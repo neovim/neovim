@@ -1359,6 +1359,9 @@ describe('API', function()
       eq({id=1}, meths.get_current_buf())
 
       local screen = Screen.new(20, 4)
+      screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+      })
       screen:attach()
 
       --
@@ -1373,7 +1376,7 @@ describe('API', function()
       end
 
       --
-      -- Visiting a scratch-buffer DOES change its properties.
+      -- Visiting a scratch-buffer DOES NOT change its properties.
       --
       meths.set_current_buf(edited_buf)
       screen:expect([[
@@ -1381,12 +1384,19 @@ describe('API', function()
         {1:~                   }|
         {1:~                   }|
                             |
-      ]], {
-        [1] = {bold = true, foreground = Screen.colors.Blue1},
-      })
-      eq('', meths.buf_get_option(edited_buf, 'buftype'))
-      eq('', meths.buf_get_option(edited_buf, 'bufhidden'))
+      ]])
+      eq('nofile', meths.buf_get_option(edited_buf, 'buftype'))
+      eq('hide', meths.buf_get_option(edited_buf, 'bufhidden'))
       eq(false, meths.buf_get_option(edited_buf, 'swapfile'))
+
+      -- scratch buffer can be wiped without error
+      command('bwipe')
+      screen:expect([[
+        ^                    |
+        {1:~                   }|
+        {1:~                   }|
+                            |
+      ]])
     end)
   end)
 end)

@@ -63,35 +63,6 @@ enum bfa_values {
 # include "buffer.h.generated.h"
 #endif
 
-// Find a window that contains "buf" and switch to it.
-// If there is no such window, use the current window and change "curbuf".
-// Caller must initialize save_curbuf to NULL.
-// restore_win_for_buf() MUST be called later!
-static inline void switch_to_win_for_buf(buf_T *buf,
-                                         win_T **save_curwinp,
-                                         tabpage_T **save_curtabp,
-                                         bufref_T *save_curbuf)
-{
-  win_T *wp;
-  tabpage_T *tp;
-
-  if (!find_win_for_buf(buf, &wp, &tp)
-      || switch_win(save_curwinp, save_curtabp, wp, tp, true) == FAIL) {
-    switch_buffer(save_curbuf, buf);
-  }
-}
-
-static inline void restore_win_for_buf(win_T *save_curwin,
-                                       tabpage_T *save_curtab,
-                                       bufref_T *save_curbuf)
-{
-  if (save_curbuf->br_buf == NULL) {
-    restore_win(save_curwin, save_curtab, true);
-  } else {
-    restore_buffer(save_curbuf);
-  }
-}
-
 static inline void buf_set_changedtick(buf_T *const buf,
                                        const varnumber_T changedtick)
   REAL_FATTR_NONNULL_ALL REAL_FATTR_ALWAYS_INLINE;
@@ -144,16 +115,5 @@ static inline void buf_inc_changedtick(buf_T *const buf)
 {
   buf_set_changedtick(buf, buf_get_changedtick(buf) + 1);
 }
-
-#define WITH_BUFFER(b, code) \
-  do { \
-    win_T *save_curwin = NULL; \
-    tabpage_T *save_curtab = NULL; \
-    bufref_T save_curbuf = { NULL, 0, 0 }; \
-    switch_to_win_for_buf(b, &save_curwin, &save_curtab, &save_curbuf); \
-    code; \
-    restore_win_for_buf(save_curwin, save_curtab, &save_curbuf); \
-  } while (0)
-
 
 #endif  // NVIM_BUFFER_H

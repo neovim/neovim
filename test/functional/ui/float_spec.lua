@@ -504,7 +504,7 @@ describe('floating windows', function()
       local win = meths.open_win(buf, false, 15, 4, {relative='editor', row=2, col=10})
       meths.win_set_option(win , 'winhl', 'Normal:PMenu')
       local expected_pos = {
-          [3]={{id=1001}, 'NW', 1, 2, 10, true},
+          [4]={{id=1002}, 'NW', 1, 2, 10, true},
       }
       if multigrid then
         screen:expect{grid=[[
@@ -523,7 +523,7 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:such           }|
           {1:very           }|
           {1:float          }|
@@ -555,7 +555,7 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:such           }|
           {1:very           }|
           {1:float          }|
@@ -583,7 +583,7 @@ describe('floating windows', function()
           ^                                        |
           {0:~                                       }|
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:such           }|
           {1:very           }|
           {1:float          }|
@@ -608,7 +608,7 @@ describe('floating windows', function()
         ## grid 2
           ^                                        |
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:such           }|
           {1:very           }|
           {1:float          }|
@@ -631,7 +631,7 @@ describe('floating windows', function()
         ## grid 2
                                                   |
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:such           }|
           {1:very           }|
           {1:^float          }|
@@ -663,7 +663,7 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:such           }|
           {1:very           }|
           {1:^float          }|
@@ -700,7 +700,7 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -735,7 +735,7 @@ describe('floating windows', function()
           {0:~                         }|
           {0:~                         }|
           {0:~                         }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -770,7 +770,7 @@ describe('floating windows', function()
           {0:~                        }|
           {0:~                        }|
           {0:~                        }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -805,7 +805,7 @@ describe('floating windows', function()
           {0:~                       }|
           {0:~                       }|
           {0:~                       }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -840,7 +840,7 @@ describe('floating windows', function()
           {0:~               }|
           {0:~               }|
           {0:~               }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -875,7 +875,7 @@ describe('floating windows', function()
           {0:~              }|
           {0:~              }|
           {0:~              }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -910,7 +910,7 @@ describe('floating windows', function()
           {0:~             }|
           {0:~             }|
           {0:~             }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -945,7 +945,7 @@ describe('floating windows', function()
           {0:~           }|
           {0:~           }|
           {0:~           }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -971,7 +971,7 @@ describe('floating windows', function()
                       |
         ## grid 2
                       |
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|
@@ -1001,7 +1001,7 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
           {0:~                                       }|
-        ## grid 3
+        ## grid 4
           {1:^such           }|
           {1:very           }|
           {1:float          }|

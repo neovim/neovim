@@ -1112,11 +1112,15 @@ static void refresh_terminal(Terminal *term)
     return;
   }
   long ml_before = buf->b_ml.ml_line_count;
-  WITH_BUFFER(buf, {
-    refresh_size(term, buf);
-    refresh_scrollback(term, buf);
-    refresh_screen(term, buf);
-  });
+
+  // refresh_ functions assume the terminal buffer is current
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, buf);
+  refresh_size(term, buf);
+  refresh_scrollback(term, buf);
+  refresh_screen(term, buf);
+  aucmd_restbuf(&aco);
+
   long ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
 }

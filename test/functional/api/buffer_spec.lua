@@ -1,7 +1,9 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
 local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
+local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
 local exc_exec = helpers.exc_exec
@@ -11,6 +13,7 @@ local NIL = helpers.NIL
 local meth_pcall = helpers.meth_pcall
 local command = helpers.command
 local bufmeths = helpers.bufmeths
+local feed = helpers.feed
 
 describe('api/buf', function()
   before_each(clear)
@@ -298,6 +301,38 @@ describe('api/buf', function()
       feed_command('$')
       local retval = exc_exec("call nvim_buf_set_lines(1, 0, 1, v:false, ['test'])")
       eq(0, retval)
+    end)
+
+    it("set_lines of invisible buffer doesn't move cursor in current window", function()
+      local screen = Screen.new(20, 5)
+      screen:set_default_attr_ids({
+        [1] = {bold = true, foreground = Screen.colors.Blue1},
+        [2] = {bold = true},
+      })
+      screen:attach()
+
+      insert([[
+        Who would win?
+        A real window
+        with proper text]])
+      local buf = meths.create_buf(false,true)
+      screen:expect([[
+        Who would win?      |
+        A real window       |
+        with proper tex^t    |
+        {1:~                   }|
+                            |
+      ]])
+
+      meths.buf_set_lines(buf, 0, -1, true, {'or some', 'scratchy text'})
+      feed('i') -- provoke redraw
+      screen:expect([[
+        Who would win?      |
+        A real window       |
+        with proper tex^t    |
+        {1:~                   }|
+        {2:-- INSERT --}        |
+      ]])
     end)
   end)
 
