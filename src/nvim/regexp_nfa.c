@@ -1341,10 +1341,11 @@ static int nfa_regatom(void)
     {
       int refnum = no_Magic(c) - '1';
 
-      if (!seen_endbrace(refnum + 1))
+      if (!seen_endbrace(refnum + 1)) {
           return FAIL;
+      }
       EMIT(NFA_BACKREF1 + refnum);
-      nfa_has_backref = TRUE;
+      nfa_has_backref = true;
     }
     break;
 

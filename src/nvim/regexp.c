@@ -1210,27 +1210,30 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
   return p;
 }
 
-/*
- * Return TRUE if the back reference is legal. We must have seen the close
- * brace.
- * TODO: Should also check that we don't refer to something that is repeated
- * (+*=): what instance of the repetition should we match?
- */
+///
+/// Return TRUE if the back reference is legal. We must have seen the close
+/// brace.
+/// TODO(billy4195): Should also check that we don't refer to something that is
+///   repeated
+/// (+*=): what instance of the repetition should we match?
+///
 static int seen_endbrace(int refnum)
 {
   if (!had_endbrace[refnum]) {
       char_u *p;
 
-      /* Trick: check if "@<=" or "@<!" follows, in which case
-       * the \1 can appear before the referenced match. */
-      for (p = regparse; *p != NUL; ++p)
-        if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '='))
+      // Trick: check if "@<=" or "@<!" follows, in which case
+      // the \1 can appear before the referenced match.
+      for (p = regparse; *p != NUL; p++) {
+        if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '=')) {
           break;
+        }
+      }
 
     if (*p == NUL) {
       EMSG(_("E65: Illegal back reference"));
-      rc_did_emsg = TRUE;
-      return FALSE;
+      rc_did_emsg = true;
+      return false;
     }
   }
   return TRUE;
@@ -1953,8 +1956,9 @@ static char_u *regatom(int *flagp)
     int refnum;
 
     refnum = c - Magic('0');
-    if (!seen_endbrace(refnum))
+    if (!seen_endbrace(refnum)) {
       return NULL;
+    }
     ret = regnode(BACKREF + refnum);
   }
   break;
@@ -3783,17 +3787,17 @@ regmatch(
   int c;
   regitem_T     *rp;
   int no;
-  int status;                   /* one of the RA_ values: */
-  int tm_count;                 /* counter for checking timeout */
-#define RA_FAIL         1       /* something failed, abort */
-#define RA_CONT         2       /* continue in inner loop */
-#define RA_BREAK        3       /* break inner loop */
-#define RA_MATCH        4       /* successful match */
-#define RA_NOMATCH      5       /* didn't match */
+  int status;                   // one of the RA_ values:
+  int tm_count;                 // counter for checking timeout
+#define RA_FAIL         1       // something failed, abort
+#define RA_CONT         2       // continue in inner loop
+#define RA_BREAK        3       // break inner loop
+#define RA_MATCH        4       // successful match
+#define RA_NOMATCH      5       // didn't match
 
   tm_count = 0;
-  /* Make "regstack" and "backpos" empty.  They are allocated and freed in
-   * bt_regexec_both() to reduce malloc()/free() calls. */
+  // Make "regstack" and "backpos" empty.  They are allocated and freed in
+  // bt_regexec_both() to reduce malloc()/free() calls.
   regstack.ga_len = 0;
   backpos.ga_len = 0;
 
