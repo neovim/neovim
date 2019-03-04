@@ -5332,7 +5332,10 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
 void set_fraction(win_T *wp)
 {
   if (wp->w_height_inner > 1) {
-    wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + wp->w_height_inner / 2)
+    // When cursor is in the first line the percentage is computed as if
+    // it's halfway that line.  Thus with two lines it is 25%, with three
+    // lines 17%, etc.  Similarly for the last line: 75%, 83%, etc.
+    wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT + FRACTION_MULT / 2)
                    / (long)wp->w_height_inner;
   }
 }
@@ -5364,8 +5367,8 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     int sline, line_size;
     int height = wp->w_height_inner;
 
-  /* Don't change w_topline when height is zero.  Don't set w_topline when
-   * 'scrollbind' is set and this isn't the current window. */
+    // Don't change w_topline when height is zero.  Don't set w_topline when
+    // 'scrollbind' is set and this isn't the current window.
   if (height > 0
       && (!wp->w_p_scb || wp == curwin)
       ) {
@@ -5376,8 +5379,7 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     lnum = wp->w_cursor.lnum;
     if (lnum < 1)               /* can happen when starting up */
       lnum = 1;
-    wp->w_wrow = ((long)wp->w_fraction * (long)height - 1L + FRACTION_MULT / 2)
-                 / FRACTION_MULT;
+    wp->w_wrow = ((long)wp->w_fraction * (long)height - 1L) / FRACTION_MULT;
     line_size = plines_win_col(wp, lnum, (long)(wp->w_cursor.col)) - 1;
     sline = wp->w_wrow - line_size;
 
@@ -5408,7 +5410,6 @@ void scroll_to_fraction(win_T *wp, int prev_height)
           wp->w_wrow--;
         }
       }
-      set_topline(wp, lnum);
     } else if (sline > 0) {
       while (sline > 0 && lnum > 1) {
         (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
@@ -5437,12 +5438,12 @@ void scroll_to_fraction(win_T *wp, int prev_height)
         lnum++;
         wp->w_wrow -= line_size + sline;
       } else if (sline > 0) {
-        /* First line of file reached, use that as topline. */
+        // First line of file reached, use that as topline.
         lnum = 1;
         wp->w_wrow -= sline;
       }
-      set_topline(wp, lnum);
     }
+    set_topline(wp, lnum);
   }
 
   if (wp == curwin) {

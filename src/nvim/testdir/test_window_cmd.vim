@@ -518,4 +518,132 @@ func Test_winrestcmd()
   only
 endfunc
 
+func Test_relative_cursor_position_in_one_line_window()
+  new
+  only
+  call setline(1, range(1, 10000))
+  normal 50%
+  let lnum = getcurpos()[1]
+  split
+  split
+  " make third window take as many lines as possible, other windows will
+  " become one line
+  3wincmd w
+  for i in range(1, &lines - 6)
+    wincmd +
+    redraw!
+  endfor
+
+  " first and second window should show cursor line
+  let wininfo = getwininfo()
+  call assert_equal(lnum, wininfo[0].topline)
+  call assert_equal(lnum, wininfo[1].topline)
+
+  only!
+  bwipe!
+endfunc
+
+func Test_relative_cursor_position_after_move_and_resize()
+  let so_save = &so
+  set so=0
+  enew
+  call setline(1, range(1, 10000))
+  normal 50%
+  split
+  1wincmd w
+  " Move cursor to first line in window
+  normal H
+  redraw!
+  " Reduce window height to two lines
+  let height = winheight(0)
+  while winheight(0) > 2
+    wincmd -
+    redraw!
+  endwhile
+  " move cursor to second/last line in window
+  normal j
+  " restore previous height
+  while winheight(0) < height
+    wincmd +
+    redraw!
+  endwhile
+  " make window two lines again
+  while winheight(0) > 2
+    wincmd -
+    redraw!
+  endwhile
+
+  " cursor should be at bottom line
+  let info = getwininfo(win_getid())[0]
+  call assert_equal(info.topline + 1, getcurpos()[1])
+
+  only!
+  bwipe!
+  let &so = so_save
+endfunc
+
+func Test_relative_cursor_position_after_resize()
+  let so_save = &so
+  set so=0
+  enew
+  call setline(1, range(1, 10000))
+  normal 50%
+  split
+  1wincmd w
+  let winid1 = win_getid()
+  let info = getwininfo(winid1)[0]
+  " Move cursor to second line in window
+  exe "normal " . (info.topline + 1) . "G"
+  redraw!
+  let lnum = getcurpos()[1]
+
+  " Make the window only two lines high, cursor should end up in top line
+  2wincmd w
+  exe (info.height - 2) . "wincmd +"
+  redraw!
+  let info = getwininfo(winid1)[0]
+  call assert_equal(lnum, info.topline)
+
+  only!
+  bwipe!
+  let &so = so_save
+endfunc
+
+func Test_relative_cursor_second_line_after_resize()
+  let so_save = &so
+  set so=0
+  enew
+  call setline(1, range(1, 10000))
+  normal 50%
+  split
+  1wincmd w
+  let winid1 = win_getid()
+  let info = getwininfo(winid1)[0]
+
+  " Make the window only two lines high
+  2wincmd _
+
+  " Move cursor to second line in window
+  normal H
+  normal j
+
+  " Make window size bigger, then back to 2 lines
+  for i in range(1, 10)
+    wincmd +
+    redraw!
+  endfor
+  for i in range(1, 10)
+    wincmd -
+    redraw!
+  endfor
+
+  " cursor should end up in bottom line
+  let info = getwininfo(winid1)[0]
+  call assert_equal(info.topline + 1, getcurpos()[1])
+
+  only!
+  bwipe!
+  let &so = so_save
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

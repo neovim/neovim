@@ -1274,17 +1274,18 @@ describe("'winhighlight' highlight", function()
     command('set number')
     command('set colorcolumn=2')
     command('set cursorcolumn')
+    feed('k')
 
     command('split')
     command('set winhl=LineNr:Background1,CursorColumn:Background2,'
             ..'ColorColumn:ErrorMsg')
     screen:expect([[
-      {1:  1 }v{15:e}ry tex{5:t}       |
-      {1:  2 }m{15:o}re tex^t       |
+      {1:  1 }v{15:e}ry tex^t       |
+      {1:  2 }m{15:o}re tex{5:t}       |
       {0:~                   }|
       {3:[No Name] [+]       }|
-      {9:  1 }v{17:e}ry tex{18:t}       |
-      {9:  2 }m{17:o}re text       |
+      {9:  1 }v{17:e}ry text       |
+      {9:  2 }m{17:o}re tex{18:t}       |
       {4:[No Name] [+]       }|
                           |
     ]])
