@@ -5219,7 +5219,6 @@ int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type,
 {
     signlist_T *sign;  // a sign in a b_signlist
     signlist_T *matches[9];
-    const size_t max_sign_matches = ARRAY_SIZE(matches);
     int nr_matches = 0;
 
     for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
@@ -5234,7 +5233,7 @@ int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type,
             matches[nr_matches] = sign;
             nr_matches++;
 
-            if (nr_matches == max_sign_matches) {
+            if (nr_matches == ARRAY_SIZE(matches)) {
                 break;
             }
         }
