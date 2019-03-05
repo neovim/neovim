@@ -3,6 +3,12 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local insert = helpers.insert
+local exe_lua = helpers.meths.execute_lua
+local nvim = helpers.nvim
+
+local function set_responses(responses)
+  nvim('call_function', 'lsp#request', { "meta/setResponses", responses })
+end
 
 describe('plugin with a server', function()
 
@@ -24,19 +30,29 @@ describe('plugin with a server', function()
             )
     insert([[
       abc de
-      fggli haf
-      ]])
+      fggli haf]])
     command('set ft=text')
     helpers.sleep(100)
+    set_responses{
+      --{}, {},
+      {
+        result = {
+          contents = { { value = "hover_content", language = "txt" } },
+          range = { start = { line = 0, character = 0 },
+                    ["end"] = { line = 0, character = 2 },
+          }
+        }
+      }
+    }
     helpers.feed("o")
     helpers.feed('<C-r>=lsp#request("textDocument/hover")<Enter><Esc>')
     helpers.sleep(100)
     screen:expect([[
       {2:ab}c de              |
       fggli haf           |
-                          |
       hover_content       |
       ^                    |
+      {1:~                   }|
       {1:~                   }|
       {1:~                   }|
       {1:~                   }|
