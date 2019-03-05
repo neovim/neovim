@@ -33,7 +33,11 @@
 #include <sys/utsname.h>
 #endif
 
-// Because `uv_os_getenv` requires allocating, we must manage a map to maintain
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/env.c.generated.h"
+#endif
+
+// Because `mch_getenv` requires allocating, we must manage a map to maintain
 // the behavior of `os_getenv`.
 static PMap(cstr_t) *envmap;
 static uv_mutex_t mutex;
@@ -66,16 +70,16 @@ const char *os_getenv(const char *name)
     pmap_del2(envmap, name);
   }
   e = xmalloc(size);
-  int r = uv_os_getenv(name, e, &size);
+  int r = mch_getenv(name, e, &size);
   if (r == UV_ENOBUFS) {
     e = xrealloc(e, size);
-    r = uv_os_getenv(name, e, &size);
+    r = mch_getenv(name, e, &size);
   }
   if (r != 0 || size == 0 || e[0] == '\0') {
     xfree(e);
     e = NULL;
     if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
-      ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
+      ELOG("mch_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
     }
     goto end;
   }
@@ -93,14 +97,14 @@ bool os_env_exists(const char *name)
   if (name[0] == '\0') {
     return false;
   }
-  // Use a tiny buffer because we don't care about the value: if uv_os_getenv()
+  // Use a tiny buffer because we don't care about the value: if mch_getenv()
   // returns UV_ENOBUFS, the env var was found.
   char buf[1];
   size_t size = sizeof(buf);
-  int r = uv_os_getenv(name, buf, &size);
+  int r = mch_getenv(name, buf, &size);
   assert(r != UV_EINVAL);
   if (r != 0 && r != UV_ENOENT && r != UV_ENOBUFS) {
-    ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
+    ELOG("mch_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
   return (r == 0 || r == UV_ENOBUFS);
 }
@@ -122,10 +126,10 @@ int os_setenv(const char *name, const char *value, int overwrite)
 #endif
   uv_mutex_lock(&mutex);
   pmap_del2(envmap, name);
-  int r = uv_os_setenv(name, value);
+  int r = mch_setenv(name, value);
   assert(r != UV_EINVAL);
   if (r != 0) {
-    ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
+    ELOG("mch_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
   uv_mutex_unlock(&mutex);
   return r == 0 ? 0 : -1;
@@ -140,9 +144,9 @@ int os_unsetenv(const char *name)
   }
   uv_mutex_lock(&mutex);
   pmap_del2(envmap, name);
-  int r = uv_os_unsetenv(name);
+  int r = mch_unsetenv(name);
   if (r != 0) {
-    ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
+    ELOG("mch_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
   uv_mutex_unlock(&mutex);
   return r == 0 ? 0 : -1;
@@ -1034,4 +1038,117 @@ bool os_shell_is_cmdexe(const char *sh)
     return true;
   }
   return striequal("cmd.exe", (char *)path_tail((char_u *)sh));
+}
+
+static int mch_getenv(const char *name, char *buffer, size_t *size)
+{
+#ifdef WIN32
+# define MAX_ENV_VAR_LENGTH 32767
+
+  if (name == NULL || buffer == NULL || size == NULL || *size == 0) {
+    return UV_EINVAL;
+  }
+
+  wchar_t *buffer_w = NULL;
+  wchar_t *name_w = NULL;
+  char *value = NULL;
+  int ret = 0;
+
+  int conversion_result = utf8_to_utf16(name, &name_w);
+  if (conversion_result  != 0) {
+    ELOG("utf8_to_utf16 failed: %d", conversion_result);
+    return uv_translate_sys_error(conversion_result);
+  }
+
+  buffer_w = (wchar_t *)xmalloc(MAX_ENV_VAR_LENGTH * sizeof(*buffer_w));
+  size_t utf16_len;
+  errno_t r = _wgetenv_s(&utf16_len, buffer_w, MAX_ENV_VAR_LENGTH, name_w);
+  assert(utf16_len <= MAX_ENV_VAR_LENGTH);
+  assert(r != ERANGE);
+  if (utf16_len == 0) {
+    *size = 0;
+    ret = UV_ENOENT;
+    goto end;
+  }
+  if (r != 0) {
+    ret = -r;
+    goto end;
+  }
+  conversion_result = utf16_to_utf8(buffer_w, &value);
+  if (conversion_result != 0) {
+    ELOG("utf16_to_utf8 failed: %d", conversion_result);
+    ret = uv_translate_sys_error(conversion_result);
+    goto end;
+  }
+  size_t utf8_len = STRLEN(value) + 1;
+  if (utf8_len > *size) {
+    *size = utf8_len;
+    ret = UV_ENOBUFS;
+    goto end;
+  }
+  xstrlcpy(buffer, value, *size);
+  *size = utf8_len;
+end:
+  xfree(buffer_w);
+  xfree(name_w);
+  xfree(value);
+  return ret;
+#else
+  return uv_os_getenv(name, buffer, size);
+#endif
+}
+
+static int mch_setenv(const char *name, const char *value)
+{
+#ifdef WIN32
+  if (name == NULL || value == NULL) {
+    return UV_EINVAL;
+  }
+
+  wchar_t *name_w;
+  int conversion_result = utf8_to_utf16(name, &name_w);
+  if (conversion_result != 0) {
+    ELOG("utf8_to_utf16 failed: %d", conversion_result);
+    return uv_translate_sys_error(conversion_result);
+  }
+
+  wchar_t *value_w;
+  conversion_result = utf8_to_utf16(value, &value_w);
+  if (conversion_result != 0) {
+    ELOG("utf8_to_utf16 failed: %d", conversion_result);
+    xfree(name_w);
+    return uv_translate_sys_error(conversion_result);
+  }
+
+  errno_t r = _wputenv_s(name_w, value_w);
+  xfree(name_w);
+  xfree(value_w);
+
+  return -r;
+#else
+  return uv_os_setenv(name, value);
+#endif
+}
+
+static int mch_unsetenv(const char *name)
+{
+#ifdef WIN32
+  if (name == NULL) {
+    return UV_EINVAL;
+  }
+
+  wchar_t *name_w = NULL;
+  int conversion_result = utf8_to_utf16(name, &name_w);
+  if (conversion_result != 0) {
+    ELOG("utf8_to_utf16 failed: %d", conversion_result);
+    return uv_translate_sys_error(conversion_result);
+  }
+
+  errno_t r = _wputenv_s(name_w, L"");
+  xfree(name_w);
+
+  return -r;
+#else
+  return uv_os_unsetenv(name);
+#endif
 }
