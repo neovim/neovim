@@ -322,6 +322,90 @@ func Test_sub_cmd_8()
   set titlestring&
 endfunc
 
+" Test %s/\n// which is implemented as a special case to use a
+" more efficient join rather than doing a regular substitution.
+func Test_substitute_join()
+  new
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//')
+  call assert_equal("", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//g')
+  call assert_equal("", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//p')
+  call assert_equal("\nfoo     barbar^Hfoo", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//l')
+  call assert_equal("\nfoo^Ibarbar^Hfoo$", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//#')
+  call assert_equal("\n  1 foo     barbar^Hfoo", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  bwipe!
+endfunc
+
+func Test_substitute_count()
+  new
+  call setline(1, ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo'])
+  2
+
+  s/foo/bar/3
+  call assert_equal(['foo foo', 'bar foo', 'bar foo', 'bar foo', 'foo foo'],
+  \                 getline(1, '$'))
+
+  call assert_fails('s/foo/bar/0', 'E939:')
+
+  bwipe!
+endfunc
+
+" Test substitute 'n' flag (report number of matches, do not substitute).
+func Test_substitute_flag_n()
+  new
+  let lines = ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo']
+  call setline(1, lines)
+
+  call assert_equal("\n3 matches on 3 lines", execute('2,4s/foo/bar/n'))
+  call assert_equal("\n6 matches on 3 lines", execute('2,4s/foo/bar/gn'))
+
+  " c flag (confirm) should be ignored when using n flag.
+  call assert_equal("\n3 matches on 3 lines", execute('2,4s/foo/bar/nc'))
+
+  " No substitution should have been done.
+  call assert_equal(lines, getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_substitute_errors()
+  new
+  call setline(1, 'foobar')
+
+  call assert_fails('s/FOO/bar/', 'E486:')
+  call assert_fails('s/foo/bar/@', 'E488:')
+  call assert_fails('s/\(/bar/', 'E476:')
+
+  setl nomodifiable
+  call assert_fails('s/foo/bar/', 'E21:')
+
+  bwipe!
+endfunc
+
 " Test for *sub-replace-special* and *sub-replace-expression* on substitute().
 func Test_sub_replace_1()
   " Run the tests with 'magic' on
