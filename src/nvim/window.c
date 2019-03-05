@@ -806,12 +806,12 @@ bool parse_float_config(Dictionary config, FloatConfig *out, bool reconf,
     api_set_error(err, kErrorTypeValidation,
                   "Only one of 'relative' and 'external' should be used");
     return false;
-  } else if (has_relative) {
-    out->external = false;
   } else if (!reconf && !has_relative && !has_external) {
     api_set_error(err, kErrorTypeValidation,
                   "One of 'relative' and 'external' must be used");
     return false;
+  } else if (has_relative) {
+    out->external = false;
   }
 
   if (out->external && !ui_has(kUIMultigrid)) {
