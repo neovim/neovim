@@ -50,8 +50,8 @@ describe('plugin with a server', function()
     screen:expect([[
       {2:ab}c de              |
       fggli haf           |
-      hover_content       |
-      ^                    |
+      hover_conten^t       |
+      {1:~                   }|
       {1:~                   }|
       {1:~                   }|
       {1:~                   }|

@@ -344,7 +344,7 @@ add_default_callback('textDocument/hover', function(self, data)
   local long_string = ''
   if data.contents ~= nil then
     if util.is_array(data.contents) == true then
-      for _, item in ipairs(data.contents) do
+      for i, item in ipairs(data.contents) do
         local value
         if type(item) == 'table' then
           value = item.value
@@ -354,7 +354,11 @@ add_default_callback('textDocument/hover', function(self, data)
           value = item
         end
 
-        long_string = long_string .. value .. "\n"
+        if i == 1 then
+          long_string = value
+        else 
+          long_string = long_string .. "\n" .. value
+        end
       end
 
       log.debug('Hover: ', long_string)
