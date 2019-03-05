@@ -119,6 +119,14 @@ func Test_findfile()
   let &shellslash = save_shellslash
 endfunc
 
+func Test_findfile_error()
+  call assert_fails('call findfile([])', 'E730:')
+  call assert_fails('call findfile("x", [])', 'E730:')
+  call assert_fails('call findfile("x", "", [])', 'E745:')
+  call assert_fails('call findfile("x", "**x")', 'E343:')
+  call assert_fails('call findfile("x", repeat("x", 5000))', 'E854:')
+endfunc
+
 " Test finddir({name} [, {path} [, {count}]])
 func Test_finddir()
   let save_path = &path
@@ -166,4 +174,12 @@ func Test_finddir()
   call CleanFiles()
   let &path = save_path
   let &shellslash = save_shellslash
+endfunc
+
+func Test_finddir_error()
+  call assert_fails('call finddir([])', 'E730:')
+  call assert_fails('call finddir("x", [])', 'E730:')
+  call assert_fails('call finddir("x", "", [])', 'E745:')
+  call assert_fails('call finddir("x", "**x")', 'E343:')
+  call assert_fails('call finddir("x", repeat("x", 5000))', 'E854:')
 endfunc
