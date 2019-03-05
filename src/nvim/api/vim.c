@@ -31,6 +31,7 @@
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
+#include "nvim/fileio.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
 #include "nvim/syntax.h"
@@ -978,11 +979,12 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
     return 0;
   }
   if (scratch) {
-    WITH_BUFFER(buf, {
-      set_option_value("bh", 0L, "hide", OPT_LOCAL);
-      set_option_value("bt", 0L, "nofile", OPT_LOCAL);
-      set_option_value("swf", 0L, NULL, OPT_LOCAL);
-    });
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
+    set_option_value("bh", 0L, "hide", OPT_LOCAL);
+    set_option_value("bt", 0L, "nofile", OPT_LOCAL);
+    set_option_value("swf", 0L, NULL, OPT_LOCAL);
+    aucmd_restbuf(&aco);
   }
   return buf->b_fnum;
 }

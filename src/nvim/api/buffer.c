@@ -380,8 +380,6 @@ void nvim_buf_set_lines(uint64_t channel_id,
     }
   }
 
-  win_T *save_curwin = NULL;
-  tabpage_T *save_curtab = NULL;
   size_t new_len = replacement.size;
   size_t old_len = (size_t)(end - start);
   ptrdiff_t extra = 0;  // lines added to text, can be negative
@@ -397,8 +395,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
   }
 
   try_start();
-  bufref_T save_curbuf = { NULL, 0, 0 };
-  switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, (buf_T *)buf);
 
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to save undo information");
@@ -465,19 +463,13 @@ void nvim_buf_set_lines(uint64_t channel_id,
   // changed range, and move any in the remainder of the buffer.
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
-  if (save_curbuf.br_buf == NULL) {
-    mark_adjust((linenr_T)start,
-                (linenr_T)(end - 1),
-                MAXLNUM,
-                (long)extra,
-                false);
-  }
+  mark_adjust((linenr_T)start,
+              (linenr_T)(end - 1),
+              MAXLNUM,
+              (long)extra,
+              false);
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
-
-  if (save_curbuf.br_buf == NULL) {
-    fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
-  }
 
 end:
   for (size_t i = 0; i < new_len; i++) {
@@ -485,7 +477,7 @@ end:
   }
 
   xfree(lines);
-  restore_win_for_buf(save_curwin, save_curtab, &save_curbuf);
+  aucmd_restbuf(&aco);
   try_end(err);
 }
 
@@ -1107,28 +1099,6 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
 free_exit:
   kv_destroy(virt_text);
   return 0;
-}
-
-// Check if deleting lines made the cursor position invalid.
-// Changed the lines from "lo" to "hi" and added "extra" lines (negative if
-// deleted).
-static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
-{
-  if (curwin->w_cursor.lnum >= lo) {
-    // Adjust the cursor position if it's in/after the changed
-    // lines.
-    if (curwin->w_cursor.lnum >= hi) {
-      curwin->w_cursor.lnum += extra;
-      check_cursor_col();
-    } else if (extra < 0) {
-      curwin->w_cursor.lnum = lo;
-      check_cursor();
-    } else {
-      check_cursor_col();
-    }
-    changed_cline_bef_curs();
-  }
-  invalidate_botline();
 }
 
 // Normalizes 0-based indexes to buffer line numbers
