@@ -201,6 +201,22 @@ describe('command line completion', function()
     ]])
   end)
 
+  it('completes env var names', function()
+    clear()
+    screen:attach()
+    command('let $XTEST_1 = "foo" | let $XTEST_2 = "bar"')
+    command('set wildmode=full')
+    command('set wildmenu')
+    feed(':!echo $XTEST_<tab>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:XTEST_1}{3:  XTEST_2                        }|
+      :!echo $XTEST_1^                         |
+    ]])
+  end)
+
   it('completes (multibyte) env var names #9655', function()
     clear({env={
       ['XTEST_1AaあB']='foo',
