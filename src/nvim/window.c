@@ -5546,10 +5546,11 @@ void command_height(void)
    * p_ch was changed in another tab page. */
   curtab->tp_ch_used = p_ch;
 
-  /* Find bottom frame with width of screen. */
-  frp = lastwin->w_frame;
-  while (frp->fr_width != Columns && frp->fr_parent != NULL)
+  // Find bottom frame with width of screen.
+  frp = lastwin_nofloating()->w_frame;
+  while (frp->fr_width != Columns && frp->fr_parent != NULL) {
     frp = frp->fr_parent;
+  }
 
   /* Avoid changing the height of a window with 'winfixheight' set. */
   while (frp->fr_prev != NULL && frp->fr_layout == FR_LEAF
