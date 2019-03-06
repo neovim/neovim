@@ -2000,7 +2000,7 @@ static const char *tui_tk_ti_getstr(const char *name, const char *value,
   } else if (strequal(name, "key_dc")) {
     DLOG("libtermkey:kdch1=%s", value);
     // Vim: "If <BS> and <DEL> are now the same, redefine <DEL>."
-    if (value != NULL && strequal(stty_erase, value)) {
+    if (value != NULL && value != (char *)-1 && strequal(stty_erase, value)) {
       return stty_erase[0] == DEL ? CTRL_H_STR : DEL_STR;
     }
   } else if (strequal(name, "key_mouse")) {
