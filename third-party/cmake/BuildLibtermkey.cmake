@@ -11,10 +11,6 @@ ExternalProject_Add(libtermkey
   -DTARGET=libtermkey
   -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
   -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-  PATCH_COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libtermkey init
-    COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libtermkey apply --ignore-whitespace
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libtermkey-Add-support-for-Windows.patch 
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libtermkey-Fix-escape-sequences-for-MSVC.patch
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/libtermkeyCMakeLists.txt
       ${DEPS_BUILD_DIR}/src/libtermkey/CMakeLists.txt
