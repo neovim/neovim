@@ -74,6 +74,8 @@ static inline void buf_set_changedtick(buf_T *const buf,
 static inline void buf_set_changedtick(buf_T *const buf,
                                        const varnumber_T changedtick)
 {
+  typval_T old_val = buf->changedtick_di.di_tv;
+
 #ifndef NDEBUG
   dictitem_T *const changedtick_di = tv_dict_find(
       buf->b_vars, S_LEN("changedtick"));
@@ -87,6 +89,13 @@ static inline void buf_set_changedtick(buf_T *const buf,
   assert(changedtick_di == (dictitem_T *)&buf->changedtick_di);
 #endif
   buf->changedtick_di.di_tv.vval.v_number = changedtick;
+
+  if (tv_dict_is_watched(buf->b_vars)) {
+    tv_dict_watcher_notify(buf->b_vars,
+                           (char *)buf->changedtick_di.di_key,
+                           &buf->changedtick_di.di_tv,
+                           &old_val);
+  }
 }
 
 static inline varnumber_T buf_get_changedtick(const buf_T *const buf)
