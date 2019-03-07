@@ -5651,13 +5651,15 @@ next_search_hl (
                               && cur != NULL
                               && shl == &cur->hl
                               && cur->match.regprog == cur->hl.rm.regprog);
+      int timed_out = false;
 
-      nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, &(shl->tm));
-      /* Copy the regprog, in case it got freed and recompiled. */
+      nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol,
+                                   &(shl->tm), &timed_out);
+      // Copy the regprog, in case it got freed and recompiled.
       if (regprog_is_copy) {
         cur->match.regprog = cur->hl.rm.regprog;
       }
-      if (called_emsg || got_int) {
+      if (called_emsg || got_int || timed_out) {
         // Error while handling regexp: stop using this regexp.
         if (shl == &search_hl) {
           // don't free regprog in the match list, it's a copy

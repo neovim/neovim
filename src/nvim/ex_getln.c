@@ -1061,7 +1061,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
   s->i = searchit(curwin, curbuf, &t,
                   next_match ? FORWARD : BACKWARD,
                   pat, s->count, search_flags,
-                  RE_SEARCH, 0, NULL);
+                  RE_SEARCH, 0, NULL, NULL);
   emsg_off--;
   ui_busy_stop();
   if (s->i) {
@@ -1847,7 +1847,7 @@ static int command_line_changed(CommandLineState *s)
       }
       s->i = do_search(NULL, s->firstc, ccline.cmdbuff, s->count,
                        search_flags,
-                       &tm);
+                       &tm, NULL);
       emsg_off--;
       // if interrupted while searching, behave like it failed
       if (got_int) {

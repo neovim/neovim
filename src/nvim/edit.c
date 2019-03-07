@@ -3907,10 +3907,11 @@ static int ins_compl_get_exp(pos_T *ini)
               compl_direction, compl_pattern);
         } else
           found_new_match = searchit(NULL, ins_buf, pos,
-              compl_direction,
-              compl_pattern, 1L, SEARCH_KEEP + SEARCH_NFMSG,
-              RE_LAST, (linenr_T)0, NULL);
-        --msg_silent;
+                                     compl_direction,
+                                     compl_pattern, 1L,
+                                     SEARCH_KEEP + SEARCH_NFMSG,
+                                     RE_LAST, (linenr_T)0, NULL, NULL);
+        msg_silent--;
         if (!compl_started || set_match_pos) {
           /* set "compl_started" even on fail */
           compl_started = TRUE;
