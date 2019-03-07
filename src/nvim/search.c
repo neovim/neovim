@@ -870,9 +870,11 @@ int searchit(
         lnum = buf->b_ml.ml_line_count;
       else
         lnum = 1;
-      if (!shortmess(SHM_SEARCH) && (options & SEARCH_MSG))
+      if (!shortmess(SHM_SEARCH) && (options & SEARCH_MSG)) {
+        apply_autocmds(EVENT_SEARCHWRAPPED, NULL, NULL, false, NULL);
         give_warning((char_u *)_(dir == BACKWARD
                 ? top_bot_msg : bot_top_msg), true);
+      }
     }
     if (got_int || called_emsg
         || break_loop
