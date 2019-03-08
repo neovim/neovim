@@ -1201,6 +1201,19 @@ static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
   }
 }
 
+static char_u *skip_colon_white(const char_u *p, bool skipleadingwhite)
+{
+  if (skipleadingwhite) {
+    p = skipwhite(p);
+  }
+
+  while (*p == ':') {
+    p = skipwhite(p + 1);
+  }
+
+  return (char_u *)p;
+}
+
 /*
  * Execute one Ex command.
  *
@@ -1705,9 +1718,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   /*
    * Skip ':' and any white space
    */
-  ea.cmd = skipwhite(ea.cmd);
-  while (*ea.cmd == ':')
-    ea.cmd = skipwhite(ea.cmd + 1);
+  ea.cmd = skip_colon_white(ea.cmd, true);
 
   /*
    * If we got a line, but no command, then go to the line.
@@ -3580,9 +3591,8 @@ char_u *skip_range(
       ++cmd;
   }
 
-  /* Skip ":" and white space. */
-  while (*cmd == ':')
-    cmd = skipwhite(cmd + 1);
+  // Skip ":" and white space.
+  cmd = skip_colon_white(cmd, false);
 
   return (char_u *)cmd;
 }
