@@ -10216,10 +10216,13 @@ bool cmd_can_preview(char_u *cmd)
     return false;
   }
 
+  // Ignore additional colons at the start...
+  cmd = skip_colon_white(cmd, true);
+
   // Ignore any leading modifiers (:keeppatterns, :verbose, etc.)
   for (int len = modifier_len(cmd); len != 0; len = modifier_len(cmd)) {
     cmd += len;
-    cmd = skipwhite(cmd);
+    cmd = skip_colon_white(cmd, true);
   }
 
   exarg_T ea;

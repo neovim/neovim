@@ -779,6 +779,13 @@ describe(":substitute, inccommand=split", function()
       {15:~                             }|
       :silent tabedit %s/tw/to^      |
     ]])
+    feed('<Esc>')
+
+    -- leading colons
+    feed(':::%s/tw/to')
+    screen:expect{any=[[{12:to}o lines]]}
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
   end)
 
   it('shows split window when typing the pattern', function()
