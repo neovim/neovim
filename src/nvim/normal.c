@@ -5443,7 +5443,7 @@ static void nv_csearch(cmdarg_T *cap)
  */
 static void nv_brackets(cmdarg_T *cap)
 {
-  pos_T new_pos = INIT_POS_T(0, 0, 0);
+  pos_T new_pos = { 0, 0, 0 };
   pos_T prev_pos;
   pos_T       *pos = NULL;          /* init for GCC */
   pos_T old_pos;                    /* cursor position before command */

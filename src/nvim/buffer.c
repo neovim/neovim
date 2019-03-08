@@ -2446,7 +2446,7 @@ void get_winopts(buf_T *buf)
  */
 pos_T *buflist_findfpos(buf_T *buf)
 {
-  static pos_T no_position = INIT_POS_T(1, 0, 0);
+  static pos_T no_position = { 1, 0, 0 };
 
   wininfo_T *wip = find_wininfo(buf, FALSE);
   return (wip == NULL) ? &no_position : &(wip->wi_fpos);

@@ -602,7 +602,7 @@ EXTERN bool can_si INIT(= false);
 EXTERN bool can_si_back INIT(= false);
 
 // w_cursor before formatting text.
-EXTERN pos_T saved_cursor INIT(= INIT_POS_T(0, 0, 0));
+EXTERN pos_T saved_cursor INIT(= { 0, 0, 0 });
 
 /*
  * Stuff for insert mode.
@@ -789,7 +789,7 @@ EXTERN int autocmd_bufnr INIT(= 0);            // fnum for <abuf> on cmdline
 EXTERN char_u *autocmd_match INIT(= NULL);     // name for <amatch> on cmdline
 EXTERN int did_cursorhold INIT(= false);       // set when CursorHold t'gerd
 // for CursorMoved event
-EXTERN pos_T last_cursormoved INIT(= INIT_POS_T(0, 0, 0));
+EXTERN pos_T last_cursormoved INIT(= { 0, 0, 0 });
 
 EXTERN int postponed_split INIT(= 0);       /* for CTRL-W CTRL-] command */
 EXTERN int postponed_split_flags INIT(= 0);       /* args for win_split() */
