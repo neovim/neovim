@@ -523,9 +523,10 @@ int searchit(
     char_u      *pat,
     long count,
     int options,
-    int pat_use,                    /* which pattern to use when "pat" is empty */
-    linenr_T stop_lnum,             /* stop after this line number when != 0 */
-    proftime_T  *tm          /* timeout limit or NULL */
+    int pat_use,              // which pattern to use when "pat" is empty
+    linenr_T stop_lnum,       // stop after this line number when != 0
+    proftime_T  *tm,          // timeout limit or NULL
+    int *timed_out            // set when timed out or NULL
 )
 {
   int found;
@@ -620,9 +621,9 @@ int searchit(
         // Look for a match somewhere in line "lnum".
         colnr_T col = at_first_line && (options & SEARCH_COL) ? pos->col : 0;
         nmatched = vim_regexec_multi(&regmatch, win, buf,
-                                     lnum, col, tm);
+                                     lnum, col, tm, timed_out);
         // Abort searching on an error (e.g., out of stack).
-        if (called_emsg) {
+        if (called_emsg || (timed_out != NULL && *timed_out)) {
           break;
         }
         if (nmatched > 0) {
@@ -686,8 +687,9 @@ int searchit(
               }
 
               if (ptr[matchcol] == NUL
-                  || (nmatched = vim_regexec_multi(&regmatch, win, buf, lnum,
-                                                   matchcol, tm)) == 0) {
+                  || (nmatched = vim_regexec_multi(&regmatch, win, buf,
+                                                   lnum, matchcol, tm,
+                                                   timed_out)) == 0) {
                 match_ok = false;
                 break;
               }
@@ -771,7 +773,7 @@ int searchit(
               if (ptr[matchcol] == NUL
                   || (nmatched = vim_regexec_multi(
                       &regmatch, win, buf, lnum + matchpos.lnum, matchcol,
-                      tm)) == 0) {
+                      tm, timed_out)) == 0) {
                   // If the search timed out, we did find a match
                   // but it might be the wrong one, so that's not
                   // OK.
@@ -855,30 +857,35 @@ int searchit(
        * twice.
        */
       if (!p_ws || stop_lnum != 0 || got_int || called_emsg
+          || (timed_out != NULL && timed_out)
           || break_loop
-          || found || loop)
+          || found || loop) {
         break;
-
-      /*
-       * If 'wrapscan' is set we continue at the other end of the file.
-       * If 'shortmess' does not contain 's', we give a message.
-       * This message is also remembered in keep_msg for when the screen
-       * is redrawn. The keep_msg is cleared whenever another message is
-       * written.
-       */
-      if (dir == BACKWARD)          /* start second loop at the other end */
+      }
+      //
+      // If 'wrapscan' is set we continue at the other end of the file.
+      // If 'shortmess' does not contain 's', we give a message.
+      // This message is also remembered in keep_msg for when the screen
+      // is redrawn. The keep_msg is cleared whenever another message is
+      // written.
+      //
+      if (dir == BACKWARD) {        // start second loop at the other end
         lnum = buf->b_ml.ml_line_count;
-      else
+      } else {
         lnum = 1;
-      if (!shortmess(SHM_SEARCH) && (options & SEARCH_MSG))
+      }
+      if (!shortmess(SHM_SEARCH) && (options & SEARCH_MSG)) {
         give_warning((char_u *)_(dir == BACKWARD
-                ? top_bot_msg : bot_top_msg), true);
+                                 ? top_bot_msg : bot_top_msg), true);
+      }
     }
     if (got_int || called_emsg
+        || (timed_out != NULL && *timed_out)
         || break_loop
-        )
+        ) {
       break;
-  } while (--count > 0 && found);   /* stop after count matches or no match */
+    }
+  } while (--count > 0 && found);   // stop after count matches or no match
 
   vim_regfree(regmatch.regprog);
 
@@ -965,7 +972,8 @@ int do_search(
     char_u          *pat,
     long count,
     int options,
-    proftime_T      *tm             /* timeout limit or NULL */
+    proftime_T      *tm,            // timeout limit or NULL
+    int             *timed_out      // flag set on timeout or NULL
 )
 {
   pos_T pos;                    /* position of the last match */
@@ -1195,7 +1203,7 @@ int do_search(
                      & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
                         + SEARCH_START
                         + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
-                 RE_LAST, (linenr_T)0, tm);
+                 RE_LAST, (linenr_T)0, tm, timed_out);
 
     if (dircp != NULL)
       *dircp = dirc;            /* restore second '/' or '?' for normal_cmd() */
@@ -3978,7 +3986,7 @@ current_search(
 
     result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
                       spats[last_idx].pat, i ? count : 1,
-                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
+                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL, NULL);
 
     /* First search may fail, but then start searching from the
      * beginning of the file (cursor might be on the search match)
@@ -4025,7 +4033,7 @@ current_search(
     for (int i = 0; i < 2; i++) {
       result = searchit(curwin, curbuf, &pos, direction,
                         spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH,
-                        0, NULL);
+                        0, NULL, NULL);
       // Search successfull, break out from the loop
       if (result) {
         break;
@@ -4104,14 +4112,15 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
     flag = SEARCH_START;
   }
   if (searchit(curwin, curbuf, &pos, direction, pattern, 1,
-               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL) != FAIL) {
+               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
     called_emsg = false;
     do {
       regmatch.startpos[0].col++;
       nmatched = vim_regexec_multi(&regmatch, curwin, curbuf,
-                                   pos.lnum, regmatch.startpos[0].col, NULL);
+                                   pos.lnum, regmatch.startpos[0].col,
+                                   NULL, NULL);
       if (!nmatched) {
         break;
       }

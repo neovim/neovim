@@ -3782,9 +3782,10 @@ find_decl (
     valid = false;
     (void)valid;  // Avoid "dead assignment" warning.
     t = searchit(curwin, curbuf, &curwin->w_cursor, FORWARD,
-        pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL);
-    if (curwin->w_cursor.lnum >= old_pos.lnum)
-      t = false;         /* match after start is failure too */
+                 pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL, NULL);
+    if (curwin->w_cursor.lnum >= old_pos.lnum) {
+      t = false;         // match after start is failure too
+    }
 
     if (thisblock && t != false) {
       const int64_t maxtravel = old_pos.lnum - curwin->w_cursor.lnum + 1;
@@ -5384,7 +5385,7 @@ static int normal_search(
   curwin->w_set_curswant = true;
 
   i = do_search(cap->oap, dir, pat, cap->count1,
-                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL);
+                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL, NULL);
   if (i == 0) {
     clearop(cap->oap);
   } else {

@@ -1210,6 +1210,31 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
   return p;
 }
 
+/// Return TRUE if the back reference is legal. We must have seen the close
+/// brace.
+/// TODO(vim): Should also check that we don't refer to something repeated
+/// (+*=): what instance of the repetition should we match?
+static int seen_endbrace(int refnum)
+{
+  if (!had_endbrace[refnum]) {
+      char_u *p;
+
+      // Trick: check if "@<=" or "@<!" follows, in which case
+      // the \1 can appear before the referenced match.
+      for (p = regparse; *p != NUL; p++) {
+        if (p[0] == '@' && p[1] == '<' && (p[2] == '!' || p[2] == '=')) {
+          break;
+        }
+      }
+
+    if (*p == NUL) {
+      EMSG(_("E65: Illegal back reference"));
+      rc_did_emsg = true;
+      return false;
+    }
+  }
+  return TRUE;
+}
 
 /*
  * bt_regcomp() - compile a regular expression into internal code for the
@@ -1928,22 +1953,8 @@ static char_u *regatom(int *flagp)
     int refnum;
 
     refnum = c - Magic('0');
-    /*
-     * Check if the back reference is legal. We must have seen the
-     * close brace.
-     * TODO: Should also check that we don't refer to something
-     * that is repeated (+*=): what instance of the repetition
-     * should we match?
-     */
-    if (!had_endbrace[refnum]) {
-      /* Trick: check if "@<=" or "@<!" follows, in which case
-       * the \1 can appear before the referenced match. */
-      for (p = regparse; *p != NUL; ++p)
-        if (p[0] == '@' && p[1] == '<'
-            && (p[2] == '!' || p[2] == '='))
-          break;
-      if (*p == NUL)
-        EMSG_RET_NULL(_("E65: Illegal back reference"));
+    if (!seen_endbrace(refnum)) {
+      return NULL;
     }
     ret = regnode(BACKREF + refnum);
   }
@@ -3297,7 +3308,7 @@ bt_regexec_nl (
   rex.reg_icombine = false;
   rex.reg_maxcol = 0;
 
-  long r = bt_regexec_both(line, col, NULL);
+  long r = bt_regexec_both(line, col, NULL, NULL);
   assert(r <= INT_MAX);
   return (int)r;
 }
@@ -3357,7 +3368,8 @@ static inline char_u *cstrchr(const char_u *const s, const int c)
 /// @return zero if there is no match and number of lines contained in the match
 ///         otherwise.
 static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
-                             linenr_T lnum, colnr_T col, proftime_T *tm)
+                             linenr_T lnum, colnr_T col,
+                             proftime_T *tm, int *timed_out)
 {
   rex.reg_match = NULL;
   rex.reg_mmatch = rmp;
@@ -3370,18 +3382,16 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
   rex.reg_icombine = false;
   rex.reg_maxcol = rmp->rmm_maxcol;
 
-  return bt_regexec_both(NULL, col, tm);
+  return bt_regexec_both(NULL, col, tm, timed_out);
 }
 
-/*
- * Match a regexp against a string ("line" points to the string) or multiple
- * lines ("line" is NULL, use reg_getline()).
- * Returns 0 for failure, number of lines contained in the match otherwise.
- */
+/// Match a regexp against a string ("line" points to the string) or multiple
+/// lines ("line" is NULL, use reg_getline()).
+/// @return 0 for failure, or number of lines contained in the match.
 static long bt_regexec_both(char_u *line,
-                            colnr_T col, /* column to start looking for match */
-                            proftime_T *tm /* timeout limit or NULL */
-                            )
+                            colnr_T col,      // column to start search
+                            proftime_T *tm,   // timeout limit or NULL
+                            int *timed_out)   // flag set on timeout or NULL
 {
   bt_regprog_T        *prog;
   char_u      *s;
@@ -3483,7 +3493,7 @@ static long bt_regexec_both(char_u *line,
             && (utf_fold(prog->regstart) == utf_fold(c)
                 || (c < 255 && prog->regstart < 255
                     && mb_tolower(prog->regstart) == mb_tolower(c))))) {
-      retval = regtry(prog, col);
+      retval = regtry(prog, col, tm, timed_out);
     } else {
       retval = 0;
     }
@@ -3507,9 +3517,10 @@ static long bt_regexec_both(char_u *line,
         break;
       }
 
-      retval = regtry(prog, col);
-      if (retval > 0)
+      retval = regtry(prog, col, tm, timed_out);
+      if (retval > 0) {
         break;
+      }
 
       /* if not currently on the first line, get it again */
       if (reglnum != 0) {
@@ -3525,8 +3536,12 @@ static long bt_regexec_both(char_u *line,
       /* Check for timeout once in a twenty times to avoid overhead. */
       if (tm != NULL && ++tm_count == 20) {
         tm_count = 0;
-        if (profile_passed_limit(*tm))
+        if (profile_passed_limit(*tm)) {
+          if (timed_out != NULL) {
+            *timed_out = true;
+          }
           break;
+        }
       }
     }
   }
@@ -3582,11 +3597,12 @@ void unref_extmatch(reg_extmatch_T *em)
   }
 }
 
-/*
- * regtry - try match of "prog" with at regline["col"].
- * Returns 0 for failure, number of lines contained in the match otherwise.
- */
-static long regtry(bt_regprog_T *prog, colnr_T col)
+/// Try match of "prog" with at regline["col"].
+/// @returns 0 for failure, or number of lines contained in the match.
+static long regtry(bt_regprog_T *prog,
+                   colnr_T col,
+                   proftime_T *tm,    // timeout limit or NULL
+                   int *timed_out)    // flag set on timeout or NULL
 {
   reginput = regline + col;
   need_clear_subexpr = TRUE;
@@ -3594,8 +3610,9 @@ static long regtry(bt_regprog_T *prog, colnr_T col)
   if (prog->reghasz == REX_SET)
     need_clear_zsubexpr = TRUE;
 
-  if (regmatch(prog->program + 1) == 0)
+  if (regmatch(prog->program + 1, tm, timed_out) == 0) {
     return 0;
+  }
 
   cleanup_subexpr();
   if (REG_MULTI) {
@@ -3736,24 +3753,23 @@ static int reg_match_visual(void)
 static long bl_minval;
 static long bl_maxval;
 
-/*
- * regmatch - main matching routine
- *
- * Conceptually the strategy is simple: Check to see whether the current node
- * matches, push an item onto the regstack and loop to see whether the rest
- * matches, and then act accordingly.  In practice we make some effort to
- * avoid using the regstack, in particular by going through "ordinary" nodes
- * (that don't need to know whether the rest of the match failed) by a nested
- * loop.
- *
- * Returns TRUE when there is a match.  Leaves reginput and reglnum just after
- * the last matched character.
- * Returns FALSE when there is no match.  Leaves reginput and reglnum in an
- * undefined state!
- */
-static int 
-regmatch (
-    char_u *scan              /* Current node. */
+/// Main matching routine
+///
+/// Conceptually the strategy is simple: Check to see whether the current node
+/// matches, push an item onto the regstack and loop to see whether the rest
+/// matches, and then act accordingly.  In practice we make some effort to
+/// avoid using the regstack, in particular by going through "ordinary" nodes
+/// (that don't need to know whether the rest of the match failed) by a nested
+/// loop.
+///
+/// Returns TRUE when there is a match.  Leaves reginput and reglnum just after
+/// the last matched character.
+/// Returns FALSE when there is no match.  Leaves reginput and reglnum in an
+/// undefined state!
+static int regmatch(
+    char_u *scan,               // Current node.
+    proftime_T *tm,             // timeout limit or NULL
+    int *timed_out              // flag set on timeout or NULL
 )
 {
   char_u        *next;          /* Next node. */
@@ -3761,15 +3777,16 @@ regmatch (
   int c;
   regitem_T     *rp;
   int no;
-  int status;                   /* one of the RA_ values: */
-#define RA_FAIL         1       /* something failed, abort */
-#define RA_CONT         2       /* continue in inner loop */
-#define RA_BREAK        3       /* break inner loop */
-#define RA_MATCH        4       /* successful match */
-#define RA_NOMATCH      5       /* didn't match */
+  int status;                   // one of the RA_ values:
+  int tm_count = 0;
+#define RA_FAIL         1       // something failed, abort
+#define RA_CONT         2       // continue in inner loop
+#define RA_BREAK        3       // break inner loop
+#define RA_MATCH        4       // successful match
+#define RA_NOMATCH      5       // didn't match
 
-  /* Make "regstack" and "backpos" empty.  They are allocated and freed in
-   * bt_regexec_both() to reduce malloc()/free() calls. */
+  // Make "regstack" and "backpos" empty.  They are allocated and freed in
+  // bt_regexec_both() to reduce malloc()/free() calls.
   regstack.ga_len = 0;
   backpos.ga_len = 0;
 
@@ -3796,6 +3813,17 @@ regmatch (
       if (got_int || scan == NULL) {
         status = RA_FAIL;
         break;
+      }
+      // Check for timeout once in a 100 times to avoid overhead.
+      if (tm != NULL && ++tm_count == 100) {
+        tm_count = 0;
+        if (profile_passed_limit(*tm)) {
+          if (timed_out != NULL) {
+            *timed_out = true;
+          }
+          status = RA_FAIL;
+          break;
+        }
       }
       status = RA_CONT;
 
@@ -7275,12 +7303,13 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 /// Return zero if there is no match.  Return number of lines contained in the
 /// match otherwise.
 long vim_regexec_multi(
-  regmmatch_T *rmp,
-  win_T       *win,               /* window in which to search or NULL */
-  buf_T       *buf,               /* buffer in which to search */
-  linenr_T lnum,                  /* nr of line to start looking for match */
-  colnr_T col,                    /* column to start looking for match */
-  proftime_T  *tm                 /* timeout limit or NULL */
+    regmmatch_T *rmp,
+    win_T       *win,               // window in which to search or NULL
+    buf_T       *buf,               // buffer in which to search
+    linenr_T lnum,                  // nr of line to start looking for match
+    colnr_T col,                    // column to start looking for match
+    proftime_T  *tm,                // timeout limit or NULL
+    int         *timed_out          // flag is set when timeout limit reached
 )
 {
   regexec_T rex_save;
@@ -7293,7 +7322,7 @@ long vim_regexec_multi(
   rex_in_use = true;
 
   int result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
-                                                   tm);
+                                                   tm, timed_out);
 
   // NFA engine aborted because it's very slow, use backtracking engine instead.
   if (rmp->regprog->re_engine == AUTOMATIC_ENGINE
@@ -7313,7 +7342,7 @@ long vim_regexec_multi(
 
     if (rmp->regprog != NULL) {
       result = rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col,
-                                                   tm);
+                                                   tm, timed_out);
     }
 
     xfree(pat);

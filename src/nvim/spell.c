@@ -3048,9 +3048,10 @@ void ex_spellrepall(exarg_T *eap)
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
-        || u_save_cursor() == FAIL)
+    if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL, NULL) == 0
+        || u_save_cursor() == FAIL) {
       break;
+    }
 
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".

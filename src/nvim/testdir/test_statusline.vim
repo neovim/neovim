@@ -223,7 +223,7 @@ func Test_statusline()
   set statusline=ab%(cd%q%)de
   call assert_match('^abde\s*$', s:get_statusline())
   copen
-  call assert_match('^abcd\[Quickfix List\1]de\s*$', s:get_statusline())
+  call assert_match('^abcd\[Quickfix List]de\s*$', s:get_statusline())
   cclose
 
   " %#: Set highlight group. The name must follow and then a # again.

@@ -63,3 +63,13 @@ func Test_rex_init()
   bwipe!
   set re=0
 endfunc
+
+func Test_backref()
+  new
+  call setline(1, ['one', 'two', 'three', 'four', 'five'])
+  call assert_equal(3, search('\%#=1\(e\)\1'))
+  call assert_equal(3, search('\%#=2\(e\)\1'))
+  call assert_fails('call search("\\%#=1\\(e\\1\\)")', 'E65:')
+  call assert_fails('call search("\\%#=2\\(e\\1\\)")', 'E65:')
+  bwipe!
+endfunc
