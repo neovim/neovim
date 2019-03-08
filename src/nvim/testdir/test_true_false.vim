@@ -57,6 +57,9 @@ endfunc
 
 " Test using TRUE or FALSE values for an argument.
 func Test_true_false_arg()
+  let shellslash = &shellslash
+  let wildignore = &wildignore
+  set shellslash
   call Try_arg_true_false('count(["a", "A"], "a", %v%)', 1, 2)
 
   set wildignore=*.swp
@@ -110,6 +113,8 @@ func Test_true_false_arg()
   let here_id = synID(1, 3, 0)
   call Try_arg_true_false('synID(1, 3, %v%)', here_id, brackets_id)
   bwipe!
+  let &wildignore = wildignore
+  let &shellslash = shellslash
 endfunc
 
 function Try_arg_non_zero(expr, false_val, true_val)
