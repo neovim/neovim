@@ -274,9 +274,46 @@ func Test_visual_mode_reset()
   set belloff&
 endfunc
 
+func Test_Visual_word_textobject()
+  new
+  call setline(1, ['First sentence. Second sentence.'])
+
+  " When start and end of visual area are identical, 'aw' or 'iw' select
+  " the whole word.
+  norm! 1go2fcvawy
+  call assert_equal('Second ', @")
+  norm! 1go2fcviwy
+  call assert_equal('Second', @")
+
+  " When start and end of visual area are not identical, 'aw' or 'iw'
+  " extend the word in direction of the end of the visual area.
+  norm! 1go2fcvlawy
+  call assert_equal('cond ', @")
+  norm! gv2awy
+  call assert_equal('cond sentence.', @")
+
+  norm! 1go2fcvliwy
+  call assert_equal('cond', @")
+  norm! gv2iwy
+  call assert_equal('cond sentence', @")
+
+  " Extend visual area in opposite direction.
+  norm! 1go2fcvhawy
+  call assert_equal(' Sec', @")
+  norm! gv2awy
+  call assert_equal(' sentence. Sec', @")
+
+  norm! 1go2fcvhiwy
+  call assert_equal('Sec', @")
+  norm! gv2iwy
+  call assert_equal('. Sec', @")
+
+  bwipe!
+endfunc
+
 func Test_Visual_sentence_textobject()
   new
-  call setline(1, ['First sentence. Second sentence. Third', 'sentence. Fouth sentence'])
+  call setline(1, ['First sentence. Second sentence. Third', 'sentence. Fourth sentence'])
 
   " When start and end of visual area are identical, 'as' or 'is' select
   " the whole sentence.
@@ -324,4 +361,53 @@ func Test_curswant_not_changed()
 
   bwipe!
   au! InsertLeave
+endfunc
+
+func Test_Visual_paragraph_textobject()
+  new
+  call setline(1, ['First line.',
+  \                '',
+  \                'Second line.',
+  \                'Third line.',
+  \                'Fourth line.',
+  \                'Fifth line.',
+  \                '',
+  \                'Sixth line.'])
+
+  " When start and end of visual area are identical, 'ap' or 'ip' select
+  " the whole paragraph.
+  norm! 4ggvapy
+  call assert_equal("Second line.\nThird line.\nFourth line.\nFifth line.\n\n", @")
+  norm! 4ggvipy
+  call assert_equal("Second line.\nThird line.\nFourth line.\nFifth line.\n", @")
+
+  " When start and end of visual area are not identical, 'ap' or 'ip'
+  " extend the sentence in direction of the end of the visual area.
+  " FIXME: actually, it is not sufficient to have different start and
+  " end of visual selection, the start line and end line have to differ,
+  " which is not consistent with the documentation.
+  norm! 4ggVjapy
+  call assert_equal("Third line.\nFourth line.\nFifth line.\n\n", @")
+  norm! gvapy
+  call assert_equal("Third line.\nFourth line.\nFifth line.\n\nSixth line.\n", @")
+  norm! 4ggVjipy
+  call assert_equal("Third line.\nFourth line.\nFifth line.\n", @")
+  norm! gvipy
+  call assert_equal("Third line.\nFourth line.\nFifth line.\n\n", @")
+  norm! gvipy
+  call assert_equal("Third line.\nFourth line.\nFifth line.\n\nSixth line.\n", @")
+
+  " Extend visual area in opposite direction.
+  norm! 5ggVkapy
+  call assert_equal("\nSecond line.\nThird line.\nFourth line.\n", @")
+  norm! gvapy
+  call assert_equal("First line.\n\nSecond line.\nThird line.\nFourth line.\n", @")
+  norm! 5ggVkipy
+  call assert_equal("Second line.\nThird line.\nFourth line.\n", @")
+  norma gvipy
+  call assert_equal("\nSecond line.\nThird line.\nFourth line.\n", @")
+  norm! gvipy
+  call assert_equal("First line.\n\nSecond line.\nThird line.\nFourth line.\n", @")
+
+  bwipe!
 endfunc
