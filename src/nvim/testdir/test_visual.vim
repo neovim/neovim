@@ -1,8 +1,4 @@
 " Tests for various Visual mode.
-if !has('visual')
-  finish
-endif
-
 
 func Test_block_shift_multibyte()
   " Uses double-wide character.
@@ -317,4 +313,15 @@ func Test_Visual_sentence_textobject()
   call assert_equal('First sentence. Second', @")
 
   bwipe!
+endfunc
+
+func Test_curswant_not_changed()
+  new
+  call setline(1, ['one', 'two'])
+  au InsertLeave * call getcurpos()
+  call feedkeys("gg0\<C-V>jI123 \<Esc>j", 'xt')
+  call assert_equal([0, 2, 1, 0, 1], getcurpos())
+
+  bwipe!
+  au! InsertLeave
 endfunc
