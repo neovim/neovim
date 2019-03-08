@@ -924,7 +924,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
   int i;
   int fnum = curbuf->b_fnum;
   linenr_T    *lp;
-  static pos_T initpos = INIT_POS_T(1, 0, 0);
+  static pos_T initpos = { 1, 0, 0 };
 
   if (line2 < line1 && amount_after == 0L)          /* nothing to do */
     return;

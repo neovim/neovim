@@ -24,7 +24,6 @@ typedef struct {
   colnr_T coladd;
 } pos_T;
 
-# define INIT_POS_T(l, c, ca) {l, c, ca}
 
 /*
  * Same, but without coladd.

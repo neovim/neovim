@@ -10086,10 +10086,23 @@ static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
   tv_list_append_number(
       l, (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
   if (getcurpos) {
+    const int save_set_curswant = curwin->w_set_curswant;
+    const colnr_T save_curswant = curwin->w_curswant;
+    const colnr_T save_virtcol = curwin->w_virtcol;
+
     update_curswant();
     tv_list_append_number(l, (curwin->w_curswant == MAXCOL
                               ? (varnumber_T)MAXCOL
                               : (varnumber_T)curwin->w_curswant + 1));
+
+    // Do not change "curswant", as it is unexpected that a get
+    // function has a side effect.
+    if (save_set_curswant) {
+      curwin->w_set_curswant = save_set_curswant;
+      curwin->w_curswant = save_curswant;
+      curwin->w_virtcol = save_virtcol;
+      curwin->w_valid &= ~VALID_VIRTCOL;
+    }
   }
 }
 
