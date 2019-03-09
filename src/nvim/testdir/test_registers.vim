@@ -42,7 +42,6 @@ func Test_display_registers()
     call assert_match('^\n--- Registers ---\n'
           \ .         '""   a\n'
           \ .         '"0   ba\n'
-          \ .         '"1   b\n'
           \ .         '"a   b\n'
           \ .         '.*'
           \ .         '"-   a\n'
@@ -62,4 +61,88 @@ func Test_display_registers()
           \ .         '":   ls', a)
 
     bwipe!
+endfunc
+
+func Test_register_one()
+  " delete a line goes into register one
+  new
+  call setline(1, "one")
+  normal dd
+  call assert_equal("one\n", @1)
+
+  " delete a word does not change register one, does change "-
+  call setline(1, "two")
+  normal de
+  call assert_equal("one\n", @1)
+  call assert_equal("two", @-)
+
+  " delete a word with a register does not change register one
+  call setline(1, "three")
+  normal "ade
+  call assert_equal("three", @a)
+  call assert_equal("one\n", @1)
+
+  " delete a word with register DOES change register one with one of a list of
+  " operators
+  " %
+  call setline(1, ["(12)3"])
+  normal "ad%
+  call assert_equal("(12)", @a)
+  call assert_equal("(12)", @1)
+
+  " (
+  call setline(1, ["first second"])
+  normal $"ad(
+  call assert_equal("first secon", @a)
+  call assert_equal("first secon", @1)
+
+  " )
+  call setline(1, ["First Second."])
+  normal gg0"ad)
+  call assert_equal("First Second.", @a)
+  call assert_equal("First Second.", @1)
+
+  " `
+  call setline(1, ["start here."])
+  normal gg0fhmx0"ad`x
+  call assert_equal("start ", @a)
+  call assert_equal("start ", @1)
+
+  " /
+  call setline(1, ["searchX"])
+  exe "normal gg0\"ad/X\<CR>"
+  call assert_equal("search", @a)
+  call assert_equal("search", @1)
+
+  " ?
+  call setline(1, ["Ysearch"])
+  exe "normal gg$\"ad?Y\<CR>"
+  call assert_equal("Ysearc", @a)
+  call assert_equal("Ysearc", @1)
+
+  " n
+  call setline(1, ["Ynext"])
+  normal gg$"adn
+  call assert_equal("Ynex", @a)
+  call assert_equal("Ynex", @1)
+
+  " N
+  call setline(1, ["prevY"])
+  normal gg0"adN
+  call assert_equal("prev", @a)
+  call assert_equal("prev", @1)
+
+  " }
+  call setline(1, ["one", ""])
+  normal gg0"ad}
+  call assert_equal("one\n", @a)
+  call assert_equal("one\n", @1)
+
+  " {
+  call setline(1, ["", "two"])
+  normal 2G$"ad{
+  call assert_equal("\ntw", @a)
+  call assert_equal("\ntw", @1)
+
+  bwipe!
 endfunc

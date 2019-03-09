@@ -1399,11 +1399,10 @@ int op_delete(oparg_T *oap)
       }
     }
 
-    /*
-     * Put deleted text into register 1 and shift number registers if the
-     * delete contains a line break, or when a regname has been specified.
-     */
-    if (oap->regname != 0 || oap->motion_type == kMTLineWise
+    // Put deleted text into register 1 and shift number registers if the
+    // delete contains a line break, or when using a specific operator (Vi
+    // compatible)
+    if (oap->motion_type == kMTLineWise
         || oap->line_count > 1 || oap->use_reg_one) {
       free_register(&y_regs[9]); /* free register "9 */
       for (n = 9; n > 1; n--)
