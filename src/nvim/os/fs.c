@@ -288,7 +288,11 @@ static bool is_executable(const char *name)
   // a directory.
   return (S_ISREG(mode));
 #else
-  return (S_ISREG(mode) && (S_IXUSR & mode));
+  int r = -1;
+  if (S_ISREG(mode)) {
+    RUN_UV_FS_FUNC(r, uv_fs_access, name, X_OK, NULL);
+  }
+  return (r == 0);
 #endif
 }
 
