@@ -1198,20 +1198,20 @@ describe('builtin popupmenu', function()
 
     command("split")
     screen:expect([[
-      xx                                      |
       choice^                                  |
+      {1:~                                       }|
       {n:word           }{1:                         }|
       {s:choice         }{4:                         }|
       {n:text           }                         |
-      {n:thing          }                         |
+      {n:thing          }{1:                         }|
       {3:[No Name] [+]                           }|
       {2:-- INSERT --}                            |
     ]])
 
     meths.input_mouse('wheel', 'down', '', 0, 6, 15)
     screen:expect([[
-      xx                                      |
       choice^                                  |
+      {1:~                                       }|
       {n:word           }{1:                         }|
       {s:choice         }{4:                         }|
       {n:text           }                         |

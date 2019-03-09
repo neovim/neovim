@@ -39,10 +39,11 @@ describe(':terminal', function()
   it('does not change size on WinEnter', function()
     if helpers.pending_win32(pending) then return end
     feed('<c-\\><c-n>')
+    feed('k')
     feed_command('2split')
     screen:expect([[
-      tty ready                                         |
-      ^rows: 5, cols: 50                                 |
+      ^tty ready                                         |
+      rows: 5, cols: 50                                 |
       ==========                                        |
       tty ready                                         |
       rows: 5, cols: 50                                 |
@@ -57,8 +58,8 @@ describe(':terminal', function()
       tty ready                                         |
       rows: 5, cols: 50                                 |
       ==========                                        |
-      tty ready                                         |
-      ^rows: 5, cols: 50                                 |
+      ^tty ready                                         |
+      rows: 5, cols: 50                                 |
       {2: }                                                 |
                                                         |
                                                         |

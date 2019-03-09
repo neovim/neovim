@@ -356,16 +356,17 @@ describe('Screen', function()
     end)
 
     it('between windows', function()
+      feed('k')
       command("split")
       screen:expect([[
         foo {1:b} bar {1:b} eggs                                     |
-        foo {1:b} bar {1:b} eggs                                     |
         foo barf bar barf egg^s                               |
+        foo {1:b} bar {1:b} eggs                                     |
                                                              |
         {2:[No Name] [+]                                        }|
         foo {1:b} bar {1:b} eggs                                     |
         foo {1:b} bar {1:b} eggs                                     |
-                                                             |
+        foo {1:b} bar {1:b} eggs                                     |
         {3:[No Name] [+]                                        }|
                                                              |
       ]])
@@ -379,7 +380,7 @@ describe('Screen', function()
         {3:[No Name] [+]                                        }|
         foo {1:b} bar {1:b} eggs                                     |
         foo barf bar barf egg^s                               |
-                                                             |
+        foo {1:b} bar {1:b} eggs                                     |
         {2:[No Name] [+]                                        }|
                                                              |
       ]])

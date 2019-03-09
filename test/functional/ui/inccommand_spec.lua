@@ -938,11 +938,11 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw")
     -- 'cursorline' is NOT active during preview.
     screen:expect([[
-      Inc substitution on           |
       {12:tw}o lines                     |
       Inc substitution on           |
       {12:tw}o lines                     |
                                     |
+      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
@@ -1185,6 +1185,7 @@ describe(":substitute, inccommand=split", function()
   end)
 
   it("clears preview if non-previewable command is edited #5585", function()
+    feed('gg')
     -- Put a non-previewable command in history.
     feed_command("echo 'foo'")
     -- Start an incomplete :substitute command.
@@ -2084,11 +2085,11 @@ describe(":substitute", function()
 
     feed(":%s/[0-9]\\n\\zs[A-Z]/OKO")
     screen:expect([[
-      1 2 3                         |
       {12:OKO} B C                       |
       4 5 6                         |
       {12:OKO} Y Z                       |
       7 8 9                         |
+                                    |
       {11:[No Name] [+]                 }|
       |1| 1 2 3                     |
       |2| {12:OKO} B C                   |
@@ -2204,9 +2205,9 @@ describe(":substitute", function()
 
     feed("/KKK")
     screen:expect([[
-      x                             |
       afa {12:KKK}adf la;lkd {12:KKK}alx      |
                                     |
+      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
@@ -2256,11 +2257,11 @@ describe(":substitute", function()
     common_setup(screen, "split", multibyte_text)
     feed(":%s/£.*ѫ/X¥¥")
     screen:expect([[
-      {12:X¥¥}                           |
        a{12:X¥¥}¥KOL                     |
       £ ¥  libm                     |
       £ ¥                           |
                                     |
+      {15:~                             }|
       {11:[No Name] [+]                 }|
       |1|  {12:X¥¥} PEPPERS              |
       |2| {12:X¥¥}                       |
@@ -2275,11 +2276,11 @@ describe(":substitute", function()
 
     feed("\\ra££   ¥")
     screen:expect([[
-      {12:a££   ¥}                       |
        a{12:X¥¥}                         |
       {12:a££   ¥}¥KOL                   |
       £ ¥  libm                     |
       £ ¥                           |
+                                    |
       {11:[No Name] [+]                 }|
       |1|  {12:X¥¥}                      |
       |2|{12: a££   ¥} PEPPERS           |
@@ -2378,7 +2379,6 @@ describe(":substitute", function()
 
     feed("\\rѫ ab   \\rXXXX")
     screen:expect([[
-      7 8 9                         |
       K L M                         |
       {12:JLKR £}                        |
       {12:ѫ ab   }                       |
@@ -2387,6 +2387,7 @@ describe(":substitute", function()
       {12:ѫ ab   }                       |
       {12:XXXX} e f                      |
       {12:JLKR £}                        |
+      {12:ѫ ab   }                       |
       {11:[No Name] [+]                 }|
       | 7| {12:JLKR £}                   |
       | 8|{12: ѫ ab   }                  |
@@ -2480,12 +2481,13 @@ describe(":substitute", function()
     ]])
 
     feed("<C-c>")
+    feed('gg')
     wait()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
     screen:expect([[
-      something                     |
       every{12:one}                      |
       someone                       |
+      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
@@ -2525,8 +2527,8 @@ describe(":substitute", function()
     wait()
     feed([[:%s/some\(thing\)\@!/every/]])
     screen:expect([[
-      everything                    |
       {12:every}one                      |
+      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
