@@ -1019,6 +1019,13 @@ describe('floating windows', function()
       end
     end)
 
+    it('does not crash when set cmdheight #9680', function()
+      local buf = meths.create_buf(false,false)
+      meths.open_win(buf, false, 20, 2, {relative='editor', row=2, col=5})
+      command("set cmdheight=2")
+      eq(1, meths.eval('1'))
+    end)
+
     describe('and completion', function()
       before_each(function()
         local buf = meths.create_buf(false,false)
