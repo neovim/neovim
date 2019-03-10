@@ -29,7 +29,10 @@ describe('floating windows', function()
     [10] = {background = Screen.colors.LightGrey, underline = true, bold = true, foreground = Screen.colors.Magenta},
     [11] = {bold = true, foreground = Screen.colors.Magenta},
     [12] = {background = Screen.colors.Red, bold = true, foreground = Screen.colors.Blue1},
-    [13] = {background = Screen.colors.WebGray}
+    [13] = {background = Screen.colors.WebGray},
+    [14] = {foreground = Screen.colors.Brown},
+    [15] = {background = Screen.colors.Grey20},
+    [16] = {background = Screen.colors.Grey20, bold = true, foreground = Screen.colors.Blue1},
   }
 
   local function with_ext_multigrid(multigrid)
@@ -43,11 +46,9 @@ describe('floating windows', function()
     it('can be created and reconfigured', function()
       local buf = meths.create_buf(false,false)
       local win = meths.open_win(buf, false, 20, 2, {relative='editor', row=2, col=5})
-      meths.win_set_option(win , 'winhl', 'Normal:PMenu')
       local expected_pos = {
           [3]={{id=1001}, 'NW', 1, 2, 5, true},
       }
-
 
       if multigrid then
         screen:expect{grid=[[
@@ -151,6 +152,83 @@ describe('floating windows', function()
       end
     end)
 
+    it('defaults to nonumber and NormalFloat highlight', function()
+      command('set number')
+      command('hi NormalFloat guibg=#333333')
+      feed('ix<cr>y<cr><esc>gg')
+      local win = meths.open_win(0, false, 20, 4, {relative='editor', row=4, col=10})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          {14:  1 }^x                                   |
+          {14:  2 }y                                   |
+          {14:  3 }                                    |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {15:x                   }|
+          {15:y                   }|
+          {15:                    }|
+          {16:~                   }|
+        ]], float_pos={[3] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+      else
+        screen:expect([[
+          {14:  1 }^x                                   |
+          {14:  2 }y                                   |
+          {14:  3 }      {15:x                   }          |
+          {0:~         }{15:y                   }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{16:~                   }{0:          }|
+                                                  |
+        ]])
+      end
+
+      local buf = meths.create_buf(false, true)
+      meths.win_set_buf(win, buf)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          {4:[No Name] [+]                           }|
+                                                  |
+        ## grid 2
+          {14:  1 }^x                                   |
+          {14:  2 }y                                   |
+          {14:  3 }                                    |
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {15:                    }|
+          {16:~                   }|
+          {16:~                   }|
+          {16:~                   }|
+        ]], float_pos={[3] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+      else
+        screen:expect([[
+          {14:  1 }^x                                   |
+          {14:  2 }y                                   |
+          {14:  3 }      {15:                    }          |
+          {0:~         }{16:~                   }{0:          }|
+          {0:~         }{16:~                   }{0:          }|
+          {4:[No Name] }{16:~                   }{4:          }|
+                                                  |
+        ]])
+      end
+    end)
+
     it('API has proper error messages', function()
       local buf = meths.create_buf(false,false)
       eq({false, "Invalid options key 'bork'"},
@@ -211,7 +289,6 @@ describe('floating windows', function()
       local buf = meths.create_buf(false,false)
       -- no 'win' arg, relative default window
       local win = meths.open_win(buf, false, 20, 2, {relative='win', row=0, col=10})
-      meths.win_set_option(win, 'winhl', 'Normal:PMenu')
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -467,8 +544,7 @@ describe('floating windows', function()
         screen2:attach(nil, session2)
         screen2:set_default_attr_ids(attrs)
         local buf = meths.create_buf(false,false)
-        local win = meths.open_win(buf, true, 20, 2, {relative='editor', row=2, col=5})
-        meths.win_set_option(win, 'winhl', 'Normal:PMenu')
+        meths.open_win(buf, true, 20, 2, {relative='editor', row=2, col=5})
         local expected_pos = {
           [2]={{id=1001}, 'NW', 1, 2, 5}
         }
@@ -502,7 +578,6 @@ describe('floating windows', function()
       local buf = meths.create_buf(false,false)
       meths.buf_set_lines(buf, 0, -1, true, {'such', 'very', 'float'})
       local win = meths.open_win(buf, false, 15, 4, {relative='editor', row=2, col=10})
-      meths.win_set_option(win , 'winhl', 'Normal:PMenu')
       local expected_pos = {
           [4]={{id=1002}, 'NW', 1, 2, 10, true},
       }
@@ -1417,7 +1492,6 @@ describe('floating windows', function()
         local buf = meths.create_buf(false,false)
         win = meths.open_win(buf, false, 20, 2, {relative='editor', row=2, col=5})
         meths.buf_set_lines(buf,0,-1,true,{"y"})
-        meths.win_set_option(win , 'winhl', 'Normal:PMenu')
         expected_pos = {
           [3]={{id=1001}, 'NW', 1, 2, 5, true}
         }
@@ -2074,39 +2148,6 @@ describe('floating windows', function()
             {1:y                   }|
             {2:~                   }|
           ## grid 4
-            {1:^y                                       }|
-            {2:~                                       }|
-        ]], float_pos=expected_pos}
-        else
-          screen:expect([[
-            {1:^y                                       }|
-            {2:~                                       }|
-            {4:[No N}{1:y                   }{4:               }|
-            x    {2:~                   }               |
-            {0:~                                       }|
-            {5:[No Name] [+]                           }|
-                                                    |
-          ]])
-        end
-
-        feed(":set winhighlight=<cr><c-l>")
-        if multigrid then
-          screen:expect{grid=[[
-          ## grid 1
-            [4:----------------------------------------]|
-            [4:----------------------------------------]|
-            {4:[No Name] [+]                           }|
-            [2:----------------------------------------]|
-            [2:----------------------------------------]|
-            {5:[No Name] [+]                           }|
-                                                    |
-          ## grid 2
-            x                                       |
-            {0:~                                       }|
-          ## grid 3
-            {1:y                   }|
-            {2:~                   }|
-          ## grid 4
             ^y                                       |
             {0:~                                       }|
         ]], float_pos=expected_pos}
@@ -2121,7 +2162,6 @@ describe('floating windows', function()
                                                     |
           ]])
         end
-
 
         feed("<c-w>j")
         if multigrid then
@@ -2659,16 +2699,16 @@ describe('floating windows', function()
             x                                       |
             {0:~                                       }|
           ## grid 3
-            {1:^y                                       }|
-            {2:~                                       }|
+            ^y                                       |
+            {0:~                                       }|
         ]]}
         else
           screen:expect([[
             x                                       |
             {0:~                                       }|
             {5:[No Name] [+]                           }|
-            {1:^y                                       }|
-            {2:~                                       }|
+            ^y                                       |
+            {0:~                                       }|
             {4:[No Name] [+]                           }|
                                                     |
           ]])
@@ -2693,8 +2733,8 @@ describe('floating windows', function()
             {0:~                                       }|
             {0:~                                       }|
           ## grid 3
-            {1:^y                                       }|
-            {2:~                                       }|
+            ^y                                       |
+            {0:~                                       }|
         ]], float_pos=expected_pos}
         else
           eq({false, "UI doesn't support external windows"},
@@ -2717,11 +2757,10 @@ describe('floating windows', function()
             x                                       |
             {0:~                                       }|
           ## grid 3
-            {1:^y                                       }|
-            {2:~                                       }|
+            ^y                                       |
+            {0:~                                       }|
           ]])
         end
-
       end)
 
       it('movements with nested split layout', function()
@@ -2786,8 +2825,8 @@ describe('floating windows', function()
             4                   |
             {0:~                   }|
           ## grid 3
-            ^5                   |
-            {0:~                   }|
+            {1:^5                   }|
+            {2:~                   }|
           ## grid 4
             2                   |
             {0:~                   }|
@@ -2802,8 +2841,8 @@ describe('floating windows', function()
           screen:expect([[
             1                  {5:│}2                   |
             {0:~                  }{5:│}{0:~                   }|
-            {5:[No N}^5                   {5:ame] [+]       }|
-            3    {0:~                   }               |
+            {5:[No N}{1:^5                   }{5:ame] [+]       }|
+            3    {2:~                   }               |
             {0:~                  }{5:│}{0:~                   }|
             {5:[No Name] [+]       [No Name] [+]       }|
             :enew                                   |
@@ -2985,8 +3024,8 @@ describe('floating windows', function()
             {0:~                                       }|
             {0:~                                       }|
           ## grid 3
-            {1:y                   }|
-            {2:~                   }|
+            y                   |
+            {0:~                   }|
           ## grid 4
             ^                                        |
             {0:~                                       }|
@@ -3016,8 +3055,8 @@ describe('floating windows', function()
             {0:~                                       }|
             {0:~                                       }|
           ## grid 3
-            {1:y                   }|
-            {2:~                   }|
+            y                   |
+            {0:~                   }|
           ## grid 4
                                                     |
             {0:~                                       }|
@@ -3044,8 +3083,8 @@ describe('floating windows', function()
             {0:~                                       }|
             {0:~                                       }|
           ## grid 3
-            {1:y                   }|
-            {2:~                   }|
+            y                   |
+            {0:~                   }|
           ## grid 4
             ^                                        |
             {0:~                                       }|

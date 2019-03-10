@@ -161,6 +161,7 @@ Functions:
 
 Highlight groups:
   |expr-highlight| highlight groups (prefixed with "Nvim")
+  |hl-NormalFloat| highlights floating window
   |hl-NormalNC| highlights non-current windows
   |hl-MsgSeparator| highlights separator for scrolled messages
   |hl-QuickFixLine|

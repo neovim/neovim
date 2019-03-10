@@ -567,6 +567,10 @@ win_T *win_new_float(win_T *wp, int width, int height, FloatConfig config,
   wp->w_floating = 1;
   wp->w_status_height = 0;
   wp->w_vsep_width = 0;
+
+  // TODO(bfredl): use set_option_to() after merging #9110 ?
+  wp->w_p_nu = false;
+  wp->w_allbuf_opt.wo_nu = false;
   win_config_float(wp, width, height, config);
   wp->w_pos_changed = true;
   redraw_win_later(wp, VALID);
@@ -586,6 +590,7 @@ void win_config_float(win_T *wp, int width, int height,
     config.window = curwin->handle;
   }
 
+  bool change_external = config.external != wp->w_float_config.external;
   wp->w_float_config = config;
 
   if (!ui_has(kUIMultigrid)) {
@@ -596,6 +601,10 @@ void win_config_float(win_T *wp, int width, int height,
   win_set_inner_size(wp);
   must_redraw = MAX(must_redraw, VALID);
   wp->w_pos_changed = true;
+  if (change_external) {
+    wp->w_hl_needs_update = true;
+    redraw_win_later(wp, NOT_VALID);
+  }
 }
 
 static void ui_ext_win_position(win_T *wp)
