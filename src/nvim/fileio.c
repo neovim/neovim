@@ -2762,7 +2762,6 @@ buf_write (
       backup_ext = p_bex;
 
     if (backup_copy && (fd = os_open((char *)fname, O_RDONLY, 0)) >= 0) {
-      int bfd;
       char_u      *copybuf, *wp;
       int some_error = FALSE;
       char_u      *dirp;
@@ -2855,81 +2854,24 @@ buf_write (
         if (backup != NULL) {
           /* remove old backup, if present */
           os_remove((char *)backup);
-          /* Open with O_EXCL to avoid the file being created while
-           * we were sleeping (symlink hacker attack?) */
-          bfd = os_open((char *)backup,
-              O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,
-              perm & 0777);
-          if (bfd < 0) {
-            xfree(backup);
-            backup = NULL;
-          } else {
-            // set file protection same as original file, but
-            // strip s-bit.
-            (void)os_setperm((const char *)backup, perm & 0777);
+
+          /* copy the file */
+          if (os_copy((char *)fname, (char *)backup, 0) != 0) {
+            SET_ERRMSG(_("E506: Can't write to backup file (add ! to override)"));
+          }
 
 #ifdef UNIX
-            /*
-             * Try to set the group of the backup same as the
-             * original file. If this fails, set the protection
-             * bits for the group same as the protection bits for
-             * others.
-             */
-            if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
-                && os_fchown(bfd, -1, file_info_old.stat.st_gid) != 0) {
-              os_setperm((const char *)backup,
-                         (perm & 0707) | ((perm & 07) << 3));
-            }
-# ifdef HAVE_SELINUX
-            mch_copy_sec(fname, backup);
-# endif
-#endif
-
-            /*
-             * copy the file.
-             */
-            write_info.bw_fd = bfd;
-            write_info.bw_buf = copybuf;
-#ifdef HAS_BW_FLAGS
-            write_info.bw_flags = FIO_NOCONVERT;
-#endif
-            while ((write_info.bw_len = read_eintr(fd, copybuf,
-                        BUFSIZE)) > 0) {
-              if (buf_write_bytes(&write_info) == FAIL) {
-                SET_ERRMSG(_(
-                    "E506: Can't write to backup file (add ! to override)"));
-                break;
-              }
-              os_breakcheck();
-              if (got_int) {
-                SET_ERRMSG(_(e_interr));
-                break;
-              }
-            }
-
-            int error;
-            if ((error = os_close(bfd)) != 0 && errmsg == NULL) {
-              SET_ERRMSG_ARG(_("E507: Close error for backup file "
-                               "(add ! to override): %s"),
-                             error);
-            }
-            if (write_info.bw_len < 0) {
-              SET_ERRMSG(_(
-                  "E508: Can't read file for backup (add ! to override)"));
-            }
-#ifdef UNIX
-            set_file_time(backup,
-                          file_info_old.stat.st_atim.tv_sec,
-                          file_info_old.stat.st_mtim.tv_sec);
+          set_file_time(backup,
+                        file_info_old.stat.st_atim.tv_sec,
+                        file_info_old.stat.st_mtim.tv_sec);
 #endif
 #ifdef HAVE_ACL
-            mch_set_acl(backup, acl);
+          mch_set_acl(backup, acl);
 #endif
 #ifdef HAVE_SELINUX
-            mch_copy_sec(fname, backup);
+          mch_copy_sec(fname, backup);
 #endif
-            break;
-          }
+          break;
         }
       }
 nobackup:
