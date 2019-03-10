@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, nvim, source = helpers.clear, helpers.nvim, helpers.source
+local clear, nvim, source, insert = helpers.clear, helpers.nvim,
+                                    helpers.source, helpers.insert
 local eq, next_msg = helpers.eq, helpers.next_msg
 local exc_exec = helpers.exc_exec
 local command = helpers.command
@@ -338,4 +339,25 @@ describe('dictionary change notifications', function()
       eq({'notification', '2', {'foo', {old = 'baz', new = 'bar'}}}, next_msg())
     end)
   end)
+
+  describe('Event For changedtick of b:', function()
+    it('with keypress', function()
+        source([[
+          function! OnTickChanged(dict, key, value)
+              call rpcnotify(g:channel, 'SendChangeTick', a:key, a:value)
+          endfunction
+          call dictwatcheradd(b:, "changedtick", "OnTickChanged")
+        ]])
+
+        insert("t");
+
+        local res = next_msg()
+        assert.is_true(res[2] == "SendChangeTick")
+
+        source([[
+          call dictwatcherdel(b:, "changedtick", "OnTickChanged")
+        ]])
+    end)
+  end)
+
 end)
