@@ -10,6 +10,7 @@
 #include "nvim/charset.h"
 #include "nvim/main.h"
 #include "nvim/aucmd.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
@@ -357,15 +358,17 @@ static bool handle_forced_escape(TermInput *input)
 static void set_bg_deferred(void **argv)
 {
   char *bgvalue = argv[0];
-  if (starting) {
-    // Wait until after startup, so OptionSet is triggered.
-    loop_schedule(&main_loop, event_create(set_bg_deferred, 1, bgvalue));
-    return;
-  }
   if (!option_was_set("bg") && !strequal((char *)p_bg, bgvalue)) {
     // Value differs, apply it.
-    set_option_value("bg", 0L, bgvalue, 0);
-    reset_option_was_set("bg");
+    if (starting) {
+      // Wait until after startup, so OptionSet is triggered.
+      do_cmdline_cmd((bgvalue[0] == 'l')
+                     ? "autocmd VimEnter * once nested set background=light"
+                     : "autocmd VimEnter * once nested set background=dark");
+    } else {
+      set_option_value("bg", 0L, bgvalue, 0);
+      reset_option_was_set("bg");
+    }
   }
 }
 
@@ -424,7 +427,8 @@ static bool handle_background_color(TermInput *input)
       double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
       char *bgvalue = luminance < 0.5 ? "dark" : "light";
       DLOG("bg response: %s", bgvalue);
-      loop_schedule(&main_loop, event_create(set_bg_deferred, 1, bgvalue));
+      loop_schedule_deferred(&main_loop,
+                             event_create(set_bg_deferred, 1, bgvalue));
     } else {
       DLOG("failed to parse bg response");
     }
