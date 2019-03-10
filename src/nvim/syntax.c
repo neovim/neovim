@@ -5956,6 +5956,7 @@ static const char *highlight_init_both[] = {
   "default link Substitute Search",
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",
+  "default link NormalFloat Pmenu",
   NULL
 };
 
