@@ -2761,18 +2761,11 @@ buf_write (
     else
       backup_ext = p_bex;
 
-    if (backup_copy && (fd = os_open((char *)fname, O_RDONLY, 0)) >= 0) {
-      char_u      *copybuf, *wp;
+    if (backup_copy) {
+      char_u      *wp;
       int some_error = FALSE;
       char_u      *dirp;
       char_u      *rootname;
-
-      copybuf = verbose_try_malloc(BUFSIZE + 1);
-      if (copybuf == NULL) {
-        // out of memory
-        some_error = TRUE;
-        goto nobackup;
-      }
 
       /*
        * Try to make the backup in each directory in the 'bdir' option.
@@ -2791,8 +2784,8 @@ buf_write (
         /*
          * Isolate one directory name, using an entry in 'bdir'.
          */
-        (void)copy_option_part(&dirp, copybuf, BUFSIZE, ",");
-        rootname = get_file_in_dir(fname, copybuf);
+        (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        rootname = get_file_in_dir(fname, IObuff);
         if (rootname == NULL) {
           some_error = TRUE;                /* out of memory */
           goto nobackup;
@@ -2874,10 +2867,8 @@ buf_write (
           break;
         }
       }
-nobackup:
-      os_close(fd);  // Ignore errors for closing read file.
-      xfree(copybuf);
 
+nobackup:
       if (backup == NULL && errmsg == NULL) {
         SET_ERRMSG(_(
             "E509: Cannot create backup file (add ! to override)"));
