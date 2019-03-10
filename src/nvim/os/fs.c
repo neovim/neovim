@@ -643,6 +643,20 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
   return (ptrdiff_t)written_bytes;
 }
 
+/// Copies a file from path to new_path. Currently this passes
+/// the arguments through to uv_fs_copyfile.
+///
+/// @param path Path of file to be copied
+/// @param path_new Path of new file
+/// @param flags Bitwise OR of flags defined in <uv.h>
+/// @return libuv error code on error
+int os_copy(const char *path, const char *new_path, int flags)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_copyfile, path, new_path, flags, NULL);
+  return r;
+}
+
 /// Flushes file modifications to disk.
 ///
 /// @param fd the file descriptor of the file to flush to disk.

@@ -3517,28 +3517,10 @@ restore_backup:
           MSG(_(e_interr));
           ui_flush();
         }
-        if ((fd = os_open((char *)backup, O_RDONLY, 0)) >= 0) {
-          if ((write_info.bw_fd = os_open((char *)fname,
-                                          O_WRONLY | O_CREAT | O_TRUNC,
-                                          perm & 0777)) >= 0) {
-            // copy the file.
-            write_info.bw_buf = smallbuf;
-#ifdef HAS_BW_FLAGS
-            write_info.bw_flags = FIO_NOCONVERT;
-#endif
-            while ((write_info.bw_len = read_eintr(fd, smallbuf,
-                                                   SMBUFSIZE)) > 0) {
-              if (buf_write_bytes(&write_info) == FAIL) {
-                break;
-              }
-            }
 
-            if (close(write_info.bw_fd) >= 0
-                && write_info.bw_len == 0) {
-              end = 1;                          // success
-            }
-          }
-          close(fd);            // ignore errors for closing read file
+        // copy the file.
+        if (os_copy((char *)backup, (char *)fname, 0) == 0) {
+          end = 1;
         }
       } else {
         if (vim_rename(backup, fname) == 0) {
