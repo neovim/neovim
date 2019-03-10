@@ -155,8 +155,6 @@ struct dbg_stuff {
 # include "ex_cmds_defs.generated.h"
 #endif
 
-static const int command_count = 539;
-
 static char_u dollar_command[2] = {'$', 0};
 
 static void save_dbg_stuff(struct dbg_stuff *dsp)
@@ -2265,8 +2263,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   need_rethrow = check_cstack = FALSE;
 
 doend:
-  if (curwin->w_cursor.lnum == 0)       /* can happen with zero line number */
+  // can happen with zero line number
+  if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
+    curwin->w_cursor.col = 0;
+  }
 
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
@@ -2447,7 +2448,7 @@ static char_u *find_command(exarg_T *eap, int *full)
       const int c2 = eap->cmd[1];
 
       if (command_count != (int)CMD_SIZE) {
-        iemsg((char_u *)_("E943: Command table needs to be updated, run 'make cmdidxs'"));
+        iemsg((char *)_("E943: Command table needs to be updated, run 'make'"));
         getout(1);
       }
 
