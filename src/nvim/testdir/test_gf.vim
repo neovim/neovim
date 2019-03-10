@@ -9,6 +9,7 @@ func Test_gf_url()
       \ "third test for URL:\\\\machine.name\\vimtest2c and other text",
       \ "fourth test for URL:\\\\machine.name\\tmp\\vimtest2d, and other text",
       \ "fifth test for URL://machine.name/tmp?q=vim&opt=yes and other text",
+      \ "sixth test for URL://machine.name:1234?q=vim and other text",
       \ ])
   call cursor(1,1)
   call search("^first")
@@ -20,7 +21,7 @@ func Test_gf_url()
   if has("ebcdic")
       set isf=@,240-249,/,.,-,_,+,,,$,:,~,\
   else
-      set isf=@,48-57,/,.,-,_,+,,,$,:,~,\
+      set isf=@,48-57,/,.,-,_,+,,,$,~,\
   endif
   call search("^third")
   call search("name")
@@ -32,6 +33,10 @@ func Test_gf_url()
   call search("^fifth")
   call search("URL")
   call assert_equal("URL://machine.name/tmp?q=vim&opt=yes", expand("<cfile>"))
+
+  call search("^sixth")
+  call search("URL")
+  call assert_equal("URL://machine.name:1234?q=vim", expand("<cfile>"))
 
   set isf&vim
   enew!
