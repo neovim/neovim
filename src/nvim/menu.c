@@ -171,7 +171,7 @@ ex_menu(exarg_T *eap)
   if (enable != kNone) {
     // Change sensitivity of the menu.
     // For the PopUp menu, remove a menu for each mode separately.
-    // Careful: menu_nable_recurse() changes menu_path.
+    // Careful: menu_enable_recurse() changes menu_path.
     if (STRCMP(menu_path, "*") == 0) {          // meaning: do all menus
       menu_path = (char_u *)"";
     }
@@ -180,11 +180,11 @@ ex_menu(exarg_T *eap)
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          menu_nable_recurse(root_menu, p, MENU_ALL_MODES, enable);
+          menu_enable_recurse(root_menu, p, MENU_ALL_MODES, enable);
           xfree(p);
         }
     }
-    menu_nable_recurse(root_menu, menu_path, modes, enable);
+    menu_enable_recurse(root_menu, menu_path, modes, enable);
   } else if (unmenu) {
     /*
      * Delete menu(s).
@@ -485,7 +485,10 @@ erret:
  * Set the (sub)menu with the given name to enabled or disabled.
  * Called recursively.
  */
-static int menu_nable_recurse(vimmenu_T *menu, char_u *name, int modes, int enable)
+static int menu_enable_recurse(vimmenu_T *menu,
+                               char_u *name,
+                               int modes,
+                               int enable)
 {
   char_u      *p;
 
@@ -503,13 +506,14 @@ static int menu_nable_recurse(vimmenu_T *menu, char_u *name, int modes, int enab
           EMSG(_(e_notsubmenu));
           return FAIL;
         }
-        if (menu_nable_recurse(menu->children, p, modes, enable)
-            == FAIL)
+        if (menu_enable_recurse(menu->children, p, modes, enable) == FAIL) {
           return FAIL;
-      } else if (enable)
+        }
+      } else if (enable) {
         menu->enabled |= modes;
-      else
+      } else {
         menu->enabled &= ~modes;
+      }
 
       /*
        * When name is empty, we are doing all menu items for the given
