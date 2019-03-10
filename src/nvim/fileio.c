@@ -99,8 +99,9 @@
 //   defined and will have to be executed.
 //
 typedef struct AutoCmd {
-  char_u          *cmd;                 // The command to be executed (NULL
-                                        // when command has been removed)
+  char_u          *cmd;                 // Command to be executed (NULL when
+                                        // command has been removed)
+  bool once;                            // "One shot": removed after execution
   char nested;                          // If autocommands nest here
   char last;                            // last command in list
   scid_T scriptID;                      // script ID where defined
@@ -121,20 +122,20 @@ typedef struct AutoPat {
   char last;                            // last pattern for apply_autocmds()
 } AutoPat;
 
-/*
- * struct used to keep status while executing autocommands for an event.
- */
+///
+/// Struct used to keep status while executing autocommands for an event.
+///
 typedef struct AutoPatCmd {
-  AutoPat     *curpat;          /* next AutoPat to examine */
-  AutoCmd     *nextcmd;         /* next AutoCmd to execute */
-  int group;                    /* group being used */
-  char_u      *fname;           /* fname to match with */
-  char_u      *sfname;          /* sfname to match with */
-  char_u      *tail;            /* tail of fname */
-  event_T event;                /* current event */
-  int arg_bufnr;                /* initially equal to <abuf>, set to zero when
-                                   buf is deleted */
-  struct AutoPatCmd   *next;    /* chain of active apc-s for auto-invalidation*/
+  AutoPat     *curpat;          // next AutoPat to examine
+  AutoCmd     *nextcmd;         // next AutoCmd to execute
+  int group;                    // group being used
+  char_u      *fname;           // fname to match with
+  char_u      *sfname;          // sfname to match with
+  char_u      *tail;            // tail of fname
+  event_T event;                // current event
+  int arg_bufnr;                // initially equal to <abuf>, set to zero when
+                                // buf is deleted
+  struct AutoPatCmd   *next;    // chain of active apc-s for auto-invalidation
 } AutoPatCmd;
 
 #define AUGROUP_DEFAULT    -1      /* default autocmd group */
@@ -5563,29 +5564,31 @@ static void show_autocmd(AutoPat *ap, event_T event)
   }
 }
 
-/*
- * Mark an autocommand pattern for deletion.
- */
+// Mark an autocommand handler for deletion.
 static void au_remove_pat(AutoPat *ap)
 {
   xfree(ap->pat);
   ap->pat = NULL;
   ap->buflocal_nr = -1;
-  au_need_clean = TRUE;
+  au_need_clean = true;
 }
 
-/*
- * Mark all commands for a pattern for deletion.
- */
+// Mark all commands for a pattern for deletion.
 static void au_remove_cmds(AutoPat *ap)
 {
-  AutoCmd *ac;
-
-  for (ac = ap->cmds; ac != NULL; ac = ac->next) {
+  for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
     xfree(ac->cmd);
     ac->cmd = NULL;
   }
-  au_need_clean = TRUE;
+  au_need_clean = true;
+}
+
+// Delete one command from an autocmd pattern.
+static void au_del_cmd(AutoCmd *ac)
+{
+  xfree(ac->cmd);
+  ac->cmd = NULL;
+  au_need_clean = true;
 }
 
 /*
@@ -5674,18 +5677,18 @@ void aubuflocal_remove(buf_T *buf)
   au_cleanup();
 }
 
-/*
- * Add an autocmd group name.
- * Return it's ID.  Returns AUGROUP_ERROR (< 0) for error.
- */
+// Add an autocmd group name.
+// Return its ID.  Returns AUGROUP_ERROR (< 0) for error.
 static int au_new_group(char_u *name)
 {
   int i = au_find_group(name);
-  if (i == AUGROUP_ERROR) {     /* the group doesn't exist yet, add it */
-    /* First try using a free entry. */
-    for (i = 0; i < augroups.ga_len; ++i)
-      if (AUGROUP_NAME(i) == NULL)
+  if (i == AUGROUP_ERROR) {     // the group doesn't exist yet, add it.
+    // First try using a free entry.
+    for (i = 0; i < augroups.ga_len; i++) {
+      if (AUGROUP_NAME(i) == NULL) {
         break;
+      }
+    }
     if (i == augroups.ga_len) {
       ga_grow(&augroups, 1);
     }
@@ -5701,9 +5704,7 @@ static int au_new_group(char_u *name)
 
 static void au_del_group(char_u *name)
 {
-  int i;
-
-  i = au_find_group(name);
+  int i = au_find_group(name);
   if (i == AUGROUP_ERROR) {      // the group doesn't exist
     EMSG2(_("E367: No such group: \"%s\""), name);
   } else if (i == current_augroup) {
@@ -5760,23 +5761,22 @@ bool au_has_group(const char_u *name)
   return au_find_group(name) != AUGROUP_ERROR;
 }
 
-/*
- * ":augroup {name}".
- */
+/// ":augroup {name}".
 void do_augroup(char_u *arg, int del_group)
 {
   if (del_group) {
-    if (*arg == NUL)
+    if (*arg == NUL) {
       EMSG(_(e_argreq));
-    else
+    } else {
       au_del_group(arg);
-  } else if (STRICMP(arg, "end") == 0)   /* ":aug end": back to group 0 */
+    }
+  } else if (STRICMP(arg, "end") == 0) {  // ":aug end": back to group 0
     current_augroup = AUGROUP_DEFAULT;
-  else if (*arg) {                  /* ":aug xxx": switch to group xxx */
+  } else if (*arg) {  // ":aug xxx": switch to group xxx
     int i = au_new_group(arg);
     if (i != AUGROUP_ERROR)
       current_augroup = i;
-  } else {                        /* ":aug": list the group names */
+  } else {  // ":aug": list the group names
     msg_start();
     for (int i = 0; i < augroups.ga_len; ++i) {
       if (AUGROUP_NAME(i) != NULL) {
@@ -5957,38 +5957,38 @@ void au_event_restore(char_u *old_ei)
   }
 }
 
-/*
- * do_autocmd() -- implements the :autocmd command.  Can be used in the
- *  following ways:
- *
- * :autocmd <event> <pat> <cmd>	    Add <cmd> to the list of commands that
- *				    will be automatically executed for <event>
- *				    when editing a file matching <pat>, in
- *				    the current group.
- * :autocmd <event> <pat>	    Show the autocommands associated with
- *				    <event> and <pat>.
- * :autocmd <event>		    Show the autocommands associated with
- *				    <event>.
- * :autocmd			    Show all autocommands.
- * :autocmd! <event> <pat> <cmd>    Remove all autocommands associated with
- *				    <event> and <pat>, and add the command
- *				    <cmd>, for the current group.
- * :autocmd! <event> <pat>	    Remove all autocommands associated with
- *				    <event> and <pat> for the current group.
- * :autocmd! <event>		    Remove all autocommands associated with
- *				    <event> for the current group.
- * :autocmd!			    Remove ALL autocommands for the current
- *				    group.
- *
- *  Multiple events and patterns may be given separated by commas.  Here are
- *  some examples:
- * :autocmd bufread,bufenter *.c,*.h	set tw=0 smartindent noic
- * :autocmd bufleave	     *		set tw=79 nosmartindent ic infercase
- *
- * :autocmd * *.c		show all autocommands for *.c files.
- *
- * Mostly a {group} argument can optionally appear before <event>.
- */
+// Implements :autocmd.
+// Defines an autocmd (does not execute; cf. apply_autocmds_group).
+//
+// Can be used in the following ways:
+//
+// :autocmd <event> <pat> <cmd>     Add <cmd> to the list of commands that
+//                                  will be automatically executed for <event>
+//                                  when editing a file matching <pat>, in
+//                                  the current group.
+// :autocmd <event> <pat>           Show the autocommands associated with
+//                                  <event> and <pat>.
+// :autocmd <event>                 Show the autocommands associated with
+//                                  <event>.
+// :autocmd                         Show all autocommands.
+// :autocmd! <event> <pat> <cmd>    Remove all autocommands associated with
+//                                  <event> and <pat>, and add the command
+//                                  <cmd>, for the current group.
+// :autocmd! <event> <pat>          Remove all autocommands associated with
+//                                  <event> and <pat> for the current group.
+// :autocmd! <event>                Remove all autocommands associated with
+//                                  <event> for the current group.
+// :autocmd!                        Remove ALL autocommands for the current
+//                                  group.
+//
+//  Multiple events and patterns may be given separated by commas.  Here are
+//  some examples:
+// :autocmd bufread,bufenter *.c,*.h    set tw=0 smartindent noic
+// :autocmd bufleave         *          set tw=79 nosmartindent ic infercase
+//
+// :autocmd * *.c               show all autocommands for *.c files.
+//
+// Mostly a {group} argument can optionally appear before <event>.
 void do_autocmd(char_u *arg_in, int forceit)
 {
   char_u      *arg = arg_in;
@@ -5997,6 +5997,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   char_u      *cmd;
   int need_free = false;
   int nested = false;
+  bool once = false;
   int group;
 
   if (*arg == '|') {
@@ -6046,6 +6047,14 @@ void do_autocmd(char_u *arg_in, int forceit)
       }
     }
 
+    // Check for "once" flag.
+    cmd = skipwhite(cmd);
+    if (*cmd != NUL && STRNCMP(cmd, "once", 4) == 0
+        && ascii_iswhite(cmd[4])) {
+      once = true;
+      cmd = skipwhite(cmd + 4);
+    }
+
     // Check for "nested" flag.
     cmd = skipwhite(cmd);
     if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0
@@ -6081,7 +6090,8 @@ void do_autocmd(char_u *arg_in, int forceit)
   if (*arg == '*' || *arg == NUL || *arg == '|') {
     for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS;
          event = (event_T)((int)event + 1)) {
-      if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
+      if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
+          == FAIL) {
         break;
       }
     }
@@ -6089,7 +6099,8 @@ void do_autocmd(char_u *arg_in, int forceit)
     while (*arg && *arg != '|' && !ascii_iswhite(*arg)) {
       event_T event = event_name2nr(arg, &arg);
       assert(event < NUM_EVENTS);
-      if (do_autocmd_event(event, pat, nested, cmd, forceit, group) == FAIL) {
+      if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
+          == FAIL) {
         break;
       }
     }
@@ -6127,14 +6138,15 @@ static int au_get_grouparg(char_u **argp)
   return group;
 }
 
-/*
- * do_autocmd() for one event.
- * If *pat == NUL do for all patterns.
- * If *cmd == NUL show entries.
- * If forceit == TRUE delete entries.
- * If group is not AUGROUP_ALL, only use this group.
- */
-static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd, int forceit, int group)
+// do_autocmd() for one event.
+// Defines an autocmd (does not execute; cf. apply_autocmds_group).
+//
+// If *pat == NUL: do for all patterns.
+// If *cmd == NUL: show entries.
+// If forceit == TRUE: delete entries.
+// If group is not AUGROUP_ALL: only use this group.
+static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
+                            char_u *cmd, int forceit, int group)
 {
   AutoPat     *ap;
   AutoPat     **prev_ap;
@@ -6333,6 +6345,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
       ac->scriptID = current_SID;
       ac->next = NULL;
       *prev_ac = ac;
+      ac->once = once;
       ac->nested = nested;
     }
   }
@@ -6996,7 +7009,7 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
   patcmd.event = event;
   patcmd.arg_bufnr = autocmd_bufnr;
   patcmd.next = NULL;
-  auto_next_pat(&patcmd, FALSE);
+  auto_next_pat(&patcmd, false);
 
   /* found one, start executing the autocommands */
   if (patcmd.curpat != NULL) {
@@ -7020,8 +7033,11 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     }
     ap->last = true;
     check_lnums(true);  // make sure cursor and topline are valid
+
+    // Execute the autocmd. The `getnextac` callback handles iteration.
     do_cmdline(NULL, getnextac, (void *)&patcmd,
                DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
+
     if (eap != NULL) {
       (void)set_cmdarg(NULL, save_cmdarg);
       set_vim_var_nr(VV_CMDBANG, save_cmdbang);
@@ -7233,12 +7249,18 @@ char_u *getnextac(int c, void *cookie, int indent)
     verbose_leave_scroll();
   }
   retval = vim_strsave(ac->cmd);
+  // Remove one-shot ("once") autocmd in anticipation of its execution.
+  if (ac->once) {
+    au_del_cmd(ac);
+  }
   autocmd_nested = ac->nested;
   current_SID = ac->scriptID;
-  if (ac->last)
+  if (ac->last) {
     acp->nextcmd = NULL;
-  else
+  } else {
     acp->nextcmd = ac->next;
+  }
+
   return retval;
 }
 

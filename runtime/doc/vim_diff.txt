@@ -133,6 +133,7 @@ Command-line highlighting:
   removed in the future).
 
 Commands:
+  |:autocmd| accepts the `once` flag
   |:checkhealth|
   |:cquit| can use [count] to set the exit code
   |:drop| is always available

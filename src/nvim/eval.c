@@ -20160,7 +20160,7 @@ void ex_function(exarg_T *eap)
         skip_until = vim_strsave((char_u *)".");
       }
 
-      // Check for ":python <<EOF", ":lua <<EOF", etc.
+      // heredoc: Check for ":python <<EOF", ":lua <<EOF", etc.
       arg = skipwhite(skiptowhite(p));
       if (arg[0] == '<' && arg[1] =='<'
           && ((p[0] == 'p' && p[1] == 'y'

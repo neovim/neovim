@@ -40,15 +40,18 @@ effects.  Be careful not to destroy your text.
 2. Defining autocommands				*autocmd-define*
 
 							*:au* *:autocmd*
-:au[tocmd] [group] {event} {pat} [nested] {cmd}
+:au[tocmd] [group] {event} {pat} [once] [nested] {cmd}
 			Add {cmd} to the list of commands that Vim will
 			execute automatically on {event} for a file matching
 			{pat} |autocmd-patterns|.
 			Note: A quote character is seen as argument to the
 			:autocmd and won't start a comment.
-			Vim always adds the {cmd} after existing autocommands,
-			so that the autocommands execute in the order in which
-			they were given.  See |autocmd-nested| for [nested].
+			Nvim always adds {cmd} after existing autocommands so
+			they execute in the order in which they were defined.
+			See |autocmd-nested| for [nested].
+							*autocmd-once*
+			If [once] is supplied the command is executed once,
+			then removed ("one shot").
 
 The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
 See |autocmd-buflocal|.
@@ -116,10 +119,11 @@ prompt.  When one command outputs two messages this can happen anyway.
 ==============================================================================
 3. Removing autocommands				*autocmd-remove*
 
-:au[tocmd]! [group] {event} {pat} [nested] {cmd}
+:au[tocmd]! [group] {event} {pat} [once] [nested] {cmd}
 			Remove all autocommands associated with {event} and
-			{pat}, and add the command {cmd}.  See
-			|autocmd-nested| for [nested].
+			{pat}, and add the command {cmd}.
+			See |autocmd-once| for [once].
+			See |autocmd-nested| for [nested].
 
 :au[tocmd]! [group] {event} {pat}
 			Remove all autocommands associated with {event} and
@@ -1323,8 +1327,7 @@ option will not cause any commands to be executed.
 			another extension.  Example: >
 				:au BufEnter *.cpp so ~/.config/nvim/init_cpp.vim
 				:au BufEnter *.cpp doau BufEnter x.c
-<			Be careful to avoid endless loops.  See
-			|autocmd-nested|.
+<			Be careful to avoid endless loops.  |autocmd-nested|
 
 			When the [group] argument is not given, Vim executes
 			the autocommands for all groups.  When the [group]
