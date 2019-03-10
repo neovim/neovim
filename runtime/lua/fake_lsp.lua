@@ -9,9 +9,12 @@ local function onEvent(payload)
     return { jsonrpc = '1.0' }
   end
 
-  response.jsonrpc = '2.0'
-  response.id = payload.id
-  response.counter = counter - 1
+  -- allow non-tables to test for garbage responses
+  if type(response) == "table" then
+    response.jsonrpc = '2.0'
+    response.id = payload.id
+    response.counter = counter - 1
+  end
 
   return response
 end

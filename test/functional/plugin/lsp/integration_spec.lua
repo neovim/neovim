@@ -24,7 +24,7 @@ describe('plugin with a server', function()
     command('hi Error guifg=red')
   end)
 
-  it('basic', function()
+  it('textDocument/hover', function()
     command('call lsp#server#add("text",["nvim", "--headless", '..
             '"--cmd", "source test/functional/fixtures/nvim_fake_lsp.vim"])'
             )
@@ -34,7 +34,6 @@ describe('plugin with a server', function()
     command('set ft=text')
     helpers.sleep(100)
     set_responses{
-      --{}, {},
       {
         result = {
           contents = { { value = "hover_content", language = "txt" } },
@@ -59,6 +58,61 @@ describe('plugin with a server', function()
       {1:~                   }|
                           |
     ]])
+  end)
+
+  it('can deal with garbage responses', function()
+    command('call lsp#server#add("text",["nvim", "--headless", '..
+            '"--cmd", "source test/functional/fixtures/nvim_fake_lsp.vim"])'
+            )
+    insert([[
+      abc de
+      fggli haf]])
+    command('set ft=text')
+    helpers.sleep(100)
+
+    set_responses{
+      -- missing value in contents element
+      {
+        result = {
+          contents = { { language = "txt" } },
+          range = { start = { line = 0, character = 0 },
+                    ["end"] = { line = 0, character = 2 },
+          }
+        }
+      },
+      -- element in contents that's not a table
+      {
+        result = {
+          contents = { "xyz" },
+          range = { start = { line = 0, character = 0 },
+                    ["end"] = { line = 0, character = 2 },
+          }
+        }
+      },
+      -- contents missing
+      {
+        result = {
+          range = { start = { line = 0, character = 0 },
+                    ["end"] = { line = 0, character = 2 },
+          }
+        }
+      },
+      -- result empty
+      {
+        result = { }
+      },
+      -- response empty
+      {
+      },
+      -- response not a table
+      "xyz",
+      -- response not a table
+      5,
+      -- response a non-ascii string
+      "A\\u20dd\\u20dd",
+    }
+
+    helpers.command('echo lsp#request("textDocument/hover")<Enter>')
   end)
 
 end)
