@@ -155,6 +155,8 @@ struct dbg_stuff {
 # include "ex_cmds_defs.generated.h"
 #endif
 
+static const int command_count = 539;
+
 static char_u dollar_command[2] = {'$', 0};
 
 static void save_dbg_stuff(struct dbg_stuff *dsp)
@@ -2440,10 +2442,23 @@ static char_u *find_command(exarg_T *eap, int *full)
       }
     }
 
-    if (ASCII_ISLOWER(*eap->cmd))
-      eap->cmdidx = cmdidxs[CharOrdLow(*eap->cmd)];
-    else
-      eap->cmdidx = cmdidxs[26];
+    if (ASCII_ISLOWER(eap->cmd[0])) {
+      if (command_count != (int)CMD_SIZE) {
+        iemsg((char_u *)_("E943: Command table needs to be updated, run 'make cmdidxs'"));
+        getout(1);
+      }
+
+      // Use a precomputed index for fast look-up in cmdnames[]
+      // taking into account the first 2 letters of eap->cmd.
+      const int c1 = eap->cmd[0];
+      const int c2 = eap->cmd[1];
+      eap->cmdidx = cmdidxs1[CharOrdLow(c1)];
+      if (ASCII_ISLOWER(c2)) {
+        eap->cmdidx += cmdidxs2[CharOrdLow(c1)][CharOrdLow(c2)];
+      }
+    } else {
+      eap->cmdidx = CMD_bang;
+    }
 
     for (; (int)eap->cmdidx < (int)CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1))
