@@ -3768,7 +3768,7 @@ function({name} [, {arglist}] [, {dict}])
 		same function.
 
 		When {arglist} or {dict} is present this creates a partial.
-		That mans the argument list and/or the dictionary is stored in
+		That means the argument list and/or the dictionary is stored in
 		the Funcref and will be used when the Funcref is called.
 
 		The arguments are passed to the function in front of other
