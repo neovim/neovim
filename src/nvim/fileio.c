@@ -2763,7 +2763,7 @@ buf_write (
 
     if (backup_copy) {
       char_u      *wp;
-      int some_error = FALSE;
+      int some_error = false;
       char_u      *dirp;
       char_u      *rootname;
 
@@ -2848,9 +2848,11 @@ buf_write (
           /* remove old backup, if present */
           os_remove((char *)backup);
 
-          /* copy the file */
-          if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE) != 0) {
-            SET_ERRMSG(_("E506: Can't write to backup file (add ! to override)"));
+          // copy the file
+          if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
+              != 0) {
+            SET_ERRMSG(_("E506: Can't write to backup file "
+                         "(add ! to override)"));
           }
 
 #ifdef UNIX
@@ -3452,7 +3454,8 @@ restore_backup:
         }
 
         // copy the file.
-        if (os_copy((char *)backup, (char *)fname, UV_FS_COPYFILE_FICLONE) == 0) {
+        if (os_copy((char *)backup, (char *)fname, UV_FS_COPYFILE_FICLONE)
+            == 0) {
           end = 1;
         }
       } else {
