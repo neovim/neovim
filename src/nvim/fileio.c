@@ -2849,7 +2849,7 @@ buf_write (
           os_remove((char *)backup);
 
           /* copy the file */
-          if (os_copy((char *)fname, (char *)backup, 0) != 0) {
+          if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE) != 0) {
             SET_ERRMSG(_("E506: Can't write to backup file (add ! to override)"));
           }
 
@@ -3452,7 +3452,7 @@ restore_backup:
         }
 
         // copy the file.
-        if (os_copy((char *)backup, (char *)fname, 0) == 0) {
+        if (os_copy((char *)backup, (char *)fname, UV_FS_COPYFILE_FICLONE) == 0) {
           end = 1;
         }
       } else {
