@@ -206,6 +206,7 @@ syn keyword sshconfigKeyword PubkeyAcceptedKeyTypes
 syn keyword sshconfigKeyword PubkeyAuthentication
 syn keyword sshconfigKeyword RSAAuthentication
 syn keyword sshconfigKeyword RekeyLimit
+syn keyword sshconfigKeyword RemoteCommand
 syn keyword sshconfigKeyword RemoteForward
 syn keyword sshconfigKeyword RequestTTY
 syn keyword sshconfigKeyword RhostsRSAAuthentication
