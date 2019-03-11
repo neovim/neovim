@@ -66,10 +66,11 @@ and end position.  Generally, motions that move between lines affect lines
 characterwise).  However, there are some exceptions.
 
 						*exclusive* *inclusive*
-A character motion is either inclusive or exclusive.  When inclusive, the
+Character motion is either inclusive or exclusive.  When inclusive, the
 start and end position of the motion are included in the operation.  When
 exclusive, the last character towards the end of the buffer is not included.
-Linewise motions always include the start and end position.
+Linewise motions always include the start and end position.  Plugins can
+check the v:event.inclusive flag of the |TextYankPost| event.
 
 Which motions are linewise, inclusive or exclusive is mentioned with the
 command.  There are however, two general exceptions:
