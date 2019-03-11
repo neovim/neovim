@@ -59,9 +59,9 @@ describe('autocmd', function()
     end)
   end)
 
-  it('once', function()  -- :help autocmd-once
+  it('-once', function()  -- :help autocmd-once
     --
-    -- ":autocmd ... once" executes its handler once, then removes the handler.
+    -- ":autocmd ... -once" executes its handler once, then removes the handler.
     --
     local expected = {
       'Many1',
@@ -76,10 +76,10 @@ describe('autocmd', function()
     }
     command('let g:foo = []')
     command('autocmd TabNew * :call add(g:foo, "Many1")')
-    command('autocmd TabNew * once :call add(g:foo, "Once1")')
-    command('autocmd TabNew * once :call add(g:foo, "Once2")')
+    command('autocmd TabNew * -once :call add(g:foo, "Once1")')
+    command('autocmd TabNew * -once :call add(g:foo, "Once2")')
     command('autocmd TabNew * :call add(g:foo, "Many2")')
-    command('autocmd TabNew * once :call add(g:foo, "Once3")')
+    command('autocmd TabNew * -once :call add(g:foo, "Once3")')
     eq(dedent([[
 
        --- Autocommands ---
@@ -103,25 +103,25 @@ describe('autocmd', function()
        funcs.execute('autocmd Tabnew'))
 
     --
-    -- ":autocmd ... once" handlers can be deleted.
+    -- ":autocmd ... -once" handlers can be deleted.
     --
     expected = {}
     command('let g:foo = []')
-    command('autocmd TabNew * once :call add(g:foo, "Once1")')
+    command('autocmd TabNew * -once :call add(g:foo, "Once1")')
     command('autocmd! TabNew')
     command('tabnew')
     eq(expected, eval('g:foo'))
 
     --
-    -- ":autocmd ... <buffer> once nested"
+    -- ":autocmd ... <buffer> -once -nested"
     --
     expected = {
       'OptionSet-Once',
       'CursorMoved-Once',
     }
     command('let g:foo = []')
-    command('autocmd OptionSet binary once nested :call add(g:foo, "OptionSet-Once")')
-    command('autocmd CursorMoved <buffer> once nested setlocal binary|:call add(g:foo, "CursorMoved-Once")')
+    command('autocmd OptionSet binary -nested -once :call add(g:foo, "OptionSet-Once")')
+    command('autocmd CursorMoved <buffer> -once -nested setlocal binary|:call add(g:foo, "CursorMoved-Once")')
     command("put ='foo bar baz'")
     feed('0llhlh')
     eq(expected, eval('g:foo'))

@@ -6047,20 +6047,23 @@ void do_autocmd(char_u *arg_in, int forceit)
       }
     }
 
-    // Check for "once" flag.
     cmd = skipwhite(cmd);
-    if (*cmd != NUL && STRNCMP(cmd, "once", 4) == 0
-        && ascii_iswhite(cmd[4])) {
-      once = true;
-      cmd = skipwhite(cmd + 4);
-    }
-
-    // Check for "nested" flag.
-    cmd = skipwhite(cmd);
-    if (*cmd != NUL && STRNCMP(cmd, "nested", 6) == 0
-        && ascii_iswhite(cmd[6])) {
-      nested = true;
-      cmd = skipwhite(cmd + 6);
+    for (size_t i = 0; i < 2; i++) {
+      if (*cmd != NUL) {
+        // Check for "-once" flag.
+        if (!once && STRNCMP(cmd, "-once", 5) == 0 && ascii_iswhite(cmd[5])) {
+          once = true;
+          cmd = skipwhite(cmd + 5);
+        }
+        // Check for "-nested" flag.
+        if (!nested
+            && ((STRNCMP(cmd, "-nested", 7) == 0 && ascii_iswhite(cmd[7]))
+                // Deprecated form (without "-").
+                || (STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])))) {
+          nested = true;
+          cmd = skipwhite(cmd + ('-' == cmd[0] ? 7 : 6));
+        }
+      }
     }
 
     // Find the start of the commands.
