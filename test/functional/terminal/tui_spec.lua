@@ -839,8 +839,7 @@ describe('TUI background color', function()
   it("triggers OptionSet event on terminal-response", function()
     feed_data('\027:autocmd OptionSet background echo "did OptionSet, yay!"\n')
 
-    -- The child Nvim is running asynchronously; wait for it to register the
-    -- OptionSet handler.
+    -- Wait for the child Nvim to register the OptionSet handler.
     feed_data('\027:autocmd OptionSet\n')
     screen:expect({any='--- Autocommands ---'})
 
@@ -860,8 +859,14 @@ describe('TUI background color', function()
 
   local function assert_bg(color, bg)
     it('handles '..color..' as '..bg, function()
-      feed_data('\027]11;rgb:'..color..'\007:echo &background\n')
-      screen:expect(string.format([[
+      feed_data('\027:autocmd OptionSet background :echo &background\n')
+
+      -- Wait for the child Nvim to register the OptionSet handler.
+      feed_data('\027:autocmd OptionSet\n')
+      screen:expect({any='--- Autocommands ---'})
+
+      feed_data('\012')  -- CTRL-L: clear the screen
+      local expected_grid = [[
         {1: }                                                 |
         {4:~                                                 }|
         {4:~                                                 }|
@@ -869,7 +874,17 @@ describe('TUI background color', function()
         {5:[No Name]                       0,0-1          All}|
         %-5s                                             |
         {3:-- TERMINAL --}                                    |
-      ]], bg))
+      ]]
+      screen:expect(string.format(expected_grid, ''))
+
+      feed_data('\027]11;rgb:'..color..'\007')
+      -- Because bg=dark is the default, we do NOT expect OptionSet event.
+      if bg == 'dark' then
+        screen:expect{unchanged=true,
+                      grid=string.format(expected_grid, '')}
+      else
+        screen:expect(string.format(expected_grid, bg))
+      end
     end)
   end
 
