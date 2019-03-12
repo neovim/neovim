@@ -160,14 +160,19 @@ void update_window_hl(win_T *wp, bool invalid)
   wp->w_hl_needs_update = false;
 
   // determine window specific background set in 'winhighlight'
+  bool float_win = wp->w_floating && !wp->w_float_config.external;
   if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] > 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(HLF_INACTIVE,
                                           wp->w_hl_ids[HLF_INACTIVE], true);
+  } else if (float_win && wp->w_hl_ids[HLF_NFLOAT] > 0) {
+    wp->w_hl_attr_normal = hl_get_ui_attr(HLF_NFLOAT,
+                                          wp->w_hl_ids[HLF_NFLOAT], true);
   } else if (wp->w_hl_id_normal > 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, true);
   } else {
-    wp->w_hl_attr_normal = 0;
+    wp->w_hl_attr_normal = float_win ? HL_ATTR(HLF_NFLOAT) : 0;
   }
+
   if (wp != curwin) {
     wp->w_hl_attr_normal = hl_combine_attr(HL_ATTR(HLF_INACTIVE),
                                            wp->w_hl_attr_normal);
