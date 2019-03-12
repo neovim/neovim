@@ -51,7 +51,8 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    if helpers.skip_fragile(pending) then
+    if helpers.skip_fragile(pending,
+        (os.getenv("TRAVIS") and helpers.os_name() == "osx")) then
       return
     end
     child_session.feed_data(
