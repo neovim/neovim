@@ -857,6 +857,8 @@ OptionSet			After setting an option.  The pattern is
 				it's global or local scoped and |<amatch>|
 				indicates what option has been set.
 
+				Is not triggered on startup.
+
 				Usage example: Check for the existence of the
 				directory in the 'backupdir' and 'undodir'
 				options, create the directory if it doesn't
