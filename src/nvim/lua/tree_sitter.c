@@ -14,7 +14,7 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
-#include <tree_sitter/runtime.h>
+#include <tree_sitter/api.h>
 
 #define REG_KEY "tree_sitter-private"
 
