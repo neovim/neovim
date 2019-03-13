@@ -363,8 +363,8 @@ static void set_bg_deferred(void **argv)
     if (starting) {
       // Wait until after startup, so OptionSet is triggered.
       do_cmdline_cmd((bgvalue[0] == 'l')
-                     ? "autocmd VimEnter * once nested set background=light"
-                     : "autocmd VimEnter * once nested set background=dark");
+                     ? "autocmd VimEnter * ++once ++nested set bg=light"
+                     : "autocmd VimEnter * ++once ++nested set bg=dark");
     } else {
       set_option_value("bg", 0L, bgvalue, 0);
       reset_option_was_set("bg");

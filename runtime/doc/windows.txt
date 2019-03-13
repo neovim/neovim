@@ -880,15 +880,15 @@ CTRL-W g }						*CTRL-W_g}*
 		cursor.  This is less clever than using |:ptag|, but you don't
 		need a tags file and it will also find matches in system
 		include files.  Example: >
-  :au! CursorHold *.[ch] -nested exe "silent! psearch " . expand("<cword>")
+  :au! CursorHold *.[ch] ++nested exe "silent! psearch " . expand("<cword>")
 <		Warning: This can be slow.
 
 Example						*CursorHold-example*  >
 
-  :au! CursorHold *.[ch] -nested exe "silent! ptag " . expand("<cword>")
+  :au! CursorHold *.[ch] ++nested exe "silent! ptag " . expand("<cword>")
 
 This will cause a ":ptag" to be executed for the keyword under the cursor,
-when the cursor hasn't moved for the time set with 'updatetime'.  "-nested"
+when the cursor hasn't moved for the time set with 'updatetime'.  "++nested"
 makes other autocommands be executed, so that syntax highlighting works in the
 preview window.  The "silent!" avoids an error message when the tag could not
 be found.  Also see |CursorHold|.  To disable this again: >
@@ -898,7 +898,7 @@ be found.  Also see |CursorHold|.  To disable this again: >
 A nice addition is to highlight the found tag, avoid the ":ptag" when there
 is no word under the cursor, and a few other things: >
 
-  :au! CursorHold *.[ch] -nested call PreviewWord()
+  :au! CursorHold *.[ch] ++nested call PreviewWord()
   :func PreviewWord()
   :  if &previewwindow			" don't do this in the preview window
   :    return

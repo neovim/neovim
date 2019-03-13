@@ -453,14 +453,14 @@ matching BufWritePre autocommands and executes them, and then it
 performs the ":write".
    The general form of the :autocmd command is as follows: >
 
-	:autocmd [group] {events} {file_pattern} [-nested] {command}
+	:autocmd [group] {events} {file_pattern} [++nested] {command}
 
 The [group] name is optional.  It is used in managing and calling the commands
 (more on this later).  The {events} parameter is a list of events (comma
 separated) that trigger the command.
    {file_pattern} is a filename, usually with wildcards.  For example, using
 "*.txt" makes the autocommand be used for all files whose name end in ".txt".
-The optional [-nested] flag allows for nesting of autocommands (see below),
+The optional [++nested] flag allows for nesting of autocommands (see below),
 and finally, {command} is the command to be executed.
 
 
@@ -576,9 +576,9 @@ NESTING
 Generally, commands executed as the result of an autocommand event will not
 trigger any new events.  If you read a file in response to a FileChangedShell
 event, it will not trigger the autocommands that would set the syntax, for
-example.  To make the events triggered, add the "-nested" flag: >
+example.  To make the events triggered, add the "++nested" flag: >
 
-	:autocmd FileChangedShell * -nested  edit
+	:autocmd FileChangedShell * ++nested  edit
 
 
 EXECUTING AUTOCOMMANDS

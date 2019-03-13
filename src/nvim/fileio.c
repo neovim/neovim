@@ -6050,18 +6050,18 @@ void do_autocmd(char_u *arg_in, int forceit)
     cmd = skipwhite(cmd);
     for (size_t i = 0; i < 2; i++) {
       if (*cmd != NUL) {
-        // Check for "-once" flag.
-        if (!once && STRNCMP(cmd, "-once", 5) == 0 && ascii_iswhite(cmd[5])) {
+        // Check for "++once" flag.
+        if (!once && STRNCMP(cmd, "++once", 6) == 0 && ascii_iswhite(cmd[6])) {
           once = true;
-          cmd = skipwhite(cmd + 5);
+          cmd = skipwhite(cmd + 6);
         }
-        // Check for "-nested" flag.
+        // Check for "++nested" flag.
         if (!nested
-            && ((STRNCMP(cmd, "-nested", 7) == 0 && ascii_iswhite(cmd[7]))
-                // Deprecated form (without "-").
+            && ((STRNCMP(cmd, "++nested", 8) == 0 && ascii_iswhite(cmd[8]))
+                // Deprecated form (without "++").
                 || (STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])))) {
           nested = true;
-          cmd = skipwhite(cmd + ('-' == cmd[0] ? 7 : 6));
+          cmd = skipwhite(cmd + ('+' == cmd[0] ? 8 : 6));
         }
       }
     }
