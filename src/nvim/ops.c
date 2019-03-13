@@ -2605,17 +2605,16 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   static bool recursive = false;
 
   if (recursive || !has_event(EVENT_TEXTYANKPOST)) {
-    // No autocommand was defined
-    // or we yanked from this autocommand.
+    // No autocommand was defined, or we yanked from this autocommand.
     return;
   }
 
   recursive = true;
 
-  // set v:event to a dictionary with information about the yank
+  // Set the v:event dictionary with information about the yank.
   dict_T *dict = get_vim_var_dict(VV_EVENT);
 
-  // the yanked text
+  // The yanked text contents.
   list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
@@ -2623,17 +2622,21 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   tv_list_set_lock(list, VAR_FIXED);
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
-  // the register type
+  // Register type.
   char buf[NUMBUFLEN+2];
   format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
   tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
-  // name of requested register or the empty string for an unnamed operation.
+  // Name of requested register, or empty string for unnamed operation.
   buf[0] = (char)oap->regname;
   buf[1] = NUL;
   tv_dict_add_str(dict, S_LEN("regname"), buf);
 
-  // kind of operation (yank/delete/change)
+  // Motion type: inclusive or exclusive.
+  tv_dict_add_special(dict, S_LEN("inclusive"),
+                      oap->inclusive ? kSpecialVarTrue : kSpecialVarFalse);
+
+  // Kind of operation: yank, delete, change).
   buf[0] = (char)get_op_char(oap->op_type);
   buf[1] = NUL;
   tv_dict_add_str(dict, S_LEN("operator"), buf);

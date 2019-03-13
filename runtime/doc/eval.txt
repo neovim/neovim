@@ -1539,6 +1539,7 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 			cmdlevel	Level of cmdline.
 			cmdtype		Type of cmdline, |cmdline-char|.
 			cwd		Current working directory.
+			inclusive	Motion is |inclusive|, else exclusive.
 			scope		Event-specific scope name.
 			operator	Current |operator|.  Also set for Ex
 					commands (unlike |v:operator|). For

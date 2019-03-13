@@ -809,20 +809,25 @@ InsertCharPre			When a character is typed in Insert mode,
 				a different character.  When |v:char| is set
 				to more than one character this text is
 				inserted literally.
-				It is not allowed to change the text |textlock|.
-				The event is not triggered when 'paste' is
-				set.
+
+				Cannot change the text. |textlock|
+				Not triggered when 'paste' is set.
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor
 				for |setreg()|. Pattern must be *.
 				Sets these |v:event| keys:
+				    inclusive
 				    operator
 				    regcontents
 				    regname
 				    regtype
+				The `inclusive` flag combined with the |'[|
+				and |']| marks can be used to calculate the
+				precise region of the operation.
+
 				Recursion is ignored.
-				It is not allowed to change the text |textlock|.
+				Cannot change the text. |textlock|
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -972,7 +977,6 @@ SwapExists			Detected an existing swap file when starting
 				It is not allowed to change to another buffer,
 				change a buffer name or change directory
 				here.
-				{only available with the +eval feature}
 							*Syntax*
 Syntax				When the 'syntax' option has been set.  The
 				pattern is matched against the syntax name.
