@@ -5591,39 +5591,48 @@ static void au_del_cmd(AutoCmd *ac)
   au_need_clean = true;
 }
 
-/*
- * Cleanup autocommands and patterns that have been deleted.
- * This is only done when not executing autocommands.
- */
+/// Cleanup autocommands and patterns that have been deleted.
+/// This is only done when not executing autocommands.
 static void au_cleanup(void)
 {
   AutoPat     *ap, **prev_ap;
   AutoCmd     *ac, **prev_ac;
   event_T event;
 
-  if (autocmd_busy || !au_need_clean)
+  if (autocmd_busy || !au_need_clean) {
     return;
+  }
 
-  /* loop over all events */
+  // Loop over all events.
   for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
        event = (event_T)((int)event + 1)) {
-    /* loop over all autocommand patterns */
+    // Loop over all autocommand patterns.
     prev_ap = &(first_autopat[(int)event]);
     for (ap = *prev_ap; ap != NULL; ap = *prev_ap) {
-      /* loop over all commands for this pattern */
+      // Loop over all commands for this pattern.
       prev_ac = &(ap->cmds);
+      bool has_cmd = false;
+
       for (ac = *prev_ac; ac != NULL; ac = *prev_ac) {
-        /* remove the command if the pattern is to be deleted or when
-         * the command has been marked for deletion */
+        // Remove the command if the pattern is to be deleted or when
+        // the command has been marked for deletion.
         if (ap->pat == NULL || ac->cmd == NULL) {
           *prev_ac = ac->next;
           xfree(ac->cmd);
           xfree(ac);
-        } else
+        } else {
+          has_cmd = true;
           prev_ac = &(ac->next);
+        }
       }
 
-      /* remove the pattern if it has been marked for deletion */
+      if (ap->pat != NULL && !has_cmd) {
+        // Pattern was not marked for deletion, but all of its commands were.
+        // So mark the pattern for deletion.
+        au_remove_pat(ap);
+      }
+
+      // Remove the pattern if it has been marked for deletion.
       if (ap->pat == NULL) {
         if (ap->next == NULL) {
           if (prev_ap == &(first_autopat[(int)event])) {
@@ -5637,12 +5646,13 @@ static void au_cleanup(void)
         *prev_ap = ap->next;
         vim_regfree(ap->reg_prog);
         xfree(ap);
-      } else
+      } else {
         prev_ap = &(ap->next);
+      }
     }
   }
 
-  au_need_clean = FALSE;
+  au_need_clean = false;
 }
 
 /*

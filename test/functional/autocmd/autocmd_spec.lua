@@ -125,5 +125,23 @@ describe('autocmd', function()
     command("put ='foo bar baz'")
     feed('0llhlh')
     eq(expected, eval('g:foo'))
+
+    --
+    -- :autocmd should not show empty section after ++once handlers expire.
+    --
+    expected = {
+      'Once1',
+      'Once2',
+    }
+    command('let g:foo = []')
+    command('autocmd! TabNew')  -- Clear all TabNew handlers.
+    command('autocmd TabNew * ++once :call add(g:foo, "Once1")')
+    command('autocmd TabNew * ++once :call add(g:foo, "Once2")')
+    command('tabnew')
+    eq(expected, eval('g:foo'))
+    eq(dedent([[
+
+       --- Autocommands ---]]),
+       funcs.execute('autocmd Tabnew'))
   end)
 end)
