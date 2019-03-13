@@ -4582,7 +4582,9 @@ static bool nfa_re_num_cmp(uintmax_t val, int op, uintmax_t pos)
  * "pim" is NULL or contains info about a Postponed Invisible Match (start
  * position).
  */
-static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T *prog, regsubs_T *submatch, regsubs_T *m, int **listids)
+static int recursive_regmatch(
+    nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T *prog,
+    regsubs_T *submatch, regsubs_T *m, int **listids, int *listids_len)
 {
   int save_reginput_col = (int)(reginput - regline);
   int save_reglnum = reglnum;
@@ -4665,8 +4667,10 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
   if (nfa_ll_index == 1) {
     /* Already calling nfa_regmatch() recursively.  Save the lastlist[1]
      * values and clear them. */
-    if (*listids == NULL) {
+    if (*listids == NULL || *listids_len < nstate) {
+      xfree(*listids);
       *listids = xmalloc(sizeof(**listids) * nstate);
+      *listids_len = nstate;
     }
     nfa_save_listids(prog, *listids);
     need_restore = TRUE;
@@ -4979,6 +4983,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   nfa_list_T  *thislist;
   nfa_list_T  *nextlist;
   int         *listids = NULL;
+  int listids_len = 0;
   nfa_state_T *add_state;
   bool add_here;
   int add_count;
@@ -5271,7 +5276,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // First try matching the invisible match, then what
           // follows.
           result = recursive_regmatch(t->state, NULL, prog, submatch, m,
-                                      &listids);
+                                      &listids, &listids_len);
           if (result == NFA_TOO_EXPENSIVE) {
             nfa_match = result;
             goto theend;
@@ -5372,7 +5377,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
 
         // First try matching the pattern.
         result = recursive_regmatch(t->state, NULL, prog, submatch, m,
-                                    &listids);
+                                    &listids, &listids_len);
         if (result == NFA_TOO_EXPENSIVE) {
           nfa_match = result;
           goto theend;
@@ -6079,8 +6084,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
             fprintf(log_fd, "Postponed recursive nfa_regmatch()\n");
             fprintf(log_fd, "\n");
 #endif
-            result = recursive_regmatch(pim->state, pim,
-                prog, submatch, m, &listids);
+            result = recursive_regmatch(pim->state, pim, prog, submatch, m,
+                                        &listids, &listids_len);
             pim->result = result ? NFA_PIM_MATCH : NFA_PIM_NOMATCH;
             // for \@! and \@<! it is a match when the result is
             // FALSE
