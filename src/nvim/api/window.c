@@ -495,7 +495,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
   PUT(rv, "focusable", BOOLEAN_OBJ(wp->w_float_config.focusable));
   PUT(rv, "external", BOOLEAN_OBJ(wp->w_float_config.external));
   PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
-          float_anchor_str[wp->w_float_config.anchor])));
+      float_anchor_str[wp->w_float_config.anchor])));
 
   if (wp->w_float_config.relative == kFloatRelativeWindow) {
     PUT(rv, "win", INTEGER_OBJ(wp->w_float_config.window));

@@ -958,20 +958,23 @@ struct matchitem {
   int conceal_char;         ///< cchar for Conceal highlighting
 };
 
-typedef enum {
-    kFloatAnchorEast = 1,
-    kFloatAnchorSouth = 2,
+typedef int FloatAnchor;
 
-    kFloatAnchorNW = 0,
-    kFloatAnchorNE = 1,
-    kFloatAnchorSW = 2,
-    kFloatAnchorSE = 3,
-} FloatAnchor;
+enum {
+  kFloatAnchorEast  = 1,
+  kFloatAnchorSouth = 2,
+};
+
+// NW -> 0
+// NE -> kFloatAnchorEast
+// SW -> kFloatAnchorSouth
+// SE -> kFloatAnchorSouth | kFloatAnchorEast
+EXTERN const char *const float_anchor_str[] INIT(= { "NW", "NE", "SW", "SE" });
 
 typedef enum {
-    kFloatRelativeEditor = 0,
-    kFloatRelativeWindow = 1,
-    kFloatRelativeCursor = 2,
+  kFloatRelativeEditor = 0,
+  kFloatRelativeWindow = 1,
+  kFloatRelativeCursor = 2,
 } FloatRelative;
 
 typedef struct {

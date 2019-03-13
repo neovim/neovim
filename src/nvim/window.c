@@ -614,12 +614,6 @@ static void ui_ext_win_position(win_T *wp)
                     wp->w_wincol, wp->w_width, wp->w_height);
     return;
   }
-  const char *const anchor_str[] = {
-    "NW",
-    "NE",
-    "SW",
-    "SE"
-  };
 
   FloatConfig c = wp->w_float_config;
   if (!c.external) {
@@ -635,7 +629,7 @@ static void ui_ext_win_position(win_T *wp)
       api_clear_error(&dummy);
     }
     if (ui_has(kUIMultigrid)) {
-      String anchor = cstr_to_string(anchor_str[c.anchor]);
+      String anchor = cstr_to_string(float_anchor_str[c.anchor]);
       ui_call_win_float_pos(wp->w_grid.handle, wp->handle, anchor, grid->handle,
                             row, col, c.focusable);
     } else {
@@ -672,14 +666,14 @@ static bool parse_float_anchor(String anchor, FloatAnchor *out)
     *out = (FloatAnchor)0;
   }
   char *str = anchor.data;
-  if (!STRICMP(str, "NW")) {
-    *out = kFloatAnchorNW;
-  } else if (!STRICMP(str, "NE")) {
-    *out = kFloatAnchorNE;
-  } else if (!STRICMP(str, "SW")) {
-    *out = kFloatAnchorSW;
-  } else if (!STRICMP(str, "SE")) {
-    *out = kFloatAnchorSE;
+  if (striequal(str, "NW")) {
+    *out = 0;  //  NW is the default
+  } else if (striequal(str, "NE")) {
+    *out = kFloatAnchorEast;
+  } else if (striequal(str, "SW")) {
+    *out = kFloatAnchorSouth;
+  } else if (striequal(str, "SE")) {
+    *out = kFloatAnchorSouth | kFloatAnchorEast;
   } else {
     return false;
   }
