@@ -450,5 +450,16 @@ func Test_format_undo()
 	      \ ], getline(1, '$'))
 
   unmap gg
+  set tw&
   enew!
+endfunc
+
+func Test_format_list_auto()
+  new
+  call setline(1, ['1. abc', '2. def', '3.  ghi'])
+  set fo=tan ai bs=2
+  call feedkeys("3G0lli\<BS>\<BS>x\<Esc>", 'tx')
+  call assert_equal('2. defx ghi', getline(2))
+  bwipe!
+  set fo& ai& bs&
 endfunc

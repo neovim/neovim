@@ -3707,10 +3707,16 @@ int do_join(size_t count,
       cend -= spaces[t];
       memset(cend, ' ', (size_t)(spaces[t]));
     }
+
+    // If deleting more spaces than adding, the cursor moves no more than
+    // what is added if it is inside these spaces.
+    const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
+
     mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
-        (long)(cend - newp + spaces[t] - (curr - curr_start)));
-    if (t == 0)
+                    (long)(cend - newp - spaces_removed), spaces_removed);
+    if (t == 0) {
       break;
+    }
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t - 1));
     if (remove_comments)
       curr += comments[t - 1];
@@ -4138,14 +4144,14 @@ format_lines (
         if (next_leader_len > 0) {
           (void)del_bytes(next_leader_len, false, false);
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
-                          (long)-next_leader_len);
+                          (long)-next_leader_len, 0);
         } else if (second_indent > 0) {   // the "leader" for FO_Q_SECOND
           int indent = (int)getwhitecols_curline();
 
           if (indent > 0) {
             (void)del_bytes(indent, FALSE, FALSE);
             mark_col_adjust(curwin->w_cursor.lnum,
-                (colnr_T)0, 0L, (long)-indent);
+                            (colnr_T)0, 0L, (long)-indent, 0);
           }
         }
         curwin->w_cursor.lnum--;

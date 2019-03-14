@@ -848,10 +848,11 @@ open_line (
         /* Move marks after the line break to the new line. */
         if (flags & OPENLINE_MARKFIX)
           mark_col_adjust(curwin->w_cursor.lnum,
-              curwin->w_cursor.col + less_cols_off,
-              1L, (long)-less_cols);
-      } else
+                          curwin->w_cursor.col + less_cols_off,
+                          1L, (long)-less_cols, 0);
+      } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
+      }
     }
 
     /*
