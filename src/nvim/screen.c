@@ -1829,14 +1829,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * Add the margin between the text and either the number column
    * or the edge of the window.
    */
-  if (wp->w_p_mrg) {
+  if (wp->w_p_mrg_chars.start) {
     len = wp->w_width - col;
-    if (len > wp->w_p_mrg) {
-      len = wp->w_p_mrg;
+    if (len > wp->w_p_mrg_chars.start) {
+      len = wp->w_p_mrg_chars.start;
     }
 
     sprintf((char *) buf, "%*s", len, "");
-    copy_text_attr(off + wp->w_width - len - col, buf, len, hl_attr(HLF_FL));
+    copy_text_attr(off + wp->w_width - len - col, buf, len, win_hl_attr(wp, HLF_FL));
     col += len;
   }
 
@@ -2801,12 +2801,12 @@ win_line (
       // Add margin between text and either number column or window edge.
       if (draw_state == WL_MRG - 1 && n_extra == 0) {
         draw_state = WL_MRG;
-        if (wp->w_p_mrg) {
+        if (wp->w_p_mrg_chars.start) {
           c_extra = ' ';
-          n_extra = wp->w_p_mrg;
+          n_extra = wp->w_p_mrg_chars.start;
 
           if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
-            char_attr = hl_attr(HLF_CUL);
+            char_attr = win_hl_attr(wp, HLF_CUL);
           } else {
             char_attr = 0;
           }

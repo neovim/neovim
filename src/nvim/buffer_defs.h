@@ -204,7 +204,7 @@ typedef struct {
 #define w_p_rnu w_onebuf_opt.wo_rnu     /* 'relativenumber' */
   long wo_nuw;
 # define w_p_nuw w_onebuf_opt.wo_nuw    /* 'numberwidth' */
-  long wo_mrg;
+  char_u      *wo_mrg;
 # define w_p_mrg w_onebuf_opt.wo_mrg    /* 'margin' */
   int wo_wfh;
 # define w_p_wfh w_onebuf_opt.wo_wfh    /* 'winfixheight' */
@@ -1062,6 +1062,14 @@ struct window_S {
     int msgsep;
     int eob;
   } w_p_fcs_chars;
+
+  // 'margin' values for each dimension of the window.
+  struct {
+    int start;
+    int end;
+    int top;
+    int bottom;
+  } w_p_mrg_chars;
 
   /*
    * "w_topline", "w_leftcol" and "w_skipcol" specify the offsets for

@@ -684,13 +684,13 @@ void validate_cursor_col(void)
 }
 
 /*
- * Compute offset of a window, occupied by the margin, absolute or relative 
- * line number, fold column and sign column (these don't move when scrolling 
+ * Compute offset of a window, occupied by the margin, absolute or relative
+ * line number, fold column and sign column (these don't move when scrolling
  * horizontally).
  */
 int win_col_off(win_T *wp)
 {
-  return (int)wp->w_p_mrg
+  return (int)wp->w_p_mrg_chars.start
          + ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0)
          + (cmdwin_type == 0 || wp != curwin ? 0 : 1)
          + (int)wp->w_p_fdc

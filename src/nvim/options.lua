@@ -1455,8 +1455,12 @@ return {
     },
     {
       full_name='margin', abbreviation='mrg',
-      type='number', scope={'window'},
-      redraw={'current_window'}
+      type='string', list='onecomma', scope={'window'},
+      deny_duplicates=true,
+      vim=true,
+      alloced=true,
+      redraw={'current_buffer'},
+      defaults={if_true={vim="start:0,end:0,top:0,bottom:0"}},
     },
     {
       full_name='matchpairs', abbreviation='mps',

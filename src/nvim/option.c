@@ -2111,6 +2111,7 @@ static void didset_options(void)
   briopt_check(curwin);
   // initialize the table for 'breakat'.
   fill_breakat_flags();
+  parse_margin_options(curwin);
 }
 
 // More side effects of setting options.
@@ -3179,6 +3180,12 @@ ambw_end:
     }
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
+      errmsg = e_invarg;
+    }
+  }
+  /* Margin */
+  else if (varp == &curwin->w_p_mrg) {
+    if (!parse_margin_options(curwin)) {
       errmsg = e_invarg;
     }
   } else {
@@ -4314,14 +4321,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     u_sync(true);
     *pp = value;
     curwin->w_nrwidth_line_count = 0;
-  } else if (pp == &curwin->w_p_mrg) {
-    if (curwin->w_p_mrg < 0) {
-      errmsg = e_positive;
-      curwin->w_p_mrg=0;
-    } else if (curwin->w_p_mrg > 4) {
-      errmsg = e_invarg;
-      curwin->w_p_mrg = 4;
-    }
   } else if (pp == &curbuf->b_p_tw) {
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
@@ -5640,7 +5639,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_nu = from->wo_nu;
   to->wo_rnu = from->wo_rnu;
   to->wo_nuw = from->wo_nuw;
-  to->wo_mrg = from->wo_mrg;
+  to->wo_mrg = vim_strsave(from->wo_mrg);
   to->wo_rl  = from->wo_rl;
   to->wo_rlc = vim_strsave(from->wo_rlc);
   to->wo_stl = vim_strsave(from->wo_stl);
@@ -5742,6 +5741,7 @@ void didset_window_options(win_T *wp)
   briopt_check(wp);
   set_chars_option(wp, &wp->w_p_fcs);
   set_chars_option(wp, &wp->w_p_lcs);
+  parse_margin_options(wp);
   parse_winhl_opt(wp);
 }
 
@@ -6910,6 +6910,85 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
     }
   }
 }
+
+
+/*
+ * Parse the margin option string.
+ *
+ * The setting string can come in three forms: a number, any permutation of the
+ * individual settings of "start", "end", "top", and "bottom", or the
+ * combination of the first then second. For the first case the number sets the
+ * value of all of individual settings to the number.
+ *
+ * For the second case, the string is looped through to extract the values of
+ * any of the individual settings. Any individual setting not specified will
+ * not be impacted and will remain its current value. So if the setting string
+ * is "top:10", only the top margin would be changed.
+ *
+ * The third case is just a combination of the first two with the overarching
+ * value being overriden by any specific setting value. Note that to use this
+ * the setting string must start with a number. So the setting string
+ * "15,start:20" would set all margins to 15 and then the starting margin to
+ * 20. The string "top:10,15" will, however, fail to be parsed.
+ *
+ * Returns whether or not the setting string was valid and could be parsed.
+ */
+static bool parse_margin_options(win_T *wp)
+{
+  int mrg_start = -1;
+  int mrg_end = -1;
+  int mrg_top = -1;
+  int mrg_bottom = -1;
+
+  char_u *p = wp->w_p_mrg;
+  // Set all margins
+  if (*p != NUL && ascii_isdigit(p[0]))
+  {
+    mrg_start = mrg_end = mrg_top = mrg_bottom = getdigits_int(&p);
+  }
+
+  // Set specific margins
+  while (*p != NUL)
+  {
+    if (STRNCMP(p, "start:", 6) == 0 && ascii_isdigit(p[6]))
+    {
+      p += 6;
+      mrg_start = getdigits_int(&p);
+    }
+    else if (STRNCMP(p, "end:", 4) == 0 && ascii_isdigit(p[4]))
+    {
+      p += 4;
+      mrg_end = getdigits_int(&p);
+    }
+    else if (STRNCMP(p, "top:", 4) == 0 && ascii_isdigit(p[4]))
+    {
+      p += 4;
+      mrg_top = getdigits_int(&p);
+    }
+    else if (STRNCMP(p, "bottom:", 7) == 0 && ascii_isdigit(p[7]))
+    {
+      p += 7;
+      mrg_bottom = getdigits_int(&p);
+    }
+    if (*p != ',' && *p != NUL)
+      return false;
+    if (*p == ',')
+      ++p;
+  }
+
+  // Only set the values if they were updated
+  if (mrg_start >= 0)
+    wp->w_p_mrg_chars.start = mrg_start;
+  if (mrg_end >= 0)
+    wp->w_p_mrg_chars.end = mrg_end;
+  if (mrg_top >= 0)
+    wp->w_p_mrg_chars.top = mrg_top;
+  if (mrg_bottom >= 0)
+    wp->w_p_mrg_chars.bottom = mrg_bottom;
+
+  return true;
+}
+
 
 /// This is called when 'breakindentopt' is changed and when a window is
 /// initialized
