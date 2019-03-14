@@ -158,6 +158,7 @@ bool ui_comp_put_grid(ScreenGrid *grid, int row, int col, int height, int width,
     if (insert_at < kv_size(layers)-1) {
       for (size_t i = kv_size(layers)-1; i > insert_at; i--) {
         kv_A(layers, i) = kv_A(layers, i-1);
+        kv_A(layers, i)->comp_index = i;
       }
       kv_A(layers, insert_at) = grid;
     }
