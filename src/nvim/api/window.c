@@ -444,8 +444,8 @@ Boolean nvim_win_is_valid(Window window)
 /// When reconfiguring a floating window, absent option keys will not be
 /// changed. The following restriction apply: `row`, `col` and `relative`
 /// must be reconfigured together. Only changing a subset of these is an error.
-void nvim_win_config(Window window, Integer width, Integer height,
-                     Dictionary options, Error *err)
+void nvim_win_set_config(Window window, Integer width, Integer height,
+                         Dictionary options, Error *err)
   FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);

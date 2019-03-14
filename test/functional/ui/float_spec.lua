@@ -84,7 +84,7 @@ describe('floating windows', function()
       end
 
 
-      meths.win_config(win,0,0,{relative='editor', row=0, col=10})
+      meths.win_set_config(win,0,0,{relative='editor', row=0, col=10})
       expected_pos[3][4] = 0
       expected_pos[3][5] = 10
       if multigrid then
@@ -329,7 +329,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_config(win, -1, -1, {relative='cursor', row=1, col=-2})
+      meths.win_set_config(win, -1, -1, {relative='cursor', row=1, col=-2})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -370,7 +370,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_config(win, -1, -1, {relative='cursor', row=0, col=0, anchor='SW'})
+      meths.win_set_config(win, -1, -1, {relative='cursor', row=0, col=0, anchor='SW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -412,7 +412,7 @@ describe('floating windows', function()
       end
 
 
-      meths.win_config(win, -1, -1, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
+      meths.win_set_config(win, -1, -1, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -453,7 +453,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_config(win, -1, -1, {relative='win', win=oldwin, row=3, col=39, anchor='SE'})
+      meths.win_set_config(win, -1, -1, {relative='win', win=oldwin, row=3, col=39, anchor='SE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -494,7 +494,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_config(win, -1, -1, {relative='win', win=0, row=0, col=50, anchor='NE'})
+      meths.win_set_config(win, -1, -1, {relative='win', win=0, row=0, col=50, anchor='NE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -756,7 +756,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_config(win, -1, 3, {})
+      meths.win_set_config(win, -1, 3, {})
       feed('gg')
       if multigrid then
         screen:expect{grid=[[
@@ -1824,7 +1824,7 @@ describe('floating windows', function()
       end)
 
       it("w with focusable=false", function()
-        meths.win_config(win, -1, -1, {focusable=false})
+        meths.win_set_config(win, -1, -1, {focusable=false})
         expected_pos[3][6] = false
         feed("<c-w>wi") -- i to provoke redraw
         if multigrid then
@@ -2038,7 +2038,7 @@ describe('floating windows', function()
       end)
 
       it("focus by mouse (focusable=false)", function()
-        meths.win_config(win, -1, -1, {focusable=false})
+        meths.win_set_config(win, -1, -1, {focusable=false})
         meths.buf_set_lines(0, -1, -1, true, {"a"})
         expected_pos[3][6] = false
         if multigrid then
@@ -2939,7 +2939,7 @@ describe('floating windows', function()
         end
 
         if multigrid then
-          meths.win_config(0,-1,-1,{external=true})
+          meths.win_set_config(0,-1,-1,{external=true})
           expected_pos = {[3]={external=true}}
           screen:expect{grid=[[
           ## grid 1
@@ -2962,7 +2962,7 @@ describe('floating windows', function()
         ]], float_pos=expected_pos}
         else
           eq({false, "UI doesn't support external windows"},
-             meth_pcall(meths.win_config, 0,-1,-1,{external=true}))
+             meth_pcall(meths.win_set_config, 0,-1,-1,{external=true}))
           return
         end
 
@@ -3228,7 +3228,7 @@ describe('floating windows', function()
 
       it(":tabnew and :tabnext (external)", function()
         if multigrid then
-          meths.win_config(win,-1,-1,{external=true})
+          meths.win_set_config(win,-1,-1,{external=true})
           expected_pos = {[3]={external=true}}
           feed(":tabnew<cr>")
           screen:expect{grid=[[
@@ -3259,7 +3259,7 @@ describe('floating windows', function()
         ]], float_pos=expected_pos}
         else
           eq({false, "UI doesn't support external windows"},
-             meth_pcall(meths.win_config, 0,-1,-1,{external=true}))
+             meth_pcall(meths.win_set_config, 0,-1,-1,{external=true}))
         end
 
         feed(":tabnext<cr>")
