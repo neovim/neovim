@@ -472,6 +472,61 @@ void nvim_win_config(Window window, Integer width, Integer height,
   }
 }
 
+/// Return window configuration.
+///
+/// Return a dictionary containing the same options that can be given to
+/// |nvim_open_win()|.
+///
+/// @param window Window handle
+/// @param[out] err Error details, if any
+/// @return Window configuration
+Dictionary nvim_win_get_config(Window window, Error *err)
+  FUNC_API_SINCE(6)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  win_T *wp = find_window_by_handle(window, err);
+  if (!wp) {
+    return rv;
+  }
+
+  PUT(rv, "height", INTEGER_OBJ(wp->w_height));
+  PUT(rv, "width", INTEGER_OBJ(wp->w_width));
+  PUT(rv, "focusable", BOOLEAN_OBJ(wp->w_float_config.focusable));
+  PUT(rv, "external", BOOLEAN_OBJ(wp->w_float_config.external));
+  PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
+          float_anchor_str[wp->w_float_config.anchor])));
+
+  if (wp->w_float_config.relative == kFloatRelativeWindow) {
+    PUT(rv, "win", INTEGER_OBJ(wp->w_float_config.window));
+  }
+
+  if (wp->w_float_config.external) {
+    return rv;
+  }
+
+  PUT(rv, "row", FLOAT_OBJ(wp->w_float_config.row));
+  PUT(rv, "col", FLOAT_OBJ(wp->w_float_config.col));
+
+  if (wp->w_floating) {
+    switch (wp->w_float_config.relative) {
+      case kFloatRelativeEditor:
+        PUT(rv, "relative", STRING_OBJ(cstr_to_string("editor")));
+        break;
+      case kFloatRelativeWindow:
+        PUT(rv, "relative", STRING_OBJ(cstr_to_string("win")));
+        break;
+      case kFloatRelativeCursor:
+        PUT(rv, "relative", STRING_OBJ(cstr_to_string("cursor")));
+        break;
+    }
+  } else {
+    PUT(rv, "relative", STRING_OBJ(cstr_to_string("")));
+  }
+
+  return rv;
+}
+
 /// Close a window.
 ///
 /// This is equivalent to |:close| with count except that it takes a window id.
