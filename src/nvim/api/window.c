@@ -439,11 +439,15 @@ Boolean nvim_win_is_valid(Window window)
 /// types).
 ///
 /// See documentation at |nvim_open_win()|, for the meaning of parameters. Pass
-/// in 0 for 'witdh' and 'height' to keep exiting size.
+/// in 0 for `width` and `height` to keep existing size.
 ///
 /// When reconfiguring a floating window, absent option keys will not be
 /// changed. The following restriction apply: `row`, `col` and `relative`
 /// must be reconfigured together. Only changing a subset of these is an error.
+///
+/// @param      window  Window handle
+/// @param      options Dictionary of options
+/// @param[out] err     Error details, if any
 void nvim_win_set_config(Window window, Dictionary options, Error *err)
   FUNC_API_SINCE(6)
 {
@@ -475,6 +479,8 @@ void nvim_win_set_config(Window window, Dictionary options, Error *err)
 ///
 /// Return a dictionary containing the same options that can be given to
 /// |nvim_open_win()|.
+///
+/// `relative` will be empty for normal windows.
 ///
 /// @param window Window handle
 /// @param[out] err Error details, if any
