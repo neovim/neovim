@@ -35,7 +35,7 @@ There are 3 ways to create a terminal buffer:
 <
     Note: The "term://" pattern is handled by a BufReadCmd handler, so the
     |autocmd-nested| modifier is required to use it in an autocmd. >
-        autocmd VimEnter * -nested split term://sh
+        autocmd VimEnter * ++nested split term://sh
 <    This is only mentioned for reference; use |:terminal| instead.
 
 When the terminal starts, the buffer contents are updated and the buffer is
