@@ -5486,16 +5486,33 @@ internal_format (
         /* remember position of blank just before text */
         end_col = curwin->w_cursor.col;
 
-        /* find start of sequence of blanks */
+        // find start of sequence of blanks
+        int wcc = 0;  // counter for whitespace chars
         while (curwin->w_cursor.col > 0 && WHITECHAR(cc)) {
           dec_cursor();
           cc = gchar_cursor();
+
+          // Increment count of how many whitespace chars in this
+          // group; we only need to know if it's more than one.
+          if (wcc < 2) {
+            wcc++;
+          }
         }
-        if (curwin->w_cursor.col == 0 && WHITECHAR(cc))
-          break;                        /* only spaces in front of text */
-        /* Don't break until after the comment leader */
-        if (curwin->w_cursor.col < leader_len)
+        if (curwin->w_cursor.col == 0 && WHITECHAR(cc)) {
+          break;                        // only spaces in front of text
+        }
+
+        // Don't break after a period when 'formatoptions' has 'p' and
+        // there are less than two spaces.
+        if (has_format_option(FO_PERIOD_ABBR) && cc == '.' && wcc < 2) {
+          continue;
+        }
+
+        // Don't break until after the comment leader
+        if (curwin->w_cursor.col < leader_len) {
           break;
+        }
+
         if (has_format_option(FO_ONE_LETTER)) {
           /* do not break after one-letter words */
           if (curwin->w_cursor.col == 0)

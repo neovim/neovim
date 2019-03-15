@@ -163,6 +163,32 @@ func Test_text_format()
 	      \ '# 1 xxxxx',
 	      \ '#   foobar'], getline(1, 2))
 
+  " Test the 'p' flag for 'formatoptions'
+  " First test without the flag: that it will break "Mr. Feynman" at the space
+  normal ggdG
+  setl tw=28 fo=tcq
+  call setline('.', 'Surely you''re joking, Mr. Feynman!')
+  normal gqq
+  call assert_equal([
+              \ 'Surely you''re joking, Mr.',
+              \ 'Feynman!'], getline(1, 2))
+  " Now test with the flag: that it will push the name with the title onto the
+  " next line
+  normal ggdG
+  setl fo+=p
+  call setline('.', 'Surely you''re joking, Mr. Feynman!')
+  normal gqq
+  call assert_equal([
+              \ 'Surely you''re joking,',
+              \ 'Mr. Feynman!'], getline(1, 2))
+  " Ensure that it will still break if two spaces are entered
+  normal ggdG
+  call setline('.', 'Surely you''re joking, Mr.  Feynman!')
+  normal gqq
+  call assert_equal([
+              \ 'Surely you''re joking, Mr.',
+              \ 'Feynman!'], getline(1, 2))
+
   setl ai& tw& fo& si& comments&
   enew!
 endfunc
