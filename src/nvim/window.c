@@ -502,10 +502,11 @@ wingotofile:
         break;
       }
       FloatConfig config = FLOAT_CONFIG_INIT;
+      config.width = curwin->w_width;
+      config.height = curwin->w_height;
       config.external = true;
       Error err = ERROR_INIT;
-      if (!win_new_float(curwin, curwin->w_width, curwin->w_height, config,
-                         &err)) {
+      if (!win_new_float(curwin, config, &err)) {
         EMSG(err.msg);
         api_clear_error(&err);
         beep_flush();
@@ -538,8 +539,7 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
 /// float. It must then already belong to the current tabpage!
 ///
 /// config must already have been validated!
-win_T *win_new_float(win_T *wp, int width, int height, FloatConfig config,
-                     Error *err)
+win_T *win_new_float(win_T *wp, FloatConfig config, Error *err)
 {
   if (wp == NULL) {
     wp = win_alloc(lastwin_nofloating(), false);
@@ -571,17 +571,16 @@ win_T *win_new_float(win_T *wp, int width, int height, FloatConfig config,
   // TODO(bfredl): use set_option_to() after merging #9110 ?
   wp->w_p_nu = false;
   wp->w_allbuf_opt.wo_nu = false;
-  win_config_float(wp, width, height, config);
+  win_config_float(wp, config);
   wp->w_pos_changed = true;
   redraw_win_later(wp, VALID);
   return wp;
 }
 
-void win_config_float(win_T *wp, int width, int height,
-                      FloatConfig config)
+void win_config_float(win_T *wp, FloatConfig config)
 {
-  wp->w_height = MAX(height, 1);
-  wp->w_width = MAX(width, 2);
+  wp->w_width = MAX(config.width, 2);
+  wp->w_height = MAX(config.height, 1);
 
   if (config.relative == kFloatRelativeCursor) {
     config.relative = kFloatRelativeWindow;
@@ -727,6 +726,22 @@ bool parse_float_config(Dictionary config, FloatConfig *out, bool reconf,
       } else {
         api_set_error(err, kErrorTypeValidation,
                       "'col' option has to be Integer or Float");
+        return false;
+      }
+    } else if (strequal(key, "width")) {
+      if (val.type == kObjectTypeInteger && val.data.integer >= 0) {
+        out->width = val.data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "'width' option has to be a positive Integer");
+        return false;
+      }
+    } else if (strequal(key, "height")) {
+      if (val.type == kObjectTypeInteger && val.data.integer >= 0) {
+        out->height= val.data.integer;
+      } else {
+        api_set_error(err, kErrorTypeValidation,
+                      "'height' option has to be a positive Integer");
         return false;
       }
     } else if (!strcmp(key, "anchor")) {
@@ -3804,7 +3819,9 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
 
   for (win_T *wp = firstwin; wp; wp = wp->w_next) {
     if (wp->w_floating && !wp->w_float_config.external) {
-      win_config_float(wp, wp->w_width, wp->w_height, wp->w_float_config);
+      wp->w_float_config.width = wp->w_width;
+      wp->w_float_config.height = wp->w_height;
+      win_config_float(wp, wp->w_float_config);
     }
     wp->w_pos_changed = true;
   }
@@ -4664,7 +4681,9 @@ int win_comp_pos(void)
   // Too often, but when we support anchoring floats to split windows,
   // this will be needed
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
-    win_config_float(wp, wp->w_width, wp->w_height, wp->w_float_config);
+    wp->w_float_config.width = wp->w_width;
+    wp->w_float_config.height = wp->w_height;
+    win_config_float(wp, wp->w_float_config);
   }
 
   return row;
@@ -4737,7 +4756,9 @@ void win_setheight_win(int height, win_T *win)
 
   if (win->w_floating) {
     if (win->w_float_config.external) {
-      win_config_float(win, win->w_width, height, win->w_float_config);
+      win->w_float_config.width = win->w_width;
+      win->w_float_config.height = height;
+      win_config_float(win, win->w_float_config);
     } else {
       beep_flush();
       return;
@@ -4942,7 +4963,9 @@ void win_setwidth_win(int width, win_T *wp)
   }
   if (wp->w_floating) {
     if (wp->w_float_config.external) {
-      win_config_float(wp, width, wp->w_height, wp->w_float_config);
+      wp->w_float_config.width = width;
+      wp->w_float_config.height = wp->w_height;
+      win_config_float(wp, wp->w_float_config);
     } else {
       beep_flush();
       return;

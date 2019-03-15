@@ -45,7 +45,7 @@ describe('floating windows', function()
 
     it('can be created and reconfigured', function()
       local buf = meths.create_buf(false,false)
-      local win = meths.open_win(buf, false, 20, 2, {relative='editor', row=2, col=5})
+      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
       local expected_pos = {
           [3]={{id=1001}, 'NW', 1, 2, 5, true},
       }
@@ -84,7 +84,7 @@ describe('floating windows', function()
       end
 
 
-      meths.win_set_config(win,0,0,{relative='editor', row=0, col=10})
+      meths.win_set_config(win, {relative='editor', row=0, col=10})
       expected_pos[3][4] = 0
       expected_pos[3][5] = 10
       if multigrid then
@@ -156,7 +156,7 @@ describe('floating windows', function()
       command('set number')
       command('hi NormalFloat guibg=#333333')
       feed('ix<cr>y<cr><esc>gg')
-      local win = meths.open_win(0, false, 20, 4, {relative='editor', row=4, col=10})
+      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -232,17 +232,17 @@ describe('floating windows', function()
     it('API has proper error messages', function()
       local buf = meths.create_buf(false,false)
       eq({false, "Invalid options key 'bork'"},
-         meth_pcall(meths.open_win,buf, false, 20, 2, {bork=true}))
+         meth_pcall(meths.open_win,buf, false, {width=20,height=2,bork=true}))
       eq({false, "'win' option is only valid with relative='win'"},
-         meth_pcall(meths.open_win,buf, false, 20, 2, {relative='editor',row=0,col=0,win=0}))
+         meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,win=0}))
       eq({false, "Only one of 'relative' and 'external' should be used"},
-         meth_pcall(meths.open_win,buf, false, 20, 2, {relative='editor',row=0,col=0,external=true}))
+         meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,external=true}))
       eq({false, "Invalid value of 'relative' option"},
-         meth_pcall(meths.open_win,buf, false, 20, 2, {relative='shell',row=0,col=0}))
+         meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
       eq({false, "Invalid value of 'anchor' option"},
-         meth_pcall(meths.open_win,buf, false, 20, 2, {relative='editor',row=0,col=0,anchor='bottom'}))
+         meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
       eq({false, "All of 'relative', 'row', and 'col' has to be specified at once"},
-         meth_pcall(meths.open_win,buf, false, 20, 2, {relative='editor'}))
+         meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor'}))
     end)
 
     it('can be placed relative window or cursor', function()
@@ -288,7 +288,7 @@ describe('floating windows', function()
 
       local buf = meths.create_buf(false,false)
       -- no 'win' arg, relative default window
-      local win = meths.open_win(buf, false, 20, 2, {relative='win', row=0, col=10})
+      local win = meths.open_win(buf, false, {relative='win', width=20, height=2, row=0, col=10})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -329,7 +329,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_set_config(win, -1, -1, {relative='cursor', row=1, col=-2})
+      meths.win_set_config(win, {relative='cursor', row=1, col=-2})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -370,7 +370,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_set_config(win, -1, -1, {relative='cursor', row=0, col=0, anchor='SW'})
+      meths.win_set_config(win, {relative='cursor', row=0, col=0, anchor='SW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -412,7 +412,7 @@ describe('floating windows', function()
       end
 
 
-      meths.win_set_config(win, -1, -1, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
+      meths.win_set_config(win, {relative='win', win=oldwin, row=1, col=10, anchor='NW'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -453,7 +453,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_set_config(win, -1, -1, {relative='win', win=oldwin, row=3, col=39, anchor='SE'})
+      meths.win_set_config(win, {relative='win', win=oldwin, row=3, col=39, anchor='SE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -494,7 +494,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_set_config(win, -1, -1, {relative='win', win=0, row=0, col=50, anchor='NE'})
+      meths.win_set_config(win, {relative='win', win=0, row=0, col=50, anchor='NE'})
       if multigrid then
         screen:expect{grid=[[
         ## grid 1
@@ -544,7 +544,7 @@ describe('floating windows', function()
         screen2:attach(nil, session2)
         screen2:set_default_attr_ids(attrs)
         local buf = meths.create_buf(false,false)
-        meths.open_win(buf, true, 20, 2, {relative='editor', row=2, col=5})
+        meths.open_win(buf, true, {relative='editor', width=20, height=2, row=2, col=5})
         local expected_pos = {
           [2]={{id=1001}, 'NW', 1, 2, 5}
         }
@@ -577,7 +577,7 @@ describe('floating windows', function()
     it('handles resized screen', function()
       local buf = meths.create_buf(false,false)
       meths.buf_set_lines(buf, 0, -1, true, {'such', 'very', 'float'})
-      local win = meths.open_win(buf, false, 15, 4, {relative='editor', row=2, col=10})
+      local win = meths.open_win(buf, false, {relative='editor', width=15, height=4, row=2, col=10})
       local expected_pos = {
           [4]={{id=1002}, 'NW', 1, 2, 10, true},
       }
@@ -756,7 +756,7 @@ describe('floating windows', function()
         ]])
       end
 
-      meths.win_set_config(win, -1, 3, {})
+      meths.win_set_config(win, {width=0, height=3})
       feed('gg')
       if multigrid then
         screen:expect{grid=[[
@@ -1096,7 +1096,7 @@ describe('floating windows', function()
 
     it('does not crash when set cmdheight #9680', function()
       local buf = meths.create_buf(false,false)
-      meths.open_win(buf, false, 20, 2, {relative='editor', row=2, col=5})
+      meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
       command("set cmdheight=2")
       eq(1, meths.eval('1'))
     end)
@@ -1104,7 +1104,7 @@ describe('floating windows', function()
     describe('and completion', function()
       before_each(function()
         local buf = meths.create_buf(false,false)
-        local win = meths.open_win(buf, true, 12, 4, {relative='editor', row=2, col=5})
+        local win = meths.open_win(buf, true, {relative='editor', width=12, height=4, row=2, col=5})
         meths.win_set_option(win , 'winhl', 'Normal:ErrorMsg')
         if multigrid then
           screen:expect{grid=[[
@@ -1523,7 +1523,7 @@ describe('floating windows', function()
 
         local buf = meths.create_buf(false,true)
         meths.buf_set_lines(buf,0,-1,true,{"some info", "about item"})
-        win = meths.open_win(buf, false, 12, 2, {relative='cursor', row=1, col=10})
+        win = meths.open_win(buf, false, {relative='cursor', width=12, height=2, row=1, col=10})
         if multigrid then
           screen:expect{grid=[[
           ## grid 1
@@ -1714,7 +1714,7 @@ describe('floating windows', function()
         command("set hidden")
         meths.buf_set_lines(0,0,-1,true,{"x"})
         local buf = meths.create_buf(false,false)
-        win = meths.open_win(buf, false, 20, 2, {relative='editor', row=2, col=5})
+        win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
         meths.buf_set_lines(buf,0,-1,true,{"y"})
         expected_pos = {
           [3]={{id=1001}, 'NW', 1, 2, 5, true}
@@ -1824,7 +1824,7 @@ describe('floating windows', function()
       end)
 
       it("w with focusable=false", function()
-        meths.win_set_config(win, -1, -1, {focusable=false})
+        meths.win_set_config(win, {focusable=false})
         expected_pos[3][6] = false
         feed("<c-w>wi") -- i to provoke redraw
         if multigrid then
@@ -2038,7 +2038,7 @@ describe('floating windows', function()
       end)
 
       it("focus by mouse (focusable=false)", function()
-        meths.win_set_config(win, -1, -1, {focusable=false})
+        meths.win_set_config(win, {focusable=false})
         meths.buf_set_lines(0, -1, -1, true, {"a"})
         expected_pos[3][6] = false
         if multigrid then
@@ -2939,7 +2939,7 @@ describe('floating windows', function()
         end
 
         if multigrid then
-          meths.win_set_config(0,-1,-1,{external=true})
+          meths.win_set_config(0, {external=true})
           expected_pos = {[3]={external=true}}
           screen:expect{grid=[[
           ## grid 1
@@ -2962,7 +2962,7 @@ describe('floating windows', function()
         ]], float_pos=expected_pos}
         else
           eq({false, "UI doesn't support external windows"},
-             meth_pcall(meths.win_set_config, 0,-1,-1,{external=true}))
+             meth_pcall(meths.win_set_config, 0, {external=true}))
           return
         end
 
@@ -3228,7 +3228,7 @@ describe('floating windows', function()
 
       it(":tabnew and :tabnext (external)", function()
         if multigrid then
-          meths.win_set_config(win,-1,-1,{external=true})
+          meths.win_set_config(win, {external=true})
           expected_pos = {[3]={external=true}}
           feed(":tabnew<cr>")
           screen:expect{grid=[[
@@ -3259,7 +3259,7 @@ describe('floating windows', function()
         ]], float_pos=expected_pos}
         else
           eq({false, "UI doesn't support external windows"},
-             meth_pcall(meths.win_set_config, 0,-1,-1,{external=true}))
+             meth_pcall(meths.win_set_config, 0, {external=true}))
         end
 
         feed(":tabnext<cr>")

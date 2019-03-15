@@ -1004,8 +1004,6 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// @param buffer handle of buffer to be displayed in the window
 /// @param enter whether the window should be entered (made the current window)
-/// @param width width of window (in character cells)
-/// @param height height of window (in character cells)
 /// @param options dict of options for configuring window positioning
 ///                accepts the following keys:
 ///     `relative`: If set, the window becomes a floating window. The window
@@ -1023,6 +1021,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///     `focusable`: Whether window can be focused by wincmds and
 ///         mouse events. Defaults to true. Even if set to false, the window
 ///         can still be entered using |nvim_set_current_win()| API call.
+///     `height`: window height (in character cells). Cannot be smaller than 1.
+///     `width`: window width (in character cells). Cannot be smaller than 2.
 ///     `row`: row position. Screen cell height are used as unit.  Can be
 ///         floating point.
 ///     `col`: column position. Screen cell width is used as unit. Can be
@@ -1047,16 +1047,15 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// @param[out] err Error details, if any
 /// @return the window handle or 0 when error
-Window nvim_open_win(Buffer buffer, Boolean enter,
-                     Integer width, Integer height,
-                     Dictionary options, Error *err)
+Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary options,
+                     Error *err)
   FUNC_API_SINCE(6)
 {
   FloatConfig config = FLOAT_CONFIG_INIT;
   if (!parse_float_config(options, &config, false, err)) {
     return 0;
   }
-  win_T *wp = win_new_float(NULL, (int)width, (int)height, config, err);
+  win_T *wp = win_new_float(NULL, config, err);
   if (!wp) {
     return 0;
   }

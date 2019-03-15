@@ -979,6 +979,7 @@ typedef enum {
 
 typedef struct {
   Window window;
+  int height, width;
   double row, col;
   FloatAnchor anchor;
   FloatRelative relative;
@@ -986,7 +987,8 @@ typedef struct {
   bool focusable;
 } FloatConfig;
 
-#define FLOAT_CONFIG_INIT ((FloatConfig){ .row = 0, .col = 0, .anchor = 0, \
+#define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
+                                          .row = 0, .col = 0, .anchor = 0, \
                                           .relative = 0, .external = false, \
                                           .focusable = true })
 

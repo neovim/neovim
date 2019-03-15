@@ -460,7 +460,9 @@ void ui_grid_resize(handle_T grid_handle, int width, int height, Error *error)
 
   if (wp->w_floating) {
     if (width != wp->w_width && height != wp->w_height) {
-      win_config_float(wp, (int)width, (int)height, wp->w_float_config);
+      wp->w_float_config.width = width;
+      wp->w_float_config.height = height;
+      win_config_float(wp, wp->w_float_config);
     }
   } else {
     // non-positive indicates no request
