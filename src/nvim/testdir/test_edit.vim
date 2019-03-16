@@ -402,8 +402,19 @@ func! Test_edit_13()
     call feedkeys("A {\<cr>more\<cr>}\<esc>", 'tnix')
     call assert_equal(["\tabc {", "\t\tmore", "\t}"], getline(1, '$'))
     set smartindent& autoindent&
-    bw!
+    bwipe!
   endif
+
+  " Test autoindent removing indent of blank line.
+  new
+  call setline(1, '    foo bar baz')
+  set autoindent
+  exe "normal 0eea\<CR>\<CR>\<Esc>"
+  call assert_equal("    foo bar", getline(1))
+  call assert_equal("", getline(2))
+  call assert_equal("    baz", getline(3))
+  set autoindent&
+  bwipe!
 endfunc
 
 func! Test_edit_CR()
