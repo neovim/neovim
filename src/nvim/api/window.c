@@ -438,17 +438,16 @@ Boolean nvim_win_is_valid(Window window)
 /// floating and external windows (including changing a split window to these
 /// types).
 ///
-/// See documentation at |nvim_open_win()|, for the meaning of parameters. Pass
-/// in 0 for `width` and `height` to keep existing size.
+/// See documentation at |nvim_open_win()|, for the meaning of parameters.
 ///
 /// When reconfiguring a floating window, absent option keys will not be
 /// changed. The following restriction apply: `row`, `col` and `relative`
 /// must be reconfigured together. Only changing a subset of these is an error.
 ///
 /// @param      window  Window handle
-/// @param      options Dictionary of options
+/// @param      config  Dictionary of window configuration
 /// @param[out] err     Error details, if any
-void nvim_win_set_config(Window window, Dictionary options, Error *err)
+void nvim_win_set_config(Window window, Dictionary config, Error *err)
   FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -457,34 +456,34 @@ void nvim_win_set_config(Window window, Dictionary options, Error *err)
   }
   bool new_float = !win->w_floating;
   // reuse old values, if not overriden
-  FloatConfig config = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
+  FloatConfig fconfig = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
 
-  if (!parse_float_config(options, &config, !new_float, err)) {
+  if (!parse_float_config(config, &fconfig, !new_float, err)) {
     return;
   }
-  config.height = config.height > 0 ? config.height : win->w_height;
-  config.width = config.width > 0 ? config.width : win->w_width;
+  fconfig.height = fconfig.height > 0 ? fconfig.height : win->w_height;
+  fconfig.width = fconfig.width > 0 ? fconfig.width : win->w_width;
   if (new_float) {
-    if (!win_new_float(win, config, err)) {
+    if (!win_new_float(win, fconfig, err)) {
       return;
     }
     redraw_later(NOT_VALID);
   } else {
-    win_config_float(win, config);
+    win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
 }
 
 /// Return window configuration.
 ///
-/// Return a dictionary containing the same options that can be given to
+/// Return a dictionary containing the same config that can be given to
 /// |nvim_open_win()|.
 ///
-/// `relative` will be empty for normal windows.
+/// `relative` will be an empty string for normal windows.
 ///
-/// @param window Window handle
+/// @param      window Window handle
 /// @param[out] err Error details, if any
-/// @return Window configuration
+/// @return     Window configuration
 Dictionary nvim_win_get_config(Window window, Error *err)
   FUNC_API_SINCE(6)
 {

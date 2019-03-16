@@ -231,15 +231,15 @@ describe('floating windows', function()
 
     it('API has proper error messages', function()
       local buf = meths.create_buf(false,false)
-      eq({false, "Invalid options key 'bork'"},
+      eq({false, "Invalid key 'bork'"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,bork=true}))
-      eq({false, "'win' option is only valid with relative='win'"},
+      eq({false, "'win' key is only valid with relative='win'"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,win=0}))
-      eq({false, "Only one of 'relative' and 'external' should be used"},
+      eq({false, "Only one of 'relative' and 'external' must be used"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,external=true}))
-      eq({false, "Invalid value of 'relative' option"},
+      eq({false, "Invalid value of 'relative' key"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
-      eq({false, "Invalid value of 'anchor' option"},
+      eq({false, "Invalid value of 'anchor' key"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
       eq({false, "All of 'relative', 'row', and 'col' has to be specified at once"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor'}))

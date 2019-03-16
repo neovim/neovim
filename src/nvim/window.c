@@ -539,7 +539,7 @@ static void cmd_with_count(char *cmd, char_u *bufp, size_t bufsize,
 /// float. It must then already belong to the current tabpage!
 ///
 /// config must already have been validated!
-win_T *win_new_float(win_T *wp, FloatConfig config, Error *err)
+win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
 {
   if (wp == NULL) {
     wp = win_alloc(lastwin_nofloating(), false);
@@ -571,26 +571,26 @@ win_T *win_new_float(win_T *wp, FloatConfig config, Error *err)
   // TODO(bfredl): use set_option_to() after merging #9110 ?
   wp->w_p_nu = false;
   wp->w_allbuf_opt.wo_nu = false;
-  win_config_float(wp, config);
+  win_config_float(wp, fconfig);
   wp->w_pos_changed = true;
   redraw_win_later(wp, VALID);
   return wp;
 }
 
-void win_config_float(win_T *wp, FloatConfig config)
+void win_config_float(win_T *wp, FloatConfig fconfig)
 {
-  wp->w_width = MAX(config.width, 2);
-  wp->w_height = MAX(config.height, 1);
+  wp->w_width = MAX(fconfig.width, 2);
+  wp->w_height = MAX(fconfig.height, 1);
 
-  if (config.relative == kFloatRelativeCursor) {
-    config.relative = kFloatRelativeWindow;
-    config.row += curwin->w_wrow;
-    config.col += curwin->w_wcol;
-    config.window = curwin->handle;
+  if (fconfig.relative == kFloatRelativeCursor) {
+    fconfig.relative = kFloatRelativeWindow;
+    fconfig.row += curwin->w_wrow;
+    fconfig.col += curwin->w_wcol;
+    fconfig.window = curwin->handle;
   }
 
-  bool change_external = config.external != wp->w_float_config.external;
-  wp->w_float_config = config;
+  bool change_external = fconfig.external != wp->w_float_config.external;
+  wp->w_float_config = fconfig;
 
   if (!ui_has(kUIMultigrid)) {
     wp->w_height = MIN(wp->w_height, Rows-1);
@@ -697,7 +697,7 @@ static bool parse_float_relative(String relative, FloatRelative *out)
   return true;
 }
 
-bool parse_float_config(Dictionary config, FloatConfig *out, bool reconf,
+bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
                         Error *err)
 {
   bool has_row = false, has_col = false, has_relative = false;
@@ -709,62 +709,62 @@ bool parse_float_config(Dictionary config, FloatConfig *out, bool reconf,
     if (!strcmp(key, "row")) {
       has_row = true;
       if (val.type == kObjectTypeInteger) {
-        out->row = val.data.integer;
+        fconfig->row = val.data.integer;
       } else if (val.type == kObjectTypeFloat) {
-        out->row = val.data.floating;
+        fconfig->row = val.data.floating;
       } else {
         api_set_error(err, kErrorTypeValidation,
-                      "'row' option has to be Integer or Float");
+                      "'row' key must be Integer or Float");
         return false;
       }
     } else if (!strcmp(key, "col")) {
       has_col = true;
       if (val.type == kObjectTypeInteger) {
-        out->col = val.data.integer;
+        fconfig->col = val.data.integer;
       } else if (val.type == kObjectTypeFloat) {
-        out->col = val.data.floating;
+        fconfig->col = val.data.floating;
       } else {
         api_set_error(err, kErrorTypeValidation,
-                      "'col' option has to be Integer or Float");
+                      "'col' key must be Integer or Float");
         return false;
       }
     } else if (strequal(key, "width")) {
       if (val.type == kObjectTypeInteger && val.data.integer >= 0) {
-        out->width = val.data.integer;
+        fconfig->width = val.data.integer;
       } else {
         api_set_error(err, kErrorTypeValidation,
-                      "'width' option has to be a positive Integer");
+                      "'width' key must be a positive Integer");
         return false;
       }
     } else if (strequal(key, "height")) {
       if (val.type == kObjectTypeInteger && val.data.integer >= 0) {
-        out->height= val.data.integer;
+        fconfig->height= val.data.integer;
       } else {
         api_set_error(err, kErrorTypeValidation,
-                      "'height' option has to be a positive Integer");
+                      "'height' key must be a positive Integer");
         return false;
       }
     } else if (!strcmp(key, "anchor")) {
       if (val.type != kObjectTypeString) {
         api_set_error(err, kErrorTypeValidation,
-                      "'anchor' option has to be String");
+                      "'anchor' key must be String");
         return false;
       }
-      if (!parse_float_anchor(val.data.string, &out->anchor)) {
+      if (!parse_float_anchor(val.data.string, &fconfig->anchor)) {
         api_set_error(err, kErrorTypeValidation,
-                      "Invalid value of 'anchor' option");
+                      "Invalid value of 'anchor' key");
         return false;
       }
     } else if (!strcmp(key, "relative")) {
       has_relative = true;
       if (val.type != kObjectTypeString) {
         api_set_error(err, kErrorTypeValidation,
-                      "'relative' option has to be String");
+                      "'relative' key must be String");
         return false;
       }
-      if (!parse_float_relative(val.data.string, &out->relative)) {
+      if (!parse_float_relative(val.data.string, &fconfig->relative)) {
         api_set_error(err, kErrorTypeValidation,
-                      "Invalid value of 'relative' option");
+                      "Invalid value of 'relative' key");
         return false;
       }
     } else if (!strcmp(key, "win")) {
@@ -772,62 +772,62 @@ bool parse_float_config(Dictionary config, FloatConfig *out, bool reconf,
       if (val.type != kObjectTypeInteger
           && val.type != kObjectTypeWindow) {
         api_set_error(err, kErrorTypeValidation,
-                      "'win' option has to be Integer or Window");
+                      "'win' key must be Integer or Window");
         return false;
       }
-      out->window = val.data.integer;
+      fconfig->window = val.data.integer;
     } else if (!strcmp(key, "external")) {
       if (val.type == kObjectTypeInteger) {
-        out->external = val.data.integer;
+        fconfig->external = val.data.integer;
       } else if (val.type == kObjectTypeBoolean) {
-        out->external = val.data.boolean;
+        fconfig->external = val.data.boolean;
       } else {
         api_set_error(err, kErrorTypeValidation,
-                      "'external' option has to be Boolean");
+                      "'external' key must be Boolean");
         return false;
       }
-      has_external = out->external;
+      has_external = fconfig->external;
     } else if (!strcmp(key, "focusable")) {
       if (val.type == kObjectTypeInteger) {
-        out->focusable = val.data.integer;
+        fconfig->focusable = val.data.integer;
       } else if (val.type == kObjectTypeBoolean) {
-        out->focusable = val.data.boolean;
+        fconfig->focusable = val.data.boolean;
       } else {
         api_set_error(err, kErrorTypeValidation,
-                      "'focusable' option has to be Boolean");
+                      "'focusable' key must be Boolean");
         return false;
       }
     } else {
       api_set_error(err, kErrorTypeValidation,
-                    "Invalid options key '%s'", key);
+                    "Invalid key '%s'", key);
       return false;
     }
   }
 
-  if (has_window && !(has_relative && out->relative == kFloatRelativeWindow)) {
+  if (has_window && !(has_relative && fconfig->relative == kFloatRelativeWindow)) {
     api_set_error(err, kErrorTypeValidation,
-                  "'win' option is only valid with relative='win'");
+                  "'win' key is only valid with relative='win'");
     return false;
   }
 
-  if ((has_relative && out->relative == kFloatRelativeWindow)
-      && (!has_window || out->window == 0)) {
-    out->window = curwin->handle;
+  if ((has_relative && fconfig->relative == kFloatRelativeWindow)
+      && (!has_window || fconfig->window == 0)) {
+    fconfig->window = curwin->handle;
   }
 
   if (has_relative && has_external) {
     api_set_error(err, kErrorTypeValidation,
-                  "Only one of 'relative' and 'external' should be used");
+                  "Only one of 'relative' and 'external' must be used");
     return false;
   } else if (!reconf && !has_relative && !has_external) {
     api_set_error(err, kErrorTypeValidation,
                   "One of 'relative' and 'external' must be used");
     return false;
   } else if (has_relative) {
-    out->external = false;
+    fconfig->external = false;
   }
 
-  if (out->external && !ui_has(kUIMultigrid)) {
+  if (fconfig->external && !ui_has(kUIMultigrid)) {
     api_set_error(err, kErrorTypeValidation,
                   "UI doesn't support external windows");
     return false;
@@ -3819,8 +3819,6 @@ static void tabpage_check_windows(tabpage_T *old_curtab)
 
   for (win_T *wp = firstwin; wp; wp = wp->w_next) {
     if (wp->w_floating && !wp->w_float_config.external) {
-      wp->w_float_config.width = wp->w_width;
-      wp->w_float_config.height = wp->w_height;
       win_config_float(wp, wp->w_float_config);
     }
     wp->w_pos_changed = true;
@@ -4756,7 +4754,6 @@ void win_setheight_win(int height, win_T *win)
 
   if (win->w_floating) {
     if (win->w_float_config.external) {
-      win->w_float_config.width = win->w_width;
       win->w_float_config.height = height;
       win_config_float(win, win->w_float_config);
     } else {
@@ -4964,7 +4961,6 @@ void win_setwidth_win(int width, win_T *wp)
   if (wp->w_floating) {
     if (wp->w_float_config.external) {
       wp->w_float_config.width = width;
-      wp->w_float_config.height = wp->w_height;
       win_config_float(wp, wp->w_float_config);
     } else {
       beep_flush();
