@@ -987,18 +987,16 @@ typedef struct {
                                           .relative = 0, .external = false, \
                                           .focusable = true })
 
-/*
- * Structure which contains all information that belongs to a window
- *
- * All row numbers are relative to the start of the window, except w_winrow.
- */
+/// Structure which contains all information that belongs to a window.
+///
+/// All row numbers are relative to the start of the window, except w_winrow.
 struct window_S {
   handle_T handle;                  ///< unique identifier for the window
 
   buf_T       *w_buffer;            ///< buffer we are a window into (used
                                     ///< often, keep it the first item!)
 
-  synblock_T  *w_s;                 /* for :ownsyntax */
+  synblock_T  *w_s;                 ///< for :ownsyntax
 
   int w_hl_id_normal;               ///< 'winhighlight' normal id
   int w_hl_attr_normal;             ///< 'winhighlight' normal final attrs
@@ -1008,18 +1006,18 @@ struct window_S {
 
   int w_hl_needs_update;            ///< attrs need to be recalculated
 
-  win_T       *w_prev;              /* link to previous window */
-  win_T       *w_next;              /* link to next window */
-  bool w_closing;                   /* window is being closed, don't let
-                                       autocommands close it too. */
+  win_T       *w_prev;              ///< link to previous window
+  win_T       *w_next;              ///< link to next window
+  bool w_closing;                   ///< window is being closed, don't let
+                                    ///  autocommands close it too.
 
-  frame_T     *w_frame;             /* frame containing this window */
+  frame_T     *w_frame;             ///< frame containing this window
 
-  pos_T w_cursor;                   /* cursor position in buffer */
+  pos_T w_cursor;                   ///< cursor position in buffer
 
-  colnr_T w_curswant;               /* The column we'd like to be at.  This is
-                                       used to try to stay in the same column
-                                       for up/down cursor motions. */
+  colnr_T w_curswant;               ///< Column we want to be at.  This is
+                                    ///  used to try to stay in the same column
+                                    ///  for up/down cursor motions.
 
   int w_set_curswant;               // If set, then update w_curswant the next
                                     // time through cursupdate() to the

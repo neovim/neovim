@@ -6527,6 +6527,7 @@ aucmd_prepbuf (
     win = curwin;
 
   aco->save_curwin = curwin;
+  aco->save_prevwin = prevwin;
   aco->save_curbuf = curbuf;
   if (win != NULL) {
     /* There is a window for "buf" in the current tab page, make it the
@@ -6624,6 +6625,8 @@ win_found:
       // Hmm, original window disappeared.  Just use the first one.
       curwin = firstwin;
     }
+    prevwin = win_valid(aco->save_prevwin) ? aco->save_prevwin
+              : firstwin;  // window disappeared?
     vars_clear(&aucmd_win->w_vars->dv_hashtab);      // free all w: variables
     hash_init(&aucmd_win->w_vars->dv_hashtab);       // re-use the hashtab
     curbuf = curwin->w_buffer;
@@ -6656,6 +6659,8 @@ win_found:
       }
 
       curwin = aco->save_curwin;
+      prevwin = win_valid(aco->save_prevwin) ? aco->save_prevwin
+                : firstwin;  // window disappeared?
       curbuf = curwin->w_buffer;
       // In case the autocommand moves the cursor to a position that does not
       // exist in curbuf
