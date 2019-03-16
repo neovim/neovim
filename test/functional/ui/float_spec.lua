@@ -152,6 +152,13 @@ describe('floating windows', function()
       end
     end)
 
+    it('return their configuration', function()
+      local buf = meths.create_buf(false, false)
+      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5})
+      local expected = {anchor='NW', col=5, external=false, focusable=true, height=2, relative='editor', row=3, width=20}
+      eq(expected, meths.win_get_config(win))
+    end)
+
     it('defaults to nonumber and NormalFloat highlight', function()
       command('set number')
       command('hi NormalFloat guibg=#333333')
@@ -243,6 +250,10 @@ describe('floating windows', function()
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
       eq({false, "All of 'relative', 'row', and 'col' has to be specified at once"},
          meth_pcall(meths.open_win,buf, false, {width=20,height=2,relative='editor'}))
+      eq({false, "'width' key must be a positive Integer"},
+         meth_pcall(meths.open_win,buf, false, {width=-1,height=2,relative='editor'}))
+      eq({false, "'height' key must be a positive Integer"},
+         meth_pcall(meths.open_win,buf, false, {width=20,height=-1,relative='editor'}))
     end)
 
     it('can be placed relative window or cursor', function()
