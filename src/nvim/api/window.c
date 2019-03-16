@@ -512,21 +512,9 @@ Dictionary nvim_win_get_config(Window window, Error *err)
   PUT(rv, "row", FLOAT_OBJ(wp->w_float_config.row));
   PUT(rv, "col", FLOAT_OBJ(wp->w_float_config.col));
 
-  if (wp->w_floating) {
-    switch (wp->w_float_config.relative) {
-      case kFloatRelativeEditor:
-        PUT(rv, "relative", STRING_OBJ(cstr_to_string("editor")));
-        break;
-      case kFloatRelativeWindow:
-        PUT(rv, "relative", STRING_OBJ(cstr_to_string("win")));
-        break;
-      case kFloatRelativeCursor:
-        PUT(rv, "relative", STRING_OBJ(cstr_to_string("cursor")));
-        break;
-    }
-  } else {
-    PUT(rv, "relative", STRING_OBJ(cstr_to_string("")));
-  }
+  const char *rel =
+    wp->w_floating ? float_relative_str[wp->w_float_config.relative] : "";
+  PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
 
   return rv;
 }

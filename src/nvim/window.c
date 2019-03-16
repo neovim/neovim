@@ -685,11 +685,11 @@ static bool parse_float_relative(String relative, FloatRelative *out)
     *out = (FloatRelative)0;
   }
   char *str = relative.data;
-  if (!STRICMP(str, "editor")) {
+  if (striequal(str, "editor")) {
     *out = kFloatRelativeEditor;
-  }  else if (!STRICMP(str, "win")) {
+  }  else if (striequal(str, "win")) {
     *out = kFloatRelativeWindow;
-  } else if (!STRICMP(str, "cursor")) {
+  } else if (striequal(str, "cursor")) {
     *out = kFloatRelativeCursor;
   } else {
     return false;
@@ -804,7 +804,8 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
     }
   }
 
-  if (has_window && !(has_relative && fconfig->relative == kFloatRelativeWindow)) {
+  if (has_window && !(has_relative
+                      && fconfig->relative == kFloatRelativeWindow)) {
     api_set_error(err, kErrorTypeValidation,
                   "'win' key is only valid with relative='win'");
     return false;

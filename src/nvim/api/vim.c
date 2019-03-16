@@ -1047,7 +1047,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// @param[out] err Error details, if any
 /// @return the window handle or 0 when error
-Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config, Error *err)
+Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
+                     Error *err)
   FUNC_API_SINCE(6)
 {
   FloatConfig fconfig = FLOAT_CONFIG_INIT;

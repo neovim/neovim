@@ -959,6 +959,7 @@ struct matchitem {
 };
 
 typedef int FloatAnchor;
+typedef int FloatRelative;
 
 enum {
   kFloatAnchorEast  = 1,
@@ -971,11 +972,14 @@ enum {
 // SE -> kFloatAnchorSouth | kFloatAnchorEast
 EXTERN const char *const float_anchor_str[] INIT(= { "NW", "NE", "SW", "SE" });
 
-typedef enum {
+enum {
   kFloatRelativeEditor = 0,
   kFloatRelativeWindow = 1,
   kFloatRelativeCursor = 2,
-} FloatRelative;
+};
+
+EXTERN const char *const float_relative_str[] INIT(= { "editor", "window",
+                                                       "cursor" });
 
 typedef struct {
   Window window;
