@@ -710,9 +710,6 @@ open_line (
         less_cols_off++;
       }
     }
-    if (*p_extra != NUL) {
-      did_ai = false;               // append some text, don't truncate now
-    }
 
     /* columns for marks adjusted for removed columns */
     less_cols = (int)(p_extra - saved_line);
