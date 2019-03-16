@@ -12,6 +12,7 @@
 #include "nvim/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/eval/typval.h"
 #include "nvim/popupmnu.h"
 #include "nvim/charset.h"
 #include "nvim/ex_cmds.h"
@@ -840,4 +841,18 @@ void pum_recompose(void)
 int pum_get_height(void)
 {
   return pum_height;
+}
+
+void pum_set_boundings(dict_T *dict)
+{
+  if (!pum_visible()) {
+    return;
+  }
+  tv_dict_add_nr(dict, S_LEN("height"), pum_height);
+  tv_dict_add_nr(dict, S_LEN("width"), pum_width);
+  tv_dict_add_nr(dict, S_LEN("row"), pum_row);
+  tv_dict_add_nr(dict, S_LEN("col"), pum_col);
+  tv_dict_add_nr(dict, S_LEN("size"), pum_size);
+  tv_dict_add_special(dict, S_LEN("scrollbar"),
+                      pum_scrollbar ? kSpecialVarTrue : kSpecialVarFalse);
 }
