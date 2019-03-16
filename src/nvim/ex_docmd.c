@@ -3235,7 +3235,7 @@ const char * set_one_cmd_context(
   case CMD_tjump:
   case CMD_stjump:
   case CMD_ptjump:
-    if (*p_wop != NUL) {
+    if (wop_flags & WOP_TAGFILE) {
       xp->xp_context = EXPAND_TAGS_LISTFILES;
     } else {
       xp->xp_context = EXPAND_TAGS;

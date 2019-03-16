@@ -34,6 +34,7 @@ typedef struct {
 
   // Position of legacy cursor, used both for drawing and visible user cursor.
   Integer client_row, client_col;
+  bool wildmenu_active;
 } UIData;
 
 static PMap(uint64_t) *connected_uis = NULL;
@@ -146,6 +147,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   data->buffer = (Array)ARRAY_DICT_INIT;
   data->hl_id = 0;
   data->client_col = -1;
+  data->wildmenu_active = false;
   ui->data = data;
 
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
@@ -586,6 +588,7 @@ static Array translate_firstarg(UI *ui, Array args)
 
 static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
 {
+  UIData *data = ui->data;
   if (!ui->ui_ext[kUILinegrid]) {
     // the representation of highlights in cmdline changed, translate back
     // never consumes args
@@ -610,6 +613,39 @@ static void remote_ui_event(UI *ui, char *name, Array args, bool *args_consumed)
       return;
     }
   }
+
+  // Back-compat: translate popupmenu_xx to legacy wildmenu_xx.
+  if (ui->ui_ext[kUIWildmenu]) {
+    if (strequal(name, "popupmenu_show")) {
+      data->wildmenu_active = (args.items[4].data.integer == -1)
+                            || !ui->ui_ext[kUIPopupmenu];
+      if (data->wildmenu_active) {
+        Array new_args = ARRAY_DICT_INIT;
+        Array items = args.items[0].data.array;
+        Array new_items = ARRAY_DICT_INIT;
+        for (size_t i = 0; i < items.size; i++) {
+          ADD(new_items, copy_object(items.items[i].data.array.items[0]));
+        }
+        ADD(new_args, ARRAY_OBJ(new_items));
+        push_call(ui, "wildmenu_show", new_args);
+        if (args.items[1].data.integer != -1) {
+          Array new_args2 = ARRAY_DICT_INIT;
+          ADD(new_args2, args.items[1]);
+          push_call(ui, "wildmenu_select", new_args);
+        }
+        return;
+      }
+    } else if (strequal(name, "popupmenu_select")) {
+      if (data->wildmenu_active) {
+        name = "wildmenu_select";
+      }
+    } else if (strequal(name, "popupmenu_hide")) {
+      if (data->wildmenu_active) {
+        name = "wildmenu_hide";
+      }
+    }
+  }
+
 
   Array my_args = ARRAY_DICT_INIT;
   // Objects are currently single-reference

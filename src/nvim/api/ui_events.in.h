@@ -143,11 +143,11 @@ void cmdline_block_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void wildmenu_show(Array items)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
 void wildmenu_select(Integer selected)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
 void wildmenu_hide(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
 
 void msg_show(String kind, Array content, Boolean replace_last)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;

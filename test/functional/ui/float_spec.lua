@@ -1341,7 +1341,7 @@ describe('floating windows', function()
           ]], float_pos={
             [3] = {{ id = 1001 }, "NW", 1, 2, 5, true},
           }, popupmenu={
-            anchor = {0, 2, 3}, items = items, pos = 0
+            anchor = {3, 0, 2}, items = items, pos = 0
           }}
         else
           screen:expect{grid=[[
@@ -1353,7 +1353,7 @@ describe('floating windows', function()
             {0:~    }{12:~           }{0:                       }|
             {3:-- INSERT --}                            |
           ]], popupmenu={
-            anchor = {2, 7}, items = items, pos = 0
+            anchor = {1, 2, 7}, items = items, pos = 0
           }}
         end
 
@@ -1423,7 +1423,7 @@ describe('floating windows', function()
           ]], float_pos={
             [3] = {{ id = 1001 }, "NW", 1, 2, 5, true},
           }, popupmenu={
-            anchor = {0, 0, 2}, items = items, pos = 0
+            anchor = {2, 0, 0}, items = items, pos = 0
           }}
         else
           screen:expect{grid=[[
@@ -1435,7 +1435,7 @@ describe('floating windows', function()
             {0:~    }{12:~           }{0:                       }|
             {3:-- INSERT --}                            |
           ]], popupmenu={
-            anchor = {0, 0}, items = items, pos = 0
+            anchor = {1, 0, 0}, items = items, pos = 0
           }}
         end
 

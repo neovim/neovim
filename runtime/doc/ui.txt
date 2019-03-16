@@ -31,7 +31,7 @@ a dictionary with these (optional) keys:
 	`ext_popupmenu`		Externalize the popupmenu. |ui-popupmenu|
 	`ext_tabline`		Externalize the tabline. |ui-tabline|
 	`ext_cmdline`		Externalize the cmdline. |ui-cmdline|
-	`ext_wildmenu`		Externalize the wildmenu. |ui-wildmenu|
+	`ext_wildmenu`		Externalize the wildmenu (deprecated). |ui-wildmenu|
 	`ext_messages`		Externalize messages. |ui-messages|
 	`ext_linegrid`		Use new revision of the grid events. |ui-linegrid|
 	`ext_multigrid`		Use per-window grid based events. |ui-multigrid|
@@ -554,7 +554,7 @@ See |nvim_input_mouse| for sending mouse events to Nvim.
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*
 
-Only sent if `ext_popupmenu` option is set in |ui-options|
+Only sent if `ext_popupmenu` option is set in |ui-options|.
 
 ["popupmenu_show", items, selected, row, col, grid]
 	Show |popupmenu-completion|. `items` is an array of completion items
@@ -564,7 +564,9 @@ Only sent if `ext_popupmenu` option is set in |ui-options|
 	index into the array of items (-1 if no item is selected). `row` and
 	`col` give the anchor position, where the first character of the
 	completed word will be. When |ui-multigrid| is used, `grid` is the
-	grid for the anchor position.
+	grid for the anchor position. When `ext_cmdline` is active, `grid` is
+	set to -1 to indicate the popupmenu should be anchored to the external
+	cmdline. Then `col` will be a byte position in the cmdline text.
 
 ["popupmenu_select", selected]
 	Select an item in the current popupmenu. `selected` is a zero-based
@@ -588,7 +590,10 @@ Only sent if `ext_tabline` option is set in |ui-options|
 ==============================================================================
 Cmdline Events							   *ui-cmdline*
 
-Only sent if `ext_cmdline` option is set in |ui-options|.
+Only sent if `ext_cmdline` option is set in |ui-options|. To handle
+command-line completion (wildmenu), use |ui-popupmenu| events activated by
+|ext_popupmenu| option. (The `ext_wildmenu` option only exists for backwards
+compatibility).
 
 ["cmdline_show", content, pos, firstc, prompt, indent, level]
         content: List of [attrs, string]
@@ -647,6 +652,11 @@ Only sent if `ext_cmdline` option is set in |ui-options|.
 Wildmenu Events							   *ui-wildmenu*
 
 Only sent if `ext_wildmenu` option is set in |ui-options|
+
+Deprecated. When `ext_cmdline` and `ext_popupmenu` are both set,
+|ui-popupmenu| events will be used for command-line completion. But if
+`ext_wildmenu` is also set, these events are still used for backwards
+compatibility. New clients should use `ext_popupmenu` instead.
 
 ["wildmenu_show", items]
 	Activate the wildmenu (command-line completion). `items` is an array
