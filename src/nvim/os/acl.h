@@ -1,25 +1,23 @@
 #ifndef NVIM_OS_ACL_H
 #define NVIM_OS_ACL_H
 
-#include "nvim/vim.h"
-
-#if defined(HAVE_SYS_ACL_H)
-
-#include <sys/types.h>
+#ifdef HAVE_SYS_ACL_H
 #include <sys/acl.h>
-
-typedef acl_t vim_acl_T;
-
-#else
-
-typedef void *vim_acl_T;
-
 #endif
 
-vim_acl_T os_get_acl(char_u *fname);
+#include "nvim/vim.h"
 
-void os_set_acl(char_u *fname, vim_acl_T aclent);
+#ifdef HAVE_ACL
+# ifdef WIN32
+typedef struct win_acl *vim_acl_T;
+# else
+typedef acl_t vim_acl_T;
+# endif
+#else
+typedef void *vim_acl_T;
+#endif
 
-void os_free_acl(vim_acl_T aclent);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/acl.h.generated.h"
+#endif
 #endif  // NVIM_OS_ACL_H

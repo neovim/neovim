@@ -46,7 +46,7 @@ if(Iconv_FOUND)
   set(HAVE_ICONV 1)
 endif()
 
-if(LibACL_FOUND)
+if(LibACL_FOUND OR WIN32)
   set(HAVE_ACL 1)
 endif()
 

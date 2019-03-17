@@ -1089,7 +1089,9 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
 
   // Strip any sticky and executable bits.
   perm = perm & 0666;
-#ifdef HAVE_ACL
+// In cygwin, deleting the execute permission causes the order of the ACL
+// to be incorrect, so do not delete the execute permission.
+#if defined(HAVE_ACL) && !defined(__CYGWIN__) && !defined(WIN32)
   if (acl != NULL) {
     acl_entry_t entry;
     int ret = acl_get_entry(acl, ACL_FIRST_ENTRY, &entry);
