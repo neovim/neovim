@@ -1270,7 +1270,7 @@ write_error:
     EMSG2(_("E829: write error in undo file: %s"), file_name);
 
   if (buf->b_ffname != NULL) {
-    /* For systems that support ACL: get the ACL from the original file. */
+    // For systems that support ACL: get the ACL from the original file.
     os_set_acl((char_u *)file_name, acl);
   }
 

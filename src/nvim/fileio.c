@@ -2314,9 +2314,9 @@ buf_write(
 #ifdef HAS_BW_FLAGS
   int wb_flags = 0;
 #endif
-  vim_acl_T acl = NULL;                 /* ACL copied from original file to
-                                           backup or new file */
-  int write_undo_file = FALSE;
+  vim_acl_T acl = NULL;                 // ACL copied from original file to
+                                        // backup or new file
+  int write_undo_file = false;
   context_sha256_T sha_ctx;
   unsigned int bkc = get_bkc_value(buf);
 
@@ -2656,23 +2656,26 @@ buf_write(
      */
     if (overwriting) {
       retval = check_mtime(buf, &file_info_old);
-      if (retval == FAIL)
+      if (retval == FAIL) {
         goto fail;
+      }
     }
   }
 
-  /*
-   * For systems that support ACL: get the ACL from the original file.
-   */
-  if (!newfile)
+  //
+  // For systems that support ACL: get the ACL from the original file.
+  //
+  if (!newfile) {
     acl = os_get_acl(fname);
+  }
 
   /*
    * If 'backupskip' is not empty, don't make a backup for some files.
    */
   dobackup = (p_wb || p_bk || *p_pm != NUL);
-  if (dobackup && *p_bsk != NUL && match_file_list(p_bsk, sfname, ffname))
-    dobackup = FALSE;
+  if (dobackup && *p_bsk != NUL && match_file_list(p_bsk, sfname, ffname)) {
+    dobackup = false;
+  }
 
   /*
    * Save the value of got_int and reset it.  We don't want a previous
@@ -4618,7 +4621,7 @@ int vim_rename(const char_u *from, const char_u *to)
   char        *errmsg = NULL;
   char        *buffer;
   long perm;
-  vim_acl_T acl;                /* ACL from original file */
+  vim_acl_T acl;                // ACL from original file
   bool use_tmp_file = false;
 
   /*
@@ -4734,8 +4737,9 @@ int vim_rename(const char_u *from, const char_u *to)
 
   xfree(buffer);
   close(fd_in);
-  if (close(fd_out) < 0)
+  if (close(fd_out) < 0) {
     errmsg = _("E209: Error closing \"%s\"");
+  }
   if (n < 0) {
     errmsg = _("E210: Error reading \"%s\"");
     to = from;

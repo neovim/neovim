@@ -15,10 +15,10 @@
 # define _ACL_TYPE ACL_TYPE_ACCESS
 #endif
 
-/*
- * Return a pointer to the ACL of file "fname" in allocated memory.
- * Return NULL if the ACL is not available for whatever reason.
- */
+//
+// Return a pointer to the ACL of file "fname" in allocated memory.
+// Return NULL if the ACL is not available for whatever reason.
+//
 vim_acl_T os_get_acl(char_u *fname)
 {
   vim_acl_T ret = NULL;
@@ -33,13 +33,14 @@ vim_acl_T os_get_acl(char_u *fname)
   return ret;
 }
 
-/*
- * Set the ACL of file "fname" to "acl" (unless it's NULL).
- */
+//
+// Set the ACL of file "fname" to "acl" (unless it's NULL).
+//
 void os_set_acl(char_u *fname, vim_acl_T aclent)
 {
-  if (aclent == NULL)
+  if (aclent == NULL) {
     return;
+  }
 
 #if defined(HAVE_SYS_ACL_H)
   if (acl_set_file((char *)fname, _ACL_TYPE, aclent) != 0 && errno != 0) {
@@ -50,8 +51,9 @@ void os_set_acl(char_u *fname, vim_acl_T aclent)
 
 void os_free_acl(vim_acl_T aclent)
 {
-  if (aclent == NULL)
+  if (aclent == NULL) {
     return;
+  }
 
 #if defined(HAVE_SYS_ACL_H)
   if (acl_free(aclent) != 0 && errno != 0) {
