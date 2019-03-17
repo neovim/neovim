@@ -300,6 +300,14 @@ void init_homedir(void)
 #endif
     homedir = xstrdup(var);
   }
+  else {
+    size_t maxpathl = MAXPATHL;
+    if (uv_os_homedir((char *)IObuff, &maxpathl)) {
+      var = (char *) IObuff;
+      homedir = xstrdup(var);
+      os_setenv("HOME", var, 0);
+    }
+  }
 }
 
 #if defined(EXITFREE)
