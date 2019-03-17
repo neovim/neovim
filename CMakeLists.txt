@@ -98,6 +98,12 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 
+if(WIN32)
+  option(ENABLE_LIBACL "enable libacl" OFF)
+else()
+  option(ENABLE_LIBACL "enabled libacl" ON)
+endif()
+
 message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 # Build type.
@@ -462,6 +468,11 @@ if(ENABLE_LIBINTL)
   # LibIntl (not Intl) selects our FindLibIntl.cmake script. #8464
   find_package(LibIntl REQUIRED)
   include_directories(SYSTEM ${LibIntl_INCLUDE_DIRS})
+endif()
+
+if(ENABLE_LIBACL)
+  find_package(LibACL REQUIRED)
+  include_directories(SYSTEM ${LibACL_INCLUDE_DIRS})
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD

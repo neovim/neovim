@@ -5,9 +5,6 @@
 
 #if defined(HAVE_SYS_ACL_H)
 
-// For features, not guarding calls to ACL fns.
-#define HAVE_ACL
-
 #include <sys/types.h>
 #include <sys/acl.h>
 
