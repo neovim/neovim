@@ -109,6 +109,7 @@
 #include "nvim/os/time.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/acl.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "undo.c.generated.h"
@@ -1088,7 +1089,38 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
 
   // Strip any sticky and executable bits.
   perm = perm & 0666;
-  // TODO: whatever the equivalent of stripping exec from ACL is
+#ifdef HAVE_ACL
+  if (acl != NULL) {
+    acl_entry_t entry;
+    int ret = acl_get_entry(acl, ACL_FIRST_ENTRY, &entry);
+    if (ret == 1) {
+      do {
+        acl_tag_t tag;
+        acl_permset_t permset;
+        if (!acl_get_tag_type(entry, &tag)) {
+          if (tag != ACL_UNDEFINED_TAG
+              && !acl_get_permset(entry, &permset)) {
+            if (!acl_delete_perm(permset, ACL_EXECUTE)) {
+              if (!acl_set_permset(entry, permset)) {
+                ELOG("failed set permset to entry: %s", uv_strerror(errno));
+              }
+            } else {
+              ELOG("failed delete ACL_EXECUTE from permset: %s",
+                   uv_strerror(errno));
+            }
+          } else if (tag != ACL_UNDEFINED_TAG) {
+            ELOG("failed get permset from entry: %s", uv_strerror(errno));
+          }
+        } else {
+          ELOG("failed get tag type from entry: %s", uv_strerror(errno));
+        }
+      } while ((ret = acl_get_entry(acl, ACL_NEXT_ENTRY, &entry)) == 1);
+    }
+    if (ret == -1) {
+      ELOG("failed get entry from acl: %s", uv_strerror(errno));
+    }
+  }
+#endif
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
