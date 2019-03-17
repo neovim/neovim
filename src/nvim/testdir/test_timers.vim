@@ -52,7 +52,7 @@ func Test_repeat_many()
   endif
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange((has('mac') ? 1 : 2), 4, g:val)
+  call s:assert_inrange((has('mac') ? 1 : 2), 4, g:val)
 endfunc
 
 func Test_with_partial_callback()

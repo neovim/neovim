@@ -56,12 +56,13 @@ typing certain characters or commands in certain contexts.  Note that this not
 only triggers C-indenting.  When 'indentexpr' is not empty 'indentkeys' is
 used instead.  The format of 'cinkeys' and 'indentkeys' is equal.
 
-The default is "0{,0},0),:,0#,!^F,o,O,e" which specifies that indenting occurs
-as follows:
+The default is "0{,0},0),0],:,0#,!^F,o,O,e" which specifies that indenting
+occurs as follows:
 
 	"0{"	if you type '{' as the first character in a line
 	"0}"	if you type '}' as the first character in a line
 	"0)"	if you type ')' as the first character in a line
+	"0]"	if you type ']' as the first character in a line
 	":"	if you type ':' after a label or case statement
 	"0#"	if you type '#' as the first character in a line
 	"!^F"	if you type CTRL-F (which is not inserted)

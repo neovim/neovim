@@ -1214,7 +1214,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option is not used when 'paste' is set.
 
 							*'cinkeys'* *'cink'*
-'cinkeys' 'cink'	string	(default "0{,0},0),:,0#,!^F,o,O,e")
+'cinkeys' 'cink'	string	(default "0{,0},0),0],:,0#,!^F,o,O,e")
 			local to buffer
 	A list of keys that, when typed in Insert mode, cause reindenting of
 	the current line.  Only used if 'cindent' is on and 'indentexpr' is
@@ -3265,7 +3265,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 
 						*'indentkeys'* *'indk'*
-'indentkeys' 'indk'	string	(default "0{,0},:,0#,!^F,o,O,e")
+'indentkeys' 'indk'	string	(default "0{,0},0),0],:,0#,!^F,o,O,e")
 			local to buffer
 	A list of keys that, when typed in Insert mode, cause reindenting of
 	the current line.  Only happens if 'indentexpr' isn't empty.
