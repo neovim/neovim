@@ -609,13 +609,6 @@ static int command_line_execute(VimState *state, int key)
     } else if (s->c == K_RIGHT) {
       s->c = Ctrl_N;
     }
-    if (compl_match_array) {
-      if (s->c == K_UP) {
-        s->c = Ctrl_P;
-      } else if (s->c == K_DOWN) {
-        s->c = Ctrl_N;
-      }
-    }
   }
 
   // Hitting CR after "emenu Name.": complete submenu
