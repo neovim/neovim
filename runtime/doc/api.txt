@@ -245,10 +245,10 @@ functional buffer windows and support user editing. They support the standard
 'statusline' is not supported currently).
 
 Floating windows are created either by |nvim_open_win()| to open a new window,
-or |nvim_win_config()| to reconfigure a normal window into a float. Currently
-the position can either be grid coordinates relative the top-left of some
-window, or a position relative to the current window cursor.  The parameters
-for positioning are described in detail at |nvim_open_win()| help.
+or |nvim_win_set_config()| to reconfigure a normal window into a float.
+Currently the position can either be grid coordinates relative the top-left of
+some window, or a position relative to the current window cursor.  The
+parameters for positioning are described in detail at |nvim_open_win()|.
 
 |nvim_open_win()| assumes an existing buffer to display in the window. To create
 a scratch buffer for the float, |nvim_create_buffer()| can be used. The text in
@@ -264,8 +264,9 @@ Here is an example for creating a float with scratch buffer: >
 
     let buf = nvim_create_buf(v:false, v:true)
     call nvim_buf_set_lines(buf, 0, -1, v:true, ["test", "text"])
-    let opts = {'relative': 'cursor', 'col':0, 'row':1, 'anchor': 'NW'}
-    let win =  nvim_open_win(buf, 0, 10, 2, opts)
+    let opts = {'relative': 'cursor', 'width': 10, 'height': 2, 'col': 0,
+        \ 'row': 1, 'anchor': 'NW'}
+    let win = nvim_open_win(buf, 0, opts)
     " optional: change highlight, otherwise Pmenu is used
     call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
 >
@@ -624,8 +625,7 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                 Return: ~
                     Buffer handle, or 0 on error
 
-                                                             *nvim_open_win()*
-nvim_open_win({buffer}, {enter}, {width}, {height}, {options})
+nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 Open a new window.
 
                 Currently this is used to open floating and external windows.
@@ -643,20 +643,20 @@ nvim_open_win({buffer}, {enter}, {width}, {height}, {options})
                     {buffer}   handle of buffer to be displayed in the window
                     {enter}    whether the window should be entered (made the
                                current window)
-                    {width}    width of window (in character cells)
-                    {height}   height of window (in character cells)
-                    {options}  dict of options for configuring window
-                               positioning accepts the following keys:
+                    {config}   dictionary for the window configuration accepts
+                               these keys:
 
                         `relative`: If set, the window becomes a
                         floating window. The window will be placed with
                         row,col coordinates relative one of the
                         following:
                             "editor" the global editor grid
-                            "win"    a window. Use 'win' option below to
-                                     specify window id, or current window will
-                                     be used by default.
+                            "win"    a window. Use `win` to specify window id,
+                                     or current window will be used by default.
                             "cursor" the cursor position in current window.
+
+                        `win`: when using `relative='win'`, window id of the window
+                        where the position is defined.
 
                         `anchor`: the corner of the float that the row,col
                         position defines
@@ -670,18 +670,19 @@ nvim_open_win({buffer}, {enter}, {width}, {height}, {options})
                         the window can still be entered using
                         |nvim_set_current_win()| API call.
 
+                        `height`: Window height in character cells. Minimum of 1.
+
+                        `width`: Window width in character cells. Minimum of 2.
+
                         `row`: row position. Screen cell height are used as unit.
                         Can be floating point.
 
                         `col`: column position.  Screen cell width is used as
                         unit. Can be floating point.
 
-                        `win`: when using relative='win', window id of the window
-                        where the position is defined.
-
                         `external`: GUI should display the window as an external
                         top-level window. Currently accepts no other
-                        positioning options together with this.
+                        positioning configuration together with this.
 
                 With editor positioning row=0, col=0 refers to the top-left
                 corner of the screen-grid and row=Lines-1, Columns-1 refers to
@@ -1561,20 +1562,36 @@ nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                 Return: ~
                     true if the window is valid, false otherwise
 
-                                                           *nvim_win_config()*
-nvim_win_config({window}, {width}, {height}, {options})
+nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
                 Configure window position. Currently this is only used to
                 configure floating and external windows (including changing a
                 split window to these types).
 
                 See documentation at |nvim_open_win()|, for the meaning of
-                parameters. Pass in -1 for 'witdh' and 'height' to keep
-                exiting size.
+                parameters.
 
                 When reconfiguring a floating window, absent option keys will
                 not be changed. The following restriction apply: `row`, `col`
                 and `relative` must be reconfigured together. Only changing a
                 subset of these is an error.
+
+                Parameters: ~
+                    {window}  Window handle
+                    {config}  Dictionary of window configuration
+
+nvim_win_get_config({window})                          *nvim_win_get_config()*
+                Return window configuration.
+
+                Return a dictionary containing the same config that can be
+                given to |nvim_open_win()|.
+
+                `relative` will be an empty string for normal windows.
+
+                Parameters: ~
+                    {window}  Window handle
+
+                Return: ~
+                    Window configuration
 
 nvim_win_close({window}, {force})                           *nvim_win_close()*
                 Close a window.

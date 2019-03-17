@@ -958,24 +958,32 @@ struct matchitem {
   int conceal_char;         ///< cchar for Conceal highlighting
 };
 
-typedef enum {
-    kFloatAnchorEast = 1,
-    kFloatAnchorSouth = 2,
+typedef int FloatAnchor;
+typedef int FloatRelative;
 
-    kFloatAnchorNW = 0,
-    kFloatAnchorNE = 1,
-    kFloatAnchorSW = 2,
-    kFloatAnchorSE = 3,
-} FloatAnchor;
+enum {
+  kFloatAnchorEast  = 1,
+  kFloatAnchorSouth = 2,
+};
 
-typedef enum {
-    kFloatRelativeEditor = 0,
-    kFloatRelativeWindow = 1,
-    kFloatRelativeCursor = 2,
-} FloatRelative;
+// NW -> 0
+// NE -> kFloatAnchorEast
+// SW -> kFloatAnchorSouth
+// SE -> kFloatAnchorSouth | kFloatAnchorEast
+EXTERN const char *const float_anchor_str[] INIT(= { "NW", "NE", "SW", "SE" });
+
+enum {
+  kFloatRelativeEditor = 0,
+  kFloatRelativeWindow = 1,
+  kFloatRelativeCursor = 2,
+};
+
+EXTERN const char *const float_relative_str[] INIT(= { "editor", "window",
+                                                       "cursor" });
 
 typedef struct {
   Window window;
+  int height, width;
   double row, col;
   FloatAnchor anchor;
   FloatRelative relative;
@@ -983,7 +991,8 @@ typedef struct {
   bool focusable;
 } FloatConfig;
 
-#define FLOAT_CONFIG_INIT ((FloatConfig){ .row = 0, .col = 0, .anchor = 0, \
+#define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
+                                          .row = 0, .col = 0, .anchor = 0, \
                                           .relative = 0, .external = false, \
                                           .focusable = true })
 

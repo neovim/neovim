@@ -1003,35 +1003,35 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 /// Exactly one of `external` and `relative` must be specified.
 ///
 /// @param buffer handle of buffer to be displayed in the window
-/// @param enter whether the window should be entered (made the current window)
-/// @param width width of window (in character cells)
-/// @param height height of window (in character cells)
-/// @param options dict of options for configuring window positioning
-///                accepts the following keys:
+/// @param enter  whether the window should be entered (made the current window)
+/// @param config dictionary for the window configuration accepts these keys:
+///
 ///     `relative`: If set, the window becomes a floating window. The window
 ///         will be placed with row,col coordinates relative one of the
 ///         following:
 ///        "editor" the global editor grid
-///        "win"    a window. Use 'win' option below to specify window id,
-///                 or current window will be used by default.
+///        "win"    a window. Use `win` to specify a window id,
+///                 or the current window will be used by default.
 ///        "cursor" the cursor position in current window.
-///     `anchor`:   the corner of the float that the row,col position defines
+///     `win`: When using relative='win', window id of the window where the
+///         position is defined.
+///     `anchor`: The corner of the float that the row,col position defines:
 ///        "NW" north-west (default)
 ///        "NE" north-east
 ///        "SW" south-west
 ///        "SE" south-east
-///     `focusable`: Whether window can be focused by wincmds and
-///         mouse events. Defaults to true. Even if set to false, the window
-///         can still be entered using |nvim_set_current_win()| API call.
-///     `row`: row position. Screen cell height are used as unit.  Can be
+///     `height`: window height (in character cells). Minimum of 1.
+///     `width`: window width (in character cells). Minimum of 2.
+///     `row`: row position. Screen cell height are used as unit. Can be
 ///         floating point.
 ///     `col`: column position. Screen cell width is used as unit. Can be
 ///         floating point.
-///     `win`: when using relative='win', window id of the window where the
-///         position is defined.
-///     `external` GUI should display the window as an external
-///         top-level window. Currently accepts no other positioning options
-///         together with this.
+///     `focusable`: Whether window can be focused by wincmds and
+///         mouse events. Defaults to true. Even if set to false, the window
+///         can still be entered using |nvim_set_current_win()| API call.
+///     `external`: GUI should display the window as an external
+///         top-level window. Currently accepts no other positioning
+///         configuration together with this.
 ///
 /// With editor positioning row=0, col=0 refers to the top-left corner of the
 /// screen-grid and row=Lines-1, Columns-1 refers to the bottom-right corner.
@@ -1047,16 +1047,15 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// @param[out] err Error details, if any
 /// @return the window handle or 0 when error
-Window nvim_open_win(Buffer buffer, Boolean enter,
-                     Integer width, Integer height,
-                     Dictionary options, Error *err)
+Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
+                     Error *err)
   FUNC_API_SINCE(6)
 {
-  FloatConfig config = FLOAT_CONFIG_INIT;
-  if (!parse_float_config(options, &config, false, err)) {
+  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  if (!parse_float_config(config, &fconfig, false, err)) {
     return 0;
   }
-  win_T *wp = win_new_float(NULL, (int)width, (int)height, config, err);
+  win_T *wp = win_new_float(NULL, fconfig, err);
   if (!wp) {
     return 0;
   }
