@@ -302,10 +302,14 @@ void init_homedir(void)
   }
   else {
     size_t maxpathl = MAXPATHL;
-    if (uv_os_homedir((char *)IObuff, &maxpathl)) {
+    int ret_value = uv_os_homedir((char *)IObuff, &maxpathl);
+    if (ret_value == 0) {
       var = (char *) IObuff;
       homedir = xstrdup(var);
       os_setenv("HOME", var, 0);
+    }
+    else {
+      ELOG("uv_os_homedir failed: %d: %s", ret_value, os_strerror(ret_value));
     }
   }
 }
