@@ -64,7 +64,8 @@ describe(':mksession', function()
     -- Create a new test instance of Nvim.
     clear()
 
-    command('source ' .. session_path)
+    -- Use :silent to avoid press-enter prompt due to long path
+    command('silent source ' .. session_path)
     command('tabnext 1')
     eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', eval("fnamemodify(bufname('%'), ':p')"))
     command('tabnext 2')
