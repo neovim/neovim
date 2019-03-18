@@ -1472,15 +1472,16 @@ au BufNewFile,BufRead *.install
 	\   call dist#ft#SetFileTypeSH("bash") |
 	\ endif
 
-" tcsh scripts
+" tcsh scripts (patterns ending in a star further below)
 au BufNewFile,BufRead .tcshrc,*.tcsh,tcsh.tcshrc,tcsh.login	call dist#ft#SetFileTypeShell("tcsh")
 
 " csh scripts, but might also be tcsh scripts (on some systems csh is tcsh)
+" (patterns ending in a start further below)
 au BufNewFile,BufRead .login,.cshrc,csh.cshrc,csh.login,csh.logout,*.csh,.alias  call dist#ft#CSH()
 
-" Z-Shell script
+" Z-Shell script (patterns ending in a star further below)
 au BufNewFile,BufRead .zprofile,*/etc/zprofile,.zfbfmarks  setf zsh
-au BufNewFile,BufRead .zsh,.zlog,.zcompdump  	call s:StarSetf('zsh')
+au BufNewFile,BufRead .zshrc,.zshenv,.zlogin,.zlogout,.zcompdump setf zsh
 au BufNewFile,BufRead *.zsh			setf zsh
 
 " Scheme
@@ -2086,9 +2087,6 @@ au BufNewFile,BufRead .tcshrc*	call dist#ft#SetFileTypeShell("tcsh")
 " csh scripts ending in a star
 au BufNewFile,BufRead .login*,.cshrc*  call dist#ft#CSH()
 
-" Z-Shell script ending in a star
-au BufNewFile,BufRead .zsh*,.zlog*,.zcompdump*  call s:StarSetf('zsh')
-
 " Vim script
 au BufNewFile,BufRead *vimrc*			call s:StarSetf('vim')
 
@@ -2116,7 +2114,8 @@ au BufNewFile,BufRead */etc/xinetd.d/*		call s:StarSetf('xinetd')
 " yum conf (close enough to dosini)
 au BufNewFile,BufRead */etc/yum.repos.d/*	call s:StarSetf('dosini')
 
-" Z-Shell script
+" Z-Shell script ending in a star
+au BufNewFile,BufRead .zsh*,.zlog*,.zcompdump*  call s:StarSetf('zsh')
 au BufNewFile,BufRead zsh*,zlog*		call s:StarSetf('zsh')
 
 
