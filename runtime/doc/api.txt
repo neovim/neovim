@@ -246,8 +246,8 @@ functional buffer windows and support user editing. They support the standard
 
 Floating windows are created either by |nvim_open_win()| to open a new window,
 or |nvim_win_set_config()| to reconfigure a normal window into a float.
-Currently the position can either be grid coordinates relative the top-left of
-some window, or a position relative to the current window cursor.  The
+Currently the position can either be grid coordinates relative to the top-left
+of some window, or a position relative to the current window cursor.  The
 parameters for positioning are described in detail at |nvim_open_win()|.
 
 |nvim_open_win()| assumes an existing buffer to display in the window. To create
