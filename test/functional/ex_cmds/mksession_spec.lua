@@ -7,7 +7,6 @@ local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local funcs = helpers.funcs
 local rmdir = helpers.rmdir
-local eval = helpers.eval
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
@@ -67,8 +66,8 @@ describe(':mksession', function()
     -- Use :silent to avoid press-enter prompt due to long path
     command('silent source ' .. session_path)
     command('tabnext 1')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', eval("fnamemodify(bufname('%'), ':p')"))
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand('%:p'))
     command('tabnext 2')
-    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', eval("fnamemodify(bufname('%'), ':p')"))
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
   end)
 end)
