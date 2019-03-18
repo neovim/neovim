@@ -197,7 +197,7 @@ func dist#ft#FTe()
     exe 'setf ' . g:filetype_euphoria
   else
     let n = 1
-    while n < 100 && n < line("$")
+    while n < 100 && n <= line("$")
       if getline(n) =~ "^\\s*\\(<'\\|'>\\)\\s*$"
 	setf specman
 	return
@@ -211,7 +211,7 @@ endfunc
 " Distinguish between HTML, XHTML and Django
 func dist#ft#FThtml()
   let n = 1
-  while n < 10 && n < line("$")
+  while n < 10 && n <= line("$")
     if getline(n) =~ '\<DTD\s\+XHTML\s'
       setf xhtml
       return
@@ -222,13 +222,13 @@ func dist#ft#FThtml()
     endif
     let n = n + 1
   endwhile
-  setf html
+  setf FALLBACK html
 endfunc
 
 " Distinguish between standard IDL and MS-IDL
 func dist#ft#FTidl()
   let n = 1
-  while n < 50 && n < line("$")
+  while n < 50 && n <= line("$")
     if getline(n) =~ '^\s*import\s\+"\(unknwn\|objidl\)\.idl"'
       setf msidl
       return
@@ -687,7 +687,7 @@ endfunc
 
 func dist#ft#FTxml()
   let n = 1
-  while n < 100 && n < line("$")
+  while n < 100 && n <= line("$")
     let line = getline(n)
     " DocBook 4 or DocBook 5.
     let is_docbook4 = line =~ '<!DOCTYPE.*DocBook'
@@ -713,7 +713,7 @@ endfunc
 
 func dist#ft#FTy()
   let n = 1
-  while n < 100 && n < line("$")
+  while n < 100 && n <= line("$")
     let line = getline(n)
     if line =~ '^\s*%'
       setf yacc
