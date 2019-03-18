@@ -748,6 +748,66 @@ describe('CursorLine highlight', function()
     ]])
   end)
 
+  it('always updated. vim-patch:8.1.0849', function()
+    local screen = Screen.new(50,5)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.SlateBlue},
+      [2] = {bold = true, foreground = Screen.colors.Brown},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
+      [5] = {background = Screen.colors.Gray90},
+      [6] = {bold = true, foreground = Screen.colors.Blue1},
+      [7] = {background = Screen.colors.LightRed},
+      [8] = {foreground = Screen.colors.Brown},
+    })
+    screen:attach()
+    command('set cursorline relativenumber')
+    command('call setline(1, ["","1","2","3",""])')
+    feed('Gy3k')
+    screen:expect([[
+      {2:  0 }{5:^1                                             }|
+      {8:  1 }2                                             |
+      {8:  2 }3                                             |
+      {8:  3 }                                              |
+      4 lines yanked                                    |
+    ]])
+    feed('jj')
+    screen:expect([[
+      {8:  2 }1                                             |
+      {8:  1 }2                                             |
+      {2:  0 }{5:^3                                             }|
+      {8:  1 }                                              |
+      4 lines yanked                                    |
+    ]])
+  end)
+
+  it('with visual area. vim-patch:8.1.1001', function()
+    local screen = Screen.new(50,5)
+    screen:set_default_attr_ids({
+      [1] = {foreground = Screen.colors.SlateBlue},
+      [2] = {bold = true, foreground = Screen.colors.Brown},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {foreground = Screen.colors.SlateBlue, background = Screen.colors.Gray90},
+      [5] = {background = Screen.colors.Gray90},
+      [6] = {bold = true, foreground = Screen.colors.Blue1},
+      [7] = {background = Screen.colors.LightRed},
+      [8] = {foreground = Screen.colors.Brown},
+      [9] = {background = Screen.colors.LightGrey},
+      [10] = {bold = true},
+    })
+    screen:attach()
+    command('set cursorline')
+    command('call setline(1, repeat(["abc"], 50))')
+    feed('V<C-f>zbkkjk')
+    screen:expect([[
+      {9:abc}                                               |
+      ^a{9:bc}                                               |
+      abc                                               |
+      abc                                               |
+      {10:-- VISUAL LINE --}                                 |
+    ]])
+  end)
+
   it('with split-windows in diff-mode', function()
     local screen = Screen.new(50,12)
     screen:set_default_attr_ids({
