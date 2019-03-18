@@ -1,7 +1,7 @@
 " Vim functions for file type detection
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Dec 05
+" Last Change:	2019 Jan 18
 
 " These functions are moved here from runtime/filetype.vim to make startup
 " faster.
@@ -484,6 +484,10 @@ endfunc
 
 " Called from filetype.vim and scripts.vim.
 func dist#ft#SetFileTypeSH(name)
+  if did_filetype()
+    " Filetype was already detected
+    return
+  endif
   if expand("<amatch>") =~ g:ft_ignore_pat
     return
   endif
@@ -531,6 +535,10 @@ endfunc
 " as used for Tcl.
 " Also called from scripts.vim, thus can't be local to this script.
 func dist#ft#SetFileTypeShell(name)
+  if did_filetype()
+    " Filetype was already detected
+    return
+  endif
   if expand("<amatch>") =~ g:ft_ignore_pat
     return
   endif
@@ -551,6 +559,10 @@ func dist#ft#SetFileTypeShell(name)
 endfunc
 
 func dist#ft#CSH()
+  if did_filetype()
+    " Filetype was already detected
+    return
+  endif
   if exists("g:filetype_csh")
     call dist#ft#SetFileTypeShell(g:filetype_csh)
   elseif &shell =~ "tcsh"
