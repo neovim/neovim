@@ -1004,10 +1004,10 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// @param buffer handle of buffer to be displayed in the window
 /// @param enter  whether the window should be entered (made the current window)
-/// @param config dictionary for the window configuration accepts these keys:
+/// @param config Dictionary for the window configuration accepts these keys:
 ///
 ///     `relative`: If set, the window becomes a floating window. The window
-///         will be placed with row,col coordinates relative one of the
+///         will be placed with row,col coordinates relative to one of the
 ///         following:
 ///        "editor" the global editor grid
 ///        "win"    a window. Use `win` to specify a window id,
