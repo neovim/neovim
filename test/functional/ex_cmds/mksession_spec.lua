@@ -7,6 +7,7 @@ local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local funcs = helpers.funcs
 local rmdir = helpers.rmdir
+local eval = helpers.eval
 
 local file_prefix = 'Xtest-functional-ex_cmds-mksession_spec'
 
@@ -46,5 +47,27 @@ describe(':mksession', function()
     -- Second tab should have the tab-local working directory.
     command('tabnext 2')
     eq(cwd_dir .. get_pathsep() .. tab_dir, funcs.getcwd())
+  end)
+
+  it('restores buffers when using tab-local working directories', function()
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    local cwd_dir = funcs.getcwd()
+    local session_path = cwd_dir .. get_pathsep() .. session_file
+
+    command('edit ' .. tmpfile_base .. '1')
+    command('tcd ' .. tab_dir)
+    command('tabnew')
+    command('edit ' .. cwd_dir .. get_pathsep() .. tmpfile_base .. '2')
+    command('tabfirst')
+    command('mksession ' .. session_path)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    command('source ' .. session_path)
+    command('tabnext 1')
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', eval("fnamemodify(bufname('%'), ':p')"))
+    command('tabnext 2')
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', eval("fnamemodify(bufname('%'), ':p')"))
   end)
 end)
