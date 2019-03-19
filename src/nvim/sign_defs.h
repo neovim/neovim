@@ -13,6 +13,7 @@ struct signlist
     linenr_T lnum;      // line number which has this sign
     int typenr;         // typenr of sign
     signlist_T *next;   // next signlist entry
+    signlist_T *prev;   // previous entry -- for easy reordering
 };
 
 // type argument for buf_getsigntype() and sign_get_attr()
