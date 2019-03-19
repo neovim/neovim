@@ -5037,6 +5037,10 @@ static void insert_sign(
     newsign->lnum = lnum;
     newsign->typenr = typenr;
     newsign->next = next;
+    newsign->prev = prev;
+    if (next != NULL) {
+      next->prev = newsign;
+    }
 
     if (prev == NULL) {
         /* When adding first sign need to redraw the windows to create the
@@ -5073,11 +5077,31 @@ void buf_addsign(
             sign->typenr = typenr;
             return;
         } else if ((lnum == sign->lnum && id != sign->id)
-                   || (id < 0 && lnum < sign->lnum)) {  // attempt to keep signs sorted by lnum
-            insert_sign(buf, prev, sign, id, lnum, typenr);
-            return;
+                   || (id < 0 && lnum < sign->lnum)) {
+          // keep signs sorted by lnum: insert new sign at head of list for
+          // this lnum
+          while (prev != NULL && prev->lnum == lnum) {
+            prev = prev->prev;
+          }
+          if (prev == NULL) {
+            sign = buf->b_signlist;
+          } else {
+            sign = prev->next;
+          }
+          insert_sign(buf, prev, sign, id, lnum, typenr);
+          return;
         }
         prev = sign;
+    }
+
+    // insert new sign at head of list for this lnum
+    while (prev != NULL && prev->lnum == lnum) {
+      prev = prev->prev;
+    }
+    if (prev == NULL) {
+      sign = buf->b_signlist;
+    } else {
+      sign = prev->next;
     }
     insert_sign(buf, prev, sign, id, lnum, typenr);
 
@@ -5147,6 +5171,9 @@ linenr_T buf_delsign(
         next = sign->next;
         if (sign->id == id) {
             *lastp = next;
+            if (next != NULL) {
+              next->prev = sign->prev;
+            }
             lnum = sign->lnum;
             xfree(sign);
             break;
