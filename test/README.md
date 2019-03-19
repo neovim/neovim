@@ -88,10 +88,25 @@ To run a *single* legacy test set `TEST_FILE`, for example:
 Debugging tests
 ---------------
 
-You can set `$GDB` to [run tests under gdbserver](https://github.com/neovim/neovim/pull/1527).
-And if `$VALGRIND` is set it will pass `--vgdb=yes` to valgrind instead of
-starting gdbserver directly.
+- You can set `$GDB` to [run tests under gdbserver](https://github.com/neovim/neovim/pull/1527).
+  And if `$VALGRIND` is set it will pass `--vgdb=yes` to valgrind instead of
+  starting gdbserver directly.
+- Hanging tests often happen due to unexpected `:h press-enter` prompts. The
+  default screen width is 50 columns. Commands that try to print lines longer
+  than 50 columns in the command-line, e.g. `:edit very...long...path`, will
+  trigger the prompt. In this case, a shorter path or `:silent edit` should be
+  used.
+- If you can't figure out what is going on, try to visualize the screen. Put
+  this at the beginning of your test:
 
+    ```lua
+    local Screen = require('test.functional.ui.screen')
+    local screen = Screen.new()
+    screen:attach()
+    ```
+
+  Afterwards, put `screen:snapshot_util()` at any position in your test. See the
+  comment at the top of `test/functional/ui/screen.lua` for more.
 
 Filtering Tests
 ---------------
