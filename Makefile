@@ -7,6 +7,7 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
 
@@ -15,7 +16,9 @@ CMAKE_EXTRA_FLAGS ?=
 #   - `checkprefix` target checks that it matches the CMake-cached value. #9615
 CMAKE_INSTALL_PREFIX ?= $(shell echo $(CMAKE_EXTRA_FLAGS) | 2>/dev/null \
     grep -o 'CMAKE_INSTALL_PREFIX=[^ ]\+' | cut -d '=' -f2)
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
+ifneq (,$(CMAKE_INSTALL_PREFIX))
+  CMAKE_FLAGS += -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
+endif
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
