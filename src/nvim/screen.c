@@ -2377,27 +2377,30 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
-  // Cursor line highlighting for 'cursorline' in the current window.  Not
-  // when Visual mode is active, because it's not clear what is selected
-  // then.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum
-      && !(wp == curwin && VIsual_active)) {
-    int cul_attr = win_hl_attr(wp, HLF_CUL);
-    HlAttrs ae = syn_attr2entry(cul_attr);
+  // Cursor line highlighting for 'cursorline' in the current window.
+  if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+    // Do not show the cursor line when Visual mode is active, because it's
+    // not clear what is selected then.
+    if (!(wp == curwin && VIsual_active)) {
+      int cul_attr = win_hl_attr(wp, HLF_CUL);
+      HlAttrs ae = syn_attr2entry(cul_attr);
 
-    // We make a compromise here (#7383):
-    //  * low-priority CursorLine if fg is not set
-    //  * high-priority ("same as Vim" priority) CursorLine if fg is set
-    if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
-      line_attr_lowprio = cul_attr;
-    } else {
-      if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
-          && qf_current_entry(wp) == lnum) {
-        line_attr = hl_combine_attr(cul_attr, line_attr);
+      // We make a compromise here (#7383):
+      //  * low-priority CursorLine if fg is not set
+      //  * high-priority ("same as Vim" priority) CursorLine if fg is set
+      if (ae.rgb_fg_color == -1 && ae.cterm_fg_color == 0) {
+        line_attr_lowprio = cul_attr;
       } else {
-        line_attr = cul_attr;
+        if (!(State & INSERT) && bt_quickfix(wp->w_buffer)
+            && qf_current_entry(wp) == lnum) {
+          line_attr = hl_combine_attr(cul_attr, line_attr);
+        } else {
+          line_attr = cul_attr;
+        }
       }
     }
+    // Update w_last_cursorline even if Visual mode is active.
+    wp->w_last_cursorline = wp->w_cursor.lnum;
   }
 
   // If this line has a sign with line highlighting set line_attr.

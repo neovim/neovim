@@ -17,7 +17,7 @@ describe('example', function()
     } )
   end)
 
-  it("works with buffer switch and 'hidden'", function()
+  it('screen test', function()
     -- Do some stuff.
     feed('iline1<cr>line2<esc>')
 
