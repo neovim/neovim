@@ -102,7 +102,19 @@ describe(':lua command', function()
     {1:~                                                 }|
                                                       |
     ]]
-		-- ################## lua error #######################
+		-- ################## lua errors #######################
+    feed(':function A()<cr>')
+    feed(':lua error("error")<cr>')
+    feed(':endfunction<cr>')
+
+    feed(':function B()<cr>')
+    feed(':call A()<cr>')
+    feed(':endfunction<cr>')
+
+		-- FIXME(@tedbauer): uncomment and fix next 2 lines
+		--feed(':call B()')
+		--screen:expect(empty_screen)
+
 		feed(':lua error("this is a normal error")<cr>')
 		screen:expect([[
                                                         |
@@ -209,6 +221,86 @@ describe(':lua command', function()
     eq(false, status)
     eq(expected, string.sub(err, -string.len(expected)))
 
+    feed('<cr>')
+    screen:expect(empty_screen)
+
+		-- ################## echo messages #######################
+    feed(':function C()<cr>')
+    feed(':error("error")<cr>')
+    feed(':endfunction<cr>')
+
+    feed(':function D()<cr>')
+    feed(':call C()<cr>')
+    feed(':endfunction<cr>')
+
+		-- FIXME(@tedbauer): uncomment and fix next 2 lines
+		--feed(':call D()')
+		--screen:expect(empty_screen)
+
+-- 		feed(':echo("this is a normal string")<cr>')
+-- 		screen:expect([[
+--       ^                                                  |
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+--       {1:~                                                 }|
+-- 			|
+--     ]])
+		feed('<cr>')
+		screen:expect(empty_screen)
+		feed(':echo("this is \t\t a really \t\t long \t\t string \t\t.")<cr>')
+		screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      this is                  a really                l|
+      ong              string                 .         |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+		feed('<cr>')
+		screen:expect(empty_screen)
+    feed(':echo("")<cr>')
+		screen:expect(empty_screen)
+    feed('<cr>')
+    screen:expect(empty_screen)
+		--FIXME(@tedbauer): uncomment/fix next line
+    --feed(':echo("\n\n\n")<cr>')
+    --screen:expect(empty_screen)
+    feed('<cr>')
+    screen:expect(empty_screen)
+		--FIXME(@tedbauer): uncomment/fix next line
+    --feed(':echo("\t\t\t")<cr>')
+    --screen:expect(empty_screen)
+    feed('<cr>')
+    screen:expect(empty_screen)
+		--FIXME(@tedbauer): uncomment/fix next line
+    --feed(':echo("\r\r\r")<cr>')
+    --screen:expect(empty_screen)
+    feed('<cr>')
+    screen:expect(empty_screen)
+		feed(':echo("' .. ('x'):rep(200) .. '")<cr>')
+		screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx|
+                                                        |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+    screen:expect(empty_screen)
     feed('<cr>')
     screen:expect(empty_screen)
   end)
