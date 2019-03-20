@@ -649,28 +649,6 @@ compatibility).
 	Hide the block.
 
 ==============================================================================
-Wildmenu Events							   *ui-wildmenu*
-
-Only sent if `ext_wildmenu` option is set in |ui-options|
-
-Deprecated. When `ext_cmdline` and `ext_popupmenu` are both set,
-|ui-popupmenu| events will be used for command-line completion. But if
-`ext_wildmenu` is also set, these events are still used for backwards
-compatibility. New clients should use `ext_popupmenu` instead.
-
-["wildmenu_show", items]
-	Activate the wildmenu (command-line completion). `items` is an array
-	with the completion items.
-
-["wildmenu_select", selected]
-	Select an item in the current wildmenu. `selected` is a zero-based
-	index into the array of items from the last wildmenu_show event, or -1
-	if no item is selected.
-
-["wildmenu_hide"]
-	Hide the wildmenu.
-
-==============================================================================
 Message Events							   *ui-messages*
 
 Only sent if `ext_messages` option is set in |ui-options|. This option implies
