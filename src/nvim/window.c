@@ -5788,7 +5788,7 @@ last_status (
 {
   /* Don't make a difference between horizontal or vertical split. */
   last_status_rec(topframe, (p_ls == 2
-                             || (p_ls == 1 && (morewin || !ONE_WINDOW))));
+                             || (p_ls == 1 && (morewin || !one_window()))));
 }
 
 static void last_status_rec(frame_T *fr, int statusline)
