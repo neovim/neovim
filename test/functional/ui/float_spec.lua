@@ -5,6 +5,7 @@ local clear, feed = helpers.clear, helpers.feed
 local command, feed_command = helpers.command, helpers.feed_command
 local eval = helpers.eval
 local eq = helpers.eq
+local insert = helpers.insert
 local meths = helpers.meths
 local curbufmeths = helpers.curbufmeths
 local funcs = helpers.funcs
@@ -33,6 +34,7 @@ describe('floating windows', function()
     [14] = {foreground = Screen.colors.Brown},
     [15] = {background = Screen.colors.Grey20},
     [16] = {background = Screen.colors.Grey20, bold = true, foreground = Screen.colors.Blue1},
+    [17] = {background = Screen.colors.Yellow},
   }
 
   local function with_ext_multigrid(multigrid)
@@ -1102,6 +1104,191 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
                                                   |
+        ]])
+      end
+    end)
+
+    it('does not crash with inccommand #9379', function()
+      screen:try_resize(30,15)
+      local expected_pos = {
+        [3]={{id=1001}, 'NW', 1, 2, 0, true},
+      }
+
+      command("set inccommand=split")
+      command("set laststatus=2")
+
+      local buf = meths.create_buf(false,false)
+      meths.open_win(buf, true, {relative='editor', width=30, height=3, row=2, col=0})
+
+      insert([[
+  foo
+  bar
+]])
+
+      if multigrid then
+        screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            {5:[No Name]                     }|
+                                          |
+          ## grid 2
+                                          |
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+          ## grid 3
+            {1:foo                           }|
+            {1:bar                           }|
+            {1:^                              }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+                                         |
+           {0:~                             }|
+           {1:foo                           }|
+           {1:bar                           }|
+           {1:^                              }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {5:[No Name]                     }|
+                                         |
+        ]])
+      end
+
+      feed(':%s/.')
+
+      if multigrid then
+        screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            {5:[Preview]                     }|
+            :%s/.^                         |
+          ## grid 2
+                                          |
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+          ## grid 3
+            {17:f}{1:oo                           }|
+            {17:b}{1:ar                           }|
+            {1:                              }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+                                         |
+           {0:~                             }|
+           {17:f}{1:oo                           }|
+           {17:b}{1:ar                           }|
+           {1:                              }|
+           {5:[No Name]                     }|
+           |1| {17:f}oo                       |
+           |2| {17:b}ar                       |
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {5:[Preview]                     }|
+           :%s/.^                         |
+        ]])
+      end
+
+      feed('<Esc>')
+
+      if multigrid then
+        screen:expect{grid=[[
+          ## grid 1
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            [2:------------------------------]|
+            {5:[No Name]                     }|
+                                          |
+          ## grid 2
+                                          |
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+            {0:~                             }|
+          ## grid 3
+            {1:foo                           }|
+            {1:bar                           }|
+            {1:^                              }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+                                         |
+           {0:~                             }|
+           {1:foo                           }|
+           {1:bar                           }|
+           {1:^                              }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {0:~                             }|
+           {5:[No Name]                     }|
+                                         |
         ]])
       end
     end)
@@ -3456,6 +3643,5 @@ describe('floating windows', function()
   describe('without ext_multigrid', function()
     with_ext_multigrid(false)
   end)
-
 end)
 
