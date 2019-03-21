@@ -6963,10 +6963,11 @@ char_u *reg_submatch(int no)
         return NULL;
       }
 
-      s = reg_getline_submatch(lnum) + rsm.sm_mmatch->startpos[no].col;
+      s = reg_getline_submatch(lnum);
       if (s == NULL) {  // anti-crash check, cannot happen?
         break;
       }
+      s += rsm.sm_mmatch->startpos[no].col;
       if (rsm.sm_mmatch->endpos[no].lnum == lnum) {
         // Within one line: take form start to end col.
         len = rsm.sm_mmatch->endpos[no].col - rsm.sm_mmatch->startpos[no].col;
