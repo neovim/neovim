@@ -26,29 +26,34 @@ Nvim supports Python |remote-plugin|s and the Vim legacy |python2| and
 Note: Only the Vim 7.3 legacy interface is supported, not later features such
 as |python-bindeval| (Vim 7.4); use the Nvim API instead.
 
+
 PYTHON QUICKSTART ~
 
-Install the "pynvim" Python package:
+To use Python plugins, you need the "pynvim" module. Run |:checkhealth| to see
+if you already have it (some package managers install the module with Nvim
+itself).
 
-- Run |:checkhealth| to see if you already have the package (some package
-  managers install the "pynvim" Python package with Nvim itself).
+For Python 3 plugins:
+1. Make sure Python 3.4+ is available in your $PATH.
+2. Install the module (try "pip" if "pip3" is missing): >
+   pip3 install --user --upgrade pynvim
 
-- For Python 2 plugins, make sure Python 2.7 is available in your $PATH, then
-  install the package systemwide: >
-    sudo pip2 install --upgrade pynvim
-<  or for the current user: >
-    pip2 install --user --upgrade pynvim
-<  If "pip2" is missing, try "pip".
+For Python 2 plugins:
+1. Make sure Python 2.7 is available in your $PATH.
+2. Install the module (try "pip" if "pip2" is missing): >
+   pip2 install --user --upgrade pynvim
 
-- For Python 3 plugins, make sure Python 3.4+ is available in your $PATH, then
-  install the package systemwide: >
-    sudo pip3 install --upgrade pynvim
-<  or for the current user: >
-    pip3 install --user --upgrade pynvim
-<  If "pip3" is missing, try "pip".
+The pip `--upgrade` flag ensures that you get the latest version even if
+a previous version was already installed.
 
-- The `--upgrade` flag ensures you have the latest version even if a previous
-  version was already installed.
+See also |python-virtualenv|.
+
+Note: The old "neovim" module was renamed to "pynvim".
+https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
+If you run into problems, uninstall _both_ then install "pynvim" again: >
+  pip uninstall neovim pynvim
+  pip install pynvim
+
 
 PYTHON PROVIDER CONFIGURATION ~
 						*g:python_host_prog*
@@ -69,8 +74,9 @@ To disable Python 2 support: >
 To disable Python 3 support: >
     let g:loaded_python3_provider = 1
 
-PYTHON VIRTUALENVS ~
 
+PYTHON VIRTUALENVS ~
+						*python-virtualenv*
 If you plan to use per-project virtualenvs often, you should assign one
 virtualenv for Neovim and hard-code the interpreter path via
 |g:python3_host_prog| (or |g:python_host_prog|) so that the "pynvim" package
@@ -93,12 +99,14 @@ Ruby integration		    	      *provider-ruby*
 Nvim supports Ruby |remote-plugin|s and the Vim legacy |ruby-vim| interface
 (which is itself implemented as a Nvim remote-plugin).
 
+
 RUBY QUICKSTART ~
 
 To use Ruby plugins with Nvim, install the latest "neovim" RubyGem: >
     gem install neovim
 
 Run |:checkhealth| to see if your system is up-to-date.
+
 
 RUBY PROVIDER CONFIGURATION ~
 						*g:loaded_ruby_provider*
@@ -122,12 +130,14 @@ Node.js integration				*provider-nodejs*
 Nvim supports Node.js |remote-plugin|s.
 https://github.com/neovim/node-client/
 
+
 NODEJS QUICKSTART~
 
 To use javascript remote-plugins with Nvim, install the "neovim" npm package: >
     npm install -g neovim
 
 Run |:checkhealth| to see if your system is up-to-date.
+
 
 NODEJS PROVIDER CONFIGURATION~
 						*g:loaded_node_provider*
