@@ -9130,6 +9130,7 @@ makeopens(
           || put_eol(fd) == FAIL) {
         return FAIL;
       }
+      did_lcd = true;
     }
 
     /* Don't continue in another tab page when doing only the current one
