@@ -6062,7 +6062,7 @@ static win_T *get_snapshot_focus(int idx)
     }
   }
 
-  return sn->fr_win;
+  return win_valid(sn->fr_win) ? sn->fr_win : NULL;
 }
 
 /*
