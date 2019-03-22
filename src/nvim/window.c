@@ -4656,12 +4656,12 @@ void win_size_restore(garray_T *gap)
     {
       int i = 0;
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (wp->w_floating) {
-          win_setwidth_win(((int *)gap->ga_data)[i++], wp);
-        } else {
-          frame_setwidth(wp->w_frame, ((int *)gap->ga_data)[i++]);
+        int width = ((int *)gap->ga_data)[i++];
+        int height = ((int *)gap->ga_data)[i++];
+        if (!wp->w_floating) {
+          frame_setwidth(wp->w_frame, width);
+          win_setheight_win(height, wp);
         }
-        win_setheight_win(((int *)gap->ga_data)[i++], wp);
       }
     }
     /* recompute the window positions */
