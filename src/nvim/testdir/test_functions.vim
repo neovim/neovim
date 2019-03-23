@@ -1049,3 +1049,19 @@ func Test_func_range_with_edit()
   call delete('Xfuncrange2')
   bwipe!
 endfunc
+
+sandbox function Fsandbox()
+  normal ix
+endfunc
+
+func Test_func_sandbox()
+  sandbox let F = {-> 'hello'}
+  call assert_equal('hello', F())
+
+  sandbox let F = {-> execute("normal ix\<Esc>")}
+  call assert_fails('call F()', 'E48:')
+  unlet F
+
+  call assert_fails('call Fsandbox()', 'E48:')
+  delfunc Fsandbox
+endfunc
