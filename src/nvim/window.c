@@ -2313,10 +2313,10 @@ int win_close(win_T *win, bool free_buf)
     if (!win->w_floating) {
       wp = frame2win(win_altframe(win, NULL));
     } else {
-      if (win_valid(prevwin)) {
+      if (win_valid(prevwin) && prevwin != win) {
         wp = prevwin;
       } else {
-        wp = curtab->tp_firstwin;
+        wp = firstwin;
       }
     }
 
@@ -2595,10 +2595,10 @@ win_free_mem (
     wp = winframe_remove(win, dirp, tp);
     xfree(frp);
   } else {
-    if (win_valid(prevwin)) {
+    if (win_valid(prevwin) && prevwin != win) {
       wp = prevwin;
     } else {
-      wp = curtab->tp_firstwin;
+      wp = firstwin;
     }
   }
   win_free(win, tp);
