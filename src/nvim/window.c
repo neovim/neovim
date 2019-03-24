@@ -2462,7 +2462,7 @@ int win_close(win_T *win, bool free_buf)
   }
 
   if (!was_floating) {
-    if (p_ea && (*p_ead == 'b' || *p_ead == dir)) {
+    if (!curwin->w_floating && p_ea && (*p_ead == 'b' || *p_ead == dir)) {
       // If the frame of the closed window contains the new current window,
       // only resize that frame.  Otherwise resize all windows.
       win_equal(curwin, curwin->w_frame->fr_parent == win_frame, dir);
@@ -4656,8 +4656,12 @@ void win_size_restore(garray_T *gap)
     {
       int i = 0;
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        frame_setwidth(wp->w_frame, ((int *)gap->ga_data)[i++]);
-        win_setheight_win(((int *)gap->ga_data)[i++], wp);
+        int width = ((int *)gap->ga_data)[i++];
+        int height = ((int *)gap->ga_data)[i++];
+        if (!wp->w_floating) {
+          frame_setwidth(wp->w_frame, width);
+          win_setheight_win(height, wp);
+        }
       }
     }
     /* recompute the window positions */
