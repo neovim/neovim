@@ -41,6 +41,7 @@ option(USE_BUNDLED_LUV "Use the bundled version of luv." ${USE_BUNDLED})
 #XXX(tarruda): Lua is only used for debugging the functional test client, no
 # build it unless explicitly requested
 option(USE_BUNDLED_LUA "Use the bundled version of lua." OFF)
+option(USE_BUNDLED_TREESITTER "Use the bundled version of treesitter." ${USE_BUNDLED})
 
 if(USE_BUNDLED AND MSVC)
   option(USE_BUNDLED_GETTEXT "Use the bundled version of gettext." ON)
@@ -181,6 +182,15 @@ set(GETTEXT_SHA256 ff942af0e438ced4a8b0ea4b0b6e0d6d657157c5e2364de57baa279c1c125
 set(LIBICONV_URL https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz)
 set(LIBICONV_SHA256 ccf536620a45458d26ba83887a983b96827001e92a13847b45e4925cc8913178)
 
+set(TREESITTER_URL https://github.com/tree-sitter/tree-sitter/archive/d51cd86.tar.gz)
+set(TREESITTER_SHA256 409a4b126dbc0ed38cb0d7f9bcab4dd5aec6bd7848a150687b12eb0c00da13ce)
+
+set(TREESITTER_C_URL https://github.com/tree-sitter/tree-sitter-c/archive/5b250e1.tar.gz)
+set(TREESITTER_C_SHA256 4651ee825c49c224b28c6da89ec7172ef10f257d65cf3f904d848ac8831ca0f6)
+
+set(UTF8PROC_URL https://github.com/JuliaStrings/utf8proc/archive/v2.2.0.tar.gz)
+set(UTF8PROC_SHA256 3f8fd1dbdb057ee5ba584a539d5cd1b3952141c0338557cb0bdf8cb9cfed5dbf)
+
 if(USE_BUNDLED_UNIBILIUM)
   include(BuildUnibilium)
 endif()
@@ -227,6 +237,11 @@ endif()
 
 if(USE_BUNDLED_LIBICONV)
   include(BuildLibiconv)
+endif()
+
+if(USE_BUNDLED_TREESITTER)
+  include(BuildTreesitter)
+  include(BuildUtf8proc)
 endif()
 
 include(GetBinaryDeps)

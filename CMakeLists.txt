@@ -22,8 +22,10 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Prefer our bundled versions of dependencies.
 if(DEFINED ENV{DEPS_BUILD_DIR})
+  set(DEPS_BUILD_DIR "$ENV{DEPS_BUILD_DIR")
   set(DEPS_PREFIX "$ENV{DEPS_BUILD_DIR}/usr" CACHE PATH "Path prefix for finding dependencies")
 else()
+  set(DEPS_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.deps")
   set(DEPS_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/.deps/usr" CACHE PATH "Path prefix for finding dependencies")
   # When running from within CLion or Visual Studio,
   # build bundled dependencies automatically.
@@ -414,6 +416,10 @@ unset(CMAKE_REQUIRED_LIBRARIES)
 if(MSGPACK_HAS_FLOAT32)
   add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
+
+set(TREESITTER_PATH "${DEPS_BUILD_DIR}/build/src/treesitter")
+set(TREESITTER_C_PATH "${DEPS_BUILD_DIR}/build/src/treesitter-c")
+set(LIBUTF8PROC_INCLUDE_DIRS ${DEPS_BUILD_DIR}/build/src/utf8proc)
 
 option(FEAT_TUI "Enable the Terminal UI" ON)
 

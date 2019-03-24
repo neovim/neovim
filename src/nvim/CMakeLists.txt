@@ -72,9 +72,9 @@ include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
-include_directories(${CMAKE_SOURCE_DIR}/../tree-sitter/lib/include)
-include_directories(${CMAKE_SOURCE_DIR}/../tree-sitter/lib/src)
-include_directories(${CMAKE_SOURCE_DIR}/../utf8proc/)
+include_directories(${TREESITTER_PATH}/lib/include)
+include_directories(${TREESITTER_PATH}/lib/src)
+include_directories(${LIBUTF8PROC_INCLUDE_DIRS})
 
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
@@ -87,8 +87,8 @@ file(GLOB NVIM_HEADERS *.h)
 file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
 
-list(APPEND TS_SOURCES ${CMAKE_SOURCE_DIR}/../tree-sitter/lib/src/lib.c)
-list(APPEND TS_SOURCES ${CMAKE_SOURCE_DIR}/../tree-sitter-c/src/parser.c)
+list(APPEND TS_SOURCES ${TREESITTER_PATH}/lib/src/lib.c)
+list(APPEND TS_SOURCES ${TREESITTER_C_PATH}/src/parser.c)
 
 foreach(subdir
         os
