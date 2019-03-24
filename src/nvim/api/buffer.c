@@ -186,7 +186,7 @@ void nvim_buf_set_luahl(Buffer buffer, String cb, Error *err)
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
-    return false;
+    return;
   }
   xfree(buf->b_luahl);
   if (cb.size > 0) {
