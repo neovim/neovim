@@ -2270,12 +2270,12 @@ Integer nvim__syn_attr(String name)
 void nvim__put_attr(Integer id, Integer c0, Integer c1)
 {
   if (!lua_attr_active) {
-    return 0;
+    return;
   }
   c0 = MAX(c0, 0);
-  c1 = MIN(c1, lua_attr_bufsize);
-  for (int c = c0; c < c1; c++) {
-    lua_attr_buf[c] = hl_combine_attr(lua_attr_buf[c], id);
+  c1 = MIN(c1, (Integer)lua_attr_bufsize);
+  for (int c = (int)c0; c < (int)c1; c++) {
+    lua_attr_buf[c] = (sattr_T)hl_combine_attr(lua_attr_buf[c], (int)id);
   }
   return;
 }
