@@ -134,7 +134,7 @@ static int tree_gc(lua_State *L)
     return 0;
   }
 
-  ts_tree_delete(tree);
+  // ts_tree_delete(tree);
   return 0;
 }
 
@@ -172,8 +172,8 @@ static void push_node(lua_State *L, TSNode node)
   *ud = node;
   lua_getfield(L, LUA_ENVIRONINDEX, "node-meta");  // [src, udata, meta]
   lua_setmetatable(L, -2);  // [src, udata]
-  lua_getfenv(L, -2);  // [src, udata, reftable]
-  lua_setfenv(L, -2);  // [src, udata]
+  //lua_getfenv(L, -2);  // [src, udata, reftable]
+  //lua_setfenv(L, -2);  // [src, udata]
 }
 
 static bool node_check(lua_State *L, TSNode *res)
