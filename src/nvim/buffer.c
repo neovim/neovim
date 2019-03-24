@@ -4943,7 +4943,12 @@ chk_modeline (
     if (*s != NUL) {                  /* skip over an empty "::" */
       save_SID = current_SID;
       current_SID = SID_MODELINE;
+      // Make sure no risky things are executed as a side effect.
+      sandbox++;
+
       retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
+
+      sandbox--;
       current_SID = save_SID;
       if (retval == FAIL)                     /* stop if error found */
         break;
