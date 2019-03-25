@@ -5070,8 +5070,7 @@ static int sign_compare(const void *a1, const void *a2)
     const signlist_T *s1 = *(const signlist_T **)a1;
     const signlist_T *s2 = *(const signlist_T **)a2;
 
-    // Sort by line number and the by id
-
+    // Sort by line number and then by id.
     if (s1->lnum > s2->lnum) {
         return 1;
     }
@@ -5084,7 +5083,6 @@ static int sign_compare(const void *a1, const void *a2)
     if (s1->id < s2->id) {
         return -1;
     }
-
     return 0;
 }
 
@@ -5243,11 +5241,10 @@ linenr_T buf_change_sign_type(
 /// @param buf Buffer in which to search
 /// @param lnum Line in which to search
 /// @param type Type of sign to look for
-/// @param idx if there multiple signs, this index will pick the n-th
-//          out of the most `max_signs` sorted ascending by Id.
-/// @param max_signs the number of signs, with priority for the ones
-//         with the highest Ids.
-/// @return Identifier of the matching sign, or 0
+/// @param idx If there are multiple signs, this index will be used to pick
+///         the sign out of at most `max_signs` sorted ascending by Id.
+/// @param max_signs The maximum number of signs, giving priority to higher Ids.
+/// @return Identifier of the matching sign, or 0.
 int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type,
                     int idx, int max_signs)
 {
