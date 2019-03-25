@@ -7098,13 +7098,12 @@ int csh_like_shell(void)
 /// buffer signs and on user configuration.
 int win_signcol_count(win_T *wp)
 {
-  int maximum = 1, needed_signcols;
+  int maximum = 1;
   const char *scl = (const char *)wp->w_p_scl;
 
   if (*scl == 'n') {
     return 0;
   }
-  needed_signcols = buf_signcols(wp->w_buffer);
 
   // yes or yes
   if (!strncmp(scl, "yes:", 4)) {
@@ -7121,7 +7120,7 @@ int win_signcol_count(win_T *wp)
     maximum = scl[5] - '0';
   }
 
-  return MIN(maximum, needed_signcols);
+  return MIN(maximum, buf_signcols(wp->w_buffer));
 }
 
 /// Get window or buffer local options
