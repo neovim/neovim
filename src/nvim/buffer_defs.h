@@ -781,6 +781,7 @@ struct file_buffer {
   signlist_T *b_signlist;       // list of signs to draw
   int b_signcols_max;           // cached maximum number of sign columns
   int b_signcols;               // last calculated number of sign columns
+  int b_signcols_cells;         // number of cells used for sign columns
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 

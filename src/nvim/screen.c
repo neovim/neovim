@@ -624,7 +624,7 @@ static void win_update(win_T *wp)
   // If we can compute a change in the automatic sizing of the sign column
   // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
   // figuring it out here so we can redraw the entire screen for it.
-  buf_signcols(buf);
+  win_signcol_cells(wp);
 
   type = wp->w_redr_type;
 
@@ -1545,7 +1545,7 @@ static void win_update(win_T *wp)
 int win_signcol_width(win_T *wp)
 {
   // 2 is vim default value
-  return 2;
+  return MAX(2, win_signcol_cells(wp) + 1);
 }
 
 /*
@@ -1573,9 +1573,9 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
                 wp->w_grid.Columns, ' ', ' ', win_hl_attr(wp, HLF_FC));
     }
 
-    int count = win_signcol_count(wp);
-    if (count > 0) {
-        int nn = n + win_signcol_width(wp) * count;
+    int signcol_width = win_signcol_width(wp);
+    if (signcol_width > 0) {
+        int nn = n + signcol_width;
 
         // draw the sign column left of the fold column
         if (nn > wp->w_grid.Columns) {
@@ -1613,9 +1613,9 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       n = nn;
     }
 
-    int count = win_signcol_count(wp);
-    if (count > 0) {
-        int nn = n + win_signcol_width(wp) * count;
+    int signcol_width = win_signcol_width(wp);
+    if (signcol_width > 0) {
+        int nn = n + signcol_width;
 
         // draw the sign column after the fold column
         if (nn > wp->w_grid.Columns) {
@@ -1780,14 +1780,14 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   RL_MEMSET(col, win_hl_attr(wp, HLF_FL), wp->w_grid.Columns - col);
 
   // If signs are being displayed, add spaces.
-  if (win_signcol_count(wp) > 0) {
+  int signcol_width = win_signcol_width(wp);
+  if (signcol_width > 0) {
       len = wp->w_grid.Columns - col;
       if (len > 0) {
-          int len_max = win_signcol_width(wp) * win_signcol_count(wp);
-          if (len > len_max) {
-              len = len_max;
+          if (len > signcol_width) {
+              len = signcol_width;
           }
-          copy_text_attr(off + col, (char_u *)"  ", len,
+          copy_text_attr(off + col, (char_u *)" ", len,
                          win_hl_attr(wp, HLF_FL));
           col += len;
       }
@@ -2661,7 +2661,7 @@ win_line (
     extra_check = true;
   }
 
-  int sign_idx = 0;
+  int sign_idx = 0, sign_cells = win_signcol_width(wp);
   // Repeat for the whole displayed line.
   for (;; ) {
     has_match_conc = 0;
@@ -2697,7 +2697,7 @@ win_line (
         }
       }
 
-      //sign column
+      // sign column
       if (draw_state == WL_SIGN - 1 && n_extra == 0) {
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
@@ -2709,32 +2709,26 @@ win_line (
               c_extra = ' ';
               c_final = NUL;
               char_attr = win_hl_attr(wp, HLF_SC);
-              n_extra = win_signcol_width(wp);
+              n_extra = sign_cells;
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
                   text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
                                               sign_idx, count);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
-                      int symbol_blen = (int)STRLEN(p_extra);
                       if (p_extra != NULL) {
                           c_extra = NUL;
-                          c_final = NUL;
-                          // symbol(s) bytes + (filling spaces) (one byte each)
-                          n_extra = symbol_blen +
-                            (win_signcol_width(wp) - mb_string2cells(p_extra));
-                          memset(extra, ' ', sizeof(extra));
-                          STRNCPY(extra, p_extra, STRLEN(p_extra));
-                          p_extra = extra;
-                          p_extra[n_extra] = NUL;
+                          n_extra = (int)STRLEN(p_extra);
+                          sign_cells -= mb_string2cells(p_extra);
                       }
                       char_attr = sign_get_attr(text_sign, SIGN_TEXT);
-                  }
-              }
 
-              sign_idx++;
-              if (sign_idx < count) {
-                  draw_state = WL_SIGN - 1;
+                      // Handle next sign in next loop iteration.
+                      sign_idx++;
+                      if (sign_idx < count) {
+                          draw_state = WL_SIGN - 1;
+                      }
+                  }
               }
           }
       }

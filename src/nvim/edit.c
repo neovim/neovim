@@ -5899,7 +5899,7 @@ comp_textwidth (
       textwidth -= 1;
     }
     textwidth -= curwin->w_p_fdc;
-    textwidth -= win_signcol_count(curwin);
+    textwidth -= win_signcol_width(curwin);
 
     if (curwin->w_p_nu || curwin->w_p_rnu)
       textwidth -= 8;

@@ -3035,6 +3035,8 @@ ambw_end:
     // 'signcolumn'
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
       errmsg = e_invarg;
+    } else {
+      curwin->w_buffer->b_signcols_max = -1;
     }
   }
   /* 'pastetoggle': translate key codes like in a mapping */
@@ -7094,33 +7096,46 @@ int csh_like_shell(void)
   return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
-/// Return the number of requested sign columns, based on current
-/// buffer signs and on user configuration.
+/* /// Return the number of requested sign columns, based on current */
+/// buffer signs and user configuration.
 int win_signcol_count(win_T *wp)
 {
-  int maximum = 1;
+  int min, max;
   const char *scl = (const char *)wp->w_p_scl;
 
   if (*scl == 'n') {
     return 0;
   }
 
-  // yes or yes
+  // yes or yes:<NUM>
   if (!strncmp(scl, "yes:", 4)) {
     // Fixed amount of columns
-    return scl[4] - '0';
-  }
-  if (*scl == 'y') {
-    return 1;
-  }
-
-  // auto or auto:<NUM>
-  if (!strncmp(scl, "auto:", 5)) {
+    min = max = scl[4] - '0';
+  } else if (*scl == 'y') {
+    min = max = 1;
+  } else {
     // Variable depending on a configuration
-    maximum = scl[5] - '0';
+    min = 0;
+    if (!strncmp(scl, "auto:", 5)) {
+      // auto:<NUM>
+      max = scl[5] - '0';
+    } else {
+      // auto
+      max = 1;
+    }
   }
+  return MAX(min, buf_signcols(wp->w_buffer, max));
+}
 
-  return MIN(maximum, buf_signcols(wp->w_buffer));
+/// Return the number of requested sign column cells, based on current
+/// buffer signs and user configuration.
+int win_signcol_cells(win_T *wp)
+{
+  int cols = win_signcol_count(wp);
+  if (cols) {
+    return MAX(cols, wp->w_buffer->b_signcols_cells);
+  }
+  return 0;
 }
 
 /// Get window or buffer local options

@@ -5086,13 +5086,13 @@ static int sign_compare(const void *a1, const void *a2)
     return 0;
 }
 
-int buf_signcols(buf_T *buf)
+int buf_signcols(buf_T *buf, int max_signs)
 {
     if (buf->b_signcols_max == -1) {
         signlist_T *sign;  // a sign in the signlist
         signlist_T **signs_array;
         signlist_T **prev_sign;
-        int nr_signs = 0, i = 0, same;
+        int nr_signs = 0, i = 0, same = 0, cells = 0;
 
         // Count the number of signs
         for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
@@ -5110,23 +5110,33 @@ int buf_signcols(buf_T *buf)
         qsort(signs_array, (size_t)nr_signs, sizeof(signlist_T *),
               sign_compare);
 
-        // Find the maximum amount of signs existing in a single line
+        // Find the maximum amount of signs existing in a single line, and the
+        // cells that they are occupying.
         buf->b_signcols_max = 0;
+        buf->b_signcols_cells = 0;
 
-        same = 1;
-        for (i = 1; i < nr_signs; i++) {
-            if (signs_array[i - 1]->lnum != signs_array[i]->lnum) {
-                if (buf->b_signcols_max < same) {
+        linenr_T prev_lnum = -1;
+        same = 0, cells = 0;
+        for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
+            if (sign->lnum == prev_lnum) {
+                if (same < max_signs) {
+                    same++;
+                    cells += (int)mb_string2cells(sign_get_text(sign->typenr));
+                }
+            } else {
+                if (same > buf->b_signcols_max) {
                     buf->b_signcols_max = same;
+                    buf->b_signcols_cells = cells;
                 }
                 same = 1;
-            } else {
-                same++;
+                cells = (int)mb_string2cells(sign_get_text(sign->typenr));
+                prev_lnum = sign->lnum;
             }
         }
 
         if (nr_signs > 0 && buf->b_signcols_max < same) {
             buf->b_signcols_max = same;
+            buf->b_signcols_cells = cells;
         }
 
         // Recreate the linked list with the sorted order of the array
