@@ -7096,7 +7096,7 @@ int csh_like_shell(void)
   return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
-/* /// Return the number of requested sign columns, based on current */
+/// Return the number of requested sign columns, based on current
 /// buffer signs and user configuration.
 int win_signcol_count(win_T *wp)
 {
@@ -7125,17 +7125,6 @@ int win_signcol_count(win_T *wp)
     }
   }
   return MAX(min, buf_signcols(wp->w_buffer, max));
-}
-
-/// Return the number of requested sign column cells, based on current
-/// buffer signs and user configuration.
-int win_signcol_cells(win_T *wp)
-{
-  int cols = win_signcol_count(wp);
-  if (cols) {
-    return MAX(cols, wp->w_buffer->b_signcols_cells);
-  }
-  return 0;
 }
 
 /// Get window or buffer local options

@@ -624,7 +624,7 @@ static void win_update(win_T *wp)
   // If we can compute a change in the automatic sizing of the sign column
   // under 'signcolumn=auto:X' and signs currently placed in the buffer, better
   // figuring it out here so we can redraw the entire screen for it.
-  win_signcol_cells(wp);
+  win_signcol_count(wp);
 
   type = wp->w_redr_type;
 
@@ -1537,15 +1537,14 @@ static void win_update(win_T *wp)
 ///
 /// @param wp window we want signcolumn width from
 /// @return max width of signcolumn (cell unit)
-///
-/// @note Returns a constant for now but hopefully we can improve neovim so that
-///       the returned value width adapts to the maximum number of marks to draw
-///       for the window
-/// TODO(teto)
 int win_signcol_width(win_T *wp)
 {
-  // 2 is vim default value
-  return MAX(2, win_signcol_cells(wp) + 1);
+  int cols = win_signcol_count(wp);
+  if (cols) {
+    // +1 for extra separator always.
+    return MAX(cols, wp->w_buffer->b_signcols_cells) + 1;
+  }
+  return 0;
 }
 
 /*
