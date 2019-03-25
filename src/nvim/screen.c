@@ -1541,8 +1541,9 @@ int win_signcol_width(win_T *wp)
 {
   int cols = win_signcol_count(wp);
   if (cols) {
-    // +1 for extra separator always.
-    return MAX(cols, wp->w_buffer->b_signcols_cells) + 1;
+    // Use a minimum of 2, simulating Vim/previous width of 2 cells with
+    // single-char signs (i.e. a separating space).
+    return MIN(MAX(cols, wp->w_buffer->b_signcols_cells), 2);
   }
   return 0;
 }
