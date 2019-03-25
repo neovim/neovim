@@ -2660,7 +2660,8 @@ win_line (
     extra_check = true;
   }
 
-  int sign_idx = 0, sign_cells = win_signcol_width(wp);
+  int sign_idx = 0;
+  int sign_cells = win_signcol_width(wp);
   // Repeat for the whole displayed line.
   for (;; ) {
     has_match_conc = 0;
@@ -2701,9 +2702,8 @@ win_line (
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
            * buffer or when using Netbeans. */
-          int count = win_signcol_count(wp);
-          if (count > 0) {
-              int text_sign;
+          int sign_count = win_signcol_count(wp);
+          if (sign_count > 0) {
               // Draw cells with the sign value or blank.
               c_extra = ' ';
               c_final = NUL;
@@ -2711,8 +2711,8 @@ win_line (
               n_extra = sign_cells;
 
               if (row == startrow + filler_lines && filler_todo <= 0) {
-                  text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
-                                              sign_idx, count);
+                  int text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT,
+                                                  sign_idx, sign_count);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
                       if (p_extra != NULL) {
@@ -2722,11 +2722,11 @@ win_line (
                       }
                       char_attr = sign_get_attr(text_sign, SIGN_TEXT);
 
-                      // Handle next sign in next loop iteration.
-                      sign_idx++;
-                      if (sign_idx < count) {
+                      // Handle remaining signs/space in next loop iteration.
+                      if (sign_idx < sign_count) {
                           draw_state = WL_SIGN - 1;
                       }
+                      sign_idx++;
                   }
               }
           }
