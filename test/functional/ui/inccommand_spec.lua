@@ -2607,3 +2607,30 @@ it(':substitute with inccommand during :terminal activity', function()
 
   end)
 end)
+
+it(':substitute with inccommand, timer-induced :redraw #9777', function()
+  local screen = Screen.new(30,12)
+  clear()
+  command('set cmdwinheight=3')
+  command('call timer_start(10, {-> execute("redraw")}, {"repeat":-1})')
+  command('call timer_start(10, {-> execute("redrawstatus")}, {"repeat":-1})')
+  common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
+
+  feed('gg')
+  feed(':%s/foo/ZZZ')
+  sleep(20)  -- Allow some timer activity.
+  screen:expect([[
+    {12:ZZZ} bar baz                   |
+    bar baz fox                   |
+    bar {12:ZZZ} baz                   |
+    {15:~                             }|
+    {15:~                             }|
+    {15:~                             }|
+    {11:[No Name] [+]                 }|
+    |1| {12:ZZZ} bar baz               |
+    |3| bar {12:ZZZ} baz               |
+    {15:~                             }|
+    {10:[Preview]                     }|
+    :%s/foo/ZZZ^                   |
+  ]])
+end)
