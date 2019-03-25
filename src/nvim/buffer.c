@@ -5117,11 +5117,15 @@ int buf_signcols(buf_T *buf, int max_signs)
 
         linenr_T prev_lnum = -1;
         same = 0, cells = 0;
+        char_u *sign_text;
         for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
             if (sign->lnum == prev_lnum) {
                 if (same < max_signs) {
                     same++;
-                    cells += (int)mb_string2cells(sign_get_text(sign->typenr));
+                    sign_text = sign_get_text(sign->typenr);
+                    if (sign_text != NULL) {
+                        cells += (int)mb_string2cells(sign_text);
+                    }
                 }
             } else {
                 if (same > buf->b_signcols_max) {
@@ -5129,7 +5133,10 @@ int buf_signcols(buf_T *buf, int max_signs)
                     buf->b_signcols_cells = cells;
                 }
                 same = 1;
-                cells = (int)mb_string2cells(sign_get_text(sign->typenr));
+                sign_text = sign_get_text(sign->typenr);
+                if (sign_text != NULL) {
+                    cells += (int)mb_string2cells(sign_text);
+                }
                 prev_lnum = sign->lnum;
             }
         }
