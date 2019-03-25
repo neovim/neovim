@@ -5403,10 +5403,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'signcolumn'* *'scl'*
 'signcolumn' 'scl'	string	(default "auto")
 			local to window
-	Whether or not to draw the signcolumn. Valid values are:
+	When and how to draw the signcolumn. Valid values are:
 	   "auto"   	only when there is a sign to display
+	   "auto:[1-9]" resize to accommodate multiple signs up to the
+	                given number (maximum 9), e.g. "auto:4"
 	   "no"	    	never
 	   "yes"    	always
+	   "yes:[1-9]"  always, with fixed space for signs up to the given
+	                number (maximum 9), e.g. "yes:3"
 
 
 			*'smartcase'* *'scs'* *'nosmartcase'* *'noscs'*

@@ -193,10 +193,14 @@ Options:
   'listchars' local to window
   'pumblend' pseudo-transparent popupmenu
   'scrollback'
+  'signcolumn' supports up to 9 dynamic/fixed columns
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
   'wildoptions' `pum` flag to use popupmenu for wildmode completion
   'winhighlight' window-local highlights
+
+Signs:
+  Signs are removed if the associated line is deleted.
 
 Variables:
   |v:event|
