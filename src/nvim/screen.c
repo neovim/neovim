@@ -1543,7 +1543,7 @@ int win_signcol_width(win_T *wp)
   if (cols) {
     // Use a minimum of 2, simulating Vim/previous width of 2 cells with
     // single-char signs (i.e. a separating space).
-    return MIN(MAX(cols, wp->w_buffer->b_signcols_cells), 2);
+    return MAX(MAX(cols, wp->w_buffer->b_signcols_cells), 2);
   }
   return 0;
 }
