@@ -5693,7 +5693,6 @@ void ex_sign(exarg_T *eap)
           } else if (STRNCMP(arg, "text=", 5) == 0) {
             char_u *s;
             int cells;
-            int len;
 
             arg += 5;
             for (s = arg; s + 1 < p; s++) {
@@ -5721,14 +5720,7 @@ void ex_sign(exarg_T *eap)
             }
 
             xfree(sp->sn_text);
-            // Allocate one byte more if we need to pad up
-            // with a space.
-            len = (int)(p - arg + ((cells == 1) ? 1 : 0));
-            sp->sn_text = vim_strnsave(arg, len);
-
-            if (cells == 1) {
-              STRCPY(sp->sn_text + len - 1, " ");
-            }
+            sp->sn_text = vim_strnsave(arg, p - arg);
           } else if (STRNCMP(arg, "linehl=", 7) == 0) {
             arg += 7;
             sp->sn_line_hl = syn_check_group(arg, (int)(p - arg));
