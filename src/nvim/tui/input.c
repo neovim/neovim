@@ -23,7 +23,7 @@
 # include "tui/input.c.generated.h"
 #endif
 
-void term_input_init(TermInput *input, Loop *loop)
+void tinput_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
   input->paste_enabled = false;
@@ -62,7 +62,7 @@ void term_input_init(TermInput *input, Loop *loop)
   time_watcher_init(loop, &input->timer_handle, input);
 }
 
-void term_input_destroy(TermInput *input)
+void tinput_destroy(TermInput *input)
 {
   rbuffer_free(input->key_buffer);
   uv_mutex_destroy(&input->key_buffer_mutex);
@@ -72,23 +72,23 @@ void term_input_destroy(TermInput *input)
   termkey_destroy(input->tk);
 }
 
-void term_input_start(TermInput *input)
+void tinput_start(TermInput *input)
 {
-  rstream_start(&input->read_stream, read_cb, input);
+  rstream_start(&input->read_stream, tinput_read_cb, input);
 }
 
-void term_input_stop(TermInput *input)
+void tinput_stop(TermInput *input)
 {
   rstream_stop(&input->read_stream);
   time_watcher_stop(&input->timer_handle);
 }
 
-static void input_done_event(void **argv)
+static void tinput_done_event(void **argv)
 {
   input_done();
 }
 
-static void wait_input_enqueue(void **argv)
+static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
@@ -107,12 +107,12 @@ static void wait_input_enqueue(void **argv)
   uv_mutex_unlock(&input->key_buffer_mutex);
 }
 
-static void flush_input(TermInput *input, bool wait_until_empty)
+static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
     uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&main_loop, event_create(wait_input_enqueue, 1, input));
+    loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
     input->waiting = true;
     while (input->waiting) {
       uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
@@ -121,13 +121,13 @@ static void flush_input(TermInput *input, bool wait_until_empty)
   } while (rbuffer_size(input->key_buffer) > drain_boundary);
 }
 
-static void enqueue_input(TermInput *input, char *buf, size_t size)
+static void tinput_enqueue(TermInput *input, char *buf, size_t size)
 {
   if (rbuffer_size(input->key_buffer) >
       rbuffer_capacity(input->key_buffer) - 0xff) {
     // don't ever let the buffer get too full or we risk putting incomplete keys
     // into it
-    flush_input(input, false);
+    tinput_flush(input, false);
   }
   rbuffer_write(input->key_buffer, buf, size);
 }
@@ -147,7 +147,7 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
     ptr++;
   }
 
-  enqueue_input(input, buf, len);
+  tinput_enqueue(input, buf, len);
 }
 
 static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
@@ -165,7 +165,7 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
     len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
   }
 
-  enqueue_input(input, buf, len);
+  tinput_enqueue(input, buf, len);
 }
 
 static void forward_mouse_event(TermInput *input, TermKeyKey *key)
@@ -237,7 +237,7 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);
-  enqueue_input(input, buf, len);
+  tinput_enqueue(input, buf, len);
 }
 
 static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
@@ -245,7 +245,7 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
-static void timer_cb(TimeWatcher *watcher, void *data);
+static void tinput_timer_cb(TimeWatcher *watcher, void *data);
 
 static int get_key_code_timeout(void)
 {
@@ -288,16 +288,16 @@ static void tk_getkeys(TermInput *input, bool force)
   if (ms > 0) {
     // Stop the current timer if already running
     time_watcher_stop(&input->timer_handle);
-    time_watcher_start(&input->timer_handle, timer_cb, (uint32_t)ms, 0);
+    time_watcher_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
   } else {
     tk_getkeys(input, true);
   }
 }
 
-static void timer_cb(TimeWatcher *watcher, void *data)
+static void tinput_timer_cb(TimeWatcher *watcher, void *data)
 {
   tk_getkeys(data, true);
-  flush_input(data, true);
+  tinput_flush(data, true);
 }
 
 /// Handle focus events.
@@ -333,7 +333,7 @@ static bool handle_bracketed_paste(TermInput *input)
     if (input->paste_enabled == enable) {
       return true;
     }
-    enqueue_input(input, PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
+    tinput_enqueue(input, PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
     input->paste_enabled = enable;
     return true;
   }
@@ -437,8 +437,8 @@ static bool handle_background_color(TermInput *input)
   return false;
 }
 
-static void read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data,
-                    bool eof)
+static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
+                           void *data, bool eof)
 {
   TermInput *input = data;
 
@@ -456,9 +456,10 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data,
       // ls *.md | xargs nvim
       input->in_fd = 2;
       stream_close(&input->read_stream, NULL, NULL);
-      multiqueue_put(input->loop->fast_events, restart_reading, 1, input);
+      multiqueue_put(input->loop->fast_events, tinput_restart_reading, 1,
+                     input);
     } else {
-      loop_schedule(&main_loop, event_create(input_done_event, 0));
+      loop_schedule(&main_loop, event_create(tinput_done_event, 0));
     }
     return;
   }
@@ -498,15 +499,15 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t count_, void *data,
       }
     }
   } while (rbuffer_size(input->read_stream.buffer));
-  flush_input(input, true);
+  tinput_flush(input, true);
   // Make sure the next input escape sequence fits into the ring buffer
   // without wrap around, otherwise it could be misinterpreted.
   rbuffer_reset(input->read_stream.buffer);
 }
 
-static void restart_reading(void **argv)
+static void tinput_restart_reading(void **argv)
 {
   TermInput *input = argv[0];
   rstream_init_fd(input->loop, &input->read_stream, input->in_fd, 0xfff);
-  rstream_start(&input->read_stream, read_cb, input);
+  rstream_start(&input->read_stream, tinput_read_cb, input);
 }
