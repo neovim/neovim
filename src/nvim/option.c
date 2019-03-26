@@ -1359,7 +1359,9 @@ do_set (
             && nextchar != NUL && !ascii_iswhite(afterchar))
           errmsg = e_trailing;
       } else {
+
         int value_is_replaced = !prepending && !adding && !removing;
+        int value_checked = false;
 
         if (flags & P_BOOL) {                       /* boolean */
           if (nextchar == '=' || nextchar == ':') {
@@ -1805,7 +1807,7 @@ do_set (
               // or 'filetype' autocommands may be triggered that can
               // cause havoc.
               errmsg = did_set_string_option(opt_idx, (char_u **)varp,
-                  new_value_alloced, oldval, errbuf, opt_flags);
+                  new_value_alloced, oldval, errbuf, opt_flags, &value_checked);
 
               if (did_inc_secure) {
                 --secure;
@@ -1837,7 +1839,7 @@ do_set (
         }
 
         if (opt_idx >= 0)
-          did_set_option(opt_idx, opt_flags, value_is_replaced);
+          did_set_option(opt_idx, opt_flags, value_is_replaced, value_checked);
       }
 
 skip:
@@ -1902,7 +1904,9 @@ static void
 did_set_option (
     int opt_idx,
     int opt_flags,              /* possibly with OPT_MODELINE */
-    int new_value              /* value was replaced completely */
+    int new_value,              /* value was replaced completely */
+    int value_checked           /* value was checked to be safe, no need to
+                                   set P_INSECURE */
 )
 {
   options[opt_idx].flags |= P_WAS_SET;
@@ -1911,9 +1915,9 @@ did_set_option (
    * set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
    * flag. */
   uint32_t *p = insecure_flag(opt_idx, opt_flags);
-  if (secure
+  if (!value_checked && (secure
       || sandbox != 0
-      || (opt_flags & OPT_MODELINE))
+      || (opt_flags & OPT_MODELINE)))
     *p = *p | P_INSECURE;
   else if (new_value)
     *p = *p & ~P_INSECURE;
@@ -2413,10 +2417,12 @@ static char *set_string_option(const int opt_idx, const char *const value,
   char *const saved_oldval = xstrdup(oldval);
   char *const saved_newval = xstrdup(s);
 
+  int value_checked = false;
   char *const r = (char *)did_set_string_option(
-      opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
+      opt_idx, (char_u **)varp, (int)true, (char_u *)oldval,
+      NULL, opt_flags, &value_checked);
   if (r == NULL) {
-    did_set_option(opt_idx, opt_flags, true);
+    did_set_option(opt_idx, opt_flags, true, value_checked);
   }
 
   // call autocommand after handling side effects
@@ -2463,7 +2469,9 @@ did_set_string_option (
     int new_value_alloced,                  /* new value was allocated */
     char_u *oldval,                    /* previous value of the option */
     char_u *errbuf,                    /* buffer for errors, or NULL */
-    int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
+    int opt_flags,                          /* OPT_LOCAL and/or OPT_GLOBAL */
+    int *value_checked                 /* value was checked to be safe, no
+                                          need to set P_INSECURE */
 )
 {
   char_u      *errmsg = NULL;
@@ -2690,8 +2698,20 @@ ambw_end:
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
+      int secure_save = secure;
+
+      // Reset the secure flag, since the value of 'keymap' has
+      // been checked to be safe.
+      secure = 0;
+
       // load or unload key mapping tables
       errmsg = keymap_init();
+
+      secure = secure_save;
+
+      // Since we check the value, there is no need to set P_INSECURE,
+      // even when the value comes from a modeline.
+      *value_checked = true;
     }
 
     if (errmsg == NULL) {
@@ -3198,12 +3218,20 @@ ambw_end:
       errmsg = e_invarg;
     } else {
       value_changed = STRCMP(oldval, *varp) != 0;
+
+      // Since we check the value, there is no need to set P_INSECURE,
+      // even when the value comes from a modeline.
+      *value_checked = true;
     }
   } else if (gvarp == &p_syn) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
       value_changed = STRCMP(oldval, *varp) != 0;
+
+      // Since we check the value, there is no need to set P_INSECURE,
+      // even when the value comes from a modeline.
+      *value_checked = true;
     }
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
@@ -3293,6 +3321,11 @@ ambw_end:
       // already set to this value.
       if (!(opt_flags & OPT_MODELINE) || value_changed) {
         static int ft_recursive = 0;
+        int secure_save = secure;
+
+        // Reset the secure flag, since the value of 'filetype' has
+        // been checked to be safe.
+        secure = 0;
 
         ft_recursive++;
         did_filetype = true;
@@ -3305,6 +3338,7 @@ ambw_end:
         if (varp != &(curbuf->b_p_ft)) {
           varp = NULL;
         }
+        secure = secure_save;
       }
     }
     if (varp == &(curwin->w_s->b_p_spl)) {
