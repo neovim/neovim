@@ -359,10 +359,16 @@ notation	meaning		    equivalent	decimal value(s)	~
 <End>		end				*end*
 <PageUp>	page-up				*page_up* *page-up*
 <PageDown>	page-down			*page_down* *page-down*
+<kUp>		keypad cursor-up		*keypad-cursor-up*
+<kDown>		keypad cursor-down		*keypad-cursor-down*
+<kLeft>		keypad cursor-left		*keypad-cursor-left*
+<kRight>	keypad cursor-right		*keypad-cursor-right*
 <kHome>		keypad home (upper left)	*keypad-home*
 <kEnd>		keypad end (lower left)		*keypad-end*
+<kOrigin>	keypad origin (middle)		*keypad-origin*
 <kPageUp>	keypad page-up (upper right)	*keypad-page-up*
 <kPageDown>	keypad page-down (lower right)	*keypad-page-down*
+<kDel>		keypad delete 			*keypad-delete*
 <kPlus>		keypad +			*keypad-plus*
 <kMinus>	keypad -			*keypad-minus*
 <kMultiply>	keypad *			*keypad-multiply*
@@ -391,6 +397,9 @@ sends the same raw key code as its non-keypad equivalent, it will be
 recognized as the non-keypad code.  For example, when <kHome> sends the same
 code as <Home>, when pressing <kHome> Vim will think <Home> was pressed.
 Mapping <kHome> will not work then.
+
+Note: If numlock is on, the |TUI| receives plain ASCII values, so
+mappings to <k0> - <k9> and <kPoint> will not work.
 
 								*<>*
 Examples are often given in the <> notation.  Sometimes this is just to make
