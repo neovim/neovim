@@ -23,7 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re, urllib.parse
+import os
+import re
+import urllib.parse
+import datetime
+import sys
 from itertools import chain
 
 HEAD = """\
@@ -32,6 +36,17 @@ HEAD = """\
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html; charset={encoding}"/>
+<style>
+.h {{
+  font-weight: bold;
+}}
+h1 {{
+  font-family: sans-serif;
+}}
+pre {{
+  font-family: sans-serif;
+}}
+</style>
 <title>Nvim: {filename}</title>
 """
 
@@ -39,22 +54,19 @@ HEAD_END = '</head>\n<body>\n'
 
 INTRO = """
 <h1>Nvim help files</h1>
-<p>HTML export of the <a href="https://neovim.io/">Nvim</a> help pages{vers-note}.
-Updated <a href="https://github.com/neovim/bot-ci" class="d">automatically</a> from the <a
-href="https://github.com/vim/vim/tree/master/runtime/doc" class="d">Nvim source repository</a>.
-Also includes the <a href="vim_faq.txt.html">Vim FAQ</a>, pulled from its
-<a href="https://github.com/chrisbra/vim_faq" class="d">source repository</a>.</p>
+<p>
+<a href="https://neovim.io/">Nvim</a> help pages{vers-note}.
+Updated <a href="https://github.com/neovim/bot-ci" class="d">automatically</a>
+from the <a href="https://github.com/neovim/neovim" class="d">Nvim source</a>.
+</p>
 """
 
-VERSION_NOTE = ", current as of Vim {version}"
+VERSION_NOTE = ", current as of Nvim {version}"
 
 SITENAVI_LINKS = """
-Quick links:
-<a href="/">help overview</a> &middot;
-<a href="quickref.txt.html">quick reference</a> &middot;
-<a href="usr_toc.txt.html">user manual toc</a> &middot;
-<a href="{helptxt}#reference_toc">reference manual toc</a> &middot;
-<a href="vim_faq.txt.html">faq</a>
+<a href="quickref.txt.html">Quick reference</a> &middot;
+<a href="usr_toc.txt.html">User manual</a> &middot;
+<a href="{helptxt}#reference_toc">Reference manual</a> &middot;
 """
 
 SITENAVI_LINKS_PLAIN = SITENAVI_LINKS.format(helptxt='help.txt.html')
@@ -77,15 +89,14 @@ TEXTSTART = """
 FOOTER = '</pre>'
 
 FOOTER2 = """
-<p id="footer">This site is maintained by Carlo Teubner (<i>(my first name) dot (my last name) at gmail dot com</i>).</p>
+<p id="footer">Generated {generated_date} from <code>{commit}</code></p>
 </div>
 </div>
 </body>
 </html>
-"""
-
-VIM_FAQ_LINE = '<a href="vim_faq.txt.html#vim_faq.txt" class="l">' \
-               'vim_faq.txt</a>   Frequently Asked Questions\n'
+""".format(
+        generated_date='{0:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()),
+        commit='?')
 
 RE_TAGLINE = re.compile(r'(\S+)\s+(\S+)')
 
@@ -127,6 +138,8 @@ RE_TAGWORD = re.compile(
         PAT_URL      + '|' +
         PAT_WORD)
 RE_NEWLINE   = re.compile(r'[\r\n]')
+# H1 header "=====…"
+# H2 header "-----…"
 RE_HRULE     = re.compile(r'[-=]{3,}.*[-=]{3,3}$')
 RE_EG_START  = re.compile(r'(?:.* )?>$')
 RE_EG_END    = re.compile(r'\S')
@@ -211,13 +224,20 @@ class VimH2H(object):
         inexample = 0
         filename = str(filename)
         is_help_txt = (filename == 'help.txt')
-        faq_line = False
+        last = ''
         for line in RE_NEWLINE.split(contents):
             line = line.rstrip('\r\n')
             line_tabs = line
             line = line.expandtabs()
+            if last == 'h1':
+                out.extend(('</pre>'))  # XXX
+                out.extend(('<h1>', line.rstrip(), '</h1>\n'))
+                out.extend(('<pre>'))
+                last = ''
+                continue
             if RE_HRULE.match(line):
-                out.extend(('<span class="h">', line, '</span>\n'))
+                # out.extend(('<span class="h">', line, '</span>\n'))
+                last = 'h1'
                 continue
             if inexample == 2:
                 if RE_EG_END.match(line):
@@ -234,8 +254,6 @@ class VimH2H(object):
                 m = RE_SECTION.match(line)
                 out.extend((r'<span class="c">', m.group(0), r'</span>'))
                 line = line[m.end():]
-            if is_help_txt and RE_LOCAL_ADD.match(line_tabs):
-                faq_line = True
             lastpos = 0
             for match in RE_TAGWORD.finditer(line):
                 pos = match.start()
@@ -278,9 +296,6 @@ class VimH2H(object):
                 out.append(html_escape[line[lastpos:]])
             out.append('\n')
             if inexample == 1: inexample = 2
-            if faq_line:
-                out.append(VIM_FAQ_LINE)
-                faq_line = False
 
         header = []
         header.append(HEAD.format(encoding=encoding, filename=filename))
@@ -310,9 +325,6 @@ html_escape = HtmlEscCache()
 
 
 
-import sys, os, os.path
-#import cProfile
-sys.path.append('.')
 
 def slurp(filename):
     try:
@@ -352,4 +364,3 @@ def main():
         of.close()
 
 main()
-#cProfile.run('main()')
