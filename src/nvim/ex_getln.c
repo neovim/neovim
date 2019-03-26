@@ -546,8 +546,8 @@ static int command_line_execute(VimState *state, int key)
       multiqueue_process_events(main_loop.events);
     } else {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+      redrawcmdline();
     }
-    redrawcmdline();
     return 1;
   }
 

@@ -7807,6 +7807,16 @@ static void ex_redraw(exarg_T *eap)
   if (need_maketitle) {
     maketitle();
   }
+
+  if (State & CMDLINE) {
+    int save_msg_silent = msg_silent;
+    msg_silent = 0;
+    // Reset lines_left since messages will be cleared
+    lines_left = Rows - 1;
+    redrawcmdline();
+    msg_silent = save_msg_silent;
+  }
+
   RedrawingDisabled = r;
   p_lz = p;
 
