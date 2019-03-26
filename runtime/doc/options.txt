@@ -5527,7 +5527,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	After this option has been set successfully, Vim will source the files
 	"spell/LANG.vim" in 'runtimepath'.  "LANG" is the value of 'spelllang'
-	up to the first comma, dot or underscore.
+	up to the first character that is not an ASCII letter and not a dash.
 	Also see |set-spc-auto|.
 
 

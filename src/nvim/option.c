@@ -3291,11 +3291,13 @@ did_set_string_option (
        * '.encoding'.
        */
       for (p = q; *p != NUL; ++p)
-        if (vim_strchr((char_u *)"_.,", *p) != NULL)
+        if (!ASCII_ISALPHA(*p) && *p != '-')
           break;
-      vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
-                   (int)(p - q), q);
-      source_runtime(fname, DIP_ALL);
+      if (p > q) {
+        vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
+                     (int)(p - q), q);
+        source_runtime(fname, DIP_ALL);
+      }
     }
   }
 
