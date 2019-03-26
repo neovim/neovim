@@ -44,6 +44,8 @@ local N_=function(s)
     return 'N_(' .. cstr(s) .. ')'
   end
 end
+-- used for 'cinkeys' and 'indentkeys'
+local indentkeys_default = '0{,0},0),0],:,0#,!^F,o,O,e';
 return {
   cstr=cstr,
   options={
@@ -319,7 +321,7 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_cink',
-      defaults={if_true={vi="0{,0},0),:,0#,!^F,o,O,e"}}
+      defaults={if_true={vi=indentkeys_default}}
     },
     {
       full_name='cinoptions', abbreviation='cino',
@@ -1218,7 +1220,7 @@ return {
       vi_def=true,
       alloced=true,
       varname='p_indk',
-      defaults={if_true={vi="0{,0},:,0#,!^F,o,O,e"}}
+      defaults={if_true={vi=indentkeys_default}}
     },
     {
       full_name='infercase', abbreviation='inf',
@@ -2699,7 +2701,7 @@ return {
     },
     {
       full_name='wildoptions', abbreviation='wop',
-      type='string', scope={'global'},
+      type='string', list='onecomma', scope={'global'},
       vi_def=true,
       varname='p_wop',
       defaults={if_true={vi=""}}

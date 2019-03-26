@@ -1004,7 +1004,7 @@ return {
   },
   {
     command='function',
-    flags=bit.bor(EXTRA, BANG, CMDWIN),
+    flags=bit.bor(EXTRA, BANG, SBOXOK, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_function',
   },

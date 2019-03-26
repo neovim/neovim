@@ -74,13 +74,14 @@
 #define FO_MBYTE_JOIN   'M'     /* no space before/after multi-byte char */
 #define FO_MBYTE_JOIN2  'B'     /* no space between multi-byte chars */
 #define FO_ONE_LETTER   '1'
-#define FO_WHITE_PAR    'w'     /* trailing white space continues paragr. */
-#define FO_AUTO         'a'     /* automatic formatting */
-#define FO_REMOVE_COMS  'j'     /* remove comment leaders when joining lines */
+#define FO_WHITE_PAR    'w'     // trailing white space continues paragr.
+#define FO_AUTO         'a'     // automatic formatting
+#define FO_REMOVE_COMS  'j'     // remove comment leaders when joining lines
+#define FO_PERIOD_ABBR  'p'     // don't break a single space after a period
 
 #define DFLT_FO_VI      "vt"
 #define DFLT_FO_VIM     "tcqj"
-#define FO_ALL          "tcroq2vlb1mMBn,awj"    /* for do_set() */
+#define FO_ALL          "tcroq2vlb1mMBn,awjp"   // for do_set()
 
 // characters for the p_cpo option:
 #define CPO_ALTREAD     'a'     // ":read" sets alternate file name
@@ -658,6 +659,12 @@ extern char_u   *p_vfile;       /* 'verbosefile' */
 #endif
 EXTERN int p_warn;              // 'warn'
 EXTERN char_u   *p_wop;         // 'wildoptions'
+EXTERN unsigned wop_flags;
+# ifdef IN_OPTION_C
+static char *(p_wop_values[]) =  { "tagfile", "pum", NULL };
+#endif
+#define WOP_TAGFILE             0x01
+#define WOP_PUM                 0x02
 EXTERN long p_window;           // 'window'
 EXTERN char_u   *p_wak;         // 'winaltkeys'
 EXTERN char_u   *p_wig;         // 'wildignore'

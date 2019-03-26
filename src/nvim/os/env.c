@@ -151,25 +151,36 @@ int os_unsetenv(const char *name)
 char *os_getenvname_at_index(size_t index)
 {
 #ifdef _WIN32
-  // Check if index is inside the environ array and is not the last element.
-  for (size_t i = 0; i <= index; i++) {
-    if (_wenviron[i] == NULL) {
-      return NULL;
-    }
-  }
-  wchar_t *utf16_str = _wenviron[index];
-  char *utf8_str;
-  int conversion_result = utf16_to_utf8(utf16_str, &utf8_str);
-  if (conversion_result != 0) {
-    EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+  wchar_t *env = GetEnvironmentStringsW();
+  if (!env) {
     return NULL;
   }
-  size_t namesize = 0;
-  while (utf8_str[namesize] != '=' && utf8_str[namesize] != NUL) {
-    namesize++;
+  char *name = NULL;
+  size_t current_index = 0;
+  // GetEnvironmentStringsW() result has this format:
+  //    var1=value1\0var2=value2\0...varN=valueN\0\0
+  for (wchar_t *it = env; *it != L'\0' || *(it + 1) != L'\0'; it++) {
+    if (index == current_index) {
+      char *utf8_str;
+      int conversion_result = utf16_to_utf8(it, &utf8_str);
+      if (conversion_result != 0) {
+        EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+        break;
+      }
+      size_t namesize = 0;
+      while (utf8_str[namesize] != '=' && utf8_str[namesize] != NUL) {
+        namesize++;
+      }
+      name = (char *)vim_strnsave((char_u *)utf8_str, namesize);
+      xfree(utf8_str);
+      break;
+    }
+    if (*it == L'\0') {
+      current_index++;
+    }
   }
-  char *name = (char *)vim_strnsave((char_u *)utf8_str, namesize);
-  xfree(utf8_str);
+
+  FreeEnvironmentStringsW(env);
   return name;
 #else
 # if defined(HAVE__NSGETENVIRON)

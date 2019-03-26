@@ -555,6 +555,24 @@ size_t mb_string2cells(const char_u *str)
   return clen;
 }
 
+/// Get the number of cells occupied by string `str` with maximum length `size`
+///
+/// @param str The source string, may not be NULL, must be a NUL-terminated
+///            string.
+/// @param size maximum length of string. It will terminate on earlier NUL.
+/// @return The number of cells occupied by string `str`
+size_t mb_string2cells_len(const char_u *str, size_t size)
+{
+  size_t clen = 0;
+
+  for (const char_u *p = str; *p != NUL && p < str+size;
+       p += utf_ptr2len_len(p, size+(p-str))) {
+    clen += utf_ptr2cells(p);
+  }
+
+  return clen;
+}
+
 /// Convert a UTF-8 byte sequence to a wide character
 ///
 /// If the sequence is illegal or truncated by a NUL then the first byte is

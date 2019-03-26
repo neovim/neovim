@@ -214,6 +214,15 @@ static int hislen = 0;                  /* actual length of history tables */
 /// user interrupting highlight function to not interrupt command-line.
 static bool getln_interrupted_highlight = false;
 
+// "compl_match_array" points the currently displayed list of entries in the
+// popup menu.  It is NULL when there is no popup menu.
+static pumitem_T *compl_match_array = NULL;
+static int compl_match_arraysize;
+// First column in cmdline of the matched item for completion.
+static int compl_startcol;
+static int compl_selected;
+
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_getln.c.generated.h"
@@ -615,8 +624,10 @@ static int command_line_execute(VimState *state, int key)
   if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
       && s->c != Ctrl_L) {
-    if (ui_has(kUIWildmenu)) {
-      ui_call_wildmenu_hide();
+    if (compl_match_array) {
+      pum_undisplay(true);
+      xfree(compl_match_array);
+      compl_match_array = NULL;
     }
     if (s->xpc.xp_numfiles != -1) {
       (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
@@ -3746,13 +3757,12 @@ ExpandOne (
         else
           findex = -1;
       }
-      if (p_wmnu) {
-        if (ui_has(kUIWildmenu)) {
-          ui_call_wildmenu_select(findex);
-        } else {
-          win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
-                                  findex, cmd_showtail);
-        }
+      if (compl_match_array) {
+        compl_selected = findex;
+        cmdline_pum_display(false);
+      } else if (p_wmnu) {
+        win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
+                                findex, cmd_showtail);
       }
       if (findex == -1) {
         return vim_strsave(orig_save);
@@ -4069,6 +4079,12 @@ void tilde_replace(char_u *orig_pat, int num_files, char_u **files)
   }
 }
 
+void cmdline_pum_display(bool changed_array)
+{
+  pum_display(compl_match_array, compl_match_arraysize, compl_selected,
+              changed_array, compl_startcol);
+}
+
 /*
  * Show all matches for completion on the command line.
  * Returns EXPAND_NOTHING when the character that triggered expansion should
@@ -4102,12 +4118,28 @@ static int showmatches(expand_T *xp, int wildmenu)
     showtail = cmd_showtail;
   }
 
-  if (ui_has(kUIWildmenu)) {
-    Array args = ARRAY_DICT_INIT;
+  bool compl_use_pum = (ui_has(kUICmdline)
+                        ? ui_has(kUIPopupmenu)
+                        : wildmenu && (wop_flags & WOP_PUM))
+                       || ui_has(kUIWildmenu);
+
+  if (compl_use_pum) {
+    compl_match_arraysize = num_files;
+    compl_match_array = xcalloc(compl_match_arraysize, sizeof(pumitem_T));
     for (i = 0; i < num_files; i++) {
-      ADD(args, STRING_OBJ(cstr_to_string((char *)files_found[i])));
+      compl_match_array[i].pum_text = L_SHOWFILE(i);
     }
-    ui_call_wildmenu_show(args);
+    ssize_t offset = showtail ? sm_gettail(xp->xp_pattern)-xp->xp_pattern : 0;
+    if (ui_has(kUICmdline)) {
+      compl_startcol = ccline.cmdpos - strnlen((char *)xp->xp_pattern+offset,
+                                               xp->xp_pattern_len-offset);
+    } else {
+      compl_startcol = ccline.cmdspos
+                       - mb_string2cells_len(xp->xp_pattern+offset,
+                                             xp->xp_pattern_len-offset);
+    }
+    compl_selected = -1;
+    cmdline_pum_display(true);
     return EXPAND_OK;
   }
 

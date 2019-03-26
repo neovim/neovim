@@ -692,7 +692,7 @@ int win_col_off(win_T *wp)
   return ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0)
          + (cmdwin_type == 0 || wp != curwin ? 0 : 1)
          + (int)wp->w_p_fdc
-         + (signcolumn_on(wp) ? win_signcol_width(wp) : 0);
+         + (win_signcol_count(wp) * win_signcol_width(wp));
 }
 
 int curwin_col_off(void)
@@ -2001,10 +2001,7 @@ static void get_scroll_overlap(lineoff_T *lp, int dir)
   return;
 }
 
-/* #define KEEP_SCREEN_LINE */
-/*
- * Scroll 'scroll' lines up or down.
- */
+// Scroll 'scroll' lines up or down.
 void halfpage(bool flag, linenr_T Prenum)
 {
   long scrolled = 0;
@@ -2039,13 +2036,11 @@ void halfpage(bool flag, linenr_T Prenum)
         ++curwin->w_topline;
         curwin->w_topfill = diff_check_fill(curwin, curwin->w_topline);
 
-#ifndef KEEP_SCREEN_LINE
         if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
           ++curwin->w_cursor.lnum;
           curwin->w_valid &=
             ~(VALID_VIRTCOL|VALID_CHEIGHT|VALID_WCOL);
         }
-#endif
       }
       curwin->w_valid &= ~(VALID_CROW|VALID_WROW);
       scrolled += i;
@@ -2070,10 +2065,7 @@ void halfpage(bool flag, linenr_T Prenum)
       }
     }
 
-#ifndef KEEP_SCREEN_LINE
-    /*
-     * When hit bottom of the file: move cursor down.
-     */
+    // When hit bottom of the file: move cursor down.
     if (n > 0) {
       if (hasAnyFolding(curwin)) {
         while (--n >= 0
@@ -2086,18 +2078,6 @@ void halfpage(bool flag, linenr_T Prenum)
         curwin->w_cursor.lnum += n;
       check_cursor_lnum();
     }
-#else
-    /* try to put the cursor in the same screen line */
-    while ((curwin->w_cursor.lnum < curwin->w_topline || scrolled > 0)
-           && curwin->w_cursor.lnum < curwin->w_botline - 1) {
-      scrolled -= plines(curwin->w_cursor.lnum);
-      if (scrolled < 0 && curwin->w_cursor.lnum >= curwin->w_topline)
-        break;
-      (void)hasFolding(curwin->w_cursor.lnum, NULL,
-          &curwin->w_cursor.lnum);
-      ++curwin->w_cursor.lnum;
-    }
-#endif
   } else {
     /*
      * scroll the text down
@@ -2119,17 +2099,13 @@ void halfpage(bool flag, linenr_T Prenum)
       curwin->w_valid &= ~(VALID_CROW|VALID_WROW|
                            VALID_BOTLINE|VALID_BOTLINE_AP);
       scrolled += i;
-#ifndef KEEP_SCREEN_LINE
       if (curwin->w_cursor.lnum > 1) {
         --curwin->w_cursor.lnum;
         curwin->w_valid &= ~(VALID_VIRTCOL|VALID_CHEIGHT|VALID_WCOL);
       }
-#endif
     }
-#ifndef KEEP_SCREEN_LINE
-    /*
-     * When hit top of the file: move cursor up.
-     */
+
+    // When hit top of the file: move cursor up.
     if (n > 0) {
       if (curwin->w_cursor.lnum <= (linenr_T)n)
         curwin->w_cursor.lnum = 1;
@@ -2142,18 +2118,6 @@ void halfpage(bool flag, linenr_T Prenum)
       } else
         curwin->w_cursor.lnum -= n;
     }
-#else
-    /* try to put the cursor in the same screen line */
-    scrolled += n;          /* move cursor when topline is 1 */
-    while (curwin->w_cursor.lnum > curwin->w_topline
-           && (scrolled > 0 || curwin->w_cursor.lnum >= curwin->w_botline)) {
-      scrolled -= plines(curwin->w_cursor.lnum - 1);
-      if (scrolled < 0 && curwin->w_cursor.lnum < curwin->w_botline)
-        break;
-      --curwin->w_cursor.lnum;
-      foldAdjustCursor();
-    }
-#endif
   }
   /* Move cursor to first line of closed fold. */
   foldAdjustCursor();

@@ -342,7 +342,7 @@ static void tui_terminal_start(UI *ui)
   terminfo_start(ui);
   tui_guess_size(ui);
   signal_watcher_start(&data->winch_handle, sigwinch_cb, SIGWINCH);
-  term_input_start(&data->input);
+  tinput_start(&data->input);
 }
 
 static void tui_terminal_after_startup(UI *ui)
@@ -364,7 +364,7 @@ static void tui_terminal_stop(UI *ui)
     ui->data = NULL;  // Flag UI as "stopped".
     return;
   }
-  term_input_stop(&data->input);
+  tinput_stop(&data->input);
   signal_watcher_stop(&data->winch_handle);
   terminfo_stop(ui);
   ugrid_free(&data->grid);
@@ -404,7 +404,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
 #endif
-  term_input_init(&data->input, &tui_loop);
+  tinput_init(&data->input, &tui_loop);
   tui_terminal_start(ui);
 
   // Allow main thread to continue, we are ready to handle UI callbacks.
@@ -429,7 +429,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   }
 
   ui_bridge_stopped(bridge);
-  term_input_destroy(&data->input);
+  tinput_destroy(&data->input);
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);
   signal_watcher_close(&data->winch_handle, NULL);

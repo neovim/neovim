@@ -1635,6 +1635,17 @@ j	Where it makes sense, remove a comment leader when joining lines.  For
 		         // in the list ~
 	Becomes:
 		int i;   // the index in the list ~
+p	Don't break lines at single spaces that follow periods.  This is
+	intended to complement 'joinspaces' and |cpo-J|, for prose with
+	sentences separated by two spaces.  For example, with 'textwidth' set
+	to 28: >
+		Surely you're joking, Mr. Feynman!
+<	Becomes: >
+		Surely you're joking,
+		Mr. Feynman!
+<	Instead of: >
+		Surely you're joking, Mr.
+		Feynman!
 
 
 With 't' and 'c' you can specify when Vim performs auto-wrapping:

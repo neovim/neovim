@@ -232,7 +232,45 @@ An example of calling the api from vimscript: >
 
     " later
     call nvim_buf_clear_namespace(0, src, 0, -1)
+
+
+==============================================================================
+Floating windows						 *api-floatwin*
+
+Nvim supports floating windows, windows that are displayed on top of ordinary
+windows.  This is useful to implement simple widgets, such as tooltips
+displaying information next to cursor text. Floating windows are fully
+functional buffer windows and support user editing. They support the standard
+|api-window| calls and almost all window options (with some exceptions such as
+'statusline' is not supported currently).
+
+Floating windows are created either by |nvim_open_win()| to open a new window,
+or |nvim_win_set_config()| to reconfigure a normal window into a float.
+Currently the position can either be grid coordinates relative to the top-left
+of some window, or a position relative to the current window cursor.  The
+parameters for positioning are described in detail at |nvim_open_win()|.
+
+|nvim_open_win()| assumes an existing buffer to display in the window. To create
+a scratch buffer for the float, |nvim_create_buffer()| can be used. The text in
+the buffer can be highlighted using standard functionality, such as syntax
+highlighting, or |api-highlights|.
+
+By default, floats will use |hl-NormalFloat| as normal highlight, which
+links to |hl-Pmenu| in the builtin color scheme. The 'winhighlight' option can
+be used to override it. Currently, floating windows don't support any visual
+decorations like a border or additional widgets like scrollbar.
+
+Here is an example for creating a float with scratch buffer: >
+
+    let buf = nvim_create_buf(v:false, v:true)
+    call nvim_buf_set_lines(buf, 0, -1, v:true, ["test", "text"])
+    let opts = {'relative': 'cursor', 'width': 10, 'height': 2, 'col': 0,
+        \ 'row': 1, 'anchor': 'NW'}
+    let win = nvim_open_win(buf, 0, opts)
+    " optional: change highlight, otherwise Pmenu is used
+    call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
 >
+To close the float, |nvim_win_close()| can be used.
 ==============================================================================
 Global Functions                                                  *api-global*
 
@@ -576,6 +614,94 @@ nvim_set_current_win({window})                        *nvim_set_current_win()*
                 Parameters: ~
                     {window}  Window handle
 
+nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
+                Creates a new, empty, unnamed buffer.
+
+                Parameters: ~
+                    {listed}   Controls 'buflisted'
+                    {scratch}  Creates a "throwaway" |scratch-buffer| for
+                               temporary work (always 'nomodified')
+
+                Return: ~
+                    Buffer handle, or 0 on error
+
+nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
+                Open a new window.
+
+                Currently this is used to open floating and external windows.
+                Floats are windows that are drawn above the split layout, at
+                some anchor position in some other window. Floats can be draw
+                internally or by external GUI with the |ui-multigrid|
+                extension. External windows are only supported with multigrid
+                GUIs, and are displayed as separate top-level windows.
+
+                For a general overview of floats, see |api-floatwin|.
+
+                Exactly one of `external` and `relative` must be specified.
+
+                Parameters: ~
+                    {buffer}   handle of buffer to be displayed in the window
+                    {enter}    whether the window should be entered (made the
+                               current window)
+                    {config}   Dictionary for the window configuration accepts
+                               these keys:
+
+                        `relative`: If set, the window becomes a
+                        floating window. The window will be placed with
+                        row,col coordinates relative to one of the
+                        following:
+                            "editor" the global editor grid
+                            "win"    a window. Use `win` to specify window id,
+                                     or current window will be used by default.
+                            "cursor" the cursor position in current window.
+
+                        `win`: when using `relative='win'`, window id of the window
+                        where the position is defined.
+
+                        `anchor`: the corner of the float that the row,col
+                        position defines
+                            "NW" north-west (default)
+                            "NE" north-east
+                            "SW" south-west
+                            "SE" south-east
+
+                        `focusable`: Whether window can be focused by wincmds and
+                        mouse events. Defaults to true. Even if set to false,
+                        the window can still be entered using
+                        |nvim_set_current_win()| API call.
+
+                        `height`: Window height in character cells. Minimum of 1.
+
+                        `width`: Window width in character cells. Minimum of 2.
+
+                        `row`: row position. Screen cell height are used as unit.
+                        Can be floating point.
+
+                        `col`: column position.  Screen cell width is used as
+                        unit. Can be floating point.
+
+                        `external`: GUI should display the window as an external
+                        top-level window. Currently accepts no other
+                        positioning configuration together with this.
+
+                With editor positioning row=0, col=0 refers to the top-left
+                corner of the screen-grid and row=Lines-1, Columns-1 refers to
+                the bottom-right corner. Floating point values are allowed,
+                but the builtin implementation (used by TUI and GUIs without
+                multigrid support) will always round down to nearest integer.
+
+                Out-of-bounds values, and configurations that make the float
+                not fit inside the main editor, are allowed. The builtin
+                implementation will truncate values so floats are completely
+                within the main screen grid. External GUIs could let floats
+                hover outside of the main window like a tooltip, but this
+                should not be used to specify arbitrary WM screen positions.
+
+                Parameters: ~
+
+                Return: ~
+                    the window handle or 0 when error
+
 nvim_list_tabpages()                                    *nvim_list_tabpages()*
                 Gets the current list of tabpage handles.
 
@@ -737,12 +863,31 @@ nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
 
                 Return: ~
                     a Dictionary, describing a channel with the following
-                    keys:   "stream" the stream underlying the channel
-                    "stdio" stdin and stdout of this Nvim instance  "stderr"
-                    stderr of this Nvim instance  "socket" TCP/IP socket or
-                    named pipe  "job" job with communication over its stdio
+                    keys:
 
-                  "mode" how data received on the channel is interpreted   "bytes" send and recieve raw bytes  "terminal" a |terminal| instance interprets ASCII sequences  "rpc" |RPC| communication on the channel is active  "pty" Name of pseudoterminal, if one is used (optional). On a POSIX system, this will be a device path like /dev/pts/1. Even if the name is unknown, the key will still be present to indicate a pty is used. This is currently the case when using winpty on windows.  "buffer" buffer with connected |terminal| instance (optional)  "client" information about the client on the other end of the RPC channel, if it has added it using |nvim_set_client_info()|. (optional)
+                    `stream`: the stream underlying the channel:
+                        "stdio"   stdin and stdout of this Nvim instance.
+                        "stderr"  stderr of this Nvim instance.
+                        "socket"  TCP/IP socket or named pipe.
+                        "job"     job with communication over its stdio.
+
+                    `mode`: how data received on the channel is interpreted:
+                        "bytes"    send and recieve raw bytes.
+                        "terminal" a |terminal| instance interprets ASCII sequences
+                        "rpc"      |RPC| communication on the channel is active
+
+                    `pty`: Name of pseudoterminal, if one is used (optional).
+                    On a POSIX system, this will be a device path like
+                    /dev/pts/1. Even if the name is unknown, the key will
+                    still be present to indicate a pty is used. This is
+                    currently the case when using winpty on windows.
+
+                    `buffer`: buffer with connected |terminal|
+                    instance (optional).
+
+                    `client`: information about the client on the other end of
+                    the RPC channel, if it has added it using
+                    |nvim_set_client_info()| (optional).
 
 nvim_list_chans()                                          *nvim_list_chans()*
                 Get information about all open channels.
@@ -755,7 +900,13 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                 Calls many API methods atomically.
 
                 This has two main usages:
-                  To perform several requests from an async context atomically, i.e. without interleaving redraws, RPC requests from other clients, or user interactions (however API methods may trigger autocommands or event processing which have such side-effects, e.g. |:sleep| may wake timers).  To minimize RPC overhead (roundtrips) of a sequence of many requests.
+                1. To perform several requests from an async context
+                atomically, i.e. without interleaving redraws, RPC requests
+                from other clients, or user interactions (however API methods
+                may trigger autocommands or event processing which have such
+                side-effects, e.g. |:sleep| may wake timers).
+                2. To minimize RPC overhead (roundtrips) of a sequence of many
+                requests.
 
                 Parameters: ~
                     {calls}  an array of calls, where each call is described
@@ -907,9 +1058,14 @@ nvim_list_uis()                                              *nvim_list_uis()*
                 Gets a list of dictionaries representing attached UIs.
 
                 Return: ~
-                    Array of UI dictionaries
-                Each dictionary has the following keys:
-                  "height" requested height of the UI  "width" requested width of the UI  "rgb" whether the UI uses rgb colors (false implies cterm colors)  "ext_..." Requested UI extensions, see |ui-options|  "chan" Channel id of remote UI (not present for TUI)
+                    Array of UI dictionaries. Each dictionary has the
+                    following keys:
+                        `height`:  requested height of the UI
+                        `width`:   requested width of the UI
+                        `rgb`:     whether the UI uses rgb colors
+                                   (false implies cterm colors)
+                        `ext_...`: Requested UI extensions, see |ui-options|
+                        `chan`:    Channel id of remote UI (not present for TUI)
 
 nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
                 Gets the immediate children of process `pid`.
@@ -1435,6 +1591,53 @@ nvim_win_is_valid({window})                              *nvim_win_is_valid()*
 
                 Return: ~
                     true if the window is valid, false otherwise
+
+nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
+                Configure window position. Currently this is only used to
+                configure floating and external windows (including changing a
+                split window to these types).
+
+                See documentation at |nvim_open_win()|, for the meaning of
+                parameters.
+
+                When reconfiguring a floating window, absent option keys will
+                not be changed. The following restriction apply: `row`, `col`
+                and `relative` must be reconfigured together. Only changing a
+                subset of these is an error.
+
+                Parameters: ~
+                    {window}  Window handle
+                    {config}  Dictionary of window configuration
+
+nvim_win_get_config({window})                          *nvim_win_get_config()*
+                Return window configuration.
+
+                Return a dictionary containing the same config that can be
+                given to |nvim_open_win()|.
+
+                `relative` will be an empty string for normal windows.
+
+                Parameters: ~
+                    {window}  Window handle
+
+                Return: ~
+                    Window configuration
+
+nvim_win_close({window}, {force})                           *nvim_win_close()*
+                Close a window.
+
+                This is equivalent to |:close| with count except that it takes
+                a window id.
+
+                Parameters: ~
+                    {window}  Window handle
+                    {force}   Behave like `:close!` The last window of a
+                              buffer with unwritten changes can be closed. The
+                              buffer will become hidden, even if 'hidden' is
+                              not set.
+
+                Return: ~
+                    Window number
 
 
 ==============================================================================

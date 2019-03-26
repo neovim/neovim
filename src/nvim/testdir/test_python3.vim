@@ -52,3 +52,87 @@ func Test_vim_function()
   py3 del f
   delfunc s:foo
 endfunc
+
+func _SetUpHiddenBuffer()
+  py3 import vim
+  new
+  edit hidden
+  setlocal bufhidden=hide
+
+  enew
+  let lnum = 0
+  while lnum < 10
+    call append( 1, string( lnum ) )
+    let lnum = lnum + 1
+  endwhile
+  normal G
+
+  call assert_equal( line( '.' ), 11 )
+endfunc
+
+func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_Clear()
+  call _SetUpHiddenBuffer()
+  py3 vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][:] = None
+  call assert_equal( line( '.' ), 11 )
+  bwipe!
+endfunc
+
+func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_List()
+  call _SetUpHiddenBuffer()
+  py3 vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][:] = [ 'test' ]
+  call assert_equal( line( '.' ), 11 )
+  bwipe!
+endfunc
+
+func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_Str()
+  call _SetUpHiddenBuffer()
+  py3 vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][0] = 'test'
+  call assert_equal( line( '.' ), 11 )
+  bwipe!
+endfunc
+
+func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_ClearLine()
+  call _SetUpHiddenBuffer()
+  py3 vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][0] = None
+  call assert_equal( line( '.' ), 11 )
+  bwipe!
+endfunc
+
+func _SetUpVisibleBuffer()
+  py3 import vim
+  new
+  let lnum = 0
+  while lnum < 10
+    call append( 1, string( lnum ) )
+    let lnum = lnum + 1
+  endwhile
+  normal G
+  call assert_equal( line( '.' ), 11 )
+endfunc
+
+func Test_Write_To_Current_Buffer_Fixes_Cursor_Clear()
+  call _SetUpVisibleBuffer()
+
+  py3 vim.current.buffer[:] = None
+  call assert_equal( line( '.' ), 1 )
+
+  bwipe!
+endfunc
+
+func Test_Write_To_Current_Buffer_Fixes_Cursor_List()
+  call _SetUpVisibleBuffer()
+
+  py3 vim.current.buffer[:] = [ 'test' ]
+  call assert_equal( line( '.' ), 1 )
+
+  bwipe!
+endfunction
+
+func Test_Write_To_Current_Buffer_Fixes_Cursor_Str()
+  call _SetUpVisibleBuffer()
+
+  py3 vim.current.buffer[-1] = None
+  call assert_equal( line( '.' ), 10 )
+
+  bwipe!
+endfunction

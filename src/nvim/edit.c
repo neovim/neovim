@@ -2656,8 +2656,25 @@ void ins_compl_show_pum(void)
   col = curwin->w_cursor.col;
   curwin->w_cursor.col = compl_col;
   pum_selected_item = cur;
-  pum_display(compl_match_array, compl_match_arraysize, cur, array_changed);
+  pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
   curwin->w_cursor.col = col;
+
+  if (!has_event(EVENT_MENUPOPUPCHANGED)) {
+    return;
+  }
+  dict_T *dict = get_vim_var_dict(VV_EVENT);
+  if (cur < 0) {
+    tv_dict_add_dict(dict, S_LEN("completed_item"), tv_dict_alloc());
+  } else {
+    dict_T *item = ins_compl_dict_alloc(compl_curr_match);
+    tv_dict_add_dict(dict, S_LEN("completed_item"), item);
+  }
+  pum_set_boundings(dict);
+  tv_dict_set_keys_readonly(dict);
+  textlock++;
+  apply_autocmds(EVENT_MENUPOPUPCHANGED, NULL, NULL, false, curbuf);
+  textlock--;
+  tv_dict_clear(dict);
 }
 
 #define DICT_FIRST      (1)     /* use just first element in "dict" */
@@ -4097,31 +4114,37 @@ static void ins_compl_insert(int in_compl_func)
   else
     compl_used_match = TRUE;
 
-  // Set completed item.
-  // { word, abbr, menu, kind, info }
-  dict_T *dict = tv_dict_alloc();
-  tv_dict_add_str(
-      dict, S_LEN("word"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_str));
-  tv_dict_add_str(
-      dict, S_LEN("abbr"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_ABBR]));
-  tv_dict_add_str(
-      dict, S_LEN("menu"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_MENU]));
-  tv_dict_add_str(
-      dict, S_LEN("kind"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_KIND]));
-  tv_dict_add_str(
-      dict, S_LEN("info"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_INFO]));
-  tv_dict_add_str(
-      dict, S_LEN("user_data"),
-      (const char *)EMPTY_IF_NULL(compl_shown_match->cp_text[CPT_USER_DATA]));
+  dict_T *dict = ins_compl_dict_alloc(compl_shown_match);
   set_vim_var_dict(VV_COMPLETED_ITEM, dict);
   if (!in_compl_func) {
     compl_curr_match = compl_shown_match;
   }
+}
+
+// Convert to complete item dict
+static dict_T *ins_compl_dict_alloc(compl_T *match)
+{
+  // { word, abbr, menu, kind, info }
+  dict_T *dict = tv_dict_alloc();
+  tv_dict_add_str(
+      dict, S_LEN("word"),
+      (const char *)EMPTY_IF_NULL(match->cp_str));
+  tv_dict_add_str(
+      dict, S_LEN("abbr"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
+  tv_dict_add_str(
+      dict, S_LEN("menu"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
+  tv_dict_add_str(
+      dict, S_LEN("kind"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
+  tv_dict_add_str(
+      dict, S_LEN("info"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
+  tv_dict_add_str(
+      dict, S_LEN("user_data"),
+      (const char *)EMPTY_IF_NULL(match->cp_text[CPT_USER_DATA]));
+  return dict;
 }
 
 /*
@@ -5486,16 +5509,33 @@ internal_format (
         /* remember position of blank just before text */
         end_col = curwin->w_cursor.col;
 
-        /* find start of sequence of blanks */
+        // find start of sequence of blanks
+        int wcc = 0;  // counter for whitespace chars
         while (curwin->w_cursor.col > 0 && WHITECHAR(cc)) {
           dec_cursor();
           cc = gchar_cursor();
+
+          // Increment count of how many whitespace chars in this
+          // group; we only need to know if it's more than one.
+          if (wcc < 2) {
+            wcc++;
+          }
         }
-        if (curwin->w_cursor.col == 0 && WHITECHAR(cc))
-          break;                        /* only spaces in front of text */
-        /* Don't break until after the comment leader */
-        if (curwin->w_cursor.col < leader_len)
+        if (curwin->w_cursor.col == 0 && WHITECHAR(cc)) {
+          break;                        // only spaces in front of text
+        }
+
+        // Don't break after a period when 'formatoptions' has 'p' and
+        // there are less than two spaces.
+        if (has_format_option(FO_PERIOD_ABBR) && cc == '.' && wcc < 2) {
+          continue;
+        }
+
+        // Don't break until after the comment leader
+        if (curwin->w_cursor.col < leader_len) {
           break;
+        }
+
         if (has_format_option(FO_ONE_LETTER)) {
           /* do not break after one-letter words */
           if (curwin->w_cursor.col == 0)
@@ -5859,10 +5899,7 @@ comp_textwidth (
       textwidth -= 1;
     }
     textwidth -= curwin->w_p_fdc;
-
-    if (signcolumn_on(curwin)) {
-        textwidth -= 1;
-    }
+    textwidth -= win_signcol_count(curwin);
 
     if (curwin->w_p_nu || curwin->w_p_rnu)
       textwidth -= 8;

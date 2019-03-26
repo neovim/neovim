@@ -438,14 +438,16 @@ Boolean nvim_win_is_valid(Window window)
 /// floating and external windows (including changing a split window to these
 /// types).
 ///
-/// See documentation at |nvim_open_win()|, for the meaning of parameters. Pass
-/// in -1 for 'witdh' and 'height' to keep exiting size.
+/// See documentation at |nvim_open_win()|, for the meaning of parameters.
 ///
 /// When reconfiguring a floating window, absent option keys will not be
 /// changed. The following restriction apply: `row`, `col` and `relative`
 /// must be reconfigured together. Only changing a subset of these is an error.
-void nvim_win_config(Window window, Integer width, Integer height,
-                     Dictionary options, Error *err)
+///
+/// @param      window  Window handle
+/// @param      config  Dictionary of window configuration
+/// @param[out] err     Error details, if any
+void nvim_win_set_config(Window window, Dictionary config, Error *err)
   FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);
@@ -453,23 +455,68 @@ void nvim_win_config(Window window, Integer width, Integer height,
     return;
   }
   bool new_float = !win->w_floating;
-  width = width > 0 ? width: win->w_width;
-  height = height > 0 ? height : win->w_height;
   // reuse old values, if not overriden
-  FloatConfig config = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
+  FloatConfig fconfig = new_float ? FLOAT_CONFIG_INIT : win->w_float_config;
 
-  if (!parse_float_config(options, &config, !new_float, err)) {
+  if (!parse_float_config(config, &fconfig, !new_float, err)) {
     return;
   }
+  fconfig.height = fconfig.height > 0 ? fconfig.height : win->w_height;
+  fconfig.width = fconfig.width > 0 ? fconfig.width : win->w_width;
   if (new_float) {
-    if (!win_new_float(win, (int)width, (int)height, config, err)) {
+    if (!win_new_float(win, fconfig, err)) {
       return;
     }
     redraw_later(NOT_VALID);
   } else {
-    win_config_float(win, (int)width, (int)height, config);
+    win_config_float(win, fconfig);
     win->w_pos_changed = true;
   }
+}
+
+/// Return window configuration.
+///
+/// Return a dictionary containing the same config that can be given to
+/// |nvim_open_win()|.
+///
+/// `relative` will be an empty string for normal windows.
+///
+/// @param      window Window handle
+/// @param[out] err Error details, if any
+/// @return     Window configuration
+Dictionary nvim_win_get_config(Window window, Error *err)
+  FUNC_API_SINCE(6)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  win_T *wp = find_window_by_handle(window, err);
+  if (!wp) {
+    return rv;
+  }
+
+  PUT(rv, "width", INTEGER_OBJ(wp->w_float_config.width));
+  PUT(rv, "height", INTEGER_OBJ(wp->w_float_config.height));
+  PUT(rv, "focusable", BOOLEAN_OBJ(wp->w_float_config.focusable));
+  PUT(rv, "external", BOOLEAN_OBJ(wp->w_float_config.external));
+  PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
+      float_anchor_str[wp->w_float_config.anchor])));
+
+  if (wp->w_float_config.relative == kFloatRelativeWindow) {
+    PUT(rv, "win", INTEGER_OBJ(wp->w_float_config.window));
+  }
+
+  if (wp->w_float_config.external) {
+    return rv;
+  }
+
+  PUT(rv, "row", FLOAT_OBJ(wp->w_float_config.row));
+  PUT(rv, "col", FLOAT_OBJ(wp->w_float_config.col));
+
+  const char *rel =
+    wp->w_floating ? float_relative_str[wp->w_float_config.relative] : "";
+  PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
+
+  return rv;
 }
 
 /// Close a window.

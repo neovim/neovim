@@ -1777,9 +1777,12 @@ void vim_str2nr(const char_u *const start, int *const prep, int *const len,
 #define PARSE_NUMBER(base, cond, conv) \
   do { \
     while (!STRING_ENDED(ptr) && (cond)) { \
+      const uvarnumber_T digit = (uvarnumber_T)(conv); \
       /* avoid ubsan error for overflow */ \
-      if (un < UVARNUMBER_MAX / base) { \
-        un = base * un + (uvarnumber_T)(conv); \
+      if (un < UVARNUMBER_MAX / base \
+          || (un == UVARNUMBER_MAX / base \
+              && (base != 10 || digit <= UVARNUMBER_MAX % 10))) { \
+        un = base * un + digit; \
       } else { \
         un = UVARNUMBER_MAX; \
       } \

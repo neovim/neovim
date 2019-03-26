@@ -133,7 +133,7 @@ Command-line highlighting:
   removed in the future).
 
 Commands:
-  |:autocmd| accepts the `once` flag
+  |:autocmd| accepts the `++once` flag
   |:checkhealth|
   |:cquit| can use [count] to set the exit code
   |:drop| is always available
@@ -161,6 +161,7 @@ Functions:
 
 Highlight groups:
   |expr-highlight| highlight groups (prefixed with "Nvim")
+  |hl-NormalFloat| highlights floating window
   |hl-NormalNC| highlights non-current windows
   |hl-MsgSeparator| highlights separator for scrolled messages
   |hl-QuickFixLine|
@@ -192,9 +193,14 @@ Options:
   'listchars' local to window
   'pumblend' pseudo-transparent popupmenu
   'scrollback'
+  'signcolumn' supports up to 9 dynamic/fixed columns
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
+  'wildoptions' `pum` flag to use popupmenu for wildmode completion
   'winhighlight' window-local highlights
+
+Signs:
+  Signs are removed if the associated line is deleted.
 
 Variables:
   |v:event|

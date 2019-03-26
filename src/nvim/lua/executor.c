@@ -24,6 +24,10 @@
 #include "nvim/undo.h"
 #include "nvim/ascii.h"
 
+#ifdef WIN32
+#include "nvim/os/os.h"
+#endif
+
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
 
@@ -117,6 +121,14 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, &nlua_debug);
   lua_setfield(lstate, -2, "debug");
   lua_pop(lstate, 1);
+
+#ifdef WIN32
+  // os.getenv
+  lua_getglobal(lstate, "os");
+  lua_pushcfunction(lstate, &nlua_getenv);
+  lua_setfield(lstate, -2, "getenv");
+  lua_pop(lstate, 1);
+#endif
 
   // vim
   if (luaL_dostring(lstate, (char *)&vim_module[0])) {
@@ -297,7 +309,7 @@ nlua_print_error:
   return 0;
 }
 
-/// debug.debug implementation: interaction with user while debugging
+/// debug.debug: interaction with user while debugging.
 ///
 /// @param  lstate  Lua interpreter state.
 int nlua_debug(lua_State *lstate)
@@ -336,6 +348,19 @@ int nlua_debug(lua_State *lstate)
   }
   return 0;
 }
+
+#ifdef WIN32
+/// os.getenv: override os.getenv to maintain coherency. #9681
+///
+/// uv_os_setenv uses SetEnvironmentVariableW which does not update _environ.
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_getenv(lua_State *lstate)
+{
+  lua_pushstring(lstate, os_getenv(luaL_checkstring(lstate, 1)));
+  return 1;
+}
+#endif
 
 /// Evaluate lua string
 ///

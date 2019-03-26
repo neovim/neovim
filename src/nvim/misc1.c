@@ -710,9 +710,6 @@ open_line (
         less_cols_off++;
       }
     }
-    if (*p_extra != NUL) {
-      did_ai = false;               // append some text, don't truncate now
-    }
 
     /* columns for marks adjusted for removed columns */
     less_cols = (int)(p_extra - saved_line);
@@ -848,10 +845,11 @@ open_line (
         /* Move marks after the line break to the new line. */
         if (flags & OPENLINE_MARKFIX)
           mark_col_adjust(curwin->w_cursor.lnum,
-              curwin->w_cursor.col + less_cols_off,
-              1L, (long)-less_cols);
-      } else
+                          curwin->w_cursor.col + less_cols_off,
+                          1L, (long)-less_cols, 0);
+      } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
+      }
     }
 
     /*

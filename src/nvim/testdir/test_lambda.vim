@@ -291,3 +291,9 @@ func Test_named_function_closure()
   call garbagecollect()
   call assert_equal(14, s:Abar())
 endfunc
+
+func Test_lambda_with_index()
+  let List = {x -> [x]}
+  let Extract = {-> function(List, ['foobar'])()[0]}
+  call assert_equal('foobar', Extract())
+endfunc

@@ -5591,39 +5591,48 @@ static void au_del_cmd(AutoCmd *ac)
   au_need_clean = true;
 }
 
-/*
- * Cleanup autocommands and patterns that have been deleted.
- * This is only done when not executing autocommands.
- */
+/// Cleanup autocommands and patterns that have been deleted.
+/// This is only done when not executing autocommands.
 static void au_cleanup(void)
 {
   AutoPat     *ap, **prev_ap;
   AutoCmd     *ac, **prev_ac;
   event_T event;
 
-  if (autocmd_busy || !au_need_clean)
+  if (autocmd_busy || !au_need_clean) {
     return;
+  }
 
-  /* loop over all events */
+  // Loop over all events.
   for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
        event = (event_T)((int)event + 1)) {
-    /* loop over all autocommand patterns */
+    // Loop over all autocommand patterns.
     prev_ap = &(first_autopat[(int)event]);
     for (ap = *prev_ap; ap != NULL; ap = *prev_ap) {
-      /* loop over all commands for this pattern */
+      // Loop over all commands for this pattern.
       prev_ac = &(ap->cmds);
+      bool has_cmd = false;
+
       for (ac = *prev_ac; ac != NULL; ac = *prev_ac) {
-        /* remove the command if the pattern is to be deleted or when
-         * the command has been marked for deletion */
+        // Remove the command if the pattern is to be deleted or when
+        // the command has been marked for deletion.
         if (ap->pat == NULL || ac->cmd == NULL) {
           *prev_ac = ac->next;
           xfree(ac->cmd);
           xfree(ac);
-        } else
+        } else {
+          has_cmd = true;
           prev_ac = &(ac->next);
+        }
       }
 
-      /* remove the pattern if it has been marked for deletion */
+      if (ap->pat != NULL && !has_cmd) {
+        // Pattern was not marked for deletion, but all of its commands were.
+        // So mark the pattern for deletion.
+        au_remove_pat(ap);
+      }
+
+      // Remove the pattern if it has been marked for deletion.
       if (ap->pat == NULL) {
         if (ap->next == NULL) {
           if (prev_ap == &(first_autopat[(int)event])) {
@@ -5637,12 +5646,13 @@ static void au_cleanup(void)
         *prev_ap = ap->next;
         vim_regfree(ap->reg_prog);
         xfree(ap);
-      } else
+      } else {
         prev_ap = &(ap->next);
+      }
     }
   }
 
-  au_need_clean = FALSE;
+  au_need_clean = false;
 }
 
 /*
@@ -6050,18 +6060,18 @@ void do_autocmd(char_u *arg_in, int forceit)
     cmd = skipwhite(cmd);
     for (size_t i = 0; i < 2; i++) {
       if (*cmd != NUL) {
-        // Check for "-once" flag.
-        if (!once && STRNCMP(cmd, "-once", 5) == 0 && ascii_iswhite(cmd[5])) {
+        // Check for "++once" flag.
+        if (!once && STRNCMP(cmd, "++once", 6) == 0 && ascii_iswhite(cmd[6])) {
           once = true;
-          cmd = skipwhite(cmd + 5);
+          cmd = skipwhite(cmd + 6);
         }
-        // Check for "-nested" flag.
+        // Check for "++nested" flag.
         if (!nested
-            && ((STRNCMP(cmd, "-nested", 7) == 0 && ascii_iswhite(cmd[7]))
-                // Deprecated form (without "-").
+            && ((STRNCMP(cmd, "++nested", 8) == 0 && ascii_iswhite(cmd[8]))
+                // Deprecated form (without "++").
                 || (STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])))) {
           nested = true;
-          cmd = skipwhite(cmd + ('-' == cmd[0] ? 7 : 6));
+          cmd = skipwhite(cmd + ('+' == cmd[0] ? 8 : 6));
         }
       }
     }
@@ -6517,6 +6527,7 @@ aucmd_prepbuf (
     win = curwin;
 
   aco->save_curwin = curwin;
+  aco->save_prevwin = prevwin;
   aco->save_curbuf = curbuf;
   if (win != NULL) {
     /* There is a window for "buf" in the current tab page, make it the
@@ -6614,6 +6625,8 @@ win_found:
       // Hmm, original window disappeared.  Just use the first one.
       curwin = firstwin;
     }
+    prevwin = win_valid(aco->save_prevwin) ? aco->save_prevwin
+              : firstwin;  // window disappeared?
     vars_clear(&aucmd_win->w_vars->dv_hashtab);      // free all w: variables
     hash_init(&aucmd_win->w_vars->dv_hashtab);       // re-use the hashtab
     curbuf = curwin->w_buffer;
@@ -6646,6 +6659,8 @@ win_found:
       }
 
       curwin = aco->save_curwin;
+      prevwin = win_valid(aco->save_prevwin) ? aco->save_prevwin
+                : firstwin;  // window disappeared?
       curbuf = curwin->w_buffer;
       // In case the autocommand moves the cursor to a position that does not
       // exist in curbuf

@@ -40,7 +40,7 @@ effects.  Be careful not to destroy your text.
 2. Defining autocommands				*autocmd-define*
 
 							*:au* *:autocmd*
-:au[tocmd] [group] {event} {pat} [-once] [-nested] {cmd}
+:au[tocmd] [group] {event} {pat} [++once] [++nested] {cmd}
 			Add {cmd} to the list of commands that Vim will
 			execute automatically on {event} for a file matching
 			{pat} |autocmd-patterns|.
@@ -48,9 +48,9 @@ effects.  Be careful not to destroy your text.
 			:autocmd and won't start a comment.
 			Nvim always adds {cmd} after existing autocommands so
 			they execute in the order in which they were defined.
-			See |autocmd-nested| for [-nested].
+			See |autocmd-nested| for [++nested].
 							*autocmd-once*
-			If [-once] is supplied the command is executed once,
+			If [++once] is supplied the command is executed once,
 			then removed ("one shot").
 
 The special pattern <buffer> or <buffer=N> defines a buffer-local autocommand.
@@ -119,11 +119,11 @@ prompt.  When one command outputs two messages this can happen anyway.
 ==============================================================================
 3. Removing autocommands				*autocmd-remove*
 
-:au[tocmd]! [group] {event} {pat} [-once] [-nested] {cmd}
+:au[tocmd]! [group] {event} {pat} [++once] [++nested] {cmd}
 			Remove all autocommands associated with {event} and
 			{pat}, and add the command {cmd}.
-			See |autocmd-once| for [-once].
-			See |autocmd-nested| for [-nested].
+			See |autocmd-once| for [++once].
+			See |autocmd-nested| for [++nested].
 
 :au[tocmd]! [group] {event} {pat}
 			Remove all autocommands associated with {event} and
@@ -354,6 +354,7 @@ Name			triggered by ~
 |SessionLoadPost|	after loading a session file
 
 |MenuPopup|		just before showing the popup menu
+|MenuPopupChanged|	after popup menu changed, not fired on popup menu hide
 |CompleteDone|		after Insert mode completion is done
 
 |User|			to be used in combination with ":doautocmd"
@@ -809,20 +810,25 @@ InsertCharPre			When a character is typed in Insert mode,
 				a different character.  When |v:char| is set
 				to more than one character this text is
 				inserted literally.
-				It is not allowed to change the text |textlock|.
-				The event is not triggered when 'paste' is
-				set.
+
+				Cannot change the text. |textlock|
+				Not triggered when 'paste' is set.
 							*TextYankPost*
 TextYankPost			Just after a |yank| or |deleting| command, but not
 				if the black hole register |quote_| is used nor
 				for |setreg()|. Pattern must be *.
 				Sets these |v:event| keys:
+				    inclusive
 				    operator
 				    regcontents
 				    regname
 				    regtype
+				The `inclusive` flag combined with the |'[|
+				and |']| marks can be used to calculate the
+				precise region of the operation.
+
 				Recursion is ignored.
-				It is not allowed to change the text |textlock|.
+				Cannot change the text. |textlock|
 							*InsertEnter*
 InsertEnter			Just before starting Insert mode.  Also for
 				Replace mode and Virtual Replace mode.  The
@@ -847,6 +853,22 @@ MenuPopup			Just before showing the popup menu (under the
 					o	Operator-pending
 					i	Insert
 					c	Command line
+MenuPopupChanged 					*MenuPopupChanged*
+				After each time popup menu changed, not fired
+				on popup menu hide, use |CompleteDone| for popup
+				menu hide.
+
+				Sets these |v:event| keys:
+				    completed_item
+				    height
+				    width
+				    row
+				    col
+				    size
+				    scrollbar
+
+				It is not allowed to change the text |textlock|.
+
 							*OptionSet*
 OptionSet			After setting an option.  The pattern is
 				matched against the long option name.
@@ -972,7 +994,6 @@ SwapExists			Detected an existing swap file when starting
 				It is not allowed to change to another buffer,
 				change a buffer name or change directory
 				here.
-				{only available with the +eval feature}
 							*Syntax*
 Syntax				When the 'syntax' option has been set.  The
 				pattern is matched against the syntax name.
@@ -1442,9 +1463,9 @@ instead of ":q!".
 							*autocmd-nested* *E218*
 By default, autocommands do not nest.  If you use ":e" or ":w" in an
 autocommand, Vim does not execute the BufRead and BufWrite autocommands for
-those commands.  If you do want this, use the "-nested" flag for those
+those commands.  If you do want this, use the "++nested" flag for those
 commands in which you want nesting.  For example: >
-  :autocmd FileChangedShell *.c -nested e!
+  :autocmd FileChangedShell *.c ++nested e!
 The nesting is limited to 10 levels to get out of recursive loops.
 
 It's possible to use the ":au" command in an autocommand.  This can be a

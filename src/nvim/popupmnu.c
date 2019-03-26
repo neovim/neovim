@@ -12,6 +12,7 @@
 #include "nvim/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/eval/typval.h"
 #include "nvim/popupmnu.h"
 #include "nvim/charset.h"
 #include "nvim/ex_cmds.h"
@@ -65,7 +66,9 @@ static bool pum_invalid = false;  // the screen was just cleared
 /// @param array_changed if true, array contains different items since last call
 ///                      if false, a new item is selected, but the array
 ///                      is the same
-void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
+/// @param cmd_startcol only for cmdline mode: column of completed match
+void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
+                 int cmd_startcol)
 {
   int w;
   int def_width;
@@ -83,7 +86,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
   if (!pum_is_visible) {
     // To keep the code simple, we only allow changing the
     // draw mode when the popup menu is not being displayed
-    pum_external = ui_has(kUIPopupmenu);
+    pum_external = ui_has(kUIPopupmenu)
+                   || (State == CMDLINE && ui_has(kUIWildmenu));
   }
 
   do {
@@ -95,19 +99,26 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed)
     above_row = 0;
     below_row = cmdline_row;
 
-    // anchor position: the start of the completed word
-    row = curwin->w_wrow;
-    if (curwin->w_p_rl) {
-      col = curwin->w_width - curwin->w_wcol - 1;
+    // wildoptions=pum
+    if (State == CMDLINE) {
+      row = ui_has(kUICmdline) ? 0 : cmdline_row;
+      col = cmd_startcol;
+      pum_anchor_grid = ui_has(kUICmdline) ? -1 : DEFAULT_GRID_HANDLE;
     } else {
-      col = curwin->w_wcol;
-    }
+      // anchor position: the start of the completed word
+      row = curwin->w_wrow;
+      if (curwin->w_p_rl) {
+        col = curwin->w_width - curwin->w_wcol - 1;
+      } else {
+        col = curwin->w_wcol;
+      }
 
-    pum_anchor_grid = (int)curwin->w_grid.handle;
-    if (!ui_has(kUIMultigrid)) {
-      pum_anchor_grid = (int)default_grid.handle;
-      row += curwin->w_winrow;
-      col += curwin->w_wincol;
+      pum_anchor_grid = (int)curwin->w_grid.handle;
+      if (!ui_has(kUIMultigrid)) {
+        pum_anchor_grid = (int)default_grid.handle;
+        row += curwin->w_winrow;
+        col += curwin->w_wincol;
+      }
     }
 
     if (pum_external) {
@@ -840,4 +851,18 @@ void pum_recompose(void)
 int pum_get_height(void)
 {
   return pum_height;
+}
+
+void pum_set_boundings(dict_T *dict)
+{
+  if (!pum_visible()) {
+    return;
+  }
+  tv_dict_add_nr(dict, S_LEN("height"), pum_height);
+  tv_dict_add_nr(dict, S_LEN("width"), pum_width);
+  tv_dict_add_nr(dict, S_LEN("row"), pum_row);
+  tv_dict_add_nr(dict, S_LEN("col"), pum_col);
+  tv_dict_add_nr(dict, S_LEN("size"), pum_size);
+  tv_dict_add_special(dict, S_LEN("scrollbar"),
+                      pum_scrollbar ? kSpecialVarTrue : kSpecialVarFalse);
 }

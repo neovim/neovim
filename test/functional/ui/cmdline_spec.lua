@@ -600,6 +600,137 @@ local function test_cmdline(linegrid)
       pos = 12,
     }}}
   end)
+
+  it('works together with ext_popupmenu', function()
+    local expected = {
+        {'define', '', '', ''},
+        {'jump', '', '', ''},
+        {'list', '', '', ''},
+        {'place', '', '', ''},
+        {'undefine', '', '', ''},
+        {'unplace', '', '', ''},
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_popupmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, popupmenu={items=expected, pos=0, anchor={-1, 0, 5}}}
+
+    feed('<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign jump"}},
+      pos = 9,
+    }}, popupmenu={items=expected, pos=1, anchor={-1, 0, 5}}}
+
+    feed('<left><left>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign "}},
+      pos = 5,
+    }}, popupmenu={items=expected, pos=-1, anchor={-1, 0, 5}}}
+
+    feed('<right>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, popupmenu={items=expected, pos=0, anchor={-1, 0, 5}}}
+
+    feed('a')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign definea"}},
+      pos = 12,
+    }}}
+    feed('<esc>')
+
+    -- check positioning with multibyte char in pattern
+    command("e långfile1")
+    command("sp långfile2")
+    feed(':b lå<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {3:långfile2                }|
+                               |
+      {2:långfile1                }|
+                               |
+    ]], popupmenu={
+      anchor = { -1, 0, 2 },
+      items = {{ "långfile1", "", "", "" }, { "långfile2", "", "", "" }},
+      pos = 0
+    }, cmdline={{
+      content = {{ "b långfile1" }},
+      firstc = ":",
+      pos = 12
+    }}}
+  end)
+
+  it('ext_wildmenu takes precedence over ext_popupmenu', function()
+    local expected = {
+      'define',
+      'jump',
+      'list',
+      'place',
+      'undefine',
+      'unplace',
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_wildmenu', true)
+    screen:set_option('ext_popupmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, wildmenu_items=expected, wildmenu_pos=0}
+  end)
+
 end
 
 -- the representation of cmdline and cmdline_block contents changed with ext_linegrid

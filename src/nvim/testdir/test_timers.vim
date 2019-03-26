@@ -47,9 +47,12 @@ func Test_repeat_many()
   call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
+  if has('mac')
+    sleep 200m
+  endif
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange((has('mac') ? 1 : 2), 4, g:val)
+  call s:assert_inrange((has('mac') ? 1 : 2), 4, g:val)
 endfunc
 
 func Test_with_partial_callback()

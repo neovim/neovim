@@ -284,7 +284,6 @@ static char *(p_ambw_values[]) =      { "single", "double", NULL };
 static char *(p_bg_values[]) =        { "light", "dark", NULL };
 static char *(p_nf_values[]) =        { "bin", "octal", "hex", "alpha", NULL };
 static char *(p_ff_values[]) =        { FF_UNIX, FF_DOS, FF_MAC, NULL };
-static char *(p_wop_values[]) =       { "tagfile", NULL };
 static char *(p_wak_values[]) =       { "yes", "menu", "no", NULL };
 static char *(p_mousem_values[]) =    { "extend", "popup", "popup_setpos",
                                         "mac", NULL };
@@ -306,7 +305,10 @@ static char *(p_fcl_values[]) =       { "all", NULL };
 static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
                                         "noinsert", "noselect", NULL };
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
-static char *(p_scl_values[]) =       { "yes", "no", "auto", NULL };
+static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
+  "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
+  "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
+  "yes:9", NULL };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
@@ -2608,11 +2610,11 @@ ambw_end:
   else if (varp == &p_wim) {
     if (check_opt_wim() == FAIL)
       errmsg = e_invarg;
-  }
-  /* 'wildoptions' */
-  else if (varp == &p_wop) {
-    if (check_opt_strings(p_wop, p_wop_values, TRUE) != OK)
+  // 'wildoptions'
+  } else if (varp == &p_wop) {
+    if (opt_strings_flags(p_wop, p_wop_values, &wop_flags, true) != OK) {
       errmsg = e_invarg;
+    }
   }
   /* 'winaltkeys' */
   else if (varp == &p_wak) {
@@ -7092,16 +7094,34 @@ int csh_like_shell(void)
   return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
-/// Return true when window "wp" has a column to draw signs in.
-bool signcolumn_on(win_T *wp)
+/// Return the number of requested sign columns, based on current
+/// buffer signs and on user configuration.
+int win_signcol_count(win_T *wp)
 {
-    if (*wp->w_p_scl == 'n') {
-      return false;
-    }
-    if (*wp->w_p_scl == 'y') {
-      return true;
-    }
-    return wp->w_buffer->b_signlist != NULL;
+  int maximum = 1, needed_signcols;
+  const char *scl = (const char *)wp->w_p_scl;
+
+  if (*scl == 'n') {
+    return 0;
+  }
+  needed_signcols = buf_signcols(wp->w_buffer);
+
+  // yes or yes
+  if (!strncmp(scl, "yes:", 4)) {
+    // Fixed amount of columns
+    return scl[4] - '0';
+  }
+  if (*scl == 'y') {
+    return 1;
+  }
+
+  // auto or auto:<NUM>
+  if (!strncmp(scl, "auto:", 5)) {
+    // Variable depending on a configuration
+    maximum = scl[5] - '0';
+  }
+
+  return MIN(maximum, needed_signcols);
 }
 
 /// Get window or buffer local options

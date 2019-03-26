@@ -29,8 +29,7 @@ describe("'wildmenu'", function()
   end
 
   it(':sign <tab> shows wildmenu completions', function()
-    command('set wildmode=full')
-    command('set wildmenu')
+    command('set wildmenu wildmode=full')
     feed(':sign <tab>')
     screen:expect([[
                                |
@@ -201,14 +200,28 @@ describe('command line completion', function()
     ]])
   end)
 
+  it('completes env var names #9681', function()
+    clear()
+    screen:attach()
+    command('let $XTEST_1 = "foo" | let $XTEST_2 = "bar"')
+    command('set wildmenu wildmode=full')
+    feed(':!echo $XTEST_<tab>')
+    screen:expect([[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:XTEST_1}{3:  XTEST_2                        }|
+      :!echo $XTEST_1^                         |
+    ]])
+  end)
+
   it('completes (multibyte) env var names #9655', function()
     clear({env={
       ['XTEST_1AaあB']='foo',
       ['XTEST_2']='bar',
     }})
     screen:attach()
-    command('set wildmode=full')
-    command('set wildmenu')
+    command('set wildmenu wildmode=full')
     feed(':!echo $XTEST_<tab>')
     screen:expect([[
                                               |
