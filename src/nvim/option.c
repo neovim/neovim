@@ -1359,6 +1359,8 @@ do_set (
             && nextchar != NUL && !ascii_iswhite(afterchar))
           errmsg = e_trailing;
       } else {
+        int value_is_replaced = !prepending && !adding && !removing;
+
         if (flags & P_BOOL) {                       /* boolean */
           if (nextchar == '=' || nextchar == ':') {
             errmsg = e_invarg;
@@ -1778,12 +1780,37 @@ do_set (
             // buffer is closed by autocommands.
             saved_newval = (newval != NULL) ? xstrdup((char *)newval) : 0;
 
-            // Handle side effects, and set the global value for
-            // ":set" on local options. Note: when setting 'syntax'
-            // or 'filetype' autocommands may be triggered that can
-            // cause havoc.
-            errmsg = did_set_string_option(opt_idx, (char_u **)varp,
-                new_value_alloced, oldval, errbuf, opt_flags);
+            {
+              unsigned int *p = insecure_flag(opt_idx, opt_flags);
+              int     did_inc_secure = FALSE;
+
+              // When an option is set in the sandbox, from a
+              // modeline or in secure mode, then deal with side
+              // effects in secure mode.  Also when the value was
+              // set with the P_INSECURE flag and is not
+              // completely replaced.
+              if (secure
+#ifdef HAVE_SANDBOX
+                      || sandbox != 0
+#endif
+                      || (opt_flags & OPT_MODELINE)
+                      || (!value_is_replaced && (*p & P_INSECURE)))
+              {
+                  did_inc_secure = TRUE;
+                  ++secure;
+              }
+
+              // Handle side effects, and set the global value for
+              // ":set" on local options. Note: when setting 'syntax'
+              // or 'filetype' autocommands may be triggered that can
+              // cause havoc.
+              errmsg = did_set_string_option(opt_idx, (char_u **)varp,
+                  new_value_alloced, oldval, errbuf, opt_flags);
+
+              if (did_inc_secure) {
+                --secure;
+              }
+          }
 
             if (errmsg == NULL) {
               if (!starting) {
@@ -1810,8 +1837,7 @@ do_set (
         }
 
         if (opt_idx >= 0)
-          did_set_option(opt_idx, opt_flags,
-              !prepending && !adding && !removing);
+          did_set_option(opt_idx, opt_flags, value_is_replaced);
       }
 
 skip:
