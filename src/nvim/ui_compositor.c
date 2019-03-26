@@ -3,6 +3,8 @@
 
 // Compositor: merge floating grids with the main grid for display in
 // TUI and non-multigrid UIs.
+//
+// Layer-based compositing: https://en.wikipedia.org/wiki/Digital_compositing
 
 #include <assert.h>
 #include <stdbool.h>
@@ -104,6 +106,9 @@ bool ui_comp_should_draw(void)
   return composed_uis != 0 && valid_screen;
 }
 
+/// Places `grid` at (col,row) position with (width * height) size.
+/// Adds `grid` as the top layer if it is a new layer.
+///
 /// TODO(bfredl): later on the compositor should just use win_float_pos events,
 /// though that will require slight event order adjustment: emit the win_pos
 /// events in the beginning of  update_screen(0), rather than in ui_flush()

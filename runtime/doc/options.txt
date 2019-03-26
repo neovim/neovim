@@ -694,8 +694,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 							*'background'* *'bg'*
 'background' 'bg'	string	(default "dark")
 			global
-	When set to "dark" or "light", Nvim will adjust the default color
-	groups for a dark or light background, respectively.
+	When set to "dark" or "light", adjusts the default color groups for
+	that background type.  The |TUI| or other UI sets this on startup
+	(triggering |OptionSet|) if it can detect the background color.
 
 	This option does NOT change the background color, it tells Nvim what
 	the "inherited" (terminal/GUI) background looks like.
@@ -878,7 +879,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	A list of file patterns.  When one of the patterns matches with the
 	name of the file which is written, no backup file is created.  Both
 	the specified file name and the full path name of the file are used.
-	The pattern is used like with |:autocmd|, see |autocmd-patterns|.
+	The pattern is used like with |:autocmd|, see |autocmd-pattern|.
 	Watch out for special characters, see |option-backslash|.
 	When $TMPDIR, $TMP or $TEMP is not defined, it is not used for the
 	default value.  "/tmp/*" is only used for Unix.
@@ -1831,9 +1832,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	name.  See |option-backslash| about using backslashes.
 	This has nothing to do with the |Dictionary| variable type.
 	Where to find a list of words?
-	- On FreeBSD, there is the file "/usr/share/dict/words".
-	- In the Simtel archive, look in the "msdos/linguist" directory.
-	- In "miscfiles" of the GNU collection.
+	- BSD/macOS include the "/usr/share/dict/words" file.
+	- Try "apt install spell" to get the "/usr/share/dict/words" file on
+	  apt-managed systems (Debian/Ubuntu).
 	The use of |:set+=| and |:set-=| is preferred when adding or removing
 	directories from the list.  This avoids problems when a future version
 	uses another default.
@@ -4693,6 +4694,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  pack/		packages |:packadd|
 	  plugin/	plugin scripts |write-plugin|
 	  print/	files for printing |postscript-print-encoding|
+	  rplugin/	|remote-plugin| scripts
 	  spell/	spell checking files |spell|
 	  syntax/	syntax files |mysyntaxfile|
 	  tutor/	tutorial files |:Tutor|
@@ -6127,8 +6129,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When set: Add 's' flag to 'shortmess' option (this makes the message
 	for a search that hits the start or end of the file not being
-	displayed).  When reset: Remove 's' flag from 'shortmess' option.  {Vi
-	shortens a lot of messages}
+	displayed).  When reset: Remove 's' flag from 'shortmess' option.
 
 						*'textwidth'* *'tw'*
 'textwidth' 'tw'	number	(default 0)
@@ -6506,7 +6507,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	patterns is ignored when expanding |wildcards|, completing file or
 	directory names, and influences the result of |expand()|, |glob()| and
 	|globpath()| unless a flag is passed to disable this.
-	The pattern is used like with |:autocmd|, see |autocmd-patterns|.
+	The pattern is used like with |:autocmd|, see |autocmd-pattern|.
 	Also see 'suffixes'.
 	Example: >
 		:set wildignore=*.o,*.obj

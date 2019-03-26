@@ -227,14 +227,14 @@ should not either insert or change the v:char.
 
 Be very careful about side effects!  The expression is evaluated while
 obtaining characters, you may very well make the command dysfunctional.
-For this reason the following is blocked:
+Therefore the following is blocked for <expr> mappings:
 - Changing the buffer text |textlock|.
 - Editing another buffer.
 - The |:normal| command.
 - Moving the cursor is allowed, but it is restored afterwards.
 - If the cmdline is changed, the old text and cursor position are restored.
 If you want the mapping to do any of these let the returned characters do
-that. Or use a |<Cmd>| mapping (which doesn't have these restrictions).
+that. (Or use a |<Cmd>| mapping instead.)
 
 You can use getchar(), it consumes typeahead if there is any. E.g., if you
 have these mappings: >
@@ -274,9 +274,9 @@ Using 0x80 as a single byte before other text does not work, it will be seen
 as a special key.
 
 						*<Cmd>* *:map-cmd*
-The <Cmd> pseudokey may be used to define a "command mapping", which executes
-the command directly (without changing modes, etc.).  Where you might use
-":...<CR>" in the {lhs} of a mapping, you can instead use "<Cmd>...<CR>".
+The <Cmd> pseudokey begins a "command mapping", which executes the command
+directly (without changing modes).  Where you might use ":...<CR>" in the
+{lhs} of a mapping, you can instead use "<Cmd>...<CR>".
 Example: >
 	noremap x <Cmd>echo mode(1)<cr>
 <
@@ -284,17 +284,21 @@ This is more flexible than `:<C-U>` in visual and operator-pending mode, or
 `<C-O>:` in insert-mode, because the commands are executed directly in the
 current mode (instead of always going to normal-mode).  Visual-mode is
 preserved, so tricks with |gv| are not needed.  Commands can be invoked
-directly in cmdline-mode (which otherwise would require timer hacks).
-
-Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
-|CmdlineEnter| and |CmdlineLeave| events. This helps performance.
+directly in cmdline-mode (which would otherwise require timer hacks).
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
 command: it is executed as if an (unrestricted) |autocmd| was invoked or an
 async event event was processed.
 
-In select-mode, |:map| and |:vmap| command mappings are executed in
-visual-mode.  Use |:smap| to handle select-mode.
+Note:
+- Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
+  |CmdlineEnter| and |CmdlineLeave| events. This helps performance.
+- For the same reason, |keycodes| like <C-R><C-W> are interpreted in the
+  context of the current mode, not cmdline-mode!  Thus <C-R><C-W> in a
+  :nnoremap (normal-mode) mapping does the normal-mode function of <C-R> and
+  <C-W> rather than the cmdline-mode <C-R><C-W> chord.
+- In select-mode, |:map| and |:vmap| command mappings are executed in
+  visual-mode.  Use |:smap| to handle select-mode.
 
 							*E5520*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the

@@ -2,9 +2,8 @@
 
 [Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](https://neovim.io/doc) |
-[Twitter](https://twitter.com/Neovim) |
-[Community](https://neovim.io/community/) |
-[Gitter **Chat**](https://gitter.im/neovim/neovim)
+[Chat/Discussion](https://gitter.im/neovim/neovim) |
+[Twitter](https://twitter.com/Neovim)
 
 [![Travis build status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/urdqjrik5u521fac/branch/master?svg=true)](https://ci.appveyor.com/project/neovim/neovim/branch/master)
@@ -34,9 +33,8 @@ Features
 
 - Modern [GUIs](https://github.com/neovim/neovim/wiki/Related-projects#gui)
 - [API access](https://github.com/neovim/neovim/wiki/Related-projects#api-clients)
-  from any language including C/C++, C#, Clojure, D, Elixir, Lisp, Go,
-  Haskell, Java, JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket,
-  Ruby, Rust
+  from any language including C/C++, C#, Clojure, D, Elixir, Go, Haskell, Java,
+  JavaScript/Node.js, Julia, Lisp, Lua, Perl, Python, Racket, Ruby, Rust
 - Embedded, scriptable [terminal emulator](https://neovim.io/doc/user/nvim_terminal_emulator.html)
 - Asynchronous [job control](https://github.com/neovim/neovim/pull/2247)
 - [Shared data (shada)](https://github.com/neovim/neovim/pull/2506) among multiple editor instances
@@ -51,8 +49,8 @@ Install from package
 Pre-built packages for Windows, macOS, and Linux are found on the
 [Releases](https://github.com/neovim/neovim/releases/) page.
 
-Managed packages are in [Homebrew], [Debian], [Ubuntu], [Fedora], [Arch Linux], [Gentoo],
-and [more](https://github.com/neovim/neovim/wiki/Installing-Neovim)!
+[Managed packages] are in Homebrew, [Debian], [Ubuntu], [Fedora], [Arch Linux],
+[Gentoo], and more!
 
 Install from source
 -------------------
@@ -144,7 +142,7 @@ See `LICENSE` for details.
 [nvim-features]: https://neovim.io/doc/user/vim_diff.html#nvim-features
 [Roadmap]: https://neovim.io/roadmap/
 [advanced UIs]: https://github.com/neovim/neovim/wiki/Related-projects#gui
-[Homebrew]: https://github.com/neovim/homebrew-neovim#installation
+[Managed packages]: https://github.com/neovim/neovim/wiki/Installing-Neovim#install-from-package
 [Debian]: https://packages.debian.org/testing/neovim
 [Ubuntu]: http://packages.ubuntu.com/search?keywords=neovim
 [Fedora]: https://apps.fedoraproject.org/packages/neovim

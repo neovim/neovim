@@ -8,14 +8,14 @@ Nvim							   *nvim* *nvim-intro*
 
 Nvim is based on Vim by Bram Moolenaar.
 
+If you already use Vim see |nvim-from-vim| for a quickstart.
 If you are new to Vim, try the 30-minute tutorial: >
+
     :Tutor<Enter>
 
-If you already use Vim see |nvim-from-vim| for a quickstart.
-
-Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim is
-maintained where possible. See |vim_diff.txt| for the complete reference of
-differences from Vim.
+Nvim is emphatically a fork of Vim, not a clone: compatibility with Vim
+(especially editor and VimL features) is maintained where possible. See
+|vim-differences| for the complete reference of differences from Vim.
 
 				      Type |gO| to see the table of contents.
 

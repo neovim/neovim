@@ -49,7 +49,7 @@
 
 /// Gets the buffer line count
 ///
-/// @param buffer   Buffer handle
+/// @param buffer   Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any
 /// @return Line count, or 0 for unloaded buffer. |api-buffer|
 Integer nvim_buf_line_count(Buffer buffer, Error *err)
@@ -99,7 +99,8 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 
 /// Activate updates from this buffer to the current channel.
 ///
-/// @param buffer The buffer handle
+/// @param channel_id
+/// @param buffer Buffer handle, or 0 for current buffer
 /// @param send_buffer Set to true if the initial notification should contain
 ///        the whole buffer. If so, the first notification will be a
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
@@ -131,7 +132,8 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 //
 /// Deactivate updates from this buffer to the current channel.
 ///
-/// @param buffer The buffer handle
+/// @param channel_id
+/// @param buffer Buffer handle, or 0 for current buffer
 /// @param[out] err Details of an error that may have occurred
 /// @return False when updates couldn't be disabled because the buffer
 ///         isn't loaded; otherwise True.
@@ -221,7 +223,8 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
-/// @param buffer           Buffer handle
+/// @param channel_id
+/// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start            First line index
 /// @param end              Last line index (exclusive)
 /// @param strict_indexing  Whether out-of-bounds should be an error.
@@ -290,7 +293,7 @@ end:
 ///                   newend = end + int(include_end) + int(end < 0)
 ///                   int(bool) = 1 if bool is true else 0
 ///
-/// @param buffer         Buffer handle
+/// @param buffer         Buffer handle, or 0 for current buffer
 /// @param start          First line index
 /// @param end            Last line index
 /// @param include_start  True if the slice includes the `start` parameter
@@ -324,7 +327,8 @@ void buffer_set_line_slice(Buffer buffer,
 /// Out-of-bounds indices are clamped to the nearest valid value, unless
 /// `strict_indexing` is set.
 ///
-/// @param buffer           Buffer handle
+/// @param channel_id
+/// @param buffer           Buffer handle, or 0 for current buffer
 /// @param start            First line index
 /// @param end              Last line index (exclusive)
 /// @param strict_indexing  Whether out-of-bounds should be an error.
@@ -491,7 +495,7 @@ end:
 /// Unlike |line2byte()|, throws error for out-of-bounds indexing.
 /// Returns -1 for unloaded buffer.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param index      Line index
 /// @param[out] err   Error details, if any
 /// @return Integer byte offset, or -1 for unloaded buffer.
@@ -518,7 +522,7 @@ Integer nvim_buf_get_offset(Buffer buffer, Integer index, Error *err)
 
 /// Gets a buffer-scoped (b:) variable.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
 /// @return Variable value
@@ -536,7 +540,7 @@ Object nvim_buf_get_var(Buffer buffer, String name, Error *err)
 
 /// Gets a changed tick of a buffer
 ///
-/// @param[in]  buffer  Buffer handle.
+/// @param[in]  buffer  Buffer handle, or 0 for current buffer
 /// @param[out] err     Error details, if any
 ///
 /// @return `b:changedtick` value.
@@ -555,7 +559,7 @@ Integer nvim_buf_get_changedtick(Buffer buffer, Error *err)
 /// Gets a list of buffer-local |mapping| definitions.
 ///
 /// @param  mode       Mode short-name ("n", "i", "v", ...)
-/// @param  buffer     Buffer handle
+/// @param  buffer     Buffer handle, or 0 for current buffer
 /// @param[out]  err   Error details, if any
 /// @returns Array of maparg()-like dictionaries describing mappings.
 ///          The "buffer" key holds the associated buffer handle.
@@ -573,7 +577,7 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
 
 /// Gets a map of buffer-local |user-commands|.
 ///
-/// @param  buffer  Buffer handle.
+/// @param  buffer  Buffer handle, or 0 for current buffer
 /// @param  opts  Optional parameters. Currently not used.
 /// @param[out]  err   Error details, if any.
 ///
@@ -613,7 +617,7 @@ Dictionary nvim_buf_get_commands(Buffer buffer, Dictionary opts, Error *err)
 
 /// Sets a buffer-scoped (b:) variable
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param value      Variable value
 /// @param[out] err   Error details, if any
@@ -631,7 +635,7 @@ void nvim_buf_set_var(Buffer buffer, String name, Object value, Error *err)
 
 /// Removes a buffer-scoped (b:) variable
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
 void nvim_buf_del_var(Buffer buffer, String name, Error *err)
@@ -650,7 +654,7 @@ void nvim_buf_del_var(Buffer buffer, String name, Error *err)
 ///
 /// @deprecated
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param value      Variable value
 /// @param[out] err   Error details, if any
@@ -673,7 +677,7 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 ///
 /// @deprecated
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Variable name
 /// @param[out] err   Error details, if any
 /// @return Old value
@@ -691,7 +695,7 @@ Object buffer_del_var(Buffer buffer, String name, Error *err)
 
 /// Gets a buffer option value
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Option name
 /// @param[out] err   Error details, if any
 /// @return Option value
@@ -710,7 +714,8 @@ Object nvim_buf_get_option(Buffer buffer, String name, Error *err)
 /// Sets a buffer option value. Passing 'nil' as value deletes the option (only
 /// works if there's a global fallback)
 ///
-/// @param buffer     Buffer handle
+/// @param channel_id
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Option name
 /// @param value      Option value
 /// @param[out] err   Error details, if any
@@ -732,7 +737,7 @@ void nvim_buf_set_option(uint64_t channel_id, Buffer buffer,
 /// @deprecated The buffer number now is equal to the object id,
 ///             so there is no need to use this function.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param[out] err   Error details, if any
 /// @return Buffer number
 Integer nvim_buf_get_number(Buffer buffer, Error *err)
@@ -751,7 +756,7 @@ Integer nvim_buf_get_number(Buffer buffer, Error *err)
 
 /// Gets the full file name for the buffer
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param[out] err   Error details, if any
 /// @return Buffer name
 String nvim_buf_get_name(Buffer buffer, Error *err)
@@ -769,7 +774,7 @@ String nvim_buf_get_name(Buffer buffer, Error *err)
 
 /// Sets the full file name for a buffer
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Buffer name
 /// @param[out] err   Error details, if any
 void nvim_buf_set_name(Buffer buffer, String name, Error *err)
@@ -801,7 +806,7 @@ void nvim_buf_set_name(Buffer buffer, String name, Error *err)
 /// Checks if a buffer is valid and loaded. See |api-buffer| for more info
 /// about unloaded buffers.
 ///
-/// @param buffer Buffer handle
+/// @param buffer Buffer handle, or 0 for current buffer
 /// @return true if the buffer is valid and loaded, false otherwise.
 Boolean nvim_buf_is_loaded(Buffer buffer)
   FUNC_API_SINCE(5)
@@ -817,7 +822,7 @@ Boolean nvim_buf_is_loaded(Buffer buffer)
 /// @note Even if a buffer is valid it may have been unloaded. See |api-buffer|
 /// for more info about unloaded buffers.
 ///
-/// @param buffer Buffer handle
+/// @param buffer Buffer handle, or 0 for current buffer
 /// @return true if the buffer is valid, false otherwise.
 Boolean nvim_buf_is_valid(Buffer buffer)
   FUNC_API_SINCE(1)
@@ -849,7 +854,7 @@ void buffer_insert(Buffer buffer,
 
 /// Return a tuple (row,col) representing the position of the named mark
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Mark name
 /// @param[out] err   Error details, if any
 /// @return (row, col) tuple
@@ -914,7 +919,7 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 /// supported for backwards compatibility, new code should use
 /// |nvim_create_namespace| to create a new empty namespace.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      namespace to use or -1 for ungrouped highlight
 /// @param hl_group   Name of the highlight group to use
 /// @param line       Line to highlight (zero-indexed)
@@ -964,7 +969,7 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 /// To clear the namespace in the entire buffer, pass in 0 and -1 to
 /// line_start and line_end respectively.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all namespaces.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
@@ -997,7 +1002,7 @@ void nvim_buf_clear_namespace(Buffer buffer,
 ///
 /// @deprecated use |nvim_buf_clear_namespace|.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all.
 /// @param line_start Start of range of lines to clear
 /// @param line_end   End of range of lines to clear (exclusive) or -1 to clear
@@ -1031,7 +1036,7 @@ void nvim_buf_clear_highlight(Buffer buffer,
 /// As a shorthand, `ns_id = 0` can be used to create a new namespace for the
 /// virtual text, the allocated id is then returned.
 ///
-/// @param buffer     Buffer handle
+/// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      Namespace to use or 0 to create a namespace,
 ///                   or -1 for a ungrouped annotation
 /// @param line       Line to annotate with virtual text (zero-indexed)

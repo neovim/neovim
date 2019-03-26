@@ -345,6 +345,7 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// Sets a window option value. Passing 'nil' as value deletes the option(only
 /// works if there's a global fallback)
 ///
+/// @param channel_id
 /// @param window   Window handle
 /// @param name     Option name
 /// @param value    Option value
@@ -527,9 +528,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 /// @param force    Behave like `:close!` The last window of a buffer with
 ///                 unwritten changes can be closed. The buffer will become
 ///                 hidden, even if 'hidden' is not set.
-///
 /// @param[out] err Error details, if any
-/// @return Window number
 void nvim_win_close(Window window, Boolean force, Error *err)
   FUNC_API_SINCE(6)
 {

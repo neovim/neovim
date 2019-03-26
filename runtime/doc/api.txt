@@ -293,6 +293,9 @@ nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
                 Return: ~
                     Highlight definition map
 
+                See also: ~
+                    nvim_get_hl_by_id
+
 nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
                 Gets a highlight definition by id. |hlID()|
 
@@ -302,6 +305,9 @@ nvim_get_hl_by_id({hl_id}, {rgb})                        *nvim_get_hl_by_id()*
 
                 Return: ~
                     Highlight definition map
+
+                See also: ~
+                    nvim_get_hl_by_name
 
 nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                 Sends input-keys to Nvim, subject to various quirks controlled
@@ -316,6 +322,10 @@ nvim_feedkeys({keys}, {mode}, {escape_csi})                  *nvim_feedkeys()*
                     {escape_csi}  If true, escape K_SPECIAL/CSI bytes in
                                   `keys`
 
+                See also: ~
+                    feedkeys()
+                    vim_strsave_escape_csi
+
 nvim_input({keys})                                              *nvim_input()*
                 Queues raw user-input. Unlike |nvim_feedkeys()|, this uses a
                 low-level input buffer and the call is non-blocking (input is
@@ -326,7 +336,6 @@ nvim_input({keys})                                              *nvim_input()*
                 Note:
                     |keycodes| like <CR> are translated, so "<" is special. To
                     input a literal "<", send <LT>.
-
                 Note:
                     For mouse events use |nvim_input_mouse()|. The pseudokey
                     form "<LeftMouse><col,row>" is deprecated since
@@ -346,9 +355,8 @@ nvim_input({keys})                                              *nvim_input()*
 nvim_input_mouse({button}, {action}, {modifier}, {grid}, {row}, {col})
                 Send mouse event from GUI.
 
-                The call is non-blocking. It doesn't wait on any resulting
-                action, but queues the event to be processed soon by the event
-                loop.
+                Non-blocking: does not wait on any result, but queues the
+                event to be processed soon by the event loop.
 
                 Note:
                     Currently this doesn't support "scripting" multiple mouse
@@ -392,6 +400,10 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
                     {special}    Replace |keycodes|, e.g. <CR> becomes a "\n"
                                  char.
 
+                See also: ~
+                    replace_termcodes
+                    cpoptions
+
 nvim_command_output({command})                         *nvim_command_output()*
                 Executes an ex-command and returns its (non-error) output.
                 Shell |:!| output is not captured.
@@ -420,7 +432,7 @@ nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
                 inside the chunk. The chunk can return a value.
 
                 Only statements are executed. To evaluate an expression,
-                prefix it with `return`: return my_function(...)
+                prefix it with `return` : return my_function(...)
 
                 Parameters: ~
                     {code}  lua code to execute
@@ -458,7 +470,7 @@ nvim_call_dict_function({dict}, {fn}, {args})      *nvim_call_dict_function()*
                     Result of the function call
 
 nvim_strwidth({text})                                        *nvim_strwidth()*
-                Calculates the number of display cells occupied by `text`.
+                Calculates the number of display cells occupied by `text` .
                 <Tab> counts as one cell.
 
                 Parameters: ~
@@ -575,11 +587,14 @@ nvim_err_writeln({str})                                   *nvim_err_writeln()*
                 Parameters: ~
                     {str}  Message
 
+                See also: ~
+                    nvim_err_write()
+
 nvim_list_bufs()                                            *nvim_list_bufs()*
                 Gets the current list of buffer handles
 
-                Includes unlisted (unloaded/deleted) buffers, like `:ls!`. Use
-                |nvim_buf_is_loaded()| to check if a buffer is loaded.
+                Includes unlisted (unloaded/deleted) buffers, like `:ls!` .
+                Use |nvim_buf_is_loaded()| to check if a buffer is loaded.
 
                 Return: ~
                     List of buffer handles
@@ -618,12 +633,15 @@ nvim_create_buf({listed}, {scratch})                       *nvim_create_buf()*
                 Creates a new, empty, unnamed buffer.
 
                 Parameters: ~
-                    {listed}   Controls 'buflisted'
+                    {listed}   Sets 'buflisted'
                     {scratch}  Creates a "throwaway" |scratch-buffer| for
                                temporary work (always 'nomodified')
 
                 Return: ~
                     Buffer handle, or 0 on error
+
+                See also: ~
+                    buf_open_scratch
 
 nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 Open a new window.
@@ -639,51 +657,6 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
 
                 Exactly one of `external` and `relative` must be specified.
 
-                Parameters: ~
-                    {buffer}   handle of buffer to be displayed in the window
-                    {enter}    whether the window should be entered (made the
-                               current window)
-                    {config}   Dictionary for the window configuration accepts
-                               these keys:
-
-                        `relative`: If set, the window becomes a
-                        floating window. The window will be placed with
-                        row,col coordinates relative to one of the
-                        following:
-                            "editor" the global editor grid
-                            "win"    a window. Use `win` to specify window id,
-                                     or current window will be used by default.
-                            "cursor" the cursor position in current window.
-
-                        `win`: when using `relative='win'`, window id of the window
-                        where the position is defined.
-
-                        `anchor`: the corner of the float that the row,col
-                        position defines
-                            "NW" north-west (default)
-                            "NE" north-east
-                            "SW" south-west
-                            "SE" south-east
-
-                        `focusable`: Whether window can be focused by wincmds and
-                        mouse events. Defaults to true. Even if set to false,
-                        the window can still be entered using
-                        |nvim_set_current_win()| API call.
-
-                        `height`: Window height in character cells. Minimum of 1.
-
-                        `width`: Window width in character cells. Minimum of 2.
-
-                        `row`: row position. Screen cell height are used as unit.
-                        Can be floating point.
-
-                        `col`: column position.  Screen cell width is used as
-                        unit. Can be floating point.
-
-                        `external`: GUI should display the window as an external
-                        top-level window. Currently accepts no other
-                        positioning configuration together with this.
-
                 With editor positioning row=0, col=0 refers to the top-left
                 corner of the screen-grid and row=Lines-1, Columns-1 refers to
                 the bottom-right corner. Floating point values are allowed,
@@ -698,9 +671,49 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 should not be used to specify arbitrary WM screen positions.
 
                 Parameters: ~
+                    {buffer}  handle of buffer to be displayed in the window
+                    {enter}   whether the window should be entered (made the
+                              current window)
+                    {config}  Dictionary for the window configuration accepts
+                              these keys:
+                              -  `relative` : If set, the window becomes a floating
+                                window. The window will be placed with row,col
+                                coordinates relative to one of the following:
+                                - "editor" the global editor grid
+                                - "win" a window. Use `win` to specify a
+                                  window id, or the current window will be
+                                  used by default. "cursor" the cursor
+                                  position in current window.
+
+                              - `win` : When using relative='win', window id
+                                of the window where the position is defined.
+                              -  `anchor` : The corner of the float that the row,col
+                                position defines:
+                                - "NW" north-west (default)
+                                - "NE" north-east
+                                - "SW" south-west
+                                - "SE" south-east
+
+                              - `height` : window height (in character cells).
+                                Minimum of 1.
+                              - `width` : window width (in character cells).
+                                Minimum of 2.
+                              - `row` : row position. Screen cell height are
+                                used as unit. Can be floating point.
+                              - `col` : column position. Screen cell width is
+                                used as unit. Can be floating point.
+                              - `focusable` : Whether window can be focused by
+                                wincmds and mouse events. Defaults to true.
+                                Even if set to false, the window can still be
+                                entered using |nvim_set_current_win()| API
+                                call.
+                              - `external` : GUI should display the window as
+                                an external top-level window. Currently
+                                accepts no other positioning configuration
+                                together with this.
 
                 Return: ~
-                    the window handle or 0 when error
+                    Window handle, or 0 on error
 
 nvim_list_tabpages()                                    *nvim_list_tabpages()*
                 Gets the current list of tabpage handles.
@@ -808,86 +821,87 @@ nvim_get_api_info()                                      *nvim_get_api_info()*
                                                       *nvim_set_client_info()*
 nvim_set_client_info({name}, {version}, {type}, {methods},
                      {attributes})
-                Identify the client for nvim. Can be called more than once,
-                but subsequent calls will remove earlier info, which should be
-                resent if it is still valid. (This could happen if a library
-                first identifies the channel, and a plugin using that library
-                later overrides that info)
+                Identifies the client. Can be called more than once;
+                subsequent calls remove earlier info, which should be included
+                by the caller if it is still valid. (E.g. if a library first
+                identifies the channel, then a plugin using that library later
+                overrides that info)
 
                 Parameters: ~
-                    {name}        short name for the connected client
-                    {version}     Dictionary describing the version, with the
-                                  following possible keys (all optional)
-                                  "major" major version (defaults to 0 if not
-                                  set, for no release yet)  "minor" minor
-                                  version  "patch" patch number  "prerelease"
-                                  string describing a prerelease, like "dev"
-                                  or "beta1"  "commit" hash or similar
-                                  identifier of commit
-                    {type}        Must be one of the following values. A
-                                  client library should use "remote" if the
-                                  library user hasn't specified other value.
-                                  "remote" remote client that connected to
-                                  nvim.  "ui" gui frontend  "embedder"
-                                  application using nvim as a component, for
-                                  instance IDE/editor implementing a vim mode.
-                                  "host" plugin host, typically started by
-                                  nvim  "plugin" single plugin, started by
-                                  nvim
+                    {name}        Short name for the connected client
+                    {version}     Dictionary describing the version, with
+                                  these (optional) keys:
+                                  - "major" major version (defaults to 0 if
+                                    not set, for no release yet)
+                                  - "minor" minor version
+                                  - "patch" patch number
+                                  - "prerelease" string describing a
+                                    prerelease, like "dev" or "beta1"
+                                  - "commit" hash or similar identifier of
+                                    commit
+                    {type}        Must be one of the following values. Client
+                                  libraries should default to "remote" unless
+                                  overridden by the user.
+                                  - "remote" remote client connected to Nvim.
+                                  - "ui" gui frontend
+                                  - "embedder" application using Nvim as a
+                                    component (for example, IDE/editor
+                                    implementing a vim mode).
+                                  - "host" plugin host, typically started by
+                                    nvim
+                                  - "plugin" single plugin, started by nvim
                     {methods}     Builtin methods in the client. For a host,
                                   this does not include plugin methods which
                                   will be discovered later. The key should be
                                   the method name, the values are dicts with
-                                  the following (optional) keys:   "async" if
-                                  true, send as a notification. If false or
-                                  unspecified, use a blocking request  "nargs"
-                                  Number of arguments. Could be a single
-                                  integer or an array two integers, minimum
-                                  and maximum inclusive. Further keys might be
-                                  added in later versions of nvim and unknown
-                                  keys are thus ignored. Clients must only use
-                                  keys defined in this or later versions of
-                                  nvim!
-                    {attributes}  Informal attributes describing the client.
-                                  Clients might define their own keys, but the
-                                  following are suggested:   "website" Website
-                                  of client (for instance github repository)
-                                  "license" Informal description of the
-                                  license, such as "Apache 2", "GPLv3" or
-                                  "MIT"  "logo" URI or path to image,
-                                  preferably small logo or icon. .png or .svg
-                                  format is preferred.
+                                  these (optional) keys (more keys may be
+                                  added in future versions of Nvim, thus
+                                  unknown keys are ignored. Clients must only
+                                  use keys defined in this or later versions
+                                  of Nvim):
+                                  - "async" if true, send as a notification.
+                                    If false or unspecified, use a blocking
+                                    request
+                                  - "nargs" Number of arguments. Could be a
+                                    single integer or an array of two
+                                    integers, minimum and maximum inclusive.
+                    {attributes}  Arbitrary string:string map of informal
+                                  client properties. Suggested keys:
+                                  - "website": Client homepage URL (e.g.
+                                    GitHub repository)
+                                  - "license": License description ("Apache
+                                    2", "GPLv3", "MIT", …)
+                                  - "logo": URI or path to image, preferably
+                                    small logo or icon. .png or .svg format is
+                                    preferred.
 
 nvim_get_chan_info({chan})                              *nvim_get_chan_info()*
                 Get information about a channel.
 
                 Return: ~
-                    a Dictionary, describing a channel with the following
-                    keys:
+                    Dictionary describing a channel, with these keys:
+                    - "stream" the stream underlying the channel
+                      - "stdio" stdin and stdout of this Nvim instance
+                      - "stderr" stderr of this Nvim instance
+                      - "socket" TCP/IP socket or named pipe
+                      - "job" job with communication over its stdio
 
-                    `stream`: the stream underlying the channel:
-                        "stdio"   stdin and stdout of this Nvim instance.
-                        "stderr"  stderr of this Nvim instance.
-                        "socket"  TCP/IP socket or named pipe.
-                        "job"     job with communication over its stdio.
+                    - "mode" how data received on the channel is interpreted
+                      - "bytes" send and receive raw bytes
+                      - "terminal" a |terminal| instance interprets ASCII
+                        sequences
+                      - "rpc" |RPC| communication on the channel is active
 
-                    `mode`: how data received on the channel is interpreted:
-                        "bytes"    send and recieve raw bytes.
-                        "terminal" a |terminal| instance interprets ASCII sequences
-                        "rpc"      |RPC| communication on the channel is active
-
-                    `pty`: Name of pseudoterminal, if one is used (optional).
-                    On a POSIX system, this will be a device path like
-                    /dev/pts/1. Even if the name is unknown, the key will
-                    still be present to indicate a pty is used. This is
-                    currently the case when using winpty on windows.
-
-                    `buffer`: buffer with connected |terminal|
-                    instance (optional).
-
-                    `client`: information about the client on the other end of
-                    the RPC channel, if it has added it using
-                    |nvim_set_client_info()| (optional).
+                    - "pty" Name of pseudoterminal, if one is used (optional).
+                      On a POSIX system, this will be a device path like
+                      /dev/pts/1. Even if the name is unknown, the key will
+                      still be present to indicate a pty is used. This is
+                      currently the case when using winpty on windows.
+                    - "buffer" buffer with connected |terminal| instance
+                      (optional)
+                    - "client" information about the client on the other end
+                      of the RPC channel, if it has added it using
+                      |nvim_set_client_info()|. (optional)
 
 nvim_list_chans()                                          *nvim_list_chans()*
                 Get information about all open channels.
@@ -901,12 +915,12 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
 
                 This has two main usages:
                 1. To perform several requests from an async context
-                atomically, i.e. without interleaving redraws, RPC requests
-                from other clients, or user interactions (however API methods
-                may trigger autocommands or event processing which have such
-                side-effects, e.g. |:sleep| may wake timers).
+                   atomically, i.e. without interleaving redraws, RPC requests
+                   from other clients, or user interactions (however API
+                   methods may trigger autocommands or event processing which
+                   have such side-effects, e.g. |:sleep| may wake timers).
                 2. To minimize RPC overhead (roundtrips) of a sequence of many
-                requests.
+                   requests.
 
                 Parameters: ~
                     {calls}  an array of calls, where each call is described
@@ -914,13 +928,13 @@ nvim_call_atomic({calls})                                 *nvim_call_atomic()*
                              and an array of arguments.
 
                 Return: ~
-                    an array with two elements. The first is an array of
-                    return values. The second is NIL if all calls succeeded.
-                    If a call resulted in an error, it is a three-element
-                    array with the zero-based index of the call which resulted
-                    in an error, the error type and the error message. If an
-                    error occurred, the values from all preceding calls will
-                    still be returned.
+                    Array of two elements. The first is an array of return
+                    values. The second is NIL if all calls succeeded. If a
+                    call resulted in an error, it is a three-element array
+                    with the zero-based index of the call which resulted in an
+                    error, the error type and the error message. If an error
+                    occurred, the values from all preceding calls will still
+                    be returned.
 
                                                      *nvim_parse_expression()*
 nvim_parse_expression({expr}, {flags}, {highlight})
@@ -930,20 +944,24 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                     {async}
 
                 Parameters: ~
-                    {expr}       Expression to parse. Is always treated as a
+                    {expr}       Expression to parse. Always treated as a
                                  single line.
-                    {flags}      Flags:  - "m" if multiple expressions in a
-                                 row are allowed (only the first one will be
-                                 parsed), - "E" if EOC tokens are not allowed
-                                 (determines whether they will stop parsing
-                                 process or be recognized as an
-                                 operator/space, though also yielding an
-                                 error). - "l" when needing to start parsing
-                                 with lvalues for ":let" or ":for". Common
-                                 flag sets: - "m" to parse like for ":echo". -
-                                 "E" to parse like for "<C-r>=". - empty
-                                 string for ":call". - "lm" to parse for
-                                 ":let".
+                    {flags}      Flags:
+                                 - "m" if multiple expressions in a row are
+                                   allowed (only the first one will be
+                                   parsed),
+                                 - "E" if EOC tokens are not allowed
+                                   (determines whether they will stop parsing
+                                   process or be recognized as an
+                                   operator/space, though also yielding an
+                                   error).
+                                 - "l" when needing to start parsing with
+                                   lvalues for ":let" or ":for". Common flag
+                                   sets:
+                                 - "m" to parse like for ":echo".
+                                 - "E" to parse like for "<C-r>=".
+                                 - empty string for ":call".
+                                 - "lm" to parse for ":let".
                     {highlight}  If true, return value will also include
                                  "highlight" key containing array of 4-tuples
                                  (arrays) (Integer, Integer, Integer, String),
@@ -954,51 +972,66 @@ nvim_parse_expression({expr}, {flags}, {highlight})
                                  [start_col, end_col)).
 
                 Return: ~
-                    AST: top-level dictionary with these keys: "error":
-                    Dictionary with error, present only if parser saw some
-                    error. Contains the following keys: "message": String,
-                    error message in printf format, translated. Must contain
-                    exactly one "%.*s". "arg": String, error message argument.
-                    "len": Amount of bytes successfully parsed. With flags
-                    equal to "" that should be equal to the length of expr
-                    string. @note: “Sucessfully parsed” here means
-                    “participated in AST creation”, not “till the first
-                    error”. "ast": AST, either nil or a dictionary with these
-                    keys: "type": node type, one of the value names from
-                    ExprASTNodeType stringified without "kExprNode" prefix.
-                    "start": a pair [line, column] describing where node is
-                    “started” where "line" is always 0 (will not be 0 if you
-                    will be using nvim_parse_viml() on e.g. ":let", but that
-                    is not present yet). Both elements are Integers. "len":
-                    “length” of the node. This and "start" are there for
-                    debugging purposes primary (debugging parser and providing
-                    debug information). "children": a list of nodes described
-                    in top/"ast". There always is zero, one or two children,
-                    key will not be present if node has no children. Maximum
-                    number of children may be found in node_maxchildren array.
-                    Local values (present only for certain nodes): "scope": a
-                    single Integer, specifies scope for "Option" and
-                    "PlainIdentifier" nodes. For "Option" it is one of
-                    ExprOptScope values, for "PlainIdentifier" it is one of
-                    ExprVarScope values. "ident": identifier (without scope,
-                    if any), present for "Option", "PlainIdentifier",
-                    "PlainKey" and "Environment" nodes. "name": Integer,
-                    register name (one character) or -1. Only present for
-                    "Register" nodes. "cmp_type": String, comparison type, one
-                    of the value names from ExprComparisonType, stringified
-                    without "kExprCmp" prefix. Only present for "Comparison"
-                    nodes. "ccs_strategy": String, case comparison strategy,
-                    one of the value names from ExprCaseCompareStrategy,
-                    stringified without "kCCStrategy" prefix. Only present for
-                    "Comparison" nodes. "augmentation": String, augmentation
-                    type for "Assignment" nodes. Is either an empty string,
-                    "Add", "Subtract" or "Concat" for "=", "+=", "-=" or ".="
-                    respectively. "invert": Boolean, true if result of
-                    comparison needs to be inverted. Only present for
-                    "Comparison" nodes. "ivalue": Integer, integer value for
-                    "Integer" nodes. "fvalue": Float, floating-point value for
-                    "Float" nodes. "svalue": String, value for
-                    "SingleQuotedString" and "DoubleQuotedString" nodes.
+
+                    - AST: top-level dictionary with these keys:
+                      - "error": Dictionary with error, present only if parser
+                        saw some error. Contains the following keys:
+                        - "message": String, error message in printf format,
+                          translated. Must contain exactly one "%.*s".
+                        - "arg": String, error message argument.
+
+                      - "len": Amount of bytes successfully parsed. With flags
+                        equal to "" that should be equal to the length of expr
+                        string. (“Sucessfully parsed” here means “participated
+                        in AST creation”, not “till the first error”.)
+                      - "ast": AST, either nil or a dictionary with these
+                        keys:
+                        - "type": node type, one of the value names from
+                          ExprASTNodeType stringified without "kExprNode"
+                          prefix.
+                        - "start": a pair [line, column] describing where node
+                          is "started" where "line" is always 0 (will not be 0
+                          if you will be using nvim_parse_viml() on e.g.
+                          ":let", but that is not present yet). Both elements
+                          are Integers.
+                        - "len": “length” of the node. This and "start" are
+                          there for debugging purposes primary (debugging
+                          parser and providing debug information).
+                        - "children": a list of nodes described in top/"ast".
+                          There always is zero, one or two children, key will
+                          not be present if node has no children. Maximum
+                          number of children may be found in node_maxchildren
+                          array.
+
+                    - Local values (present only for certain nodes):
+                      - "scope": a single Integer, specifies scope for
+                        "Option" and "PlainIdentifier" nodes. For "Option" it
+                        is one of ExprOptScope values, for "PlainIdentifier"
+                        it is one of ExprVarScope values.
+                      - "ident": identifier (without scope, if any), present
+                        for "Option", "PlainIdentifier", "PlainKey" and
+                        "Environment" nodes.
+                      - "name": Integer, register name (one character) or -1.
+                        Only present for "Register" nodes.
+                      - "cmp_type": String, comparison type, one of the value
+                        names from ExprComparisonType, stringified without
+                        "kExprCmp" prefix. Only present for "Comparison"
+                        nodes.
+                      - "ccs_strategy": String, case comparison strategy, one
+                        of the value names from ExprCaseCompareStrategy,
+                        stringified without "kCCStrategy" prefix. Only present
+                        for "Comparison" nodes.
+                      - "augmentation": String, augmentation type for
+                        "Assignment" nodes. Is either an empty string, "Add",
+                        "Subtract" or "Concat" for "=", "+=", "-=" or ".="
+                        respectively.
+                      - "invert": Boolean, true if result of comparison needs
+                        to be inverted. Only present for "Comparison" nodes.
+                      - "ivalue": Integer, integer value for "Integer" nodes.
+                      - "fvalue": Float, floating-point value for "Float"
+                        nodes.
+                      - "svalue": String, value for "SingleQuotedString" and
+                        "DoubleQuotedString" nodes.
 
 nvim__id({obj})                                                   *nvim__id()*
                 Returns object given as argument.
@@ -1058,23 +1091,22 @@ nvim_list_uis()                                              *nvim_list_uis()*
                 Gets a list of dictionaries representing attached UIs.
 
                 Return: ~
-                    Array of UI dictionaries. Each dictionary has the
-                    following keys:
-                        `height`:  requested height of the UI
-                        `width`:   requested width of the UI
-                        `rgb`:     whether the UI uses rgb colors
-                                   (false implies cterm colors)
-                        `ext_...`: Requested UI extensions, see |ui-options|
-                        `chan`:    Channel id of remote UI (not present for TUI)
+                    Array of UI dictionaries, each with these keys:
+                    - "height" requested height of the UI
+                    - "width" requested width of the UI
+                    - "rgb" whether the UI uses rgb colors (false implies
+                      cterm colors)
+                    - "ext_..." Requested UI extensions, see |ui-options|
+                    - "chan" Channel id of remote UI (not present for TUI)
 
 nvim_get_proc_children({pid})                       *nvim_get_proc_children()*
-                Gets the immediate children of process `pid`.
+                Gets the immediate children of process `pid` .
 
                 Return: ~
                     Array of child process ids, empty if process not found.
 
 nvim_get_proc({pid})                                         *nvim_get_proc()*
-                Gets info describing process `pid`.
+                Gets info describing process `pid` .
 
                 Return: ~
                     Map of process properties, or NIL if process not found.
@@ -1096,7 +1128,7 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
                     {insert}  Whether the selection should be inserted in the
                               buffer.
                     {finish}  Finish the completion and dismiss the popupmenu.
-                              Implies `insert`.
+                              Implies `insert` .
                     {opts}    Optional parameters. Reserved for future use.
 
 nvim__inspect_cell({row}, {col})                        *nvim__inspect_cell()*
@@ -1123,7 +1155,7 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                 Gets the buffer line count
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
                     Line count, or 0 for unloaded buffer. |api-buffer|
@@ -1132,11 +1164,11 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                 Activate updates from this buffer to the current channel.
 
                 Parameters: ~
-                    {buffer}       The buffer handle
+                    {buffer}       Buffer handle, or 0 for current buffer
                     {send_buffer}  Set to true if the initial notification
                                    should contain the whole buffer. If so, the
                                    first notification will be a
-                                   `nvim_buf_lines_event`. Otherwise, the
+                                   `nvim_buf_lines_event` . Otherwise, the
                                    first notification will be a
                                    `nvim_buf_changedtick_event`
                     {opts}         Optional parameters. Reserved for future
@@ -1144,14 +1176,14 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
 
                 Return: ~
                     False when updates couldn't be enabled because the buffer
-                    isn't loaded or optscontained an invalid key; otherwise
+                    isn't loaded or `opts` contained an invalid key; otherwise
                     True.
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
                 Deactivate updates from this buffer to the current channel.
 
                 Parameters: ~
-                    {buffer}  The buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
                     False when updates couldn't be disabled because the buffer
@@ -1169,7 +1201,7 @@ nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})
                 unless `strict_indexing` is set.
 
                 Parameters: ~
-                    {buffer}           Buffer handle
+                    {buffer}           Buffer handle, or 0 for current buffer
                     {start}            First line index
                     {end}              Last line index (exclusive)
                     {strict_indexing}  Whether out-of-bounds should be an
@@ -1196,7 +1228,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
                 unless `strict_indexing` is set.
 
                 Parameters: ~
-                    {buffer}           Buffer handle
+                    {buffer}           Buffer handle, or 0 for current buffer
                     {start}            First line index
                     {end}              Last line index (exclusive)
                     {strict_indexing}  Whether out-of-bounds should be an
@@ -1216,7 +1248,7 @@ nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
                 Returns -1 for unloaded buffer.
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {index}   Line index
 
                 Return: ~
@@ -1226,7 +1258,7 @@ nvim_buf_get_var({buffer}, {name})                        *nvim_buf_get_var()*
                 Gets a buffer-scoped (b:) variable.
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Variable name
 
                 Return: ~
@@ -1236,17 +1268,17 @@ nvim_buf_get_changedtick({buffer})                *nvim_buf_get_changedtick()*
                 Gets a changed tick of a buffer
 
                 Parameters: ~
-                    {buffer}  Buffer handle.
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
-                    b:changedtickvalue.
+                    `b:changedtick` value.
 
 nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
                 Gets a list of buffer-local |mapping| definitions.
 
                 Parameters: ~
                     {mode}    Mode short-name ("n", "i", "v", ...)
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
                     Array of maparg()-like dictionaries describing mappings.
@@ -1256,7 +1288,7 @@ nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
                 Gets a map of buffer-local |user-commands|.
 
                 Parameters: ~
-                    {buffer}  Buffer handle.
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {opts}    Optional parameters. Currently not used.
 
                 Return: ~
@@ -1266,7 +1298,7 @@ nvim_buf_set_var({buffer}, {name}, {value})               *nvim_buf_set_var()*
                 Sets a buffer-scoped (b:) variable
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Variable name
                     {value}   Variable value
 
@@ -1274,14 +1306,14 @@ nvim_buf_del_var({buffer}, {name})                        *nvim_buf_del_var()*
                 Removes a buffer-scoped (b:) variable
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Variable name
 
 nvim_buf_get_option({buffer}, {name})                  *nvim_buf_get_option()*
                 Gets a buffer option value
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Option name
 
                 Return: ~
@@ -1292,7 +1324,7 @@ nvim_buf_set_option({buffer}, {name}, {value})         *nvim_buf_set_option()*
                 option (only works if there's a global fallback)
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Option name
                     {value}   Option value
 
@@ -1300,7 +1332,7 @@ nvim_buf_get_name({buffer})                              *nvim_buf_get_name()*
                 Gets the full file name for the buffer
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
                     Buffer name
@@ -1309,7 +1341,7 @@ nvim_buf_set_name({buffer}, {name})                      *nvim_buf_set_name()*
                 Sets the full file name for a buffer
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Buffer name
 
 nvim_buf_is_loaded({buffer})                            *nvim_buf_is_loaded()*
@@ -1317,7 +1349,7 @@ nvim_buf_is_loaded({buffer})                            *nvim_buf_is_loaded()*
                 more info about unloaded buffers.
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
                     true if the buffer is valid and loaded, false otherwise.
@@ -1330,7 +1362,7 @@ nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
                     |api-buffer| for more info about unloaded buffers.
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
                     true if the buffer is valid, false otherwise.
@@ -1340,7 +1372,7 @@ nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
                 named mark
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {name}    Mark name
 
                 Return: ~
@@ -1364,7 +1396,7 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line},
                 `ns_id` to add highlights to the namespace. All highlights in
                 the same namespace can then be cleared with single call to
                 |nvim_buf_clear_namespace|. If the highlight never will be
-                deleted by an API call, pass `ns_id = -1`.
+                deleted by an API call, pass `ns_id = -1` .
 
                 As a shorthand, `ns_id = 0` can be used to create a new
                 namespace for the highlight, the allocated id is then
@@ -1374,7 +1406,7 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line},
                 |nvim_create_namespace| to create a new empty namespace.
 
                 Parameters: ~
-                    {buffer}     Buffer handle
+                    {buffer}     Buffer handle, or 0 for current buffer
                     {ns_id}      namespace to use or -1 for ungrouped
                                  highlight
                     {hl_group}   Name of the highlight group to use
@@ -1396,7 +1428,7 @@ nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
                 to line_start and line_end respectively.
 
                 Parameters: ~
-                    {buffer}      Buffer handle
+                    {buffer}      Buffer handle, or 0 for current buffer
                     {ns_id}       Namespace to clear, or -1 to clear all
                                   namespaces.
                     {line_start}  Start of range of lines to clear
@@ -1420,14 +1452,14 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                 both virtual text and highlights added by
                 |nvim_buf_add_highlight|, both can then be cleared with a
                 single call to |nvim_buf_clear_namespace|. If the virtual text
-                never will be cleared by an API call, pass `ns_id = -1`.
+                never will be cleared by an API call, pass `ns_id = -1` .
 
                 As a shorthand, `ns_id = 0` can be used to create a new
                 namespace for the virtual text, the allocated id is then
                 returned.
 
                 Parameters: ~
-                    {buffer}  Buffer handle
+                    {buffer}  Buffer handle, or 0 for current buffer
                     {ns_id}   Namespace to use or 0 to create a namespace, or
                               -1 for a ungrouped annotation
                     {line}    Line to annotate with virtual text
@@ -1601,7 +1633,7 @@ nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
                 parameters.
 
                 When reconfiguring a floating window, absent option keys will
-                not be changed. The following restriction apply: `row`, `col`
+                not be changed. The following restriction apply: `row` , `col`
                 and `relative` must be reconfigured together. Only changing a
                 subset of these is an error.
 
@@ -1636,9 +1668,6 @@ nvim_win_close({window}, {force})                           *nvim_win_close()*
                               buffer will become hidden, even if 'hidden' is
                               not set.
 
-                Return: ~
-                    Window number
-
 
 ==============================================================================
 Tabpage Functions                                                *api-tabpage*
@@ -1650,7 +1679,7 @@ nvim_tabpage_list_wins({tabpage})                   *nvim_tabpage_list_wins()*
                     {tabpage}  Tabpage
 
                 Return: ~
-                    List of windows in tabpage
+                    List of windows in `tabpage`
 
 nvim_tabpage_get_var({tabpage}, {name})               *nvim_tabpage_get_var()*
                 Gets a tab-scoped (t:) variable

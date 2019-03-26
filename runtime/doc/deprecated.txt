@@ -63,6 +63,15 @@ Options ~
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.
 
+UI extensions~
+*ui-wildmenu*		Use `ext_cmdline` and `ext_popupmenu` instead.
+			Enabled by `ext_wildmenu` |ui-options|.
+			If `ext_wildmenu` is set, these events are emitted for
+			backwards-compatibility:
+				["wildmenu_show", items]
+				["wildmenu_select", selected]
+				["wildmenu_hide"]
+
 Variables~
 *b:terminal_job_pid*	PID of the top-level process in a |:terminal|.
 			Use `jobpid(&channel)` instead.

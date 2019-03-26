@@ -43,7 +43,7 @@ effects.  Be careful not to destroy your text.
 :au[tocmd] [group] {event} {pat} [++once] [++nested] {cmd}
 			Add {cmd} to the list of commands that Vim will
 			execute automatically on {event} for a file matching
-			{pat} |autocmd-patterns|.
+			{pat} |autocmd-pattern|.
 			Note: A quote character is seen as argument to the
 			:autocmd and won't start a comment.
 			Nvim always adds {cmd} after existing autocommands so
@@ -358,7 +358,7 @@ Name			triggered by ~
 |CompleteDone|		after Insert mode completion is done
 
 |User|			to be used in combination with ":doautocmd"
-|Signal|		after the nvim process received a signal
+|Signal|		after Nvim receives a signal
 
 
 
@@ -870,27 +870,27 @@ MenuPopupChanged 					*MenuPopupChanged*
 				It is not allowed to change the text |textlock|.
 
 							*OptionSet*
-OptionSet			After setting an option.  The pattern is
-				matched against the long option name.
-				The |v:option_old| variable indicates the
-				old option value, |v:option_new| variable
-				indicates the newly set value, the
-				|v:option_type| variable indicates whether
-				it's global or local scoped and |<amatch>|
-				indicates what option has been set.
+OptionSet			After setting an option (except during
+				|startup|).  The |autocmd-pattern| is matched
+				against the long option name.
+				|v:option_old| indicates the old option value,
+				|v:option_new| indicates the new value,
+				|v:option_type| indicates whether it's global
+				or local scoped and |<amatch>| indicates which
+				option was set.
 
 				Usage example: Check for the existence of the
 				directory in the 'backupdir' and 'undodir'
 				options, create the directory if it doesn't
 				exist yet.
 
-				Note: It's a bad idea to reset an option
-				during this autocommand, this may break a
-				plugin. You can always use `:noa` to prevent
-				triggering this autocommand.
+				Note: Do not reset the same option during this
+				autocommand, that may break plugins. You can
+				always use |:noautocmd| to prevent triggering
+				OptionSet.
 
-				When using |:set| in the autocommand the event
-				is not triggered again.
+				Recursion is ignored, thus |:set| in the
+				autocommand does not trigger OptionSet again.
 
 							*QuickFixCmdPre*
 QuickFixCmdPre			Before a quickfix command is run (|:make|,
@@ -943,10 +943,11 @@ ShellCmdPost			After executing a shell command with |:!cmd|,
 				For non-blocking shell commands, see
 				|job-control|.
 							*Signal*
-Signal				After the nvim process received a signal.
-				The pattern is matched against the name of the
-				received signal. Only "SIGUSR1" is supported.
-							*ShellFilterPost*
+Signal				After Nvim receives a signal. The pattern is
+				matched against the signal name. Only
+				"SIGUSR1" is supported.  Example: >
+				    autocmd Signal SIGUSR1 call some#func()
+<							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
 				Can be used to check for any changed files.
@@ -1123,7 +1124,7 @@ WinNew				When a new window was created.  Not done for
 				Before a WinEnter event.
 
 ==============================================================================
-6. Patterns					*autocmd-patterns* *{pat}*
+6. Patterns					*autocmd-pattern* *{pat}*
 
 The {pat} argument can be a comma separated list.  This works as if the
 command was given with each pattern separately.  Thus this command: >

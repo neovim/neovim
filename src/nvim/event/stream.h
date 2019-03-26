@@ -13,7 +13,7 @@ typedef struct stream Stream;
 /// Type of function called when the Stream buffer is filled with data
 ///
 /// @param stream The Stream instance
-/// @param rbuffer The associated RBuffer instance
+/// @param buf The associated RBuffer instance
 /// @param count Number of bytes that was read.
 /// @param data User-defined data
 /// @param eof If the stream reached EOF.
@@ -23,7 +23,7 @@ typedef void (*stream_read_cb)(Stream *stream, RBuffer *buf, size_t count,
 /// Type of function called when the Stream has information about a write
 /// request.
 ///
-/// @param wstream The Stream instance
+/// @param stream The Stream instance
 /// @param data User-defined data
 /// @param status 0 on success, anything else indicates failure
 typedef void (*stream_write_cb)(Stream *stream, void *data, int status);
