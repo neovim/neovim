@@ -1094,8 +1094,8 @@ nvim_list_uis()                                              *nvim_list_uis()*
                     Array of UI dictionaries, each with these keys:
                     - "height" requested height of the UI
                     - "width" requested width of the UI
-                    - "rgb" whether the UI uses rgb colors (false implies
-                      cterm colors)
+                    - "rgb" true if the UI uses RGB colors (false implies
+                      |cterm-colors|)
                     - "ext_..." Requested UI extensions, see |ui-options|
                     - "chan" Channel id of remote UI (not present for TUI)
 

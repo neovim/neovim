@@ -293,10 +293,8 @@ async event event was processed.
 Note:
 - Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
   |CmdlineEnter| and |CmdlineLeave| events. This helps performance.
-- For the same reason, |keycodes| like <C-R><C-W> are interpreted in the
-  context of the current mode, not cmdline-mode!  Thus <C-R><C-W> in a
-  :nnoremap (normal-mode) mapping does the normal-mode function of <C-R> and
-  <C-W> rather than the cmdline-mode <C-R><C-W> chord.
+- For the same reason, |keycodes| like <C-R><C-W> are interpreted as plain,
+  unmapped keys.
 - In select-mode, |:map| and |:vmap| command mappings are executed in
   visual-mode.  Use |:smap| to handle select-mode.
 
