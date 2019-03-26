@@ -256,9 +256,13 @@ enum key_extra {
 #define K_ZERO          TERMCAP2KEY(KS_ZERO, KE_FILLER)
 
 #define K_UP            TERMCAP2KEY('k', 'u')
+#define K_KUP           TERMCAP2KEY('K', 'u')
 #define K_DOWN          TERMCAP2KEY('k', 'd')
+#define K_KDOWN         TERMCAP2KEY('K', 'd')
 #define K_LEFT          TERMCAP2KEY('k', 'l')
+#define K_KLEFT         TERMCAP2KEY('K', 'l')
 #define K_RIGHT         TERMCAP2KEY('k', 'r')
+#define K_KRIGHT        TERMCAP2KEY('K', 'r')
 #define K_S_UP          TERMCAP2KEY(KS_EXTRA, KE_S_UP)
 #define K_S_DOWN        TERMCAP2KEY(KS_EXTRA, KE_S_DOWN)
 #define K_S_LEFT        TERMCAP2KEY('#', '4')
@@ -367,6 +371,8 @@ enum key_extra {
 #define K_PAGEDOWN      TERMCAP2KEY('k', 'N')
 #define K_KPAGEUP       TERMCAP2KEY('K', '3')   /* keypad pageup (upper R.) */
 #define K_KPAGEDOWN     TERMCAP2KEY('K', '5')   /* keypad pagedown (lower R.) */
+
+#define K_KCENTER       TERMCAP2KEY('K', '2')   /* WIP: correct name ? */
 
 #define K_KPLUS         TERMCAP2KEY('K', '6')   /* keypad plus */
 #define K_KMINUS        TERMCAP2KEY('K', '7')   /* keypad minus */
