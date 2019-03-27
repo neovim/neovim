@@ -2474,6 +2474,13 @@ bool cmdline_at_end(void)
 }
 
 /*
+ * Returns a copy of the current cmdbuff.
+ */
+char_u *get_ccline_cmdbuf(void) {
+  return vim_strsave(ccline.cmdbuff);
+}
+
+/*
  * Allocate a new command line buffer.
  * Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
  * Returns the new value of ccline.cmdbuff and ccline.cmdbufflen.
