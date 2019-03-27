@@ -3227,7 +3227,7 @@ static int get_pfxlist(afffile_T *affile, char_u *afflist, char_u *store_afflist
     prevp = p;
     if (get_affitem(affile->af_flagtype, &p) != 0) {
       // A flag is a postponed prefix flag if it appears in "af_pref"
-      // and it's ID is not zero.
+      // and its ID is not zero.
       STRLCPY(key, prevp, p - prevp + 1);
       hi = hash_find(&affile->af_pref, key);
       if (!HASHITEM_EMPTY(hi)) {
