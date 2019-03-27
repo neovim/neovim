@@ -1120,6 +1120,8 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     s->old_topfill = curwin->w_topfill;
     s->old_botline = curwin->w_botline;
     update_screen(NOT_VALID);
+    // reset lines_left since messages are cleared after update_screen
+    lines_left = Rows - 1;
     redrawcmdline();
   } else {
     vim_beep(BO_ERROR);
