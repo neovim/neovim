@@ -2295,8 +2295,7 @@ int win_close(win_T *win, bool free_buf)
     EMSG(_("E813: Cannot close autocmd window"));
     return FAIL;
   }
-  if ((firstwin == aucmd_win || lastwin_nofloating() == aucmd_win)
-      && one_window()) {
+  if ((firstwin == aucmd_win || lastwin == aucmd_win) && one_window()) {
     EMSG(_("E814: Cannot close window, only autocmd window would remain"));
     return FAIL;
   }
@@ -3413,16 +3412,18 @@ int win_alloc_first(void)
   return OK;
 }
 
-/*
- * Init "aucmd_win".  This can only be done after the first
- * window is fully initialized, thus it can't be in win_alloc_first().
- */
+// Init "aucmd_win". This can only be done after the first window
+// is fully initialized, thus it can't be in win_alloc_first().
 void win_alloc_aucmd_win(void)
 {
-  aucmd_win = win_alloc(NULL, TRUE);
-  win_init_some(aucmd_win, curwin);
+  Error err = ERROR_INIT;
+  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  fconfig.width = 20;
+  fconfig.height = 20;
+  fconfig.focusable = false;
+  aucmd_win = win_new_float(NULL, fconfig, &err);
+  aucmd_win->w_buffer->b_nwindows--;
   RESET_BINDING(aucmd_win);
-  new_frame(aucmd_win);
 }
 
 /*
