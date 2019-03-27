@@ -1108,6 +1108,8 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
 
     set_search_match(&s->match_end);
     curwin->w_cursor = s->match_start;
+    search_match_startcol = s->match_start.col;
+    search_match_startline = s->match_start.lnum;
     changed_cline_bef_curs();
     update_topline();
     validate_cursor();
@@ -1895,6 +1897,8 @@ static int command_line_changed(CommandLineState *s)
       pos_T save_pos = curwin->w_cursor;
 
       s->match_start = curwin->w_cursor;
+      search_match_startcol = s->match_start.col;
+      search_match_startline = s->match_start.lnum;
       set_search_match(&curwin->w_cursor);
       validate_cursor();
       end_pos = curwin->w_cursor;

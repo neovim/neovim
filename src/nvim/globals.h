@@ -368,6 +368,8 @@ EXTERN int t_colors INIT(= 256);                // int value of T_CCO
 EXTERN int highlight_match INIT(= FALSE);       /* show search match pos */
 EXTERN linenr_T search_match_lines;             /* lines of of matched string */
 EXTERN colnr_T search_match_endcol;             /* col nr of match end */
+EXTERN colnr_T search_match_startcol;           /* col nr of match start */
+EXTERN colnr_T search_match_startline;          /* line nr of match start */
 
 EXTERN int no_smartcase INIT(= FALSE);          /* don't use 'smartcase' once */
 
