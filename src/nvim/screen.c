@@ -6371,14 +6371,12 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
 }
 
 
-/*
- * show the current mode and ruler
- *
- * If clear_cmdline is TRUE, clear the rest of the cmdline.
- * If clear_cmdline is FALSE there may be a message there that needs to be
- * cleared only if a mode is shown.
- * Return the length of the message (0 if no message).
- */
+// Show the current mode and ruler.
+//
+// If clear_cmdline is TRUE, clear the rest of the cmdline.
+// If clear_cmdline is FALSE there may be a message there that needs to be
+// cleared only if a mode is shown.
+// Return the length of the message (0 if no message).
 int showmode(void)
 {
   int need_clear;
