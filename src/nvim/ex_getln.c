@@ -2475,9 +2475,7 @@ bool cmdline_at_end(void)
   return (ccline.cmdpos >= ccline.cmdlen);
 }
 
-/*
- * Returns a copy of the current cmdbuff.
- */
+// Returns a copy of the current cmdbuff.
 char_u *get_ccline_cmdbuf(void) {
   return vim_strsave(ccline.cmdbuff);
 }

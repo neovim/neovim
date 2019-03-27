@@ -228,7 +228,7 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
   }
 
   if ((State & CMDLINE) && !emsg_on_display && !redraw_cmdline) {
-    --entered;
+    entered--;
     return true;
   }
 

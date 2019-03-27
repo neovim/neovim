@@ -452,10 +452,11 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   set_last_search_pat_save(s, idx, magic, setlast, save_level);
 }
 
-/*
- * Same as set_last_search_pat, but save the search pattern only if `save` is true.
- */
-void set_last_search_pat_save(const char_u *s, int idx, int magic, int setlast, int save)
+
+// Same as set_last_search_pat, but save the search pattern only if `save`
+// is true.
+void set_last_search_pat_save(const char_u *s, int idx, int magic, int setlast,
+                              int save)
 {
   free_spat(&spats[idx]);
   /* An empty string means that nothing should be matched. */
