@@ -7807,6 +7807,7 @@ static void ex_redraw(exarg_T *eap)
   // the last search pattern is reset.
   // With display+=msg_sep, windows covered by the messages are NOT_VALID.
   int need_redraw_highlight = (State & CMDLINE)
+      && (get_ccline_cmdfirstc() == '/' || get_ccline_cmdfirstc() == '?')
       && ((p_is
            && msg_scrolled > 0
            && (dy_flags & DY_MSGSEP))
