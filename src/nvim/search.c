@@ -310,7 +310,7 @@ void free_search_patterns(void)
 /// Save and restore the search pattern for incremental highlight search
 /// feature.
 ///
-/// It's similar but different from save_search_patterns() and
+/// It's similar to but different from save_search_patterns() and
 /// restore_search_patterns(), because the search pattern must be restored when
 /// cancelling incremental searching even if it's called inside user functions.
 void save_last_search_pattern(void)
