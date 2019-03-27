@@ -163,6 +163,7 @@ static const struct key_name_entry {
   { K_DEL,             "Del" },
   { K_DEL,             "Delete" },      // Alternative name
   { K_KDEL,            "kDel" },
+  { K_KDEL,            "KPPeriod" },    // termkey KPPeriod value
   { K_UP,              "Up" },
   { K_DOWN,            "Down" },
   { K_LEFT,            "Left" },
@@ -261,7 +262,6 @@ static const struct key_name_entry {
   { K_KENTER,          "kEnter" },
   { K_KENTER,          "KPEnter" },
   { K_KPOINT,          "kPoint" },
-  { K_KPOINT,          "KPPeriod" },
 
   { K_K0,              "k0" },
   { K_K1,              "k1" },
