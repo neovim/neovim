@@ -19,6 +19,7 @@
 #include "nvim/eval.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
@@ -224,6 +225,11 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
           && last_msg_hist->msg != NULL
           && STRCMP(s, last_msg_hist->msg))) {
     add_msg_hist((const char *)s, -1, attr, multiline);
+  }
+
+  if ((State & CMDLINE) && !emsg_on_display) {
+    --entered;
+    return true;
   }
 
   /* When displaying keep_msg, don't let msg_start() free it, caller must do
@@ -558,6 +564,7 @@ static bool emsg_multiline(const char *s, bool multiline)
      */
     if (emsg_silent != 0) {
       if (!emsg_noredir) {
+        emsg_on_display = true;
         msg_start();
         char *p = get_emsg_source();
         if (p != NULL) {
@@ -574,6 +581,10 @@ static bool emsg_multiline(const char *s, bool multiline)
           xfree(p);
         }
         redir_write(s, strlen(s));
+
+        if (State & CMDLINE) {
+          redrawcmdline();
+        }
       }
       return true;
     }
@@ -615,7 +626,13 @@ static bool emsg_multiline(const char *s, bool multiline)
 
   // Display the error message itself.
   msg_nowait = false;  // Wait for this msg.
-  return msg_attr_keep((char_u *)s, attr, false, multiline);
+  int ret = msg_attr_keep((char_u *)s, attr, false, multiline);
+
+  if (State & CMDLINE) {
+    redrawcmdline();
+  }
+
+  return ret;
 }
 
 /// emsg() - display an error message

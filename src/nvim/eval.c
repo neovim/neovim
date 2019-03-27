@@ -19582,6 +19582,10 @@ void ex_echo(exarg_T *eap)
   bool atstart = true;
   const int did_emsg_before = did_emsg;
 
+  if (State & CMDLINE) {
+    return;
+  }
+
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n' && !got_int) {
