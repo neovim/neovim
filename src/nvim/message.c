@@ -581,10 +581,6 @@ static bool emsg_multiline(const char *s, bool multiline)
           xfree(p);
         }
         redir_write(s, strlen(s));
-
-        if (State & CMDLINE) {
-          redrawcmdline();
-        }
       }
       return true;
     }

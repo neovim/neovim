@@ -541,17 +541,17 @@ static int command_line_execute(VimState *state, int key)
   CommandLineState *s = (CommandLineState *)state;
   s->c = key;
 
-  if (s->c == K_EVENT || s->c == K_COMMAND) {
-    if (s->c == K_EVENT) {
-      multiqueue_process_events(main_loop.events);
+  if (s->c == K_EVENT) {
+    multiqueue_process_events(main_loop.events);
 
-      if (exmode_active) {
-        redrawcmdprompt();
-      }
-    } else {
-      do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
-      redrawcmdline();
+    if (exmode_active) {
+      redrawcmdprompt();
     }
+
+    return 1;
+  } else if (s->c == K_COMMAND) {
+    do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
+
     return 1;
   }
 
@@ -2478,6 +2478,11 @@ bool cmdline_at_end(void)
 // Returns a copy of the current cmdbuff.
 char_u *get_ccline_cmdbuf(void) {
   return vim_strsave(ccline.cmdbuff);
+}
+
+// Returns the current cmdfirstc.
+int get_ccline_cmdfirstc(void) {
+  return ccline.cmdfirstc;
 }
 
 /*
