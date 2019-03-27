@@ -218,6 +218,8 @@ describe('timers', function()
       :good^                                   |
     ]])
 
+    run(nil, nil, nil, load_adjust(300))
+
     screen:expect{grid=[[
                                               |
       {0:~                                       }|
@@ -225,7 +227,7 @@ describe('timers', function()
       {0:~                                       }|
       {0:~                                       }|
       :good^                                   |
-    ]], intermediate=true, timeout=200}
+    ]], unchanged=true}
 
     eq(1, eval('g:val'))
   end)
