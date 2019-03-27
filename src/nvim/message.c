@@ -227,7 +227,7 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
     add_msg_hist((const char *)s, -1, attr, multiline);
   }
 
-  if ((State & CMDLINE) && !emsg_on_display) {
+  if ((State & CMDLINE) && !emsg_on_display && !redraw_cmdline) {
     --entered;
     return true;
   }
