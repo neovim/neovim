@@ -247,9 +247,8 @@ static const struct key_name_entry {
   { K_KPAGEUP,         "KP9" },
   { K_KPAGEDOWN,       "kPageDown" },
   { K_KPAGEDOWN,       "KP3" },
-
-  { K_KCENTER,         "kCenter" }, // WIP: Correct name ?
-  { K_KCENTER,         "KP5" },
+  { K_KORIGIN,         "kOrigin" },  // RFC: Correct name ?
+  { K_KORIGIN,         "KP5" },
 
   { K_KPLUS,           "kPlus" },
   { K_KPLUS,           "KPPlus" },
