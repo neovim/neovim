@@ -640,8 +640,9 @@ CursorHoldI			Just like CursorHold, but in Insert mode.
 
 							*CursorMoved*
 CursorMoved			After the cursor was moved in Normal or Visual
-				mode.  Also when the text of the cursor line
-				has been changed, e.g., with "x", "rx" or "p".
+				mode or to another window.  Also when the text
+				of the cursor line has been changed, e.g. with
+				"x", "rx" or "p".
 				Not triggered when there is typeahead or when
 				an operator is pending.
 				For an example see |match-parens|.

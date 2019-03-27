@@ -35,13 +35,13 @@ itself).
 
 For Python 3 plugins:
 1. Make sure Python 3.4+ is available in your $PATH.
-2. Install the module (try "pip" if "pip3" is missing): >
-   pip3 install --user --upgrade pynvim
+2. Install the module (try "python" if "python3" is missing): >
+   python3 -m pip install --user --upgrade pynvim
 
 For Python 2 plugins:
 1. Make sure Python 2.7 is available in your $PATH.
-2. Install the module (try "pip" if "pip2" is missing): >
-   pip2 install --user --upgrade pynvim
+2. Install the module (try "python" if "python2" is missing): >
+   python2 -m pip install --user --upgrade pynvim
 
 The pip `--upgrade` flag ensures that you get the latest version even if
 a previous version was already installed.
@@ -51,8 +51,8 @@ See also |python-virtualenv|.
 Note: The old "neovim" module was renamed to "pynvim".
 https://github.com/neovim/neovim/wiki/Following-HEAD#20181118
 If you run into problems, uninstall _both_ then install "pynvim" again: >
-  pip uninstall neovim pynvim
-  pip install pynvim
+  python -m pip uninstall neovim pynvim
+  python -m pip install --user --upgrade pynvim
 
 
 PYTHON PROVIDER CONFIGURATION ~

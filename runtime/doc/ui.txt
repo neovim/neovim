@@ -325,9 +325,13 @@ numerical highlight `id`:s to the actual attributes.
 	indicates the visible cursor position.
 
 ["grid_scroll", grid, top, bot, left, right, rows, cols]
-	Scroll the text in the a region of `grid`. The diagrams below illustrate
-	what will happen, depending on the scroll direction. "=" is used to
-	represent the SR(scroll region) boundaries and "-" the moved rectangles.
+	Scroll a region of `grid`. This is semantically unrelated to editor
+	|scrolling|, rather this is an optimized way to say "copy these screen
+	cells".
+
+	The following diagrams show what happens per scroll direction.
+	"===" represents the SR (scroll region) boundaries.
+	"---" represents the moved rectangles.
 	Note that dst and src share a common region.
 
 	If `rows` is bigger than 0, move a rectangle in the SR up, this can

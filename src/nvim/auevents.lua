@@ -65,7 +65,6 @@ return {
     'InsertCharPre',          -- before inserting a char
     'InsertEnter',            -- when entering Insert mode
     'InsertLeave',            -- when leaving Insert mode
-    'JobActivity',            -- when job sent some data
     'MenuPopup',              -- just before popup menu is displayed
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
@@ -89,7 +88,7 @@ return {
     'TabNew',                 -- when creating a new tab
     'TabNewEntered',          -- after entering a new tab
     'TermChanged',            -- after changing 'term'
-    'TermClose',              -- after the processs exits
+    'TermClose',              -- after the process exits
     'TermOpen',               -- after opening a terminal buffer
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified

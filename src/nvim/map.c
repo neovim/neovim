@@ -1,12 +1,12 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-///
-/// map.c: khash.h wrapper
-///
-/// NOTE: Callers must manage memory (allocate) for keys and values.
-///       khash.h does not make its own copy of the key or value.
-///
+//
+// map.c: khash.h wrapper
+//
+// NOTE: Callers must manage memory (allocate) for keys and values.
+//       khash.h does not make its own copy of the key or value.
+//
 
 #include <stdlib.h>
 #include <stdbool.h>
