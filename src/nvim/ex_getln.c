@@ -544,6 +544,10 @@ static int command_line_execute(VimState *state, int key)
   if (s->c == K_EVENT || s->c == K_COMMAND) {
     if (s->c == K_EVENT) {
       multiqueue_process_events(main_loop.events);
+
+      if (exmode_active) {
+        redrawcmdprompt();
+      }
     } else {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
       redrawcmdline();
