@@ -7802,15 +7802,19 @@ static void ex_redraw(exarg_T *eap)
   if (eap->forceit) {
     redraw_all_later(NOT_VALID);
   }
-  if ((State & CMDLINE) &&
-    p_is &&
-    msg_scrolled > 0 &&
-    (dy_flags & DY_MSGSEP)) {
-    // with display+=msg_sep, windows covered by the messages are NOT_VALID.
-    // When redrawn, these windows lose incsearch highlighting since the
-    // last search pattern is reset.
-    // To fix this, set the last search pattern to the current cmdline and
-    // then call update_screen().
+
+  // When NOT_VALID windows are redrawn, they lose incsearch highlighting since
+  // the last search pattern is reset.
+  // With display+=msg_sep, windows covered by the messages are NOT_VALID.
+  int need_redraw_highlight = (State & CMDLINE) &&
+      ((p_is &&
+        msg_scrolled > 0 &&
+        (dy_flags & DY_MSGSEP)) ||
+      eap->forceit);
+
+  // To fix this, set the last search pattern to the current cmdline and
+  // then call update_screen().
+  if (need_redraw_highlight) {
     save_last_search_pattern();
     char_u *cmdbuf = get_ccline_cmdbuf();
     pos_T old_w_cursor = curwin->w_cursor;
