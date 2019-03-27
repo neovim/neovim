@@ -449,6 +449,14 @@ void reset_search_dir(void)
  */
 void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
 {
+  set_last_search_pat_save(s, idx, magic, setlast, save_level);
+}
+
+/*
+ * Same as set_last_search_pat, but save the search pattern only if `save` is true.
+ */
+void set_last_search_pat_save(const char_u *s, int idx, int magic, int setlast, int save)
+{
   free_spat(&spats[idx]);
   /* An empty string means that nothing should be matched. */
   if (*s == NUL)
@@ -466,7 +474,7 @@ void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
   spats[idx].off.off = 0;
   if (setlast)
     last_idx = idx;
-  if (save_level) {
+  if (save) {
     free_spat(&saved_spats[idx]);
     saved_spats[idx] = spats[0];
     if (spats[idx].pat == NULL)
