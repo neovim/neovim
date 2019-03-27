@@ -1987,7 +1987,7 @@ static void abandon_cmdline(void)
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
-  MSG("");
+  msg_clr_cmdline();
   redraw_cmdline = true;
 }
 
