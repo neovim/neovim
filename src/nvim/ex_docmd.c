@@ -7805,13 +7805,13 @@ static void ex_redraw(exarg_T *eap)
 
   // When NOT_VALID windows are redrawn, they lose incsearch highlighting since
   // the last search pattern is reset.
-  // With display+=msg_sep, windows covered by the messages are NOT_VALID.
+  // With display+=msg_sep, windows overlapping the messages are NOT_VALID.
+  // With display-=msg_sep, windows starting below the messages are NOT_VALID.
+  // To catch both cases, check msg_scrolled > 0
   int need_redraw_highlight = (State & CMDLINE)
-      && (get_ccline_cmdfirstc() == '/' || get_ccline_cmdfirstc() == '?')
-      && ((p_is
-           && msg_scrolled > 0
-           && (dy_flags & DY_MSGSEP))
-          || eap->forceit);
+      && (eap->forceit
+          || ((get_ccline_cmdfirstc() == '/' || get_ccline_cmdfirstc() == '?')
+              && p_is && msg_scrolled > 0));
 
   // To fix this, set the last search pattern to the current cmdline and
   // then call update_screen().
