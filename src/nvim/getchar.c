@@ -1443,15 +1443,16 @@ int vgetc(void)
         case K_K9:          c = '9'; break;
 
         case K_XHOME:
-        case K_ZHOME:       
+        case K_ZHOME:
           if (mod_mask == MOD_MASK_SHIFT) {
               c = K_S_HOME;
               mod_mask = 0;
           } else if (mod_mask == MOD_MASK_CTRL) {
               c = K_C_HOME;
               mod_mask = 0;
-          } else
+          } else {
               c = K_HOME;
+          }
           break;
         case K_XEND:
         case K_ZEND:
@@ -1461,12 +1462,12 @@ int vgetc(void)
           } else if (mod_mask == MOD_MASK_CTRL) {
               c = K_C_END;
               mod_mask = 0;
-          } else
+          } else {
               c = K_END;
+          }
           break;
 
-        case K_XUP:         
-                            c = K_UP; break;
+        case K_XUP:         c = K_UP; break;
         case K_XDOWN:       c = K_DOWN; break;
         case K_XLEFT:       c = K_LEFT; break;
         case K_XRIGHT:      c = K_RIGHT; break;
