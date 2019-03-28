@@ -1958,8 +1958,8 @@ static char_u *illegal_char(char_u *errbuf, size_t errbuflen, int c)
   if (errbuf == NULL) {
     return (char_u *)"";
   }
-  snprintf((char *)errbuf, errbuflen, _("E539: Illegal character <%s>"),
-           (char *)transchar(c));
+  vim_snprintf((char *)errbuf, errbuflen, _("E539: Illegal character <%s>"),
+               (char *)transchar(c));
   return errbuf;
 }
 
@@ -2896,9 +2896,9 @@ ambw_end:
 
         if (!ascii_isdigit(*(s - 1))) {
           if (errbuf != NULL) {
-            snprintf((char *)errbuf, errbuflen,
-                     _("E526: Missing number after <%s>"),
-                     transchar_byte(*(s - 1)));
+            vim_snprintf((char *)errbuf, errbuflen,
+                         _("E526: Missing number after <%s>"),
+                         transchar_byte(*(s - 1)));
             errmsg = errbuf;
           } else
             errmsg = (char_u *)"";
@@ -3074,9 +3074,9 @@ ambw_end:
           }
         } else {
           if (errbuf != NULL) {
-            snprintf((char *)errbuf, errbuflen,
-                     _("E535: Illegal character after <%c>"),
-                     *--s);
+            vim_snprintf((char *)errbuf, errbuflen,
+                         _("E535: Illegal character after <%c>"),
+                         *--s);
             errmsg = errbuf;
           } else
             errmsg = (char_u *)"";
