@@ -107,6 +107,32 @@ function! Test_substitute_variants()
   endfor
 endfunction
 
+" Test the l, p, # flags.
+func Test_substitute_flags_lp()
+  new
+  call setline(1, "abc\tdef\<C-h>ghi")
+
+  let a = execute('s/a/a/p')
+  call assert_equal("\nabc     def^Hghi", a)
+
+  let a = execute('s/a/a/l')
+  call assert_equal("\nabc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/p#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/l#')
+  call assert_equal("\n  1 abc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/')
+  call assert_equal("", a)
+
+  bwipe!
+endfunc
+
 func Test_substitute_repeat()
   " This caused an invalid memory access.
   split Xfile

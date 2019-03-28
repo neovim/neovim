@@ -3181,6 +3181,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
     subflags->do_ask = false;
     subflags->do_error = true;
     subflags->do_print = false;
+    subflags->do_list = false;
     subflags->do_count = false;
     subflags->do_number = false;
     subflags->do_ic = kSubHonorOptions;
