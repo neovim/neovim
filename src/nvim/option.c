@@ -601,9 +601,10 @@ void set_init_1(void)
       if (*names[n] == NUL) {
         p = "/tmp";
         mustfree = false;
-      } else {
+      } else
 # endif
-      p = vim_getenv(names[n]);
+      {
+        p = vim_getenv(names[n]);
       }
       if (p != NULL && *p != NUL) {
         // First time count the NUL, otherwise count the ','.
