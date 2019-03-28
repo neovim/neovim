@@ -1035,6 +1035,7 @@ struct window_S {
                                     // current virtual column
 
   linenr_T w_last_cursorline;       ///< where last 'cursorline' was drawn
+  pos_T w_last_cursormoved;         ///< for CursorMoved event
 
   // the next seven are used to update the visual part
   char w_old_visual_mode;           ///< last known VIsual_mode
