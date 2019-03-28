@@ -240,6 +240,7 @@ static const struct key_name_entry {
   { K_ZHOME,           "zHome" },
   { K_END,             "End" },
   { K_KEND,            "kEnd" },
+  { K_KEND,            "KP1" },
   { K_XEND,            "xEnd" },
   { K_ZEND,            "zEnd" },
   { K_PAGEUP,          "PageUp" },
@@ -248,7 +249,7 @@ static const struct key_name_entry {
   { K_KPAGEUP,         "KP9" },
   { K_KPAGEDOWN,       "kPageDown" },
   { K_KPAGEDOWN,       "KP3" },
-  { K_KORIGIN,         "kOrigin" },  // RFC: Correct name ?
+  { K_KORIGIN,         "kOrigin" },
   { K_KORIGIN,         "KP5" },
 
   { K_KPLUS,           "kPlus" },

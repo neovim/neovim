@@ -372,7 +372,7 @@ enum key_extra {
 #define K_KPAGEUP       TERMCAP2KEY('K', '3')   /* keypad pageup (upper R.) */
 #define K_KPAGEDOWN     TERMCAP2KEY('K', '5')   /* keypad pagedown (lower R.) */
 
-#define K_KORIGIN       TERMCAP2KEY('K', '2')   // RFC: correct name ?
+#define K_KORIGIN       TERMCAP2KEY('K', '2')
 
 #define K_KPLUS         TERMCAP2KEY('K', '6')   /* keypad plus */
 #define K_KMINUS        TERMCAP2KEY('K', '7')   /* keypad minus */
