@@ -107,6 +107,32 @@ function! Test_substitute_variants()
   endfor
 endfunction
 
+" Test the l, p, # flags.
+func Test_substitute_flags_lp()
+  new
+  call setline(1, "abc\tdef\<C-h>ghi")
+
+  let a = execute('s/a/a/p')
+  call assert_equal("\nabc     def^Hghi", a)
+
+  let a = execute('s/a/a/l')
+  call assert_equal("\nabc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/p#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/l#')
+  call assert_equal("\n  1 abc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/')
+  call assert_equal("", a)
+
+  bwipe!
+endfunc
+
 func Test_substitute_repeat()
   " This caused an invalid memory access.
   split Xfile
@@ -584,4 +610,34 @@ func Test_sub_replace_10()
    call assert_equal('aaa', substitute('123', '.\ze', 'a', 'g'))
    call assert_equal('aa2a3a', substitute('123', '1\|\ze', 'a', 'g'))
    call assert_equal('1aaa', substitute('123', '1\zs\|[23]', 'a', 'g'))
+endfunc
+
+func Test_nocatch_sub_failure_handling()
+  " normal error results in all replacements 
+  func! Foo()
+    foobar
+  endfunc
+  new
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  %s/aaa/\=Foo()/g
+  call assert_equal(['1 0', '2 0', '3 0'], getline(1, 3))
+
+  " Trow without try-catch causes abort after the first line.
+  " We cannot test this, since it would stop executing the test script.
+
+  " try/catch does not result in any changes
+  func! Foo()
+    throw 'error'
+  endfunc
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  let error_caught = 0
+  try
+    %s/aaa/\=Foo()/g
+  catch
+    let error_caught = 1
+  endtry
+  call assert_equal(1, error_caught)
+  call assert_equal(['1 aaa', '2 aaa', '3 aaa'], getline(1, 3))
+
+  bwipe!
 endfunc

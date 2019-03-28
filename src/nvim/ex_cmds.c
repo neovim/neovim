@@ -3181,6 +3181,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
     subflags->do_ask = false;
     subflags->do_error = true;
     subflags->do_print = false;
+    subflags->do_list = false;
     subflags->do_count = false;
     subflags->do_number = false;
     subflags->do_ic = kSubHonorOptions;
@@ -3830,6 +3831,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
                                     sub, sub_firstline, false, p_magic, true);
+          // If getting the substitute string caused an error, don't do
+          // the replacement.
+          if (aborting()) {
+            goto skip;
+          }
+
           // Don't keep flags set by a recursive call
           subflags = subflags_save;
           if (subflags.do_count) {
