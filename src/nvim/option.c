@@ -1812,7 +1812,9 @@ do_set (
               // or 'filetype' autocommands may be triggered that can
               // cause havoc.
               errmsg = did_set_string_option(opt_idx, (char_u **)varp,
-                  new_value_alloced, oldval, errbuf, opt_flags, &value_checked);
+                                             new_value_alloced, oldval,
+                                             errbuf, sizeof(errbuf),
+                                             opt_flags, &value_checked);
 
               if (did_inc_secure) {
                 --secure;
@@ -1921,19 +1923,21 @@ did_set_option (
    * flag. */
   uint32_t *p = insecure_flag(opt_idx, opt_flags);
   if (!value_checked && (secure
-      || sandbox != 0
-      || (opt_flags & OPT_MODELINE)))
+                         || sandbox != 0
+                         || (opt_flags & OPT_MODELINE))) {
     *p = *p | P_INSECURE;
-  else if (new_value)
+  } else if (new_value) {
     *p = *p & ~P_INSECURE;
+  }
 }
 
-static char_u *illegal_char(char_u *errbuf, int c)
+static char_u *illegal_char(char_u *errbuf, size_t errbuflen, int c)
 {
-  if (errbuf == NULL)
+  if (errbuf == NULL) {
     return (char_u *)"";
-  sprintf((char *)errbuf, _("E539: Illegal character <%s>"),
-      (char *)transchar(c));
+  }
+  vim_snprintf((char *)errbuf, errbuflen, _("E539: Illegal character <%s>"),
+               (char *)transchar(c));
   return errbuf;
 }
 
@@ -2425,7 +2429,7 @@ static char *set_string_option(const int opt_idx, const char *const value,
   int value_checked = false;
   char *const r = (char *)did_set_string_option(
       opt_idx, (char_u **)varp, (int)true, (char_u *)oldval,
-      NULL, opt_flags, &value_checked);
+      NULL, 0, opt_flags, &value_checked);
   if (r == NULL) {
     did_set_option(opt_idx, opt_flags, true, value_checked);
   }
@@ -2463,15 +2467,16 @@ static bool valid_filetype(char_u *val)
  * Returns NULL for success, or an error message for an error.
  */
 static char_u *
-did_set_string_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u **varp,                     /* pointer to the option variable */
-    int new_value_alloced,                  /* new value was allocated */
-    char_u *oldval,                    /* previous value of the option */
-    char_u *errbuf,                    /* buffer for errors, or NULL */
-    int opt_flags,                          /* OPT_LOCAL and/or OPT_GLOBAL */
-    int *value_checked                 /* value was checked to be safe, no
-                                          need to set P_INSECURE */
+did_set_string_option(
+    int opt_idx,                       // index in options[] table
+    char_u **varp,                     // pointer to the option variable
+    int new_value_alloced,             // new value was allocated
+    char_u *oldval,                    // previous value of the option
+    char_u *errbuf,                    // buffer for errors, or NULL
+    size_t errbuflen,                  // length of errors buffer
+    int opt_flags,                     // OPT_LOCAL and/or OPT_GLOBAL
+    int *value_checked                 // value was checked to be safe, no
+                                       // need to set P_INSECURE
 )
 {
   char_u      *errmsg = NULL;
@@ -2788,7 +2793,7 @@ did_set_string_option (
       while (*s && *s != ':') {
         if (vim_strchr((char_u *)COM_ALL, *s) == NULL
             && !ascii_isdigit(*s) && *s != '-') {
-          errmsg = illegal_char(errbuf, *s);
+          errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
         }
         ++s;
@@ -2840,7 +2845,7 @@ did_set_string_option (
     for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
-        errmsg = illegal_char(errbuf, *s);
+        errmsg = illegal_char(errbuf, errbuflen, *s);
         break;
       }
       if (*s == 'n') {          /* name is always last one */
@@ -2860,9 +2865,9 @@ did_set_string_option (
 
         if (!ascii_isdigit(*(s - 1))) {
           if (errbuf != NULL) {
-            sprintf((char *)errbuf,
-                _("E526: Missing number after <%s>"),
-                transchar_byte(*(s - 1)));
+            vim_snprintf((char *)errbuf, errbuflen,
+                         _("E526: Missing number after <%s>"),
+                         transchar_byte(*(s - 1)));
             errmsg = errbuf;
           } else
             errmsg = (char_u *)"";
@@ -3040,7 +3045,7 @@ did_set_string_option (
       if (!*s)
         break;
       if (vim_strchr((char_u *)".wbuksid]tU", *s) == NULL) {
-        errmsg = illegal_char(errbuf, *s);
+        errmsg = illegal_char(errbuf, errbuflen, *s);
         break;
       }
       if (*++s != NUL && *s != ',' && *s != ' ') {
@@ -3054,9 +3059,9 @@ did_set_string_option (
           }
         } else {
           if (errbuf != NULL) {
-            sprintf((char *)errbuf,
-                _("E535: Illegal character after <%c>"),
-                *--s);
+            vim_snprintf((char *)errbuf, errbuflen,
+                         _("E535: Illegal character after <%c>"),
+                         *--s);
             errmsg = errbuf;
           } else
             errmsg = (char_u *)"";
@@ -3252,7 +3257,7 @@ did_set_string_option (
     if (p != NULL) {
       for (s = *varp; *s; ++s)
         if (vim_strchr(p, *s) == NULL) {
-          errmsg = illegal_char(errbuf, *s);
+          errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
         }
     }
@@ -3351,7 +3356,7 @@ did_set_string_option (
        * '.encoding'.
        */
       for (p = q; *p != NUL; ++p)
-        if (!ASCII_ISALPHA(*p) && *p != '-')
+        if (!ASCII_ISALNUM(*p) && *p != '-')
           break;
       if (p > q) {
         vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
@@ -3616,7 +3621,7 @@ char_u *check_stl_option(char_u *s)
       continue;
     }
     if (vim_strchr(STL_ALL, *s) == NULL) {
-      return illegal_char(errbuf, *s);
+      return illegal_char(errbuf, sizeof(errbuf), *s);
     }
     if (*s == '{') {
       s++;
