@@ -250,7 +250,7 @@ static const struct key_name_entry {
   { K_KPAGEUP,         "KP9" },
   { K_KPAGEDOWN,       "kPageDown" },
   { K_KPAGEDOWN,       "KP3" },
-  { K_KORIGIN,         "kOrigin" },  // RFC: Correct name ?
+  { K_KORIGIN,         "kOrigin" },
   { K_KORIGIN,         "KP5" },
 
   { K_KPLUS,           "kPlus" },
