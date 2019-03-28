@@ -4256,9 +4256,12 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
     apply_autocmds(EVENT_WINNEW, NULL, NULL, false, curbuf);
   }
   if (trigger_enter_autocmds) {
-    apply_autocmds(EVENT_WINENTER, NULL, NULL, FALSE, curbuf);
-    if (other_buffer)
-      apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+    apply_autocmds(EVENT_WINENTER, NULL, NULL, false, curbuf);
+    if (other_buffer) {
+      apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
+    }
+    apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, false, curbuf);
+    curwin->w_last_cursormoved = curwin->w_cursor;
   }
 
   maketitle();
