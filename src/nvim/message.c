@@ -1881,6 +1881,8 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
     return;
   }
 
+  cmdline_was_last_drawn = redrawing_cmdline;
+
   while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {
     // We are at the end of the screen line when:
     // - When outputting a newline.

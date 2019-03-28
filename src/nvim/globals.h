@@ -146,12 +146,14 @@ EXTERN int mod_mask INIT(= 0x0);                /* current key modifiers */
  */
 EXTERN int cmdline_row;
 
-EXTERN int redraw_cmdline INIT(= FALSE);        /* cmdline must be redrawn */
-EXTERN int clear_cmdline INIT(= FALSE);         /* cmdline must be cleared */
-EXTERN int mode_displayed INIT(= FALSE);        /* mode is being displayed */
-EXTERN int cmdline_star INIT(= FALSE);          /* cmdline is crypted */
+EXTERN int redraw_cmdline INIT(= false);          // cmdline must be redrawn
+EXTERN int clear_cmdline INIT(= false);           // cmdline must be cleared
+EXTERN int mode_displayed INIT(= false);          // mode is being displayed
+EXTERN int cmdline_star INIT(= false);            // cmdline is crypted
+EXTERN int redrawing_cmdline INIT(= false);       // cmdline is being redrawn
+EXTERN int cmdline_was_last_drawn INIT(= false);  // cmdline was last drawn
 
-EXTERN int exec_from_reg INIT(= FALSE);         /* executing register */
+EXTERN int exec_from_reg INIT(= false);         // executing register
 
 /*
  * When '$' is included in 'cpoptions' option set:
