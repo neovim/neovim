@@ -1,0 +1,32 @@
+commit 6b1da3312e15c065b373c9ec2732f31a77cee61f
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Fri Jun 9 21:35:47 2017 +0200
+
+    patch 8.0.0629: checking for ambigous width is not working
+    
+    Problem:    Checking for ambigous width is not working. (Hirohito Higashi)
+    Solution:   Reset "starting" earlier.
+
+diff --git a/src/nvim/main.c b/src/nvim/main.c
+index 0c7aa9846..e30701c67 100644
+--- a/src/nvim/main.c
++++ b/src/nvim/main.c
+@@ -792,6 +792,9 @@ vim_main2(void)
+     if (params.n_commands > 0)
+ 	exe_commands(&params);
+ 
++    /* Must come before the may_req_ calls. */
++    starting = 0;
++
+ #if defined(FEAT_TERMRESPONSE) && defined(FEAT_MBYTE)
+     /* Must be done before redrawing, puts a few characters on the screen. */
+     may_req_ambiguous_char_width();
+@@ -800,7 +803,6 @@ vim_main2(void)
+     RedrawingDisabled = 0;
+     redraw_all_later(NOT_VALID);
+     no_wait_return = FALSE;
+-    starting = 0;
+ 
+     /* 'autochdir' has been postponed */
+     DO_AUTOCHDIR
+/

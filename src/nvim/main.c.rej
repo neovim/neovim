@@ -1,0 +1,20 @@
+--- src/nvim/main.c
++++ src/nvim/main.c
+@@ -792,6 +792,9 @@ vim_main2(void)
+     if (params.n_commands > 0)
+ 	exe_commands(&params);
+ 
++    /* Must come before the may_req_ calls. */
++    starting = 0;
++
+ #if defined(FEAT_TERMRESPONSE) && defined(FEAT_MBYTE)
+     /* Must be done before redrawing, puts a few characters on the screen. */
+     may_req_ambiguous_char_width();
+@@ -800,7 +803,6 @@ vim_main2(void)
+     RedrawingDisabled = 0;
+     redraw_all_later(NOT_VALID);
+     no_wait_return = FALSE;
+-    starting = 0;
+ 
+     /* 'autochdir' has been postponed */
+     DO_AUTOCHDIR
