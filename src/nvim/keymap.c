@@ -263,6 +263,10 @@ static const struct key_name_entry {
   { K_KENTER,          "kEnter" },
   { K_KENTER,          "KPEnter" },
   { K_KPOINT,          "kPoint" },
+  { K_KCOMMA,          "kComma" },
+  { K_KCOMMA,          "KPComma" },
+  { K_KEQUAL,          "kEqual" },
+  { K_KEQUAL,          "KPEquals" },
 
   { K_K0,              "k0" },
   { K_K1,              "k1" },
@@ -684,7 +688,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         *modp = modifiers;
         *srcp = end_of_name;
         return key;
-      }
+      }  // else { ELOG("unknown key: '%s'", src); }
     }
   }
   return 0;

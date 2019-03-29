@@ -551,7 +551,7 @@ int main(int argc, char **argv)
 
   RedrawingDisabled = 0;
   redraw_all_later(NOT_VALID);
-  no_wait_return = FALSE;
+  no_wait_return = false;
 
   // 'autochdir' has been postponed.
   do_autochdir();
