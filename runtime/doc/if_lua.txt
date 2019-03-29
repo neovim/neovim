@@ -258,146 +258,6 @@ position are restricted when the command is executed in the |sandbox|.
 
 
 ==============================================================================
-vim.*							*lua-vim* *lua-stdlib*
-
-The Nvim Lua "standard library" (stdlib) is the `vim` module, which exposes
-various functions and sub-modules.  It is always loaded, thus require("vim")
-is unnecessary.
-
-You can peek at the module properties: >
-
-    :lua print(vim.inspect(vim))
-
-Result is something like this: >
-
-    {
-      _os_proc_children = <function 1>,
-      _os_proc_info = <function 2>,
-      ...
-      api = {
-        nvim__id = <function 5>,
-        nvim__id_array = <function 6>,
-        ...
-      },
-      deepcopy = <function 106>,
-      gsplit = <function 107>,
-      ...
-    }
-
-To find documentation on e.g. the "deepcopy" function: >
-
-    :help vim.deepcopy
-
-Note that underscore-prefixed functions (e.g. "_os_proc_children") are
-internal/private and must not be used by plugins.
-
-------------------------------------------------------------------------------
-vim.api.* functions
-
-`vim.api` exposes the full Nvim |API| as a table of Lua functions.
-
-For example, to use the "nvim_get_current_line()" API function, call
-"vim.api.nvim_get_current_line()": >
-
-    print(tostring(vim.api.nvim_get_current_line()))
-
-------------------------------------------------------------------------------
-vim.* builtin functions
-
-vim.deepcopy({object})                                         *vim.deepcopy*
-	Performs a deep copy of the given object, and returns that copy.
-	For a non-table object, that just means a usual copy of the object,
-	while for a table all subtables are copied recursively.
-
-vim.gsplit({s}, {sep}, {plain})                                  *vim.gsplit*
-	Split a given string by a separator. Returns an iterator of the 
-	split components. The separator can be a lua pattern, see
-		    https://www.lua.org/pil/20.2.html
-	Setting {plain} to `true` turns off pattern matching, as it is passed
-	to `string:find`, see 
-		http://lua-users.org/wiki/StringLibraryTutorial
-
-	Parameters:~
-		{s}     String: String to split
-		{sep}   String: Separator pattern. If empty, split by chars.
-		{plain} Boolean: If false, match {sep} verbatim
-
-	Return:~
-		Iterator of strings, which are the components of {s} after
-		splitting	
-
-vim.split({s}, {sep}, {plain})                                    *vim.split*
-	Split a given string by a separator. Returns a table containing the 
-	split components. The separator can be a lua pattern, see
-		    https://www.lua.org/pil/20.2.html
-	Setting {plain} to `true` turns off pattern matching, as it is passed
-	to `string:find`, see 
-		http://lua-users.org/wiki/StringLibraryTutorial
-
-	Parameters:~
-		{s}     String: String to split
-		{sep}   String: Separator pattern. If empty, split by chars.
-		{plain} Boolean: If false, match {sep} verbatim
-
-	Return:~
-		Table of strings, which are the components of {s} after
-		splitting	
-
-vim.stricmp(a, b)					*lua-vim.stricmp*
-	Function used for case-insensitive string comparison.  Takes two 
-	string arguments and returns 0, 1 or -1 if strings are equal, a is 
-	greater then b or a is lesser then b respectively.
-
-vim.trim({string})                                                  *vim.trim*
-	Returns the string with all leading and trailing whitespace removed.
-	
-vim.type_idx						*lua-vim.type_idx*
-	Type index for use in |lua-special-tbl|.  Specifying one of the 
-	values from |lua-vim.types| allows typing the empty table (it is 
-	unclear whether empty lua table represents empty list or empty array) 
-	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 
-	more details.
-
-vim.val_idx						*lua-vim.val_idx*
-	Value index for tables representing |Float|s.  A table representing 
-	floating-point value 1.0 looks like this: >
-            {
-              [vim.type_idx] = vim.types.float,
-              [vim.val_idx] = 1.0,
-            }
-<	See also |lua-vim.type_idx| and |lua-special-tbl|.
-
-vim.types						*lua-vim.types*
-	Table with possible values for |lua-vim.type_idx|.  Contains two sets 
-	of key-value pairs: first maps possible values for |lua-vim.type_idx| 
-	to human-readable strings, second maps human-readable type names to 
-	values for |lua-vim.type_idx|.  Currently contains pairs for `float`, 
-	`array` and `dictionary` types.
-
-	Note: one must expect that values corresponding to `vim.types.float`, 
-	`vim.types.array` and `vim.types.dictionary` fall under only two 
-	following assumptions:
-	1. Value may serve both as a key and as a value in a table.  Given the 
-	   properties of lua tables this basically means “value is not `nil`”.
-	2. For each value in `vim.types` table `vim.types[vim.types[value]]` 
-	   is the same as `value`.
-	No other restrictions are put on types, and it is not guaranteed that 
-	values corresponding to `vim.types.float`, `vim.types.array` and 
-	`vim.types.dictionary` will not change or that `vim.types` table will 
-	only contain values for these three types.
-
-------------------------------------------------------------------------------
-vim.* runtime functions
-
-Those functions are only available after the runtime files have been loaded.
-In particular, they are not available when using `nvim -u NONE`.
-
-vim.inspect({object}, {options})                                 *vim.inspect*
-	Return a human-readable representation of the passed object. See
-	         https://github.com/kikito/inspect.lua
-	for details and possible options.
-
-==============================================================================
 luaeval()						*lua-luaeval* *lua-eval*
 							*luaeval()*
 
@@ -465,7 +325,162 @@ Examples: >
 Note that currently second argument to `luaeval` undergoes VimL to lua 
 conversion, so changing containers in lua do not affect values in VimL. Return 
 value is also always converted. When converting, |msgpack-special-dict|s are 
-treated specially.
 
 ==============================================================================
- vim:tw=78:ts=8:et:ft=help:norl:
+vim.*							*lua-vim* *lua-stdlib*
+
+The Nvim Lua "standard library" (stdlib) is the `vim` module, which exposes
+various functions and sub-modules.  It is always loaded, thus require("vim")
+is unnecessary.
+
+You can peek at the module properties: >
+
+    :lua print(vim.inspect(vim))
+
+Result is something like this: >
+
+    {
+      _os_proc_children = <function 1>,
+      _os_proc_info = <function 2>,
+      ...
+      api = {
+        nvim__id = <function 5>,
+        nvim__id_array = <function 6>,
+        ...
+      },
+      deepcopy = <function 106>,
+      gsplit = <function 107>,
+      ...
+    }
+
+To find documentation on e.g. the "deepcopy" function: >
+
+    :help vim.deepcopy
+
+Note that underscore-prefixed functions (e.g. "_os_proc_children") are
+internal/private and must not be used by plugins.
+
+------------------------------------------------------------------------------
+vim.api.* functions
+
+`vim.api` exposes the full Nvim |API| as a table of Lua functions.
+
+For example, to use the "nvim_get_current_line()" API function, call
+"vim.api.nvim_get_current_line()": >
+
+    print(tostring(vim.api.nvim_get_current_line()))
+
+------------------------------------------------------------------------------
+vim.* builtin functions
+
+vim.inspect({object}, {options})                                 *vim.inspect*
+	Return a human-readable representation of the passed object. See
+	         https://github.com/kikito/inspect.lua
+	for details and possible options.
+
+vim.stricmp(a, b)					*lua-vim.stricmp*
+	Function used for case-insensitive string comparison.  Takes two 
+	string arguments and returns 0, 1 or -1 if strings are equal, a is 
+	greater then b or a is lesser then b respectively.
+
+vim.type_idx						*lua-vim.type_idx*
+	Type index for use in |lua-special-tbl|.  Specifying one of the 
+	values from |lua-vim.types| allows typing the empty table (it is 
+	unclear whether empty lua table represents empty list or empty array) 
+	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 
+	more details.
+
+vim.val_idx						*lua-vim.val_idx*
+	Value index for tables representing |Float|s.  A table representing 
+	floating-point value 1.0 looks like this: >
+            {
+              [vim.type_idx] = vim.types.float,
+              [vim.val_idx] = 1.0,
+            }
+<	See also |lua-vim.type_idx| and |lua-special-tbl|.
+
+vim.types						*lua-vim.types*
+	Table with possible values for |lua-vim.type_idx|.  Contains two sets 
+	of key-value pairs: first maps possible values for |lua-vim.type_idx| 
+	to human-readable strings, second maps human-readable type names to 
+	values for |lua-vim.type_idx|.  Currently contains pairs for `float`, 
+	`array` and `dictionary` types.
+
+	Note: one must expect that values corresponding to `vim.types.float`, 
+	`vim.types.array` and `vim.types.dictionary` fall under only two 
+	following assumptions:
+	1. Value may serve both as a key and as a value in a table.  Given the 
+	   properties of lua tables this basically means “value is not `nil`”.
+	2. For each value in `vim.types` table `vim.types[vim.types[value]]` 
+	   is the same as `value`.
+	No other restrictions are put on types, and it is not guaranteed that 
+	values corresponding to `vim.types.float`, `vim.types.array` and 
+	`vim.types.dictionary` will not change or that `vim.types` table will 
+	only contain values for these three types.
+
+==============================================================================
+Vim Lua Functions                                                    *lua-vim*
+
+gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
+                Split a string by a given separator. The separator can be a
+                lua pattern, see [1]. Used by |vim.split()|, see there for
+                some examples. See [2] for usage of the plain parameter.
+
+                [1]https://www.lua.org/pil/20.2.html.
+
+                [2]http://lua-users.org/wiki/StringLibraryTutorial
+
+                Parameters: ~
+                    {s}      String The string to split
+                    {sep}    String The separator to use
+                    {plain}  Boolean If `true` , use the separator literally
+                             (passed as an argument to String.find)
+
+                Return: ~
+                    An iterator over the split components
+
+split({s}, {sep}, {plain})                                       *vim.split()*
+                Split a string by a given separator.
+
+                Examples:
+
+                - split(":aa::b:", ":") returns {'','aa','','bb',''}
+                - split("axaby", "ab?") returns {'','x','y'}
+                - split(x*yz*o, "*", true) returns {'x','yz','o'}
+
+                Parameters: ~
+                    {s}      String The string to split
+                    {sep}    String The separator to use (see |vim.gsplit()|)
+                    {plain}  Boolean If `true` , use the separator literally
+                             (see |vim.gsplit()|)
+
+                Return: ~
+                    An array containing the components of the split.
+
+trim({s})                                                         *vim.trim()*
+                Trim the whitespaces from a string. A whitespace is everything
+                that matches the lua pattern '%s', see
+
+                https://www.lua.org/pil/20.2.html
+
+                Parameters: ~
+                    {s}  String The string to trim
+
+                Return: ~
+                    The string with all whitespaces trimmed from its beginning
+                    and end
+
+deepcopy({orig})                                              *vim.deepcopy()*
+                Performs a deep copy of the given object, and returns that
+                copy. For a non-table object, that just means a usual copy of
+                the object, while for a table all subtables are copied
+                recursively.
+
+                Parameters: ~
+                    {orig}  Table The table to copy
+
+                Return: ~
+                    A new table where the keys and values are deepcopies of
+                    the keys and values from the original table.
+
+ vim:tw=78:ts=8:ft=help:norl:

@@ -154,6 +154,18 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
+---Split a string by a given separator. The separator can be a lua pattern, see [1].
+---Used by |vim.split()|, see there for some examples. See [2]
+---for usage of the plain parameter.
+---
+--- [1] https://www.lua.org/pil/20.2.html.
+---
+--- [2] http://lua-users.org/wiki/StringLibraryTutorial
+--@param s String The string to split
+--@param sep String The separator to use
+--@param plain Boolean If `true`, use the separator literally
+---(passed as an argument to String.find)
+--@returns An iterator over the split components
 local function gsplit(s, sep, plain)
   assert(type(s) == "string")
   assert(type(sep) == "string")
@@ -162,7 +174,7 @@ local function gsplit(s, sep, plain)
   local start = 1
   local done = false
 
-  local function pass(i, j, ...)
+  local function _pass(i, j, ...)
     if i then
       assert(j+1 > start, "Infinite loop detected")
       local seg = s:sub(start, i - 1)
@@ -182,26 +194,55 @@ local function gsplit(s, sep, plain)
       if start == #s then
         done = true
       end
-      return pass(start+1, start)
+      return _pass(start+1, start)
     end
-    return pass(s:find(sep, start, plain))
+    return _pass(s:find(sep, start, plain))
   end
 end
 
+--- Split a string by a given separator.
+---
+--- Examples:
+---
+---  * split(":aa::b:", ":") returns {'','aa','','bb',''}
+---
+---  * split("axaby", "ab?") returns {'','x','y'}
+---
+---  * split(x*yz*o, "*", true) returns {'x','yz','o'}
+---
+--@param s String The string to split
+--@param sep String The separator to use (see |vim.gsplit()|)
+--@param plain Boolean If `true`, use the separator literally
+---(see |vim.gsplit()|)
+--@returns An array containing the components of the split.
 local function split(s,sep,plain)
   local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
   return t
 end
 
+--- Trim the whitespaces from a string.  A whitespace is everything that
+--- matches the lua pattern '%%s', see
+---
+--- https://www.lua.org/pil/20.2.html
+--@param s String The string to trim
+--@returns The string with all whitespaces trimmed from its beginning and end
 local function trim(s)
   assert(type(s) == "string", "Only strings can be trimmed")
   local result = s:gsub("^%s+", ""):gsub("%s+$", "")
   return result
 end
 
-local deepcopy
+--- Performs a deep copy of the given object, and returns that copy.
+--- For a non-table object, that just means a usual copy of the object,
+--- while for a table all subtables are copied recursively.
+--@param orig Table The table to copy
+--@returns A new table where the keys and values are deepcopies of the keys
+--- and values from the original table.
+local function deepcopy(orig)
+  error()
+end
 
-local function id(v)
+local function _id(v)
   return v
 end
 
@@ -213,10 +254,10 @@ local deepcopy_funcs = {
     end
     return copy
   end,
-  number = id,
-  string = id,
-  ['nil'] = id,
-  boolean = id,
+  number = _id,
+  string = _id,
+  ['nil'] = _id,
+  boolean = _id,
 }
 
 deepcopy = function(orig)
