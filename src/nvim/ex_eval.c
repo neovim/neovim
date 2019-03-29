@@ -569,12 +569,10 @@ static void discard_exception(except_T *excp, int was_finished)
  */
 void discard_current_exception(void)
 {
-  if (current_exception != NULL)
-  {
+  if (current_exception != NULL) {
     discard_exception(current_exception, false);
     current_exception = NULL;
   }
-
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
   need_rethrow = false;
