@@ -578,7 +578,6 @@ void discard_current_exception(void)
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
   need_rethrow = false;
-
 }
 
 /*
