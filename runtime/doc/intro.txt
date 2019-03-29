@@ -373,8 +373,10 @@ notation	meaning		    equivalent	decimal value(s)	~
 <kMinus>	keypad -			*keypad-minus*
 <kMultiply>	keypad *			*keypad-multiply*
 <kDivide>	keypad /			*keypad-divide*
-<kEnter>	keypad Enter			*keypad-enter*
 <kPoint>	keypad Decimal point		*keypad-point*
+<kComma>	keypad comma key		*keypad-comma*
+<kEqual>	keypad equal key		*keypad-equal*
+<kEnter>	keypad Enter			*keypad-enter*
 <k0> - <k9>	keypad 0 to 9			*keypad-0* *keypad-9*
 <S-...>		shift-key			*shift* *<S-*
 <C-...>		control-key			*control* *ctrl* *<C-*
