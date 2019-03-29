@@ -391,6 +391,9 @@ enum key_extra {
 #define K_K8            TERMCAP2KEY('K', 'K')   /* keypad 8 */
 #define K_K9            TERMCAP2KEY('K', 'L')   /* keypad 9 */
 
+#define K_KCOMMA        TERMCAP2KEY('K', 'M')   /* keypad comma */
+#define K_KEQUAL        TERMCAP2KEY('K', 'N')   /* keypad equal */
+
 #define K_MOUSE         TERMCAP2KEY(KS_MOUSE, KE_FILLER)
 #define K_MENU          TERMCAP2KEY(KS_MENU, KE_FILLER)
 #define K_VER_SCROLLBAR TERMCAP2KEY(KS_VER_SCROLLBAR, KE_FILLER)

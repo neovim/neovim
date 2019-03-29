@@ -275,6 +275,11 @@ static const struct key_name_entry {
   { K_K8,              "k8" },
   { K_K9,              "k9" },
 
+  { K_KCOMMA,          "kComma" },
+  { K_KCOMMA,          "KPComma" },
+  { K_KEQUAL,          "kEqual" },
+  { K_KEQUAL,          "KPEquals" },
+
   { '<',               "lt" },
 
   { K_MOUSE,           "Mouse" },
