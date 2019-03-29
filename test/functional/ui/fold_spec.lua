@@ -39,11 +39,11 @@ describe("folded lines", function()
     screen:expect([[
       {7:+ }{5:  1 +--  2 lines: ·························}|
       {7:+ }{5:  0 ^+--  2 lines: ·························}|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
       :set foldcolumn=2                            |
     ]])
   end)
@@ -93,12 +93,12 @@ describe("folded lines", function()
     feed_command("set number foldcolumn=2")
     screen:expect([[
       {7:+ }{5:  1 ^+--  2 lines: å 语 x̎͂̀̂͛͛ العَرَبِيَّة···········}|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
-      {7:  }{1:~                                          }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
       :set number foldcolumn=2                     |
     ]])
 
@@ -106,12 +106,12 @@ describe("folded lines", function()
     feed_command("set rightleft")
     screen:expect([[
       {5:+--  2 lines: å ······················^·  1 }{7: +}|
-      {1:                                          ~}{7:  }|
-      {1:                                          ~}{7:  }|
-      {1:                                          ~}{7:  }|
-      {1:                                          ~}{7:  }|
-      {1:                                          ~}{7:  }|
-      {1:                                          ~}{7:  }|
+      {1:                                            ~}|
+      {1:                                            ~}|
+      {1:                                            ~}|
+      {1:                                            ~}|
+      {1:                                            ~}|
+      {1:                                            ~}|
       :set rightleft                               |
     ]])
 
@@ -178,7 +178,7 @@ describe("folded lines", function()
       {1::}set foldmethod=manual                       |
       {1::}let x = 1                                   |
       {1::}^                                            |
-      {1::~                                           }|
+      {1:~                                            }|
       {3:[Command Line]                               }|
       :                                            |
     ]])
@@ -189,8 +189,8 @@ describe("folded lines", function()
       {2:[No Name]                                    }|
       {1::}{5:^+--  2 lines: set foldmethod=manual·········}|
       {1::}                                            |
-      {1::~                                           }|
-      {1::~                                           }|
+      {1:~                                            }|
+      {1:~                                            }|
       {3:[Command Line]                               }|
       :                                            |
     ]])
@@ -214,7 +214,7 @@ describe("folded lines", function()
       {1:/}alpha                                       |
       {1:/}{6:omega}                                       |
       {1:/}^                                            |
-      {1:/~                                           }|
+      {1:~                                            }|
       {3:[Command Line]                               }|
       /                                            |
     ]])
@@ -224,9 +224,9 @@ describe("folded lines", function()
                                                    |
       {2:[No Name]                                    }|
       {1:/}{5:^+--  3 lines: alpha·························}|
-      {1:/~                                           }|
-      {1:/~                                           }|
-      {1:/~                                           }|
+      {1:~                                            }|
+      {1:~                                            }|
+      {1:~                                            }|
       {3:[Command Line]                               }|
       /                                            |
     ]])

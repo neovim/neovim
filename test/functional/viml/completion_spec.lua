@@ -904,9 +904,9 @@ describe('completion', function()
                                                                     |
         {8:[No Name]                                                   }|
         {0::}foo faa fee f^                                              |
-        {0::~                                                          }|
-        {0::~                                                          }|
-        {0::~                                                          }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
         {9:[Command Line]                                              }|
         {3:-- INSERT --}                                                |
       ]] )
@@ -915,9 +915,9 @@ describe('completion', function()
                                                                     |
         {8:[No Name]                                                   }|
         {0::}foo faa fee foo^                                            |
-        {0::~          }{2: foo            }{0:                                }|
-        {0::~          }{1: faa            }{0:                                }|
-        {0::~          }{1: fee            }{0:                                }|
+        {0:~           }{2: foo            }{0:                                }|
+        {0:~           }{1: faa            }{0:                                }|
+        {0:~           }{1: fee            }{0:                                }|
         {9:[Command Line]                                              }|
         {3:-- Keyword Local completion (^N^P) }{4:match 1 of 3}             |
       ]])
@@ -926,9 +926,9 @@ describe('completion', function()
                                                                     |
         {8:[No Name]                                                   }|
         {0::}foo faa fee foo                                            |
-        {0::~                                                          }|
-        {0::~                                                          }|
-        {0::~                                                          }|
+        {0:~                                                           }|
+        {0:~                                                           }|
+        {0:~                                                           }|
         {9:[Command Line]                                              }|
         :foo faa fee foo^                                            |
       ]])
