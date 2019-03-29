@@ -889,6 +889,7 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_K2:        return VTERM_KEY_KP_2;
     case K_K3:        return VTERM_KEY_KP_3;
     case K_K4:        return VTERM_KEY_KP_4;
+    case K_KORIGIN:   FALLTHROUGH;
     case K_K5:        return VTERM_KEY_KP_5;
     case K_KORIGIN:   FALLTHROUGH;
     case K_K6:        return VTERM_KEY_KP_6;
