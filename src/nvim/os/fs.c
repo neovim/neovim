@@ -649,7 +649,7 @@ ptrdiff_t os_write(const int fd, const char *const buf, const size_t size,
 /// @param path Path of file to be copied
 /// @param path_new Path of new file
 /// @param flags Bitwise OR of flags defined in <uv.h>
-/// @return libuv error code on error
+/// @return 0 on success, or libuv error code on failure.
 int os_copy(const char *path, const char *new_path, int flags)
 {
   int r;
