@@ -2659,7 +2659,7 @@ void ins_compl_show_pum(void)
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
   curwin->w_cursor.col = col;
 
-  if (!has_event(EVENT_MENUPOPUPCHANGED)) {
+  if (!has_event(EVENT_COMPLETECHANGED)) {
     return;
   }
   dict_T *dict = get_vim_var_dict(VV_EVENT);
@@ -2672,7 +2672,7 @@ void ins_compl_show_pum(void)
   pum_set_boundings(dict);
   tv_dict_set_keys_readonly(dict);
   textlock++;
-  apply_autocmds(EVENT_MENUPOPUPCHANGED, NULL, NULL, false, curbuf);
+  apply_autocmds(EVENT_COMPLETECHANGED, NULL, NULL, false, curbuf);
   textlock--;
   tv_dict_clear(dict);
 }

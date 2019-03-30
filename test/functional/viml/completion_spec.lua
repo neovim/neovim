@@ -1073,7 +1073,7 @@ describe('completion', function()
     ]])
   end)
 
-  it('MenuPopupChanged autocommand', function()
+  it('CompleteChanged autocommand', function()
     curbufmeths.set_lines(0, 1, false, { 'foo', 'bar', 'foobar', ''})
     source([[
       set complete=. completeopt=noinsert,noselect,menuone
@@ -1082,7 +1082,7 @@ describe('completion', function()
         let g:item = get(v:event, 'completed_item', {})
         let g:word = get(g:item, 'word', v:null)
       endfunction
-      autocmd! MenuPopupChanged * :call OnPumChange()
+      autocmd! CompleteChanged * :call OnPumChange()
       call cursor(4, 1)
     ]])
 

@@ -29,6 +29,7 @@ return {
     'CmdWinLeave',            -- before leaving the cmdline window
     'ColorScheme',            -- after loading a colorscheme
     'ColorSchemePre',         -- before loading a colorscheme
+    'CompleteChanged',        -- after popup menu changed
     'CompleteDone',           -- after finishing insert complete
     'CursorHold',             -- cursor in same position for a while
     'CursorHoldI',            -- idem, in Insert mode
@@ -66,7 +67,6 @@ return {
     'InsertLeave',            -- when leaving Insert mode
     'JobActivity',            -- when job sent some data
     'MenuPopup',              -- just before popup menu is displayed
-    'MenuPopupChanged',       -- after popup menu changed
     'OptionSet',              -- after setting any option
     'QuickFixCmdPost',        -- after :make, :grep etc.
     'QuickFixCmdPre',         -- before :make, :grep etc.
