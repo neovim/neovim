@@ -3018,8 +3018,7 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
     what_flag = CI_WHAT_ALL;
   } else {
     what_flag = 0;
-    for (listitem_T *item = TV_LIST_ITEM_NEXT(what_list,
-                                              tv_list_first(what_list))
+    for (listitem_T *item = tv_list_first(what_list)
          ; item != NULL
          ; item = TV_LIST_ITEM_NEXT(what_list, item)) {
       const char *what = tv_get_string(TV_LIST_ITEM_TV(item));
@@ -3040,7 +3039,7 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
 
   if (ret == OK && (what_flag & CI_WHAT_MODE)) {
     ret = tv_dict_add_str(retdict, S_LEN("mode"),
-                          (const char *)ins_compl_mode());
+                          (char *)ins_compl_mode());
   }
 
   if (ret == OK && (what_flag & CI_WHAT_PUM_VISIBLE)) {
@@ -3059,17 +3058,17 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
 
           tv_list_append_dict(li, di);
           tv_dict_add_str(di, S_LEN("word"),
-                          (const char *)match->cp_str);
+                          (char *)EMPTY_IF_NULL(match->cp_str));
           tv_dict_add_str(di, S_LEN("abbr"),
-                          (const char *)match->cp_text[CPT_ABBR]);
+                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_ABBR]));
           tv_dict_add_str(di, S_LEN("menu"),
-                          (const char *)match->cp_text[CPT_MENU]);
+                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_MENU]));
           tv_dict_add_str(di, S_LEN("kind"),
-                          (const char *)match->cp_text[CPT_KIND]);
+                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_KIND]));
           tv_dict_add_str(di, S_LEN("info"),
-                          (const char *)match->cp_text[CPT_INFO]);
+                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_INFO]));
           tv_dict_add_str(di, S_LEN("user_data"),
-                          (const char *)match->cp_text[CPT_USER_DATA]);
+                          (char *)EMPTY_IF_NULL(match->cp_text[CPT_USER_DATA]));
         }
         match = match->cp_next;
       } while (match != NULL && match != compl_first_match);
@@ -3089,10 +3088,10 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
 // Return Insert completion mode name string
 static char_u * ins_compl_mode(void)
 {
-    if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || compl_started) {
-      return (char_u *)ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
-    }
-    return (char_u *)"";
+  if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET || compl_started) {
+    return (char_u *)ctrl_x_mode_names[ctrl_x_mode & ~CTRL_X_WANT_IDENT];
+  }
+  return (char_u *)"";
 }
 
 
