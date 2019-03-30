@@ -569,10 +569,12 @@ static void discard_exception(except_T *excp, int was_finished)
  */
 void discard_current_exception(void)
 {
-  discard_exception(current_exception, false);
+  if (current_exception != NULL) {
+    discard_exception(current_exception, false);
+    current_exception = NULL;
+  }
   // Note: all globals manipulated here should be saved/restored in
   // try_enter/try_leave.
-  current_exception = NULL;
   need_rethrow = false;
 }
 
@@ -1766,6 +1768,7 @@ void enter_cleanup(cleanup_T *csp)
      */
     if (current_exception || need_rethrow) {
       csp->exception = current_exception;
+      current_exception = NULL;
     } else {
       csp->exception = NULL;
       if (did_emsg) {
