@@ -1,0 +1,35 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+jobs:
+- job: 'linax'
+  pool:
+    vimImage: 'ubuntu-16.04'
+  container: 'puremourning/vimspector:test'
+  steps:
+  - bash: python3 install_gadget.py
+    displayName: 'Install gadgets'
+
+  - bash: vim --version
+    displayName: 'Print vim version information'
+
+  - bash: ./run_tests
+    displayName: 'Run the tests'
+
+- job: 'macos'
+  pool:
+    vmImage: 'macOS-10.13'
+  steps:
+  - bash: brew install macvim
+    displayName: 'Install vim'
+
+  - bash: python3 install_gadget.py
+    displayName: 'Install gadgets'
+
+  - bash: vim --version
+    displayName: 'Print vim version information'
+
+  - bash: ./run_tests
+    displayName: 'Run the tests'

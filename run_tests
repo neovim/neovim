@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+RUN_VIM="vim --noplugin --clean --not-a-term"
+RUN_TEST="${RUN_VIM} -S run_test.vim"
+
+pushd tests > /dev/null
+
+echo "Running Vimspector Vim tests"
+
+RESULT=0
+
+for t in *.test.vim; do
+  echo ""
+  echo "%RUN: $t"
+  rm -f messages debuglog
+
+  if ${RUN_TEST} $t --cmd 'au SwapExists * let v:swapchoice = "e"'; then
+    echo "%PASS: $t PASSED"
+  else
+    cat messages
+    echo "%FAIL: $t FAILED"
+    RESULT=1
+  fi
+done
+
+popd > /dev/null
+
+echo ""
+echo "All done."
+
+exit $RESULT

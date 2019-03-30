@@ -23,14 +23,18 @@ import shlex
 
 from collections import defaultdict
 
-from vimspector import ( code,
+from vimspector import ( breakpoints,
+                         code,
                          debug_adapter_connection,
+                         install,
                          output,
                          stack_trace,
                          utils,
                          variables )
 
-SIGN_ID_OFFSET = 10005000
+VIMSPECTOR_HOME = os.path.abspath( os.path.join( os.path.dirname( __file__ ),
+                                                 '..',
+                                                 '..' ) )
 
 
 class DebugSession( object ):
@@ -38,84 +42,27 @@ class DebugSession( object ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
+    self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
+    self._logger.info( 'gadgetDir = %s',
+                       install.GetGadgetDir( VIMSPECTOR_HOME,
+                                             install.GetOS() ) )
+
     self._uiTab = None
     self._stackTraceView = None
     self._variablesView = None
     self._outputView = None
+    self._breakpoints = breakpoints.ProjectBreakpoints()
 
     self._run_on_server_exit = None
 
-    self._next_sign_id = SIGN_ID_OFFSET
-
-    # FIXME: This needs redesigning. There are a number of problems:
-    #  - breakpoints don't have to be line-wise (e.g. method/exception)
-    #  - when the server moves/changes a breakpoint, this is not updated,
-    #    leading to them getting out of sync
-    #  - the split of responsibility between this object and the CodeView is
-    #    messy and ill-defined.
-    self._line_breakpoints = defaultdict( list )
-    self._func_breakpoints = []
-
     self._ResetServerState()
-
-    vim.command( 'sign define vimspectorBP text==> texthl=Error' )
-    vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
 
   def _ResetServerState( self ):
     self._connection = None
     self._configuration = None
-    self._exceptionBreakpoints = None
     self._init_complete = False
     self._launch_complete = False
     self._server_capabilities = {}
-
-  def ToggleBreakpoint( self ):
-    line, column = vim.current.window.cursor
-    file_name = vim.current.buffer.name
-
-    if not file_name:
-      return
-
-    found_bp = False
-    for index, bp in enumerate( self._line_breakpoints[ file_name]  ):
-      if bp[ 'line' ] == line:
-        found_bp = True
-        if bp[ 'state' ] == 'ENABLED':
-          bp[ 'state' ] = 'DISABLED'
-        else:
-          if 'sign_id' in bp:
-            vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del self._line_breakpoints[ file_name ][ index ]
-
-    if not found_bp:
-      self._line_breakpoints[ file_name ].append( {
-        'state': 'ENABLED',
-        'line': line,
-        # 'sign_id': <filled in when placed>,
-        #
-        # Used by other breakpoint types:
-        # 'condition': ...,
-        # 'hitCondition': ...,
-        # 'logMessage': ...
-      } )
-
-    self._UpdateUIBreakpoints()
-
-  def _UpdateUIBreakpoints( self ):
-    if self._connection:
-      self._SendBreakpoints()
-    else:
-      self._ShowBreakpoints()
-
-  def AddFunctionBreakpoint( self, function ):
-    self._func_breakpoints.append( {
-        'state': 'ENABLED',
-        'function': function,
-    } )
-
-    # TODO: We don't really have aanything to update here, but if we're going to
-    # have a UI list of them we should update that at this point
-    self._UpdateUIBreakpoints()
 
   def Start( self, launch_variables = {} ):
     self._configuration = None
@@ -132,7 +79,15 @@ class DebugSession( object ):
       database = json.load( f )
 
     configurations = database.get( 'configurations' )
-    adapters = database.get( 'adapters' )
+    adapters = {}
+
+    for gadget_config_file in [ install.GetGadgetConfigFile( VIMSPECTOR_HOME ),
+                                utils.PathToConfigFile( '.gadgets.json' ) ]:
+      if gadget_config_file and os.path.exists( gadget_config_file ):
+        with open( gadget_config_file, 'r' ) as f:
+          adapters.update( json.load( f ).get( 'adapters' ) or {} )
+
+    adapters.update( database.get( 'adapters' ) or {} )
 
     if len( configurations ) == 1:
       configuration_name = next( iter( configurations.keys() ) )
@@ -156,7 +111,8 @@ class DebugSession( object ):
     # way to load .vimspector.local.json which just sets variables
     self._variables = {
       'dollar': '$', # HACK
-      'workspaceRoot': self._workspace_root
+      'workspaceRoot': self._workspace_root,
+      'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() )
     }
     self._variables.update( 
       utils.ParseVariables( adapter.get( 'variables', {} ) ) )
@@ -195,6 +151,16 @@ class DebugSession( object ):
       self._stackTraceView.ConnectionUp( self._connection )
       self._variablesView.ConnectionUp( self._connection )
       self._outputView.ConnectionUp( self._connection )
+      self._breakpoints.ConnectionUp( self._connection )
+
+      def update_breakpoints( source, message ):
+        if 'body' not in message:
+          return
+        self._codeView.AddBreakpoints( source,
+                                       message[ 'body' ][ 'breakpoints' ] )
+        self._codeView.ShowBreakpoints()
+
+      self._breakpoints.SetBreakpointsHandler( update_breakpoints )
 
     if self._connection:
       self._StopDebugAdapter( start )
@@ -250,7 +216,7 @@ class DebugSession( object ):
       self._uiTab = None
 
     # make sure that we're displaying signs in any still-open buffers
-    self._UpdateUIBreakpoints()
+    self._breakpoints.UpdateUI()
 
   def StepOver( self ):
     if self._stackTraceView.GetCurrentThreadId() is None:
@@ -557,6 +523,7 @@ class DebugSession( object ):
   def _Initialise( self ):
     def handle_initialize_response( msg ):
       self._server_capabilities = msg.get( 'body' ) or {}
+      self._breakpoints.SetServerCapabilities( self._server_capabilities )
       self._Launch()
 
     self._connection.DoRequest( handle_initialize_response, {
@@ -612,12 +579,6 @@ class DebugSession( object ):
     )
 
 
-  def _UpdateBreakpoints( self, source, message ):
-    if 'body' not in message:
-      return
-    self._codeView.AddBreakpoints( source, message[ 'body' ][ 'breakpoints' ] )
-    self._codeView.ShowBreakpoints()
-
   def _OnLaunchComplete( self ):
     self._launch_complete = True
     self._LoadThreadsIfReady()
@@ -649,7 +610,8 @@ class DebugSession( object ):
 
 
   def OnEvent_initialized( self, message ):
-    self._SendBreakpoints()
+    self._codeView.ClearBreakpoints()
+    self._breakpoints.SendBreakpoints()
 
     if self._server_capabilities.get( 'supportsConfigurationDoneRequest' ):
       self._connection.DoRequest(
@@ -660,7 +622,6 @@ class DebugSession( object ):
       )
     else:
       self._OnInitializeComplete()
-
 
   def OnEvent_thread( self, message ):
     self._stackTraceView.OnThreadEvent( message[ 'body' ] )
@@ -721,6 +682,7 @@ class DebugSession( object ):
     self._stackTraceView.ConnectionClosed()
     self._variablesView.ConnectionClosed()
     self._outputView.ConnectionClosed()
+    self._breakpoints.ConnectionClosed()
 
     self._ResetServerState()
 
@@ -730,128 +692,6 @@ class DebugSession( object ):
   def OnEvent_terminated( self, message ):
     # We will handle this when the server actually exists
     utils.UserMessage( "Debugging was terminated." )
-
-  def _RemoveBreakpoints( self ):
-    for breakpoints in self._line_breakpoints.values():
-      for bp in breakpoints:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del bp[ 'sign_id' ]
-
-  def _SendBreakpoints( self ):
-    self._codeView.ClearBreakpoints()
-
-    for file_name, line_breakpoints in self._line_breakpoints.items():
-      breakpoints = []
-      for bp in line_breakpoints:
-        if bp[ 'state' ] != 'ENABLED':
-          continue
-
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del bp[ 'sign_id' ]
-
-        breakpoints.append( { 'line': bp[ 'line' ] } )
-
-      source = {
-        'name': os.path.basename( file_name ),
-        'path': file_name,
-      }
-
-      self._connection.DoRequest(
-        functools.partial( self._UpdateBreakpoints, source ),
-        {
-          'command': 'setBreakpoints',
-          'arguments': {
-            'source': source,
-            'breakpoints': breakpoints,
-          },
-          'sourceModified': False, # TODO: We can actually check this
-        }
-      )
-
-    if self._server_capabilities.get( 'supportsFunctionBreakpoints' ):
-      self._connection.DoRequest(
-        functools.partial( self._UpdateBreakpoints, None ),
-        {
-          'command': 'setFunctionBreakpoints',
-          'arguments': {
-            'breakpoints': [
-              { 'name': bp[ 'function' ] }
-              for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
-            ],
-          }
-        }
-      )
-
-    if self._exceptionBreakpoints is None:
-      self._SetUpExceptionBreakpoints()
-
-    if self._exceptionBreakpoints:
-      self._connection.DoRequest(
-        None, # There is nothing on the response to this
-        {
-          'command': 'setExceptionBreakpoints',
-          'arguments': self._exceptionBreakpoints
-        }
-      )
-
-  def _SetUpExceptionBreakpoints( self ):
-    exceptionBreakpointFilters = self._server_capabilities.get(
-        'exceptionBreakpointFilters',
-        [] )
-
-    if exceptionBreakpointFilters or not self._server_capabilities.get(
-      'supportsConfigurationDoneRequest' ):
-      exceptionFilters = []
-      if exceptionBreakpointFilters:
-        for f in exceptionBreakpointFilters:
-          response = utils.AskForInput(
-            "Enable exception filter '{}'? (Y/N)".format( f[ 'label' ] ) )
-
-          if response == 'Y':
-            exceptionFilters.append( f[ 'filter' ] )
-          elif not response and f.get( 'default' ):
-            exceptionFilters.append( f[ 'filter' ] )
-
-      self._exceptionBreakpoints = {
-        'filters': exceptionFilters
-      }
-
-      if self._server_capabilities.get( 'supportsExceptionOptions' ):
-        # FIXME Sigh. The python debug adapter requires this 
-        #       key to exist. Even though it is optional.
-        break_mode = utils.SelectFromList( 'When to break on exception?',
-                                           [ 'never',
-                                             'always',
-                                             'unhandled',
-                                             'userHandled' ] )
-
-        if not break_mode:
-          break_mode = 'unhandled'
-
-        path = [ { 'nagate': True, 'names': [ 'DO_NOT_MATCH' ] } ]
-        self._exceptionBreakpoints[ 'exceptionOptions' ] = [ {
-          'path': path,
-          'breakMode': break_mode
-        } ]
-
-  def _ShowBreakpoints( self ):
-    for file_name, line_breakpoints in self._line_breakpoints.items():
-      for bp in line_breakpoints:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-        else:
-          bp[ 'sign_id' ] = self._next_sign_id
-          self._next_sign_id += 1
-
-        vim.command(
-          'sign place {0} line={1} name={2} file={3}'.format(
-            bp[ 'sign_id' ] ,
-            bp[ 'line' ],
-            'vimspectorBP' if bp[ 'state' ] == 'ENABLED'
-                           else 'vimspectorBPDisabled',
-            file_name ) )
 
   def OnEvent_output( self, message ):
     if self._outputView:
@@ -880,3 +720,12 @@ class DebugSession( object ):
       self._outputView.Print( 'server', msg )
 
     self._stackTraceView.OnStopped( event )
+
+  def ListBreakpoints( self ):
+    return self._breakpoints.ListBreakpoints()
+
+  def ToggleBreakpoint( self ):
+    return self._breakpoints.ToggleBreakpoint()
+
+  def AddFunctionBreakpoint( self, function ):
+    return self._breakpoints.AddFunctionBreakpoint( function )

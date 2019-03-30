@@ -102,6 +102,10 @@ function! vimspector#ShowOutput( category ) abort
   py3 _vimspector_session.ShowOutput( vim.eval( 'a:category' ) )
 endfunction
 
+function! vimspector#ListBreakpoints() abort
+  py3 _vimspector_session.ListBreakpoints()
+endfunction
+
 " Boilerplate {{{
 let &cpo=s:save_cpo
 unlet s:save_cpo
