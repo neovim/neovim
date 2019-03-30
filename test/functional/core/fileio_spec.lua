@@ -11,6 +11,7 @@ local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
 local read_file = helpers.read_file
+local trim = helpers.trim
 
 describe('fileio', function()
   before_each(function()
@@ -79,11 +80,11 @@ describe('fileio', function()
     feed('Abar<esc>')
     command('write')
 
-    local foo_contents = read_file('Xtest_startup_file1')
-    local bar_contents = read_file('Xtest_startup_file1~')
+    local foobar_contents = trim(read_file('Xtest_startup_file1'))
+    local bar_contents = trim(read_file('Xtest_startup_file1~'))
 
-    eq('foobar\n', foo_contents);
-    eq('foo\n', bar_contents);
+    eq('foobar', foobar_contents);
+    eq('foo', bar_contents);
 
   end)
 end)

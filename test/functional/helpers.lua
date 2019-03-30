@@ -25,6 +25,7 @@ local read_file = global_helpers.read_file
 local sleep = global_helpers.sleep
 local table_flatten = global_helpers.table_flatten
 local write_file = global_helpers.write_file
+local trim = global_helpers.trim
 
 local start_dir = lfs.currentdir()
 -- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
@@ -797,6 +798,7 @@ local module = {
   window = window,
   winmeths = winmeths,
   write_file = write_file,
+  trim = trim,
 }
 
 return function(after_each)
