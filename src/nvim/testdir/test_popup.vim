@@ -712,4 +712,105 @@ func Test_popup_and_window_resize()
   bwipe!
 endfunc
 
+func Test_popup_complete_info_01()
+  new
+  inoremap <buffer><F5> <C-R>=complete_info().mode<CR>
+  func s:complTestEval() abort
+    call complete(1, ['aa', 'ab'])
+    return ''
+  endfunc
+  inoremap <buffer><F6> <C-R>=s:complTestEval()<CR>
+  call writefile([
+        \ 'dummy	dummy.txt	1',
+        \], 'Xdummy.txt')
+  setlocal tags=Xdummy.txt
+  setlocal dictionary=Xdummy.txt
+  setlocal thesaurus=Xdummy.txt
+  setlocal omnifunc=syntaxcomplete#Complete
+  setlocal completefunc=syntaxcomplete#Complete
+  setlocal spell
+  for [keys, mode_name] in [
+        \ ["", ''],
+        \ ["\<C-X>", 'ctrl_x'],
+        \ ["\<C-X>\<C-N>", 'keyword'],
+        \ ["\<C-X>\<C-P>", 'keyword'],
+        \ ["\<C-X>\<C-L>", 'whole_line'],
+        \ ["\<C-X>\<C-F>", 'files'],
+        \ ["\<C-X>\<C-]>", 'tags'],
+        \ ["\<C-X>\<C-D>", 'path_defines'],
+        \ ["\<C-X>\<C-I>", 'path_patterns'],
+        \ ["\<C-X>\<C-K>", 'dictionary'],
+        \ ["\<C-X>\<C-T>", 'thesaurus'],
+        \ ["\<C-X>\<C-V>", 'cmdline'],
+        \ ["\<C-X>\<C-U>", 'function'],
+        \ ["\<C-X>\<C-O>", 'omni'],
+        \ ["\<C-X>s", 'spell'],
+        \ ["\<F6>", 'eval'],
+        \]
+    call feedkeys("i" . keys . "\<F5>\<Esc>", 'tx')
+    call assert_equal(mode_name, getline('.'))
+    %d
+  endfor
+  call delete('Xdummy.txt')
+  bwipe!
+endfunc
+
+func UserDefinedComplete(findstart, base)
+  if a:findstart
+    return 0
+  else
+    return [
+          \   { 'word': 'Jan', 'menu': 'January' },
+          \   { 'word': 'Feb', 'menu': 'February' },
+          \   { 'word': 'Mar', 'menu': 'March' },
+          \   { 'word': 'Apr', 'menu': 'April' },
+          \   { 'word': 'May', 'menu': 'May' },
+          \ ]
+  endif
+endfunc
+
+func GetCompleteInfo()
+  if empty(g:compl_what)
+    let g:compl_info = complete_info()
+  else
+    let g:compl_info = complete_info(g:compl_what)
+  endif
+  return ''
+endfunc
+
+func Test_popup_complete_info_02()
+  new
+  inoremap <buffer><F5> <C-R>=GetCompleteInfo()<CR>
+  setlocal completefunc=UserDefinedComplete
+
+  let d = {
+    \   'mode': 'function',
+    \   'pum_visible': 1,
+    \   'items': [
+    \     {'word': 'Jan', 'menu': 'January', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'Feb', 'menu': 'February', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'Mar', 'menu': 'March', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'Apr', 'menu': 'April', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'May', 'menu': 'May', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}
+    \   ],
+    \   'selected': 0,
+    \ }
+
+  let g:compl_what = []
+  call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
+  call assert_equal(d, g:compl_info)
+
+  let g:compl_what = ['mode', 'pum_visible', 'selected']
+  call remove(d, 'items')
+  call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
+  call assert_equal(d, g:compl_info)
+
+  let g:compl_what = ['mode']
+  call remove(d, 'selected')
+  call remove(d, 'pum_visible')
+  call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
+  call assert_equal(d, g:compl_info)
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

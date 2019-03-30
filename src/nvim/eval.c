@@ -7564,6 +7564,22 @@ static void f_complete_check(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   RedrawingDisabled = saved;
 }
 
+// "complete_info()" function
+static void f_complete_info(typval_T *argvars, typval_T *rettv, FunPtr fptr) {
+  tv_dict_alloc_ret(rettv);
+
+  list_T *what_list = NULL;
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    if (argvars[0].v_type != VAR_LIST) {
+      EMSG(_(e_listreq));
+      return;
+    }
+    what_list = argvars[0].vval.v_list;
+  }
+  get_complete_info(what_list, rettv->vval.v_dict);
+}
+
 /*
  * "confirm(message, buttons[, default [, type]])" function
  */
