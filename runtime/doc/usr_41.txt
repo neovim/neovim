@@ -825,6 +825,7 @@ Insert mode completion:				*completion-functions*
 	complete()		set found matches
 	complete_add()		add to found matches
 	complete_check()	check if completion should be aborted
+	complete_info()		get current completion information
 	pumvisible()		check if the popup menu is displayed
 
 Folding:					*folding-functions*

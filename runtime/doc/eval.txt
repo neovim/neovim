@@ -2021,6 +2021,7 @@ col({expr})			Number	column nr of cursor or mark
 complete({startcol}, {matches}) none	set Insert mode completion
 complete_add({expr})		Number	add completion match
 complete_check()		Number	check for key typed during completion
+complete_info([{what}])		Dict	get current completion information
 confirm({msg} [, {choices} [, {default} [, {type}]]])
 				Number	number of choice picked by user
 copy({expr})			any	make a shallow copy of {expr}
@@ -2844,8 +2845,8 @@ cindent({lnum})						*cindent()*
 		See |C-indenting|.
 
 clearmatches()						*clearmatches()*
-		Clears all matches previously defined by |matchadd()| and the
-		|:match| commands.
+		Clears all matches previously defined for the current window
+		by |matchadd()| and the |:match| commands.
 
 							*col()*
 col({expr})	The result is a Number, which is the byte index of the column
@@ -2930,6 +2931,55 @@ complete_check()				*complete_check()*
 		Only to be used by the function specified with the
 		'completefunc' option.
 
+							*complete_info()*
+complete_info([{what}])
+		Returns a Dictionary with information about Insert mode
+		completion.  See |ins-completion|.
+		The items are:
+		   mode		Current completion mode name string.
+				See |completion_info_mode| for the values.
+		   pum_visible	|TRUE| if popup menu is visible.
+				See |pumvisible()|.
+		   items	List of completion matches.  Each item is a
+				dictionary containing the entries "word",
+				"abbr", "menu", "kind", "info" and "user_data".
+				See |complete-items|.
+		   selected	Selected item index.  First index is zero.
+				Index is -1 if no item is selected (showing
+				typed text only)
+		   inserted	Inserted string. [NOT IMPLEMENT YET]
+
+							*complete_info_mode*
+		mode values are:
+		   ""		     Not in completion mode
+		   "keyword"	     Keyword completion |i_CTRL-X_CTRL-N|
+		   "ctrl_x"	     Just pressed CTRL-X |i_CTRL-X|
+		   "whole_line"	     Whole lines |i_CTRL-X_CTRL-L|
+		   "files"	     File names |i_CTRL-X_CTRL-F|
+		   "tags"	     Tags |i_CTRL-X_CTRL-]|
+		   "path_defines"    Definition completion |i_CTRL-X_CTRL-D|
+		   "path_patterns"   Include completion |i_CTRL-X_CTRL-I|
+		   "dictionary"	     Dictionary |i_CTRL-X_CTRL-K|
+		   "thesaurus"	     Thesaurus |i_CTRL-X_CTRL-T|
+		   "cmdline"	     Vim Command line |i_CTRL-X_CTRL-V|
+		   "function"	     User defined completion |i_CTRL-X_CTRL-U|
+		   "omni"	     Omni completion |i_CTRL-X_CTRL-O|
+		   "spell"	     Spelling suggestions |i_CTRL-X_s|
+		   "eval"            |complete()| completion
+		   "unknown"	     Other internal modes
+
+		If the optional {what} list argument is supplied, then only
+		the items listed in {what} are returned.  Unsupported items in
+		{what} are silently ignored.
+
+		Examples: >
+			" Get all items
+			call complete_info()
+			" Get only 'mode'
+			call complete_info(['mode'])
+			" Get only 'mode' and 'pum_visible'
+			call complete_info(['mode', 'pum_visible'])
+<
 						*confirm()*
 confirm({msg} [, {choices} [, {default} [, {type}]]])
 		Confirm() offers the user a dialog, from which a choice can be
@@ -4279,10 +4329,11 @@ getloclist({nr},[, {what}])				*getloclist()*
 		|getqflist()| for the supported items in {what}.
 
 getmatches()						*getmatches()*
-		Returns a |List| with all matches previously defined by
-		|matchadd()| and the |:match| commands.  |getmatches()| is
-		useful in combination with |setmatches()|, as |setmatches()|
-		can restore a list of matches saved by |getmatches()|.
+		Returns a |List| with all matches previously defined for the
+		current window by |matchadd()| and the |:match| commands.
+		|getmatches()| is useful in combination with |setmatches()|,
+		as |setmatches()| can restore a list of matches saved by
+		|getmatches()|.
 		Example: >
 			:echo getmatches()
 <			[{'group': 'MyGroup1', 'pattern': 'TODO',
@@ -6862,9 +6913,10 @@ setloclist({nr}, {list} [, {action}[, {what}]])		*setloclist()*
 		for the list of supported keys in {what}.
 
 setmatches({list})					*setmatches()*
-		Restores a list of matches saved by |getmatches()|.  Returns 0
-		if successful, otherwise -1.  All current matches are cleared
-		before the list is restored.  See example for |getmatches()|.
+		Restores a list of matches saved by |getmatches() for the
+		current window|.  Returns 0 if successful, otherwise -1.  All
+		current matches are cleared before the list is restored.  See
+		example for |getmatches()|.
 
 							*setpos()*
 setpos({expr}, {list})
