@@ -5,7 +5,7 @@ source shared.vim
 let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 let g:setting = ''
 
-func! ListMonths()
+func ListMonths()
   if g:setting != ''
     exe ":set" g:setting
   endif
@@ -18,7 +18,7 @@ func! ListMonths()
   return ''
 endfunc
 
-func! Test_popup_complete2()
+func Test_popup_complete2()
   " Although the popupmenu is not visible, this does not mean completion mode
   " has ended. After pressing <f5> to complete the currently typed char, Vim
   " still stays in the first state of the completion (:h ins-completion-menu),
@@ -33,9 +33,9 @@ func! Test_popup_complete2()
   call assert_equal(["Dece", "", "December2015"], getline(1,3))
   %d
   bw!
-endfu
+endfunc
 
-func! Test_popup_complete()
+func Test_popup_complete()
   new
   inoremap <f5> <c-r>=ListMonths()<cr>
 
@@ -214,10 +214,10 @@ func! Test_popup_complete()
   call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
   call assert_equal(["March", "M", "March"], getline(1,4))
   %d
-endfu
+endfunc
 
 
-func! Test_popup_completion_insertmode()
+func Test_popup_completion_insertmode()
   new
   inoremap <F5> <C-R>=ListMonths()<CR>
 
@@ -246,20 +246,16 @@ func! Test_popup_completion_insertmode()
   iunmap <F5>
 endfunc
 
-" TODO: Fix what breaks after this line.
-" - Do not use "q!", it may exit Vim if there is an error
-finish
-
 func Test_noinsert_complete()
-  function! s:complTest1() abort
+  func! s:complTest1() abort
     call complete(1, ['source', 'soundfold'])
     return ''
-  endfunction
+  endfunc
 
-  function! s:complTest2() abort
+  func! s:complTest2() abort
     call complete(1, ['source', 'soundfold'])
     return ''
-  endfunction
+  endfunc
 
   new
   set completeopt+=noinsert
@@ -280,9 +276,9 @@ func Test_noinsert_complete()
 endfunc
 
 func Test_compl_vim_cmds_after_register_expr()
-  function! s:test_func()
+  func! s:test_func()
     return 'autocmd '
-  endfunction
+  endfunc
   augroup AAAAA_Group
     au!
   augroup END
@@ -329,7 +325,7 @@ func DummyCompleteTwo(findstart, base)
   else
     return ['twodef', 'twoDEF']
   endif
-endfunction
+endfunc
 
 " Test that nothing happens if the 'completefunc' opens
 " a new window (no completion, no crash)
@@ -406,7 +402,7 @@ func Test_omnifunc_with_check()
   q!
 endfunc
 
-function UndoComplete()
+func UndoComplete()
   call complete(1, ['January', 'February', 'March',
         \ 'April', 'May', 'June', 'July', 'August', 'September',
         \ 'October', 'November', 'December'])
@@ -443,7 +439,7 @@ func Test_complete_no_undo()
   q!
 endfunc
 
-function! DummyCompleteFive(findstart, base)
+func DummyCompleteFive(findstart, base)
   if a:findstart
     return 0
   else
@@ -547,7 +543,7 @@ func Test_completion_comment_formatting()
   bwipe!
 endfunc
 
-function! DummyCompleteSix()
+func DummyCompleteSix()
   call complete(1, ['Hello', 'World'])
   return ''
 endfunction
@@ -623,7 +619,7 @@ func Test_popup_and_preview_autocommand()
   bw!
 endfunc
 
-fun MessCompleteMonths()
+func MessCompleteMonths()
   for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep")
     call complete_add(m)
     if complete_check()
@@ -631,14 +627,14 @@ fun MessCompleteMonths()
     endif
   endfor
   return []
-endfun
+endfunc
 
-fun MessCompleteMore()
+func MessCompleteMore()
   call complete(1, split("Oct Nov Dec"))
   return []
-endfun
+endfunc
 
-fun MessComplete(findstart, base)
+func MessComplete(findstart, base)
   if a:findstart
     let line = getline('.')
     let start = col('.') - 1
@@ -651,7 +647,7 @@ fun MessComplete(findstart, base)
     call MessCompleteMore()
     return []
   endif
-endf
+endfunc
 
 func Test_complete_func_mess()
   " Calling complete() after complete_add() in 'completefunc' is wrong, but it
