@@ -547,10 +547,12 @@ int main(int argc, char **argv)
   if (params.n_commands > 0)
     exe_commands(&params);
 
+  /* Must come before the may_req_ calls. */
+  starting = 0;
+
   RedrawingDisabled = 0;
   redraw_all_later(NOT_VALID);
   no_wait_return = FALSE;
-  starting = 0;
 
   // 'autochdir' has been postponed.
   do_autochdir();
