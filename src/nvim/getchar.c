@@ -1431,6 +1431,8 @@ int vgetc(void)
         case K_KMULTIPLY:   c = '*'; break;
         case K_KENTER:      c = CAR; break;
         case K_KPOINT:      c = '.'; break;
+        case K_KCOMMA:      c = ','; break;
+        case K_KEQUAL:      c = '='; break;
         case K_K0:          c = '0'; break;
         case K_K1:          c = '1'; break;
         case K_K2:          c = '2'; break;
