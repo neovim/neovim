@@ -354,7 +354,7 @@ Name			triggered by ~
 |SessionLoadPost|	after loading a session file
 
 |MenuPopup|		just before showing the popup menu
-|MenuPopupChanged|	after popup menu changed, not fired on popup menu hide
+|CompleteChanged|	after popup menu changed, not fired on popup menu hide
 |CompleteDone|		after Insert mode completion is done
 
 |User|			to be used in combination with ":doautocmd"
@@ -588,6 +588,22 @@ CompleteDone			After Insert mode completion is done.  Either
 				completion. |ins-completion|
 				The |v:completed_item| variable contains the
 				completed item.
+
+CompleteChanged 					*CompleteChanged*
+				After each time popup menu changed, not fired
+				on popup menu hide, use |CompleteDone| for popup
+				menu hide.
+
+				Sets these |v:event| keys:
+				    completed_item
+				    height
+				    width
+				    row
+				    col
+				    size
+				    scrollbar
+
+				It is not allowed to change the text |textlock|.
 
 							*CursorHold*
 CursorHold			When the user doesn't press a key for the time
@@ -853,22 +869,6 @@ MenuPopup			Just before showing the popup menu (under the
 					o	Operator-pending
 					i	Insert
 					c	Command line
-MenuPopupChanged 					*MenuPopupChanged*
-				After each time popup menu changed, not fired
-				on popup menu hide, use |CompleteDone| for popup
-				menu hide.
-
-				Sets these |v:event| keys:
-				    completed_item
-				    height
-				    width
-				    row
-				    col
-				    size
-				    scrollbar
-
-				It is not allowed to change the text |textlock|.
-
 							*OptionSet*
 OptionSet			After setting an option (except during
 				|startup|).  The |autocmd-pattern| is matched
