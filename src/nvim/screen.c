@@ -2772,8 +2772,15 @@ win_line (
             if (wp->w_skipcol > 0)
               for (p_extra = extra; *p_extra == ' '; ++p_extra)
                 *p_extra = '-';
-            if (wp->w_p_rl)                         /* reverse line numbers */
-              rl_mirror(extra);
+            if (wp->w_p_rl) {                       // reverse line numbers
+              // like rl_mirror(), but keep the space at the end
+              char_u *p2 = skiptowhite(extra) - 1;
+              for (char_u *p1 = extra; p1 < p2; p1++, p2--) {
+                const int t = *p1;
+                *p1 = *p2;
+                *p2 = t;
+              }
+            }
             p_extra = extra;
             c_extra = NUL;
             c_final = NUL;
