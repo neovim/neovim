@@ -889,6 +889,17 @@ func Test_Executable()
   endif
 endfunc
 
+func Test_executable_longname()
+  if !has('win32')
+    return
+  endif
+
+  let fname = 'X' . repeat('あ', 200) . '.bat'
+  call writefile([], fname)
+  call assert_equal(1, executable(fname))
+  call delete(fname)
+endfunc
+
 func Test_hostname()
   let hostname_vim = hostname()
   if has('unix')
