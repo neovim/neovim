@@ -226,13 +226,13 @@ int os_exepath(char *buffer, size_t *size)
   return uv_exepath(buffer, size);
 }
 
-/// Checks if the given path represents an executable file.
+/// Checks if the file `name` is executable.
 ///
-/// @param[in]  name     Name of the executable.
-/// @param[out] abspath  Path of the executable, if found and not `NULL`.
-/// @param[in] use_path  If 'false', only check if "name" is executable
+/// @param[in]  name     Filename to check.
+/// @param[out] abspath  Returns resolved executable path, if not NULL.
+/// @param[in] use_path  Also search $PATH.
 ///
-/// @return `true` if `name` is executable and
+/// @return true if `name` is executable and
 ///   - can be found in $PATH,
 ///   - is relative to current dir or
 ///   - is absolute.
@@ -242,8 +242,8 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   bool no_path = !use_path || path_is_absolute(name);
-#ifdef WIN32
   // If the filename is "qualified" (relative or absolute) do not check $PATH.
+#ifdef WIN32
   no_path |= (name[0] == '.'
               && ((name[1] == '/' || name[1] == '\\')
                   || (name[1] == '.' && (name[2] == '/' || name[2] == '\\'))));
@@ -287,18 +287,7 @@ static bool is_extension_executable(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {
   // Don't check extension for Unix-style 'shell'.
-  const char_u *shell_end = p_sh + STRLEN(p_sh);
-  while (true) {
-    if (*shell_end == '.') {
-      break;
-    } else if (shell_end == p_sh
-               || (*shell_end == '/' || *shell_end == '\\')) {
-      shell_end = p_sh + STRLEN(p_sh);
-      break;
-    }
-    shell_end--;
-  }
-  if (mb_strnicmp(shell_end - 2, (const char_u  *)"sh", 2) == 0) {
+  if (strstr((char *)path_tail(p_sh), "sh") != NULL) {
     return true;
   }
 
@@ -351,13 +340,10 @@ static bool is_executable(const char *name, char_u **abspath)
   }
   const bool ok = (r == 0);
 #endif
-  if (ok) {
-    if (abspath != NULL) {
-      *abspath = save_abs_path((char_u *)name);
-    }
-    return true;
+  if (ok && abspath != NULL) {
+    *abspath = save_abs_path((char_u *)name);
   }
-  return false;
+  return ok;
 }
 
 #ifdef WIN32
@@ -391,10 +377,10 @@ static bool is_executable_ext(char *name, const char *pathext, char_u **abspath)
 }
 #endif
 
-/// Checks if a file is inside the `$PATH` and is executable.
+/// Checks if a file is in `$PATH` and is executable.
 ///
-/// @param[in]  name The name of the executable.
-/// @param[out] abspath  Path of the executable, if found and not `NULL`.
+/// @param[in]  name  Filename to check.
+/// @param[out] abspath  Returns resolved executable path, if not NULL.
 ///
 /// @return `true` if `name` is an executable inside `$PATH`.
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
