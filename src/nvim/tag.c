@@ -1561,24 +1561,6 @@ parse_line:
           }
 
           /*
-           * Check for old style static tag: "file:tag file .."
-           */
-          tagp.fname = NULL;
-          for (p = lbuf; p < tagp.tagname_end; ++p) {
-            if (*p == ':') {
-              if (tagp.fname == NULL)
-                tagp.fname = tagp.tagname_end + 1;
-              if (       fnamencmp(lbuf, tagp.fname, p - lbuf) == 0
-                         && tagp.fname[p - lbuf] == TAB
-                         ) {
-                /* found one */
-                tagp.tagname = p + 1;
-                break;
-              }
-            }
-          }
-
-          /*
            * Skip this line if the length of the tag is different and
            * there is no regexp, or the tag is too short.
            */
@@ -1677,11 +1659,8 @@ parse_line:
           if (mb_strnicmp(tagp.tagname, orgpat.head, (size_t)cmplen) != 0)
             continue;
 
-          /*
-           * Can be a matching tag, isolate the file name and command.
-           */
-          if (tagp.fname == NULL)
-            tagp.fname = tagp.tagname_end + 1;
+          // Can be a matching tag, isolate the file name and command.
+          tagp.fname = tagp.tagname_end + 1;
           tagp.fname_end = vim_strchr(tagp.fname, TAB);
           tagp.command = tagp.fname_end + 1;
           if (tagp.fname_end == NULL)
@@ -1748,19 +1727,12 @@ parse_line:
             /* Don't change the ordering, always use the same table. */
             mtt = MT_GL_OTH;
           } else {
-            /* Decide in which array to store this match. */
-            is_current = test_for_current(
-                tagp.fname, tagp.fname_end, tag_fname,
-                buf_ffname);
-            {
-              if (tagp.tagname != lbuf)
-                is_static = TRUE;               /* detected static tag before */
-              else
-                is_static = test_for_static(&tagp);
-            }
+            // Decide in which array to store this match.
+            is_current = test_for_current(tagp.fname, tagp.fname_end, tag_fname,
+                                          buf_ffname);
+            is_static = test_for_static(&tagp);
 
-            /* decide in which of the sixteen tables to store this
-             * match */
+            // Decide in which of the sixteen tables to store this match.
             if (is_static) {
               if (is_current)
                 mtt = MT_ST_CUR;
@@ -2192,25 +2164,9 @@ parse_tag_line (
  */
 static bool test_for_static(tagptrs_T *tagp)
 {
-  char_u      *p;
+  char_u *p;
 
-  int len;
-
-  /*
-   * Check for old style static tag: "file:tag file .."
-   */
-  len = (int)(tagp->fname_end - tagp->fname);
-  p = tagp->tagname + len;
-  if (       p < tagp->tagname_end
-             && *p == ':'
-             && fnamencmp(tagp->tagname, tagp->fname, len) == 0) {
-    tagp->tagname = p + 1;
-    return TRUE;
-  }
-
-  /*
-   * Check for new style static tag ":...<Tab>file:[<Tab>...]"
-   */
+  // Check for new style static tag ":...<Tab>file:[<Tab>...]"
   p = tagp->command;
   while ((p = vim_strchr(p, '\t')) != NULL) {
     ++p;
