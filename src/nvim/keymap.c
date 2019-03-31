@@ -689,9 +689,10 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         *modp = modifiers;
         *srcp = end_of_name;
         return key;
-      } else {
-          ELOG("invalid special key name: '%s'", src);
       }
+      // else {
+      //     ELOG("invalid special key name: '%s'", src);
+      // }
     }
   }
   return 0;
