@@ -18,9 +18,26 @@
 
 #define REG_KEY "tree_sitter-private"
 
+#include "nvim/lua/tree_sitter.h"
+#include "nvim/buffer.h" // for nvim_ts_read_cb
+
+typedef struct {
+    TSParser *parser;
+    TSTree *tree;
+} Tslua_parser;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/tree_sitter.c.generated.h"
 #endif
+
+static struct luaL_Reg parser_meta[] = {
+  {"__gc", parser_gc},
+  {"__tostring", parser_tostring},
+  {"parse_buf", parser_parse_buf},
+  {"edit", parser_edit},
+  {"tree", parser_tree},
+  {NULL, NULL}
+};
 
 static struct luaL_Reg tree_meta[] = {
   {"__gc", tree_gc},
@@ -33,11 +50,12 @@ static struct luaL_Reg node_meta[] = {
   {"__tostring", node_tostring},
   {"__len", node_child_count},
   {"range", node_range},
+  {"start", node_start},
   {"type", node_type},
   {"symbol", node_symbol},
   {"child_count", node_child_count},
   {"child", node_child},
-  {"descendant_for_range", node_descendant_for_point_range},
+  {"descendant_for_point_range", node_descendant_for_point_range},
   {"parent", node_parent},
   {"to_cursor", node_to_cursor},
   {NULL, NULL}
@@ -74,7 +92,11 @@ void tslua_init(lua_State *L)
 {
   lua_createtable(L, 0, 0);
 
-  // Tree metatable
+  // type metatables
+  lua_createtable(L, 0, 0);
+  build_meta(L, parser_meta);
+  lua_setfield(L, -2, "parser-meta");
+
   lua_createtable(L, 0, 0);
   build_meta(L, tree_meta);
   lua_setfield(L, -2, "tree-meta");
@@ -89,6 +111,121 @@ void tslua_init(lua_State *L)
 
   lua_setfield(L, LUA_REGISTRYINDEX, REG_KEY);
 }
+
+void tslua_push_parser(lua_State *L, TSLanguage *lang)
+{
+  TSParser *parser = ts_parser_new();
+  ts_parser_set_language(parser, lang);
+  Tslua_parser *p = lua_newuserdata(L, sizeof(Tslua_parser));  // [udata]
+  p->parser = parser;
+  p->tree = NULL;
+
+  lua_getfield(L, LUA_REGISTRYINDEX, REG_KEY);  // [udata, env]
+  lua_getfield(L, -1, "parser-meta");  // [udata, env, meta]
+  lua_setmetatable(L, -3);  // [udata, env]
+  lua_pop(L, 1);  // [udata]
+}
+
+static Tslua_parser *parser_check(lua_State *L)
+{
+  if (!lua_gettop(L)) {
+    return 0;
+  }
+  if (!lua_isuserdata(L, 1)) {
+    return 0;
+  }
+  // TODO: typecheck!
+  return lua_touserdata(L, 1);
+}
+
+static int parser_gc(lua_State *L)
+{
+  Tslua_parser *p = parser_check(L);
+  if (!p) {
+    return 0;
+  }
+
+  ts_parser_delete(p->parser);
+  if (p->tree) {
+    ts_tree_delete(p->tree);
+  }
+
+  return 0;
+}
+
+static int parser_tostring(lua_State *L)
+{
+  lua_pushstring(L, "<parser>");
+  return 1;
+}
+
+static int parser_parse_buf(lua_State *L)
+{
+  Tslua_parser *p = parser_check(L);
+  if (!p) {
+    return 0;
+  }
+
+  long num = lua_tointeger(L, 2);
+  void *payload = nvim_ts_read_payload(num);
+  TSInput input = {payload, nvim_ts_read_cb, TSInputEncodingUTF8};
+  TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
+  if (p->tree) {
+    ts_tree_delete(p->tree);
+  }
+  p->tree = new_tree;
+
+  tslua_push_tree(L, ts_tree_copy(p->tree));
+  return 1;
+}
+
+static int parser_tree(lua_State *L)
+{
+  Tslua_parser *p = parser_check(L);
+  if (!p) {
+    return 0;
+  }
+
+  if (p->tree) {
+    tslua_push_tree(L, ts_tree_copy(p->tree));
+  } else {
+    lua_pushnil(L);
+  }
+  return 1;
+}
+
+static int parser_edit(lua_State *L)
+{
+  if(lua_gettop(L) < 10) {
+    lua_pushstring(L, "not enough args to parser:edit()");
+    lua_error(L);
+    return 0; // unreachable
+  }
+
+  Tslua_parser *p = parser_check(L);
+  if (!p) {
+    return 0;
+  }
+
+  if (!p->tree) {
+    return 0;
+  }
+
+  long start_byte = lua_tointeger(L, 2);
+  long old_end_byte = lua_tointeger(L, 3);
+  long new_end_byte = lua_tointeger(L, 4);
+  TSPoint start_point = { lua_tointeger(L, 5), lua_tointeger(L, 6) };
+  TSPoint old_end_point = { lua_tointeger(L, 7), lua_tointeger(L, 8) };
+  TSPoint new_end_point = { lua_tointeger(L, 9), lua_tointeger(L, 10) };
+
+  TSInputEdit edit = { start_byte, old_end_byte, new_end_byte,
+                       start_point, old_end_point, new_end_point };
+
+  ts_tree_edit(p->tree, &edit);
+
+  return 0;
+}
+
 
 // Tree methods
 
@@ -217,6 +354,20 @@ static int node_range(lua_State *L)
   lua_pushnumber(L, end.row);
   lua_pushnumber(L, end.column);
   return 4;
+}
+
+static int node_start(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSPoint start = ts_node_start_point(node);
+  uint32_t start_byte = ts_node_start_byte(node);
+  lua_pushnumber(L, start.row);
+  lua_pushnumber(L, start.column);
+  lua_pushnumber(L, start_byte);
+  return 3;
 }
 
 static int node_child_count(lua_State *L)

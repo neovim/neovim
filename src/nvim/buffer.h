@@ -1,6 +1,8 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
+#include <tree_sitter/api.h>  // for TSPoint
+
 #include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/pos.h"  // for linenr_T
@@ -58,11 +60,6 @@ enum bfa_values {
   BFA_WIPE      = 2, // buffer is going to be wiped out
   BFA_KEEP_UNDO = 4, // do not free undo information
 };
-
-typedef struct {
-  uint32_t row;
-  uint32_t column;
-} TSPoint;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.h.generated.h"

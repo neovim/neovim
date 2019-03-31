@@ -667,9 +667,19 @@ static int unsafe_ptr_to_ts_tree(lua_State *L)
   return 1;
 }
 
+static int create_tslua_parser(lua_State *L)
+{
+  TSLanguage *tree_sitter_c(void), *lang = tree_sitter_c();
+  tslua_push_parser(L, lang);
+  return 1;
+}
+
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   tslua_init(lstate);
   lua_pushcfunction(lstate, unsafe_ptr_to_ts_tree);
   lua_setfield(lstate, -2, "unsafe_ts_tree");
+
+  lua_pushcfunction(lstate, create_tslua_parser);
+  lua_setfield(lstate, -2, "ts_parser");
 }

@@ -1,8 +1,4 @@
 local a = vim.api
-local ffi = require'ffi'
-
-local path = a.nvim_get_var("ts_test_path")
-local data = io.open(path..'/treesitter_rt_ffi.h'):read('*all')
 
 if __treesitter_rt_ns == nil then
     __treesitter_rt_ns = a.nvim_buf_add_highlight(0, 0, "", 0, 0, 0)
@@ -13,41 +9,6 @@ local my_syn_ns = __treesitter_rt_syn_ns
 
 --luadev = require'luadev'
 --i = require'inspect'
-
-if did_def == nil then
-ffi.cdef(data)
-ffi.cdef([[ const TSLanguage * tree_sitter_c(); ]])
-
-ffi.cdef([[
-  const char nvim_ts_read_cb(void *payload, uint32_t byte_index, TSPoint position, uint32_t *bytes_read);
-  void *nvim_ts_read_payload(int bufnr);
-]])
-did_def = true
-TSPoint = ffi.metatype("TSPoint", {
-  __tostring=function(p)
-      return "TSPoint("..p.row..", "..p.column..")"
-  end
-})
-else
-TSPoint = ffi.typeof("TSPoint")
-end
-
---ffi.load(path..'/../utf8proc/libutf8proc.so',true)
---l = ffi.load(path..'/../tree-sitter/build/libtreesitter_rt.so')
-l = ffi.C
-local l = ffi.C
-
-function inspect_node(node)
-  local start = l.ts_node_start_point(node)
-  local endp = l.ts_node_end_point(node)
-  local name = ffi.string(l.ts_node_type(node))
-  return (name.."(["..start.row..", "..start.column.."], ["..endp.row..", "..endp.column.."])")
-end
-
-TSInput = ffi.typeof("TSInput")
-TSInputEdit = ffi.typeof("TSInputEdit")
-read_cb = ffi.typeof("const char *(*)(void *payload, uint32_t byte_index, TSPoint position, uint32_t *bytes_read)")
-fake_read_cb = ffi.typeof("const char *(*)(void *payload, uint32_t byte_index, uint32_t row, uint32_t *bytes_read)")
 
 
 function reader(payload, byte_index, position, bytes_read)
@@ -62,15 +23,7 @@ function parse_tree(tsstate, force)
   if tsstate.valid and not force then
     return tsstate.tree
   end
-  local old_tree = (not force) and tsstate.rawtree or nil
-  payload = ffi.C.nvim_ts_read_payload(tsstate.bufnr) -- check NULL!
-  local input = TSInput(payload, ffi.C.nvim_ts_read_cb, "TSInputEncodingUTF8")
-  --print(input.read)
-  tsstate.rawtree = l.ts_parser_parse(tsstate.parser, old_tree, input)
-  tsstate.tree = vim.unsafe_ts_tree(l.ts_tree_copy(tsstate.rawtree))
-  if oldtree ~= nil then
-    l.ts_tree_delete(oldtree)
-  end
+  tsstate.tree = tsstate.parser:parse_buf(tsstate.bufnr)
   tsstate.valid = true
   return tsstate.tree
 end
@@ -82,22 +35,22 @@ function the_cb(tsstate, ev, ...)
     local nlines = #lines
     local stop_row = start_row + nlines
     local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-    local root = l.ts_tree_root_node(tsstate.rawtree)
+    -- a bit messy, should we expose edited but not reparsed tree?
+    -- are multiple edits safe in general?
+    local root = tsstate.parser:tree():root()
     -- TODO: add proper lookup function!
-    local inode = l.ts_node_descendant_for_point_range(root, TSPoint(oldstopline+9000,0), TSPoint(oldstopline,0))
+    local inode = root:descendant_for_point_range(oldstopline+9000,0, oldstopline,0)
     local edit
-    if l.ts_node_is_null(inode) then
+    if inode == nil then
       local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
-      edit = TSInputEdit(start_byte,stop_byte,stop_byte,TSPoint(start_row,0),TSPoint(stop_row,0),TSPoint(stop_row,0))
+      tsstate.parser:edit(start_byte,stop_byte,stop_byte,start_row,0,stop_row,0,stop_row,0)
     else
-      local fakebyteoldstop = l.ts_node_start_byte(inode)
-      local fakeoldstoppoint = l.ts_node_start_point(inode)
-      local fake_rows = fakeoldstoppoint.row-oldstopline
+      local fakeoldstoprow, fakeoldstopcol, fakebyteoldstop = inode:start()
+      local fake_rows = fakeoldstoprow-oldstopline
       local fakestop = stop_row+fake_rows
-      local fakebytestop = a.nvim_buf_get_offset(bufnr,fakestop)+fakeoldstoppoint.column
-      edit = TSInputEdit(start_byte,fakebyteoldstop,fakebytestop,TSPoint(start_row,0),fakeoldstoppoint,TSPoint(fakestop,fakeoldstoppoint.column))
+      local fakebytestop = a.nvim_buf_get_offset(bufnr,fakestop)+fakeoldstopcol
+      tsstate.parser:edit(start_byte,fakebyteoldstop,fakebytestop,start_row,0,fakeoldstoprow,fakeoldstopcol,fakestop,fakeoldstopcol)
     end
-    l.ts_tree_edit(tsstate.rawtree,edit)
     tsstate.valid = false
     --luadev.append_buf({i{edit.start_byte,edit.old_end_byte,edit.new_end_byte},
     --                   i{edit.start_point, edit.old_end_point, edit.new_end_point}})
@@ -117,10 +70,8 @@ function create_parser(bufnr)
   end
   local tsstate = {}
   tsstate.bufnr = bufnr
-  tsstate.parser = l.ts_parser_new()
-  clang = l.tree_sitter_c()
-  l.ts_parser_set_language(tsstate.parser,clang)
-  --tree = l.ts_parser_parse_string(tsstate.parser, nil, data, string.len(data))
+  tsstate.parser = vim.ts_parser()
+  -- tsstate:set_lang("c")
   parse_tree(tsstate)
   attach_buf(tsstate)
   return tsstate
@@ -129,7 +80,7 @@ end
 function ts_inspect_pos(row,col)
   local tree = parse_tree(theparser)
   local root = tree:root()
-  local node = root:descendant_for_range(row,col,row,col)
+  local node = root:descendant_for_point_range(row,col,row,col)
   show_node(node)
 end
 
@@ -197,8 +148,6 @@ function ts_line(line,endl,drawing)
   end
   tree = parse_tree(theparser)
   local root = tree:root()
-  --local node = l.ts_node_descendant_for_point_range(root, TSPoint(line,0), TSPoint(line,0))
-  --local cursor = l.ts_tree_cursor_new(node)
   local cursor = root:to_cursor()
   local startbyte = a.nvim_buf_get_offset(theparser.bufnr, line)
   local node = root
