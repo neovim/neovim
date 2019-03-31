@@ -1527,36 +1527,32 @@ line_read_in:
         }
 
 parse_line:
-        /*
-         * Figure out where the different strings are in this line.
-         * For "normal" tags: Do a quick check if the tag matches.
-         * This speeds up tag searching a lot!
-         */
-        if (orgpat.headlen
-            ) {
+        if (vim_strchr(lbuf, NL) == NULL && !use_cscope) {
+          // Truncated line, ignore it. Has been reported for Mozilla JS with
+          // extremely long names.
+          if (p_verbose >= 5) {
+            verbose_enter();
+            MSG(_("Ignoring long line in tags file"));
+            verbose_leave();
+          }
+          if (state != TS_LINEAR) {
+            // Avoid getting stuck.
+            linear = true;
+            state = TS_LINEAR;
+            vim_fseek(fp, search_info.low_offset, SEEK_SET);
+          }
+          continue;
+        }
+
+        // Figure out where the different strings are in this line.
+        // For "normal" tags: Do a quick check if the tag matches.
+        // This speeds up tag searching a lot!
+        if (orgpat.headlen) {
           tagp.tagname = lbuf;
           tagp.tagname_end = vim_strchr(lbuf, TAB);
-          if (tagp.tagname_end == NULL)
-          {
-            if (vim_strchr(lbuf, NL) == NULL) {
-              /* Truncated line, ignore it.  Has been reported for
-               * Mozilla JS with extremely long names. */
-              if (p_verbose >= 5) {
-                verbose_enter();
-                MSG(_("Ignoring long line in tags file"));
-                verbose_leave();
-              }
-              if (state != TS_LINEAR) {
-                /* Avoid getting stuck. */
-                linear = TRUE;
-                state = TS_LINEAR;
-                vim_fseek(fp, search_info.low_offset, SEEK_SET);
-              }
-              continue;
-            }
-
-            /* Corrupted tag line. */
-            line_error = TRUE;
+          if (tagp.tagname_end == NULL) {
+            // Corrupted tag line.
+            line_error = true;
             break;
           }
 
