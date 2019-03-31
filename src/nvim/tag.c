@@ -436,11 +436,15 @@ do_tag (
         tagmatchname = vim_strsave(name);
       }
 
-      if (type == DT_TAG || type == DT_SELECT || type == DT_JUMP
+      if (type == DT_SELECT || type == DT_JUMP
           || type == DT_LTAG) {
         cur_match = MAXCOL - 1;
       }
-      max_num_matches = cur_match + 1;
+      if (type == DT_TAG) {
+        max_num_matches = MAXCOL;
+      } else {
+        max_num_matches = cur_match + 1;
+      }
 
       /* when the argument starts with '/', use it as a regexp */
       if (!no_regexp && *name == '/') {
@@ -495,7 +499,7 @@ do_tag (
       if (type == DT_CSCOPE && num_matches > 1) {
         cs_print_tags();
         ask_for_selection = true;
-      } else if (type == DT_TAG) {
+      } else if (type == DT_TAG && *tag != NUL) {
         // If a count is supplied to the ":tag <name>" command, then
         // jump to count'th matching tag.
         cur_match = count > 0 ? count - 1 : 0;

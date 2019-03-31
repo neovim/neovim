@@ -258,4 +258,77 @@ func Test_tagjump_etags()
   bwipe!
 endfunc
 
+func Test_tag_with_count()
+  call writefile([
+	\ 'test	Xtest.h	/^void test();$/;"	p	typeref:typename:void	signature:()',
+	\ ], 'Xtags')
+  call writefile([
+	\ 'main	Xtest.c	/^int main()$/;"	f	typeref:typename:int	signature:()',
+	\ 'test	Xtest.c	/^void test()$/;"	f	typeref:typename:void	signature:()',
+	\ ], 'Ytags')
+  cal writefile([
+	\ 'int main()',
+	\ 'void test()',
+	\ ], 'Xtest.c')
+  cal writefile([
+	\ 'void test();',
+	\ ], 'Xtest.h')
+  set tags=Xtags,Ytags
+
+  new Xtest.c
+  let tl = taglist('test', 'Xtest.c')
+  call assert_equal(tl[0].filename, 'Xtest.c')
+  call assert_equal(tl[1].filename, 'Xtest.h')
+
+  tag test
+  call assert_equal(bufname('%'), 'Xtest.c')
+  1tag test
+  call assert_equal(bufname('%'), 'Xtest.c')
+  2tag test
+  call assert_equal(bufname('%'), 'Xtest.h')
+
+  set tags&
+  call delete('Xtags')
+  call delete('Ytags')
+  bwipe Xtest.h
+  bwipe Xtest.c
+  call delete('Xtest.h')
+  call delete('Xtest.c')
+endfunc
+
+func Test_tagnr_recall()
+  call writefile([
+	\ 'test	Xtest.h	/^void test();$/;"	p',
+	\ 'main	Xtest.c	/^int main()$/;"	f',
+	\ 'test	Xtest.c	/^void test()$/;"	f',
+	\ ], 'Xtags')
+  cal writefile([
+	\ 'int main()',
+	\ 'void test()',
+	\ ], 'Xtest.c')
+  cal writefile([
+	\ 'void test();',
+	\ ], 'Xtest.h')
+  set tags=Xtags
+
+  new Xtest.c
+  let tl = taglist('test', 'Xtest.c')
+  call assert_equal(tl[0].filename, 'Xtest.c')
+  call assert_equal(tl[1].filename, 'Xtest.h')
+
+  2tag test
+  call assert_equal(bufname('%'), 'Xtest.h')
+  pop
+  call assert_equal(bufname('%'), 'Xtest.c')
+  tag
+  call assert_equal(bufname('%'), 'Xtest.h')
+
+  set tag&
+  call delete('Xtags')
+  bwipe Xtest.h
+  bwipe Xtest.c
+  call delete('Xtest.h')
+  call delete('Xtest.c')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
