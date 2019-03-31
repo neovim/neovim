@@ -763,6 +763,9 @@ func Test_diff_of_diff()
 
   call VerifyScreenDump(buf, 'Test_diff_of_diff_01', {})
 
+  call term_sendkeys(buf, ":set rightleft\<cr>")
+  call VerifyScreenDump(buf, 'Test_diff_of_diff_02', {})
+
   " clean up
   call StopVimInTerminal(buf)
   call delete('Xtest_diff_diff')
