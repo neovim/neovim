@@ -70,32 +70,37 @@ func _SetUpHiddenBuffer()
   call assert_equal( line( '.' ), 11 )
 endfunc
 
+func _CleanUpHiddenBuffer()
+  bwipe! hidden
+  bwipe!
+endfunc
+
 func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_Clear()
   call _SetUpHiddenBuffer()
   py vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][:] = None
   call assert_equal( line( '.' ), 11 )
-  bwipe!
+  call _CleanUpHiddenBuffer()
 endfunc
 
 func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_List()
   call _SetUpHiddenBuffer()
   py vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][:] = [ 'test' ]
   call assert_equal( line( '.' ), 11 )
-  bwipe!
+  call _CleanUpHiddenBuffer()
 endfunc
 
 func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_Str()
   call _SetUpHiddenBuffer()
   py vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][0] = 'test'
   call assert_equal( line( '.' ), 11 )
-  bwipe!
+  call _CleanUpHiddenBuffer()
 endfunc
 
 func Test_Write_To_HiddenBuffer_Does_Not_Fix_Cursor_ClearLine()
   call _SetUpHiddenBuffer()
   py vim.buffers[ int( vim.eval( 'bufnr("hidden")' ) ) ][0] = None
   call assert_equal( line( '.' ), 11 )
-  bwipe!
+  call _CleanUpHiddenBuffer()
 endfunc
 
 func _SetUpVisibleBuffer()
