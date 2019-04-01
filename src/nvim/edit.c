@@ -3006,7 +3006,6 @@ bool ins_compl_active(void)
 // Get complete information
 void get_complete_info(list_T *what_list, dict_T *retdict)
 {
-  int ret = OK;
 #define CI_WHAT_MODE            0x01
 #define CI_WHAT_PUM_VISIBLE     0x02
 #define CI_WHAT_ITEMS           0x04
@@ -3038,7 +3037,8 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
     }
   }
 
-  if (ret == OK && (what_flag & CI_WHAT_MODE)) {
+  int ret = OK;
+  if (what_flag & CI_WHAT_MODE) {
     ret = tv_dict_add_str(retdict, S_LEN("mode"),
                           (char *)ins_compl_mode());
   }
