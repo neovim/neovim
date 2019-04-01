@@ -255,9 +255,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
   if (no_path) {
 #ifdef WIN32
     const char *pathext = get_pathext();
-    if ((is_extension_executable((char *)name)
-         && is_executable((char *)name, abspath))
-        || is_executable_ext((char *)name, pathext, abspath)) {
+    if (is_executable_ext((char *)name, pathext, abspath)) {
 #else
     // Must have path separator, cannot execute files in the current directory.
     if ((const char_u *)gettail_dir((const char *)name) != name
@@ -271,53 +269,6 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 
   return is_executable_in_path(name, abspath);
 }
-
-#ifdef WIN32
-static const char *get_pathext(void)
-{
-  const char *pathext = os_getenv("PATHEXT");
-  if (!pathext) {
-    pathext = ".com;.exe;.bat;.cmd";
-  }
-  return pathext;
-}
-
-/// Returns true if extension of `name` is executable file extension.
-static bool is_extension_executable(const char *name)
-  FUNC_ATTR_NONNULL_ALL
-{
-  // Don't check extension for Unix-style 'shell'.
-  if (strstr((char *)path_tail(p_sh), "sh") != NULL) {
-    return true;
-  }
-
-  const char *pathext = get_pathext();
-  const char *cur_pos = pathext;
-  while (true) {
-    // Don't check extension if $PATHEXT itself contains dot.
-    if (*cur_pos == '.'
-        && (*(cur_pos + 1) == ENV_SEPCHAR || *(cur_pos + 1) == NUL)) {
-      return true;
-    }
-    const char *ext_end = strchr(cur_pos, ENV_SEPCHAR);
-    size_t ext_len = ext_end
-      ? (size_t)(ext_end - cur_pos)
-      : (strlen(pathext) - (size_t)(cur_pos - pathext));
-    size_t name_len = STRLEN(name);
-    if (name_len > ext_len && mb_strnicmp(
-        (char_u *)(name + name_len - ext_len),
-        (char_u *)cur_pos, ext_len) == 0) {
-      return true;
-    }
-    if (ext_end == NULL) {
-      break;
-    } else {
-      cur_pos = ++ext_end;
-    }
-  }
-  return false;
-}
-#endif
 
 /// Returns true if `name` is an executable file.
 static bool is_executable(const char *name, char_u **abspath)
@@ -347,24 +298,43 @@ static bool is_executable(const char *name, char_u **abspath)
 }
 
 #ifdef WIN32
-/// Appends file extensions from `pathext` to `name` and returns true if any
-/// such combination is executable.
+static const char *get_pathext(void)
+{
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
+  return pathext;
+}
+
+/// Checks if file `name` is executable under one of these conditions:
+/// - if the file extension is in $PATHEXT
+/// - if the result of any $PATHEXT extension appended to `name` is executable
 static bool is_executable_ext(char *name, const char *pathext, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  char *nameext = strrchr(name, '.');
+  size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
   char *buf_end = xstrchrnul(os_buf, '\0');
   for (const char *ext = pathext; *ext; ext++) {
-    // Skip the extension if there is no suffix after a '.'.
+    // If $PATHEXT itself contains dot:
     if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
+      if (is_executable(name, abspath)) {
+        return true;
+      }
+      // Skip the extension.
       ext++;
       continue;
     }
 
     const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
-    STRLCPY(buf_end, ext, ext_end - ext + 1);
+    size_t ext_len = (size_t)(ext_end - ext);
+    STRLCPY(buf_end, ext, ext_len + 1);
+    bool in_pathext = nameext_len == ext_len
+       && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
 
-    if (is_executable(os_buf, abspath)) {
+    if (in_pathext || is_executable(os_buf, abspath)) {
       return true;
     }
 
@@ -421,8 +391,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     append_path(buf, (char *)name, buf_len);
 
 #ifdef WIN32
-    if ((is_extension_executable(buf) && is_executable(buf, abspath))
-        || is_executable_ext(buf, pathext, abspath)) {
+    if (is_executable_ext(buf, pathext, abspath)) {
 #else
     if (is_executable(buf, abspath)) {
 #endif
