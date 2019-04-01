@@ -378,6 +378,14 @@ int main(int argc, char **argv)
     TIME_MSG("initialized screen early for embedder");
   }
 
+  if (!headless_mode && !embedded_mode && !silent_mode) {
+    input_stop();  // Stop reading input, let the UI take over.
+    ui_builtin_start();
+    starting = NO_BUFFERS;
+    screenclear();
+    early_ui = true;
+  }
+
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
@@ -475,11 +483,6 @@ int main(int argc, char **argv)
     // messages and that is done with a call to wait_return.
     TIME_MSG("waiting for return");
     wait_return(true);
-  }
-
-  if (!headless_mode && !embedded_mode && !silent_mode) {
-    input_stop();  // Stop reading input, let the UI take over.
-    ui_builtin_start();
   }
 
   setmouse();  // may start using the mouse
