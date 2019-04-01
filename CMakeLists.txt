@@ -419,6 +419,7 @@ endif()
 
 set(TREESITTER_PATH "${DEPS_BUILD_DIR}/build/src/treesitter")
 set(TREESITTER_C_PATH "${DEPS_BUILD_DIR}/build/src/treesitter-c")
+set(TREESITTER_JAVASCRIPT_PATH "${DEPS_BUILD_DIR}/build/src/treesitter-javascript")
 set(LIBUTF8PROC_INCLUDE_DIRS ${DEPS_BUILD_DIR}/build/src/utf8proc)
 
 option(FEAT_TUI "Enable the Terminal UI" ON)

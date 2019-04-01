@@ -669,7 +669,17 @@ static int unsafe_ptr_to_ts_tree(lua_State *L)
 
 static int create_tslua_parser(lua_State *L)
 {
-  TSLanguage *tree_sitter_c(void), *lang = tree_sitter_c();
+  TSLanguage *tree_sitter_c(void), *tree_sitter_javascript(void);
+
+  if (!lua_gettop(L)) {
+    return 0;
+  }
+  char *str = lua_tostring(L,1);
+
+  TSLanguage *lang = tree_sitter_c();
+  if (str && striequal(str, "javascript")) {
+    lang = tree_sitter_javascript();
+  }
   tslua_push_parser(L, lang);
   return 1;
 }

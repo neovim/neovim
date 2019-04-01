@@ -89,6 +89,8 @@ file(GLOB XDIFF_HEADERS xdiff/*.h)
 
 list(APPEND TS_SOURCES ${TREESITTER_PATH}/lib/src/lib.c)
 list(APPEND TS_SOURCES ${TREESITTER_C_PATH}/src/parser.c)
+list(APPEND TS_SOURCES ${TREESITTER_JAVASCRIPT_PATH}/src/parser.c)
+list(APPEND TS_SOURCES ${TREESITTER_JAVASCRIPT_PATH}/src/scanner.c)
 
 foreach(subdir
         os
