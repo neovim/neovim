@@ -158,13 +158,11 @@ describe('executable() (Windows)', function()
 
   it('returns 1 for any existing filename, when $PATHEXT contain dot itself', function()
     clear({env={PATHEXT='.;.zzz'}})
-    command('set shell=sh')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
     end
     eq(1, call('executable', 'test_executable_zzz.zzz'))
     clear({env={PATHEXT='.zzz;.'}})
-    command('set shell=sh')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
     end
@@ -173,7 +171,6 @@ describe('executable() (Windows)', function()
 
   it('returns 1 for any existing path, when $PATHEXT contain dot itself (backslashes)', function()
     clear({env={PATHEXT='.;.zzz'}})
-    command('set shell=bash.exe')
     for _,ext in ipairs(exts) do
       eq(1, call('executable', '.\\test_executable_'..ext..'.'..ext))
       eq(1, call('executable', './test_executable_'..ext..'.'..ext))
