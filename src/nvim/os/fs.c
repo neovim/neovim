@@ -303,6 +303,7 @@ static bool is_executable(const char *name, char_u **abspath)
 static bool is_executable_ext(char *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  const bool is_unix_shell = strstr((char *)path_tail(p_sh), "sh") != NULL;
   char *nameext = strrchr(name, '.');
   size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
@@ -325,11 +326,10 @@ static bool is_executable_ext(char *name, char_u **abspath)
     const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
     size_t ext_len = (size_t)(ext_end - ext);
     STRLCPY(buf_end, ext, ext_len + 1);
-    bool in_pathext = (strstr((char *)path_tail(p_sh), "sh") != NULL)
-       || (nameext_len == ext_len
-           && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len));
+    bool in_pathext = nameext_len == ext_len
+      && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
 
-    if ((in_pathext && is_executable(name, abspath))
+    if (((in_pathext || is_unix_shell) && is_executable(name, abspath))
         || is_executable(os_buf, abspath)) {
       return true;
     }
