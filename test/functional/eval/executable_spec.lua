@@ -136,7 +136,14 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', '.\\test_executable_zzz'))
   end)
 
-  it('returns 1 for any existing filename, when a Unix-shell like \'shell\'', function()
+  it("with weird $PATHEXT", function()
+    clear({env={PATHEXT=';'}})
+    eq(0, call('executable', '.\\test_executable_zzz'))
+    clear({env={PATHEXT=';;;.zzz;;'}})
+    eq(1, call('executable', '.\\test_executable_zzz'))
+  end)
+
+  it("unqualified filename, Unix-style 'shell'", function()
     clear({env={PATHEXT=''}})
     command('set shell=sh')
     for _,ext in ipairs(exts) do
@@ -145,7 +152,7 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', 'test_executable_zzz.zzz'))
   end)
 
-  it('returns 1 for any existing path, when a Unix-shell like \'shell\' (backslashes)', function()
+  it("relative path, Unix-style 'shell' (backslashes)", function()
     clear({env={PATHEXT=''}})
     command('set shell=bash.exe')
     for _,ext in ipairs(exts) do
@@ -156,7 +163,7 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', './test_executable_zzz.zzz'))
   end)
 
-  it('returns 1 for any existing filename, when $PATHEXT contain dot itself', function()
+  it('unqualified filename, $PATHEXT contains dot', function()
     clear({env={PATHEXT='.;.zzz'}})
     for _,ext in ipairs(exts) do
       eq(1, call('executable', 'test_executable_'..ext..'.'..ext))
@@ -169,7 +176,7 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', 'test_executable_zzz.zzz'))
   end)
 
-  it('returns 1 for any existing path, when $PATHEXT contain dot itself (backslashes)', function()
+  it('relative path, $PATHEXT contains dot (backslashes)', function()
     clear({env={PATHEXT='.;.zzz'}})
     for _,ext in ipairs(exts) do
       eq(1, call('executable', '.\\test_executable_'..ext..'.'..ext))
@@ -179,12 +186,12 @@ describe('executable() (Windows)', function()
     eq(1, call('executable', './test_executable_zzz.zzz'))
   end)
 
-  it('ignore case of extension', function()
+  it('ignores case of extension', function()
     clear({env={PATHEXT='.ZZZ'}})
     eq(1, call('executable', 'test_executable_zzz.zzz'))
   end)
 
-  it('file is not found by relative path from $PATH', function()
+  it('relative path does not search $PATH', function()
     clear({env={PATHEXT=''}})
     eq(0, call('executable', './System32/notepad.exe'))
     eq(0, call('executable', '.\\System32\\notepad.exe'))

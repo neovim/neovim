@@ -5,7 +5,7 @@ local eq, clear, call, iswin =
 describe('exepath() (Windows)', function()
   if not iswin() then return end  -- N/A for Unix.
 
-  it('append extension, even if omit extension', function()
+  it('append extension if omitted', function()
     local filename = 'cmd'
     local pathext = '.exe'
     clear({env={PATHEXT=pathext}})

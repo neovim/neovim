@@ -297,9 +297,9 @@ static bool is_executable(const char *name, char_u **abspath)
 }
 
 #ifdef WIN32
-/// Checks if file `name` is executable under one of these conditions:
-/// - if the file extension is in $PATHEXT and `name` is executable
-/// - if the result of any $PATHEXT extension appended to `name` is executable
+/// Checks if file `name` is executable under any of these conditions:
+/// - extension is in $PATHEXT and `name` is executable
+/// - result of any $PATHEXT extension appended to `name` is executable
 static bool is_executable_ext(char *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -318,7 +318,7 @@ static bool is_executable_ext(char *name, char_u **abspath)
       if (is_executable(name, abspath)) {
         return true;
       }
-      // Skip the extension.
+      // Skip it.
       ext++;
       continue;
     }
