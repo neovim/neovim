@@ -136,6 +136,16 @@ func XlistTests(cchar)
 	      \ ' 4:40 col 20 x  44: Other',
 	      \ ' 5:50 col 25  55: one'], l)
 
+  " Test for module names, one needs to explicitly set `'valid':v:true` so
+  call g:Xsetlist([
+        \ {'lnum':10,'col':5,'type':'W','module':'Data.Text','text':'ModuleWarning','nr':11,'valid':v:true},
+        \ {'lnum':20,'col':10,'type':'W','module':'Data.Text','filename':'Data/Text.hs','text':'ModuleWarning','nr':22,'valid':v:true},
+        \ {'lnum':30,'col':15,'type':'W','filename':'Data/Text.hs','text':'FileWarning','nr':33,'valid':v:true}])
+  let l = split(execute('Xlist', ""), "\n")
+  call assert_equal([' 1 Data.Text:10 col 5 warning  11: ModuleWarning',
+        \ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
+        \ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
+
   " Error cases
   call assert_fails('Xlist abc', 'E488:')
 endfunc
@@ -1092,6 +1102,21 @@ func Test_efm2()
   call assert_equal(89, l[4].lnum)
   call assert_equal(1, l[4].valid)
   call assert_equal(expand('unittests/dbfacadeTest.py'), bufname(l[4].bufnr))
+
+  " Test for %o
+  set efm=%f(%o):%l\ %m
+  cgetexpr ['Xtestfile(Language.PureScript.Types):20 Error']
+  call writefile(['Line1'], 'Xtestfile')
+  let l = getqflist()
+  call assert_equal(1, len(l), string(l))
+  call assert_equal('Language.PureScript.Types', l[0].module)
+  copen
+  call assert_equal('Language.PureScript.Types|20| Error', getline(1))
+  call feedkeys("\<CR>", 'xn')
+  call assert_equal('Xtestfile', expand('%:t'))
+  cclose
+  bd
+  call delete("Xtestfile")
 
   " The following sequence of commands used to crash Vim
   set efm=%W%m

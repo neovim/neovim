@@ -57,19 +57,20 @@ struct dir_stack_T {
  */
 typedef struct qfline_S qfline_T;
 struct qfline_S {
-  qfline_T    *qf_next;         /* pointer to next error in the list */
-  qfline_T    *qf_prev;         /* pointer to previous error in the list */
-  linenr_T qf_lnum;             /* line number where the error occurred */
-  int qf_fnum;                  /* file number for the line */
-  int qf_col;                   /* column where the error occurred */
-  int qf_nr;                    /* error number */
-  char_u      *qf_pattern;      /* search pattern for the error */
-  char_u      *qf_text;         /* description of the error */
-  char_u qf_viscol;             /* set to TRUE if qf_col is screen column */
-  char_u qf_cleared;            /* set to TRUE if line has been deleted */
-  char_u qf_type;               /* type of the error (mostly 'E'); 1 for
-                                   :helpgrep */
-  char_u qf_valid;              /* valid error message detected */
+  qfline_T    *qf_next;         ///< pointer to next error in the list
+  qfline_T    *qf_prev;         ///< pointer to previous error in the list
+  linenr_T qf_lnum;             ///< line number where the error occurred
+  int qf_fnum;                  ///< file number for the line
+  int qf_col;                   ///< column where the error occurred
+  int qf_nr;                    ///< error number
+  char_u      *qf_module;       ///< module name for this error
+  char_u      *qf_pattern;      ///< search pattern for the error
+  char_u      *qf_text;         ///< description of the error
+  char_u qf_viscol;             ///< set to TRUE if qf_col is screen column
+  char_u qf_cleared;            ///< set to TRUE if line has been deleted
+  char_u qf_type;               ///< type of the error (mostly 'E'); 1 for
+                                //   :helpgrep
+  char_u qf_valid;              ///< valid error message detected
 };
 
 /*
@@ -122,7 +123,7 @@ struct qf_info_S {
 static qf_info_T ql_info;         // global quickfix list
 static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
-#define FMT_PATTERNS 10         /* maximum number of % recognized */
+#define FMT_PATTERNS 11           // maximum number of % recognized
 
 /*
  * Structure used to hold the info of one part of 'errorformat'
@@ -177,6 +178,7 @@ typedef struct {
 
 typedef struct {
   char_u *namebuf;
+  char_u *module;
   char_u *errmsg;
   size_t errmsglen;
   long lnum;
@@ -250,7 +252,8 @@ static struct fmtpattern
   { 'r', ".*" },
   { 'p', "[- 	.]*" },  // NOLINT(whitespace/tab)
   { 'v', "\\d\\+" },
-  { 's', ".\\+" }
+  { 's', ".\\+" },
+  { 'o', ".\\+" }
 };
 
 // Converts a 'errorformat' string to regular expression pattern
@@ -748,6 +751,7 @@ restofline:
       continue;
     }
     fields->namebuf[0] = NUL;
+    fields->module[0] = NUL;
     fields->pattern[0] = NUL;
     if (!qfl->qf_multiscan) {
       fields->errmsg[0] = NUL;
@@ -877,6 +881,16 @@ restofline:
         fields->pattern[len + 3] = '\\';
         fields->pattern[len + 4] = '$';
         fields->pattern[len + 5] = NUL;
+      }
+      if ((i = (int)fmt_ptr->addr[10]) > 0) {  // %o
+        if (regmatch.startp[i] == NULL) {
+          continue;
+        }
+        len = (size_t)(regmatch.endp[i] - regmatch.startp[i]);
+        if (len > CMDBUFFSIZE) {
+          len = CMDBUFFSIZE;
+        }
+        xstrlcat((char *)fields->module, (char *)regmatch.startp[i], len);
       }
       break;
     }
@@ -1037,6 +1051,7 @@ qf_init_ext(
   }
 
   fields.namebuf = xmalloc(CMDBUFFSIZE + 1);
+  fields.module = xmalloc(CMDBUFFSIZE + 1);
   fields.errmsglen = CMDBUFFSIZE + 1;
   fields.errmsg = xmalloc(fields.errmsglen);
   fields.pattern = xmalloc(CMDBUFFSIZE + 1);
@@ -1131,6 +1146,7 @@ qf_init_ext(
                      (*fields.namebuf || qfl->qf_directory)
                      ? fields.namebuf : ((qfl->qf_currfile && fields.valid)
                                          ? qfl->qf_currfile : (char_u *)NULL),
+                     fields.module,
                      0,
                      fields.errmsg,
                      fields.lnum,
@@ -1175,6 +1191,7 @@ qf_init_end:
     fclose(state.fd);
   }
   xfree(fields.namebuf);
+  xfree(fields.module);
   xfree(fields.errmsg);
   xfree(fields.pattern);
   xfree(state.growbuf);
@@ -1276,6 +1293,7 @@ void qf_free_all(win_T *wp)
 /// @param  qf_idx   list index
 /// @param  dir      optional directory name
 /// @param  fname    file name or NULL
+/// @param  module   module name or NULL
 /// @param  bufnum   buffer number or zero
 /// @param  mesg     message
 /// @param  lnum     line number
@@ -1288,9 +1306,9 @@ void qf_free_all(win_T *wp)
 ///
 /// @returns OK or FAIL.
 static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
-                        int bufnum, char_u *mesg, long lnum, int col,
-                        char_u vis_col, char_u *pattern, int nr, char_u type,
-                        char_u valid)
+                        char_u *module, int bufnum, char_u *mesg, long lnum,
+                        int col, char_u vis_col, char_u *pattern, int nr,
+                        char_u type, char_u valid)
 {
   qfline_T *qfp = xmalloc(sizeof(qfline_T));
   qfline_T **lastp;  // pointer to qf_last or NULL
@@ -1314,6 +1332,14 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
     qfp->qf_pattern = NULL;
   } else {
     qfp->qf_pattern = vim_strsave(pattern);
+  }
+  if (module == NULL || *module == NUL) {
+    qfp->qf_module = NULL;
+  } else if ((qfp->qf_module = vim_strsave(module)) == NULL) {
+    xfree(qfp->qf_text);
+    xfree(qfp->qf_pattern);
+    xfree(qfp);
+    return QF_FAIL;
   }
   qfp->qf_nr = nr;
   if (type != 1 && !vim_isprintc(type))   /* only printable chars allowed */
@@ -1446,6 +1472,7 @@ void copy_loclist(win_T *from, win_T *to)
                          to->w_llist->qf_curlist,
                          NULL,
                          NULL,
+                         from_qfp->qf_module,
                          0,
                          from_qfp->qf_text,
                          from_qfp->qf_lnum,
@@ -2394,17 +2421,22 @@ void qf_list(exarg_T *eap)
         break;
 
       fname = NULL;
-      if (qfp->qf_fnum != 0
-          && (buf = buflist_findnr(qfp->qf_fnum)) != NULL) {
-        fname = buf->b_fname;
-        if (qfp->qf_type == 1)          /* :helpgrep */
-          fname = path_tail(fname);
+      if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
+        vim_snprintf((char *)IObuff, IOSIZE, "%2d %s", i,
+                     (char *)qfp->qf_module);
+      } else {
+        if (qfp->qf_fnum != 0 && (buf = buflist_findnr(qfp->qf_fnum)) != NULL) {
+          fname = buf->b_fname;
+          if (qfp->qf_type == 1) {  // :helpgrep
+            fname = path_tail(fname);
+          }
+        }
+        if (fname == NULL) {
+          snprintf((char *)IObuff, IOSIZE, "%2d", i);
+        } else {
+          vim_snprintf((char *)IObuff, IOSIZE, "%2d %s", i, (char *)fname);
+        }
       }
-      if (fname == NULL)
-        sprintf((char *)IObuff, "%2d", i);
-      else
-        vim_snprintf((char *)IObuff, IOSIZE, "%2d %s",
-            i, (char *)fname);
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
                         ? HL_ATTR(HLF_QFL) : HL_ATTR(HLF_D));
       if (qfp->qf_lnum == 0) {
@@ -2565,9 +2597,10 @@ static void qf_free_items(qf_info_T *qi, int idx)
     qfp = qfl->qf_start;
     qfpnext = qfp->qf_next;
     if (!stop) {
+      xfree(qfp->qf_module);
       xfree(qfp->qf_text);
-      stop = (qfp == qfpnext);
       xfree(qfp->qf_pattern);
+      stop = (qfp == qfpnext);
       xfree(qfp);
       if (stop) {
         // Somehow qf_count may have an incorrect value, set it to 1
@@ -3108,9 +3141,12 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
       lnum = buf->b_ml.ml_line_count;
     }
     while (lnum < qi->qf_lists[qi->qf_curlist].qf_count) {
-      if (qfp->qf_fnum != 0
-          && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
-          && errbuf->b_fname != NULL) {
+      if (qfp->qf_module != NULL) {
+        STRCPY(IObuff, qfp->qf_module);
+        len = (int)STRLEN(IObuff);
+      } else if (qfp->qf_fnum != 0
+                 && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
+                 && errbuf->b_fname != NULL) {
         if (qfp->qf_type == 1) {  // :helpgrep
           STRLCPY(IObuff, path_tail(errbuf->b_fname), sizeof(IObuff));
         } else {
@@ -3799,6 +3835,7 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
                        qi->qf_curlist,
                        NULL,  // dir
                        fname,
+                       NULL,
                        duplicate_name ? 0 : buf->b_fnum,
                        ml_get_buf(buf, regmatch->startpos[0].lnum + lnum, false),
                        regmatch->startpos[0].lnum + lnum,
@@ -4306,6 +4343,10 @@ int get_errorlist(const qf_info_T *qi_arg, win_T *wp, int qf_idx, list_T *list)
         || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
             == FAIL)
         || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
+        || tv_dict_add_str(dict, S_LEN("module"),
+                           (qfp->qf_module == NULL
+                            ? ""
+                            : (const char *)qfp->qf_module)) == FAIL
         || tv_dict_add_str(dict, S_LEN("pattern"),
                            (qfp->qf_pattern == NULL
                             ? ""
@@ -4680,6 +4721,7 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
     }
 
     char *const filename = tv_dict_get_string(d, "filename", true);
+    char *const module = tv_dict_get_string(d, "module", true);
     int bufnum = (int)tv_dict_get_number(d, "bufnr");
     long lnum = (long)tv_dict_get_number(d, "lnum");
     int col = (int)tv_dict_get_number(d, "col");
@@ -4717,6 +4759,7 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
                               qf_idx,
                               NULL,      // dir
                               (char_u *)filename,
+                              (char_u *)module,
                               bufnum,
                               (char_u *)text,
                               lnum,
@@ -4728,6 +4771,7 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
                               valid);
 
     xfree(filename);
+    xfree(module);
     xfree(pattern);
     xfree(text);
 
@@ -5263,15 +5307,15 @@ void ex_helpgrep(exarg_T *eap)
       if (gen_expand_wildcards(1, buff_list, &fcount,
               &fnames, EW_FILE|EW_SILENT) == OK
           && fcount > 0) {
-        for (fi = 0; fi < fcount && !got_int; ++fi) {
-          /* Skip files for a different language. */
+        for (fi = 0; fi < fcount && !got_int; fi++) {
+          // Skip files for a different language.
           if (lang != NULL
-              && STRNICMP(lang, fnames[fi]
-                  + STRLEN(fnames[fi]) - 3, 2) != 0
+              && STRNICMP(lang, fnames[fi] + STRLEN(fnames[fi]) - 3, 2) != 0
               && !(STRNICMP(lang, "en", 2) == 0
                    && STRNICMP("txt", fnames[fi]
-                       + STRLEN(fnames[fi]) - 3, 3) == 0))
+                               + STRLEN(fnames[fi]) - 3, 3) == 0)) {
             continue;
+          }
           fd = mch_fopen((char *)fnames[fi], "r");
           if (fd != NULL) {
             lnum = 1;
@@ -5288,6 +5332,7 @@ void ex_helpgrep(exarg_T *eap)
                                  qi->qf_curlist,
                                  NULL,                  // dir
                                  fnames[fi],
+                                 NULL,
                                  0,
                                  line,
                                  lnum,

@@ -1204,6 +1204,7 @@ you want to match case, add "\C" to the pattern |/\C|.
 Basic items
 
 	%f		file name (finds a string)
+	%o		module name (finds a string)
 	%l		line number (finds a number)
 	%c		column number (finds a number representing character
 			column of the error, (1 <tab> == 1 character column))
@@ -1247,6 +1248,11 @@ text is prefixed with the "\V" atom to make it "very nomagic".  The "%s"
 conversion can be used to locate lines without a line number in the error
 output.  Like the output of the "grep" shell command.
 When the pattern is present the line number will not be used.
+
+The "%o" conversion specifies the module name in quickfix entry.  If present
+it will be used in quickfix error window instead of the filename.  The module
+name is used only for displaying purposes, the file name is used when jumping
+to the file.
 
 Changing directory
 
