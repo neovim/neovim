@@ -1188,9 +1188,23 @@ void cleanup_jumplist(void)
       xfree(curwin->w_jumplist[from].fname);
     }
   }
-  if (curwin->w_jumplistidx == curwin->w_jumplistlen)
+  if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
     curwin->w_jumplistidx = to;
+  }
   curwin->w_jumplistlen = to;
+
+  // When pointer is below last jump, remove the jump if it matches the current
+  // line.  This avoids useless/phantom jumps. #9805
+  if (curwin->w_jumplistlen
+      && curwin->w_jumplistidx == curwin->w_jumplistlen) {
+    const xfmark_T *fm_last = &curwin->w_jumplist[curwin->w_jumplistlen - 1];
+    if (fm_last->fmark.fnum == curbuf->b_fnum
+        && fm_last->fmark.mark.lnum == curwin->w_cursor.lnum) {
+      xfree(fm_last->fname);
+      curwin->w_jumplistlen--;
+      curwin->w_jumplistidx--;
+    }
+  }
 }
 
 /*

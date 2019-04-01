@@ -912,12 +912,11 @@ describe('ShaDa jumps support code', function()
     eq('', curbufmeths.get_name())
     eq('\n'
        .. ' jump line  col file/text\n'
-       .. '   6     2    0 ' .. mock_file_path .. 'c\n'
-       .. '   5     2    0 ' .. mock_file_path .. 'd\n'
-       .. '   4     3    0 ' .. mock_file_path .. 'd\n'
-       .. '   3     2    0 ' .. mock_file_path .. 'e\n'
-       .. '   2     2    0 ' .. mock_file_path .. 'f\n'
-       .. '   1     1    0 \n'
+       .. '   5     2    0 ' .. mock_file_path .. 'c\n'
+       .. '   4     2    0 ' .. mock_file_path .. 'd\n'
+       .. '   3     3    0 ' .. mock_file_path .. 'd\n'
+       .. '   2     2    0 ' .. mock_file_path .. 'e\n'
+       .. '   1     2    0 ' .. mock_file_path .. 'f\n'
        .. '>', redir_exec('jumps'))
   end)
 
