@@ -331,10 +331,12 @@ static bool is_executable_ext(char *name, const char *pathext, char_u **abspath)
     const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
     size_t ext_len = (size_t)(ext_end - ext);
     STRLCPY(buf_end, ext, ext_len + 1);
-    bool in_pathext = nameext_len == ext_len
-       && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
+    bool in_pathext = (strstr((char *)path_tail(p_sh), "sh") != NULL)
+       || (nameext_len == ext_len
+           && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len));
 
-    if (in_pathext || is_executable(os_buf, abspath)) {
+    if ((in_pathext && is_executable(name, abspath))
+        || is_executable(os_buf, abspath)) {
       return true;
     }
 
