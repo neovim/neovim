@@ -254,8 +254,7 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 
   if (no_path) {
 #ifdef WIN32
-    const char *pathext = get_pathext();
-    if (is_executable_ext((char *)name, pathext, abspath)) {
+    if (is_executable_ext((char *)name, abspath)) {
 #else
     // Must have path separator, cannot execute files in the current directory.
     if ((const char_u *)gettail_dir((const char *)name) != name
@@ -298,25 +297,20 @@ static bool is_executable(const char *name, char_u **abspath)
 }
 
 #ifdef WIN32
-static const char *get_pathext(void)
-{
-  const char *pathext = os_getenv("PATHEXT");
-  if (!pathext) {
-    pathext = ".com;.exe;.bat;.cmd";
-  }
-  return pathext;
-}
-
 /// Checks if file `name` is executable under one of these conditions:
 /// - if the file extension is in $PATHEXT
 /// - if the result of any $PATHEXT extension appended to `name` is executable
-static bool is_executable_ext(char *name, const char *pathext, char_u **abspath)
+static bool is_executable_ext(char *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char *nameext = strrchr(name, '.');
   size_t nameext_len = nameext ? strlen(nameext) : 0;
   xstrlcpy(os_buf, name, sizeof(os_buf));
   char *buf_end = xstrchrnul(os_buf, '\0');
+  const char *pathext = os_getenv("PATHEXT");
+  if (!pathext) {
+    pathext = ".com;.exe;.bat;.cmd";
+  }
   for (const char *ext = pathext; *ext; ext++) {
     // If $PATHEXT itself contains dot:
     if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
@@ -373,12 +367,6 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #endif
 
   size_t buf_len = STRLEN(name) + strlen(path) + 2;
-
-#ifdef WIN32
-  const char *pathext = get_pathext();
-  buf_len += strlen(pathext);
-#endif
-
   char *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
@@ -393,7 +381,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
     append_path(buf, (char *)name, buf_len);
 
 #ifdef WIN32
-    if (is_executable_ext(buf, pathext, abspath)) {
+    if (is_executable_ext(buf, abspath)) {
 #else
     if (is_executable(buf, abspath)) {
 #endif
