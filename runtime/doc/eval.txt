@@ -4011,14 +4011,14 @@ getchar([expr])						*getchar()*
 			not consumed.  Return zero if no character available.
 
 		Without [expr] and when [expr] is 0 a whole character or
-		special key is returned.  If it is an 8-bit character, the
+		special key is returned.  If it is a single character, the
 		result is a number.  Use nr2char() to convert it to a String.
 		Otherwise a String is returned with the encoded character.
-		For a special key it's a sequence of bytes starting with 0x80
-		(decimal: 128).  This is the same value as the string
-		"\<Key>", e.g., "\<Left>".  The returned value is also a
-		String when a modifier (shift, control, alt) was used that is
-		not included in the character.
+		For a special key it's a String with a sequence of bytes
+		starting with 0x80 (decimal: 128).  This is the same value as
+		the String "\<Key>", e.g., "\<Left>".  The returned value is
+		also a String when a modifier (shift, control, alt) was used
+		that is not included in the character.
 
 		When [expr] is 0 and Esc is typed, there will be a short delay
 		while Vim waits to see if this is the start of an escape
@@ -8059,6 +8059,10 @@ timer_start({time}, {callback} [, {options}])
 		   "repeat"	Number of times to repeat calling the
 				callback.  -1 means forever.  When not present
 				the callback will be called once.
+				If the timer causes an error three times in a
+				row the repeat is cancelled.  This avoids that
+				Vim becomes unusable because of all the error
+				messages.
 
 		Example: >
 			func MyHandler(timer)
