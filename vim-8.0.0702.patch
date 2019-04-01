@@ -1,0 +1,146 @@
+commit c577d813b7978345dec4310b2d8f5d5624a681f6
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Sat Jul 8 22:37:34 2017 +0200
+
+    patch 8.0.0702: an error in a timer can make Vim unusable
+    
+    Problem:    An error in a timer can make Vim unusable.
+    Solution:   Don't set the error flag or exception from a timer.  Stop a timer
+                if it causes an error 3 out of 3 times.  Discard an exception
+                caused inside a timer.
+
+diff --git a/runtime/doc/eval.txt b/runtime/doc/eval.txt
+index 03f59a959..781c79af0 100644
+--- a/runtime/doc/eval.txt
++++ b/runtime/doc/eval.txt
+
+ 
+ 
+ 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
+@@ -4189,14 +4189,14 @@ getchar([expr])						*getchar()*
+ 			not consumed.  Return zero if no character available.
+ 
+ 		Without [expr] and when [expr] is 0 a whole character or
+-		special key is returned.  If it is an 8-bit character, the
++		special key is returned.  If it is a single character, the
+ 		result is a number.  Use nr2char() to convert it to a String.
+ 		Otherwise a String is returned with the encoded character.
+-		For a special key it's a sequence of bytes starting with 0x80
+-		(decimal: 128).  This is the same value as the string
+-		"\<Key>", e.g., "\<Left>".  The returned value is also a
+-		String when a modifier (shift, control, alt) was used that is
+-		not included in the character.
++		For a special key it's a String with a sequence of bytes
++		starting with 0x80 (decimal: 128).  This is the same value as
++		the String "\<Key>", e.g., "\<Left>".  The returned value is
++		also a String when a modifier (shift, control, alt) was used
++		that is not included in the character.
+ 
+ 		When [expr] is 0 and Esc is typed, there will be a short delay
+ 		while Vim waits to see if this is the start of an escape
+@@ -8017,6 +8017,10 @@ timer_start({time}, {callback} [, {options}])
+ 		   "repeat"	Number of times to repeat calling the
+ 				callback.  -1 means forever.  When not present
+ 				the callback will be called once.
++				If the timer causes an error three times in a
++				row the repeat is cancelled.  This avoids that
++				Vim becomes unusable because of all the error
++				messages.
+ 
+ 		Example: >
+ 			func MyHandler(timer)
+diff --git a/src/nvim/ex_cmds2.c b/src/nvim/ex_cmds2.c
+index 3efa8ca2e..76e62f7a0 100644
+--- a/src/nvim/ex_cmds2.c
++++ b/src/nvim/ex_cmds2.c
+@@ -1197,11 +1197,13 @@ check_due_timer(void)
+     long	current_id = last_timer_id;
+ # ifdef WIN3264
+     LARGE_INTEGER   fr;
++# endif
+ 
+-    /* Don't run any timers while exiting. */
+-    if (exiting)
++    /* Don't run any timers while exiting or dealing with an error. */
++    if (exiting || aborting())
+ 	return next_due;
+ 
++# ifdef WIN3264
+     QueryPerformanceFrequency(&fr);
+ # endif
+     profile_start(&now);
+@@ -1216,9 +1218,13 @@ check_due_timer(void)
+ 	{
+ 	    int save_timer_busy = timer_busy;
+ 	    int save_vgetc_busy = vgetc_busy;
++	    int did_emsg_save = did_emsg;
++	    int called_emsg_save = called_emsg;
++	    int did_throw_save = did_throw;
+ 
+ 	    timer_busy = timer_busy > 0 || vgetc_busy > 0;
+ 	    vgetc_busy = 0;
++	    called_emsg = FALSE;
+ 	    timer->tr_firing = TRUE;
+ 	    timer_callback(timer);
+ 	    timer->tr_firing = FALSE;
+@@ -1226,10 +1232,19 @@ check_due_timer(void)
+ 	    did_one = TRUE;
+ 	    timer_busy = save_timer_busy;
+ 	    vgetc_busy = save_vgetc_busy;
++	    if (called_emsg)
++	    {
++		++timer->tr_emsg_count;
++		if (!did_throw_save && current_exception != NULL)
++		    discard_current_exception();
++	    }
++	    did_emsg = did_emsg_save;
++	    called_emsg = called_emsg_save;
+ 
+ 	    /* Only fire the timer again if it repeats and stop_timer() wasn't
+ 	     * called while inside the callback (tr_id == -1). */
+-	    if (timer->tr_repeat != 0 && timer->tr_id != -1)
++	    if (timer->tr_repeat != 0 && timer->tr_id != -1
++		    && timer->tr_emsg_count < 3)
+ 	    {
+ 		profile_setlimit(timer->tr_interval, &timer->tr_due);
+ 		this_due = GET_TIMEDIFF(timer, now);
+diff --git a/src/nvim/structs.h b/src/nvim/structs.h
+index 0fbc5a5bd..c3f120008 100644
+--- a/src/nvim/structs.h
++++ b/src/nvim/structs.h
+@@ -3243,6 +3243,7 @@ struct timer_S
+     long	tr_interval;	    /* msec */
+     char_u	*tr_callback;	    /* allocated */
+     partial_T	*tr_partial;
++    int		tr_emsg_count;
+ #endif
+ };
+ 
+diff --git a/src/nvim/testdir/test_timers.vim b/src/nvim/testdir/test_timers.vim
+index fdb74e795..d30325b7b 100644
+--- a/src/nvim/testdir/test_timers.vim
++++ b/src/nvim/testdir/test_timers.vim
+@@ -189,4 +189,22 @@ func Test_input_in_timer()
+   call assert_equal('hello', g:val)
+ endfunc
+ 
++func FuncWithError(timer)
++  let g:call_count += 1
++  if g:call_count == 4
++    return
++  endif
++  doesnotexist
++endfunc
++
++func Test_timer_errors()
++  let g:call_count = 0
++  let timer = timer_start(10, 'FuncWithError', {'repeat': -1})
++  " Timer will be stopped after failing 3 out of 3 times.
++  call WaitFor('g:call_count == 3')
++  sleep 50m
++  call assert_equal(3, g:call_count)
++endfunc
++
++
+ " vim: shiftwidth=2 sts=2 expandtab
+,
