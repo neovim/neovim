@@ -2575,15 +2575,12 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     free_tabpage(tp);
 }
 
-/*
- * Free the memory used for a window.
- * Returns a pointer to the window that got the freed up space.
- */
-static win_T *
-win_free_mem (
+// Free the memory used for a window.
+// Returns a pointer to the window that got the freed up space.
+static win_T *win_free_mem(
     win_T *win,
-    int *dirp,              /* set to 'v' or 'h' for direction if 'ea' */
-    tabpage_T *tp                /* tab page "win" is in, NULL for current */
+    int *dirp,              // set to 'v' or 'h' for direction if 'ea'
+    tabpage_T *tp           // tab page "win" is in, NULL for current
 )
 {
   frame_T     *frp;
@@ -2595,6 +2592,7 @@ win_free_mem (
     wp = winframe_remove(win, dirp, tp);
     xfree(frp);
   } else {
+    *dirp = 'h';  // Dummy value.
     if (win_valid(prevwin) && prevwin != win) {
       wp = prevwin;
     } else {
@@ -2603,10 +2601,11 @@ win_free_mem (
   }
   win_free(win, tp);
 
-  /* When deleting the current window of another tab page select a new
-   * current window. */
-  if (tp != NULL && win == tp->tp_curwin)
+  // When deleting the current window of another tab page select a new
+  // current window.
+  if (tp != NULL && win == tp->tp_curwin) {
     tp->tp_curwin = wp;
+  }
 
   return wp;
 }
