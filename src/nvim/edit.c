@@ -667,8 +667,9 @@ static int insert_execute(VimState *state, int key)
       // there is nothing to add, CTRL-L works like CTRL-P then.
       if (s->c == Ctrl_L
           && (!CTRL_X_MODE_LINE_OR_EVAL(ctrl_x_mode)
-              || (int)STRLEN(compl_shown_match->cp_str)
-              > curwin->w_cursor.col - compl_col)) {
+              || (compl_shown_match->cp_str != NULL
+                  && (int)STRLEN(compl_shown_match->cp_str)
+                  > curwin->w_cursor.col - compl_col))) {
         ins_compl_addfrommatch();
         return 1;  // continue
       }
