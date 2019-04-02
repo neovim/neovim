@@ -327,14 +327,34 @@ int main(int argc, char **argv)
   bool reading_excmds = !params.input_isatty
                         && silent_mode
                         && exmode_active == EXMODE_NORMAL;
+#ifdef WIN32
+  int fd;
+  HANDLE conin_handle = INVALID_HANDLE_VALUE;
+#endif
   if (reading_tty || reading_excmds) {
     // One of the startup commands (arguments, sourced scripts or plugins) may
     // prompt the user, so start reading from a tty now.
+#ifdef WIN32
+    fd = STDIN_FILENO;
+#else
     int fd = STDIN_FILENO;
+#endif
     if (!silent_mode
         && (!params.input_isatty || params.edit_type == EDIT_STDIN)) {
+#ifdef WIN32
+      // If stdin is used to read commands, on Windows can not use stderr or
+      // stdout for reading, so opens the console input handle by special
+      // CONIN$ filename.
+      conin_handle = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                (LPSECURITY_ATTRIBUTES)NULL,
+                                OPEN_EXISTING, 0, (HANDLE)NULL);
+      fd = _open_osfhandle(conin_handle, _O_RDONLY);
+      assert(fd != -1);
+#else
       // Use stderr or stdout since stdin is being used to read commands.
       fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
+#endif
     }
     input_start(fd);
   }
@@ -478,6 +498,12 @@ int main(int argc, char **argv)
 
   if (!headless_mode && !embedded_mode && !silent_mode) {
     input_stop();  // Stop reading input, let the UI take over.
+#ifdef WIN32
+    if (conin_handle != INVALID_HANDLE_VALUE) {
+      CloseHandle(conin_handle);
+      close(fd);
+    }
+#endif
     ui_builtin_start();
   }
 
