@@ -449,6 +449,7 @@ typedef struct {
   int timer_id;
   int repeat_count;
   int refcount;
+  int emsg_count;
   long timeout;
   bool stopped;
   bool paused;
@@ -17076,7 +17077,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
 
-  if (argvars[2].v_type != VAR_UNKNOWN) {
+    if (argvars[2].v_type != VAR_UNKNOWN) {
     if (argvars[2].v_type != VAR_DICT
         || (dict = argvars[2].vval.v_dict) == NULL) {
       EMSG2(_(e_invarg2), tv_get_string(&argvars[2]));
@@ -17100,6 +17101,7 @@ static void f_timer_start(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   timer->refcount = 1;
   timer->stopped = false;
   timer->paused = false;
+  timer->emsg_count = 0;
   timer->repeat_count = repeat;
   timer->timeout = timeout;
   timer->timer_id = last_timer_id++;
@@ -17142,7 +17144,15 @@ static void f_timer_stopall(typval_T *argvars, typval_T *unused, FunPtr fptr)
 static void timer_due_cb(TimeWatcher *tw, void *data)
 {
   timer_T *timer = (timer_T *)data;
+  int save_did_emsg = did_emsg;
+  int save_called_emsg = called_emsg;
+
   if (timer->stopped || timer->paused) {
+    return;
+  }
+
+  // Don't run timer while dealing with an error
+  if (aborting()) {
     return;
   }
 
@@ -17156,8 +17166,23 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   argv[0].v_type = VAR_NUMBER;
   argv[0].vval.v_number = timer->timer_id;
   typval_T rettv = TV_INITIAL_VALUE;
+  called_emsg = FALSE;
 
   callback_call(&timer->callback, 1, argv, &rettv);
+
+  // Handle error message
+  if (called_emsg && did_emsg) {
+    timer->emsg_count++;
+    if (current_exception != NULL)
+        discard_current_exception();
+  }
+  did_emsg = save_did_emsg;
+  called_emsg = save_called_emsg;
+
+  if (timer->emsg_count >= 3) {
+    timer_stop(timer);
+  }
+
   tv_clear(&rettv);
 
   if (!timer->stopped && timer->timeout == 0) {
