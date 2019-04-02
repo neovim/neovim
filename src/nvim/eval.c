@@ -17151,11 +17151,6 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
     return;
   }
 
-  // Don't run timer while dealing with an error
-  if (aborting()) {
-    return;
-  }
-
   timer->refcount++;
   // if repeat was negative repeat forever
   if (timer->repeat_count >= 0 && --timer->repeat_count == 0) {
