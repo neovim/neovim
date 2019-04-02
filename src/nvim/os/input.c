@@ -35,9 +35,6 @@ typedef enum {
 } InbufPollResult;
 
 static Stream read_stream = { .closed = true };  // Input before UI starts.
-#ifdef WIN32
-static uv_tty_t tty_in;
-#endif
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
@@ -66,18 +63,7 @@ void input_start(int fd)
   }
 
   global_fd = fd;
-#ifdef WIN32
-  uv_handle_type type = uv_guess_handle(fd);
-  if (type == UV_TTY) {
-    uv_tty_init(&main_loop.uv, &tty_in, fd, 1);
-    uv_tty_set_mode(&tty_in, UV_TTY_MODE_RAW);
-    rstream_init_stream(&read_stream, (uv_stream_t *)&tty_in, READ_BUFFER_SIZE);
-  } else {
-    rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
-  }
-#else
   rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
-#endif
   rstream_start(&read_stream, input_read_cb, NULL);
 }
 
