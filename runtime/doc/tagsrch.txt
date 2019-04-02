@@ -498,28 +498,21 @@ gnatxref		For Ada.  See http://www.gnuada.org/.  gnatxref is
 			part of the gnat package.
 
 
-The lines in the tags file must have one of these three formats:
+The lines in the tags file must have one of these two formats:
 
 1.  {tagname}		{TAB} {tagfile} {TAB} {tagaddress}
-2.  {tagfile}:{tagname} {TAB} {tagfile} {TAB} {tagaddress}
-3.  {tagname}		{TAB} {tagfile} {TAB} {tagaddress} {term} {field} ..
+2.  {tagname}		{TAB} {tagfile} {TAB} {tagaddress} {term} {field} ..
 
-The first is a normal tag, which is completely compatible with Vi.  It is the
-only format produced by traditional ctags implementations.  This is often used
-for functions that are global, also referenced in other files.
+Previously an old format was supported, see |tag-old-static|.
+
+The first format is a normal tag, which is completely compatible with Vi.  It
+is the only format produced by traditional ctags implementations.  This is
+often used for functions that are global, also referenced in other files.
 
 The lines in the tags file can end in <LF> or <CR><LF>.  On the Macintosh <CR>
 also works.  The <CR> and <NL> characters can never appear inside a line.
 
-							*tag-old-static*
-The second format is for a static tag only.  It is obsolete now, replaced by
-the third format.  It is only supported by Elvis 1.x and Vim and a few
-versions of ctags.  A static tag is often used for functions that are local,
-only referenced in the file {tagfile}.  Note that for the static tag, the two
-occurrences of {tagfile} must be exactly the same.  Also see |tags-option|
-below, for how static tags are used.
-
-The third format is new.  It includes additional information in optional
+The second format is new.  It includes additional information in optional
 fields at the end of each line.  It is backwards compatible with Vi.  It is
 only supported by new versions of ctags (such as Exuberant ctags).
 
@@ -560,6 +553,7 @@ only supported by new versions of ctags (such as Exuberant ctags).
 
 		The only other field currently recognized by Vim is "file:"
 		(with an empty value).  It is used for a static tag.
+
 
 The first lines in the tags file can contain lines that start with
 	!_TAG_
@@ -612,6 +606,21 @@ If the command is a normal search command (it starts and ends with "/" or
   This means: A line starting with '#' or an identifier and containing the tag
   followed by white space and a '('.  This will find macro names and function
   names with a type prepended.
+
+
+							*tag-old-static*
+Until March 2019 (patch 8.1.1092) an outdated format was supported:
+    {tagfile}:{tagname} {TAB} {tagfile} {TAB} {tagaddress}
+
+This format is for a static tag only.  It is obsolete now, replaced by
+the second format.  It is only supported by Elvis 1.x, older Vim versions and
+a few versions of ctags.  A static tag is often used for functions that are
+local, only referenced in the file {tagfile}.  Note that for the static tag,
+the two occurrences of {tagfile} must be exactly the same.  Also see
+|tags-option| below, for how static tags are used.
+
+The support was removed, since when you can update to the new Vim version you
+should also be able to update ctags to one that supports the second format.
 
 ==============================================================================
 6. Include file searches		*include-search* *definition-search*
