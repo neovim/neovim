@@ -18,6 +18,9 @@ from collections import defaultdict
 import vim
 import os
 
+import json
+from vimspector import utils
+
 
 class ProjectBreakpoints( object ):
   def __init__( self ):
@@ -54,7 +57,7 @@ class ProjectBreakpoints( object ):
     self._connection = None
 
     # for each breakpoint:
-      # clear its resolved status
+    # clear its resolved status
 
 
   def ListBreakpoints( self ):
@@ -140,13 +143,15 @@ class ProjectBreakpoints( object ):
       self._ShowBreakpoints()
 
 
-  # FIXME: Remove this temporary compat .layer
   def SetBreakpointsHandler( self, handler ):
+    # FIXME: Remove this temporary compat .layer
     self._breakpoints_handler = handler
+
 
   def SendBreakpoints( self ):
     if not self._breakpoints_handler:
-      handler = lambda source, msg: self._ShowBreakpoints()
+      def handler( source, msg ):
+          return self._ShowBreakpoints()
     else:
       handler = self._breakpoints_handler
 
@@ -229,7 +234,7 @@ class ProjectBreakpoints( object ):
       }
 
       if self._server_capabilities.get( 'supportsExceptionOptions' ):
-        # FIXME Sigh. The python debug adapter requires this 
+        # FIXME Sigh. The python debug adapter requires this
         #       key to exist. Even though it is optional.
         break_mode = utils.SelectFromList( 'When to break on exception?',
                                            [ 'never',
