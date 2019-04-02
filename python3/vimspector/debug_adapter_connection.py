@@ -199,11 +199,11 @@ class DebugAdapterConnection( object ):
 
     self._logger.debug( 'Message received: {0}'.format( message ) )
 
-    try:
-      self._OnMessageReceived( message )
-    finally:
-      # Don't allow exceptions to break message reading
-      self._SetState( 'READ_HEADER' )
+    # We read the message, so the next time we get data from the socket it must
+    # be a header.
+    self._SetState( 'READ_HEADER' )
+    self._OnMessageReceived( message )
+
 
   def _OnMessageReceived( self, message ):
     if not self._handler:
