@@ -1,3 +1,4 @@
+" Tests for put commands, e.g. ":put", "p", "gp", "P", "gP", etc.
 
 func Test_put_block()
   if !has('multi_byte')
@@ -57,4 +58,49 @@ func Test_put_lines()
   " clean up
   bw!
   call setreg('a', a[0], a[1])
+endfunc
+
+func Test_put_fails_when_nomodifiable()
+  new
+  set nomodifiable
+
+  normal! yy
+  call assert_fails(':put', 'E21')
+  call assert_fails(':put!', 'E21')
+  call assert_fails(':normal! p', 'E21')
+  call assert_fails(':normal! gp', 'E21')
+  call assert_fails(':normal! P', 'E21')
+  call assert_fails(':normal! gP', 'E21')
+
+  if has('mouse')
+    set mouse=n
+    call assert_fails('execute "normal! \<MiddleMouse>"', 'E21')
+    set mouse&
+  endif
+
+  bwipeout!
+endfunc
+
+" A bug was discovered where the Normal mode put commands (e.g., "p") would
+" output duplicate error messages when invoked in a non-modifiable buffer.
+func Test_put_p_errmsg_nodup()
+  new
+  set nomodifiable
+
+  normal! yy
+
+  func Capture_p_error()
+    redir => s:p_err
+    normal! p
+    redir END
+  endfunc
+
+  silent! call Capture_p_error()
+
+  " Error message output within a function should be three lines (the function
+  " name, the line number, and the error message).
+  call assert_equal(3, count(s:p_err, "\n"))
+
+  delfunction Capture_p_error
+  bwipeout!
 endfunc
