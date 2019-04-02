@@ -218,6 +218,24 @@ func Test_timer_catch_error()
   call assert_equal(4, g:call_count)
 endfunc
 
+func FuncWithError(timer)
+  let g:call_count += 1
+  if g:call_count == 4
+    return
+  endif
+  doesnotexist
+endfunc
+
+func Test_timer_errors()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithError', {'repeat': -1})
+  " Timer will be stopped after failing 3 out of 3 times.
+  call WaitFor('g:call_count == 3')
+  sleep 50m
+  call assert_equal(3, g:call_count)
+endfunc
+
+
 func FeedAndPeek(timer)
   call test_feedinput('a')
   call getchar(1)
