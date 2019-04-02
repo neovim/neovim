@@ -47,3 +47,14 @@ func Test_put_expr()
   call assert_equal(['A1','A2','A3','4A','5A','6A'], getline(1,'$'))
   bw!
 endfunc
+
+func Test_put_lines()
+  new
+  let a = [ getreg('a'), getregtype('a') ]
+  call setline(1, ['Line 1', 'Line2', 'Line 3', ''])
+  exe 'norm! gg"add"AddG""p'
+  call assert_equal(['Line 3', '', 'Line 1', 'Line2'], getline(1,'$'))
+  " clean up
+  bw!
+  call setreg('a', a[0], a[1])
+endfunc

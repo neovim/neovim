@@ -1408,7 +1408,9 @@ int op_delete(oparg_T *oap)
       free_register(&y_regs[9]); /* free register "9 */
       for (n = 9; n > 1; n--)
         y_regs[n] = y_regs[n - 1];
-      y_previous = &y_regs[1];
+      if (!is_append_register(oap->regname)) {
+        y_previous = &y_regs[1];
+      }
       y_regs[1].y_array = NULL;                 /* set register "1 to empty */
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
