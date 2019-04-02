@@ -191,6 +191,8 @@ static int cmd_showtail;                /* Only show path tail in lists ? */
 
 static int new_cmdpos;          /* position set by set_cmdline_pos() */
 
+static int extra_char = NUL; /* extra character to display when redrawing the command line */
+
 /// currently displayed block of context
 static Array cmdline_block = ARRAY_DICT_INIT;
 
@@ -1342,6 +1344,7 @@ static int command_line_handle_key(CommandLineState *s)
 
   case Ctrl_R:                        // insert register
     putcmdline('"', true);
+    extra_char = '"';
     ++no_mapping;
     s->i = s->c = plain_vgetc();      // CTRL-R <char>
     if (s->i == Ctrl_O) {
@@ -1351,6 +1354,7 @@ static int command_line_handle_key(CommandLineState *s)
     if (s->i == Ctrl_R) {
       s->c = plain_vgetc();              // CTRL-R CTRL-R <char>
     }
+    extra_char = NUL;
     --no_mapping;
     // Insert the result of an expression.
     // Need to save the current command line, to be able to enter
@@ -1447,6 +1451,8 @@ static int command_line_handle_key(CommandLineState *s)
              && ccline.cmdbuff[ccline.cmdpos - 1] != ' ');
 
     set_cmdspos_cursor();
+    if (extra_char != NUL)
+	putcmdline(extra_char, TRUE);
 
     return command_line_not_changed(s);
 
@@ -1702,8 +1708,10 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_Q:
     s->ignore_drag_release = true;
     putcmdline('^', true);
+    extra_char = '^';
     s->c = get_literal();                 // get next (two) character(s)
     s->do_abbr = false;                   // don't do abbreviation now
+    extra_char = NUL;
     // may need to remove ^ when composing char was typed
     if (enc_utf8 && utf_iscomposing(s->c) && !cmd_silent) {
       if (ui_has(kUICmdline)) {
@@ -1720,7 +1728,9 @@ static int command_line_handle_key(CommandLineState *s)
   case Ctrl_K:
     s->ignore_drag_release = true;
     putcmdline('?', true);
+    extra_char = '?';
     s->c = get_digraph(true);
+    extra_char = 'NUL';
 
     if (s->c != NUL) {
       break;
@@ -3467,6 +3477,9 @@ void redrawcmd(void)
   msg_no_more = FALSE;
 
   set_cmdspos_cursor();
+
+  if (extra_char != NUL)
+    putcmdline(extra_char, true);
 
   /*
    * An emsg() before may have set msg_scroll. This is used in normal mode,
