@@ -1,3 +1,4 @@
+_G.a = vim.api
 local a = vim.api
 
 if __treesitter_rt_ns == nil then
@@ -7,10 +8,64 @@ end
 local my_ns = __treesitter_rt_ns
 local my_syn_ns = __treesitter_rt_syn_ns
 
-local path = '.deps/build/src/treesitter-javascript/src/highlights.json'
-a.nvim_set_var("_ts_path", path)
-obj = a.nvim_eval("json_decode(readfile(g:_ts_path,'b'))")
+function js_sheet()
+  local path = '.deps/build/src/treesitter-javascript/src/highlights.json'
+  a.nvim_set_var("_ts_path", path)
+  local obj = a.nvim_eval("json_decode(readfile(g:_ts_path,'b'))")
+  for k in pairs(obj) do print(k) end
+  --obj.property_sets[2]
 
+  states = obj.states
+  s = states[1]
+  for k in pairs(s) do print(k) end
+
+  t = s.transitions[2]
+  for k in pairs(t) do print(k) end
+
+  parser = vim.ts_parser("javascript")
+  symbs = parser:symbols()
+  named = {}
+  anonymous = {}
+  for i, symb in pairs(symbs) do
+    local dict
+    if symb[2] == "named" then
+      dict = named
+      --named[symb[1]] = i
+    elseif symb[2] == "anonymous" then
+      dict = anonymous
+      --anonymous[symb[1]] = i
+    else
+      dict = {} -- SKRAPET
+    end
+    -- TODO: duplicate symbols might be a bug
+    if dict[symb[1]] == nil then
+      dict[symb[1]] = {}
+    end
+    table.insert(dict[symb[1]], i)
+  end
+  lut = {[true]=named, [false]=anonymous}
+
+  local sheet = vim.ts_propertysheet(#states, #symbs)
+  for _, s in pairs(states) do
+      local id = s.id
+      sheet:add_state(id, s.default_next_state_id, s.property_set_id)
+      for _,t in pairs(s.transitions) do
+        if t.text == nil then
+            local kinds = lut[t.named][t.type]
+            for _,kind in ipairs(kinds) do
+              sheet:add_transition(id, kind, t.state_id, t.index)
+            end
+        end
+      end
+  end
+
+  scope = {}
+  for i,prop in ipairs(obj.property_sets) do
+    scope[i-1] = prop.scope
+  end
+  return sheet
+end
+print(lut[true]['identifier'])
 
 --luadev = require'luadev'
 --i = require'inspect'
@@ -89,13 +144,37 @@ function ts_inspect_pos(row,col)
   show_node(node)
 end
 
-function show_node(node)
+sheet = js_sheet()
+function ts_inspect2(row,col)
+  local tree = parse_tree(theparser)
+  icursor = tree:root():to_cursor(sheet)
+  local startbyte = a.nvim_buf_get_offset(theparser.bufnr, row)
+  ipos = startbyte+col+1
+  ii = 0
+  repeat
+    node, propid = icursor:forward(ipos)
+    r,c, start_byte = node:start()
+    ii = ii + 1
+  until propid > 0 or start_byte > ipos
+  show_node(node,true)
+  print(ii, scope[propid], node:type())
+end
+
+function ts_iforward()
+  node, propid = icursor:forward(ipos)
+  show_node(node,true)
+  print(node:type(), scope[propid])
+end
+
+function show_node(node,subtle)
   if node == nil then
     return
   end
   a.nvim_buf_clear_highlight(0, my_ns, 0, -1)
   shown_node = node
-  print(node:type())
+  if not subtle then
+    print(node:type())
+  end
   local start_row, start_col, end_row, end_col = node:range()
 
   a.nvim_buf_add_highlight(0, my_ns, "ErrorMsg", start_row, start_col, start_col+1)
@@ -116,7 +195,8 @@ end
 
 function ts_cursor()
   local row, col = unpack(a.nvim_win_get_cursor(0))
-  ts_inspect_pos(row-1, col)
+  --ts_inspect_pos(row-1, col)
+  ts_inspect2(row-1, col)
 end
 
 hl_map = {
@@ -141,10 +221,29 @@ hl_map = {
   ["#endif"]="PreProc",
 }
 
+hl_scope_map = {
+  constant='Constant',
+  number='Number',
+  keyword='Statement',
+  string='String',
+  escape='Special',
+  ['function']='Identifier',
+}
+
 id_map = {}
 for k,v in pairs(hl_map) do
   id_map[k] = a.nvim__syn_attr(v)
 end
+
+scope_map = {}
+id_scope_map = {}
+for i,s in pairs(scope) do
+  if hl_scope_map[s] then
+    scope_map[i] = hl_scope_map[s]
+    id_scope_map[i] = a.nvim__syn_attr(hl_scope_map[s])
+  end
+end
+
 
 function ts_line(line,endl,drawing)
   if endl == nil then endl = line+1 end
@@ -153,16 +252,24 @@ function ts_line(line,endl,drawing)
   end
   tree = parse_tree(theparser)
   local root = tree:root()
-  local cursor = root:to_cursor()
+  local cursor = root:to_cursor(sheet)
+  print(cursor)
   local startbyte = a.nvim_buf_get_offset(theparser.bufnr, line)
   local node = root
   local continue = true
-  local i = 500
+  local i = 800
+  local nscope = 0
   while continue do
     --print(inspect_node(node))
-    local name = node:type()
-    local map = (drawing and id_map) or hl_map
-    local hl = map[name]
+    if true then
+      print(nscope)
+      local map = (drawing and id_scope_map) or scope_map
+      hl = map[nscope]
+    else
+      local name = node:type()
+      local map = (drawing and id_map) or hl_map
+      local hl = map[name]
+    end
     local start_row, start_col, end_row, end_col = node:range()
     if hl then
       if not drawing then
@@ -182,7 +289,7 @@ function ts_line(line,endl,drawing)
     if start_row >= endl then
       continue = false
     end
-    node = cursor:forward(startbyte)
+    node, nscope = cursor:forward(startbyte)
     if node == nil then
       continue = false
     end
@@ -195,7 +302,7 @@ function ts_line(line,endl,drawing)
 end
 
 if false then
-  ts_line(0,500)
+  ts_line(0,800)
 end
 
 

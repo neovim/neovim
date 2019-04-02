@@ -18,6 +18,7 @@ func! TSCursor()
   au CursorMoved <buffer> lua ts_cursor()
   au CursorMovedI <buffer> lua ts_cursor()
   map <buffer> <Plug>(ts-expand) <cmd>lua ts_expand_node()<cr>
+  map <buffer> <Plug>(ts-fwd) <cmd>lua ts_iforward()<cr>
 endfunc
 
 func! TSSyntax()

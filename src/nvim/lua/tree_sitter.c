@@ -18,13 +18,43 @@
 
 #define REG_KEY "tree_sitter-private"
 
+#include "nvim/lib/kvec.h"
 #include "nvim/lua/tree_sitter.h"
 #include "nvim/buffer.h" // for nvim_ts_read_cb
 
 typedef struct {
-    TSParser *parser;
-    TSTree *tree;
+  TSParser *parser;
+  TSTree *tree;
 } Tslua_parser;
+
+typedef struct {
+  int kind_id;
+  int next_state_id;
+  int child_index;
+  int regex_index;
+} KindTransition;
+
+typedef struct  {
+  int default_next_state_id;
+  int property_id;
+  kvec_t(KindTransition) kind_trans;
+  int *kind_first_trans;
+} PropertyState;
+
+typedef struct {
+  PropertyState *states;
+  int n_states;
+  int n_kinds;
+} Tslua_propertysheet;
+
+typedef struct {
+  TSTreeCursor cursor;
+  Tslua_propertysheet *sheet;
+  int state_id[32];
+  int child_index[32];
+  int level;
+  //Buffer source;
+} Tslua_cursor;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/tree_sitter.c.generated.h"
@@ -36,6 +66,7 @@ static struct luaL_Reg parser_meta[] = {
   {"parse_buf", parser_parse_buf},
   {"edit", parser_edit},
   {"tree", parser_tree},
+  {"symbols", parser_symbols},
   {NULL, NULL}
 };
 
@@ -51,6 +82,7 @@ static struct luaL_Reg node_meta[] = {
   {"__len", node_child_count},
   {"range", node_range},
   {"start", node_start},
+  {"end_byte", node_end_byte},
   {"type", node_type},
   {"symbol", node_symbol},
   {"child_count", node_child_count},
@@ -66,8 +98,18 @@ static struct luaL_Reg cursor_meta[] = {
   {"__tostring", cursor_tostring},
   //{"node", cursor_node},
   {"forward", cursor_forward},
+  {"debug", cursor_debug},
   {NULL, NULL}
 };
+
+static struct luaL_Reg propertysheet_meta[] = {
+  {"__gc", propertysheet_gc},
+  {"__tostring", propertysheet_tostring},
+  {"add_state", propertysheet_add_state},
+  {"add_transition", propertysheet_add_transition},
+  {NULL, NULL}
+};
+
 
 void build_meta(lua_State *L, const luaL_Reg *meta)
 {
@@ -108,6 +150,10 @@ void tslua_init(lua_State *L)
   lua_createtable(L, 0, 0);
   build_meta(L, cursor_meta);
   lua_setfield(L, -2, "cursor-meta");
+
+  lua_createtable(L, 0, 0);
+  build_meta(L, propertysheet_meta);
+  lua_setfield(L, -2, "propertysheet-meta");
 
   lua_setfield(L, LUA_REGISTRYINDEX, REG_KEY);
 }
@@ -198,8 +244,7 @@ static int parser_edit(lua_State *L)
 {
   if(lua_gettop(L) < 10) {
     lua_pushstring(L, "not enough args to parser:edit()");
-    lua_error(L);
-    return 0; // unreachable
+    return lua_error(L);
   }
 
   Tslua_parser *p = parser_check(L);
@@ -224,6 +269,33 @@ static int parser_edit(lua_State *L)
   ts_tree_edit(p->tree, &edit);
 
   return 0;
+}
+
+static int parser_symbols(lua_State *L)
+{
+  Tslua_parser *p = parser_check(L);  // [parser]
+  if (!p) {
+    return 0;
+  }
+
+  const TSLanguage *lang = ts_parser_language(p->parser);
+
+  size_t nsymb = (size_t)ts_language_symbol_count(lang);
+
+  lua_createtable(L, nsymb-1, 1);  // [parser, result]
+  for (size_t i = 0; i < nsymb; i++) {
+    lua_createtable(L, 2, 0);  // [parser, result, elem]
+    lua_pushstring(L, ts_language_symbol_name(lang, i));
+    lua_rawseti(L, -2, 1);
+    TSSymbolType t= ts_language_symbol_type(lang, i);
+    lua_pushstring(L, (t == TSSymbolTypeRegular
+                       ? "named" : (t == TSSymbolTypeAnonymous
+                                    ? "anonymous" : "auxiliary")));
+    lua_rawseti(L, -2, 2); // [parser, result, elem]
+    lua_rawseti(L, -2, i); // [parser, result]
+  }
+
+  return 1;
 }
 
 
@@ -370,6 +442,17 @@ static int node_start(lua_State *L)
   return 3;
 }
 
+static int node_end_byte(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  uint32_t end_byte = ts_node_end_byte(node);
+  lua_pushnumber(L, end_byte);
+  return 1;
+}
+
 static int node_child_count(lua_State *L)
 {
   TSNode node;
@@ -446,46 +529,50 @@ static int node_to_cursor(lua_State *L)
   if (!node_check(L, &node)) {
     return 0;
   }
-  push_cursor(L, node);
-  return 1;
-}
+  Tslua_propertysheet *sheet = NULL;
+
+  if (lua_gettop(L) >= 2) {
+    if (!lua_isuserdata(L, 2)) {
+      return 0;
+    }
+    // TODO: typecheck!
+    sheet = lua_touserdata(L, 2);
+  }
 
 
-
-// Cursor functions
-
-/// push cursor interface on lua stack, with node as starting point
-///
-/// top of stack must either be the this node or tree this node belongs to,
-/// or another node of the same tree! This value is not popped.
-/// Can only be called inside a cfunction with the tslua environment.
-static void push_cursor(lua_State *L, TSNode node)
-{
   if (ts_node_is_null(node)) {
     lua_pushnil(L); // [src, nil]
-    return;
+    return 1;
   }
-  TSTreeCursor *ud = lua_newuserdata(L, sizeof(TSTreeCursor));  // [src, udata]
-  *ud = ts_tree_cursor_new(node);
+  Tslua_cursor *c = lua_newuserdata(L, sizeof(Tslua_cursor));  // [src, udata]
+  c->cursor = ts_tree_cursor_new(node);
+  c->sheet = sheet; // TODO: GC ref for sheet!
+  if (c->sheet) {
+    c->state_id[0] = 0;
+    c->level = 1;
+    c->child_index[c->level] = 0;
+    c->state_id[c->level] = cursor_next_state(c);
+  }
   lua_getfield(L, LUA_ENVIRONINDEX, "cursor-meta");  // [src, udata, meta]
   lua_setmetatable(L, -2);  // [src, udata]
-  lua_getfenv(L, -2);  // [src, udata, reftable]
+  lua_getfenv(L, 1);  // [src, udata, reftable]
   lua_setfenv(L, -2);  // [src, udata]
+  return 1;
 }
 
 
 static int cursor_gc(lua_State *L)
 {
-  TSTreeCursor *cursor = cursor_check(L);
+  Tslua_cursor *cursor = cursor_check(L);
   if (!cursor) {
     return 0;
   }
 
-  ts_tree_cursor_delete(cursor);
+  ts_tree_cursor_delete(&cursor->cursor);
   return 0;
 }
 
-static TSTreeCursor *cursor_check(lua_State *L)
+static Tslua_cursor *cursor_check(lua_State *L)
 {
   if (!lua_gettop(L)) {
     return NULL;
@@ -494,18 +581,18 @@ static TSTreeCursor *cursor_check(lua_State *L)
     return NULL;
   }
   // TODO: typecheck!
-  TSTreeCursor *ud = lua_touserdata(L, 1);
+  Tslua_cursor *ud = lua_touserdata(L, 1);
   return ud;
 }
 
 
 static int cursor_tostring(lua_State *L)
 {
-  TSTreeCursor *cursor = cursor_check(L);
-  if (!cursor) {
+  Tslua_cursor *c = cursor_check(L);
+  if (!c) {
     return 0;
   }
-  TSNode node = ts_tree_cursor_current_node(cursor);
+  TSNode node = ts_tree_cursor_current_node(&c->cursor);
   if (ts_node_is_null(node)) {
     lua_pushstring(L, "<cursor nil>");
     return 1;
@@ -517,46 +604,277 @@ static int cursor_tostring(lua_State *L)
   return 1;
 }
 
+static int cursor_next_state(Tslua_cursor *c)
+{
+  int state_id = c->state_id[c->level-1];
+  int child_index = c->child_index[c->level];
+  PropertyState *s = &c->sheet->states[state_id];
+  TSNode current = ts_tree_cursor_current_node(&c->cursor);
+  int kind_id = (int)ts_node_symbol(current);
+
+  int i = s->kind_first_trans[kind_id];
+  if (i == -1) {
+    return s->default_next_state_id;
+  }
+
+  for (; i < (int)kv_size(s->kind_trans); i++) {
+    KindTransition *t = &kv_A(s->kind_trans, i);
+    if (t->kind_id != kind_id) {
+      break;
+    }
+
+    //if (t->regex_id) {
+    //}
+
+    if (t->child_index >= 0 && t->child_index != child_index) {
+      continue;
+    }
+    return t->next_state_id;
+  }
+
+  return s->default_next_state_id;
+}
+
+static bool cursor_goto_first_child(Tslua_cursor *c)
+{
+  if (!ts_tree_cursor_goto_first_child(&c->cursor)) {
+    return false;
+  }
+  if (c->sheet) {
+    c->level++;
+    c->child_index[c->level] = 0;
+    c->state_id[c->level] = cursor_next_state(c);
+  }
+  return true;
+}
+
+static bool cursor_goto_next_sibling(Tslua_cursor *c)
+{
+  if (!ts_tree_cursor_goto_next_sibling(&c->cursor)) {
+    return false;
+  }
+  if (c->sheet) {
+    c->child_index[c->level]++;
+    c->state_id[c->level] = cursor_next_state(c);
+  }
+  return true;
+}
+
+static bool cursor_goto_parent(Tslua_cursor *c)
+{
+  if (!ts_tree_cursor_goto_parent(&c->cursor)) {
+    return false;
+  }
+  if (c->sheet) {
+    c->level--;
+  }
+  return true;
+}
+
 static int cursor_forward(lua_State *L)
 {
-  TSTreeCursor *cursor = cursor_check(L);
-  if (!cursor) {
+  Tslua_cursor *c = cursor_check(L);
+  if (!c) {
     return 0;
   }
+  TSTreeCursor *cursor = &c->cursor;
 
   bool status = false;
 
   int narg = lua_gettop(L);
+  uint32_t byte_index = 0;
   if (narg >= 1) {
-    uint32_t byte_index = (uint32_t)lua_tointeger(L, 2);
-    status = ts_tree_cursor_goto_first_child_for_byte(cursor, byte_index) != -1;
-  } else {
-    status = ts_tree_cursor_goto_first_child(cursor);
+    byte_index = (uint32_t)lua_tointeger(L, 2);
   }
+
+  if (c->sheet && c->level >= 31) {
+    lua_pushstring(L,"DEPTH EXCEEDED");
+    return lua_error(L);
+  }
+
+  // TODO: use this and use child index from cursor
+  //status = ts_tree_cursor_goto_first_child_for_byte(cursor, byte_index) != -1;
+  status = cursor_goto_first_child(c);
+
   if (status) {
+    if (byte_index > 0) {
+      while (true) {
+        TSNode node = ts_tree_cursor_current_node(cursor);
+        if (ts_node_end_byte(node) >= byte_index) {
+          break;
+        }
+        // TODO: for a compound node like statement-list, where highlighting
+        // of each element doesn't depend on previous siblings, this is inefficient
+        // internal ts_tree_cursor_goto_first_child_for_byte uses binary search.
+        // we could check what states doesn't have child_index rules.
+        if(!cursor_goto_next_sibling(c)) {
+          // if the parent node was in range, we expect some child node to be
+          lua_pushstring(L, "UNEXPECTED STATE");
+          return lua_error(L);
+        }
+      }
+
+    }
+
     goto ret;
   }
 
   while (true) {
-    status = ts_tree_cursor_goto_next_sibling(cursor);
+    status = cursor_goto_next_sibling(c);
     if (status) {
       break;
     }
 
     // Current node was last a child, look for sibling on higher
     // level
-    status = ts_tree_cursor_goto_parent(cursor);
+    status = cursor_goto_parent(c);
     if (!status) { // past end of root node
       break;
-    }
+    } 
   }
 
 ret:
   if (status) {
     push_node(L, ts_tree_cursor_current_node(cursor));
-    return 1;
+    if (c->sheet) {
+      lua_pushnumber(L, c->sheet->states[c->state_id[c->level]].property_id);
+      return 2;
+    } else {
+      return 1;
+    }
   } else {
     return 0;
   }
+}
+
+static int cursor_debug(lua_State *L)
+{
+  Tslua_cursor *c = cursor_check(L);
+  if (!c) {
+    return 0;
+  }
+
+  lua_createtable(L, 0, 0);
+  for (int i = 0; i <= c->level; i++) {
+    lua_pushinteger(L, c->state_id[i]);
+    lua_rawseti(L, -2, i);
+  }
+  return 1;
+}
+
+// Propertysheet functions
+void tslua_push_propertysheet(lua_State *L, int n_states, int n_kinds)
+{
+  Tslua_propertysheet *sheet = lua_newuserdata(L, sizeof(Tslua_propertysheet));
+  sheet->n_states = n_states;
+  sheet->n_kinds = n_kinds;
+  sheet->states = xcalloc(n_states, sizeof(*sheet->states));
+  for (int i = 0; i < n_states; i++) {
+    PropertyState *s = &sheet->states[i];
+    s->kind_first_trans = xmalloc(n_kinds * sizeof(*s->kind_first_trans));
+    memset(s->kind_first_trans, -1,
+           sheet->n_kinds * sizeof(*s->kind_first_trans));
+    kv_init(s->kind_trans);
+  }
+
+  lua_getfield(L, LUA_REGISTRYINDEX, REG_KEY);  // [udata, env]
+  lua_getfield(L, -1, "propertysheet-meta");  // [udata, env, meta]
+  lua_setmetatable(L, -3);  // [udata, env]
+  lua_pop(L, 1);  // [udata]
+}
+
+static Tslua_propertysheet *propertysheet_check(lua_State *L)
+{
+  if (!lua_gettop(L)) {
+    return 0;
+  }
+  if (!lua_isuserdata(L, 1)) {
+    return 0;
+  }
+  // TODO: typecheck!
+  return lua_touserdata(L, 1);
+}
+
+static int propertysheet_gc(lua_State *L)
+{
+  Tslua_propertysheet *sheet = propertysheet_check(L);
+  if (!sheet) {
+    return 0;
+  }
+
+  // TODO
+  return 0;
+}
+
+static int propertysheet_tostring(lua_State *L)
+{
+  Tslua_propertysheet *c = propertysheet_check(L);
+  if (!c) {
+    return 0;
+  }
+
+  lua_pushstring(L, "<propertysheet>");
+  return 1;
+}
+
+static int propertysheet_add_state(lua_State *L)
+{
+  Tslua_propertysheet *sheet = propertysheet_check(L);
+  if (!sheet) {
+    return 0;
+  }
+
+  int state_id = lua_tointeger(L, 2);
+  int default_next_id = lua_tointeger(L, 3);
+  int property_id = lua_tointeger(L, 4);
+
+  if (state_id >= sheet->n_states) {
+    lua_pushstring(L, "out of bounds");
+    return lua_error(L);
+  }
+
+  PropertyState *state = &sheet->states[state_id];
+
+  state->default_next_state_id = default_next_id;
+  state->property_id = property_id;
+
+  return 0;
+}
+
+static int propertysheet_add_transition(lua_State *L)
+{
+  Tslua_propertysheet *sheet = propertysheet_check(L);
+  if (!sheet) {
+    return 0;
+  }
+
+  int state_id = lua_tointeger(L, 2);
+  int kind_id = lua_tointeger(L, 3);
+  int next_state_id = lua_tointeger(L, 4);
+  int child_index = lua_isnil(L, 5) ? -1 : lua_tointeger(L, 5);
+
+  if (state_id >= sheet->n_states || kind_id >= sheet->n_kinds) {
+    lua_pushstring(L, "out of bounds!!");
+    return lua_error(L);
+  }
+
+  PropertyState *state = &sheet->states[state_id];
+  if (state->kind_first_trans[kind_id] == -1) {
+    state->kind_first_trans[kind_id] = kv_size(state->kind_trans);
+  } else {
+    if (kv_Z(state->kind_trans, 0).kind_id != kind_id) {
+      lua_pushstring(L, "disorder!!");
+      return lua_error(L);
+    }
+  }
+
+  kv_push(state->kind_trans, ((KindTransition){
+    .kind_id = kind_id,
+    .next_state_id = next_state_id,
+    .child_index = child_index,
+    .regex_index = -1,
+  }));
+
+  return 0;
 }
 
