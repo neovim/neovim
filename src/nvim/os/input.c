@@ -64,6 +64,9 @@ void input_start(int fd)
 
   global_fd = fd;
   rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
+#ifdef WIN32
+  uv_tty_set_mode(&read_stream.uv.tty, UV_TTY_MODE_RAW);
+#endif
   rstream_start(&read_stream, input_read_cb, NULL);
 }
 

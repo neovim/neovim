@@ -36,6 +36,9 @@ struct stream {
     uv_pipe_t pipe;
     uv_tcp_t tcp;
     uv_idle_t idle;
+#ifdef WIN32
+    uv_tty_t tty;
+#endif
   } uv;
   uv_stream_t *uvstream;
   uv_buf_t uvbuf;
