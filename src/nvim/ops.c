@@ -1411,7 +1411,7 @@ int op_delete(oparg_T *oap)
       if (!is_append_register(oap->regname)) {
         y_previous = &y_regs[1];
       }
-      y_regs[1].y_array = NULL;                 /* set register "1 to empty */
+      y_regs[1].y_array = NULL;                 // set register "1 to empty
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
     }
