@@ -17145,7 +17145,6 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   timer_T *timer = (timer_T *)data;
   int save_did_emsg = did_emsg;
   int save_called_emsg = called_emsg;
-  int save_did_throw = did_throw;
 
   if (timer->stopped || timer->paused) {
     return;
@@ -17172,15 +17171,12 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
 
   // Handle error message
   if (called_emsg) {
-    ++timer->emsg_count;
-    if (!save_did_throw && current_exception != NULL)
+    timer->emsg_count++;
+    if (current_exception != NULL)
         discard_current_exception();
   }
   did_emsg = save_did_emsg;
   called_emsg = save_called_emsg;
-
-  if (timer->emsg_count >= 3)
-      timer_stop(timer);
 
   tv_clear(&rettv);
 
