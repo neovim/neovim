@@ -6662,12 +6662,24 @@ static void f_append(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = 1;           /* Failed */
 }
 
-/*
- * "argc()" function
- */
 static void f_argc(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = ARGCOUNT;
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    // use the current window
+    rettv->vval.v_number = ARGCOUNT;
+  } else if (argvars[0].v_type == VAR_NUMBER
+             && tv_get_number(&argvars[0]) == -1) {
+    // use the global argument list
+    rettv->vval.v_number = GARGCOUNT;
+  } else {
+    // use the argument list of the specified window
+    win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+    if (wp != NULL) {
+      rettv->vval.v_number = WARGCOUNT(wp);
+    } else {
+      rettv->vval.v_number = -1;
+    }
+  }
 }
 
 /*
@@ -6688,28 +6700,54 @@ static void f_arglistid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+/// Get the argument list for a given window
+static void get_arglist_as_rettv(aentry_T *arglist, int argcount,
+                                 typval_T *rettv)
+{
+  tv_list_alloc_ret(rettv, argcount);
+  if (arglist != NULL) {
+    for (int idx = 0; idx < argcount; idx++) {
+      tv_list_append_string(rettv->vval.v_list,
+                            (const char *)alist_name(&arglist[idx]), -1);
+    }
+  }
+}
+
 /*
  * "argv(nr)" function
  */
 static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int idx;
+  aentry_T *arglist = NULL;
+  int argcount = -1;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    idx = (int)tv_get_number_chk(&argvars[0], NULL);
-    if (idx >= 0 && idx < ARGCOUNT) {
-      rettv->vval.v_string = (char_u *)xstrdup(
-          (const char *)alist_name(&ARGLIST[idx]));
+    if (argvars[1].v_type == VAR_UNKNOWN) {
+      arglist = ARGLIST;
+      argcount = ARGCOUNT;
+    } else if (argvars[1].v_type == VAR_NUMBER
+               && tv_get_number(&argvars[1]) == -1) {
+      arglist = GARGLIST;
+      argcount = GARGCOUNT;
     } else {
-      rettv->vval.v_string = NULL;
+      win_T *wp = find_win_by_nr_or_id(&argvars[1]);
+      if (wp != NULL) {
+        // Use the argument list of the specified window
+        arglist = WARGLIST(wp);
+        argcount = WARGCOUNT(wp);
+      }
     }
     rettv->v_type = VAR_STRING;
-  } else {
-    tv_list_alloc_ret(rettv, ARGCOUNT);
-    for (idx = 0; idx < ARGCOUNT; idx++) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)alist_name(&ARGLIST[idx]), -1);
+    rettv->vval.v_string = NULL;
+    int idx = tv_get_number_chk(&argvars[0], NULL);
+    if (arglist != NULL && idx >= 0 && idx < argcount) {
+      rettv->vval.v_string = (char_u *)xstrdup(
+          (const char *)alist_name(&arglist[idx]));
+    } else if (idx == -1) {
+      get_arglist_as_rettv(arglist, argcount, rettv);
     }
+  } else {
+    get_arglist_as_rettv(ARGLIST, ARGCOUNT, rettv);
   }
 }
 
@@ -8217,6 +8255,19 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
+}
+
+/// Find a window: When using a Window ID in any tab page, when using a number
+/// in the current tab page.
+win_T * find_win_by_nr_or_id(typval_T *vp)
+{
+  int nr = (int)tv_get_number_chk(vp, NULL);
+
+  if (nr >= LOWEST_WIN_ID) {
+    return win_id2wp(vp);
+  }
+
+  return find_win_by_nr(vp, NULL);
 }
 
 /*
@@ -11204,7 +11255,6 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 static int inputsecret_flag = 0;
-
 
 /*
  * This function is used by f_input() and f_inputdialog() functions. The third
@@ -16667,7 +16717,6 @@ static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-
 /*
  * "tabpagenr()" function
  */
@@ -16747,7 +16796,6 @@ static void f_tabpagewinnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   rettv->vval.v_number = nr;
 }
-
 
 /*
  * "tagfiles()" function
