@@ -2452,7 +2452,9 @@ static void u_undo_end(
     }
   }
 
-  smsg(_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+  smsg_attr_keep(
+      0,
+      _("%" PRId64 " %s; %s #%" PRId64 "  %s"),
       u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
       _(msgstr),
       did_undo ? _("before") : _("after"),

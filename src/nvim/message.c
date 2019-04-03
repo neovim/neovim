@@ -400,6 +400,17 @@ int smsg_attr(int attr, char *s, ...)
   return msg_attr((const char *)IObuff, attr);
 }
 
+int smsg_attr_keep(int attr, char *s, ...)
+  FUNC_ATTR_PRINTF(2, 3)
+{
+  va_list arglist;
+
+  va_start(arglist, s);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
+  va_end(arglist);
+  return msg_attr_keep(IObuff, attr, true, false);
+}
+
 /*
  * Remember the last sourcing name/lnum used in an error message, so that it
  * isn't printed each time when it didn't change.
