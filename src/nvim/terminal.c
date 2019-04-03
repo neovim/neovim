@@ -982,6 +982,9 @@ static bool send_mouse_event(Terminal *term, int c)
 {
   int row = mouse_row, col = mouse_col, grid = mouse_grid;
   win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+  if (mouse_win == NULL) {
+    goto end;
+  }
 
   if (term->forward_mouse && mouse_win->w_buffer->terminal == term) {
     // event in the terminal window and mouse events was enabled by the
@@ -1029,6 +1032,7 @@ static bool send_mouse_event(Terminal *term, int c)
     return mouse_win == curwin;
   }
 
+end:
   ins_char_typebuf(c);
   return true;
 }
