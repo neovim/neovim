@@ -16,6 +16,7 @@ set cpo&vim
 
 " BAT comment formatting
 setlocal comments=b:rem,b:@rem,b:REM,b:@REM,:::
+setlocal commentstring=REM\ %s
 setlocal formatoptions-=t formatoptions+=rol
 
 " Define patterns for the browse file filter
