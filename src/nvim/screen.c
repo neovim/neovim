@@ -1461,7 +1461,7 @@ static void win_update(win_T *wp)
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, '@', ' ', srow, wp->w_grid.Rows, HLF_AT);
+      win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.Rows, at_attr);
       wp->w_botline = lnum;
     }
   } else {
@@ -1478,7 +1478,7 @@ static void win_update(win_T *wp)
         if (row + j > wp->w_grid.Rows) {
           j = wp->w_grid.Rows - row;
         }
-        win_draw_end(wp, i, i, row, row + (int)j, HLF_DED);
+        win_draw_end(wp, i, i, true, row, row + (int)j, HLF_DED);
         row += j;
       }
     } else if (dollar_vcol == -1)
@@ -1486,7 +1486,8 @@ static void win_update(win_T *wp)
 
     // make sure the rest of the screen is blank
     // write the 'eob' character to rows that aren't part of the file.
-    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', row, wp->w_grid.Rows, HLF_EOB);
+    win_draw_end(wp, wp->w_p_fcs_chars.eob, ' ', false, row, wp->w_grid.Rows,
+                 HLF_EOB);
   }
 
   if (wp->w_redr_type >= REDRAW_TOP) {
@@ -1548,87 +1549,66 @@ int win_signcol_width(win_T *wp)
   return 2;
 }
 
-/*
- * Clear the rest of the window and mark the unused lines with "c1".  use "c2"
- * as the filler character.
- */
-static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T hl)
+/// Call grid_fill() with columns adjusted for 'rightleft' if needed.
+/// Return the new offset.
+static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row,
+                        int endrow, int attr)
+{
+  int nn = off + width;
+
+  if (nn > wp->w_grid.Columns) {
+    nn = wp->w_grid.Columns;
+  }
+
+  if (wp->w_p_rl) {
+    grid_fill(&wp->w_grid, row, endrow, W_ENDCOL(wp) - nn, W_ENDCOL(wp) - off,
+              c1, c2, attr);
+  } else {
+    grid_fill(&wp->w_grid, row, endrow, off, nn, c1, c2, attr);
+  }
+
+  return nn;
+}
+
+/// Clear lines near the end of the window and mark the unused lines with "c1".
+/// Use "c2" as filler character.
+/// When "draw_margin" is true, then draw the sign/fold/number columns.
+static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
+                         int endrow, hlf_T hl)
 {
   int n = 0;
-# define FDC_OFF n
-  int fdc = compute_foldcolumn(wp, 0);
+
+  if (draw_margin) {
+    // draw the fold column
+    int fdc = compute_foldcolumn(wp, 0);
+    if (fdc > 0) {
+      n = win_fill_end(wp, ' ', ' ', n, fdc, row, endrow,
+                       win_hl_attr(wp, HLF_FC));
+    }
+    // draw the sign column
+    int count = win_signcol_count(wp);
+    if (count > 0) {
+      n = win_fill_end(wp, ' ', ' ', n, win_signcol_width(wp) * count, row,
+                       endrow, win_hl_attr(wp, HLF_SC));
+    }
+    // draw the number column
+    if ((wp->w_p_nu || wp->w_p_rnu) && vim_strchr(p_cpo, CPO_NUMCOL) == NULL) {
+      n = win_fill_end(wp, ' ', ' ', n, number_width(wp) + 1, row, endrow,
+                       win_hl_attr(wp, HLF_N));
+    }
+  }
 
   int attr = hl_combine_attr(wp->w_hl_attr_normal, win_hl_attr(wp, hl));
 
   if (wp->w_p_rl) {
-    // No check for cmdline window: should never be right-left.
-    n = fdc;
-
-    if (n > 0) {
-      // draw the fold column at the right
-      if (n > wp->w_grid.Columns) {
-        n = wp->w_grid.Columns;
-      }
-      grid_fill(&wp->w_grid, row, endrow, wp->w_grid.Columns - n,
-                wp->w_grid.Columns, ' ', ' ', win_hl_attr(wp, HLF_FC));
-    }
-
-    int count = win_signcol_count(wp);
-    if (count > 0) {
-        int nn = n + win_signcol_width(wp) * count;
-
-        // draw the sign column left of the fold column
-        if (nn > wp->w_grid.Columns) {
-            nn = wp->w_grid.Columns;
-        }
-        grid_fill(&wp->w_grid, row, endrow, wp->w_grid.Columns - nn,
-                  wp->w_grid.Columns - n, ' ', ' ', win_hl_attr(wp, HLF_SC));
-        n = nn;
-    }
-
-    grid_fill(&wp->w_grid, row, endrow, 0, wp->w_grid.Columns - 1 - FDC_OFF,
+    grid_fill(&wp->w_grid, row, endrow, wp->w_wincol, W_ENDCOL(wp) - 1 - n,
               c2, c2, attr);
-    grid_fill(&wp->w_grid, row, endrow,
-              wp->w_grid.Columns - 1 - FDC_OFF, wp->w_grid.Columns - FDC_OFF,
+    grid_fill(&wp->w_grid, row, endrow, W_ENDCOL(wp) - 1 - n, W_ENDCOL(wp) - n,
               c1, c2, attr);
   } else {
-    if (cmdwin_type != 0 && wp == curwin) {
-      /* draw the cmdline character in the leftmost column */
-      n = 1;
-      if (n > wp->w_grid.Columns) {
-        n = wp->w_grid.Columns;
-      }
-      grid_fill(&wp->w_grid, row, endrow, 0, n, cmdwin_type, ' ',
-                win_hl_attr(wp, HLF_AT));
-    }
-    if (fdc > 0) {
-      int nn = n + fdc;
-
-      // draw the fold column at the left
-      if (nn > wp->w_grid.Columns) {
-        nn = wp->w_grid.Columns;
-      }
-      grid_fill(&wp->w_grid, row, endrow, n, nn, ' ', ' ',
-                win_hl_attr(wp, HLF_FC));
-      n = nn;
-    }
-
-    int count = win_signcol_count(wp);
-    if (count > 0) {
-        int nn = n + win_signcol_width(wp) * count;
-
-        // draw the sign column after the fold column
-        if (nn > wp->w_grid.Columns) {
-            nn = wp->w_grid.Columns;
-        }
-        grid_fill(&wp->w_grid, row, endrow, n, nn, ' ', ' ',
-                  win_hl_attr(wp, HLF_SC));
-        n = nn;
-    }
-
-    grid_fill(&wp->w_grid, row, endrow, FDC_OFF, wp->w_grid.Columns, c1, c2,
-              attr);
+    grid_fill(&wp->w_grid, row, endrow, n, wp->w_grid.Columns, c1, c2, attr);
   }
+
   set_empty_rows(wp, row);
 }
 
@@ -4222,11 +4202,9 @@ win_line (
            ) || lcs_eol_one == -1)
         break;
 
-      /* When the window is too narrow draw all "@" lines. */
-      if (draw_state != WL_LINE
-          && filler_todo <= 0
-          ) {
-        win_draw_end(wp, '@', ' ', row, wp->w_grid.Rows, HLF_AT);
+      // When the window is too narrow draw all "@" lines.
+      if (draw_state != WL_LINE && filler_todo <= 0) {
+        win_draw_end(wp, '@', ' ', true, row, wp->w_grid.Rows, HLF_AT);
         row = endrow;
       }
 
