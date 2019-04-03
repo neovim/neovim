@@ -5554,7 +5554,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		the pattern.  'smartcase' is NOT used.	The matching is always
 		done like 'magic' is set and 'cpoptions' is empty.
 
-					*matchadd()* *E798* *E799* *E801*
+				*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
@@ -5593,6 +5593,8 @@ matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 			conceal	    Special character to show instead of the
 				    match (only for |hl-Conceal| highlighed
 				    matches, see |:syn-cchar|)
+			window	    Instead of the current window use the
+				    window with this number or window ID.
 
 		The number of matches is not limited, as it is the case with
 		the |:match| commands.
