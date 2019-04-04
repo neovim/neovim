@@ -6662,12 +6662,24 @@ static void f_append(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = 1;           /* Failed */
 }
 
-/*
- * "argc()" function
- */
 static void f_argc(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  rettv->vval.v_number = ARGCOUNT;
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    // use the current window
+    rettv->vval.v_number = ARGCOUNT;
+  } else if (argvars[0].v_type == VAR_NUMBER
+             && tv_get_number(&argvars[0]) == -1) {
+    // use the global argument list
+    rettv->vval.v_number = GARGCOUNT;
+  } else {
+    // use the argument list of the specified window
+    win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+    if (wp != NULL) {
+      rettv->vval.v_number = WARGCOUNT(wp);
+    } else {
+      rettv->vval.v_number = -1;
+    }
+  }
 }
 
 /*
@@ -6688,28 +6700,54 @@ static void f_arglistid(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+/// Get the argument list for a given window
+static void get_arglist_as_rettv(aentry_T *arglist, int argcount,
+                                 typval_T *rettv)
+{
+  tv_list_alloc_ret(rettv, argcount);
+  if (arglist != NULL) {
+    for (int idx = 0; idx < argcount; idx++) {
+      tv_list_append_string(rettv->vval.v_list,
+                            (const char *)alist_name(&arglist[idx]), -1);
+    }
+  }
+}
+
 /*
  * "argv(nr)" function
  */
 static void f_argv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int idx;
+  aentry_T *arglist = NULL;
+  int argcount = -1;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
-    idx = (int)tv_get_number_chk(&argvars[0], NULL);
-    if (idx >= 0 && idx < ARGCOUNT) {
-      rettv->vval.v_string = (char_u *)xstrdup(
-          (const char *)alist_name(&ARGLIST[idx]));
+    if (argvars[1].v_type == VAR_UNKNOWN) {
+      arglist = ARGLIST;
+      argcount = ARGCOUNT;
+    } else if (argvars[1].v_type == VAR_NUMBER
+               && tv_get_number(&argvars[1]) == -1) {
+      arglist = GARGLIST;
+      argcount = GARGCOUNT;
     } else {
-      rettv->vval.v_string = NULL;
+      win_T *wp = find_win_by_nr_or_id(&argvars[1]);
+      if (wp != NULL) {
+        // Use the argument list of the specified window
+        arglist = WARGLIST(wp);
+        argcount = WARGCOUNT(wp);
+      }
     }
     rettv->v_type = VAR_STRING;
-  } else {
-    tv_list_alloc_ret(rettv, ARGCOUNT);
-    for (idx = 0; idx < ARGCOUNT; idx++) {
-      tv_list_append_string(rettv->vval.v_list,
-                            (const char *)alist_name(&ARGLIST[idx]), -1);
+    rettv->vval.v_string = NULL;
+    int idx = tv_get_number_chk(&argvars[0], NULL);
+    if (arglist != NULL && idx >= 0 && idx < argcount) {
+      rettv->vval.v_string = (char_u *)xstrdup(
+          (const char *)alist_name(&arglist[idx]));
+    } else if (idx == -1) {
+      get_arglist_as_rettv(arglist, argcount, rettv);
     }
+  } else {
+    get_arglist_as_rettv(ARGLIST, ARGCOUNT, rettv);
   }
 }
 
@@ -8217,6 +8255,19 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = path;
+}
+
+/// Find a window: When using a Window ID in any tab page, when using a number
+/// in the current tab page.
+win_T * find_win_by_nr_or_id(typval_T *vp)
+{
+  int nr = (int)tv_get_number_chk(vp, NULL);
+
+  if (nr >= LOWEST_WIN_ID) {
+    return win_id2wp(vp);
+  }
+
+  return find_win_by_nr(vp, NULL);
 }
 
 /*
@@ -10025,7 +10076,7 @@ static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
 /// "getloclist()" function
 static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *wp = find_win_by_nr(&argvars[0], NULL);
+  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
   get_qf_loc_list(false, wp, &argvars[1], rettv);
 }
 
@@ -10396,7 +10447,7 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   tv_list_alloc_ret(rettv, 2);
-  const win_T *const wp = find_win_by_nr(&argvars[0], NULL);
+  const win_T *const wp = find_win_by_nr_or_id(&argvars[0]);
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_winrow + 1);
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
 }
@@ -11204,7 +11255,6 @@ static void f_index(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 static int inputsecret_flag = 0;
-
 
 /*
  * This function is used by f_input() and f_inputdialog() functions. The third
@@ -12528,6 +12578,31 @@ static void f_match(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   find_some_match(argvars, rettv, kSomeMatch);
 }
 
+static int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
+                             win_T **win)
+{
+  dictitem_T *di;
+
+  if (tv->v_type != VAR_DICT) {
+    EMSG(_(e_dictreq));
+    return FAIL;
+  }
+
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("conceal"))) != NULL) {
+    *conceal_char = tv_get_string(&di->di_tv);
+  }
+
+  if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
+    *win = find_win_by_nr_or_id(&di->di_tv);
+    if (*win == NULL) {
+      EMSG(_("E957: Invalid window number"));
+      return FAIL;
+    }
+  }
+
+  return OK;
+}
+
 /*
  * "matchadd()" function
  */
@@ -12541,6 +12616,7 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int id = -1;
   bool error = false;
   const char *conceal_char = NULL;
+  win_T *win = curwin;
 
   rettv->vval.v_number = -1;
 
@@ -12551,16 +12627,9 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     prio = tv_get_number_chk(&argvars[2], &error);
     if (argvars[3].v_type != VAR_UNKNOWN) {
       id = tv_get_number_chk(&argvars[3], &error);
-      if (argvars[4].v_type != VAR_UNKNOWN) {
-        if (argvars[4].v_type != VAR_DICT) {
-          EMSG(_(e_dictreq));
-          return;
-        }
-        dictitem_T *di;
-        if ((di = tv_dict_find(argvars[4].vval.v_dict, S_LEN("conceal")))
-            != NULL) {
-          conceal_char = tv_get_string(&di->di_tv);
-        }
+      if (argvars[4].v_type != VAR_UNKNOWN
+          && matchadd_dict_arg(&argvars[4], &conceal_char, &win) == FAIL) {
+        return;
       }
     }
   }
@@ -12572,8 +12641,7 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  rettv->vval.v_number = match_add(curwin, grp, pat, prio, id, NULL,
-                                   conceal_char);
+  rettv->vval.v_number = match_add(win, grp, pat, prio, id, NULL, conceal_char);
 }
 
 static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -12601,21 +12669,15 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int prio = 10;
   int id = -1;
   const char *conceal_char = NULL;
+  win_T *win = curwin;
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     prio = tv_get_number_chk(&argvars[2], &error);
     if (argvars[3].v_type != VAR_UNKNOWN) {
       id = tv_get_number_chk(&argvars[3], &error);
-      if (argvars[4].v_type != VAR_UNKNOWN) {
-        if (argvars[4].v_type != VAR_DICT) {
-          EMSG(_(e_dictreq));
-          return;
-        }
-        dictitem_T *di;
-        if ((di = tv_dict_find(argvars[4].vval.v_dict, S_LEN("conceal")))
-            != NULL) {
-          conceal_char = tv_get_string(&di->di_tv);
-        }
+      if (argvars[4].v_type != VAR_UNKNOWN
+          && matchadd_dict_arg(&argvars[4], &conceal_char, &win) == FAIL) {
+        return;
       }
     }
   }
@@ -12629,8 +12691,7 @@ static void f_matchaddpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  rettv->vval.v_number = match_add(curwin, group, NULL, prio, id, l,
-                                   conceal_char);
+  rettv->vval.v_number = match_add(win, group, NULL, prio, id, l, conceal_char);
 }
 
 /*
@@ -14806,7 +14867,7 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
 
-  win = find_win_by_nr(&argvars[0], NULL);
+  win = find_win_by_nr_or_id(&argvars[0]);
   if (win != NULL) {
     set_qf_ll_list(win, &argvars[1], rettv);
   }
@@ -16656,7 +16717,6 @@ static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
-
 /*
  * "tabpagenr()" function
  */
@@ -16736,7 +16796,6 @@ static void f_tabpagewinnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
   rettv->vval.v_number = nr;
 }
-
 
 /*
  * "tagfiles()" function
@@ -17557,18 +17616,15 @@ static void f_win_id2win(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = win_id2win(argvars);
 }
 
-/*
- * "winbufnr(nr)" function
- */
+/// "winbufnr(nr)" function
 static void f_winbufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T       *wp;
-
-  wp = find_win_by_nr(&argvars[0], NULL);
-  if (wp == NULL)
+  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+  if (wp == NULL) {
     rettv->vval.v_number = -1;
-  else
+  } else {
     rettv->vval.v_number = wp->w_buffer->b_fnum;
+  }
 }
 
 /*
@@ -17580,18 +17636,15 @@ static void f_wincol(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = curwin->w_wcol + 1;
 }
 
-/*
- * "winheight(nr)" function
- */
+/// "winheight(nr)" function
 static void f_winheight(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T       *wp;
-
-  wp = find_win_by_nr(&argvars[0], NULL);
-  if (wp == NULL)
+  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+  if (wp == NULL) {
     rettv->vval.v_number = -1;
-  else
+  } else {
     rettv->vval.v_number = wp->w_height;
+  }
 }
 
 /*
@@ -17855,18 +17908,15 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   return ret;
 }
 
-/*
- * "winwidth(nr)" function
- */
+/// "winwidth(nr)" function
 static void f_winwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T       *wp;
-
-  wp = find_win_by_nr(&argvars[0], NULL);
-  if (wp == NULL)
+  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+  if (wp == NULL) {
     rettv->vval.v_number = -1;
-  else
+  } else {
     rettv->vval.v_number = wp->w_width;
+  }
 }
 
 /// "wordcount()" function

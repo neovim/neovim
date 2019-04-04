@@ -1970,11 +1970,11 @@ and({expr}, {expr})		Number  bitwise AND
 api_info()			Dict	api metadata
 append({lnum}, {string})	Number	append {string} below line {lnum}
 append({lnum}, {list})		Number	append lines {list} below line {lnum}
-argc()				Number	number of files in the argument list
+argc([{winid}])			Number	number of files in the argument list
 argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
-argv({nr})			String	{nr} entry of the argument list
-argv()				List	the argument list
+argv({nr} [, {winid}])		String	{nr} entry of the argument list
+argv([-1, {winid}])		List	the argument list
 assert_equal({exp}, {act} [, {msg}])
 				none	assert {exp} is equal to {act}
 assert_exception({error} [, {msg}])
@@ -2446,8 +2446,15 @@ append({lnum}, {text})					*append()*
 			:let failed = append(0, ["Chapter 1", "the beginning"])
 <
 							*argc()*
-argc()		The result is the number of files in the argument list of the
-		current window.  See |arglist|.
+argc([{winid}])
+		The result is the number of files in the argument list.  See
+		|arglist|.
+		If {winid} is not supplied, the argument list of the current
+		window is used.
+		If {winid} is -1, the global argument list is used.
+		Otherwise {winid} specifies the window of which the argument
+		list is used: either the window number or the window ID.
+		Returns -1 if the {winid} argument is invalid.
 
 							*argidx()*
 argidx()	The result is the current index in the argument list.  0 is
@@ -2458,7 +2465,7 @@ arglistid([{winnr} [, {tabnr}]])
 		Return the argument list ID.  This is a number which
 		identifies the argument list being used.  Zero is used for the
 		global argument list.  See |arglist|.
-		Return -1 if the arguments are invalid.
+		Returns -1 if the arguments are invalid.
 
 		Without arguments use the current window.
 		With {winnr} only use this window in the current tab page.
@@ -2467,17 +2474,19 @@ arglistid([{winnr} [, {tabnr}]])
 		{winnr} can be the window number or the |window-ID|.
 
 							*argv()*
-argv([{nr}])	The result is the {nr}th file in the argument list of the
-		current window.  See |arglist|.  "argv(0)" is the first one.
-		Example: >
+argv([{nr} [, {winid}])
+		The result is the {nr}th file in the argument list.  See
+		|arglist|.  "argv(0)" is the first one.  Example: >
 	:let i = 0
 	:while i < argc()
 	:  let f = escape(fnameescape(argv(i)), '.')
 	:  exe 'amenu Arg.' . f . ' :e ' . f . '<CR>'
 	:  let i = i + 1
 	:endwhile
-<		Without the {nr} argument a |List| with the whole |arglist| is
-		returned.
+<		Without the {nr} argument, or when {nr} is -1, a |List| with
+		the whole |arglist| is returned.
+
+		The {winid} argument specifies the window ID, see |argc()|.
 
 							*assert_equal()*
 assert_equal({expected}, {actual}, [, {msg}])
@@ -5554,7 +5563,7 @@ match({expr}, {pat} [, {start} [, {count}]])			*match()*
 		the pattern.  'smartcase' is NOT used.	The matching is always
 		done like 'magic' is set and 'cpoptions' is empty.
 
-					*matchadd()* *E798* *E799* *E801*
+				*matchadd()* *E798* *E799* *E801* *E957*
 matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 		Defines a pattern to be highlighted in the current window (a
 		"match").  It will be highlighted with {group}.  Returns an
@@ -5593,6 +5602,8 @@ matchadd({group}, {pattern}[, {priority}[, {id} [, {dict}]]])
 			conceal	    Special character to show instead of the
 				    match (only for |hl-Conceal| highlighed
 				    matches, see |:syn-cchar|)
+			window	    Instead of the current window use the
+				    window with this number or window ID.
 
 		The number of matches is not limited, as it is the case with
 		the |:match| commands.
