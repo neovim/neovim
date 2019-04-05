@@ -1352,7 +1352,7 @@ static int command_line_handle_key(CommandLineState *s)
       s->c = plain_vgetc();              // CTRL-R CTRL-R <char>
     }
     ccline.special_char = NUL;
-    --no_mapping;
+    no_mapping--;
     // Insert the result of an expression.
     // Need to save the current command line, to be able to enter
     // a new one...
@@ -1448,8 +1448,9 @@ static int command_line_handle_key(CommandLineState *s)
              && ccline.cmdbuff[ccline.cmdpos - 1] != ' ');
 
     set_cmdspos_cursor();
-    if (ccline.special_char != NUL)
-	putcmdline(ccline.special_char, true);
+    if (ccline.special_char != NUL) {
+      putcmdline(ccline.special_char, true);
+    }
 
     return command_line_not_changed(s);
 
@@ -1725,7 +1726,7 @@ static int command_line_handle_key(CommandLineState *s)
     s->ignore_drag_release = true;
     putcmdline('?', true);
     s->c = get_digraph(true);
-    ccline.special_char = 'NUL';
+    ccline.special_char = NUL;
 
     if (s->c != NUL) {
       break;
@@ -3472,8 +3473,9 @@ void redrawcmd(void)
 
   set_cmdspos_cursor();
 
-  if (ccline.special_char != NUL)
+  if (ccline.special_char != NUL) {
     putcmdline(ccline.special_char, ccline.special_shift);
+  }
 
   /*
    * An emsg() before may have set msg_scroll. This is used in normal mode,
