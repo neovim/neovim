@@ -2558,6 +2558,29 @@ func Xmultifilestack_tests(cchar)
   call assert_equal(3, l1.items[1].lnum)
   call assert_equal('two.txt', bufname(l2.items[1].bufnr))
   call assert_equal(5, l2.items[1].lnum)
+
+  " Test for start of a new error line in the same line where a previous
+  " error line ends with a file stack.
+  let efm_val = 'Error\ l%l\ in\ %f,'
+  let efm_val .= '%-P%>(%f%r,Error\ l%l\ in\ %m,%-Q)%r'
+  let l = g:Xgetlist({'lines' : [
+              \ '(one.txt',
+              \ 'Error l4 in one.txt',
+              \ ') (two.txt',
+              \ 'Error l6 in two.txt',
+              \ ')',
+              \ 'Error l8 in one.txt'
+              \ ], 'efm' : efm_val})
+  call assert_equal(3, len(l.items))
+  call assert_equal('one.txt', bufname(l.items[0].bufnr))
+  call assert_equal(4, l.items[0].lnum)
+  call assert_equal('one.txt', l.items[0].text)
+  call assert_equal('two.txt', bufname(l.items[1].bufnr))
+  call assert_equal(6, l.items[1].lnum)
+  call assert_equal('two.txt', l.items[1].text)
+  call assert_equal('one.txt', bufname(l.items[2].bufnr))
+  call assert_equal(8, l.items[2].lnum)
+  call assert_equal('', l.items[2].text)
 endfunc
 
 func Test_multifilestack()
