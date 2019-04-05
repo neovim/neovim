@@ -1408,8 +1408,10 @@ int op_delete(oparg_T *oap)
       free_register(&y_regs[9]); /* free register "9 */
       for (n = 9; n > 1; n--)
         y_regs[n] = y_regs[n - 1];
-      y_previous = &y_regs[1];
-      y_regs[1].y_array = NULL;                 /* set register "1 to empty */
+      if (!is_append_register(oap->regname)) {
+        y_previous = &y_regs[1];
+      }
+      y_regs[1].y_array = NULL;                 // set register "1 to empty
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
     }
@@ -2789,8 +2791,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (!curbuf->terminal) {
-    // Autocommands may be executed when saving lines for undo, which may make
-    // y_array invalid.  Start undo now to avoid that.
+    // Autocommands may be executed when saving lines for undo.  This might
+    // make y_array invalid, so we start undo now to avoid that.
     if (u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1) == FAIL) {
       return;
     }
