@@ -86,11 +86,13 @@ GADGETS = {
         'f7e5552db3783d6b45ba4b84005d7b42a372033ca84c0fce82eb70e7372336c6',
     },
     'adapters': {
-      "name": "vscode-python",
-      "command": [
-        "node",
-        "${gadgetDir}/vscode-python/out/client/debugger/debugAdapter/main.js",
-      ]
+      "vscode-python": {
+        "name": "vscode-python",
+        "command": [
+          "node",
+          "${gadgetDir}/vscode-python/out/client/debugger/debugAdapter/main.js",
+        ],
+      }
     },
   },
   'tclpro': {
