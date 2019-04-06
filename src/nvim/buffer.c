@@ -1550,7 +1550,7 @@ void enter_buffer(buf_T *buf)
     diff_buf_add(curbuf);
   }
 
-  curwin->w_s = &(buf->b_s);
+  curwin->w_s = &(curbuf->b_s);
 
   // Cursor on first line by default.
   curwin->w_cursor.lnum = 1;
