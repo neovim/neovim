@@ -3783,8 +3783,8 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
     icase = (bool)tv_dict_get_number(tv->vval.v_dict, "icase");
     adup = (bool)tv_dict_get_number(tv->vval.v_dict, "dup");
     aempty = (bool)tv_dict_get_number(tv->vval.v_dict, "empty");
-    if (tv_dict_get_string(tv->vval.v_dict, (char_u *)"equal", false) != NULL) {
-      aequal = tv_dict_get_number(tv->vval.v_dict, (char_u *)"equal");
+    if (tv_dict_get_string(tv->vval.v_dict, "equal", false) != NULL) {
+      aequal = tv_dict_get_number(tv->vval.v_dict, "equal");
     }
   } else {
     word = (const char *)tv_get_string_chk(tv);
