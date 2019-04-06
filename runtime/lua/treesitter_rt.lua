@@ -12,15 +12,15 @@ function js_sheet()
   local path = '.deps/build/src/treesitter-javascript/src/highlights.json'
   a.nvim_set_var("_ts_path", path)
   local obj = a.nvim_eval("json_decode(readfile(g:_ts_path,'b'))")
-  for k in pairs(obj) do print(k) end
+  --for k in pairs(obj) do print(k) end
   --obj.property_sets[2]
 
   states = obj.states
   s = states[1]
-  for k in pairs(s) do print(k) end
+  --for k in pairs(s) do print(k) end
 
   t = s.transitions[2]
-  for k in pairs(t) do print(k) end
+  --for k in pairs(t) do print(k) end
 
   parser = vim.ts_parser("javascript")
   symbs = parser:symbols()
@@ -65,7 +65,6 @@ function js_sheet()
   end
   return sheet
 end
-print(lut[true]['identifier'])
 
 --luadev = require'luadev'
 --i = require'inspect'
@@ -195,8 +194,8 @@ end
 
 function ts_cursor()
   local row, col = unpack(a.nvim_win_get_cursor(0))
-  --ts_inspect_pos(row-1, col)
-  ts_inspect2(row-1, col)
+  ts_inspect_pos(row-1, col)
+  --ts_inspect2(row-1, col)
 end
 
 hl_map = {
@@ -227,6 +226,7 @@ hl_scope_map = {
   keyword='Statement',
   string='String',
   escape='Special',
+  comment='Comment'
   ['function']='Identifier',
 }
 
@@ -262,7 +262,6 @@ function ts_line(line,endl,drawing)
   while continue do
     --print(inspect_node(node))
     if true then
-      print(nscope)
       local map = (drawing and id_scope_map) or scope_map
       hl = map[nscope]
     else
