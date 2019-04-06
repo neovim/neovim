@@ -80,9 +80,17 @@ GADGETS = {
                '${version}/${file_name}' ),
     },
     'all': {
-      'version': '2018.12.1',
+      'version': '2019.3.6352',
       'file_name': 'ms-python-release.vsix',
-      'checksum': '0406028b7d2fbb86ffd6cda18a36638a95111fd35b19cc198d343a2828f5c3b1',
+      'checksum':
+        'f7e5552db3783d6b45ba4b84005d7b42a372033ca84c0fce82eb70e7372336c6',
+    },
+    'adapters': {
+      "name": "vscode-python",
+      "command": [
+        "node",
+        "${gadgetDir}/vscode-python/out/client/debugger/debugAdapter/main.js",
+      ]
     },
   },
   'tclpro': {
