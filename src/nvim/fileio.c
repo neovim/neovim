@@ -6061,17 +6061,30 @@ void do_autocmd(char_u *arg_in, int forceit)
     for (size_t i = 0; i < 2; i++) {
       if (*cmd != NUL) {
         // Check for "++once" flag.
-        if (!once && STRNCMP(cmd, "++once", 6) == 0 && ascii_iswhite(cmd[6])) {
+        if (STRNCMP(cmd, "++once", 6) == 0 && ascii_iswhite(cmd[6])) {
+          if (once) {
+            EMSG2(_(e_duparg2), "++once");
+          }
           once = true;
           cmd = skipwhite(cmd + 6);
         }
+
         // Check for "++nested" flag.
-        if (!nested
-            && ((STRNCMP(cmd, "++nested", 8) == 0 && ascii_iswhite(cmd[8]))
-                // Deprecated form (without "++").
-                || (STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])))) {
+        if ((STRNCMP(cmd, "++nested", 8) == 0 && ascii_iswhite(cmd[8]))) {
+          if (nested) {
+            EMSG2(_(e_duparg2), "++nested");
+          }
           nested = true;
-          cmd = skipwhite(cmd + ('+' == cmd[0] ? 8 : 6));
+          cmd = skipwhite(cmd + 8);
+        }
+
+        // Check for the old (deprecated) "nested" flag.
+        if (STRNCMP(cmd, "nested", 6) == 0 && ascii_iswhite(cmd[6])) {
+          if (nested) {
+            EMSG2(_(e_duparg2), "nested");
+          }
+          nested = true;
+          cmd = skipwhite(cmd + 6);
         }
       }
     }
