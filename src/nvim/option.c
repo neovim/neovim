@@ -306,6 +306,15 @@ static char *(p_cot_values[]) =       { "menu", "menuone", "longest", "preview",
 static char *(p_icm_values[]) =       { "nosplit", "split", NULL };
 static char *(p_scl_values[]) =       { "yes", "no", "auto", NULL };
 
+/// All possible flags for 'shm'.
+static char_u SHM_ALL[] = {
+  SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI,
+  SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL, SHM_OVER,
+  SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO, SHM_COMPLETIONMENU,
+  SHM_RECORDING, SHM_FILEINFO,
+  0,
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
 #endif
