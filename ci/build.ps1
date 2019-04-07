@@ -6,12 +6,15 @@ $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
 $cmakeBuildType = 'RelWithDebInfo'
+$depsDir = "deps-$($compiler)"
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
 }
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
+  DEPS_BUILD_DIR=$depsDir;
+  DEPS_PREFIX="$($depsDir)/usr";
 }
 $uploadToCodeCov = $false
 
@@ -89,10 +92,10 @@ function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-if (-Not (Test-Path -PathType container .deps)) {
-  mkdir .deps
+if (-Not (Test-Path -PathType container $depsDir)) {
+  mkdir "$depsDir"
 }
-cd .deps
+cd "$depsDir"
 cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) ..\third-party\ ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd ..
