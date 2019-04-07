@@ -8,6 +8,13 @@ configuration:
 - MINGW_64
 - MINGW_32
 - MINGW_64-gcov
+init:
+- ps: |
+    # For pull requests, skip some build configurations to save time.
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
+      $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
+      Exit-AppVeyorBuild
+    }
 matrix:
   allow_failures:
     - configuration: MINGW_64-gcov
@@ -18,8 +25,10 @@ build_script:
 - powershell ci\build.ps1
 cache:
 - C:\msys64\var\cache\pacman\pkg -> ci\build.ps1
-- .deps -> ci\build.ps1
-- .deps -> third-party\**
+- deps-MINGW  -> ci\build.ps1
+- deps-MSVC   -> ci\build.ps1
+- deps-MINGW  -> third-party\**
+- deps-MSVC   -> third-party\**
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe

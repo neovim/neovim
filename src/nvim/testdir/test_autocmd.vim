@@ -1308,3 +1308,73 @@ func Test_Changed_FirstTime()
   call delete('Xchanged.txt')
   bwipe!
 endfunc
+
+func Test_autocmd_nested()
+  let g:did_nested = 0
+  augroup Testing
+    au WinNew * edit somefile
+    au BufNew * let g:did_nested = 1
+  augroup END
+  split
+  call assert_equal(0, g:did_nested)
+  close
+  bwipe! somefile
+
+  " old nested argument still works
+  augroup Testing
+    au!
+    au WinNew * nested edit somefile
+    au BufNew * let g:did_nested = 1
+  augroup END
+  split
+  call assert_equal(1, g:did_nested)
+  close
+  bwipe! somefile
+
+  " New ++nested argument works
+  augroup Testing
+    au!
+    au WinNew * ++nested edit somefile
+    au BufNew * let g:did_nested = 1
+  augroup END
+  split
+  call assert_equal(1, g:did_nested)
+  close
+  bwipe! somefile
+
+  augroup Testing
+    au!
+  augroup END
+
+  call assert_fails('au WinNew * ++nested ++nested echo bad', 'E983:')
+  call assert_fails('au WinNew * nested nested echo bad', 'E983:')
+endfunc
+
+func Test_autocmd_once()
+  " Without ++once WinNew triggers twice
+  let g:did_split = 0
+  augroup Testing
+    au WinNew * let g:did_split += 1
+  augroup END
+  split
+  split
+  call assert_equal(2, g:did_split)
+  call assert_true(exists('#WinNew'))
+  close
+  close
+
+  " With ++once WinNew triggers once
+  let g:did_split = 0
+  augroup Testing
+    au!
+    au WinNew * ++once let g:did_split += 1
+  augroup END
+  split
+  split
+  call assert_equal(1, g:did_split)
+  call assert_false(exists('#WinNew'))
+  close
+  close
+
+  call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+endfunc

@@ -6,19 +6,17 @@ $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
 $cmakeBuildType = 'RelWithDebInfo'
+$depsDir = [System.IO.Path]::GetFullPath("deps-$($compiler)")
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
 }
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
+  DEPS_BUILD_DIR=$depsDir;
+  DEPS_PREFIX="$($depsDir)/usr";
 }
 $uploadToCodeCov = $false
-
-# For pull requests, skip some build configurations to save time.
-if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
-  exit 0
-}
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
@@ -89,10 +87,10 @@ function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-if (-Not (Test-Path -PathType container .deps)) {
-  mkdir .deps
+if (-Not (Test-Path -PathType container $depsDir)) {
+  mkdir "$depsDir"
 }
-cd .deps
+cd "$depsDir"
 cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) ..\third-party\ ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd ..
