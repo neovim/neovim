@@ -6,7 +6,7 @@ $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
 $cmakeBuildType = 'RelWithDebInfo'
-$depsDir = "deps-$($compiler)"
+$depsDir = [System.IO.Path]::GetFullPath("deps-$($compiler)")
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
 }
