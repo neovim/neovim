@@ -28,7 +28,6 @@ before_build:
 build_script:
 - powershell ci\build.ps1
 cache:
-- C:\projects\nvim-deps -> ci\build.ps1
 - C:\projects\nvim-deps -> third-party\**
 artifacts:
 - path: build/Neovim.zip
