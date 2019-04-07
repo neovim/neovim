@@ -99,6 +99,13 @@ describe(':terminal', function()
     eq(3, #jumps)
   end)
 
+  it(':stopinsert RPC request exits terminal-mode #7807', function()
+    command(':terminal')
+    feed('i[tui] insert-mode')
+    eq({ blocking=false, mode='t' }, nvim('get_mode'))
+    command('stopinsert')
+    eq({ blocking=false, mode='n' }, nvim('get_mode'))
+  end)
 end)
 
 describe(':terminal (with fake shell)', function()

@@ -1844,7 +1844,8 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 ":endif", ":for" and ":endfor", ":while" and ":endwhile".
 
 							*:start* *:startinsert*
-:star[tinsert][!]	Start Insert mode just after executing this command.
+:star[tinsert][!]	Start Insert mode (or |Terminal-mode| in a |terminal|
+			buffer) just after executing this command.
 			Works like typing "i" in Normal mode.  When the ! is
 			included it works like "A", append to the line.
 			Otherwise insertion starts at the cursor position.
@@ -1854,8 +1855,8 @@ NOTE: These commands cannot be used with |:global| or |:vglobal|.
 			This command does not work from |:normal|.
 
 							*:stopi* *:stopinsert*
-:stopi[nsert]		Stop Insert mode as soon as possible.  Works like
-			typing <Esc> in Insert mode.
+:stopi[nsert]		Stop Insert mode or |Terminal-mode| as soon as
+			possible.  Works like typing <Esc> in Insert mode.
 			Can be used in an autocommand, example: >
 				:au BufEnter scratch stopinsert
 <
