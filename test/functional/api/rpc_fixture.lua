@@ -1,7 +1,5 @@
-local deps_prefix = './.deps/usr'
-if os.getenv('DEPS_PREFIX') then
-  deps_prefix = os.getenv('DEPS_PREFIX')
-end
+local deps_prefix = (os.getenv('DEPS_PREFIX') and os.getenv('DEPS_PREFIX')
+                     or './.deps/usr')
 
 package.path = deps_prefix .. '/share/lua/5.1/?.lua;' ..
                deps_prefix .. '/share/lua/5.1/?/init.lua;' ..
