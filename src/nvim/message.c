@@ -384,7 +384,7 @@ int smsg(char *s, ...)
   va_list arglist;
 
   va_start(arglist, s);
-  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist, NULL);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
   va_end(arglist);
   return msg(IObuff);
 }
@@ -395,9 +395,20 @@ int smsg_attr(int attr, char *s, ...)
   va_list arglist;
 
   va_start(arglist, s);
-  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist, NULL);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
   va_end(arglist);
   return msg_attr((const char *)IObuff, attr);
+}
+
+int smsg_attr_keep(int attr, char *s, ...)
+  FUNC_ATTR_PRINTF(2, 3)
+{
+  va_list arglist;
+
+  va_start(arglist, s);
+  vim_vsnprintf((char *)IObuff, IOSIZE, s, arglist);
+  va_end(arglist);
+  return msg_attr_keep(IObuff, attr, true, false);
 }
 
 /*
@@ -662,7 +673,7 @@ bool emsgf_multiline(const char *const fmt, ...)
   }
 
   va_start(ap, fmt);
-  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
   va_end(ap);
 
   ret = emsg_multiline(errbuf, true);
@@ -678,7 +689,7 @@ static bool emsgfv(const char *fmt, va_list ap)
     return true;
   }
 
-  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap, NULL);
+  vim_vsnprintf(errbuf, sizeof(errbuf), fmt, ap);
 
   return emsg((const char_u *)errbuf);
 }
@@ -726,7 +737,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  vim_vsnprintf((char *)IObuff, IOSIZE, fmt, ap, NULL);
+  vim_vsnprintf((char *)IObuff, IOSIZE, fmt, ap);
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
@@ -1826,7 +1837,7 @@ void msg_printf_attr(const int attr, const char *const fmt, ...)
 
   va_list ap;
   va_start(ap, fmt);
-  const size_t len = vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap, NULL);
+  const size_t len = vim_vsnprintf(msgbuf, sizeof(msgbuf), fmt, ap);
   va_end(ap);
 
   msg_scroll = true;

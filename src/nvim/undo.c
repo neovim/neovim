@@ -2452,7 +2452,9 @@ static void u_undo_end(
     }
   }
 
-  smsg(_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+  smsg_attr_keep(
+      0,
+      _("%" PRId64 " %s; %s #%" PRId64 "  %s"),
       u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
       _(msgstr),
       did_undo ? _("before") : _("after"),
@@ -2585,9 +2587,13 @@ static void u_add_time(char_u *buf, size_t buflen, time_t tt)
     else
       /* longer ago */
       (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
-  } else
-  vim_snprintf((char *)buf, buflen, _("%" PRId64 " seconds ago"),
-      (int64_t)(time(NULL) - tt));
+  } else {
+    int64_t seconds = time(NULL) - tt;
+    vim_snprintf((char *)buf, buflen,
+                 NGETTEXT("%" PRId64 " second ago",
+                          "%" PRId64 " seconds ago", (uint32_t)seconds),
+                 seconds);
+  }
 }
 
 /*
