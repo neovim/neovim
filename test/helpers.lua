@@ -268,7 +268,7 @@ local function check_cores(app, force)
   else
     initial_path = '.'
     re = '/core[^/]*$'
-    exc_re = { '^/%.deps$', '^/%'.deps_prefix().'$', local_tmpdir, '^/%node_modules$' }
+    exc_re = { '^/%.deps$', '^/%'..deps_prefix()..'$', local_tmpdir, '^/%node_modules$' }
     db_cmd = gdb_db_cmd
     random_skip = true
   end
