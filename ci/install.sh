@@ -12,9 +12,7 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
 fi
 
 echo "Install neovim module for Python 3."
-# Allow failure. pyenv pip3 on travis is broken:
-# https://github.com/travis-ci/travis-ci/issues/8363
-CC=cc python3 -m pip -q install --user --upgrade neovim || true
+CC=cc python3 -m pip -q install --user --upgrade neovim
 
 if ! [ "${TRAVIS_OS_NAME}" = osx ] ; then
   # Update PATH for pip.

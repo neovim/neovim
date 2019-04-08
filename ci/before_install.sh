@@ -26,9 +26,7 @@ else
   echo "Upgrade Python 2 pip"
   python2.7 -m pip -q install --user --upgrade pip
   echo "Upgrade Python 3 pip"
-  # Allow failure. pyenv pip3 on travis is broken:
-  # https://github.com/travis-ci/travis-ci/issues/8363
-  python3 -m pip -q install --user --upgrade pip || true
+  python3 -m pip -q install --user --upgrade pip
 fi
 
 echo "Install node (LTS)"
