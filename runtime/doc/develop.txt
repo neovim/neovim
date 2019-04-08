@@ -123,7 +123,7 @@ autoload/provider/python.vim script; the provider#python#Call function is only
 defined if a valid external Python host is found. That works well with the
 `has('python')` expression (normally used by Python plugins) because if the
 Python host isn't installed then the plugin will "think" it is running in
-a Vim compiled without the |+python| feature.
+a Vim compiled without the "+python" feature.
 
 DOCUMENTATION						*dev-doc*
 

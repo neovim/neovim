@@ -1,4 +1,4 @@
-[![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-600x173.png)](https://neovim.io)
+[![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
 [Wiki](https://github.com/neovim/neovim/wiki) |
 [Documentation](https://neovim.io/doc) |
@@ -25,8 +25,6 @@ Neovim is a project that seeks to aggressively refactor Vim in order to:
 
 See the [Introduction](https://github.com/neovim/neovim/wiki/Introduction) wiki page and [Roadmap]
 for more information.
-
-[![Throughput Graph](https://graphs.waffle.io/neovim/neovim/throughput.svg)](https://waffle.io/neovim/neovim/metrics)
 
 Features
 --------

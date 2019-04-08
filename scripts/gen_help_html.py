@@ -1,5 +1,10 @@
 # Converts Vim/Nvim documentation to HTML.
 #
+# USAGE:
+#   1. python3 scripts/gen_help_html.py runtime/doc/ ~/neovim.github.io/t/
+#   3. cd ~/neovim.github.io/ && jekyll serve --host 0.0.0.0
+#   2. Visit http://localhost:4000/t/help.txt.html
+#
 # Adapted from https://github.com/c4rlo/vimhelp/
 # License: MIT
 #

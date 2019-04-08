@@ -1170,9 +1170,8 @@ If you want to always use ":confirm", set the 'confirm' option.
 			and |:qall| if 'confirm' is set.
 			{only in Win32 GUI}
 			When ":browse" is not possible you get an error
-			message.  If the |+browse| feature is missing or the
-			{command} doesn't support browsing, the {command} is
-			executed without a dialog.
+			message.  If {command} doesn't support browsing, the
+			{command} is executed without a dialog.
 			":browse set" works like |:options|.
 			See also |:oldfiles| for ":browse oldfiles".
 
@@ -1459,8 +1458,6 @@ problem goes away the next day.
 
 ==============================================================================
 11. File Searching					*file-searching*
-
-{not available when compiled without the |+path_extra| feature}
 
 The file searching is currently used for the 'path', 'cdpath' and 'tags'
 options, for |finddir()| and |findfile()|.  Other commands use |wildcards|

@@ -740,11 +740,10 @@ You tried to set an option after startup that only allows changes during
 startup.
 
 							*E943*  >
-  Command table needs to be updated, run 'make cmdidxs'
+  Command table needs to be updated, run 'make'
 
-This can only happen when changing the source code, when adding a command in
-src/ex_cmds.h.  The lookup table then needs to be updated, by running: >
-	make cmdidxs
+This can only happen when changing the source code, after adding a command in
+src/ex_cmds.lua.  Update the lookup table by re-running the build. >
 
 ==============================================================================
 3. Messages						*messages*
