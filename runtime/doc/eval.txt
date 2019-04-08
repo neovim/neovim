@@ -8,10 +8,6 @@ Expression evaluation			*expression* *expr* *E15* *eval*
 
 Using expressions is introduced in chapter 41 of the user manual |usr_41.txt|.
 
-Note: Expression evaluation can be disabled at compile time.  If this has been
-done, the features in this document are not available.	See |+eval| and
-|no-eval-feature|.
-
 				      Type |gO| to see the table of contents.
 
 ==============================================================================
@@ -22,8 +18,6 @@ done, the features in this document are not available.	See |+eval| and
 There are six types of variables:
 
 Number		A 32 or 64 bit signed number.  |expr-number| *Number*
-		64-bit Number is available only when compiled with the
-		|+num64| feature.
 		Examples:  -123  0x10  0177  0b1011
 
 Float		A floating point number. |floating-point-format| *Float*
@@ -1307,8 +1301,7 @@ is deleted when the window is closed.
 
 						*tabpage-variable* *t:var* *t:*
 A variable name that is preceded with "t:" is local to the current tab page,
-It is deleted when the tab page is closed. {not available when compiled
-without the |+windows| feature}
+It is deleted when the tab page is closed.
 
 						*global-variable* *g:var* *g:*
 Inside functions global variables are accessed with "g:".  Omitting this will
@@ -1745,7 +1738,6 @@ v:oldfiles	List of file names that is loaded from the |shada| file on
 		The List can be modified, but this has no effect on what is
 		stored in the |shada| file later.  If you use values other
 		than String this will cause trouble.
-		{only when compiled with the |+shada| feature}
 
 						    *v:option_new*
 v:option_new    New value of the option. Valid while executing an |OptionSet|
@@ -1896,7 +1888,6 @@ v:termresponse	The escape sequence returned by the terminal for the DA
 		is the terminal type: 0 for vt100 and 1 for vt220.  Pv is the
 		patch level (since this was introduced in patch 95, it's
 		always 95 or bigger).  Pc is always zero.
-		{only when compiled with |+termresponse| feature}
 
 					*v:testing* *testing-variable*
 v:testing	Must be set before using `test_garbagecollect_now()`.
@@ -3673,8 +3664,6 @@ finddir({name} [, {path} [, {count}]])				*finddir()*
 		{name} in {path} instead of the first one.
 		When {count} is negative return all the matches in a |List|.
 		This is quite similar to the ex-command |:find|.
-		{only available when compiled with the |+file_in_path|
-		feature}
 
 findfile({name} [, {path} [, {count}]])				*findfile()*
 		Just like |finddir()|, but find a file instead of a directory.
@@ -3795,7 +3784,6 @@ foldtext()	Returns a String, to be displayed for a closed fold.  This is
 		When used to draw the actual foldtext, the rest of the line
 		will be filled with the fold char from the 'fillchars'
 		setting.
-		{not available when compiled without the |+folding| feature}
 
 foldtextresult({lnum})					*foldtextresult()*
 		Returns the text that is displayed for the closed fold at line
@@ -3805,7 +3793,6 @@ foldtextresult({lnum})					*foldtextresult()*
 		{lnum} is used like with |getline()|.  Thus "." is the current
 		line, "'m" mark m, etc.
 		Useful when exporting folded text, e.g., to HTML.
-		{not available when compiled without the |+folding| feature}
 
 							*foreground()*
 foreground()	Move the Vim window to the foreground.	Useful when sent from
@@ -4683,10 +4670,49 @@ globpath({path}, {expr} [, {nosuf} [, {list} [, {allinks}]]])
 		supported, thus using 'path' will not always work properly.
 
 							*has()*
-has({feature})	The result is a Number, which is 1 if the feature {feature} is
-		supported, zero otherwise.  The {feature} argument is a
-		string.  See |feature-list| below.
-		Also see |exists()|.
+has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
+		{feature} argument is a feature name like "nvim-0.2.1" or
+		"win32", see below.  See also |exists()|.
+
+		Vim's compile-time feature names (prefixed with "+") are not
+		supported because Nvim is always compiled with ALL possible
+		features. |feature-compile| 
+
+		Feature names can be:
+		1.  Nvim version. For example the "nvim-0.2.1" feature means
+		    that Nvim is version 0.2.1 or later: >
+			:if has("nvim-0.2.1")
+
+<		2.  Runtime condition or other pseudo-feature. For example the
+		    "win32" feature checks if the current system is Windows: >
+			:if has("win32")
+<							*feature-list*
+		    List of supported pseudo-feature names:
+		        acl		|ACL| support
+		        iconv		Can use |iconv()| for conversion.
+		        +shellslash	Can use backslashes in filenames (Windows)
+			clipboard	|clipboard| provider is available.
+			nvim		This is Nvim.
+			python2		Legacy Vim |python2| interface. |has-python|
+			python3		Legacy Vim |python3| interface. |has-python|
+			pythonx		Legacy Vim |python_x| interface. |has-pythonx|
+			ttyin		input is a terminal (tty)
+			ttyout		output is a terminal (tty)
+			unix		Unix system.
+			*vim_starting*	True during |startup|. 
+			win32		Windows system (32 or 64 bit).
+			wsl		WSL (Windows Subsystem for Linux) system
+
+							*has-patch*
+		3.  Vim patches.  The "patch123" feature means that Vim patch
+		    123 has been included.  This does not check the Vim
+		    version, you could check |v:version| for that.
+		    Example: >
+			:if v:version > 602 || v:version == 602 && has("patch148")
+
+<		5.  Vim version. For example the "patch-7.4.237" feature means
+		    that the Vim version is 7.4.237 or later. >
+			:if has("patch-7.4.237")
 
 
 has_key({dict}, {key})					*has_key()*
@@ -8513,154 +8539,6 @@ xor({expr}, {expr})					*xor()*
 			:let bits = xor(bits, 0x80)
 <
 
-
-							*feature-list*
-There are four types of features:
-1.  Features that are only supported when they have been enabled when Vim
-    was compiled |+feature-list|.  Example: >
-	:if has("cindent")
-2.  Features that are only supported when certain conditions have been met.
-    Example: >
-	:if has("win32")
-<							*has-patch*
-3.  Nvim version. The "nvim-0.2.1" feature means that the Nvim version is
-    0.2.1 or later. Example: >
-	:if has("nvim-0.2.1")
-<
-4.  Included patches.  The "patch123" feature means that patch 123 has been
-    included.  Note that this form does not check the version of Vim, you need
-    to inspect |v:version| for that.
-    Example (checking version 6.2.148 or later): >
-	:if v:version > 602 || v:version == 602 && has("patch148")
-<    Note that it's possible for patch 147 to be omitted even though 148 is
-    included.
-
-5.  Beyond a certain version or at a certain version and including a specific
-    patch.  The "patch-7.4.237" feature means that the Vim version is 7.5 or
-    later, or it is version 7.4 and patch 237 was included.
-    Note that this only works for patch 7.4.237 and later, before that you
-    need to use the example above that checks v:version.  Example: >
-	:if has("patch-7.4.248")
-<    Note that it's possible for patch 147 to be omitted even though 148 is
-    included.
-
-Hint: To find out if Vim supports backslashes in a file name (MS-Windows),
-use: `if exists('+shellslash')`
-
-
-acl			Compiled with |ACL| support.
-arabic			Compiled with Arabic support |Arabic|.
-autocmd			Compiled with autocommand support. |autocommand|
-browse			Compiled with |:browse| support, and browse() will
-			work.
-browsefilter		Compiled with support for |browsefilter|.
-byte_offset		Compiled with support for 'o' in 'statusline'
-cindent			Compiled with 'cindent' support.
-clipboard		Compiled with 'clipboard' support.
-cmdline_compl		Compiled with |cmdline-completion| support.
-cmdline_hist		Compiled with |cmdline-history| support.
-cmdline_info		Compiled with 'showcmd' and 'ruler' support.
-comments		Compiled with |'comments'| support.
-cscope			Compiled with |cscope| support.
-debug			Compiled with "DEBUG" defined.
-dialog_con		Compiled with console dialog support.
-digraphs		Compiled with support for digraphs.
-eval			Compiled with expression evaluation support.  Always
-			true, of course!
-ex_extra		|+ex_extra|, always true now
-extra_search		Compiled with support for |'incsearch'| and
-			|'hlsearch'|
-file_in_path		Compiled with support for |gf| and |<cfile>|
-filterpipe		When 'shelltemp' is off pipes are used for shell
-			read/write/filter commands
-find_in_path		Compiled with support for include file searches
-			|+find_in_path|.
-float			Compiled with support for |Float|.
-fname_case		Case in file names matters (for Windows this is not
-			present).
-folding			Compiled with |folding| support.
-gettext			Compiled with message translation |multi-lang|
-iconv			Can use iconv() for conversion.
-insert_expand		Compiled with support for CTRL-X expansion commands in
-			Insert mode.
-jumplist		Compiled with |jumplist| support.
-keymap			Compiled with 'keymap' support.
-lambda			Compiled with |lambda| support.
-langmap			Compiled with 'langmap' support.
-libcall			Compiled with |libcall()| support.
-linebreak		Compiled with 'linebreak', 'breakat', 'showbreak' and
-			'breakindent' support.
-lispindent		Compiled with support for lisp indenting.
-listcmds		Compiled with commands for the buffer list |:files|
-			and the argument list |arglist|.
-localmap		Compiled with local mappings and abbr. |:map-local|
-mac			macOS version of Nvim.
-menu			Compiled with support for |:menu|.
-mksession		Compiled with support for |:mksession|.
-modify_fname		Compiled with file name modifiers. |filename-modifiers|
-mouse			Compiled with support mouse.
-mouseshape		Compiled with support for 'mouseshape'.
-multi_byte		Compiled with support for 'encoding'
-multi_byte_encoding	'encoding' is set to a multi-byte encoding.
-multi_lang		Compiled with support for multiple languages.
-num64			Compiled with 64-bit |Number| support.
-nvim			This is Nvim. |has-patch|
-path_extra		Compiled with up/downwards search in 'path' and 'tags'
-persistent_undo		Compiled with support for persistent undo history.
-postscript		Compiled with PostScript file printing.
-printer			Compiled with |:hardcopy| support.
-profile			Compiled with |:profile| support.
-python			Legacy Vim Python 2.x API is available. |has-python|
-python3			Legacy Vim Python 3.x API is available. |has-python|
-pythonx			Compiled with |python_x| interface. |has-pythonx|
-quickfix		Compiled with |quickfix| support.
-reltime			Compiled with |reltime()| support.
-rightleft		Compiled with 'rightleft' support.
-scrollbind		Compiled with 'scrollbind' support.
-shada			Compiled with shada support.
-showcmd			Compiled with 'showcmd' support.
-signs			Compiled with |:sign| support.
-smartindent		Compiled with 'smartindent' support.
-spell			Compiled with spell checking support |spell|.
-startuptime		Compiled with |--startuptime| support.
-statusline		Compiled with support for 'statusline', 'rulerformat'
-			and special formats of 'titlestring' and 'iconstring'.
-syntax			Compiled with syntax highlighting support |syntax|.
-syntax_items		There are active syntax highlighting items for the
-			current buffer.
-tablineat		'tabline' option accepts %@Func@ items.
-tag_binary		Compiled with binary searching in tags files
-			|tag-binary-search|.
-tag_old_static		Compiled with support for old static tags
-			|tag-old-static|.
-tag_any_white		Compiled with support for any white characters in tags
-			files |tag-any-white|.
-termresponse		Compiled with support for t_RV and |v:termresponse|.
-textobjects		Compiled with support for |text-objects|.
-timers			Compiled with |timer_start()| support.
-title			Compiled with window title support |'title'|.
-ttyin			input is a terminal (tty)
-ttyout			output is a terminal (tty)
-unix			Unix version of Vim.
-unnamedplus		Compiled with support for "unnamedplus" in 'clipboard'
-user_commands		User-defined commands.
-vertsplit		Compiled with vertically split windows |:vsplit|.
-vim_starting		True while initial source'ing takes place. |startup|
-			*vim_starting*
-virtualedit		Compiled with 'virtualedit' option.
-visual			Compiled with Visual mode.
-visualextra		Compiled with extra Visual mode commands.
-			|blockwise-operators|.
-vreplace		Compiled with |gR| and |gr| commands.
-vtp			Compiled for vcon support |+vtp| (check vcon to find
-			out if it works in the current console)).
-wildignore		Compiled with 'wildignore' option.
-wildmenu		Compiled with 'wildmenu' option.
-win32			Windows version of Vim (32 or 64 bit).
-winaltkeys		Compiled with 'winaltkeys' option.
-windows			Compiled with support for more than one window.
-writebackup		Compiled with 'writebackup' default on.
-wsl			WSL (Windows Subsystem for Linux) version of Vim.
 
 							*string-match*
 Matching a pattern in a String
