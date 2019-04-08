@@ -1,11 +1,12 @@
 $ErrorActionPreference = 'stop'
 Set-PSDebug -Strict -Trace 1
 
+$isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
-$cmakeBuildType = 'RelWithDebInfo'
+$cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
 $buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
