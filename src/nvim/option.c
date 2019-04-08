@@ -2426,11 +2426,6 @@ static bool valid_filetype(char_u *val)
   return true;
 }
 
-#ifdef _MSC_VER
-// MSVC optimizations are disabled for this function because it
-// incorrectly generates an empty string for SHM_ALL.
-#pragma optimize("", off)
-#endif
 /*
  * Handle string options that need some action to perform when changed.
  * Returns NULL for success, or an error message for an error.
@@ -3320,9 +3315,6 @@ did_set_string_option (
 
   return errmsg;
 }
-#ifdef _MSC_VER
-#pragma optimize("", on)
-#endif
 
 /*
  * Simple int comparison function for use with qsort()
