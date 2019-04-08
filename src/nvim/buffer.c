@@ -1868,6 +1868,7 @@ bool curbuf_reusable(void)
           && curbuf->b_ffname == NULL
           && curbuf->b_nwindows <= 1
           && (curbuf->b_ml.ml_mfp == NULL || BUFEMPTY())
+          && !bt_quickfix(curbuf)
           && !curbufIsChanged());
 }
 
