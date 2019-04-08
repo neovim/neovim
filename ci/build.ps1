@@ -6,15 +6,15 @@ $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
 $cmakeBuildType = 'RelWithDebInfo'
-$depsDir = [System.IO.Path]::GetFullPath("deps-$($compiler)")
+$buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
 }
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
-  DEPS_BUILD_DIR=$depsDir;
-  DEPS_PREFIX="$($depsDir)/usr";
+  DEPS_BUILD_DIR=$(if ($env:DEPS_BUILD_DIR -ne $null) {$env:DEPS_BUILD_DIR} else {".deps"});
+  DEPS_PREFIX=$(if ($env:DEPS_PREFIX -ne $null) {$env:DEPS_PREFIX} else {".deps/usr"});
 }
 $uploadToCodeCov = $false
 
@@ -23,6 +23,13 @@ function exitIfFailed() {
     Set-PSDebug -Off
     exit $LastExitCode
   }
+}
+
+if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
+  write-host "cache dir not found: $($nvimCmakeVars['DEPS_BUILD_DIR'])"
+  mkdir $nvimCmakeVars["DEPS_BUILD_DIR"]
+} else {
+  write-host "cache dir ($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
 if ($compiler -eq 'MINGW') {
@@ -87,13 +94,10 @@ function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-if (-Not (Test-Path -PathType container $depsDir)) {
-  mkdir "$depsDir"
-}
-cd "$depsDir"
-cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) ..\third-party\ ; exitIfFailed
+cd $nvimCmakeVars["DEPS_BUILD_DIR"]
+cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
-cd ..
+cd $buildDir
 
 # Build Neovim
 mkdir build
