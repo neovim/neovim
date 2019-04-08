@@ -220,7 +220,7 @@ Grid Events (line-based)					  *ui-linegrid*
 
 These events are used if `ext_linegrid` option is set (recommended for all new
 UIs). The biggest change compared to previous revision is to use a single
-event `grid_line` to update the contents of a screen line (where the old
+`grid_line` event to update the contents of a screen line (where the old
 protocol used a combination of cursor, highlight and text events)
 
 Most of these events take a `grid` index as first parameter.  Grid 1 is the
@@ -465,10 +465,10 @@ Detailed highlight state Extension 				  *ui-hlstate*
 Only sent if `ext_hlstate` option is set in |ui-options|. `ext_hlstate` implies
 `ext_linegrid`.
 
-By default, nvim will only describe grid cells using the final calculated
-higlight attributes, as described by the dict keys in |ui-event-highlight_set|.
+By default Nvim will only describe grid cells using the final calculated
+highlight attributes, as described by the dict keys in |ui-event-highlight_set|.
 The `ext_hlstate` extension allows to the UI to also receive a semantic
-describtion of the higlights active in a cell. In this mode highlights will be
+description of the highlights active in a cell. In this mode highlights will be
 predefined in a table, see |ui-event-hl_attr_define| and |ui-event-grid_line|.
 The `info` parameter in `hl_attr_define` will contain a semantic description
 of the highlights. As highlight groups can be combined, this will be an array
@@ -476,14 +476,13 @@ of items, with the item with highest priority last. Each item is a dictionary
 with the following possible keys:
 
     `kind`:	always present. One of the following values:
-	"ui":       A builtin ui highlight.
-	"syntax":   highlight applied to a buffer by a syntax declaration or
-	            other runtime/plugin functionallity such as
+	"ui":       Builtin UI highlight. |highlight-groups|
+	"syntax":   Highlight applied to a buffer by a syntax declaration or
+	            other runtime/plugin functionality such as
 		    |nvim_buf_add_highlight()|
 	"terminal": highlight from a process running in a |terminal-emulator|.
-		    Contains no futher semantic information.
-    `ui_name`:	Name of the builtin highlight. See |highlight-groups| for
-	        possible values. Only present for "ui".
+		    Contains no further semantic information.
+    `ui_name`:	Highlight name from |highlight-groups|. Only for "ui" kind.
     `hi_name`:	Name of the final |:highlight| group where the used
 		attributes are defined.
     `id`:	Unique numeric id representing this item.

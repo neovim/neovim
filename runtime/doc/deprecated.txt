@@ -12,6 +12,9 @@ updated.
 
 ==============================================================================
 
+API ~
+*nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+
 Commands ~
 *:rv*
 *:rviminfo*		Deprecated alias to |:rshada| command.
