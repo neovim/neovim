@@ -2495,10 +2495,8 @@ static bool valid_filetype(char_u *val)
   return true;
 }
 
-/*
- * Handle string options that need some action to perform when changed.
- * Returns NULL for success, or an error message for an error.
- */
+/// Handle string options that need some action to perform when changed.
+/// Returns NULL for success, or an error message for an error.
 static char_u *
 did_set_string_option(
     int opt_idx,                       // index in options[] table
@@ -3387,18 +3385,15 @@ ambw_end:
   return errmsg;
 }
 
-/*
- * Simple int comparison function for use with qsort()
- */
+/// Simple int comparison function for use with qsort()
 static int int_cmp(const void *a, const void *b)
 {
   return *(const int *)a - *(const int *)b;
 }
 
-/*
- * Handle setting 'colorcolumn' or 'textwidth' in window "wp".
- * Returns error message, NULL if it's OK.
- */
+/// Handle setting 'colorcolumn' or 'textwidth' in window "wp".
+///
+/// @return error message, NULL if it's OK.
 char_u *check_colorcolumn(win_T *wp)
 {
   char_u      *s;
