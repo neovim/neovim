@@ -2491,10 +2491,10 @@ static bool valid_filetype(char_u *val)
 // incorrectly generates an empty string for SHM_ALL.
 #pragma optimize("", off)
 #endif
-/*
- * Handle string options that need some action to perform when changed.
- * Returns NULL for success, or an error message for an error.
- */
+//
+// Handle string options that need some action to perform when changed.
+// Returns NULL for success, or an error message for an error.
+//
 static char_u *
 did_set_string_option(
     int opt_idx,                       // index in options[] table
