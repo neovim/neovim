@@ -56,6 +56,13 @@ describe('API', function()
     eq(2, eval('1+1'))
   end)
 
+  it('does not set CA_COMMAND_BUSY #7254', function()
+    nvim('command', 'split')
+    nvim('command', 'autocmd WinEnter * startinsert')
+    nvim('command', 'wincmd w')
+    eq({mode='i', blocking=false}, nvim("get_mode"))
+  end)
+
   describe('nvim_command', function()
     it('works', function()
       local fname = helpers.tmpname()
@@ -83,7 +90,7 @@ describe('API', function()
     end)
 
     it('VimL execution error: fails with specific error', function()
-      local status, rv = pcall(nvim, "command_output", "buffer 23487")
+      local status, rv = pcall(nvim, "command", "buffer 23487")
       eq(false, status)                 -- nvim_command() failed.
       eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
