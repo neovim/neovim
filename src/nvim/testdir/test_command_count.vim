@@ -173,7 +173,6 @@ func Test_command_count_4()
   only!
 
   exe bufnr . 'buf'
-  bnext
   let bufnr = bufnr('%')
   let buffers = []
   .,$-bufdo call add(buffers, bufnr('%'))

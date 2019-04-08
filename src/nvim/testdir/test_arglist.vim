@@ -329,6 +329,18 @@ func Test_argedit()
   %argd
   bwipe! C
   bwipe! D
+
+  " :argedit reuses the current buffer if it is empty
+  %argd
+  " make sure to use a new buffer number for x when it is loaded
+  bw! x
+  new
+  let a = bufnr('')
+  argedit x
+  call assert_equal(a, bufnr(''))
+  call assert_equal('x', bufname(''))
+  %argd
+  bw! x
 endfunc
 
 " Test for the :argdelete command
