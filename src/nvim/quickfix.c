@@ -1018,8 +1018,21 @@ static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
     char_u *p = xmallocz(len);
 
     qi->qf_lists[qf_idx].qf_title = p;
-    snprintf((char *)p, len + 1, ":%s", (char *)title);
+    xstrlcpy((char *)p, (char *)title, len + 1);
   }
+}
+
+/// The title of a quickfix/location list is set, by default, to the command
+/// that created the quickfix list with the ":" prefix.
+/// Create a quickfix list title string by prepending ":" to a user command.
+/// Returns a pointer to a static buffer with the title.
+static char_u * qf_cmdtitle(char_u *cmd)
+{
+  static char_u qftitle_str[IOSIZE];
+
+  snprintf((char *)qftitle_str, IOSIZE, ":%s", (char *)cmd);
+
+  return qftitle_str;
 }
 
 // Prepare for adding a new quickfix list. If the current list is in the
@@ -1221,6 +1234,8 @@ static int qf_parse_get_fields(char_u *linebuf, size_t linelen, efm_T *fmt_ptr,
   fields->type = 0;
   *tail = NULL;
 
+  // Always ignore case when looking for a matching error.
+  regmatch.rm_ic = true;
   regmatch.regprog = fmt_ptr->prog;
   r = vim_regexec(&regmatch, linebuf, (colnr_T)0);
   fmt_ptr->prog = regmatch.regprog;
@@ -3417,7 +3432,7 @@ void ex_make(exarg_T *eap)
   res = qf_init(wp, fname, (eap->cmdidx != CMD_make
                             && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm,
                 (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd),
-                *eap->cmdlinep, enc);
+                qf_cmdtitle(*eap->cmdlinep), enc);
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
   }
@@ -3776,7 +3791,7 @@ void ex_cfile(exarg_T *eap)
   // quickfix list then a new list is created.
   int res = qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
                                       && eap->cmdidx != CMD_laddfile),
-                    *eap->cmdlinep,enc);
+                    qf_cmdtitle(*eap->cmdlinep), enc);
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
   }
@@ -4044,7 +4059,7 @@ void ex_vimgrep(exarg_T *eap)
 
   /* Get the search pattern: either white-separated or enclosed in // */
   regmatch.regprog = NULL;
-  char_u *title = vim_strsave(*eap->cmdlinep);
+  char_u *title = vim_strsave(qf_cmdtitle(*eap->cmdlinep));
   p = skip_vimgrep_pat(eap->arg, &s, &flags);
   if (p == NULL) {
     EMSG(_(e_invalpat));
@@ -5216,7 +5231,7 @@ void ex_cbuffer(exarg_T *eap)
         || eap->line2 < 1 || eap->line2 > buf->b_ml.ml_line_count)
       EMSG(_(e_invrange));
     else {
-      char_u *qf_title = *eap->cmdlinep;
+      char_u *qf_title = qf_cmdtitle(*eap->cmdlinep);
 
       if (buf->b_sfname) {
         vim_snprintf((char *)IObuff, IOSIZE, "%s (%s)",
@@ -5296,7 +5311,8 @@ void ex_cexpr(exarg_T *eap)
       int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, p_efm,
                             (eap->cmdidx != CMD_caddexpr
                              && eap->cmdidx != CMD_laddexpr),
-                            (linenr_T)0, (linenr_T)0, *eap->cmdlinep, NULL);
+                            (linenr_T)0, (linenr_T)0,
+                            qf_cmdtitle(*eap->cmdlinep), NULL);
       if (res >= 0) {
         qf_list_changed(qi, qi->qf_curlist);
       }
@@ -5386,7 +5402,7 @@ void ex_helpgrep(exarg_T *eap)
   regmatch.rm_ic = FALSE;
   if (regmatch.regprog != NULL) {
     // Create a new quickfix list.
-    qf_new_list(qi, *eap->cmdlinep);
+    qf_new_list(qi, qf_cmdtitle(*eap->cmdlinep));
 
     // Go through all the directories in 'runtimepath'
     p = p_rtp;
