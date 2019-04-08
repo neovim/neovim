@@ -12,7 +12,7 @@ configuration:
 - MINGW_64-gcov
 init:
 - ps: |
-    # For pull requests, skip some build configurations to save time.
+    # Pull requests: skip some build configurations to save time.
     if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
       $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
       Exit-AppVeyorBuild
