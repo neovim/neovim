@@ -310,6 +310,15 @@ static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
   "yes:9", NULL };
 
+/// All possible flags for 'shm'.
+static char_u SHM_ALL[] = {
+  SHM_RO, SHM_MOD, SHM_FILE, SHM_LAST, SHM_TEXT, SHM_LINES, SHM_NEW, SHM_WRI,
+  SHM_ABBREVIATIONS, SHM_WRITE, SHM_TRUNC, SHM_TRUNCALL, SHM_OVER,
+  SHM_OVERALL, SHM_SEARCH, SHM_ATTENTION, SHM_INTRO, SHM_COMPLETIONMENU,
+  SHM_RECORDING, SHM_FILEINFO,
+  0,
+};
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "option.c.generated.h"
 #endif
@@ -2486,15 +2495,8 @@ static bool valid_filetype(char_u *val)
   return true;
 }
 
-#ifdef _MSC_VER
-// MSVC optimizations are disabled for this function because it
-// incorrectly generates an empty string for SHM_ALL.
-#pragma optimize("", off)
-#endif
-/*
- * Handle string options that need some action to perform when changed.
- * Returns NULL for success, or an error message for an error.
- */
+/// Handle string options that need some action to perform when changed.
+/// Returns NULL for success, or an error message for an error.
 static char_u *
 did_set_string_option(
     int opt_idx,                       // index in options[] table
@@ -3381,23 +3383,17 @@ ambw_end:
   check_redraw(options[opt_idx].flags);
 
   return errmsg;
-}
-#ifdef _MSC_VER
-#pragma optimize("", on)
-#endif
+}  // NOLINT(readability/fn_size)
 
-/*
- * Simple int comparison function for use with qsort()
- */
+/// Simple int comparison function for use with qsort()
 static int int_cmp(const void *a, const void *b)
 {
   return *(const int *)a - *(const int *)b;
 }
 
-/*
- * Handle setting 'colorcolumn' or 'textwidth' in window "wp".
- * Returns error message, NULL if it's OK.
- */
+/// Handle setting 'colorcolumn' or 'textwidth' in window "wp".
+///
+/// @return error message, NULL if it's OK.
 char_u *check_colorcolumn(win_T *wp)
 {
   char_u      *s;

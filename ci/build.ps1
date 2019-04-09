@@ -1,30 +1,36 @@
 $ErrorActionPreference = 'stop'
 Set-PSDebug -Strict -Trace 1
 
+$isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
-$cmakeBuildType = 'RelWithDebInfo'
+$cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
+$buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
 }
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
+  DEPS_BUILD_DIR=$(if ($env:DEPS_BUILD_DIR -ne $null) {$env:DEPS_BUILD_DIR} else {".deps"});
+  DEPS_PREFIX=$(if ($env:DEPS_PREFIX -ne $null) {$env:DEPS_PREFIX} else {".deps/usr"});
 }
 $uploadToCodeCov = $false
-
-# For pull requests, skip some build configurations to save time.
-if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
-  exit 0
-}
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
     Set-PSDebug -Off
     exit $LastExitCode
   }
+}
+
+if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
+  write-host "cache dir not found: $($nvimCmakeVars['DEPS_BUILD_DIR'])"
+  mkdir $nvimCmakeVars["DEPS_BUILD_DIR"]
+} else {
+  write-host "cache dir $($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
 if ($compiler -eq 'MINGW') {
@@ -89,13 +95,10 @@ function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-if (-Not (Test-Path -PathType container .deps)) {
-  mkdir .deps
-}
-cd .deps
-cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) ..\third-party\ ; exitIfFailed
+cd $nvimCmakeVars["DEPS_BUILD_DIR"]
+cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
-cd ..
+cd $buildDir
 
 # Build Neovim
 mkdir build

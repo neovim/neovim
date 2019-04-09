@@ -550,6 +550,66 @@ describe('floating windows', function()
       end
     end)
 
+    it('validates cursor even when window is not entered', function()
+      screen:try_resize(30,5)
+      command("set nowrap")
+      insert([[some text that is wider than the window]])
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+                                        |
+        ## grid 2
+          that is wider than the windo^w |
+          {0:~                             }|
+          {0:~                             }|
+          {0:~                             }|
+        ]])
+      else
+        screen:expect([[
+          that is wider than the windo^w |
+          {0:~                             }|
+          {0:~                             }|
+          {0:~                             }|
+                                        |
+        ]])
+      end
+
+      local buf = meths.create_buf(false,true)
+      meths.buf_set_lines(buf, 0, -1, true, {'some floaty text'})
+      meths.open_win(buf, false, {relative='editor', width=20, height=1, row=3, col=1})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+          [2:------------------------------]|
+                                        |
+        ## grid 2
+          that is wider than the windo^w |
+          {0:~                             }|
+          {0:~                             }|
+          {0:~                             }|
+        ## grid 4
+          {1:some floaty text    }|
+        ]], float_pos={
+          [4] = {{id = 1002}, "NW", 1, 3, 1, true}
+        }}
+      else
+        screen:expect([[
+          that is wider than the windo^w |
+          {0:~                             }|
+          {0:~                             }|
+          {0:~}{1:some floaty text    }{0:         }|
+                                        |
+        ]])
+      end
+    end)
+
     if multigrid then
       pending("supports second UI without multigrid", function()
         local session2 = helpers.connect(eval('v:servername'))

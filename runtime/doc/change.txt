@@ -939,8 +939,6 @@ This replaces each 'E' character with a euro sign.  Read more in |<Char->|.
 			this (that's a good habit anyway).
 			`:retab!` may also change a sequence of spaces by
 			<Tab> characters, which can mess up a printf().
-			Not available when |+ex_extra| feature was disabled at
-			compile time.
 
 							*retab-example*
 Example for using autocommands and ":retab" to edit a file which is stored
@@ -1291,21 +1289,15 @@ The next three commands always work on whole lines.
 :[range]ce[nter] [width]				*:ce* *:center*
 			Center lines in [range] between [width] columns
 			(default 'textwidth' or 80 when 'textwidth' is 0).
-			Not available when |+ex_extra| feature was disabled at
-			compile time.
 
 :[range]ri[ght] [width]					*:ri* *:right*
 			Right-align lines in [range] at [width] columns
 			(default 'textwidth' or 80 when 'textwidth' is 0).
-			Not available when |+ex_extra| feature was disabled at
-			compile time.
 
 							*:le* *:left*
 :[range]le[ft] [indent]
 			Left-align lines in [range].  Sets the indent in the
 			lines to [indent] (default 0).
-			Not available when |+ex_extra| feature was disabled at
-			compile time.
 
 							*gq*
 gq{motion}		Format the lines that {motion} moves over.

@@ -32,9 +32,6 @@ An alternative is using the 'keymap' option.
 			first character, it has a special meaning in the
 			future.
 
-Vim is normally compiled with the |+digraphs| feature.  If the feature is
-disabled, the ":digraph" command will display an error message.
-
 Example of the output of ":digraphs": >
  TH Þ  222  ss ß  223  a! à  224  a' á  225  a> â  226  a? ã  227  a: ä  228
 
@@ -52,19 +49,6 @@ converted from Unicode to 'encoding' when needed.  This does require the
 conversion to be available, it might fail.  For the NUL character you will see
 "10".  That's because NUL characters are internally represented with a NL
 character.  When you write the file it will become a NUL character.
-
-When Vim was compiled without the |+multi_byte| feature, you need to specify
-the character in the encoding given with 'encoding'.  You might want to use
-something like this: >
-
-	if has("multi_byte")
-		digraph oe 339
-	elseif &encoding == "iso-8859-15"
-		digraph oe 189
-	endif
-
-This defines the "oe" digraph for a character that is number 339 in Unicode
-and 189 in latin9 (iso-8859-15).
 
 ==============================================================================
 2. Using digraphs					*digraphs-use*
@@ -155,8 +139,7 @@ a standard meaning:
 Example: a: is ä  and o: is ö
 
 These are the RFC1345 digraphs for the one-byte characters.  See the output of
-":digraphs" for the others.  The characters above 255 are only available when
-Vim was compiled with the |+multi_byte| feature.
+":digraphs" for the others.
 
 EURO
 

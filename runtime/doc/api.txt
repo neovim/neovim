@@ -251,7 +251,7 @@ of some window, or a position relative to the current window cursor.  The
 parameters for positioning are described in detail at |nvim_open_win()|.
 
 |nvim_open_win()| assumes an existing buffer to display in the window. To create
-a scratch buffer for the float, |nvim_create_buffer()| can be used. The text in
+a scratch buffer for the float, |nvim_create_buf()| can be used. The text in
 the buffer can be highlighted using standard functionality, such as syntax
 highlighting, or |api-highlights|.
 

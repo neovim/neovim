@@ -202,6 +202,28 @@ func Test_matchaddpos()
   set hlsearch&
 endfunc
 
+func Test_matchaddpos_otherwin()
+  syntax on
+  new
+  call setline(1, ['12345', 'NP'])
+  let winid = win_getid()
+
+  wincmd w
+  call matchadd('Search', '4', 10, -1, {'window': winid})
+  call matchaddpos('Error', [[1,2], [2,2]], 10, -1, {'window': winid})
+  redraw!
+  call assert_notequal(screenattr(1,2), 0)
+  call assert_notequal(screenattr(1,4), 0)
+  call assert_notequal(screenattr(2,2), 0)
+  call assert_equal(screenattr(1,2), screenattr(2,2))
+  call assert_notequal(screenattr(1,2), screenattr(1,4))
+
+  wincmd w
+  bwipe!
+  call clearmatches()
+  syntax off
+endfunc
+
 func Test_matchaddpos_using_negative_priority()
   set hlsearch
 

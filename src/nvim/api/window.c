@@ -67,6 +67,10 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
                   buffer);
   }
 
+  // If window is not current, state logic will not validate its cursor.
+  // So do it now.
+  validate_cursor();
+
   restore_win(save_curwin, save_curtab, false);
 }
 
