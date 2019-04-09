@@ -1351,8 +1351,8 @@ static int command_line_handle_key(CommandLineState *s)
     if (s->i == Ctrl_R) {
       s->c = plain_vgetc();              // CTRL-R CTRL-R <char>
     }
+    --no_mapping;
     ccline.special_char = NUL;
-    no_mapping--;
     // Insert the result of an expression.
     // Need to save the current command line, to be able to enter
     // a new one...
@@ -1449,7 +1449,7 @@ static int command_line_handle_key(CommandLineState *s)
 
     set_cmdspos_cursor();
     if (ccline.special_char != NUL) {
-      putcmdline(ccline.special_char, true);
+      putcmdline(ccline.special_char, ccline.special_shift);
     }
 
     return command_line_not_changed(s);
