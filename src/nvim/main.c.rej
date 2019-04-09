@@ -1,0 +1,17 @@
+--- src/nvim/main.c
++++ src/nvim/main.c
+@@ -1354,7 +1354,14 @@ main_loop(
+ 	    do_exmode(exmode_active == EXMODE_VIM);
+ 	}
+ 	else
++	{
++#ifdef FEAT_TERMINAL
++	    if (curbuf->b_term != NULL && oa.op_type == OP_NOP
++							  && oa.regname == NUL)
++		terminal_loop();
++#endif
+ 	    normal_cmd(&oa, TRUE);
++	}
+     }
+ }
+ 

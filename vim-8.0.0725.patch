@@ -1,0 +1,203 @@
+commit 938783d0ab5678c259ceb62b15be72abe69362fa
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Sun Jul 16 20:13:26 2017 +0200
+
+    patch 8.0.0725: a terminal window does not handle keyboard input
+    
+    Problem:    A terminal window does not handle keyboard input.
+    Solution:   Add terminal_loop().  ":term bash -i" sort of works now.
+
+diff --git a/src/nvim/main.c b/src/nvim/main.c
+index 6e21f7314..268c25627 100644
+--- a/src/nvim/main.c
++++ b/src/nvim/main.c
+@@ -1354,7 +1354,14 @@ main_loop(
+ 	    do_exmode(exmode_active == EXMODE_VIM);
+ 	}
+ 	else
++	{
++#ifdef FEAT_TERMINAL
++	    if (curbuf->b_term != NULL && oa.op_type == OP_NOP
++							  && oa.regname == NUL)
++		terminal_loop();
++#endif
+ 	    normal_cmd(&oa, TRUE);
++	}
+     }
+ }
+ 
+diff --git a/src/nvim/normal.c b/src/nvim/normal.c
+index fe1a1829f..c8e78410d 100644
+--- a/src/nvim/normal.c
++++ b/src/nvim/normal.c
+@@ -7846,7 +7846,10 @@ n_start_visual_mode(int c)
+ nv_window(cmdarg_T *cap)
+ {
+ #ifdef FEAT_WINDOWS
+-    if (!checkclearop(cap->oap))
++    if (cap->nchar == ':')
++	/* "CTRL-W :" is the same as typing ":"; useful in a terminal window */
++	nv_colon(cap);
++    else if (!checkclearop(cap->oap))
+ 	do_window(cap->nchar, cap->count0, NUL); /* everything is in window.c */
+ #else
+     (void)checkclearop(cap->oap);
+diff --git a/src/nvim/terminal.c b/src/nvim/terminal.c
+index f0cf21d98..63bc6abb1 100644
+--- a/src/nvim/terminal.c
++++ b/src/nvim/terminal.c
+@@ -15,7 +15,7 @@
+  *
+  * The VTerm invokes callbacks when its screen contents changes.  The line
+  * range is stored in tl_dirty_row_start and tl_dirty_row_end.  Once in a
+- * while, if the window is visible, the screen contents is drawn.
++ * while, if the terminal window is visible, the screen contents is drawn.
+  *
+  * If the terminal window has keyboard focus, typed keys are converted to the
+  * terminal encoding and writting to the job over a channel.
+@@ -24,13 +24,21 @@
+  * This will result in screen updates.
+  *
+  * TODO:
++ * - pressing Enter sends two CR and/or NL characters to "bash -i"?
+  * - free b_term when closing terminal.
+  * - remove term from first_term list when closing terminal.
+  * - set buffer options to be scratch, hidden, nomodifiable, etc.
+  * - set buffer name to command, add (1) to avoid duplicates.
+  * - if buffer is wiped, cleanup terminal, may stop job.
+  * - if the job ends, write "-- JOB ENDED --" in the terminal
+- * - command line completion (command name)
++ * - when closing window and job ended, delete the terminal
++ * - when closing window and job has not ended, make terminal hidden?
++ * - Use a pty for I/O with the job.
++ * - Windows implementation:
++ *   (WiP): https://github.com/mattn/vim/tree/terminal
++ *	src/os_win32.c  mch_open_terminal()
++     Using winpty ?
++ * - command line completion for :terminal
+  * - support fixed size when 'termsize' is "rowsXcols".
+  * - support minimal size when 'termsize' is "rows*cols".
+  * - support minimal size when 'termsize' is empty.
+@@ -157,6 +165,7 @@ ex_terminal(exarg_T *eap)
+     vterm_screen_reset(screen, 1 /* hard */);
+ 
+     /* By default NL means CR-NL. */
++    /* TODO: this causes two prompts when using ":term bash -i". */
+     vterm_input_write(vterm, "\x1b[20h", 5);
+ 
+     argvars[0].v_type = VAR_STRING;
+@@ -302,17 +311,104 @@ handle_resize(int rows, int cols, void *user)
+ 
+ /* TODO: Use win_del_lines() to make scroll up efficient. */
+ 
+-/* TODO: function to update the window.
+- * Get the screen contents from vterm with vterm_screen_get_cell().
+- * put in current_ScreenLine and call screen_line().
+- */
+ 
+-/* TODO: function to wait for input and send it to the job.
++/*
++ * Wait for input and send it to the job.
+  * Return when a CTRL-W command is typed that moves to another window.
+- * Convert special keys to vterm keys:
+- * - Write keys to vterm: vterm_keyboard_key()
+- * - read the output (xterm escape sequences): vterm_output_read()
+- * - Write output to channel.
+  */
++    void
++terminal_loop(void)
++{
++    VTerm   *vterm = curbuf->b_term->tl_vterm;
++    char    buf[200];
++
++    for (;;)
++    {
++	int c;
++	VTermKey key = VTERM_KEY_NONE;
++	VTermModifier mod = VTERM_MOD_NONE;
++	size_t len;
++
++	update_screen(0);
++	setcursor();
++	out_flush();
++
++	c = vgetc();
++	switch (c)
++	{
++	    case Ctrl_W:
++		stuffcharReadbuff(Ctrl_W);
++		return;
++
++	    case CAR:		key = VTERM_KEY_ENTER; break;
++	    case ESC:		key = VTERM_KEY_ESCAPE; break;
++	    case K_BS:		key = VTERM_KEY_BACKSPACE; break;
++	    case K_DEL:		key = VTERM_KEY_DEL; break;
++	    case K_DOWN:	key = VTERM_KEY_DOWN; break;
++	    case K_END:		key = VTERM_KEY_END; break;
++	    case K_F10:		key = VTERM_KEY_FUNCTION(10); break;
++	    case K_F11:		key = VTERM_KEY_FUNCTION(11); break;
++	    case K_F12:		key = VTERM_KEY_FUNCTION(12); break;
++	    case K_F1:		key = VTERM_KEY_FUNCTION(1); break;
++	    case K_F2:		key = VTERM_KEY_FUNCTION(2); break;
++	    case K_F3:		key = VTERM_KEY_FUNCTION(3); break;
++	    case K_F4:		key = VTERM_KEY_FUNCTION(4); break;
++	    case K_F5:		key = VTERM_KEY_FUNCTION(5); break;
++	    case K_F6:		key = VTERM_KEY_FUNCTION(6); break;
++	    case K_F7:		key = VTERM_KEY_FUNCTION(7); break;
++	    case K_F8:		key = VTERM_KEY_FUNCTION(8); break;
++	    case K_F9:		key = VTERM_KEY_FUNCTION(9); break;
++	    case K_HOME:	key = VTERM_KEY_HOME; break;
++	    case K_INS:		key = VTERM_KEY_INS; break;
++	    case K_K0:		key = VTERM_KEY_KP_0; break;
++	    case K_K1:		key = VTERM_KEY_KP_1; break;
++	    case K_K2:		key = VTERM_KEY_KP_2; break;
++	    case K_K3:		key = VTERM_KEY_KP_3; break;
++	    case K_K4:		key = VTERM_KEY_KP_4; break;
++	    case K_K5:		key = VTERM_KEY_KP_5; break;
++	    case K_K6:		key = VTERM_KEY_KP_6; break;
++	    case K_K7:		key = VTERM_KEY_KP_7; break;
++	    case K_K8:		key = VTERM_KEY_KP_8; break;
++	    case K_K9:		key = VTERM_KEY_KP_9; break;
++	    case K_KDEL:	key = VTERM_KEY_DEL; break; /* TODO */
++	    case K_KDIVIDE:	key = VTERM_KEY_KP_DIVIDE; break;
++	    case K_KEND:	key = VTERM_KEY_KP_1; break; /* TODO */
++	    case K_KENTER:	key = VTERM_KEY_KP_ENTER; break;
++	    case K_KHOME:	key = VTERM_KEY_KP_7; break; /* TODO */
++	    case K_KINS:	key = VTERM_KEY_KP_0; break; /* TODO */
++	    case K_KMINUS:	key = VTERM_KEY_KP_MINUS; break;
++	    case K_KMULTIPLY:	key = VTERM_KEY_KP_MULT; break;
++	    case K_KPAGEDOWN:	key = VTERM_KEY_KP_3; break; /* TODO */
++	    case K_KPAGEUP:	key = VTERM_KEY_KP_9; break; /* TODO */
++	    case K_KPLUS:	key = VTERM_KEY_KP_PLUS; break;
++	    case K_KPOINT:	key = VTERM_KEY_KP_PERIOD; break;
++	    case K_LEFT:	key = VTERM_KEY_LEFT; break;
++	    case K_PAGEDOWN:	key = VTERM_KEY_PAGEDOWN; break;
++	    case K_PAGEUP:	key = VTERM_KEY_PAGEUP; break;
++	    case K_RIGHT:	key = VTERM_KEY_RIGHT; break;
++	    case K_UP:		key = VTERM_KEY_UP; break;
++	    case TAB:		key = VTERM_KEY_TAB; break;
++	}
++
++	/*
++	 * Convert special keys to vterm keys:
++	 * - Write keys to vterm: vterm_keyboard_key()
++	 * - Write output to channel.
++	 */
++	if (key != VTERM_KEY_NONE)
++	    /* Special key, let vterm convert it. */
++	    vterm_keyboard_key(vterm, key, mod);
++	else
++	    /* Normal character, let vterm convert it. */
++	    vterm_keyboard_unichar(vterm, c, mod);
++
++	/* Read back the converted escape sequence. */
++	len = vterm_output_read(vterm, buf, sizeof(buf));
++
++	/* TODO: if FAIL is returned, stop? */
++	channel_send(curbuf->b_term->tl_job->jv_channel, PART_IN,
++						     (char_u *)buf, len, NULL);
++    }
++}
+ 
+ #endif /* FEAT_TERMINAL */
+/
