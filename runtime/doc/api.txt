@@ -1159,7 +1159,7 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                     Line count, or 0 for unloaded buffer. |api-buffer|
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
-                Activate updates from this buffer to the current channel.
+                Activates buffer-update events on the channel.
 
                 Parameters: ~
                     {buffer}       Buffer handle, or 0 for current buffer
@@ -1178,7 +1178,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                     True.
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
-                Deactivate updates from this buffer to the current channel.
+                Deactivates buffer-update events on the channel.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -1736,10 +1736,29 @@ nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
 UI Functions                                                          *api-ui*
 
 nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
-                TODO: Documentation
+                Activates UI events on the channel.
+
+                Entry point of all UI clients. Allows |--embed| to continue
+                startup. Implies that the client is ready to show the UI. Adds
+                the client to the list of UIs. |nvim_list_uis()|
+
+                Note:
+                    If multiple UI clients are attached, the global screen
+                    dimensions degrade to the smallest client. E.g. if client
+                    A requests 80x40 but client B requests 200x100, the global
+                    screen has size 80x40.
+
+                Parameters: ~
+                    {width}    Requested screen columns
+                    {height}   Requested screen rows
+                    {options}  |ui-options| map
 
 nvim_ui_detach()                                            *nvim_ui_detach()*
-                TODO: Documentation
+                Deactivates UI events on the channel.
+
+                Removes the client from the list of UIs. |nvim_list_uis()|
+
+                Parameters: ~
 
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
                 TODO: Documentation

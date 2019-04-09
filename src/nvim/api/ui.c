@@ -76,6 +76,21 @@ void remote_ui_wait_for_attach(void)
                             pmap_has(uint64_t)(connected_uis, CHAN_STDIO));
 }
 
+/// Activates UI events on the channel.
+///
+/// Entry point of all UI clients.  Allows |\-\-embed| to continue startup.
+/// Implies that the client is ready to show the UI.  Adds the client to the
+/// list of UIs. |nvim_list_uis()|
+///
+/// @note If multiple UI clients are attached, the global screen dimensions
+///       degrade to the smallest client. E.g. if client A requests 80x40 but
+///       client B requests 200x100, the global screen has size 80x40.
+///
+/// @param channel_id
+/// @param width  Requested screen columns
+/// @param height  Requested screen rows
+/// @param options  |ui-options| map
+/// @param[out] err Error details, if any
 void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
                     Dictionary options, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
@@ -164,6 +179,12 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   api_free_dictionary(opts);
 }
 
+/// Deactivates UI events on the channel.
+///
+/// Removes the client from the list of UIs. |nvim_list_uis()|
+///
+/// @param channel_id
+/// @param[out] err Error details, if any
 void nvim_ui_detach(uint64_t channel_id, Error *err)
   FUNC_API_SINCE(1) FUNC_API_REMOTE_ONLY
 {
