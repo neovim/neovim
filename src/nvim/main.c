@@ -317,26 +317,13 @@ int main(int argc, char **argv)
   debug_break_level = params.use_debug_break_level;
 
   //
-  // Read user-input if any TTY is connected.
   // Read ex-commands if invoked with "-es".
   //
-  bool reading_tty = !headless_mode
-                     && !embedded_mode
-                     && !silent_mode
-                     && (params.input_isatty || params.output_isatty
-                         || params.err_isatty);
   bool reading_excmds = !params.input_isatty
                         && silent_mode
                         && exmode_active == EXMODE_NORMAL;
-  if (reading_tty || reading_excmds) {
-    // One of the startup commands (arguments, sourced scripts or plugins) may
-    // prompt the user, so start reading from a tty now.
+  if (reading_excmds) {
     int fd = STDIN_FILENO;
-    if (!silent_mode
-        && (!params.input_isatty || params.edit_type == EDIT_STDIN)) {
-      // Use stderr or stdout since stdin is being used to read commands.
-      fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
-    }
     input_start(fd);
   }
 
@@ -366,24 +353,23 @@ int main(int argc, char **argv)
   // startup. This allows an external UI to show messages and prompts from
   // --cmd and buffer loading (e.g. swap files)
   bool early_ui = false;
-  if (embedded_mode && !headless_mode) {
-    TIME_MSG("waiting for embedder to make request");
-    remote_ui_wait_for_attach();
-    TIME_MSG("done waiting for embedder");
+  bool use_remote_ui = (embedded_mode && !headless_mode);
+  bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
+  if (use_remote_ui || use_builtin_ui) {
+    TIME_MSG("waiting for user interface to make request");
+    if (use_remote_ui)
+    {
+      remote_ui_wait_for_attach();
+    } else {
+      ui_builtin_start();
+    }
+    TIME_MSG("done waiting for user interface");
 
     // prepare screen now, so external UIs can display messages
     starting = NO_BUFFERS;
     screenclear();
     early_ui = true;
-    TIME_MSG("initialized screen early for embedder");
-  }
-
-  if (!headless_mode && !embedded_mode && !silent_mode) {
-    input_stop();  // Stop reading input, let the UI take over.
-    ui_builtin_start();
-    starting = NO_BUFFERS;
-    screenclear();
-    early_ui = true;
+    TIME_MSG("initialized screen early for user interface");
   }
 
   // Execute --cmd arguments.
@@ -475,14 +461,6 @@ int main(int argc, char **argv)
   // Using autocommands here may cause trouble...
   if (params.edit_type == EDIT_STDIN && !recoverymode) {
     read_stdin();
-  }
-
-  if (reading_tty && (need_wait_return || msg_didany)) {
-    // Because there's no UI yet, error messages would have been printed to
-    // stdout.  Before starting we need confirmation that the user has seen the
-    // messages and that is done with a call to wait_return.
-    TIME_MSG("waiting for return");
-    wait_return(true);
   }
 
   setmouse();  // may start using the mouse
