@@ -114,12 +114,12 @@ typedef struct {
   char *listen_addr;                    // --listen {address}
 } mparm_T;
 
-/* Values for edit_type. */
-#define EDIT_NONE   0       /* no edit type yet */
-#define EDIT_FILE   1       /* file name argument[s] given, use argument list */
-#define EDIT_STDIN  2       /* read file from stdin */
-#define EDIT_TAG    3       /* tag name argument given, use tagname */
-#define EDIT_QF     4       /* start in quickfix mode */
+// Values for edit_type.
+#define EDIT_NONE   0       // no edit type yet
+#define EDIT_FILE   1       // file name argument[s] given, use argument list
+#define EDIT_STDIN  2       // read file from stdin
+#define EDIT_TAG    3       // tag name argument given, use tagname
+#define EDIT_QF     4       // start in quickfix mode
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.c.generated.h"
@@ -807,6 +807,7 @@ static void command_line_scan(mparm_T *parmp)
           if (exmode_active) {
             // "nvim -e -" silent mode
             silent_mode = true;
+            parmp->no_swap_file = true;
           } else {
             if (parmp->edit_type != EDIT_NONE
                 && parmp->edit_type != EDIT_FILE
@@ -990,6 +991,7 @@ static void command_line_scan(mparm_T *parmp)
         case 's': {
           if (exmode_active) {    // "-es" silent (batch) Ex-mode
             silent_mode = true;
+            parmp->no_swap_file = true;
           } else {                // "-s {scriptin}" read from script file
             want_argument = true;
           }

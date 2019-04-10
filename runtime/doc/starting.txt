@@ -208,6 +208,7 @@ argument.
 			echo foo | nvim -V1 -es
 <
 		User |init.vim| is skipped (unless given with |-u|).
+		Swap file is skipped (like |-n|).
 		|$TERM| is not used.
 
 		If stdin is not a TTY:
@@ -255,7 +256,7 @@ argument.
 		{not available when compiled without the |+eval| feature}
 
 							*-n*
--n		No swap file will be used.  Recovery after a crash will be
+-n		No |swap-file| will be used.  Recovery after a crash will be
 		impossible.  Handy if you want to view or edit a file on a
 		very slow medium (e.g., a floppy).
 		Can also be done with ":set updatecount=0".  You can switch it
