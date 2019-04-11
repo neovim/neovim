@@ -4037,7 +4037,7 @@ win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
   foundfr = wp->w_frame;
 
   if (wp->w_floating) {
-    return prevwin;
+    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
   }
 
   while (count--) {
@@ -4118,7 +4118,7 @@ win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
   foundfr = wp->w_frame;
 
   if (wp->w_floating) {
-    return prevwin;
+    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
   }
 
   while (count--) {
