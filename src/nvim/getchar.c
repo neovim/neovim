@@ -2225,10 +2225,10 @@ static int vgetorpeek(int advance)
         i = 0;
         c1 = 0;
         if (typebuf.tb_len > 0 && advance && !exmode_active) {
-          if (((State & (NORMAL | INSERT)) || State == LANGMAP)
+          if (((State & (NORMAL | INSERT | TERM_FOCUS)) || State == LANGMAP)
               && State != HITRETURN) {
             /* this looks nice when typing a dead character map */
-            if (State & INSERT
+            if (State & (INSERT | TERM_FOCUS)
                 && ptr2cells(typebuf.tb_buf + typebuf.tb_off
                     + typebuf.tb_len - 1) == 1) {
               edit_putchar(typebuf.tb_buf[typebuf.tb_off

@@ -673,8 +673,13 @@ static int term_movecursor(VTermPos new, VTermPos old, int visible,
     void *data)
 {
   Terminal *term = data;
+
   term->cursor.row = new.row;
   term->cursor.col = new.col;
+
+  curwin->w_wrow = new.row;
+  curwin->w_wcol = new.col;
+
   invalidate_terminal(term, old.row, old.row + 1);
   invalidate_terminal(term, new.row, new.row + 1);
   return 1;
@@ -1279,6 +1284,10 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
   int change_start = row_to_linenr(term, term->invalid_start);
   int change_end = change_start + changed;
+
+  curwin->w_wrow = term->cursor.row;
+  curwin->w_wcol = term->cursor.col;
+
   changed_lines(change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
