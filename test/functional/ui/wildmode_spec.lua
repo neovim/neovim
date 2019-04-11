@@ -95,10 +95,12 @@ describe("'wildmenu'", function()
 
     feed([[<C-\><C-N>gg]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
+    -- NB: in earlier versions terminal output was redrawn during cmdline mode.
+    -- For now just assert that the screen remains unchanged.
     expect_stay_unchanged{grid=[[
-      foo                      |
-      foo                      |
-      foo                      |
+                               |
+                               |
+                               |
       define  jump  list  >    |
       :sign define^             |
     ]]}

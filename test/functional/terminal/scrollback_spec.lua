@@ -142,15 +142,15 @@ describe(':terminal scrollback', function()
     describe('and height decreased by 1', function()
       if helpers.pending_win32(pending) then return end
       local function will_hide_top_line()
-        feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
+        feed([[<C-\><C-N>]])
         screen:try_resize(screen._width - 2, screen._height - 1)
         screen:expect([[
           line2                       |
           line3                       |
           line4                       |
           rows: 5, cols: 28           |
-          {2: }                           |
-          :^                           |
+          {2:^ }                           |
+                                      |
         ]])
       end
 
@@ -166,11 +166,11 @@ describe(':terminal scrollback', function()
           screen:expect([[
             rows: 5, cols: 28         |
             rows: 3, cols: 26         |
-            {2: }                         |
-            :^                         |
+            {2:^ }                         |
+                                      |
           ]])
           eq(8, curbuf('line_count'))
-          feed([[<C-\><C-N>3k]])
+          feed([[3k]])
           screen:expect([[
             ^line4                     |
             rows: 5, cols: 28         |

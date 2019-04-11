@@ -400,7 +400,6 @@ void terminal_enter(void)
   showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
   ui_busy_start();
-  redraw(false);
 
   s->state.execute = terminal_execute;
   s->state.check = terminal_check;
@@ -416,8 +415,10 @@ void terminal_enter(void)
 
   // draw the unfocused cursor
   invalidate_terminal(s->term, s->term->cursor.row, s->term->cursor.row + 1);
+  if (curbuf->terminal == s->term && !s->close) {
+    terminal_check_cursor();
+  }
   unshowmode(true);
-  redraw(curbuf->handle != s->term->buf_handle);
   ui_busy_stop();
   if (s->close) {
     bool wipe = s->term->buf_handle != 0;
@@ -426,6 +427,20 @@ void terminal_enter(void)
       do_cmdline_cmd("bwipeout!");
     }
   }
+}
+
+static void terminal_check_cursor(void)
+{
+  Terminal *term = curbuf->terminal;
+  curwin->w_wrow = term->cursor.row;
+  curwin->w_wcol = term->cursor.col + win_col_off(curwin);
+  curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
+                              row_to_linenr(term, term->cursor.row));
+  // Nudge cursor when returning to normal-mode.
+  int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
+  curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
+  curwin->w_cursor.coladd = 0;
+  mb_check_adjust_col(curwin);
 }
 
 // Function executed before each iteration of terminal mode.
@@ -438,6 +453,19 @@ static int terminal_check(VimState *state)
     stop_insert_mode = false;
     return 0;
   }
+
+  terminal_check_cursor();
+
+  if (must_redraw) {
+    update_screen(0);
+  }
+
+  if (need_maketitle) {  // Update title in terminal-mode. #7248
+    maketitle();
+  }
+
+  setcursor();
+  ui_flush();
   return 1;
 }
 
@@ -1151,11 +1179,7 @@ static void refresh_terminal(Terminal *term)
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
   refresh_pending = false;
-  if (exiting  // Cannot redraw (requires event loop) during teardown/exit.
-      || (State & CMDPREVIEW)
-      // WM_LIST (^D) is not redrawn, unlike the normal wildmenu. So we must
-      // skip redraws to keep it visible.
-      || wild_menu_showing == WM_LIST) {
+  if (exiting) {  // Cannot redraw (requires event loop) during teardown/exit.
     return;
   }
   Terminal *term;
@@ -1165,12 +1189,8 @@ static void refresh_timer_cb(TimeWatcher *watcher, void *data)
   map_foreach(invalidated_terminals, term, stub, {
     refresh_terminal(term);
   });
-  bool any_visible = is_term_visible();
   pmap_clear(ptr_t)(invalidated_terminals);
   unblock_autocmds();
-  if (any_visible) {
-    redraw(true);
-  }
 }
 
 static void refresh_size(Terminal *term, buf_T *buf)
@@ -1282,61 +1302,6 @@ static void refresh_screen(Terminal *term, buf_T *buf)
   changed_lines(change_start, 0, change_end, added, true);
   term->invalid_start = INT_MAX;
   term->invalid_end = -1;
-}
-
-/// @return true if any invalidated terminal buffer is visible to the user
-static bool is_term_visible(void)
-{
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer->terminal
-        && pmap_has(ptr_t)(invalidated_terminals, wp->w_buffer->terminal)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-static void redraw(bool restore_cursor)
-{
-  Terminal *term = curbuf->terminal;
-  if (!term) {
-    restore_cursor = true;
-  }
-
-  int save_row = 0;
-  int save_col = 0;
-  if (restore_cursor) {
-    // save the current row/col to restore after updating screen when not
-    // focused
-    save_row = ui_current_row();
-    save_col = ui_current_col();
-  }
-  block_autocmds();
-
-  if (must_redraw) {
-    update_screen(0);
-  }
-
-  if (need_maketitle) {  // Update title in terminal-mode. #7248
-    maketitle();
-  }
-
-  if (restore_cursor) {
-    ui_cursor_goto(save_row, save_col);
-  } else if (term) {
-    curwin->w_wrow = term->cursor.row;
-    curwin->w_wcol = term->cursor.col + win_col_off(curwin);
-    curwin->w_cursor.lnum = MIN(curbuf->b_ml.ml_line_count,
-                                row_to_linenr(term, term->cursor.row));
-    // Nudge cursor when returning to normal-mode.
-    int off = is_focused(term) ? 0 : (curwin->w_p_rl ? 1 : -1);
-    curwin->w_cursor.col = MAX(0, term->cursor.col + win_col_off(curwin) + off);
-    curwin->w_cursor.coladd = 0;
-    mb_check_adjust_col(curwin);
-  }
-
-  unblock_autocmds();
-  ui_flush();
 }
 
 static void adjust_topline(Terminal *term, buf_T *buf, long added)
