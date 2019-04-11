@@ -1718,6 +1718,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
    */
   buf = NULL;
   if ((flags & BLN_CURBUF) && curbuf_reusable()) {
+    assert(curbuf != NULL);
     buf = curbuf;
     /* It's like this buffer is deleted.  Watch out for autocommands that
      * change curbuf!  If that happens, allocate a new buffer anyway. */
