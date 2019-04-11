@@ -691,4 +691,9 @@ func Test_winnr()
   only | tabonly
 endfunc
 
+func Test_window_colon_command()
+  " This was reading invalid memory.
+  exe "norm! v\<C-W>:\<C-U>echo v:version"
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
