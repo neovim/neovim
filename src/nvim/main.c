@@ -357,8 +357,7 @@ int main(int argc, char **argv)
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
   if (use_remote_ui || use_builtin_ui) {
     TIME_MSG("waiting for user interface to make request");
-    if (use_remote_ui)
-    {
+    if (use_remote_ui) {
       remote_ui_wait_for_attach();
     } else {
       ui_builtin_start();

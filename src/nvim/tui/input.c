@@ -50,7 +50,8 @@ void tinput_init(TermInput *input, Loop *loop)
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
 #ifdef WIN32
   if (!os_isatty(0)) {
-      const HANDLE conin_handle = CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+      const HANDLE conin_handle = CreateFile("CONIN$",
+                                             GENERIC_READ | GENERIC_WRITE,
                                              FILE_SHARE_READ | FILE_SHARE_WRITE,
                                              (LPSECURITY_ATTRIBUTES)NULL,
                                              OPEN_EXISTING, 0, (HANDLE)NULL);
