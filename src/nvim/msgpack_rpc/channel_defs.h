@@ -13,7 +13,7 @@
 typedef struct Channel Channel;
 
 typedef struct {
-  uint64_t request_id;
+  uint32_t request_id;
   bool returned, errored;
   Object result;
 } ChannelCallFrame;
@@ -23,14 +23,14 @@ typedef struct {
   Channel *channel;
   MsgpackRpcRequestHandler handler;
   Array args;
-  uint64_t request_id;
+  uint32_t request_id;
 } RequestEvent;
 
 typedef struct {
   PMap(cstr_t) *subscribed_events;
   bool closed;
   msgpack_unpacker *unpacker;
-  uint64_t next_request_id;
+  uint32_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
   Dictionary info;
 } RpcState;

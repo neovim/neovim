@@ -131,7 +131,7 @@ Object rpc_send_call(uint64_t id,
 
   channel_incref(channel);
   RpcState *rpc = &channel->rpc;
-  uint64_t request_id = rpc->next_request_id++;
+  uint32_t request_id = rpc->next_request_id++;
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
 
@@ -292,7 +292,7 @@ static void parse_msgpack(Channel *channel)
 static void handle_request(Channel *channel, msgpack_object *request)
   FUNC_ATTR_NONNULL_ALL
 {
-  uint64_t request_id;
+  uint32_t request_id;
   Error error = ERROR_INIT;
   MessageType type = msgpack_rpc_validate(&request_id, request, &error);
 
@@ -437,7 +437,7 @@ static void internal_read_event(void **argv)
   wstream_release_wbuffer(buffer);
 }
 
-static void send_error(Channel *chan, MessageType type, uint64_t id, char *err)
+static void send_error(Channel *chan, MessageType type, uint32_t id, char *err)
 {
   Error e = ERROR_INIT;
   api_set_error(&e, kErrorTypeException, "%s", err);
@@ -451,7 +451,7 @@ static void send_error(Channel *chan, MessageType type, uint64_t id, char *err)
 }
 
 static void send_request(Channel *channel,
-                         uint64_t id,
+                         uint32_t id,
                          const char *name,
                          Array args)
 {
@@ -584,7 +584,7 @@ static bool is_rpc_response(msgpack_object *obj)
 
 static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
 {
-  uint64_t response_id = obj->via.array.ptr[1].via.u64;
+  uint32_t response_id = (uint32_t)obj->via.array.ptr[1].via.u64;
   if (kv_size(channel->rpc.call_stack) == 0) {
     return false;
   }
@@ -622,7 +622,7 @@ static void call_set_error(Channel *channel, char *msg, int loglevel)
 }
 
 static WBuffer *serialize_request(uint64_t channel_id,
-                                  uint64_t request_id,
+                                  uint32_t request_id,
                                   const String method,
                                   Array args,
                                   msgpack_sbuffer *sbuffer,
@@ -643,7 +643,7 @@ static WBuffer *serialize_request(uint64_t channel_id,
 
 static WBuffer *serialize_response(uint64_t channel_id,
                                    MessageType type,
-                                   uint64_t response_id,
+                                   uint32_t response_id,
                                    Error *err,
                                    Object arg,
                                    msgpack_sbuffer *sbuffer)
