@@ -4019,24 +4019,25 @@ tabpage_T *win_find_tabpage(win_T *win)
   return NULL;
 }
 
-/*
- * Move to window above or below "count" times.
- */
-static void 
-win_goto_ver (
-    int up,                         /* TRUE to go to win above */
-    long count
-)
+/// Get the above or below neighbor window of the specified window.
+///
+/// Returns the specified window if the neighbor is not found.
+/// Returns the previous window if the specifiecied window is a floating window.
+///
+/// @param up     true for the above neighbor
+/// @param count  nth neighbor window
+///
+/// @return       found window
+win_T *win_vert_neighbor(tabpage_T *tp, win_T *wp, bool up, long count)
 {
   frame_T     *fr;
   frame_T     *nfr;
   frame_T     *foundfr;
 
-  foundfr = curwin->w_frame;
+  foundfr = wp->w_frame;
 
-  if (curwin->w_floating) {
-    win_goto(prevwin);
-    return;
+  if (wp->w_floating) {
+    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
   }
 
   while (count--) {
@@ -4046,14 +4047,17 @@ win_goto_ver (
      */
     fr = foundfr;
     for (;; ) {
-      if (fr == topframe)
+      if (fr == tp->tp_topframe) {
         goto end;
-      if (up)
+      }
+      if (up) {
         nfr = fr->fr_prev;
-      else
+      } else {
         nfr = fr->fr_next;
-      if (fr->fr_parent->fr_layout == FR_COL && nfr != NULL)
+      }
+      if (fr->fr_parent->fr_layout == FR_COL && nfr != NULL) {
         break;
+      }
       fr = fr->fr_parent;
     }
 
@@ -4067,11 +4071,12 @@ win_goto_ver (
       }
       fr = nfr->fr_child;
       if (nfr->fr_layout == FR_ROW) {
-        /* Find the frame at the cursor row. */
+        // Find the frame at the cursor row.
         while (fr->fr_next != NULL
                && frame2win(fr)->w_wincol + fr->fr_width
-               <= curwin->w_wincol + curwin->w_wcol)
+               <= wp->w_wincol + wp->w_wcol) {
           fr = fr->fr_next;
+        }
       }
       if (nfr->fr_layout == FR_COL && up)
         while (fr->fr_next != NULL)
@@ -4080,28 +4085,40 @@ win_goto_ver (
     }
   }
 end:
-  if (foundfr != NULL)
-    win_goto(foundfr->fr_win);
+  return foundfr != NULL ? foundfr->fr_win : NULL;
 }
 
-/*
- * Move to left or right window.
- */
-static void 
-win_goto_hor (
-    int left,                       /* TRUE to go to left win */
-    long count
-)
+/// Move to window above or below "count" times.
+///
+/// @param up     true to go to win above
+/// @param count  go count times into direction
+static void win_goto_ver(bool up, long count)
+{
+  win_T *win = win_vert_neighbor(curtab, curwin, up, count);
+  if (win != NULL) {
+    win_goto(win);
+  }
+}
+
+/// Get the left or right neighbor window of the specified window.
+///
+/// Returns the specified window if the neighbor is not found.
+/// Returns the previous window if the specifiecied window is a floating window.
+///
+/// @param left  true for the left neighbor
+/// @param count nth neighbor window
+///
+/// @return      found window
+win_T *win_horz_neighbor(tabpage_T *tp, win_T *wp, bool left, long count)
 {
   frame_T     *fr;
   frame_T     *nfr;
   frame_T     *foundfr;
 
-  foundfr = curwin->w_frame;
+  foundfr = wp->w_frame;
 
-  if (curwin->w_floating) {
-    win_goto(prevwin);
-    return;
+  if (wp->w_floating) {
+    return win_valid(prevwin) && !prevwin->w_floating ? prevwin : firstwin;
   }
 
   while (count--) {
@@ -4111,14 +4128,17 @@ win_goto_hor (
      */
     fr = foundfr;
     for (;; ) {
-      if (fr == topframe)
+      if (fr == tp->tp_topframe) {
         goto end;
-      if (left)
+      }
+      if (left) {
         nfr = fr->fr_prev;
-      else
+      } else {
         nfr = fr->fr_next;
-      if (fr->fr_parent->fr_layout == FR_ROW && nfr != NULL)
+      }
+      if (fr->fr_parent->fr_layout == FR_ROW && nfr != NULL) {
         break;
+      }
       fr = fr->fr_parent;
     }
 
@@ -4135,7 +4155,7 @@ win_goto_hor (
         /* Find the frame at the cursor row. */
         while (fr->fr_next != NULL
                && frame2win(fr)->w_winrow + fr->fr_height
-               <= curwin->w_winrow + curwin->w_wrow)
+               <= wp->w_winrow + wp->w_wrow)
           fr = fr->fr_next;
       }
       if (nfr->fr_layout == FR_ROW && left)
@@ -4145,8 +4165,19 @@ win_goto_hor (
     }
   }
 end:
-  if (foundfr != NULL)
-    win_goto(foundfr->fr_win);
+  return foundfr != NULL ? foundfr->fr_win : NULL;
+}
+
+/// Move to left or right window.
+///
+/// @param left   true to go to left window
+/// @param count  go count times into direction
+static void win_goto_hor(bool left, long count)
+{
+  win_T *win = win_horz_neighbor(curtab, curwin, left, count);
+  if (win != NULL) {
+    win_goto(win);
+  }
 }
 
 /*

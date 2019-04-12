@@ -1447,6 +1447,9 @@ static int command_line_handle_key(CommandLineState *s)
              && ccline.cmdbuff[ccline.cmdpos - 1] != ' ');
 
     set_cmdspos_cursor();
+    if (ccline.special_char != NUL) {
+      putcmdline(ccline.special_char, ccline.special_shift);
+    }
 
     return command_line_not_changed(s);
 
@@ -1704,6 +1707,7 @@ static int command_line_handle_key(CommandLineState *s)
     putcmdline('^', true);
     s->c = get_literal();                 // get next (two) character(s)
     s->do_abbr = false;                   // don't do abbreviation now
+    ccline.special_char = NUL;
     // may need to remove ^ when composing char was typed
     if (enc_utf8 && utf_iscomposing(s->c) && !cmd_silent) {
       if (ui_has(kUICmdline)) {
@@ -1721,6 +1725,7 @@ static int command_line_handle_key(CommandLineState *s)
     s->ignore_drag_release = true;
     putcmdline('?', true);
     s->c = get_digraph(true);
+    ccline.special_char = NUL;
 
     if (s->c != NUL) {
       break;
@@ -3082,15 +3087,13 @@ void putcmdline(int c, int shift)
       draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
     }
     msg_no_more = false;
-  } else {
-    ccline.special_char = c;
-    ccline.special_shift = shift;
-    if (ccline.redraw_state != kCmdRedrawAll) {
+  } else if (ccline.redraw_state != kCmdRedrawAll) {
       ui_call_cmdline_special_char(cchar_to_string((char)(c)), shift,
                                    ccline.level);
-    }
   }
   cursorcmd();
+  ccline.special_char = c;
+  ccline.special_shift = shift;
   ui_cursor_shape();
 }
 
@@ -3108,6 +3111,7 @@ void unputcmdline(void)
   }
   msg_no_more = false;
   cursorcmd();
+  ccline.special_char = NUL;
   ui_cursor_shape();
 }
 
@@ -3467,6 +3471,10 @@ void redrawcmd(void)
   msg_no_more = FALSE;
 
   set_cmdspos_cursor();
+
+  if (ccline.special_char != NUL) {
+    putcmdline(ccline.special_char, ccline.special_shift);
+  }
 
   /*
    * An emsg() before may have set msg_scroll. This is used in normal mode,

@@ -975,8 +975,6 @@ describe('Expressions coloring support', function()
     ]])
     funcs.setreg('a', {'\192'})
     feed('<C-r>="<C-r><C-r>a"<C-r><C-r>a"foo"')
-    -- TODO(ZyX-I): Parser highlighting should not override special character
-    --              highlighting.
     screen:expect([[
                                               |
       {EOB:~                                       }|
@@ -985,7 +983,7 @@ describe('Expressions coloring support', function()
       {EOB:~                                       }|
       {EOB:~                                       }|
       {EOB:~                                       }|
-      ={SQ:"}{SB:<c0>}{SQ:"}{E:<c0>"}{SB:foo}{E:"}^                        |
+      ={SQ:"}{SB:<c0>}{SQ:"}{E:<c0>"}{SB:foo}{E:"}^"                       |
     ]])
   end)
 end)

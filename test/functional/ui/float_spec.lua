@@ -37,6 +37,20 @@ describe('floating windows', function()
     [17] = {background = Screen.colors.Yellow},
   }
 
+  it('behavior', function()
+    -- Create three windows and test that ":wincmd <direction>" changes to the
+    -- first window, if the previous window is invalid.
+    command('split')
+    meths.open_win(0, true, {width=10, height=10, relative='editor', row=0, col=0})
+    eq(1002, funcs.win_getid())
+    eq('editor', meths.win_get_config(1002).relative)
+    command([[
+      call nvim_win_close(1001, v:false)
+      wincmd j
+    ]])
+    eq(1000, funcs.win_getid())
+  end)
+
   local function with_ext_multigrid(multigrid)
     local screen
     before_each(function()

@@ -646,4 +646,54 @@ func Test_relative_cursor_second_line_after_resize()
   let &so = so_save
 endfunc
 
+" Tests for the winnr() function
+func Test_winnr()
+  only | tabonly
+  call assert_equal(1, winnr('j'))
+  call assert_equal(1, winnr('k'))
+  call assert_equal(1, winnr('h'))
+  call assert_equal(1, winnr('l'))
+
+  " create a set of horizontally and vertically split windows
+  leftabove new | wincmd p
+  leftabove new | wincmd p
+  rightbelow new | wincmd p
+  rightbelow new | wincmd p
+  leftabove vnew | wincmd p
+  leftabove vnew | wincmd p
+  rightbelow vnew | wincmd p
+  rightbelow vnew | wincmd p
+
+  call assert_equal(8, winnr('j'))
+  call assert_equal(2, winnr('k'))
+  call assert_equal(4, winnr('h'))
+  call assert_equal(6, winnr('l'))
+  call assert_equal(9, winnr('2j'))
+  call assert_equal(1, winnr('2k'))
+  call assert_equal(3, winnr('2h'))
+  call assert_equal(7, winnr('2l'))
+
+  " Error cases
+  call assert_fails("echo winnr('0.2k')", 'E15:')
+  call assert_equal(2, winnr('-2k'))
+  call assert_fails("echo winnr('-2xj')", 'E15:')
+  call assert_fails("echo winnr('j2j')", 'E15:')
+  call assert_fails("echo winnr('ll')", 'E15:')
+  call assert_fails("echo winnr('5')", 'E15:')
+  call assert_equal(4, winnr('0h'))
+
+  tabnew
+  call assert_equal(8, tabpagewinnr(1, 'j'))
+  call assert_equal(2, tabpagewinnr(1, 'k'))
+  call assert_equal(4, tabpagewinnr(1, 'h'))
+  call assert_equal(6, tabpagewinnr(1, 'l'))
+
+  only | tabonly
+endfunc
+
+func Test_window_colon_command()
+  " This was reading invalid memory.
+  exe "norm! v\<C-W>:\<C-U>echo v:version"
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
