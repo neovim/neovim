@@ -19,6 +19,7 @@ typedef struct {
 } ChannelCallFrame;
 
 typedef struct {
+  MessageType type;
   Channel *channel;
   MsgpackRpcRequestHandler handler;
   Array args;
