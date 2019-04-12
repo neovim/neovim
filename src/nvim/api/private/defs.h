@@ -29,13 +29,12 @@ typedef enum {
 } ErrorType;
 
 typedef enum {
-  kMessageTypeRequest,
-  kMessageTypeResponse,
-  kMessageTypeNotification
+  kMessageTypeUnknown = -1,
+  // Per msgpack-rpc spec.
+  kMessageTypeRequest = 0,
+  kMessageTypeResponse = 1,
+  kMessageTypeNotification = 2,
 } MessageType;
-
-/// Used as the message ID of notifications.
-#define NO_RESPONSE UINT64_MAX
 
 /// Mask for all internal calls
 #define INTERNAL_CALL_MASK (((uint64_t)1) << (sizeof(uint64_t) * 8 - 1))
