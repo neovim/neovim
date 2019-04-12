@@ -1128,6 +1128,10 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     {0xff1a, 0xff20, 1},                /* half/fullwidth ASCII */
     {0xff3b, 0xff40, 1},                /* half/fullwidth ASCII */
     {0xff5b, 0xff65, 1},                /* half/fullwidth ASCII */
+    {0x1d000, 0x1d24f, 1},              // Musical notation
+    {0x1d400, 0x1d7ff, 1},              // Mathematical Alphanumeric Symbols
+    {0x1f000, 0x1f2ff, 1},              // Game pieces; enclosed characters
+    {0x1f300, 0x1f9ff, 1},              // Many symbol blocks
     {0x20000, 0x2a6df, 0x4e00},         /* CJK Ideographs */
     {0x2a700, 0x2b73f, 0x4e00},         /* CJK Ideographs */
     {0x2b740, 0x2b81f, 0x4e00},         /* CJK Ideographs */
