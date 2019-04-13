@@ -579,7 +579,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
 
 void win_config_float(win_T *wp, FloatConfig fconfig)
 {
-  wp->w_width = MAX(fconfig.width, 2);
+  wp->w_width = MAX(fconfig.width, 1);
   wp->w_height = MAX(fconfig.height, 1);
 
   if (fconfig.relative == kFloatRelativeCursor) {
@@ -617,13 +617,16 @@ static void ui_ext_win_position(win_T *wp)
   FloatConfig c = wp->w_float_config;
   if (!c.external) {
     ScreenGrid *grid = &default_grid;
-    int row = c.row, col = c.col;
+    float row = c.row, col = c.col;
     if (c.relative == kFloatRelativeWindow) {
       Error dummy = ERROR_INIT;
       win_T *win = find_window_by_handle(c.window, &dummy);
       if (win) {
         grid = &win->w_grid;
-        screen_adjust_grid(&grid, &row, &col);
+        int row_off = 0, col_off = 0;
+        screen_adjust_grid(&grid, &row_off, &col_off);
+        row += row_off;
+        col += col_off;
       }
       api_clear_error(&dummy);
     }
@@ -637,16 +640,16 @@ static void ui_ext_win_position(win_T *wp)
       bool east = c.anchor & kFloatAnchorEast;
       bool south = c.anchor & kFloatAnchorSouth;
 
-      row -= (south ? wp->w_height : 0);
-      col -= (east ? wp->w_width : 0);
-      row = MAX(MIN(row, Rows-wp->w_height-1), 0);
-      col = MAX(MIN(col, Columns-wp->w_width), 0);
-      wp->w_winrow = row;
-      wp->w_wincol = col;
+      int comp_row = (int)row - (south ? wp->w_height : 0);
+      int comp_col = (int)col - (east ? wp->w_width : 0);
+      comp_row = MAX(MIN(comp_row, Rows-wp->w_height-1), 0);
+      comp_col = MAX(MIN(comp_col, Columns-wp->w_width), 0);
+      wp->w_winrow = comp_row;
+      wp->w_wincol = comp_col;
       bool valid = (wp->w_redr_type == 0);
       bool on_top = (curwin == wp) || !curwin->w_floating;
-      ui_comp_put_grid(&wp->w_grid, row, col, wp->w_height, wp->w_width,
-                       valid, on_top);
+      ui_comp_put_grid(&wp->w_grid, comp_row, comp_col, wp->w_height,
+                       wp->w_width, valid, on_top);
       if (!valid) {
         wp->w_grid.valid = false;
         redraw_win_later(wp, NOT_VALID);
@@ -681,9 +684,6 @@ static bool parse_float_anchor(String anchor, FloatAnchor *out)
 
 static bool parse_float_relative(String relative, FloatRelative *out)
 {
-  if (relative.size == 0) {
-    *out = (FloatRelative)0;
-  }
   char *str = relative.data;
   if (striequal(str, "editor")) {
     *out = kFloatRelativeEditor;
@@ -700,8 +700,11 @@ static bool parse_float_relative(String relative, FloatRelative *out)
 bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
                         Error *err)
 {
+  // TODO(bfredl): use a get/has_key interface instead and get rid of extra
+  // flags
   bool has_row = false, has_col = false, has_relative = false;
   bool has_external = false, has_window = false;
+  bool has_width = false, has_height = false;
 
   for (size_t i = 0; i < config.size; i++) {
     char *key = config.items[i].key.data;
@@ -729,7 +732,8 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         return false;
       }
     } else if (strequal(key, "width")) {
-      if (val.type == kObjectTypeInteger && val.data.integer >= 0) {
+      has_width = true;
+      if (val.type == kObjectTypeInteger && val.data.integer > 0) {
         fconfig->width = val.data.integer;
       } else {
         api_set_error(err, kErrorTypeValidation,
@@ -737,7 +741,8 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         return false;
       }
     } else if (strequal(key, "height")) {
-      if (val.type == kObjectTypeInteger && val.data.integer >= 0) {
+      has_height = true;
+      if (val.type == kObjectTypeInteger && val.data.integer > 0) {
         fconfig->height= val.data.integer;
       } else {
         api_set_error(err, kErrorTypeValidation,
@@ -756,16 +761,19 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         return false;
       }
     } else if (!strcmp(key, "relative")) {
-      has_relative = true;
       if (val.type != kObjectTypeString) {
         api_set_error(err, kErrorTypeValidation,
                       "'relative' key must be String");
         return false;
       }
-      if (!parse_float_relative(val.data.string, &fconfig->relative)) {
-        api_set_error(err, kErrorTypeValidation,
-                      "Invalid value of 'relative' key");
-        return false;
+      // ignore empty string, to match nvim_win_get_config
+      if (val.data.string.size > 0) {
+        has_relative = true;
+        if (!parse_float_relative(val.data.string, &fconfig->relative)) {
+          api_set_error(err, kErrorTypeValidation,
+                        "Invalid value of 'relative' key");
+          return false;
+        }
       }
     } else if (!strcmp(key, "win")) {
       has_window = true;
@@ -826,6 +834,12 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
     return false;
   } else if (has_relative) {
     fconfig->external = false;
+  }
+
+  if (!reconf && !(has_height && has_width)) {
+    api_set_error(err, kErrorTypeValidation,
+                  "Must specify 'width' and 'height'");
+    return false;
   }
 
   if (fconfig->external && !ui_has(kUIMultigrid)) {
@@ -1135,6 +1149,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   } else if (wp->w_floating) {
     new_frame(wp);
     wp->w_floating = false;
+    // non-floating window doesn't store float config.
+    wp->w_float_config = FLOAT_CONFIG_INIT;
   }
 
   /*
@@ -4421,6 +4437,7 @@ static win_T *win_alloc(win_T *after, int hidden)
   new_wp->w_cursor.lnum = 1;
   new_wp->w_scbind_pos = 1;
   new_wp->w_floating = 0;
+  new_wp->w_float_config = FLOAT_CONFIG_INIT;
 
   /* We won't calculate w_fraction until resizing the window */
   new_wp->w_fraction = 0;
@@ -4717,8 +4734,6 @@ int win_comp_pos(void)
   // Too often, but when we support anchoring floats to split windows,
   // this will be needed
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
-    wp->w_float_config.width = wp->w_width;
-    wp->w_float_config.height = wp->w_height;
     win_config_float(wp, wp->w_float_config);
   }
 
