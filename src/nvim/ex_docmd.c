@@ -7343,7 +7343,7 @@ void ex_cd(exarg_T *eap)
       break;
     }
 
-    if (vim_chdir(new_dir, scope)) {
+    if (vim_chdir(new_dir)) {
       EMSG(_(e_failed));
     } else {
       post_chdir(scope, true);
