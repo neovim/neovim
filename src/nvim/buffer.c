@@ -1559,6 +1559,7 @@ void do_autochdir(void)
     if (starting == 0
         && curbuf->b_ffname != NULL
         && vim_chdirfile(curbuf->b_ffname) == OK) {
+      post_chdir(kCdScopeGlobal, false);
       shorten_fnames(true);
     }
   }
