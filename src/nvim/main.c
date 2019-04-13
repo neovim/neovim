@@ -467,7 +467,7 @@ int main(int argc, char **argv)
   if (exmode_active || early_ui) {
     // Don't clear the screen when starting in Ex mode, or when an
     // embedding UI might have displayed messages
-    must_redraw = CLEAR;
+    must_redraw = VALID;
   } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");
