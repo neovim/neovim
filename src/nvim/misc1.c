@@ -2583,10 +2583,17 @@ void vim_beep(unsigned val)
 
   if (emsg_silent == 0) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
-      if (p_vb) {
-        ui_call_visual_bell();
-      } else {
-        ui_call_bell();
+      static uint64_t start_time = 0;
+
+      // Only beep once per half a second, otherwise a sequence of beeps
+      // would freeze Vim.
+      if (start_time == 0 || os_hrtime() - start_time > 500000000u) {
+        start_time = os_hrtime();
+        if (p_vb) {
+          ui_call_visual_bell();
+        } else {
+          ui_call_bell();
+        }
       }
     }
 
