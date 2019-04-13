@@ -3174,6 +3174,12 @@ int bt_quickfix(const buf_T *const buf)
   return buf != NULL && buf->b_p_bt[0] == 'q';
 }
 
+// Return true if "buf" is a terminal buffer.
+bool bt_terminal(const buf_T *buf)
+{
+  return buf != NULL && buf->b_p_bt[0] == 't';
+}
+
 // Return TRUE if "buf" is a "nofile", "acwrite" or "terminal" buffer.
 // This means the buffer name is not a file name.
 int bt_nofile(buf_T *buf)
