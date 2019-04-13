@@ -205,10 +205,15 @@
 #endif
 
 #ifdef DEFINE_FUNC_ATTRIBUTES
+/// Non-deferred API function.
 # define FUNC_API_ASYNC
+/// Internal C function not exposed in the RPC API.
 # define FUNC_API_NOEXPORT
+/// API function not exposed in VimL/eval.
 # define FUNC_API_REMOTE_ONLY
+/// API function introduced at the given API level.
 # define FUNC_API_SINCE(X)
+/// API function deprecated since the given API level.
 # define FUNC_API_DEPRECATED_SINCE(X)
 # define FUNC_ATTR_MALLOC REAL_FATTR_MALLOC
 # define FUNC_ATTR_ALLOC_SIZE(x) REAL_FATTR_ALLOC_SIZE(x)

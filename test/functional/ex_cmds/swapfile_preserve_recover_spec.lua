@@ -13,6 +13,7 @@ local rmdir = helpers.rmdir
 local set_session = helpers.set_session
 local spawn = helpers.spawn
 local nvim_async = helpers.nvim_async
+local expect_msg_seq = helpers.expect_msg_seq
 
 describe(':recover', function()
   before_each(clear)
@@ -163,6 +164,13 @@ describe('swapfile detection', function()
     screen2:expect{any=[[Found a swap file by the name ".*]]
                        ..[[Xtest_swapdialog_dir[/\].*]]..testfile..[[%.swp"]]}
     feed('e')  -- Chose "Edit" at the swap dialog.
-    feed('<c-c>')
+    expect_msg_seq({
+      ignore={'redraw'},
+      seqs={
+        { {'notification', 'nvim_error_event', {0, 'Vim(edit):E325: ATTENTION'}},
+        }
+      }
+    })
+    feed('<cr>')
   end)
 end)

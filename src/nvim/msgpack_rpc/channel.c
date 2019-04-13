@@ -348,28 +348,28 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
     if (is_get_mode && !input_blocking()) {
       // Defer the event to a special queue used by os/input.c. #6247
-      multiqueue_put(ch_before_blocking_events, response_event, 1, evdata);
+      multiqueue_put(ch_before_blocking_events, request_event, 1, evdata);
     } else {
       // Invoke immediately.
-      response_event((void **)&evdata);
+      request_event((void **)&evdata);
     }
   } else {
-    multiqueue_put(channel->events, response_event, 1, evdata);
+    multiqueue_put(channel->events, request_event, 1, evdata);
     DLOG("RPC: scheduled %.*s", method->via.bin.size, method->via.bin.ptr);
   }
 }
 
-/// Responds to a message, depending on the type:
-///   - Request: writes the response.
-///   - Notification: does nothing.
-static void response_event(void **argv)
+/// Handles a message, depending on the type:
+///   - Request: invokes method and writes the response (or error).
+///   - Notification: invokes method (emits `nvim_error_event` on error).
+static void request_event(void **argv)
 {
   RequestEvent *e = argv[0];
   Channel *channel = e->channel;
   MsgpackRpcRequestHandler handler = e->handler;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, e->args, &error);
-  if (e->type == kMessageTypeRequest) {
+  if (e->type == kMessageTypeRequest || ERROR_SET(&error)) {
     // Send the response.
     msgpack_packer response;
     msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
