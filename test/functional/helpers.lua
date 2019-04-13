@@ -23,6 +23,7 @@ local neq = global_helpers.neq
 local ok = global_helpers.ok
 local read_file = global_helpers.read_file
 local sleep = global_helpers.sleep
+local table_contains = global_helpers.table_contains
 local table_flatten = global_helpers.table_flatten
 local write_file = global_helpers.write_file
 
@@ -129,16 +130,33 @@ end
 
 -- Expects a sequence of next_msg() results. If multiple sequences are
 -- passed they are tried until one succeeds, in order of shortest to longest.
+--
+-- Can be called with positional args (list of sequences only):
+--    expect_msg_seq(seq1, seq2, ...)
+-- or keyword args:
+--    expect_msg_seq{ignore={...}, seqs={seq1, seq2, ...}}
+--
+-- ignore:      List of ignored event names.
+-- seqs:        List of one or more potential event sequences.
 local function expect_msg_seq(...)
   if select('#', ...) < 1 then
     error('need at least 1 argument')
   end
-  local seqs = {...}
+  local arg1 = select(1, ...)
+  if (arg1['seqs'] and select('#', ...) > 1) or type(arg1) ~= 'table'  then
+    error('invalid args')
+  end
+  local ignore = arg1['ignore'] and arg1['ignore'] or {}
+  local seqs = arg1['seqs'] and arg1['seqs'] or {...}
+  if type(ignore) ~= 'table' then
+    error("'ignore' arg must be a list of strings")
+  end
   table.sort(seqs, function(a, b)  -- Sort ascending, by (shallow) length.
     return #a < #b
   end)
 
   local actual_seq = {}
+  local nr_ignored = 0
   local final_error = ''
   local function cat_err(err1, err2)
     if err1 == nil then
@@ -151,12 +169,16 @@ local function expect_msg_seq(...)
     -- Collect enough messages to compare the next expected sequence.
     while #actual_seq < #expected_seq do
       local msg = next_msg(10000)  -- Big timeout for ASAN/valgrind.
+      local msg_type = msg and msg[2] or nil
       if msg == nil then
         error(cat_err(final_error,
-                      string.format('got %d messages, expected %d',
-                                    #actual_seq, #expected_seq)))
+                      string.format('got %d messages (ignored %d), expected %d',
+                                    #actual_seq, nr_ignored, #expected_seq)))
+      elseif table_contains(ignore, msg_type) then
+        nr_ignored = nr_ignored + 1
+      else
+        table.insert(actual_seq, msg)
       end
-      table.insert(actual_seq, msg)
     end
     local status, result = pcall(eq, expected_seq, actual_seq)
     if status then
