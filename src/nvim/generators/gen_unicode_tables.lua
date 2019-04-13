@@ -17,7 +17,7 @@
 --    which don't have ambiguous or double width, and emoji_all has all Emojis.
 if arg[1] == '--help' then
   print('Usage:')
-  print('  genunicodetables.lua unicode/ unicode_tables.generated.h')
+  print('  gen_unicode_tables.lua unicode/ unicode_tables.generated.h')
   os.exit(0)
 end
 
