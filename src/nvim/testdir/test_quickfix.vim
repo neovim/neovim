@@ -430,6 +430,19 @@ func Xtest_browse(cchar)
 
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')
+
+  " Should be able to use next/prev with invalid entries
+  Xexpr ""
+  call assert_equal(0, g:Xgetlist({'idx' : 0}).idx)
+  call assert_equal(0, g:Xgetlist({'size' : 0}).size)
+  Xaddexpr ['foo', 'bar', 'baz', 'quux', 'shmoo']
+  call assert_equal(5, g:Xgetlist({'size' : 0}).size)
+  Xlast
+  call assert_equal(5, g:Xgetlist({'idx' : 0}).idx)
+  Xfirst
+  call assert_equal(1, g:Xgetlist({'idx' : 0}).idx)
+  2Xnext
+  call assert_equal(3, g:Xgetlist({'idx' : 0}).idx)
 endfunc
 
 func Test_browse()

@@ -2196,8 +2196,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   old_qf_ptr = qf_ptr;
   qf_index = qi->qf_lists[qi->qf_curlist].qf_index;
   old_qf_index = qf_index;
-  if (dir == FORWARD || dir == FORWARD_FILE || dir == BACKWARD
-      || dir == BACKWARD_FILE) {  // next/prev valid entry
+  if (dir != 0) {   // next/prev valid entry
     qf_ptr = get_nth_valid_entry(qi, errornr, qf_ptr, &qf_index, dir);
     if (qf_ptr == NULL) {
       qf_ptr = old_qf_ptr;
@@ -4202,6 +4201,8 @@ enum {
   QF_GETLIST_WINID = 0x8,
   QF_GETLIST_CONTEXT = 0x10,
   QF_GETLIST_ID = 0x20,
+  QF_GETLIST_IDX = 0x40,
+  QF_GETLIST_SIZE = 0x80,
   QF_GETLIST_ALL = 0xFF
 };
 
@@ -4336,6 +4337,13 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if (tv_dict_find(what, S_LEN("items")) != NULL) {
     flags |= QF_GETLIST_ITEMS;
   }
+  if (tv_dict_find(what, S_LEN("idx")) != NULL) {
+    flags |= QF_GETLIST_IDX;
+  }
+  if (tv_dict_find(what, S_LEN("size")) != NULL) {
+    flags |= QF_GETLIST_SIZE;
+  }
+
 
   if (flags & QF_GETLIST_TITLE) {
     char_u *t = qi->qf_lists[qf_idx].qf_title;
@@ -4374,6 +4382,20 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
 
   if ((status == OK) && (flags & QF_GETLIST_ID)) {
     status = tv_dict_add_nr(retdict, S_LEN("id"), qi->qf_lists[qf_idx].qf_id);
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_IDX)) {
+    int idx = qi->qf_lists[qf_idx].qf_index;
+    if (qi->qf_lists[qf_idx].qf_count == 0) {
+      // For empty lists, qf_index is set to 1
+      idx = 0;
+    }
+    status = tv_dict_add_nr(retdict, S_LEN("idx"), idx);
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
+    status = tv_dict_add_nr(retdict, S_LEN("size"),
+                            qi->qf_lists[qf_idx].qf_count);
   }
 
   return status;
