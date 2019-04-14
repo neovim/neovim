@@ -363,7 +363,7 @@ void update_screen(int type)
     need_wait_return = FALSE;
   }
 
-  if (type >= NOT_VALID) {
+  if (type >= CLEAR || !default_grid.valid) {
     ui_comp_set_screen_valid(false);
   }
   win_ui_flush_positions();
