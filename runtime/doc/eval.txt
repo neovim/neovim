@@ -1412,7 +1412,7 @@ v:beval_text	The text under or after the mouse pointer.  Usually a word as
 		but a dot and "->" before the position is included.  When on a
 		']' the text before it is used, including the matching '[' and
 		word before it.  When on a Visual area within one line the
-		highlighted text is used.
+		highlighted text is used.  Also see |<cexpr>|.
 		Only valid while evaluating the 'balloonexpr' option.
 
 					*v:beval_winnr* *beval_winnr-variable*
@@ -3270,7 +3270,7 @@ escape({string}, {chars})				*escape()*
 			:echo escape('c:\program files\vim', ' \')
 <		results in: >
 			c:\\program\ files\\vim
-<		Also see |shellescape()|.
+<		Also see |shellescape()| and |fnameescape()|.
 
 							*eval()*
 eval({string})	Evaluate {string} and return the result.  Especially useful to
@@ -3680,7 +3680,7 @@ float2nr({expr})					*float2nr()*
 		When the value of {expr} is out of range for a |Number| the
 		result is truncated to 0x7fffffff or -0x7fffffff (or when
 		64-bit Number support is enabled, 0x7fffffffffffffff or
-		-0x7fffffffffffffff.  NaN results in -0x80000000 (or when
+		-0x7fffffffffffffff).  NaN results in -0x80000000 (or when
 		64-bit Number support is enabled, -0x8000000000000000).
 		Examples: >
 			echo float2nr(3.95)
@@ -6933,6 +6933,7 @@ setline({lnum}, {text})					*setline()*
 			:for [n, l] in [[5, 'aaa'], [6, 'bbb'], [7, 'ccc']]
 			:  call setline(n, l)
 			:endfor
+
 <		Note: The '[ and '] marks are not set.
 
 setloclist({nr}, {list} [, {action}[, {what}]])		*setloclist()*
@@ -7137,16 +7138,17 @@ setreg({regname}, {value} [, {options}])
 			:call setreg('a', "1\n2\n3", 'b5')
 
 <		This example shows using the functions to save and restore a
-		register (note: you may not reliably restore register value
-		without using the third argument to |getreg()| as without it
-		newlines are represented as newlines AND Nul bytes are
-		represented as newlines as well, see |NL-used-for-Nul|). >
+		register: >
 			:let var_a = getreg('a', 1, 1)
 			:let var_amode = getregtype('a')
 			    ....
 			:call setreg('a', var_a, var_amode)
+<		Note: you may not reliably restore register value
+		without using the third argument to |getreg()| as without it
+		newlines are represented as newlines AND Nul bytes are
+		represented as newlines as well, see |NL-used-for-Nul|.
 
-<		You can also change the type of a register by appending
+		You can also change the type of a register by appending
 		nothing: >
 			:call setreg('a', '', 'al')
 
@@ -8343,7 +8345,7 @@ win_getid([{win} [, {tab}]])				*win_getid()*
 		Get the |window-ID| for the specified window.
 		When {win} is missing use the current window.
 		With {win} this is the window number.  The top window has
-		number 1.
+		number 1.  Use `win_getid(winnr())` for the current window.
 		Without {tab} use the current tab, otherwise the tab with
 		number {tab}.  The first tab has number one.
 		Return zero if the window cannot be found.
