@@ -40,7 +40,7 @@ local imacros=function(s)
     return '(intptr_t)' .. s
   end
 end
-local N_=function(s)
+local N_=function(s) -- luacheck: ignore 211
   return function()
     return 'N_(' .. cstr(s) .. ')'
   end
@@ -189,7 +189,7 @@ return {
     },
     {
       full_name='belloff', abbreviation='bo',
-      deny_duplicates=true,
+      deny_duplicates=true, -- luacheck: ignore 314
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
