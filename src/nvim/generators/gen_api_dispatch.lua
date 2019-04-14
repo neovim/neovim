@@ -1,4 +1,4 @@
-mpack = require('mpack')
+local mpack = require('mpack')
 
 -- we need at least 4 arguments since the last two are output files
 if arg[1] == '--help' then
@@ -11,27 +11,27 @@ if arg[1] == '--help' then
   print('      rest: C files where API functions are defined')
 end
 assert(#arg >= 4)
-functions = {}
+local functions = {}
 
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
 -- names of all headers relative to the source root (for inclusion in the
 -- generated file)
-headers = {}
+local headers = {}
 
 -- output h file with generated dispatch functions
-dispatch_outputf = arg[2]
+local dispatch_outputf = arg[2]
 -- output h file with packed metadata
-funcs_metadata_outputf = arg[3]
+local funcs_metadata_outputf = arg[3]
 -- output metadata mpack file, for use by other build scripts
-mpack_outputf = arg[4]
-lua_c_bindings_outputf = arg[5]
+local mpack_outputf = arg[4]
+local lua_c_bindings_outputf = arg[5]
 
 -- set of function names, used to detect duplicates
-function_names = {}
+local function_names = {}
 
-c_grammar = require('generators.c_grammar')
+local c_grammar = require('generators.c_grammar')
 
 -- read each input file, parse and append to the api metadata
 for i = 6, #arg do
@@ -45,10 +45,10 @@ for i = 6, #arg do
   local input = io.open(full_path, 'rb')
 
   local tmp = c_grammar.grammar:match(input:read('*all'))
-  for i = 1, #tmp do
-    local fn = tmp[i]
+  for j = 1, #tmp do
+    local fn = tmp[j]
     if not fn.noexport then
-      functions[#functions + 1] = tmp[i]
+      functions[#functions + 1] = tmp[j]
       function_names[fn.name] = true
       if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
         -- this function should receive the channel id
@@ -83,7 +83,7 @@ end
 -- Export functions under older deprecated names.
 -- These will be removed eventually.
 local deprecated_aliases = require("api.dispatch_deprecated")
-for i,f in ipairs(shallowcopy(functions)) do
+for _,f in ipairs(shallowcopy(functions)) do
   local ismethod = false
   if startswith(f.name, "nvim_") then
     if startswith(f.name, "nvim__") then
@@ -135,9 +135,9 @@ for i,f in ipairs(shallowcopy(functions)) do
 end
 
 -- don't expose internal attributes like "impl_name" in public metadata
-exported_attributes = {'name', 'return_type', 'method',
-                       'since', 'deprecated_since'}
-exported_functions = {}
+local exported_attributes = {'name', 'return_type', 'method',
+                             'since', 'deprecated_since'}
+local exported_functions = {}
 for _,f in ipairs(functions) do
   if not startswith(f.name, "nvim__") then
     local f_exported = {}
@@ -158,14 +158,14 @@ end
 
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
-packed = mpack.pack(exported_functions)
-dump_bin_array = require("generators.dump_bin_array")
+local funcs_metadata_output = io.open(funcs_metadata_outputf, 'wb')
+local packed = mpack.pack(exported_functions)
+local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(funcs_metadata_output, 'funcs_metadata', packed)
 funcs_metadata_output:close()
 
 -- start building the dispatch wrapper output
-output = io.open(dispatch_outputf, 'wb')
+local output = io.open(dispatch_outputf, 'wb')
 
 local function real_type(type)
   local rv = type
@@ -209,20 +209,22 @@ for i = 1, #functions do
     end
     output:write('\n')
     output:write('\n  if (args.size != '..#fn.parameters..') {')
-    output:write('\n    api_set_error(error, kErrorTypeException, "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
+    output:write('\n    api_set_error(error, kErrorTypeException, \
+      "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
     output:write('\n    goto cleanup;')
     output:write('\n  }\n')
 
     -- Validation/conversion for each argument
     for j = 1, #fn.parameters do
-      local converted, convert_arg, param, arg
+      local converted, param
       param = fn.parameters[j]
       converted = 'arg_'..j
       local rt = real_type(param[1])
       if rt ~= 'Object' then
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') then
           -- Buffer, Window, and Tabpage have a specific type, but are stored in integer
-          output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..' && args.items['..(j - 1)..'].data.integer >= 0) {')
+          output:write('\n  if (args.items['..
+            (j - 1)..'].type == kObjectType'..rt..' && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         else
           output:write('\n  if (args.items['..(j - 1)..'].type == kObjectType'..rt..') {')
@@ -230,16 +232,18 @@ for i = 1, #functions do
         end
         if rt:match('^Buffer$') or rt:match('^Window$') or rt:match('^Tabpage$') or rt:match('^Boolean$') then
           -- accept nonnegative integers for Booleans, Buffers, Windows and Tabpages
-          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
+          output:write('\n  } else if (args.items['..
+            (j - 1)..'].type == kObjectTypeInteger && args.items['..(j - 1)..'].data.integer >= 0) {')
           output:write('\n    '..converted..' = (handle_T)args.items['..(j - 1)..'].data.integer;')
         end
         -- accept empty lua tables as empty dictionarys
         if rt:match('^Dictionary') then
-          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {')
+          output:write('\n  } else if (args.items['..(j - 1)..'].type == kObjectTypeArray && args.items['..(j - 1)..'].data.array.size == 0) {') --luacheck: ignore 631
           output:write('\n    '..converted..' = (Dictionary)ARRAY_DICT_INIT;')
         end
         output:write('\n  } else {')
-        output:write('\n    api_set_error(error, kErrorTypeException, "Wrong type for argument '..j..', expecting '..param[1]..'");')
+        output:write('\n    api_set_error(error, kErrorTypeException, \
+          "Wrong type for argument '..j..', expecting '..param[1]..'");')
         output:write('\n    goto cleanup;')
         output:write('\n  }\n')
       else
@@ -316,19 +320,19 @@ end
 output:write('\n}\n\n')
 output:close()
 
-mpack_output = io.open(mpack_outputf, 'wb')
+local mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
 mpack_output:close()
 
-local function include_headers(output, headers)
-  for i = 1, #headers do
-    if headers[i]:sub(-12) ~= '.generated.h' then
-      output:write('\n#include "nvim/'..headers[i]..'"')
+local function include_headers(output_handle, headers_to_include)
+  for i = 1, #headers_to_include do
+    if headers_to_include[i]:sub(-12) ~= '.generated.h' then
+      output_handle:write('\n#include "nvim/'..headers_to_include[i]..'"')
     end
   end
 end
 
-local function write_shifted_output(output, str)
+local function write_shifted_output(_, str)
   str = str:gsub('\n  ', '\n')
   str = str:gsub('^  ', '')
   str = str:gsub(' +$', '')
@@ -354,10 +358,10 @@ output:write([[
 include_headers(output, headers)
 output:write('\n')
 
-lua_c_functions = {}
+local lua_c_functions = {}
 
 local function process_function(fn)
-  lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
+  local lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
   write_shifted_output(output, string.format([[
 
   static int %s(lua_State *lstate)
@@ -384,11 +388,11 @@ local function process_function(fn)
   local cparams = ''
   local free_code = {}
   for j = #fn.parameters,1,-1 do
-    param = fn.parameters[j]
-    cparam = string.format('arg%u', j)
-    param_type = real_type(param[1])
-    lc_param_type = real_type(param[1]):lower()
-    extra = ((param_type == "Object" or param_type == "Dictionary") and "false, ") or ""
+    local param = fn.parameters[j]
+    local cparam = string.format('arg%u', j)
+    local param_type = real_type(param[1])
+    local lc_param_type = real_type(param[1]):lower()
+    local extra = ((param_type == "Object" or param_type == "Dictionary") and "false, ") or ""
     if param[1] == "DictionaryOf(LuaRef)" then
       extra = "true, "
     end
@@ -433,6 +437,7 @@ local function process_function(fn)
       return lua_error(lstate);
     }
   ]]
+  local return_type
   if fn.return_type ~= 'void' then
     if fn.return_type:match('^ArrayOf') then
       return_type = 'Array'

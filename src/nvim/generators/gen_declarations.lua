@@ -10,7 +10,7 @@ local lpeg = require('lpeg')
 
 local fold = function (func, ...)
   local result = nil
-  for i, v in ipairs({...}) do
+  for _, v in ipairs({...}) do
     if result == nil then
       result = v
     else
@@ -107,7 +107,7 @@ local typ_part = concat(
   )),
   spaces
 )
-local typ = one_or_more(typ_part)
+
 local typ_id = two_or_more(typ_part)
 local arg = typ_id         -- argument name is swallowed by typ
 local pattern = concat(
@@ -222,7 +222,6 @@ local non_static = header
 local static = header
 
 local filepattern = '^#%a* (%d+) "([^"]-)/?([^"/]+)"'
-local curfile
 
 local init = 1
 local curfile = nil
@@ -248,14 +247,14 @@ while init ~= nil do
     else
       declline = declline - 1
     end
-  elseif init < declendpos then
+  elseif init < declendpos then -- luacheck: ignore 542
     -- Skipping over declaration
   elseif is_needed_file then
     s = init
-    e = pattern:match(text, init)
+    local e = pattern:match(text, init)
     if e ~= nil then
       local declaration = text:sub(s, e - 1)
-      -- Comments are really handled by preprocessor, so the following is not 
+      -- Comments are really handled by preprocessor, so the following is not
       -- needed
       declaration = declaration:gsub('/%*.-%*/', '')
       declaration = declaration:gsub('//.-\n', '\n')

@@ -13,8 +13,8 @@ local auevents = require('auevents')
 local events = auevents.events
 local aliases = auevents.aliases
 
-enum_tgt = io.open(fileio_enum_file, 'w')
-names_tgt = io.open(names_file, 'w')
+local enum_tgt = io.open(fileio_enum_file, 'w')
+local names_tgt = io.open(names_file, 'w')
 
 enum_tgt:write('typedef enum auto_event {')
 names_tgt:write([[
@@ -42,8 +42,8 @@ enum_tgt:write('\n} event_T;\n')
 names_tgt:write('\n};\n')
 
 names_tgt:write('\nstatic AutoPat *first_autopat[NUM_EVENTS] = {\n ')
-line_len = 1
-for i = 1,((#events) - 1) do
+local line_len = 1
+for _ = 1,((#events) - 1) do
   line_len = line_len + #(' NULL,')
   if line_len > 80 then
     names_tgt:write('\n ')
