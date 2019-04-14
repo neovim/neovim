@@ -20,7 +20,7 @@ end
 
 local options = require('options')
 
-cstr = options.cstr
+local cstr = options.cstr
 
 local type_flags={
   bool='P_BOOL',
@@ -108,12 +108,12 @@ get_cond = function(c, base_string)
   return cond_string
 end
 
-value_dumpers = {
+local value_dumpers = {
   ['function']=function(v) return v() end,
   string=cstr,
   boolean=function(v) return v and 'true' or 'false' end,
   number=function(v) return ('%iL'):format(v) end,
-  ['nil']=function(v) return '0L' end,
+  ['nil']=function(_) return '0L' end,
 }
 
 local get_value = function(v)
