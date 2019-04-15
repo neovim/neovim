@@ -6920,10 +6920,11 @@ static void ex_resize(exarg_T *eap)
       n = 9999;
     win_setwidth_win(n, wp);
   } else {
-    if (*eap->arg == '-' || *eap->arg == '+')
+    if (*eap->arg == '-' || *eap->arg == '+') {
       n += curwin->w_height;
-    else if (n == 0 && eap->arg[0] == NUL)      /* default is very wide */
+    } else if (n == 0 && eap->arg[0] == NUL) {  // default is very high
       n = 9999;
+    }
     win_setheight_win(n, wp);
   }
 }

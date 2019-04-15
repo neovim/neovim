@@ -83,13 +83,11 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "nvim/vim.h"
+#include "nvim/buffer.h"
 #include "nvim/ascii.h"
 #include "nvim/undo.h"
-#include "nvim/macros.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
-#include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/buffer_updates.h"
@@ -102,8 +100,6 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
-#include "nvim/quickfix.h"
-#include "nvim/screen.h"
 #include "nvim/sha256.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"

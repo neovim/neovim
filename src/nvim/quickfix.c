@@ -2196,8 +2196,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   old_qf_ptr = qf_ptr;
   qf_index = qi->qf_lists[qi->qf_curlist].qf_index;
   old_qf_index = qf_index;
-  if (dir == FORWARD || dir == FORWARD_FILE || dir == BACKWARD
-      || dir == BACKWARD_FILE) {  // next/prev valid entry
+  if (dir != 0) {   // next/prev valid entry
     qf_ptr = get_nth_valid_entry(qi, errornr, qf_ptr, &qf_index, dir);
     if (qf_ptr == NULL) {
       qf_ptr = old_qf_ptr;
@@ -3164,53 +3163,6 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
 
   /* Restore KeyTyped, setting 'filetype' may reset it. */
   KeyTyped = old_KeyTyped;
-}
-
-/*
- * Return TRUE if "buf" is the quickfix buffer.
- */
-int bt_quickfix(const buf_T *const buf)
-{
-  return buf != NULL && buf->b_p_bt[0] == 'q';
-}
-
-// Return TRUE if "buf" is a "nofile", "acwrite" or "terminal" buffer.
-// This means the buffer name is not a file name.
-int bt_nofile(buf_T *buf)
-{
-  return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
-                         || buf->b_p_bt[0] == 'a' || buf->terminal);
-}
-
-// Return TRUE if "buf" is a "nowrite", "nofile" or "terminal" buffer.
-int bt_dontwrite(buf_T *buf)
-{
-  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal);
-}
-
-int bt_dontwrite_msg(buf_T *buf)
-{
-  if (bt_dontwrite(buf)) {
-    EMSG(_("E382: Cannot write, 'buftype' option is set"));
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * Return TRUE if the buffer should be hidden, according to 'hidden', ":hide"
- * and 'bufhidden'.
- */
-int buf_hide(buf_T *buf)
-{
-  /* 'bufhidden' overrules 'hidden' and ":hide", check it first */
-  switch (buf->b_p_bh[0]) {
-  case 'u':                         /* "unload" */
-  case 'w':                         /* "wipe" */
-  case 'd': return FALSE;           /* "delete" */
-  case 'h': return TRUE;            /* "hide" */
-  }
-  return p_hid || cmdmod.hide;
 }
 
 /*
@@ -4249,6 +4201,8 @@ enum {
   QF_GETLIST_WINID = 0x8,
   QF_GETLIST_CONTEXT = 0x10,
   QF_GETLIST_ID = 0x20,
+  QF_GETLIST_IDX = 0x40,
+  QF_GETLIST_SIZE = 0x80,
   QF_GETLIST_ALL = 0xFF
 };
 
@@ -4290,10 +4244,22 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
   return status;
 }
 
+// Return the quickfix/location list number with the given identifier.
+// Returns -1 if list is not found.
+static int qf_id2nr(const qf_info_T *const qi, const unsigned qfid)
+{
+  for (int qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
+    if (qi->qf_lists[qf_idx].qf_id == qfid) {
+      return qf_idx;
+    }
+  }
+  return -1;
+}
+
 /// Return quickfix/location list details (title) as a
 /// dictionary. 'what' contains the details to return. If 'list_idx' is -1,
 /// then current list is used. Otherwise the specified list is used.
-int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
+int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
 {
   qf_info_T *qi = &ql_info;
   dictitem_T *di;
@@ -4345,12 +4311,8 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
     if (di->di_tv.v_type == VAR_NUMBER) {
       // For zero, use the current list or the list specifed by 'nr'
       if (di->di_tv.vval.v_number != 0) {
-        for (qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
-          if (qi->qf_lists[qf_idx].qf_id == di->di_tv.vval.v_number) {
-            break;
-          }
-        }
-        if (qf_idx == qi->qf_listcount) {
+        qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
+        if (qf_idx == -1) {
           return FAIL;      // List not found
         }
       }
@@ -4375,6 +4337,13 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if (tv_dict_find(what, S_LEN("items")) != NULL) {
     flags |= QF_GETLIST_ITEMS;
   }
+  if (tv_dict_find(what, S_LEN("idx")) != NULL) {
+    flags |= QF_GETLIST_IDX;
+  }
+  if (tv_dict_find(what, S_LEN("size")) != NULL) {
+    flags |= QF_GETLIST_SIZE;
+  }
+
 
   if (flags & QF_GETLIST_TITLE) {
     char_u *t = qi->qf_lists[qf_idx].qf_title;
@@ -4413,6 +4382,20 @@ int get_errorlist_properties(win_T *wp, dict_T *what, dict_T *retdict)
 
   if ((status == OK) && (flags & QF_GETLIST_ID)) {
     status = tv_dict_add_nr(retdict, S_LEN("id"), qi->qf_lists[qf_idx].qf_id);
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_IDX)) {
+    int idx = qi->qf_lists[qf_idx].qf_index;
+    if (qi->qf_lists[qf_idx].qf_count == 0) {
+      // For empty lists, qf_index is set to 1
+      idx = 0;
+    }
+    status = tv_dict_add_nr(retdict, S_LEN("idx"), idx);
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
+    status = tv_dict_add_nr(retdict, S_LEN("size"),
+                            qi->qf_lists[qf_idx].qf_count);
   }
 
   return status;
@@ -4575,12 +4558,8 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
   if (!newlist && (di = tv_dict_find(what, S_LEN("id"))) != NULL) {
     // Use the quickfix/location list with the specified id
     if (di->di_tv.v_type == VAR_NUMBER) {
-      for (qf_idx = 0; qf_idx < qi->qf_listcount; qf_idx++) {
-        if (qi->qf_lists[qf_idx].qf_id == di->di_tv.vval.v_number) {
-          break;
-        }
-      }
-      if (qf_idx == qi->qf_listcount) {
+      qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
+      if (qf_idx == -1) {
         return FAIL;      // List not found
       }
     } else {
@@ -4612,6 +4591,13 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
 
       retval = qf_add_entries(qi, qf_idx, di->di_tv.vval.v_list,
                               title_save, action == ' ' ? 'a' : action);
+      if (action == 'r') {
+        // When replacing the quickfix list entries using
+        // qf_add_entries(), the title is set with a ':' prefix.
+        // Restore the title with the saved title.
+        xfree(qi->qf_lists[qf_idx].qf_title);
+        qi->qf_lists[qf_idx].qf_title = vim_strsave(title_save);
+      }
       xfree(title_save);
     }
   }

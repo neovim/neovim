@@ -5142,6 +5142,55 @@ bool bt_help(const buf_T *const buf)
   return buf != NULL && buf->b_help;
 }
 
+// Return true if "buf" is the quickfix buffer.
+bool bt_quickfix(const buf_T *const buf)
+{
+  return buf != NULL && buf->b_p_bt[0] == 'q';
+}
+
+// Return true if "buf" is a terminal buffer.
+bool bt_terminal(const buf_T *const buf)
+{
+  return buf != NULL && buf->b_p_bt[0] == 't';
+}
+
+// Return true if "buf" is a "nofile", "acwrite" or "terminal" buffer.
+// This means the buffer name is not a file name.
+bool bt_nofile(const buf_T *const buf)
+{
+  return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
+                         || buf->b_p_bt[0] == 'a' || buf->terminal);
+}
+
+// Return true if "buf" is a "nowrite", "nofile" or "terminal" buffer.
+bool bt_dontwrite(const buf_T *const buf)
+{
+  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal);
+}
+
+bool bt_dontwrite_msg(const buf_T *const buf)
+{
+  if (bt_dontwrite(buf)) {
+    EMSG(_("E382: Cannot write, 'buftype' option is set"));
+    return true;
+  }
+  return false;
+}
+
+// Return true if the buffer should be hidden, according to 'hidden', ":hide"
+// and 'bufhidden'.
+bool buf_hide(const buf_T *const buf)
+{
+  // 'bufhidden' overrules 'hidden' and ":hide", check it first
+  switch (buf->b_p_bh[0]) {
+  case 'u':                         // "unload"
+  case 'w':                         // "wipe"
+  case 'd': return false;           // "delete"
+  case 'h': return true;            // "hide"
+  }
+  return p_hid || cmdmod.hide;
+}
+
 /*
  * Return special buffer name.
  * Returns NULL when the buffer has a normal file name.

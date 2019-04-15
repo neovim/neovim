@@ -16,11 +16,10 @@
 #include <inttypes.h>
 #include <fcntl.h>
 
-#include "nvim/vim.h"
+#include "nvim/buffer.h"
 #include "nvim/ascii.h"
 #include "nvim/if_cscope.h"
 #include "nvim/charset.h"
-#include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
@@ -29,7 +28,6 @@
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
-#include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/stream.h"
