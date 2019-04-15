@@ -5000,9 +5000,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		has been used since the last search command.
 							*shada-n*
 	n	Name of the shada file.  The name must immediately follow
-		the 'n'.  Must be at the end of the option!  If the "-i"
-		argument was given when starting Vim, that file name overrides
-		the one given here with 'shada'.  Environment variables are
+		the 'n'.  Must be at the end of the option!  If the
+		'shadafile' option is set, that file name overrides the one
+		given here with 'shada'.  Environment variables are
 		expanded when opening the file, not when setting the option.
 							*shada-r*
 	r	Removable media.  The argument is a string (up to the next
@@ -5822,7 +5822,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	Watch out for errors in expressions.  They may render Vim unusable!
 	If you are stuck, hold down ':' or 'Q' to get a prompt, then quit and
-	edit your vimrc or whatever with "vim -u NONE" to get it right.
+	edit your vimrc or whatever with "vim --clean" to get it right.
 
 	Examples:
 	Emulate standard status line with 'ruler' set >
@@ -6409,6 +6409,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"slash" and "unix" are useful on Windows when sharing view files
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
+
+				*'shadafile'* *'sdf'*
+'shadafile' 'vif'	string	(default: "")
+			global
+	When non-empty, overrides the file name used for |shada| (viminfo).
+	When equal to "NONE" no shada file will be read or written.
+	This option can be set with the |-i| command line flag.  The |--clean|
+	command line flag sets it to "NONE".
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")

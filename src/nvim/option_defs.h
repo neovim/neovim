@@ -630,6 +630,7 @@ EXTERN long p_ur;               ///< 'undoreload'
 EXTERN long p_uc;               ///< 'updatecount'
 EXTERN long p_ut;               ///< 'updatetime'
 EXTERN char_u *p_shada;         ///< 'shada'
+EXTERN char *p_shadafile;       ///< 'shadafile'
 EXTERN char_u *p_vdir;          ///< 'viewdir'
 EXTERN char_u *p_vop;           ///< 'viewoptions'
 EXTERN unsigned vop_flags;      ///< uses SSOP_ flags
