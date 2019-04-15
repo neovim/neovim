@@ -5044,6 +5044,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
+				*'shadafile'* *'sdf'*
+'shadafile' 'vif'	string	(default: "")
+			global
+	When non-empty, overrides the file name used for |shada| (viminfo).
+	When equal to "NONE" no shada file will be read or written.
+	This option can be set with the |-i| command line flag.  The |--clean|
+	command line flag sets it to "NONE".
+
 						*'shell'* *'sh'* *E91*
 'shell' 'sh'		string	(default $SHELL or "sh",
 					Windows: "cmd.exe")
@@ -6409,14 +6417,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	"slash" and "unix" are useful on Windows when sharing view files
 	with Unix.  The Unix version of Vim cannot source dos format scripts,
 	but the Windows version of Vim can source unix format scripts.
-
-				*'shadafile'* *'sdf'*
-'shadafile' 'vif'	string	(default: "")
-			global
-	When non-empty, overrides the file name used for |shada| (viminfo).
-	When equal to "NONE" no shada file will be read or written.
-	This option can be set with the |-i| command line flag.  The |--clean|
-	command line flag sets it to "NONE".
 
 					    *'virtualedit'* *'ve'*
 'virtualedit' 've'	string	(default "")
