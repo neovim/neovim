@@ -503,3 +503,37 @@ func Test_syn_wrong_z_one()
   " call test_override("ALL", 0)
   bwipe!
 endfunc
+
+func Test_syntax_hangs()
+  if !has('reltime') || !has('float') || !has('syntax')
+    return
+  endif
+
+  " This pattern takes a long time to match, it should timeout.
+  new
+  call setline(1, ['aaa', repeat('abc ', 1000), 'ccc'])
+  let start = reltime()
+  set nolazyredraw redrawtime=101
+  syn match Error /\%#=1a*.*X\@<=b*/
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  " second time syntax HL is disabled
+  let start = reltime()
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed < 0.1)
+
+  " after CTRL-L the timeout flag is reset
+  let start = reltime()
+  exe "normal \<C-L>"
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  set redrawtime&
+  bwipe!
+endfunc

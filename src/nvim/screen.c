@@ -1135,6 +1135,8 @@ static void win_update(win_T *wp)
   /* reset got_int, otherwise regexp won't work */
   save_got_int = got_int;
   got_int = 0;
+  // Set the time limit to 'redrawtime'.
+  proftime_T syntax_tm = profile_setlimit(p_rdt);
   win_foldinfo.fi_level = 0;
 
   /*
@@ -1362,7 +1364,7 @@ static void win_update(win_T *wp)
         /*
          * Display one line.
          */
-        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false);
+        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false, &syntax_tm);
 
         wp->w_lines[idx].wl_folded = FALSE;
         wp->w_lines[idx].wl_lastlnum = lnum;
@@ -1393,7 +1395,7 @@ static void win_update(win_T *wp)
         if (fold_count != 0) {
           fold_line(wp, fold_count, &win_foldinfo, lnum, row);
         } else {
-          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true);
+          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true, &syntax_tm);
         }
       }
 
@@ -2041,7 +2043,8 @@ win_line (
     int startrow,
     int endrow,
     bool nochange,                    // not updating for changed text
-    bool number_only                  // only update the number column
+    bool number_only,                 // only update the number column
+    proftime_T *syntax_tm
 )
 {
   int c = 0;                          // init for GCC
@@ -2189,18 +2192,20 @@ win_line (
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
     extra_check = wp->w_p_lbr;
-    if (syntax_present(wp) && !wp->w_s->b_syn_error) {
+    if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow) {
       // Prepare for syntax highlighting in this line.  When there is an
       // error, stop syntax highlighting.
       save_did_emsg = did_emsg;
       did_emsg = false;
-      syntax_start(wp, lnum);
+      syntax_start(wp, lnum, syntax_tm);
       if (did_emsg) {
         wp->w_s->b_syn_error = true;
       } else {
         did_emsg = save_did_emsg;
-        has_syntax = true;
-        extra_check = true;
+        if (!wp->w_s->b_syn_slow) {
+          has_syntax = true;
+          extra_check = true;
+        }
       }
     }
 
@@ -2540,8 +2545,9 @@ win_line (
       wp->w_cursor = pos;
 
       /* Need to restart syntax highlighting for this line. */
-      if (has_syntax)
-        syntax_start(wp, lnum);
+      if (has_syntax) {
+        syntax_start(wp, lnum, syntax_tm);
+      }
     }
   }
 
@@ -2587,6 +2593,9 @@ win_line (
     }
     next_search_hl(wp, shl, lnum, (colnr_T)v,
                    shl == &search_hl ? NULL : cur);
+    if (wp->w_s->b_syn_slow) {
+      has_syntax = false;
+    }
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.

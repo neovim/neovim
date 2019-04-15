@@ -359,6 +359,7 @@ static reg_extmatch_T *next_match_extmatch = NULL;
 static win_T    *syn_win;               /* current window for highlighting */
 static buf_T    *syn_buf;               /* current buffer for highlighting */
 static synblock_T *syn_block;           /* current buffer for highlighting */
+static proftime_T *syn_tm;
 static linenr_T current_lnum = 0;       /* lnum of current state */
 static colnr_T current_col = 0;         /* column of current state */
 static int current_state_stored = 0;      /* TRUE if stored current state
@@ -384,7 +385,7 @@ static int syn_time_on = FALSE;
  * it.	Careful: curbuf and curwin are likely to point to another buffer and
  * window.
  */
-void syntax_start(win_T *wp, linenr_T lnum)
+void syntax_start(win_T *wp, linenr_T lnum, proftime_T *syntax_tm)
 {
   synstate_T  *p;
   synstate_T  *last_valid = NULL;
@@ -411,6 +412,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
   }
   changedtick = buf_get_changedtick(syn_buf);
   syn_win = wp;
+  syn_tm = syntax_tm;
 
   /*
    * Allocate syntax stack when needed.
@@ -2887,6 +2889,7 @@ static char_u *syn_getcurline(void)
 static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
 {
   int r;
+  int timed_out = 0;
   proftime_T pt;
   const int l_syn_time_on = syn_time_on;
 
@@ -2902,7 +2905,8 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
 
   rmp->rmm_maxcol = syn_buf->b_p_smc;
-  r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, NULL, NULL);
+  r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col,
+                        syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
@@ -2913,6 +2917,9 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     ++st->count;
     if (r > 0)
       ++st->match;
+  }
+  if (timed_out) {
+    syn_win->w_s->b_syn_slow = true;
   }
 
   if (r > 0) {
@@ -3144,6 +3151,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 void syntax_clear(synblock_T *block)
 {
   block->b_syn_error = false;           // clear previous error
+  block->b_syn_slow = false;            // clear previous timeout
   block->b_syn_ic = false;              // Use case, by default
   block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
   block->b_syn_containedin = false;
@@ -5682,7 +5690,7 @@ int syn_get_id(
   // When the position is not after the current position and in the same
   // line of the same buffer, need to restart parsing.
   if (wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
-    syntax_start(wp, lnum);
+    syntax_start(wp, lnum, NULL);
   } else if (col > current_col) {
       // next_match may not be correct when moving around, e.g. with the
       // "skip" expression in searchpair()
@@ -5757,8 +5765,10 @@ int syn_get_foldlevel(win_T *wp, long lnum)
   int level = 0;
 
   /* Return quickly when there are no fold items at all. */
-  if (wp->w_s->b_syn_folditems != 0) {
-    syntax_start(wp, lnum);
+  if (wp->w_s->b_syn_folditems != 0
+      && !wp->w_s->b_syn_error
+      && !wp->w_s->b_syn_slow) {
+    syntax_start(wp, lnum, NULL);
 
     for (int i = 0; i < current_state.ga_len; ++i) {
       if (CUR_STATE(i).si_flags & HL_FOLD) {
