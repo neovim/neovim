@@ -4663,12 +4663,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:set rulerformat=%15(%c%V\ %p%%%)
 <
 				*'runtimepath'* *'rtp'* *vimfiles*
-'runtimepath' 'rtp'	string	(default:
-					Unix: "$XDG_CONFIG_HOME/nvim,
+'runtimepath' 'rtp'	string	(default:     "$XDG_CONFIG_HOME/nvim,
 					       $XDG_CONFIG_DIRS[1]/nvim,
 					       $XDG_CONFIG_DIRS[2]/nvim,
 					       …
-					       $XDG_DATA_HOME/nvim/site,
+					       $XDG_DATA_HOME/nvim[-data]/site,
 					       $XDG_DATA_DIRS[1]/nvim/site,
 					       $XDG_DATA_DIRS[2]/nvim/site,
 					       …
@@ -4676,14 +4675,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 					       …
 					       $XDG_DATA_DIRS[2]/nvim/site/after,
 					       $XDG_DATA_DIRS[1]/nvim/site/after,
-					       $XDG_DATA_HOME/nvim/site/after,
+					       $XDG_DATA_HOME/nvim[-data]/site/after,
 					       …
 					       $XDG_CONFIG_DIRS[2]/nvim/after,
 					       $XDG_CONFIG_DIRS[1]/nvim/after,
 					       $XDG_CONFIG_HOME/nvim/after")
 			global
-	This is a list of directories which will be searched for runtime
-	files:
+	List of directories to be searched for these runtime files:
 	  filetype.vim	filetypes by file name |new-filetype|
 	  scripts.vim	filetypes by file contents |new-filetype-scripts|
 	  autoload/	automatically loaded scripts |autoload-functions|
@@ -4705,19 +4703,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	And any other file searched for with the |:runtime| command.
 
-	The defaults for most systems are setup to search these locations:
-	1. In your home directory (XDG_CONFIG_HOME defaults to $HOME/.config), 
-	   for your personal preferences.
-	2. In directories which must contain configuration files according to 
-	   XDG ($XDG_CONFIG_DIRS).  This also contains preferences from system 
-	   administrator (XDG_CONFIG_DIRS defaults to /etc/xdg).
-	3. In data home directory, for plugins installed by user.
-	4. In nvim/site subdirectories for each directory in $XDG_DATA_DIRS.  
-	   This is for plugins which were installed by system administrator, 
-	   but are not part of the Neovim distribution. XDG_DATA_DIRS defaults 
-	   to /usr/local/share/:/usr/share/, so system administrators are 
+	Defaults are setup to search these locations:
+	1. Your home directory, for personal preferences.
+	   Given by `stdpath("config")`.  |$XDG_CONFIG_HOME|
+	2. Directories which must contain configuration files according to 
+	   |xdg| ($XDG_CONFIG_DIRS, defaults to /etc/xdg).  This also contains
+	   preferences from system administrator.
+	3. Data home directory, for plugins installed by user.
+	   Given by `stdpath("data")`.  |$XDG_DATA_HOME|
+	4. nvim/site subdirectories for each directory in $XDG_DATA_DIRS.
+	   This is for plugins which were installed by system administrator,
+	   but are not part of the Nvim distribution. XDG_DATA_DIRS defaults
+	   to /usr/local/share/:/usr/share/, so system administrators are
 	   expected to install site plugins to /usr/share/nvim/site.
-	5. In $VIMRUNTIME, for files distributed with Neovim.
+	5. $VIMRUNTIME, for files distributed with Neovim.
 							*after-directory*
 	6, 7, 8, 9. In after/ subdirectories of 1, 2, 3 and 4, with reverse 
 	   ordering.  This is for preferences to overrule or add to the 
@@ -6163,9 +6162,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the file should contain words with similar meaning, separated by
 	non-keyword characters (white space is preferred).  Maximum line
 	length is 510 bytes.
-	To obtain a file to be used here, check out this ftp site:
-	[Sorry this link doesn't work anymore, do you know the right one?]
-	ftp://ftp.ox.ac.uk/pub/wordlists/  First get the README file.
+
 	To include a comma in a file name precede it with a backslash.  Spaces
 	after a comma are ignored, otherwise spaces are included in the file
 	name.  See |option-backslash| about using backslashes.

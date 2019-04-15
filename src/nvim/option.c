@@ -432,13 +432,17 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
   return dest;
 }
 
-/// Add directory to a comma-separated list of directories
+/// Adds directory `dest` to a comma-separated list of directories.
 ///
-/// In the added directory comma is escaped.
+/// Commas in the added directory are escaped.
+///
+/// Windows: Appends "nvim-data" instead of "nvim" if `type` is kXDGDataHome.
+///
+/// @see get_xdg_home
 ///
 /// @param[in,out]  dest  Destination comma-separated array.
 /// @param[in]  dir  Directory to append.
-/// @param[in]  append_nvim  If true, append "nvim" as the very first suffix.
+/// @param[in]  type  Decides whether to append "nvim" (Win: or "nvim-data").
 /// @param[in]  suf1  If not NULL, suffix appended to destination. Prior to it
 ///                   directory separator is appended. Suffix must not contain
 ///                   commas.
@@ -452,7 +456,7 @@ static inline char *add_colon_dirs(char *dest, const char *const val,
 ///
 /// @return (dest + appended_characters_length)
 static inline char *add_dir(char *dest, const char *const dir,
-                            const size_t dir_len, const bool append_nvim,
+                            const size_t dir_len, const XDGVarType type,
                             const char *const suf1, const size_t len1,
                             const char *const suf2, const size_t len2)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
@@ -461,12 +465,19 @@ static inline char *add_dir(char *dest, const char *const dir,
     return dest;
   }
   dest = strcpy_comma_escaped(dest, dir, dir_len);
+  bool append_nvim = (type == kXDGDataHome || type == kXDGConfigHome);
   if (append_nvim) {
     if (!after_pathsep(dest - 1, dest)) {
       *dest++ = PATHSEP;
     }
+#if defined(WIN32)
+    size_t size = (type == kXDGDataHome ? sizeof("nvim-data") - 1 : NVIM_SIZE);
+    memmove(dest, (type == kXDGDataHome ? "nvim-data" : "nvim"), size);
+    dest += size;
+#else
     memmove(dest, "nvim", NVIM_SIZE);
     dest += NVIM_SIZE;
+#endif
     if (suf1 != NULL) {
       *dest++ = PATHSEP;
       memmove(dest, suf1, len1);
@@ -482,7 +493,10 @@ static inline char *add_dir(char *dest, const char *const dir,
   return dest;
 }
 
-/// Set &runtimepath to default value
+/// Sets &runtimepath to default value.
+///
+/// Windows: Uses "…/nvim-data" for kXDGDataHome to avoid storing
+/// configuration and data files in the same path. #4403
 static void set_runtimepath_default(void)
 {
   size_t rtp_size = 0;
@@ -499,8 +513,13 @@ static void set_runtimepath_default(void)
   if (data_home != NULL) {
     data_len = strlen(data_home);
     if (data_len != 0) {
+#if defined(WIN32)
+      size_t nvim_size = (sizeof("nvim-data") - 1);
+#else
+      size_t nvim_size = NVIM_SIZE;
+#endif
       rtp_size += ((data_len + memcnt(data_home, ',', data_len)
-                    + NVIM_SIZE + 1 + SITE_SIZE + 1
+                    + nvim_size + 1 + SITE_SIZE + 1
                     + !after_pathsep(data_home, data_home + data_len)) * 2
                    + AFTER_SIZE + 1);
     }
@@ -529,21 +548,22 @@ static void set_runtimepath_default(void)
   }
   char *const rtp = xmalloc(rtp_size);
   char *rtp_cur = rtp;
-  rtp_cur = add_dir(rtp_cur, config_home, config_len, true, NULL, 0, NULL, 0);
+  rtp_cur = add_dir(rtp_cur, config_home, config_len, kXDGConfigHome,
+                    NULL, 0, NULL, 0);
   rtp_cur = add_colon_dirs(rtp_cur, config_dirs, NULL, 0, NULL, 0, true);
-  rtp_cur = add_dir(rtp_cur, data_home, data_len, true, "site", SITE_SIZE,
-                    NULL, 0);
+  rtp_cur = add_dir(rtp_cur, data_home, data_len, kXDGDataHome,
+                    "site", SITE_SIZE, NULL, 0);
   rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE, NULL, 0,
                            true);
-  rtp_cur = add_dir(rtp_cur, vimruntime, vimruntime_len, false, NULL, 0,
-                    NULL, 0);
+  rtp_cur = add_dir(rtp_cur, vimruntime, vimruntime_len, kXDGNone,
+                    NULL, 0, NULL, 0);
   rtp_cur = add_colon_dirs(rtp_cur, data_dirs, "site", SITE_SIZE,
                            "after", AFTER_SIZE, false);
-  rtp_cur = add_dir(rtp_cur, data_home, data_len, true, "site", SITE_SIZE,
-                    "after", AFTER_SIZE);
+  rtp_cur = add_dir(rtp_cur, data_home, data_len, kXDGDataHome,
+                    "site", SITE_SIZE, "after", AFTER_SIZE);
   rtp_cur = add_colon_dirs(rtp_cur, config_dirs, "after", AFTER_SIZE, NULL, 0,
                            false);
-  rtp_cur = add_dir(rtp_cur, config_home, config_len, true,
+  rtp_cur = add_dir(rtp_cur, config_home, config_len, kXDGConfigHome,
                     "after", AFTER_SIZE, NULL, 0);
   // Strip trailing comma.
   rtp_cur[-1] = NUL;
