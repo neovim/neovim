@@ -1245,6 +1245,19 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
   return keymap_array(mode, NULL);
 }
 
+/// Sets a |mapping| for the given mode.
+///
+/// @param  mode  Mode short-name ("n", "i", "v", ...)
+/// @param  noremap   False when |{rhs}| shouldn't trigger other mappings.
+/// @param  lhs   The left-hand-side |{lhs}| of the mapping.
+/// @param  rhs   The right-hand-side |{rhs}| of the mapping.
+//
+void nvim_set_keymap(String mode, Boolean noremap, String lhs, String rhs)
+  FUNC_API_SINCE(7)  // TODO?
+{
+  // TODO
+}
+
 /// Gets a map of global (non-buffer-local) Ex commands.
 ///
 /// Currently only |user-commands| are supported, not builtin Ex commands.
