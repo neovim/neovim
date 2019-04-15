@@ -308,3 +308,8 @@ describe('nvim_get_keymap', function()
     eq({space_table}, meths.get_keymap('n'))
   end)
 end)
+
+describe('nvim_set_keymap', function()
+  before_each(clear)
+  eq(0, meths.set_keymap('n', true, 'lhs', 'rhs'))
+end)
