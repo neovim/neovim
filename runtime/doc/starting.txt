@@ -86,6 +86,11 @@ argument.
 		|:version| command.
 		See |info-message| about capturing the text.
 
+							*--clean*
+--clean		Equivalent to "-u NONE -i NONE":
+		- Skips initializations from files and environment variables.
+		- No 'shada' file is read or written.
+
 							*--noplugin*
 --noplugin	Skip loading plugins.  Resets the 'loadplugins' option.
 		Note that the |-u| argument may also disable loading plugins:
@@ -295,19 +300,21 @@ argument.
 
 							*-u* *E282*
 -u {vimrc}	The file {vimrc} is read for initializations.  Most other
-		initializations are skipped; see |initialization|.  This can
-		be used to start Vim in a special mode, with special
+		initializations are skipped; see |initialization|.
+
+		This can be used to start Vim in a special mode, with special
 		mappings and settings.  A shell alias can be used to make
 		this easy to use.  For example: >
 			alias vimc vim -u ~/.config/nvim/c_init.vim !*
 <		Also consider using autocommands; see |autocommand|.
-		When {vimrc} is equal to "NONE" (all uppercase), all
-		initializations from files and environment variables are
-		skipped, including reading the |ginit.vim| file when the GUI
-		starts.  Plugins and syntax highlighting are also skipped.
-		When {vimrc} is equal to "NORC" (all uppercase), this has the
-		same effect as "NONE", but plugins and syntax highlighting are
-		not skipped.
+
+		When {vimrc} is "NONE" (all uppercase), all initializations
+		from files and environment variables are skipped.  Plugins and
+		syntax highlighting are also skipped.
+
+		When {vimrc} is "NORC" (all uppercase), this has the same
+		effect as "NONE", but plugins and syntax highlighting are not
+		skipped.
 
 							*-i*
 -i {shada}	The file {shada} is used instead of the default ShaDa
@@ -482,6 +489,7 @@ accordingly.  Vim proceeds in this order:
 	Loading plugins won't be done when:
 	- The 'loadplugins' option was reset in a vimrc file.
 	- The |--noplugin| command line argument is used.
+	- The |--clean| command line argument is used.
 	- The "-u NONE" command line argument is used |-u|.
 	- When Vim was compiled without the |+eval| feature.
 	Note that using "-c 'set noloadplugins'" doesn't work, because the

@@ -62,6 +62,7 @@ Options ~
 *'langnoremap'*		Deprecated alias to 'nolangremap'.
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.
+*'viminfofile'*		Deprecated alias to 'shadafile' option.
 
 UI extensions~
 *ui-wildmenu*		Use `ext_cmdline` and `ext_popupmenu` instead.

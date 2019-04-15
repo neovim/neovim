@@ -2015,6 +2015,15 @@ return {
       defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
     },
     {
+      full_name='shadafile', abbreviation='sdf',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      vi_def=true,
+      secure=true,
+      varname='p_shadafile',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='shell', abbreviation='sh',
       type='string', scope={'global'},
       secure=true,
@@ -2631,6 +2640,15 @@ return {
       secure=true,
       varname='p_shada',
       defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
+    },
+    {
+      full_name='viminfofile', abbreviation='vif',
+      type='string', list='onecomma', scope={'global'},
+      deny_duplicates=true,
+      vi_def=true,
+      secure=true,
+      varname='p_shadafile',
+      defaults={if_true={vi=""}}
     },
     {
       full_name='virtualedit', abbreviation='ve',
