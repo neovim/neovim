@@ -1253,9 +1253,9 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// @param  rhs   The right-hand-side |{rhs}| of the mapping.
 //
 void nvim_set_keymap(String mode, Boolean noremap, String lhs, String rhs)
-  FUNC_API_SINCE(7)  // TODO?
+  FUNC_API_SINCE(6)  // TODO?
 {
-  // TODO
+  assert(false && "aAAaaAAaaAAaAAAAAAaaAAAAaaAAAAAARrrrRRRRRgh");
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.
