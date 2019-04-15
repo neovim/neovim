@@ -356,16 +356,16 @@ static reg_extmatch_T *next_match_extmatch = NULL;
  * The current state (within the line) of the recognition engine.
  * When current_state.ga_itemsize is 0 the current state is invalid.
  */
-static win_T    *syn_win;               /* current window for highlighting */
-static buf_T    *syn_buf;               /* current buffer for highlighting */
-static synblock_T *syn_block;           /* current buffer for highlighting */
+static win_T    *syn_win;               // current window for highlighting
+static buf_T    *syn_buf;               // current buffer for highlighting
+static synblock_T *syn_block;           // current buffer for highlighting
 static proftime_T *syn_tm;
-static linenr_T current_lnum = 0;       /* lnum of current state */
-static colnr_T current_col = 0;         /* column of current state */
-static int current_state_stored = 0;      /* TRUE if stored current state
-                                           * after setting current_finished */
-static int current_finished = 0;        /* current line has been finished */
-static garray_T current_state           /* current stack of state_items */
+static linenr_T current_lnum = 0;       // lnum of current state
+static colnr_T current_col = 0;         // column of current state
+static int current_state_stored = 0;    // TRUE if stored current state
+                                        // after setting current_finished
+static int current_finished = 0;        // current line has been finished
+static garray_T current_state           // current stack of state_items
   = GA_EMPTY_INIT_VALUE;
 static int16_t *current_next_list = NULL;   // when non-zero, nextgroup list
 static int current_next_flags = 0;          // flags for current_next_list
@@ -5764,7 +5764,7 @@ int syn_get_foldlevel(win_T *wp, long lnum)
 {
   int level = 0;
 
-  /* Return quickly when there are no fold items at all. */
+  // Return quickly when there are no fold items at all.
   if (wp->w_s->b_syn_folditems != 0
       && !wp->w_s->b_syn_error
       && !wp->w_s->b_syn_slow) {

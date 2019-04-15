@@ -1364,7 +1364,8 @@ static void win_update(win_T *wp)
         /*
          * Display one line.
          */
-        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false, &syntax_tm);
+        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false,
+                       &syntax_tm);
 
         wp->w_lines[idx].wl_folded = FALSE;
         wp->w_lines[idx].wl_lastlnum = lnum;
@@ -1395,7 +1396,8 @@ static void win_update(win_T *wp)
         if (fold_count != 0) {
           fold_line(wp, fold_count, &win_foldinfo, lnum, row);
         } else {
-          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true, &syntax_tm);
+          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
+                         &syntax_tm);
         }
       }
 
@@ -2544,7 +2546,7 @@ win_line (
       }
       wp->w_cursor = pos;
 
-      /* Need to restart syntax highlighting for this line. */
+      // Need to restart syntax highlighting for this line.
       if (has_syntax) {
         syntax_start(wp, lnum, syntax_tm);
       }
