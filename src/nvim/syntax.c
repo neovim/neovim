@@ -359,7 +359,7 @@ static reg_extmatch_T *next_match_extmatch = NULL;
 static win_T    *syn_win;               // current window for highlighting
 static buf_T    *syn_buf;               // current buffer for highlighting
 static synblock_T *syn_block;           // current buffer for highlighting
-static proftime_T *syn_tm;
+static proftime_T *syn_tm;              // timeout limit
 static linenr_T current_lnum = 0;       // lnum of current state
 static colnr_T current_col = 0;         // column of current state
 static int current_state_stored = 0;    // TRUE if stored current state
@@ -376,7 +376,12 @@ static int current_line_id = 0;             // unique number for current line
 static int syn_time_on = FALSE;
 # define IF_SYN_TIME(p) (p)
 
-
+// Set the timeout used for syntax highlighting.
+// Use NULL to reset, no timeout.
+void syn_set_timeout(proftime_T *tm)
+{
+  syn_tm = tm;
+}
 
 /*
  * Start the syntax recognition for a line.  This function is normally called
@@ -385,7 +390,7 @@ static int syn_time_on = FALSE;
  * it.	Careful: curbuf and curwin are likely to point to another buffer and
  * window.
  */
-void syntax_start(win_T *wp, linenr_T lnum, proftime_T *syntax_tm)
+void syntax_start(win_T *wp, linenr_T lnum)
 {
   synstate_T  *p;
   synstate_T  *last_valid = NULL;
@@ -412,7 +417,6 @@ void syntax_start(win_T *wp, linenr_T lnum, proftime_T *syntax_tm)
   }
   changedtick = buf_get_changedtick(syn_buf);
   syn_win = wp;
-  syn_tm = syntax_tm;
 
   /*
    * Allocate syntax stack when needed.
@@ -5690,7 +5694,7 @@ int syn_get_id(
   // When the position is not after the current position and in the same
   // line of the same buffer, need to restart parsing.
   if (wp->w_buffer != syn_buf || lnum != current_lnum || col < current_col) {
-    syntax_start(wp, lnum, NULL);
+    syntax_start(wp, lnum);
   } else if (col > current_col) {
       // next_match may not be correct when moving around, e.g. with the
       // "skip" expression in searchpair()
@@ -5768,7 +5772,7 @@ int syn_get_foldlevel(win_T *wp, long lnum)
   if (wp->w_s->b_syn_folditems != 0
       && !wp->w_s->b_syn_error
       && !wp->w_s->b_syn_slow) {
-    syntax_start(wp, lnum, NULL);
+    syntax_start(wp, lnum);
 
     for (int i = 0; i < current_state.ga_len; ++i) {
       if (CUR_STATE(i).si_flags & HL_FOLD) {

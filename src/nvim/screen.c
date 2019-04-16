@@ -1137,6 +1137,7 @@ static void win_update(win_T *wp)
   got_int = 0;
   // Set the time limit to 'redrawtime'.
   proftime_T syntax_tm = profile_setlimit(p_rdt);
+  syn_set_timeout(&syntax_tm);
   win_foldinfo.fi_level = 0;
 
   /*
@@ -1364,8 +1365,7 @@ static void win_update(win_T *wp)
         /*
          * Display one line.
          */
-        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false,
-                       &syntax_tm);
+        row = win_line(wp, lnum, srow, wp->w_grid.Rows, mod_top == 0, false);
 
         wp->w_lines[idx].wl_folded = FALSE;
         wp->w_lines[idx].wl_lastlnum = lnum;
@@ -1396,8 +1396,7 @@ static void win_update(win_T *wp)
         if (fold_count != 0) {
           fold_line(wp, fold_count, &win_foldinfo, lnum, row);
         } else {
-          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true,
-                         &syntax_tm);
+          (void)win_line(wp, lnum, srow, wp->w_grid.Rows, true, true);
         }
       }
 
@@ -1497,6 +1496,7 @@ static void win_update(win_T *wp)
   if (wp->w_redr_type >= REDRAW_TOP) {
     draw_vsep_win(wp, 0);
   }
+  syn_set_timeout(NULL);
 
   /* Reset the type of redrawing required, the window has been updated. */
   wp->w_redr_type = 0;
@@ -2045,8 +2045,7 @@ win_line (
     int startrow,
     int endrow,
     bool nochange,                    // not updating for changed text
-    bool number_only,                 // only update the number column
-    proftime_T *syntax_tm
+    bool number_only                  // only update the number column
 )
 {
   int c = 0;                          // init for GCC
@@ -2199,7 +2198,7 @@ win_line (
       // error, stop syntax highlighting.
       save_did_emsg = did_emsg;
       did_emsg = false;
-      syntax_start(wp, lnum, syntax_tm);
+      syntax_start(wp, lnum);
       if (did_emsg) {
         wp->w_s->b_syn_error = true;
       } else {
@@ -2548,7 +2547,7 @@ win_line (
 
       // Need to restart syntax highlighting for this line.
       if (has_syntax) {
-        syntax_start(wp, lnum, syntax_tm);
+        syntax_start(wp, lnum);
       }
     }
   }
