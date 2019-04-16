@@ -13,9 +13,7 @@ local nvim_set = helpers.nvim_set
 local read_file = helpers.read_file
 local retry = helpers.retry
 local rmdir = helpers.rmdir
-local set_session = helpers.set_session
 local sleep = helpers.sleep
-local spawn = helpers.spawn
 local iswin = helpers.iswin
 local write_file = helpers.write_file
 
@@ -228,10 +226,6 @@ describe('sysinit', function()
   local vimdir = 'Xvim'
   local xhome = 'Xhome'
   local pathsep = helpers.get_pathsep()
-  local argv = {
-    nvim_prog, '--headless', '--embed', '-i', 'NONE', '-n',
-    '--cmd', 'set nomore undodir=. directory=. belloff='
-  }
 
   before_each(function()
     rmdir(xdgdir)
@@ -260,19 +254,21 @@ describe('sysinit', function()
   end)
 
   it('prefers XDG_CONFIG_DIRS over VIM', function()
-    set_session(spawn(argv, nil,
-                      { 'HOME='..xhome,
-                        'XDG_CONFIG_DIRS='..xdgdir,
-                        'VIM='..vimdir }))
+    clear{args={'--cmd', 'set nomore undodir=. directory=. belloff='},
+          args_rm={'-u', '--cmd'},
+          env={ HOME=xhome,
+                XDG_CONFIG_DIRS=xdgdir,
+                VIM=vimdir }}
     eq('loaded 1 xdg 1 vim 0',
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
 
   it('uses VIM if XDG_CONFIG_DIRS unset', function()
-    set_session(spawn(argv, nil,
-                      { 'HOME='..xhome,
-                        'XDG_CONFIG_DIRS=',
-                        'VIM='..vimdir }))
+    clear{args={'--cmd', 'set nomore undodir=. directory=. belloff='},
+          args_rm={'-u', '--cmd'},
+          env={ HOME=xhome,
+                XDG_CONFIG_DIRS='',
+                VIM=vimdir }}
     eq('loaded 1 xdg 0 vim 1',
        eval('printf("loaded %d xdg %d vim %d", g:loaded, get(g:, "xdg", 0), get(g:, "vim", 0))'))
   end)
