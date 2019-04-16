@@ -59,6 +59,7 @@ func s:StartDebug(cmd)
     return
   endif
   let pty = job_info(term_getjob(s:ptybuf))['tty_out']
+  let s:ptywin = win_getid(winnr())
 
   " Create a hidden terminal window to communicate with gdb
   let s:commbuf = term_start('NONE', {
@@ -86,12 +87,15 @@ func s:StartDebug(cmd)
     exe 'bwipe! ' . s:commbuf
     return
   endif
+  let s:gdbwin = win_getid(winnr())
 
   " Connect gdb to the communication pty, using the GDB/MI interface
   call term_sendkeys(gdbbuf, 'new-ui mi ' . commpty . "\r")
 
-  " Install debugger commands.
+  " Install debugger commands in the text window.
+  call win_gotoid(s:startwin)
   call s:InstallCommands()
+  call win_gotoid(s:gdbwin)
 
   let s:breakpoints = {}
 endfunc
@@ -121,10 +125,14 @@ func s:CommOutput(chan, msg)
     if msg != ''
       if msg =~ '^\*\(stopped\|running\)'
 	call s:HandleCursor(msg)
-      elseif msg =~ '^\^done,bkpt='
+      elseif msg =~ '^\^done,bkpt=' || msg =~ '^=breakpoint-created,'
 	call s:HandleNewBreakpoint(msg)
       elseif msg =~ '^=breakpoint-deleted,'
 	call s:HandleBreakpointDelete(msg)
+      elseif msg =~ '^\^done,value='
+	call s:HandleEvaluate(msg)
+      elseif msg =~ '^\^error,msg='
+	call s:HandleError(msg)
       endif
     endif
   endfor
@@ -135,9 +143,15 @@ func s:InstallCommands()
   command Break call s:SetBreakpoint()
   command Delete call s:DeleteBreakpoint()
   command Step call s:SendCommand('-exec-step')
-  command NNext call s:SendCommand('-exec-next')
+  command Over call s:SendCommand('-exec-next')
   command Finish call s:SendCommand('-exec-finish')
   command Continue call s:SendCommand('-exec-continue')
+  command -range -nargs=* Evaluate call s:Evaluate(<range>, <q-args>)
+  command Gdb call win_gotoid(s:gdbwin)
+  command Program call win_gotoid(s:ptywin)
+
+  " TODO: can the K mapping be restored?
+  nnoremap K :Evaluate<CR>
 endfunc
 
 " Delete installed debugger commands in the current window.
@@ -145,9 +159,21 @@ func s:DeleteCommands()
   delcommand Break
   delcommand Delete
   delcommand Step
-  delcommand NNext
+  delcommand Over
   delcommand Finish
   delcommand Continue
+  delcommand Evaluate
+  delcommand Gdb
+  delcommand Program
+
+  nunmap K
+  sign undefine debugPC
+  sign undefine debugBreakpoint
+  exe 'sign unplace ' . s:pc_id
+  for key in keys(s:breakpoints)
+    exe 'sign unplace ' . (s:break_id + key)
+  endfor
+  unlet s:breakpoints
 endfunc
 
 " :Break - Set a breakpoint at the cursor position.
@@ -174,6 +200,35 @@ endfunc
 " :Next, :Continue, etc - send a command to gdb
 func s:SendCommand(cmd)
   call term_sendkeys(s:commbuf, a:cmd . "\r")
+endfunc
+
+" :Evaluate - evaluate what is under the cursor
+func s:Evaluate(range, arg)
+  if a:arg != ''
+    let expr = a:arg
+  elseif a:range == 2
+    let pos = getcurpos()
+    let reg = getreg('v', 1, 1)
+    let regt = getregtype('v')
+    normal! gv"vy
+    let expr = @v
+    call setpos('.', pos)
+    call setreg('v', reg, regt)
+  else
+    let expr = expand('<cexpr>')
+  endif
+  call term_sendkeys(s:commbuf, '-data-evaluate-expression "' . expr . "\"\r")
+  let s:evalexpr = expr
+endfunc
+
+" Handle the result of data-evaluate-expression
+func s:HandleEvaluate(msg)
+  echomsg '"' . s:evalexpr . '": ' . substitute(a:msg, '.*value="\(.*\)"', '\1', '')
+endfunc
+
+" Handle an error.
+func s:HandleError(msg)
+  echoerr substitute(a:msg, '.*msg="\(.*\)"', '\1', '')
 endfunc
 
 " Handle stopping and running message from gdb.
