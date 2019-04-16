@@ -15,6 +15,9 @@ local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
+local spawn = helpers.spawn
+local nvim_prog = helpers.nvim_prog
+local set_session = helpers.set_session
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -160,20 +163,43 @@ describe('startup defaults', function()
     end)
   end)
 
-  describe("'packpath'", function()
-    it('defaults to &runtimepath', function()
-      eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
-    end)
+  it("'shadafile' ('viminfofile')", function()
+    -- Cannot use clear() because we do not want "-i NONE".
+    local function clear_use_default_shada()
+      set_session(spawn({nvim_prog, '-u', 'NONE', '--embed', '--headless'},
+                         false,
+                         {XDG_DATA_HOME='Xtest-userdata',
+                          XDG_CONFIG_HOME='Xtest-userconfig'}))
+    end
+    clear_use_default_shada()
+    -- Default 'shadafile' is empty.
+    -- This means use the default location. :help shada-file-name
+    eq('', meths.get_option('shadafile'))
+    eq('', meths.get_option('viminfofile'))
+    -- Check that shada data (such as v:oldfiles) is saved/restored.
+    command('edit foo')
+    command('write')
+    local f = eval('fnamemodify(@%,":p")')
+    assert(string.len(f) > 3)
+    command('qall')
+    clear_use_default_shada()
+    eq({ f }, eval('v:oldfiles'))
+  end)
 
-    it('does not follow modifications to runtimepath', function()
-      meths.command('set runtimepath+=foo')
-      neq(meths.get_option('runtimepath'), meths.get_option('packpath'))
-      meths.command('set packpath+=foo')
-      eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
-    end)
+  it("'packpath'", function()
+    clear()
+    -- Defaults to &runtimepath.
+    eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+
+    -- Does not follow modifications to runtimepath.
+    meths.command('set runtimepath+=foo')
+    neq(meths.get_option('runtimepath'), meths.get_option('packpath'))
+    meths.command('set packpath+=foo')
+    eq(meths.get_option('runtimepath'), meths.get_option('packpath'))
   end)
 
   it('v:progpath is set to the absolute path', function()
+    clear()
     eq(eval("fnamemodify(v:progpath, ':p')"), eval('v:progpath'))
   end)
 

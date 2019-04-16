@@ -1081,15 +1081,16 @@ even if other entries (with known name/type/etc) are merged. |shada-merging|
 
 SHADA FILE NAME						*shada-file-name*
 
-- The default name of the ShaDa file is "$XDG_DATA_HOME/nvim/shada/main.shada" 
-  for Unix. Default for $XDG_DATA_HOME is ~/.local/share. |base-directories|
-- The 'n' flag in the 'shada' option can be used to specify another ShaDa
-  file name |'shada'|.
-- The "-i" Vim argument can be used to set another file name, |-i|.  When the
-  file name given is "NONE" (all uppercase), no ShaDa file is ever read or
-  written.  Also not for the commands below!
-- The 'viminfofile' option can be used like the "-i" argument.  In fact, the
-  value form the "-i" argument is stored in the 'viminfofile' option.
+- Default name of the |shada| file is:
+      Unix:     "$XDG_DATA_HOME/nvim/shada/main.shada"
+      Windows:  "$XDG_DATA_HOME/nvim-data/shada/main.shada"
+  See also |base-directories|.
+- To choose a different file name you can use:
+    - The "n" flag in the 'shada' option.
+    - The |-i| startup argument.  "NONE" means no shada file is ever read or
+      written.  Also not for the commands below!
+    - The 'shadafile' option.  The value from the "-i" argument (if any) is
+      stored in the 'shadafile' option.
 - For the commands below, another file name can be given, overriding the
   default and the name given with 'shada' or "-i" (unless it's NONE).
 
