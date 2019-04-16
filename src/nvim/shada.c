@@ -1542,7 +1542,7 @@ static char *shada_filename(const char *file)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (file == NULL || *file == NUL) {
-    if (p_shadafile != NULL) {
+    if (p_shadafile != NULL && *p_shadafile != NUL) {
       file = p_shadafile;
     } else {
       if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
