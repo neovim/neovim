@@ -11,7 +11,7 @@ describe('ext_multigrid', function()
   local screen
 
   before_each(function()
-    clear{headless=false, args={'--cmd', 'set laststatus=2'}}
+    clear{args_rm={'--headless'}, args={'--cmd', 'set laststatus=2'}}
     screen = Screen.new(53,14)
     screen:attach({ext_multigrid=true})
     screen:set_default_attr_ids({

@@ -8,7 +8,7 @@ local clear = helpers.clear
 local function test_embed(ext_linegrid)
   local screen
   local function startup(...)
-    clear{headless=false, args={...}}
+    clear{args_rm={'--headless'}, args={...}}
 
     -- attach immediately after startup, for early UI
     screen = Screen.new(60, 8)

@@ -394,17 +394,16 @@ end
 --                removed, e.g. args_rm={'--cmd'} removes all cases of "--cmd"
 --                (and its value) from the default set.
 --    env:        Map: Defines the environment of the new session.
---    headless:   Boolean (default=true): Append --headless arg.
 --
 -- Example:
 --    clear('-e')
 --    clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
 local function clear(...)
   local args = {unpack(nvim_argv)}
+  table.insert(args, '--headless')
   local new_args
   local env = nil
   local opts = select(1, ...)
-  local headless = true
   if type(opts) == 'table' then
     args = remove_args(args, opts.args_rm)
     if opts.env then
@@ -432,14 +431,8 @@ local function clear(...)
       end
     end
     new_args = opts.args or {}
-    if opts.headless == false then
-      headless = false
-    end
   else
     new_args = {...}
-  end
-  if headless then
-    table.insert(args, '--headless')
   end
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
