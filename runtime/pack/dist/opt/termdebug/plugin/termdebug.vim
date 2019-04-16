@@ -29,15 +29,8 @@ if !exists('termdebugger')
   let termdebugger = 'gdb'
 endif
 
-" Sign used to highlight the line where the program has stopped.
-" There can be only one.
-sign define debugPC linehl=debugPC
 let s:pc_id = 12
 let s:break_id = 13
-
-" Sign used to indicate a breakpoint.
-" Can be used multiple times.
-sign define debugBreakpoint text=>> texthl=debugBreakpoint
 
 if &background == 'light'
   hi default debugPC term=reverse ctermbg=lightblue guibg=lightblue
@@ -50,9 +43,19 @@ func s:StartDebug(cmd)
   let s:startwin = win_getid(winnr())
   let s:startsigncolumn = &signcolumn
 
+  if exists('g:termdebug_wide') && &columns < g:termdebug_wide
+    let s:save_columns = &columns
+    let &columns = g:termdebug_wide
+    let vertical = 1
+  else
+    let s:save_columns = 0
+    let vertical = 0
+  endif
+
   " Open a terminal window without a job, to run the debugged program
   let s:ptybuf = term_start('NONE', {
 	\ 'term_name': 'gdb program',
+	\ 'vertical': vertical,
 	\ })
   if s:ptybuf == 0
     echoerr 'Failed to open the program terminal window'
@@ -92,6 +95,14 @@ func s:StartDebug(cmd)
   " Connect gdb to the communication pty, using the GDB/MI interface
   call term_sendkeys(gdbbuf, 'new-ui mi ' . commpty . "\r")
 
+  " Sign used to highlight the line where the program has stopped.
+  " There can be only one.
+  sign define debugPC linehl=debugPC
+
+  " Sign used to indicate a breakpoint.
+  " Can be used multiple times.
+  sign define debugBreakpoint text=>> texthl=debugBreakpoint
+
   " Install debugger commands in the text window.
   call win_gotoid(s:startwin)
   call s:InstallCommands()
@@ -111,6 +122,9 @@ func s:EndDebug(job, status)
   call s:DeleteCommands()
 
   call win_gotoid(curwinid)
+  if s:save_columns > 0
+    let &columns = s:save_columns
+  endif
 endfunc
 
 " Handle a message received from gdb on the GDB/MI interface.
@@ -167,12 +181,12 @@ func s:DeleteCommands()
   delcommand Program
 
   nunmap K
-  sign undefine debugPC
-  sign undefine debugBreakpoint
   exe 'sign unplace ' . s:pc_id
   for key in keys(s:breakpoints)
     exe 'sign unplace ' . (s:break_id + key)
   endfor
+  sign undefine debugPC
+  sign undefine debugBreakpoint
   unlet s:breakpoints
 endfunc
 
@@ -237,8 +251,8 @@ func s:HandleCursor(msg)
   let wid = win_getid(winnr())
 
   if win_gotoid(s:startwin)
-    if a:msg =~ '^\*stopped'
-      let fname = substitute(a:msg, '.*fullname="\([^"]*\)".*', '\1', '')
+    let fname = substitute(a:msg, '.*fullname="\([^"]*\)".*', '\1', '')
+    if a:msg =~ '^\*stopped' && filereadable(fname)
       let lnum = substitute(a:msg, '.*line="\([^"]*\)".*', '\1', '')
       if lnum =~ '^[0-9]*$'
 	if expand('%:h') != fname
