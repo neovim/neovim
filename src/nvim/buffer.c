@@ -5211,8 +5211,8 @@ char_u *buf_spname(buf_T *buf)
       return (char_u *)_(msg_qflist);
     }
   }
-  /* There is no _file_ when 'buftype' is "nofile", b_sfname
-   * contains the name as specified by the user */
+  // There is no _file_ when 'buftype' is "nofile", b_sfname
+  // contains the name as specified by the user.
   if (bt_nofile(buf)) {
     if (buf->b_sfname != NULL) {
       return buf->b_sfname;
