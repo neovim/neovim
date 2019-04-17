@@ -4169,21 +4169,18 @@ check_map (
 }
 
 
-/// Add/Remove a mapping "map" for mode "mode", based on the value of maptype.
-///
-/// Need to put string in allocated memory, because do_map() will modify it.
-/// @param  map   Map command; everything "after" the :map
-///               (e.g. "<expr> <Tab> :call Foo<cr>")
-/// @param  mode  Integer value representing the mode in which to map.
-/// @param  maptype   Passed directly to do_map(). (See do_map() docs.)
-void add_map(char_u *map, int mode, int maptype)
+/*
+ * Add a mapping "map" for mode "mode".
+ * Need to put string in allocated memory, because do_map() will modify it.
+ */
+void add_map(char_u *map, int mode)
 {
   char_u      *s;
   char_u      *cpo_save = p_cpo;
 
   p_cpo = (char_u *)"";         /* Allow <> notation */
   s = vim_strsave(map);
-  (void)do_map(maptype, s, mode, FALSE);
+  (void)do_map(0, s, mode, FALSE);
   xfree(s);
   p_cpo = cpo_save;
 }
