@@ -4513,6 +4513,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the range of 0 for fully opaque popupmenu (disabled) to 100 for fully
 	transparent background. Values between 0-30 are typically most useful.
 
+	It is possible to override the level for individual highlights within
+	the popupmenu using |highlight-blend|. For instance, to enable
+	transparency but force the current selected element to be fully opaque: >
+
+		:set pumblend=15
+		:hi PmenuSel blend=0
+<
 	UI-dependent. Works best with RGB colors. 'termguicolors'
 
 						*'pyxversion'* *'pyx'*
@@ -6692,6 +6699,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	If the menu is disabled by excluding 'm' from 'guioptions', the ALT
 	key is never used for the menu.
 	This option is not used for <F10>; on Win32.
+
+						*'winblend'* *'winbl'*
+'winblend' 'winbl'		number	(default 0)
+			local to window
+	Enables pseudo-transparency for a floating window. Valid values are in
+	the range of 0 for fully opaque window (disabled) to 100 for fully
+	transparent background. Values between 0-30 are typically most useful.
+
+	UI-dependent. Works best with RGB colors. 'termguicolors'
 
 						*'window'* *'wi'*
 'window' 'wi'		number  (default screen height - 1)

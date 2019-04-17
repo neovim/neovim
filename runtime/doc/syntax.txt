@@ -4879,6 +4879,11 @@ guisp={color-name}					*highlight-guisp*
 	All values are hexadecimal, range from "00" to "ff".  Examples: >
   :highlight Comment guifg=#11f0c3 guibg=#ff00ff
 <
+blend={integer}					*highlight-blend*
+	Override the blend level for a highlight group within the popupmenu
+	or floating windows. Only takes effect if 'pumblend' or 'winblend'
+	is set for the menu or window. See the help at the respective option.
+
 					*highlight-groups* *highlight-default*
 These are the builtin highlighting groups.  Note that the highlighting depends
 on the value of 'background'.  You can see the current settings with the

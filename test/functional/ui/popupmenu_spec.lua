@@ -1662,6 +1662,26 @@ describe('builtin popupmenu', function()
       {20:-- Keyword Local completion (^N^P) }{21:match 1 of 65}            |
     ]])
 
+    -- can disable blending for indiviual attribute. For instance current
+    -- selected item. (also tests that `hi Pmenu*` take immediate effect)
+    command('hi PMenuSel blend=0')
+    screen:expect([[
+      Lorem ipsum d{1:ol}or sit amet, consectetur                     |
+      adipisicing elit, sed do eiusmod tempor                     |
+      bla bla incididunt^                                          |
+      incidid{22: incididunt     }{27: }d{1:ol}ore magna aliqua.                |
+      Ut enim{28: }{29:ut}{28: minim veniam}{25:,} quis nostrud                       |
+      exercit{28:a}{29:labore}{28:llamco la}{25:b}oris nisi ut aliquip ex             |
+      {2:[No Nam}{30:e}{43:et}{30:[+]          }{32: }{2:                                    }|
+      incidid{28:u}{29:dol}{41:or}{29:e}{28:labore et}{25: }d{1:ol}ore magna aliqua.                |
+      Ut enim{28: }{29:magna}{28:nim veniam}{25:,} quis nostrud                       |
+      exercit{28:a}{29:aliqua}{28:llamco la}{25:b}oris nisi {4:ut} aliquip ex             |
+      ea comm{28:o}{29:Ut}{28: consequat. D}{25:u}is a{4:ut}e irure d{1:ol}or in              |
+      reprehe{28:n}{29:enim}{28:t in v}{34:ol}{28:upt}{25:a}te v{3:el}it esse cillum                |
+      {5:[No Nam}{38:e}{44:ad}{38:[+]          }{40: }{5:                                    }|
+      {20:-- Keyword Local completion (^N^P) }{21:match 1 of 65}            |
+    ]])
+
     feed('<c-e>')
     screen:expect([[
       Lorem ipsum d{1:ol}or sit amet, consectetur                     |

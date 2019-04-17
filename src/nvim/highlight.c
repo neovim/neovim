@@ -7,6 +7,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
+#include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
@@ -145,6 +146,16 @@ int hl_get_ui_attr(int idx, int final_id, bool optional)
     attrs = syn_attr2entry(syn_attr);
     available = true;
   }
+
+  if (HLF_PNI <= idx && idx <= HLF_PST) {
+    if (attrs.hl_blend == -1 && p_pb > 0) {
+      attrs.hl_blend = (int)p_pb;
+    }
+    if (pum_drawn()) {
+      must_redraw_pum = true;
+    }
+  }
+
   if (optional && !available) {
     return 0;
   }
@@ -159,18 +170,33 @@ void update_window_hl(win_T *wp, bool invalid)
   }
   wp->w_hl_needs_update = false;
 
+  // If a floating window is blending it always have a named
+  // wp->w_hl_attr_normal group. HL_ATTR(HLF_NFLOAT) is always named.
+  bool has_blend = wp->w_floating && wp->w_p_winbl != 0;
+
   // determine window specific background set in 'winhighlight'
   bool float_win = wp->w_floating && !wp->w_float_config.external;
   if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] > 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(HLF_INACTIVE,
-                                          wp->w_hl_ids[HLF_INACTIVE], true);
+                                          wp->w_hl_ids[HLF_INACTIVE],
+                                          !has_blend);
   } else if (float_win && wp->w_hl_ids[HLF_NFLOAT] > 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(HLF_NFLOAT,
-                                          wp->w_hl_ids[HLF_NFLOAT], true);
+    // 'cursorline'
+                                          wp->w_hl_ids[HLF_NFLOAT], !has_blend);
   } else if (wp->w_hl_id_normal > 0) {
-    wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, true);
+    wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, !has_blend);
   } else {
     wp->w_hl_attr_normal = float_win ? HL_ATTR(HLF_NFLOAT) : 0;
+  }
+
+  // if blend= attribute is not set, 'winblend' value overrides it.
+  if (wp->w_floating && wp->w_p_winbl > 0) {
+    HlEntry entry = kv_A(attr_entries, wp->w_hl_attr_normal);
+    if (entry.attr.hl_blend == -1) {
+      entry.attr.hl_blend = (int)wp->w_p_winbl;
+      wp->w_hl_attr_normal = get_attr_entry(entry);
+    }
   }
 
   if (wp != curwin) {
@@ -240,6 +266,8 @@ void hl_invalidate_blends(void)
 {
   map_clear(int, int)(blend_attr_entries);
   map_clear(int, int)(blendthrough_attr_entries);
+  highlight_changed();
+  update_window_hl(curwin, true);
 }
 
 // Combine special attributes (e.g., for spelling) with other attributes
@@ -292,6 +320,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
     new_en.rgb_sp_color = spell_aep.rgb_sp_color;
   }
 
+  if (spell_aep.hl_blend >= 0) {
+    new_en.hl_blend = spell_aep.hl_blend;
+  }
+
   id = get_attr_entry((HlEntry){ .attr = new_en, .kind = kHlCombine,
                                  .id1 = char_attr, .id2 = prim_attr });
   if (id > 0) {
@@ -336,50 +368,59 @@ static HlAttrs get_colors_force(int attr)
 /// This is called per-cell, so cache the result.
 ///
 /// @return the resulting attributes.
-int hl_blend_attrs(int back_attr, int front_attr, bool through)
+int hl_blend_attrs(int back_attr, int front_attr, bool *through)
 {
+  HlAttrs fattrs = get_colors_force(front_attr);
+  int ratio = fattrs.hl_blend;
+  if (ratio <= 0) {
+    *through = false;
+    return front_attr;
+  }
+
   int combine_tag = (back_attr << 16) + front_attr;
-  Map(int, int) *map = through ? blendthrough_attr_entries : blend_attr_entries;
+  Map(int, int) *map = (*through
+                        ? blendthrough_attr_entries
+                        : blend_attr_entries);
   int id = map_get(int, int)(map, combine_tag);
   if (id > 0) {
     return id;
   }
 
   HlAttrs battrs = get_colors_force(back_attr);
-  HlAttrs fattrs = get_colors_force(front_attr);
   HlAttrs cattrs;
-  if (through) {
+
+  if (*through) {
     cattrs = battrs;
-    cattrs.rgb_fg_color = rgb_blend((int)p_pb, battrs.rgb_fg_color,
+    cattrs.rgb_fg_color = rgb_blend(ratio, battrs.rgb_fg_color,
                                     fattrs.rgb_bg_color);
     if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
-      cattrs.rgb_sp_color = rgb_blend((int)p_pb, battrs.rgb_sp_color,
+      cattrs.rgb_sp_color = rgb_blend(ratio, battrs.rgb_sp_color,
                                       fattrs.rgb_bg_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
 
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
-    cattrs.cterm_fg_color = cterm_blend((int)p_pb, battrs.cterm_fg_color,
+    cattrs.cterm_fg_color = cterm_blend(ratio, battrs.cterm_fg_color,
                                         fattrs.cterm_bg_color);
   } else {
     cattrs = fattrs;
-    if (p_pb >= 50) {
+    if (ratio >= 50) {
       cattrs.rgb_ae_attr |= battrs.rgb_ae_attr;
     }
-    cattrs.rgb_fg_color = rgb_blend((int)p_pb/2, battrs.rgb_fg_color,
+    cattrs.rgb_fg_color = rgb_blend(ratio/2, battrs.rgb_fg_color,
                                     fattrs.rgb_fg_color);
     if (cattrs.rgb_ae_attr & (HL_UNDERLINE|HL_UNDERCURL)) {
-      cattrs.rgb_sp_color = rgb_blend((int)p_pb/2, battrs.rgb_bg_color,
+      cattrs.rgb_sp_color = rgb_blend(ratio/2, battrs.rgb_bg_color,
                                       fattrs.rgb_sp_color);
     } else {
       cattrs.rgb_sp_color = -1;
     }
   }
-  cattrs.rgb_bg_color = rgb_blend((int)p_pb, battrs.rgb_bg_color,
+  cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
                                   fattrs.rgb_bg_color);
 
-  HlKind kind = through ? kHlBlendThrough : kHlBlend;
+  HlKind kind = *through ? kHlBlendThrough : kHlBlend;
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
                                  .id1 = back_attr, .id2 = front_attr });
   if (id > 0) {

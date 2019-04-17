@@ -376,6 +376,7 @@ void pum_redraw(void)
                                 pum_height, grid_width, false, true);
   bool invalid_grid = moved || pum_invalid;
   pum_invalid = false;
+  must_redraw_pum = false;
 
   if (!pum_grid.chars
       || pum_grid.Rows != pum_height || pum_grid.Columns != grid_width) {
@@ -790,6 +791,7 @@ void pum_undisplay(bool immediate)
 {
   pum_is_visible = false;
   pum_array = NULL;
+  must_redraw_pum = false;
 
   if (immediate) {
     pum_check_clear();
