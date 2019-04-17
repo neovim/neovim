@@ -375,6 +375,7 @@ describe('nvim_set_keymap', function()
     eq(generate_mapargs('t', 0, 'lhs', 'rhs'), get_mapargs('t', 'lhs'))
   end)
 
+  -- TODO(Yilin-Yang): get unmap to work properly
   it('can unmap mappings', function()
     meths.set_keymap('vmap', '', 'lhs', 'rhs')
     eq(0, meths.set_keymap('vunmap', '', 'lhs', ''))

@@ -1316,7 +1316,6 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   }
 
   int result = do_map(maptype, combined_args, mode_val, 0);
-  if (result) { goto FAILED; }
 
   xfree(combined_args);
   return result;
