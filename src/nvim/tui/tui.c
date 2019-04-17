@@ -189,6 +189,12 @@ static void termname_set_event(void **argv)
 
 static void terminfo_start(UI *ui)
 {
+  // force TUI to foreground when running in gdbserver
+  signal (SIGTTOU, SIG_IGN);
+  if (!tcsetpgrp(data->input.in_fd, getpid())) {
+        perror("tcsetpgrp failed");
+  }
+
   TUIData *data = ui->data;
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
