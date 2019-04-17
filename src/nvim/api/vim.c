@@ -1204,8 +1204,8 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 /// able to find a correct RGB value for the given color name.
 ///
 /// @param name Color name string
-/// @return RGB value of the given name or -1 if it wasn’t able to
-///         find a correct RGB value for the given color name.
+/// @return A 24-bit RGB value of the given name or -1 if it wasn’t able
+///         to find a correct RGB value for the given color name.
 Integer nvim_get_color_by_name(String name)
   FUNC_API_SINCE(1)
 {
@@ -1214,7 +1214,7 @@ Integer nvim_get_color_by_name(String name)
 
 /// Returns a map (dictionary) with all colors from rgb.txt.
 /// Every key in the map is a color name (e.g. “Aqua”), and every
-/// value is an RGB decimal value (e.g. 65535).
+/// value is a 24-bit RGB value (e.g. 65535).
 ///
 /// @return Map associating names of colors and color RGB values.
 Dictionary nvim_get_color_map(void)
