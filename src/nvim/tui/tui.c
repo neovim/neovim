@@ -189,12 +189,6 @@ static void termname_set_event(void **argv)
 
 static void terminfo_start(UI *ui)
 {
-  // force TUI to foreground when running in gdbserver
-  signal (SIGTTOU, SIG_IGN);
-  if (!tcsetpgrp(data->input.in_fd, getpid())) {
-        perror("tcsetpgrp failed");
-  }
-
   TUIData *data = ui->data;
   data->scroll_region_is_full_screen = true;
   data->bufpos = 0;
@@ -307,6 +301,12 @@ static void terminfo_start(UI *ui)
   } else {
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
+  }
+
+  // force TUI to foreground when running in gdbserver
+  signal (SIGTTOU, SIG_IGN);
+  if (!tcsetpgrp(data->input.in_fd, getpid())) {
+        perror("tcsetpgrp failed");
   }
 }
 
