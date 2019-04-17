@@ -3,7 +3,7 @@
 # Run the keymap functional test.
 #
 # To run with gdbserver,
-# $ export GDB
+# $ export GDB=1
 # $ ./test_keymap.sh
 #
 # Run GDB in another terminal,
