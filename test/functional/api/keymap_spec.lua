@@ -331,10 +331,33 @@ describe('nvim_set_keymap', function()
   end)
   --]]
 
--- {'silent': 0, 'noremap': 0, 'lhs': 'foo', 'mode': 'n', 'nowait': 0, 'expr': 0, 'sid': 0, 'rhs': 'bar', 'buffer': 0}
+  -- Generate a mapargs dict, for comparison against the mapping that was
+  -- actually set
+  local function generate_mapargs(mode, noremap, lhs, rhs, silent, nowait,
+                                  expr, sid, buffer)
+    local to_return = {}
+    to_return.mode = mode
+    to_return.noremap = noremap
+    to_return.lhs = lhs
+    to_return.rhs = rhs
+    to_return.silent = not silent and 0 or 1
+    to_return.nowait = not nowait and 0 or 1
+    to_return.expr = not nowait and 0 or 1
+    to_return.sid = not sid and 0 or sid
+    to_return.buffer = not buffer and 0 or buffer
+
+    return to_return
+  end
+
+  -- Retrieve a mapargs dict from neovim, if one exists
+  local function get_mapargs(mode, lhs)
+    return funcs.maparg(lhs, mode, false, true)
+  end
+
   it('can set normal mode mappings', function()
     eq(0, meths.set_keymap('nmap', '', 'lhs', 'rhs'))
-    eq()
+    -- command('nmap lhs rhs')
+    eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
   end)
 
 end)
