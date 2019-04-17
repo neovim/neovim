@@ -1291,8 +1291,16 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   const char* to_append[kNumToAppend] = {map_args.data, lhs.data, rhs.data};
   for (int i = 0; i < kNumToAppend; ++i) {
     cur_size = xstrlcat((char*)combined_args, to_append[i], kCombinedSize);
-    if (cur_size > kCombinedSize - 1) goto FAILED;  // truncation occurred
-    cur_size = xstrlcat((char*)combined_args, " ", kCombinedSize);
+
+    // truncation occurred, so given Strings had bad .size values
+    if (cur_size > kCombinedSize - 1) goto FAILED;
+
+    // don't add a space if nothing was appended
+    // leading spaces break do_map()'s parsing, and trailing spaces alter
+    // the resulting mapping's rhs
+    if (to_append[i][0] && i != kNumToAppend - 1) {
+      cur_size = xstrlcat((char*)combined_args, " ", kCombinedSize);
+    }
   }
 
   int maptype = 0;
@@ -1302,10 +1310,7 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
     maptype = 2;
   }
 
-  // this function is only usable for declaring mappings, not abbrevs
-  static const int kIsAbbrev = 0;
-
-  int result = do_map(maptype, combined_args, mode_val, kIsAbbrev);
+  int result = do_map(maptype, combined_args, mode_val, 0);
   if (result) goto FAILED;
 
   free(combined_args);
