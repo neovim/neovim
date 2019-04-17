@@ -5,6 +5,7 @@ local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
+local neq = helpers.neq
 local funcs = helpers.funcs
 local meths = helpers.meths
 local source = helpers.source
@@ -311,5 +312,29 @@ end)
 
 describe('nvim_set_keymap', function()
   before_each(clear)
-  eq(0, meths.set_keymap('n', true, 'lhs', 'rhs'))
+
+  -- Test error handling
+  it('returns nonzero given empty arguments', function()
+    -- note: empty map_args (e.g. not having "<expr>") is okay
+    neq(0, meths.set_keymap('', '', 'lhs', 'rhs'))
+    neq(0, meths.set_keymap('map', '', '', 'rhs'))
+    neq(0, meths.set_keymap('map', '', 'lhs', ''))
+    neq(0, meths.set_keymap('', '', '', ''))
+  end)
+
+  --[[
+  -- TODO validate misspelled :map commands?
+  it('returns nonzero given bad :map command', function()
+    neq(0, meths.set_keymap('mpa', '', 'lhs', 'rhs'))
+    neq(0, meths.set_keymap('vnoreamp', '', 'lhs', 'rhs'))
+    neq(0, meths.set_keymap('vmap!', '', 'lhs', 'rhs'))
+  end)
+  --]]
+
+-- {'silent': 0, 'noremap': 0, 'lhs': 'foo', 'mode': 'n', 'nowait': 0, 'expr': 0, 'sid': 0, 'rhs': 'bar', 'buffer': 0}
+  it('can set normal mode mappings', function()
+    eq(0, meths.set_keymap('nmap', '', 'lhs', 'rhs'))
+    eq()
+  end)
+
 end)
