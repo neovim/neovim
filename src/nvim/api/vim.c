@@ -1261,12 +1261,12 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// @returns Zero on success, nonzero on failure.
 Integer nvim_set_keymap(String map_cmd, String map_args,
                         String lhs, String rhs)
-  FUNC_API_SINCE(6)  // TODO?
+  FUNC_API_SINCE(6)  // TODO(Yilin-Yang): make sure this is correct
 {
-  if (!(map_cmd.size && lhs.size && rhs.size)) goto RETURN_FAILURE;
+  if (!(map_cmd.size && lhs.size && rhs.size)) { goto RETURN_FAILURE; }
 
   // convert mode shortname into struct mapblock's integer representation
-  char_u* p = (char_u*) map_cmd.data;
+  char_u *p = (char_u *)map_cmd.data;
   int is_unmap = map_cmd.size && p[0] == 'u';
   if (is_unmap) {  // scooch past the 'u'
     p++;
@@ -1277,7 +1277,7 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   int is_noremap = STRNCMP(p + 1, "noremap", 7) == 0;
 
   // "unnoremap"/etc. isn't a real command
-  if (is_noremap && is_unmap) goto RETURN_FAILURE;
+  if (is_noremap && is_unmap) { goto RETURN_FAILURE; }
 
   // concatenate given args into a single command, parsable by do_map()
   enum { kNumToAppend = 3 };
@@ -1285,21 +1285,21 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   // include space for space characters
   const size_t kCombinedSize = map_args.size + lhs.size + rhs.size +
                                1 + kNumToAppend;
-  char_u* combined_args = calloc(kCombinedSize, '\0');
+  char_u *combined_args = xcalloc(kCombinedSize, '\0');
 
   size_t cur_size = 0;  // of chars copied to combined_args
-  const char* to_append[kNumToAppend] = {map_args.data, lhs.data, rhs.data};
-  for (int i = 0; i < kNumToAppend; ++i) {
-    cur_size = xstrlcat((char*)combined_args, to_append[i], kCombinedSize);
+  const char *to_append[kNumToAppend] = { map_args.data, lhs.data, rhs.data };
+  for (int i = 0; i < kNumToAppend; i++) {
+    cur_size = xstrlcat((char *)combined_args, to_append[i], kCombinedSize);
 
     // truncation occurred, so given Strings had bad .size values
-    if (cur_size > kCombinedSize - 1) goto FAILED;
+    if (cur_size > kCombinedSize - 1) { goto FAILED; }
 
     // don't add a space if nothing was appended
     // leading spaces break do_map()'s parsing, and trailing spaces alter
     // the resulting mapping's rhs
     if (to_append[i][0] && i != kNumToAppend - 1) {
-      cur_size = xstrlcat((char*)combined_args, " ", kCombinedSize);
+      cur_size = xstrlcat((char *)combined_args, " ", kCombinedSize);
     }
   }
 
@@ -1311,16 +1311,16 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   }
 
   int result = do_map(maptype, combined_args, mode_val, 0);
-  if (result) goto FAILED;
+  if (result) { goto FAILED; }
 
-  free(combined_args);
+  xfree(combined_args);
   return result;
 
 FAILED:
-  free(combined_args);
+  xfree(combined_args);
 
 RETURN_FAILURE:
-  return -1;  // TODO more informative error handling?
+  return -1;  // TODO(Yilin-Yang): more informative error handling?
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.
