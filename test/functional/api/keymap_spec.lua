@@ -346,6 +346,11 @@ describe('nvim_set_keymap', function()
     to_return.sid = not sid and 0 or sid
     to_return.buffer = not buffer and 0 or buffer
 
+    -- mode 't' doesn't print when calling maparg
+    if mode == 't' then
+      to_return.mode = ''
+    end
+
     return to_return
   end
 
@@ -354,10 +359,30 @@ describe('nvim_set_keymap', function()
     return funcs.maparg(lhs, mode, false, true)
   end
 
-  it('can set normal mode mappings', function()
+  it('can set ordinary mappings', function()
     eq(0, meths.set_keymap('nmap', '', 'lhs', 'rhs'))
-    -- command('nmap lhs rhs')
     eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
+
+    eq(0, meths.set_keymap('vmap', '', 'lhs', 'rhs'))
+    eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
+  end)
+
+  it('can set noremap mappings', function()
+    eq(0, meths.set_keymap('xnoremap', '', 'lhs', 'rhs'))
+    eq(generate_mapargs('x', 0, 'lhs', 'rhs'), get_mapargs('x', 'lhs'))
+
+    eq(0, meths.set_keymap('tnoremap', '', 'lhs', 'rhs'))
+    eq(generate_mapargs('t', 0, 'lhs', 'rhs'), get_mapargs('t', 'lhs'))
+  end)
+
+  it('can unmap mappings', function()
+    meths.set_keymap('vmap', '', 'lhs', 'rhs')
+    eq(0, meths.set_keymap('vunmap', '', 'lhs', ''))
+    eq({}, get_mapargs('v', 'lhs'))
+
+    meths.set_keymap('xnoremap', '', 'lhs', 'rhs')
+    eq(0, meths.set_keymap('xunmap', '', 'lhs', ''))
+    eq({}, get_mapargs('t', 'lhs'))
   end)
 
 end)
