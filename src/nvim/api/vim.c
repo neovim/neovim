@@ -1247,15 +1247,71 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 
 /// Sets a |mapping| for the given mode.
 ///
-/// @param  mode  Mode short-name ("n", "i", "v", ...)
-/// @param  noremap   False when |{rhs}| shouldn't trigger other mappings.
-/// @param  lhs   The left-hand-side |{lhs}| of the mapping.
-/// @param  rhs   The right-hand-side |{rhs}| of the mapping.
-//
-void nvim_set_keymap(String mode, Boolean noremap, String lhs, String rhs)
+/// Note that isn't possible to specify a target buffer when map_args contains
+/// "<buffer>"; like with |:map-<buffer>|, only the current buffer will be
+/// affected.
+///
+/// @param  map_cmd   |:map-command| for this mapping, e.g. :nmap, :unmap!,
+///                   :vnoremap, etc.
+/// @param  map_args  |:map-arguments| like "<buffer>", "<nowait>", etc.
+///                   concatenated into a single string.
+/// @param  lhs   Left-hand-side |{lhs}| of the mapping.
+/// @param  rhs   Right-hand-side |{rhs}| of the mapping.
+///
+/// @returns Zero on success, nonzero on failure.
+Integer nvim_set_keymap(String map_cmd, String map_args,
+                        String lhs, String rhs)
   FUNC_API_SINCE(6)  // TODO?
 {
-  assert(false && "aAAaaAAaaAAaAAAAAAaaAAAAaaAAAAAARrrrRRRRRgh");
+  if (!(map_cmd.size && lhs.size && rhs.size)) goto RETURN_FAILURE;
+
+  // convert mode shortname into struct mapblock's integer representation
+  char_u* p = (char_u*) map_cmd.data;
+  int is_unmap = map_cmd.size && p[0] == 'u';
+  if (is_unmap) {  // scooch past the 'u'
+    p++;
+    map_cmd.size--;
+  }
+  int map_excl = STRNCMP(p, "map!", 4) == 0;
+  int mode_val = get_map_mode(&p, map_excl);
+  int is_noremap = STRNCMP(p + 1, "noremap", 7) == 0;
+
+  // "unnoremap"/etc. isn't a real command
+  if (is_noremap && is_unmap) goto RETURN_FAILURE;
+
+  // concatenate given args into a single command, parsable by do_map()
+  const size_t kCombinedSize = map_args.size + lhs.size + rhs.size + 1;
+  char_u* combined_args = calloc(kCombinedSize, '\0');
+
+  size_t cur_size = 0;  // of chars copied to combined_args
+  enum { kNumToAppend = 3 };
+  const char* to_append[kNumToAppend] = {map_args.data, lhs.data, rhs.data};
+  for (int i = 0; i < kNumToAppend; ++i) {
+    cur_size = xstrlcat((char*)combined_args, to_append[i], kCombinedSize);
+    if (cur_size > kCombinedSize - 1) goto FAILED;  // truncation occurred
+  }
+
+  int maptype = 0;
+  if (is_unmap) {
+    maptype = 1;
+  } else if (is_noremap) {
+    maptype = 2;
+  }
+
+  // this function is only usable for declaring mappings, not abbrevs
+  static const int kIsAbbrev = 0;
+
+  int result = do_map(maptype, combined_args, mode_val, kIsAbbrev);
+  if (result) goto FAILED;
+
+  free(combined_args);
+  return result;
+
+FAILED:
+  free(combined_args);
+
+RETURN_FAILURE:
+  return -1;  // TODO more informative error handling?
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.
