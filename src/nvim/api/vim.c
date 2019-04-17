@@ -1280,15 +1280,19 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   if (is_noremap && is_unmap) goto RETURN_FAILURE;
 
   // concatenate given args into a single command, parsable by do_map()
-  const size_t kCombinedSize = map_args.size + lhs.size + rhs.size + 1;
+  enum { kNumToAppend = 3 };
+
+  // include space for space characters
+  const size_t kCombinedSize = map_args.size + lhs.size + rhs.size +
+                               1 + kNumToAppend;
   char_u* combined_args = calloc(kCombinedSize, '\0');
 
   size_t cur_size = 0;  // of chars copied to combined_args
-  enum { kNumToAppend = 3 };
   const char* to_append[kNumToAppend] = {map_args.data, lhs.data, rhs.data};
   for (int i = 0; i < kNumToAppend; ++i) {
     cur_size = xstrlcat((char*)combined_args, to_append[i], kCombinedSize);
     if (cur_size > kCombinedSize - 1) goto FAILED;  // truncation occurred
+    cur_size = xstrlcat((char*)combined_args, " ", kCombinedSize);
   }
 
   int maptype = 0;
