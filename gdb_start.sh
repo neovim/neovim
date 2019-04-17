@@ -1,2 +1,2 @@
 target remote localhost:6666
-br main
+b nvim_set_keymap
