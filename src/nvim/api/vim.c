@@ -1386,17 +1386,17 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
     case 0:
       break;
     case 1:
-      api_set_error(err, kErrorTypeException, _(e_invarg));
+      api_set_error(err, kErrorTypeException, (char *)e_invarg);
       goto FAIL_AND_FREE;
     case 2:
-      api_set_error(err, kErrorTypeException, _(e_nomap));
+      api_set_error(err, kErrorTypeException, (char *)e_nomap);
       goto FAIL_AND_FREE;
     case 5: {
       static const char *const e_unique = "E227: mapping already exists for %s";
       const size_t kErrMsgSize = sizeof(e_unique) + lhs.size;
       err_msg = xcalloc(kErrMsgSize, sizeof(char));
       snprintf(err_msg, kErrMsgSize, e_unique, lhs.data);
-      api_set_error(err, kErrorTypeException, _(err_msg));
+      api_set_error(err, kErrorTypeException, (char *)err_msg);
       xfree(err_msg);
       goto FAIL_AND_FREE;
     }
