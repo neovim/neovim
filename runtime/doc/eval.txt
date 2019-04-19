@@ -7110,9 +7110,6 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		freed. To add a new quickfix list at the end of the stack,
 		set "nr" in {what} to "$".
 
-		If {title} is given, it will be used to set |w:quickfix_title|
-		after opening the quickfix window.
-
 		If the optional {what} dictionary argument is supplied, then
 		only the items listed in {what} are set. The first {list}
 		argument is ignored.  The following items can be specified in
