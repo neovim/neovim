@@ -1288,7 +1288,8 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
   }
 
   if (lhs.size == 0) {
-    err_msg = "Must give nonempty LHS!";
+    ///
+    err_msg = _("Must give nonempty LHS!%s");
     err_arg = "";
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
@@ -1305,7 +1306,8 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
         is_noremap = true;
         break;
       default:
-        err_msg = "Unrecognized value for maptype: %s";
+        ///
+        err_msg = _("Unrecognized value for maptype: %s");
         err_arg = maptype.data;
         err_type = kErrorTypeValidation;
         goto FAIL_WITH_MESSAGE;
@@ -1313,7 +1315,8 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
   }
   assert(!(is_unmap && is_noremap));
   if (!is_unmap && rhs.size == 0) {
-    err_msg = "Must give an RHS when setting keymap!%s";
+    ///
+    err_msg = _("Must give an RHS when setting keymap!%s");
     err_arg = "";
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
@@ -1348,7 +1351,8 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
     }  // switch
     if (was_valid_opt) {
       if (type != kObjectTypeBoolean) {
-        err_msg = "Gave non-boolean value for an opt: %s";
+        ///
+        err_msg = _("Gave non-boolean value for an opt: %s");
         err_arg = optname;
         err_type = kErrorTypeValidation;
         goto FAIL_WITH_MESSAGE;
