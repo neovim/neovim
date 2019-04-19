@@ -314,22 +314,12 @@ describe('nvim_set_keymap', function()
   before_each(clear)
 
   -- Test error handling
-  it('returns nonzero given empty arguments', function()
+  it('returns nonzero given empty lhs or rhs', function()
     -- note: empty map_args (e.g. not having "<expr>") is okay
-    neq(0, meths.set_keymap('', '', 'lhs', 'rhs'))
-    neq(0, meths.set_keymap('map', '', '', 'rhs'))
-    neq(0, meths.set_keymap('map', '', 'lhs', ''))
-    neq(0, meths.set_keymap('', '', '', ''))
+    neq(0, meths.set_keymap('', '', {}, '', 'rhs'))
+    neq(0, meths.set_keymap('', '', {}, 'lhs', ''))
+    neq(0, meths.set_keymap('', '', {}, '', ''))
   end)
-
-  --[[
-  -- TODO validate misspelled :map commands?
-  it('returns nonzero given bad :map command', function()
-    neq(0, meths.set_keymap('mpa', '', 'lhs', 'rhs'))
-    neq(0, meths.set_keymap('vnoreamp', '', 'lhs', 'rhs'))
-    neq(0, meths.set_keymap('vmap!', '', 'lhs', 'rhs'))
-  end)
-  --]]
 
   -- Generate a mapargs dict, for comparison against the mapping that was
   -- actually set
@@ -342,7 +332,7 @@ describe('nvim_set_keymap', function()
     to_return.rhs = rhs
     to_return.silent = not silent and 0 or 1
     to_return.nowait = not nowait and 0 or 1
-    to_return.expr = not nowait and 0 or 1
+    to_return.expr = not expr and 0 or 1
     to_return.sid = not sid and 0 or sid
     to_return.buffer = not buffer and 0 or buffer
 
@@ -360,29 +350,29 @@ describe('nvim_set_keymap', function()
   end
 
   it('can set ordinary mappings', function()
-    eq(0, meths.set_keymap('nmap', '', 'lhs', 'rhs'))
+    eq(0, meths.set_keymap('n', '', {}, 'lhs', 'rhs'))
     eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
 
-    eq(0, meths.set_keymap('vmap', '', 'lhs', 'rhs'))
+    eq(0, meths.set_keymap('vmap', '', {}, 'lhs', 'rhs'))
     eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
   end)
 
   it('can set noremap mappings', function()
-    eq(0, meths.set_keymap('xnoremap', '', 'lhs', 'rhs'))
-    eq(generate_mapargs('x', 0, 'lhs', 'rhs'), get_mapargs('x', 'lhs'))
+    eq(0, meths.set_keymap('x', 'n', {}, 'lhs', 'rhs'))
+    eq(generate_mapargs('x', 1, 'lhs', 'rhs'), get_mapargs('x', 'lhs'))
 
-    eq(0, meths.set_keymap('tnoremap', '', 'lhs', 'rhs'))
-    eq(generate_mapargs('t', 0, 'lhs', 'rhs'), get_mapargs('t', 'lhs'))
+    eq(0, meths.set_keymap('t', 'n', {}, 'lhs', 'rhs'))
+    eq(generate_mapargs('t', 1, 'lhs', 'rhs'), get_mapargs('t', 'lhs'))
   end)
 
   -- TODO(Yilin-Yang): get unmap to work properly
   it('can unmap mappings', function()
-    meths.set_keymap('vmap', '', 'lhs', 'rhs')
-    eq(0, meths.set_keymap('vunmap', '', 'lhs', ''))
+    meths.set_keymap('v', '', {}, 'lhs', 'rhs')
+    eq(0, meths.set_keymap('v', 'u', {}, 'lhs', ''))
     eq({}, get_mapargs('v', 'lhs'))
 
-    meths.set_keymap('xnoremap', '', 'lhs', 'rhs')
-    eq(0, meths.set_keymap('xunmap', '', 'lhs', ''))
+    meths.set_keymap('x', 'n', {}, 'lhs', 'rhs')
+    eq(0, meths.set_keymap('x', 'u', {}, 'lhs', ''))
     eq({}, get_mapargs('t', 'lhs'))
   end)
 
