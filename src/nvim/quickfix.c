@@ -3440,12 +3440,13 @@ void ex_make(exarg_T *eap)
     qf_list_changed(qi, qi->qf_curlist);
   }
   if (au_name != NULL) {
-    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
-        curbuf->b_fname, TRUE, curbuf);
-    if (qi != NULL && qi->qf_curlist < qi->qf_listcount)
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, curbuf->b_fname, true,
+                   curbuf);
+    if (qi != NULL && qi->qf_curlist < qi->qf_listcount) {
       res = qi->qf_lists[qi->qf_curlist].qf_count;
-    else
+    } else {
       res = 0;
+    }
   }
   if (res > 0 && !eap->forceit)
     qf_jump(qi, 0, 0, FALSE);                   /* display first error */
@@ -3799,8 +3800,9 @@ void ex_cfile(exarg_T *eap)
     qf_list_changed(qi, qi->qf_curlist);
   }
   unsigned save_qfid = 0;
-  if (qi != NULL)
+  if (qi != NULL) {
     save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
+  }
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, false, curbuf);
   }
@@ -3895,8 +3897,8 @@ static buf_T *vgr_load_dummy_buf(char_u *fname, char_u *dirname_start,
 /// change a quickfix list when vimgrep is running. If the list is not found,
 /// create a new list.
 static bool vgr_qflist_valid(qf_info_T *qi, unsigned save_qfid,
-                            qfline_T *cur_qf_start, int loclist_cmd,
-                            char_u *title)
+                             qfline_T *cur_qf_start, int loclist_cmd,
+                             char_u *title)
 {
   if (loclist_cmd) {
     // Verify that the location list is still valid. An autocmd might have
@@ -3937,7 +3939,7 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
   for (long lnum = 1; lnum <= buf->b_ml.ml_line_count && tomatch > 0; lnum++) {
     colnr_T col = 0;
     while (vim_regexec_multi(regmatch, curwin, buf, lnum, col, NULL,
-           NULL) > 0) {
+                             NULL) > 0) {
       // Pass the buffer number so that it gets used even for a
       // dummy buffer, unless duplicate_name is set, then the
       // buffer will be wiped out below.
@@ -3947,7 +3949,8 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
                        fname,
                        NULL,
                        duplicate_name ? 0 : buf->b_fnum,
-                       ml_get_buf(buf, regmatch->startpos[0].lnum + lnum, false),
+                       ml_get_buf(buf, regmatch->startpos[0].lnum + lnum,
+                                  false),
                        regmatch->startpos[0].lnum + lnum,
                        regmatch->startpos[0].col + 1,
                        false,  // vis_col
@@ -3955,7 +3958,7 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
                        0,      // nr
                        0,      // type
                        true    // valid
-                      ) == FAIL) {
+                       ) == FAIL) {
         got_int = true;
         break;
       }
@@ -4122,9 +4125,10 @@ void ex_vimgrep(exarg_T *eap)
       redraw_for_dummy = TRUE;
 
       buf = vgr_load_dummy_buf(fname, dirname_start, dirname_now);
-    } else
-      /* Use existing, loaded buffer. */
-      using_dummy = FALSE;
+    } else {
+      // Use existing, loaded buffer.
+      using_dummy = false;
+    }
 
     // Check whether the quickfix list is still valid
     if (!vgr_qflist_valid(qi, save_qfid, cur_qf_start, loclist_cmd,
@@ -5228,9 +5232,9 @@ void ex_cbuffer(exarg_T *eap)
       eap->line2 = buf->b_ml.ml_line_count;
     }
     if (eap->line1 < 1 || eap->line1 > buf->b_ml.ml_line_count
-        || eap->line2 < 1 || eap->line2 > buf->b_ml.ml_line_count)
+        || eap->line2 < 1 || eap->line2 > buf->b_ml.ml_line_count) {
       EMSG(_(e_invrange));
-    else {
+    } else {
       char_u *qf_title = qf_cmdtitle(*eap->cmdlinep);
 
       if (buf->b_sfname) {
@@ -5318,7 +5322,7 @@ void ex_cexpr(exarg_T *eap)
       }
       if (au_name != NULL) {
         apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
-                        curbuf->b_fname, true, curbuf);
+                       curbuf->b_fname, true, curbuf);
       }
       if (res > 0 && (eap->cmdidx == CMD_cexpr || eap->cmdidx == CMD_lexpr)) {
         qf_jump(qi, 0, 0, eap->forceit);  // display first error
