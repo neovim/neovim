@@ -1263,8 +1263,10 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 ///
 /// @param[out]   err   Error details, if any.
-void nvim_set_keymap(String mode, String maptype, Dictionary opts,
-                     String lhs, String rhs, Error *err)
+///
+/// @returns  Zero on success, nonzero on failure.
+Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
+                        String lhs, String rhs, Error *err)
   FUNC_API_SINCE(6)  // TODO(Yilin-Yang): make sure this is correct
 {
   // maximum possible size of the args-string we pass to do_map()
@@ -1383,16 +1385,16 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
     maptype_val = 2;
   }
 
-
+  // invoke do_map
   switch (do_map(maptype_val, args, mode_val, 0)) {
     case 0:
       break;
     case 1:
       api_set_error(err, kErrorTypeException, _(e_invarg));
-      break;
+      goto FAIL_AND_FREE;
     case 2:
       api_set_error(err, kErrorTypeException, _(e_nomap));
-      break;
+      goto FAIL_AND_FREE;
     case 5: {
       static const char *const e_unique = "E227: mapping already exists for %s";
       const size_t kErrMsgSize = sizeof(e_unique) + lhs.size;
@@ -1400,19 +1402,21 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
       snprintf(err_msg, kErrMsgSize, e_unique, lhs.data);
       api_set_error(err, kErrorTypeException, _(err_msg));
       xfree(err_msg);
-      break;
+      goto FAIL_AND_FREE;
     }
     default:  // unrecognized return code
       assert(false && "Unrecognized return code!");
-      break;
+      goto FAIL_AND_FREE;
   } // switch
   xfree(args);
-  return;
+  return 0;
 
 FAIL_WITH_MESSAGE:
-  xfree(args);
   api_set_error(err, err_type, err_msg, err_arg);
-  return;
+
+FAIL_AND_FREE:
+  xfree(args);
+  return -1;
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.
