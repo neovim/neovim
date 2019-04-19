@@ -1267,8 +1267,16 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
                      String lhs, String rhs, Error *err)
   FUNC_API_SINCE(6)  // TODO(Yilin-Yang): make sure this is correct
 {
-  const char *err_msg = NULL;  // the error message to report, if any
-  const char *err_arg = NULL;  // argument for the error message format string
+  // maximum possible size of the args-string we pass to do_map()
+  // allocate memory right away, before any calls to free
+  static const size_t kMaxSpecialArgSize =
+      sizeof("<buffer> <nowait> <silent> <script> <expr> <unique>");
+  // leave room for spaces around lhs, rhs; and null character
+  const size_t kMaxArgSize = kMaxSpecialArgSize + lhs.size + rhs.size + 3;
+  char_u *args = (char_u *)xcalloc(kMaxArgSize, sizeof(char_u));
+
+  char *err_msg = NULL;  // the error message to report, if any
+  char *err_arg = NULL;  // argument for the error message format string
   ErrorType err_type = kErrorTypeNone;
 
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
@@ -1312,11 +1320,6 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
   }
 
   // read user's options into a single string of args, to be passed to do_map()
-
-  // maximum possible size of the args-string we pass to do_map()
-  enum { kMaxArgSize = sizeof("<buffer> <nowait> <silent> <script> "
-                              "<expr> <unique>") / sizeof(char) };
-  char_u args[kMaxArgSize];
   for (size_t i = 0; i < opts.size; i++) {
     KeyValuePair* key_and_val = &opts.items[i];
     char* optname = key_and_val->key.data;
@@ -1324,7 +1327,7 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
     bool was_valid_opt = false;
     switch (optname[0]) {
       // note: strncmp up to and including the null terminator, so that
-      // (e.g.) "bufferFoobar" won't match against "buffer"
+      // "bufferFoobar" won't match against "buffer"
       case 'b':
         was_valid_opt = STRNCMP(optname, "buffer", 7) == 0;
         break;
@@ -1362,10 +1365,12 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
     }
   }  // for
 
-  // "unnoremap"/etc. isn't a real command
-  if (is_noremap && is_unmap) {
-    goto RETURN_FAILURE;
+  if (args[0]) {
+    xstrlcat((char *)args, " ", kMaxArgSize);
   }
+  xstrlcat((char *)args, lhs.data, kMaxArgSize);
+  xstrlcat((char *)args, " ", kMaxArgSize);
+  xstrlcat((char *)args, rhs.data, kMaxArgSize);
 
   int maptype_val = 0;
   if (is_unmap) {
@@ -1374,12 +1379,35 @@ void nvim_set_keymap(String mode, String maptype, Dictionary opts,
     maptype_val = 2;
   }
 
-  do_map(maptype_val, args, mode_val, 0);
+
+  switch (do_map(maptype_val, args, mode_val, 0)) {
+    case 0:
+      break;
+    case 1:
+      api_set_error(err, kErrorTypeException, _(e_invarg));
+      break;
+    case 2:
+      api_set_error(err, kErrorTypeException, _(e_nomap));
+      break;
+    case 5: {
+      static const char *const e_unique = "E227: mapping already exists for %s";
+      const size_t kErrMsgSize = sizeof(e_unique) + lhs.size;
+      err_msg = xcalloc(kErrMsgSize, sizeof(char));
+      snprintf(err_msg, kErrMsgSize, e_unique, lhs.data);
+      api_set_error(err, kErrorTypeException, _(err_msg));
+      xfree(err_msg);
+      break;
+    }
+    default:  // unrecognized return code
+      assert(false && "Unrecognized return code!");
+      break;
+  } // switch
+  xfree(args);
+  return;
 
 FAIL_WITH_MESSAGE:
+  xfree(args);
   api_set_error(err, err_type, err_msg, err_arg);
-
-RETURN_FAILURE:
   return;
 }
 
