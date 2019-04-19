@@ -302,12 +302,6 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
-
-  // force TUI to foreground when running in gdbserver
-  signal (SIGTTOU, SIG_IGN);
-  if (!tcsetpgrp(data->input.in_fd, getpid())) {
-        perror("tcsetpgrp failed");
-  }
 }
 
 static void terminfo_stop(UI *ui)
