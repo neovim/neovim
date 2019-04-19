@@ -1247,90 +1247,140 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 
 /// Sets a |mapping| for the given mode.
 ///
-/// Note that isn't possible to specify a target buffer when map_args contains
-/// "<buffer>"; like with |:map-<buffer>|, only the current buffer will be
+/// Note that isn't possible to specify a target buffer when opts contains the
+/// key "buffer"; like with |:map-<buffer>|, only the current buffer will be
 /// affected.
 ///
-/// @param  map_cmd   |:map-command| for this mapping, e.g. :nmap, :unmap!,
-///                   :vnoremap, etc.
-/// @param  map_args  |:map-arguments| like "<buffer>", "<nowait>", etc.
-///                   concatenated into a single string.
+/// @param  mode  Mode short-name (the first character of an :[ ]map command,
+///               e.g. "n", "i", "v", "x", etc.) OR the exact string "m!" (for
+///               |:map!|). Unrecognized or empty values are treated like "m".
+/// @param  maptype   Whether to |:map|, |:unmap|, or |:noremap|, represented by
+///                   an empty string, "u", and "n", respectively.
+/// @param  opts  Optional parameters. Includes all |:map-arguments| as keys.
+///               Values should all be Booleans. Unrecognized keys are silently
+///               ignored.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
 ///
-/// @returns Zero on success, nonzero on failure.
-Integer nvim_set_keymap(String map_cmd, String map_args,
-                        String lhs, String rhs)
+/// @param[out]   err   Error details, if any.
+void nvim_set_keymap(String mode, String maptype, Dictionary opts,
+                     String lhs, String rhs, Error *err)
   FUNC_API_SINCE(6)  // TODO(Yilin-Yang): make sure this is correct
 {
-  if (!(map_cmd.size && lhs.size)) {
-    goto RETURN_FAILURE;
+  const char *err_msg = NULL;  // the error message to report, if any
+  const char *err_arg = NULL;  // argument for the error message format string
+  ErrorType err_type = kErrorTypeNone;
+
+  int mode_val;  // integer value of the mapping mode, to be passed to do_map()
+  char_u *p = (char_u *) ((mode.size) ? mode.data : "map");
+  if (STRNCMP(mode.data, "m!", 2)) {
+    mode_val = get_map_mode(&p, true);
+  } else {
+    mode_val = get_map_mode(&p, false);
   }
 
-  // TODO(Yilin-Yang): need much better string validation/parsing,
-  // checking for :noremap vs. :no (should be equivalent), etc.
-
-  // convert mode shortname into struct mapblock's integer representation
-  char_u *p = (char_u *)map_cmd.data;
-  bool is_unmap = map_cmd.size && p[0] == 'u';
-  if (is_unmap) {  // scooch past the 'u'
-    p++;
-    map_cmd.size--;
-  } else if (rhs.size == 0) {  // must have nonempty rhs, since this isn't unmap
-    goto RETURN_FAILURE;
+  if (lhs.size == 0) {
+    err_msg = "Must give nonempty LHS!";
+    err_arg = "";
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
   }
-  int map_excl = STRNCMP(p, "map!", 4) == 0;
-  int mode_val = get_map_mode(&p, map_excl);
-  bool is_noremap = STRNCMP(p + 1, "noremap", 7) == 0;
+
+  bool is_unmap = false;
+  bool is_noremap = false;
+  if (maptype.size) {
+    switch (maptype.data[0]) {
+      case 'u':
+        is_unmap = true;
+        break;
+      case 'n':
+        is_noremap = true;
+        break;
+      default:
+        err_msg = "Unrecognized value for maptype: %s";
+        err_arg = maptype.data;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+    }  // switch
+  }
+  assert(!(is_unmap && is_noremap));
+  if (!is_unmap && rhs.size == 0) {
+    err_msg = "Must give an RHS when setting keymap!%s";
+    err_arg = "";
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  // read user's options into a single string of args, to be passed to do_map()
+
+  // maximum possible size of the args-string we pass to do_map()
+  enum { kMaxArgSize = sizeof("<buffer> <nowait> <silent> <script> "
+                              "<expr> <unique>") / sizeof(char) };
+  char_u args[kMaxArgSize];
+  for (size_t i = 0; i < opts.size; i++) {
+    KeyValuePair* key_and_val = &opts.items[i];
+    char* optname = key_and_val->key.data;
+    ObjectType type = key_and_val->value.type;
+    bool was_valid_opt = false;
+    switch (optname[0]) {
+      // note: strncmp up to and including the null terminator, so that
+      // (e.g.) "bufferFoobar" won't match against "buffer"
+      case 'b':
+        was_valid_opt = STRNCMP(optname, "buffer", 7) == 0;
+        break;
+      case 'n':
+        was_valid_opt = STRNCMP(optname, "nowait", 7) == 0;
+        break;
+      case 's':
+        was_valid_opt = STRNCMP(optname, "silent", 7) == 0;
+        break;
+      case 'e':
+        was_valid_opt = STRNCMP(optname, "expr", 5) == 0;
+        break;
+      case 'u':
+        was_valid_opt = STRNCMP(optname, "unique", 7) == 0;
+        break;
+      default:
+        break;
+    }  // switch
+    if (was_valid_opt) {
+      if (type != kObjectTypeBoolean) {
+        err_msg = "Gave non-boolean value for an opt: %s";
+        err_arg = optname;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+      } else if (key_and_val->value.data.boolean) {
+        // if everything was good, and the option was enabled, append it
+        // to the arguments buffer
+        if (args[0]) {  // if this isn't the first option, add a space before
+          xstrlcat((char *)args, " ", kMaxArgSize);
+        }
+        xstrlcat((char *)args, "<", kMaxArgSize);
+        xstrlcat((char *)args, optname, kMaxArgSize);
+        xstrlcat((char *)args, ">", kMaxArgSize);
+      }
+    }
+  }  // for
 
   // "unnoremap"/etc. isn't a real command
   if (is_noremap && is_unmap) {
     goto RETURN_FAILURE;
   }
 
-  // concatenate given args into a single command, parsable by do_map()
-  enum { kNumToAppend = 3 };
-
-  // include space for space characters
-  const size_t kCombinedSize = map_args.size + lhs.size + rhs.size +
-                               1 + kNumToAppend;
-  char_u *combined_args = xcalloc(kCombinedSize, '\0');
-
-  size_t cur_size = 0;  // of chars copied to combined_args
-  const char *to_append[kNumToAppend] = { map_args.data, lhs.data, rhs.data };
-  for (int i = 0; i < kNumToAppend; i++) {
-    cur_size = xstrlcat((char *)combined_args, to_append[i], kCombinedSize);
-
-    // truncation occurred, so given Strings had bad .size values
-    if (cur_size > kCombinedSize - 1) {
-      goto FAILED;
-    }
-
-    // don't add a space if nothing was appended
-    // leading spaces break do_map()'s parsing, and trailing spaces alter
-    // the resulting mapping's rhs
-    if (to_append[i][0] && i != kNumToAppend - 1) {
-      cur_size = xstrlcat((char *)combined_args, " ", kCombinedSize);
-    }
-  }
-
-  int maptype = 0;
+  int maptype_val = 0;
   if (is_unmap) {
-    maptype = 1;
+    maptype_val = 1;
   } else if (is_noremap) {
-    maptype = 2;
+    maptype_val = 2;
   }
 
-  int result = do_map(maptype, combined_args, mode_val, 0);
+  do_map(maptype_val, args, mode_val, 0);
 
-  xfree(combined_args);
-  return result;
-
-FAILED:
-  xfree(combined_args);
+FAIL_WITH_MESSAGE:
+  api_set_error(err, err_type, err_msg, err_arg);
 
 RETURN_FAILURE:
-  return -1;  // TODO(Yilin-Yang): more informative error handling?
+  return;
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.
