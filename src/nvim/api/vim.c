@@ -1270,7 +1270,7 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
 
   // convert mode shortname into struct mapblock's integer representation
   char_u *p = (char_u *)map_cmd.data;
-  int is_unmap = map_cmd.size && p[0] == 'u';
+  bool is_unmap = map_cmd.size && p[0] == 'u';
   if (is_unmap) {  // scooch past the 'u'
     p++;
     map_cmd.size--;
@@ -1279,7 +1279,7 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   }
   int map_excl = STRNCMP(p, "map!", 4) == 0;
   int mode_val = get_map_mode(&p, map_excl);
-  int is_noremap = STRNCMP(p + 1, "noremap", 7) == 0;
+  bool is_noremap = STRNCMP(p + 1, "noremap", 7) == 0;
 
   // "unnoremap"/etc. isn't a real command
   if (is_noremap && is_unmap) { goto RETURN_FAILURE; }
