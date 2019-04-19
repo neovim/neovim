@@ -1367,6 +1367,7 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
     }
   }  // for
 
+  // TODO(Yilin-Yang): validate that lhs, rhs are not purely whitespace
   if (args[0]) {
     xstrlcat((char *)args, " ", kMaxArgSize);
   }
