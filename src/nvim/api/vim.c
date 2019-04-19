@@ -1282,7 +1282,7 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
   ErrorType err_type = kErrorTypeNone;
 
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
-  char_u *p = (char_u *) ((mode.size) ? mode.data : "map");
+  char_u *p = (char_u *)((mode.size) ? mode.data : "map");
   if (STRNCMP(mode.data, "m!", 2)) {
     mode_val = get_map_mode(&p, true);
   } else {
@@ -1323,8 +1323,8 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
 
   // read user's options into a single string of args, to be passed to do_map()
   for (size_t i = 0; i < opts.size; i++) {
-    KeyValuePair* key_and_val = &opts.items[i];
-    char* optname = key_and_val->key.data;
+    KeyValuePair *key_and_val = &opts.items[i];
+    char *optname = key_and_val->key.data;
     ObjectType type = key_and_val->value.type;
     bool was_valid_opt = false;
     switch (optname[0]) {
@@ -1406,7 +1406,7 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
     default:  // unrecognized return code
       assert(false && "Unrecognized return code!");
       goto FAIL_AND_FREE;
-  } // switch
+  }  // switch
   xfree(args);
   return 0;
 
