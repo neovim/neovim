@@ -101,6 +101,7 @@ typedef struct qf_list_S {
   bool qf_multiline;
   bool qf_multiignore;
   bool qf_multiscan;
+  long qf_changedtick;
 } qf_list_T;
 
 /// Quickfix/Location list stack definition
@@ -1473,6 +1474,7 @@ void copy_loclist(win_T *from, win_T *to)
 
     // Assign a new ID for the location list
     to_qfl->qf_id = ++last_qf_id;
+    to_qfl->qf_changedtick = 0L;
 
     /* When no valid entries are present in the list, qf_ptr points to
      * the first item in the list */
@@ -2575,6 +2577,7 @@ static void qf_free(qf_info_T *qi, int idx)
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
   qfl->qf_id = 0;
+  qfl->qf_changedtick = 0L;
 }
 
 /*
@@ -3165,6 +3168,11 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
   KeyTyped = old_KeyTyped;
 }
 
+static void qf_list_changed(qf_info_T *qi, int qf_idx)
+{
+    qi->qf_lists[qf_idx].qf_changedtick++;
+}
+
 /*
  * Return TRUE when using ":vimgrep" for ":grep".
  */
@@ -3251,6 +3259,9 @@ void ex_make(exarg_T *eap)
                 *eap->cmdlinep, enc);
   if (wp != NULL) {
     qi = GET_LOC_LIST(wp);
+  }
+  if (res >= 0 && qi != NULL) {
+    qf_list_changed(qi, qi->qf_curlist);
   }
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
@@ -3605,13 +3616,16 @@ void ex_cfile(exarg_T *eap)
   int res = qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
                                       && eap->cmdidx != CMD_laddfile),
                     *eap->cmdlinep,enc);
+  if (wp != NULL) {
+    qi = GET_LOC_LIST(wp);
+  }
+  if (res >= 0 && qi != NULL) {
+    qf_list_changed(qi, qi->qf_curlist);
+  }
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, false, curbuf);
   }
   if (res > 0 && (eap->cmdidx == CMD_cfile || eap->cmdidx == CMD_lfile)) {
-    if (wp != NULL) {
-      qi = GET_LOC_LIST(wp);
-    }
     qf_jump(qi, 0, 0, eap->forceit);  // display first error
   }
 }
@@ -3912,6 +3926,7 @@ void ex_vimgrep(exarg_T *eap)
   qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
   qi->qf_lists[qi->qf_curlist].qf_ptr = qi->qf_lists[qi->qf_curlist].qf_start;
   qi->qf_lists[qi->qf_curlist].qf_index = 1;
+  qf_list_changed(qi, qi->qf_curlist);
 
   qf_update_buffer(qi, NULL);
 
@@ -4201,7 +4216,8 @@ enum {
   QF_GETLIST_ID = 0x20,
   QF_GETLIST_IDX = 0x40,
   QF_GETLIST_SIZE = 0x80,
-  QF_GETLIST_ALL = 0xFF
+  QF_GETLIST_TICK = 0x100,
+  QF_GETLIST_ALL = 0x1FF
 };
 
 // Parse text from 'di' and return the quickfix list items
@@ -4299,6 +4315,9 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if (tv_dict_find(what, S_LEN("size")) != NULL) {
     flags |= QF_GETLIST_SIZE;
   }
+  if (tv_dict_find(what, S_LEN("changedtick")) != NULL) {
+    flags |= QF_GETLIST_TICK;
+  }
 
   int qf_idx;
 
@@ -4367,6 +4386,9 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
     if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
       status = tv_dict_add_nr(retdict, S_LEN("size"), 0);
     }
+    if ((status == OK) && (flags & QF_GETLIST_TICK)) {
+      status = tv_dict_add_nr(retdict, S_LEN("changedtick"), 0);
+    }
     return status;
   }
 
@@ -4421,6 +4443,11 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
     status = tv_dict_add_nr(retdict, S_LEN("size"),
                             qi->qf_lists[qf_idx].qf_count);
+  }
+
+  if ((status == OK) && (flags & QF_GETLIST_TICK)) {
+    status = tv_dict_add_nr(retdict, S_LEN("changedtick"),
+                            qi->qf_lists[qf_idx].qf_changedtick);
   }
 
   return status;
@@ -4658,6 +4685,10 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
     retval = OK;
   }
 
+  if (retval == OK) {
+    qf_list_changed(qi, qf_idx);
+  }
+
   return retval;
 }
 
@@ -4739,6 +4770,9 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title,
     retval = qf_set_properties(qi, what, action, title);
   } else {
     retval = qf_add_entries(qi, qi->qf_curlist, list, title, action);
+    if (retval == OK) {
+      qf_list_changed(qi, qi->qf_curlist);
+    }
   }
 
   return retval;
@@ -4860,6 +4894,9 @@ void ex_cbuffer(exarg_T *eap)
                             (eap->cmdidx != CMD_caddbuffer
                              && eap->cmdidx != CMD_laddbuffer),
                             eap->line1, eap->line2, qf_title, NULL);
+      if (res >= 0) {
+        qf_list_changed(qi, qi->qf_curlist);
+      }
       if (au_name != NULL) {
         apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
                        curbuf->b_fname, true, curbuf);
@@ -4925,6 +4962,9 @@ void ex_cexpr(exarg_T *eap)
                             (eap->cmdidx != CMD_caddexpr
                              && eap->cmdidx != CMD_laddexpr),
                             (linenr_T)0, (linenr_T)0, *eap->cmdlinep, NULL);
+      if (res >= 0) {
+        qf_list_changed(qi, qi->qf_curlist);
+      }
       if (au_name != NULL) {
         apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
                         curbuf->b_fname, true, curbuf);
@@ -5097,6 +5137,7 @@ void ex_helpgrep(exarg_T *eap)
     /* Darn, some plugin changed the value. */
     free_string_option(save_cpo);
 
+  qf_list_changed(qi, qi->qf_curlist);
   qf_update_buffer(qi, NULL);
 
   if (au_name != NULL) {
