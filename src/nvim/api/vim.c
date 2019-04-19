@@ -1371,8 +1371,10 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
     xstrlcat((char *)args, " ", kMaxArgSize);
   }
   xstrlcat((char *)args, lhs.data, kMaxArgSize);
-  xstrlcat((char *)args, " ", kMaxArgSize);
-  xstrlcat((char *)args, rhs.data, kMaxArgSize);
+  if (rhs.size) {
+    xstrlcat((char *)args, " ", kMaxArgSize);
+    xstrlcat((char *)args, rhs.data, kMaxArgSize);
+  }
 
   int maptype_val = 0;
   if (is_unmap) {
