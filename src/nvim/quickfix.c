@@ -3602,19 +3602,17 @@ void ex_cfile(exarg_T *eap)
   // first error.
   // :caddfile adds to an existing quickfix list. If there is no
   // quickfix list then a new list is created.
-  if (qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
-                                && eap->cmdidx != CMD_laddfile),
-              *eap->cmdlinep, enc) > 0
-      && (eap->cmdidx == CMD_cfile
-          || eap->cmdidx == CMD_lfile)) {
-    if (au_name != NULL)
-      apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, FALSE, curbuf);
-    if (wp != NULL)
+  int res = qf_init(wp, p_ef, p_efm, (eap->cmdidx != CMD_caddfile
+                                      && eap->cmdidx != CMD_laddfile),
+                    *eap->cmdlinep,enc);
+  if (au_name != NULL) {
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, false, curbuf);
+  }
+  if (res > 0 && (eap->cmdidx == CMD_cfile || eap->cmdidx == CMD_lfile)) {
+    if (wp != NULL) {
       qi = GET_LOC_LIST(wp);
-    qf_jump(qi, 0, 0, eap->forceit);            /* display first error */
-  } else {
-    if (au_name != NULL)
-      apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, FALSE, curbuf);
+    }
+    qf_jump(qi, 0, 0, eap->forceit);  // display first error
   }
 }
 
@@ -4831,17 +4829,17 @@ void ex_cbuffer(exarg_T *eap)
         qf_title = IObuff;
       }
 
-      if (qf_init_ext(qi, qi->qf_curlist, NULL, buf, NULL, p_efm,
-                      (eap->cmdidx != CMD_caddbuffer
-                       && eap->cmdidx != CMD_laddbuffer),
-                      eap->line1, eap->line2, qf_title, NULL) > 0) {
-        if (au_name != NULL) {
-          apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
-                         curbuf->b_fname, true, curbuf);
-        }
-        if (eap->cmdidx == CMD_cbuffer || eap->cmdidx == CMD_lbuffer) {
-          qf_jump(qi, 0, 0, eap->forceit);  // display first error
-        }
+      int res = qf_init_ext(qi, qi->qf_curlist, NULL, buf, NULL, p_efm,
+                            (eap->cmdidx != CMD_caddbuffer
+                             && eap->cmdidx != CMD_laddbuffer),
+                            eap->line1, eap->line2, qf_title, NULL);
+      if (au_name != NULL) {
+        apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
+                       curbuf->b_fname, true, curbuf);
+      }
+      if (res > 0 && (eap->cmdidx == CMD_cbuffer
+                      || eap->cmdidx == CMD_lbuffer)) {
+        qf_jump(qi, 0, 0, eap->forceit);  // display first error
       }
     }
   }
@@ -4896,17 +4894,16 @@ void ex_cexpr(exarg_T *eap)
   if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)
         || tv.v_type == VAR_LIST) {
-      if (qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, p_efm,
-                      (eap->cmdidx != CMD_caddexpr
-                       && eap->cmdidx != CMD_laddexpr),
-                      (linenr_T)0, (linenr_T)0, *eap->cmdlinep, NULL) > 0) {
-        if (au_name != NULL) {
-          apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
-                         curbuf->b_fname, true, curbuf);
-        }
-        if (eap->cmdidx == CMD_cexpr || eap->cmdidx == CMD_lexpr) {
-          qf_jump(qi, 0, 0, eap->forceit);  // display first error
-        }
+      int res = qf_init_ext(qi, qi->qf_curlist, NULL, NULL, &tv, p_efm,
+                            (eap->cmdidx != CMD_caddexpr
+                             && eap->cmdidx != CMD_laddexpr),
+                            (linenr_T)0, (linenr_T)0, *eap->cmdlinep, NULL);
+      if (au_name != NULL) {
+        apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
+                        curbuf->b_fname, true, curbuf);
+      }
+      if (res > 0 && (eap->cmdidx == CMD_cexpr || eap->cmdidx == CMD_lexpr)) {
+        qf_jump(qi, 0, 0, eap->forceit);  // display first error
       }
     } else {
       EMSG(_("E777: String or List expected"));

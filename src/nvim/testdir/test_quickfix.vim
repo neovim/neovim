@@ -1953,6 +1953,30 @@ func Test_Autocmd()
   cexpr "F1:10:Line 10"
   caddexpr "F1:20:Line 20"
   cgetexpr "F1:30:Line 30"
+  cexpr ""
+  caddexpr ""
+  cgetexpr ""
+  silent! cexpr non_existing_func()
+  silent! caddexpr non_existing_func()
+  silent! cgetexpr non_existing_func()
+  let l = ['precexpr',
+        \ 'postcexpr',
+        \ 'precaddexpr',
+        \ 'postcaddexpr',
+        \ 'precgetexpr',
+        \ 'postcgetexpr',
+        \ 'precexpr',
+        \ 'postcexpr',
+        \ 'precaddexpr',
+        \ 'postcaddexpr',
+        \ 'precgetexpr',
+        \ 'postcgetexpr',
+        \ 'precexpr',
+        \ 'precaddexpr',
+        \ 'precgetexpr']
+  call assert_equal(l, g:acmds)
+
+  let g:acmds = []
   enew! | call append(0, "F2:10:Line 10")
   cbuffer!
   enew! | call append(0, "F2:20:Line 20")
@@ -1960,19 +1984,106 @@ func Test_Autocmd()
   enew! | call append(0, "F2:30:Line 30")
   caddbuffer
 
-  let l = ['precexpr',
-      \ 'postcexpr',
-      \ 'precaddexpr',
-      \ 'postcaddexpr',
-      \ 'precgetexpr',
-      \ 'postcgetexpr',
-      \ 'precbuffer',
+  new
+  let bnum = bufnr('%')
+  bunload
+  exe 'silent! cbuffer! ' . bnum
+  exe 'silent! cgetbuffer ' . bnum
+  exe 'silent! caddbuffer ' . bnum
+  enew!
+  let l = ['precbuffer',
       \ 'postcbuffer',
       \ 'precgetbuffer',
       \ 'postcgetbuffer',
       \ 'precaddbuffer',
-      \ 'postcaddbuffer']
+      \ 'postcaddbuffer',
+      \ 'precbuffer',
+      \ 'precgetbuffer',
+      \ 'precaddbuffer']
   call assert_equal(l, g:acmds)
+
+  call writefile(['Xtest:1:Line1'], 'Xtest')
+  call writefile([], 'Xempty')
+  let g:acmds = []
+  cfile Xtest
+  caddfile Xtest
+  cgetfile Xtest
+  cfile Xempty
+  caddfile Xempty
+  cgetfile Xempty
+  silent! cfile do_not_exist
+  silent! caddfile do_not_exist
+  silent! cgetfile do_not_exist
+  let l = ['precfile',
+        \ 'postcfile',
+        \ 'precaddfile',
+        \ 'postcaddfile',
+        \ 'precgetfile',
+        \ 'postcgetfile',
+        \ 'precfile',
+        \ 'postcfile',
+        \ 'precaddfile',
+        \ 'postcaddfile',
+        \ 'precgetfile',
+        \ 'postcgetfile',
+        \ 'precfile',
+        \ 'postcfile',
+        \ 'precaddfile',
+        \ 'postcaddfile',
+        \ 'precgetfile',
+        \ 'postcgetfile']
+  call assert_equal(l, g:acmds)
+
+  let g:acmds = []
+  helpgrep quickfix
+  silent! helpgrep non_existing_help_topic
+  vimgrep test Xtest
+  vimgrepadd test Xtest
+  silent! vimgrep non_existing_test Xtest
+  silent! vimgrepadd non_existing_test Xtest
+  set makeprg=
+  silent! make
+  set makeprg&
+  let l = ['prehelpgrep',
+        \ 'posthelpgrep',
+        \ 'prehelpgrep',
+        \ 'posthelpgrep',
+        \ 'previmgrep',
+        \ 'postvimgrep',
+        \ 'previmgrepadd',
+        \ 'postvimgrepadd',
+        \ 'previmgrep',
+        \ 'postvimgrep',
+        \ 'previmgrepadd',
+        \ 'postvimgrepadd',
+        \ 'premake',
+        \ 'postmake']
+  call assert_equal(l, g:acmds)
+
+  if has('unix')
+    " Run this test only on Unix-like systems. The grepprg may not be set on
+    " non-Unix systems.
+    " The following lines are used for the grep test. Don't remove.
+    " Grep_Autocmd_Text: Match 1
+    " GrepAdd_Autocmd_Text: Match 2
+    let g:acmds = []
+    silent grep Grep_Autocmd_Text test_quickfix.vim
+    silent grepadd GrepAdd_Autocmd_Text test_quickfix.vim
+    silent grep abc123def Xtest
+    silent grepadd abc123def Xtest
+    let l = ['pregrep',
+          \ 'postgrep',
+          \ 'pregrepadd',
+          \ 'postgrepadd',
+          \ 'pregrep',
+          \ 'postgrep',
+          \ 'pregrepadd',
+          \ 'postgrepadd']
+    call assert_equal(l, g:acmds)
+  endif
+
+  call delete('Xtest')
+  call delete('Xempty')
 endfunc
 
 func Test_Autocmd_Exception()
