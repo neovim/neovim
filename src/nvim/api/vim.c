@@ -1263,7 +1263,9 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
                         String lhs, String rhs)
   FUNC_API_SINCE(6)  // TODO(Yilin-Yang): make sure this is correct
 {
-  if (!(map_cmd.size && lhs.size)) { goto RETURN_FAILURE; }
+  if (!(map_cmd.size && lhs.size)) {
+    goto RETURN_FAILURE;
+  }
 
   // TODO(Yilin-Yang): need much better string validation/parsing,
   // checking for :noremap vs. :no (should be equivalent), etc.
@@ -1282,7 +1284,9 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
   bool is_noremap = STRNCMP(p + 1, "noremap", 7) == 0;
 
   // "unnoremap"/etc. isn't a real command
-  if (is_noremap && is_unmap) { goto RETURN_FAILURE; }
+  if (is_noremap && is_unmap) {
+    goto RETURN_FAILURE;
+  }
 
   // concatenate given args into a single command, parsable by do_map()
   enum { kNumToAppend = 3 };
@@ -1298,7 +1302,9 @@ Integer nvim_set_keymap(String map_cmd, String map_args,
     cur_size = xstrlcat((char *)combined_args, to_append[i], kCombinedSize);
 
     // truncation occurred, so given Strings had bad .size values
-    if (cur_size > kCombinedSize - 1) { goto FAILED; }
+    if (cur_size > kCombinedSize - 1) {
+      goto FAILED;
+    }
 
     // don't add a space if nothing was appended
     // leading spaces break do_map()'s parsing, and trailing spaces alter
