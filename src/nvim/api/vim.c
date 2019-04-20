@@ -1353,7 +1353,8 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
         was_valid_opt = STRNCMP(optname, "nowait", 7) == 0;
         break;
       case 's':
-        was_valid_opt = STRNCMP(optname, "silent", 7) == 0;
+        was_valid_opt = STRNCMP(optname, "silent", 7) == 0 ||
+                        STRNCMP(optname, "script", 7) == 0;
         break;
       case 'e':
         was_valid_opt = STRNCMP(optname, "expr", 5) == 0;

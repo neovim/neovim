@@ -354,10 +354,16 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {nowaiT = false})
   end)
 
-  it('throws errors when given non-boolean option values', function()
-    expect_err("Gave non-boolean value for an opt: buffer",
-               meths.set_keymap, 'n', '', 'lhs', 'rhs', {buffer = 2})
-  end)
+  local optnames = {'buffer', 'nowait', 'silent', 'script', 'expr', 'unique'}
+  for _, opt in ipairs(optnames) do
+    -- note: need '%' to escape hyphens, which have special meaning in lua
+    it('throws an error when given non-boolean value for '..opt, function()
+      local opts = {}
+      opts[opt] = 2
+      expect_err('Gave non%-boolean value for an opt: '..opt,
+                 meths.set_keymap, 'n', '', 'lhs', 'rhs', opts)
+    end)
+  end
 
   -- Generate a mapargs dict, for comparison against the mapping that was
   -- actually set
