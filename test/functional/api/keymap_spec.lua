@@ -323,11 +323,22 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, '', '', '', '', {})
   end)
 
+  it('throws errors when lhs or rhs has interrupting whitespace', function()
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: l hs",
+               meths.set_keymap, '', '', 'l hs', 'rhs', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: l\ths",
+               meths.set_keymap, '', '', 'l\ths', 'rhs', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace:      l\ths",
+               meths.set_keymap, '', '', '     l\ths', 'rhs', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: l\ths     ",
+               meths.set_keymap, '', '', 'l\ths     ', 'rhs', {})
+  end)
+
   it('throws errors when unmapping and given nonempty rhs', function()
     expect_err('RHS must be empty when unmapping! Gave: rhs',
                meths.set_keymap, '', 'u', 'lhs', 'rhs', {})
-    expect_err('RHS must be empty when unmapping! Gave:  ',
-               meths.set_keymap, '', 'u', 'lhs', ' ', {})
+    expect_err('RHS must be empty when unmapping! Gave: a',
+               meths.set_keymap, '', 'u', 'lhs', '  a', {})
   end)
 
   it('throws errors when given too-long mode shortnames', function()
@@ -419,6 +430,17 @@ describe('nvim_set_keymap', function()
     eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
 
     eq(0, meths.set_keymap('v', '', 'lhs', 'rhs', {}))
+    eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
+  end)
+
+  it('doesn\'t throw when lhs or rhs have leading/trailing WS', function()
+    eq(0, meths.set_keymap('n', '', '   lhs', 'rhs', {}))
+    eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
+
+    eq(0, meths.set_keymap('n', '', 'lhs     ', 'rhs', {}))
+    eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
+
+    eq(0, meths.set_keymap('v', '', ' lhs  ', '\trhs\t\f', {}))
     eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
   end)
 

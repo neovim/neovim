@@ -1281,6 +1281,31 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
   char *err_arg = NULL;  // argument for the error message format string
   ErrorType err_type = kErrorTypeNone;
 
+  // make sure that lhs and rhs aren't purely whitespace, and don't contain
+  // illegal characters
+  String hss[2] = {lhs, rhs};
+  for (int i = 0; i < 2; i++) {
+    String* hs = &hss[i];
+    switch (strip_whitespace(*hs, false, false)) {
+      case 0:
+        break;
+      case 1:
+        err_msg = "lhs/rhs in keymap cannot contain line breaks: %s";
+        err_arg = hs->data;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+      case 2:
+        err_msg = "lhs/rhs in keymap shouldn't contain whitespace: %s";
+        err_arg = hs->data;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+      default:
+        assert(false &&
+               "Unknown error while stripping whitespace from LHS/RHS.");
+        goto FAIL_AND_FREE;
+    }  // switch
+  } // for
+
   if (mode.size > 1) {
     err_msg = "Given shortname is too long: %s";
     err_arg = mode.data;
