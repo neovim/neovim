@@ -744,6 +744,61 @@ String ga_take_string(garray_T *ga)
   return str;
 }
 
+/// Strips leading and trailing whitespace characters from the given String
+/// object, modifying it in place iff there were no errors.
+///
+/// @param[in,out]  to_strip  String to be modified.
+/// @param linebreaks_okay  Whether linebreak characters (e.g. '\n') shouldn't
+///                         be treated as an error.
+/// @param okay_in_middle   Whether whitespace in the String's middle shouldn't
+///                         be treated as an error.
+/// @returns - Zero on success.
+///          - If linebreaks_okay is false, the first found linebreak will cause 
+///          the function to return 1.
+///          - If okay_in_middle is false, the first whitespace character in the
+///          "middle" will cause the function to return 2.
+int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
+{
+  size_t first_nonwhite = SIZE_MAX;
+  size_t last_nonwhite = SIZE_MAX;
+  size_t midpoint = to_strip.size / 2 + to_strip.size % 2;
+
+  // search for the "snip" points, while also error checking
+  for (size_t offset = 0; offset < midpoint; offset++) {
+    size_t back_pos = to_strip.size - 1 - offset;
+    char front_c = to_strip.data[offset];
+    char back_c = to_strip.data[back_pos];
+    if (!linebreaks_okay &&
+        (ascii_islinebreak(front_c) || ascii_islinebreak(back_c))) {
+      return 1;
+    }
+    if (first_nonwhite == SIZE_MAX && !ascii_isspace(front_c)) {
+      first_nonwhite = offset;
+    } else if (!okay_in_middle &&
+               (first_nonwhite != SIZE_MAX && ascii_isspace(front_c))) {
+      return 2;
+    }
+    if (last_nonwhite == SIZE_MAX && !ascii_isspace(back_c)) {
+      last_nonwhite = back_pos;
+    } else if (!okay_in_middle &&
+               (last_nonwhite != SIZE_MAX && ascii_isspace(back_c))) {
+      return 2;
+    }
+  }
+
+  // memmove non-whitespace chars to front, zero remainder of buffer, shrink
+  // size appropriately
+  size_t num_nonwhite = last_nonwhite - first_nonwhite - 1;
+  num_nonwhite = (num_nonwhite == SIZE_MAX) ? 0 : num_nonwhite;
+
+  memmove(to_strip.data, to_strip.data + first_nonwhite, num_nonwhite);
+  memset(to_strip.data + num_nonwhite, '\0', to_strip.size - num_nonwhite);
+
+  to_strip.size = num_nonwhite;
+
+  return 0;
+}
+
 /// Collects `n` buffer lines into array `l`, optionally replacing newlines
 /// with NUL.
 ///
