@@ -765,10 +765,9 @@ int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
 
   size_t first_nonwhite = SIZE_MAX;
   size_t last_nonwhite = SIZE_MAX;
-  size_t midpoint = to_strip.size / 2 + to_strip.size % 2;
 
-  // search for the "snip" points, while also error checking
-  for (size_t offset = 0; offset < midpoint; offset++) {
+  // search for the "snip" points, while checking for newlines
+  for (size_t offset = 0; offset < to_strip.size; offset++) {
     size_t back_pos = to_strip.size - 1 - offset;
     char front_c = to_strip.data[offset];
     char back_c = to_strip.data[back_pos];
@@ -778,17 +777,20 @@ int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
     }
     if (first_nonwhite == SIZE_MAX && !ascii_isspace(front_c)) {
       first_nonwhite = offset;
-    } else if (!okay_in_middle &&
-               (first_nonwhite != SIZE_MAX && ascii_isspace(front_c))) {
-      return 2;
     }
     if (last_nonwhite == SIZE_MAX && !ascii_isspace(back_c)) {
       last_nonwhite = back_pos;
-    } else if (!okay_in_middle &&
-               (last_nonwhite != SIZE_MAX && ascii_isspace(back_c))) {
+    }
+  }
+
+  if (!okay_in_middle) {
+    for (size_t i = first_nonwhite; i <= last_nonwhite; i++) {
+      if (!ascii_isspace(to_strip.data[i])) continue;
       return 2;
     }
   }
+
+  assert(first_nonwhite <= last_nonwhite);
 
   // memmove non-whitespace chars to front, zero remainder of buffer, shrink
   // size appropriately
