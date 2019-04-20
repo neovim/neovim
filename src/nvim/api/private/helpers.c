@@ -757,7 +757,7 @@ String ga_take_string(garray_T *ga)
 ///          the function to return 1.
 ///          - If okay_in_middle is false, the first whitespace character in the
 ///          "middle" will cause the function to return 2.
-int strip_whitespace(String* to_strip, bool linebreaks_okay,
+int strip_whitespace(String *to_strip, bool linebreaks_okay,
                      bool okay_in_middle)
 {  // TODO(Yilin-Yang): figure out how to unit test this
   if (to_strip->size == 0) {
@@ -772,8 +772,8 @@ int strip_whitespace(String* to_strip, bool linebreaks_okay,
     size_t back_pos = to_strip->size - 1 - offset;
     char front_c = to_strip->data[offset];
     char back_c = to_strip->data[back_pos];
-    if (!linebreaks_okay &&
-        (ascii_islinebreak(front_c) || ascii_islinebreak(back_c))) {
+    if (!linebreaks_okay
+        && (ascii_islinebreak(front_c) || ascii_islinebreak(back_c))) {
       return 1;
     }
     if (first_nonwhite == SIZE_MAX && !ascii_isspace(front_c)) {
@@ -795,7 +795,9 @@ int strip_whitespace(String* to_strip, bool linebreaks_okay,
 
   if (!okay_in_middle) {
     for (size_t i = first_nonwhite; i <= last_nonwhite; i++) {
-      if (!ascii_isspace(to_strip->data[i])) continue;
+      if (!ascii_isspace(to_strip->data[i])) {
+        continue;
+      }
       return 2;
     }
   }
