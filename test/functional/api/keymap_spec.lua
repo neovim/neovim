@@ -323,6 +323,15 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, '', '', '', '', {})
   end)
 
+  it('throws errors when given lhs or rhs that are only whitespace', function()
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace:    ",
+               meths.set_keymap, '', '', '   ', 'rhs', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace:    ",
+               meths.set_keymap, '', '', 'lhs', '   ', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: \t\t",
+               meths.set_keymap, '', '', '\t\t', '', {})
+  end)
+
   it('throws errors when lhs or rhs has interrupting whitespace', function()
     expect_err("lhs/rhs in keymap shouldn't contain whitespace: l hs",
                meths.set_keymap, '', '', 'l hs', 'rhs', {})
@@ -332,6 +341,25 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, '', '', '     l\ths', 'rhs', {})
     expect_err("lhs/rhs in keymap shouldn't contain whitespace: l\ths     ",
                meths.set_keymap, '', '', 'l\ths     ', 'rhs', {})
+
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: r h s",
+               meths.set_keymap, '', '', 'lhs', 'r h s', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: rh    s",
+               meths.set_keymap, '', '', 'lhs', 'rh    s', {})
+    expect_err("lhs/rhs in keymap shouldn't contain whitespace: rh\t\t  \ts",
+               meths.set_keymap, '', '', 'lhs', 'rh\t\t  \ts', {})
+  end)
+
+  it('throws errors when given lhs or rhs that contain linebreaks', function()
+    expect_err("lhs/rhs in keymap cannot contain line breaks: l\nhs",
+               meths.set_keymap, '', '', 'l\nhs', 'rhs', {})
+    expect_err("lhs/rhs in keymap cannot contain line breaks: l\rhs",
+               meths.set_keymap, '', '', 'l\rhs', 'rhs', {})
+
+    expect_err("lhs/rhs in keymap cannot contain line breaks: rh\ns",
+               meths.set_keymap, '', '', 'lhs', 'rh\ns', {})
+    expect_err("lhs/rhs in keymap cannot contain line breaks: rhs\r",
+               meths.set_keymap, '', '', 'lhs', 'rhs\r', {})
   end)
 
   it('throws errors when unmapping and given nonempty rhs', function()
