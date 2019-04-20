@@ -1335,6 +1335,11 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     err_arg = "";
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
+  } else if (is_unmap && rhs.size) {
+    err_msg = "RHS must be empty when unmapping! Gave: %s";
+    err_arg = rhs.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
   }
 
   // read user's options into a single string of args, to be passed to do_map()

@@ -323,6 +323,11 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, '', '', '', '', {})
   end)
 
+  it('throws errors when unmapping and given nonempty rhs', function()
+    expect_err('RHS must be empty when unmapping! Gave: rhs',
+               meths.set_keymap, '', 'u', 'lhs', 'rhs', {})
+  end)
+
   it('throws errors when given too-long mode shortnames', function()
     expect_err('Given shortname is too long: map',
                meths.set_keymap, 'map', '', 'lhs', 'rhs', {})
@@ -466,7 +471,7 @@ describe('nvim_set_keymap', function()
 
       -- some mapmodes (like 'o') will prevent other mapmodes (like '!') from
       -- taking effect, so unmap after each mapping
-      eq(0, meths.set_keymap(mapmode, 'u', 'lhs', 'rhs', {}))
+      eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
       eq({}, get_mapargs(mapmode, 'lhs'))
     end)
   end
@@ -477,7 +482,7 @@ describe('nvim_set_keymap', function()
       eq(generate_mapargs(mapmode, 1, 'lhs', 'rhs'),
          get_mapargs(mapmode, 'lhs'))
 
-      eq(0, meths.set_keymap(mapmode, 'u', 'lhs', 'rhs', {}))
+      eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
       eq({}, get_mapargs(mapmode, 'lhs'))
     end)
   end
