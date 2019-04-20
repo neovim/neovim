@@ -8,7 +8,6 @@ local eq = helpers.eq
 local expect_err = helpers.expect_err
 local funcs = helpers.funcs
 local meths = helpers.meths
-local neq = helpers.neq
 local source = helpers.source
 
 local shallowcopy = global_helpers.shallowcopy
@@ -317,11 +316,11 @@ describe('nvim_set_keymap', function()
   -- Test error handling
   it('returns nonzero given empty lhs or rhs', function()
     expect_err('Must give nonempty LHS!',
-               meths.set_keymap, '', '', {}, '', 'rhs')
+               meths.set_keymap, '', '', '', 'rhs', {})
     expect_err('Must give an RHS when setting keymap!',
-               meths.set_keymap, '', '', {}, 'lhs', '')
+               meths.set_keymap, '', '', 'lhs', '', {})
     expect_err('Must give nonempty LHS!',
-               meths.set_keymap, '', '', {}, '', '')
+               meths.set_keymap, '', '', '', '', {})
   end)
 
   -- Generate a mapargs dict, for comparison against the mapping that was
@@ -353,29 +352,29 @@ describe('nvim_set_keymap', function()
   end
 
   it('can set ordinary mappings', function()
-    eq(0, meths.set_keymap('n', '', {}, 'lhs', 'rhs'))
+    eq(0, meths.set_keymap('n', '', 'lhs', 'rhs', {}))
     eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
 
-    eq(0, meths.set_keymap('vmap', '', {}, 'lhs', 'rhs'))
+    eq(0, meths.set_keymap('v', '', 'lhs', 'rhs', {}))
     eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
   end)
 
   it('can set noremap mappings', function()
-    eq(0, meths.set_keymap('x', 'n', {}, 'lhs', 'rhs'))
+    eq(0, meths.set_keymap('x', 'n', 'lhs', 'rhs', {}))
     eq(generate_mapargs('x', 1, 'lhs', 'rhs'), get_mapargs('x', 'lhs'))
 
-    eq(0, meths.set_keymap('t', 'n', {}, 'lhs', 'rhs'))
+    eq(0, meths.set_keymap('t', 'n', 'lhs', 'rhs', {}))
     eq(generate_mapargs('t', 1, 'lhs', 'rhs'), get_mapargs('t', 'lhs'))
   end)
 
   -- TODO(Yilin-Yang): get unmap to work properly
   it('can unmap mappings', function()
-    meths.set_keymap('v', '', {}, 'lhs', 'rhs')
-    eq(0, meths.set_keymap('v', 'u', {}, 'lhs', ''))
+    meths.set_keymap('v', '', 'lhs', 'rhs', {})
+    eq(0, meths.set_keymap('v', 'u', 'lhs', '', {}))
     eq({}, get_mapargs('v', 'lhs'))
 
-    meths.set_keymap('t', 'n', {}, 'lhs', 'rhs')
-    eq(0, meths.set_keymap('t', 'u', {}, 'lhs', ''))
+    meths.set_keymap('t', 'n', 'lhs', 'rhs', {})
+    eq(0, meths.set_keymap('t', 'u', 'lhs', '', {}))
     eq({}, get_mapargs('t', 'lhs'))
   end)
 

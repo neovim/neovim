@@ -1256,18 +1256,17 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///               |:map!|). Unrecognized or empty values are treated like "m".
 /// @param  maptype   Whether to |:map|, |:unmap|, or |:noremap|, represented by
 ///                   an empty string, "u", and "n", respectively.
-/// @param  opts  Optional parameters. Includes all |:map-arguments| as keys.
-///               Values should all be Booleans. Unrecognized keys are silently
-///               ignored.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-///
+/// @param  opts  Optional parameters. Includes all |:map-arguments| as keys.
+///               Values should all be Booleans. Unrecognized keys will result
+///               in an error.
 /// @param[out]   err   Error details, if any.
 ///
 /// @returns  Zero on success, nonzero on failure.
-Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
-                        String lhs, String rhs, Error *err)
-  FUNC_API_SINCE(6)  // TODO(Yilin-Yang): make sure this is correct
+Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
+                        Dictionary opts, Error *err)
+  FUNC_API_SINCE(6)
 {
   // maximum possible size of the args-string we pass to do_map()
   // allocate memory right away, before any calls to free
@@ -1282,11 +1281,27 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
   ErrorType err_type = kErrorTypeNone;
 
   int mode_val;  // integer value of the mapping mode, to be passed to do_map()
-  char_u *p = (char_u *)((mode.size) ? mode.data : "map");
-  if (STRNCMP(mode.data, "m!", 2)) {
+  char_u *p = (char_u *)((mode.size) ? mode.data : "m");
+  if (STRNCMP(p, "m!", 3) == 0) {
     mode_val = get_map_mode(&p, true);
   } else {
+    if (mode.size > 1) {  // "m!" is the only two-character shortname
+      err_msg = "Given shortname is too long and/or unrecognized: %s";
+      err_arg = mode.data;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
+    }
     mode_val = get_map_mode(&p, false);
+    if (mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING) {
+      // get_map_mode will treat "unrecognized" mode shortnames like "map"
+      // if it does, and the given shortname wasn't "map", then it's an error
+      if (STRNCMP(p, "m", 2)) {
+        err_msg = "Unrecognized mode shortname: %s";
+        err_arg = (char *)p;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+      }
+    }
   }
 
   if (lhs.size == 0) {
@@ -1364,6 +1379,11 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
         xstrlcat((char *)args, optname, kMaxArgSize);
         xstrlcat((char *)args, ">", kMaxArgSize);
       }
+    } else {  // was not a valid opt
+      err_msg = "Unrecognized option in nvim_set_keymap: %s";
+      err_arg = optname;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
     }
   }  // for
 
@@ -1389,17 +1409,17 @@ Integer nvim_set_keymap(String mode, String maptype, Dictionary opts,
     case 0:
       break;
     case 1:
-      api_set_error(err, kErrorTypeException, (char *)e_invarg);
+      api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
       goto FAIL_AND_FREE;
     case 2:
-      api_set_error(err, kErrorTypeException, (char *)e_nomap);
+      api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
       goto FAIL_AND_FREE;
     case 5: {
       static const char *const e_unique = "E227: mapping already exists for %s";
       const size_t kErrMsgSize = sizeof(e_unique) + lhs.size;
       err_msg = xcalloc(kErrMsgSize, sizeof(char));
       snprintf(err_msg, kErrMsgSize, e_unique, lhs.data);
-      api_set_error(err, kErrorTypeException, (char *)err_msg);
+      api_set_error(err, kErrorTypeException, (char *)err_msg, 0);
       xfree(err_msg);
       goto FAIL_AND_FREE;
     }
