@@ -1247,11 +1247,11 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 
 /// Sets a |mapping| for the given mode.
 ///
-/// Note that isn't possible to specify a target buffer when opts contains the
-/// key "buffer"; like with |:map-<buffer>|, only the current buffer will be
-/// affected.
+/// Note that isn't possible to specify a target buffer when {opts} contains
+/// the key `"buffer"`; like with |:map-<buffer>|, only the current buffer will
+/// be affected.
 ///
-/// @param  mode  Mode short-name (the first character of an :[ ]map command,
+/// @param  mode  Mode short-name (the first character of an map command,
 ///               e.g. "n", "i", "v", "x", etc.) OR the string "!" (for
 ///               |:map!|). |:map| can be represented with an empty string, a
 ///               single space " ", or "m".
