@@ -326,6 +326,8 @@ describe('nvim_set_keymap', function()
   it('throws errors when unmapping and given nonempty rhs', function()
     expect_err('RHS must be empty when unmapping! Gave: rhs',
                meths.set_keymap, '', 'u', 'lhs', 'rhs', {})
+    expect_err('RHS must be empty when unmapping! Gave:  ',
+               meths.set_keymap, '', 'u', 'lhs', ' ', {})
   end)
 
   it('throws errors when given too-long mode shortnames', function()
