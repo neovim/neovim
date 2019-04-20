@@ -472,10 +472,17 @@ describe('nvim_set_keymap', function()
     end
   end)
 
-  it('can set mappings with special characters', function()
-    eq(0, meths.set_keymap('!', '', '<C-u>', 'rhs', {}))
-    eq(generate_mapargs('!', 0, '<C-U>', 'rhs'), get_mapargs('!', '<C-u>'))
-  end)
+  local special_chars = {'<C-U>', '<S-Left>', '<F12><F2><Tab>', '<Space><Tab>'}
+  for _, lhs in ipairs(special_chars) do
+    for _, rhs in ipairs(special_chars) do
+      local mapmode = '!'
+      it('can set mappings with special characters, lhs: '..lhs..', rhs: '..rhs,
+          function()
+        eq(0, meths.set_keymap(mapmode, '', lhs, rhs, {}))
+        eq(generate_mapargs(mapmode, 0, lhs, rhs), get_mapargs(mapmode, lhs))
+      end)
+    end
+  end
 
   it('throws appropriate error messages when setting <unique> maps', function()
     meths.set_keymap('l', '', 'lhs', 'rhs', {})
