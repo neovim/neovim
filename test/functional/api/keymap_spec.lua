@@ -365,12 +365,25 @@ describe('nvim_set_keymap', function()
     end)
   end
 
+  -- generate_expected is truthy when we want to generate an expected output for
+  -- maparg(); mapargs() won't take '!' as an input, though it will return '!'
+  -- in its output if getting a mapping set with |:map!|
+  local function normalize_mapmode(mode, generate_expected)
+    if not generate_expected and mode == '!' then
+      -- can't retrieve mapmode-ic mappings with '!', but can with 'i' or 'c'.
+      mode = 'i'
+    elseif mode == '' or mode == 'm' then
+      mode = ' '
+    end
+    return mode
+  end
+
   -- Generate a mapargs dict, for comparison against the mapping that was
   -- actually set
   local function generate_mapargs(mode, noremap, lhs, rhs, silent, nowait,
                                   expr, sid, buffer)
     local to_return = {}
-    to_return.mode = mode
+    to_return.mode = normalize_mapmode(mode, true)
     to_return.noremap = noremap
     to_return.lhs = lhs
     to_return.rhs = rhs
@@ -390,11 +403,7 @@ describe('nvim_set_keymap', function()
 
   -- Retrieve a mapargs dict from neovim, if one exists
   local function get_mapargs(mode, lhs)
-    if mode == '!' then
-      -- can't retrieve mapmode-ic mappings with '!', but can with 'i' or 'c'.
-      mode = 'i'
-    end
-    return funcs.maparg(lhs, mode, false, true)
+    return funcs.maparg(lhs, normalize_mapmode(mode), false, true)
   end
 
   -- Perform tests of basic functionality
@@ -424,6 +433,7 @@ describe('nvim_set_keymap', function()
     eq({}, get_mapargs('t', 'lhs'))
   end)
 
+  -- Test some edge cases
   it('accepts "!" and " " and "" as synonyms for mapmode-nvo', function()
     local nvo_shortnames = {'', ' ', '!'}
     for _, name in ipairs(nvo_shortnames) do
@@ -435,7 +445,7 @@ describe('nvim_set_keymap', function()
 
   it('can set mappings with special characters', function()
     eq(0, meths.set_keymap('!', '', '<C-u>', 'rhs', {}))
-    eq(generate_mapargs('!', 0, '<C-U>', 'rhs'), get_mapargs('i', '<C-u>'))
+    eq(generate_mapargs('!', 0, '<C-U>', 'rhs'), get_mapargs('!', '<C-u>'))
   end)
 
   it('throws appropriate error messages when setting <unique> maps', function()
@@ -448,8 +458,8 @@ describe('nvim_set_keymap', function()
 
   -- Perform exhaustive tests of basic functionality
   local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', ' ', ''}
-  it('can set/unset normal mappings using all different mapmodes', function()
-    for _, mapmode in ipairs(mapmodes) do
+  for _, mapmode in ipairs(mapmodes) do
+    it('can set/unset normal mappings in mapmode '..mapmode, function()
       eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', {}))
       eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs'),
          get_mapargs(mapmode, 'lhs'))
@@ -458,18 +468,18 @@ describe('nvim_set_keymap', function()
       -- taking effect, so unmap after each mapping
       eq(0, meths.set_keymap(mapmode, 'u', 'lhs', 'rhs', {}))
       eq({}, get_mapargs(mapmode, 'lhs'))
-    end
-  end)
+    end)
+  end
 
-  it('can set/unset noremap mappings using all different mapmodes', function()
-    for _, mapmode in ipairs(mapmodes) do
+  for _, mapmode in ipairs(mapmodes) do
+    it('can set/unset noremap mappings using mapmode '..mapmode, function()
       eq(0, meths.set_keymap(mapmode, 'n', 'lhs', 'rhs', {}))
       eq(generate_mapargs(mapmode, 1, 'lhs', 'rhs'),
          get_mapargs(mapmode, 'lhs'))
 
       eq(0, meths.set_keymap(mapmode, 'u', 'lhs', 'rhs', {}))
       eq({}, get_mapargs(mapmode, 'lhs'))
-    end
-  end)
+    end)
+  end
 
 end)
