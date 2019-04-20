@@ -758,7 +758,11 @@ String ga_take_string(garray_T *ga)
 ///          - If okay_in_middle is false, the first whitespace character in the
 ///          "middle" will cause the function to return 2.
 int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
-{
+{  // TODO(Yilin-Yang): figure out how to unit test this
+  if (to_strip.size == 0) {
+    return 0;
+  }
+
   size_t first_nonwhite = SIZE_MAX;
   size_t last_nonwhite = SIZE_MAX;
   size_t midpoint = to_strip.size / 2 + to_strip.size % 2;
@@ -788,8 +792,7 @@ int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
 
   // memmove non-whitespace chars to front, zero remainder of buffer, shrink
   // size appropriately
-  size_t num_nonwhite = last_nonwhite - first_nonwhite - 1;
-  num_nonwhite = (num_nonwhite == SIZE_MAX) ? 0 : num_nonwhite;
+  size_t num_nonwhite = last_nonwhite - first_nonwhite + 1;
 
   memmove(to_strip.data, to_strip.data + first_nonwhite, num_nonwhite);
   memset(to_strip.data + num_nonwhite, '\0', to_strip.size - num_nonwhite);
