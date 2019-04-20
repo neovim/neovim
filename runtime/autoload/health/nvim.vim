@@ -170,6 +170,17 @@ function! s:check_tmux() abort
           \ ["Set default-terminal in ~/.tmux.conf:\nset-option -g default-terminal \"screen-256color\"",
           \  s:suggest_faq])
   endif
+
+  " check for RGB capabilities
+  let info = system('tmux server-info')
+  let has_tc = stridx(info, " Tc: (flag) true") != -1
+  let has_rgb = stridx(info, " RGB: (flag) true") != -1
+  if !has_tc && !has_rgb
+    call health#report_warn(
+          \ "Neither Tc nor RGB capability set. True colors are disabled. |'termguicolors'| won't work properly.",
+          \ ["Put this in your ~/.tmux.conf and replace XXX by your $TERM outside of tmux:\nset-option -sa terminal-overrides ',XXX:RGB'",
+          \  "For older tmux versions use this instead:\nset-option -ga terminal-overrides ',XXX:Tc'"])
+  endif
 endfunction
 
 function! s:check_terminal() abort
