@@ -753,13 +753,14 @@ String ga_take_string(garray_T *ga)
 /// @param okay_in_middle   Whether whitespace in the String's middle shouldn't
 ///                         be treated as an error.
 /// @returns - Zero on success.
-///          - If linebreaks_okay is false, the first found linebreak will cause 
+///          - If linebreaks_okay is false, the first found linebreak will cause
 ///          the function to return 1.
 ///          - If okay_in_middle is false, the first whitespace character in the
 ///          "middle" will cause the function to return 2.
-int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
+int strip_whitespace(String* to_strip, bool linebreaks_okay,
+                     bool okay_in_middle)
 {  // TODO(Yilin-Yang): figure out how to unit test this
-  if (to_strip.size == 0) {
+  if (to_strip->size == 0) {
     return 0;
   }
 
@@ -767,10 +768,10 @@ int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
   size_t last_nonwhite = SIZE_MAX;
 
   // search for the "snip" points, while checking for newlines
-  for (size_t offset = 0; offset < to_strip.size; offset++) {
-    size_t back_pos = to_strip.size - 1 - offset;
-    char front_c = to_strip.data[offset];
-    char back_c = to_strip.data[back_pos];
+  for (size_t offset = 0; offset < to_strip->size; offset++) {
+    size_t back_pos = to_strip->size - 1 - offset;
+    char front_c = to_strip->data[offset];
+    char back_c = to_strip->data[back_pos];
     if (!linebreaks_okay &&
         (ascii_islinebreak(front_c) || ascii_islinebreak(back_c))) {
       return 1;
@@ -783,23 +784,30 @@ int strip_whitespace(String to_strip, bool linebreaks_okay, bool okay_in_middle)
     }
   }
 
+  if (first_nonwhite == SIZE_MAX) {  // entire string is whitespace
+    memset(to_strip->data, '\0', to_strip->size);
+    to_strip->size = 0;
+    return 0;
+  }
+
+  assert(first_nonwhite != SIZE_MAX && last_nonwhite != SIZE_MAX);
+  assert(first_nonwhite <= last_nonwhite);
+
   if (!okay_in_middle) {
     for (size_t i = first_nonwhite; i <= last_nonwhite; i++) {
-      if (!ascii_isspace(to_strip.data[i])) continue;
+      if (!ascii_isspace(to_strip->data[i])) continue;
       return 2;
     }
   }
-
-  assert(first_nonwhite <= last_nonwhite);
 
   // memmove non-whitespace chars to front, zero remainder of buffer, shrink
   // size appropriately
   size_t num_nonwhite = last_nonwhite - first_nonwhite + 1;
 
-  memmove(to_strip.data, to_strip.data + first_nonwhite, num_nonwhite);
-  memset(to_strip.data + num_nonwhite, '\0', to_strip.size - num_nonwhite);
+  memmove(to_strip->data, to_strip->data + first_nonwhite, num_nonwhite);
+  memset(to_strip->data + num_nonwhite, '\0', to_strip->size - num_nonwhite);
 
-  to_strip.size = num_nonwhite;
+  to_strip->size = num_nonwhite;
 
   return 0;
 }

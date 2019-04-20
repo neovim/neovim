@@ -324,11 +324,11 @@ describe('nvim_set_keymap', function()
   end)
 
   it('throws errors when given lhs or rhs that are only whitespace', function()
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace:    ",
+    expect_err("Must give nonempty LHS!",
                meths.set_keymap, '', '', '   ', 'rhs', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace:    ",
+    expect_err("Must give an RHS when setting keymap!",
                meths.set_keymap, '', '', 'lhs', '   ', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: \t\t",
+    expect_err("Must give nonempty LHS!",
                meths.set_keymap, '', '', '\t\t', '', {})
   end)
 

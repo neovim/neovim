@@ -1283,10 +1283,10 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
 
   // make sure that lhs and rhs aren't purely whitespace, and don't contain
   // illegal characters
-  String hss[2] = { lhs, rhs };
+  String *hss[2] = { &lhs, &rhs };
   for (int i = 0; i < 2; i++) {
-    String *hs = &hss[i];
-    switch (strip_whitespace(*hs, false, false)) {
+    String *hs = hss[i];
+    switch (strip_whitespace(hs, false, false)) {
       case 0:
         break;
       case 1:
