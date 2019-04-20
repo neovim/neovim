@@ -656,6 +656,7 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 For a general overview of floats, see |api-floatwin|.
 
                 Exactly one of `external` and `relative` must be specified.
+                The `width` and `height` of the new window must be specified.
 
                 With editor positioning row=0, col=0 refers to the top-left
                 corner of the screen-grid and row=Lines-1, Columns-1 refers to
@@ -697,7 +698,7 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                               - `height` : window height (in character cells).
                                 Minimum of 1.
                               - `width` : window width (in character cells).
-                                Minimum of 2.
+                                Minimum of 1.
                               - `row` : row position. Screen cell height are
                                 used as unit. Can be floating point.
                               - `col` : column position. Screen cell width is
@@ -794,6 +795,33 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
                 Return: ~
                     Array of maparg()-like dictionaries describing mappings.
                     The "buffer" key is always zero.
+
+                                                           *nvim_set_keymap()*
+nvim_set_keymap({mode}, {maptype}, {lhs}, {rhs}, {opts})
+                Sets a |mapping| for the given mode.
+
+                Note that isn't possible to specify a target buffer when
+                {opts} contains the key `"buffer"` ; like with
+                |:map-<buffer>|, only the current buffer will be affected.
+
+                Parameters: ~
+                    {mode}     Mode short-name (the first character of an map
+                               command, e.g. "n", "i", "v", "x", etc.) OR the
+                               string "!" (for |:map!|). |:map| can be
+                               represented with an empty string, a single
+                               space " ", or "m".
+                    {maptype}  Whether to |:map|, |:unmap|, or |:noremap|,
+                               represented by an empty string, "u", and "n",
+                               respectively.
+                    {lhs}      Left-hand-side |{lhs}| of the mapping.
+                    {rhs}      Right-hand-side |{rhs}| of the mapping.
+                    {opts}     Optional parameters. Includes all
+                               |:map-arguments| as keys. Values should all be
+                               Booleans. Unrecognized keys will result in an
+                               error.
+
+                Return: ~
+                    Zero on success, nonzero on failure.
 
 nvim_get_commands({opts})                                *nvim_get_commands()*
                 Gets a map of global (non-buffer-local) Ex commands.
