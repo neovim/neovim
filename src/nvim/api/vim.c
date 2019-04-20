@@ -1283,9 +1283,9 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
 
   // make sure that lhs and rhs aren't purely whitespace, and don't contain
   // illegal characters
-  String hss[2] = {lhs, rhs};
+  String hss[2] = { lhs, rhs };
   for (int i = 0; i < 2; i++) {
-    String* hs = &hss[i];
+    String *hs = &hss[i];
     switch (strip_whitespace(*hs, false, false)) {
       case 0:
         break;
@@ -1300,11 +1300,11 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
         err_type = kErrorTypeValidation;
         goto FAIL_WITH_MESSAGE;
       default:
-        assert(false &&
-               "Unknown error while stripping whitespace from LHS/RHS.");
+        assert(false
+               && "Unknown error while stripping whitespace from LHS/RHS.");
         goto FAIL_AND_FREE;
     }  // switch
-  } // for
+  }  // for
 
   if (mode.size > 1) {
     err_msg = "Given shortname is too long: %s";
@@ -1383,8 +1383,8 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
         was_valid_opt = STRNCMP(optname, "nowait", 7) == 0;
         break;
       case 's':
-        was_valid_opt = STRNCMP(optname, "silent", 7) == 0 ||
-                        STRNCMP(optname, "script", 7) == 0;
+        was_valid_opt = STRNCMP(optname, "silent", 7) == 0
+                        || STRNCMP(optname, "script", 7) == 0;
         break;
       case 'e':
         was_valid_opt = STRNCMP(optname, "expr", 5) == 0;
