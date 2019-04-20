@@ -106,7 +106,14 @@ endfunction
 
 " Fetch the contents of a URL.
 function! s:download(url) abort
-  if executable('curl')
+  if executable('curl') && !empty(
+        \ filter(
+        \   split(
+        \     join(
+        \       filter(systemlist(['curl', '-V']), 'v:val =~# "^Protocols:\\s\\+"'),
+        \     ' '),
+        \   ' '),
+        \ 'v:val =~? "^https$"'))
     let rv = s:system(['curl', '-sL', a:url], '', 1, 1)
     return s:shell_error ? 'curl error with '.a:url.': '.s:shell_error : rv
   elseif executable('python')
