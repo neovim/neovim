@@ -418,26 +418,29 @@ describe('nvim_set_keymap', function()
     if not generate_expected and mode == '!' then
       -- can't retrieve mapmode-ic mappings with '!', but can with 'i' or 'c'.
       mode = 'i'
-    elseif mode == '' or mode == 'm' then
-      mode = ' '
+    elseif mode == '' or mode == ' ' or mode == 'm' then
+      mode = generate_expected and ' ' or 'm'
     end
     return mode
   end
 
   -- Generate a mapargs dict, for comparison against the mapping that was
   -- actually set
-  local function generate_mapargs(mode, noremap, lhs, rhs, silent, nowait,
-                                  expr, sid, buffer)
+  local function generate_mapargs(mode, noremap, lhs, rhs, opts)
+    if not opts then
+      opts = {}
+    end
+
     local to_return = {}
     to_return.mode = normalize_mapmode(mode, true)
     to_return.noremap = noremap
     to_return.lhs = lhs
     to_return.rhs = rhs
-    to_return.silent = not silent and 0 or 1
-    to_return.nowait = not nowait and 0 or 1
-    to_return.expr = not expr and 0 or 1
-    to_return.sid = not sid and 0 or sid
-    to_return.buffer = not buffer and 0 or buffer
+    to_return.silent = not opts.silent and 0 or 1
+    to_return.nowait = not opts.nowait and 0 or 1
+    to_return.expr = not opts.expr and 0 or 1
+    to_return.sid = not opts.sid and 0 or opts.sid
+    to_return.buffer = not opts.buffer and 0 or opts.buffer
 
     -- mode 't' doesn't print when calling maparg
     if mode == 't' then
@@ -546,4 +549,43 @@ describe('nvim_set_keymap', function()
     end)
   end
 
+  -- Test map-arguments, using optnames from above
+  -- remove some map arguments that are harder to test, or were already tested
+  optnames = {'nowait', 'silent', 'expr'}
+  for _, mapmode in ipairs(mapmodes) do
+    local printable_mode = normalize_mapmode(mapmode)
+
+    -- Test with single mappings
+    for _, maparg in ipairs(optnames) do
+      it('can set/unset '..printable_mode..'-mappings with maparg: '..maparg,
+          function()
+        eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', {[maparg] = true}))
+        eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs', {[maparg] = true}),
+           get_mapargs(mapmode, 'lhs'))
+        -- calling unmap with a nonempty options dictionary shouldn't affect
+        -- anything
+        eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {[maparg] = true}))
+      end)
+      it ('can set/unset '..printable_mode..'-mode mappings with maparg '..
+          maparg..', whose value is false', function()
+        eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', {[maparg] = false}))
+        eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs'),
+           get_mapargs(mapmode, 'lhs'))
+        eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
+      end)
+    end
+
+    -- Test with triplets of mappings, one of which is false
+    for i = 1, (#optnames - 2) do
+      local opt1, opt2, opt3 = optnames[i], optnames[i + 1], optnames[i + 2]
+      it('can set/unset '..printable_mode..'-mode mappings with mapargs '..
+          opt1..', '..opt2..', '..opt3, function()
+        local opts = {[opt1] = true, [opt2] = false, [opt3] = true}
+        eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', opts))
+        eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs', opts),
+           get_mapargs(mapmode, 'lhs'))
+        eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
+      end)
+    end
+  end
 end)
