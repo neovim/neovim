@@ -2502,56 +2502,8 @@ int fix_input_buffer(char_u *buf, int len)
   return len;
 }
 
-/// Set or remove a mapping or an abbreviation in the current buffer, OR
-/// display / (matching) mappings/abbreviations.
-/// 
-/// ```vim
-/// map[!]                          " show all key mappings
-/// map[!] {lhs}                    " show key mapping for {lhs}
-/// map[!] {lhs} {rhs}              " set key mapping for {lhs} to {rhs}
-/// noremap[!] {lhs} {rhs}          " same, but no remapping for {rhs}
-/// unmap[!] {lhs}                  " remove key mapping for {lhs}
-/// abbr                            " show all abbreviations
-/// abbr {lhs}                      " show abbreviations for {lhs}
-/// abbr {lhs} {rhs}                " set abbreviation for {lhs} to {rhs}
-/// noreabbr {lhs} {rhs}            " same, but no remapping for {rhs}
-/// unabbr {lhs}                    " remove abbreviation for {lhs}
-///
-/// for :map   mode is NORMAL + VISUAL + SELECTMODE + OP_PENDING
-/// for :map!  mode is INSERT + CMDLINE
-/// for :cmap  mode is CMDLINE
-/// for :imap  mode is INSERT
-/// for :lmap  mode is LANGMAP
-/// for :nmap  mode is NORMAL
-/// for :vmap  mode is VISUAL + SELECTMODE
-/// for :xmap  mode is VISUAL
-/// for :smap  mode is SELECTMODE
-/// for :omap  mode is OP_PENDING
-/// for :tmap  mode is TERM_FOCUS
-///
-/// for :abbr  mode is INSERT + CMDLINE
-/// for :iabbr mode is INSERT
-/// for :cabbr mode is CMDLINE
-/// ```
-///
-/// @param maptype  0 for |:map|, 1 for |:unmap|, 2 for |noremap|.
-/// @param arg      C-string containing the arguments of the map/abbrev
-///                 command, i.e. everything except the initial `:[X][nore]map`.
-///                 - Cannot be a read-only string; it will be modified.
-///                 - Should be stripped of leading and trailing whitespace,
-///                 else parsing will fail or {rhs} will contain literal
-///                 whitespace, respectively.
-/// @param mode   Bitflags representing the mode in which to set the mapping.
-///               See @ref get_map_mode.
-/// @param is_abbrev  True if setting an abbreviation, false otherwise.
-///
-/// @return 0 on success. On failure, will return one of the following:
-///         - 1 for invalid arguments
-///         - 2 for no match
-///         - 4 for out of mem (deprecated, WON'T HAPPEN)
-///         - 5 for entry not unique
-///
-int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
+/// Like @ref do_map, but you can specify the target buffer.
+int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
 {
   char_u      *keys;
   mapblock_T  *mp, **mpp;
@@ -2597,8 +2549,8 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
      */
     if (STRNCMP(keys, "<buffer>", 8) == 0) {
       keys = skipwhite(keys + 8);
-      map_table = curbuf->b_maphash;
-      abbr_table = &curbuf->b_first_abbr;
+      map_table = buf->b_maphash;
+      abbr_table = &buf->b_first_abbr;
       continue;
     }
 
@@ -2765,7 +2717,7 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
   /*
    * Check if a new local mapping wasn't already defined globally.
    */
-  if (map_table == curbuf->b_maphash && haskey && hasarg && maptype != 1) {
+  if (map_table == buf->b_maphash && haskey && hasarg && maptype != 1) {
     /* need to loop over all global hash lists */
     for (hash = 0; hash < 256 && !got_int; ++hash) {
       if (is_abbrev) {
@@ -2796,15 +2748,15 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
   /*
    * When listing global mappings, also list buffer-local ones here.
    */
-  if (map_table != curbuf->b_maphash && !hasarg && maptype != 1) {
+  if (map_table != buf->b_maphash && !hasarg && maptype != 1) {
     /* need to loop over all global hash lists */
     for (hash = 0; hash < 256 && !got_int; ++hash) {
       if (is_abbrev) {
         if (hash != 0)          /* there is only one abbreviation list */
           break;
-        mp = curbuf->b_first_abbr;
+        mp = buf->b_first_abbr;
       } else
-        mp = curbuf->b_maphash[hash];
+        mp = buf->b_maphash[hash];
       for (; mp != NULL && !got_int; mp = mp->m_next) {
         /* check entries with the same mode */
         if ((mp->m_mode & mode) != 0) {
@@ -2934,8 +2886,8 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
       retval = 2;                           /* no match */
     } else if (*keys == Ctrl_C) {
       // If CTRL-C has been unmapped, reuse it for Interrupting.
-      if (map_table == curbuf->b_maphash) {
-        curbuf->b_mapped_ctrl_c &= ~mode;
+      if (map_table == buf->b_maphash) {
+        buf->b_mapped_ctrl_c &= ~mode;
       } else {
         mapped_ctrl_c &= ~mode;
       }
@@ -2965,8 +2917,8 @@ int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
 
   // If CTRL-C has been mapped, don't always use it for Interrupting.
   if (*keys == Ctrl_C) {
-    if (map_table == curbuf->b_maphash) {
-      curbuf->b_mapped_ctrl_c |= mode;
+    if (map_table == buf->b_maphash) {
+      buf->b_mapped_ctrl_c |= mode;
     } else {
       mapped_ctrl_c |= mode;
     }
@@ -2997,6 +2949,61 @@ theend:
   xfree(keys_buf);
   xfree(arg_buf);
   return retval;
+}
+
+
+/// Set or remove a mapping or an abbreviation in the current buffer, OR
+/// display (matching) mappings/abbreviations.
+///
+/// ```vim
+/// map[!]                          " show all key mappings
+/// map[!] {lhs}                    " show key mapping for {lhs}
+/// map[!] {lhs} {rhs}              " set key mapping for {lhs} to {rhs}
+/// noremap[!] {lhs} {rhs}          " same, but no remapping for {rhs}
+/// unmap[!] {lhs}                  " remove key mapping for {lhs}
+/// abbr                            " show all abbreviations
+/// abbr {lhs}                      " show abbreviations for {lhs}
+/// abbr {lhs} {rhs}                " set abbreviation for {lhs} to {rhs}
+/// noreabbr {lhs} {rhs}            " same, but no remapping for {rhs}
+/// unabbr {lhs}                    " remove abbreviation for {lhs}
+///
+/// for :map   mode is NORMAL + VISUAL + SELECTMODE + OP_PENDING
+/// for :map!  mode is INSERT + CMDLINE
+/// for :cmap  mode is CMDLINE
+/// for :imap  mode is INSERT
+/// for :lmap  mode is LANGMAP
+/// for :nmap  mode is NORMAL
+/// for :vmap  mode is VISUAL + SELECTMODE
+/// for :xmap  mode is VISUAL
+/// for :smap  mode is SELECTMODE
+/// for :omap  mode is OP_PENDING
+/// for :tmap  mode is TERM_FOCUS
+///
+/// for :abbr  mode is INSERT + CMDLINE
+/// for :iabbr mode is INSERT
+/// for :cabbr mode is CMDLINE
+/// ```
+///
+/// @param maptype  0 for |:map|, 1 for |:unmap|, 2 for |noremap|.
+/// @param arg      C-string containing the arguments of the map/abbrev
+///                 command, i.e. everything except the initial `:[X][nore]map`.
+///                 - Cannot be a read-only string; it will be modified.
+///                 - Should be stripped of leading and trailing whitespace,
+///                 else parsing will fail or {rhs} will contain literal
+///                 whitespace, respectively.
+/// @param mode   Bitflags representing the mode in which to set the mapping.
+///               See @ref get_map_mode.
+/// @param is_abbrev  True if setting an abbreviation, false otherwise.
+///
+/// @return 0 on success. On failure, will return one of the following:
+///         - 1 for invalid arguments
+///         - 2 for no match
+///         - 4 for out of mem (deprecated, WON'T HAPPEN)
+///         - 5 for entry not unique
+///
+int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
+{
+  return buf_do_map(maptype, arg, mode, is_abbrev, curbuf);
 }
 
 /*
