@@ -106,14 +106,8 @@ endfunction
 
 " Fetch the contents of a URL.
 function! s:download(url) abort
-  if executable('curl') && !empty(
-        \ filter(
-        \   split(
-        \     join(
-        \       filter(systemlist(['curl', '-V']), 'v:val =~# "^Protocols:\\s\\+"'),
-        \     ' '),
-        \   ' '),
-        \ 'v:val =~? "^https$"'))
+  let has_curl = executable('curl')
+  if has_curl && system(['curl', '-V']) =~# 'Protocols:.*https'
     let rv = s:system(['curl', '-sL', a:url], '', 1, 1)
     return s:shell_error ? 'curl error with '.a:url.': '.s:shell_error : rv
   elseif executable('python')
@@ -131,7 +125,9 @@ function! s:download(url) abort
           \ ? 'python urllib.request error: '.s:shell_error
           \ : rv
   endif
-  return 'missing `curl` and `python`, cannot make pypi request'
+  return 'missing `curl`'
+          \ .(has_curl ? ' with HTTPS support ' : ' ')
+          \ .'and `python`, cannot make pypi request'
 endfunction
 
 " Check for clipboard tools.
