@@ -2502,52 +2502,56 @@ int fix_input_buffer(char_u *buf, int len)
   return len;
 }
 
-/*
- * map[!]		    : show all key mappings
- * map[!] {lhs}		    : show key mapping for {lhs}
- * map[!] {lhs} {rhs}	    : set key mapping for {lhs} to {rhs}
- * noremap[!] {lhs} {rhs}   : same, but no remapping for {rhs}
- * unmap[!] {lhs}	    : remove key mapping for {lhs}
- * abbr			    : show all abbreviations
- * abbr {lhs}		    : show abbreviations for {lhs}
- * abbr {lhs} {rhs}	    : set abbreviation for {lhs} to {rhs}
- * noreabbr {lhs} {rhs}	    : same, but no remapping for {rhs}
- * unabbr {lhs}		    : remove abbreviation for {lhs}
- *
- * maptype: 0 for :map, 1 for :unmap, 2 for noremap.
- *
- * arg is pointer to any arguments. Note: arg cannot be a read-only string,
- * it will be modified.
- *
- * for :map   mode is NORMAL + VISUAL + SELECTMODE + OP_PENDING
- * for :map!  mode is INSERT + CMDLINE
- * for :cmap  mode is CMDLINE
- * for :imap  mode is INSERT
- * for :lmap  mode is LANGMAP
- * for :nmap  mode is NORMAL
- * for :vmap  mode is VISUAL + SELECTMODE
- * for :xmap  mode is VISUAL
- * for :smap  mode is SELECTMODE
- * for :omap  mode is OP_PENDING
- * for :tmap  mode is TERM_FOCUS
- *
- * for :abbr  mode is INSERT + CMDLINE
- * for :iabbr mode is INSERT
- * for :cabbr mode is CMDLINE
- *
- * Return 0 for success
- *	  1 for invalid arguments
- *	  2 for no match
- *	  4 for out of mem (deprecated, WON'T HAPPEN)
- *	  5 for entry not unique
- */
-int 
-do_map (
-    int maptype,
-    char_u *arg,
-    int mode,
-    int abbrev                     /* not a mapping but an abbreviation */
-)
+/// Set or remove a mapping or an abbreviation in the current buffer, OR
+/// display / (matching) mappings/abbreviations.
+/// 
+/// ```vim
+/// map[!]                          " show all key mappings
+/// map[!] {lhs}                    " show key mapping for {lhs}
+/// map[!] {lhs} {rhs}              " set key mapping for {lhs} to {rhs}
+/// noremap[!] {lhs} {rhs}          " same, but no remapping for {rhs}
+/// unmap[!] {lhs}                  " remove key mapping for {lhs}
+/// abbr                            " show all abbreviations
+/// abbr {lhs}                      " show abbreviations for {lhs}
+/// abbr {lhs} {rhs}                " set abbreviation for {lhs} to {rhs}
+/// noreabbr {lhs} {rhs}            " same, but no remapping for {rhs}
+/// unabbr {lhs}                    " remove abbreviation for {lhs}
+///
+/// for :map   mode is NORMAL + VISUAL + SELECTMODE + OP_PENDING
+/// for :map!  mode is INSERT + CMDLINE
+/// for :cmap  mode is CMDLINE
+/// for :imap  mode is INSERT
+/// for :lmap  mode is LANGMAP
+/// for :nmap  mode is NORMAL
+/// for :vmap  mode is VISUAL + SELECTMODE
+/// for :xmap  mode is VISUAL
+/// for :smap  mode is SELECTMODE
+/// for :omap  mode is OP_PENDING
+/// for :tmap  mode is TERM_FOCUS
+///
+/// for :abbr  mode is INSERT + CMDLINE
+/// for :iabbr mode is INSERT
+/// for :cabbr mode is CMDLINE
+/// ```
+///
+/// @param maptype  0 for |:map|, 1 for |:unmap|, 2 for |noremap|.
+/// @param arg      C-string containing the arguments of the map/abbrev
+///                 command, i.e. everything except the initial `:[X][nore]map`.
+///                 - Cannot be a read-only string; it will be modified.
+///                 - Should be stripped of leading and trailing whitespace,
+///                 else parsing will fail or {rhs} will contain literal
+///                 whitespace, respectively.
+/// @param mode   Bitflags representing the mode in which to set the mapping.
+///               See @ref get_map_mode.
+/// @param is_abbrev  True if setting an abbreviation, false otherwise.
+///
+/// @return 0 on success. On failure, will return one of the following:
+///         - 1 for invalid arguments
+///         - 2 for no match
+///         - 4 for out of mem (deprecated, WON'T HAPPEN)
+///         - 5 for entry not unique
+///
+int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
 {
   char_u      *keys;
   mapblock_T  *mp, **mpp;
@@ -2710,7 +2714,7 @@ do_map (
       goto theend;
     }
 
-    if (abbrev && maptype != 1) {
+    if (is_abbrev && maptype != 1) {
       /*
        * If an abbreviation ends in a keyword character, the
        * rest must be all keyword-char or all non-keyword-char.
@@ -2751,7 +2755,7 @@ do_map (
     }
   }
 
-  if (haskey && hasarg && abbrev)       /* if we will add an abbreviation */
+  if (haskey && hasarg && is_abbrev)       /* if we will add an abbreviation */
     no_abbr = FALSE;                    /* reset flag that indicates there are
                                                             no abbreviations */
 
@@ -2764,7 +2768,7 @@ do_map (
   if (map_table == curbuf->b_maphash && haskey && hasarg && maptype != 1) {
     /* need to loop over all global hash lists */
     for (hash = 0; hash < 256 && !got_int; ++hash) {
-      if (abbrev) {
+      if (is_abbrev) {
         if (hash != 0)          /* there is only one abbreviation list */
           break;
         mp = first_abbr;
@@ -2776,7 +2780,7 @@ do_map (
             && mp->m_keylen == len
             && unique
             && STRNCMP(mp->m_keys, keys, (size_t)len) == 0) {
-          if (abbrev)
+          if (is_abbrev)
             EMSG2(_("E224: global abbreviation already exists for %s"),
                 mp->m_keys);
           else
@@ -2795,7 +2799,7 @@ do_map (
   if (map_table != curbuf->b_maphash && !hasarg && maptype != 1) {
     /* need to loop over all global hash lists */
     for (hash = 0; hash < 256 && !got_int; ++hash) {
-      if (abbrev) {
+      if (is_abbrev) {
         if (hash != 0)          /* there is only one abbreviation list */
           break;
         mp = curbuf->b_first_abbr;
@@ -2832,7 +2836,7 @@ do_map (
        && !did_it && !got_int; ++round) {
     /* need to loop over all hash lists */
     for (hash = 0; hash < 256 && !got_int; ++hash) {
-      if (abbrev) {
+      if (is_abbrev) {
         if (hash > 0)           /* there is only one abbreviation list */
           break;
         mpp = abbr_table;
@@ -2861,7 +2865,7 @@ do_map (
                * ignore trailing space when matching with the
                * "lhs", since an abbreviation can't have
                * trailing space. */
-              if (n != len && (!abbrev || round || n > len
+              if (n != len && (!is_abbrev || round || n > len
                                || *skipwhite(keys + n) != NUL)) {
                 mpp = &(mp->m_next);
                 continue;
@@ -2879,7 +2883,7 @@ do_map (
               mpp = &(mp->m_next);
               continue;
             } else if (unique) {
-              if (abbrev)
+              if (is_abbrev)
                 EMSG2(_("E226: abbreviation already exists for %s"),
                     p);
               else
@@ -2911,7 +2915,7 @@ do_map (
              * May need to put this entry into another hash list.
              */
             new_hash = MAP_HASH(mp->m_mode, mp->m_keys[0]);
-            if (!abbrev && new_hash != hash) {
+            if (!is_abbrev && new_hash != hash) {
               *mpp = mp->m_next;
               mp->m_next = map_table[new_hash];
               map_table[new_hash] = mp;
@@ -2943,7 +2947,7 @@ do_map (
     if (!did_it
         && !did_local
         ) {
-      if (abbrev)
+      if (is_abbrev)
         MSG(_("No abbreviation found"));
       else
         MSG(_("No mapping found"));
@@ -2980,7 +2984,7 @@ do_map (
   mp->m_script_ID = current_SID;
 
   /* add the new entry in front of the abbrlist or maphash[] list */
-  if (abbrev) {
+  if (is_abbrev) {
     mp->m_next = *abbr_table;
     *abbr_table = mp;
   } else {
