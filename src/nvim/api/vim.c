@@ -1445,11 +1445,10 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     case 2:
       api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
       goto FAIL_AND_FREE;
-    case 5: {
+    case 5:
       api_set_error(err, kErrorTypeException,
                     "E227: mapping already exists for %s", lhs.data);
       goto FAIL_AND_FREE;
-    }
     default:  // unrecognized return code
       assert(false && "Unrecognized return code!");
       goto FAIL_AND_FREE;
