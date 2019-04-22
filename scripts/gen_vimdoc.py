@@ -219,6 +219,14 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
     return result
 
 
+def has_nonexcluded_params(nodes):
+    """Returns true if any of the given <parameterlist> elements has at least
+    one non-excluded item."""
+    for n in nodes:
+        if render_params(n) != '':
+            return True
+
+
 def render_params(parent, width=62):
     """Renders Doxygen <parameterlist> tag as Vim help text."""
     name_length = 0
@@ -356,7 +364,7 @@ def render_para(parent, indent='', width=62):
 
     chunks = [text]
     # Generate text from the gathered items.
-    if len(groups['params']) > 0:
+    if len(groups['params']) > 0 and has_nonexcluded_params(groups['params']):
         chunks.append('\nParameters: ~')
         for child in groups['params']:
             chunks.append(render_params(child, width=width))

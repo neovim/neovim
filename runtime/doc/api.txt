@@ -491,8 +491,6 @@ nvim_set_current_dir({dir})                           *nvim_set_current_dir()*
 nvim_get_current_line()                              *nvim_get_current_line()*
                 Gets the current line.
 
-                Parameters: ~
-
                 Return: ~
                     Current line string
 
@@ -504,8 +502,6 @@ nvim_set_current_line({line})                        *nvim_set_current_line()*
 
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.
-
-                Parameters: ~
 
 nvim_get_var({name})                                          *nvim_get_var()*
                 Gets a global (g:) variable.
@@ -1757,8 +1753,6 @@ nvim_ui_detach()                                            *nvim_ui_detach()*
                 Deactivates UI events on the channel.
 
                 Removes the client from the list of UIs. |nvim_list_uis()|
-
-                Parameters: ~
 
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
                 TODO: Documentation
