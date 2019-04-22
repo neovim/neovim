@@ -64,7 +64,7 @@ the batch array, nor after a batch not ending with "flush".
 By default, Nvim sends |ui-global| and |ui-grid-old| events; these suffice to
 implement a terminal-like interface. However there are two revisions of the
 grid part of the protocol. The newer revision |ui-linegrid|, enabled by
-`ext_linegrid` option, has a more effecient representation of text (especially
+`ext_linegrid` option, has a more efficient representation of text (especially
 highlighted text), and allows extensions that use multiple grids.
 
 The older revision is available and used by default only for backwards
@@ -83,35 +83,31 @@ for forward-compatibility. |api-contract|
 ==============================================================================
 UI startup							   *ui-startup*
 
-Nvim defines a standard procedure for how an embedding UI should interact with
-the startup phase of Nvim. When spawning the nvim process, use the |--embed| flag
-but not the |--headless| flag. The started Nvim process will pause before loading
-startup files and reading buffers, and give the UI a chance to invoke requests
-to do early initialization. As soon as the UI invokes |nvim_ui_attach()|, the
-startup will continue.
+UI embedders (clients that start Nvim with |--embed| and later call
+|nvim_ui_attach()|) must start Nvim without |--headless|: >
+    nvim --embed
+Nvim will pause before loading startup files and reading buffers, so the UI
+has a chance to invoke requests and do early initialization. Startup will
+continue as soon as the UI invokes |nvim_ui_attach()|.
 
-A simple UI only need to do a single |nvim_ui_attach()| request and then
-be prepared to handle any UI event. A more featureful UI, which might need
+A simple UI only needs to do a single |nvim_ui_attach()| request and then
+prepare to handle any UI event. A more featureful UI, which might need
 additional configuration of the nvim process, should use the following startup
 procedure:
 
-1. Invoke |nvim_get_api_info()|, if this is needed to setup the client library
-   and/or to get the list of supported UI extensions.
-2. At this time, any configuration that should be happen before init.vim
-   loading should be done. Buffers and windows are not available at this
-   point, but this could be used to set |g:| variables visible to init.vim
-3. If the UI wants to do additional setup after the init.vim file was loaded
-   register an autocmd for VimEnter at this point: >
-
-    nvim_command("autocmd VimEnter * call rpcrequest(1, 'vimenter')")
-
-<4.  Now invoke |nvim_ui_attach()|. The UI will need to handle keyboard input
-    at this point, as sourcing init.vim and loading buffers might lead to
-    blocking prompts.
-5.  If step 3 was used, nvim will send a blocking "vimenter" request to the
-    UI. Inside this request handler, the UI can safely do any initialization
-    before entering normal mode, for instance reading variables set by
-    init.vim.
+1. Invoke |nvim_get_api_info()|, if needed to setup the client library and/or
+   to get the list of supported UI extensions.
+2. Do any configuration that should be happen before user config is loaded.
+   Buffers and windows are not available at this point, but this could be used
+   to set |g:| variables visible to init.vim
+3. If the UI wants to do additional setup after user config is loaded,
+   register a VimEnter autocmd: >
+      nvim_command("autocmd VimEnter * call rpcrequest(1, 'vimenter')")
+<4. Now invoke |nvim_ui_attach()|. The UI must handle user input by now:
+   sourcing init.vim and loading buffers might lead to blocking prompts.
+5. If step 3 was used, Nvim will send a blocking "vimenter" request to the UI.
+   Inside this request handler, the UI can safely do any initialization before
+   entering normal mode, for example reading variables set by init.vim.
 
 ==============================================================================
 Global Events							    *ui-global*
@@ -220,7 +216,7 @@ Grid Events (line-based)					  *ui-linegrid*
 
 These events are used if `ext_linegrid` option is set (recommended for all new
 UIs). The biggest change compared to previous revision is to use a single
-event `grid_line` to update the contents of a screen line (where the old
+`grid_line` event to update the contents of a screen line (where the old
 protocol used a combination of cursor, highlight and text events)
 
 Most of these events take a `grid` index as first parameter.  Grid 1 is the
@@ -231,7 +227,7 @@ created.  To enable per-window grids, `ext_multigrid` option should be set (see
 |ui-multigrid|).
 
 Highlight attribute groups are predefined. UIs should maintain a table to map
-numerical highlight `id`:s to the actual attributes.
+numerical highlight ids to the actual attributes.
 
 ["grid_resize", grid, width, height]
 	Resize a `grid`. If `grid` wasn't seen by the client before, a new grid is
@@ -242,12 +238,12 @@ numerical highlight `id`:s to the actual attributes.
 	special colors respectively. `cterm_fg` and `cterm_bg` specifies the
 	default color codes to use in a 256-color terminal.
 
-	The rgb values will always be valid colors, by default. If no
+	The RGB values will always be valid colors, by default. If no
 	colors have been set, they will default to black and white, depending
 	on 'background'. By setting the `ext_termcolors` option, instead
-	-1 will be used for unset colors. This is mostly useful for a
-	TUI implementation, where using the terminal emulators builitn
-	defaults are expected.
+	-1 will be used for unset colors. This is mostly useful for a TUI
+	implementation, where using the terminal builtin ("ANSI") defaults
+	are expected.
 
 	Note: unlike the corresponding events in the first revision, the
 	screen is not always cleared after sending this event. The GUI has to
@@ -275,7 +271,7 @@ numerical highlight `id`:s to the actual attributes.
 	All boolean keys default to false, and will only be sent when they
 	are true.
 
-	Highlights are always transmitted both for both the rgb format and as
+	Highlights are always transmitted both for both the RGB format and as
 	terminal 256-color codes, as the `rgb_attr` and `cterm_attr` parameters
 	respectively. The |ui-rgb| option has no effect effect anymore.
 	Most external UIs will only need to store and use the `rgb_attr`
@@ -284,17 +280,17 @@ numerical highlight `id`:s to the actual attributes.
 	`id` 0 will always be used for the default highlight with colors defined
 	by `default_colors_set` and no styles applied.
 
-	Note: `id`:s can be reused if Nvim's internal highlight table is full.
-	In this case, Nvim will always issue redraws of screen cells that are
-	affected by redefined `id`:s, so UIs do not need to keep track of this
+	Note: Nvim may reuse `id` values if its internal highlight table is full.
+	In that case Nvim will always issue redraws of screen cells that are
+	affected by redefined ids, so UIs do not need to keep track of this
 	themselves.
 
-	`info` is an empty array per default, and will be used by the
-	|ui-hlstate| extension explaned below.
+	`info` is an empty array by default, and will be used by the
+	|ui-hlstate| extension explained below.
 
 							    *ui-event-grid_line*
 ["grid_line", grid, row, col_start, cells]
-	Redraw a continous part of a `row` on a `grid`, starting at the column
+	Redraw a continuous part of a `row` on a `grid`, starting at the column
 	`col_start`. `cells` is an array of arrays each with 1 to 3 items:
 	`[text(, hl_id, repeat)]` . `text` is the UTF-8 text that should be put in
 	a cell, with the highlight `hl_id` defined by a previous `hl_attr_define`
@@ -407,7 +403,7 @@ option is not set. New UIs should use |ui-linegrid|.
 	updates. All boolean keys default to false.
 
 	`foreground`:	foreground color.
-	`background`:	backround color.
+	`background`:	background color.
 	`special`:	color to use for underline and undercurl, when present.
 	`reverse`:	reverse video. Foreground and background colors are
 			switched.
@@ -465,10 +461,10 @@ Detailed highlight state Extension 				  *ui-hlstate*
 Only sent if `ext_hlstate` option is set in |ui-options|. `ext_hlstate` implies
 `ext_linegrid`.
 
-By default, nvim will only describe grid cells using the final calculated
-higlight attributes, as described by the dict keys in |ui-event-highlight_set|.
+By default Nvim will only describe grid cells using the final calculated
+highlight attributes, as described by the dict keys in |ui-event-highlight_set|.
 The `ext_hlstate` extension allows to the UI to also receive a semantic
-describtion of the higlights active in a cell. In this mode highlights will be
+description of the highlights active in a cell. In this mode highlights will be
 predefined in a table, see |ui-event-hl_attr_define| and |ui-event-grid_line|.
 The `info` parameter in `hl_attr_define` will contain a semantic description
 of the highlights. As highlight groups can be combined, this will be an array
@@ -476,14 +472,13 @@ of items, with the item with highest priority last. Each item is a dictionary
 with the following possible keys:
 
     `kind`:	always present. One of the following values:
-	"ui":       A builtin ui highlight.
-	"syntax":   highlight applied to a buffer by a syntax declaration or
-	            other runtime/plugin functionallity such as
+	"ui":       Builtin UI highlight. |highlight-groups|
+	"syntax":   Highlight applied to a buffer by a syntax declaration or
+	            other runtime/plugin functionality such as
 		    |nvim_buf_add_highlight()|
 	"terminal": highlight from a process running in a |terminal-emulator|.
-		    Contains no futher semantic information.
-    `ui_name`:	Name of the builtin highlight. See |highlight-groups| for
-	        possible values. Only present for "ui".
+		    Contains no further semantic information.
+    `ui_name`:	Highlight name from |highlight-groups|. Only for "ui" kind.
     `hi_name`:	Name of the final |:highlight| group where the used
 		attributes are defined.
     `id`:	Unique numeric id representing this item.
@@ -532,7 +527,7 @@ tabs.
 
 ["win_external_pos", grid, win]
 	Display or reconfigure external window `win`. The window should be
-	displayed as a separate top-level window in the desktop envirionment,
+	displayed as a separate top-level window in the desktop environment,
 	or something similar.
 
 ["win_hide", grid]

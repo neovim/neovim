@@ -206,17 +206,15 @@ Highlights are registered using the |nvim_buf_add_highlight()| function. If an
 external highlighter plugin wants to add many highlights in a batch,
 performance can be improved by calling |nvim_buf_add_highlight()| as an
 asynchronous notification, after first (synchronously) reqesting a source id.
-Example using the Nvim python-client:
+
+Example using the Python API client (|pynvim|):
 >
     src = vim.new_highlight_source()
-
     buf = vim.current.buffer
     for i in range(5):
         buf.add_highlight("String",i,0,-1,src_id=src)
-
-    # some time later
-
-    buf.clear_highlight(src)
+    # some time later ...
+    buf.clear_namespace(src)
 <
 If the highlights don't need to be deleted or updated, just pass -1 as
 src_id (this is the default in python). Use |nvim_buf_clear_namespace()| to
@@ -224,13 +222,12 @@ clear highlights from a specific source, in a specific line range or the
 entire buffer by passing in the line range 0, -1 (the latter is the default in
 python as used above).
 
-An example of calling the api from vimscript: >
+Example using the API from Vimscript: >
 
     call nvim_buf_set_lines(0, 0, 0, v:true, ["test text"])
     let src = nvim_buf_add_highlight(0, 0, "String", 1, 0, 4)
     call nvim_buf_add_highlight(0, src, "Identifier", 0, 5, -1)
-
-    " later
+    " some time later ...
     call nvim_buf_clear_namespace(0, src, 0, -1)
 
 
@@ -494,8 +491,6 @@ nvim_set_current_dir({dir})                           *nvim_set_current_dir()*
 nvim_get_current_line()                              *nvim_get_current_line()*
                 Gets the current line.
 
-                Parameters: ~
-
                 Return: ~
                     Current line string
 
@@ -507,8 +502,6 @@ nvim_set_current_line({line})                        *nvim_set_current_line()*
 
 nvim_del_current_line()                              *nvim_del_current_line()*
                 Deletes the current line.
-
-                Parameters: ~
 
 nvim_get_var({name})                                          *nvim_get_var()*
                 Gets a global (g:) variable.
@@ -656,6 +649,7 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 For a general overview of floats, see |api-floatwin|.
 
                 Exactly one of `external` and `relative` must be specified.
+                The `width` and `height` of the new window must be specified.
 
                 With editor positioning row=0, col=0 refers to the top-left
                 corner of the screen-grid and row=Lines-1, Columns-1 refers to
@@ -697,7 +691,7 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                               - `height` : window height (in character cells).
                                 Minimum of 1.
                               - `width` : window width (in character cells).
-                                Minimum of 2.
+                                Minimum of 1.
                               - `row` : row position. Screen cell height are
                                 used as unit. Can be floating point.
                               - `col` : column position. Screen cell width is
@@ -1161,7 +1155,7 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                     Line count, or 0 for unloaded buffer. |api-buffer|
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
-                Activate updates from this buffer to the current channel.
+                Activates buffer-update events on the channel.
 
                 Parameters: ~
                     {buffer}       Buffer handle, or 0 for current buffer
@@ -1180,7 +1174,7 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
                     True.
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
-                Deactivate updates from this buffer to the current channel.
+                Deactivates buffer-update events on the channel.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -1738,10 +1732,27 @@ nvim_tabpage_is_valid({tabpage})                     *nvim_tabpage_is_valid()*
 UI Functions                                                          *api-ui*
 
 nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
-                TODO: Documentation
+                Activates UI events on the channel.
+
+                Entry point of all UI clients. Allows |--embed| to continue
+                startup. Implies that the client is ready to show the UI. Adds
+                the client to the list of UIs. |nvim_list_uis()|
+
+                Note:
+                    If multiple UI clients are attached, the global screen
+                    dimensions degrade to the smallest client. E.g. if client
+                    A requests 80x40 but client B requests 200x100, the global
+                    screen has size 80x40.
+
+                Parameters: ~
+                    {width}    Requested screen columns
+                    {height}   Requested screen rows
+                    {options}  |ui-options| map
 
 nvim_ui_detach()                                            *nvim_ui_detach()*
-                TODO: Documentation
+                Deactivates UI events on the channel.
+
+                Removes the client from the list of UIs. |nvim_list_uis()|
 
 nvim_ui_try_resize({width}, {height})                   *nvim_ui_try_resize()*
                 TODO: Documentation

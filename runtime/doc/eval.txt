@@ -1502,7 +1502,8 @@ v:dying		Normally zero.	When a deadly signal is caught it's set to
 v:exiting	Exit code, or |v:null| if not exiting. |VimLeave|
 
 					*v:errmsg* *errmsg-variable*
-v:errmsg	Last given error message.  It's allowed to set this variable.
+v:errmsg	Last given error message.
+		Modifiable (can be set).
 		Example: >
 	:let v:errmsg = ""
 	:silent! next
@@ -1827,7 +1828,8 @@ v:shell_error	Result of the last shell command.  When non-zero, the last
 	:endif
 <
 					*v:statusmsg* *statusmsg-variable*
-v:statusmsg	Last given status message.  It's allowed to set this variable.
+v:statusmsg	Last given status message.
+		Modifiable (can be set).
 
 					*v:stderr* *stderr-variable*
 v:stderr	|channel-id| corresponding to stderr. The value is always 2;
@@ -1893,9 +1895,9 @@ v:termresponse	The escape sequence returned by the terminal for the DA
 v:testing	Must be set before using `test_garbagecollect_now()`.
 
 				*v:this_session* *this_session-variable*
-v:this_session	Full filename of the last loaded or saved session file.  See
-		|:mksession|.  It is allowed to set this variable.  When no
-		session file has been saved, this variable is empty.
+v:this_session	Full filename of the last loaded or saved session file.
+		Empty when no session file has been saved.  See |:mksession|.
+		Modifiable (can be set).
 
 					*v:throwpoint* *throwpoint-variable*
 v:throwpoint	The point where the exception most recently caught and not
@@ -1922,22 +1924,20 @@ v:val		Value of the current item of a |List| or |Dictionary|.	Only
 		|filter()|.  Read-only.
 
 					*v:version* *version-variable*
-v:version	Version number of Vim: Major version number times 100 plus
-		minor version number.  Version 5.0 is 500.  Version 5.1 (5.01)
-		is 501.  Read-only.  "version" also works, for backwards
-		compatibility.
-		Use |has()| to check if a certain patch was included, e.g.: >
-			if has("patch-7.4.123")
-<		Note that patch numbers are specific to the version, thus both
-		version 5.0 and 5.1 may have a patch 123, but these are
-		completely different.
+v:version	Vim version number: major version times 100 plus minor
+		version.  Vim 5.0 is 500, Vim 5.1 is 501.
+		Read-only.
+		Use |has()| to check the Nvim (not Vim) version: >
+			:if has("nvim-0.2.1")
+<
 
 				*v:vim_did_enter* *vim_did_enter-variable*
-v:vim_did_enter	Zero until most of startup is done.  It is set to one just
-		before |VimEnter| autocommands are triggered.
+v:vim_did_enter	0 during startup, 1 just before |VimEnter|.
+		Read-only.
 
 					*v:warningmsg* *warningmsg-variable*
-v:warningmsg	Last given warning message.  It's allowed to set this variable.
+v:warningmsg	Last given warning message.
+		Modifiable (can be set).
 
 					*v:windowid* *windowid-variable*
 v:windowid	Application-specific window "handle" which may be set by any
@@ -4674,8 +4674,8 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 		{feature} argument is a feature name like "nvim-0.2.1" or
 		"win32", see below.  See also |exists()|.
 
-		Vim's compile-time feature names (prefixed with "+") are not
-		supported because Nvim is always compiled with ALL possible
+		Vim's compile-time feature-names (prefixed with "+") are not
+		recognized because Nvim is always compiled with all possible
 		features. |feature-compile| 
 
 		Feature names can be:
@@ -4704,14 +4704,12 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 			wsl		WSL (Windows Subsystem for Linux) system
 
 							*has-patch*
-		3.  Vim patches.  The "patch123" feature means that Vim patch
-		    123 has been included.  This does not check the Vim
-		    version, you could check |v:version| for that.
-		    Example: >
+		3.  Vim patch. For example the "patch123" feature means that
+		    Vim patch 123 at the current |v:version| was included: >
 			:if v:version > 602 || v:version == 602 && has("patch148")
 
-<		5.  Vim version. For example the "patch-7.4.237" feature means
-		    that the Vim version is 7.4.237 or later. >
+<		4.  Vim version. For example the "patch-7.4.237" feature means
+		    that Nvim is Vim-compatible to version 7.4.237 or later. >
 			:if has("patch-7.4.237")
 
 

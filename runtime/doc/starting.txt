@@ -195,34 +195,33 @@ argument.
 -E		Start Nvim in Ex mode |gQ|.
 
 		If stdin is not a TTY:
-		  -e reads stdin as Ex commands.
+		  -e reads/executes stdin as Ex commands.
 		  -E reads stdin as text (into buffer 1).
 
-							*-es* *-Es*
--es							*-s-ex* *silent-mode*
--Es		Silent or batch mode: execute Ex commands from a file instead
-		of a terminal.  Special case of |-s| (which takes an argument
-		while "-es" doesn't).  Disables most prompts, messages,
-		warnings and errors.
-		Output of these commands is displayed (to stdout):
+-es						*-es* *-Es* *-s-ex* *silent-mode*
+-Es		Silent or batch mode.  Special case of |-s| (which takes an
+		argument while "-es" doesn't).  Disables most prompts,
+		messages, warnings and errors.
+
+		-es reads/executes stdin as Ex commands. >
+			printf "put ='foo'\n%%print\n" | nvim -es
+
+<		-Es reads stdin as text (into buffer 1).  Use |-c| or "+" to
+		send commands. >
+			printf "foo\n" | nvim -Es +"%print"
+
+<		Output of these commands is displayed (to stdout):
 			:print
 			:list
 			:number
-			:set      to display option values.
-		When 'verbose' is set messages are printed to stderr, e.g.: >
+			:set      (to display option values)
+		When 'verbose' is set messages are printed to stderr. >
 			echo foo | nvim -V1 -es
-<
-		User |init.vim| is skipped (unless given with |-u|).
+
+<		User |init.vim| is skipped (unless given with |-u|).
 		Swap file is skipped (like |-n|).
-		|$TERM| is not used.
+		User |shada| is loaded (unless "-i NONE" is given).
 
-		If stdin is not a TTY:
-		  -es reads stdin as Ex commands.
-		  -Es reads stdin as text (into buffer 1).
-
-		Example: >
-			printf "put ='foo'\n%%print\n" | nvim -es
-<
 							*-b*
 -b		Binary mode.  File I/O will only recognize <NL> to separate
 		lines.  The 'expandtab' option will be reset.  The 'textwidth'
@@ -355,35 +354,33 @@ argument.
 --embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
 		embed and control Nvim via the |rpc-api|.
 
-		By default nvim will wait for the embedding process to call
-		`nvim_ui_attach` before sourcing startup files and reading
-		buffers.  This is so that UI can show startup messages and
-		possible swap file dialog for the first loaded file.  The
-		process can do requests before the `nvim_ui_attach`, for
-		instance a `nvim_get_api_info` call so that UI features can be
-		safely detected by the UI before attaching.
+		Waits for the client ("embedder") to call |nvim_ui_attach()|
+		before sourcing startup files and reading buffers, so that UIs
+		can deterministically handle (display) early messages,
+		dialogs, etc.  The client can do other requests before
+		`nvim_ui_attach` (e.g. `nvim_get_api_info` for feature-detection).
+		During this pre-startup phase the user config is of course not
+		available (similar to `--cmd`).
 
-		See |ui-startup| for more information about UI startup.
+		Embedders _not_ using the UI protocol must pass |--headless|: >
+		    nvim --embed --headless
 
-		To embed nvim without using the UI protocol, `--headless` should
-		be supplied together with `--embed`. Then initialization is
-		performed without waiting for an UI. This is also equivalent
-		to the following alternative: >
-			nvim --headless --cmd "call stdioopen({'rpc': v:true})"
-<
-		See also |channel-stdio|.
+<		Then startup will continue without waiting for `nvim_ui_attach`.
+		This is equivalent to: >
+		    nvim --headless --cmd "call stdioopen({'rpc': v:true})"
+
+<		See also: |ui-startup| |channel-stdio|
 
 							*--headless*
---headless 	Start nvim without an UI. The TUI is not used, so stdio
-		can be used as an arbitrary communication channel.
-		|channel-stdio| When used together with `--embed`, do not wait
-		for the embedder to attach an UI.
+--headless 	Start without UI, and do not wait for `nvim_ui_attach`. The
+		builtin TUI is not used, so stdio works as an arbitrary
+		communication channel. |channel-stdio| 
 
 		Also useful for scripting (tests) to see messages that would
 		not be printed by |-es|.
 
 		To detect if a UI is available, check if |nvim_list_uis()| is
-		empty in or after |VimEnter|.
+		empty during or after |VimEnter|.
 
 		To read stdin as text, "-" must be given explicitly:
 		--headless cannot assume that stdin is just text. >

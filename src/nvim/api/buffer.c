@@ -97,7 +97,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
-/// Activate updates from this buffer to the current channel.
+/// Activates buffer-update events on the channel.
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
@@ -106,7 +106,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
 ///        a `nvim_buf_changedtick_event`
 /// @param  opts  Optional parameters. Reserved for future use.
-/// @param[out] err Details of an error that may have occurred
+/// @param[out] err Error details, if any
 /// @return False when updates couldn't be enabled because the buffer isn't
 ///         loaded or `opts` contained an invalid key; otherwise True.
 Boolean nvim_buf_attach(uint64_t channel_id,
@@ -129,12 +129,12 @@ Boolean nvim_buf_attach(uint64_t channel_id,
 
   return buf_updates_register(buf, channel_id, send_buffer);
 }
-//
-/// Deactivate updates from this buffer to the current channel.
+
+/// Deactivates buffer-update events on the channel.
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
-/// @param[out] err Details of an error that may have occurred
+/// @param[out] err Error details, if any
 /// @return False when updates couldn't be disabled because the buffer
 ///         isn't loaded; otherwise True.
 Boolean nvim_buf_detach(uint64_t channel_id,
