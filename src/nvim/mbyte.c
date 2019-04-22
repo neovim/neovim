@@ -1063,75 +1063,78 @@ int utf_class_tab(const int c, const uint64_t *const chartab)
     unsigned int first;
     unsigned int last;
     unsigned int class;
-  } classes[] =
-  {
-    {0x037e, 0x037e, 1},                /* Greek question mark */
-    {0x0387, 0x0387, 1},                /* Greek ano teleia */
-    {0x055a, 0x055f, 1},                /* Armenian punctuation */
-    {0x0589, 0x0589, 1},                /* Armenian full stop */
-    {0x05be, 0x05be, 1},
-    {0x05c0, 0x05c0, 1},
-    {0x05c3, 0x05c3, 1},
-    {0x05f3, 0x05f4, 1},
-    {0x060c, 0x060c, 1},
-    {0x061b, 0x061b, 1},
-    {0x061f, 0x061f, 1},
-    {0x066a, 0x066d, 1},
-    {0x06d4, 0x06d4, 1},
-    {0x0700, 0x070d, 1},                /* Syriac punctuation */
-    {0x0964, 0x0965, 1},
-    {0x0970, 0x0970, 1},
-    {0x0df4, 0x0df4, 1},
-    {0x0e4f, 0x0e4f, 1},
-    {0x0e5a, 0x0e5b, 1},
-    {0x0f04, 0x0f12, 1},
-    {0x0f3a, 0x0f3d, 1},
-    {0x0f85, 0x0f85, 1},
-    {0x104a, 0x104f, 1},                /* Myanmar punctuation */
-    {0x10fb, 0x10fb, 1},                /* Georgian punctuation */
-    {0x1361, 0x1368, 1},                /* Ethiopic punctuation */
-    {0x166d, 0x166e, 1},                /* Canadian Syl. punctuation */
-    {0x1680, 0x1680, 0},
-    {0x169b, 0x169c, 1},
-    {0x16eb, 0x16ed, 1},
-    {0x1735, 0x1736, 1},
-    {0x17d4, 0x17dc, 1},                /* Khmer punctuation */
-    {0x1800, 0x180a, 1},                /* Mongolian punctuation */
-    {0x2000, 0x200b, 0},                /* spaces */
-    {0x200c, 0x2027, 1},                /* punctuation and symbols */
-    {0x2028, 0x2029, 0},
-    {0x202a, 0x202e, 1},                /* punctuation and symbols */
-    {0x202f, 0x202f, 0},
-    {0x2030, 0x205e, 1},                /* punctuation and symbols */
-    {0x205f, 0x205f, 0},
-    {0x2060, 0x27ff, 1},                /* punctuation and symbols */
-    {0x2070, 0x207f, 0x2070},           /* superscript */
-    {0x2080, 0x2094, 0x2080},           /* subscript */
-    {0x20a0, 0x27ff, 1},                /* all kinds of symbols */
-    {0x2800, 0x28ff, 0x2800},           /* braille */
-    {0x2900, 0x2998, 1},                /* arrows, brackets, etc. */
-    {0x29d8, 0x29db, 1},
-    {0x29fc, 0x29fd, 1},
-    {0x2e00, 0x2e7f, 1},                /* supplemental punctuation */
-    {0x3000, 0x3000, 0},                /* ideographic space */
-    {0x3001, 0x3020, 1},                /* ideographic punctuation */
-    {0x3030, 0x3030, 1},
-    {0x303d, 0x303d, 1},
-    {0x3040, 0x309f, 0x3040},           /* Hiragana */
-    {0x30a0, 0x30ff, 0x30a0},           /* Katakana */
-    {0x3300, 0x9fff, 0x4e00},           /* CJK Ideographs */
-    {0xac00, 0xd7a3, 0xac00},           /* Hangul Syllables */
-    {0xf900, 0xfaff, 0x4e00},           /* CJK Ideographs */
-    {0xfd3e, 0xfd3f, 1},
-    {0xfe30, 0xfe6b, 1},                /* punctuation forms */
-    {0xff00, 0xff0f, 1},                /* half/fullwidth ASCII */
-    {0xff1a, 0xff20, 1},                /* half/fullwidth ASCII */
-    {0xff3b, 0xff40, 1},                /* half/fullwidth ASCII */
-    {0xff5b, 0xff65, 1},                /* half/fullwidth ASCII */
-    {0x20000, 0x2a6df, 0x4e00},         /* CJK Ideographs */
-    {0x2a700, 0x2b73f, 0x4e00},         /* CJK Ideographs */
-    {0x2b740, 0x2b81f, 0x4e00},         /* CJK Ideographs */
-    {0x2f800, 0x2fa1f, 0x4e00},         /* CJK Ideographs */
+  } classes[] = {
+    { 0x037e, 0x037e, 1 },              // Greek question mark
+    { 0x0387, 0x0387, 1 },              // Greek ano teleia
+    { 0x055a, 0x055f, 1 },              // Armenian punctuation
+    { 0x0589, 0x0589, 1 },              // Armenian full stop
+    { 0x05be, 0x05be, 1 },
+    { 0x05c0, 0x05c0, 1 },
+    { 0x05c3, 0x05c3, 1 },
+    { 0x05f3, 0x05f4, 1 },
+    { 0x060c, 0x060c, 1 },
+    { 0x061b, 0x061b, 1 },
+    { 0x061f, 0x061f, 1 },
+    { 0x066a, 0x066d, 1 },
+    { 0x06d4, 0x06d4, 1 },
+    { 0x0700, 0x070d, 1 },              // Syriac punctuation
+    { 0x0964, 0x0965, 1 },
+    { 0x0970, 0x0970, 1 },
+    { 0x0df4, 0x0df4, 1 },
+    { 0x0e4f, 0x0e4f, 1 },
+    { 0x0e5a, 0x0e5b, 1 },
+    { 0x0f04, 0x0f12, 1 },
+    { 0x0f3a, 0x0f3d, 1 },
+    { 0x0f85, 0x0f85, 1 },
+    { 0x104a, 0x104f, 1 },              // Myanmar punctuation
+    { 0x10fb, 0x10fb, 1 },              // Georgian punctuation
+    { 0x1361, 0x1368, 1 },              // Ethiopic punctuation
+    { 0x166d, 0x166e, 1 },              // Canadian Syl. punctuation
+    { 0x1680, 0x1680, 0 },
+    { 0x169b, 0x169c, 1 },
+    { 0x16eb, 0x16ed, 1 },
+    { 0x1735, 0x1736, 1 },
+    { 0x17d4, 0x17dc, 1 },              // Khmer punctuation
+    { 0x1800, 0x180a, 1 },              // Mongolian punctuation
+    { 0x2000, 0x200b, 0 },              // spaces
+    { 0x200c, 0x2027, 1 },              // punctuation and symbols
+    { 0x2028, 0x2029, 0 },
+    { 0x202a, 0x202e, 1 },              // punctuation and symbols
+    { 0x202f, 0x202f, 0 },
+    { 0x2030, 0x205e, 1 },              // punctuation and symbols
+    { 0x205f, 0x205f, 0 },
+    { 0x2060, 0x27ff, 1 },              // punctuation and symbols
+    { 0x2070, 0x207f, 0x2070 },         // superscript
+    { 0x2080, 0x2094, 0x2080 },         // subscript
+    { 0x20a0, 0x27ff, 1 },              // all kinds of symbols
+    { 0x2800, 0x28ff, 0x2800 },         // braille
+    { 0x2900, 0x2998, 1 },              // arrows, brackets, etc.
+    { 0x29d8, 0x29db, 1 },
+    { 0x29fc, 0x29fd, 1 },
+    { 0x2e00, 0x2e7f, 1 },              // supplemental punctuation
+    { 0x3000, 0x3000, 0 },              // ideographic space
+    { 0x3001, 0x3020, 1 },              // ideographic punctuation
+    { 0x3030, 0x3030, 1 },
+    { 0x303d, 0x303d, 1 },
+    { 0x3040, 0x309f, 0x3040 },         // Hiragana
+    { 0x30a0, 0x30ff, 0x30a0 },         // Katakana
+    { 0x3300, 0x9fff, 0x4e00 },         // CJK Ideographs
+    { 0xac00, 0xd7a3, 0xac00 },         // Hangul Syllables
+    { 0xf900, 0xfaff, 0x4e00 },         // CJK Ideographs
+    { 0xfd3e, 0xfd3f, 1 },
+    { 0xfe30, 0xfe6b, 1 },              // punctuation forms
+    { 0xff00, 0xff0f, 1 },              // half/fullwidth ASCII
+    { 0xff1a, 0xff20, 1 },              // half/fullwidth ASCII
+    { 0xff3b, 0xff40, 1 },              // half/fullwidth ASCII
+    { 0xff5b, 0xff65, 1 },              // half/fullwidth ASCII
+    { 0x1d000, 0x1d24f, 1 },            // Musical notation
+    { 0x1d400, 0x1d7ff, 1 },            // Mathematical Alphanumeric Symbols
+    { 0x1f000, 0x1f2ff, 1 },            // Game pieces; enclosed characters
+    { 0x1f300, 0x1f9ff, 1 },            // Many symbol blocks
+    { 0x20000, 0x2a6df, 0x4e00 },       // CJK Ideographs
+    { 0x2a700, 0x2b73f, 0x4e00 },       // CJK Ideographs
+    { 0x2b740, 0x2b81f, 0x4e00 },       // CJK Ideographs
+    { 0x2f800, 0x2fa1f, 0x4e00 },       // CJK Ideographs
   };
   int bot = 0;
   int top = ARRAY_SIZE(classes) - 1;

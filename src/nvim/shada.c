@@ -856,13 +856,13 @@ static int msgpack_sd_writer_write(void *data, const char *buf, size_t len)
   return 0;
 }
 
-/// Check whether writing to shada file was disabled with -i NONE
+/// Check whether writing to shada file was disabled ("-i NONE" or "--clean").
 ///
 /// @return true if it was disabled, false otherwise.
 static bool shada_disabled(void)
   FUNC_ATTR_PURE
 {
-  return used_shada_file != NULL && STRCMP(used_shada_file, "NONE") == 0;
+  return strequal(p_shadafile, "NONE");
 }
 
 /// Read ShaDa file
@@ -1542,14 +1542,14 @@ static char *shada_filename(const char *file)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (file == NULL || *file == NUL) {
-    if (used_shada_file != NULL) {
-      file = used_shada_file;
+    if (p_shadafile != NULL && *p_shadafile != NUL) {
+      file = p_shadafile;
     } else {
       if ((file = find_shada_parameter('n')) == NULL || *file == NUL) {
         file =  shada_get_default_file();
       }
       // XXX It used to be one level lower, so that whatever is in
-      //     `used_shada_file` was expanded. I intentionally moved it here
+      //     `p_shadafile` was expanded. I intentionally moved it here
       //     because various expansions must have already be done by the shell.
       //     If shell is not performing them then they should be done in main.c
       //     where arguments are parsed, *not here*.

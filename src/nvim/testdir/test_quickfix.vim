@@ -430,6 +430,19 @@ func Xtest_browse(cchar)
 
   call delete('Xqftestfile1')
   call delete('Xqftestfile2')
+
+  " Should be able to use next/prev with invalid entries
+  Xexpr ""
+  call assert_equal(0, g:Xgetlist({'idx' : 0}).idx)
+  call assert_equal(0, g:Xgetlist({'size' : 0}).size)
+  Xaddexpr ['foo', 'bar', 'baz', 'quux', 'shmoo']
+  call assert_equal(5, g:Xgetlist({'size' : 0}).size)
+  Xlast
+  call assert_equal(5, g:Xgetlist({'idx' : 0}).idx)
+  Xfirst
+  call assert_equal(1, g:Xgetlist({'idx' : 0}).idx)
+  2Xnext
+  call assert_equal(3, g:Xgetlist({'idx' : 0}).idx)
 endfunc
 
 func Test_browse()
@@ -468,6 +481,19 @@ func s:test_xhelpgrep(cchar)
 
   " This wipes out the buffer, make sure that doesn't cause trouble.
   Xclose
+
+  if a:cchar == 'l'
+      " When a help window is present, running :lhelpgrep should reuse the
+      " help window and not the current window
+      new | only
+      call g:Xsetlist([], 'f')
+      help index.txt
+      wincmd w
+      lhelpgrep quickfix
+      call assert_equal(1, winnr())
+      call assert_notequal([], getloclist(1))
+      call assert_equal([], getloclist(2))
+  endif
 
   new | only
 
@@ -1666,6 +1692,10 @@ func HistoryTest(cchar)
   call assert_equal('  error list 1 of 3; 1 ' . common, res[0])
   call assert_equal('  error list 2 of 3; 2 ' . common, res[1])
   call assert_equal('> error list 3 of 3; 3 ' . common, res[2])
+
+  call g:Xsetlist([], 'f')
+  let l = split(execute(a:cchar . 'hist'), "\n")
+  call assert_equal('No entries', l[0])
 endfunc
 
 func Test_history()
@@ -1844,6 +1874,11 @@ func Xproperty_tests(cchar)
     let l = g:Xgetlist({'items':1})
     call assert_equal(0, len(l.items))
 
+    call g:Xsetlist([], 'r', {'title' : 'TestTitle'})
+    call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F1', 'lnum' : 10, 'text' : 'L10'}]})
+    call g:Xsetlist([], 'r', {'items' : [{'filename' : 'F1', 'lnum' : 10, 'text' : 'L10'}]})
+    call assert_equal('TestTitle', g:Xgetlist({'title' : 1}).title)
+
     " The following used to crash Vim with address sanitizer
     call g:Xsetlist([], 'f')
     call g:Xsetlist([], 'a', {'items' : [{'filename':'F1', 'lnum':10}]})
@@ -1886,10 +1921,10 @@ func Xproperty_tests(cchar)
     call g:Xsetlist([], 'r', l2)
     let newl1=g:Xgetlist({'nr':1,'all':1})
     let newl2=g:Xgetlist({'nr':2,'all':1})
-    call assert_equal(':Fruits', newl1.title)
+    call assert_equal('Fruits', newl1.title)
     call assert_equal(['Fruits'], newl1.context)
     call assert_equal('Line20', newl1.items[0].text)
-    call assert_equal(':Colors', newl2.title)
+    call assert_equal('Colors', newl2.title)
     call assert_equal(['Colors'], newl2.context)
     call assert_equal('Line10', newl2.items[0].text)
     call g:Xsetlist([], 'f')

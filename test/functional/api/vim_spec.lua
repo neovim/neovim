@@ -49,9 +49,19 @@ describe('API', function()
 
   it('handles errors in async requests', function()
     local error_types = meths.get_api_info()[2].error_types
-    nvim_async("bogus")
+    nvim_async('bogus')
     eq({'notification', 'nvim_error_event',
         {error_types.Exception.id, 'Invalid method: nvim_bogus'}}, next_msg())
+    -- error didn't close channel.
+    eq(2, eval('1+1'))
+  end)
+
+  it('failed async request emits nvim_error_event', function()
+    local error_types = meths.get_api_info()[2].error_types
+    nvim_async('command', 'bogus')
+    eq({'notification', 'nvim_error_event',
+        {error_types.Exception.id, 'Vim:E492: Not an editor command: bogus'}},
+        next_msg())
     -- error didn't close channel.
     eq(2, eval('1+1'))
   end)

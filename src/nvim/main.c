@@ -871,6 +871,9 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0) {
             want_argument = true;
             argv_idx += 11;
+          } else if (STRNICMP(argv[0] + argv_idx, "clean", 5) == 0) {
+            parmp->use_vimrc = "NONE";
+            set_option_value("shadafile", 0L, "NONE", 0);
           } else {
             if (argv[0][argv_idx])
               mainerr(err_opt_unknown, argv[0]);
@@ -1129,7 +1132,7 @@ static void command_line_scan(mparm_T *parmp)
           }
 
           case 'i': {  // "-i {shada}" use for shada
-            used_shada_file = argv[0];
+            set_option_value("shadafile", 0L, argv[0], 0);
             break;
           }
 

@@ -466,8 +466,6 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
   if (!parse_float_config(config, &fconfig, !new_float, err)) {
     return;
   }
-  fconfig.height = fconfig.height > 0 ? fconfig.height : win->w_height;
-  fconfig.width = fconfig.width > 0 ? fconfig.width : win->w_width;
   if (new_float) {
     if (!win_new_float(win, fconfig, err)) {
       return;
@@ -499,26 +497,25 @@ Dictionary nvim_win_get_config(Window window, Error *err)
     return rv;
   }
 
-  PUT(rv, "width", INTEGER_OBJ(wp->w_float_config.width));
-  PUT(rv, "height", INTEGER_OBJ(wp->w_float_config.height));
   PUT(rv, "focusable", BOOLEAN_OBJ(wp->w_float_config.focusable));
   PUT(rv, "external", BOOLEAN_OBJ(wp->w_float_config.external));
-  PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
-      float_anchor_str[wp->w_float_config.anchor])));
 
-  if (wp->w_float_config.relative == kFloatRelativeWindow) {
-    PUT(rv, "win", INTEGER_OBJ(wp->w_float_config.window));
+  if (wp->w_floating) {
+    PUT(rv, "width", INTEGER_OBJ(wp->w_float_config.width));
+    PUT(rv, "height", INTEGER_OBJ(wp->w_float_config.height));
+    if (!wp->w_float_config.external) {
+      if (wp->w_float_config.relative == kFloatRelativeWindow) {
+        PUT(rv, "win", INTEGER_OBJ(wp->w_float_config.window));
+      }
+      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
+          float_anchor_str[wp->w_float_config.anchor])));
+      PUT(rv, "row", FLOAT_OBJ(wp->w_float_config.row));
+      PUT(rv, "col", FLOAT_OBJ(wp->w_float_config.col));
+    }
   }
 
-  if (wp->w_float_config.external) {
-    return rv;
-  }
-
-  PUT(rv, "row", FLOAT_OBJ(wp->w_float_config.row));
-  PUT(rv, "col", FLOAT_OBJ(wp->w_float_config.col));
-
-  const char *rel =
-    wp->w_floating ? float_relative_str[wp->w_float_config.relative] : "";
+  const char *rel = (wp->w_floating && !wp->w_float_config.external
+                     ? float_relative_str[wp->w_float_config.relative] : "");
   PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
 
   return rv;

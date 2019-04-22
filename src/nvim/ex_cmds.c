@@ -6392,6 +6392,7 @@ void ex_substitute(exarg_T *eap)
   }
 
   block_autocmds();           // Disable events during command preview.
+  input_disable_events();
 
   char_u *save_eap = eap->arg;
   garray_T save_view;
@@ -6434,6 +6435,7 @@ void ex_substitute(exarg_T *eap)
   restore_search_patterns();
   win_size_restore(&save_view);
   ga_clear(&save_view);
+  input_enable_events();
   unblock_autocmds();
 }
 

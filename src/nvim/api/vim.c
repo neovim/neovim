@@ -683,14 +683,14 @@ void nvim_set_current_dir(String dir, Error *err)
 
   try_start();
 
-  if (vim_chdir((char_u *)string, kCdScopeGlobal)) {
+  if (vim_chdir((char_u *)string)) {
     if (!try_end(err)) {
       api_set_error(err, kErrorTypeException, "Failed to change directory");
     }
     return;
   }
 
-  post_chdir(kCdScopeGlobal);
+  post_chdir(kCdScopeGlobal, true);
   try_end(err);
 }
 
@@ -1003,7 +1003,8 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///
 /// For a general overview of floats, see |api-floatwin|.
 ///
-/// Exactly one of `external` and `relative` must be specified.
+/// Exactly one of `external` and `relative` must be specified. The `width` and
+/// `height` of the new window must be specified.
 ///
 /// With editor positioning row=0, col=0 refers to the top-left corner of the
 /// screen-grid and row=Lines-1, Columns-1 refers to the bottom-right corner.
@@ -1035,7 +1036,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///      - "SW" south-west
 ///      - "SE" south-east
 ///   - `height`: window height (in character cells). Minimum of 1.
-///   - `width`: window width (in character cells). Minimum of 2.
+///   - `width`: window width (in character cells). Minimum of 1.
 ///   - `row`: row position. Screen cell height are used as unit. Can be
 ///       floating point.
 ///   - `col`: column position. Screen cell width is used as unit. Can be

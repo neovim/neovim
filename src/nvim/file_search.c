@@ -1634,7 +1634,7 @@ int vim_chdirfile(char_u *fname)
 }
 
 /// Change directory to "new_dir". Search 'cdpath' for relative directory names.
-int vim_chdir(char_u *new_dir, CdScope scope)
+int vim_chdir(char_u *new_dir)
 {
   char_u *dir_name = find_directory_in_path(new_dir, STRLEN(new_dir),
                                             FNAME_MESS, curbuf->b_ffname);

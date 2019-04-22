@@ -374,6 +374,7 @@ void terminal_enter(void)
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
   s->term = buf->terminal;
+  stop_insert_mode = false;
 
   // Ensure the terminal is properly sized. Ideally window size management
   // code should always have resized the terminal already, but check here to
@@ -435,7 +436,6 @@ void terminal_enter(void)
 static int terminal_check(VimState *state)
 {
   if (stop_insert_mode) {
-    stop_insert_mode = false;
     return 0;
   }
   return 1;

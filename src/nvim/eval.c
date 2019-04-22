@@ -10065,7 +10065,7 @@ static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
         dict_T *d = what_arg->vval.v_dict;
 
         if (d != NULL) {
-          get_errorlist_properties(wp, d, rettv->vval.v_dict);
+          qf_get_properties(wp, d, rettv->vval.v_dict);
         }
       } else {
         EMSG(_(e_dictreq));
