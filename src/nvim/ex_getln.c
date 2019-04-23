@@ -1352,7 +1352,6 @@ static int command_line_handle_key(CommandLineState *s)
       s->c = plain_vgetc();              // CTRL-R CTRL-R <char>
     }
     --no_mapping;
-    ccline.special_char = NUL;
     // Insert the result of an expression.
     // Need to save the current command line, to be able to enter
     // a new one...
@@ -1390,6 +1389,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
       }
     }
+    ccline.special_char = NUL;
     redrawcmd();
     return command_line_changed(s);
 
