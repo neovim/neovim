@@ -5,6 +5,7 @@
 #include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/vim.h"
 
 /// Values for "noremap" argument of ins_typebuf()
 ///
@@ -34,6 +35,8 @@ struct map_arguments {
   bool script;
   bool expr;
   bool unique;
+  char_u lhs[MAXMAPLEN + 1];
+  char_u rhs[MAXMAPLEN + 1];
 };
 typedef struct map_arguments MapArguments;
 

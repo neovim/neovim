@@ -2505,67 +2505,104 @@ int fix_input_buffer(char_u *buf, int len)
 /// Parse a string of |:map-arguments| into a @ref MapArguments struct.
 /// @param[in]  strargs   String of map arguments, e.g. "<buffer> <expr><silent>".
 ///                       May contain leading or trailing whitespace.
+/// @param[in]  is_unmap  True, if strargs should be parsed like an |:unmap|
+///                       command. |:unmap| commands interpret *all* text to the
+///                       right of the last map argument as the {lhs} of the
+///                       mapping, i.e. a literal ' ' character is treated like
+///                       a "<space>", rather than separating the {lhs} from the
+///                       {rhs}.
 /// @param[out] mapargs   MapArguments struct holding all extracted argument
 ///                       values. If an error occurs during parsing, this
 ///                       will not be modified.
 ///
-/// @return 0 on success, 1 on unrecognized option.
-int str_to_mapargs(const char_u *strargs, MapArguments* mapargs)
+/// @return 0 on success, 1 on invalid arguments.
+int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
 {
-  strargs = skipwhite(strargs);
-  MapArguments parsed_flags;  // copy these into mapargs "all at once" when done
-  memset(&parsed_flags, 0, sizeof(parsed_flags));
+  const char_u *to_parse = strargs;
+  to_parse = skipwhite(to_parse);
+  MapArguments parsed_args;  // copy these into mapargs "all at once" when done
+  memset(&parsed_args, 0, sizeof(parsed_args));
 
-  // Accept <buffer>, <nowait>, <silent>, <expr> <script> and <unique> in
+  // Accept <buffer>, <nowait>, <silent>, <expr>, <script>, and <unique> in
   // any order.
-  while (*strargs) {
-    if (STRNCMP(strargs, "<buffer>", 8) == 0) {
-      strargs = skipwhite(strargs + 8);
-      parsed_flags.buffer = true;
+  while (true) {
+    if (STRNCMP(to_parse, "<buffer>", 8) == 0) {
+      to_parse = skipwhite(to_parse + 8);
+      parsed_args.buffer = true;
       continue;
     }
 
-    if (STRNCMP(strargs, "<nowait>", 8) == 0) {
-      strargs = skipwhite(strargs + 8);
-      parsed_flags.nowait = true;
+    if (STRNCMP(to_parse, "<nowait>", 8) == 0) {
+      to_parse = skipwhite(to_parse + 8);
+      parsed_args.nowait = true;
       continue;
     }
 
-    if (STRNCMP(strargs, "<silent>", 8) == 0) {
-      strargs = skipwhite(strargs + 8);
-      parsed_flags.silent = true;
+    if (STRNCMP(to_parse, "<silent>", 8) == 0) {
+      to_parse = skipwhite(to_parse + 8);
+      parsed_args.silent = true;
       continue;
     }
 
     // Ignore obsolete "<special>" modifier.
-    if (STRNCMP(strargs, "<special>", 9) == 0) {
-      strargs = skipwhite(strargs + 9);
+    if (STRNCMP(to_parse, "<special>", 9) == 0) {
+      to_parse = skipwhite(to_parse + 9);
       continue;
     }
 
-    if (STRNCMP(strargs, "<script>", 8) == 0) {
-      strargs = skipwhite(strargs + 8);
-      parsed_flags.script = true;
+    if (STRNCMP(to_parse, "<script>", 8) == 0) {
+      to_parse = skipwhite(to_parse + 8);
+      parsed_args.script = true;
       continue;
     }
 
-    if (STRNCMP(strargs, "<expr>", 6) == 0) {
-      strargs = skipwhite(strargs + 6);
-      parsed_flags.expr = true;
+    if (STRNCMP(to_parse, "<expr>", 6) == 0) {
+      to_parse = skipwhite(to_parse + 6);
+      parsed_args.expr = true;
       continue;
     }
 
-    if (STRNCMP(strargs, "<unique>", 8) == 0) {
-      strargs = skipwhite(strargs + 8);
-      parsed_flags.unique = true;
+    if (STRNCMP(to_parse, "<unique>", 8) == 0) {
+      to_parse = skipwhite(to_parse + 8);
+      parsed_args.unique = true;
       continue;
     }
-
-    // unrecognized option
-    return 1;
+    break;
   }
 
-  *mapargs = parsed_flags;
+  // Find the next whitespace character, call that the end of {lhs}.
+  //
+  // If a character (e.g. whitespace) is immediately preceded by a CTRL-V,
+  // "scan past" that character, i.e. don't "terminate" LHS with that character
+  // if it's whitespace.
+  //
+  // Treat backslash like CTRL-V when 'cpoptions' does not contain 'B'.
+  //
+  // With :unmap, literal white space is included in the {lhs}; there is no
+  // separate {rhs}.
+  const char_u *lhs_end = to_parse;
+  bool do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
+  while (*lhs_end && (is_unmap || !ascii_iswhite(*lhs_end))) {
+    if ((lhs_end[0] == Ctrl_V || (do_backslash && lhs_end[0] == '\\'))
+        && lhs_end[1] != NUL) {
+      lhs_end++;  // skip CTRL-V or backslash
+    }
+    lhs_end++;
+  }
+
+  // {lhs_end} is a pointer to the "terminating whitespace" after {lhs}.
+  // Use that to initialize {rhs_start}.
+  const char_u *rhs_start = skipwhite(lhs_end);
+
+  if (xstrlcpy((char *)parsed_args.lhs, (char *)to_parse,
+               (size_t)(lhs_end - to_parse)) >= MAXMAPLEN) {
+    return 1;
+  }
+  if (xstrlcpy((char *)parsed_args.rhs, (char *)rhs_start, MAXMAPLEN)
+      >= MAXMAPLEN) {
+    return 1;
+  }
+  *mapargs = parsed_args;
   return 0;
 }
 
