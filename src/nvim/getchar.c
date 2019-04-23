@@ -2503,6 +2503,10 @@ int fix_input_buffer(char_u *buf, int len)
 }
 
 /// Parse a string of |:map-arguments| into a @ref MapArguments struct.
+///
+/// The extracted {lhs} and {rhs} are not "processed," i.e. termcodes,
+/// backslashes, and CTRL-V's are not replaced.
+///
 /// @param[in]  strargs   String of map arguments, e.g. "<buffer> <expr><silent>".
 ///                       May contain leading or trailing whitespace.
 /// @param[in]  is_unmap  True, if strargs should be parsed like an |:unmap|
