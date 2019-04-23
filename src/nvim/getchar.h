@@ -23,6 +23,20 @@ typedef enum {
   FLUSH_INPUT       // flush typebuf and inchar() input
 } flush_buffers_T;
 
+/// All possible |:map-arguments| usable in a |:map| command.
+///
+/// The <special> argument has no effect on mappings and is excluded from this
+/// struct declaration.
+struct map_arguments {
+  bool buffer;
+  bool nowait;
+  bool silent;
+  bool script;
+  bool expr;
+  bool unique;
+};
+typedef struct map_arguments MapArguments;
+
 #define KEYLEN_PART_KEY -1      /* keylen value for incomplete key-code */
 #define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
 #define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */

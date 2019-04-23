@@ -2502,6 +2502,73 @@ int fix_input_buffer(char_u *buf, int len)
   return len;
 }
 
+/// Parse a string of |:map-arguments| into a @ref MapArguments struct.
+/// @param[in]  strargs   String of map arguments, e.g. "<buffer> <expr><silent>".
+///                       May contain leading or trailing whitespace.
+/// @param[out] mapargs   MapArguments struct holding all extracted argument
+///                       values. If an error occurs during parsing, this
+///                       will not be modified.
+///
+/// @return 0 on success, 1 on unrecognized option.
+int str_to_mapargs(const char_u *strargs, MapArguments* mapargs)
+{
+  strargs = skipwhite(strargs);
+  MapArguments parsed_flags;  // copy these into mapargs "all at once" when done
+  memset(&parsed_flags, 0, sizeof(parsed_flags));
+
+  // Accept <buffer>, <nowait>, <silent>, <expr> <script> and <unique> in
+  // any order.
+  while (*strargs) {
+    if (STRNCMP(strargs, "<buffer>", 8) == 0) {
+      strargs = skipwhite(strargs + 8);
+      parsed_flags.buffer = true;
+      continue;
+    }
+
+    if (STRNCMP(strargs, "<nowait>", 8) == 0) {
+      strargs = skipwhite(strargs + 8);
+      parsed_flags.nowait = true;
+      continue;
+    }
+
+    if (STRNCMP(strargs, "<silent>", 8) == 0) {
+      strargs = skipwhite(strargs + 8);
+      parsed_flags.silent = true;
+      continue;
+    }
+
+    // Ignore obsolete "<special>" modifier.
+    if (STRNCMP(strargs, "<special>", 9) == 0) {
+      strargs = skipwhite(strargs + 9);
+      continue;
+    }
+
+    if (STRNCMP(strargs, "<script>", 8) == 0) {
+      strargs = skipwhite(strargs + 8);
+      parsed_flags.script = true;
+      continue;
+    }
+
+    if (STRNCMP(strargs, "<expr>", 6) == 0) {
+      strargs = skipwhite(strargs + 6);
+      parsed_flags.expr = true;
+      continue;
+    }
+
+    if (STRNCMP(strargs, "<unique>", 8) == 0) {
+      strargs = skipwhite(strargs + 8);
+      parsed_flags.unique = true;
+      continue;
+    }
+
+    // unrecognized option
+    return 1;
+  }
+
+  *mapargs = parsed_flags;
+  return 0;
+}
+
 /// Like @ref do_map, but you can specify the target buffer.
 int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
 {
