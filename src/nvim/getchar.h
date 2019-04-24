@@ -35,8 +35,12 @@ struct map_arguments {
   bool script;
   bool expr;
   bool unique;
+
   char_u lhs[MAXMAPLEN + 1];  /// The {lhs} of the mapping.
+  size_t lhs_len;
+
   char_u rhs[MAXMAPLEN + 1];  /// The {rhs} of the mapping.
+  size_t rhs_len;
 };
 typedef struct map_arguments MapArguments;
 

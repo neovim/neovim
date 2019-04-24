@@ -2597,49 +2597,39 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
   // {lhs_end} is a pointer to the "terminating whitespace" after {lhs}.
   // Use that to initialize {rhs_start}.
   const char_u *rhs_start = skipwhite(lhs_end);
-
-  if (xstrlcpy((char *)parsed_args.lhs, (char *)to_parse,
-               (size_t)(lhs_end - to_parse)) >= MAXMAPLEN) {
+  parsed_args.lhs_len = (size_t)(lhs_end - to_parse);
+  STRNCPY((char *)parsed_args.lhs, (char *)to_parse, parsed_args.lhs_len);
+  parsed_args.rhs_len = xstrlcpy((char *)parsed_args.rhs, (char *)rhs_start,
+                                 MAXMAPLEN);
+  if (parsed_args.lhs_len >= MAXMAPLEN) {
     return 1;
   }
-  if (xstrlcpy((char *)parsed_args.rhs, (char *)rhs_start, MAXMAPLEN)
-      >= MAXMAPLEN) {
+  if (parsed_args.rhs_len >= MAXMAPLEN) {
     return 1;
   }
   *mapargs = parsed_args;
   return 0;
 }
 
-/// Like @ref do_map, but you can specify the target buffer.
-int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
+int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
+                        bool is_abbrev, buf_T *buf)
 {
-  char_u      *keys;
   mapblock_T  *mp, **mpp;
-  char_u      *rhs;
   char_u      *p;
   int n;
   int len = 0;                  /* init for GCC */
-  int hasarg;
-  int haskey;
   int did_it = FALSE;
   int did_local = FALSE;
   int round;
   char_u      *keys_buf = NULL;
   char_u      *arg_buf = NULL;
   int retval = 0;
-  int do_backslash;
   int hash;
   int new_hash;
   mapblock_T  **abbr_table;
   mapblock_T  **map_table;
-  bool unique = false;
-  bool nowait = false;
-  bool silent = false;
-  bool expr = false;
   int noremap;
-  char_u      *orig_rhs;
 
-  keys = arg;
   map_table = maphash;
   abbr_table = &first_abbr;
 
@@ -2649,97 +2639,20 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
   else
     noremap = REMAP_YES;
 
-  /* Accept <buffer>, <nowait>, <silent>, <expr> <script> and <unique> in
-   * any order. */
-  for (;; ) {
-    /*
-     * Check for "<buffer>": mapping local to buffer.
-     */
-    if (STRNCMP(keys, "<buffer>", 8) == 0) {
-      keys = skipwhite(keys + 8);
-      map_table = buf->b_maphash;
-      abbr_table = &buf->b_first_abbr;
-      continue;
-    }
-
-    /*
-     * Check for "<nowait>": don't wait for more characters.
-     */
-    if (STRNCMP(keys, "<nowait>", 8) == 0) {
-      keys = skipwhite(keys + 8);
-      nowait = true;
-      continue;
-    }
-
-    /*
-     * Check for "<silent>": don't echo commands.
-     */
-    if (STRNCMP(keys, "<silent>", 8) == 0) {
-      keys = skipwhite(keys + 8);
-      silent = true;
-      continue;
-    }
-
-    // Ignore obsolete "<special>" modifier.
-    if (STRNCMP(keys, "<special>", 9) == 0) {
-      keys = skipwhite(keys + 9);
-      continue;
-    }
-
-    /*
-     * Check for "<script>": remap script-local mappings only
-     */
-    if (STRNCMP(keys, "<script>", 8) == 0) {
-      keys = skipwhite(keys + 8);
-      noremap = REMAP_SCRIPT;
-      continue;
-    }
-
-    /*
-     * Check for "<expr>": {rhs} is an expression.
-     */
-    if (STRNCMP(keys, "<expr>", 6) == 0) {
-      keys = skipwhite(keys + 6);
-      expr = true;
-      continue;
-    }
-    /*
-     * Check for "<unique>": don't overwrite an existing mapping.
-     */
-    if (STRNCMP(keys, "<unique>", 8) == 0) {
-      keys = skipwhite(keys + 8);
-      unique = true;
-      continue;
-    }
-    break;
+  if (args->buffer) {
+    // If <buffer> was given, we'll be searching through the buffer's
+    // mappings/abbreviations, not the globals.
+    map_table = buf->b_maphash;
+    abbr_table = &buf->b_first_abbr;
   }
 
   validate_maphash();
 
-  /*
-   * Find end of keys and skip CTRL-Vs (and backslashes) in it.
-   * Accept backslash like CTRL-V when 'cpoptions' does not contain 'B'.
-   * with :unmap white space is included in the keys, no argument possible.
-   */
-  p = keys;
-  do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
-  while (*p && (maptype == 1 || !ascii_iswhite(*p))) {
-    if ((p[0] == Ctrl_V || (do_backslash && p[0] == '\\')) && p[1] != NUL) {
-      p++;  // skip CTRL-V or backslash
-    }
-    p++;
-  }
-  if (*p != NUL) {
-    *p++ = NUL;
-  }
-
-  p = skipwhite(p);
-  rhs = p;
-  hasarg = (*rhs != NUL);
-  haskey = (*keys != NUL);
+  bool has_lhs = (args->lhs[0] != NUL);
+  bool has_rhs = (args->rhs[0] != NUL);
 
   /* check for :unmap without argument */
-  if (maptype == 1 && !haskey) {
+  if (maptype == 1 && !has_lhs) {
     retval = 1;
     goto theend;
   }
@@ -2750,12 +2663,14 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
   // replace_termcodes() may move the result to allocated memory, which
   // needs to be freed later (*keys_buf and *arg_buf).
   // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
-  if (haskey) {
-    keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, true,
-                             CPO_TO_CPO_FLAGS);
+  char_u *lhs = (char_u *)&args->lhs;
+  char_u *rhs = (char_u *)&args->rhs;
+  if (has_lhs) {
+    lhs = replace_termcodes(args->lhs, STRLEN(args->lhs), &keys_buf, true,
+                            true, true, CPO_TO_CPO_FLAGS);
   }
-  orig_rhs = rhs;
-  if (hasarg) {
+  char_u *orig_rhs = rhs;
+  if (has_rhs) {
     if (STRICMP(rhs, "<nop>") == 0) {  // "<Nop>" means nothing
       rhs = (char_u *)"";
     } else {
@@ -2764,69 +2679,69 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
     }
   }
 
-  //
   // check arguments and translate function keys
-  //
-  if (haskey) {
-    len = (int)STRLEN(keys);
-    if (len > MAXMAPLEN) {              /* maximum length of MAXMAPLEN chars */
+  if (has_lhs) {
+    len = (int)args->lhs_len;
+    if (len > MAXMAPLEN) {
+      // TODO this check should now be redundant?
       retval = 1;
       goto theend;
     }
 
     if (is_abbrev && maptype != 1) {
-      /*
-       * If an abbreviation ends in a keyword character, the
-       * rest must be all keyword-char or all non-keyword-char.
-       * Otherwise we won't be able to find the start of it in a
-       * vi-compatible way.
-       */
+      //
+      // If an abbreviation ends in a keyword character, the
+      // rest must be all keyword-char or all non-keyword-char.
+      // Otherwise we won't be able to find the start of it in a
+      // vi-compatible way.
+      //
       if (has_mbyte) {
         int first, last;
         int same = -1;
 
-        first = vim_iswordp(keys);
+        first = vim_iswordp(lhs);
         last = first;
-        p = keys + (*mb_ptr2len)(keys);
+        p = lhs + (*mb_ptr2len)(lhs);
         n = 1;
-        while (p < keys + len) {
-          ++n;                                  /* nr of (multi-byte) chars */
-          last = vim_iswordp(p);                /* type of last char */
+        while (p < lhs + len) {
+          ++n;                                  // nr of (multi-byte) chars
+          last = vim_iswordp(p);                // type of last char
           if (same == -1 && last != first)
-            same = n - 1;                       /* count of same char type */
+            same = n - 1;                       // count of same char type
           p += (*mb_ptr2len)(p);
         }
         if (last && n > 2 && same >= 0 && same < n - 1) {
           retval = 1;
           goto theend;
         }
-      } else if (vim_iswordc(keys[len - 1]))    /* ends in keyword char */
+      } else if (vim_iswordc(lhs[len - 1]))    // ends in keyword char
         for (n = 0; n < len - 2; ++n)
-          if (vim_iswordc(keys[n]) != vim_iswordc(keys[len - 2])) {
+          if (vim_iswordc(lhs[n]) != vim_iswordc(lhs[len - 2])) {
             retval = 1;
             goto theend;
           }
-      /* An abbreviation cannot contain white space. */
+      // An abbreviation cannot contain white space.
       for (n = 0; n < len; ++n)
-        if (ascii_iswhite(keys[n])) {
+        if (ascii_iswhite(lhs[n])) {
           retval = 1;
           goto theend;
         }
     }
   }
 
-  if (haskey && hasarg && is_abbrev)       /* if we will add an abbreviation */
-    no_abbr = FALSE;                    /* reset flag that indicates there are
-                                                            no abbreviations */
+  if (has_lhs && has_rhs && is_abbrev) {  // if we will add an abbreviation,
+    no_abbr = FALSE; // reset flag that indicates there are no abbreviations
+  }
 
-  if (!haskey || (maptype != 1 && !hasarg))
+  if (!has_lhs || (maptype != 1 && !has_rhs)) {
     msg_start();
+  }
 
-  /*
-   * Check if a new local mapping wasn't already defined globally.
-   */
-  if (map_table == buf->b_maphash && haskey && hasarg && maptype != 1) {
-    /* need to loop over all global hash lists */
+  //
+  // Check if a new local mapping wasn't already defined globally.
+  //
+  if (map_table == buf->b_maphash && has_lhs && has_rhs && maptype != 1) {
+    // need to loop over all global hash lists
     for (hash = 0; hash < 256 && !got_int; ++hash) {
       if (is_abbrev) {
         if (hash != 0)          /* there is only one abbreviation list */
@@ -2838,8 +2753,8 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
         /* check entries with the same mode */
         if ((mp->m_mode & mode) != 0
             && mp->m_keylen == len
-            && unique
-            && STRNCMP(mp->m_keys, keys, (size_t)len) == 0) {
+            && args->unique
+            && STRNCMP(mp->m_keys, lhs, (size_t)len) == 0) {
           if (is_abbrev)
             EMSG2(_("E224: global abbreviation already exists for %s"),
                 mp->m_keys);
@@ -2856,7 +2771,7 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
   /*
    * When listing global mappings, also list buffer-local ones here.
    */
-  if (map_table != buf->b_maphash && !hasarg && maptype != 1) {
+  if (map_table != buf->b_maphash && !has_rhs && maptype != 1) {
     /* need to loop over all global hash lists */
     for (hash = 0; hash < 256 && !got_int; ++hash) {
       if (is_abbrev) {
@@ -2868,12 +2783,12 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
       for (; mp != NULL && !got_int; mp = mp->m_next) {
         /* check entries with the same mode */
         if ((mp->m_mode & mode) != 0) {
-          if (!haskey) {                            /* show all entries */
+          if (!has_lhs) {                            /* show all entries */
             showmap(mp, TRUE);
             did_local = TRUE;
           } else {
             n = mp->m_keylen;
-            if (STRNCMP(mp->m_keys, keys,
+            if (STRNCMP(mp->m_keys, lhs,
                     (size_t)(n < len ? n : len)) == 0) {
               showmap(mp, TRUE);
               did_local = TRUE;
@@ -2908,7 +2823,7 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
           mpp = &(mp->m_next);
           continue;
         }
-        if (!haskey) {                      /* show all entries */
+        if (!has_lhs) {                      /* show all entries */
           showmap(mp, map_table != maphash);
           did_it = TRUE;
         } else {                          /* do we have a match? */
@@ -2919,14 +2834,14 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
             n = mp->m_keylen;
             p = mp->m_keys;
           }
-          if (STRNCMP(p, keys, (size_t)(n < len ? n : len)) == 0) {
+          if (STRNCMP(p, lhs, (size_t)(n < len ? n : len)) == 0) {
             if (maptype == 1) {                 /* delete entry */
               /* Only accept a full match.  For abbreviations we
                * ignore trailing space when matching with the
                * "lhs", since an abbreviation can't have
                * trailing space. */
               if (n != len && (!is_abbrev || round || n > len
-                               || *skipwhite(keys + n) != NUL)) {
+                               || *skipwhite(lhs + n) != NUL)) {
                 mpp = &(mp->m_next);
                 continue;
               }
@@ -2936,13 +2851,13 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
                */
               mp->m_mode &= ~mode;
               did_it = TRUE;                    /* remember we did something */
-            } else if (!hasarg) {             /* show matching entry */
+            } else if (!has_rhs) {             /* show matching entry */
               showmap(mp, map_table != maphash);
               did_it = TRUE;
             } else if (n != len) {            /* new entry is ambiguous */
               mpp = &(mp->m_next);
               continue;
-            } else if (unique) {
+            } else if (args->unique) {
               if (is_abbrev)
                 EMSG2(_("E226: abbreviation already exists for %s"),
                     p);
@@ -2958,10 +2873,10 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
                 xfree(mp->m_orig_str);
                 mp->m_orig_str = vim_strsave(orig_rhs);
                 mp->m_noremap = noremap;
-                mp->m_nowait = nowait;
-                mp->m_silent = silent;
+                mp->m_nowait = args->nowait;
+                mp->m_silent = args->silent;
                 mp->m_mode = mode;
-                mp->m_expr = expr;
+                mp->m_expr = args->expr;
                 mp->m_script_ID = current_SID;
                 did_it = TRUE;
               }
@@ -2992,7 +2907,7 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
   if (maptype == 1) {                       /* delete entry */
     if (!did_it) {
       retval = 2;                           /* no match */
-    } else if (*keys == Ctrl_C) {
+    } else if (*lhs == Ctrl_C) {
       // If CTRL-C has been unmapped, reuse it for Interrupting.
       if (map_table == buf->b_maphash) {
         buf->b_mapped_ctrl_c &= ~mode;
@@ -3003,7 +2918,7 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
     goto theend;
   }
 
-  if (!haskey || !hasarg) {                 /* print entries */
+  if (!has_lhs || !has_rhs) {                 /* print entries */
     if (!did_it
         && !did_local
         ) {
@@ -3024,7 +2939,7 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
   mp = xmalloc(sizeof(mapblock_T));
 
   // If CTRL-C has been mapped, don't always use it for Interrupting.
-  if (*keys == Ctrl_C) {
+  if (*lhs == Ctrl_C) {
     if (map_table == buf->b_maphash) {
       buf->b_mapped_ctrl_c |= mode;
     } else {
@@ -3032,15 +2947,15 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T* buf)
     }
   }
 
-  mp->m_keys = vim_strsave(keys);
+  mp->m_keys = vim_strsave(lhs);
   mp->m_str = vim_strsave(rhs);
   mp->m_orig_str = vim_strsave(orig_rhs);
   mp->m_keylen = (int)STRLEN(mp->m_keys);
   mp->m_noremap = noremap;
-  mp->m_nowait = nowait;
-  mp->m_silent = silent;
+  mp->m_nowait = args->nowait;
+  mp->m_silent = args->silent;
   mp->m_mode = mode;
-  mp->m_expr = expr;
+  mp->m_expr = args->expr;
   mp->m_script_ID = current_SID;
 
   /* add the new entry in front of the abbrlist or maphash[] list */
@@ -3057,6 +2972,23 @@ theend:
   xfree(keys_buf);
   xfree(arg_buf);
   return retval;
+}
+
+/// Like @ref do_map, but you can specify the target buffer.
+int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T *buf)
+{
+  MapArguments parsed_args;
+  int result = str_to_mapargs(arg, maptype == 1, &parsed_args);
+  switch (result) {
+    case 0:
+      break;
+    case 1:
+      return 1;  // invalid arguments
+    default:
+      assert(false && "Unknown return code from str_to_mapargs!");
+      return -1;
+  }  // switch
+  return buf_do_map_explicit(maptype, &parsed_args, mode, is_abbrev, buf);
 }
 
 
@@ -3096,9 +3028,6 @@ theend:
 /// @param arg      C-string containing the arguments of the map/abbrev
 ///                 command, i.e. everything except the initial `:[X][nore]map`.
 ///                 - Cannot be a read-only string; it will be modified.
-///                 - Should be stripped of leading and trailing whitespace,
-///                 else parsing will fail or {rhs} will contain literal
-///                 whitespace, respectively.
 /// @param mode   Bitflags representing the mode in which to set the mapping.
 ///               See @ref get_map_mode.
 /// @param is_abbrev  True if setting an abbreviation, false otherwise.
