@@ -2645,6 +2645,9 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
     map_table = buf->b_maphash;
     abbr_table = &buf->b_first_abbr;
   }
+  if (args->script) {
+    noremap = REMAP_SCRIPT;
+  }
 
   validate_maphash();
 
