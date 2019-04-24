@@ -1389,6 +1389,7 @@ static int command_line_handle_key(CommandLineState *s)
         }
       }
     }
+    ccline.special_char = NUL;
     redrawcmd();
     return command_line_changed(s);
 
