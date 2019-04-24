@@ -5098,8 +5098,6 @@ static int regmatch(
         printf("Premature EOL\n");
 #endif
       }
-      if (status == RA_FAIL)
-        got_int = TRUE;
       return status == RA_MATCH;
     }
 
@@ -7226,7 +7224,8 @@ static void report_re_switch(char_u *pat)
 /// @param nl
 ///
 /// @return TRUE if there is a match, FALSE if not.
-static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
+static int vim_regexec_string(regmatch_T *rmp, char_u *line, colnr_T col,
+                              bool nl)
 {
   regexec_T rex_save;
   bool rex_in_use_save = rex_in_use;
@@ -7275,8 +7274,8 @@ static int vim_regexec_both(regmatch_T *rmp, char_u *line, colnr_T col, bool nl)
 int vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
                       colnr_T col)
 {
-  regmatch_T regmatch = {.regprog = *prog, .rm_ic = ignore_case};
-  int r = vim_regexec_both(&regmatch, line, col, false);
+  regmatch_T regmatch = { .regprog = *prog, .rm_ic = ignore_case };
+  int r = vim_regexec_string(&regmatch, line, col, false);
   *prog = regmatch.regprog;
   return r;
 }
@@ -7285,7 +7284,7 @@ int vim_regexec_prog(regprog_T **prog, bool ignore_case, char_u *line,
 // Return TRUE if there is a match, FALSE if not.
 int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
 {
-  return vim_regexec_both(rmp, line, col, false);
+  return vim_regexec_string(rmp, line, col, false);
 }
 
 // Like vim_regexec(), but consider a "\n" in "line" to be a line break.
@@ -7293,7 +7292,7 @@ int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col)
 // Return TRUE if there is a match, FALSE if not.
 int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
-  return vim_regexec_both(rmp, line, col, true);
+  return vim_regexec_string(rmp, line, col, true);
 }
 
 /// Match a regexp against multiple lines.

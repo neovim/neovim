@@ -388,24 +388,25 @@ typedef struct {
  * a window may have its own instance.
  */
 typedef struct {
-  hashtab_T b_keywtab;                  /* syntax keywords hash table */
-  hashtab_T b_keywtab_ic;               /* idem, ignore case */
-  int b_syn_error;                      /* TRUE when error occurred in HL */
-  int b_syn_ic;                         /* ignore case for :syn cmds */
-  int b_syn_spell;                      /* SYNSPL_ values */
-  garray_T b_syn_patterns;              /* table for syntax patterns */
-  garray_T b_syn_clusters;              /* table for syntax clusters */
-  int b_spell_cluster_id;               /* @Spell cluster ID or 0 */
-  int b_nospell_cluster_id;             /* @NoSpell cluster ID or 0 */
-  int b_syn_containedin;                /* TRUE when there is an item with a
-                                           "containedin" argument */
-  int b_syn_sync_flags;                 /* flags about how to sync */
-  short b_syn_sync_id;                  /* group to sync on */
-  long b_syn_sync_minlines;             /* minimal sync lines offset */
-  long b_syn_sync_maxlines;             /* maximal sync lines offset */
-  long b_syn_sync_linebreaks;           /* offset for multi-line pattern */
-  char_u      *b_syn_linecont_pat;      /* line continuation pattern */
-  regprog_T   *b_syn_linecont_prog;     /* line continuation program */
+  hashtab_T b_keywtab;                  // syntax keywords hash table
+  hashtab_T b_keywtab_ic;               // idem, ignore case
+  int b_syn_error;                      // TRUE when error occurred in HL
+  bool b_syn_slow;                      // true when 'redrawtime' reached
+  int b_syn_ic;                         // ignore case for :syn cmds
+  int b_syn_spell;                      // SYNSPL_ values
+  garray_T b_syn_patterns;              // table for syntax patterns
+  garray_T b_syn_clusters;              // table for syntax clusters
+  int b_spell_cluster_id;               // @Spell cluster ID or 0
+  int b_nospell_cluster_id;             // @NoSpell cluster ID or 0
+  int b_syn_containedin;                // TRUE when there is an item with a
+                                        // "containedin" argument
+  int b_syn_sync_flags;                 // flags about how to sync
+  int16_t b_syn_sync_id;                // group to sync on
+  long b_syn_sync_minlines;             // minimal sync lines offset
+  long b_syn_sync_maxlines;             // maximal sync lines offset
+  long b_syn_sync_linebreaks;           // offset for multi-line pattern
+  char_u      *b_syn_linecont_pat;      // line continuation pattern
+  regprog_T   *b_syn_linecont_prog;     // line continuation program
   syn_time_T b_syn_linecont_time;
   int b_syn_linecont_ic;                /* ignore-case flag for above */
   int b_syn_topgrp;                     /* for ":syntax include" */

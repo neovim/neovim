@@ -4642,6 +4642,9 @@ static void nv_clear(cmdarg_T *cap)
   if (!checkclearop(cap->oap)) {
     /* Clear all syntax states to force resyncing. */
     syn_stack_free_all(curwin->w_s);
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      wp->w_s->b_syn_slow = false;
+    }
     redraw_later(CLEAR);
   }
 }

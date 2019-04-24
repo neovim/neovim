@@ -1379,6 +1379,11 @@ func XquickfixSetListWithAct(cchar)
   call assert_fails("call g:Xsetlist(list1, 0)", 'E928:')
 endfunc
 
+func Test_setqflist_invalid_nr()
+  " The following command used to crash Vim
+  call setqflist([], ' ', {'nr' : $XXX_DOES_NOT_EXIST})
+endfunc
+
 func Test_quickfix_set_list_with_act()
   call XquickfixSetListWithAct('c')
   call XquickfixSetListWithAct('l')
@@ -2647,6 +2652,15 @@ endfunc
 func Test_qf_id()
   call Xqfid_tests('c')
   call Xqfid_tests('l')
+endfunc
+
+func Test_getqflist_invalid_nr()
+  " The following commands used to crash Vim
+  cexpr ""
+  call getqflist({'nr' : $XXX_DOES_NOT_EXIST_XXX})
+
+  " Cleanup
+  call setqflist([], 'r')
 endfunc
 
 " Test for shortening/simplifying the file name when opening the

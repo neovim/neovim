@@ -356,15 +356,16 @@ static reg_extmatch_T *next_match_extmatch = NULL;
  * The current state (within the line) of the recognition engine.
  * When current_state.ga_itemsize is 0 the current state is invalid.
  */
-static win_T    *syn_win;               /* current window for highlighting */
-static buf_T    *syn_buf;               /* current buffer for highlighting */
-static synblock_T *syn_block;           /* current buffer for highlighting */
-static linenr_T current_lnum = 0;       /* lnum of current state */
-static colnr_T current_col = 0;         /* column of current state */
-static int current_state_stored = 0;      /* TRUE if stored current state
-                                           * after setting current_finished */
-static int current_finished = 0;        /* current line has been finished */
-static garray_T current_state           /* current stack of state_items */
+static win_T    *syn_win;               // current window for highlighting
+static buf_T    *syn_buf;               // current buffer for highlighting
+static synblock_T *syn_block;           // current buffer for highlighting
+static proftime_T *syn_tm;              // timeout limit
+static linenr_T current_lnum = 0;       // lnum of current state
+static colnr_T current_col = 0;         // column of current state
+static int current_state_stored = 0;    // TRUE if stored current state
+                                        // after setting current_finished
+static int current_finished = 0;        // current line has been finished
+static garray_T current_state           // current stack of state_items
   = GA_EMPTY_INIT_VALUE;
 static int16_t *current_next_list = NULL;   // when non-zero, nextgroup list
 static int current_next_flags = 0;          // flags for current_next_list
@@ -375,7 +376,12 @@ static int current_line_id = 0;             // unique number for current line
 static int syn_time_on = FALSE;
 # define IF_SYN_TIME(p) (p)
 
-
+// Set the timeout used for syntax highlighting.
+// Use NULL to reset, no timeout.
+void syn_set_timeout(proftime_T *tm)
+{
+  syn_tm = tm;
+}
 
 /*
  * Start the syntax recognition for a line.  This function is normally called
@@ -2887,6 +2893,7 @@ static char_u *syn_getcurline(void)
 static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
 {
   int r;
+  int timed_out = 0;
   proftime_T pt;
   const int l_syn_time_on = syn_time_on;
 
@@ -2902,7 +2909,8 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   }
 
   rmp->rmm_maxcol = syn_buf->b_p_smc;
-  r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, NULL, NULL);
+  r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col,
+                        syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
@@ -2913,6 +2921,9 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     ++st->count;
     if (r > 0)
       ++st->match;
+  }
+  if (timed_out) {
+    syn_win->w_s->b_syn_slow = true;
   }
 
   if (r > 0) {
@@ -3144,6 +3155,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 void syntax_clear(synblock_T *block)
 {
   block->b_syn_error = false;           // clear previous error
+  block->b_syn_slow = false;            // clear previous timeout
   block->b_syn_ic = false;              // Use case, by default
   block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
   block->b_syn_containedin = false;
@@ -5756,8 +5768,10 @@ int syn_get_foldlevel(win_T *wp, long lnum)
 {
   int level = 0;
 
-  /* Return quickly when there are no fold items at all. */
-  if (wp->w_s->b_syn_folditems != 0) {
+  // Return quickly when there are no fold items at all.
+  if (wp->w_s->b_syn_folditems != 0
+      && !wp->w_s->b_syn_error
+      && !wp->w_s->b_syn_slow) {
     syntax_start(wp, lnum);
 
     for (int i = 0; i < current_state.ga_len; ++i) {

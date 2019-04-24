@@ -1135,6 +1135,9 @@ static void win_update(win_T *wp)
   /* reset got_int, otherwise regexp won't work */
   save_got_int = got_int;
   got_int = 0;
+  // Set the time limit to 'redrawtime'.
+  proftime_T syntax_tm = profile_setlimit(p_rdt);
+  syn_set_timeout(&syntax_tm);
   win_foldinfo.fi_level = 0;
 
   /*
@@ -1493,6 +1496,7 @@ static void win_update(win_T *wp)
   if (wp->w_redr_type >= REDRAW_TOP) {
     draw_vsep_win(wp, 0);
   }
+  syn_set_timeout(NULL);
 
   /* Reset the type of redrawing required, the window has been updated. */
   wp->w_redr_type = 0;
@@ -2189,7 +2193,7 @@ win_line (
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
     extra_check = wp->w_p_lbr;
-    if (syntax_present(wp) && !wp->w_s->b_syn_error) {
+    if (syntax_present(wp) && !wp->w_s->b_syn_error && !wp->w_s->b_syn_slow) {
       // Prepare for syntax highlighting in this line.  When there is an
       // error, stop syntax highlighting.
       save_did_emsg = did_emsg;
@@ -2199,8 +2203,10 @@ win_line (
         wp->w_s->b_syn_error = true;
       } else {
         did_emsg = save_did_emsg;
-        has_syntax = true;
-        extra_check = true;
+        if (!wp->w_s->b_syn_slow) {
+          has_syntax = true;
+          extra_check = true;
+        }
       }
     }
 
@@ -2539,9 +2545,10 @@ win_line (
       }
       wp->w_cursor = pos;
 
-      /* Need to restart syntax highlighting for this line. */
-      if (has_syntax)
+      // Need to restart syntax highlighting for this line.
+      if (has_syntax) {
         syntax_start(wp, lnum);
+      }
     }
   }
 
@@ -2587,6 +2594,9 @@ win_line (
     }
     next_search_hl(wp, shl, lnum, (colnr_T)v,
                    shl == &search_hl ? NULL : cur);
+    if (wp->w_s->b_syn_slow) {
+      has_syntax = false;
+    }
 
     // Need to get the line again, a multi-line regexp may have made it
     // invalid.
@@ -4821,13 +4831,13 @@ static void win_redr_status(win_T *wp)
     p = NameBuff;
     len = (int)STRLEN(p);
 
-    if (wp->w_buffer->b_help
+    if (bt_help(wp->w_buffer)
         || wp->w_p_pvw
         || bufIsChanged(wp->w_buffer)
         || wp->w_buffer->b_p_ro) {
       *(p + len++) = ' ';
     }
-    if (wp->w_buffer->b_help) {
+    if (bt_help(wp->w_buffer)) {
       STRCPY(p + len, _("[Help]"));
       len += (int)STRLEN(p + len);
     }

@@ -4528,10 +4528,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 'redrawtime' 'rdt'	number	(default 2000)
 			global
 	Time in milliseconds for redrawing the display.  Applies to
-	'hlsearch', 'inccommand' and |:match| highlighting.
+	'hlsearch', 'inccommand', |:match| highlighting and syntax
+	highlighting.
 	When redrawing takes more than this many milliseconds no further
-	matches will be highlighted.  This is used to avoid that Vim hangs
-	when using a very complicated pattern.
+	matches will be highlighted.
+	For syntax highlighting the time applies per window.  When over the
+	limit syntax highlighting is disabled until |CTRL-L| is used.
+	This is used to avoid that Vim hangs when using a very complicated
+	pattern.
 
 						*'regexpengine'* *'re'*
 'regexpengine' 're'	number	(default 0)
