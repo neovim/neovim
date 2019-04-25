@@ -227,6 +227,7 @@ EXTERN dict_T vimvardict;                   /* Dictionary with v: variables */
 EXTERN dict_T globvardict;                  /* Dictionary with g: variables */
 EXTERN int did_emsg;                        /* set by emsg() when the message
                                                is displayed or thrown */
+EXTERN bool called_vim_beep;                // set if vim_beep() is called
 EXTERN int did_emsg_syntax;                 /* did_emsg set because of a
                                                syntax error */
 EXTERN int called_emsg;                     /* always set by emsg() */

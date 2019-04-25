@@ -6877,6 +6877,27 @@ static void assert_equal_common(typval_T *argvars, assert_type_T atype)
   }
 }
 
+static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  const char *const cmd = tv_get_string_chk(&argvars[0]);
+  garray_T ga;
+
+  called_vim_beep = false;
+  suppress_errthrow = true;
+  emsg_silent = false;
+  do_cmdline_cmd(cmd);
+  if (!called_vim_beep) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (const char_u *)"command did not beep: ");
+    ga_concat(&ga, (const char_u *)cmd);
+    assert_error(&ga);
+    ga_clear(&ga);
+  }
+
+  suppress_errthrow = false;
+  emsg_on_display = false;
+}
+
 // "assert_equal(expected, actual[, msg])" function
 static void f_assert_equal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {

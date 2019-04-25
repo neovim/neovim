@@ -2272,6 +2272,8 @@ endfunc
 
 func! Test_normal45_drop()
   if !has('dnd')
+    " The ~ register does not exist
+    call assert_beeps('norm! "~')
     return
   endif
 
