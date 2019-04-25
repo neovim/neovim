@@ -25,6 +25,7 @@ return {
     arglistid={args={0, 2}},
     argv={args={0, 1}},
     asin={args=1, func="float_op_wrapper", data="&asin"},  -- WJMc
+    assert_beeps={args={1, 2}},
     assert_equal={args={2, 3}},
     assert_exception={args={1, 2}},
     assert_fails={args={1, 2}},

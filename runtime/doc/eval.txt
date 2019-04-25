@@ -1966,6 +1966,7 @@ argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr} [, {winid}])		String	{nr} entry of the argument list
 argv([-1, {winid}])		List	the argument list
+assert_beeps({cmd})		none	assert {cmd} causes a beep
 assert_equal({exp}, {act} [, {msg}])
 				none	assert {exp} is equal to {act}
 assert_exception({error} [, {msg}])
@@ -2479,6 +2480,11 @@ argv([{nr} [, {winid}])
 
 		The {winid} argument specifies the window ID, see |argc()|.
 
+assert_beeps({cmd})					*assert_beeps()*
+		Run {cmd} and add an error message to |v:errors| if it does
+		NOT produce a beep or visual bell.
+		Also see |assert_fails()|.
+
 							*assert_equal()*
 assert_equal({expected}, {actual}, [, {msg}])
 		When {expected} and {actual} are not equal an error message is
@@ -2511,6 +2517,8 @@ assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce an error.
 		When {error} is given it must match in |v:errmsg|.
+		Note that beeping is not considered an error, and some failing
+		commands only beep.  Use |assert_beeps()| for those.
 
 assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to

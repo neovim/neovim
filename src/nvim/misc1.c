@@ -2578,6 +2578,8 @@ void beep_flush(void)
 // val is one of the BO_ values, e.g., BO_OPER
 void vim_beep(unsigned val)
 {
+  called_vim_beep = true;
+
   if (emsg_silent == 0) {
     if (!((bo_flags & val) || (bo_flags & BO_ALL))) {
       if (p_vb) {
@@ -2587,8 +2589,9 @@ void vim_beep(unsigned val)
       }
     }
 
-    /* When 'verbose' is set and we are sourcing a script or executing a
-     * function give the user a hint where the beep comes from. */
+    // When 'debug' contains "beep" produce a message.  If we are sourcing
+    // a script or executing a function give the user a hint where the beep
+    // comes from.
     if (vim_strchr(p_debug, 'e') != NULL) {
       msg_source(HL_ATTR(HLF_W));
       msg_attr(_("Beep!"), HL_ATTR(HLF_W));
