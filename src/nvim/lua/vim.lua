@@ -200,6 +200,16 @@ local function _grep(pattern, path, global)
   return results
 end
 
+-- Creates a new nvim job (for async calls) and returns its id.
+-- Used by acquire_asynccall_channel().
+local function _create_nvim_job()
+  local progpath = vim.api.nvim_get_vvar('progpath')
+  return vim.api.nvim_call_function('jobstart', {
+    { progpath, '--embed', '--headless', '-u', 'NONE', '-i', 'NONE', '-n' },
+    { rpc = true }
+  })
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -207,6 +217,7 @@ local module = {
   _system = _system,
   schedule_wrap = schedule_wrap,
   _grep = _grep,
+  _create_nvim_job = _create_nvim_job,
 }
 
 setmetatable(module, {

@@ -56,6 +56,7 @@ return {
     byteidx={args=2},
     byteidxcomp={args=2},
     call={args={2, 3}},
+    call_async={args={3, 4}},
     ceil={args=1, func="float_op_wrapper", data="&ceil"},
     changenr={},
     chanclose={args={1, 2}},

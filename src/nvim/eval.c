@@ -7598,6 +7598,70 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   func_call(func, &argvars[1], partial, selfdict, rettv);
 }
 
+/// "call_async(callee, args, opts[, callback])" function
+static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = -1;
+
+  typval_T *callee = NULL;
+  typval_T *args = NULL;
+  typval_T *opts = NULL;
+  Callback callback = CALLBACK_NONE;
+
+  // TODO(abdelhakeem): support artibrary user-defined functions
+  callee = &argvars[0];
+  if (callee->v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2),
+          "First argument of call_async() must be a string");
+    return;
+  }
+
+  args = &argvars[1];
+  if (args->v_type != VAR_LIST) {
+    EMSG2(_(e_invarg2),
+          "Second argument of call_async() must be a list");
+    return;
+  }
+
+  opts = &argvars[2];
+  if (opts->v_type != VAR_DICT) {
+    EMSG2(_(e_invarg2),
+          "Third argument of call_async() must be a dictionary");
+    return;
+  }
+
+  // TODO(abdelhakeem): serialize and send context data as specified by "opts"
+
+  if (argvars[3].v_type != VAR_UNKNOWN
+      && !callback_from_typval(&callback, &argvars[3])) {
+    EMSG2(_(e_invarg2),
+          "Fourth argument of call_async() "
+          "must be a function name or funcref");
+    return;
+  }
+
+  Channel *chan = acquire_asynccall_channel();
+  if (!chan) {
+    return;
+  }
+
+  chan->async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
+  chan->async_call->callback = callback;
+
+  Array call_async_args = ARRAY_DICT_INIT;
+  ADD(call_async_args, vim_to_object(callee));
+  ADD(call_async_args, STRING_OBJ(cstr_to_string("")));
+  ADD(call_async_args, vim_to_object(args));
+
+  if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
+    release_asynccall_channel(chan);
+    return;
+  }
+
+  rettv->vval.v_number = chan->id;
+}
+
 /*
  * "changenr()" function
  */

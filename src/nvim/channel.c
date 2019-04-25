@@ -232,11 +232,23 @@ void callback_reader_start(CallbackReader *reader, const char *type)
   reader->type = type;
 }
 
+void asynccall_clear(AsyncCall **async_call)
+  FUNC_ATTR_NONNULL_ALL
+{
+  callback_free(&(*async_call)->callback);
+  xfree(*async_call);
+  *async_call = NULL;
+}
+
 static void free_channel_event(void **argv)
 {
   Channel *chan = argv[0];
   if (chan->is_rpc) {
     rpc_free(chan);
+  }
+
+  if (chan->async_call) {
+    asynccall_clear(&chan->async_call);
   }
 
   callback_reader_free(&chan->on_data);

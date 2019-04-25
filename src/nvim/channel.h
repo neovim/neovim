@@ -8,6 +8,8 @@
 #include "nvim/event/libuv_process.h"
 #include "nvim/eval/typval.h"
 #include "nvim/msgpack_rpc/channel_defs.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/lua/executor.h"
 
 #define CHAN_STDIO 1
 #define CHAN_STDERR 2
@@ -57,6 +59,10 @@ static inline bool callback_reader_set(CallbackReader reader)
   return reader.cb.type != kCallbackNone || reader.self;
 }
 
+typedef struct {
+  Callback callback;
+} AsyncCall;
+
 struct Channel {
   uint64_t id;
   size_t refcount;
@@ -75,6 +81,7 @@ struct Channel {
   bool is_rpc;
   RpcState rpc;
   Terminal *term;
+  AsyncCall *async_call;
 
   CallbackReader on_data;
   CallbackReader on_stderr;
@@ -135,6 +142,20 @@ static inline Stream *channel_outstream(Channel *chan)
       abort();
   }
   abort();
+}
+
+static inline Channel *acquire_asynccall_channel(void)
+{
+  typval_T jobid_tv = TV_INITIAL_VALUE;
+  executor_exec_lua(
+      STATIC_CSTR_AS_STRING("return vim._create_nvim_job()"),
+      &jobid_tv);
+  return find_channel((uint64_t)jobid_tv.vval.v_number);
+}
+
+static inline void release_asynccall_channel(Channel *channel)
+{
+  process_stop((Process *)&channel->stream.proc);
 }
 
 
