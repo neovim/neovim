@@ -16,6 +16,7 @@ local parse_context = helpers.parse_context
 local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
+local write_file = helpers.write_file
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -1718,6 +1719,55 @@ describe('API', function()
     it('does not cause heap-use-after-free on exit while setting options', function()
       command('au OptionSet * q')
       command('silent! call nvim_create_buf(0, 1)')
+    end)
+  end)
+
+  describe('nvim_grep', function()
+    local files = {
+      ['nvim_grep_spec_file1'] = [[ Lorem ipsum dolor sit amet,
+                                    consectetur adipiscing elit... ]],
+      ['nvim_grep_spec_file2'] = [[ Lorem ipsum dolor sit amet,
+                                    consectetur adipiscing elit... ]],
+      ['nvim_grep_spec_file3'] = [[ Lorem ipsum dolor sit amet,
+                                    consectetur adipiscing elit... ]],
+    }
+
+    before_each(function()
+      for fname, content in pairs(files) do
+        write_file(fname, content:gsub('^%s+', ''):gsub('([\n\r]+)%s+', '%1'))
+      end
+    end)
+
+    after_each(function()
+      for fname, _ in pairs(files) do
+        os.remove(fname)
+      end
+    end)
+
+    it('works', function()
+      local results = nvim('grep', 'ipsum', 'nvim_grep_spec_file*', true)
+      results = funcs.map(results, table.pack(([[
+       { 'fname': fnamemodify(v:val.fname, ':t'),
+         'lnum': v:val.lnum, 'col': v:val.col, 'text': v:val.text }
+      ]]):gsub('\n', ''))[1])
+      table.sort(results, function(r1, r2)
+        return r1.fname < r2.fname
+      end)
+      local expected = {
+        { fname = 'nvim_grep_spec_file1',
+          lnum = 1,
+          col = 7,
+          text = 'Lorem ipsum dolor sit amet,', },
+        { fname = 'nvim_grep_spec_file2',
+          lnum = 1,
+          col = 7,
+          text = 'Lorem ipsum dolor sit amet,', },
+        { fname = 'nvim_grep_spec_file3',
+          lnum = 1,
+          col = 7,
+          text = 'Lorem ipsum dolor sit amet,', },
+      }
+      eq(expected, results)
     end)
   end)
 end)

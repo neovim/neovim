@@ -1448,6 +1448,25 @@ nvim_select_popupmenu_item({item}, {insert}, {finish}, {opts})
 nvim__inspect_cell({grid}, {row}, {col})                *nvim__inspect_cell()*
                 TODO: Documentation
 
+nvim_grep({pattern}, {path}, {global})                           *nvim_grep()*
+                Search {path} for {pattern}.
+
+                Note:
+                    This function sets the |quickfix| list as a side-effect.
+
+                Parameters: ~
+                    {pattern}  |regexp| for pattern to search for.
+                    {path}     File(s) to search.
+                    {global}   Report multiple matches occurring on the same
+                               line.
+
+                Return: ~
+                    List of search results in |getqflist()|-style format with
+                    an additional "fname" field for the filename.
+
+                See also: ~
+                    |:vimgrep|
+
 
 ==============================================================================
 Buffer Functions                                                  *api-buffer*

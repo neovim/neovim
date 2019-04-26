@@ -239,6 +239,22 @@ local function __index(t, key)
   end
 end
 
+-- Used by nvim_grep().
+local function _grep(pattern, path, global)
+  local g = global and 'g' or ''
+  local vimgrep_cmd = ([[
+    try
+      silent vimgrep /${pattern}/j${g} ${path}
+    catch /E480:/
+    endtry
+  ]]):gsub('${pattern}', pattern)
+     :gsub('${g}', g)
+     :gsub('${path}', path)
+  vim.api.nvim_command(vimgrep_cmd)
+  return vim.api.nvim_eval(
+      [[map(getqflist(), 'extend(v:val, {"fname": bufname(v:val.bufnr)})')]])
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -246,6 +262,7 @@ local module = {
   _system = _system,
   paste = paste,
   schedule_wrap = schedule_wrap,
+  _grep = _grep,
 }
 
 setmetatable(module, {
