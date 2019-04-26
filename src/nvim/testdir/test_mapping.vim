@@ -4,6 +4,8 @@ if !has('multi_byte')
   finish
 endif
 
+source shared.vim
+
 func Test_abbreviation()
   " abbreviation with 0x80 should work
   inoreab чкпр   vim
@@ -173,6 +175,9 @@ func Test_abbr_after_line_join()
 endfunc
 
 func Test_map_timeout()
+  if !has('timers')
+    return
+  endif
   nnoremap aaaa :let got_aaaa = 1<CR>
   nnoremap bb :let got_bb = 1<CR>
   nmap b aaa
@@ -182,7 +187,7 @@ func Test_map_timeout()
     call feedkeys("\<Esc>", "t")
   endfunc
   set timeout timeoutlen=200
-  call timer_start(300, 'ExitInsert')
+  let timer = timer_start(300, 'ExitInsert')
   " After the 'b' Vim waits for another character to see if it matches 'bb'.
   " When it times out it is expanded to "aaa", but there is no wait for
   " "aaaa".  Can't check that reliably though.
@@ -197,6 +202,39 @@ func Test_map_timeout()
   nunmap b
   set timeoutlen&
   delfunc ExitInsert
+  call timer_stop(timer)
+endfunc
+
+func Test_map_timeout_with_timer_interrupt()
+  if !has('job') || !has('timers')
+    return
+  endif
+
+  " Confirm the timer invoked in exit_cb of the job doesn't disturb mapped key
+  " sequence.
+  new
+  let g:val = 0
+  nnoremap \12 :let g:val = 1<CR>
+  nnoremap \123 :let g:val = 2<CR>
+  set timeout timeoutlen=1000
+
+  func ExitCb(job, status)
+    let g:timer = timer_start(1, {_ -> feedkeys("3\<Esc>", 't')})
+  endfunc
+
+  call job_start([&shell, &shellcmdflag, 'echo'], {'exit_cb': 'ExitCb'})
+  call feedkeys('\12', 'xt!')
+  call assert_equal(2, g:val)
+
+  bwipe!
+  nunmap \12
+  nunmap \123
+  set timeoutlen&
+  call WaitFor({-> exists('g:timer')})
+  call timer_stop(g:timer)
+  unlet g:timer
+  unlet g:val
+  delfunc ExitCb
 endfunc
 
 func Test_cabbr_visual_mode()
