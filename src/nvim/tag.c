@@ -1832,9 +1832,9 @@ parse_line:
             // Don't add identical matches.
             // Add all cscope tags, because they are all listed.
             // "mfp" is used as a hash key, there is a NUL byte to end
-            // the part matters for comparing, more bytes may follow
-            // after it.  E.g. help tags store the priority after the
-            // NUL.
+            // the part that matters for comparing, more bytes may
+            // follow after it.  E.g. help tags store the priority
+            // after the NUL.
             if (use_cscope) {
               hash++;
             } else {

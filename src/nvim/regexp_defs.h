@@ -94,10 +94,8 @@ typedef struct {
   char_u program[1];                    /* actually longer.. */
 } bt_regprog_T;
 
-/*
- * Structure representing a NFA state.
- * A NFA state may have no outgoing edge, when it is a NFA_MATCH state.
- */
+// Structure representing a NFA state.
+// An NFA state may have no outgoing edge, when it is a NFA_MATCH state.
 typedef struct nfa_state nfa_state_T;
 struct nfa_state {
   int c;
