@@ -2354,3 +2354,35 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   }
   return ret;
 }
+
+/// Search {path} for {pattern}.
+///
+/// @note This function sets the |quickfix| list as a side-effect.
+///
+/// @param[in]  pattern |regexp| for pattern to search for.
+/// @param[in]  path    File(s) to search.
+/// @param[in]  global  Report multiple matches occurring on the same line.
+/// @param[out] err     Error details, if any.
+///
+/// @return  List of search results in |getqflist()|-style format with an
+///          additional "fname" field for the filename.
+Array nvim_grep(String pattern, String path, Boolean global, Error *err)
+  FUNC_API_SINCE(6)
+{
+  Array result_array = ARRAY_DICT_INIT;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(pattern));
+  ADD(args, STRING_OBJ(path));
+  ADD(args, BOOLEAN_OBJ(global));
+  Object results = nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("return vim._grep(select(1, ...))"), args, err);
+  xfree(args.items);
+  if (results.type == kObjectTypeArray) {
+    result_array = results.data.array;
+  } else if (!ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException,
+                  "Failed to grep %s for %s",
+                  path.data, pattern.data);
+  }
+  return result_array;
+}
