@@ -641,3 +641,52 @@ func Test_nocatch_sub_failure_handling()
 
   bwipe!
 endfunc
+
+" Test ":s/pat/sub/" with different ~s in sub.
+func Test_replace_with_tilde()
+  new
+  " Set the last replace string to empty
+  s/^$//
+  call append(0, ['- Bug in "vPPPP" on this text:'])
+  normal gg
+  s/u/~u~/
+  call assert_equal('- Bug in "vPPPP" on this text:', getline(1))
+  s/i/~u~/
+  call assert_equal('- Bug uuun "vPPPP" on this text:', getline(1))
+  s/o/~~~/
+  call assert_equal('- Bug uuun "vPPPP" uuuuuuuuun this text:', getline(1))
+  close!
+endfunc
+
+func Test_replace_keeppatterns()
+  new
+  a
+foobar
+
+substitute foo asdf
+
+one two
+.
+
+  normal gg
+  /^substitute
+  s/foo/bar/
+  call assert_equal('foo', @/)
+  call assert_equal('substitute bar asdf', getline('.'))
+
+  /^substitute
+  keeppatterns s/asdf/xyz/
+  call assert_equal('^substitute', @/)
+  call assert_equal('substitute bar xyz', getline('.'))
+
+  exe "normal /bar /e\<CR>"
+  call assert_equal(15, col('.'))
+  normal -
+  keeppatterns /xyz
+  call assert_equal('bar ', @/)
+  call assert_equal('substitute bar xyz', getline('.'))
+  exe "normal 0dn"
+  call assert_equal('xyz', getline('.'))
+
+  close!
+endfunc

@@ -411,3 +411,27 @@ func Test_Visual_paragraph_textobject()
 
   bwipe!
 endfunc
+
+" Tests for "vaBiB", end could be wrong.
+func Test_Visual_Block()
+  new
+  a
+- Bug in "vPPPP" on this text:
+	{
+		cmd;
+		{
+			cmd;\t/* <-- Start cursor here */
+			{
+			}
+		}
+	}
+.
+  normal gg
+  call search('Start cursor here')
+  normal vaBiBD
+  call assert_equal(['- Bug in "vPPPP" on this text:',
+	      \ "\t{",
+	      \ "\t}"], getline(1, '$'))
+
+  close!
+endfunc
