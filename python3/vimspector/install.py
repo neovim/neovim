@@ -20,7 +20,7 @@ import os
 def GetOS():
   if platform.system() == 'Darwin':
     return 'macos'
-  elif platform.system() == 'Winwdows':
+  elif platform.system() == 'Windows':
     return 'windows'
   else:
     return 'linux'
