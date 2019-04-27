@@ -1469,7 +1469,6 @@ func Test_ReadWrite_Autocmds()
   augroup END
 
   " Test for the FileAppendPre and FileAppendPost autocmds
-  call delete('test.out')
   augroup Test2
     au!
     au BufNewFile      *.c    read Xtest.c
