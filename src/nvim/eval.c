@@ -10117,7 +10117,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       // match added with matchaddpos()
       for (i = 0; i < MAXPOSMATCH; i++) {
         llpos_T   *llpos;
-        char buf[6];
+        char buf[30];  // use 30 to avoid compiler warning
 
         llpos = &cur->pos.pos[i];
         if (llpos->lnum == 0) {
@@ -14946,7 +14946,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
       // match from matchaddpos()
       for (i = 1; i < 9; i++) {
-        char buf[5];
+        char buf[30];  // use 30 to avoid compiler warning
         snprintf(buf, sizeof(buf), "pos%d", i);
         dictitem_T *const pos_di = tv_dict_find(d, buf, -1);
         if (pos_di != NULL) {
