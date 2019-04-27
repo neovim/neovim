@@ -38,7 +38,7 @@ local nvim_prog = (
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
                   ..' belloff= noshowcmd noruler nomore'
-local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
+local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE',
                    '--cmd', nvim_set, '--embed'}
 -- Directory containing nvim.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
@@ -312,6 +312,43 @@ local function merge_args(...)
   return argv
 end
 
+--  Removes Nvim startup args from `args` matching items in `args_rm`.
+--
+--  "-u", "-i", "--cmd" are treated specially: their "values" are also removed.
+--  Example:
+--      args={'--headless', '-u', 'NONE'}
+--      args_rm={'--cmd', '-u'}
+--  Result:
+--      {'--headless'}
+--
+--  All cases are removed.
+--  Example:
+--      args={'--cmd', 'foo', '-N', '--cmd', 'bar'}
+--      args_rm={'--cmd', '-u'}
+--  Result:
+--      {'-N'}
+local function remove_args(args, args_rm)
+  local new_args = {}
+  local skip_following = {'-u', '-i', '-c', '--cmd', '-s', '--listen'}
+  if not args_rm or #args_rm == 0 then
+    return {unpack(args)}
+  end
+  for _, v in ipairs(args_rm) do
+    assert(type(v) == 'string')
+  end
+  local last = ''
+  for _, arg in ipairs(args) do
+    if table_contains(skip_following, last) then
+      last = ''
+    elseif table_contains(args_rm, arg) then
+      last = arg
+    else
+      table.insert(new_args, arg)
+    end
+  end
+  return new_args
+end
+
 local function spawn(argv, merge, env)
   local child_stream = ChildProcessStream.spawn(
       merge and merge_args(prepend_argv, argv) or argv,
@@ -350,20 +387,25 @@ local function retry(max, max_ms, fn)
 end
 
 -- Starts a new global Nvim session.
+--
 -- Parameters are interpreted as startup args, OR a map with these keys:
---    args: Merged with the default `nvim_argv` set.
---    env : Defines the environment of the new session.
+--    args:       List: Args appended to the default `nvim_argv` set.
+--    args_rm:    List: Args removed from the default set. All cases are
+--                removed, e.g. args_rm={'--cmd'} removes all cases of "--cmd"
+--                (and its value) from the default set.
+--    env:        Map: Defines the environment of the new session.
 --
 -- Example:
 --    clear('-e')
---    clear({args={'-e'}, env={TERM=term}})
+--    clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
 local function clear(...)
   local args = {unpack(nvim_argv)}
+  table.insert(args, '--headless')
   local new_args
   local env = nil
   local opts = select(1, ...)
-  local headless = true
   if type(opts) == 'table' then
+    args = remove_args(args, opts.args_rm)
     if opts.env then
       local env_tbl = {}
       for k, v in pairs(opts.env) do
@@ -374,7 +416,8 @@ local function clear(...)
       for _, k in ipairs({
         'HOME',
         'ASAN_OPTIONS',
-        'LD_LIBRARY_PATH', 'PATH',
+        'LD_LIBRARY_PATH',
+        'PATH',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
       }) do
@@ -388,14 +431,8 @@ local function clear(...)
       end
     end
     new_args = opts.args or {}
-    if opts.headless == false then
-      headless = false
-    end
   else
     new_args = {...}
-  end
-  if headless then
-    table.insert(args, '--headless')
   end
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)

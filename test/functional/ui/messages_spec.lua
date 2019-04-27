@@ -529,7 +529,7 @@ describe('ui/ext_messages', function()
   local screen
 
   before_each(function()
-    clear{headless=false, args={"--cmd", "set shortmess-=I"}}
+    clear{args_rm={'--headless'}, args={"--cmd", "set shortmess-=I"}}
     screen = Screen.new(80, 24)
     screen:attach({rgb=true, ext_messages=true, ext_popupmenu=true})
     screen:set_default_attr_ids({

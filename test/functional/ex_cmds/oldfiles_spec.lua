@@ -1,18 +1,18 @@
 local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
 
+local clear = helpers.clear
 local buf, eq, feed_command = helpers.curbufmeths, helpers.eq, helpers.feed_command
-local feed, nvim_prog, wait = helpers.feed, helpers.nvim_prog, helpers.wait
-local ok, set_session, spawn = helpers.ok, helpers.set_session, helpers.spawn
+local feed, wait = helpers.feed, helpers.wait
+local ok = helpers.ok
 local eval = helpers.eval
 
 local shada_file = 'Xtest.shada'
 
 local function _clear()
-  set_session(spawn({nvim_prog, '--embed', '--headless', '-u', 'NONE',
-                     -- Need shada for these tests.
-                     '-i', shada_file,
-                     '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'}))
+  clear{args={'-i', shada_file, -- Need shada for these tests.
+              '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'},
+        args_rm={'-i', '--cmd'}}
 end
 
 describe(':oldfiles', function()

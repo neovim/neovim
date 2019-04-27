@@ -115,7 +115,8 @@ describe('ui receives option updates', function()
   end)
 
   local function startup_test(headless)
-    local expected = reset(nil,{headless=headless,args={'--cmd', 'set guifont=Comic\\ Sans\\ 12'}})
+    local expected = reset(nil, {args_rm=(headless and {} or {'--headless'}),
+                                 args={'--cmd', 'set guifont=Comic\\ Sans\\ 12'}})
     expected.guifont = "Comic Sans 12"
     screen:expect(function()
       eq(expected, screen.options)

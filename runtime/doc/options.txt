@@ -5049,7 +5049,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 				*'shadafile'* *'sdf'*
-'shadafile' 'vif'	string	(default: "")
+'shadafile' 'sdf'	string	(default: "")
 			global
 	When non-empty, overrides the file name used for |shada| (viminfo).
 	When equal to "NONE" no shada file will be read or written.
