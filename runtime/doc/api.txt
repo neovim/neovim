@@ -766,8 +766,10 @@ nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
                 Returns the 24-bit RGB value of a |nvim_get_color_map()| color
                 name or "#rrggbb" hexadecimal string.
 
-                Examples::echo nvim_get_color_by_name("Pink")     :echo
-                nvim_get_color_by_name("#cbcbcb")
+                Examples: >
+                    :echo nvim_get_color_by_name("Pink")
+                    :echo nvim_get_color_by_name("#cbcbcb")
+<
 
                 Parameters: ~
                     {name}  Color name or "#rrggbb" string

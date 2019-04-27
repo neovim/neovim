@@ -1201,7 +1201,7 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
 /// Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
 /// "#rrggbb" hexadecimal string.
 ///
-/// Examples:
+/// Example:
 /// <pre>
 ///     :echo nvim_get_color_by_name("Pink")
 ///     :echo nvim_get_color_by_name("#cbcbcb")

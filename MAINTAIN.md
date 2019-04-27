@@ -44,14 +44,16 @@ Release Policy
 Release "often", but not "early".
 
 The (unreleased) `master` branch is the "early" channel; it should not be
-released if it's not stable. Medium-risk changes may be merged to `master` if
+released if it's not stable. High-risk changes may be merged to `master` if
 the next feature-release is not imminent.
 
-For maintenance releases, create a `release-x.y` branch. If the current stable
-release has a major bug:
+For maintenance releases, create a `release-x.y` branch. If the current release
+has a major bug:
 
 1. Fix the bug on `master`.
 2. Cherry-pick the fix to `release-x.y`.
-3. Cut a release from `release-x.y` (run `scripts/release.sh`).
+3. Cut a release from `release-x.y`.
+    - Run `./scripts/release.sh`
+    - Update (force-push) the remote `stable` tag.
 
 See also: https://github.com/neovim/neovim/issues/862
