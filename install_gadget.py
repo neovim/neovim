@@ -187,8 +187,7 @@ def InstallTclProDebug( name, root ):
     #    '/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System'
     #    '/Library/Frameworks/Tcl.framework/Versions'
     #    '/Current',
-    for p in [ '/System/Library/Frameworks/Tcl.framework/',
-               '/usr/local/opt/tcl-tk/lib' ]:
+    for p in [ '/usr/local/opt/tcl-tk/lib' ]:
       if os.path.exists( os.path.join( p, 'tclConfig.sh' ) ):
         configure.append( '--with-tcl=' + p )
         break
