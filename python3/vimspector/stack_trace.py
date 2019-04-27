@@ -38,7 +38,7 @@ class StackTraceView( object ):
     self._line_to_thread = {}
 
     # TODO: We really need a proper state model
-    # 
+    #
     # AWAIT_CONNECTION -- OnServerReady / RequestThreads --> REQUESTING_THREADS
     # REQUESTING -- OnGotThreads / RequestScopes --> REQUESTING_SCOPES
     #
@@ -76,7 +76,7 @@ class StackTraceView( object ):
     pending_request = False
     if self._requesting_threads:
       pending_request = True
-      return 
+      return
 
     def consume_threads( message ):
       self._requesting_threads = False

@@ -30,7 +30,7 @@ _log_handler.setFormatter(
 def SetUpLogging( logger ):
   logger.setLevel( logging.DEBUG )
   if _log_handler not in logger.handlers:
-      logger.addHandler( _log_handler )
+    logger.addHandler( _log_handler )
 
 
 def BufferNumberForFile( file_name ):
@@ -60,12 +60,12 @@ def SetUpCommandBuffer( cmd, name ):
 
   if bufs is None:
     raise RuntimeError( "Unable to start job {}: {}".format( cmd, name ) )
-  elif not all( [ b > 0 for b in bufs ] ):
+  elif not all( b > 0 for b in bufs ):
     raise RuntimeError( "Unable to get all streams for job {}: {}".format(
       name,
       cmd ) )
 
-  UserMessage( 'Bufs: {}'.format( [ int(b) for b in bufs ] ), persist = True )
+  UserMessage( 'Bufs: {}'.format( [ int( b ) for b in bufs ] ), persist = True )
 
   return [ vim.buffers[ b ] for b in bufs ]
 
@@ -257,11 +257,11 @@ def AppendToBuffer( buf, line_or_lines, modified=False ):
       buf.append( line_or_lines )
     elif isinstance( line_or_lines, str ):
       line = 1
-      buf[-1] = line_or_lines
+      buf[ -1 ] = line_or_lines
     else:
       line = 1
-      buf[:] = line_or_lines
-  except:
+      buf[ : ] = line_or_lines
+  except Exception:
     # There seem to be a lot of Vim bugs that lead to E315, whose help says that
     # this is an internal error. Ignore the error, but write a trace to the log.
     logging.getLogger( __name__ ).exception(
@@ -276,7 +276,7 @@ def AppendToBuffer( buf, line_or_lines, modified=False ):
 
 
 def ClearBuffer( buf ):
-  buf[:] = None
+  buf[ : ] = None
 
 
 def IsCurrent( window, buf ):
@@ -330,7 +330,7 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
 
 def ParseVariables( variables ):
   new_variables = {}
-  for n,v in variables.items():
+  for n, v in variables.items():
     if isinstance( v, dict ):
       if 'shell' in v:
         import subprocess

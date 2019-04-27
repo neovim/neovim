@@ -21,7 +21,7 @@ from collections import defaultdict
 from vimspector import utils
 
 
-class CodeView( object  ):
+class CodeView( object ):
   def __init__( self, window ):
     self._window = window
 
@@ -78,9 +78,9 @@ class CodeView( object  ):
     vim.command( 'sign place {0} group=VimspectorCode priority=20 '
                                  'line={1} name=vimspectorPC '
                                  'file={2}'.format(
-      self._signs[ 'vimspectorPC' ],
-      frame[ 'line' ],
-      frame[ 'source' ][ 'path' ] ) )
+                                   self._signs[ 'vimspectorPC' ],
+                                   frame[ 'line' ],
+                                   frame[ 'source' ][ 'path' ] ) )
 
     return True
 
@@ -166,11 +166,11 @@ class CodeView( object  ):
                           'line={1} '
                           'name={2} '
                           'file={3}'.format(
-            sign_id,
-            breakpoint[ 'line' ],
-            'vimspectorBP' if breakpoint[ 'verified' ]
-                           else 'vimspectorBPDisabled',
-            file_name ) )
+                            sign_id,
+                            breakpoint[ 'line' ],
+                            'vimspectorBP' if breakpoint[ 'verified' ]
+                            else 'vimspectorBPDisabled',
+                            file_name ) )
 
 
   def BreakpointsAsQuickFix( self ):

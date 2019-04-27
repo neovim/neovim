@@ -190,7 +190,7 @@ class DebugAdapterConnection( object ):
       assert self._state == 'READ_BODY'
       return
 
-    payload = str( self._buffer[ : content_length  ], 'utf-8' )
+    payload = str( self._buffer[ : content_length ], 'utf-8' )
     self._buffer = self._buffer[ content_length : ]
 
     # self._logger.debug( 'Message received (raw): %s', payload )

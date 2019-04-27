@@ -100,7 +100,7 @@ class ProjectBreakpoints( object ):
       return
 
     found_bp = False
-    for index, bp in enumerate( self._line_breakpoints[ file_name]  ):
+    for index, bp in enumerate( self._line_breakpoints[ file_name ] ):
       if bp[ 'line' ] == line:
         found_bp = True
         if bp[ 'state' ] == 'ENABLED':
@@ -151,7 +151,7 @@ class ProjectBreakpoints( object ):
   def SendBreakpoints( self ):
     if not self._breakpoints_handler:
       def handler( source, msg ):
-          return self._ShowBreakpoints()
+        return self._ShowBreakpoints()
     else:
       handler = self._breakpoints_handler
 

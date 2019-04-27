@@ -16,6 +16,7 @@
 import platform
 import os
 
+
 def GetOS():
   if platform.system() == 'Darwin':
     return 'macos'
@@ -24,8 +25,10 @@ def GetOS():
   else:
     return 'linux'
 
+
 def GetGadgetDir( vimspector_base, OS ):
   return os.path.join( os.path.abspath( vimspector_base ), 'gadgets', OS )
+
 
 def GetGadgetConfigFile( vimspector_base ):
   return os.path.join( GetGadgetDir( vimspector_base, GetOS() ),

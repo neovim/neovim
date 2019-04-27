@@ -83,7 +83,7 @@ class OutputView( object ):
         self._ShowOutput( category )
 
   def ConnectionUp( self, connection ):
-      self._connection = connection
+    self._connection = connection
 
   def ConnectionClosed( self ):
     # Don't clear because output is probably still useful
@@ -166,7 +166,7 @@ class OutputView( object ):
         if cmd is not None:
           out, err = utils.SetUpCommandBuffer( cmd, category )
           self._buffers[ category + '-out' ] = TabBuffer( out,
-                                                           len( self._buffers ) )
+                                                          len( self._buffers ) )
           self._buffers[ category + '-out' ].is_job = True
           self._buffers[ category + '-err' ] = TabBuffer( err,
                                                           len( self._buffers ) )

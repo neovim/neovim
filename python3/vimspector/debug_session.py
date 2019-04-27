@@ -17,11 +17,8 @@ import logging
 import vim
 import json
 import os
-import functools
 import subprocess
 import shlex
-
-from collections import defaultdict
 
 from vimspector import ( breakpoints,
                          code,
@@ -110,11 +107,11 @@ class DebugSession( object ):
     # set from an api call like SetLaunchParam( 'var', 'value' ), perhaps also a
     # way to load .vimspector.local.json which just sets variables
     self._variables = {
-      'dollar': '$', # HACK
+      'dollar': '$', # HACK. Hote '$$' also works.
       'workspaceRoot': self._workspace_root,
       'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() )
     }
-    self._variables.update( 
+    self._variables.update(
       utils.ParseVariables( adapter.get( 'variables', {} ) ) )
     self._variables.update(
       utils.ParseVariables( configuration.get( 'variables', {} ) ) )
@@ -125,7 +122,7 @@ class DebugSession( object ):
 
     if not adapter:
       utils.UserMessage( 'No adapter configured for {}'.format(
-        configuration_name ), persist=True  )
+        configuration_name ), persist=True )
       return
 
     self._StartWithConfiguration( configuration, adapter )
@@ -174,7 +171,7 @@ class DebugSession( object ):
     # beeps and doesn't display the config selector. One option is to just not
     # display the selector and restart with the same opitons.
     if not self._configuration or not self._adapter:
-      return Start()
+      return self.Start()
 
     self._StartWithConfiguration( self._configuration, self._adapter )
 
@@ -420,7 +417,7 @@ class DebugSession( object ):
     atttach_config = adapter_config.get( 'attach' )
 
     if not atttach_config:
-        return
+      return
 
     if 'remote' in atttach_config:
       # FIXME: We almost want this to feed-back variables to be expanded later,
@@ -449,7 +446,7 @@ class DebugSession( object ):
       commands = self._GetCommands( remote, 'attach' )
 
       for command in commands:
-        cmd = ssh + command[:]
+        cmd = ssh + command[ : ]
 
         for index, item in enumerate( cmd ):
           cmd[ index ] = item.replace( '%PID%', pid )
@@ -483,7 +480,7 @@ class DebugSession( object ):
       commands = self._GetCommands( remote, 'run' )
 
       for index, command in enumerate( commands ):
-        cmd = ssh + command[:]
+        cmd = ssh + command[ : ]
         full_cmd = []
         for item in cmd:
           if isinstance( command_line, list ):
@@ -560,7 +557,7 @@ class DebugSession( object ):
     if request == "attach":
       self._PrepareAttach( adapter_config, launch_config )
     elif request == "launch":
-      # FIXME: This cmdLine hack is not fun. 
+      # FIXME: This cmdLine hack is not fun.
       self._PrepareLaunch( self._configuration.get( 'remote-cmdLine', [] ),
                            adapter_config,
                            launch_config )

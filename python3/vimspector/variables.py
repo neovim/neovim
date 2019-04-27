@@ -93,7 +93,7 @@ class VariablesView( object ):
       utils.ClearBuffer( self._watch.win.buffer )
 
   def ConnectionUp( self, connection ):
-      self._connection = connection
+    self._connection = connection
 
   def ConnectionClosed( self ):
     self.Clear()
