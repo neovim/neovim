@@ -7460,7 +7460,7 @@ void highlight_attr_set_all(void)
 void highlight_changed(void)
 {
   int id;
-  char_u userhl[10];
+  char_u userhl[30];  // use 30 to avoid compiler warning
   int id_SNC = -1;
   int id_S = -1;
   int hlcnt;

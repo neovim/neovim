@@ -34,6 +34,28 @@ if has('timers')
     call timer_start(LoadAdjust(100), 'ExitInsertMode')
     call feedkeys('a', 'x!')
     call assert_equal(1, g:triggered)
+    unlet g:triggered
+    au! CursorHoldI
+    set updatetime&
+  endfunc
+
+  func Test_cursorhold_insert_with_timer_interrupt()
+    if !has('job')
+      return
+    endif
+    " Need to move the cursor.
+    call feedkeys("ggG", "xt")
+
+    " Confirm the timer invoked in exit_cb of the job doesn't disturb
+    " CursorHoldI event.
+    let g:triggered = 0
+    au CursorHoldI * let g:triggered += 1
+    set updatetime=500
+    call job_start(has('win32') ? 'cmd /c echo:' : 'echo',
+          \ {'exit_cb': {j, s -> timer_start(1000, 'ExitInsertMode')}})
+    call feedkeys('a', 'x!')
+    call assert_equal(1, g:triggered)
+    unlet g:triggered
     au! CursorHoldI
     set updatetime&
   endfunc
@@ -46,6 +68,7 @@ if has('timers')
     " CursorHoldI does not trigger after CTRL-X
     call feedkeys("a\<C-X>", 'x!')
     call assert_equal(0, g:triggered)
+    unlet g:triggered
     au! CursorHoldI
     set updatetime&
   endfunc
@@ -457,7 +480,7 @@ endfunc
 
 func Test_OptionSet()
   throw 'skipped: Nvim does not support test_override()'
-  if !has("eval") || !has("autocmd") || !exists("+autochdir")
+  if !has("eval") || !exists("+autochdir")
     return
   endif
 
@@ -598,7 +621,7 @@ endfunc
 func Test_OptionSet_diffmode()
   throw 'skipped: Nvim does not support test_override()'
   call test_override('starting', 1)
-  " 18: Changing an option when enetering diff mode
+  " 18: Changing an option when entering diff mode
   new
   au OptionSet diff :let &l:cul=v:option_new
 
@@ -1377,4 +1400,206 @@ func Test_autocmd_once()
   close
 
   call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
+endfunc
+
+" Tests for the following autocommands:
+" - FileWritePre	writing a compressed file
+" - FileReadPost	reading a compressed file
+" - BufNewFile		reading a file template
+" - BufReadPre		decompressing the file to be read
+" - FilterReadPre	substituting characters in the temp file
+" - FilterReadPost	substituting characters after filtering
+" - FileReadPre		set options for decompression
+" - FileReadPost	decompress the file
+func Test_ReadWrite_Autocmds()
+  " Run this test only on Unix-like systems and if gzip is available
+  if !has('unix') || !executable("gzip")
+    return
+  endif
+
+  " Make $GZIP empty, "-v" would cause trouble.
+  let $GZIP = ""
+
+  " Use a FileChangedShell autocommand to avoid a prompt for 'Xtestfile.gz'
+  " being modified outside of Vim (noticed on Solaris).
+  au FileChangedShell * echo 'caught FileChangedShell'
+
+  " Test for the FileReadPost, FileWritePre and FileWritePost autocmds
+  augroup Test1
+    au!
+    au FileWritePre    *.gz   '[,']!gzip
+    au FileWritePost   *.gz   undo
+    au FileReadPost    *.gz   '[,']!gzip -d
+  augroup END
+
+  new
+  set bin
+  call append(0, [
+	      \ 'line 2	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 4	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 6	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 8	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 10 Abcdefghijklmnopqrstuvwxyz'
+	      \ ])
+  1,9write! Xtestfile.gz
+  enew! | close
+
+  new
+  " Read and decompress the testfile
+  0read Xtestfile.gz
+  call assert_equal([
+	      \ 'line 2	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 4	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 6	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 8	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 10 Abcdefghijklmnopqrstuvwxyz'
+	      \ ], getline(1, 9))
+  enew! | close
+
+  augroup Test1
+    au!
+  augroup END
+
+  " Test for the FileAppendPre and FileAppendPost autocmds
+  augroup Test2
+    au!
+    au BufNewFile      *.c    read Xtest.c
+    au FileAppendPre   *.out  '[,']s/new/NEW/
+    au FileAppendPost  *.out  !cat Xtest.c >> test.out
+  augroup END
+
+  call writefile(['/*', ' * Here is a new .c file', ' */'], 'Xtest.c')
+  new foo.c			" should load Xtest.c
+  call assert_equal(['/*', ' * Here is a new .c file', ' */'], getline(2, 4))
+  w! >> test.out		" append it to the output file
+
+  let contents = readfile('test.out')
+  call assert_equal(' * Here is a NEW .c file', contents[2])
+  call assert_equal(' * Here is a new .c file', contents[5])
+
+  call delete('test.out')
+  enew! | close
+  augroup Test2
+    au!
+  augroup END
+
+  " Test for the BufReadPre and BufReadPost autocmds
+  augroup Test3
+    au!
+    " setup autocommands to decompress before reading and re-compress
+    " afterwards
+    au BufReadPre  *.gz  exe '!gzip -d ' . shellescape(expand("<afile>"))
+    au BufReadPre  *.gz  call rename(expand("<afile>:r"), expand("<afile>"))
+    au BufReadPost *.gz  call rename(expand("<afile>"), expand("<afile>:r"))
+    au BufReadPost *.gz  exe '!gzip ' . shellescape(expand("<afile>:r"))
+  augroup END
+
+  e! Xtestfile.gz		" Edit compressed file
+  call assert_equal([
+	      \ 'line 2	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 4	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 6	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 8	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 10 Abcdefghijklmnopqrstuvwxyz'
+	      \ ], getline(1, 9))
+
+  w! >> test.out		" Append it to the output file
+
+  augroup Test3
+    au!
+  augroup END
+
+  " Test for the FilterReadPre and FilterReadPost autocmds.
+  set shelltemp			" need temp files here
+  augroup Test4
+    au!
+    au FilterReadPre   *.out  call rename(expand("<afile>"), expand("<afile>") . ".t")
+    au FilterReadPre   *.out  exe 'silent !sed s/e/E/ ' . shellescape(expand("<afile>")) . ".t >" . shellescape(expand("<afile>"))
+    au FilterReadPre   *.out  exe 'silent !rm ' . shellescape(expand("<afile>")) . '.t'
+    au FilterReadPost  *.out  '[,']s/x/X/g
+  augroup END
+
+  e! test.out			" Edit the output file
+  1,$!cat
+  call assert_equal([
+	      \ 'linE 2	AbcdefghijklmnopqrstuvwXyz',
+	      \ 'linE 3	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+	      \ 'linE 4	AbcdefghijklmnopqrstuvwXyz',
+	      \ 'linE 5	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+	      \ 'linE 6	AbcdefghijklmnopqrstuvwXyz',
+	      \ 'linE 7	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+	      \ 'linE 8	AbcdefghijklmnopqrstuvwXyz',
+	      \ 'linE 9	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+	      \ 'linE 10 AbcdefghijklmnopqrstuvwXyz'
+	      \ ], getline(1, 9))
+  call assert_equal([
+	      \ 'line 2	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 4	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 6	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 8	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 10 Abcdefghijklmnopqrstuvwxyz'
+	      \ ], readfile('test.out'))
+
+  augroup Test4
+    au!
+  augroup END
+  set shelltemp&vim
+
+  " Test for the FileReadPre and FileReadPost autocmds.
+  augroup Test5
+    au!
+    au FileReadPre *.gz exe 'silent !gzip -d ' . shellescape(expand("<afile>"))
+    au FileReadPre *.gz call rename(expand("<afile>:r"), expand("<afile>"))
+    au FileReadPost *.gz '[,']s/l/L/
+  augroup END
+
+  new
+  0r Xtestfile.gz		" Read compressed file
+  call assert_equal([
+	      \ 'Line 2	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'Line 4	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'Line 6	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'Line 8	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'Line 10 Abcdefghijklmnopqrstuvwxyz'
+	      \ ], getline(1, 9))
+  call assert_equal([
+	      \ 'line 2	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 4	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 6	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 8	Abcdefghijklmnopqrstuvwxyz',
+	      \ 'line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+	      \ 'line 10 Abcdefghijklmnopqrstuvwxyz'
+	      \ ], readfile('Xtestfile.gz'))
+
+  augroup Test5
+    au!
+  augroup END
+
+  au! FileChangedShell
+  call delete('Xtestfile.gz')
+  call delete('Xtest.c')
+  call delete('test.out')
 endfunc

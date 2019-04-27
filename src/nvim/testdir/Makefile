@@ -164,5 +164,6 @@ newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
+	@rm -rf $*.failed test.ok $(RM_ON_RUN)
 	@mkdir -p $(TMPDIR)
 	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim

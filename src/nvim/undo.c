@@ -1818,7 +1818,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
   u_header_T      *uhp = NULL;
   u_header_T      *last;
   int mark;
-  int nomark;
+  int nomark = 0;  // shut up compiler
   int round;
   bool dosec = sec;
   bool dofile = file;
