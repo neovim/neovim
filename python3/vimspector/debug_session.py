@@ -18,17 +18,23 @@ import vim
 import json
 import os
 import functools
+import subprocess
+import shlex
 
 from collections import defaultdict
 
-from vimspector import ( code,
+from vimspector import ( breakpoints,
+                         code,
                          debug_adapter_connection,
+                         install,
                          output,
                          stack_trace,
                          utils,
                          variables )
 
-SIGN_ID_OFFSET = 10005000
+VIMSPECTOR_HOME = os.path.abspath( os.path.join( os.path.dirname( __file__ ),
+                                                 '..',
+                                                 '..' ) )
 
 
 class DebugSession( object ):
@@ -36,75 +42,27 @@ class DebugSession( object ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
-    self._connection = None
+    self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
+    self._logger.info( 'gadgetDir = %s',
+                       install.GetGadgetDir( VIMSPECTOR_HOME,
+                                             install.GetOS() ) )
 
     self._uiTab = None
     self._stackTraceView = None
     self._variablesView = None
     self._outputView = None
+    self._breakpoints = breakpoints.ProjectBreakpoints()
 
-    self._next_sign_id = SIGN_ID_OFFSET
+    self._run_on_server_exit = None
 
-    # FIXME: This needs redesigning. There are a number of problems:
-    #  - breakpoints don't have to be line-wise (e.g. method/exception)
-    #  - when the server moves/changes a breakpoint, this is not updated,
-    #    leading to them getting out of sync
-    #  - the split of responsibility between this object and the CodeView is
-    #    messy and ill-defined.
-    self._line_breakpoints = defaultdict( list )
-    self._func_breakpoints = []
+    self._ResetServerState()
+
+  def _ResetServerState( self ):
+    self._connection = None
     self._configuration = None
-
-    vim.command( 'sign define vimspectorBP text==> texthl=Error' )
-    vim.command( 'sign define vimspectorBPDisabled text=!> texthl=Warning' )
-
-  def ToggleBreakpoint( self ):
-    line, column = vim.current.window.cursor
-    file_name = vim.current.buffer.name
-
-    if not file_name:
-      return
-
-    found_bp = False
-    for index, bp in enumerate( self._line_breakpoints[ file_name]  ):
-      if bp[ 'line' ] == line:
-        found_bp = True
-        if bp[ 'state' ] == 'ENABLED':
-          bp[ 'state' ] = 'DISABLED'
-        else:
-          if 'sign_id' in bp:
-            vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del self._line_breakpoints[ file_name ][ index ]
-
-    if not found_bp:
-      self._line_breakpoints[ file_name ].append( {
-        'state': 'ENABLED',
-        'line': line,
-        # 'sign_id': <filled in when placed>,
-        #
-        # Used by other breakpoint types:
-        # 'condition': ...,
-        # 'hitCondition': ...,
-        # 'logMessage': ...
-      } )
-
-    self._UpdateUIBreakpoints()
-
-  def _UpdateUIBreakpoints( self ):
-    if self._connection:
-      self._SendBreakpoints()
-    else:
-      self._ShowBreakpoints()
-
-  def AddFunctionBreakpoint( self, function ):
-    self._func_breakpoints.append( {
-        'state': 'ENABLED',
-        'function': function,
-    } )
-
-    # TODO: We don't really have aanything to update here, but if we're going to
-    # have a UI list of them we should update that at this point
-    self._UpdateUIBreakpoints()
+    self._init_complete = False
+    self._launch_complete = False
+    self._server_capabilities = {}
 
   def Start( self, launch_variables = {} ):
     self._configuration = None
@@ -120,55 +78,89 @@ class DebugSession( object ):
     with open( launch_config_file, 'r' ) as f:
       database = json.load( f )
 
-    launch_config = database.get( 'configurations' )
-    adapters = database.get( 'adapters' )
+    configurations = database.get( 'configurations' )
+    adapters = {}
 
-    if len( launch_config ) == 1:
-      configuration = next( iter( launch_config.keys() ) )
+    for gadget_config_file in [ install.GetGadgetConfigFile( VIMSPECTOR_HOME ),
+                                utils.PathToConfigFile( '.gadgets.json' ) ]:
+      if gadget_config_file and os.path.exists( gadget_config_file ):
+        with open( gadget_config_file, 'r' ) as f:
+          adapters.update( json.load( f ).get( 'adapters' ) or {} )
+
+    adapters.update( database.get( 'adapters' ) or {} )
+
+    if len( configurations ) == 1:
+      configuration_name = next( iter( configurations.keys() ) )
     else:
-      configuration = utils.SelectFromList( 'Which launch configuration?',
-                                            list( launch_config.keys() ) )
-    if not configuration:
+      configuration_name = utils.SelectFromList(
+        'Which launch configuration?',
+        sorted( list( configurations.keys() ) ) )
+
+    if not configuration_name or configuration_name not in configurations:
       return
 
     self._workspace_root = os.path.dirname( launch_config_file )
 
-    variables = {
-      'dollar': '$', # HAAACK: work around not having a way to include a literal
-      'workspaceRoot': self._workspace_root
-    }
-    variables.update( launch_variables )
-    utils.ExpandReferencesInDict( launch_config[ configuration ], variables  )
-
-    adapter = launch_config[ configuration ].get( 'adapter' )
+    configuration = configurations[ configuration_name ]
+    adapter = configuration.get( 'adapter' )
     if isinstance( adapter, str ):
       adapter = adapters.get( adapter )
-      utils.ExpandReferencesInDict( adapter, variables )
 
-    self._StartWithConfiguration( launch_config[ configuration ],
-                                  adapter )
+    # TODO: Do we want some form of persistence ? e.g. self._staticVariables,
+    # set from an api call like SetLaunchParam( 'var', 'value' ), perhaps also a
+    # way to load .vimspector.local.json which just sets variables
+    self._variables = {
+      'dollar': '$', # HACK
+      'workspaceRoot': self._workspace_root,
+      'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() )
+    }
+    self._variables.update( 
+      utils.ParseVariables( adapter.get( 'variables', {} ) ) )
+    self._variables.update(
+      utils.ParseVariables( configuration.get( 'variables', {} ) ) )
+    self._variables.update( launch_variables )
+
+    utils.ExpandReferencesInDict( configuration, self._variables )
+    utils.ExpandReferencesInDict( adapter, self._variables )
+
+    if not adapter:
+      utils.UserMessage( 'No adapter configured for {}'.format(
+        configuration_name ), persist=True  )
+      return
+
+    self._StartWithConfiguration( configuration, adapter )
 
   def _StartWithConfiguration( self, configuration, adapter ):
-    self._configuration = configuration
-    self._adapter = adapter
-
-    self._logger.info( 'Configuration: {0}'.format( json.dumps(
-      self._configuration ) ) )
-    self._logger.info( 'Adapter: {0}'.format( json.dumps(
-      self._adapter ) ) )
-
     def start():
-      self._StartDebugAdapter()
-      self._Initialise()
+      self._configuration = configuration
+      self._adapter = adapter
+
+      self._logger.info( 'Configuration: {0}'.format( json.dumps(
+        self._configuration ) ) )
+      self._logger.info( 'Adapter: {0}'.format( json.dumps(
+        self._adapter ) ) )
 
       if not self._uiTab:
         self._SetUpUI()
       else:
         vim.current.tabpage = self._uiTab
-        # FIXME: Encapsulation
-        self._stackTraceView._connection = self._connection
-        self._variablesView._connection = self._connection
-        self._outputView._connection = self._connection
+
+      self._StartDebugAdapter()
+      self._Initialise()
+
+      self._stackTraceView.ConnectionUp( self._connection )
+      self._variablesView.ConnectionUp( self._connection )
+      self._outputView.ConnectionUp( self._connection )
+      self._breakpoints.ConnectionUp( self._connection )
+
+      def update_breakpoints( source, message ):
+        if 'body' not in message:
+          return
+        self._codeView.AddBreakpoints( source,
+                                       message[ 'body' ][ 'breakpoints' ] )
+        self._codeView.ShowBreakpoints()
+
+      self._breakpoints.SetBreakpointsHandler( update_breakpoints )
 
     if self._connection:
       self._StopDebugAdapter( start )
@@ -181,6 +173,9 @@ class DebugSession( object ):
     # FIXME: For some reason this doesn't work when run from the WinBar. It just
     # beeps and doesn't display the config selector. One option is to just not
     # display the selector and restart with the same opitons.
+    if not self._configuration or not self._adapter:
+      return Start()
+
     self._StartWithConfiguration( self._configuration, self._adapter )
 
   def OnChannelData( self, data ):
@@ -190,13 +185,15 @@ class DebugSession( object ):
   def OnServerStderr( self, data ):
     self._logger.info( "Server stderr: %s", data )
     if self._outputView:
-      self._outputView.ServerEcho( data )
+      self._outputView.Print( 'server', data )
+
 
   def OnRequestTimeout( self, timer_id ):
     if self._connection:
       self._connection.OnRequestTimeout( timer_id )
 
   def OnChannelClosed( self ):
+    # TODO: Not calld
     self._connection = None
 
   def Stop( self ):
@@ -216,13 +213,10 @@ class DebugSession( object ):
       self._codeView.Reset()
       vim.current.tabpage = self._uiTab
       vim.command( 'tabclose!' )
-
-    vim.eval( 'vimspector#internal#{}#Reset()'.format(
-      self._connection_type ) )
-    vim.eval( 'vimspector#internal#state#Reset()' )
+      self._uiTab = None
 
     # make sure that we're displaying signs in any still-open buffers
-    self._UpdateUIBreakpoints()
+    self._breakpoints.UpdateUI()
 
   def StepOver( self ):
     if self._stackTraceView.GetCurrentThreadId() is None:
@@ -358,8 +352,17 @@ class DebugSession( object ):
     return True
 
   def _StartDebugAdapter( self ):
+    if self._connection:
+      utils.UserMessage( 'The connection is already created. Please try again',
+                         persist = True )
+      return
+
     self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
       self._adapter ) ) )
+
+    self._init_complete = False
+    self._launch_complete = False
+    self._run_on_server_exit = None
 
     self._connection_type = 'job'
     if 'port' in self._adapter:
@@ -392,77 +395,141 @@ class DebugSession( object ):
 
       self._logger.info( 'Debug Adapter Started' )
 
-      vim.command( 'augroup vimspector_cleanup' )
-      vim.command(   'autocmd!' )
-      vim.command(   'autocmd VimLeavePre * py3 '
-                     '_vimspector_session.CloseDown()' )
-      vim.command( 'augroup END' )
-
-  def CloseDown( self ):
-    # We have to use a dict because of python's scoping/assignment rules (state
-    # = False would touch a state variable in handler, not in the enclosing
-    # scope)
-    state = { 'done': False }
-
-    def handler( *args ):
-      state[ 'done' ] = True
-
-    self._connection.DoRequest( handler, {
-      'command': 'disconnect',
-      'arguments': {
-        'terminateDebugee': True
-      },
-    }, failure_handler = handler, timeout = 5000 )
-
-    # This request times out after 5 seconds
-    while not state[ 'done' ]:
-      vim.eval( 'vimspector#internal#{}#ForceRead()'.format(
-        self._connection_type ) )
-
-    vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
-      self._connection_type ) )
-
   def _StopDebugAdapter( self, callback = None ):
     def handler( *args ):
       vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
         self._connection_type ) )
 
-      vim.command( 'au! vimspector_cleanup' )
-
-      self._connection.Reset()
-      self._connection = None
-      self._stackTraceView.ConnectionClosed()
-      self._variablesView.ConnectionClosed()
-      self._outputView.ConnectionClosed()
       if callback:
-        callback()
+        assert not self._run_on_server_exit
+        self._run_on_server_exit = callback
+
+    arguments = {}
+    if self._server_capabilities.get( 'supportTerminateDebuggee' ):
+      arguments[ 'terminateDebugee' ] = True
 
     self._connection.DoRequest( handler, {
       'command': 'disconnect',
-      'arguments': {
-        'terminateDebugee': True
-      },
+      'arguments': arguments,
     }, failure_handler = handler, timeout = 5000 )
 
-  def _SelectProcess( self, adapter_config, launch_config ):
-    atttach_config = adapter_config[ 'attach' ]
-    if atttach_config[ 'pidSelect' ] == 'ask':
-      pid = utils.AskForInput( 'Enter PID to attach to: ' )
-      launch_config[ atttach_config[ 'pidProperty' ] ] = pid
-      return
-    elif atttach_config[ 'pidSelect' ] == 'none':
-      return
+    # TODO: Use the 'tarminate' request if supportsTerminateRequest set
 
-    raise ValueError( 'Unrecognised pidSelect {0}'.format(
-      atttach_config[ 'pidSelect' ] ) )
+  def _PrepareAttach( self, adapter_config, launch_config ):
 
+    atttach_config = adapter_config.get( 'attach' )
+
+    if not atttach_config:
+        return
+
+    if 'remote' in atttach_config:
+      # FIXME: We almost want this to feed-back variables to be expanded later,
+      # e.g. expand variables when we use them, not all at once. This would
+      # remove the whole %PID% hack.
+      remote = atttach_config[ 'remote' ]
+      ssh = [ 'ssh' ]
+
+      if 'account' in remote:
+        ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
+      else:
+        ssh.append( remote[ 'host' ] )
+
+      cmd = ssh + remote[ 'pidCommand' ]
+
+      self._logger.debug( 'Getting PID: %s', cmd )
+      pid = subprocess.check_output( ssh + remote[ 'pidCommand' ] ).decode(
+        'utf-8' ).strip()
+      self._logger.debug( 'Got PID: %s', pid )
+
+      if not pid:
+        # FIXME: We should raise an exception here or something
+        utils.UserMessage( 'Unable to get PID', persist = True )
+        return
+
+      commands = self._GetCommands( remote, 'attach' )
+
+      for command in commands:
+        cmd = ssh + command[:]
+
+        for index, item in enumerate( cmd ):
+          cmd[ index ] = item.replace( '%PID%', pid )
+
+        self._logger.debug( 'Running remote app: %s', cmd )
+        self._outputView.RunJobWithOutput( 'Remote', cmd )
+    else:
+      if atttach_config[ 'pidSelect' ] == 'ask':
+        pid = utils.AskForInput( 'Enter PID to attach to: ' )
+        launch_config[ atttach_config[ 'pidProperty' ] ] = pid
+        return
+      elif atttach_config[ 'pidSelect' ] == 'none':
+        return
+
+      raise ValueError( 'Unrecognised pidSelect {0}'.format(
+        atttach_config[ 'pidSelect' ] ) )
+
+
+
+  def _PrepareLaunch( self, command_line, adapter_config, launch_config ):
+    run_config = adapter_config.get( 'launch', {} )
+
+    if 'remote' in run_config:
+      remote = run_config[ 'remote' ]
+      ssh = [ 'ssh' ]
+      if 'account' in remote:
+        ssh.append( remote[ 'account' ] + '@' + remote[ 'host' ] )
+      else:
+        ssh.append( remote[ 'host' ] )
+
+      commands = self._GetCommands( remote, 'run' )
+
+      for index, command in enumerate( commands ):
+        cmd = ssh + command[:]
+        full_cmd = []
+        for item in cmd:
+          if isinstance( command_line, list ):
+            if item == '%CMD%':
+              full_cmd.extend( command_line )
+            else:
+              full_cmd.append( item )
+          else:
+            full_cmd.append( item.replace( '%CMD%', command_line ) )
+
+        self._logger.debug( 'Running remote app: %s', full_cmd )
+        self._outputView.RunJobWithOutput( 'Remote{}'.format( index ),
+                                           full_cmd )
+
+
+  def _GetCommands( self, remote, pfx ):
+    commands = remote.get( pfx + 'Commands', None )
+
+    if isinstance( commands, list ):
+      return commands
+    elif commands is not None:
+      raise ValueError( "Invalid commands; must be list" )
+
+    command = remote[ pfx + 'Command' ]
+
+    if isinstance( command, str ):
+      command = shlex.split( command )
+
+    if not isinstance( command, list ):
+      raise ValueError( "Invalid command; must be list/string" )
+
+    if not command:
+      raise ValueError( 'Could not determine commands for ' + pfx )
+
+    return [ command ]
 
   def _Initialise( self ):
-    adapter_config = self._adapter
-    self._connection.DoRequest( lambda msg: self._Launch(), {
+    def handle_initialize_response( msg ):
+      self._server_capabilities = msg.get( 'body' ) or {}
+      self._breakpoints.SetServerCapabilities( self._server_capabilities )
+      self._Launch()
+
+    self._connection.DoRequest( handle_initialize_response, {
       'command': 'initialize',
       'arguments': {
-        'adapterID': adapter_config.get( 'name', 'adapter' ),
+        'adapterID': self._adapter.get( 'name', 'adapter' ),
         'clientID': 'vimspector',
         'clientName': 'vimspector',
         'linesStartAt1': True,
@@ -477,15 +544,26 @@ class DebugSession( object ):
 
 
   def OnFailure( self, reason, message ):
-    self._outputView.ServerEcho( reason )
+    msg = "Request for '{}' failed: {}".format( message[ 'command' ],
+                                                reason )
+    self._outputView.Print( 'server', msg )
 
   def _Launch( self ):
     self._logger.debug( "LAUNCH!" )
     adapter_config = self._adapter
     launch_config = self._configuration[ 'configuration' ]
 
-    if launch_config.get( 'request' ) == "attach":
-      self._SelectProcess( adapter_config, launch_config )
+    request = self._configuration.get(
+      'remote-request',
+      launch_config.get( 'request', 'launch' ) )
+
+    if request == "attach":
+      self._PrepareAttach( adapter_config, launch_config )
+    elif request == "launch":
+      # FIXME: This cmdLine hack is not fun. 
+      self._PrepareLaunch( self._configuration.get( 'remote-cmdLine', [] ),
+                           adapter_config,
+                           launch_config )
 
     # FIXME: name is mandatory. Forcefully add it (we should really use the
     # _actual_ name, but that isn't actually remembered at this point)
@@ -493,15 +571,7 @@ class DebugSession( object ):
       launch_config[ 'name' ] = 'test'
 
     self._connection.DoRequest(
-      # NOTE: You might think we should only load threads on a stopped event,
-      # but the spec is clear:
-      #
-      #   After a successful launch or attach the development tool requests the
-      #   baseline of currently existing threads with the threads request and
-      #   then starts to listen for thread events to detect new or terminated
-      #   threads.
-      #
-      lambda msg: self._stackTraceView.LoadThreads( True ),
+      lambda msg: self._OnLaunchComplete(),
       {
         'command': launch_config[ 'request' ],
         'arguments': launch_config
@@ -509,24 +579,53 @@ class DebugSession( object ):
     )
 
 
-  def _UpdateBreakpoints( self, source, message ):
-    if 'body' not in message:
-      return
-    self._codeView.AddBreakpoints( source, message[ 'body' ][ 'breakpoints' ] )
-    self._codeView.ShowBreakpoints()
+  def _OnLaunchComplete( self ):
+    self._launch_complete = True
+    self._LoadThreadsIfReady()
+
+  def _OnInitializeComplete( self ):
+    self._init_complete = True
+    self._LoadThreadsIfReady()
+
+  def _LoadThreadsIfReady( self ):
+    # NOTE: You might think we should only load threads on a stopped event,
+    # but the spec is clear:
+    #
+    #   After a successful launch or attach the development tool requests the
+    #   baseline of currently existing threads with the threads request and
+    #   then starts to listen for thread events to detect new or terminated
+    #   threads.
+    #
+    # Of course, specs are basically guidelines. MS's own cpptools simply
+    # doesn't respond top threads request when attaching via gdbserver. At
+    # least it would apear that way.
+    #
+    if self._launch_complete and self._init_complete:
+      self._stackTraceView.LoadThreads( True )
+
+
+  def OnEvent_capabiilities( self, msg ):
+    self._server_capabilities.update(
+      ( msg.get( 'body' ) or {} ).get( 'capabilities' ) or {} )
 
 
   def OnEvent_initialized( self, message ):
-    self._SendBreakpoints()
-    self._connection.DoRequest(
-      None,
-      {
-        'command': 'configurationDone',
-      }
-    )
+    self._codeView.ClearBreakpoints()
+    self._breakpoints.SendBreakpoints()
+
+    if self._server_capabilities.get( 'supportsConfigurationDoneRequest' ):
+      self._connection.DoRequest(
+        lambda msg: self._OnInitializeComplete(),
+        {
+          'command': 'configurationDone',
+        }
+      )
+    else:
+      self._OnInitializeComplete()
 
   def OnEvent_thread( self, message ):
     self._stackTraceView.OnThreadEvent( message[ 'body' ] )
+
 
   def OnEvent_breakpoint( self, message ):
     reason = message[ 'body' ][ 'reason' ]
@@ -543,8 +642,10 @@ class DebugSession( object ):
   def OnRequest_runInTerminal( self, message ):
     params = message[ 'arguments' ]
 
-    if 'cwd' not in params:
+    if not params.get( 'cwd' ) :
       params[ 'cwd' ] = self._workspace_root
+      self._logger.debug( 'Defaulting working directory to %s',
+                          params[ 'cwd' ] )
 
     buffer_number = self._codeView.LaunchTerminal( params )
 
@@ -574,78 +675,23 @@ class DebugSession( object ):
     self._stackTraceView.Clear()
     self._variablesView.Clear()
 
-  def OnEvent_terminated( self, message ):
+  def OnServerExit( self, status ):
     self.Clear()
+
+    self._connection.Reset()
+    self._stackTraceView.ConnectionClosed()
+    self._variablesView.ConnectionClosed()
+    self._outputView.ConnectionClosed()
+    self._breakpoints.ConnectionClosed()
+
+    self._ResetServerState()
+
+    if self._run_on_server_exit:
+      self._run_on_server_exit()
+
+  def OnEvent_terminated( self, message ):
+    # We will handle this when the server actually exists
     utils.UserMessage( "Debugging was terminated." )
-
-  def _RemoveBreakpoints( self ):
-    for breakpoints in self._line_breakpoints.values():
-      for bp in breakpoints:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del bp[ 'sign_id' ]
-
-  def _SendBreakpoints( self ):
-    self._codeView.ClearBreakpoints()
-
-    for file_name, line_breakpoints in self._line_breakpoints.items():
-      breakpoints = []
-      for bp in line_breakpoints:
-        if bp[ 'state' ] != 'ENABLED':
-          continue
-
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-          del bp[ 'sign_id' ]
-
-        breakpoints.append( { 'line': bp[ 'line' ] } )
-
-      source = {
-        'name': os.path.basename( file_name ),
-        'path': file_name,
-      }
-
-      self._connection.DoRequest(
-        functools.partial( self._UpdateBreakpoints, source ),
-        {
-          'command': 'setBreakpoints',
-          'arguments': {
-            'source': source,
-            'breakpoints': breakpoints,
-          },
-          'sourceModified': False, # TODO: We can actually check this
-        }
-      )
-
-    self._connection.DoRequest(
-      functools.partial( self._UpdateBreakpoints, None ),
-      {
-        'command': 'setFunctionBreakpoints',
-        'arguments': {
-          'breakpoints': [
-            { 'name': bp[ 'function' ] }
-            for bp in self._func_breakpoints if bp[ 'state' ] == 'ENABLED'
-          ],
-        }
-      }
-    )
-
-  def _ShowBreakpoints( self ):
-    for file_name, line_breakpoints in self._line_breakpoints.items():
-      for bp in line_breakpoints:
-        if 'sign_id' in bp:
-          vim.command( 'sign unplace {0}'.format( bp[ 'sign_id' ] ) )
-        else:
-          bp[ 'sign_id' ] = self._next_sign_id
-          self._next_sign_id += 1
-
-        vim.command(
-          'sign place {0} line={1} name={2} file={3}'.format(
-            bp[ 'sign_id' ] ,
-            bp[ 'line' ],
-            'vimspectorBP' if bp[ 'state' ] == 'ENABLED'
-                           else 'vimspectorBPDisabled',
-            file_name ) )
 
   def OnEvent_output( self, message ):
     if self._outputView:
@@ -653,9 +699,33 @@ class DebugSession( object ):
 
   def OnEvent_stopped( self, message ):
     event = message[ 'body' ]
+    reason = event.get( 'reason' ) or '<protocol error>'
+    description = event.get( 'description' )
+    text = event.get( 'text' )
 
-    utils.UserMessage( 'Paused in thread {0} due to {1}'.format(
+    if description:
+      explanation = description + '(' + reason + ')'
+    else:
+      explanation = reason
+
+    if text:
+      explanation += ': ' + text
+
+    msg = 'Paused in thread {0} due to {1}'.format(
       event.get( 'threadId', '<unknown>' ),
-      event.get( 'description', event.get( 'reason', '' ) ) ) )
+      explanation )
+    utils.UserMessage( msg, persist = True )
+
+    if self._outputView:
+      self._outputView.Print( 'server', msg )
 
     self._stackTraceView.OnStopped( event )
+
+  def ListBreakpoints( self ):
+    return self._breakpoints.ListBreakpoints()
+
+  def ToggleBreakpoint( self ):
+    return self._breakpoints.ToggleBreakpoint()
+
+  def AddFunctionBreakpoint( self, function ):
+    return self._breakpoints.AddFunctionBreakpoint( function )

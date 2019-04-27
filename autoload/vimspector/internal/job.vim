@@ -20,44 +20,42 @@ set cpo&vim
 " }}}
 
 function! s:_OnServerData( channel, data ) abort
-  py3 << EOF
-_vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
-EOF
+  py3 _vimspector_session.OnChannelData( vim.eval( 'a:data' ) )
 endfunction
 
 function! s:_OnServerError( channel, data ) abort
-  py3 << EOF
-_vimspector_session.OnServerStderr( vim.eval( 'a:data' ) )
-EOF
+  py3 _vimspector_session.OnServerStderr( vim.eval( 'a:data' ) )
 endfunction
 
 function! s:_OnExit( channel, status ) abort
   echom "Channel exit with status " . a:status
+  unlet s:job 
+  py3 _vimspector_session.OnServerExit( vim.eval( 'a:status' ) )
 endfunction
 
 function! s:_OnClose( channel ) abort
   echom "Channel closed"
-  " py3 _vimspector_session.OnChannelClosed()
 endfunction
 
 function! s:_Send( msg ) abort
   if ! exists( 's:job' )
     echom "Can't send message: Job was not initialised correctly"
-    return
+    return 0
   endif
 
   if job_status( s:job ) != 'run'
     echom "Can't send message: Job is not running"
-    return
+    return 0
   endif
 
   let ch = job_getchannel( s:job )
   if ch == 'channel fail'
     echom "Channel was closed unexpectedly!"
-    return
+    return 0
   endif
 
   call ch_sendraw( ch, a:msg )
+  return 1
 endfunction
 
 function! vimspector#internal#job#StartDebugSession( config ) abort
@@ -98,10 +96,9 @@ function! vimspector#internal#job#StopDebugSession() abort
   endif
 
   if job_status( s:job ) == 'run'
-    call job_stop( s:job, 'term' )
+      echom "Terminating job"
+    call job_stop( s:job, 'kill' )
   endif
-
-  unlet s:job
 endfunction
 
 function! vimspector#internal#job#Reset() abort
@@ -115,6 +112,59 @@ function! vimspector#internal#job#ForceRead() abort
       call s:_OnServerData( job_getchannel( s:job ), data )
     endif
   endif
+endfunction
+
+function! vimspector#internal#job#StartCommandWithLog( cmd, category )
+  if ! exists( 's:commands' )
+    let s:commands = {}
+  endif
+
+  if ! has_key( s:commands, a:category )
+    let s:commands[ a:category ] = []
+  endif
+
+  let l:index = len( s:commands[ a:category ] )
+
+  call add( s:commands[ a:category ], job_start(
+        \ a:cmd, 
+        \ {
+        \   'out_io': 'buffer',
+        \   'in_io': 'null',
+        \   'err_io': 'buffer',
+        \   'out_name': '_vimspector_log_' . a:category . '_out',
+        \   'err_name': '_vimspector_log_' . a:category . '_err',
+        \   'out_modifiable': 0,
+        \   'err_modifiable': 0,
+        \   'stoponexit': 'kill'
+        \ } ) )
+
+  if job_status( s:commands[ a:category ][ index ] ) !=# 'run'
+    echom "Unable to start job for " . a:cmd
+    return v:none
+  endif
+
+  let l:stdout = ch_getbufnr(
+        \ job_getchannel( s:commands[ a:category ][ index ] ), 'out' )
+  let l:stderr = ch_getbufnr(
+        \ job_getchannel( s:commands[ a:category ][ index ] ), 'err' )
+
+  return [ l:stdout, l:stderr ]
+endfunction
+
+
+function! vimspector#internal#job#CleanUpCommand( category )
+  if ! exists( 's:commands' )
+    let s:commands = {}
+  endif
+
+  if ! has_key( s:commands, a:category )
+    return
+  endif
+  for j in s:commands[ a:category ]
+    call job_stop( j, 'kill' )
+  endfor
+
+  unlet s:commands[ a:category ]
 endfunction
 
 " Boilerplate {{{

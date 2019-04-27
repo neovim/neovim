@@ -1,0 +1,6 @@
+[submodule "vendor/vader.vim"]
+	path = vendor/vader.vim
+	url = https://github.com/junegunn/vader.vim
+[submodule "vendor/vim-themis"]
+	path = vendor/vim-themis
+	url = https://github.com/thinca/vim-themis

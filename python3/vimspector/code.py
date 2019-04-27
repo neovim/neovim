@@ -20,8 +20,6 @@ from collections import defaultdict
 
 from vimspector import utils
 
-SIGN_ID_OFFSET = 10000000
-
 
 class CodeView( object  ):
   def __init__( self, window ):
@@ -30,7 +28,7 @@ class CodeView( object  ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
-    self._next_sign_id = SIGN_ID_OFFSET
+    self._next_sign_id = 1
     self._breakpoints = defaultdict( list )
     self._signs = {
       'vimspectorPC': None,
@@ -53,7 +51,8 @@ class CodeView( object  ):
 
   def SetCurrentFrame( self, frame ):
     if self._signs[ 'vimspectorPC' ]:
-      vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
+      vim.command( 'sign unplace {} group=VimspectorCode'.format(
+        self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
 
     if not frame or not frame.get( 'source' ):
@@ -64,23 +63,21 @@ class CodeView( object  ):
 
     vim.current.window = self._window
 
-    buffer_number = int( vim.eval( 'bufnr( "{0}", 1 )'.format(
-      frame[ 'source' ][ 'path' ] ) ) )
-
     try:
-      vim.command( 'bu {0}'.format( buffer_number ) )
-      self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
-    except vim.error as e:
-      if 'E325' not in str( e ):
-        self._logger.exception(
-          'Unexpected error from vim: loading buffer {}'.format(
-            buffer_number ) )
-        return False
+      utils.OpenFileInCurrentWindow( frame[ 'source' ][ 'path' ] )
+    except vim.error:
+      self._logger.exception( 'Unexpected vim error opening file {}'.format(
+        frame[ 'source' ][ 'path' ] ) )
+      return False
+
+    self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
 
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
     self._next_sign_id += 1
 
-    vim.command( 'sign place {0} line={1} name=vimspectorPC file={2}'.format(
+    vim.command( 'sign place {0} group=VimspectorCode priority=20 '
+                                 'line={1} name=vimspectorPC '
+                                 'file={2}'.format(
       self._signs[ 'vimspectorPC' ],
       frame[ 'line' ],
       frame[ 'source' ][ 'path' ] ) )
@@ -89,7 +86,8 @@ class CodeView( object  ):
 
   def Clear( self ):
     if self._signs[ 'vimspectorPC' ]:
-      vim.command( 'sign unplace {0}'.format( self._signs[ 'vimspectorPC' ] ) )
+      vim.command( 'sign unplace {} group=VimspectorCode'.format(
+        self._signs[ 'vimspectorPC' ] ) )
       self._signs[ 'vimspectorPC' ] = None
 
     self._UndisplaySigns()
@@ -144,7 +142,7 @@ class CodeView( object  ):
 
   def _UndisplaySigns( self ):
     for sign_id in self._signs[ 'breakpoints' ]:
-      vim.command( 'sign unplace {0}'.format( sign_id ) )
+      vim.command( 'sign unplace {} group=VimspectorCode'.format( sign_id ) )
 
     self._signs[ 'breakpoints' ].clear()
 
@@ -164,12 +162,31 @@ class CodeView( object  ):
         self._next_sign_id += 1
         self._signs[ 'breakpoints' ].append( sign_id )
         vim.command(
-          'sign place {0} line={1} name={2} file={3}'.format(
+          'sign place {0} group=VimspectorCode priority=9 '
+                          'line={1} '
+                          'name={2} '
+                          'file={3}'.format(
             sign_id,
             breakpoint[ 'line' ],
             'vimspectorBP' if breakpoint[ 'verified' ]
                            else 'vimspectorBPDisabled',
             file_name ) )
+
+
+  def BreakpointsAsQuickFix( self ):
+    qf = []
+    for file_name, breakpoints in self._breakpoints.items():
+      for breakpoint in breakpoints:
+        qf.append( {
+            'filename': file_name,
+            'lnum': breakpoint.get( 'line', 1 ),
+            'col': 1,
+            'type': 'L',
+            'valid': 1 if breakpoint.get( 'verified' ) else 0,
+            'text': "Line breakpoint - {}".format(
+              'VERIFIED' if breakpoint.get( 'verified' ) else 'INVALID' )
+        } )
+    return qf
 
 
   def LaunchTerminal( self, params ):

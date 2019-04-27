@@ -37,6 +37,15 @@ class StackTraceView( object ):
     self._line_to_frame = {}
     self._line_to_thread = {}
 
+    # TODO: We really need a proper state model
+    # 
+    # AWAIT_CONNECTION -- OnServerReady / RequestThreads --> REQUESTING_THREADS
+    # REQUESTING -- OnGotThreads / RequestScopes --> REQUESTING_SCOPES
+    #
+    # When we attach using gdbserver, this whole thing breaks because we request
+    # the threads over and over and get duff data back on later threads.
+    self._requesting_threads = False
+
 
   def GetCurrentThreadId( self ):
     return self._currentThread
@@ -51,6 +60,10 @@ class StackTraceView( object ):
     with utils.ModifiableScratchBuffer( self._buf ):
       utils.ClearBuffer( self._buf )
 
+  def ConnectionUp( self, connection ):
+    self._connection = connection
+    self._requesting_threads = False
+
   def ConnectionClosed( self ):
     self.Clear()
     self._connection = None
@@ -60,26 +73,38 @@ class StackTraceView( object ):
     # TODO: delete the buffer ?
 
   def LoadThreads( self, infer_current_frame ):
+    pending_request = False
+    if self._requesting_threads:
+      pending_request = True
+      return 
+
     def consume_threads( message ):
-      self._threads.clear()
+      self._requesting_threads = False
 
       if not message[ 'body' ][ 'threads' ]:
-        # This is a protocol error. It is required to return at least one!
-        utils.UserMessage( 'Server returned no threads. Is it running?',
-                           persist = True )
-        return
+        if pending_request:
+          # We may have hit a thread event, so try again.
+          self.LoadThreads( infer_current_frame )
+          return
+        else:
+          # This is a protocol error. It is required to return at least one!
+          utils.UserMessage( 'Server returned no threads. Is it running?',
+                             persist = True )
+
+      self._threads.clear()
 
       for thread in message[ 'body' ][ 'threads' ]:
         self._threads.append( thread )
 
         if infer_current_frame and thread[ 'id' ] == self._currentThread:
           self._LoadStackTrace( thread, True )
-        elif infer_current_frame and not self._currentThread:
+        elif infer_current_frame and self._currentThread is None:
           self._currentThread = thread[ 'id' ]
           self._LoadStackTrace( thread, True )
 
       self._DrawThreads()
 
+    self._requesting_threads = True
     self._connection.DoRequest( consume_threads, {
       'command': 'threads',
     } )
@@ -146,7 +171,7 @@ class StackTraceView( object ):
     elif event.get( 'allThreadsStopped', False ) and self._threads:
       self._currentThread = self._threads[ 0 ][ 'id' ]
 
-    if self._currentThread:
+    if self._currentThread is not None:
       for thread in self._threads:
         if thread[ 'id' ] == self._currentThread:
           self._LoadStackTrace( thread, True )
@@ -156,10 +181,11 @@ class StackTraceView( object ):
 
   def OnThreadEvent( self, event ):
     if event[ 'reason' ] == 'started' and self._currentThread is None:
+      self._currentThread = event[ 'threadId' ]
       self.LoadThreads( True )
 
   def Continue( self ):
-    if not self._currentThread:
+    if self._currentThread is None:
       utils.UserMessage( 'No current thread', persist = True )
       return
 
@@ -174,7 +200,7 @@ class StackTraceView( object ):
     self.LoadThreads( True )
 
   def Pause( self ):
-    if not self._currentThread:
+    if self._currentThread is None:
       utils.UserMessage( 'No current thread', persist = True )
       return
 
