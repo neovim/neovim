@@ -7823,7 +7823,7 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 		|submatch()| returns. Example: >
 		   :echo substitute(s, '\(\x\x\)', {m -> '0x' . m[1]}, 'g')
 
-swapinfo({fname})					swapinfo()
+swapinfo({fname})					*swapinfo()*
 		The result is a dictionary, which holds information about the
 		swapfile {fname}. The available fields are:
 			version VIM version
@@ -7970,7 +7970,7 @@ system({cmd} [, {input}])				*system()* *E677*
 		items converted to NULs).
 		When {input} is given and is a valid buffer id, the content of
 		the buffer is written to the file line by line, each line
-		terminated by a NL (and NUL where the text has NL).
+		terminated by NL (and NUL where the text has NL).
 								*E5677*
 		Note: system() cannot write to or read from backgrounded ("&")
 		shell commands, e.g.: >
@@ -7987,7 +7987,7 @@ system({cmd} [, {input}])				*system()* *E677*
 		The characters in 'shellquote' and 'shellxquote' may also
 		cause trouble.
 
-		The result is a String.  Example: >
+		Result is a String.  Example: >
 		    :let files = system("ls " .  shellescape(expand('%:h')))
 		    :let files = system('ls ' . expand('%:h:S'))
 

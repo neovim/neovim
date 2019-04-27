@@ -235,35 +235,32 @@ g8			Print the hex values of the bytes used in the
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with 'shell'. See also |:terminal|.
 
-			Any '!' in {cmd} is replaced with the previous
-			external command (see also 'cpoptions').  But not when
-			there is a backslash before the '!', then that
-			backslash is removed.  Example: ":!ls" followed by
-			":!echo ! \! \\!" executes "echo ls ! \!".
-
-			A '|' in {cmd} is passed to the shell, you cannot use
-			it to append a Vim command.  See |:bar|.
-
-			If {cmd} contains "%" it is expanded to the current
-			file name.  Special characters are not escaped, use
-			quotes to avoid their special meaning: >
-				:!ls "%"
-<			If the file name contains a "$" single quotes might
-			work better (but a single quote causes trouble): >
-				:!ls '%'
-<			This should always work, but it's more typing: >
-				:exe "!ls " . shellescape(expand("%"))
-<
-			A newline character ends {cmd}, what follows is
-			interpreted as a following ":" command.  However, if
-			there is a backslash before the newline it is removed
-			and {cmd} continues.  It doesn't matter how many
-			backslashes are before the newline, only one is
-			removed.
-
 			The command runs in a non-interactive shell connected
 			to a pipe (not a terminal). Use |:terminal| to run an
 			interactive shell connected to a terminal.
+
+			Backgrounded ("&") commands must not write to stdout
+			or stderr, the streams are closed immediately. |E5677|
+			Use |jobstart()| instead. >
+				:call jobstart('foo', {'detach':1})
+<
+			Any "!" in {cmd} is replaced with the previous
+			external command (see also 'cpoptions'), unless
+			escaped by a backslash.  Example: ":!ls" followed by
+			":!echo ! \! \\!" executes "echo ls ! \!".
+
+			Any "|" in {cmd} is passed to the shell, you cannot
+			use it to append a Vim command.  See |:bar|.
+
+			Any "%" in {cmd} is expanded to the current file name.
+			Special characters are not escaped, use quotes or
+			|shellescape()|: >
+				:!ls "%"
+				:exe "!ls " . shellescape(expand("%"))
+<
+			Newline character ends {cmd} unless a backslash
+			precedes the newline.  What follows is interpreted as
+			another |:| command.
 
 			After the command has been executed, the timestamp and
 			size of the current file is checked |timestamp|.
@@ -273,25 +270,15 @@ g8			Print the hex values of the bytes used in the
 			data is lost, this only affects the display.  The last
 			few lines are always displayed (never skipped).
 
-			Vim redraws the screen after the command is finished,
-			because it may have printed any text.  This requires a
-			hit-enter prompt, so that you can read any messages.
-			To avoid this use: >
+			To avoid the hit-enter prompt use: >
 				:silent !{cmd}
-<			The screen is not redrawn then, thus you have to use
-			CTRL-L or ":redraw!" if the command did display
-			something.
-
+<
 							*:!!*
 :!!			Repeat last ":!{cmd}".
 
 							*:ve* *:version*
 :ve[rsion]		Print editor version and build information.
 			See also |feature-compile|.
-
-:ve[rsion] {nr}		Ignored.  Previously used to check the version number
-			of a .vimrc file.  You can now use the ":if" command
-			for version-dependent behavior.
 
 							*:redi* *:redir*
 :redi[r][!] > {file}	Redirect messages to file {file}.  The messages which
