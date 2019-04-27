@@ -1,5 +1,7 @@
 # vimspector - A multi language graphical debugger for Vim
 
+[![Build Status](https://dev.azure.com/puremouron/Vimspector/_apis/build/status/puremourning.vimspector?branchName=master)](https://dev.azure.com/puremouron/Vimspector/_build/latest?definitionId=1&branchName=master)
+
 # Status
 
 The plugin is a capable Vim graphical debugger for multiple languages.
