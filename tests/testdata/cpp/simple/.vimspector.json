@@ -1,0 +1,18 @@
+{
+  "configurations": {
+    "cpptools-run": {
+      "adapter": "vscode-cpptools",
+      "configuration": {
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceRoot}/simple",
+        "args": [],
+        "cwd": "${workspaceRoot}",
+        "environment": [],
+        "externalConsole": true,
+        "stopAtEntry": true,
+        "MImode": "${VIMSPECTOR_MIMODE}"
+      }
+    }
+  }
+}

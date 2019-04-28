@@ -38,6 +38,10 @@ function! vimspector#Restart() abort
   py3 _vimspector_session.Restart()
 endfunction
 
+function! vimspector#ClearBreakpoints() abort
+  py3 _vimspector_session.ClearBreakpoints()
+endfunction
+
 function! vimspector#ToggleBreakpoint() abort
   py3 _vimspector_session.ToggleBreakpoint()
 endfunction

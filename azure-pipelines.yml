@@ -15,8 +15,13 @@ jobs:
   - bash: vim --version
     displayName: 'Print vim version information'
 
+  - bash: cd tests/testdata/cpp/simple && make
+    displayName: 'Build test cpp program'
+
   - bash: ./run_tests
     displayName: 'Run the tests'
+    env:
+      VIMSPECTOR_MIMODE: gdb
 
 - job: 'macos'
   pool:
@@ -31,5 +36,10 @@ jobs:
   - bash: vim --version
     displayName: 'Print vim version information'
 
+  - bash: cd tests/testdata/cpp/simple && make
+    displayName: 'Build test cpp program'
+
   - bash: ./run_tests
     displayName: 'Run the tests'
+    env:
+      VIMSPECTOR_MIMODE: lldb

@@ -8,3 +8,4 @@ tests/debuglog
 test.log
 gadgets/
 *.pyc
+*.dSYM
