@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local global_helpers = require('test.helpers')
 
 local Screen = require('test.functional.ui.screen')
 
@@ -15,6 +16,7 @@ local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
+local table_contains = global_helpers.table_contains
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -249,6 +251,23 @@ end)
 describe('XDG-based defaults', function()
   -- Need separate describe() blocks to not run clear() twice.
   -- Do not put before_each() here for the same reasons.
+
+  it("&runtimepath data-dir matches stdpath('data') #9910", function()
+    clear()
+    local rtp = eval('split(&runtimepath, ",")')
+    local rv = {}
+    local expected = (iswin()
+                      and { [[\nvim-data\site]], [[\nvim-data\site\after]], }
+                      or { '/nvim/site', '/nvim/site/after', })
+
+    for _,v in ipairs(rtp) do
+      local m = string.match(v, [=[[/\]nvim[^/\]*[/\]site.*$]=])
+      if m and not table_contains(rv, m) then
+        table.insert(rv, m)
+      end
+    end
+    eq(expected, rv)
+  end)
 
   describe('with empty/broken environment', function()
     it('sets correct defaults', function()
