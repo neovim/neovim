@@ -3,6 +3,14 @@
 RUN_VIM="vim --noplugin --clean --not-a-term"
 RUN_TEST="${RUN_VIM} -S run_test.vim"
 
+echo "%SETUP - Building test programs..."
+set -e
+  pushd tests/testdata/cpp/simple
+    make clean simple
+  popd
+set +e
+echo "%DONE - built test programs"
+
 pushd tests > /dev/null
 
 echo "Running Vimspector Vim tests"
