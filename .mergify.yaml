@@ -1,0 +1,16 @@
+pull_request_rules:
+  - name: Merge when all checks passed
+    conditions:
+      - status-success=code=review/reviewable
+      - status-success=puremourning.vimspector # Azure pipeline
+      - approved-reviews-by=puremourning
+      - base=master
+
+      - "#approved-reviews-by>=1"
+      - "#review-requested=0"
+      - "#changes-requested-reviews-by=0"
+      - "#commented-reviews-by=0"
+
+    actions:
+      merge:
+        method: merge
