@@ -37,7 +37,7 @@ class CodeView( object ):
 
     vim.current.window = self._window
 
-    vim.command( 'nnoremenu WinBar.Continute :call vimspector#Continue()<CR>' )
+    vim.command( 'nnoremenu WinBar.Continue :call vimspector#Continue()<CR>' )
     vim.command( 'nnoremenu WinBar.Next :call vimspector#StepOver()<CR>' )
     vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
     vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
