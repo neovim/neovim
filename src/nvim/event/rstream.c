@@ -21,16 +21,14 @@
 #endif
 
 void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize)
-  FUNC_ATTR_NONNULL_ARG(1)
-  FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream_init(loop, stream, fd, NULL);
   rstream_init(stream, bufsize);
 }
 
 void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize)
-  FUNC_ATTR_NONNULL_ARG(1)
-  FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream_init(NULL, stream, -1, uvstream);
   rstream_init(stream, bufsize);
@@ -138,6 +136,10 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
+//
+// Idle callbacks are invoked once per event loop:
+//  - to perform some very low priority activity.
+//  - to keep the loop "alive" (so there is always an event to process)
 static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
