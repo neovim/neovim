@@ -687,20 +687,24 @@ char_u *vim_findfile(void *search_ctx_arg)
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
           if (STRLEN(search_ctx->ffsc_start_dir) + 1 >= MAXPATHL) {
+            ff_free_stack_element(stackp);
             goto fail;
           }
           STRCPY(file_path, search_ctx->ffsc_start_dir);
           if (!add_pathsep((char *)file_path)) {
+            ff_free_stack_element(stackp);
             goto fail;
           }
         }
 
         // append the fix part of the search path
         if (STRLEN(file_path) + STRLEN(stackp->ffs_fix_path) + 1 >= MAXPATHL) {
+          ff_free_stack_element(stackp);
           goto fail;
         }
         STRCAT(file_path, stackp->ffs_fix_path);
         if (!add_pathsep((char *)file_path)) {
+          ff_free_stack_element(stackp);
           goto fail;
         }
 
@@ -715,6 +719,7 @@ char_u *vim_findfile(void *search_ctx_arg)
             if (*p > 0) {
               (*p)--;
               if (len + 1 >= MAXPATHL) {
+                ff_free_stack_element(stackp);
                 goto fail;
               }
               file_path[len++] = '*';
@@ -743,6 +748,7 @@ char_u *vim_findfile(void *search_ctx_arg)
           while (*rest_of_wildcards
                  && !vim_ispathsep(*rest_of_wildcards)) {
             if (len + 1 >= MAXPATHL) {
+              ff_free_stack_element(stackp);
               goto fail;
             }
             file_path[len++] = *rest_of_wildcards++;
@@ -792,10 +798,12 @@ char_u *vim_findfile(void *search_ctx_arg)
             // prepare the filename to be checked for existence below
             if (STRLEN(stackp->ffs_filearray[i]) + 1
                 + STRLEN(search_ctx->ffsc_file_to_search) >= MAXPATHL) {
+              ff_free_stack_element(stackp);
               goto fail;
             }
             STRCPY(file_path, stackp->ffs_filearray[i]);
             if (!add_pathsep((char *)file_path)) {
+              ff_free_stack_element(stackp);
               goto fail;
             }
             STRCAT(file_path, search_ctx->ffsc_file_to_search);
@@ -964,7 +972,6 @@ char_u *vim_findfile(void *search_ctx_arg)
   }
 
 fail:
-  ff_free_stack_element(stackp);
   xfree(file_path);
   return NULL;
 }
