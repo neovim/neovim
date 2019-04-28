@@ -49,29 +49,29 @@ syn match tutorInlineType /{\(normal\|vim\)}/ contained conceal
 syn match tutorInlineOK /✓/
 syn match tutorInlineX /✗/
 
-hi! tutorLink cterm=underline gui=underline ctermfg=lightblue guifg=#0088ff
-hi! link tutorLinkBands Delimiter
-hi! link tutorLinkAnchor Underlined
-hi! link tutorInternalAnchor Underlined
-hi! link tutorURL tutorLink
-hi! link tutorEmail tutorLink
+hi def tutorLink cterm=underline gui=underline ctermfg=lightblue guifg=#0088ff
+hi def link tutorLinkBands Delimiter
+hi def link tutorLinkAnchor Underlined
+hi def link tutorInternalAnchor Underlined
+hi def link tutorURL tutorLink
+hi def link tutorEmail tutorLink
 
-hi! link tutorSection Title
-hi! link tutorSectionBullet Delimiter
+hi def link tutorSection Title
+hi def link tutorSectionBullet Delimiter
 
-hi! link tutorTOC Directory
+hi def link tutorTOC Directory
 
-hi! tutorMarks cterm=bold gui=bold
+hi def tutorMarks cterm=bold gui=bold
 
-hi! tutorEmphasis gui=italic cterm=italic
-hi! tutorBold gui=bold cterm=bold
+hi def tutorEmphasis gui=italic cterm=italic
+hi def tutorBold gui=bold cterm=bold
 
-hi! link tutorExpect Special
-hi! tutorOK ctermfg=green guifg=#00ff88 cterm=bold gui=bold
-hi! tutorX ctermfg=red guifg=#ff2000  cterm=bold gui=bold
-hi! link tutorInlineOK tutorOK
-hi! link tutorInlineX tutorX
+hi def link tutorExpect Special
+hi def tutorOK ctermfg=green guifg=#00ff88 cterm=bold gui=bold
+hi def tutorX ctermfg=red guifg=#ff2000  cterm=bold gui=bold
+hi def link tutorInlineOK tutorOK
+hi def link tutorInlineX tutorX
 
-hi! link tutorShellPrompt Delimiter
+hi def link tutorShellPrompt Delimiter
 
 let b:current_syntax = "tutor"
