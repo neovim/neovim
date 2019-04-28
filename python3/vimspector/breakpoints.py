@@ -29,10 +29,10 @@ class ProjectBreakpoints( object ):
     # These are the user-entered breakpoints.
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
+    self._exceptionBreakpoints = None
 
     # FIXME: Remove this. Remove breakpoints nonesense from code.py
     self._breakpoints_handler = None
-    self._exceptionBreakpoints = None
     self._server_capabilities = {}
 
     self._next_sign_id = 1
@@ -91,6 +91,14 @@ class ProjectBreakpoints( object ):
         } )
 
     vim.eval( 'setqflist( {} )'.format( json.dumps( qf ) ) )
+
+  def ClearBreakpoints( self ):
+    # These are the user-entered breakpoints.
+    self._line_breakpoints = defaultdict( list )
+    self._func_breakpoints = []
+    self._exceptionBreakpoints = None
+
+    self.UpdateUI()
 
   def ToggleBreakpoint( self ):
     line, column = vim.current.window.cursor
@@ -210,6 +218,7 @@ class ProjectBreakpoints( object ):
           'arguments': self._exceptionBreakpoints
         }
       )
+
 
   def _SetUpExceptionBreakpoints( self ):
     exceptionBreakpointFilters = self._server_capabilities.get(

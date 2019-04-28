@@ -724,5 +724,8 @@ class DebugSession( object ):
   def ToggleBreakpoint( self ):
     return self._breakpoints.ToggleBreakpoint()
 
+  def ClearBreakpoints( self ):
+    return self._breakpoints.ClearBreakpoints()
+
   def AddFunctionBreakpoint( self, function ):
     return self._breakpoints.AddFunctionBreakpoint( function )
