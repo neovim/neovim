@@ -5616,6 +5616,9 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 
   if (explicit_cb_reg) {
     target = &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
+    if (writing && (cb_flags & (*name == '*' ? CB_UNNAMED : CB_UNNAMEDPLUS))) {
+      clipboard_needs_update = false;
+    }
     goto end;
   } else {  // unnamed register: "implicit" clipboard
     if (writing && clipboard_delay_update) {

@@ -236,7 +236,7 @@ describe('clipboard', function()
   end)
 end)
 
-describe('clipboard', function()
+describe('clipboard (with fake clipboard.vim)', function()
   local function reset(...)
     clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp', ...)
   end
@@ -664,4 +664,20 @@ describe('clipboard', function()
       the a sourcetarget]])
   end)
 
+  it('setreg("*") with clipboard=unnamed #5646', function()
+    source([=[
+      function! Paste_without_yank(direction) range
+        let [reg_save,regtype_save] = [getreg('*'), getregtype('*')]
+        normal! gvp
+        call setreg('*', reg_save, regtype_save)
+      endfunction
+      xnoremap p :call Paste_without_yank('p')<CR>
+      set clipboard=unnamed
+    ]=])
+    insert('some words')
+    feed('gg0yiw')
+    feed('wviwp')
+    expect('some some')
+    eq('some', eval('getreg("*")'))
+  end)
 end)
