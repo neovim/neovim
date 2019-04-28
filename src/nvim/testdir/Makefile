@@ -49,8 +49,6 @@ NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
 
 NEW_TESTS ?= $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
 
-SCRIPTS_GUI := test16.out
-
 
 ifdef VALGRIND_GDB
 	VGDB := --vgdb=yes     \
@@ -82,8 +80,6 @@ endif
 
 nongui: nolog $(SCRIPTS) newtests report
 
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
-
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
 	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
@@ -101,7 +97,7 @@ report:
 
 test1.out: $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
+$(SCRIPTS): $(NVIM_PRG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
