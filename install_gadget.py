@@ -47,7 +47,7 @@ GADGETS = {
     },
     'do': lambda name, root: InstallCppTools( name, root ),
     'all': {
-      'version': '0.21.0',
+      'version': '0.22.1',
     },
     'linux': {
       'file_name': 'cpptools-linux.vsix',
@@ -55,7 +55,8 @@ GADGETS = {
     },
     'macos': {
       'file_name': 'cpptools-osx.vsix',
-      'checksum': '4c149df241f8a548f928d824565aa9bb3ccaaa426c07aac3b47db3a51ebbb1f4',
+      'checksum':
+        'fa9d37d5ea74e86043051cbc37660f9c187be828fbde56d8eb75c48d36a3c13b',
     },
     'windows': {
       'file_name': 'cpptools-win32.vsix',
