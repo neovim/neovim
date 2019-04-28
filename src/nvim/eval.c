@@ -10404,21 +10404,18 @@ static void f_gettabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   getwinvar(argvars, rettv, 1);
 }
 
-/*
- * "gettagstack()" function
- */
-    static void
-f_gettagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+// "gettagstack()" function
+static void f_gettagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-    win_T	*wp = curwin;			// default is current window
+    win_T        *wp = curwin;                  // default is current window
 
     tv_dict_alloc_ret(rettv);
 
-    if (argvars[0].v_type != VAR_UNKNOWN)
-    {
-	wp = find_win_by_nr_or_id(&argvars[0]);
-	if (wp == NULL)
-	    return;
+    if (argvars[0].v_type != VAR_UNKNOWN) {
+        wp = find_win_by_nr_or_id(&argvars[0]);
+        if (wp == NULL) {
+          return;
+        }
     }
 
     get_tagstack(wp, rettv->vval.v_dict);
@@ -15216,62 +15213,58 @@ static void f_settabwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   setwinvar(argvars, rettv, 1);
 }
 
-/*
- * "settagstack()" function
- */
-    static void
-f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+// "settagstack()" function
+static void f_settagstack(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
     static char *e_invact2 = N_("E962: Invalid action: '%s'");
-    win_T	*wp;
-    dict_T	*d;
-    int		action = 'r';
+    win_T       *wp;
+    dict_T      *d;
+    int         action = 'r';
 
     rettv->vval.v_number = -1;
 
     // first argument: window number or id
     wp = find_win_by_nr_or_id(&argvars[0]);
-    if (wp == NULL)
-	return;
+    if (wp == NULL) {
+      return;
+    }
 
     // second argument: dict with items to set in the tag stack
-    if (argvars[1].v_type != VAR_DICT)
-    {
-	EMSG(_(e_dictreq));
-	return;
+    if (argvars[1].v_type != VAR_DICT) {
+        EMSG(_(e_dictreq));
+        return;
     }
     d = argvars[1].vval.v_dict;
-    if (d == NULL)
-	return;
+    if (d == NULL) {
+      return;
+    }
 
     // third argument: action - 'a' for append and 'r' for replace.
     // default is to replace the stack.
-    if (argvars[2].v_type == VAR_UNKNOWN)
-	action = 'r';
-    else if (argvars[2].v_type == VAR_STRING)
-    {
-	const char *actstr;
-	actstr = tv_get_string_chk(&argvars[2]);
-	if (actstr == NULL)
-	    return;
-	if ((*actstr == 'r' || *actstr == 'a') && actstr[1] == NUL)
-	    action = *actstr;
-	else
-	{
-	    EMSG2(_(e_invact2), actstr);
-	    return;
-	}
-    }
-    else
-    {
-	EMSG(_(e_stringreq));
-	return;
+    if (argvars[2].v_type == VAR_UNKNOWN) {
+      action = 'r';
+    } else if (argvars[2].v_type == VAR_STRING) {
+        const char *actstr;
+        actstr = tv_get_string_chk(&argvars[2]);
+        if (actstr == NULL) {
+          return;
+        }
+        if ((*actstr == 'r' || *actstr == 'a') && actstr[1] == NUL) {
+          action = *actstr;
+        } else {
+            EMSG2(_(e_invact2), actstr);
+            return;
+        }
+    } else {
+        EMSG(_(e_stringreq));
+        return;
     }
 
-    if (set_tagstack(wp, d, action) == OK)
-	rettv->vval.v_number = 0;
-    else
-	EMSG(_(e_listreq));
+    if (set_tagstack(wp, d, action) == OK) {
+      rettv->vval.v_number = 0;
+    } else {
+      EMSG(_(e_listreq));
+    }
 }
 
 /*
