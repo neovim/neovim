@@ -3,6 +3,19 @@
 RUN_VIM="vim --noplugin --clean --not-a-term"
 RUN_TEST="${RUN_VIM} -S run_test.vim"
 
+if [ -z "$VIMSPECTOR_MIMODE" ]; then
+  if which -s lldb; then
+    export VIMSPECTOR_MIMODE=lldb
+  elif which -s gdb; then
+    export VIMSPECTOR_MIMODE=gdb
+  else
+    echo "Couldn't guess VIMSPECTOR_MIMODE. Need lldb or gdb in path"
+    exit 1
+  fi
+fi
+
+echo "Testing with VIMSPECTOR_MIMODE=$VIMSPECTOR_MIMODE"
+
 echo "%SETUP - Building test programs..."
 set -e
   pushd tests/testdata/cpp/simple
