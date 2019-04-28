@@ -704,14 +704,6 @@ static void cursor_goto(UI *ui, int row, int col)
     // even less expensive than using BSes or CUB.
     unibi_out(ui, unibi_carriage_return);
     ugrid_goto(grid, grid->row, 0);
-  } else if (col > grid->col) {
-      int n = col - grid->col;
-      if (n <= (row == grid->row ? 4 : 2)
-          && cheap_to_print(ui, grid->row, grid->col, n)) {
-        UGRID_FOREACH_CELL(grid, grid->row, grid->col, col, {
-          print_cell(ui, cell);
-        });
-      }
   }
   if (row == grid->row) {
     if (col < grid->col
