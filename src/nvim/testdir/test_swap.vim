@@ -156,7 +156,7 @@ func Test_swapfile_delete()
   let s:swapname = ''
   split XswapfileText
   quit
-  call assert_equal(swapfile_name, s:swapname)
+  call assert_equal(fnamemodify(swapfile_name, ':t'), fnamemodify(s:swapname, ':t'))
 
   " Write the swapfile with a modified PID, now it will be automatically
   " deleted. Process one should never be Vim.
@@ -173,7 +173,7 @@ func Test_swapfile_delete()
   let s:swapname = ''
   split XswapfileText
   quit
-  call assert_equal(swapfile_name, s:swapname)
+  call assert_equal(fnamemodify(swapfile_name, ':t'), fnamemodify(s:swapname, ':t'))
 
   call delete('XswapfileText')
   call delete(swapfile_name)
