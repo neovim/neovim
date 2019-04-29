@@ -1623,7 +1623,7 @@ static time_t swapfile_unchanged(char *fname)
     ret = false;
   }
 
-  // TODO: Should we check if the swap file was created on the current
+  // TODO(bram): Should we check if the swap file was created on the current
   // system?  And the current user?
 
   close(fd);
@@ -3446,8 +3446,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           // response, trigger it.  It may return 0 to ask the user anyway.
           if (choice == 0
               && swap_exists_action != SEA_NONE
-              && has_autocmd(EVENT_SWAPEXISTS, (char_u *) buf_fname, buf)) {
-            choice = do_swapexists(buf, (char_u *) fname);
+              && has_autocmd(EVENT_SWAPEXISTS, (char_u *)buf_fname, buf)) {
+            choice = do_swapexists(buf, (char_u *)fname);
           }
 
           if (choice == 0) {
