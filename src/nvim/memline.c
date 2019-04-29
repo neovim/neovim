@@ -1466,8 +1466,10 @@ void get_b0_dict(const char *fname, dict_T *d)
 
   if ((fd = os_open(fname, O_RDONLY, 0)) >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
-      if (b0_magic_wrong(&b0)) {
-        tv_dict_add_str(d, S_LEN("error"), xstrdup("magic number mismatch"));
+      if (ml_check_b0_id(&b0) == FAIL) {
+        tv_dict_add_str(d, S_LEN("error"), xstrdup("Not a swap file"));
+      } else if (b0_magic_wrong(&b0)) {
+        tv_dict_add_str(d, S_LEN("error"), xstrdup("Magic number mismatch"));
       } else {
         // We have swap information.
         tv_dict_add_str(d, S_LEN("version"), xstrdup((char *)b0.b0_version));
@@ -1477,9 +1479,8 @@ void get_b0_dict(const char *fname, dict_T *d)
 
         tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
         tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
-#ifdef CHECK_INODE
+        tv_dict_add_nr(d, S_LEN("dirty"), b0.b0_dirty ? 1 : 0);
         tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
-#endif
       }
     } else {
       tv_dict_add_str(d, S_LEN("error"), xstrdup("Cannot read file"));

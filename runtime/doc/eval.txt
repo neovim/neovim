@@ -7770,10 +7770,12 @@ swapinfo({fname})					swapinfo()
 				file
 			mtime	last modification time in seconds
 			inode	Optional: INODE number of the file
+			dirty	1 if file was modified, 0 if not
 		In case of failure an "error" item is added with the reason:
 			Cannot open file: file not found or in accessible
 			Cannot read file: cannot read first block
-			magic number mismatch: info in first block is invalid
+			Not a swap file: does not contain correct block ID
+			Magic number mismatch: Info in first block is invalid
 
 synID({lnum}, {col}, {trans})				*synID()*
 		The result is a Number, which is the syntax ID at the position
