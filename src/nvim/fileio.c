@@ -310,6 +310,7 @@ readfile (
 #endif
   int fileformat = 0;                   /* end-of-line format */
   int keep_fileformat = FALSE;
+  FileInfo file_info;
   int file_readonly;
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
@@ -481,7 +482,6 @@ readfile (
 
   if (newfile && !read_stdin && !read_buffer && !read_fifo) {
     // Remember time of file.
-    FileInfo file_info;
     if (os_fileinfo((char *)fname, &file_info)) {
       buf_store_file_info(curbuf, &file_info);
       curbuf->b_mtime_read = curbuf->b_mtime;
@@ -627,8 +627,25 @@ readfile (
     // Set swap file protection bits after creating it.
     if (swap_mode > 0 && curbuf->b_ml.ml_mfp != NULL
         && curbuf->b_ml.ml_mfp->mf_fname != NULL) {
-      (void)os_setperm((const char *)curbuf->b_ml.ml_mfp->mf_fname,
-                       (long)swap_mode);
+      const char *swap_fname = (const char *)curbuf->b_ml.ml_mfp->mf_fname;
+
+      // If the group-read bit is set but not the world-read bit, then
+      // the group must be equal to the group of the original file.  If
+      // we can't make that happen then reset the group-read bit.  This
+      // avoids making the swap file readable to more users when the
+      // primary group of the user is too permissive.
+      if ((swap_mode & 044) == 040) {
+        FileInfo swap_info;
+
+        if (os_fileinfo(swap_fname, &swap_info)
+            && file_info.stat.st_gid != swap_info.stat.st_gid
+            && os_fchown(curbuf->b_ml.ml_mfp->mf_fd, -1, file_info.stat.st_gid)
+            == -1) {
+          swap_mode &= 0600;
+        }
+      }
+
+      (void)os_setperm(swap_fname, swap_mode);
     }
 #endif
   }

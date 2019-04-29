@@ -51,6 +51,40 @@ func Test_swap_directory()
   call delete("Xtest.je", "rf")
 endfunc
 
+func Test_swap_group()
+  if !has("unix")
+    return
+  endif
+  let groups = split(system('groups'))
+  if len(groups) <= 1
+    throw 'Skipped: need at least two groups, got ' . groups
+  endif
+
+  call delete('Xtest')
+  split Xtest
+  call setline(1, 'just some text')
+  wq
+  if system('ls -l Xtest') !~ ' ' . groups[0] . ' \d'
+    throw 'Skipped: test file does not have the first group'
+  else
+    silent !chmod 640 Xtest
+    call system('chgrp ' . groups[1] . ' Xtest')
+    if system('ls -l Xtest') !~ ' ' . groups[1] . ' \d'
+      throw 'Skipped: cannot set second group on test file'
+    else
+      split Xtest
+      let swapname = substitute(execute('swapname'), '[[:space:]]', '', 'g')
+      call assert_match('Xtest', swapname)
+      " Group of swapfile must now match original file.
+      call assert_match(' ' . groups[1] . ' \d', system('ls -l ' . swapname))
+
+      bwipe!
+    endif
+  endif
+
+  call delete('Xtest')
+endfunc
+
 func Test_missing_dir()
   call mkdir('Xswapdir')
   exe 'set directory=' . getcwd() . '/Xswapdir'
