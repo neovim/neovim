@@ -69,9 +69,13 @@ func Test_swapinfo()
   let fname = trim(execute('swapname'))
   call assert_match('Xswapinfo', fname)
   let info = swapinfo(fname)
-  call assert_match('8\.', info.version)
+
+  let ver = printf('VIM %d.%d', v:version / 100, v:version % 100)
+  call assert_equal(ver, info.version)
+
   call assert_match('\w', info.user)
-  call assert_equal(hostname(), info.host)
+  " host name is truncated to 39 bytes in the swap file
+  call assert_equal(hostname()[:38], info.host)
   call assert_match('Xswapinfo', info.fname)
   call assert_match(0, info.dirty)
   call assert_equal(getpid(), info.pid)
