@@ -265,3 +265,9 @@ Dictionary os_proc_info(int pid)
   return pinfo;
 }
 #endif
+
+/// Return true if process `pid` is running.
+bool os_proc_running(int pid)
+{
+  return uv_kill(pid, 0) == 0;
+}

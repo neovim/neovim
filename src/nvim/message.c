@@ -133,15 +133,11 @@ int msg(char_u *s)
   return msg_attr_keep(s, 0, false, false);
 }
 
-/*
- * Like msg() but keep it silent when 'verbosefile' is set.
- */
-int verb_msg(char_u *s)
+/// Like msg() but keep it silent when 'verbosefile' is set.
+int verb_msg(char *s)
 {
-  int n;
-
   verbose_enter();
-  n = msg_attr_keep(s, 0, false, false);
+  int n = msg_attr_keep((char_u *)s, 0, false, false);
   verbose_leave();
 
   return n;

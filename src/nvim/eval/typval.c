@@ -1656,18 +1656,34 @@ int tv_dict_add_special(dict_T *const d, const char *const key,
 
 /// Add a string entry to dictionary
 ///
-/// @param[out]  d  Dictionary to add entry to.
-/// @param[in]  key  Key to add.
-/// @param[in]  key_len  Key length.
-/// @param[in]  val  String to add.
-///
-/// @return OK in case of success, FAIL when key already exists.
+/// @see tv_dict_add_allocated_str
 int tv_dict_add_str(dict_T *const d,
                     const char *const key, const size_t key_len,
                     const char *const val)
   FUNC_ATTR_NONNULL_ALL
 {
   return tv_dict_add_allocated_str(d, key, key_len, xstrdup(val));
+}
+
+/// Add a string entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  val  String to add. NULL adds empty string.
+/// @param[in]  len  Use this many bytes from `val`, or -1 for whole string.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_str_len(dict_T *const d,
+                        const char *const key, const size_t key_len,
+                        char *const val, int len)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  char *s = val ? val : "";
+  if (val != NULL) {
+    s = (len < 0) ? xstrdup(val) : xstrndup(val, (size_t)len);
+  }
+  return tv_dict_add_allocated_str(d, key, key_len, s);
 }
 
 /// Add a string entry to dictionary

@@ -5221,7 +5221,7 @@ bool garbage_collect(bool testing)
       (void)garbage_collect(testing);
     }
   } else if (p_verbose > 0) {
-    verb_msg((char_u *)_(
+    verb_msg(_(
         "Not enough memory to set references, garbage collection aborted!"));
   }
 #undef ABORTING
@@ -11474,25 +11474,21 @@ static void f_inputlist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static garray_T ga_userinput = {0, 0, sizeof(tasave_T), 4, NULL};
 
-/*
- * "inputrestore()" function
- */
+/// "inputrestore()" function
 static void f_inputrestore(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (!GA_EMPTY(&ga_userinput)) {
-    --ga_userinput.ga_len;
+    ga_userinput.ga_len--;
     restore_typeahead((tasave_T *)(ga_userinput.ga_data)
-        + ga_userinput.ga_len);
-    /* default return is zero == OK */
+                      + ga_userinput.ga_len);
+    // default return is zero == OK
   } else if (p_verbose > 1) {
-    verb_msg((char_u *)_("called inputrestore() more often than inputsave()"));
-    rettv->vval.v_number = 1;     /* Failed */
+    verb_msg(_("called inputrestore() more often than inputsave()"));
+    rettv->vval.v_number = 1;  // Failed
   }
 }
 
-/*
- * "inputsave()" function
- */
+/// "inputsave()" function
 static void f_inputsave(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   // Add an entry to the stack of typeahead storage.
@@ -11500,9 +11496,7 @@ static void f_inputsave(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   save_typeahead(p);
 }
 
-/*
- * "inputsecret()" function
- */
+/// "inputsecret()" function
 static void f_inputsecret(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   cmdline_star++;
@@ -16420,6 +16414,27 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     rettv->vval.v_string = do_string_sub((char_u *)str, (char_u *)pat,
                                          (char_u *)sub, expr, (char_u *)flg);
+  }
+}
+
+/// "swapinfo(swap_filename)" function
+static void f_swapinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_dict_alloc_ret(rettv);
+  get_b0_dict(tv_get_string(argvars), rettv->vval.v_dict);
+}
+
+/// "swapname(expr)" function
+static void f_swapname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_STRING;
+  buf_T *buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL
+      || buf->b_ml.ml_mfp == NULL
+      || buf->b_ml.ml_mfp->mf_fname == NULL) {
+    rettv->vval.v_string = NULL;
+  } else {
+    rettv->vval.v_string = vim_strsave(buf->b_ml.ml_mfp->mf_fname);
   }
 }
 

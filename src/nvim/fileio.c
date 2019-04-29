@@ -633,7 +633,7 @@ readfile (
 #endif
   }
 
-  /* If "Quit" selected at ATTENTION dialog, don't load the file */
+  // If "Quit" selected at ATTENTION dialog, don't load the file.
   if (swap_exists_action == SEA_QUIT) {
     if (!read_buffer && !read_stdin)
       close(fd);
