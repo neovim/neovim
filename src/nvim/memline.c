@@ -1472,10 +1472,14 @@ void get_b0_dict(const char *fname, dict_T *d)
         tv_dict_add_str(d, S_LEN("error"), xstrdup("Magic number mismatch"));
       } else {
         // We have swap information.
-        tv_dict_add_str(d, S_LEN("version"), xstrdup((char *)b0.b0_version));
-        tv_dict_add_str(d, S_LEN("user"), xstrdup((char *)b0.b0_uname));
-        tv_dict_add_str(d, S_LEN("host"), xstrdup((char *)b0.b0_hname));
-        tv_dict_add_str(d, S_LEN("fname"), xstrdup((char *)b0.b0_fname));
+        tv_dict_add_str(d, S_LEN("version"),
+                        xstrndup((char *)b0.b0_version, 10));
+        tv_dict_add_str(d, S_LEN("user"),
+                        xstrndup((char *)b0.b0_uname, B0_UNAME_SIZE));
+        tv_dict_add_str(d, S_LEN("host"),
+                        xstrndup((char *)b0.b0_hname, B0_HNAME_SIZE));
+        tv_dict_add_str(d, S_LEN("fname"),
+                        xstrndup((char *)b0.b0_fname, B0_FNAME_SIZE_ORG));
 
         tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
         tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
