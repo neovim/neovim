@@ -1466,19 +1466,18 @@ void get_b0_dict(const char *fname, dict_T *d)
   if ((fd = os_open(fname, O_RDONLY, 0)) >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (ml_check_b0_id(&b0) == FAIL) {
-        tv_dict_add_str(d, S_LEN("error"), xstrdup("Not a swap file"));
+        tv_dict_add_str(d, S_LEN("error"), "Not a swap file");
       } else if (b0_magic_wrong(&b0)) {
-        tv_dict_add_str(d, S_LEN("error"), xstrdup("Magic number mismatch"));
+        tv_dict_add_str(d, S_LEN("error"), "Magic number mismatch");
       } else {
         // We have swap information.
-        tv_dict_add_str(d, S_LEN("version"),
-                        xstrndup((char *)b0.b0_version, 10));
-        tv_dict_add_str(d, S_LEN("user"),
-                        xstrndup((char *)b0.b0_uname, B0_UNAME_SIZE));
-        tv_dict_add_str(d, S_LEN("host"),
-                        xstrndup((char *)b0.b0_hname, B0_HNAME_SIZE));
-        tv_dict_add_str(d, S_LEN("fname"),
-                        xstrndup((char *)b0.b0_fname, B0_FNAME_SIZE_ORG));
+        tv_dict_add_str_len(d, S_LEN("version"), (char *)b0.b0_version, 10);
+        tv_dict_add_str_len(d, S_LEN("user"), (char *)b0.b0_uname,
+                            B0_UNAME_SIZE);
+        tv_dict_add_str_len(d, S_LEN("host"), (char *)b0.b0_hname,
+                            B0_HNAME_SIZE);
+        tv_dict_add_str_len(d, S_LEN("fname"), (char *)b0.b0_fname,
+                            B0_FNAME_SIZE_ORG);
 
         tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
         tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
@@ -1486,11 +1485,11 @@ void get_b0_dict(const char *fname, dict_T *d)
         tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
       }
     } else {
-      tv_dict_add_str(d, S_LEN("error"), xstrdup("Cannot read file"));
+      tv_dict_add_str(d, S_LEN("error"), "Cannot read file");
     }
     close(fd);
   } else {
-    tv_dict_add_str(d, S_LEN("error"), xstrdup("Cannot open file"));
+    tv_dict_add_str(d, S_LEN("error"), "Cannot open file");
   }
 }
 
