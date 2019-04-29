@@ -302,6 +302,7 @@ return {
     submatch={args={1, 2}},
     substitute={args=4},
     swapinfo={args={1}},
+    swapname={args={1}},
     synID={args=3},
     synIDattr={args={2, 3}},
     synIDtrans={args=1},

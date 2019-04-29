@@ -1,5 +1,9 @@
 " Tests for the swap feature
 
+func s:swapname()
+  return trim(execute('swapname'))
+endfunc
+
 " Tests for 'directory' option.
 func Test_swap_directory()
   if !has("unix")
@@ -17,7 +21,7 @@ func Test_swap_directory()
   " Verify that the swap file doesn't exist in the current directory
   call assert_equal([], glob(".Xtest1*.swp", 1, 1, 1))
   edit Xtest1
-  let swfname = split(execute("swapname"))[0]
+  let swfname = s:swapname()
   call assert_equal([swfname], glob(swfname, 1, 1, 1))
 
   " './dir', swap file in a directory relative to the file
@@ -27,7 +31,7 @@ func Test_swap_directory()
   edit Xtest1
   call assert_equal([], glob(swfname, 1, 1, 1))
   let swfname = "Xtest2/Xtest1.swp"
-  call assert_equal(swfname, split(execute("swapname"))[0])
+  call assert_equal(swfname, s:swapname())
   call assert_equal([swfname], glob("Xtest2/*", 1, 1, 1))
 
   " 'dir', swap file in directory relative to the current dir
@@ -38,7 +42,7 @@ func Test_swap_directory()
   edit Xtest2/Xtest3
   call assert_equal(["Xtest2/Xtest3"], glob("Xtest2/*", 1, 1, 1))
   let swfname = "Xtest.je/Xtest3.swp"
-  call assert_equal(swfname, split(execute("swapname"))[0])
+  call assert_equal(swfname, s:swapname())
   call assert_equal([swfname], glob("Xtest.je/*", 1, 1, 1))
 
   set dir&
@@ -66,7 +70,7 @@ func Test_swapinfo()
   new Xswapinfo
   call setline(1, ['one', 'two', 'three'])
   w
-  let fname = trim(execute('swapname'))
+  let fname = s:swapname()
   call assert_match('Xswapinfo', fname)
   let info = swapinfo(fname)
 
@@ -99,4 +103,25 @@ func Test_swapinfo()
   let info = swapinfo('Xnotaswapfile')
   call assert_equal('Not a swap file', info.error)
   call delete('Xnotaswapfile')
+endfunc
+
+func Test_swapname()
+  edit Xtest1
+  let expected = s:swapname()
+  call assert_equal(expected, swapname('%'))
+
+  new Xtest2
+  let buf = bufnr('%')
+  let expected = s:swapname()
+  wincmd p
+  call assert_equal(expected, swapname(buf))
+
+  new Xtest3
+  setlocal noswapfile
+  call assert_equal('', swapname('%'))
+
+  bwipe!
+  call delete('Xtest1')
+  call delete('Xtest2')
+  call delete('Xtest3')
 endfunc
