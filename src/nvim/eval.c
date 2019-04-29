@@ -16423,6 +16423,13 @@ static void f_substitute(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+/// "swapinfo(swap_filename)" function
+static void f_swapinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_dict_alloc_ret(rettv);
+  get_b0_dict(tv_get_string(argvars), rettv->vval.v_dict);
+}
+
 /// "synID(lnum, col, trans)" function
 static void f_synID(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {

@@ -1457,10 +1457,41 @@ static char *make_percent_swname(const char *dir, char *name)
 static bool process_still_running;
 #endif
 
-/*
- * Give information about an existing swap file.
- * Returns timestamp (0 when unknown).
- */
+/// Return information found in swapfile "fname" in dictionary "d".
+/// This is used by the swapinfo() function.
+void get_b0_dict(const char *fname, dict_T *d)
+{
+  int fd;
+  struct block0 b0;
+
+  if ((fd = os_open(fname, O_RDONLY, 0)) >= 0) {
+    if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
+      if (b0_magic_wrong(&b0)) {
+        tv_dict_add_str(d, S_LEN("error"), xstrdup("magic number mismatch"));
+      } else {
+        // We have swap information.
+        tv_dict_add_str(d, S_LEN("version"), xstrdup((char *)b0.b0_version));
+        tv_dict_add_str(d, S_LEN("user"), xstrdup((char *)b0.b0_uname));
+        tv_dict_add_str(d, S_LEN("host"), xstrdup((char *)b0.b0_hname));
+        tv_dict_add_str(d, S_LEN("fname"), xstrdup((char *)b0.b0_fname));
+
+        tv_dict_add_nr(d, S_LEN("pid"), char_to_long(b0.b0_pid));
+        tv_dict_add_nr(d, S_LEN("mtime"), char_to_long(b0.b0_mtime));
+#ifdef CHECK_INODE
+        tv_dict_add_nr(d, S_LEN("inode"), char_to_long(b0.b0_ino));
+#endif
+      }
+    } else {
+      tv_dict_add_str(d, S_LEN("error"), xstrdup("Cannot read file"));
+    }
+    close(fd);
+  } else {
+    tv_dict_add_str(d, S_LEN("error"), xstrdup("Cannot open file"));
+  }
+}
+
+/// Give information about an existing swap file.
+/// Returns timestamp (0 when unknown).
 static time_t swapfile_info(char_u *fname)
 {
   assert(fname != NULL);

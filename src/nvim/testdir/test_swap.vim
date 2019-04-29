@@ -61,3 +61,37 @@ func Test_missing_dir()
   set directory&
   call delete('Xswapdir', 'rf')
 endfunc
+
+func Test_swapinfo()
+  new Xswapinfo
+  call setline(1, ['one', 'two', 'three'])
+  w
+  let fname = trim(execute('swapname'))
+  call assert_match('Xswapinfo', fname)
+  let info = swapinfo(fname)
+  call assert_match('8\.', info.version)
+  call assert_match('\w', info.user)
+  call assert_equal(hostname(), info.host)
+  call assert_match('Xswapinfo', info.fname)
+  call assert_equal(getpid(), info.pid)
+  call assert_match('^\d*$', info.mtime)
+  if has_key(info, 'inode')
+    call assert_match('\d', info.inode)
+  endif
+  bwipe!
+  call delete(fname)
+  call delete('Xswapinfo')
+
+  let info = swapinfo('doesnotexist')
+  call assert_equal('Cannot open file', info.error)
+
+  call writefile(['burp'], 'Xnotaswapfile')
+  let info = swapinfo('Xnotaswapfile')
+  call assert_equal('Cannot read file', info.error)
+  call delete('Xnotaswapfile')
+
+  call writefile([repeat('x', 10000)], 'Xnotaswapfile')
+  let info = swapinfo('Xnotaswapfile')
+  call assert_equal('magic number mismatch', info.error)
+  call delete('Xnotaswapfile')
+endfunc

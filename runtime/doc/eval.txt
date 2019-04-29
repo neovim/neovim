@@ -2321,6 +2321,7 @@ submatch({nr} [, {list}])	String or List
 					specific match in ":s" or substitute()
 substitute({expr}, {pat}, {sub}, {flags})
 				String	all {pat} in {expr} replaced with {sub}
+swapinfo({fname})		Dict	information about swap file {fname}
 synID({lnum}, {col}, {trans})	Number	syntax ID at {lnum} and {col}
 synIDattr({synID}, {what} [, {mode}])
 				String	attribute {what} of syntax ID {synID}
@@ -7757,6 +7758,22 @@ substitute({expr}, {pat}, {sub}, {flags})		*substitute()*
 		matched string and up to nine submatches,like what
 		|submatch()| returns. Example: >
 		   :echo substitute(s, '\(\x\x\)', {m -> '0x' . m[1]}, 'g')
+
+swapinfo({fname})					swapinfo()
+		The result is a dictionary, which holds information about the
+		swapfile {fname}. The available fields are:
+			version VIM version
+			user	user name
+			host	host name
+			fname	original file name
+			pid	PID of the VIM process that created the swap
+				file
+			mtime	last modification time in seconds
+			inode	Optional: INODE number of the file
+		In case of failure an "error" item is added with the reason:
+			Cannot open file: file not found or in accessible
+			Cannot read file: cannot read first block
+			magic number mismatch: info in first block is invalid
 
 synID({lnum}, {col}, {trans})				*synID()*
 		The result is a Number, which is the syntax ID at the position
