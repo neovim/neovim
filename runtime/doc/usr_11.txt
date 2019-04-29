@@ -205,6 +205,13 @@ something wrong.  It may be one of these two situations.
       NEWER than swap file! ~
 
 
+NOTE that in the following situation Vim knows the swap file is not useful and
+will automatically delete it:
+- The file is a valid swap file (Magic number is correct).
+- The flag that the file was modified is not set.
+- The process is not running.
+
+
 UNREADABLE SWAP FILE
 
 Sometimes the line

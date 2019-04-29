@@ -71,6 +71,7 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/process.h"
 #include "nvim/os/input.h"
 
 #ifndef UNIX            /* it's in os/unix_defs.h for Unix */
@@ -1453,9 +1454,7 @@ static char *make_percent_swname(const char *dir, char *name)
   return d;
 }
 
-#ifdef UNIX
 static bool process_still_running;
-#endif
 
 /// Return information found in swapfile "fname" in dictionary "d".
 /// This is used by the swapinfo() function.
@@ -1566,12 +1565,10 @@ static time_t swapfile_info(char_u *fname)
         if (char_to_long(b0.b0_pid) != 0L) {
           MSG_PUTS(_("\n        process ID: "));
           msg_outnum(char_to_long(b0.b0_pid));
-#if defined(UNIX)
-          if (kill((pid_t)char_to_long(b0.b0_pid), 0) == 0) {
+          if (os_proc_running((int)char_to_long(b0.b0_pid))) {
             MSG_PUTS(_(" (STILL RUNNING)"));
             process_still_running = true;
           }
-#endif
         }
 
         if (b0_magic_wrong(&b0)) {
@@ -1586,6 +1583,51 @@ static time_t swapfile_info(char_u *fname)
   msg_putchar('\n');
 
   return x;
+}
+
+/// Returns TRUE if the swap file looks OK and there are no changes, thus it
+/// can be safely deleted.
+static time_t swapfile_unchanged(char *fname)
+{
+  struct block0 b0;
+  int ret = true;
+
+  // Swap file must exist.
+  if (!os_path_exists((char_u *)fname)) {
+    return false;
+  }
+
+  // must be able to read the first block
+  int fd = os_open(fname, O_RDONLY, 0);
+  if (fd < 0) {
+    return false;
+  }
+  if (read_eintr(fd, &b0, sizeof(b0)) != sizeof(b0)) {
+    close(fd);
+    return false;
+  }
+
+  // the ID and magic number must be correct
+  if (ml_check_b0_id(&b0) == FAIL|| b0_magic_wrong(&b0)) {
+    ret = false;
+  }
+
+  // must be unchanged
+  if (b0.b0_dirty) {
+    ret = false;
+  }
+
+  // process must be known and not running.
+  long pid = char_to_long(b0.b0_pid);
+  if (pid == 0L || os_proc_running((int)pid)) {
+    ret = false;
+  }
+
+  // TODO: Should we check if the swap file was created on the current
+  // system?  And the current user?
+
+  close(fd);
+  return ret;
 }
 
 static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
@@ -3389,17 +3431,24 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;
 
-#ifdef UNIX
           process_still_running = false;
-#endif
-          /*
-           * If there is a SwapExists autocommand and we can handle
-           * the response, trigger it.  It may return 0 to ask the
-           * user anyway.
-           */
-          if (swap_exists_action != SEA_NONE
-              && has_autocmd(EVENT_SWAPEXISTS, (char_u *) buf_fname, buf))
+          // It's safe to delete the swap file if all these are true:
+          // - the edited file exists
+          // - the swap file has no changes and looks OK
+          if (os_path_exists(buf->b_fname) && swapfile_unchanged(fname)) {
+            choice = 4;
+            if (p_verbose > 0) {
+              verb_msg(_("Found a swap file that is not useful, deleting it"));
+            }
+          }
+
+          // If there is a SwapExists autocommand and we can handle the
+          // response, trigger it.  It may return 0 to ask the user anyway.
+          if (choice == 0
+              && swap_exists_action != SEA_NONE
+              && has_autocmd(EVENT_SWAPEXISTS, (char_u *) buf_fname, buf)) {
             choice = do_swapexists(buf, (char_u *) fname);
+          }
 
           if (choice == 0) {
             // Show info about the existing swap file.
@@ -3431,21 +3480,18 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             xstrlcat(name, sw_msg_2, name_len);
             choice = do_dialog(VIM_WARNING, (char_u *)_("VIM - ATTENTION"),
                                (char_u *)name,
-# if defined(UNIX)
                                process_still_running
                                ? (char_u *)_(
                                    "&Open Read-Only\n&Edit anyway\n&Recover"
                                    "\n&Quit\n&Abort") :
-# endif
                                (char_u *)_(
                                    "&Open Read-Only\n&Edit anyway\n&Recover"
                                    "\n&Delete it\n&Quit\n&Abort"),
                                1, NULL, false);
 
-# if defined(UNIX)
-            if (process_still_running && choice >= 4)
-              choice++;                 /* Skip missing "Delete it" button */
-# endif
+            if (process_still_running && choice >= 4) {
+              choice++;                 // Skip missing "Delete it" button.
+            }
             xfree(name);
 
             // pretend screen didn't scroll, need redraw anyway

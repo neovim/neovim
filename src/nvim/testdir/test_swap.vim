@@ -125,3 +125,59 @@ func Test_swapname()
   call delete('Xtest2')
   call delete('Xtest3')
 endfunc
+
+func Test_swapfile_delete()
+  autocmd! SwapExists
+  function s:swap_exists()
+    let v:swapchoice = s:swap_choice
+    let s:swapname = v:swapname
+    let s:filename = expand('<afile>')
+  endfunc
+  augroup test_swapfile_delete
+    autocmd!
+    autocmd SwapExists * call s:swap_exists()
+  augroup END
+
+
+  " Create a valid swapfile by editing a file.
+  split XswapfileText
+  call setline(1, ['one', 'two', 'three'])
+  write  " file is written, not modified
+  " read the swapfile as a Blob
+  let swapfile_name = swapname('%')
+  let swapfile_bytes = readfile(swapfile_name, 'B')
+
+  " Close the file and recreate the swap file.
+  " Now editing the file will run into the process still existing
+  quit
+  call writefile(swapfile_bytes, swapfile_name)
+  let s:swap_choice = 'e'
+  let s:swapname = ''
+  split XswapfileText
+  quit
+  call assert_equal(swapfile_name, s:swapname)
+
+  " Write the swapfile with a modified PID, now it will be automatically
+  " deleted. Process one should never be Vim.
+  let swapfile_bytes[24:27] = 0z01000000
+  call writefile(swapfile_bytes, swapfile_name)
+  let s:swapname = ''
+  split XswapfileText
+  quit
+  call assert_equal('', s:swapname)
+
+  " Now set the modified flag, the swap file will not be deleted
+  let swapfile_bytes[28 + 80 + 899] = 0x55
+  call writefile(swapfile_bytes, swapfile_name)
+  let s:swapname = ''
+  split XswapfileText
+  quit
+  call assert_equal(swapfile_name, s:swapname)
+
+  call delete('XswapfileText')
+  call delete(swapfile_name)
+  augroup test_swapfile_delete
+    autocmd!
+  augroup END
+  augroup! test_swapfile_delete
+endfunc

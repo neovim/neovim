@@ -1520,10 +1520,11 @@ static void create_windows(mparm_T *parmp)
       dorewind = FALSE;
       curbuf = curwin->w_buffer;
       if (curbuf->b_ml.ml_mfp == NULL) {
-        /* Set 'foldlevel' to 'foldlevelstart' if it's not negative. */
-        if (p_fdls >= 0)
+        // Set 'foldlevel' to 'foldlevelstart' if it's not negative..
+        if (p_fdls >= 0) {
           curwin->w_p_fdl = p_fdls;
-        /* When getting the ATTENTION prompt here, use a dialog */
+        }
+        // When getting the ATTENTION prompt here, use a dialog.
         swap_exists_action = SEA_DIALOG;
         set_buflisted(TRUE);
 
