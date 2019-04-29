@@ -1132,7 +1132,7 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
    * existing undo file. */
   if (buf->b_u_numhead == 0 && buf->b_u_line_ptr == NULL) {
     if (p_verbose > 0)
-      verb_msg((char_u *)_("Skipping undo file write, nothing to undo"));
+      verb_msg(_("Skipping undo file write, nothing to undo"));
     goto theend;
   }
 
