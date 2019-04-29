@@ -10474,6 +10474,14 @@ static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
 }
 
+// "getwinpos({timeout})" function
+static void f_getwinpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, 2);
+  tv_list_append_number(rettv->vval.v_list, -1);
+  tv_list_append_number(rettv->vval.v_list, -1);
+}
+
 /*
  * "getwinposx()" function
  */
