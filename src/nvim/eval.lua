@@ -143,6 +143,7 @@ return {
     gettabvar={args={2, 3}},
     gettabwinvar={args={3, 4}},
     getwininfo={args={0, 1}},
+    getwinpos={args={0, 1}},
     getwinposx={},
     getwinposy={},
     getwinvar={args={2, 3}},
