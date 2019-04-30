@@ -139,7 +139,7 @@ def is_blank(text):
     return '' == clean_lines(text)
 
 
-def get_text(parent):
+def get_text(parent, preformatted=False):
     """Combine all text in a node."""
     if parent.nodeType == parent.TEXT_NODE:
         return parent.data
@@ -147,9 +147,9 @@ def get_text(parent):
     out = ''
     for node in parent.childNodes:
         if node.nodeType == node.TEXT_NODE:
-            out += clean_text(node.data)
+            out += node.data if preformatted else clean_text(node.data)
         elif node.nodeType == node.ELEMENT_NODE:
-            out += ' ' + get_text(node)
+            out += ' ' + get_text(node, preformatted)
     return out
 
 
@@ -271,6 +271,10 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += doc_wrap(n.data, indent=indent, width=width)
     elif n.nodeName == 'computeroutput':
         text += ' `{}` '.format(get_text(n))
+    elif n.nodeName == 'preformatted':
+        o = get_text(n, preformatted=True)
+        ensure_nl = '' if o[-1] == '\n' else '\n'
+        text += ' >{}{}\n<'.format(ensure_nl, o)
     elif is_inline(n):
         for c in n.childNodes:
             text += render_node(c, text)

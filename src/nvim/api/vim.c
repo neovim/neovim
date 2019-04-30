@@ -1198,25 +1198,29 @@ void nvim_unsubscribe(uint64_t channel_id, String event)
   rpc_unsubscribe(channel_id, e);
 }
 
-/// If the given name is an hexadecimal value (e.g. #XXXXXX)
-/// translates it to RGB. Otherwise, translates given name
-/// (e.g. “Pink”) to its RGB value. Returns -1 if it wasn’t
-/// able to find a correct RGB value for the given color name.
+/// Returns the 24-bit RGB value of a |nvim_get_color_map()| color name or
+/// "#rrggbb" hexadecimal string.
 ///
-/// @param name Color name string
-/// @return A 24-bit RGB value of the given name or -1 if it wasn’t able
-///         to find a correct RGB value for the given color name.
+/// Example:
+/// <pre>
+///     :echo nvim_get_color_by_name("Pink")
+///     :echo nvim_get_color_by_name("#cbcbcb")
+/// </pre>
+///
+/// @param name Color name or "#rrggbb" string
+/// @return 24-bit RGB value, or -1 for invalid argument.
 Integer nvim_get_color_by_name(String name)
   FUNC_API_SINCE(1)
 {
   return name_to_color((char_u *)name.data);
 }
 
-/// Returns a map (dictionary) with all colors from rgb.txt.
-/// Every key in the map is a color name (e.g. “Aqua”), and every
-/// value is a 24-bit RGB value (e.g. 65535).
+/// Returns a map of color names and RGB values.
 ///
-/// @return Map associating names of colors and color RGB values.
+/// Keys are color names (e.g. "Aqua") and values are 24-bit RGB color values
+/// (e.g. 65535).
+///
+/// @return Map of color names and RGB values.
 Dictionary nvim_get_color_map(void)
   FUNC_API_SINCE(1)
 {

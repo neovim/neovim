@@ -763,10 +763,28 @@ nvim_unsubscribe({event})                                 *nvim_unsubscribe()*
                     {event}  Event type string
 
 nvim_get_color_by_name({name})                      *nvim_get_color_by_name()*
-                TODO: Documentation
+                Returns the 24-bit RGB value of a |nvim_get_color_map()| color
+                name or "#rrggbb" hexadecimal string.
+
+                Examples: >
+                    :echo nvim_get_color_by_name("Pink")
+                    :echo nvim_get_color_by_name("#cbcbcb")
+<
+
+                Parameters: ~
+                    {name}  Color name or "#rrggbb" string
+
+                Return: ~
+                    24-bit RGB value, or -1 for invalid argument.
 
 nvim_get_color_map()                                    *nvim_get_color_map()*
-                TODO: Documentation
+                Returns a map of color names and RGB values.
+
+                Keys are color names (e.g. "Aqua") and values are 24-bit RGB
+                color values (e.g. 65535).
+
+                Return: ~
+                    Map of color names and RGB values.
 
 nvim_get_mode()                                              *nvim_get_mode()*
                 Gets the current mode. |mode()| "blocking" is true if Nvim is
