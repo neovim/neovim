@@ -242,6 +242,7 @@ func Test_undojoin()
 endfunc
 
 func Test_undo_write()
+  call delete('Xtest')
   split Xtest
   call feedkeys("ione one one\<Esc>", 'xt')
   w!
