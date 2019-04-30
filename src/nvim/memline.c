@@ -349,7 +349,7 @@ int ml_open(buf_T *buf)
   /*
    * Allocate first data block and create an empty line 1.
    */
-  hp = ml_new_data(mfp, FALSE, 1);
+  hp = ml_new_data(mfp, false, 1);
   if (hp->bh_bnum != 2) {
     IEMSG(_("E298: Didn't get block nr 2?"));
     goto error;
@@ -764,7 +764,7 @@ void ml_recover(void)
   long error;
   int cannot_open;
   linenr_T line_count;
-  int has_error;
+  bool has_error;
   int idx;
   int top;
   int txt_start;
@@ -984,8 +984,9 @@ void ml_recover(void)
    * Now that we are sure that the file is going to be recovered, clear the
    * contents of the current buffer.
    */
-  while (!(curbuf->b_ml.ml_flags & ML_EMPTY))
-    ml_delete((linenr_T)1, FALSE);
+  while (!(curbuf->b_ml.ml_flags & ML_EMPTY)) {
+    ml_delete((linenr_T)1, false);
+  }
 
   /*
    * Try reading the original file to obtain the values of 'fileformat',
@@ -1034,8 +1035,8 @@ void ml_recover(void)
       }
       ++error;
       ml_append(lnum++, (char_u *)_("???MANY LINES MISSING"),
-          (colnr_T)0, TRUE);
-    } else {          /* there is a block */
+                (colnr_T)0, true);
+    } else {          // there is a block
       pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                /* it is a pointer block */
         /* check line count when using pointer block first time */
@@ -1045,15 +1046,15 @@ void ml_recover(void)
           if (line_count != 0) {
             ++error;
             ml_append(lnum++, (char_u *)_("???LINE COUNT WRONG"),
-                (colnr_T)0, TRUE);
+                      (colnr_T)0, true);
           }
         }
 
         if (pp->pb_count == 0) {
           ml_append(lnum++, (char_u *)_("???EMPTY BLOCK"),
-              (colnr_T)0, TRUE);
-          ++error;
-        } else if (idx < (int)pp->pb_count) {         /* go a block deeper */
+                    (colnr_T)0, true);
+          error++;
+        } else if (idx < (int)pp->pb_count) {         // go a block deeper
           if (pp->pb_pointer[idx].pe_bnum < 0) {
             /*
              * Data block with negative block number.
@@ -1073,7 +1074,7 @@ void ml_recover(void)
             if (cannot_open) {
               ++error;
               ml_append(lnum++, (char_u *)_("???LINES MISSING"),
-                  (colnr_T)0, TRUE);
+                        (colnr_T)0, true);
             }
             ++idx;                  /* get same block again for next index */
             continue;
@@ -1103,23 +1104,21 @@ void ml_recover(void)
           }
           ++error;
           ml_append(lnum++, (char_u *)_("???BLOCK MISSING"),
-              (colnr_T)0, TRUE);
+                    (colnr_T)0, true);
         } else {
-          /*
-           * it is a data block
-           * Append all the lines in this block
-           */
-          has_error = FALSE;
-          /*
-           * check length of block
-           * if wrong, use length in pointer block
-           */
+          // it is a data block
+          // Append all the lines in this block
+          has_error = false;
+          // check length of block
+          // if wrong, use length in pointer block
           if (page_count * mfp->mf_page_size != dp->db_txt_end) {
-            ml_append(lnum++,
-                (char_u *)_("??? from here until ???END lines may be messed up"),
-                (colnr_T)0, TRUE);
-            ++error;
-            has_error = TRUE;
+            ml_append(
+                lnum++,
+                (char_u *)_("??? from here until ???END lines"
+                            " may be messed up"),
+                (colnr_T)0, true);
+            error++;
+            has_error = true;
             dp->db_txt_end = page_count * mfp->mf_page_size;
           }
 
@@ -1131,12 +1130,13 @@ void ml_recover(void)
            * if wrong, use count in data block
            */
           if (line_count != dp->db_line_count) {
-            ml_append(lnum++,
-                (char_u *)_(
-                    "??? from here until ???END lines may have been inserted/deleted"),
-                (colnr_T)0, TRUE);
-            ++error;
-            has_error = TRUE;
+            ml_append(
+                lnum++,
+                (char_u *)_("??? from here until ???END lines"
+                            " may have been inserted/deleted"),
+                (colnr_T)0, true);
+            error++;
+            has_error = true;
           }
 
           for (i = 0; i < dp->db_line_count; ++i) {
@@ -1147,11 +1147,11 @@ void ml_recover(void)
               ++error;
             } else
               p = (char_u *)dp + txt_start;
-            ml_append(lnum++, p, (colnr_T)0, TRUE);
+            ml_append(lnum++, p, (colnr_T)0, true);
           }
-          if (has_error)
-            ml_append(lnum++, (char_u *)_("???END"),
-                (colnr_T)0, TRUE);
+          if (has_error) {
+            ml_append(lnum++, (char_u *)_("???END"), (colnr_T)0, true);
+          }
         }
       }
     }
@@ -1202,7 +1202,7 @@ void ml_recover(void)
    */
   while (curbuf->b_ml.ml_line_count > lnum
          && !(curbuf->b_ml.ml_flags & ML_EMPTY))
-    ml_delete(curbuf->b_ml.ml_line_count, FALSE);
+    ml_delete(curbuf->b_ml.ml_line_count, false);
   curbuf->b_flags |= BF_RECOVERED;
 
   recoverymode = FALSE;
@@ -1814,7 +1814,7 @@ char_u *
 ml_get_buf (
     buf_T *buf,
     linenr_T lnum,
-    int will_change                        /* line will be changed */
+    bool will_change                        // line will be changed
 )
 {
   bhdr_T      *hp;
@@ -1900,12 +1900,11 @@ int ml_line_alloced(void)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
-ml_append (
-    linenr_T lnum,                  /* append after this line (can be 0) */
-    char_u *line,              /* text of the new line */
-    colnr_T len,                    /* length of new line, including NUL, or 0 */
-    int newfile                    /* flag, see above */
+int ml_append(
+    linenr_T lnum,                  // append after this line (can be 0)
+    char_u *line,                   // text of the new line
+    colnr_T len,                    // length of new line, including NUL, or 0
+    bool newfile                    // flag, see above
 )
 {
   /* When starting up, we might still need to create the memfile */
@@ -1921,13 +1920,12 @@ ml_append (
  * Like ml_append() but for an arbitrary buffer.  The buffer must already have
  * a memline.
  */
-int 
-ml_append_buf (
+int ml_append_buf(
     buf_T *buf,
-    linenr_T lnum,                  /* append after this line (can be 0) */
-    char_u *line,              /* text of the new line */
-    colnr_T len,                    /* length of new line, including NUL, or 0 */
-    int newfile                    /* flag, see above */
+    linenr_T lnum,                  // append after this line (can be 0)
+    char_u *line,                   // text of the new line
+    colnr_T len,                    // length of new line, including NUL, or 0
+    bool newfile                    // flag, see above
 )
 {
   if (buf->b_ml.ml_mfp == NULL)
@@ -1938,14 +1936,13 @@ ml_append_buf (
   return ml_append_int(buf, lnum, line, len, newfile, FALSE);
 }
 
-static int 
-ml_append_int (
+static int ml_append_int(
     buf_T *buf,
-    linenr_T lnum,                  /* append after this line (can be 0) */
-    char_u *line,              /* text of the new line */
-    colnr_T len,                    /* length of line, including NUL, or 0 */
-    int newfile,                    /* flag, see above */
-    int mark                       /* mark the new line */
+    linenr_T lnum,                  // append after this line (can be 0)
+    char_u *line,                   // text of the new line
+    colnr_T len,                    // length of line, including NUL, or 0
+    bool newfile,                   // flag, see above
+    int mark                        // mark the new line
 )
 {
   int i;
@@ -2428,13 +2425,13 @@ int ml_replace(linenr_T lnum, char_u *line, bool copy)
 ///
 /// @param message  Show "--No lines in buffer--" message.
 /// @return FAIL for failure, OK otherwise
-int ml_delete(linenr_T lnum, int message)
+int ml_delete(linenr_T lnum, bool message)
 {
   ml_flush_line(curbuf);
   return ml_delete_int(curbuf, lnum, message);
 }
 
-static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
+static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
 {
   bhdr_T      *hp;
   memfile_T   *mfp;
@@ -2754,17 +2751,15 @@ static void ml_flush_line(buf_T *buf)
         /* The else case is already covered by the insert and delete */
         ml_updatechunk(buf, lnum, (long)extra, ML_CHNK_UPDLINE);
       } else {
-        /*
-         * Cannot do it in one data block: Delete and append.
-         * Append first, because ml_delete_int() cannot delete the
-         * last line in a buffer, which causes trouble for a buffer
-         * that has only one line.
-         * Don't forget to copy the mark!
-         */
-        /* How about handling errors??? */
-        (void)ml_append_int(buf, lnum, new_line, new_len, FALSE,
-            (dp->db_index[idx] & DB_MARKED));
-        (void)ml_delete_int(buf, lnum, FALSE);
+        // Cannot do it in one data block: Delete and append.
+        // Append first, because ml_delete_int() cannot delete the
+        // last line in a buffer, which causes trouble for a buffer
+        // that has only one line.
+        // Don't forget to copy the mark!
+        // How about handling errors???
+        (void)ml_append_int(buf, lnum, new_line, new_len, false,
+                            (dp->db_index[idx] & DB_MARKED));
+        (void)ml_delete_int(buf, lnum, false);
       }
     }
     xfree(new_line);
@@ -2778,7 +2773,7 @@ static void ml_flush_line(buf_T *buf)
 /*
  * create a new, empty, data block
  */
-static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
+static bhdr_T *ml_new_data(memfile_T *mfp, bool negative, int page_count)
 {
   assert(page_count >= 0);
   bhdr_T *hp = mf_new(mfp, negative, (unsigned)page_count);

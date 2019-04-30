@@ -6110,9 +6110,9 @@ static int open_cmdwin(void)
       do {
         if (++i == hislen)
           i = 0;
-        if (history[histtype][i].hisstr != NULL)
-          ml_append(lnum++, history[histtype][i].hisstr,
-              (colnr_T)0, FALSE);
+        if (history[histtype][i].hisstr != NULL) {
+          ml_append(lnum++, history[histtype][i].hisstr, (colnr_T)0, false);
+        }
       } while (i != hisidx[histtype]);
     }
   }

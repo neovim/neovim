@@ -7213,10 +7213,11 @@ static void ex_read(exarg_T *eap)
         else
           lnum = 1;
         if (*ml_get(lnum) == NUL && u_savedel(lnum, 1L) == OK) {
-          ml_delete(lnum, FALSE);
+          ml_delete(lnum, false);
           if (curwin->w_cursor.lnum > 1
-              && curwin->w_cursor.lnum >= lnum)
-            --curwin->w_cursor.lnum;
+              && curwin->w_cursor.lnum >= lnum) {
+            curwin->w_cursor.lnum--;
+          }
           deleted_lines_mark(lnum, 1L);
         }
       }
