@@ -35,6 +35,10 @@ enum { NUMBUFLEN = 65 };
 
 #include "nvim/gettext.h"
 
+#ifdef WIN32
+# include "nvim/mbyte.h"  // for utf8_to_utf16
+#endif
+
 // special attribute addition: Put message in history
 #define MSG_HIST                0x1000
 
@@ -287,9 +291,34 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 // functions of these names. The declarations would break if the defines had
 // been seen at that stage.  But it must be before globals.h, where error_ga
 // is declared.
-#define mch_errmsg(str)        fprintf(stderr, "%s", (str))
+#ifdef WIN32
+# define mch_errmsg(str) \
+  do { \
+    wchar_t *utf16str; \
+    int conversion_result = utf8_to_utf16((str), &utf16str); \
+    if (conversion_result != 0) { \
+      EMSG2("utf8_to_utf16 failed: %d", conversion_result); \
+    } else { \
+      fwprintf(stderr, L"%ls", utf16str); \
+      xfree(utf16str); \
+    } \
+  } while (0)
+# define mch_msg(str) \
+  do { \
+    wchar_t *utf16str; \
+    int conversion_result = utf8_to_utf16((str), &utf16str); \
+    if (conversion_result != 0) { \
+      EMSG2("utf8_to_utf16 failed: %d", conversion_result); \
+    } else { \
+      wprintf(L"%ls", utf16str); \
+      xfree(utf16str); \
+    } \
+  } while (0)
+#else
+# define mch_errmsg(str)        fprintf(stderr, "%s", (str))
+# define mch_msg(str)           printf("%s", (str))
+#endif
 #define display_errors()       fflush(stderr)
-#define mch_msg(str)           printf("%s", (str))
 
 #include "nvim/globals.h"        // global variables and messages
 #include "nvim/buffer_defs.h"    // buffer and windows

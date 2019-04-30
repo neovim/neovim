@@ -2303,18 +2303,19 @@ int msg_use_printf(void)
 static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
 {
   const char *s = str;
-  char buf[4];
+  char buf[7];
   char *p;
 
   while ((maxlen < 0 || s - str < maxlen) && *s != NUL) {
+    int len = utf_ptr2len((const char_u *)s);
     if (!(silent_mode && p_verbose == 0)) {
       // NL --> CR NL translation (for Unix, not for "--version")
       p = &buf[0];
       if (*s == '\n' && !info_message) {
         *p++ = '\r';
       }
-      *p++ = *s;
-      *p = '\0';
+      memcpy(p, s, len);
+      *(p + len) = '\0';
       if (info_message) {
         mch_msg(buf);
       } else {
@@ -2323,20 +2324,21 @@ static void msg_puts_printf(const char *str, const ptrdiff_t maxlen)
     }
 
     // primitive way to compute the current column
+    int cw = utf_char2cells(utf_ptr2char((const char_u *)s));
     if (cmdmsg_rl) {
       if (*s == '\r' || *s == '\n') {
         msg_col = Columns - 1;
       } else {
-        msg_col--;
+        msg_col -= cw;
       }
     } else {
       if (*s == '\r' || *s == '\n') {
         msg_col = 0;
       } else {
-        msg_col++;
+        msg_col += cw;
       }
     }
-    s++;
+    s += len;
   }
   msg_didout = true;  // assume that line is not empty
 }
