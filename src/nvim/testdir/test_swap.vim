@@ -57,7 +57,7 @@ func Test_swap_group()
   endif
   let groups = split(system('groups'))
   if len(groups) <= 1
-    throw 'Skipped: need at least two groups, got ' . groups
+    throw 'Skipped: need at least two groups, got ' . string(groups)
   endif
 
   call delete('Xtest')
