@@ -672,7 +672,7 @@ static int pum_set_selected(int n, int repeat)
             && (curbuf->b_p_bh[0] == 'w')) {
           // Already a "wipeout" buffer, make it empty.
           while (!BUFEMPTY()) {
-            ml_delete((linenr_T)1, FALSE);
+            ml_delete((linenr_T)1, false);
           }
         } else {
           // Don't want to sync undo in the current buffer.
@@ -697,11 +697,11 @@ static int pum_set_selected(int n, int repeat)
           for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
             e = vim_strchr(p, '\n');
             if (e == NULL) {
-              ml_append(lnum++, p, 0, FALSE);
+              ml_append(lnum++, p, 0, false);
               break;
             } else {
               *e = NUL;
-              ml_append(lnum++, p, (int)(e - p + 1), FALSE);
+              ml_append(lnum++, p, (int)(e - p + 1), false);
               *e = '\n';
               p = e + 1;
             }

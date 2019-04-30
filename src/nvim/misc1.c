@@ -745,9 +745,9 @@ open_line (
   if (dir == BACKWARD)
     --curwin->w_cursor.lnum;
   if (!(State & VREPLACE_FLAG) || old_cursor.lnum >= orig_line_count) {
-    if (ml_append(curwin->w_cursor.lnum, p_extra, (colnr_T)0, FALSE)
-        == FAIL)
+    if (ml_append(curwin->w_cursor.lnum, p_extra, (colnr_T)0, false) == FAIL) {
       goto theend;
+    }
     // Postpone calling changed_lines(), because it would mess up folding
     // with markers.
     // Skip mark_adjust when adding a line after the last one, there can't
@@ -1747,8 +1747,8 @@ del_lines (
     if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
       break;
 
-    ml_delete(first, TRUE);
-    ++n;
+    ml_delete(first, true);
+    n++;
 
     /* If we delete the last line in the file, stop */
     if (first > curbuf->b_ml.ml_line_count)

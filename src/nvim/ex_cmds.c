@@ -855,7 +855,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     return FAIL;
   for (extra = 0, l = line1; l <= line2; l++) {
     str = vim_strsave(ml_get(l + extra));
-    ml_append(dest + l - line1, str, (colnr_T)0, FALSE);
+    ml_append(dest + l - line1, str, (colnr_T)0, false);
     xfree(str);
     if (dest < line1)
       extra++;
@@ -914,9 +914,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   if (u_save(line1 + extra - 1, line2 + extra + 1) == FAIL)
     return FAIL;
 
-  for (l = line1; l <= line2; l++)
-    ml_delete(line1 + extra, TRUE);
-
+  for (l = line1; l <= line2; l++) {
+    ml_delete(line1 + extra, true);
+  }
   if (!global_busy && num_lines > p_report) {
     if (num_lines == 1)
       MSG(_("1 line moved"));
@@ -982,7 +982,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     /* need to use vim_strsave() because the line will be unlocked within
      * ml_append() */
     p = vim_strsave(ml_get(line1));
-    ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, FALSE);
+    ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
     xfree(p);
 
     /* situation 2: skip already copied lines */
@@ -2720,7 +2720,7 @@ static int append_indent = 0;       /* autoindent for first line */
 void ex_append(exarg_T *eap)
 {
   char_u      *theline;
-  int did_undo = FALSE;
+  bool did_undo = false;
   linenr_T lnum = eap->line2;
   int indent = 0;
   char_u      *p;
@@ -2808,16 +2808,16 @@ void ex_append(exarg_T *eap)
     if (p[0] == NUL)
       theline[0] = NUL;
 
-    did_undo = TRUE;
-    ml_append(lnum, theline, (colnr_T)0, FALSE);
+    did_undo = true;
+    ml_append(lnum, theline, (colnr_T)0, false);
     appended_lines_mark(lnum + (empty ? 1 : 0), 1L);
 
     xfree(theline);
     ++lnum;
 
     if (empty) {
-      ml_delete(2L, FALSE);
-      empty = FALSE;
+      ml_delete(2L, false);
+      empty = 0;
     }
   }
   State = NORMAL;
@@ -2862,7 +2862,7 @@ void ex_change(exarg_T *eap)
   for (lnum = eap->line2; lnum >= eap->line1; --lnum) {
     if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
       break;
-    ml_delete(eap->line1, FALSE);
+    ml_delete(eap->line1, false);
   }
 
   /* make sure the cursor is not beyond the end of the file now */
@@ -3989,8 +3989,9 @@ skip:
               ++lnum;
               if (u_savedel(lnum, nmatch_tl) != OK)
                 break;
-              for (i = 0; i < nmatch_tl; ++i)
-                ml_delete(lnum, (int)FALSE);
+              for (i = 0; i < nmatch_tl; i++) {
+                ml_delete(lnum, false);
+              }
               mark_adjust(lnum, lnum + nmatch_tl - 1,
                           (long)MAXLNUM, -nmatch_tl, false);
               if (subflags.do_ask) {
@@ -5154,10 +5155,11 @@ void fix_help_buffer(void)
                 }
                 convert_setup(&vc, NULL, NULL);
 
-                ml_append(lnum, cp, (colnr_T)0, FALSE);
-                if (cp != IObuff)
+                ml_append(lnum, cp, (colnr_T)0, false);
+                if (cp != IObuff) {
                   xfree(cp);
-                ++lnum;
+                }
+                lnum++;
               }
               fclose(fd);
             }

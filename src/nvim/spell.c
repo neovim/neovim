@@ -7100,9 +7100,9 @@ void ex_spelldump(exarg_T *eap)
   spell_dump_compl(NULL, 0, NULL, eap->forceit ? DUMPFLAG_COUNT : 0);
 
   // Delete the empty line that we started with.
-  if (curbuf->b_ml.ml_line_count > 1)
-    ml_delete(curbuf->b_ml.ml_line_count, FALSE);
-
+  if (curbuf->b_ml.ml_line_count > 1) {
+    ml_delete(curbuf->b_ml.ml_line_count, false);
+  }
   redraw_later(NOT_VALID);
 }
 
@@ -7171,7 +7171,7 @@ spell_dump_compl (
   if (do_region && region_names != NULL) {
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "/regions=%s", region_names);
-      ml_append(lnum++, IObuff, (colnr_T)0, FALSE);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
   } else
     do_region = false;
@@ -7185,7 +7185,7 @@ spell_dump_compl (
 
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "# file: %s", slang->sl_fname);
-      ml_append(lnum++, IObuff, (colnr_T)0, FALSE);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
 
     // When matching with a pattern and there are no prefixes only use
@@ -7347,14 +7347,15 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int d
       }
     }
 
-    ml_append(lnum, p, (colnr_T)0, FALSE);
+    ml_append(lnum, p, (colnr_T)0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
               : STRNCMP(p, pat, STRLEN(pat)) == 0)
              && ins_compl_add_infercase(p, (int)STRLEN(p),
-                 p_ic, NULL, *dir, 0) == OK)
+                                        p_ic, NULL, *dir, 0) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
+  }
 }
 
 // For ":spelldump": Find matching prefixes for "word".  Prepend each to

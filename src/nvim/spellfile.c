@@ -955,8 +955,9 @@ someerror:
             break;
         }
         if (ml_append_buf(slang->sl_sugbuf, (linenr_T)wordnr,
-                ga.ga_data, ga.ga_len, TRUE) == FAIL)
+                          ga.ga_data, ga.ga_len, true) == FAIL) {
           goto someerror;
+        }
       }
       ga_clear(&ga);
 
@@ -4920,9 +4921,10 @@ sug_filltable (
       ((char_u *)gap->ga_data)[gap->ga_len++] = NUL;
 
       if (ml_append_buf(spin->si_spellbuf, (linenr_T)wordnr,
-              gap->ga_data, gap->ga_len, TRUE) == FAIL)
+                        gap->ga_data, gap->ga_len, true) == FAIL) {
         return -1;
-      ++wordnr;
+      }
+      wordnr++;
 
       // Remove extra NUL entries, we no longer need them. We don't
       // bother freeing the nodes, the won't be reused anyway.

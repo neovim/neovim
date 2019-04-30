@@ -308,8 +308,8 @@ readfile (
 #ifdef UNIX
   int swap_mode = -1;                   /* protection bits for swap file */
 #endif
-  int fileformat = 0;                   /* end-of-line format */
-  int keep_fileformat = FALSE;
+  int fileformat = 0;                   // end-of-line format
+  bool keep_fileformat = false;
   FileInfo file_info;
   int file_readonly;
   linenr_T skip_count = 0;
@@ -317,21 +317,21 @@ readfile (
   int msg_save = msg_scroll;
   linenr_T read_no_eol_lnum = 0;        // non-zero lnum when last line of
                                         // last read was missing the eol
-  int file_rewind = false;
+  bool file_rewind = false;
   int can_retry;
-  linenr_T conv_error = 0;              /* line nr with conversion error */
-  linenr_T illegal_byte = 0;            /* line nr with illegal byte */
-  int keep_dest_enc = FALSE;            /* don't retry when char doesn't fit
-                                           in destination encoding */
+  linenr_T conv_error = 0;              // line nr with conversion error
+  linenr_T illegal_byte = 0;            // line nr with illegal byte
+  bool keep_dest_enc = false;           // don't retry when char doesn't fit
+                                        // in destination encoding
   int bad_char_behavior = BAD_REPLACE;
   /* BAD_KEEP, BAD_DROP or character to
    * replace with */
   char_u      *tmpname = NULL;          /* name of 'charconvert' output file */
   int fio_flags = 0;
-  char_u      *fenc;                    /* fileencoding to use */
-  int fenc_alloced;                     /* fenc_next is in allocated memory */
-  char_u      *fenc_next = NULL;        /* next item in 'fencs' or NULL */
-  int advance_fenc = FALSE;
+  char_u      *fenc;                    // fileencoding to use
+  bool fenc_alloced;                    // fenc_next is in allocated memory
+  char_u      *fenc_next = NULL;        // next item in 'fencs' or NULL
+  bool advance_fenc = false;
   long real_size = 0;
 # ifdef USE_ICONV
   iconv_t iconv_fd = (iconv_t)-1;       /* descriptor for iconv() or -1 */
@@ -764,11 +764,11 @@ readfile (
    */
   if (eap != NULL && eap->force_enc != 0) {
     fenc = enc_canonize(eap->cmd + eap->force_enc);
-    fenc_alloced = TRUE;
-    keep_dest_enc = TRUE;
+    fenc_alloced = true;
+    keep_dest_enc = true;
   } else if (curbuf->b_p_bin) {
-    fenc = (char_u *)"";                /* binary: don't convert */
-    fenc_alloced = FALSE;
+    fenc = (char_u *)"";                // binary: don't convert
+    fenc_alloced = false;
   } else if (curbuf->b_help) {
     // Help files are either utf-8 or latin1.  Try utf-8 first, if this
     // fails it must be latin1.
@@ -779,12 +779,12 @@ readfile (
 
     fenc_alloced = false;
   } else if (*p_fencs == NUL) {
-    fenc = curbuf->b_p_fenc;            /* use format from buffer */
-    fenc_alloced = FALSE;
+    fenc = curbuf->b_p_fenc;            // use format from buffer
+    fenc_alloced = false;
   } else {
     fenc_next = p_fencs;                /* try items in 'fileencodings' */
     fenc = next_fenc(&fenc_next);
-    fenc_alloced = TRUE;
+    fenc_alloced = true;
   }
 
   /*
@@ -817,10 +817,11 @@ retry:
       error = true;
       goto failed;
     }
-    /* Delete the previously read lines. */
-    while (lnum > from)
-      ml_delete(lnum--, FALSE);
-    file_rewind = FALSE;
+    // Delete the previously read lines.
+    while (lnum > from) {
+      ml_delete(lnum--, false);
+    }
+    file_rewind = false;
     if (set_options) {
       curbuf->b_p_bomb = FALSE;
       curbuf->b_start_bomb = FALSE;
@@ -832,9 +833,9 @@ retry:
    * When retrying with another "fenc" and the first time "fileformat"
    * will be reset.
    */
-  if (keep_fileformat)
-    keep_fileformat = FALSE;
-  else {
+  if (keep_fileformat) {
+    keep_fileformat = false;
+  } else {
     if (eap != NULL && eap->force_ff != 0) {
       fileformat = get_fileformat_force(curbuf, eap);
       try_unix = try_dos = try_mac = FALSE;
@@ -858,7 +859,7 @@ retry:
     /*
      * Try the next entry in 'fileencodings'.
      */
-    advance_fenc = FALSE;
+    advance_fenc = false;
 
     if (eap != NULL && eap->force_enc != 0) {
       /* Conversion given with "++cc=" wasn't possible, read
@@ -868,7 +869,7 @@ retry:
       if (fenc_alloced)
         xfree(fenc);
       fenc = (char_u *)"";
-      fenc_alloced = FALSE;
+      fenc_alloced = false;
     } else {
       if (fenc_alloced)
         xfree(fenc);
@@ -877,7 +878,7 @@ retry:
         fenc_alloced = (fenc_next != NULL);
       } else {
         fenc = (char_u *)"";
-        fenc_alloced = FALSE;
+        fenc_alloced = false;
       }
     }
     if (tmpname != NULL) {
@@ -943,8 +944,8 @@ retry:
       if (tmpname == NULL) {
         tmpname = readfile_charconvert(fname, fenc, &fd);
         if (tmpname == NULL) {
-          /* Conversion failed.  Try another one. */
-          advance_fenc = TRUE;
+          // Conversion failed.  Try another one.
+          advance_fenc = true;
           if (fd < 0) {
             /* Re-opening the original file failed! */
             EMSG(_("E202: Conversion made file unreadable!"));
@@ -962,7 +963,7 @@ retry:
           ) {
         /* Conversion wanted but we can't.
          * Try the next conversion in 'fileencodings' */
-        advance_fenc = TRUE;
+        advance_fenc = true;
         goto retry;
       }
     }
@@ -1197,14 +1198,14 @@ retry:
 
         if (fio_flags == FIO_UCSBOM) {
           if (ccname == NULL) {
-            /* No BOM detected: retry with next encoding. */
-            advance_fenc = TRUE;
+            // No BOM detected: retry with next encoding.
+            advance_fenc = true;
           } else {
             /* BOM detected: set "fenc" and jump back */
             if (fenc_alloced)
               xfree(fenc);
             fenc = ccname;
-            fenc_alloced = FALSE;
+            fenc_alloced = false;
           }
           /* retry reading without getting new bytes or rewinding */
           skip_read = TRUE;
@@ -1529,9 +1530,9 @@ rewind_retry:
             did_iconv = TRUE;
           else
 # endif
-          /* use next item from 'fileencodings' */
-          advance_fenc = TRUE;
-          file_rewind = TRUE;
+          // use next item from 'fileencodings'
+          advance_fenc = true;
+          file_rewind = true;
           goto retry;
         }
       }
@@ -1665,8 +1666,8 @@ rewind_retry:
                   fileformat = EOL_UNIX;
                   if (set_options)
                     set_fileformat(EOL_UNIX, OPT_LOCAL);
-                  file_rewind = TRUE;
-                  keep_fileformat = TRUE;
+                  file_rewind = true;
+                  keep_fileformat = true;
                   goto retry;
                 }
                 ff_error = EOL_DOS;
@@ -1777,8 +1778,8 @@ failed:
   if (!recoverymode) {
     /* need to delete the last line, which comes from the empty buffer */
     if (newfile && wasempty && !(curbuf->b_ml.ml_flags & ML_EMPTY)) {
-      ml_delete(curbuf->b_ml.ml_line_count, FALSE);
-      --linecnt;
+      ml_delete(curbuf->b_ml.ml_line_count, false);
+      linecnt--;
     }
     linecnt = curbuf->b_ml.ml_line_count - linecnt;
     if (filesize == 0)
@@ -4911,9 +4912,9 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
 
   /* Copy the lines in "frombuf" to "tobuf". */
   curbuf = tobuf;
-  for (lnum = 1; lnum <= frombuf->b_ml.ml_line_count; ++lnum) {
-    p = vim_strsave(ml_get_buf(frombuf, lnum, FALSE));
-    if (ml_append(lnum - 1, p, 0, FALSE) == FAIL) {
+  for (lnum = 1; lnum <= frombuf->b_ml.ml_line_count; lnum++) {
+    p = vim_strsave(ml_get_buf(frombuf, lnum, false));
+    if (ml_append(lnum - 1, p, 0, false) == FAIL) {
       xfree(p);
       retval = FAIL;
       break;
@@ -4924,13 +4925,14 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   /* Delete all the lines in "frombuf". */
   if (retval != FAIL) {
     curbuf = frombuf;
-    for (lnum = curbuf->b_ml.ml_line_count; lnum > 0; --lnum)
-      if (ml_delete(lnum, FALSE) == FAIL) {
-        /* Oops!  We could try putting back the saved lines, but that
-         * might fail again... */
+    for (lnum = curbuf->b_ml.ml_line_count; lnum > 0; lnum--) {
+      if (ml_delete(lnum, false) == FAIL) {
+        // Oops!  We could try putting back the saved lines, but that
+        // might fail again...
         retval = FAIL;
         break;
       }
+    }
   }
 
   curbuf = tbuf;
