@@ -173,6 +173,9 @@ commands explained above the tag stack will look like this:
    1  1 main		1  harddisk2:text/vim/test
    2  1 FuncB	       59  harddisk2:text/vim/src/main.c
 
+The gettagstack() function returns the tag stack of a specified window. The
+settagstack() function modifies the tag stack of a window.
+
 							*E73*
 When you try to use the tag stack while it doesn't contain anything you will
 get an error message.

@@ -2112,6 +2112,7 @@ gettabvar({nr}, {varname} [, {def}])
 				any	variable {varname} in tab {nr} or {def}
 gettabwinvar({tabnr}, {winnr}, {name} [, {def}])
 				any	{name} in {winnr} in tab page {tabnr}
+gettagstack([{nr}])		Dict	get the tag stack of window {nr}
 getwininfo([{winid}])		List	list of windows
 getwinpos([{timeout}])		List	X and Y coord in pixels of the Vim window
 getwinposx()			Number	X coord in pixels of Vim window
@@ -2277,6 +2278,8 @@ setreg({n}, {v}[, {opt}])	Number	set register to value and type
 settabvar({nr}, {varname}, {val})	set {varname} in tab page {nr} to {val}
 settabwinvar({tabnr}, {winnr}, {varname}, {val})    set {varname} in window
 					{winnr} in tab page {tabnr} to {val}
+settagstack({nr}, {dict} [, {action}])
+				Number	modify tag stack using {dict}
 setwinvar({nr}, {varname}, {val})	set {varname} in window {nr} to {val}
 sha256({string})		String	SHA256 checksum of {string}
 shellescape({string} [, {special}])
@@ -4551,6 +4554,34 @@ gettabwinvar({tabnr}, {winnr}, {varname} [, {def}])		*gettabwinvar()*
 <
 		To obtain all window-local variables use: >
 			gettabwinvar({tabnr}, {winnr}, '&')
+
+gettagstack([{nr}])					*gettagstack()*
+		The result is a Dict, which is the tag stack of window {nr}.
+		{nr} can be the window number or the |window-ID|.
+		When {nr} is not specified, the current window is used.
+		When window {nr} doesn't exist, an empty Dict is returned.
+
+		The returned dictionary contains the following entries:
+			curidx		Current index in the stack. When at
+					top of the stack, set to (length + 1).
+					Index of bottom of the stack is 1.
+			items		List of items in the stack. Each item
+					is a dictionary containing the
+					entries described below.
+			length		Number of entries in the stack.
+
+		Each item in the stack is a dictionary with the following
+		entries:
+			bufnr		buffer number of the current jump
+			from		cursor position before the tag jump.
+					See |getpos()| for the format of the
+					returned list.
+			matchnr		current matching tag number. Used when
+					multiple matching tags are found for a
+					name.
+			tagname		name of the tag
+
+		See |tagstack| for more information about the tag stack.
 
 getwinpos([{timeout}])					*getwinpos()*
 		The result is a list with two numbers, the result of
@@ -7189,6 +7220,38 @@ settabwinvar({tabnr}, {winnr}, {varname}, {val})	*settabwinvar()*
 			:call settabwinvar(1, 1, "&list", 0)
 			:call settabwinvar(3, 2, "myvar", "foobar")
 <		This function is not available in the |sandbox|.
+
+settagstack({nr}, {dict} [, {action}])			*settagstack()*
+		Modify the tag stack of the window {nr} using {dict}.
+		{nr} can be the window number or the |window-ID|.
+
+		For a list of supported items in {dict}, refer to
+		|gettagstack()|
+							*E962*
+		If {action} is not present or is set to 'r', then the tag
+		stack is replaced. If {action} is set to 'a', then new entries
+		from {dict} are pushed onto the tag stack.
+
+		Returns zero for success, -1 for failure.
+
+		Examples:
+		    Set current index of the tag stack to 4: >
+			call settagstack(1005, {'curidx' : 4})
+
+<		    Empty the tag stack of window 3: >
+			call settagstack(3, {'items' : []})
+
+<		    Push a new item onto the tag stack: >
+			let pos = [bufnr('myfile.txt'), 10, 1, 0]
+			let newtag = [{'tagname' : 'mytag', 'from' : pos}]
+			call settagstack(2, {'items' : newtag}, 'a')
+
+<		    Save and restore the tag stack: >
+			let stack = gettagstack(1003)
+			" do something else
+			call settagstack(1003, stack)
+			unlet stack
+<
 
 setwinvar({nr}, {varname}, {val})			*setwinvar()*
 		Like |settabwinvar()| for the current tab page.

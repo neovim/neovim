@@ -258,6 +258,107 @@ func Test_tagjump_etags()
   bwipe!
 endfunc
 
+" Test for getting and modifying the tag stack
+func Test_getsettagstack()
+  call writefile(['line1', 'line2', 'line3'], 'Xfile1')
+  call writefile(['line1', 'line2', 'line3'], 'Xfile2')
+  call writefile(['line1', 'line2', 'line3'], 'Xfile3')
+
+  enew | only
+  call settagstack(1, {'items' : []})
+  call assert_equal(0, gettagstack(1).length)
+  call assert_equal([], gettagstack(1).items)
+  " Error cases
+  call assert_equal({}, gettagstack(100))
+  call assert_equal(-1, settagstack(100, {'items' : []}))
+  call assert_fails('call settagstack(1, [1, 10])', 'E715')
+  call assert_fails("call settagstack(1, {'items' : 10})", 'E714')
+  call assert_fails("call settagstack(1, {'items' : []}, 10)", 'E928')
+  call assert_fails("call settagstack(1, {'items' : []}, 'b')", 'E962')
+
+  set tags=Xtags
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "one\tXfile1\t1",
+        \ "three\tXfile3\t3",
+        \ "two\tXfile2\t2"],
+        \ 'Xtags')
+
+  let stk = []
+  call add(stk, {'bufnr' : bufnr('%'), 'tagname' : 'one',
+	\ 'from' : [bufnr('%'), line('.'), col('.'), 0], 'matchnr' : 1})
+  tag one
+  call add(stk, {'bufnr' : bufnr('%'), 'tagname' : 'two',
+	\ 'from' : [bufnr('%'), line('.'), col('.'), 0], 'matchnr' : 1})
+  tag two
+  call add(stk, {'bufnr' : bufnr('%'), 'tagname' : 'three',
+	\ 'from' : [bufnr('%'), line('.'), col('.'), 0], 'matchnr' : 1})
+  tag three
+  call assert_equal(3, gettagstack(1).length)
+  call assert_equal(stk, gettagstack(1).items)
+  " Check for default - current window
+  call assert_equal(3, gettagstack().length)
+  call assert_equal(stk, gettagstack().items)
+
+  " Try to set current index to invalid values
+  call settagstack(1, {'curidx' : -1})
+  call assert_equal(1, gettagstack().curidx)
+  call settagstack(1, {'curidx' : 50})
+  call assert_equal(4, gettagstack().curidx)
+
+  " Try pushing invalid items onto the stack
+  call settagstack(1, {'items' : []})
+  call settagstack(1, {'items' : ["plate"]}, 'a')
+  call assert_equal(0, gettagstack().length)
+  call assert_equal([], gettagstack().items)
+  call settagstack(1, {'items' : [{"tagname" : "abc"}]}, 'a')
+  call assert_equal(0, gettagstack().length)
+  call assert_equal([], gettagstack().items)
+  call settagstack(1, {'items' : [{"from" : 100}]}, 'a')
+  call assert_equal(0, gettagstack().length)
+  call assert_equal([], gettagstack().items)
+  call settagstack(1, {'items' : [{"from" : [2, 1, 0, 0]}]}, 'a')
+  call assert_equal(0, gettagstack().length)
+  call assert_equal([], gettagstack().items)
+
+  " Push one item at a time to the stack
+  call settagstack(1, {'items' : []})
+  call settagstack(1, {'items' : [stk[0]]}, 'a')
+  call settagstack(1, {'items' : [stk[1]]}, 'a')
+  call settagstack(1, {'items' : [stk[2]]}, 'a')
+  call settagstack(1, {'curidx' : 4})
+  call assert_equal({'length' : 3, 'curidx' : 4, 'items' : stk},
+        \ gettagstack(1))
+
+  " Try pushing items onto a full stack
+  for i in range(7)
+    call settagstack(1, {'items' : stk}, 'a')
+  endfor
+  call assert_equal(20, gettagstack().length)
+  call settagstack(1,
+        \ {'items' : [{'tagname' : 'abc', 'from' : [1, 10, 1, 0]}]}, 'a')
+  call assert_equal('abc', gettagstack().items[19].tagname)
+
+  " Tag with multiple matches
+  call writefile(["!_TAG_FILE_ENCODING\tutf-8\t//",
+        \ "two\tXfile1\t1",
+        \ "two\tXfile2\t3",
+        \ "two\tXfile3\t2"],
+        \ 'Xtags')
+  call settagstack(1, {'items' : []})
+  tag two
+  tnext
+  tnext
+  call assert_equal(1, gettagstack().length)
+  call assert_equal(3, gettagstack().items[0].matchnr)
+
+  call settagstack(1, {'items' : []})
+  call delete('Xfile1')
+  call delete('Xfile2')
+  call delete('Xfile3')
+  call delete('Xtags')
+  set tags&
+endfunc
+
 func Test_tag_with_count()
   call writefile([
 	\ 'test	Xtest.h	/^void test();$/;"	p	typeref:typename:void	signature:()',

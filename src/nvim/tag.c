@@ -2863,3 +2863,189 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
   }
   return ret;
 }
+
+// Return information about 'tag' in dict 'retdict'.
+static void get_tag_details(taggy_T *tag, dict_T *retdict)
+{
+    list_T      *pos;
+    fmark_T     *fmark;
+
+    tv_dict_add_str(retdict, S_LEN("tagname"), (const char *)tag->tagname);
+    tv_dict_add_nr(retdict, S_LEN("matchnr"), tag->cur_match + 1);
+    tv_dict_add_nr(retdict, S_LEN("bufnr"), tag->cur_fnum);
+
+    if ((pos = tv_list_alloc(4)) == NULL) {
+      return;
+    }
+    tv_dict_add_list(retdict, S_LEN("from"), pos);
+
+    fmark = &tag->fmark;
+    tv_list_append_number(pos,
+                          (varnumber_T)(fmark->fnum != -1 ? fmark->fnum : 0));
+    tv_list_append_number(pos, (varnumber_T)fmark->mark.lnum);
+    tv_list_append_number(pos, (varnumber_T)(fmark->mark.col == MAXCOL ?
+                                             MAXCOL : fmark->mark.col + 1));
+    tv_list_append_number(pos, (varnumber_T)fmark->mark.coladd);
+}
+
+// Return the tag stack entries of the specified window 'wp' in dictionary
+// 'retdict'.
+void get_tagstack(win_T *wp, dict_T *retdict)
+{
+    list_T      *l;
+    int         i;
+    dict_T      *d;
+
+    tv_dict_add_nr(retdict, S_LEN("length"), wp->w_tagstacklen);
+    tv_dict_add_nr(retdict, S_LEN("curidx"), wp->w_tagstackidx + 1);
+    l = tv_list_alloc(2);
+    if (l == NULL) {
+      return;
+    }
+    tv_dict_add_list(retdict, S_LEN("items"), l);
+
+    for (i = 0; i < wp->w_tagstacklen; i++) {
+        if ((d = tv_dict_alloc()) == NULL) {
+          return;
+        }
+        tv_list_append_dict(l, d);
+
+        get_tag_details(&wp->w_tagstack[i], d);
+    }
+}
+
+// Free all the entries in the tag stack of the specified window
+static void tagstack_clear(win_T *wp)
+{
+    int i;
+
+    // Free the current tag stack
+    for (i = 0; i < wp->w_tagstacklen; i++) {
+      xfree(wp->w_tagstack[i].tagname);
+    }
+    wp->w_tagstacklen = 0;
+    wp->w_tagstackidx = 0;
+}
+
+// Remove the oldest entry from the tag stack and shift the rest of
+// the entires to free up the top of the stack.
+static void tagstack_shift(win_T *wp)
+{
+    taggy_T     *tagstack = wp->w_tagstack;
+    int         i;
+
+    xfree(tagstack[0].tagname);
+    for (i = 1; i < wp->w_tagstacklen; i++) {
+      tagstack[i - 1] = tagstack[i];
+    }
+    wp->w_tagstacklen--;
+}
+
+// Push a new item to the tag stack
+static void tagstack_push_item(
+    win_T   *wp,
+    char_u  *tagname,
+    int     cur_fnum,
+    int     cur_match,
+    pos_T   mark,
+    int     fnum)
+{
+    taggy_T     *tagstack = wp->w_tagstack;
+    int         idx = wp->w_tagstacklen;        // top of the stack
+
+    // if the tagstack is full: remove the oldest entry
+    if (idx >= TAGSTACKSIZE) {
+        tagstack_shift(wp);
+        idx = TAGSTACKSIZE - 1;
+    }
+
+    wp->w_tagstacklen++;
+    tagstack[idx].tagname = tagname;
+    tagstack[idx].cur_fnum = cur_fnum;
+    tagstack[idx].cur_match = cur_match;
+    if (tagstack[idx].cur_match < 0) {
+      tagstack[idx].cur_match = 0;
+    }
+    tagstack[idx].fmark.mark = mark;
+    tagstack[idx].fmark.fnum = fnum;
+}
+
+// Add a list of items to the tag stack in the specified window
+static void tagstack_push_items(win_T *wp, list_T *l)
+{
+    listitem_T  *li;
+    dictitem_T  *di;
+    dict_T      *itemdict;
+    char_u      *tagname;
+    pos_T       mark;
+    int         fnum;
+
+    // Add one entry at a time to the tag stack
+    for (li = tv_list_first(l); li != NULL; li = TV_LIST_ITEM_NEXT(l, li)) {
+        if (TV_LIST_ITEM_TV(li)->v_type != VAR_DICT
+            || TV_LIST_ITEM_TV(li)->vval.v_dict == NULL) {
+          continue;                           // Skip non-dict items
+        }
+        itemdict = TV_LIST_ITEM_TV(li)->vval.v_dict;
+
+        // parse 'from' for the cursor position before the tag jump
+        if ((di = tv_dict_find(itemdict, "from", -1)) == NULL) {
+          continue;
+        }
+        if (list2fpos(&di->di_tv, &mark, &fnum, NULL) != OK) {
+          continue;
+        }
+        if ((tagname = (char_u *)
+             tv_dict_get_string(itemdict, "tagname", true)) == NULL) {
+          continue;
+        }
+
+        if (mark.col > 0) {
+          mark.col--;
+        }
+        tagstack_push_item(wp, tagname,
+                           (int)tv_dict_get_number(itemdict, "bufnr"),
+                           (int)tv_dict_get_number(itemdict, "matchnr") - 1,
+                           mark, fnum);
+    }
+}
+
+// Set the current index in the tag stack. Valid values are between 0
+// and the stack length (inclusive).
+static void tagstack_set_curidx(win_T *wp, int curidx)
+{
+    wp->w_tagstackidx = curidx;
+    if (wp->w_tagstackidx < 0) {                // sanity check
+      wp->w_tagstackidx = 0;
+    }
+    if (wp->w_tagstackidx > wp->w_tagstacklen) {
+      wp->w_tagstackidx = wp->w_tagstacklen;
+    }
+}
+
+// Set the tag stack entries of the specified window.
+// 'action' is set to either 'a' for append or 'r' for replace.
+int set_tagstack(win_T *wp, dict_T *d, int action)
+{
+    dictitem_T  *di;
+    list_T      *l;
+
+    if ((di = tv_dict_find(d, "items", -1)) != NULL) {
+        if (di->di_tv.v_type != VAR_LIST) {
+            return FAIL;
+        }
+        l = di->di_tv.vval.v_list;
+
+        if (action == 'r') {
+            tagstack_clear(wp);
+        }
+
+        tagstack_push_items(wp, l);
+    }
+
+    if ((di = tv_dict_find(d, "curidx", -1)) != NULL) {
+        tagstack_set_curidx(wp, (int)tv_get_number(&di->di_tv) - 1);
+    }
+
+    return OK;
+}
