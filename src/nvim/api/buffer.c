@@ -475,6 +475,8 @@ void nvim_buf_set_lines(uint64_t channel_id,
 
   changed_lines((linenr_T)start, 0, (linenr_T)end, (long)extra, true);
 
+  fix_cursor((linenr_T)start, (linenr_T)end, (linenr_T)extra);
+  
 end:
   for (size_t i = 0; i < new_len; i++) {
     xfree(lines[i]);
@@ -1104,6 +1106,28 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
 free_exit:
   kv_destroy(virt_text);
   return 0;
+}
+
+// Check if deleting lines made the cursor position invalid.
+// Changed the lines from "lo" to "hi" and added "extra" lines (negative if
+// deleted).
+static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
+{
+  if (curwin->w_cursor.lnum >= lo) {
+    // Adjust the cursor position if it's in/after the changed
+    // lines.
+    if (curwin->w_cursor.lnum >= hi) {
+      curwin->w_cursor.lnum += extra;
+      check_cursor_col();
+    } else if (extra < 0) {
+      curwin->w_cursor.lnum = lo;
+      check_cursor();
+    } else {
+      check_cursor_col();
+    }
+    changed_cline_bef_curs();
+  }
+  invalidate_botline();
 }
 
 // Normalizes 0-based indexes to buffer line numbers
