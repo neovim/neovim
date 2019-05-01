@@ -59,6 +59,7 @@ class DebugSession( object ):
     self._configuration = None
     self._init_complete = False
     self._launch_complete = False
+    self._on_init_complete_handlers = None
     self._server_capabilities = {}
 
   def Start( self, launch_variables = {} ):
@@ -358,6 +359,7 @@ class DebugSession( object ):
       self._adapter ) ) )
 
     self._init_complete = False
+    self._on_init_complete_handlers = []
     self._launch_complete = False
     self._run_on_server_exit = None
 
@@ -434,14 +436,21 @@ class DebugSession( object ):
       cmd = ssh + remote[ 'pidCommand' ]
 
       self._logger.debug( 'Getting PID: %s', cmd )
-      pid = subprocess.check_output( ssh + remote[ 'pidCommand' ] ).decode(
-        'utf-8' ).strip()
+      pid = subprocess.check_output( cmd ).decode( 'utf-8' ).strip()
       self._logger.debug( 'Got PID: %s', pid )
 
       if not pid:
         # FIXME: We should raise an exception here or something
         utils.UserMessage( 'Unable to get PID', persist = True )
         return
+
+      if 'initCompleteCommand' in remote:
+        initcmd = ssh + remote[ 'initCompleteCommand' ][ : ]
+        for index, item in enumerate( initcmd ):
+          initcmd[ index ] = item.replace( '%PID%', pid )
+
+        self._on_init_complete_handlers.append(
+          lambda: subprocess.check_call( initcmd ) )
 
       commands = self._GetCommands( remote, 'attach' )
 
@@ -598,6 +607,11 @@ class DebugSession( object ):
     # least it would apear that way.
     #
     if self._launch_complete and self._init_complete:
+      for h in self._on_init_complete_handlers:
+        h()
+
+      self._on_init_complete_handlers = None
+
       self._stackTraceView.LoadThreads( True )
 
 
