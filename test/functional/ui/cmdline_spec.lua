@@ -116,6 +116,31 @@ local function test_cmdline(linegrid)
       }}}
     end)
 
+    it('from normal mode when : is mapped', function()
+      command('nnoremap ; :')
+
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:n                        }|
+                                 |
+      ]]}
+
+      feed(';')
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:c                        }|
+                                 |
+      ]], cmdline={{
+        firstc = ":",
+        content = {{""}},
+        pos = 0,
+      }}}
+    end)
+
     it('but not with scrolled messages', function()
       screen:try_resize(35,10)
       feed(':echoerr doesnotexist<cr>')
