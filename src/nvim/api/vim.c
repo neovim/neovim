@@ -1269,42 +1269,45 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
                         Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  // maximum possible size of the args-string we pass to do_map()
-  // allocate memory right away, before any calls to free
-  static const size_t kMaxSpecialArgSize =
-      sizeof("<buffer> <nowait> <silent> <script> <expr> <unique>");
-  // leave room for spaces around lhs, rhs; and null character
-  const size_t kMaxArgSize = kMaxSpecialArgSize + lhs.size + rhs.size + 3;
-  char_u *args = (char_u *)xcalloc(kMaxArgSize, sizeof(char_u));
-
   char *err_msg = NULL;  // the error message to report, if any
   char *err_arg = NULL;  // argument for the error message format string
   ErrorType err_type = kErrorTypeNone;
 
-  // make sure that lhs and rhs aren't purely whitespace, and don't contain
-  // illegal characters
-  String *hss[2] = { &lhs, &rhs };
-  for (int i = 0; i < 2; i++) {
-    String *hs = hss[i];
-    switch (strip_whitespace(hs, false, false)) {
-      case 0:
-        break;
-      case 1:
-        err_msg = "lhs/rhs in keymap cannot contain line breaks: %s";
-        err_arg = hs->data;
-        err_type = kErrorTypeValidation;
-        goto FAIL_WITH_MESSAGE;
-      case 2:
-        err_msg = "lhs/rhs in keymap shouldn't contain whitespace: %s";
-        err_arg = hs->data;
-        err_type = kErrorTypeValidation;
-        goto FAIL_WITH_MESSAGE;
-      default:
-        assert(false
-               && "Unknown error while stripping whitespace from LHS/RHS.");
-        goto FAIL_AND_FREE;
-    }  // switch
-  }  // for
+  char_u *lhs_buf = NULL;
+  char_u *rhs_buf = NULL;
+
+  MapArguments parsed_args;
+  memset(&parsed_args, 0, sizeof(parsed_args));
+  {
+    // Preprocess the given lhs and rhs, replacing strings like "<C-c>" with
+    // actual termcodes. Use those instead of the given {lhs} and {rhs}, which
+    // aren't directly usable in a mapblock.
+    char_u* result = replace_termcodes((char_u *)lhs.data, lhs.size, &lhs_buf,
+                                       true, true, true, CPO_TO_CPO_FLAGS);
+    parsed_args.lhs_len = STRLEN(result);
+    if (parsed_args.lhs_len > MAXMAPLEN) {
+      err_msg = "LHS exceeds maximum map length: %s";
+      err_arg = lhs.data;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
+    }
+    STRNCPY(parsed_args.lhs, result, sizeof(parsed_args.lhs));
+
+    parsed_args.orig_rhs = xcalloc(rhs.size + 1, sizeof(char_u));
+    STRNCPY(parsed_args.orig_rhs, rhs.data, rhs.size);
+    parsed_args.orig_rhs_len = rhs.size;
+
+    result = replace_termcodes((char_u*)rhs.data, rhs.size, &rhs_buf,
+                               false, true, true, CPO_TO_CPO_FLAGS);
+    parsed_args.rhs_len = STRLEN(result);
+    if (parsed_args.rhs_len > MAXMAPLEN) {
+      err_msg = "RHS exceeds maximum map length: %s";
+      err_arg = rhs.data;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
+    }
+    STRNCPY(parsed_args.rhs, result, sizeof(parsed_args.rhs));
+  }
 
   if (mode.size > 1) {
     err_msg = "Given shortname is too long: %s";
@@ -1330,7 +1333,7 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     }
   }
 
-  if (lhs.size == 0) {
+  if (parsed_args.lhs_len == 0) {
     err_msg = "Must give nonempty LHS!";
     err_arg = "";
     err_type = kErrorTypeValidation;
@@ -1355,14 +1358,14 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     }  // switch
   }
   assert(!(is_unmap && is_noremap));
-  if (!is_unmap && rhs.size == 0) {
+  if (!is_unmap && parsed_args.rhs_len == 0) {
     err_msg = "Must give an RHS when setting keymap!%s";
     err_arg = "";
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
-  } else if (is_unmap && rhs.size) {
+  } else if (is_unmap && parsed_args.rhs_len) {
     err_msg = "RHS must be empty when unmapping! Gave: %s";
-    err_arg = rhs.data;
+    err_arg = (char *)parsed_args.rhs;
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
   }
@@ -1377,20 +1380,37 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
       // note: strncmp up to and including the null terminator, so that
       // "bufferFoobar" won't match against "buffer"
       case 'b':
-        was_valid_opt = STRNCMP(optname, "buffer", 7) == 0;
+        if (STRNCMP(optname, "buffer", 7) == 0) {
+          was_valid_opt = true;
+          parsed_args.buffer = key_and_val->value.data.boolean;
+        }
         break;
       case 'n':
-        was_valid_opt = STRNCMP(optname, "nowait", 7) == 0;
+        if (STRNCMP(optname, "nowait", 7) == 0) {
+          was_valid_opt = true;
+          parsed_args.nowait = key_and_val->value.data.boolean;
+        }
         break;
       case 's':
-        was_valid_opt = STRNCMP(optname, "silent", 7) == 0
-                        || STRNCMP(optname, "script", 7) == 0;
+        if (STRNCMP(optname, "silent", 7) == 0) {
+          was_valid_opt = true;
+          parsed_args.silent = key_and_val->value.data.boolean;
+        } else if (STRNCMP(optname, "script", 7) == 0) {
+          was_valid_opt = true;
+          parsed_args.script = key_and_val->value.data.boolean;
+        }
         break;
       case 'e':
-        was_valid_opt = STRNCMP(optname, "expr", 5) == 0;
+        if (STRNCMP(optname, "expr", 5) == 0) {
+          was_valid_opt = true;
+          parsed_args.expr = key_and_val->value.data.boolean;
+        }
         break;
       case 'u':
-        was_valid_opt = STRNCMP(optname, "unique", 7) == 0;
+        if (STRNCMP(optname, "unique", 7) == 0) {
+          was_valid_opt = true;
+          parsed_args.unique = key_and_val->value.data.boolean;
+        }
         break;
       default:
         break;
@@ -1401,15 +1421,6 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
         err_arg = optname;
         err_type = kErrorTypeValidation;
         goto FAIL_WITH_MESSAGE;
-      } else if (key_and_val->value.data.boolean) {
-        // if everything was good, and the option was enabled, append it
-        // to the arguments buffer
-        if (args[0]) {  // if this isn't the first option, add a space before
-          xstrlcat((char *)args, " ", kMaxArgSize);
-        }
-        xstrlcat((char *)args, "<", kMaxArgSize);
-        xstrlcat((char *)args, optname, kMaxArgSize);
-        xstrlcat((char *)args, ">", kMaxArgSize);
       }
     } else {  // was not a valid opt
       err_msg = "Unrecognized option in nvim_set_keymap: %s";
@@ -1419,15 +1430,6 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     }
   }  // for
 
-  if (args[0]) {
-    xstrlcat((char *)args, " ", kMaxArgSize);
-  }
-  xstrlcat((char *)args, lhs.data, kMaxArgSize);
-  if (rhs.size) {
-    xstrlcat((char *)args, " ", kMaxArgSize);
-    xstrlcat((char *)args, rhs.data, kMaxArgSize);
-  }
-
   int maptype_val = 0;
   if (is_unmap) {
     maptype_val = 1;
@@ -1435,8 +1437,7 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     maptype_val = 2;
   }
 
-  // invoke do_map
-  switch (do_map(maptype_val, args, mode_val, 0)) {
+  switch (buf_do_map_explicit(maptype_val, &parsed_args, mode_val, 0, curbuf)) {
     case 0:
       break;
     case 1:
@@ -1447,20 +1448,26 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
       goto FAIL_AND_FREE;
     case 5:
       api_set_error(err, kErrorTypeException,
-                    "E227: mapping already exists for %s", lhs.data);
+                    "E227: mapping already exists for %s", parsed_args.lhs);
       goto FAIL_AND_FREE;
     default:  // unrecognized return code
       assert(false && "Unrecognized return code!");
       goto FAIL_AND_FREE;
   }  // switch
-  xfree(args);
+
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.orig_rhs);
+
   return 0;
 
 FAIL_WITH_MESSAGE:
   api_set_error(err, err_type, err_msg, err_arg);
 
 FAIL_AND_FREE:
-  xfree(args);
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.orig_rhs);
   return -1;
 }
 
