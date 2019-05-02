@@ -613,7 +613,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
     // Preprocess the given lhs and rhs, replacing strings like "<C-c>" with
     // actual termcodes. Use those instead of the given {lhs} and {rhs}, which
     // aren't directly usable in a mapblock.
-    char_u* result = replace_termcodes((char_u *)lhs.data, lhs.size, &lhs_buf,
+    char_u *result = replace_termcodes((char_u *)lhs.data, lhs.size, &lhs_buf,
                                        true, true, true, CPO_TO_CPO_FLAGS);
     parsed_args.lhs_len = STRLEN(result);
     if (parsed_args.lhs_len > MAXMAPLEN) {
@@ -622,13 +622,13 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
       err_type = kErrorTypeValidation;
       goto FAIL_WITH_MESSAGE;
     }
-    STRNCPY(parsed_args.lhs, result, sizeof(parsed_args.lhs));
+    xstrlcpy((char *)parsed_args.lhs, (char *)result, sizeof(parsed_args.lhs));
 
     parsed_args.orig_rhs = xcalloc(rhs.size + 1, sizeof(char_u));
-    STRNCPY(parsed_args.orig_rhs, rhs.data, rhs.size);
+    xstrlcpy((char *)parsed_args.orig_rhs, (char *)rhs.data, rhs.size + 1);
     parsed_args.orig_rhs_len = rhs.size;
 
-    result = replace_termcodes((char_u*)rhs.data, rhs.size, &rhs_buf,
+    result = replace_termcodes((char_u *)rhs.data, rhs.size, &rhs_buf,
                                false, true, true, CPO_TO_CPO_FLAGS);
     parsed_args.rhs_len = STRLEN(result);
     if (parsed_args.rhs_len > MAXMAPLEN) {
@@ -637,7 +637,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
       err_type = kErrorTypeValidation;
       goto FAIL_WITH_MESSAGE;
     }
-    STRNCPY(parsed_args.rhs, result, sizeof(parsed_args.rhs));
+    xstrlcpy((char *)parsed_args.rhs, (char *)result, sizeof(parsed_args.rhs));
   }
 
   if (mode.size > 1) {
