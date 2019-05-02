@@ -323,49 +323,10 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, '', '', '', '', {})
   end)
 
-  it('throws errors when given lhs or rhs that are only whitespace', function()
-    expect_err("Must give nonempty LHS!",
-               meths.set_keymap, '', '', '   ', 'rhs', {})
-    expect_err("Must give an RHS when setting keymap!",
-               meths.set_keymap, '', '', 'lhs', '   ', {})
-    expect_err("Must give nonempty LHS!",
-               meths.set_keymap, '', '', '\t\t', '', {})
-  end)
-
-  it('throws errors when lhs or rhs has interrupting whitespace', function()
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: l hs",
-               meths.set_keymap, '', '', 'l hs', 'rhs', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: l\ths",
-               meths.set_keymap, '', '', 'l\ths', 'rhs', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace:      l\ths",
-               meths.set_keymap, '', '', '     l\ths', 'rhs', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: l\ths     ",
-               meths.set_keymap, '', '', 'l\ths     ', 'rhs', {})
-
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: r h s",
-               meths.set_keymap, '', '', 'lhs', 'r h s', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: rh    s",
-               meths.set_keymap, '', '', 'lhs', 'rh    s', {})
-    expect_err("lhs/rhs in keymap shouldn't contain whitespace: rh\t\t  \ts",
-               meths.set_keymap, '', '', 'lhs', 'rh\t\t  \ts', {})
-  end)
-
-  it('throws errors when given lhs or rhs that contain linebreaks', function()
-    expect_err("lhs/rhs in keymap cannot contain line breaks: l\nhs",
-               meths.set_keymap, '', '', 'l\nhs', 'rhs', {})
-    expect_err("lhs/rhs in keymap cannot contain line breaks: l\rhs",
-               meths.set_keymap, '', '', 'l\rhs', 'rhs', {})
-
-    expect_err("lhs/rhs in keymap cannot contain line breaks: rh\ns",
-               meths.set_keymap, '', '', 'lhs', 'rh\ns', {})
-    expect_err("lhs/rhs in keymap cannot contain line breaks: rhs\r",
-               meths.set_keymap, '', '', 'lhs', 'rhs\r', {})
-  end)
-
   it('throws errors when unmapping and given nonempty rhs', function()
     expect_err('RHS must be empty when unmapping! Gave: rhs',
                meths.set_keymap, '', 'u', 'lhs', 'rhs', {})
-    expect_err('RHS must be empty when unmapping! Gave: a',
+    expect_err('RHS must be empty when unmapping! Gave:   a',
                meths.set_keymap, '', 'u', 'lhs', '  a', {})
   end)
 
@@ -472,7 +433,7 @@ describe('nvim_set_keymap', function()
     eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
 
     eq(0, meths.set_keymap('v', '', ' lhs  ', '\trhs\t\f', {}))
-    eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
+    eq(generate_mapargs('v', 0, 'lhs', '\trhs\t\f'), get_mapargs('v', 'lhs'))
   end)
 
   it('can set noremap mappings', function()
