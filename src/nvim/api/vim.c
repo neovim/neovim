@@ -1251,6 +1251,10 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// the key `"buffer"`; like with |:map-<buffer>|, only the current buffer will
 /// be affected.
 ///
+/// If not provided in {opts}, |<buffer>| is assumed to be false; if provided
+/// and set to true, an error will be thrown. Use |nvim_buf_set_keymap| to set
+/// buffer-local mappings.
+///
 /// @param  mode  Mode short-name (the first character of an map command,
 ///               e.g. "n", "i", "v", "x", etc.) OR the string "!" (for
 ///               |:map!|). |:map| can be represented with an empty string, a
@@ -1278,6 +1282,17 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
 
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
+
+  if (parse_keymap_opts(opts, &parsed_args, err)) {
+    goto FAIL_AND_FREE;
+  }
+  if (parsed_args.buffer) {
+    err_msg = "Cannot set buffer-local map in nvim_set_keymap: %s";
+    err_arg = lhs.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
   {
     // Preprocess the given lhs and rhs, replacing strings like "<C-c>" with
     // actual termcodes. Use those instead of the given {lhs} and {rhs}, which
@@ -1369,66 +1384,6 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
   }
-
-  // read user's options into a single string of args, to be passed to do_map()
-  for (size_t i = 0; i < opts.size; i++) {
-    KeyValuePair *key_and_val = &opts.items[i];
-    char *optname = key_and_val->key.data;
-    ObjectType type = key_and_val->value.type;
-    bool was_valid_opt = false;
-    switch (optname[0]) {
-      // note: strncmp up to and including the null terminator, so that
-      // "bufferFoobar" won't match against "buffer"
-      case 'b':
-        if (STRNCMP(optname, "buffer", 7) == 0) {
-          was_valid_opt = true;
-          parsed_args.buffer = key_and_val->value.data.boolean;
-        }
-        break;
-      case 'n':
-        if (STRNCMP(optname, "nowait", 7) == 0) {
-          was_valid_opt = true;
-          parsed_args.nowait = key_and_val->value.data.boolean;
-        }
-        break;
-      case 's':
-        if (STRNCMP(optname, "silent", 7) == 0) {
-          was_valid_opt = true;
-          parsed_args.silent = key_and_val->value.data.boolean;
-        } else if (STRNCMP(optname, "script", 7) == 0) {
-          was_valid_opt = true;
-          parsed_args.script = key_and_val->value.data.boolean;
-        }
-        break;
-      case 'e':
-        if (STRNCMP(optname, "expr", 5) == 0) {
-          was_valid_opt = true;
-          parsed_args.expr = key_and_val->value.data.boolean;
-        }
-        break;
-      case 'u':
-        if (STRNCMP(optname, "unique", 7) == 0) {
-          was_valid_opt = true;
-          parsed_args.unique = key_and_val->value.data.boolean;
-        }
-        break;
-      default:
-        break;
-    }  // switch
-    if (was_valid_opt) {
-      if (type != kObjectTypeBoolean) {
-        err_msg = "Gave non-boolean value for an opt: %s";
-        err_arg = optname;
-        err_type = kErrorTypeValidation;
-        goto FAIL_WITH_MESSAGE;
-      }
-    } else {  // was not a valid opt
-      err_msg = "Unrecognized option in nvim_set_keymap: %s";
-      err_arg = optname;
-      err_type = kErrorTypeValidation;
-      goto FAIL_WITH_MESSAGE;
-    }
-  }  // for
 
   int maptype_val = 0;
   if (is_unmap) {
