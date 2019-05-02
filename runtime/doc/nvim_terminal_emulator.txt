@@ -7,8 +7,8 @@
 Terminal emulator				*terminal* *terminal-emulator*
 
 Nvim embeds a VT220/xterm terminal emulator based on libvterm. The terminal is
-presented as a special buffer type, asynchronously updated from the virtual
-terminal as data is received from the program connected to it.
+presented as a special 'buftype', asynchronously updated as data is received
+from the connected program.
 
 Terminal buffers behave like normal buffers, except:
 - With 'modifiable', lines can be edited but not deleted.
@@ -23,11 +23,11 @@ Terminal buffers behave like normal buffers, except:
 ==============================================================================
 Start						*terminal-start*
 
-There are 3 ways to create a terminal buffer:
+There are several ways to create a terminal buffer:
 
-- By invoking the |:terminal| ex command.
-- By calling the |termopen()| function.
-- By editing a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
+- Invoke the |:terminal| command.
+- Call the |termopen()| function.
+- Edit a file with a name matching `term://(.{-}//(\d+:)?)?\zs.*`.
   For example:
 >
     :edit term://bash
@@ -98,14 +98,21 @@ global configuration.
 - 'wrap' is disabled
 
 You can change the defaults with a TermOpen autocommand: >
-	au TermOpen * setlocal list
+    au TermOpen * setlocal list
 
 TERMINAL COLORS ~
 
-The `{g,b}:terminal_color_$NUM` variables control the terminal color palette,
-where `$NUM` is the color index between 0 and 255 inclusive. This setting only
-affects UIs with RGB capabilities; for normal terminals the color index is
-just forwarded. The variables are read only during |TermOpen|.
+The `{g,b}:terminal_color_x` variables control the terminal color palette,
+where `x` is the color index between 0 and 255 inclusive.  The variables are
+read during |TermOpen|. The value must be a color name or hexadecimal string.
+Example: >
+    let g:terminal_color_4 = '#ff0000'
+    let g:terminal_color_5 = 'green'
+Only works for RGB UIs (see 'termguicolors'); for 256-color terminals the
+color index is just forwarded.
+
+Editor highlighting (|syntax-highlighting|, |highlight-groups|, etc.) has
+higher precedence: it is applied after terminal colors are resolved.
 
 ==============================================================================
 Status Variables				*terminal-status*

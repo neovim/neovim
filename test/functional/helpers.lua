@@ -238,6 +238,16 @@ local function stop()
   session:stop()
 end
 
+local function nvim_prog_abs()
+  -- system(['build/bin/nvim']) does not work for whatever reason. It must
+  -- be executable searched in $PATH or something starting with / or ./.
+  if nvim_prog:match('[/\\]') then
+    return request('nvim_call_function', 'fnamemodify', {nvim_prog, ':p'})
+  else
+    return nvim_prog
+  end
+end
+
 -- Executes an ex-command. VimL errors manifest as client (lua) errors, but
 -- v:errmsg will not be updated.
 local function nvim_command(cmd)
@@ -826,6 +836,7 @@ local module = {
   nvim_async = nvim_async,
   nvim_dir = nvim_dir,
   nvim_prog = nvim_prog,
+  nvim_prog_abs = nvim_prog_abs,
   nvim_set = nvim_set,
   ok = ok,
   os_name = os_name,
