@@ -744,74 +744,92 @@ String ga_take_string(garray_T *ga)
   return str;
 }
 
-/// Strips leading and trailing whitespace characters from the given String
-/// object, modifying it in place iff there were no errors.
+/// Read in the given opts, setting corresponding flags in `out`.
 ///
-/// @param[in,out]  to_strip  String to be modified.
-/// @param linebreaks_okay  Whether linebreak characters (e.g. '\n') shouldn't
-///                         be treated as an error.
-/// @param okay_in_middle   Whether whitespace in the String's middle shouldn't
-///                         be treated as an error.
-/// @returns - Zero on success.
-///          - If linebreaks_okay is false, the first found linebreak will cause
-///          the function to return 1.
-///          - If okay_in_middle is false, the first whitespace character in the
-///          "middle" will cause the function to return 2.
-int strip_whitespace(String *to_strip, bool linebreaks_okay,
-                     bool okay_in_middle)
-{  // TODO(Yilin-Yang): figure out how to unit test this
-  if (to_strip->size == 0) {
-    return 0;
-  }
+/// @param opts A dictionary passed to @ref nvim_set_keymap or
+///             @ref nvim_buf_set_keymap.
+/// @param[out]   out  MapArguments object in which to set parsed
+///                    |:map-arguments| flags.
+/// @param[out]   err  Error details, if any.
+///
+/// @returns Zero on success, nonzero on failure.
+Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
+{
+  char *err_msg = NULL;  // the error message to report, if any
+  char *err_arg = NULL;  // argument for the error message format string
+  ErrorType err_type = kErrorTypeNone;
 
-  size_t first_nonwhite = SIZE_MAX;
-  size_t last_nonwhite = SIZE_MAX;
+  out->buffer = false;
+  out->nowait = false;
+  out->silent = false;
+  out->script = false;
+  out->expr = false;
+  out->unique = false;
 
-  // search for the "snip" points, while checking for newlines
-  for (size_t offset = 0; offset < to_strip->size; offset++) {
-    size_t back_pos = to_strip->size - 1 - offset;
-    char front_c = to_strip->data[offset];
-    char back_c = to_strip->data[back_pos];
-    if (!linebreaks_okay
-        && (ascii_islinebreak(front_c) || ascii_islinebreak(back_c))) {
-      return 1;
-    }
-    if (first_nonwhite == SIZE_MAX && !ascii_isspace(front_c)) {
-      first_nonwhite = offset;
-    }
-    if (last_nonwhite == SIZE_MAX && !ascii_isspace(back_c)) {
-      last_nonwhite = back_pos;
-    }
-  }
-
-  if (first_nonwhite == SIZE_MAX) {  // entire string is whitespace
-    memset(to_strip->data, '\0', to_strip->size);
-    to_strip->size = 0;
-    return 0;
-  }
-
-  assert(first_nonwhite != SIZE_MAX && last_nonwhite != SIZE_MAX);
-  assert(first_nonwhite <= last_nonwhite);
-
-  if (!okay_in_middle) {
-    for (size_t i = first_nonwhite; i <= last_nonwhite; i++) {
-      if (!ascii_isspace(to_strip->data[i])) {
-        continue;
+  for (size_t i = 0; i < opts.size; i++) {
+    KeyValuePair *key_and_val = &opts.items[i];
+    char *optname = key_and_val->key.data;
+    ObjectType type = key_and_val->value.type;
+    bool was_valid_opt = false;
+    switch (optname[0]) {
+      // note: strncmp up to and including the null terminator, so that
+      // "bufferFoobar" won't match against "buffer"
+      case 'b':
+        if (STRNCMP(optname, "buffer", 7) == 0) {
+          was_valid_opt = true;
+          out->buffer = key_and_val->value.data.boolean;
+        }
+        break;
+      case 'n':
+        if (STRNCMP(optname, "nowait", 7) == 0) {
+          was_valid_opt = true;
+          out->nowait = key_and_val->value.data.boolean;
+        }
+        break;
+      case 's':
+        if (STRNCMP(optname, "silent", 7) == 0) {
+          was_valid_opt = true;
+          out->silent = key_and_val->value.data.boolean;
+        } else if (STRNCMP(optname, "script", 7) == 0) {
+          was_valid_opt = true;
+          out->script = key_and_val->value.data.boolean;
+        }
+        break;
+      case 'e':
+        if (STRNCMP(optname, "expr", 5) == 0) {
+          was_valid_opt = true;
+          out->expr = key_and_val->value.data.boolean;
+        }
+        break;
+      case 'u':
+        if (STRNCMP(optname, "unique", 7) == 0) {
+          was_valid_opt = true;
+          out->unique = key_and_val->value.data.boolean;
+        }
+        break;
+      default:
+        break;
+    }  // switch
+    if (was_valid_opt) {
+      if (type != kObjectTypeBoolean) {
+        err_msg = "Gave non-boolean value for an opt: %s";
+        err_arg = optname;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
       }
-      return 2;
+    } else {  // was not a valid opt
+      err_msg = "Unrecognized option in nvim_set_keymap: %s";
+      err_arg = optname;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
     }
-  }
-
-  // memmove non-whitespace chars to front, zero remainder of buffer, shrink
-  // size appropriately
-  size_t num_nonwhite = last_nonwhite - first_nonwhite + 1;
-
-  memmove(to_strip->data, to_strip->data + first_nonwhite, num_nonwhite);
-  memset(to_strip->data + num_nonwhite, '\0', to_strip->size - num_nonwhite);
-
-  to_strip->size = num_nonwhite;
+  }  // for
 
   return 0;
+
+FAIL_WITH_MESSAGE:
+  api_set_error(err, err_type, err_msg, err_arg);
+  return 1;
 }
 
 /// Collects `n` buffer lines into array `l`, optionally replacing newlines

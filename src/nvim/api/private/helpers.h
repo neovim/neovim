@@ -5,6 +5,7 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
+#include "nvim/getchar.h"
 #include "nvim/memory.h"
 #include "nvim/ex_eval.h"
 #include "nvim/lib/kvec.h"
