@@ -2727,3 +2727,17 @@ func Test_empty_qfbuf()
   enew
   call delete('Xfile1')
 endfunc
+
+" The following test used to crash Vim
+func Test_lhelpgrep_autocmd()
+  lhelpgrep quickfix
+  autocmd QuickFixCmdPost * call setloclist(0, [], 'f')
+  lhelpgrep buffer
+  call assert_equal('help', &filetype)
+  call assert_equal(0, getloclist(0, {'nr' : '$'}).nr)
+  lhelpgrep tabpage
+  call assert_equal('help', &filetype)
+  call assert_equal(1, getloclist(0, {'nr' : '$'}).nr)
+  au! QuickFixCmdPost
+  new | only
+endfunc
