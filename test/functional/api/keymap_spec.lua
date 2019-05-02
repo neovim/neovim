@@ -515,6 +515,21 @@ describe('nvim_set_keymap', function()
     end
   end
 
+  it('can set mappings containing literal keycodes', function()
+    eq(0, meths.set_keymap('n', '', '\n\r\n', 'rhs', {}))
+    expected = generate_mapargs('n', '', '<C-j><CR><C-j>', 'rhs')
+    eq(expected, get_mapargs('n', '<C-j><CR><C-j>'))
+  end)
+
+  it('can set and unset <M-">', function()
+    -- Taken from the legacy test: test_mapping.vim. Exposes a bug in which
+    -- replace_termcodes changes the length of the mapping's LHS, but
+    -- do_map continues to use the *old* length of LHS.
+    eq(0, meths.set_keymap('i', '', '<M-">', 'foo', {}))
+    expected = generate_mapargs('i', '', '<M-">', 'foo')
+    eq(0, meths.set_keymap('i', 'u', '<M-">', '', {}))
+  end)
+
   it('throws appropriate error messages when setting <unique> maps', function()
     meths.set_keymap('l', '', 'lhs', 'rhs', {})
     expect_err('E227: mapping already exists for lhs',
