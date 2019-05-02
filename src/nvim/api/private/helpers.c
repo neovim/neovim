@@ -750,10 +750,13 @@ String ga_take_string(garray_T *ga)
 ///             @ref nvim_buf_set_keymap.
 /// @param[out]   out  MapArguments object in which to set parsed
 ///                    |:map-arguments| flags.
+/// @param[out]   gave_buffer   Set to true if the user provided a value for
+///                             |<buffer>|, false otherwise.
 /// @param[out]   err  Error details, if any.
 ///
 /// @returns Zero on success, nonzero on failure.
-Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
+Integer parse_keymap_opts(Dictionary opts, MapArguments *out, bool *gave_buffer,
+                          Error *err)
 {
   char *err_msg = NULL;  // the error message to report, if any
   char *err_arg = NULL;  // argument for the error message format string
@@ -766,6 +769,8 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
   out->expr = false;
   out->unique = false;
 
+  *gave_buffer = false;
+
   for (size_t i = 0; i < opts.size; i++) {
     KeyValuePair *key_and_val = &opts.items[i];
     char *optname = key_and_val->key.data;
@@ -777,6 +782,7 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
       case 'b':
         if (STRNCMP(optname, "buffer", 7) == 0) {
           was_valid_opt = true;
+          *gave_buffer = true;
           out->buffer = key_and_val->value.data.boolean;
         }
         break;

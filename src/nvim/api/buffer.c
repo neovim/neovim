@@ -15,6 +15,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/getchar.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -573,6 +574,172 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   }
 
   return keymap_array(mode, buf);
+}
+
+/// Like |nvim_set_keymap|, but for a specific buffer.
+///
+/// If not provided in {opts}, |<buffer>| is assumed to be true. If provided
+/// and set to false, then the provided mapping will be global so long as
+/// {buffer} is 0; if {buffer} is not 0, the user is assumed to have made a
+/// mistake and an error will be thrown.
+///
+/// @param  buffer  Buffer handle, or 0 for the current buffer.
+Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
+                            String lhs, String rhs, Dictionary opts, Error *err)
+  FUNC_API_SINCE(6)
+{
+  char *err_msg = NULL;  // the error message to report, if any
+  char *err_arg = NULL;  // argument for the error message format string
+  ErrorType err_type = kErrorTypeNone;
+
+  char_u *lhs_buf = NULL;
+  char_u *rhs_buf = NULL;
+
+  MapArguments parsed_args;
+  memset(&parsed_args, 0, sizeof(parsed_args));
+
+  bool gave_buffer;
+  if (parse_keymap_opts(opts, &parsed_args, &gave_buffer, err)) {
+    goto FAIL_AND_FREE;
+  }
+  if (gave_buffer && !parsed_args.buffer && buffer != 0) {
+    err_msg = "Tried setting explicit global map as buffer-local: %s";
+    err_arg = lhs.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  {
+    // Preprocess the given lhs and rhs, replacing strings like "<C-c>" with
+    // actual termcodes. Use those instead of the given {lhs} and {rhs}, which
+    // aren't directly usable in a mapblock.
+    char_u* result = replace_termcodes((char_u *)lhs.data, lhs.size, &lhs_buf,
+                                       true, true, true, CPO_TO_CPO_FLAGS);
+    parsed_args.lhs_len = STRLEN(result);
+    if (parsed_args.lhs_len > MAXMAPLEN) {
+      err_msg = "LHS exceeds maximum map length: %s";
+      err_arg = lhs.data;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
+    }
+    STRNCPY(parsed_args.lhs, result, sizeof(parsed_args.lhs));
+
+    parsed_args.orig_rhs = xcalloc(rhs.size + 1, sizeof(char_u));
+    STRNCPY(parsed_args.orig_rhs, rhs.data, rhs.size);
+    parsed_args.orig_rhs_len = rhs.size;
+
+    result = replace_termcodes((char_u*)rhs.data, rhs.size, &rhs_buf,
+                               false, true, true, CPO_TO_CPO_FLAGS);
+    parsed_args.rhs_len = STRLEN(result);
+    if (parsed_args.rhs_len > MAXMAPLEN) {
+      err_msg = "RHS exceeds maximum map length: %s";
+      err_arg = rhs.data;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
+    }
+    STRNCPY(parsed_args.rhs, result, sizeof(parsed_args.rhs));
+  }
+
+  if (mode.size > 1) {
+    err_msg = "Given shortname is too long: %s";
+    err_arg = mode.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+  int mode_val;  // integer value of the mapping mode, to be passed to do_map()
+  char_u *p = (char_u *)((mode.size) ? mode.data : "m");
+  if (STRNCMP(p, "!", 2) == 0) {
+    mode_val = get_map_mode(&p, true);  // mapmode-ic
+  } else {
+    mode_val = get_map_mode(&p, false);
+    if (mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING) {
+      // get_map_mode will treat "unrecognized" mode shortnames like "map"
+      // if it does, and the given shortname wasn't "m" or " ", then error
+      if (STRNCMP(p, "m", 2) && STRNCMP(p, " ", 2)) {
+        err_msg = "Unrecognized mode shortname: %s";
+        err_arg = (char *)p;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+      }
+    }
+  }
+
+  if (parsed_args.lhs_len == 0) {
+    err_msg = "Must give nonempty LHS!";
+    err_arg = "";
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  bool is_unmap = false;
+  bool is_noremap = false;
+  if (maptype.size) {
+    switch (maptype.data[0]) {
+      case 'u':
+        is_unmap = true;
+        break;
+      case 'n':
+        is_noremap = true;
+        break;
+      default:
+        err_msg = "Unrecognized value for maptype: %s";
+        err_arg = maptype.data;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+    }  // switch
+  }
+  assert(!(is_unmap && is_noremap));
+  if (!is_unmap && parsed_args.rhs_len == 0) {
+    err_msg = "Must give an RHS when setting keymap!%s";
+    err_arg = "";
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  } else if (is_unmap && parsed_args.rhs_len) {
+    err_msg = "RHS must be empty when unmapping! Gave: %s";
+    err_arg = (char *)parsed_args.rhs;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  int maptype_val = 0;
+  if (is_unmap) {
+    maptype_val = 1;
+  } else if (is_noremap) {
+    maptype_val = 2;
+  }
+
+  switch (buf_do_map_explicit(maptype_val, &parsed_args, mode_val, 0, curbuf)) {
+    case 0:
+      break;
+    case 1:
+      api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
+      goto FAIL_AND_FREE;
+    case 2:
+      api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
+      goto FAIL_AND_FREE;
+    case 5:
+      api_set_error(err, kErrorTypeException,
+                    "E227: mapping already exists for %s", parsed_args.lhs);
+      goto FAIL_AND_FREE;
+    default:  // unrecognized return code
+      assert(false && "Unrecognized return code!");
+      goto FAIL_AND_FREE;
+  }  // switch
+
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.orig_rhs);
+
+  return 0;
+
+FAIL_WITH_MESSAGE:
+  api_set_error(err, err_type, err_msg, err_arg);
+
+FAIL_AND_FREE:
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.orig_rhs);
+  return -1;
 }
 
 /// Gets a map of buffer-local |user-commands|.
