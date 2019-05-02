@@ -1374,23 +1374,16 @@ static bool is_focused(Terminal *term)
   return State & TERM_FOCUS && curbuf->terminal == term;
 }
 
-#define GET_CONFIG_VALUE(k, o) \
-  do { \
-    Error err = ERROR_INIT; \
-    /* Only called from terminal_open where curbuf->terminal is the */ \
-    /* context  */ \
-    o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \
-    api_clear_error(&err); \
-    if (o.type == kObjectTypeNil) { \
-      o = dict_get_value(&globvardict, cstr_as_string(k), &err); \
-      api_clear_error(&err); \
-    } \
-  } while (0)
-
 static char *get_config_string(char *key)
 {
-  Object obj;
-  GET_CONFIG_VALUE(key, obj);
+  Error err = ERROR_INIT;
+  // Only called from terminal_open where curbuf->terminal is the context.
+  Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), &err);
+  api_clear_error(&err);
+  if (obj.type == kObjectTypeNil) {
+    obj = dict_get_value(&globvardict, cstr_as_string(key), &err);
+    api_clear_error(&err);
+  }
   if (obj.type == kObjectTypeString) {
     return obj.data.string.data;
   }

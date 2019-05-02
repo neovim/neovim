@@ -3275,16 +3275,18 @@ win_line (
           line = ml_get_buf(wp->w_buffer, lnum, FALSE);
           ptr = line + v;
 
-          if (!attr_pri)
+          if (!attr_pri) {
             char_attr = syntax_attr;
-          else
+          } else {
             char_attr = hl_combine_attr(syntax_attr, char_attr);
-          /* no concealing past the end of the line, it interferes
-           * with line highlighting */
-          if (c == NUL)
+          }
+          // no concealing past the end of the line, it interferes
+          // with line highlighting.
+          if (c == NUL) {
             syntax_flags = 0;
-          else
+          } else {
             syntax_flags = get_syntax_info(&syntax_seqnr);
+          }
         } else if (!attr_pri) {
           char_attr = 0;
         }
@@ -3376,7 +3378,7 @@ win_line (
         }
 
         if (wp->w_buffer->terminal) {
-          char_attr = hl_combine_attr(char_attr, term_attrs[vcol]);
+          char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
         }
 
         // Found last space before word: check for line break.

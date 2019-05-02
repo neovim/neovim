@@ -3,9 +3,12 @@ local Screen = require('test.functional.ui.screen')
 local thelpers = require('test.functional.terminal.helpers')
 local feed, clear, nvim = helpers.feed, helpers.clear, helpers.nvim
 local nvim_dir, command = helpers.nvim_dir, helpers.command
+local nvim_prog_abs = helpers.nvim_prog_abs
 local eq, eval = helpers.eq, helpers.eval
+local funcs = helpers.funcs
+local nvim_set = helpers.nvim_set
 
-describe(':terminal window highlighting', function()
+describe(':terminal highlight', function()
   local screen
 
   before_each(function()
@@ -112,8 +115,51 @@ describe(':terminal window highlighting', function()
   end)
 end)
 
+it(':terminal highlight has lower precedence than editor #9964', function()
+  clear()
+  local screen = Screen.new(30, 4)
+  screen:set_default_attr_ids({
+    -- "Normal" highlight emitted by the child nvim process.
+    N_child = {foreground = tonumber('0x4040ff'), background = tonumber('0xffff40')},
+    -- "Search" highlight emitted by the child nvim process.
+    S_child = {background = tonumber('0xffff40'), italic = true, foreground = tonumber('0x4040ff')},
+    -- "Search" highlight in the parent nvim process.
+    S = {background = Screen.colors.Green, italic = true, foreground = Screen.colors.Red},
+    -- "Question" highlight in the parent nvim process.
+    Q = {background = tonumber('0xffff40'), bold = true, foreground = Screen.colors.SeaGreen4},
+  })
+  screen:attach({rgb=true})
+  -- Child nvim process in :terminal (with cterm colors).
+  funcs.termopen({
+    nvim_prog_abs(), '-n', '-u', 'NORC', '-i', 'NONE', '--cmd', nvim_set,
+    '+hi Normal ctermfg=Blue ctermbg=Yellow',
+    '+norm! ichild nvim',
+    '+norm! oline 2',
+  })
+  screen:expect([[
+    {N_child:^child nvim                    }|
+    {N_child:line 2                        }|
+    {N_child:                              }|
+                                  |
+  ]])
+  command('hi Search gui=italic guifg=Red guibg=Green cterm=italic ctermfg=Red ctermbg=Green')
+  feed('/nvim<cr>')
+  screen:expect([[
+    {N_child:child }{S:^nvim}{N_child:                    }|
+    {N_child:line 2                        }|
+    {N_child:                              }|
+    /nvim                         |
+  ]])
+  command('syntax keyword Question line')
+  screen:expect([[
+    {N_child:child }{S:^nvim}{N_child:                    }|
+    {Q:line}{N_child: 2                        }|
+    {N_child:                              }|
+    /nvim                         |
+  ]])
+end)
 
-describe('terminal window highlighting with custom palette', function()
+describe(':terminal highlight with custom palette', function()
   local screen
 
   before_each(function()

@@ -6131,9 +6131,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'termguicolors'* *'tgc'*
 'termguicolors' 'tgc'	boolean (default off)
 			global
-	When on, uses |highlight-guifg| and |highlight-guibg| attributes in
-	the terminal (thus using 24-bit color). Requires a ISO-8613-3
-	compatible terminal.
+	Enables 24-bit RGB color in the |TUI|.  Uses "gui" |:highlight|
+	attributes instead of "cterm" attributes. |highlight-guifg|
+	Requires an ISO-8613-3 compatible terminal.
 
 						*'terse'* *'noterse'*
 'terse'			boolean	(default off)

@@ -7,18 +7,8 @@ local feed = helpers.feed
 local eval = helpers.eval
 local clear = helpers.clear
 local funcs = helpers.funcs
-local nvim_prog = helpers.nvim_prog
+local nvim_prog_abs = helpers.nvim_prog_abs
 local write_file = helpers.write_file
-
-local function nvim_prog_abs()
-  -- system(['build/bin/nvim']) does not work for whatever reason. It needs to
-  -- either be executable searched in $PATH or something starting with / or ./.
-  if nvim_prog:match('[/\\]') then
-    return funcs.fnamemodify(nvim_prog, ':p')
-  else
-    return nvim_prog
-  end
-end
 
 describe('Command-line option', function()
   describe('-s', function()
