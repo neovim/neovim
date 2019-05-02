@@ -49,7 +49,7 @@ describe('api/buf', function()
       request('nvim_buf_set_lines', 0, 1, 2, 1, {"line5", "line6"})
       -- check the current set of lines in the buffer.
       eq({"line1", "line5", "line6", "line3", "line4"}, buffer('get_lines', 0, 0, -1, 1))
-      -- cursor should be moved below by 2 lines.
+      -- cursor should be moved below by 1 line.
       eq({4, 2}, curwin('get_cursor'))
 
       -- add a line after the current cursor position.
