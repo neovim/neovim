@@ -361,6 +361,11 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {nowaiT = false})
   end)
 
+  it('throws an error when <buffer> is nonzero', function()
+    expect_err('Cannot set buffer%-local map in nvim_set_keymap: lhs',
+               meths.set_keymap, 'n', '', 'lhs', 'rhs', {buffer = true})
+  end)
+
   local optnames = {'buffer', 'nowait', 'silent', 'script', 'expr', 'unique'}
   for _, opt in ipairs(optnames) do
     -- note: need '%' to escape hyphens, which have special meaning in lua
