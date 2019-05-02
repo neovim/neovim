@@ -427,13 +427,13 @@ describe('nvim_set_keymap', function()
 
   it('doesn\'t throw when lhs or rhs have leading/trailing WS', function()
     eq(0, meths.set_keymap('n', '', '   lhs', 'rhs', {}))
-    eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
+    eq(generate_mapargs('n', 0, '<Space><Space><Space>lhs', 'rhs'), get_mapargs('n', '   lhs'))
 
-    eq(0, meths.set_keymap('n', '', 'lhs     ', 'rhs', {}))
-    eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
+    eq(0, meths.set_keymap('n', '', 'lhs    ', 'rhs', {}))
+    eq(generate_mapargs('n', 0, 'lhs<Space><Space><Space><Space>', 'rhs'), get_mapargs('n', 'lhs    '))
 
     eq(0, meths.set_keymap('v', '', ' lhs  ', '\trhs\t\f', {}))
-    eq(generate_mapargs('v', 0, 'lhs', '\trhs\t\f'), get_mapargs('v', 'lhs'))
+    eq(generate_mapargs('v', 0, '<Space>lhs<Space><Space>', '\trhs\t\f'), get_mapargs('v', ' lhs  '))
   end)
 
   it('can set noremap mappings', function()
@@ -478,7 +478,7 @@ describe('nvim_set_keymap', function()
 
   it('can set mappings containing literal keycodes', function()
     eq(0, meths.set_keymap('n', '', '\n\r\n', 'rhs', {}))
-    expected = generate_mapargs('n', '', '<C-j><CR><C-j>', 'rhs')
+    expected = generate_mapargs('n', 0, '<NL><CR><NL>', 'rhs')
     eq(expected, get_mapargs('n', '<C-j><CR><C-j>'))
   end)
 
