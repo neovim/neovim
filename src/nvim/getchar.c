@@ -2668,9 +2668,13 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
   // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
   char_u *lhs = (char_u *)&args->lhs;
   char_u *rhs = (char_u *)&args->rhs;
+
   if (has_lhs) {
-    lhs = replace_termcodes(args->lhs, STRLEN(args->lhs), &keys_buf, true,
+    lhs = replace_termcodes(lhs, STRLEN(lhs), &keys_buf, true,
                             true, true, CPO_TO_CPO_FLAGS);
+    // Update LHS, RHS lengths to reflect changes to the string; helps to avoid
+    // bugs from using the outdated length values
+    args->lhs_len = STRLEN(lhs);
   }
   char_u *orig_rhs = rhs;
   if (has_rhs) {
@@ -2679,6 +2683,7 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
     } else {
       rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, false, true, true,
                               CPO_TO_CPO_FLAGS);
+      args->rhs_len = STRLEN(rhs);
     }
   }
 
