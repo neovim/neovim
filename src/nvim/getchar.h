@@ -41,6 +41,9 @@ struct map_arguments {
 
   char_u rhs[MAXMAPLEN + 1];  /// The {rhs} of the mapping.
   size_t rhs_len;
+
+  char_u *orig_rhs;  /// The original text of the {rhs}.
+  size_t orig_rhs_len;
 };
 typedef struct map_arguments MapArguments;
 

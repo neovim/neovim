@@ -2504,8 +2504,12 @@ int fix_input_buffer(char_u *buf, int len)
 
 /// Parse a string of |:map-arguments| into a @ref MapArguments struct.
 ///
-/// The extracted {lhs} and {rhs} are not "processed," i.e. termcodes,
-/// backslashes, and CTRL-V's are not replaced.
+/// Termcodes, backslashes, CTRL-V's, etc. inside the extracted {lhs} and
+/// {rhs} are replaced by @ref replace_termcodes. Any memory allocated by
+/// replace_termcodes is freed before this function returns.
+///
+/// orig_rhs in the returned mapargs will be set to null or a pointer to
+/// allocated memory and should be freed even on error.
 ///
 /// @param[in]  strargs   String of map arguments, e.g. "<buffer> <expr><silent>".
 ///                       May contain leading or trailing whitespace.
@@ -2516,12 +2520,12 @@ int fix_input_buffer(char_u *buf, int len)
 ///                       a "<space>", rather than separating the {lhs} from the
 ///                       {rhs}.
 /// @param[out] mapargs   MapArguments struct holding all extracted argument
-///                       values. If an error occurs during parsing, this
-///                       will not be modified.
-///
-/// @return 0 on success, 1 on invalid arguments.
+///                       values.
+/// @return 0 on success, 1 if invalid arguments are detected.
 int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
 {
+  mapargs->orig_rhs = NULL;
+
   const char_u *to_parse = strargs;
   to_parse = skipwhite(to_parse);
   MapArguments parsed_args;  // copy these into mapargs "all at once" when done
@@ -2597,20 +2601,61 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
   // {lhs_end} is a pointer to the "terminating whitespace" after {lhs}.
   // Use that to initialize {rhs_start}.
   const char_u *rhs_start = skipwhite(lhs_end);
-  parsed_args.lhs_len = (size_t)(lhs_end - to_parse);
-  STRNCPY((char *)parsed_args.lhs, (char *)to_parse, parsed_args.lhs_len);
-  parsed_args.rhs_len = xstrlcpy((char *)parsed_args.rhs, (char *)rhs_start,
-                                 MAXMAPLEN);
-  if (parsed_args.lhs_len >= MAXMAPLEN) {
-    return 1;
+
+  // Given {lhs} might be larger than MAXMAPLEN before replace_termcodes
+  // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
+  size_t orig_lhs_len = (size_t)(lhs_end - to_parse);
+  char_u *lhs_to_replace = xcalloc(orig_lhs_len + 1, sizeof(char_u));
+  STRNCPY((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len);
+
+  // copy {orig_rhs} into allocated memory for the same reason
+  parsed_args.orig_rhs_len = STRLEN(rhs_start);
+  parsed_args.orig_rhs = xcalloc(parsed_args.orig_rhs_len + 1, sizeof(char_u));
+  STRNCPY((char *)parsed_args.orig_rhs, (char *)rhs_start,
+          parsed_args.orig_rhs_len);
+
+  {  // replace_termcodes and copy result into the parsed_args
+    char_u *lhs_buf = NULL;
+    char_u *rhs_buf = NULL;
+
+    char_u *replaced = replace_termcodes(lhs_to_replace, orig_lhs_len,
+                                         &lhs_buf, true, true, true,
+                                         CPO_TO_CPO_FLAGS);
+    parsed_args.lhs_len = STRLEN(replaced);
+    STRNCPY(parsed_args.lhs, replaced, sizeof(parsed_args.lhs));
+
+    if (STRICMP(parsed_args.orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
+      memset(parsed_args.rhs, '\0', sizeof(parsed_args.rhs));
+      parsed_args.rhs_len = 0;
+    } else {
+      replaced = replace_termcodes(parsed_args.orig_rhs,
+                                   parsed_args.orig_rhs_len,
+                                   &rhs_buf, false, true, true,
+                                   CPO_TO_CPO_FLAGS);
+      parsed_args.rhs_len = STRLEN(replaced);
+      STRNCPY(parsed_args.rhs, replaced, sizeof(parsed_args.rhs));
+    }
+
+    xfree(lhs_buf);
+    xfree(rhs_buf);
   }
-  if (parsed_args.rhs_len >= MAXMAPLEN) {
-    return 1;
-  }
+  xfree(lhs_to_replace);
+
   *mapargs = parsed_args;
+
+  if (parsed_args.lhs_len > MAXMAPLEN || parsed_args.rhs_len > MAXMAPLEN) {
+    return 1;
+  }
   return 0;
 }
 
+/// Actually set/unset a mapping or abbreviation.
+///
+/// Parameters are like @ref buf_do_map unless otherwise noted.
+/// @param args  Fully parsed and "preprocessed" arguments for the
+///              (un)map/abbrev command. Termcodes should have already been
+///              replaced; whitespace, `<` and `>` signs, etc. in {lhs} and
+///              {rhs} are assumed to be literal components of the mapping.
 int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
                         bool is_abbrev, buf_T *buf)
 {
@@ -2668,24 +2713,7 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
   // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
   char_u *lhs = (char_u *)&args->lhs;
   char_u *rhs = (char_u *)&args->rhs;
-
-  if (has_lhs) {
-    lhs = replace_termcodes(lhs, STRLEN(lhs), &keys_buf, true,
-                            true, true, CPO_TO_CPO_FLAGS);
-    // Update LHS, RHS lengths to reflect changes to the string; helps to avoid
-    // bugs from using the outdated length values
-    args->lhs_len = STRLEN(lhs);
-  }
-  char_u *orig_rhs = rhs;
-  if (has_rhs) {
-    if (STRICMP(rhs, "<nop>") == 0) {  // "<Nop>" means nothing
-      rhs = (char_u *)"";
-    } else {
-      rhs = replace_termcodes(rhs, STRLEN(rhs), &arg_buf, false, true, true,
-                              CPO_TO_CPO_FLAGS);
-      args->rhs_len = STRLEN(rhs);
-    }
-  }
+  char_u *orig_rhs = args->orig_rhs;
 
   // check arguments and translate function keys
   if (has_lhs) {
@@ -2991,12 +3019,19 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T *buf)
     case 0:
       break;
     case 1:
-      return 1;  // invalid arguments
+      result = 1;  // invalid arguments
+      goto FREE_AND_RETURN;
     default:
       assert(false && "Unknown return code from str_to_mapargs!");
-      return -1;
+      result = -1;
+      goto FREE_AND_RETURN;
   }  // switch
-  return buf_do_map_explicit(maptype, &parsed_args, mode, is_abbrev, buf);
+
+  result = buf_do_map_explicit(maptype, &parsed_args, mode, is_abbrev, buf);
+
+FREE_AND_RETURN:
+  xfree(parsed_args.orig_rhs);
+  return result;
 }
 
 
