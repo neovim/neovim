@@ -1277,9 +1277,6 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
   char *err_arg = NULL;  // argument for the error message format string
   ErrorType err_type = kErrorTypeNone;
 
-  char_u *lhs_buf = NULL;
-  char_u *rhs_buf = NULL;
-
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
 
@@ -1300,8 +1297,6 @@ FAIL_WITH_MESSAGE:
   api_set_error(err, err_type, err_msg, err_arg);
 
 FAIL_AND_FREE:
-  xfree(lhs_buf);
-  xfree(rhs_buf);
   xfree(parsed_args.orig_rhs);
   return -1;
 }
