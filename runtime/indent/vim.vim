@@ -10,7 +10,7 @@ endif
 let b:did_indent = 1
 
 setlocal indentexpr=GetVimIndent()
-setlocal indentkeys+==end,=else,=cat,=fina,=END,0\\
+setlocal indentkeys+==end,=else,=cat,=fina,=END,0\\,0=\"\\\ 
 
 let b:undo_indent = "setl indentkeys< indentexpr<"
 
@@ -31,15 +31,17 @@ function GetVimIndent()
   endtry
 endfunc
 
+let s:lineContPat = '^\s*\(\\\|"\\ \)'
+
 function GetVimIndentIntern()
   " Find a non-blank line above the current line.
   let lnum = prevnonblank(v:lnum - 1)
 
-  " If the current line doesn't start with '\' and below a line that starts
-  " with '\', use the indent of the line above it.
+  " If the current line doesn't start with '\' or '"\ ' and below a line that
+  " starts with '\' or '"\ ', use the indent of the line above it.
   let cur_text = getline(v:lnum)
-  if cur_text !~ '^\s*\\'
-    while lnum > 0 && getline(lnum) =~ '^\s*\\'
+  if cur_text !~ s:lineContPat
+    while lnum > 0 && getline(lnum) =~ s:lineContPat
       let lnum = lnum - 1
     endwhile
   endif
@@ -51,10 +53,10 @@ function GetVimIndentIntern()
   let prev_text = getline(lnum)
 
   " Add a 'shiftwidth' after :if, :while, :try, :catch, :finally, :function
-  " and :else.  Add it three times for a line that starts with '\' after
-  " a line that doesn't (or g:vim_indent_cont if it exists).
+  " and :else.  Add it three times for a line that starts with '\' or '"\ '
+  " after a line that doesn't (or g:vim_indent_cont if it exists).
   let ind = indent(lnum)
-  if cur_text =~ '^\s*\\' && v:lnum > 1 && prev_text !~ '^\s*\\'
+  if cur_text =~ s:lineContPat && v:lnum > 1 && prev_text !~ s:lineContPat
     if exists("g:vim_indent_cont")
       let ind = ind + g:vim_indent_cont
     else

@@ -38,3 +38,14 @@ func Test_mkdir_p()
   call delete('Xfile')
   call delete('Xmkdir', 'rf')
 endfunc
+
+func Test_line_continuation()
+  let array = [5,
+	"\ ignore this
+	\ 6,
+	"\ more to ignore
+	"\ more moreto ignore
+	\ ]
+	"\ and some more
+  call assert_equal([5, 6], array)
+endfunc
