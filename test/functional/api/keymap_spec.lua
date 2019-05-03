@@ -353,20 +353,20 @@ describe('nvim_set_keymap', function()
   end)
 
   it('throws errors when optnames are almost right', function()
-    expect_err('Unrecognized option in nvim_set_keymap: bufferr',
-               meths.set_keymap, 'n', '', 'lhs', 'rhs', {bufferr = true})
+    expect_err('Unrecognized option in nvim_set_keymap: silentt',
+               meths.set_keymap, 'n', '', 'lhs', 'rhs', {silentt = true})
     expect_err('Unrecognized option in nvim_set_keymap: sidd',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {sidd = false})
     expect_err('Unrecognized option in nvim_set_keymap: nowaiT',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {nowaiT = false})
   end)
 
-  it('throws an error when <buffer> is nonzero', function()
-    expect_err('Cannot set buffer%-local map in nvim_set_keymap: lhs',
+  it('does not recognize <buffer> as an option', function()
+    expect_err('Unrecognized option in nvim_set_keymap: buffer',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {buffer = true})
   end)
 
-  local optnames = {'buffer', 'nowait', 'silent', 'script', 'expr', 'unique'}
+  local optnames = {'nowait', 'silent', 'script', 'expr', 'unique'}
   for _, opt in ipairs(optnames) do
     -- note: need '%' to escape hyphens, which have special meaning in lua
     it('throws an error when given non-boolean value for '..opt, function()

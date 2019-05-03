@@ -1245,27 +1245,21 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
   return keymap_array(mode, NULL);
 }
 
-/// Sets a |mapping| for the given mode.
+/// Sets a global |mapping| for the given mode.
 ///
-/// Note that isn't possible to specify a target buffer when {opts} contains
-/// the key `"buffer"`; like with |:map-<buffer>|, only the current buffer will
-/// be affected.
-///
-/// If not provided in {opts}, |<buffer>| is assumed to be false; if provided
-/// and set to true, an error will be thrown. Use |nvim_buf_set_keymap| to set
-/// buffer-local mappings.
+/// To set a buffer-local mapping, use |nvim_buf_set_keymap|.
 ///
 /// @param  mode  Mode short-name (the first character of an map command,
 ///               e.g. "n", "i", "v", "x", etc.) OR the string "!" (for
 ///               |:map!|). |:map| can be represented with an empty string, a
 ///               single space " ", or "m".
-/// @param  maptype   Whether to |:map|, |:unmap|, or |:noremap|, represented by
-///                   an empty string, "u", and "n", respectively.
+/// @param  maptype   Whether to |:map|, |:unmap|, or |:noremap|, represented
+///                   by an empty string, "u", and "n", respectively.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  Optional parameters. Includes all |:map-arguments| as keys.
-///               Values should all be Booleans. Unrecognized keys will result
-///               in an error.
+/// @param  opts  Optional parameters. Includes all |:map-arguments| as keys
+///               except |<buffer>|. Values should all be Booleans.
+///               Unrecognized keys will result in an error.
 /// @param[out]   err   Error details, if any.
 ///
 /// @returns  Zero on success, nonzero on failure.
@@ -1273,28 +1267,14 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
                         Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  char *err_msg = NULL;  // the error message to report, if any
-  char *err_arg = NULL;  // argument for the error message format string
-  ErrorType err_type = kErrorTypeNone;
-
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
 
-  bool _;
-  if (parse_keymap_opts(opts, &parsed_args, &_, err)) {
+  if (parse_keymap_opts(opts, &parsed_args, err)) {
     goto FAIL_AND_FREE;
   }
-  if (parsed_args.buffer) {
-    err_msg = "Cannot set buffer-local map in nvim_set_keymap: %s";
-    err_arg = lhs.data;
-    err_type = kErrorTypeValidation;
-    goto FAIL_WITH_MESSAGE;
-  }
 
-  return nvim_buf_set_keymap(0, mode, maptype, lhs, rhs, opts, err);
-
-FAIL_WITH_MESSAGE:
-  api_set_error(err, err_type, err_msg, err_arg);
+  return nvim_buf_set_keymap(-1, mode, maptype, lhs, rhs, opts, err);
 
 FAIL_AND_FREE:
   xfree(parsed_args.orig_rhs);

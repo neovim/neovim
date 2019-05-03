@@ -750,13 +750,10 @@ String ga_take_string(garray_T *ga)
 ///             @ref nvim_buf_set_keymap.
 /// @param[out]   out  MapArguments object in which to set parsed
 ///                    |:map-arguments| flags.
-/// @param[out]   gave_buffer   Set to true if the user provided a value for
-///                             |<buffer>|, false otherwise.
 /// @param[out]   err  Error details, if any.
 ///
 /// @returns Zero on success, nonzero on failure.
-Integer parse_keymap_opts(Dictionary opts, MapArguments *out, bool *gave_buffer,
-                          Error *err)
+Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
 {
   char *err_msg = NULL;  // the error message to report, if any
   char *err_arg = NULL;  // argument for the error message format string
@@ -768,8 +765,6 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, bool *gave_buffer,
   out->script = false;
   out->expr = false;
   out->unique = false;
-
-  *gave_buffer = false;
 
   for (size_t i = 0; i < opts.size; i++) {
     KeyValuePair *key_and_val = &opts.items[i];
@@ -785,14 +780,11 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, bool *gave_buffer,
     bool was_valid_opt = false;
     switch (optname[0]) {
       // note: strncmp up to and including the null terminator, so that
-      // "bufferFoobar" won't match against "buffer"
-      case 'b':
-        if (STRNCMP(optname, "buffer", 7) == 0) {
-          was_valid_opt = true;
-          *gave_buffer = true;
-          out->buffer = key_and_val->value.data.boolean;
-        }
-        break;
+      // "nowaitFoobar" won't match against "nowait"
+
+      // don't recognize 'buffer' as a key; user shouldn't provide <buffer>
+      // when calling nvim_set_keymap or nvim_buf_set_keymap, since it can be
+      // inferred from which function they called
       case 'n':
         if (STRNCMP(optname, "nowait", 7) == 0) {
           was_valid_opt = true;

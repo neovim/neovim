@@ -578,11 +578,6 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
 
 /// Like |nvim_set_keymap|, but for a specific buffer.
 ///
-/// If not provided in {opts}, |<buffer>| is assumed to be true. If provided
-/// and set to false, then the provided mapping will be global so long as
-/// {buffer} is 0; if {buffer} is not 0, the user is assumed to have made a
-/// mistake and an error will be thrown.
-///
 /// @param  buffer  Buffer handle, or 0 for the current buffer.
 Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
                             String lhs, String rhs, Dictionary opts, Error *err)
@@ -595,19 +590,16 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   char_u *lhs_buf = NULL;
   char_u *rhs_buf = NULL;
 
+  // internal nvim code can signal global behavior by passing -1 as first
+  // param, but user code cannot
+  bool global = (buffer == -1);
+
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
-
-  bool gave_buffer;
-  if (parse_keymap_opts(opts, &parsed_args, &gave_buffer, err)) {
+  if (parse_keymap_opts(opts, &parsed_args, err)) {
     goto FAIL_AND_FREE;
   }
-  if (gave_buffer && !parsed_args.buffer && buffer != 0) {
-    err_msg = "Tried setting explicit global map as buffer-local: %s";
-    err_arg = lhs.data;
-    err_type = kErrorTypeValidation;
-    goto FAIL_WITH_MESSAGE;
-  }
+  parsed_args.buffer = !global;
 
   {
     // Preprocess the given lhs and rhs, replacing strings like "<C-c>" with
