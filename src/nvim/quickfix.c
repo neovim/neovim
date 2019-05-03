@@ -3296,7 +3296,7 @@ void ex_make(exarg_T *eap)
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
         curbuf->b_fname, TRUE, curbuf);
-    if (qi->qf_curlist < qi->qf_listcount)
+    if (qi != NULL && qi->qf_curlist < qi->qf_listcount)
       res = qi->qf_lists[qi->qf_curlist].qf_count;
     else
       res = 0;
@@ -3652,13 +3652,15 @@ void ex_cfile(exarg_T *eap)
   if (res >= 0 && qi != NULL) {
     qf_list_changed(qi, qi->qf_curlist);
   }
-  unsigned save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
+  unsigned save_qfid;
+  if (qi != NULL)
+    save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, false, curbuf);
   }
   // Autocmd might have freed the quickfix/location list. Check whether it is
   // still valid
-  if (!qflist_valid(wp, save_qfid)) {
+  if (qi != NULL && !qflist_valid(wp, save_qfid)) {
     return;
   }
   if (res > 0 && (eap->cmdidx == CMD_cfile || eap->cmdidx == CMD_lfile)) {
