@@ -432,6 +432,16 @@ flag when defining the function, it is not relevant when executing it. >
    .
    :endfunction
    :set cpo-=C
+<
+					*line-continuation-comment*
+To add a comment in between the lines start with '\" '.  Notice the space
+after the double quote.  Example: >
+	let array = [
+		"\ first entry comment
+		\ 'first',
+		"\ second entry comment
+		\ 'second',
+		\ ]
 
 Rationale:
 	Most programs work with a trailing backslash to indicate line
@@ -439,6 +449,14 @@ Rationale:
 	For example for this Vi mapping: >
 		:map xx  asdf\
 <	Therefore the unusual leading backslash is used.
+
+	Starting a comment in a continuation line results in all following
+	continuation lines to be part of the comment.  Since it was like this
+	for a long time, when making it possible to add a comment halfway a
+	sequence of continuation lines, it was not possible to use \", since
+	that was a valid continuation line.  Using '"\ ' comes closest, even
+	though it may look a bit weird.  Requiring the space after the
+	backslash is to make it very unlikely this is a normal comment line.
 
 ==============================================================================
 5. Using Vim packages					*packages*

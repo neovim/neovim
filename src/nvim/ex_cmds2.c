@@ -3403,13 +3403,18 @@ char_u *getsourceline(int c, void *cookie, int indent)
     // Get the next line and concatenate it when it starts with a
     // backslash. We always need to read the next line, keep it in
     // sp->nextline.
+    // Also check for a comment in between continuation lines: "\ .
     sp->nextline = get_one_sourceline(sp);
-    if (sp->nextline != NULL && *(p = skipwhite(sp->nextline)) == '\\') {
+    if (sp->nextline != NULL
+        && (*(p = skipwhite(sp->nextline)) == '\\'
+            || (p[0] == '"' && p[1] == '\\' && p[2] == ' '))) {
       garray_T ga;
 
       ga_init(&ga, (int)sizeof(char_u), 400);
       ga_concat(&ga, line);
-      ga_concat(&ga, p + 1);
+      if (*p == '\\') {
+        ga_concat(&ga, p + 1);
+      }
       for (;; ) {
         xfree(sp->nextline);
         sp->nextline = get_one_sourceline(sp);
@@ -3417,15 +3422,16 @@ char_u *getsourceline(int c, void *cookie, int indent)
           break;
         }
         p = skipwhite(sp->nextline);
-        if (*p != '\\') {
+        if (*p == '\\') {
+          // Adjust the growsize to the current length to speed up
+          // concatenating many lines.
+          if (ga.ga_len > 400) {
+            ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
+          }
+          ga_concat(&ga, p + 1);
+        } else if (p[0] != '"' || p[1] != '\\' || p[2] != ' ') {
           break;
         }
-        // Adjust the growsize to the current length to speed up
-        // concatenating many lines.
-        if (ga.ga_len > 400) {
-          ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
-        }
-        ga_concat(&ga, p + 1);
       }
       ga_append(&ga, NUL);
       xfree(line);

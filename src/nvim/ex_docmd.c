@@ -4505,8 +4505,8 @@ static int get_tabpage_arg(exarg_T *eap)
       tab_number = 0;
     } else {
       tab_number = eap->line2;
-      if (!unaccept_arg0 && **eap->cmdlinep == '-') {
-        --tab_number;
+      if (!unaccept_arg0 && *skipwhite(*eap->cmdlinep) == '-') {
+        tab_number--;
         if (tab_number < unaccept_arg0) {
           eap->errmsg = e_invarg;
         }
