@@ -774,7 +774,14 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, bool *gave_buffer,
   for (size_t i = 0; i < opts.size; i++) {
     KeyValuePair *key_and_val = &opts.items[i];
     char *optname = key_and_val->key.data;
-    ObjectType type = key_and_val->value.type;
+
+    if (key_and_val->value.type != kObjectTypeBoolean) {
+      err_msg = "Gave non-boolean value for an opt: %s";
+      err_arg = optname;
+      err_type = kErrorTypeValidation;
+      goto FAIL_WITH_MESSAGE;
+    }
+
     bool was_valid_opt = false;
     switch (optname[0]) {
       // note: strncmp up to and including the null terminator, so that
@@ -816,14 +823,7 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, bool *gave_buffer,
       default:
         break;
     }  // switch
-    if (was_valid_opt) {
-      if (type != kObjectTypeBoolean) {
-        err_msg = "Gave non-boolean value for an opt: %s";
-        err_arg = optname;
-        err_type = kErrorTypeValidation;
-        goto FAIL_WITH_MESSAGE;
-      }
-    } else {  // was not a valid opt
+    if (!was_valid_opt) {
       err_msg = "Unrecognized option in nvim_set_keymap: %s";
       err_arg = optname;
       err_type = kErrorTypeValidation;
