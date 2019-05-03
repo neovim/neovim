@@ -2979,10 +2979,8 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
   return FALSE;
 }
 
-/*
- * Find a window displaying the quickfix/location list 'qi'
- * Searches in only the windows opened in the current tab.
- */
+/// Find a window displaying the quickfix/location list 'qi'
+/// Only searches in the current tabpage.
 static win_T *qf_find_win(qf_info_T *qi)
 {
   FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
@@ -4328,6 +4326,21 @@ static int qf_id2nr(const qf_info_T *const qi, const unsigned qfid)
   return -1;
 }
 
+/// Return the quickfix/location list window identifier in the current tabpage.
+static int qf_winid(qf_info_T *qi)
+{
+  // The quickfix window can be opened even if the quickfix list is not set
+  // using ":copen". This is not true for location lists.
+  if (qi == NULL) {
+    return 0;
+  }
+  win_T *win = qf_find_win(qi);
+  if (win != NULL) {
+    return win->handle;
+  }
+  return 0;
+}
+
 /// Return quickfix/location list details (title) as a
 /// dictionary. 'what' contains the details to return. If 'list_idx' is -1,
 /// then current list is used. Otherwise the specified list is used.
@@ -4430,7 +4443,7 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
       status = tv_dict_add_nr(retdict, S_LEN("nr"), 0);
     }
     if ((status == OK) && (flags & QF_GETLIST_WINID)) {
-      status = tv_dict_add_nr(retdict, S_LEN("winid"), 0);
+      status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
     }
     if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
       status = tv_dict_add_str(retdict, S_LEN("context"), (const char *)"");
@@ -4461,10 +4474,7 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
     status = tv_dict_add_nr(retdict, S_LEN("nr"), qf_idx + 1);
   }
   if ((status == OK) && (flags & QF_GETLIST_WINID)) {
-    win_T *win = qf_find_win(qi);
-    if (win != NULL) {
-      status = tv_dict_add_nr(retdict, S_LEN("winid"), win->handle);
-    }
+    status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
     list_T *l = tv_list_alloc(kListLenMayKnow);

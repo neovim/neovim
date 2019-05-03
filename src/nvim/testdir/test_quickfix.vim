@@ -2859,6 +2859,12 @@ func Xgetlist_empty_tests(cchar)
   call assert_equal(0, g:Xgetlist({'changedtick' : 0}).changedtick)
   call assert_equal({'context' : '', 'id' : 0, 'idx' : 0, 'items' : [], 'nr' : 0, 'size' : 0, 'title' : '', 'winid' : 0, 'changedtick': 0}, g:Xgetlist({'all' : 0}))
 
+  " Quickfix window with empty stack
+  silent! Xopen
+  let qfwinid = (a:cchar == 'c') ? win_getid() : 0
+  call assert_equal(qfwinid, g:Xgetlist({'winid' : 0}).winid)
+  Xclose
+
   " Empty quickfix list
   Xexpr ""
   call assert_equal('', g:Xgetlist({'context' : 0}).context)
