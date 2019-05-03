@@ -2511,7 +2511,7 @@ int fix_input_buffer(char_u *buf, int len)
 /// orig_rhs in the returned mapargs will be set to null or a pointer to
 /// allocated memory and should be freed even on error.
 ///
-/// @param[in]  strargs   String of map arguments, e.g. "<buffer> <expr><silent>".
+/// @param[in]  strargs   String of map args, e.g. "<buffer> <expr><silent>".
 ///                       May contain leading or trailing whitespace.
 /// @param[in]  is_unmap  True, if strargs should be parsed like an |:unmap|
 ///                       command. |:unmap| commands interpret *all* text to the
@@ -2606,13 +2606,13 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
   // (e.g. "<Space>" is longer than ' '), so first copy into a buffer.
   size_t orig_lhs_len = (size_t)(lhs_end - to_parse);
   char_u *lhs_to_replace = xcalloc(orig_lhs_len + 1, sizeof(char_u));
-  STRNCPY((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len);
+  xstrlcpy((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len + 1);
 
   // copy {orig_rhs} into allocated memory for the same reason
   parsed_args.orig_rhs_len = STRLEN(rhs_start);
   parsed_args.orig_rhs = xcalloc(parsed_args.orig_rhs_len + 1, sizeof(char_u));
-  STRNCPY((char *)parsed_args.orig_rhs, (char *)rhs_start,
-          parsed_args.orig_rhs_len);
+  xstrlcpy((char *)parsed_args.orig_rhs, (char *)rhs_start,
+           parsed_args.orig_rhs_len + 1);
 
   {  // replace_termcodes and copy result into the parsed_args
     char_u *lhs_buf = NULL;
@@ -2629,7 +2629,8 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
                                          &lhs_buf, true, true, true,
                                          CPO_TO_CPO_FLAGS);
     parsed_args.lhs_len = STRLEN(replaced);
-    STRNCPY(parsed_args.lhs, replaced, sizeof(parsed_args.lhs));
+    xstrlcpy((char *)parsed_args.lhs, (char *)replaced,
+             sizeof(parsed_args.lhs));
 
     if (STRICMP(parsed_args.orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
       memset(parsed_args.rhs, '\0', sizeof(parsed_args.rhs));
@@ -2640,7 +2641,8 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
                                    &rhs_buf, false, true, true,
                                    CPO_TO_CPO_FLAGS);
       parsed_args.rhs_len = STRLEN(replaced);
-      STRNCPY(parsed_args.rhs, replaced, sizeof(parsed_args.rhs));
+      xstrlcpy((char *)parsed_args.rhs, (char *)replaced,
+               sizeof(parsed_args.rhs));
     }
 
     xfree(lhs_buf);
