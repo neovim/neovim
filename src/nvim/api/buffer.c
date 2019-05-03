@@ -593,6 +593,10 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   // internal nvim code can signal global behavior by passing -1 as first
   // param, but user code cannot
   bool global = (buffer == -1);
+  if (global) {
+    buffer = 0;
+  }
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   MapArguments parsed_args;
   memset(&parsed_args, 0, sizeof(parsed_args));
@@ -700,7 +704,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
     maptype_val = 2;
   }
 
-  switch (buf_do_map_explicit(maptype_val, &parsed_args, mode_val, 0, curbuf)) {
+  switch (buf_do_map_explicit(maptype_val, &parsed_args, mode_val, 0, buf)) {
     case 0:
       break;
     case 1:
