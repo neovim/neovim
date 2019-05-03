@@ -12880,33 +12880,36 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char buf[NUMBUFLEN];
   const char *const dir = tv_get_string_buf(&argvars[0], buf);
   if (*dir == NUL) {
-    rettv->vval.v_number = FAIL;
-  } else {
-    if (*path_tail((char_u *)dir) == NUL) {
-      // Remove trailing slashes.
-      *path_tail_with_sep((char_u *)dir) = NUL;
-    }
-
-    if (argvars[1].v_type != VAR_UNKNOWN) {
-      if (argvars[2].v_type != VAR_UNKNOWN) {
-        prot = tv_get_number_chk(&argvars[2], NULL);
-      }
-      if (prot != -1 && strcmp(tv_get_string(&argvars[1]), "p") == 0) {
-        char *failed_dir;
-        int ret = os_mkdir_recurse(dir, prot, &failed_dir);
-        if (ret != 0) {
-          EMSG3(_(e_mkdir), failed_dir, os_strerror(ret));
-          xfree(failed_dir);
-          rettv->vval.v_number = FAIL;
-          return;
-        } else {
-          rettv->vval.v_number = OK;
-          return;
-        }
-      }
-    }
-    rettv->vval.v_number = prot == -1 ? FAIL : vim_mkdir_emsg(dir, prot);
+    return;
   }
+
+  if (*path_tail((char_u *)dir) == NUL) {
+    // Remove trailing slashes.
+    *path_tail_with_sep((char_u *)dir) = NUL;
+  }
+
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+      prot = tv_get_number_chk(&argvars[2], NULL);
+      if (prot == -1) {
+        return;
+      }
+    }
+    if (strcmp(tv_get_string(&argvars[1]), "p") == 0) {
+      char *failed_dir;
+      int ret = os_mkdir_recurse(dir, prot, &failed_dir);
+      if (ret != 0) {
+        EMSG3(_(e_mkdir), failed_dir, os_strerror(ret));
+        xfree(failed_dir);
+        rettv->vval.v_number = FAIL;
+        return;
+      } else {
+        rettv->vval.v_number = OK;
+        return;
+      }
+    }
+  }
+  rettv->vval.v_number = vim_mkdir_emsg(dir, prot);
 }
 
 /// "mode()" function
