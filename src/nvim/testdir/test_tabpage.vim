@@ -1,5 +1,6 @@
 " Tests for tabpage
 
+" source screendump.vim
 
 function Test_tabpage()
   bw!
@@ -553,6 +554,29 @@ func Test_tabs()
 
   1tabonly!
   bw!
+endfunc
+
+func Test_tabpage_cmdheight()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: only works with terminal'
+  endif
+  call writefile([
+        \ 'set laststatus=2',
+        \ 'set cmdheight=2',
+        \ 'tabnew',
+        \ 'set cmdheight=3',
+        \ 'tabnext',
+        \ 'redraw!',
+        \ 'echo "hello\nthere"',
+        \ 'tabnext',
+        \ 'redraw',
+	\ ], 'XTest_tabpage_cmdheight')
+  " Check that cursor line is concealed
+  let buf = RunVimInTerminal('-S XTest_tabpage_cmdheight', {'statusoff': 3})
+  call VerifyScreenDump(buf, 'Test_tabpage_cmdheight', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XTest_conceal')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
