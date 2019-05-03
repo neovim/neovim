@@ -6,11 +6,13 @@ local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local expect_err = helpers.expect_err
+local feed = helpers.feed
 local funcs = helpers.funcs
 local meths = helpers.meths
 local source = helpers.source
 
 local shallowcopy = global_helpers.shallowcopy
+local sleep = global_helpers.sleep
 
 describe('nvim_get_keymap', function()
   before_each(clear)
@@ -502,6 +504,56 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, 'l', '', 'lhs', 'rhs', {unique = true})
     -- different mapmode, no error should be thrown
     eq(0, meths.set_keymap('t', '', 'lhs', 'rhs', {}))
+  end)
+
+  it('can set <expr> mappings whose RHS change dynamically', function()
+    meths.command_output([[
+        function! FlipFlop() abort
+          if !exists('g:flip') | let g:flip = 0 | endif
+          let g:flip = !g:flip
+          return g:flip
+        endfunction
+        ]])
+    eq(1, meths.call_function('FlipFlop', {}))
+    eq(0, meths.call_function('FlipFlop', {}))
+    eq(1, meths.call_function('FlipFlop', {}))
+    eq(0, meths.call_function('FlipFlop', {}))
+
+    meths.set_keymap('i', '', 'lhs', 'FlipFlop()', {expr = true})
+    command('normal ilhs')
+    eq({'1'}, curbufmeths.get_lines(0, -1, 0))
+
+    command('normal! ggVGd')
+
+    command('normal ilhs')
+    eq({'0'}, curbufmeths.get_lines(0, -1, 0))
+  end)
+
+  it("can set noremap mappings that don't trigger other mappings", function()
+    meths.set_keymap('i',  '', 'mhs', 'rhs', {})
+    meths.set_keymap('i', 'n', 'lhs', 'mhs', {})
+
+    command('normal imhs')
+    eq({'rhs'}, curbufmeths.get_lines(0, -1, 0))
+
+    command('normal! ggVGd')
+
+    command('normal ilhs')  -- shouldn't trigger mhs-to-rhs mapping
+    eq({'mhs'}, curbufmeths.get_lines(0, -1, 0))
+  end)
+
+  it("can set nowait mappings that fire without waiting", function()
+    meths.set_keymap('i', '', '123456', 'longer',  {})
+    meths.set_keymap('i', '', '123',    'shorter', {nowait = true})
+
+    -- feed keys one at a time; if all keys arrive atomically, the longer
+    -- mapping will trigger
+    local keys = 'i123456'
+    for c in string.gmatch(keys, '.') do
+      feed(c)
+      sleep(5)
+    end
+    eq({'shorter456'}, curbufmeths.get_lines(0, -1, 0))
   end)
 
   -- Perform exhaustive tests of basic functionality
