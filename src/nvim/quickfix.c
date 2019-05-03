@@ -4345,7 +4345,8 @@ enum {
   QF_GETLIST_ALL = 0x1FF
 };
 
-// Parse text from 'di' and return the quickfix list items
+/// Parse text from 'di' and return the quickfix list items.
+/// Existing quickfix lists are not modified.
 static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
 {
   int status = FAIL;
@@ -4410,22 +4411,9 @@ static int qf_winid(qf_info_T *qi)
   return 0;
 }
 
-/// Return quickfix/location list details (title) as a
-/// dictionary. 'what' contains the details to return. If 'list_idx' is -1,
-/// then current list is used. Otherwise the specified list is used.
-int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
+/// Convert the keys in 'what' to quickfix list property flags.
+static int qf_getprop_keys2flags(dict_T *what)
 {
-  qf_info_T *qi = &ql_info;
-  dictitem_T *di;
-
-  if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
-    return qf_get_list_from_lines(what, di, retdict);
-  }
-
-  if (wp != NULL) {
-    qi = GET_LOC_LIST(wp);
-  }
-
   int flags = QF_GETLIST_NONE;
 
   if (tv_dict_find(what, S_LEN("all")) != NULL) {
@@ -4459,85 +4447,175 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
     flags |= QF_GETLIST_TICK;
   }
 
-  int qf_idx;
+  return flags;
+}
 
-  if (qi != NULL && qi->qf_listcount != 0) {
-    qf_idx = qi->qf_curlist;  // default is the current list
-    if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
-      // Use the specified quickfix/location list
-      if (di->di_tv.v_type == VAR_NUMBER) {
-        // for zero use the current list
-        if (di->di_tv.vval.v_number != 0) {
-          qf_idx = (int)di->di_tv.vval.v_number - 1;
-          if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
-            qf_idx = -1;
-          }
-        }
-      } else if (di->di_tv.v_type == VAR_STRING
-                 && strequal((const char *)di->di_tv.vval.v_string, "$")) {
-        // Get the last quickfix list number
-        qf_idx = qi->qf_listcount - 1;
-      } else {
-        qf_idx = -1;
-      }
-      flags |= QF_GETLIST_NR;
-    }
+/// Return the quickfix list index based on 'nr' or 'id' in 'what'.
+///
+/// If 'nr' and 'id' are not present in 'what' then return the current
+/// quickfix list index.
+/// If 'nr' is zero then return the current quickfix list index.
+/// If 'nr' is '$' then return the last quickfix list index.
+/// If 'id' is present then return the index of the quickfix list with that id.
+/// If 'id' is zero then return the quickfix list index specified by 'nr'.
+/// Return -1, if quickfix list is not present or if the stack is empty.
+static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
+{
+  dictitem_T *di = NULL;
 
-    if ((di = tv_dict_find(what, S_LEN("id"))) != NULL) {
-      // Look for a list with the specified id
-      if (di->di_tv.v_type == VAR_NUMBER) {
-        // For zero, use the current list or the list specifed by 'nr'
-        if (di->di_tv.vval.v_number != 0) {
-          qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
+  int qf_idx = qi->qf_curlist;  // default is the current list
+  if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
+    // Use the specified quickfix/location list
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      // for zero use the current list
+      if (di->di_tv.vval.v_number != 0) {
+        qf_idx = (int)di->di_tv.vval.v_number - 1;
+        if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
+          qf_idx = -1;
         }
-        flags |= QF_GETLIST_ID;
-      } else {
-        qf_idx = -1;
       }
+    } else if (di->di_tv.v_type == VAR_STRING
+               && strequal((const char *)di->di_tv.vval.v_string, "$")) {
+      // Get the last quickfix list number
+      qf_idx = qi->qf_listcount - 1;
+    } else {
+      qf_idx = -1;
     }
   }
 
+  if ((di = tv_dict_find(what, S_LEN("id"))) != NULL) {
+    // Look for a list with the specified id
+    if (di->di_tv.v_type == VAR_NUMBER) {
+      // For zero, use the current list or the list specifed by 'nr'
+      if (di->di_tv.vval.v_number != 0) {
+        qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
+      }
+    } else {
+      qf_idx = -1;
+    }
+  }
+
+  return qf_idx;
+}
+
+/// Return default values for quickfix list properties in retdict.
+static int qf_getprop_defaults(qf_info_T *qi, int flags, dict_T *retdict)
+{
   int status = OK;
 
-  // List is not present or is empty
-  if (qi == NULL || qi->qf_listcount == 0 || qf_idx == -1) {
-    if (flags & QF_GETLIST_TITLE) {
-      status = tv_dict_add_str(retdict, S_LEN("title"), (const char *)"");
-    }
-    if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
-      list_T *l = tv_list_alloc(kListLenMayKnow);
-      status = tv_dict_add_list(retdict, S_LEN("items"), l);
-    }
-    if ((status == OK) && (flags & QF_GETLIST_NR)) {
-      status = tv_dict_add_nr(retdict, S_LEN("nr"), 0);
-    }
-    if ((status == OK) && (flags & QF_GETLIST_WINID)) {
-      status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
-    }
-    if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
-      status = tv_dict_add_str(retdict, S_LEN("context"), (const char *)"");
-    }
-    if ((status == OK) && (flags & QF_GETLIST_ID)) {
-      status = tv_dict_add_nr(retdict, S_LEN("id"), 0);
-    }
-    if ((status == OK) && (flags & QF_GETLIST_IDX)) {
-      status = tv_dict_add_nr(retdict, S_LEN("idx"), 0);
-    }
-    if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
-      status = tv_dict_add_nr(retdict, S_LEN("size"), 0);
-    }
-    if ((status == OK) && (flags & QF_GETLIST_TICK)) {
-      status = tv_dict_add_nr(retdict, S_LEN("changedtick"), 0);
-    }
-    return status;
+  if (flags & QF_GETLIST_TITLE) {
+    status = tv_dict_add_str(retdict, S_LEN("title"), (const char *)"");
+  }
+  if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
+    list_T *l = tv_list_alloc(kListLenMayKnow);
+    status = tv_dict_add_list(retdict, S_LEN("items"), l);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_NR)) {
+    status = tv_dict_add_nr(retdict, S_LEN("nr"), 0);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_WINID)) {
+    status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
+  }
+  if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
+    status = tv_dict_add_str(retdict, S_LEN("context"), (const char *)"");
+  }
+  if ((status == OK) && (flags & QF_GETLIST_ID)) {
+    status = tv_dict_add_nr(retdict, S_LEN("id"), 0);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_IDX)) {
+    status = tv_dict_add_nr(retdict, S_LEN("idx"), 0);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
+    status = tv_dict_add_nr(retdict, S_LEN("size"), 0);
+  }
+  if ((status == OK) && (flags & QF_GETLIST_TICK)) {
+    status = tv_dict_add_nr(retdict, S_LEN("changedtick"), 0);
   }
 
-  if (flags & QF_GETLIST_TITLE) {
+  return status;
+}
+
+/// Return the quickfix list title as 'title' in retdict
+static int qf_getprop_title(qf_info_T *qi, int qf_idx, dict_T *retdict)
+{
     char_u *t = qi->qf_lists[qf_idx].qf_title;
     if (t == NULL) {
       t = (char_u *)"";
     }
-    status = tv_dict_add_str(retdict, S_LEN("title"), (const char *)t);
+    return tv_dict_add_str(retdict, S_LEN("title"), (const char *)t);
+}
+
+/// Return the quickfix list items/entries as 'items' in retdict
+static int qf_getprop_items(qf_info_T *qi, int qf_idx, dict_T *retdict)
+{
+  list_T *l = tv_list_alloc(kListLenMayKnow);
+  get_errorlist(qi, NULL, qf_idx, l);
+  tv_dict_add_list(retdict, S_LEN("items"), l);
+
+  return OK;
+}
+
+/// Return the quickfix list context (if any) as 'context' in retdict.
+static int qf_getprop_ctx(qf_info_T *qi, int qf_idx, dict_T *retdict)
+{
+  int status;
+
+  if (qi->qf_lists[qf_idx].qf_ctx != NULL) {
+    dictitem_T *di = tv_dict_item_alloc_len(S_LEN("context"));
+    tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
+    status = tv_dict_add(retdict, di);
+    if (status == FAIL) {
+      tv_dict_item_free(di);
+    }
+  } else {
+    status = tv_dict_add_str(retdict, S_LEN("context"), "");
+  }
+
+  return status;
+}
+
+/// Return the quickfix list index as 'idx' in retdict
+static int qf_getprop_idx(qf_info_T *qi, int qf_idx, dict_T *retdict)
+{
+  int idx = qi->qf_lists[qf_idx].qf_index;
+  if (qi->qf_lists[qf_idx].qf_count == 0) {
+    // For empty lists, qf_index is set to 1
+    idx = 0;
+  }
+  return tv_dict_add_nr(retdict, S_LEN("idx"), idx);
+}
+
+/// Return quickfix/location list details (title) as a dictionary.
+/// 'what' contains the details to return. If 'list_idx' is -1,
+/// then current list is used. Otherwise the specified list is used.
+int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
+{
+  qf_info_T *qi = &ql_info;
+  dictitem_T *di = NULL;
+  int status = OK;
+  int qf_idx;
+
+  if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
+    return qf_get_list_from_lines(what, di, retdict);
+  }
+
+  if (wp != NULL) {
+    qi = GET_LOC_LIST(wp);
+  }
+
+  int flags = qf_getprop_keys2flags(what);
+
+  if (qi != NULL && qi->qf_listcount != 0) {
+    qf_idx = qf_getprop_qfidx(qi, what);
+  }
+
+  // List is not present or is empty
+  if (qi == NULL || qi->qf_listcount == 0 || qf_idx == -1) {
+    return qf_getprop_defaults(qi, flags, retdict);
+  }
+
+  if (flags & QF_GETLIST_TITLE) {
+    status = qf_getprop_title(qi, qf_idx, retdict);
   }
   if ((status == OK) && (flags & QF_GETLIST_NR)) {
     status = tv_dict_add_nr(retdict, S_LEN("nr"), qf_idx + 1);
@@ -4546,42 +4624,21 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
     status = tv_dict_add_nr(retdict, S_LEN("winid"), qf_winid(qi));
   }
   if ((status == OK) && (flags & QF_GETLIST_ITEMS)) {
-    list_T *l = tv_list_alloc(kListLenMayKnow);
-    (void)get_errorlist(qi, NULL, qf_idx, l);
-    tv_dict_add_list(retdict, S_LEN("items"), l);
+    status = qf_getprop_items(qi, qf_idx, retdict);
   }
-
   if ((status == OK) && (flags & QF_GETLIST_CONTEXT)) {
-    if (qi->qf_lists[qf_idx].qf_ctx != NULL) {
-      di = tv_dict_item_alloc_len(S_LEN("context"));
-      tv_copy(qi->qf_lists[qf_idx].qf_ctx, &di->di_tv);
-      status = tv_dict_add(retdict, di);
-      if (status == FAIL) {
-        tv_dict_item_free(di);
-      }
-    } else {
-      status = tv_dict_add_str(retdict, S_LEN("context"), "");
-    }
+    status = qf_getprop_ctx(qi, qf_idx, retdict);
   }
-
   if ((status == OK) && (flags & QF_GETLIST_ID)) {
     status = tv_dict_add_nr(retdict, S_LEN("id"), qi->qf_lists[qf_idx].qf_id);
   }
-
   if ((status == OK) && (flags & QF_GETLIST_IDX)) {
-    int idx = qi->qf_lists[qf_idx].qf_index;
-    if (qi->qf_lists[qf_idx].qf_count == 0) {
-      // For empty lists, qf_index is set to 1
-      idx = 0;
-    }
-    status = tv_dict_add_nr(retdict, S_LEN("idx"), idx);
+    status = qf_getprop_idx(qi, qf_idx, retdict);
   }
-
   if ((status == OK) && (flags & QF_GETLIST_SIZE)) {
     status = tv_dict_add_nr(retdict, S_LEN("size"),
                             qi->qf_lists[qf_idx].qf_count);
   }
-
   if ((status == OK) && (flags & QF_GETLIST_TICK)) {
     status = tv_dict_add_nr(retdict, S_LEN("changedtick"),
                             qi->qf_lists[qf_idx].qf_changedtick);
@@ -4931,7 +4988,7 @@ static bool mark_quickfix_ctx(qf_info_T *qi, int copyID)
 }
 
 /// Mark the context of the quickfix list and the location lists (if present) as
-/// "in use". So that garabage collection doesn't free the context.
+/// "in use". So that garbage collection doesn't free the context.
 bool set_ref_in_quickfix(int copyID)
 {
   bool abort = mark_quickfix_ctx(&ql_info, copyID);
