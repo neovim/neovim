@@ -36,10 +36,15 @@ struct map_arguments {
   bool expr;
   bool unique;
 
-  char_u lhs[MAXMAPLEN + 1];  /// The {lhs} of the mapping.
+  /// The {lhs} of the mapping.
+  ///
+  /// vim limits this to MAXMAPLEN characters, allowing us to use a static
+  /// buffer. Setting lhs_len to a value larger than MAXMAPLEN can signal
+  /// that {lhs} was too long and truncated.
+  char_u lhs[MAXMAPLEN + 1];
   size_t lhs_len;
 
-  char_u rhs[MAXMAPLEN + 1];  /// The {rhs} of the mapping.
+  char_u *rhs;  /// The {rhs} of the mapping.
   size_t rhs_len;
 
   char_u *orig_rhs;  /// The original text of the {rhs}.

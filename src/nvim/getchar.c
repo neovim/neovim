@@ -2508,8 +2508,8 @@ int fix_input_buffer(char_u *buf, int len)
 /// {rhs} are replaced by @ref replace_termcodes. Any memory allocated by
 /// replace_termcodes is freed before this function returns.
 ///
-/// orig_rhs in the returned mapargs will be set to null or a pointer to
-/// allocated memory and should be freed even on error.
+/// rhs and orig_rhs in the returned mapargs will be set to null or a pointer
+/// to allocated memory and should be freed even on error.
 ///
 /// @param[in]  strargs   String of map args, e.g. "<buffer> <expr><silent>".
 ///                       May contain leading or trailing whitespace.
@@ -2525,6 +2525,7 @@ int fix_input_buffer(char_u *buf, int len)
 int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
 {
   mapargs->orig_rhs = NULL;
+  mapargs->rhs = NULL;
 
   const char_u *to_parse = strargs;
   to_parse = skipwhite(to_parse);
@@ -2633,7 +2634,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
              sizeof(parsed_args.lhs));
 
     if (STRICMP(parsed_args.orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
-      memset(parsed_args.rhs, '\0', sizeof(parsed_args.rhs));
+      parsed_args.rhs = xcalloc(1, sizeof(char_u));  // single null-char
       parsed_args.rhs_len = 0;
     } else {
       replaced = replace_termcodes(parsed_args.orig_rhs,
@@ -2641,8 +2642,9 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
                                    &rhs_buf, false, true, true,
                                    CPO_TO_CPO_FLAGS);
       parsed_args.rhs_len = STRLEN(replaced);
+      parsed_args.rhs = xcalloc(parsed_args.rhs_len + 1, sizeof(char_u));
       xstrlcpy((char *)parsed_args.rhs, (char *)replaced,
-               sizeof(parsed_args.rhs));
+               parsed_args.rhs_len + 1);
     }
 
     xfree(lhs_buf);
@@ -2652,7 +2654,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
 
   *mapargs = parsed_args;
 
-  if (parsed_args.lhs_len > MAXMAPLEN || parsed_args.rhs_len > MAXMAPLEN) {
+  if (parsed_args.lhs_len > MAXMAPLEN) {
     return 1;
   }
   return 0;
@@ -2714,7 +2716,7 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
   }
 
   char_u *lhs = (char_u *)&args->lhs;
-  char_u *rhs = (char_u *)&args->rhs;
+  char_u *rhs = (char_u *)args->rhs;
   char_u *orig_rhs = args->orig_rhs;
 
   // check arguments and translate function keys
@@ -3026,6 +3028,7 @@ int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T *buf)
   result = buf_do_map_explicit(maptype, &parsed_args, mode, is_abbrev, buf);
 
 FREE_AND_RETURN:
+  xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
   return result;
 }

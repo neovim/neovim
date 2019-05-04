@@ -627,13 +627,8 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
     result = replace_termcodes((char_u *)rhs.data, rhs.size, &rhs_buf,
                                false, true, true, CPO_TO_CPO_FLAGS);
     parsed_args.rhs_len = STRLEN(result);
-    if (parsed_args.rhs_len > MAXMAPLEN) {
-      err_msg = "RHS exceeds maximum map length: %s";
-      err_arg = rhs.data;
-      err_type = kErrorTypeValidation;
-      goto FAIL_WITH_MESSAGE;
-    }
-    xstrlcpy((char *)parsed_args.rhs, (char *)result, sizeof(parsed_args.rhs));
+    parsed_args.rhs = xcalloc(parsed_args.rhs_len + 1, sizeof(char_u));
+    xstrlcpy((char *)parsed_args.rhs, (char *)result, parsed_args.rhs_len + 1);
   }
 
   if (mode.size > 1) {
@@ -724,6 +719,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
 
   xfree(lhs_buf);
   xfree(rhs_buf);
+  xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
 
   return 0;
@@ -734,6 +730,7 @@ FAIL_WITH_MESSAGE:
 FAIL_AND_FREE:
   xfree(lhs_buf);
   xfree(rhs_buf);
+  xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
   return -1;
 }
