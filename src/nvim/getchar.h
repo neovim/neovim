@@ -46,6 +46,7 @@ struct map_arguments {
 
   char_u *rhs;  /// The {rhs} of the mapping.
   size_t rhs_len;
+  bool rhs_is_noop;  /// True when the {orig_rhs} is <nop>.
 
   char_u *orig_rhs;  /// The original text of the {rhs}.
   size_t orig_rhs_len;

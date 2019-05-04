@@ -2502,11 +2502,73 @@ int fix_input_buffer(char_u *buf, int len)
   return len;
 }
 
+/// Replace termcodes in the given LHS and RHS and store the results into the
+/// `lhs` and `rhs` of the given @ref MapArguments struct.
+///
+/// `rhs` and `orig_rhs` will both point to new allocated buffers. `orig_rhs`
+/// will hold a copy of the given `orig_rhs`.
+///
+/// The `*_len` variables will be set appropriately. If the length of
+/// the final LHS exceeds MAXMAPLEN, `lhs_len` will be set equal to the original
+/// larger length and `lhs` will be truncated.
+///
+/// If RHS is equal to "<Nop>", `rhs` will be the empty string, `rhs_len`
+/// will be zero, and `rhs_is_noop` will be set to true.
+///
+/// Any memory allocated by @ref replace_termcodes is freed before this function
+/// returns.
+///
+/// @param[in] orig_lhs   Original mapping LHS, with characters to replace.
+/// @param[in] orig_lhs_len   `strlen` of orig_lhs.
+/// @param[in] orig_rhs   Original mapping RHS, with characters to replace.
+/// @param[in] orig_rhs_len   `strlen` of orig_rhs.
+/// @param[in] cpo_flags  See param docs for @ref replace_termcodes.
+/// @param[out] mapargs   MapArguments struct holding the replaced strings.
+void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len,
+                        const char_u *orig_rhs, const size_t orig_rhs_len,
+                        int cpo_flags, MapArguments* mapargs)
+{
+  char_u *lhs_buf = NULL;
+  char_u *rhs_buf = NULL;
+
+  // If mapping has been given as ^V<C_UP> say, then replace the term codes
+  // with the appropriate two bytes. If it is a shifted special key, unshift
+  // it too, giving another two bytes.
+  //
+  // replace_termcodes() may move the result to allocated memory, which
+  // needs to be freed later (*lhs_buf and *rhs_buf).
+  // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
+  char_u *replaced = replace_termcodes(orig_lhs, orig_lhs_len, &lhs_buf,
+                                       true, true, true, cpo_flags);
+  mapargs->lhs_len = STRLEN(replaced);
+  xstrlcpy((char *)mapargs->lhs, (char *)replaced, sizeof(mapargs->lhs));
+
+  mapargs->orig_rhs_len = orig_rhs_len;
+  mapargs->orig_rhs = xcalloc(mapargs->orig_rhs_len + 1, sizeof(char_u));
+  xstrlcpy((char *)mapargs->orig_rhs, (char *)orig_rhs,
+           mapargs->orig_rhs_len + 1);
+
+  if (STRICMP(orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
+    mapargs->rhs = xcalloc(1, sizeof(char_u));  // single null-char
+    mapargs->rhs_len = 0;
+    mapargs->rhs_is_noop = true;
+  } else {
+    replaced = replace_termcodes(orig_rhs, orig_rhs_len, &rhs_buf,
+                                 false, true, true, cpo_flags);
+    mapargs->rhs_len = STRLEN(replaced);
+    mapargs->rhs_is_noop = false;
+    mapargs->rhs = xcalloc(mapargs->rhs_len + 1, sizeof(char_u));
+    xstrlcpy((char *)mapargs->rhs, (char *)replaced, mapargs->rhs_len + 1);
+  }
+
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+}
+
 /// Parse a string of |:map-arguments| into a @ref MapArguments struct.
 ///
 /// Termcodes, backslashes, CTRL-V's, etc. inside the extracted {lhs} and
-/// {rhs} are replaced by @ref replace_termcodes. Any memory allocated by
-/// replace_termcodes is freed before this function returns.
+/// {rhs} are replaced by @ref replace_maparg_termcodes.
 ///
 /// rhs and orig_rhs in the returned mapargs will be set to null or a pointer
 /// to allocated memory and should be freed even on error.
@@ -2524,9 +2586,6 @@ int fix_input_buffer(char_u *buf, int len)
 /// @return 0 on success, 1 if invalid arguments are detected.
 int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
 {
-  mapargs->orig_rhs = NULL;
-  mapargs->rhs = NULL;
-
   const char_u *to_parse = strargs;
   to_parse = skipwhite(to_parse);
   MapArguments parsed_args;  // copy these into mapargs "all at once" when done
@@ -2610,46 +2669,16 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
   xstrlcpy((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len + 1);
 
   // copy {orig_rhs} into allocated memory for the same reason
-  parsed_args.orig_rhs_len = STRLEN(rhs_start);
-  parsed_args.orig_rhs = xcalloc(parsed_args.orig_rhs_len + 1, sizeof(char_u));
-  xstrlcpy((char *)parsed_args.orig_rhs, (char *)rhs_start,
-           parsed_args.orig_rhs_len + 1);
+  /* parsed_args.orig_rhs_len = STRLEN(rhs_start); */
+  /* parsed_args.orig_rhs = xcalloc(parsed_args.orig_rhs_len + 1, sizeof(char_u)); */
+  /* xstrlcpy((char *)parsed_args.orig_rhs, (char *)rhs_start, */
+  /*          parsed_args.orig_rhs_len + 1); */
+  size_t orig_rhs_len = STRLEN(rhs_start);
 
-  {  // replace_termcodes and copy result into the parsed_args
-    char_u *lhs_buf = NULL;
-    char_u *rhs_buf = NULL;
+  set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,
+                     rhs_start, orig_rhs_len,
+                     CPO_TO_CPO_FLAGS, &parsed_args);
 
-    // If mapping has been given as ^V<C_UP> say, then replace the term codes
-    // with the appropriate two bytes. If it is a shifted special key, unshift
-    // it too, giving another two bytes.
-    //
-    // replace_termcodes() may move the result to allocated memory, which
-    // needs to be freed later (*lhs_buf and *rhs_buf).
-    // replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
-    char_u *replaced = replace_termcodes(lhs_to_replace, orig_lhs_len,
-                                         &lhs_buf, true, true, true,
-                                         CPO_TO_CPO_FLAGS);
-    parsed_args.lhs_len = STRLEN(replaced);
-    xstrlcpy((char *)parsed_args.lhs, (char *)replaced,
-             sizeof(parsed_args.lhs));
-
-    if (STRICMP(parsed_args.orig_rhs, "<nop>") == 0) {  // "<Nop>" means nothing
-      parsed_args.rhs = xcalloc(1, sizeof(char_u));  // single null-char
-      parsed_args.rhs_len = 0;
-    } else {
-      replaced = replace_termcodes(parsed_args.orig_rhs,
-                                   parsed_args.orig_rhs_len,
-                                   &rhs_buf, false, true, true,
-                                   CPO_TO_CPO_FLAGS);
-      parsed_args.rhs_len = STRLEN(replaced);
-      parsed_args.rhs = xcalloc(parsed_args.rhs_len + 1, sizeof(char_u));
-      xstrlcpy((char *)parsed_args.rhs, (char *)replaced,
-               parsed_args.rhs_len + 1);
-    }
-
-    xfree(lhs_buf);
-    xfree(rhs_buf);
-  }
   xfree(lhs_to_replace);
 
   *mapargs = parsed_args;
@@ -2707,7 +2736,7 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
   validate_maphash();
 
   bool has_lhs = (args->lhs[0] != NUL);
-  bool has_rhs = (args->rhs[0] != NUL);
+  bool has_rhs = (args->rhs[0] != NUL) || args->rhs_is_noop;
 
   // check for :unmap without argument
   if (maptype == 1 && !has_lhs) {
@@ -2723,7 +2752,6 @@ int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
   if (has_lhs) {
     len = (int)args->lhs_len;
     if (len > MAXMAPLEN) {
-      // TODO(Yilin-Yang): this check should now be redundant?
       retval = 1;
       goto theend;
     }

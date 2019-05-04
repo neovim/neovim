@@ -605,30 +605,15 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   }
   parsed_args.buffer = !global;
 
-  {
-    // Preprocess the given lhs and rhs, replacing strings like "<C-c>" with
-    // actual termcodes. Use those instead of the given {lhs} and {rhs}, which
-    // aren't directly usable in a mapblock.
-    char_u *result = replace_termcodes((char_u *)lhs.data, lhs.size, &lhs_buf,
-                                       true, true, true, CPO_TO_CPO_FLAGS);
-    parsed_args.lhs_len = STRLEN(result);
-    if (parsed_args.lhs_len > MAXMAPLEN) {
-      err_msg = "LHS exceeds maximum map length: %s";
-      err_arg = lhs.data;
-      err_type = kErrorTypeValidation;
-      goto FAIL_WITH_MESSAGE;
-    }
-    xstrlcpy((char *)parsed_args.lhs, (char *)result, sizeof(parsed_args.lhs));
+  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
+                     (char_u *)rhs.data, rhs.size,
+                     CPO_TO_CPO_FLAGS, &parsed_args);
 
-    parsed_args.orig_rhs = xcalloc(rhs.size + 1, sizeof(char_u));
-    xstrlcpy((char *)parsed_args.orig_rhs, (char *)rhs.data, rhs.size + 1);
-    parsed_args.orig_rhs_len = rhs.size;
-
-    result = replace_termcodes((char_u *)rhs.data, rhs.size, &rhs_buf,
-                               false, true, true, CPO_TO_CPO_FLAGS);
-    parsed_args.rhs_len = STRLEN(result);
-    parsed_args.rhs = xcalloc(parsed_args.rhs_len + 1, sizeof(char_u));
-    xstrlcpy((char *)parsed_args.rhs, (char *)result, parsed_args.rhs_len + 1);
+  if (parsed_args.lhs_len > MAXMAPLEN) {
+    err_msg = "LHS exceeds maximum map length: %s";
+    err_arg = lhs.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
   }
 
   if (mode.size > 1) {
@@ -680,7 +665,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
     }  // switch
   }
   assert(!(is_unmap && is_noremap));
-  if (!is_unmap && parsed_args.rhs_len == 0) {
+  if (!is_unmap && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
     err_msg = "Must give an RHS when setting keymap!%s";
     err_arg = "";
     err_type = kErrorTypeValidation;
