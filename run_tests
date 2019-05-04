@@ -30,12 +30,21 @@ echo "Running Vimspector Vim tests"
 
 RESULT=0
 
-for t in *.test.vim; do
+TESTS="$@"
+
+if [ -z "$TESTS" ]; then
+  TESTS=*.test.vim
+fi
+
+for t in ${TESTS}; do
   echo ""
   echo "%RUN: $t"
   rm -f messages debuglog
 
-  if ${RUN_TEST} $t --cmd 'au SwapExists * let v:swapchoice = "e"'; then
+  # split on : into fileName and testName
+  IFS=: read -s t T <<< "$t"
+
+  if ${RUN_TEST} --cmd 'au SwapExists * let v:swapchoice = "e"' $t $T; then
     echo "%PASS: $t PASSED"
   else
     cat messages

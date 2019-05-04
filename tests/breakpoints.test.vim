@@ -160,6 +160,13 @@ function! Test_Use_Mappings_HUMAN()
 
   call vimspector#ClearBreakpoints()
 
+  let signs = sign_getplaced( '.', {
+    \ 'group': 'VimspectorBP',
+    \ } )
+  call assert_equal( 1, len( signs ), 1 )
+  call assert_equal( 0, len( signs[ 0 ].signs ) )
+
+
   lcd -
   bwipeout!
 endfunction

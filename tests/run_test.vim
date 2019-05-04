@@ -83,6 +83,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -97,6 +99,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -126,6 +130,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -143,6 +149,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -156,6 +164,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -219,7 +229,7 @@ func FinishTesting()
     " Append errors to test.log
     split test.log
     call append(line('$'), '')
-    call append(line('$'), 'From ' . g:testname . ':')
+    call append(line('$'), 'From ' . g:testpath . ':')
     call append(line('$'), s:errors)
     write
   endif
@@ -244,7 +254,7 @@ func FinishTesting()
   " Append messages to the file "messages"
   split messages
   call append(line('$'), '')
-  call append(line('$'), 'From ' . g:testname . ':')
+  call append(line('$'), 'From ' . g:testpath . ':')
   call append(line('$'), s:messages)
   write
 
@@ -258,6 +268,7 @@ endfunc
 " Source the test script.  First grab the file name, in case the script
 " navigates away.  g:testname can be used by the tests.
 let g:testname = expand('%')
+let g:testpath = expand('%:p')
 let s:done = 0
 let s:fail = 0
 let s:errors = []
