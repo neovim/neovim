@@ -519,6 +519,21 @@ describe('nvim_set_keymap', function()
     eq(expected, get_mapargs('n', '<C-j><CR><C-j>'))
   end)
 
+  it('can set mappings whose RHS is a <Nop>', function()
+    eq(0, meths.set_keymap('i', '', 'lhs', '<Nop>', {}))
+    command('normal ilhs')
+    eq({''}, curbufmeths.get_lines(0, -1, 0))  -- imap to <Nop> does nothing
+
+    -- also test for case insensitivity
+    eq(0, meths.set_keymap('i', '', 'lhs', '<nOp>', {}))
+    command('normal ilhs')
+    eq({''}, curbufmeths.get_lines(0, -1, 0))
+
+    eq(0, meths.set_keymap('i', '', 'lhs', '<NOP>', {}))
+    command('normal ilhs')
+    eq({''}, curbufmeths.get_lines(0, -1, 0))
+  end)
+
   it('can set and unset <M-">', function()
     -- Taken from the legacy test: test_mapping.vim. Exposes a bug in which
     -- replace_termcodes changes the length of the mapping's LHS, but
