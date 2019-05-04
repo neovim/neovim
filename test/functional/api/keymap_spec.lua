@@ -315,6 +315,50 @@ end)
 describe('nvim_set_keymap', function()
   before_each(clear)
 
+  -- generate_expected is truthy when we want to generate an expected output for
+  -- maparg(); mapargs() won't take '!' as an input, though it will return '!'
+  -- in its output if getting a mapping set with |:map!|
+  local function normalize_mapmode(mode, generate_expected)
+    if not generate_expected and mode == '!' then
+      -- can't retrieve mapmode-ic mappings with '!', but can with 'i' or 'c'.
+      mode = 'i'
+    elseif mode == '' or mode == ' ' or mode == 'm' then
+      mode = generate_expected and ' ' or 'm'
+    end
+    return mode
+  end
+
+  -- Generate a mapargs dict, for comparison against the mapping that was
+  -- actually set
+  local function generate_mapargs(mode, noremap, lhs, rhs, opts)
+    if not opts then
+      opts = {}
+    end
+
+    local to_return = {}
+    to_return.mode = normalize_mapmode(mode, true)
+    to_return.noremap = noremap
+    to_return.lhs = lhs
+    to_return.rhs = rhs
+    to_return.silent = not opts.silent and 0 or 1
+    to_return.nowait = not opts.nowait and 0 or 1
+    to_return.expr = not opts.expr and 0 or 1
+    to_return.sid = not opts.sid and 0 or opts.sid
+    to_return.buffer = not opts.buffer and 0 or opts.buffer
+
+    -- mode 't' doesn't print when calling maparg
+    if mode == 't' then
+      to_return.mode = ''
+    end
+
+    return to_return
+  end
+
+  -- Retrieve a mapargs dict from neovim, if one exists
+  local function get_mapargs(mode, lhs)
+    return funcs.maparg(lhs, normalize_mapmode(mode), false, true)
+  end
+
   -- Test error handling
   it('throws errors when given empty lhs or rhs', function()
     expect_err('Must give nonempty LHS!',
@@ -323,6 +367,36 @@ describe('nvim_set_keymap', function()
                meths.set_keymap, '', '', 'lhs', '', {})
     expect_err('Must give nonempty LHS!',
                meths.set_keymap, '', '', '', '', {})
+  end)
+
+  it('throws errors when given an lhs longer than MAXMAPLEN', function()
+
+    -- assume MAXMAPLEN of 50 chars, as declared in vim.h
+    local MAXMAPLEN = 50
+    local lhs = ''
+    for i=1,MAXMAPLEN do
+      lhs = lhs..(i % 10)
+    end
+
+    -- exactly 50 chars should be fine
+    eq(0, meths.set_keymap('', '', lhs, 'rhs', {}))
+
+    -- 51 chars should produce an error
+    lhs = lhs..'1'
+    expect_err('LHS exceeds maximum map length: '..lhs,
+               meths.set_keymap, '', '', lhs, 'rhs', {})
+  end)
+
+  it('does not throw errors when rhs is longer than MAXMAPLEN', function()
+    local MAXMAPLEN = 50
+    local rhs = ''
+    for i=1,MAXMAPLEN do
+      rhs = rhs..(i % 10)
+    end
+    rhs = rhs..'1'
+    eq(0, meths.set_keymap('', '', 'lhs', rhs, {}))
+    eq(generate_mapargs('', 0, 'lhs', rhs),
+       get_mapargs('', 'lhs'))
   end)
 
   it('throws errors when unmapping and given nonempty rhs', function()
@@ -377,50 +451,6 @@ describe('nvim_set_keymap', function()
       expect_err('Gave non%-boolean value for an opt: '..opt,
                  meths.set_keymap, 'n', '', 'lhs', 'rhs', opts)
     end)
-  end
-
-  -- generate_expected is truthy when we want to generate an expected output for
-  -- maparg(); mapargs() won't take '!' as an input, though it will return '!'
-  -- in its output if getting a mapping set with |:map!|
-  local function normalize_mapmode(mode, generate_expected)
-    if not generate_expected and mode == '!' then
-      -- can't retrieve mapmode-ic mappings with '!', but can with 'i' or 'c'.
-      mode = 'i'
-    elseif mode == '' or mode == ' ' or mode == 'm' then
-      mode = generate_expected and ' ' or 'm'
-    end
-    return mode
-  end
-
-  -- Generate a mapargs dict, for comparison against the mapping that was
-  -- actually set
-  local function generate_mapargs(mode, noremap, lhs, rhs, opts)
-    if not opts then
-      opts = {}
-    end
-
-    local to_return = {}
-    to_return.mode = normalize_mapmode(mode, true)
-    to_return.noremap = noremap
-    to_return.lhs = lhs
-    to_return.rhs = rhs
-    to_return.silent = not opts.silent and 0 or 1
-    to_return.nowait = not opts.nowait and 0 or 1
-    to_return.expr = not opts.expr and 0 or 1
-    to_return.sid = not opts.sid and 0 or opts.sid
-    to_return.buffer = not opts.buffer and 0 or opts.buffer
-
-    -- mode 't' doesn't print when calling maparg
-    if mode == 't' then
-      to_return.mode = ''
-    end
-
-    return to_return
-  end
-
-  -- Retrieve a mapargs dict from neovim, if one exists
-  local function get_mapargs(mode, lhs)
-    return funcs.maparg(lhs, normalize_mapmode(mode), false, true)
   end
 
   -- Perform tests of basic functionality
