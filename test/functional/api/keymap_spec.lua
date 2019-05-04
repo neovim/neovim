@@ -515,7 +515,7 @@ describe('nvim_set_keymap', function()
 
   it('can set mappings containing literal keycodes', function()
     eq(0, meths.set_keymap('n', '', '\n\r\n', 'rhs', {}))
-    expected = generate_mapargs('n', 0, '<NL><CR><NL>', 'rhs')
+    local expected = generate_mapargs('n', 0, '<NL><CR><NL>', 'rhs')
     eq(expected, get_mapargs('n', '<C-j><CR><C-j>'))
   end)
 
@@ -539,7 +539,6 @@ describe('nvim_set_keymap', function()
     -- replace_termcodes changes the length of the mapping's LHS, but
     -- do_map continues to use the *old* length of LHS.
     eq(0, meths.set_keymap('i', '', '<M-">', 'foo', {}))
-    expected = generate_mapargs('i', '', '<M-">', 'foo')
     eq(0, meths.set_keymap('i', 'u', '<M-">', '', {}))
   end)
 

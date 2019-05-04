@@ -2668,9 +2668,7 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
   char_u *lhs_to_replace = xcalloc(orig_lhs_len + 1, sizeof(char_u));
   xstrlcpy((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len + 1);
 
-  // copy {orig_rhs} into allocated memory for the same reason
   size_t orig_rhs_len = STRLEN(rhs_start);
-
   set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,
                      rhs_start, orig_rhs_len,
                      CPO_TO_CPO_FLAGS, &parsed_args);

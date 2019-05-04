@@ -490,7 +490,7 @@ describe('api/buf', function()
     end)
 
     it('can set local mappings only in another buffer', function()
-      local first, second = make_two_buffers(false)
+      local first = make_two_buffers(false)
       eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
 
       -- shouldn't do anything
@@ -504,7 +504,7 @@ describe('api/buf', function()
     end)
 
     it('can disable mappings made in another buffer, in that buffer', function()
-      local first, second = make_two_buffers(false)
+      local first = make_two_buffers(false)
       eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
       eq(0, bufmeths.set_keymap(first, '', 'u', 'lhs', '', {}))
       switch_to_buf(first)
