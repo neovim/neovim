@@ -2526,7 +2526,7 @@ int fix_input_buffer(char_u *buf, int len)
 /// @param[out] mapargs   MapArguments struct holding the replaced strings.
 void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len,
                         const char_u *orig_rhs, const size_t orig_rhs_len,
-                        int cpo_flags, MapArguments* mapargs)
+                        int cpo_flags, MapArguments *mapargs)
 {
   char_u *lhs_buf = NULL;
   char_u *rhs_buf = NULL;
@@ -2584,7 +2584,7 @@ void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len,
 /// @param[out] mapargs   MapArguments struct holding all extracted argument
 ///                       values.
 /// @return 0 on success, 1 if invalid arguments are detected.
-int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
+int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
 {
   const char_u *to_parse = strargs;
   to_parse = skipwhite(to_parse);
@@ -2669,10 +2669,6 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments* mapargs)
   xstrlcpy((char *)lhs_to_replace, (char *)to_parse, orig_lhs_len + 1);
 
   // copy {orig_rhs} into allocated memory for the same reason
-  /* parsed_args.orig_rhs_len = STRLEN(rhs_start); */
-  /* parsed_args.orig_rhs = xcalloc(parsed_args.orig_rhs_len + 1, sizeof(char_u)); */
-  /* xstrlcpy((char *)parsed_args.orig_rhs, (char *)rhs_start, */
-  /*          parsed_args.orig_rhs_len + 1); */
   size_t orig_rhs_len = STRLEN(rhs_start);
 
   set_maparg_lhs_rhs(lhs_to_replace, orig_lhs_len,

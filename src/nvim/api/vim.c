@@ -1267,18 +1267,7 @@ Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
                         Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  MapArguments parsed_args;
-  memset(&parsed_args, 0, sizeof(parsed_args));
-
-  if (parse_keymap_opts(opts, &parsed_args, err)) {
-    goto FAIL_AND_FREE;
-  }
-
   return nvim_buf_set_keymap(-1, mode, maptype, lhs, rhs, opts, err);
-
-FAIL_AND_FREE:
-  xfree(parsed_args.orig_rhs);
-  return -1;
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.

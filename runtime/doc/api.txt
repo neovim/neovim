@@ -798,11 +798,9 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
 
                                                            *nvim_set_keymap()*
 nvim_set_keymap({mode}, {maptype}, {lhs}, {rhs}, {opts})
-                Sets a |mapping| for the given mode.
+                Sets a global |mapping| for the given mode.
 
-                Note that isn't possible to specify a target buffer when
-                {opts} contains the key `"buffer"` ; like with
-                |:map-<buffer>|, only the current buffer will be affected.
+                To set a buffer-local mapping, use |nvim_buf_set_keymap|.
 
                 Parameters: ~
                     {mode}     Mode short-name (the first character of an map
@@ -816,9 +814,9 @@ nvim_set_keymap({mode}, {maptype}, {lhs}, {rhs}, {opts})
                     {lhs}      Left-hand-side |{lhs}| of the mapping.
                     {rhs}      Right-hand-side |{rhs}| of the mapping.
                     {opts}     Optional parameters. Includes all
-                               |:map-arguments| as keys. Values should all be
-                               Booleans. Unrecognized keys will result in an
-                               error.
+                               |:map-arguments| as keys except |<buffer>|.
+                               Values should all be Booleans. Unrecognized
+                               keys will result in an error.
 
                 Return: ~
                     Zero on success, nonzero on failure.
@@ -1311,6 +1309,13 @@ nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
                 Return: ~
                     Array of maparg()-like dictionaries describing mappings.
                     The "buffer" key holds the associated buffer handle.
+
+                                                       *nvim_buf_set_keymap()*
+nvim_buf_set_keymap({buffer}, {mode}, {maptype}, {lhs}, {rhs}, {opts})
+                Like |nvim_set_keymap|, but for a specific buffer.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for the current buffer.
 
 nvim_buf_get_commands({buffer}, {opts})              *nvim_buf_get_commands()*
                 Gets a map of buffer-local |user-commands|.
