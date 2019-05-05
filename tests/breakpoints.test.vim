@@ -54,14 +54,14 @@ endfunction
 function! Test_Signs_Placed_Using_API_Are_Shown()
   " We need a real file
   edit testdata/cpp/simple/simple.cpp
-  call feedkeys( "/printf\<CR>", 'x' )
+  call feedkeys( "/printf\<CR>", 'xt' )
 
   " Set breakpoint
   call vimspector#ToggleBreakpoint()
 
   call assert_true( exists( '*vimspector#ToggleBreakpoint' ) )
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -73,7 +73,7 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
   " Disable breakpoint
   call vimspector#ToggleBreakpoint()
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -85,7 +85,7 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
   " Remove breakpoint
   call vimspector#ToggleBreakpoint()
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -94,7 +94,7 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
   call assert_equal( 0, len( signs[ 0 ].signs ) )
 
   call vimspector#ClearBreakpoints()
-  bwipeout!
+  %bwipeout!
 endfunction
 
 function! SetUp_Test_Use_Mappings_HUMAN()
@@ -109,9 +109,9 @@ function! Test_Use_Mappings_HUMAN()
   call assert_equal( 15, line( '.' ) )
 
   " Add the breakpoing
-  call feedkeys( "\<F9>", 'x' )
+  call feedkeys( "\<F9>", 'xt' )
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -121,9 +121,9 @@ function! Test_Use_Mappings_HUMAN()
   call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
 
   " Disable the breakpoint
-  call feedkeys( "\<F9>", 'x' )
+  call feedkeys( "\<F9>", 'xt' )
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -132,9 +132,9 @@ function! Test_Use_Mappings_HUMAN()
   call assert_equal( 'vimspectorBPDisabled', signs[ 0 ].signs[ 0 ].name )
 
   " Delete the breakpoint
-  call feedkeys( "\<F9>", 'x' )
+  call feedkeys( "\<F9>", 'xt' )
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -142,9 +142,9 @@ function! Test_Use_Mappings_HUMAN()
   call assert_equal( 0, len( signs[ 0 ].signs ) )
 
   " Add it again
-  call feedkeys( "\<F9>", 'x' )
+  call feedkeys( "\<F9>", 'xt' )
 
-  let signs = sign_getplaced( '.', {
+  let signs = sign_getplaced( '%', {
     \ 'group': 'VimspectorBP',
     \ 'line': line( '.' )
     \ } )
@@ -154,19 +154,19 @@ function! Test_Use_Mappings_HUMAN()
   call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
 
   " Here we go. Start Debugging
-  call feedkeys( "\<F5>", 'x' )
+  call feedkeys( "\<F5>", 'xt' )
 
   call vimspector#Reset()
 
   call vimspector#ClearBreakpoints()
 
-  let signs = sign_getplaced( '.', {
-    \ 'group': 'VimspectorBP',
+  let signs = sign_getplaced( '%', {
+    \ 'group': 'VimspectorBP'
     \ } )
   call assert_equal( 1, len( signs ), 1 )
   call assert_equal( 0, len( signs[ 0 ].signs ) )
 
 
   lcd -
-  bwipeout!
+  %bwipeout!
 endfunction
