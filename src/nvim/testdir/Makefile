@@ -32,14 +32,12 @@ NEW_TESTS_ALOT := test_alot_utf8 test_alot
 NEW_TESTS_IN_ALOT := $(shell sed '/^source/ s/^source //;s/\.vim$$//' test_alot*.vim)
 # Ignored tests.
 # test_alot_latin: Nvim does not allow setting encoding.
-# test_arglist: ported to Lua, but kept for easier merging.
 # test_autochdir: ported to Lua, but kept for easier merging.
 # test_eval_func: used as include in old-style test (test_eval.in).
 # test_listlbr: Nvim does not allow setting encoding.
 # test_largefile: uses too much resources to run on CI.
 NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
   test_alot_latin \
-  test_arglist \
   test_autochdir \
   test_eval_func \
   test_listlbr \
