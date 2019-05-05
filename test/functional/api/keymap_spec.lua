@@ -360,11 +360,9 @@ describe('nvim_set_keymap', function()
   end
 
   -- Test error handling
-  it('throws errors when given empty lhs or rhs', function()
+  it('throws errors when given empty lhs', function()
     expect_err('Must give nonempty LHS!',
                meths.set_keymap, '', '', '', 'rhs', {})
-    expect_err('Must give an RHS when setting keymap!',
-               meths.set_keymap, '', '', 'lhs', '', {})
     expect_err('Must give nonempty LHS!',
                meths.set_keymap, '', '', '', '', {})
   end)
@@ -523,15 +521,31 @@ describe('nvim_set_keymap', function()
     eq(0, meths.set_keymap('i', '', 'lhs', '<Nop>', {}))
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))  -- imap to <Nop> does nothing
+    eq(generate_mapargs('i', 0, 'lhs', '<Nop>', {}),
+       get_mapargs('i', 'lhs'))
 
     -- also test for case insensitivity
     eq(0, meths.set_keymap('i', '', 'lhs', '<nOp>', {}))
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))
+    -- note: RHS in returned mapargs() dict reflects the original RHS
+    -- provided by the user
+    eq(generate_mapargs('i', 0, 'lhs', '<nOp>', {}),
+       get_mapargs('i', 'lhs'))
 
     eq(0, meths.set_keymap('i', '', 'lhs', '<NOP>', {}))
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))
+    eq(generate_mapargs('i', 0, 'lhs', '<NOP>', {}),
+       get_mapargs('i', 'lhs'))
+  end)
+
+  it('treats an empty RHS in a mapping like a <Nop>', function()
+    eq(0, meths.set_keymap('i', '', 'lhs', '', {}))
+    command('normal ilhs')
+    eq({''}, curbufmeths.get_lines(0, -1, 0))
+    eq(generate_mapargs('i', 0, 'lhs', '', {}),
+       get_mapargs('i', 'lhs'))
   end)
 
   it('can set and unset <M-">', function()
@@ -540,6 +554,15 @@ describe('nvim_set_keymap', function()
     -- do_map continues to use the *old* length of LHS.
     eq(0, meths.set_keymap('i', '', '<M-">', 'foo', {}))
     eq(0, meths.set_keymap('i', 'u', '<M-">', '', {}))
+  end)
+
+  it('interprets control sequences in expr-quotes correctly when called '
+     ..'inside vim', function()
+    command([[call nvim_set_keymap('i', '', "\<space>", "\<tab>", {})]])
+    eq(generate_mapargs('i', 0, '<Space>', '\t', {}),
+       get_mapargs('i', '<Space>'))
+    feed('i ')
+    eq({'\t'}, curbufmeths.get_lines(0, -1, 0))
   end)
 
   it('throws appropriate error messages when setting <unique> maps', function()
@@ -571,6 +594,19 @@ describe('nvim_set_keymap', function()
 
     command('normal ilhs')
     eq({'0'}, curbufmeths.get_lines(0, -1, 0))
+  end)
+
+  it('can set mappings that do trigger other mappings', function()
+    meths.set_keymap('i', '', 'mhs', 'rhs', {})
+    meths.set_keymap('i', '', 'lhs', 'mhs', {})
+
+    command('normal imhs')
+    eq({'rhs'}, curbufmeths.get_lines(0, -1, 0))
+
+    command('normal! ggVGd')
+
+    command('normal ilhs')
+    eq({'rhs'}, curbufmeths.get_lines(0, -1, 0))
   end)
 
   it("can set noremap mappings that don't trigger other mappings", function()

@@ -666,10 +666,13 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   }
   assert(!(is_unmap && is_noremap));
   if (!is_unmap && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
-    err_msg = "Must give an RHS when setting keymap!%s";
-    err_arg = "";
-    err_type = kErrorTypeValidation;
-    goto FAIL_WITH_MESSAGE;
+    if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
+      parsed_args.rhs_is_noop = true;
+    } else {
+      // the given RHS was nonempty and not a <Nop>, but was parsed as if it
+      // were empty?
+      assert(false && "Failed to parse nonempty RHS!");
+    }
   } else if (is_unmap && parsed_args.rhs_len) {
     err_msg = "RHS must be empty when unmapping! Gave: %s";
     err_arg = (char *)parsed_args.rhs;

@@ -1249,6 +1249,17 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///
 /// To set a buffer-local mapping, use |nvim_buf_set_keymap|.
 ///
+/// Unlike ordinary Ex mode |:map| commands, special characters like literal
+/// spaces and newlines are treated as an actual part of the {lhs} or {rhs}.
+/// An empty {rhs} is treated like a |<Nop>|. |keycodes| are still replaced as
+/// usual.
+///
+/// `call nvim_set_keymap('', '', " <NL>", "", {'nowait':v:true})`
+///
+/// Is equivalent to,
+///
+/// `map <nowait> <Space><NL> <Nop>`
+///
 /// @param  mode  Mode short-name (the first character of an map command,
 ///               e.g. "n", "i", "v", "x", etc.) OR the string "!" (for
 ///               |:map!|). |:map| can be represented with an empty string, a
@@ -1257,8 +1268,8 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///                   by an empty string, "u", and "n", respectively.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  Optional parameters. Includes all |:map-arguments| as keys
-///               except |<buffer>|. Values should all be Booleans.
+/// @param  opts  |dict| of optional parameters. Includes all |:map-arguments|
+///               as keys except |<buffer>|. Values should all be Booleans.
 ///               Unrecognized keys will result in an error.
 /// @param[out]   err   Error details, if any.
 ///
