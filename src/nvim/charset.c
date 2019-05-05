@@ -701,7 +701,7 @@ int ptr2cells(const char_u *p)
 /// @param s
 ///
 /// @return number of character cells.
-int vim_strsize(char_u *s)
+int vim_strsize(const char_u *s)
 {
   return vim_strnsize(s, (int)MAXCOL);
 }
@@ -715,7 +715,7 @@ int vim_strsize(char_u *s)
 /// @param len
 ///
 /// @return Number of character cells.
-int vim_strnsize(char_u *s, int len)
+int vim_strnsize(const char_u *s, int len)
 {
   assert(s != NULL);
   int size = 0;
