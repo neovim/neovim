@@ -82,7 +82,6 @@ fun! Test_normal00_optrans()
 endfunc
 
 func! Test_normal01_keymodel()
-  throw "skipped: Nvim regression: 'keymodel'"
   call Setup_NewWindow()
   " Test 1: depending on 'keymodel' <s-down> does something different
   50

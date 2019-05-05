@@ -4968,13 +4968,15 @@ static int nfa_did_time_out(void)
 ///
 /// When "nfa_endp" is not NULL it is a required end-of-match position.
 ///
-/// Return TRUE if there is a match, FALSE otherwise.
+/// Return TRUE if there is a match, FALSE if there is no match,
+/// NFA_TOO_EXPENSIVE if we end up with too many states.
 /// When there is a match "submatch" contains the positions.
+///
 /// Note: Caller must ensure that: start != NULL.
 static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
                         regsubs_T *submatch, regsubs_T *m)
 {
-  int result;
+  int result = false;
   int flag = 0;
   bool go_to_nextline = false;
   nfa_thread_T *t;
