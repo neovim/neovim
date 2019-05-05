@@ -7064,6 +7064,8 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 				buffer
 		    filename	name of a file; only used when "bufnr" is not
 				present or it is invalid.
+		    module	name of a module; if given it will be used in
+				quickfix error window instead of the filename
 		    lnum	line number in the file
 		    pattern	search pattern used to locate the error
 		    col		column number
@@ -7107,9 +7109,6 @@ setqflist({list} [, {action}[, {what}]])		*setqflist()*
 		quickfix list in the stack and all the following lists are
 		freed. To add a new quickfix list at the end of the stack,
 		set "nr" in {what} to "$".
-
-		If {title} is given, it will be used to set |w:quickfix_title|
-		after opening the quickfix window.
 
 		If the optional {what} dictionary argument is supplied, then
 		only the items listed in {what} are set. The first {list}

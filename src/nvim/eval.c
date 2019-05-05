@@ -14892,7 +14892,7 @@ static void set_qf_ll_list(win_T *wp, typval_T *args, typval_T *rettv)
 
 skip_args:
   if (!title) {
-    title = (wp ? "setloclist()" : "setqflist()");
+    title = (wp ? ":setloclist()" : ":setqflist()");
   }
 
   recursive++;
