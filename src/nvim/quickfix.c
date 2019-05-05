@@ -3652,7 +3652,7 @@ void ex_cfile(exarg_T *eap)
   if (res >= 0 && qi != NULL) {
     qf_list_changed(qi, qi->qf_curlist);
   }
-  unsigned save_qfid;
+  unsigned save_qfid = 0;
   if (qi != NULL)
     save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
   if (au_name != NULL) {
@@ -3685,7 +3685,6 @@ void ex_vimgrep(exarg_T *eap)
   int fi;
   qf_info_T   *qi = &ql_info;
   int loclist_cmd = false;
-  unsigned save_qfid;
   qfline_T    *cur_qf_start;
   win_T *wp;
   long lnum;
@@ -3793,7 +3792,7 @@ void ex_vimgrep(exarg_T *eap)
 
   // Remember the current values of the quickfix list and qf_start, so that
   // we can check for autocommands changing the current quickfix list.
-  save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
+  unsigned save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
   cur_qf_start = qi->qf_lists[qi->qf_curlist].qf_start;
 
   seconds = (time_t)0;
