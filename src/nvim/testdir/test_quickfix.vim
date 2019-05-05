@@ -2862,13 +2862,13 @@ func Test_qftitle()
   " :cgetexpr
   exe "cgetexpr readfile('Xerr')"
   call assert_equal(":cgetexpr readfile('Xerr')",
-        \ getqflist({'title' : 1}).title)
+					\ getqflist({'title' : 1}).title)
 
   " :caddexpr
   call setqflist([], 'f')
   exe "caddexpr readfile('Xerr')"
   call assert_equal(":caddexpr readfile('Xerr')",
-        \ getqflist({'title' : 1}).title)
+					\ getqflist({'title' : 1}).title)
 
   " :cbuffer
   new Xerr
@@ -2966,6 +2966,20 @@ func Test_qfwin_pos()
   rightbelow copen
   call assert_equal(3, winnr())
   close
+endfunc
+
+" The following test used to crash Vim
+func Test_lhelpgrep_autocmd()
+  lhelpgrep quickfix
+  autocmd QuickFixCmdPost * call setloclist(0, [], 'f')
+  lhelpgrep buffer
+  call assert_equal('help', &filetype)
+  call assert_equal(0, getloclist(0, {'nr' : '$'}).nr)
+  lhelpgrep tabpage
+  call assert_equal('help', &filetype)
+  call assert_equal(1, getloclist(0, {'nr' : '$'}).nr)
+  au! QuickFixCmdPost
+  new | only
 endfunc
 
 " Test to make sure that an empty quickfix buffer is not reused for loading
