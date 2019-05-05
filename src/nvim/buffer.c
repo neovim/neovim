@@ -5116,7 +5116,7 @@ chk_modeline(
       save_SID = current_SID;
       current_SID = SID_MODELINE;
       // Make sure no risky things are executed as a side effect.
-      secure++;
+      secure = 1;
 
       retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
 

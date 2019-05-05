@@ -1840,11 +1840,10 @@ int do_set(
               // effects in secure mode.  Also when the value was
               // set with the P_INSECURE flag and is not
               // completely replaced.
-              if (secure
+              if ((opt_flags & OPT_MODELINE)
                   || sandbox != 0
-                  || (opt_flags & OPT_MODELINE)
                   || (!value_is_replaced && (*p & P_INSECURE))) {
-                secure++;
+                secure = 1;
               }
 
               // Handle side effects, and set the global value
