@@ -95,6 +95,7 @@ func Test_argadd_empty_curbuf()
   call assert_equal('Xargadd', bufname('%'))
   call assert_equal(2, line('$'))
 
+  call delete('Xargadd')
   %argd
   bwipe!
 endfunc
