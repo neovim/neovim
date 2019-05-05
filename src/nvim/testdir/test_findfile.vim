@@ -133,6 +133,7 @@ func Test_finddir()
   let save_shellslash = &shellslash
   let save_dir = getcwd()
   set path=,,
+  set shellslash
   call CreateFiles()
   cd Xdir1
 
