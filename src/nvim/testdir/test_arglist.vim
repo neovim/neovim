@@ -473,3 +473,10 @@ func Test_arg_all_expand()
   call assert_equal('notexist Xx\ x runtest.vim', expand('##'))
   call delete('Xx x')
 endfunc
+
+func Test_large_arg()
+  " Argument longer or equal to the number of columns used to cause
+  " access to invalid memory.
+  exe 'argadd ' .repeat('x', &columns)
+  args
+endfunc

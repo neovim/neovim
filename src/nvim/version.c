@@ -2068,7 +2068,7 @@ void list_in_columns(char **items, int size, int current)
 
   if (Columns < width) {
     // Not enough screen columns - show one per line
-    for (int i = 0; items[i] != NULL; i++) {
+    for (int i = 0; i < item_count; i++) {
       version_msg_wrap((char_u *)items[i], i == current);
       if (msg_col > 0) {
         msg_putchar('\n');
