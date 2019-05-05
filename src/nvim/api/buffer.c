@@ -672,6 +672,10 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
       // the given RHS was nonempty and not a <Nop>, but was parsed as if it
       // were empty?
       assert(false && "Failed to parse nonempty RHS!");
+      err_msg = "Parsing of nonempty RHS failed: %s";
+      err_arg = rhs.data;
+      err_type = kErrorTypeException;
+      goto FAIL_WITH_MESSAGE;
     }
   } else if (is_unmap && parsed_args.rhs_len) {
     err_msg = "RHS must be empty when unmapping! Gave: %s";
