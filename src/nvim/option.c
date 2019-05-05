@@ -1833,7 +1833,7 @@ int do_set(
 
             {
               uint32_t *p = insecure_flag(opt_idx, opt_flags);
-              int did_inc_secure = false;
+              const int secure_saved = secure;
 
               // When an option is set in the sandbox, from a
               // modeline or in secure mode, then deal with side
@@ -1844,23 +1844,20 @@ int do_set(
                   || sandbox != 0
                   || (opt_flags & OPT_MODELINE)
                   || (!value_is_replaced && (*p & P_INSECURE))) {
-                  did_inc_secure = true;
-                  secure++;
+                secure++;
               }
 
-              // Handle side effects, and set the global value for
-              // ":set" on local options. Note: when setting 'syntax'
-              // or 'filetype' autocommands may be triggered that can
-              // cause havoc.
+              // Handle side effects, and set the global value
+              // for ":set" on local options. Note: when setting
+              // 'syntax' or 'filetype' autocommands may be
+              // triggered that can cause havoc.
               errmsg = did_set_string_option(opt_idx, (char_u **)varp,
                                              new_value_alloced, oldval,
                                              errbuf, sizeof(errbuf),
                                              opt_flags, &value_checked);
 
-              if (did_inc_secure) {
-                secure--;
-              }
-          }
+              secure = secure_saved;
+            }
 
             if (errmsg == NULL) {
               if (!starting) {
