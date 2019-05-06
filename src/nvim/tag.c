@@ -2874,9 +2874,7 @@ static void get_tag_details(taggy_T *tag, dict_T *retdict)
     tv_dict_add_nr(retdict, S_LEN("matchnr"), tag->cur_match + 1);
     tv_dict_add_nr(retdict, S_LEN("bufnr"), tag->cur_fnum);
 
-    if ((pos = tv_list_alloc(4)) == NULL) {
-      return;
-    }
+    pos = tv_list_alloc(4);
     tv_dict_add_list(retdict, S_LEN("from"), pos);
 
     fmark = &tag->fmark;
@@ -2899,17 +2897,11 @@ void get_tagstack(win_T *wp, dict_T *retdict)
     tv_dict_add_nr(retdict, S_LEN("length"), wp->w_tagstacklen);
     tv_dict_add_nr(retdict, S_LEN("curidx"), wp->w_tagstackidx + 1);
     l = tv_list_alloc(2);
-    if (l == NULL) {
-      return;
-    }
     tv_dict_add_list(retdict, S_LEN("items"), l);
 
     for (i = 0; i < wp->w_tagstacklen; i++) {
-        if ((d = tv_dict_alloc()) == NULL) {
-          return;
-        }
+        d = tv_dict_alloc();
         tv_list_append_dict(l, d);
-
         get_tag_details(&wp->w_tagstack[i], d);
     }
 }
