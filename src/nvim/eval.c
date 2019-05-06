@@ -19863,9 +19863,9 @@ void ex_echo(exarg_T *eap)
   }
   eap->nextcmd = check_nextcmd(arg);
 
-  if (eap->skip)
-    --emsg_skip;
-  else {
+  if (eap->skip) {
+    emsg_skip--;
+  } else {
     // remove text that may still be there from the command
     msg_clr_eos();
     if (eap->cmdidx == CMD_echo) {
