@@ -19811,16 +19811,15 @@ void ex_echo(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   typval_T rettv;
-  bool needclr = true;
   bool atstart = true;
   const int did_emsg_before = did_emsg;
 
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n' && !got_int) {
-    /* If eval1() causes an error message the text from the command may
-     * still need to be cleared. E.g., "echo 22,44". */
-    need_clr_eos = needclr;
+    // If eval1() causes an error message the text from the command may
+    // still need to be cleared. E.g., "echo 22,44".
+    need_clr_eos = true;
 
     {
       char_u *p = arg;
@@ -19867,11 +19866,11 @@ void ex_echo(exarg_T *eap)
   if (eap->skip)
     --emsg_skip;
   else {
-    /* remove text that may still be there from the command */
-    if (needclr)
-      msg_clr_eos();
-    if (eap->cmdidx == CMD_echo)
+    // remove text that may still be there from the command
+    msg_clr_eos();
+    if (eap->cmdidx == CMD_echo) {
       msg_end();
+    }
   }
 }
 
