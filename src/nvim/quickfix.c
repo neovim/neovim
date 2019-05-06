@@ -1442,15 +1442,13 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
   }
   if (module == NULL || *module == NUL) {
     qfp->qf_module = NULL;
-  } else if ((qfp->qf_module = vim_strsave(module)) == NULL) {
-    xfree(qfp->qf_text);
-    xfree(qfp->qf_pattern);
-    xfree(qfp);
-    return QF_FAIL;
+  } else {
+    qfp->qf_module = vim_strsave(module);
   }
   qfp->qf_nr = nr;
-  if (type != 1 && !vim_isprintc(type))   /* only printable chars allowed */
+  if (type != 1 && !vim_isprintc(type)) {  // only printable chars allowed
     type = 0;
+  }
   qfp->qf_type = (char_u)type;
   qfp->qf_valid = valid;
 

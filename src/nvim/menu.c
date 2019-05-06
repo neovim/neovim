@@ -774,15 +774,12 @@ static vimmenu_T *find_menu(vimmenu_T *menu, char_u *name, int modes)
       if (menu_name_equal(name, menu)) {
         // Found menu
         if (*p != NUL && menu->children == NULL) {
-          if (*p != NUL) {
             EMSG(_(e_notsubmenu));
             return NULL;
-          } else if ((menu->modes & modes) == 0x0) {
-            EMSG(_(e_othermode));
-            return NULL;
-          }
-        }
-        if (*p == NUL) {  // found a full match
+        } else if ((menu->modes & modes) == 0x0) {
+          EMSG(_(e_othermode));
+          return NULL;
+        } else if (*p == NUL) {  // found a full match
           return menu;
         }
         break;
