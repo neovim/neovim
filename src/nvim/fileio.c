@@ -6520,21 +6520,17 @@ bool check_nomodeline(char_u **argp)
   return true;
 }
 
-/*
- * Prepare for executing autocommands for (hidden) buffer "buf".
- * Search for a visible window containing the current buffer.  If there isn't
- * one then use "aucmd_win".
- * Set "curbuf" and "curwin" to match "buf".
- */
-void 
-aucmd_prepbuf (
-    aco_save_T *aco,               /* structure to save values in */
-    buf_T *buf               /* new curbuf */
-)
+/// Prepare for executing autocommands for (hidden) buffer `buf`.
+/// If the current buffer is not in any visible window, put it in a temporary
+/// floating window `aucmd_win`.
+/// Set `curbuf` and `curwin` to match `buf`.
+///
+/// @param aco  structure to save values in
+/// @param buf  new curbuf
+void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 {
-  win_T       *win;
-  int save_ea;
-  int save_acd;
+  win_T *win;
+  bool need_append = true;  // Append `aucmd_win` to the window list.
 
   /* Find a window that is for the new buffer */
   if (buf == curbuf) {          /* be quick when buf is curbuf */
@@ -6549,9 +6545,10 @@ aucmd_prepbuf (
     }
   }
 
-  /* Allocate "aucmd_win" when needed. */
+  // Allocate the `aucmd_win` dummy floating window.
   if (win == NULL && aucmd_win == NULL) {
     win_alloc_aucmd_win();
+    need_append = false;
   }
   if (win == NULL && aucmd_win_used)
     /* Strange recursive autocommand, fall back to using the current
@@ -6586,21 +6583,14 @@ aucmd_prepbuf (
     aco->globaldir = globaldir;
     globaldir = NULL;
 
-
-    /* Split the current window, put the aucmd_win in the upper half.
-     * We don't want the BufEnter or WinEnter autocommands. */
-    block_autocmds();
-    make_snapshot(SNAP_AUCMD_IDX);
-    save_ea = p_ea;
-    p_ea = false;
-
-    /* Prevent chdir() call in win_enter_ext(), through do_autochdir(). */
-    save_acd = p_acd;
+    block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
+    if (need_append) {
+      win_append(lastwin, aucmd_win);
+    }
+    // Prevent chdir() call in win_enter_ext(), through do_autochdir()
+    int save_acd = p_acd;
     p_acd = false;
-
-    (void)win_split_ins(0, WSP_TOP, aucmd_win, 0);
-    (void)win_comp_pos();       /* recompute window positions */
-    p_ea = save_ea;
+    win_enter(aucmd_win, false);
     p_acd = save_acd;
     unblock_autocmds();
     curwin = aucmd_win;
@@ -6616,8 +6606,6 @@ aucmd_prepbuf (
 /// @param aco  structure holding saved values
 void aucmd_restbuf(aco_save_T *aco)
 {
-  int dummy;
-
   if (aco->use_aucmd_win) {
     curbuf->b_nwindows--;
     // Find "aucmd_win", it can't be closed, but it may be in another tab page.
@@ -6636,8 +6624,6 @@ void aucmd_restbuf(aco_save_T *aco)
     }
 win_found:
 
-    // Remove the window and frame from the tree of frames.
-    (void)winframe_remove(curwin, &dummy, NULL);
     win_remove(curwin, NULL);
     aucmd_win_used = false;
     last_status(false);         // may need to remove last status line
@@ -6647,8 +6633,6 @@ win_found:
       close_tabpage(curtab);
     }
 
-    restore_snapshot(SNAP_AUCMD_IDX, false);
-    (void)win_comp_pos();       // recompute window positions
     unblock_autocmds();
 
     if (win_valid(aco->save_curwin)) {
