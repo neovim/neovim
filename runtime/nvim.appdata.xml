@@ -8,6 +8,7 @@
 -->
 <component type="desktop-application">
   <id>nvim</id>
+  <translation type="gettext">nvim</translation>
   <project_license>Apache-2.0</project_license>
   <metadata_license>CC0-1.0</metadata_license>
   <name>Neovim</name>
@@ -24,6 +25,16 @@
     </screenshot>
   </screenshots>
 
+  <releases>
+    <release date="2019-04-29" version="0.3.5"/>
+    <release date="2019-01-13" version="0.3.4"/>
+    <release date="2019-01-05" version="0.3.3"/>
+    <release date="2018-12-31" version="0.3.2"/>
+    <release date="2018-07-19" version="0.3.1"/>
+    <release date="2018-07-11" version="0.3.0"/>
+  </releases>
+  
+  <content_rating type="oars-1.1"/>
   <launchable type="desktop-id">nvim.desktop</launchable>
   <url type="homepage">https://neovim.io/</url>
   <url type="bugtracker">https://github.com/neovim/neovim/issues</url>
