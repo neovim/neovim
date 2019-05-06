@@ -1880,7 +1880,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
     }
     // Concat pieces with the same highlight
     ga_concat_len(&msg_ext_last_chunk, (char *)str,
-                  strnlen((char *)str, maxlen));
+                  strnlen((char *)str, maxlen));  // -V781
     return;
   }
 
