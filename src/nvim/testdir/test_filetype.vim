@@ -200,7 +200,7 @@ let s:filename_checks = {
     \ 'hog': ['file.hog', 'snort.conf', 'vision.conf'],
     \ 'hostconf': ['/etc/host.conf'],
     \ 'hostsaccess': ['/etc/hosts.allow', '/etc/hosts.deny'],
-    \ 'htmlcheetah': ['file.tmpl'],
+    \ 'template': ['file.tmpl'],
     \ 'htmlm4': ['file.html.m4'],
     \ 'httest': ['file.htt', 'file.htb'],
     \ 'ibasic': ['file.iba', 'file.ibi'],
