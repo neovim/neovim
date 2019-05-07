@@ -12,9 +12,14 @@ struct signlist
     int id;             // unique identifier for each placed sign
     linenr_T lnum;      // line number which has this sign
     int typenr;         // typenr of sign
+    char_u *group;		   // sign group
+    int priority;	     // priority for highlighting
     signlist_T *next;   // next signlist entry
     signlist_T *prev;   // previous entry -- for easy reordering
 };
+
+// Default sign priority for highlighting
+#define SIGN_DEF_PRIO	10
 
 // type argument for buf_getsigntype() and sign_get_attr()
 typedef enum {

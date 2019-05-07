@@ -482,6 +482,11 @@ EXTERN buf_T    *curbuf INIT(= NULL);    // currently active buffer
 #define FOR_ALL_BUFFERS_BACKWARDS(buf) \
   for (buf_T *buf = lastbuf; buf != NULL; buf = buf->b_prev)
 
+// Iterate through all the signs placed in a buffer
+#define FOR_ALL_SIGNS_IN_BUF(buf) \
+	for (sign = buf->b_signlist; sign != NULL; sign = sign->next)
+
+
 /*
  * List of files being edited (global argument list).  curwin->w_alist points
  * to this when the window is using the global argument list.

@@ -916,6 +916,15 @@ Mappings:				    *mapping-functions*
 	maparg()		get rhs of a mapping
 	wildmenumode()		check if the wildmode is active
 
+Signs:						*sign-functions*
+	sign_define()		define or update a sign
+	sign_getdefined()	get a list of defined signs
+	sign_getplaced()	get a list of placed signs
+	sign_place()		place a sign
+	sign_undefine()		undefine a sign
+	sign_unplace()		unplace a sign
+
+
 Testing:				    *test-functions*
 	assert_equal()		assert that two expressions values are equal
 	assert_notequal()	assert that two expressions values are not equal

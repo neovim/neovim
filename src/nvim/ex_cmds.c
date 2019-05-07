@@ -5589,6 +5589,275 @@ static int sign_cmd_idx(
 }
 
 /*
+ * Find a sign by name. Also returns pointer to the previous sign.
+ */
+    static sign_T *
+sign_find(char_u *name, sign_T **sp_prev)
+{
+    sign_T *sp;
+
+    if (sp_prev != NULL)
+	*sp_prev = NULL;
+    for (sp = first_sign; sp != NULL; sp = sp->sn_next)
+    {
+	if (STRCMP(sp->sn_name, name) == 0)
+	    break;
+	if (sp_prev != NULL)
+	    *sp_prev = sp;
+    }
+
+    return sp;
+}
+
+/*
+ * Define a new sign or update an existing sign
+ */
+int sign_define_by_name(
+	char_u *name,
+	char_u *icon,
+	char_u *linehl,
+	char_u *text,
+	char_u *texthl,
+  char_u *numhl
+)
+{
+    sign_T	*sp_prev;
+    sign_T	*sp;
+
+    sp = sign_find(name, &sp_prev);
+    if (sp == NULL)
+    {
+      sign_T	*lp;
+      int	start = next_sign_typenr;
+
+      // Allocate a new sign.
+      sp = xcalloc(1, sizeof(sign_T));
+
+      // Check that next_sign_typenr is not already being used.
+      // This only happens after wrapping around.  Hopefully
+      // another one got deleted and we can use its number.
+      for (lp = first_sign; lp != NULL; ) {
+        if (lp->sn_typenr == next_sign_typenr) {
+          ++next_sign_typenr;
+          if (next_sign_typenr == MAX_TYPENR) {
+            next_sign_typenr = 1;
+          }
+          if (next_sign_typenr == start) {
+            xfree(sp);
+            EMSG(_("E612: Too many signs defined"));
+            return FAIL;
+          }
+          lp = first_sign;  // start all over
+          continue;
+        }
+        lp = lp->sn_next;
+      }
+
+      sp->sn_typenr = next_sign_typenr;
+      if (++next_sign_typenr == MAX_TYPENR)
+        next_sign_typenr = 1; // wrap around
+
+      sp->sn_name = vim_strsave(name);
+
+      // add the new sign to the list of signs
+      if (sp_prev == NULL) {
+        first_sign = sp;
+      } else {
+        sp_prev->sn_next = sp;
+      }
+    }
+
+    // set values for a defined sign.
+    if (icon != NULL)
+    {
+      xfree(sp->sn_icon);
+      sp->sn_icon = vim_strsave(icon);
+      backslash_halve(sp->sn_icon);
+# ifdef FEAT_SIGN_ICONS
+      if (gui.in_use)
+      {
+        out_flush();
+        if (sp->sn_image != NULL)
+          gui_mch_destroy_sign(sp->sn_image);
+        sp->sn_image = gui_mch_register_sign(sp->sn_icon);
+      }
+# endif
+    }
+
+    if (text != NULL)
+    {
+      char_u	*s;
+      char_u	*endp;
+      int	cells;
+      int	len;
+
+      endp = text + (int)STRLEN(text);
+      for (s = text; s + 1 < endp; ++s) {
+        if (*s == '\\')
+        {
+          // Remove a backslash, so that it is possible
+          // to use a space.
+          STRMOVE(s, s + 1);
+          --endp;
+        }
+      }
+      // Count cells and check for non-printable chars
+      cells = 0;
+      for (s = text; s < endp; s += (*mb_ptr2len)(s)) {
+        if (!vim_isprintc(utf_ptr2char(s))) {
+            break;
+        }
+          cells += utf_ptr2cells(s);
+      }
+      // Currently must be one or two display cells
+      if (s != endp || cells < 1 || cells > 2) {
+        EMSG2(_("E239: Invalid sign text: %s"), text);
+        return FAIL;
+      }
+
+      xfree(sp->sn_text);
+      // Allocate one byte more if we need to pad up
+      // with a space.
+      len = (int)(endp - text + ((cells == 1) ? 1 : 0));
+      sp->sn_text = vim_strnsave(text, len);
+
+      if (cells == 1)
+        STRCPY(sp->sn_text + len - 1, " ");
+    }
+
+    if (linehl != NULL)
+      sp->sn_line_hl = syn_check_group(linehl, (int)STRLEN(linehl));
+
+    if (texthl != NULL)
+      sp->sn_text_hl = syn_check_group(texthl, (int)STRLEN(texthl));
+
+    if (numhl != NULL)
+      sp->sn_num_hl = syn_check_group(numhl, (int)STRLEN(numhl));
+
+    return OK;
+}
+
+/*
+ * Free the sign specified by 'name'.
+ */
+    int
+sign_undefine_by_name(char_u *name)
+{
+    sign_T	*sp_prev;
+    sign_T	*sp;
+
+    sp = sign_find(name, &sp_prev);
+    if (sp == NULL)
+    {
+	EMSG2(_("E155: Unknown sign: %s"), name);
+	return FAIL;
+    }
+    sign_undefine(sp, sp_prev);
+
+    return OK;
+}
+
+/*
+ * List the signs matching 'name'
+ */
+    static void
+sign_list_by_name(char_u *name)
+{
+    sign_T	*sp;
+
+    sp = sign_find(name, NULL);
+    if (sp != NULL)
+	sign_list_defined(sp);
+    else
+	EMSG2(_("E155: Unknown sign: %s"), name);
+}
+
+/*
+ * Place a sign at the specifed file location or update a sign.
+ */
+int sign_place(
+	int		*sign_id,
+	char_u		*sign_group,
+	char_u		*sign_name,
+	buf_T		*buf,
+	linenr_T	lnum,
+	int		prio
+)
+{
+  sign_T	*sp;
+
+  // Check for reserved character '*' in group name
+  if (sign_group != NULL && (*sign_group == '*' || *sign_group == '\0')) {
+    return FAIL;
+  }
+
+  for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
+    if (STRCMP(sp->sn_name, sign_name) == 0) {
+      break;
+    }
+  }
+  if (sp == NULL)
+  {
+    EMSG2(_("E155: Unknown sign: %s"), sign_name);
+    return FAIL;
+  }
+  if (*sign_id == 0)
+  {
+    // Allocate a new sign id
+    int		id = 1;
+    signlist_T	*sign;
+
+    while ((sign = buf_getsign_with_id(buf, id, sign_group)) != NULL) {
+      id++;
+    }
+
+    *sign_id = id;
+  }
+
+  if (lnum > 0) {
+    // ":sign place {id} line={lnum} name={name} file={fname}":
+    // place a sign
+    buf_addsign(buf, *sign_id, sign_group, prio, lnum, sp->sn_typenr);
+  } else {
+    // ":sign place {id} file={fname}": change sign type
+    lnum = buf_change_sign_type(buf, *sign_id, sign_group, sp->sn_typenr);
+  }
+  if (lnum > 0) {
+    redraw_buf_line_later(buf, lnum);
+  } else {
+    EMSG2(_("E885: Not possible to change sign %s"), sign_name);
+    return FAIL;
+  }
+
+  return OK;
+}
+
+/*
+ * Unplace the specified sign
+ */
+    int
+sign_unplace(int sign_id, char_u *sign_group, buf_T *buf)
+{
+  if (sign_id == 0)
+  {
+    // Delete all the signs in the specified buffer
+    redraw_buf_later(buf, NOT_VALID);
+    buf_delete_signs(buf, sign_group);
+  } else {
+    linenr_T	lnum;
+
+    // Delete only the specified signs
+    lnum = buf_delsign(buf, sign_id, sign_group);
+    if (lnum == 0) {
+      return FAIL;
+    }
+    redraw_buf_line_later(buf, lnum);
+  }
+
+  return OK;
+}
+
+/*
  * ":sign" command
  */
 void ex_sign(exarg_T *eap)
@@ -5597,7 +5866,6 @@ void ex_sign(exarg_T *eap)
   char_u *p;
   int idx;
   sign_T *sp;
-  sign_T *sp_prev;
 
   // Parse the subcommand.
   p = skiptowhite(arg);
@@ -5618,6 +5886,13 @@ void ex_sign(exarg_T *eap)
     } else if (*arg == NUL) {
       EMSG(_("E156: Missing sign name"));
     } else {
+      char_u	*name;
+      char_u	*icon = NULL;
+      char_u	*text = NULL;
+      char_u	*linehl = NULL;
+      char_u	*texthl = NULL;
+      char_u	*numhl = NULL;
+
       // Isolate the sign name.  If it's a number skip leading zeroes,
       // so that "099" and "99" are the same sign.  But keep "0".
       p = skiptowhite(arg);
@@ -5627,57 +5902,11 @@ void ex_sign(exarg_T *eap)
       while (arg[0] == '0' && arg[1] != NUL) {
         arg++;
       }
+      name = vim_strsave(arg);
 
-      sp_prev = NULL;
-      for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-        if (STRCMP(sp->sn_name, arg) == 0) {
-          break;
-        }
-        sp_prev = sp;
-      }
       if (idx == SIGNCMD_DEFINE) {
+        int failed = FALSE;
         // ":sign define {name} ...": define a sign
-        if (sp == NULL) {
-          sign_T *lp;
-          int start = next_sign_typenr;
-
-          // Allocate a new sign.
-          sp = xcalloc(1, sizeof(sign_T));
-
-          // Check that next_sign_typenr is not already being used.
-          // This only happens after wrapping around.  Hopefully
-          // another one got deleted and we can use its number.
-          for (lp = first_sign; lp != NULL; ) {
-            if (lp->sn_typenr == next_sign_typenr) {
-              next_sign_typenr++;
-              if (next_sign_typenr == MAX_TYPENR) {
-                next_sign_typenr = 1;
-              }
-              if (next_sign_typenr == start) {
-                xfree(sp);
-                EMSG(_("E612: Too many signs defined"));
-                return;
-              }
-              lp = first_sign;  // start all over
-              continue;
-            }
-            lp = lp->sn_next;
-          }
-
-          sp->sn_typenr = next_sign_typenr;
-          if (++next_sign_typenr == MAX_TYPENR) {
-            next_sign_typenr = 1;  // wrap around
-          }
-
-          sp->sn_name = vim_strsave(arg);
-
-          // add the new sign to the list of signs
-          if (sp_prev == NULL) {
-            first_sign = sp;
-          } else {
-            sp_prev->sn_next = sp;
-          }
-        }
 
         // set values for a defined sign.
         for (;;) {
@@ -5688,88 +5917,62 @@ void ex_sign(exarg_T *eap)
           p = skiptowhite_esc(arg);
           if (STRNCMP(arg, "icon=", 5) == 0) {
             arg += 5;
-            xfree(sp->sn_icon);
-            sp->sn_icon = vim_strnsave(arg, (int)(p - arg));
-            backslash_halve(sp->sn_icon);
+            icon = vim_strnsave(arg, (int)(p - arg));
           } else if (STRNCMP(arg, "text=", 5) == 0) {
-            char_u *s;
-            int cells;
-            int len;
-
             arg += 5;
-            for (s = arg; s + 1 < p; s++) {
-              if (*s == '\\') {
-                // Remove a backslash, so that it is possible
-                // to use a space.
-                STRMOVE(s, s + 1);
-                p--;
-              }
-            }
-
-            // Count cells and check for non-printable chars
-            cells = 0;
-            for (s = arg; s < p; s += utfc_ptr2len(s)) {
-              if (!vim_isprintc(utf_ptr2char(s))) {
-                break;
-              }
-              cells += utf_ptr2cells(s);
-            }
-            // Currently must be one or two display cells
-            if (s != p || cells < 1 || cells > 2) {
-              *p = NUL;
-              EMSG2(_("E239: Invalid sign text: %s"), arg);
-              return;
-            }
-
-            xfree(sp->sn_text);
-            // Allocate one byte more if we need to pad up
-            // with a space.
-            len = (int)(p - arg + ((cells == 1) ? 1 : 0));
-            sp->sn_text = vim_strnsave(arg, len);
-
-            if (cells == 1) {
-              STRCPY(sp->sn_text + len - 1, " ");
-            }
+            text = vim_strnsave(arg, (int)(p - arg));
           } else if (STRNCMP(arg, "linehl=", 7) == 0) {
             arg += 7;
-            sp->sn_line_hl = syn_check_group(arg, (int)(p - arg));
+            linehl = vim_strnsave(arg, (int)(p - arg));
           } else if (STRNCMP(arg, "texthl=", 7) == 0) {
             arg += 7;
-            sp->sn_text_hl = syn_check_group(arg, (int)(p - arg));
+            texthl = vim_strnsave(arg, (int)(p - arg));
           } else if (STRNCMP(arg, "numhl=", 6) == 0) {
             arg += 6;
-            sp->sn_num_hl = syn_check_group(arg, (int)(p - arg));
+            numhl = vim_strnsave(arg, (int)(p - arg));
           } else {
             EMSG2(_(e_invarg2), arg);
-            return;
+            failed = TRUE;
+            break;
           }
         }
-      } else if (sp == NULL) {
-        EMSG2(_("E155: Unknown sign: %s"), arg);
+
+        if (!failed)
+          sign_define_by_name(name, icon, linehl, text, texthl, numhl);
+
+        xfree(icon);
+        xfree(text);
+        xfree(linehl);
+        xfree(texthl);
       } else if (idx == SIGNCMD_LIST) {
         // ":sign list {name}"
-        sign_list_defined(sp);
+        sign_list_by_name(name);
       } else {
         // ":sign undefine {name}"
-        sign_undefine(sp, sp_prev);
+        sign_undefine_by_name(name);
       }
+
+      xfree(name);
+      return;
     }
   } else {
     int id = -1;
     linenr_T lnum = -1;
     char_u *sign_name = NULL;
+    char_u *group = NULL;
+    int prio = SIGN_DEF_PRIO;
     char_u *arg1;
+    int	bufarg = FALSE;
 
     if (*arg == NUL) {
       if (idx == SIGNCMD_PLACE) {
         // ":sign place": list placed signs in all buffers
-        sign_list_placed(NULL);
+        sign_list_placed(NULL, NULL);
       } else if (idx == SIGNCMD_UNPLACE) {
         // ":sign unplace": remove placed sign at cursor
         id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum);
         if (id > 0) {
-          buf_delsign(curwin->w_buffer, id);
-          redraw_buf_line_later(curwin->w_buffer, curwin->w_cursor.lnum);
+          sign_unplace(id, NULL, curwin->w_buffer);
         } else {
           EMSG(_("E159: Missing sign number"));
         }
@@ -5797,9 +6000,7 @@ void ex_sign(exarg_T *eap)
         if (idx == SIGNCMD_UNPLACE && *arg == NUL) {
           // ":sign unplace {id}": remove placed sign by number
           FOR_ALL_BUFFERS(buf) {
-            if ((lnum = buf_delsign(buf, id)) != 0) {
-              redraw_buf_line_later(buf, lnum);
-            }
+            sign_unplace(id, NULL, buf);
           }
           return;
         }
@@ -5810,7 +6011,7 @@ void ex_sign(exarg_T *eap)
     // Leave "arg" pointing to {fname}.
 
     buf_T *buf = NULL;
-    for (;;) {
+    while (*arg != NUL) {
       if (STRNCMP(arg, "line=", 5) == 0) {
         arg += 5;
         lnum = atoi((char *)arg);
@@ -5832,9 +6033,21 @@ void ex_sign(exarg_T *eap)
         while (sign_name[0] == '0' && sign_name[1] != NUL) {
           sign_name++;
         }
+ 	    } else if (STRNCMP(arg, "group=", 6) == 0) {
+        arg += 6;
+        group = arg;
+        arg = skiptowhite(arg);
+        if (*arg != NUL) {
+          *arg++ = NUL;
+        }
+      } else if (STRNCMP(arg, "priority=", 9) == 0) {
+        arg += 9;
+        prio = atoi((char *)arg);
+        arg = skiptowhite(arg);
       } else if (STRNCMP(arg, "file=", 5) == 0) {
         arg += 5;
-        buf = buflist_findname(arg);
+        buf = buflist_findname_exp(arg);
+        bufarg = TRUE;
         break;
       } else if (STRNCMP(arg, "buffer=", 7) == 0) {
         arg += 7;
@@ -5842,6 +6055,7 @@ void ex_sign(exarg_T *eap)
         if (*skipwhite(arg) != NUL) {
           EMSG(_(e_trailing));
         }
+        bufarg = TRUE;
         break;
       } else {
         EMSG(_(e_invarg));
@@ -5850,20 +6064,28 @@ void ex_sign(exarg_T *eap)
       arg = skipwhite(arg);
     }
 
-    if (buf == NULL) {
+    if ((!bufarg && group == NULL) || (group != NULL && *group == '\0')) {
+      // File or buffer is not specified or an empty group is used
+      EMSG(_(e_invarg));
+      return;
+    }
+
+    if (bufarg && buf == NULL) {
       EMSG2(_("E158: Invalid buffer name: %s"), arg);
     } else if (id <= 0 && !(idx == SIGNCMD_UNPLACE && id == -2)) {
-      if (lnum >= 0 || sign_name != NULL) {
+      if ((group == NULL) && (lnum >= 0 || sign_name != NULL)) {
         EMSG(_(e_invarg));
       } else {
         // ":sign place file={fname}": list placed signs in one file
-        sign_list_placed(buf);
+        // ":sign place group={group} file={fname}"
+        // ":sign place group=* file={fname}"
+        sign_list_placed(buf, group);
       }
     } else if (idx == SIGNCMD_JUMP) {
       // ":sign jump {id} file={fname}"
       if (lnum >= 0 || sign_name != NULL) {
         EMSG(_(e_invarg));
-      } else if ((lnum = buf_findsign(buf, id)) > 0) {
+      } else if ((lnum = buf_findsign(buf, id, group)) > 0) {
         // goto a sign ...
         if (buf_jump_open_win(buf) != NULL) {
           // ... in a current window
@@ -5892,40 +6114,170 @@ void ex_sign(exarg_T *eap)
       if (lnum >= 0 || sign_name != NULL) {
         EMSG(_(e_invarg));
       } else if (id == -2) {
-        // ":sign unplace * file={fname}"
-        redraw_buf_later(buf, NOT_VALID);
-        buf_delete_signs(buf);
+        if (buf != NULL) {
+          // ":sign unplace * file={fname}"
+          sign_unplace(0, group, buf);
+        } else {
+          // ":sign unplace * group=*": remove all placed signs
+          FOR_ALL_BUFFERS(buf) {
+            if (buf->b_signlist != NULL) {
+              buf_delete_signs(buf, group);
+            }
+          }
+        }
       } else {
-        // ":sign unplace {id} file={fname}"
-        lnum = buf_delsign(buf, id);
-        redraw_buf_line_later(buf, lnum);
-      }
-    } else if (sign_name != NULL) {
-      // idx == SIGNCMD_PLACE
-      for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
-        if (STRCMP(sp->sn_name, sign_name) == 0) {
-          break;
+        if (buf != NULL) {
+          // ":sign unplace {id} file={fname}"
+          // ":sign unplace {id} group={group} file={fname}"
+          // ":sign unplace {id} group=* file={fname}"
+          sign_unplace(id, group, buf);
+        } else {
+          // ":sign unplace {id} group={group}":
+          // ":sign unplace {id} group=*":
+          //     remove all placed signs in this group.
+          FOR_ALL_BUFFERS(buf) {
+            if (buf->b_signlist != NULL) {
+              sign_unplace(id, group, buf);
+            }
+          }
         }
       }
-      if (sp == NULL) {
-        EMSG2(_("E155: Unknown sign: %s"), sign_name);
-        return;
-      }
-      if (lnum > 0) {
-        // ":sign place {id} line={lnum} name={name} file={fname}":
-        // place a sign
-        buf_addsign(buf, id, lnum, sp->sn_typenr);
-      } else {
-        // ":sign place {id} file={fname}": change sign type
-        lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
-      }
-      if (lnum > 0) {
-        redraw_buf_line_later(buf, lnum);
-      } else {
-        EMSG2(_("E885: Not possible to change sign %s"), sign_name);
-      }
+    } else if (sign_name != NULL && buf != NULL) {
+      // idx == SIGNCMD_PLACE
+      sign_place(&id, group, sign_name, buf, lnum, prio);
     } else {
       EMSG(_(e_invarg));
+    }
+  }
+}
+
+/*
+ * Return information about a specified sign
+ */
+static void sign_getinfo(sign_T *sp, dict_T *retdict)
+{
+  char_u	*p;
+
+  tv_dict_add_str(retdict, S_LEN("name"), (char_u *)sp->sn_name);
+  if (sp->sn_icon != NULL) {
+    tv_dict_add_str(retdict, S_LEN("icon"), (char_u *)sp->sn_icon);
+  }
+  if (sp->sn_text != NULL) {
+    tv_dict_add_str(retdict, S_LEN("text"), (char_u *)sp->sn_text);
+  }
+  if (sp->sn_line_hl > 0) {
+    p = get_highlight_name_ext(NULL, sp->sn_line_hl - 1, FALSE);
+    if (p == NULL) {
+      p = (char_u *)"NONE";
+    }
+    tv_dict_add_str(retdict, S_LEN("linehl"), (char_u *)p);
+  }
+  if (sp->sn_text_hl > 0) {
+    p = get_highlight_name_ext(NULL, sp->sn_text_hl - 1, FALSE);
+    if (p == NULL) {
+      p = (char_u *)"NONE";
+    }
+    tv_dict_add_str(retdict, S_LEN("texthl"), (char_u *)p);
+  }
+  if (sp->sn_num_hl > 0) {
+    p = get_highlight_name_ext(NULL, sp->sn_num_hl - 1, FALSE);
+    if (p == NULL) {
+      p = (char_u *)"NONE";
+    }
+    tv_dict_add_str(retdict, S_LEN("numhl"), (char_u *)p);
+  }
+}
+
+/*
+ * If 'name' is NULL, return a list of all the defined signs.
+ * Otherwise, return information about the specified sign.
+ */
+void sign_getlist(char_u *name, list_T *retlist)
+{
+  sign_T	*sp = first_sign;
+  dict_T	*dict;
+
+  if (name != NULL) {
+    sp = sign_find(name, NULL);
+    if (sp == NULL) {
+      return;
+    }
+  }
+
+  for (; sp != NULL && !got_int; sp = sp->sn_next) {
+    if ((dict = tv_dict_alloc()) == NULL) {
+      return;
+    }
+    tv_list_append_dict(retlist, dict);
+    sign_getinfo(sp, dict);
+
+    if (name != NULL) {	    // handle only the specified sign
+      break;
+    }
+  }
+}
+
+/*
+ * Return information about all the signs placed in a buffer
+ */
+static void sign_get_placed_in_buf(
+    buf_T		*buf,
+    linenr_T	lnum,
+    int		sign_id,
+    char_u		*sign_group,
+    list_T		*retlist)
+{
+  dict_T	*d;
+  list_T	*l;
+  signlist_T	*sign;
+  dict_T	*sdict;
+
+  if ((d = tv_dict_alloc()) == NULL) {
+    return;
+  }
+  tv_list_append_dict(retlist, d);
+
+  tv_dict_add_nr(d, S_LEN("bufnr"), (long)buf->b_fnum);
+
+  if ((l = tv_list_alloc(kListLenMayKnow)) == NULL) {
+    return;
+  }
+  tv_dict_add_list(d, S_LEN("signs"), l);
+
+  FOR_ALL_SIGNS_IN_BUF(buf) {
+    if (!sign_in_group(sign, sign_group)) {
+      continue;
+    }
+    if ((lnum == 0 && sign_id == 0) ||
+        (sign_id == 0 && lnum == sign->lnum) ||
+        (lnum == 0 && sign_id == sign->id) ||
+        (lnum == sign->lnum && sign_id == sign->id)) {
+      if ((sdict = sign_get_info(sign)) != NULL) {
+        tv_list_append_dict(l, sdict);
+      }
+    }
+  }
+}
+
+/*
+ * Get a list of signs placed in buffer 'buf'. If 'num' is non-zero, return the
+ * sign placed at the line number. If 'lnum' is zero, return all the signs
+ * placed in 'buf'. If 'buf' is NULL, return signs placed in all the buffers.
+ */
+void sign_get_placed(
+    buf_T		*buf,
+    linenr_T	lnum,
+    int		sign_id,
+    char_u		*sign_group,
+    list_T		*retlist)
+{
+  if (buf != NULL) {
+    sign_get_placed_in_buf(buf, lnum, sign_id, sign_group, retlist);
+  } else {
+    FOR_ALL_BUFFERS(buf) {
+      if (buf->b_signlist != NULL) {
+        sign_get_placed_in_buf(buf, 0, sign_id, sign_group, retlist);
+      }
     }
   }
 }
@@ -6050,7 +6402,6 @@ char_u * sign_typenr2name(int typenr)
   return (char_u *)_("[Deleted]");
 }
 
-#if defined(EXITFREE)
 /*
  * Undefine/free all signs.
  */
@@ -6059,7 +6410,6 @@ void free_signs(void)
   while (first_sign != NULL)
     sign_undefine(first_sign, NULL);
 }
-#endif
 
 static enum
 {
