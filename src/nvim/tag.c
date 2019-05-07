@@ -2044,9 +2044,10 @@ get_tagfname (
           return FAIL;  // avoid duplicate file names
         }
       }
-    } else
-      STRLCPY(buf, ((char_u **)(tag_fnames.ga_data))[
-            tnp->tn_hf_idx++], MAXPATHL);
+    } else {
+      STRLCPY(buf, ((char_u **)(tag_fnames.ga_data))[tnp->tn_hf_idx++],
+              MAXPATHL);
+    }
     return OK;
   }
 
