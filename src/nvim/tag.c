@@ -1970,7 +1970,13 @@ static garray_T tag_fnames = GA_EMPTY_INIT_VALUE;
  */
 static void found_tagfile_cb(char_u *fname, void *cookie)
 {
-  GA_APPEND(char_u *, &tag_fnames, vim_strsave(fname));
+  char_u *const tag_fname = vim_strsave(fname);
+
+#ifdef BACKSLASH_IN_FILENAME
+    slash_adjust(tag_fname);
+#endif
+  simplify_filename(tag_fname);
+  GA_APPEND(char_u *, &tag_fnames, tag_fname);
 }
 
 #if defined(EXITFREE)
@@ -2028,9 +2034,20 @@ get_tagfname (
       ++tnp->tn_hf_idx;
       STRCPY(buf, p_hf);
       STRCPY(path_tail(buf), "tags");
-    } else
-      STRLCPY(buf, ((char_u **)(tag_fnames.ga_data))[
-            tnp->tn_hf_idx++], MAXPATHL);
+#ifdef BACKSLASH_IN_FILENAME
+      slash_adjust(buf);
+#endif
+      simplify_filename(buf);
+
+      for (int i = 0; i < tag_fnames.ga_len; i++) {
+        if (STRCMP(buf, ((char_u **)(tag_fnames.ga_data))[i]) == 0) {
+          return FAIL;  // avoid duplicate file names
+        }
+      }
+    } else {
+      STRLCPY(buf, ((char_u **)(tag_fnames.ga_data))[tnp->tn_hf_idx++],
+              MAXPATHL);
+    }
     return OK;
   }
 
