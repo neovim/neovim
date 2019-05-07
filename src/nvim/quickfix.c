@@ -430,7 +430,11 @@ static efm_T * parse_efm_option(char_u *efm)
   for (int round = FMT_PATTERNS - 1; round >= 0; ) {
     i += STRLEN(fmt_pat[round--].pattern);
   }
+#ifdef BACKSLASH_IN_FILENAME
+  i += 12;  // "%f" can become twelve chars longer (see efm_to_regpat)
+#else
   i += 2;   // "%f" can become two chars longer
+#endif
   char_u *fmtstr = xmalloc(i);
 
   while (efm[0] != NUL) {
