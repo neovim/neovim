@@ -7072,6 +7072,8 @@ static bool apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
     do_cmdline(NULL, getnextac, (void *)&patcmd,
                DOCMD_NOWAIT|DOCMD_VERBOSE|DOCMD_REPEAT);
 
+    reset_lnums();  // restore cursor and topline, unless they were changed
+
     if (eap != NULL) {
       (void)set_cmdarg(NULL, save_cmdarg);
       set_vim_var_nr(VV_CMDBANG, save_cmdbang);

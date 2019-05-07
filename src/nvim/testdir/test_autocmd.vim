@@ -1425,6 +1425,50 @@ func Test_autocmd_once()
   call assert_fails('au WinNew * ++once ++once echo bad', 'E983:')
 endfunc
 
+func Test_autocmd_bufreadpre()
+  new
+  let b:bufreadpre = 1
+  call append(0, range(100))
+  w! XAutocmdBufReadPre.txt
+  autocmd BufReadPre <buffer> :let b:bufreadpre += 1
+  norm! 50gg
+  sp
+  norm! 100gg
+  wincmd p
+  let g:wsv1 = winsaveview()
+  wincmd p
+  let g:wsv2 = winsaveview()
+  " triggers BufReadPre, should not move the cursor in either window
+  " The topline may change one line in a large window.
+  edit
+  call assert_inrange(g:wsv2.topline - 1, g:wsv2.topline + 1, winsaveview().topline)
+  call assert_equal(g:wsv2.lnum, winsaveview().lnum)
+  call assert_equal(2, b:bufreadpre)
+  wincmd p
+  call assert_equal(g:wsv1.topline, winsaveview().topline)
+  call assert_equal(g:wsv1.lnum, winsaveview().lnum)
+  call assert_equal(2, b:bufreadpre)
+  " Now set the cursor position in an BufReadPre autocommand
+  " (even though the position will be invalid, this should make Vim reset the
+  " cursor position in the other window.
+  wincmd p
+  1
+  " won't do anything, but try to set the cursor on an invalid lnum
+  autocmd BufReadPre <buffer> :norm! 70gg
+  " triggers BufReadPre, should not move the cursor in either window
+  e
+  call assert_equal(1, winsaveview().topline)
+  call assert_equal(1, winsaveview().lnum)
+  call assert_equal(3, b:bufreadpre)
+  wincmd p
+  call assert_equal(g:wsv1.topline, winsaveview().topline)
+  call assert_equal(g:wsv1.lnum, winsaveview().lnum)
+  call assert_equal(3, b:bufreadpre)
+  close
+  close
+  call delete('XAutocmdBufReadPre.txt')
+endfunc
+
 " Tests for the following autocommands:
 " - FileWritePre	writing a compressed file
 " - FileReadPost	reading a compressed file
