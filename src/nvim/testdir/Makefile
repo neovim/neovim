@@ -22,7 +22,6 @@ SCRIPTS_DEFAULT = \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
-	test17.out             \
 	test49.out             \
 
 endif

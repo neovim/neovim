@@ -576,7 +576,7 @@ func Test_tabpage_cmdheight()
   call VerifyScreenDump(buf, 'Test_tabpage_cmdheight', {})
 
   call StopVimInTerminal(buf)
-  call delete('XTest_conceal')
+  call delete('XTest_tabpage_cmdheight')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
