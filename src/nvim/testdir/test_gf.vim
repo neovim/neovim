@@ -64,3 +64,38 @@ func Test_gF()
   bwipe Xfile
   bwipe Xfile2
 endfunc
+
+" Test for invoking 'gf' on a ${VAR} variable
+func Test_gf()
+  if has("ebcdic")
+    set isfname=@,240-249,/,.,-,_,+,,,$,:,~,{,}
+  else
+    set isfname=@,48-57,/,.,-,_,+,,,$,:,~,{,}
+  endif
+
+  call writefile(["Test for gf command"], "Xtest1")
+  if has("unix")
+    call writefile(["    ${CDIR}/Xtest1"], "Xtestgf")
+  else
+    call writefile(["    $TDIR/Xtest1"], "Xtestgf")
+  endif
+  new Xtestgf
+  if has("unix")
+    let $CDIR = "."
+    /CDIR
+  else
+    if has("amiga")
+      let $TDIR = "/testdir"
+    else
+      let $TDIR = "."
+    endif
+    /TDIR
+  endif
+
+  normal gf
+  call assert_equal('Xtest1', fnamemodify(bufname(''), ":t"))
+  close!
+
+  call delete('Xtest1')
+  call delete('Xtestgf')
+endfunc
