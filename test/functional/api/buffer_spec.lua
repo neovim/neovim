@@ -39,6 +39,41 @@ describe('api/buf', function()
       eq(1, curbuf_depr('line_count'))
     end)
 
+    it('cursor position is maintained after lines are inserted #9961', function()
+      -- replace the buffer contents with these three lines.
+      request('nvim_buf_set_lines', 0, 0, -1, 1, {"line1", "line2", "line3", "line4"})
+      -- Set the current cursor to {3, 2}.
+      curwin('set_cursor', {3, 2})
+
+      -- add 2 lines and delete 1 line above the current cursor position.
+      request('nvim_buf_set_lines', 0, 1, 2, 1, {"line5", "line6"})
+      -- check the current set of lines in the buffer.
+      eq({"line1", "line5", "line6", "line3", "line4"}, buffer('get_lines', 0, 0, -1, 1))
+      -- cursor should be moved below by 1 line.
+      eq({4, 2}, curwin('get_cursor'))
+
+      -- add a line after the current cursor position.
+      request('nvim_buf_set_lines', 0, 5, 5, 1, {"line7"})
+      -- check the current set of lines in the buffer.
+      eq({"line1", "line5", "line6", "line3", "line4", "line7"}, buffer('get_lines', 0, 0, -1, 1))
+      -- cursor position is unchanged.
+      eq({4, 2}, curwin('get_cursor'))
+
+      -- overwrite current cursor line.
+      request('nvim_buf_set_lines', 0, 3, 5, 1, {"line8", "line9"})
+      -- check the current set of lines in the buffer.
+      eq({"line1", "line5", "line6", "line8",  "line9", "line7"}, buffer('get_lines', 0, 0, -1, 1))
+      -- cursor position is unchanged.
+      eq({4, 2}, curwin('get_cursor'))
+
+      -- delete current cursor line.
+      request('nvim_buf_set_lines', 0, 3, 5, 1, {})
+      -- check the current set of lines in the buffer.
+      eq({"line1", "line5", "line6", "line7"}, buffer('get_lines', 0, 0, -1, 1))
+      -- cursor position is unchanged.
+      eq({4, 2}, curwin('get_cursor'))
+    end)
+
     it('line_count has defined behaviour for unloaded buffers', function()
       -- we'll need to know our bufnr for when it gets unloaded
       local bufnr = curbuf('get_number')
