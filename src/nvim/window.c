@@ -3418,8 +3418,8 @@ void win_alloc_aucmd_win(void)
 {
   Error err = ERROR_INIT;
   FloatConfig fconfig = FLOAT_CONFIG_INIT;
-  fconfig.width = 20;
-  fconfig.height = 20;
+  fconfig.width = Columns;
+  fconfig.height = 5;
   fconfig.focusable = false;
   aucmd_win = win_new_float(NULL, fconfig, &err);
   aucmd_win->w_buffer->b_nwindows--;

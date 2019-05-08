@@ -11,6 +11,7 @@
 #include <fcntl.h>
 
 #include "nvim/vim.h"
+#include "nvim/api/private/handle.h"
 #include "nvim/ascii.h"
 #include "nvim/fileio.h"
 #include "nvim/buffer.h"
@@ -47,6 +48,7 @@
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/types.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -6586,6 +6588,8 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     block_autocmds();  // We don't want BufEnter/WinEnter autocommands.
     if (need_append) {
       win_append(lastwin, aucmd_win);
+      handle_register_window(aucmd_win);
+      win_config_float(aucmd_win, aucmd_win->w_float_config);
     }
     // Prevent chdir() call in win_enter_ext(), through do_autochdir()
     int save_acd = p_acd;
@@ -6625,6 +6629,13 @@ void aucmd_restbuf(aco_save_T *aco)
 win_found:
 
     win_remove(curwin, NULL);
+    handle_unregister_window(curwin);
+    if (curwin->w_grid.chars != NULL) {
+      ui_comp_remove_grid(&curwin->w_grid);
+      ui_call_win_hide(curwin->w_grid.handle);
+      grid_free(&curwin->w_grid);
+    }
+
     aucmd_win_used = false;
     last_status(false);         // may need to remove last status line
 
