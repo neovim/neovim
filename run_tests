@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-RUN_VIM="vim --noplugin --clean --not-a-term"
+RUN_VIM="vim --clean --not-a-term"
 RUN_TEST="${RUN_VIM} -S run_test.vim"
 
 if [ -z "$VIMSPECTOR_MIMODE" ]; then

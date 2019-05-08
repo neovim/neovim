@@ -156,6 +156,10 @@ function! Test_Use_Mappings_HUMAN()
   " Here we go. Start Debugging
   call feedkeys( "\<F5>", 'xt' )
 
+  call assert_equal( 2, len( gettabinfo() ) )
+  let cur_tabnr = tabpagenr()
+  call assert_equal( 5, len( gettabinfo( cur_tabnr )[ 0 ].windows ) )
+
   call vimspector#Reset()
 
   call vimspector#ClearBreakpoints()
@@ -165,7 +169,6 @@ function! Test_Use_Mappings_HUMAN()
     \ } )
   call assert_equal( 1, len( signs ), 1 )
   call assert_equal( 0, len( signs[ 0 ].signs ) )
-
 
   lcd -
   %bwipeout!
