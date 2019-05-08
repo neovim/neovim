@@ -76,10 +76,6 @@ matches the EXE (same date).
 If you built the executable yourself with the Microsoft Visual C++ compiler,
 then the PDB was built with the EXE.
 
-Alternatively, if you have the source files, you can import Make_ivc.mak into
-Visual Studio as a workspace.  Then select a debug configuration, build and
-you can do all kinds of debugging (set breakpoints, watch variables, etc.).
-
 If you have Visual Studio, use that instead of the VC Toolkit and WinDbg.
 
 For other compilers, you should always use the corresponding debugger: TD for
