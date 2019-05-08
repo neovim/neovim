@@ -15,8 +15,8 @@
 
 
 " Boilerplate {{{
-let s:save_cpo = &cpo
-set cpo&vim
+let s:save_cpo = &cpoptions
+set cpoptions&vim
 " }}}
 
 function! s:_OnServerData( channel, data ) abort
@@ -28,13 +28,13 @@ function! s:_OnServerError( channel, data ) abort
 endfunction
 
 function! s:_OnExit( channel, status ) abort
-  echom "Channel exit with status " . a:status
+  echom 'Channel exit with status ' . a:status
   unlet s:job 
   py3 _vimspector_session.OnServerExit( vim.eval( 'a:status' ) )
 endfunction
 
 function! s:_OnClose( channel ) abort
-  echom "Channel closed"
+  echom 'Channel closed'
 endfunction
 
 function! s:_Send( msg ) abort
@@ -43,14 +43,14 @@ function! s:_Send( msg ) abort
     return 0
   endif
 
-  if job_status( s:job ) != 'run'
+  if job_status( s:job ) !=# 'run'
     echom "Can't send message: Job is not running"
     return 0
   endif
 
   let ch = job_getchannel( s:job )
-  if ch == 'channel fail'
-    echom "Channel was closed unexpectedly!"
+  if ch ==# 'channel fail'
+    echom 'Channel was closed unexpectedly!'
     return 0
   endif
 
@@ -60,7 +60,7 @@ endfunction
 
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
-    echom "Not starging: Job is already running"
+    echom 'Not starging: Job is already running'
     return v:none
   endif
 
@@ -81,7 +81,7 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
 
   echom 'Started job, status is: ' . job_status( s:job )
 
-  if job_status( s:job ) != 'run'
+  if job_status( s:job ) !=# 'run'
     echom 'Unable to start job, status is: ' . job_status( s:job )
     return v:none
   endif
@@ -95,8 +95,8 @@ function! vimspector#internal#job#StopDebugSession() abort
     return
   endif
 
-  if job_status( s:job ) == 'run'
-      echom "Terminating job"
+  if job_status( s:job ) ==# 'run'
+      echom 'Terminating job'
     call job_stop( s:job, 'kill' )
   endif
 endfunction
@@ -108,13 +108,13 @@ endfunction
 function! vimspector#internal#job#ForceRead() abort
   if exists( 's:job' )
     let data = ch_readraw( job_getchannel( s:job ), { 'timeout': 1000 } )
-    if data != ''
+    if data !=# ''
       call s:_OnServerData( job_getchannel( s:job ), data )
     endif
   endif
 endfunction
 
-function! vimspector#internal#job#StartCommandWithLog( cmd, category )
+function! vimspector#internal#job#StartCommandWithLog( cmd, category ) abort
   if ! exists( 's:commands' )
     let s:commands = {}
   endif
@@ -139,7 +139,7 @@ function! vimspector#internal#job#StartCommandWithLog( cmd, category )
         \ } ) )
 
   if job_status( s:commands[ a:category ][ index ] ) !=# 'run'
-    echom "Unable to start job for " . a:cmd
+    echom 'Unable to start job for ' . a:cmd
     return v:none
   endif
 
@@ -152,7 +152,7 @@ function! vimspector#internal#job#StartCommandWithLog( cmd, category )
 endfunction
 
 
-function! vimspector#internal#job#CleanUpCommand( category )
+function! vimspector#internal#job#CleanUpCommand( category ) abort
   if ! exists( 's:commands' )
     let s:commands = {}
   endif
@@ -168,6 +168,6 @@ function! vimspector#internal#job#CleanUpCommand( category )
 endfunction
 
 " Boilerplate {{{
-let &cpo=s:save_cpo
+let &cpoptions=s:save_cpo
 unlet s:save_cpo
 " }}}

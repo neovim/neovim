@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
   apt-get -y dist-upgrade && \
   apt-get -y install python3-dev \
+                     python3-pip \
                      ca-cacert \
                      libncurses5-dev libncursesw5-dev \
                      git \
@@ -19,7 +20,7 @@ RUN mkdir -p $HOME/vim && \
     cd $HOME/vim && \
     git clone https://github.com/vim/vim && \
     cd vim && \
-    git checkout v8.1.0958 && \
+    git checkout v8.1.1302 && \
     ./configure --with-features=huge \
                 --enable-python3interp \
                 --enable-terminal \

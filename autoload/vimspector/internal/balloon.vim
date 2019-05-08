@@ -15,11 +15,11 @@
 
 
 " Boilerplate {{{
-let s:save_cpo = &cpo
-set cpo&vim
+let s:save_cpo = &cpoptions
+set cpoptions&vim
 " }}}
 
-function vimspector#internal#balloon#BalloonExpr()
+function! vimspector#internal#balloon#BalloonExpr() abort
   " winnr + 1 because for *no good reason* winnr is 0 based here unlike
   " everywhere else
   " int() because for *no good reason* winnr is a string.
@@ -29,6 +29,6 @@ function vimspector#internal#balloon#BalloonExpr()
 endfunction
 
 " Boilerplate {{{
-let &cpo=s:save_cpo
+let &cpoptions=s:save_cpo
 unlet s:save_cpo
 " }}}

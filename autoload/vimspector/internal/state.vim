@@ -15,11 +15,11 @@
 
 
 " Boilerplate {{{
-let s:save_cpo = &cpo
-set cpo&vim
+let s:save_cpo = &cpoptions
+set cpoptions&vim
 " }}}
 
-function! vimspector#internal#state#Reset()
+function! vimspector#internal#state#Reset() abort
     py3 << EOF
 from vimspector import debug_session
 _vimspector_session = debug_session.DebugSession()
@@ -27,6 +27,6 @@ EOF
 endfunction
 
 " Boilerplate {{{
-let &cpo=s:save_cpo
+let &cpoptions=s:save_cpo
 unlet s:save_cpo
 " }}}

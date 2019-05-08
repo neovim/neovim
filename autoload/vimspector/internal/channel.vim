@@ -15,8 +15,8 @@
 
 
 " Boilerplate {{{
-let s:save_cpo = &cpo
-set cpo&vim
+let s:save_cpo = &cpoptions
+set cpoptions&vim
 " }}}
 
 function! s:_OnServerData( channel, data ) abort
@@ -26,15 +26,15 @@ EOF
 endfunction
 
 function! s:_OnServerError( channel, data ) abort
-  echom "Channel received error: " . a:data
+  echom 'Channel received error: ' . a:data
 endfunction
 
 function! s:_OnExit( channel, status ) abort
-  echom "Channel exit with status " . a:status
+  echom 'Channel exit with status ' . a:status
 endfunction
 
 function! s:_OnClose( channel ) abort
-  echom "Channel closed"
+  echom 'Channel closed'
   " py3 _vimspector_session.OnChannelClosed()
 endfunction
 
@@ -52,7 +52,7 @@ endfunction
 function! vimspector#internal#channel#StartDebugSession( config ) abort
 
   if exists( 's:ch' )
-    echo "Channel is already running"
+    echo 'Channel is already running'
     return v:none
   endif
 
@@ -66,7 +66,7 @@ function! vimspector#internal#channel#StartDebugSession( config ) abort
         \             }
         \           )
 
-  if ch_status( s:ch ) != 'open'
+  if ch_status( s:ch ) !=# 'open'
     echom 'Unable to connect to debug adapter'
     return v:none
   endif
@@ -79,7 +79,7 @@ function! vimspector#internal#channel#StopDebugSession() abort
     return
   endif
 
-  if ch_status( s:ch ) == 'open'
+  if ch_status( s:ch ) ==# 'open'
     call ch_close( s:ch )
   endif
 
@@ -95,14 +95,14 @@ endfunction
 function! vimspector#internal#channel#ForceRead() abort
   if exists( 's:ch' )
     let data = ch_readraw( s:ch, { 'timeout': 1000 } )
-    if data != ''
+    if data !=# ''
       call s:_OnServerData( s:ch, data )
     endif
   endif
 endfunction
 
 " Boilerplate {{{
-let &cpo=s:save_cpo
+let &cpoptions=s:save_cpo
 unlet s:save_cpo
 " }}}
 

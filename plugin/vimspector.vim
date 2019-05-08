@@ -14,15 +14,15 @@
 " limitations under the License.
 
 " Boilerplate {{{
-let s:save_cpo = &cpo
-set cpo&vim
+let s:save_cpo = &cpoptions
+set cpoptions&vim
 
 function! s:restore_cpo()
-  let &cpo=s:save_cpo
+  let &cpoptions=s:save_cpo
   unlet s:save_cpo
 endfunction
 
-if exists( "g:loaded_vimpector" )
+if exists( 'g:loaded_vimpector' )
   call s:restore_cpo()
   finish
 endif
@@ -36,7 +36,7 @@ let g:loaded_vimpector = 1
 
 let s:mappings = get( g:, 'vimspector_enable_mappings', '' )
 
-if s:mappings == 'VISUAL_STUDIO'
+if s:mappings ==# 'VISUAL_STUDIO'
   nnoremap <F5>         :call vimspector#Continue()<CR>
   nnoremap <S-F5>       :call vimspector#Stop()<CR>
   nnoremap <C-S-F5>     :call vimspector#Restart()<CR>
@@ -46,7 +46,7 @@ if s:mappings == 'VISUAL_STUDIO'
   nnoremap <F10>        :call vimspector#StepOver()<CR>
   nnoremap <F11>        :call vimspector#StepInto()<CR>
   nnoremap <S-F11>      :call vimspector#StepOut()<CR>
-elseif s:mappings == 'HUMAN'
+elseif s:mappings ==# 'HUMAN'
   nnoremap <F5>         :call vimspector#Continue()<CR>
   nnoremap <F3>         :call vimspector#Stop()<CR>
   nnoremap <F4>         :call vimspector#Restart()<CR>

@@ -4,9 +4,33 @@
 # https://aka.ms/yaml
 
 jobs:
-- job: 'linax'
+- job: 'PythonLint'
+  displayName: "Python Lint"
   pool:
-    vimImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-16.04'
+  container: 'puremourning/vimspector:test'
+  steps:
+   - bash: pip3 install -r dev_requirements.txt
+     displayName: "Install requirements"
+
+   - bash: $HOME/.local/bin/flake8 python3/
+     displayName: "Run flake8"
+
+- job: 'Vimscript'
+  displayName: "Vimscript Lint"
+  pool:
+    vmImage: 'ubuntu-16.04'
+  container: 'puremourning/vimspector:test'
+  steps:
+   - bash: pip3 install -r dev_requirements.txt
+     displayName: "Install requirements"
+
+   - bash: $HOME/.local/bin/vint autoload/ plugin/
+     displayName: "Run vint"
+
+- job: 'linux'
+  pool:
+    vmImage: 'ubuntu-16.04'
   container: 'puremourning/vimspector:test'
   steps:
   - bash: python3 install_gadget.py
