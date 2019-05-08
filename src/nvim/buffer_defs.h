@@ -999,6 +999,16 @@ typedef struct {
                                           .relative = 0, .external = false, \
                                           .focusable = true })
 
+// Structure to store last cursor position and topline.  Used by check_lnums()
+// and reset_lnums().
+typedef struct
+{
+  int w_topline_save;   // original topline value
+  int w_topline_corr;   // corrected topline value
+  pos_T w_cursor_save;  // original cursor position
+  pos_T w_cursor_corr;  // corrected cursor position
+} pos_save_T;
+
 /// Structure which contains all information that belongs to a window.
 ///
 /// All row numbers are relative to the start of the window, except w_winrow.
@@ -1091,17 +1101,18 @@ struct window_S {
   colnr_T w_skipcol;                /* starting column when a single line
                                        doesn't fit in the window */
 
-  /*
-   * Layout of the window in the screen.
-   * May need to add "msg_scrolled" to "w_winrow" in rare situations.
-   */
-  int w_winrow;                     /* first row of window in screen */
-  int w_height;                     /* number of rows in window, excluding
-                                       status/command line(s) */
-  int w_status_height;              /* number of status lines (0 or 1) */
-  int w_wincol;                     /* Leftmost column of window in screen. */
-  int w_width;                      /* Width of window, excluding separation. */
-  int w_vsep_width;                 /* Number of separator columns (0 or 1). */
+  //
+  // Layout of the window in the screen.
+  // May need to add "msg_scrolled" to "w_winrow" in rare situations.
+  //
+  int w_winrow;                     // first row of window in screen
+  int w_height;                     // number of rows in window, excluding
+                                    // status/command line(s)
+  int w_status_height;              // number of status lines (0 or 1)
+  int w_wincol;                     // Leftmost column of window in screen.
+  int w_width;                      // Width of window, excluding separation.
+  int w_vsep_width;                 // Number of separator columns (0 or 1).
+  pos_save_T w_save_cursor;         // backup of cursor pos and topline
 
   // inner size of window, which can be overridden by external UI
   int w_height_inner;
