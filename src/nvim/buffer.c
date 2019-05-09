@@ -64,6 +64,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/sign.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -5255,6 +5256,70 @@ bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
   return false;
 }
 
+static hashtab_T	sg_table;	// sign group (signgroup_T) hashtable
+
+/*
+ * A new sign in group 'groupname' is added. If the group is not present,
+ * create it. Otherwise reference the group.
+ */
+static signgroup_T * sign_group_ref(char_u *groupname)
+{
+  static int		initialized = FALSE;
+  hash_T		hash;
+  hashitem_T		*hi;
+  signgroup_T		*group;
+
+  if (!initialized) {
+    initialized = TRUE;
+    hash_init(&sg_table);
+  }
+
+  hash = hash_hash(groupname);
+  hi = hash_lookup(&sg_table, S_LEN(groupname), hash);
+  if (HASHITEM_EMPTY(hi))
+  {
+    // new group
+    group = (signgroup_T *)xmalloc(
+        (unsigned)(sizeof(signgroup_T) + STRLEN(groupname)));
+    if (group == NULL)
+      return NULL;
+    STRCPY(group->sg_name, groupname);
+    group->refcount = 1;
+    hash_add_item(&sg_table, hi, group->sg_name, hash);
+  }
+  else
+  {
+    // existing group
+    group = HI2SG(hi);
+    group->refcount++;
+  }
+
+  return group;
+}
+
+/*
+ * A sign in group 'groupname' is removed. If all the signs in this group are
+ * removed, then remove the group.
+ */
+static void sign_group_unref(char_u *groupname)
+{
+  hashitem_T		*hi;
+  signgroup_T		*group;
+
+  hi = hash_find(&sg_table, groupname);
+  if (!HASHITEM_EMPTY(hi))
+  {
+    group = HI2SG(hi);
+    group->refcount--;
+    if (group->refcount == 0)
+    {
+      // All the signs in this group are removed
+      hash_remove(&sg_table, hi);
+      xfree(group);
+    }
+  }
+}
+
 /*
  * Insert a new sign into the signlist for buffer 'buf' between the 'prev' and
  * 'next' signs.
@@ -5275,7 +5340,14 @@ static void insert_sign(
     newsign->lnum = lnum;
     newsign->typenr = typenr;
 	   if (group != NULL)
-	       newsign->group = vim_strsave(group);
+	{
+	    newsign->group = sign_group_ref(group);
+	    if (newsign->group == NULL)
+	    {
+		xfree(newsign);
+		return;
+	    }
+	}
 	   else
 	       newsign->group = NULL;
 	   newsign->priority = prio;
@@ -5431,7 +5503,7 @@ int sign_in_group(signlist_T *sign, char_u *group)
   return ((group != NULL && STRCMP(group, "*") == 0) ||
       (group == NULL && sign->group == NULL) ||
       (group != NULL && sign->group != NULL &&
-       STRCMP(group, sign->group) == 0));
+				STRCMP(group, sign->group->sg_name) == 0));
 }
 
 /*
@@ -5445,7 +5517,7 @@ dict_T * sign_get_info(signlist_T *sign)
     return NULL;
   }
   tv_dict_add_nr(d,  S_LEN("id"), sign->id);
-  tv_dict_add_str(d, S_LEN("group"), (sign->group == NULL) ? (char_u *)"" : sign->group);
+  tv_dict_add_str(d, S_LEN("group"), (sign->group == NULL) ? (char_u *)"" : sign->group->sg_name);
   tv_dict_add_nr(d,  S_LEN("lnum"), sign->lnum);
   tv_dict_add_str(d, S_LEN("name"), sign_typenr2name(sign->typenr));
   tv_dict_add_nr(d,  S_LEN("priority"), sign->priority);
@@ -5459,7 +5531,7 @@ dict_T * sign_get_info(signlist_T *sign)
 void buf_addsign(
     buf_T *buf,     // buffer to store sign in
     int id,         // sign ID
-    char_u	*group,  // sign group
+    char_u	*groupname,	// sign group
     int prio,       // sign priority
     linenr_T lnum,  // line number which gets the mark
     int typenr      // typenr of sign we are adding
@@ -5472,19 +5544,19 @@ void buf_addsign(
     prev = NULL;
     FOR_ALL_SIGNS_IN_BUF(buf) {
         if (lnum == sign->lnum && id == sign->id &&
-            sign_in_group(sign, group)) {
+            sign_in_group(sign, groupname)) {
           // Update an existing sign
           sign->typenr = typenr;
           return;
         } else if ((lnum == sign->lnum && id != sign->id)
                    || (id < 0 && lnum < sign->lnum)) {
-          insert_sign_by_lnum_prio(buf, prev, id, group, prio, lnum, typenr);
+          insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
           return;
         }
         prev = sign;
     }
 
-    insert_sign_by_lnum_prio(buf, prev, id, group, prio, lnum, typenr);
+    insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
 
     // Having more than one sign with _the same type_ and on the _same line_ is
     // unwanted, let's prevent it.
@@ -5604,7 +5676,8 @@ linenr_T buf_delsign(
               next->prev = sign->prev;
             }
             lnum = sign->lnum;
-            xfree(sign->group);
+	    if (sign->group != NULL)
+		sign_group_unref(sign->group->sg_name);
             xfree(sign);
             // Check whether only one sign needs to be deleted
             if (group == NULL || (*group != '*' && id != 0))
@@ -5709,7 +5782,7 @@ int buf_findsign_id(
 /*
  * Delete signs in buffer "buf".
  */
-buf_delete_signs(buf_T *buf, char_u *group)
+void buf_delete_signs(buf_T *buf, char_u *group)
 {
     signlist_T	*sign;
     signlist_T	**lastp;	// pointer to pointer to current sign
@@ -5730,7 +5803,9 @@ buf_delete_signs(buf_T *buf, char_u *group)
         if (next != NULL) {
           next->prev = sign->prev;
         }
-        xfree(sign->group);
+        if (sign->group != NULL) {
+          sign_group_unref(sign->group->sg_name);
+        }
         xfree(sign);
       } else {
         lastp = &sign->next;
@@ -5775,11 +5850,14 @@ void sign_list_placed(buf_T *rbuf, char_u *sign_group)
             msg_putchar('\n');
         }
         FOR_ALL_SIGNS_IN_BUF(buf) {
+          if (got_int) {
+            break;
+          }
           if (!sign_in_group(sign, sign_group)) {
             continue;
           }
           if (sign->group != NULL) {
-            vim_snprintf(group, BUFSIZ, "  group=%s", sign->group);
+            vim_snprintf(group, BUFSIZ, "  group=%s", sign->group->sg_name);
           } else {
             group[0] = '\0';
           }

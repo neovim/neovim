@@ -59,7 +59,7 @@ func Test_sign()
   redraw
 
   " Check that we can't change sign.
-  call assert_fails("exe 'sign place 40 name=Sign1 buffer=' . bufnr('%')", 'E885:')
+  call assert_fails("sign place 40 name=Sign1 buffer=" . bufnr('%'), 'E885:')
 
   " Check placed signs
   let a=execute('sign place')
@@ -68,7 +68,7 @@ func Test_sign()
   " Unplace the sign and try jumping to it again should fail.
   sign unplace 41
   1
-  call assert_fails("exe 'sign jump 41 buffer=' . bufnr('%')", 'E157:')
+  call assert_fails("sign jump 41 buffer=" . bufnr('%'), 'E157:')
   call assert_equal('a', getline('.'))
 
   " Unplace sign on current line.
@@ -132,17 +132,22 @@ func Test_sign()
   sign undefine Sign4
 
   " Error cases
-  call assert_fails("exe 'sign place abc line=3 name=Sign1 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign unplace abc name=Sign1 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign place 1abc line=3 name=Sign1 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign unplace 2abc name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place abc line=3 name=Sign1 buffer=" .
+			  \ bufnr('%'), 'E474:')
+  call assert_fails("sign unplace abc name=Sign1 buffer=" .
+			  \ bufnr('%'), 'E474:')
+  call assert_fails("sign place 1abc line=3 name=Sign1 buffer=" .
+			  \ bufnr('%'), 'E474:')
+  call assert_fails("sign unplace 2abc name=Sign1 buffer=" .
+			  \ bufnr('%'), 'E474:')
   call assert_fails("sign unplace 2 *", 'E474:')
-  call assert_fails("exe 'sign place 1 line=3 name=Sign1 buffer=' . bufnr('%') a", 'E488:')
-  call assert_fails("exe 'sign place name=Sign1 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign place line=10 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign unplace 2 line=10 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign unplace 2 name=Sign1 buffer=' . bufnr('%')", 'E474:')
-  call assert_fails("exe 'sign place 2 line=3 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place 1 line=3 name=Sign1 buffer=" .
+			  \ bufnr('%') . " a", 'E488:')
+  call assert_fails("sign place name=Sign1 buffer=" . bufnr('%'), 'E474:')
+  call assert_fails("sign place line=10 buffer=" . bufnr('%'), 'E474:')
+  call assert_fails("sign unplace 2 line=10 buffer=" . bufnr('%'), 'E474:')
+  call assert_fails("sign unplace 2 name=Sign1 buffer=" . bufnr('%'), 'E474:')
+  call assert_fails("sign place 2 line=3 buffer=" . bufnr('%'), 'E474:')
   call assert_fails("sign place 2", 'E474:')
   call assert_fails("sign place abc", 'E474:')
   call assert_fails("sign place 5 line=3", 'E474:')
@@ -157,7 +162,8 @@ func Test_sign()
   sign undefine Sign1
   sign undefine Sign2
   sign undefine Sign3
-  call assert_fails("exe 'sign place 41 line=3 name=Sign1 buffer=' . bufnr('%')", 'E155:')
+  call assert_fails("sign place 41 line=3 name=Sign1 buffer=" .
+			  \ bufnr('%'), 'E155:')
 endfunc
 
 " Undefining placed sign is not recommended.
@@ -236,33 +242,33 @@ func Test_sign_invalid_commands()
   call assert_fails('sign place 1 buffer=999', 'E158:')
   call assert_fails('sign define Sign2 text=', 'E239:')
   " Non-numeric identifier for :sign place
-  call assert_fails("exe 'sign place abc line=3 name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place abc line=3 name=Sign1 buffer=" . bufnr('%'), 'E474:')
   " Non-numeric identifier for :sign unplace
-  call assert_fails("exe 'sign unplace abc name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign unplace abc name=Sign1 buffer=" . bufnr('%'), 'E474:')
   " Number followed by an alphabet as sign identifier for :sign place
-  call assert_fails("exe 'sign place 1abc line=3 name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place 1abc line=3 name=Sign1 buffer=" . bufnr('%'), 'E474:')
   " Number followed by an alphabet as sign identifier for :sign unplace
-  call assert_fails("exe 'sign unplace 2abc name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign unplace 2abc name=Sign1 buffer=" . bufnr('%'), 'E474:')
   " Sign identifier and '*' for :sign unplace
   call assert_fails("sign unplace 2 *", 'E474:')
   " Trailing characters after buffer number for :sign place
-  call assert_fails("exe 'sign place 1 line=3 name=Sign1 buffer=' . bufnr('%') . 'xxx'", 'E488:')
+  call assert_fails("sign place 1 line=3 name=Sign1 buffer=" . bufnr('%') . 'xxx', 'E488:')
   " Trailing characters after buffer number for :sign unplace
-  call assert_fails("exe 'sign unplace 1 buffer=' . bufnr('%') . 'xxx'", 'E488:')
-  call assert_fails("exe 'sign unplace * buffer=' . bufnr('%') . 'xxx'", 'E488:')
+  call assert_fails("sign unplace 1 buffer=" . bufnr('%') . 'xxx', 'E488:')
+  call assert_fails("sign unplace * buffer=" . bufnr('%') . 'xxx', 'E488:')
   call assert_fails("sign unplace 1 xxx", 'E474:')
   call assert_fails("sign unplace * xxx", 'E474:')
   call assert_fails("sign unplace xxx", 'E474:')
   " Placing a sign without line number
-  call assert_fails("exe 'sign place name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place name=Sign1 buffer=" . bufnr('%'), 'E474:')
   " Placing a sign without sign name
-  call assert_fails("exe 'sign place line=10 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place line=10 buffer=" . bufnr('%'), 'E474:')
   " Unplacing a sign with line number
-  call assert_fails("exe 'sign unplace 2 line=10 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign unplace 2 line=10 buffer=" . bufnr('%'), 'E474:')
   " Unplacing a sign with sign name
-  call assert_fails("exe 'sign unplace 2 name=Sign1 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign unplace 2 name=Sign1 buffer=" . bufnr('%'), 'E474:')
   " Placing a sign without sign name
-  call assert_fails("exe 'sign place 2 line=3 buffer=' . bufnr('%')", 'E474:')
+  call assert_fails("sign place 2 line=3 buffer=" . bufnr('%'), 'E474:')
   " Placing a sign with only sign identifier
   call assert_fails("sign place 2", 'E474:')
   " Placing a sign with only a name
@@ -574,24 +580,24 @@ func Test_sign_group()
   call sign_unplace('*')
 
   " Test for :sign command and groups
-  exe 'sign place 5 line=10 name=sign1 file=' . fname
-  exe 'sign place 5 group=g1 line=10 name=sign1 file=' . fname
-  exe 'sign place 5 group=g2 line=10 name=sign1 file=' . fname
+  sign place 5 line=10 name=sign1 file=Xsign
+  sign place 5 group=g1 line=10 name=sign1 file=Xsign
+  sign place 5 group=g2 line=10 name=sign1 file=Xsign
 
   " Test for :sign place group={group} file={fname}
-  let a = execute('sign place file=' . fname)
+  let a = execute('sign place file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n    line=10  id=5  name=sign1 priority=10\n", a)
 
-  let a = execute('sign place group=g2 file=' . fname)
+  let a = execute('sign place group=g2 file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n    line=10  id=5  group=g2  name=sign1 priority=10\n", a)
 
-  let a = execute('sign place group=* file=' . fname)
+  let a = execute('sign place group=* file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  group=g2  name=sign1 priority=10\n" .
 	      \ "    line=10  id=5  group=g1  name=sign1 priority=10\n" .
 	      \ "    line=10  id=5  name=sign1 priority=10\n", a)
 
-  let a = execute('sign place group=xyz file=' . fname)
+  let a = execute('sign place group=xyz file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
 
   call sign_unplace('*')
@@ -624,22 +630,22 @@ func Test_sign_group()
 	      \ "    line=12  id=5  group=g2  name=sign1 priority=10\n", a)
 
   " Test for :sign unplace
-  exe 'sign unplace 5 group=g2 file=' . fname
+  sign unplace 5 group=g2 file=Xsign
   call assert_equal([], sign_getplaced(bnum, {'group' : 'g2'})[0].signs)
 
   exe 'sign unplace 5 group=g1 buffer=' . bnum
   call assert_equal([], sign_getplaced(bnum, {'group' : 'g1'})[0].signs)
 
-  exe 'sign unplace 5 group=xy file=' . fname
+  sign unplace 5 group=xy file=Xsign
   call assert_equal(1, len(sign_getplaced(bnum, {'group' : '*'})[0].signs))
 
   " Test for removing all the signs. Place the signs again for this test
-  exe 'sign place 5 group=g1 line=11 name=sign1 file=' . fname
-  exe 'sign place 5 group=g2 line=12 name=sign1 file=' . fname
-  exe 'sign place 6 line=20 name=sign1 file=' . fname
-  exe 'sign place 6 group=g1 line=21 name=sign1 file=' . fname
-  exe 'sign place 6 group=g2 line=22 name=sign1 file=' . fname
-  exe 'sign unplace 5 group=* file=' . fname
+  sign place 5 group=g1 line=11 name=sign1 file=Xsign
+  sign place 5 group=g2 line=12 name=sign1 file=Xsign
+  sign place 6 line=20 name=sign1 file=Xsign
+  sign place 6 group=g1 line=21 name=sign1 file=Xsign
+  sign place 6 group=g2 line=22 name=sign1 file=Xsign
+  sign unplace 5 group=* file=Xsign
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=20  id=6  name=sign1 priority=10\n" .
@@ -647,17 +653,17 @@ func Test_sign_group()
 	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
 
   " Remove all the signs from the global group
-  exe 'sign unplace * file=' . fname
+  sign unplace * file=Xsign
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=21  id=6  group=g1  name=sign1 priority=10\n" .
 	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
 
   " Remove all the signs from a particular group
-  exe 'sign place 5 line=10 name=sign1 file=' . fname
-  exe 'sign place 5 group=g1 line=11 name=sign1 file=' . fname
-  exe 'sign place 5 group=g2 line=12 name=sign1 file=' . fname
-  exe 'sign unplace * group=g1 file=' . fname
+  sign place 5 line=10 name=sign1 file=Xsign
+  sign place 5 group=g1 line=11 name=sign1 file=Xsign
+  sign place 5 group=g2 line=12 name=sign1 file=Xsign
+  sign unplace * group=g1 file=Xsign
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1 priority=10\n" .
@@ -665,26 +671,26 @@ func Test_sign_group()
 	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
 
   " Remove all the signs from all the groups in a file
-  exe 'sign place 5 group=g1 line=11 name=sign1 file=' . fname
-  exe 'sign place 6 line=20 name=sign1 file=' . fname
-  exe 'sign place 6 group=g1 line=21 name=sign1 file=' . fname
-  exe 'sign unplace * group=* file=' . fname
+  sign place 5 group=g1 line=11 name=sign1 file=Xsign
+  sign place 6 line=20 name=sign1 file=Xsign
+  sign place 6 group=g1 line=21 name=sign1 file=Xsign
+  sign unplace * group=* file=Xsign
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\n", a)
 
   " Remove a particular sign id in a group from all the files
-  exe 'sign place 5 group=g1 line=11 name=sign1 file=' . fname
+  sign place 5 group=g1 line=11 name=sign1 file=Xsign
   sign unplace 5 group=g1
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\n", a)
 
   " Remove a particular sign id in all the groups from all the files
-  exe 'sign place 5 line=10 name=sign1 file=' . fname
-  exe 'sign place 5 group=g1 line=11 name=sign1 file=' . fname
-  exe 'sign place 5 group=g2 line=12 name=sign1 file=' . fname
-  exe 'sign place 6 line=20 name=sign1 file=' . fname
-  exe 'sign place 6 group=g1 line=21 name=sign1 file=' . fname
-  exe 'sign place 6 group=g2 line=22 name=sign1 file=' . fname
+  sign place 5 line=10 name=sign1 file=Xsign
+  sign place 5 group=g1 line=11 name=sign1 file=Xsign
+  sign place 5 group=g2 line=12 name=sign1 file=Xsign
+  sign place 6 line=20 name=sign1 file=Xsign
+  sign place 6 group=g1 line=21 name=sign1 file=Xsign
+  sign place 6 group=g2 line=22 name=sign1 file=Xsign
   sign unplace 5 group=*
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
@@ -693,14 +699,14 @@ func Test_sign_group()
 	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
 
   " Remove all the signs from all the groups in all the files
-  exe 'sign place 5 line=10 name=sign1 file=' . fname
-  exe 'sign place 5 group=g1 line=11 name=sign1 file=' . fname
+  sign place 5 line=10 name=sign1 file=Xsign
+  sign place 5 group=g1 line=11 name=sign1 file=Xsign
   sign unplace * group=*
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\n", a)
 
   " Error cases
-  call assert_fails("exe 'sign place 3 group= name=sign1 buffer=' . bnum", 'E474:')
+  call assert_fails("sign place 3 group= name=sign1 buffer=" . bnum, 'E474:')
 
   call delete("Xsign")
   call sign_unplace('*')
