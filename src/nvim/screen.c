@@ -678,8 +678,6 @@ static void win_update(win_T *wp)
       mod_bot = wp->w_redraw_bot + 1;
     else
       mod_bot = 0;
-    wp->w_redraw_top = 0;       /* reset for next time */
-    wp->w_redraw_bot = 0;
     if (buf->b_mod_set) {
       if (mod_top == 0 || mod_top > buf->b_mod_top) {
         mod_top = buf->b_mod_top;
@@ -776,6 +774,8 @@ static void win_update(win_T *wp)
     if (mod_top != 0 && buf->b_mod_xlines != 0 && wp->w_p_nu)
       mod_bot = MAXLNUM;
   }
+  wp->w_redraw_top = 0;  // reset for next time
+  wp->w_redraw_bot = 0;
 
   /*
    * When only displaying the lines at the top, set top_end.  Used when
@@ -2446,7 +2446,9 @@ win_line (
   }
 
   if (wp->w_p_list) {
-    if (curwin->w_p_lcs_chars.space || wp->w_p_lcs_chars.trail) {
+    if (curwin->w_p_lcs_chars.space
+        || wp->w_p_lcs_chars.trail
+        || wp->w_p_lcs_chars.nbsp) {
       extra_check = true;
     }
     // find start of trailing whitespace
@@ -3993,8 +3995,10 @@ win_line (
       break;
     }
 
-    // line continues beyond line end
-    if (wp->w_p_lcs_chars.ext
+    // Show "extends" character from 'listchars' if beyond the line end and
+    // 'list' is set.
+    if (wp->w_p_lcs_chars.ext != NUL
+        && wp->w_p_list
         && !wp->w_p_wrap
         && filler_todo <= 0
         && (wp->w_p_rl ? col == 0 : col == grid->Columns - 1)
