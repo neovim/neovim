@@ -68,10 +68,8 @@ Options ~
 *'viminfofile'*		Deprecated alias to 'shadafile' option.
 
 UI extensions~
-*ui-wildmenu*		Use `ext_cmdline` and `ext_popupmenu` instead.
-			Enabled by `ext_wildmenu` |ui-options|.
-			If `ext_wildmenu` is set, these events are emitted for
-			backwards-compatibility:
+*ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
+			by `ext_wildmenu` |ui-options|. Emits these events:
 				["wildmenu_show", items]
 				["wildmenu_select", selected]
 				["wildmenu_hide"]

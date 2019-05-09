@@ -141,6 +141,17 @@ bool ui_rgb_attached(void)
   return false;
 }
 
+/// Returns true if any UI requested `override=true`.
+bool ui_override(void)
+{
+  for (size_t i = 1; i < ui_count; i++) {
+    if (uis[i]->override) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool ui_active(void)
 {
   return ui_count > 1;
@@ -173,12 +184,13 @@ void ui_refresh(void)
     ext_widgets[i] = true;
   }
 
+  bool inclusive = ui_override();
   for (size_t i = 0; i < ui_count; i++) {
     UI *ui = uis[i];
     width = MIN(ui->width, width);
     height = MIN(ui->height, height);
     for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
-      ext_widgets[j] &= ui->ui_ext[j];
+      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
     }
   }
 
@@ -431,6 +443,7 @@ Array ui_array(void)
     PUT(info, "width", INTEGER_OBJ(ui->width));
     PUT(info, "height", INTEGER_OBJ(ui->height));
     PUT(info, "rgb", BOOLEAN_OBJ(ui->rgb));
+    PUT(info, "override", BOOLEAN_OBJ(ui->override));
     for (UIExtension j = 0; j < kUIExtCount; j++) {
       if (ui_ext_names[j][0] != '_' || ui->ui_ext[j]) {
         PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));

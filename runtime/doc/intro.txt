@@ -58,7 +58,7 @@ For more information try one of these:
 ==============================================================================
 Nvim on the interwebs					*internet*
 
-			*www* *WWW*  *faq* *FAQ* *distribution* *download*
+			*www* *faq* *distribution* *download*
 
 	Nvim home page:	  https://neovim.io/
 	Nvim FAQ:	  https://github.com/neovim/neovim/wiki/FAQ
@@ -67,9 +67,10 @@ Nvim on the interwebs					*internet*
 	Vim home page:	  https://www.vim.org/
 
 
-Bug reports:				*bugs* *bug-reports* *bugreport.vim*
+			*bugs* *bug-report* *bugreport.vim* *feature-request* 
 
-Report bugs on GitHub: https://github.com/neovim/neovim/issues
+Report bugs and request features here:
+https://github.com/neovim/neovim/issues
 
 Be brief, yet complete.  Always give a reproducible example and try to find
 out which settings or other things trigger the bug.

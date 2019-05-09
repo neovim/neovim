@@ -255,14 +255,14 @@ describe('TUI', function()
     ]])
   end)
 
-  it('shows up in nvim_list_uis', function()
+  it('is included in nvim_list_uis()', function()
     feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\013')
     screen:expect([=[
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      [[['height', 6], ['rgb', v:false], ['width', 50]]]|
-                                                        |
+      [[['height', 6], ['override', v:false], ['rgb', v:|
+      false], ['width', 50]]]                           |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]=])
