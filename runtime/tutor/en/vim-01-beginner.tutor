@@ -159,9 +159,9 @@ There is also some text missing here.
 
  2. At the shell prompt type this command:
 ~~~ sh
-     $ vim tutor
+     $ nvim tutor
 ~~~
-    'vim' is the command to start the Vim editor, 'tutor' is the name of
+    'nvim' is the command to start the Nvim editor, 'tutor' is the name of
     the file you wish to edit. Use a file that may be changed.
 
  3. Insert and delete text as you learned in the previous lessons.
@@ -186,7 +186,7 @@ There is also some text missing here.
  2. To start Vim from the shell prompt type:
 
 ~~~ sh
-    $ vim FILENAME
+    $ nvim FILENAME
 ~~~
 
  3. To exit Vim type: `<Esc>`{normal} `:q!`{vim} `<Enter>`{normal} to trash
