@@ -90,6 +90,26 @@ func Test_listchars()
 	      \ '.....h>-$',
 	      \ 'iii<<<<><<$', '$'], l)
 
+
+  " test nbsp
+  normal ggdG
+  set listchars=nbsp:X,trail:Y
+  set list
+  " Non-breaking space
+  let nbsp = nr2char(0xa0)
+  call append(0, [ ">".nbsp."<" ])
+
+  let expected = '>X< '
+
+  redraw!
+  call cursor(1, 1)
+  call assert_equal([expected], ScreenLines(1, virtcol('$')))
+
+  set listchars=nbsp:X
+  redraw!
+  call cursor(1, 1)
+  call assert_equal([expected], ScreenLines(1, virtcol('$')))
+
   enew!
   set listchars& ff&
 endfunc
