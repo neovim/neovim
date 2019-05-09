@@ -3995,8 +3995,10 @@ win_line (
       break;
     }
 
-    // line continues beyond line end
-    if (wp->w_p_lcs_chars.ext
+    // Show "extends" character from 'listchars' if beyond the line end and
+    // 'list' is set.
+    if (wp->w_p_lcs_chars.ext != NUL
+        && wp->w_p_list
         && !wp->w_p_wrap
         && filler_todo <= 0
         && (wp->w_p_rl ? col == 0 : col == grid->Columns - 1)

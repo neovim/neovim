@@ -110,6 +110,25 @@ func Test_listchars()
   call cursor(1, 1)
   call assert_equal([expected], ScreenLines(1, virtcol('$')))
 
+  " test extends
+  normal ggdG
+  set listchars=extends:Z
+  set nowrap
+  set nolist
+  call append(0, [ repeat('A', &columns + 1) ])
+
+  let expected = repeat('A', &columns)
+
+  redraw!
+  call cursor(1, 1)
+  call assert_equal([expected], ScreenLines(1, &columns))
+
+  set list
+  let expected = expected[:-2] . 'Z'
+  redraw!
+  call cursor(1, 1)
+  call assert_equal([expected], ScreenLines(1, &columns))
+
   enew!
   set listchars& ff&
 endfunc
