@@ -161,7 +161,7 @@ There is also some text missing here.
 ~~~ sh
      $ nvim tutor
 ~~~
-    'nvim' is the command to start the Vim editor (it is NeoVim, but we call it as Vim sometimes), 'tutor' is the name of
+    'nvim' is the command to start the Nvim editor, 'tutor' is the name of
     the file you wish to edit. Use a file that may be changed.
 
  3. Insert and delete text as you learned in the previous lessons.
