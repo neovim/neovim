@@ -48,9 +48,11 @@ typedef int LineFlags;
 
 struct ui_t {
   bool rgb;
+  bool override;  ///< Force highest-requested UI capabilities.
   bool composed;
-  bool ui_ext[kUIExtCount];  ///< Externalized widgets
-  int width, height;
+  bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
+  int width;
+  int height;
   void *data;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

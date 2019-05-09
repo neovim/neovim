@@ -110,6 +110,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->width = (int)width;
   ui->height = (int)height;
   ui->rgb = true;
+  ui->override = false;
   ui->grid_resize = remote_ui_grid_resize;
   ui->grid_clear = remote_ui_grid_clear;
   ui->grid_cursor_goto = remote_ui_grid_cursor_goto;
@@ -236,6 +237,15 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
 static void ui_set_option(UI *ui, bool init, String name, Object value,
                           Error *error)
 {
+  if (strequal(name.data, "override")) {
+    if (value.type != kObjectTypeBoolean) {
+      api_set_error(error, kErrorTypeValidation, "override must be a Boolean");
+      return;
+    }
+    ui->override = value.data.boolean;
+    return;
+  }
+
   if (strequal(name.data, "rgb")) {
     if (value.type != kObjectTypeBoolean) {
       api_set_error(error, kErrorTypeValidation, "rgb must be a Boolean");

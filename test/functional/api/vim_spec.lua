@@ -1284,7 +1284,7 @@ describe('API', function()
     end)
     it('returns attached UIs', function()
       local screen = Screen.new(20, 4)
-      screen:attach()
+      screen:attach({override=true})
       local expected = {
         {
           chan = 1,
@@ -1299,6 +1299,7 @@ describe('API', function()
           ext_messages = false,
           height = 4,
           rgb = true,
+          override = true,
           width = 20,
         }
       }
@@ -1308,6 +1309,7 @@ describe('API', function()
       screen = Screen.new(44, 99)
       screen:attach({ rgb = false })
       expected[1].rgb = false
+      expected[1].override = false
       expected[1].width = 44
       expected[1].height = 99
       eq(expected, nvim("list_uis"))
