@@ -839,9 +839,10 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       sourcing_lnum = current_exception->throw_lnum;
       current_exception->throw_name = NULL;
 
-      discard_current_exception();              /* uses IObuff if 'verbose' */
-      suppress_errthrow = TRUE;
-      force_abort = TRUE;
+      discard_current_exception();              // uses IObuff if 'verbose'
+      suppress_errthrow = true;
+      force_abort = true;
+      msg_ext_set_kind("emsg");  // kind=emsg for :throw, exceptions. #9993
 
       if (messages != NULL) {
         do {

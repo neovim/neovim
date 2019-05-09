@@ -74,6 +74,7 @@
 local global_helpers = require('test.helpers')
 local deepcopy = global_helpers.deepcopy
 local shallowcopy = global_helpers.shallowcopy
+local concat_tables = global_helpers.concat_tables
 local helpers = require('test.functional.helpers')(nil)
 local request, run_session = helpers.request, helpers.run_session
 local eq = helpers.eq
@@ -413,26 +414,23 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
       end
     end
 
-    -- Extension features. The default expectations should cover the case of
+    -- UI extensions. The default expectations should cover the case of
     -- the ext_ feature being disabled, or the feature currently not activated
-    -- (for instance no external cmdline visible). Some extensions require
+    -- (e.g. no external cmdline visible). Some extensions require
     -- preprocessing to represent highlights in a reproducible way.
     local extstate = self:_extstate_repr(attr_state)
-
-    -- convert assertion errors into invalid screen state descriptions
-    local status, res = pcall(function()
-      for _, k in ipairs(ext_keys) do
-        -- Empty states is considered the default and need not be mentioned
-        if not (expected[k] == nil and isempty(extstate[k])) then
-          eq(expected[k], extstate[k], k)
+    if expected['mode'] ~= nil then
+      extstate['mode'] = self.mode
+    end
+    -- Convert assertion errors into invalid screen state descriptions.
+    for _, k in ipairs(concat_tables(ext_keys, {'mode'})) do
+      -- Empty states are considered the default and need not be mentioned.
+      if (not (expected[k] == nil and isempty(extstate[k]))) then
+        local status, res = pcall(eq, expected[k], extstate[k], k)
+        if not status then
+          return (tostring(res)..'\nHint: full state of "'..k..'":\n  '..inspect(extstate[k]))
         end
       end
-      if expected.mode ~= nil then
-        eq(expected.mode, self.mode, "mode")
-      end
-    end)
-    if not status then
-      return tostring(res)
     end
   end, expected)
 end

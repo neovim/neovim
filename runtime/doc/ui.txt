@@ -672,29 +672,33 @@ of the cmdline.
 ["msg_show", kind, content, replace_last]
 	Display a message to the user.
 
-	`kind` will be one of the following
-		`emsg`:		Internal error message
-		`echo`:		temporary message from plugin (|:echo|)
-		`echomsg`:	ordinary message from plugin (|:echomsg|)
-		`echoerr`:	error message from plugin (|:echoerr|)
-		`return_prompt`:  |press-enter| prompt after a group of messages
-		`quickfix`:	Quickfix navigation message
-	`kind` can also be the empty string. The message is then some internal
-	informative or warning message, that hasn't yet been assigned a kind.
-	New message kinds can be added in later versions; clients should
-	handle messages of an unknown kind just like empty kind.
+	kind
+	    Name indicating the message kind:
+		"" (empty)	Unknown, report a |feature-request|
+		"confirm"	|confirm()| or |:confirm| dialog
+		"confirm_sub"	|:substitute| confirm dialog |:s_c|
+		"emsg"		Error (|errors|, internal error, |:throw|, …)
+		"echo"		|:echo| message
+		"echomsg"	|:echomsg| message
+		"echoerr"	|:echoerr| message
+		"return_prompt"	|press-enter| prompt after a multiple messages
+		"quickfix"	Quickfix navigation message
+		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)
+	    New kinds may be added in the future; clients should treat unknown
+	    kinds as the empty kind.
 
-	`content` will be an array of `[attr_id, text_chunk]` tuples,
-	building up the message text of chunks of different highlights.
-	No extra spacing should be added between chunks, the `text_chunk` by
-	itself should contain any necessary whitespace. Messages can contain
-	line breaks `"\n"`.
+	content
+	    Array of `[attr_id, text_chunk]` tuples, building up the message
+	    text of chunks of different highlights. No extra spacing should be
+	    added between chunks, the `text_chunk` by itself contains any
+	    necessary whitespace. Messages can contain line breaks "\n".
 
-	`replace_last` controls how multiple messages should be displayed.
-	If `replace_last` is false, this message should be displayed together
-	with all previous messages that are still visible. If `replace_last`
-	is true, this message should replace the message in the most recent
-	`msg_show` call, but any other visible message should still remain.
+	replace_last
+	    Decides how multiple messages should be displayed:
+	    false: Display the message together with all previous messages
+		   that are still visible.
+	    true:  Replace the message in the most-recent `msg_show` call,
+		   but any other visible message should still remain.
 
 ["msg_clear"]
 	Clear all messages currently displayed by "msg_show". (Messages sent
