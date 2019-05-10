@@ -78,9 +78,8 @@ then the PDB was built with the EXE.
 
 If you have Visual Studio, use that instead of the VC Toolkit and WinDbg.
 
-For other compilers, you should always use the corresponding debugger: TD for
-a Vim executable compiled with the Borland compiler; gdb (see above
-|debug-gcc|) for the Cygwin and MinGW compilers.
+For other compilers, you should always use the corresponding debugger: gdb
+(see above |debug-gcc|) for the Cygwin and MinGW compilers.
 
 
 								*debug-vs2005*
