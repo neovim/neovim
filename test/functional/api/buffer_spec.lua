@@ -1,10 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, nvim, buffer = helpers.clear, helpers.nvim, helpers.buffer
-local curbuf, curwin = helpers.curbuf, helpers.curwin
-local eq, neq = helpers.eq, helpers.neq
+local curbuf, curwin, eq = helpers.curbuf, helpers.curwin, helpers.eq
 local curbufmeths, ok = helpers.curbufmeths, helpers.ok
-local expect_err = helpers.expect_err
 local meths = helpers.meths
 local funcs = helpers.funcs
 local request = helpers.request
@@ -434,96 +432,6 @@ describe('api/buf', function()
       eq(NIL,  request('buffer_set_var', 0, 'lua', val1))
       eq(val1, request('buffer_set_var', 0, 'lua', val2))
       eq(val2, request('buffer_del_var', 0, 'lua'))
-    end)
-  end)
-
-  describe('nvim_buf_set_keymap', function()
-    -- nvim_set_keymap is implemented as a wrapped call to nvim_buf_set_keymap,
-    -- so ./keymap_spec.lua also effectively tests nvim_buf_set_keymap
-
-    -- here, we mainly test for buffer specificity and other special cases
-
-    -- switch to the given buffer, abandoning any changes in the current buffer
-    local function switch_to_buf(bufnr)
-      command(bufnr..'buffer!')
-    end
-
-    -- `set hidden`, then create two buffers and return their bufnr's
-    -- If start_from_first is truthy, the first buffer will be open when
-    -- the function returns; if falsy, the second buffer will be open.
-    local function make_two_buffers(start_from_first)
-      command('set hidden')
-
-      local first_buf = meths.call_function('bufnr', {'%'})
-      command('new')
-      local second_buf = meths.call_function('bufnr', {'%'})
-      neq(second_buf, first_buf)  -- sanity check
-
-      if start_from_first then
-        switch_to_buf(first_buf)
-      end
-
-      return first_buf, second_buf
-    end
-
-    it('rejects negative bufnr values', function()
-      expect_err('Wrong type for argument 1, expecting Buffer',
-                 bufmeths.set_keymap, -1, '', '', 'lhs', 'rhs', {})
-    end)
-
-    it('can set mappings active in the current buffer but not others', function()
-      local first, second = make_two_buffers(true)
-
-      eq(0, bufmeths.set_keymap(0, '', '', 'lhs', 'irhs<Esc>', {}))
-      command('normal lhs')
-      eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
-
-      -- mapping should have no effect in new buffer
-      switch_to_buf(second)
-      command('normal lhs')
-      eq({''}, bufmeths.get_lines(0, 0, 1, 1))
-
-      -- mapping should remain active in old buffer
-      switch_to_buf(first)
-      command('normal ^lhs')
-      eq({'rhsrhs'}, bufmeths.get_lines(0, 0, 1, 1))
-    end)
-
-    it('can set local mappings only in another buffer', function()
-      local first = make_two_buffers(false)
-      eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
-
-      -- shouldn't do anything
-      command('normal lhs')
-      eq({''}, bufmeths.get_lines(0, 0, 1, 1))
-
-      -- should take effect
-      switch_to_buf(first)
-      command('normal lhs')
-      eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
-    end)
-
-    it('can disable mappings made in another buffer, in that buffer', function()
-      local first = make_two_buffers(false)
-      eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
-      eq(0, bufmeths.set_keymap(first, '', 'u', 'lhs', '', {}))
-      switch_to_buf(first)
-
-      -- shouldn't do anything
-      command('normal lhs')
-      eq({''}, bufmeths.get_lines(0, 0, 1, 1))
-    end)
-
-    it("can't disable mappings from another buffer in the current", function()
-      local first, second = make_two_buffers(false)
-      eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
-      expect_err('E31: No such mapping',
-                 bufmeths.set_keymap, second, '', 'u', 'lhs', '', {})
-
-      -- should still work
-      switch_to_buf(first)
-      command('normal lhs')
-      eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
     end)
   end)
 

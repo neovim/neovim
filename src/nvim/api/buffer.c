@@ -617,7 +617,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   }
 
   if (mode.size > 1) {
-    err_msg = "Given shortname is too long: %s";
+    err_msg = "Shortname is too long: %s";
     err_arg = mode.data;
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
@@ -632,7 +632,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
       // get_map_mode will treat "unrecognized" mode shortnames like "map"
       // if it does, and the given shortname wasn't "m" or " ", then error
       if (STRNCMP(p, "m", 2) && STRNCMP(p, " ", 2)) {
-        err_msg = "Unrecognized mode shortname: %s";
+        err_msg = "Invalid mode shortname: %s";
         err_arg = (char *)p;
         err_type = kErrorTypeValidation;
         goto FAIL_WITH_MESSAGE;
@@ -641,7 +641,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   }
 
   if (parsed_args.lhs_len == 0) {
-    err_msg = "Must give nonempty LHS!";
+    err_msg = "Invalid (empty) LHS";
     err_arg = "";
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;
@@ -658,7 +658,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
         is_noremap = true;
         break;
       default:
-        err_msg = "Unrecognized value for maptype: %s";
+        err_msg = "Invalid maptype value: %s";
         err_arg = maptype.data;
         err_type = kErrorTypeValidation;
         goto FAIL_WITH_MESSAGE;
@@ -678,7 +678,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
       goto FAIL_WITH_MESSAGE;
     }
   } else if (is_unmap && parsed_args.rhs_len) {
-    err_msg = "RHS must be empty when unmapping! Gave: %s";
+    err_msg = "Gave nonempty RHS in unmap command: %s";
     err_arg = (char *)parsed_args.rhs;
     err_type = kErrorTypeValidation;
     goto FAIL_WITH_MESSAGE;

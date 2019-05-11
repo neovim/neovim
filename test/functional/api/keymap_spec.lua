@@ -1,10 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 local global_helpers = require('test.helpers')
 
+local bufmeths = helpers.bufmeths
 local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
-local eq = helpers.eq
+local eq, neq = helpers.eq, helpers.neq
 local expect_err = helpers.expect_err
 local feed = helpers.feed
 local funcs = helpers.funcs
@@ -361,9 +362,10 @@ describe('nvim_set_keymap', function()
 
   -- Test error handling
   it('throws errors when given empty lhs', function()
-    expect_err('Must give nonempty LHS!',
+    -- escape parentheses in lua string, else comparison fails erroneously
+    expect_err('Invalid %(empty%) LHS',
                meths.set_keymap, '', '', '', 'rhs', {})
-    expect_err('Must give nonempty LHS!',
+    expect_err('Invalid %(empty%) LHS',
                meths.set_keymap, '', '', '', '', {})
   end)
 
@@ -398,45 +400,45 @@ describe('nvim_set_keymap', function()
   end)
 
   it('throws errors when unmapping and given nonempty rhs', function()
-    expect_err('RHS must be empty when unmapping! Gave: rhs',
+    expect_err('Gave nonempty RHS in unmap command: rhs',
                meths.set_keymap, '', 'u', 'lhs', 'rhs', {})
-    expect_err('RHS must be empty when unmapping! Gave:   a',
+    expect_err('Gave nonempty RHS in unmap command:   a',
                meths.set_keymap, '', 'u', 'lhs', '  a', {})
   end)
 
   it('throws errors when given too-long mode shortnames', function()
-    expect_err('Given shortname is too long: map',
+    expect_err('Shortname is too long: map',
                meths.set_keymap, 'map', '', 'lhs', 'rhs', {})
 
-    expect_err('Given shortname is too long: vmap',
+    expect_err('Shortname is too long: vmap',
                meths.set_keymap, 'vmap', '', 'lhs', 'rhs', {})
 
-    expect_err('Given shortname is too long: xnoremap',
+    expect_err('Shortname is too long: xnoremap',
                meths.set_keymap, 'xnoremap', '', 'lhs', 'rhs', {})
   end)
 
   it('throws errors when given unrecognized mode shortnames', function()
-    expect_err('Unrecognized mode shortname: ?',
+    expect_err('Invalid mode shortname: ?',
                meths.set_keymap, '?', '', 'lhs', 'rhs', {})
 
-    expect_err('Unrecognized mode shortname: y',
+    expect_err('Invalid mode shortname: y',
                meths.set_keymap, 'y', '', 'lhs', 'rhs', {})
 
-    expect_err('Unrecognized mode shortname: p',
+    expect_err('Invalid mode shortname: p',
                meths.set_keymap, 'p', '', 'lhs', 'rhs', {})
   end)
 
   it('throws errors when optnames are almost right', function()
-    expect_err('Unrecognized option in nvim_set_keymap: silentt',
+    expect_err('Invalid key: silentt',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {silentt = true})
-    expect_err('Unrecognized option in nvim_set_keymap: sidd',
+    expect_err('Invalid key: sidd',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {sidd = false})
-    expect_err('Unrecognized option in nvim_set_keymap: nowaiT',
+    expect_err('Invalid key: nowaiT',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {nowaiT = false})
   end)
 
   it('does not recognize <buffer> as an option', function()
-    expect_err('Unrecognized option in nvim_set_keymap: buffer',
+    expect_err('Invalid key: buffer',
                meths.set_keymap, 'n', '', 'lhs', 'rhs', {buffer = true})
   end)
 
@@ -701,4 +703,96 @@ describe('nvim_set_keymap', function()
       end)
     end
   end
+end)
+
+describe('nvim_buf_set_keymap', function()
+  before_each(clear)
+
+  -- nvim_set_keymap is implemented as a wrapped call to nvim_buf_set_keymap,
+  -- so its tests also effectively test nvim_buf_set_keymap
+
+  -- here, we mainly test for buffer specificity and other special cases
+
+  -- switch to the given buffer, abandoning any changes in the current buffer
+  local function switch_to_buf(bufnr)
+    command(bufnr..'buffer!')
+  end
+
+  -- `set hidden`, then create two buffers and return their bufnr's
+  -- If start_from_first is truthy, the first buffer will be open when
+  -- the function returns; if falsy, the second buffer will be open.
+  local function make_two_buffers(start_from_first)
+    command('set hidden')
+
+    local first_buf = meths.call_function('bufnr', {'%'})
+    command('new')
+    local second_buf = meths.call_function('bufnr', {'%'})
+    neq(second_buf, first_buf)  -- sanity check
+
+    if start_from_first then
+      switch_to_buf(first_buf)
+    end
+
+    return first_buf, second_buf
+  end
+
+  it('rejects negative bufnr values', function()
+    expect_err('Wrong type for argument 1, expecting Buffer',
+               bufmeths.set_keymap, -1, '', '', 'lhs', 'rhs', {})
+  end)
+
+  it('can set mappings active in the current buffer but not others', function()
+    local first, second = make_two_buffers(true)
+
+    eq(0, bufmeths.set_keymap(0, '', '', 'lhs', 'irhs<Esc>', {}))
+    command('normal lhs')
+    eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+
+    -- mapping should have no effect in new buffer
+    switch_to_buf(second)
+    command('normal lhs')
+    eq({''}, bufmeths.get_lines(0, 0, 1, 1))
+
+    -- mapping should remain active in old buffer
+    switch_to_buf(first)
+    command('normal ^lhs')
+    eq({'rhsrhs'}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
+
+  it('can set local mappings only in another buffer', function()
+    local first = make_two_buffers(false)
+    eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
+
+    -- shouldn't do anything
+    command('normal lhs')
+    eq({''}, bufmeths.get_lines(0, 0, 1, 1))
+
+    -- should take effect
+    switch_to_buf(first)
+    command('normal lhs')
+    eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
+
+  it('can disable mappings made in another buffer, in that buffer', function()
+    local first = make_two_buffers(false)
+    eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
+    eq(0, bufmeths.set_keymap(first, '', 'u', 'lhs', '', {}))
+    switch_to_buf(first)
+
+    -- shouldn't do anything
+    command('normal lhs')
+    eq({''}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
+
+  it("can't disable mappings from another buffer in the current", function()
+    local first, second = make_two_buffers(false)
+    eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
+    expect_err('E31: No such mapping',
+               bufmeths.set_keymap, second, '', 'u', 'lhs', '', {})
+
+    -- should still work
+    switch_to_buf(first)
+    command('normal lhs')
+    eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
+  end)
 end)

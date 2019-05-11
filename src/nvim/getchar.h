@@ -28,6 +28,8 @@ typedef enum {
 ///
 /// The <special> argument has no effect on mappings and is excluded from this
 /// struct declaration.
+///
+/// @see mapblock_T
 struct map_arguments {
   bool buffer;
   bool nowait;

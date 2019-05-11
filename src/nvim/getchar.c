@@ -2509,8 +2509,8 @@ int fix_input_buffer(char_u *buf, int len)
 /// will hold a copy of the given `orig_rhs`.
 ///
 /// The `*_len` variables will be set appropriately. If the length of
-/// the final LHS exceeds MAXMAPLEN, `lhs_len` will be set equal to the original
-/// larger length and `lhs` will be truncated.
+/// the final `lhs` exceeds `MAXMAPLEN`, `lhs_len` will be set equal to the
+/// original larger length and `lhs` will be truncated.
 ///
 /// If RHS is equal to "<Nop>", `rhs` will be the empty string, `rhs_len`
 /// will be zero, and `rhs_is_noop` will be set to true.
@@ -2568,7 +2568,7 @@ void set_maparg_lhs_rhs(const char_u *orig_lhs, const size_t orig_lhs_len,
 /// Parse a string of |:map-arguments| into a @ref MapArguments struct.
 ///
 /// Termcodes, backslashes, CTRL-V's, etc. inside the extracted {lhs} and
-/// {rhs} are replaced by @ref replace_maparg_termcodes.
+/// {rhs} are replaced by @ref set_maparg_lhs_rhs.
 ///
 /// rhs and orig_rhs in the returned mapargs will be set to null or a pointer
 /// to allocated memory and should be freed even on error.

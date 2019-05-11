@@ -111,10 +111,6 @@ static inline bool ascii_isspace(int)
   REAL_FATTR_CONST
   REAL_FATTR_ALWAYS_INLINE;
 
-static inline bool ascii_islinebreak(int)
-  REAL_FATTR_CONST
-  REAL_FATTR_ALWAYS_INLINE;
-
 /// Checks if `c` is a space or tab character.
 ///
 /// @see {ascii_isdigit}
@@ -170,15 +166,6 @@ static inline bool ascii_isbdigit(int c)
 static inline bool ascii_isspace(int c)
 {
   return (c >= 9 && c <= 13) || c == ' ';
-}
-
-/// Checks if `c` is a linebreak character, that is,
-/// one of \n or \r.
-///
-/// @see {ascii_isdigit}
-static inline bool ascii_islinebreak(int c)
-{
-  return (c == '\n' || c == '\r');
 }
 
 #endif /* NVIM_ASCII_H */

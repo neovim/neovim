@@ -816,7 +816,7 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
         break;
     }  // switch
     if (!was_valid_opt) {
-      err_msg = "Unrecognized option in nvim_set_keymap: %s";
+      err_msg = "Invalid key: %s";
       err_arg = optname;
       err_type = kErrorTypeValidation;
       goto FAIL_WITH_MESSAGE;
