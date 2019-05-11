@@ -157,28 +157,32 @@ with a {thing} that groups functions under a common concept).
 
 Use existing common {action} names if possible:
     add   Append to, or insert into, a collection
-    get   Get a thing (or subset of things by some query)
-    set   Set a thing
+    get   Get a thing (or group of things by query)
+    set   Set a thing (or group of things)
     del   Delete a thing (or group of things)
     list  Get all things
 
 Use consistent names for {thing} in all API functions. E.g. a buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
 
-Example: `nvim_get_current_line` acts on the global editor state; the common
-{action} "get" is used but {thing} is omitted.
+Example:
+    `nvim_get_current_line` acts on the global editor state; the common
+    {action} "get" is used but {thing} is omitted.
 
-Example: `nvim_buf_add_highlight` acts on a `Buffer` object (the first
-parameter) and uses the common {action} "add".
+Example:
+    `nvim_buf_add_highlight` acts on a `Buffer` object (the first parameter)
+    and uses the common {action} "add".
 
-Example: `nvim_list_bufs` operates in a global context (first parameter is
-_not_ a Buffer). The common {action} "list" indicates that it lists all
-bufs (plural) in the global context.
+Example:
+    `nvim_list_bufs` operates in a global context (first parameter is not
+    a Buffer). The common {action} "list" indicates that it lists all bufs
+    (plural) in the global context.
 
 Use this template to name new API events:
     nvim_{thing}_{event}_event
 
-Example: `nvim_buf_changedtick_event`.
+Example:
+    `nvim_buf_changedtick_event`
 
 
 API-CLIENT						*dev-api-client*
