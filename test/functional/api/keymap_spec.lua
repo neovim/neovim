@@ -379,7 +379,7 @@ describe('nvim_set_keymap', function()
     end
 
     -- exactly 50 chars should be fine
-    eq(0, meths.set_keymap('', '', lhs, 'rhs', {}))
+    meths.set_keymap('', '', lhs, 'rhs', {})
 
     -- 51 chars should produce an error
     lhs = lhs..'1'
@@ -394,7 +394,7 @@ describe('nvim_set_keymap', function()
       rhs = rhs..(i % 10)
     end
     rhs = rhs..'1'
-    eq(0, meths.set_keymap('', '', 'lhs', rhs, {}))
+    meths.set_keymap('', '', 'lhs', rhs, {})
     eq(generate_mapargs('', 0, 'lhs', rhs),
        get_mapargs('', 'lhs'))
   end)
@@ -455,39 +455,39 @@ describe('nvim_set_keymap', function()
 
   -- Perform tests of basic functionality
   it('can set ordinary mappings', function()
-    eq(0, meths.set_keymap('n', '', 'lhs', 'rhs', {}))
+    meths.set_keymap('n', '', 'lhs', 'rhs', {})
     eq(generate_mapargs('n', 0, 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
 
-    eq(0, meths.set_keymap('v', '', 'lhs', 'rhs', {}))
+    meths.set_keymap('v', '', 'lhs', 'rhs', {})
     eq(generate_mapargs('v', 0, 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
   end)
 
   it('doesn\'t throw when lhs or rhs have leading/trailing WS', function()
-    eq(0, meths.set_keymap('n', '', '   lhs', 'rhs', {}))
+    meths.set_keymap('n', '', '   lhs', 'rhs', {})
     eq(generate_mapargs('n', 0, '<Space><Space><Space>lhs', 'rhs'), get_mapargs('n', '   lhs'))
 
-    eq(0, meths.set_keymap('n', '', 'lhs    ', 'rhs', {}))
+    meths.set_keymap('n', '', 'lhs    ', 'rhs', {})
     eq(generate_mapargs('n', 0, 'lhs<Space><Space><Space><Space>', 'rhs'), get_mapargs('n', 'lhs    '))
 
-    eq(0, meths.set_keymap('v', '', ' lhs  ', '\trhs\t\f', {}))
+    meths.set_keymap('v', '', ' lhs  ', '\trhs\t\f', {})
     eq(generate_mapargs('v', 0, '<Space>lhs<Space><Space>', '\trhs\t\f'), get_mapargs('v', ' lhs  '))
   end)
 
   it('can set noremap mappings', function()
-    eq(0, meths.set_keymap('x', 'n', 'lhs', 'rhs', {}))
+    meths.set_keymap('x', 'n', 'lhs', 'rhs', {})
     eq(generate_mapargs('x', 1, 'lhs', 'rhs'), get_mapargs('x', 'lhs'))
 
-    eq(0, meths.set_keymap('t', 'n', 'lhs', 'rhs', {}))
+    meths.set_keymap('t', 'n', 'lhs', 'rhs', {})
     eq(generate_mapargs('t', 1, 'lhs', 'rhs'), get_mapargs('t', 'lhs'))
   end)
 
   it('can unmap mappings', function()
     meths.set_keymap('v', '', 'lhs', 'rhs', {})
-    eq(0, meths.set_keymap('v', 'u', 'lhs', '', {}))
+    meths.set_keymap('v', 'u', 'lhs', '', {})
     eq({}, get_mapargs('v', 'lhs'))
 
     meths.set_keymap('t', 'n', 'lhs', 'rhs', {})
-    eq(0, meths.set_keymap('t', 'u', 'lhs', '', {}))
+    meths.set_keymap('t', 'u', 'lhs', '', {})
     eq({}, get_mapargs('t', 'lhs'))
   end)
 
@@ -496,7 +496,7 @@ describe('nvim_set_keymap', function()
     local nvo_shortnames = {'', ' ', '!'}
     for _, name in ipairs(nvo_shortnames) do
       meths.set_keymap(name, '', 'lhs', 'rhs', {})
-      eq(0, meths.set_keymap(name, 'u', 'lhs', '', {}))
+      meths.set_keymap(name, 'u', 'lhs', '', {})
       eq({}, get_mapargs(name, 'lhs'))
     end
   end)
@@ -507,27 +507,27 @@ describe('nvim_set_keymap', function()
       local mapmode = '!'
       it('can set mappings with special characters, lhs: '..lhs..', rhs: '..rhs,
           function()
-        eq(0, meths.set_keymap(mapmode, '', lhs, rhs, {}))
+        meths.set_keymap(mapmode, '', lhs, rhs, {})
         eq(generate_mapargs(mapmode, 0, lhs, rhs), get_mapargs(mapmode, lhs))
       end)
     end
   end
 
   it('can set mappings containing literal keycodes', function()
-    eq(0, meths.set_keymap('n', '', '\n\r\n', 'rhs', {}))
+    meths.set_keymap('n', '', '\n\r\n', 'rhs', {})
     local expected = generate_mapargs('n', 0, '<NL><CR><NL>', 'rhs')
     eq(expected, get_mapargs('n', '<C-j><CR><C-j>'))
   end)
 
   it('can set mappings whose RHS is a <Nop>', function()
-    eq(0, meths.set_keymap('i', '', 'lhs', '<Nop>', {}))
+    meths.set_keymap('i', '', 'lhs', '<Nop>', {})
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))  -- imap to <Nop> does nothing
     eq(generate_mapargs('i', 0, 'lhs', '<Nop>', {}),
        get_mapargs('i', 'lhs'))
 
     -- also test for case insensitivity
-    eq(0, meths.set_keymap('i', '', 'lhs', '<nOp>', {}))
+    meths.set_keymap('i', '', 'lhs', '<nOp>', {})
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))
     -- note: RHS in returned mapargs() dict reflects the original RHS
@@ -535,7 +535,7 @@ describe('nvim_set_keymap', function()
     eq(generate_mapargs('i', 0, 'lhs', '<nOp>', {}),
        get_mapargs('i', 'lhs'))
 
-    eq(0, meths.set_keymap('i', '', 'lhs', '<NOP>', {}))
+    meths.set_keymap('i', '', 'lhs', '<NOP>', {})
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))
     eq(generate_mapargs('i', 0, 'lhs', '<NOP>', {}),
@@ -543,7 +543,7 @@ describe('nvim_set_keymap', function()
   end)
 
   it('treats an empty RHS in a mapping like a <Nop>', function()
-    eq(0, meths.set_keymap('i', '', 'lhs', '', {}))
+    meths.set_keymap('i', '', 'lhs', '', {})
     command('normal ilhs')
     eq({''}, curbufmeths.get_lines(0, -1, 0))
     eq(generate_mapargs('i', 0, 'lhs', '', {}),
@@ -554,8 +554,8 @@ describe('nvim_set_keymap', function()
     -- Taken from the legacy test: test_mapping.vim. Exposes a bug in which
     -- replace_termcodes changes the length of the mapping's LHS, but
     -- do_map continues to use the *old* length of LHS.
-    eq(0, meths.set_keymap('i', '', '<M-">', 'foo', {}))
-    eq(0, meths.set_keymap('i', 'u', '<M-">', '', {}))
+    meths.set_keymap('i', '', '<M-">', 'foo', {})
+    meths.set_keymap('i', 'u', '<M-">', '', {})
   end)
 
   it('interprets control sequences in expr-quotes correctly when called '
@@ -572,7 +572,7 @@ describe('nvim_set_keymap', function()
     expect_err('E227: mapping already exists for lhs',
                meths.set_keymap, 'l', '', 'lhs', 'rhs', {unique = true})
     -- different mapmode, no error should be thrown
-    eq(0, meths.set_keymap('t', '', 'lhs', 'rhs', {}))
+    meths.set_keymap('t', '', 'lhs', 'rhs', {})
   end)
 
   it('can set <expr> mappings whose RHS change dynamically', function()
@@ -642,24 +642,24 @@ describe('nvim_set_keymap', function()
   local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', ' ', ''}
   for _, mapmode in ipairs(mapmodes) do
     it('can set/unset normal mappings in mapmode '..mapmode, function()
-      eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', {}))
+      meths.set_keymap(mapmode, '', 'lhs', 'rhs', {})
       eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs'),
          get_mapargs(mapmode, 'lhs'))
 
       -- some mapmodes (like 'o') will prevent other mapmodes (like '!') from
       -- taking effect, so unmap after each mapping
-      eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
+      meths.set_keymap(mapmode, 'u', 'lhs', '', {})
       eq({}, get_mapargs(mapmode, 'lhs'))
     end)
   end
 
   for _, mapmode in ipairs(mapmodes) do
     it('can set/unset noremap mappings using mapmode '..mapmode, function()
-      eq(0, meths.set_keymap(mapmode, 'n', 'lhs', 'rhs', {}))
+      meths.set_keymap(mapmode, 'n', 'lhs', 'rhs', {})
       eq(generate_mapargs(mapmode, 1, 'lhs', 'rhs'),
          get_mapargs(mapmode, 'lhs'))
 
-      eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
+      meths.set_keymap(mapmode, 'u', 'lhs', '', {})
       eq({}, get_mapargs(mapmode, 'lhs'))
     end)
   end
@@ -674,19 +674,19 @@ describe('nvim_set_keymap', function()
     for _, maparg in ipairs(optnames) do
       it('can set/unset '..printable_mode..'-mappings with maparg: '..maparg,
           function()
-        eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', {[maparg] = true}))
+        meths.set_keymap(mapmode, '', 'lhs', 'rhs', {[maparg] = true})
         eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs', {[maparg] = true}),
            get_mapargs(mapmode, 'lhs'))
         -- calling unmap with a nonempty options dictionary shouldn't affect
         -- anything
-        eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {[maparg] = true}))
+        meths.set_keymap(mapmode, 'u', 'lhs', '', {[maparg] = true})
       end)
       it ('can set/unset '..printable_mode..'-mode mappings with maparg '..
           maparg..', whose value is false', function()
-        eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', {[maparg] = false}))
+        meths.set_keymap(mapmode, '', 'lhs', 'rhs', {[maparg] = false})
         eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs'),
            get_mapargs(mapmode, 'lhs'))
-        eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
+        meths.set_keymap(mapmode, 'u', 'lhs', '', {})
       end)
     end
 
@@ -696,10 +696,10 @@ describe('nvim_set_keymap', function()
       it('can set/unset '..printable_mode..'-mode mappings with mapargs '..
           opt1..', '..opt2..', '..opt3, function()
         local opts = {[opt1] = true, [opt2] = false, [opt3] = true}
-        eq(0, meths.set_keymap(mapmode, '', 'lhs', 'rhs', opts))
+        meths.set_keymap(mapmode, '', 'lhs', 'rhs', opts)
         eq(generate_mapargs(mapmode, 0, 'lhs', 'rhs', opts),
            get_mapargs(mapmode, 'lhs'))
-        eq(0, meths.set_keymap(mapmode, 'u', 'lhs', '', {}))
+        meths.set_keymap(mapmode, 'u', 'lhs', '', {})
       end)
     end
   end
@@ -744,7 +744,7 @@ describe('nvim_buf_set_keymap', function()
   it('can set mappings active in the current buffer but not others', function()
     local first, second = make_two_buffers(true)
 
-    eq(0, bufmeths.set_keymap(0, '', '', 'lhs', 'irhs<Esc>', {}))
+    bufmeths.set_keymap(0, '', '', 'lhs', 'irhs<Esc>', {})
     command('normal lhs')
     eq({'rhs'}, bufmeths.get_lines(0, 0, 1, 1))
 
@@ -761,7 +761,7 @@ describe('nvim_buf_set_keymap', function()
 
   it('can set local mappings only in another buffer', function()
     local first = make_two_buffers(false)
-    eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
+    bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {})
 
     -- shouldn't do anything
     command('normal lhs')
@@ -775,8 +775,8 @@ describe('nvim_buf_set_keymap', function()
 
   it('can disable mappings made in another buffer, in that buffer', function()
     local first = make_two_buffers(false)
-    eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
-    eq(0, bufmeths.set_keymap(first, '', 'u', 'lhs', '', {}))
+    bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {})
+    bufmeths.set_keymap(first, '', 'u', 'lhs', '', {})
     switch_to_buf(first)
 
     -- shouldn't do anything
@@ -786,7 +786,7 @@ describe('nvim_buf_set_keymap', function()
 
   it("can't disable mappings from another buffer in the current", function()
     local first, second = make_two_buffers(false)
-    eq(0, bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {}))
+    bufmeths.set_keymap(first, '', '', 'lhs', 'irhs<Esc>', {})
     expect_err('E31: No such mapping',
                bufmeths.set_keymap, second, '', 'u', 'lhs', '', {})
 

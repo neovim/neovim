@@ -579,8 +579,8 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
 /// Like |nvim_set_keymap|, but for a specific buffer.
 ///
 /// @param  buffer  Buffer handle, or 0 for the current buffer.
-Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
-                            String lhs, String rhs, Dictionary opts, Error *err)
+void nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
+                         String lhs, String rhs, Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
   char *err_msg = NULL;  // the error message to report, if any
@@ -714,7 +714,7 @@ Integer nvim_buf_set_keymap(Buffer buffer, String mode, String maptype,
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
 
-  return 0;
+  return;
 
 FAIL_WITH_MESSAGE:
   api_set_error(err, err_type, err_msg, err_arg);
@@ -724,7 +724,7 @@ FAIL_AND_FREE:
   xfree(rhs_buf);
   xfree(parsed_args.rhs);
   xfree(parsed_args.orig_rhs);
-  return -1;
+  return;
 }
 
 /// Gets a map of buffer-local |user-commands|.

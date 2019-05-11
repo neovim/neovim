@@ -1272,13 +1272,11 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 ///               as keys except |<buffer>|. Values should all be Booleans.
 ///               Unrecognized keys will result in an error.
 /// @param[out]   err   Error details, if any.
-///
-/// @returns  Zero on success, nonzero on failure.
-Integer nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
-                        Dictionary opts, Error *err)
+void nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
+                     Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  return nvim_buf_set_keymap(-1, mode, maptype, lhs, rhs, opts, err);
+  nvim_buf_set_keymap(-1, mode, maptype, lhs, rhs, opts, err);
 }
 
 /// Gets a map of global (non-buffer-local) Ex commands.

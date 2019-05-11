@@ -54,3 +54,4 @@ local.mk
 /runtime/doc/*.html
 /runtime/doc/tags.ref
 /runtime/doc/errors.log
+compile_commands.json

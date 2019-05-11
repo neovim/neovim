@@ -829,9 +829,6 @@ nvim_set_keymap({mode}, {maptype}, {lhs}, {rhs}, {opts})
                                Values should all be Booleans. Unrecognized
                                keys will result in an error.
 
-                Return: ~
-                    Zero on success, nonzero on failure.
-
 nvim_get_commands({opts})                                *nvim_get_commands()*
                 Gets a map of global (non-buffer-local) Ex commands.
 
