@@ -1524,9 +1524,9 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
       /* Count screen lines that are below the window. */
       scrolled += loff.height;
       if (loff.lnum == curwin->w_botline
-          && boff.fill == 0
-          )
+          && loff.fill == 0) {
         scrolled -= curwin->w_empty_rows;
+      }
     }
 
     if (boff.lnum < curbuf->b_ml.ml_line_count) {
