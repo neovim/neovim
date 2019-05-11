@@ -277,7 +277,6 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 
 // Enums need a typecast to be used as array index (for Ultrix).
 #define HL_ATTR(n)      highlight_attr[(int)(n)]
-#define TERM_STR(n)     term_strings[(int)(n)]
 
 /// Maximum number of bytes in a multi-byte character.  It can be one 32-bit
 /// character of up to 6 bytes, or one 16-bit character of up to three bytes

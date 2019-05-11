@@ -3008,6 +3008,8 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   } else {
     keep_msg_attr = 0;
   }
+  msg_ext_set_kind("wmsg");
+
   if (msg_attr((const char *)message, keep_msg_attr) && msg_scrolled == 0) {
     set_keep_msg(message, keep_msg_attr);
   }
@@ -3348,6 +3350,7 @@ void display_confirm_msg(void)
   // Avoid that 'q' at the more prompt truncates the message here.
   confirm_msg_used++;
   if (confirm_msg != NULL) {
+    msg_ext_set_kind("confirm");
     msg_puts_attr((const char *)confirm_msg, HL_ATTR(HLF_M));
   }
   confirm_msg_used--;

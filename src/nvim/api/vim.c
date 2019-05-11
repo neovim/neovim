@@ -2048,10 +2048,10 @@ Dictionary nvim__stats(void)
 /// Gets a list of dictionaries representing attached UIs.
 ///
 /// @return Array of UI dictionaries, each with these keys:
-///   - "height"  requested height of the UI
-///   - "width"   requested width of the UI
+///   - "height"  Requested height of the UI
+///   - "width"   Requested width of the UI
 ///   - "rgb"     true if the UI uses RGB colors (false implies |cterm-colors|)
-///   - "ext_..." Requested UI extensions, see |ui-options|
+///   - "ext_..." Requested UI extensions, see |ui-option|
 ///   - "chan"    Channel id of remote UI (not present for TUI)
 Array nvim_list_uis(void)
   FUNC_API_SINCE(4)

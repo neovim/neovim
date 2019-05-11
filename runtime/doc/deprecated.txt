@@ -69,7 +69,7 @@ Options ~
 
 UI extensions~
 *ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
-			by `ext_wildmenu` |ui-options|. Emits these events:
+			by the `ext_wildmenu` |ui-option|. Emits these events:
 				["wildmenu_show", items]
 				["wildmenu_select", selected]
 				["wildmenu_hide"]

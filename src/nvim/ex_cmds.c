@@ -3692,10 +3692,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               i = msg_scroll;
               msg_scroll = 0;                           /* truncate msg when
                                                            needed */
-              msg_no_more = TRUE;
-              /* write message same highlighting as for
-               * wait_return */
-              smsg_attr(HL_ATTR(HLF_R),
+              msg_no_more = true;
+              msg_ext_set_kind("confirm_sub");
+              smsg_attr(HL_ATTR(HLF_R),  // Same highlight as wait_return().
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
               msg_scroll = i;

@@ -2248,6 +2248,7 @@ change_warning (
     if (msg_row == Rows - 1)
       msg_col = col;
     msg_source(HL_ATTR(HLF_W));
+    msg_ext_set_kind("wmsg");
     MSG_PUTS_ATTR(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
     set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
     msg_clr_eos();

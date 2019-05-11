@@ -89,7 +89,7 @@ void remote_ui_wait_for_attach(void)
 /// @param channel_id
 /// @param width  Requested screen columns
 /// @param height  Requested screen rows
-/// @param options  |ui-options| map
+/// @param options  |ui-option| map
 /// @param[out] err Error details, if any
 void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
                     Dictionary options, Error *err)
