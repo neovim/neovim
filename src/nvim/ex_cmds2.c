@@ -1298,7 +1298,12 @@ void dialog_changed(buf_T *buf, bool checkall)
 {
   char_u buff[DIALOG_MSG_SIZE];
   int ret;
-  exarg_T ea;
+  // Init ea pseudo-structure, this is needed for the check_overwrite()
+  // function.
+  exarg_T ea = {
+    .append = false,
+    .forceit = false,
+  };
 
   dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
@@ -1306,10 +1311,6 @@ void dialog_changed(buf_T *buf, bool checkall)
   } else {
     ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
   }
-
-  // Init ea pseudo-structure, this is needed for the check_overwrite()
-  // function.
-  ea.append = ea.forceit = false;
 
   if (ret == VIM_YES) {
     if (buf->b_fname != NULL

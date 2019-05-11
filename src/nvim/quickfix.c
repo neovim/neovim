@@ -4260,10 +4260,10 @@ static void restore_start_dir(char_u *dirname_start)
   if (STRCMP(dirname_start, dirname_now) != 0) {
     /* If the directory has changed, change it back by building up an
      * appropriate ex command and executing it. */
-    exarg_T ea;
-
-    ea.arg = dirname_start;
-    ea.cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd;
+    exarg_T ea = {
+      .arg = dirname_start,
+      .cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd,
+    };
     ex_cd(&ea);
   }
   xfree(dirname_now);
