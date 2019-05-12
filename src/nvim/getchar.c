@@ -2683,15 +2683,18 @@ int str_to_mapargs(const char_u *strargs, bool is_unmap, MapArguments *mapargs)
   return 0;
 }
 
-/// Actually set/unset a mapping or abbreviation.
+/// Sets or removes a mapping or abbreviation in buffer `buf`.
 ///
-/// Parameters are like @ref buf_do_map unless otherwise noted.
+/// @param maptype    @see do_map
 /// @param args  Fully parsed and "preprocessed" arguments for the
 ///              (un)map/abbrev command. Termcodes should have already been
 ///              replaced; whitespace, `<` and `>` signs, etc. in {lhs} and
 ///              {rhs} are assumed to be literal components of the mapping.
-int buf_do_map_explicit(int maptype, MapArguments *args, int mode,
-                        bool is_abbrev, buf_T *buf)
+/// @param mode       @see do_map
+/// @param is_abbrev  @see do_map
+/// @param buf        Target Buffer
+int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
+               buf_T *buf)
 {
   mapblock_T  *mp, **mpp;
   char_u      *p;
@@ -3030,31 +3033,6 @@ theend:
   return retval;
 }
 
-/// Like @ref do_map, but you can specify the target buffer.
-int buf_do_map(int maptype, char_u *arg, int mode, bool is_abbrev, buf_T *buf)
-{
-  MapArguments parsed_args;
-  int result = str_to_mapargs(arg, maptype == 1, &parsed_args);
-  switch (result) {
-    case 0:
-      break;
-    case 1:
-      result = 1;  // invalid arguments
-      goto FREE_AND_RETURN;
-    default:
-      assert(false && "Unknown return code from str_to_mapargs!");
-      result = -1;
-      goto FREE_AND_RETURN;
-  }  // switch
-
-  result = buf_do_map_explicit(maptype, &parsed_args, mode, is_abbrev, buf);
-
-FREE_AND_RETURN:
-  xfree(parsed_args.rhs);
-  xfree(parsed_args.orig_rhs);
-  return result;
-}
-
 
 /// Set or remove a mapping or an abbreviation in the current buffer, OR
 /// display (matching) mappings/abbreviations.
@@ -3104,7 +3082,26 @@ FREE_AND_RETURN:
 ///
 int do_map(int maptype, char_u *arg, int mode, bool is_abbrev)
 {
-  return buf_do_map(maptype, arg, mode, is_abbrev, curbuf);
+  MapArguments parsed_args;
+  int result = str_to_mapargs(arg, maptype == 1, &parsed_args);
+  switch (result) {
+    case 0:
+      break;
+    case 1:
+      result = 1;  // invalid arguments
+      goto free_and_return;
+    default:
+      assert(false && "Unknown return code from str_to_mapargs!");
+      result = -1;
+      goto free_and_return;
+  }  // switch
+
+  result = buf_do_map(maptype, &parsed_args, mode, is_abbrev, curbuf);
+
+free_and_return:
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
+  return result;
 }
 
 /*

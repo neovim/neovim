@@ -313,7 +313,7 @@ describe('nvim_get_keymap', function()
   end)
 end)
 
-describe('nvim_[set/del]_keymap', function()
+describe('nvim_set_keymap, nvim_del_keymap', function()
   before_each(clear)
 
   -- generate_expected is truthy when we want to generate an expected output for
@@ -720,7 +720,7 @@ describe('nvim_[set/del]_keymap', function()
   end
 end)
 
-describe('nvim_buf_[set/del]_keymap', function()
+describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   before_each(clear)
 
   -- nvim_set_keymap is implemented as a wrapped call to nvim_buf_set_keymap,

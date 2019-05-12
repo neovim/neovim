@@ -1264,29 +1264,28 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 
 /// Sets a global |mapping| for the given mode.
 ///
-/// To set a buffer-local mapping, use |nvim_buf_set_keymap|.
+/// To set a buffer-local mapping, use |nvim_buf_set_keymap()|.
 ///
-/// Unlike ordinary Ex mode |:map| commands, special characters like literal
-/// spaces and newlines are treated as an actual part of the {lhs} or {rhs}.
-/// An empty {rhs} is treated like a |<Nop>|. |keycodes| are still replaced as
-/// usual.
+/// Unlike |:map|, leading/trailing whitespace is accepted as part of the {lhs}
+/// or {rhs}. Empty {rhs} is |<Nop>|. |keycodes| are replaced as usual.
 ///
-/// `call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})`
+/// Example:
+/// <pre>
+///     call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})
+/// </pre>
 ///
-/// Is equivalent to,
+/// is equivalent to:
+/// <pre>
+///     nmap <nowait> <Space><NL> <Nop>
+/// </pre>
 ///
-/// `nmap <nowait> <Space><NL> <Nop>`
-///
-/// @param  mode  Mode short-name (the first character of an map command,
-///               e.g. "n", "i", "v", "x", etc.) OR the string "!" (for
-///               |:map!|). |:map| can be represented with a single space " ",
-///               an empty string, or "m".
+/// @param  mode  Mode short-name (map command prefix: "n", "i", "v", "x", …)
+///               or "!" for |:map!|, or empty string for |:map|.
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  |dict| of optional parameters. Accepts all |:map-arguments|
-///               as keys excluding |<buffer>| but also including |noremap|.
-///               Values should all be Booleans. Unrecognized keys will result
-///               in an error.
+/// @param  opts  Optional parameters map. Accepts all |:map-arguments|
+///               as keys excluding |<buffer>| but including |noremap|.
+///               Values are Booleans. Unknown key is an error.
 /// @param[out]   err   Error details, if any.
 void nvim_set_keymap(String mode, String lhs, String rhs,
                      Dictionary opts, Error *err)
@@ -1295,14 +1294,11 @@ void nvim_set_keymap(String mode, String lhs, String rhs,
   modify_keymap(-1, false, mode, lhs, rhs, opts, err);
 }
 
-/// Unmap a global |mapping| for the given mode.
+/// Unmaps a global |mapping| for the given mode.
 ///
-/// To unmap a buffer-local mapping, use |nvim_buf_del_keymap|.
+/// To unmap a buffer-local mapping, use |nvim_buf_del_keymap()|.
 ///
-/// Arguments are handled like |nvim_set_keymap|. Like with ordinary |:unmap|
-/// commands (and `nvim_set_keymap`), the given {lhs} is interpreted literally:
-/// for instance, trailing whitespace is treated as part of the {lhs}.
-/// |keycodes| are still replaced as usual.
+/// @see |nvim_set_keymap()|
 void nvim_del_keymap(String mode, String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
