@@ -797,15 +797,14 @@ void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
     mode_val = get_map_mode(&p, true);  // mapmode-ic
   } else {
     mode_val = get_map_mode(&p, false);
-    if (mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING) {
-      // get_map_mode will treat "unrecognized" mode shortnames like "map"
-      // if it does, and the given shortname wasn't "m" or " ", then error
-      if (STRNCMP(p, "m", 2) && STRNCMP(p, " ", 2)) {
-        err_msg = "Invalid mode shortname: %s";
-        err_arg = (char *)p;
-        err_type = kErrorTypeValidation;
-        goto fail_with_message;
-      }
+    if ((mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING)
+        && mode.size > 0) {
+      // get_map_mode() treats unrecognized mode shortnames as ":map".
+      // This is an error unless the given shortname was empty string "".
+      err_msg = "Invalid mode shortname: \"%s\"";
+      err_arg = (char *)p;
+      err_type = kErrorTypeValidation;
+      goto fail_with_message;
     }
   }
 
