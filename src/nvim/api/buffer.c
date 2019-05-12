@@ -15,6 +15,7 @@
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/getchar.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -574,6 +575,27 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   }
 
   return keymap_array(mode, buf);
+}
+
+/// Like |nvim_set_keymap|, but for a specific buffer.
+///
+/// @param  buffer  Buffer handle, or 0 for the current buffer.
+void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs,
+                         Dictionary opts, Error *err)
+  FUNC_API_SINCE(6)
+{
+  modify_keymap(buffer, false, mode, lhs, rhs, opts, err);
+}
+
+/// Like |nvim_del_keymap|, but for a specific buffer.
+///
+/// @param  buffer  Buffer handle, or 0 for the current buffer.
+void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
+  FUNC_API_SINCE(6)
+{
+  String rhs = { .data = "", .size = 0 };
+  Dictionary opts = ARRAY_DICT_INIT;
+  modify_keymap(buffer, true, mode, lhs, rhs, opts, err);
 }
 
 /// Gets a map of buffer-local |user-commands|.
