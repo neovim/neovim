@@ -1279,6 +1279,20 @@ void nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
   nvim_buf_set_keymap(-1, mode, maptype, lhs, rhs, opts, err);
 }
 
+/// Unmap a global |mapping| for the given mode.
+///
+/// To unmap a buffer-local mapping, use |nvim_buf_del_keymap|.
+///
+/// Arguments are handled like |nvim_set_keymap|. Like with ordinary |:unmap|
+/// commands (and `nvim_set_keymap`), the given {lhs} is interpreted literally:
+/// for instance, trailing whitespace is treated as part of the {lhs}.
+/// |keycodes| are still replaced as usual.
+void nvim_del_keymap(String mode, String lhs, Error *err)
+  FUNC_API_SINCE(6)
+{
+  nvim_buf_del_keymap(-1, mode, lhs, err);
+}
+
 /// Gets a map of global (non-buffer-local) Ex commands.
 ///
 /// Currently only |user-commands| are supported, not builtin Ex commands.

@@ -727,6 +727,18 @@ FAIL_AND_FREE:
   return;
 }
 
+/// Like |nvim_del_keymap|, but for a specific buffer.
+///
+/// @param  buffer  Buffer handle, or 0 for the current buffer.
+void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
+  FUNC_API_SINCE(6)
+{
+  String maptype = { .data = "u", .size = 1 };
+  String rhs = { .data = "", .size = 0 };
+  Dictionary opts = ARRAY_DICT_INIT;
+  nvim_buf_set_keymap(buffer, mode, maptype, lhs, rhs, opts, err);
+}
+
 /// Gets a map of buffer-local |user-commands|.
 ///
 /// @param  buffer  Buffer handle, or 0 for current buffer
