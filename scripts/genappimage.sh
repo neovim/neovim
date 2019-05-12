@@ -88,6 +88,9 @@ else
   generate_type2_appimage
 fi
 
+# Change the URL and Filename fields on the .zsync file to reflect the renaming
+sed -i "s/Neovim-${VERSION}.glibc${GLIBC_NEEDED}-${ARCH}.AppImage/nvim.appimage/g" ${ROOT_DIR}/out/*.zsync
+
 # Moving the final executable to a different folder so it isn't in the
 # way for a subsequent build.
 
