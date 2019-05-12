@@ -27,15 +27,17 @@ typedef enum {
 /// All possible |:map-arguments| usable in a |:map| command.
 ///
 /// The <special> argument has no effect on mappings and is excluded from this
-/// struct declaration.
+/// struct declaration. |noremap| is included, since it behaves like a map
+/// argument when used in a mapping.
 ///
 /// @see mapblock_T
 struct map_arguments {
   bool buffer;
-  bool nowait;
-  bool silent;
-  bool script;
   bool expr;
+  bool noremap;
+  bool nowait;
+  bool script;
+  bool silent;
   bool unique;
 
   /// The {lhs} of the mapping.

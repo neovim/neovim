@@ -1254,29 +1254,28 @@ ArrayOf(Dictionary) nvim_get_keymap(String mode)
 /// An empty {rhs} is treated like a |<Nop>|. |keycodes| are still replaced as
 /// usual.
 ///
-/// `call nvim_set_keymap('', '', " <NL>", "", {'nowait':v:true})`
+/// `call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})`
 ///
 /// Is equivalent to,
 ///
-/// `map <nowait> <Space><NL> <Nop>`
+/// `nmap <nowait> <Space><NL> <Nop>`
 ///
 /// @param  mode  Mode short-name (the first character of an map command,
 ///               e.g. "n", "i", "v", "x", etc.) OR the string "!" (for
-///               |:map!|). |:map| can be represented with an empty string, a
-///               single space " ", or "m".
-/// @param  maptype   Whether to |:map|, |:unmap|, or |:noremap|, represented
-///                   by an empty string, "u", and "n", respectively.
+///               |:map!|). |:map| can be represented with a single space " ",
+///               an empty string, or "m".
 /// @param  lhs   Left-hand-side |{lhs}| of the mapping.
 /// @param  rhs   Right-hand-side |{rhs}| of the mapping.
-/// @param  opts  |dict| of optional parameters. Includes all |:map-arguments|
-///               as keys except |<buffer>|. Values should all be Booleans.
-///               Unrecognized keys will result in an error.
+/// @param  opts  |dict| of optional parameters. Accepts all |:map-arguments|
+///               as keys excluding |<buffer>| but also including |noremap|.
+///               Values should all be Booleans. Unrecognized keys will result
+///               in an error.
 /// @param[out]   err   Error details, if any.
-void nvim_set_keymap(String mode, String maptype, String lhs, String rhs,
+void nvim_set_keymap(String mode, String lhs, String rhs,
                      Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  nvim_buf_set_keymap(-1, mode, maptype, lhs, rhs, opts, err);
+  modify_keymap(-1, false, mode, lhs, rhs, opts, err);
 }
 
 /// Unmap a global |mapping| for the given mode.

@@ -744,6 +744,145 @@ String ga_take_string(garray_T *ga)
   return str;
 }
 
+/// Set, tweak, or remove a mapping in a mode. Acts as the implementation for
+/// functions like @ref nvim_buf_set_keymap.
+///
+/// Arguments are handled like @ref nvim_set_keymap unless noted.
+/// @param  buffer    Buffer handle for a specific buffer, or 0 for the current
+///                   buffer, or -1 to signify global behavior ("all buffers")
+/// @param  is_unmap  When true, removes the mapping that matches {lhs}.
+void modify_keymap(Buffer buffer, bool is_unmap, String mode, String lhs,
+                   String rhs, Dictionary opts, Error *err)
+{
+  char *err_msg = NULL;  // the error message to report, if any
+  char *err_arg = NULL;  // argument for the error message format string
+  ErrorType err_type = kErrorTypeNone;
+
+  char_u *lhs_buf = NULL;
+  char_u *rhs_buf = NULL;
+
+  bool global = (buffer == -1);
+  if (global) {
+    buffer = 0;
+  }
+  buf_T *target_buf = find_buffer_by_handle(buffer, err);
+
+  MapArguments parsed_args;
+  memset(&parsed_args, 0, sizeof(parsed_args));
+  if (parse_keymap_opts(opts, &parsed_args, err)) {
+    goto FAIL_AND_FREE;
+  }
+  parsed_args.buffer = !global;
+
+  set_maparg_lhs_rhs((char_u *)lhs.data, lhs.size,
+                     (char_u *)rhs.data, rhs.size,
+                     CPO_TO_CPO_FLAGS, &parsed_args);
+
+  if (parsed_args.lhs_len > MAXMAPLEN) {
+    err_msg = "LHS exceeds maximum map length: %s";
+    err_arg = lhs.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  if (mode.size > 1) {
+    err_msg = "Shortname is too long: %s";
+    err_arg = mode.data;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+  int mode_val;  // integer value of the mapping mode, to be passed to do_map()
+  char_u *p = (char_u *)((mode.size) ? mode.data : "m");
+  if (STRNCMP(p, "!", 2) == 0) {
+    mode_val = get_map_mode(&p, true);  // mapmode-ic
+  } else {
+    mode_val = get_map_mode(&p, false);
+    if (mode_val == VISUAL + SELECTMODE + NORMAL + OP_PENDING) {
+      // get_map_mode will treat "unrecognized" mode shortnames like "map"
+      // if it does, and the given shortname wasn't "m" or " ", then error
+      if (STRNCMP(p, "m", 2) && STRNCMP(p, " ", 2)) {
+        err_msg = "Invalid mode shortname: %s";
+        err_arg = (char *)p;
+        err_type = kErrorTypeValidation;
+        goto FAIL_WITH_MESSAGE;
+      }
+    }
+  }
+
+  if (parsed_args.lhs_len == 0) {
+    err_msg = "Invalid (empty) LHS";
+    err_arg = "";
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  bool is_noremap = parsed_args.noremap;
+  assert(!(is_unmap && is_noremap));
+
+  if (!is_unmap && (parsed_args.rhs_len == 0 && !parsed_args.rhs_is_noop)) {
+    if (rhs.size == 0) {  // assume that the user wants RHS to be a <Nop>
+      parsed_args.rhs_is_noop = true;
+    } else {
+      // the given RHS was nonempty and not a <Nop>, but was parsed as if it
+      // were empty?
+      assert(false && "Failed to parse nonempty RHS!");
+      err_msg = "Parsing of nonempty RHS failed: %s";
+      err_arg = rhs.data;
+      err_type = kErrorTypeException;
+      goto FAIL_WITH_MESSAGE;
+    }
+  } else if (is_unmap && parsed_args.rhs_len) {
+    err_msg = "Gave nonempty RHS in unmap command: %s";
+    err_arg = (char *)parsed_args.rhs;
+    err_type = kErrorTypeValidation;
+    goto FAIL_WITH_MESSAGE;
+  }
+
+  // buf_do_map_explicit reads noremap/unmap as its own argument
+  int maptype_val = 0;
+  if (is_unmap) {
+    maptype_val = 1;
+  } else if (is_noremap) {
+    maptype_val = 2;
+  }
+
+  switch (buf_do_map_explicit(maptype_val, &parsed_args, mode_val,
+                              0, target_buf)) {
+    case 0:
+      break;
+    case 1:
+      api_set_error(err, kErrorTypeException, (char *)e_invarg, 0);
+      goto FAIL_AND_FREE;
+    case 2:
+      api_set_error(err, kErrorTypeException, (char *)e_nomap, 0);
+      goto FAIL_AND_FREE;
+    case 5:
+      api_set_error(err, kErrorTypeException,
+                    "E227: mapping already exists for %s", parsed_args.lhs);
+      goto FAIL_AND_FREE;
+    default:
+      assert(false && "Unrecognized return code!");
+      goto FAIL_AND_FREE;
+  }  // switch
+
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
+
+  return;
+
+FAIL_WITH_MESSAGE:
+  api_set_error(err, err_type, err_msg, err_arg);
+
+FAIL_AND_FREE:
+  xfree(lhs_buf);
+  xfree(rhs_buf);
+  xfree(parsed_args.rhs);
+  xfree(parsed_args.orig_rhs);
+  return;
+}
+
 /// Read in the given opts, setting corresponding flags in `out`.
 ///
 /// @param opts A dictionary passed to @ref nvim_set_keymap or
@@ -786,7 +925,10 @@ Integer parse_keymap_opts(Dictionary opts, MapArguments *out, Error *err)
       // when calling nvim_set_keymap or nvim_buf_set_keymap, since it can be
       // inferred from which function they called
       case 'n':
-        if (STRNCMP(optname, "nowait", 7) == 0) {
+        if (STRNCMP(optname, "noremap", 8) == 0) {
+          was_valid_opt = true;
+          out->noremap = key_and_val->value.data.boolean;
+        } else if (STRNCMP(optname, "nowait", 7) == 0) {
           was_valid_opt = true;
           out->nowait = key_and_val->value.data.boolean;
         }

@@ -796,8 +796,7 @@ nvim_get_keymap({mode})                                    *nvim_get_keymap()*
                     Array of maparg()-like dictionaries describing mappings.
                     The "buffer" key is always zero.
 
-                                                           *nvim_set_keymap()*
-nvim_set_keymap({mode}, {maptype}, {lhs}, {rhs}, {opts})
+nvim_set_keymap({mode}, {lhs}, {rhs}, {opts})              *nvim_set_keymap()*
                 Sets a global |mapping| for the given mode.
 
                 To set a buffer-local mapping, use |nvim_buf_set_keymap|.
@@ -807,27 +806,36 @@ nvim_set_keymap({mode}, {maptype}, {lhs}, {rhs}, {opts})
                 of the {lhs} or {rhs}. An empty {rhs} is treated like a
                 |<Nop>|. |keycodes| are still replaced as usual.
 
-                `call nvim_set_keymap('', '', " <NL>", "", {'nowait':v:true})`
+                `call nvim_set_keymap('n', ' <NL>', '', {'nowait': v:true})`
 
                 Is equivalent to,
 
-                `map <nowait> <Space><NL> <Nop>`
+                `nmap <nowait> <Space><NL> <Nop>`
 
                 Parameters: ~
-                    {mode}     Mode short-name (the first character of an map
-                               command, e.g. "n", "i", "v", "x", etc.) OR the
-                               string "!" (for |:map!|). |:map| can be
-                               represented with an empty string, a single
-                               space " ", or "m".
-                    {maptype}  Whether to |:map|, |:unmap|, or |:noremap|,
-                               represented by an empty string, "u", and "n",
-                               respectively.
-                    {lhs}      Left-hand-side |{lhs}| of the mapping.
-                    {rhs}      Right-hand-side |{rhs}| of the mapping.
-                    {opts}     |dict| of optional parameters. Includes all
-                               |:map-arguments| as keys except |<buffer>|.
-                               Values should all be Booleans. Unrecognized
-                               keys will result in an error.
+                    {mode}  Mode short-name (the first character of an map
+                            command, e.g. "n", "i", "v", "x", etc.) OR the
+                            string "!" (for |:map!|). |:map| can be
+                            represented with a single space " ", an empty
+                            string, or "m".
+                    {lhs}   Left-hand-side |{lhs}| of the mapping.
+                    {rhs}   Right-hand-side |{rhs}| of the mapping.
+                    {opts}  |dict| of optional parameters. Accepts all
+                            |:map-arguments| as keys excluding |<buffer>| but
+                            also including |noremap|. Values should all be
+                            Booleans. Unrecognized keys will result in an
+                            error.
+
+nvim_del_keymap({mode}, {lhs})                             *nvim_del_keymap()*
+                Unmap a global |mapping| for the given mode.
+
+                To unmap a buffer-local mapping, use |nvim_buf_del_keymap|.
+
+                Arguments are handled like |nvim_set_keymap|. Like with
+                ordinary |:unmap| commands (and `nvim_set_keymap` ), the given
+                {lhs} is interpreted literally: for instance, trailing
+                whitespace is treated as part of the {lhs}. |keycodes| are
+                still replaced as usual.
 
 nvim_get_commands({opts})                                *nvim_get_commands()*
                 Gets a map of global (non-buffer-local) Ex commands.
@@ -1319,8 +1327,14 @@ nvim_buf_get_keymap({buffer}, {mode})                  *nvim_buf_get_keymap()*
                     The "buffer" key holds the associated buffer handle.
 
                                                        *nvim_buf_set_keymap()*
-nvim_buf_set_keymap({buffer}, {mode}, {maptype}, {lhs}, {rhs}, {opts})
+nvim_buf_set_keymap({buffer}, {mode}, {lhs}, {rhs}, {opts})
                 Like |nvim_set_keymap|, but for a specific buffer.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for the current buffer.
+
+nvim_buf_del_keymap({buffer}, {mode}, {lhs})           *nvim_buf_del_keymap()*
+                Like |nvim_del_keymap|, but for a specific buffer.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for the current buffer.
