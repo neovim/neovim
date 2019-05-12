@@ -5610,10 +5610,13 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     int sline, line_size;
     int height = wp->w_height_inner;
 
-    // Don't change w_topline when height is zero.  Don't set w_topline when
-    // 'scrollbind' is set and this isn't the current window.
+  // Don't change w_topline in any of these cases:
+  // - window height is 0
+  // - 'scrollbind' is set and this isn't the current window
+  // - window height is sufficient to display the whole buffer
   if (height > 0
       && (!wp->w_p_scb || wp == curwin)
+      && (height < wp->w_buffer->b_ml.ml_line_count)
       ) {
     /*
      * Find a value for w_topline that shows the cursor at the same
