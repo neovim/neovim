@@ -23,6 +23,7 @@ describe('TextYankPost', function()
   it('is executed after yank and handles register types', function()
     feed('yy')
     eq({
+      inclusive = false,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
@@ -35,6 +36,7 @@ describe('TextYankPost', function()
 
     feed('+yw')
     eq({
+      inclusive = false,
       operator = 'y',
       regcontents = { 'baz ' },
       regname = '',
@@ -44,6 +46,7 @@ describe('TextYankPost', function()
 
     feed('<c-v>eky')
     eq({
+      inclusive = true,
       operator = 'y',
       regcontents = { 'foo', 'baz' },
       regname = '',
@@ -55,6 +58,7 @@ describe('TextYankPost', function()
   it('makes v:event immutable', function()
     feed('yy')
     eq({
+      inclusive = false,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
@@ -84,6 +88,7 @@ describe('TextYankPost', function()
     command('autocmd TextYankPost * normal "+yy')
     feed('yy')
     eq({
+      inclusive = false,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
@@ -96,6 +101,7 @@ describe('TextYankPost', function()
   it('is executed after delete and change', function()
     feed('dw')
     eq({
+      inclusive = false,
       operator = 'd',
       regcontents = { 'foo' },
       regname = '',
@@ -105,6 +111,7 @@ describe('TextYankPost', function()
 
     feed('dd')
     eq({
+      inclusive = false,
       operator = 'd',
       regcontents = { '\nbar' },
       regname = '',
@@ -114,6 +121,7 @@ describe('TextYankPost', function()
 
     feed('cwspam<esc>')
     eq({
+      inclusive = true,
       operator = 'c',
       regcontents = { 'baz' },
       regname = '',
@@ -141,6 +149,7 @@ describe('TextYankPost', function()
   it('gives the correct register name', function()
     feed('$"byiw')
     eq({
+      inclusive = true,
       operator = 'y',
       regcontents = { 'bar' },
       regname = 'b',
@@ -149,6 +158,7 @@ describe('TextYankPost', function()
 
     feed('"*yy')
     eq({
+      inclusive = true,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '*',
@@ -160,6 +170,7 @@ describe('TextYankPost', function()
     -- regname still shows the name the user requested
     feed('yy')
     eq({
+      inclusive = true,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '',
@@ -168,6 +179,7 @@ describe('TextYankPost', function()
 
     feed('"*yy')
     eq({
+      inclusive = true,
       operator = 'y',
       regcontents = { 'foo\nbar' },
       regname = '*',
@@ -178,6 +190,7 @@ describe('TextYankPost', function()
   it('works with Ex commands', function()
     command('1delete +')
     eq({
+      inclusive = false,
       operator = 'd',
       regcontents = { 'foo\nbar' },
       regname = '+',
@@ -187,6 +200,7 @@ describe('TextYankPost', function()
 
     command('yank')
     eq({
+      inclusive = false,
       operator = 'y',
       regcontents = { 'baz text' },
       regname = '',
@@ -196,6 +210,7 @@ describe('TextYankPost', function()
 
     command('normal yw')
     eq({
+      inclusive = false,
       operator = 'y',
       regcontents = { 'baz ' },
       regname = '',
@@ -205,6 +220,7 @@ describe('TextYankPost', function()
 
     command('normal! dd')
     eq({
+      inclusive = false,
       operator = 'd',
       regcontents = { 'baz text' },
       regname = '',

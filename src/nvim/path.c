@@ -1267,7 +1267,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   }
 
   *num_file = ga.ga_len;
-  *file = (ga.ga_data != NULL) ? (char_u **)ga.ga_data : (char_u **)"";
+  *file = (ga.ga_data != NULL) ? (char_u **)ga.ga_data : NULL;
 
   recursive = false;
 
@@ -1346,6 +1346,15 @@ void slash_adjust(char_u *p)
   if (path_with_url((const char *)p)) {
     return;
   }
+
+  if (*p == '`') {
+    // don't replace backslash in backtick quoted strings
+    const size_t len = STRLEN(p);
+    if (len > 2 && *(p + len - 1) == '`') {
+      return;
+    }
+  }
+
   while (*p) {
     if (*p == (char_u)psepcN) {
       *p = (char_u)psepc;
@@ -2038,12 +2047,12 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
   if (*p_wig) {
     char_u  *ffname;
 
-    // check all filess in (*files)[]
+    // check all files in (*files)[]
+    assert(*num_files == 0 || *files != NULL);
     for (i = 0; i < *num_files; i++) {
       ffname = (char_u *)FullName_save((char *)(*files)[i], false);
-      if (ffname == NULL) {               // out of memory
-        break;
-      }
+      assert((*files)[i] != NULL);
+      assert(ffname != NULL);
       if (match_file_list(p_wig, (*files)[i], ffname)) {
         // remove this matching file from the list
         xfree((*files)[i]);
@@ -2057,16 +2066,16 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
     }
   }
 
-  /*
-   * Move the names where 'suffixes' match to the end.
-   */
+  //
+  // Move the names where 'suffixes' match to the end.
+  //
+  assert(*num_files == 0 || *files != NULL);
   if (*num_files > 1) {
     non_suf_match = 0;
     for (i = 0; i < *num_files; i++) {
       if (!match_suffix((*files)[i])) {
         //
-        // Move the name without matching suffix to the front
-        // of the list.
+        // Move the name without matching suffix to the front of the list.
         //
         p = (*files)[i];
         for (j = i; j > non_suf_match; j--) {
@@ -2271,7 +2280,7 @@ int path_is_absolute(const char_u *fname)
 void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
   FUNC_ATTR_NONNULL_ALL
 {
-  char *path = getenv("PATH");
+  const char *path = os_getenv("PATH");
 
   if (path == NULL || path_is_absolute((char_u *)argv0)) {
     xstrlcpy(buf, argv0, bufsize);

@@ -256,9 +256,13 @@ enum key_extra {
 #define K_ZERO          TERMCAP2KEY(KS_ZERO, KE_FILLER)
 
 #define K_UP            TERMCAP2KEY('k', 'u')
+#define K_KUP           TERMCAP2KEY('K', 'u')   // keypad up
 #define K_DOWN          TERMCAP2KEY('k', 'd')
+#define K_KDOWN         TERMCAP2KEY('K', 'd')   // keypad down
 #define K_LEFT          TERMCAP2KEY('k', 'l')
+#define K_KLEFT         TERMCAP2KEY('K', 'l')   // keypad left
 #define K_RIGHT         TERMCAP2KEY('k', 'r')
+#define K_KRIGHT        TERMCAP2KEY('K', 'r')   // keypad right
 #define K_S_UP          TERMCAP2KEY(KS_EXTRA, KE_S_UP)
 #define K_S_DOWN        TERMCAP2KEY(KS_EXTRA, KE_S_DOWN)
 #define K_S_LEFT        TERMCAP2KEY('#', '4')
@@ -284,7 +288,7 @@ enum key_extra {
 #define K_XLEFT         TERMCAP2KEY(KS_EXTRA, KE_XLEFT)
 #define K_XRIGHT        TERMCAP2KEY(KS_EXTRA, KE_XRIGHT)
 
-#define K_F1            TERMCAP2KEY('k', '1')   /* function keys */
+#define K_F1            TERMCAP2KEY('k', '1')   // function keys
 #define K_F2            TERMCAP2KEY('k', '2')
 #define K_F3            TERMCAP2KEY('k', '3')
 #define K_F4            TERMCAP2KEY('k', '4')
@@ -331,7 +335,7 @@ enum key_extra {
 #define K_S_XF3         TERMCAP2KEY(KS_EXTRA, KE_S_XF3)
 #define K_S_XF4         TERMCAP2KEY(KS_EXTRA, KE_S_XF4)
 
-#define K_S_F1          TERMCAP2KEY(KS_EXTRA, KE_S_F1)  /* shifted func. keys */
+#define K_S_F1          TERMCAP2KEY(KS_EXTRA, KE_S_F1)  // shifted func. keys
 #define K_S_F2          TERMCAP2KEY(KS_EXTRA, KE_S_F2)
 #define K_S_F3          TERMCAP2KEY(KS_EXTRA, KE_S_F3)
 #define K_S_F4          TERMCAP2KEY(KS_EXTRA, KE_S_F4)
@@ -356,35 +360,39 @@ enum key_extra {
 #define K_DEL           TERMCAP2KEY('k', 'D')
 #define K_KDEL          TERMCAP2KEY(KS_EXTRA, KE_KDEL)
 #define K_HOME          TERMCAP2KEY('k', 'h')
-#define K_KHOME         TERMCAP2KEY('K', '1')   /* keypad home (upper left) */
+#define K_KHOME         TERMCAP2KEY('K', '1')   // keypad home (upper left)
 #define K_XHOME         TERMCAP2KEY(KS_EXTRA, KE_XHOME)
 #define K_ZHOME         TERMCAP2KEY(KS_EXTRA, KE_ZHOME)
 #define K_END           TERMCAP2KEY('@', '7')
-#define K_KEND          TERMCAP2KEY('K', '4')   /* keypad end (lower left) */
+#define K_KEND          TERMCAP2KEY('K', '4')   // keypad end (lower left)
 #define K_XEND          TERMCAP2KEY(KS_EXTRA, KE_XEND)
 #define K_ZEND          TERMCAP2KEY(KS_EXTRA, KE_ZEND)
 #define K_PAGEUP        TERMCAP2KEY('k', 'P')
 #define K_PAGEDOWN      TERMCAP2KEY('k', 'N')
-#define K_KPAGEUP       TERMCAP2KEY('K', '3')   /* keypad pageup (upper R.) */
-#define K_KPAGEDOWN     TERMCAP2KEY('K', '5')   /* keypad pagedown (lower R.) */
+#define K_KPAGEUP       TERMCAP2KEY('K', '3')   // keypad pageup (upper R.)
+#define K_KPAGEDOWN     TERMCAP2KEY('K', '5')   // keypad pagedown (lower R.)
+#define K_KORIGIN       TERMCAP2KEY('K', '2')   // keypad center
 
-#define K_KPLUS         TERMCAP2KEY('K', '6')   /* keypad plus */
-#define K_KMINUS        TERMCAP2KEY('K', '7')   /* keypad minus */
-#define K_KDIVIDE       TERMCAP2KEY('K', '8')   /* keypad / */
-#define K_KMULTIPLY     TERMCAP2KEY('K', '9')   /* keypad * */
-#define K_KENTER        TERMCAP2KEY('K', 'A')   /* keypad Enter */
-#define K_KPOINT        TERMCAP2KEY('K', 'B')   /* keypad . or ,*/
+#define K_KPLUS         TERMCAP2KEY('K', '6')   // keypad plus
+#define K_KMINUS        TERMCAP2KEY('K', '7')   // keypad minus
+#define K_KDIVIDE       TERMCAP2KEY('K', '8')   // keypad /
+#define K_KMULTIPLY     TERMCAP2KEY('K', '9')   // keypad *
+#define K_KENTER        TERMCAP2KEY('K', 'A')   // keypad Enter
+#define K_KPOINT        TERMCAP2KEY('K', 'B')   // keypad . or ,
 
-#define K_K0            TERMCAP2KEY('K', 'C')   /* keypad 0 */
-#define K_K1            TERMCAP2KEY('K', 'D')   /* keypad 1 */
-#define K_K2            TERMCAP2KEY('K', 'E')   /* keypad 2 */
-#define K_K3            TERMCAP2KEY('K', 'F')   /* keypad 3 */
-#define K_K4            TERMCAP2KEY('K', 'G')   /* keypad 4 */
-#define K_K5            TERMCAP2KEY('K', 'H')   /* keypad 5 */
-#define K_K6            TERMCAP2KEY('K', 'I')   /* keypad 6 */
-#define K_K7            TERMCAP2KEY('K', 'J')   /* keypad 7 */
-#define K_K8            TERMCAP2KEY('K', 'K')   /* keypad 8 */
-#define K_K9            TERMCAP2KEY('K', 'L')   /* keypad 9 */
+#define K_K0            TERMCAP2KEY('K', 'C')   // keypad 0
+#define K_K1            TERMCAP2KEY('K', 'D')   // keypad 1
+#define K_K2            TERMCAP2KEY('K', 'E')   // keypad 2
+#define K_K3            TERMCAP2KEY('K', 'F')   // keypad 3
+#define K_K4            TERMCAP2KEY('K', 'G')   // keypad 4
+#define K_K5            TERMCAP2KEY('K', 'H')   // keypad 5
+#define K_K6            TERMCAP2KEY('K', 'I')   // keypad 6
+#define K_K7            TERMCAP2KEY('K', 'J')   // keypad 7
+#define K_K8            TERMCAP2KEY('K', 'K')   // keypad 8
+#define K_K9            TERMCAP2KEY('K', 'L')   // keypad 9
+
+#define K_KCOMMA        TERMCAP2KEY('K', 'M')   // keypad comma
+#define K_KEQUAL        TERMCAP2KEY('K', 'N')   // keypad equal
 
 #define K_MOUSE         TERMCAP2KEY(KS_MOUSE, KE_FILLER)
 #define K_MENU          TERMCAP2KEY(KS_MENU, KE_FILLER)

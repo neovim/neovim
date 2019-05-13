@@ -15,10 +15,6 @@
 #     - Tag the commit.
 #   Create the "version bump" commit:
 #     - CMakeLists.txt: Set NVIM_VERSION_PRERELEASE to "-dev"
-#
-# Manual steps:
-#   - CMakeLists.txt: Bump NVIM_VERSION_* as appropriate.
-#   - git push --follow-tags
 
 set -e
 set -u
@@ -67,7 +63,7 @@ _do_release_commit() {
 
   if ! test "$ARG1" = '--use-current-commit' ; then
     echo "Building changelog since ${__LAST_TAG}..."
-    __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:\S')"
+    __CHANGELOG="$(./scripts/git-log-pretty-since.sh "$__LAST_TAG" 'vim-patch:[^[:space:]]')"
 
     git add CMakeLists.txt
     git commit --edit -m "${__RELEASE_MSG} ${__CHANGELOG}"
@@ -95,5 +91,9 @@ _do_bump_commit
 echo "
 Next steps:
     - Double-check NVIM_VERSION_* in CMakeLists.txt
-    - git push --follow-tags
-    - update website: index.html"
+    - Push the tag:
+        git push --follow-tags
+    - Update the 'stable' tag:
+        git push --force upstream HEAD^:refs/tags/stable
+        git fetch --tags
+    - Update website: index.html"

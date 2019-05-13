@@ -88,12 +88,13 @@ char_u *parse_shape_opt(int what)
   char_u      *colonp;
   char_u      *commap;
   char_u      *slashp;
-  char_u      *p, *endp;
-  int idx = 0;                          /* init for GCC */
+  char_u      *p = NULL;
+  char_u      *endp;
+  int idx = 0;                          // init for GCC
   int all_idx;
   int len;
   int i;
-  int found_ve = false;                 /* found "ve" flag */
+  int found_ve = false;                 // found "ve" flag
   int round;
 
   // First round: check for errors; second round: do it for real.
@@ -254,6 +255,16 @@ char_u *parse_shape_opt(int what)
   return NULL;
 }
 
+/// Returns true if the cursor is non-blinking "block" shape during
+/// visual selection.
+///
+/// @param exclusive If 'selection' option is "exclusive".
+bool cursor_is_block_during_visual(bool exclusive)
+{
+  int mode_idx = exclusive ? SHAPE_IDX_VE : SHAPE_IDX_V;
+  return (SHAPE_BLOCK == shape_table[mode_idx].shape
+          && 0 == shape_table[mode_idx].blinkon);
+}
 
 /// Map cursor mode from string to integer
 ///

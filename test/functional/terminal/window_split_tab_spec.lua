@@ -6,8 +6,10 @@ local feed_command = helpers.feed_command
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local iswin = helpers.iswin
+local retry = helpers.retry
 
-describe('terminal', function()
+describe(':terminal', function()
   local screen
 
   before_each(function()
@@ -37,10 +39,11 @@ describe('terminal', function()
   it('does not change size on WinEnter', function()
     if helpers.pending_win32(pending) then return end
     feed('<c-\\><c-n>')
+    feed('k')
     feed_command('2split')
     screen:expect([[
-      tty ready                                         |
-      ^rows: 5, cols: 50                                 |
+      ^tty ready                                         |
+      rows: 5, cols: 50                                 |
       ==========                                        |
       tty ready                                         |
       rows: 5, cols: 50                                 |
@@ -55,8 +58,8 @@ describe('terminal', function()
       tty ready                                         |
       rows: 5, cols: 50                                 |
       ==========                                        |
-      tty ready                                         |
-      ^rows: 5, cols: 50                                 |
+      ^tty ready                                         |
+      rows: 5, cols: 50                                 |
       {2: }                                                 |
                                                         |
                                                         |
@@ -66,8 +69,22 @@ describe('terminal', function()
   end)
 
   it('forwards resize request to the program', function()
-    feed([[<C-\><C-N>:]])  -- Go to cmdline-mode, so cursor is at bottom.
-    screen:try_resize(screen._width - 3, screen._height - 2)
+    feed([[<C-\><C-N>G:]])  -- Go to cmdline-mode, so cursor is at bottom.
+    local w1, h1 = screen._width - 3, screen._height - 2
+    local w2, h2 = w1 - 6, h1 - 3
+
+    if iswin() then
+      -- win: SIGWINCH is unreliable, use a weaker test. #7506
+      retry(3, 30000, function()
+        screen:try_resize(w1, h1)
+        screen:expect{any='rows: 7, cols: 47'}
+        screen:try_resize(w2, h2)
+        screen:expect{any='rows: 4, cols: 41'}
+      end)
+      return
+    end
+
+    screen:try_resize(w1, h1)
     screen:expect([[
       tty ready                                      |
       rows: 7, cols: 47                              |
@@ -78,7 +95,7 @@ describe('terminal', function()
                                                      |
       :^                                              |
     ]])
-    screen:try_resize(screen._width - 6, screen._height - 3)
+    screen:try_resize(w2, h2)
     screen:expect([[
       tty ready                                |
       rows: 7, cols: 47                        |

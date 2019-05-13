@@ -80,14 +80,14 @@ char *stdpaths_get_xdg_var(const XDGVarType idx)
   return ret;
 }
 
-/// Return nvim-specific XDG directory subpath
+/// Return Nvim-specific XDG directory subpath.
+///
+/// Windows: Uses "…/nvim-data" for kXDGDataHome to avoid storing
+/// configuration and data files in the same path. #4403
 ///
 /// @param[in]  idx  XDG directory to use.
 ///
-/// @return [allocated] `{xdg_directory}/nvim`
-///
-/// In WIN32 get_xdg_home(kXDGDataHome) returns `{xdg_directory}/nvim-data` to
-/// avoid storing configuration and data files in the same path.
+/// @return [allocated] "{xdg_directory}/nvim"
 char *get_xdg_home(const XDGVarType idx)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {

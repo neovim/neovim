@@ -5,6 +5,11 @@ func Test_compiler()
     return
   endif
 
+  " $LANG changes the output of Perl.
+  if $LANG != ''
+    unlet $LANG
+  endif
+
   e Xfoo.pl
   compiler perl
   call assert_equal('perl', b:current_compiler)

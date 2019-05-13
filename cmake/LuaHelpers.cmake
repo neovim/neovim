@@ -17,7 +17,7 @@ endfunction()
 function(check_lua_deps LUA_PRG_PATH MODULES RESULT_VAR)
   # Check if the lua interpreter at the given path
   # satisfies all Neovim dependencies
-  message(STATUS "Checking Lua interpreter ${LUA_PRG_PATH}")
+  message(STATUS "Checking Lua interpreter: ${LUA_PRG_PATH}")
   if(NOT EXISTS ${LUA_PRG_PATH})
     message(STATUS
       "[${LUA_PRG_PATH}] file not found")

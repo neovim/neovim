@@ -29,10 +29,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Does neovim-lint on c files.
+"""Lints C files in the Neovim source tree.
 
 The goal of this script is to identify places in the code that *may*
-be in non-compliance with neovim style.  It does not attempt to fix
+be in non-compliance with Neovim style.  It does not attempt to fix
 up these problems -- the point is to educate.  It does also not
 attempt to find all problems, or to ensure that everything it does
 find is legitimately a problem.
@@ -49,6 +49,7 @@ from __future__ import unicode_literals
 
 import codecs
 import copy
+import fileinput
 import getopt
 import math  # for log
 import os
@@ -65,7 +66,7 @@ _USAGE = """
 Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
                  [--counting=total|toplevel|detailed] [--root=subdir]
                  [--linelength=digits] [--record-errors=file]
-                 [--suppress-errors=file]
+                 [--suppress-errors=file] [--stdin-filename=filename]
         <file> [file] ...
 
   The style guidelines this tries to follow are those in
@@ -87,7 +88,7 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
    * [whitespace/braces] { should almost always be at the end of the previous
      line
    * [build/include] Include the directory when naming .h files
-   * [runtime/int] Use int16/int64/etc, rather than the C type.
+   * [runtime/int] Use int16_t/int64_t/etc, rather than the C type.
 
   Every problem is given a confidence score from 1-5, with 5 meaning we are
   certain of the problem, and 1 meaning it could be a legitimate construct.
@@ -167,6 +168,9 @@ Syntax: clint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
 
     suppress-errors=file
       Errors listed in the given file will not be reported.
+
+    stdin-filename=filename
+      Use specified filename when reading from stdin (file "-").
 """
 
 # We categorize each error message we print.  Here are the categories.
@@ -1479,6 +1483,37 @@ def CheckMemoryFunctions(filename, clean_lines, linenum, error):
         if ix >= 0 and (ix == 0 or (not line[ix - 1].isalnum() and
                                     line[ix - 1] not in ('_', '.', '>'))):
             error(filename, linenum, 'runtime/memory_fn', 2,
+                  'Use ' + suggested_function +
+                  '...) instead of ' + function + '...).')
+
+
+os_functions = (
+    ('setenv(', 'os_setenv('),
+    ('getenv(', 'os_getenv('),
+    ('_wputenv(', 'os_setenv('),
+    ('_putenv_s(', 'os_setenv('),
+    ('putenv(', 'os_setenv('),
+    ('unsetenv(', 'os_unsetenv('),
+)
+
+
+def CheckOSFunctions(filename, clean_lines, linenum, error):
+    """Checks for calls to invalid functions.
+
+    Args:
+      filename: The name of the current file.
+      clean_lines: A CleansedLines instance containing the file.
+      linenum: The number of the line to check.
+      error: The function to call with any errors found.
+    """
+    line = clean_lines.elided[linenum]
+    for function, suggested_function in os_functions:
+        ix = line.find(function)
+        # Comparisons made explicit for clarity -- pylint:
+        # disable=g-explicit-bool-comparison
+        if ix >= 0 and (ix == 0 or (not line[ix - 1].isalnum() and
+                                    line[ix - 1] not in ('_', '.', '>'))):
+            error(filename, linenum, 'runtime/os_fn', 2,
                   'Use ' + suggested_function +
                   '...) instead of ' + function + '...).')
 
@@ -3211,7 +3246,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
                           r'|li_(?:next|prev|tv))\b', line)
         if match:
             error(filename, linenum, 'runtime/deprecated', 4,
-                  'Accessing list_T internals directly is prohibited')
+                  'Accessing list_T internals directly is prohibited (hint: see commit d46e37cb4c71)')
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {
@@ -3366,6 +3401,7 @@ def ProcessLine(filename, file_extension, clean_lines, line,
                                   nesting_state, error)
     CheckPosixThreading(filename, clean_lines, line, error)
     CheckMemoryFunctions(filename, clean_lines, line, error)
+    CheckOSFunctions(filename, clean_lines, line, error)
     for check_fn in extra_check_functions:
         check_fn(filename, clean_lines, line, error)
 
@@ -3456,10 +3492,12 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
         # is processed.
 
         if filename == '-':
-            lines = codecs.StreamReaderWriter(sys.stdin,
-                                              codecs.getreader('utf8'),
-                                              codecs.getwriter('utf8'),
-                                              'replace').read().split('\n')
+            stdin = sys.stdin.read()
+            if sys.version_info < (3, 0):
+                stdin = stdin.decode('utf8')
+            lines = stdin.split('\n')
+            if _cpplint_state.stdin_filename is not None:
+                filename = _cpplint_state.stdin_filename
         else:
             lines = codecs.open(
                 filename, 'r', 'utf8', 'replace').read().split('\n')
@@ -3540,7 +3578,9 @@ def ParseArguments(args):
                                                      'linelength=',
                                                      'extensions=',
                                                      'record-errors=',
-                                                     'suppress-errors='])
+                                                     'suppress-errors=',
+                                                     'stdin-filename=',
+                                                     ])
     except getopt.GetoptError:
         PrintUsage('Invalid arguments.')
 
@@ -3550,6 +3590,7 @@ def ParseArguments(args):
     counting_style = ''
     record_errors_file = None
     suppress_errors_file = None
+    stdin_filename = None
 
     for (opt, val) in opts:
         if opt == '--help':
@@ -3586,6 +3627,8 @@ def ParseArguments(args):
             record_errors_file = val
         elif opt == '--suppress-errors':
             suppress_errors_file = val
+        elif opt == '--stdin-filename':
+            stdin_filename = val
 
     if not filenames:
         PrintUsage('No files were specified.')
@@ -3596,6 +3639,7 @@ def ParseArguments(args):
     _SetCountingStyle(counting_style)
     _SuppressErrorsFrom(suppress_errors_file)
     _RecordErrorsTo(record_errors_file)
+    _cpplint_state.stdin_filename = stdin_filename
 
     return filenames
 

@@ -6,7 +6,7 @@ local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
 local insert = helpers.insert
 
-describe('api functions', function()
+describe('eval-API', function()
   before_each(clear)
 
   it("work", function()

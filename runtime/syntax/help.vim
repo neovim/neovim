@@ -36,7 +36,6 @@ syn match helpNormal		"|||"
 syn match helpNormal		":|vim:|"	" for :help modeline
 syn match helpVim		"\<Vim version [0-9][0-9.a-z]*"
 syn match helpVim		"VIM REFERENCE.*"
-syn match helpVim		"\<Nvim\."
 syn match helpVim		"NVIM REFERENCE.*"
 syn match helpOption		"'[a-z]\{2,\}'"
 syn match helpOption		"'t_..'"

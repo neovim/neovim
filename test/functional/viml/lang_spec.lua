@@ -18,4 +18,13 @@ describe('viml', function()
     ]])
     eq(nil, string.find(eval('v:errmsg'), '^E129'))
   end)
+
+  it('str2float is not affected by locale', function()
+    if exc_exec('lang ctype sv_SE.UTF-8') ~= 0 then
+      pending("Locale sv_SE.UTF-8 not supported")
+      return
+    end
+    clear{env={LANG="", LC_NUMERIC="sv_SE.UTF-8"}}
+    eq(2.2, eval('str2float("2.2")'))
+  end)
 end)

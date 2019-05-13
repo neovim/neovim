@@ -162,19 +162,20 @@ struct listwatch_S {
 };
 
 /// Structure to hold info about a list
+/// Order of members is optimized to reduce padding.
 struct listvar_S {
   listitem_T *lv_first;  ///< First item, NULL if none.
   listitem_T *lv_last;  ///< Last item, NULL if none.
-  int lv_refcount;  ///< Reference count.
-  int lv_len;  ///< Number of items.
   listwatch_T *lv_watch;  ///< First watcher, NULL if none.
-  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
   listitem_T *lv_idx_item;  ///< When not NULL item at index "lv_idx".
-  int lv_copyID;  ///< ID used by deepcopy().
   list_T *lv_copylist;  ///< Copied list used by deepcopy().
-  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
   list_T *lv_used_next;  ///< next list in used lists list.
   list_T *lv_used_prev;  ///< Previous list in used lists list.
+  int lv_refcount;  ///< Reference count.
+  int lv_len;  ///< Number of items.
+  int lv_idx;  ///< Index of a cached item, used for optimising repeated l[idx].
+  int lv_copyID;  ///< ID used by deepcopy().
+  VarLockStatus lv_lock;  ///< Zero, VAR_LOCKED, VAR_FIXED.
 };
 
 // Static list with 10 items. Use tv_list_init_static10() to initialize.

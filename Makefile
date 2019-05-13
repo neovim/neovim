@@ -7,13 +7,22 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 
 CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
-
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
+# Extra CMake flags which extend the default set
+CMAKE_EXTRA_FLAGS ?=
+
+# CMAKE_INSTALL_PREFIX
+#   - May be passed directly or as part of CMAKE_EXTRA_FLAGS.
+#   - `checkprefix` target checks that it matches the CMake-cached value. #9615
+CMAKE_INSTALL_PREFIX ?= $(shell echo $(CMAKE_EXTRA_FLAGS) | 2>/dev/null \
+    grep -o 'CMAKE_INSTALL_PREFIX=[^ ]\+' | cut -d '=' -f2)
+ifneq (,$(CMAKE_INSTALL_PREFIX))
+  CMAKE_FLAGS += -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
+endif
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
 DEPS_BUILD_DIR ?= .deps
-
 ifneq (1,$(words [$(DEPS_BUILD_DIR)]))
   $(error DEPS_BUILD_DIR must not contain whitespace)
 endif
@@ -41,13 +50,12 @@ endif
 
 BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
 
-# Extra CMake flags which extend the default set
-CMAKE_EXTRA_FLAGS ?=
 DEPS_CMAKE_FLAGS ?=
-USE_BUNDLED_DEPS ?=
+# Back-compat: USE_BUNDLED_DEPS was the old name.
+USE_BUNDLED ?= $(USE_BUNDLED_DEPS)
 
-ifneq (,$(USE_BUNDLED_DEPS))
-  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
+ifneq (,$(USE_BUNDLED))
+  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED)
 endif
 
 ifneq (,$(findstring functionaltest-lua,$(MAKECMDGOALS)))
@@ -61,7 +69,7 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 all: nvim
 
-nvim: build/.ran-cmake deps
+nvim: checkprefix build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
 
 libnvim: build/.ran-cmake deps
@@ -76,12 +84,12 @@ build/.ran-cmake: | deps
 	touch $@
 
 deps: | build/.ran-third-party-cmake
-ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
+ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	+$(BUILD_CMD) -C $(DEPS_BUILD_DIR)
 endif
 
 build/.ran-third-party-cmake:
-ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
+ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	mkdir -p $(DEPS_BUILD_DIR)
 	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
@@ -100,7 +108,11 @@ else
 endif
 
 helptags: | nvim
-	+$(BUILD_CMD) -C build helptags
+	+$(BUILD_CMD) -C build runtime/doc/tags
+
+# Builds help HTML _and_ checks for invalid help tags.
+helphtml: | nvim helptags
+	+$(BUILD_CMD) -C build doc_html
 
 functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
@@ -148,11 +160,21 @@ generated-sources: build/.ran-cmake
 appimage:
 	bash scripts/genappimage.sh
 
-# Build an appimage with embedded update information appimage-nightly for
-# nightly builds or appimage-latest for a release
+# Build an appimage with embedded update information.
+#   appimage-nightly: for nightly builds
+#   appimage-latest: for a release
 appimage-%:
 	bash scripts/genappimage.sh $*
 
 lint: check-single-includes clint testlint lualint
 
-.PHONY: test testlint lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage
+checkprefix:
+	@cached_prefix=$$("$(CMAKE_PRG)" -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
+	if [ -n "$(CMAKE_INSTALL_PREFIX)" ] && [ -n "$$cached_prefix" ] && ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
+		printf "\nerror: CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s'\n" "$$cached_prefix"; \
+		printf "       Run this command, then try again:\n"; \
+		printf "         cmake build -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)\n"; \
+		exit 1; \
+	fi;
+
+.PHONY: test testlint lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix

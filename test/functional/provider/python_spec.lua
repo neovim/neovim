@@ -8,6 +8,7 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local insert = helpers.insert
 local expect = helpers.expect
+local expect_err = helpers.expect_err
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
@@ -17,7 +18,12 @@ local missing_provider = helpers.missing_provider
 do
   clear()
   if missing_provider('python') then
-    pending('Python 2 (or the neovim module) is broken/missing', function() end)
+    it(':python reports E319 if provider is missing', function()
+      local expected = [[Vim%(py.*%):E319: No "python" provider found.*]]
+      expect_err(expected, command, 'py print("foo")')
+      expect_err(expected, command, 'pyfile foo')
+    end)
+    pending('Python 2 (or the pynvim module) is broken/missing', function() end)
     return
   end
 end

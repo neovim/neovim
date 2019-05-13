@@ -955,8 +955,9 @@ someerror:
             break;
         }
         if (ml_append_buf(slang->sl_sugbuf, (linenr_T)wordnr,
-                ga.ga_data, ga.ga_len, TRUE) == FAIL)
+                          ga.ga_data, ga.ga_len, true) == FAIL) {
           goto someerror;
+        }
       }
       ga_clear(&ga);
 
@@ -3096,8 +3097,8 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
     if (spin->si_verbose && spin->si_msg_count > 10000) {
       spin->si_msg_count = 0;
       vim_snprintf((char *)message, sizeof(message),
-          _("line %6d, word %6d - %s"),
-          lnum, spin->si_foldwcount + spin->si_keepwcount, w);
+                   _("line %6d, word %6ld - %s"),
+                   lnum, spin->si_foldwcount + spin->si_keepwcount, w);
       msg_start();
       msg_puts_long_attr(message, 0);
       msg_clr_eos();
@@ -3227,7 +3228,7 @@ static int get_pfxlist(afffile_T *affile, char_u *afflist, char_u *store_afflist
     prevp = p;
     if (get_affitem(affile->af_flagtype, &p) != 0) {
       // A flag is a postponed prefix flag if it appears in "af_pref"
-      // and it's ID is not zero.
+      // and its ID is not zero.
       STRLCPY(key, prevp, p - prevp + 1);
       hi = hash_find(&affile->af_pref, key);
       if (!HASHITEM_EMPTY(hi)) {
@@ -3570,7 +3571,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     if (spin->si_conv.vc_type != CONV_NONE) {
       pc = string_convert(&spin->si_conv, rline, NULL);
       if (pc == NULL) {
-        smsg(_("Conversion failure for word in %s line %d: %s"),
+        smsg(_("Conversion failure for word in %s line %ld: %s"),
              fname, lnum, rline);
         continue;
       }
@@ -3583,13 +3584,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
     if (*line == '/') {
       ++line;
       if (STRNCMP(line, "encoding=", 9) == 0) {
-        if (spin->si_conv.vc_type != CONV_NONE)
-          smsg(_("Duplicate /encoding= line ignored in %s line %d: %s"),
+        if (spin->si_conv.vc_type != CONV_NONE) {
+          smsg(_("Duplicate /encoding= line ignored in %s line %ld: %s"),
                fname, lnum, line - 1);
-        else if (did_word)
-          smsg(_("/encoding= line after word ignored in %s line %d: %s"),
+        } else if (did_word) {
+          smsg(_("/encoding= line after word ignored in %s line %ld: %s"),
                fname, lnum, line - 1);
-        else {
+        } else {
           char_u      *enc;
 
           // Setup for conversion to 'encoding'.
@@ -3607,13 +3608,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
       }
 
       if (STRNCMP(line, "regions=", 8) == 0) {
-        if (spin->si_region_count > 1)
-          smsg(_("Duplicate /regions= line ignored in %s line %d: %s"),
+        if (spin->si_region_count > 1) {
+          smsg(_("Duplicate /regions= line ignored in %s line %ld: %s"),
                fname, lnum, line);
-        else {
+        } else {
           line += 8;
           if (STRLEN(line) > MAXREGIONS * 2) {
-            smsg(_("Too many regions in %s line %d: %s"),
+            smsg(_("Too many regions in %s line %ld: %s"),
                  fname, lnum, line);
           } else {
             spin->si_region_count = (int)STRLEN(line) / 2;
@@ -3626,7 +3627,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
         continue;
       }
 
-      smsg(_("/ line ignored in %s line %d: %s"),
+      smsg(_("/ line ignored in %s line %ld: %s"),
            fname, lnum, line - 1);
       continue;
     }
@@ -3652,13 +3653,13 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 
           l = *p - '0';
           if (l == 0 || l > spin->si_region_count) {
-            smsg(_("Invalid region nr in %s line %d: %s"),
+            smsg(_("Invalid region nr in %s line %ld: %s"),
                  fname, lnum, p);
             break;
           }
           regionmask |= 1 << (l - 1);
         } else {
-          smsg(_("Unrecognized flags in %s line %d: %s"),
+          smsg(_("Unrecognized flags in %s line %ld: %s"),
                fname, lnum, p);
           break;
         }
@@ -4311,8 +4312,8 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       qsort(gap->ga_data, (size_t)gap->ga_len,
           sizeof(fromto_T), rep_compare);
 
-    int i = round == 1 ? SN_REP : (round == 2 ? SN_SAL : SN_REPSAL);
-    putc(i, fd);                                        // <sectionID>
+    int sect_id = round == 1 ? SN_REP : (round == 2 ? SN_SAL : SN_REPSAL);
+    putc(sect_id, fd);                                  // <sectionID>
 
     // This is for making suggestions, section is not required.
     putc(0, fd);                                        // <sectionflags>
@@ -4920,9 +4921,10 @@ sug_filltable (
       ((char_u *)gap->ga_data)[gap->ga_len++] = NUL;
 
       if (ml_append_buf(spin->si_spellbuf, (linenr_T)wordnr,
-              gap->ga_data, gap->ga_len, TRUE) == FAIL)
+                        gap->ga_data, gap->ga_len, true) == FAIL) {
         return -1;
-      ++wordnr;
+      }
+      wordnr++;
 
       // Remove extra NUL entries, we no longer need them. We don't
       // bother freeing the nodes, the won't be reused anyway.
@@ -5136,7 +5138,7 @@ mkspell (
   } else if (vim_strchr(path_tail(wfname), '_') != NULL) {
     EMSG(_("E751: Output file name must not have region name"));
   } else if (incount > MAXREGIONS) {
-    EMSGN(_("E754: Only up to %ld regions supported"), MAXREGIONS);
+    emsgf(_("E754: Only up to %d regions supported"), MAXREGIONS);
   } else {
     // Check for overwriting before doing things that may take a lot of
     // time.

@@ -227,14 +227,14 @@ should not either insert or change the v:char.
 
 Be very careful about side effects!  The expression is evaluated while
 obtaining characters, you may very well make the command dysfunctional.
-For this reason the following is blocked:
+Therefore the following is blocked for <expr> mappings:
 - Changing the buffer text |textlock|.
 - Editing another buffer.
 - The |:normal| command.
 - Moving the cursor is allowed, but it is restored afterwards.
 - If the cmdline is changed, the old text and cursor position are restored.
 If you want the mapping to do any of these let the returned characters do
-that. Or use a |<Cmd>| mapping (which doesn't have these restrictions).
+that. (Or use a |<Cmd>| mapping instead.)
 
 You can use getchar(), it consumes typeahead if there is any. E.g., if you
 have these mappings: >
@@ -274,9 +274,9 @@ Using 0x80 as a single byte before other text does not work, it will be seen
 as a special key.
 
 						*<Cmd>* *:map-cmd*
-The <Cmd> pseudokey may be used to define a "command mapping", which executes
-the command directly (without changing modes, etc.).  Where you might use
-":...<CR>" in the {lhs} of a mapping, you can instead use "<Cmd>...<CR>".
+The <Cmd> pseudokey begins a "command mapping", which executes the command
+directly (without changing modes).  Where you might use ":...<CR>" in the
+{lhs} of a mapping, you can instead use "<Cmd>...<CR>".
 Example: >
 	noremap x <Cmd>echo mode(1)<cr>
 <
@@ -284,14 +284,19 @@ This is more flexible than `:<C-U>` in visual and operator-pending mode, or
 `<C-O>:` in insert-mode, because the commands are executed directly in the
 current mode (instead of always going to normal-mode).  Visual-mode is
 preserved, so tricks with |gv| are not needed.  Commands can be invoked
-directly in cmdline-mode (which otherwise would require timer hacks).
+directly in cmdline-mode (which would otherwise require timer hacks).
 
 Unlike <expr> mappings, there are no special restrictions on the <Cmd>
 command: it is executed as if an (unrestricted) |autocmd| was invoked or an
 async event event was processed.
 
-In select-mode, |:map| and |:vmap| command mappings are executed in
-visual-mode.  Use |:smap| to handle select-mode.
+Note:
+- Because <Cmd> avoids mode-changes (unlike ":") it does not trigger
+  |CmdlineEnter| and |CmdlineLeave| events. This helps performance.
+- For the same reason, |keycodes| like <C-R><C-W> are interpreted as plain,
+  unmapped keys.
+- In select-mode, |:map| and |:vmap| command mappings are executed in
+  visual-mode.  Use |:smap| to handle select-mode.
 
 							*E5520*
 <Cmd> commands must terminate, that is, they must be followed by <CR> in the
@@ -371,8 +376,9 @@ several modes.  In Vim you can use the ":nmap", ":vmap", ":omap", ":cmap" and
 
 							*omap-info*
 Operator-pending mappings can be used to define a movement command that can be
-used with any operator.  Simple example: ":omap { w" makes "y{" work like "yw"
-and "d{" like "dw".
+used with any operator.  Simple example: >
+	:omap { w
+makes "y{" work like "yw" and "d{" like "dw".
 
 To ignore the starting cursor position and select different text, you can have
 the omap start Visual mode to select the text to be operated upon.  Example
@@ -383,9 +389,11 @@ Normal mode commands find the first '(' character and select the first word
 before it.  That usually is the function name.
 
 To enter a mapping for Normal and Visual mode, but not Operator-pending mode,
-first define it for all three modes, then unmap it for Operator-pending mode:
+first define it for all three modes, then unmap it for
+Operator-pending mode: >
 	:map    xx something-difficult
 	:ounmap xx
+
 Likewise for a mapping for Visual and Operator-pending mode or Normal and
 Operator-pending mode.
 
@@ -866,7 +874,9 @@ an additional rule:
 full-id	  In front of the match is a non-keyword character, or this is where
 	  the line or insertion starts.  Exception: When the abbreviation is
 	  only one character, it is not recognized if there is a non-keyword
-	  character in front of it, other than a space or a tab.
+	  character in front of it, other than a space or a tab. However, for
+	  the command line "'<,'>" (or any other marks) is ignored, as if the
+	  command line starts after it.
 
 end-id	  In front of the match is a keyword character, or a space or a tab,
 	  or this is where the line or insertion starts.
@@ -1487,4 +1497,4 @@ local to the script and use mappings local to the script.  When the user
 invokes the user command, it will run in the context of the script it was
 defined in.  This matters if |<SID>| is used in a command.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

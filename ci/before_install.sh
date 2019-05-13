@@ -7,10 +7,6 @@ if [[ "${CI_TARGET}" == lint ]]; then
   exit
 fi
 
-if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  brew update
-fi
-
 echo 'python info:'
 (
   2>&1 python --version || true
@@ -24,17 +20,15 @@ echo 'python info:'
 ) | sed 's/^/  /'
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  echo "Upgrade Python 3."
-  brew upgrade python
-  echo "Upgrade Python 3 pip."
-  pip3 -q install --user --upgrade pip
+  echo "Upgrade Python 3 pip"
+  python3 -m pip -q install --user --upgrade pip
 else
-  echo "Upgrade Python 2 pip."
-  pip2.7 -q install --user --upgrade pip
-  echo "Upgrade Python 3 pip."
+  echo "Upgrade Python 2 pip"
+  python2.7 -m pip -q install --user --upgrade pip
+  echo "Upgrade Python 3 pip"
   # Allow failure. pyenv pip3 on travis is broken:
   # https://github.com/travis-ci/travis-ci/issues/8363
-  pip3 -q install --user --upgrade pip || true
+  python3 -m pip -q install --user --upgrade pip || true
 fi
 
 echo "Install node (LTS)"

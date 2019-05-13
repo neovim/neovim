@@ -7,8 +7,11 @@
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/ascii.h"
+#include "nvim/charset.h"
 #include "nvim/main.h"
 #include "nvim/aucmd.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
@@ -20,7 +23,7 @@
 # include "tui/input.c.generated.h"
 #endif
 
-void term_input_init(TermInput *input, Loop *loop)
+void tinput_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
   input->paste_enabled = false;
@@ -46,20 +49,12 @@ void term_input_init(TermInput *input, Loop *loop)
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
   // setup input handle
-#ifdef WIN32
-  uv_tty_init(&loop->uv, &input->tty_in, 0, 1);
-  uv_tty_set_mode(&input->tty_in, UV_TTY_MODE_RAW);
-  rstream_init_stream(&input->read_stream,
-                      (uv_stream_t *)&input->tty_in,
-                      0xfff);
-#else
   rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
-#endif
   // initialize a timer handle for handling ESC with libtermkey
   time_watcher_init(loop, &input->timer_handle, input);
 }
 
-void term_input_destroy(TermInput *input)
+void tinput_destroy(TermInput *input)
 {
   rbuffer_free(input->key_buffer);
   uv_mutex_destroy(&input->key_buffer_mutex);
@@ -69,23 +64,23 @@ void term_input_destroy(TermInput *input)
   termkey_destroy(input->tk);
 }
 
-void term_input_start(TermInput *input)
+void tinput_start(TermInput *input)
 {
-  rstream_start(&input->read_stream, read_cb, input);
+  rstream_start(&input->read_stream, tinput_read_cb, input);
 }
 
-void term_input_stop(TermInput *input)
+void tinput_stop(TermInput *input)
 {
   rstream_stop(&input->read_stream);
   time_watcher_stop(&input->timer_handle);
 }
 
-static void input_done_event(void **argv)
+static void tinput_done_event(void **argv)
 {
   input_done();
 }
 
-static void wait_input_enqueue(void **argv)
+static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
@@ -104,12 +99,12 @@ static void wait_input_enqueue(void **argv)
   uv_mutex_unlock(&input->key_buffer_mutex);
 }
 
-static void flush_input(TermInput *input, bool wait_until_empty)
+static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
     uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&main_loop, event_create(wait_input_enqueue, 1, input));
+    loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
     input->waiting = true;
     while (input->waiting) {
       uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
@@ -118,13 +113,13 @@ static void flush_input(TermInput *input, bool wait_until_empty)
   } while (rbuffer_size(input->key_buffer) > drain_boundary);
 }
 
-static void enqueue_input(TermInput *input, char *buf, size_t size)
+static void tinput_enqueue(TermInput *input, char *buf, size_t size)
 {
   if (rbuffer_size(input->key_buffer) >
       rbuffer_capacity(input->key_buffer) - 0xff) {
     // don't ever let the buffer get too full or we risk putting incomplete keys
     // into it
-    flush_input(input, false);
+    tinput_flush(input, false);
   }
   rbuffer_write(input->key_buffer, buf, size);
 }
@@ -144,7 +139,7 @@ static void forward_simple_utf8(TermInput *input, TermKeyKey *key)
     ptr++;
   }
 
-  enqueue_input(input, buf, len);
+  tinput_enqueue(input, buf, len);
 }
 
 static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
@@ -162,7 +157,7 @@ static void forward_modified_utf8(TermInput *input, TermKeyKey *key)
     len = termkey_strfkey(input->tk, buf, sizeof(buf), key, TERMKEY_FORMAT_VIM);
   }
 
-  enqueue_input(input, buf, len);
+  tinput_enqueue(input, buf, len);
 }
 
 static void forward_mouse_event(TermInput *input, TermKeyKey *key)
@@ -234,7 +229,7 @@ static void forward_mouse_event(TermInput *input, TermKeyKey *key)
   }
 
   len += (size_t)snprintf(buf + len, sizeof(buf) - len, "><%d,%d>", col, row);
-  enqueue_input(input, buf, len);
+  tinput_enqueue(input, buf, len);
 }
 
 static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
@@ -242,7 +237,7 @@ static TermKeyResult tk_getkey(TermKey *tk, TermKeyKey *key, bool force)
   return force ? termkey_getkey_force(tk, key) : termkey_getkey(tk, key);
 }
 
-static void timer_cb(TimeWatcher *watcher, void *data);
+static void tinput_timer_cb(TimeWatcher *watcher, void *data);
 
 static int get_key_code_timeout(void)
 {
@@ -285,16 +280,16 @@ static void tk_getkeys(TermInput *input, bool force)
   if (ms > 0) {
     // Stop the current timer if already running
     time_watcher_stop(&input->timer_handle);
-    time_watcher_start(&input->timer_handle, timer_cb, (uint32_t)ms, 0);
+    time_watcher_start(&input->timer_handle, tinput_timer_cb, (uint32_t)ms, 0);
   } else {
     tk_getkeys(input, true);
   }
 }
 
-static void timer_cb(TimeWatcher *watcher, void *data)
+static void tinput_timer_cb(TimeWatcher *watcher, void *data)
 {
   tk_getkeys(data, true);
-  flush_input(data, true);
+  tinput_flush(data, true);
 }
 
 /// Handle focus events.
@@ -330,7 +325,7 @@ static bool handle_bracketed_paste(TermInput *input)
     if (input->paste_enabled == enable) {
       return true;
     }
-    enqueue_input(input, PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
+    tinput_enqueue(input, PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
     input->paste_enabled = enable;
     return true;
   }
@@ -352,8 +347,90 @@ static bool handle_forced_escape(TermInput *input)
   return false;
 }
 
-static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
-    bool eof)
+static void set_bg_deferred(void **argv)
+{
+  char *bgvalue = argv[0];
+  if (!option_was_set("bg") && !strequal((char *)p_bg, bgvalue)) {
+    // Value differs, apply it.
+    if (starting) {
+      // Wait until after startup, so OptionSet is triggered.
+      do_cmdline_cmd((bgvalue[0] == 'l')
+                     ? "autocmd VimEnter * ++once ++nested set bg=light"
+                     : "autocmd VimEnter * ++once ++nested set bg=dark");
+    } else {
+      set_option_value("bg", 0L, bgvalue, 0);
+      reset_option_was_set("bg");
+    }
+  }
+}
+
+// During startup, tui.c requests the background color (see `ext.get_bg`).
+//
+// Here in input.c, we watch for the terminal response `\e]11;COLOR\a`.  If
+// COLOR matches `rgb:RRRR/GGGG/BBBB` where R, G, and B are hex digits, then
+// compute the luminance[1] of the RGB color and classify it as light/dark
+// accordingly. Note that the color components may have anywhere from one to
+// four hex digits, and require scaling accordingly as values out of 4, 8, 12,
+// or 16 bits.
+//
+// [1] https://en.wikipedia.org/wiki/Luma_%28video%29
+static bool handle_background_color(TermInput *input)
+{
+  size_t count = 0;
+  size_t component = 0;
+  uint16_t rgb[] = { 0, 0, 0 };
+  uint16_t rgb_max[] = { 0, 0, 0 };
+  bool eat_backslash = false;
+  bool done = false;
+  bool bad = false;
+  if (rbuffer_size(input->read_stream.buffer) >= 9
+      && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgb:", 9)) {
+    rbuffer_consumed(input->read_stream.buffer, 9);
+    RBUFFER_EACH(input->read_stream.buffer, c, i) {
+      count = i + 1;
+      if (eat_backslash) {
+        done = true;
+        break;
+      } else if (c == '\x07') {
+        done = true;
+        break;
+      } else if (c == '\x1b') {
+        eat_backslash = true;
+      } else if (bad) {
+        // ignore
+      } else if (c == '/') {
+        if (component < 3) {
+          component++;
+        }
+      } else if (ascii_isxdigit(c)) {
+        if (component < 3 && rgb_max[component] != 0xffff) {
+          rgb_max[component] = (uint16_t)((rgb_max[component] << 4) | 0xf);
+          rgb[component] = (uint16_t)((rgb[component] << 4) | hex2nr(c));
+        }
+      } else {
+        bad = true;
+      }
+    }
+    rbuffer_consumed(input->read_stream.buffer, count);
+    if (done && !bad && rgb_max[0] && rgb_max[1] && rgb_max[2]) {
+      double r = (double)rgb[0] / (double)rgb_max[0];
+      double g = (double)rgb[1] / (double)rgb_max[1];
+      double b = (double)rgb[2] / (double)rgb_max[2];
+      double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
+      char *bgvalue = luminance < 0.5 ? "dark" : "light";
+      DLOG("bg response: %s", bgvalue);
+      loop_schedule_deferred(&main_loop,
+                             event_create(set_bg_deferred, 1, bgvalue));
+    } else {
+      DLOG("failed to parse bg response");
+    }
+    return true;
+  }
+  return false;
+}
+
+static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
+                           void *data, bool eof)
 {
   TermInput *input = data;
 
@@ -371,9 +448,10 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       // ls *.md | xargs nvim
       input->in_fd = 2;
       stream_close(&input->read_stream, NULL, NULL);
-      multiqueue_put(input->loop->fast_events, restart_reading, 1, input);
+      multiqueue_put(input->loop->fast_events, tinput_restart_reading, 1,
+                     input);
     } else {
-      loop_schedule(&main_loop, event_create(input_done_event, 0));
+      loop_schedule(&main_loop, event_create(tinput_done_event, 0));
     }
     return;
   }
@@ -381,7 +459,8 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
   do {
     if (handle_focus_event(input)
         || handle_bracketed_paste(input)
-        || handle_forced_escape(input)) {
+        || handle_forced_escape(input)
+        || handle_background_color(input)) {
       continue;
     }
 
@@ -412,15 +491,15 @@ static void read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
       }
     }
   } while (rbuffer_size(input->read_stream.buffer));
-  flush_input(input, true);
+  tinput_flush(input, true);
   // Make sure the next input escape sequence fits into the ring buffer
   // without wrap around, otherwise it could be misinterpreted.
   rbuffer_reset(input->read_stream.buffer);
 }
 
-static void restart_reading(void **argv)
+static void tinput_restart_reading(void **argv)
 {
   TermInput *input = argv[0];
   rstream_init_fd(input->loop, &input->read_stream, input->in_fd, 0xfff);
-  rstream_start(&input->read_stream, read_cb, input);
+  rstream_start(&input->read_stream, tinput_read_cb, input);
 }

@@ -3,17 +3,7 @@ if !has('conceal')
   finish
 endif
 
-function! s:screenline(lnum) abort
-  let line = []
-  for c in range(1, winwidth(0))
-    call add(line, nr2char(screenchar(a:lnum, c)))
-  endfor
-  return s:trim(join(line, ''))
-endfunction
-
-function! s:trim(str) abort
-  return matchstr(a:str,'^\s*\zs.\{-}\ze\s*$')
-endfunction
+source shared.vim
 
 function! Test_simple_matchadd()
   new
@@ -26,7 +16,7 @@ function! Test_simple_matchadd()
   call matchadd('Conceal', '\%2l ')
   redraw!
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
@@ -49,7 +39,7 @@ function! Test_simple_matchadd_and_conceal()
   call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'X'})
   redraw!
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -75,7 +65,7 @@ function! Test_matchadd_and_conceallevel_3()
   call matchadd('Conceal', '\%2l ', 10, -1, {'conceal': 'X'})
   redraw!
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -88,7 +78,7 @@ function! Test_matchadd_and_conceallevel_3()
 
   call matchadd('ErrorMsg', '\%2l Test', 20, -1, {'conceal': 'X'})
   redraw!
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2) , screenattr(lnum, 7))
   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 10))
@@ -112,7 +102,7 @@ function! Test_default_conceal_char()
   call matchadd('Conceal', '\%2l ', 10, -1, {})
   redraw!
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -125,7 +115,7 @@ function! Test_default_conceal_char()
   set listchars=conceal:+
   redraw!
 
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -149,7 +139,7 @@ function! Test_syn_and_match_conceal()
   syntax match MyConceal /\%2l / conceal containedin=ALL cchar=*
   redraw!
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -161,7 +151,7 @@ function! Test_syn_and_match_conceal()
   call clearmatches()
   redraw!
 
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -187,7 +177,7 @@ function! Test_clearmatches()
   redraw!
 
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_equal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -200,7 +190,7 @@ function! Test_clearmatches()
   call setmatches(a)
   redraw!
 
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1), screenattr(lnum, 2))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 2), screenattr(lnum, 10))
@@ -228,7 +218,7 @@ function! Test_using_matchaddpos()
   redraw!
 
   let lnum = 2
-  call assert_equal(expect, s:screenline(lnum))
+  call assert_equal(expect, Screenline(lnum))
   call assert_notequal(screenattr(lnum, 1) , screenattr(lnum, 2))
   call assert_notequal(screenattr(lnum, 2) , screenattr(lnum, 7))
   call assert_equal(screenattr(lnum, 1) , screenattr(lnum, 7))
@@ -250,13 +240,13 @@ function! Test_matchadd_repeat_conceal_with_syntax_off()
   1put ='TARGET_TARGETTARGET'
   call cursor(1, 1)
   redraw
-  call assert_equal('TARGET_TARGETTARGET', s:screenline(2))
+  call assert_equal('TARGET_TARGETTARGET', Screenline(2))
 
   setlocal conceallevel=2
   call matchadd('Conceal', 'TARGET', 10, -1, {'conceal': 't'})
 
   redraw
-  call assert_equal('t_tt', s:screenline(2))
+  call assert_equal('t_tt', Screenline(2))
 
   quit!
 endfunction
@@ -272,13 +262,13 @@ function! Test_matchadd_and_syn_conceal()
   syntax on
   syntax keyword coqKwd bool conceal cchar=-
   redraw!
-  call assert_equal(expect, s:screenline(1))
+  call assert_equal(expect, Screenline(1))
   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))
   call matchadd('CheckedByCoq', '\%<2l\%>9c\%<16c')
   redraw!
-  call assert_equal(expect, s:screenline(1))
+  call assert_equal(expect, Screenline(1))
   call assert_notequal(screenattr(1, 10) , screenattr(1, 11))
   call assert_notequal(screenattr(1, 11) , screenattr(1, 12))
   call assert_equal(screenattr(1, 11) , screenattr(1, 32))

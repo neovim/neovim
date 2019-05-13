@@ -23,6 +23,7 @@ set(GENERATOR_DIR ${CMAKE_CURRENT_LIST_DIR}/generators)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(API_DISPATCH_GENERATOR ${GENERATOR_DIR}/gen_api_dispatch.lua)
 set(API_UI_EVENTS_GENERATOR ${GENERATOR_DIR}/gen_api_ui_events.lua)
+set(GENERATOR_C_GRAMMAR ${GENERATOR_DIR}/c_grammar.lua)
 set(API_METADATA ${PROJECT_BINARY_DIR}/api_metadata.mpack)
 set(FUNCS_DATA ${PROJECT_BINARY_DIR}/funcs_data.mpack)
 set(MSGPACK_LUA_C_BINDINGS ${GENERATED_DIR}/msgpack_lua_c_bindings.generated.c)
@@ -79,6 +80,8 @@ file(MAKE_DIRECTORY ${LINT_SUPPRESSES_ROOT}/src)
 
 file(GLOB NVIM_SOURCES *.c)
 file(GLOB NVIM_HEADERS *.h)
+file(GLOB XDIFF_SOURCES xdiff/*.c)
+file(GLOB XDIFF_HEADERS xdiff/*.h)
 
 foreach(subdir
         os
@@ -148,12 +151,13 @@ set(CONV_SOURCES
   syntax.c
   tag.c
   window.c)
-
 foreach(sfile ${CONV_SOURCES})
   if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${sfile}")
     message(FATAL_ERROR "${sfile} doesn't exist (it was added to CONV_SOURCES)")
   endif()
 endforeach()
+# xdiff: inlined external project, we don't maintain it. #9306
+list(APPEND CONV_SOURCES ${XDIFF_SOURCES})
 
 if(NOT MSVC)
   set_source_files_properties(
@@ -266,6 +270,7 @@ add_custom_command(
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADERS}
     ${API_DISPATCH_GENERATOR}
+    ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/dispatch_deprecated.lua
 )
 
@@ -297,6 +302,7 @@ add_custom_command(
                      ${GENERATED_UI_EVENTS_METADATA}
   DEPENDS
     ${API_UI_EVENTS_GENERATOR}
+    ${GENERATOR_C_GRAMMAR}
     ${CMAKE_CURRENT_LIST_DIR}/api/ui_events.in.h
 )
 
@@ -394,17 +400,13 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-# Don't use jemalloc in the unit test library.
-if(JEMALLOC_FOUND)
-  list(APPEND NVIM_EXEC_LINK_LIBRARIES ${JEMALLOC_LIBRARIES})
-endif()
-
 if(POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif()
 
 add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS})
+  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -490,6 +492,7 @@ add_library(
   EXCLUDE_FROM_ALL
   ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
 )
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
@@ -514,6 +517,7 @@ else()
     EXCLUDE_FROM_ALL
     ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
     ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+    ${XDIFF_SOURCES} ${XDIFF_HEADERS}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})

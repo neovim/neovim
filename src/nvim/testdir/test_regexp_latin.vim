@@ -30,3 +30,46 @@ func Test_equivalence_re2()
   set re=2
   call s:equivalence_test()
 endfunc
+
+func Test_range_with_newline()
+  new
+  call setline(1, "a")
+  call assert_equal(0, search("[ -*\\n- ]"))
+  call assert_equal(0, search("[ -*\\t-\\n]"))
+  bwipe!
+endfunc
+
+func Test_get_equi_class()
+  new
+  " Incomplete equivalence class caused invalid memory access
+  s/^/[[=
+  call assert_equal(1, search(getline(1)))
+  s/.*/[[.
+  call assert_equal(1, search(getline(1)))
+endfunc
+
+func Test_rex_init()
+  set noincsearch
+  set re=1
+  new
+  setlocal iskeyword=a-z
+  call setline(1, ['abc', 'ABC'])
+  call assert_equal(1, search('[[:keyword:]]'))
+  new
+  setlocal iskeyword=A-Z
+  call setline(1, ['abc', 'ABC'])
+  call assert_equal(2, search('[[:keyword:]]'))
+  bwipe!
+  bwipe!
+  set re=0
+endfunc
+
+func Test_backref()
+  new
+  call setline(1, ['one', 'two', 'three', 'four', 'five'])
+  call assert_equal(3, search('\%#=1\(e\)\1'))
+  call assert_equal(3, search('\%#=2\(e\)\1'))
+  call assert_fails('call search("\\%#=1\\(e\\1\\)")', 'E65:')
+  call assert_fails('call search("\\%#=2\\(e\\1\\)")', 'E65:')
+  bwipe!
+endfunc

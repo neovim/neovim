@@ -83,13 +83,11 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "nvim/vim.h"
+#include "nvim/buffer.h"
 #include "nvim/ascii.h"
 #include "nvim/undo.h"
-#include "nvim/macros.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
-#include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/buffer_updates.h"
@@ -102,8 +100,6 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
-#include "nvim/quickfix.h"
-#include "nvim/screen.h"
 #include "nvim/sha256.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
@@ -891,7 +887,7 @@ static u_header_T *unserialize_uhp(bufinfo_T *bi,
   for (;; ) {
     int len = undo_read_byte(bi);
 
-    if (len == 0) {
+    if (len == 0 || len == EOF) {
       break;
     }
     int what = undo_read_byte(bi);
@@ -1135,8 +1131,9 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
   /* If there is no undo information at all, quit here after deleting any
    * existing undo file. */
   if (buf->b_u_numhead == 0 && buf->b_u_line_ptr == NULL) {
-    if (p_verbose > 0)
-      verb_msg((char_u *)_("Skipping undo file write, nothing to undo"));
+    if (p_verbose > 0) {
+      verb_msg(_("Skipping undo file write, nothing to undo"));
+    }
     goto theend;
   }
 
@@ -1822,7 +1819,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
   u_header_T      *uhp = NULL;
   u_header_T      *last;
   int mark;
-  int nomark;
+  int nomark = 0;  // shut up compiler
   int round;
   bool dosec = sec;
   bool dofile = file;
@@ -1901,7 +1898,8 @@ void undo_time(long step, bool sec, bool file, bool absolute)
 
   // When "target" is 0; Back to origin.
   if (target == 0) {
-    goto found;
+    mark = lastmark;  // avoid that GCC complains
+    goto target_zero;
   }
 
   /*
@@ -2020,7 +2018,7 @@ void undo_time(long step, bool sec, bool file, bool absolute)
     }
   }
 
-found:
+target_zero:
   // If we found it: Follow the path to go to where we want to be.
   if (uhp != NULL || target == 0) {
     // First go up the tree as much as needed.
@@ -2153,7 +2151,7 @@ static void u_undoredo(int undo, bool do_buf_event)
   int new_flags;
   fmark_T namedm[NMARKS];
   visualinfo_T visualinfo;
-  int empty_buffer;                         /* buffer became empty */
+  bool empty_buffer;                        // buffer became empty
   u_header_T  *curhead = curbuf->b_u_curhead;
 
   /* Don't want autocommands using the undo structures here, they are
@@ -2220,7 +2218,7 @@ static void u_undoredo(int undo, bool do_buf_event)
       }
     }
 
-    empty_buffer = FALSE;
+    empty_buffer = false;
 
     /* delete the lines between top and bot and save them in newarray */
     if (oldsize > 0) {
@@ -2231,9 +2229,10 @@ static void u_undoredo(int undo, bool do_buf_event)
         newarray[i] = u_save_line(lnum);
         /* remember we deleted the last line in the buffer, and a
          * dummy empty line will be inserted */
-        if (curbuf->b_ml.ml_line_count == 1)
-          empty_buffer = TRUE;
-        ml_delete(lnum, FALSE);
+        if (curbuf->b_ml.ml_line_count == 1) {
+          empty_buffer = true;
+        }
+        ml_delete(lnum, false);
       }
     } else
       newarray = NULL;
@@ -2248,7 +2247,7 @@ static void u_undoredo(int undo, bool do_buf_event)
         if (empty_buffer && lnum == 0) {
           ml_replace((linenr_T)1, uep->ue_array[i], true);
         } else {
-          ml_append(lnum, uep->ue_array[i], (colnr_T)0, FALSE);
+          ml_append(lnum, uep->ue_array[i], (colnr_T)0, false);
         }
         xfree(uep->ue_array[i]);
       }
@@ -2451,7 +2450,9 @@ static void u_undo_end(
     }
   }
 
-  smsg(_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+  smsg_attr_keep(
+      0,
+      _("%" PRId64 " %s; %s #%" PRId64 "  %s"),
       u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
       _(msgstr),
       did_undo ? _("before") : _("after"),
@@ -2502,8 +2503,8 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7ld  ",
-          uhp->uh_seq, changes);
+      vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7d  ",
+                   uhp->uh_seq, changes);
       u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
           uhp->uh_time);
       if (uhp->uh_save_nr > 0) {
@@ -2584,9 +2585,13 @@ static void u_add_time(char_u *buf, size_t buflen, time_t tt)
     else
       /* longer ago */
       (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
-  } else
-  vim_snprintf((char *)buf, buflen, _("%" PRId64 " seconds ago"),
-      (int64_t)(time(NULL) - tt));
+  } else {
+    int64_t seconds = time(NULL) - tt;
+    vim_snprintf((char *)buf, buflen,
+                 NGETTEXT("%" PRId64 " second ago",
+                          "%" PRId64 " seconds ago", (uint32_t)seconds),
+                 seconds);
+  }
 }
 
 /*

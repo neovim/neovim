@@ -18,9 +18,9 @@ won't be saved. Don't worry about messing things up; just remember that
 pressing [<Esc>](<Esc>) and then [u](u) will undo the latest change.
 
 This tutorial is interactive, and there are a few things you should know.
-Pressing [<Enter>](<Enter>) over text highlighted [like this](holy-grail    )
-will take you to some relevant help (hopefully), and pressing K over any
-word will try to do so too. Sometimes you will be required to modify text like
+- Type [<Enter>](<Enter>) on links [like this](holy-grail    ) to open the linked help section.
+- Or simply type [K](K) on any word to find its documentation!
+- Sometimes you will be required to modify text like
 this here
 Once you have done the changes correctly, the ✗ sign at the left will change
 to ✓. I imagine you can already see how neat Vim can be. ;)
@@ -159,9 +159,9 @@ There is also some text missing here.
 
  2. At the shell prompt type this command:
 ~~~ sh
-     $ vim tutor
+     $ nvim tutor
 ~~~
-    'vim' is the command to start the Vim editor, 'tutor' is the name of
+    'nvim' is the command to start the Nvim editor, 'tutor' is the name of
     the file you wish to edit. Use a file that may be changed.
 
  3. Insert and delete text as you learned in the previous lessons.
@@ -186,7 +186,7 @@ There is also some text missing here.
  2. To start Vim from the shell prompt type:
 
 ~~~ sh
-    $ vim FILENAME
+    $ nvim FILENAME
 ~~~
 
  3. To exit Vim type: `<Esc>`{normal} `:q!`{vim} `<Enter>`{normal} to trash

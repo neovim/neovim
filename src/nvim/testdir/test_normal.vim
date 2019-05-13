@@ -82,7 +82,6 @@ fun! Test_normal00_optrans()
 endfunc
 
 func! Test_normal01_keymodel()
-  throw "skipped: Nvim regression: 'keymodel'"
   call Setup_NewWindow()
   " Test 1: depending on 'keymodel' <s-down> does something different
   50
@@ -1353,11 +1352,21 @@ func! Test_normal23_K()
     bw!
     return
   endif
-  set keywordprg=man\ --pager=cat
+
+  if has('mac')
+    " In MacOS, the option for specifying a pager is different
+    set keywordprg=man\ -P\ cat
+  else
+    set keywordprg=man\ --pager=cat
+  endif
   " Test for using man
   2
   let a = execute('unsilent norm! K')
-  call assert_match("man --pager=cat 'man'", a)
+  if has('mac')
+    call assert_match("man -P cat 'man'", a)
+  else
+    call assert_match("man --pager=cat 'man'", a)
+  endif
 
   " clean up
   let &keywordprg = k
@@ -2272,6 +2281,8 @@ endfunc
 
 func! Test_normal45_drop()
   if !has('dnd')
+    " The ~ register does not exist
+    call assert_beeps('norm! "~')
     return
   endif
 
@@ -2539,4 +2550,82 @@ func Test_delete_until_paragraph()
   normal grád}
   call assert_equal('', getline(1))
   bwipe!
+endfunc
+
+" Test for '[m', ']m', '[M' and ']M'
+" Jumping to beginning and end of methods in Java-like languages
+func Test_java_motion()
+  new
+  a
+Piece of Java
+{
+	tt m1 {
+		t1;
+	} e1
+
+	tt m2 {
+		t2;
+	} e2
+
+	tt m3 {
+		if (x)
+		{
+			t3;
+		}
+	} e3
+}
+.
+
+  normal gg
+
+  normal 2]maA
+  call assert_equal("\ttt m1 {A", getline('.'))
+  call assert_equal([3, 9, 16], [line('.'), col('.'), virtcol('.')])
+
+  normal j]maB
+  call assert_equal("\ttt m2 {B", getline('.'))
+  call assert_equal([7, 9, 16], [line('.'), col('.'), virtcol('.')])
+
+  normal ]maC
+  call assert_equal("\ttt m3 {C", getline('.'))
+  call assert_equal([11, 9, 16], [line('.'), col('.'), virtcol('.')])
+
+  normal [maD
+  call assert_equal("\ttt m3 {DC", getline('.'))
+  call assert_equal([11, 9, 16], [line('.'), col('.'), virtcol('.')])
+
+  normal k2[maE
+  call assert_equal("\ttt m1 {EA", getline('.'))
+  call assert_equal([3, 9, 16], [line('.'), col('.'), virtcol('.')])
+
+  normal 3[maF
+  call assert_equal("{F", getline('.'))
+  call assert_equal([2, 2, 2], [line('.'), col('.'), virtcol('.')])
+
+  normal ]MaG
+  call assert_equal("\t}G e1", getline('.'))
+  call assert_equal([5, 3, 10], [line('.'), col('.'), virtcol('.')])
+
+  normal j2]MaH
+  call assert_equal("\t}H e3", getline('.'))
+  call assert_equal([16, 3, 10], [line('.'), col('.'), virtcol('.')])
+
+  normal ]M]M
+  normal aI
+  call assert_equal("}I", getline('.'))
+  call assert_equal([17, 2, 2], [line('.'), col('.'), virtcol('.')])
+
+  normal 2[MaJ
+  call assert_equal("\t}JH e3", getline('.'))
+  call assert_equal([16, 3, 10], [line('.'), col('.'), virtcol('.')])
+
+  normal k[MaK
+  call assert_equal("\t}K e2", getline('.'))
+  call assert_equal([9, 3, 10], [line('.'), col('.'), virtcol('.')])
+
+  normal 3[MaL
+  call assert_equal("{LF", getline('.'))
+  call assert_equal([2, 2, 2], [line('.'), col('.'), virtcol('.')])
+
+  close!
 endfunc

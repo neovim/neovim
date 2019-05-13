@@ -1,9 +1,10 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local ok, feed, eq, eval = helpers.ok, helpers.feed, helpers.eq, helpers.eval
+local feed, eq, eval = helpers.feed, helpers.eq, helpers.eval
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
 local curbufmeths = helpers.curbufmeths
+local load_adjust = helpers.load_adjust
 
 describe('timers', function()
   before_each(function()
@@ -19,14 +20,14 @@ describe('timers', function()
   it('works one-shot', function()
     command("call timer_start(50, 'MyHandler')")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 200)
+    run(nil, nil, nil, load_adjust(200))
     eq(1,eval("g:val"))
   end)
 
   it('works one-shot when repeat=0', function()
     command("call timer_start(50, 'MyHandler', {'repeat': 0})")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 200)
+    run(nil, nil, nil, load_adjust(200))
     eq(1,eval("g:val"))
   end)
 
@@ -34,7 +35,7 @@ describe('timers', function()
   it('works with repeat two', function()
     command("call timer_start(50, 'MyHandler', {'repeat': 2})")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     eq(2,eval("g:val"))
   end)
 
@@ -42,14 +43,14 @@ describe('timers', function()
     command("call timer_start(50, 'MyHandler', {'repeat': 2})")
     nvim_async("command", "sleep 10")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     eq(2,eval("g:val"))
   end)
 
   it('works with zero timeout', function()
     -- timer_start does still not invoke the callback immediately
     eq(0,eval("[timer_start(0, 'MyHandler', {'repeat': 1000}), g:val][1]"))
-    run(nil, nil, nil, 400)
+    run(nil, nil, nil, load_adjust(400))
     eq(1000,eval("g:val"))
   end)
 
@@ -58,30 +59,31 @@ describe('timers', function()
     -- this also tests that remote requests works during sleep
     eval("timer_start(50, 'MyHandler', {'repeat': 2})")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     eq(2,eval("g:val"))
   end)
 
   it('are paused when event processing is disabled', function()
     command("call timer_start(50, 'MyHandler', {'repeat': -1})")
-    run(nil, nil, nil, 100)
+    run(nil, nil, nil, load_adjust(100))
     local count = eval("g:val")
     -- shows two line error message and thus invokes the return prompt.
     -- if we start to allow event processing here, we need to change this test.
     feed(':throw "fatal error"<CR>')
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     feed("<cr>")
     local diff = eval("g:val") - count
-    ok(0 <= diff and diff <= 4)
+    assert(0 <= diff and diff <= 4,
+           'expected (0 <= diff <= 4), got: '..tostring(diff))
   end)
 
   it('are triggered in blocking getchar() call', function()
     command("call timer_start(50, 'MyHandler', {'repeat': -1})")
     nvim_async("command", "let g:c = getchar()")
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     feed("c")
     local count = eval("g:val")
-    ok(count >= 4)
+    assert(count >= 3, 'expected count >= 3, got: '..tostring(count))
     eq(99, eval("g:c"))
   end)
 
@@ -112,7 +114,6 @@ describe('timers', function()
       ^                                        |
     ]])
 
-    screen:sleep(200)
     screen:expect([[
       ITEM 1                                  |
       ITEM 2                                  |
@@ -137,14 +138,16 @@ describe('timers', function()
   it('can be stopped', function()
     local t = eval("timer_start(50, 'MyHandler', {'repeat': -1})")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     funcs.timer_stop(t)
     local count = eval("g:val")
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     local count2 = eval("g:val")
-    ok(4 <= count and count <= 7)
     -- when count is eval:ed after timer_stop this should be non-racy
     eq(count, count2)
+    assert((3 <= count and count <= load_adjust(7)),
+           string.format('expected (3 <= count <= %s), got: %s',
+                         load_adjust(7), tostring(count)))
   end)
 
   it('can be stopped from the handler', function()
@@ -160,7 +163,7 @@ describe('timers', function()
     ]])
     command("call timer_start(50, 'MyHandler', {'repeat': -1})")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     eq(3,eval("g:val"))
   end)
 
@@ -171,9 +174,9 @@ describe('timers', function()
         let g:val2 += 1
       endfunc
     ]])
-    command("call timer_start(50,  'MyHandler', {'repeat': 3})")
-    command("call timer_start(100, 'MyHandler2', {'repeat': 2})")
-    run(nil, nil, nil, 300)
+    command("call timer_start(20, 'MyHandler',  {'repeat': 3})")
+    command("call timer_start(40, 'MyHandler2', {'repeat': 2})")
+    run(nil, nil, nil, load_adjust(300))
     eq(3,eval("g:val"))
     eq(2,eval("g:val2"))
   end)
@@ -188,7 +191,7 @@ describe('timers', function()
       endfunc
     ]])
     command("call timer_start(5, 'MyHandler', {'repeat': 1})")
-    run(nil, nil, nil, 300)
+    run(nil, nil, nil, load_adjust(300))
     eq(1,eval("g:val"))
   end)
 
@@ -198,13 +201,14 @@ describe('timers', function()
     screen:attach()
     screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     source([[
+      let g:val = 0
       func! MyHandler(timer)
         echo "evil"
+        let g:val = 1
       endfunc
     ]])
     command("call timer_start(100,  'MyHandler', {'repeat': 1})")
     feed(":good")
-    screen:sleep(200)
     screen:expect([[
                                               |
       {0:~                                       }|
@@ -213,6 +217,17 @@ describe('timers', function()
       {0:~                                       }|
       :good^                                   |
     ]])
+
+    screen:expect{grid=[[
+                                              |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
+      :good^                                   |
+    ]], intermediate=true, timeout=200}
+
+    eq(1, eval('g:val'))
   end)
 
 end)

@@ -599,9 +599,10 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count)
     return vim_strsave((char_u *)"-invalid-");
   assert(Columns >= 0 && (size_t)Columns <= SIZE_MAX);
-  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns);
+  // Allow for up to 5 bytes per character.
+  s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (size_t)Columns * 5);
 
-  /* Truncate the line to fit it in the window */
+  // Truncate the line to fit it in the window
   len = 0;
   for (p = s; *p != NUL; MB_PTR_ADV(p)) {
     len += ptr2cells(p);
@@ -923,7 +924,7 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
   int i;
   int fnum = curbuf->b_fnum;
   linenr_T    *lp;
-  static pos_T initpos = INIT_POS_T(1, 0, 0);
+  static pos_T initpos = { 1, 0, 0 };
 
   if (line2 < line1 && amount_after == 0L)          /* nothing to do */
     return;
@@ -1068,19 +1069,24 @@ static void mark_adjust_internal(linenr_T line1, linenr_T line2,
     { \
       posp->lnum += lnum_amount; \
       assert(col_amount > INT_MIN && col_amount <= INT_MAX); \
-      if (col_amount < 0 && posp->col <= (colnr_T)-col_amount) \
+      if (col_amount < 0 && posp->col <= (colnr_T)-col_amount) { \
         posp->col = 0; \
-      else \
+      } else if (posp->col < spaces_removed) { \
+        posp->col = (int)col_amount + spaces_removed; \
+      } else { \
         posp->col += (colnr_T)col_amount; \
+      } \
     } \
   }
 
-/*
- * Adjust marks in line "lnum" at column "mincol" and further: add
- * "lnum_amount" to the line number and add "col_amount" to the column
- * position.
- */
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount)
+// Adjust marks in line "lnum" at column "mincol" and further: add
+// "lnum_amount" to the line number and add "col_amount" to the column
+// position.
+// "spaces_removed" is the number of spaces that were removed, matters when the
+// cursor is inside them.
+void mark_col_adjust(
+    linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount,
+    int spaces_removed)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1182,9 +1188,23 @@ void cleanup_jumplist(void)
       xfree(curwin->w_jumplist[from].fname);
     }
   }
-  if (curwin->w_jumplistidx == curwin->w_jumplistlen)
+  if (curwin->w_jumplistidx == curwin->w_jumplistlen) {
     curwin->w_jumplistidx = to;
+  }
   curwin->w_jumplistlen = to;
+
+  // When pointer is below last jump, remove the jump if it matches the current
+  // line.  This avoids useless/phantom jumps. #9805
+  if (curwin->w_jumplistlen
+      && curwin->w_jumplistidx == curwin->w_jumplistlen) {
+    const xfmark_T *fm_last = &curwin->w_jumplist[curwin->w_jumplistlen - 1];
+    if (fm_last->fmark.fnum == curbuf->b_fnum
+        && fm_last->fmark.mark.lnum == curwin->w_cursor.lnum) {
+      xfree(fm_last->fname);
+      curwin->w_jumplistlen--;
+      curwin->w_jumplistidx--;
+    }
+  }
 }
 
 /*

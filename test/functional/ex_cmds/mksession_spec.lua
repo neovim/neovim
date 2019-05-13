@@ -47,4 +47,27 @@ describe(':mksession', function()
     command('tabnext 2')
     eq(cwd_dir .. get_pathsep() .. tab_dir, funcs.getcwd())
   end)
+
+  it('restores buffers when using tab-local working directories', function()
+    local tmpfile_base = file_prefix .. '-tmpfile'
+    local cwd_dir = funcs.getcwd()
+    local session_path = cwd_dir .. get_pathsep() .. session_file
+
+    command('edit ' .. tmpfile_base .. '1')
+    command('tcd ' .. tab_dir)
+    command('tabnew')
+    command('edit ' .. cwd_dir .. get_pathsep() .. tmpfile_base .. '2')
+    command('tabfirst')
+    command('mksession ' .. session_path)
+
+    -- Create a new test instance of Nvim.
+    clear()
+
+    -- Use :silent to avoid press-enter prompt due to long path
+    command('silent source ' .. session_path)
+    command('tabnext 1')
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '1', funcs.expand('%:p'))
+    command('tabnext 2')
+    eq(cwd_dir .. get_pathsep() .. tmpfile_base .. '2', funcs.expand('%:p'))
+  end)
 end)

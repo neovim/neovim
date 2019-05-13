@@ -991,7 +991,7 @@ const char *tv_list_find_str(list_T *const l, const int n)
 {
   const listitem_T *const li = tv_list_find(l, n);
   if (li == NULL) {
-    emsgf(_(e_listidx), (int64_t)n);
+    EMSG2(_(e_listidx), (int64_t)n);
     return NULL;
   }
   return tv_get_string(TV_LIST_ITEM_TV(li));
@@ -1532,7 +1532,7 @@ bool tv_dict_get_callback(dict_T *const d,
   }
 
   if (!tv_is_func(di->di_tv) && di->di_tv.v_type != VAR_STRING) {
-    emsgf(_("E6000: Argument is not a function or function name"));
+    EMSG(_("E6000: Argument is not a function or function name"));
     return false;
   }
 
@@ -1656,18 +1656,34 @@ int tv_dict_add_special(dict_T *const d, const char *const key,
 
 /// Add a string entry to dictionary
 ///
-/// @param[out]  d  Dictionary to add entry to.
-/// @param[in]  key  Key to add.
-/// @param[in]  key_len  Key length.
-/// @param[in]  val  String to add.
-///
-/// @return OK in case of success, FAIL when key already exists.
+/// @see tv_dict_add_allocated_str
 int tv_dict_add_str(dict_T *const d,
                     const char *const key, const size_t key_len,
                     const char *const val)
   FUNC_ATTR_NONNULL_ALL
 {
   return tv_dict_add_allocated_str(d, key, key_len, xstrdup(val));
+}
+
+/// Add a string entry to dictionary
+///
+/// @param[out]  d  Dictionary to add entry to.
+/// @param[in]  key  Key to add.
+/// @param[in]  key_len  Key length.
+/// @param[in]  val  String to add. NULL adds empty string.
+/// @param[in]  len  Use this many bytes from `val`, or -1 for whole string.
+///
+/// @return OK in case of success, FAIL when key already exists.
+int tv_dict_add_str_len(dict_T *const d,
+                        const char *const key, const size_t key_len,
+                        char *const val, int len)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  char *s = val ? val : "";
+  if (val != NULL) {
+    s = (len < 0) ? xstrdup(val) : xstrndup(val, (size_t)len);
+  }
+  return tv_dict_add_allocated_str(d, key, key_len, s);
 }
 
 /// Add a string entry to dictionary
@@ -2298,7 +2314,7 @@ void tv_item_lock(typval_T *const tv, const int deep, const bool lock)
   static int recurse = 0;
 
   if (recurse >= DICT_MAXNEST) {
-    emsgf(_("E743: variable nested too deep for (un)lock"));
+    EMSG(_("E743: variable nested too deep for (un)lock"));
     return;
   }
   if (deep == 0) {
@@ -2546,28 +2562,28 @@ bool tv_check_str_or_nr(const typval_T *const tv)
       return true;
     }
     case VAR_FLOAT: {
-      emsgf(_("E805: Expected a Number or a String, Float found"));
+      EMSG(_("E805: Expected a Number or a String, Float found"));
       return false;
     }
     case VAR_PARTIAL:
     case VAR_FUNC: {
-      emsgf(_("E703: Expected a Number or a String, Funcref found"));
+      EMSG(_("E703: Expected a Number or a String, Funcref found"));
       return false;
     }
     case VAR_LIST: {
-      emsgf(_("E745: Expected a Number or a String, List found"));
+      EMSG(_("E745: Expected a Number or a String, List found"));
       return false;
     }
     case VAR_DICT: {
-      emsgf(_("E728: Expected a Number or a String, Dictionary found"));
+      EMSG(_("E728: Expected a Number or a String, Dictionary found"));
       return false;
     }
     case VAR_SPECIAL: {
-      emsgf(_("E5300: Expected a Number or a String"));
+      EMSG(_("E5300: Expected a Number or a String"));
       return false;
     }
     case VAR_UNKNOWN: {
-      emsgf(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
+      EMSG2(_(e_intern2), "tv_check_str_or_nr(UNKNOWN)");
       return false;
     }
   }
@@ -2611,7 +2627,7 @@ bool tv_check_num(const typval_T *const tv)
     case VAR_DICT:
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
-      emsgf(_(num_errors[tv->v_type]));
+      EMSG(_(num_errors[tv->v_type]));
       return false;
     }
   }
@@ -2632,7 +2648,7 @@ static const char *const str_errors[] = {
 
 #undef FUNC_ERROR
 
-/// Check that given value is a string or can be converted to it
+/// Check that given value is a VimL String or can be "cast" to it.
 ///
 /// Error messages are compatible with tv_get_string_chk() previously used for
 /// the same purpose.
@@ -2655,7 +2671,7 @@ bool tv_check_str(const typval_T *const tv)
     case VAR_DICT:
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
-      emsgf(_(str_errors[tv->v_type]));
+      EMSG(_(str_errors[tv->v_type]));
       return false;
     }
   }
@@ -2702,7 +2718,7 @@ varnumber_T tv_get_number_chk(const typval_T *const tv, bool *const ret_error)
     case VAR_LIST:
     case VAR_DICT:
     case VAR_FLOAT: {
-      emsgf(_(num_errors[tv->v_type]));
+      EMSG(_(num_errors[tv->v_type]));
       break;
     }
     case VAR_NUMBER: {
@@ -2778,23 +2794,23 @@ float_T tv_get_float(const typval_T *const tv)
     }
     case VAR_PARTIAL:
     case VAR_FUNC: {
-      emsgf(_("E891: Using a Funcref as a Float"));
+      EMSG(_("E891: Using a Funcref as a Float"));
       break;
     }
     case VAR_STRING: {
-      emsgf(_("E892: Using a String as a Float"));
+      EMSG(_("E892: Using a String as a Float"));
       break;
     }
     case VAR_LIST: {
-      emsgf(_("E893: Using a List as a Float"));
+      EMSG(_("E893: Using a List as a Float"));
       break;
     }
     case VAR_DICT: {
-      emsgf(_("E894: Using a Dictionary as a Float"));
+      EMSG(_("E894: Using a Dictionary as a Float"));
       break;
     }
     case VAR_SPECIAL: {
-      emsgf(_("E907: Using a special value as a Float"));
+      EMSG(_("E907: Using a special value as a Float"));
       break;
     }
     case VAR_UNKNOWN: {
@@ -2805,7 +2821,7 @@ float_T tv_get_float(const typval_T *const tv)
   return 0;
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @param[in]  tv  Object to get value of.
 /// @param  buf  Buffer used to hold numbers and special variables converted to
@@ -2840,17 +2856,17 @@ const char *tv_get_string_buf_chk(const typval_T *const tv, char *const buf)
     case VAR_DICT:
     case VAR_FLOAT:
     case VAR_UNKNOWN: {
-      emsgf(_(str_errors[tv->v_type]));
+      EMSG(_(str_errors[tv->v_type]));
       return false;
     }
   }
   return NULL;
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
-///          may be used only once, next call to get_tv_string may reuse it. Use
+///          may be used only once, next call to tv_get_string may reuse it. Use
 ///          tv_get_string_buf() if you need to use tv_get_string() output after
 ///          calling it again.
 ///
@@ -2866,10 +2882,10 @@ const char *tv_get_string_chk(const typval_T *const tv)
   return tv_get_string_buf_chk(tv, mybuf);
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @warning For number and special values it uses a single, static buffer. It
-///          may be used only once, next call to get_tv_string may reuse it. Use
+///          may be used only once, next call to tv_get_string may reuse it. Use
 ///          tv_get_string_buf() if you need to use tv_get_string() output after
 ///          calling it again.
 ///
@@ -2888,7 +2904,7 @@ const char *tv_get_string(const typval_T *const tv)
   return tv_get_string_buf((typval_T *)tv, mybuf);
 }
 
-/// Get the string value of a VimL object
+/// Get the string value of a "stringish" VimL object.
 ///
 /// @note tv_get_string_chk() and tv_get_string_buf_chk() are similar, but
 ///       return NULL on error.

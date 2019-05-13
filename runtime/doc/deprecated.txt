@@ -12,6 +12,9 @@ updated.
 
 ==============================================================================
 
+API ~
+*nvim_buf_clear_highlight()*	Use |nvim_buf_clear_namespace()| instead.
+
 Commands ~
 *:rv*
 *:rviminfo*		Deprecated alias to |:rshada| command.
@@ -37,15 +40,17 @@ Functions ~
 *file_readable()*	Obsolete name for |filereadable()|.
 *highlight_exists()*	Obsolete name for |hlexists()|.
 *highlightID()*		Obsolete name for |hlID()|.
+*inputdialog()*		Use |input()| instead.
 *jobclose()*		Obsolete name for |chanclose()|
 *jobsend()*		Obsolete name for |chansend()|
 *last_buffer_nr()*	Obsolete name for bufnr("$").
 
 Modifiers ~
+*cpo-<*
 *:menu-<special>*
-*:menu-special*		<> notation is always enabled. |cpo-<|
+*:menu-special*		<> notation is always enabled.
 *:map-<special>*
-*:map-special*		<> notation is always enabled. |cpo-<|
+*:map-special*		<> notation is always enabled.
 
 Normal commands ~
 *]f*
@@ -60,6 +65,14 @@ Options ~
 *'langnoremap'*		Deprecated alias to 'nolangremap'.
 *'vi'*
 *'viminfo'*		Deprecated alias to 'shada' option.
+*'viminfofile'*		Deprecated alias to 'shadafile' option.
+
+UI extensions~
+*ui-wildmenu*		Use |ui-cmdline| with |ui-popupmenu| instead. Enabled
+			by the `ext_wildmenu` |ui-option|. Emits these events:
+				["wildmenu_show", items]
+				["wildmenu_select", selected]
+				["wildmenu_hide"]
 
 Variables~
 *b:terminal_job_pid*	PID of the top-level process in a |:terminal|.

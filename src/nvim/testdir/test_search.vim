@@ -454,6 +454,65 @@ func Test_search_multibyte()
   let &encoding = save_enc
 endfunc
 
+" Similar to Test_incsearch_substitute() but with a screendump halfway.
+func Test_incsearch_substitute_dump()
+  if !exists('+incsearch')
+    return
+  endif
+  if !CanRunVimInTerminal()
+    return
+  endif
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'for n in range(1, 10)',
+	\ '  call setline(n, "foo " . n)',
+	\ 'endfor',
+	\ '3',
+	\ ], 'Xis_subst_script')
+  let buf = RunVimInTerminal('-S Xis_subst_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 100m
+
+  " Need to send one key at a time to force a redraw.
+  call term_sendkeys(buf, ':.,.+2s/')
+  sleep 100m
+  call term_sendkeys(buf, 'f')
+  sleep 100m
+  call term_sendkeys(buf, 'o')
+  sleep 100m
+  call term_sendkeys(buf, 'o')
+  call VerifyScreenDump(buf, 'Test_incsearch_substitute_01', {})
+
+  call term_sendkeys(buf, "\<Esc>")
+  call StopVimInTerminal(buf)
+  call delete('Xis_subst_script')
+endfunc
+
+func Test_incsearch_with_change()
+  if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
+    return
+  endif
+
+  call writefile([
+	\ 'set incsearch hlsearch scrolloff=0',
+	\ 'call setline(1, ["one", "two ------ X", "three"])',
+	\ 'call timer_start(200, { _ -> setline(2, "x")})',
+	\ ], 'Xis_change_script')
+  let buf = RunVimInTerminal('-S Xis_change_script', {'rows': 9, 'cols': 70})
+  " Give Vim a chance to redraw to get rid of the spaces in line 2 caused by
+  " the 'ambiwidth' check.
+  sleep 300m
+
+  " Highlight X, it will be deleted by the timer callback.
+  call term_sendkeys(buf, ':%s/X')
+  call VerifyScreenDump(buf, 'Test_incsearch_change_01', {})
+  call term_sendkeys(buf, "\<Esc>")
+
+  call StopVimInTerminal(buf)
+  call delete('Xis_change_script')
+endfunc
+
 func Test_search_undefined_behaviour()
   if !has("terminal")
     return
@@ -479,4 +538,74 @@ func Test_look_behind()
   call setline(1, '0\|\&\n\@<=') 
   call search(getline("."))
   bwipe!
+endfunc
+
+func Test_search_sentence()
+  new
+  " this used to cause a crash
+  call assert_fails("/\\%')", 'E486')
+  call assert_fails("/", 'E486')
+  /\%'(
+  /
+endfunc
+
+func Test_large_hex_chars1()
+  " This used to cause a crash, the character becomes an NFA state.
+  try
+    /\%Ufffffc23
+  catch
+    call assert_match('E678:', v:exception)
+  endtry
+  try
+    set re=1
+    /\%Ufffffc23
+  catch
+    call assert_match('E678:', v:exception)
+  endtry
+  set re&
+endfunc
+
+func Test_large_hex_chars2()
+  " This used to cause a crash, the character becomes an NFA state.
+  try
+    /[\Ufffffc1f]
+  catch
+    call assert_match('E486:', v:exception)
+  endtry
+  try
+    set re=1
+    /[\Ufffffc1f]
+  catch
+    call assert_match('E486:', v:exception)
+  endtry
+  set re&
+endfunc
+
+func Test_one_error_msg()
+  " This  was also giving an internal error
+  call assert_fails('call search(" \\((\\v[[=P=]]){185}+             ")', 'E871:')
+endfunc
+
+" Test for the search() function with match at the cursor position
+func Test_search_match_at_curpos()
+  new
+  call append(0, ['foobar', '', 'one two', ''])
+
+  normal gg
+
+  call search('foobar', 'c')
+  call assert_equal([1, 1], [line('.'), col('.')])
+
+  normal j
+  call search('^$', 'c')
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  call search('^$', 'bc')
+  call assert_equal([2, 1], [line('.'), col('.')])
+
+  exe "normal /two\<CR>"
+  call search('.', 'c')
+  call assert_equal([3, 5], [line('.'), col('.')])
+
+  close!
 endfunc

@@ -2112,9 +2112,9 @@ char_u *did_set_spelllang(win_T *wp)
         }
 
         if (region_mask != 0) {
-          langp_T *p = GA_APPEND_VIA_PTR(langp_T, &ga);
-          p->lp_slang = slang;
-          p->lp_region = region_mask;
+          langp_T *p_ = GA_APPEND_VIA_PTR(langp_T, &ga);
+          p_->lp_slang = slang;
+          p_->lp_region = region_mask;
 
           use_midword(slang, wp);
           if (slang->sl_nobreak)
@@ -2190,11 +2190,11 @@ char_u *did_set_spelllang(win_T *wp)
       }
 
       if (region_mask != 0) {
-        langp_T *p = GA_APPEND_VIA_PTR(langp_T, &ga);
-        p->lp_slang = slang;
-        p->lp_sallang = NULL;
-        p->lp_replang = NULL;
-        p->lp_region = region_mask;
+        langp_T *p_ = GA_APPEND_VIA_PTR(langp_T, &ga);
+        p_->lp_slang = slang;
+        p_->lp_sallang = NULL;
+        p_->lp_replang = NULL;
+        p_->lp_region = region_mask;
 
         use_midword(slang, wp);
       }
@@ -2294,7 +2294,7 @@ static void use_midword(slang_T *lp, win_T *wp)
 }
 
 // Find the region "region[2]" in "rp" (points to "sl_regions").
-// Each region is simply stored as the two characters of it's name.
+// Each region is simply stored as the two characters of its name.
 // Returns the index if found (first is 0), REGION_ALL if not found.
 static int find_region(char_u *rp, char_u *region)
 {
@@ -2510,7 +2510,7 @@ buf_T *open_spellbuf(void)
   buf->b_spell = true;
   buf->b_p_swf = true;        // may create a swap file
   if (ml_open(buf) == FAIL) {
-    abort();
+    ELOG("Error opening a new memline");
   }
   ml_open_file(buf);          // create swap file now
 
@@ -3048,9 +3048,10 @@ void ex_spellrepall(exarg_T *eap)
   sub_nlines = 0;
   curwin->w_cursor.lnum = 0;
   while (!got_int) {
-    if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL) == 0
-        || u_save_cursor() == FAIL)
+    if (do_search(NULL, '/', frompat, 1L, SEARCH_KEEP, NULL, NULL) == 0
+        || u_save_cursor() == FAIL) {
       break;
+    }
 
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
@@ -4204,7 +4205,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       }
       PROF_STORE(sp->ts_state)
       sp->ts_state = STATE_PLAIN;
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_PLAIN:
       // Go over all possible bytes at this node, add each to tword[]
@@ -4386,7 +4387,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
         break;
       }
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_INS_PREP:
       if (sp->ts_flags & TSF_DIDDEL) {
@@ -4416,7 +4417,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       }
       break;
 
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_INS:
       // Insert one byte.  Repeat this for each possible byte at this
@@ -4552,7 +4553,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       memmove(p + MB_PTR2LEN(p + n), p, n);
       utf_char2bytes(c, p);
 
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_SWAP3:
       // Swap two bytes, skipping one: "123" -> "321".  We change
@@ -4695,7 +4696,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       memmove(p, p + tl, n);
       utf_char2bytes(c, p + n);
 
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_REP_INI:
       // Check if matching with REP items from the .aff file would work.
@@ -4726,7 +4727,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
 
       PROF_STORE(sp->ts_state)
       sp->ts_state = STATE_REP;
-    // FALLTHROUGH
+      FALLTHROUGH;
 
     case STATE_REP:
       // Try matching with REP items from the .aff file.  For each match
@@ -7099,9 +7100,9 @@ void ex_spelldump(exarg_T *eap)
   spell_dump_compl(NULL, 0, NULL, eap->forceit ? DUMPFLAG_COUNT : 0);
 
   // Delete the empty line that we started with.
-  if (curbuf->b_ml.ml_line_count > 1)
-    ml_delete(curbuf->b_ml.ml_line_count, FALSE);
-
+  if (curbuf->b_ml.ml_line_count > 1) {
+    ml_delete(curbuf->b_ml.ml_line_count, false);
+  }
   redraw_later(NOT_VALID);
 }
 
@@ -7170,7 +7171,7 @@ spell_dump_compl (
   if (do_region && region_names != NULL) {
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "/regions=%s", region_names);
-      ml_append(lnum++, IObuff, (colnr_T)0, FALSE);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
   } else
     do_region = false;
@@ -7184,7 +7185,7 @@ spell_dump_compl (
 
     if (pat == NULL) {
       vim_snprintf((char *)IObuff, IOSIZE, "# file: %s", slang->sl_fname);
-      ml_append(lnum++, IObuff, (colnr_T)0, FALSE);
+      ml_append(lnum++, IObuff, (colnr_T)0, false);
     }
 
     // When matching with a pattern and there are no prefixes only use
@@ -7346,14 +7347,15 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int d
       }
     }
 
-    ml_append(lnum, p, (colnr_T)0, FALSE);
+    ml_append(lnum, p, (colnr_T)0, false);
   } else if (((dumpflags & DUMPFLAG_ICASE)
               ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
               : STRNCMP(p, pat, STRLEN(pat)) == 0)
              && ins_compl_add_infercase(p, (int)STRLEN(p),
-                 p_ic, NULL, *dir, 0) == OK)
+                                        p_ic, NULL, *dir, 0) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
+  }
 }
 
 // For ":spelldump": Find matching prefixes for "word".  Prepend each to

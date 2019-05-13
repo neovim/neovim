@@ -170,6 +170,15 @@ func Test_argument()
   call assert_fails('argument', 'E163:')
 endfunc
 
+func Test_args_with_quote()
+  " Only on Unix can a file name include a double quote.
+  if has('unix')
+    args \"foobar
+    call assert_equal('"foobar', argv(0))
+    %argdelete
+  endif
+endfunc
+
 " Test for 0argadd and 0argedit
 " Ported from the test_argument_0count.in test script
 func Test_zero_argadd()
@@ -231,13 +240,53 @@ func Test_arglistid()
   call assert_equal(0, arglistid())
 endfunc
 
-" Test for argv()
+" Tests for argv() and argc()
 func Test_argv()
   call Reset_arglist()
   call assert_equal([], argv())
   call assert_equal("", argv(2))
+  call assert_equal(0, argc())
   argadd a b c d
+  call assert_equal(4, argc())
   call assert_equal('c', argv(2))
+
+  let w1_id = win_getid()
+  split
+  let w2_id = win_getid()
+  arglocal
+  args e f g
+  tabnew
+  let w3_id = win_getid()
+  split
+  let w4_id = win_getid()
+  argglobal
+  tabfirst
+  call assert_equal(4, argc(w1_id))
+  call assert_equal('b', argv(1, w1_id))
+  call assert_equal(['a', 'b', 'c', 'd'], argv(-1, w1_id))
+
+  call assert_equal(3, argc(w2_id))
+  call assert_equal('f', argv(1, w2_id))
+  call assert_equal(['e', 'f', 'g'], argv(-1, w2_id))
+
+  call assert_equal(3, argc(w3_id))
+  call assert_equal('e', argv(0, w3_id))
+  call assert_equal(['e', 'f', 'g'], argv(-1, w3_id))
+
+  call assert_equal(4, argc(w4_id))
+  call assert_equal('c', argv(2, w4_id))
+  call assert_equal(['a', 'b', 'c', 'd'], argv(-1, w4_id))
+
+  call assert_equal(4, argc(-1))
+  call assert_equal(3, argc())
+  call assert_equal('d', argv(3, -1))
+  call assert_equal(['a', 'b', 'c', 'd'], argv(-1, -1))
+  tabonly | only | enew!
+  " Negative test cases
+  call assert_equal(-1, argc(100))
+  call assert_equal('', argv(1, 100))
+  call assert_equal([], argv(-1, 100))
+  call assert_equal('', argv(10, -1))
 endfunc
 
 " Test for the :argedit command
@@ -280,6 +329,18 @@ func Test_argedit()
   %argd
   bwipe! C
   bwipe! D
+
+  " :argedit reuses the current buffer if it is empty
+  %argd
+  " make sure to use a new buffer number for x when it is loaded
+  bw! x
+  new
+  let a = bufnr('')
+  argedit x
+  call assert_equal(a, bufnr(''))
+  call assert_equal('x', bufname(''))
+  %argd
+  bw! x
 endfunc
 
 " Test for the :argdelete command
@@ -294,6 +355,18 @@ func Test_argdelete()
   call assert_equal(['b'], argv())
   call assert_fails('argdelete', 'E471:')
   call assert_fails('1,100argdelete', 'E16:')
+  %argd
+endfunc
+
+func Test_argdelete_completion()
+  args foo bar
+
+  call feedkeys(":argdelete \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"argdelete bar foo', @:)
+
+  call feedkeys(":argdelete x \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"argdelete x bar foo', @:)
+
   %argd
 endfunc
 

@@ -30,7 +30,6 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies dow
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
 option(USE_BUNDLED_GPERF "Use the bundled version of gperf." ${USE_BUNDLED})
-option(USE_BUNDLED_JEMALLOC "Use the bundled jemalloc." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
@@ -88,7 +87,7 @@ if(MINGW AND CMAKE_GENERATOR MATCHES "Ninja")
   if(NOT MAKE_PRG)
     message(FATAL_ERROR "GNU Make for mingw32 is required to build the dependecies.")
   else()
-    message(STATUS "Found GNU Make for mingw32 at ${MAKE_PRG}")
+    message(STATUS "Found GNU Make for mingw32: ${MAKE_PRG}")
   endif()
 endif()
 
@@ -96,6 +95,12 @@ if(CMAKE_C_COMPILER_ARG1)
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
 else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
+endif()
+
+set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+
+if(CMAKE_OSX_SYSROOT)
+  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
 endif()
 
 # Cross compiling: use these for dependencies built for the
@@ -107,17 +112,24 @@ if(CMAKE_CROSSCOMPILING AND NOT UNIX)
   set(HOSTDEPS_BIN_DIR "${HOSTDEPS_INSTALL_DIR}/bin")
   set(HOSTDEPS_LIB_DIR "${HOSTDEPS_INSTALL_DIR}/lib")
   set(HOSTDEPS_C_COMPILER "${HOST_C_COMPILER}")
+  set(HOSTDEPS_CXX_COMPILER "${HOST_CXX_COMPILER}")
 else()
   set(HOSTDEPS_INSTALL_DIR "${DEPS_INSTALL_DIR}")
   set(HOSTDEPS_BIN_DIR "${DEPS_BIN_DIR}")
   set(HOSTDEPS_LIB_DIR "${DEPS_LIB_DIR}")
   set(HOSTDEPS_C_COMPILER "${DEPS_C_COMPILER}")
+  set(HOSTDEPS_CXX_COMPILER "${DEPS_CXX_COMPILER}")
 endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.12.0.tar.gz)
-set(LIBUV_SHA256 41ce914a88da21d3b07a76023beca57576ca5b376c6ac440c80bc581cbca1250)
+if(WIN32)
+  set(LIBUV_URL https://github.com/neovim/libuv/archive/327f762644ccb964715cb99d08db0f1df43f651e.tar.gz)
+  set(LIBUV_SHA256 76e4ac06c7c74aeb471342c7f2d4a054af51ff054d399fac9f26e8fd5821dc92)
+else()
+  set(LIBUV_URL https://github.com/libuv/libuv/archive/v1.26.0.tar.gz)
+  set(LIBUV_SHA256 e414cf74615b7dae768f0f5667092f1d4975f5067c087bcbe0641e241ebe4693)
+endif()
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
 set(MSGPACK_SHA256 bfbb71b7c02f806393bc3cbc491b40523b89e64f83860c58e3e54af47de176e4)
@@ -135,14 +147,11 @@ set(LUAROCKS_SHA256 9eb3d0738fd02ad8bf39bcedccac4e83e9b5fff2bcca247c3584b925b207
 set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v2.0.0.tar.gz)
 set(UNIBILIUM_SHA256 78997d38d4c8177c60d3d0c1aa8c53fd0806eb21825b7b335b1768d7116bc1c1)
 
-set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.20.tar.gz)
-set(LIBTERMKEY_SHA256 6c0d87c94ab9915e76ecd313baec08dedf3bd56de83743d9aa923a081935d2f5)
+set(LIBTERMKEY_URL http://www.leonerd.org.uk/code/libtermkey/libtermkey-0.21.1.tar.gz)
+set(LIBTERMKEY_SHA256 cecbf737f35d18f433c8d7864f63c0f878af41f8bd0255a3ebb16010dc044d5f)
 
-set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/3f62ac6b7bdffda39d68f723fb1806dfd6d6382d.tar.gz)
-set(LIBVTERM_SHA256 1c8b318370f00f831f43e3ec86a48984250e3ee5c76beb106a421c9a42286ac5)
-
-set(JEMALLOC_URL https://github.com/jemalloc/jemalloc/releases/download/5.1.0/jemalloc-5.1.0.tar.bz2)
-set(JEMALLOC_SHA256 5396e61cc6103ac393136c309fae09e44d74743c86f90e266948c50f3dbb7268)
+set(LIBVTERM_URL https://github.com/neovim/libvterm/archive/b45b648cab73f9667bde7c0c6045b285e22b3ecd.tar.gz)
+set(LIBVTERM_SHA256 37cc123deff29327efa654358c2ebaaf8589da03754ca5adb8ec47be386a0433)
 
 set(LUV_URL https://github.com/luvit/luv/archive/1.9.1-1.tar.gz)
 set(LUV_SHA256 562b9efaad30aa051a40eac9ade0c3df48bb8186763769abe47ec3fb3edb1268)
@@ -154,8 +163,8 @@ set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
 
-set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.10/neovim-qt.zip)
-set(WINGUI_SHA256 97988a96994b6066ea2b5f035a633304d664b8a14c91e946c5833a6e3782fdbb)
+set(WINGUI_URL https://github.com/equalsraf/neovim-qt/releases/download/v0.2.12/neovim-qt.zip)
+set(WINGUI_SHA256 68f8d7d46e21c94ac24577bc65d378c5f622794d11d34950e41edc1b0335560c)
 
 set(WIN32YANK_X86_URL https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x86.zip)
 set(WIN32YANK_X86_SHA256 62f34e5a46c5d4a7b3f3b512e1ff7b77fedd432f42581cbe825233a996eed62c)
@@ -201,10 +210,6 @@ endif()
 
 if(USE_BUNDLED_LUAROCKS)
   include(BuildLuarocks)
-endif()
-
-if(USE_BUNDLED_JEMALLOC)
-  include(BuildJeMalloc)
 endif()
 
 if(USE_BUNDLED_LUV)

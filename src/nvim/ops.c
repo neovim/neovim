@@ -153,6 +153,10 @@ int get_op_type(int char1, int char2)
     if (opchars[i][0] == char1 && opchars[i][1] == char2) {
       break;
     }
+    if (i == (int)(ARRAY_SIZE(opchars) - 1)) {
+      internal_error("get_op_type()");
+      break;
+    }
   }
   return i;
 }
@@ -865,8 +869,12 @@ int do_record(int c)
      * needs to be removed again to put it in a register.  exec_reg then
      * adds the escaping back later.
      */
-    Recording = FALSE;
-    MSG("");
+    Recording = false;
+    if (ui_has(kUIMessages)) {
+      showmode();
+    } else {
+      MSG("");
+    }
     p = get_recorded();
     if (p == NULL)
       retval = FAIL;
@@ -1404,8 +1412,10 @@ int op_delete(oparg_T *oap)
       free_register(&y_regs[9]); /* free register "9 */
       for (n = 9; n > 1; n--)
         y_regs[n] = y_regs[n - 1];
-      y_previous = &y_regs[1];
-      y_regs[1].y_array = NULL;                 /* set register "1 to empty */
+      if (!is_append_register(oap->regname)) {
+        y_previous = &y_regs[1];
+      }
+      y_regs[1].y_array = NULL;                 // set register "1 to empty
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
     }
@@ -1970,8 +1980,6 @@ int swapchar(int op_type, pos_T *pos)
     inc(pos);
   }
 
-  if (enc_dbcs != 0 && c >= 0x100)      /* No lower/uppercase letter */
-    return FALSE;
   nc = c;
   if (mb_islower(c)) {
     if (op_type == OP_ROT13) {
@@ -2159,9 +2167,17 @@ void op_insert(oparg_T *oap, long count1)
      * Subsequent calls to ml_get() flush the firstline data - take a
      * copy of the required string.
      */
-    firstline = ml_get(oap->start.lnum) + bd.textcol;
-    if (oap->op_type == OP_APPEND)
-      firstline += bd.textlen;
+    firstline = ml_get(oap->start.lnum);
+    const size_t len = STRLEN(firstline);
+    colnr_T add = bd.textcol;
+    if (oap->op_type == OP_APPEND) {
+      add += bd.textlen;
+    }
+    if ((size_t)add > len) {
+      firstline += len;  // short line, point to the NUL
+    } else {
+      firstline += add;
+    }
     ins_len = (long)STRLEN(firstline) - pre_textlen;
     if (pre_textlen >= 0 && ins_len > 0) {
       ins_text = vim_strnsave(firstline, (size_t)ins_len);
@@ -2595,17 +2611,16 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   static bool recursive = false;
 
   if (recursive || !has_event(EVENT_TEXTYANKPOST)) {
-    // No autocommand was defined
-    // or we yanked from this autocommand.
+    // No autocommand was defined, or we yanked from this autocommand.
     return;
   }
 
   recursive = true;
 
-  // set v:event to a dictionary with information about the yank
+  // Set the v:event dictionary with information about the yank.
   dict_T *dict = get_vim_var_dict(VV_EVENT);
 
-  // the yanked text
+  // The yanked text contents.
   list_T *const list = tv_list_alloc((ptrdiff_t)reg->y_size);
   for (size_t i = 0; i < reg->y_size; i++) {
     tv_list_append_string(list, (const char *)reg->y_array[i], -1);
@@ -2613,17 +2628,21 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
   tv_list_set_lock(list, VAR_FIXED);
   tv_dict_add_list(dict, S_LEN("regcontents"), list);
 
-  // the register type
+  // Register type.
   char buf[NUMBUFLEN+2];
   format_reg_type(reg->y_type, reg->y_width, buf, ARRAY_SIZE(buf));
   tv_dict_add_str(dict, S_LEN("regtype"), buf);
 
-  // name of requested register or the empty string for an unnamed operation.
+  // Name of requested register, or empty string for unnamed operation.
   buf[0] = (char)oap->regname;
   buf[1] = NUL;
   tv_dict_add_str(dict, S_LEN("regname"), buf);
 
-  // kind of operation (yank/delete/change)
+  // Motion type: inclusive or exclusive.
+  tv_dict_add_special(dict, S_LEN("inclusive"),
+                      oap->inclusive ? kSpecialVarTrue : kSpecialVarFalse);
+
+  // Kind of operation: yank, delete, change).
   buf[0] = (char)get_op_char(oap->op_type);
   buf[1] = NUL;
   tv_dict_add_str(dict, S_LEN("operator"), buf);
@@ -2662,7 +2681,6 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   colnr_T vcol;
   int delcount;
   int incr = 0;
-  long j;
   struct block_def bd;
   char_u      **y_array = NULL;
   long nr_lines = 0;
@@ -2777,8 +2795,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (!curbuf->terminal) {
-    // Autocommands may be executed when saving lines for undo, which may make
-    // y_array invalid.  Start undo now to avoid that.
+    // Autocommands may be executed when saving lines for undo.  This might
+    // make y_array invalid, so we start undo now to avoid that.
     if (u_save(curwin->w_cursor.lnum, curwin->w_cursor.lnum + 1) == FAIL) {
       return;
     }
@@ -2832,16 +2850,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
   }
 
   if (curbuf->terminal) {
-    for (int i = 0; i < count; i++) {  // -V756
-      // feed the lines to the terminal
-      for (size_t j = 0; j < y_size; j++) {
-        if (j) {
-          // terminate the previous line
-          terminal_send(curbuf->terminal, "\n", 1);
-        }
-        terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
-      }
-    }
+    terminal_paste(count, y_array, y_size);
     return;
   }
 
@@ -2992,9 +3001,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       /* add a new line */
       if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
         if (ml_append(curbuf->b_ml.ml_line_count, (char_u *)"",
-                (colnr_T)1, FALSE) == FAIL)
+                      (colnr_T)1, false) == FAIL) {
           break;
-        ++nr_lines;
+        }
+        nr_lines++;
       }
       /* get the old line and advance to the position to insert at */
       oldp = get_cursor_line_ptr();
@@ -3027,12 +3037,14 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
 
       yanklen = (int)STRLEN(y_array[i]);
 
-      /* calculate number of spaces required to fill right side of block*/
+      // calculate number of spaces required to fill right side of block
       spaces = y_width + 1;
-      for (j = 0; j < yanklen; j++)
+      for (long j = 0; j < yanklen; j++) {
         spaces -= lbr_chartabsize(NULL, &y_array[i][j], 0);
-      if (spaces < 0)
+      }
+      if (spaces < 0) {
         spaces = 0;
+      }
 
       // insert the new text
       totlen = (size_t)(count * (yanklen + spaces)
@@ -3042,21 +3054,21 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       ptr = newp;
       memmove(ptr, oldp, (size_t)bd.textcol);
       ptr += bd.textcol;
-      /* may insert some spaces before the new text */
+      // may insert some spaces before the new text
       memset(ptr, ' ', (size_t)bd.startspaces);
       ptr += bd.startspaces;
-      /* insert the new text */
-      for (j = 0; j < count; ++j) {
+      // insert the new text
+      for (long j = 0; j < count; j++) {
         memmove(ptr, y_array[i], (size_t)yanklen);
         ptr += yanklen;
 
-        /* insert block's trailing spaces only if there's text behind */
+        // insert block's trailing spaces only if there's text behind
         if ((j < count - 1 || !shortline) && spaces) {
           memset(ptr, ' ', (size_t)spaces);
           ptr += spaces;
         }
       }
-      /* may insert some spaces after the new text */
+      // may insert some spaces after the new text
       memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
       // move the text after the cursor to the end of the line.
@@ -3179,8 +3191,8 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           newp = (char_u *) xmalloc((size_t)(STRLEN(ptr) + totlen + 1));
           STRCPY(newp, y_array[y_size - 1]);
           STRCAT(newp, ptr);
-          /* insert second line */
-          ml_append(lnum, newp, (colnr_T)0, FALSE);
+          // insert second line
+          ml_append(lnum, newp, (colnr_T)0, false);
           xfree(newp);
 
           oldp = ml_get(lnum);
@@ -3606,6 +3618,7 @@ int do_join(size_t count,
   int remove_comments = (use_formatoptions == TRUE)
                         && has_format_option(FO_REMOVE_COMS);
   bool prev_was_comment = false;
+  assert(count >= 1);
 
   if (save_undo && u_save(curwin->w_cursor.lnum - 1,
                           curwin->w_cursor.lnum + (linenr_T)count) == FAIL) {
@@ -3701,10 +3714,16 @@ int do_join(size_t count,
       cend -= spaces[t];
       memset(cend, ' ', (size_t)(spaces[t]));
     }
+
+    // If deleting more spaces than adding, the cursor moves no more than
+    // what is added if it is inside these spaces.
+    const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
+
     mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
-        (long)(cend - newp + spaces[t] - (curr - curr_start)));
-    if (t == 0)
+                    (long)(cend - newp - spaces_removed), spaces_removed);
+    if (t == 0) {
       break;
+    }
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t - 1));
     if (remove_comments)
       curr += comments[t - 1];
@@ -4132,14 +4151,14 @@ format_lines (
         if (next_leader_len > 0) {
           (void)del_bytes(next_leader_len, false, false);
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
-                          (long)-next_leader_len);
+                          (long)-next_leader_len, 0);
         } else if (second_indent > 0) {   // the "leader" for FO_Q_SECOND
           int indent = (int)getwhitecols_curline();
 
           if (indent > 0) {
             (void)del_bytes(indent, FALSE, FALSE);
             mark_col_adjust(curwin->w_cursor.lnum,
-                (colnr_T)0, 0L, (long)-indent);
+                            (colnr_T)0, 0L, (long)-indent, 0);
           }
         }
         curwin->w_cursor.lnum--;
@@ -4418,7 +4437,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
         length = (colnr_T)STRLEN(ml_get(pos.lnum));
       } else {
         // oap->motion_type == kMTCharWise
-        if (!oap->inclusive) {
+        if (pos.lnum == oap->start.lnum && !oap->inclusive) {
           dec(&(oap->end));
         }
         length = (colnr_T)STRLEN(ml_get(pos.lnum));
@@ -5598,6 +5617,9 @@ static yankreg_T *adjust_clipboard_name(int *name, bool quiet, bool writing)
 
   if (explicit_cb_reg) {
     target = &y_regs[*name == '*' ? STAR_REGISTER : PLUS_REGISTER];
+    if (writing && (cb_flags & (*name == '*' ? CB_UNNAMED : CB_UNNAMEDPLUS))) {
+      clipboard_needs_update = false;
+    }
     goto end;
   } else {  // unnamed register: "implicit" clipboard
     if (writing && clipboard_delay_update) {
@@ -5689,12 +5711,12 @@ static bool get_clipboard(int name, yankreg_T **target, bool quiet)
   // Timestamp is not saved for clipboard registers because clipboard registers
   // are not saved in the ShaDa file.
 
-  int i = 0;
+  size_t tv_idx = 0;
   TV_LIST_ITER_CONST(lines, li, {
     if (TV_LIST_ITEM_TV(li)->v_type != VAR_STRING) {
       goto err;
     }
-    reg->y_array[i++] = (char_u *)xstrdupnul(
+    reg->y_array[tv_idx++] = (char_u *)xstrdupnul(
         (const char *)TV_LIST_ITEM_TV(li)->vval.v_string);
   });
 

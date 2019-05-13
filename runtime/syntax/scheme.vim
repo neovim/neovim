@@ -1,328 +1,464 @@
 " Vim syntax file
-" Language:	Scheme (R5RS + some R6RS extras)
-" Last Change:	2016 May 23
-" Maintainer:	Sergey Khorev <sergey.khorev@gmail.com>
-" Original author:	Dirk van Deun <dirk@igwe.vub.ac.be>
+" Language: Scheme (R7RS)
+" Last Change: 2018-01-06
+" Author: Evan Hanson <evhan@foldling.org>
+" Maintainer: Evan Hanson <evhan@foldling.org>
+" Previous Author: Dirk van Deun <dirk@igwe.vub.ac.be>
+" Previous Maintainer: Sergey Khorev <sergey.khorev@gmail.com>
+" URL: https://foldling.org/vim/syntax/scheme.vim
 
-" This script incorrectly recognizes some junk input as numerals:
-" parsing the complete system of Scheme numerals using the pattern
-" language is practically impossible: I did a lax approximation.
-
-" MzScheme extensions can be activated with setting is_mzscheme variable
-
-" Suggestions and bug reports are solicited by the author.
-
-" Initializing:
-
-" quit when a syntax file was already loaded
-if exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
-let s:cpo_save = &cpo
+let s:cpo = &cpo
 set cpo&vim
 
-syn case ignore
+syn match schemeParentheses "[^ '`\t\n()\[\]";]\+"
+syn match schemeParentheses "[)\]]"
 
-" Fascist highlighting: everything that doesn't fit the rules is an error...
+syn match schemeIdentifier /[^ '`\t\n()\[\]"|;][^ '`\t\n()\[\]"|;]*/
 
-syn match	schemeError	![^ \t()\[\]";]*!
-syn match	schemeError	")"
+syn region schemeQuote matchgroup=schemeData start=/'[`']*/ end=/[ \t\n()\[\]";]/me=e-1
+syn region schemeQuote matchgroup=schemeData start=/'['`]*"/ skip=/\\[\\"]/ end=/"/
+syn region schemeQuote matchgroup=schemeData start=/'['`]*|/ skip=/\\[\\|]/ end=/|/
+syn region schemeQuote matchgroup=schemeData start=/'['`]*#\?(/ end=/)/ contains=ALLBUT,schemeQuasiquote,schemeQuasiquoteForm,schemeUnquote,schemeForm,schemeDatumCommentForm,schemeImport,@schemeImportCluster,@schemeSyntaxCluster
 
-" Quoted and backquoted stuff
+syn region schemeQuasiquote matchgroup=schemeData start=/`['`]*/ end=/[ \t\n()\[\]";]/me=e-1
+syn region schemeQuasiquote matchgroup=schemeData start=/`['`]*#\?(/ end=/)/ contains=ALLBUT,schemeQuote,schemeQuoteForm,schemeForm,schemeDatumCommentForm,schemeImport,@schemeImportCluster,@schemeSyntaxCluster
 
-syn region schemeQuoted matchgroup=Delimiter start="['`]" end=![ \t()\[\]";]!me=e-1 contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn region schemeUnquote matchgroup=schemeParentheses start=/,/ end=/[ `'\t\n\[\]()";]/me=e-1 contained contains=ALLBUT,schemeDatumCommentForm,@schemeImportCluster
+syn region schemeUnquote matchgroup=schemeParentheses start=/,@/ end=/[ `'\t\n\[\]()";]/me=e-1 contained contains=ALLBUT,schemeDatumCommentForm,@schemeImportCluster
+syn region schemeUnquote matchgroup=schemeParentheses start=/,(/ end=/)/ contained contains=ALLBUT,schemeDatumCommentForm,@schemeImportCluster
+syn region schemeUnquote matchgroup=schemeParentheses start=/,@(/ end=/)/ contained contains=ALLBUT,schemeDatumCommentForm,@schemeImportCluster
 
-syn region schemeQuoted matchgroup=Delimiter start="['`](" matchgroup=Delimiter end=")" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
-syn region schemeQuoted matchgroup=Delimiter start="['`]#(" matchgroup=Delimiter end=")" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn region schemeQuoteForm matchgroup=schemeData start=/(/ end=/)/ contained contains=ALLBUT,schemeQuasiquote,schemeQuasiquoteForm,schemeUnquote,schemeForm,schemeDatumCommentForm,schemeImport,@schemeImportCluster,@schemeSyntaxCluster
+syn region schemeQuasiquoteForm matchgroup=schemeData start=/(/ end=/)/ contained contains=ALLBUT,schemeQuote,schemeForm,schemeDatumCommentForm,schemeImport,@schemeImportCluster,@schemeSyntaxCluster
 
-syn region schemeStrucRestricted matchgroup=Delimiter start="(" matchgroup=Delimiter end=")" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
-syn region schemeStrucRestricted matchgroup=Delimiter start="#(" matchgroup=Delimiter end=")" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn region schemeString start=/\(\\\)\@<!"/ skip=/\\[\\"]/ end=/"/
+syn region schemeSymbol start=/\(\\\)\@<!|/ skip=/\\[\\|]/ end=/|/
 
-" Popular Scheme extension:
-" using [] as well as ()
-syn region schemeStrucRestricted matchgroup=Delimiter start="\[" matchgroup=Delimiter end="\]" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
-syn region schemeStrucRestricted matchgroup=Delimiter start="#\[" matchgroup=Delimiter end="\]" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn match schemeNumber /\(#[dbeio]\)*[+\-]*\([0-9]\+\|inf.0\|nan.0\)\(\/\|\.\)\?[0-9+\-@\ilns]*\>/
+syn match schemeNumber /#x[+\-]*[0-9a-fA-F]\+\>/
 
-syn region schemeUnquote matchgroup=Delimiter start="," end=![ \t\[\]()";]!me=e-1 contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
-syn region schemeUnquote matchgroup=Delimiter start=",@" end=![ \t\[\]()";]!me=e-1 contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn match schemeBoolean /#t\(rue\)\?/
+syn match schemeBoolean /#f\(alse\)\?/
 
-syn region schemeUnquote matchgroup=Delimiter start=",(" end=")" contains=ALL
-syn region schemeUnquote matchgroup=Delimiter start=",@(" end=")" contains=ALL
+syn match schemeCharacter /#\\.[^ `'\t\n\[\]()]*/
+syn match schemeCharacter /#\\x[0-9a-fA-F]\+/
 
-syn region schemeUnquote matchgroup=Delimiter start=",#(" end=")" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
-syn region schemeUnquote matchgroup=Delimiter start=",@#(" end=")" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn match schemeComment /;.*$/
 
-syn region schemeUnquote matchgroup=Delimiter start=",\[" end="\]" contains=ALL
-syn region schemeUnquote matchgroup=Delimiter start=",@\[" end="\]" contains=ALL
+syn region schemeMultilineComment start=/#|/ end=/|#/ contains=schemeMultilineComment
 
-syn region schemeUnquote matchgroup=Delimiter start=",#\[" end="\]" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
-syn region schemeUnquote matchgroup=Delimiter start=",@#\[" end="\]" contains=ALLBUT,schemeStruc,schemeSyntax,schemeFunc
+syn region schemeForm matchgroup=schemeParentheses start="(" end=")" contains=ALLBUT,schemeUnquote,schemeDatumCommentForm,@schemeImportCluster
+syn region schemeForm matchgroup=schemeParentheses start="\[" end="\]" contains=ALLBUT,schemeUnquote,schemeDatumCommentForm,@schemeImportCluster
 
-" R5RS Scheme Functions and Syntax:
+syn region schemeVector matchgroup=schemeData start="#(" end=")" contains=ALLBUT,schemeQuasiquote,schemeQuasiquoteForm,schemeUnquote,schemeForm,schemeDatumCommentForm,schemeImport,@schemeImportCluster,@schemeSyntaxCluster
+syn region schemeVector matchgroup=schemeData start="#[fsu]\d\+(" end=")" contains=schemeNumber,schemeComment,schemeDatumComment
 
-setlocal iskeyword=33,35-39,42-58,60-90,94,95,97-122,126,_
-
-syn keyword schemeSyntax lambda and or if cond case define let let* letrec
-syn keyword schemeSyntax begin do delay set! else =>
-syn keyword schemeSyntax quote quasiquote unquote unquote-splicing
-syn keyword schemeSyntax define-syntax let-syntax letrec-syntax syntax-rules
-" R6RS
-syn keyword schemeSyntax define-record-type fields protocol
-
-syn keyword schemeFunc not boolean? eq? eqv? equal? pair? cons car cdr set-car!
-syn keyword schemeFunc set-cdr! caar cadr cdar cddr caaar caadr cadar caddr
-syn keyword schemeFunc cdaar cdadr cddar cdddr caaaar caaadr caadar caaddr
-syn keyword schemeFunc cadaar cadadr caddar cadddr cdaaar cdaadr cdadar cdaddr
-syn keyword schemeFunc cddaar cddadr cdddar cddddr null? list? list length
-syn keyword schemeFunc append reverse list-ref memq memv member assq assv assoc
-syn keyword schemeFunc symbol? symbol->string string->symbol number? complex?
-syn keyword schemeFunc real? rational? integer? exact? inexact? = < > <= >=
-syn keyword schemeFunc zero? positive? negative? odd? even? max min + * - / abs
-syn keyword schemeFunc quotient remainder modulo gcd lcm numerator denominator
-syn keyword schemeFunc floor ceiling truncate round rationalize exp log sin cos
-syn keyword schemeFunc tan asin acos atan sqrt expt make-rectangular make-polar
-syn keyword schemeFunc real-part imag-part magnitude angle exact->inexact
-syn keyword schemeFunc inexact->exact number->string string->number char=?
-syn keyword schemeFunc char-ci=? char<? char-ci<? char>? char-ci>? char<=?
-syn keyword schemeFunc char-ci<=? char>=? char-ci>=? char-alphabetic? char?
-syn keyword schemeFunc char-numeric? char-whitespace? char-upper-case?
-syn keyword schemeFunc char-lower-case?
-syn keyword schemeFunc char->integer integer->char char-upcase char-downcase
-syn keyword schemeFunc string? make-string string string-length string-ref
-syn keyword schemeFunc string-set! string=? string-ci=? string<? string-ci<?
-syn keyword schemeFunc string>? string-ci>? string<=? string-ci<=? string>=?
-syn keyword schemeFunc string-ci>=? substring string-append vector? make-vector
-syn keyword schemeFunc vector vector-length vector-ref vector-set! procedure?
-syn keyword schemeFunc apply map for-each call-with-current-continuation
-syn keyword schemeFunc call-with-input-file call-with-output-file input-port?
-syn keyword schemeFunc output-port? current-input-port current-output-port
-syn keyword schemeFunc open-input-file open-output-file close-input-port
-syn keyword schemeFunc close-output-port eof-object? read read-char peek-char
-syn keyword schemeFunc write display newline write-char call/cc
-syn keyword schemeFunc list-tail string->list list->string string-copy
-syn keyword schemeFunc string-fill! vector->list list->vector vector-fill!
-syn keyword schemeFunc force with-input-from-file with-output-to-file
-syn keyword schemeFunc char-ready? load transcript-on transcript-off eval
-syn keyword schemeFunc dynamic-wind port? values call-with-values
-syn keyword schemeFunc scheme-report-environment null-environment
-syn keyword schemeFunc interaction-environment
-" R6RS
-syn keyword schemeFunc make-eq-hashtable make-eqv-hashtable make-hashtable
-syn keyword schemeFunc hashtable? hashtable-size hashtable-ref hashtable-set!
-syn keyword schemeFunc hashtable-delete! hashtable-contains? hashtable-update!
-syn keyword schemeFunc hashtable-copy hashtable-clear! hashtable-keys
-syn keyword schemeFunc hashtable-entries hashtable-equivalence-function hashtable-hash-function
-syn keyword schemeFunc hashtable-mutable? equal-hash string-hash string-ci-hash symbol-hash
-syn keyword schemeFunc find for-all exists filter partition fold-left fold-right
-syn keyword schemeFunc remp remove remv remq memp assp cons*
-
-" ... so that a single + or -, inside a quoted context, would not be
-" interpreted as a number (outside such contexts, it's a schemeFunc)
-
-syn match	schemeDelimiter	!\.[ \t\[\]()";]!me=e-1
-syn match	schemeDelimiter	!\.$!
-" ... and a single dot is not a number but a delimiter
-
-" This keeps all other stuff unhighlighted, except *stuff* and <stuff>:
-
-syn match	schemeOther	,[a-z!$%&*/:<=>?^_~+@#%-][-a-z!$%&*/:<=>?^_~0-9+.@#%]*,
-syn match	schemeError	,[a-z!$%&*/:<=>?^_~+@#%-][-a-z!$%&*/:<=>?^_~0-9+.@#%]*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
-
-syn match	schemeOther	"\.\.\."
-syn match	schemeError	!\.\.\.[^ \t\[\]()";]\+!
-" ... a special identifier
-
-syn match	schemeConstant	,\*[-a-z!$%&*/:<=>?^_~0-9+.@]\+\*[ \t\[\]()";],me=e-1
-syn match	schemeConstant	,\*[-a-z!$%&*/:<=>?^_~0-9+.@]\+\*$,
-syn match	schemeError	,\*[-a-z!$%&*/:<=>?^_~0-9+.@]*\*[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
-
-syn match	schemeConstant	,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[ \t\[\]()";],me=e-1
-syn match	schemeConstant	,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>$,
-syn match	schemeError	,<[-a-z!$%&*/:<=>?^_~0-9+.@]*>[^-a-z!$%&*/:<=>?^_~0-9+.@ \t\[\]()";]\+[^ \t\[\]()";]*,
-
-" Non-quoted lists, and strings:
-
-syn region schemeStruc matchgroup=Delimiter start="(" matchgroup=Delimiter end=")" contains=ALL
-syn region schemeStruc matchgroup=Delimiter start="#(" matchgroup=Delimiter end=")" contains=ALL
-
-syn region schemeStruc matchgroup=Delimiter start="\[" matchgroup=Delimiter end="\]" contains=ALL
-syn region schemeStruc matchgroup=Delimiter start="#\[" matchgroup=Delimiter end="\]" contains=ALL
-
-" Simple literals:
-syn region schemeString start=+\%(\\\)\@<!"+ skip=+\\[\\"]+ end=+"+ contains=@Spell
-
-" Comments:
-
-syn match	schemeComment	";.*$" contains=@Spell
-
-
-" Writing out the complete description of Scheme numerals without
-" using variables is a day's work for a trained secretary...
-
-syn match	schemeOther	![+-][ \t\[\]()";]!me=e-1
-syn match	schemeOther	![+-]$!
-"
-" This is a useful lax approximation:
-syn match	schemeNumber	"[-#+.]\=[0-9][-#+/0-9a-f@i.boxesfdl]*"
-syn match	schemeError	![-#+0-9.][-#+/0-9a-f@i.boxesfdl]*[^-#+/0-9a-f@i.boxesfdl \t\[\]()";][^ \t\[\]()";]*!
-
-syn match	schemeBoolean	"#[tf]"
-syn match	schemeError	!#[tf][^ \t\[\]()";]\+!
-
-syn match	schemeCharacter	"#\\"
-syn match	schemeCharacter	"#\\."
-syn match       schemeError	!#\\.[^ \t\[\]()";]\+!
-syn match	schemeCharacter	"#\\space"
-syn match	schemeError	!#\\space[^ \t\[\]()";]\+!
-syn match	schemeCharacter	"#\\newline"
-syn match	schemeError	!#\\newline[^ \t\[\]()";]\+!
-
-" R6RS
-syn match schemeCharacter "#\\x[0-9a-fA-F]\+"
-
-
-if exists("b:is_mzscheme") || exists("is_mzscheme")
-    " MzScheme extensions
-    " multiline comment
-    syn region	schemeComment start="#|" end="|#" contains=@Spell
-
-    " #%xxx are the special MzScheme identifiers
-    syn match schemeOther "#%[-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
-    " anything limited by |'s is identifier
-    syn match schemeOther "|[^|]\+|"
-
-    syn match	schemeCharacter	"#\\\%(return\|tab\)"
-
-    " Modules require stmt
-    syn keyword schemeExtSyntax module require dynamic-require lib prefix all-except prefix-all-except rename
-    " modules provide stmt
-    syn keyword schemeExtSyntax provide struct all-from all-from-except all-defined all-defined-except
-    " Other from MzScheme
-    syn keyword schemeExtSyntax with-handlers when unless instantiate define-struct case-lambda syntax-case
-    syn keyword schemeExtSyntax free-identifier=? bound-identifier=? module-identifier=? syntax-object->datum
-    syn keyword schemeExtSyntax datum->syntax-object
-    syn keyword schemeExtSyntax let-values let*-values letrec-values set!-values fluid-let parameterize begin0
-    syn keyword schemeExtSyntax error raise opt-lambda define-values unit unit/sig define-signature
-    syn keyword schemeExtSyntax invoke-unit/sig define-values/invoke-unit/sig compound-unit/sig import export
-    syn keyword schemeExtSyntax link syntax quasisyntax unsyntax with-syntax
-
-    syn keyword schemeExtFunc format system-type current-extension-compiler current-extension-linker
-    syn keyword schemeExtFunc use-standard-linker use-standard-compiler
-    syn keyword schemeExtFunc find-executable-path append-object-suffix append-extension-suffix
-    syn keyword schemeExtFunc current-library-collection-paths current-extension-compiler-flags make-parameter
-    syn keyword schemeExtFunc current-directory build-path normalize-path current-extension-linker-flags
-    syn keyword schemeExtFunc file-exists? directory-exists? delete-directory/files delete-directory delete-file
-    syn keyword schemeExtFunc system compile-file system-library-subpath getenv putenv current-standard-link-libraries
-    syn keyword schemeExtFunc remove* file-size find-files fold-files directory-list shell-execute split-path
-    syn keyword schemeExtFunc current-error-port process/ports process printf fprintf open-input-string open-output-string
-    syn keyword schemeExtFunc get-output-string
-    " exceptions
-    syn keyword schemeExtFunc exn exn:application:arity exn:application:continuation exn:application:fprintf:mismatch
-    syn keyword schemeExtFunc exn:application:mismatch exn:application:type exn:application:mismatch exn:break exn:i/o:filesystem exn:i/o:port
-    syn keyword schemeExtFunc exn:i/o:port:closed exn:i/o:tcp exn:i/o:udp exn:misc exn:misc:application exn:misc:unsupported exn:module exn:read
-    syn keyword schemeExtFunc exn:read:non-char exn:special-comment exn:syntax exn:thread exn:user exn:variable exn:application:mismatch
-    syn keyword schemeExtFunc exn? exn:application:arity? exn:application:continuation? exn:application:fprintf:mismatch? exn:application:mismatch?
-    syn keyword schemeExtFunc exn:application:type? exn:application:mismatch? exn:break? exn:i/o:filesystem? exn:i/o:port? exn:i/o:port:closed?
-    syn keyword schemeExtFunc exn:i/o:tcp? exn:i/o:udp? exn:misc? exn:misc:application? exn:misc:unsupported? exn:module? exn:read? exn:read:non-char?
-    syn keyword schemeExtFunc exn:special-comment? exn:syntax? exn:thread? exn:user? exn:variable? exn:application:mismatch?
-    " Command-line parsing
-    syn keyword schemeExtFunc command-line current-command-line-arguments once-any help-labels multi once-each
-
-    " syntax quoting, unquoting and quasiquotation
-    syn region schemeUnquote matchgroup=Delimiter start="#," end=![ \t\[\]()";]!me=e-1 contains=ALL
-    syn region schemeUnquote matchgroup=Delimiter start="#,@" end=![ \t\[\]()";]!me=e-1 contains=ALL
-    syn region schemeUnquote matchgroup=Delimiter start="#,(" end=")" contains=ALL
-    syn region schemeUnquote matchgroup=Delimiter start="#,@(" end=")" contains=ALL
-    syn region schemeUnquote matchgroup=Delimiter start="#,\[" end="\]" contains=ALL
-    syn region schemeUnquote matchgroup=Delimiter start="#,@\[" end="\]" contains=ALL
-    syn region schemeQuoted matchgroup=Delimiter start="#['`]" end=![ \t()\[\]";]!me=e-1 contains=ALL
-    syn region schemeQuoted matchgroup=Delimiter start="#['`](" matchgroup=Delimiter end=")" contains=ALL
-
-    " Identifiers are very liberal in MzScheme/Racket
-    syn match schemeOther ![^()[\]{}",'`;#|\\ ]\+!
-
-    " Language setting
-    syn match schemeLang "#lang [-+_/A-Za-z0-9]\+\>"
-
-    " Various number forms
-    syn match schemeNumber "[-+]\=[0-9]\+\(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\>"
-    syn match schemeNumber "[-+]\=\.[0-9]\+\(e[-+]\=[0-9]\+\)\=\>"
-    syn match schemeNumber "[-+]\=[0-9]\+/[0-9]\+\>"
-    syn match schemeNumber "\([-+]\=\([0-9]\+\(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\|\.[0-9]\+\(e[-+]\=[0-9]\+\)\=\|[0-9]\+/[0-9]\+\)\)\=[-+]\([0-9]\+\(\.[0-9]*\)\=\(e[-+]\=[0-9]\+\)\=\|\.[0-9]\+\(e[-+]\=[0-9]\+\)\=\|[0-9]\+/[0-9]\+\)\=i\>"
+if exists('g:is_chicken') || exists('b:is_chicken')
+  syn region schemeImport matchgroup=schemeImport start="\(([ \t\n]*\)\@<=\(import\|import-syntax\|use\|require-extension\)\(-for-syntax\)\?\>" end=")"me=e-1 contained contains=schemeImportForm,schemeIdentifier,schemeComment,schemeDatumComment
+else
+  syn region schemeImport matchgroup=schemeImport start="\(([ \t\n]*\)\@<=\(import\)\>" end=")"me=e-1 contained contains=schemeImportForm,schemeIdentifier,schemeComment,schemeDatumComment
 endif
 
+syn match   schemeImportKeyword "\(([ \t\n]*\)\@<=\(except\|only\|prefix\|rename\|srfi\)\>"
+syn region  schemeImportForm matchgroup=schemeParentheses start="(" end=")" contained contains=schemeIdentifier,schemeComment,schemeDatumComment,@schemeImportCluster
+syn cluster schemeImportCluster contains=schemeImportForm,schemeImportKeyword
 
-if exists("b:is_chicken") || exists("is_chicken")
-    " multiline comment
-    syntax region schemeMultilineComment start=/#|/ end=/|#/ contains=@Spell,schemeMultilineComment
+syn region schemeDatumComment matchgroup=schemeDatumComment start=/#;[ \t\n`']*/ end=/[ \t\n()\[\]";]/me=e-1
+syn region schemeDatumComment matchgroup=schemeDatumComment start=/#;[ \t\n`']*"/ skip=/\\[\\"]/ end=/"/
+syn region schemeDatumComment matchgroup=schemeDatumComment start=/#;[ \t\n`']*|/ skip=/\\[\\|]/ end=/|/
+syn region schemeDatumComment matchgroup=schemeDatumComment start=/#;[ \t\n`']*\(#\([usf]\d\+\)\?\)\?(/ end=/)/ contains=schemeDatumCommentForm
+syn region schemeDatumCommentForm start="(" end=")" contained contains=schemeDatumCommentForm
 
-    syn match schemeOther "##[-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
-    syn match schemeExtSyntax "#:[-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
+syn cluster schemeSyntaxCluster contains=schemeFunction,schemeKeyword,schemeSyntax,schemeExtraSyntax,schemeLibrarySyntax,schemeSyntaxSyntax
 
-    syn keyword schemeExtSyntax unit uses declare hide foreign-declare foreign-parse foreign-parse/spec
-    syn keyword schemeExtSyntax foreign-lambda foreign-lambda* define-external define-macro load-library
-    syn keyword schemeExtSyntax let-values let*-values letrec-values ->string require-extension
-    syn keyword schemeExtSyntax let-optionals let-optionals* define-foreign-variable define-record
-    syn keyword schemeExtSyntax pointer tag-pointer tagged-pointer? define-foreign-type
-    syn keyword schemeExtSyntax require require-for-syntax cond-expand and-let* receive argc+argv
-    syn keyword schemeExtSyntax fixnum? fx= fx> fx< fx>= fx<= fxmin fxmax
-    syn keyword schemeExtFunc ##core#inline ##sys#error ##sys#update-errno
+syn keyword schemeLibrarySyntax define-library
+syn keyword schemeLibrarySyntax export
+syn keyword schemeLibrarySyntax include
+syn keyword schemeLibrarySyntax include-ci
+syn keyword schemeLibrarySyntax include-library-declarations
+syn keyword schemeLibrarySyntax library
+syn keyword schemeLibrarySyntax cond-expand
 
-    " here-string
-    syn region schemeString start=+#<<\s*\z(.*\)+ end=+^\z1$+ contains=@Spell
+syn keyword schemeSyntaxSyntax define-syntax
+syn keyword schemeSyntaxSyntax let-syntax
+syn keyword schemeSyntaxSyntax letrec-syntax
+syn keyword schemeSyntaxSyntax syntax-rules
 
-    if filereadable(expand("<sfile>:p:h")."/cpp.vim")
-	unlet! b:current_syntax
-	syn include @ChickenC <sfile>:p:h/cpp.vim
-	syn region ChickenC matchgroup=schemeOther start=+(\@<=foreign-declare "+ end=+")\@=+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+foreign-declare\s*#<<\z(.*\)$+hs=s+15 end=+^\z1$+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeOther start=+(\@<=foreign-parse "+ end=+")\@=+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+foreign-parse\s*#<<\z(.*\)$+hs=s+13 end=+^\z1$+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeOther start=+(\@<=foreign-parse/spec "+ end=+")\@=+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+foreign-parse/spec\s*#<<\z(.*\)$+hs=s+18 end=+^\z1$+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+#>+ end=+<#+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+#>?+ end=+<#+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+#>!+ end=+<#+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+#>\$+ end=+<#+ contains=@ChickenC
-	syn region ChickenC matchgroup=schemeComment start=+#>%+ end=+<#+ contains=@ChickenC
-    endif
+syn keyword schemeSyntax =>
+syn keyword schemeSyntax and
+syn keyword schemeSyntax begin
+syn keyword schemeSyntax case
+syn keyword schemeSyntax case-lambda
+syn keyword schemeSyntax cond
+syn keyword schemeSyntax define
+syn keyword schemeSyntax define-record-type
+syn keyword schemeSyntax define-values
+syn keyword schemeSyntax delay
+syn keyword schemeSyntax delay-force
+syn keyword schemeSyntax do
+syn keyword schemeSyntax else
+syn keyword schemeSyntax guard
+syn keyword schemeSyntax if
+syn keyword schemeSyntax lambda
+syn keyword schemeSyntax let
+syn keyword schemeSyntax let*
+syn keyword schemeSyntax let*-values
+syn keyword schemeSyntax let-values
+syn keyword schemeSyntax letrec
+syn keyword schemeSyntax letrec*
+syn keyword schemeSyntax or
+syn keyword schemeSyntax parameterize
+syn keyword schemeSyntax quasiquote
+syn keyword schemeSyntax quote
+syn keyword schemeSyntax set!
+syn keyword schemeSyntax unless
+syn keyword schemeSyntax unquote
+syn keyword schemeSyntax unquote-splicing
+syn keyword schemeSyntax when
 
-    " suggested by Alex Queiroz
-    syn match schemeExtSyntax "#![-a-z!$%&*/:<=>?^_~0-9+.@#%]\+"
-    syn region schemeString start=+#<#\s*\z(.*\)+ end=+^\z1$+ contains=@Spell
+syn keyword schemeFunction *
+syn keyword schemeFunction +
+syn keyword schemeFunction -
+syn keyword schemeFunction /
+syn keyword schemeFunction <
+syn keyword schemeFunction <=
+syn keyword schemeFunction =
+syn keyword schemeFunction >
+syn keyword schemeFunction >=
+syn keyword schemeFunction abs
+syn keyword schemeFunction acos
+syn keyword schemeFunction acos
+syn keyword schemeFunction angle
+syn keyword schemeFunction append
+syn keyword schemeFunction apply
+syn keyword schemeFunction asin
+syn keyword schemeFunction assoc
+syn keyword schemeFunction assq
+syn keyword schemeFunction assv
+syn keyword schemeFunction atan
+syn keyword schemeFunction binary-port?
+syn keyword schemeFunction boolean=?
+syn keyword schemeFunction boolean?
+syn keyword schemeFunction bytevector
+syn keyword schemeFunction bytevector-append
+syn keyword schemeFunction bytevector-append
+syn keyword schemeFunction bytevector-copy
+syn keyword schemeFunction bytevector-copy!
+syn keyword schemeFunction bytevector-length
+syn keyword schemeFunction bytevector-u8-ref
+syn keyword schemeFunction bytevector-u8-set!
+syn keyword schemeFunction bytevector?
+syn keyword schemeFunction caaaar
+syn keyword schemeFunction caaadr
+syn keyword schemeFunction caaar
+syn keyword schemeFunction caadar
+syn keyword schemeFunction caaddr
+syn keyword schemeFunction caadr
+syn keyword schemeFunction caar
+syn keyword schemeFunction cadaar
+syn keyword schemeFunction cadadr
+syn keyword schemeFunction cadar
+syn keyword schemeFunction caddar
+syn keyword schemeFunction cadddr
+syn keyword schemeFunction caddr
+syn keyword schemeFunction cadr
+syn keyword schemeFunction call-with-current-continuation
+syn keyword schemeFunction call-with-input-file
+syn keyword schemeFunction call-with-output-file
+syn keyword schemeFunction call-with-port
+syn keyword schemeFunction call-with-values
+syn keyword schemeFunction call/cc
+syn keyword schemeFunction car
+syn keyword schemeFunction cdaaar
+syn keyword schemeFunction cdaadr
+syn keyword schemeFunction cdaar
+syn keyword schemeFunction cdadar
+syn keyword schemeFunction cdaddr
+syn keyword schemeFunction cdadr
+syn keyword schemeFunction cdar
+syn keyword schemeFunction cddaar
+syn keyword schemeFunction cddadr
+syn keyword schemeFunction cddar
+syn keyword schemeFunction cdddar
+syn keyword schemeFunction cddddr
+syn keyword schemeFunction cdddr
+syn keyword schemeFunction cddr
+syn keyword schemeFunction cdr
+syn keyword schemeFunction ceiling
+syn keyword schemeFunction char->integer
+syn keyword schemeFunction char-alphabetic?
+syn keyword schemeFunction char-ci<=?
+syn keyword schemeFunction char-ci<?
+syn keyword schemeFunction char-ci=?
+syn keyword schemeFunction char-ci>=?
+syn keyword schemeFunction char-ci>?
+syn keyword schemeFunction char-downcase
+syn keyword schemeFunction char-foldcase
+syn keyword schemeFunction char-lower-case?
+syn keyword schemeFunction char-numeric?
+syn keyword schemeFunction char-ready?
+syn keyword schemeFunction char-upcase
+syn keyword schemeFunction char-upper-case?
+syn keyword schemeFunction char-whitespace?
+syn keyword schemeFunction char<=?
+syn keyword schemeFunction char<?
+syn keyword schemeFunction char=?
+syn keyword schemeFunction char>=?
+syn keyword schemeFunction char>?
+syn keyword schemeFunction char?
+syn keyword schemeFunction close-input-port
+syn keyword schemeFunction close-output-port
+syn keyword schemeFunction close-port
+syn keyword schemeFunction command-line
+syn keyword schemeFunction complex?
+syn keyword schemeFunction cons
+syn keyword schemeFunction cos
+syn keyword schemeFunction current-error-port
+syn keyword schemeFunction current-input-port
+syn keyword schemeFunction current-jiffy
+syn keyword schemeFunction current-output-port
+syn keyword schemeFunction current-second
+syn keyword schemeFunction delete-file
+syn keyword schemeFunction denominator
+syn keyword schemeFunction digit-value
+syn keyword schemeFunction display
+syn keyword schemeFunction dynamic-wind
+syn keyword schemeFunction emergency-exit
+syn keyword schemeFunction environment
+syn keyword schemeFunction eof-object
+syn keyword schemeFunction eof-object?
+syn keyword schemeFunction eq?
+syn keyword schemeFunction equal?
+syn keyword schemeFunction eqv?
+syn keyword schemeFunction error
+syn keyword schemeFunction error-object-irritants
+syn keyword schemeFunction error-object-message
+syn keyword schemeFunction error-object?
+syn keyword schemeFunction eval
+syn keyword schemeFunction even?
+syn keyword schemeFunction exact
+syn keyword schemeFunction exact->inexact
+syn keyword schemeFunction exact-integer-sqrt
+syn keyword schemeFunction exact-integer?
+syn keyword schemeFunction exact?
+syn keyword schemeFunction exit
+syn keyword schemeFunction exp
+syn keyword schemeFunction expt
+syn keyword schemeFunction features
+syn keyword schemeFunction file-error?
+syn keyword schemeFunction file-exists?
+syn keyword schemeFunction finite?
+syn keyword schemeFunction floor
+syn keyword schemeFunction floor-quotient
+syn keyword schemeFunction floor-remainder
+syn keyword schemeFunction floor/
+syn keyword schemeFunction flush-output-port
+syn keyword schemeFunction for-each
+syn keyword schemeFunction force
+syn keyword schemeFunction gcd
+syn keyword schemeFunction get-environment-variable
+syn keyword schemeFunction get-environment-variables
+syn keyword schemeFunction get-output-bytevector
+syn keyword schemeFunction get-output-string
+syn keyword schemeFunction imag-part
+syn keyword schemeFunction inexact
+syn keyword schemeFunction inexact->exact
+syn keyword schemeFunction inexact?
+syn keyword schemeFunction infinite?
+syn keyword schemeFunction input-port-open?
+syn keyword schemeFunction input-port?
+syn keyword schemeFunction integer->char
+syn keyword schemeFunction integer?
+syn keyword schemeFunction interaction-environment
+syn keyword schemeFunction jiffies-per-second
+syn keyword schemeFunction lcm
+syn keyword schemeFunction length
+syn keyword schemeFunction list
+syn keyword schemeFunction list->string
+syn keyword schemeFunction list->vector
+syn keyword schemeFunction list-copy
+syn keyword schemeFunction list-ref
+syn keyword schemeFunction list-set!
+syn keyword schemeFunction list-tail
+syn keyword schemeFunction list?
+syn keyword schemeFunction load
+syn keyword schemeFunction log
+syn keyword schemeFunction magnitude
+syn keyword schemeFunction make-bytevector
+syn keyword schemeFunction make-list
+syn keyword schemeFunction make-parameter
+syn keyword schemeFunction make-polar
+syn keyword schemeFunction make-promise
+syn keyword schemeFunction make-rectangular
+syn keyword schemeFunction make-string
+syn keyword schemeFunction make-vector
+syn keyword schemeFunction map
+syn keyword schemeFunction max
+syn keyword schemeFunction member
+syn keyword schemeFunction memq
+syn keyword schemeFunction memv
+syn keyword schemeFunction min
+syn keyword schemeFunction modulo
+syn keyword schemeFunction nan?
+syn keyword schemeFunction negative?
+syn keyword schemeFunction newline
+syn keyword schemeFunction not
+syn keyword schemeFunction null-environment
+syn keyword schemeFunction null?
+syn keyword schemeFunction number->string
+syn keyword schemeFunction number?
+syn keyword schemeFunction numerator
+syn keyword schemeFunction odd?
+syn keyword schemeFunction open-binary-input-file
+syn keyword schemeFunction open-binary-output-file
+syn keyword schemeFunction open-input-bytevector
+syn keyword schemeFunction open-input-file
+syn keyword schemeFunction open-input-string
+syn keyword schemeFunction open-output-bytevector
+syn keyword schemeFunction open-output-file
+syn keyword schemeFunction open-output-string
+syn keyword schemeFunction output-port-open?
+syn keyword schemeFunction output-port?
+syn keyword schemeFunction pair?
+syn keyword schemeFunction peek-char
+syn keyword schemeFunction peek-u8
+syn keyword schemeFunction port?
+syn keyword schemeFunction positive?
+syn keyword schemeFunction procedure?
+syn keyword schemeFunction promise?
+syn keyword schemeFunction quotient
+syn keyword schemeFunction raise
+syn keyword schemeFunction raise-continuable
+syn keyword schemeFunction rational?
+syn keyword schemeFunction rationalize
+syn keyword schemeFunction read
+syn keyword schemeFunction read-bytevector
+syn keyword schemeFunction read-bytevector!
+syn keyword schemeFunction read-char
+syn keyword schemeFunction read-error?
+syn keyword schemeFunction read-line
+syn keyword schemeFunction read-string
+syn keyword schemeFunction read-u8
+syn keyword schemeFunction real-part
+syn keyword schemeFunction real?
+syn keyword schemeFunction remainder
+syn keyword schemeFunction reverse
+syn keyword schemeFunction round
+syn keyword schemeFunction scheme-report-environment
+syn keyword schemeFunction set-car!
+syn keyword schemeFunction set-cdr!
+syn keyword schemeFunction sin
+syn keyword schemeFunction sqrt
+syn keyword schemeFunction square
+syn keyword schemeFunction string
+syn keyword schemeFunction string->list
+syn keyword schemeFunction string->number
+syn keyword schemeFunction string->symbol
+syn keyword schemeFunction string->utf8
+syn keyword schemeFunction string->vector
+syn keyword schemeFunction string-append
+syn keyword schemeFunction string-ci<=?
+syn keyword schemeFunction string-ci<?
+syn keyword schemeFunction string-ci=?
+syn keyword schemeFunction string-ci>=?
+syn keyword schemeFunction string-ci>?
+syn keyword schemeFunction string-copy
+syn keyword schemeFunction string-copy!
+syn keyword schemeFunction string-downcase
+syn keyword schemeFunction string-fill!
+syn keyword schemeFunction string-foldcase
+syn keyword schemeFunction string-for-each
+syn keyword schemeFunction string-length
+syn keyword schemeFunction string-map
+syn keyword schemeFunction string-ref
+syn keyword schemeFunction string-set!
+syn keyword schemeFunction string-upcase
+syn keyword schemeFunction string<=?
+syn keyword schemeFunction string<?
+syn keyword schemeFunction string=?
+syn keyword schemeFunction string>=?
+syn keyword schemeFunction string>?
+syn keyword schemeFunction string?
+syn keyword schemeFunction substring
+syn keyword schemeFunction symbol->string
+syn keyword schemeFunction symbol=?
+syn keyword schemeFunction symbol?
+syn keyword schemeFunction syntax-error
+syn keyword schemeFunction tan
+syn keyword schemeFunction textual-port?
+syn keyword schemeFunction transcript-off
+syn keyword schemeFunction transcript-on
+syn keyword schemeFunction truncate
+syn keyword schemeFunction truncate-quotient
+syn keyword schemeFunction truncate-remainder
+syn keyword schemeFunction truncate/
+syn keyword schemeFunction u8-ready?
+syn keyword schemeFunction utf8->string
+syn keyword schemeFunction values
+syn keyword schemeFunction vector
+syn keyword schemeFunction vector->list
+syn keyword schemeFunction vector->string
+syn keyword schemeFunction vector-append
+syn keyword schemeFunction vector-copy
+syn keyword schemeFunction vector-copy!
+syn keyword schemeFunction vector-fill!
+syn keyword schemeFunction vector-for-each
+syn keyword schemeFunction vector-length
+syn keyword schemeFunction vector-map
+syn keyword schemeFunction vector-ref
+syn keyword schemeFunction vector-set!
+syn keyword schemeFunction vector?
+syn keyword schemeFunction with-exception-handler
+syn keyword schemeFunction with-input-from-file
+syn keyword schemeFunction with-output-to-file
+syn keyword schemeFunction write
+syn keyword schemeFunction write-bytevector
+syn keyword schemeFunction write-char
+syn keyword schemeFunction write-shared
+syn keyword schemeFunction write-simple
+syn keyword schemeFunction write-string
+syn keyword schemeFunction write-u8
+syn keyword schemeFunction zero?
+
+hi def link schemeBoolean Boolean
+hi def link schemeCharacter Character
+hi def link schemeComment Comment
+hi def link schemeConstant Constant
+hi def link schemeData Delimiter
+hi def link schemeDatumComment Comment
+hi def link schemeDatumCommentForm Comment
+hi def link schemeDelimiter Delimiter
+hi def link schemeError Error
+hi def link schemeExtraSyntax Underlined
+hi def link schemeFunction Function
+hi def link schemeIdentifier Normal
+hi def link schemeImport PreProc
+hi def link schemeImportKeyword PreProc
+hi def link schemeKeyword Type
+hi def link schemeLibrarySyntax PreProc
+hi def link schemeMultilineComment Comment
+hi def link schemeNumber Number
+hi def link schemeParentheses Normal
+hi def link schemeQuasiquote Delimiter
+hi def link schemeQuote Delimiter
+hi def link schemeSpecialSyntax Special
+hi def link schemeString String
+hi def link schemeSymbol Normal
+hi def link schemeSyntax Statement
+hi def link schemeSyntaxSyntax PreProc
+hi def link schemeTypeSyntax Type
+
+let b:did_scheme_syntax = 1
+
+if exists('b:is_chicken') || exists('g:is_chicken')
+  exe 'ru! syntax/chicken.vim'
 endif
 
-" Synchronization and the wrapping up...
-
-syn sync match matchPlace grouphere NONE "^[^ \t]"
-" ... i.e. synchronize on a line that starts at the left margin
-
-" Define the default highlighting.
-" Only when an item doesn't have highlighting yet
-
-hi def link schemeSyntax		Statement
-hi def link schemeFunc		Function
-
-hi def link schemeString		String
-hi def link schemeCharacter	Character
-hi def link schemeNumber		Number
-hi def link schemeBoolean		Boolean
-
-hi def link schemeDelimiter	Delimiter
-hi def link schemeConstant		Constant
-
-hi def link schemeComment		Comment
-hi def link schemeMultilineComment	Comment
-hi def link schemeError		Error
-
-hi def link schemeExtSyntax	Type
-hi def link schemeExtFunc		PreProc
-
-hi def link schemeLang		PreProc
-
-
-let b:current_syntax = "scheme"
-
-let &cpo = s:cpo_save
-unlet s:cpo_save
+unlet b:did_scheme_syntax
+let b:current_syntax = 'scheme'
+let &cpo = s:cpo
+unlet s:cpo

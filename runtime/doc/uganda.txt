@@ -281,4 +281,4 @@ Address to send checks to:
 
 This address is expected to be valid for a long time.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

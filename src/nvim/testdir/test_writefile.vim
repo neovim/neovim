@@ -32,6 +32,24 @@ func Test_writefile_fails_gently()
   call assert_fails('call writefile([], [])', 'E730:')
 endfunc
 
+func Test_writefile_fails_conversion()
+  if !has('multi_byte') || !has('iconv')
+    return
+  endif
+  set nobackup nowritebackup
+  new
+  let contents = ["line one", "line two"]
+  call writefile(contents, 'Xfile')
+  edit Xfile
+  call setline(1, ["first line", "cannot convert \u010b", "third line"])
+  call assert_fails('write ++enc=cp932')
+  call assert_equal(contents, readfile('Xfile'))
+
+  call delete('Xfile')
+  bwipe!
+  set backup& writebackup&
+endfunc
+
 func SetFlag(timer)
   let g:flag = 1
 endfunc

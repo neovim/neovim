@@ -1,6 +1,8 @@
+require('vim.compat')
 local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')
+local relpath = require('pl.path').relpath
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
@@ -45,11 +47,11 @@ local check_logs_useless_lines = {
   ['See README_MISSING_SYSCALL_OR_IOCTL for guidance']=3,
 }
 
-local function eq(expected, actual, ctx)
-  return assert.are.same(expected, actual, ctx)
+local function eq(expected, actual, context)
+  return assert.are.same(expected, actual, context)
 end
-local function neq(expected, actual)
-  return assert.are_not.same(expected, actual)
+local function neq(expected, actual, context)
+  return assert.are_not.same(expected, actual, context)
 end
 local function ok(res)
   return assert.is_true(res)
@@ -233,6 +235,11 @@ local function hasenv(name)
   return nil
 end
 
+local function deps_prefix()
+  local env = os.getenv('DEPS_PREFIX')
+  return (env and env ~= '') and env or '.deps/usr'
+end
+
 local tests_skipped = 0
 
 local function check_cores(app, force)
@@ -244,7 +251,7 @@ local function check_cores(app, force)
   -- Workspace-local $TMPDIR, scrubbed and pattern-escaped.
   -- "./Xtest-tmpdir/" => "Xtest%-tmpdir"
   local local_tmpdir = (tmpdir_is_local(tmpdir_get())
-    and tmpdir_get():gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
+    and relpath(tmpdir_get()):gsub('^[ ./]+',''):gsub('%/+$',''):gsub('([^%w])', '%%%1')
     or nil)
   local db_cmd
   if hasenv('NVIM_TEST_CORE_GLOB_DIRECTORY') then
@@ -261,7 +268,7 @@ local function check_cores(app, force)
   else
     initial_path = '.'
     re = '/core[^/]*$'
-    exc_re = { '^/%.deps$', local_tmpdir, '^/%node_modules$' }
+    exc_re = { '^/%.deps$', '^/%'..deps_prefix()..'$', local_tmpdir, '^/%node_modules$' }
     db_cmd = gdb_db_cmd
     random_skip = true
   end
@@ -620,6 +627,19 @@ local function table_flatten(arr)
   return result
 end
 
+-- Checks if a list-like (vector) table contains `value`.
+local function table_contains(t, value)
+  if type(t) ~= 'table' then
+    error('t must be a table')
+  end
+  for _,v in ipairs(t) do
+    if v == value then
+      return true
+    end
+  end
+  return false
+end
+
 local function hexdump(str)
   local len = string.len(str)
   local dump = ""
@@ -645,8 +665,38 @@ local function hexdump(str)
   return dump .. hex .. string.rep("   ", 8 - len % 8) .. asc
 end
 
-local function read_file(name)
-  local file = io.open(name, 'r')
+-- Reads text lines from `filename` into a table.
+--
+-- filename: path to file
+-- start: start line (1-indexed), negative means "lines before end" (tail)
+local function read_file_list(filename, start)
+  local lnum = (start ~= nil and type(start) == 'number') and start or 1
+  local tail = (lnum < 0)
+  local maxlines = tail and math.abs(lnum) or nil
+  local file = io.open(filename, 'r')
+  if not file then
+    return nil
+  end
+  local lines = {}
+  local i = 1
+  for line in file:lines() do
+    if i >= start then
+      table.insert(lines, line)
+      if #lines > maxlines then
+        table.remove(lines, 1)
+      end
+    end
+    i = i + 1
+  end
+  file:close()
+  return lines
+end
+
+-- Reads the entire contents of `filename` into a string.
+--
+-- filename: path to file
+local function read_file(filename)
+  local file = io.open(filename, 'r')
   if not file then
     return nil
   end
@@ -676,7 +726,7 @@ end
 local function isCI()
   local is_travis = nil ~= os.getenv('TRAVIS')
   local is_appveyor = nil ~= os.getenv('APPVEYOR')
-  local is_quickbuild = nil ~= os.getenv('PR_NUMBER')
+  local is_quickbuild = nil ~= lfs.attributes('/usr/home/quickbuild')
   return is_travis or is_appveyor or is_quickbuild
 end
 
@@ -684,18 +734,13 @@ end
 -- Also removes the file, if the current environment looks like CI.
 local function read_nvim_log()
   local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
-  local logtext = read_file(logfile)
-  local lines = {}
-  for l in string.gmatch(logtext or '', "[^\n]+") do  -- Split at newlines.
-    table.insert(lines, l)
-  end
+  local keep = isCI() and 999 or 10
+  local lines = read_file_list(logfile, -keep) or {}
   local log = (('-'):rep(78)..'\n'
     ..string.format('$NVIM_LOG_FILE: %s\n', logfile)
-    ..(logtext and (isCI() and '' or '(last 10 lines)\n') or '(empty)\n'))
-  local keep = (isCI() and #lines or math.min(10, #lines))
-  local startidx = math.max(1, #lines - keep + 1)
-  for i = startidx, (startidx + keep - 1) do
-    log = log..lines[i]..'\n'
+    ..(#lines > 0 and '(last '..tostring(keep)..' lines)\n' or '(empty)\n'))
+  for _,line in ipairs(lines) do
+    log = log..line..'\n'
   end
   log = log..('-'):rep(78)..'\n'
   if isCI() then
@@ -724,6 +769,7 @@ local module = {
   hasenv = hasenv,
   hexdump = hexdump,
   intchar2lua = intchar2lua,
+  isCI = isCI,
   map = map,
   matches = matches,
   mergedicts_copy = mergedicts_copy,
@@ -733,10 +779,12 @@ local module = {
   popen_r = popen_r,
   popen_w = popen_w,
   read_file = read_file,
+  read_file_list = read_file_list,
   read_nvim_log = read_nvim_log,
   repeated_read_cmd = repeated_read_cmd,
   shallowcopy = shallowcopy,
   sleep = sleep,
+  table_contains = table_contains,
   table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,

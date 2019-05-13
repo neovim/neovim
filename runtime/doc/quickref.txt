@@ -597,7 +597,6 @@ In Insert or Command-line mode:
 Short explanation of each option:		*option-list*
 'aleph'		  'al'	    ASCII code of the letter Aleph (Hebrew)
 'allowrevins'	  'ari'     allow CTRL-_ in Insert and Command-line mode
-'altkeymap'	  'akm'     for default second language (Farsi/Hebrew)
 'ambiwidth'	  'ambw'    what to do with Unicode chars of ambiguous width
 'autochdir'	  'acd'     change directory to the file in the current window
 'arabic'	  'arab'    for Arabic as a default second language
@@ -614,7 +613,8 @@ Short explanation of each option:		*option-list*
 'backupext'	  'bex'     extension used for the backup file
 'backupskip'	  'bsk'     no backup for files that match these patterns
 'balloondelay'	  'bdlay'   delay in mS before a balloon may pop up
-'ballooneval'	  'beval'   switch on balloon evaluation
+'ballooneval'	  'beval'     switch on balloon evaluation in the GUI
+'balloonevalterm' 'bevalterm' switch on balloon evaluation in the terminal
 'balloonexpr'	  'bexpr'   expression to show in balloon
 'belloff'	  'bo'	    do not ring the bell for these reasons
 'binary'	  'bin'     read/write/edit file in binary mode
@@ -687,7 +687,6 @@ Short explanation of each option:		*option-list*
 'filetype'	  'ft'	    type of file, used for autocommands
 'fillchars'	  'fcs'     characters to use for displaying special items
 'fixendofline'	  'fixeol'  make sure last line in file has <EOL>
-'fkmap'		  'fk'	    Farsi keyboard mapping
 'foldclose'	  'fcl'     close a fold when the cursor leaves it
 'foldcolumn'	  'fdc'     width of the column used to indicate folds
 'foldenable'	  'fen'     set to display all folds open
@@ -809,8 +808,10 @@ Short explanation of each option:		*option-list*
 'printoptions'	  'popt'    controls the format of :hardcopy output
 'prompt'	  'prompt'  enable prompt in Ex mode
 'pumheight'	  'ph'	    maximum height of the popup menu
+'pumwidth'	  'pw'	    minimum width of the popup menu
 'pythondll'		    name of the Python 2 dynamic library
 'pythonthreedll'	    name of the Python 3 dynamic library
+'pyxversion'	  'pyx'	    Python version used for pyx* commands
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting
@@ -856,7 +857,7 @@ Short explanation of each option:		*option-list*
 'showtabline'	  'stal'    tells when the tab pages line is displayed
 'sidescroll'	  'ss'	    minimum number of columns to scroll horizontal
 'sidescrolloff'   'siso'    min. nr. of columns to left and right of cursor
-'signcolumn'	  'scl'	    when to display the sign column
+'signcolumn'	  'scl'	    when and how to display the sign column
 'smartcase'	  'scs'     no ignore case when pattern has uppercase
 'smartindent'	  'si'	    smart autoindenting for C programs
 'smarttab'	  'sta'     use 'shiftwidth' when inserting <Tab>
@@ -906,6 +907,8 @@ Short explanation of each option:		*option-list*
 'undoreload'	  'ur'	    max nr of lines to save for undo on a buffer reload
 'updatecount'	  'uc'	    after this many characters flush swap file
 'updatetime'	  'ut'	    after this many milliseconds flush swap file
+'varsofttabstop'  'vsts'    a list of number of spaces when typing <Tab>
+'vartabstop'	  'vts'	    a list of number of spaces for <Tab>s
 'verbose'	  'vbs'     give informative messages
 'verbosefile'	  'vfile'   file to write messages in
 'viewdir'	  'vdir'    directory where to store files with :mkview
@@ -1117,7 +1120,6 @@ Context-sensitive completion on the command-line:
 |-b|	-b		    binary mode
 |-l|	-l		    lisp mode
 |-A|	-A		    Arabic mode ('arabic' is set)
-|-F|	-F		    Farsi mode ('fkmap' and 'rightleft' are set)
 |-H|	-H		    Hebrew mode ('hkmap' and 'rightleft' are set)
 |-V|	-V		    Verbose, give informative messages
 |-r|	-r		    give list of swap files
@@ -1372,4 +1374,4 @@ Context-sensitive completion on the command-line:
 |zN|		zN			fold normal set 'foldenable'
 |zi|		zi			invert 'foldenable'
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

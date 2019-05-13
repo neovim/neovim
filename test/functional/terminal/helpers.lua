@@ -33,7 +33,7 @@ local function disable_mouse() feed_termcode('[?1002l') end
 
 local default_command = '["'..nvim_dir..'/tty-test'..'"]'
 
-local function screen_setup(extra_rows, command, cols)
+local function screen_setup(extra_rows, command, cols, opts)
   extra_rows = extra_rows and extra_rows or 0
   command = command and command or default_command
   cols = cols and cols or 50
@@ -52,10 +52,10 @@ local function screen_setup(extra_rows, command, cols)
     [7] = {foreground = 130},
     [8] = {foreground = 15, background = 1}, -- error message
     [9] = {foreground = 4},
-    [10] = {foreground = 2},  -- "Press ENTER" in embedded :terminal session.
+    [10] = {foreground = 121},  -- "Press ENTER" in embedded :terminal session.
   })
 
-  screen:attach({rgb=false})
+  screen:attach(opts or {rgb=false})
 
   feed_command('enew | call termopen('..command..')')
   nvim('input', '<CR>')
@@ -69,13 +69,13 @@ local function screen_setup(extra_rows, command, cols)
 
   -- tty-test puts the terminal into raw mode and echoes input. Tests work by
   -- feeding termcodes to control the display and asserting by screen:expect.
-  if command == default_command then
+  if command == default_command and opts == nil then
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
-    local empty_line = (' '):rep(cols + 1)
+    local empty_line = (' '):rep(cols)
     local expected = {
-      'tty ready'..(' '):rep(cols - 8),
-      '{1: }'    ..(' '):rep(cols),
+      'tty ready'..(' '):rep(cols - 9),
+      '{1: }'    ..(' '):rep(cols - 1),
       empty_line,
       empty_line,
       empty_line,
@@ -85,8 +85,8 @@ local function screen_setup(extra_rows, command, cols)
       table.insert(expected, empty_line)
     end
 
-    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 13)))
-    screen:expect(table.concat(expected, '\n'))
+    table.insert(expected, '{3:-- TERMINAL --}' .. ((' '):rep(cols - 14)))
+    screen:expect(table.concat(expected, '|\n')..'|')
   else
     -- This eval also acts as a wait().
     if 0 == nvim('eval', "exists('b:terminal_job_id')") then

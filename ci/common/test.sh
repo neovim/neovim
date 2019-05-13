@@ -34,8 +34,10 @@ check_core_dumps() {
   local app="${1:-${BUILD_DIR}/bin/nvim}"
   if test "${TRAVIS_OS_NAME}" = osx ; then
     local cores="$(find /cores/ -type f -print)"
+    local _sudo='sudo'
   else
     local cores="$(find ./ -type f -name 'core.*' -print)"
+    local _sudo=
   fi
 
   if test -z "${cores}" ; then
@@ -45,7 +47,7 @@ check_core_dumps() {
   for core in $cores; do
     if test "$del" = "1" ; then
       print_core "$app" "$core" >&2
-      rm "$core"
+      "$_sudo" rm "$core"
     else
       print_core "$app" "$core"
     fi
@@ -81,7 +83,7 @@ valgrind_check() {
 
 asan_check() {
   if test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
-    check_logs "${1}" "*san.*" | asan_symbolize
+    check_logs "${1}" "*san.*" | $ASAN_SYMBOLIZE
   fi
 }
 

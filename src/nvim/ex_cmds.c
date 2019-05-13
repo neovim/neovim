@@ -30,7 +30,6 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
-#include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
@@ -114,6 +113,7 @@ typedef struct {
 /// ":ascii" and "ga" implementation
 void do_ascii(const exarg_T *const eap)
 {
+  char_u *dig;
   int cc[MAX_MCO];
   int c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   if (c == NUL) {
@@ -141,10 +141,22 @@ void do_ascii(const exarg_T *const eap)
     }
     char buf2[20];
     buf2[0] = NUL;
-    iobuff_len += (
-        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
-                     _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
-                     transchar(c), buf1, buf2, cval, cval, cval));
+
+    dig = get_digraph_for_char(cval);
+    if (dig != NULL) {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         _("<%s>%s%s  %d,  Hex %02x,  Oct %03o, Digr %s"),
+                         transchar(c), buf1, buf2, cval, cval, cval, dig));
+    } else {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         _("<%s>%s%s  %d,  Hex %02x,  Octal %03o"),
+                         transchar(c), buf1, buf2, cval, cval, cval));
+    }
+
     c = cc[ci++];
   }
 
@@ -179,11 +191,25 @@ void do_ascii(const exarg_T *const eap)
       IObuff[iobuff_len++] = ' ';  // Draw composing char on top of a space.
     }
     iobuff_len += utf_char2bytes(c, IObuff + iobuff_len);
-    iobuff_len += (
-        vim_snprintf((char *)IObuff + iobuff_len, sizeof(IObuff) - iobuff_len,
-                     (c < 0x10000
-                      ? _("> %d, Hex %04x, Octal %o")
-                      : _("> %d, Hex %08x, Octal %o")), c, c, c));
+
+    dig = get_digraph_for_char(c);
+    if (dig != NULL) {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         (c < 0x10000
+                          ? _("> %d, Hex %04x, Oct %o, Digr %s")
+                          : _("> %d, Hex %08x, Oct %o, Digr %s")),
+                         c, c, c, dig));
+    } else {
+        iobuff_len += (
+            vim_snprintf((char *)IObuff + iobuff_len,
+                         sizeof(IObuff) - iobuff_len,
+                         (c < 0x10000
+                          ? _("> %d, Hex %04x, Octal %o")
+                          : _("> %d, Hex %08x, Octal %o")),
+                         c, c, c));
+    }
     if (ci == MAX_MCO) {
       break;
     }
@@ -229,10 +255,12 @@ void ex_align(exarg_T *eap)
      */
     if (width <= 0)
       width = curbuf->b_p_tw;
-    if (width == 0 && curbuf->b_p_wm > 0)
-      width = curwin->w_width - curbuf->b_p_wm;
-    if (width <= 0)
+    if (width == 0 && curbuf->b_p_wm > 0) {
+      width = curwin->w_width_inner - curbuf->b_p_wm;
+    }
+    if (width <= 0) {
       width = 80;
+    }
   }
 
   if (u_save((linenr_T)(eap->line1 - 1), (linenr_T)(eap->line2 + 1)) == FAIL)
@@ -338,7 +366,10 @@ typedef struct {
       varnumber_T start_col_nr;  ///< starting column number
       varnumber_T end_col_nr;    ///< ending column number
     } line;
-    varnumber_T value;           ///< value if sorting by integer
+    struct {
+      varnumber_T value;         ///< value if sorting by integer
+      bool is_number;            ///< true when line contains a number
+    } num;
     float_T value_flt;    ///< value if sorting by float
   } st_u;
 } sorti_T;
@@ -362,9 +393,15 @@ static int sort_compare(const void *s1, const void *s2)
   // When sorting numbers "start_col_nr" is the number, not the column
   // number.
   if (sort_nr) {
-    result = l1.st_u.value == l2.st_u.value
-             ? 0 : l1.st_u.value > l2.st_u.value
-             ? 1 : -1;
+    if (l1.st_u.num.is_number != l2.st_u.num.is_number) {
+      result = l1.st_u.num.is_number - l2.st_u.num.is_number;
+    } else {
+      result = l1.st_u.num.value == l2.st_u.num.value
+        ? 0
+        : l1.st_u.num.value > l2.st_u.num.value
+          ? 1
+          : -1;
+    }
   } else if (sort_flt) {
     result = l1.st_u.value_flt == l2.st_u.value_flt
              ? 0 : l1.st_u.value_flt > l2.st_u.value_flt
@@ -424,6 +461,7 @@ void ex_sort(exarg_T *eap)
 
   sort_abort = sort_ic = sort_rx = sort_nr = sort_flt = 0;
   size_t format_found = 0;
+  bool change_occurred = false;   // Buffer contents changed.
 
   for (p = eap->arg; *p != NUL; ++p) {
     if (ascii_iswhite(*p)) {
@@ -538,11 +576,13 @@ void ex_sort(exarg_T *eap)
           s--;  // include preceding negative sign
         }
         if (*s == NUL) {
-          // empty line should sort before any number
-          nrs[lnum - eap->line1].st_u.value = -MAXLNUM;
+          // line without number should sort before any number
+          nrs[lnum - eap->line1].st_u.num.is_number = false;
+          nrs[lnum - eap->line1].st_u.num.value = 0;
         } else {
+          nrs[lnum - eap->line1].st_u.num.is_number = true;
           vim_str2nr(s, NULL, NULL, sort_what,
-                     &nrs[lnum - eap->line1].st_u.value, NULL, 0);
+                     &nrs[lnum - eap->line1].st_u.num.value, NULL, 0);
         }
       } else {
         s = skipwhite(p);
@@ -584,8 +624,16 @@ void ex_sort(exarg_T *eap)
 
   // Insert the lines in the sorted order below the last one.
   lnum = eap->line2;
-  for (i = 0; i < count; ++i) {
-    s = ml_get(nrs[eap->forceit ? count - i - 1 : i].lnum);
+  for (i = 0; i < count; i++) {
+    const linenr_T get_lnum = nrs[eap->forceit ? count - i - 1 : i].lnum;
+
+    // If the original line number of the line being placed is not the same
+    // as "lnum" (accounting for offset), we know that the buffer changed.
+    if (get_lnum + ((linenr_T)count - 1) != lnum) {
+      change_occurred = true;
+    }
+
+    s = ml_get(get_lnum);
     if (!unique || i == 0
         || (sort_ic ? STRICMP(s, sortbuf1) : STRCMP(s, sortbuf1)) != 0) {
       // Copy the line into a buffer, it may become invalid in
@@ -614,10 +662,13 @@ void ex_sort(exarg_T *eap)
   if (deleted > 0) {
     mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted,
                 false);
+    msgmore(-deleted);
   } else if (deleted < 0) {
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L, false);
   }
-  changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
+  if (change_occurred || deleted != 0) {
+    changed_lines(eap->line1, 0, eap->line2 + 1, -deleted, true);
+  }
 
   curwin->w_cursor.lnum = eap->line1;
   beginline(BL_WHITE | BL_FIX);
@@ -777,8 +828,21 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   linenr_T last_line;  // Last line in file after adding new text
 
   if (dest >= line1 && dest < line2) {
-    EMSG(_("E134: Move lines into themselves"));
+    EMSG(_("E134: Cannot move a range of lines into itself"));
     return FAIL;
+  }
+
+  // Do nothing if we are not actually moving any lines.  This will prevent
+  // the 'modified' flag from being set without cause.
+  if (dest == line1 - 1 || dest == line2) {
+    // Move the cursor as if lines were moved (see below) to be backwards
+    // compatible.
+    if (dest >= line1) {
+      curwin->w_cursor.lnum = dest;
+    } else {
+      curwin->w_cursor.lnum = dest + (line2 - line1) + 1;
+    }
+    return OK;
   }
 
   num_lines = line2 - line1 + 1;
@@ -791,7 +855,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     return FAIL;
   for (extra = 0, l = line1; l <= line2; l++) {
     str = vim_strsave(ml_get(l + extra));
-    ml_append(dest + l - line1, str, (colnr_T)0, FALSE);
+    ml_append(dest + l - line1, str, (colnr_T)0, false);
     xfree(str);
     if (dest < line1)
       extra++;
@@ -850,9 +914,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   if (u_save(line1 + extra - 1, line2 + extra + 1) == FAIL)
     return FAIL;
 
-  for (l = line1; l <= line2; l++)
-    ml_delete(line1 + extra, TRUE);
-
+  for (l = line1; l <= line2; l++) {
+    ml_delete(line1 + extra, true);
+  }
   if (!global_busy && num_lines > p_report) {
     if (num_lines == 1)
       MSG(_("1 line moved"));
@@ -918,7 +982,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     /* need to use vim_strsave() because the line will be unlocked within
      * ml_append() */
     p = vim_strsave(ml_get(line1));
-    ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, FALSE);
+    ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, false);
     xfree(p);
 
     /* situation 2: skip already copied lines */
@@ -1341,6 +1405,25 @@ do_shell(
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);
 }
 
+#if !defined(UNIX)
+static char *find_pipe(const char *cmd)
+{
+  bool inquote = false;
+
+  for (const char *p = cmd; *p != NUL; p++) {
+    if (!inquote && *p == '|') {
+      return p;
+    }
+    if (*p == '"') {
+      inquote = !inquote;
+    } else if (rem_backslash((const char_u *)p)) {
+      p++;
+    }
+  }
+  return NULL;
+}
+#endif
+
 /// Create a shell command from a command string, input redirection file and
 /// output redirection file.
 ///
@@ -1394,7 +1477,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     // Don't do this when 'shellquote' is not empty, otherwise the
     // redirection would be inside the quotes.
     if (*p_shq == NUL) {
-      char *const p = strchr(buf, '|');
+      char *const p = find_pipe(buf);
       if (p != NULL) {
         *p = NUL;
       }
@@ -1402,7 +1485,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
     xstrlcat(buf, " < ", len);
     xstrlcat(buf, (const char *)itmp, len);
     if (*p_shq == NUL) {
-      const char *const p = strchr((const char *)cmd, '|');
+      const char *const p = find_pipe((const char *)cmd);
       if (p != NULL) {
         xstrlcat(buf, " ", len - 1);  // Insert a space before the '|' for DOS
         xstrlcat(buf, p, len - 1);
@@ -2393,8 +2476,8 @@ int do_ecmd(
     }
     set_bufref(&bufref, buf);
     if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
-      /* Save all the text, so that the reload can be undone.
-       * Sync first so that this is a separate undo-able action. */
+      // Save all the text, so that the reload can be undone.
+      // Sync first so that this is a separate undo-able action.
       u_sync(false);
       if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
           == FAIL) {
@@ -2408,6 +2491,7 @@ int do_ecmd(
       // Tell readfile() not to clear or reload undo info.
       readfile_flags = READ_KEEP_UNDO;
     } else {
+      buf_updates_unregister_all(curbuf);
       buf_freeall(curbuf, 0);  // Free all things for buffer.
     }
     // If autocommands deleted the buffer we were going to re-edit, give
@@ -2605,6 +2689,10 @@ int do_ecmd(
 
 
 theend:
+  if (bufref_valid(&old_curbuf) && old_curbuf.br_buf->terminal != NULL) {
+    terminal_check_size(old_curbuf.br_buf->terminal);
+  }
+
   if (did_inc_redrawing_disabled) {
     RedrawingDisabled--;
   }
@@ -2632,7 +2720,7 @@ static int append_indent = 0;       /* autoindent for first line */
 void ex_append(exarg_T *eap)
 {
   char_u      *theline;
-  int did_undo = FALSE;
+  bool did_undo = false;
   linenr_T lnum = eap->line2;
   int indent = 0;
   char_u      *p;
@@ -2720,16 +2808,16 @@ void ex_append(exarg_T *eap)
     if (p[0] == NUL)
       theline[0] = NUL;
 
-    did_undo = TRUE;
-    ml_append(lnum, theline, (colnr_T)0, FALSE);
+    did_undo = true;
+    ml_append(lnum, theline, (colnr_T)0, false);
     appended_lines_mark(lnum + (empty ? 1 : 0), 1L);
 
     xfree(theline);
     ++lnum;
 
     if (empty) {
-      ml_delete(2L, FALSE);
-      empty = FALSE;
+      ml_delete(2L, false);
+      empty = 0;
     }
   }
   State = NORMAL;
@@ -2774,7 +2862,7 @@ void ex_change(exarg_T *eap)
   for (lnum = eap->line2; lnum >= eap->line1; --lnum) {
     if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
       break;
-    ml_delete(eap->line1, FALSE);
+    ml_delete(eap->line1, false);
   }
 
   /* make sure the cursor is not beyond the end of the file now */
@@ -2799,11 +2887,11 @@ void ex_z(exarg_T *eap)
   // Vi compatible: ":z!" uses display height, without a count uses
   // 'scroll'
   if (eap->forceit) {
-    bigness = curwin->w_height;
+    bigness = curwin->w_height_inner;
   } else if (ONE_WINDOW) {
     bigness = curwin->w_p_scr * 2;
   } else {
-    bigness = curwin->w_height - 3;
+    bigness = curwin->w_height_inner - 3;
   }
   if (bigness < 1) {
     bigness = 1;
@@ -3093,6 +3181,7 @@ static char_u *sub_parse_flags(char_u *cmd, subflags_T *subflags,
     subflags->do_ask = false;
     subflags->do_error = true;
     subflags->do_print = false;
+    subflags->do_list = false;
     subflags->do_count = false;
     subflags->do_number = false;
     subflags->do_ic = kSubHonorOptions;
@@ -3218,9 +3307,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
       delimiter = *cmd++;                   // remember delimiter character
       has_second_delim = true;
     } else {          // find the end of the regexp
-      if (p_altkeymap && curwin->w_p_rl) {
-        lrF_sub(cmd);
-      }
       which_pat = RE_LAST;                  // use last used regexp
       delimiter = *cmd++;                   // remember delimiter character
       pat = cmd;                            // remember start of search pat
@@ -3268,7 +3354,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
-  if (sub_joining_lines(eap, pat, sub, cmd, !preview)) {
+  if (sub != NULL && sub_joining_lines(eap, pat, sub, cmd, !preview)) {
     return NULL;
   }
 
@@ -3347,7 +3433,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
            || lnum <= curwin->w_botline);
        lnum++) {
     long nmatch = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                    (colnr_T)0, NULL);
+                                    (colnr_T)0, NULL, NULL);
     if (nmatch) {
       colnr_T copycol;
       colnr_T matchcol;
@@ -3606,10 +3692,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               i = msg_scroll;
               msg_scroll = 0;                           /* truncate msg when
                                                            needed */
-              msg_no_more = TRUE;
-              /* write message same highlighting as for
-               * wait_return */
-              smsg_attr(HL_ATTR(HLF_R),
+              msg_no_more = true;
+              msg_ext_set_kind("confirm_sub");
+              smsg_attr(HL_ATTR(HLF_R),  // Same highlight as wait_return().
                         _("replace with %s (y/n/a/q/l/^E/^Y)?"), sub);
               msg_no_more = FALSE;
               msg_scroll = i;
@@ -3632,12 +3717,8 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               }
             }
 
-            need_wait_return = FALSE;             /* no hit-return prompt */
-            if (typed == 'q' || typed == ESC || typed == Ctrl_C
-#ifdef UNIX
-                || typed == intr_char
-#endif
-                ) {
+            need_wait_return = false;             // no hit-return prompt
+            if (typed == 'q' || typed == ESC || typed == Ctrl_C) {
               got_quit = true;
               break;
             }
@@ -3749,6 +3830,12 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           sublen = vim_regsub_multi(&regmatch,
                                     sub_firstlnum - regmatch.startpos[0].lnum,
                                     sub, sub_firstline, false, p_magic, true);
+          // If getting the substitute string caused an error, don't do
+          // the replacement.
+          if (aborting()) {
+            goto skip;
+          }
+
           // Don't keep flags set by a recursive call
           subflags = subflags_save;
           if (subflags.do_count) {
@@ -3870,8 +3957,8 @@ skip:
         if (lastone
             || nmatch_tl > 0
             || (nmatch = vim_regexec_multi(&regmatch, curwin,
-                    curbuf, sub_firstlnum,
-                    matchcol, NULL)) == 0
+                                           curbuf, sub_firstlnum,
+                                           matchcol, NULL, NULL)) == 0
             || regmatch.startpos[0].lnum > 0) {
           if (new_start != NULL) {
             /*
@@ -3901,8 +3988,9 @@ skip:
               ++lnum;
               if (u_savedel(lnum, nmatch_tl) != OK)
                 break;
-              for (i = 0; i < nmatch_tl; ++i)
-                ml_delete(lnum, (int)FALSE);
+              for (i = 0; i < nmatch_tl; i++) {
+                ml_delete(lnum, false);
+              }
               mark_adjust(lnum, lnum + nmatch_tl - 1,
                           (long)MAXLNUM, -nmatch_tl, false);
               if (subflags.do_ask) {
@@ -3935,7 +4023,7 @@ skip:
           }
           if (nmatch == -1 && !lastone)
             nmatch = vim_regexec_multi(&regmatch, curwin, curbuf,
-                sub_firstlnum, matchcol, NULL);
+                                       sub_firstlnum, matchcol, NULL, NULL);
 
           /*
            * 5. break if there isn't another match in this line
@@ -4062,7 +4150,7 @@ skip:
   buf_T *preview_buf = NULL;
   size_t subsize = preview_lines.subresults.size;
   if (preview && !aborting()) {
-    if (got_quit) {  // Substitution is too slow, disable 'inccommand'.
+    if (got_quit || profile_passed_limit(timeout)) {  // Too slow, disable.
       set_string_option_direct((char_u *)"icm", -1, (char_u *)"", OPT_FREE,
                                SID_NONE);
     } else if (*p_icm != NUL &&  pat != NULL) {
@@ -4225,9 +4313,6 @@ void ex_global(exarg_T *eap)
       *cmd++ = NUL;                         /* replace it with a NUL */
   }
 
-  if (p_altkeymap && curwin->w_p_rl)
-    lrFswap(pat,0);
-
   if (search_regcomp(pat, RE_BOTH, which_pat, SEARCH_HIS, &regmatch) == FAIL) {
     EMSG(_(e_invcmd));
     return;
@@ -4236,7 +4321,7 @@ void ex_global(exarg_T *eap)
   if (global_busy) {
     lnum = curwin->w_cursor.lnum;
     match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                              (colnr_T)0, NULL);
+                              (colnr_T)0, NULL, NULL);
     if ((type == 'g' && match) || (type == 'v' && !match)) {
       global_exe_one(cmd, lnum);
     }
@@ -4245,7 +4330,7 @@ void ex_global(exarg_T *eap)
     for (lnum = eap->line1; lnum <= eap->line2 && !got_int; lnum++) {
       // a match on this line?
       match = vim_regexec_multi(&regmatch, curwin, curbuf, lnum,
-                                (colnr_T)0, NULL);
+                                (colnr_T)0, NULL, NULL);
       if ((type == 'g' && match) || (type == 'v' && !match)) {
         ml_setmarked(lnum);
         ndone++;
@@ -4395,7 +4480,7 @@ void ex_help(exarg_T *eap)
   buf_T       *buf;
   int len;
   char_u      *lang;
-  int old_KeyTyped = KeyTyped;
+  const bool old_KeyTyped = KeyTyped;
 
   if (eap != NULL) {
     /*
@@ -4826,7 +4911,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
     }
   }
 
-  *matches = (char_u **)"";
+  *matches = NULL;
   *num_matches = 0;
   int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
   if (keep_lang) {
@@ -5069,10 +5154,11 @@ void fix_help_buffer(void)
                 }
                 convert_setup(&vc, NULL, NULL);
 
-                ml_append(lnum, cp, (colnr_T)0, FALSE);
-                if (cp != IObuff)
+                ml_append(lnum, cp, (colnr_T)0, false);
+                if (cp != IObuff) {
                   xfree(cp);
-                ++lnum;
+                }
+                lnum++;
               }
               fclose(fd);
             }
@@ -5444,13 +5530,14 @@ void ex_helptags(exarg_T *eap)
 
 struct sign
 {
-    sign_T      *sn_next;       /* next sign in list */
-    int         sn_typenr;      /* type number of sign */
-    char_u      *sn_name;       /* name of sign */
-    char_u      *sn_icon;       /* name of pixmap */
-    char_u      *sn_text;       /* text used instead of pixmap */
-    int         sn_line_hl;     /* highlight ID for line */
-    int         sn_text_hl;     /* highlight ID for text */
+    sign_T      *sn_next;       // next sign in list
+    int         sn_typenr;      // type number of sign
+    char_u      *sn_name;       // name of sign
+    char_u      *sn_icon;       // name of pixmap
+    char_u      *sn_text;       // text used instead of pixmap
+    int         sn_line_hl;     // highlight ID for line
+    int         sn_text_hl;     // highlight ID for text
+    int         sn_num_hl;      // highlight ID for line number
 };
 
 static sign_T   *first_sign = NULL;
@@ -5617,6 +5704,14 @@ void ex_sign(exarg_T *eap)
             int len;
 
             arg += 5;
+            for (s = arg; s + 1 < p; s++) {
+              if (*s == '\\') {
+                // Remove a backslash, so that it is possible
+                // to use a space.
+                STRMOVE(s, s + 1);
+                p--;
+              }
+            }
 
             // Count cells and check for non-printable chars
             cells = 0;
@@ -5648,6 +5743,9 @@ void ex_sign(exarg_T *eap)
           } else if (STRNCMP(arg, "texthl=", 7) == 0) {
             arg += 7;
             sp->sn_text_hl = syn_check_group(arg, (int)(p - arg));
+          } else if (STRNCMP(arg, "numhl=", 6) == 0) {
+            arg += 6;
+            sp->sn_num_hl = syn_check_group(arg, (int)(p - arg));
           } else {
             EMSG2(_(e_invarg2), arg);
             return;
@@ -5678,7 +5776,7 @@ void ex_sign(exarg_T *eap)
         id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum);
         if (id > 0) {
           buf_delsign(curwin->w_buffer, id);
-          update_debug_sign(curwin->w_buffer, curwin->w_cursor.lnum);
+          redraw_buf_line_later(curwin->w_buffer, curwin->w_cursor.lnum);
         } else {
           EMSG(_("E159: Missing sign number"));
         }
@@ -5707,7 +5805,7 @@ void ex_sign(exarg_T *eap)
           // ":sign unplace {id}": remove placed sign by number
           FOR_ALL_BUFFERS(buf) {
             if ((lnum = buf_delsign(buf, id)) != 0) {
-              update_debug_sign(buf, lnum);
+              redraw_buf_line_later(buf, lnum);
             }
           }
           return;
@@ -5807,7 +5905,7 @@ void ex_sign(exarg_T *eap)
       } else {
         // ":sign unplace {id} file={fname}"
         lnum = buf_delsign(buf, id);
-        update_debug_sign(buf, lnum);
+        redraw_buf_line_later(buf, lnum);
       }
     } else if (sign_name != NULL) {
       // idx == SIGNCMD_PLACE
@@ -5829,7 +5927,7 @@ void ex_sign(exarg_T *eap)
         lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
       }
       if (lnum > 0) {
-        update_debug_sign(buf, lnum);
+        redraw_buf_line_later(buf, lnum);
       } else {
         EMSG2(_("E885: Not possible to change sign %s"), sign_name);
       }
@@ -5874,6 +5972,16 @@ static void sign_list_defined(sign_T *sp)
       msg_puts(p);
     }
   }
+  if (sp->sn_num_hl > 0) {
+    msg_puts(" numhl=");
+    const char *const p = get_highlight_name_ext(NULL,
+                                                 sp->sn_num_hl - 1, false);
+    if (p == NULL) {
+      msg_puts("NONE");
+    } else {
+      msg_puts(p);
+    }
+  }
 }
 
 /*
@@ -5891,25 +5999,33 @@ static void sign_undefine(sign_T *sp, sign_T *sp_prev)
   xfree(sp);
 }
 
-/*
- * Get highlighting attribute for sign "typenr".
- * If "line" is TRUE: line highl, if FALSE: text highl.
- */
-int sign_get_attr(int typenr, int line)
+/// Gets highlighting attribute for sign "typenr" corresponding to "type".
+int sign_get_attr(int typenr, SignType type)
 {
   sign_T  *sp;
+  int sign_hl = 0;
 
-  for (sp = first_sign; sp != NULL; sp = sp->sn_next)
+  for (sp = first_sign; sp != NULL; sp = sp->sn_next) {
     if (sp->sn_typenr == typenr) {
-      if (line) {
-        if (sp->sn_line_hl > 0)
-          return syn_id2attr(sp->sn_line_hl);
-      } else {
-        if (sp->sn_text_hl > 0)
-          return syn_id2attr(sp->sn_text_hl);
+      switch (type) {
+        case SIGN_TEXT:
+          sign_hl = sp->sn_text_hl;
+          break;
+        case SIGN_LINEHL:
+          sign_hl = sp->sn_line_hl;
+          break;
+        case SIGN_NUMHL:
+          sign_hl = sp->sn_num_hl;
+          break;
+        default:
+          abort();
+      }
+      if (sign_hl > 0) {
+        return syn_id2attr(sign_hl);
       }
       break;
     }
+  }
   return 0;
 }
 
@@ -5970,7 +6086,8 @@ char_u * get_sign_name(expand_T *xp, int idx)
     case EXP_SUBCMD:
       return (char_u *)cmds[idx];
     case EXP_DEFINE: {
-        char *define_arg[] = { "icon=", "linehl=", "text=", "texthl=", NULL };
+        char *define_arg[] = { "icon=", "linehl=", "text=", "texthl=", "numhl=",
+                               NULL };
         return (char_u *)define_arg[idx];
       }
     case EXP_PLACE: {
@@ -6093,7 +6210,8 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     {
       case SIGNCMD_DEFINE:
         if (STRNCMP(last, "texthl", p - last) == 0
-            || STRNCMP(last, "linehl", p - last) == 0) {
+            || STRNCMP(last, "linehl", p - last) == 0
+            || STRNCMP(last, "numhl", p - last) == 0) {
           xp->xp_context = EXPAND_HIGHLIGHT;
         } else if (STRNCMP(last, "icon", p - last) == 0) {
           xp->xp_context = EXPAND_FILES;
@@ -6275,6 +6393,7 @@ void ex_substitute(exarg_T *eap)
   }
 
   block_autocmds();           // Disable events during command preview.
+  input_disable_events();
 
   char_u *save_eap = eap->arg;
   garray_T save_view;
@@ -6317,6 +6436,7 @@ void ex_substitute(exarg_T *eap)
   restore_search_patterns();
   win_size_restore(&save_view);
   ga_clear(&save_view);
+  input_enable_events();
   unblock_autocmds();
 }
 

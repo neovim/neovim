@@ -11,28 +11,24 @@ typedef struct ugrid UGrid;
 
 struct ucell {
   char data[CELLBYTES + 1];
-  HlAttrs attrs;
+  sattr_T attr;
 };
 
 struct ugrid {
-  int top, bot, left, right;
   int row, col;
   int width, height;
-  HlAttrs attrs;
   UCell **cells;
 };
 
 // -V:UGRID_FOREACH_CELL:625
 
-#define UGRID_FOREACH_CELL(grid, top, bot, left, right, code) \
+#define UGRID_FOREACH_CELL(grid, row, startcol, endcol, code) \
   do { \
-    for (int row = top; row <= bot; row++) { \
-      UCell *row_cells = (grid)->cells[row]; \
-      for (int col = left; col <= right; col++) { \
-        UCell *cell = row_cells + col; \
-        (void)(cell); \
-        code; \
-      } \
+    UCell *row_cells = (grid)->cells[row]; \
+    for (int curcol = startcol; curcol < endcol; curcol++) { \
+      UCell *cell = row_cells + curcol; \
+      (void)(cell); \
+      code; \
     } \
   } while (0)
 

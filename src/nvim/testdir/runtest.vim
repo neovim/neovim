@@ -26,7 +26,7 @@
 " It will be called after each Test_ function.
 "
 " When debugging a test it can be useful to add messages to v:errors:
-" 	call add(v:errors, "this happened")
+"	call add(v:errors, "this happened")
 
 
 " Check that the screen size is at least 24 x 80 characters.
@@ -67,7 +67,7 @@ lang mess C
 let v:testing = 1
 
 " Support function: get the alloc ID by name.
-function GetAllocId(name)
+func GetAllocId(name)
   exe 'split ' . s:srcdir . '/alloc.h'
   let top = search('typedef enum')
   if top == 0
@@ -79,6 +79,11 @@ function GetAllocId(name)
   endif
   close
   return lnum - top - 1
+endfunc
+
+func CanRunVimInTerminal()
+  " Nvim: always false, we use Lua screen-tests instead.
+  return 0
 endfunc
 
 func RunTheTest(test)
@@ -124,6 +129,10 @@ func RunTheTest(test)
       call add(v:errors, 'Caught exception in ' . a:test . ': ' . v:exception . ' @ ' . v:throwpoint)
     endtry
   endif
+
+  " In case 'insertmode' was set and something went wrong, make sure it is
+  " reset to avoid trouble with anything else.
+  set noinsertmode
 
   if exists("*TearDown")
     try
@@ -240,6 +249,7 @@ let s:flaky = [
       \ 'Test_oneshot()',
       \ 'Test_out_cb()',
       \ 'Test_paused()',
+      \ 'Test_popup_and_window_resize()',
       \ 'Test_quoteplus()',
       \ 'Test_quotestar()',
       \ 'Test_reltime()',

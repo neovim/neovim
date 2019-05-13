@@ -1,5 +1,6 @@
 # Tools
 .ropeproject/
+compile_commands.json
 # Visual Studio
 /.vs/
 

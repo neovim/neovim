@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	C
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2017 Apr 30
+" Last Change:	2018 Sep 21
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -12,6 +12,14 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 let s:ft = matchstr(&ft, '^\([^.]\)\+')
+
+" Optional embedded Autodoc parsing
+" To enable it add: let g:c_autodoc = 1
+" to your .vimrc
+if exists("c_autodoc")
+  syn include @cAutodoc <sfile>:p:h/autodoc.vim
+  unlet b:current_syntax
+endif
 
 " A bunch of useful C keywords
 syn keyword	cStatement	goto break return continue asm
@@ -212,7 +220,7 @@ if exists("c_comment_strings")
   syn match	cCommentSkip	contained "^\s*\*\($\|\s\+\)"
   syn region cCommentString	contained start=+L\=\\\@<!"+ skip=+\\\\\|\\"+ end=+"+ end=+\*/+me=s-1 contains=cSpecial,cCommentSkip
   syn region cComment2String	contained start=+L\=\\\@<!"+ skip=+\\\\\|\\"+ end=+"+ end="$" contains=cSpecial
-  syn region  cCommentL	start="//" skip="\\$" end="$" keepend contains=@cCommentGroup,cComment2String,cCharacter,cNumbersCom,cSpaceError,@Spell
+  syn region  cCommentL	start="//" skip="\\$" end="$" keepend contains=@cCommentGroup,cComment2String,cCharacter,cNumbersCom,cSpaceError,cWrongComTail,@Spell
   if exists("c_no_comment_fold")
     " Use "extend" here to have preprocessor lines not terminate halfway a
     " comment.
@@ -231,6 +239,7 @@ endif
 " keep a // comment separately, it terminates a preproc. conditional
 syn match	cCommentError	display "\*/"
 syn match	cCommentStartError display "/\*"me=e-1 contained
+syn match	cWrongComTail	display "\*/"
 
 syn keyword	cOperator	sizeof
 if exists("c_gnu")
@@ -377,6 +386,13 @@ syn cluster	cPreProcGroup	contains=cPreCondit,cIncluded,cInclude,cDefine,cErrInP
 syn region	cDefine		start="^\s*\zs\(%:\|#\)\s*\(define\|undef\)\>" skip="\\$" end="$" keepend contains=ALLBUT,@cPreProcGroup,@Spell
 syn region	cPreProc	start="^\s*\zs\(%:\|#\)\s*\(pragma\>\|line\>\|warning\>\|warn\>\|error\>\)" skip="\\$" end="$" keepend contains=ALLBUT,@cPreProcGroup,@Spell
 
+" Optional embedded Autodoc parsing
+if exists("c_autodoc")
+  syn match cAutodocReal display contained "\%(//\|[/ \t\v]\*\|^\*\)\@2<=!.*" contains=@cAutodoc containedin=cComment,cCommentL
+  syn cluster cCommentGroup add=cAutodocReal
+  syn cluster cPreProcGroup add=cAutodocReal
+endif
+
 " Highlight User Labels
 syn cluster	cMultiGroup	contains=cIncluded,cSpecial,cCommentSkip,cCommentString,cComment2String,@cCommentGroup,cCommentStartError,cUserCont,cUserLabel,cBitField,cOctalZero,cCppOutWrapper,cCppInWrapper,@cCppOutInGroup,cFormat,cNumber,cFloat,cOctal,cOctalError,cNumbersCom,cCppParen,cCppBracket,cCppString
 if s:ft ==# 'c' || exists("cpp_no_cpp11")
@@ -438,6 +454,7 @@ hi def link cErrInBracket	cError
 hi def link cCommentError	cError
 hi def link cCommentStartError	cError
 hi def link cSpaceError		cError
+hi def link cWrongComTail	cError
 hi def link cSpecialError	cError
 hi def link cCurlyError		cError
 hi def link cOperator		Operator

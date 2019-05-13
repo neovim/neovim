@@ -495,6 +495,18 @@ describe(":substitute, 'inccommand' preserves undo", function()
     for _, case in pairs(cases) do
       clear()
       common_setup(screen, case, default_text)
+      screen:expect([[
+        Inc substitution on |
+        two lines           |
+        ^                    |
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+        {15:~                   }|
+                            |
+      ]])
       feed_command("set undolevels=1")
 
       feed("1G0")
@@ -757,8 +769,23 @@ describe(":substitute, inccommand=split", function()
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect{any=[[two lines]]}
-    feed('<Esc>')
+    screen:expect([[
+      Inc substitution on           |
+      two lines                     |
+      Inc substitution on           |
+      two lines                     |
+                                    |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      :silent tabedit %s/tw/to^      |
+    ]])
   end)
 
   it('shows split window when typing the pattern', function()
@@ -866,7 +893,6 @@ describe(":substitute, inccommand=split", function()
   it('does not show split window for :s/', function()
     feed("2gg")
     feed(":s/tw")
-    screen:sleep(1)
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
@@ -912,11 +938,11 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw")
     -- 'cursorline' is NOT active during preview.
     screen:expect([[
-      Inc substitution on           |
       {12:tw}o lines                     |
       Inc substitution on           |
       {12:tw}o lines                     |
                                     |
+      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
@@ -1125,7 +1151,41 @@ describe(":substitute, inccommand=split", function()
     eq("split", eval("&inccommand"))
   end)
 
+  it("deactivates if 'foldexpr' is slow #9557", function()
+    insert([[
+      a
+      a
+      a
+      a
+      a
+      a
+      a
+      a
+    ]])
+    source([[
+      function! Slowfold(lnum)
+        sleep 5m
+        return a:lnum % 3
+      endfun
+    ]])
+    command('set redrawtime=1 inccommand=split')
+    command('set foldmethod=expr foldexpr=Slowfold(v:lnum)')
+    feed(':%s/a/bcdef')
+
+    -- Assert that 'inccommand' is DISABLED in cmdline mode.
+    retry(nil, nil, function()
+      eq('', eval('&inccommand'))
+    end)
+
+    -- Assert that 'inccommand' is again ENABLED after leaving cmdline mode.
+    feed([[<C-\><C-N>]])
+    retry(nil, nil, function()
+      eq('split', eval('&inccommand'))
+    end)
+  end)
+
   it("clears preview if non-previewable command is edited #5585", function()
+    feed('gg')
     -- Put a non-previewable command in history.
     feed_command("echo 'foo'")
     -- Start an incomplete :substitute command.
@@ -1234,8 +1294,18 @@ describe("inccommand=nosplit", function()
 
     -- non-modifier prefix
     feed(':silent tabedit %s/tw/to')
-    screen:expect{any=[[two lines]]}
-    feed('<Esc>')
+    screen:expect([[
+      two lines           |
+      Inc substitution on |
+      two lines           |
+                          |
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      {15:~                   }|
+      :silent tabedit %s/t|
+      w/to^                |
+    ]])
   end)
 
   it("does not show window after toggling :set inccommand", function()
@@ -1503,7 +1573,7 @@ describe("'inccommand' and :cnoremap", function()
       end
   end)
 
-  it('does not work with a failing mapping', function()
+  it('still works with a broken mapping', function()
     for _, case in pairs(cases) do
       refresh(case)
       feed_command("cnoremap <expr> x execute('bwipeout!')[-1].'x'")
@@ -1512,7 +1582,10 @@ describe("'inccommand' and :cnoremap", function()
 
       -- error thrown b/c of the mapping
       neq(nil, eval('v:errmsg'):find('^E523:'))
-      expect(default_text)
+      expect([[
+      Inc substitution on
+      toxo lines
+      ]])
     end
   end)
 
@@ -2012,11 +2085,11 @@ describe(":substitute", function()
 
     feed(":%s/[0-9]\\n\\zs[A-Z]/OKO")
     screen:expect([[
-      1 2 3                         |
       {12:OKO} B C                       |
       4 5 6                         |
       {12:OKO} Y Z                       |
       7 8 9                         |
+                                    |
       {11:[No Name] [+]                 }|
       |1| 1 2 3                     |
       |2| {12:OKO} B C                   |
@@ -2132,9 +2205,9 @@ describe(":substitute", function()
 
     feed("/KKK")
     screen:expect([[
-      x                             |
       afa {12:KKK}adf la;lkd {12:KKK}alx      |
                                     |
+      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
@@ -2184,11 +2257,11 @@ describe(":substitute", function()
     common_setup(screen, "split", multibyte_text)
     feed(":%s/£.*ѫ/X¥¥")
     screen:expect([[
-      {12:X¥¥}                           |
        a{12:X¥¥}¥KOL                     |
       £ ¥  libm                     |
       £ ¥                           |
                                     |
+      {15:~                             }|
       {11:[No Name] [+]                 }|
       |1|  {12:X¥¥} PEPPERS              |
       |2| {12:X¥¥}                       |
@@ -2203,11 +2276,11 @@ describe(":substitute", function()
 
     feed("\\ra££   ¥")
     screen:expect([[
-      {12:a££   ¥}                       |
        a{12:X¥¥}                         |
       {12:a££   ¥}¥KOL                   |
       £ ¥  libm                     |
       £ ¥                           |
+                                    |
       {11:[No Name] [+]                 }|
       |1|  {12:X¥¥}                      |
       |2|{12: a££   ¥} PEPPERS           |
@@ -2306,7 +2379,6 @@ describe(":substitute", function()
 
     feed("\\rѫ ab   \\rXXXX")
     screen:expect([[
-      7 8 9                         |
       K L M                         |
       {12:JLKR £}                        |
       {12:ѫ ab   }                       |
@@ -2315,6 +2387,7 @@ describe(":substitute", function()
       {12:ѫ ab   }                       |
       {12:XXXX} e f                      |
       {12:JLKR £}                        |
+      {12:ѫ ab   }                       |
       {11:[No Name] [+]                 }|
       | 7| {12:JLKR £}                   |
       | 8|{12: ѫ ab   }                  |
@@ -2408,12 +2481,13 @@ describe(":substitute", function()
     ]])
 
     feed("<C-c>")
+    feed('gg')
     wait()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
     screen:expect([[
-      something                     |
       every{12:one}                      |
       someone                       |
+      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
@@ -2453,8 +2527,8 @@ describe(":substitute", function()
     wait()
     feed([[:%s/some\(thing\)\@!/every/]])
     screen:expect([[
-      everything                    |
       {12:every}one                      |
+      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {15:~                             }|
@@ -2473,7 +2547,10 @@ describe(":substitute", function()
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
-  retry(2, nil, function()
+  if helpers.skip_fragile(pending) then
+    return
+  end
+  retry(2, 40000, function()
     local screen = Screen.new(30,15)
     clear()
 
@@ -2529,4 +2606,31 @@ it(':substitute with inccommand during :terminal activity', function()
     ]])
 
   end)
+end)
+
+it(':substitute with inccommand, timer-induced :redraw #9777', function()
+  local screen = Screen.new(30,12)
+  clear()
+  command('set cmdwinheight=3')
+  command('call timer_start(10, {-> execute("redraw")}, {"repeat":-1})')
+  command('call timer_start(10, {-> execute("redrawstatus")}, {"repeat":-1})')
+  common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
+
+  feed('gg')
+  feed(':%s/foo/ZZZ')
+  sleep(20)  -- Allow some timer activity.
+  screen:expect([[
+    {12:ZZZ} bar baz                   |
+    bar baz fox                   |
+    bar {12:ZZZ} baz                   |
+    {15:~                             }|
+    {15:~                             }|
+    {15:~                             }|
+    {11:[No Name] [+]                 }|
+    |1| {12:ZZZ} bar baz               |
+    |3| bar {12:ZZZ} baz               |
+    {15:~                             }|
+    {10:[Preview]                     }|
+    :%s/foo/ZZZ^                   |
+  ]])
 end)

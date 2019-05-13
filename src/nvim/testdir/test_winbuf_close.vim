@@ -158,3 +158,29 @@ func Test_winfixwidth_on_close()
   %bwipeout!
   setlocal nowinfixwidth splitbelow& splitright&
 endfunction
+
+" Test that 'winfixheight' will be respected even there is non-leaf frame
+fun! Test_winfixheight_non_leaf_frame()
+  vsplit
+  botright 11new
+  let l:wid = win_getid()
+  setlocal winfixheight
+  call assert_equal(11, winheight(l:wid))
+  botright new
+  bwipe!
+  call assert_equal(11, winheight(l:wid))
+  %bwipe!
+endf
+
+" Test that 'winfixwidth' will be respected even there is non-leaf frame
+fun! Test_winfixwidth_non_leaf_frame()
+  split
+  topleft 11vnew
+  let l:wid = win_getid()
+  setlocal winfixwidth
+  call assert_equal(11, winwidth(l:wid))
+  topleft new
+  bwipe!
+  call assert_equal(11, winwidth(l:wid))
+  %bwipe!
+endf

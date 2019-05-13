@@ -1,6 +1,13 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+//
+// Log module
+//
+// How Linux printk() handles recursion, buffering, etc:
+// https://lwn.net/Articles/780556/
+//
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -12,6 +19,7 @@
 #endif
 #include <uv.h>
 
+#include "auto/config.h"
 #include "nvim/log.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
@@ -98,16 +106,27 @@ void log_unlock(void)
   uv_mutex_unlock(&mutex);
 }
 
-/// @param context    description of a shared context or subsystem
-/// @param func_name  function name, or NULL
-/// @param line_num   source line number, or -1
-bool do_log(int log_level, const char *context, const char *func_name,
+/// Logs a message to $NVIM_LOG_FILE.
+///
+/// @param log_level  Log level (see log.h)
+/// @param context    Description of a shared context or subsystem
+/// @param func_name  Function name, or NULL
+/// @param line_num   Source line number, or -1
+/// @param eol        Append linefeed "\n"
+/// @param fmt        printf-style format string
+bool logmsg(int log_level, const char *context, const char *func_name,
             int line_num, bool eol, const char *fmt, ...)
-  FUNC_ATTR_UNUSED
+  FUNC_ATTR_UNUSED FUNC_ATTR_PRINTF(6, 7)
 {
   if (log_level < MIN_LOG_LEVEL) {
     return false;
   }
+
+#ifdef EXITFREE
+  // Logging after we've already started freeing all our memory will only cause
+  // pain.  We need access to VV_PROGPATH, homedir, etc.
+  assert(!entered_free_all_mem);
+#endif
 
   log_lock();
   bool ret = false;
@@ -156,7 +175,8 @@ end:
 FILE *open_log_file(void)
 {
   static bool opening_log_file = false;
-  // check if it's a recursive call
+  // Disallow recursion. (This only matters for log_path_init; for logmsg and
+  // friends we use a mutex: log_lock).
   if (opening_log_file) {
     do_log_to_file(stderr, ERROR_LOG_LEVEL, NULL, __func__, __LINE__, true,
                    "Cannot LOG() recursively.");
@@ -239,7 +259,8 @@ end:
 
 static bool do_log_to_file(FILE *log_file, int log_level, const char *context,
                            const char *func_name, int line_num, bool eol,
-                           const char* fmt, ...)
+                           const char *fmt, ...)
+  FUNC_ATTR_PRINTF(7, 8)
 {
   va_list args;
   va_start(args, fmt);

@@ -29,6 +29,19 @@ function! Test_isfname()
   set isfname&
 endfunction
 
+function Test_wildchar()
+  " Empty 'wildchar' used to access invalid memory.
+  call assert_fails('set wildchar=', 'E521:')
+  call assert_fails('set wildchar=abc', 'E521:')
+  set wildchar=<Esc>
+  let a=execute('set wildchar?')
+  call assert_equal("\n  wildchar=<Esc>", a)
+  set wildchar=27
+  let a=execute('set wildchar?')
+  call assert_equal("\n  wildchar=<Esc>", a)
+  set wildchar&
+endfunction
+
 function! Test_options()
   let caught = 'ok'
   try
@@ -249,7 +262,7 @@ func Test_set_ttytype()
     " in travis on some builds. Why?  Catch both for now
     try
       set ttytype=
-      call assert_report('set ttype= did not fail')
+      call assert_report('set ttytype= did not fail')
     catch /E529\|E522/
     endtry
 
@@ -257,7 +270,7 @@ func Test_set_ttytype()
     " check for failure of finding the entry and for missing 'cm' entry.
     try
       set ttytype=xxx
-      call assert_report('set ttype=xxx did not fail')
+      call assert_report('set ttytype=xxx did not fail')
     catch /E522\|E437/
     endtry
 
@@ -353,5 +366,47 @@ func Test_shortmess_F()
   call assert_match('bar', execute('file bar'))
   call assert_match('bar', execute('file'))
   set shortmess&
+  bwipe
+endfunc
+
+func Test_set_all()
+  set tw=75
+  set iskeyword=a-z,A-Z
+  set nosplitbelow
+  let out = execute('set all')
+  call assert_match('textwidth=75', out)
+  call assert_match('iskeyword=a-z,A-Z', out)
+  call assert_match('nosplitbelow', out)
+  set tw& iskeyword& splitbelow&
+endfunc
+
+func Test_set_values()
+  " The file is only generated when running "make test" in the src directory.
+  if filereadable('opt_test.vim')
+    source opt_test.vim
+  endif
+endfunc
+
+func Test_shortmess_F2()
+  e file1
+  e file2
+  " Accommodate Nvim default.
+  set shortmess-=F
+  call assert_match('file1', execute('bn', ''))
+  call assert_match('file2', execute('bn', ''))
+  set shortmess+=F
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+  set hidden
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+  set nohidden
+  call assert_true(empty(execute('bn', '')))
+  call assert_true(empty(execute('bn', '')))
+  " Accommodate Nvim default.
+  set shortmess-=F
+  call assert_match('file1', execute('bn', ''))
+  call assert_match('file2', execute('bn', ''))
+  bwipe
   bwipe
 endfunc

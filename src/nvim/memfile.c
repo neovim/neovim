@@ -76,7 +76,8 @@
 
 /// @param flags  Flags for open() call.
 ///
-/// @return The open memory file.
+/// @return - The open memory file, on success.
+///         - NULL, on failure (e.g. file does not exist).
 memfile_T *mf_open(char_u *fname, int flags)
 {
   memfile_T *mfp = xmalloc(sizeof(memfile_T));

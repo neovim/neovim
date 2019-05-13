@@ -4,6 +4,8 @@ if !has('multi_byte')
   finish
 endif
 
+source shared.vim
+
 func Test_abbreviation()
   " abbreviation with 0x80 should work
   inoreab чкпр   vim
@@ -173,6 +175,9 @@ func Test_abbr_after_line_join()
 endfunc
 
 func Test_map_timeout()
+  if !has('timers')
+    return
+  endif
   nnoremap aaaa :let got_aaaa = 1<CR>
   nnoremap bb :let got_bb = 1<CR>
   nmap b aaa
@@ -182,7 +187,7 @@ func Test_map_timeout()
     call feedkeys("\<Esc>", "t")
   endfunc
   set timeout timeoutlen=200
-  call timer_start(300, 'ExitInsert')
+  let timer = timer_start(300, 'ExitInsert')
   " After the 'b' Vim waits for another character to see if it matches 'bb'.
   " When it times out it is expanded to "aaa", but there is no wait for
   " "aaaa".  Can't check that reliably though.
@@ -197,4 +202,123 @@ func Test_map_timeout()
   nunmap b
   set timeoutlen&
   delfunc ExitInsert
+  call timer_stop(timer)
+endfunc
+
+func Test_map_timeout_with_timer_interrupt()
+  if !has('job') || !has('timers')
+    return
+  endif
+
+  " Confirm the timer invoked in exit_cb of the job doesn't disturb mapped key
+  " sequence.
+  new
+  let g:val = 0
+  nnoremap \12 :let g:val = 1<CR>
+  nnoremap \123 :let g:val = 2<CR>
+  set timeout timeoutlen=1000
+
+  func ExitCb(job, status)
+    let g:timer = timer_start(1, {_ -> feedkeys("3\<Esc>", 't')})
+  endfunc
+
+  call job_start([&shell, &shellcmdflag, 'echo'], {'exit_cb': 'ExitCb'})
+  call feedkeys('\12', 'xt!')
+  call assert_equal(2, g:val)
+
+  bwipe!
+  nunmap \12
+  nunmap \123
+  set timeoutlen&
+  call WaitFor({-> exists('g:timer')})
+  call timer_stop(g:timer)
+  unlet g:timer
+  unlet g:val
+  delfunc ExitCb
+endfunc
+
+func Test_cabbr_visual_mode()
+  cabbr s su
+  call feedkeys(":s \<c-B>\"\<CR>", 'itx')
+  call assert_equal('"su ', getreg(':'))
+  call feedkeys(":'<,'>s \<c-B>\"\<CR>", 'itx')
+  let expected = '"'. "'<,'>su "
+  call assert_equal(expected, getreg(':'))
+  call feedkeys(":  '<,'>s \<c-B>\"\<CR>", 'itx')
+  let expected = '"  '. "'<,'>su "
+  call assert_equal(expected, getreg(':'))
+  call feedkeys(":'a,'bs \<c-B>\"\<CR>", 'itx')
+  let expected = '"'. "'a,'bsu "
+  call assert_equal(expected, getreg(':'))
+  cunabbr s
+endfunc
+
+func Test_abbreviation_CR()
+  new
+  func Eatchar(pat)
+    let c = nr2char(getchar(0))
+    return (c =~ a:pat) ? '' : c
+  endfunc
+  iabbrev <buffer><silent> ~~7 <c-r>=repeat('~', 7)<CR><c-r>=Eatchar('\s')<cr>
+  call feedkeys("GA~~7 \<esc>", 'xt')
+  call assert_equal('~~~~~~~', getline('$'))
+  %d
+  call feedkeys("GA~~7\<cr>\<esc>", 'xt')
+  call assert_equal(['~~~~~~~', ''], getline(1,'$'))
+  delfunc Eatchar
+  bw!
+endfunc
+
+func Test_motionforce_omap()
+  func GetCommand()
+    let g:m=mode(1)
+    let [g:lnum1, g:col1] = searchpos('-', 'Wb')
+    if g:lnum1 == 0
+        return "\<Esc>"
+    endif
+    let [g:lnum2, g:col2] = searchpos('-', 'W')
+    if g:lnum2 == 0
+        return "\<Esc>"
+    endif
+    return ":call Select()\<CR>"
+  endfunc
+  func Select()
+    call cursor([g:lnum1, g:col1])
+    exe "normal! 1 ". (strlen(g:m) == 2 ? 'v' : g:m[2])
+    call cursor([g:lnum2, g:col2])
+    execute "normal! \<BS>"
+  endfunc
+  new
+  onoremap <buffer><expr> i- GetCommand()
+  " 1) default omap mapping
+  %d_
+  call setline(1, ['aaa - bbb', 'x', 'ddd - eee'])
+  call cursor(2, 1)
+  norm di-
+  call assert_equal('no', g:m)
+  call assert_equal(['aaa -- eee'], getline(1, '$'))
+  " 2) forced characterwise operation
+  %d_
+  call setline(1, ['aaa - bbb', 'x', 'ddd - eee'])
+  call cursor(2, 1)
+  norm dvi-
+  call assert_equal('nov', g:m)
+  call assert_equal(['aaa -- eee'], getline(1, '$'))
+  " 3) forced linewise operation
+  %d_
+  call setline(1, ['aaa - bbb', 'x', 'ddd - eee'])
+  call cursor(2, 1)
+  norm dVi-
+  call assert_equal('noV', g:m)
+  call assert_equal([''], getline(1, '$'))
+  " 4) forced blockwise operation
+  %d_
+  call setline(1, ['aaa - bbb', 'x', 'ddd - eee'])
+  call cursor(2, 1)
+  exe "norm d\<C-V>i-"
+  call assert_equal("no\<C-V>", g:m)
+  call assert_equal(['aaabbb', 'x', 'dddeee'], getline(1, '$'))
+  bwipe!
+  delfunc Select
+  delfunc GetCommand
 endfunc

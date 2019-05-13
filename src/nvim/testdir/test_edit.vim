@@ -402,8 +402,19 @@ func! Test_edit_13()
     call feedkeys("A {\<cr>more\<cr>}\<esc>", 'tnix')
     call assert_equal(["\tabc {", "\t\tmore", "\t}"], getline(1, '$'))
     set smartindent& autoindent&
-    bw!
+    bwipe!
   endif
+
+  " Test autoindent removing indent of blank line.
+  new
+  call setline(1, '    foo bar baz')
+  set autoindent
+  exe "normal 0eea\<CR>\<CR>\<Esc>"
+  call assert_equal("    foo bar", getline(1))
+  call assert_equal("", getline(2))
+  call assert_equal("    baz", getline(3))
+  set autoindent&
+  bwipe!
 endfunc
 
 func! Test_edit_CR()
@@ -1412,4 +1423,50 @@ func Test_edit_alt()
 
   bwipe XAltFile
   call delete('XAltFile')
+endfunc
+
+func Test_leave_insert_autocmd()
+  new
+  au InsertLeave * let g:did_au = 1
+  let g:did_au = 0
+  call feedkeys("afoo\<Esc>", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('foo', getline(1))
+
+  let g:did_au = 0
+  call feedkeys("Sbar\<C-C>", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bar', getline(1))
+
+  inoremap x xx<Esc>
+  let g:did_au = 0
+  call feedkeys("Saax", 'tx')
+  call assert_equal(1, g:did_au)
+  call assert_equal('aaxx', getline(1))
+
+  inoremap x xx<C-C>
+  let g:did_au = 0
+  call feedkeys("Sbbx", 'tx')
+  call assert_equal(0, g:did_au)
+  call assert_equal('bbxx', getline(1))
+
+  bwipe!
+  au! InsertLeave
+  iunmap x
+endfunc
+
+" Test for inserting characters using CTRL-V followed by a number.
+func Test_edit_special_chars()
+  new
+
+  if has("ebcdic")
+    let t = "o\<C-V>193\<C-V>xc2\<C-V>o303 \<C-V>90a\<C-V>xfg\<C-V>o578\<Esc>"
+  else
+    let t = "o\<C-V>65\<C-V>x42\<C-V>o103 \<C-V>33a\<C-V>xfg\<C-V>o78\<Esc>"
+  endif
+
+  exe "normal " . t
+  call assert_equal("ABC !a\<C-O>g\<C-G>8", getline(2))
+
+  close!
 endfunc

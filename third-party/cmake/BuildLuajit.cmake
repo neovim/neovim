@@ -50,8 +50,17 @@ set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 install)
 
 if(UNIX)
+  if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # Set MACOSX_DEPLOYMENT_TARGET (else luajit defaults to 10.4). #9050
+    # https://github.com/LuaJIT/LuaJIT/blob/b025b01c5b9d23f6218c7d72b7aafa3f1ab1e08a/src/Makefile#L301-L303
+    set(DEPLOYMENT_TARGET "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  else()
+    set(DEPLOYMENT_TARGET "")
+  endif()
+
   BuildLuaJit(INSTALL_COMMAND ${INSTALLCMD_UNIX}
-    CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR})
+    CC=${DEPS_C_COMPILER} PREFIX=${DEPS_INSTALL_DIR}
+    ${DEPLOYMENT_TARGET})
 
 elseif(MINGW AND CMAKE_CROSSCOMPILING)
 

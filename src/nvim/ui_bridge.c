@@ -104,7 +104,7 @@ static void ui_thread_run(void *data)
 
 static void ui_bridge_stop(UI *b)
 {
-  // Detach brigde first, so that "stop" is the last event the TUI loop
+  // Detach bridge first, so that "stop" is the last event the TUI loop
   // receives from the main thread. #8041
   ui_detach_impl(b);
   UIBridgeData *bridge = (UIBridgeData *)b;
@@ -117,6 +117,7 @@ static void ui_bridge_stop(UI *b)
     if (stopped) {  // -V547
       break;
     }
+    // TODO(justinmk): Remove this. Use a cond-wait above. #9274
     loop_poll_events(&main_loop, 10);  // Process one event.
   }
   uv_thread_join(&bridge->ui_thread);
@@ -152,14 +153,14 @@ static void ui_bridge_raw_line_event(void **argv)
   UI *ui = UI(argv[0]);
   ui->raw_line(ui, PTR2INT(argv[1]), PTR2INT(argv[2]), PTR2INT(argv[3]),
                PTR2INT(argv[4]), PTR2INT(argv[5]), PTR2INT(argv[6]),
-               PTR2INT(argv[7]), argv[8], argv[9]);
+               (LineFlags)PTR2INT(argv[7]), argv[8], argv[9]);
   xfree(argv[8]);
   xfree(argv[9]);
 }
 static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row,
                                Integer startcol, Integer endcol,
                                Integer clearcol, Integer clearattr,
-                               Boolean wrap, const schar_T *chunk,
+                               LineFlags flags, const schar_T *chunk,
                                const sattr_T *attrs)
 {
   size_t ncol = (size_t)(endcol-startcol);
@@ -167,7 +168,7 @@ static void ui_bridge_raw_line(UI *ui, Integer grid, Integer row,
   sattr_T *hl = xmemdup(attrs, ncol * sizeof(sattr_T));
   UI_BRIDGE_CALL(ui, raw_line, 10, ui, INT2PTR(grid), INT2PTR(row),
                  INT2PTR(startcol), INT2PTR(endcol), INT2PTR(clearcol),
-                 INT2PTR(clearattr), INT2PTR(wrap), c, hl);
+                 INT2PTR(clearattr), INT2PTR(flags), c, hl);
 }
 
 static void ui_bridge_suspend(UI *b)

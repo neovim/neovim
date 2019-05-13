@@ -34,6 +34,7 @@ void loop_init(Loop *loop, void *data)
 
 /// Processes one `Loop.uv` event (at most).
 /// Processes all `Loop.fast_events` events.
+/// Does NOT process `Loop.events`, that is an application-specific decision.
 ///
 /// @returns true if `ms` timeout was reached
 bool loop_poll_events(Loop *loop, int ms)

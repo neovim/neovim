@@ -61,6 +61,7 @@ struct hl_group {
   scid_T sg_scriptID;           ///< script in which the group was last set
   // for terminal UIs
   int sg_cterm;                 ///< "cterm=" highlighting attr
+                                ///< (combination of \ref HlAttrFlags)
   int sg_cterm_fg;              ///< terminal fg color number + 1
   int sg_cterm_bg;              ///< terminal bg color number + 1
   bool sg_cterm_bold;           ///< bold attr was set for light color
@@ -355,15 +356,16 @@ static reg_extmatch_T *next_match_extmatch = NULL;
  * The current state (within the line) of the recognition engine.
  * When current_state.ga_itemsize is 0 the current state is invalid.
  */
-static win_T    *syn_win;               /* current window for highlighting */
-static buf_T    *syn_buf;               /* current buffer for highlighting */
-static synblock_T *syn_block;           /* current buffer for highlighting */
-static linenr_T current_lnum = 0;       /* lnum of current state */
-static colnr_T current_col = 0;         /* column of current state */
-static int current_state_stored = 0;      /* TRUE if stored current state
-                                           * after setting current_finished */
-static int current_finished = 0;        /* current line has been finished */
-static garray_T current_state           /* current stack of state_items */
+static win_T    *syn_win;               // current window for highlighting
+static buf_T    *syn_buf;               // current buffer for highlighting
+static synblock_T *syn_block;           // current buffer for highlighting
+static proftime_T *syn_tm;              // timeout limit
+static linenr_T current_lnum = 0;       // lnum of current state
+static colnr_T current_col = 0;         // column of current state
+static int current_state_stored = 0;    // TRUE if stored current state
+                                        // after setting current_finished
+static int current_finished = 0;        // current line has been finished
+static garray_T current_state           // current stack of state_items
   = GA_EMPTY_INIT_VALUE;
 static int16_t *current_next_list = NULL;   // when non-zero, nextgroup list
 static int current_next_flags = 0;          // flags for current_next_list
@@ -374,7 +376,12 @@ static int current_line_id = 0;             // unique number for current line
 static int syn_time_on = FALSE;
 # define IF_SYN_TIME(p) (p)
 
-
+// Set the timeout used for syntax highlighting.
+// Use NULL to reset, no timeout.
+void syn_set_timeout(proftime_T *tm)
+{
+  syn_tm = tm;
+}
 
 /*
  * Start the syntax recognition for a line.  This function is normally called
@@ -2886,6 +2893,7 @@ static char_u *syn_getcurline(void)
 static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
 {
   int r;
+  int timed_out = 0;
   proftime_T pt;
   const int l_syn_time_on = syn_time_on;
 
@@ -2893,8 +2901,16 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     pt = profile_start();
   }
 
+  if (rmp->regprog == NULL) {
+    // This can happen if a previous call to vim_regexec_multi() tried to
+    // use the NFA engine, which resulted in NFA_TOO_EXPENSIVE, and
+    // compiling the pattern with the other engine fails.
+    return false;
+  }
+
   rmp->rmm_maxcol = syn_buf->b_p_smc;
-  r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, NULL);
+  r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col,
+                        syn_tm, &timed_out);
 
   if (l_syn_time_on) {
     pt = profile_end(pt);
@@ -2905,6 +2921,9 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     ++st->count;
     if (r > 0)
       ++st->match;
+  }
+  if (timed_out) {
+    syn_win->w_s->b_syn_slow = true;
   }
 
   if (r > 0) {
@@ -3136,6 +3155,7 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
 void syntax_clear(synblock_T *block)
 {
   block->b_syn_error = false;           // clear previous error
+  block->b_syn_slow = false;            // clear previous timeout
   block->b_syn_ic = false;              // Use case, by default
   block->b_syn_spell = SYNSPL_DEFAULT;  // default spell checking
   block->b_syn_containedin = false;
@@ -5748,8 +5768,10 @@ int syn_get_foldlevel(win_T *wp, long lnum)
 {
   int level = 0;
 
-  /* Return quickly when there are no fold items at all. */
-  if (wp->w_s->b_syn_folditems != 0) {
+  // Return quickly when there are no fold items at all.
+  if (wp->w_s->b_syn_folditems != 0
+      && !wp->w_s->b_syn_error
+      && !wp->w_s->b_syn_slow) {
     syntax_start(wp, lnum);
 
     for (int i = 0; i < current_state.ga_len; ++i) {
@@ -5948,6 +5970,7 @@ static const char *highlight_init_both[] = {
   "default link Substitute Search",
   "default link Whitespace NonText",
   "default link MsgSeparator StatusLine",
+  "default link NormalFloat Pmenu",
   NULL
 };
 
@@ -6326,13 +6349,13 @@ int load_colors(char_u *name)
   recursive = true;
   size_t buflen = STRLEN(name) + 12;
   buf = xmalloc(buflen);
+  apply_autocmds(EVENT_COLORSCHEMEPRE, name, curbuf->b_fname, false, curbuf);
   snprintf((char *)buf, buflen, "colors/%s.vim", name);
   retval = source_runtime(buf, DIP_START + DIP_OPT);
   xfree(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
   recursive = false;
-  ui_refresh();
 
   return retval;
 }
@@ -6455,7 +6478,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // If no argument, list current highlighting.
   if (ends_excmd((uint8_t)(*line))) {
-    for (int i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
+    for (i = 1; i <= highlight_ga.ga_len && !got_int; i++) {
       // TODO(brammool): only call when the group has attributes set
       highlight_list_one(i);
     }
@@ -6561,12 +6584,12 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       restore_cterm_colors();
 
       // Clear all default highlight groups and load the defaults.
-      for (int idx = 0; idx < highlight_ga.ga_len; idx++) {
-        highlight_clear(idx);
+      for (int j = 0; j < highlight_ga.ga_len; j++) {
+        highlight_clear(j);
       }
       init_highlight(true, true);
       highlight_changed();
-      redraw_later_clear();
+      redraw_all_later(NOT_VALID);
       return;
     }
     name_end = (const char *)skiptowhite((const char_u *)line);
@@ -6885,7 +6908,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
       // "fg", which have been changed now.
       highlight_attr_set_all();
 
-      if (!ui_is_external(kUINewgrid)) {
+      if (!ui_has(kUILinegrid) && starting == 0) {
         // Older UIs assume that we clear the screen after normal group is
         // changed
         ui_refresh();
@@ -7437,7 +7460,7 @@ void highlight_attr_set_all(void)
 void highlight_changed(void)
 {
   int id;
-  char_u userhl[10];
+  char_u userhl[30];  // use 30 to avoid compiler warning
   int id_SNC = -1;
   int id_S = -1;
   int hlcnt;

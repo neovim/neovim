@@ -161,7 +161,6 @@ void channel_init(void)
   channels = pmap_new(uint64_t)();
   channel_alloc(kChannelStreamStderr);
   rpc_init();
-  remote_ui_init();
 }
 
 /// Allocates a channel.
@@ -284,6 +283,8 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            uint16_t pty_width, uint16_t pty_height,
                            char *term_name, varnumber_T *status_out)
 {
+  assert(cwd == NULL || os_isdir_executable(cwd));
+
   Channel *chan = channel_alloc(kChannelStreamProc);
   chan->on_stdout = on_stdout;
   chan->on_stderr = on_stderr;
@@ -432,7 +433,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
                             const char **error)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (!headless_mode) {
+  if (!headless_mode && !embedded_mode) {
     *error = _("can only be opened in headless mode");
     return 0;
   }
@@ -605,12 +606,15 @@ static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
   }
 
   rbuffer_consumed(buf, count);
-  // if buffer wasn't consumed, a pending callback is stalled. Aggregate the
-  // received data and avoid a "burst" of multiple callbacks.
-  bool buffer_set = reader->buffer.ga_len > 0;
-  ga_concat_len(&reader->buffer, ptr, count);
-  if (!reader->buffered && !buffer_set && callback_reader_set(*reader)) {
-    process_channel_event(chan, &reader->cb, type, reader, 0);
+
+  if (callback_reader_set(*reader) || reader->buffered) {
+    // if buffer wasn't consumed, a pending callback is stalled. Aggregate the
+    // received data and avoid a "burst" of multiple callbacks.
+    bool buffer_set = reader->buffer.ga_len > 0;
+    ga_concat_len(&reader->buffer, ptr, count);
+    if (callback_reader_set(*reader) && !reader->buffered && !buffer_set) {
+      process_channel_event(chan, &reader->cb, type, reader, 0);
+    }
   }
 }
 
@@ -791,7 +795,7 @@ Dictionary channel_info(uint64_t id)
 
     case kChannelStreamInternal:
        PUT(info, "internal", BOOLEAN_OBJ(true));
-      // FALLTHROUGH
+      FALLTHROUGH;
 
     case kChannelStreamSocket:
       stream_desc = "socket";

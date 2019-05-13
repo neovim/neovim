@@ -1,12 +1,16 @@
 " Vim indent file
 " Language:            Shell Script
 " Maintainer:          Christian Brabandt <cb@256bit.org>
-" Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
-" Latest Revision:     2017-08-08
+" Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
+" Latest Revision:     2018-03-26
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20180724  - make check for zsh syntax more rigid (needs word-boundaries)
+"          20180326  - better support for line continuation
+"          20180325  - better detection of function definitions
+"          20180127  - better support for zsh complex commands
 "          20170808: - better indent of line continuation
 "          20170502: - get rid of buffer-shiftwidth function
 "          20160912: - preserve indentation of here-doc blocks
@@ -59,12 +63,15 @@ function! GetShIndent()
   if lnum == 0
     return 0
   endif
+  let line = getline(lnum)
 
   let pnum = prevnonblank(lnum - 1)
-
+  let pline = getline(pnum)
   let ind = indent(lnum)
-  let line = getline(lnum)
-  if line =~ '^\s*\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>'
+
+  " Check contents of previous lines
+  if line =~ '^\s*\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>' ||
+        \  (&ft is# 'zsh' && line =~ '\<\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>')
     if line !~ '\<\%(fi\|esac\|done\|end\)\>\s*\%(#.*\)\=$'
       let ind += s:indent_value('default')
     endif
@@ -72,21 +79,35 @@ function! GetShIndent()
     if !s:is_case_ended(line)
       let ind += s:indent_value('case-statements')
     endif
-  elseif line =~ '^\s*\<\k\+\>\s*()\s*{' || line =~ '^\s*{' || line =~ '^\s*function\s*\w\S\+\s*\%(()\)\?\s*{'
+  " function definition
+  elseif s:is_function_definition(line)
     if line !~ '}\s*\%(#.*\)\=$'
       let ind += s:indent_value('default')
     endif
   elseif s:is_continuation_line(line)
-    if pnum == 0 || !s:is_continuation_line(getline(pnum))
+    if pnum == 0 || !s:is_continuation_line(pline)
       let ind += s:indent_value('continuation-line')
     endif
-  elseif pnum != 0 && s:is_continuation_line(getline(pnum))
-    let ind = indent(s:find_continued_lnum(pnum))
+  elseif s:end_block(line) && !s:start_block(line)
+    let ind -= s:indent_value('default')
+  elseif pnum != 0 && s:is_continuation_line(pline) && !s:end_block(getline(v:lnum))
+    " only add indent, if line and pline is in the same block
+    let i = v:lnum
+    let ind2 = indent(s:find_continued_lnum(pnum))
+    while !s:is_empty(getline(i)) && i > pnum
+      let i -= 1
+    endw
+    if i == pnum
+      let ind += ind2
+    else
+      let ind = ind2
+    endif
   endif
 
   let pine = line
+  " Check content of current line
   let line = getline(v:lnum)
-  if line =~ '^\s*\%(then\|do\|else\|elif\|fi\|done\|end\)\>' || line =~ '^\s*}'
+  if line =~ '^\s*\%(then\|do\|else\|elif\|fi\|done\|end\)\>' || s:end_block(line)
     let ind -= s:indent_value('default')
   elseif line =~ '^\s*esac\>' && s:is_case_empty(getline(v:lnum - 1))
     let ind -= s:indent_value('default')
@@ -112,14 +133,24 @@ function! GetShIndent()
   " statements, executed within a here document. Keep the current indent
   elseif match(map(synstack(v:lnum, 1), 'synIDattr(v:val, "name")'), '\c\mheredoc') > -1
     return indent(v:lnum)
+  elseif s:is_comment(line) && s:is_empty(getline(v:lnum-1))
+    return indent(v:lnum)
   endif
 
-  return ind
+  return ind > 0 ? ind : 0
 endfunction
 
 function! s:is_continuation_line(line)
-  return a:line =~ '\%(\%(^\|[^\\]\)\\\|&&\|||\||\)' .
+  " Comment, cannot be a line continuation
+  if a:line =~ '^\s*#'
+    return 0
+  else
+    " start-of-line
+    " \\ or && or || or |
+    " followed optionally by { or #
+    return a:line =~ '\%(\%(^\|[^\\]\)\\\|&&\|||\||\)' .
                  \ '\s*\({\s*\)\=\(#.*\)\=$'
+  endif
 endfunction
 
 function! s:find_continued_lnum(lnum)
@@ -128,6 +159,12 @@ function! s:find_continued_lnum(lnum)
     let i -= 1
   endwhile
   return i
+endfunction
+
+function! s:is_function_definition(line)
+  return a:line =~ '^\s*\<\k\+\>\s*()\s*{' ||
+       \ a:line =~ '^\s*{' ||
+       \ a:line =~ '^\s*function\s*\w\S\+\s*\%(()\)\?\s*{'
 endfunction
 
 function! s:is_case_label(line, pnum)
@@ -193,6 +230,30 @@ endfunction
 
 function! s:escape(pattern)
     return '\V'. escape(a:pattern, '\\')
+endfunction
+
+function! s:is_empty(line)
+  return a:line =~ '^\s*$'
+endfunction
+
+function! s:end_block(line)
+  return a:line =~ '^\s*}'
+endfunction
+
+function! s:start_block(line)
+  return a:line =~ '{\s*\(#.*\)\?$'
+endfunction
+
+function! s:find_start_block(lnum)
+  let i = a:lnum
+  while i > 1 && !s:start_block(getline(i))
+    let i -= 1
+  endwhile
+  return i
+endfunction
+
+function! s:is_comment(line)
+  return a:line =~ '^\s*#'
 endfunction
 
 let &cpo = s:cpo_save

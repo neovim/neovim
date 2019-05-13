@@ -114,6 +114,15 @@ func Test_syntime()
   bd
 endfunc
 
+func Test_syntime_completion()
+  if !has('profile')
+    return
+  endif
+
+  call feedkeys(":syntime \<C-A>\<C-B>\"\<CR>", 'tx')
+  call assert_equal('"syntime clear off on report', @:)
+endfunc
+
 func Test_syntax_list()
   syntax on
   let a = execute('syntax list')
@@ -450,11 +459,81 @@ func Test_bg_detection()
   hi Normal ctermbg=15
   call assert_equal('light', &bg)
 
-  " manually-set &bg takes precendence over auto-detection
+  " manually-set &bg takes precedence over auto-detection
   set bg=light
   hi Normal ctermbg=4
   call assert_equal('light', &bg)
   set bg=dark
   hi Normal ctermbg=12
   call assert_equal('dark', &bg)
+endfunc
+
+fun Test_synstack_synIDtrans()
+  new
+  setfiletype c
+  syntax on
+  call setline(1, ' /* A comment with a TODO */')
+
+  call assert_equal([], synstack(1, 1))
+
+  norm f/
+  call assert_equal(['cComment', 'cCommentStart'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Comment'],        map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fA
+  call assert_equal(['cComment'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment'],  map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  norm fT
+  call assert_equal(['cComment', 'cTodo'], map(synstack(line("."), col(".")), 'synIDattr(v:val, "name")'))
+  call assert_equal(['Comment', 'Todo'],   map(synstack(line("."), col(".")), 'synIDattr(synIDtrans(v:val), "name")'))
+
+  syn clear
+  bw!
+endfunc
+
+" Using \z() in a region with NFA failing should not crash.
+func Test_syn_wrong_z_one()
+  new
+  call setline(1, ['just some text', 'with foo and bar to match with'])
+  syn region FooBar start="foo\z(.*\)bar" end="\z1"
+  " call test_override("nfa_fail", 1)
+  redraw!
+  redraw!
+  " call test_override("ALL", 0)
+  bwipe!
+endfunc
+
+func Test_syntax_hangs()
+  if !has('reltime') || !has('float') || !has('syntax')
+    return
+  endif
+
+  " This pattern takes a long time to match, it should timeout.
+  new
+  call setline(1, ['aaa', repeat('abc ', 1000), 'ccc'])
+  let start = reltime()
+  set nolazyredraw redrawtime=101
+  syn match Error /\%#=1a*.*X\@<=b*/
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  " second time syntax HL is disabled
+  let start = reltime()
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed < 0.1)
+
+  " after CTRL-L the timeout flag is reset
+  let start = reltime()
+  exe "normal \<C-L>"
+  redraw
+  let elapsed = reltimefloat(reltime(start))
+  call assert_true(elapsed > 0.1)
+  call assert_true(elapsed < 1.0)
+
+  set redrawtime&
+  bwipe!
 endfunc

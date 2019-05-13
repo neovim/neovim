@@ -1,4 +1,4 @@
-" test 'taglist' function and :tags command
+" test taglist(), tagfiles() functions and :tags command
 
 func Test_taglist()
   call writefile([
@@ -60,4 +60,40 @@ endfunc
 func Test_tags_too_long()
   call assert_fails('tag ' . repeat('x', 1020), 'E426')
   tags
+endfunc
+
+" For historical reasons we support a tags file where the last line is missing
+" the newline.
+func Test_tagsfile_without_trailing_newline()
+  call writefile(["Foo\tfoo\t1"], 'Xtags', 'b')
+  set tags=Xtags
+
+  let tl = taglist('.*')
+  call assert_equal(1, len(tl))
+  call assert_equal('Foo', tl[0].name)
+
+  call delete('Xtags')
+endfunc
+
+func Test_tagfiles()
+  call assert_equal([], tagfiles())
+
+  call writefile(["FFoo\tXfoo\t1"], 'Xtags1')
+  call writefile(["FBar\tXbar\t1"], 'Xtags2')
+  set tags=Xtags1,Xtags2
+  call assert_equal(['Xtags1', 'Xtags2'], tagfiles())
+
+  help
+  let tf = tagfiles()
+  call assert_equal(1, len(tf))
+  call assert_equal(fnamemodify(expand('$VIMRUNTIME/doc/tags'), ':p:gs?\\?/?'),
+	\           fnamemodify(tf[0], ':p:gs?\\?/?'))
+  helpclose
+  call assert_equal(['Xtags1', 'Xtags2'], tagfiles())
+  set tags&
+  call assert_equal([], tagfiles())
+
+  call delete('Xtags1')
+  call delete('Xtags2')
+  bd
 endfunc

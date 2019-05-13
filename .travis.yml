@@ -1,5 +1,5 @@
-dist: trusty
-sudo: false
+dist: xenial
+
 language: c
 
 env:
@@ -25,7 +25,7 @@ env:
                    -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=3"
-    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR"
+    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR -DUSE_BUNDLED_GPERF=OFF"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
                          -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
@@ -34,6 +34,7 @@ env:
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
+    - ASAN_SYMBOLIZE=asan_symbolize
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
     # If this file exists, the cache is valid (compile was successful).
@@ -50,12 +51,12 @@ jobs:
   include:
     - stage: normal builds
       os: linux
-      compiler: clang
+      compiler: clang-4.0
+      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
-        # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-      sudo: true
+        ASAN_SYMBOLIZE=asan_symbolize-4.0
     - os: linux
       compiler: gcc
       env: >
@@ -69,11 +70,12 @@ jobs:
       env: BUILD_32BIT=ON
     - os: osx
       compiler: clang
-      osx_image: xcode7.3  # macOS 10.11
+      osx_image: xcode10.1  # macOS 10.13
     - os: osx
       compiler: gcc
-      osx_image: xcode7.3  # macOS 10.11
-    - os: linux
+      osx_image: xcode10.1  # macOS 10.13
+    - if: branch = master
+      os: linux
       env: CI_TARGET=lint
     - stage: Flaky builds
       os: linux
@@ -96,29 +98,36 @@ before_cache:   ci/before_cache.sh
 addons:
   apt:
     packages:
+      - apport
       - autoconf
       - automake
-      - apport
       - build-essential
-      - clang
+      - clang-4.0
       - cmake
       - cscope
       - g++-multilib
       - gcc-multilib
       - gdb
+      - gperf
       - language-pack-tr
       - libc6-dev-i386
-      - libtool
+      - libtool-bin
       - locales
       - ninja-build
       - pkg-config
       - unzip
       - valgrind
       - xclip
+  homebrew:
+    update: true
+    packages:
+      - ccache
+      - ninja
 
 branches:
-  except:
-    - nightly
+  only:
+    - master
+    - /^release-\d+\.\d+$/
 
 cache:
   apt: true

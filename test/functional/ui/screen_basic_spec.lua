@@ -48,13 +48,13 @@ describe('screen', function()
   end)
 end)
 
-local function screen_tests(newgrid)
+local function screen_tests(linegrid)
   local screen
 
   before_each(function()
     clear()
     screen = Screen.new()
-    screen:attach({rgb=true,ext_newgrid=newgrid})
+    screen:attach({rgb=true,ext_linegrid=linegrid})
     screen:set_default_attr_ids( {
       [0] = {bold=true, foreground=255},
       [1] = {bold=true, reverse=true},
@@ -153,6 +153,82 @@ local function screen_tests(newgrid)
       screen:expect(function()
         eq(expected, screen.icon)
       end)
+    end)
+  end)
+
+  describe('statusline', function()
+    it('is redrawn after <c-l>', function()
+      command('set laststatus=2')
+      screen:expect([[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+      ]])
+
+      feed('<c-l>')
+      screen:expect{grid=[[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+      ]], reset=true}
+
+      command('split')
+      screen:expect([[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {3:[No Name]                                            }|
+                                                             |
+      ]])
+
+      feed('<c-l>')
+      screen:expect{grid=[[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {1:[No Name]                                            }|
+                                                             |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {3:[No Name]                                            }|
+                                                             |
+      ]], reset=true}
     end)
   end)
 
@@ -394,7 +470,7 @@ local function screen_tests(newgrid)
     end)
 
     it('redraws properly with :tab split right after scroll', function()
-      feed('30Ofoo<esc>gg')
+      feed('15Ofoo<esc>15Obar<esc>gg')
 
       command('vsplit')
       screen:expect([[
@@ -420,18 +496,17 @@ local function screen_tests(newgrid)
         foo                       {3:│}foo                       |
         foo                       {3:│}foo                       |
         foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
-        foo                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
+        bar                       {3:│}foo                       |
         {1:[No Name] [+]              }{3:[No Name] [+]             }|
                                                              |
       ]])
-
       command('tab split')
       screen:expect([[
         {4: }{5:2}{4:+ [No Name] }{2: + [No Name] }{3:                         }{4:X}|
@@ -439,14 +514,54 @@ local function screen_tests(newgrid)
         foo                                                  |
         foo                                                  |
         foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
-        foo                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+        bar                                                  |
+                                                             |
+      ]])
+    end)
+
+    it('redraws unvisited tab #9152', function()
+      insert('hello')
+      -- create a tab without visiting it
+      command('tabnew|tabnext')
+      screen:expect([[
+        {2: + [No Name] }{4: [No Name] }{3:                            }{4:X}|
+        hell^o                                                |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+
+      feed('gT')
+      screen:expect([[
+        {4: + [No Name] }{2: [No Name] }{3:                            }{4:X}|
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
                                                              |
       ]])
     end)
@@ -844,4 +959,47 @@ end)
 
 describe("Screen (line-based)", function()
   screen_tests(true)
+end)
+
+describe('Screen default colors', function()
+  local screen
+  local function startup(light, termcolors)
+    local extra = (light and ' background=light') or ''
+
+    local nvim_argv = {helpers.nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
+                       '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler'..extra,
+                       '--embed'}
+    local screen_nvim = spawn(nvim_argv)
+    set_session(screen_nvim)
+    screen = Screen.new()
+    screen:attach(termcolors and {rgb=true,ext_termcolors=true} or {rgb=true})
+  end
+
+  it('are dark per default', function()
+    startup(false, false)
+    screen:expect{condition=function()
+      eq({rgb_bg=0, rgb_fg=Screen.colors.White, rgb_sp=Screen.colors.Red,
+          cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+  end)
+
+  it('can be set to light', function()
+    startup(true, false)
+    screen:expect{condition=function()
+      eq({rgb_bg=Screen.colors.White, rgb_fg=0, rgb_sp=Screen.colors.Red,
+          cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+  end)
+
+  it('can be handled by external terminal', function()
+    startup(false, true)
+    screen:expect{condition=function()
+      eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+
+    startup(true, true)
+    screen:expect{condition=function()
+      eq({rgb_bg=-1, rgb_fg=-1, rgb_sp=-1, cterm_bg=0, cterm_fg=0}, screen.default_colors)
+    end}
+  end)
 end)

@@ -139,7 +139,7 @@ void mch_exit(int r)
   exiting = true;
 
   ui_flush();
-  ui_builtin_stop();
+  ui_call_stop();
   ml_close_all(true);           // remove all memfiles
 
   if (!event_teardown() && r == 0) {
@@ -148,6 +148,8 @@ void mch_exit(int r)
   if (input_global_fd() >= 0) {
     stream_set_blocking(input_global_fd(), true);  // normalize stream (#2598)
   }
+
+  ILOG("Nvim exit: %d", r);
 
 #ifdef EXITFREE
   free_all_mem();

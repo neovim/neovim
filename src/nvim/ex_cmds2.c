@@ -1152,6 +1152,21 @@ static void script_dump_profile(FILE *fd)
           if (vim_fgets(IObuff, IOSIZE, sfd)) {
             break;
           }
+          // When a line has been truncated, append NL, taking care
+          // of multi-byte characters .
+          if (IObuff[IOSIZE - 2] != NUL && IObuff[IOSIZE - 2] != NL) {
+            int n = IOSIZE - 2;
+
+            // Move to the first byte of this char.
+            // utf_head_off() doesn't work, because it checks
+            // for a truncated character.
+            while (n > 0 && (IObuff[n] & 0xc0) == 0x80) {
+              n--;
+            }
+
+            IObuff[n] = NL;
+            IObuff[n + 1] = NUL;
+          }
           if (i < si->sn_prl_ga.ga_len
               && (pp = &PRL_ITEM(si, i))->snp_count > 0) {
             fprintf(fd, "%5d ", pp->snp_count);
@@ -1283,19 +1298,19 @@ void dialog_changed(buf_T *buf, bool checkall)
 {
   char_u buff[DIALOG_MSG_SIZE];
   int ret;
-  exarg_T ea;
+  // Init ea pseudo-structure, this is needed for the check_overwrite()
+  // function.
+  exarg_T ea = {
+    .append = false,
+    .forceit = false,
+  };
 
-  assert(buf->b_fname != NULL);
   dialog_msg(buff, _("Save changes to \"%s\"?"), buf->b_fname);
   if (checkall) {
     ret = vim_dialog_yesnoallcancel(VIM_QUESTION, NULL, buff, 1);
   } else {
     ret = vim_dialog_yesnocancel(VIM_QUESTION, NULL, buff, 1);
   }
-
-  // Init ea pseudo-structure, this is needed for the check_overwrite()
-  // function.
-  ea.append = ea.forceit = false;
 
   if (ret == VIM_YES) {
     if (buf->b_fname != NULL
@@ -1773,7 +1788,7 @@ void ex_args(exarg_T *eap)
     }
   }
 
-  if (!ends_excmd(*eap->arg)) {
+  if (*eap->arg != NUL) {
     // ":args file ..": define new argument list, handle like ":next"
     // Also for ":argslocal file .." and ":argsglobal file ..".
     ex_next(eap);
@@ -1938,14 +1953,17 @@ void ex_next(exarg_T *eap)
 void ex_argedit(exarg_T *eap)
 {
   int i = eap->addr_count ? (int)eap->line2 : curwin->w_arg_idx + 1;
+  // Whether curbuf will be reused, curbuf->b_ffname will be set.
+  bool curbuf_is_reusable = curbuf_reusable();
 
   if (do_arglist(eap->arg, AL_ADD, i) == FAIL) {
     return;
   }
   maketitle();
 
-  if (curwin->w_arg_idx == 0 && (curbuf->b_ml.ml_flags & ML_EMPTY)
-      && curbuf->b_ffname == NULL) {
+  if (curwin->w_arg_idx == 0
+      && (curbuf->b_ml.ml_flags & ML_EMPTY)
+      && (curbuf->b_ffname == NULL || curbuf_is_reusable)) {
     i = 0;
   }
   // Edit the argument.
@@ -2131,9 +2149,9 @@ void ex_listdo(exarg_T *eap)
         // Remember the number of the next listed buffer, in case
         // ":bwipe" is used or autocommands do something strange.
         next_fnum = -1;
-        for (buf_T *buf = curbuf->b_next; buf != NULL; buf = buf->b_next) {
-          if (buf->b_p_bl) {
-            next_fnum = buf->b_fnum;
+        for (buf_T *bp = curbuf->b_next; bp != NULL; bp = bp->b_next) {
+          if (bp->b_p_bl) {
+            next_fnum = bp->b_fnum;
             break;
           }
         }
@@ -2243,7 +2261,8 @@ static int alist_add_list(int count, char_u **files, int after)
     }
     for (int i = 0; i < count; i++) {
       ARGLIST[after + i].ae_fname = files[i];
-      ARGLIST[after + i].ae_fnum = buflist_add(files[i], BLN_LISTED);
+      ARGLIST[after + i].ae_fnum = buflist_add(files[i],
+                                               BLN_LISTED | BLN_CURBUF);
     }
     ALIST(curwin)->al_ga.ga_len += count;
     if (old_argcount > 0 && curwin->w_arg_idx >= after) {
@@ -2537,48 +2556,50 @@ static void source_all_matches(char_u *pat)
   }
 }
 
-// used for "cookie" of add_pack_plugin()
-static int APP_ADD_DIR;
-static int APP_LOAD;
-static int APP_BOTH;
-
-static void add_pack_plugin(char_u *fname, void *cookie)
+/// Add the package directory to 'runtimepath'
+static int add_pack_dir_to_rtp(char_u *fname)
 {
   char_u *p4, *p3, *p2, *p1, *p;
   char_u *buf = NULL;
+  char *afterdir = NULL;
+  int retval = FAIL;
 
-  char *const ffname = fix_fname((char *)fname);
-
-  if (ffname == NULL) {
-    return;
+  p4 = p3 = p2 = p1 = get_past_head(fname);
+  for (p = p1; *p; MB_PTR_ADV(p)) {
+    if (vim_ispathsep_nocolon(*p)) {
+      p4 = p3; p3 = p2; p2 = p1; p1 = p;
+    }
   }
 
-  if (cookie != &APP_LOAD && strstr((char *)p_rtp, ffname) == NULL) {
-    // directory is not yet in 'runtimepath', add it
-    p4 = p3 = p2 = p1 = get_past_head((char_u *)ffname);
-    for (p = p1; *p; MB_PTR_ADV(p)) {
-      if (vim_ispathsep_nocolon(*p)) {
-        p4 = p3; p3 = p2; p2 = p1; p1 = p;
-      }
-    }
+  // now we have:
+  // rtp/pack/name/start/name
+  //    p4   p3   p2   p1
+  //
+  // find the part up to "pack" in 'runtimepath'
+  p4++;  // append pathsep in order to expand symlink
+  char_u c = *p4;
+  *p4 = NUL;
+  char *const ffname = fix_fname((char *)fname);
+  *p4 = c;
 
-    // now we have:
-    // rtp/pack/name/start/name
-    //    p4   p3   p2   p1
-    //
-    // find the part up to "pack" in 'runtimepath'
-    char_u c = *p4;
-    *p4 = NUL;
+  if (ffname == NULL) {
+    return FAIL;
+  }
 
-    // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
-    size_t fname_len = strlen(ffname);
-    const char *insp = (const char *)p_rtp;
-    buf = try_malloc(MAXPATHL);
-    if (buf == NULL) {
-      goto theend;
-    }
-    while (*insp != NUL) {
-      copy_option_part((char_u **)&insp, buf, MAXPATHL, ",");
+  // Find "ffname" in "p_rtp", ignoring '/' vs '\' differences
+  // Also stop at the first "after" directory
+  size_t fname_len = strlen(ffname);
+  buf = try_malloc(MAXPATHL);
+  if (buf == NULL) {
+    goto theend;
+  }
+  const char *insp = NULL;
+  const char *after_insp = NULL;
+  for (const char *entry = (const char *)p_rtp; *entry != NUL; ) {
+    const char *cur_entry = entry;
+
+    copy_option_part((char_u **)&entry, buf, MAXPATHL, ",");
+    if (insp == NULL) {
       add_pathsep((char *)buf);
       char *const rtp_ffname = fix_fname((char *)buf);
       if (rtp_ffname == NULL) {
@@ -2587,87 +2608,164 @@ static void add_pack_plugin(char_u *fname, void *cookie)
       bool match = path_fnamencmp(rtp_ffname, ffname, fname_len) == 0;
       xfree(rtp_ffname);
       if (match) {
-        break;
+        // Insert "ffname" after this entry (and comma).
+        insp = entry;
       }
     }
 
-    if (*insp == NUL) {
-      // not found, append at the end
-      insp = (const char *)p_rtp + STRLEN(p_rtp);
-    } else {
-      // append after the matching directory.
-      insp--;
+    if ((p = (char_u *)strstr((char *)buf, "after")) != NULL
+        && p > buf
+        && vim_ispathsep(p[-1])
+        && (vim_ispathsep(p[5]) || p[5] == NUL || p[5] == ',')) {
+      if (insp == NULL) {
+        // Did not find "ffname" before the first "after" directory,
+        // insert it before this entry.
+        insp = cur_entry;
+      }
+      after_insp = cur_entry;
+      break;
     }
-    *p4 = c;
-
-    // check if rtp/pack/name/start/name/after exists
-    char *afterdir = concat_fnames(ffname, "after", true);
-    size_t afterlen = 0;
-    if (os_isdir((char_u *)afterdir)) {
-      afterlen = strlen(afterdir) + 1;  // add one for comma
-    }
-
-    const size_t oldlen = STRLEN(p_rtp);
-    const size_t addlen = strlen(ffname) + 1;  // add one for comma
-    const size_t new_rtp_len = oldlen + addlen + afterlen + 1;
-    // add one for NUL -------------------------------------^
-    char *const new_rtp = try_malloc(new_rtp_len);
-    if (new_rtp == NULL) {
-      goto theend;
-    }
-    const size_t keep = (size_t)(insp - (const char *)p_rtp);
-    size_t new_rtp_fill = 0;
-    memmove(new_rtp, p_rtp, keep);
-    new_rtp_fill += keep;
-    new_rtp[new_rtp_fill++] = ',';
-    memmove(new_rtp + new_rtp_fill, ffname, addlen);
-    new_rtp_fill += addlen - 1;
-    assert(new_rtp[new_rtp_fill] == NUL || new_rtp[new_rtp_fill] == ',');
-    if (p_rtp[keep] != NUL) {
-      memmove(new_rtp + new_rtp_fill, p_rtp + keep, oldlen - keep + 1);
-      new_rtp_fill += oldlen - keep;
-    }
-    if (afterlen > 0) {
-      assert(new_rtp[new_rtp_fill] == NUL);
-      new_rtp[new_rtp_fill++] = ',';
-      memmove(new_rtp + new_rtp_fill, afterdir, afterlen - 1);
-      new_rtp_fill += afterlen - 1;
-    }
-    new_rtp[new_rtp_fill] = NUL;
-    set_option_value("rtp", 0L, new_rtp, 0);
-    xfree(new_rtp);
-    xfree(afterdir);
   }
 
-  if (cookie != &APP_ADD_DIR) {
-    static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
-    static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
-
-    size_t len = strlen(ffname) + STRLEN(ftpat);
-    char_u *pat = try_malloc(len + 1);
-    if (pat == NULL) {
-      goto theend;
-    }
-    vim_snprintf((char *)pat, len, plugpat, ffname);
-    source_all_matches(pat);
-
-    char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
-
-    // If runtime/filetype.vim wasn't loaded yet, the scripts will be
-    // found when it loads.
-    if (eval_to_number(cmd) > 0) {
-      do_cmdline_cmd("augroup filetypedetect");
-      vim_snprintf((char *)pat, len, ftpat, ffname);
-      source_all_matches(pat);
-      do_cmdline_cmd("augroup END");
-    }
-    xfree(cmd);
-    xfree(pat);
+  if (insp == NULL) {
+    // Both "fname" and "after" not found, append at the end.
+    insp = (const char *)p_rtp + STRLEN(p_rtp);
   }
+
+  // check if rtp/pack/name/start/name/after exists
+  afterdir = concat_fnames((char *)fname, "after", true);
+  size_t afterlen = 0;
+  if (os_isdir((char_u *)afterdir)) {
+    afterlen = strlen(afterdir) + 1;  // add one for comma
+  }
+
+  const size_t oldlen = STRLEN(p_rtp);
+  const size_t addlen = STRLEN(fname) + 1;  // add one for comma
+  const size_t new_rtp_capacity = oldlen + addlen + afterlen + 1;
+  // add one for NUL ------------------------------------------^
+  char *const new_rtp = try_malloc(new_rtp_capacity);
+  if (new_rtp == NULL) {
+    goto theend;
+  }
+
+  // We now have 'rtp' parts: {keep}{keep_after}{rest}.
+  // Create new_rtp, first: {keep},{fname}
+  size_t keep = (size_t)(insp - (const char *)p_rtp);
+  memmove(new_rtp, p_rtp, keep);
+  size_t new_rtp_len = keep;
+  if (*insp == NUL) {
+    new_rtp[new_rtp_len++] = ',';  // add comma before
+  }
+  memmove(new_rtp + new_rtp_len, fname, addlen - 1);
+  new_rtp_len += addlen - 1;
+  if (*insp != NUL) {
+    new_rtp[new_rtp_len++] = ',';  // add comma after
+  }
+
+  if (afterlen > 0 && after_insp != NULL) {
+    size_t keep_after = (size_t)(after_insp - (const char *)p_rtp);
+
+    // Add to new_rtp: {keep},{fname}{keep_after},{afterdir}
+    memmove(new_rtp + new_rtp_len, p_rtp + keep, keep_after - keep);
+    new_rtp_len += keep_after - keep;
+    memmove(new_rtp + new_rtp_len, afterdir, afterlen - 1);
+    new_rtp_len += afterlen - 1;
+    new_rtp[new_rtp_len++] = ',';
+    keep = keep_after;
+  }
+
+  if (p_rtp[keep] != NUL) {
+    // Append rest: {keep},{fname}{keep_after},{afterdir}{rest}
+    memmove(new_rtp + new_rtp_len, p_rtp + keep, oldlen - keep + 1);
+  } else {
+    new_rtp[new_rtp_len] = NUL;
+  }
+
+  if (afterlen > 0 && after_insp == NULL) {
+    // Append afterdir when "after" was not found:
+    // {keep},{fname}{rest},{afterdir}
+    xstrlcat(new_rtp, ",", new_rtp_capacity);
+    xstrlcat(new_rtp, afterdir, new_rtp_capacity);
+  }
+
+  set_option_value("rtp", 0L, new_rtp, 0);
+  xfree(new_rtp);
+  retval = OK;
 
 theend:
   xfree(buf);
   xfree(ffname);
+  xfree(afterdir);
+  return retval;
+}
+
+/// Load scripts in "plugin" and "ftdetect" directories of the package.
+static int load_pack_plugin(char_u *fname)
+{
+  static const char *plugpat = "%s/plugin/**/*.vim";  // NOLINT
+  static const char *ftpat = "%s/ftdetect/*.vim";  // NOLINT
+
+  int retval = FAIL;
+  char *const ffname = fix_fname((char *)fname);
+  size_t len = strlen(ffname) + STRLEN(ftpat);
+  char_u *pat = try_malloc(len + 1);
+  if (pat == NULL) {
+    goto theend;
+  }
+  vim_snprintf((char *)pat, len, plugpat, ffname);
+  source_all_matches(pat);
+
+  char_u *cmd = vim_strsave((char_u *)"g:did_load_filetypes");
+
+  // If runtime/filetype.vim wasn't loaded yet, the scripts will be
+  // found when it loads.
+  if (eval_to_number(cmd) > 0) {
+    do_cmdline_cmd("augroup filetypedetect");
+    vim_snprintf((char *)pat, len, ftpat, ffname);
+    source_all_matches(pat);
+    do_cmdline_cmd("augroup END");
+  }
+  xfree(cmd);
+  xfree(pat);
+  retval = OK;
+
+theend:
+  xfree(ffname);
+
+  return retval;
+}
+
+// used for "cookie" of add_pack_plugin()
+static int APP_ADD_DIR;
+static int APP_LOAD;
+static int APP_BOTH;
+
+static void add_pack_plugin(char_u *fname, void *cookie)
+{
+  if (cookie != &APP_LOAD) {
+    char *buf = xmalloc(MAXPATHL);
+    bool found = false;
+
+    const char *p = (const char *)p_rtp;
+    while (*p != NUL) {
+      copy_option_part((char_u **)&p, (char_u *)buf, MAXPATHL, ",");
+      if (path_fnamecmp(buf, (char *)fname) == 0) {
+        found = true;
+        break;
+      }
+    }
+    xfree(buf);
+    if (!found) {
+      // directory is not yet in 'runtimepath', add it
+      if (add_pack_dir_to_rtp(fname) == FAIL) {
+        return;
+      }
+    }
+  }
+
+  if (cookie != &APP_ADD_DIR) {
+    load_pack_plugin(fname);
+  }
 }
 
 /// Add all packages in the "start" directory to 'runtimepath'.
@@ -2729,6 +2827,126 @@ void ex_options(exarg_T *eap)
 {
   vim_setenv("OPTWIN_CMD", cmdmod.tab ? "tab" : "");
   cmd_source((char_u *)SYS_OPTWIN_FILE, NULL);
+}
+
+// Detect Python 3 or 2, and initialize 'pyxversion'.
+void init_pyxversion(void)
+{
+  if (p_pyx == 0) {
+    if (!eval_has_provider("python3")) {
+      p_pyx = 3;
+    } else if (!eval_has_provider("python")) {
+      p_pyx = 2;
+    }
+  }
+}
+
+// Does a file contain one of the following strings at the beginning of any
+// line?
+// "#!(any string)python2"  => returns 2
+// "#!(any string)python3"  => returns 3
+// "# requires python 2.x"  => returns 2
+// "# requires python 3.x"  => returns 3
+// otherwise return 0.
+static int requires_py_version(char_u *filename)
+{
+  FILE      *file;
+  int       requires_py_version = 0;
+  int       i, lines;
+
+  lines = (int)p_mls;
+  if (lines < 0) {
+    lines = 5;
+  }
+
+  file = mch_fopen((char *)filename, "r");
+  if (file != NULL) {
+    for (i = 0; i < lines; i++) {
+      if (vim_fgets(IObuff, IOSIZE, file)) {
+        break;
+      }
+      if (i == 0 && IObuff[0] == '#' && IObuff[1] == '!') {
+        // Check shebang.
+        if (strstr((char *)IObuff + 2, "python2") != NULL) {
+          requires_py_version = 2;
+          break;
+        }
+        if (strstr((char *)IObuff + 2, "python3") != NULL) {
+          requires_py_version = 3;
+          break;
+        }
+      }
+      IObuff[21] = '\0';
+      if (STRCMP("# requires python 2.x", IObuff) == 0) {
+        requires_py_version = 2;
+        break;
+      }
+      if (STRCMP("# requires python 3.x", IObuff) == 0) {
+        requires_py_version = 3;
+        break;
+      }
+    }
+    fclose(file);
+  }
+  return requires_py_version;
+}
+
+
+// Source a python file using the requested python version.
+static void source_pyx_file(exarg_T *eap, char_u *fname)
+{
+  exarg_T ex;
+  long int v = requires_py_version(fname);
+
+  init_pyxversion();
+  if (v == 0) {
+    // user didn't choose a preference, 'pyx' is used
+    v = p_pyx;
+  }
+
+  // now source, if required python version is not supported show
+  // unobtrusive message.
+  if (eap == NULL) {
+    memset(&ex, 0, sizeof(ex));
+  } else {
+    ex = *eap;
+  }
+  ex.arg = fname;
+  ex.cmd = (char_u *)(v == 2 ? "pyfile" : "pyfile3");
+
+  if (v == 2) {
+    ex_pyfile(&ex);
+  } else {
+    ex_py3file(&ex);
+  }
+}
+
+// ":pyxfile {fname}"
+void ex_pyxfile(exarg_T *eap)
+{
+  source_pyx_file(eap, eap->arg);
+}
+
+// ":pyx"
+void ex_pyx(exarg_T *eap)
+{
+  init_pyxversion();
+  if (p_pyx == 2) {
+    ex_python(eap);
+  } else {
+    ex_python3(eap);
+  }
+}
+
+// ":pyxdo"
+void ex_pyxdo(exarg_T *eap)
+{
+  init_pyxversion();
+  if (p_pyx == 2) {
+    ex_pydo(eap);
+  } else {
+    ex_pydo3(eap);
+  }
 }
 
 /// ":source {fname}"
@@ -3070,6 +3288,17 @@ theend:
 /// ":scriptnames"
 void ex_scriptnames(exarg_T *eap)
 {
+  if (eap->addr_count > 0) {
+    // :script {scriptId}: edit the script
+    if (eap->line2 < 1 || eap->line2 > script_items.ga_len) {
+      EMSG(_(e_invarg));
+    } else {
+      eap->arg = SCRIPT_ITEM(eap->line2).sn_name;
+      do_exedit(eap, NULL);
+    }
+    return;
+  }
+
   for (int i = 1; i <= script_items.ga_len && !got_int; i++) {
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i).sn_name,
@@ -3175,13 +3404,18 @@ char_u *getsourceline(int c, void *cookie, int indent)
     // Get the next line and concatenate it when it starts with a
     // backslash. We always need to read the next line, keep it in
     // sp->nextline.
+    // Also check for a comment in between continuation lines: "\ .
     sp->nextline = get_one_sourceline(sp);
-    if (sp->nextline != NULL && *(p = skipwhite(sp->nextline)) == '\\') {
+    if (sp->nextline != NULL
+        && (*(p = skipwhite(sp->nextline)) == '\\'
+            || (p[0] == '"' && p[1] == '\\' && p[2] == ' '))) {
       garray_T ga;
 
       ga_init(&ga, (int)sizeof(char_u), 400);
       ga_concat(&ga, line);
-      ga_concat(&ga, p + 1);
+      if (*p == '\\') {
+        ga_concat(&ga, p + 1);
+      }
       for (;; ) {
         xfree(sp->nextline);
         sp->nextline = get_one_sourceline(sp);
@@ -3189,15 +3423,16 @@ char_u *getsourceline(int c, void *cookie, int indent)
           break;
         }
         p = skipwhite(sp->nextline);
-        if (*p != '\\') {
+        if (*p == '\\') {
+          // Adjust the growsize to the current length to speed up
+          // concatenating many lines.
+          if (ga.ga_len > 400) {
+            ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
+          }
+          ga_concat(&ga, p + 1);
+        } else if (p[0] != '"' || p[1] != '\\' || p[2] != ' ') {
           break;
         }
-        // Adjust the growsize to the current length to speed up
-        // concatenating many lines.
-        if (ga.ga_len > 400) {
-          ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
-        }
-        ga_concat(&ga, p + 1);
       }
       ga_append(&ga, NUL);
       xfree(line);
@@ -3507,7 +3742,12 @@ static char *get_locale_val(int what)
 }
 #endif
 
-
+// Return true when "lang" starts with a valid language name.
+// Rejects NULL, empty string, "C", "C.UTF-8" and others.
+static bool is_valid_mess_lang(char *lang)
+{
+  return lang != NULL && ASCII_ISALPHA(lang[0]) && ASCII_ISALPHA(lang[1]);
+}
 
 /// Obtain the current messages language.  Used to set the default for
 /// 'helplang'.  May return NULL or an empty string.
@@ -3527,14 +3767,14 @@ char *get_mess_lang(void)
 #  endif
 # else
   p = os_getenv("LC_ALL");
-  if (p == NULL) {
+  if (!is_valid_mess_lang(p)) {
     p = os_getenv("LC_MESSAGES");
-    if (p == NULL) {
+    if (!is_valid_mess_lang(p)) {
       p = os_getenv("LANG");
     }
   }
 # endif
-  return p;
+  return is_valid_mess_lang(p) ? p : NULL;
 }
 
 // Complicated #if; matches with where get_mess_env() is used below.
@@ -3813,6 +4053,7 @@ static void script_host_execute(char *name, exarg_T *eap)
     // current range
     tv_list_append_number(args, (int)eap->line1);
     tv_list_append_number(args, (int)eap->line2);
+
     (void)eval_call_provider(name, "execute", args);
   }
 }

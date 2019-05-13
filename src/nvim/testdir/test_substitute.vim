@@ -107,6 +107,32 @@ function! Test_substitute_variants()
   endfor
 endfunction
 
+" Test the l, p, # flags.
+func Test_substitute_flags_lp()
+  new
+  call setline(1, "abc\tdef\<C-h>ghi")
+
+  let a = execute('s/a/a/p')
+  call assert_equal("\nabc     def^Hghi", a)
+
+  let a = execute('s/a/a/l')
+  call assert_equal("\nabc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/p#')
+  call assert_equal("\n  1 abc     def^Hghi", a)
+
+  let a = execute('s/a/a/l#')
+  call assert_equal("\n  1 abc^Idef^Hghi$", a)
+
+  let a = execute('s/a/a/')
+  call assert_equal("", a)
+
+  bwipe!
+endfunc
+
 func Test_substitute_repeat()
   " This caused an invalid memory access.
   split Xfile
@@ -322,6 +348,90 @@ func Test_sub_cmd_8()
   set titlestring&
 endfunc
 
+" Test %s/\n// which is implemented as a special case to use a
+" more efficient join rather than doing a regular substitution.
+func Test_substitute_join()
+  new
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//')
+  call assert_equal("", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//g')
+  call assert_equal("", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//p')
+  call assert_equal("\nfoo     barbar^Hfoo", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//l')
+  call assert_equal("\nfoo^Ibarbar^Hfoo$", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  call setline(1, ["foo\tbar", "bar\<C-H>foo"])
+  let a = execute('%s/\n//#')
+  call assert_equal("\n  1 foo     barbar^Hfoo", a)
+  call assert_equal(["foo\tbarbar\<C-H>foo"], getline(1, '$'))
+  call assert_equal('\n', histget("search", -1))
+
+  bwipe!
+endfunc
+
+func Test_substitute_count()
+  new
+  call setline(1, ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo'])
+  2
+
+  s/foo/bar/3
+  call assert_equal(['foo foo', 'bar foo', 'bar foo', 'bar foo', 'foo foo'],
+  \                 getline(1, '$'))
+
+  call assert_fails('s/foo/bar/0', 'E939:')
+
+  bwipe!
+endfunc
+
+" Test substitute 'n' flag (report number of matches, do not substitute).
+func Test_substitute_flag_n()
+  new
+  let lines = ['foo foo', 'foo foo', 'foo foo', 'foo foo', 'foo foo']
+  call setline(1, lines)
+
+  call assert_equal("\n3 matches on 3 lines", execute('2,4s/foo/bar/n'))
+  call assert_equal("\n6 matches on 3 lines", execute('2,4s/foo/bar/gn'))
+
+  " c flag (confirm) should be ignored when using n flag.
+  call assert_equal("\n3 matches on 3 lines", execute('2,4s/foo/bar/nc'))
+
+  " No substitution should have been done.
+  call assert_equal(lines, getline(1, '$'))
+
+  bwipe!
+endfunc
+
+func Test_substitute_errors()
+  new
+  call setline(1, 'foobar')
+
+  call assert_fails('s/FOO/bar/', 'E486:')
+  call assert_fails('s/foo/bar/@', 'E488:')
+  call assert_fails('s/\(/bar/', 'E476:')
+
+  setl nomodifiable
+  call assert_fails('s/foo/bar/', 'E21:')
+
+  bwipe!
+endfunc
+
 " Test for *sub-replace-special* and *sub-replace-expression* on substitute().
 func Test_sub_replace_1()
   " Run the tests with 'magic' on
@@ -500,4 +610,83 @@ func Test_sub_replace_10()
    call assert_equal('aaa', substitute('123', '.\ze', 'a', 'g'))
    call assert_equal('aa2a3a', substitute('123', '1\|\ze', 'a', 'g'))
    call assert_equal('1aaa', substitute('123', '1\zs\|[23]', 'a', 'g'))
+endfunc
+
+func Test_nocatch_sub_failure_handling()
+  " normal error results in all replacements 
+  func! Foo()
+    foobar
+  endfunc
+  new
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  %s/aaa/\=Foo()/g
+  call assert_equal(['1 0', '2 0', '3 0'], getline(1, 3))
+
+  " Trow without try-catch causes abort after the first line.
+  " We cannot test this, since it would stop executing the test script.
+
+  " try/catch does not result in any changes
+  func! Foo()
+    throw 'error'
+  endfunc
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  let error_caught = 0
+  try
+    %s/aaa/\=Foo()/g
+  catch
+    let error_caught = 1
+  endtry
+  call assert_equal(1, error_caught)
+  call assert_equal(['1 aaa', '2 aaa', '3 aaa'], getline(1, 3))
+
+  bwipe!
+endfunc
+
+" Test ":s/pat/sub/" with different ~s in sub.
+func Test_replace_with_tilde()
+  new
+  " Set the last replace string to empty
+  s/^$//
+  call append(0, ['- Bug in "vPPPP" on this text:'])
+  normal gg
+  s/u/~u~/
+  call assert_equal('- Bug in "vPPPP" on this text:', getline(1))
+  s/i/~u~/
+  call assert_equal('- Bug uuun "vPPPP" on this text:', getline(1))
+  s/o/~~~/
+  call assert_equal('- Bug uuun "vPPPP" uuuuuuuuun this text:', getline(1))
+  close!
+endfunc
+
+func Test_replace_keeppatterns()
+  new
+  a
+foobar
+
+substitute foo asdf
+
+one two
+.
+
+  normal gg
+  /^substitute
+  s/foo/bar/
+  call assert_equal('foo', @/)
+  call assert_equal('substitute bar asdf', getline('.'))
+
+  /^substitute
+  keeppatterns s/asdf/xyz/
+  call assert_equal('^substitute', @/)
+  call assert_equal('substitute bar xyz', getline('.'))
+
+  exe "normal /bar /e\<CR>"
+  call assert_equal(15, col('.'))
+  normal -
+  keeppatterns /xyz
+  call assert_equal('bar ', @/)
+  call assert_equal('substitute bar xyz', getline('.'))
+  exe "normal 0dn"
+  call assert_equal('xyz', getline('.'))
+
+  close!
 endfunc

@@ -236,7 +236,8 @@ Terminal *terminal_open(TerminalOptions opts)
   // Default settings for terminal buffers
   curbuf->b_p_ma = false;     // 'nomodifiable'
   curbuf->b_p_ul = -1;        // 'undolevels'
-  curbuf->b_p_scbk = p_scbk;  // 'scrollback'
+  curbuf->b_p_scbk =          // 'scrollback' (initialize local from global)
+    (p_scbk < 0) ? 10000 : MAX(1, p_scbk);
   curbuf->b_p_tw = 0;         // 'textwidth'
   set_option_value("wrap", false, NULL, OPT_LOCAL);
   set_option_value("list", false, NULL, OPT_LOCAL);
@@ -244,13 +245,13 @@ Terminal *terminal_open(TerminalOptions opts)
   RESET_BINDING(curwin);
   // Reset cursor in current window.
   curwin->w_cursor = (pos_T){ .lnum = 1, .col = 0, .coladd = 0 };
-
   // Apply TermOpen autocmds _before_ configuring the scrollback buffer.
   apply_autocmds(EVENT_TERMOPEN, NULL, NULL, false, curbuf);
+  // Local 'scrollback' _after_ autocmds.
+  curbuf->b_p_scbk = (curbuf->b_p_scbk < 1) ? SB_MAX : curbuf->b_p_scbk;
 
   // Configure the scrollback buffer.
-  rv->sb_size = curbuf->b_p_scbk < 0
-                ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
+  rv->sb_size = (size_t)curbuf->b_p_scbk;
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
   if (!true_color) {
@@ -334,39 +335,30 @@ void terminal_close(Terminal *term, char *msg)
   }
 }
 
-void terminal_resize(Terminal *term, uint16_t width, uint16_t height)
+void terminal_check_size(Terminal *term)
 {
   if (term->closed) {
-    // If two windows display the same terminal and one is closed by keypress.
     return;
   }
-  bool force = width == UINT16_MAX || height == UINT16_MAX;
+
   int curwidth, curheight;
   vterm_get_size(term->vt, &curheight, &curwidth);
+  uint16_t width = 0, height = 0;
 
-  if (force || !width) {
-    width = (uint16_t)curwidth;
-  }
-
-  if (force || !height) {
-    height = (uint16_t)curheight;
-  }
-
-  if (!force && curheight == height && curwidth == width) {
-    return;
-  }
-
-  if (height == 0 || width == 0) {
-    return;
-  }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer && wp->w_buffer->terminal == term) {
       const uint16_t win_width =
-        (uint16_t)(MAX(0, wp->w_width - win_col_off(wp)));
+        (uint16_t)(MAX(0, wp->w_width_inner - win_col_off(wp)));
       width = MAX(width, win_width);
-      height = (uint16_t)MAX(height, wp->w_height);
+      height = (uint16_t)MAX(height, wp->w_height_inner);
     }
+  }
+
+  // if no window displays the terminal, or such all windows are zero-height,
+  // don't resize the terminal.
+  if ((curheight == height && curwidth == width) || height == 0 || width == 0) {
+    return;
   }
 
   vterm_set_size(term->vt, height, width);
@@ -382,9 +374,12 @@ void terminal_enter(void)
   TerminalState state, *s = &state;
   memset(s, 0, sizeof(TerminalState));
   s->term = buf->terminal;
+  stop_insert_mode = false;
 
-  // Ensure the terminal is properly sized.
-  terminal_resize(s->term, 0, 0);
+  // Ensure the terminal is properly sized. Ideally window size management
+  // code should always have resized the terminal already, but check here to
+  // be sure.
+  terminal_check_size(s->term);
 
   int save_state = State;
   s->save_rd = RedrawingDisabled;
@@ -409,6 +404,7 @@ void terminal_enter(void)
   redraw(false);
 
   s->state.execute = terminal_execute;
+  s->state.check = terminal_check;
   state_enter(&s->state);
 
   restart_edit = 0;
@@ -431,6 +427,18 @@ void terminal_enter(void)
       do_cmdline_cmd("bwipeout!");
     }
   }
+}
+
+// Function executed before each iteration of terminal mode.
+// Return:
+//   1 if the iteration should continue normally
+//   0 if the main loop must exit
+static int terminal_check(VimState *state)
+{
+  if (stop_insert_mode) {
+    return 0;
+  }
+  return 1;
 }
 
 static int terminal_execute(VimState *state, int key)
@@ -477,7 +485,7 @@ static int terminal_execute(VimState *state, int key)
       if (s->got_bsl) {
         return 0;
       }
-      // FALLTHROUGH
+      FALLTHROUGH;
 
     default:
       if (key == Ctrl_BSL && !s->got_bsl) {
@@ -527,6 +535,20 @@ void terminal_send(Terminal *term, char *data, size_t size)
     return;
   }
   term->opts.write_cb(data, size, term->opts.data);
+}
+
+void terminal_paste(long count, char_u **y_array, size_t y_size)
+{
+  for (int i = 0; i < count; i++) {  // -V756
+    // feed the lines to the terminal
+    for (size_t j = 0; j < y_size; j++) {
+      if (j) {
+        // terminate the previous line
+        terminal_send(curbuf->terminal, "\n", 1);
+      }
+      terminal_send(curbuf->terminal, (char *)y_array[j], STRLEN(y_array[j]));
+    }
+  }
 }
 
 void terminal_flush_output(Terminal *term)
@@ -603,13 +625,14 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int attr_id = 0;
 
     if (hl_attrs || vt_fg != -1 || vt_bg != -1) {
-      attr_id = get_term_attr_entry(&(HlAttrs) {
+      attr_id = hl_get_term_attr(&(HlAttrs) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
         .cterm_bg_color = vt_bg_idx,
         .rgb_ae_attr = (int16_t)hl_attrs,
         .rgb_fg_color = vt_fg,
         .rgb_bg_color = vt_bg,
+        .rgb_sp_color = -1,
       });
     }
 
@@ -668,6 +691,7 @@ static void buf_set_term_title(buf_T *buf, char *title)
                false,
                &err);
   api_clear_error(&err);
+  status_redraw_buf(buf);
 }
 
 static int term_settermprop(VTermProp prop, VTermValue *val, void *data)
@@ -841,20 +865,20 @@ static VTermKey convert_key(int key, VTermModifier *statep)
 
   switch (key) {
     case K_BS:        return VTERM_KEY_BACKSPACE;
-    case K_S_TAB:     // FALLTHROUGH
+    case K_S_TAB:     FALLTHROUGH;
     case TAB:         return VTERM_KEY_TAB;
     case Ctrl_M:      return VTERM_KEY_ENTER;
     case ESC:         return VTERM_KEY_ESCAPE;
 
-    case K_S_UP:      // FALLTHROUGH
+    case K_S_UP:      FALLTHROUGH;
     case K_UP:        return VTERM_KEY_UP;
-    case K_S_DOWN:    // FALLTHROUGH
+    case K_S_DOWN:    FALLTHROUGH;
     case K_DOWN:      return VTERM_KEY_DOWN;
-    case K_S_LEFT:    // FALLTHROUGH
-    case K_C_LEFT:    // FALLTHROUGH
+    case K_S_LEFT:    FALLTHROUGH;
+    case K_C_LEFT:    FALLTHROUGH;
     case K_LEFT:      return VTERM_KEY_LEFT;
-    case K_S_RIGHT:   // FALLTHROUGH
-    case K_C_RIGHT:   // FALLTHROUGH
+    case K_S_RIGHT:   FALLTHROUGH;
+    case K_C_RIGHT:   FALLTHROUGH;
     case K_RIGHT:     return VTERM_KEY_RIGHT;
 
     case K_INS:       return VTERM_KEY_INS;
@@ -864,22 +888,27 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_PAGEUP:    return VTERM_KEY_PAGEUP;
     case K_PAGEDOWN:  return VTERM_KEY_PAGEDOWN;
 
-    case K_K0:        // FALLTHROUGH
+    case K_K0:        FALLTHROUGH;
     case K_KINS:      return VTERM_KEY_KP_0;
-    case K_K1:        // FALLTHROUGH
+    case K_K1:        FALLTHROUGH;
     case K_KEND:      return VTERM_KEY_KP_1;
-    case K_K2:        return VTERM_KEY_KP_2;
-    case K_K3:        // FALLTHROUGH
+    case K_K2:        FALLTHROUGH;
+    case K_KDOWN:     return VTERM_KEY_KP_2;
+    case K_K3:        FALLTHROUGH;
     case K_KPAGEDOWN: return VTERM_KEY_KP_3;
-    case K_K4:        return VTERM_KEY_KP_4;
-    case K_K5:        return VTERM_KEY_KP_5;
-    case K_K6:        return VTERM_KEY_KP_6;
-    case K_K7:        // FALLTHROUGH
+    case K_K4:        FALLTHROUGH;
+    case K_KLEFT:     return VTERM_KEY_KP_4;
+    case K_K5:        FALLTHROUGH;
+    case K_KORIGIN:   return VTERM_KEY_KP_5;
+    case K_K6:        FALLTHROUGH;
+    case K_KRIGHT:    return VTERM_KEY_KP_6;
+    case K_K7:        FALLTHROUGH;
     case K_KHOME:     return VTERM_KEY_KP_7;
-    case K_K8:        return VTERM_KEY_KP_8;
-    case K_K9:        // FALLTHROUGH
+    case K_K8:        FALLTHROUGH;
+    case K_KUP:       return VTERM_KEY_KP_8;
+    case K_K9:        FALLTHROUGH;
     case K_KPAGEUP:   return VTERM_KEY_KP_9;
-    case K_KDEL:      // FALLTHROUGH
+    case K_KDEL:      FALLTHROUGH;
     case K_KPOINT:    return VTERM_KEY_KP_PERIOD;
     case K_KENTER:    return VTERM_KEY_KP_ENTER;
     case K_KPLUS:     return VTERM_KEY_KP_PLUS;
@@ -887,29 +916,29 @@ static VTermKey convert_key(int key, VTermModifier *statep)
     case K_KMULTIPLY: return VTERM_KEY_KP_MULT;
     case K_KDIVIDE:   return VTERM_KEY_KP_DIVIDE;
 
-    case K_S_F1:      // FALLTHROUGH
+    case K_S_F1:      FALLTHROUGH;
     case K_F1:        return VTERM_KEY_FUNCTION(1);
-    case K_S_F2:      // FALLTHROUGH
+    case K_S_F2:      FALLTHROUGH;
     case K_F2:        return VTERM_KEY_FUNCTION(2);
-    case K_S_F3:      // FALLTHROUGH
+    case K_S_F3:      FALLTHROUGH;
     case K_F3:        return VTERM_KEY_FUNCTION(3);
-    case K_S_F4:      // FALLTHROUGH
+    case K_S_F4:      FALLTHROUGH;
     case K_F4:        return VTERM_KEY_FUNCTION(4);
-    case K_S_F5:      // FALLTHROUGH
+    case K_S_F5:      FALLTHROUGH;
     case K_F5:        return VTERM_KEY_FUNCTION(5);
-    case K_S_F6:      // FALLTHROUGH
+    case K_S_F6:      FALLTHROUGH;
     case K_F6:        return VTERM_KEY_FUNCTION(6);
-    case K_S_F7:      // FALLTHROUGH
+    case K_S_F7:      FALLTHROUGH;
     case K_F7:        return VTERM_KEY_FUNCTION(7);
-    case K_S_F8:      // FALLTHROUGH
+    case K_S_F8:      FALLTHROUGH;
     case K_F8:        return VTERM_KEY_FUNCTION(8);
-    case K_S_F9:      // FALLTHROUGH
+    case K_S_F9:      FALLTHROUGH;
     case K_F9:        return VTERM_KEY_FUNCTION(9);
-    case K_S_F10:     // FALLTHROUGH
+    case K_S_F10:     FALLTHROUGH;
     case K_F10:       return VTERM_KEY_FUNCTION(10);
-    case K_S_F11:     // FALLTHROUGH
+    case K_S_F11:     FALLTHROUGH;
     case K_F11:       return VTERM_KEY_FUNCTION(11);
-    case K_S_F12:     // FALLTHROUGH
+    case K_S_F12:     FALLTHROUGH;
     case K_F12:       return VTERM_KEY_FUNCTION(12);
 
     case K_F13:       return VTERM_KEY_FUNCTION(13);
@@ -965,8 +994,11 @@ static void mouse_action(Terminal *term, int button, int row, int col,
 // terminal should lose focus
 static bool send_mouse_event(Terminal *term, int c)
 {
-  int row = mouse_row, col = mouse_col;
-  win_T *mouse_win = mouse_find_win(&row, &col);
+  int row = mouse_row, col = mouse_col, grid = mouse_grid;
+  win_T *mouse_win = mouse_find_win(&grid, &row, &col);
+  if (mouse_win == NULL) {
+    goto end;
+  }
 
   if (term->forward_mouse && mouse_win->w_buffer->terminal == term) {
     // event in the terminal window and mouse events was enabled by the
@@ -975,11 +1007,11 @@ static bool send_mouse_event(Terminal *term, int c)
     bool drag = false;
 
     switch (c) {
-      case K_LEFTDRAG: drag = true;  // FALLTHROUGH
+      case K_LEFTDRAG: drag = true;   FALLTHROUGH;
       case K_LEFTMOUSE: button = 1; break;
-      case K_MIDDLEDRAG: drag = true;  // FALLTHROUGH
+      case K_MIDDLEDRAG: drag = true; FALLTHROUGH;
       case K_MIDDLEMOUSE: button = 2; break;
-      case K_RIGHTDRAG: drag = true;  // FALLTHROUGH
+      case K_RIGHTDRAG: drag = true;  FALLTHROUGH;
       case K_RIGHTMOUSE: button = 3; break;
       case K_MOUSEDOWN: button = 4; break;
       case K_MOUSEUP: button = 5; break;
@@ -1014,6 +1046,7 @@ static bool send_mouse_event(Terminal *term, int c)
     return mouse_win == curwin;
   }
 
+end:
   ins_char_typebuf(c);
   return true;
 }
@@ -1102,11 +1135,15 @@ static void refresh_terminal(Terminal *term)
     return;
   }
   long ml_before = buf->b_ml.ml_line_count;
-  WITH_BUFFER(buf, {
-    refresh_size(term, buf);
-    refresh_scrollback(term, buf);
-    refresh_screen(term, buf);
-  });
+
+  // refresh_ functions assume the terminal buffer is current
+  aco_save_T aco;
+  aucmd_prepbuf(&aco, buf);
+  refresh_size(term, buf);
+  refresh_scrollback(term, buf);
+  refresh_screen(term, buf);
+  aucmd_restbuf(&aco);
+
   long ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
 }
@@ -1153,8 +1190,10 @@ static void refresh_size(Terminal *term, buf_T *buf)
 /// Adjusts scrollback storage after 'scrollback' option changed.
 static void on_scrollback_option_changed(Terminal *term, buf_T *buf)
 {
-  const size_t scbk = curbuf->b_p_scbk < 0
-                      ? SB_MAX : (size_t)MAX(1, curbuf->b_p_scbk);
+  if (buf->b_p_scbk < 1) {  // Local 'scrollback' was set to -1.
+    buf->b_p_scbk = SB_MAX;
+  }
+  const size_t scbk = (size_t)buf->b_p_scbk;
   assert(term->sb_current < SIZE_MAX);
   if (term->sb_pending > 0) {  // Pending rows must be processed first.
     abort();
@@ -1302,8 +1341,6 @@ static void redraw(bool restore_cursor)
 
 static void adjust_topline(Terminal *term, buf_T *buf, long added)
 {
-  int height, width;
-  vterm_get_size(term->vt, &height, &width);
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
@@ -1312,7 +1349,7 @@ static void adjust_topline(Terminal *term, buf_T *buf, long added)
       if (following || (wp == curwin && is_focused(term))) {
         // "Follow" the terminal output
         wp->w_cursor.lnum = ml_end;
-        set_topline(wp, MAX(wp->w_cursor.lnum - height + 1, 1));
+        set_topline(wp, MAX(wp->w_cursor.lnum - wp->w_height_inner + 1, 1));
       } else {
         // Ensure valid cursor for each window displaying this terminal.
         wp->w_cursor.lnum = MIN(wp->w_cursor.lnum, ml_end);
@@ -1337,23 +1374,16 @@ static bool is_focused(Terminal *term)
   return State & TERM_FOCUS && curbuf->terminal == term;
 }
 
-#define GET_CONFIG_VALUE(k, o) \
-  do { \
-    Error err = ERROR_INIT; \
-    /* Only called from terminal_open where curbuf->terminal is the */ \
-    /* context  */ \
-    o = dict_get_value(curbuf->b_vars, cstr_as_string(k), &err); \
-    api_clear_error(&err); \
-    if (o.type == kObjectTypeNil) { \
-      o = dict_get_value(&globvardict, cstr_as_string(k), &err); \
-      api_clear_error(&err); \
-    } \
-  } while (0)
-
 static char *get_config_string(char *key)
 {
-  Object obj;
-  GET_CONFIG_VALUE(key, obj);
+  Error err = ERROR_INIT;
+  // Only called from terminal_open where curbuf->terminal is the context.
+  Object obj = dict_get_value(curbuf->b_vars, cstr_as_string(key), &err);
+  api_clear_error(&err);
+  if (obj.type == kObjectTypeNil) {
+    obj = dict_get_value(&globvardict, cstr_as_string(key), &err);
+    api_clear_error(&err);
+  }
   if (obj.type == kObjectTypeString) {
     return obj.data.string.data;
   }

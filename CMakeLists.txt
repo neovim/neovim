@@ -6,7 +6,10 @@ cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
 
 if(POLICY CMP0059)
-  cmake_policy(SET CMP0059 OLD)  # Needed until cmake 2.8.12. #4389
+  # Needed for use of DEFINITIONS variable, which is used to collect the
+  # compilation flags for reporting in "nvim --version"
+  # https://github.com/neovim/neovim/pull/8558#issuecomment-398033140
+  cmake_policy(SET CMP0059 OLD)
 endif()
 
 # Point CMake at any custom modules we may ship
@@ -94,26 +97,34 @@ else()
   option(ENABLE_LTO "enable link time optimization" ON)
 endif()
 
-# Set default build type.
-if(NOT CMAKE_BUILD_TYPE)
-  message(STATUS "CMAKE_BUILD_TYPE not given, defaulting to 'Debug'.")
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build." FORCE)
-endif()
+message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
+# Build type.
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "CMAKE_BUILD_TYPE not specified, default is 'Debug'")
+  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build" FORCE)
+else()
+  message(STATUS "CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  set(DEBUG 1)
+else()
+  set(DEBUG 0)
+endif()
 # Set available build types for CMake GUIs.
-# A different build type can still be set by -DCMAKE_BUILD_TYPE=...
+# Other build types can still be set by -DCMAKE_BUILD_TYPE=...
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY
   STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 
 # If not in a git repo (e.g., a tarball) these tokens define the complete
 # version string, else they are combined with the result of `git describe`.
 set(NVIM_VERSION_MAJOR 0)
-set(NVIM_VERSION_MINOR 3)
-set(NVIM_VERSION_PATCH 2)
+set(NVIM_VERSION_MINOR 4)
+set(NVIM_VERSION_PATCH 0)
 set(NVIM_VERSION_PRERELEASE "-dev") # for package maintainers
 
 # API level
-set(NVIM_API_LEVEL 5)         # Bump this after any API change.
+set(NVIM_API_LEVEL 6)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE true)
 
@@ -135,12 +146,6 @@ set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Default to -O2 on release builds.
-if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
-  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2.")
-  string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-endif()
-
 # Minimize logging for release-type builds.
 if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DMIN_LOG_LEVEL)
   set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMIN_LOG_LEVEL=3")
@@ -150,6 +155,22 @@ if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DMIN_LOG_LEVEL)
 endif()
 if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
   set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
+endif()
+
+# Log level (MIN_LOG_LEVEL in log.h)
+if("${MIN_LOG_LEVEL}" MATCHES "^$")
+  message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+else()
+  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
+    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
+  endif()
+  message(STATUS "MIN_LOG_LEVEL=${MIN_LOG_LEVEL}")
+endif()
+
+# Default to -O2 on release builds.
+if(CMAKE_C_FLAGS_RELEASE MATCHES "-O3")
+  message(STATUS "Replacing -O3 in CMAKE_C_FLAGS_RELEASE with -O2")
+  string(REPLACE "-O3" "-O2" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC)
@@ -167,11 +188,6 @@ endif()
 # We _want_ assertions in RelWithDebInfo build-type.
 if(CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-endif()
-
-# Enable -Wconversion.
-if(NOT MSVC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wconversion")
 endif()
 
 # gcc 4.0+ sets _FORTIFY_SOURCE=2 automatically.  This currently
@@ -205,12 +221,12 @@ main(void)
 " HAS_ACCEPTABLE_FORTIFY)
 
 if(NOT HAS_ACCEPTABLE_FORTIFY)
-  message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1.")
+  message(STATUS "Unsupported _FORTIFY_SOURCE found, forcing _FORTIFY_SOURCE=1")
   # Extract possible prefix to _FORTIFY_SOURCE (e.g. -Wp,-D_FORTIFY_SOURCE).
   STRING(REGEX MATCH "[^\ ]+-D_FORTIFY_SOURCE" _FORTIFY_SOURCE_PREFIX "${CMAKE_C_FLAGS}")
   STRING(REPLACE "-D_FORTIFY_SOURCE" "" _FORTIFY_SOURCE_PREFIX "${_FORTIFY_SOURCE_PREFIX}" )
   if(NOT _FORTIFY_SOURCE_PREFIX STREQUAL "")
-    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}.")
+    message(STATUS "Detected _FORTIFY_SOURCE Prefix=${_FORTIFY_SOURCE_PREFIX}")
   endif()
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
@@ -222,7 +238,7 @@ endif()
 if(CMAKE_EXE_LINKER_FLAGS MATCHES "--sort-common" OR
    CMAKE_SHARED_LINKER_FLAGS MATCHES "--sort-common" OR
    CMAKE_MODULE_LINKER_FLAGS MATCHES "--sort-common")
-  message(STATUS "Removing --sort-common from linker flags.")
+  message(STATUS "Removing --sort-common from linker flags")
   string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
   string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
   string(REGEX REPLACE ",--sort-common(=[^,]+)?" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}")
@@ -245,13 +261,24 @@ int main(void)
 }
 " HAVE_EXECINFO_BACKTRACE)
 
+check_c_source_compiles("
+int main(void)
+{
+  int a;
+  __builtin_add_overflow(a, a, &a);
+  __builtin_sub_overflow(a, a, &a);
+  return 0;
+}
+" HAVE_BUILTIN_ADD_OVERFLOW)
+
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
   add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
   add_definitions(-DWIN32)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
-    -Wstrict-prototypes -std=gnu99)
+    -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
+    -Wmissing-prototypes)
 
   check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
   if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
@@ -309,21 +336,15 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   endif()
 endif()
 
-option(TRAVIS_CI_BUILD "Travis/QuickBuild CI. Extra flags will be set." OFF)
+option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
 
 if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis/QuickBuild CI build enabled.")
+  message(STATUS "Travis/QuickBuild CI build enabled")
   add_definitions(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char
     add_definitions(-funsigned-char)
   endif()
-endif()
-
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-  set(DEBUG 1)
-else()
-  set(DEBUG 0)
 endif()
 
 option(LOG_LIST_ACTIONS "Add list actions logging" OFF)
@@ -358,7 +379,7 @@ endif()
 include_directories("${PROJECT_BINARY_DIR}/config")
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
-find_package(LibUV REQUIRED)
+find_package(LibUV REQUIRED)  # minimum version: v1.12
 include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 
 find_package(Msgpack 1.0.0 REQUIRED)
@@ -368,7 +389,7 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 option(PREFER_LUA "Prefer Lua over LuaJIT in the nvim executable." OFF)
 
 if(PREFER_LUA)
-  find_package(Lua REQUIRED)
+  find_package(Lua 5.1 REQUIRED)
   set(LUA_PREFERRED_INCLUDE_DIRS ${LUA_INCLUDE_DIR})
   set(LUA_PREFERRED_LIBRARIES ${LUA_LIBRARIES})
   # Passive (not REQUIRED): if LUAJIT_FOUND is not set, nvim-test is skipped.
@@ -389,6 +410,7 @@ main(void)
   return MSGPACK_OBJECT_FLOAT32;
 }
 " MSGPACK_HAS_FLOAT32)
+unset(CMAKE_REQUIRED_LIBRARIES)
 if(MSGPACK_HAS_FLOAT32)
   add_definitions(-DNVIM_MSGPACK_HAS_FLOAT32)
 endif()
@@ -410,11 +432,13 @@ if(FEAT_TUI)
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
   if(UNIBI_HAS_VAR_FROM)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()
 
-  find_package(LibTermkey REQUIRED)
+  find_package(LibTermkey 0.18 REQUIRED)
   include_directories(SYSTEM ${LIBTERMKEY_INCLUDE_DIRS})
 endif()
 
@@ -422,7 +446,7 @@ find_package(LibVterm REQUIRED)
 include_directories(SYSTEM ${LIBVTERM_INCLUDE_DIRS})
 
 if(WIN32)
-  find_package(Winpty REQUIRED)
+  find_package(Winpty 0.4.3 REQUIRED)
   include_directories(SYSTEM ${WINPTY_INCLUDE_DIRS})
 endif()
 
@@ -433,27 +457,11 @@ option(CLANG_TSAN "Enable Clang thread sanitizer for nvim binary." OFF)
 if((CLANG_ASAN_UBSAN AND CLANG_MSAN)
     OR (CLANG_ASAN_UBSAN AND CLANG_TSAN)
     OR (CLANG_MSAN AND CLANG_TSAN))
-  message(FATAL_ERROR "Sanitizers cannot be enabled simultaneously.")
+  message(FATAL_ERROR "Sanitizers cannot be enabled simultaneously")
 endif()
 
 if((CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN) AND NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
-  message(FATAL_ERROR "Sanitizers are only supported for Clang.")
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD|FreeBSD|Windows")  # see #5318
-  message(STATUS "skipping jemalloc on this system: ${CMAKE_SYSTEM_NAME}")
-  option(ENABLE_JEMALLOC "enable jemalloc" OFF)
-else()
-  option(ENABLE_JEMALLOC "enable jemalloc" ON)
-endif()
-
-if(ENABLE_JEMALLOC)
-  if(CLANG_ASAN_UBSAN OR CLANG_MSAN OR CLANG_TSAN)
-    message(STATUS "Sanitizers have been enabled; don't use jemalloc.")
-  else()
-    find_package(JeMalloc REQUIRED)
-    include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIRS})
-  endif()
+  message(FATAL_ERROR "Sanitizers are only supported for Clang")
 endif()
 
 if(ENABLE_LIBINTL)
@@ -505,10 +513,10 @@ else()
 endif()
 
 if(NOT LUA_PRG_WORKS)
-  message(FATAL_ERROR "A suitable Lua interpreter was not found.")
+  message(FATAL_ERROR "Failed to find a Lua 5.1-compatible interpreter")
 endif()
 
-message(STATUS "Using the Lua interpreter ${LUA_PRG}.")
+message(STATUS "Using Lua interpreter: ${LUA_PRG}")
 
 # Setup busted.
 find_program(BUSTED_PRG NAMES busted busted.bat)
@@ -529,17 +537,9 @@ install_helper(
   FILES ${MANPAGES}
   DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
-# MIN_LOG_LEVEL for log.h
-if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  message(STATUS "MIN_LOG_LEVEL not specified")
-else()
-  if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
-    message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
-  endif()
-  message(STATUS "MIN_LOG_LEVEL set to ${MIN_LOG_LEVEL}")
-endif()
-
+#
 # Go down the tree.
+#
 
 add_subdirectory(src/nvim)
 # Read compilation flags from src/nvim, used in config subdirectory below.
@@ -682,7 +682,7 @@ if(LUACHECK_PRG)
       -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
 
   add_custom_target(
-    blobcodelint
+    lintbuiltinlua
     COMMAND
       ${CMAKE_COMMAND}
         -DLUACHECK_PRG=${LUACHECK_PRG}
@@ -691,10 +691,21 @@ if(LUACHECK_PRG)
         -DREAD_GLOBALS=vim
         -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
   )
+  add_custom_target(
+    lintruntimelua
+    COMMAND
+      ${CMAKE_COMMAND}
+        -DLUACHECK_PRG=${LUACHECK_PRG}
+        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime/lua
+        -DCMAKE_SYSTEM_NAME=${CMAKE_SYSTEM_NAME}
+        -DREAD_GLOBALS=vim
+        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
+  )
   # TODO(ZyX-I): Run linter for all lua code in src
   add_custom_target(
     lualint
-    DEPENDS blobcodelint
+    DEPENDS lintruntimelua
+    DEPENDS lintbuiltinlua
   )
 endif()
 

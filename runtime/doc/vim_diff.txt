@@ -6,8 +6,9 @@
 
 Differences between Nvim and Vim			       *vim-differences*
 
-Nvim differs from Vim in many ways, big and small.  This document is
-a complete and centralized reference of those differences.
+Nvim differs from Vim in many ways, although editor and VimL features are
+mostly identical.  This document is a complete and centralized reference of
+the differences.
 
 				      Type |gO| to see the table of contents.
 
@@ -27,6 +28,7 @@ a complete and centralized reference of those differences.
 
 - 'autoindent' is set by default
 - 'autoread' is set by default
+- 'background' always defaults to "dark"
 - 'backspace' defaults to "indent,eol,start"
 - 'backupdir' defaults to .,~/.local/share/nvim/backup (|xdg|)
 - 'belloff' defaults to "all"
@@ -36,8 +38,8 @@ a complete and centralized reference of those differences.
 - 'display' defaults to "lastline,msgsep"
 - 'encoding' is UTF-8 (cf. 'fileencoding' for file-content encoding)
 - 'fillchars' defaults (in effect) to "vert:│,fold:·"
-- 'fsync' is disabled
 - 'formatoptions' defaults to "tcqj"
+- 'fsync' is disabled
 - 'history' defaults to 10000 (the maximum)
 - 'hlsearch' is set by default
 - 'incsearch' is set by default
@@ -132,14 +134,17 @@ Command-line highlighting:
   removed in the future).
 
 Commands:
+  |:autocmd| accepts the `++once` flag
   |:checkhealth|
   |:cquit| can use [count] to set the exit code
   |:drop| is always available
   |:Man| is available by default, with many improvements such as completion
+  |:sign-define| accepts a `numhl` argument, to highlight the line number
   |:tchdir| tab-local |current-directory|
 
 Events:
   |DirChanged|
+  |Signal|
   |TabNewEntered|
   |TermClose|
   |TermOpen|
@@ -157,6 +162,7 @@ Functions:
 
 Highlight groups:
   |expr-highlight| highlight groups (prefixed with "Nvim")
+  |hl-NormalFloat| highlights floating window
   |hl-NormalNC| highlights non-current windows
   |hl-MsgSeparator| highlights separator for scrolled messages
   |hl-QuickFixLine|
@@ -182,13 +188,20 @@ Options:
   'cpoptions' flags: |cpo-_|
   'display' flag `msgsep` to minimize scrolling when showing messages
   'guicursor' works in the terminal
-  'fillchars' flags: `msgsep` (see 'display' above)
-	      and `eob` for |hl-EndOfBuffer| marker
+  'fillchars' local to window. flags: `msgsep` (see 'display' above) and `eob`
+              for |hl-EndOfBuffer| marker
   'inccommand' shows interactive results for |:substitute|-like commands
+  'listchars' local to window
+  'pumblend' pseudo-transparent popupmenu
   'scrollback'
+  'signcolumn' supports up to 9 dynamic/fixed columns
   'statusline' supports unlimited alignment sections
   'tabline' %@Func@foo%X can call any function on mouse-click
+  'wildoptions' `pum` flag to use popupmenu for wildmode completion
   'winhighlight' window-local highlights
+
+Signs:
+  Signs are removed if the associated line is deleted.
 
 Variables:
   |v:event|
@@ -205,18 +218,7 @@ certain features removed/added at compile-time. |feature-compile|
 If a Python interpreter is available on your `$PATH`, |:python| and |:python3|
 are always available and may be used simultaneously. See |provider-python|.
 
-|:!| does not support "interactive" commands. Use |:terminal| instead.
-(GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
-
-:!start is not special-cased on Windows.
-
-|system()| does not support writing/reading "backgrounded" commands. |E5677|
-
 |:redir| nested in |execute()| works.
-
-Nvim may throttle (skip) messages from shell commands (|:!|, |:grep|, |:make|)
-if there is too much output. No data is lost, this only affects display and
-makes things faster. |:terminal| output is never throttled.
 
 |mkdir()| behaviour changed:
 1. Assuming /tmp/foo does not exist and /tmp can be written to
@@ -317,15 +319,37 @@ Macro/|recording| behavior
   macros and 'keymap' at the same time. This also means you can use |:imap| on
   the results of keys from 'keymap'.
 
+Motion:
+  The |jumplist| avoids useless/phantom jumps.
+
 Normal commands:
   |Q| is the same as |gQ|
 
 Options:
   'ttimeout', 'ttimeoutlen' behavior was simplified
 
+Shell:
+  Shell output (|:!|, |:make|, …) is always routed through the UI, so it
+  cannot "mess up" the screen. (You can still use "chansend(v:stderr,…)" if
+  you want to mess up the screen :)
+
+  Nvim throttles (skips) messages from shell commands (|:!|, |:grep|, |:make|)
+  if there is too much output. No data is lost, this only affects display and
+  improves performance. |:terminal| output is never throttled.
+
+  |:!| does not support "interactive" commands. Use |:terminal| instead.
+  (GUI Vim has a similar limitation, see ":help gui-pty" in Vim.)
+
+  :!start is not special-cased on Windows.
+
+  |system()| does not support writing/reading "backgrounded" commands. |E5677|
+
 Startup:
   |-e| and |-es| invoke the same "improved Ex mode" as -E and -Es.
-  |-E| and |-Es| reads stdin as text (into buffer 1).
+  |-E| and |-Es| read stdin as text (into buffer 1).
+  |-es| and |-Es| have improved behavior:
+    - Quits automatically, don't need "-c qa!".
+    - Skips swap-file dialog.
   |-s| reads Normal commands from stdin if the script name is "-".
   Reading text (instead of commands) from stdin |--|:
     - works by default: "-" file is optional
@@ -350,6 +374,9 @@ TUI:
   and has a 'ttybuiltin' setting to control how that combination works.  Nvim
   uses one or the other, it does not attempt to merge the two.
 
+UI/Display:
+  |Visual| selection highlights the character at cursor. |visual-use|
+
 VimL (Vim script) compatibility:
   `count` does not alias to |v:count|
   `errmsg` does not alias to |v:errmsg|
@@ -361,7 +388,7 @@ VimL (Vim script) compatibility:
 
 Some legacy Vim features are not implemented:
 
-- |if_py|: vim.bindeval() and vim.Function() are not supported
+- |if_py|: *python-bindeval* *python-Function* are not supported
 - |if_lua|: the `vim` object is missing some legacy methods
 - *if_perl*
 - *if_mzscheme*

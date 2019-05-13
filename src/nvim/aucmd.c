@@ -6,6 +6,7 @@
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/ui.h"
+#include "nvim/aucmd.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "aucmd.c.generated.h"
@@ -26,7 +27,6 @@ void aucmd_schedule_focusgained(bool gained)
 }
 
 static void do_autocmd_focusgained(bool gained)
-  FUNC_ATTR_NONNULL_ALL
 {
   static bool recursive = false;
 

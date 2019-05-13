@@ -19,6 +19,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/garray.h"
 #include "nvim/mbyte.h"
+#include "nvim/math.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
 #include "nvim/charset.h"  // vim_isprintc()
@@ -27,11 +28,6 @@
 #include "nvim/vim.h"  // For _()
 #include "nvim/lib/kvec.h"
 #include "nvim/eval/typval_encode.h"
-
-#ifdef __MINGW32__
-# undef fpclassify
-# define fpclassify __fpclassify
-#endif
 
 #define ga_concat(a, b) ga_concat(a, (char_u *)b)
 #define utf_ptr2char(b) utf_ptr2char((char_u *)b)
@@ -302,11 +298,11 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
         const size_t len_ = (len); \
         ga_grow(gap, (int) (2 + len_ + memcnt(buf_, '\'', len_))); \
         ga_append(gap, '\''); \
-        for (size_t i = 0; i < len_; i++) { \
-          if (buf_[i] == '\'') { \
+        for (size_t i_ = 0; i_ < len_; i_++) { \
+          if (buf_[i_] == '\'') { \
             ga_append(gap, '\''); \
           } \
-          ga_append(gap, buf_[i]); \
+          ga_append(gap, buf_[i_]); \
         } \
         ga_append(gap, '\''); \
       } \
@@ -327,7 +323,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (xfpclassify(flt_)) { \
         case FP_NAN: { \
           ga_concat(gap, (char_u *) "str2float('nan')"); \
           break; \
@@ -531,7 +527,7 @@ int encode_read_from_list(ListReaderState *const state, char *const buf,
 #define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
     do { \
       const float_T flt_ = (flt); \
-      switch (fpclassify(flt_)) { \
+      switch (xfpclassify(flt_)) { \
         case FP_NAN: { \
           EMSG(_("E474: Unable to represent NaN value in JSON")); \
           return FAIL; \
@@ -609,14 +605,14 @@ static inline int convert_to_json_string(garray_T *const gap,
           if (ch > 0x7F && shift == 1) {
             emsgf(_("E474: String \"%.*s\" contains byte that does not start "
                     "any UTF-8 character"),
-                  utf_len - (i - shift), utf_buf + i - shift);
+                  (int)(utf_len - (i - shift)), utf_buf + i - shift);
             xfree(tofree);
             return FAIL;
           } else if ((SURROGATE_HI_START <= ch && ch <= SURROGATE_HI_END)
                      || (SURROGATE_LO_START <= ch && ch <= SURROGATE_LO_END)) {
             emsgf(_("E474: UTF-8 string contains code point which belongs "
                     "to a surrogate pair: %.*s"),
-                  utf_len - (i - shift), utf_buf + i - shift);
+                  (int)(utf_len - (i - shift)), utf_buf + i - shift);
             xfree(tofree);
             return FAIL;
           } else if (ENCODE_RAW(ch)) {
@@ -933,7 +929,7 @@ char *encode_tv2json(typval_T *tv, size_t *len)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     do { \
-      if ((num)) { \
+      if (num) { \
         msgpack_pack_true(packer); \
       } else { \
         msgpack_pack_false(packer); \

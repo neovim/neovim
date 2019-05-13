@@ -1,27 +1,36 @@
-Set-PSDebug -Trace 1
+$ErrorActionPreference = 'stop'
+Set-PSDebug -Strict -Trace 1
 
+$isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
 $compileOption = $Matches.option
 $bits = $Matches.bits
-$cmakeBuildType = 'RelWithDebInfo'
+$cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
+$buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
 $depsCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
 }
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
+  DEPS_BUILD_DIR=$(if ($env:DEPS_BUILD_DIR -ne $null) {$env:DEPS_BUILD_DIR} else {".deps"});
+  DEPS_PREFIX=$(if ($env:DEPS_PREFIX -ne $null) {$env:DEPS_PREFIX} else {".deps/usr"});
 }
-
-# For pull requests, skip some build configurations to save time.
-if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
-  exit 0
-}
+$uploadToCodeCov = $false
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
+    Set-PSDebug -Off
     exit $LastExitCode
   }
+}
+
+if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
+  write-host "cache dir not found: $($nvimCmakeVars['DEPS_BUILD_DIR'])"
+  mkdir $nvimCmakeVars["DEPS_BUILD_DIR"]
+} else {
+  write-host "cache dir $($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
 if ($compiler -eq 'MINGW') {
@@ -38,15 +47,21 @@ if ($compiler -eq 'MINGW') {
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
   # in MSYS2, but we cannot build inside the MSYS2 shell.
-  $cmakeGenerator = 'MinGW Makefiles'
-  $cmakeGeneratorArgs = 'VERBOSE=1'
+  $cmakeGenerator = 'Ninja'
+  $cmakeGeneratorArgs = '-v'
+  $mingwPackages = @('ninja', 'cmake', 'perl', 'diffutils', 'unibilium').ForEach({
+    "mingw-w64-$arch-$_"
+  })
 
   # Add MinGW to the PATH
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
 
+  # Avoid pacman "warning" which causes non-zero return code. https://github.com/open62541/open62541/issues/2068
+  & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
+
   # Build third-party dependencies
   C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S mingw-w64-$arch-cmake mingw-w64-$arch-perl mingw-w64-$arch-diffutils mingw-w64-$arch-unibilium" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
@@ -58,36 +73,32 @@ elseif ($compiler -eq 'MSVC') {
   }
 }
 
-# Remove Git Unix utilities from the PATH
-$env:PATH = $env:PATH.Replace('C:\Program Files\Git\usr\bin', '')
-
 # Setup python (use AppVeyor system python)
-C:\Python27\python.exe -m pip install neovim ; exitIfFailed
-C:\Python35\python.exe -m pip install neovim ; exitIfFailed
+C:\Python27\python.exe -m pip install pynvim ; exitIfFailed
+C:\Python35\python.exe -m pip install pynvim ; exitIfFailed
 # Disambiguate python3
 move c:\Python35\python.exe c:\Python35\python3.exe
 $env:PATH = "C:\Python35;C:\Python27;$env:PATH"
 # Sanity check
-python  -c "import neovim; print(str(neovim))" ; exitIfFailed
-python3 -c "import neovim; print(str(neovim))" ; exitIfFailed
+python  -c "import pynvim; print(str(pynvim))" ; exitIfFailed
+python3 -c "import pynvim; print(str(pynvim))" ; exitIfFailed
 
 $env:PATH = "C:\Ruby24\bin;$env:PATH"
-cmd /c gem.cmd install neovim ; exitIfFailed
-where.exe neovim-ruby-host.bat ; exitIfFailed
+gem.cmd install neovim
+Get-Command -CommandType Application neovim-ruby-host.bat
 
-cmd /c npm.cmd install -g neovim ; exitIfFailed
-where.exe neovim-node-host.cmd ; exitIfFailed
-cmd /c npm link neovim
+npm.cmd install -g neovim
+Get-Command -CommandType Application neovim-node-host.cmd
+npm.cmd link neovim
 
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-mkdir .deps
-cd .deps
-cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) ..\third-party\ ; exitIfFailed
+cd $nvimCmakeVars["DEPS_BUILD_DIR"]
+cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
-cd ..
+cd $buildDir
 
 # Build Neovim
 mkdir build
@@ -103,11 +114,11 @@ $failed = $false
 Set-PSDebug -Off
 cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
-    $_ -match 'Running functional tests failed with error'; $_ }
-Set-PSDebug -Trace 1
+    $_ -match 'functional tests failed with error'; $_ }
 if ($failed) {
   exit $LastExitCode
 }
+Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {

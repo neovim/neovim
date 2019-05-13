@@ -1,13 +1,13 @@
-" Test sort()
+" Tests for the "sort()" function and for the ":sort" command.
 
-:func Compare1(a, b) abort
+func Compare1(a, b) abort
     call sort(range(3), 'Compare2')
     return a:a - a:b
-:endfunc
+endfunc
 
-:func Compare2(a, b) abort
+func Compare2(a, b) abort
     return a:a - a:b
-:endfunc
+endfunc
 
 func Test_sort_strings()
   " numbers compared as strings
@@ -45,7 +45,7 @@ func Test_sort_default()
   call assert_fails('call sort([3.3, 1, "2"], 3)', "E474")
 endfunc
 
-" Tests for the :sort command
+" Tests for the ":sort" command.
 func Test_sort_cmd()
   let tests = [
 	\ {
@@ -1167,18 +1167,158 @@ func Test_sort_cmd()
 	\	'1.234',
 	\	'123.456'
 	\    ]
-	\ }
+	\ },
+	\ {
+	\    'name' : 'alphabetical, sorted input',
+	\    'cmd' : 'sort',
+	\    'input' : [
+	\	'a',
+	\	'b',
+	\	'c',
+	\    ],
+	\    'expected' : [
+	\	'a',
+	\	'b',
+	\	'c',
+	\    ]
+	\ },
+	\ {
+	\    'name' : 'alphabetical, sorted input, unique at end',
+	\    'cmd' : 'sort u',
+	\    'input' : [
+	\	'aa',
+	\	'bb',
+	\	'cc',
+	\	'cc',
+	\    ],
+	\    'expected' : [
+	\	'aa',
+	\	'bb',
+	\	'cc',
+	\    ]
+	\ },
 	\ ]
 
   for t in tests
     enew!
     call append(0, t.input)
     $delete _
-    exe t.cmd
+    setlocal nomodified
+    execute t.cmd
+
     call assert_equal(t.expected, getline(1, '$'), t.name)
+
+    " Previously, the ":sort" command would set 'modified' even if the buffer
+    " contents did not change.  Here, we check that this problem is fixed.
+    if t.input == t.expected
+      call assert_false(&modified, t.name . ': &mod is not correct')
+    else
+      call assert_true(&modified, t.name . ': &mod is not correct')
+    endif
   endfor
 
   call assert_fails('sort no', 'E474')
 
   enew!
 endfunc
+
+func Test_sort_large_num()
+  new
+  a
+-2147483648
+-2147483647
+
+-1
+0
+1
+-2147483646
+2147483646
+2147483647
+2147483647
+-2147483648
+abc
+
+.
+  " Numerical sort. Non-numeric lines are ordered before numerical lines.
+  " Ordering of non-numerical is stable.
+  sort n
+  call assert_equal(['',
+  \                  'abc',
+  \                  '',
+  \                  '-2147483648',
+  \                  '-2147483648',
+  \                  '-2147483647',
+  \                  '-2147483646',
+  \                  '-1',
+  \                  '0',
+  \                  '1',
+  \                  '2147483646',
+  \                  '2147483647',
+  \                  '2147483647'], getline(1, '$'))
+  bwipe!
+
+  if has('num64')
+    new
+    a
+-9223372036854775808
+-9223372036854775807
+
+-1
+0
+1
+-9223372036854775806
+9223372036854775806
+9223372036854775807
+9223372036854775807
+-9223372036854775808
+abc
+
+.
+    sort n
+    call assert_equal(['',
+    \                  'abc',
+    \                  '',
+    \                  '-9223372036854775808',
+    \                  '-9223372036854775808',
+    \                  '-9223372036854775807',
+    \                  '-9223372036854775806',
+    \                  '-1',
+    \                  '0',
+    \                  '1',
+    \                  '9223372036854775806',
+    \                  '9223372036854775807',
+    \                  '9223372036854775807'], getline(1, '$'))
+    bwipe!
+  endif
+endfunc
+
+
+func Test_sort_cmd_report()
+    enew!
+    call append(0, repeat([1], 3) + repeat([2], 3) + repeat([3], 3))
+    $delete _
+    setlocal nomodified
+    let res = execute('%sort u')
+
+    call assert_equal([1,2,3], map(getline(1, '$'), 'v:val+0'))
+    call assert_match("6 fewer lines", res)
+    enew!
+    call append(0, repeat([1], 3) + repeat([2], 3) + repeat([3], 3))
+    $delete _
+    setlocal nomodified report=10
+    let res = execute('%sort u')
+
+    call assert_equal([1,2,3], map(getline(1, '$'), 'v:val+0'))
+    call assert_equal("", res)
+    enew!
+    call append(0, repeat([1], 3) + repeat([2], 3) + repeat([3], 3))
+    $delete _
+    setl report&vim
+    setlocal nomodified
+    let res = execute('1g/^/%sort u')
+
+    call assert_equal([1,2,3], map(getline(1, '$'), 'v:val+0'))
+    " the output comes from the :g command, not from the :sort
+    call assert_match("6 fewer lines", res)
+    enew!
+  endfunc

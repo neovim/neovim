@@ -38,7 +38,10 @@ set(ENV{SYSTEM_NAME} ${SYSTEM_NAME})
 execute_process(
   COMMAND ${BUSTED_PRG} ${TEST_TAG} ${TEST_FILTER} -v -o ${BUSTED_OUTPUT_TYPE}
     --lua=${LUA_PRG} --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
-    --lpath=${BUILD_DIR}/?.lua --lpath=?.lua ${TEST_PATH}
+    --lpath=${BUILD_DIR}/?.lua
+    --lpath=${WORKING_DIR}/runtime/lua/?.lua
+    --lpath=?.lua
+    ${TEST_PATH}
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
   RESULT_VARIABLE res
@@ -50,5 +53,5 @@ file(REMOVE_RECURSE ${WORKING_DIR}/Xtest-tmpdir)
 
 if(NOT res EQUAL 0)
   message(STATUS "Output to stderr:\n${err}")
-  message(FATAL_ERROR "Running ${TEST_TYPE} tests failed with error: ${res}.")
+  message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
 endif()

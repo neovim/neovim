@@ -18,5 +18,5 @@ execute_process(
 
 if(NOT res EQUAL 0)
   message(STATUS "Output to stderr:\n${err}")
-  message(FATAL_ERROR "Linting tests failed with error: ${res}.")
+  message(FATAL_ERROR "Linting tests failed with error: ${res}")
 endif()

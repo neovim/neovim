@@ -2845,30 +2845,32 @@ viml_pexpr_parse_no_paren_closing_error: {}
           kvi_push(ast_stack, new_top_node_p);
           want_node = kENodeOperator;
         } else {
-          if (want_node == kENodeValue) {
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeNested);
-            *top_node_p = cur_node;
-            kvi_push(ast_stack, &cur_node->children);
-            HL_CUR_TOKEN(NestingParenthesis);
-          } else if (want_node == kENodeOperator) {
-            if (prev_token.type == kExprLexSpacing) {
-              // For some reason "function (args)" is a function call, but
-              // "(funcref) (args)" is not. AFAIR this somehow involves
-              // compatibility and Bram was commenting that this is
-              // intentionally inconsistent and he is not very happy with the
-              // situation himself.
-              if ((*top_node_p)->type != kExprNodePlainIdentifier
-                  && (*top_node_p)->type != kExprNodeComplexIdentifier
-                  && (*top_node_p)->type != kExprNodeCurlyBracesIdentifier) {
-                OP_MISSING;
-              }
+          switch (want_node) {
+            case kENodeValue: {
+              NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeNested);
+              *top_node_p = cur_node;
+              kvi_push(ast_stack, &cur_node->children);
+              HL_CUR_TOKEN(NestingParenthesis);
+              break;
             }
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeCall);
-            ADD_OP_NODE(cur_node);
-            HL_CUR_TOKEN(CallingParenthesis);
-          } else {
-            // Currently it is impossible to reach this.
-            assert(false);
+            case kENodeOperator: {
+              if (prev_token.type == kExprLexSpacing) {
+                // For some reason "function (args)" is a function call, but
+                // "(funcref) (args)" is not. AFAIR this somehow involves
+                // compatibility and Bram was commenting that this is
+                // intentionally inconsistent and he is not very happy with the
+                // situation himself.
+                if ((*top_node_p)->type != kExprNodePlainIdentifier
+                    && (*top_node_p)->type != kExprNodeComplexIdentifier
+                    && (*top_node_p)->type != kExprNodeCurlyBracesIdentifier) {
+                  OP_MISSING;
+                }
+              }
+              NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeCall);
+              ADD_OP_NODE(cur_node);
+              HL_CUR_TOKEN(CallingParenthesis);
+              break;
+            }
           }
           want_node = kENodeValue;
         }

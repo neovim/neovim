@@ -60,29 +60,36 @@ function! provider#clipboard#Executable() abort
       let s:err = 'clipboard: invalid g:clipboard'
       return ''
     endif
+
     let s:copy = get(g:clipboard, 'copy', { '+': v:null, '*': v:null })
     let s:paste = get(g:clipboard, 'paste', { '+': v:null, '*': v:null })
     let s:cache_enabled = get(g:clipboard, 'cache_enabled', 0)
     return get(g:clipboard, 'name', 'g:clipboard')
-  elseif has('mac') && executable('pbpaste') && s:cmd_ok('pbpaste')
+  elseif has('mac')
     let s:copy['+'] = 'pbcopy'
     let s:paste['+'] = 'pbpaste'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     let s:cache_enabled = 0
     return 'pbcopy'
-  elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
-    let s:copy['+'] = 'xsel --nodetach -i -b'
-    let s:paste['+'] = 'xsel -o -b'
-    let s:copy['*'] = 'xsel --nodetach -i -p'
-    let s:paste['*'] = 'xsel -o -p'
-    return 'xsel'
+  elseif exists('$WAYLAND_DISPLAY') && executable('wl-copy') && executable('wl-paste')
+    let s:copy['+'] = 'wl-copy --foreground --type text/plain'
+    let s:paste['+'] = 'wl-paste --no-newline'
+    let s:copy['*'] = 'wl-copy --foreground --primary --type text/plain'
+    let s:paste['*'] = 'wl-paste --no-newline --primary'
+    return 'wl-copy'
   elseif exists('$DISPLAY') && executable('xclip')
     let s:copy['+'] = 'xclip -quiet -i -selection clipboard'
     let s:paste['+'] = 'xclip -o -selection clipboard'
     let s:copy['*'] = 'xclip -quiet -i -selection primary'
     let s:paste['*'] = 'xclip -o -selection primary'
     return 'xclip'
+  elseif exists('$DISPLAY') && executable('xsel') && s:cmd_ok('xsel -o -b')
+    let s:copy['+'] = 'xsel --nodetach -i -b'
+    let s:paste['+'] = 'xsel -o -b'
+    let s:copy['*'] = 'xsel --nodetach -i -p'
+    let s:paste['*'] = 'xsel -o -p'
+    return 'xsel'
   elseif executable('lemonade')
     let s:copy['+'] = 'lemonade copy'
     let s:paste['+'] = 'lemonade paste'
@@ -95,9 +102,9 @@ function! provider#clipboard#Executable() abort
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'doitclient'
-  elseif executable('win32yank')
-    let s:copy['+'] = 'win32yank -i --crlf'
-    let s:paste['+'] = 'win32yank -o --lf'
+  elseif executable('win32yank.exe')
+    let s:copy['+'] = 'win32yank.exe -i --crlf'
+    let s:paste['+'] = 'win32yank.exe -o --lf'
     let s:copy['*'] = s:copy['+']
     let s:paste['*'] = s:paste['+']
     return 'win32yank'
@@ -121,7 +128,9 @@ if empty(provider#clipboard#Executable())
 endif
 
 function! s:clipboard.get(reg) abort
-  if s:selections[a:reg].owner > 0
+  if type(s:paste[a:reg]) == v:t_func
+    return s:paste[a:reg]()
+  elseif s:selections[a:reg].owner > 0
     return s:selections[a:reg].data
   end
   return s:try_cmd(s:paste[a:reg])
@@ -135,6 +144,12 @@ function! s:clipboard.set(lines, regtype, reg) abort
     end
     return 0
   end
+
+  if type(s:copy[a:reg]) == v:t_func
+    call s:copy[a:reg](a:lines, a:regtype)
+    return 0
+  end
+
   if s:cache_enabled == 0
     call s:try_cmd(s:copy[a:reg], a:lines)
     return 0

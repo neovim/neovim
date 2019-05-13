@@ -16,12 +16,14 @@ Concepts
 
 Job Id							*job-id*
 
-When a job starts it is assigned a number, unique for the life of the current
-Nvim session. Functions like |jobstart()| return job ids. Functions like
+Each job is identified by an integer id, unique for the life of the current
+Nvim session. Each job-id is a valid |channel-id|: they share the same "key
+space". Functions like |jobstart()| return job ids; functions like
 |jobsend()|, |jobstop()|, |rpcnotify()|, and |rpcrequest()| take job ids.
 
-The job's stdio streams are represented as a |channel|. It is possible to send
-and recieve raw bytes, or use |msgpack-rpc|.
+Job stdio streams form a |channel| which can send and receive raw bytes or
+|msgpack-rpc| messages.
+
 ==============================================================================
 Usage							*job-control-usage*
 

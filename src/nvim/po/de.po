@@ -1918,7 +1918,7 @@ msgstr "E216: Keine solche Gruppe oder Ereignis: %s"
 #: ../fileio.c:5993
 msgid ""
 "\n"
-"--- Auto-Commands ---"
+"--- Autocommands ---"
 msgstr ""
 "\n"
 "--- Autokommandos ---"
@@ -1942,7 +1942,7 @@ msgstr "E218: Autokommandos zu tief verschachtelt"
 
 #: ../fileio.c:7042
 #, c-format
-msgid "%s Auto commands for \"%s\""
+msgid "%s Autocommands for \"%s\""
 msgstr "%s Autokommandos für \"%s\""
 
 #: ../fileio.c:7048
@@ -1994,7 +1994,7 @@ msgstr "E223: rekursive Zuordnung"
 #: ../getchar.c:2835
 #, c-format
 msgid "E224: global abbreviation already exists for %s"
-msgstr "E224: Globale Abkürzung für %s existiert bereits"
+msgstr "E224: Globale Kurzform für %s existiert bereits"
 
 #: ../getchar.c:2838
 #, c-format
@@ -2162,7 +2162,7 @@ msgstr "E23: Keine alternative Datei"
 
 #: ../globals.h:1031
 msgid "E24: No such abbreviation"
-msgstr "E24: Keine Abkürzung gefunden"
+msgstr "E24: Diese Kurzform nicht gefunden"
 
 #: ../globals.h:1032
 msgid "E477: No ! allowed"
@@ -2835,7 +2835,7 @@ msgstr "-q [Fehler-Datei]  öffne Datei mit erstem Fehler"
 msgid ""
 "\n"
 "\n"
-"usage:"
+"Usage:"
 msgstr ""
 "\n"
 "\n"
@@ -4771,8 +4771,8 @@ msgstr "Achtung: Region %s nicht unterstützt"
 
 #: ../spell.c:4364
 #, c-format
-msgid "Reading affix file %s ..."
-msgstr "Lese Affix-Datei %s ..."
+msgid "Reading affix file %s..."
+msgstr "Lese Affix-Datei %s..."
 
 #: ../spell.c:4403 ../spell.c:5449 ../spell.c:5954
 #, c-format
@@ -4938,8 +4938,8 @@ msgstr ""
 
 #: ../spell.c:5416
 #, c-format
-msgid "Reading dictionary file %s ..."
-msgstr "Lese Wörterbuch-Datei %s ..."
+msgid "Reading dictionary file %s..."
+msgstr "Lese Wörterbuch-Datei %s..."
 
 #: ../spell.c:5425
 #, c-format
@@ -4973,8 +4973,8 @@ msgstr "%d Wort(e) mit Nicht-ASCII-Zeichen ignoriert in %s"
 
 #: ../spell.c:5929
 #, c-format
-msgid "Reading word file %s ..."
-msgstr "Lese Wort-Datei %s ..."
+msgid "Reading word file %s..."
+msgstr "Lese Wort-Datei %s..."
 
 #: ../spell.c:5969
 #, c-format
@@ -5043,8 +5043,8 @@ msgstr "Gesamte Anzahl von Wörtern: %d"
 
 #: ../spell.c:7468
 #, c-format
-msgid "Writing suggestion file %s ..."
-msgstr "Schreibe Datei %s für Vorschläge ..."
+msgid "Writing suggestion file %s..."
+msgstr "Schreibe Datei %s für Vorschläge..."
 
 #: ../spell.c:7520 ../spell.c:7740
 #, c-format
@@ -5070,8 +5070,8 @@ msgstr "Achtung: Sowohl zusammengesetzte Wörter als auch NOBREAK angegeben"
 
 #: ../spell.c:7733
 #, c-format
-msgid "Writing spell file %s ..."
-msgstr "Schreibe Rechtschreibwörterbuch %s ..."
+msgid "Writing spell file %s..."
+msgstr "Schreibe Rechtschreibwörterbuch %s..."
 
 #: ../spell.c:7738
 msgid "Done!"

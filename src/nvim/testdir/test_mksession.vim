@@ -17,9 +17,9 @@ func Test_mksession()
     \   '    four leadinG spaces',
     \   'two		consecutive tabs',
     \   'two	tabs	in one line',
-    \   'one ä multibyteCharacter',
-    \   'aä Ä  two multiByte characters',
-    \   'Aäöü  three mulTibyte characters',
+    \   'one Ã¤ multibyteCharacter',
+    \   'aÃ¤ Ã„  two multiByte characters',
+    \   'AÃ¤Ã¶Ã¼  three mulTibyte characters',
     \   'short line',
     \ ])
   let tmpfile = 'Xtemp'
@@ -236,6 +236,21 @@ func Test_mkview_no_file_name()
 
   call delete('Xview')
   %bwipe
+endfunc
+
+func Test_mksession_quote_in_filename()
+  let v:errmsg = ''
+  let filename = has('win32') ? 'x''y' : 'x''y"z'
+  %bwipe!
+  split another
+  execute 'split' escape(filename, '"')
+  mksession! Xtest_mks_quoted.out
+  %bwipe!
+  source Xtest_mks_quoted.out
+  call assert_true(bufexists(filename))
+
+  %bwipe!
+  call delete('Xtest_mks_quoted.out')
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

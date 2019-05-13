@@ -5,7 +5,7 @@ source shared.vim
 let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 let g:setting = ''
 
-func! ListMonths()
+func ListMonths()
   if g:setting != ''
     exe ":set" g:setting
   endif
@@ -18,7 +18,7 @@ func! ListMonths()
   return ''
 endfunc
 
-func! Test_popup_complete2()
+func Test_popup_complete2()
   " Although the popupmenu is not visible, this does not mean completion mode
   " has ended. After pressing <f5> to complete the currently typed char, Vim
   " still stays in the first state of the completion (:h ins-completion-menu),
@@ -33,9 +33,9 @@ func! Test_popup_complete2()
   call assert_equal(["Dece", "", "December2015"], getline(1,3))
   %d
   bw!
-endfu
+endfunc
 
-func! Test_popup_complete()
+func Test_popup_complete()
   new
   inoremap <f5> <c-r>=ListMonths()<cr>
 
@@ -214,10 +214,10 @@ func! Test_popup_complete()
   call feedkeys("aM\<f5>\<enter>\<esc>", 'tx')
   call assert_equal(["March", "M", "March"], getline(1,4))
   %d
-endfu
+endfunc
 
 
-func! Test_popup_completion_insertmode()
+func Test_popup_completion_insertmode()
   new
   inoremap <F5> <C-R>=ListMonths()<CR>
 
@@ -247,15 +247,15 @@ func! Test_popup_completion_insertmode()
 endfunc
 
 func Test_noinsert_complete()
-  function! s:complTest1() abort
+  func! s:complTest1() abort
     call complete(1, ['source', 'soundfold'])
     return ''
-  endfunction
+  endfunc
 
-  function! s:complTest2() abort
+  func! s:complTest2() abort
     call complete(1, ['source', 'soundfold'])
     return ''
-  endfunction
+  endfunc
 
   new
   set completeopt+=noinsert
@@ -275,10 +275,42 @@ func Test_noinsert_complete()
   iunmap <F5>
 endfunc
 
+func Test_complete_no_filter()
+  func! s:complTest1() abort
+    call complete(1, [{'word': 'foobar'}])
+    return ''
+  endfunc
+  func! s:complTest2() abort
+    call complete(1, [{'word': 'foobar', 'equal': 1}])
+    return ''
+  endfunc
+
+  let completeopt = &completeopt
+
+  " without equal=1
+  new
+  set completeopt=menuone,noinsert,menu
+  inoremap <F5>  <C-R>=s:complTest1()<CR>
+  call feedkeys("i\<F5>z\<CR>\<CR>\<ESC>.", 'tx')
+  call assert_equal('z', getline(1))
+  bwipe!
+
+  " with equal=1
+  new
+  set completeopt=menuone,noinsert,menu
+  inoremap <F5>  <C-R>=s:complTest2()<CR>
+  call feedkeys("i\<F5>z\<CR>\<CR>\<ESC>.", 'tx')
+  call assert_equal('foobar', getline(1))
+  bwipe!
+
+  let &completeopt = completeopt
+  iunmap <F5>
+endfunc
+
 func Test_compl_vim_cmds_after_register_expr()
-  function! s:test_func()
+  func! s:test_func()
     return 'autocmd '
-  endfunction
+  endfunc
   augroup AAAAA_Group
     au!
   augroup END
@@ -325,7 +357,7 @@ func DummyCompleteTwo(findstart, base)
   else
     return ['twodef', 'twoDEF']
   endif
-endfunction
+endfunc
 
 " Test that nothing happens if the 'completefunc' opens
 " a new window (no completion, no crash)
@@ -402,7 +434,7 @@ func Test_omnifunc_with_check()
   q!
 endfunc
 
-function UndoComplete()
+func UndoComplete()
   call complete(1, ['January', 'February', 'March',
         \ 'April', 'May', 'June', 'July', 'August', 'September',
         \ 'October', 'November', 'December'])
@@ -439,7 +471,7 @@ func Test_complete_no_undo()
   q!
 endfunc
 
-function! DummyCompleteFive(findstart, base)
+func DummyCompleteFive(findstart, base)
   if a:findstart
     return 0
   else
@@ -543,7 +575,7 @@ func Test_completion_comment_formatting()
   bwipe!
 endfunc
 
-function! DummyCompleteSix()
+func DummyCompleteSix()
   call complete(1, ['Hello', 'World'])
   return ''
 endfunction
@@ -571,6 +603,15 @@ func Test_completion_clear_candidate_list()
   bw!
 endfunc
 
+func Test_popup_complete_backwards()
+  new
+  call setline(1, ['Post', 'Port', 'Po'])
+  let expected=['Post', 'Port', 'Port']
+  call cursor(3,2)
+  call feedkeys("A\<C-X>". repeat("\<C-P>", 3). "rt\<cr>", 'tx')
+  call assert_equal(expected, getline(1,'$'))
+  bwipe!
+endfunc
 
 func Test_popup_and_preview_autocommand()
   " This used to crash Vim
@@ -610,7 +651,7 @@ func Test_popup_and_preview_autocommand()
   bw!
 endfunc
 
-fun MessCompleteMonths()
+func MessCompleteMonths()
   for m in split("Jan Feb Mar Apr May Jun Jul Aug Sep")
     call complete_add(m)
     if complete_check()
@@ -618,14 +659,14 @@ fun MessCompleteMonths()
     endif
   endfor
   return []
-endfun
+endfunc
 
-fun MessCompleteMore()
+func MessCompleteMore()
   call complete(1, split("Oct Nov Dec"))
   return []
-endfun
+endfunc
 
-fun MessComplete(findstart, base)
+func MessComplete(findstart, base)
   if a:findstart
     let line = getline('.')
     let start = col('.') - 1
@@ -638,7 +679,7 @@ fun MessComplete(findstart, base)
     call MessCompleteMore()
     return []
   endif
-endf
+endfunc
 
 func Test_complete_func_mess()
   " Calling complete() after complete_add() in 'completefunc' is wrong, but it
@@ -678,18 +719,125 @@ func Test_popup_and_window_resize()
   let g:buf = term_start([$NVIM_PRG, '--clean', '-c', 'set noswapfile'], {'term_rows': h / 3})
   call term_sendkeys(g:buf, (h / 3 - 1)."o\<esc>G")
   call term_sendkeys(g:buf, "i\<c-x>")
-  call term_wait(g:buf, 100)
+  call term_wait(g:buf, 200)
   call term_sendkeys(g:buf, "\<c-v>")
   call term_wait(g:buf, 100)
+  " popup first entry "!" must be at the top
+  call WaitFor('term_getline(g:buf, 1) =~ "^!"')
   call assert_match('^!\s*$', term_getline(g:buf, 1))
   exe 'resize +' . (h - 1)
   call term_wait(g:buf, 100)
   redraw!
-  call WaitFor('"" == term_getline(g:buf, 1)')
+  " popup shifted down, first line is now empty
+  call WaitFor('term_getline(g:buf, 1) == ""')
   call assert_equal('', term_getline(g:buf, 1))
   sleep 100m
-  call WaitFor('"^!" =~ term_getline(g:buf, term_getcursor(g:buf)[0] + 1)')
+  " popup is below cursor line and shows first match "!"
+  call WaitFor('term_getline(g:buf, term_getcursor(g:buf)[0] + 1) =~ "^!"')
   call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0] + 1))
+  " cursor line also shows !
+  call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0]))
+  bwipe!
+endfunc
+
+func Test_popup_complete_info_01()
+  new
+  inoremap <buffer><F5> <C-R>=complete_info().mode<CR>
+  func s:complTestEval() abort
+    call complete(1, ['aa', 'ab'])
+    return ''
+  endfunc
+  inoremap <buffer><F6> <C-R>=s:complTestEval()<CR>
+  call writefile([
+        \ 'dummy	dummy.txt	1',
+        \], 'Xdummy.txt')
+  setlocal tags=Xdummy.txt
+  setlocal dictionary=Xdummy.txt
+  setlocal thesaurus=Xdummy.txt
+  setlocal omnifunc=syntaxcomplete#Complete
+  setlocal completefunc=syntaxcomplete#Complete
+  setlocal spell
+  for [keys, mode_name] in [
+        \ ["", ''],
+        \ ["\<C-X>", 'ctrl_x'],
+        \ ["\<C-X>\<C-N>", 'keyword'],
+        \ ["\<C-X>\<C-P>", 'keyword'],
+        \ ["\<C-X>\<C-L>", 'whole_line'],
+        \ ["\<C-X>\<C-F>", 'files'],
+        \ ["\<C-X>\<C-]>", 'tags'],
+        \ ["\<C-X>\<C-D>", 'path_defines'],
+        \ ["\<C-X>\<C-I>", 'path_patterns'],
+        \ ["\<C-X>\<C-K>", 'dictionary'],
+        \ ["\<C-X>\<C-T>", 'thesaurus'],
+        \ ["\<C-X>\<C-V>", 'cmdline'],
+        \ ["\<C-X>\<C-U>", 'function'],
+        \ ["\<C-X>\<C-O>", 'omni'],
+        \ ["\<C-X>s", 'spell'],
+        \ ["\<F6>", 'eval'],
+        \]
+    call feedkeys("i" . keys . "\<F5>\<Esc>", 'tx')
+    call assert_equal(mode_name, getline('.'))
+    %d
+  endfor
+  call delete('Xdummy.txt')
+  bwipe!
+endfunc
+
+func UserDefinedComplete(findstart, base)
+  if a:findstart
+    return 0
+  else
+    return [
+          \   { 'word': 'Jan', 'menu': 'January' },
+          \   { 'word': 'Feb', 'menu': 'February' },
+          \   { 'word': 'Mar', 'menu': 'March' },
+          \   { 'word': 'Apr', 'menu': 'April' },
+          \   { 'word': 'May', 'menu': 'May' },
+          \ ]
+  endif
+endfunc
+
+func GetCompleteInfo()
+  if empty(g:compl_what)
+    let g:compl_info = complete_info()
+  else
+    let g:compl_info = complete_info(g:compl_what)
+  endif
+  return ''
+endfunc
+
+func Test_popup_complete_info_02()
+  new
+  inoremap <buffer><F5> <C-R>=GetCompleteInfo()<CR>
+  setlocal completefunc=UserDefinedComplete
+
+  let d = {
+    \   'mode': 'function',
+    \   'pum_visible': 1,
+    \   'items': [
+    \     {'word': 'Jan', 'menu': 'January', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'Feb', 'menu': 'February', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'Mar', 'menu': 'March', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'Apr', 'menu': 'April', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''},
+    \     {'word': 'May', 'menu': 'May', 'user_data': '', 'info': '', 'kind': '', 'abbr': ''}
+    \   ],
+    \   'selected': 0,
+    \ }
+
+  let g:compl_what = []
+  call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
+  call assert_equal(d, g:compl_info)
+
+  let g:compl_what = ['mode', 'pum_visible', 'selected']
+  call remove(d, 'items')
+  call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
+  call assert_equal(d, g:compl_info)
+
+  let g:compl_what = ['mode']
+  call remove(d, 'selected')
+  call remove(d, 'pum_visible')
+  call feedkeys("i\<C-X>\<C-U>\<F5>", 'tx')
+  call assert_equal(d, g:compl_info)
   bwipe!
 endfunc
 

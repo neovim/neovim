@@ -171,9 +171,8 @@ bool hasFoldingWin(
   int low_level = 0;
 
   checkupdate(win);
-  /*
-   * Return quickly when there is no folding at all in this window.
-   */
+
+  // Return quickly when there is no folding at all in this window.
   if (!hasAnyFolding(win)) {
     if (infop != NULL)
       infop->fi_level = 0;
@@ -2851,8 +2850,9 @@ static void foldlevelIndent(fline_T *flp)
       flp->lvl = 0;
     else
       flp->lvl = -1;
-  } else
-    flp->lvl = get_indent_buf(buf, lnum) / get_sw_value(curbuf);
+  } else {
+    flp->lvl = get_indent_buf(buf, lnum) / get_sw_value(buf);
+  }
   if (flp->lvl > flp->wp->w_p_fdn) {
     flp->lvl = (int) MAX(0, flp->wp->w_p_fdn);
   }
@@ -2883,7 +2883,6 @@ static void foldlevelExpr(fline_T *flp)
   int n;
   int c;
   linenr_T lnum = flp->lnum + flp->off;
-  int save_keytyped;
 
   win = curwin;
   curwin = flp->wp;
@@ -2898,7 +2897,7 @@ static void foldlevelExpr(fline_T *flp)
 
   /* KeyTyped may be reset to 0 when calling a function which invokes
    * do_cmdline().  To make 'foldopen' work correctly restore KeyTyped. */
-  save_keytyped = KeyTyped;
+  const bool save_keytyped = KeyTyped;
   n = (int)eval_foldexpr(flp->wp->w_p_fde, &c);
   KeyTyped = save_keytyped;
 

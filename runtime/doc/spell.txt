@@ -1733,4 +1733,4 @@ This isn't ideal, because the longer Vim is running the higher the counts
 become.  But in practice it is a noticeable improvement over not using the word
 count.
 
- vim:tw=78:sw=4:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

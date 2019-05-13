@@ -1,4 +1,6 @@
-*ft_rust.txt*      Filetype plugin for Rust
+*ft_rust.txt*	For Vim version 8.1.  Last change: 2017 Nov 02
+
+This is documentation for the Rust filetype plugin.
 
 ==============================================================================
 CONTENTS                                                      *rust*
@@ -234,4 +236,4 @@ It also has a few other mappings:
 			Note: This binding is only available in MacVim.
 
 ==============================================================================
- vim:tw=78:sw=4:noet:ts=8:ft=help:norl:
+ vim:tw=78:sw=4:ts=8:noet:ft=help:norl:

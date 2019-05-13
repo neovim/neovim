@@ -23,6 +23,8 @@ function! Test_lambda_with_timer()
     return
   endif
 
+  source load.vim
+
   let s:n = 0
   let s:timer_id = 0
   function! s:Foo()
@@ -31,15 +33,19 @@ function! Test_lambda_with_timer()
   endfunction
 
   call s:Foo()
-  sleep 200ms
+  sleep 210m
   " do not collect lambda
-  call garbagecollect()
-  let m = s:n
-  sleep 200ms
+  call test_garbagecollect_now()
+  let m = LoadAdjust(s:n)
+  sleep 230m
   call timer_stop(s:timer_id)
+
+  let n = LoadAdjust(s:n)
+  let nine = LoadAdjust(9)
+
   call assert_true(m > 1)
-  call assert_true(s:n > m + 1)
-  call assert_true(s:n < 9)
+  call assert_true(n > m + 1)
+  call assert_true(n < nine)
 endfunction
 
 function! Test_lambda_with_partial()
@@ -284,4 +290,10 @@ func Test_named_function_closure()
   call assert_equal(14, s:Abar())
   call garbagecollect()
   call assert_equal(14, s:Abar())
+endfunc
+
+func Test_lambda_with_index()
+  let List = {x -> [x]}
+  let Extract = {-> function(List, ['foobar'])()[0]}
+  call assert_equal('foobar', Extract())
 endfunc

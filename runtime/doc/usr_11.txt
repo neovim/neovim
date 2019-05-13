@@ -205,6 +205,13 @@ something wrong.  It may be one of these two situations.
       NEWER than swap file! ~
 
 
+NOTE that in the following situation Vim knows the swap file is not useful and
+will automatically delete it:
+- The file is a valid swap file (Magic number is correct).
+- The flag that the file was modified is not set.
+- The process is not running.
+
+
 UNREADABLE SWAP FILE
 
 Sometimes the line
@@ -234,7 +241,7 @@ that file, be prepared to redo your last changes.
 
 WHAT TO DO?					*swap-exists-choices*
 
-If dialogs are supported you will be asked to select one of five choices:
+If dialogs are supported you will be asked to select one of six choices:
 
   Swap file ".main.c.swp" already exists! ~
   [O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (A)bort, (D)elete it: ~
@@ -283,6 +290,8 @@ machines.  Therefore, don't rely on Vim always warning you.
 If you really don't want to see this message, you can add the 'A' flag to the
 'shortmess' option.  But it's very unusual that you need this.
 
+For programatic access to the swap file, see |swapinfo()|.
+
 ==============================================================================
 *11.4*	Further reading
 
@@ -299,4 +308,4 @@ If you really don't want to see this message, you can add the 'A' flag to the
 
 Next chapter: |usr_12.txt|  Clever tricks
 
-Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -149,8 +149,10 @@ function! s:system(cmd, ...) abort
 endfunction
 
 function! s:get_page(path) abort
-  " Respect $MANWIDTH or default to window width.
-  let manwidth = empty($MANWIDTH) ? winwidth(0) : $MANWIDTH
+  " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
+  " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
+  " Hard-wrap: driven by `man`.
+  let manwidth = !get(g:,'man_hardwrap') ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
@@ -166,6 +168,11 @@ function! s:put_page(page) abort
   while getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   endwhile
+  " XXX: nroff justifies text by filling it with whitespace.  That interacts
+  " badly with our use of $MANWIDTH=999.  Hack around this by using a fixed
+  " size for those whitespace regions.
+  silent! keeppatterns keepjumps %s/\s\{199,}/\=repeat(' ', 10)/g
+  1
   lua require("man").highlight_man_page()
   setlocal filetype=man
 endfunction
@@ -386,15 +393,17 @@ function! man#init_pager() abort
     keepjumps 1
   endif
   lua require("man").highlight_man_page()
-  " This is not perfect. See `man glDrawArraysInstanced`. Since the title is
-  " all caps it is impossible to tell what the original capitilization was.
+  " Guess the ref from the heading (which is usually uppercase, so we cannot
+  " know the correct casing, cf. `man glDrawArraysInstanced`).
   let ref = substitute(matchstr(getline(1), '^[^)]\+)'), ' ', '_', 'g')
   try
     let b:man_sect = man#extract_sect_and_name_ref(ref)[0]
   catch
     let b:man_sect = ''
   endtry
-  execute 'silent file man://'.fnameescape(ref)
+  if -1 == match(bufname('%'), 'man:\/\/')  " Avoid duplicate buffers, E95.
+    execute 'silent file man://'.tolower(fnameescape(ref))
+  endif
 endfunction
 
 call s:init()

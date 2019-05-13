@@ -78,7 +78,7 @@
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
 
-/* whether ":lcd" was produced for a session */
+/// Whether ":lcd" or ":tcd" was produced for a session.
 static int did_lcd;
 
 typedef struct ucmd {
@@ -208,8 +208,8 @@ void do_exmode(int improved)
     return;
 
   save_msg_scroll = msg_scroll;
-  ++RedrawingDisabled;              /* don't redisplay the window */
-  ++no_wait_return;                 /* don't wait for return */
+  RedrawingDisabled++;  // don't redisplay the window
+  no_wait_return++;  // don't wait for return
 
   MSG(_("Entering Ex mode.  Type \"visual\" to go to Normal mode."));
   while (exmode_active) {
@@ -253,10 +253,11 @@ void do_exmode(int improved)
     }
   }
 
-  --RedrawingDisabled;
-  --no_wait_return;
-  update_screen(CLEAR);
-  need_wait_return = FALSE;
+  RedrawingDisabled--;
+  no_wait_return--;
+  redraw_all_later(NOT_VALID);
+  update_screen(NOT_VALID);
+  need_wait_return = false;
   msg_scroll = save_msg_scroll;
 }
 
@@ -400,7 +401,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
    */
   if (!(flags & DOCMD_KEYTYPED)
       && !getline_equal(fgetline, cookie, getexline))
-    KeyTyped = FALSE;
+    KeyTyped = false;
 
   /*
    * Continue executing command lines:
@@ -838,9 +839,10 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       sourcing_lnum = current_exception->throw_lnum;
       current_exception->throw_name = NULL;
 
-      discard_current_exception();              /* uses IObuff if 'verbose' */
-      suppress_errthrow = TRUE;
-      force_abort = TRUE;
+      discard_current_exception();              // uses IObuff if 'verbose'
+      suppress_errthrow = true;
+      force_abort = true;
+      msg_ext_set_kind("emsg");  // kind=emsg for :throw, exceptions. #9993
 
       if (messages != NULL) {
         do {
@@ -973,8 +975,8 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
     return line;
   }
 
-  KeyTyped = FALSE;
-  ++cp->current_line;
+  KeyTyped = false;
+  cp->current_line++;
   wp = (wcmd_T *)(cp->lines_gap->ga_data) + cp->current_line;
   sourcing_lnum = wp->lnum;
   return vim_strsave(wp->line);
@@ -1803,15 +1805,19 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       errormsg = (char_u *)_(get_text_locked_msg());
       goto doend;
     }
-    /* Disallow editing another buffer when "curbuf_lock" is set.
-     * Do allow ":edit" (check for argument later).
-     * Do allow ":checktime" (it's postponed). */
+
+    // Disallow editing another buffer when "curbuf_lock" is set.
+    // Do allow ":checktime" (it is postponed).
+    // Do allow ":edit" (check for an argument later).
+    // Do allow ":file" with no arguments (check for an argument later).
     if (!(ea.argt & CMDWIN)
-        && ea.cmdidx != CMD_edit
         && ea.cmdidx != CMD_checktime
+        && ea.cmdidx != CMD_edit
+        && ea.cmdidx != CMD_file
         && !IS_USER_CMDIDX(ea.cmdidx)
-        && curbuf_locked())
+        && curbuf_locked()) {
       goto doend;
+    }
 
     if (!ni && !(ea.argt & RANGE) && ea.addr_count > 0) {
       /* no range allowed */
@@ -1882,6 +1888,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     ea.arg = p;
   else
     ea.arg = skipwhite(p);
+
+  // ":file" cannot be run with an argument when "curbuf_lock" is set
+  if (ea.cmdidx == CMD_file && *ea.arg != NUL && curbuf_locked()) {
+    goto doend;
+  }
 
   /*
    * Check for "++opt=val" argument.
@@ -2148,6 +2159,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_python:
     case CMD_py3:
     case CMD_python3:
+    case CMD_pythonx:
+    case CMD_pyx:
+    case CMD_pyxdo:
+    case CMD_pyxfile:
     case CMD_return:
     case CMD_rightbelow:
     case CMD_ruby:
@@ -2249,8 +2264,11 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   need_rethrow = check_cstack = FALSE;
 
 doend:
-  if (curwin->w_cursor.lnum == 0)       /* can happen with zero line number */
+  // can happen with zero line number
+  if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
+    curwin->w_cursor.col = 0;
+  }
 
   if (errormsg != NULL && *errormsg != NUL && !did_emsg) {
     if (flags & DOCMD_VERBOSE) {
@@ -2426,10 +2444,24 @@ static char_u *find_command(exarg_T *eap, int *full)
       }
     }
 
-    if (ASCII_ISLOWER(*eap->cmd))
-      eap->cmdidx = cmdidxs[CharOrdLow(*eap->cmd)];
-    else
-      eap->cmdidx = cmdidxs[26];
+    if (ASCII_ISLOWER(eap->cmd[0])) {
+      const int c1 = eap->cmd[0];
+      const int c2 = eap->cmd[1];
+
+      if (command_count != (int)CMD_SIZE) {
+        iemsg((char *)_("E943: Command table needs to be updated, run 'make'"));
+        getout(1);
+      }
+
+      // Use a precomputed index for fast look-up in cmdnames[]
+      // taking into account the first 2 letters of eap->cmd.
+      eap->cmdidx = cmdidxs1[CharOrdLow(c1)];
+      if (ASCII_ISLOWER(c2)) {
+        eap->cmdidx += cmdidxs2[CharOrdLow(c1)][CharOrdLow(c2)];
+      }
+    } else {
+      eap->cmdidx = CMD_bang;
+    }
 
     for (; (int)eap->cmdidx < (int)CMD_SIZE;
          eap->cmdidx = (cmdidx_T)((int)eap->cmdidx + 1))
@@ -3221,7 +3253,7 @@ const char * set_one_cmd_context(
   case CMD_tjump:
   case CMD_stjump:
   case CMD_ptjump:
-    if (*p_wop != NUL) {
+    if (wop_flags & WOP_TAGFILE) {
       xp->xp_context = EXPAND_TAGS_LISTFILES;
     } else {
       xp->xp_context = EXPAND_TAGS;
@@ -3260,8 +3292,15 @@ const char * set_one_cmd_context(
     while ((xp->xp_pattern = (char_u *)strchr(arg, ' ')) != NULL) {
       arg = (const char *)xp->xp_pattern + 1;
     }
+
     xp->xp_context = EXPAND_USER_VARS;
     xp->xp_pattern = (char_u *)arg;
+
+    if (*xp->xp_pattern == '$') {
+      xp->xp_context = EXPAND_ENV_VARS;
+      xp->xp_pattern++;
+    }
+
     break;
 
   case CMD_function:
@@ -3290,7 +3329,7 @@ const char * set_one_cmd_context(
     while ((xp->xp_pattern = (char_u *)strchr(arg, ' ')) != NULL) {
       arg = (const char *)xp->xp_pattern + 1;
     }
-  // FALLTHROUGH
+    FALLTHROUGH;
   case CMD_buffer:
   case CMD_sbuffer:
   case CMD_checktime:
@@ -3664,20 +3703,21 @@ static linenr_T get_address(exarg_T *eap,
          */
         if (lnum != MAXLNUM)
           curwin->w_cursor.lnum = lnum;
-        /*
-         * Start a forward search at the end of the line.
-         * Start a backward search at the start of the line.
-         * This makes sure we never match in the current
-         * line, and can match anywhere in the
-         * next/previous line.
-         */
-        if (c == '/')
+
+        // Start a forward search at the end of the line (unless
+        // before the first line).
+        // Start a backward search at the start of the line.
+        // This makes sure we never match in the current
+        // line, and can match anywhere in the
+        // next/previous line.
+        if (c == '/' && curwin->w_cursor.lnum > 0) {
           curwin->w_cursor.col = MAXCOL;
-        else
+        } else {
           curwin->w_cursor.col = 0;
+        }
         searchcmdlen = 0;
         if (!do_search(NULL, c, cmd, 1L,
-                SEARCH_HIS | SEARCH_MSG, NULL)) {
+                       SEARCH_HIS | SEARCH_MSG, NULL, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
           goto error;
@@ -3715,7 +3755,7 @@ static linenr_T get_address(exarg_T *eap,
         if (searchit(curwin, curbuf, &pos,
                      *cmd == '?' ? BACKWARD : FORWARD,
                      (char_u *)"", 1L, SEARCH_MSG,
-                     i, (linenr_T)0, NULL) != FAIL)
+                     i, (linenr_T)0, NULL, NULL) != FAIL)
           lnum = pos.lnum;
         else {
           cmd = NULL;
@@ -4466,8 +4506,8 @@ static int get_tabpage_arg(exarg_T *eap)
       tab_number = 0;
     } else {
       tab_number = eap->line2;
-      if (!unaccept_arg0 && **eap->cmdlinep == '-') {
-        --tab_number;
+      if (!unaccept_arg0 && *skipwhite(*eap->cmdlinep) == '-') {
+        tab_number--;
         if (tab_number < unaccept_arg0) {
           eap->errmsg = e_invarg;
         }
@@ -5467,24 +5507,18 @@ uc_check_code(
       break;
     case 1:     /* Quote, but don't split */
       result = STRLEN(eap->arg) + 2;
-      for (p = eap->arg; *p; ++p) {
-        if (enc_dbcs != 0 && (*mb_ptr2len)(p) == 2)
-          /* DBCS can contain \ in a trail byte, skip the
-           * double-byte character. */
-          ++p;
-        else if (*p == '\\' || *p == '"')
-          ++result;
+      for (p = eap->arg; *p; p++) {
+        if (*p == '\\' || *p == '"') {
+          result++;
+        }
       }
 
       if (buf != NULL) {
         *buf++ = '"';
-        for (p = eap->arg; *p; ++p) {
-          if (enc_dbcs != 0 && (*mb_ptr2len)(p) == 2)
-            /* DBCS can contain \ in a trail byte, copy the
-             * double-byte character to avoid escaping. */
-            *buf++ = *p++;
-          else if (*p == '\\' || *p == '"')
+        for (p = eap->arg; *p; p++) {
+          if (*p == '\\' || *p == '"') {
             *buf++ = '\\';
+          }
           *buf++ = *p;
         }
         *buf = '"';
@@ -6154,7 +6188,7 @@ static void ex_pclose(exarg_T *eap)
  * Close window "win" and take care of handling closing the last window for a
  * modified buffer.
  */
-static void
+void
 ex_win_close(
     int forceit,
     win_T *win,
@@ -6263,6 +6297,9 @@ void tabpage_close(int forceit)
 {
   // First close all the windows but the current one.  If that worked then
   // close the last window in this tab, that will close it.
+  while (curwin->w_floating) {
+    ex_win_close(forceit, curwin, NULL);
+  }
   if (!ONE_WINDOW) {
     close_others(true, forceit);
   }
@@ -6287,8 +6324,8 @@ void tabpage_close_other(tabpage_T *tp, int forceit)
   /* Limit to 1000 windows, autocommands may add a window while we close
    * one.  OK, so I'm paranoid... */
   while (++done < 1000) {
-    sprintf((char *)prev_idx, "%i", tabpage_index(tp));
-    wp = tp->tp_firstwin;
+    snprintf((char *)prev_idx, sizeof(prev_idx), "%i", tabpage_index(tp));
+    wp = tp->tp_lastwin;
     ex_win_close(forceit, wp, tp);
 
     /* Autocommands may delete the tab page under our fingers and we may
@@ -6309,6 +6346,7 @@ static void ex_only(exarg_T *eap)
 {
   win_T *wp;
   int wnr;
+
   if (eap->addr_count > 0) {
     wnr = eap->line2;
     for (wp = firstwin; --wnr > 0;) {
@@ -6317,6 +6355,10 @@ static void ex_only(exarg_T *eap)
       else
         wp = wp->w_next;
     }
+  } else {
+    wp = curwin;
+  }
+  if (wp != curwin) {
     win_goto(wp);
   }
   close_others(TRUE, eap->forceit);
@@ -6535,6 +6577,13 @@ void alist_expand(int *fnum_list, int fnum_len)
 void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum_list, int fnum_len)
 {
   int i;
+  static int recursive = 0;
+
+  if (recursive) {
+    EMSG(_(e_au_recursive));
+    return;
+  }
+  recursive++;
 
   alist_clear(al);
   ga_grow(&al->al_ga, count);
@@ -6559,8 +6608,10 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
     xfree(files);
   }
 
-  if (al == &global_alist)
-    arg_had_last = FALSE;
+  if (al == &global_alist) {
+    arg_had_last = false;
+  }
+  recursive--;
 }
 
 /*
@@ -6840,7 +6891,8 @@ static void ex_tabs(exarg_T *eap)
 static void ex_mode(exarg_T *eap)
 {
   if (*eap->arg == NUL) {
-    ui_refresh();
+    must_redraw = CLEAR;
+    ex_redraw(eap);
   } else {
     EMSG(_(e_screenmode));
   }
@@ -6869,10 +6921,11 @@ static void ex_resize(exarg_T *eap)
       n = 9999;
     win_setwidth_win(n, wp);
   } else {
-    if (*eap->arg == '-' || *eap->arg == '+')
+    if (*eap->arg == '-' || *eap->arg == '+') {
       n += curwin->w_height;
-    else if (n == 0 && eap->arg[0] == NUL)      /* default is very wide */
+    } else if (n == 0 && eap->arg[0] == NUL) {  // default is very high
       n = 9999;
+    }
     win_setheight_win(n, wp);
   }
 }
@@ -6946,7 +6999,7 @@ do_exedit(
         no_wait_return = 0;
         need_wait_return = FALSE;
         msg_scroll = 0;
-        must_redraw = CLEAR;
+        redraw_all_later(NOT_VALID);
 
         normal_enter(false, true);
 
@@ -7161,10 +7214,11 @@ static void ex_read(exarg_T *eap)
         else
           lnum = 1;
         if (*ml_get(lnum) == NUL && u_savedel(lnum, 1L) == OK) {
-          ml_delete(lnum, FALSE);
+          ml_delete(lnum, false);
           if (curwin->w_cursor.lnum > 1
-              && curwin->w_cursor.lnum >= lnum)
-            --curwin->w_cursor.lnum;
+              && curwin->w_cursor.lnum >= lnum) {
+            curwin->w_cursor.lnum--;
+          }
           deleted_lines_mark(lnum, 1L);
         }
       }
@@ -7190,7 +7244,7 @@ void free_cd_dir(void)
 /// Deal with the side effects of changing the current directory.
 ///
 /// @param scope  Scope of the function call (global, tab or window).
-void post_chdir(CdScope scope)
+void post_chdir(CdScope scope, bool trigger_dirchanged)
 {
   // Always overwrite the window-local CWD.
   xfree(curwin->w_localdir);
@@ -7230,7 +7284,10 @@ void post_chdir(CdScope scope)
   }
 
   shorten_fnames(true);
-  do_autocmd_dirchanged(cwd, scope);
+
+  if (trigger_dirchanged) {
+    do_autocmd_dirchanged(cwd, scope);
+  }
 }
 
 /// `:cd`, `:tcd`, `:lcd`, `:chdir`, `:tchdir` and `:lchdir`.
@@ -7289,10 +7346,10 @@ void ex_cd(exarg_T *eap)
       break;
     }
 
-    if (vim_chdir(new_dir, scope)) {
+    if (vim_chdir(new_dir)) {
       EMSG(_(e_failed));
     } else {
-      post_chdir(scope);
+      post_chdir(scope, true);
       // Echo the new current directory if the command was typed.
       if (KeyTyped || p_verbose >= 5) {
         ex_pwd(eap);
@@ -7753,11 +7810,12 @@ static void ex_redir(exarg_T *eap)
     redir_off = FALSE;
 }
 
-/*
- * ":redraw": force redraw
- */
+/// ":redraw": force redraw
 static void ex_redraw(exarg_T *eap)
 {
+  if (State & CMDPREVIEW) {
+    return;  // Ignore :redraw during 'inccommand' preview. #9777
+  }
   int r = RedrawingDisabled;
   int p = p_lz;
 
@@ -7765,11 +7823,14 @@ static void ex_redraw(exarg_T *eap)
   p_lz = FALSE;
   validate_cursor();
   update_topline();
-  update_screen(eap->forceit ? CLEAR :
-      VIsual_active ? INVERTED :
-      0);
-  if (need_maketitle)
+  if (eap->forceit) {
+    redraw_all_later(NOT_VALID);
+  }
+  update_screen(eap->forceit ? NOT_VALID
+                : VIsual_active ? INVERTED : 0);
+  if (need_maketitle) {
     maketitle();
+  }
   RedrawingDisabled = r;
   p_lz = p;
 
@@ -7783,11 +7844,12 @@ static void ex_redraw(exarg_T *eap)
   ui_flush();
 }
 
-/*
- * ":redrawstatus": force redraw of status line(s)
- */
+/// ":redrawstatus": force redraw of status line(s)
 static void ex_redrawstatus(exarg_T *eap)
 {
+  if (State & CMDPREVIEW) {
+    return;  // Ignore :redrawstatus during 'inccommand' preview. #9777
+  }
   int r = RedrawingDisabled;
   int p = p_lz;
 
@@ -8623,7 +8685,10 @@ eval_vars (
       break;
 
     case SPEC_AFILE:  // file name for autocommand
-      if (autocmd_fname != NULL && !path_is_absolute(autocmd_fname)) {
+      if (autocmd_fname != NULL
+          && !path_is_absolute(autocmd_fname)
+          // For CmdlineEnter and related events, <afile> is not a path! #9348
+          && !strequal("/", (char *)autocmd_fname)) {
         // Still need to turn the fname into a full path.  It was
         // postponed to avoid a delay when <afile> is not used.
         result = (char_u *)FullName_save((char *)autocmd_fname, false);
@@ -9039,8 +9104,10 @@ makeopens(
     // cursor can be set.  This is done again below.
     // winminheight and winminwidth need to be set to avoid an error if the
     // user has set winheight or winwidth.
-    if (put_line(fd, "set winminheight=1 winminwidth=1 winheight=1 winwidth=1")
-        == FAIL) {
+    if (put_line(fd, "set winminheight=0") == FAIL
+        || put_line(fd, "set winheight=1") == FAIL
+        || put_line(fd, "set winminwidth=0") == FAIL
+        || put_line(fd, "set winwidth=1") == FAIL) {
       return FAIL;
     }
     if (nr > 1 && ses_winsizes(fd, restore_size, tab_firstwin) == FAIL) {
@@ -9088,6 +9155,7 @@ makeopens(
           || put_eol(fd) == FAIL) {
         return FAIL;
       }
+      did_lcd = true;
     }
 
     /* Don't continue in another tab page when doing only the current one
@@ -9151,33 +9219,38 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
 
   if (restore_size && (ssop_flags & SSOP_WINSIZE)) {
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
-      if (!ses_do_win(wp))
+      if (!ses_do_win(wp)) {
         continue;
-      ++n;
+      }
+      n++;
 
-      /* restore height when not full height */
+      // restore height when not full height
       if (wp->w_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
-                  "exe '%dresize ' . ((&lines * %" PRId64
-                  " + %" PRId64 ") / %" PRId64 ")",
-                  n, (int64_t)wp->w_height,
-                  (int64_t)(Rows / 2), (int64_t)Rows) < 0
-              || put_eol(fd) == FAIL))
+                      "exe '%dresize ' . ((&lines * %" PRId64
+                      " + %" PRId64 ") / %" PRId64 ")",
+                      n, (int64_t)wp->w_height,
+                      (int64_t)Rows / 2, (int64_t)Rows) < 0
+              || put_eol(fd) == FAIL)) {
         return FAIL;
+      }
 
-      /* restore width when not full width */
+      // restore width when not full width
       if (wp->w_width < Columns
-          && (fprintf(fd, "exe 'vert %dresize ' . ((&columns * %" PRId64
-                          " + %" PRId64 ") / %" PRId64 ")",
-                      n, (int64_t)wp->w_width, (int64_t)(Columns / 2),
+          && (fprintf(fd,
+                      "exe 'vert %dresize ' . ((&columns * %" PRId64
+                      " + %" PRId64 ") / %" PRId64 ")",
+                      n, (int64_t)wp->w_width, (int64_t)Columns / 2,
                       (int64_t)Columns) < 0
-              || put_eol(fd) == FAIL))
+              || put_eol(fd) == FAIL)) {
         return FAIL;
+      }
     }
   } else {
-    /* Just equalise window sizes */
-    if (put_line(fd, "wincmd =") == FAIL)
+    // Just equalise window sizes
+    if (put_line(fd, "wincmd =") == FAIL) {
       return FAIL;
+    }
   }
   return OK;
 }
@@ -9325,10 +9398,11 @@ put_view(
    * arguments may have been deleted, check if the index is valid. */
   if (wp->w_arg_idx != current_arg_idx && wp->w_arg_idx < WARGCOUNT(wp)
       && flagp == &ssop_flags) {
-    if (fprintf(fd, "%" PRId64 "argu", (int64_t)(wp->w_arg_idx + 1)) < 0
-        || put_eol(fd) == FAIL)
+    if (fprintf(fd, "%" PRId64 "argu", (int64_t)wp->w_arg_idx + 1) < 0
+        || put_eol(fd) == FAIL) {
       return FAIL;
-    did_next = TRUE;
+    }
+    did_next = true;
   }
 
   /* Edit the file.  Skip this when ":next" already did it. */
@@ -9345,9 +9419,9 @@ put_view(
       // Note, if a buffer for that file already exists, use :badd to
       // edit that buffer, to not lose folding information (:edit resets
       // folds in other buffers)
-      if (fputs("if bufexists('", fd) < 0
+      if (fputs("if bufexists(\"", fd) < 0
           || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
-          || fputs("') | buffer ", fd) < 0
+          || fputs("\") | buffer ", fd) < 0
           || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
           || fputs(" | else | edit ", fd) < 0
           || ses_fname(fd, wp->w_buffer, flagp, false) == FAIL
@@ -9423,8 +9497,8 @@ put_view(
                 " * winheight(0) + %" PRId64 ") / %" PRId64 ")",
                 (int64_t)wp->w_cursor.lnum,
                 (int64_t)(wp->w_cursor.lnum - wp->w_topline),
-                (int64_t)(wp->w_height / 2),
-                (int64_t)wp->w_height) < 0
+                (int64_t)(wp->w_height_inner / 2),
+                (int64_t)wp->w_height_inner) < 0
         || put_eol(fd) == FAIL
         || put_line(fd, "if s:l < 1 | let s:l = 1 | endif") == FAIL
         || put_line(fd, "exe s:l") == FAIL
@@ -9438,21 +9512,23 @@ put_view(
         return FAIL;
     } else {
       if (!wp->w_p_wrap && wp->w_leftcol > 0 && wp->w_width > 0) {
-        if (fprintf(fd, "let s:c = %" PRId64 " - ((%" PRId64
-                        " * winwidth(0) + %" PRId64 ") / %" PRId64 ")",
-                    (int64_t)(wp->w_virtcol + 1),
+        if (fprintf(fd,
+                    "let s:c = %" PRId64 " - ((%" PRId64
+                    " * winwidth(0) + %" PRId64 ") / %" PRId64 ")",
+                    (int64_t)wp->w_virtcol + 1,
                     (int64_t)(wp->w_virtcol - wp->w_leftcol),
                     (int64_t)(wp->w_width / 2),
                     (int64_t)wp->w_width) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "if s:c > 0") == FAIL
             || fprintf(fd, "  exe 'normal! ' . s:c . '|zs' . %" PRId64 " . '|'",
-                (int64_t)(wp->w_virtcol + 1)) < 0
+                       (int64_t)wp->w_virtcol + 1) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "else") == FAIL
             || put_view_curpos(fd, wp, "  ") == FAIL
-            || put_line(fd, "endif") == FAIL)
+            || put_line(fd, "endif") == FAIL) {
           return FAIL;
+        }
       } else if (put_view_curpos(fd, wp, "") == FAIL) {
         return FAIL;
       }
@@ -10029,6 +10105,7 @@ bool cmd_can_preview(char_u *cmd)
   }
 
   exarg_T ea;
+  memset(&ea, 0, sizeof(ea));
   // parse the command line
   ea.cmd = skip_range(cmd, NULL);
   if (*ea.cmd == '*') {
@@ -10062,6 +10139,7 @@ Dictionary commands_array(buf_T *buf)
 {
   Dictionary rv = ARRAY_DICT_INIT;
   Object obj = NIL;
+  (void)obj;  // Avoid "dead assignment" warning.
   char str[10];
   garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
 

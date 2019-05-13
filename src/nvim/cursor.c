@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#include "nvim/assert.h"
 #include "nvim/cursor.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"
@@ -120,11 +121,11 @@ static int coladvance2(
         --curwin->w_curswant;
     }
   } else {
-    int width = curwin->w_width - win_col_off(curwin);
+    int width = curwin->w_width_inner - win_col_off(curwin);
 
     if (finetune
         && curwin->w_p_wrap
-        && curwin->w_width != 0
+        && curwin->w_width_inner != 0
         && wcol >= (colnr_T)width) {
       csize = linetabsize(line);
       if (csize > 0)
@@ -170,7 +171,9 @@ static int coladvance2(
       if (line[idx] == NUL) {
         /* Append spaces */
         int correct = wcol - col;
-        char_u *newline = xmallocz((size_t)(idx + correct));
+        size_t newline_size;
+        STRICT_ADD(idx, correct, &newline_size, size_t);
+        char_u *newline = xmallocz(newline_size);
         memcpy(newline, line, (size_t)idx);
         memset(newline + idx, ' ', (size_t)correct);
 
@@ -187,14 +190,17 @@ static int coladvance2(
         if (-correct > csize)
           return FAIL;
 
-        newline = xmallocz((size_t)(linelen - 1 + csize));
+        size_t n;
+        STRICT_ADD(linelen - 1, csize, &n, size_t);
+        newline = xmallocz(n);
         // Copy first idx chars
         memcpy(newline, line, (size_t)idx);
         // Replace idx'th char with csize spaces
         memset(newline + idx, ' ', (size_t)csize);
         // Copy the rest of the line
-        memcpy(newline + idx + csize, line + idx + 1,
-               (size_t)(linelen - idx - 1));
+        STRICT_SUB(linelen, idx, &n, size_t);
+        STRICT_SUB(n, 1, &n, size_t);
+        memcpy(newline + idx + csize, line + idx + 1, n);
 
         ml_replace(pos->lnum, newline, false);
         changed_bytes(pos->lnum, idx);
@@ -223,9 +229,10 @@ static int coladvance2(
     } else {
       int b = (int)wcol - (int)col;
 
-      /* The difference between wcol and col is used to set coladd. */
-      if (b > 0 && b < (MAXCOL - 2 * curwin->w_width))
+      // The difference between wcol and col is used to set coladd.
+      if (b > 0 && b < (MAXCOL - 2 * curwin->w_width_inner)) {
         pos->coladd = b;
+      }
 
       col += b;
     }
@@ -387,7 +394,8 @@ void check_cursor_col_win(win_T *win)
       // Make sure that coladd is not more than the char width.
       // Not for the last character, coladd is then used when the cursor
       // is actually after the last character.
-      if (win->w_cursor.col + 1 < len && win->w_cursor.coladd > 0) {
+      if (win->w_cursor.col + 1 < len) {
+        assert(win->w_cursor.coladd > 0);
         int cs, ce;
 
         getvcol(win, &win->w_cursor, &cs, NULL, &ce);
@@ -436,7 +444,7 @@ bool leftcol_changed(void)
   bool retval = false;
 
   changed_cline_bef_curs();
-  lastcol = curwin->w_leftcol + curwin->w_width - curwin_col_off() - 1;
+  lastcol = curwin->w_leftcol + curwin->w_width_inner - curwin_col_off() - 1;
   validate_virtcol();
 
   /*

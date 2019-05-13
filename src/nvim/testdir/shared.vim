@@ -136,29 +136,27 @@ endfunc
 " Wait for up to a second for "expr" to become true.
 " Return time slept in milliseconds.  With the +reltime feature this can be
 " more than the actual waiting time.  Without +reltime it can also be less.
-func WaitFor(expr)
+func WaitFor(expr, ...)
+  let timeout = get(a:000, 0, 1000)
   " using reltime() is more accurate, but not always available
   if has('reltime')
     let start = reltime()
   else
     let slept = 0
   endif
-  for i in range(100)
-    try
-      if eval(a:expr)
-	if has('reltime')
-	  return float2nr(reltimefloat(reltime(start)) * 1000)
-	endif
-	return slept
+  for i in range(timeout / 10)
+    if eval(a:expr)
+      if has('reltime')
+	return float2nr(reltimefloat(reltime(start)) * 1000)
       endif
-    catch
-    endtry
+      return slept
+    endif
     if !has('reltime')
       let slept += 10
     endif
     sleep 10m
   endfor
-  return 1000
+  return timeout
 endfunc
 
 " Wait for up to a given milliseconds.
@@ -236,4 +234,15 @@ func RunVimPiped(before, after, arguments, pipecmd)
     call delete('Xafter.vim')
   endif
   return 1
+endfunc
+
+" Get line "lnum" as displayed on the screen.
+" Trailing white space is trimmed.
+func! Screenline(lnum)
+  let chars = []
+  for c in range(1, winwidth(0))
+    call add(chars, nr2char(screenchar(a:lnum, c)))
+  endfor
+  let line = join(chars, '')
+  return matchstr(line, '^.\{-}\ze\s*$')
 endfunc

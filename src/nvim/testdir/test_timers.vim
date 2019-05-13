@@ -5,6 +5,7 @@ if !has('timers')
 endif
 
 source shared.vim
+source load.vim
 
 func MyHandler(timer)
   let g:val += 1
@@ -14,15 +15,19 @@ func MyHandlerWithLists(lists, timer)
   let x = string(a:lists)
 endfunc
 
+func s:assert_inrange(lower, upper, actual)
+  return assert_inrange(a:lower, LoadAdjust(a:upper), a:actual)
+endfunc
+
 func Test_oneshot()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler')
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(40, 100, slept)
+    call s:assert_inrange(40, 120, slept)
   else
-    call assert_inrange(20, 100, slept)
+    call assert_inrange(20, 120, slept)
   endif
 endfunc
 
@@ -32,18 +37,22 @@ func Test_repeat_three()
   let slept = WaitFor('g:val == 3')
   call assert_equal(3, g:val)
   if has('reltime')
-    call assert_inrange(120, 250, slept)
+    call s:assert_inrange(120, 250, slept)
   else
     call assert_inrange(80, 200, slept)
   endif
 endfunc
 
 func Test_repeat_many()
+  call timer_stopall()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler', {'repeat': -1})
+  if has('mac')
+    sleep 200m
+  endif
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange(2, 4, g:val)
+  call s:assert_inrange((has('mac') ? 1 : 2), 4, g:val)
 endfunc
 
 func Test_with_partial_callback()
@@ -57,7 +66,7 @@ func Test_with_partial_callback()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(40, 130, slept)
+    call s:assert_inrange(40, 130, slept)
   else
     call assert_inrange(20, 100, slept)
   endif
@@ -89,6 +98,7 @@ func Test_info()
 endfunc
 
 func Test_stopall()
+  call timer_stopall()
   let id1 = timer_start(1000, 'MyHandler')
   let id2 = timer_start(2000, 'MyHandler')
   let info = timer_info()
@@ -119,7 +129,7 @@ func Test_paused()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call assert_inrange(0, 100, slept)
+    call s:assert_inrange(0, 140, slept)
   else
     call assert_inrange(0, 10, slept)
   endif
@@ -161,12 +171,68 @@ func StopTimerAll(timer)
 endfunc
 
 func Test_stop_all_in_callback()
+  call timer_stopall()
   let g:timer1 = timer_start(10, 'StopTimerAll')
   let info = timer_info()
   call assert_equal(1, len(info))
+  if has('mac')
+    sleep 100m
+  endif
   sleep 40m
   let info = timer_info()
   call assert_equal(0, len(info))
+endfunc
+
+func FeedkeysCb(timer)
+  call feedkeys("hello\<CR>", 'nt')
+endfunc
+
+func InputCb(timer)
+  call timer_start(10, 'FeedkeysCb')
+  let g:val = input('?')
+  call Resume()
+endfunc
+
+func Test_input_in_timer()
+  let g:val = ''
+  call timer_start(10, 'InputCb')
+  call Standby(1000)
+  call assert_equal('hello', g:val)
+endfunc
+
+func FuncWithError(timer)
+  let g:call_count += 1
+  if g:call_count == 4
+    return
+  endif
+  doesnotexist
+endfunc
+
+func Test_timer_errors()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithError', {'repeat': -1})
+  " Timer will be stopped after failing 3 out of 3 times.
+  call WaitFor('g:call_count == 3')
+  sleep 50m
+  call assert_equal(3, g:call_count)
+endfunc
+
+func FuncWithCaughtError(timer)
+  let g:call_count += 1
+  try
+    doesnotexist
+  catch
+    " nop
+  endtry
+endfunc
+
+func Test_timer_catch_error()
+  let g:call_count = 0
+  let timer = timer_start(10, 'FuncWithCaughtError', {'repeat': 4})
+  " Timer will not be stopped.
+  call WaitFor('g:call_count == 4')
+  sleep 50m
+  call assert_equal(4, g:call_count)
 endfunc
 
 func FeedAndPeek(timer)

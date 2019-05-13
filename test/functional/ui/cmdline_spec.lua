@@ -4,13 +4,13 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
 
-local function test_cmdline(newgrid)
+local function test_cmdline(linegrid)
   local screen
 
   before_each(function()
     clear()
     screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_cmdline=true, ext_newgrid=newgrid})
+    screen:attach({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {reverse = true},
@@ -116,61 +116,86 @@ local function test_cmdline(newgrid)
       }}}
     end)
 
+    it('from normal mode when : is mapped', function()
+      command('nnoremap ; :')
+
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:n                        }|
+                                 |
+      ]]}
+
+      feed(';')
+      screen:expect{grid=[[
+        ^                         |
+        {1:~                        }|
+        {1:~                        }|
+        {3:c                        }|
+                                 |
+      ]], cmdline={{
+        firstc = ":",
+        content = {{""}},
+        pos = 0,
+      }}}
+    end)
+
     it('but not with scrolled messages', function()
-      screen:try_resize(50,10)
+      screen:try_resize(35,10)
       feed(':echoerr doesnotexist<cr>')
       screen:expect{grid=[[
-                                                          |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {3:                                                  }|
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {5:Press ENTER or type command to continue}^           |
+                                           |
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {3:                                   }|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
       ]]}
       feed(':echoerr doesnotexist<cr>')
       screen:expect{grid=[[
-                                                          |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {3:                                                  }|
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {5:Press ENTER or type command to continue}^           |
+                                           |
+        {1:~                                  }|
+        {3:                                   }|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
       ]]}
 
       feed(':echoerr doesnotexist<cr>')
       screen:expect{grid=[[
-                                                          |
-        {1:~                                                 }|
-        {3:                                                  }|
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {4:E121: Undefined variable: doesnotexist}            |
-        {4:E15: Invalid expression: doesnotexist}             |
-        {5:Press ENTER or type command to continue}^           |
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {4:E121: Undefined variable: doesnotex}|
+        {4:ist}                                |
+        {5:Press ENTER or type command to cont}|
+        {5:inue}^                               |
       ]]}
 
       feed('<cr>')
       screen:expect{grid=[[
-        ^                                                  |
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {1:~                                                 }|
-        {3:n                                                 }|
-                                                          |
+        ^                                   |
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {1:~                                  }|
+        {3:n                                  }|
+                                           |
       ]]}
     end)
   end)
@@ -253,17 +278,14 @@ local function test_cmdline(newgrid)
     ]], cmdline=expectation}
 
     -- erase information, so we check if it is retransmitted
-    -- TODO(bfredl): when we add a flag to screen:expect{}
-    -- to explicitly check redraw!, it should also do this
-    screen.cmdline = {}
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
       {1:~                        }|
       {1:~                        }|
                                |
-    ]], cmdline=expectation}
+    ]], cmdline=expectation, reset=true}
 
 
     feed('<cr>')
@@ -323,8 +345,7 @@ local function test_cmdline(newgrid)
       {{'  line1'}},
     }}
 
-    screen.cmdline_block = {}
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -339,7 +360,7 @@ local function test_cmdline(newgrid)
     }}, cmdline_block = {
       {{'function Foo()'}},
       {{'  line1'}},
-    }}
+    }, reset=true}
 
     feed('endfunction<cr>')
     screen:expect{grid=[[
@@ -415,8 +436,7 @@ local function test_cmdline(newgrid)
       pos = 4,
     }}}
 
-    screen.cmdline = {}
-    command("redraw!")
+    command("mode")
     screen:expect{grid=[[
                                |
       {2:[No Name]                }|
@@ -427,7 +447,7 @@ local function test_cmdline(newgrid)
       firstc = ":",
       content = {{"yank"}},
       pos = 4,
-    }}}
+    }}, reset=true}
 
     feed("<c-c>")
     screen:expect{grid=[[
@@ -440,9 +460,9 @@ local function test_cmdline(newgrid)
 
     feed("<c-c>")
     screen:expect{grid=[[
-                               |
+      ^                         |
       {2:[No Name]                }|
-      {1::}make^                    |
+      {1::}make                    |
       {3:[Command Line]           }|
                                |
     ]], cmdline={{
@@ -451,7 +471,6 @@ local function test_cmdline(newgrid)
       pos = 4,
     }}}
 
-    screen.cmdline = {}
     command("redraw!")
     screen:expect{grid=[[
       ^                         |
@@ -606,9 +625,140 @@ local function test_cmdline(newgrid)
       pos = 12,
     }}}
   end)
+
+  it('works together with ext_popupmenu', function()
+    local expected = {
+        {'define', '', '', ''},
+        {'jump', '', '', ''},
+        {'list', '', '', ''},
+        {'place', '', '', ''},
+        {'undefine', '', '', ''},
+        {'unplace', '', '', ''},
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_popupmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, popupmenu={items=expected, pos=0, anchor={-1, 0, 5}}}
+
+    feed('<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign jump"}},
+      pos = 9,
+    }}, popupmenu={items=expected, pos=1, anchor={-1, 0, 5}}}
+
+    feed('<left><left>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign "}},
+      pos = 5,
+    }}, popupmenu={items=expected, pos=-1, anchor={-1, 0, 5}}}
+
+    feed('<right>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, popupmenu={items=expected, pos=0, anchor={-1, 0, 5}}}
+
+    feed('a')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign definea"}},
+      pos = 12,
+    }}}
+    feed('<esc>')
+
+    -- check positioning with multibyte char in pattern
+    command("e långfile1")
+    command("sp långfile2")
+    feed(':b lå<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {3:långfile2                }|
+                               |
+      {2:långfile1                }|
+                               |
+    ]], popupmenu={
+      anchor = { -1, 0, 2 },
+      items = {{ "långfile1", "", "", "" }, { "långfile2", "", "", "" }},
+      pos = 0
+    }, cmdline={{
+      content = {{ "b långfile1" }},
+      firstc = ":",
+      pos = 12
+    }}}
+  end)
+
+  it('ext_wildmenu takes precedence over ext_popupmenu', function()
+    local expected = {
+      'define',
+      'jump',
+      'list',
+      'place',
+      'undefine',
+      'unplace',
+    }
+
+    command('set wildmode=full')
+    command('set wildmenu')
+    screen:set_option('ext_wildmenu', true)
+    screen:set_option('ext_popupmenu', true)
+    feed(':sign <tab>')
+
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      firstc = ":",
+      content = {{"sign define"}},
+      pos = 11,
+    }}, wildmenu_items=expected, wildmenu_pos=0}
+  end)
+
 end
 
--- the representation of cmdline and cmdline_block contents changed with ext_newgrid
+-- the representation of cmdline and cmdline_block contents changed with ext_linegrid
 -- (which uses indexed highlights) so make sure to test both
 describe('ui/ext_cmdline', function() test_cmdline(true) end)
 describe('ui/ext_cmdline (legacy highlights)', function() test_cmdline(false) end)

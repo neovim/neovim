@@ -1,6 +1,8 @@
 #ifndef NVIM_ASSERT_H
 #define NVIM_ASSERT_H
 
+#include "auto/config.h"
+
 // support static asserts (aka compile-time asserts)
 
 // some compilers don't properly support short-circuiting apparently, giving
@@ -78,7 +80,7 @@
 
 # undef STATIC_ASSERT_PRAGMA_END
 # define STATIC_ASSERT_PRAGMA_END \
-    _Pragma("GCC diagnostic pop") \
+    _Pragma("GCC diagnostic pop")
 
 // the same goes for clang in C99 mode, but we suppress a different warning
 #elif defined(__clang__) && __has_extension(c_static_assert)
@@ -88,11 +90,11 @@
 # undef STATIC_ASSERT_PRAGMA_START
 # define STATIC_ASSERT_PRAGMA_START \
     _Pragma("clang diagnostic push") \
-    _Pragma("clang diagnostic ignored \"-Wc11-extensions\"") \
+    _Pragma("clang diagnostic ignored \"-Wc11-extensions\"")
 
 # undef STATIC_ASSERT_PRAGMA_END
 # define STATIC_ASSERT_PRAGMA_END \
-    _Pragma("clang diagnostic pop") \
+    _Pragma("clang diagnostic pop")
 
 // TODO(aktau): verify that this works, don't have MSVC on hand.
 #elif _MSC_VER >= 1600
@@ -119,6 +121,46 @@
 // compiled with gcc -combine -fwhole-program.
 # define STATIC_ASSERT_EXPR(e, m) \
     ((enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }) 0)
+#endif
+
+/// @def STRICT_ADD
+/// @brief Adds (a + b) and stores result in `c`.  Aborts on overflow.
+///
+/// Requires GCC 5+ and Clang 3.8+
+///   https://clang.llvm.org/docs/LanguageExtensions.html
+///   https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+///
+/// Alternative for compilers without __builtin_xx_overflow ?
+///   https://stackoverflow.com/a/44830670/152142
+///
+/// @param MAX Maximum value of the narrowest type of operand.
+///            Not used if compiler supports __builtin_add_overflow.
+#ifdef HAVE_BUILTIN_ADD_OVERFLOW
+# define STRICT_ADD(a, b, c, t) \
+  do { \
+    if (__builtin_add_overflow(a, b, c)) { \
+      ELOG("STRICT_ADD overflow"); \
+      abort(); \
+    } \
+  } while (0)
+#else
+# define STRICT_ADD(a, b, c, t) \
+  do { *(c) = (t)((a) + (b)); } while (0)
+#endif
+
+/// @def STRICT_SUB
+/// @brief Subtracts (a - b) and stores result in `c`.  Aborts on overflow.
+#ifdef HAVE_BUILTIN_ADD_OVERFLOW
+# define STRICT_SUB(a, b, c, t) \
+  do { \
+    if (__builtin_sub_overflow(a, b, c)) { \
+      ELOG("STRICT_SUB overflow"); \
+      abort(); \
+    } \
+  } while (0)
+#else
+# define STRICT_SUB(a, b, c, t) \
+  do { *(c) = (t)((a) - (b)); } while (0)
 #endif
 
 #endif  // NVIM_ASSERT_H

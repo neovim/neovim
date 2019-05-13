@@ -169,7 +169,7 @@ void socket_watcher_close(SocketWatcher *watcher, socket_close_cb cb)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   watcher->close_cb = cb;
-  uv_close((uv_handle_t *)watcher->stream, close_cb);
+  uv_close(STRUCT_CAST(uv_handle_t, watcher->stream), close_cb);
 }
 
 static void connection_event(void **argv)

@@ -25,6 +25,7 @@ local c_id = (
 local c_void = P('void')
 local c_param_type = (
   ((P('Error') * fill * P('*') * fill) * Cc('error')) +
+  C((P('const ') ^ -1) * (c_id) * (ws ^ 1) * P('*')) +
   (C(c_id) * (ws ^ 1))
   )
 local c_type = (C(c_void) * (ws ^ 1)) + c_param_type
@@ -43,6 +44,7 @@ local c_proto = Ct(
   (fill * Cg((P('FUNC_API_REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1) *
   (fill * Cg((P('FUNC_API_REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
   (fill * Cg((P('FUNC_API_BRIDGE_IMPL') * Cc(true)), 'bridge_impl') ^ -1) *
+  (fill * Cg((P('FUNC_API_COMPOSITOR_IMPL') * Cc(true)), 'compositor_impl') ^ -1) *
   fill * P(';')
   )
 

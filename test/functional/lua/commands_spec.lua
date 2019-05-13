@@ -1,13 +1,17 @@
 -- Test suite for checking :lua* commands
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local eq = helpers.eq
 local NIL = helpers.NIL
+local eval = helpers.eval
+local feed = helpers.feed
 local clear = helpers.clear
 local meths = helpers.meths
 local funcs = helpers.funcs
 local source = helpers.source
 local dedent = helpers.dedent
+local command = helpers.command
 local exc_exec = helpers.exc_exec
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
@@ -75,6 +79,64 @@ describe(':lua command', function()
 
     eq('', redir_exec(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s"})'):format(s)))
     eq({'', s}, curbufmeths.get_lines(0, -1, false))
+  end)
+
+  it('can show multiline error messages', function()
+    local screen = Screen.new(50,10)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+
+    feed(':lua error("fail\\nmuch error\\nsuch details")<cr>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:E5105: Error while calling lua chunk: [string "<Vi}|
+      {3:mL compiled string>"]:1: fail}                     |
+      {3:much error}                                        |
+      {3:such details}                                      |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
+    feed('<cr>')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+    eq('E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: fail\nmuch error\nsuch details', eval('v:errmsg'))
+
+    local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
+    local expected = 'Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: some error\nin a\nAPI command'
+    eq(false, status)
+    eq(expected, string.sub(err, -string.len(expected)))
+
+    feed(':messages<cr>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:E5105: Error while calling lua chunk: [string "<Vi}|
+      {3:mL compiled string>"]:1: fail}                     |
+      {3:much error}                                        |
+      {3:such details}                                      |
+      {4:Press ENTER or type command to continue}^           |
+    ]])
   end)
 end)
 

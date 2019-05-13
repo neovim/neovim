@@ -14,7 +14,6 @@ export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
-	test14.out             \
 	test37.out             \
 	test42.out             \
 	test48.out             \
@@ -23,7 +22,6 @@ SCRIPTS_DEFAULT = \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
-	test17.out             \
 	test49.out             \
 
 endif
@@ -48,9 +46,7 @@ NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
   test_listlbr \
   test_largefile \
 
-NEW_TESTS = $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
-
-SCRIPTS_GUI := test16.out
+NEW_TESTS ?= $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
 
 
 ifdef VALGRIND_GDB
@@ -83,8 +79,6 @@ endif
 
 nongui: nolog $(SCRIPTS) newtests report
 
-gui:    nolog $(SCRIPTS) $(SCRIPTS_GUI) newtests report
-
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
 	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
@@ -102,7 +96,7 @@ report:
 
 test1.out: $(NVIM_PRG)
 
-$(SCRIPTS) $(SCRIPTS_GUI): $(NVIM_PRG) test1.out
+$(SCRIPTS): $(NVIM_PRG) test1.out
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
@@ -153,7 +147,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE --headless --noplugin
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
@@ -164,5 +158,6 @@ newtestssilent: $(NEW_TESTS)
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*
+	@rm -rf $*.failed test.ok $(RM_ON_RUN)
 	@mkdir -p $(TMPDIR)
 	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim

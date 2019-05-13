@@ -12,7 +12,7 @@
 #include <sys/ioctl.h>
 
 // forkpty is not in POSIX, so headers are platform-specific
-#if defined(__FreeBSD__) || defined (__DragonFly__)
+#if defined(__FreeBSD__) || defined(__DragonFly__)
 # include <libutil.h>
 #elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__APPLE__)
 # include <util.h>
@@ -157,11 +157,11 @@ static void init_child(PtyProcess *ptyproc)
   // New session/process-group. #6530
   setsid();
 
-  unsetenv("COLUMNS");
-  unsetenv("LINES");
-  unsetenv("TERMCAP");
-  unsetenv("COLORTERM");
-  unsetenv("COLORFGBG");
+  os_unsetenv("COLUMNS");
+  os_unsetenv("LINES");
+  os_unsetenv("TERMCAP");
+  os_unsetenv("COLORTERM");
+  os_unsetenv("COLORFGBG");
 
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
@@ -177,7 +177,7 @@ static void init_child(PtyProcess *ptyproc)
   }
 
   char *prog = ptyproc->process.argv[0];
-  setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
+  os_setenv("TERM", ptyproc->term_name ? ptyproc->term_name : "ansi", 1);
   execvp(prog, ptyproc->process.argv);
   ELOG("execvp failed: %s: %s", strerror(errno), prog);
   _exit(122);  // 122 is EXEC_FAILED in the Vim source.

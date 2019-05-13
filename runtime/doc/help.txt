@@ -137,7 +137,6 @@ Special issues ~
 |mbyte.txt|	multi-byte text support
 |mlang.txt|	non-English language support
 |arabic.txt|	Arabic language support and editing
-|farsi.txt|	Farsi (Persian) editing
 |hebrew.txt|	Hebrew language support and editing
 |russian.txt|	Russian language support and editing
 |ft_ada.txt|	Ada (the programming language) support
@@ -150,6 +149,7 @@ GUI ~
 
 Interfaces ~
 |if_cscop.txt|	using Cscope with Vim
+|if_lua.txt|	Lua interface
 |if_pyth.txt|	Python interface
 |if_ruby.txt|	Ruby interface
 |sign.txt|	debugging signs
@@ -160,6 +160,9 @@ Versions ~
 						*standard-plugin-list*
 Standard plugins ~
 |pi_gzip.txt|      Reading and writing compressed files
+|pi_health.txt|    Healthcheck framework
+|pi_matchit.txt|   Extended "%" matching
+|pi_msgpack.txt|   msgpack utilities
 |pi_netrw.txt|     Reading and writing files over a network
 |pi_paren.txt|     Highlight matching parens
 |pi_spec.txt|      Filetype plugin to work with rpm spec files
@@ -182,4 +185,4 @@ will try to find help for it.  Especially for options in single quotes, e.g.
 'hlsearch'.
 
 ------------------------------------------------------------------------------
- vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:
+ vim:tw=78:isk=!-~,^*,^\|,^\":ts=8:noet:ft=help:norl:

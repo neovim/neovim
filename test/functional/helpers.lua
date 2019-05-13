@@ -23,6 +23,7 @@ local neq = global_helpers.neq
 local ok = global_helpers.ok
 local read_file = global_helpers.read_file
 local sleep = global_helpers.sleep
+local table_contains = global_helpers.table_contains
 local table_flatten = global_helpers.table_flatten
 local write_file = global_helpers.write_file
 
@@ -37,7 +38,7 @@ local nvim_prog = (
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
                   ..' belloff= noshowcmd noruler nomore'
-local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE', '-N',
+local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE',
                    '--cmd', nvim_set, '--embed'}
 -- Directory containing nvim.
 local nvim_dir = nvim_prog:gsub("[/\\][^/\\]+$", "")
@@ -83,6 +84,10 @@ end
 
 local session, loop_running, last_error
 
+local function get_session()
+  return session
+end
+
 local function set_session(s, keep)
   if session and not keep then
     session:close()
@@ -125,16 +130,33 @@ end
 
 -- Expects a sequence of next_msg() results. If multiple sequences are
 -- passed they are tried until one succeeds, in order of shortest to longest.
+--
+-- Can be called with positional args (list of sequences only):
+--    expect_msg_seq(seq1, seq2, ...)
+-- or keyword args:
+--    expect_msg_seq{ignore={...}, seqs={seq1, seq2, ...}}
+--
+-- ignore:      List of ignored event names.
+-- seqs:        List of one or more potential event sequences.
 local function expect_msg_seq(...)
   if select('#', ...) < 1 then
     error('need at least 1 argument')
   end
-  local seqs = {...}
+  local arg1 = select(1, ...)
+  if (arg1['seqs'] and select('#', ...) > 1) or type(arg1) ~= 'table'  then
+    error('invalid args')
+  end
+  local ignore = arg1['ignore'] and arg1['ignore'] or {}
+  local seqs = arg1['seqs'] and arg1['seqs'] or {...}
+  if type(ignore) ~= 'table' then
+    error("'ignore' arg must be a list of strings")
+  end
   table.sort(seqs, function(a, b)  -- Sort ascending, by (shallow) length.
     return #a < #b
   end)
 
   local actual_seq = {}
+  local nr_ignored = 0
   local final_error = ''
   local function cat_err(err1, err2)
     if err1 == nil then
@@ -147,12 +169,16 @@ local function expect_msg_seq(...)
     -- Collect enough messages to compare the next expected sequence.
     while #actual_seq < #expected_seq do
       local msg = next_msg(10000)  -- Big timeout for ASAN/valgrind.
+      local msg_type = msg and msg[2] or nil
       if msg == nil then
         error(cat_err(final_error,
-                      string.format('got %d messages, expected %d',
-                                    #actual_seq, #expected_seq)))
+                      string.format('got %d messages (ignored %d), expected %d',
+                                    #actual_seq, nr_ignored, #expected_seq)))
+      elseif table_contains(ignore, msg_type) then
+        nr_ignored = nr_ignored + 1
+      else
+        table.insert(actual_seq, msg)
       end
-      table.insert(actual_seq, msg)
     end
     local status, result = pcall(eq, expected_seq, actual_seq)
     if status then
@@ -163,34 +189,34 @@ local function expect_msg_seq(...)
   error(final_error)
 end
 
-local function call_and_stop_on_error(...)
+local function call_and_stop_on_error(lsession, ...)
   local status, result = copcall(...)  -- luacheck: ignore
   if not status then
-    session:stop()
+    lsession:stop()
     last_error = result
     return ''
   end
   return result
 end
 
-local function run(request_cb, notification_cb, setup_cb, timeout)
+local function run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
   local on_request, on_notification, on_setup
 
   if request_cb then
     function on_request(method, args)
-      return call_and_stop_on_error(request_cb, method, args)
+      return call_and_stop_on_error(lsession, request_cb, method, args)
     end
   end
 
   if notification_cb then
     function on_notification(method, args)
-      call_and_stop_on_error(notification_cb, method, args)
+      call_and_stop_on_error(lsession, notification_cb, method, args)
     end
   end
 
   if setup_cb then
     function on_setup()
-      call_and_stop_on_error(setup_cb)
+      call_and_stop_on_error(lsession, setup_cb)
     end
   end
 
@@ -204,8 +230,22 @@ local function run(request_cb, notification_cb, setup_cb, timeout)
   end
 end
 
+local function run(request_cb, notification_cb, setup_cb, timeout)
+  run_session(session, request_cb, notification_cb, setup_cb, timeout)
+end
+
 local function stop()
   session:stop()
+end
+
+local function nvim_prog_abs()
+  -- system(['build/bin/nvim']) does not work for whatever reason. It must
+  -- be executable searched in $PATH or something starting with / or ./.
+  if nvim_prog:match('[/\\]') then
+    return request('nvim_call_function', 'fnamemodify', {nvim_prog, ':p'})
+  else
+    return nvim_prog
+  end
 end
 
 -- Executes an ex-command. VimL errors manifest as client (lua) errors, but
@@ -282,6 +322,43 @@ local function merge_args(...)
   return argv
 end
 
+--  Removes Nvim startup args from `args` matching items in `args_rm`.
+--
+--  "-u", "-i", "--cmd" are treated specially: their "values" are also removed.
+--  Example:
+--      args={'--headless', '-u', 'NONE'}
+--      args_rm={'--cmd', '-u'}
+--  Result:
+--      {'--headless'}
+--
+--  All cases are removed.
+--  Example:
+--      args={'--cmd', 'foo', '-N', '--cmd', 'bar'}
+--      args_rm={'--cmd', '-u'}
+--  Result:
+--      {'-N'}
+local function remove_args(args, args_rm)
+  local new_args = {}
+  local skip_following = {'-u', '-i', '-c', '--cmd', '-s', '--listen'}
+  if not args_rm or #args_rm == 0 then
+    return {unpack(args)}
+  end
+  for _, v in ipairs(args_rm) do
+    assert(type(v) == 'string')
+  end
+  local last = ''
+  for _, arg in ipairs(args) do
+    if table_contains(skip_following, last) then
+      last = ''
+    elseif table_contains(args_rm, arg) then
+      last = arg
+    else
+      table.insert(new_args, arg)
+    end
+  end
+  return new_args
+end
+
 local function spawn(argv, merge, env)
   local child_stream = ChildProcessStream.spawn(
       merge and merge_args(prepend_argv, argv) or argv,
@@ -300,8 +377,10 @@ end
 -- Calls fn() until it succeeds, up to `max` times or until `max_ms`
 -- milliseconds have passed.
 local function retry(max, max_ms, fn)
+  assert(max == nil or max > 0)
+  assert(max_ms == nil or max_ms > 0)
   local tries = 1
-  local timeout = (max_ms and max_ms > 0) and max_ms or 10000
+  local timeout = (max_ms and max_ms or 10000)
   local start_time = luv.now()
   while true do
     local status, result = pcall(fn)
@@ -318,19 +397,25 @@ local function retry(max, max_ms, fn)
 end
 
 -- Starts a new global Nvim session.
+--
 -- Parameters are interpreted as startup args, OR a map with these keys:
---    args: Merged with the default `nvim_argv` set.
---    env : Defines the environment of the new session.
+--    args:       List: Args appended to the default `nvim_argv` set.
+--    args_rm:    List: Args removed from the default set. All cases are
+--                removed, e.g. args_rm={'--cmd'} removes all cases of "--cmd"
+--                (and its value) from the default set.
+--    env:        Map: Defines the environment of the new session.
 --
 -- Example:
 --    clear('-e')
---    clear({args={'-e'}, env={TERM=term}})
+--    clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
 local function clear(...)
   local args = {unpack(nvim_argv)}
+  table.insert(args, '--headless')
   local new_args
   local env = nil
   local opts = select(1, ...)
   if type(opts) == 'table' then
+    args = remove_args(args, opts.args_rm)
     if opts.env then
       local env_tbl = {}
       for k, v in pairs(opts.env) do
@@ -341,7 +426,8 @@ local function clear(...)
       for _, k in ipairs({
         'HOME',
         'ASAN_OPTIONS',
-        'LD_LIBRARY_PATH', 'PATH',
+        'LD_LIBRARY_PATH',
+        'PATH',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
       }) do
@@ -661,12 +747,51 @@ local function alter_slashes(obj)
   end
 end
 
+local function compute_load_factor()
+  local timeout = 200
+  local times = {}
+
+  clear()
+
+  for _ = 1, 5 do
+    source([[
+      let g:val = 0
+      call timer_start(200, {-> nvim_set_var('val', 1)})
+      let start = reltime()
+      while 1
+        sleep 10m
+        if g:val == 1
+          let g:waited_in_ms = float2nr(reltimefloat(reltime(start)) * 1000)
+          break
+        endif
+      endwhile
+    ]])
+    table.insert(times, nvim_eval('g:waited_in_ms'))
+  end
+
+  session:close()
+  session = nil
+
+  local longest = math.max(unpack(times))
+  local factor = (longest + 50.0) / timeout
+
+  return factor
+end
+
+-- Compute load factor only once.
+local load_factor = compute_load_factor()
+
+local function load_adjust(num)
+  return math.ceil(num * load_factor)
+end
+
 local module = {
   NIL = mpack.NIL,
   alter_slashes = alter_slashes,
   buffer = buffer,
   bufmeths = bufmeths,
   call = nvim_call,
+  create_callindex = create_callindex,
   clear = clear,
   command = nvim_command,
   connect = connect,
@@ -691,6 +816,7 @@ local module = {
   filter = filter,
   funcs = funcs,
   get_pathsep = get_pathsep,
+  get_session = get_session,
   insert = insert,
   iswin = iswin,
   map = map,
@@ -700,6 +826,7 @@ local module = {
   meths = meths,
   missing_provider = missing_provider,
   mkdir = lfs.mkdir,
+  load_adjust = load_adjust,
   near = near,
   neq = neq,
   new_pipename = new_pipename,
@@ -709,6 +836,7 @@ local module = {
   nvim_async = nvim_async,
   nvim_dir = nvim_dir,
   nvim_prog = nvim_prog,
+  nvim_prog_abs = nvim_prog_abs,
   nvim_set = nvim_set,
   ok = ok,
   os_name = os_name,
@@ -722,6 +850,7 @@ local module = {
   retry = retry,
   rmdir = rmdir,
   run = run,
+  run_session = run_session,
   set_session = set_session,
   set_shell_powershell = set_shell_powershell,
   skip_fragile = skip_fragile,
@@ -748,6 +877,14 @@ return function(after_each)
       end
       check_logs()
       check_cores('build/bin/nvim')
+      if session then
+        local msg = session:next_message(0)
+        if msg then
+          if msg[1] == "notification" and msg[2] == "nvim_error_event" then
+            error(msg[3][2])
+          end
+        end
+      end
     end)
   end
   return module

@@ -203,7 +203,8 @@ gT		Go to the previous tab page.  Wraps around from the first one
 :tabN[ext] {count}
 {count}<C-PageUp>
 {count}gT	Go {count} tab pages back.  Wraps around from the first one
-		to the last one.
+		to the last one.  Note that the use of {count} is different
+		from |:tabnext|, where it is used as the tab page number.
 
 :tabr[ewind]			*:tabfir* *:tabfirst* *:tabr* *:tabrewind*
 :tabfir[st]	Go to the first tab page.
@@ -230,8 +231,10 @@ REORDERING TAB PAGES:
 :tabm[ove] [N]						*:tabm* *:tabmove*
 :[N]tabm[ove]
 		Move the current tab page to after tab page N.  Use zero to
-		make the current tab page the first one.  Without N the tab
-		page is made the last one. >
+		make the current tab page the first one.  N is counted before
+		the move, thus if the second tab is the current one,
+		`:tabmove 1` and `:tabmove 2`  have no effect.
+		Without N the tab page is made the last one. >
 		    :.tabmove   " do nothing
 		    :-tabmove   " move the tab page to the left
 		    :+tabmove   " move the tab page to the right
@@ -463,4 +466,4 @@ If you want to show something specific for a tab page, you might want to use a
 tab page local variable. |t:var|
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:

@@ -2,6 +2,7 @@
 " This makes testing go faster, since Vim doesn't need to restart.
 
 source test_assign.vim
+source test_behave.vim
 source test_cd.vim
 source test_changedtick.vim
 source test_compiler.vim
@@ -27,6 +28,7 @@ source test_lambda.vim
 source test_mapping.vim
 source test_menu.vim
 source test_messages.vim
+source test_move.vim
 source test_partial.vim
 source test_popup.vim
 source test_put.vim
@@ -37,6 +39,7 @@ source test_sort.vim
 source test_source_utf8.vim
 source test_sha256.vim
 source test_statusline.vim
+source test_suspend.vim
 source test_syn_attr.vim
 source test_tabline.vim
 " source test_tabpage.vim
@@ -48,3 +51,4 @@ source test_unlet.vim
 source test_utf8.vim
 source test_virtualedit.vim
 source test_window_cmd.vim
+source test_wnext.vim

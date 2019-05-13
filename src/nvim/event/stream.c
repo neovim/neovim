@@ -53,9 +53,19 @@ void stream_init(Loop *loop, Stream *stream, int fd, uv_stream_t *uvstream)
       stream->uv.idle.data = stream;
     } else {
       assert(type == UV_NAMED_PIPE || type == UV_TTY);
+#ifdef WIN32
+      if (type == UV_TTY) {
+        uv_tty_init(&loop->uv, &stream->uv.tty, fd, 0);
+        uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_RAW);
+        stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.tty);
+      } else {
+#endif
       uv_pipe_init(&loop->uv, &stream->uv.pipe, 0);
       uv_pipe_open(&stream->uv.pipe, fd);
       stream->uvstream = STRUCT_CAST(uv_stream_t, &stream->uv.pipe);
+#ifdef WIN32
+      }
+#endif
     }
   }
 

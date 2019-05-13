@@ -16,36 +16,17 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/ui.h"
-
-#ifdef HAVE_JEMALLOC
-// Force je_ prefix on jemalloc functions.
-# define JEMALLOC_NO_DEMANGLE
-# include <jemalloc/jemalloc.h>
-#endif
+#include "nvim/api/vim.h"
 
 #ifdef UNIT_TESTING
 # define malloc(size) mem_malloc(size)
 # define calloc(count, size) mem_calloc(count, size)
 # define realloc(ptr, size) mem_realloc(ptr, size)
 # define free(ptr) mem_free(ptr)
-# ifdef HAVE_JEMALLOC
-MemMalloc mem_malloc = &je_malloc;
-MemFree mem_free = &je_free;
-MemCalloc mem_calloc = &je_calloc;
-MemRealloc mem_realloc = &je_realloc;
-# else
 MemMalloc mem_malloc = &malloc;
 MemFree mem_free = &free;
 MemCalloc mem_calloc = &calloc;
 MemRealloc mem_realloc = &realloc;
-# endif
-#else
-# ifdef HAVE_JEMALLOC
-#  define malloc(size) je_malloc(size)
-#  define calloc(count, size) je_calloc(count, size)
-#  define realloc(ptr, size) je_realloc(ptr, size)
-#  define free(ptr) je_free(ptr)
-# endif
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -128,7 +109,7 @@ void *xmalloc(size_t size)
   return ret;
 }
 
-/// free wrapper that returns delegates to the backing memory manager
+/// free() wrapper that delegates to the backing memory manager
 void xfree(void *ptr)
 {
   free(ptr);
@@ -591,8 +572,13 @@ void free_all_mem(void)
   p_ea = false;
   if (first_tabpage->tp_next != NULL)
     do_cmdline_cmd("tabonly!");
-  if (!ONE_WINDOW)
+
+  if (!ONE_WINDOW) {
+    // to keep things simple, don't perform this
+    // ritual inside a float
+    curwin = firstwin;
     do_cmdline_cmd("only!");
+  }
 
   /* Free all spell info. */
   spell_free_all();
@@ -681,6 +667,7 @@ void free_all_mem(void)
       break;
 
   eval_clear();
+  api_vim_free_all_mem();
 
   // Free all buffers.  Reset 'autochdir' to avoid accessing things that
   // were freed already.
@@ -696,8 +683,8 @@ void free_all_mem(void)
     buf = bufref_valid(&bufref) ? nextbuf : firstbuf;
   }
 
-  /* screenlines (can't display anything now!) */
-  free_screenlines();
+  // free screenlines (can't display anything now!)
+  screen_free_all_mem();
 
   clear_hl_tables(false);
   list_free_log();
