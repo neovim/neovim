@@ -313,18 +313,18 @@ describe('nvim_get_keymap', function()
   end)
 end)
 
-describe('nvim_[set/del]_keymap', function()
+describe('nvim_set_keymap, nvim_del_keymap', function()
   before_each(clear)
 
-  -- generate_expected is truthy when we want to generate an expected output for
-  -- maparg(); mapargs() won't take '!' as an input, though it will return '!'
-  -- in its output if getting a mapping set with |:map!|
+  -- `generate_expected` is truthy: for generating an expected output for
+  -- maparg(), which does not accept "!" (though it returns "!" in its output
+  -- if getting a mapping set with |:map!|).
   local function normalize_mapmode(mode, generate_expected)
     if not generate_expected and mode == '!' then
-      -- can't retrieve mapmode-ic mappings with '!', but can with 'i' or 'c'.
+      -- Cannot retrieve mapmode-ic mappings with "!", but can with "i" or "c".
       mode = 'i'
-    elseif mode == '' or mode == ' ' or mode == 'm' then
-      mode = generate_expected and ' ' or 'm'
+    elseif mode == '' then
+      mode = generate_expected and ' ' or mode
     end
     return mode
   end
@@ -355,13 +355,12 @@ describe('nvim_[set/del]_keymap', function()
     return to_return
   end
 
-  -- Retrieve a mapargs dict from neovim, if one exists
+  -- Gets a maparg() dict from Nvim, if one exists.
   local function get_mapargs(mode, lhs)
     return funcs.maparg(lhs, normalize_mapmode(mode), false, true)
   end
 
-  -- Test error handling
-  it('throws errors when given empty lhs', function()
+  it('error on empty LHS', function()
     -- escape parentheses in lua string, else comparison fails erroneously
     expect_err('Invalid %(empty%) LHS',
                meths.set_keymap, '', '', 'rhs', {})
@@ -371,7 +370,7 @@ describe('nvim_[set/del]_keymap', function()
     expect_err('Invalid %(empty%) LHS', meths.del_keymap, '', '')
   end)
 
-  it('throws errors when given an lhs longer than MAXMAPLEN', function()
+  it('error if LHS longer than MAXMAPLEN', function()
     -- assume MAXMAPLEN of 50 chars, as declared in vim.h
     local MAXMAPLEN = 50
     local lhs = ''
@@ -421,22 +420,23 @@ describe('nvim_[set/del]_keymap', function()
     expect_err('Shortname is too long: xnoremap', meths.del_keymap, 'xnoremap', 'lhs')
   end)
 
-  it('throws errors when given unrecognized mode shortnames', function()
-    expect_err('Invalid mode shortname: ?',
+  it('error on invalid mode shortname', function()
+    expect_err('Invalid mode shortname: " "',
+               meths.set_keymap, ' ', 'lhs', 'rhs', {})
+    expect_err('Invalid mode shortname: "m"',
+               meths.set_keymap, 'm', 'lhs', 'rhs', {})
+    expect_err('Invalid mode shortname: "?"',
                meths.set_keymap, '?', 'lhs', 'rhs', {})
-
-    expect_err('Invalid mode shortname: y',
+    expect_err('Invalid mode shortname: "y"',
                meths.set_keymap, 'y', 'lhs', 'rhs', {})
-
-    expect_err('Invalid mode shortname: p',
+    expect_err('Invalid mode shortname: "p"',
                meths.set_keymap, 'p', 'lhs', 'rhs', {})
-
-    expect_err('Invalid mode shortname: ?', meths.del_keymap, '?', 'lhs')
-    expect_err('Invalid mode shortname: y', meths.del_keymap, 'y', 'lhs')
-    expect_err('Invalid mode shortname: p', meths.del_keymap, 'p', 'lhs')
+    expect_err('Invalid mode shortname: "?"', meths.del_keymap, '?', 'lhs')
+    expect_err('Invalid mode shortname: "y"', meths.del_keymap, 'y', 'lhs')
+    expect_err('Invalid mode shortname: "p"', meths.del_keymap, 'p', 'lhs')
   end)
 
-  it('throws errors when optnames are almost right', function()
+  it('error on invalid optnames', function()
     expect_err('Invalid key: silentt',
                meths.set_keymap, 'n', 'lhs', 'rhs', {silentt = true})
     expect_err('Invalid key: sidd',
@@ -445,7 +445,7 @@ describe('nvim_[set/del]_keymap', function()
                meths.set_keymap, 'n', 'lhs', 'rhs', {nowaiT = false})
   end)
 
-  it('does not recognize <buffer> as an option', function()
+  it('error on <buffer> option key', function()
     expect_err('Invalid key: buffer',
                meths.set_keymap, 'n', 'lhs', 'rhs', {buffer = true})
   end)
@@ -462,7 +462,7 @@ describe('nvim_[set/del]_keymap', function()
   end
 
   -- Perform tests of basic functionality
-  it('can set ordinary mappings', function()
+  it('sets ordinary mappings', function()
     meths.set_keymap('n', 'lhs', 'rhs', {})
     eq(generate_mapargs('n', 'lhs', 'rhs'), get_mapargs('n', 'lhs'))
 
@@ -470,7 +470,7 @@ describe('nvim_[set/del]_keymap', function()
     eq(generate_mapargs('v', 'lhs', 'rhs'), get_mapargs('v', 'lhs'))
   end)
 
-  it('doesn\'t throw when lhs or rhs have leading/trailing WS', function()
+  it('does not throw when LHS or RHS have leading/trailing whitespace', function()
     meths.set_keymap('n', '   lhs', 'rhs', {})
     eq(generate_mapargs('n', '<Space><Space><Space>lhs', 'rhs'),
        get_mapargs('n', '   lhs'))
@@ -505,8 +505,8 @@ describe('nvim_[set/del]_keymap', function()
   end)
 
   -- Test some edge cases
-  it('accepts "!" and " " and "" as synonyms for mapmode-nvo', function()
-    local nvo_shortnames = {'', ' ', '!'}
+  it('"!" and empty string are synonyms for mapmode-nvo', function()
+    local nvo_shortnames = {'', '!'}
     for _, name in ipairs(nvo_shortnames) do
       meths.set_keymap(name, 'lhs', 'rhs', {})
       meths.del_keymap(name, 'lhs')
@@ -653,7 +653,7 @@ describe('nvim_[set/del]_keymap', function()
   end)
 
   -- Perform exhaustive tests of basic functionality
-  local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', ' ', ''}
+  local mapmodes = {'n', 'v', 'x', 's', 'o', '!', 'i', 'l', 'c', 't', ''}
   for _, mapmode in ipairs(mapmodes) do
     it('can set/unset normal mappings in mapmode '..mapmode, function()
       meths.set_keymap(mapmode, 'lhs', 'rhs', {})
@@ -720,7 +720,7 @@ describe('nvim_[set/del]_keymap', function()
   end
 end)
 
-describe('nvim_buf_[set/del]_keymap', function()
+describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   before_each(clear)
 
   -- nvim_set_keymap is implemented as a wrapped call to nvim_buf_set_keymap,

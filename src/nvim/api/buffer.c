@@ -577,9 +577,11 @@ ArrayOf(Dictionary) nvim_buf_get_keymap(Buffer buffer, String mode, Error *err)
   return keymap_array(mode, buf);
 }
 
-/// Like |nvim_set_keymap|, but for a specific buffer.
+/// Sets a buffer-local |mapping| for the given mode.
 ///
-/// @param  buffer  Buffer handle, or 0 for the current buffer.
+/// @see |nvim_set_keymap()|
+///
+/// @param  buffer  Buffer handle, or 0 for current buffer
 void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs,
                          Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
@@ -587,9 +589,11 @@ void nvim_buf_set_keymap(Buffer buffer, String mode, String lhs, String rhs,
   modify_keymap(buffer, false, mode, lhs, rhs, opts, err);
 }
 
-/// Like |nvim_del_keymap|, but for a specific buffer.
+/// Unmaps a buffer-local |mapping| for the given mode.
 ///
-/// @param  buffer  Buffer handle, or 0 for the current buffer.
+/// @see |nvim_del_keymap()|
+///
+/// @param  buffer  Buffer handle, or 0 for current buffer
 void nvim_buf_del_keymap(Buffer buffer, String mode, String lhs, Error *err)
   FUNC_API_SINCE(6)
 {
