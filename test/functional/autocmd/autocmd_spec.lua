@@ -1,4 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local dedent = helpers.dedent
 local eq = helpers.eq
@@ -6,11 +7,13 @@ local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
 local meths = helpers.meths
+local meth_pcall = helpers.meth_pcall
 local funcs = helpers.funcs
 local expect = helpers.expect
 local command = helpers.command
 local exc_exec = helpers.exc_exec
 local curbufmeths = helpers.curbufmeths
+local source = helpers.source
 
 describe('autocmd', function()
   before_each(clear)
@@ -143,5 +146,118 @@ describe('autocmd', function()
 
        --- Autocommands ---]]),
        funcs.execute('autocmd Tabnew'))
+  end)
+
+  it('window works', function()
+    -- Nvim uses a special window to execute certain actions for an invisible buffer,
+    -- internally called autcmd_win and mentioned in the docs at :help E813
+    -- Do some safety checks for redrawing and api accesses to this window.
+
+    local screen = Screen.new(50, 10)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {background = Screen.colors.LightMagenta},
+      [3] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
+    })
+
+    source([[
+      function! Doit()
+        let g:winid = nvim_get_current_win()
+        redraw!
+        echo getchar()
+        " API functions work when aucmd_win is in scope
+        let g:had_value = has_key(w:, "testvar")
+        call nvim_win_set_var(g:winid, "testvar", 7)
+        let g:test = w:testvar
+      endfunction
+      set hidden
+      " add dummy text to not discard the buffer
+      call setline(1,"bb")
+      autocmd User <buffer> call Doit()
+    ]])
+    screen:expect([[
+      ^bb                                                |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+                                                        |
+    ]])
+
+    feed(":enew | doautoall User<cr>")
+    screen:expect([[
+      {2:bb                                                }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      ^:enew | doautoall User                            |
+    ]])
+
+    feed('<cr>')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      13                                                |
+    ]])
+    eq(7, eval('g:test'))
+
+    -- API calls are blocked when aucmd_win is not in scope
+    eq({false, 'Vim(call):Invalid window id'},
+       meth_pcall(command, "call nvim_set_current_win(g:winid)"))
+
+    -- second time aucmd_win is needed, a different code path is invoked
+    -- to reuse the same window, so check again
+    command("let g:test = v:null")
+    command("let g:had_value = v:null")
+    feed(":doautoall User<cr>")
+    screen:expect([[
+      {2:bb                                                }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {3:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      ^:doautoall User                                   |
+    ]])
+
+    feed('<cr>')
+    screen:expect([[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      13                                                |
+    ]])
+    -- win vars in aucmd_win should have been reset
+    eq(0, eval('g:had_value'))
+    eq(7, eval('g:test'))
+
+    eq({false, 'Vim(call):Invalid window id'},
+       meth_pcall(command, "call nvim_set_current_win(g:winid)"))
   end)
 end)
