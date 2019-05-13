@@ -6,7 +6,6 @@ local feed_command = helpers.feed_command
 local eq = helpers.eq
 local eval = helpers.eval
 local iswin = helpers.iswin
-local sleep = helpers.sleep
 
 describe('search highlighting', function()
   local screen
@@ -149,9 +148,9 @@ describe('search highlighting', function()
 
   it('is preserved during :terminal activity', function()
     if iswin() then
-      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx & ping -n 10 127.0.0.1)<cr>G]])
     else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
+      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; sleep 0.01; done<cr>G]])
     end
 
     feed(':file term<CR>')
@@ -162,13 +161,12 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
-    sleep(50)  -- Allow some terminal activity.
     screen:expect([[
         {3:foo} bar baz       {3:│}xxx                |
         bar baz {2:foo}       {3:│}xxx                |
         bar {2:foo} baz       {3:│}xxx                |
                           {3:│}xxx                |
-      {1:~                   }{3:│}xxx                |
+      {1:~                   }{3:│}                   |
       {5:[No Name] [+]        }{3:term               }|
       /foo^                                    |
     ]], { [1] = {bold = true, foreground = Screen.colors.Blue1},

@@ -88,17 +88,16 @@ describe("'wildmenu'", function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
     if iswin() then
-      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo)<cr>]])
+      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo & ping -n 10 127.0.0.1)<cr>G]])
     else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
+      feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.01; done<cr>G]])
     end
 
-    feed([[<C-\><C-N>gg]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
-    expect_stay_unchanged{grid=[[
+    screen:expect{grid=[[
       foo                      |
       foo                      |
-      foo                      |
+                               |
       define  jump  list  >    |
       :sign define^             |
     ]]}
@@ -117,10 +116,10 @@ describe("'wildmenu'", function()
     -- Exiting cmdline should show the buffer.
     feed([[<C-\><C-N>]])
     screen:expect([[
-      ^foo                      |
       foo                      |
       foo                      |
       foo                      |
+      ^                         |
                                |
     ]])
   end)
@@ -140,8 +139,8 @@ describe("'wildmenu'", function()
   end)
 
   it('with laststatus=0, :vsplit, :term #2255', function()
-    -- Because this test verifies a _lack_ of activity after screen:sleep(), we
-    -- must wait the full timeout. So make it reasonable.
+    -- Because this test verifies a _lack_ of activity, we must wait the full
+    -- timeout. So make it reasonable.
     screen.timeout = 1000
 
     if not iswin() then
