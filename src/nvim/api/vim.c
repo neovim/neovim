@@ -1027,7 +1027,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///      - "editor" the global editor grid
 ///      - "win"    a window. Use `win` to specify a window id,
 ///                 or the current window will be used by default.
-///      "cursor" the cursor position in current window.
+///      - "cursor" the cursor position in current window.
 ///   - `win`: When using relative='win', window id of the window where the
 ///       position is defined.
 ///   - `anchor`: The corner of the float that the row,col position defines:
