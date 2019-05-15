@@ -7428,10 +7428,10 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			lnum	select signs placed in this line. For the use
 				of {lnum}, see |line()|.
 		If {group} is '*', then signs in all the groups including the
-		global group are returned. If {group} is not supplied, then
-		only signs in the global group are returned.  If no arguments
-		are supplied, then signs in the global group placed in all the
-		buffers are returned.
+		global group are returned. If {group} is not supplied or is an
+		empty string, then only signs in the global group are
+		returned.  If no arguments are supplied, then signs in the
+		global group placed in all the buffers are returned.
 
 		Each list item in the returned value is a dictionary with the
 		following entries:

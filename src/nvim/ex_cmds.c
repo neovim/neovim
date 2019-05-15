@@ -5803,15 +5803,7 @@ int sign_place(
   }
   if (*sign_id == 0)
   {
-    // Allocate a new sign id
-    int		id = 1;
-    signlist_T	*sign;
-
-    while ((sign = buf_getsign_with_id(buf, id, sign_group)) != NULL) {
-      id++;
-    }
-
-    *sign_id = id;
+    *sign_id = sign_group_get_next_signid(buf, sign_group);
   }
 
   if (lnum > 0) {
@@ -6083,7 +6075,7 @@ void ex_sign(exarg_T *eap)
       }
     } else if (idx == SIGNCMD_JUMP) {
       // ":sign jump {id} file={fname}"
-      if (lnum >= 0 || sign_name != NULL) {
+      if (lnum >= 0 || sign_name != NULL || buf == NULL){
         EMSG(_(e_invarg));
       } else if ((lnum = buf_findsign(buf, id, group)) > 0) {
         // goto a sign ...
@@ -6244,7 +6236,7 @@ static void sign_get_placed_in_buf(
   }
   tv_dict_add_list(d, S_LEN("signs"), l);
 
-  FOR_ALL_SIGNS_IN_BUF(buf) {
+  FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (!sign_in_group(sign, sign_group)) {
       continue;
     }

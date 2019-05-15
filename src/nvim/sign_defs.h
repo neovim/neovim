@@ -9,6 +9,7 @@
 typedef struct signgroup_S
 {
     uint16_t	refcount;		// number of signs in this group
+    int next_sign_id;     // next sign id for this group
     char_u	sg_name[1];		// sign group name
 } signgroup_T;
 

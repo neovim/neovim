@@ -9294,7 +9294,7 @@ static list_T *get_buffer_signs(buf_T *buf)
   dict_T	*d;
   list_T *const l = tv_list_alloc(kListLenMayKnow);
 
-  FOR_ALL_SIGNS_IN_BUF(buf) {
+  FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if ((d = sign_get_info(sign)) != NULL) {
       tv_list_append_dict(l, d);
     }
@@ -15558,6 +15558,8 @@ f_sign_getplaced(typval_T *argvars, typval_T *rettv)
 		group = tv_get_string_chk(&di->di_tv);
 		if (group == NULL)
 		    return;
+		if (*group == '\0')	// empty string means global group
+		    group = NULL;
 	    }
 	}
     }

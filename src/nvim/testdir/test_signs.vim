@@ -301,7 +301,7 @@ func Test_sign_delete_buffer()
   sign undefine Sign
 endfunc
 
-" Test for VimL functions for managing signs
+" Test for Vim script functions for managing signs
 func Test_sign_funcs()
   " Remove all the signs
   call sign_unplace('*')
@@ -733,7 +733,7 @@ func Test_sign_id_autogen()
   call assert_equal(3, sign_place(0, '', 'sign1', 'Xsign',
 	      \ {'lnum' : 14}))
   call sign_unplace('', {'buffer' : 'Xsign', 'id' : 2})
-  call assert_equal(2, sign_place(0, '', 'sign1', 'Xsign',
+  call assert_equal(4, sign_place(0, '', 'sign1', 'Xsign',
 	      \ {'lnum' : 12}))
 
   call assert_equal(1, sign_place(0, 'g1', 'sign1', 'Xsign',

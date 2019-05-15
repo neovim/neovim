@@ -1337,6 +1337,8 @@ static void init_path(const char *exename)
   // shipped with Windows package. This also mimics SearchPath().
   os_setenv_append_path(exepath);
 #endif
+
+    init_signs();
 }
 
 /// Get filename from command line, if any.
