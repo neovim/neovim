@@ -205,11 +205,11 @@ class DebugSession( object ):
 
   def _Reset( self ):
     if self._uiTab:
+      vim.current.tabpage = self._uiTab
       self._stackTraceView.Reset()
       self._variablesView.Reset()
       self._outputView.Reset()
       self._codeView.Reset()
-      vim.current.tabpage = self._uiTab
       vim.command( 'tabclose!' )
       self._uiTab = None
 

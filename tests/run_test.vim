@@ -83,6 +83,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -97,6 +99,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -111,6 +115,7 @@ func RunTheTest(test)
   else
     try
       let s:test = a:test
+      let s:testid = g:testpath . ':' . a:test
       au VimLeavePre * call EarlyExit(s:test)
       exe 'call ' . a:test
       au! VimLeavePre
@@ -126,6 +131,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -143,6 +150,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -156,6 +165,8 @@ func RunTheTest(test)
             \ . ': '
             \ . v:exception
             \ . ' @ '
+            \ . g:testpath
+            \ . ':'
             \ . v:throwpoint)
     endtry
   endif
@@ -187,7 +198,7 @@ endfunc
 func AfterTheTest()
   if len(v:errors) > 0
     let s:fail += 1
-    call add(s:errors, 'Found errors in ' . s:test . ':')
+    call add(s:errors, 'Found errors in ' . s:testid . ':')
     call extend(s:errors, v:errors)
     let v:errors = []
   endif
@@ -219,7 +230,7 @@ func FinishTesting()
     " Append errors to test.log
     split test.log
     call append(line('$'), '')
-    call append(line('$'), 'From ' . g:testname . ':')
+    call append(line('$'), 'From ' . g:testpath . ':')
     call append(line('$'), s:errors)
     write
   endif
@@ -244,7 +255,7 @@ func FinishTesting()
   " Append messages to the file "messages"
   split messages
   call append(line('$'), '')
-  call append(line('$'), 'From ' . g:testname . ':')
+  call append(line('$'), 'From ' . g:testpath . ':')
   call append(line('$'), s:messages)
   write
 
@@ -258,6 +269,7 @@ endfunc
 " Source the test script.  First grab the file name, in case the script
 " navigates away.  g:testname can be used by the tests.
 let g:testname = expand('%')
+let g:testpath = expand('%:p')
 let s:done = 0
 let s:fail = 0
 let s:errors = []
@@ -307,7 +319,7 @@ for s:test in sort(s:tests)
         \ && (index(s:flaky_tests, s:test) >= 0
         \      || v:errors[0] =~ s:flaky_errors_re)
     while 1
-      call add(s:messages, 'Found errors in ' . s:test . ':')
+      call add(s:messages, 'Found errors in ' . s:testid . ':')
       call extend(s:messages, v:errors)
 
       call add(total_errors, 'Run ' . run_nr . ':')

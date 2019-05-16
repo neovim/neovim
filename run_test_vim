@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-RUN_VIM="vim --noplugin --clean --not-a-term -Nu vimrc"
-RUN_TEST="${RUN_VIM} -S run_test.vim"
-
-pushd tests > /dev/null
-
-exec $RUN_VIM "$@"

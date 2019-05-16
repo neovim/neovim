@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+exec vim \
+     --clean \
+     --not-a-term \
+     --cmd "let g:vimspector_enable_mappings='HUMAN'" \
+     -Nu $(dirname $0)/../../tests/vimrc \
+     "$@"
