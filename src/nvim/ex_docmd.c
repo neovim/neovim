@@ -7385,16 +7385,17 @@ static void ex_equal(exarg_T *eap)
 
 static void ex_sleep(exarg_T *eap)
 {
-  int n;
-  long len;
+  if (in_callback) {
+    return;  // #10018
+  }
 
   if (cursor_valid()) {
-    n = curwin->w_winrow + curwin->w_wrow - msg_scrolled;
+    int n = curwin->w_winrow + curwin->w_wrow - msg_scrolled;
     if (n >= 0)
       ui_cursor_goto(n, curwin->w_wincol + curwin->w_wcol);
   }
 
-  len = eap->line2;
+  long len = eap->line2;
   switch (*eap->arg) {
   case 'm': break;
   case NUL: len *= 1000L; break;

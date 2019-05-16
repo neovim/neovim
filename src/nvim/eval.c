@@ -9563,7 +9563,8 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     if (argvars[0].v_type == VAR_UNKNOWN) {
       // getchar(): blocking wait.
-      if (!(char_avail() || using_script() || input_available())) {
+      if (!(char_avail() || using_script() || input_available()
+            || in_callback)) {
         input_enable_events();
         (void)os_inchar(NULL, 0, -1, 0);
         input_disable_events();
@@ -17146,9 +17147,12 @@ bool callback_call(Callback *const callback, const int argcount_in,
   }
 
   int dummy;
-  return call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
+  in_callback = true;
+  bool rv = call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
                    NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                    true, partial, NULL);
+  in_callback = false;
+  return rv;
 }
 
 static bool set_ref_in_callback(Callback *callback, int copyID,

@@ -343,6 +343,7 @@ EXTERN int garbage_collect_at_exit INIT(= false);
 EXTERN scid_T current_SID INIT(= 0);
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
+EXTERN bool in_callback INIT(= false);
 
 EXTERN bool did_source_packages INIT(= false);
 
