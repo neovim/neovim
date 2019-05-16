@@ -328,9 +328,9 @@ To change the name of the gdb command, set the "termdebugger" variable before
 invoking `:Termdebug`: >
 	let termdebugger = "mygdb"
 
-To use neovim floating windows for previewing variable evaluation, set the
+To not use neovim floating windows for previewing variable evaluation, set the
 `g:termdebug_useFloatingHover` variable like this: >
-	let g:termdebug_useFloatingHover = 1
+	let g:termdebug_useFloatingHover = 0
 
 If you are a mouse person, you can also define a mapping using your right
 click to one of the terminal command like evaluate the variable under the
