@@ -691,8 +691,8 @@ function! s:OpenHoverPreview(lines, filetype) abort
         call nvim_win_set_option(float_win_id, 'filetype', a:filetype)
       endif
 
-      " cannot use nvim_win_set_option for these options
-      setlocal nomodified nomodifiable
+      call nvim_buf_set_option(buf, 'modified', v:false)
+      call nvim_buf_set_option(buf, 'modifiable', v:false)
 
       " Unlike preview window, :pclose does not close window. Instead, close
       " hover window automatically when cursor is moved.
