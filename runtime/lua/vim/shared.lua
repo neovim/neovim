@@ -168,7 +168,7 @@ local function tbl_flatten(t)
   return result
 end
 
---- Trim whitespace (Lua pattern "%%s") from both sides of a string.
+--- Trim whitespace (Lua pattern "%s") from both sides of a string.
 ---
 --@see https://www.lua.org/pil/20.2.html
 --@param s String to trim

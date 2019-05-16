@@ -1027,7 +1027,7 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
 ///      - "editor" the global editor grid
 ///      - "win"    a window. Use `win` to specify a window id,
 ///                 or the current window will be used by default.
-///      "cursor" the cursor position in current window.
+///      - "cursor" the cursor position in current window.
 ///   - `win`: When using relative='win', window id of the window where the
 ///       position is defined.
 ///   - `anchor`: The corner of the float that the row,col position defines:
@@ -1336,10 +1336,17 @@ Array nvim_get_api_info(uint64_t channel_id)
   return rv;
 }
 
-/// Identifies the client. Can be called more than once; subsequent calls
-/// remove earlier info, which should be included by the caller if it is
-/// still valid. (E.g. if a library first identifies the channel, then a
-/// plugin using that library later overrides that info)
+/// Self-identifies the client.
+///
+/// The client/plugin/application should call this after connecting, to provide
+/// hints about its identity and purpose, for debugging and orchestration.
+///
+/// Can be called more than once; the caller should merge old info if
+/// appropriate. Example: library first identifies the channel, then a plugin
+/// using that library later identifies itself.
+///
+/// @note "Something is better than nothing". You don't need to include all the
+///       fields.
 ///
 /// @param channel_id
 /// @param name Short name for the connected client

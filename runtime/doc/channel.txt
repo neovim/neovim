@@ -47,27 +47,23 @@ By default, channels opened by vimscript functions will operate with raw
 bytes. Additionally, for a job channel using rpc, bytes can still be
 read over its stderr. Similarily, only bytes can be written to nvim's own stderr.
 
-						    *channel-callback* *buffered*
-				*E5210* *on_stdout* *on_stderr* *on_stdin* *on_data*
-It is possible to register callback functions when a channel receives data by
-passing the `on_stdout`, `on_stderr`, `on_stdin` options on creation. Sockets
-may specify an `on_data` callback instead. Each callback function will be
-invoked with data read from the channel. By default, the callback will be
-invoked immediately when data is available, to facilitate interactive
-communication. The same callback will then be invoked with empty data, to
-indicate that the stream reached EOF. Alternatively the `stdout_buffered`,
-`stderr_buffered`, `stdin_buffered`, `data_buffered` options can be set to
-invoke the corresponding callback only when the underlying stream reaches EOF.
-The callback will then be passed complete output. This is helpful when only
-the complete output is useful, and not partial data. Futhermore if the stream
-is set to be buffered, but the callback is not set, the data is saved in the
-options dict, with the stream name as key. For this to work a new options dict
-must be used for each opened channel. If a script uses a global `s:job_opts`
-dict, it can be copied with |copy()| before supplying it to |jobstart()|. If a
-dict is reused, so that the dict key already is occupied, error `E5210` will
-be raised.
+			*channel-callback* *on_stdout* *on_stderr* *on_stdin* *on_data*
+Scripts can react to channel activity (received data) via callback functions
+assigned to the `on_stdout`, `on_stderr`, `on_stdin`, and `on_data` options.
+Callbacks should be fast, avoid potentially slow/expensive work.
 
-- The arguments passed to the callback function are:
+						*channel-buffered*
+By default the callback is invoked immediately as data is available; empty
+data indicates EOF (stream closed).  Alternatively, set the `stdout_buffered`,
+`stderr_buffered`, `stdin_buffered`, or `data_buffered` options to invoke the
+callback only on EOF, after all output was gathered.
+						*E5210*
+If the stream is set as buffered without assigning a callback, the data is
+saved in the options dict with the stream name as key. This requires a new
+options dict for each opened channel (|copy()|). If the stream name key
+is already set, error E5210 is raised.
+
+Channel callback functions accept these arguments:
 
   0: |channel-id|
   1: Raw data read from the channel, formatted as a |readfile()|-style

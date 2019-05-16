@@ -1099,8 +1099,8 @@ in the command-line window, like this: >
 Note that hitting <Tab> in Normal mode will do completion on the next
 character.  That way it works at the end of the line.
 If you don't want these mappings, disable them with: >
-	au CmdwinEnter [:>] iunmap <Tab>
-	au CmdwinEnter [:>] nunmap <Tab>
+	au CmdwinEnter [:>] iunmap <buffer> <Tab>
+	au CmdwinEnter [:>] nunmap <buffer> <Tab>
 You could put these lines in your vimrc file.
 
 While in the command-line window you cannot use the mouse to put the cursor in
