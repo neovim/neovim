@@ -579,7 +579,7 @@ func s:HandleEvaluate(msg)
 endfunc
 
 function! s:ShouldUseFloatWindow() abort
-  if exists('*nvim_open_win') && exists('g:termdebug_useFloatingHover') && (g:termdebug_useFloatingHover == 1)
+  if exists('*nvim_open_win') && (get(g:, 'termdebug_useFloatingHover', 1) == 1)
     return v:true
   else
     return v:false
