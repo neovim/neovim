@@ -71,18 +71,6 @@ are being built for Visual Studio Code.
 The ability to do remote debugging is a must. This is key to my workflow, so
 baking it in to the debugging experience is a top bill goal for the project.
 
-# Demo
-
-Please note the entire UI is placeholder. These are just proofs-of-concept.
-
-## C Debugging
-
-![C demo](https://cdn.pbrd.co/images/Hnk0NfR.gif)
-
-# Python Debugging
-
-![demo-python](https://cdn.pbrd.co/images/Hnk5ZPw.gif)
-
 # Features and Usage
 
 # Mappings
@@ -151,7 +139,7 @@ let g:vimspector_enable_mappings = 'HUMAN'
 ## Launch and attach by PID:
 
 * Create `vimspector.json`. See [below](#supported-languages).
-* `:call vimsepctor#Launch()` and select a configuration.
+* `:call vimspector#Launch()` and select a configuration.
 
 ## Breakpoints
 
