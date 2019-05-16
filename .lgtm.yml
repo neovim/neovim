@@ -1,0 +1,8 @@
+extraction:
+  python:
+    python_setup:
+      version: 3
+      setup_py: false
+    index:
+      include:
+        - python3/vimspector
