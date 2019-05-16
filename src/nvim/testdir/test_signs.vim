@@ -28,8 +28,8 @@ func Test_sign()
   let a=execute('sign list Sign1')
   call assert_equal("\nsign Sign1 text=x ", a)
 
-  " Split the window to the bottom to verify sign jump will stay in the current window
-  " if the buffer is displayed there.
+  " Split the window to the bottom to verify sign jump will stay in the
+  " current window if the buffer is displayed there.
   let bn = bufnr('%')
   let wn = winnr()
   exe 'sign place 41 line=3 name=Sign1 buffer=' . bn 
@@ -211,19 +211,20 @@ func Test_sign_completion()
   call assert_equal('"sign undefine Sign1 Sign2', @:)
 
   call feedkeys(":sign place 1 \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign place 1 buffer= file= line= name=', @:)
+  call assert_equal('"sign place 1 buffer= file= group= line= name= priority=',
+	      \ @:)
 
   call feedkeys(":sign place 1 name=\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign place 1 name=Sign1 Sign2', @:)
 
   call feedkeys(":sign unplace 1 \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign unplace 1 buffer= file=', @:)
+  call assert_equal('"sign unplace 1 buffer= file= group=', @:)
 
   call feedkeys(":sign list \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"sign list Sign1 Sign2', @:)
 
   call feedkeys(":sign jump 1 \<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"sign jump 1 buffer= file=', @:)
+  call assert_equal('"sign jump 1 buffer= file= group=', @:)
 
   sign undefine Sign1
   sign undefine Sign2
@@ -449,7 +450,6 @@ func Test_sign_group()
 
   edit Xsign
   let bnum = bufnr('%')
-  let fname = fnamemodify('Xsign', ':p')
 
   " Error case
   call assert_fails("call sign_place(5, [], 'sign1', 'Xsign',
@@ -466,6 +466,10 @@ func Test_sign_group()
   let s = sign_getplaced('Xsign')
   call assert_equal(1, len(s[0].signs))
   call assert_equal(s[0].signs[0].group, '')
+  let s = sign_getplaced(bnum, {'group' : ''})
+  call assert_equal([{'id' : 5, 'group' : '', 'name' : 'sign1', 'lnum' : 10,
+	      \ 'priority' : 10}], s[0].signs)
+  call assert_equal(1, len(s[0].signs))
   let s = sign_getplaced(bnum, {'group' : 'g2'})
   call assert_equal('g2', s[0].signs[0].group)
   let s = sign_getplaced(bnum, {'group' : 'g3'})
@@ -584,126 +588,75 @@ func Test_sign_group()
   sign place 5 group=g1 line=10 name=sign1 file=Xsign
   sign place 5 group=g2 line=10 name=sign1 file=Xsign
 
-  " Test for :sign place group={group} file={fname}
+  " Tests for the ':sign place' command
+
+  " :sign place file={fname}
   let a = execute('sign place file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n    line=10  id=5  name=sign1 priority=10\n", a)
 
+  " :sign place group={group} file={fname}
   let a = execute('sign place group=g2 file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n    line=10  id=5  group=g2  name=sign1 priority=10\n", a)
 
+  " :sign place group=* file={fname}
   let a = execute('sign place group=* file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  group=g2  name=sign1 priority=10\n" .
 	      \ "    line=10  id=5  group=g1  name=sign1 priority=10\n" .
 	      \ "    line=10  id=5  name=sign1 priority=10\n", a)
 
+  " Error case: non-existing group
   let a = execute('sign place group=xyz file=Xsign')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
 
   call sign_unplace('*')
-
-  " Test for :sign place group={group} buffer={nr}
   let bnum = bufnr('Xsign')
   exe 'sign place 5 line=10 name=sign1 buffer=' . bnum
   exe 'sign place 5 group=g1 line=11 name=sign1 buffer=' . bnum
   exe 'sign place 5 group=g2 line=12 name=sign1 buffer=' . bnum
 
+  " :sign place buffer={fname}
   let a = execute('sign place buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n    line=10  id=5  name=sign1 priority=10\n", a)
 
+  " :sign place group={group} buffer={fname}
   let a = execute('sign place group=g2 buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n    line=12  id=5  group=g2  name=sign1 priority=10\n", a)
 
+  " :sign place group=* buffer={fname}
   let a = execute('sign place group=* buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1 priority=10\n" .
 	      \ "    line=11  id=5  group=g1  name=sign1 priority=10\n" .
 	      \ "    line=12  id=5  group=g2  name=sign1 priority=10\n", a)
 
+  " Error case: non-existing group
   let a = execute('sign place group=xyz buffer=' . bnum)
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n", a)
 
+  " :sign place
+  let a = execute('sign place')
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
+	      \ "    line=10  id=5  name=sign1 priority=10\n", a)
+
+  " :sign place group={group}
+  let a = execute('sign place group=g1')
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
+	      \ "    line=11  id=5  group=g1  name=sign1 priority=10\n", a)
+
+  " :sign place group=*
   let a = execute('sign place group=*')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1 priority=10\n" .
 	      \ "    line=11  id=5  group=g1  name=sign1 priority=10\n" .
 	      \ "    line=12  id=5  group=g2  name=sign1 priority=10\n", a)
 
-  " Test for :sign unplace
-  sign unplace 5 group=g2 file=Xsign
-  call assert_equal([], sign_getplaced(bnum, {'group' : 'g2'})[0].signs)
-
-  exe 'sign unplace 5 group=g1 buffer=' . bnum
-  call assert_equal([], sign_getplaced(bnum, {'group' : 'g1'})[0].signs)
-
-  sign unplace 5 group=xy file=Xsign
-  call assert_equal(1, len(sign_getplaced(bnum, {'group' : '*'})[0].signs))
-
-  " Test for removing all the signs. Place the signs again for this test
-  sign place 5 group=g1 line=11 name=sign1 file=Xsign
-  sign place 5 group=g2 line=12 name=sign1 file=Xsign
-  sign place 6 line=20 name=sign1 file=Xsign
-  sign place 6 group=g1 line=21 name=sign1 file=Xsign
-  sign place 6 group=g2 line=22 name=sign1 file=Xsign
-  sign unplace 5 group=* file=Xsign
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=20  id=6  name=sign1 priority=10\n" .
-	      \ "    line=21  id=6  group=g1  name=sign1 priority=10\n" .
-	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
-
-  " Remove all the signs from the global group
-  sign unplace * file=Xsign
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=21  id=6  group=g1  name=sign1 priority=10\n" .
-	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
-
-  " Remove all the signs from a particular group
-  sign place 5 line=10 name=sign1 file=Xsign
-  sign place 5 group=g1 line=11 name=sign1 file=Xsign
-  sign place 5 group=g2 line=12 name=sign1 file=Xsign
-  sign unplace * group=g1 file=Xsign
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=10  id=5  name=sign1 priority=10\n" .
-	      \ "    line=12  id=5  group=g2  name=sign1 priority=10\n" .
-	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
-
-  " Remove all the signs from all the groups in a file
-  sign place 5 group=g1 line=11 name=sign1 file=Xsign
-  sign place 6 line=20 name=sign1 file=Xsign
-  sign place 6 group=g1 line=21 name=sign1 file=Xsign
-  sign unplace * group=* file=Xsign
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\n", a)
-
-  " Remove a particular sign id in a group from all the files
-  sign place 5 group=g1 line=11 name=sign1 file=Xsign
-  sign unplace 5 group=g1
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\n", a)
-
-  " Remove a particular sign id in all the groups from all the files
-  sign place 5 line=10 name=sign1 file=Xsign
-  sign place 5 group=g1 line=11 name=sign1 file=Xsign
-  sign place 5 group=g2 line=12 name=sign1 file=Xsign
-  sign place 6 line=20 name=sign1 file=Xsign
-  sign place 6 group=g1 line=21 name=sign1 file=Xsign
-  sign place 6 group=g2 line=22 name=sign1 file=Xsign
-  sign unplace 5 group=*
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
-	      \ "    line=20  id=6  name=sign1 priority=10\n" .
-	      \ "    line=21  id=6  group=g1  name=sign1 priority=10\n" .
-	      \ "    line=22  id=6  group=g2  name=sign1 priority=10\n", a)
-
-  " Remove all the signs from all the groups in all the files
-  sign place 5 line=10 name=sign1 file=Xsign
-  sign place 5 group=g1 line=11 name=sign1 file=Xsign
-  sign unplace * group=*
-  let a = execute('sign place group=*')
-  call assert_equal("\n--- Signs ---\n", a)
+  " Test for ':sign jump' command with groups
+  sign jump 5 group=g1 file=Xsign
+  call assert_equal(11, line('.'))
+  call assert_equal('Xsign', bufname(''))
+  sign jump 5 group=g2 file=Xsign
+  call assert_equal(12, line('.'))
 
   " Error cases
   call assert_fails("sign place 3 group= name=sign1 buffer=" . bnum, 'E474:')
@@ -712,6 +665,357 @@ func Test_sign_group()
   call sign_unplace('*')
   call sign_undefine()
   enew  | only
+endfunc
+
+" Place signs used for ":sign unplace" command test
+func Place_signs_for_test()
+  call sign_unplace('*')
+
+  sign place 3 line=10 name=sign1 file=Xsign1
+  sign place 3 group=g1 line=11 name=sign1 file=Xsign1
+  sign place 3 group=g2 line=12 name=sign1 file=Xsign1
+  sign place 4 line=15 name=sign1 file=Xsign1
+  sign place 4 group=g1 line=16 name=sign1 file=Xsign1
+  sign place 4 group=g2 line=17 name=sign1 file=Xsign1
+  sign place 5 line=20 name=sign1 file=Xsign2
+  sign place 5 group=g1 line=21 name=sign1 file=Xsign2
+  sign place 5 group=g2 line=22 name=sign1 file=Xsign2
+  sign place 6 line=25 name=sign1 file=Xsign2
+  sign place 6 group=g1 line=26 name=sign1 file=Xsign2
+  sign place 6 group=g2 line=27 name=sign1 file=Xsign2
+endfunc
+
+" Place multiple signs in a single line for test
+func Place_signs_at_line_for_test()
+  call sign_unplace('*')
+  sign place 3 line=13 name=sign1 file=Xsign1
+  sign place 3 group=g1 line=13 name=sign1 file=Xsign1
+  sign place 3 group=g2 line=13 name=sign1 file=Xsign1
+  sign place 4 line=13 name=sign1 file=Xsign1
+  sign place 4 group=g1 line=13 name=sign1 file=Xsign1
+  sign place 4 group=g2 line=13 name=sign1 file=Xsign1
+endfunc
+
+" Tests for the ':sign unplace' command
+func Test_sign_unplace()
+  enew | only
+  " Remove all the signs
+  call sign_unplace('*')
+  call sign_undefine()
+
+  " Create two files and define signs
+  call writefile(repeat(["Sun is shining"], 30), "Xsign1")
+  call writefile(repeat(["It is beautiful"], 30), "Xsign2")
+
+  let attr = {'text' : '=>', 'linehl' : 'Search', 'texthl' : 'Error'}
+  call sign_define("sign1", attr)
+
+  edit Xsign1
+  let bnum1 = bufnr('%')
+  split Xsign2
+  let bnum2 = bufnr('%')
+
+  let signs1 = [{'id' : 3, 'name' : 'sign1', 'lnum' : 10, 'group' : '',
+	      \ 'priority' : 10},
+	      \ {'id' : 3, 'name' : 'sign1', 'lnum' : 11, 'group' : 'g1',
+	      \ 'priority' : 10},
+	      \ {'id' : 3, 'name' : 'sign1', 'lnum' : 12, 'group' : 'g2',
+	      \ 'priority' : 10},
+	      \ {'id' : 4, 'name' : 'sign1', 'lnum' : 15, 'group' : '',
+	      \ 'priority' : 10},
+	      \ {'id' : 4, 'name' : 'sign1', 'lnum' : 16, 'group' : 'g1',
+	      \ 'priority' : 10},
+	      \ {'id' : 4, 'name' : 'sign1', 'lnum' : 17, 'group' : 'g2',
+	      \ 'priority' : 10},]
+  let signs2 = [{'id' : 5, 'name' : 'sign1', 'lnum' : 20, 'group' : '',
+	      \ 'priority' : 10},
+	      \ {'id' : 5, 'name' : 'sign1', 'lnum' : 21, 'group' : 'g1',
+	      \ 'priority' : 10},
+	      \ {'id' : 5, 'name' : 'sign1', 'lnum' : 22, 'group' : 'g2',
+	      \ 'priority' : 10},
+	      \ {'id' : 6, 'name' : 'sign1', 'lnum' : 25, 'group' : '',
+	      \ 'priority' : 10},
+	      \ {'id' : 6, 'name' : 'sign1', 'lnum' : 26, 'group' : 'g1',
+	      \ 'priority' : 10},
+	      \ {'id' : 6, 'name' : 'sign1', 'lnum' : 27, 'group' : 'g2',
+	      \ 'priority' : 10},]
+
+  " Test for :sign unplace {id} file={fname}
+  call Place_signs_for_test()
+  sign unplace 3 file=Xsign1
+  sign unplace 6 file=Xsign2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 3 || val.group != ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 6 || val.group != ''}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} group={group} file={fname}
+  call Place_signs_for_test()
+  sign unplace 4 group=g1 file=Xsign1
+  sign unplace 5 group=g2 file=Xsign2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group != 'g1'}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 5 || val.group != 'g2'}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} group=* file={fname}
+  call Place_signs_for_test()
+  sign unplace 3 group=* file=Xsign1
+  sign unplace 6 group=* file=Xsign2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 3}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 6}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * file={fname}
+  call Place_signs_for_test()
+  sign unplace * file=Xsign1
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(signs2, sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * group={group} file={fname}
+  call Place_signs_for_test()
+  sign unplace * group=g1 file=Xsign1
+  sign unplace * group=g2 file=Xsign2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != 'g1'}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.group != 'g2'}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * group=* file={fname}
+  call Place_signs_for_test()
+  sign unplace * group=* file=Xsign2
+  call assert_equal(signs1, sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal([], sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} buffer={nr}
+  call Place_signs_for_test()
+  exe 'sign unplace 3 buffer=' . bnum1
+  exe 'sign unplace 6 buffer=' . bnum2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 3 || val.group != ''}),
+	      \ sign_getplaced(bnum1, {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 6 || val.group != ''}),
+	      \ sign_getplaced(bnum2, {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} group={group} buffer={nr}
+  call Place_signs_for_test()
+  exe 'sign unplace 4 group=g1 buffer=' . bnum1
+  exe 'sign unplace 5 group=g2 buffer=' . bnum2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group != 'g1'}),
+	      \ sign_getplaced(bnum1, {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 5 || val.group != 'g2'}),
+	      \ sign_getplaced(bnum2, {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} group=* buffer={nr}
+  call Place_signs_for_test()
+  exe 'sign unplace 3 group=* buffer=' . bnum1
+  exe 'sign unplace 6 group=* buffer=' . bnum2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 3}),
+	      \ sign_getplaced(bnum1, {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 6}),
+	      \ sign_getplaced(bnum2, {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * buffer={nr}
+  call Place_signs_for_test()
+  exe 'sign unplace * buffer=' . bnum1
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != ''}),
+	      \ sign_getplaced(bnum1, {'group' : '*'})[0].signs)
+  call assert_equal(signs2, sign_getplaced(bnum2, {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * group={group} buffer={nr}
+  call Place_signs_for_test()
+  exe 'sign unplace * group=g1 buffer=' . bnum1
+  exe 'sign unplace * group=g2 buffer=' . bnum2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != 'g1'}),
+	      \ sign_getplaced(bnum1, {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.group != 'g2'}),
+	      \ sign_getplaced(bnum2, {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * group=* buffer={nr}
+  call Place_signs_for_test()
+  exe 'sign unplace * group=* buffer=' . bnum2
+  call assert_equal(signs1, sign_getplaced(bnum1, {'group' : '*'})[0].signs)
+  call assert_equal([], sign_getplaced(bnum2, {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id}
+  call Place_signs_for_test()
+  sign unplace 4
+  sign unplace 6
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group != ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 6 || val.group != ''}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} group={group}
+  call Place_signs_for_test()
+  sign unplace 4 group=g1
+  sign unplace 6 group=g2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group != 'g1'}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 6 || val.group != 'g2'}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace {id} group=*
+  call Place_signs_for_test()
+  sign unplace 3 group=*
+  sign unplace 5 group=*
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 3}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.id != 5}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace *
+  call Place_signs_for_test()
+  sign unplace *
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.group != ''}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * group={group}
+  call Place_signs_for_test()
+  sign unplace * group=g1
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != 'g1'}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(
+	      \ filter(copy(signs2),
+	      \     {idx, val -> val.group != 'g1'}),
+	      \ sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Test for :sign unplace * group=*
+  call Place_signs_for_test()
+  sign unplace * group=*
+  call assert_equal([], sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal([], sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Negative test cases
+  call Place_signs_for_test()
+  sign unplace 3 group=xy file=Xsign1
+  sign unplace * group=xy file=Xsign1
+  silent! sign unplace * group=* file=FileNotPresent
+  call assert_equal(signs1, sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  call assert_equal(signs2, sign_getplaced('Xsign2', {'group' : '*'})[0].signs)
+
+  " Tests for removing sign at the current cursor position
+
+  " Test for ':sign unplace'
+  let signs1 = [{'id' : 4, 'name' : 'sign1', 'lnum' : 13, 'group' : 'g2',
+	      \ 'priority' : 10},
+	      \ {'id' : 4, 'name' : 'sign1', 'lnum' : 13, 'group' : 'g1',
+	      \ 'priority' : 10},
+	      \ {'id' : 4, 'name' : 'sign1', 'lnum' : 13, 'group' : '',
+	      \ 'priority' : 10},
+	      \ {'id' : 3, 'name' : 'sign1', 'lnum' : 13, 'group' : 'g2',
+	      \ 'priority' : 10},
+	      \ {'id' : 3, 'name' : 'sign1', 'lnum' : 13, 'group' : 'g1',
+	      \ 'priority' : 10},
+	      \ {'id' : 3, 'name' : 'sign1', 'lnum' : 13, 'group' : '',
+	      \ 'priority' : 10},]
+  exe bufwinnr('Xsign1') . 'wincmd w'
+  call cursor(13, 1)
+
+  " Should remove only one sign in the global group
+  call Place_signs_at_line_for_test()
+  sign unplace
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group != ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  " Should remove the second sign in the global group
+  sign unplace
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.group != ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+
+  " Test for ':sign unplace group={group}'
+  call Place_signs_at_line_for_test()
+  " Should remove only one sign in group g1
+  sign unplace group=g1
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group != 'g1'}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  sign unplace group=g2
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4 || val.group == ''}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+
+  " Test for ':sign unplace group=*'
+  call Place_signs_at_line_for_test()
+  sign unplace group=*
+  sign unplace group=*
+  sign unplace group=*
+  call assert_equal(
+	      \ filter(copy(signs1),
+	      \     {idx, val -> val.id != 4}),
+	      \ sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+  sign unplace group=*
+  sign unplace group=*
+  sign unplace group=*
+  call assert_equal([], sign_getplaced('Xsign1', {'group' : '*'})[0].signs)
+
+  call sign_unplace('*')
+  call sign_undefine()
+  enew  | only
+  call delete("Xsign1")
+  call delete("Xsign2")
 endfunc
 
 " Tests for auto-generating the sign identifier
@@ -762,7 +1066,6 @@ func Test_sign_priority()
   " Place three signs with different priority in the same line
   call writefile(repeat(["Sun is shining"], 30), "Xsign")
   edit Xsign
-  let fname = fnamemodify('Xsign', ':p')
 
   call sign_place(1, 'g1', 'sign1', 'Xsign',
 	      \ {'lnum' : 11, 'priority' : 50})

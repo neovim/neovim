@@ -244,13 +244,24 @@ See |sign_unplace()| for the equivalent Vim script function.
 		all the files it appears in.
 
 :sign unplace *
-		Remove all placed signs in the global group.
+		Remove placed signs in the global group from all the files.
+
+:sign unplace * group={group}
+		Remove placed signs in group {group} from all the files.
 
 :sign unplace * group=*
-		Remove all placed signs in all the groups.
+		Remove placed signs in all the groups from all the files.
 
 :sign unplace
-		Remove the placed sign at the cursor position.
+		Remove a placed sign at the cursor position. If multiple signs
+		are placed in the line, then only one is removed.
+
+:sign unplace group={group}
+		Remove a placed sign in group {group} at the cursor
+		position.
+
+:sign unplace group=*
+		Remove a placed sign in any group at the cursor position.
 
 
 LISTING PLACED SIGNS					*:sign-place-list*
@@ -264,16 +275,24 @@ See |sign_getplaced()| for the equivalent Vim script function.
 :sign place group={group} file={fname}
 		List signs in group {group} placed in file {fname}.
 
+:sign place group=* file={fname}
+		List signs in all the groups placed in file {fname}.
+
+
 :sign place buffer={nr}
 		List signs placed in buffer {nr}.
 
 :sign place group={group} buffer={nr}
 		List signs in group {group} placed in buffer {nr}.
 
-:sign place	List placed signs in all files.
+:sign place group=* buffer={nr}
+		List signs in all the groups placed in buffer {nr}.
 
 :sign place group={group}
 		List placed signs in all sign groups in all the files.
+
+:sign place group=*
+		List placed signs in all sign groups in all files.
 
 
 JUMPING TO A SIGN					*:sign-jump* *E157*
@@ -285,9 +304,15 @@ JUMPING TO A SIGN					*:sign-jump* *E157*
 		If the file isn't displayed in window and the current file can
 		not be |abandon|ed this fails.
 
+:sign jump {id} group={group} file={fname}
+		Same but jump to the sign in group {group}
+
 :sign jump {id} buffer={nr}					*E934*
 		Same, but use buffer {nr}.  This fails if buffer {nr} does not
 		have a name.
+
+:sign jump {id} group={group} buffer={nr}
+		Same but jump to the sign in group {group}
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

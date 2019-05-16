@@ -5828,7 +5828,7 @@ int sign_place(
  * Unplace the specified sign
  */
     int
-sign_unplace(int sign_id, char_u *sign_group, buf_T *buf)
+sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
 {
   if (sign_id == 0)
   {
@@ -5839,14 +5839,30 @@ sign_unplace(int sign_id, char_u *sign_group, buf_T *buf)
     linenr_T	lnum;
 
     // Delete only the specified signs
-    lnum = buf_delsign(buf, sign_id, sign_group);
+    lnum = buf_delsign(buf, atlnum, sign_id, sign_group);
     if (lnum == 0) {
       return FAIL;
+      update_debug_sign(buf, lnum);
     }
     redraw_buf_line_later(buf, lnum);
   }
 
   return OK;
+}
+ 
+/*
+ * Unplace the sign at the current cursor line.
+ */
+static void sign_unplace_at_cursor(char_u *groupname)
+{
+  int		id = -1;
+
+  id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum, groupname);
+  if (id > 0) {
+    sign_unplace(id, groupname, curwin->w_buffer, curwin->w_cursor.lnum);
+  } else {
+    EMSG(_("E159: Missing sign number"));
+  }
 }
 
 /*
@@ -5962,12 +5978,7 @@ void ex_sign(exarg_T *eap)
         sign_list_placed(NULL, NULL);
       } else if (idx == SIGNCMD_UNPLACE) {
         // ":sign unplace": remove placed sign at cursor
-        id = buf_findsign_id(curwin->w_buffer, curwin->w_cursor.lnum);
-        if (id > 0) {
-          sign_unplace(id, NULL, curwin->w_buffer);
-        } else {
-          EMSG(_("E159: Missing sign number"));
-        }
+        sign_unplace_at_cursor(NULL);
       } else {
         EMSG(_(e_argreq));
       }
@@ -5976,7 +5987,7 @@ void ex_sign(exarg_T *eap)
 
     if (idx == SIGNCMD_UNPLACE && arg[0] == '*' && arg[1] == NUL) {
       // ":sign unplace *": remove all placed signs
-      buf_delete_all_signs();
+      buf_delete_all_signs(NULL);
       return;
     }
 
@@ -5992,7 +6003,7 @@ void ex_sign(exarg_T *eap)
         if (idx == SIGNCMD_UNPLACE && *arg == NUL) {
           // ":sign unplace {id}": remove placed sign by number
           FOR_ALL_BUFFERS(buf) {
-            sign_unplace(id, NULL, buf);
+			sign_unplace(id, NULL, buf, 0);
           }
           return;
         }
@@ -6075,6 +6086,7 @@ void ex_sign(exarg_T *eap)
       }
     } else if (idx == SIGNCMD_JUMP) {
       // ":sign jump {id} file={fname}"
+      // ":sign jump {id} group={group} file={fname}"
       if (lnum >= 0 || sign_name != NULL || buf == NULL){
         EMSG(_(e_invarg));
       } else if ((lnum = buf_findsign(buf, id, group)) > 0) {
@@ -6108,7 +6120,7 @@ void ex_sign(exarg_T *eap)
       } else if (id == -2) {
         if (buf != NULL) {
           // ":sign unplace * file={fname}"
-          sign_unplace(0, group, buf);
+          sign_unplace(0, group, buf, 0);
         } else {
           // ":sign unplace * group=*": remove all placed signs
           FOR_ALL_BUFFERS(buf) {
@@ -6122,14 +6134,21 @@ void ex_sign(exarg_T *eap)
           // ":sign unplace {id} file={fname}"
           // ":sign unplace {id} group={group} file={fname}"
           // ":sign unplace {id} group=* file={fname}"
-          sign_unplace(id, group, buf);
+          sign_unplace(id, group, buf, 0);
         } else {
-          // ":sign unplace {id} group={group}":
-          // ":sign unplace {id} group=*":
-          //     remove all placed signs in this group.
-          FOR_ALL_BUFFERS(buf) {
-            if (buf->b_signlist != NULL) {
-              sign_unplace(id, group, buf);
+          if (id == -1) {
+            // ":sign unplace group={group}":
+            // ":sign unplace group=*":
+            // remove sign in the current line in specified group
+            sign_unplace_at_cursor(group);
+          } else {
+            // ":sign unplace {id} group={group}":
+            // ":sign unplace {id} group=*":
+            //     remove all placed signs in this group.
+            FOR_ALL_BUFFERS(buf) {
+              if (buf->b_signlist != NULL) {
+                sign_unplace(id, group, buf, 0);
+              }
             }
           }
         }
@@ -6426,11 +6445,12 @@ char_u * get_sign_name(expand_T *xp, int idx)
         return (char_u *)define_arg[idx];
       }
     case EXP_PLACE: {
-        char *place_arg[] = { "line=", "name=", "file=", "buffer=", NULL };
+        char *place_arg[] = { "line=", "name=", "group=", "priority=", "file=",
+                              "buffer=", NULL };
         return (char_u *)place_arg[idx];
       }
     case EXP_UNPLACE: {
-        char *unplace_arg[] = { "file=", "buffer=", NULL };
+        char *unplace_arg[] = { "group=", "file=", "buffer=", NULL };
         return (char_u *)unplace_arg[idx];
       }
     case EXP_SIGN_NAMES: {

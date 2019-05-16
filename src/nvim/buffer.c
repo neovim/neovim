@@ -5548,10 +5548,10 @@ static void insert_sign_by_lnum_prio(
  */
 int sign_in_group(signlist_T *sign, char_u *group)
 {
-  return ((group != NULL && STRCMP(group, "*") == 0) ||
-      (group == NULL && sign->group == NULL) ||
-      (group != NULL && sign->group != NULL &&
-				STRCMP(group, sign->group->sg_name) == 0));
+    return ((group != NULL && STRCMP(group, "*") == 0)
+	    || (group == NULL && sign->group == NULL)
+	    || (group != NULL && sign->group != NULL
+				 && STRCMP(group, sign->group->sg_name) == 0));
 }
 
 /*
@@ -5704,45 +5704,55 @@ int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type,
  */
 linenr_T buf_delsign(
     buf_T *buf,  // buffer sign is stored in
+    linenr_T	atlnum,		// sign at this line, 0 - at any line
     int id,       // sign id
     char_u *group// sign group
-)
+    )
 {
-    signlist_T **lastp;  // pointer to pointer to current sign
-    signlist_T *sign;    // a sign in a b_signlist
-    signlist_T *next;    // the next sign in a b_signlist
-    linenr_T lnum;       // line number whose sign was deleted
+  signlist_T **lastp;  // pointer to pointer to current sign
+  signlist_T *sign;    // a sign in a b_signlist
+  signlist_T *next;    // the next sign in a b_signlist
+  linenr_T lnum;       // line number whose sign was deleted
 
-    buf->b_signcols_max = -1;
-    lastp = &buf->b_signlist;
-    lnum = 0;
-    for (sign = buf->b_signlist; sign != NULL; sign = next) {
-        next = sign->next;
-        if ((id == 0 || sign->id == id) && sign_in_group(sign, group)) {
-            *lastp = next;
-            if (next != NULL) {
-              next->prev = sign->prev;
-            }
-            lnum = sign->lnum;
-	    if (sign->group != NULL)
-		sign_group_unref(sign->group->sg_name);
-            xfree(sign);
-            // Check whether only one sign needs to be deleted
-            if (group == NULL || (*group != '*' && id != 0))
-            break;
-        } else {
-            lastp = &sign->next;
-        }
+  buf->b_signcols_max = -1;
+  lastp = &buf->b_signlist;
+  lnum = 0;
+  for (sign = buf->b_signlist; sign != NULL; sign = next) {
+    next = sign->next;
+    if ((id == 0 || sign->id == id) &&
+        (atlnum == 0 || sign->lnum == atlnum) &&
+        sign_in_group(sign, group)) {
+      *lastp = next;
+      if (next != NULL) {
+        next->prev = sign->prev;
+      }
+      lnum = sign->lnum;
+      if (sign->group != NULL)
+        sign_group_unref(sign->group->sg_name);
+      xfree(sign);
+      redraw_buf_line_later(buf, lnum);
+      // Check whether only one sign needs to be deleted
+      // If deleting a sign with a specific identifer in a particular
+      // group or deleting any sign at a particular line number, delete
+      // only one sign.
+      if (group == NULL
+          || (*group != '*' && id != 0)
+          || (*group == '*' && atlnum != 0)) {
+        break;
+      }
+    } else {
+      lastp = &sign->next;
     }
+  }
 
-    /* When deleted the last sign needs to redraw the windows to remove the
-     * sign column. */
-    if (buf->b_signlist == NULL) {
-        redraw_buf_later(buf, NOT_VALID);
-        changed_cline_bef_curs();
-    }
+  /* When deleted the last sign needs to redraw the windows to remove the
+   * sign column. */
+  if (buf->b_signlist == NULL) {
+    redraw_buf_later(buf, NOT_VALID);
+    changed_cline_bef_curs();
+  }
 
-    return lnum;
+  return lnum;
 }
 
 
@@ -5770,17 +5780,18 @@ int buf_findsign(
 
 /*
  * Return the sign at line 'lnum' in buffer 'buf'. Returns NULL if a sign is
- * not found at the line.
+ * not found at the line. If 'groupname' is NULL, searches in the global group.
  */
 static signlist_T * buf_getsign_at_line(
     buf_T	*buf,   // buffer whose sign we are searching for
-    linenr_T lnum // line number of sign
+    linenr_T lnum, // line number of sign
+    char_u *groupname	// sign group name
 )
 {
   signlist_T	*sign;		// a sign in the signlist
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if (sign->lnum == lnum) {
+    if (sign->lnum == lnum && sign_in_group(sign, groupname)) {
       return sign;
     }
   }
@@ -5813,12 +5824,13 @@ signlist_T *buf_getsign_with_id(
  */
 int buf_findsign_id(
     buf_T *buf,         // buffer whose sign we are searching for
-    linenr_T lnum       // line number of sign
+    linenr_T lnum,      // line number of sign
+    char_u *groupname   // sign group name
 )
 {
     signlist_T *sign;   // a sign in the signlist
 
-    sign = buf_getsign_at_line(buf, lnum);
+    sign = buf_getsign_at_line(buf, lnum, groupname);
     if (sign != NULL) {
       return sign->id;
     }
@@ -5865,11 +5877,11 @@ void buf_delete_signs(buf_T *buf, char_u *group)
 /*
  * Delete all signs in all buffers.
  */
-void buf_delete_all_signs(void)
+void buf_delete_all_signs(char_u *groupname)
 {
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_signlist != NULL) {
-      buf_delete_signs(buf, (char_u *)"*");
+      buf_delete_signs(buf, groupname);
     }
   }
 }

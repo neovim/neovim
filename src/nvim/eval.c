@@ -15739,12 +15739,12 @@ f_sign_unplace(typval_T *argvars, typval_T *rettv)
     {
 	// Delete the sign in all the buffers
 	FOR_ALL_BUFFERS(buf)
-	    if (sign_unplace(sign_id, group, buf) == OK)
+	    if (sign_unplace(sign_id, group, buf, 0) == OK)
 		rettv->vval.v_number = 0;
     }
     else
     {
-	if (sign_unplace(sign_id, group, buf) == OK)
+	if (sign_unplace(sign_id, group, buf, 0) == OK)
 	    rettv->vval.v_number = 0;
     }
     xfree(group);
