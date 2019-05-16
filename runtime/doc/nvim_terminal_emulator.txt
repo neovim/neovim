@@ -161,8 +161,7 @@ source file location will be displayed, if possible.  A sign is used to
 highlight the current position, using highlight group debugPC.	 
 
 If the buffer in the current window is modified, another window will be opened
-to display the current gdb position.  You can use `:Winbar` to add a window
-toolbar there.
+to display the current gdb position.
 
 Focus the terminal of the executed program to interact with it.  This works
 the same as any command running in a terminal window.
@@ -275,16 +274,6 @@ gdb:
  *:Continue*	execute the gdb "continue" command
  *:Stop*	interrupt the program
 
-If 'mouse' is set the plugin adds a window toolbar with these entries:
-  Step		`:Step`
-  Next		`:Over`
-  Finish	`:Finish`
-  Cont		`:Continue`
-  Stop		`:Stop`
-  Eval		`:Evaluate`
-This way you can use the mouse to perform the most common commands.  You need
-to have the 'mouse' option set to enable mouse clicks.
-
 If gdb stops at a source line and there is no window currently showing the
 source code, a new window will be created for the source code.  This also
 happens if the buffer in the source code window has been modified and can't be
@@ -338,6 +327,18 @@ GDB command						 *termdebug-customizing*
 To change the name of the gdb command, set the "termdebugger" variable before
 invoking `:Termdebug`: >
 	let termdebugger = "mygdb"
+
+To use neovim floating windows for previewing variable evaluation, set the
+`g:termdebug_useFloatingHover` variable like this: >
+	let g:termdebug_useFloatingHover = 1
+
+If you are a mouse person, you can also define a mapping using your right
+click to one of the terminal command like evaluate the variable under the
+cursor: >
+      	nnoremap <RightMouse> :Evaluate<CR>
+or set/unset a breakpoint: >
+	nnoremap <RightMouse> :Break<CR>
+
 <							*gdb-version*
 Only debuggers fully compatible with gdb will work.  Vim uses the GDB/MI
 interface.  The "new-ui" command  requires gdb version 7.12 or later.  if you

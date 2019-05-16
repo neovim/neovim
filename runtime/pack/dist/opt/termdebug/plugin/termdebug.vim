@@ -430,36 +430,10 @@ func s:InstallCommands()
   " TODO: can the K mapping be restored?
   nnoremap K :Evaluate<CR>
 
-  if has('menu') && &mouse != ''
-    call s:InstallWinbar()
-
-    if !exists('g:termdebug_popup') || g:termdebug_popup != 0
-      let s:saved_mousemodel = &mousemodel
-      let &mousemodel = 'popup_setpos'
-      an 1.200 PopUp.-SEP3-	<Nop>
-      an 1.210 PopUp.Set\ breakpoint	:Break<CR>
-      an 1.220 PopUp.Clear\ breakpoint	:Clear<CR>
-      an 1.230 PopUp.Evaluate		:Evaluate<CR>
-    endif
-  endif
-
   let &cpo = save_cpo
 endfunc
 
 let s:winbar_winids = []
-
-" Install the window toolbar in the current window.
-func s:InstallWinbar()
-  if has('menu') && &mouse != ''
-    nnoremenu WinBar.Step   :Step<CR>
-    nnoremenu WinBar.Next   :Over<CR>
-    nnoremenu WinBar.Finish :Finish<CR>
-    nnoremenu WinBar.Cont   :Continue<CR>
-    nnoremenu WinBar.Stop   :Stop<CR>
-    nnoremenu WinBar.Eval   :Evaluate<CR>
-    call add(s:winbar_winids, win_getid(winnr()))
-  endif
-endfunc
 
 " Delete installed debugger commands in the current window.
 func s:DeleteCommands()
@@ -479,32 +453,6 @@ func s:DeleteCommands()
   delcommand Winbar
 
   nunmap K
-
-  if has('menu')
-    " Remove the WinBar entries from all windows where it was added.
-    let curwinid = win_getid(winnr())
-    for winid in s:winbar_winids
-      if win_gotoid(winid)
-        aunmenu WinBar.Step
-        aunmenu WinBar.Next
-        aunmenu WinBar.Finish
-        aunmenu WinBar.Cont
-        aunmenu WinBar.Stop
-        aunmenu WinBar.Eval
-      endif
-    endfor
-    call win_gotoid(curwinid)
-    let s:winbar_winids = []
-
-    if exists('s:saved_mousemodel')
-      let &mousemodel = s:saved_mousemodel
-      unlet s:saved_mousemodel
-      aunmenu PopUp.-SEP3-
-      aunmenu PopUp.Set\ breakpoint
-      aunmenu PopUp.Clear\ breakpoint
-      aunmenu PopUp.Evaluate
-    endif
-  endif
 
   exe 'sign unplace ' . s:pc_id
   for [id, entries] in items(s:breakpoints)
@@ -616,9 +564,7 @@ func s:HandleEvaluate(msg)
     else
       let s:evalFromBalloonExprResult .= ' = ' . value
     endif
-    let buf = nvim_create_buf(v:false, v:true)
-    call nvim_buf_set_lines(buf, 0, -1, v:true, [s:evalFromBalloonExprResult])
-    call s:OpenHoverPreview(buf, [s:evalFromBalloonExprResult], v:null)
+    call s:OpenHoverPreview([s:evalFromBalloonExprResult], v:null)
   else
     echomsg '"' . s:evalexpr . '": ' . value
   endif
@@ -633,7 +579,7 @@ func s:HandleEvaluate(msg)
 endfunc
 
 function! s:ShouldUseFloatWindow() abort
-  if exists('g:termdebug_useFloatingHover') && (g:termdebug_useFloatingHover == 1)
+  if has('nvim_open_win') && exists('g:termdebug_useFloatingHover') && (g:termdebug_useFloatingHover == 1)
     return v:true
   else
     return v:false
@@ -677,13 +623,15 @@ function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
 " Open preview window. Window is open in:
 "   - Floating window on Neovim (0.4.0 or later)
 "   - Preview window on Neovim (0.3.0 or earlier) or Vim
-function! s:OpenHoverPreview(bufname, lines, filetype) abort
+function! s:OpenHoverPreview(lines, filetype) abort
     " Use local variable since parameter is not modifiable
     let lines = a:lines
     let bufnr = bufnr('%')
 
     let use_float_win = s:ShouldUseFloatWindow()
     if use_float_win
+        let bufname = nvim_create_buf(v:false, v:true)
+        call nvim_buf_set_lines(buf, 0, -1, v:true, lines)
         let pos = getpos('.')
 
         " Calculate width and height and give margin to lines
@@ -735,23 +683,12 @@ function! s:OpenHoverPreview(bufname, lines, filetype) abort
         \   'height': height,
         \ })
 
-        execute 'noswapfile edit!' a:bufname
+        execute 'noswapfile edit!' bufname
 
         setlocal winhl=Normal:CursorLine
     else
-      echomsg '"' . a:lines[0] . '": ' . value
+      echomsg a:lines[0]
     endif
-
-    setlocal buftype=nofile nobuflisted bufhidden=wipe nonumber norelativenumber signcolumn=no
-
-    if a:filetype isnot v:null
-        let &filetype = a:filetype
-    endif
-
-    call setline(1, lines)
-    setlocal nomodified nomodifiable
-
-    wincmd p
 
     if use_float_win
         " Unlike preview window, :pclose does not close window. Instead, close
