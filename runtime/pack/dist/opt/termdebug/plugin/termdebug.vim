@@ -593,7 +593,7 @@ function! s:CloseFloatingHoverOnCursorMove(win_id, opened) abort
     " was really moved
     return
   endif
-  autocmd! termdebug-close-hover
+  autocmd! nvim_termdebug_close_hover
   let winnr = win_id2win(a:win_id)
   if winnr == 0
     return
@@ -605,7 +605,7 @@ function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
     let winnr = win_id2win(a:win_id)
     if winnr == 0
         " Float window was already closed
-        autocmd! termdebug-close-hover
+        autocmd! nvim_termdebug_close_hover
         return
     endif
     if winnr == winnr()
@@ -616,7 +616,7 @@ function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
         " When current buffer opened hover window, it's not another buffer. Skipped
         return
     endif
-    autocmd! termdebug-close-hover
+    autocmd! nvim_termdebug_close_hover
     call nvim_win_close(a:win_id, v:true)
   endfunction
 
@@ -632,14 +632,10 @@ function! s:OpenHoverPreview(lines, filetype) abort
     if use_float_win
       let pos = getpos('.')
 
-      " Calculate width and height and give margin to lines
+      " Calculate width and height
       let width = 0
       for index in range(len(lines))
         let line = lines[index]
-        if line !=# ''
-          " Give a left margin
-          let line = ' ' . line
-        endif
         let lw = strdisplaywidth(line)
         if lw > width
           let width = lw
@@ -647,9 +643,6 @@ function! s:OpenHoverPreview(lines, filetype) abort
         let lines[index] = line
       endfor
 
-      " Give margin
-      let width += 1
-      let lines = [''] + lines + ['']
       let height = len(lines)
 
       " Calculate anchor
@@ -698,7 +691,7 @@ function! s:OpenHoverPreview(lines, filetype) abort
       " hover window automatically when cursor is moved.
       let call_after_move = printf('<SID>CloseFloatingHoverOnCursorMove(%d, %s)', float_win_id, string(pos))
       let call_on_bufenter = printf('<SID>CloseFloatingHoverOnBufEnter(%d, %d)', float_win_id, bufnr)
-      augroup termdebug-close-hover
+      augroup nvim_termdebug_close_hover
         execute 'autocmd CursorMoved,CursorMovedI,InsertEnter <buffer> call ' . call_after_move
         execute 'autocmd BufEnter * call ' . call_on_bufenter
       augroup END
