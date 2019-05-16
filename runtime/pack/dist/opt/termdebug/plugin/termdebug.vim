@@ -684,11 +684,11 @@ function! s:OpenHoverPreview(lines, filetype) abort
             \   'width': width,
             \   'height': height,
             \ })
-      setlocal winhl=Normal:NormalFloat
-      setlocal buftype=nofile nobuflisted bufhidden=wipe nonumber norelativenumber signcolumn=no
-
+      call nvim_win_set_option(float_win_id, 'relativenumber', v:false)
+      call nvim_win_set_option(float_win_id, 'signcolumn', 'no')
+      call nvim_win_set_option(float_win_id, 'signcolumn', 'no')
       if a:filetype isnot v:null
-        let &filetype = a:filetype
+        call nvim_win_set_option(float_win_id, 'filetype', a:filetype)
       endif
 
       " cannot use nvim_win_set_option for these options
