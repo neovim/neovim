@@ -630,8 +630,6 @@ function! s:OpenHoverPreview(lines, filetype) abort
 
     let use_float_win = s:ShouldUseFloatWindow()
     if use_float_win
-      let bufname = nvim_create_buf(v:false, v:true)
-      call nvim_buf_set_lines(bufname, 0, -1, v:true, lines)
       let pos = getpos('.')
 
       " Calculate width and height and give margin to lines
@@ -674,7 +672,11 @@ function! s:OpenHoverPreview(lines, filetype) abort
         let col = 1
       endif
 
-      let float_win_id = nvim_open_win(bufnr, v:true, {
+      let buf = nvim_create_buf(v:false, v:true)
+      call nvim_buf_set_lines(buf, 0, -1, v:true, lines)
+      " using v:true for second argument of nvim_open_win make the floating
+      " window disappear
+      let float_win_id = nvim_open_win(buf, v:false, {
             \   'relative': 'cursor',
             \   'anchor': vert . hor,
             \   'row': row,
@@ -682,9 +684,6 @@ function! s:OpenHoverPreview(lines, filetype) abort
             \   'width': width,
             \   'height': height,
             \ })
-
-      execute 'noswapfile edit!' bufname
-
       setlocal winhl=Normal:NormalFloat
       setlocal buftype=nofile nobuflisted bufhidden=wipe nonumber norelativenumber signcolumn=no
 
@@ -692,10 +691,8 @@ function! s:OpenHoverPreview(lines, filetype) abort
         let &filetype = a:filetype
       endif
 
-      call setline(1, lines)
+      " cannot use nvim_win_set_option for these options
       setlocal nomodified nomodifiable
-
-      wincmd p
 
       " Unlike preview window, :pclose does not close window. Instead, close
       " hover window automatically when cursor is moved.
