@@ -685,7 +685,7 @@ function! s:OpenHoverPreview(lines, filetype) abort
 
       execute 'noswapfile edit!' bufname
 
-      setlocal winhl=Normal:CursorLine
+      setlocal winhl=Normal:NormalFloat
       setlocal buftype=nofile nobuflisted bufhidden=wipe nonumber norelativenumber signcolumn=no
 
       if a:filetype isnot v:null
