@@ -579,7 +579,7 @@ func s:HandleEvaluate(msg)
 endfunc
 
 function! s:ShouldUseFloatWindow() abort
-  if has('nvim_open_win') && exists('g:termdebug_useFloatingHover') && (g:termdebug_useFloatingHover == 1)
+  if exists('*nvim_open_win') && exists('g:termdebug_useFloatingHover') && (g:termdebug_useFloatingHover == 1)
     return v:true
   else
     return v:false
@@ -593,19 +593,19 @@ function! s:CloseFloatingHoverOnCursorMove(win_id, opened) abort
     " was really moved
     return
   endif
-  autocmd! plugin-LC-neovim-close-hover
+  autocmd! termdebug-close-hover
   let winnr = win_id2win(a:win_id)
   if winnr == 0
     return
   endif
-  execute winnr . 'wincmd c'
+  call nvim_win_close(a:win_id, v:true)
 endfunction
 
 function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
     let winnr = win_id2win(a:win_id)
     if winnr == 0
         " Float window was already closed
-        autocmd! plugin-LC-neovim-close-hover
+        autocmd! termdebug-close-hover
         return
     endif
     if winnr == winnr()
@@ -616,8 +616,8 @@ function! s:CloseFloatingHoverOnBufEnter(win_id, bufnr) abort
         " When current buffer opened hover window, it's not another buffer. Skipped
         return
     endif
-    autocmd! plugin-LC-neovim-close-hover
-    execute winnr . 'wincmd c'
+    autocmd! termdebug-close-hover
+    call nvim_win_close(a:win_id, v:true)
   endfunction
 
 " Open preview window. Window is open in:
@@ -630,75 +630,83 @@ function! s:OpenHoverPreview(lines, filetype) abort
 
     let use_float_win = s:ShouldUseFloatWindow()
     if use_float_win
-        let bufname = nvim_create_buf(v:false, v:true)
-        call nvim_buf_set_lines(buf, 0, -1, v:true, lines)
-        let pos = getpos('.')
+      let bufname = nvim_create_buf(v:false, v:true)
+      call nvim_buf_set_lines(bufname, 0, -1, v:true, lines)
+      let pos = getpos('.')
 
-        " Calculate width and height and give margin to lines
-        let width = 0
-        for index in range(len(lines))
-            let line = lines[index]
-            if line !=# ''
-                " Give a left margin
-                let line = ' ' . line
-            endif
-            let lw = strdisplaywidth(line)
-            if lw > width
-                let width = lw
-            endif
-            let lines[index] = line
-        endfor
-
-        " Give margin
-        let width += 1
-        let lines = [''] + lines + ['']
-        let height = len(lines)
-
-        " Calculate anchor
-        " Prefer North, but if there is no space, fallback into South
-        let bottom_line = line('w0') + winheight(0) - 1
-        if pos[1] + height <= bottom_line
-            let vert = 'N'
-            let row = 1
-        else
-            let vert = 'S'
-            let row = 0
+      " Calculate width and height and give margin to lines
+      let width = 0
+      for index in range(len(lines))
+        let line = lines[index]
+        if line !=# ''
+          " Give a left margin
+          let line = ' ' . line
         endif
-
-        " Prefer West, but if there is no space, fallback into East
-        if pos[2] + width <= &columns
-            let hor = 'W'
-            let col = 0
-        else
-            let hor = 'E'
-            let col = 1
+        let lw = strdisplaywidth(line)
+        if lw > width
+          let width = lw
         endif
+        let lines[index] = line
+      endfor
 
-        let float_win_id = nvim_open_win(bufnr, v:true, {
-        \   'relative': 'cursor',
-        \   'anchor': vert . hor,
-        \   'row': row,
-        \   'col': col,
-        \   'width': width,
-        \   'height': height,
-        \ })
+      " Give margin
+      let width += 1
+      let lines = [''] + lines + ['']
+      let height = len(lines)
 
-        execute 'noswapfile edit!' bufname
+      " Calculate anchor
+      " Prefer North, but if there is no space, fallback into South
+      let bottom_line = line('w0') + winheight(0) - 1
+      if pos[1] + height <= bottom_line
+        let vert = 'N'
+        let row = 1
+      else
+        let vert = 'S'
+        let row = 0
+      endif
 
-        setlocal winhl=Normal:CursorLine
+      " Prefer West, but if there is no space, fallback into East
+      if pos[2] + width <= &columns
+        let hor = 'W'
+        let col = 0
+      else
+        let hor = 'E'
+        let col = 1
+      endif
+
+      let float_win_id = nvim_open_win(bufnr, v:true, {
+            \   'relative': 'cursor',
+            \   'anchor': vert . hor,
+            \   'row': row,
+            \   'col': col,
+            \   'width': width,
+            \   'height': height,
+            \ })
+
+      execute 'noswapfile edit!' bufname
+
+      setlocal winhl=Normal:CursorLine
+      setlocal buftype=nofile nobuflisted bufhidden=wipe nonumber norelativenumber signcolumn=no
+
+      if a:filetype isnot v:null
+        let &filetype = a:filetype
+      endif
+
+      call setline(1, lines)
+      setlocal nomodified nomodifiable
+
+      wincmd p
+
+      " Unlike preview window, :pclose does not close window. Instead, close
+      " hover window automatically when cursor is moved.
+      let call_after_move = printf('<SID>CloseFloatingHoverOnCursorMove(%d, %s)', float_win_id, string(pos))
+      let call_on_bufenter = printf('<SID>CloseFloatingHoverOnBufEnter(%d, %d)', float_win_id, bufnr)
+      augroup termdebug-close-hover
+        execute 'autocmd CursorMoved,CursorMovedI,InsertEnter <buffer> call ' . call_after_move
+        execute 'autocmd BufEnter * call ' . call_on_bufenter
+      augroup END
     else
       echomsg a:lines[0]
-    endif
-
-    if use_float_win
-        " Unlike preview window, :pclose does not close window. Instead, close
-        " hover window automatically when cursor is moved.
-        let call_after_move = printf('<SID>CloseFloatingHoverOnCursorMove(%d, %s)', float_win_id, string(pos))
-        let call_on_bufenter = printf('<SID>CloseFloatingHoverOnBufEnter(%d, %d)', float_win_id, bufnr)
-        augroup plugin-LC-neovim-close-hover
-            execute 'autocmd CursorMoved,CursorMovedI,InsertEnter <buffer> call ' . call_after_move
-            execute 'autocmd BufEnter * call ' . call_on_bufenter
-        augroup END
     endif
 endfunction
 
