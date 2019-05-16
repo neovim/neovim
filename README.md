@@ -71,10 +71,6 @@ are being built for Visual Studio Code.
 The ability to do remote debugging is a must. This is key to my workflow, so
 baking it in to the debugging experience is a top bill goal for the project.
 
-# Demo
-
-Please note the entire UI is placeholder. These are just proofs-of-concept.
-
 # Features and Usage
 
 # Mappings
