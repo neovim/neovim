@@ -439,16 +439,66 @@ describe('jobs', function()
         call add(self.data, Normalize(a:data))
         sleep 200m
       endfunction
+      function! d.on_exit(job, data, event) dict
+        let g:exit_data = copy(self.data)
+      endfunction
       if has('win32')
         let cmd = 'for /L %I in (1,1,5) do @(echo %I& ping -n 2 127.0.0.1 > nul)'
       else
         let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
       endif
-      call jobwait([jobstart(cmd, d)])
+      let g:id = jobstart(cmd, d)
+      sleep 1500m
+      call jobwait([g:id])
     ]])
 
     local expected = {'1', '2', '3', '4', '5', ''}
     local chunks = eval('d.data')
+    -- check nothing was received after exit, including EOF
+    eq(eval('g:exit_data'), chunks)
+    local received = {''}
+    for i, chunk in ipairs(chunks) do
+      if i < #chunks then
+        -- if chunks got joined, a spurious [''] callback was not sent
+        neq({''}, chunk)
+      else
+        -- but EOF callback is still sent
+        eq({''}, chunk)
+      end
+      received[#received] = received[#received]..chunk[1]
+      for j = 2, #chunk do
+        received[#received+1] = chunk[j]
+      end
+    end
+    eq(expected, received)
+  end)
+
+  it('does not invoke callbacks recursively', function()
+    source([[
+      let d = {'data': []}
+      function! d.on_stdout(job, data, event) dict
+        " if callbacks were invoked recursively, this would cause on_stdout
+        " to be invoked recursively and the data reversed on the call stack
+        sleep 200m
+        call add(self.data, Normalize(a:data))
+      endfunction
+      function! d.on_exit(job, data, event) dict
+        let g:exit_data = copy(self.data)
+      endfunction
+      if has('win32')
+        let cmd = 'for /L %I in (1,1,5) do @(echo %I& ping -n 2 127.0.0.1 > nul)'
+      else
+        let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
+      endif
+      let g:id = jobstart(cmd, d)
+      sleep 1500m
+      call jobwait([g:id])
+    ]])
+
+    local expected = {'1', '2', '3', '4', '5', ''}
+    local chunks = eval('d.data')
+    -- check nothing was received after exit, including EOF
+    eq(eval('g:exit_data'), chunks)
     local received = {''}
     for i, chunk in ipairs(chunks) do
       if i < #chunks then

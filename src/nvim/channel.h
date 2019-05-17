@@ -42,13 +42,16 @@ typedef struct {
   Callback cb;
   dict_T *self;
   garray_T buffer;
+  bool eof;
   bool buffered;
+  const char *type;
 } CallbackReader;
 
 #define CALLBACK_READER_INIT ((CallbackReader){ .cb = CALLBACK_NONE, \
                                                 .self = NULL, \
                                                 .buffer = GA_EMPTY_INIT_VALUE, \
-                                                .buffered = false })
+                                                .buffered = false, \
+                                                .type = NULL })
 static inline bool callback_reader_set(CallbackReader reader)
 {
   return reader.cb.type != kCallbackNone || reader.self;
@@ -73,9 +76,13 @@ struct Channel {
   RpcState rpc;
   Terminal *term;
 
-  CallbackReader on_stdout;
+  CallbackReader on_data;
   CallbackReader on_stderr;
   Callback on_exit;
+  int exit_status;
+
+  bool callback_busy;
+  bool callback_scheduled;
 };
 
 EXTERN PMap(uint64_t) *channels;
