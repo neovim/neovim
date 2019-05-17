@@ -17147,12 +17147,9 @@ bool callback_call(Callback *const callback, const int argcount_in,
   }
 
   int dummy;
-  in_callback = true;
-  bool rv = call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
+  return call_func(name, (int)STRLEN(name), rettv, argcount_in, argvars_in,
                    NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum, &dummy,
                    true, partial, NULL);
-  in_callback = false;
-  return rv;
 }
 
 static bool set_ref_in_callback(Callback *callback, int copyID,

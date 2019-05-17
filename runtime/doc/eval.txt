@@ -10750,44 +10750,7 @@ code can be used: >
     unlet scriptnames_output
 
 ==============================================================================
-10. No +eval feature				*no-eval-feature*
-
-When the |+eval| feature was disabled at compile time, none of the expression
-evaluation commands are available.  To prevent this from causing Vim scripts
-to generate all kinds of errors, the ":if" and ":endif" commands are still
-recognized, though the argument of the ":if" and everything between the ":if"
-and the matching ":endif" is ignored.  Nesting of ":if" blocks is allowed, but
-only if the commands are at the start of the line.  The ":else" command is not
-recognized.
-
-Example of how to avoid executing commands when the |+eval| feature is
-missing: >
-
-	:if 1
-	:  echo "Expression evaluation is compiled in"
-	:else
-	:  echo "You will _never_ see this message"
-	:endif
-
-To execute a command only when the |+eval| feature is disabled requires a trick,
-as this example shows: >
-
-	silent! while 0
-	  set history=111
-	silent! endwhile
-
-When the |+eval| feature is available the command is skipped because of the
-"while 0".  Without the |+eval| feature the "while 0" is an error, which is
-silently ignored, and the command is executed.
-
-The "<CR>" here is a real CR character, type CTRL-V Enter to get it.
-
-When the |+eval| feature is available the ":" is remapped to add a double
-quote, which has the effect of commenting-out the command.  Without the
-|+eval| feature the nnoremap command is skipped and the command is executed.
-
-==============================================================================
-11. The sandbox					*eval-sandbox* *sandbox* *E48*
+The sandbox					*eval-sandbox* *sandbox* *E48*
 
 The 'foldexpr', 'formatexpr', 'includeexpr', 'indentexpr', 'statusline' and
 'foldtext' options may be evaluated in a sandbox.  This means that you are
@@ -10826,7 +10789,7 @@ Note that when in the sandbox and saving an option value and restoring it, the
 option will still be marked as it was set in the sandbox.
 
 ==============================================================================
-12. Textlock							*textlock*
+Textlock							*textlock*
 
 In a few situations it is not allowed to change the text in the buffer, jump
 to another window and some other things that might confuse or break what Vim
@@ -10842,7 +10805,7 @@ This is not allowed when the textlock is active:
 	- etc.
 
 ==============================================================================
-13. Command-line expressions highlighting		*expr-highlight*
+Command-line expressions highlighting		*expr-highlight*
 
 Expressions entered by the user in |i_CTRL-R_=|, |c_CTRL-\_e|, |quote=| are
 highlighted by the built-in expressions parser.  It uses highlight groups

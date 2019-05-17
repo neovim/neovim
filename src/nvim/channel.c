@@ -672,7 +672,9 @@ static void on_channel_event(void **args)
   argv[2].vval.v_string = (uint8_t *)ev->type;
 
   typval_T rettv = TV_INITIAL_VALUE;
+  in_callback = true;
   callback_call(ev->callback, 3, argv, &rettv);
+  in_callback = false;
   tv_clear(&rettv);
   channel_decref(ev->chan);
   xfree(ev);
