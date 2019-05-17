@@ -5830,6 +5830,9 @@ int sign_place(
     int
 sign_unplace(int sign_id, char_u *sign_group, buf_T *buf, linenr_T atlnum)
 {
+    if (buf->b_signlist == NULL) {	// No signs in the buffer
+	return OK;
+    }
   if (sign_id == 0)
   {
     // Delete all the signs in the specified buffer
@@ -5866,6 +5869,316 @@ static void sign_unplace_at_cursor(char_u *groupname)
 }
 
 /*
+ * sign define command
+ *   ":sign define {name} ..."
+ */
+static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
+{
+  char_u	*arg;
+  char_u	*p = cmdline;
+  char_u	*icon = NULL;
+  char_u	*text = NULL;
+  char_u	*linehl = NULL;
+  char_u	*texthl = NULL;
+  char_u	*numhl = NULL;
+  int failed = FALSE;
+
+  // set values for a defined sign.
+  for (;;) {
+    arg = skipwhite(p);
+    if (*arg == NUL) {
+      break;
+    }
+    p = skiptowhite_esc(arg);
+    if (STRNCMP(arg, "icon=", 5) == 0) {
+      arg += 5;
+      icon = vim_strnsave(arg, (int)(p - arg));
+    } else if (STRNCMP(arg, "text=", 5) == 0) {
+      arg += 5;
+      text = vim_strnsave(arg, (int)(p - arg));
+    } else if (STRNCMP(arg, "linehl=", 7) == 0) {
+      arg += 7;
+      linehl = vim_strnsave(arg, (int)(p - arg));
+    } else if (STRNCMP(arg, "texthl=", 7) == 0) {
+      arg += 7;
+      texthl = vim_strnsave(arg, (int)(p - arg));
+    } else if (STRNCMP(arg, "numhl=", 6) == 0) {
+      arg += 6;
+      numhl = vim_strnsave(arg, (int)(p - arg));
+    } else {
+      EMSG2(_(e_invarg2), arg);
+      failed = TRUE;
+      break;
+    }
+  }
+
+  if (!failed) {
+    sign_define_by_name(sign_name, icon, linehl, text, texthl, numhl);
+  }
+
+  xfree(icon);
+  xfree(text);
+  xfree(linehl);
+  xfree(texthl);
+  xfree(numhl);
+}
+
+/*
+ * :sign place command
+ */
+static void sign_place_cmd(
+    buf_T		*buf,
+    linenr_T	lnum,
+    char_u		*sign_name,
+    int		id,
+    char_u		*group,
+    int		prio
+    )
+{
+  if (id <= 0)
+  {
+    // List signs placed in a file/buffer
+    //   :sign place file={fname}
+    //   :sign place group={group} file={fname}
+    //   :sign place group=* file={fname}
+    //   :sign place buffer={nr}
+    //   :sign place group={group} buffer={nr}
+    //   :sign place group=* buffer={nr}
+    //   :sign place
+    //   :sign place group={group}
+    //   :sign place group=*
+    if (lnum >= 0 || sign_name != NULL ||
+        (group != NULL && *group == '\0')) {
+      EMSG(_(e_invarg));
+    } else {
+      sign_list_placed(buf, group);
+    }
+  } else {
+    // Place a new sign
+    if (sign_name == NULL || buf == NULL ||
+        (group != NULL && *group == '\0')) {
+      EMSG(_(e_invarg));
+      return;
+    }
+
+    sign_place(&id, group, sign_name, buf, lnum, prio);
+  }
+}
+
+/*
+ * :sign unplace command
+ */
+static void sign_unplace_cmd(
+	buf_T		*buf,
+	linenr_T	lnum,
+	char_u		*sign_name,
+	int		id,
+	char_u		*group
+)
+{
+    if (lnum >= 0 || sign_name != NULL || (group != NULL && *group == '\0')) {
+      EMSG(_(e_invarg));
+      return;
+    }
+
+    if (id == -2)
+    {
+      if (buf != NULL) {
+        // :sign unplace * file={fname}
+        // :sign unplace * group={group} file={fname}
+        // :sign unplace * group=* file={fname}
+        // :sign unplace * buffer={nr}
+        // :sign unplace * group={group} buffer={nr}
+        // :sign unplace * group=* buffer={nr}
+        sign_unplace(0, group, buf, 0);
+      } else {
+        // :sign unplace *
+        // :sign unplace * group={group}
+        // :sign unplace * group=*
+        FOR_ALL_BUFFERS(buf) {
+          if (buf->b_signlist != NULL) {
+            buf_delete_signs(buf, group);
+          }
+        }
+      }
+    } else {
+      if (buf != NULL) {
+        // :sign unplace {id} file={fname}
+        // :sign unplace {id} group={group} file={fname}
+        // :sign unplace {id} group=* file={fname}
+        // :sign unplace {id} buffer={nr}
+        // :sign unplace {id} group={group} buffer={nr}
+        // :sign unplace {id} group=* buffer={nr}
+        sign_unplace(id, group, buf, 0);
+      } else {
+        if (id == -1)
+        {
+          // :sign unplace group={group}
+          // :sign unplace group=*
+          sign_unplace_at_cursor(group);
+        } else {
+          // :sign unplace {id}
+          // :sign unplace {id} group={group}
+          // :sign unplace {id} group=*
+          FOR_ALL_BUFFERS(buf) {
+            sign_unplace(id, group, buf, 0);
+          }
+        }
+      }
+    }
+}
+
+/*
+ * Jump to a placed sign
+ *   :sign jump {id} file={fname}
+ *   :sign jump {id} buffer={nr}
+ *   :sign jump {id} group={group} file={fname}
+ *   :sign jump {id} group={group} buffer={nr}
+ */
+static void sign_jump_cmd(
+	buf_T		*buf,
+	linenr_T	lnum,
+	char_u		*sign_name,
+	int		id,
+	char_u		*group
+  )
+{
+  if (buf == NULL && sign_name == NULL && group == NULL && id == -1) {
+    EMSG(_(e_argreq));
+    return;
+  }
+
+  if (buf == NULL || (group != NULL && *group == '\0') ||
+      lnum >= 0 || sign_name != NULL) {
+    // File or buffer is not specified or an empty group is used
+    // or a line number or a sign name is specified.
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  if ((lnum = buf_findsign(buf, id, group)) <= 0) {
+    EMSGN(_("E157: Invalid sign ID: %ld"), id);
+    return;
+  }
+
+  // goto a sign ...
+  if (buf_jump_open_win(buf) != NULL)
+  {			// ... in a current window
+    curwin->w_cursor.lnum = lnum;
+    check_cursor_lnum();
+    beginline(BL_WHITE);
+  } else {			// ... not currently in a window
+    if (buf->b_fname == NULL) {
+      EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
+      return;
+    }
+    size_t cmdlen = STRLEN(buf->b_fname) + 24;
+    char *cmd = xmallocz(cmdlen);
+    snprintf(cmd, cmdlen, "e +%" PRId64 " %s",
+        (int64_t)lnum, buf->b_fname);
+    do_cmdline_cmd(cmd);
+    xfree(cmd);
+  }
+
+  foldOpenCursor();
+}
+
+/*
+ * Parse the command line arguments for the ":sign place", ":sign unplace" and
+ * ":sign jump" commands.
+ * The supported arguments are: line={lnum} name={name} group={group}
+ * priority={prio} and file={fname} or buffer={nr}.
+ */
+static int parse_sign_cmd_args(
+	int	    cmd,
+	char_u	    *arg,
+	char_u	    **sign_name,
+	int	    *signid,
+	char_u	    **group,
+	int	    *prio,
+	buf_T	    **buf,
+	linenr_T    *lnum
+)
+{
+    char_u	*arg1;
+    char_u	*name;
+    char_u	*filename = NULL;
+
+    // first arg could be placed sign id
+    arg1 = arg;
+    if (ascii_isdigit(*arg)) {
+      *signid = getdigits_int(&arg);
+      if (!ascii_iswhite(*arg) && *arg != NUL) {
+        *signid = -1;
+        arg = arg1;
+      } else {
+        arg = skipwhite(arg);
+      }
+    }
+
+    while (*arg != NUL) {
+      if (STRNCMP(arg, "line=", 5) == 0) {
+        arg += 5;
+        *lnum = atoi((char *)arg);
+        arg = skiptowhite(arg);
+      } else if (STRNCMP(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
+        if (*signid != -1) {
+          EMSG(_(e_invarg));
+          return FAIL;
+        }
+        *signid = -2;
+        arg = skiptowhite(arg + 1);
+      } else if (STRNCMP(arg, "name=", 5) == 0) {
+        arg += 5;
+        name = arg;
+        arg = skiptowhite(arg);
+        if (*arg != NUL) {
+          *arg++ = NUL;
+        }
+        while (name[0] == '0' && name[1] != NUL) {
+          ++name;
+        }
+        *sign_name = name;
+ 	    } else if (STRNCMP(arg, "group=", 6) == 0) {
+        arg += 6;
+        *group = arg;
+        arg = skiptowhite(arg);
+        if (*arg != NUL) {
+          *arg++ = NUL;
+        }
+      } else if (STRNCMP(arg, "priority=", 9) == 0) {
+        arg += 9;
+        *prio = atoi((char *)arg);
+        arg = skiptowhite(arg);
+      } else if (STRNCMP(arg, "file=", 5) == 0) {
+        arg += 5;
+        filename = arg;
+        *buf = buflist_findname_exp(arg);
+        break;
+      } else if (STRNCMP(arg, "buffer=", 7) == 0) {
+        arg += 7;
+        filename = arg;
+        *buf = buflist_findnr(getdigits_int(&arg));
+        if (*skipwhite(arg) != NUL) {
+          EMSG(_(e_trailing));
+        }
+        break;
+      } else {
+        EMSG(_(e_invarg));
+        return FAIL;
+      }
+      arg = skipwhite(arg);
+    }
+
+    if (filename != NULL && *buf == NULL) {
+      EMSG2(_("E158: Invalid buffer name: %s"), filename);
+      return FAIL;
+    }
+
+    return OK;
+}
+
+/*
  * ":sign" command
  */
 void ex_sign(exarg_T *eap)
@@ -5895,11 +6208,6 @@ void ex_sign(exarg_T *eap)
       EMSG(_("E156: Missing sign name"));
     } else {
       char_u	*name;
-      char_u	*icon = NULL;
-      char_u	*text = NULL;
-      char_u	*linehl = NULL;
-      char_u	*texthl = NULL;
-      char_u	*numhl = NULL;
 
       // Isolate the sign name.  If it's a number skip leading zeroes,
       // so that "099" and "99" are the same sign.  But keep "0".
@@ -5913,45 +6221,7 @@ void ex_sign(exarg_T *eap)
       name = vim_strsave(arg);
 
       if (idx == SIGNCMD_DEFINE) {
-        int failed = FALSE;
-        // ":sign define {name} ...": define a sign
-
-        // set values for a defined sign.
-        for (;;) {
-          arg = skipwhite(p);
-          if (*arg == NUL) {
-            break;
-          }
-          p = skiptowhite_esc(arg);
-          if (STRNCMP(arg, "icon=", 5) == 0) {
-            arg += 5;
-            icon = vim_strnsave(arg, (int)(p - arg));
-          } else if (STRNCMP(arg, "text=", 5) == 0) {
-            arg += 5;
-            text = vim_strnsave(arg, (int)(p - arg));
-          } else if (STRNCMP(arg, "linehl=", 7) == 0) {
-            arg += 7;
-            linehl = vim_strnsave(arg, (int)(p - arg));
-          } else if (STRNCMP(arg, "texthl=", 7) == 0) {
-            arg += 7;
-            texthl = vim_strnsave(arg, (int)(p - arg));
-          } else if (STRNCMP(arg, "numhl=", 6) == 0) {
-            arg += 6;
-            numhl = vim_strnsave(arg, (int)(p - arg));
-          } else {
-            EMSG2(_(e_invarg2), arg);
-            failed = TRUE;
-            break;
-          }
-        }
-
-        if (!failed)
-          sign_define_by_name(name, icon, linehl, text, texthl, numhl);
-
-        xfree(icon);
-        xfree(text);
-        xfree(linehl);
-        xfree(texthl);
+        sign_define_cmd(name, p);
       } else if (idx == SIGNCMD_LIST) {
         // ":sign list {name}"
         sign_list_by_name(name);
@@ -5969,195 +6239,19 @@ void ex_sign(exarg_T *eap)
     char_u *sign_name = NULL;
     char_u *group = NULL;
     int prio = SIGN_DEF_PRIO;
-    char_u *arg1;
-    int	bufarg = FALSE;
-
-    if (*arg == NUL) {
-      if (idx == SIGNCMD_PLACE) {
-        // ":sign place": list placed signs in all buffers
-        sign_list_placed(NULL, NULL);
-      } else if (idx == SIGNCMD_UNPLACE) {
-        // ":sign unplace": remove placed sign at cursor
-        sign_unplace_at_cursor(NULL);
-      } else {
-        EMSG(_(e_argreq));
-      }
-      return;
-    }
-
-    if (idx == SIGNCMD_UNPLACE && arg[0] == '*' && arg[1] == NUL) {
-      // ":sign unplace *": remove all placed signs
-      buf_delete_all_signs(NULL);
-      return;
-    }
-
-    // first arg could be placed sign id
-    arg1 = arg;
-    if (ascii_isdigit(*arg)) {
-      id = getdigits_int(&arg);
-      if (!ascii_iswhite(*arg) && *arg != NUL) {
-        id = -1;
-        arg = arg1;
-      } else {
-        arg = skipwhite(arg);
-        if (idx == SIGNCMD_UNPLACE && *arg == NUL) {
-          // ":sign unplace {id}": remove placed sign by number
-          FOR_ALL_BUFFERS(buf) {
-			sign_unplace(id, NULL, buf, 0);
-          }
-          return;
-        }
-      }
-    }
-
-    // Check for line={lnum} name={name} and file={fname} or buffer={nr}.
-    // Leave "arg" pointing to {fname}.
-
     buf_T *buf = NULL;
-    while (*arg != NUL) {
-      if (STRNCMP(arg, "line=", 5) == 0) {
-        arg += 5;
-        lnum = atoi((char *)arg);
-        arg = skiptowhite(arg);
-      } else if (STRNCMP(arg, "*", 1) == 0 && idx == SIGNCMD_UNPLACE) {
-        if (id != -1) {
-          EMSG(_(e_invarg));
-          return;
-        }
-        id = -2;
-        arg = skiptowhite(arg + 1);
-      } else if (STRNCMP(arg, "name=", 5) == 0) {
-        arg += 5;
-        sign_name = arg;
-        arg = skiptowhite(arg);
-        if (*arg != NUL) {
-          *arg++ = NUL;
-        }
-        while (sign_name[0] == '0' && sign_name[1] != NUL) {
-          sign_name++;
-        }
- 	    } else if (STRNCMP(arg, "group=", 6) == 0) {
-        arg += 6;
-        group = arg;
-        arg = skiptowhite(arg);
-        if (*arg != NUL) {
-          *arg++ = NUL;
-        }
-      } else if (STRNCMP(arg, "priority=", 9) == 0) {
-        arg += 9;
-        prio = atoi((char *)arg);
-        arg = skiptowhite(arg);
-      } else if (STRNCMP(arg, "file=", 5) == 0) {
-        arg += 5;
-        buf = buflist_findname_exp(arg);
-        bufarg = TRUE;
-        break;
-      } else if (STRNCMP(arg, "buffer=", 7) == 0) {
-        arg += 7;
-        buf = buflist_findnr(getdigits_int(&arg));
-        if (*skipwhite(arg) != NUL) {
-          EMSG(_(e_trailing));
-        }
-        bufarg = TRUE;
-        break;
-      } else {
-        EMSG(_(e_invarg));
-        return;
-      }
-      arg = skipwhite(arg);
-    }
 
-    if ((!bufarg && group == NULL) || (group != NULL && *group == '\0')) {
-      // File or buffer is not specified or an empty group is used
-      EMSG(_(e_invarg));
+    // Parse command line arguments
+    if (parse_sign_cmd_args(idx, arg, &sign_name, &id, &group, &prio,
+          &buf, &lnum) == FAIL)
       return;
-    }
 
-    if (bufarg && buf == NULL) {
-      EMSG2(_("E158: Invalid buffer name: %s"), arg);
-    } else if (id <= 0 && idx == SIGNCMD_PLACE) {
-      if ((group == NULL) && (lnum >= 0 || sign_name != NULL)) {
-        EMSG(_(e_invarg));
-      } else {
-        // ":sign place file={fname}": list placed signs in one file
-        // ":sign place group={group} file={fname}"
-        // ":sign place group=* file={fname}"
-        sign_list_placed(buf, group);
-      }
-    } else if (idx == SIGNCMD_JUMP) {
-      // ":sign jump {id} file={fname}"
-      // ":sign jump {id} group={group} file={fname}"
-      if (lnum >= 0 || sign_name != NULL || buf == NULL){
-        EMSG(_(e_invarg));
-      } else if ((lnum = buf_findsign(buf, id, group)) > 0) {
-        // goto a sign ...
-        if (buf_jump_open_win(buf) != NULL) {
-          // ... in a current window
-          curwin->w_cursor.lnum = lnum;
-          check_cursor_lnum();
-          beginline(BL_WHITE);
-        } else {
-          // ... not currently in a window
-          if (buf->b_fname == NULL) {
-            EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
-            return;
-          }
-          size_t cmdlen = STRLEN(buf->b_fname) + 24;
-          char *cmd = xmallocz(cmdlen);
-          snprintf(cmd, cmdlen, "e +%" PRId64 " %s",
-                   (int64_t)lnum, buf->b_fname);
-          do_cmdline_cmd(cmd);
-          xfree(cmd);
-        }
-
-        foldOpenCursor();
-      } else {
-        EMSGN(_("E157: Invalid sign ID: %" PRId64), id);
-      }
+    if (idx == SIGNCMD_PLACE) {
+      sign_place_cmd(buf, lnum, sign_name, id, group, prio);
     } else if (idx == SIGNCMD_UNPLACE) {
-      if (lnum >= 0 || sign_name != NULL) {
-        EMSG(_(e_invarg));
-      } else if (id == -2) {
-        if (buf != NULL) {
-          // ":sign unplace * file={fname}"
-          sign_unplace(0, group, buf, 0);
-        } else {
-          // ":sign unplace * group=*": remove all placed signs
-          FOR_ALL_BUFFERS(buf) {
-            if (buf->b_signlist != NULL) {
-              buf_delete_signs(buf, group);
-            }
-          }
-        }
-      } else {
-        if (buf != NULL) {
-          // ":sign unplace {id} file={fname}"
-          // ":sign unplace {id} group={group} file={fname}"
-          // ":sign unplace {id} group=* file={fname}"
-          sign_unplace(id, group, buf, 0);
-        } else {
-          if (id == -1) {
-            // ":sign unplace group={group}":
-            // ":sign unplace group=*":
-            // remove sign in the current line in specified group
-            sign_unplace_at_cursor(group);
-          } else {
-            // ":sign unplace {id} group={group}":
-            // ":sign unplace {id} group=*":
-            //     remove all placed signs in this group.
-            FOR_ALL_BUFFERS(buf) {
-              if (buf->b_signlist != NULL) {
-                sign_unplace(id, group, buf, 0);
-              }
-            }
-          }
-        }
-      }
-    } else if (sign_name != NULL && buf != NULL) {
-      // idx == SIGNCMD_PLACE
-      sign_place(&id, group, sign_name, buf, lnum, prio);
-    } else {
-      EMSG(_(e_invarg));
+      sign_unplace_cmd(buf, lnum, sign_name, id, group);
+    } else if (idx == SIGNCMD_JUMP) {
+      sign_jump_cmd(buf, lnum, sign_name, id, group);
     }
   }
 }

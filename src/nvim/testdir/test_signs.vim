@@ -104,6 +104,16 @@ func Test_sign()
   exe 'sign jump 43 file=' . fn
   call assert_equal('B', getline('.'))
 
+  " Check for jumping to a sign in a hidden buffer
+  enew! | only!
+  edit foo
+  call setline(1, ['A', 'B', 'C', 'D'])
+  let fn = expand('%:p')
+  exe 'sign place 21 line=3 name=Sign3 file=' . fn
+  hide edit bar
+  exe 'sign jump 21 file=' . fn
+  call assert_equal('C', getline('.'))
+
   " can't define a sign with a non-printable character as text
   call assert_fails("sign define Sign4 text=\e linehl=Comment", 'E239:')
   call assert_fails("sign define Sign4 text=a\e linehl=Comment", 'E239:')
@@ -130,6 +140,18 @@ func Test_sign()
   sign undefine Sign4
   sign define Sign4 text=\\ linehl=Comment
   sign undefine Sign4
+
+  " define a sign with a leading 0 in the name
+  sign unplace *
+  sign define 004 text=#> linehl=Comment
+  let a = execute('sign list 4')
+  call assert_equal("\nsign 4 text=#> linehl=Comment", a)
+  exe 'sign place 20 line=3 name=004 buffer=' . bufnr('')
+  let a = execute('sign place')
+  call assert_equal("\n--- Signs ---\nSigns for foo:\n    line=3  id=20  name=4 priority=10\n", a)
+  exe 'sign unplace 20 buffer=' . bufnr('')
+  sign undefine 004
+  call assert_fails('sign list 4', 'E155:')
 
   " Error cases
   call assert_fails("sign place abc line=3 name=Sign1 buffer=" .
@@ -241,6 +263,14 @@ func Test_sign_invalid_commands()
   call assert_fails('sign undefine', 'E156:')
   call assert_fails('sign list xxx', 'E155:')
   call assert_fails('sign place 1 buffer=999', 'E158:')
+  call assert_fails('sign place 1 name=Sign1 buffer=999', 'E158:')
+  call assert_fails('sign place buffer=999', 'E158:')
+  call assert_fails('sign jump buffer=999', 'E158:')
+  call assert_fails('sign jump 1 file=', 'E158:')
+  call assert_fails('sign jump 1 group=', 'E474:')
+  call assert_fails('sign jump 1 name=', 'E474:')
+  call assert_fails('sign jump 1 name=Sign1', 'E474:')
+  call assert_fails('sign jump 1 line=100', '474:')
   call assert_fails('sign define Sign2 text=', 'E239:')
   " Non-numeric identifier for :sign place
   call assert_fails("sign place abc line=3 name=Sign1 buffer=" . bufnr('%'), 'E474:')
