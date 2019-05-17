@@ -385,6 +385,8 @@ func Test_sign_funcs()
 	      \ {"lnum" : -1})', 'E885:')
   call assert_fails('call sign_place(22, "", "sign1", "Xsign",
 	      \ {"lnum" : 0})', 'E885:')
+  call assert_fails('call sign_place(22, "", "sign1", "Xsign",
+	      \ {"lnum" : []})', 'E745:')
   call assert_equal(-1, sign_place(1, "*", "sign1", "Xsign", {"lnum" : 10}))
 
   " Tests for sign_getplaced()
@@ -420,9 +422,9 @@ func Test_sign_funcs()
 	      \ {'id' : 20, 'buffer' : 'buffer.c'})", 'E158:')
   call assert_fails("call sign_unplace('',
 	      \ {'id' : 20, 'buffer' : ''})", 'E158:')
-  call assert_fails("call sign_unplace('',
+  call assert_fails("call sign_unplace('g1',
 	      \ {'id' : 20, 'buffer' : 200})", 'E158:')
-  call assert_fails("call sign_unplace('', 'mySign')", 'E715:')
+  call assert_fails("call sign_unplace('g1', 'mySign')", 'E715:')
 
   " Tests for sign_undefine()
   call assert_equal(0, sign_undefine("sign1"))
@@ -664,7 +666,7 @@ func Test_sign_group()
   call delete("Xsign")
   call sign_unplace('*')
   call sign_undefine()
-  enew  | only
+  enew | only
 endfunc
 
 " Place signs used for ":sign unplace" command test
@@ -1013,7 +1015,7 @@ func Test_sign_unplace()
 
   call sign_unplace('*')
   call sign_undefine()
-  enew  | only
+  enew | only
   call delete("Xsign1")
   call delete("Xsign2")
 endfunc
@@ -1042,6 +1044,9 @@ func Test_sign_id_autogen()
 
   call assert_equal(1, sign_place(0, 'g1', 'sign1', 'Xsign',
 	      \ {'lnum' : 11}))
+  " Check for the next generated sign id in this group
+  call assert_equal(2, sign_place(0, 'g1', 'sign1', 'Xsign',
+	      \ {'lnum' : 12}))
   call assert_equal(0, sign_unplace('g1', {'id' : 1}))
   call assert_equal(10,
 	      \ sign_getplaced('Xsign', {'id' : 1})[0].signs[0].lnum)
@@ -1049,7 +1054,7 @@ func Test_sign_id_autogen()
   call delete("Xsign")
   call sign_unplace('*')
   call sign_undefine()
-  enew  | only
+  enew | only
 endfunc
 
 " Test for sign priority
@@ -1085,6 +1090,8 @@ func Test_sign_priority()
   " Error case
   call assert_fails("call sign_place(1, 'g1', 'sign1', 'Xsign',
 	      \ [])", 'E715:')
+  call assert_fails("call sign_place(1, 'g1', 'sign1', 'Xsign',
+	      \ {'priority' : []})", 'E745:')
   call sign_unplace('*')
 
   " Tests for the :sign place command with priority
@@ -1104,7 +1111,7 @@ func Test_sign_priority()
 
   call sign_unplace('*')
   call sign_undefine()
-  enew  | only
+  enew | only
   call delete("Xsign")
 endfunc
 
@@ -1146,6 +1153,6 @@ func Test_sign_memfailures()
 
   call sign_unplace('*')
   call sign_undefine()
-  enew  | only
+  enew | only
   call delete("Xsign")
 endfunc
