@@ -2171,7 +2171,6 @@ win_line (
   int vcol_off        = 0;              ///< offset for concealed characters
   int did_wcol        = false;
   int match_conc      = 0;              ///< cchar for match functions
-  int has_match_conc  = 0;              ///< match wants to conceal
   int old_boguscols = 0;
 # define VCOL_HLC (vcol - vcol_off)
 # define FIX_FOR_BOGUSCOLS \
@@ -2656,7 +2655,8 @@ win_line (
   int sign_idx = 0;
   // Repeat for the whole displayed line.
   for (;; ) {
-    has_match_conc = 0;
+    int has_match_conc = 0;  ///< match wants to conceal
+    bool did_decrement_ptr = false;
     // Skip this quickly when working on the text.
     if (draw_state != WL_LINE) {
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
@@ -3229,6 +3229,7 @@ win_line (
         // Put pointer back so that the character will be
         // displayed at the start of the next line.
         ptr--;
+        did_decrement_ptr = true;
       } else if (*ptr != NUL) {
         ptr += mb_l - 1;
       }
@@ -3686,6 +3687,11 @@ win_line (
       } else {
         prev_syntax_id = 0;
         is_concealing = FALSE;
+      }
+
+      if (n_skip > 0 && did_decrement_ptr) {
+        // not showing the '>', put pointer back to avoid getting stuck
+        ptr++;
       }
     }
 
