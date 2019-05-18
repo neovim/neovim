@@ -14,9 +14,8 @@ PACK=${ROOT}/package/${OS}
 
 mkdir -p ${PACK}
 pushd ${PACK}
-  mkdir -p vimspector/opt
-  mkdir -p vimspector/start
-  pushd vimspector/opt
+  mkdir -p vimspector/opt/vimspector
+  pushd vimspector/opt/vimspector
     for d in autoload plugin python3 vendor doc; do
       if [[ -d ${ROOT}/$d ]]; then
         cp -r ${ROOT}/$d .
