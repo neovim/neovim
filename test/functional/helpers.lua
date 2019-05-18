@@ -739,41 +739,14 @@ local function alter_slashes(obj)
   end
 end
 
-local function compute_load_factor()
-  local timeout = 200
-  local times = {}
 
-  clear()
-
-  for _ = 1, 5 do
-    source([[
-      let g:val = 0
-      call timer_start(200, {-> nvim_set_var('val', 1)})
-      let start = reltime()
-      while 1
-        sleep 10m
-        if g:val == 1
-          let g:waited_in_ms = float2nr(reltimefloat(reltime(start)) * 1000)
-          break
-        endif
-      endwhile
-    ]])
-    table.insert(times, nvim_eval('g:waited_in_ms'))
-  end
-
-  session:close()
-  session = nil
-
-  local longest = math.max(unpack(times))
-  local factor = (longest + 50.0) / timeout
-
-  return factor
-end
-
--- Compute load factor only once.
-local load_factor = compute_load_factor()
-
+local load_factor = nil
 local function load_adjust(num)
+  if load_factor == nil then  -- Compute load factor only once.
+    clear()
+    request('nvim_command', 'source src/nvim/testdir/load.vim')
+    load_factor = request('nvim_eval', 'g:test_load_factor')
+  end
   return math.ceil(num * load_factor)
 end
 

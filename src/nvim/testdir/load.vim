@@ -1,3 +1,5 @@
+" Also used by: test/functional/helpers.lua
+
 function! s:load_factor() abort
   let timeout = 200
   let times = []
@@ -23,8 +25,8 @@ function! s:load_factor() abort
 endfunction
 
 " Compute load factor only once.
-let s:load_factor = s:load_factor()
+let g:test_load_factor = s:load_factor()
 
 function! LoadAdjust(num) abort
-  return float2nr(ceil(a:num * s:load_factor))
+  return float2nr(ceil(a:num * g:test_load_factor))
 endfunction
