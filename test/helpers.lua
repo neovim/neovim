@@ -612,37 +612,6 @@ local function fixtbl_rec(tbl)
   return fixtbl(tbl)
 end
 
--- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
-local function table_flatten(arr)
-  local result = {}
-  local function _table_flatten(_arr)
-    local n = #_arr
-    for i = 1, n do
-      local v = _arr[i]
-      if type(v) == "table" then
-        _table_flatten(v)
-      elseif v then
-        table.insert(result, v)
-      end
-    end
-  end
-  _table_flatten(arr)
-  return result
-end
-
--- Checks if a list-like (vector) table contains `value`.
-local function table_contains(t, value)
-  if type(t) ~= 'table' then
-    error('t must be a table')
-  end
-  for _,v in ipairs(t) do
-    if v == value then
-      return true
-    end
-  end
-  return false
-end
-
 local function hexdump(str)
   local len = string.len(str)
   local dump = ""
@@ -787,15 +756,12 @@ local module = {
   repeated_read_cmd = repeated_read_cmd,
   shallowcopy = shallowcopy,
   sleep = sleep,
-  table_contains = table_contains,
-  tbl_extend = shared.tbl_extend,
-  table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
   updated = updated,
   which = which,
   write_file = write_file,
 }
-module = shared.tbl_extend('error', module, Paths)
+module = shared.tbl_extend('error', module, Paths, shared)
 
 return module

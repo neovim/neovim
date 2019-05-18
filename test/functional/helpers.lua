@@ -15,7 +15,7 @@ local dedent = global_helpers.dedent
 local eq = global_helpers.eq
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
-local table_contains = global_helpers.table_contains
+local tbl_contains = global_helpers.tbl_contains
 local write_file = global_helpers.write_file
 
 local start_dir = lfs.currentdir()
@@ -165,7 +165,7 @@ local function expect_msg_seq(...)
         error(cat_err(final_error,
                       string.format('got %d messages (ignored %d), expected %d',
                                     #actual_seq, nr_ignored, #expected_seq)))
-      elseif table_contains(ignore, msg_type) then
+      elseif tbl_contains(ignore, msg_type) then
         nr_ignored = nr_ignored + 1
       else
         table.insert(actual_seq, msg)
@@ -339,9 +339,9 @@ local function remove_args(args, args_rm)
   end
   local last = ''
   for _, arg in ipairs(args) do
-    if table_contains(skip_following, last) then
+    if tbl_contains(skip_following, last) then
       last = ''
-    elseif table_contains(args_rm, arg) then
+    elseif tbl_contains(args_rm, arg) then
       last = arg
     else
       table.insert(new_args, arg)
