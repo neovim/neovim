@@ -16,14 +16,14 @@ local function tbl_contains(t, value)
   return false
 end
 
---- Merges two or more map-like tables.
+-- Merges two or more map-like tables.
 --
 --@see |extend()|
 --
--- behavior: Decides what to do if a key is found in more than one map:
---           "error": raise an error
---           "keep":  use value from the leftmost map
---           "force": use value from the rightmost map
+--@param behavior Decides what to do if a key is found in more than one map:
+---      - "error": raise an error
+---      - "keep":  use value from the leftmost map
+---      - "force": use value from the rightmost map
 local function tbl_extend(behavior, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
     error('invalid "behavior": '..tostring(behavior))

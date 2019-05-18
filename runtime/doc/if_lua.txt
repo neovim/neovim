@@ -30,7 +30,7 @@ finds and loads Lua modules.  The conventions are similar to VimL plugins,
 with some extra features.  See |lua-require-example| for a walkthrough.
 
 ==============================================================================
-Importing modules					*lua-require*
+Importing Lua modules					*lua-require*
 
 Nvim automatically adjusts `package.path` and `package.cpath` according to
 effective 'runtimepath' value.  Adjustment happens whenever 'runtimepath' is
@@ -325,9 +325,10 @@ Examples: >
 Note that currently second argument to `luaeval` undergoes VimL to lua 
 conversion, so changing containers in lua do not affect values in VimL. Return 
 value is also always converted. When converting, |msgpack-special-dict|s are 
+treated specially.
 
 ==============================================================================
-vim.*							*lua-vim* *lua-stdlib*
+Lua standard modules					*lua-stdlib*
 
 The Nvim Lua "standard library" (stdlib) is the `vim` module, which exposes
 various functions and sub-modules.  It is always loaded, thus require("vim")
@@ -361,7 +362,7 @@ Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
-vim.api.* functions
+VIM.API							*lua-api*
 
 `vim.api` exposes the full Nvim |API| as a table of Lua functions.
 
@@ -371,7 +372,7 @@ For example, to use the "nvim_get_current_line()" API function, call
     print(tostring(vim.api.nvim_get_current_line()))
 
 ------------------------------------------------------------------------------
-vim.* builtin functions
+VIM							*lua-util*
 
 vim.inspect({object}, {options})                                 *vim.inspect*
 	Return a human-readable representation of the passed object. See
@@ -419,7 +420,7 @@ vim.types						*lua-vim.types*
 	only contain values for these three types.
 
 ==============================================================================
-Vim Lua Functions                                                    *lua-vim*
+Lua module: vim                                                      *lua-vim*
 
 gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
                 Split a string by a given separator. The separator can be a
@@ -442,11 +443,12 @@ gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
 split({s}, {sep}, {plain})                                       *vim.split()*
                 Split a string by a given separator.
 
-                Examples:
+                Examples: >
 
-                - split(":aa::b:", ":") returns {'','aa','','bb',''}
-                - split("axaby", "ab?") returns {'','x','y'}
-                - split(x*yz*o, "*", true) returns {'x','yz','o'}
+                  split(":aa::b:", ":")     --> {'','aa','','bb',''}
+                  split("axaby", "ab?")     --> {'','x','y'}
+                  split(x*yz*o, "*", true)  --> {'x','yz','o'}
+<
 
                 Parameters: ~
                     {s}      String The string to split
@@ -482,5 +484,25 @@ deepcopy({orig})                                              *vim.deepcopy()*
                 Return: ~
                     A new table where the keys and values are deepcopies of
                     the keys and values from the original table.
+
+
+
+
+tbl_contains({t}, {value})                                *vim.tbl_contains()*
+                TODO: Documentation
+
+tbl_extend({behavior}, {...})                               *vim.tbl_extend()*
+                Parameters: ~
+                    {behavior}  Decides what to do if a key is found in more
+                                than one map:
+                                - "error": raise an error
+                                - "keep": use value from the leftmost map
+                                - "force": use value from the rightmost map
+
+                See also: ~
+                    |extend()|
+
+tbl_flatten({t})                                           *vim.tbl_flatten()*
+                TODO: Documentation
 
  vim:tw=78:ts=8:ft=help:norl:

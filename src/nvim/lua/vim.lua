@@ -203,12 +203,11 @@ end
 --- Split a string by a given separator.
 ---
 --- Examples:
----
----  * split(":aa::b:", ":") returns {'','aa','','bb',''}
----
----  * split("axaby", "ab?") returns {'','x','y'}
----
----  * split(x*yz*o, "*", true) returns {'x','yz','o'}
+--- <pre>
+---  split(":aa::b:", ":")     --> {'','aa','','bb',''}
+---  split("axaby", "ab?")     --> {'','x','y'}
+---  split(x*yz*o, "*", true)  --> {'x','yz','o'}
+--- </pre>
 ---
 --@param s String The string to split
 --@param sep String The separator to use (see |vim.gsplit()|)

@@ -70,26 +70,41 @@ CONFIG = {
       'ui.c',
     ],
     # List of files/directories for doxygen to read, separated by blanks
-    'files': os.path.join(base_dir, 'src/nvim/api'), 
+    'files': os.path.join(base_dir, 'src/nvim/api'),
     # file patterns used by doxygen
     'file_patterns': '*.h *.c',
     # Only function with this prefix are considered
     'func_name_prefix': 'nvim_',
+    # Section name overrides.
+    'section_name': {
+        'vim.c': 'Global',
+    },
+    # Module name overrides (for Lua).
+    'module_override': {},
+    # Append the docs for these modules, do not start a new section.
+    'append_only' : [],
   },
   'lua': {
     'filename': 'if_lua.txt',
-    'section_start_token': '*vim-lua*',
+    'section_start_token': '*lua-vim*',
     'section_order' : [
       'vim.lua',
+      'shared.lua',
     ],
-    'files': os.path.join(base_dir, 'src/nvim/lua/vim.lua'), 
+    'files': ' '.join([
+        os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
+        os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
+        ]),
     'file_patterns': '*.lua',
     'func_name_prefix': '',
-  }
-}
-# Section name overrides.
-section_name = {
-    'vim.c': 'Global',
+    'section_name': {},
+    'module_override': {
+        'shared': 'vim',  # `shared` functions are exposed on the `vim` module.
+    },
+    'append_only' : [
+      'shared.lua',
+    ],
+  },
 }
 
 param_exclude = (
@@ -303,7 +318,7 @@ def render_node(n, text, prefix='', indent='', width=62):
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
             text += indent + prefix + render_node(c, text, indent=indent+(' ' * len(prefix)), width=width)
-    elif n.nodeName == 'para':
+    elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
             text += render_node(c, text, indent=indent, width=width)
         if is_inline(n):
@@ -466,9 +481,10 @@ def parse_source_xml(filename, mode):
 
         if mode == 'lua':
             fstem = compoundname.split('.')[0]
-            vimtag = '*%s.%s()*' % (fstem, name)
+            fstem = CONFIG[mode]['module_override'].get(fstem, fstem)
+            vimtag = '*{}.{}()*'.format(fstem, name)
         else:
-            vimtag = '*%s()*' % name
+            vimtag = '*{}()*'.format(name)
 
         params = []
         type_length = 0
@@ -646,14 +662,14 @@ def gen_docs(config):
 
                     if doc:
                         filename = os.path.basename(filename)
-                        name = section_name.get(filename, name)
+                        name = CONFIG[mode]['section_name'].get(filename, name)
 
                         if mode == 'lua':
-                            title = '%s Lua Functions' % name
-                            helptag = '*%s-lua*' % name.lower()
+                            title = 'Lua module: {}'.format(name.lower())
+                            helptag = '*lua-{}*'.format(name.lower())
                         else:
-                            title = '%s Functions' % name
-                            helptag = '*api-%s*' % name.lower()
+                            title = '{} Functions'.format(name)
+                            helptag = '*api-{}*'.format(name.lower())
                         sections[filename] = (title, helptag, doc)
 
         if not sections:
@@ -664,23 +680,14 @@ def gen_docs(config):
         i = 0
         for filename in CONFIG[mode]['section_order']:
             if filename not in sections:
-                continue
+                raise RuntimeError('found new module "{}"; update the "section_order" map'.format(filename))
             title, helptag, section_doc = sections.pop(filename)
-
             i += 1
-            docs += sep
-            docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
-            docs += section_doc
-            docs += '\n\n\n'
-
-        if sections:
-            # In case new API sources are added without updating the order dict.
-            for title, helptag, section_doc in sections.values():
-                i += 1
+            if filename not in CONFIG[mode]['append_only']:
                 docs += sep
                 docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
-                docs += section_doc
-                docs += '\n\n\n'
+            docs += section_doc
+            docs += '\n\n\n'
 
         docs = docs.rstrip() + '\n\n'
         docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
