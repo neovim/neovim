@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local global_helpers = require('test.helpers')
 
 local bufmeths = helpers.bufmeths
 local clear = helpers.clear
@@ -12,8 +11,8 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local source = helpers.source
 
-local shallowcopy = global_helpers.shallowcopy
-local sleep = global_helpers.sleep
+local shallowcopy = helpers.shallowcopy
+local sleep = helpers.sleep
 
 describe('nvim_get_keymap', function()
   before_each(clear)

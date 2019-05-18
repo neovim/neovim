@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local global_helpers = require('test.helpers')
 
 local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
@@ -16,10 +15,10 @@ local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
 
-local expect_err = global_helpers.expect_err
-local format_string = global_helpers.format_string
-local intchar2lua = global_helpers.intchar2lua
-local mergedicts_copy = global_helpers.mergedicts_copy
+local expect_err = helpers.expect_err
+local format_string = helpers.format_string
+local intchar2lua = helpers.intchar2lua
+local mergedicts_copy = helpers.mergedicts_copy
 
 describe('API', function()
   before_each(clear)

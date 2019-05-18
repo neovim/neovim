@@ -15,17 +15,13 @@ func MyHandlerWithLists(lists, timer)
   let x = string(a:lists)
 endfunc
 
-func s:assert_inrange(lower, upper, actual)
-  return assert_inrange(a:lower, LoadAdjust(a:upper), a:actual)
-endfunc
-
 func Test_oneshot()
   let g:val = 0
   let timer = timer_start(50, 'MyHandler')
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call s:assert_inrange(40, 120, slept)
+    call assert_inrange(40, LoadAdjust(120), slept)
   else
     call assert_inrange(20, 120, slept)
   endif
@@ -37,7 +33,7 @@ func Test_repeat_three()
   let slept = WaitFor('g:val == 3')
   call assert_equal(3, g:val)
   if has('reltime')
-    call s:assert_inrange(120, 250, slept)
+    call assert_inrange(120, LoadAdjust(250), slept)
   else
     call assert_inrange(80, 200, slept)
   endif
@@ -52,7 +48,7 @@ func Test_repeat_many()
   endif
   sleep 200m
   call timer_stop(timer)
-  call s:assert_inrange((has('mac') ? 1 : 2), 4, g:val)
+  call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(4), g:val)
 endfunc
 
 func Test_with_partial_callback()
@@ -66,7 +62,7 @@ func Test_with_partial_callback()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call s:assert_inrange(40, 130, slept)
+    call assert_inrange(40, LoadAdjust(130), slept)
   else
     call assert_inrange(20, 100, slept)
   endif
@@ -129,7 +125,7 @@ func Test_paused()
   let slept = WaitFor('g:val == 1')
   call assert_equal(1, g:val)
   if has('reltime')
-    call s:assert_inrange(0, 140, slept)
+    call assert_inrange(0, LoadAdjust(140), slept)
   else
     call assert_inrange(0, 10, slept)
   endif

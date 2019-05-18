@@ -1,7 +1,5 @@
-local global_helpers = require('test.helpers')
-local uname = global_helpers.uname
-
 local helpers = require('test.functional.helpers')(after_each)
+local uname = helpers.uname
 local clear, eq, eval, next_msg, ok, source = helpers.clear, helpers.eq,
    helpers.eval, helpers.next_msg, helpers.ok, helpers.source
 local command, funcs, meths = helpers.command, helpers.funcs, helpers.meths

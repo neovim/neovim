@@ -1,3 +1,39 @@
+-- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
+--
+-- Lua code lives in one of three places:
+--    1. The runtime (`runtime/lua/vim/`). For "nice to have" features, e.g.
+--       the `inspect` and `lpeg` modules.
+--    2. The `vim.shared` module: code shared between Nvim and its test-suite.
+--    3. Compiled-into Nvim itself (`src/nvim/lua/`).
+--
+-- Guideline: "If in doubt, put it in the runtime".
+--
+-- Most functions should live directly on `vim.`, not sub-modules. The only
+-- "forbidden" names are those claimed by legacy `if_lua`:
+--    $ vim
+--    :lua for k,v in pairs(vim) do print(k) end
+--    buffer
+--    open
+--    window
+--    lastline
+--    firstline
+--    type
+--    line
+--    eval
+--    dict
+--    beep
+--    list
+--    command
+--
+-- Reference (#6580):
+--    - https://github.com/luafun/luafun
+--    - https://github.com/rxi/lume
+--    - http://leafo.net/lapis/reference/utilities.html
+--    - https://github.com/torch/paths
+--    - https://github.com/bakpakin/Fennel (pretty print, repl)
+--    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
+
+
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
@@ -187,10 +223,14 @@ deepcopy = function(orig)
   return deepcopy_funcs[type(orig)](orig)
 end
 
-local function __index(table, key)
-  if key == "inspect" then
-    table.inspect = require("vim.inspect")
-    return table.inspect
+local function __index(t, key)
+  if key == 'inspect' then
+    t.inspect = require('vim.inspect')
+    return t.inspect
+  elseif require('vim.shared')[key] ~= nil then
+    -- Expose all `vim.shared` functions on the `vim` module.
+    t[key] = require('vim.shared')[key]
+    return t[key]
   end
 end
 

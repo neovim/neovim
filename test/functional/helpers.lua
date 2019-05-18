@@ -8,23 +8,14 @@ local Session = require('nvim.session')
 local TcpStream = require('nvim.tcp_stream')
 local SocketStream = require('nvim.socket_stream')
 local ChildProcessStream = require('nvim.child_process_stream')
-local Paths = require('test.config.paths')
 
 local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local expect_err = global_helpers.expect_err
-local filter = global_helpers.filter
-local map = global_helpers.map
-local matches = global_helpers.matches
-local near = global_helpers.near
-local neq = global_helpers.neq
 local ok = global_helpers.ok
-local read_file = global_helpers.read_file
 local sleep = global_helpers.sleep
-local table_contains = global_helpers.table_contains
-local table_flatten = global_helpers.table_flatten
+local tbl_contains = global_helpers.tbl_contains
 local write_file = global_helpers.write_file
 
 local start_dir = lfs.currentdir()
@@ -32,7 +23,7 @@ local start_dir = lfs.currentdir()
 local nvim_prog = (
   os.getenv('NVIM_PROG')
   or os.getenv('NVIM_PRG')
-  or Paths.test_build_dir .. '/bin/nvim'
+  or global_helpers.test_build_dir .. '/bin/nvim'
 )
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
@@ -174,7 +165,7 @@ local function expect_msg_seq(...)
         error(cat_err(final_error,
                       string.format('got %d messages (ignored %d), expected %d',
                                     #actual_seq, nr_ignored, #expected_seq)))
-      elseif table_contains(ignore, msg_type) then
+      elseif tbl_contains(ignore, msg_type) then
         nr_ignored = nr_ignored + 1
       else
         table.insert(actual_seq, msg)
@@ -348,9 +339,9 @@ local function remove_args(args, args_rm)
   end
   local last = ''
   for _, arg in ipairs(args) do
-    if table_contains(skip_following, last) then
+    if tbl_contains(skip_following, last) then
       last = ''
-    elseif table_contains(args_rm, arg) then
+    elseif tbl_contains(args_rm, arg) then
       last = arg
     else
       table.insert(new_args, arg)
@@ -747,41 +738,14 @@ local function alter_slashes(obj)
   end
 end
 
-local function compute_load_factor()
-  local timeout = 200
-  local times = {}
 
-  clear()
-
-  for _ = 1, 5 do
-    source([[
-      let g:val = 0
-      call timer_start(200, {-> nvim_set_var('val', 1)})
-      let start = reltime()
-      while 1
-        sleep 10m
-        if g:val == 1
-          let g:waited_in_ms = float2nr(reltimefloat(reltime(start)) * 1000)
-          break
-        endif
-      endwhile
-    ]])
-    table.insert(times, nvim_eval('g:waited_in_ms'))
-  end
-
-  session:close()
-  session = nil
-
-  local longest = math.max(unpack(times))
-  local factor = (longest + 50.0) / timeout
-
-  return factor
-end
-
--- Compute load factor only once.
-local load_factor = compute_load_factor()
-
+local load_factor = nil
 local function load_adjust(num)
+  if load_factor == nil then  -- Compute load factor only once.
+    clear()
+    request('nvim_command', 'source src/nvim/testdir/load.vim')
+    load_factor = request('nvim_eval', 'g:test_load_factor')
+  end
   return math.ceil(num * load_factor)
 end
 
@@ -802,33 +766,25 @@ local module = {
   curtabmeths = curtabmeths,
   curwin = curwin,
   curwinmeths = curwinmeths,
-  dedent = dedent,
-  eq = eq,
   eval = nvim_eval,
   exc_exec = exc_exec,
   expect = expect,
   expect_any = expect_any,
-  expect_err = expect_err,
   expect_msg_seq = expect_msg_seq,
   expect_twostreams = expect_twostreams,
   feed = feed,
   feed_command = feed_command,
-  filter = filter,
   funcs = funcs,
   get_pathsep = get_pathsep,
   get_session = get_session,
   insert = insert,
   iswin = iswin,
-  map = map,
-  matches = matches,
   merge_args = merge_args,
   meth_pcall = meth_pcall,
   meths = meths,
   missing_provider = missing_provider,
   mkdir = lfs.mkdir,
   load_adjust = load_adjust,
-  near = near,
-  neq = neq,
   new_pipename = new_pipename,
   next_msg = next_msg,
   nvim = nvim,
@@ -838,13 +794,11 @@ local module = {
   nvim_prog = nvim_prog,
   nvim_prog_abs = nvim_prog_abs,
   nvim_set = nvim_set,
-  ok = ok,
   os_name = os_name,
   pathroot = pathroot,
   pending_win32 = pending_win32,
   prepend_argv = prepend_argv,
   rawfeed = rawfeed,
-  read_file = read_file,
   redir_exec = redir_exec,
   request = request,
   retry = retry,
@@ -854,20 +808,17 @@ local module = {
   set_session = set_session,
   set_shell_powershell = set_shell_powershell,
   skip_fragile = skip_fragile,
-  sleep = sleep,
   source = source,
   spawn = spawn,
   stop = stop,
-  table_flatten = table_flatten,
   tabmeths = tabmeths,
   tabpage = tabpage,
-  tmpname = tmpname,
   uimeths = uimeths,
   wait = wait,
   window = window,
   winmeths = winmeths,
-  write_file = write_file,
 }
+module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
   if after_each then

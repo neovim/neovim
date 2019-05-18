@@ -1,8 +1,10 @@
 require('vim.compat')
+local shared = require('vim.shared')
 local assert = require('luassert')
 local luv = require('luv')
 local lfs = require('lfs')
 local relpath = require('pl.path').relpath
+local Paths = require('test.config.paths')
 
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
@@ -420,6 +422,7 @@ local function updated(d, d2)
   return d
 end
 
+-- Concat list-like tables.
 local function concat_tables(...)
   local ret = {}
   for i = 1, select('#', ...) do
@@ -609,37 +612,6 @@ local function fixtbl_rec(tbl)
   return fixtbl(tbl)
 end
 
--- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
-local function table_flatten(arr)
-  local result = {}
-  local function _table_flatten(_arr)
-    local n = #_arr
-    for i = 1, n do
-      local v = _arr[i]
-      if type(v) == "table" then
-        _table_flatten(v)
-      elseif v then
-        table.insert(result, v)
-      end
-    end
-  end
-  _table_flatten(arr)
-  return result
-end
-
--- Checks if a list-like (vector) table contains `value`.
-local function table_contains(t, value)
-  if type(t) ~= 'table' then
-    error('t must be a table')
-  end
-  for _,v in ipairs(t) do
-    if v == value then
-      return true
-    end
-  end
-  return false
-end
-
 local function hexdump(str)
   local len = string.len(str)
   local dump = ""
@@ -784,13 +756,12 @@ local module = {
   repeated_read_cmd = repeated_read_cmd,
   shallowcopy = shallowcopy,
   sleep = sleep,
-  table_contains = table_contains,
-  table_flatten = table_flatten,
   tmpname = tmpname,
   uname = uname,
   updated = updated,
   which = which,
   write_file = write_file,
 }
+module = shared.tbl_extend('error', module, Paths, shared)
 
 return module

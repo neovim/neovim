@@ -1,8 +1,7 @@
 -- TUI acceptance tests.
 -- Uses :terminal as a way to send keys and assert screen state.
-local global_helpers = require('test.helpers')
-local uname = global_helpers.uname
 local helpers = require('test.functional.helpers')(after_each)
+local uname = helpers.uname
 local thelpers = require('test.functional.terminal.helpers')
 local Screen = require('test.functional.ui.screen')
 local eq = helpers.eq

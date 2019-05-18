@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local global_helpers = require('test.helpers')
 
 local Screen = require('test.functional.ui.screen')
 
@@ -16,7 +15,7 @@ local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
-local table_contains = global_helpers.table_contains
+local tbl_contains = helpers.tbl_contains
 
 describe('startup defaults', function()
   describe(':filetype', function()
@@ -262,7 +261,7 @@ describe('XDG-based defaults', function()
 
     for _,v in ipairs(rtp) do
       local m = string.match(v, [=[[/\]nvim[^/\]*[/\]site.*$]=])
-      if m and not table_contains(rv, m) then
+      if m and not tbl_contains(rv, m) then
         table.insert(rv, m)
       end
     end
