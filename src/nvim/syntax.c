@@ -38,6 +38,7 @@
 #include "nvim/macros.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/sign.h"
 #include "nvim/strings.h"
 #include "nvim/syntax_defs.h"
 #include "nvim/terminal.h"

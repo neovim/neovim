@@ -103,6 +103,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
+#include "nvim/sign.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"

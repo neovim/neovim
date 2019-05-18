@@ -68,6 +68,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/sha256.h"
+#include "nvim/sign.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
@@ -9284,22 +9285,6 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     tv_copy(tv, rettv);
   }
-}
-
-/// Returns information about signs placed in a buffer as list of dicts.
-static list_T *get_buffer_signs(buf_T *buf)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  signlist_T	*sign;
-  dict_T	*d;
-  list_T *const l = tv_list_alloc(kListLenMayKnow);
-
-  FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if ((d = sign_get_info(sign)) != NULL) {
-      tv_list_append_dict(l, d);
-    }
-  }
-  return l;
 }
 
 /// Returns buffer options, variables and other attributes in a dictionary.
