@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -e
+set -v
+
+OS=$1
+shift
+
+VERSION=$1
+shift
+
+ROOT=$(pwd)
+PACK=${ROOT}/package/${OS}
+
+mkdir -p ${PACK}
+pushd ${PACK}
+  mkdir -p vimspector/opt
+  mkdir -p vimspector/start
+  pushd vimspector/opt
+    for d in autoload plugin python3 vendor doc; do
+      if [[ -d ${ROOT}/$d ]]; then
+        cp -r ${ROOT}/$d .
+      fi
+    done
+    mkdir -p gadgets
+    cp -r ${ROOT}/gadgets/${OS} gadgets/
+  popd
+popd
+
+cd ${ROOT}/package
+tar zcvf ${OS}-${VERSION}.tar.gz ${OS}/
