@@ -36,18 +36,41 @@ func Test_writefile_fails_conversion()
   if !has('multi_byte') || !has('iconv')
     return
   endif
+  " Without a backup file the write won't happen if there is a conversion
+  " error.
   set nobackup nowritebackup
   new
   let contents = ["line one", "line two"]
   call writefile(contents, 'Xfile')
   edit Xfile
   call setline(1, ["first line", "cannot convert \u010b", "third line"])
-  call assert_fails('write ++enc=cp932')
+  call assert_fails('write ++enc=cp932', 'E513:')
   call assert_equal(contents, readfile('Xfile'))
 
   call delete('Xfile')
   bwipe!
   set backup& writebackup&
+endfunc
+
+func Test_writefile_fails_conversion2()
+  if !has('iconv') || has('sun')
+    return
+  endif
+  " With a backup file the write happens even if there is a conversion error,
+  " but then the backup file must remain
+  set nobackup writebackup
+  let contents = ["line one", "line two"]
+  call writefile(contents, 'Xfile_conversion_err')
+  edit Xfile_conversion_err
+  call setline(1, ["first line", "cannot convert \u010b", "third line"])
+  set fileencoding=latin1
+  let output = execute('write')
+  call assert_match('CONVERSION ERROR', output)
+  call assert_equal(contents, readfile('Xfile_conversion_err~'))
+
+  call delete('Xfile_conversion_err')
+  call delete('Xfile_conversion_err~')
+  bwipe!
 endfunc
 
 func SetFlag(timer)

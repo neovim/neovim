@@ -3693,9 +3693,11 @@ restore_backup:
   /*
    * Remove the backup unless 'backup' option is set
    */
-  if (!p_bk && backup != NULL && os_remove((char *)backup) != 0)
+  if (!p_bk && backup != NULL
+      && !write_info.bw_conv_error
+      && os_remove((char *)backup) != 0) {
     EMSG(_("E207: Can't delete backup file"));
-
+  }
 
   goto nofail;
 

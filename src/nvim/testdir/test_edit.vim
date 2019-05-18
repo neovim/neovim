@@ -1385,9 +1385,26 @@ func Test_edit_complete_very_long_name()
     return
   endtry
 
-  " Try to get the Vim window position before setting 'columns'.
+  " Try to get the Vim window position before setting 'columns', so that we can
+  " move the window back to where it was.
   let winposx = getwinposx()
   let winposy = getwinposy()
+
+  if winposx >= 0 && winposy >= 0 && !has('gui_running')
+    " We did get the window position, but xterm may report the wrong numbers.
+    " Move the window to the reported position and compute any offset.
+    exe 'winpos ' . winposx . ' ' . winposy
+    sleep 100m
+    let x = getwinposx()
+    if x >= 0
+      let winposx += winposx - x
+    endif
+    let y = getwinposy()
+    if y >= 0
+      let winposy += winposy - y
+    endif
+  endif
+
   let save_columns = &columns
   " Need at least about 1100 columns to reproduce the problem.
   set columns=2000
