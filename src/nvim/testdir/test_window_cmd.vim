@@ -758,16 +758,8 @@ endfunc
 
 func Test_split_noscroll()
   let so_save = &so
-  new
-  only
-
-  " Make sure windows can hold all content after split.
-  for i in range(1, 20)
-    wincmd +
-    redraw!
-  endfor
-
-  call setline (1, range(1, 8))
+  enew
+  call setline(1, range(1, 8))
   normal 100%
   split
 
@@ -782,12 +774,20 @@ func Test_split_noscroll()
   call assert_equal(1, info1.topline)
   call assert_equal(1, info2.topline)
 
-  " Restore original state.
-  for i in range(1, 20)
-    wincmd -
-    redraw!
-  endfor
+  " window that fits all lines by itself, but not when split: closing other
+  " window should restore fraction.
   only!
+  call setline(1, range(1, &lines - 10))
+  exe &lines / 4
+  let winid1 = win_getid()
+  let info1 = getwininfo(winid1)[0]
+  call assert_equal(1, info1.topline)
+  new
+  redraw
+  close
+  let info1 = getwininfo(winid1)[0]
+  call assert_equal(1, info1.topline)
+
   bwipe!
   let &so = so_save
 endfunc
