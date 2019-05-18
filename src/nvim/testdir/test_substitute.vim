@@ -639,6 +639,17 @@ func Test_nocatch_sub_failure_handling()
   call assert_equal(1, error_caught)
   call assert_equal(['1 aaa', '2 aaa', '3 aaa'], getline(1, 3))
 
+  " Same, but using "n" flag so that "sandbox" gets set
+  call setline(1, ['1 aaa', '2 aaa', '3 aaa'])
+  let error_caught = 0
+  try
+    %s/aaa/\=Foo()/gn
+  catch
+    let error_caught = 1
+  endtry
+  call assert_equal(1, error_caught)
+  call assert_equal(['1 aaa', '2 aaa', '3 aaa'], getline(1, 3))
+
   bwipe!
 endfunc
 

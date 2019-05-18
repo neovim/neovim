@@ -3819,7 +3819,6 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         if (!preview || has_second_delim) {
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
-            save_ma = curbuf->b_p_ma;
             curbuf->b_p_ma = false;
             sandbox++;
           }
@@ -3832,13 +3831,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
                                     sub, sub_firstline, false, p_magic, true);
           // If getting the substitute string caused an error, don't do
           // the replacement.
-          if (aborting()) {
-            goto skip;
-          }
-
           // Don't keep flags set by a recursive call
           subflags = subflags_save;
-          if (subflags.do_count) {
+          if (aborting() || subflags.do_count) {
             curbuf->b_p_ma = save_ma;
             if (sandbox > 0) {
               sandbox--;
