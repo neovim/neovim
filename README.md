@@ -1,60 +1,291 @@
 # vimspector - A multi language graphical debugger for Vim
 
+For a tutorial and usage overview, take a look at the
+[Vimspector website][website]
+
 [![Build Status](https://dev.azure.com/puremouron/Vimspector/_apis/build/status/puremourning.vimspector?branchName=master)](https://dev.azure.com/puremouron/Vimspector/_build/latest?definitionId=1&branchName=master)
 
-# Status
+<!--ts-->
+   * [Features and Usage](#features-and-usage)
+      * [Supported debugging features](#supported-debugging-features)
+      * [Supported languages:](#supported-languages)
+      * [Languages known to work](#languages-known-to-work)
+      * [Other languages](#other-languages)
+   * [Installation](#installation)
+      * [Dependencies](#dependencies)
+      * [Language dependencies](#language-dependencies)
+      * [Clone the plugin](#clone-the-plugin)
+      * [Install some gadgets](#install-some-gadgets)
+      * [Manual gadget installation](#manual-gadget-installation)
+         * [The gadget directory](#the-gadget-directory)
+   * [About](#about)
+      * [Background](#background)
+      * [Status](#status)
+         * [Experimental](#experimental)
+   * [Mappings](#mappings)
+      * [Visual Studio / VSCode](#visual-studio--vscode)
+      * [Human Mode](#human-mode)
+   * [Usage](#usage)
+      * [Launch and attach by PID:](#launch-and-attach-by-pid)
+      * [Breakpoints](#breakpoints)
+      * [Stepping](#stepping)
+      * [Variables and scopes](#variables-and-scopes)
+      * [Watches](#watches)
+      * [Stack Traces](#stack-traces)
+      * [Program Output:](#program-output)
+         * [Console](#console)
+   * [Debug adapter configuration](#debug-adapter-configuration)
+      * [Supported Languages](#supported-languages-1)
+      * [Partially supported](#partially-supported)
+      * [Unsupported](#unsupported)
+   * [FAQ](#faq)
+   * [License](#license)
+
+<!-- Added by: ben, at: Sun 19 May 2019 19:53:27 BST -->
+
+<!--te-->
+
+# Features and Usage
 
 The plugin is a capable Vim graphical debugger for multiple languages.
 It's mostly tested for c++ and python, but in theory supports any 
 language that Visual Studio Code supports (but see caveats).
 
-It supports:
+The [Vimspector website][website] has an overview of the UI, along with basic
+instructions for configuration and setup.
 
-- breakpoints (function and line)
+## Supported debugging features
+
+- breakpoints (function, line and exception breakpoints)
 - step in/out/over/up, stop, restart
 - launch and attach
+- remote launch, remote attach
 - locals and globals display
-- watches (expressions)
+- watch expressions
 - call stack and navigation
 - variable value display hover
-- interractive debug console
+- interactive debug console
 - launch debugee within Vim's embedded terminal
 - logging/stdout display
 
-The author successfully uses it for debugging Vim code and YouCompletMe's
-core engine `ycmd` (a complex python application).
+## Supported languages:
 
-It should work for any debug adapter that works in VSCode, but there are
-certain limitations (see FAQ). There are some bugs certainly, and 
-configuring it is a bit of a dark art at this stage.
+The following languages are used frequently by the author and are known to work
+with little effort, and are supported as first-class languages.
 
-It is currently a work in progress, and any feedback/contributions are more
-than welcome.
+- C, C++, etc. (languages supported by gdb or lldb)
+- Python 2 and Python 3
+- TCL
+- Bash scripts
 
-If you are insanely curious and wish to try it out, it's probably best to
-shout me in the [vimspector gitter channel][gitter]. I'd love to hear from
-you.
+## Languages known to work
 
-In order to use it you have to currently:
+The following languages are used frequently by the author, but require some sort
+of hackery that makes it challenging to support generally. These languages are
+on a best-efforts basis:
 
-- Write an undocumented configuration file that contains essentially
-  undocumented parameters.
-- Use an undocumented API via things like `:call vimsepctor#Launch()`.
-- Accept that it isn't complete yet
-- etc.
+- Java (see caveats)
 
-## Experimental
+## Other languages
 
-The plugin is currently _experimental_. That means that any part of it
-can (and probably will) change, including things like:
+Vimspector should work for any debug adapter that works in Visual Studio Code,
+but there are certain limitations (see FAQ). If you're trying to get vimspector
+to work with a language that's not "supported", head over to Gitter and contact
+the author. It should be possible to get it going.
 
-- breaking changes to the configuration
-- keys, layout, functionatlity of the UI
+# Installation
 
-If a large number of people start using it then I will do my best to
-minimise this, or at least announce on Gitter.
+There are 2 installation methods:
 
-# Background
+* Using a release tarball, or
+* Manually
+
+Release tarballs come with debug adapters for the default languages
+pre-packaged. To use a release tarball:
+
+1. Check the dependencies
+2. Untar the release tarball for your OS into `$HOME/.vim/pack`:
+
+```
+$ mkdir -p $HOME/.vim/pack
+$ curl -L <url> | tar -C $HOME/.vim/pack zxvf - 
+```
+
+3. Configure your project's debug profiles (create `.vimspector.json`)
+
+Alternatively, you can clone the repo and select which gadgets are installed:
+
+1. Check the dependencies
+1. Install the plugin as a Vim package. See `:help packages`.
+2. Install some 'gadgets' (debug adapters)
+3. Configure your project's debug profiles (create `.vimspector.json`)
+
+## Dependencies
+
+Vimspector requires:
+
+* Vim version 8.1 with at least patch 1264
+* One of the following operating systems:
+  * Linux
+  * macOS Mojave or pater
+
+Why such a new vim ? Well 2 reasons:
+
+1. Because vimspector uses a lot of new Vim features 
+2. Because there are Vim bugs that vimspector triggers that will frustrate you
+   if you hit them.
+
+Why no Windows support? Because it's effort and it's not a priority for the
+author. PRs are welcome.
+
+Which Linux versions? I only test on Ubuntu 18.04 and later and RHEL 6.5 and
+RHEL 7.6.
+
+## Language dependencies
+
+The debug adapters themselves have certain runtime dependencies:
+
+| Language     | Switch            | Adapter           | Dependencies           |
+|--------------|-------------------|-------------------|------------------------|
+| C, C++, etc. | `--enable-c`      | vscode-cpptools   | mono-core              |
+| Python       | `--enable-python` | vscode-python     | Python 2.7 or Python 3 |
+| TCL          | `--enable-tcl`    | tclpro            | TCL 8.5                |
+| Bourne Shell | `--enable-bash`   | vscode-bash-debug | Bash v??               |
+
+For other languages, you'll need some other way to install the gadget.
+
+## Clone the plugin
+
+There are many Vim plugin managers, and I'm not going to state a particular
+preference, so if you choose to use one, you're on your own with installation
+issues.
+
+Install vimspector as a Vim package, either by cloning this repository into your
+package path, like this:
+
+```
+$ git clone https://github.com/puremourning/vimspector ~/.vim/pack/vimspector/opt/vimspector
+```
+
+2. Configure vimspector in your `.vimrc`:
+
+```viml
+let g:vimspector_enable_mappings = 'HUMAN'
+```
+
+3. Load vimspector at runtime. This can also be added to your `.vimrc` after
+   configuring vimspector:
+
+```
+packadd! vimspector
+```
+
+See support/doc/example_vimrc.vim.
+
+Also, if you want to try out vimspector without changing your vim config, run:
+
+```
+vim -Nu /path/to/vimspector/tests/vimrc --cmd "let g:vimspector_enable_mappings='HUMAN'"
+```
+
+## Install some gadgets
+
+There are a couple of ways of doing this, but ***using `install_gadget.py` is
+highly recommended*** where that's an option.
+
+For supported languages, `install_gadget.py` will:
+
+* Download the relevant debug adapter at a version that's been tested from the
+  internet, either as a 'vsix' (Visusal Studio plugin), or clone from GitHub. If
+  you're in a corporate environment and this is a problem, you may need to
+  install the gadgets manually.
+* Perform any necessary post-installation actions, such as:
+  * Building any binary components
+  * Ensuring scripts are executable, because the VSIX pacakges are usually
+    broken in this regard.
+  * Set up the `gadgetDir` symlinks for the platform.
+
+To install the tested debug adapter for a language, run:
+
+```
+./install_gadget.py --enable-<language>
+```
+
+Or to install all supported gagtets:
+
+```
+./install_gadget.py --all
+```
+
+To install everything other than TCL (because TCL is sadly not as popular as it
+should be):
+
+```
+./install_gadget.py --all --disable-tcl
+```
+
+See `--help` for more info.
+
+## Manual gadget installation
+
+You essentially need to get a working installation of the debug adapter, find
+out how to start it, and configure that in an `adapters` entry in either your
+`.vimspector.json` or in `.gadgets.json`.
+
+The simplest way in practice is to install or start Visusal Studio Code and use
+its extension manager to install the relevant extension. You can then configure
+the adapter manually in the `adapters` section of your `.vimspector.json` or in
+a `gagets.json`. 
+
+PRs are always welcome to add configuration to do this to `install_gadget.py`.
+
+### The gadget directory
+
+Vimspector uses the following directory by default to look for a file named
+`.gadgets.json`: `</path/to/vimspector>/gadgets/<os>`.
+
+This path is exposed as the vimspector _variable_ `${gadgetDir}`. This is useful
+for configuring gadget command lines.
+
+Where os is one of:
+
+* `macos`
+* `linux`
+* `windows` (though note: Windows is not supported)
+
+The format is the same as `.vimspector.json`, but only the `gagets` key is used:
+
+Example:
+
+```json
+{
+  "adapters": {
+    "vscode-cpptools": {
+      "attach": {
+        "pidProperty": "processId", 
+        "pidSelect": "ask"
+      }, 
+      "command": [
+        "${gadgetDir}/vscode-cpptools/debugAdapters/OpenDebugAD7"
+      ], 
+      "name": "cppdbg"
+    }, 
+    "vscode-python": {
+      "command": [
+        "node", 
+        "${gadgetDir}/vscode-python/out/client/debugger/debugAdapter/main.js"
+      ], 
+      "name": "vscode-python"
+    }
+  }
+}
+```
+
+The gadget file is automatically written by `install_gadget.py`.
+
+# About
+
+## Background
 
 The motivation is that debugging in Vim is a pretty horrible experience,
 particularly if you use multiple languages. With pyclewn no more and the
@@ -69,9 +300,36 @@ experience in Vim for multiple languages, by leveraging the debug adapters that
 are being built for Visual Studio Code.
 
 The ability to do remote debugging is a must. This is key to my workflow, so
-baking it in to the debugging experience is a top bill goal for the project.
+baking it in to the debugging experience is a top bill goal for the project. So
+vimspector has first-class support for executing programs remotely and attaching
+to them. This support is unique to vimspector and on top of (complementary to)
+any such support in actual debug adapters.
 
-# Features and Usage
+## Status
+
+Vimspector is a work in progress, and any feedback/contributions are more
+than welcome.
+
+The backlog can be [viewed on Trello](https://trello.com/b/yvAKK0rD/vimspector).
+
+In order to use it you have to currently:
+
+- Write a mostly undocumented configuration file that contains essentially
+  undocumented parameters.
+- Accept that it isn't complete yet
+- Work around some frustrating bugs in Vim
+- Ignore probably many bugs in vimspector!
+
+### Experimental
+
+The plugin is currently _experimental_. That means that any part of it
+can (and probably will) change, including things like:
+
+- breaking changes to the configuration
+- keys, layout, functionatlity of the UI
+
+If a large number of people start using it then I will do my best to
+minimise this, or at least announce on Gitter.
 
 # Mappings
 
@@ -89,10 +347,13 @@ That said, many people are familiar with particular debuggers, so the following
 mappings can be enabled by setting `g:vimspector_enable_mappings` to the
 specified value.
 
+Please note: Currently there are no `<plug>` mappings. These will be added in
+future to make custom mappings much easier.
+
 ## Visual Studio / VSCode
 
-To use Visual Studio-like mappings, add the following to your `vimrc` before
-loading vimspector:
+To use Visual Studio-like mappings, add the following to your `vimrc` **before
+loading vimspector**:
 
 ```viml
 let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
@@ -116,7 +377,8 @@ If, like me, you only have 2 hands and 10 fingers, you probably don't like
 Ctrl-Shift-F keys. Also, if you're running in a terminal, there's a real
 possibility of terminfo being wrong for shifted-F-keys, particularly if your
 `TERM` is `screen-256color`. If these issues (number of hands, `TERM` variables)
-are unfixable, try the following mappings:
+are unfixable, try the following mappings, by adding the following **before
+loading vimspector**:
 
 ```viml
 let g:vimspector_enable_mappings = 'HUMAN'
@@ -134,7 +396,7 @@ let g:vimspector_enable_mappings = 'HUMAN'
 | `F11` | Step Into                                                 | `vimspector#StepInto()` |
 | `F12` | Step out of current function scope                        | `vimspector#StepOut()` |
 
-
+# Usage
 
 ## Launch and attach by PID:
 
@@ -191,36 +453,24 @@ CLI for the debug adapter. Support for this varies amongt adapters.
 
 NOTE: See also [Watches][#watches] above.
 
-# Supported Languages
+# Debug adapter configuration
+
+## Supported Languages
+
+For more information on the configuration of `.vimspector.json`, take a look at
+the Getting Started section of the [Vimspector website][website].
 
 Current tested with the following debug adapters.
 
-Note, there is no support for installing the extension. Use VSCode to do that by
-installing it in the UI. The default extension directory is something like
-`$HOME/.vscode/extensions`.
-
-Note, the launch configurations below are reverse-engineered from the
-extensions. Typically they are documented in the extension's `package.json`, but
-not always (or not completely).
-
 * C++: [vscode-cpptools](https://github.com/Microsoft/vscode-cpptools)
+
+Example `.vimspector.json`
 
 ```
 {
-  "adapters": {
-    "cppdbg": {
-      "name": "cppdbg",
-      "command": [ "<path to extension>/debugAdapters/OpenDebugAD7" ],
-      "attach": {
-        "pidProperty": "processId",
-        "pidSelect": "ask"
-      }
-    },
-    ....
-  },
   "configurations": {
     "<name>: Launch": {
-      "adapter": "cppdbg",
+      "adapter": "vscode-cpptools",
       "configuration": {
         "name": "<name>",
         "type": "cppdbg",
@@ -234,7 +484,7 @@ not always (or not completely).
       }
     },
     "<name>: Attach": {
-      "adapter": "cppdbg",
+      "adapter": "vscode-cpptools",
       "configuration": {
         "name": "<name>: Attach",
         "type": "cppdbg",
@@ -248,102 +498,13 @@ not always (or not completely).
 }
 ```
 
-* C++: [code=debug ](https://github.com/WebFreak001/code-debug)
-
-```
-{
-  "adapters": {
-    "lldb-mi": {
-      "name": "lldb-mi",
-      "command": [
-        "node",
-        "<path to extension>/out/src/lldb.js"
-      ],
-      "attach": {
-        "pidProperty": "target",
-        "pidSelect": "ask"
-      }
-    }
-    ...
-  },
-  "configurations": {
-    "<name>: Launch": {
-      "adapter": "lldb-mi",
-      "configuration": {
-        "request": "attach",
-        "cwd": "<working directory>",
-        "program": "<path to binary>",
-        "args": [ ... ],
-        "environment": [ ... ],
-        "lldbmipath": "<path to a working lldb-mi>"
-      }
-    },
-    "<name>: Attach": {
-      "adapter": "lldb-mi",
-      "configuration": {
-        "request": "attach",
-        "cwd": "<working directory>",
-        "executable": "<path to binary>",
-        "lldbmipath": "<path to a working lldb-mi>"
-      }
-    }
-    ...
-  }
-}
-
-```
-
-* C, C++, Rust, etc.: [CodeLLDB](https://github.com/vadimcn/vscode-lldb)
-
-```
-{
-  "adapters": {
-    "lldb": {
-      "name": "lldb",
-      "command": [
-        "lldb",
-        "-b",
-        "-O",
-        "command script import '<extension path>/adapter'",
-        "-O",
-        "script adapter.main.run_stdio_session()"
-      ]
-    }
-    ...
-  },
-  "configurations": {
-    "<name>: Launch": {
-      "adapter": "lldb",
-      "configuration": {
-        "type": "lldb",
-        "request": "launch",
-        "name": "<name>: Launch",
-        "program": "<path to binary>",
-        "args": [ .. ],
-        "cwd": "<working directory>"
-      }
-    }
-  }
-}
-```
-
 * Python: [vscode-python](https://github.com/Microsoft/vscode-python)
 
 ```
 {
-  "adapters": {
-    "python": {
-      "name": "python",
-      "command": [
-        "node",
-        "<path to extension>/out/client/debugger/debugAdapter/main.js"
-      ]
-    }
-    ...
-  },
   "configurations": {
     "<name>: Launch": {
-      "adapter": "python",
+      "adapter": "vscode-python",
       "configuration": {
         "name": "<name>: Launch",
         "type": "python",
@@ -366,9 +527,7 @@ See [my fork of TclProDebug](https://github.com/puremourning/TclProDebug) for in
 
 Also the mock debugger, but that isn't actually useful.
 
-# Unsupported
-
-Known not to work:
+## Partially supported
 
 * Java Debug Server. The [java debug server][java-debug-server] runs as a
   jdt.ls plugin, rather than a standalone debug adapter. This makes a lot
@@ -378,27 +537,17 @@ Known not to work:
   manually (however you might do so) and you can tell vimspector the port
   on which it is listening. See [this issue](https://github.com/puremourning/vimspector/issues/3)
   for more background.
+
+## Unsupported
+
+Known not to work:
 * C-sharp. The license appears to require that it is only used with Visual
   Studio Code.
-
-# Supported Platforms
-
-Currently on the author's environment which is macOS.
-
-The plugin _might_ work on other UNIX-like environments but it hasn't been
-tested. It will almost certainly not work on Windows.
-
-Requires:
-
-- Vim 8.1 compiled with python 3 support.
-
-Note the plugin uses a lot of very new Vim features (like prompt buffers), so
-I would strongly recommend a very new build of Vim.
 
 # FAQ
 
 1. Q: Does it work? A: Yeah, sort of. It's _incredibly_ buggy and unpolished.
-2. Q: Does it work with <insert language here>? A: Probably, but it won't
+2. Q: Does it work with _this_ language? A: Probably, but it won't
    necessarily be easy to work out what to put in the `.vimspector.json`. As you
    can see above, some of the servers aren't really editor agnostic, and require
    very-specific unique handling.
@@ -412,3 +561,4 @@ Copyright © 2018 Ben Jackson
 [ycmd]: https://github.com/Valloric/ycmd
 [gitter]: https://gitter.im/vimspector/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link
 [java-debug-server]: https://github.com/Microsoft/java-debug
+[website]: https://puremourning.github.io/vimspector-web/

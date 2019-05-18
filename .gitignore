@@ -10,3 +10,5 @@ gadgets/
 package/
 *.pyc
 *.dSYM
+README.md.orig.*
+README.md.toc.*
