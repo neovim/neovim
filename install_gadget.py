@@ -20,6 +20,7 @@ try:
 except ImportError:
   import urllib2
 
+import argparse
 import contextlib
 import os
 import collections
@@ -41,6 +42,7 @@ from vimspector import install
 
 GADGETS = {
   'vscode-cpptools': {
+    'language': 'c',
     'download': {
       'url': ( 'https://github.com/Microsoft/vscode-cpptools/releases/download/'
                '${version}/${file_name}' ),
@@ -76,6 +78,7 @@ GADGETS = {
     },
   },
   'vscode-python': {
+    'language': 'python',
     'download': {
       'url': ( 'https://github.com/Microsoft/vscode-python/releases/download/'
                '${version}/${file_name}' ),
@@ -97,6 +100,7 @@ GADGETS = {
     },
   },
   'tclpro': {
+    'language': 'tcl',
     'repo': {
       'url': 'https://github.com/puremourning/TclProDebug',
       'ref': 'master',
@@ -104,6 +108,7 @@ GADGETS = {
     'do': lambda name, root: InstallTclProDebug( name, root )
   },
   'vscode-mono-debug': {
+    'language': 'csharp',
     'enabled': False,
     'download': {
       'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
@@ -119,6 +124,7 @@ GADGETS = {
     }
   },
   'vscode-bash-debug': {
+    'language': 'bash',
     'download': {
       'url': ( 'https://github.com/rogalmic/vscode-bash-debug/releases/'
                'download/${version}/${file_name}' ),
@@ -325,10 +331,40 @@ gadget_dir = install.GetGadgetDir( os.path.dirname( __file__ ), OS )
 print( 'OS = ' + OS )
 print( 'gadget_dir = ' + gadget_dir )
 
+parser = argparse.ArgumentParser()
+parser.add_argument( '--all',
+                     action = 'store_true',
+                     help = 'Enable all completers' )
+
+for name, gadget in GADGETS.items():
+  if not gadget.get( 'enabled', True ):
+    continue
+
+  parser.add_argument(
+    '--enable-' + gadget[ 'language' ],
+    action = 'store_true',
+    help = 'Install the {} debug adapter for {} support'.format(
+      name,
+      gadget[ 'language' ] ) )
+
+  parser.add_argument(
+    '--disable-' + gadget[ 'language' ],
+    action = 'store_true',
+    help = 'Don\t install the {} debug adapter for {} support '
+           '(when supplying --all)'.format( name, gadget[ 'language' ] ) )
+
+args = parser.parse_args()
+
 failed = []
 all_adapters = {}
 for name, gadget in GADGETS.items():
   if not gadget.get( 'enabled', True ):
+    continue
+
+  if not args.all and not getattr( args, 'enable_' + gadget[ 'language' ] ):
+    continue
+
+  if getattr( args, 'disable_' + gadget[ 'language' ] ):
     continue
 
   try:
@@ -384,5 +420,3 @@ with open( install.GetGadgetConfigFile( os.path.dirname( __file__ ) ),
 if failed:
   raise RuntimeError( 'Failed to install gadgets: {}'.format(
     ','.join( failed ) ) )
-
-
