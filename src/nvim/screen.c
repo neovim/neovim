@@ -2157,6 +2157,8 @@ win_line (
   int multi_attr = 0;                   // attributes desired by multibyte
   int mb_l = 1;                         // multi-byte byte length
   int mb_c = 0;                         // decoded multi-byte character
+  int mb_width = 1;                     // width of utf-8 char, might depend
+                                        // on composing variant selector.
   bool mb_utf8 = false;                 // screen char is UTF-8 char
   int u8cc[MAX_MCO];                    // composing UTF-8 chars
   int filler_lines;                     // nr of filler lines to be drawn
@@ -3128,6 +3130,7 @@ win_line (
       if (c_extra != NUL || (n_extra == 1 && c_final != NUL)) {
         c = (n_extra == 1 && c_final != NUL) ? c_final : c_extra;
         mb_c = c;               // doesn't handle non-utf-8 multi-byte!
+        mb_width = utf_char2cells(mb_c);
         if (utf_char2len(c) > 1) {
           mb_utf8 = true;
           u8cc[0] = 0;
@@ -3138,6 +3141,7 @@ win_line (
       } else {
         c = *p_extra;
         mb_c = c;
+        mb_width = utf_char2cells(mb_c);
         // If the UTF-8 character is more than one byte:
         // Decode it into "mb_c".
         mb_l = utfc_ptr2len(p_extra);
@@ -3146,6 +3150,7 @@ win_line (
           mb_l = 1;
         } else if (mb_l > 1) {
           mb_c = utfc_ptr2char(p_extra, u8cc);
+          mb_width = utf_ptr2cells(p_extra);
           mb_utf8 = true;
           c = 0xc0;
         }
@@ -3155,9 +3160,10 @@ win_line (
 
         // If a double-width char doesn't fit display a '>' in the last column.
         if ((wp->w_p_rl ? (col <= 0) : (col >= grid->Columns - 1))
-            && (*mb_char2cells)(mb_c) == 2) {
+            && mb_width == 2) {
           c = '>';
           mb_c = c;
+          mb_width = 1;
           mb_l = 1;
           (void)mb_l;
           multi_attr = win_hl_attr(wp, HLF_AT);
@@ -3183,12 +3189,14 @@ win_line (
       // Get a character from the line itself.
       c0 = c = *ptr;
       mb_c = c;
+      mb_width = utf_char2cells(c);
       // If the UTF-8 character is more than one byte: Decode it
       // into "mb_c".
       mb_l = utfc_ptr2len(ptr);
       mb_utf8 = false;
       if (mb_l > 1) {
         mb_c = utfc_ptr2char(ptr, u8cc);
+        mb_width = utf_ptr2cells(ptr);
         // Overlong encoded ASCII or ASCII with composing char
         // is displayed normally, except a NUL.
         if (mb_c < 0x80) {
@@ -3206,6 +3214,7 @@ win_line (
           }
           u8cc[0] = mb_c;
           mb_c = ' ';
+          mb_width = 1;
         }
       }
 
@@ -3221,6 +3230,7 @@ win_line (
 
         p_extra = extra;
         c = *p_extra;
+        mb_width = utf_ptr2cells(p_extra);
         mb_c = mb_ptr2char_adv((const char_u **)&p_extra);
         mb_utf8 = (c >= 0x80);
         n_extra = (int)STRLEN(p_extra);
@@ -3261,9 +3271,10 @@ win_line (
       // next line.
       if ((wp->w_p_rl ? (col <= 0) :
            (col >= grid->Columns - 1))
-          && (*mb_char2cells)(mb_c) == 2) {
+          && mb_width == 2) {
         c = '>';
         mb_c = c;
+        mb_width = 1;
         mb_utf8 = false;
         mb_l = 1;
         multi_attr = win_hl_attr(wp, HLF_AT);
@@ -3288,6 +3299,7 @@ win_line (
           saved_attr2 = char_attr;             // save current attr
         }
         mb_c = c;
+        mb_width = 1;
         mb_utf8 = false;
         mb_l = 1;
       }
@@ -3460,6 +3472,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
+          mb_width = utf_char2cells(c);
           if (utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
@@ -3475,6 +3488,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_0);
           saved_attr2 = char_attr;  // save current attr
           mb_c = c;
+          mb_width = utf_char2cells(c);
           if (utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
@@ -3582,6 +3596,7 @@ win_line (
             extra_attr = win_hl_attr(wp, HLF_0);
             saved_attr2 = char_attr;  // save current attr
             mb_c = c;
+            mb_width = utf_char2cells(c);
             if (utf_char2len(c) > 1) {
               mb_utf8 = true;
               u8cc[0] = 0;
@@ -3629,6 +3644,7 @@ win_line (
           extra_attr = win_hl_attr(wp, HLF_AT);
           n_attr = 1;
           mb_c = c;
+          mb_width = utf_char2cells(c);
           if (utf_char2len(c) > 1) {
             mb_utf8 = true;
             u8cc[0] = 0;
@@ -3718,6 +3734,7 @@ win_line (
           n_skip = 1;
         }
         mb_c = c;
+        mb_width = utf_char2cells(c);
         if (utf_char2len(c) > 1) {
           mb_utf8 = true;
           u8cc[0] = 0;
@@ -3769,7 +3786,7 @@ win_line (
         && c != NUL) {
       c = wp->w_p_lcs_chars.prec;
       lcs_prec_todo = NUL;
-      if ((*mb_char2cells)(mb_c) > 1) {
+      if (mb_width > 1) {
         // Double-width character being overwritten by the "precedes"
         // character, need to fill up half the character.
         c_extra = MB_FILLER_CHAR;
@@ -3779,6 +3796,7 @@ win_line (
         extra_attr = win_hl_attr(wp, HLF_AT);
       }
       mb_c = c;
+      mb_width = utf_char2cells(c);
       if (utf_char2len(c) > 1) {
         mb_utf8 = true;
         u8cc[0] = 0;
@@ -4053,6 +4071,7 @@ win_line (
       c = wp->w_p_lcs_chars.ext;
       char_attr = win_hl_attr(wp, HLF_AT);
       mb_c = c;
+      mb_width = utf_char2cells(c);
       if (utf_char2len(c) > 1) {
         mb_utf8 = true;
         u8cc[0] = 0;
@@ -4096,7 +4115,7 @@ win_line (
       //
       // Store the character.
       //
-      if (wp->w_p_rl && (*mb_char2cells)(mb_c) > 1) {
+      if (wp->w_p_rl && mb_width > 1) {
         // A double-wide character is: put first halve in left cell.
         off--;
         col--;
@@ -4113,7 +4132,7 @@ win_line (
         linebuf_attr[off] = char_attr;
       }
 
-      if ((*mb_char2cells)(mb_c) > 1) {
+      if (mb_width > 1) {
         // Need to fill two screen columns.
         off++;
         col++;
@@ -4173,7 +4192,7 @@ win_line (
         }
 
 
-        if ((*mb_char2cells)(mb_c) > 1) {
+        if (mb_width > 1) {
           // Need to fill two screen columns.
           if (wp->w_p_rl) {
             --boguscols;

@@ -513,13 +513,22 @@ int utf_ptr2cells(const char_u *p)
   /* Need to convert to a wide character. */
   if (*p >= 0x80) {
     c = utf_ptr2char(p);
+    int len = utf_ptr2len(p);
     /* An illegal byte is displayed as <xx>. */
-    if (utf_ptr2len(p) == 1 || c == NUL)
+    if (len == 1 || c == NUL)
       return 4;
     /* If the char is ASCII it must be an overlong sequence. */
     if (c < 0x80)
       return char2cells(c);
-    return utf_char2cells(c);
+    int cells = utf_char2cells(c);
+    if (cells == 1 && p_emoji
+        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)) {
+      int c2 = utf_ptr2char(p+len);
+      if (c2 == 0xFE0F) {
+        return 2; // emoji presentation
+      }
+    }
+    return cells;
   }
   return 1;
 }
@@ -532,7 +541,8 @@ int utf_ptr2cells_len(const char_u *p, int size)
 
   /* Need to convert to a wide character. */
   if (size > 0 && *p >= 0x80) {
-    if (utf_ptr2len_len(p, size) < utf8len_tab[*p])
+    int len = utf_ptr2len_len(p, size);
+    if (len < utf8len_tab[*p])
       return 1;        /* truncated */
     c = utf_ptr2char(p);
     /* An illegal byte is displayed as <xx>. */
@@ -541,7 +551,16 @@ int utf_ptr2cells_len(const char_u *p, int size)
     /* If the char is ASCII it must be an overlong sequence. */
     if (c < 0x80)
       return char2cells(c);
-    return utf_char2cells(c);
+    int cells = utf_char2cells(c);
+    if (cells == 1 && p_emoji && size > len
+        && intable(emoji_all, ARRAY_SIZE(emoji_all), c)
+        && utf_ptr2len_len(p+len, size-len) == utf8len_tab[p[len]]) {
+      int c2 = utf_ptr2char(p+len);
+      if (c2 == 0xFE0F) {
+        return 2; // emoji presentation
+      }
+    }
+    return cells;
   }
   return 1;
 }
@@ -574,7 +593,7 @@ size_t mb_string2cells_len(const char_u *str, size_t size)
 
   for (const char_u *p = str; *p != NUL && p < str+size;
        p += utf_ptr2len_len(p, size+(p-str))) {
-    clen += utf_ptr2cells(p);
+    clen += utf_ptr2cells_len(p, size-(p-str));
   }
 
   return clen;
