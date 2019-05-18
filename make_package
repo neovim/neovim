@@ -28,4 +28,4 @@ pushd ${PACK}
 popd
 
 cd ${ROOT}/package
-tar zcvf ${OS}-${VERSION}.tar.gz ${OS}/
+tar zcvf ${OS}-${VERSION}.tar.gz -C ${OS} vimspector
