@@ -317,7 +317,7 @@
 #define __KB_ITR(name, key_t, kbnode_t) \
 	static inline void kb_itr_first_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		itr->p = 0; \
+		itr->p = NULL; \
 		if (b->n_keys == 0) return; \
 		itr->p = itr->stack; \
 		itr->p->x = b->root; itr->p->i = 0; \
@@ -329,7 +329,7 @@
 	} \
 	static inline int kb_itr_next_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		if (itr->p < itr->stack) return 0; \
+		if (itr->p == NULL) return 0; \
 		for (;;) { \
 			++itr->p->i; \
 			while (itr->p->x && itr->p->i <= itr->p->x->n) { \
@@ -337,22 +337,28 @@
 				itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
 				++itr->p; \
 			} \
+			if (itr->p == itr->stack) { \
+				itr->p = NULL; \
+				return 0; \
+			} \
 			--itr->p; \
-			if (itr->p < itr->stack) return 0; \
 			if (itr->p->x && itr->p->i < itr->p->x->n) return 1; \
 		} \
 	} \
 	static inline int kb_itr_prev_##name(kbtree_##name##_t *b, kbitr_##name##_t *itr) \
 	{ \
-		if (itr->p < itr->stack) return 0; \
+		if (itr->p == NULL) return 0; \
 		for (;;) { \
 			while (itr->p->x && itr->p->i >= 0) { \
 				itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
 				itr->p[1].i = itr->p[1].x ? itr->p[1].x->n : -1; \
 				++itr->p; \
 			} \
+			if (itr->p == itr->stack) { \
+				itr->p = NULL; \
+				return 0; \
+			} \
 			--itr->p; \
-			if (itr->p < itr->stack) return 0; \
 			--itr->p->i; \
 			if (itr->p->x && itr->p->i >= 0) return 1; \
 		} \
@@ -374,6 +380,7 @@
 			itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0; \
 			++itr->p; \
 		} \
+		itr->p->i = 0; \
 		return 0; \
 	} \
 	static inline int kb_itr_get_##name(kbtree_##name##_t *b, key_t k, kbitr_##name##_t *itr) \
