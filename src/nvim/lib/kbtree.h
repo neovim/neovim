@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "nvim/memory.h"
 
@@ -332,6 +333,7 @@
 		if (itr->p == NULL) return 0; \
 		for (;;) { \
 			++itr->p->i; \
+			assert(itr->p->i <= 21); \
 			while (itr->p->x && itr->p->i <= itr->p->x->n) { \
 				itr->p[1].i = 0; \
 				itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[itr->p->i] : 0; \
@@ -377,6 +379,7 @@
 			itr->p->i = i; \
 			if (i >= 0 && r == 0) return 1; \
 			++itr->p->i; \
+			assert(itr->p->i <= 21); \
 			itr->p[1].x = itr->p->x->is_internal? __KB_PTR(b, itr->p->x)[i + 1] : 0; \
 			++itr->p; \
 		} \
