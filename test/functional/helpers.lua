@@ -16,7 +16,6 @@ local eq = global_helpers.eq
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local table_contains = global_helpers.table_contains
-local table_flatten = global_helpers.table_flatten
 local write_file = global_helpers.write_file
 
 local start_dir = lfs.currentdir()

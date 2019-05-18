@@ -1,5 +1,4 @@
 local helpers = require('test.unit.helpers')(after_each)
-local global_helpers = require('test.helpers')
 local itp = helpers.gen_itp(it)
 local viml_helpers = require('test.unit.viml.helpers')
 
@@ -8,15 +7,14 @@ local conv_enum = helpers.conv_enum
 local cimport = helpers.cimport
 local ffi = helpers.ffi
 local eq = helpers.eq
+local shallowcopy = helpers.shallowcopy
+local intchar2lua = helpers.intchar2lua
 
 local conv_ccs = viml_helpers.conv_ccs
 local new_pstate = viml_helpers.new_pstate
 local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
-
-local shallowcopy = global_helpers.shallowcopy
-local intchar2lua = global_helpers.intchar2lua
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 

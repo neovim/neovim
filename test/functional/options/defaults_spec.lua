@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local global_helpers = require('test.helpers')
 
 local Screen = require('test.functional.ui.screen')
 
@@ -16,7 +15,7 @@ local neq = helpers.neq
 local mkdir = helpers.mkdir
 local rmdir = helpers.rmdir
 local alter_slashes = helpers.alter_slashes
-local table_contains = global_helpers.table_contains
+local table_contains = helpers.table_contains
 
 describe('startup defaults', function()
   describe(':filetype', function()

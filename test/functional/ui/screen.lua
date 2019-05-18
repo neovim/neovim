@@ -71,11 +71,10 @@
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
 
-local global_helpers = require('test.helpers')
-local deepcopy = global_helpers.deepcopy
-local shallowcopy = global_helpers.shallowcopy
-local concat_tables = global_helpers.concat_tables
 local helpers = require('test.functional.helpers')(nil)
+local deepcopy = helpers.deepcopy
+local shallowcopy = helpers.shallowcopy
+local concat_tables = helpers.concat_tables
 local request, run_session = helpers.request, helpers.run_session
 local eq = helpers.eq
 local dedent = helpers.dedent

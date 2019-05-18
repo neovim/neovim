@@ -1,7 +1,6 @@
 local bit = require('bit')
 local helpers = require('test.unit.helpers')(after_each)
 local eval_helpers = require('test.unit.eval.helpers')
-local global_helpers = require('test.helpers')
 
 local itp = helpers.gen_itp(it)
 
@@ -14,6 +13,8 @@ local NULL = helpers.NULL
 local cimport = helpers.cimport
 local to_cstr = helpers.to_cstr
 local alloc_log_new = helpers.alloc_log_new
+local concat_tables = helpers.concat_tables
+local map = helpers.map
 
 local a = eval_helpers.alloc_logging_helpers
 local int = eval_helpers.int
@@ -39,9 +40,6 @@ local null_string = eval_helpers.null_string
 local callback2tbl = eval_helpers.callback2tbl
 local tbl2callback = eval_helpers.tbl2callback
 local dict_watchers = eval_helpers.dict_watchers
-
-local concat_tables = global_helpers.concat_tables
-local map = global_helpers.map
 
 local lib = cimport('./src/nvim/eval/typval.h', './src/nvim/memory.h',
                     './src/nvim/mbyte.h', './src/nvim/garray.h',

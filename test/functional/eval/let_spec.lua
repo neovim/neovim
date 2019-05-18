@@ -59,7 +59,7 @@ describe(':let', function()
   end)
 
   it("multibyte env var to child process #8398 #9267",  function()
-    if (not helpers.iswin()) and require('test.helpers').isCI() then
+    if (not helpers.iswin()) and helpers.isCI() then
       -- Fails on non-Windows CI. Buffering/timing issue?
       pending('fails on unix CI', function() end)
     end

@@ -1,7 +1,6 @@
-local global_helpers = require('test.helpers')
-local shallowcopy = global_helpers.shallowcopy
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
+local shallowcopy = helpers.shallowcopy
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local iswin = helpers.iswin
 local funcs = helpers.funcs

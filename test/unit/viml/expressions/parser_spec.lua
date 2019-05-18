@@ -1,5 +1,4 @@
 local helpers = require('test.unit.helpers')(after_each)
-local global_helpers = require('test.helpers')
 local itp = helpers.gen_itp(it)
 local viml_helpers = require('test.unit.viml.helpers')
 
@@ -14,18 +13,17 @@ local cimport = helpers.cimport
 local ffi = helpers.ffi
 local neq = helpers.neq
 local eq = helpers.eq
+local mergedicts_copy = helpers.mergedicts_copy
+local format_string = helpers.format_string
+local format_luav = helpers.format_luav
+local intchar2lua = helpers.intchar2lua
+local dictdiff = helpers.dictdiff
 
 local conv_ccs = viml_helpers.conv_ccs
 local new_pstate = viml_helpers.new_pstate
 local conv_cmp_type = viml_helpers.conv_cmp_type
 local pstate_set_str = viml_helpers.pstate_set_str
 local conv_expr_asgn_type = viml_helpers.conv_expr_asgn_type
-
-local mergedicts_copy = global_helpers.mergedicts_copy
-local format_string = global_helpers.format_string
-local format_luav = global_helpers.format_luav
-local intchar2lua = global_helpers.intchar2lua
-local dictdiff = global_helpers.dictdiff
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h',
                     './src/nvim/syntax.h')

@@ -1,10 +1,9 @@
-local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
-local shallowcopy = global_helpers.shallowcopy
+local shallowcopy = helpers.shallowcopy
 
 describe('ui receives option updates', function()
   local screen
