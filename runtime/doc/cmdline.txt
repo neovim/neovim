@@ -1096,12 +1096,15 @@ for an Ex command, then two mappings will be added to use <Tab> for completion
 in the command-line window, like this: >
 	:imap <buffer> <Tab> <C-X><C-V>
 	:nmap <buffer> <Tab> a<C-X><C-V>
-Note that hitting <Tab> in Normal mode will do completion on the next
+As of this moment, this mapping is hardcoded and comes from `ex_getln.c`.
+
+Hitting <Tab> in Normal mode will do completion on the next
 character.  That way it works at the end of the line.
 If you don't want these mappings, disable them with: >
-	au CmdwinEnter [:>] iunmap <Tab>
-	au CmdwinEnter [:>] nunmap <Tab>
-You could put these lines in your vimrc file.
+	au CmdwinEnter [:>] iunmap <buffer> <Tab>
+	au CmdwinEnter [:>] nunmap <buffer> <Tab>
+Notice that <buffer> is required, or otherwise the mapping will not be
+cleared.
 
 While in the command-line window you cannot use the mouse to put the cursor in
 another window, or drag statuslines of other windows.  You can drag the
