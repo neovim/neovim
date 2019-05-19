@@ -336,30 +336,6 @@ local function shallowcopy(orig)
   return copy
 end
 
-local deepcopy
-
-local function id(v)
-  return v
-end
-
-local deepcopy_funcs = {
-  table = function(orig)
-    local copy = {}
-    for k, v in pairs(orig) do
-      copy[deepcopy(k)] = deepcopy(v)
-    end
-    return copy
-  end,
-  number = id,
-  string = id,
-  ['nil'] = id,
-  boolean = id,
-}
-
-deepcopy = function(orig)
-  return deepcopy_funcs[type(orig)](orig)
-end
-
 local REMOVE_THIS = {}
 
 local function mergedicts_copy(d1, d2)
@@ -728,7 +704,6 @@ local module = {
   check_logs = check_logs,
   concat_tables = concat_tables,
   dedent = dedent,
-  deepcopy = deepcopy,
   dictdiff = dictdiff,
   eq = eq,
   expect_err = expect_err,

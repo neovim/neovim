@@ -1,9 +1,107 @@
---- Shared functions
---    - Used by Nvim and tests
---    - Can run in vanilla Lua (do not require a running instance of Nvim)
+-- Functions shared by Nvim and its test-suite.
+--
+-- The singular purpose of this module is to share code with the Nvim
+-- test-suite. If, in the future, Nvim itself is used to run the test-suite
+-- instead of "vanilla Lua", these functions could move to src/nvim/lua/vim.lua
 
 
--- Checks if a list-like (vector) table contains `value`.
+--- Returns a deep copy of the given object. Non-table objects are copied as
+--- in a typical Lua assignment, whereas table objects are copied recursively.
+---
+--@param orig Table to copy
+--@returns New table of copied keys and (nested) values.
+local function deepcopy(orig)
+  error()
+end
+local function _id(v)
+  return v
+end
+local deepcopy_funcs = {
+  table = function(orig)
+    local copy = {}
+    for k, v in pairs(orig) do
+      copy[deepcopy(k)] = deepcopy(v)
+    end
+    return copy
+  end,
+  number = _id,
+  string = _id,
+  ['nil'] = _id,
+  boolean = _id,
+}
+deepcopy = function(orig)
+  return deepcopy_funcs[type(orig)](orig)
+end
+
+--- Splits a string at each instance of a separator.
+---
+--@see |vim.split()|
+--@see https://www.lua.org/pil/20.2.html
+--@see http://lua-users.org/wiki/StringLibraryTutorial
+---
+--@param s String to split
+--@param sep Separator string or pattern
+--@param plain If `true` use `sep` literally (passed to String.find)
+--@returns Iterator over the split components
+local function gsplit(s, sep, plain)
+  assert(type(s) == "string")
+  assert(type(sep) == "string")
+  assert(type(plain) == "boolean" or type(plain) == "nil")
+
+  local start = 1
+  local done = false
+
+  local function _pass(i, j, ...)
+    if i then
+      assert(j+1 > start, "Infinite loop detected")
+      local seg = s:sub(start, i - 1)
+      start = j + 1
+      return seg, ...
+    else
+      done = true
+      return s:sub(start)
+    end
+  end
+
+  return function()
+    if done then
+      return
+    end
+    if sep == '' then
+      if start == #s then
+        done = true
+      end
+      return _pass(start+1, start)
+    end
+    return _pass(s:find(sep, start, plain))
+  end
+end
+
+--- Splits a string at each instance of a separator.
+---
+--- Examples:
+--- <pre>
+---  split(":aa::b:", ":")     --> {'','aa','','bb',''}
+---  split("axaby", "ab?")     --> {'','x','y'}
+---  split(x*yz*o, "*", true)  --> {'x','yz','o'}
+--- </pre>
+--
+--@see |vim.gsplit()|
+---
+--@param s String to split
+--@param sep Separator string or pattern
+--@param plain If `true` use `sep` literally (passed to String.find)
+--@returns List-like table of the split components.
+local function split(s,sep,plain)
+  local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
+  return t
+end
+
+--- Checks if a list-like (vector) table contains `value`.
+---
+--@param t Table to check
+--@param value Value to compare
+--@returns true if `t` contains `value`
 local function tbl_contains(t, value)
   if type(t) ~= 'table' then
     error('t must be a table')
@@ -17,13 +115,14 @@ local function tbl_contains(t, value)
 end
 
 --- Merges two or more map-like tables.
---
+---
 --@see |extend()|
---
--- behavior: Decides what to do if a key is found in more than one map:
---           "error": raise an error
---           "keep":  use value from the leftmost map
---           "force": use value from the rightmost map
+---
+--@param behavior Decides what to do if a key is found in more than one map:
+---      - "error": raise an error
+---      - "keep":  use value from the leftmost map
+---      - "force": use value from the rightmost map
+--@param ... Two or more map-like tables.
 local function tbl_extend(behavior, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
     error('invalid "behavior": '..tostring(behavior))
@@ -46,7 +145,11 @@ local function tbl_extend(behavior, ...)
   return ret
 end
 
--- Flattens a list-like table: unrolls and appends nested tables to table `t`.
+--- Creates a copy of a list-like table such that any nested tables are
+--- "unrolled" and appended to the result.
+---
+--@param t List-like table
+--@returns Flattened copy of the given list-like table.
 local function tbl_flatten(t)
   -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
   local result = {}
@@ -66,6 +169,9 @@ local function tbl_flatten(t)
 end
 
 local module = {
+  deepcopy = deepcopy,
+  gsplit = gsplit,
+  split = split,
   tbl_contains = tbl_contains,
   tbl_extend = tbl_extend,
   tbl_flatten = tbl_flatten,

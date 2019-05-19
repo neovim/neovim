@@ -48,25 +48,64 @@ DEBUG = ('DEBUG' in os.environ)
 INCLUDE_C_DECL = ('INCLUDE_C_DECL' in os.environ)
 INCLUDE_DEPRECATED = ('INCLUDE_DEPRECATED' in os.environ)
 
-doc_filename = 'api.txt'
-# String used to find the start of the generated part of the doc.
-section_start_token = '*api-global*'
-# Required prefix for API function names.
-api_func_name_prefix = 'nvim_'
+text_width = 78
+script_path = os.path.abspath(__file__)
+base_dir = os.path.dirname(os.path.dirname(script_path))
+out_dir = os.path.join(base_dir, 'tmp-{mode}-doc')
+filter_cmd = '%s %s' % (sys.executable, script_path)
+seen_funcs = set()
+lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
 
-# Section name overrides.
-section_name = {
-    'vim.c': 'Global',
+CONFIG = {
+  'api': {
+    'filename': 'api.txt',
+    # String used to find the start of the generated part of the doc.
+    'section_start_token': '*api-global*',
+    # Section ordering.
+    'section_order' : [
+      'vim.c',
+      'buffer.c',
+      'window.c',
+      'tabpage.c',
+      'ui.c',
+    ],
+    # List of files/directories for doxygen to read, separated by blanks
+    'files': os.path.join(base_dir, 'src/nvim/api'),
+    # file patterns used by doxygen
+    'file_patterns': '*.h *.c',
+    # Only function with this prefix are considered
+    'func_name_prefix': 'nvim_',
+    # Section name overrides.
+    'section_name': {
+        'vim.c': 'Global',
+    },
+    # Module name overrides (for Lua).
+    'module_override': {},
+    # Append the docs for these modules, do not start a new section.
+    'append_only' : [],
+  },
+  'lua': {
+    'filename': 'if_lua.txt',
+    'section_start_token': '*lua-vim*',
+    'section_order' : [
+      'vim.lua',
+      'shared.lua',
+    ],
+    'files': ' '.join([
+        os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
+        os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
+        ]),
+    'file_patterns': '*.lua',
+    'func_name_prefix': '',
+    'section_name': {},
+    'module_override': {
+        'shared': 'vim',  # `shared` functions are exposed on the `vim` module.
+    },
+    'append_only' : [
+      'shared.lua',
+    ],
+  },
 }
-
-# Section ordering.
-section_order = (
-    'vim.c',
-    'buffer.c',
-    'window.c',
-    'tabpage.c',
-    'ui.c',
-)
 
 param_exclude = (
     'channel_id',
@@ -77,13 +116,6 @@ annotation_map = {
     'FUNC_API_ASYNC': '{async}',
 }
 
-text_width = 78
-script_path = os.path.abspath(__file__)
-base_dir = os.path.dirname(os.path.dirname(script_path))
-src_dir = os.path.join(base_dir, 'src/nvim/api')
-out_dir = os.path.join(base_dir, 'tmp-api-doc')
-filter_cmd = '%s %s' % (sys.executable, script_path)
-seen_funcs = set()
 
 # Tracks `xrefsect` titles.  As of this writing, used only for separating
 # deprecated functions.
@@ -286,7 +318,7 @@ def render_node(n, text, prefix='', indent='', width=62):
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
             text += indent + prefix + render_node(c, text, indent=indent+(' ' * len(prefix)), width=width)
-    elif n.nodeName == 'para':
+    elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
             text += render_node(c, text, indent=indent, width=width)
         if is_inline(n):
@@ -400,7 +432,7 @@ def parse_parblock(parent, prefix='', width=62, indent=''):
 # }}}
 
 
-def parse_source_xml(filename):
+def parse_source_xml(filename, mode):
     """Collects API functions.
 
     Returns two strings:
@@ -415,9 +447,12 @@ def parse_source_xml(filename):
     deprecated_functions = []
 
     dom = minidom.parse(filename)
+    compoundname = get_text(dom.getElementsByTagName('compoundname')[0])
     for member in dom.getElementsByTagName('memberdef'):
         if member.getAttribute('static') == 'yes' or \
-                member.getAttribute('kind') != 'function':
+                member.getAttribute('kind') != 'function' or \
+                member.getAttribute('prot') == 'private' or \
+                get_text(get_child(member, 'name')).startswith('_'):
             continue
 
         loc = find_first(member, 'location')
@@ -444,7 +479,13 @@ def parse_source_xml(filename):
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
 
-        vimtag = '*{}()*'.format(name)
+        if mode == 'lua':
+            fstem = compoundname.split('.')[0]
+            fstem = CONFIG[mode]['module_override'].get(fstem, fstem)
+            vimtag = '*{}.{}()*'.format(fstem, name)
+        else:
+            vimtag = '*{}()*'.format(name)
+
         params = []
         type_length = 0
 
@@ -454,6 +495,10 @@ def parse_source_xml(filename):
             declname = get_child(param, 'declname')
             if declname:
                 param_name = get_text(declname).strip()
+            elif mode == 'lua':
+                # that's how it comes out of lua2dox
+                param_name = param_type
+                param_type = ''
 
             if param_name in param_exclude:
                 continue
@@ -521,7 +566,7 @@ def parse_source_xml(filename):
 
         if 'Deprecated' in xrefs:
             deprecated_functions.append(func_doc)
-        elif name.startswith(api_func_name_prefix):
+        elif name.startswith(CONFIG[mode]['func_name_prefix']):
             functions.append(func_doc)
 
         xrefs.clear()
@@ -547,115 +592,129 @@ def gen_docs(config):
 
     Doxygen is called and configured through stdin.
     """
-    p = subprocess.Popen(['doxygen', '-'], stdin=subprocess.PIPE)
-    p.communicate(config.format(input=src_dir, output=out_dir,
-                                filter=filter_cmd).encode('utf8'))
-    if p.returncode:
-        sys.exit(p.returncode)
+    for mode in CONFIG:
+        output_dir = out_dir.format(mode=mode)
+        p = subprocess.Popen(['doxygen', '-'], stdin=subprocess.PIPE)
+        p.communicate(
+            config.format(
+                input=CONFIG[mode]['files'],
+                output=output_dir,
+                filter=filter_cmd,
+                file_patterns=CONFIG[mode]['file_patterns'])
+            .encode('utf8')
+        )
+        if p.returncode:
+            sys.exit(p.returncode)
 
-    sections = {}
-    intros = {}
-    sep = '=' * text_width
+        sections = {}
+        intros = {}
+        sep = '=' * text_width
 
-    base = os.path.join(out_dir, 'xml')
-    dom = minidom.parse(os.path.join(base, 'index.xml'))
+        base = os.path.join(output_dir, 'xml')
+        dom = minidom.parse(os.path.join(base, 'index.xml'))
 
-    # generate docs for section intros
-    for compound in dom.getElementsByTagName('compound'):
-        if compound.getAttribute('kind') != 'group':
-            continue
-
-        groupname = get_text(find_first(compound, 'name'))
-        groupxml = os.path.join(base, '%s.xml' % compound.getAttribute('refid'))
-
-        desc = find_first(minidom.parse(groupxml), 'detaileddescription')
-        if desc:
-            doc = parse_parblock(desc)
-            if doc:
-                intros[groupname] = doc
-
-    for compound in dom.getElementsByTagName('compound'):
-        if compound.getAttribute('kind') != 'file':
-            continue
-
-        filename = get_text(find_first(compound, 'name'))
-        if filename.endswith('.c'):
-            functions, deprecated = parse_source_xml(
-                os.path.join(base, '%s.xml' % compound.getAttribute('refid')))
-
-            if not functions and not deprecated:
+        # generate docs for section intros
+        for compound in dom.getElementsByTagName('compound'):
+            if compound.getAttribute('kind') != 'group':
                 continue
 
-            if functions or deprecated:
-                name = os.path.splitext(os.path.basename(filename))[0]
-                if name == 'ui':
-                    name = name.upper()
-                else:
-                    name = name.title()
+            groupname = get_text(find_first(compound, 'name'))
+            groupxml = os.path.join(base, '%s.xml' % compound.getAttribute('refid'))
 
-                doc = ''
-
-                intro = intros.get('api-%s' % name.lower())
-                if intro:
-                    doc += '\n\n' + intro
-
-                if functions:
-                    doc += '\n\n' + functions
-
-                if INCLUDE_DEPRECATED and deprecated:
-                    doc += '\n\n\nDeprecated %s Functions: ~\n\n' % name
-                    doc += deprecated
-
+            desc = find_first(minidom.parse(groupxml), 'detaileddescription')
+            if desc:
+                doc = parse_parblock(desc)
                 if doc:
-                    filename = os.path.basename(filename)
-                    name = section_name.get(filename, name)
-                    title = '%s Functions' % name
-                    helptag = '*api-%s*' % name.lower()
-                    sections[filename] = (title, helptag, doc)
+                    intros[groupname] = doc
 
-    if not sections:
-        return
+        for compound in dom.getElementsByTagName('compound'):
+            if compound.getAttribute('kind') != 'file':
+                continue
 
-    docs = ''
+            filename = get_text(find_first(compound, 'name'))
+            if filename.endswith('.c') or filename.endswith('.lua'):
+                functions, deprecated = parse_source_xml(
+                    os.path.join(base, '%s.xml' %
+                        compound.getAttribute('refid')), mode)
 
-    i = 0
-    for filename in section_order:
-        if filename not in sections:
-            continue
-        title, helptag, section_doc = sections.pop(filename)
+                if not functions and not deprecated:
+                    continue
 
-        i += 1
-        docs += sep
-        docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
-        docs += section_doc
-        docs += '\n\n\n'
+                if functions or deprecated:
+                    name = os.path.splitext(os.path.basename(filename))[0]
+                    if name == 'ui':
+                        name = name.upper()
+                    else:
+                        name = name.title()
 
-    if sections:
-        # In case new API sources are added without updating the order dict.
-        for title, helptag, section_doc in sections.values():
+                    doc = ''
+
+                    intro = intros.get('api-%s' % name.lower())
+                    if intro:
+                        doc += '\n\n' + intro
+
+                    if functions:
+                        doc += '\n\n' + functions
+
+                    if INCLUDE_DEPRECATED and deprecated:
+                        doc += '\n\n\nDeprecated %s Functions: ~\n\n' % name
+                        doc += deprecated
+
+                    if doc:
+                        filename = os.path.basename(filename)
+                        name = CONFIG[mode]['section_name'].get(filename, name)
+
+                        if mode == 'lua':
+                            title = 'Lua module: {}'.format(name.lower())
+                            helptag = '*lua-{}*'.format(name.lower())
+                        else:
+                            title = '{} Functions'.format(name)
+                            helptag = '*api-{}*'.format(name.lower())
+                        sections[filename] = (title, helptag, doc)
+
+        if not sections:
+            return
+
+        docs = ''
+
+        i = 0
+        for filename in CONFIG[mode]['section_order']:
+            if filename not in sections:
+                raise RuntimeError('found new module "{}"; update the "section_order" map'.format(filename))
+            title, helptag, section_doc = sections.pop(filename)
             i += 1
-            docs += sep
-            docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
+            if filename not in CONFIG[mode]['append_only']:
+                docs += sep
+                docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
             docs += section_doc
             docs += '\n\n\n'
 
-    docs = docs.rstrip() + '\n\n'
-    docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
+        docs = docs.rstrip() + '\n\n'
+        docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
 
-    doc_file = os.path.join(base_dir, 'runtime/doc', doc_filename)
-    delete_lines_below(doc_file, section_start_token)
-    with open(doc_file, 'ab') as fp:
-        fp.write(docs.encode('utf8'))
-    shutil.rmtree(out_dir)
+        doc_file = os.path.join(base_dir, 'runtime', 'doc',
+                CONFIG[mode]['filename'])
+
+        delete_lines_below(doc_file, CONFIG[mode]['section_start_token'])
+        with open(doc_file, 'ab') as fp:
+            fp.write(docs.encode('utf8'))
+
+        shutil.rmtree(output_dir)
 
 
 def filter_source(filename):
-    """Filters the source to fix macros that confuse Doxygen."""
-    with open(filename, 'rt') as fp:
-        print(re.sub(r'^(ArrayOf|DictionaryOf)(\(.*?\))',
-                     lambda m: m.group(1)+'_'.join(
-                         re.split(r'[^\w]+', m.group(2))),
-                     fp.read(), flags=re.M))
+    name, extension = os.path.splitext(filename)
+    if extension == '.lua':
+        p = subprocess.run([lua2dox_filter, filename], stdout=subprocess.PIPE)
+        op = ('?' if 0 != p.returncode else p.stdout.decode('utf-8'))
+        print(op)
+    else:
+        """Filters the source to fix macros that confuse Doxygen."""
+        with open(filename, 'rt') as fp:
+            print(re.sub(r'^(ArrayOf|DictionaryOf)(\(.*?\))',
+                         lambda m: m.group(1)+'_'.join(
+                             re.split(r'[^\w]+', m.group(2))),
+                         fp.read(), flags=re.M))
 
 
 # Doxygen Config {{{
@@ -663,13 +722,15 @@ Doxyfile = '''
 OUTPUT_DIRECTORY       = {output}
 INPUT                  = {input}
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.h *.c
+FILE_PATTERNS          = {file_patterns}
 RECURSIVE              = YES
 INPUT_FILTER           = "{filter}"
 EXCLUDE                =
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = */private/*
 EXCLUDE_SYMBOLS        =
+EXTENSION_MAPPING      = lua=C
+EXTRACT_PRIVATE        = NO
 
 GENERATE_HTML          = NO
 GENERATE_DOCSET        = NO

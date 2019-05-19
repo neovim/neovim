@@ -1,10 +1,10 @@
 -- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
 --
 -- Lua code lives in one of three places:
---    1. The runtime (`runtime/lua/vim/`). For "nice to have" features, e.g.
---       the `inspect` and `lpeg` modules.
---    2. The `vim.shared` module: code shared between Nvim and its test-suite.
---    3. Compiled-into Nvim itself (`src/nvim/lua/`).
+--    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
+--       `inspect` and `lpeg` modules.
+--    2. runtime/lua/vim/shared.lua: Code shared between Nvim and tests.
+--    3. src/nvim/lua/: Compiled-into Nvim itself.
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
@@ -154,73 +154,15 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
-local function gsplit(s, sep, plain)
-  assert(type(s) == "string")
-  assert(type(sep) == "string")
-  assert(type(plain) == "boolean" or type(plain) == "nil")
-
-  local start = 1
-  local done = false
-
-  local function pass(i, j, ...)
-    if i then
-      assert(j+1 > start, "Infinite loop detected")
-      local seg = s:sub(start, i - 1)
-      start = j + 1
-      return seg, ...
-    else
-      done = true
-      return s:sub(start)
-    end
-  end
-
-  return function()
-    if done then
-      return
-    end
-    if sep == '' then
-      if start == #s then
-        done = true
-      end
-      return pass(start+1, start)
-    end
-    return pass(s:find(sep, start, plain))
-  end
-end
-
-local function split(s,sep,plain)
-  local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
-  return t
-end
-
+--- Trim whitespace (Lua pattern "%%s") from both sides of a string.
+---
+--@see https://www.lua.org/pil/20.2.html
+--@param s String to trim
+--@returns String with whitespace removed from its beginning and end
 local function trim(s)
-  assert(type(s) == "string", "Only strings can be trimmed")
-  local result = s:gsub("^%s+", ""):gsub("%s+$", "")
+  assert(type(s) == 'string', 'Only strings can be trimmed')
+  local result = s:gsub('^%s+', ''):gsub('%s+$', '')
   return result
-end
-
-local deepcopy
-
-local function id(v)
-  return v
-end
-
-local deepcopy_funcs = {
-  table = function(orig)
-    local copy = {}
-    for k, v in pairs(orig) do
-      copy[deepcopy(k)] = deepcopy(v)
-    end
-    return copy
-  end,
-  number = id,
-  string = id,
-  ['nil'] = id,
-  boolean = id,
-}
-
-deepcopy = function(orig)
-  return deepcopy_funcs[type(orig)](orig)
 end
 
 local function __index(t, key)
@@ -240,9 +182,6 @@ local module = {
   _os_proc_info = _os_proc_info,
   _system = _system,
   trim = trim,
-  split = split,
-  gsplit = gsplit,
-  deepcopy = deepcopy,
 }
 
 setmetatable(module, {
