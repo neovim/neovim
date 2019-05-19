@@ -10830,6 +10830,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef __APPLE__
     "mac",
     "macunix",
+    "osx",
 #endif
     "menu",
     "mksession",
