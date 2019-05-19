@@ -782,7 +782,7 @@ void ex_jumps(exarg_T *eap)
   char_u      *name;
 
   cleanup_jumplist(curwin, true);
-  /* Highlight title */
+  // Highlight title
   MSG_PUTS_TITLE(_("\n jump line  col file/text"));
   for (i = 0; i < curwin->w_jumplistlen && !got_int; ++i) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
@@ -1161,7 +1161,6 @@ void mark_col_adjust(
 void cleanup_jumplist(win_T *wp, bool loadfiles)
 {
   int i;
-  int from, to;
 
   if (loadfiles) {
     // If specified, load all the files from the jump list. This is
@@ -1175,17 +1174,20 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
     }
   }
 
-  to = 0;
-  for (from = 0; from < wp->w_jumplistlen; ++from) {
-    if (wp->w_jumplistidx == from)
+  int to = 0;
+  for (int from = 0; from < wp->w_jumplistlen; from++) {
+    if (wp->w_jumplistidx == from) {
       wp->w_jumplistidx = to;
-    for (i = from + 1; i < wp->w_jumplistlen; ++i)
+    }
+    for (i = from + 1; i < wp->w_jumplistlen; i++) {
       if (wp->w_jumplist[i].fmark.fnum
           == wp->w_jumplist[from].fmark.fnum
           && wp->w_jumplist[from].fmark.fnum != 0
           && wp->w_jumplist[i].fmark.mark.lnum
-          == wp->w_jumplist[from].fmark.mark.lnum)
+          == wp->w_jumplist[from].fmark.mark.lnum) {
         break;
+      }
+    }
     if (i >= wp->w_jumplistlen) {  // no duplicate
       if (to != from) {
         // Not using wp->w_jumplist[to++] = wp->w_jumplist[from] because
