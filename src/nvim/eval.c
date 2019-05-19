@@ -10064,13 +10064,11 @@ static void f_getjumplist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_append_list(rettv->vval.v_list, l);
   tv_list_append_number(rettv->vval.v_list, wp->w_jumplistidx);
 
-  cleanup_jumplist(wp);
+  cleanup_jumplist(wp, true);
+
   for (int i = 0; i < wp->w_jumplistlen; i++) {
     if (wp->w_jumplist[i].fmark.mark.lnum == 0) {
       continue;
-    }
-    if (wp->w_jumplist[i].fmark.fnum == 0) {
-      fname2fnum(&wp->w_jumplist[i]);
     }
     dict_T *const d = tv_dict_alloc();
     tv_list_append_dict(l, d);

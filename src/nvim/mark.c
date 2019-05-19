@@ -214,7 +214,7 @@ pos_T *movemark(int count)
   pos_T       *pos;
   xfmark_T    *jmp;
 
-  cleanup_jumplist(curwin);
+  cleanup_jumplist(curwin, true);
 
   if (curwin->w_jumplistlen == 0)           /* nothing to jump to */
     return (pos_T *)NULL;
@@ -463,7 +463,7 @@ getnextmark (
  * This is used for marks obtained from the .shada file.  It's postponed
  * until the mark is used to avoid a long startup delay.
  */
-void fname2fnum(xfmark_T *fm)
+static void fname2fnum(xfmark_T *fm)
 {
   char_u *p;
 
@@ -781,13 +781,11 @@ void ex_jumps(exarg_T *eap)
   int i;
   char_u      *name;
 
-  cleanup_jumplist(curwin);
+  cleanup_jumplist(curwin, true);
   /* Highlight title */
   MSG_PUTS_TITLE(_("\n jump line  col file/text"));
   for (i = 0; i < curwin->w_jumplistlen && !got_int; ++i) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
-      if (curwin->w_jumplist[i].fmark.fnum == 0)
-        fname2fnum(&curwin->w_jumplist[i]);
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
       if (name == NULL)             /* file name not available */
         continue;
@@ -1158,10 +1156,24 @@ void mark_col_adjust(
 
 // When deleting lines, this may create duplicate marks in the
 // jumplist. They will be removed here for the specified window.
-void cleanup_jumplist(win_T *wp)
+// When "loadfiles" is true first ensure entries have the "fnum" field set
+// (this may be a bit slow).
+void cleanup_jumplist(win_T *wp, bool loadfiles)
 {
   int i;
   int from, to;
+
+  if (loadfiles) {
+    // If specified, load all the files from the jump list. This is
+    // needed to properly clean up duplicate entries, but will take some
+    // time.
+    for (i = 0; i < wp->w_jumplistlen; i++) {
+      if ((wp->w_jumplist[i].fmark.fnum == 0)
+          && (wp->w_jumplist[i].fmark.mark.lnum != 0)) {
+        fname2fnum(&wp->w_jumplist[i]);
+      }
+    }
+  }
 
   to = 0;
   for (from = 0; from < wp->w_jumplistlen; ++from) {
