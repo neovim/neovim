@@ -11,7 +11,7 @@
 --@param orig Table to copy
 --@returns New table of copied keys and (nested) values.
 local function deepcopy(orig)
-  error()
+  error(orig)
 end
 local function _id(v)
   return v
