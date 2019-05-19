@@ -154,80 +154,14 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
----Split a string by a given separator. The separator can be a lua pattern, see [1].
----Used by |vim.split()|, see there for some examples. See [2]
----for usage of the plain parameter.
+--- Trim whitespace (Lua pattern "%%s") from both sides of a string.
 ---
---- [1] https://www.lua.org/pil/20.2.html.
----
---- [2] http://lua-users.org/wiki/StringLibraryTutorial
---@param s String The string to split
---@param sep String The separator to use
---@param plain Boolean If `true`, use the separator literally
----(passed as an argument to String.find)
---@returns An iterator over the split components
-local function gsplit(s, sep, plain)
-  assert(type(s) == "string")
-  assert(type(sep) == "string")
-  assert(type(plain) == "boolean" or type(plain) == "nil")
-
-  local start = 1
-  local done = false
-
-  local function _pass(i, j, ...)
-    if i then
-      assert(j+1 > start, "Infinite loop detected")
-      local seg = s:sub(start, i - 1)
-      start = j + 1
-      return seg, ...
-    else
-      done = true
-      return s:sub(start)
-    end
-  end
-
-  return function()
-    if done then
-      return
-    end
-    if sep == '' then
-      if start == #s then
-        done = true
-      end
-      return _pass(start+1, start)
-    end
-    return _pass(s:find(sep, start, plain))
-  end
-end
-
---- Split a string by a given separator.
----
---- Examples:
---- <pre>
----  split(":aa::b:", ":")     --> {'','aa','','bb',''}
----  split("axaby", "ab?")     --> {'','x','y'}
----  split(x*yz*o, "*", true)  --> {'x','yz','o'}
---- </pre>
----
---@param s String The string to split
---@param sep String The separator to use (see |vim.gsplit()|)
---@param plain Boolean If `true`, use the separator literally
----(see |vim.gsplit()|)
---@returns An array containing the components of the split.
-local function split(s,sep,plain)
-  local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
-  return t
-end
-
---- Trim the whitespaces from a string.  A whitespace is everything that
---- matches the lua pattern '%%s', see
----
---- https://www.lua.org/pil/20.2.html
---@param s String The string to trim
---@returns The string with all whitespaces trimmed from its beginning and end
+--@see https://www.lua.org/pil/20.2.html
+--@param s String to trim
+--@returns String with whitespace removed from its beginning and end
 local function trim(s)
-  assert(type(s) == "string", "Only strings can be trimmed")
-  local result = s:gsub("^%s+", ""):gsub("%s+$", "")
+  assert(type(s) == 'string', 'Only strings can be trimmed')
+  local result = s:gsub('^%s+', ''):gsub('%s+$', '')
   return result
 end
 
@@ -248,8 +182,6 @@ local module = {
   _os_proc_info = _os_proc_info,
   _system = _system,
   trim = trim,
-  split = split,
-  gsplit = gsplit,
 }
 
 setmetatable(module, {

@@ -422,55 +422,18 @@ vim.types						*lua-vim.types*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
-gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
-                Split a string by a given separator. The separator can be a
-                lua pattern, see [1]. Used by |vim.split()|, see there for
-                some examples. See [2] for usage of the plain parameter.
-
-                [1]https://www.lua.org/pil/20.2.html.
-
-                [2]http://lua-users.org/wiki/StringLibraryTutorial
-
-                Parameters: ~
-                    {s}      String The string to split
-                    {sep}    String The separator to use
-                    {plain}  Boolean If `true` , use the separator literally
-                             (passed as an argument to String.find)
-
-                Return: ~
-                    An iterator over the split components
-
-split({s}, {sep}, {plain})                                       *vim.split()*
-                Split a string by a given separator.
-
-                Examples: >
-
-                  split(":aa::b:", ":")     --> {'','aa','','bb',''}
-                  split("axaby", "ab?")     --> {'','x','y'}
-                  split(x*yz*o, "*", true)  --> {'x','yz','o'}
-<
-
-                Parameters: ~
-                    {s}      String The string to split
-                    {sep}    String The separator to use (see |vim.gsplit()|)
-                    {plain}  Boolean If `true` , use the separator literally
-                             (see |vim.gsplit()|)
-
-                Return: ~
-                    An array containing the components of the split.
-
 trim({s})                                                         *vim.trim()*
-                Trim the whitespaces from a string. A whitespace is everything
-                that matches the lua pattern '%s', see
-
-                https://www.lua.org/pil/20.2.html
+                Trim whitespace (Lua pattern "%%s") from both sides of a
+                string.
 
                 Parameters: ~
-                    {s}  String The string to trim
+                    {s}  String to trim
 
                 Return: ~
-                    The string with all whitespaces trimmed from its beginning
-                    and end
+                    String with whitespace removed from its beginning and end
+
+                See also: ~
+                    https://www.lua.org/pil/20.2.html
 
 
 
@@ -485,6 +448,44 @@ deepcopy({orig})                                              *vim.deepcopy()*
 
                 Return: ~
                     New table of copied keys and (nested) values.
+
+gsplit({s}, {sep}, {plain})                                     *vim.gsplit()*
+                Splits a string at each instance of a separator.
+
+                Parameters: ~
+                    {s}      String to split
+                    {sep}    Separator string or pattern
+                    {plain}  If `true` use `sep` literally (passed to
+                             String.find)
+
+                Return: ~
+                    Iterator over the split components
+
+                See also: ~
+                    |vim.split()|
+                    https://www.lua.org/pil/20.2.html
+                    http://lua-users.org/wiki/StringLibraryTutorial
+
+split({s}, {sep}, {plain})                                       *vim.split()*
+                Splits a string at each instance of a separator.
+
+                Examples: >
+                 split(":aa::b:", ":")     --> {'','aa','','bb',''}
+                 split("axaby", "ab?")     --> {'','x','y'}
+                 split(x*yz*o, "*", true)  --> {'x','yz','o'}
+<
+
+                Parameters: ~
+                    {s}      String to split
+                    {sep}    Separator string or pattern
+                    {plain}  If `true` use `sep` literally (passed to
+                             String.find)
+
+                Return: ~
+                    List-like table of the split components.
+
+                See also: ~
+                    |vim.gsplit()|
 
 tbl_contains({t}, {value})                                *vim.tbl_contains()*
                 Checks if a list-like (vector) table contains `value` .

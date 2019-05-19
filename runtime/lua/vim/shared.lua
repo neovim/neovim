@@ -33,6 +33,70 @@ deepcopy = function(orig)
   return deepcopy_funcs[type(orig)](orig)
 end
 
+--- Splits a string at each instance of a separator.
+---
+--@see |vim.split()|
+--@see https://www.lua.org/pil/20.2.html
+--@see http://lua-users.org/wiki/StringLibraryTutorial
+---
+--@param s String to split
+--@param sep Separator string or pattern
+--@param plain If `true` use `sep` literally (passed to String.find)
+--@returns Iterator over the split components
+local function gsplit(s, sep, plain)
+  assert(type(s) == "string")
+  assert(type(sep) == "string")
+  assert(type(plain) == "boolean" or type(plain) == "nil")
+
+  local start = 1
+  local done = false
+
+  local function _pass(i, j, ...)
+    if i then
+      assert(j+1 > start, "Infinite loop detected")
+      local seg = s:sub(start, i - 1)
+      start = j + 1
+      return seg, ...
+    else
+      done = true
+      return s:sub(start)
+    end
+  end
+
+  return function()
+    if done then
+      return
+    end
+    if sep == '' then
+      if start == #s then
+        done = true
+      end
+      return _pass(start+1, start)
+    end
+    return _pass(s:find(sep, start, plain))
+  end
+end
+
+--- Splits a string at each instance of a separator.
+---
+--- Examples:
+--- <pre>
+---  split(":aa::b:", ":")     --> {'','aa','','bb',''}
+---  split("axaby", "ab?")     --> {'','x','y'}
+---  split(x*yz*o, "*", true)  --> {'x','yz','o'}
+--- </pre>
+--
+--@see |vim.gsplit()|
+---
+--@param s String to split
+--@param sep Separator string or pattern
+--@param plain If `true` use `sep` literally (passed to String.find)
+--@returns List-like table of the split components.
+local function split(s,sep,plain)
+  local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
+  return t
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
@@ -106,6 +170,8 @@ end
 
 local module = {
   deepcopy = deepcopy,
+  gsplit = gsplit,
+  split = split,
   tbl_contains = tbl_contains,
   tbl_extend = tbl_extend,
   tbl_flatten = tbl_flatten,
