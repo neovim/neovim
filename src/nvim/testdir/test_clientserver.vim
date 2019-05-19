@@ -35,7 +35,8 @@ func Test_client_server()
   endif
 
   " Takes a short while for the server to be active.
-  call WaitFor('serverlist() =~ "' . name . '"')
+  " When using valgrind it takes much longer.
+  call WaitFor('serverlist() =~ "' . name . '"', 5000)
   call assert_match(name, serverlist())
 
   call remote_foreground(name)
