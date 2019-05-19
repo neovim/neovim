@@ -391,7 +391,11 @@ funct Test_undofile()
 
   if isdirectory('/tmp')
     set undodir=/tmp
-    call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
+    if has('osx')
+      call assert_equal('/tmp/%private%tmp%file', undofile('///tmp/file'))
+    else
+      call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
+    endif
   endif
 
   set undodir&
