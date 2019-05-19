@@ -10051,6 +10051,32 @@ static void f_getftype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = type;
 }
 
+// "getjumplist()" function
+static void f_getjumplist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, kListLenMayKnow);
+  const win_T *const wp = find_tabwin(&argvars[0], &argvars[1]);
+  if (wp == NULL) {
+    return;
+  }
+
+  list_T *const l = tv_list_alloc(wp->w_jumplistlen);
+  tv_list_append_list(rettv->vval.v_list, l);
+  tv_list_append_number(rettv->vval.v_list, wp->w_jumplistidx);
+
+  for (int i = 0; i < wp->w_jumplistlen; i++) {
+    dict_T *const d = tv_dict_alloc();
+    tv_list_append_dict(l, d);
+    tv_dict_add_nr(d, S_LEN("lnum"), wp->w_jumplist[i].fmark.mark.lnum);
+    tv_dict_add_nr(d, S_LEN("col"), wp->w_jumplist[i].fmark.mark.col);
+    tv_dict_add_nr(d, S_LEN("coladd"), wp->w_jumplist[i].fmark.mark.coladd);
+    tv_dict_add_nr(d, S_LEN("bufnr"), wp->w_jumplist[i].fmark.fnum);
+    if (wp->w_jumplist[i].fmark.fnum == 0) {
+      tv_dict_add_str(d, S_LEN("filename"), (char *)wp->w_jumplist[i].fname);
+    }
+  }
+}
+
 /*
  * "getline(lnum, [end])" function
  */
