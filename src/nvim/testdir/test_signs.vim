@@ -32,7 +32,7 @@ func Test_sign()
   " current window if the buffer is displayed there.
   let bn = bufnr('%')
   let wn = winnr()
-  exe 'sign place 41 line=3 name=Sign1 buffer=' . bn 
+  exe 'sign place 41 line=3 name=Sign1 buffer=' . bn
   1
   bot split
   exe 'sign jump 41 buffer=' . bufnr('%')
@@ -77,7 +77,7 @@ func Test_sign()
   sign unplace
   let a=execute('sign place')
   call assert_equal("\n--- Signs ---\n", a)
-  
+
   " Try again to unplace sign on current line, it should fail this time.
   call assert_fails('sign unplace', 'E159:')
 
@@ -386,11 +386,11 @@ func Test_sign_funcs()
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
 	      \ [{'id' : 10, 'group' : '', 'lnum' : 20, 'name' : 'sign1',
 	      \ 'priority' : 10}]}],
-	      \ sign_getplaced('Xsign', {'lnum' : 20}))
+	      \ sign_getplaced('%', {'lnum' : 20}))
   call assert_equal([{'bufnr' : bufnr(''), 'signs' :
 	      \ [{'id' : 10, 'group' : '', 'lnum' : 20, 'name' : 'sign1',
 	      \ 'priority' : 10}]}],
-	      \ sign_getplaced('Xsign', {'id' : 10}))
+	      \ sign_getplaced('', {'id' : 10}))
 
   " Tests for invalid arguments to sign_place()
   call assert_fails('call sign_place([], "", "mySign", 1)', 'E745:')
@@ -407,7 +407,7 @@ func Test_sign_funcs()
 	      \ {"lnum" : 30})', 'E730:')
   call assert_fails('call sign_place(5, "", "sign1", "abcxyz.xxx",
 	      \ {"lnum" : 10})', 'E158:')
-  call assert_fails('call sign_place(5, "", "sign1", "", {"lnum" : 10})',
+  call assert_fails('call sign_place(5, "", "sign1", "@", {"lnum" : 10})',
 	      \ 'E158:')
   call assert_fails('call sign_place(5, "", "sign1", [], {"lnum" : 10})',
 	      \ 'E158:')
@@ -429,7 +429,7 @@ func Test_sign_funcs()
 	      \ 'priority' : 10}]}],
 	      \ sign_getplaced())
   call assert_fails("call sign_getplaced('dummy.sign')", 'E158:')
-  call assert_fails('call sign_getplaced("")', 'E158:')
+  call assert_fails('call sign_getplaced("&")', 'E158:')
   call assert_fails('call sign_getplaced(-1)', 'E158:')
   call assert_fails('call sign_getplaced("Xsign", [])', 'E715:')
   call assert_equal([{'bufnr' : bufnr(''), 'signs' : []}],
@@ -451,7 +451,7 @@ func Test_sign_funcs()
   call assert_fails("call sign_unplace('',
 	      \ {'id' : 20, 'buffer' : 'buffer.c'})", 'E158:')
   call assert_fails("call sign_unplace('',
-	      \ {'id' : 20, 'buffer' : ''})", 'E158:')
+	      \ {'id' : 20, 'buffer' : '&'})", 'E158:')
   call assert_fails("call sign_unplace('g1',
 	      \ {'id' : 20, 'buffer' : 200})", 'E158:')
   call assert_fails("call sign_unplace('g1', 'mySign')", 'E715:')
@@ -1185,4 +1185,63 @@ func Test_sign_memfailures()
   call sign_undefine()
   enew | only
   call delete("Xsign")
+endfunc
+
+" Test for auto-adjusting the line number of a placed sign.
+func Test_sign_lnum_adjust()
+  enew! | only!
+
+  sign define sign1 text=#> linehl=Comment
+  call setline(1, ['A', 'B', 'C', 'D'])
+  exe 'sign place 5 line=3 name=sign1 buffer=' . bufnr('')
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(3, l[0].signs[0].lnum)
+
+  " Add some lines before the sign and check the sign line number
+  call append(2, ['AA', 'AB', 'AC'])
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(6, l[0].signs[0].lnum)
+
+  " Delete some lines before the sign and check the sign line number
+  call deletebufline('%', 1, 2)
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(4, l[0].signs[0].lnum)
+
+  sign unplace * group=*
+  sign undefine sign1
+  enew!
+endfunc
+
+" Test for changing the type of a placed sign
+func Test_sign_change_type()
+  enew! | only!
+
+  sign define sign1 text=#> linehl=Comment
+  sign define sign2 text=@@ linehl=Comment
+
+  call setline(1, ['A', 'B', 'C', 'D'])
+  exe 'sign place 4 line=3 name=sign1 buffer=' . bufnr('')
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal('sign1', l[0].signs[0].name)
+  exe 'sign place 4 name=sign2 buffer=' . bufnr('')
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal('sign2', l[0].signs[0].name)
+  call sign_place(4, '', 'sign1', '')
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal('sign1', l[0].signs[0].name)
+
+  exe 'sign place 4 group=g1 line=4 name=sign1 buffer=' . bufnr('')
+  let l = sign_getplaced(bufnr(''), {'group' : 'g1'})
+  call assert_equal('sign1', l[0].signs[0].name)
+  exe 'sign place 4 group=g1 name=sign2 buffer=' . bufnr('')
+  let l = sign_getplaced(bufnr(''), {'group' : 'g1'})
+  call assert_equal('sign2', l[0].signs[0].name)
+  call sign_place(4, 'g1', 'sign1', '')
+  let l = sign_getplaced(bufnr(''), {'group' : 'g1'})
+  call assert_equal('sign1', l[0].signs[0].name)
+
+  sign unplace * group=*
+  sign undefine sign1
+  sign undefine sign2
+  enew!
 endfunc
