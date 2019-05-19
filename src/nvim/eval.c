@@ -10830,6 +10830,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #ifdef __APPLE__
     "mac",
     "macunix",
+    "osx",
 #endif
     "menu",
     "mksession",
@@ -17669,7 +17670,7 @@ static void f_undofile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     // If there is no file name there will be no undo file.
     rettv->vval.v_string = NULL;
   } else {
-    char *ffname = FullName_save(fname, false);
+    char *ffname = FullName_save(fname, true);
 
     if (ffname != NULL) {
       rettv->vval.v_string = (char_u *)u_get_undo_file_name(ffname, false);
