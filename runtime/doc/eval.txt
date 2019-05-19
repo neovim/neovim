@@ -3581,20 +3581,24 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 feedkeys({string} [, {mode}])				*feedkeys()*
 		Characters in {string} are queued for processing as if they
 		come from a mapping or were typed by the user.
+
 		By default the string is added to the end of the typeahead
 		buffer, thus if a mapping is still being executed the
 		characters come after them.  Use the 'i' flag to insert before
 		other characters, they will be executed next, before any
 		characters from a mapping.
+
 		The function does not wait for processing of keys contained in
 		{string}.
+
 		To include special keys into {string}, use double-quotes
 		and "\..." notation |expr-quote|. For example,
 		feedkeys("\<CR>") simulates pressing of the <Enter> key. But
 		feedkeys('\<CR>') pushes 5 characters.
-		If {mode} is absent, keys are remapped.
+
 		{mode} is a String, which can contain these character flags:
-		'm'	Remap keys. This is default.
+		'm'	Remap keys. This is default.  If {mode} is absent,
+			keys are remapped.
 		'n'	Do not remap keys.
 		't'	Handle keys as if typed; otherwise they are handled as
 			if coming from a mapping.  This matters for undo,
@@ -3608,6 +3612,9 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			will behave as if <Esc> is typed, to avoid getting
 			stuck, waiting for a character to be typed before the
 			script continues.
+			Note that if you manage to call feedkeys() while
+			executing commands, thus calling it recursively, the
+			all typehead will be consumed by the last call.
 		'!'	When used with 'x' will not end Insert mode. Can be
 			used in a test when a timer is set to exit Insert mode
 			a little later.  Useful for testing CursorHoldI.
@@ -7378,6 +7385,9 @@ sign_define({name} [, {dict}])				*sign_define()*
 				associated line. Overrides |hl-LineNr|,
 				|hl-CursorLineNr|.
 
+		If the sign named {name} already exists, then the attributes
+		of the sign are updated.
+
 		Returns 0 on success and -1 on failure.
 
 		Examples: >
@@ -7432,6 +7442,7 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 		empty string, then only signs in the global group are
 		returned.  If no arguments are supplied, then signs in the
 		global group placed in all the buffers are returned.
+		See |sign-group|.
 
 		Each list item in the returned value is a dictionary with the
 		following entries:
@@ -7447,7 +7458,8 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			name	name of the defined sign
 			priority	sign priority
 
-		Returns an empty list on failure.
+		Returns an empty list on failure or if there are no placed
+		signs.
 
 		Examples: >
 			" Get a List of signs placed in eval.c in the
@@ -7480,7 +7492,8 @@ sign_place({id}, {group}, {name}, {expr} [, {dict}])
 		allocated.  Otherwise the specified number is used. {group} is
 		the sign group name. To use the global sign group, use an
 		empty string.  {group} functions as a namespace for {id}, thus
-		two groups can use the same IDs.
+		two groups can use the same IDs. Refer to |sign-identifier|
+		for more information.
 		
 		{name} refers to a defined sign.
 		{expr} refers to a buffer name or number. For the accepted
@@ -8576,7 +8589,7 @@ undofile({name})					*undofile()*
 		If {name} is empty undofile() returns an empty string, since a
 		buffer without a file name will not write an undo file.
 		Useful in combination with |:wundo| and |:rundo|.
-		When compiled without the +persistent_undo option this always
+		When compiled without the |+persistent_undo| option this always
 		returns an empty string.
 
 undotree()						*undotree()*

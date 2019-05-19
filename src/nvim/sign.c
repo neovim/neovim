@@ -1142,7 +1142,7 @@ static void sign_jump_cmd(
 	char_u		*group
   )
 {
-  if (buf == NULL && sign_name == NULL && group == NULL && id == -1) {
+  if (sign_name == NULL && group == NULL && id == -1) {
     EMSG(_(e_argreq));
     return;
   }
@@ -1274,6 +1274,11 @@ static int parse_sign_cmd_args(
       return FAIL;
     }
 
+    // If the filename is not supplied for the sign place or the sign jump
+    // command, then use the current buffer.
+    if (filename == NULL && (cmd == SIGNCMD_PLACE || cmd == SIGNCMD_JUMP)) {
+	      *buf = curwin->w_buffer;
+    }
     return OK;
 }
 
