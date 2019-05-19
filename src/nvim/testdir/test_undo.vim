@@ -389,6 +389,11 @@ funct Test_undofile()
   " Test undofile() with 'undodir' set to a non-existing directory.
   " call assert_equal('', undofile('Xundofoo'))
 
+  if isdirectory('/tmp')
+    set undodir=/tmp
+    call assert_equal('/tmp/%tmp%file', undofile('///tmp/file'))
+  endif
+
   set undodir&
 endfunc
 
