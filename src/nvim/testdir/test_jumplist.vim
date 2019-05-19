@@ -30,7 +30,6 @@ func Test_getjumplist()
 
   call assert_equal([[
 	      \ {'lnum': 1, 'bufnr': bnr, 'col': 0, 'coladd': 0},
-	      \ {'lnum': 1, 'bufnr': bnr, 'col': 0, 'coladd': 0},
 	      \ {'lnum': 50, 'bufnr': bnr, 'col': 0, 'coladd': 0},
 	      \ {'lnum': 100, 'bufnr': bnr, 'col': 0, 'coladd': 0}], 4],
 	      \ getjumplist())
@@ -48,17 +47,16 @@ func Test_getjumplist()
   call assert_equal([[
 	      \ {'lnum': 1, 'bufnr': bnr, 'col': 0, 'coladd': 0},
 	      \ {'lnum': 50, 'bufnr': bnr, 'col': 0, 'coladd': 0},
-	      \ {'lnum': 100, 'bufnr': bnr, 'col': 0, 'coladd': 0},
 	      \ {'lnum': 5, 'bufnr': bnr, 'col': 0, 'coladd': 0},
 	      \ {'lnum': 100, 'bufnr': bnr, 'col': 0, 'coladd': 0}], 5],
 	      \ getjumplist())
 
   let l = getjumplist()
   call test_garbagecollect_now()
-  call assert_equal(5, l[1])
+  call assert_equal(4, l[1])
   clearjumps
   call test_garbagecollect_now()
-  call assert_equal(5, l[1])
+  call assert_equal(4, l[1])
 
   call delete("Xtest")
 endfunc
