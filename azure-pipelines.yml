@@ -35,7 +35,7 @@ stages:
       vmImage: 'ubuntu-16.04'
     container: 'puremourning/vimspector:test'
     steps:
-    - bash: python3 install_gadget.py
+    - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'
 
     - bash: vim --version
@@ -61,7 +61,7 @@ stages:
     - bash: brew install macvim
       displayName: 'Install vim'
 
-    - bash: python3 install_gadget.py
+    - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'
 
     - bash: vim --version
