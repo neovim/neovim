@@ -1,10 +1,10 @@
 -- Nvim-Lua stdlib: the `vim` module (:help lua-stdlib)
 --
 -- Lua code lives in one of three places:
---    1. The runtime (`runtime/lua/vim/`). For "nice to have" features, e.g.
---       the `inspect` and `lpeg` modules.
---    2. The `vim.shared` module: code shared between Nvim and its test-suite.
---    3. Compiled-into Nvim itself (`src/nvim/lua/`).
+--    1. runtime/lua/vim/ (the runtime): For "nice to have" features, e.g. the
+--       `inspect` and `lpeg` modules.
+--    2. runtime/lua/vim/shared.lua: Code shared between Nvim and tests.
+--    3. src/nvim/lua/: Compiled-into Nvim itself.
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
@@ -231,38 +231,6 @@ local function trim(s)
   return result
 end
 
---- Performs a deep copy of the given object, and returns that copy.
---- For a non-table object, that just means a usual copy of the object,
---- while for a table all subtables are copied recursively.
---@param orig Table The table to copy
---@returns A new table where the keys and values are deepcopies of the keys
---- and values from the original table.
-local function deepcopy(orig)
-  error()
-end
-
-local function _id(v)
-  return v
-end
-
-local deepcopy_funcs = {
-  table = function(orig)
-    local copy = {}
-    for k, v in pairs(orig) do
-      copy[deepcopy(k)] = deepcopy(v)
-    end
-    return copy
-  end,
-  number = _id,
-  string = _id,
-  ['nil'] = _id,
-  boolean = _id,
-}
-
-deepcopy = function(orig)
-  return deepcopy_funcs[type(orig)](orig)
-end
-
 local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
@@ -282,7 +250,6 @@ local module = {
   trim = trim,
   split = split,
   gsplit = gsplit,
-  deepcopy = deepcopy,
 }
 
 setmetatable(module, {

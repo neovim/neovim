@@ -1,9 +1,43 @@
---- Shared functions
---    - Used by Nvim and tests
---    - Can run in vanilla Lua (do not require a running instance of Nvim)
+-- Functions shared by Nvim and its test-suite.
+--
+-- The singular purpose of this module is to share code with the Nvim
+-- test-suite. If, in the future, Nvim itself is used to run the test-suite
+-- instead of "vanilla Lua", these functions could move to src/nvim/lua/vim.lua
 
 
--- Checks if a list-like (vector) table contains `value`.
+--- Returns a deep copy of the given object. Non-table objects are copied as
+--- in a typical Lua assignment, whereas table objects are copied recursively.
+---
+--@param orig Table to copy
+--@returns New table of copied keys and (nested) values.
+local function deepcopy(orig)
+  error()
+end
+local function _id(v)
+  return v
+end
+local deepcopy_funcs = {
+  table = function(orig)
+    local copy = {}
+    for k, v in pairs(orig) do
+      copy[deepcopy(k)] = deepcopy(v)
+    end
+    return copy
+  end,
+  number = _id,
+  string = _id,
+  ['nil'] = _id,
+  boolean = _id,
+}
+deepcopy = function(orig)
+  return deepcopy_funcs[type(orig)](orig)
+end
+
+--- Checks if a list-like (vector) table contains `value`.
+---
+--@param t Table to check
+--@param value Value to compare
+--@returns true if `t` contains `value`
 local function tbl_contains(t, value)
   if type(t) ~= 'table' then
     error('t must be a table')
@@ -16,14 +50,15 @@ local function tbl_contains(t, value)
   return false
 end
 
--- Merges two or more map-like tables.
---
+--- Merges two or more map-like tables.
+---
 --@see |extend()|
---
+---
 --@param behavior Decides what to do if a key is found in more than one map:
 ---      - "error": raise an error
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
+--@param ... Two or more map-like tables.
 local function tbl_extend(behavior, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
     error('invalid "behavior": '..tostring(behavior))
@@ -46,7 +81,11 @@ local function tbl_extend(behavior, ...)
   return ret
 end
 
--- Flattens a list-like table: unrolls and appends nested tables to table `t`.
+--- Creates a copy of a list-like table such that any nested tables are
+--- "unrolled" and appended to the result.
+---
+--@param t List-like table
+--@returns Flattened copy of the given list-like table.
 local function tbl_flatten(t)
   -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
   local result = {}
@@ -66,6 +105,7 @@ local function tbl_flatten(t)
 end
 
 local module = {
+  deepcopy = deepcopy,
   tbl_contains = tbl_contains,
   tbl_extend = tbl_extend,
   tbl_flatten = tbl_flatten,
