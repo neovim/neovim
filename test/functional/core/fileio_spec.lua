@@ -10,6 +10,8 @@ local request = helpers.request
 local retry = helpers.retry
 local rmdir = helpers.rmdir
 local sleep = helpers.sleep
+local read_file = helpers.read_file
+local trim = helpers.trim
 
 describe('fileio', function()
   before_each(function()
@@ -18,6 +20,7 @@ describe('fileio', function()
     command(':qall!')
     os.remove('Xtest_startup_shada')
     os.remove('Xtest_startup_file1')
+    os.remove('Xtest_startup_file1~')
     os.remove('Xtest_startup_file2')
     rmdir('Xtest_startup_swapdir')
   end)
@@ -63,6 +66,26 @@ describe('fileio', function()
     feed('ibaz<esc>h')
     command('write')
     eq(4, request('nvim__stats').fsync)
+  end)
+
+  it('backup #9709', function()
+    clear({ args={ '-i', 'Xtest_startup_shada',
+                   '--cmd', 'set directory=Xtest_startup_swapdir' } })
+
+    command('write Xtest_startup_file1')
+    feed('ifoo<esc>')
+    command('set backup')
+    command('set backupcopy=yes')
+    command('write')
+    feed('Abar<esc>')
+    command('write')
+
+    local foobar_contents = trim(read_file('Xtest_startup_file1'))
+    local bar_contents = trim(read_file('Xtest_startup_file1~'))
+
+    eq('foobar', foobar_contents);
+    eq('foo', bar_contents);
+
   end)
 end)
 

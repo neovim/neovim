@@ -161,8 +161,7 @@ end
 --@returns String with whitespace removed from its beginning and end
 local function trim(s)
   assert(type(s) == 'string', 'Only strings can be trimmed')
-  local result = s:gsub('^%s+', ''):gsub('%s+$', '')
-  return result
+  return s:match('^%s*(.*%S)') or ''
 end
 
 local function __index(t, key)

@@ -15,6 +15,7 @@ local dedent = global_helpers.dedent
 local neq = global_helpers.neq
 local map = global_helpers.map
 local eq = global_helpers.eq
+local trim = global_helpers.trim
 
 -- C constants.
 local NULL = ffi.cast('void*', 0)
@@ -118,10 +119,6 @@ local deinit = only_separate(function()
     child_cleanups_mod_once = nil
   end
 end)
-
-local function trim(s)
-  return s:match('^%s*(.*%S)') or ''
-end
 
 -- a Set that keeps around the lines we've already seen
 local cdefs_init = Set:new()
