@@ -14,7 +14,6 @@ export NVIM_PRG := $(NVIM_PRG)
 export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
-	test37.out             \
 	test42.out             \
 	test48.out             \
 	test52.out             \
