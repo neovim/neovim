@@ -2868,6 +2868,23 @@ buf_write (
           /* remove old backup, if present */
           os_remove((char *)backup);
 
+          // set file protection same as original file, but
+          // strip s-bit.
+          (void)os_setperm((const char *)backup, perm & 0777);
+
+#ifdef UNIX
+          //
+          // Try to set the group of the backup same as the original file. If
+          // this fails, set the protection bits for the group same as the
+          // protection bits for others.
+          //
+          if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
+              && os_chown((char *)backup, -1, file_info_old.stat.st_gid) != 0) {
+            os_setperm((const char *)backup,
+                       (perm & 0707) | ((perm & 07) << 3));
+          }
+#endif
+
           // copy the file
           if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
               != 0) {

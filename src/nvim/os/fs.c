@@ -712,12 +712,24 @@ int os_setperm(const char *const name, int perm)
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
-/// Changes the ownership of the file referred to by the open file descriptor.
+/// Changes the owner and group of a file, like chown(2).
 ///
-/// @return `0` on success, a libuv error code on failure.
+/// @return 0 on success, or libuv error code on failure.
 ///
-/// @note If the `owner` or `group` is specified as `-1`, then that ID is not
-/// changed.
+/// @note If `owner` or `group` is -1, then that ID is not changed.
+int os_chown(const char* path, uv_uid_t owner, uv_gid_t group)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_chown, path, owner, group, NULL);
+  return r;
+}
+
+/// Changes the owner and group of the file referred to by the open file
+/// descriptor, like fchown(2).
+///
+/// @return 0 on success, or libuv error code on failure.
+///
+/// @note If `owner` or `group` is -1, then that ID is not changed.
 int os_fchown(int fd, uv_uid_t owner, uv_gid_t group)
 {
   int r;
