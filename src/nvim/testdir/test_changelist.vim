@@ -9,7 +9,7 @@ func Test_getchangelist()
   bwipe!
   enew
   call assert_equal([], getchangelist(10))
-  call assert_equal([[], 0], getchangelist(bufnr('%')))
+  call assert_equal([[], 0], getchangelist('%'))
 
   call writefile(['line1', 'line2', 'line3'], 'Xfile1.txt')
   call writefile(['line1', 'line2', 'line3'], 'Xfile2.txt')
@@ -23,7 +23,7 @@ func Test_getchangelist()
 	      \ {'lnum' : 2, 'col' : 4, 'coladd' : 0},
 	      \ {'lnum' : 4, 'col' : 4, 'coladd' : 0},
 	      \ {'lnum' : 6, 'col' : 4, 'coladd' : 0}], 2],
-	      \ getchangelist(bufnr('%')))
+	      \ getchangelist('%'))
 
   hide edit Xfile2.txt
   exe "normal 1GOline\<C-G>u1.0"
@@ -31,7 +31,7 @@ func Test_getchangelist()
   call assert_equal([[
 	      \ {'lnum' : 1, 'col' : 6, 'coladd' : 0},
 	      \ {'lnum' : 3, 'col' : 6, 'coladd' : 0}], 2],
-	      \ getchangelist(bufnr('%')))
+	      \ getchangelist('%'))
   hide enew
 
   call assert_equal([[
