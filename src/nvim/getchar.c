@@ -1287,9 +1287,9 @@ openscript (
 
     oldcurscript = curscript;
     do {
-      update_topline_cursor();          /* update cursor position and topline */
-      normal_cmd(&oa, FALSE);           /* execute one command */
-      vpeekc();                         /* check for end of file */
+      update_topline_cursor();          // update cursor position and topline
+      normal_cmd(&oa, false);           // execute one command
+      vpeekc();                         // check for end of file
     } while (scriptin[oldcurscript] != NULL);
 
     State = save_State;
