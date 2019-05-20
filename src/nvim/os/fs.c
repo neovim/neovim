@@ -717,7 +717,7 @@ int os_setperm(const char *const name, int perm)
 /// @return 0 on success, or libuv error code on failure.
 ///
 /// @note If `owner` or `group` is -1, then that ID is not changed.
-int os_chown(const char* path, uv_uid_t owner, uv_gid_t group)
+int os_chown(const char *path, uv_uid_t owner, uv_gid_t group)
 {
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_chown, path, owner, group, NULL);

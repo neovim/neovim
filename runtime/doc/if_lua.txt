@@ -374,11 +374,6 @@ For example, to use the "nvim_get_current_line()" API function, call
 ------------------------------------------------------------------------------
 VIM							*lua-util*
 
-vim.inspect({object}, {options})                                 *vim.inspect*
-	Return a human-readable representation of the passed object. See
-	         https://github.com/kikito/inspect.lua
-	for details and possible options.
-
 vim.stricmp(a, b)					*lua-vim.stricmp*
 	Function used for case-insensitive string comparison.  Takes two 
 	string arguments and returns 0, 1 or -1 if strings are equal, a is 
@@ -422,18 +417,11 @@ vim.types						*lua-vim.types*
 ==============================================================================
 Lua module: vim                                                      *lua-vim*
 
-trim({s})                                                         *vim.trim()*
-                Trim whitespace (Lua pattern "%%s") from both sides of a
-                string.
-
-                Parameters: ~
-                    {s}  String to trim
-
-                Return: ~
-                    String with whitespace removed from its beginning and end
+inspect({object}, {options})                                   *vim.inspect()*
+                Return a human-readable representation of the given object.
 
                 See also: ~
-                    https://www.lua.org/pil/20.2.html
+                    https://github.com/kikito/inspect.lua
 
 
 
@@ -520,5 +508,18 @@ tbl_flatten({t})                                           *vim.tbl_flatten()*
 
                 Return: ~
                     Flattened copy of the given list-like table.
+
+trim({s})                                                         *vim.trim()*
+                Trim whitespace (Lua pattern "%%s") from both sides of a
+                string.
+
+                Parameters: ~
+                    {s}  String to trim
+
+                Return: ~
+                    String with whitespace removed from its beginning and end
+
+                See also: ~
+                    https://www.lua.org/pil/20.2.html
 
  vim:tw=78:ts=8:ft=help:norl:

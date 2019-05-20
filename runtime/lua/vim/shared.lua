@@ -168,6 +168,16 @@ local function tbl_flatten(t)
   return result
 end
 
+--- Trim whitespace (Lua pattern "%%s") from both sides of a string.
+---
+--@see https://www.lua.org/pil/20.2.html
+--@param s String to trim
+--@returns String with whitespace removed from its beginning and end
+local function trim(s)
+  assert(type(s) == 'string', 'Only strings can be trimmed')
+  return s:match('^%s*(.*%S)') or ''
+end
+
 local module = {
   deepcopy = deepcopy,
   gsplit = gsplit,
@@ -175,5 +185,6 @@ local module = {
   tbl_contains = tbl_contains,
   tbl_extend = tbl_extend,
   tbl_flatten = tbl_flatten,
+  trim = trim,
 }
 return module

@@ -697,10 +697,6 @@ local function read_nvim_log()
   return log
 end
 
-local function trim(s)
-  return s:match('^%s*(.*%S)') or ''
-end
-
 local module = {
   REMOVE_THIS = REMOVE_THIS,
   argss_to_cmd = argss_to_cmd,
@@ -740,7 +736,6 @@ local module = {
   updated = updated,
   which = which,
   write_file = write_file,
-  trim = trim,
 }
 module = shared.tbl_extend('error', module, Paths, shared)
 
