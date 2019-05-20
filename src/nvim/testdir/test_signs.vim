@@ -1202,13 +1202,13 @@ func Test_sign_lnum_adjust()
   enew! | only!
 
   sign define sign1 text=#> linehl=Comment
-  call setline(1, ['A', 'B', 'C', 'D'])
+  call setline(1, ['A', 'B', 'C', 'D', 'E'])
   exe 'sign place 5 line=3 name=sign1 buffer=' . bufnr('')
   let l = sign_getplaced(bufnr(''))
   call assert_equal(3, l[0].signs[0].lnum)
 
   " Add some lines before the sign and check the sign line number
-  call append(2, ['AA', 'AB', 'AC'])
+  call append(2, ['BA', 'BB', 'BC'])
   let l = sign_getplaced(bufnr(''))
   call assert_equal(6, l[0].signs[0].lnum)
 
@@ -1216,6 +1216,44 @@ func Test_sign_lnum_adjust()
   call deletebufline('%', 1, 2)
   let l = sign_getplaced(bufnr(''))
   call assert_equal(4, l[0].signs[0].lnum)
+
+  " Insert some lines after the sign and check the sign line number
+  call append(5, ['DA', 'DB'])
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(4, l[0].signs[0].lnum)
+
+  " Delete some lines after the sign and check the sign line number
+  call deletebufline('', 6, 7)
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(4, l[0].signs[0].lnum)
+
+  " Break the undo. Otherwise the undo operation below will undo all the
+  " changes made by this function.
+  let &undolevels=&undolevels
+
+  " Delete the line with the sign
+  call deletebufline('', 4)
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(4, l[0].signs[0].lnum)
+
+  " Undo the delete operation
+  undo
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(5, l[0].signs[0].lnum)
+
+  " Break the undo
+  let &undolevels=&undolevels
+
+  " Delete few lines at the end of the buffer including the line with the sign
+  " Sign line number should not change (as it is placed outside of the buffer)
+  call deletebufline('', 3, 6)
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(5, l[0].signs[0].lnum)
+
+  " Undo the delete operation. Sign should be restored to the previous line
+  undo
+  let l = sign_getplaced(bufnr(''))
+  call assert_equal(5, l[0].signs[0].lnum)
 
   sign unplace * group=*
   sign undefine sign1
