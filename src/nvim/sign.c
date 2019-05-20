@@ -378,6 +378,9 @@ linenr_T buf_change_sign_type(
 
 /// Gets a sign from a given line.
 ///
+/// Return the type number of the sign at line number 'lnum' in buffer 'buf'
+/// which has the attribute specified by 'type'. Returns 0 if a sign is not
+/// found at the line number or it doesn't have the specified attribute.
 /// @param buf Buffer in which to search
 /// @param lnum Line in which to search
 /// @param type Type of sign to look for
@@ -466,7 +469,7 @@ linenr_T buf_delsign(
       xfree(sign);
       redraw_buf_line_later(buf, lnum);
       // Check whether only one sign needs to be deleted
-      // If deleting a sign with a specific identifer in a particular
+	    // If deleting a sign with a specific identifier in a particular
       // group or deleting any sign at a particular line number, delete
       // only one sign.
       if (group == NULL
@@ -479,8 +482,8 @@ linenr_T buf_delsign(
     }
   }
 
-  /* When deleted the last sign needs to redraw the windows to remove the
-   * sign column. */
+  // When deleted the last sign needs to redraw the windows to remove the
+  // sign column.
   if (buf->b_signlist == NULL) {
     redraw_buf_later(buf, NOT_VALID);
     changed_cline_bef_curs();
@@ -873,7 +876,7 @@ sign_list_by_name(char_u *name)
 
 
 /*
- * Place a sign at the specifed file location or update a sign.
+ * Place a sign at the specified file location or update a sign.
  */
 int sign_place(
 	int		*sign_id,
