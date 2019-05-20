@@ -663,6 +663,18 @@ func Test_sign_group()
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
 	      \ "    line=10  id=5  name=sign1  priority=10\n", a)
 
+  " Place signs in more than one buffer and list the signs
+  split foo
+  set buftype=nofile
+  sign place 25 line=76 name=sign1 priority=99 file=foo
+  let a = execute('sign place')
+  call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .
+	      \ "    line=10  id=5  name=sign1  priority=10\n" .
+	      \ "Signs for foo:\n" .
+	      \ "    line=76  id=25  name=sign1  priority=99\n", a)
+  close
+  bwipe foo
+
   " :sign place group={group}
   let a = execute('sign place group=g1')
   call assert_equal("\n--- Signs ---\nSigns for Xsign:\n" .

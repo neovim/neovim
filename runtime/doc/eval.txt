@@ -7458,6 +7458,9 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			name	name of the defined sign
 			priority	sign priority
 
+		The returned signs in a buffer are ordered by their line
+		number.
+
 		Returns an empty list on failure or if there are no placed
 		signs.
 

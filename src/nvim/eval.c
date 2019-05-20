@@ -15602,7 +15602,7 @@ f_sign_place(typval_T *argvars, typval_T *rettv)
     buf = tv_get_buf(&argvars[3], FALSE);
     if (buf == NULL)
     {
-	EMSG2(_("E158: Invalid buffer name: %s"), tv_get_string(&argvars[2]));
+	EMSG2(_("E158: Invalid buffer name: %s"), tv_get_string(&argvars[3]));
 	goto cleanup;
     }
 

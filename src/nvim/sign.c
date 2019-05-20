@@ -1203,6 +1203,7 @@ static int parse_sign_cmd_args(
     char_u	*arg1;
     char_u	*name;
     char_u	*filename = NULL;
+    int		lnum_arg = FALSE;
 
     // first arg could be placed sign id
     arg1 = arg;
@@ -1221,6 +1222,7 @@ static int parse_sign_cmd_args(
         arg += 5;
         *lnum = atoi((char *)arg);
         arg = skiptowhite(arg);
+	    lnum_arg = TRUE;
       } else if (STRNCMP(arg, "*", 1) == 0 && cmd == SIGNCMD_UNPLACE) {
         if (*signid != -1) {
           EMSG(_(e_invarg));
@@ -1277,7 +1279,8 @@ static int parse_sign_cmd_args(
 
     // If the filename is not supplied for the sign place or the sign jump
     // command, then use the current buffer.
-    if (filename == NULL && (cmd == SIGNCMD_PLACE || cmd == SIGNCMD_JUMP)) {
+    if (filename == NULL && ((cmd == SIGNCMD_PLACE && lnum_arg)
+	|| cmd == SIGNCMD_JUMP)) {
 	      *buf = curwin->w_buffer;
     }
     return OK;
