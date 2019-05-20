@@ -2081,6 +2081,7 @@ getbufline({expr}, {lnum} [, {end}])
 				List	lines {lnum} to {end} of buffer {expr}
 getbufvar({expr}, {varname} [, {def}])
 				any	variable {varname} in buffer {expr}
+getchangelist({expr})		List	list of change list items
 getchar([expr])		Number	get one character from the user
 getcharmod()			Number	modifiers for the last typed character
 getcharsearch()			Dict	last character search
@@ -4013,6 +4014,22 @@ getbufvar({expr}, {varname} [, {def}])				*getbufvar()*
 			:let bufmodified = getbufvar(1, "&mod")
 			:echo "todo myvar = " . getbufvar("todo", "myvar")
 <
+getchangelist({expr})					*getchangelist()*
+		Returns the |changelist| for the buffer {expr}. For the use
+		of {expr}, see |bufname()| above. If buffer {expr} doesn't
+		exist, an empty list is returned.
+
+		The returned list contains two entries: a list with the change
+		locations and the current position in the list.  Each
+		entry in the change list is a dictionary with the following
+		entries:
+			col		column number
+			coladd		column offset for 'virtualedit'
+			lnum		line number
+		If buffer {expr} is the current buffer, then the current
+		position refers to the position in the list. For other
+		buffers, it is set to the length of the list.
+
 getchar([expr])						*getchar()*
 		Get a single character from the user or input stream.
 		If [expr] is omitted, wait until a character is available.
