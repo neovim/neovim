@@ -920,6 +920,7 @@ Signs:						*sign-functions*
 	sign_define()		define or update a sign
 	sign_getdefined()	get a list of defined signs
 	sign_getplaced()	get a list of placed signs
+	sign_jump()		jump to a sign
 	sign_place()		place a sign
 	sign_undefine()		undefine a sign
 	sign_unplace()		unplace a sign

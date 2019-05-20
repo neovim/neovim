@@ -1255,3 +1255,48 @@ func Test_sign_change_type()
   sign undefine sign2
   enew!
 endfunc
+
+" Test for the sign_jump() function
+func Test_sign_jump_func()
+  enew! | only!
+
+  sign define sign1 text=#> linehl=Comment
+
+  edit foo
+  set buftype=nofile
+  call setline(1, ['A', 'B', 'C', 'D', 'E'])
+  call sign_place(5, '', 'sign1', '', {'lnum' : 2})
+  call sign_place(5, 'g1', 'sign1', '', {'lnum' : 3})
+  call sign_place(6, '', 'sign1', '', {'lnum' : 4})
+  call sign_place(6, 'g1', 'sign1', '', {'lnum' : 5})
+  split bar
+  set buftype=nofile
+  call setline(1, ['P', 'Q', 'R', 'S', 'T'])
+  call sign_place(5, '', 'sign1', '', {'lnum' : 2})
+  call sign_place(5, 'g1', 'sign1', '', {'lnum' : 3})
+  call sign_place(6, '', 'sign1', '', {'lnum' : 4})
+  call sign_place(6, 'g1', 'sign1', '', {'lnum' : 5})
+
+  let r = sign_jump(5, '', 'foo')
+  call assert_equal(2, r)
+  call assert_equal(2, line('.'))
+  let r = sign_jump(6, 'g1', 'foo')
+  call assert_equal(5, r)
+  call assert_equal(5, line('.'))
+  let r = sign_jump(5, '', 'bar')
+  call assert_equal(2, r)
+  call assert_equal(2, line('.'))
+
+  " Error cases
+  call assert_fails("call sign_jump(99, '', 'bar')", 'E157:')
+  call assert_fails("call sign_jump(0, '', 'foo')", 'E474:')
+  call assert_fails("call sign_jump(5, 'g5', 'foo')", 'E157:')
+  call assert_fails('call sign_jump([], "", "foo")', 'E745:')
+  call assert_fails('call sign_jump(2, [], "foo")', 'E730:')
+  call assert_fails('call sign_jump(2, "", {})', 'E158:')
+  call assert_fails('call sign_jump(2, "", "baz")', 'E158:')
+
+  sign unplace * group=*
+  sign undefine sign1
+  enew! | only!
+endfunc

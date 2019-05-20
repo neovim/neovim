@@ -280,6 +280,7 @@ return {
     sign_define={args={1, 2}},
     sign_getdefined={args={0, 1}},
     sign_getplaced={args={0, 2}},
+    sign_jump={args={3, 3}},
     sign_place={args={4, 5}},
     sign_undefine={args={0, 1}},
     sign_unplace={args={1, 2}},

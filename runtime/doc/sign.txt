@@ -256,13 +256,13 @@ See |sign_unplace()| for the equivalent Vim script function.
 		all the files it appears in.
 
 :sign unplace *
-		Remove placed signs in the global group from all the files.
+		Remove all placed signs in the global group from all the files.
 
 :sign unplace * group={group}
-		Remove placed signs in group {group} from all the files.
+		Remove all placed signs in group {group} from all the files.
 
 :sign unplace * group=*
-		Remove placed signs in all the groups from all the files.
+		Remove all placed signs in all the groups from all the files.
 
 :sign unplace
 		Remove a placed sign at the cursor position. If multiple signs
@@ -308,6 +308,8 @@ See |sign_getplaced()| for the equivalent Vim script function.
 
 
 JUMPING TO A SIGN					*:sign-jump* *E157*
+
+See |sign_jump()| for the equivalent Vim script function.
 
 :sign jump {id} file={fname}
 		Open the file {fname} or jump to the window that contains

@@ -36,7 +36,7 @@ struct sign
     char_u      *sn_name;       // name of sign
     char_u      *sn_icon;       // name of pixmap
 # ifdef FEAT_SIGN_ICONS
-    void	*sn_image;	/* icon image */
+    void	*sn_image;	// icon image
 # endif
     char_u      *sn_text;       // text used instead of pixmap
     int         sn_line_hl;     // highlight ID for line
@@ -670,8 +670,8 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
  * "*end_cmd" must be writable.
  */
 static int sign_cmd_idx(
-    char_u      *begin_cmd,     /* begin of sign subcmd */
-    char_u      *end_cmd        /* just after sign subcmd */
+    char_u      *begin_cmd,     // begin of sign subcmd
+    char_u      *end_cmd        // just after sign subcmd
     )
 {
     int  idx;
@@ -968,8 +968,43 @@ static void sign_unplace_at_cursor(char_u *groupname)
 }
 
 /*
- * sign define command
- *   ":sign define {name} ..."
+ * Jump to a sign.
+ */
+linenr_T sign_jump(int sign_id, char_u *sign_group, buf_T *buf)
+{
+  linenr_T lnum;
+
+  if ((lnum = buf_findsign(buf, sign_id, sign_group)) <= 0) {
+    EMSGN(_("E157: Invalid sign ID: %ld"), sign_id);
+    return -1;
+  }
+
+  // goto a sign ...
+  if (buf_jump_open_win(buf) != NULL)
+  {			// ... in a current window
+    curwin->w_cursor.lnum = lnum;
+    check_cursor_lnum();
+    beginline(BL_WHITE);
+  } else {			// ... not currently in a window
+    if (buf->b_fname == NULL) {
+      EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
+      return -1;
+    }
+    size_t cmdlen = STRLEN(buf->b_fname) + 24;
+    char *cmd = xmallocz(cmdlen);
+    snprintf(cmd, cmdlen, "e +%" PRId64 " %s",
+        (int64_t)lnum, buf->b_fname);
+    do_cmdline_cmd(cmd);
+    xfree(cmd);
+  }
+
+  foldOpenCursor();
+
+  return lnum;
+}
+
+/*
+ * ":sign define {name} ..." command
  */
 static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
 {
@@ -1023,7 +1058,7 @@ static void sign_define_cmd(char_u *sign_name, char_u *cmdline)
 }
 
 /*
- * :sign place command
+ * ":sign place" command
  */
 static void sign_place_cmd(
     buf_T		*buf,
@@ -1065,7 +1100,7 @@ static void sign_place_cmd(
 }
 
 /*
- * :sign unplace command
+ * ":sign unplace" command
  */
 static void sign_unplace_cmd(
 	buf_T		*buf,
@@ -1128,7 +1163,7 @@ static void sign_unplace_cmd(
 }
 
 /*
- * Jump to a placed sign
+ * Jump to a placed sign commands:
  *   :sign jump {id} file={fname}
  *   :sign jump {id} buffer={nr}
  *   :sign jump {id} group={group} file={fname}
@@ -1155,31 +1190,7 @@ static void sign_jump_cmd(
     return;
   }
 
-  if ((lnum = buf_findsign(buf, id, group)) <= 0) {
-    EMSGN(_("E157: Invalid sign ID: %ld"), id);
-    return;
-  }
-
-  // goto a sign ...
-  if (buf_jump_open_win(buf) != NULL)
-  {			// ... in a current window
-    curwin->w_cursor.lnum = lnum;
-    check_cursor_lnum();
-    beginline(BL_WHITE);
-  } else {			// ... not currently in a window
-    if (buf->b_fname == NULL) {
-      EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
-      return;
-    }
-    size_t cmdlen = STRLEN(buf->b_fname) + 24;
-    char *cmd = xmallocz(cmdlen);
-    snprintf(cmd, cmdlen, "e +%" PRId64 " %s",
-        (int64_t)lnum, buf->b_fname);
-    do_cmdline_cmd(cmd);
-    xfree(cmd);
-  }
-
-  foldOpenCursor();
+  (void)sign_jump(id, group, buf);
 }
 
 /*
@@ -1635,7 +1646,7 @@ char_u * sign_get_text(int typenr)
 # if defined(FEAT_SIGN_ICONS) || defined(PROTO)
     void *
 sign_get_image(
-    int		typenr)		/* the attribute which may have a sign */
+    int		typenr)		// the attribute which may have a sign
 {
     sign_T	*sp;
 
@@ -1658,11 +1669,11 @@ void free_signs(void)
 
 static enum
 {
-    EXP_SUBCMD,		/* expand :sign sub-commands */
-    EXP_DEFINE,		/* expand :sign define {name} args */
-    EXP_PLACE,		/* expand :sign place {id} args */
-    EXP_UNPLACE,	/* expand :sign unplace" */
-    EXP_SIGN_NAMES	/* expand with name of placed signs */
+    EXP_SUBCMD,		// expand :sign sub-commands
+    EXP_DEFINE,		// expand :sign define {name} args
+    EXP_PLACE,		// expand :sign place {id} args
+    EXP_UNPLACE,	// expand :sign unplace"
+    EXP_SIGN_NAMES	// expand with name of placed signs
 } expand_what;
 
 /// Function given to ExpandGeneric() to obtain the sign command
@@ -1713,15 +1724,15 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   int    cmd_idx;
   char_u  *begin_subcmd_args;
 
-  /* Default: expand subcommands. */
+  // Default: expand subcommands.
   xp->xp_context = EXPAND_SIGN;
   expand_what = EXP_SUBCMD;
   xp->xp_pattern = arg;
 
   end_subcmd = skiptowhite(arg);
   if (*end_subcmd == NUL)
-    /* expand subcmd name
-     * :sign {subcmd}<CTRL-D>*/
+    // expand subcmd name
+    // :sign {subcmd}<CTRL-D>
     return;
 
   cmd_idx = sign_cmd_idx(arg, end_subcmd);
@@ -1733,18 +1744,18 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   p = skiptowhite(begin_subcmd_args);
   if (*p == NUL)
   {
-    /*
-     * Expand first argument of subcmd when possible.
-     * For ":jump {id}" and ":unplace {id}", we could
-     * possibly expand the ids of all signs already placed.
-     */
+    //
+    // Expand first argument of subcmd when possible.
+    // For ":jump {id}" and ":unplace {id}", we could
+    // possibly expand the ids of all signs already placed.
+    //
     xp->xp_pattern = begin_subcmd_args;
     switch (cmd_idx)
     {
       case SIGNCMD_LIST:
       case SIGNCMD_UNDEFINE:
-        /* :sign list <CTRL-D>
-         * :sign undefine <CTRL-D> */
+        // :sign list <CTRL-D>
+        // :sign undefine <CTRL-D>
         expand_what = EXP_SIGN_NAMES;
         break;
       default:
@@ -1793,7 +1804,7 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
   else
   {
-    /* Expand last argument value (after equal sign). */
+	// Expand last argument value (after equal sign).
     xp->xp_pattern = p + 1;
     switch (cmd_idx)
     {

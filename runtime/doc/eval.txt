@@ -2293,6 +2293,8 @@ sign_define({name} [, {dict}])	Number	define or update a sign
 sign_getdefined([{name}])	List	get a list of defined signs
 sign_getplaced([{expr} [, {dict}]])
 				List	get a list of placed signs
+sign_jump({id}, {group}, {expr})
+				Number	jump to a sign
 sign_place({id}, {group}, {name}, {expr} [, {dict}])
 				Number	place a sign
 sign_undefine([{name}])		Number	undefine a sign
@@ -7484,6 +7486,21 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 
 			" Get a List of all the placed signs
 			echo sign_getplaced()
+<
+							*sign_jump()*
+sign_jump({id}, {group}, {expr})
+		Open the buffer {expr} or jump to the window that contains
+		{expr} and position the cursor at sign {id} in group {group}.
+		This is similar to the |:sign-jump| command.
+
+		For the use of {expr}, see |bufname()|.
+
+		Returns the line number of the sign. Returns -1 if the
+		arguments are invalid.
+
+		Example: >
+			" Jump to sign 10 in the current buffer
+			call sign_jump(10, '', '')
 <
 							*sign_place()*
 sign_place({id}, {group}, {name}, {expr} [, {dict}])
