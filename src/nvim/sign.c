@@ -326,8 +326,8 @@ void buf_addsign(
 
     prev = NULL;
     FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-        if (lnum == sign->lnum && id == sign->id &&
-            sign_in_group(sign, groupname)) {
+        if (lnum == sign->lnum && id == sign->id
+            && sign_in_group(sign, groupname)) {
           // Update an existing sign
           sign->typenr = typenr;
           return;
@@ -453,9 +453,9 @@ linenr_T buf_delsign(
   lnum = 0;
   for (sign = buf->b_signlist; sign != NULL; sign = next) {
     next = sign->next;
-    if ((id == 0 || sign->id == id) &&
-        (atlnum == 0 || sign->lnum == atlnum) &&
-        sign_in_group(sign, group)) {
+    if ((id == 0 || sign->id == id)
+        && (atlnum == 0 || sign->lnum == atlnum)
+        && sign_in_group(sign, group)) {
       *lastp = next;
       if (next != NULL) {
         next->prev = sign->prev;
@@ -564,7 +564,6 @@ void buf_delete_signs(buf_T *buf, char_u *group)
     // When deleting the last sign need to redraw the windows to remove the
     // sign column. Not when curwin is NULL (this means we're exiting).
     if (buf->b_signlist != NULL && curwin != NULL){
-      redraw_buf_later(buf, NOT_VALID);
       changed_cline_bef_curs();
     }
 
@@ -1047,16 +1046,16 @@ static void sign_place_cmd(
     //   :sign place
     //   :sign place group={group}
     //   :sign place group=*
-    if (lnum >= 0 || sign_name != NULL ||
-        (group != NULL && *group == '\0')) {
+    if (lnum >= 0 || sign_name != NULL
+        || (group != NULL && *group == '\0')) {
       EMSG(_(e_invarg));
     } else {
       sign_list_placed(buf, group);
     }
   } else {
     // Place a new sign
-    if (sign_name == NULL || buf == NULL ||
-        (group != NULL && *group == '\0')) {
+    if (sign_name == NULL || buf == NULL
+        || (group != NULL && *group == '\0')) {
       EMSG(_(e_invarg));
       return;
     }
@@ -1148,8 +1147,8 @@ static void sign_jump_cmd(
     return;
   }
 
-  if (buf == NULL || (group != NULL && *group == '\0') ||
-      lnum >= 0 || sign_name != NULL) {
+  if (buf == NULL || (group != NULL && *group == '\0')
+      || lnum >= 0 || sign_name != NULL) {
     // File or buffer is not specified or an empty group is used
     // or a line number or a sign name is specified.
     EMSG(_(e_invarg));
@@ -1280,8 +1279,8 @@ static int parse_sign_cmd_args(
     // If the filename is not supplied for the sign place or the sign jump
     // command, then use the current buffer.
     if (filename == NULL && ((cmd == SIGNCMD_PLACE && lnum_arg)
-	|| cmd == SIGNCMD_JUMP)) {
-	      *buf = curwin->w_buffer;
+	    || cmd == SIGNCMD_JUMP)) {
+	*buf = curwin->w_buffer;
     }
     return OK;
 }
@@ -1477,10 +1476,10 @@ static void sign_get_placed_in_buf(
     if (!sign_in_group(sign, sign_group)) {
       continue;
     }
-    if ((lnum == 0 && sign_id == 0) ||
-        (sign_id == 0 && lnum == sign->lnum) ||
-        (lnum == 0 && sign_id == sign->id) ||
-        (lnum == sign->lnum && sign_id == sign->id)) {
+    if ((lnum == 0 && sign_id == 0)
+        || (sign_id == 0 && lnum == sign->lnum)
+        || (lnum == 0 && sign_id == sign->id)
+        || (lnum == sign->lnum && sign_id == sign->id)) {
       if ((sdict = sign_get_info(sign)) != NULL) {
         tv_list_append_dict(l, sdict);
       }
