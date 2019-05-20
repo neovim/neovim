@@ -763,6 +763,8 @@ static void free_buffer(buf_T *buf)
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
   tv_dict_unref(buf->additional_data);
+  xfree(buf->b_prompt_text);
+  callback_free(&buf->b_prompt_callback);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -1875,6 +1877,9 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
       return NULL;
     }
   }
+
+  buf->b_prompt_callback.type = kCallbackNone;
+  buf->b_prompt_text = NULL;
 
   return buf;
 }
@@ -4824,6 +4829,12 @@ do_arg_all(
   xfree(opened);
 }
 
+// Return TRUE if "buf" is a prompt buffer.
+int bt_prompt(buf_T *buf)
+{
+    return buf != NULL && buf->b_p_bt[0] == 'p';
+}
+
 /*
  * Open a window for a number of buffers.
  */
@@ -5218,14 +5229,18 @@ bool bt_nofile(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return buf != NULL && ((buf->b_p_bt[0] == 'n' && buf->b_p_bt[2] == 'f')
-                         || buf->b_p_bt[0] == 'a' || buf->terminal);
+                         || buf->b_p_bt[0] == 'a'
+                         || buf->terminal
+                         || buf->b_p_bt[0] == 'p');
 }
 
 // Return true if "buf" is a "nowrite", "nofile" or "terminal" buffer.
 bool bt_dontwrite(const buf_T *const buf)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return buf != NULL && (buf->b_p_bt[0] == 'n' || buf->terminal);
+  return buf != NULL && (buf->b_p_bt[0] == 'n'
+                         || buf->terminal
+                         || buf->b_p_bt[0] == 'p');
 }
 
 bool bt_dontwrite_msg(const buf_T *const buf)

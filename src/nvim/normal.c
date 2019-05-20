@@ -3642,7 +3642,9 @@ static void nv_help(cmdarg_T *cap)
  */
 static void nv_addsub(cmdarg_T *cap)
 {
-  if (!VIsual_active && cap->oap->op_type == OP_NOP) {
+  if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
+    clearopbeep(cap->oap);
+  } else if (!VIsual_active && cap->oap->op_type == OP_NOP) {
     prep_redo_cmd(cap);
     cap->oap->op_type = cap->cmdchar == Ctrl_A ? OP_NR_ADD : OP_NR_SUB;
     op_addsub(cap->oap, cap->count1, cap->arg);
@@ -5239,6 +5241,13 @@ static void nv_down(cmdarg_T *cap)
     // In the cmdline window a <CR> executes the command.
     if (cmdwin_type != 0 && cap->cmdchar == CAR) {
       cmdwin_result = CAR;
+    } else if (bt_prompt(curbuf) && cap->cmdchar == CAR
+               && curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
+      // In a prompt buffer a <CR> in the last line invokes the callback.
+      invoke_prompt_callback();
+      if (restart_edit == 0) {
+        restart_edit = 'a';
+      }
     } else {
       cap->oap->motion_type = kMTLineWise;
       if (cursor_down(cap->count1, cap->oap->op_type == OP_NOP) == false) {
@@ -5831,6 +5840,10 @@ static void nv_undo(cmdarg_T *cap)
 static void nv_kundo(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)) {
+    if (bt_prompt(curbuf)) {
+      clearopbeep(cap->oap);
+      return;
+    }
     u_undo((int)cap->count1);
     curwin->w_set_curswant = true;
   }
@@ -5844,8 +5857,13 @@ static void nv_replace(cmdarg_T *cap)
   char_u      *ptr;
   int had_ctrl_v;
 
-  if (checkclearop(cap->oap))
+  if (checkclearop(cap->oap)) {
     return;
+  }
+  if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
+    clearopbeep(cap->oap);
+    return;
+  }
 
   /* get another character */
   if (cap->nchar == Ctrl_V) {
@@ -6182,7 +6200,11 @@ static void v_visop(cmdarg_T *cap)
  */
 static void nv_subst(cmdarg_T *cap)
 {
-  if (VIsual_active) {  /* "vs" and "vS" are the same as "vc" */
+  if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
+    clearopbeep(cap->oap);
+    return;
+  }
+  if (VIsual_active) {  // "vs" and "vS" are the same as "vc"
     if (cap->cmdchar == 'S') {
       VIsual_mode_orig = VIsual_mode;
       VIsual_mode = 'V';
@@ -7120,10 +7142,15 @@ static void nv_tilde(cmdarg_T *cap)
 {
   if (!p_to
       && !VIsual_active
-      && cap->oap->op_type != OP_TILDE)
+      && cap->oap->op_type != OP_TILDE) {
+    if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
+      clearopbeep(cap->oap);
+      return;
+    }
     n_swapchar(cap);
-  else
+  } else {
     nv_operator(cap);
+  }
 }
 
 /*
@@ -7135,6 +7162,12 @@ static void nv_operator(cmdarg_T *cap)
   int op_type;
 
   op_type = get_op_type(cap->cmdchar, cap->nchar);
+
+  if (bt_prompt(curbuf) && op_is_change(op_type)
+      && !prompt_curpos_editable()) {
+    clearopbeep(cap->oap);
+    return;
+  }
 
   if (op_type == cap->oap->op_type)         /* double operator works on lines */
     nv_lineop(cap);
@@ -7796,8 +7829,11 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       clearop(cap->oap);
       assert(cap->opcount >= 0);
       nv_diffgetput(true, (size_t)cap->opcount);
-    } else
+    } else {
       clearopbeep(cap->oap);
+    }
+  } else if (bt_prompt(curbuf) && !prompt_curpos_editable()) {
+    clearopbeep(cap->oap);
   } else {
     if (fix_indent) {
       dir = (cap->cmdchar == ']' && cap->nchar == 'p')
@@ -7809,8 +7845,9 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
         ? BACKWARD : FORWARD;
     }
     prep_redo_cmd(cap);
-    if (cap->cmdchar == 'g')
+    if (cap->cmdchar == 'g') {
       flags |= PUT_CURSEND;
+    }
 
     if (VIsual_active) {
       /* Putting in Visual mode: The put text replaces the selected
@@ -7916,10 +7953,14 @@ static void nv_open(cmdarg_T *cap)
     clearop(cap->oap);
     assert(cap->opcount >= 0);
     nv_diffgetput(false, (size_t)cap->opcount);
-  } else if (VIsual_active) /* switch start and end of visual */
+  } else if (VIsual_active) {
+    // switch start and end of visual/
     v_swap_corners(cap->cmdchar);
-  else
+  } else if (bt_prompt(curbuf)) {
+    clearopbeep(cap->oap);
+  } else {
     n_opencmd(cap);
+  }
 }
 
 // Calculate start/end virtual columns for operating in block mode.

@@ -13687,3 +13687,34 @@ void ex_checkhealth(exarg_T *eap)
 
   xfree(buf);
 }
+
+void invoke_prompt_callback(void)
+{
+    typval_T rettv;
+    typval_T argv[2];
+    char_u *text;
+    char_u *prompt;
+    linenr_T lnum = curbuf->b_ml.ml_line_count;
+
+    // Add a new line for the prompt before invoking the callback, so that
+    // text can always be inserted above the last line.
+    ml_append(lnum, (char_u  *)"", 0, false);
+    curwin->w_cursor.lnum = lnum + 1;
+    curwin->w_cursor.col = 0;
+
+    if (curbuf->b_prompt_callback.type == kCallbackNone) {
+      return;
+    }
+    text = ml_get(lnum);
+    prompt = prompt_text();
+    if (STRLEN(text) >= STRLEN(prompt)) {
+      text += STRLEN(prompt);
+    }
+    argv[0].v_type = VAR_STRING;
+    argv[0].vval.v_string = vim_strsave(text);
+    argv[1].v_type = VAR_UNKNOWN;
+
+    callback_call(&curbuf->b_prompt_callback, 1, argv, &rettv);
+    tv_clear(&argv[0]);
+    tv_clear(&rettv);
+}

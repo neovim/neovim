@@ -574,6 +574,12 @@ static int insert_check(VimState *state)
     foldCheckClose();
   }
 
+  int cmdchar_todo = s->cmdchar;
+  if (bt_prompt(curbuf)) {
+    init_prompt(cmdchar_todo);
+    cmdchar_todo = NUL;
+  }
+
   // If we inserted a character at the last position of the last line in the
   // window, scroll the window one line up. This avoids an extra redraw.  This
   // is detected when the cursor column is smaller after inserting something.
@@ -1143,6 +1149,14 @@ check_pum:
       cmdwin_result = CAR;
       return 0;
     }
+    if (bt_prompt(curbuf)) {
+      invoke_prompt_callback();
+      if (curbuf != buf) {
+        // buffer changed, get out of Insert mode
+        return 0;
+      }
+      break;
+    }
     if (!ins_eol(s->c) && !p_im) {
       return 0;  // out of memory
     }
@@ -1567,6 +1581,50 @@ void edit_putchar(int c, int highlight)
     }
     grid_putchar(&curwin->w_grid, c, pc_row, pc_col, attr);
   }
+}
+
+// Return the effective prompt for the current buffer.
+char_u *prompt_text(void)
+{
+    if (curbuf->b_prompt_text == NULL) {
+      return (char_u *)"% ";
+    }
+    return curbuf->b_prompt_text;
+}
+
+// Prepare for prompt mode: Make sure the last line has the prompt text.
+// Move the cursor to this line.
+static void init_prompt(int cmdchar_todo)
+{
+  char_u *prompt = prompt_text();
+  char_u *text;
+
+  curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+  text = get_cursor_line_ptr();
+  if (STRNCMP(text, prompt, STRLEN(prompt)) != 0) {
+    // prompt is missing, insert it or append a line with it
+    if (*text == NUL) {
+      ml_replace(curbuf->b_ml.ml_line_count, prompt, true);
+    } else {
+      ml_append(curbuf->b_ml.ml_line_count, prompt, 0, false);
+    }
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+    coladvance((colnr_T)MAXCOL);
+    changed_bytes(curbuf->b_ml.ml_line_count, 0);
+  }
+  if (cmdchar_todo == 'A') {
+    coladvance((colnr_T)MAXCOL);
+  }
+  if (cmdchar_todo == 'I' || curwin->w_cursor.col <= (int)STRLEN(prompt)) {
+    curwin->w_cursor.col = STRLEN(prompt);
+  }
+}
+
+// Return TRUE if the cursor is in the editable position of the prompt line.
+int prompt_curpos_editable(void)
+{
+    return curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count
+        && curwin->w_cursor.col >= (int)STRLEN(prompt_text());
 }
 
 /*

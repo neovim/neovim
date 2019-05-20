@@ -243,6 +243,8 @@ return {
     pow={args=2},
     prevnonblank={args=1},
     printf={args=varargs(1)},
+    prompt_setcallback={args={2, 2}},
+    prompt_setprompt={args={2, 2}},
     pum_getpos={},
     pumvisible={},
     py3eval={args=1},

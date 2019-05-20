@@ -299,7 +299,8 @@ static char *(p_scbopt_values[]) =    { "ver", "hor", "jump", NULL };
 static char *(p_debug_values[]) =     { "msg", "throw", "beep", NULL };
 static char *(p_ead_values[]) =       { "both", "ver", "hor", NULL };
 static char *(p_buftype_values[]) =   { "nofile", "nowrite", "quickfix",
-                                        "help", "acwrite", "terminal", NULL };
+                                        "help", "acwrite", "terminal",
+                                        "prompt", NULL };
 
 static char *(p_bufhidden_values[]) = { "hide", "unload", "delete",
                                         "wipe", NULL };

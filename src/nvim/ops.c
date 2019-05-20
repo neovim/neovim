@@ -89,6 +89,10 @@ struct block_def {
 # include "ops.c.generated.h"
 #endif
 
+// Flags for third item in "opchars".
+#define OPF_LINES  1  // operator always works on lines
+#define OPF_CHANGE 2  // operator changes text
+
 /*
  * The names of operators.
  * IMPORTANT: Index must correspond with defines in vim.h!!!
@@ -96,36 +100,36 @@ struct block_def {
  */
 static char opchars[][3] =
 {
-  { NUL,    NUL, false },    // OP_NOP
-  { 'd',    NUL, false },    // OP_DELETE
-  { 'y',    NUL, false },    // OP_YANK
-  { 'c',    NUL, false },    // OP_CHANGE
-  { '<',    NUL, true },     // OP_LSHIFT
-  { '>',    NUL, true },     // OP_RSHIFT
-  { '!',    NUL, true },     // OP_FILTER
-  { 'g',    '~', false },    // OP_TILDE
-  { '=',    NUL, true },     // OP_INDENT
-  { 'g',    'q', true },     // OP_FORMAT
-  { ':',    NUL, true },     // OP_COLON
-  { 'g',    'U', false },    // OP_UPPER
-  { 'g',    'u', false },    // OP_LOWER
-  { 'J',    NUL, true },     // DO_JOIN
-  { 'g',    'J', true },     // DO_JOIN_NS
-  { 'g',    '?', false },    // OP_ROT13
-  { 'r',    NUL, false },    // OP_REPLACE
-  { 'I',    NUL, false },    // OP_INSERT
-  { 'A',    NUL, false },    // OP_APPEND
-  { 'z',    'f', true },     // OP_FOLD
-  { 'z',    'o', true },     // OP_FOLDOPEN
-  { 'z',    'O', true },     // OP_FOLDOPENREC
-  { 'z',    'c', true },     // OP_FOLDCLOSE
-  { 'z',    'C', true },     // OP_FOLDCLOSEREC
-  { 'z',    'd', true },     // OP_FOLDDEL
-  { 'z',    'D', true },     // OP_FOLDDELREC
-  { 'g',    'w', true },     // OP_FORMAT2
-  { 'g',    '@', false },    // OP_FUNCTION
-  { Ctrl_A, NUL, false },    // OP_NR_ADD
-  { Ctrl_X, NUL, false },    // OP_NR_SUB
+  { NUL, NUL, 0 },                       // OP_NOP
+  { 'd', NUL, OPF_CHANGE },              // OP_DELETE
+  { 'y', NUL, 0 },                       // OP_YANK
+  { 'c', NUL, OPF_CHANGE },              // OP_CHANGE
+  { '<', NUL, OPF_LINES | OPF_CHANGE },  // OP_LSHIFT
+  { '>', NUL, OPF_LINES | OPF_CHANGE },  // OP_RSHIFT
+  { '!', NUL, OPF_LINES | OPF_CHANGE },  // OP_FILTER
+  { 'g', '~', OPF_CHANGE },              // OP_TILDE
+  { '=', NUL, OPF_LINES | OPF_CHANGE },  // OP_INDENT
+  { 'g', 'q', OPF_LINES | OPF_CHANGE },  // OP_FORMAT
+  { ':', NUL, OPF_LINES },               // OP_COLON
+  { 'g', 'U', OPF_CHANGE },              // OP_UPPER
+  { 'g', 'u', OPF_CHANGE },              // OP_LOWER
+  { 'J', NUL, OPF_LINES | OPF_CHANGE },  // DO_JOIN
+  { 'g', 'J', OPF_LINES | OPF_CHANGE },  // DO_JOIN_NS
+  { 'g', '?', OPF_CHANGE },              // OP_ROT13
+  { 'r', NUL, OPF_CHANGE },              // OP_REPLACE
+  { 'I', NUL, OPF_CHANGE },              // OP_INSERT
+  { 'A', NUL, OPF_CHANGE },              // OP_APPEND
+  { 'z', 'f', OPF_LINES },               // OP_FOLD
+  { 'z', 'o', OPF_LINES },               // OP_FOLDOPEN
+  { 'z', 'O', OPF_LINES },               // OP_FOLDOPENREC
+  { 'z', 'c', OPF_LINES },               // OP_FOLDCLOSE
+  { 'z', 'C', OPF_LINES },               // OP_FOLDCLOSEREC
+  { 'z', 'd', OPF_LINES },               // OP_FOLDDEL
+  { 'z', 'D', OPF_LINES },               // OP_FOLDDELREC
+  { 'g', 'w', OPF_LINES | OPF_CHANGE },  // OP_FORMAT2
+  { 'g', '@', OPF_CHANGE },              // OP_FUNCTION
+  { Ctrl_A, NUL, OPF_CHANGE },           // OP_NR_ADD
+  { Ctrl_X, NUL, OPF_CHANGE },           // OP_NR_SUB
 };
 
 /*
@@ -169,7 +173,13 @@ int get_op_type(int char1, int char2)
  */
 int op_on_lines(int op)
 {
-  return opchars[op][2];
+  return opchars[op][2] & OPF_LINES;
+}
+
+// Return TRUE if operator "op" changes text.
+int op_is_change(int op)
+{
+    return opchars[op][2] & OPF_CHANGE;
 }
 
 /*
