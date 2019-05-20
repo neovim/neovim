@@ -806,6 +806,7 @@ Buffers, windows and the argument list:
 	getbufinfo()		get a list with buffer information
 	gettabinfo()		get a list with tab page information
 	getwininfo()		get a list with window information
+	getjumplist()		get a list of jump list entries
 
 Command line:					*command-line-functions*
 	getcmdline()		get the current command line

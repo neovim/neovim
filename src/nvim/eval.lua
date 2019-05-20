@@ -131,6 +131,7 @@ return {
     getfsize={args=1},
     getftime={args=1},
     getftype={args=1},
+    getjumplist={args={0, 2}},
     getline={args={1, 2}},
     getloclist={args={1, 2}},
     getmatches={},
