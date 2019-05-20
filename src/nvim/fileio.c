@@ -2900,9 +2900,6 @@ buf_write (
 #ifdef HAVE_ACL
           mch_set_acl(backup, acl);
 #endif
-#ifdef HAVE_SELINUX
-          mch_copy_sec(fname, backup);
-#endif
           break;
         }
       }
@@ -3384,13 +3381,6 @@ restore_backup:
       SET_ERRMSG_ARG(_("E667: Fsync failed: %s"), error);
       end = 0;
     }
-
-#ifdef HAVE_SELINUX
-    // Probably need to set the security context.
-    if (!backup_copy) {
-      mch_copy_sec(backup, wfname);
-    }
-#endif
 
 #ifdef UNIX
     // When creating a new file, set its owner/group to that of the original
@@ -4759,9 +4749,6 @@ int vim_rename(const char_u *from, const char_u *to)
 #ifdef HAVE_ACL
   mch_set_acl(to, acl);
   mch_free_acl(acl);
-#endif
-#ifdef HAVE_SELINUX
-  mch_copy_sec(from, to);
 #endif
   if (errmsg != NULL) {
     EMSG2(errmsg, to);

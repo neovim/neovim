@@ -785,9 +785,6 @@ static bool mf_do_open(memfile_T *mfp, char_u *fname, int flags)
   }
 
   (void)os_set_cloexec(mfp->mf_fd);
-#ifdef HAVE_SELINUX
-  mch_copy_sec(fname, mfp->mf_fname);
-#endif
 
   return true;
 }
