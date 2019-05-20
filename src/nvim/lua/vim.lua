@@ -154,15 +154,11 @@ local function _update_package_paths()
   last_nvim_paths = cur_nvim_paths
 end
 
---- Trim whitespace (Lua pattern "%%s") from both sides of a string.
+--- Return a human-readable representation of the given object.
 ---
---@see https://www.lua.org/pil/20.2.html
---@param s String to trim
---@returns String with whitespace removed from its beginning and end
-local function trim(s)
-  assert(type(s) == 'string', 'Only strings can be trimmed')
-  local result = s:gsub('^%s+', ''):gsub('%s+$', '')
-  return result
+--@see https://github.com/kikito/inspect.lua
+local function inspect(object, options)  -- luacheck: no unused
+  error(object, options)  -- Stub for gen_vimdoc.py
 end
 
 local function __index(t, key)
@@ -181,7 +177,6 @@ local module = {
   _os_proc_children = _os_proc_children,
   _os_proc_info = _os_proc_info,
   _system = _system,
-  trim = trim,
 }
 
 setmetatable(module, {

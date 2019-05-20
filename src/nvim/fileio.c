@@ -2781,19 +2781,11 @@ buf_write (
     else
       backup_ext = p_bex;
 
-    if (backup_copy && (fd = os_open((char *)fname, O_RDONLY, 0)) >= 0) {
-      int bfd;
-      char_u      *copybuf, *wp;
-      int some_error = FALSE;
+    if (backup_copy) {
+      char_u *wp;
+      int some_error = false;
       char_u      *dirp;
       char_u      *rootname;
-
-      copybuf = verbose_try_malloc(BUFSIZE + 1);
-      if (copybuf == NULL) {
-        // out of memory
-        some_error = TRUE;
-        goto nobackup;
-      }
 
       /*
        * Try to make the backup in each directory in the 'bdir' option.
@@ -2812,8 +2804,8 @@ buf_write (
         /*
          * Isolate one directory name, using an entry in 'bdir'.
          */
-        (void)copy_option_part(&dirp, copybuf, BUFSIZE, ",");
-        rootname = get_file_in_dir(fname, copybuf);
+        (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        rootname = get_file_in_dir(fname, IObuff);
         if (rootname == NULL) {
           some_error = TRUE;                /* out of memory */
           goto nobackup;
@@ -2875,87 +2867,47 @@ buf_write (
         if (backup != NULL) {
           /* remove old backup, if present */
           os_remove((char *)backup);
-          /* Open with O_EXCL to avoid the file being created while
-           * we were sleeping (symlink hacker attack?) */
-          bfd = os_open((char *)backup,
-              O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,
-              perm & 0777);
-          if (bfd < 0) {
-            xfree(backup);
-            backup = NULL;
-          } else {
-            // set file protection same as original file, but
-            // strip s-bit.
-            (void)os_setperm((const char *)backup, perm & 0777);
+
+          // set file protection same as original file, but
+          // strip s-bit.
+          (void)os_setperm((const char *)backup, perm & 0777);
 
 #ifdef UNIX
-            /*
-             * Try to set the group of the backup same as the
-             * original file. If this fails, set the protection
-             * bits for the group same as the protection bits for
-             * others.
-             */
-            if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
-                && os_fchown(bfd, -1, file_info_old.stat.st_gid) != 0) {
-              os_setperm((const char *)backup,
-                         (perm & 0707) | ((perm & 07) << 3));
-            }
-# ifdef HAVE_SELINUX
-            mch_copy_sec(fname, backup);
-# endif
+          //
+          // Try to set the group of the backup same as the original file. If
+          // this fails, set the protection bits for the group same as the
+          // protection bits for others.
+          //
+          if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
+              && os_chown((char *)backup, -1, file_info_old.stat.st_gid) != 0) {
+            os_setperm((const char *)backup,
+                       (perm & 0707) | ((perm & 07) << 3));
+          }
 #endif
 
-            /*
-             * copy the file.
-             */
-            write_info.bw_fd = bfd;
-            write_info.bw_buf = copybuf;
-#ifdef HAS_BW_FLAGS
-            write_info.bw_flags = FIO_NOCONVERT;
-#endif
-            while ((write_info.bw_len = read_eintr(fd, copybuf,
-                        BUFSIZE)) > 0) {
-              if (buf_write_bytes(&write_info) == FAIL) {
-                SET_ERRMSG(_(
-                    "E506: Can't write to backup file (add ! to override)"));
-                break;
-              }
-              os_breakcheck();
-              if (got_int) {
-                SET_ERRMSG(_(e_interr));
-                break;
-              }
-            }
+          // copy the file
+          if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
+              != 0) {
+            SET_ERRMSG(_("E506: Can't write to backup file "
+                         "(add ! to override)"));
+          }
 
-            int error;
-            if ((error = os_close(bfd)) != 0 && errmsg == NULL) {
-              SET_ERRMSG_ARG(_("E507: Close error for backup file "
-                               "(add ! to override): %s"),
-                             error);
-            }
-            if (write_info.bw_len < 0) {
-              SET_ERRMSG(_(
-                  "E508: Can't read file for backup (add ! to override)"));
-            }
 #ifdef UNIX
-            set_file_time(backup,
-                          file_info_old.stat.st_atim.tv_sec,
-                          file_info_old.stat.st_mtim.tv_sec);
+          set_file_time(backup,
+                        file_info_old.stat.st_atim.tv_sec,
+                        file_info_old.stat.st_mtim.tv_sec);
 #endif
 #ifdef HAVE_ACL
-            mch_set_acl(backup, acl);
+          mch_set_acl(backup, acl);
 #endif
 #ifdef HAVE_SELINUX
-            mch_copy_sec(fname, backup);
+          mch_copy_sec(fname, backup);
 #endif
-            break;
-          }
+          break;
         }
       }
-nobackup:
-      os_close(fd);  // Ignore errors for closing read file.
-      xfree(copybuf);
 
+nobackup:
       if (backup == NULL && errmsg == NULL) {
         SET_ERRMSG(_(
             "E509: Cannot create backup file (add ! to override)"));
@@ -3537,28 +3489,11 @@ restore_backup:
           MSG(_(e_interr));
           ui_flush();
         }
-        if ((fd = os_open((char *)backup, O_RDONLY, 0)) >= 0) {
-          if ((write_info.bw_fd = os_open((char *)fname,
-                                          O_WRONLY | O_CREAT | O_TRUNC,
-                                          perm & 0777)) >= 0) {
-            // copy the file.
-            write_info.bw_buf = smallbuf;
-#ifdef HAS_BW_FLAGS
-            write_info.bw_flags = FIO_NOCONVERT;
-#endif
-            while ((write_info.bw_len = read_eintr(fd, smallbuf,
-                                                   SMBUFSIZE)) > 0) {
-              if (buf_write_bytes(&write_info) == FAIL) {
-                break;
-              }
-            }
 
-            if (close(write_info.bw_fd) >= 0
-                && write_info.bw_len == 0) {
-              end = 1;                          // success
-            }
-          }
-          close(fd);            // ignore errors for closing read file
+        // copy the file.
+        if (os_copy((char *)backup, (char *)fname, UV_FS_COPYFILE_FICLONE)
+            == 0) {
+          end = 1;  // success
         }
       } else {
         if (vim_rename(backup, fname) == 0) {
