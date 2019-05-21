@@ -116,6 +116,7 @@ return {
     getbufinfo={args={0, 1}},
     getbufline={args={2, 3}},
     getbufvar={args={2, 3}},
+    getchangelist={args={1, 1}},
     getchar={args={0, 1}},
     getcharmod={},
     getcharsearch={},

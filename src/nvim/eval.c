@@ -9547,6 +9547,40 @@ f_getbufvar_end:
   }
 }
 
+// "getchangelist()" function
+static void f_getchangelist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tv_list_alloc_ret(rettv, 2);
+  vim_ignored = tv_get_number(&argvars[0]);  // issue errmsg if type error
+  emsg_off++;
+  const buf_T *const buf = tv_get_buf(&argvars[0], false);
+  emsg_off--;
+  if (buf == NULL) {
+    return;
+  }
+
+  list_T *const l = tv_list_alloc(buf->b_changelistlen);
+  tv_list_append_list(rettv->vval.v_list, l);
+  // The current window change list index tracks only the position in the
+  // current buffer change list. For other buffers, use the change list
+  // length as the current index.
+  tv_list_append_number(rettv->vval.v_list,
+                        (buf == curwin->w_buffer)
+                        ? curwin->w_changelistidx
+                        : buf->b_changelistlen);
+
+  for (int i = 0; i < buf->b_changelistlen; i++) {
+    if (buf->b_changelist[i].mark.lnum == 0) {
+      continue;
+    }
+    dict_T *const d = tv_dict_alloc();
+    tv_list_append_dict(l, d);
+    tv_dict_add_nr(d, S_LEN("lnum"), buf->b_changelist[i].mark.lnum);
+    tv_dict_add_nr(d, S_LEN("col"), buf->b_changelist[i].mark.col);
+    tv_dict_add_nr(d, S_LEN("coladd"), buf->b_changelist[i].mark.coladd);
+  }
+}
+
 /*
  * "getchar()" function
  */
