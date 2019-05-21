@@ -7662,6 +7662,26 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = chan->id;
 }
 
+/// "call_wait(ids[, timeout])" function
+static void f_call_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  f_jobwait(argvars, rettv, fptr);
+  if (rettv->v_type == VAR_NUMBER) {  // f_jobwait checks failed
+    return;
+  }
+
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, vim_to_object(&argvars[0]));  // jobs
+  ADD(args, vim_to_object(rettv));  // status
+  Error err = ERROR_INIT;
+  Object results = nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("return vim._collect_results(select(1, ...))"),
+      args, &err);
+  api_free_array(args);
+  object_to_vim(results, rettv, &err);
+  api_clear_error(&err);
+}
+
 /*
  * "changenr()" function
  */

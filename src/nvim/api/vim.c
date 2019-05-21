@@ -2418,14 +2418,14 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     return;
   }
 
+  put_result(channel_id, result, err);
+
   typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
   if (object_to_vim(result, &argv[0], err)) {
     typval_T rettv = TV_INITIAL_VALUE;  // dummy
     callback_call(&channel->async_call->callback, 1, argv, &rettv);
     tv_clear(&argv[0]);
   }
-
-  // TODO(abdlehakeem): unblock nvim if waiting on this job
 
   if (channel) {
     release_asynccall_channel(channel);

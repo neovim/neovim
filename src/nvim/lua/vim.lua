@@ -210,6 +210,30 @@ local function _create_nvim_job()
   })
 end
 
+-- Maps job ids of completed async calls to their results.
+-- Entries should get removed when collected by call_wait().
+local _call_results = {}
+
+-- Puts async call result in "_call_results".
+-- Used by put_result().
+local function _put_result(job, result)
+  _call_results[job] = result
+end
+
+-- Removes the async call results of the given job ids from "_call_results"
+-- and returns them in an array of maps with "status" and "value" keys.
+local function _collect_results(jobs, status)
+  local results = {}
+  for i, v in ipairs(jobs) do
+    table.insert(results, {
+      status = status[i],
+      value = _call_results[v]
+    })
+    _call_results[v] = nil
+  end
+  return results
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -218,6 +242,8 @@ local module = {
   schedule_wrap = schedule_wrap,
   _grep = _grep,
   _create_nvim_job = _create_nvim_job,
+  _put_result = _put_result,
+  _collect_results = _collect_results,
 }
 
 setmetatable(module, {

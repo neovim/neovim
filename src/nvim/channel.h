@@ -10,6 +10,7 @@
 #include "nvim/msgpack_rpc/channel_defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/lua/executor.h"
+#include "nvim/api/vim.h"
 
 #define CHAN_STDIO 1
 #define CHAN_STDERR 2
@@ -156,6 +157,17 @@ static inline Channel *acquire_asynccall_channel(void)
 static inline void release_asynccall_channel(Channel *channel)
 {
   process_stop((Process *)&channel->stream.proc);
+}
+
+static inline void put_result(uint64_t job, Object result, Error *err)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ((long)job));
+  ADD(args, copy_object(result));
+  nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("return vim._put_result(select(1, ...))"),
+      args, err);
+  api_free_array(args);
 }
 
 
