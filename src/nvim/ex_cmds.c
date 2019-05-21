@@ -3817,6 +3817,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         // 3. Substitute the string. During 'inccommand' preview only do this if
         //    there is a replace pattern.
         if (!preview || has_second_delim) {
+          save_ma = curbuf->b_p_ma;
           if (subflags.do_count) {
             // prevent accidentally changing the buffer by a function
             curbuf->b_p_ma = false;
