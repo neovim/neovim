@@ -29,8 +29,6 @@
 #cmakedefine HAVE_NL_MSG_CAT_CNTR
 #cmakedefine HAVE_PWD_H
 #cmakedefine HAVE_READLINK
-// TODO: add proper cmake check
-// #define HAVE_SELINUX 1
 #cmakedefine HAVE_SETPGID
 #cmakedefine HAVE_SETSID
 #cmakedefine HAVE_SIGACTION
