@@ -72,7 +72,7 @@
 			*top++ = (b)->root;											\
 			while (top != stack) {										\
 				x = *--top;												\
-				if (x->is_internal == 0) { xfree(x); continue; }			\
+				if (x->is_internal == 0) { XFREE_CLEAR(x); continue; }			\
 				for (i = 0; i <= x->n; ++i)								\
 					if (__KB_PTR(b, x)[i]) {							\
 						if (top - stack == (int)max) {		        	\
@@ -82,10 +82,10 @@
 						}												\
 						*top++ = __KB_PTR(b, x)[i];						\
 					}													\
-				xfree(x);												\
+				XFREE_CLEAR(x);												\
 			}															\
 		}																\
-		xfree(stack);											\
+		XFREE_CLEAR(stack);											\
 	} while (0)
 
 #define __KB_GET_AUX1(name, key_t, kbnode_t, __cmp)								\
@@ -253,7 +253,7 @@
 				memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
 				memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*)); \
 				--x->n;													\
-				xfree(z);												\
+				XFREE_CLEAR(z);												\
 				return __kb_delp_aux_##name(b, y, k, s);				\
 			}															\
 		}																\
@@ -281,7 +281,7 @@
 				memmove(&__KB_KEY(key_t, x)[i - 1], &__KB_KEY(key_t, x)[i], (unsigned int)(x->n - i) * sizeof(key_t)); \
 				memmove(&__KB_PTR(b, x)[i], &__KB_PTR(b, x)[i + 1], (unsigned int)(x->n - i) * sizeof(void*)); \
 				--x->n;													\
-				xfree(xp);												\
+				XFREE_CLEAR(xp);												\
 				xp = y;													\
 			} else if (i < x->n && (y = __KB_PTR(b, x)[i + 1])->n == T - 1) { \
 				__KB_KEY(key_t, xp)[xp->n++] = __KB_KEY(key_t, x)[i];	\
@@ -291,7 +291,7 @@
 				memmove(&__KB_KEY(key_t, x)[i], &__KB_KEY(key_t, x)[i + 1], (unsigned int)(x->n - i - 1) * sizeof(key_t)); \
 				memmove(&__KB_PTR(b, x)[i + 1], &__KB_PTR(b, x)[i + 2], (unsigned int)(x->n - i - 1) * sizeof(void*)); \
 				--x->n;													\
-				xfree(y);												\
+				XFREE_CLEAR(y);												\
 			}															\
 		}																\
 		return __kb_delp_aux_##name(b, xp, k, s);						\
@@ -306,7 +306,7 @@
 			--b->n_nodes;												\
 			x = b->root;												\
 			b->root = __KB_PTR(b, x)[0];								\
-			xfree(x);													\
+			XFREE_CLEAR(x);													\
 		}																\
 		return ret;														\
 	}																	\

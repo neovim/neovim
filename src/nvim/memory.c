@@ -110,6 +110,8 @@ void *xmalloc(size_t size)
 }
 
 /// free() wrapper that delegates to the backing memory manager
+///
+/// @note Use XFREE_CLEAR() instead, if possible.
 void xfree(void *ptr)
 {
   free(ptr);
