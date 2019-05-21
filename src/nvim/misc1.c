@@ -2828,8 +2828,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
   os_remove((char *)tempname);
   if (i != len) {
     EMSG2(_(e_notread), tempname);
-    xfree(buffer);
-    buffer = NULL;
+    XFREE_CLEAR(buffer);
   } else if (ret_len == NULL) {
     /* Change NUL into SOH, otherwise the string is truncated. */
     for (i = 0; i < len; ++i)

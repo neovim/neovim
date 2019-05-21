@@ -2522,8 +2522,7 @@ static void ins_compl_del_pum(void)
 {
   if (compl_match_array != NULL) {
     pum_undisplay(false);
-    xfree(compl_match_array);
-    compl_match_array = NULL;
+    XFREE_CLEAR(compl_match_array);
   }
 }
 
@@ -2592,8 +2591,7 @@ void ins_compl_show_pum(void)
      * not use "compl_leader" as prefix filter.
      */
     if (ins_compl_need_restart()){
-      xfree(compl_leader);
-      compl_leader = NULL;
+      XFREE_CLEAR(compl_leader);
     }
     if (compl_leader != NULL)
       lead_len = (int)STRLEN(compl_leader);
@@ -2960,10 +2958,8 @@ static void ins_compl_free(void)
   compl_T *match;
   int i;
 
-  xfree(compl_pattern);
-  compl_pattern = NULL;
-  xfree(compl_leader);
-  compl_leader = NULL;
+  XFREE_CLEAR(compl_pattern);
+  XFREE_CLEAR(compl_leader);
 
   if (compl_first_match == NULL)
     return;
@@ -2993,13 +2989,10 @@ static void ins_compl_clear(void)
   compl_cont_status = 0;
   compl_started = FALSE;
   compl_matches = 0;
-  xfree(compl_pattern);
-  compl_pattern = NULL;
-  xfree(compl_leader);
-  compl_leader = NULL;
+  XFREE_CLEAR(compl_pattern);
+  XFREE_CLEAR(compl_leader);
   edit_submode_extra = NULL;
-  xfree(compl_orig_text);
-  compl_orig_text = NULL;
+  XFREE_CLEAR(compl_orig_text);
   compl_enter_selects = FALSE;
   // clear v:completed_item
   set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
@@ -4960,10 +4953,8 @@ static int ins_complete(int c, bool enable_pum)
     compl_orig_text = vim_strnsave(line + compl_col, compl_length);
     if (ins_compl_add(compl_orig_text, -1, p_ic, NULL, NULL, false, 0,
                       ORIGINAL_TEXT, false, false) != OK) {
-      xfree(compl_pattern);
-      compl_pattern = NULL;
-      xfree(compl_orig_text);
-      compl_orig_text = NULL;
+      XFREE_CLEAR(compl_pattern);
+      XFREE_CLEAR(compl_orig_text);
       return FAIL;
     }
 
@@ -6310,10 +6301,8 @@ void set_last_insert(int c)
 #if defined(EXITFREE)
 void free_last_insert(void)
 {
-  xfree(last_insert);
-  last_insert = NULL;
-  xfree(compl_orig_text);
-  compl_orig_text = NULL;
+  XFREE_CLEAR(last_insert);
+  XFREE_CLEAR(compl_orig_text);
 }
 
 #endif
@@ -6840,8 +6829,7 @@ static void mb_replace_pop_ins(int cc)
  */
 static void replace_flush(void)
 {
-  xfree(replace_stack);
-  replace_stack = NULL;
+  XFREE_CLEAR(replace_stack);
   replace_stack_len = 0;
   replace_stack_nr = 0;
 }

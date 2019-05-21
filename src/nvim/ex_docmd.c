@@ -431,8 +431,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
     if (cstack.cs_looplevel > 0 && current_line < lines_ga.ga_len) {
       /* Each '|' separated command is stored separately in lines_ga, to
        * be able to jump to it.  Don't use next_cmdline now. */
-      xfree(cmdline_copy);
-      cmdline_copy = NULL;
+      XFREE_CLEAR(cmdline_copy);
 
       /* Check if a function has returned or, unless it has an unclosed
        * try conditional, aborted. */
@@ -606,12 +605,11 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
       current_line = cmd_loop_cookie.current_line;
 
     if (next_cmdline == NULL) {
-      xfree(cmdline_copy);
-      cmdline_copy = NULL;
-      /*
-       * If the command was typed, remember it for the ':' register.
-       * Do this AFTER executing the command to make :@: work.
-       */
+      XFREE_CLEAR(cmdline_copy);
+      //
+      // If the command was typed, remember it for the ':' register.
+      // Do this AFTER executing the command to make :@: work.
+      //
       if (getline_equal(fgetline, cookie, getexline)
           && new_last_cmdline != NULL) {
         xfree(last_cmdline);
@@ -4842,10 +4840,8 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
         goto fail;
       }
 
-      xfree(cmd->uc_rep);
-      cmd->uc_rep = NULL;
-      xfree(cmd->uc_compl_arg);
-      cmd->uc_compl_arg = NULL;
+      XFREE_CLEAR(cmd->uc_rep);
+      XFREE_CLEAR(cmd->uc_compl_arg);
       break;
     }
 
@@ -7232,11 +7228,8 @@ static char_u   *prev_dir = NULL;
 #if defined(EXITFREE)
 void free_cd_dir(void)
 {
-  xfree(prev_dir);
-  prev_dir = NULL;
-
-  xfree(globaldir);
-  globaldir = NULL;
+  XFREE_CLEAR(prev_dir);
+  XFREE_CLEAR(globaldir);
 }
 
 #endif
@@ -7247,13 +7240,11 @@ void free_cd_dir(void)
 void post_chdir(CdScope scope, bool trigger_dirchanged)
 {
   // Always overwrite the window-local CWD.
-  xfree(curwin->w_localdir);
-  curwin->w_localdir = NULL;
+  XFREE_CLEAR(curwin->w_localdir);
 
   // Overwrite the tab-local CWD for :cd, :tcd.
   if (scope >= kCdScopeTab) {
-    xfree(curtab->tp_localdir);
-    curtab->tp_localdir = NULL;
+    XFREE_CLEAR(curtab->tp_localdir);
   }
 
   if (scope < kCdScopeGlobal) {
@@ -7270,8 +7261,7 @@ void post_chdir(CdScope scope, bool trigger_dirchanged)
   switch (scope) {
   case kCdScopeGlobal:
     // We are now in the global directory, no need to remember its name.
-    xfree(globaldir);
-    globaldir = NULL;
+    XFREE_CLEAR(globaldir);
     break;
   case kCdScopeTab:
     curtab->tp_localdir = (char_u *)xstrdup(cwd);

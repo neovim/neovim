@@ -3135,8 +3135,7 @@ win_line (
       int c0;
 
       if (p_extra_free != NULL) {
-        xfree(p_extra_free);
-        p_extra_free = NULL;
+        XFREE_CLEAR(p_extra_free);
       }
 
       // Get a character from the line itself.

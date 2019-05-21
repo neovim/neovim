@@ -1446,8 +1446,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     // Copy flag to "sl_comprules", unless we run into a wildcard.
     if (crp != NULL) {
       if (c == '?' || c == '+' || c == '*') {
-        xfree(slang->sl_comprules);
-        slang->sl_comprules = NULL;
+        XFREE_CLEAR(slang->sl_comprules);
         crp = NULL;
       } else
         *crp++ = c;

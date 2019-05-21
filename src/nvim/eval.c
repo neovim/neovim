@@ -622,8 +622,7 @@ void eval_clear(void)
   for (size_t i = 0; i < ARRAY_SIZE(vimvars); i++) {
     p = &vimvars[i];
     if (p->vv_di.di_tv.v_type == VAR_STRING) {
-      xfree(p->vv_str);
-      p->vv_str = NULL;
+      XFREE_CLEAR(p->vv_str);
     } else if (p->vv_di.di_tv.v_type == VAR_LIST) {
       tv_list_unref(p->vv_list);
       p->vv_list = NULL;
@@ -842,15 +841,12 @@ void var_redir_stop(void)
       clear_lval(redir_lval);
     }
 
-    /* free the collected output */
-    xfree(redir_ga.ga_data);
-    redir_ga.ga_data = NULL;
+    // free the collected output
+    XFREE_CLEAR(redir_ga.ga_data);
 
-    xfree(redir_lval);
-    redir_lval = NULL;
+    XFREE_CLEAR(redir_lval);
   }
-  xfree(redir_varname);
-  redir_varname = NULL;
+  XFREE_CLEAR(redir_varname);
 }
 
 int eval_charconvert(const char *const enc_from, const char *const enc_to,
@@ -3201,8 +3197,7 @@ char_u *get_user_var_name(expand_T *xp, int idx)
     return cat_prefix_varname('v', (char_u *)vimvars[vidx++].vv_name);
   }
 
-  xfree(varnamebuf);
-  varnamebuf = NULL;
+  XFREE_CLEAR(varnamebuf);
   varnamebuflen = 0;
   return NULL;
 }
@@ -5942,8 +5937,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
       // Next try expanding things like $VIM and ${HOME}.
       string = expand_env_save(name - 1);
       if (string != NULL && *string == '$') {
-        xfree(string);
-        string = NULL;
+        XFREE_CLEAR(string);
       }
     }
     name[len] = cc;
@@ -13815,8 +13809,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (*q != NUL) {
         STRMOVE(remain, q - 1);
       } else {
-        xfree(remain);
-        remain = NULL;
+        XFREE_CLEAR(remain);
       }
     }
 
@@ -20391,8 +20384,7 @@ void ex_function(exarg_T *eap)
       /* between ":append" and "." and between ":python <<EOF" and "EOF"
        * don't check for ":endfunc". */
       if (STRCMP(theline, skip_until) == 0) {
-        xfree(skip_until);
-        skip_until = NULL;
+        XFREE_CLEAR(skip_until);
       }
     } else {
       /* skip ':' and blanks*/
@@ -20550,8 +20542,7 @@ void ex_function(exarg_T *eap)
         // redefine existing function
         ga_clear_strings(&(fp->uf_args));
         ga_clear_strings(&(fp->uf_lines));
-        xfree(name);
-        name = NULL;
+        XFREE_CLEAR(name);
       }
     }
   } else {

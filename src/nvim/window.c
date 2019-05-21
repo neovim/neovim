@@ -558,8 +558,7 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
     }
     int dir;
     winframe_remove(wp, &dir, NULL);
-    xfree(wp->w_frame);
-    wp->w_frame = NULL;
+    XFREE_CLEAR(wp->w_frame);
     (void)win_comp_pos();  // recompute window positions
     win_remove(wp, NULL);
     win_append(lastwin_nofloating(), wp);
@@ -4297,8 +4296,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
         do_autocmd_dirchanged((char *)globaldir, kCdScopeGlobal);
       }
     }
-    xfree(globaldir);
-    globaldir = NULL;
+    XFREE_CLEAR(globaldir);
     shorten_fnames(TRUE);
   }
 

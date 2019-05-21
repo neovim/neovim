@@ -592,8 +592,7 @@ static int command_line_execute(VimState *state, int key)
       && s->c != K_KPAGEDOWN && s->c != K_KPAGEUP
       && s->c != K_LEFT && s->c != K_RIGHT
       && (s->xpc.xp_numfiles > 0 || (s->c != Ctrl_P && s->c != Ctrl_N))) {
-    xfree(s->lookfor);
-    s->lookfor = NULL;
+    XFREE_CLEAR(s->lookfor);
   }
 
   // When there are matching completions to select <S-Tab> works like
@@ -626,8 +625,7 @@ static int command_line_execute(VimState *state, int key)
       && s->c != Ctrl_L) {
     if (compl_match_array) {
       pum_undisplay(true);
-      xfree(compl_match_array);
-      compl_match_array = NULL;
+      XFREE_CLEAR(compl_match_array);
     }
     if (s->xpc.xp_numfiles != -1) {
       (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
@@ -1260,8 +1258,7 @@ static int command_line_handle_key(CommandLineState *s)
         return command_line_not_changed(s);
       }
 
-      xfree(ccline.cmdbuff);               // no commandline to return
-      ccline.cmdbuff = NULL;
+      XFREE_CLEAR(ccline.cmdbuff);        // no commandline to return
       if (!cmd_silent && !ui_has(kUICmdline)) {
         if (cmdmsg_rl) {
           msg_col = Columns;
@@ -1978,8 +1975,7 @@ static int command_line_changed(CommandLineState *s)
 /// Abandon the command line.
 static void abandon_cmdline(void)
 {
-  xfree(ccline.cmdbuff);
-  ccline.cmdbuff = NULL;
+  XFREE_CLEAR(ccline.cmdbuff);
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
@@ -2630,8 +2626,7 @@ static bool color_cmdline(CmdlineInfo *colored_ccline)
 
   if (colored_ccline->cmdbuff == NULL || *colored_ccline->cmdbuff == NUL) {
     // Nothing to do, exiting.
-    xfree(ccline_colors->cmdbuff);
-    ccline_colors->cmdbuff = NULL;
+    XFREE_CLEAR(ccline_colors->cmdbuff);
     return ret;
   }
 
@@ -3650,8 +3645,7 @@ nextwild (
         }
       }
       if ((int)STRLEN(p2) < j) {
-        xfree(p2);
-        p2 = NULL;
+        XFREE_CLEAR(p2);
       }
     }
   }
@@ -3785,8 +3779,7 @@ ExpandOne (
   if (xp->xp_numfiles != -1 && mode != WILD_ALL && mode != WILD_LONGEST) {
     FreeWild(xp->xp_numfiles, xp->xp_files);
     xp->xp_numfiles = -1;
-    xfree(orig_save);
-    orig_save = NULL;
+    XFREE_CLEAR(orig_save);
   }
   findex = 0;
 

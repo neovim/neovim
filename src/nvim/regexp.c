@@ -3550,8 +3550,7 @@ theend:
   /* Free "reg_tofree" when it's a bit big.
    * Free regstack and backpos if they are bigger than their initial size. */
   if (reg_tofreelen > 400) {
-    xfree(reg_tofree);
-    reg_tofree = NULL;
+    XFREE_CLEAR(reg_tofree);
   }
   if (regstack.ga_maxlen > REGSTACK_INITIAL)
     ga_clear(&regstack);
@@ -6618,8 +6617,7 @@ static int vim_regsub_both(char_u *source, typval_T *expr, char_u *dest,
       if (eval_result != NULL) {
         STRCPY(dest, eval_result);
         dst += STRLEN(eval_result);
-        xfree(eval_result);
-        eval_result = NULL;
+        XFREE_CLEAR(eval_result);
       }
     } else {
       int prev_can_f_submatch = can_f_submatch;

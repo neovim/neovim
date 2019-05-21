@@ -885,8 +885,7 @@ retry:
     }
     if (tmpname != NULL) {
       os_remove((char *)tmpname);  // delete converted file
-      xfree(tmpname);
-      tmpname = NULL;
+      XFREE_CLEAR(tmpname);
     }
   }
 
@@ -1884,8 +1883,7 @@ failed:
 
       msg_add_lines(c, (long)linecnt, filesize);
 
-      xfree(keep_msg);
-      keep_msg = NULL;
+      XFREE_CLEAR(keep_msg);
       p = NULL;
       msg_scrolled_ign = TRUE;
 
@@ -2171,8 +2169,7 @@ readfile_charconvert (
     MSG(errmsg);
     if (tmpname != NULL) {
       os_remove((char *)tmpname);  // delete converted file
-      xfree(tmpname);
-      tmpname = NULL;
+      XFREE_CLEAR(tmpname);
     }
   }
 
@@ -2828,14 +2825,13 @@ buf_write (
            */
           if (os_fileinfo((char *)backup, &file_info_new)) {
             if (os_fileinfo_id_equal(&file_info_new, &file_info_old)) {
-              /*
-               * Backup file is same as original file.
-               * May happen when modname() gave the same file back (e.g. silly
-               * link). If we don't check here, we either ruin the file when
-               * copying or erase it after writing.
-               */
-              xfree(backup);
-              backup = NULL;                    /* no backup file to delete */
+              //
+              // Backup file is same as original file.
+              // May happen when modname() gave the same file back (e.g. silly
+              // link). If we don't check here, we either ruin the file when
+              // copying or erase it after writing.
+              //
+              XFREE_CLEAR(backup);              // no backup file to delete
             } else if (!p_bk) {
               /*
                * We are not going to keep the backup file, so don't
@@ -2853,8 +2849,7 @@ buf_write (
               }
               /* They all exist??? Must be something wrong. */
               if (*wp == 'a') {
-                xfree(backup);
-                backup = NULL;
+                XFREE_CLEAR(backup);
               }
             }
           }
@@ -2969,8 +2964,7 @@ nobackup:
             }
             // They all exist??? Must be something wrong!
             if (*p == 'a') {
-              xfree(backup);
-              backup = NULL;
+              XFREE_CLEAR(backup);
             }
           }
         }
@@ -2988,8 +2982,7 @@ nobackup:
           if (vim_rename(fname, backup) == 0)
             break;
 
-          xfree(backup);             /* don't do the rename below */
-          backup = NULL;
+          XFREE_CLEAR(backup);             // don't do the rename below
         }
       }
       if (backup == NULL && !forceit) {
@@ -3585,8 +3578,7 @@ restore_backup:
         EMSG(_("E205: Patchmode: can't save original file"));
       } else if (!os_path_exists((char_u *)org)) {
         vim_rename(backup, (char_u *)org);
-        xfree(backup);                   /* don't delete the file */
-        backup = NULL;
+        XFREE_CLEAR(backup);                   // don't delete the file
 #ifdef UNIX
         set_file_time((char_u *)org,
                       file_info_old.stat.st_atim.tv_sec,
@@ -4313,8 +4305,7 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
       && (force
           || buf->b_sfname == NULL
           || path_is_absolute(buf->b_sfname))) {
-    xfree(buf->b_sfname);
-    buf->b_sfname = NULL;
+    XFREE_CLEAR(buf->b_sfname);
     p = path_shorten_fname(buf->b_ffname, dirname);
     if (p != NULL) {
       buf->b_sfname = vim_strsave(p);
@@ -5352,8 +5343,7 @@ void vim_deltempdir(void)
     // remove the trailing path separator
     path_tail(vim_tempdir)[-1] = NUL;
     delete_recursive((const char *)vim_tempdir);
-    xfree(vim_tempdir);
-    vim_tempdir = NULL;
+    XFREE_CLEAR(vim_tempdir);
   }
 }
 
@@ -5512,8 +5502,7 @@ static void show_autocmd(AutoPat *ap, event_T event)
 // Mark an autocommand handler for deletion.
 static void au_remove_pat(AutoPat *ap)
 {
-  xfree(ap->pat);
-  ap->pat = NULL;
+  XFREE_CLEAR(ap->pat);
   ap->buflocal_nr = -1;
   au_need_clean = true;
 }
@@ -5522,8 +5511,7 @@ static void au_remove_pat(AutoPat *ap)
 static void au_remove_cmds(AutoPat *ap)
 {
   for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
-    xfree(ac->cmd);
-    ac->cmd = NULL;
+    XFREE_CLEAR(ac->cmd);
   }
   au_need_clean = true;
 }
@@ -5531,8 +5519,7 @@ static void au_remove_cmds(AutoPat *ap)
 // Delete one command from an autocmd pattern.
 static void au_del_cmd(AutoCmd *ac)
 {
-  xfree(ac->cmd);
-  ac->cmd = NULL;
+  XFREE_CLEAR(ac->cmd);
   au_need_clean = true;
 }
 
@@ -6504,8 +6491,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
 
     /* Make sure w_localdir and globaldir are NULL to avoid a chdir() in
      * win_enter_ext(). */
-    xfree(aucmd_win->w_localdir);
-    aucmd_win->w_localdir = NULL;
+    XFREE_CLEAR(aucmd_win->w_localdir);
     aco->globaldir = globaldir;
     globaldir = NULL;
 
@@ -7128,8 +7114,7 @@ auto_next_pat (
   AutoCmd     *cp;
   char        *s;
 
-  xfree(sourcing_name);
-  sourcing_name = NULL;
+  XFREE_CLEAR(sourcing_name);
 
   for (ap = apc->curpat; ap != NULL && !got_int; ap = ap->next) {
     apc->curpat = NULL;
@@ -7737,12 +7722,12 @@ char_u * file_pat_to_reg_pat(
     reg_pat[i++] = '$';
   reg_pat[i] = NUL;
   if (nested != 0) {
-    if (nested < 0)
+    if (nested < 0) {
       EMSG(_("E219: Missing {."));
-    else
+    } else {
       EMSG(_("E220: Missing }."));
-    xfree(reg_pat);
-    reg_pat = NULL;
+    }
+    XFREE_CLEAR(reg_pat);
   }
   return reg_pat;
 }

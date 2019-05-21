@@ -523,8 +523,7 @@ static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
       && fm->fname != NULL
       && fnamecmp(name, fm->fname) == 0) {
     fm->fmark.fnum = buf->b_fnum;
-    xfree(fm->fname);
-    fm->fname = NULL;
+    XFREE_CLEAR(fm->fname);
   }
 }
 
@@ -752,8 +751,7 @@ void ex_delmarks(exarg_T *eap)
               n = i - 'A';
             }
             namedfm[n].fmark.mark.lnum = 0;
-            xfree(namedfm[n].fname);
-            namedfm[n].fname = NULL;
+            XFREE_CLEAR(namedfm[n].fname);
           }
         }
       } else

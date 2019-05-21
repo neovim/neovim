@@ -1467,8 +1467,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         } else {
           AppendToRedobuffLit(repeat_cmdline, -1);
           AppendToRedobuff(NL_STR);
-          xfree(repeat_cmdline);
-          repeat_cmdline = NULL;
+          XFREE_CLEAR(repeat_cmdline);
         }
       }
     }

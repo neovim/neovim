@@ -662,8 +662,7 @@ static void diff_redraw(int dofold)
 static void clear_diffin(diffin_T *din)
 {
   if (din->din_fname == NULL) {
-    xfree(din->din_mmfile.ptr);
-    din->din_mmfile.ptr = NULL;
+    XFREE_CLEAR(din->din_mmfile.ptr);
   } else {
     os_remove((char *)din->din_fname);
   }

@@ -714,8 +714,7 @@ char *u_get_undo_file_name(const char *const buf_ffname, const bool reading)
         && (!reading || os_path_exists((char_u *)undo_file_name))) {
       break;
     }
-    xfree(undo_file_name);
-    undo_file_name = NULL;
+    XFREE_CLEAR(undo_file_name);
   }
 
   xfree(munged_name);
@@ -2887,8 +2886,7 @@ void u_saveline(linenr_T lnum)
 void u_clearline(void)
 {
   if (curbuf->b_u_line_ptr != NULL) {
-    xfree(curbuf->b_u_line_ptr);
-    curbuf->b_u_line_ptr = NULL;
+    XFREE_CLEAR(curbuf->b_u_line_ptr);
     curbuf->b_u_line_lnum = 0;
   }
 }

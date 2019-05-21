@@ -809,8 +809,7 @@ free_buffer_stuff(
   bufhl_clear_all(buf);                // delete any highligts
   map_clear_int(buf, MAP_ALL_MODES, true, false);    // clear local mappings
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
-  xfree(buf->b_start_fenc);
-  buf->b_start_fenc = NULL;
+  XFREE_CLEAR(buf->b_start_fenc);
 
   buf_updates_unregister_all(buf);
 }
@@ -1756,10 +1755,8 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
 
   if (ffname != NULL && (buf->b_ffname == NULL || buf->b_sfname == NULL)) {
-    xfree(buf->b_ffname);
-    buf->b_ffname = NULL;
-    xfree(buf->b_sfname);
-    buf->b_sfname = NULL;
+    XFREE_CLEAR(buf->b_ffname);
+    XFREE_CLEAR(buf->b_sfname);
     if (buf != curbuf) {
       free_buffer(buf);
     }
@@ -2665,10 +2662,8 @@ setfname(
 
   if (ffname == NULL || *ffname == NUL) {
     // Removing the name.
-    xfree(buf->b_ffname);
-    xfree(buf->b_sfname);
-    buf->b_ffname = NULL;
-    buf->b_sfname = NULL;
+    XFREE_CLEAR(buf->b_ffname);
+    XFREE_CLEAR(buf->b_sfname);
   } else {
     fname_expand(buf, &ffname, &sfname);    // will allocate ffname
     if (ffname == NULL) {                   // out of memory
@@ -3791,8 +3786,7 @@ int build_stl_str_hl(
       if (str != NULL && *str != 0) {
         if (*skipdigits(str) == NUL) {
           num = atoi((char *)str);
-          xfree(str);
-          str = NULL;
+          XFREE_CLEAR(str);
           itemisflag = false;
         }
       }

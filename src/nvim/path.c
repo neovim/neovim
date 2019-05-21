@@ -2088,8 +2088,7 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_files, char_u ***files,
 
   // Free empty array of matches
   if (*num_files == 0) {
-    xfree(*files);
-    *files = NULL;
+    XFREE_CLEAR(*files);
     return FAIL;
   }
 
