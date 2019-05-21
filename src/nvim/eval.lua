@@ -75,6 +75,7 @@ return {
     cursor={args={1, 3}},
     deepcopy={args={1, 2}},
     delete={args={1,2}},
+    deletebufline={args={2,3}},
     dictwatcheradd={args=3},
     dictwatcherdel={args=3},
     did_filetype={},
