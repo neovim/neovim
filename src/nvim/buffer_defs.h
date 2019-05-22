@@ -793,6 +793,9 @@ struct file_buffer {
 
   char_u *b_prompt_text;        // set by prompt_setprompt()
   Callback b_prompt_callback;   // set by prompt_setcallback()
+  Callback b_prompt_interrupt;  // set by prompt_setinterrupt()
+  int b_prompt_insert;          // value for restart_edit when entering
+                                // a prompt buffer window.
 
   synblock_T b_s;               // Info related to syntax highlighting.  w_s
                                 // normally points to this, but some windows
