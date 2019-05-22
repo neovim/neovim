@@ -2281,8 +2281,9 @@ pow({x}, {y})			Float	{x} to the power of {y}
 prevnonblank({lnum})		Number	line nr of non-blank line <= {lnum}
 printf({fmt}, {expr1}...)	String	format text
 prompt_addtext({buf}, {expr})	none	add text to a prompt buffer
-prompt_setprompt({buf}, {text}) none	set prompt text
 prompt_setcallback({buf}, {expr}) none	set prompt callback function
+prompt_setinterrupt({buf}, {text}) none	set prompt interrupt function
+prompt_setprompt({buf}, {text}) none	set prompt text
 pum_getpos()			Dict	position and size of pum if visible
 pumvisible()			Number	whether popup menu is visible
 pyeval({expr})			any	evaluate |Python| expression
@@ -6544,17 +6545,11 @@ printf({fmt}, {expr1} ...)				*printf()*
 		of "%" items.  If there are not sufficient or too many
 		arguments an error is given.  Up to 18 arguments can be used.
 
-prompt_setprompt({buf}, {text})				*prompt_setprompt()*
-		Set prompt for buffer {buf} to {text}.  You most likely want
-		{text} to end in a space.
-		The result is only visible if {buf} has 'buftype' set to
-		"prompt".  Example: >
-			call prompt_setprompt(bufnr(''), 'command: ')
-
-
 prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
-		Set prompt callback for buffer {buf} to {expr}.  This has only
+		Set prompt callback for buffer {buf} to {expr}.  When {expr}
+		is an empty string the callback is removed.  This has only
 		effect if {buf} has 'buftype' set to "prompt".
+
 		The callback is invoked when pressing Enter.  The current
 		buffer will always be the prompt buffer.  A new line for a
 		prompt is added before invoking the callback, thus the prompt
@@ -6579,6 +6574,22 @@ prompt_setcallback({buf}, {expr})			*prompt_setcallback()*
 		     endif
 		   endfunc
 
+prompt_setinterrupt({buf}, {expr})			*prompt_setinterrupt()*
+		Set a callback for buffer {buf} to {expr}.  When {expr} is an
+		empty string the callback is removed.  This has only effect if
+		{buf} has 'buftype' set to "prompt".
+
+		This callback will be invoked when pressing CTRL-C in Insert
+		mode.  Without setting a callback Vim will exit Insert mode,
+		as in any buffer.
+
+prompt_setprompt({buf}, {text})				*prompt_setprompt()*
+		Set prompt for buffer {buf} to {text}.  You most likely want
+		{text} to end in a space.
+		The result is only visible if {buf} has 'buftype' set to
+		"prompt".  Example: >
+			call prompt_setprompt(bufnr(''), 'command: ')
+
 pum_getpos()						*pum_getpos()*
  		If the popup menu (see |ins-completion-menu|) is not visible,
  		returns an empty |Dictionary|, otherwise, returns a
@@ -6591,6 +6602,7 @@ pum_getpos()						*pum_getpos()*
  			scrollbar	|TRUE| if visible
 
   		The values are the same as in |v:event| during |CompleteChanged|.
+
 pumvisible()						*pumvisible()*
 		Returns non-zero when the popup menu is visible, zero
 		otherwise.  See |ins-completion-menu|.

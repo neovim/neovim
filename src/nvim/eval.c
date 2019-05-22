@@ -13718,3 +13718,20 @@ void invoke_prompt_callback(void)
     tv_clear(&argv[0]);
     tv_clear(&rettv);
 }
+
+// Return true When the interrupt callback was invoked.
+bool invoke_prompt_interrupt(void)
+{
+    typval_T rettv;
+    typval_T argv[1];
+
+    if (curbuf->b_prompt_interrupt.type == kCallbackNone) {
+      return false;
+    }
+    argv[0].v_type = VAR_UNKNOWN;
+
+    got_int = false;  // don't skip executing commands
+    callback_call(&curbuf->b_prompt_interrupt, 0, argv, &rettv);
+    tv_clear(&rettv);
+    return true;
+}

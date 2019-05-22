@@ -823,6 +823,16 @@ static int insert_handle_key(InsertState *s)
       s->nomove = true;
       return 0;  // exit insert mode
     }
+    if (s->c == Ctrl_C && bt_prompt(curbuf)) {
+      if (invoke_prompt_interrupt()) {
+        if (!bt_prompt(curbuf)) {
+          // buffer changed to a non-prompt buffer, get out of
+          // Insert mode
+          return 0;
+        }
+        break;
+      }
+    }
 
     // when 'insertmode' set, and not halfway through a mapping, don't leave
     // Insert mode

@@ -765,6 +765,7 @@ static void free_buffer(buf_T *buf)
   tv_dict_unref(buf->additional_data);
   xfree(buf->b_prompt_text);
   callback_free(&buf->b_prompt_callback);
+  callback_free(&buf->b_prompt_interrupt);
   clear_fmark(&buf->b_last_cursor);
   clear_fmark(&buf->b_last_insert);
   clear_fmark(&buf->b_last_change);
@@ -1879,6 +1880,7 @@ buf_T * buflist_new(char_u *ffname, char_u *sfname, linenr_T lnum, int flags)
   }
 
   buf->b_prompt_callback.type = kCallbackNone;
+  buf->b_prompt_interrupt.type = kCallbackNone;
   buf->b_prompt_text = NULL;
 
   return buf;

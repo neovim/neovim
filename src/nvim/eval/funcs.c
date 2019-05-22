@@ -6101,6 +6101,31 @@ static void f_prompt_setcallback(typval_T *argvars,
     buf->b_prompt_callback = prompt_callback;
 }
 
+// "prompt_setinterrupt({buffer}, {callback})" function
+static void f_prompt_setinterrupt(typval_T *argvars,
+                                  typval_T *rettv, FunPtr fptr)
+{
+    buf_T *buf;
+    Callback interrupt_callback = { .type = kCallbackNone };
+
+    if (check_secure()) {
+      return;
+    }
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      return;
+    }
+
+    if (argvars[1].v_type != VAR_STRING || *argvars[1].vval.v_string != NUL) {
+      if (!callback_from_typval(&interrupt_callback, &argvars[1])) {
+        return;
+      }
+    }
+
+    callback_free(&buf->b_prompt_interrupt);
+    buf->b_prompt_interrupt= interrupt_callback;
+}
+
 // "prompt_setprompt({buffer}, {text})" function
 static void f_prompt_setprompt(typval_T *argvars,
                                typval_T *rettv, FunPtr fptr)
