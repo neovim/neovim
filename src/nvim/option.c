@@ -7092,10 +7092,13 @@ static int check_opt_wim(void)
  */
 bool can_bs(int what)
 {
+  if (what == BS_START && bt_prompt(curbuf)) {
+    return false;
+  }
   switch (*p_bs) {
-  case '2':       return true;
-  case '1':       return what != BS_START;
-  case '0':       return false;
+    case '2':       return true;
+    case '1':       return what != BS_START;
+    case '0':       return false;
   }
   return vim_strchr(p_bs, what) != NULL;
 }

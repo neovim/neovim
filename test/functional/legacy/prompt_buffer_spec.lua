@@ -28,6 +28,11 @@ describe('prompt buffer', function()
         call append(line("$") - 1, 'Result: "' . a:text .'"')
       endfunc
     ]])
+    feed_command("set noshowmode | set laststatus=0")
+    feed_command("call setline(1, 'other buffer')")
+    feed_command("new")
+    feed_command("set buftype=prompt")
+    feed_command("call prompt_setcallback(bufnr(''), function('TextEntered'))")
   end)
 
   after_each(function()
@@ -35,11 +40,6 @@ describe('prompt buffer', function()
   end)
 
   it('works', function()
-    feed_command("set noshowmode | set laststatus=0")
-    feed_command("call setline(1, 'other buffer')")
-    feed_command("new")
-    feed_command("set buftype=prompt")
-    feed_command("call prompt_setcallback(bufnr(''), function('TextEntered'))")
     screen:expect([[
       ^                         |
       ~                        |
@@ -52,7 +52,7 @@ describe('prompt buffer', function()
       ~                        |
                                |
     ]])
-    feed_command("startinsert")
+    feed("i")
     feed("hello\n")
     screen:expect([[
       % hello                  |
@@ -67,6 +67,74 @@ describe('prompt buffer', function()
                                |
     ]])
     feed("exit\n")
+    screen:expect([[
+      ^other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
+  it('editing', function()
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Scratch]                |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+    feed("i")
+    feed("hello<BS><BS>")
+    screen:expect([[
+      % hel^                    |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Scratch]                |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+    feed("<Left><Left><Left><BS>-")
+    screen:expect([[
+      % -^hel                   |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Scratch]                |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+    feed("<End>x")
+    screen:expect([[
+      % -helx^                  |
+      ~                        |
+      ~                        |
+      ~                        |
+      [Scratch]                |
+      other buffer             |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+    feed("<C-U>exit\n")
     screen:expect([[
       ^other buffer             |
       ~                        |
