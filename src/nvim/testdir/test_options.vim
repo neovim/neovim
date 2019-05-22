@@ -51,6 +51,32 @@ function! Test_options()
   endtry
   call assert_equal('ok', caught)
 
+  " Check if the option-window is opened horizontally.
+  wincmd j
+  call assert_notequal('option-window', bufname(''))
+  wincmd k
+  call assert_equal('option-window', bufname(''))
+  " close option-window
+  close
+
+  " Open the option-window vertically.
+  vert options
+  " Check if the option-window is opened vertically.
+  wincmd l
+  call assert_notequal('option-window', bufname(''))
+  wincmd h
+  call assert_equal('option-window', bufname(''))
+  " close option-window
+  close
+
+  " Open the option-window in a new tab.
+  tab options
+  " Check if the option-window is opened in a tab.
+  normal gT
+  call assert_notequal('option-window', bufname(''))
+  normal gt
+  call assert_equal('option-window', bufname(''))
+
   " close option-window
   close
 endfunction
