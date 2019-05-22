@@ -212,18 +212,18 @@ static void insert_sign(
     newsign->id = id;
     newsign->lnum = lnum;
     newsign->typenr = typenr;
-	   if (group != NULL)
+    if (group != NULL)
+    {
+	newsign->group = sign_group_ref(group);
+	if (newsign->group == NULL)
 	{
-	    newsign->group = sign_group_ref(group);
-	    if (newsign->group == NULL)
-	    {
-		xfree(newsign);
-		return;
-	    }
+	    xfree(newsign);
+	    return;
 	}
-	   else
-	       newsign->group = NULL;
-	   newsign->priority = prio;
+    }
+    else
+	newsign->group = NULL;
+    newsign->priority = prio;
     newsign->next = next;
     newsign->prev = prev;
     if (next != NULL) {
@@ -331,8 +331,7 @@ void buf_addsign(
           // Update an existing sign
           sign->typenr = typenr;
           return;
-        } else if ((lnum == sign->lnum && id != sign->id)
-                   || (id < 0 && lnum < sign->lnum)) {
+        } else if (lnum < sign->lnum) {
           insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
           return;
         }
@@ -407,23 +406,20 @@ int buf_getsigntype(buf_T *buf, linenr_T lnum, SignType type,
                         && sign_get_attr(sign->typenr, SIGN_NUMHL) != 0))) {
             matches[nr_matches] = sign;
             nr_matches++;
-
-            if (nr_matches == ARRAY_SIZE(matches)) {
+            // signlist is sorted with most important (priority, id), thus we
+            // may stop as soon as we have max_signs matches
+            if (nr_matches == ARRAY_SIZE(matches) || nr_matches >= max_signs) {
                 break;
             }
         }
     }
 
     if (nr_matches > 0) {
-        if (nr_matches > max_signs) {
-            idx += nr_matches - max_signs;
-        }
-
         if (idx >= nr_matches) {
             return 0;
         }
 
-        return matches[idx]->typenr;
+        return matches[nr_matches - idx -1]->typenr;
     }
 
     return 0;

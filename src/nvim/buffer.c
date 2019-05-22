@@ -5261,7 +5261,7 @@ static int sign_compare(const void *a1, const void *a2)
     const signlist_T *s1 = *(const signlist_T **)a1;
     const signlist_T *s2 = *(const signlist_T **)a2;
 
-    // Sort by line number and the by id
+    // Sort by line number, priority and id
 
     if (s1->lnum > s2->lnum) {
         return 1;
@@ -5269,11 +5269,17 @@ static int sign_compare(const void *a1, const void *a2)
     if (s1->lnum < s2->lnum) {
         return -1;
     }
-    if (s1->id > s2->id) {
+    if (s1->priority > s2->priority) {
+        return -1;
+    }
+    if (s1->priority < s2->priority) {
         return 1;
     }
-    if (s1->id < s2->id) {
+    if (s1->id > s2->id) {
         return -1;
+    }
+    if (s1->id < s2->id) {
+        return 1;
     }
 
     return 0;
