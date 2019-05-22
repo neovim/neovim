@@ -339,19 +339,6 @@ void buf_addsign(
     }
 
     insert_sign_by_lnum_prio(buf, prev, id, groupname, prio, lnum, typenr);
-
-    // Having more than one sign with _the same type_ and on the _same line_ is
-    // unwanted, let's prevent it.
-
-    lastp = &buf->b_signlist;
-    for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
-        if (lnum == sign->lnum && sign->typenr == typenr && id != sign->id) {
-            *lastp = sign->next;
-            xfree(sign);
-        } else {
-            lastp = &sign->next;
-        }
-    }
 }
 
 // For an existing, placed sign "markId" change the type to "typenr".
