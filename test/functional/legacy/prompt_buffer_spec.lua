@@ -45,7 +45,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Scratch]                |
+      [Prompt]                 |
       other buffer             |
       ~                        |
       ~                        |
@@ -59,7 +59,7 @@ describe('prompt buffer', function()
       Command: "hello"         |
       Result: "hello"          |
       % ^                       |
-      [Scratch]                |
+      [Prompt]                 |
       other buffer             |
       ~                        |
       ~                        |
@@ -87,7 +87,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Scratch]                |
+      [Prompt]                 |
       other buffer             |
       ~                        |
       ~                        |
@@ -101,7 +101,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Scratch]                |
+      [Prompt]                 |
       other buffer             |
       ~                        |
       ~                        |
@@ -114,7 +114,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Scratch]                |
+      [Prompt]                 |
       other buffer             |
       ~                        |
       ~                        |
@@ -127,7 +127,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Scratch]                |
+      [Prompt]                 |
       other buffer             |
       ~                        |
       ~                        |

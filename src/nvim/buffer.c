@@ -5293,6 +5293,9 @@ char_u *buf_spname(buf_T *buf)
     if (buf->b_fname != NULL) {
       return buf->b_fname;
     }
+    if (bt_prompt(buf)) {
+      return (char_u *)_("[Prompt]");
+    }
     return (char_u *)_("[Scratch]");
   }
   if (buf->b_fname == NULL) {

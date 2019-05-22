@@ -1151,8 +1151,9 @@ check_pum:
     }
     if (bt_prompt(curbuf)) {
       invoke_prompt_callback();
-      if (curbuf != buf) {
-        // buffer changed, get out of Insert mode
+      if (!bt_prompt(curbuf)) {
+        // buffer changed to a non-prompt buffer, get out of
+        // Insert mode
         return 0;
       }
       break;
@@ -1618,6 +1619,8 @@ static void init_prompt(int cmdchar_todo)
   if (cmdchar_todo == 'I' || curwin->w_cursor.col <= (int)STRLEN(prompt)) {
     curwin->w_cursor.col = STRLEN(prompt);
   }
+  // Make sure the cursor is in a valid position.
+  check_cursor();
 }
 
 // Return TRUE if the cursor is in the editable position of the prompt line.
@@ -8219,10 +8222,14 @@ static void ins_mouse(int c)
     win_T   *new_curwin = curwin;
 
     if (curwin != old_curwin && win_valid(old_curwin)) {
-      /* Mouse took us to another window.  We need to go back to the
-       * previous one to stop insert there properly. */
+      // Mouse took us to another window.  We need to go back to the
+      // previous one to stop insert there properly.
       curwin = old_curwin;
       curbuf = curwin->w_buffer;
+      if (bt_prompt(curbuf)) {
+        // Restart Insert mode when re-entering the prompt buffer.
+        curbuf->b_prompt_insert = 'A';
+      }
     }
     start_arrow(curwin == old_curwin ? &tpos : NULL);
     if (curwin != new_curwin && win_valid(new_curwin)) {
