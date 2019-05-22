@@ -656,11 +656,7 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_a
         next = sign->next;
 	new_lnum = sign->lnum;
         if (sign->lnum >= line1 && sign->lnum <= line2) {
-            if (amount == MAXLNUM) {
-                *lastp = next;
-                xfree(sign);
-                continue;
-            } else {
+            if (amount != MAXLNUM) {
                 new_lnum += amount;
             }
         } else if (sign->lnum > line2) {
