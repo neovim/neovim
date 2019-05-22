@@ -198,6 +198,11 @@ typedef struct {
 #define IS_QF_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref == NULL)
 /* Location list window check helper macro */
 #define IS_LL_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL)
+
+// Quickfix and location list stack check helper macros
+#define IS_QF_STACK(qi)		(qi == &ql_info)
+#define IS_LL_STACK(qi)		(qi != &ql_info)
+
 /*
  * Return location list for window 'wp'
  * For location list window, return the referenced location list
@@ -1430,7 +1435,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
     qfp->qf_fnum = bufnum;
     if (buf != NULL) {
       buf->b_has_qf_entry |=
-        (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
+        IS_QF_STACK(qi) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
     }
   } else {
     qfp->qf_fnum = qf_get_fnum(qi, qf_idx, dir, fname);
@@ -1679,7 +1684,7 @@ static int qf_get_fnum(qf_info_T *qi, int qf_idx, char_u *directory,
     return 0;
   }
   buf->b_has_qf_entry =
-    (qi == &ql_info) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
+    IS_QF_STACK(qi) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
   return buf->b_fnum;
 }
 
@@ -2019,7 +2024,7 @@ static int jump_to_help_window(qf_info_T *qi, int *opened_window)
       flags |= WSP_TOP;
     }
 
-    if (qi != &ql_info) {
+    if (IS_LL_STACK(qi)) {
       flags |= WSP_NEWLOC;  // don't copy the location list
     }
 
@@ -2033,7 +2038,7 @@ static int jump_to_help_window(qf_info_T *qi, int *opened_window)
       win_setheight((int)p_hh);
     }
 
-    if (qi != &ql_info) {  // not a quickfix list
+    if (IS_LL_STACK(qi)) {  // not a quickfix list
       // The new window should use the supplied location list
       curwin->w_llist = qi;
       qi->qf_refcount++;
@@ -2216,7 +2221,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
     retval = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
                              GETF_SETMARK | GETF_SWITCH, forceit);
 
-    if (qi != &ql_info) {
+    if (IS_LL_STACK(qi)) {
       // Location list. Check whether the associated window is still
       // present and the list is still valid.
       if (!win_valid_any_tab(oldwin)) {
@@ -2229,7 +2234,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
       }
     } else if (old_qf_curlist != qi->qf_curlist
                || !is_qf_entry_present(qi, qf_ptr)) {
-      if (qi == &ql_info) {
+      if (IS_QF_STACK(qi)) {
         EMSG(_("E925: Current quickfix was changed"));
       } else {
         EMSG(_(e_loc_list_changed));
@@ -3117,8 +3122,8 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
    * pointing to the location list.
    */
   if (bt_quickfix(win->w_buffer))
-    if ((qi == &ql_info && win->w_llist_ref == NULL)
-        || (qi != &ql_info && win->w_llist_ref == qi))
+    if ((IS_QF_STACK(qi) && win->w_llist_ref == NULL)
+        || (IS_LL_STACK(qi) && win->w_llist_ref == qi))
       return TRUE;
 
   return FALSE;
@@ -5498,7 +5503,7 @@ void ex_helpgrep(exarg_T *eap)
   if (au_name != NULL) {
     apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name,
                    curbuf->b_fname, true, curbuf);
-    if (!new_qi && qi != &ql_info && qf_find_buf(qi) == NULL) {
+    if (!new_qi && IS_LL_STACK(qi) && qf_find_buf(qi) == NULL) {
       // autocommands made "qi" invalid
       return;
     }
