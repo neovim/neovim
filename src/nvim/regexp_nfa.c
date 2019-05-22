@@ -1498,6 +1498,10 @@ static int nfa_regatom(void)
       if (c == '<' || c == '>')
         c = getchr();
       while (ascii_isdigit(c)) {
+        if (n > (INT_MAX - (c - '0')) / 10) {
+          EMSG(_("E951: \\% value too large"));
+          return FAIL;
+        }
         n = n * 10 + (c - '0');
         c = getchr();
       }
