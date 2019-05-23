@@ -104,3 +104,15 @@ func Test_put_p_errmsg_nodup()
   delfunction Capture_p_error
   bwipeout!
 endfunc
+
+func Test_put_p_indent_visual()
+  new
+  call setline(1, ['select this text', 'select that text'])
+  " yank "that" from the second line
+  normal 2Gwvey
+  " select "this" in the first line and put
+  normal k0wve[p
+  call assert_equal('select that text', getline(1))
+  call assert_equal('select that text', getline(2))
+  bwipe!
+endfunc
