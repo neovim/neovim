@@ -955,6 +955,12 @@ ShellFilterPost			After executing a shell command with
 							*SourcePre*
 SourcePre			Before sourcing a Vim script. |:source|
 				<afile> is the name of the file being sourced.
+							*SourcePost*
+SourcePost			After sourcing a Vim script. |:source|
+				<afile> is the name of the file being sourced.
+				Not triggered when sourcing was interrupted.
+				Also triggered after a SourceCmd autocommand
+				was triggered.
 							*SourceCmd*
 SourceCmd			When sourcing a Vim script. |:source|
 				<afile> is the name of the file being sourced.

@@ -77,6 +77,7 @@ return {
     'Signal',                 -- after nvim process received a signal
     'SourceCmd',              -- sourcing a Vim script using command
     'SourcePre',              -- before sourcing a Vim script
+    'SourcePost',             -- after sourcing a Vim script
     'SpellFileMissing',       -- spell file missing
     'StdinReadPost',          -- after reading from stdin
     'StdinReadPre',           -- before reading from stdin
