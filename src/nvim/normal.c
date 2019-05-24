@@ -5633,11 +5633,8 @@ static void nv_brackets(cmdarg_T *cap)
       if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP)
         foldOpenCursor();
     }
-  }
-  /*
-   * "[p", "[P", "]P" and "]p": put with indent adjustment
-   */
-  else if (cap->nchar == 'p' || cap->nchar == 'P') {
+  } else if (cap->nchar == 'p' || cap->nchar == 'P') {
+    // "[p", "[P", "]P" and "]p": put with indent adjustment
     nv_put_opt(cap, true);
   }
   /*
