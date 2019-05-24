@@ -5,7 +5,6 @@
 "   %N
 "   %T
 "   %X
-"   %*
 
 source view_util.vim
 
@@ -248,6 +247,70 @@ func Test_statusline()
   let sa3=screenattr(&lines - 1, 3)
   call assert_equal(sa1, sa3)
   call assert_notequal(sa1, sa2)
+
+  " An empty group that contains highlight changes
+  let g:a = ''
+  set statusline=ab%(cd%1*%{g:a}%*%)de
+  call assert_match('^abde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 4)
+  call assert_equal(sa1, sa2)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 5)
+  let sa3=screenattr(&lines - 1, 7)
+  call assert_equal(sa1, sa3)
+  call assert_notequal(sa1, sa2)
+
+  let g:a = ''
+  set statusline=ab%1*%(cd%*%{g:a}%1*%)de
+  call assert_match('^abde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 4)
+  call assert_notequal(sa1, sa2)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 3)
+  let sa3=screenattr(&lines - 1, 5)
+  let sa4=screenattr(&lines - 1, 7)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa1, sa3)
+  call assert_equal(sa2, sa4)
+
+  " An empty group that contains highlight changes and doesn't reset them
+  let g:a = ''
+  set statusline=ab%(cd%1*%{g:a}%)de
+  call assert_match('^abcdde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 5)
+  call assert_notequal(sa1, sa2)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 5)
+  let sa3=screenattr(&lines - 1, 7)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa2, sa3)
+
+  let g:a = ''
+  set statusline=ab%1*%(cd%*%{g:a}%)de
+  call assert_match('^abcdde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 3)
+  let sa3=screenattr(&lines - 1, 5)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa1, sa3)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 3)
+  let sa3=screenattr(&lines - 1, 5)
+  let sa4=screenattr(&lines - 1, 7)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa1, sa3)
+  call assert_equal(sa1, sa4)
 
   " %%: a percent sign.
   set statusline=10%%

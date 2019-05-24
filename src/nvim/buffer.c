@@ -3480,15 +3480,25 @@ int build_stl_str_hl(
       //       Otherwise there would be no reason to do this step.
       if (curitem > groupitems[groupdepth] + 1
           && items[groupitems[groupdepth]].minwid == 0) {
-        bool has_normal_items = false;
-        for (long n = groupitems[groupdepth] + 1; n < curitem; n++) {
-          if (items[n].type == Normal || items[n].type == Highlight) {
-            has_normal_items = true;
-            break;
+        // remove group if all items are empty and highlight group
+        // doesn't change
+        int group_start_userhl = 0;
+        int group_end_userhl = 0;
+        int n;
+        for (n = 0; n < groupitems[groupdepth]; n++) {
+          if (items[n].type == Highlight) {
+            group_start_userhl = items[n].minwid;
           }
         }
-
-        if (!has_normal_items) {
+        for (n = groupitems[groupdepth] + 1; n < curitem; n++) {
+          if (items[n].type == Normal) {
+            break;
+          }
+          if (items[n].type == Highlight) {
+            group_end_userhl = items[n].minwid;
+          }
+        }
+        if (n == curitem && group_start_userhl == group_end_userhl) {
           out_p = t;
           group_len = 0;
         }
