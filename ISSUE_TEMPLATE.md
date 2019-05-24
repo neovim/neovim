@@ -10,6 +10,8 @@
 
 ```
 nvim -u NORC
+# Alternative for shell-related problems:
+# env -i TERM=ansi-256color "$(which nvim)"
 
 ```
 

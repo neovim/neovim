@@ -487,7 +487,7 @@ end:
   try_end(err);
 }
 
-/// Returns the byte offset for a line.
+/// Returns the byte offset of a line (0-indexed). |api-indexing|
 ///
 /// Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is one byte.
 /// 'fileformat' and 'fileencoding' are ignored. The line index just after the
@@ -879,7 +879,9 @@ void buffer_insert(Buffer buffer,
   nvim_buf_set_lines(0, buffer, lnum, lnum, true, lines, err);
 }
 
-/// Return a tuple (row,col) representing the position of the named mark
+/// Return a tuple (row,col) representing the position of the named mark.
+///
+/// Marks are (1,0)-indexed. |api-indexing|
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param name       Mark name
@@ -993,8 +995,8 @@ Integer nvim_buf_add_highlight(Buffer buffer,
 
 /// Clears namespaced objects, highlights and virtual text, from a line range
 ///
-/// To clear the namespace in the entire buffer, pass in 0 and -1 to
-/// line_start and line_end respectively.
+/// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
+/// buffer, specify line_start=0 and line_end=-1.
 ///
 /// @param buffer     Buffer handle, or 0 for current buffer
 /// @param ns_id      Namespace to clear, or -1 to clear all namespaces.

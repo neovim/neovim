@@ -14,8 +14,9 @@ Applications can also embed libnvim to work with the C API directly.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-API Types							   *api-types*
+API Definitions						*api-definitions*
 
+							*api-types*
 The Nvim C API defines custom types for all function parameters. Some are just
 typedefs around C99 standard types, others are Nvim-defined data structures.
 
@@ -33,6 +34,17 @@ discriminated as separate types in an Object:
   Buffer				-> enum value kObjectTypeBuffer
   Window				-> enum value kObjectTypeWindow
   Tabpage				-> enum value kObjectTypeTabpage
+
+							*api-indexing*
+Most of the API uses 0-based indices, and ranges are end-exclusive. For the
+end of a range, -1 denotes the last line/column.
+
+Exception: the following API functions use "mark-like" indexing (1-based
+lines, 0-based columns):
+
+    |nvim_buf_get_mark()|
+    |nvim_win_get_cursor()|
+    |nvim_win_set_cursor()|
 
 ==============================================================================
 API metadata							 *api-metadata*
@@ -1293,7 +1305,7 @@ nvim_buf_set_lines({buffer}, {start}, {end}, {strict_indexing},
                     {replacement}      Array of lines to use as replacement
 
 nvim_buf_get_offset({buffer}, {index})                 *nvim_buf_get_offset()*
-                Returns the byte offset for a line.
+                Returns the byte offset of a line (0-indexed). |api-indexing|
 
                 Line 1 (index=0) has offset 0. UTF-8 bytes are counted. EOL is
                 one byte. 'fileformat' and 'fileencoding' are ignored. The
@@ -1445,7 +1457,9 @@ nvim_buf_is_valid({buffer})                              *nvim_buf_is_valid()*
 
 nvim_buf_get_mark({buffer}, {name})                      *nvim_buf_get_mark()*
                 Return a tuple (row,col) representing the position of the
-                named mark
+                named mark.
+
+                Marks are (1,0)-indexed. |api-indexing|
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
@@ -1500,8 +1514,8 @@ nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
                 Clears namespaced objects, highlights and virtual text, from a
                 line range
 
-                To clear the namespace in the entire buffer, pass in 0 and -1
-                to line_start and line_end respectively.
+                Lines are 0-indexed. |api-indexing| To clear the namespace in
+                the entire buffer, specify line_start=0 and line_end=-1.
 
                 Parameters: ~
                     {buffer}      Buffer handle, or 0 for current buffer
@@ -1570,7 +1584,8 @@ nvim_win_set_buf({window}, {buffer})                      *nvim_win_set_buf()*
                     {buffer}  Buffer handle
 
 nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
-                Gets the cursor position in the window
+                Gets the (1,0)-indexed cursor position in the window.
+                |api-indexing|
 
                 Parameters: ~
                     {window}  Window handle
@@ -1579,7 +1594,8 @@ nvim_win_get_cursor({window})                          *nvim_win_get_cursor()*
                     (row, col) tuple
 
 nvim_win_set_cursor({window}, {pos})                   *nvim_win_set_cursor()*
-                Sets the cursor position in the window
+                Sets the (1,0)-indexed cursor position in the window.
+                |api-indexing|
 
                 Parameters: ~
                     {window}  Window handle

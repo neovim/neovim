@@ -74,7 +74,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   restore_win(save_curwin, save_curtab, false);
 }
 
-/// Gets the cursor position in the window
+/// Gets the (1,0)-indexed cursor position in the window. |api-indexing|
 ///
 /// @param window   Window handle
 /// @param[out] err Error details, if any
@@ -93,7 +93,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
   return rv;
 }
 
-/// Sets the cursor position in the window
+/// Sets the (1,0)-indexed cursor position in the window. |api-indexing|
 ///
 /// @param window   Window handle
 /// @param pos      (row, col) tuple representing the new position
