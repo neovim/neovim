@@ -5,7 +5,6 @@
 "   %N
 "   %T
 "   %X
-"   %*
 
 source view_util.vim
 
@@ -63,23 +62,23 @@ func Test_statusline()
   only
   set laststatus=2
   set splitbelow
-  call setline(1, range(1, 200))
+  call setline(1, range(1, 10000))
 
   " %b: Value of character under cursor.
   " %B: As above, in hexadecimal.
-  call cursor(180, 2)
+  call cursor(9000, 1)
   set statusline=%b,%B
-  call assert_match('^56,38\s*$', s:get_statusline())
+  call assert_match('^57,39\s*$', s:get_statusline())
 
   " %o: Byte number in file of byte under cursor, first byte is 1.
   " %O: As above, in hexadecimal.
   set statusline=%o,%O
   set fileformat=dos
-  call assert_match('^789,315\s*$', s:get_statusline())
+  call assert_match('^52888,CE98\s*$', s:get_statusline())
   set fileformat=mac
-  call assert_match('^610,262\s*$', s:get_statusline())
+  call assert_match('^43889,AB71\s*$', s:get_statusline())
   set fileformat=unix
-  call assert_match('^610,262\s*$', s:get_statusline())
+  call assert_match('^43889,AB71\s*$', s:get_statusline())
   set fileformat&
 
   " %f: Path to the file in the buffer, as typed or relative to current dir.
@@ -113,7 +112,7 @@ func Test_statusline()
   " %L: Number of line in buffer.
   " %c: Column number.
   set statusline=%l/%L,%c
-  call assert_match('^180/200,2\s*$', s:get_statusline())
+  call assert_match('^9000/10000,1\s*$', s:get_statusline())
 
   " %m: Modified flag, text is "[+]", "[-]" if 'modifiable' is off.
   " %M: Modified flag, text is ",+" or ",-".
@@ -137,7 +136,7 @@ func Test_statusline()
   call assert_match('^0,Top\s*$', s:get_statusline())
   norm G
   call assert_match('^100,Bot\s*$', s:get_statusline())
-  180
+  9000
   " Don't check the exact percentage as it depends on the window size
   call assert_match('^90,\(Top\|Bot\|\d\+%\)\s*$', s:get_statusline())
 
@@ -166,7 +165,7 @@ func Test_statusline()
 
   " %v: Virtual column number.
   " %V: Virtual column number as -{num}. Not displayed if equal to 'c'.
-  call cursor(180, 2)
+  call cursor(9000, 2)
   set statusline=%v,%V
   call assert_match('^2,\s*$', s:get_statusline())
   set virtualedit=all
@@ -196,20 +195,26 @@ func Test_statusline()
 
   " Test min/max width, leading zeroes, left/right justify.
   set statusline=%04B
-  call cursor(180, 2)
-  call assert_match('^0038\s*$', s:get_statusline())
+  call cursor(9000, 1)
+  call assert_match('^0039\s*$', s:get_statusline())
   set statusline=#%4B#
-  call assert_match('^#  38#\s*$', s:get_statusline())
+  call assert_match('^#  39#\s*$', s:get_statusline())
   set statusline=#%-4B#
-  call assert_match('^#38  #\s*$', s:get_statusline())
+  call assert_match('^#39  #\s*$', s:get_statusline())
   set statusline=%.6f
   call assert_match('^<sline\s*$', s:get_statusline())
 
   " %<: Where to truncate.
-  exe 'set statusline=a%<b' . repeat('c', 1000) . 'd'
-  call assert_match('^a<c*d$', s:get_statusline())
-  exe 'set statusline=a' . repeat('b', 1000) . '%<c'
-  call assert_match('^ab*>$', s:get_statusline())
+  " First check with when %< should not truncate with many columns
+  exe 'set statusline=a%<b' . repeat('c', &columns - 3) . 'd'
+  call assert_match('^abc\+d$', s:get_statusline())
+  exe 'set statusline=a' . repeat('b', &columns - 2) . '%<c'
+  call assert_match('^ab\+c$', s:get_statusline())
+  " Then check when %< should truncate when there with too few columns.
+  exe 'set statusline=a%<b' . repeat('c', &columns - 2) . 'd'
+  call assert_match('^a<c\+d$', s:get_statusline())
+  exe 'set statusline=a' . repeat('b', &columns - 1) . '%<c'
+  call assert_match('^ab\+>$', s:get_statusline())
 
   "%{: Evaluate expression between '%{' and '}' and substitute result.
   syntax on
@@ -248,6 +253,76 @@ func Test_statusline()
   let sa3=screenattr(&lines - 1, 3)
   call assert_equal(sa1, sa3)
   call assert_notequal(sa1, sa2)
+
+  " An empty group that contains highlight changes
+  let g:a = ''
+  set statusline=ab%(cd%1*%{g:a}%*%)de
+  call assert_match('^abde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 4)
+  call assert_equal(sa1, sa2)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 5)
+  let sa3=screenattr(&lines - 1, 7)
+  call assert_equal(sa1, sa3)
+  call assert_notequal(sa1, sa2)
+
+  let g:a = ''
+  set statusline=ab%1*%(cd%*%{g:a}%1*%)de
+  call assert_match('^abde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 4)
+  call assert_notequal(sa1, sa2)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 3)
+  let sa3=screenattr(&lines - 1, 5)
+  let sa4=screenattr(&lines - 1, 7)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa1, sa3)
+  call assert_equal(sa2, sa4)
+
+  " An empty group that contains highlight changes and doesn't reset them
+  let g:a = ''
+  set statusline=ab%(cd%1*%{g:a}%)de
+  call assert_match('^abcdde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 5)
+  call assert_notequal(sa1, sa2)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 5)
+  let sa3=screenattr(&lines - 1, 7)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa2, sa3)
+
+  let g:a = ''
+  set statusline=ab%1*%(cd%*%{g:a}%)de
+  call assert_match('^abcdde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 3)
+  let sa3=screenattr(&lines - 1, 5)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa1, sa3)
+  let g:a = 'X'
+  call assert_match('^abcdXde\s*$', s:get_statusline())
+  let sa1=screenattr(&lines - 1, 1)
+  let sa2=screenattr(&lines - 1, 3)
+  let sa3=screenattr(&lines - 1, 5)
+  let sa4=screenattr(&lines - 1, 7)
+  call assert_notequal(sa1, sa2)
+  call assert_equal(sa1, sa3)
+  call assert_equal(sa1, sa4)
+
+  let g:a = ''
+  set statusline=%#Error#{%(\ %{g:a}\ %)}
+  call assert_match('^{}\s*$', s:get_statusline())
+  let g:a = 'X'
+  call assert_match('^{ X }\s*$', s:get_statusline())
 
   " %%: a percent sign.
   set statusline=10%%
