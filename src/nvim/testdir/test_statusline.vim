@@ -312,6 +312,12 @@ func Test_statusline()
   call assert_equal(sa1, sa3)
   call assert_equal(sa1, sa4)
 
+  let g:a = ''
+  set statusline=%#Error#{%(\ %{g:a}\ %)}
+  call assert_match('^{}\s*$', s:get_statusline())
+  let g:a = 'X'
+  call assert_match('^{ X }\s*$', s:get_statusline())
+
   " %%: a percent sign.
   set statusline=10%%
   call assert_match('^10%\s*$', s:get_statusline())

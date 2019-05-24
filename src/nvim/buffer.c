@@ -3485,9 +3485,10 @@ int build_stl_str_hl(
         int group_start_userhl = 0;
         int group_end_userhl = 0;
         int n;
-        for (n = 0; n < groupitems[groupdepth]; n++) {
+        for (n = groupitems[groupdepth] - 1; n >= 0; n--) {
           if (items[n].type == Highlight) {
-            group_start_userhl = items[n].minwid;
+            group_start_userhl = group_end_userhl = items[n].minwid;
+            break;
           }
         }
         for (n = groupitems[groupdepth] + 1; n < curitem; n++) {
