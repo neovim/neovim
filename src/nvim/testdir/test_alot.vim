@@ -35,22 +35,19 @@ source test_partial.vim
 source test_popup.vim
 source test_put.vim
 source test_recover.vim
-source test_regexp_utf8.vim
 source test_scroll_opt.vim
 source test_sort.vim
-source test_source_utf8.vim
 source test_sha256.vim
 source test_statusline.vim
 source test_suspend.vim
 source test_syn_attr.vim
 source test_tabline.vim
-" source test_tabpage.vim
+source test_tabpage.vim
 source test_tagcase.vim
 source test_tagjump.vim
 source test_taglist.vim
 source test_true_false.vim
 source test_unlet.vim
-source test_utf8.vim
 source test_virtualedit.vim
 source test_window_cmd.vim
 source test_wnext.vim
