@@ -16,21 +16,25 @@ describe('Buffer highlighting', function()
     screen:attach()
     screen:set_default_attr_ids({
       [1] = {bold=true, foreground=Screen.colors.Blue},
-      [2] = {foreground = Screen.colors.Fuchsia}, -- String
-      [3] = {foreground = Screen.colors.Brown, bold = true}, -- Statement
-      [4] = {foreground = Screen.colors.SlateBlue}, -- Special
-      [5] = {bold = true, foreground = Screen.colors.SlateBlue},
-      [6] = {foreground = Screen.colors.DarkCyan}, -- Identifier
+      [2] = {foreground = tonumber('0xffa0a0')},                -- String/Constant
+      [3] = {foreground = tonumber('0xffff60'), bold = true},   -- Statement
+      [4] = {foreground = Screen.colors.Orange1},               -- Special
+      [5] = {bold = true, foreground = Screen.colors.Orange1},  -- Special
+      [6] = {foreground = tonumber('0x40ffff')},                -- Identifier
       [7] = {bold = true},
-      [8] = {underline = true, bold = true, foreground = Screen.colors.SlateBlue},
-      [9] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [8] = {underline = true, bold = true,
+             foreground = tonumber('0x80a0ff')},                -- Underlined
+      [9] = {underline = true,
+             foreground = tonumber('0x80a0ff')},                -- Underlined
       [10] = {foreground = Screen.colors.Red},
       [11] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [12] = {foreground = Screen.colors.Blue1},
-      [13] = {background = Screen.colors.LightGrey},
-      [14] = {background = Screen.colors.Gray90},
-      [15] = {background = Screen.colors.Gray90, bold = true, foreground = Screen.colors.Brown},
-      [16] = {foreground = Screen.colors.Magenta, background = Screen.colors.Gray90},
+      [12] = {foreground = tonumber('0x80a0ff')},               -- Comment
+      [13] = {background = Screen.colors.DarkGrey},             -- Visual
+      [14] = {background = Screen.colors.Gray40},               -- CursorLine
+      [15] = {background = Screen.colors.Gray40, bold = true,
+              foreground = tonumber('0xffff60')},               -- Statement
+      [16] = {foreground = tonumber('0xffa0a0'),                -- Constant
+              background = Screen.colors.Gray40},
     })
   end)
 

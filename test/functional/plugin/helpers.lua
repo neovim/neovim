@@ -10,7 +10,7 @@ local function nvim_argv(shada_file)
   local rtp_value = ('\'%s/runtime\''):format(
       paths.test_source_path:gsub('\'', '\'\''))
   local nvim_args = {nvim_prog, '-u', 'NORC', '-i', shada_file or 'NONE', '-N',
-                     '--cmd', 'set shortmess+=I background=light noswapfile belloff= noshowcmd noruler',
+                     '--cmd', 'set shortmess+=I noswapfile belloff= noshowcmd noruler',
                      '--cmd', 'let &runtimepath=' .. rtp_value,
                      '--cmd', additional_cmd,
                      '--embed', '--headless'}

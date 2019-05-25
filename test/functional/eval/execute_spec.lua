@@ -120,7 +120,7 @@ describe('execute()', function()
     ]], {
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {bold = true, reverse = true},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [3] = {bold = true, foreground = Screen.colors.Green},
     })
     feed('<CR>')
   end)

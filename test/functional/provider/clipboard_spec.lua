@@ -594,8 +594,8 @@ describe('clipboard (with fake clipboard.vim)', function()
     ]], {
       [0] = {bold = true, foreground = Screen.colors.Blue},
       [1] = {bold = true, foreground = Screen.colors.Fuchsia},
-      [2] = {foreground = Screen.colors.Blue},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen},
+      [2] = {foreground = Screen.colors.Cyan},
+      [3] = {bold = true, foreground = Screen.colors.Green},
       [4] = {bold = true, reverse = true}})
     feed('<cr>') -- clear out of Press ENTER screen
   end)

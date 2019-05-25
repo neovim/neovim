@@ -59,7 +59,7 @@ describe('cmdline autocommands', function()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [3] = {bold = true, foreground = Screen.colors.Green},
       [4] = {bold = true, reverse = true},
     })
     command("autocmd CmdlineEnter * echoerr 'FAIL'")

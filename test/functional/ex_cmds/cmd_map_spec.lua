@@ -24,13 +24,13 @@ describe('mappings with <Cmd>', function()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
       [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [3] = {bold = true, foreground = Screen.colors.Green},
       [4] = {bold = true},
-      [5] = {background = Screen.colors.LightGrey},
-      [6] = {foreground = Screen.colors.Blue1},
+      [5] = {background = Screen.colors.DarkGray},
+      [6] = {foreground = Screen.colors.Cyan},
       [7] = {bold = true, reverse = true},
-      [8] = {background = Screen.colors.WebGray},
-      [9] = {background = Screen.colors.LightMagenta},
+      [8] = {background = Screen.colors.DarkGray},
+      [9] = {background = Screen.colors.Magenta},
       [10] = {foreground = Screen.colors.Red},
     })
     screen:attach()
@@ -664,7 +664,7 @@ describe('mappings with <Cmd>', function()
     screen:expect([[
       some short lines                                                 |
       some^                                                             |
-      {8:some           }                                                  |
+      {5:some           }                                                  |
       {9:short          }{1:                                                  }|
       {1:~                                                                }|
       {1:~                                                                }|

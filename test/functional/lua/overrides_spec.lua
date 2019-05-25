@@ -85,7 +85,7 @@ describe('debug.debug', function()
     screen:set_default_attr_ids({
       [0] = {bold=true, foreground=255},
       E = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      cr = {bold = true, foreground = Screen.colors.SeaGreen4},
+      cr = {bold = true, foreground = Screen.colors.Green},
     })
     command("set display-=msgsep")
   end)

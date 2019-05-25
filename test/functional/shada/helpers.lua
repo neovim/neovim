@@ -13,7 +13,7 @@ local function nvim_argv(shada_file, embed)
     embed = true
   end
   local argv = {nvim_prog, '-u', 'NONE', '-i', shada_file or tmpname, '-N',
-                '--cmd', 'set shortmess+=I background=light noswapfile',
+                '--cmd', 'set shortmess+=I noswapfile',
                 '--headless', embed  and '--embed' or nil}
   if helpers.prepend_argv or append_argv then
     return merge_args(helpers.prepend_argv, argv, append_argv)

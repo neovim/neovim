@@ -115,28 +115,26 @@ describe('health.vim', function()
       local screen = Screen.new(72, 10)
       screen:attach()
       screen:set_default_attr_ids({
-        Ok = { foreground = Screen.colors.Grey3, background = 6291200 },
+        Ok = { foreground = Screen.colors.Grey3, background = tonumber('0x5fff00') },
         Error = { foreground = Screen.colors.Grey100, background = Screen.colors.Red },
-      })
-      screen:set_default_attr_ignore({
-        Heading = { bold=true, foreground=Screen.colors.Magenta },
-        Heading2 = { foreground = Screen.colors.SlateBlue },
-        Bar = { foreground=Screen.colors.Purple },
-        Bullet = { bold=true, foreground=Screen.colors.Brown },
+        H1 = { bold=true, foreground=Screen.colors.Magenta },
+        H2 = { foreground=Screen.colors.Orange1 },
+        Bar = { foreground=tonumber('0xff80ff') },
+        Bullet = { bold=true, foreground=tonumber('0xffff60') },
       })
       command("checkhealth foo success1")
       command("1tabclose")
       command("set laststatus=0")
       screen:expect([[
         ^                                                                        |
-        health#foo#check                                                        |
-        ========================================================================|
-          - {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
+        {H1:health#foo#check}                                                        |
+        {Bar:========================================================================}|
+        {Bullet:  -} {Error:ERROR:} No healthcheck found for "foo" plugin.                       |
                                                                                 |
-        health#success1#check                                                   |
-        ========================================================================|
-        ## report 1                                                             |
-          - {Ok:OK:} everything is fine                                              |
+        {H1:health#success1#check}                                                   |
+        {Bar:========================================================================}|
+        {H2:##}{H1: report 1}                                                             |
+        {Bullet:  -} {Ok:OK:} everything is fine                                              |
                                                                                 |
       ]])
     end)

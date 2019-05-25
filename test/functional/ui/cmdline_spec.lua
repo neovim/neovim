@@ -16,7 +16,7 @@ local function test_cmdline(linegrid)
       [2] = {reverse = true},
       [3] = {bold = true, reverse = true},
       [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {bold = true, foreground = Screen.colors.Green},
     })
   end)
 
