@@ -262,7 +262,7 @@ func Test_cscope_add_dir()
 
   " Cscope doesn't handle symlinks, so this needs to be resolved in case a
   " shadow directory is being used.
-  let memfile = resolve('../memfile_test.c')
+  let memfile = resolve('./samples/memfile_test.c')
   call system('cscope -bk -fXcscopedir/cscope.out ' . memfile)
 
   cs add Xcscopedir
