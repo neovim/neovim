@@ -325,7 +325,7 @@ def render_node(n, text, prefix='', indent='', width=62):
             text = doc_wrap(text, indent=indent, width=width)
     elif n.nodeName == 'itemizedlist':
         for c in n.childNodes:
-            text += '{}\n'.format(render_node(c, text, prefix='- ',
+            text += '{}\n'.format(render_node(c, text, prefix='• ',
                 indent=indent, width=width))
     elif n.nodeName == 'orderedlist':
         i = 1

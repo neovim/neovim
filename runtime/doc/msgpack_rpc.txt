@@ -51,7 +51,7 @@ There are three ways to obtain API metadata:
   3. Use the |api_info()| vimscript function.
 
 To get a human-readable list of API functions: >
-    :new|put =map(api_info().functions, 'v:val.name')
+    :new|put =map(filter(api_info().functions, '!has_key(v:val,''deprecated_since'')'), 'v:val.name')
 <
 To get a formatted dump of the API using python (requires the `pyyaml` and
 `msgpack-python` packages): >

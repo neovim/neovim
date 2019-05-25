@@ -470,17 +470,18 @@ gO			Show a filetype-specific, navigable "outline" of the
 			Currently works in |help| and |:Man| buffers.
 
 [N]gs							*gs* *:sl* *:sleep*
-:[N]sl[eep] [N]	[m]	Do nothing for [N] seconds.  When [m] is included,
-			sleep for [N] milliseconds.  The count for "gs" always
-			uses seconds.  The default is one second. >
+:[N]sl[eep] [N]	[m]	Do nothing for [N] seconds, or [N] milliseconds if [m]
+			was given.  "gs" always uses seconds.
+			Default is one second. >
 			     :sleep	     "sleep for one second
 			     :5sleep	     "sleep for five seconds
 			     :sleep 100m     "sleep for a hundred milliseconds
 			     10gs	     "sleep for ten seconds
-<			Can be interrupted with CTRL-C (CTRL-Break on Windows).
+<			Can be interrupted with CTRL-C.
 			"gs" stands for "goto sleep".
 			While sleeping the cursor is positioned in the text,
 			if at a visible position.
+			Queued messages are processed during the sleep.
 
 ==============================================================================
 2. Using Vim like less or more					*less*

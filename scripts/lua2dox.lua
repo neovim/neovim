@@ -478,12 +478,14 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
     outStream:writelnTail('// #######################')
     outStream:writelnTail()
 
+    local state = ''
     while not (err or inStream:eof()) do
       line = string_trim(inStream:getLine())
       -- 			TCore_Debug_show_var('inStream',inStream)
       -- 			TCore_Debug_show_var('line',line )
-      if string.sub(line,1,2)=='--' then -- its a comment
+      if string.sub(line,1,2)=='--' then -- it's a comment
         if string.sub(line,3,3)=='@' then -- it's a magic comment
+          state = 'in_magic_comment'
           local magic = string.sub(line,4)
           outStream:writeln('/// @' .. magic)
           fn_magic = checkComment4fn(fn_magic,magic)
@@ -517,12 +519,16 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
             outStream:write('/* zz:' .. comment .. '*/  ')
             fn_magic = nil
           end
-        else
+        -- TODO(justinmk): Uncomment this if we want "--" lines to continue the
+        --                 preceding magic ("---", "--@", …) lines.
+        -- elseif state == 'in_magic_comment' then  -- next line of magic comment
+        --   outStream:writeln('/// '.. line:sub(3))
+        else -- discard
           outStream:writeln('// zz:"' .. line .. '"')
           fn_magic = nil
         end
       elseif string.find(line,'^function') or string.find(line,'^local%s+function') then
-        -- it's a function
+        state = 'in_function'  -- it's a function
         local pos_fn = string.find(line,'function')
         -- function
         -- ....v...
@@ -578,7 +584,7 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
         end
         fn_magic = nil -- mustn't indavertently use it again
       elseif string.find(line,'=%s*class%(') then
-        -- it's a class declaration
+        state = 'in_class'  -- it's a class declaration
         local tailComment
         line,tailComment = TString_removeCommentFromLine(line)
         local equals = string.find(line,'=')
@@ -592,8 +598,8 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
         end
         outStream:writeln('class ' .. klass .. parent .. '{};')
       else
-        -- we don't know what this line means, so we can probably just comment it out
-        if #line>0 then
+        state = ''  -- unknown
+        if #line>0 then  -- we don't know what this line means, so just comment it out
           outStream:writeln('// zz: ' .. line)
         else
           outStream:writeln() -- keep this line blank
