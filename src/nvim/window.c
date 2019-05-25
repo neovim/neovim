@@ -4297,7 +4297,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid,
       }
     }
     XFREE_CLEAR(globaldir);
-    shorten_fnames(TRUE);
+    shorten_fnames(true);
   }
 
   if (trigger_new_autocmds) {

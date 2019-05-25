@@ -4058,7 +4058,7 @@ skip:
       }
 
       if (did_sub) {
-        ++sub_nlines;
+        sub_nlines++;
       }
       xfree(new_start);              // for when substitute was cancelled
       XFREE_CLEAR(sub_firstline);    // free the copy of the original line

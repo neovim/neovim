@@ -2997,7 +2997,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   /* Don't want a hit-enter prompt here. */
   ++no_wait_return;
 
-  set_vim_var_string(VV_WARNINGMSG, (char *) message, -1);
+  set_vim_var_string(VV_WARNINGMSG, (char *)message, -1);
   XFREE_CLEAR(keep_msg);
   if (hl) {
     keep_msg_attr = HL_ATTR(HLF_W);

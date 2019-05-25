@@ -5158,7 +5158,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 
         if (curwin->w_s->b_syn_linecont_prog == NULL) {
           XFREE_CLEAR(curwin->w_s->b_syn_linecont_pat);
-          finished = TRUE;
+          finished = true;
           break;
         }
       }

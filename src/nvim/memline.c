@@ -3340,9 +3340,10 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
                                (char_u *)dir_name);
 
   for (;; ) {
-    if (fname == NULL)          /* must be out of memory */
+    if (fname == NULL) {        // must be out of memory
       break;
-    if ((n = strlen(fname)) == 0) {        /* safety check */
+    }
+    if ((n = strlen(fname)) == 0) {        // safety check
       XFREE_CLEAR(fname);
       break;
     }

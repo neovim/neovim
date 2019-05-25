@@ -4291,7 +4291,7 @@ find_pattern_in_path(
               }
             }
             XFREE_CLEAR(new_fname);
-            already_searched = TRUE;
+            already_searched = true;
             break;
           }
         }

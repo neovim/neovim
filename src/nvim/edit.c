@@ -2586,15 +2586,16 @@ void ins_compl_show_pum(void)
     // Need to build the popup menu list.
     compl_match_arraysize = 0;
     compl = compl_first_match;
-    /*
-     * If it's user complete function and refresh_always,
-     * not use "compl_leader" as prefix filter.
-     */
-    if (ins_compl_need_restart()){
+    //
+    // If it's user complete function and refresh_always,
+    // do not use "compl_leader" as prefix filter.
+    //
+    if (ins_compl_need_restart()) {
       XFREE_CLEAR(compl_leader);
     }
-    if (compl_leader != NULL)
+    if (compl_leader != NULL) {
       lead_len = (int)STRLEN(compl_leader);
+    }
     do {
       if ((compl->cp_flags & ORIGINAL_TEXT) == 0
           && (compl_leader == NULL
@@ -2993,7 +2994,7 @@ static void ins_compl_clear(void)
   XFREE_CLEAR(compl_leader);
   edit_submode_extra = NULL;
   XFREE_CLEAR(compl_orig_text);
-  compl_enter_selects = FALSE;
+  compl_enter_selects = false;
   // clear v:completed_item
   set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
 }
