@@ -74,9 +74,8 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   restore_win(save_curwin, save_curtab, false);
 }
 
-/// Gets the cursor position in the window. Rows are 1-indexed, while columns
-/// are 0-indexed (which is consistent with |marks|).
-///
+/// Gets the cursor position in the window. Indices are (1, 0)-based, see also
+/// |api-indexing|.
 /// @param window   Window handle
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple
@@ -94,7 +93,8 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
   return rv;
 }
 
-/// Sets the cursor position in the window
+/// Sets the cursor position in the window. Indices are (1, 0)-based, see also
+/// |api-indexing|.
 ///
 /// @param window   Window handle
 /// @param pos      (row, col) tuple representing the new position

@@ -14,7 +14,9 @@ Applications can also embed libnvim to work with the C API directly.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-API Types							   *api-types*
+API Definitions                                                *api-definitions*
+
+                                                                     *api-types*
 
 The Nvim C API defines custom types for all function parameters. Some are just
 typedefs around C99 standard types, others are Nvim-defined data structures.
@@ -33,6 +35,27 @@ discriminated as separate types in an Object:
   Buffer				-> enum value kObjectTypeBuffer
   Window				-> enum value kObjectTypeWindow
   Tabpage				-> enum value kObjectTypeTabpage
+
+                                                                  *api-indexing*
+
+Most of the API uses 0-based indices, and ranges are end-exclusive. For the
+end of a range, -1 denotes the last line/column.
+
+This is the case for the following functions/events:
+
+    |nvim_buf_lines_event|
+    |nvim_buf_get_lines()|
+    |nvim_buf_set_lines(),|
+    |nvim_buf_add_highlight()|
+    |nvim_buf_clear_namespace()|
+    |nvim_buf_get_offset()|
+
+For historical reasons, the following functions exhibit "mark-like" behavior,
+i.e. lines are 1-indexed, columns are 0-indexed.
+
+    |nvim_buf_get_mark()|
+    |nvim_win_get_cursor()|
+    |nvim_win_set_cursor()|
 
 ==============================================================================
 API metadata							 *api-metadata*
