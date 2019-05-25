@@ -87,5 +87,8 @@ func Test_modeline_syntax_fails()
 endfunc
 
 func Test_modeline_keymap_fails()
+  if !has('keymap')
+    return
+  endif
   call s:modeline_fails('keymap', 'keymap=evil$CMD')
 endfunc
