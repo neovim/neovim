@@ -992,10 +992,10 @@ static void syn_stack_free_block(synblock_T *block)
   synstate_T  *p;
 
   if (block->b_sst_array != NULL) {
-    for (p = block->b_sst_first; p != NULL; p = p->sst_next)
+    for (p = block->b_sst_first; p != NULL; p = p->sst_next) {
       clear_syn_state(p);
-    xfree(block->b_sst_array);
-    block->b_sst_array = NULL;
+    }
+    XFREE_CLEAR(block->b_sst_array);
     block->b_sst_len = 0;
   }
 }
@@ -3186,8 +3186,7 @@ void syntax_clear(synblock_T *block)
 
   vim_regfree(block->b_syn_linecont_prog);
   block->b_syn_linecont_prog = NULL;
-  xfree(block->b_syn_linecont_pat);
-  block->b_syn_linecont_pat = NULL;
+  XFREE_CLEAR(block->b_syn_linecont_pat);
   block->b_syn_folditems = 0;
   clear_string_option(&block->b_syn_isk);
 
@@ -3230,8 +3229,7 @@ static void syntax_sync_clear(void)
 
   vim_regfree(curwin->w_s->b_syn_linecont_prog);
   curwin->w_s->b_syn_linecont_prog = NULL;
-  xfree(curwin->w_s->b_syn_linecont_pat);
-  curwin->w_s->b_syn_linecont_pat = NULL;
+  XFREE_CLEAR(curwin->w_s->b_syn_linecont_pat);
   clear_string_option(&curwin->w_s->b_syn_isk);
 
   syn_stack_free_all(curwin->w_s);              /* Need to recompute all syntax. */
@@ -3331,8 +3329,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
           // and make it empty.
           int scl_id = id - SYNID_CLUSTER;
 
-          xfree(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
-          SYN_CLSTR(curwin->w_s)[scl_id].scl_list = NULL;
+          XFREE_CLEAR(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
         }
       } else {
         id = syn_namen2id(arg, (int)(arg_end - arg));
@@ -5160,9 +5157,8 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         syn_clear_time(&curwin->w_s->b_syn_linecont_time);
 
         if (curwin->w_s->b_syn_linecont_prog == NULL) {
-          xfree(curwin->w_s->b_syn_linecont_pat);
-          curwin->w_s->b_syn_linecont_pat = NULL;
-          finished = TRUE;
+          XFREE_CLEAR(curwin->w_s->b_syn_linecont_pat);
+          finished = true;
           break;
         }
       }
@@ -6993,12 +6989,9 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_rgb_fg = -1;
   HL_TABLE()[idx].sg_rgb_bg = -1;
   HL_TABLE()[idx].sg_rgb_sp = -1;
-  xfree(HL_TABLE()[idx].sg_rgb_fg_name);
-  HL_TABLE()[idx].sg_rgb_fg_name = NULL;
-  xfree(HL_TABLE()[idx].sg_rgb_bg_name);
-  HL_TABLE()[idx].sg_rgb_bg_name = NULL;
-  xfree(HL_TABLE()[idx].sg_rgb_sp_name);
-  HL_TABLE()[idx].sg_rgb_sp_name = NULL;
+  XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_fg_name);
+  XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_bg_name);
+  XFREE_CLEAR(HL_TABLE()[idx].sg_rgb_sp_name);
   // Clear the script ID only when there is no link, since that is not
   // cleared.
   if (HL_TABLE()[idx].sg_link == 0) {

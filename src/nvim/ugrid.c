@@ -95,8 +95,7 @@ static void destroy_cells(UGrid *grid)
     for (int i = 0; i < grid->height; i++) {
       xfree(grid->cells[i]);
     }
-    xfree(grid->cells);
-    grid->cells = NULL;
+    XFREE_CLEAR(grid->cells);
   }
 }
 

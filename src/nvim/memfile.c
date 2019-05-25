@@ -719,10 +719,8 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 /// Frees mf_fname and mf_ffname.
 void mf_free_fnames(memfile_T *mfp)
 {
-  xfree(mfp->mf_fname);
-  xfree(mfp->mf_ffname);
-  mfp->mf_fname = NULL;
-  mfp->mf_ffname = NULL;
+  XFREE_CLEAR(mfp->mf_fname);
+  XFREE_CLEAR(mfp->mf_ffname);
 }
 
 /// Set the simple file name and the full file name of memfile's swapfile, out

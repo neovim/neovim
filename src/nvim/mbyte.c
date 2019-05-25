@@ -1421,8 +1421,7 @@ int utf16_to_utf8(const wchar_t *strw, char **str)
                                  NULL,
                                  NULL);
   if (utf8_len == 0) {
-    xfree(*str);
-    *str = NULL;
+    XFREE_CLEAR(*str);
     return GetLastError();
   }
   (*str)[utf8_len] = '\0';
@@ -2119,9 +2118,8 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
       from += l;
       fromlen -= l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {
-      /* conversion failed */
-      xfree(result);
-      result = NULL;
+      // conversion failed
+      XFREE_CLEAR(result);
       break;
     }
     /* Not enough room or skipping illegal sequence. */

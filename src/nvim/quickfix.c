@@ -848,8 +848,7 @@ qf_init_ext(
   int status;
 
   // Do not used the cached buffer, it may have been wiped out.
-  xfree(qf_last_bufname);
-  qf_last_bufname = NULL;
+  XFREE_CLEAR(qf_last_bufname);
 
   memset(&state, 0, sizeof(state));
   memset(&fields, 0, sizeof(fields));
@@ -894,8 +893,7 @@ qf_init_ext(
   // parsed values.
   if (last_efm == NULL || (STRCMP(last_efm, efm) != 0)) {
     // free the previously parsed data
-    xfree(last_efm);
-    last_efm = NULL;
+    XFREE_CLEAR(last_efm);
     free_efm_list(&fmt_first);
 
     // parse the current 'efm'
@@ -1019,8 +1017,7 @@ qf_init_end:
 /// Prepends ':' to the title.
 static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
 {
-  xfree(qi->qf_lists[qf_idx].qf_title);
-  qi->qf_lists[qf_idx].qf_title = NULL;
+  XFREE_CLEAR(qi->qf_lists[qf_idx].qf_title);
 
   if (title != NULL) {
     size_t len = STRLEN(title) + 1;
@@ -2754,8 +2751,7 @@ static void qf_free(qf_info_T *qi, int idx)
   qf_list_T *qfl = &qi->qf_lists[idx];
   qf_free_items(qi, idx);
 
-  xfree(qfl->qf_title);
-  qfl->qf_title = NULL;
+  XFREE_CLEAR(qfl->qf_title);
   tv_free(qfl->qf_ctx);
   qfl->qf_ctx = NULL;
   qfl->qf_id = 0;

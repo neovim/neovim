@@ -563,8 +563,7 @@ void ml_close(buf_T *buf, int del_file)
   if (buf->b_ml.ml_line_lnum != 0 && (buf->b_ml.ml_flags & ML_LINE_DIRTY))
     xfree(buf->b_ml.ml_line_ptr);
   xfree(buf->b_ml.ml_stack);
-  xfree(buf->b_ml.ml_chunksize);
-  buf->b_ml.ml_chunksize = NULL;
+  XFREE_CLEAR(buf->b_ml.ml_chunksize);
   buf->b_ml.ml_mfp = NULL;
 
   /* Reset the "recovered" flag, give the ATTENTION prompt the next time
@@ -3341,11 +3340,11 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
                                (char_u *)dir_name);
 
   for (;; ) {
-    if (fname == NULL)          /* must be out of memory */
+    if (fname == NULL) {        // must be out of memory
       break;
-    if ((n = strlen(fname)) == 0) {        /* safety check */
-      xfree(fname);
-      fname = NULL;
+    }
+    if ((n = strlen(fname)) == 0) {        // safety check
+      XFREE_CLEAR(fname);
       break;
     }
     // check if the swapfile already exists
@@ -3541,8 +3540,7 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
     if (fname[n - 1] == 'a') {          /* ".s?a" */
       if (fname[n - 2] == 'a') {        /* ".saa": tried enough, give up */
         EMSG(_("E326: Too many swap files found"));
-        xfree(fname);
-        fname = NULL;
+        XFREE_CLEAR(fname);
         break;
       }
       --fname[n - 2];                   /* ".svz", ".suz", etc. */

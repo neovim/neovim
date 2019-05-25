@@ -148,10 +148,10 @@ describe('autocmd', function()
        funcs.execute('autocmd Tabnew'))
   end)
 
-  it('window works', function()
-    -- Nvim uses a special window to execute certain actions for an invisible buffer,
-    -- internally called autcmd_win and mentioned in the docs at :help E813
-    -- Do some safety checks for redrawing and api accesses to this window.
+  it('internal `aucmd_win` window', function()
+    -- Nvim uses a special internal window `aucmd_win` to execute certain
+    -- actions for an invisible buffer (:help E813).
+    -- Check redrawing and API accesses to this window.
 
     local screen = Screen.new(50, 10)
     screen:attach()

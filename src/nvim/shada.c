@@ -1358,8 +1358,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
       case kSDItemGlobalMark: {
         buf_T *buf = find_buffer(&fname_bufs, cur_entry.data.filemark.fname);
         if (buf != NULL) {
-          xfree(cur_entry.data.filemark.fname);
-          cur_entry.data.filemark.fname = NULL;
+          XFREE_CLEAR(cur_entry.data.filemark.fname);
         }
         xfmark_T fm = (xfmark_T) {
           .fname = (char_u *) (buf == NULL

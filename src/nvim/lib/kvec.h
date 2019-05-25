@@ -58,7 +58,11 @@
     }
 
 #define kv_init(v) ((v).size = (v).capacity = 0, (v).items = 0)
-#define kv_destroy(v) xfree((v).items)
+#define kv_destroy(v) \
+    do { \
+      xfree((v).items); \
+      kv_init(v); \
+    } while (0)
 #define kv_A(v, i) ((v).items[(i)])
 #define kv_pop(v) ((v).items[--(v).size])
 #define kv_size(v) ((v).size)
@@ -88,7 +92,7 @@
       } \
       (v1).size = (v0).size; \
       memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
-    } while (0) \
+    } while (0)
 
 #define kv_pushp(v) \
     ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
@@ -138,7 +142,7 @@ static inline void *_memcpy_free(void *const restrict dest,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_ALWAYS_INLINE
 {
   memcpy(dest, src, size);
-  xfree(src);
+  XFREE_CLEAR(src);
   return dest;
 }
 
@@ -201,7 +205,7 @@ static inline void *_memcpy_free(void *const restrict dest,
 #define kvi_destroy(v) \
     do { \
       if ((v).items != (v).init_array) { \
-        xfree((v).items); \
+        XFREE_CLEAR((v).items); \
       } \
     } while (0)
 

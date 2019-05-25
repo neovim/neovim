@@ -388,8 +388,7 @@ add_menu_path(
     menup = &menu->children;
     parent = menu;
     name = next_name;
-    xfree(dname);
-    dname = NULL;
+    XFREE_CLEAR(dname);
     if (pri_tab[pri_idx + 1] != -1) {
       pri_idx++;
     }

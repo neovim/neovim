@@ -1530,11 +1530,9 @@ static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
   }   /* for all cscope connections */
 
   if (totsofar == 0) {
-    /* No matches, free the arrays and return NULL in "*matches_p". */
-    xfree(matches);
-    matches = NULL;
-    xfree(cntxts);
-    cntxts = NULL;
+    // No matches, free the arrays and return NULL in "*matches_p".
+    XFREE_CLEAR(matches);
+    XFREE_CLEAR(cntxts);
   }
   *matched = totsofar;
   *matches_p = matches;

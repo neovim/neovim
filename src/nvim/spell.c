@@ -1708,19 +1708,13 @@ void slang_clear(slang_T *lp)
 {
   garray_T    *gap;
 
-  xfree(lp->sl_fbyts);
-  lp->sl_fbyts = NULL;
-  xfree(lp->sl_kbyts);
-  lp->sl_kbyts = NULL;
-  xfree(lp->sl_pbyts);
-  lp->sl_pbyts = NULL;
+  XFREE_CLEAR(lp->sl_fbyts);
+  XFREE_CLEAR(lp->sl_kbyts);
+  XFREE_CLEAR(lp->sl_pbyts);
 
-  xfree(lp->sl_fidxs);
-  lp->sl_fidxs = NULL;
-  xfree(lp->sl_kidxs);
-  lp->sl_kidxs = NULL;
-  xfree(lp->sl_pidxs);
-  lp->sl_pidxs = NULL;
+  XFREE_CLEAR(lp->sl_fidxs);
+  XFREE_CLEAR(lp->sl_kidxs);
+  XFREE_CLEAR(lp->sl_pidxs);
 
   GA_DEEP_CLEAR(&lp->sl_rep, fromto_T, free_fromto);
   GA_DEEP_CLEAR(&lp->sl_repsal, fromto_T, free_fromto);
@@ -1738,26 +1732,17 @@ void slang_clear(slang_T *lp)
     vim_regfree(lp->sl_prefprog[i]);
   }
   lp->sl_prefixcnt = 0;
-  xfree(lp->sl_prefprog);
-  lp->sl_prefprog = NULL;
-
-  xfree(lp->sl_info);
-  lp->sl_info = NULL;
-
-  xfree(lp->sl_midword);
-  lp->sl_midword = NULL;
+  XFREE_CLEAR(lp->sl_prefprog);
+  XFREE_CLEAR(lp->sl_info);
+  XFREE_CLEAR(lp->sl_midword);
 
   vim_regfree(lp->sl_compprog);
-  xfree(lp->sl_comprules);
-  xfree(lp->sl_compstartflags);
-  xfree(lp->sl_compallflags);
   lp->sl_compprog = NULL;
-  lp->sl_comprules = NULL;
-  lp->sl_compstartflags = NULL;
-  lp->sl_compallflags = NULL;
+  XFREE_CLEAR(lp->sl_comprules);
+  XFREE_CLEAR(lp->sl_compstartflags);
+  XFREE_CLEAR(lp->sl_compallflags);
 
-  xfree(lp->sl_syllable);
-  lp->sl_syllable = NULL;
+  XFREE_CLEAR(lp->sl_syllable);
   ga_clear(&lp->sl_syl_items);
 
   ga_clear_strings(&lp->sl_comppat);
@@ -1779,10 +1764,8 @@ void slang_clear(slang_T *lp)
 // Clear the info from the .sug file in "lp".
 void slang_clear_sug(slang_T *lp)
 {
-  xfree(lp->sl_sbyts);
-  lp->sl_sbyts = NULL;
-  xfree(lp->sl_sidxs);
-  lp->sl_sidxs = NULL;
+  XFREE_CLEAR(lp->sl_sbyts);
+  XFREE_CLEAR(lp->sl_sidxs);
   close_spellbuf(lp->sl_sugbuf);
   lp->sl_sugbuf = NULL;
   lp->sl_sugloaded = false;
@@ -2255,8 +2238,7 @@ theend:
 static void clear_midword(win_T *wp)
 {
   memset(wp->w_s->b_spell_ismw, 0, 256);
-  xfree(wp->w_s->b_spell_ismw_mb);
-  wp->w_s->b_spell_ismw_mb = NULL;
+  XFREE_CLEAR(wp->w_s->b_spell_ismw_mb);
 }
 
 // Use the "sl_midword" field of language "lp" for buffer "buf".
@@ -2415,8 +2397,7 @@ void spell_delete_wordlist(void)
     os_remove((char *)int_wordlist);
     int_wordlist_spl(fname);
     os_remove((char *)fname);
-    xfree(int_wordlist);
-    int_wordlist = NULL;
+    XFREE_CLEAR(int_wordlist);
   }
 }
 
@@ -2438,10 +2419,8 @@ void spell_free_all(void)
 
   spell_delete_wordlist();
 
-  xfree(repl_to);
-  repl_to = NULL;
-  xfree(repl_from);
-  repl_from = NULL;
+  XFREE_CLEAR(repl_to);
+  XFREE_CLEAR(repl_from);
 }
 
 // Clear all spelling tables and reload them.
@@ -2838,10 +2817,8 @@ void spell_suggest(int count)
       smsg(_("Sorry, only %" PRId64 " suggestions"),
            (int64_t)sug.su_ga.ga_len);
   } else {
-    xfree(repl_from);
-    repl_from = NULL;
-    xfree(repl_to);
-    repl_to = NULL;
+    XFREE_CLEAR(repl_from);
+    XFREE_CLEAR(repl_to);
 
     // When 'rightleft' is set the list is drawn right-left.
     cmdmsg_rl = curwin->w_p_rl;

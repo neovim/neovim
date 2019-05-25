@@ -1040,12 +1040,9 @@ static void profile_reset(void)
         uf->uf_tm_self      = profile_zero();
         uf->uf_tm_children  = profile_zero();
 
-        xfree(uf->uf_tml_count);
-        xfree(uf->uf_tml_total);
-        xfree(uf->uf_tml_self);
-        uf->uf_tml_count    = NULL;
-        uf->uf_tml_total    = NULL;
-        uf->uf_tml_self     = NULL;
+        XFREE_CLEAR(uf->uf_tml_count);
+        XFREE_CLEAR(uf->uf_tml_total);
+        XFREE_CLEAR(uf->uf_tml_self);
 
         uf->uf_tml_start    = profile_zero();
         uf->uf_tml_children = profile_zero();
@@ -1056,8 +1053,7 @@ static void profile_reset(void)
     }
   }
 
-  xfree(profile_fname);
-  profile_fname = NULL;
+  XFREE_CLEAR(profile_fname);
 }
 
 /// Start profiling a script.
@@ -4003,8 +3999,7 @@ void free_locales(void)
     for (i = 0; locales[i] != NULL; i++) {
       xfree(locales[i]);
     }
-    xfree(locales);
-    locales = NULL;
+    XFREE_CLEAR(locales);
   }
 }
 

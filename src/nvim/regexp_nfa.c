@@ -6594,8 +6594,7 @@ out:
   return (regprog_T *)prog;
 
 fail:
-  xfree(prog);
-  prog = NULL;
+  XFREE_CLEAR(prog);
 #ifdef REGEXP_DEBUG
   nfa_postfix_dump(expr, FAIL);
 #endif

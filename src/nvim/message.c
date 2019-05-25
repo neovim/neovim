@@ -420,8 +420,7 @@ static char_u   *last_sourcing_name = NULL;
  */
 void reset_last_sourcing(void)
 {
-  xfree(last_sourcing_name);
-  last_sourcing_name = NULL;
+  XFREE_CLEAR(last_sourcing_name);
   last_sourcing_lnum = 0;
 }
 
@@ -1117,8 +1116,7 @@ void wait_return(int redraw)
   reset_last_sourcing();
   if (keep_msg != NULL && vim_strsize(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
-    xfree(keep_msg);
-    keep_msg = NULL;                /* don't redisplay message, it's too long */
+    XFREE_CLEAR(keep_msg);          // don't redisplay message, it's too long
   }
 
   if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
@@ -1188,8 +1186,7 @@ void msg_start(void)
   int did_return = FALSE;
 
   if (!msg_silent) {
-    xfree(keep_msg);
-    keep_msg = NULL;                    /* don't display old message now */
+    XFREE_CLEAR(keep_msg);              // don't display old message now
   }
 
   if (need_clr_eos) {
@@ -3000,9 +2997,8 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   /* Don't want a hit-enter prompt here. */
   ++no_wait_return;
 
-  set_vim_var_string(VV_WARNINGMSG, (char *) message, -1);
-  xfree(keep_msg);
-  keep_msg = NULL;
+  set_vim_var_string(VV_WARNINGMSG, (char *)message, -1);
+  XFREE_CLEAR(keep_msg);
   if (hl) {
     keep_msg_attr = HL_ATTR(HLF_W);
   } else {

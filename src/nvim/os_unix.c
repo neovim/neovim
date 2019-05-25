@@ -553,8 +553,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   *num_file = j;
 
   if (*num_file == 0) {     // rejected all entries
-    xfree(*file);
-    *file = NULL;
+    XFREE_CLEAR(*file);
     goto notfound;
   }
 

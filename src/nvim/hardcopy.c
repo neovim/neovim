@@ -1942,8 +1942,7 @@ void mch_print_cleanup(void)
     prt_file_error = FALSE;
   }
   if (prt_ps_file_name != NULL) {
-    xfree(prt_ps_file_name);
-    prt_ps_file_name = NULL;
+    XFREE_CLEAR(prt_ps_file_name);
   }
 }
 

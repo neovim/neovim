@@ -923,8 +923,7 @@ end_do_tag:
  */
 void tag_freematch(void)
 {
-  xfree(tagmatchname);
-  tagmatchname = NULL;
+  XFREE_CLEAR(tagmatchname);
 }
 
 static void taglen_advance(int l)
@@ -1987,8 +1986,7 @@ void free_tag_stuff(void)
   tag_freematch();
 
   if (ptag_entry.tagname) {
-    xfree(ptag_entry.tagname);
-    ptag_entry.tagname = NULL;
+    XFREE_CLEAR(ptag_entry.tagname);
   }
 }
 

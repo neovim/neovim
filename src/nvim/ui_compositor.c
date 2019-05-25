@@ -92,10 +92,8 @@ void ui_comp_detach(UI *ui)
 {
   composed_uis--;
   if (composed_uis == 0) {
-    xfree(linebuf);
-    xfree(attrbuf);
-    linebuf = NULL;
-    attrbuf = NULL;
+    XFREE_CLEAR(linebuf);
+    XFREE_CLEAR(attrbuf);
     bufsize = 0;
   }
   ui->composed = false;

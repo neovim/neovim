@@ -4290,9 +4290,8 @@ find_pattern_in_path(
                 prev_fname = NULL;
               }
             }
-            xfree(new_fname);
-            new_fname = NULL;
-            already_searched = TRUE;
+            XFREE_CLEAR(new_fname);
+            already_searched = true;
             break;
           }
         }

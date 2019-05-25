@@ -983,9 +983,8 @@ do_execreg(
       EMSG(_(e_nolastcmd));
       return FAIL;
     }
-    xfree(new_last_cmdline);     /* don't keep the cmdline containing @: */
-    new_last_cmdline = NULL;
-    /* Escape all control characters with a CTRL-V */
+    XFREE_CLEAR(new_last_cmdline);      // don't keep the cmdline containing @:
+    // Escape all control characters with a CTRL-V
     p = vim_strsave_escaped_ext(
         last_cmdline,
         (char_u *)
@@ -2348,8 +2347,7 @@ void free_register(yankreg_T *reg)
     for (size_t i = reg->y_size; i-- > 0;) {  // from y_size - 1 to 0 included
       xfree(reg->y_array[i]);
     }
-    xfree(reg->y_array);
-    reg->y_array = NULL;
+    XFREE_CLEAR(reg->y_array);
   }
 }
 

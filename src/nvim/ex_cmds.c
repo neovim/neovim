@@ -3526,8 +3526,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
           lnum += regmatch.startpos[0].lnum;
           sub_firstlnum += regmatch.startpos[0].lnum;
           nmatch -= regmatch.startpos[0].lnum;
-          xfree(sub_firstline);
-          sub_firstline = NULL;
+          XFREE_CLEAR(sub_firstline);
         }
 
         // Now we're at the line where the pattern match starts
@@ -4058,11 +4057,11 @@ skip:
         line_breakcheck();
       }
 
-      if (did_sub)
-        ++sub_nlines;
-      xfree(new_start);              /* for when substitute was cancelled */
-      xfree(sub_firstline);          /* free the copy of the original line */
-      sub_firstline = NULL;
+      if (did_sub) {
+        sub_nlines++;
+      }
+      xfree(new_start);              // for when substitute was cancelled
+      XFREE_CLEAR(sub_firstline);    // free the copy of the original line
     }
 
     line_breakcheck();
@@ -5077,9 +5076,8 @@ void fix_help_buffer(void)
                 }
                 if (fnamecmp(e1, ".txt") != 0
                     && fnamecmp(e1, fname + 4) != 0) {
-                  /* Not .txt and not .abx, remove it. */
-                  xfree(fnames[i1]);
-                  fnames[i1] = NULL;
+                  // Not .txt and not .abx, remove it.
+                  XFREE_CLEAR(fnames[i1]);
                   continue;
                 }
                 if (e1 - f1 != e2 - f2
@@ -5088,9 +5086,8 @@ void fix_help_buffer(void)
                 }
                 if (fnamecmp(e1, ".txt") == 0
                     && fnamecmp(e2, fname + 4) == 0) {
-                  /* use .abx instead of .txt */
-                  xfree(fnames[i1]);
-                  fnames[i1] = NULL;
+                  // use .abx instead of .txt
+                  XFREE_CLEAR(fnames[i1]);
                 }
               }
             }
