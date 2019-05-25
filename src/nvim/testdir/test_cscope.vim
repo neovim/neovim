@@ -259,7 +259,12 @@ endfunc
 " Test ":cs add {dir}"  (add the {dir}/cscope.out database)
 func Test_cscope_add_dir()
   call mkdir('Xcscopedir', 'p')
-  call system('cscope -bk -fXcscopedir/cscope.out ../memfile_test.c')
+
+  " Cscope doesn't handle symlinks, so this needs to be resolved in case a
+  " shadow directory is being used.
+  let memfile = resolve('../memfile_test.c')
+  call system('cscope -bk -fXcscopedir/cscope.out ' . memfile)
+
   cs add Xcscopedir
   let a = execute('cscope show')
   let lines = split(a, "\n", 1)
