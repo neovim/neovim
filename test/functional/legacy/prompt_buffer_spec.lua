@@ -15,6 +15,7 @@ describe('prompt buffer', function()
     source([[
       func TextEntered(text)
         if a:text == "exit"
+          set nomodified
           stopinsert
           close
         else
@@ -59,7 +60,7 @@ describe('prompt buffer', function()
       Command: "hello"         |
       Result: "hello"          |
       % ^                       |
-      [Prompt]                 |
+      [Prompt] [+]             |
       other buffer             |
       ~                        |
       ~                        |
@@ -101,7 +102,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Prompt]                 |
+      [Prompt] [+]             |
       other buffer             |
       ~                        |
       ~                        |
@@ -114,7 +115,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Prompt]                 |
+      [Prompt] [+]             |
       other buffer             |
       ~                        |
       ~                        |
@@ -127,7 +128,7 @@ describe('prompt buffer', function()
       ~                        |
       ~                        |
       ~                        |
-      [Prompt]                 |
+      [Prompt] [+]             |
       other buffer             |
       ~                        |
       ~                        |
