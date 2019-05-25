@@ -2084,6 +2084,7 @@ ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor({list})			Number	move cursor to position in {list}
+debugbreak({pid})		Number  interrupt process being debugged
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
 deletebufline({expr}, {first}[, {last}])
@@ -3641,6 +3642,11 @@ exp({expr})						*exp()*
 			:echo exp(-1)
 <			0.367879
 
+debugbreak({pid})					*debugbreak()*
+		Specifically used to interrupt a program being debugged.  It
+		will cause process {pid} to get a SIGTRAP.  Behavior for other
+		processes is undefined. See |terminal-debugger|.
+		{Sends a SIGINT to a process {pid} other than MS-Windows}
 
 expand({expr} [, {nosuf} [, {list}]])				*expand()*
 		Expand wildcards and the following special keywords in {expr}.

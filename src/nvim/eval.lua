@@ -82,6 +82,7 @@ return {
     ctxset={args={1, 2}},
     ctxsize={},
     cursor={args={1, 3}},
+    debugbreak={args={1, 1}},
     deepcopy={args={1, 2}},
     delete={args={1,2}},
     deletebufline={args={2,3}},

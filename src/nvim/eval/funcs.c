@@ -1408,9 +1408,31 @@ static void f_cursor(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = 0;
 }
 
-/*
- * "deepcopy()" function
- */
+// "debugbreak()" function
+static void f_debugbreak(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int pid;
+
+  rettv->vval.v_number = FAIL;
+  pid = (int)tv_get_number(&argvars[0]);
+  if (pid == 0) {
+    EMSG(_(e_invarg));
+  } else {
+#ifdef WIN32
+    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, pid);
+
+    if (hProcess != NULL) {
+      DebugBreakProcess(hProcess);
+      CloseHandle(hProcess);
+      rettv->vval.v_number = OK;
+    }
+#else
+    uv_kill(pid, SIGINT);
+#endif
+  }
+}
+
+// "deepcopy()" function
 static void f_deepcopy(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int noref = 0;

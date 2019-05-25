@@ -462,10 +462,16 @@ func s:PromptCallback(text)
   call s:SendCommand(a:text)
 endfunc
 
-" Function called when pressing CTRL-C in the prompt buffer.
+" Function called when pressing CTRL-C in the prompt buffer and when placing a
+" breakpoint.
 func s:PromptInterrupt()
-  "call ch_log('Interrupting gdb')
-  call system('kill -SIGINT ' . s:pid)
+  if s:pid == 0
+    echoerr 'Cannot interrupt gdb, did not find a process ID'
+  else
+    "call ch_log('Interrupting gdb')
+    " Using job_stop(s:gdbjob, 'int') does not work.
+    call debugbreak(s:pid)
+  endif
 endfunc
 
 " Function called when gdb outputs text.
@@ -691,7 +697,11 @@ func s:SetBreakpoint()
   let do_continue = 0
   if !s:stopped
     let do_continue = 1
-    call s:SendCommand('-exec-interrupt')
+    if s:way == 'prompt'
+      call s:PromptInterrupt()
+    else
+      call s:SendCommand('-exec-interrupt')
+    endif
     sleep 10m
   endif
   " Use the fname:lnum format, older gdb can't handle --source.

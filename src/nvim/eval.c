@@ -7315,9 +7315,7 @@ dict_T *get_win_info(win_T *wp, int16_t tpnr, int16_t winnr)
   return dict;
 }
 
-/*
- * Find window specified by "vp" in tabpage "tp".
- */
+// Find window specified by "vp" in tabpage "tp".
 win_T *
 find_win_by_nr(
     typval_T *vp,
