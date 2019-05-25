@@ -1,11 +1,15 @@
-func Test_modeline_invalid()
-   let modeline = &modeline
-   set modeline
-   call assert_fails('set Xmodeline', 'E518:')
+" Tests for parsing the modeline.
 
-   let &modeline = modeline
-   bwipe!
-   call delete('Xmodeline')
+func Test_modeline_invalid()
+  " This was reading allocated memory in the past.
+  call writefile(['vi:0', 'nothing'], 'Xmodeline')
+  let modeline = &modeline
+  set modeline
+  call assert_fails('set Xmodeline', 'E518:')
+
+  let &modeline = modeline
+  bwipe!
+  call delete('Xmodeline')
  endfunc
 
 func Test_modeline_filetype()
@@ -40,6 +44,9 @@ func Test_modeline_syntax()
 endfunc
 
 func Test_modeline_keymap()
+  if !has('keymap')
+    return
+  endif
   call writefile(['vim: set keymap=greek :', 'nothing'], 'Xmodeline_keymap')
   let modeline = &modeline
   set modeline
@@ -80,5 +87,8 @@ func Test_modeline_syntax_fails()
 endfunc
 
 func Test_modeline_keymap_fails()
+  if !has('keymap')
+    return
+  endif
   call s:modeline_fails('keymap', 'keymap=evil$CMD')
 endfunc
