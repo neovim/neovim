@@ -58,7 +58,11 @@
     }
 
 #define kv_init(v) ((v).size = (v).capacity = 0, (v).items = 0)
-#define kv_destroy(v) XFREE_CLEAR((v).items)
+#define kv_destroy(v) \
+    do { \
+      xfree((v).items); \
+      kv_init(v); \
+    } while (0)
 #define kv_A(v, i) ((v).items[(i)])
 #define kv_pop(v) ((v).items[--(v).size])
 #define kv_size(v) ((v).size)
@@ -88,7 +92,7 @@
       } \
       (v1).size = (v0).size; \
       memcpy((v1).items, (v0).items, sizeof((v1).items[0]) * (v0).size); \
-    } while (0) \
+    } while (0)
 
 #define kv_pushp(v) \
     ((((v).size == (v).capacity) ? (kv_resize_full(v), 0) : 0), \
