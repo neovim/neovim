@@ -91,7 +91,7 @@ static signgroup_T * sign_group_ref(const char_u *groupname)
   signgroup_T		*group;
 
   hash = hash_hash(groupname);
-  hi = hash_lookup(&sg_table, (char*)S_LEN(groupname), hash);
+  hi = hash_lookup(&sg_table, (char*)groupname, STRLEN(groupname), hash);
   if (HASHITEM_EMPTY(hi))
   {
     // new group
