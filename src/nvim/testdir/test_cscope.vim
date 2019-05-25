@@ -254,7 +254,25 @@ func Test_cscopeWithCscopeConnections()
 
     " CleanUp
     call CscopeSetupOrClean(0)
+endfunc
 
+" Test ":cs add {dir}"  (add the {dir}/cscope.out database)
+func Test_cscope_add_dir()
+  call mkdir('Xcscopedir', 'p')
+  call system('cscope -bk -fXcscopedir/cscope.out ../memfile_test.c')
+  cs add Xcscopedir
+  let a = execute('cscope show')
+  let lines = split(a, "\n", 1)
+  call assert_equal(3, len(lines))
+  call assert_equal(' # pid    database name                       prepend path', lines[0])
+  call assert_equal('', lines[1])
+  call assert_match('^ 0 \d\+.*Xcscopedir/cscope.out\s\+<none>$', lines[2])
+
+  cs kill -1
+  call delete('Xcscopedir/cscope.out')
+  call assert_fails('cs add Xcscopedir', 'E563:')
+
+  call delete('Xcscopedir', 'd')
 endfunc
 
 func Test_cscopequickfix()
