@@ -425,7 +425,8 @@ cs_add_common(
   expand_env((char_u *)arg1, (char_u *)fname, MAXPATHL);
   size_t len = STRLEN(fname);
   fbuf = (char_u *)fname;
-  (void)modify_fname((char_u *)":p", &usedlen, (char_u **)&fname, &fbuf, &len);
+  (void)modify_fname((char_u *)":p", false, &usedlen,
+                     (char_u **)&fname, &fbuf, &len);
   if (fname == NULL)
     goto add_err;
   fname = (char *)vim_strnsave((char_u *)fname, len);

@@ -8868,8 +8868,8 @@ static void f_fnamemodify(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   } else {
     len = strlen(fname);
     size_t usedlen = 0;
-    (void)modify_fname((char_u *)mods, &usedlen, (char_u **)&fname, &fbuf,
-                       &len);
+    (void)modify_fname((char_u *)mods, false, &usedlen,
+                       (char_u **)&fname, &fbuf, &len);
   }
 
   rettv->v_type = VAR_STRING;
@@ -22623,6 +22623,7 @@ void reset_v_option_vars(void)
 int
 modify_fname(
     char_u *src,              // string with modifiers
+    bool tilde_file,          // "~" is a file name, not $HOME
     size_t *usedlen,          // characters after src that are used
     char_u **fnamep,          // file name so far
     char_u **bufp,            // buffer for allocated file name or NULL
@@ -22652,8 +22653,8 @@ repeat:
             || (*fnamep)[1] == '\\'
 # endif
             || (*fnamep)[1] == NUL)
-
 #endif
+        && !(tilde_file && (*fnamep)[1] == NUL)
         ) {
       *fnamep = expand_env_save(*fnamep);
       xfree(*bufp);          /* free any allocated file name */

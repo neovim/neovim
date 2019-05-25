@@ -8552,6 +8552,7 @@ eval_vars (
   size_t resultlen;
   buf_T       *buf;
   int valid = VALID_HEAD | VALID_PATH;  // Assume valid result.
+  bool tilde_file = false;
   int skip_mod = false;
   char strbuf[30];
 
@@ -8609,8 +8610,10 @@ eval_vars (
       if (curbuf->b_fname == NULL) {
         result = (char_u *)"";
         valid = 0;                  /* Must have ":p:h" to be valid */
-      } else
+      } else {
         result = curbuf->b_fname;
+        tilde_file = STRCMP(result, "~") == 0;
+      }
       break;
 
     case SPEC_HASH:             /* '#' or "#99": alternate file */
@@ -8660,8 +8663,10 @@ eval_vars (
         if (buf->b_fname == NULL) {
           result = (char_u *)"";
           valid = 0;                        /* Must have ":p:h" to be valid */
-        } else
+        } else {
           result = buf->b_fname;
+          tilde_file = STRCMP(result, "~") == 0;
+        }
       }
       break;
 
@@ -8746,7 +8751,8 @@ eval_vars (
         resultlen = (size_t)(s - result);
       }
     } else if (!skip_mod) {
-      valid |= modify_fname(src, usedlen, &result, &resultbuf, &resultlen);
+      valid |= modify_fname(src, tilde_file, usedlen, &result,
+                            &resultbuf, &resultlen);
       if (result == NULL) {
         *errormsg = (char_u *)"";
         return NULL;
