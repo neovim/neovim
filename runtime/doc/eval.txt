@@ -6079,7 +6079,7 @@ nr2char({expr} [, {utf8}])				*nr2char()*
 		characters.  nr2char(0) is a real NUL and terminates the
 		string, thus results in an empty string.
 
-nvim_...({...})						*nvim_...()* *eval-api*
+nvim_...({...})					*E5555* *nvim_...()* *eval-api*
 		Call nvim |api| functions. The type checking of arguments will
 		be stricter than for most other builtins. For instance,
 		if Integer is expected, a |Number| must be passed in, a

@@ -892,7 +892,7 @@ describe('API', function()
       eq({info=info}, meths.get_var("opened_event"))
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
       eq(info, meths.get_chan_info(3))
-      eval('rpcrequest(3, "nvim_set_client_info", "cat", {}, "remote",'..
+      eval('rpcrequest(3, "nvim_set_client_info", "amazing-cat", {}, "remote",'..
                        '{"nvim_command":{"n_args":1}},'.. -- and so on
                        '{"description":"The Amazing Cat"})')
       info = {
@@ -900,7 +900,7 @@ describe('API', function()
         id=3,
         mode='rpc',
         client = {
-          name='cat',
+          name='amazing-cat',
           version={major=0},
           type='remote',
           methods={nvim_command={n_args=1}},
@@ -909,6 +909,9 @@ describe('API', function()
       }
       eq({info=info}, meths.get_var("info_event"))
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
+
+      eq({false, "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1, expecting Buffer"},
+         meth_pcall(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
     end)
 
     it('works for :terminal channel', function()

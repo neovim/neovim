@@ -73,7 +73,7 @@ if prepend_argv then
   nvim_argv = new_nvim_argv
 end
 
-local session, loop_running, last_error
+local session, loop_running, last_error, method_error
 
 local function get_session()
   return session
@@ -190,12 +190,21 @@ local function call_and_stop_on_error(lsession, ...)
   return result
 end
 
+local function set_method_error(err)
+  method_error = err
+end
+
 local function run_session(lsession, request_cb, notification_cb, setup_cb, timeout)
   local on_request, on_notification, on_setup
 
   if request_cb then
     function on_request(method, args)
-      return call_and_stop_on_error(lsession, request_cb, method, args)
+      method_error = nil
+      local result = call_and_stop_on_error(lsession, request_cb, method, args)
+      if method_error ~= nil then
+        return method_error, true
+      end
+      return result
     end
   end
 
@@ -806,6 +815,7 @@ local module = {
   run = run,
   run_session = run_session,
   set_session = set_session,
+  set_method_error = set_method_error,
   set_shell_powershell = set_shell_powershell,
   skip_fragile = skip_fragile,
   source = source,

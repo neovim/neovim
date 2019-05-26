@@ -322,7 +322,7 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     assert(not (attr_ids ~= nil or attr_ignore ~= nil))
     local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
-                    reset=true, timeout=true}
+                    reset=true, timeout=true, request_cb=true}
     for _, v in ipairs(ext_keys) do
       is_key[v] = true
     end
@@ -497,7 +497,7 @@ function Screen:_wait(check, flags)
 
     return true
   end
-  run_session(self._session, nil, notification_cb, nil, minimal_timeout)
+  run_session(self._session, flags.request_cb, notification_cb, nil, minimal_timeout)
   if not did_flush then
     err = "no flush received"
   elseif not checked then
@@ -510,7 +510,7 @@ function Screen:_wait(check, flags)
 
   if not success_seen then
     did_miminal_timeout = true
-    run_session(self._session, nil, notification_cb, nil, timeout-minimal_timeout)
+    run_session(self._session, flags.request_cb, notification_cb, nil, timeout-minimal_timeout)
   end
 
   local did_warn = false
@@ -565,12 +565,12 @@ asynchronous (feed(), nvim_input()) and synchronous API calls.
   end
 end
 
-function Screen:sleep(ms)
+function Screen:sleep(ms, request_cb)
   local function notification_cb(method, args)
     assert(method == 'redraw')
     self:_redraw(args)
   end
-  run_session(self._session, nil, notification_cb, nil, ms)
+  run_session(self._session, request_cb, notification_cb, nil, ms)
 end
 
 function Screen:_redraw(updates)
@@ -1145,8 +1145,8 @@ end
 -- Use snapshot_util({},true) to generate a text-only (no attributes) test.
 --
 -- @see Screen:redraw_debug()
-function Screen:snapshot_util(attrs, ignore)
-  self:sleep(250)
+function Screen:snapshot_util(attrs, ignore, request_cb)
+  self:sleep(250, request_cb)
   self:print_snapshot(attrs, ignore)
 end
 

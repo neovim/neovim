@@ -687,6 +687,22 @@ Dictionary rpc_client_info(Channel *chan)
   return copy_dictionary(chan->rpc.info);
 }
 
+const char *rpc_client_name(Channel *chan)
+{
+  if (!chan->is_rpc) {
+    return NULL;
+  }
+  Dictionary info = chan->rpc.info;
+  for (size_t i = 0; i < info.size; i++) {
+    if (strequal("name", info.items[i].key.data)
+        && info.items[i].value.type == kObjectTypeString) {
+      return info.items[i].value.data.string.data;
+    }
+  }
+
+  return NULL;
+}
+
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 #define REQ "[request]  "
 #define RES "[response] "

@@ -702,6 +702,8 @@ events, which the UI must handle.
 		"echo"		|:echo| message
 		"echomsg"	|:echomsg| message
 		"echoerr"	|:echoerr| message
+		"lua_error"	Error in |:lua| code
+		"rpc_error"	Error response from |rpcrequest()|
 		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message
 		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)

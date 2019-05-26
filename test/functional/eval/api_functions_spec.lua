@@ -34,16 +34,16 @@ describe('eval-API', function()
     eq('Vim(call):E119: Not enough arguments for function: nvim_set_option', err)
 
     err = exc_exec('call nvim_buf_set_lines(1, 0, -1, [], ["list"])')
-    eq('Vim(call):Wrong type for argument 4, expecting Boolean', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 4, expecting Boolean', err)
 
     err = exc_exec('call nvim_buf_set_lines(0, 0, -1, v:true, "string")')
-    eq('Vim(call):Wrong type for argument 5, expecting ArrayOf(String)', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 5, expecting ArrayOf(String)', err)
 
     err = exc_exec('call nvim_buf_get_number("0")')
-    eq('Vim(call):Wrong type for argument 1, expecting Buffer', err)
+    eq('Vim(call):E5555: API call: Wrong type for argument 1, expecting Buffer', err)
 
     err = exc_exec('call nvim_buf_line_count(17)')
-    eq('Vim(call):Invalid buffer id', err)
+    eq('Vim(call):E5555: API call: Invalid buffer id', err)
   end)
 
 

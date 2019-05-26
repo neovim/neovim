@@ -40,8 +40,8 @@ describe('python3 provider', function()
     -- mostly bogus.
     local very_long_symbol = string.rep('a', 1200)
     feed_command(':silent! py3 print('..very_long_symbol..' b)')
-    -- Truncated error message would not contain this (last) line.
-    eq('SyntaxError: invalid syntax', eval('v:errmsg'))
+    -- Error message will contain this (last) line.
+    eq('Error invoking \'python_execute\' on channel 3 (python3-script-host):\n  File "<string>", line 1\n    print('..very_long_symbol..' b)\n          '..string.rep(' ',1200)..' ^\nSyntaxError: invalid syntax', eval('v:errmsg'))
   end)
 
   it('python3_execute with nested commands', function()
