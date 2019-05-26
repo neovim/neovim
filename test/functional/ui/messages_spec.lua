@@ -27,7 +27,7 @@ describe('ui/ext_messages', function()
     os.remove('Xtest')
   end)
 
-  it('msg_show kind=confirm,confirm_sub,emsg,wmsg', function()
+  it('msg_show kind=confirm,confirm_sub,emsg,wmsg,quickfix', function()
     feed('iline 1\nline 2<esc>')
 
     -- kind=confirm
@@ -143,6 +143,21 @@ describe('ui/ext_messages', function()
         kind = "return_prompt"
       } }
     }
+
+    -- kind=quickfix after :cnext
+    feed('<c-c>')
+    command("caddexpr [expand('%').':1:line1',expand('%').':2:line2']")
+    feed(':cnext<cr>')
+    screen:expect{grid=[[
+      line 1                   |
+      ^line 2                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={ {
+        content = { { "(2 of 2): line2" } },
+        kind = "quickfix"
+      } }}
   end)
 
   it(':echoerr', function()

@@ -2328,6 +2328,7 @@ static void qf_jump_print_msg(qf_info_T *qi, int qf_index, qfline_T *qf_ptr,
   } else if (!msg_scrolled && shortmess(SHM_OVERALL)) {
     msg_scroll = false;
   }
+  msg_ext_set_kind("quickfix");
   msg_attr_keep(IObuff, 0, true, false);
   msg_scroll = (int)i;
 }
