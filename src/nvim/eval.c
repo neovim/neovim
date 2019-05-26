@@ -17872,6 +17872,25 @@ static void f_winheight(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// "winlayout()" function
+static void f_winlayout(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  tabpage_T *tp;
+
+  tv_list_alloc_ret(rettv, 2);
+
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    tp = curtab;
+  } else {
+    tp = find_tabpage((int)tv_get_number(&argvars[0]));
+    if (tp == NULL) {
+      return;
+    }
+  }
+
+  get_framelayout(tp->tp_topframe, rettv->vval.v_list, true);
+}
+
 /*
  * "winline()" function
  */
