@@ -505,12 +505,7 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
 
   if (ui_has(kUICmdline)) {
     ui_call_cmdline_hide(ccline.level);
-    if (msg_ext_is_visible()) {
-      msg_ext_did_cmdline = true;
-      if (must_redraw < VALID) {
-        must_redraw = VALID;
-      }
-    }
+    msg_ext_clear_later();
   }
 
   cmdline_level--;

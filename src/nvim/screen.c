@@ -369,7 +369,7 @@ void update_screen(int type)
     ui_comp_set_screen_valid(false);
   }
   win_ui_flush_positions();
-  msg_ext_check_prompt();
+  msg_ext_check_clear();
 
   /* reset cmdline_row now (may have been changed temporarily) */
   compute_cmdrow();
