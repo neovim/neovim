@@ -2377,6 +2377,7 @@ win_screenpos({nr})		List	get screen position of window {nr}
 winbufnr({nr})			Number	buffer number of window {nr}
 wincol()			Number	window column of the cursor
 winheight({nr})			Number	height of window {nr}
+winlayout([{tabnr}])		List	layout of windows in tab {tabnr}
 winline()			Number	window line of the cursor
 winnr([{expr}])			Number	number of current window
 winrestcmd()			String	returns command to restore window sizes
@@ -8537,6 +8538,35 @@ winheight({nr})						*winheight()*
 		This excludes any window toolbar line.
 		Examples: >
   :echo "The current window has " . winheight(0) . " lines."
+<
+winlayout([{tabnr}])					*winlayout()*
+		The result is a nested List containing the layout of windows
+		in a tabpage.
+
+		Without {tabnr} use the current tabpage, otherwise the tabpage
+		with number {tabnr}. If the tabpage {tabnr} is not found,
+		returns an empty list.
+
+		For a leaf window, it returns:
+			['leaf', {winid}]
+		For horizontally split windows, which form a column, it
+		returns:
+			['col', [{nested list of windows}]]
+		For vertically split windows, which form a row, it returns:
+			['row', [{nested list of windows}]]
+
+		Example: >
+			" Only one window in the tab page
+			:echo winlayout()
+			['leaf', 1000]
+			" Two horizontally split windows
+			:echo winlayout()
+			['col', [['leaf', 1000], ['leaf', 1001]]]
+			" Three horizontally split windows, with two
+			" vertically split windows in the middle window
+			:echo winlayout(2)
+			['col', [['leaf', 1002], ['row', ['leaf', 1003],
+					     ['leaf', 1001]]], ['leaf', 1000]]
 <
 							*winline()*
 winline()	The result is a Number, which is the screen line of the cursor

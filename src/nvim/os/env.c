@@ -870,8 +870,8 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
     size_t usedlen = 0;
     size_t flen = strlen(homedir_env_mod);
     char_u *fbuf = NULL;
-    (void)modify_fname((char_u *)":p", &usedlen, (char_u **)&homedir_env_mod,
-                       &fbuf, &flen);
+    (void)modify_fname((char_u *)":p", false, &usedlen,
+                       (char_u **)&homedir_env_mod, &fbuf, &flen);
     flen = strlen(homedir_env_mod);
     assert(homedir_env_mod != homedir_env);
     if (vim_ispathsep(homedir_env_mod[flen - 1])) {

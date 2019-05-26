@@ -352,6 +352,7 @@ return {
     winbufnr={args=1},
     wincol={},
     winheight={args=1},
+    winlayout={args={0, 1}},
     winline={},
     winnr={args={0, 1}},
     winrestcmd={},

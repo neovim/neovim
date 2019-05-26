@@ -6658,6 +6658,41 @@ void win_findbuf(typval_T *argvars, list_T *list)
   }
 }
 
+// Get the layout of the given tab page for winlayout().
+void get_framelayout(const frame_T *fr, list_T *l, bool outer)
+{
+  list_T *fr_list;
+
+  if (fr == NULL) {
+    return;
+  }
+
+  if (outer) {
+    // outermost call from f_winlayout()
+    fr_list = l;
+  } else {
+    fr_list = tv_list_alloc(2);
+    tv_list_append_list(l, fr_list);
+  }
+
+  if (fr->fr_layout == FR_LEAF) {
+    if (fr->fr_win != NULL) {
+      tv_list_append_string(fr_list, "leaf", -1);
+      tv_list_append_number(fr_list, fr->fr_win->handle);
+    }
+  } else {
+    tv_list_append_string(fr_list, fr->fr_layout == FR_ROW ? "row" : "col", -1);
+
+    list_T *const win_list = tv_list_alloc(kListLenUnknown);
+    tv_list_append_list(fr_list, win_list);
+    const frame_T *child = fr->fr_child;
+    while (child != NULL) {
+      get_framelayout(child, win_list, false);
+      child = child->fr_next;
+    }
+  }
+}
+
 void win_ui_flush_positions(void)
 {
   FOR_ALL_TAB_WINDOWS(tp, wp) {
