@@ -6677,7 +6677,7 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 
   if (!did_cursorhold
       && has_cursorhold()
-      && !Recording
+      && reg_recording == 0
       && typebuf.tb_len == 0
       && !ins_compl_active()
       ) {

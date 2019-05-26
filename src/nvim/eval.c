@@ -13556,6 +13556,26 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   fclose(fd);
 }
 
+static void return_register(int regname, typval_T *rettv)
+{
+  char_u buf[2] = {0, 0};
+
+  buf[0] = (char_u)regname;
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = vim_strsave(buf);
+}
+
+// "reg_executing()" function
+static void f_reg_executing(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  return_register(reg_executing, rettv);
+}
+
+// "reg_recording()" function
+static void f_reg_recording(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  return_register(reg_recording, rettv);
+}
 
 /// list2proftime - convert a List to proftime_T
 ///

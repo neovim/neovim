@@ -1076,3 +1076,28 @@ func Test_func_sandbox()
   call assert_fails('call Fsandbox()', 'E48:')
   delfunc Fsandbox
 endfunc
+
+" Test for reg_recording() and reg_executing()
+func Test_reg_executing_and_recording()
+  let s:reg_stat = ''
+  func s:save_reg_stat()
+    let s:reg_stat = reg_recording() . ':' . reg_executing()
+    return ''
+  endfunc
+
+  new
+  call s:save_reg_stat()
+  call assert_equal(':', s:reg_stat)
+  call feedkeys("qa\"=s:save_reg_stat()\<CR>pq", 'xt')
+  call assert_equal('a:', s:reg_stat)
+  call feedkeys("@a", 'xt')
+  call assert_equal(':a', s:reg_stat)
+  call feedkeys("qb@aq", 'xt')
+  call assert_equal('b:a', s:reg_stat)
+  call feedkeys("q\"\"=s:save_reg_stat()\<CR>pq", 'xt')
+  call assert_equal('":', s:reg_stat)
+
+  bwipe!
+  delfunc s:save_reg_stat
+  unlet s:reg_stat
+endfunc

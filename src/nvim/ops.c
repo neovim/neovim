@@ -852,13 +852,13 @@ int do_record(int c)
   yankreg_T  *old_y_previous;
   int retval;
 
-  if (Recording == false) {
+  if (reg_recording == 0) {
     // start recording
     // registers 0-9, a-z and " are allowed
     if (c < 0 || (!ASCII_ISALNUM(c) && c != '"')) {
       retval = FAIL;
     } else {
-      Recording = c;
+      reg_recording = c;
       showmode();
       regname = c;
       retval = OK;
@@ -869,7 +869,7 @@ int do_record(int c)
      * needs to be removed again to put it in a register.  exec_reg then
      * adds the escaping back later.
      */
-    Recording = false;
+    reg_recording = 0;
     if (ui_has(kUIMessages)) {
       showmode();
     } else {
@@ -1040,7 +1040,7 @@ do_execreg(
           == FAIL)
         return FAIL;
     }
-    Exec_reg = TRUE;            /* disable the 'q' command */
+    reg_executing = regname == 0 ? '"' : regname;  // disable the 'q' command
   }
   return retval;
 }

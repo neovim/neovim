@@ -6412,7 +6412,7 @@ int showmode(void)
                  || restart_edit
                  || VIsual_active
                  ));
-  if (do_mode || Recording) {
+  if (do_mode || reg_recording != 0) {
     /*
      * Don't show mode right now, when not redrawing or inside a mapping.
      * Call char_avail() only when we are going to show something, because
@@ -6533,7 +6533,7 @@ int showmode(void)
 
       need_clear = TRUE;
     }
-    if (Recording
+    if (reg_recording != 0
         && edit_submode == NULL             /* otherwise it gets too long */
         ) {
       recording_mode(attr);
@@ -6600,7 +6600,7 @@ void clearmode(void)
 {
   msg_ext_ui_flush();
   msg_pos_mode();
-  if (Recording) {
+  if (reg_recording != 0) {
     recording_mode(HL_ATTR(HLF_CM));
   }
   msg_clr_eos();
@@ -6612,7 +6612,7 @@ static void recording_mode(int attr)
   MSG_PUTS_ATTR(_("recording"), attr);
   if (!shortmess(SHM_RECORDING)) {
     char_u s[4];
-    vim_snprintf((char *)s, ARRAY_SIZE(s), " @%c", Recording);
+    snprintf((char *)s, ARRAY_SIZE(s), " @%c", reg_recording);
     MSG_PUTS_ATTR(s, attr);
   }
 }

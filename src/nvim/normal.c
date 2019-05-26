@@ -552,7 +552,10 @@ static bool normal_need_additional_char(NormalState *s)
         // needs to be followed by a second char, examples:
         // - qc => record using register c
         // - q: => open command-line window
-     || (cmdchar == 'q' && !pending_op && !Recording && !Exec_reg)
+     || (cmdchar == 'q'
+         && !pending_op
+         && reg_recording == 0
+         && reg_executing == 0)
         // 'a' or 'i' after an operator is a text object, examples:
         // - ciw => change inside word
         // - da( => delete parenthesis and everything inside.
@@ -7686,7 +7689,7 @@ static void nv_record(cmdarg_T *cap)
     } else {
       // (stop) recording into a named register, unless executing a
       // register.
-      if (!Exec_reg && do_record(cap->nchar) == FAIL) {
+      if (reg_executing == 0 && do_record(cap->nchar) == FAIL) {
         clearopbeep(cap->oap);
       }
     }
