@@ -427,8 +427,9 @@ cs_add_common(
   fbuf = (char_u *)fname;
   (void)modify_fname((char_u *)":p", false, &usedlen,
                      (char_u **)&fname, &fbuf, &len);
-  if (fname == NULL)
+  if (fname == NULL) {
     goto add_err;
+  }
   fname = (char *)vim_strnsave((char_u *)fname, len);
   xfree(fbuf);
   FileInfo file_info;

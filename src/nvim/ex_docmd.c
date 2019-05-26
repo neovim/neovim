@@ -8609,7 +8609,7 @@ eval_vars (
     case SPEC_PERC:             /* '%': current file */
       if (curbuf->b_fname == NULL) {
         result = (char_u *)"";
-        valid = 0;                  /* Must have ":p:h" to be valid */
+        valid = 0;                  // Must have ":p:h" to be valid
       } else {
         result = curbuf->b_fname;
         tilde_file = STRCMP(result, "~") == 0;
@@ -8662,7 +8662,7 @@ eval_vars (
           *lnump = ECMD_LAST;
         if (buf->b_fname == NULL) {
           result = (char_u *)"";
-          valid = 0;                        /* Must have ":p:h" to be valid */
+          valid = 0;                        // Must have ":p:h" to be valid
         } else {
           result = buf->b_fname;
           tilde_file = STRCMP(result, "~") == 0;
