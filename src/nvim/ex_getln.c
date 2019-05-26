@@ -547,7 +547,10 @@ static int command_line_execute(VimState *state, int key)
     } else {
       do_cmdline(NULL, getcmdkeycmd, NULL, DOCMD_NOWAIT);
     }
-    redrawcmdline();
+
+    if (!cmdline_was_last_drawn) {
+      redrawcmdline();
+    }
     return 1;
   }
 
@@ -3457,6 +3460,8 @@ void redrawcmd(void)
     return;
   }
 
+  redrawing_cmdline = true;
+
   msg_start();
   redrawcmdprompt();
 
@@ -3478,9 +3483,11 @@ void redrawcmd(void)
    */
   msg_scroll = FALSE;           /* next message overwrites cmdline */
 
-  /* Typing ':' at the more prompt may set skip_redraw.  We don't want this
-   * in cmdline mode */
-  skip_redraw = FALSE;
+  // Typing ':' at the more prompt may set skip_redraw.  We don't want this
+  // in cmdline mode.
+  skip_redraw = false;
+
+  redrawing_cmdline = false;
 }
 
 void compute_cmdrow(void)

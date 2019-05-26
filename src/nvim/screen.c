@@ -507,6 +507,8 @@ void update_screen(int type)
     maybe_intro_message();
   did_intro = TRUE;
 
+  // either cmdline is cleared, not drawn or mode is last drawn
+  cmdline_was_last_drawn = false;
 }
 
 /*

@@ -4,20 +4,25 @@ local clear, feed = helpers.clear, helpers.feed
 local source = helpers.source
 local command = helpers.command
 
+local function new_screen(opt)
+  local screen = Screen.new(25, 5)
+  screen:attach(opt)
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue1},
+    [2] = {reverse = true},
+    [3] = {bold = true, reverse = true},
+    [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
+  })
+  return screen
+end
+
 local function test_cmdline(linegrid)
   local screen
 
   before_each(function()
     clear()
-    screen = Screen.new(25, 5)
-    screen:attach({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
-    screen:set_default_attr_ids({
-      [1] = {bold = true, foreground = Screen.colors.Blue1},
-      [2] = {reverse = true},
-      [3] = {bold = true, reverse = true},
-      [4] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
-      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
-    })
+    screen = new_screen({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
   end)
 
   after_each(function()
@@ -757,6 +762,57 @@ local function test_cmdline(linegrid)
   end)
 
 end
+
+describe('cmdline redraw', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = new_screen({rgb=true})
+  end)
+
+  after_each(function()
+    screen:detach()
+  end)
+
+  it('with timer', function()
+    feed(':012345678901234567890123456789')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]]}
+    command('call timer_start(0, {-> 1})')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]], unchanged=true, timeout=100}
+  end)
+
+  it('with <Cmd>', function()
+    command('cmap a <Cmd>0<CR>')  -- no-op
+    feed(':012345678901234567890123456789')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]]}
+    feed('a')
+    screen:expect{grid=[[
+                             |
+    {1:~                        }|
+    {3:                         }|
+    :012345678901234567890123|
+    456789^                   |
+    ]], unchanged=true}
+  end)
+end)
 
 -- the representation of cmdline and cmdline_block contents changed with ext_linegrid
 -- (which uses indexed highlights) so make sure to test both
