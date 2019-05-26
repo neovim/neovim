@@ -49,6 +49,7 @@
 #include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
+#include "nvim/sign.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
@@ -1337,6 +1338,8 @@ static void init_path(const char *exename)
   // shipped with Windows package. This also mimics SearchPath().
   os_setenv_append_path(exepath);
 #endif
+
+    init_signs();
 }
 
 /// Get filename from command line, if any.

@@ -1082,16 +1082,14 @@ void wait_return(int redraw)
       /* Put the character back in the typeahead buffer.  Don't use the
        * stuff buffer, because lmaps wouldn't work. */
       ins_char_typebuf(c);
-      do_redraw = TRUE;             /* need a redraw even though there is
-                                       typeahead */
+      do_redraw = true;             // need a redraw even though there is
+                                    // typeahead
     }
   }
-  redir_off = FALSE;
+  redir_off = false;
 
-  /*
-   * If the user hits ':', '?' or '/' we get a command line from the next
-   * line.
-   */
+  // If the user hits ':', '?' or '/' we get a command line from the next
+  // line.
   if (c == ':' || c == '?' || c == '/') {
     if (!exmode_active)
       cmdline_row = msg_row;
@@ -1100,19 +1098,17 @@ void wait_return(int redraw)
     msg_ext_keep_after_cmdline = true;
   }
 
-  /*
-   * If the window size changed set_shellsize() will redraw the screen.
-   * Otherwise the screen is only redrawn if 'redraw' is set and no ':'
-   * typed.
-   */
+  // If the window size changed set_shellsize() will redraw the screen.
+  // Otherwise the screen is only redrawn if 'redraw' is set and no ':'
+  // typed.
   tmpState = State;
-  State = oldState;                 /* restore State before set_shellsize */
+  State = oldState;                 // restore State before set_shellsize
   setmouse();
   msg_check();
-  need_wait_return = FALSE;
-  did_wait_return = TRUE;
-  emsg_on_display = FALSE;      /* can delete error message now */
-  lines_left = -1;              /* reset lines_left at next msg_start() */
+  need_wait_return = false;
+  did_wait_return = true;
+  emsg_on_display = false;      // can delete error message now
+  lines_left = -1;              // reset lines_left at next msg_start()
   reset_last_sourcing();
   if (keep_msg != NULL && vim_strsize(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
@@ -1183,25 +1179,25 @@ void msg_ext_set_kind(const char *msg_kind)
  */
 void msg_start(void)
 {
-  int did_return = FALSE;
+  int did_return = false;
 
   if (!msg_silent) {
     XFREE_CLEAR(keep_msg);              // don't display old message now
   }
 
   if (need_clr_eos) {
-    /* Halfway an ":echo" command and getting an (error) message: clear
-     * any text from the command. */
-    need_clr_eos = FALSE;
+    // Halfway an ":echo" command and getting an (error) message: clear
+    // any text from the command.
+    need_clr_eos = false;
     msg_clr_eos();
   }
 
-  if (!msg_scroll && full_screen) {     /* overwrite last message */
+  if (!msg_scroll && full_screen) {     // overwrite last message
     msg_row = cmdline_row;
     msg_col =
       cmdmsg_rl ? Columns - 1 :
       0;
-  } else if (msg_didout) {                /* start message on next line */
+  } else if (msg_didout) {                // start message on next line
     msg_putchar('\n');
     did_return = TRUE;
     if (exmode_active != EXMODE_NORMAL)
@@ -1210,7 +1206,7 @@ void msg_start(void)
   if (!msg_didany || lines_left < 0)
     msg_starthere();
   if (msg_silent == 0) {
-    msg_didout = FALSE;                     /* no output on current line yet */
+    msg_didout = false;                     // no output on current line yet
   }
 
   if (ui_has(kUIMessages)) {
@@ -2992,12 +2988,13 @@ int verbose_open(void)
  */
 void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
 {
-  /* Don't do this for ":silent". */
-  if (msg_silent != 0)
+  // Don't do this for ":silent".
+  if (msg_silent != 0) {
     return;
+  }
 
-  /* Don't want a hit-enter prompt here. */
-  ++no_wait_return;
+  // Don't want a hit-enter prompt here.
+  no_wait_return++;
 
   set_vim_var_string(VV_WARNINGMSG, (char *)message, -1);
   XFREE_CLEAR(keep_msg);
@@ -3015,7 +3012,7 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   msg_nowait = true;   // Don't wait for this message.
   msg_col = 0;
 
-  --no_wait_return;
+  no_wait_return--;
 }
 
 void give_warning2(char_u *const message, char_u *const a1, bool hl)

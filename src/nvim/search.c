@@ -87,13 +87,13 @@ static struct spat spats[2] =
 
 static int last_idx = 0;        /* index in spats[] for RE_LAST */
 
-static char_u lastc[2] = {NUL, NUL};        /* last character searched for */
-static int lastcdir = FORWARD;              /* last direction of character search */
-static int last_t_cmd = TRUE;               /* last search t_cmd */
+static char_u lastc[2] = { NUL, NUL };    // last character searched for
+static int lastcdir = FORWARD;            // last direction of character search
+static int last_t_cmd = true;             // last search t_cmd
 static char_u lastc_bytes[MB_MAXBYTES + 1];
-static int lastc_bytelen = 1;               /* >1 for multi-byte char */
+static int lastc_bytelen = 1;             // >1 for multi-byte char
 
-/* copy of spats[], for keeping the search patterns while executing autocmds */
+// copy of spats[], for keeping the search patterns while executing autocmds
 static struct spat saved_spats[2];
 // copy of spats[RE_SEARCH], for keeping the search patterns while incremental
 // searching
@@ -101,8 +101,8 @@ static struct spat  saved_last_search_spat;
 static int saved_last_idx = 0;
 static int saved_no_hlsearch = 0;
 
-static char_u       *mr_pattern = NULL; /* pattern used by search_regcomp() */
-static int mr_pattern_alloced = FALSE;          /* mr_pattern was allocated */
+static char_u       *mr_pattern = NULL;    // pattern used by search_regcomp()
+static int mr_pattern_alloced = false;     // mr_pattern was allocated
 
 /*
  * Type used by find_pattern_in_path() to remember which included files have

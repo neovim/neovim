@@ -179,9 +179,9 @@ static int compl_no_insert = FALSE;             /* FALSE: select & insert
 static int compl_no_select = FALSE;             /* FALSE: select & insert
                                                    TRUE: noselect */
 
-static int compl_used_match;            /* Selected one of the matches.  When
-                                           FALSE the match was edited or using
-                                           the longest common string. */
+static int compl_used_match;            // Selected one of the matches.  When
+                                        // FALSE the match was edited or using
+                                        // the longest common string.
 
 static int compl_was_interrupted = FALSE;         /* didn't finish finding
                                                      completions. */
@@ -2599,8 +2599,9 @@ void ins_compl_show_pum(void)
     do {
       if ((compl->cp_flags & ORIGINAL_TEXT) == 0
           && (compl_leader == NULL
-              || ins_compl_equal(compl, compl_leader, lead_len)))
-        ++compl_match_arraysize;
+              || ins_compl_equal(compl, compl_leader, lead_len))) {
+        compl_match_arraysize++;
+      }
       compl = compl->cp_next;
     } while (compl != NULL && compl != compl_first_match);
     if (compl_match_arraysize == 0)

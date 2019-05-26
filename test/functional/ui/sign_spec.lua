@@ -240,7 +240,7 @@ describe('Signs', function()
         :sign place                                          |
         {9:--- Signs ---}                                        |
         {10:Signs for [NULL]:}                                    |
-            line=1  id=100000  name=piet                     |
+            line=1  id=100000  name=piet  priority=10        |
                                                              |
         {11:Press ENTER or type command to continue}^              |
       ]])

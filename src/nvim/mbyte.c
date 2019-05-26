@@ -2085,31 +2085,31 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
 
     to = (char *)result + done;
     tolen = len - done - 2;
-    /* Avoid a warning for systems with a wrong iconv() prototype by
-     * casting the second argument to void *. */
+    // Avoid a warning for systems with a wrong iconv() prototype by
+    // casting the second argument to void *.
     if (iconv(vcp->vc_fd, (void *)&from, &fromlen, &to, &tolen) != SIZE_MAX) {
-      /* Finished, append a NUL. */
+      // Finished, append a NUL.
       *to = NUL;
       break;
     }
 
-    /* Check both ICONV_EINVAL and EINVAL, because the dynamically loaded
-     * iconv library may use one of them. */
+    // Check both ICONV_EINVAL and EINVAL, because the dynamically loaded
+    // iconv library may use one of them.
     if (!vcp->vc_fail && unconvlenp != NULL
         && (ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
-      /* Handle an incomplete sequence at the end. */
+      // Handle an incomplete sequence at the end.
       *to = NUL;
       *unconvlenp = fromlen;
       break;
-    }
-    /* Check both ICONV_EILSEQ and EILSEQ, because the dynamically loaded
-     * iconv library may use one of them. */
-    else if (!vcp->vc_fail
-        && (ICONV_ERRNO == ICONV_EILSEQ || ICONV_ERRNO == EILSEQ
-          || ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
-      /* Can't convert: insert a '?' and skip a character.  This assumes
-       * conversion from 'encoding' to something else.  In other
-       * situations we don't know what to skip anyway. */
+    } else if (!vcp->vc_fail
+               && (ICONV_ERRNO == ICONV_EILSEQ || ICONV_ERRNO == EILSEQ
+                   || ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
+      // Check both ICONV_EILSEQ and EILSEQ, because the dynamically loaded
+      // iconv library may use one of them.
+
+      // Can't convert: insert a '?' and skip a character.  This assumes
+      // conversion from 'encoding' to something else.  In other
+      // situations we don't know what to skip anyway.
       *to++ = '?';
       if (utf_ptr2cells((char_u *)from) > 1) {
         *to++ = '?';
@@ -2122,7 +2122,7 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
       XFREE_CLEAR(result);
       break;
     }
-    /* Not enough room or skipping illegal sequence. */
+    // Not enough room or skipping illegal sequence.
     done = to - (char *)result;
   }
 
@@ -2132,11 +2132,9 @@ static char_u *iconv_string(const vimconv_T *const vcp, char_u *str,
 }
 
 #  if defined(DYNAMIC_ICONV)
-/*
- * Dynamically load the "iconv.dll" on Win32.
- */
+// Dynamically load the "iconv.dll" on Win32.
 
-#ifndef DYNAMIC_ICONV       /* just generating prototypes */
+#ifndef DYNAMIC_ICONV       // just generating prototypes
 # define HINSTANCE int
 #endif
 static HINSTANCE hIconvDLL = 0;

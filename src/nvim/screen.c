@@ -103,6 +103,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
+#include "nvim/sign.h"
 #include "nvim/spell.h"
 #include "nvim/state.h"
 #include "nvim/strings.h"
@@ -220,7 +221,8 @@ void redraw_buf_later(buf_T *buf, int type)
 void redraw_buf_line_later(buf_T *buf,  linenr_T line)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer == buf) {
+    if (wp->w_buffer == buf
+        && line >= wp->w_topline && line < wp->w_botline) {
       redrawWinline(wp, line);
     }
   }

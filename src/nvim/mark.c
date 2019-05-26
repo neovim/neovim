@@ -29,6 +29,7 @@
 #include "nvim/path.h"
 #include "nvim/quickfix.h"
 #include "nvim/search.h"
+#include "nvim/sign.h"
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"

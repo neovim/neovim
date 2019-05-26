@@ -2028,6 +2028,8 @@ cursor({lnum}, {col} [, {off}])
 cursor({list})			Number	move cursor to position in {list}
 deepcopy({expr} [, {noref}])	any	make a full copy of {expr}
 delete({fname} [, {flags}])	Number	delete the file or directory {fname}
+deletebufline({expr}, {first}[, {last}])
+				Number	delete lines from buffer {expr}
 dictwatcheradd({dict}, {pattern}, {callback})
 				Start watching a dictionary
 dictwatcherdel({dict}, {pattern}, {callback})
@@ -2289,6 +2291,17 @@ shellescape({string} [, {special}])
 				String	escape {string} for use as shell
 					command argument
 shiftwidth()			Number	effective value of 'shiftwidth'
+sign_define({name} [, {dict}])	Number	define or update a sign
+sign_getdefined([{name}])	List	get a list of defined signs
+sign_getplaced([{expr} [, {dict}]])
+				List	get a list of placed signs
+sign_jump({id}, {group}, {expr})
+				Number	jump to a sign
+sign_place({id}, {group}, {name}, {expr} [, {dict}])
+				Number	place a sign
+sign_undefine([{name}])		Number	undefine a sign
+sign_unplace({group} [, {dict}])
+				Number	unplace a sign
 simplify({filename})		String	simplify filename as much as possible
 sin({expr})			Float	sine of {expr}
 sinh({expr})			Float	hyperbolic sine of {expr}
@@ -3198,6 +3211,17 @@ delete({fname} [, {flags}])					*delete()*
 		The result is a Number, which is 0 if the delete operation was
 		successful and -1 when the deletion failed or partly failed.
 
+deletebufline({expr}, {first}[, {last}])		*deletebufline()*
+		Delete lines {first} to {last} (inclusive) from buffer {expr}.
+		If {last} is omitted then delete line {first} only.
+		On success 0 is returned, on failure 1 is returned.
+
+		For the use of {expr}, see |bufname()| above.
+
+		{first} and {last} are used like with |setline()|. Note that
+		when using |line()| this refers to the current buffer. Use "$"
+		to refer to the last line in buffer {expr}.
+
 dictwatcheradd({dict}, {pattern}, {callback})		      *dictwatcheradd()*
 		Adds a watcher to a dictionary. A dictionary watcher is
 		identified by three components:
@@ -3572,20 +3596,24 @@ extend({expr1}, {expr2} [, {expr3}])			*extend()*
 feedkeys({string} [, {mode}])				*feedkeys()*
 		Characters in {string} are queued for processing as if they
 		come from a mapping or were typed by the user.
+
 		By default the string is added to the end of the typeahead
 		buffer, thus if a mapping is still being executed the
 		characters come after them.  Use the 'i' flag to insert before
 		other characters, they will be executed next, before any
 		characters from a mapping.
+
 		The function does not wait for processing of keys contained in
 		{string}.
+
 		To include special keys into {string}, use double-quotes
 		and "\..." notation |expr-quote|. For example,
 		feedkeys("\<CR>") simulates pressing of the <Enter> key. But
 		feedkeys('\<CR>') pushes 5 characters.
-		If {mode} is absent, keys are remapped.
+
 		{mode} is a String, which can contain these character flags:
-		'm'	Remap keys. This is default.
+		'm'	Remap keys. This is default.  If {mode} is absent,
+			keys are remapped.
 		'n'	Do not remap keys.
 		't'	Handle keys as if typed; otherwise they are handled as
 			if coming from a mapping.  This matters for undo,
@@ -3599,6 +3627,9 @@ feedkeys({string} [, {mode}])				*feedkeys()*
 			will behave as if <Esc> is typed, to avoid getting
 			stuck, waiting for a character to be typed before the
 			script continues.
+			Note that if you manage to call feedkeys() while
+			executing commands, thus calling it recursively, the
+			all typehead will be consumed by the last call.
 		'!'	When used with 'x' will not end Insert mode. Can be
 			used in a test when a timer is set to exit Insert mode
 			a little later.  Useful for testing CursorHoldI.
@@ -7349,7 +7380,246 @@ shiftwidth()						*shiftwidth()*
 			endif
 <		And then use s:sw() instead of &sw.
 
+sign_define({name} [, {dict}])				*sign_define()*
+		Define a new sign named {name} or modify the attributes of an
+		existing sign.  This is similar to the |:sign-define| command.
 
+		Prefix {name} with a unique text to avoid name collisions.
+		There is no {group} like with placing signs.
+
+		The {name} can be a String or a Number.  The optional {dict}
+		argument specifies the sign attributes.  The following values
+		are supported:
+		    icon	full path to the bitmap file for the sign.
+		    linehl	highlight group used for the whole line the
+				sign is placed in.
+		    text	text that is displayed when there is no icon
+				or the GUI is not being used.
+		    texthl	highlight group used for the text item
+		    numhl	highlight group used for 'number' column at the
+				associated line. Overrides |hl-LineNr|,
+				|hl-CursorLineNr|.
+
+		If the sign named {name} already exists, then the attributes
+		of the sign are updated.
+
+		Returns 0 on success and -1 on failure.
+
+		Examples: >
+			call sign_define("mySign", {"text" : "=>", "texthl" :
+					\ "Error", "linehl" : "Search"})
+<
+sign_getdefined([{name}])				*sign_getdefined()*
+		Get a list of defined signs and their attributes.
+		This is similar to the |:sign-list| command.
+
+		If the {name} is not supplied, then a list of all the defined
+		signs is returned. Otherwise the attribute of the specified
+		sign is returned.
+
+		Each list item in the returned value is a dictionary with the
+		following entries:
+			icon	full path to the bitmap file of the sign
+			linehl	highlight group used for the whole line the
+				sign is placed in.
+			name	name of the sign
+			text	text that is displayed when there is no icon
+				or the GUI is not being used.
+			texthl	highlight group used for the text item
+			numhl	highlight group used for 'number' column at the
+				associated line. Overrides |hl-LineNr|,
+				|hl-CursorLineNr|.
+
+		Returns an empty List if there are no signs and when {name} is
+		not found.
+
+		Examples: >
+			" Get a list of all the defined signs
+			echo sign_getdefined()
+
+			" Get the attribute of the sign named mySign
+			echo sign_getdefined("mySign")
+<
+sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
+		Return a list of signs placed in a buffer or all the buffers.
+		This is similar to the |:sign-place-list| command.
+
+		If the optional buffer name {expr} is specified, then only the
+		list of signs placed in that buffer is returned.  For the use
+		of {expr}, see |bufname()|. The optional {dict} can contain
+		the following entries:
+			group	select only signs in this group
+			id	select sign with this identifier
+			lnum	select signs placed in this line. For the use
+				of {lnum}, see |line()|.
+		If {group} is '*', then signs in all the groups including the
+		global group are returned. If {group} is not supplied or is an
+		empty string, then only signs in the global group are
+		returned.  If no arguments are supplied, then signs in the
+		global group placed in all the buffers are returned.
+		See |sign-group|.
+
+		Each list item in the returned value is a dictionary with the
+		following entries:
+			bufnr	number of the buffer with the sign
+			signs	list of signs placed in {bufnr}. Each list
+				item is a dictionary with the below listed
+				entries
+
+		The dictionary for each sign contains the following entries:
+			group	sign group. Set to '' for the global group.
+			id	identifier of the sign
+			lnum	line number where the sign is placed
+			name	name of the defined sign
+			priority	sign priority
+
+		The returned signs in a buffer are ordered by their line
+		number.
+
+		Returns an empty list on failure or if there are no placed
+		signs.
+
+		Examples: >
+			" Get a List of signs placed in eval.c in the
+			" global group
+			echo sign_getplaced("eval.c")
+
+			" Get a List of signs in group 'g1' placed in eval.c
+			echo sign_getplaced("eval.c", {'group' : 'g1'})
+
+			" Get a List of signs placed at line 10 in eval.c
+			echo sign_getplaced("eval.c", {'lnum' : 10})
+
+			" Get sign with identifier 10 placed in a.py
+			echo sign_getplaced("a.py", {'id' : 10'})
+
+			" Get sign with id 20 in group 'g1' placed in a.py
+			echo sign_getplaced("a.py", {'group' : 'g1',
+							\  'id' : 20'})
+
+			" Get a List of all the placed signs
+			echo sign_getplaced()
+<
+							*sign_jump()*
+sign_jump({id}, {group}, {expr})
+		Open the buffer {expr} or jump to the window that contains
+		{expr} and position the cursor at sign {id} in group {group}.
+		This is similar to the |:sign-jump| command.
+
+		For the use of {expr}, see |bufname()|.
+
+		Returns the line number of the sign. Returns -1 if the
+		arguments are invalid.
+
+		Example: >
+			" Jump to sign 10 in the current buffer
+			call sign_jump(10, '', '')
+<
+							*sign_place()*
+sign_place({id}, {group}, {name}, {expr} [, {dict}])
+		Place the sign defined as {name} at line {lnum} in file {expr}
+		and assign {id} and {group} to sign.  This is similar to the
+		|:sign-place| command.
+
+		If the sign identifier {id} is zero, then a new identifier is
+		allocated.  Otherwise the specified number is used. {group} is
+		the sign group name. To use the global sign group, use an
+		empty string.  {group} functions as a namespace for {id}, thus
+		two groups can use the same IDs. Refer to |sign-identifier|
+		for more information.
+		
+		{name} refers to a defined sign.
+		{expr} refers to a buffer name or number. For the accepted
+		values, see |bufname()|.
+
+		The optional {dict} argument supports the following entries:
+			lnum		line number in the buffer {expr} where
+					the sign is to be placed. For the
+					accepted values, see |line()|.
+			priority	priority of the sign. See
+					|sign-priority| for more information.
+
+		If the optional {dict} is not specified, then it modifies the
+		placed sign {id} in group {group} to use the defined sign
+		{name}.
+
+		Returns the sign identifier on success and -1 on failure.
+
+		Examples: >
+			" Place a sign named sign1 with id 5 at line 20 in
+			" buffer json.c
+			call sign_place(5, '', 'sign1', 'json.c',
+							\ {'lnum' : 20})
+
+			" Updates sign 5 in buffer json.c to use sign2
+			call sign_place(5, '', 'sign2', 'json.c')
+
+			" Place a sign named sign3 at line 30 in
+			" buffer json.c with a new identifier
+			let id = sign_place(0, '', 'sign3', 'json.c',
+							\ {'lnum' : 30})
+
+			" Place a sign named sign4 with id 10 in group 'g3'
+			" at line 40 in buffer json.c with priority 90
+			call sign_place(10, 'g3', 'sign4', 'json.c',
+					\ {'lnum' : 40, 'priority' : 90})
+<
+sign_undefine([{name}])					*sign_undefine()*
+		Deletes a previously defined sign {name}. This is similar to
+		the |:sign-undefine| command. If {name} is not supplied, then
+		deletes all the defined signs.
+
+		Returns 0 on success and -1 on failure.
+
+		Examples: >
+			" Delete a sign named mySign
+			call sign_undefine("mySign")
+
+			" Delete all the signs
+			call sign_undefine()
+<
+sign_unplace({group} [, {dict}])			*sign_unplace()*
+		Remove a previously placed sign in one or more buffers.  This
+		is similar to the |:sign-unplace()| command.
+
+		{group} is the sign group name. To use the global sign group,
+		use an empty string.  If {group} is set to '*', then all the
+		groups including the global group are used.
+		The signs in {group} are selected based on the entries in
+		{dict}.  The following optional entries in {dict} are
+		supported:
+			buffer	buffer name or number. See |bufname()|.
+			id	sign identifier
+		If {dict} is not supplied, then all the signs in {group} are
+		removed.
+
+		Returns 0 on success and -1 on failure.
+
+		Examples: >
+			" Remove sign 10 from buffer a.vim
+			call sign_unplace('', {'buffer' : "a.vim", 'id' : 10})
+
+			" Remove sign 20 in group 'g1' from buffer 3
+			call sign_unplace('g1', {'buffer' : 3, 'id' : 20})
+
+			" Remove all the signs in group 'g2' from buffer 10
+			call sign_unplace('g2', {'buffer' : 10})
+
+			" Remove sign 30 in group 'g3' from all the buffers
+			call sign_unplace('g3', {'id' : 30})
+
+			" Remove all the signs placed in buffer 5
+			call sign_unplace('*', {'buffer' : 5})
+
+			" Remove the signs in group 'g4' from all the buffers
+			call sign_unplace('g4')
+
+			" Remove sign 40 from all the buffers
+			call sign_unplace('*', {'id' : 40})
+
+			" Remove all the placed signs from all the buffers
+			call sign_unplace('*')
+<
 simplify({filename})					*simplify()*
 		Simplify the file name as much as possible without changing
 		the meaning.  Shortcuts (on MS-Windows) or symbolic links (on
@@ -8352,7 +8622,7 @@ undofile({name})					*undofile()*
 		If {name} is empty undofile() returns an empty string, since a
 		buffer without a file name will not write an undo file.
 		Useful in combination with |:wundo| and |:rundo|.
-		When compiled without the +persistent_undo option this always
+		When compiled without the |+persistent_undo| option this always
 		returns an empty string.
 
 undotree()						*undotree()*

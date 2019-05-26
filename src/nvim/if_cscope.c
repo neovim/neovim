@@ -1524,12 +1524,10 @@ static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
       }
 
       totsofar++;
-
-    }     /* for all matches */
+    }     // for all matches
 
     (void)cs_read_prompt(i);
-
-  }   /* for all cscope connections */
+  }   // for all cscope connections
 
   if (totsofar == 0) {
     // No matches, free the arrays and return NULL in "*matches_p".
@@ -1541,20 +1539,25 @@ static void cs_fill_results(char *tagstr, size_t totmatches, int *nummatches_a,
   *cntxts_p = cntxts;
 
   xfree(buf);
-} /* cs_fill_results */
+}  // cs_fill_results
 
 
 /* get the requested path components */
 static char *cs_pathcomponents(char *path)
 {
-  if (p_cspc == 0)
+  if (p_cspc == 0) {
     return path;
+  }
 
   char *s = path + strlen(path) - 1;
-  for (int i = 0; i < p_cspc; ++i)
-    while (s > path && *--s != '/') continue;
-  if ((s > path && *s == '/'))
-    ++s;
+  for (int i = 0; i < p_cspc; i++) {
+    while (s > path && *--s != '/') {
+      continue;
+    }
+  }
+  if ((s > path && *s == '/')) {
+    s++;
+  }
   return s;
 }
 
