@@ -926,6 +926,10 @@ void ex_messages(void *const eap_p)
  */
 void msg_end_prompt(void)
 {
+  if (must_redraw < VALID) {
+    must_redraw = VALID;
+  }
+  msg_ext_did_cmdline = TRUE;
   need_wait_return = FALSE;
   emsg_on_display = FALSE;
   cmdline_row = msg_row;
