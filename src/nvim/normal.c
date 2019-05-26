@@ -4213,10 +4213,10 @@ dozet:
     set_fraction(curwin);
     break;
 
-  /* "z^", "z-" and "zb": put cursor at bottom of screen */
-  case '^':     /* Strange Vi behavior: <count>z^ finds line at top of window
-                 * when <count> is at bottom of window, and puts that one at
-                 * bottom of window. */
+  // "z^", "z-" and "zb": put cursor at bottom of screen
+  case '^':     // Strange Vi behavior: <count>z^ finds line at top of window
+                // when <count> is at bottom of window, and puts that one at
+                // bottom of window.
     if (cap->count0 != 0) {
       scroll_cursor_bot(0, true);
       curwin->w_cursor.lnum = curwin->w_topline;

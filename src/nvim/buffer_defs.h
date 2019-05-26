@@ -769,15 +769,15 @@ struct file_buffer {
    * spell buffer - used for spell info, never displayed and doesn't have a
    *                file name.
    */
-  bool b_help;                  /* TRUE for help file buffer (when set b_p_bt
-                                   is "help") */
-  bool b_spell;                 /* True for a spell file buffer, most fields
-                                   are not used!  Use the B_SPELL macro to
-                                   access b_spell without #ifdef. */
+  bool b_help;                  // TRUE for help file buffer (when set b_p_bt
+                                // is "help")
+  bool b_spell;                 // True for a spell file buffer, most fields
+                                // are not used!  Use the B_SPELL macro to
+                                // access b_spell without #ifdef.
 
-  synblock_T b_s;               /* Info related to syntax highlighting.  w_s
-                                 * normally points to this, but some windows
-                                 * may use a different synblock_T. */
+  synblock_T b_s;               // Info related to syntax highlighting.  w_s
+                                // normally points to this, but some windows
+                                // may use a different synblock_T.
 
   signlist_T *b_signlist;       // list of signs to draw
   int b_signcols_max;           // cached maximum number of sign columns
@@ -1144,12 +1144,12 @@ struct window_S {
 
   int w_cline_row;                  /* starting row of the cursor line */
 
-  colnr_T w_virtcol;                /* column number of the cursor in the
-                                       buffer line, as opposed to the column
-                                       number we're at on the screen.  This
-                                       makes a difference on lines which span
-                                       more than one screen line or when
-                                       w_leftcol is non-zero */
+  colnr_T w_virtcol;                // column number of the cursor in the
+                                    // buffer line, as opposed to the column
+                                    // number we're at on the screen.  This
+                                    // makes a difference on lines which span
+                                    // more than one screen line or when
+                                    // w_leftcol is non-zero
 
   /*
    * w_wrow and w_wcol specify the cursor position in the window.

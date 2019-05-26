@@ -1114,22 +1114,17 @@ static void restore_vimvar(int idx, typval_T *save_tv)
   }
 }
 
-/*
- * If there is a window for "curbuf", make it the current window.
- */
-    static void
-find_win_for_curbuf(void)
+/// If there is a window for "curbuf", make it the current window.
+static void find_win_for_curbuf(void)
 {
-    wininfo_T *wip;
+  wininfo_T *wip;
 
-    for (wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next)
-    {
-	if (wip->wi_win != NULL)
-	{
-	    curwin = wip->wi_win;
-	    break;
-	}
+  for (wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+    if (wip->wi_win != NULL) {
+      curwin = wip->wi_win;
+      break;
     }
+  }
 }
 
 /*
@@ -1144,7 +1139,7 @@ list_T *eval_spell_expr(char_u *badword, char_u *expr)
   list_T      *list = NULL;
   char_u      *p = skipwhite(expr);
 
-  /* Set "v:val" to the bad word. */
+  // Set "v:val" to the bad word.
   prepare_vimvar(VV_VAL, &save_val);
   vimvars[VV_VAL].vv_type = VAR_STRING;
   vimvars[VV_VAL].vv_str = badword;
@@ -7202,7 +7197,7 @@ static buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   if (name[0] == '$' && name[1] == NUL)
     return lastbuf;
 
-  /* Ignore 'magic' and 'cpoptions' here to make scripts portable */
+  // Ignore 'magic' and 'cpoptions' here to make scripts portable
   save_magic = p_magic;
   p_magic = TRUE;
   save_cpo = p_cpo;
@@ -7214,28 +7209,27 @@ static buf_T *tv_get_buf(typval_T *tv, int curtab_only)
   p_magic = save_magic;
   p_cpo = save_cpo;
 
-  /* If not found, try expanding the name, like done for bufexists(). */
-  if (buf == NULL)
+  // If not found, try expanding the name, like done for bufexists().
+  if (buf == NULL) {
     buf = find_buffer(tv);
+  }
 
   return buf;
 }
 
-/*
- * Get the buffer from "arg" and give an error and return NULL if it is not
- * valid.
- */
-    static buf_T *
-get_buf_arg(typval_T *arg)
+/// Get the buffer from "arg" and give an error and return NULL if it is not
+/// valid.
+static buf_T * get_buf_arg(typval_T *arg)
 {
-    buf_T *buf;
+  buf_T *buf;
 
-    ++emsg_off;
-    buf = tv_get_buf(arg, FALSE);
-    --emsg_off;
-    if (buf == NULL)
-	EMSG2(_("E158: Invalid buffer name: %s"), tv_get_string(arg));
-    return buf;
+  emsg_off++;
+  buf = tv_get_buf(arg, false);
+  emsg_off--;
+  if (buf == NULL) {
+    EMSG2(_("E158: Invalid buffer name: %s"), tv_get_string(arg));
+  }
+  return buf;
 }
 
 /*
@@ -8035,87 +8029,83 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   callback_free(&callback);
 }
 
-/*
- * "deletebufline()" function
- */
-    static void
-f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "deletebufline()" function
+static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-    buf_T	*buf;
-    linenr_T	first, last;
-    linenr_T	lnum;
-    long	count;
-    int		is_curbuf;
-    buf_T	*curbuf_save = NULL;
-    win_T	*curwin_save = NULL;
+  buf_T *buf;
+  linenr_T first, last;
+  linenr_T lnum;
+  long count;
+  int is_curbuf;
+  buf_T *curbuf_save = NULL;
+  win_T *curwin_save = NULL;
 
-    buf = tv_get_buf(&argvars[0], FALSE);
-    if (buf == NULL)
-    {
-	rettv->vval.v_number = 1; /* FAIL */
-	return;
+  buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    rettv->vval.v_number = 1;  // FAIL
+    return;
+  }
+  is_curbuf = buf == curbuf;
+
+  first = tv_get_lnum_buf(&argvars[1], buf);
+  if (argvars[2].v_type != VAR_UNKNOWN) {
+    last = tv_get_lnum_buf(&argvars[2], buf);
+  } else {
+    last = first;
+  }
+
+  if (buf->b_ml.ml_mfp == NULL || first < 1
+      || first > buf->b_ml.ml_line_count || last < first) {
+    rettv->vval.v_number = 1;  // FAIL
+    return;
+  }
+
+  if (!is_curbuf) {
+    curbuf_save = curbuf;
+    curwin_save = curwin;
+    curbuf = buf;
+    find_win_for_curbuf();
+  }
+  if (last > curbuf->b_ml.ml_line_count) {
+    last = curbuf->b_ml.ml_line_count;
+  }
+  count = last - first + 1;
+
+  // When coming here from Insert mode, sync undo, so that this can be
+  // undone separately from what was previously inserted.
+  if (u_sync_once == 2) {
+    u_sync_once = 1;  // notify that u_sync() was called
+    u_sync(true);
+  }
+
+  if (u_save(first - 1, last + 1) == FAIL) {
+    rettv->vval.v_number = 1;  // FAIL
+    return;
+  }
+
+  for (lnum = first; lnum <= last; lnum++) {
+    ml_delete(first, true);
+  }
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_buffer == buf) {
+      if (wp->w_cursor.lnum > last) {
+        wp->w_cursor.lnum -= count;
+      } else if (wp->w_cursor.lnum> first) {
+        wp->w_cursor.lnum = first;
+      }
+      if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count) {
+        wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
+      }
     }
-    is_curbuf = buf == curbuf;
+  }
+  check_cursor_col();
+  deleted_lines_mark(first, count);
 
-    first = tv_get_lnum_buf(&argvars[1], buf);
-    if (argvars[2].v_type != VAR_UNKNOWN)
-	last = tv_get_lnum_buf(&argvars[2], buf);
-    else
-	last = first;
-
-    if (buf->b_ml.ml_mfp == NULL || first < 1
-			   || first > buf->b_ml.ml_line_count || last < first)
-    {
-	rettv->vval.v_number = 1;	/* FAIL */
-	return;
-    }
-
-    if (!is_curbuf)
-    {
-	curbuf_save = curbuf;
-	curwin_save = curwin;
-	curbuf = buf;
-	find_win_for_curbuf();
-    }
-    if (last > curbuf->b_ml.ml_line_count)
-	last = curbuf->b_ml.ml_line_count;
-    count = last - first + 1;
-
-    // When coming here from Insert mode, sync undo, so that this can be
-    // undone separately from what was previously inserted.
-    if (u_sync_once == 2)
-    {
-	u_sync_once = 1; // notify that u_sync() was called
-	u_sync(TRUE);
-    }
-
-    if (u_save(first - 1, last + 1) == FAIL)
-    {
-	rettv->vval.v_number = 1;	/* FAIL */
-	return;
-    }
-
-    for (lnum = first; lnum <= last; ++lnum)
-	ml_delete(first, TRUE);
-
-    FOR_ALL_TAB_WINDOWS(tp, wp)
-	if (wp->w_buffer == buf)
-	{
-	    if (wp->w_cursor.lnum > last)
-		wp->w_cursor.lnum -= count;
-	    else if (wp->w_cursor.lnum> first)
-		wp->w_cursor.lnum = first;
-	    if (wp->w_cursor.lnum > wp->w_buffer->b_ml.ml_line_count)
-		wp->w_cursor.lnum = wp->w_buffer->b_ml.ml_line_count;
-	}
-    check_cursor_col();
-    deleted_lines_mark(first, count);
-
-    if (!is_curbuf)
-    {
-	curbuf = curbuf_save;
-	curwin = curwin_save;
-    }
+  if (!is_curbuf) {
+    curbuf = curbuf_save;
+    curwin = curwin_save;
+  }
 }
 
 /*
@@ -15539,92 +15529,89 @@ static void f_shiftwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = get_sw_value(curbuf);
 }
 
-/*
- * "sign_define()" function
- */
+/// "sign_define()" function
 static void f_sign_define(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-    const char	*name;
-    dict_T	*dict;
-    char	*icon = NULL;
-    char	*linehl = NULL;
-    char	*text = NULL;
-    char	*texthl = NULL;
-    char	*numhl = NULL;
+  const char *name;
+  dict_T *dict;
+  char *icon = NULL;
+  char *linehl = NULL;
+  char *text = NULL;
+  char *texthl = NULL;
+  char *numhl = NULL;
 
-    rettv->vval.v_number = -1;
+  rettv->vval.v_number = -1;
 
-    name = tv_get_string_chk(&argvars[0]);
-    if (name == NULL)
-	return;
+  name = tv_get_string_chk(&argvars[0]);
+  if (name == NULL) {
+    return;
+  }
 
-    if (argvars[1].v_type != VAR_UNKNOWN)
-    {
-	if (argvars[1].v_type != VAR_DICT)
-	{
-	    EMSG(_(e_dictreq));
-	    return;
-	}
-
-	// sign attributes
-	dict = argvars[1].vval.v_dict;
-	if (tv_dict_find(dict, "icon", -1) != NULL)
-	    icon = tv_dict_get_string(dict, "icon", TRUE);
-	if (tv_dict_find(dict, "linehl", -1) != NULL)
-	    linehl = tv_dict_get_string(dict, "linehl", TRUE);
-	if (tv_dict_find(dict, "text", -1) != NULL)
-	    text = tv_dict_get_string(dict, "text", TRUE);
-	if (tv_dict_find(dict, "texthl", -1) != NULL)
-	    texthl = tv_dict_get_string(dict, "texthl", TRUE);
-	if (tv_dict_find(dict, "numhl", -1) != NULL)
-	    numhl = tv_dict_get_string(dict, "numhl", TRUE);
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (argvars[1].v_type != VAR_DICT) {
+      EMSG(_(e_dictreq));
+      return;
     }
 
-    if (sign_define_by_name((char_u *)name, (char_u *)icon, (char_u *)linehl,
-                            (char_u *)text, (char_u *)texthl, (char_u *)numhl)
-        == OK) {
-      rettv->vval.v_number = 0;
+    // sign attributes
+    dict = argvars[1].vval.v_dict;
+    if (tv_dict_find(dict, "icon", -1) != NULL) {
+      icon = tv_dict_get_string(dict, "icon", true);
     }
+    if (tv_dict_find(dict, "linehl", -1) != NULL) {
+      linehl = tv_dict_get_string(dict, "linehl", true);
+    }
+    if (tv_dict_find(dict, "text", -1) != NULL) {
+      text = tv_dict_get_string(dict, "text", true);
+    }
+    if (tv_dict_find(dict, "texthl", -1) != NULL) {
+      texthl = tv_dict_get_string(dict, "texthl", true);
+    }
+    if (tv_dict_find(dict, "numhl", -1) != NULL) {
+      numhl = tv_dict_get_string(dict, "numhl", true);
+    }
+  }
 
-    xfree(icon);
-    xfree(linehl);
-    xfree(text);
-    xfree(texthl);
+  if (sign_define_by_name((char_u *)name, (char_u *)icon, (char_u *)linehl,
+                          (char_u *)text, (char_u *)texthl, (char_u *)numhl)
+      == OK) {
+    rettv->vval.v_number = 0;
+  }
+
+  xfree(icon);
+  xfree(linehl);
+  xfree(text);
+  xfree(texthl);
 }
 
-/*
- * "sign_getdefined()" function
- */
-    static void
-f_sign_getdefined(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "sign_getdefined()" function
+static void f_sign_getdefined(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-    const char *name = NULL;
-
-    tv_list_alloc_ret(rettv, 0);
-
-    if (argvars[0].v_type != VAR_UNKNOWN)
-      name = tv_get_string(&argvars[0]);
-
-    sign_getlist((const char_u *)name, rettv->vval.v_list);
-}
-
-/*
- * "sign_getplaced()" function
- */
-static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
-{
-  buf_T	*buf = NULL;
-  dict_T	*dict;
-  dictitem_T	*di;
-  linenr_T	lnum = 0;
-  int sign_id = 0;
-  const char *group = NULL;
-  bool notanum = FALSE;
+  const char *name = NULL;
 
   tv_list_alloc_ret(rettv, 0);
 
-  if (argvars[0].v_type != VAR_UNKNOWN)
-  {
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    name = tv_get_string(&argvars[0]);
+  }
+
+  sign_getlist((const char_u *)name, rettv->vval.v_list);
+}
+
+/// "sign_getplaced()" function
+static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  buf_T *buf = NULL;
+  dict_T *dict;
+  dictitem_T *di;
+  linenr_T lnum = 0;
+  int sign_id = 0;
+  const char *group = NULL;
+  bool notanum = false;
+
+  tv_list_alloc_ret(rettv, 0);
+
+  if (argvars[0].v_type != VAR_UNKNOWN) {
     // get signs placed in the specified buffer
     buf = get_buf_arg(&argvars[0]);
     if (buf == NULL) {
@@ -15632,8 +15619,8 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
-      if (argvars[1].v_type != VAR_DICT ||
-          ((dict = argvars[1].vval.v_dict) == NULL)) {
+      if (argvars[1].v_type != VAR_DICT
+          || ((dict = argvars[1].vval.v_dict) == NULL)) {
         EMSG(_(e_dictreq));
         return;
       }
@@ -15652,30 +15639,29 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           return;
         }
       }
-      if ((di = tv_dict_find(dict, "group", -1)) != NULL)
-      {
+      if ((di = tv_dict_find(dict, "group", -1)) != NULL) {
         group = tv_get_string_chk(&di->di_tv);
-        if (group == NULL)
+        if (group == NULL) {
           return;
-        if (*group == '\0')	// empty string means global group
+        }
+        if (*group == '\0') {  // empty string means global group
           group = NULL;
+        }
       }
     }
   }
 
-  sign_get_placed(buf, lnum, sign_id, (const char_u*)group, rettv->vval.v_list);
+  sign_get_placed(buf, lnum, sign_id, (const char_u *)group,
+                  rettv->vval.v_list);
 }
 
-/*
- * "sign_jump()" function
- */
-    static void
-f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "sign_jump()" function
+static void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int	 sign_id;
+  int sign_id;
   char *sign_group = NULL;
   buf_T *buf;
-  bool notanum = FALSE;
+  bool notanum = false;
 
   rettv->vval.v_number = -1;
 
@@ -15684,18 +15670,18 @@ f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (notanum) {
     return;
   }
-  if (sign_id <= 0)
-  {
+  if (sign_id <= 0) {
     EMSG(_(e_invarg));
     return;
   }
 
   // Sign group
-  const char* sign_group_chk = tv_get_string_chk(&argvars[1]);
-  if (sign_group_chk == NULL)
+  const char * sign_group_chk = tv_get_string_chk(&argvars[1]);
+  if (sign_group_chk == NULL) {
     return;
+  }
   if (sign_group_chk[0] == '\0') {
-    sign_group = NULL;			// global sign group
+    sign_group = NULL;  // global sign group
   } else {
     sign_group = xstrdup(sign_group_chk);
     if (sign_group == NULL) {
@@ -15705,18 +15691,17 @@ f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   // Buffer to place the sign
   buf = get_buf_arg(&argvars[2]);
-  if (buf == NULL)
+  if (buf == NULL) {
     goto cleanup;
+  }
 
-  rettv->vval.v_number = sign_jump(sign_id, (char_u*)sign_group, buf);
+  rettv->vval.v_number = sign_jump(sign_id, (char_u *)sign_group, buf);
 
 cleanup:
   xfree(sign_group);
 }
 
-/*
- * "sign_place()" function
- */
+/// "sign_place()" function
 static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int sign_id;
@@ -15727,7 +15712,7 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dictitem_T *di;
   linenr_T lnum = 0;
   int prio = SIGN_DEF_PRIO;
-  bool notanum = FALSE;
+  bool notanum = false;
 
   rettv->vval.v_number = -1;
 
@@ -15747,9 +15732,9 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
   if (group_chk[0] == '\0') {
-    group = NULL;			// global sign group
+    group = NULL;  // global sign group
   } else {
-    group = vim_strsave((const char_u*)group_chk);
+    group = vim_strsave((const char_u *)group_chk);
     if (group == NULL) {
       return;
     }
@@ -15768,8 +15753,8 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (argvars[4].v_type != VAR_UNKNOWN) {
-    if (argvars[4].v_type != VAR_DICT ||
-        ((dict = argvars[4].vval.v_dict) == NULL)) {
+    if (argvars[4].v_type != VAR_DICT
+        || ((dict = argvars[4].vval.v_dict) == NULL)) {
       EMSG(_(e_dictreq));
       goto cleanup;
     }
@@ -15791,7 +15776,8 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  if (sign_place(&sign_id, group, (const char_u*)sign_name, buf, lnum, prio) == OK) {
+  if (sign_place(&sign_id, group, (const char_u *)sign_name, buf, lnum, prio)
+      == OK) {
     rettv->vval.v_number = sign_id;
   }
 
@@ -15799,86 +15785,75 @@ cleanup:
   xfree(group);
 }
 
-/*
- * "sign_undefine()" function
- */
-    static void
-f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+/// "sign_undefine()" function
+static void f_sign_undefine(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *name;
 
   rettv->vval.v_number = -1;
 
-  if (argvars[0].v_type == VAR_UNKNOWN)
-  {
+  if (argvars[0].v_type == VAR_UNKNOWN) {
     // Free all the signs
     free_signs();
     rettv->vval.v_number = 0;
-  }
-  else
-  {
+  } else {
     // Free only the specified sign
     name = tv_get_string_chk(&argvars[0]);
-    if (name == NULL)
+    if (name == NULL) {
       return;
+    }
 
-    if (sign_undefine_by_name((const char_u*)name) == OK) {
+    if (sign_undefine_by_name((const char_u *)name) == OK) {
       rettv->vval.v_number = 0;
     }
   }
 }
 
-/*
- * "sign_unplace()" function
- */
+/// "sign_unplace()" function
 static void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  dict_T	*dict;
-  dictitem_T	*di;
-  int		sign_id = 0;
-  buf_T	*buf = NULL;
-  char_u	*group = NULL;
+  dict_T *dict;
+  dictitem_T *di;
+  int sign_id = 0;
+  buf_T *buf = NULL;
+  char_u *group = NULL;
 
   rettv->vval.v_number = -1;
 
-  if (argvars[0].v_type != VAR_STRING)
-  {
+  if (argvars[0].v_type != VAR_STRING) {
     EMSG(_(e_invarg));
     return;
   }
 
-  const char* group_chk = tv_get_string(&argvars[0]);
+  const char *group_chk = tv_get_string(&argvars[0]);
   if (group_chk[0] == '\0') {
-    group = NULL;			// global sign group
+    group = NULL;  // global sign group
   } else {
-    group = vim_strsave((const char_u*)group_chk);
+    group = vim_strsave((const char_u *)group_chk);
     if (group == NULL) {
       return;
     }
   }
 
-  if (argvars[1].v_type != VAR_UNKNOWN)
-  {
-    if (argvars[1].v_type != VAR_DICT)
-    {
+  if (argvars[1].v_type != VAR_UNKNOWN) {
+    if (argvars[1].v_type != VAR_DICT) {
       EMSG(_(e_dictreq));
       goto cleanup;
     }
     dict = argvars[1].vval.v_dict;
 
-    if ((di = tv_dict_find(dict, "buffer", -1)) != NULL)
-    {
+    if ((di = tv_dict_find(dict, "buffer", -1)) != NULL) {
       buf = get_buf_arg(&di->di_tv);
-      if (buf == NULL)
+      if (buf == NULL) {
         goto cleanup;
+      }
     }
     if (tv_dict_find(dict, "id", -1) != NULL) {
       sign_id = tv_dict_get_number(dict, "id");
     }
   }
 
-  if (buf == NULL)
-  {
+  if (buf == NULL) {
     // Delete the sign in all the buffers
     FOR_ALL_BUFFERS(cbuf) {
       if (sign_unplace(sign_id, group, cbuf, 0) == OK) {

@@ -805,9 +805,9 @@ free_buffer_stuff(
   vars_clear(&buf->b_vars->dv_hashtab);   // free all internal variables
   hash_init(&buf->b_vars->dv_hashtab);
   buf_init_changedtick(buf);
-  uc_clear(&buf->b_ucmds);              // clear local user commands
-  buf_delete_signs(buf, (char_u *)"*"); // delete any signs
-  bufhl_clear_all(buf);                // delete any highligts
+  uc_clear(&buf->b_ucmds);               // clear local user commands
+  buf_delete_signs(buf, (char_u *)"*");  // delete any signs
+  bufhl_clear_all(buf);                  // delete any highligts
   map_clear_int(buf, MAP_ALL_MODES, true, false);    // clear local mappings
   map_clear_int(buf, MAP_ALL_MODES, true, true);     // clear local abbrevs
   XFREE_CLEAR(buf->b_start_fenc);

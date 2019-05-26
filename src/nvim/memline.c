@@ -3356,47 +3356,38 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
       break;
     }
 
-    /*
-     * A file name equal to old_fname is OK to use.
-     */
-    if (old_fname != NULL && fnamecmp(fname, old_fname) == 0)
+    // A file name equal to old_fname is OK to use.
+    if (old_fname != NULL && fnamecmp(fname, old_fname) == 0) {
       break;
+    }
 
-    /*
-     * get here when file already exists
-     */
-    if (fname[n - 2] == 'w' && fname[n - 1] == 'p') {   /* first try */
-      /*
-       * If we get here the ".swp" file really exists.
-       * Give an error message, unless recovering, no file name, we are
-       * viewing a help file or when the path of the file is different
-       * (happens when all .swp files are in one directory).
-       */
+    // get here when file already exists
+    if (fname[n - 2] == 'w' && fname[n - 1] == 'p') {   // first try
+      // If we get here the ".swp" file really exists.
+      // Give an error message, unless recovering, no file name, we are
+      // viewing a help file or when the path of the file is different
+      // (happens when all .swp files are in one directory).
       if (!recoverymode && buf_fname != NULL
           && !buf->b_help && !(buf->b_flags & BF_DUMMY)) {
         int fd;
         struct block0 b0;
         int differ = FALSE;
 
-        /*
-         * Try to read block 0 from the swap file to get the original
-         * file name (and inode number).
-         */
+        // Try to read block 0 from the swap file to get the original
+        // file name (and inode number).
         fd = os_open(fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
-            /*
-             * If the swapfile has the same directory as the
-             * buffer don't compare the directory names, they can
-             * have a different mountpoint.
-             */
+            // If the swapfile has the same directory as the
+            // buffer don't compare the directory names, they can
+            // have a different mountpoint.
             if (b0.b0_flags & B0_SAME_DIR) {
               if (fnamecmp(path_tail(buf->b_ffname),
                            path_tail(b0.b0_fname)) != 0
-                  || !same_directory((char_u *) fname, buf->b_ffname)) {
-                /* Symlinks may point to the same file even
-                 * when the name differs, need to check the
-                 * inode too. */
+                  || !same_directory((char_u *)fname, buf->b_ffname)) {
+                // Symlinks may point to the same file even
+                // when the name differs, need to check the
+                // inode too.
                 expand_env(b0.b0_fname, NameBuff, MAXPATHL);
                 if (fnamecmp_ino(buf->b_ffname, NameBuff,
                     char_to_long(b0.b0_ino))) {
@@ -3404,10 +3395,8 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
                 }
               }
             } else {
-              /*
-               * The name in the swap file may be
-               * "~user/path/file".  Expand it first.
-               */
+              // The name in the swap file may be
+              // "~user/path/file".  Expand it first.
               expand_env(b0.b0_fname, NameBuff, MAXPATHL);
               if (fnamecmp_ino(buf->b_ffname, NameBuff,
                   char_to_long(b0.b0_ino))) {
@@ -3418,9 +3407,9 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
           close(fd);
         }
 
-        /* give the ATTENTION message when there is an old swap file
-        * for the current file, and the buffer was not recovered. */
-        if (differ == FALSE && !(curbuf->b_flags & BF_RECOVERED)
+        // give the ATTENTION message when there is an old swap file
+        // for the current file, and the buffer was not recovered. */
+        if (differ == false && !(curbuf->b_flags & BF_RECOVERED)
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
           int choice = 0;
 

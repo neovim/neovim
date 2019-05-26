@@ -2833,13 +2833,12 @@ buf_write (
               //
               XFREE_CLEAR(backup);              // no backup file to delete
             } else if (!p_bk) {
-              /*
-               * We are not going to keep the backup file, so don't
-               * delete an existing one, and try to use another name instead.
-               * Change one character, just before the extension.
-               */
+              // We are not going to keep the backup file, so don't
+              // delete an existing one, and try to use another name instead.
+              // Change one character, just before the extension.
+              //
               wp = backup + STRLEN(backup) - 1 - STRLEN(backup_ext);
-              if (wp < backup) {                /* empty file name ??? */
+              if (wp < backup) {                // empty file name ???
                 wp = backup;
               }
               *wp = 'z';
@@ -2847,7 +2846,7 @@ buf_write (
                      && os_fileinfo((char *)backup, &file_info_new)) {
                 --*wp;
               }
-              /* They all exist??? Must be something wrong. */
+              // They all exist??? Must be something wrong.
               if (*wp == 'a') {
                 XFREE_CLEAR(backup);
               }
@@ -2969,18 +2968,17 @@ nobackup:
           }
         }
         if (backup != NULL) {
-          /*
-           * Delete any existing backup and move the current version
-           * to the backup.	For safety, we don't remove the backup
-           * until the write has finished successfully. And if the
-           * 'backup' option is set, leave it around.
-           */
-          /*
-           * If the renaming of the original file to the backup file
-           * works, quit here.
-           */
-          if (vim_rename(fname, backup) == 0)
+          // Delete any existing backup and move the current version
+          // to the backup. For safety, we don't remove the backup
+          // until the write has finished successfully. And if the
+          // 'backup' option is set, leave it around.
+
+          // If the renaming of the original file to the backup file
+          // works, quit here.
+          ///
+          if (vim_rename(fname, backup) == 0) {
             break;
+          }
 
           XFREE_CLEAR(backup);             // don't do the rename below
         }
@@ -2993,7 +2991,7 @@ nobackup:
   }
 
 #if defined(UNIX)
-  /* When using ":w!" and the file was read-only: make it writable */
+  // When using ":w!" and the file was read-only: make it writable
   if (forceit && perm >= 0 && !(perm & 0200)
       && file_info_old.stat.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
@@ -3003,12 +3001,12 @@ nobackup:
   }
 #endif
 
-  /* When using ":w!" and writing to the current file, 'readonly' makes no
-   * sense, reset it, unless 'Z' appears in 'cpoptions'.  */
+  // When using ":w!" and writing to the current file, 'readonly' makes no
+  // sense, reset it, unless 'Z' appears in 'cpoptions'.
   if (forceit && overwriting && vim_strchr(p_cpo, CPO_KEEPRO) == NULL) {
-    buf->b_p_ro = FALSE;
-    need_maketitle = TRUE;          /* set window title later */
-    status_redraw_all();            /* redraw status lines later */
+    buf->b_p_ro = false;
+    need_maketitle = true;          // set window title later
+    status_redraw_all();            // redraw status lines later
   }
 
   if (end > buf->b_ml.ml_line_count)
@@ -3016,13 +3014,11 @@ nobackup:
   if (buf->b_ml.ml_flags & ML_EMPTY)
     start = end + 1;
 
-  /*
-   * If the original file is being overwritten, there is a small chance that
-   * we crash in the middle of writing. Therefore the file is preserved now.
-   * This makes all block numbers positive so that recovery does not need
-   * the original file.
-   * Don't do this if there is a backup file and we are exiting.
-   */
+  // If the original file is being overwritten, there is a small chance that
+  // we crash in the middle of writing. Therefore the file is preserved now.
+  // This makes all block numbers positive so that recovery does not need
+  // the original file.
+  // Don't do this if there is a backup file and we are exiting.
   if (reset_changed && !newfile && overwriting
       && !(exiting && backup != NULL)) {
     ml_preserve(buf, false, !!p_fs);
@@ -3033,36 +3029,34 @@ nobackup:
   }
 
 
-  /* Default: write the file directly.  May write to a temp file for
-   * multi-byte conversion. */
+  // Default: write the file directly.  May write to a temp file for
+  // multi-byte conversion.
   wfname = fname;
 
-  /* Check for forced 'fileencoding' from "++opt=val" argument. */
+  // Check for forced 'fileencoding' from "++opt=val" argument.
   if (eap != NULL && eap->force_enc != 0) {
     fenc = eap->cmd + eap->force_enc;
     fenc = enc_canonize(fenc);
     fenc_tofree = fenc;
-  } else
+  } else {
     fenc = buf->b_p_fenc;
+  }
 
-  /*
-   * Check if the file needs to be converted.
-   */
+  // Check if the file needs to be converted.
   converted = need_conversion(fenc);
 
-  /*
-   * Check if UTF-8 to UCS-2/4 or Latin1 conversion needs to be done.  Or
-   * Latin1 to Unicode conversion.  This is handled in buf_write_bytes().
-   * Prepare the flags for it and allocate bw_conv_buf when needed.
-   */
+  // Check if UTF-8 to UCS-2/4 or Latin1 conversion needs to be done.  Or
+  // Latin1 to Unicode conversion.  This is handled in buf_write_bytes().
+  // Prepare the flags for it and allocate bw_conv_buf when needed.
   if (converted && (enc_utf8 || STRCMP(p_enc, "latin1") == 0)) {
     wb_flags = get_fio_flags(fenc);
     if (wb_flags & (FIO_UCS2 | FIO_UCS4 | FIO_UTF16 | FIO_UTF8)) {
-      /* Need to allocate a buffer to translate into. */
-      if (wb_flags & (FIO_UCS2 | FIO_UTF16 | FIO_UTF8))
+      // Need to allocate a buffer to translate into.
+      if (wb_flags & (FIO_UCS2 | FIO_UTF16 | FIO_UTF8)) {
         write_info.bw_conv_buflen = bufsize * 2;
-      else       /* FIO_UCS4 */
+      } else {       // FIO_UCS4
         write_info.bw_conv_buflen = bufsize * 4;
+      }
       write_info.bw_conv_buf = verbose_try_malloc(write_info.bw_conv_buflen);
       if (!write_info.bw_conv_buf) {
         end = 0;
@@ -3074,10 +3068,8 @@ nobackup:
 
   if (converted && wb_flags == 0) {
 #  ifdef USE_ICONV
-    /*
-     * Use iconv() conversion when conversion is needed and it's not done
-     * internally.
-     */
+    // Use iconv() conversion when conversion is needed and it's not done
+    // internally.
     write_info.bw_iconv_fd = (iconv_t)my_iconv_open(fenc,
         enc_utf8 ? (char_u *)"utf-8" : p_enc);
     if (write_info.bw_iconv_fd != (iconv_t)-1) {
