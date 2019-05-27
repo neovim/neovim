@@ -4237,8 +4237,8 @@ static void search_stat(int dirc, pos_T *pos,
       p_ws = false;
       start = profile_setlimit(20L);
       while (!got_int && searchit(curwin, curbuf, &lastpos, NULL,
-                                  FORWARD, NULL, 1, SEARCH_PEEK + SEARCH_KEEP,
-                                  RE_LAST, (linenr_T)0, NULL, NULL) != FAIL) {
+                                  FORWARD, NULL, 1, SEARCH_KEEP, RE_LAST,
+                                  (linenr_T)0, NULL, NULL) != FAIL) {
         // Stop after passing the time limit.
         if (profile_passed_limit(start)) {
           cnt = OUT_OF_TIME;
