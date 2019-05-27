@@ -1131,9 +1131,31 @@ int do_search(
     if ((options & SEARCH_ECHO) && messaging()
         && !cmd_silent && msg_silent == 0) {
       char_u      *trunc;
+      char_u      off_buf[40];
+      int         off_len = 0;
 
       // Compute msg_row early.
       msg_start();
+
+      // Get the offset, so we know how long it is.
+      if (spats[0].off.line || spats[0].off.end || spats[0].off.off) {
+        p = off_buf;
+        *p++ = dirc;
+        if (spats[0].off.end) {
+          *p++ = 'e';
+        } else if (!spats[0].off.line) {
+          *p++ = 's';
+        }
+        if (spats[0].off.off > 0 || spats[0].off.line) {
+          *p++ = '+';
+        }
+        *p = NUL;
+        if (spats[0].off.off != 0 || spats[0].off.line) {
+          snprintf((char *)p, sizeof(off_buf) - 1 - (p - off_buf),
+                   "%" PRId64, spats[0].off.off);
+        }
+        off_len = STRLEN(off_buf);
+      }
 
       if (*searchstr == NUL) {
         p = spats[last_idx].pat;
@@ -1143,7 +1165,9 @@ int do_search(
 
       if (!shortmess(SHM_SEARCHCOUNT)) {
         // Reserve enough space for the search pattern + offset +
-        // search stat.
+        // search stat.  Use all the space available, so that the
+        // search state is right aligned.  If there is not enough space
+        // msg_strtrunc() will shorten in the middle.
         if (msg_scrolled != 0) {
           // Use all the columns.
           len = (int)(Rows - msg_row) * Columns - 1;
@@ -1151,12 +1175,12 @@ int do_search(
           // Use up to 'showcmd' column.
           len = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
         }
-        if (len < STRLEN(p) + SEARCH_STAT_BUF_LEN + 1) {
-            len = STRLEN(p) + SEARCH_STAT_BUF_LEN + 1;
+        if (len < STRLEN(p) + off_len + SEARCH_STAT_BUF_LEN + 3) {
+          len = STRLEN(p) + off_len + SEARCH_STAT_BUF_LEN + 3;
         }
       } else {
         // Reserve enough space for the search pattern + offset.
-        len = STRLEN(p) + 40;
+        len = STRLEN(p) + off_len + 3;
       }
 
       msgbuf = xmalloc((int)len);
@@ -1172,25 +1196,11 @@ int do_search(
         } else {
           memmove(msgbuf + 1, p, STRLEN(p));
         }
-        if (spats[0].off.line || spats[0].off.end || spats[0].off.off) {
-          p = msgbuf + STRLEN(p) + 1;
-          *p++ = dirc;
-          if (spats[0].off.end) {
-            *p++ = 'e';
-          } else if (!spats[0].off.line) {
-            *p++ = 's';
-          }
-          if (spats[0].off.off > 0 || spats[0].off.line) {
-            *p++ = '+';
-          }
-          if (spats[0].off.off != 0 || spats[0].off.line) {
-            int l = 0;
-            l = sprintf((char *)p, "%ld", spats[0].off.off);
-            p[l] = ' '; // remove NUL from sprintf
-          }
+        if (off_len > 0) {
+          memmove(msgbuf + STRLEN(p) + 1, off_buf, off_len);
         }
 
-        trunc = msg_strtrunc(msgbuf, FALSE);
+        trunc = msg_strtrunc(msgbuf, true);
         if (trunc != NULL) {
           xfree(msgbuf);
           msgbuf = trunc;
@@ -4311,8 +4321,10 @@ static void search_stat(int dirc, pos_T *pos,
       lbuf    = curbuf;
       lastpos = p;
 
-      // keep the message even after redraw
+      // keep the message even after redraw, but don't put in history
+      msg_hist_off = true;
       give_warning(msgbuf, false);
+      msg_hist_off = false;
     }
     p_ws = save_ws;
 }

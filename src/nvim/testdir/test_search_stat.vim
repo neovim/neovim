@@ -13,11 +13,14 @@ func! Test_search_stat()
 
   " match at second line
   call cursor(1, 1)
+  let messages_before = execute('messages')
   let @/ = 'fo*\(bar\?\)\?'
   let g:a = execute(':unsilent :norm! n')
   let stat = '\[2/50\]'
   let pat = escape(@/, '()*?'). '\s\+'
   call assert_match(pat .. stat, g:a)
+  " didn't get added to message history
+  call assert_equal(messages_before, execute('messages'))
 
   " Match at last line
   call cursor(line('$')-2, 1)
