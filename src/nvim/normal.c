@@ -541,27 +541,29 @@ static bool normal_need_additional_char(NormalState *s)
   int flags = nv_cmds[s->idx].cmd_flags;
   bool pending_op = s->oa.op_type != OP_NOP;
   int cmdchar = s->ca.cmdchar;
-  return
-    // without NV_NCH we never need to check for an additional char
-    flags & NV_NCH && (
-        // NV_NCH_NOP is set and no operator is pending, get a second char
-        ((flags & NV_NCH_NOP) == NV_NCH_NOP && !pending_op)
-        // NV_NCH_ALW is set, always get a second char
-     || (flags & NV_NCH_ALW) == NV_NCH_ALW
-        // 'q' without a pending operator, recording or executing a register,
-        // needs to be followed by a second char, examples:
-        // - qc => record using register c
-        // - q: => open command-line window
-     || (cmdchar == 'q' && !pending_op && !Recording && !Exec_reg)
-        // 'a' or 'i' after an operator is a text object, examples:
-        // - ciw => change inside word
-        // - da( => delete parenthesis and everything inside.
-        // Also, don't do anything when these keys are received in visual mode
-        // so just get another char.
-        //
-        // TODO(tarruda): Visual state needs to be refactored into a
-        // separate state that "inherits" from normal state.
-     || ((cmdchar == 'a' || cmdchar == 'i') && (pending_op || VIsual_active)));
+  // without NV_NCH we never need to check for an additional char
+  return flags & NV_NCH && (
+      // NV_NCH_NOP is set and no operator is pending, get a second char
+      ((flags & NV_NCH_NOP) == NV_NCH_NOP && !pending_op)
+      // NV_NCH_ALW is set, always get a second char
+      || (flags & NV_NCH_ALW) == NV_NCH_ALW
+      // 'q' without a pending operator, recording or executing a register,
+      // needs to be followed by a second char, examples:
+      // - qc => record using register c
+      // - q: => open command-line window
+      || (cmdchar == 'q'
+          && !pending_op
+          && reg_recording == 0
+          && reg_executing == 0)
+      // 'a' or 'i' after an operator is a text object, examples:
+      // - ciw => change inside word
+      // - da( => delete parenthesis and everything inside.
+      // Also, don't do anything when these keys are received in visual mode
+      // so just get another char.
+      //
+      // TODO(tarruda): Visual state needs to be refactored into a
+      // separate state that "inherits" from normal state.
+      || ((cmdchar == 'a' || cmdchar == 'i') && (pending_op || VIsual_active)));
 }
 
 static bool normal_need_redraw_mode_message(NormalState *s)
@@ -7686,7 +7688,7 @@ static void nv_record(cmdarg_T *cap)
     } else {
       // (stop) recording into a named register, unless executing a
       // register.
-      if (!Exec_reg && do_record(cap->nchar) == FAIL) {
+      if (reg_executing == 0 && do_record(cap->nchar) == FAIL) {
         clearopbeep(cap->oap);
       }
     }

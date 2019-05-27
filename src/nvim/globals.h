@@ -682,8 +682,8 @@ EXTERN int motion_force INIT(=0);       // motion force for pending operator
 EXTERN int exmode_active INIT(= 0);     // Zero, EXMODE_NORMAL or EXMODE_VIM.
 EXTERN int ex_no_reprint INIT(=false);  // No need to print after z or p.
 
-EXTERN int Recording INIT(= false);     // TRUE when recording into a reg.
-EXTERN int Exec_reg INIT(= false);      // TRUE when executing a register.
+EXTERN int reg_recording INIT(= 0);     // register for recording  or zero
+EXTERN int reg_executing INIT(= 0);     // register being executed or zero
 
 EXTERN int no_mapping INIT(= false);    // currently no mapping allowed
 EXTERN int no_zero_mapping INIT(= 0);   // mapping zero not allowed

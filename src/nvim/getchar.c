@@ -1100,7 +1100,7 @@ static void gotchars(char_u *chars, size_t len)
   int c;
 
   // remember how many chars were last recorded
-  if (Recording) {
+  if (reg_recording != 0) {
     last_recorded_len += len;
   }
 
@@ -1109,7 +1109,7 @@ static void gotchars(char_u *chars, size_t len)
     c = *s++;
     updatescript(c);
 
-    if (Recording) {
+    if (reg_recording != 0) {
       char buf[2] = { (char)c, NUL };
       add_buff(&recordbuff, buf, 1L);
     }
@@ -1666,8 +1666,9 @@ static int vgetorpeek(int advance)
 
   init_typebuf();
   start_stuff();
-  if (advance && typebuf.tb_maplen == 0)
-    Exec_reg = FALSE;
+  if (advance && typebuf.tb_maplen == 0) {
+    reg_executing = 0;
+  }
   do {
     /*
      * get a character: 1. from the stuffbuffer
