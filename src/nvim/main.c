@@ -114,6 +114,7 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
+  char *server_name;                    // --servername {address}
 } mparm_T;
 
 // Values for edit_type.
@@ -453,6 +454,15 @@ int main(int argc, char **argv)
     read_stdin();
   }
 
+  if (params.server_name) {
+      input_stop();  // Stop reading input, let the UI take over.
+      uint64_t rv = ui_client_start(params.server_name);
+      if (!rv) {
+          // cannot continue without a channel
+          mch_exit(1);
+      }
+  }
+  
   setmouse();  // may start using the mouse
 
   if (exmode_active || use_remote_ui || use_builtin_ui) {
@@ -826,6 +836,9 @@ static void command_line_scan(mparm_T *parmp)
             // Do nothing: file args are always literal. #7679
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0) {
             p_lpl = false;
+          } else if (STRNICMP(argv[0] + argv_idx, "servername", 10) == 0) {
+            want_argument = true;
+            argv_idx += 10;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = true;
             argv_idx += 3;
@@ -1082,6 +1095,9 @@ static void command_line_scan(mparm_T *parmp)
             } else if (strequal(argv[-1], "--listen")) {
               // "--listen {address}"
               parmp->listen_addr = argv[0];
+            } else if (strequal(argv[-1], "--servername")) {
+              // "--servername {address}"
+              parmp->server_name = argv[0];
             }
             // "--startuptime <file>" already handled
             break;
@@ -1245,6 +1261,7 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
   paramp->listen_addr = NULL;
+  paramp->server_name = NULL;
 }
 
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
@@ -1963,6 +1980,7 @@ static void usage(void)
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
   mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
+  mch_msg(_("  --servername <address>    Specify Nvim server to connect to\n"));
   mch_msg(_("  --noplugin            Don't load plugins\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
