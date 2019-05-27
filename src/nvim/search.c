@@ -497,8 +497,8 @@ void last_pat_prog(regmmatch_T *regmatch)
 }
 
 /// lowest level search function.
-/// Search for 'count'th occurrence of pattern 'pat' in direction 'dir'.
-/// Start at position 'pos' and return the found position in 'pos'.
+/// Search for 'count'th occurrence of pattern "pat" in direction "dir".
+/// Start at position "pos" and return the found position in "pos".
 ///
 /// if (options & SEARCH_MSG) == 0 don't give any messages
 /// if (options & SEARCH_MSG) == SEARCH_NFMSG don't give 'notfound' messages
@@ -519,6 +519,7 @@ int searchit(
                                        buffer without a window! */
     buf_T       *buf,
     pos_T       *pos,
+    pos_T       *end_pos,  // set to end of the match, unless NULL
     Direction dir,
     char_u      *pat,
     long count,
@@ -819,11 +820,22 @@ int searchit(
                 pos->col -= utf_head_off(ptr, ptr + pos->col);
               }
             }
+            if (end_pos != NULL) {
+              end_pos->lnum = lnum + matchpos.lnum;
+              end_pos->col = matchpos.col;
+            }
           } else {
             pos->lnum = lnum + matchpos.lnum;
             pos->col = matchpos.col;
+            if (end_pos != NULL) {
+              end_pos->lnum = lnum + endpos.lnum;
+              end_pos->col = endpos.col;
+            }
           }
           pos->coladd = 0;
+          if (end_pos != NULL) {
+            end_pos->coladd = 0;
+          }
           found = 1;
           first_match = false;
 
@@ -1196,7 +1208,7 @@ int do_search(
       }
     }
 
-    c = searchit(curwin, curbuf, &pos, dirc == '/' ? FORWARD : BACKWARD,
+    c = searchit(curwin, curbuf, &pos, NULL, dirc == '/' ? FORWARD : BACKWARD,
                  searchstr, count,
                  (spats[0].off.end * SEARCH_END
                   + (options
@@ -3933,7 +3945,7 @@ abort_search:
 int
 current_search(
     long count,
-    int forward                    /* move forward or backwards */
+    int forward  // true for forward, false for backward
 )
 {
   bool old_p_ws = p_ws;
@@ -3946,8 +3958,8 @@ current_search(
   if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor))
     dec_cursor();
 
+  pos_T end_pos;                // end position of the pattern match
   pos_T orig_pos;               // position of the cursor at beginning
-  pos_T first_match;            // position of first match
   pos_T pos;                    // position after the pattern
   int result;                   // result of various function calls
 
@@ -3981,78 +3993,52 @@ current_search(
     int dir = forward ? i : !i;
     int flags = 0;
 
-    if (!dir && !one_char)
+    if (!dir && !one_char) {
       flags = SEARCH_END;
+    }
+    end_pos = pos;
 
-    result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
+    result = searchit(curwin, curbuf, &pos, &end_pos,
+                      (dir ? FORWARD : BACKWARD),
                       spats[last_idx].pat, i ? count : 1,
                       SEARCH_KEEP | flags, RE_SEARCH, 0, NULL, NULL);
 
-    /* First search may fail, but then start searching from the
-     * beginning of the file (cursor might be on the search match)
-     * except when Visual mode is active, so that extending the visual
-     * selection works. */
-    if (!result && i) {   /* not found, abort */
+    // First search may fail, but then start searching from the
+    // beginning of the file (cursor might be on the search match)
+    // except when Visual mode is active, so that extending the visual
+    // selection works.
+    if (i == 1 && !result) {  // not found, abort */
       curwin->w_cursor = orig_pos;
       if (VIsual_active)
         VIsual = save_VIsual;
       p_ws = old_p_ws;
       return FAIL;
-    } else if (!i && !result) {
-      if (forward) {     /* try again from start of buffer */
+    } else if (i == 0 && !result) {
+      if (forward) {  // try again from start of buffer
         clearpos(&pos);
-      } else { /* try again from end of buffer */
-                 /* searching backwards, so set pos to last line and col */
+      } else {  // try again from end of buffer
+                // searching backwards, so set pos to last line and col
         pos.lnum = curwin->w_buffer->b_ml.ml_line_count;
         pos.col  = (colnr_T)STRLEN(
             ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
-    if (i == 0) {
-      first_match = pos;
-    }
     p_ws = old_p_ws;
   }
 
-  const int flags = forward ? SEARCH_END : SEARCH_START;
   pos_T start_pos = pos;
-  const Direction direction = forward ? FORWARD : BACKWARD;
-
-  // Check again from the current cursor position,
-  // since the next match might actually be only one char wide
-  one_char = is_one_char(spats[last_idx].pat, false, &pos, direction);
-  if (one_char < 0) {
-    // search failed, abort
-    return FAIL;
-  }
-
-  /* move to match, except for zero-width matches, in which case, we are
-   * already on the next match */
-  if (!one_char) {
-    p_ws = false;
-    for (int i = 0; i < 2; i++) {
-      result = searchit(curwin, curbuf, &pos, direction,
-                        spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH,
-                        0, NULL, NULL);
-      // Search successfull, break out from the loop
-      if (result) {
-        break;
-      }
-      // search failed, try again from the last search position match
-      pos = first_match;
-    }
-  }
 
   p_ws = old_p_ws;
-  // not found
-  if (!result) {
-    return FAIL;
+
+  if (!VIsual_active) {
+    VIsual = start_pos;
   }
 
-  if (!VIsual_active)
-    VIsual = start_pos;
-
-  curwin->w_cursor = pos;
+  // put cursor on last character of match
+  curwin->w_cursor = end_pos;
+  if (lt(VIsual, end_pos)) {
+    dec_cursor();
+  }
   VIsual_active = true;
   VIsual_mode = 'v';
 
@@ -4111,7 +4097,7 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
     // accept a match at the cursor position
     flag = SEARCH_START;
   }
-  if (searchit(curwin, curbuf, &pos, direction, pattern, 1,
+  if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, 1,
                SEARCH_KEEP + flag, RE_SEARCH, 0, NULL, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.

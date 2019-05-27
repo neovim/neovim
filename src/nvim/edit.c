@@ -4045,13 +4045,15 @@ static int ins_compl_get_exp(pos_T *ini)
         if (CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode)
             || (compl_cont_status & CONT_SOL)) {
           found_new_match = search_for_exact_line(ins_buf, pos,
-              compl_direction, compl_pattern);
-        } else
-          found_new_match = searchit(NULL, ins_buf, pos,
+                                                  compl_direction,
+                                                  compl_pattern);
+        } else {
+          found_new_match = searchit(NULL, ins_buf, pos, NULL,
                                      compl_direction,
                                      compl_pattern, 1L,
                                      SEARCH_KEEP + SEARCH_NFMSG,
                                      RE_LAST, (linenr_T)0, NULL, NULL);
+        }
         msg_silent--;
         if (!compl_started || set_match_pos) {
           /* set "compl_started" even on fail */
