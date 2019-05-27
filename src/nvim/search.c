@@ -1055,6 +1055,8 @@ int do_search(
    * Repeat the search when pattern followed by ';', e.g. "/foo/;?bar".
    */
   for (;; ) {
+    bool show_top_bot_msg = false;
+
     searchstr = pat;
     dircp = NULL;
     /* use previous pattern */
@@ -1261,7 +1263,7 @@ int do_search(
     if (!shortmess(SHM_SEARCH)
         && ((dirc == '/' && lt(pos, curwin->w_cursor))
             || (dirc == '?' && lt(curwin->w_cursor, pos)))) {
-      os_delay(500L, false);  // leave some time for top_bot_msg
+      show_top_bot_msg = true;
     }
 
     if (c == FAIL) {
@@ -1312,7 +1314,7 @@ int do_search(
         && c != FAIL
         && !shortmess(SHM_SEARCHCOUNT)
         && msgbuf != NULL) {
-      search_stat(dirc, &pos, msgbuf);
+      search_stat(dirc, &pos, show_top_bot_msg, msgbuf);
     }
 
     // The search command can be followed by a ';' to do another search.
@@ -4196,7 +4198,8 @@ int linewhite(linenr_T lnum)
 }
 
 // Add the search count "[3/19]" to "msgbuf".
-static void search_stat(int dirc, pos_T *pos, char_u *msgbuf)
+static void search_stat(int dirc, pos_T *pos,
+    bool show_top_bot_msg, char_u *msgbuf)
 {
     int       save_ws = p_ws;
     int       wraparound = false;
@@ -4256,8 +4259,9 @@ static void search_stat(int dirc, pos_T *pos, char_u *msgbuf)
       }
     }
     if (cur > 0) {
-#define STAT_BUF_LEN 10
+#define STAT_BUF_LEN 12
       char t[STAT_BUF_LEN] = "";
+      int len;
 
       if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
         if (cur == OUT_OF_TIME) {
@@ -4280,7 +4284,14 @@ static void search_stat(int dirc, pos_T *pos, char_u *msgbuf)
           vim_snprintf(t, STAT_BUF_LEN, "[%d/%d]", cur, cnt);
         }
       }
-      memmove(msgbuf + STRLEN(msgbuf) - STRLEN(t), t, STRLEN(t));
+
+      len = STRLEN(t);
+      if (show_top_bot_msg && len + 3 < STAT_BUF_LEN) {
+        STRCPY(t + len, " W");
+        len += 2;
+      }
+
+      memmove(msgbuf + STRLEN(msgbuf) - len, t, len);
       if (dirc == '?' && cur == 100) {
         cur = -1;
       }

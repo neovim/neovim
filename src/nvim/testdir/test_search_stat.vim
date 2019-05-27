@@ -3,6 +3,8 @@
 " This test is fragile, it might not work interactively, but it works when run
 " as test!
 
+source shared.vim
+
 func! Test_search_stat()
   new
   set shortmess-=S
@@ -79,7 +81,7 @@ func! Test_search_stat()
     set norl
   endif
 
-  " 9) normal, back at top
+  " 9) normal, back at bottom
   call cursor(1,1)
   let @/ = 'foobar'
   let pat = '?foobar\s\+'
@@ -87,6 +89,7 @@ func! Test_search_stat()
   let stat = '\[20/20\]'
   call assert_match(pat .. stat, g:a)
   call assert_match('search hit TOP, continuing at BOTTOM', g:a)
+  call assert_match('\[20/20\] W', Screenline(&lines))
 
   " 10) normal, no match
   call cursor(1,1)
