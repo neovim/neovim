@@ -9,6 +9,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/multiqueue.h"
 #include "nvim/globals.h"
+#include "nvim/eval.h"
 #include "nvim/highlight.h"
 #include "nvim/log.h"
 #include "nvim/main.h"
@@ -24,6 +25,31 @@
 #endif
 // uncrustify:on
 
+uint64_t ui_client_start_server(int argc, char **argv, bool pass_stdin)
+{
+    varnumber_T exit_status;
+    char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
+    int args_idx = 0;
+    args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
+    args[args_idx++] = xstrdup("--embed");
+    for (int i = 1; i < argc; i++) {
+      args[args_idx++] = xstrdup(argv[i]);
+    }
+    args[args_idx++] = NULL; // last value of argv should be NULL
+
+    Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
+                                  CALLBACK_READER_INIT, CALLBACK_NONE,
+                                  false, true, true, false, kChannelStdinPipe,
+                                  NULL, 0, 0, NULL, &exit_status);
+    if (pass_stdin && !stdin_isatty) {
+      close(0);
+      dup(2);
+    }
+
+    ui_client_init(channel->id);
+    return channel->id;;
+}
+
 void ui_client_init(uint64_t chan)
 {
   Array args = ARRAY_DICT_INIT;
@@ -34,6 +60,13 @@ void ui_client_init(uint64_t chan)
   PUT(opts, "rgb", BOOLEAN_OBJ(true));
   PUT(opts, "ext_linegrid", BOOLEAN_OBJ(true));
   PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
+
+  // TODO: PUT(opts, "term_name", STRING_OBJ(cstr_as_string(termname_local)));
+  PUT(opts, "term_colors", INTEGER_OBJ(t_colors));
+  if (!is_remote_client) {
+    PUT(opts, "term_ttyin", INTEGER_OBJ(stdin_isatty));
+    PUT(opts, "term_ttyout", INTEGER_OBJ(stdout_isatty));
+  }
 
   ADD(args, INTEGER_OBJ((int)width));
   ADD(args, INTEGER_OBJ((int)height));

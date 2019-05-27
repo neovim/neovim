@@ -32,6 +32,7 @@
 #endif
 #include "nvim/event/rstream.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/ui.h"
 
 #define KEY_BUFFER_SIZE 0xfff
 
@@ -226,8 +227,9 @@ static void tinput_wait_enqueue(void **argv)
       ADD(args, INTEGER_OBJ(input->paste));  // 'phase'
       rpc_send_event(ui_client_channel_id, "nvim_paste", args);
     } else {
-      multiqueue_put(main_loop.events, tinput_paste_event, 3,
-                     keys.data, keys.size, (intptr_t)input->paste);
+      // TODO
+      // multiqueue_put(main_loop.events, tinput_paste_event, 3,
+      //                keys.data, keys.size, (intptr_t)input->paste);
     }
     if (input->paste == 1) {
       // Paste phase: "continue"
@@ -248,7 +250,9 @@ static void tinput_wait_enqueue(void **argv)
         consumed = result.type == kObjectTypeInteger ? (size_t)result.data.integer : 0;
         arena_mem_free(res_mem);
       } else {
-        consumed = input_enqueue(keys);
+        // TODO
+        // consumed = input_enqueue(keys);
+        abort();
       }
       if (consumed) {
         rbuffer_consumed(input->key_buffer, consumed);
@@ -259,38 +263,15 @@ static void tinput_wait_enqueue(void **argv)
       }
     }
   }
-  uv_mutex_lock(&input->key_buffer_mutex);
-  input->waiting = false;
-  uv_cond_signal(&input->key_buffer_cond);
-  uv_mutex_unlock(&input->key_buffer_mutex);
 }
 
-static void tinput_paste_event(void **argv)
-{
-  String keys = { .data = argv[0], .size = (size_t)argv[1] };
-  intptr_t phase = (intptr_t)argv[2];
-
-  Error err = ERROR_INIT;
-  nvim_paste(keys, true, phase, &err);
-  if (ERROR_SET(&err)) {
-    semsg("paste: %s", err.msg);
-    api_clear_error(&err);
-  }
-
-  api_free_string(keys);
-}
 
 static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
+  // TODO: fuuuuuuuuuuuuuuu
   do {
-    uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule_fast(&main_loop, event_create(tinput_wait_enqueue, 1, input));
-    input->waiting = true;
-    while (input->waiting) {
-      uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
-    }
-    uv_mutex_unlock(&input->key_buffer_mutex);
+    tinput_wait_enqueue((void**)&input);
   } while (rbuffer_size(input->key_buffer) > drain_boundary);
 }
 
@@ -569,8 +550,10 @@ static bool handle_focus_event(TermInput *input)
           || !rbuffer_cmp(input->read_stream.buffer, "\x1b[O", 3))) {
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     // Advance past the sequence
-    rbuffer_consumed(input->read_stream.buffer, 3);
-    autocmd_schedule_focusgained(focus_gained);
+  
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, BOOLEAN_OBJ(focus_gained));
+    rpc_send_event(ui_client_channel_id, "nvim_ui_set_focus", args);
     return true;
   }
   return false;
@@ -617,10 +600,13 @@ static HandleState handle_bracketed_paste(TermInput *input)
   return kNotApplicable;
 }
 
-static void set_bg_deferred(void **argv)
+static void set_bg(char *bgvalue)
 {
-  char *bgvalue = argv[0];
-  set_tty_background(bgvalue);
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_to_string("term_background")));
+  ADD(args, STRING_OBJ(cstr_as_string(xstrdup(bgvalue))));
+  
+  rpc_send_event(ui_client_channel_id, "nvim_ui_set_option", args);
 }
 
 // During startup, tui.c requests the background color (see `ext.get_bg`).
@@ -704,8 +690,7 @@ static HandleState handle_background_color(TermInput *input)
     double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
     char *bgvalue = luminance < 0.5 ? "dark" : "light";
     DLOG("bg response: %s", bgvalue);
-    loop_schedule_deferred(&main_loop,
-                           event_create(set_bg_deferred, 1, bgvalue));
+    set_bg(bgvalue);
     input->waiting_for_bg_response = 0;
   } else if (!done && !bad) {
     // An incomplete sequence was found, waiting for the next input.

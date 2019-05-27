@@ -850,6 +850,14 @@ EXTERN linenr_T printer_page_num;
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()
 
+EXTERN bool is_remote_client INIT(= false);       // Initially the TUI is not
+                                                  // a remote client
+
+EXTERN bool TUI_process INIT(= false);            // This is the TUI process
+
+
+EXTERN long server_process_exit_status INIT(= false); // Used by TUI process
+
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character
 EXTERN char psepcN INIT(= '/');            // abnormal path separator character

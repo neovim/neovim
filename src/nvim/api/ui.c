@@ -14,9 +14,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
 #include "nvim/channel.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/wstream.h"
-#include "nvim/globals.h"
 #include "nvim/grid.h"
 #include "nvim/highlight.h"
 #include "nvim/main.h"
@@ -30,6 +27,7 @@
 #include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/vim.h"
+#include "nvim/window.h"
 
 typedef struct {
   uint64_t channel_id;
@@ -285,6 +283,19 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height, Boolean enabl
   api_free_dictionary(opts);
 }
 
+/// Tells the nvim server if focus was gained by the GUI or not
+void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(&connected_uis, channel_id)) {
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  autocmd_schedule_focusgained((bool)gained);
+}
+
 /// Deactivates UI events on the channel.
 ///
 /// Removes the client from the list of UIs. |nvim_list_uis()|
@@ -401,6 +412,24 @@ static void ui_set_option(UI *ui, bool init, String name, Object value, Error *e
     }
 
     stdin_fd = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_ttyin")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_ttyin must be a Integer");
+      return;
+    }
+    stdin_isatty = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_ttyout")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_ttyout must be a Integer");
+      return;
+    }
+    stdout_isatty = (int)value.data.integer;
     return;
   }
 

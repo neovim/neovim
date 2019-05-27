@@ -31,7 +31,7 @@ void visual_bell(void)
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void suspend(void)
-  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3);
 void set_title(String title)
   FUNC_API_SINCE(3);
 void set_icon(String icon)
@@ -39,7 +39,7 @@ void set_icon(String icon)
 void screenshot(String path)
   FUNC_API_SINCE(7) FUNC_API_REMOTE_IMPL;
 void option_set(String name, Object value)
-  FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(4);
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
@@ -73,9 +73,9 @@ void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp, Integer 
                         Integer cterm_bg)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_IMPL;
 void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs, Array info)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 void hl_group_set(String name, Integer id)
-  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(6);
 void grid_resize(Integer grid, Integer width, Integer height)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_CLIENT_IMPL;
 void grid_clear(Integer grid)
@@ -112,8 +112,9 @@ void win_hide(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_close(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
+
 void msg_set_pos(Integer grid, Integer row, Boolean scrolled, String sep_char)
-  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(6) FUNC_API_COMPOSITOR_IMPL;
 
 void win_viewport(Integer grid, Window win, Integer topline, Integer botline, Integer curline,
                   Integer curcol, Integer line_count)
@@ -149,11 +150,11 @@ void cmdline_block_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void wildmenu_show(Array items)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void wildmenu_select(Integer selected)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 void wildmenu_hide(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
 
 void msg_show(String kind, Array content, Boolean replace_last)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
