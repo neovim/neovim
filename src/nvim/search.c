@@ -1000,6 +1000,7 @@ int do_search(
   char_u          *ps;
   char_u          *msgbuf = NULL;
   size_t          len;
+  bool            has_offset = false;
 #define SEARCH_STAT_BUF_LEN 12
 
   /*
@@ -1280,7 +1281,9 @@ int do_search(
      * Add character and/or line offset
      */
     if (!(options & SEARCH_NOOF) || (pat != NULL && *pat == ';')) {
-      if (spats[0].off.line) {          /* Add the offset to the line number. */
+      pos_T org_pos = pos;
+
+      if (spats[0].off.line) {  // Add the offset to the line number.
         c = pos.lnum + spats[0].off.off;
         if (c < 1)
           pos.lnum = 1;
@@ -1306,6 +1309,9 @@ int do_search(
               break;
         }
       }
+      if (!equalpos(pos, org_pos)) {
+        has_offset = true;
+      }
     }
 
     // Show [1/15] if 'S' is not in 'shortmess'.
@@ -1315,7 +1321,8 @@ int do_search(
         && c != FAIL
         && !shortmess(SHM_SEARCHCOUNT)
         && msgbuf != NULL) {
-      search_stat(dirc, &pos, show_top_bot_msg, msgbuf);
+      search_stat(dirc, &pos, show_top_bot_msg, msgbuf,
+                  (count != 1 || has_offset));
     }
 
     // The search command can be followed by a ';' to do another search.
@@ -4199,8 +4206,9 @@ int linewhite(linenr_T lnum)
 }
 
 // Add the search count "[3/19]" to "msgbuf".
+// When "recompute" is true Always recompute the numbers.
 static void search_stat(int dirc, pos_T *pos,
-    bool show_top_bot_msg, char_u *msgbuf)
+                        bool show_top_bot_msg, char_u *msgbuf, bool recompute)
 {
     int       save_ws = p_ws;
     int       wraparound = false;
@@ -4224,7 +4232,8 @@ static void search_stat(int dirc, pos_T *pos,
           && STRNICMP(lastpat, spats[last_idx].pat, STRLEN(lastpat)) == 0
           && STRLEN(lastpat) == STRLEN(spats[last_idx].pat)
           && equalpos(lastpos, curwin->w_cursor)
-          && lbuf == curbuf) || wraparound || cur < 0 || cur > 99) {
+          && lbuf == curbuf)
+        || wraparound || cur < 0 || cur > 99 || recompute) {
       cur = 0;
       cnt = 0;
       clearpos(&lastpos);
