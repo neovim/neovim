@@ -4286,7 +4286,7 @@ static void search_stat(int dirc, pos_T *pos,
       }
 
       len = STRLEN(t);
-      if (show_top_bot_msg && len + 3 < SEARCH_STAT_BUF_LEN) {
+      if (show_top_bot_msg && len + 2 < SEARCH_STAT_BUF_LEN) {
         STRCPY(t + len, " W");
         len += 2;
       }

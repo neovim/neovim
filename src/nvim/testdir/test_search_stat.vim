@@ -40,11 +40,19 @@ func! Test_search_stat()
   let g:a = execute(':unsilent :norm! n')
   let stat = '\[>99/>99\]'
   call assert_match(pat .. stat, g:a)
+  call cursor(line('$'), 1)
+  let g:a = execute(':unsilent :norm! n')
+  let stat = '\[1/>99\] W'
+  call assert_match(pat .. stat, g:a)
 
   " 5) Many matches
   call cursor(1, 1)
   let g:a = execute(':unsilent :norm! n')
   let stat = '\[2/>99\]'
+  call assert_match(pat .. stat, g:a)
+  call cursor(1, 1)
+  let g:a = execute(':unsilent :norm! N')
+  let stat = '\[>99/>99\] W'
   call assert_match(pat .. stat, g:a)
 
   " 6) right-left
