@@ -1000,6 +1000,7 @@ int do_search(
   char_u          *ps;
   char_u          *msgbuf = NULL;
   size_t          len;
+#define SEARCH_STAT_BUF_LEN 12
 
   /*
    * A line offset is not remembered, this is vi compatible.
@@ -1149,8 +1150,8 @@ int do_search(
           // Use up to 'showcmd' column.
           len = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
         }
-        if (len < STRLEN(p) + 40 + 11) {
-          len = STRLEN(p) + 40 + 11;
+        if (len < STRLEN(p) + SEARCH_STAT_BUF_LEN + 1) {
+            len = STRLEN(p) + SEARCH_STAT_BUF_LEN + 1;
         }
       } else {
         // Reserve enough space for the search pattern + offset.
@@ -4259,34 +4260,33 @@ static void search_stat(int dirc, pos_T *pos,
       }
     }
     if (cur > 0) {
-#define STAT_BUF_LEN 12
-      char t[STAT_BUF_LEN] = "";
+      char t[SEARCH_STAT_BUF_LEN] = "";
       int len;
 
       if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
         if (cur == OUT_OF_TIME) {
-          vim_snprintf(t, STAT_BUF_LEN, "[?/??]");
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[?/??]");
         } else if (cnt > 99 && cur > 99) {
-          vim_snprintf(t, STAT_BUF_LEN, "[>99/>99]");
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[>99/>99]");
         } else if (cnt > 99) {
-          vim_snprintf(t, STAT_BUF_LEN, "[>99/%d]", cur);
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[>99/%d]", cur);
         } else {
-          vim_snprintf(t, STAT_BUF_LEN, "[%d/%d]", cnt, cur);
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[%d/%d]", cnt, cur);
         }
       } else {
         if (cur == OUT_OF_TIME) {
-          vim_snprintf(t, STAT_BUF_LEN, "[?/??]");
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[?/??]");
         } else if (cnt > 99 && cur > 99) {
-          vim_snprintf(t, STAT_BUF_LEN, "[>99/>99]");
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[>99/>99]");
         } else if (cnt > 99) {
-          vim_snprintf(t, STAT_BUF_LEN, "[%d/>99]", cur);
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[%d/>99]", cur);
         } else {
-          vim_snprintf(t, STAT_BUF_LEN, "[%d/%d]", cur, cnt);
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[%d/%d]", cur, cnt);
         }
       }
 
       len = STRLEN(t);
-      if (show_top_bot_msg && len + 3 < STAT_BUF_LEN) {
+      if (show_top_bot_msg && len + 3 < SEARCH_STAT_BUF_LEN) {
         STRCPY(t + len, " W");
         len += 2;
       }
