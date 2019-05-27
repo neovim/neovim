@@ -13558,9 +13558,8 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void return_register(int regname, typval_T *rettv)
 {
-  char_u buf[2] = {0, 0};
+  char_u buf[2] = { regname, 0 };
 
-  buf[0] = (char_u)regname;
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = vim_strsave(buf);
 }

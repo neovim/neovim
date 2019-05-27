@@ -6410,14 +6410,11 @@ int showmode(void)
              && ((State & TERM_FOCUS)
                  || (State & INSERT)
                  || restart_edit
-                 || VIsual_active
-                 ));
+                 || VIsual_active));
   if (do_mode || reg_recording != 0) {
-    /*
-     * Don't show mode right now, when not redrawing or inside a mapping.
-     * Call char_avail() only when we are going to show something, because
-     * it takes a bit of time.
-     */
+    // Don't show mode right now, when not redrawing or inside a mapping.
+    // Call char_avail() only when we are going to show something, because
+    // it takes a bit of time.
     if (!redrawing() || (char_avail() && !KeyTyped) || msg_silent != 0) {
       redraw_cmdline = TRUE;                    /* show mode later */
       return 0;
@@ -6534,7 +6531,7 @@ int showmode(void)
       need_clear = TRUE;
     }
     if (reg_recording != 0
-        && edit_submode == NULL             /* otherwise it gets too long */
+        && edit_submode == NULL             // otherwise it gets too long
         ) {
       recording_mode(attr);
       need_clear = true;

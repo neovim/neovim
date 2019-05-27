@@ -1666,8 +1666,9 @@ static int vgetorpeek(int advance)
 
   init_typebuf();
   start_stuff();
-  if (advance && typebuf.tb_maplen == 0)
+  if (advance && typebuf.tb_maplen == 0) {
     reg_executing = 0;
+  }
   do {
     /*
      * get a character: 1. from the stuffbuffer

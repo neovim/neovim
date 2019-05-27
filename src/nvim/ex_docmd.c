@@ -1234,7 +1234,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   int did_sandbox = FALSE;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
-  int ni;                                       /* set when Not Implemented */
   char_u *cmd;
   int address_count = 1;
 
@@ -1763,10 +1762,10 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     goto doend;
   }
 
-  ni = (!IS_USER_CMDIDX(ea.cmdidx)
-        && (cmdnames[ea.cmdidx].cmd_func == ex_ni
-           || cmdnames[ea.cmdidx].cmd_func == ex_script_ni
-    ));
+  // set when Not Implemented
+  const int ni = !IS_USER_CMDIDX(ea.cmdidx)
+    && (cmdnames[ea.cmdidx].cmd_func == ex_ni
+        || cmdnames[ea.cmdidx].cmd_func == ex_script_ni);
 
 
   // Forced commands.
