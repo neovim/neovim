@@ -9673,6 +9673,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   varnumber_T n;
   bool error = false;
+  const int save_reg_executing = reg_executing;
 
   no_mapping++;
   for (;; ) {
@@ -9709,6 +9710,7 @@ static void f_getchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     break;
   }
   no_mapping--;
+  reg_executing = save_reg_executing;
 
   vimvars[VV_MOUSE_WIN].vv_nr = 0;
   vimvars[VV_MOUSE_WINID].vv_nr = 0;
