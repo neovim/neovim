@@ -2134,7 +2134,7 @@ return {
       type='string', list='flags', scope={'global'},
       vim=true,
       varname='p_shm',
-      defaults={if_true={vi="", vim="filnxtToOF"}}
+      defaults={if_true={vi="S", vim="filnxtToOFS"}}
     },
     {
       full_name='showbreak', abbreviation='sbr',

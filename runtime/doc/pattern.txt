@@ -141,6 +141,17 @@ use <Esc> to abandon the search.
 All matches for the last used search pattern will be highlighted if you set
 the 'hlsearch' option.  This can be suspended with the |:nohlsearch| command.
 
+When 'shortmess' does not include the "S" flag, Vim will automatically show an
+index, on which the cursor is. This can look like this: >
+
+  [1/5]		Cursor is on first of 5 matches.
+  [1/>99]	Cursor is on first of more than 99 matches.
+  [>99/>99]	Cursor is after 99 match of more than 99 matches.
+  [?/??]	Unknown how many matches exists, generating the
+		statistics was aborted because of search timeout.
+
+Note: the count does not take offset into account.
+
 When no match is found you get the error: *E486* Pattern not found
 Note that for the |:global| command this behaves like a normal message, for Vi
 compatibility.  For the |:s| command the "e" flag can be used to avoid the

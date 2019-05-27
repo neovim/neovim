@@ -14,6 +14,7 @@
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/search.h"
+#include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
@@ -997,6 +998,8 @@ int do_search(
   char_u          *dircp;
   char_u          *strcopy = NULL;
   char_u          *ps;
+  char_u          *msgbuf = NULL;
+  size_t          len;
 
   /*
    * A line offset is not remembered, this is vi compatible.
@@ -1123,61 +1126,95 @@ int do_search(
 
     if ((options & SEARCH_ECHO) && messaging()
         && !cmd_silent && msg_silent == 0) {
-      char_u      *msgbuf;
       char_u      *trunc;
 
-      if (*searchstr == NUL)
+      // Compute msg_row early.
+      msg_start();
+
+      if (*searchstr == NUL) {
         p = spats[last_idx].pat;
-      else
+      } else {
         p = searchstr;
-      msgbuf = xmalloc(STRLEN(p) + 40);
+      }
+
+      if (!shortmess(SHM_SEARCHCOUNT)) {
+        // Reserve enough space for the search pattern + offset +
+        // search stat.
+        if (msg_scrolled != 0) {
+          // Use all the columns.
+          len = (int)(Rows - msg_row) * Columns - 1;
+        } else {
+          // Use up to 'showcmd' column.
+          len = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+        }
+        if (len < STRLEN(p) + 40 + 11) {
+          len = STRLEN(p) + 40 + 11;
+        }
+      } else {
+        // Reserve enough space for the search pattern + offset.
+        len = STRLEN(p) + 40;
+      }
+
+      msgbuf = xmalloc((int)len);
       {
+        memset(msgbuf, ' ', len);
         msgbuf[0] = dirc;
+        msgbuf[len - 1] = NUL;
+
         if (utf_iscomposing(utf_ptr2char(p))) {
           // Use a space to draw the composing char on.
           msgbuf[1] = ' ';
-          STRCPY(msgbuf + 2, p);
-        } else
-          STRCPY(msgbuf + 1, p);
+          STRNCPY(msgbuf + 2, p, STRLEN(p));
+        } else {
+          STRNCPY(msgbuf + 1, p, STRLEN(p));
+        }
         if (spats[0].off.line || spats[0].off.end || spats[0].off.off) {
-          p = msgbuf + STRLEN(msgbuf);
+          p = msgbuf + STRLEN(p) + 1;
           *p++ = dirc;
-          if (spats[0].off.end)
+          if (spats[0].off.end) {
             *p++ = 'e';
-          else if (!spats[0].off.line)
+          } else if (!spats[0].off.line) {
             *p++ = 's';
-          if (spats[0].off.off > 0 || spats[0].off.line)
+          }
+          if (spats[0].off.off > 0 || spats[0].off.line) {
             *p++ = '+';
-          if (spats[0].off.off != 0 || spats[0].off.line)
-            sprintf((char *)p, "%" PRId64, (int64_t)spats[0].off.off);
-          else
-            *p = NUL;
+          }
+          if (spats[0].off.off != 0 || spats[0].off.line) {
+            int l = 0;
+            l = sprintf((char *)p, "%ld", spats[0].off.off);
+            p[l] = ' '; // remove NUL from sprintf
+          }
         }
 
-        msg_start();
         trunc = msg_strtrunc(msgbuf, FALSE);
+        if (trunc != NULL) {
+          xfree(msgbuf);
+          msgbuf = trunc;
+        }
 
-        /* The search pattern could be shown on the right in rightleft
-         * mode, but the 'ruler' and 'showcmd' area use it too, thus
-         * it would be blanked out again very soon.  Show it on the
-         * left, but do reverse the text. */
+        // The search pattern could be shown on the right in rightleft
+        // mode, but the 'ruler' and 'showcmd' area use it too, thus
+        // it would be blanked out again very soon.  Show it on the
+        // left, but do reverse the text.
         if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
           char_u *r = reverse_text(trunc != NULL ? trunc : msgbuf);
-          xfree(trunc);
-          trunc = r;
+          xfree(msgbuf);
+          msgbuf = r;
+          // move reversed text to beginning of buffer
+          while (*r != NUL && *r == ' ') {
+            r++;
+          }
+          memmove(msgbuf, r, msgbuf + STRLEN(msgbuf) - r);
+          // overwrite old text
+          memset(r, ' ', msgbuf + STRLEN(msgbuf) - r);
         }
-        if (trunc != NULL) {
-          msg_outtrans(trunc);
-          xfree(trunc);
-        } else
-          msg_outtrans(msgbuf);
+        msg_outtrans(msgbuf);
         msg_clr_eos();
         msg_check();
-        xfree(msgbuf);
 
-        gotocmdline(FALSE);
+        gotocmdline(false);
         ui_flush();
-        msg_nowait = TRUE;                  /* don't wait for this message */
+        msg_nowait = true;  // don't wait for this message
       }
     }
 
@@ -1217,8 +1254,16 @@ int do_search(
                         + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
                  RE_LAST, (linenr_T)0, tm, timed_out);
 
-    if (dircp != NULL)
-      *dircp = dirc;            /* restore second '/' or '?' for normal_cmd() */
+    if (dircp != NULL) {
+      *dircp = dirc;  // restore second '/' or '?' for normal_cmd()
+    }
+
+    if (!shortmess(SHM_SEARCH)
+        && ((dirc == '/' && lt(pos, curwin->w_cursor))
+            || (dirc == '?' && lt(curwin->w_cursor, pos)))) {
+      os_delay(500L, false);  // leave some time for top_bot_msg
+    }
+
     if (c == FAIL) {
       retval = 0;
       goto end_do_search;
@@ -1260,16 +1305,25 @@ int do_search(
       }
     }
 
-    /*
-     * The search command can be followed by a ';' to do another search.
-     * For example: "/pat/;/foo/+3;?bar"
-     * This is like doing another search command, except:
-     * - The remembered direction '/' or '?' is from the first search.
-     * - When an error happens the cursor isn't moved at all.
-     * Don't do this when called by get_address() (it handles ';' itself).
-     */
-    if (!(options & SEARCH_OPT) || pat == NULL || *pat != ';')
+    // Show [1/15] if 'S' is not in 'shortmess'.
+    if ((options & SEARCH_ECHO)
+        && messaging()
+        && !(cmd_silent + msg_silent)
+        && c != FAIL
+        && !shortmess(SHM_SEARCHCOUNT)
+        && msgbuf != NULL) {
+      search_stat(dirc, &pos, msgbuf);
+    }
+
+    // The search command can be followed by a ';' to do another search.
+    // For example: "/pat/;/foo/+3;?bar"
+    // This is like doing another search command, except:
+    // - The remembered direction '/' or '?' is from the first search.
+    // - When an error happens the cursor isn't moved at all.
+    // Don't do this when called by get_address() (it handles ';' itself).
+    if (!(options & SEARCH_OPT) || pat == NULL || *pat != ';') {
       break;
+    }
 
     dirc = *++pat;
     if (dirc != '?' && dirc != '/') {
@@ -1288,7 +1342,7 @@ int do_search(
 end_do_search:
   if ((options & SEARCH_KEEP) || cmdmod.keeppatterns)
     spats[0].off = old_off;
-  xfree(strcopy);
+  xfree(msgbuf);
 
   return retval;
 }
@@ -4139,6 +4193,108 @@ int linewhite(linenr_T lnum)
 
   p = skipwhite(ml_get(lnum));
   return *p == NUL;
+}
+
+// Add the search count "[3/19]" to "msgbuf".
+static void search_stat(int dirc, pos_T *pos, char_u *msgbuf)
+{
+    int       save_ws = p_ws;
+    int       wraparound = false;
+    pos_T     p = (*pos);
+    static  pos_T   lastpos = { 0, 0, 0 };
+    static int      cur = 0;
+    static int      cnt = 0;
+    static int      chgtick = 0;
+    static char_u   *lastpat = NULL;
+    static buf_T    *lbuf = NULL;
+    proftime_T  start;
+#define OUT_OF_TIME 999
+
+    wraparound = ((dirc == '?' && lt(lastpos, p))
+                  || (dirc == '/' && lt(p, lastpos)));
+
+    // If anything relevant changed the count has to be recomputed.
+    // STRNICMP ignores case, but we should not ignore case.
+    // Unfortunately, there is no STRNICMP function.
+    if (!(chgtick == buf_get_changedtick(curbuf)
+          && STRNICMP(lastpat, spats[last_idx].pat, STRLEN(lastpat)) == 0
+          && STRLEN(lastpat) == STRLEN(spats[last_idx].pat)
+          && equalpos(lastpos, curwin->w_cursor)
+          && lbuf == curbuf) || wraparound || cur < 0 || cur > 99) {
+      cur = 0;
+      cnt = 0;
+      clearpos(&lastpos);
+      lbuf = curbuf;
+    }
+
+    if (equalpos(lastpos, curwin->w_cursor) && !wraparound
+        && (dirc == '/' ? cur < cnt : cur > 0)) {
+      cur += dirc == '/' ? 1 : -1;
+    } else {
+      p_ws = false;
+      start = profile_setlimit(20L);
+      while (!got_int && searchit(curwin, curbuf, &lastpos, NULL,
+                                  FORWARD, NULL, 1, SEARCH_PEEK + SEARCH_KEEP,
+                                  RE_LAST, (linenr_T)0, NULL, NULL) != FAIL) {
+        // Stop after passing the time limit.
+        if (profile_passed_limit(start)) {
+          cnt = OUT_OF_TIME;
+          cur = OUT_OF_TIME;
+          break;
+        }
+        cnt++;
+        if (ltoreq(lastpos, p)) {
+          cur++;
+        }
+        fast_breakcheck();
+        if (cnt > 99) {
+          break;
+        }
+      }
+      if (got_int) {
+        cur = -1;  // abort
+      }
+    }
+    if (cur > 0) {
+#define STAT_BUF_LEN 10
+      char t[STAT_BUF_LEN] = "";
+
+      if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
+        if (cur == OUT_OF_TIME) {
+          vim_snprintf(t, STAT_BUF_LEN, "[?/??]");
+        } else if (cnt > 99 && cur > 99) {
+          vim_snprintf(t, STAT_BUF_LEN, "[>99/>99]");
+        } else if (cnt > 99) {
+          vim_snprintf(t, STAT_BUF_LEN, "[>99/%d]", cur);
+        } else {
+          vim_snprintf(t, STAT_BUF_LEN, "[%d/%d]", cnt, cur);
+        }
+      } else {
+        if (cur == OUT_OF_TIME) {
+          vim_snprintf(t, STAT_BUF_LEN, "[?/??]");
+        } else if (cnt > 99 && cur > 99) {
+          vim_snprintf(t, STAT_BUF_LEN, "[>99/>99]");
+        } else if (cnt > 99) {
+          vim_snprintf(t, STAT_BUF_LEN, "[%d/>99]", cur);
+        } else {
+          vim_snprintf(t, STAT_BUF_LEN, "[%d/%d]", cur, cnt);
+        }
+      }
+      STRNCPY(msgbuf + STRLEN(msgbuf) - STRLEN(t), t, STRLEN(t));
+      if (dirc == '?' && cur == 100) {
+        cur = -1;
+      }
+
+      xfree(lastpat);
+      lastpat = vim_strsave(spats[last_idx].pat);
+      chgtick = buf_get_changedtick(curbuf);
+      lbuf    = curbuf;
+      lastpos = p;
+
+      // keep the message even after redraw
+      give_warning(msgbuf, false);
+    }
+    p_ws = save_ws;
 }
 
 /*
