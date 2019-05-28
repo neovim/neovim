@@ -128,6 +128,12 @@ void ui_builtin_start(void)
 #endif
 }
 
+uint64_t ui_client_start(char *server_name)
+{   
+  is_remote_client = true; // The TUI is a remote client
+  return tui_ui_client_init(server_name);    
+}
+
 bool ui_rgb_attached(void)
 {
   if (!headless_mode && p_tgc) {

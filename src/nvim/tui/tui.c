@@ -41,6 +41,7 @@
 #include "nvim/tui/terminfo.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/macros.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.
@@ -137,6 +138,41 @@ static bool cursor_style_enabled = false;
 # include "tui/tui.c.generated.h"
 #endif
 
+/*
+Connecting the remote server.
+*/
+uint64_t tui_ui_client_init(char *servername){
+    CallbackReader on_data = CALLBACK_READER_INIT;
+    const char *error = NULL;
+    uint64_t rc_id = servername == NULL ? 0 : channel_connect(true,
+                     servername, true, on_data, 50, &error);   // connected to channel
+
+
+    Array args = ARRAY_DICT_INIT;
+    int width = INT_MAX;
+    int height = INT_MAX;
+    Dictionary opts = ARRAY_DICT_INIT;
+    Error err = ERROR_INIT;
+
+    PUT(opts, "rgb", BOOLEAN_OBJ(true));
+    PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
+    PUT(opts, "ext_cmdline", BOOLEAN_OBJ(true));
+    PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
+    PUT(opts, "ext_multigrid", BOOLEAN_OBJ(true));
+    PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
+
+    ADD(args, INTEGER_OBJ((int)rc_id));
+    ADD(args, INTEGER_OBJ((int)width));
+    ADD(args, INTEGER_OBJ((int)height));
+    ADD(args, DICTIONARY_OBJ(opts));
+
+    // Telling to the server that you exist as a Client
+    rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
+ 
+    api_free_dictionary(opts);
+
+    return rc_id;
+}
 
 UI *tui_start(void)
 {

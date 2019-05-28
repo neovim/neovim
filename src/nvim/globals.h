@@ -877,6 +877,9 @@ EXTERN linenr_T printer_page_num;
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()
 
+EXTERN bool is_remote_client INIT(= false);       // Initially the TUI is not
+                                                  // a remote client                                        
+
 
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character
