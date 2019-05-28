@@ -1095,8 +1095,9 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
           int width = (colnr_T)wp->w_width_inner - sbrlen - numberwidth;
           int prev_width = col ? ((colnr_T)wp->w_width_inner - (sbrlen + col))
                                : 0;
-          if (width == 0) {
-            width = (colnr_T)wp->w_width_inner;
+
+          if (width <= 0) {
+            width = 1;
           }
           added += ((size - prev_width) / width) * vim_strsize(p_sbr);
           if ((size - prev_width) % width) {
