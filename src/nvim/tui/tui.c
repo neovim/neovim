@@ -147,7 +147,6 @@ uint64_t tui_ui_client_init(char *servername){
     uint64_t rc_id = servername == NULL ? 0 : channel_connect(true,
                      servername, true, on_data, 50, &error);   // connected to channel
 
-
     Array args = ARRAY_DICT_INIT;
     int width = INT_MAX;
     int height = INT_MAX;
@@ -155,11 +154,12 @@ uint64_t tui_ui_client_init(char *servername){
     Error err = ERROR_INIT;
 
     PUT(opts, "rgb", BOOLEAN_OBJ(true));
-    PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
-    PUT(opts, "ext_cmdline", BOOLEAN_OBJ(true));
+    // PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
+    // PUT(opts, "ext_cmdline", BOOLEAN_OBJ(true));
     PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
-    PUT(opts, "ext_multigrid", BOOLEAN_OBJ(true));
-    PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
+    // PUT(opts, "ext_multigrid", BOOLEAN_OBJ(true));
+    // PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
+    PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
     ADD(args, INTEGER_OBJ((int)rc_id));
     ADD(args, INTEGER_OBJ((int)width));
@@ -169,7 +169,7 @@ uint64_t tui_ui_client_init(char *servername){
     // Telling to the server that you exist as a Client
     rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
  
-    api_free_dictionary(opts);
+    // api_free_dictionary(opts);
 
     return rc_id;
 }
