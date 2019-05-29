@@ -1948,29 +1948,26 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Check for '|' to separate commands and '"' to start comments.
    * Don't do this for ":read !cmd" and ":write !cmd".
    */
-  if ((ea.argt & TRLBAR) && !ea.usefilter)
+  if ((ea.argt & TRLBAR) && !ea.usefilter) {
     separate_nextcmd(&ea);
-
-  /*
-   * Check for <newline> to end a shell command.
-   * Also do this for ":read !cmd", ":write !cmd" and ":global".
-   * Any others?
-   */
-  else if (ea.cmdidx == CMD_bang
-           || ea.cmdidx == CMD_terminal
-           || ea.cmdidx == CMD_global
-           || ea.cmdidx == CMD_vglobal
-           || ea.usefilter) {
-    for (p = ea.arg; *p; ++p) {
-      /* Remove one backslash before a newline, so that it's possible to
-       * pass a newline to the shell and also a newline that is preceded
-       * with a backslash.  This makes it impossible to end a shell
-       * command in a backslash, but that doesn't appear useful.
-       * Halving the number of backslashes is incompatible with previous
-       * versions. */
-      if (*p == '\\' && p[1] == '\n')
+  } else if (ea.cmdidx == CMD_bang
+             || ea.cmdidx == CMD_terminal
+             || ea.cmdidx == CMD_global
+             || ea.cmdidx == CMD_vglobal
+             || ea.usefilter) {
+    // Check for <newline> to end a shell command.
+    // Also do this for ":read !cmd", ":write !cmd" and ":global".
+    // Any others?
+    for (p = ea.arg; *p; p++) {
+      // Remove one backslash before a newline, so that it's possible to
+      // pass a newline to the shell and also a newline that is preceded
+      // with a backslash.  This makes it impossible to end a shell
+      // command in a backslash, but that doesn't appear useful.
+      // Halving the number of backslashes is incompatible with previous
+      // versions.
+      if (*p == '\\' && p[1] == '\n') {
         STRMOVE(p, p + 1);
-      else if (*p == '\n') {
+      } else if (*p == '\n') {
         ea.nextcmd = p + 1;
         *p = NUL;
         break;
@@ -4152,7 +4149,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         }
     }
 
-    /* For a shell command a '!' must be escaped. */
+    // For a shell command a '!' must be escaped.
     if ((eap->usefilter
          || eap->cmdidx == CMD_bang
          || eap->cmdidx == CMD_terminal)
