@@ -9459,9 +9459,13 @@ This does NOT work: >
 			When the selected range of items is partly past the
 			end of the list, items will be added.
 
-					*:let+=* *:let-=* *:let.=* *E734*
+                                            *:let+=* *:let-=* *:letstar=*
+                                            *:let/=* *:let%=* *:let.=* *E734*
 :let {var} += {expr1}	Like ":let {var} = {var} + {expr1}".
 :let {var} -= {expr1}	Like ":let {var} = {var} - {expr1}".
+:let {var} *= {expr1}	Like ":let {var} = {var} * {expr1}".
+:let {var} /= {expr1}	Like ":let {var} = {var} / {expr1}".
+:let {var} %= {expr1}	Like ":let {var} = {var} % {expr1}".
 :let {var} .= {expr1}	Like ":let {var} = {var} . {expr1}".
 			These fail if {var} was not set yet and when the type
 			of {var} and {expr1} don't fit the operator.

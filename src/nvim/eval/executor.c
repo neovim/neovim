@@ -16,7 +16,7 @@ static char *e_letwrong = N_("E734: Wrong variable type for %s=");
 
 char *e_listidx = N_("E684: list index out of range: %" PRId64);
 
-/// Hanle tv1 += tv2, -=, .=
+/// Hanle tv1 += tv2, -=, *=, /=,  %=, .=
 ///
 /// @param[in,out]  tv1  First operand, modified typval.
 /// @param[in]  tv2  Second operand.
@@ -51,25 +51,31 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
         if (tv2->v_type == VAR_LIST) {
           break;
         }
-        if (*op == '+' || *op == '-') {
-          // nr += nr  or  nr -= nr
+        if (vim_strchr((char_u *)"+-*/%", *op) != NULL) {
+          // nr += nr  or  nr -= nr, nr *= nr, nr /= nr, nr %= nr
           varnumber_T n = tv_get_number(tv1);
           if (tv2->v_type == VAR_FLOAT) {
             float_T f = (float_T)n;
 
-            if (*op == '+') {
-              f += tv2->vval.v_float;
-            } else {
-              f -= tv2->vval.v_float;
+            if (*op == '%') {
+              break;
+            }
+            switch (*op) {
+              case '+': f += tv2->vval.v_float; break;
+              case '-': f -= tv2->vval.v_float; break;
+              case '*': f *= tv2->vval.v_float; break;
+              case '/': f /= tv2->vval.v_float; break;
             }
             tv_clear(tv1);
             tv1->v_type = VAR_FLOAT;
             tv1->vval.v_float = f;
           } else {
-            if (*op == '+') {
-              n += tv_get_number(tv2);
-            } else {
-              n -= tv_get_number(tv2);
+            switch (*op) {
+              case '+': n += tv_get_number(tv2); break;
+              case '-': n -= tv_get_number(tv2); break;
+              case '*': n *= tv_get_number(tv2); break;
+              case '/': n /= tv_get_number(tv2); break;
+              case '%': n %= tv_get_number(tv2); break;
             }
             tv_clear(tv1);
             tv1->v_type = VAR_NUMBER;
@@ -92,18 +98,20 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
         return OK;
       }
       case VAR_FLOAT: {
-        if (*op == '.' || (tv2->v_type != VAR_FLOAT
-                           && tv2->v_type != VAR_NUMBER
-                           && tv2->v_type != VAR_STRING)) {
+        if (*op == '%' || *op == '.'
+            || (tv2->v_type != VAR_FLOAT
+                && tv2->v_type != VAR_NUMBER
+                && tv2->v_type != VAR_STRING)) {
           break;
         }
         const float_T f = (tv2->v_type == VAR_FLOAT
                            ? tv2->vval.v_float
                            : (float_T)tv_get_number(tv2));
-        if (*op == '+') {
-          tv1->vval.v_float += f;
-        } else {
-          tv1->vval.v_float -= f;
+        switch (*op) {
+          case '+': tv1->vval.v_float += f; break;
+          case '-': tv1->vval.v_float -= f; break;
+          case '*': tv1->vval.v_float *= f; break;
+          case '/': tv1->vval.v_float /= f; break;
         }
         return OK;
       }

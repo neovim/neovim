@@ -1442,6 +1442,9 @@ int eval_foldexpr(char_u *arg, int *cp)
  * ":let var = expr"		assignment command.
  * ":let var += expr"		assignment command.
  * ":let var -= expr"		assignment command.
+ * ":let var *= expr"		assignment command.
+ * ":let var /= expr"		assignment command.
+ * ":let var %= expr"		assignment command.
  * ":let var .= expr"		assignment command.
  * ":let [var1, var2] = expr"	unpack list.
  */
@@ -1465,7 +1468,7 @@ void ex_let(exarg_T *eap)
     argend--;
   }
   expr = skipwhite(argend);
-  if (*expr != '=' && !(vim_strchr((char_u *)"+-.", *expr) != NULL
+  if (*expr != '=' && !(vim_strchr((char_u *)"+-*/%.", *expr) != NULL
                         && expr[1] == '=')) {
     // ":let" without "=": list variables
     if (*arg == '[') {
@@ -1488,8 +1491,8 @@ void ex_let(exarg_T *eap)
     op[0] = '=';
     op[1] = NUL;
     if (*expr != '=') {
-      if (vim_strchr((char_u *)"+-.", *expr) != NULL) {
-        op[0] = *expr;  // +=, -=, .=
+      if (vim_strchr((char_u *)"+-*/%.", *expr) != NULL) {
+        op[0] = *expr;  // +=, -=, *=, /=, %= or .=
       }
       expr = skipwhite(expr + 2);
     } else {
@@ -1864,7 +1867,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
     if (len == 0) {
       EMSG2(_(e_invarg2), name - 1);
     } else {
-      if (op != NULL && (*op == '+' || *op == '-')) {
+      if (op != NULL && vim_strchr((char_u *)"+-*/%", *op) != NULL) {
         EMSG2(_(e_letwrong), op);
       } else if (endchars != NULL
                  && vim_strchr(endchars, *skipwhite(arg)) == NULL) {
@@ -1927,10 +1930,12 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
           s = NULL;  // don't set the value
         } else {
           if (opt_type == 1) {  // number
-            if (*op == '+') {
-              n = numval + n;
-            } else {
-              n = numval - n;
+            switch (*op) {
+              case '+': n = numval + n; break;
+              case '-': n = numval - n; break;
+              case '*': n = numval * n; break;
+              case '/': n = numval / n; break;
+              case '%': n = numval % n; break;
             }
           } else if (opt_type == 0 && stringval != NULL) {  // string
             char *const oldstringval = stringval;
@@ -1951,7 +1956,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
   // ":let @r = expr": Set register contents.
   } else if (*arg == '@') {
     arg++;
-    if (op != NULL && (*op == '+' || *op == '-')) {
+    if (op != NULL && vim_strchr((char_u *)"+-*/%", *op) != NULL) {
       emsgf(_(e_letwrong), op);
     } else if (endchars != NULL
                && vim_strchr(endchars, *skipwhite(arg + 1)) == NULL) {
@@ -2350,7 +2355,8 @@ static void clear_lval(lval_T *lp)
 /*
  * Set a variable that was parsed by get_lval() to "rettv".
  * "endp" points to just after the parsed name.
- * "op" is NULL, "+" for "+=", "-" for "-=", "." for ".=" or "=" for "=".
+ * "op" is NULL, "+" for "+=", "-" for "-=", "*" for "*=", "/" for "/=",
+ * "%" for "%=", "." for ".=" or "=" for "=".
  */
 static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
                          int copy, const char_u *op)
@@ -2365,7 +2371,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv,
     if (op != NULL && *op != '=') {
       typval_T tv;
 
-      // handle +=, -= and .=
+      // handle +=, -=, *=, /=, %= and .=
       di = NULL;
       if (get_var_tv((const char *)lp->ll_name, (int)STRLEN(lp->ll_name),
                      &tv, &di, true, false) == OK) {
