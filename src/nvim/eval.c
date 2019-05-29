@@ -1446,6 +1446,7 @@ int eval_foldexpr(char_u *arg, int *cp)
  * ":let var /= expr"		assignment command.
  * ":let var %= expr"		assignment command.
  * ":let var .= expr"		assignment command.
+ * ":let var ..= expr"		assignment command.
  * ":let [var1, var2] = expr"	unpack list.
  */
 void ex_let(exarg_T *eap)
@@ -1468,8 +1469,8 @@ void ex_let(exarg_T *eap)
     argend--;
   }
   expr = skipwhite(argend);
-  if (*expr != '=' && !(vim_strchr((char_u *)"+-*/%.", *expr) != NULL
-                        && expr[1] == '=')) {
+  if (*expr != '=' && !((vim_strchr((char_u *)"+-*/%.", *expr) != NULL
+                         && expr[1] == '=') || STRNCMP(expr, "..=", 3) == 0)) {
     // ":let" without "=": list variables
     if (*arg == '[') {
       EMSG(_(e_invarg));
@@ -1493,6 +1494,9 @@ void ex_let(exarg_T *eap)
     if (*expr != '=') {
       if (vim_strchr((char_u *)"+-*/%.", *expr) != NULL) {
         op[0] = *expr;  // +=, -=, *=, /=, %= or .=
+        if (expr[0] == '.' && expr[1] == '.') {  // ..=
+          expr++;
+        }
       }
       expr = skipwhite(expr + 2);
     } else {
@@ -3789,6 +3793,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
  *	+	number addition
  *	-	number subtraction
  *	.	string concatenation
+ *	..	string concatenation
  *
  * "arg" must point to the first non-white of the expression.
  * "arg" is advanced to the next non-white after the recognized expression.
@@ -3836,6 +3841,9 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
     /*
      * Get the second variable.
      */
+    if (op == '.' && *(*arg + 1) == '.') {  // ..string concatenation
+      (*arg)++;
+    }
     *arg = skipwhite(*arg + 1);
     if (eval6(arg, &var2, evaluate, op == '.') == FAIL) {
       tv_clear(rettv);
