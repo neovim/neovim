@@ -1948,28 +1948,26 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Check for '|' to separate commands and '"' to start comments.
    * Don't do this for ":read !cmd" and ":write !cmd".
    */
-  if ((ea.argt & TRLBAR) && !ea.usefilter)
+  if ((ea.argt & TRLBAR) && !ea.usefilter) {
     separate_nextcmd(&ea);
-
-  /*
-   * Check for <newline> to end a shell command.
-   * Also do this for ":read !cmd", ":write !cmd" and ":global".
-   * Any others?
-   */
-  else if (ea.cmdidx == CMD_bang
-           || ea.cmdidx == CMD_global
-           || ea.cmdidx == CMD_vglobal
-           || ea.usefilter) {
-    for (p = ea.arg; *p; ++p) {
-      /* Remove one backslash before a newline, so that it's possible to
-       * pass a newline to the shell and also a newline that is preceded
-       * with a backslash.  This makes it impossible to end a shell
-       * command in a backslash, but that doesn't appear useful.
-       * Halving the number of backslashes is incompatible with previous
-       * versions. */
-      if (*p == '\\' && p[1] == '\n')
+  } else if (ea.cmdidx == CMD_bang
+             || ea.cmdidx == CMD_terminal
+             || ea.cmdidx == CMD_global
+             || ea.cmdidx == CMD_vglobal
+             || ea.usefilter) {
+    // Check for <newline> to end a shell command.
+    // Also do this for ":read !cmd", ":write !cmd" and ":global".
+    // Any others?
+    for (p = ea.arg; *p; p++) {
+      // Remove one backslash before a newline, so that it's possible to
+      // pass a newline to the shell and also a newline that is preceded
+      // with a backslash.  This makes it impossible to end a shell
+      // command in a backslash, but that doesn't appear useful.
+      // Halving the number of backslashes is incompatible with previous
+      // versions.
+      if (*p == '\\' && p[1] == '\n') {
         STRMOVE(p, p + 1);
-      else if (*p == '\n') {
+      } else if (*p == '\n') {
         ea.nextcmd = p + 1;
         *p = NUL;
         break;
@@ -4122,13 +4120,14 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
     if (!eap->usefilter
         && !escaped
         && eap->cmdidx != CMD_bang
-        && eap->cmdidx != CMD_make
-        && eap->cmdidx != CMD_lmake
         && eap->cmdidx != CMD_grep
-        && eap->cmdidx != CMD_lgrep
         && eap->cmdidx != CMD_grepadd
-        && eap->cmdidx != CMD_lgrepadd
         && eap->cmdidx != CMD_hardcopy
+        && eap->cmdidx != CMD_lgrep
+        && eap->cmdidx != CMD_lgrepadd
+        && eap->cmdidx != CMD_lmake
+        && eap->cmdidx != CMD_make
+        && eap->cmdidx != CMD_terminal
         && !(eap->argt & NOSPC)
         ) {
       char_u      *l;
@@ -4150,8 +4149,10 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         }
     }
 
-    /* For a shell command a '!' must be escaped. */
-    if ((eap->usefilter || eap->cmdidx == CMD_bang)
+    // For a shell command a '!' must be escaped.
+    if ((eap->usefilter
+         || eap->cmdidx == CMD_bang
+         || eap->cmdidx == CMD_terminal)
         && vim_strpbrk(repl, (char_u *)"!") != NULL) {
       char_u      *l;
 
@@ -8399,7 +8400,7 @@ static void ex_pedit(exarg_T *eap)
 
   g_do_tagpreview = p_pvh;
   prepare_tagpreview(true);
-  keep_help_flag = curwin_save->w_buffer->b_help;
+  keep_help_flag = bt_help(curwin_save->w_buffer);
   do_exedit(eap, NULL);
   keep_help_flag = FALSE;
   if (curwin != curwin_save && win_valid(curwin_save)) {
@@ -9046,7 +9047,7 @@ makeopens(
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)
           && wp->w_buffer->b_ffname != NULL
-          && !wp->w_buffer->b_help
+          && !bt_help(wp->w_buffer)
           && !bt_nofile(wp->w_buffer)
           ) {
         if (fputs(need_tabnew ? "tabedit " : "edit ", fd) < 0
@@ -9337,7 +9338,7 @@ static int ses_do_win(win_T *wp)
       || (!wp->w_buffer->terminal && bt_nofile(wp->w_buffer))) {
     return ssop_flags & SSOP_BLANK;
   }
-  if (wp->w_buffer->b_help) {
+  if (bt_help(wp->w_buffer)) {
     return ssop_flags & SSOP_HELP;
   }
   return true;
@@ -9477,7 +9478,7 @@ put_view(
    */
   if ((*flagp & SSOP_FOLDS)
       && wp->w_buffer->b_ffname != NULL
-      && (*wp->w_buffer->b_p_bt == NUL || wp->w_buffer->b_help)
+      && (*wp->w_buffer->b_p_bt == NUL || bt_help(wp->w_buffer))
       ) {
     if (put_folds(fd, wp) == FAIL)
       return FAIL;
