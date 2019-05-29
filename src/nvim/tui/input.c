@@ -15,6 +15,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #define PASTETOGGLE_KEY "<Paste>"
 #define KEY_BUFFER_SIZE 0xfff
@@ -104,8 +105,19 @@ static void tinput_done_event(void **argv)
 static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
+  size_t consumed = 0;
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    size_t consumed = input_enqueue((String){.data = buf, .size = len});
+    if(is_remote_client){
+      Array args = ARRAY_DICT_INIT;
+      Error err = ERROR_INIT;
+      ADD(args, STRING_OBJ(((String){
+          .data = xstrdup(buf), 
+          .size = len})));
+      Object result = rpc_send_call(channel_get_id(true, true), "nvim_input", args, &err);
+      consumed = (size_t)result.data.integer;
+    } else {
+      consumed = input_enqueue((String){.data = buf, .size = len});
+    }
     if (consumed) {
       rbuffer_consumed(input->key_buffer, consumed);
     }
