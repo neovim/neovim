@@ -1957,6 +1957,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
    * Any others?
    */
   else if (ea.cmdidx == CMD_bang
+           || ea.cmdidx == CMD_terminal
            || ea.cmdidx == CMD_global
            || ea.cmdidx == CMD_vglobal
            || ea.usefilter) {
@@ -4122,13 +4123,14 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
     if (!eap->usefilter
         && !escaped
         && eap->cmdidx != CMD_bang
-        && eap->cmdidx != CMD_make
-        && eap->cmdidx != CMD_lmake
         && eap->cmdidx != CMD_grep
-        && eap->cmdidx != CMD_lgrep
         && eap->cmdidx != CMD_grepadd
-        && eap->cmdidx != CMD_lgrepadd
         && eap->cmdidx != CMD_hardcopy
+        && eap->cmdidx != CMD_lgrep
+        && eap->cmdidx != CMD_lgrepadd
+        && eap->cmdidx != CMD_lmake
+        && eap->cmdidx != CMD_make
+        && eap->cmdidx != CMD_terminal
         && !(eap->argt & NOSPC)
         ) {
       char_u      *l;
@@ -4151,7 +4153,9 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
     }
 
     /* For a shell command a '!' must be escaped. */
-    if ((eap->usefilter || eap->cmdidx == CMD_bang)
+    if ((eap->usefilter
+         || eap->cmdidx == CMD_bang
+         || eap->cmdidx == CMD_terminal)
         && vim_strpbrk(repl, (char_u *)"!") != NULL) {
       char_u      *l;
 
@@ -8399,7 +8403,7 @@ static void ex_pedit(exarg_T *eap)
 
   g_do_tagpreview = p_pvh;
   prepare_tagpreview(true);
-  keep_help_flag = curwin_save->w_buffer->b_help;
+  keep_help_flag = bt_help(curwin_save->w_buffer);
   do_exedit(eap, NULL);
   keep_help_flag = FALSE;
   if (curwin != curwin_save && win_valid(curwin_save)) {
@@ -9046,7 +9050,7 @@ makeopens(
     for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp)
           && wp->w_buffer->b_ffname != NULL
-          && !wp->w_buffer->b_help
+          && !bt_help(wp->w_buffer)
           && !bt_nofile(wp->w_buffer)
           ) {
         if (fputs(need_tabnew ? "tabedit " : "edit ", fd) < 0
@@ -9337,7 +9341,7 @@ static int ses_do_win(win_T *wp)
       || (!wp->w_buffer->terminal && bt_nofile(wp->w_buffer))) {
     return ssop_flags & SSOP_BLANK;
   }
-  if (wp->w_buffer->b_help) {
+  if (bt_help(wp->w_buffer)) {
     return ssop_flags & SSOP_HELP;
   }
   return true;
@@ -9477,7 +9481,7 @@ put_view(
    */
   if ((*flagp & SSOP_FOLDS)
       && wp->w_buffer->b_ffname != NULL
-      && (*wp->w_buffer->b_p_bt == NUL || wp->w_buffer->b_help)
+      && (*wp->w_buffer->b_p_bt == NUL || bt_help(wp->w_buffer))
       ) {
     if (put_folds(fd, wp) == FAIL)
       return FAIL;
