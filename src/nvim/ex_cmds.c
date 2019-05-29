@@ -900,9 +900,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   // send update regarding the new lines that were added
-  if (kv_size(curbuf->update_channels)) {
-    buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
-  }
+  buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
 
   /*
    * Now we delete the original text -- webb
@@ -939,9 +937,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
 
   // send nvim_buf_lines_event regarding lines that were deleted
-  if (kv_size(curbuf->update_channels)) {
-    buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
-  }
+  buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
 
   return OK;
 }
@@ -4074,12 +4070,10 @@ skip:
     i = curbuf->b_ml.ml_line_count - old_line_count;
     changed_lines(first_line, 0, last_line - i, i, false);
 
-    if (kv_size(curbuf->update_channels)) {
-      int64_t num_added = last_line - first_line;
-      int64_t num_removed = num_added - i;
-      buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
-                               do_buf_event);
-    }
+    int64_t num_added = last_line - first_line;
+    int64_t num_removed = num_added - i;
+    buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
+                             do_buf_event);
   }
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */

@@ -48,6 +48,10 @@
     .type = kObjectTypeDictionary, \
     .data.dictionary = d })
 
+#define LUAREF_OBJ(r) ((Object) { \
+    .type = kObjectTypeLuaRef, \
+    .data.luaref = r })
+
 #define NIL ((Object) {.type = kObjectTypeNil})
 
 #define PUT(dict, k, v) \

@@ -5,17 +5,28 @@
 #include "nvim/memline.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/lua/executor.h"
 #include "nvim/assert.h"
 #include "nvim/buffer.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "buffer_updates.c.generated.h"
+#endif
 
 // Register a channel. Return True if the channel was added, or already added.
 // Return False if the channel couldn't be added because the buffer is
 // unloaded.
-bool buf_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
+bool buf_updates_register(buf_T *buf, uint64_t channel_id,
+                          BufUpdateCallbacks cb, bool send_buffer)
 {
   // must fail if the buffer isn't loaded
   if (buf->b_ml.ml_mfp == NULL) {
     return false;
+  }
+
+  if (channel_id == LUA_INTERNAL_CALL) {
+    kv_push(buf->update_callbacks, cb);
+    return true;
   }
 
   // count how many channels are currently watching the buffer
@@ -67,6 +78,11 @@ bool buf_updates_register(buf_T *buf, uint64_t channel_id, bool send_buffer)
   }
 
   return true;
+}
+
+bool buf_updates_active(buf_T *buf)
+{
+    return kv_size(buf->update_channels) || kv_size(buf->update_callbacks);
 }
 
 void buf_updates_send_end(buf_T *buf, uint64_t channelid)
@@ -125,6 +141,12 @@ void buf_updates_unregister_all(buf_T *buf)
     kv_destroy(buf->update_channels);
     kv_init(buf->update_channels);
   }
+
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    free_update_callbacks(kv_A(buf->update_callbacks, i));
+  }
+  kv_destroy(buf->update_callbacks);
+  kv_init(buf->update_callbacks);
 }
 
 void buf_updates_send_changes(buf_T *buf,
@@ -133,6 +155,10 @@ void buf_updates_send_changes(buf_T *buf,
                               int64_t num_removed,
                               bool send_tick)
 {
+  if (!buf_updates_active(buf)) {
+    return;
+  }
+
   // if one the channels doesn't work, put its ID here so we can remove it later
   uint64_t badchannelid = 0;
 
@@ -183,6 +209,47 @@ void buf_updates_send_changes(buf_T *buf,
     ELOG("Disabling buffer updates for dead channel %"PRIu64, badchannelid);
     buf_updates_unregister(buf, badchannelid);
   }
+
+  // notify each of the active channels
+  size_t j = 0;
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
+    bool keep = true;
+    if (cb.on_lines != LUA_NOREF) {
+      Array args = ARRAY_DICT_INIT;
+      Object items[5];
+      args.size = 5;
+      args.items = items;
+
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
+
+      // next argument is b:changedtick
+      args.items[1] = send_tick ? INTEGER_OBJ(buf_get_changedtick(buf)) : NIL;
+
+      // the first line that changed (zero-indexed)
+      args.items[2] = INTEGER_OBJ(firstline - 1);
+
+      // the last line that was changed
+      args.items[3] = INTEGER_OBJ(firstline - 1 + num_removed);
+
+      // the last line in the updated range
+      args.items[4] = INTEGER_OBJ(firstline - 1 + num_added);
+
+      textlock++;
+      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args);
+      textlock--;
+
+      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+        free_update_callbacks(cb);
+        keep = false;
+      }
+    }
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    }
+  }
+  kv_size(buf->update_callbacks) = j;
 }
 
 void buf_updates_changedtick(buf_T *buf)
@@ -192,6 +259,36 @@ void buf_updates_changedtick(buf_T *buf)
     uint64_t channel_id = kv_A(buf->update_channels, i);
     buf_updates_changedtick_single(buf, channel_id);
   }
+  size_t j = 0;
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
+    bool keep = true;
+    if (cb.on_changedtick != LUA_NOREF) {
+      Array args = ARRAY_DICT_INIT;
+      Object items[2];
+      args.size = 2;
+      args.items = items;
+
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
+
+      // next argument is b:changedtick
+      args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+
+      textlock++;
+      Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick", args);
+      textlock--;
+
+      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+        free_update_callbacks(cb);
+        keep = false;
+      }
+    }
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    }
+  }
+  kv_size(buf->update_callbacks) = j;
 }
 
 void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
@@ -208,4 +305,10 @@ void buf_updates_changedtick_single(buf_T *buf, uint64_t channel_id)
 
     // don't try and clean up dead channels here
     rpc_send_event(channel_id, "nvim_buf_changedtick_event", args);
+}
+
+static void free_update_callbacks(BufUpdateCallbacks cb)
+{
+  executor_free_luaref(cb.on_lines);
+  executor_free_luaref(cb.on_changedtick);
 }

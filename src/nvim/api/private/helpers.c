@@ -11,6 +11,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
 #include "nvim/vim.h"
@@ -1145,6 +1146,10 @@ void api_free_object(Object value)
 
     case kObjectTypeDictionary:
       api_free_dictionary(value.data.dictionary);
+      break;
+
+    case kObjectTypeLuaRef:
+      executor_free_luaref(value.data.luaref);
       break;
 
     default:
