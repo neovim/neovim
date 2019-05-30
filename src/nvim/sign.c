@@ -233,8 +233,9 @@ static void insert_sign_by_lnum_prio(
 
   // keep signs sorted by lnum, priority and id: insert new sign at
   // the proper position in the list for this lnum.
-  while (prev != NULL && prev->lnum == lnum && (prev->priority < prio
-         || ( prev->priority == prio && prev->id <= id ))) {
+  while (prev != NULL && prev->lnum == lnum
+         && (prev->priority < prio
+             || (prev->priority == prio && prev->id <= id))) {
     prev = prev->prev;
   }
   if (prev == NULL) {
