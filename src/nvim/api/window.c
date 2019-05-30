@@ -13,6 +13,7 @@
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
+#include "nvim/option.h"
 #include "nvim/window.h"
 #include "nvim/screen.h"
 #include "nvim/move.h"
@@ -474,6 +475,10 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
   } else {
     win_config_float(win, fconfig);
     win->w_pos_changed = true;
+  }
+  if (fconfig.style == kWinStyleMinimal) {
+    win_set_minimal_style(win);
+    didset_window_options(win);
   }
 }
 

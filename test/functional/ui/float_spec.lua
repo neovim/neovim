@@ -35,6 +35,10 @@ describe('floating windows', function()
     [15] = {background = Screen.colors.Grey20},
     [16] = {background = Screen.colors.Grey20, bold = true, foreground = Screen.colors.Blue1},
     [17] = {background = Screen.colors.Yellow},
+    [18] = {foreground = Screen.colors.Brown, background = Screen.colors.Grey20},
+    [19] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+    [20] = {bold = true, foreground = Screen.colors.Brown},
+    [21] = {background = Screen.colors.Gray90},
   }
 
   it('behavior', function()
@@ -182,7 +186,7 @@ describe('floating windows', function()
       end
     end)
 
-    it('defaults to nonumber and NormalFloat highlight', function()
+    it('defaults to NormalFloat highlight and inherited options', function()
       command('set number')
       command('hi NormalFloat guibg=#333333')
       feed('ix<cr>y<cr><esc>gg')
@@ -205,18 +209,18 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
         ## grid 3
-          {15:x                   }|
-          {15:y                   }|
-          {15:                    }|
+          {18:  1 }{15:x               }|
+          {18:  2 }{15:y               }|
+          {18:  3 }{15:                }|
           {16:~                   }|
         ]], float_pos={[3] = {{id = 1001}, "NW", 1, 4, 10, true}}}
       else
         screen:expect([[
           {14:  1 }^x                                   |
           {14:  2 }y                                   |
-          {14:  3 }      {15:x                   }          |
-          {0:~         }{15:y                   }{0:          }|
-          {0:~         }{15:                    }{0:          }|
+          {14:  3 }      {18:  1 }{15:x               }          |
+          {0:~         }{18:  2 }{15:y               }{0:          }|
+          {0:~         }{18:  3 }{15:                }{0:          }|
           {0:~         }{16:~                   }{0:          }|
                                                   |
         ]])
@@ -242,7 +246,7 @@ describe('floating windows', function()
           {0:~                                       }|
           {0:~                                       }|
         ## grid 3
-          {15:                    }|
+          {18:  1 }{15:                }|
           {16:~                   }|
           {16:~                   }|
           {16:~                   }|
@@ -251,10 +255,130 @@ describe('floating windows', function()
         screen:expect([[
           {14:  1 }^x                                   |
           {14:  2 }y                                   |
-          {14:  3 }      {15:                    }          |
+          {14:  3 }      {18:  1 }{15:                }          |
           {0:~         }{16:~                   }{0:          }|
           {0:~         }{16:~                   }{0:          }|
           {0:~         }{16:~                   }{0:          }|
+                                                  |
+        ]])
+      end
+    end)
+
+    it("can use 'minimal' style", function()
+      command('set number')
+      command('set signcolumn=yes')
+      command('set cursorline')
+      command('hi NormalFloat guibg=#333333')
+      feed('ix<cr>y<cr><esc>gg')
+      local win = meths.open_win(0, false, {relative='editor', width=20, height=4, row=4, col=10, style='minimal'})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          {19:  }{20:  1 }{21:^x                                 }|
+          {19:  }{14:  2 }y                                 |
+          {19:  }{14:  3 }                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {15:x                   }|
+          {15:y                   }|
+          {15:                    }|
+          {15:                    }|
+        ]], float_pos={[3] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+      else
+        screen:expect([[
+          {19:  }{20:  1 }{21:^x                                 }|
+          {19:  }{14:  2 }y                                 |
+          {19:  }{14:  3 }    {15:x                   }          |
+          {0:~         }{15:y                   }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+                                                  |
+        ]])
+      end
+
+      --  signcolumn=yes still works if there actually are signs
+      command('sign define piet1 text=𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄ texthl=Search')
+      command('sign place 1 line=1 name=piet1 buffer=1')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          {17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{20:  1 }{21:^x                                 }|
+          {19:  }{14:  2 }y                                 |
+          {19:  }{14:  3 }                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{15:x                 }|
+          {19:  }{15:y                 }|
+          {19:  }{15:                  }|
+          {15:                    }|
+        ]], float_pos={[3] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+
+      else
+        screen:expect([[
+          {17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{20:  1 }{21:^x                                 }|
+          {19:  }{14:  2 }y                                 |
+          {19:  }{14:  3 }    {17:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}{15:x                 }          |
+          {0:~         }{19:  }{15:y                 }{0:          }|
+          {0:~         }{19:  }{15:                  }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+                                                  |
+        ]])
+      end
+      command('sign unplace 1 buffer=1')
+
+      local buf = meths.create_buf(false, true)
+      meths.win_set_buf(win, buf)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          {19:  }{20:  1 }{21:^x                                 }|
+          {19:  }{14:  2 }y                                 |
+          {19:  }{14:  3 }                                  |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {15:                    }|
+          {15:                    }|
+          {15:                    }|
+          {15:                    }|
+        ]], float_pos={[3] = {{id = 1001}, "NW", 1, 4, 10, true}}}
+      else
+        screen:expect([[
+          {19:  }{20:  1 }{21:^x                                 }|
+          {19:  }{14:  2 }y                                 |
+          {19:  }{14:  3 }    {15:                    }          |
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{15:                    }{0:          }|
+          {0:~         }{15:                    }{0:          }|
                                                   |
         ]])
       end

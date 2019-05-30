@@ -1612,7 +1612,8 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
     }
   }
 
-  int attr = hl_combine_attr(wp->w_hl_attr_normal, win_hl_attr(wp, hl));
+  int attr = hl_combine_attr(wp->w_hl_attr_normal,
+                             hl ? win_hl_attr(wp, hl) : 0);
 
   if (wp->w_p_rl) {
     grid_fill(&wp->w_grid, row, endrow, wp->w_wincol, W_ENDCOL(wp) - 1 - n,

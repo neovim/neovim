@@ -141,10 +141,12 @@ int hl_get_ui_attr(int idx, int final_id, bool optional)
   HlAttrs attrs = HLATTRS_INIT;
   bool available = false;
 
-  int syn_attr = syn_id2attr(final_id);
-  if (syn_attr != 0) {
-    attrs = syn_attr2entry(syn_attr);
-    available = true;
+  if (final_id > 0) {
+    int syn_attr = syn_id2attr(final_id);
+    if (syn_attr != 0) {
+      attrs = syn_attr2entry(syn_attr);
+      available = true;
+    }
   }
 
   if (HLF_PNI <= idx && idx <= HLF_PST) {
@@ -176,15 +178,14 @@ void update_window_hl(win_T *wp, bool invalid)
 
   // determine window specific background set in 'winhighlight'
   bool float_win = wp->w_floating && !wp->w_float_config.external;
-  if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] > 0) {
+  if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] != 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(HLF_INACTIVE,
                                           wp->w_hl_ids[HLF_INACTIVE],
                                           !has_blend);
-  } else if (float_win && wp->w_hl_ids[HLF_NFLOAT] > 0) {
+  } else if (float_win && wp->w_hl_ids[HLF_NFLOAT] != 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(HLF_NFLOAT,
-    // 'cursorline'
                                           wp->w_hl_ids[HLF_NFLOAT], !has_blend);
-  } else if (wp->w_hl_id_normal > 0) {
+  } else if (wp->w_hl_id_normal != 0) {
     wp->w_hl_attr_normal = hl_get_ui_attr(-1, wp->w_hl_id_normal, !has_blend);
   } else {
     wp->w_hl_attr_normal = float_win ? HL_ATTR(HLF_NFLOAT) : 0;
@@ -199,14 +200,14 @@ void update_window_hl(win_T *wp, bool invalid)
     }
   }
 
-  if (wp != curwin) {
+  if (wp != curwin && wp->w_hl_ids[HLF_INACTIVE] == 0) {
     wp->w_hl_attr_normal = hl_combine_attr(HL_ATTR(HLF_INACTIVE),
                                            wp->w_hl_attr_normal);
   }
 
   for (int hlf = 0; hlf < (int)HLF_COUNT; hlf++) {
     int attr;
-    if (wp->w_hl_ids[hlf] > 0) {
+    if (wp->w_hl_ids[hlf] != 0) {
       attr = hl_get_ui_attr(hlf, wp->w_hl_ids[hlf], false);
     } else {
       attr = HL_ATTR(hlf);
