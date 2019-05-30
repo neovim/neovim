@@ -31,6 +31,8 @@
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
 
+#include "luv/luv.h"
+
 typedef struct {
   Error err;
   String lua_err_str;
@@ -143,6 +145,11 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // stricmp
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setfield(lstate, -2, "stricmp");
+
+  // vim.uv
+  luv_set_loop(lstate, &main_loop.uv);
+  luaopen_luv(lstate);
+  lua_setfield(lstate, -2, "uv");
 
   lua_setglobal(lstate, "vim");
   return 0;

@@ -1,0 +1,32 @@
+# - Try to find luv
+# Once done this will define
+#  LIBLUV_FOUND - System has libluv
+#  LIBLUV_INCLUDE_DIRS - The libluv include directories
+#  LIBLUV_LIBRARIES - The libraries needed to use libluv
+
+find_path(LIBLUV_INCLUDE_DIR luv/luv.h
+          PATHS ${PC_LIBLUV_INCLUDEDIR} ${PC_LIBLUV_INCLUDE_DIRS}
+          ${LIMIT_SEARCH})
+
+# If we're asked to use static linkage, add libluv.a as a preferred library name.
+if(LIBLUV_USE_STATIC)
+  list(APPEND LIBLUV_NAMES
+    "${CMAKE_STATIC_LIBRARY_PREFIX}luv${CMAKE_STATIC_LIBRARY_SUFFIX}")
+endif()
+
+list(APPEND LIBLUV_NAMES luv)
+
+find_library(LIBLUV_LIBRARY NAMES ${LIBLUV_NAMES}
+  HINTS ${PC_LIBLUV_LIBDIR} ${PC_LIBLUV_LIBRARY_DIRS}
+  ${LIMIT_SEARCH})
+
+set(LIBLUV_LIBRARIES ${LIBLUV_LIBRARY})
+set(LIBLUV_INCLUDE_DIRS ${LIBLUV_INCLUDE_DIR})
+
+include(FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set LIBLUV_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args(libluv DEFAULT_MSG
+  LIBLUV_LIBRARY LIBLUV_INCLUDE_DIR)
+
+mark_as_advanced(LIBLUV_INCLUDE_DIR LIBLUV_LIBRARY)
