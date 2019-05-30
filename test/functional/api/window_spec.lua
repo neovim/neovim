@@ -322,5 +322,20 @@ describe('API/win', function()
       meths.win_close(oldwin,true)
       eq({newwin}, meths.list_wins())
     end)
+
+    it('in cmdline-window #9767', function()
+      command('split')
+      eq(2, #meths.list_wins())
+      -- Open cmdline-window.
+      feed('q:')
+      eq(3, #meths.list_wins())
+      eq(':', funcs.getcmdwintype())
+      -- Vim: not allowed to close other windows from cmdline-window.
+      expect_err('Invalid window id$', meths.win_close, 1, true)
+      -- Close cmdline-window.
+      meths.win_close(0,true)
+      eq(2, #meths.list_wins())
+      eq('', funcs.getcmdwintype())
+    end)
   end)
 end)

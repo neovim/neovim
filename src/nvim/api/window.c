@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#include "nvim/ascii.h"
+#include "nvim/globals.h"
 #include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
@@ -17,7 +19,6 @@
 #include "nvim/window.h"
 #include "nvim/screen.h"
 #include "nvim/move.h"
-
 
 /// Gets the current buffer in a window
 ///
@@ -526,9 +527,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
   return rv;
 }
 
-/// Close a window.
-///
-/// This is equivalent to |:close| with count except that it takes a window id.
+/// Closes the window (like |:close| with a |window-ID|).
 ///
 /// @param window   Window handle
 /// @param force    Behave like `:close!` The last window of a buffer with
@@ -546,6 +545,10 @@ void nvim_win_close(Window window, Boolean force, Error *err)
 
   TryState tstate;
   try_enter(&tstate);
-  ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
+  if (cmdwin_type != 0 && win == curwin) {
+    cmdwin_result = Ctrl_C;
+  } else {
+    ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
+  }
   vim_ignored = try_leave(&tstate, err);
 }
