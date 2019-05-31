@@ -60,8 +60,8 @@ on_data({chan-id}, {data}, {name})		*on_data*
     Parameters: ~
       {chan-id}     Channel handle. |channel-id|
       {data}	    Raw data (|readfile()|-style list of strings) read from
-		    the channel. EOF is a single-item list: `['']`.
-		    First and last items may be incomplete! |channel-lines|
+		    the channel. EOF is a single-item list: `['']`. First and
+		    last items may be partial lines! |channel-lines|
       {name}	    Stream name (string) like "stdout", so the same function
 		    can handle multiple streams. Event names depend on how the
 		    channel was opened and in what mode/protocol.
@@ -90,7 +90,7 @@ on_data({chan-id}, {data}, {name})		*on_data*
     There are two ways to deal with this:
     1. To wait for the entire output, use |channel-buffered| mode.
     2. To read line-by-line, use the following code: >
-	let s:lines = ['']  " Last item may be a partial line.
+	let s:lines = ['']
 	func! s:on_event(job_id, data, event) dict
 	  let eof = (a:data == [''])
 	  " Complete the previous line.
