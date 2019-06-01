@@ -4770,8 +4770,16 @@ win_redr_status_matches (
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
         if (cmdline_row == Rows - 1) {
-          grid_del_lines(&default_grid, 0, 1, (int)Rows, 0, (int)Columns);
-          msg_scrolled++;
+          if (dy_flags & DY_MSGSEP) {
+            // with msgsep, push the messages 1 line up
+            // and draw the wildmenu on that line
+            msg_putchar('\n');
+            // reset cmdline_row since msg_putchar changes it
+            cmdline_row = Rows - 1;
+          } else {
+            grid_del_lines(&default_grid, 0, 1, (int)Rows, 0, (int)Columns);
+            msg_scrolled++;
+          }
         } else {
           cmdline_row++;
           row++;
