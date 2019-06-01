@@ -221,6 +221,31 @@ describe('startup', function()
     clear{args={'--embed'}}
     eq(2, eval('1+1'))
   end)
+
+  it('message display ends with enter #7967', function()
+    local screen
+    screen = Screen.new(60, 6)
+    screen:attach()
+    command([[let g:id = termopen('"]]..nvim_prog..
+    [[" -u NONE -i NONE --cmd "set noruler" --cmd "let g:foo = g:bar"')]])
+    screen:expect([[
+      ^                                                            |
+      Error detected while processing pre-vimrc command line:     |
+      E121: Undefined variable: g:bar                             |
+      E15: Invalid expression: g:bar                              |
+      Press ENTER or type command to continue                     |
+                                                                  |
+    ]])
+    command('call chansend(g:id, "\n")')
+    screen:expect([[
+      ^                                                            |
+      ~                                                           |
+      ~                                                           |
+      [No Name]                                                   |
+                                                                  |
+                                                                  |
+    ]])
+  end)
 end)
 
 describe('sysinit', function()
