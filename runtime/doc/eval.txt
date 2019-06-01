@@ -5272,9 +5272,9 @@ jobstart({cmd}[, {opts}])				*jobstart()*
 							*jobstart-options*
 		{opts} is a dictionary with these keys:
 		  |on_stdout|: stdout event handler (function name or |Funcref|)
-		  stdout_buffered : read stdout in |buffered| mode.
+		  stdout_buffered : read stdout in |channel-buffered| mode.
 		  |on_stderr|: stderr event handler (function name or |Funcref|)
-		  stderr_buffered : read stderr in |buffered| mode.
+		  stderr_buffered : read stderr in |channel-buffered| mode.
 		  |on_exit|  : exit event handler (function name or |Funcref|)
 		  cwd      : Working directory of the job; defaults to
 		             |current-directory|.
@@ -7681,7 +7681,7 @@ sockconnect({mode}, {address}, {opts})			 *sockconnect()*
 
 		{opts} is a dictionary with these keys:
 		  |on_data| : callback invoked when data was read from socket
-		  data_buffered : read data from socket in |buffered| mode.
+		  data_buffered : read socket data in |channel-buffered| mode.
 		  rpc     : If set, |msgpack-rpc| will be used to communicate
 			    over the socket.
 		Returns:
@@ -7850,7 +7850,7 @@ stdioopen({opts})			 *stdioopen()*
 
 		{opts} is a dictionary with these keys:
 		  |on_stdin| : callback invoked when stdin is written to.
-		  stdin_buffered : read stdin in |buffered| mode.
+		  stdin_buffered : read stdin in |channel-buffered| mode.
 		  rpc      : If set, |msgpack-rpc| will be used to communicate
 			     over stdio
 		Returns:

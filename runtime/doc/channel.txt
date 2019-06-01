@@ -43,59 +43,66 @@ functions like |chansend()| consume channel ids.
 ==============================================================================
 2. Reading and writing raw bytes			      *channel-bytes*
 
-By default, channels opened by vimscript functions will operate with raw
-bytes. Additionally, for a job channel using rpc, bytes can still be
-read over its stderr. Similarily, only bytes can be written to nvim's own stderr.
+Channels opened by Vimscript functions operate with raw bytes by default. For
+a job channel using RPC, bytes can still be read over its stderr. Similarily,
+only bytes can be written to Nvim's own stderr.
 
-			*channel-callback* *on_stdout* *on_stderr* *on_stdin* *on_data*
-Scripts can react to channel activity (received data) via callback functions
-assigned to the `on_stdout`, `on_stderr`, `on_stdin`, and `on_data` options.
-Callbacks should be fast, avoid potentially slow/expensive work.
+						*channel-callback*
+on_stdout({chan-id}, {data}, {name})		*on_stdout* 
+on_stderr({chan-id}, {data}, {name})		*on_stderr* 
+on_stdin({chan-id}, {data}, {name})		*on_stdin* 
+on_data({chan-id}, {data}, {name})		*on_data*
+    Scripts can react to channel activity (received data) via callback
+    functions assigned to the `on_stdout`, `on_stderr`, `on_stdin`, or
+    `on_data` option keys. Callbacks should be fast: avoid potentially
+    slow/expensive work.
+
+    Parameters: ~
+      {chan-id}     Channel handle. |channel-id|
+      {data}	    Raw data (|readfile()|-style list of strings) read from
+		    the channel. EOF is a single-item list: `['']`. First and
+		    last items may be partial lines! |channel-lines|
+      {name}	    Stream name (string) like "stdout", so the same function
+		    can handle multiple streams. Event names depend on how the
+		    channel was opened and in what mode/protocol.
 
 						*channel-buffered*
-By default the callback is invoked immediately as data is available; empty
-data indicates EOF (stream closed).  Alternatively, set the `stdout_buffered`,
-`stderr_buffered`, `stdin_buffered`, or `data_buffered` options to invoke the
-callback only on EOF, after all output was gathered.
+    The callback is invoked immediately as data is available, where
+    a single-item list `['']` indicates EOF (stream closed).  Alternatively
+    set the `stdout_buffered`, `stderr_buffered`, `stdin_buffered`, or
+    `data_buffered` option keys to invoke the callback only after all output
+    was gathered and the stream was closed.
 						*E5210*
-If the stream is set as buffered without assigning a callback, the data is
-saved in the options dict with the stream name as key. This requires a new
-options dict for each opened channel (|copy()|). If the stream name key
-is already set, error E5210 is raised.
-
-Channel callback functions accept these arguments:
-
-  0: |channel-id|
-  1: Raw data read from the channel, formatted as a |readfile()|-style
-     list. If EOF occured, a single empty string `['']` will be passed in.
-     Note that the items in this list do not directly correspond to actual
-     lines in the output. See |channel-lines|
-  2: Stream name as a string, like `"stdout"`. This is to allow multiple
-  stream handlers to be implemented by the same function. The available
-  events depend on how the channel was opened and in what mode/protocol.
+    If a buffering mode is used without a callback, the data is saved in the
+    stream {name} key of the options dict. It is an error if the key exists.
 
 							      *channel-lines*
-  Note:
-	stream event handlers may receive partial (incomplete) lines. For a given
-	invocation of on_stdout etc, `a:data` is not guaranteed to end
-	with a newline.
-	  - `abcdefg` may arrive as `['abc']`, `['defg']`.
-	  - `abc\nefg` may arrive as `['abc', '']`, `['efg']` or `['abc']`,
-	    `['','efg']`, or even `['ab']`, `['c','efg']`.
-	
-	If you only are interested in complete output when the process exits,
-	use buffered mode. Otherwise, an easy way to deal with this:
-	initialize a list as `['']`, then append to it as follows: >
-	  let s:chunks = ['']
-	  func! s:on_event(job_id, data, event) dict
-	    let s:chunks[-1] .= a:data[0]
-	    call extend(s:chunks, a:data[1:])
-	  endf
+    Stream event handlers receive data as it becomes available from the OS,
+    thus the first and last items in the {data} list may be partial lines.
+    Empty string completes the previous partial line. Examples (not including
+    the final `['']` emitted at EOF):
+      - `foobar` may arrive as `['fo'], ['obar']` 
+      - `foo\nbar` may arrive as
+	   `['foo','bar']`
+	or `['foo',''], ['bar']`
+	or `['foo'], ['','bar']`
+	or `['fo'], ['o','bar']`
+    There are two ways to deal with this:
+    1. To wait for the entire output, use |channel-buffered| mode.
+    2. To read line-by-line, use the following code: >
+	let s:lines = ['']
+	func! s:on_event(job_id, data, event) dict
+	  let eof = (a:data == [''])
+	  " Complete the previous line.
+	  let s:lines[-1] .= a:data[0]
+	  " Append (last item may be a partial line, until EOF).
+	  call extend(s:lines, a:data[1:])
+	endf
 <
 
-Additionally, if the callbacks are Dictionary functions, |self| can be used to
-refer to the options dictionary containing the callbacks. |Partial|s can also be
-used as callbacks.
+If the callback functions are |Dictionary-function|s, |self| refers to the
+options dictionary containing the callbacks. |Partial|s can also be used as
+callbacks.
 
 Data can be sent to the channel using the |chansend()| function. Here is a
 simple example, echoing some data through a cat-process:
