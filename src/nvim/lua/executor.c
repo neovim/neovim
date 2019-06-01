@@ -192,11 +192,6 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_setglobal(lstate, "vim");
 
-  // expose main_loop's UV loop for luv
-  lua_pushstring(lstate, "uv_loop");
-  lua_pushlightuserdata(lstate, &main_loop.uv);
-  lua_rawset(lstate, LUA_REGISTRYINDEX);
-
   return 0;
 }
 
