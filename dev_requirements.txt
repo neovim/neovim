@@ -1,2 +1,2 @@
 flake8==3.7.7
-vim-vint==0.3.19
+vim-vint==0.3.21

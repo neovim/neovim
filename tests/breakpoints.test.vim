@@ -162,9 +162,9 @@ function! Test_Use_Mappings_HUMAN()
   let cur_tabnr = tabpagenr()
   call assert_equal( 5, len( gettabinfo( cur_tabnr )[ 0 ].windows ) )
 
-  call WaitForAssert( {-> 
+  call WaitForAssert( {->
         \ assert_equal( 'simple.cpp', bufname( '%' ), 'Current buffer' )
-        \ } )
+        \ }, 60000 )
   call assert_equal( 15, line( '.' ), 'Current line' )
   call assert_equal( 1, col( '.' ), 'Current column' )
 
