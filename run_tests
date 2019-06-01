@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 RUN_VIM="vim --clean --not-a-term"
-RUN_TEST="${RUN_VIM} -S run_test.vim"
+RUN_TEST="${RUN_VIM} -S lib/run_test.vim"
 
 if [ -z "$VIMSPECTOR_MIMODE" ]; then
   if which -s lldb; then

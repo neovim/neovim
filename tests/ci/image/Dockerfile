@@ -16,15 +16,17 @@ RUN apt-get update && \
 RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime && \
   dpkg-reconfigure --frontend noninteractive tzdata
 
+ARG VIM_VERSION=v8.1.1270
+
 RUN mkdir -p $HOME/vim && \
     cd $HOME/vim && \
     git clone https://github.com/vim/vim && \
     cd vim && \
-    git checkout v8.1.1302 && \
+    git checkout ${VIM_VERSION} && \
     ./configure --with-features=huge \
                 --enable-python3interp \
                 --enable-terminal \
                 --enable-multibyte \
                 --enable-fail-if-missing && \
-    make -j 8 install
+    make -j 4 install
 
