@@ -23,7 +23,6 @@ except ImportError:
 import argparse
 import contextlib
 import os
-import collections
 import string
 import zipfile
 import shutil
@@ -49,7 +48,7 @@ GADGETS = {
     },
     'do': lambda name, root: InstallCppTools( name, root ),
     'all': {
-      'version': '0.22.1',
+      'version': '0.23.1',
     },
     'linux': {
       'file_name': 'cpptools-linux.vsix',
@@ -58,7 +57,7 @@ GADGETS = {
     'macos': {
       'file_name': 'cpptools-osx.vsix',
       'checksum':
-        'fa9d37d5ea74e86043051cbc37660f9c187be828fbde56d8eb75c48d36a3c13b',
+        '431692395ba243ea20428e083d5df3201a0dbda31a66eab7729da0f377def5fd',
     },
     'windows': {
       'file_name': 'cpptools-win32.vsix',
@@ -84,10 +83,10 @@ GADGETS = {
                '${version}/${file_name}' ),
     },
     'all': {
-      'version': '2019.3.6352',
+      'version': '2019.5.17059',
       'file_name': 'ms-python-release.vsix',
       'checksum':
-        'f7e5552db3783d6b45ba4b84005d7b42a372033ca84c0fce82eb70e7372336c6',
+        'db31c9d835318209f4b26948db8b7c68b45ca4c341f6c17bb8e62dfc32f0b78d',
     },
     'adapters': {
       "vscode-python": {
@@ -130,8 +129,8 @@ GADGETS = {
                'download/${version}/${file_name}' ),
     },
     'all': {
-      'file_name': 'bash-debug-0.3.3.vsix',
-      'version': 'untagged-3c529a47de44a70c9c76',
+      'file_name': 'bash-debug-0.3.5.vsix',
+      'version': 'v0.3.5',
       'checksum': '',
     }
   }
