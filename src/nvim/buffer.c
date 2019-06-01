@@ -5256,91 +5256,27 @@ bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
   return false;
 }
 
-static int sign_compare(const void *a1, const void *a2)
-{
-    const signlist_T *s1 = *(const signlist_T **)a1;
-    const signlist_T *s2 = *(const signlist_T **)a2;
-
-    // Sort by line number, priority and id
-
-    if (s1->lnum > s2->lnum) {
-        return 1;
-    }
-    if (s1->lnum < s2->lnum) {
-        return -1;
-    }
-    if (s1->priority > s2->priority) {
-        return -1;
-    }
-    if (s1->priority < s2->priority) {
-        return 1;
-    }
-    if (s1->id > s2->id) {
-        return -1;
-    }
-    if (s1->id < s2->id) {
-        return 1;
-    }
-
-    return 0;
-}
-
 int buf_signcols(buf_T *buf)
 {
     if (buf->b_signcols_max == -1) {
         signlist_T *sign;  // a sign in the signlist
-        signlist_T **signs_array;
-        signlist_T **prev_sign;
-        int nr_signs = 0, i = 0, same;
-
-        // Count the number of signs
-        for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
-            nr_signs++;
-        }
-
-        // Make an array of all the signs
-        signs_array = xcalloc((size_t)nr_signs, sizeof(*sign));
-        for (sign = buf->b_signlist; sign != NULL; sign = sign->next) {
-            signs_array[i] = sign;
-            i++;
-        }
-
-        // Sort the array
-        qsort(signs_array, (size_t)nr_signs, sizeof(signlist_T *),
-              sign_compare);
-
-        // Find the maximum amount of signs existing in a single line
         buf->b_signcols_max = 0;
+        int linesum = 0;
+        linenr_T curline = 0;
 
-        same = 1;
-        for (i = 1; i < nr_signs; i++) {
-            if (signs_array[i - 1]->lnum != signs_array[i]->lnum) {
-                if (buf->b_signcols_max < same) {
-                    buf->b_signcols_max = same;
-                }
-                same = 1;
-            } else {
-                same++;
+        FOR_ALL_SIGNS_IN_BUF(buf, sign) {
+          if (sign->lnum > curline) {
+            if (linesum > buf->b_signcols_max) {
+              buf->b_signcols_max = linesum;
             }
+            curline = sign->lnum;
+            linesum = 0;
+          }
+          linesum++;
         }
-
-        if (nr_signs > 0 && buf->b_signcols_max < same) {
-            buf->b_signcols_max = same;
+        if (linesum > buf->b_signcols_max) {
+          buf->b_signcols_max = linesum;
         }
-
-        // Recreate the linked list with the sorted order of the array
-        buf->b_signlist = NULL;
-        prev_sign = &buf->b_signlist;
-
-        for (i = 0; i < nr_signs; i++) {
-            sign = signs_array[i];
-            sign->next = NULL;
-            *prev_sign = sign;
-
-            prev_sign = &sign->next;
-        }
-
-        xfree(signs_array);
 
         // Check if we need to redraw
         if (buf->b_signcols_max != buf->b_signcols) {
