@@ -38,7 +38,7 @@ func Test_writefile_fails_conversion()
   endif
   " Without a backup file the write won't happen if there is a conversion
   " error.
-  set nobackup nowritebackup
+  set nobackup nowritebackup backupdir=. backupskip=
   new
   let contents = ["line one", "line two"]
   call writefile(contents, 'Xfile')
@@ -49,7 +49,7 @@ func Test_writefile_fails_conversion()
 
   call delete('Xfile')
   bwipe!
-  set backup& writebackup&
+  set backup& writebackup& backupdir&vim backupskip&vim
 endfunc
 
 func Test_writefile_fails_conversion2()
@@ -58,7 +58,7 @@ func Test_writefile_fails_conversion2()
   endif
   " With a backup file the write happens even if there is a conversion error,
   " but then the backup file must remain
-  set nobackup writebackup
+  set nobackup writebackup backupdir=. backupskip=
   let contents = ["line one", "line two"]
   call writefile(contents, 'Xfile_conversion_err')
   edit Xfile_conversion_err
@@ -71,6 +71,7 @@ func Test_writefile_fails_conversion2()
   call delete('Xfile_conversion_err')
   call delete('Xfile_conversion_err~')
   bwipe!
+  set backup& writebackup& backupdir&vim backupskip&vim
 endfunc
 
 func SetFlag(timer)

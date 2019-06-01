@@ -1422,8 +1422,8 @@ int vgetc(void)
 
       }
 
-      /* a keypad or special function key was not mapped, use it like
-       * its ASCII equivalent */
+      // a keypad or special function key was not mapped, use it like
+      // its ASCII equivalent
       switch (c) {
         case K_KPLUS:       c = '+'; break;
         case K_KMINUS:      c = '-'; break;
@@ -1475,25 +1475,25 @@ int vgetc(void)
         case K_XRIGHT:      c = K_RIGHT; break;
       }
 
-      /* For a multi-byte character get all the bytes and return the
-       * converted character.
-       * Note: This will loop until enough bytes are received!
-       */
-      if (has_mbyte && (n = MB_BYTE2LEN_CHECK(c)) > 1) {
+      // For a multi-byte character get all the bytes and return the
+      // converted character.
+      // Note: This will loop until enough bytes are received!
+      if ((n = MB_BYTE2LEN_CHECK(c)) > 1) {
         no_mapping++;
         buf[0] = (char_u)c;
         for (i = 1; i < n; i++) {
           buf[i] = (char_u)vgetorpeek(true);
           if (buf[i] == K_SPECIAL
               ) {
-            /* Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
-             * which represents a K_SPECIAL (0x80),
-             * or a CSI - KS_EXTRA - KE_CSI sequence, which represents
-             * a CSI (0x9B),
-             * of a K_SPECIAL - KS_EXTRA - KE_CSI, which is CSI too. */
-            c = vgetorpeek(TRUE);
-            if (vgetorpeek(TRUE) == (int)KE_CSI && c == KS_EXTRA)
+            // Must be a K_SPECIAL - KS_SPECIAL - KE_FILLER sequence,
+            // which represents a K_SPECIAL (0x80),
+            // or a CSI - KS_EXTRA - KE_CSI sequence, which represents
+            // a CSI (0x9B),
+            // of a K_SPECIAL - KS_EXTRA - KE_CSI, which is CSI too.
+            c = vgetorpeek(true);
+            if (vgetorpeek(true) == (int)KE_CSI && c == KS_EXTRA) {
               buf[i] = CSI;
+            }
           }
         }
         no_mapping--;
