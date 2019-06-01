@@ -2879,8 +2879,17 @@ buf_write (
           }
 #endif
 
+          char_u *fname_res = fname; // De-symlinked filename
+#ifdef HAVE_READLINK
+          // In the case where the file is a symlink, we want to copy the link
+          // target instead of the link itself. #10101
+          if (resolve_symlink(fname, IObuff) == OK) {
+            fname_res = IObuff;
+          }
+#endif
+
           // copy the file
-          if (os_copy((char *)fname, (char *)backup, UV_FS_COPYFILE_FICLONE)
+          if (os_copy((char *)fname_res, (char *)backup, UV_FS_COPYFILE_FICLONE)
               != 0) {
             SET_ERRMSG(_("E506: Can't write to backup file "
                          "(add ! to override)"));
