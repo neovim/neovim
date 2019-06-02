@@ -927,8 +927,8 @@ void ex_messages(void *const eap_p)
 void msg_end_prompt(void)
 {
   msg_ext_clear_later();
-  need_wait_return = FALSE;
-  emsg_on_display = FALSE;
+  need_wait_return = false;
+  emsg_on_display = false;
   cmdline_row = msg_row;
   msg_col = 0;
   msg_clr_eos();
