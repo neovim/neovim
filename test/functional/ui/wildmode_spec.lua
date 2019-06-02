@@ -200,9 +200,9 @@ describe("'wildmenu'", function()
     screen:expect([[
        [No Name]               |
                                |
+                               |
       :set wildm               |
       wildmenu  wildmode       |
-      :set wildm               |
       wildmenu  wildmode       |
       :set wildmenu^            |
     ]])
@@ -210,6 +210,41 @@ describe("'wildmenu'", function()
     screen:expect([[
        [No Name]               |
       ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+                               |
+    ]])
+  end)
+
+  it('wildmode=list,full and display-=msgsep interact correctly', function()
+    command('set display-=msgsep')
+    command('set wildmenu wildmode=list,full')
+    feed(':set wildm<tab>')
+    screen:expect([[
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm^               |
+    ]])
+    feed('<tab>') -- trigger wildmode full
+    screen:expect([[
+      ~                        |
+      ~                        |
+      ~                        |
+      :set wildm               |
+      wildmenu  wildmode       |
+      wildmenu  wildmode       |
+      :set wildmenu^            |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
       ~                        |
       ~                        |
       ~                        |
