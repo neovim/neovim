@@ -116,7 +116,7 @@ static void read_cb(uv_stream_t *uvstream, ssize_t cnt, const uv_buf_t *buf)
       // The TTY driver might signal EOF without closing the stream
       invoke_read_cb(stream, 0, true);
     } else {
-      DLOG("Closing Stream (%p): %s (%s)", stream,
+      DLOG("closing Stream (%p): %s (%s)", (void *)stream,
            uv_err_name((int)cnt), os_strerror((int)cnt));
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true

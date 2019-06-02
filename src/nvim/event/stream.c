@@ -92,7 +92,7 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(!stream->closed);
-  DLOG("closing Stream: %p", stream);
+  DLOG("closing Stream: %p", (void *)stream);
   stream->closed = true;
   stream->close_cb = on_stream_close;
   stream->close_cb_data = data;
