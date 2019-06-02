@@ -4773,9 +4773,7 @@ win_redr_status_matches (
           if (dy_flags & DY_MSGSEP) {
             // with msgsep, push the messages 1 line up
             // and draw the wildmenu on that line
-            msg_putchar('\n');
-            // reset cmdline_row since msg_putchar changes it
-            cmdline_row = Rows - 1;
+            msg_scroll_up();
           } else {
             grid_del_lines(&default_grid, 0, 1, (int)Rows, 0, (int)Columns);
             msg_scrolled++;

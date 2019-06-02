@@ -197,6 +197,15 @@ describe("'wildmenu'", function()
       :set wildm^               |
     ]])
     feed('<tab>') -- trigger wildmode full
+    screen:expect([[
+       [No Name]               |
+                               |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildmenu^            |
+    ]])
     feed('<Esc>')
     screen:expect([[
        [No Name]               |

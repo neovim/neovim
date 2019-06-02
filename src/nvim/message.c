@@ -2053,7 +2053,7 @@ int msg_scrollsize(void)
 /*
  * Scroll the screen up one line for displaying the next message line.
  */
-static void msg_scroll_up(void)
+void msg_scroll_up(void)
 {
   if (!msg_did_scroll) {
     ui_call_win_scroll_over_start();

@@ -681,7 +681,7 @@ describe('ui/ext_messages', function()
   end)
 end)
 
-describe('ui/ext messages', function()
+describe('ui/ext_messages', function()
   local screen
   before_each(function()
     clear()
@@ -718,7 +718,7 @@ describe('ui/ext messages', function()
   end)
 end)
 
-describe('ui/ext messages', function()
+describe('ui/builtin messages', function()
   local screen
   before_each(function()
     clear()
