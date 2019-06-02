@@ -4771,6 +4771,7 @@ win_redr_status_matches (
          * no room, scroll the screen one line up. */
         if (cmdline_row == Rows - 1) {
           msg_scroll_up();
+          msg_scrolled++;
         } else {
           cmdline_row++;
           row++;
