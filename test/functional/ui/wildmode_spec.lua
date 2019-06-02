@@ -167,22 +167,13 @@ describe("'wildmenu'", function()
     -- system-dependent.
     expect_stay_unchanged{any='!  #  &  <  =  >  @  >   |\n:!^'}
   end)
-end)
 
-describe("'wildmenu'", function()
-  local screen
-  before_each(function()
-    clear()
-    -- screen needs to be more than 5 rows
-    -- otherwise the tabline is covered and will be redrawn
+  it('wildmode=list,full and display+=msgsep interaction #10092', function()
+    -- Need more than 5 rows, else tabline is covered and will be redrawn.
+    screen:detach()
     screen = Screen.new(25, 7)
     screen:attach()
-  end)
-  after_each(function()
-    screen:detach()
-  end)
 
-  it('wildmode=list,full and display+=msgsep interact correctly #10092', function()
     command('set display+=msgsep')
     command('set wildmenu wildmode=list,full')
     command('set showtabline=2')
@@ -218,7 +209,12 @@ describe("'wildmenu'", function()
     ]])
   end)
 
-  it('wildmode=list,full and display-=msgsep interact correctly', function()
+  it('wildmode=list,full and display-=msgsep interaction', function()
+    -- Need more than 5 rows, else tabline is covered and will be redrawn.
+    screen:detach()
+    screen = Screen.new(25, 7)
+    screen:attach()
+
     command('set display-=msgsep')
     command('set wildmenu wildmode=list,full')
     feed(':set wildm<tab>')
