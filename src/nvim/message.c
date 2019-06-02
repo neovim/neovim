@@ -2554,32 +2554,31 @@ static int do_more_prompt(int typed_char)
   return retval;
 }
 
-#if defined(USE_MCH_ERRMSG)
+#if defined(USE_MCH_ERRMSG) || defined(WIN32)
 
-#ifdef mch_errmsg
-# undef mch_errmsg
-#endif
-#ifdef mch_msg
-# undef mch_msg
-#endif
+# ifdef mch_errmsg
+#  undef mch_errmsg
+# endif
+# ifdef mch_msg
+#  undef mch_msg
+# endif
 
-/*
- * Give an error message.  To be used when the screen hasn't been initialized
- * yet.  When stderr can't be used, collect error messages until the GUI has
- * started and they can be displayed in a message box.
- */
+# if defined(USE_MCH_ERRMSG)
+// Give an error message.  To be used when the screen hasn't been initialized
+// yet.  When stderr can't be used, collect error messages until the GUI has
+// started and they can be displayed in a message box.
 void mch_errmsg(const char *const str)
   FUNC_ATTR_NONNULL_ALL
 {
-#ifdef UNIX
-  /* On Unix use stderr if it's a tty.
-   * When not going to start the GUI also use stderr.
-   * On Mac, when started from Finder, stderr is the console. */
+#  ifdef UNIX
+  // On Unix use stderr if it's a tty.
+  // When not going to start the GUI also use stderr.
+  // On Mac, when started from Finder, stderr is the console.
   if (os_isatty(2)) {
     fprintf(stderr, "%s", str);
     return;
   }
-#endif
+#  endif
 
   /* avoid a delay for a message that isn't there */
   emsg_on_display = FALSE;
@@ -2591,8 +2590,8 @@ void mch_errmsg(const char *const str)
   }
   ga_grow(&error_ga, len);
   memmove(error_ga.ga_data + error_ga.ga_len, str, len);
-#ifdef UNIX
-  /* remove CR characters, they are displayed */
+#  ifdef UNIX
+  // remove CR characters, they are displayed/
   {
     char_u      *p;
 
@@ -2604,31 +2603,54 @@ void mch_errmsg(const char *const str)
       *p = ' ';
     }
   }
-#endif
-  --len;              /* don't count the NUL at the end */
+#  endif
+  len--;  // don't count the NUL at the end
   error_ga.ga_len += len;
 }
 
-/*
- * Give a message.  To be used when the screen hasn't been initialized yet.
- * When there is no tty, collect messages until the GUI has started and they
- * can be displayed in a message box.
- */
+// Give a message.  To be used when the screen hasn't been initialized yet.
+// When there is no tty, collect messages until the GUI has started and they
+// can be displayed in a message box.
 void mch_msg(char *str)
 {
-#ifdef UNIX
-  /* On Unix use stdout if we have a tty.  This allows "vim -h | more" and
-   * uses mch_errmsg() when started from the desktop.
-   * When not going to start the GUI also use stdout.
-   * On Mac, when started from Finder, stderr is the console. */
+#  ifdef UNIX
+  // On Unix use stdout if we have a tty.  This allows "vim -h | more" and
+  // uses mch_errmsg() when started from the desktop.
+  // When not going to start the GUI also use stdout.
+  // On Mac, when started from Finder, stderr is the console.
   if (os_isatty(2)) {
     printf("%s", str);
     return;
   }
-# endif
+#  endif
   mch_errmsg(str);
 }
-#endif /* USE_MCH_ERRMSG */
+# else
+void mch_errmsg(char *str)
+{
+  wchar_t *utf16str;
+  int conversion_result = utf8_to_utf16((str), &utf16str);
+  if (conversion_result != 0) {
+    EMSG2("utf8_to_utf16 failed: %d", conversion_result);
+  } else {
+    fwprintf(stderr, L"%ls", utf16str);
+    xfree(utf16str);
+  }
+}
+
+void mch_msg(char *str)
+{
+  wchar_t *utf16str;
+  int conversion_result = utf8_to_utf16((str), &utf16str);
+  if (conversion_result != 0) {
+    EMSG2("utf8_to_utf16 failed: %d", conversion_result);
+  } else {
+    wprintf(L"%ls", utf16str);
+    xfree(utf16str);
+  }
+}
+# endif  // USE_MCH_ERRMSG
+#endif  // USE_MCH_ERRMSG && WIN32
 
 /*
  * Put a character on the screen at the current message position and advance
