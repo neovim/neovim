@@ -248,6 +248,42 @@ describe("'wildmenu'", function()
                                |
     ]])
   end)
+
+  it('multiple <C-D> renders correctly', function()
+    command('set laststatus=2')
+    command('set display+=msgsep')
+    feed(':set wildm')
+    feed('<c-d>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm^               |
+    ]])
+    feed('<c-d>')
+    screen:expect([[
+                               |
+                               |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm^               |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      [No Name]                |
+                               |
+    ]])
+  end)
 end)
 
 describe('command line completion', function()
