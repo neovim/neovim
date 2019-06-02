@@ -681,6 +681,43 @@ describe('ui/ext_messages', function()
   end)
 end)
 
+describe('ui/ext_messages', function()
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(25, 7)
+    screen:attach({rgb=true, ext_messages=true})
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {bold = true, reverse = true},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+  end)
+
+  it('wildmode=list', function()
+    command('set wildmenu wildmode=list')
+    feed(':set wildm<tab>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={{
+        content = {{'wildmenu  wildmode'}},
+        kind = '',
+     }},
+    cmdline={{
+      firstc = ':',
+      content = {{ 'set wildm' }},
+      pos = 9,
+    }}}
+  end)
+end)
+
 describe('ui/builtin messages', function()
   local screen
   before_each(function()

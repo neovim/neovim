@@ -4765,12 +4765,12 @@ win_redr_status_matches (
 
   row = cmdline_row - 1;
   if (row >= 0) {
-    if (wild_menu_showing == 0) {
+    if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
       if (msg_scrolled > 0) {
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
         if (cmdline_row == Rows - 1) {
-          grid_del_lines(&default_grid, 0, 1, (int)Rows, 0, (int)Columns);
+          msg_scroll_up();
           msg_scrolled++;
         } else {
           cmdline_row++;
