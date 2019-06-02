@@ -4765,7 +4765,7 @@ win_redr_status_matches (
 
   row = cmdline_row - 1;
   if (row >= 0) {
-    if (wild_menu_showing == 0) {
+    if (wild_menu_showing == 0 || wild_menu_showing == WM_LIST) {
       if (msg_scrolled > 0) {
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
