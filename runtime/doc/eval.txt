@@ -610,10 +610,10 @@ Expression syntax summary, from least to most significant:
 	expr2 ? expr1 : expr1	if-then-else
 
 |expr2|	expr3
-	expr3 || expr3 ..	logical OR
+	expr3 || expr3 ...	logical OR
 
 |expr3|	expr4
-	expr4 && expr4 ..	logical AND
+	expr4 && expr4 ...	logical AND
 
 |expr4|	expr5
 	expr5 == expr5		equal
@@ -634,14 +634,15 @@ Expression syntax summary, from least to most significant:
 	expr5 isnot expr5	different |List| instance
 
 |expr5|	expr6
-	expr6 +	 expr6 ..	number addition or list concatenation
-	expr6 -	 expr6 ..	number subtraction
-	expr6 .	 expr6 ..	string concatenation
+	expr6 +	 expr6 ...	number addition, list or blob concatenation
+	expr6 -	 expr6 ...	number subtraction
+	expr6 .	 expr6 ...	string concatenation
+	expr6 .. expr6 ...	string concatenation
 
 |expr6|	expr7
-	expr7 *	 expr7 ..	number multiplication
-	expr7 /	 expr7 ..	number division
-	expr7 %	 expr7 ..	number modulo
+	expr7 *	 expr7 ...	number multiplication
+	expr7 /	 expr7 ...	number division
+	expr7 %	 expr7 ...	number modulo
 
 |expr7|	expr8
 	! expr7			logical NOT
@@ -670,7 +671,7 @@ Expression syntax summary, from least to most significant:
 	{args -> expr1}		lambda expression
 
 
-".." indicates that the operations in this level can be concatenated.
+"..." indicates that the operations in this level can be concatenated.
 Example: >
 	&nu || &list && &shell == "csh"
 
@@ -707,7 +708,9 @@ use in a variable such as "a:1".
 expr2 and expr3						*expr2* *expr3*
 ---------------
 
-					*expr-barbar* *expr-&&*
+expr3 || expr3 ..	logical OR		*expr-barbar*
+expr4 && expr4 ..	logical AND		*expr-&&*
+
 The "||" and "&&" operators take one argument on each side.  The arguments
 are (converted to) Numbers.  The result is:
 
@@ -847,18 +850,22 @@ can be matched like an ordinary character.  Examples:
 
 expr5 and expr6						*expr5* *expr6*
 ---------------
-expr6 +	 expr6 ..	Number addition or |List| concatenation	*expr-+*
-expr6 -	 expr6 ..	Number subtraction			*expr--*
-expr6 .	 expr6 ..	String concatenation			*expr-.*
+expr6 + expr6   Number addition, |List| or |Blob| concatenation	*expr-+*
+expr6 - expr6   Number subtraction				*expr--*
+expr6 . expr6   String concatenation				*expr-.*
+expr6 .. expr6  String concatenation				*expr-..*
 
 For |Lists| only "+" is possible and then both expr6 must be a list.  The
 result is a new list with the two lists Concatenated.
 
-expr7 *	 expr7 ..	Number multiplication			*expr-star*
-expr7 /	 expr7 ..	Number division				*expr-/*
-expr7 %	 expr7 ..	Number modulo				*expr-%*
+For String concatenation ".." is preferred, since "." is ambiguous, it is also
+used for |Dict| member access and floating point numbers.
 
-For all, except ".", Strings are converted to Numbers.
+expr7 * expr7  Number multiplication				*expr-star*
+expr7 / expr7  Number division					*expr-/*
+expr7 % expr7  Number modulo					*expr-%*
+
+For all, except "." and "..", Strings are converted to Numbers.
 For bitwise operators see |and()|, |or()| and |xor()|.
 
 Note the difference between "+" and ".":
@@ -1049,11 +1056,6 @@ These are INVALID:
 	3.		empty {M}
 	1e40		missing .{M}
 
-							*float-pi* *float-e*
-A few useful values to copy&paste: >
-	:let pi = 3.14159265359
-	:let e  = 2.71828182846
-
 Rationale:
 Before floating point was introduced, the text "123.456" was interpreted as
 the two numbers "123" and "456", both converted to a string and concatenated,
@@ -1062,6 +1064,15 @@ could not find it intentionally being used in Vim scripts, this backwards
 incompatibility was accepted in favor of being able to use the normal notation
 for floating point numbers.
 
+							*float-pi* *float-e*
+A few useful values to copy&paste: >
+	:let pi = 3.14159265359
+	:let e  = 2.71828182846
+Or, if you don't want to write them in as floating-point literals, you can
+also use functions, like the following: >
+	:let pi = acos(-1.0)
+	:let e  = exp(1.0)
+<
 						*floating-point-precision*
 The precision and range of floating points numbers depends on what "double"
 means in the library Vim was compiled with.  There is no way to change this at
@@ -1101,8 +1112,10 @@ A string constant accepts these special characters:
 \\	backslash
 \"	double quote
 \<xxx>	Special key named "xxx".  e.g. "\<C-W>" for CTRL-W.  This is for use
-	in mappings, the 0x80 byte is escaped.  Don't use <Char-xxxx> to get a
-	utf-8 character, use \uxxxx as mentioned above.
+	in mappings, the 0x80 byte is escaped.
+	To use the double quote character it must be escaped: "<M-\">".
+	Don't use <Char-xxxx> to get a utf-8 character, use \uxxxx as
+	mentioned above.
 
 Note that "\xff" is stored as the byte 255, which may be invalid in some
 encodings.  Use "\u00ff" to store character 255 correctly as UTF-8.
@@ -1211,8 +1224,8 @@ The arguments are optional.  Example: >
 							*closure*
 Lambda expressions can access outer scope variables and arguments.  This is
 often called a closure.  Example where "i" and "a:arg" are used in a lambda
-while they exist in the function scope.  They remain valid even after the
-function returns: >
+while they already exist in the function scope.  They remain valid even after
+the function returns: >
 	:function Foo(arg)
 	:  let i = 3
 	:  return {x -> x + i - a:arg}
@@ -1220,8 +1233,11 @@ function returns: >
 	:let Bar = Foo(4)
 	:echo Bar(6)
 <	5
-See also |:func-closure|. Lambda and closure support can be checked with: >
-        if has('lambda')
+Note that the variables must exist in the outer scope before the lamba is
+defined for this to work.  See also |:func-closure|.
+
+Lambda and closure support can be checked with: >
+	if has('lambda')
 
 Examples for using a lambda expression with |sort()|, |map()| and |filter()|: >
 	:echo map([1, 2, 3], {idx, val -> val + 1})
@@ -9459,9 +9475,13 @@ This does NOT work: >
 			When the selected range of items is partly past the
 			end of the list, items will be added.
 
-					*:let+=* *:let-=* *:let.=* *E734*
+                                            *:let+=* *:let-=* *:letstar=*
+                                            *:let/=* *:let%=* *:let.=* *E734*
 :let {var} += {expr1}	Like ":let {var} = {var} + {expr1}".
 :let {var} -= {expr1}	Like ":let {var} = {var} - {expr1}".
+:let {var} *= {expr1}	Like ":let {var} = {var} * {expr1}".
+:let {var} /= {expr1}	Like ":let {var} = {var} / {expr1}".
+:let {var} %= {expr1}	Like ":let {var} = {var} % {expr1}".
 :let {var} .= {expr1}	Like ":let {var} = {var} . {expr1}".
 			These fail if {var} was not set yet and when the type
 			of {var} and {expr1} don't fit the operator.

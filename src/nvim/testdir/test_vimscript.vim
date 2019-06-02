@@ -1294,6 +1294,84 @@ func Test_script_local_func()
   enew! | close
 endfunc
 
+func Test_compound_assignment_operators()
+    " Test for number
+    let x = 1
+    let x += 10
+    call assert_equal(11, x)
+    let x -= 5
+    call assert_equal(6, x)
+    let x *= 4
+    call assert_equal(24, x)
+    let x /= 3
+    call assert_equal(8, x)
+    let x %= 3
+    call assert_equal(2, x)
+    let x .= 'n'
+    call assert_equal('2n', x)
+
+    " Test for string
+    let x = 'str'
+    let x .= 'ing'
+    call assert_equal('string', x)
+    let x += 1
+    call assert_equal(1, x)
+    let x -= 1.5
+    call assert_equal(-0.5, x)
+
+    if has('float')
+        " Test for float
+        let x = 0.5
+        let x += 4.5
+        call assert_equal(5.0, x)
+        let x -= 1.5
+        call assert_equal(3.5, x)
+        let x *= 3.0
+        call assert_equal(10.5, x)
+        let x /= 2.5
+        call assert_equal(4.2, x)
+        call assert_fails('let x %= 0.5', 'E734')
+        call assert_fails('let x .= "f"', 'E734')
+    endif
+
+    " Test for environment variable
+    let $FOO = 1
+    call assert_fails('let $FOO += 1', 'E734')
+    call assert_fails('let $FOO -= 1', 'E734')
+    call assert_fails('let $FOO *= 1', 'E734')
+    call assert_fails('let $FOO /= 1', 'E734')
+    call assert_fails('let $FOO %= 1', 'E734')
+    let $FOO .= 's'
+    call assert_equal('1s', $FOO)
+    unlet $FOO
+
+    " Test for option variable (type: number)
+    let &scrolljump = 1
+    let &scrolljump += 5
+    call assert_equal(6, &scrolljump)
+    let &scrolljump -= 2
+    call assert_equal(4, &scrolljump)
+    let &scrolljump *= 3
+    call assert_equal(12, &scrolljump)
+    let &scrolljump /= 2
+    call assert_equal(6, &scrolljump)
+    let &scrolljump %= 5
+    call assert_equal(1, &scrolljump)
+    call assert_fails('let &scrolljump .= "j"', 'E734')
+    set scrolljump&vim
+
+    " Test for register
+    let @/ = 1
+    call assert_fails('let @/ += 1', 'E734')
+    call assert_fails('let @/ -= 1', 'E734')
+    call assert_fails('let @/ *= 1', 'E734')
+    call assert_fails('let @/ /= 1', 'E734')
+    call assert_fails('let @/ %= 1', 'E734')
+    let @/ .= 's'
+    call assert_equal('1s', @/)
+    let @/ = ''
+endfunc
+
 "-------------------------------------------------------------------------------
 " Modelines								    {{{1
 " vim: ts=8 sw=4 tw=80 fdm=marker
