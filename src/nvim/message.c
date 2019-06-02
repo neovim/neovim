@@ -926,8 +926,9 @@ void ex_messages(void *const eap_p)
  */
 void msg_end_prompt(void)
 {
-  need_wait_return = FALSE;
-  emsg_on_display = FALSE;
+  msg_ext_clear_later();
+  need_wait_return = false;
+  emsg_on_display = false;
   cmdline_row = msg_row;
   msg_col = 0;
   msg_clr_eos();
@@ -2791,12 +2792,22 @@ void msg_ext_clear(bool force)
   msg_ext_keep_after_cmdline = false;
 }
 
-void msg_ext_check_prompt(void)
+void msg_ext_clear_later(void)
 {
-  // Redraw after cmdline is expected to clear messages.
-  if (msg_ext_did_cmdline) {
+  if (msg_ext_is_visible()) {
+    msg_ext_need_clear = true;
+    if (must_redraw < VALID) {
+      must_redraw = VALID;
+    }
+  }
+}
+
+void msg_ext_check_clear(void)
+{
+  // Redraw after cmdline or prompt is expected to clear messages.
+  if (msg_ext_need_clear) {
     msg_ext_clear(true);
-    msg_ext_did_cmdline = false;
+    msg_ext_need_clear = false;
   }
 }
 

@@ -27,6 +27,30 @@ describe('ui/ext_messages', function()
     os.remove('Xtest')
   end)
 
+  it('msg_clear follows msg_show kind of confirm', function()
+    feed('iline 1<esc>')
+    feed(':call confirm("test")<cr>')
+    screen:expect{grid=[[
+      line ^1                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={ {
+      content = {{"\ntest\n[O]k: ", 4}},
+      kind = 'confirm',
+    }}}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      line ^1                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]]}
+  end)
+
   it('msg_show kind=confirm,confirm_sub,emsg,wmsg,quickfix', function()
     feed('iline 1\nline 2<esc>')
 

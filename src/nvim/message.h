@@ -88,7 +88,7 @@ extern MessageHistoryEntry *first_msg_hist;
 /// Last message
 extern MessageHistoryEntry *last_msg_hist;
 
-EXTERN bool msg_ext_did_cmdline INIT(= false);
+EXTERN bool msg_ext_need_clear INIT(= false);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "message.h.generated.h"
