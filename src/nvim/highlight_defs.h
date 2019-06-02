@@ -87,6 +87,7 @@ typedef enum {
   , HLF_CUL         // 'cursorline'
   , HLF_MC          // 'colorcolumn'
   , HLF_QFL         // selected quickfix line
+  , HLF_ST          // status lines of terminal windows
   , HLF_0           // Whitespace
   , HLF_INACTIVE    // NormalNC: Normal text in non-current windows
   , HLF_MSGSEP      // message separator line
@@ -140,6 +141,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_CUL] = "CursorLine",
   [HLF_MC] = "ColorColumn",
   [HLF_QFL] = "QuickFixLine",
+  [HLF_ST] = "StatusLineTerm",
   [HLF_0] = "Whitespace",
   [HLF_INACTIVE] = "NormalNC",
   [HLF_MSGSEP] = "MsgSeparator",

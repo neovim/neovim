@@ -5957,6 +5957,8 @@ static const char *highlight_init_both[] = {
   "PmenuSbar    ctermbg=Grey guibg=Grey",
   "StatusLine   cterm=reverse,bold gui=reverse,bold",
   "StatusLineNC cterm=reverse gui=reverse",
+  "StatusLineTerm term=reverse cterm=reverse ctermFg=DarkGreen "
+      "gui=reverse guifg=DarkGreen",
   "TabLineFill  cterm=reverse gui=reverse",
   "TabLineSel   cterm=bold gui=bold",
   "TermCursor   cterm=reverse gui=reverse",

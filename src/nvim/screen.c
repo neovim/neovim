@@ -6831,7 +6831,14 @@ static int fillchar_status(int *attr, win_T *wp)
 {
   int fill;
   bool is_curwin = (wp == curwin);
-  if (is_curwin) {
+  if (bt_terminal(wp->w_buffer)) {
+    *attr = win_hl_attr(wp, HLF_ST);
+    if (is_curwin) {
+      fill = wp->w_p_fcs_chars.stl;
+    } else {
+      fill = wp->w_p_fcs_chars.stlnc;
+    }
+  } else if (is_curwin) {
     *attr = win_hl_attr(wp, HLF_S);
     fill = wp->w_p_fcs_chars.stl;
   } else {
