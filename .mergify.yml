@@ -6,7 +6,6 @@ pull_request_rules:
       - status-success=code-review/reviewable
       - status-success=puremourning.vimspector # Azure pipeline
 
-      - "#review-requested=0"
       - "#changes-requested-reviews-by=0"
 
     actions: &merge-actions
@@ -24,7 +23,6 @@ pull_request_rules:
       - approved-reviews-by=puremourning
 
       - "#approved-reviews-by>=1"
-      - "#review-requested=0"
       - "#changes-requested-reviews-by=0"
     actions:
       <<: *merge-actions
