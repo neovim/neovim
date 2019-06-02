@@ -8716,18 +8716,25 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   tv_dict_alloc_ret(rettv);
 
-  for (int i = 0; ; i++) {
-    // TODO(justinmk): use os_copyfullenv from #7202 ?
-    char *envname = os_getenvname_at_index((size_t)i);
-    if (envname == NULL) {
-      break;
-    }
-    const char *value = os_getenv(envname);
+  size_t env_size = os_get_fullenv_size();
+  char **env = xmalloc(sizeof(*env) * (env_size + 1));
+  env[env_size] = NULL;
+
+  os_copy_fullenv(env, env_size);
+
+  for (size_t i = 0; i < env_size; i++) {
+    const char * str = env[i];
+    const char * const end = strchr(str + (str[0] == '=' ? 1 : 0),
+                                    '=');
+    assert(end != NULL);
+    ptrdiff_t len = end - str;
+    assert(len > 0);
+    const char * value = str + len + 1;
     tv_dict_add_str(rettv->vval.v_dict,
-                    (char *)envname, STRLEN((char *)envname),
-                    value == NULL ? "" : value);
-    xfree(envname);
+                    str, len,
+                    value);
   }
+  os_free_fullenv(env);
 }
 
 /*
@@ -12639,15 +12646,12 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         env = xmalloc((custom_env_size + 1) * sizeof(*env));
         env_size = 0;
       } else {
-        char **genv = os_getfullenv();
-        for (env = genv; *env; env++) {
-          env_size++;
-        }
+        env_size = os_get_fullenv_size();
+
         env = xmalloc((custom_env_size + env_size + 1) * sizeof(*env));
 
-        for (i = 0; i < env_size; i++) {
-            env[i] = xstrdup(genv[i]);
-        }
+        os_copy_fullenv(env, env_size);
+        i = env_size;
       }
       assert(env);  // env must be allocated at this point
 
