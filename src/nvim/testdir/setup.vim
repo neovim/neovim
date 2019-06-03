@@ -16,6 +16,7 @@ set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
 set listchars=eol:$
 set fillchars=vert:\|,fold:-
 set shortmess-=F
+set laststatus=1
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
