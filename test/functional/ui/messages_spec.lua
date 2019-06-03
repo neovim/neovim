@@ -705,11 +705,8 @@ describe('ui/ext_messages', function()
   end)
 
   it('wildmode=list', function()
-    local default_attr = screen:get_default_attr_ids()
-    screen:detach()
-    screen = Screen.new(25, 7)
-    screen:attach({rgb=true, ext_messages=true})
-    screen:set_default_attr_ids(default_attr)
+    screen:try_resize(25, 7)
+    screen:set_option('ext_popupmenu', false)
 
     command('set wildmenu wildmode=list')
     feed(':set wildm<tab>')

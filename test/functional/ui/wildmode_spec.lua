@@ -15,9 +15,6 @@ describe("'wildmenu'", function()
     screen = Screen.new(25, 5)
     screen:attach()
   end)
-  after_each(function()
-    screen:detach()
-  end)
 
   -- expect the screen stayed unchanged some time after first seen success
   local function expect_stay_unchanged(args)
@@ -170,9 +167,7 @@ describe("'wildmenu'", function()
 
   it('wildmode=list,full and display+=msgsep interaction #10092', function()
     -- Need more than 5 rows, else tabline is covered and will be redrawn.
-    screen:detach()
-    screen = Screen.new(25, 7)
-    screen:attach()
+    screen:try_resize(25, 7)
 
     command('set display+=msgsep')
     command('set wildmenu wildmode=list,full')
@@ -211,9 +206,7 @@ describe("'wildmenu'", function()
 
   it('wildmode=list,full and display-=msgsep interaction', function()
     -- Need more than 5 rows, else tabline is covered and will be redrawn.
-    screen:detach()
-    screen = Screen.new(25, 7)
-    screen:attach()
+    screen:try_resize(25, 7)
 
     command('set display-=msgsep')
     command('set wildmenu wildmode=list,full')
@@ -245,6 +238,44 @@ describe("'wildmenu'", function()
       ~                        |
       ~                        |
       ~                        |
+                               |
+    ]])
+  end)
+
+  it('multiple <C-D> renders correctly', function()
+    screen:try_resize(25, 7)
+
+    command('set laststatus=2')
+    command('set display+=msgsep')
+    feed(':set wildm')
+    feed('<c-d>')
+    screen:expect([[
+                               |
+      ~                        |
+      ~                        |
+                               |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm^               |
+    ]])
+    feed('<c-d>')
+    screen:expect([[
+                               |
+                               |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm               |
+      wildmenu  wildmode       |
+      :set wildm^               |
+    ]])
+    feed('<Esc>')
+    screen:expect([[
+      ^                         |
+      ~                        |
+      ~                        |
+      ~                        |
+      ~                        |
+      [No Name]                |
                                |
     ]])
   end)
@@ -322,10 +353,6 @@ describe('ui/ext_wildmenu', function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_wildmenu=true})
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it('works with :sign <tab>', function()
