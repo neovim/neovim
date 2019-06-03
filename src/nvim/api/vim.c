@@ -27,6 +27,7 @@
 #include "nvim/types.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/edit.h"
@@ -977,11 +978,20 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
                            BLN_NOOPT | BLN_NEW | (listed ? BLN_LISTED : 0));
   try_end(err);
   if (buf == NULL) {
-    if (!ERROR_SET(err)) {
-      api_set_error(err, kErrorTypeException, "Failed to create buffer");
-    }
-    return 0;
+    goto fail;
   }
+
+  // Open the memline for the buffer. This will avoid spurious autocmds when
+  // a later nvim_buf_set_lines call would have needed to "open" the buffer.
+  try_start();
+  block_autocmds();
+  int status = ml_open(buf);
+  unblock_autocmds();
+  try_end(err);
+  if (status == FAIL) {
+    goto fail;
+  }
+
   if (scratch) {
     aco_save_T aco;
     aucmd_prepbuf(&aco, buf);
@@ -991,6 +1001,12 @@ Buffer nvim_create_buf(Boolean listed, Boolean scratch, Error *err)
     aucmd_restbuf(&aco);
   }
   return buf->b_fnum;
+
+fail:
+  if (!ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException, "Failed to create buffer");
+  }
+  return 0;
 }
 
 /// Open a new window.

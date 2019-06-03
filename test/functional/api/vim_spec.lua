@@ -1336,7 +1336,7 @@ describe('API', function()
       eq({id=2}, meths.create_buf(true, false))
       eq({id=3}, meths.create_buf(false, false))
       eq('  1 %a   "[No Name]"                    line 1\n'..
-         '  2      "[No Name]"                    line 0',
+         '  2  h   "[No Name]"                    line 0',
          meths.command_output("ls"))
       -- current buffer didn't change
       eq({id=1}, meths.get_current_buf())
@@ -1367,14 +1367,24 @@ describe('API', function()
       eq({id=1}, meths.get_current_buf())
     end)
 
+    it("doesn't cause BufEnter or BufWinEnter autocmds", function()
+      command("let g:fired = v:false")
+      command("au BufEnter,BufWinEnter * let g:fired = v:true")
+
+      eq({id=2}, meths.create_buf(true, false))
+      meths.buf_set_lines(2, 0, -1, true, {"test", "text"})
+
+      eq(false, eval('g:fired'))
+    end)
+
     it('|scratch-buffer|', function()
       eq({id=2}, meths.create_buf(false, true))
       eq({id=3}, meths.create_buf(true, true))
       eq({id=4}, meths.create_buf(true, true))
       local scratch_bufs = { 2, 3, 4 }
       eq('  1 %a   "[No Name]"                    line 1\n'..
-         '  3      "[Scratch]"                    line 0\n'..
-         '  4      "[Scratch]"                    line 0',
+         '  3  h   "[Scratch]"                    line 0\n'..
+         '  4  h   "[Scratch]"                    line 0',
          meths.command_output("ls"))
       -- current buffer didn't change
       eq({id=1}, meths.get_current_buf())
