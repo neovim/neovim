@@ -1812,7 +1812,7 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
       msg_col = saved_msg_col;
     }
   }
-  if (!msg_use_printf() || headless_mode) {
+  if (!msg_use_printf() || (headless_mode && default_grid.chars)) {
     msg_puts_display((const char_u *)str, len, attr, false);
   }
 }
