@@ -1806,8 +1806,13 @@ void msg_puts_attr_len(const char *const str, const ptrdiff_t len, int attr)
   // different, e.g. for Win32 console) or we just don't know where the
   // cursor is.
   if (msg_use_printf()) {
+    int saved_msg_col = msg_col;
     msg_puts_printf(str, len);
-  } else {
+    if (headless_mode) {
+      msg_col = saved_msg_col;
+    }
+  }
+  if (!msg_use_printf() || (headless_mode && default_grid.chars)) {
     msg_puts_display((const char_u *)str, len, attr, false);
   }
 }
