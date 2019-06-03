@@ -624,6 +624,55 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   return hl;
 }
 
+HlAttrs dict2hlattrs(Dictionary dict)
+{
+  HlAttrs hlattrs = HLATTRS_INIT;
+
+  bool use_rgb = false;
+  int32_t foreground = -1;
+  int32_t background = -1;
+  int32_t special = -1;
+  int16_t mask = 0;
+  for (size_t i = 0; i < dict.size; i++) {
+    char *key = dict.items[i].key.data;
+    Object val = dict.items[i].value;
+    
+    if (!strcmp(key, "bold")) {
+      mask = mask | HL_BOLD;
+    } else if (!strcmp(key, "standout")) {
+      mask = mask | HL_STANDOUT;
+    } else if (!strcmp(key, "underline")) {
+      mask = mask | HL_UNDERLINE;
+    } else if (!strcmp(key, "undercurl")) {
+      mask = mask | HL_UNDERCURL;
+    } else if (!strcmp(key, "italic")) {
+      mask = mask | HL_ITALIC;
+    } else if (!strcmp(key, "reverse")) {
+      mask = mask | HL_INVERSE;
+    } else if (!strcmp(key, "special")) {
+      use_rgb = true;
+      special = (int32_t)val.data.integer;
+    } else if (!strcmp(key, "foreground")) {
+      foreground = (int32_t)val.data.integer;
+    } else if (!strcmp(key, "background")) {
+      background = (int32_t)val.data.integer;
+    } 
+  }
+
+  if (use_rgb) {
+    hlattrs.rgb_ae_attr = mask;
+    hlattrs.rgb_bg_color = background;
+    hlattrs.rgb_fg_color = foreground;
+    hlattrs.rgb_sp_color = special;    
+  } else {
+    hlattrs.cterm_ae_attr = mask;
+    hlattrs.cterm_bg_color = background;
+    hlattrs.cterm_fg_color = foreground;
+  }
+
+  return hlattrs;
+}
+
 Array hl_inspect(int attr)
 {
   Array ret = ARRAY_DICT_INIT;

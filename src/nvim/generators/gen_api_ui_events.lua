@@ -3,15 +3,16 @@ local mpack = require('mpack')
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
-assert(#arg == 7)
-local input = io.open(arg[2], 'rb')
-local proto_output = io.open(arg[3], 'wb')
-local call_output = io.open(arg[4], 'wb')
-local remote_output = io.open(arg[5], 'wb')
-local bridge_output = io.open(arg[6], 'wb')
-local metadata_output = io.open(arg[7], 'wb')
+assert(#arg == 8)
+input = io.open(arg[2], 'rb')
+proto_output = io.open(arg[3], 'wb')
+call_output = io.open(arg[4], 'wb')
+remote_output = io.open(arg[5], 'wb')
+bridge_output = io.open(arg[6], 'wb')
+metadata_output = io.open(arg[7], 'wb')
+redraw_output = io.open(arg[8], 'wb')
 
-local c_grammar = require('generators.c_grammar')
+c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
 local function write_signature(output, ev, prefix, notype)
@@ -48,6 +49,30 @@ local function write_arglist(output, ev, need_copy)
     end
     output:write(');\n')
   end
+end
+
+function extract_and_write_arglist(output, ev)
+  for j = 1, #ev.parameters do
+    local param = ev.parameters[j]
+    local kind = param[1]
+    output:write('  '..kind..' arg_'..j..' = ')
+    if kind == 'HlAttrs' then
+      output:write('dict2hlattrs(args.items['..(j-1)..'].data.dictionary);\n')
+    else 
+      output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
+    end
+  end
+end
+
+function call_ui_event_method(output, ev)
+  output:write('  ui_call_'..ev.name..'(')
+  for j = 1, #ev.parameters do
+    output:write('arg_'..j)
+    if j ~= #ev.parameters then
+      output:write(', ')
+    end
+  end
+  output:write(');\n')
 end
 
 for i = 1, #events do
@@ -159,6 +184,13 @@ for i = 1, #events do
     write_signature(call_output, ev, 'ui->composed, '..ev.name..', ui', true)
     call_output:write(";\n")
     call_output:write("}\n\n")
+  end
+
+  if ev.redraw then
+    redraw_output:write('void ui_redraw_event_'..ev.name..'(Array args)\n{\n')
+    extract_and_write_arglist(redraw_output, ev)
+    call_ui_event_method(redraw_output, ev)
+    redraw_output:write('}\n\n')
   end
 end
 

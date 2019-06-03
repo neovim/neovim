@@ -29,7 +29,7 @@ void bell(void)
 void visual_bell(void)
   FUNC_API_SINCE(3);
 void flush(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_REDRAW;
 void suspend(void)
   FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
 void set_title(String title)
@@ -44,48 +44,48 @@ void stop(void)
 
 // First revison of the grid protocol, used by default
 void update_fg(Integer fg)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void update_bg(Integer bg)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void update_sp(Integer sp)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void resize(Integer width, Integer height)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void clear(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void eol_clear(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void cursor_goto(Integer row, Integer col)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void highlight_set(HlAttrs attrs)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_REDRAW;
 void put(String str)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void set_scroll_region(Integer top, Integer bot, Integer left, Integer right)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void scroll(Integer count)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 
 // Second revison of the grid protocol, used with ext_linegrid ui option
 void default_colors_set(Integer rgb_fg, Integer rgb_bg, Integer rgb_sp,
                         Integer cterm_fg, Integer cterm_bg)
-  FUNC_API_SINCE(4) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(4) FUNC_API_REMOTE_IMPL FUNC_API_REDRAW;
 void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
                     Array info)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL FUNC_API_REDRAW;
 void hl_group_set(String name, Integer id)
   FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL;
 void grid_resize(Integer grid, Integer width, Integer height)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_REDRAW;
 void grid_clear(Integer grid)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_REDRAW;
 void grid_cursor_goto(Integer grid, Integer row, Integer col)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_REDRAW;
 void grid_line(Integer grid, Integer row, Integer col_start, Array data)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void grid_scroll(Integer grid, Integer top, Integer bot,
                  Integer left, Integer right, Integer rows, Integer cols)
-  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_REDRAW;
 void grid_destroy(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 
@@ -130,7 +130,7 @@ void tabline_update(Tabpage current, Array tabs)
 
 void cmdline_show(Array content, Integer pos, String firstc, String prompt,
                   Integer indent, Integer level)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void cmdline_pos(Integer pos, Integer level)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_special_char(String c, Boolean shift, Integer level)
@@ -138,18 +138,18 @@ void cmdline_special_char(String c, Boolean shift, Integer level)
 void cmdline_hide(Integer level)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 void cmdline_block_show(Array lines)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void cmdline_block_append(Array lines)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void cmdline_block_hide(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY;
 
 void wildmenu_show(Array items)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL FUNC_API_REDRAW;
 void wildmenu_select(Integer selected)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL FUNC_API_REDRAW;
 void wildmenu_hide(void)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_BRIDGE_IMPL FUNC_API_REDRAW;
 
 void msg_show(String kind, Array content, Boolean replace_last)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
