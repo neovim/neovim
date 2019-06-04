@@ -6,7 +6,7 @@
 typedef Object (*ApiRedrawWrapper)(Array args);                                     
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "ui_events_redraw.h.generated.h"
-#include "ui_events_call.h.generated.h"
+#include "redraw.h.generated.h"
+#include "ui_events_redraw.h.generated.h"
 #endif
 #endif  // NVIM_REDRAW_H

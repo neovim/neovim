@@ -211,7 +211,7 @@ for i = 1, #events do
     redraw_output:write('  add_redraw_event_handler('..
                 '(String) {.data = "'..fn.name..'", '..
                 '.size = sizeof("'..fn.name..'") - 1}, '..
-                '(ApiRedrawWrapper) ui_redraw_event_'..fn.name..'});\n')
+                '(ApiRedrawWrapper) ui_redraw_event_'..fn.name..');\n')
   end
 end
 

@@ -10,6 +10,9 @@
 #include "nvim/log.h"
 #include "nvim/vim.h"
 #include "nvim/redraw.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/highlight.h"
+#include "nvim/ui.h"
 
 static Map(String, ApiRedrawWrapper) *redraw_methods = NULL;
 

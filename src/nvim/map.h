@@ -8,6 +8,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/bufhl_defs.h"
 #include "nvim/highlight_defs.h"
+#include "nvim/redraw.h"
 
 #if defined(__NetBSD__)
 # undef uint64_t
@@ -42,6 +43,7 @@ MAP_DECLS(handle_T, ptr_t)
 MAP_DECLS(String, MsgpackRpcRequestHandler)
 MAP_DECLS(HlEntry, int)
 MAP_DECLS(String, handle_T)
+MAP_DECLS(String, ApiRedrawWrapper)
 
 #define map_new(T, U) map_##T##_##U##_new
 #define map_free(T, U) map_##T##_##U##_free
