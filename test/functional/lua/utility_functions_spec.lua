@@ -5,10 +5,13 @@ local funcs = helpers.funcs
 local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
+local eval = helpers.eval
+local feed = helpers.feed
+local meth_pcall = helpers.meth_pcall
 
 before_each(clear)
 
-describe('vim.stricmp', function()
+describe('lua function', function()
   -- İ: `tolower("İ")` is `i` which has length 1 while `İ` itself has
   --    length 2 (in bytes).
   -- Ⱥ: `tolower("Ⱥ")` is `ⱥ` which has length 2 while `Ⱥ` itself has
@@ -17,7 +20,7 @@ describe('vim.stricmp', function()
   -- Note: 'i' !=? 'İ' and 'ⱥ' !=? 'Ⱥ' on some systems.
   -- Note: Built-in Nvim comparison (on systems lacking `strcasecmp`) works
   --       only on ASCII characters.
-  it('works', function()
+  it('vim.stricmp', function()
     eq(0, funcs.luaeval('vim.stricmp("a", "A")'))
     eq(0, funcs.luaeval('vim.stricmp("A", "a")'))
     eq(0, funcs.luaeval('vim.stricmp("a", "a")'))
@@ -106,10 +109,35 @@ describe('vim.stricmp', function()
     eq(1, funcs.luaeval('vim.stricmp("\\0c\\0", "\\0b\\0")'))
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0B\\0")'))
   end)
-end)
 
-describe("vim.split", function()
-  it("works", function()
+  it("vim.schedule", function()
+    meths.execute_lua([[
+      test_table = {}
+      vim.schedule(function()
+        table.insert(test_table, "xx")
+      end)
+      table.insert(test_table, "yy")
+    ]], {})
+    eq({"yy","xx"}, meths.execute_lua("return test_table", {}))
+
+    -- type checked args
+    eq({false, 'Error executing lua: vim.schedule: expected function'},
+       meth_pcall(meths.execute_lua, "vim.schedule('stringly')", {}))
+
+    eq({false, 'Error executing lua: vim.schedule: expected function'},
+       meth_pcall(meths.execute_lua, "vim.schedule()", {}))
+
+    meths.execute_lua([[
+      vim.schedule(function()
+        error("big failure\nvery async")
+      end)
+    ]], {})
+
+    feed("<cr>")
+    eq('Error executing vim.schedule lua callback: [string "<nvim>"]:2: big failure\nvery async', eval("v:errmsg"))
+  end)
+
+  it("vim.split", function()
     local split = function(str, sep)
       return meths.execute_lua('return vim.split(...)', {str, sep})
     end
@@ -141,10 +169,8 @@ describe("vim.split", function()
       assert(string.match(err, "Infinite loop detected"))
     end
   end)
-end)
 
-describe("vim.trim", function()
-  it('works', function()
+  it('vim.trim', function()
     local trim = function(s)
       return meths.execute_lua('return vim.trim(...)', { s })
     end
@@ -164,10 +190,8 @@ describe("vim.trim", function()
     eq(false, status)
     assert(string.match(err, "Only strings can be trimmed"))
   end)
-end)
 
-describe("vim.inspect", function()
-  it('works', function()
+  it('vim.inspect', function()
     -- just make sure it basically works, it has its own test suite
     local inspect = function(t, opts)
       return meths.execute_lua('return vim.inspect(...)', { t, opts })
@@ -187,10 +211,8 @@ describe("vim.inspect", function()
       end})
     ]], {}))
   end)
-end)
 
-describe("vim.deepcopy", function()
-  it("works", function()
+  it("vim.deepcopy", function()
     local is_dc = meths.execute_lua([[
       local a = { x = { 1, 2 }, y = 5}
       local b = vim.deepcopy(a)

@@ -36,12 +36,6 @@ typedef struct {
   String lua_err_str;
 } LuaError;
 
-/// We use this to store Lua callbacks
-typedef struct {
-  // TODO: store more info for debugging, traceback?
-  int cb;
-} nlua_ctx;
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/vim_module.generated.h"
 # include "lua/executor.c.generated.h"
@@ -114,33 +108,32 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-static void nlua_schedule_cb(void **argv)
+static void nlua_schedule_event(void **argv)
 {
-  nlua_ctx *ctx = argv[0];
+  LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
   lua_State *const lstate = nlua_enter();
-  lua_rawgeti(lstate, LUA_REGISTRYINDEX, ctx->cb);
-  luaL_unref(lstate, LUA_REGISTRYINDEX, ctx->cb);
-  lua_pcall(lstate, 0, 0, 0);
-  free(ctx);
+  nlua_pushref(lstate, cb);
+  nlua_unref(lstate, cb);
+  if (lua_pcall(lstate, 0, 0, 0)) {
+    nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
+  }
 }
 
 /// Schedule Lua callback on main loop's event queue
 ///
-/// This is used to make sure nvim API is called at the right moment.
-///
 /// @param  lstate  Lua interpreter state.
-/// @param[in]  msg  Message base, must contain one `%s`.
 static int nlua_schedule(lua_State *const lstate)
   FUNC_ATTR_NONNULL_ALL
 {
-  // TODO: report error using nlua_error instead
-  luaL_checktype(lstate, 1, LUA_TFUNCTION);
+  if (lua_type(lstate, 1) != LUA_TFUNCTION) {
+    lua_pushliteral(lstate, "vim.schedule: expected function");
+    return lua_error(lstate);
+  }
 
-  nlua_ctx* ctx = (nlua_ctx*)malloc(sizeof(nlua_ctx));
-  lua_pushvalue(lstate, 1);
-  ctx->cb = luaL_ref(lstate, LUA_REGISTRYINDEX);
+  LuaRef cb = nlua_ref(lstate, 1);
 
-  multiqueue_put(main_loop.events, nlua_schedule_cb, 1, ctx);
+  multiqueue_put(main_loop.events, nlua_schedule_event,
+                 1, (void *)(ptrdiff_t)cb);
   return 0;
 }
 
