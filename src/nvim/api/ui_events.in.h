@@ -58,7 +58,7 @@ void eol_clear(void)
 void cursor_goto(Integer row, Integer col)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void highlight_set(HlAttrs attrs)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL FUNC_API_REDRAW;
+  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REMOTE_IMPL;
 void put(String str)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY FUNC_API_REDRAW;
 void set_scroll_region(Integer top, Integer bot, Integer left, Integer right)

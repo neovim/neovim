@@ -73,6 +73,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/redraw.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
@@ -148,6 +149,9 @@ void event_init(void)
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
+  // early initialisation of redraw_handlers
+  redraw_methods_table_init();
+  // Initialize input events
   input_init();
   signal_init();
   // finish mspgack-rpc initialization

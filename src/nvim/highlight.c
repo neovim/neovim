@@ -624,11 +624,10 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   return hl;
 }
 
-HlAttrs dict2hlattrs(Dictionary dict)
+HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb)
 {
   HlAttrs hlattrs = HLATTRS_INIT;
 
-  bool use_rgb = false;
   int32_t foreground = -1;
   int32_t background = -1;
   int32_t special = -1;
@@ -650,7 +649,6 @@ HlAttrs dict2hlattrs(Dictionary dict)
     } else if (!strcmp(key, "reverse")) {
       mask = mask | HL_INVERSE;
     } else if (!strcmp(key, "special")) {
-      use_rgb = true;
       special = (int32_t)val.data.integer;
     } else if (!strcmp(key, "foreground")) {
       foreground = (int32_t)val.data.integer;
@@ -666,8 +664,12 @@ HlAttrs dict2hlattrs(Dictionary dict)
     hlattrs.rgb_sp_color = special;    
   } else {
     hlattrs.cterm_ae_attr = mask;
-    hlattrs.cterm_bg_color = background;
-    hlattrs.cterm_fg_color = foreground;
+    if (background != -1) {
+      hlattrs.cterm_bg_color = background;
+    }
+    if (foreground != -1) {
+      hlattrs.cterm_fg_color = foreground;
+    }
   }
 
   return hlattrs;
