@@ -52,12 +52,15 @@ local function write_arglist(output, ev, need_copy)
 end
 
 function extract_and_write_arglist(output, ev)
+  local hlattrs_args_count = 0
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
     local kind = param[1]
     output:write('  '..kind..' arg_'..j..' = ')
     if kind == 'HlAttrs' then
-      output:write('dict2hlattrs(args.items['..(j-1)..'].data.dictionary);\n')
+      -- The first HlAttrs argument is rgb_attrs and second is cterm_attrs
+      output:write('dict2hlattrs(args.items['..(j-1)..'].data.dictionary, '..(hlattrs_args_count == 0 and 'true' or 'false')..');\n')
+      hlattrs_args_count = hlattrs_args_count + 1
     else 
       output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
     end
@@ -194,10 +197,31 @@ for i = 1, #events do
   end
 end
 
+-- Generate the map_init method for redraw handlers
+redraw_output:write([[
+void redraw_methods_table_init(void)
+{
+  redraw_methods = map_new(String, ApiRedrawWrapper)();
+
+]])
+
+for i = 1, #events do
+  local fn = events[i]
+  if fn.redraw then
+    redraw_output:write('  add_redraw_event_handler('..
+                '(String) {.data = "'..fn.name..'", '..
+                '.size = sizeof("'..fn.name..'") - 1}, '..
+                '(ApiRedrawWrapper) ui_redraw_event_'..fn.name..'});\n')
+  end
+end
+
+redraw_output:write('\n}\n\n')
+
 proto_output:close()
 call_output:close()
 remote_output:close()
 bridge_output:close()
+redraw_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
 local exported_attributes = {'name', 'parameters',
