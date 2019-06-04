@@ -453,6 +453,12 @@ typedef struct {
 /// Primary exists so that literals of relevant type can be made.
 typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 
+typedef struct {
+  LuaRef on_lines;
+  LuaRef on_changedtick;
+} BufUpdateCallbacks;
+#define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF }
+
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2
 
@@ -796,6 +802,7 @@ struct file_buffer {
   // array of channelids which have asked to receive updates for this
   // buffer.
   kvec_t(uint64_t) update_channels;
+  kvec_t(BufUpdateCallbacks) update_callbacks;
 
   int b_diff_failed;    // internal diff failed for this buffer
 };

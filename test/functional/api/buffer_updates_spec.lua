@@ -760,7 +760,7 @@ describe('API: buffer events:', function()
   it('returns a proper error on nonempty options dict', function()
     clear()
     local b = editoriginal(false)
-    expect_err("dict isn't empty", buffer, 'attach', b, false, {builtin="asfd"})
+    expect_err("unexpected key: builtin", buffer, 'attach', b, false, {builtin="asfd"})
   end)
 
   it('nvim_buf_attach returns response after delay #8634', function()

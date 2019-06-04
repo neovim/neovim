@@ -2,6 +2,7 @@
 #define NVIM_LUA_EXECUTOR_H
 
 #include <lua.h>
+#include <lauxlib.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/func_attr.h"

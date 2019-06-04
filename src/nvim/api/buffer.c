@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <lauxlib.h>
 
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/helpers.h"
@@ -98,37 +99,62 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
-/// Activates buffer-update events on the channel.
+/// Activates buffer-update events on a channel, or as lua callbacks.
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param send_buffer Set to true if the initial notification should contain
 ///        the whole buffer. If so, the first notification will be a
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
-///        a `nvim_buf_changedtick_event`
-/// @param  opts  Optional parameters. Reserved for future use.
+///        a `nvim_buf_changedtick_event`. Not used for lua callbacks.
+/// @param  opts  Optional parameters.
+///               `on_lines`: lua callback received on change.
+///               `on_changedtick`: lua callback received on changedtick
+///                                 increment without text change.
+///               See |api-buffer-updates-lua| for more information
 /// @param[out] err Error details, if any
 /// @return False when updates couldn't be enabled because the buffer isn't
 ///         loaded or `opts` contained an invalid key; otherwise True.
+///         TODO: LUA_API_NO_EVAL
 Boolean nvim_buf_attach(uint64_t channel_id,
                         Buffer buffer,
                         Boolean send_buffer,
-                        Dictionary opts,
+                        DictionaryOf(LuaRef) opts,
                         Error *err)
-  FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
+  FUNC_API_SINCE(4)
 {
-  if (opts.size > 0) {
-      api_set_error(err, kErrorTypeValidation, "dict isn't empty");
-      return false;
-  }
-
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return false;
   }
 
-  return buf_updates_register(buf, channel_id, send_buffer);
+  bool is_lua = (channel_id == LUA_INTERNAL_CALL);
+  BufUpdateCallbacks cb = BUF_UPDATE_CALLBACKS_INIT;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (is_lua && strequal("on_lines", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        return false;
+      }
+      cb.on_lines = v->data.luaref;
+      v->data.integer = LUA_NOREF;
+    } else if (is_lua && strequal("on_changedtick", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        return false;
+      }
+      cb.on_changedtick = v->data.luaref;
+      v->data.integer = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return false;
+    }
+  }
+
+  return buf_updates_register(buf, channel_id, cb, send_buffer);
 }
 
 /// Deactivates buffer-update events on the channel.
@@ -307,7 +333,7 @@ void buffer_set_line_slice(Buffer buffer,
                            Integer end,
                            Boolean include_start,
                            Boolean include_end,
-                           ArrayOf(String) replacement,  // NOLINT
+                           ArrayOf(String) replacement,
                            Error *err)
 {
   start = convert_index(start) + !include_start;
@@ -340,7 +366,7 @@ void nvim_buf_set_lines(uint64_t channel_id,
                         Integer start,
                         Integer end,
                         Boolean strict_indexing,
-                        ArrayOf(String) replacement,  // NOLINT
+                        ArrayOf(String) replacement,
                         Error *err)
   FUNC_API_SINCE(1)
 {

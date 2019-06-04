@@ -135,7 +135,7 @@ for i,f in ipairs(shallowcopy(functions)) do
 end
 
 -- don't expose internal attributes like "impl_name" in public metadata
-exported_attributes = {'name', 'parameters', 'return_type', 'method',
+exported_attributes = {'name', 'return_type', 'method',
                        'since', 'deprecated_since'}
 exported_functions = {}
 for _,f in ipairs(functions) do
@@ -143,6 +143,13 @@ for _,f in ipairs(functions) do
     local f_exported = {}
     for _,attr in ipairs(exported_attributes) do
       f_exported[attr] = f[attr]
+    end
+    f_exported.parameters = {}
+    for i,param in ipairs(f.parameters) do
+      if param[1] == "DictionaryOf(LuaRef)" then
+        param = {"Dictionary", param[2]}
+      end
+      f_exported.parameters[i] = param
     end
     exported_functions[#exported_functions+1] = f_exported
   end
@@ -371,14 +378,18 @@ local function process_function(fn)
     param = fn.parameters[j]
     cparam = string.format('arg%u', j)
     param_type = real_type(param[1])
-    lc_param_type = param_type:lower()
+    lc_param_type = real_type(param[1]):lower()
+    extra = ((param_type == "Object" or param_type == "Dictionary") and "false, ") or ""
+    if param[1] == "DictionaryOf(LuaRef)" then
+      extra = "true, "
+    end
     write_shifted_output(output, string.format([[
-    const %s %s = nlua_pop_%s(lstate, &err);
+    const %s %s = nlua_pop_%s(lstate, %s&err);
 
     if (ERROR_SET(&err)) {
       goto exit_%u;
     }
-    ]], param[1], cparam, param_type, #fn.parameters - j))
+    ]], param[1], cparam, param_type, extra, #fn.parameters - j))
     free_code[#free_code + 1] = ('api_free_%s(%s);'):format(
       lc_param_type, cparam)
     cparams = cparam .. ', ' .. cparams

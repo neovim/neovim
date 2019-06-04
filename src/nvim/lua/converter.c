@@ -706,6 +706,10 @@ void nlua_push_Object(lua_State *lstate, const Object obj)
       lua_pushnil(lstate);
       break;
     }
+    case kObjectTypeLuaRef: {
+      nlua_pushref(lstate, obj.data.luaref);
+      break;
+    }
 #define ADD_TYPE(type, data_key) \
     case kObjectType##type: { \
       nlua_push_##type(lstate, obj.data.data_key); \
@@ -862,7 +866,7 @@ static Array nlua_pop_Array_unchecked(lua_State *const lstate,
 
     lua_rawgeti(lstate, -1, (int)i);
 
-    val = nlua_pop_Object(lstate, err);
+    val = nlua_pop_Object(lstate, false, err);
     if (ERROR_SET(err)) {
       ret.size = i - 1;
       lua_pop(lstate, 1);
@@ -900,6 +904,7 @@ Array nlua_pop_Array(lua_State *lstate, Error *err)
 /// @param[out]  err  Location where error will be saved.
 static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
                                                 const LuaTableProps table_props,
+                                                bool ref,
                                                 Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -923,7 +928,7 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
       // stack: dict, key, value
 
       if (!ERROR_SET(err)) {
-        ret.items[i].value = nlua_pop_Object(lstate, err);
+        ret.items[i].value = nlua_pop_Object(lstate, ref, err);
         // stack: dict, key
       } else {
         lua_pop(lstate, 1);
@@ -951,7 +956,7 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
 /// Convert lua table to dictionary
 ///
 /// Always pops one value from the stack.
-Dictionary nlua_pop_Dictionary(lua_State *lstate, Error *err)
+Dictionary nlua_pop_Dictionary(lua_State *lstate, bool ref, Error *err)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const LuaTableProps table_props = nlua_check_type(lstate, err,
@@ -961,7 +966,7 @@ Dictionary nlua_pop_Dictionary(lua_State *lstate, Error *err)
     return (Dictionary) { .size = 0, .items = NULL };
   }
 
-  return nlua_pop_Dictionary_unchecked(lstate, table_props, err);
+  return nlua_pop_Dictionary_unchecked(lstate, table_props, ref, err);
 }
 
 /// Helper structure for nlua_pop_Object
@@ -973,7 +978,7 @@ typedef struct {
 /// Convert lua table to object
 ///
 /// Always pops one value from the stack.
-Object nlua_pop_Object(lua_State *const lstate, Error *const err)
+Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 {
   Object ret = NIL;
   const int initial_size = lua_gettop(lstate);
@@ -1122,7 +1127,18 @@ Object nlua_pop_Object(lua_State *const lstate, Error *const err)
         }
         break;
       }
+
+      case LUA_TFUNCTION: {
+        if (ref) {
+          *cur.obj = LUAREF_OBJ(nlua_ref(lstate, -1));
+        } else {
+          goto type_error;
+        }
+        break;
+      }
+
       default: {
+type_error:
         api_set_error(err, kErrorTypeValidation,
                       "Cannot convert given lua type");
         break;
