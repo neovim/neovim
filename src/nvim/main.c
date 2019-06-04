@@ -316,28 +316,9 @@ int main(int argc, char **argv)
   // Set the break level after the terminal is initialized.
   debug_break_level = params.use_debug_break_level;
 
-  //
-  // Read user-input if any TTY is connected.
   // Read ex-commands if invoked with "-es".
-  //
-  bool reading_tty = !headless_mode
-                     && !embedded_mode
-                     && !silent_mode
-                     && (params.input_isatty || params.output_isatty
-                         || params.err_isatty);
-  bool reading_excmds = !params.input_isatty
-                        && silent_mode
-                        && exmode_active == EXMODE_NORMAL;
-  if (reading_tty || reading_excmds) {
-    // One of the startup commands (arguments, sourced scripts or plugins) may
-    // prompt the user, so start reading from a tty now.
-    int fd = STDIN_FILENO;
-    if (!silent_mode
-        && (!params.input_isatty || params.edit_type == EDIT_STDIN)) {
-      // Use stderr or stdout since stdin is being used to read commands.
-      fd = params.err_isatty ? fileno(stderr) : fileno(stdout);
-    }
-    input_start(fd);
+  if (!params.input_isatty && silent_mode && exmode_active == EXMODE_NORMAL) {
+    input_start(STDIN_FILENO);
   }
 
   // open terminals when opening files that start with term://
@@ -366,16 +347,22 @@ int main(int argc, char **argv)
   // startup. This allows an external UI to show messages and prompts from
   // --cmd and buffer loading (e.g. swap files)
   bool early_ui = false;
-  if (embedded_mode && !headless_mode) {
-    TIME_MSG("waiting for embedder to make request");
-    remote_ui_wait_for_attach();
-    TIME_MSG("done waiting for embedder");
+  bool use_remote_ui = (embedded_mode && !headless_mode);
+  bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
+  if (use_remote_ui || use_builtin_ui) {
+    TIME_MSG("waiting for UI to make request");
+    if (use_remote_ui) {
+      remote_ui_wait_for_attach();
+    } else {
+      ui_builtin_start();
+    }
+    TIME_MSG("done waiting for UI");
 
     // prepare screen now, so external UIs can display messages
     starting = NO_BUFFERS;
     screenclear();
     early_ui = true;
-    TIME_MSG("initialized screen early for embedder");
+    TIME_MSG("initialized screen early for UI");
   }
 
   // Execute --cmd arguments.
@@ -469,25 +456,12 @@ int main(int argc, char **argv)
     read_stdin();
   }
 
-  if (reading_tty && (need_wait_return || msg_didany)) {
-    // Because there's no UI yet, error messages would have been printed to
-    // stdout.  Before starting we need confirmation that the user has seen the
-    // messages and that is done with a call to wait_return.
-    TIME_MSG("waiting for return");
-    wait_return(true);
-  }
-
-  if (!headless_mode && !embedded_mode && !silent_mode) {
-    input_stop();  // Stop reading input, let the UI take over.
-    ui_builtin_start();
-  }
-
   setmouse();  // may start using the mouse
 
   if (exmode_active || early_ui) {
-    // Don't clear the screen when starting in Ex mode, or when an
-    // embedding UI might have displayed messages
-    must_redraw = CLEAR;
+    // Don't clear the screen when starting in Ex mode, or when a UI might have
+    // displayed messages.
+    redraw_later(VALID);
   } else {
     screenclear();  // clear screen
     TIME_MSG("clearing screen");

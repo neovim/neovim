@@ -48,6 +48,26 @@ void tinput_init(TermInput *input, Loop *loop)
 
   int curflags = termkey_get_canonflags(input->tk);
   termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
+
+  // If stdin is not a pty, switch to stderr. For cases like:
+  //    echo q | nvim -es
+  //    ls *.md | xargs nvim
+#ifdef WIN32
+  if (!os_isatty(0)) {
+      const HANDLE conin_handle = CreateFile("CONIN$",
+                                             GENERIC_READ | GENERIC_WRITE,
+                                             FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                             (LPSECURITY_ATTRIBUTES)NULL,
+                                             OPEN_EXISTING, 0, (HANDLE)NULL);
+      input->in_fd = _open_osfhandle(conin_handle, _O_RDONLY);
+      assert(input->in_fd != -1);
+  }
+#else
+  if (!os_isatty(0) && os_isatty(2)) {
+    input->in_fd = 2;
+  }
+#endif
+
   // setup input handle
   rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
   // initialize a timer handle for handling ESC with libtermkey
@@ -435,24 +455,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
   TermInput *input = data;
 
   if (eof) {
-    if (input->in_fd == 0 && !os_isatty(0) && os_isatty(2)) {
-      // Started reading from stdin which is not a pty but failed. Switch to
-      // stderr since it is a pty.
-      //
-      // This is how we support commands like:
-      //
-      // echo q | nvim -es
-      //
-      // and
-      //
-      // ls *.md | xargs nvim
-      input->in_fd = 2;
-      stream_close(&input->read_stream, NULL, NULL);
-      multiqueue_put(input->loop->fast_events, tinput_restart_reading, 1,
-                     input);
-    } else {
-      loop_schedule(&main_loop, event_create(tinput_done_event, 0));
-    }
+    loop_schedule(&main_loop, event_create(tinput_done_event, 0));
     return;
   }
 
@@ -495,11 +498,4 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
   // Make sure the next input escape sequence fits into the ring buffer
   // without wrap around, otherwise it could be misinterpreted.
   rbuffer_reset(input->read_stream.buffer);
-}
-
-static void tinput_restart_reading(void **argv)
-{
-  TermInput *input = argv[0];
-  rstream_init_fd(input->loop, &input->read_stream, input->in_fd, 0xfff);
-  rstream_start(&input->read_stream, tinput_read_cb, input);
 }
