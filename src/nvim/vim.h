@@ -291,7 +291,6 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 # define mch_errmsg(str)        fprintf(stderr, "%s", (str))
 # define mch_msg(str)           printf("%s", (str))
 #endif
-#define display_errors()       fflush(stderr)
 
 #include "nvim/globals.h"        // global variables and messages
 #include "nvim/buffer_defs.h"    // buffer and windows
