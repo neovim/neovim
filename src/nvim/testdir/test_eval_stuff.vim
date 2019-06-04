@@ -92,3 +92,10 @@ func Test_nocatch_restore_silent_emsg()
   let c5 = nr2char(screenchar(&lines, 5))
   call assert_equal('wrong', c1 . c2 . c3 . c4 . c5)
 endfunc
+
+func Test_let_errmsg()
+  call assert_fails('let v:errmsg = []', 'E730:')
+  let v:errmsg = ''
+  call assert_fails('let v:errmsg = []', 'E730:')
+  let v:errmsg = ''
+endfunc
