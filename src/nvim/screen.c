@@ -6595,6 +6595,9 @@ void unshowmode(bool force)
 // Clear the mode message.
 void clearmode(void)
 {
+  const int save_msg_row = msg_row;
+  const int save_msg_col = msg_col;
+
   msg_ext_ui_flush();
   msg_pos_mode();
   if (reg_recording != 0) {
@@ -6602,6 +6605,9 @@ void clearmode(void)
   }
   msg_clr_eos();
   msg_ext_flush_showmode();
+
+  msg_col = save_msg_col;
+  msg_row = save_msg_row;
 }
 
 static void recording_mode(int attr)

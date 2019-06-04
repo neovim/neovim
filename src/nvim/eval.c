@@ -20082,9 +20082,15 @@ static void set_var(const char *name, const size_t name_len, typval_T *const tv,
     // prevent changing the type.
     if (ht == &vimvarht) {
       if (v->di_tv.v_type == VAR_STRING) {
-        xfree(v->di_tv.vval.v_string);
+        XFREE_CLEAR(v->di_tv.vval.v_string);
         if (copy || tv->v_type != VAR_STRING) {
-          v->di_tv.vval.v_string = (char_u *)xstrdup(tv_get_string(tv));
+          const char *const val = tv_get_string(tv);
+
+          // Careful: when assigning to v:errmsg and tv_get_string()
+          // causes an error message the variable will alrady be set.
+          if (v->di_tv.vval.v_string == NULL) {
+            v->di_tv.vval.v_string = (char_u *)xstrdup(val);
+          }
         } else {
           // Take over the string to avoid an extra alloc/free.
           v->di_tv.vval.v_string = tv->vval.v_string;
