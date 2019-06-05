@@ -161,7 +161,7 @@ uint64_t tui_ui_client_init(char *servername){
     // PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
     PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
-    ADD(args, INTEGER_OBJ((int)rc_id));
+    // ADD(args, INTEGER_OBJ((int)rc_id));
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
     ADD(args, DICTIONARY_OBJ(opts));
@@ -169,6 +169,11 @@ uint64_t tui_ui_client_init(char *servername){
     // Telling to the server that you exist as a Client
     rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
  
+    if (ERROR_SET(&err)) {
+      rc_id = 0;
+      mch_msg(err.msg);
+    }
+
     api_clear_error(&err);
 
     return rc_id;
