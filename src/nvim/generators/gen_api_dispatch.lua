@@ -215,11 +215,13 @@ for i = 1, #functions do
       output:write('\n  '..param[1]..' '..converted..';')
     end
     output:write('\n')
-    output:write('\n  if (args.size != '..#fn.parameters..') {')
-    output:write('\n    api_set_error(error, kErrorTypeException, \
-      "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
-    output:write('\n    goto cleanup;')
-    output:write('\n  }\n')
+    if not fn.receives_array_args then
+      output:write('\n  if (args.size != '..#fn.parameters..') {')
+      output:write('\n    api_set_error(error, kErrorTypeException, \
+        "Wrong number of arguments: expecting '..#fn.parameters..' but got %zu", args.size);')
+      output:write('\n    goto cleanup;')
+      output:write('\n  }\n')
+    end
 
     -- Validation/conversion for each argument
     for j = 1, #fn.parameters do

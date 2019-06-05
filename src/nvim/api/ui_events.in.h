@@ -11,33 +11,33 @@
 #include "nvim/ui.h"
 
 void mode_info_set(Boolean enabled, Array cursor_styles)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void update_menu(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void busy_start(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void busy_stop(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void mouse_on(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void mouse_off(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void mode_change(String mode, Integer mode_idx)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void bell(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void visual_bell(void)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void flush(void)
   FUNC_API_SINCE(3) FUNC_API_REMOTE_IMPL FUNC_API_REDRAW;
 void suspend(void)
-  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(3) FUNC_API_BRIDGE_IMPL FUNC_API_REDRAW;
 void set_title(String title)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void set_icon(String icon)
-  FUNC_API_SINCE(3);
+  FUNC_API_SINCE(3) FUNC_API_REDRAW;
 void option_set(String name, Object value)
-  FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL;
+  FUNC_API_SINCE(4) FUNC_API_BRIDGE_IMPL FUNC_API_REDRAW;
 // Stop event is not exported as such, represented by EOF in the msgpack stream.
 void stop(void)
   FUNC_API_NOEXPORT;
@@ -113,9 +113,9 @@ void win_hide(Integer grid)
 void win_close(Integer grid)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_scroll_over_start(void)
-  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_REDRAW;
 void win_scroll_over_reset(void)
-  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL;
+  FUNC_API_SINCE(6) FUNC_API_BRIDGE_IMPL FUNC_API_COMPOSITOR_IMPL FUNC_API_REDRAW;
 
 void popupmenu_show(Array items, Integer selected,
                     Integer row, Integer col, Integer grid)

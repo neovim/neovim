@@ -61,7 +61,9 @@ function extract_and_write_arglist(output, ev)
       -- The first HlAttrs argument is rgb_attrs and second is cterm_attrs
       output:write('dict2hlattrs(args.items['..(j-1)..'].data.dictionary, '..(hlattrs_args_count == 0 and 'true' or 'false')..');\n')
       hlattrs_args_count = hlattrs_args_count + 1
-    else 
+    elseif kind == 'Object' then
+      output:write('args.items['..(j-1)..'];\n')
+    else
       output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
     end
   end

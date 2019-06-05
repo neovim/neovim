@@ -709,23 +709,24 @@ void redraw(uint64_t channel_id, Array uidata, Error *error)
   char *method_name;
   size_t size;
 
-  for (size_t i = 0; i < uidata.size; i++) {
-    call = uidata.items[i].data.array;
+  Array uidata_copy = copy_array(uidata);
+
+  for (size_t i = 0; i < uidata_copy.size; i++) {
+    call = uidata_copy.items[i].data.array;
     method_name = call.items[0].data.string.data;
     size = call.items[0].data.string.size;
-    Error *err = NULL;
+    Error err = ERROR_INIT;
 
-    ApiRedrawWrapper handler_method = get_redraw_event_handler(method_name, size, err);
-    if (ERROR_SET(err)) {
+    ApiRedrawWrapper handler_method = get_redraw_event_handler(method_name, size, &err);
+    if (ERROR_SET(&err)) {
       logmsg(ERROR_LOG_LEVEL, "RPC: ", NULL, -1, true, "No redraw handler by name: %s", method_name);
-      error = err;
+      error = &err;
     } else {
-      for (size_t j = 1; j < call.size; j++){
+      for (size_t j = 1; j < call.size; j++) {
         Array internal_call_args = call.items[j].data.array; 
         logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true, "Invoke redraw handler by name: %s", method_name);
         handler_method(internal_call_args);
-      } 
+      }
     }
-    // api_clear_error(error);
   }
 }
