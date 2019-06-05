@@ -169,7 +169,7 @@ uint64_t tui_ui_client_init(char *servername){
     // Telling to the server that you exist as a Client
     rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
  
-    // api_free_dictionary(opts);
+    api_clear_error(&err);
 
     return rc_id;
 }

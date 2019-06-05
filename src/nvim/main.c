@@ -149,7 +149,7 @@ void event_init(void)
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
-  // early initialisation of redraw_handlers
+  // early initialisation of redraw_handlers table
   redraw_methods_table_init();
   // Initialize input events
   input_init();
@@ -349,8 +349,22 @@ int main(int argc, char **argv)
     p_lpl = false;
   }
 
-  // Wait for UIs to set up Nvim or show early messages
-  // and prompts (--cmd, swapfile dialog, …).
+// Setting up the remote connection.
+// This has to be always before ui_builtin_start
+if (params.server_name) {
+      input_stop();  // Stop reading input, let the UI take over.
+      uint64_t rv = ui_client_start(params.server_name);
+      if (!rv) {
+          // cannot continue without a channel
+          mch_msg("Could not establish connection with remote server\n");
+          mch_exit(1);
+      }
+  }
+
+  // give embedders a chance to set up nvim, by processing a request before
+  // startup. This allows an external UI to show messages and prompts from
+  // --cmd and buffer loading (e.g. swap files)
+  bool early_ui = false;
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
   if (use_remote_ui || use_builtin_ui) {
@@ -458,16 +472,6 @@ int main(int argc, char **argv)
     read_stdin();
   }
 
-  if (params.server_name) {
-      input_stop();  // Stop reading input, let the UI take over.
-      uint64_t rv = ui_client_start(params.server_name);
-      if (!rv) {
-          // cannot continue without a channel
-          mch_msg("Could not establish connection with remote server\n");
-          mch_exit(1);
-      }
-  }
-  
   setmouse();  // may start using the mouse
 
   if (exmode_active || use_remote_ui || use_builtin_ui) {
