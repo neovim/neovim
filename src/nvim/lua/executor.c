@@ -108,6 +108,35 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
+static void nlua_schedule_event(void **argv)
+{
+  LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
+  lua_State *const lstate = nlua_enter();
+  nlua_pushref(lstate, cb);
+  nlua_unref(lstate, cb);
+  if (lua_pcall(lstate, 0, 0, 0)) {
+    nlua_error(lstate, _("Error executing vim.schedule lua callback: %.*s"));
+  }
+}
+
+/// Schedule Lua callback on main loop's event queue
+///
+/// @param  lstate  Lua interpreter state.
+static int nlua_schedule(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (lua_type(lstate, 1) != LUA_TFUNCTION) {
+    lua_pushliteral(lstate, "vim.schedule: expected function");
+    return lua_error(lstate);
+  }
+
+  LuaRef cb = nlua_ref(lstate, 1);
+
+  multiqueue_put(main_loop.events, nlua_schedule_event,
+                 1, (void *)(ptrdiff_t)cb);
+  return 0;
+}
+
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
@@ -143,6 +172,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // stricmp
   lua_pushcfunction(lstate, &nlua_stricmp);
   lua_setfield(lstate, -2, "stricmp");
+  // schedule
+  lua_pushcfunction(lstate, &nlua_schedule);
+  lua_setfield(lstate, -2, "schedule");
 
   lua_setglobal(lstate, "vim");
   return 0;

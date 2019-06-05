@@ -379,6 +379,12 @@ vim.stricmp(a, b)					*lua-vim.stricmp*
 	string arguments and returns 0, 1 or -1 if strings are equal, a is 
 	greater then b or a is lesser then b respectively.
 
+vim.schedule(callback)					*lua-vim.schedule*
+	Schedule `callback` to be called soon by the main event loop. This is
+        useful in contexts where some functionality is blocked, like an
+        autocommand or callback running with |textlock|. Then the scheduled
+        callback could invoke this functionality later when it is allowed.
+
 vim.type_idx						*lua-vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
 	values from |lua-vim.types| allows typing the empty table (it is 
