@@ -87,40 +87,34 @@ function parse_tree(tsstate, force)
   return tsstate.tree
 end
 
-function the_cb(tsstate, ev, ...)
-  if ev == "nvim_buf_lines_event" then
-    --luadev.print(require'inspect'({...}))
-    bufnr, tick, start_row, oldstopline, lines, more = ...
-    local nlines = #lines
-    local stop_row = start_row + nlines
-    local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-    -- a bit messy, should we expose edited but not reparsed tree?
-    -- are multiple edits safe in general?
-    local root = tsstate.parser:tree():root()
-    -- TODO: add proper lookup function!
-    local inode = root:descendant_for_point_range(oldstopline+9000,0, oldstopline,0)
-    local edit
-    if inode == nil then
-      local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
-      tsstate.parser:edit(start_byte,stop_byte,stop_byte,start_row,0,stop_row,0,stop_row,0)
-    else
-      local fakeoldstoprow, fakeoldstopcol, fakebyteoldstop = inode:start()
-      local fake_rows = fakeoldstoprow-oldstopline
-      local fakestop = stop_row+fake_rows
-      local fakebytestop = a.nvim_buf_get_offset(bufnr,fakestop)+fakeoldstopcol
-      tsstate.parser:edit(start_byte,fakebyteoldstop,fakebytestop,start_row,0,fakeoldstoprow,fakeoldstopcol,fakestop,fakeoldstopcol)
-    end
-    tsstate.valid = false
-    --luadev.append_buf({i{edit.start_byte,edit.old_end_byte,edit.new_end_byte},
-    --                   i{edit.start_point, edit.old_end_point, edit.new_end_point}})
+function the_cb(tsstate, ev, bufnr, tick, start_row, oldstopline, stop_row)
+  local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
+  -- a bit messy, should we expose edited but not reparsed tree?
+  -- are multiple edits safe in general?
+  local root = tsstate.parser:tree():root()
+  -- TODO: add proper lookup function!
+  local inode = root:descendant_for_point_range(oldstopline+9000,0, oldstopline,0)
+  local edit
+  if inode == nil then
+    local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
+    tsstate.parser:edit(start_byte,stop_byte,stop_byte,start_row,0,stop_row,0,stop_row,0)
+  else
+    local fakeoldstoprow, fakeoldstopcol, fakebyteoldstop = inode:start()
+    local fake_rows = fakeoldstoprow-oldstopline
+    local fakestop = stop_row+fake_rows
+    local fakebytestop = a.nvim_buf_get_offset(bufnr,fakestop)+fakeoldstopcol
+    tsstate.parser:edit(start_byte,fakebyteoldstop,fakebytestop,start_row,0,fakeoldstoprow,fakeoldstopcol,fakestop,fakeoldstopcol)
   end
+  tsstate.valid = false
+  --luadev.append_buf({i{edit.start_byte,edit.old_end_byte,edit.new_end_byte},
+  --                   i{edit.start_point, edit.old_end_point, edit.new_end_point}})
 end
 
 function attach_buf(tsstate)
   local function cb(ev, ...)
     return the_cb(tsstate, ev, ...)
   end
-  a.nvim_buf_attach(tsstate.bufnr, false, {on_event=cb})
+  a.nvim_buf_attach(tsstate.bufnr, false, {on_lines=cb})
 end
 
 function create_parser(bufnr)
@@ -226,7 +220,7 @@ hl_scope_map = {
   keyword='Statement',
   string='String',
   escape='Special',
-  comment='Comment'
+  comment='Comment',
   ['function']='Identifier',
 }
 
