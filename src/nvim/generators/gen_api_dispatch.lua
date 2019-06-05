@@ -50,6 +50,12 @@ for i = 6, #arg do
     if not fn.noexport then
       functions[#functions + 1] = tmp[j]
       function_names[fn.name] = true
+      if #fn.parameters >= 2 and fn.parameters[2][1] == 'Array' and fn.parameters[2][2] == 'uidata' then
+        -- function recieves the "args" as a parameter
+        fn.receives_array_args = true
+        -- remove the args parameter
+        table.remove(fn.parameters, 2)
+      end
       if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
         -- this function should receive the channel id
         fn.receives_channel_id = true
@@ -268,12 +274,28 @@ for i = 1, #functions do
     if fn.receives_channel_id then
       -- if the function receives the channel id, pass it as first argument
       if #args > 0 or fn.can_fail then
-        output:write('channel_id, '..call_args)
+        output:write('channel_id, ')
+        if fn.receives_array_args then
+          -- if the function recieves the array args, pass it the second argument
+          output:write('args, ')
+        end
+        output:write(call_args)  
       else
         output:write('channel_id')
+        if fn.receives_array_args then
+          output:write(', args')
+        end
       end
     else
-      output:write(call_args)
+      if fn.receives_array_args then
+        if #args > 0 or fn.call_fail then
+          output:write('args, '..call_args)
+        else
+          output:write('args')
+        end
+      else
+        output:write(call_args)
+      end
     end
 
     if fn.can_fail then
