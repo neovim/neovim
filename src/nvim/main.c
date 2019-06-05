@@ -349,18 +349,6 @@ int main(int argc, char **argv)
     p_lpl = false;
   }
 
-// Setting up the remote connection.
-// This has to be always before ui_builtin_start
-if (params.server_name) {
-      input_stop();  // Stop reading input, let the UI take over.
-      uint64_t rv = ui_client_start(params.server_name);
-      if (!rv) {
-          // cannot continue without a channel
-          mch_msg("Could not establish connection with remote server\n");
-          mch_exit(1);
-      }
-  }
-
   // give embedders a chance to set up nvim, by processing a request before
   // startup. This allows an external UI to show messages and prompts from
   // --cmd and buffer loading (e.g. swap files)
@@ -382,6 +370,19 @@ if (params.server_name) {
     TIME_MSG("initialized screen early for UI");
   }
 
+  // Setting up the remote connection.
+  // This has to be always after ui_builtin_start or after the start of atleast one GUI 
+  // as size of "uis[]" must be greater than 1
+  if (params.server_name) {
+    input_stop();  // Stop reading input, let the UI take over.
+    uint64_t rv = ui_client_start(params.server_name);
+    if (!rv) {
+        // cannot continue without a channel
+        mch_msg("Could not establish connection with remote server\n");
+        mch_exit(1);
+    }
+  }
+  
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
