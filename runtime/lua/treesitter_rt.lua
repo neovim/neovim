@@ -7,10 +7,6 @@ end
 local my_ns = __treesitter_rt_ns
 local my_syn_ns = __treesitter_rt_syn_ns
 
-local path = '.deps/build/src/treesitter-javascript/src/highlights.json'
-a.nvim_set_var("_ts_path", path)
-obj = a.nvim_eval("json_decode(readfile(g:_ts_path,'b'))")
-
 
 --luadev = require'luadev'
 --i = require'inspect'
@@ -62,7 +58,7 @@ function create_parser(bufnr)
   local ft = a.nvim_buf_get_option(bufnr, "filetype")
   local tsstate = {}
   tsstate.bufnr = bufnr
-  tsstate.parser = vim.ts_parser(ft)
+  tsstate.parser = vim.ts_parser(ft.."_parser.so", ft)
   parse_tree(tsstate)
   attach_buf(tsstate)
   return tsstate

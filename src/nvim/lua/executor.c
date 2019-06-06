@@ -834,16 +834,31 @@ static int unsafe_ptr_to_ts_tree(lua_State *L)
 
 static int create_tslua_parser(lua_State *L)
 {
-  TSLanguage *tree_sitter_c(void), *tree_sitter_javascript(void);
-
-  if (!lua_gettop(L)) {
+  if (lua_gettop(L) < 2) {
     return 0;
   }
-  char *str = lua_tostring(L,1);
+  const char *path = lua_tostring(L,1);
+  const char *lang_name = lua_tostring(L,2);
 
-  TSLanguage *lang = tree_sitter_c();
-  if (str && striequal(str, "javascript")) {
-    lang = tree_sitter_javascript();
+  // TODO: unsafe!
+  char symbol_buf[128] = "tree_sitter_";
+  STRCAT(symbol_buf, lang_name);
+
+  // TODO: we should maybe keep the uv_lib_t around, and close them
+  // at exit, to keep LeakSanitizer happy.
+  uv_lib_t lib;
+  if (uv_dlopen(path, &lib)) {
+    return luaL_error(L, "uv_dlopen: %s", uv_dlerror(&lib));
+  }
+
+  TSLanguage *(*lang_parser)(void);
+  if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
+    return luaL_error(L, "uv_dlsym: %s", uv_dlerror(&lib));
+  }
+
+  TSLanguage *lang = lang_parser();
+  if (lang == NULL) {
+    return luaL_error(L, "failed to load parser");
   }
   tslua_push_parser(L, lang);
   return 1;
