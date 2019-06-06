@@ -3767,10 +3767,6 @@ void ex_cfile(exarg_T *eap)
   qf_info_T   *qi = &ql_info;
   char_u      *au_name = NULL;
 
-  if (eap->cmdidx == CMD_lfile || eap->cmdidx == CMD_lgetfile
-      || eap->cmdidx == CMD_laddfile)
-    wp = curwin;
-
   switch (eap->cmdidx) {
   case CMD_cfile:     au_name = (char_u *)"cfile"; break;
   case CMD_cgetfile:  au_name = (char_u *)"cgetfile"; break;
@@ -3786,6 +3782,13 @@ void ex_cfile(exarg_T *eap)
     set_string_option_direct((char_u *)"ef", -1, eap->arg, OPT_FREE, 0);
 
   char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
+
+  if (eap->cmdidx == CMD_lfile
+      || eap->cmdidx == CMD_lgetfile
+      || eap->cmdidx == CMD_laddfile) {
+    wp = curwin;
+  }
+
   // This function is used by the :cfile, :cgetfile and :caddfile
   // commands.
   // :cfile always creates a new quickfix list and jumps to the
