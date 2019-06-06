@@ -74,8 +74,6 @@ include_directories(${GENERATED_DIR})
 include_directories(${CACHED_GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
 
-include_directories(${LIBUTF8PROC_INCLUDE_DIRS})
-
 file(MAKE_DIRECTORY ${TOUCHES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
@@ -88,8 +86,9 @@ file(GLOB XDIFF_SOURCES xdiff/*.c)
 file(GLOB XDIFF_HEADERS xdiff/*.h)
 
 # when LIBUTF8PROC build is fixed, don't use lib.c with amalgamated utf8proc.c
-#file(GLOB TS_SOURCES tree_sitter/*.c)
-file(GLOB TS_SOURCES ../tree_sitter/lib.c)
+file(GLOB TS_SOURCES ../tree_sitter/*.c)
+file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
+list(REMOVE_ITEM TS_SOURCES ${TS_SOURCE_AMALGAM})
 
 foreach(subdir
         os
@@ -402,6 +401,7 @@ list(APPEND NVIM_LINK_LIBRARIES
   ${LIBVTERM_LIBRARIES}
   ${LIBTERMKEY_LIBRARIES}
   ${UNIBILIUM_LIBRARIES}
+  ${UTF8PROC_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
 )
 
