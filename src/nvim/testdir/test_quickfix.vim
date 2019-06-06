@@ -3360,3 +3360,15 @@ func Test_vimgrep_autocmd()
   call delete('Xtest2.txt')
   call setqflist([], 'f')
 endfunc
+
+func Test_lbuffer_with_bwipe()
+  new
+  new
+  augroup nasty
+    au * * bwipe
+  augroup END
+  lbuffer
+  augroup nasty
+    au!
+  augroup END
+endfunc
