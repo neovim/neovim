@@ -703,7 +703,6 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
 }
 
 void redraw(uint64_t channel_id, Array uidata, Error *error)
-  FUNC_API_SINCE(7)
 {
   Array call = ARRAY_DICT_INIT;
   char *method_name;
@@ -729,4 +728,5 @@ void redraw(uint64_t channel_id, Array uidata, Error *error)
       }
     }
   }
+  api_free_array(call);
 }

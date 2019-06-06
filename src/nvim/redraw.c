@@ -13,6 +13,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/highlight.h"
 #include "nvim/ui.h"
+#include "nvim/screen.h"
 
 static Map(String, ApiRedrawWrapper) *redraw_methods = NULL;
 

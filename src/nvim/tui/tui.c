@@ -161,7 +161,6 @@ uint64_t tui_ui_client_init(char *servername){
     // PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
     PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
-    // ADD(args, INTEGER_OBJ((int)rc_id));
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
     ADD(args, DICTIONARY_OBJ(opts));
@@ -171,7 +170,7 @@ uint64_t tui_ui_client_init(char *servername){
  
     if (ERROR_SET(&err)) {
       rc_id = 0;
-      mch_msg(err.msg);
+      logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
     }
 
     api_clear_error(&err);
