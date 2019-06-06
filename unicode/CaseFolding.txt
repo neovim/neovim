@@ -1,5 +1,5 @@
-# CaseFolding-12.0.0.txt
-# Date: 2019-01-22, 08:18:22 GMT
+# CaseFolding-12.1.0.txt
+# Date: 2019-03-10, 10:53:00 GMT
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
