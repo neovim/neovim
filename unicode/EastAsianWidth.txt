@@ -1,5 +1,5 @@
-# EastAsianWidth-12.0.0.txt
-# Date: 2019-01-21, 14:12:58 GMT [KW, LI]
+# EastAsianWidth-12.1.0.txt
+# Date: 2019-03-31, 22:01:58 GMT [KW, LI]
 # © 2019 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
@@ -1477,7 +1477,7 @@
 3280..3289;W     # No    [10] CIRCLED IDEOGRAPH ONE..CIRCLED IDEOGRAPH TEN
 328A..32B0;W     # So    [39] CIRCLED IDEOGRAPH MOON..CIRCLED IDEOGRAPH NIGHT
 32B1..32BF;W     # No    [15] CIRCLED NUMBER THIRTY SIX..CIRCLED NUMBER FIFTY
-32C0..32FE;W     # So    [63] IDEOGRAPHIC TELEGRAPH SYMBOL FOR JANUARY..CIRCLED KATAKANA WO
+32C0..32FF;W     # So    [64] IDEOGRAPHIC TELEGRAPH SYMBOL FOR JANUARY..SQUARE ERA NAME REIWA
 3300..33FF;W     # So   [256] SQUARE APAATO..SQUARE GAL
 3400..4DB5;W     # Lo  [6582] CJK UNIFIED IDEOGRAPH-3400..CJK UNIFIED IDEOGRAPH-4DB5
 4DB6..4DBF;W     # Cn    [10] <reserved-4DB6>..<reserved-4DBF>
