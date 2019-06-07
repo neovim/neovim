@@ -1218,9 +1218,14 @@ int do_search(
           while (*r != NUL && *r == ' ') {
             r++;
           }
-          memmove(msgbuf, r, msgbuf + STRLEN(msgbuf) - r);
+          size_t pat_len = msgbuf + STRLEN(msgbuf) - r;
+          memmove(msgbuf, r, pat_len);
           // overwrite old text
-          memset(r, ' ', msgbuf + STRLEN(msgbuf) - r);
+          if ((size_t)(r - msgbuf) >= pat_len) {
+            memset(r, ' ', pat_len);
+          } else {
+            memset(msgbuf + pat_len, ' ', r - msgbuf);
+          }
         }
         msg_outtrans(msgbuf);
         msg_clr_eos();
