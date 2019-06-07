@@ -384,6 +384,11 @@ list_missing_vimpatches() {
     tokens[$token]=1
   done
 
+  # Create an associative array mapping commits to tags.
+  eval "declare -A commit_tags=(
+    $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags --format '[%(objectname)]=%(refname:lstrip=2)' --shell)
+  )"
+
   # Get missing Vim commits
   for vim_commit in $(list_vim_commits); do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
@@ -392,7 +397,8 @@ list_missing_vimpatches() {
       continue
     fi
 
-    if vim_tag="$(git -C "${VIM_SOURCE_DIR}" describe --tags --exact-match "${vim_commit}" 2>/dev/null)"; then
+    vim_tag="${commit_tags[$vim_commit]-}"
+    if [[ -n "$vim_tag" ]]; then
       # Check for vim-patch:<tag> (not commit hash).
       patch_number="vim-patch:${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
       if [[ "${tokens[$patch_number]-}" ]]; then
