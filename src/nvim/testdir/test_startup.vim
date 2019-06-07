@@ -264,11 +264,11 @@ func Test_V_arg()
   call assert_equal("  verbose=0\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V2 -c "set verbose?" -cq')
-  call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n", out)
+  " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n", out)
   call assert_match("  verbose=2\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')
-   call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
+   " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
 endfunc
 
 " Test the -V[N]{filename} argument to set the 'verbose' option to N
@@ -276,7 +276,7 @@ endfunc
 func Test_V_file_arg()
   if RunVim([], [], ' --clean -X -V2Xverbosefile -c "set verbose? verbosefile?" -cq')
     let out = join(readfile('Xverbosefile'), "\n")
-    call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\n", out)
+    " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\n", out)
     call assert_match("\n  verbose=2\n", out)
     call assert_match("\n  verbosefile=Xverbosefile", out)
   endif
