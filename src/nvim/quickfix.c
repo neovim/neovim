@@ -4142,6 +4142,7 @@ void ex_vimgrep(exarg_T *eap)
     // Check whether the quickfix list is still valid. When loading a
     // buffer above, autocommands might have changed the quickfix list.
     if (!vgr_qflist_valid(wp, qi, save_qfid, *eap->cmdlinep)) {
+      FreeWild(fcount, fnames);
       goto theend;
     }
     save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
