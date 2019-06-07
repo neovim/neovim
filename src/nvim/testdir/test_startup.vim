@@ -201,7 +201,7 @@ func Test_o_arg()
     " - both windows should have the same height
     " - window height (+ 2 for the statusline and Ex command) should be equal
     "   to the number of lines
-    " - buffer of both windowns should have no name
+    " - buffer of both windows should have no name
     let [wn, wh1, wh2, ln, ww1, ww2, cn, bn1, bn2] = readfile('Xtestout')
     call assert_equal('2', wn)
     call assert_inrange(0, 1, ww1 - ww2)
@@ -222,6 +222,69 @@ func Test_o_arg()
     call assert_equal(string(wh1 + 2), ln)
     call assert_equal('foo', bn1)
     call assert_equal('bar', bn2)
+  endif
+
+  call delete('Xtestout')
+endfunc
+
+" Test the -p[N] argument to open N tabpages.
+func Test_p_arg()
+  let after = [
+	\ 'call writefile(split(execute("tabs"), "\n"), "Xtestout")',
+	\ 'qall',
+	\ ]
+  if RunVim([], after, '-p2')
+    let lines = readfile('Xtestout')
+    call assert_equal(4, len(lines))
+    call assert_equal('Tab page 1',    lines[0])
+    call assert_equal('>   [No Name]', lines[1])
+    call assert_equal('Tab page 2',    lines[2])
+    call assert_equal('    [No Name]', lines[3])
+  endif
+
+  if RunVim([], after, '-p foo bar')
+    let lines = readfile('Xtestout')
+    call assert_equal(4, len(lines))
+    call assert_equal('Tab page 1', lines[0])
+    call assert_equal('>   foo',    lines[1])
+    call assert_equal('Tab page 2', lines[2])
+    call assert_equal('    bar',    lines[3])
+  endif
+
+  call delete('Xtestout')
+endfunc
+
+" Test the -V[N] argument to set the 'version' option to [N]
+func Test_V_arg()
+  let out = system(GetVimCommand() . ' --clean -es -X -V0 -c "set verbose?" -cq')
+  call assert_equal("  verbose=0\n", out)
+
+  let out = system(GetVimCommand() . ' --clean -es -X -V2 -c "set verbose?" -cq')
+  call assert_match("^sourcing \"$VIMRUNTIME/defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n  verbose=2\n$", out)
+
+  let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')
+  call assert_match("\+*\nsourcing \"$VIMRUNTIME/defaults\.vim\"\r\nline 1: \" The default vimrc file\..*\n  verbose=15\n\+*", out)
+endfunc
+
+" Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
+func Test_A_F_H_arg()
+  let after = [
+	\ 'call writefile([&rightleft, &arabic, 0, &hkmap], "Xtestout")',
+	\ 'qall',
+	\ ]
+  if has('arabic') && RunVim([], after, '-A')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '1', '0', '0'], lines)
+  endif
+
+  if has('farsi') && RunVim([], after, '-F')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '0', '1', '0'], lines)
+  endif
+
+  if has('rightleft') && RunVim([], after, '-H')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '0', '0', '1'], lines)
   endif
 
   call delete('Xtestout')
