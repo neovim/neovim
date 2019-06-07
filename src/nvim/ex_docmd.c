@@ -3758,12 +3758,12 @@ static linenr_T get_address(exarg_T *eap,
         // Start the search just like for the above do_search().
         pos.col = (*cmd != '?') ? MAXCOL : 0;
         pos.coladd = 0;
-        if (searchit(curwin, curbuf, &pos,
+        if (searchit(curwin, curbuf, &pos, NULL,
                      *cmd == '?' ? BACKWARD : FORWARD,
                      (char_u *)"", 1L, SEARCH_MSG,
-                     i, (linenr_T)0, NULL, NULL) != FAIL)
+                     i, (linenr_T)0, NULL, NULL) != FAIL) {
           lnum = pos.lnum;
-        else {
+        } else {
           cmd = NULL;
           goto error;
         }

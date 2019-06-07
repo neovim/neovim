@@ -1069,7 +1069,7 @@ static void command_line_next_incsearch(CommandLineState *s, bool next_match)
     search_flags += SEARCH_KEEP;
   }
   emsg_off++;
-  s->i = searchit(curwin, curbuf, &t,
+  s->i = searchit(curwin, curbuf, &t, NULL,
                   next_match ? FORWARD : BACKWARD,
                   pat, s->count, search_flags,
                   RE_SEARCH, 0, NULL, NULL);

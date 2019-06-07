@@ -609,3 +609,25 @@ func Test_search_match_at_curpos()
 
   close!
 endfunc
+
+func Test_search_display_pattern()
+  new
+  call setline(1, ['foo', 'bar', 'foobar'])
+
+  call cursor(1, 1)
+  let @/ = 'foo'
+  let pat = escape(@/, '()*?'. '\s\+')
+  let g:a = execute(':unsilent :norm! n')
+  call assert_match(pat, g:a)
+
+  " right-left
+  if exists("+rightleft")
+    set rl
+    call cursor(1, 1)
+    let @/ = 'foo'
+    let pat = 'oof/\s\+'
+    let g:a = execute(':unsilent :norm! n')
+    call assert_match(pat, g:a)
+    set norl
+  endif
+endfunc
