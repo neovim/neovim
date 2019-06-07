@@ -274,7 +274,7 @@ endfunc
 " Test the -V[N]{filename} argument to set the 'verbose' option to N
 " and set 'verbosefile' to filename.
 func Test_V_file_arg()
-  if RunVim([], [], ' --clean -X -V2Xverbosefile -c "set verbose? verbosefile?" -cq')
+  if RunVim([], [], ' --clean -V2Xverbosefile -c "set verbose? verbosefile?" -cq')
     let out = join(readfile('Xverbosefile'), "\n")
     " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\n", out)
     call assert_match("\n  verbose=2\n", out)
