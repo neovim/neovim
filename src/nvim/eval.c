@@ -1890,7 +1890,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
           }
         }
         if (p != NULL) {
-          vim_setenv(name, p);
+          os_setenv(name, p, 1);
           if (STRICMP(name, "HOME") == 0) {
             init_homedir();
           } else if (didset_vim && STRICMP(name, "VIM") == 0) {
