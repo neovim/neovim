@@ -254,16 +254,21 @@ func Test_p_arg()
   call delete('Xtestout')
 endfunc
 
-" Test the -V[N] argument to set the 'version' option to [N]
+" Test the -V[N] argument to set the 'verbose' option to [N]
 func Test_V_arg()
+  if has('gui_running')
+    " Can't catch the output of gvim.
+    return
+  endif
   let out = system(GetVimCommand() . ' --clean -es -X -V0 -c "set verbose?" -cq')
   call assert_equal("  verbose=0\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V2 -c "set verbose?" -cq')
-  call assert_match("^sourcing \"$VIMRUNTIME/defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n  verbose=2\n$", out)
+  call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n", out)
+  call assert_match("  verbose=2\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')
-  call assert_match("\+*\nsourcing \"$VIMRUNTIME/defaults\.vim\"\r\nline 1: \" The default vimrc file\..*\n  verbose=15\n\+*", out)
+   call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
 endfunc
 
 " Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
@@ -272,7 +277,9 @@ func Test_A_F_H_arg()
 	\ 'call writefile([&rightleft, &arabic, 0, &hkmap], "Xtestout")',
 	\ 'qall',
 	\ ]
-  if has('arabic') && RunVim([], after, '-A')
+  " Use silent Ex mode to avoid the hit-Enter prompt for the warning that
+  " 'encoding' is not utf-8.
+  if has('arabic') && &encoding == 'utf-8' && RunVim([], after, '-e -s -A')
     let lines = readfile('Xtestout')
     call assert_equal(['1', '1', '0', '0'], lines)
   endif
