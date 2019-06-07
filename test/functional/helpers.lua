@@ -26,7 +26,7 @@ local nvim_prog = (
   or global_helpers.test_build_dir .. '/bin/nvim'
 )
 -- Default settings for the test session.
-local nvim_set  = 'set shortmess+=I background=light noswapfile noautoindent'
+local nvim_set  = 'set shortmess+=IS background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
                   ..' belloff= noshowcmd noruler nomore'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE',

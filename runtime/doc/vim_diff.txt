@@ -51,7 +51,7 @@ the differences.
 - 'nrformats' defaults to "bin,hex"
 - 'ruler' is set by default
 - 'sessionoptions' doesn't include "options"
-- 'shortmess' sets "F" flag
+- 'shortmess' includes "F", excludes "S"
 - 'showcmd' is set by default
 - 'sidescroll' defaults to 1
 - 'smarttab' is set by default
