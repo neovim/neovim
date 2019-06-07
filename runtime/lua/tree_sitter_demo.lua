@@ -7,7 +7,7 @@ end
 local my_ns = __treesitter_rt_ns
 
 function ts_inspect_pos(row,col)
-  local tree = parse_tree(theparser)
+  local tree = theparser:parse_tree()
   local root = tree:root()
   local node = root:descendant_for_point_range(row,col,row,col)
   show_node(node)

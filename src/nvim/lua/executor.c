@@ -822,16 +822,6 @@ void ex_luafile(exarg_T *const eap)
   }
 }
 
-static int unsafe_ptr_to_ts_tree(lua_State *L)
-{
-  if (!lua_gettop(L)) {
-    return 0;
-  }
-  TSTree *const *ptr = lua_topointer(L,1);
-  tslua_push_tree(L, *ptr);
-  return 1;
-}
-
 static int create_tslua_parser(lua_State *L)
 {
   if (lua_gettop(L) < 2) {
@@ -867,9 +857,7 @@ static int create_tslua_parser(lua_State *L)
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   tslua_init(lstate);
-  lua_pushcfunction(lstate, unsafe_ptr_to_ts_tree);
-  lua_setfield(lstate, -2, "unsafe_ts_tree");
 
   lua_pushcfunction(lstate, create_tslua_parser);
-  lua_setfield(lstate, -2, "ts_parser");
+  lua_setfield(lstate, -2, "_create_ts_parser");
 }
