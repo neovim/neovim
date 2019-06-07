@@ -196,8 +196,8 @@ func Test_o_arg()
     " Open 2 windows split vertically. Expect:
     " - 2 windows
     " - both windows should have the same or almost the same width
-    " - sum of both windows width (+ 1 separator) should be equal to the
-    "   number of columns
+    " - sum of both windows width (+ 1 for the separator) should be equal to
+    "   the number of columns
     " - both windows should have the same height
     " - window height (+ 2 for the statusline and Ex command) should be equal
     "   to the number of lines
@@ -269,6 +269,48 @@ func Test_V_arg()
 
   let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')
    call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
+endfunc
+
+" Test the -V[N]{filename} argument to set the 'verbose' option to N
+" and set 'verbosefile' to filename.
+func Test_V_file_arg()
+  if RunVim([], [], ' --clean -X -V2Xverbosefile -c "set verbose? verbosefile?" -cq')
+    let out = join(readfile('Xverbosefile'), "\n")
+    call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\n", out)
+    call assert_match("\n  verbose=2\n", out)
+    call assert_match("\n  verbosefile=Xverbosefile", out)
+  endif
+
+  call delete('Xverbosefile')
+endfunc
+
+" Test the -m, -M and -R arguments:
+" -m resets 'write'
+" -M resets 'modifiable' and 'write'
+" -R sets 'readonly'
+func Test_m_M_R()
+  let after = [
+	\ 'call writefile([&write, &modifiable, &readonly, &updatecount], "Xtestout")',
+	\ 'qall',
+	\ ]
+  if RunVim([], after, '')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '1', '0', '200'], lines)
+  endif
+  if RunVim([], after, '-m')
+    let lines = readfile('Xtestout')
+    call assert_equal(['0', '1', '0', '200'], lines)
+  endif
+  if RunVim([], after, '-M')
+    let lines = readfile('Xtestout')
+    call assert_equal(['0', '0', '0', '200'], lines)
+  endif
+  if RunVim([], after, '-R')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '1', '1', '10000'], lines)
+  endif
+
+  call delete('Xtestout')
 endfunc
 
 " Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
@@ -417,7 +459,7 @@ func Test_zzz_startinsert()
   call writefile(['123456'], 'Xtestout')
   let after = [
 	\ ':startinsert',
-  \ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
+	\ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
 	\ ]
   if RunVim([], after, 'Xtestout')
     let lines = readfile('Xtestout')
@@ -427,7 +469,7 @@ func Test_zzz_startinsert()
   call writefile(['123456'], 'Xtestout')
   let after = [
 	\ ':startinsert!',
-  \ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
+	\ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
 	\ ]
   if RunVim([], after, 'Xtestout')
     let lines = readfile('Xtestout')
