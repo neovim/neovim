@@ -9,7 +9,20 @@ extern "C" {
 #include <stdbool.h>
 #include <stdio.h>
 
-#if defined(TREE_SITTER_TEST)
+#include "nvim/memory.h"
+
+#if 1
+
+static inline bool ts_toggle_allocation_recording(bool value) {
+  return false;
+}
+
+#define ts_malloc xmalloc
+#define ts_calloc xcalloc
+#define ts_realloc xrealloc
+#define ts_free xfree
+
+#elif defined(TREE_SITTER_TEST)
 
 void *ts_record_malloc(size_t);
 void *ts_record_calloc(size_t, size_t);
