@@ -6,7 +6,8 @@ func! TSTest()
     return
   end
   " TODO: module!
-  lua require'treesitter_rt'
+  lua require'vim.tree_sitter'
+  lua require'tree_sitter_demo'
   lua theparser = create_parser(vim.api.nvim_get_current_buf())
   let g:has_ts = v:true
 endfunc
