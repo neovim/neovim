@@ -110,8 +110,12 @@ commit_message() {
 }
 
 find_git_remote() {
-  git remote -v \
-    | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}'
+  git_remote=$(git remote -v \
+    | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}')
+  if [[ -z "$git_remote" ]]; then
+    git_remote="origin"
+  fi
+  echo "$git_remote"
 }
 
 assign_commit_details() {
