@@ -123,9 +123,9 @@ func Test_argument()
   call assert_equal(['d', 'c', 'b', 'a', 'c'], g:buffers)
 
   redir => result
-  ar
+  args
   redir END
-  call assert_true(result =~# 'a b \[c] d')
+  call assert_equal('a   b   [c] d', trim(result))
 
   .argd
   call assert_equal(['a', 'b', 'd'], argv())
@@ -178,6 +178,34 @@ func Test_args_with_quote()
     call assert_equal('"foobar', argv(0))
     %argdelete
   endif
+endfunc
+
+func Test_list_arguments()
+  " Clean the argument list
+  arga a | %argd
+
+  " four args half the screen width makes two lines with two columns
+  let aarg = repeat('a', &columns / 2 - 4)
+  let barg = repeat('b', &columns / 2 - 4)
+  let carg = repeat('c', &columns / 2 - 4)
+  let darg = repeat('d', &columns / 2 - 4)
+  exe 'argadd ' aarg barg carg darg
+
+  redir => result
+  args
+  redir END
+  call assert_match('\[' . aarg . '] \+' . carg . '\n' . barg . ' \+' . darg, trim(result))
+
+  " if one arg is longer than half the screen make one column
+  exe 'argdel' aarg
+  let aarg = repeat('a', &columns / 2 + 2)
+  exe '0argadd' aarg
+  redir => result
+  args
+  redir END
+  call assert_match(aarg . '\n\[' . barg . ']\n' . carg . '\n' . darg, trim(result))
+
+  %argdelete
 endfunc
 
 " Test for 0argadd and 0argedit

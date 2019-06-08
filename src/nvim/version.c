@@ -2002,29 +2002,69 @@ void ex_version(exarg_T *eap)
   }
 }
 
+/// Output a string for the version message.  If it's going to wrap, output a
+/// newline, unless the message is too long to fit on the screen anyway.
+/// When "wrap" is TRUE wrap the string in [].
+/// @param s
+/// @param wrap
+static void version_msg_wrap(char_u *s, int wrap)
+{
+  int len = (int)vim_strsize(s) + (wrap ? 2 : 0);
+
+  if (!got_int
+      && (len < Columns)
+      && (msg_col + len >= Columns)
+      && (*s != '\n')) {
+    msg_putchar('\n');
+  }
+
+  if (!got_int) {
+    if (wrap) {
+      msg_puts("[");
+    }
+    msg_puts((char *)s);
+    if (wrap) {
+      msg_puts("]");
+    }
+  }
+}
+
+static void version_msg(char *s)
+{
+  version_msg_wrap((char_u *)s, false);
+}
+
 /// List all features aligned in columns, dictionary style.
 static void list_features(void)
 {
-  int nfeat = 0;
+  list_in_columns((char_u **)features, -1, -1);
+  MSG_PUTS("See \":help feature-compile\"\n\n");
+}
+
+/// List string items nicely aligned in columns.
+/// When "size" is < 0 then the last entry is marked with NULL.
+/// The entry with index "current" is inclosed in [].
+void list_in_columns(char_u **items, int size, int current)
+{
+  int item_count = 0;
   int width = 0;
 
-  // Find the length of the longest feature name, use that + 1 as the column
-  // width
+  // Find the length of the longest item, use that + 1 as the column width.
   int i;
-  for (i = 0; features[i] != NULL; ++i) {
-    int l = (int)STRLEN(features[i]);
+  for (i = 0; size < 0 ? items[i] != NULL : i < size; i++) {
+    int l = (int)vim_strsize(items[i]) + (i == current ? 2 : 0);
 
     if (l > width) {
       width = l;
     }
-    nfeat++;
+    item_count++;
   }
   width += 1;
 
   if (Columns < width) {
     // Not enough screen columns - show one per line
-    for (i = 0; features[i] != NULL; ++i) {
-      version_msg(features[i]);
+    for (i = 0; items[i] != NULL; i++) {
+      version_msg_wrap(items[i], i == current);
       if (msg_col > 0) {
         msg_putchar('\n');
       }
@@ -2035,20 +2075,28 @@ static void list_features(void)
   // The rightmost column doesn't need a separator.
   // Sacrifice it to fit in one more column if possible.
   int ncol = (int)(Columns + 1) / width;
-  int nrow = nfeat / ncol + (nfeat % ncol ? 1 : 0);
+  int nrow = item_count / ncol + (item_count % ncol ? 1 : 0);
 
   // i counts columns then rows.  idx counts rows then columns.
   for (i = 0; !got_int && i < nrow * ncol; ++i) {
     int idx = (i / ncol) + (i % ncol) * nrow;
-    if (idx < nfeat) {
+    if (idx < item_count) {
       int last_col = (i + 1) % ncol == 0;
-      msg_puts(features[idx]);
+      if (idx == current) {
+        msg_putchar('[');
+      }
+      msg_puts((char *)items[idx]);
+      if (idx == current) {
+        msg_putchar(']');
+      }
       if (last_col) {
         if (msg_col > 0) {
           msg_putchar('\n');
         }
       } else {
-        msg_putchar(' ');
+        while (msg_col % width) {
+          msg_putchar(' ');
+        }
       }
     } else {
       if (msg_col > 0) {
@@ -2056,7 +2104,6 @@ static void list_features(void)
       }
     }
   }
-  MSG_PUTS("See \":help feature-compile\"\n\n");
 }
 
 void list_lua_version(void)
@@ -2119,26 +2166,6 @@ void list_version(void)
 #endif  // ifdef HAVE_PATHDEF
 
   version_msg("\nRun :checkhealth for more info");
-}
-
-/// Output a string for the version message.  If it's going to wrap, output a
-/// newline, unless the message is too long to fit on the screen anyway.
-///
-/// @param s
-static void version_msg(char *s)
-{
-  int len = (int)STRLEN(s);
-
-  if (!got_int
-      && (len < Columns)
-      && (msg_col + len >= Columns)
-      && (*s != '\n')) {
-    msg_putchar('\n');
-  }
-
-  if (!got_int) {
-    MSG_PUTS(s);
-  }
 }
 
 
