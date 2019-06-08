@@ -30,9 +30,9 @@ usage() {
   echo "    -g {vim-revision}  Download a Vim patch."
   echo "    -s                 Create a vim-patch pull request."
   echo "    -r {pr-number}     Review a vim-patch pull request."
-  echo '    -V                 Clone the Vim source code to $VIM_SOURCE_DIR.'
+  echo "    -V                 Clone the Vim source code to \$VIM_SOURCE_DIR."
   echo
-  echo '    $VIM_SOURCE_DIR controls where Vim sources are found'
+  echo "    \$VIM_SOURCE_DIR controls where Vim sources are found"
   echo "    (default: '${VIM_SOURCE_DIR_DEFAULT}')"
 }
 
@@ -93,9 +93,11 @@ get_vim_sources() {
       exit 1
     fi
     echo "Updating Vim sources: ${VIM_SOURCE_DIR}"
-    git pull --ff &&
-      msg_ok "Updated Vim sources." ||
+    if git pull --ff; then
+      msg_ok "Updated Vim sources."
+    else
       msg_err "Could not update Vim sources; ignoring error."
+    fi
   fi
 }
 
@@ -147,18 +149,18 @@ preprocess_patch() {
 
   # Remove *.proto, Make*, gui_*, some if_*
   local na_src='proto\|Make*\|gui_*\|if_lua\|if_mzsch\|if_olepp\|if_ole\|if_perl\|if_py\|if_ruby\|if_tcl\|if_xcmdsrv'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('${na_src}'\)@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/\S*\<\%(testdir/\)\@<!\%('"${na_src}"'\)@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove unwanted Vim doc files.
   local na_doc='channel\.txt\|netbeans\.txt\|os_\w\+\.txt\|term\.txt\|todo\.txt\|version\d\.txt\|sponsor\.txt\|intro\.txt\|tags'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('${na_doc}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/runtime/doc/\<\%('"${na_doc}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove "Last change ..." changes in doc files.
   2>/dev/null $nvim --cmd 'set dir=/tmp' +'%s/^@@.*\n.*For Vim version.*Last change.*\n.*For Vim version.*Last change.*//' +w +q "$file"
 
   # Remove screen dumps, testdir/Make_*.mak files
   local na_src_testdir='Make_amiga.mak\|Make_dos.mak\|Make_ming.mak\|Make_vms.mms\|dumps/.*.dump'
-  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('${na_src_testdir}'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
+  2>/dev/null $nvim --cmd 'set dir=/tmp' +'g@^diff --git a/src/testdir/\<\%('"${na_src_testdir}"'\)\>@norm! d/\v(^diff)|%$' +w +q "$file"
 
   # Remove version.c #7555
   local na_po='version.c'
@@ -216,6 +218,7 @@ get_vimpatch() {
   msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'."
 }
 
+# shellcheck disable=SC2015  # "Note that A && B || C is not if-then-else."
 stage_patch() {
   get_vimpatch "$1"
   local try_apply="${2:-}"
@@ -285,6 +288,7 @@ git_hub_pr() {
   git hub pull new -m "$1"
 }
 
+# shellcheck disable=SC2015  # "Note that A && B || C is not if-then-else."
 submit_pr() {
   require_executable git
   local push_first
@@ -316,7 +320,7 @@ submit_pr() {
   local patches
   # Extract just the "vim-patch:X.Y.ZZZZ" or "vim-patch:sha" portion of each log
   patches=("$(git log --grep=vim-patch --reverse --format='%s' "${git_remote}"/master..HEAD | sed 's/: .*//')")
-  patches=(${patches[@]//vim-patch:}) # Remove 'vim-patch:' prefix for each item in array.
+  patches=("${patches[@]//vim-patch:}") # Remove 'vim-patch:' prefix for each item in array.
   local pr_title="${patches[*]}" # Create space-separated string from array.
   pr_title="${pr_title// /,}" # Replace spaces with commas.
 
@@ -369,7 +373,7 @@ list_vimpatch_tokens() {
 # a "vim-patch:xxx" token in the Nvim git log.
 list_vimpatch_numbers() {
   # Transform "vim-patch:X.Y.ZZZZ" to "ZZZZ".
-  list_vimpatch_tokens | while read vimpatch_token; do
+  list_vimpatch_tokens | while read -r vimpatch_token; do
     echo "$vimpatch_token" | grep '8\.0\.' | sed 's/.*vim-patch:8\.0\.\([0-9a-z]\+\).*/\1/'
   done
 }
@@ -410,7 +414,7 @@ show_vimpatches() {
   get_vim_sources
   printf "\nVim patches missing from Neovim:\n"
 
-  list_missing_vimpatches | while read vim_commit; do
+  list_missing_vimpatches | while read -r vim_commit; do
     if [ -n "$(git -C "$VIM_SOURCE_DIR" diff-tree --no-commit-id --name-only  "${vim_commit}" -- runtime)" ]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
@@ -507,8 +511,9 @@ review_pr() {
   echo
   echo "Downloading data for pull request #${pr}."
 
-  local pr_commit_urls=($(curl -Ssf "https://api.github.com/repos/neovim/neovim/pulls/${pr}/commits" \
-                          | jq -r '.[].html_url'))
+  local pr_commit_urls=(
+    "$(curl -Ssf "https://api.github.com/repos/neovim/neovim/pulls/${pr}/commits" \
+      | jq -r '.[].html_url')")
 
   echo "Found ${#pr_commit_urls[@]} commit(s)."
 
