@@ -21,6 +21,8 @@ describe('ui/ext_messages', function()
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [5] = {foreground = Screen.colors.Blue1},
       [6] = {bold = true, reverse = true},
+      [7] = {background = Screen.colors.Yellow},
+      [8] = {foreground = Screen.colors.Red},
     })
   end)
   after_each(function()
@@ -300,6 +302,33 @@ describe('ui/ext_messages', function()
       {kind="echoerr", content={{"fail", 2}}},
       {kind="echoerr", content={{"extrafail", 2}}},
       {kind="echoerr", content={{"problem", 2}}}
+    }}
+  end)
+
+  it('shortmess-=S', function()
+    command('set shortmess-=S')
+    feed('iline 1\nline 2<esc>')
+
+    feed('/line<cr>')
+    screen:expect{grid=[[
+      {7:^line} 1                   |
+      {7:line} 2                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={
+      {content = {{"/line      [1/2] W"}}, kind = "search_count"}
+    }}
+
+    feed('n')
+    screen:expect{grid=[[
+      {7:line} 1                   |
+      {7:^line} 2                   |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={
+      {content = {{"/line        [2/2]"}}, kind = "search_count"}
     }}
   end)
 

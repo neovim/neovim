@@ -1168,7 +1168,9 @@ int do_search(
         // search stat.  Use all the space available, so that the
         // search state is right aligned.  If there is not enough space
         // msg_strtrunc() will shorten in the middle.
-        if (msg_scrolled != 0) {
+        if (ui_has(kUIMessages)) {
+          len = 0;  // adjusted below
+        } else if (msg_scrolled != 0) {
           // Use all the columns.
           len = (int)(Rows - msg_row) * Columns - 1;
         } else {
@@ -4328,6 +4330,7 @@ static void search_stat(int dirc, pos_T *pos,
 
       // keep the message even after redraw, but don't put in history
       msg_hist_off = true;
+      msg_ext_set_kind("search_count");
       give_warning(msgbuf, false);
       msg_hist_off = false;
     }

@@ -3018,7 +3018,10 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   } else {
     keep_msg_attr = 0;
   }
-  msg_ext_set_kind("wmsg");
+
+  if (msg_ext_kind == NULL) {
+    msg_ext_set_kind("wmsg");
+  }
 
   if (msg_attr((const char *)message, keep_msg_attr) && msg_scrolled == 0) {
     set_keep_msg(message, keep_msg_attr);
