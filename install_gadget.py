@@ -119,7 +119,8 @@ GADGETS = {
     'all': {
       'file_name': 'vscode-mono-debug.vsix',
       'version': '0.15.8',
-      'checksum': '723eb2b621b99d65a24f215cb64b45f5fe694105613a900a03c859a62a810470',
+      'checksum':
+          '723eb2b621b99d65a24f215cb64b45f5fe694105613a900a03c859a62a810470',
     }
   },
   'vscode-bash-debug': {
@@ -135,6 +136,7 @@ GADGETS = {
     }
   }
 }
+
 
 @contextlib.contextmanager
 def CurrentWorkingDir( d ):
@@ -200,7 +202,7 @@ def InstallTclProDebug( name, root ):
 
 
   with CurrentWorkingDir( os.path.join( root, 'lib', 'tclparser' ) ):
-    subprocess.check_call( configure  )
+    subprocess.check_call( configure )
     subprocess.check_call( [ 'make' ] )
 
   MakeSymlink( gadget_dir, name, root )
@@ -274,15 +276,15 @@ def RemoveIfExists( destination ):
 # other than crappy code. Let's do it's job for it.
 class ModePreservingZipFile( zipfile.ZipFile ):
   def extract( self, member, path = None, pwd = None ):
-    if not isinstance(member, zipfile.ZipInfo):
-      member = self.getinfo(member)
+    if not isinstance( member, zipfile.ZipInfo ):
+      member = self.getinfo( member )
 
     if path is None:
       path = os.getcwd()
 
-    ret_val = self._extract_member(member, path, pwd)
+    ret_val = self._extract_member( member, path, pwd )
     attr = member.external_attr >> 16
-    os.chmod(ret_val, attr)
+    os.chmod( ret_val, attr )
     return ret_val
 
 
@@ -323,6 +325,7 @@ def CloneRepoTo( url, ref, destination ):
   RemoveIfExists( destination )
   subprocess.check_call( [ 'git', 'clone', url, destination ] )
   subprocess.check_call( [ 'git', '-C', destination, 'checkout', ref ] )
+
 
 OS = install.GetOS()
 gadget_dir = install.GetGadgetDir( os.path.dirname( __file__ ), OS )
@@ -388,7 +391,7 @@ for name, gadget in GADGETS.items():
       root = os.path.join( destination, 'root' )
       ExtractZipTo( file_path,
                     root,
-                    format = gadget[ 'download' ].get( 'format', 'zip' )  )
+                    format = gadget[ 'download' ].get( 'format', 'zip' ) )
     elif 'repo' in gadget:
       url = string.Template( gadget[ 'repo' ][ 'url' ] ).substitute( v )
       ref = string.Template( gadget[ 'repo' ][ 'ref' ] ).substitute( v )
