@@ -98,6 +98,9 @@ func Test_missing_dir()
   split bar/x.txt
   only
 
+  " Delete the buffer so that swap file is removed before we try to delete the
+  " directory.  That fails on MS-Windows.
+  %bdelete!
   set directory&
   call delete('Xswapdir', 'rf')
 endfunc
