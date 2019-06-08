@@ -65,6 +65,8 @@ static struct luaL_Reg node_meta[] = {
   {NULL, NULL}
 };
 
+PMap(cstr_t) *langs;
+
 void build_meta(lua_State *L, const luaL_Reg *meta)
 {
   // [env, target]
@@ -86,6 +88,9 @@ void build_meta(lua_State *L, const luaL_Reg *meta)
 /// all global state is stored in the regirstry of the lua_State
 void tslua_init(lua_State *L)
 {
+
+  langs = pmap_new(cstr_t)();
+
   lua_createtable(L, 0, 0);
 
   // type metatables
@@ -114,9 +119,55 @@ static int tslua_debug(lua_State *L)
   return 2;
 }
 
-void tslua_push_parser(lua_State *L, TSLanguage *lang)
+
+int ts_lua_register_lang(lua_State *L)
+{
+  if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+    return luaL_error(L, "string expected");
+  }
+
+  const char *path = lua_tostring(L,1);
+  const char *lang_name = lua_tostring(L,2);
+
+  if (pmap_has(cstr_t)(langs, lang_name)) {
+    return 0;
+  }
+
+  // TODO: unsafe!
+  char symbol_buf[128] = "tree_sitter_";
+  STRCAT(symbol_buf, lang_name);
+
+  // TODO: we should maybe keep the uv_lib_t around, and close them
+  // at exit, to keep LeakSanitizer happy.
+  uv_lib_t lib;
+  if (uv_dlopen(path, &lib)) {
+    return luaL_error(L, "Failed to load parser: uv_dlopen: %s", uv_dlerror(&lib));
+  }
+
+  TSLanguage *(*lang_parser)(void);
+  if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
+    return luaL_error(L, "Failed to load parser: uv_dlsym: %s", uv_dlerror(&lib));
+  }
+
+  TSLanguage *lang = lang_parser();
+  if (lang == NULL) {
+    return luaL_error(L, "Failed to load parser: internal error");
+  }
+
+  pmap_put(cstr_t)(langs, xstrdup(lang_name), lang);
+
+  lua_pushboolean(L, true);
+  return 1;
+}
+
+int tslua_push_parser(lua_State *L, const char *lang_name)
 {
   TSParser *parser = ts_parser_new();
+  TSLanguage *lang = pmap_get(cstr_t)(langs, lang_name);
+  if (!lang) {
+    return luaL_error(L, "no such language: %s", lang_name);
+  }
+
   ts_parser_set_language(parser, lang);
   Tslua_parser *p = lua_newuserdata(L, sizeof(Tslua_parser));  // [udata]
   p->parser = parser;
@@ -126,6 +177,7 @@ void tslua_push_parser(lua_State *L, TSLanguage *lang)
   lua_getfield(L, -1, "parser-meta");  // [udata, env, meta]
   lua_setmetatable(L, -3);  // [udata, env]
   lua_pop(L, 1);  // [udata]
+  return 1;
 }
 
 static Tslua_parser *parser_check(lua_State *L)

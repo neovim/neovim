@@ -38,7 +38,7 @@ local function create_parser(bufnr)
   end
   local ft = a.nvim_buf_get_option(bufnr, "filetype")
   local self = setmetatable({bufnr=bufnr, valid=false}, Parser)
-  self._parser = vim._create_ts_parser(ft.."_parser.so", ft)
+  self._parser = vim._create_ts_parser(ft)
   self:parse_tree()
   local function cb(ev, ...)
     -- TODO: use weakref to self, so that the parser is free'd is no plugin is

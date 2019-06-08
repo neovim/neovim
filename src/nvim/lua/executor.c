@@ -824,34 +824,13 @@ void ex_luafile(exarg_T *const eap)
 
 static int create_tslua_parser(lua_State *L)
 {
-  if (lua_gettop(L) < 2) {
-    return 0;
-  }
-  const char *path = lua_tostring(L,1);
-  const char *lang_name = lua_tostring(L,2);
-
-  // TODO: unsafe!
-  char symbol_buf[128] = "tree_sitter_";
-  STRCAT(symbol_buf, lang_name);
-
-  // TODO: we should maybe keep the uv_lib_t around, and close them
-  // at exit, to keep LeakSanitizer happy.
-  uv_lib_t lib;
-  if (uv_dlopen(path, &lib)) {
-    return luaL_error(L, "uv_dlopen: %s", uv_dlerror(&lib));
+  if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
+    return luaL_error(L, "string expected");
   }
 
-  TSLanguage *(*lang_parser)(void);
-  if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
-    return luaL_error(L, "uv_dlsym: %s", uv_dlerror(&lib));
-  }
+  const char *lang_name = lua_tostring(L,1);
 
-  TSLanguage *lang = lang_parser();
-  if (lang == NULL) {
-    return luaL_error(L, "failed to load parser");
-  }
-  tslua_push_parser(L, lang);
-  return 1;
+  return tslua_push_parser(L, lang_name);
 }
 
 static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
@@ -860,4 +839,7 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, create_tslua_parser);
   lua_setfield(lstate, -2, "_create_ts_parser");
+
+  lua_pushcfunction(lstate, ts_lua_register_lang);
+  lua_setfield(lstate, -2, "ts_add_language");
 }
