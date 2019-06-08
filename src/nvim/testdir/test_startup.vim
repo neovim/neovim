@@ -196,12 +196,12 @@ func Test_o_arg()
     " Open 2 windows split vertically. Expect:
     " - 2 windows
     " - both windows should have the same or almost the same width
-    " - sum of both windows width (+ 1 separator) should be equal to the
-    "   number of columns
+    " - sum of both windows width (+ 1 for the separator) should be equal to
+    "   the number of columns
     " - both windows should have the same height
     " - window height (+ 2 for the statusline and Ex command) should be equal
     "   to the number of lines
-    " - buffer of both windowns should have no name
+    " - buffer of both windows should have no name
     let [wn, wh1, wh2, ln, ww1, ww2, cn, bn1, bn2] = readfile('Xtestout')
     call assert_equal('2', wn)
     call assert_inrange(0, 1, ww1 - ww2)
@@ -222,6 +222,118 @@ func Test_o_arg()
     call assert_equal(string(wh1 + 2), ln)
     call assert_equal('foo', bn1)
     call assert_equal('bar', bn2)
+  endif
+
+  call delete('Xtestout')
+endfunc
+
+" Test the -p[N] argument to open N tabpages.
+func Test_p_arg()
+  let after = [
+	\ 'call writefile(split(execute("tabs"), "\n"), "Xtestout")',
+	\ 'qall',
+	\ ]
+  if RunVim([], after, '-p2')
+    let lines = readfile('Xtestout')
+    call assert_equal(4, len(lines))
+    call assert_equal('Tab page 1',    lines[0])
+    call assert_equal('>   [No Name]', lines[1])
+    call assert_equal('Tab page 2',    lines[2])
+    call assert_equal('    [No Name]', lines[3])
+  endif
+
+  if RunVim([], after, '-p foo bar')
+    let lines = readfile('Xtestout')
+    call assert_equal(4, len(lines))
+    call assert_equal('Tab page 1', lines[0])
+    call assert_equal('>   foo',    lines[1])
+    call assert_equal('Tab page 2', lines[2])
+    call assert_equal('    bar',    lines[3])
+  endif
+
+  call delete('Xtestout')
+endfunc
+
+" Test the -V[N] argument to set the 'verbose' option to [N]
+func Test_V_arg()
+  if has('gui_running')
+    " Can't catch the output of gvim.
+    return
+  endif
+  let out = system(GetVimCommand() . ' --clean -es -X -V0 -c "set verbose?" -cq')
+  call assert_equal("  verbose=0\n", out)
+
+  let out = system(GetVimCommand() . ' --clean -es -X -V2 -c "set verbose?" -cq')
+  " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n", out)
+  call assert_match("  verbose=2\n", out)
+
+  let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')
+   " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\r\nline 1: \" The default vimrc file\..*  verbose=15\n", out)
+endfunc
+
+" Test the -V[N]{filename} argument to set the 'verbose' option to N
+" and set 'verbosefile' to filename.
+func Test_V_file_arg()
+  if RunVim([], [], ' --clean -V2Xverbosefile -c "set verbose? verbosefile?" -cq')
+    let out = join(readfile('Xverbosefile'), "\n")
+    " call assert_match("sourcing \"$VIMRUNTIME[\\/]defaults\.vim\"\n", out)
+    call assert_match("\n  verbose=2\n", out)
+    call assert_match("\n  verbosefile=Xverbosefile", out)
+  endif
+
+  call delete('Xverbosefile')
+endfunc
+
+" Test the -m, -M and -R arguments:
+" -m resets 'write'
+" -M resets 'modifiable' and 'write'
+" -R sets 'readonly'
+func Test_m_M_R()
+  let after = [
+	\ 'call writefile([&write, &modifiable, &readonly, &updatecount], "Xtestout")',
+	\ 'qall',
+	\ ]
+  if RunVim([], after, '')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '1', '0', '200'], lines)
+  endif
+  if RunVim([], after, '-m')
+    let lines = readfile('Xtestout')
+    call assert_equal(['0', '1', '0', '200'], lines)
+  endif
+  if RunVim([], after, '-M')
+    let lines = readfile('Xtestout')
+    call assert_equal(['0', '0', '0', '200'], lines)
+  endif
+  if RunVim([], after, '-R')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '1', '1', '10000'], lines)
+  endif
+
+  call delete('Xtestout')
+endfunc
+
+" Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
+func Test_A_F_H_arg()
+  let after = [
+	\ 'call writefile([&rightleft, &arabic, 0, &hkmap], "Xtestout")',
+	\ 'qall',
+	\ ]
+  " Use silent Ex mode to avoid the hit-Enter prompt for the warning that
+  " 'encoding' is not utf-8.
+  if has('arabic') && &encoding == 'utf-8' && RunVim([], after, '-e -s -A')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '1', '0', '0'], lines)
+  endif
+
+  if has('farsi') && RunVim([], after, '-F')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '0', '1', '0'], lines)
+  endif
+
+  if has('rightleft') && RunVim([], after, '-H')
+    let lines = readfile('Xtestout')
+    call assert_equal(['1', '0', '0', '1'], lines)
   endif
 
   call delete('Xtestout')
@@ -347,7 +459,7 @@ func Test_zzz_startinsert()
   call writefile(['123456'], 'Xtestout')
   let after = [
 	\ ':startinsert',
-  \ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
+	\ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
 	\ ]
   if RunVim([], after, 'Xtestout')
     let lines = readfile('Xtestout')
@@ -357,7 +469,7 @@ func Test_zzz_startinsert()
   call writefile(['123456'], 'Xtestout')
   let after = [
 	\ ':startinsert!',
-  \ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
+	\ 'call feedkeys("foobar\<c-o>:wq\<cr>","t")'
 	\ ]
   if RunVim([], after, 'Xtestout')
     let lines = readfile('Xtestout')
