@@ -68,6 +68,47 @@ func Test_z_equal_on_invalid_utf8_word()
   bwipe!
 endfunc
 
+" Test spellbadword() with argument
+func Test_spellbadword()
+  set spell
+
+  call assert_equal(['bycycle', 'bad'],  spellbadword('My bycycle.'))
+  call assert_equal(['another', 'caps'], spellbadword('A sentence. another sentence'))
+
+  set spelllang=en
+  call assert_equal(['', ''],            spellbadword('centre'))
+  call assert_equal(['', ''],            spellbadword('center'))
+  set spelllang=en_us
+  call assert_equal(['centre', 'local'], spellbadword('centre'))
+  call assert_equal(['', ''],            spellbadword('center'))
+  set spelllang=en_gb
+  call assert_equal(['', ''],            spellbadword('centre'))
+  call assert_equal(['center', 'local'], spellbadword('center'))
+
+  " Create a small word list to test that spellbadword('...')
+  " can return ['...', 'rare'].
+  e Xwords
+  insert
+foo
+foobar/?
+.
+   w!
+   mkspell! Xwords.spl Xwords
+   set spelllang=Xwords.spl
+   call assert_equal(['foobar', 'rare'], spellbadword('foo foobar'))
+
+  " Typo should not be detected without the 'spell' option.
+  set spelllang=en_gb nospell
+  call assert_equal(['', ''], spellbadword('centre'))
+  call assert_equal(['', ''], spellbadword('My bycycle.'))
+  call assert_equal(['', ''], spellbadword('A sentence. another sentence'))
+
+  call delete('Xwords.spl')
+  call delete('Xwords')
+  set spelllang&
+  set spell&
+endfunc
+
 func Test_spellreall()
   new
   set spell
