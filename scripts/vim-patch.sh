@@ -378,15 +378,19 @@ list_vimpatch_numbers() {
 list_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
   declare -A tokens
+  declare -A vim_commit_tags
 
   # Find all "vim-patch:xxx" tokens in the Nvim git log.
   for token in $(list_vimpatch_tokens); do
     tokens[$token]=1
   done
 
-  # Create an associative array mapping commits to tags.
-  eval "declare -A commit_tags=(
-    $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags --format '[%(objectname)]=%(refname:lstrip=2)' --shell)
+  # Create an associative array mapping Vim commits to tags.
+  eval "declare -A vim_commit_tags=(
+    $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags \
+      --format '[%(objectname)]=%(refname:lstrip=2)' \
+      --sort='-*authordate' \
+      --shell)
   )"
 
   # Get missing Vim commits
@@ -397,7 +401,7 @@ list_missing_vimpatches() {
       continue
     fi
 
-    vim_tag="${commit_tags[$vim_commit]-}"
+    vim_tag="${vim_commit_tags[$vim_commit]-}"
     if [[ -n "$vim_tag" ]]; then
       # Check for vim-patch:<tag> (not commit hash).
       patch_number="vim-patch:${vim_tag:1}" # "v7.4.0001" => "7.4.0001"
