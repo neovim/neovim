@@ -260,6 +260,7 @@ struct ufunc {
   garray_T     uf_args;          ///< arguments
   garray_T     uf_lines;         ///< function lines
   int          uf_profiling;     ///< true when func is being profiled
+  int          uf_prof_initialized;
   // Profiling the function as a whole.
   int          uf_tm_count;      ///< nr of calls
   proftime_T   uf_tm_total;      ///< time spent in function + children
