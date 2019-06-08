@@ -27,14 +27,17 @@ endfunction
 
 function! s:_OnServerError( channel, data ) abort
   echom 'Channel received error: ' . a:data
+  redraw
 endfunction
 
 function! s:_OnExit( channel, status ) abort
   echom 'Channel exit with status ' . a:status
+  redraw
 endfunction
 
 function! s:_OnClose( channel ) abort
   echom 'Channel closed'
+  redraw
   " py3 _vimspector_session.OnChannelClosed()
 endfunction
 
@@ -68,6 +71,7 @@ function! vimspector#internal#channel#StartDebugSession( config ) abort
 
   if ch_status( s:ch ) !=# 'open'
     echom 'Unable to connect to debug adapter'
+    redraw
     return v:none
   endif
 

@@ -213,6 +213,7 @@ def UserMessage( msg, persist=False ):
   cmd = 'echom' if persist else 'echo'
   for line in msg.split( '\n' ):
     vim.command( "{0} '{1}'".format( cmd, Escape( line ) ) )
+  vim.command( 'redraw' )
 
 
 @contextlib.contextmanager

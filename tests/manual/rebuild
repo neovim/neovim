@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -e
+
+docker build --no-cache -t puremourning/vimspector:manual image/

@@ -12,3 +12,4 @@ package/
 *.dSYM
 README.md.orig.*
 README.md.toc.*
+.DS_Store

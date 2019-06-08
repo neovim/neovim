@@ -70,7 +70,8 @@ class CodeView( object ):
         frame[ 'source' ][ 'path' ] ) )
       return False
 
-    self._window.cursor = ( frame[ 'line' ], frame[ 'column' ] )
+    # SIC: column is 0-based, line is 1-based in vim. Why? Nobody knows.
+    self._window.cursor = ( frame[ 'line' ], frame[ 'column' ]  - 1 )
 
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
     self._next_sign_id += 1

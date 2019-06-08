@@ -33,7 +33,9 @@ stages:
   - job: 'linux'
     pool:
       vmImage: 'ubuntu-16.04'
-    container: 'puremourning/vimspector:test'
+    container:
+      image: 'puremourning/vimspector:test'
+      options: --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
     steps:
     - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'

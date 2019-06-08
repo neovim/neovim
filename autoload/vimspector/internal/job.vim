@@ -29,28 +29,33 @@ endfunction
 
 function! s:_OnExit( channel, status ) abort
   echom 'Channel exit with status ' . a:status
+  redraw
   unlet s:job 
   py3 _vimspector_session.OnServerExit( vim.eval( 'a:status' ) )
 endfunction
 
 function! s:_OnClose( channel ) abort
   echom 'Channel closed'
+  redraw
 endfunction
 
 function! s:_Send( msg ) abort
   if ! exists( 's:job' )
     echom "Can't send message: Job was not initialised correctly"
+    redraw
     return 0
   endif
 
   if job_status( s:job ) !=# 'run'
     echom "Can't send message: Job is not running"
+    redraw
     return 0
   endif
 
   let ch = job_getchannel( s:job )
   if ch ==# 'channel fail'
     echom 'Channel was closed unexpectedly!'
+    redraw
     return 0
   endif
 
@@ -61,6 +66,7 @@ endfunction
 function! vimspector#internal#job#StartDebugSession( config ) abort
   if exists( 's:job' )
     echom 'Not starging: Job is already running'
+    redraw
     return v:none
   endif
 
@@ -80,9 +86,11 @@ function! vimspector#internal#job#StartDebugSession( config ) abort
         \              )
 
   echom 'Started job, status is: ' . job_status( s:job )
+  redraw
 
   if job_status( s:job ) !=# 'run'
     echom 'Unable to start job, status is: ' . job_status( s:job )
+    redraw
     return v:none
   endif
 
@@ -92,11 +100,13 @@ endfunction
 function! vimspector#internal#job#StopDebugSession() abort
   if !exists( 's:job' )
     echom "Not stopping session: Job doesn't exist"
+    redraw
     return
   endif
 
   if job_status( s:job ) ==# 'run'
       echom 'Terminating job'
+      redraw
     call job_stop( s:job, 'kill' )
   endif
 endfunction
@@ -140,6 +150,7 @@ function! vimspector#internal#job#StartCommandWithLog( cmd, category ) abort
 
   if job_status( s:commands[ a:category ][ index ] ) !=# 'run'
     echom 'Unable to start job for ' . a:cmd
+    redraw
     return v:none
   endif
 
