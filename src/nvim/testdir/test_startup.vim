@@ -348,17 +348,15 @@ func Test_invalid_args()
   for opt in ['-Y', '--does-not-exist']
     let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
     call assert_equal(1, v:shell_error)
-    call assert_match('^VIM - Vi IMproved .* (.*)$',              out[0])
-    call assert_equal('Unknown option argument: "' .. opt .. '"', out[1])
-    call assert_equal('More info with: "vim -h"',                 out[2])
+    call assert_equal('nvim: Unknown option argument: "' .. opt .. '"', out[0])
+    call assert_equal('More info with "nvim -h"',                       out[1])
   endfor
 
-  for opt in ['-c', '-i', '-s', '-t', '-T', '-u', '-U', '-w', '-W', '--cmd', '--startuptime']
+  for opt in ['-c', '-i', '-s', '-t', '-u', '-U', '-w', '-W', '--cmd', '--startuptime']
     let out = split(system(GetVimCommand() .. ' '  .. opt), "\n")
     call assert_equal(1, v:shell_error)
-    call assert_match('^VIM - Vi IMproved .* (.*)$',             out[0])
-    call assert_equal('Argument missing after: "' .. opt .. '"', out[1])
-    call assert_equal('More info with: "vim -h"',                out[2])
+    call assert_equal('nvim: Argument missing after: "' .. opt .. '"', out[0])
+    call assert_equal('More info with "nvim -h"',                      out[1])
   endfor
 
   if has('clientserver')
@@ -388,23 +386,19 @@ func Test_invalid_args()
 
   let out = split(system(GetVimCommand() .. ' -ix'), "\n")
   call assert_equal(1, v:shell_error)
-  call assert_match('^VIM - Vi IMproved .* (.*)$',          out[0])
-  call assert_equal('Garbage after option argument: "-ix"', out[1])
-  call assert_equal('More info with: "vim -h"',             out[2])
+  call assert_equal('nvim: Garbage after option argument: "-ix"', out[0])
+  call assert_equal('More info with "nvim -h"',                   out[1])
 
-  let out = split(system(GetVimCommand() .. ' - xxx'), "\n")
-  call assert_equal(1, v:shell_error)
-  call assert_match('^VIM - Vi IMproved .* (.*)$',    out[0])
-  call assert_equal('Too many edit arguments: "xxx"', out[1])
-  call assert_equal('More info with: "vim -h"',       out[2])
+  " Not an error in Nvim.  The "-" file is allowed with -t, -q, or [file].
+  let out = split(system(GetVimCommand() .. ' - xxx -cq'), "\n")
+  call assert_equal(0, v:shell_error)
 
   " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
   for opt in ['-t', '-q']
     let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
     call assert_equal(1, v:shell_error)
-    call assert_match('^VIM - Vi IMproved .* (.*)$',              out[0])
-    call assert_equal('Too many edit arguments: "' .. opt .. '"', out[1])
-    call assert_equal('More info with: "vim -h"',                 out[2])
+    call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
+    call assert_equal('More info with "nvim -h"',                       out[1])
   endfor
 
   for opt in [' -cq', ' --cmd q', ' +', ' -S foo']
@@ -412,21 +406,19 @@ func Test_invalid_args()
     call assert_equal(1, v:shell_error)
     " FIXME: The error message given by Vim is not ideal in case of repeated
     " -S foo since it does not mention -S.
-    call assert_match('^VIM - Vi IMproved .* (.*)$',                                    out[0])
-    call assert_equal('Too many "+command", "-c command" or "--cmd command" arguments', out[1])
-    call assert_equal('More info with: "vim -h"',                                       out[2])
+    call assert_equal('nvim: Too many "+command", "-c command" or "--cmd command" arguments', out[0])
+    call assert_equal('More info with "nvim -h"',                                             out[1])
   endfor
 
-  " FIXME: commented out as this causes vim-8.1.1282 to crash!
-  "if has('gui_gtk')
-  "  for opt in ['--socketid x', '--socketid 0xg']
-  "    let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
-  "    call assert_equal(1, v:shell_error)
-  "    call assert_match('^VIM - Vi IMproved .* (.*)$',        out[0])
-  "    call assert_equal('Invalid argument for: "--socketid"', out[1])
-  "    call assert_equal('More info with: "vim -h"',           out[2])
-  "  endfor
-  "endif
+  if has('gui_gtk')
+    for opt in ['--socketid x', '--socketid 0xg']
+      let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
+      call assert_equal(1, v:shell_error)
+      call assert_match('^VIM - Vi IMproved .* (.*)$',        out[0])
+      call assert_equal('Invalid argument for: "--socketid"', out[1])
+      call assert_equal('More info with: "vim -h"',           out[2])
+    endfor
+  endif
 endfunc
 
 func Test_file_args()
