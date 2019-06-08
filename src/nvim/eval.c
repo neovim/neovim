@@ -4284,7 +4284,7 @@ static int eval7(
         // Stop the expression evaluation when immediately
         // aborting on error, or when an interrupt occurred or
         // an exception was thrown but not caught.
-        if (aborting()) {
+        if (evaluate && aborting()) {
           if (ret == OK) {
             tv_clear(rettv);
           }
