@@ -239,6 +239,10 @@ func Test_mkview_no_file_name()
 endfunc
 
 func Test_mksession_quote_in_filename()
+  if !has('unix')
+    " only Unix can handle this weird filename
+    return
+  endif
   let v:errmsg = ''
   let filename = has('win32') ? 'x''y' : 'x''y"z'
   %bwipe!
