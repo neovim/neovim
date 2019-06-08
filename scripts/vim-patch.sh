@@ -258,7 +258,7 @@ stage_patch() {
       msg_err "'patch' command not found\n"
     else
       printf "\nApplying patch...\n"
-      patch -p1 --fuzz=1 --suffix= < "${patch_file}" || ret=$?
+      patch -p1 --fuzz=1 --no-backup-if-mismatch < "${patch_file}" || ret=$?
     fi
     printf "\nInstructions:\n  Proceed to port the patch.\n"
   else
