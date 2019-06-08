@@ -266,30 +266,6 @@ func Test_V_arg()
   call assert_equal("line 0: set verbose?\r\n\r\n  verbose=15\n\r\nline 0: q\r\n", out)
 endfunc
 
-" Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
-func Test_A_F_H_arg()
-  let after = [
-	\ 'call writefile([&rightleft, &arabic, &fkmap, &hkmap], "Xtestout")',
-	\ 'qall',
-	\ ]
-  if has('arabic') && RunVim([], after, '-A')
-    let lines = readfile('Xtestout')
-    call assert_equal(['1', '1', '0', '0'], lines)
-  endif
-
-  if has('farsi') && RunVim([], after, '-F')
-    let lines = readfile('Xtestout')
-    call assert_equal(['1', '0', '1', '0'], lines)
-  endif
-
-  if has('rightleft') && RunVim([], after, '-H')
-    let lines = readfile('Xtestout')
-    call assert_equal(['1', '0', '0', '1'], lines)
-  endif
-
-  call delete('Xtestout')
-endfunc
-
 func Test_file_args()
   let after = [
 	\ 'call writefile(argv(), "Xtestout")',
