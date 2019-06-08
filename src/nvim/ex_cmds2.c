@@ -43,6 +43,7 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
+#include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/profile.h"
 #include "nvim/os/os.h"
@@ -1791,18 +1792,17 @@ void ex_args(exarg_T *eap)
   } else if (eap->cmdidx == CMD_args) {
     // ":args": list arguments.
     if (ARGCOUNT > 0) {
-      // Overwrite the command, for a short list there is no scrolling
-      // required and no wait_return().
-      gotocmdline(true);
-      for (int i = 0; i < ARGCOUNT; i++) {
-        if (i == curwin->w_arg_idx) {
-          msg_putchar('[');
+      char_u **items = xmalloc(sizeof(char_u *) * (size_t)ARGCOUNT);
+
+      if (items != NULL) {
+        // Overwrite the command, for a short list there is no scrolling
+        // required and no wait_return().
+        gotocmdline(true);
+        for (int i = 0; i < ARGCOUNT; i++) {
+          items[i] = alist_name(&ARGLIST[i]);
         }
-        msg_outtrans(alist_name(&ARGLIST[i]));
-        if (i == curwin->w_arg_idx) {
-          msg_putchar(']');
-        }
-        msg_putchar(' ');
+        list_in_columns(items, ARGCOUNT, curwin->w_arg_idx);
+        xfree(items);
       }
     }
   } else if (eap->cmdidx == CMD_arglocal) {
