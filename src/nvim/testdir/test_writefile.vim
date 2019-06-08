@@ -160,6 +160,10 @@ func Test_writefile_sync_dev_stdout()
   if !has('unix')
     return
   endif
-  " Just check that this doesn't cause an error.
-  call writefile(['one'], '/dev/stdout')
+  if filewritable('/dev/stdout')
+    " Just check that this doesn't cause an error.
+    call writefile(['one'], '/dev/stdout')
+  else
+    throw 'Skipped: /dev/stdout is not writable'
+  endif
 endfunc
