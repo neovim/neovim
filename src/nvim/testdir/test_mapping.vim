@@ -15,6 +15,49 @@ func Test_abbreviation()
   set nomodified
 endfunc
 
+func Test_abclear()
+   abbrev foo foobar
+   iabbrev fooi foobari
+   cabbrev fooc foobarc
+   call assert_equal("\n\nc  fooc          foobarc\ni  fooi          foobari\n!  foo           foobar", execute('abbrev'))
+
+   iabclear
+   call assert_equal("\n\nc  fooc          foobarc\nc  foo           foobar", execute('abbrev'))
+   abbrev foo foobar
+   iabbrev fooi foobari
+
+   cabclear
+   call assert_equal("\n\ni  fooi          foobari\ni  foo           foobar", execute('abbrev'))
+   abbrev foo foobar
+   cabbrev fooc foobarc
+
+   abclear
+   call assert_equal("\n\nNo abbreviation found", execute('abbrev'))
+endfunc
+
+func Test_abclear_buffer()
+  abbrev foo foobar
+  new X1
+  abbrev <buffer> foo1 foobar1
+  new X2
+  abbrev <buffer> foo2 foobar2
+
+  call assert_equal("\n\n!  foo2         @foobar2\n!  foo           foobar", execute('abbrev'))
+
+  abclear <buffer>
+  call assert_equal("\n\n!  foo           foobar", execute('abbrev'))
+
+  b X1
+  call assert_equal("\n\n!  foo1         @foobar1\n!  foo           foobar", execute('abbrev'))
+  abclear <buffer>
+  call assert_equal("\n\n!  foo           foobar", execute('abbrev'))
+
+  abclear
+   call assert_equal("\n\nNo abbreviation found", execute('abbrev'))
+
+  %bwipe
+endfunc
+
 func Test_map_ctrl_c_insert()
   " mapping of ctrl-c in Insert mode
   set cpo-=< cpo-=k
