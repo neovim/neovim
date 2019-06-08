@@ -7415,6 +7415,12 @@ void do_sleep(long msec)
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)next, got_int);
     os_breakcheck();
   }
+
+  // If CTRL-C was typed to interrupt the sleep, drop the CTRL-C from the
+  // input buffer, otherwise a following call to input() fails.
+  if (got_int) {
+    (void)vpeekc();
+  }
 }
 
 static void do_exmap(exarg_T *eap, int isabbrev)
