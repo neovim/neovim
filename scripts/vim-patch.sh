@@ -425,8 +425,13 @@ show_vimpatches() {
   get_vim_sources
   printf "\nVim patches missing from Neovim:\n"
 
+  local -A runtime_commits
+  for commit in $(git -C "${VIM_SOURCE_DIR}" log --format="%H %D" -- runtime | sed 's/,\? tag: / /g'); do
+    runtime_commits[$commit]=1
+  done
+
   list_missing_vimpatches | while read -r vim_commit; do
-    if [ -n "$(git -C "$VIM_SOURCE_DIR" diff-tree --no-commit-id --name-only  "${vim_commit}" -- runtime)" ]; then
+    if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
       printf '  • %s\n' "${vim_commit}"
