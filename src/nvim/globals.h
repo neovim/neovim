@@ -958,6 +958,7 @@ EXTERN char_u e_streamkey[] INIT(= N_(
     "E5210: dict key '%s' already set for buffered stream in channel %"
     PRIu64));
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
+EXTERN char e_fsync[] INIT(= N_("E667: Fsync failed: %s"));
 EXTERN char_u e_mkdir[] INIT(= N_("E739: Cannot create directory %s: %s"));
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));

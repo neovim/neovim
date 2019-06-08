@@ -8958,7 +8958,7 @@ winwidth({nr})						*winwidth()*
 		Examples: >
   :echo "The current window has " . winwidth(0) . " columns."
   :if winwidth(0) <= 50
-  :  exe "normal 50\<C-W>|"
+  :  50 wincmd |
   :endif
 <		For getting the terminal or screen size, see the 'columns'
 		option.
