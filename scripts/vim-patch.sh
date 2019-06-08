@@ -205,7 +205,7 @@ get_vimpatch() {
   msg_ok "Found Vim revision '${vim_commit}'."
 
   local patch_content
-  patch_content="$(git --no-pager show --color=never -1 --pretty=medium "${vim_commit}")"
+  patch_content="$(git --no-pager show --unified=5 --color=never -1 --pretty=medium "${vim_commit}")"
 
   cd "${NVIM_SOURCE_DIR}"
 
@@ -251,14 +251,14 @@ stage_patch() {
     msg_ok "${output}" ||
     (msg_err "${output}"; false)
 
+  local ret=0
   if test -n "$try_apply" ; then
     if ! check_executable patch; then
       printf "\n"
       msg_err "'patch' command not found\n"
     else
       printf "\nApplying patch...\n"
-      patch -p1 < "${patch_file}" || true
-      find . -name '*.orig' -type f -delete
+      patch -p1 --fuzz=1 --suffix= < "${patch_file}" || ret=$?
     fi
     printf "\nInstructions:\n  Proceed to port the patch.\n"
   else
@@ -278,6 +278,7 @@ stage_patch() {
   See the wiki for more information:
     * https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-vim
 ' "${vim_version}" "${BASENAME}" "${BASENAME}"
+  return $ret
 }
 
 hub_pr() {
@@ -563,7 +564,7 @@ while getopts "hlLMVp:P:g:r:s" opt; do
       ;;
     p)
       stage_patch "${OPTARG}"
-      exit 0
+      exit
       ;;
     P)
       stage_patch "${OPTARG}" TRY_APPLY
