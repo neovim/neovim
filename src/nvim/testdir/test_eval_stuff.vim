@@ -99,3 +99,12 @@ func Test_let_errmsg()
   call assert_fails('let v:errmsg = []', 'E730:')
   let v:errmsg = ''
 endfunc
+
+" Test fix for issue #4507
+func Test_skip_after_throw()
+  try
+    throw 'something'
+    let x = wincol() || &ts
+  catch /something/
+  endtry
+endfunc
