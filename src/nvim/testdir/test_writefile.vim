@@ -162,7 +162,7 @@ func Test_writefile_sync_dev_stdout()
   endif
   if filewritable('/dev/stdout')
     " Just check that this doesn't cause an error.
-    call writefile(['one'], '/dev/stdout')
+    call writefile(['one'], '/dev/stdout', 's')
   else
     throw 'Skipped: /dev/stdout is not writable'
   endif
