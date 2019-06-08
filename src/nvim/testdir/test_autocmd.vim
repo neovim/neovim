@@ -1671,3 +1671,93 @@ func Test_ReadWrite_Autocmds()
   call delete('Xtest.c')
   call delete('test.out')
 endfunc
+
+func Test_FileChangedShell_reload()
+  if !has('unix')
+    return
+  endif
+  augroup testreload
+    au FileChangedShell Xchanged let g:reason = v:fcs_reason | let v:fcs_choice = 'reload'
+  augroup END
+  new Xchanged
+  call setline(1, 'reload this')
+  write
+  " Need to wait until the timestamp would change by at least a second.
+  sleep 2
+  silent !echo 'extra line' >>Xchanged
+  checktime
+  call assert_equal('changed', g:reason)
+  call assert_equal(2, line('$'))
+  call assert_equal('extra line', getline(2))
+
+  " Only triggers once
+  let g:reason = ''
+  checktime
+  call assert_equal('', g:reason)
+
+  " When deleted buffer is not reloaded
+  silent !rm Xchanged
+  let g:reason = ''
+  checktime
+  call assert_equal('deleted', g:reason)
+  call assert_equal(2, line('$'))
+  call assert_equal('extra line', getline(2))
+
+  " When recreated buffer is reloaded
+  call setline(1, 'buffer is changed')
+  silent !echo 'new line' >>Xchanged
+  let g:reason = ''
+  checktime
+  call assert_equal('conflict', g:reason)
+  call assert_equal(1, line('$'))
+  call assert_equal('new line', getline(1))
+
+  " Only mode changed
+  silent !chmod +x Xchanged
+  let g:reason = ''
+  checktime
+  call assert_equal('mode', g:reason)
+  call assert_equal(1, line('$'))
+  call assert_equal('new line', getline(1))
+
+  " Only time changed
+  sleep 2
+  silent !touch Xchanged
+  let g:reason = ''
+  checktime
+  call assert_equal('time', g:reason)
+  call assert_equal(1, line('$'))
+  call assert_equal('new line', getline(1))
+
+  if has('persistent_undo')
+    " With an undo file the reload can be undone and a change before the
+    " reload.
+    set undofile
+    call setline(2, 'before write')
+    write
+    call setline(2, 'after write')
+    sleep 2
+    silent !echo 'different line' >>Xchanged
+    let g:reason = ''
+    checktime
+    call assert_equal('conflict', g:reason)
+    call assert_equal(3, line('$'))
+    call assert_equal('before write', getline(2))
+    call assert_equal('different line', getline(3))
+    " undo the reload
+    undo
+    call assert_equal(2, line('$'))
+    call assert_equal('after write', getline(2))
+    " undo the change before reload
+    undo
+    call assert_equal(2, line('$'))
+    call assert_equal('before write', getline(2))
+
+    set noundofile
+  endif
+
+
+  au! testreload
+  bwipe!
+  call delete('Xchanged')
+endfunc
