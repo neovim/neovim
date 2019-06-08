@@ -260,10 +260,10 @@ func Test_V_arg()
   call assert_equal("  verbose=0\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V2 -c "set verbose?" -cq')
-  call assert_match("^sourcing \"$VIMRUNTIME/defaults\.vim\"\r\nSearching for \"filetype\.vim\".*\n  verbose=2\n$", out)
+  call assert_equal("  verbose=2\n", out)
 
   let out = system(GetVimCommand() . ' --clean -es -X -V15 -c "set verbose?" -cq')
-  call assert_match("\+*\nsourcing \"$VIMRUNTIME/defaults\.vim\"\r\nline 1: \" The default vimrc file\..*\n  verbose=15\n\+*", out)
+  call assert_equal("line 0: set verbose?\r\n\r\n  verbose=15\n\r\nline 0: q\r\n", out)
 endfunc
 
 " Test the -A, -F and -H arguments (Arabic, Farsi and Hebrew modes).
