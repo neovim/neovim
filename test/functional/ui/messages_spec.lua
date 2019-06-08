@@ -5,6 +5,10 @@ local eval = helpers.eval
 local eq = helpers.eq
 local command = helpers.command
 local set_method_error = helpers.set_method_error
+local test_build_dir = helpers.test_build_dir
+local nvim_prog = helpers.nvim_prog
+local iswin = helpers.iswin
+local exc_exec = helpers.exc_exec
 
 
 describe('ui/ext_messages', function()
@@ -866,5 +870,45 @@ describe('ui/ext_messages', function()
     ]], messages={
       {content = { { "Press ENTER or type command to continue", 4 } }, kind = "return_prompt" }
     }}
+  end)
+end)
+
+describe('ui/msg_puts_printf', function()
+  it('output multibyte characters correctly', function()
+    local screen
+    local cmd = ''
+    local locale_dir = test_build_dir..'/share/locale/ja/LC_MESSAGES'
+
+    os.execute('cmake -E make_directory '..locale_dir)
+    os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
+    clear({env={LANG='ja_JP.UTF-8'}})
+    screen = Screen.new(25, 5)
+    screen:attach()
+
+    if iswin() then
+      if os.execute('chcp 932 > NUL 2>&1') ~= 0 then
+        pending('missing japanese language features')
+        return
+      else
+        cmd = 'chcp 932 > NULL & '
+      end
+    else
+      if exc_exec('lang ja_JP.UTF-8') ~= 0 then
+        pending('Locale ja_JP.UTF-8 not supported')
+        return
+      end
+    end
+
+    cmd = cmd..'"'..nvim_prog..'" -u NONE -i NONE -Es -V1'
+    command([[call termopen(']]..cmd..[[')]])
+    screen:expect([[
+    ^Exモードに入ります. ノー |
+    マルモードに戻るには"visu|
+    al"と入力してください.   |
+    :                        |
+                             |
+    ]])
+
+    os.execute('cmake -E remove_directory '..test_build_dir..'/share')
   end)
 end)
