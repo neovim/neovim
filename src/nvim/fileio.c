@@ -3363,7 +3363,7 @@ restore_backup:
     if (p_fs && (error = os_fsync(fd)) != 0 && !device
         // fsync not supported on this storage.
         && error != UV_ENOTSUP) {
-      SET_ERRMSG_ARG(_("E667: Fsync failed: %s"), error);
+      SET_ERRMSG_ARG(e_fsync, error);
       end = 0;
     }
 

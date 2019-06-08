@@ -167,3 +167,10 @@ func Test_writefile_sync_dev_stdout()
     throw 'Skipped: /dev/stdout is not writable'
   endif
 endfunc
+
+func Test_writefile_sync_arg()
+  " This doesn't check if fsync() works, only that the argument is accepted.
+  call writefile(['one'], 'Xtest', 's')
+  call writefile(['two'], 'Xtest', 'S')
+  call delete('Xtest')
+endfunc
