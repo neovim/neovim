@@ -333,10 +333,9 @@ void changed_bytes(linenr_T lnum, colnr_T col)
  * Must be called AFTER the change and after mark_adjust().
  * Takes care of marking the buffer to be redrawn and sets the changed flag.
  */
-    void
-appended_lines(linenr_T lnum, long count)
+void appended_lines(linenr_T lnum, long count)
 {
-    changed_lines(lnum + 1, 0, lnum + 1, count);
+  changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
 /*

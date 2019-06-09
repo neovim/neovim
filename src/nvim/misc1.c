@@ -1786,16 +1786,6 @@ int gchar_pos(pos_T *pos)
 }
 
 /*
- * Appended "count" lines below line "lnum" in the current buffer.
- * Must be called AFTER the change and after mark_adjust().
- * Takes care of marking the buffer to be redrawn and sets the changed flag.
- */
-void appended_lines(linenr_T lnum, long count)
-{
-  changed_lines(lnum + 1, 0, lnum + 1, count, true);
-}
-
-/*
  * Like appended_lines(), but adjust marks first.
  */
 void appended_lines_mark(linenr_T lnum, long count)
