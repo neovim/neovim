@@ -11,54 +11,45 @@
  * If the file is readonly, give a warning message with the first change.
  * Don't do this for autocommands.
  * Doesn't use emsg(), because it flushes the macro buffer.
- * If we have undone all changes b_changed will be FALSE, but "b_did_warn"
- * will be TRUE.
+ * If we have undone all changes b_changed will be false, but "b_did_warn"
+ * will be true.
  * "col" is the column for the message; non-zero when in insert mode and
  * 'showmode' is on.
  * Careful: may trigger autocommands that reload the buffer.
  */
-    void
-change_warning(int col)
+void change_warning(int col)
 {
-    static char *w_readonly = N_("W10: Warning: Changing a readonly file");
+  static char *w_readonly = N_("W10: Warning: Changing a readonly file");
 
-    if (curbuf->b_did_warn == FALSE
-	    && curbufIsChanged() == 0
-	    && !autocmd_busy
-	    && curbuf->b_p_ro)
-    {
-	++curbuf_lock;
-	apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, FALSE, curbuf);
-	--curbuf_lock;
-	if (!curbuf->b_p_ro)
-	    return;
-
-	// Do what msg() does, but with a column offset if the warning should
-	// be after the mode message.
-	msg_start();
-	if (msg_row == Rows - 1)
-	    msg_col = col;
-	msg_source(HL_ATTR(HLF_W));
-	msg_puts_attr(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
-#ifdef FEAT_EVAL
-	set_vim_var_string(VV_WARNINGMSG, (char_u *)_(w_readonly), -1);
-#endif
-	msg_clr_eos();
-	(void)msg_end();
-	if (msg_silent == 0 && !silent_mode
-#ifdef FEAT_EVAL
-		&& time_for_testing != 1
-#endif
-		)
-	{
-	    out_flush();
-	    ui_delay(1000L, TRUE); // give the user time to think about it
-	}
-	curbuf->b_did_warn = TRUE;
-	redraw_cmdline = FALSE;	// don't redraw and erase the message
-	if (msg_row < Rows - 1)
-	    showmode();
+  if (curbuf->b_did_warn == false
+      && curbufIsChanged() == 0
+      && !autocmd_busy
+      && curbuf->b_p_ro) {
+    ++curbuf_lock;
+    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, FALSE, curbuf);
+    --curbuf_lock;
+    if (!curbuf->b_p_ro)
+      return;
+    // Do what msg() does, but with a column offset if the warning should
+    // be after the mode message.
+    msg_start();
+    if (msg_row == Rows - 1)
+      msg_col = col;
+    msg_source(HL_ATTR(HLF_W));
+    msg_ext_set_kind("wmsg");
+    MSG_PUTS_ATTR(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
+    set_vim_var_string(VV_WARNINGMSG, _(w_readonly), -1);
+    msg_clr_eos();
+    (void)msg_end();
+    if (msg_silent == 0 && !silent_mode && ui_active()) {
+      ui_flush();
+      os_delay(1000L, true); // give the user time to think about it
     }
+    curbuf->b_did_warn = true;
+    redraw_cmdline = FALSE; // don't redraw and erase the message
+    if (msg_row < Rows - 1)
+      showmode();
+  }
 }
 
 /*
