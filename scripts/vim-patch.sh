@@ -41,7 +41,7 @@ msg_ok() {
 }
 
 msg_err() {
-  printf '\e[31m✘\e[0m %s\n' "$@"
+  printf '\e[31m✘\e[0m %s\n' "$@" >&2
 }
 
 # Checks if a program is in the user's PATH, and is executable.
@@ -393,10 +393,15 @@ list_missing_vimpatches() {
   # Create an associative array mapping Vim commits to tags.
   eval "declare -A vim_commit_tags=(
     $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags \
-      --format '[%(objectname)]=%(refname:lstrip=2)' \
+      --format '[%(objectname)]=%(refname:strip=2)' \
       --sort='-*authordate' \
       --shell)
   )"
+  # Exit in case of errors from the above eval (empty vim_commit_tags).
+  if ! (( "${#vim_commit_tags[@]}" )); then
+    msg_err "Could not get Vim commits/tags."
+    exit 1
+  fi
 
   # Get missing Vim commits
   for vim_commit in $(list_vim_commits); do
