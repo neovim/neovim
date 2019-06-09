@@ -708,128 +708,96 @@ int del_chars(long count, int fixpos)
   return del_bytes(bytes, fixpos, TRUE);
 }
 
-/*
- * Delete "count" bytes under the cursor.
- * If "fixpos" is TRUE, don't leave the cursor on the NUL after the line.
- * Caller must have prepared for undo.
- *
- * Return FAIL for failure, OK otherwise.
- */
-    int
-del_bytes(
-    long	count,
-    int		fixpos_arg,
-    int		use_delcombine UNUSED)	    // 'delcombine' option applies
+/// Delete "count" bytes under the cursor.
+/// If "fixpos" is true, don't leave the cursor on the NUL after the line.
+/// Caller must have prepared for undo.
+///
+/// @param  count           number of bytes to be deleted
+/// @param  fixpos_arg      leave the cursor on the NUL after the line
+/// @param  use_delcombine  'delcombine' option applies
+///
+/// @return FAIL for failure, OK otherwise
+int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 {
-    char_u	*oldp, *newp;
-    colnr_T	oldlen;
-    colnr_T	newlen;
-    linenr_T	lnum = curwin->w_cursor.lnum;
-    colnr_T	col = curwin->w_cursor.col;
-    int		alloc_newp;
-    long	movelen;
-    int		fixpos = fixpos_arg;
+  linenr_T lnum = curwin->w_cursor.lnum;
+  colnr_T col = curwin->w_cursor.col;
+  bool fixpos = fixpos_arg;
+  char_u *oldp = ml_get(lnum);
+  colnr_T oldlen = (colnr_T)STRLEN(oldp);
 
-    oldp = ml_get(lnum);
-    oldlen = (int)STRLEN(oldp);
-
-    // Can't do anything when the cursor is on the NUL after the line.
-    if (col >= oldlen)
-	return FAIL;
-
-    // If "count" is zero there is nothing to do.
-    if (count == 0)
-	return OK;
-
-    // If "count" is negative the caller must be doing something wrong.
-    if (count < 1)
-    {
-	siemsg("E950: Invalid count for del_bytes(): %ld", count);
-	return FAIL;
-    }
-
-    // If 'delcombine' is set and deleting (less than) one character, only
-    // delete the last combining character.
-    if (p_deco && use_delcombine && enc_utf8
-					 && utfc_ptr2len(oldp + col) >= count)
-    {
-	int	cc[MAX_MCO];
-	int	n;
-
-	(void)utfc_ptr2char(oldp + col, cc);
-	if (cc[0] != NUL)
-	{
-	    // Find the last composing char, there can be several.
-	    n = col;
-	    do
-	    {
-		col = n;
-		count = utf_ptr2len(oldp + n);
-		n += count;
-	    } while (UTF_COMPOSINGLIKE(oldp + col, oldp + n));
-	    fixpos = 0;
-	}
-    }
-
-    // When count is too big, reduce it.
-    movelen = (long)oldlen - (long)col - count + 1; // includes trailing NUL
-    if (movelen <= 1)
-    {
-	// If we just took off the last character of a non-blank line, and
-	// fixpos is TRUE, we don't want to end up positioned at the NUL,
-	// unless "restart_edit" is set or 'virtualedit' contains "onemore".
-	if (col > 0 && fixpos && restart_edit == 0
-					      && (ve_flags & VE_ONEMORE) == 0)
-	{
-	    --curwin->w_cursor.col;
-	    curwin->w_cursor.coladd = 0;
-	    if (has_mbyte)
-		curwin->w_cursor.col -=
-			    (*mb_head_off)(oldp, oldp + curwin->w_cursor.col);
-	}
-	count = oldlen - col;
-	movelen = 1;
-    }
-    newlen = oldlen - count;
-
-    // If the old line has been allocated the deletion can be done in the
-    // existing line. Otherwise a new line has to be allocated
-    // Can't do this when using Netbeans, because we would need to invoke
-    // netbeans_removed(), which deallocates the line.  Let ml_replace() take
-    // care of notifying Netbeans.
-#ifdef FEAT_NETBEANS_INTG
-    if (netbeans_active())
-	alloc_newp = TRUE;
-    else
-#endif
-	alloc_newp = !ml_line_alloced();    // check if oldp was allocated
-    if (!alloc_newp)
-	newp = oldp;			    // use same allocated memory
-    else
-    {					    // need to allocate a new line
-	newp = alloc((unsigned)(newlen + 1));
-	if (newp == NULL)
-	    return FAIL;
-	mch_memmove(newp, oldp, (size_t)col);
-    }
-    mch_memmove(newp + col, oldp + col + count, (size_t)movelen);
-    if (alloc_newp)
-	ml_replace(lnum, newp, FALSE);
-#ifdef FEAT_TEXT_PROP
-    else
-    {
-	// Also move any following text properties.
-	if (oldlen + 1 < curbuf->b_ml.ml_line_len)
-	    mch_memmove(newp + newlen + 1, oldp + oldlen + 1,
-			       (size_t)curbuf->b_ml.ml_line_len - oldlen - 1);
-	curbuf->b_ml.ml_line_len -= count;
-    }
-#endif
-
-    // mark the buffer as changed and prepare for displaying
-    inserted_bytes(lnum, curwin->w_cursor.col, -count);
-
+  // Can't do anything when the cursor is on the NUL after the line.
+  if (col >= oldlen) {
+    return FAIL;
+  }
+  // If "count" is zero there is nothing to do.
+  if (count == 0) {
     return OK;
+  }
+  // If "count" is negative the caller must be doing something wrong.
+  if (count < 1) {
+    IEMSGN("E950: Invalid count for del_bytes(): %ld", count);
+    return FAIL;
+  }
+
+  /* If 'delcombine' is set and deleting (less than) one character, only
+   * delete the last combining character. */
+  if (p_deco && use_delcombine && enc_utf8
+      && utfc_ptr2len(oldp + col) >= count) {
+    int cc[MAX_MCO];
+    int n;
+
+    (void)utfc_ptr2char(oldp + col, cc);
+    if (cc[0] != NUL) {
+      /* Find the last composing char, there can be several. */
+      n = col;
+      do {
+        col = n;
+        count = utf_ptr2len(oldp + n);
+        n += count;
+      } while (UTF_COMPOSINGLIKE(oldp + col, oldp + n));
+      fixpos = false;
+    }
+  }
+
+  // When count is too big, reduce it.
+  int movelen = oldlen - col - count + 1;  // includes trailing NUL
+  if (movelen <= 1) {
+    /*
+     * If we just took off the last character of a non-blank line, and
+     * fixpos is TRUE, we don't want to end up positioned at the NUL,
+     * unless "restart_edit" is set or 'virtualedit' contains "onemore".
+     */
+    if (col > 0 && fixpos && restart_edit == 0
+        && (ve_flags & VE_ONEMORE) == 0
+        ) {
+      --curwin->w_cursor.col;
+      curwin->w_cursor.coladd = 0;
+      curwin->w_cursor.col -= utf_head_off(oldp, oldp + curwin->w_cursor.col);
+    }
+    count = oldlen - col;
+    movelen = 1;
+  }
+
+  // If the old line has been allocated the deletion can be done in the
+  // existing line. Otherwise a new line has to be allocated.
+  bool was_alloced = ml_line_alloced();     // check if oldp was allocated
+  char_u *newp;
+  if (was_alloced) {
+    ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, oldlen);
+    newp = oldp;                            // use same allocated memory
+  } else {                                  // need to allocate a new line
+    newp = xmalloc((size_t)(oldlen + 1 - count));
+    memmove(newp, oldp, (size_t)col);
+  }
+  memmove(newp + col, oldp + col + count, (size_t)movelen);
+  if (!was_alloced) {
+    ml_replace(lnum, newp, false);
+  }
+
+  /* mark the buffer as changed and prepare for displaying */
+  changed_bytes(lnum, curwin->w_cursor.col);
+
+  return OK;
 }
 
 /*
