@@ -5871,10 +5871,6 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
       fp->uf_scoped = NULL;
     }
 
-    fp->uf_tml_count = NULL;
-    fp->uf_tml_total = NULL;
-    fp->uf_tml_self = NULL;
-    fp->uf_profiling = false;
     if (prof_def_func()) {
       func_do_profile(fp);
     }
@@ -21628,25 +21624,29 @@ static void func_do_profile(ufunc_T *fp)
 {
   int len = fp->uf_lines.ga_len;
 
-  if (len == 0)
-    len = 1;      /* avoid getting error for allocating zero bytes */
-  fp->uf_tm_count = 0;
-  fp->uf_tm_self = profile_zero();
-  fp->uf_tm_total = profile_zero();
+  if (!fp->uf_prof_initialized) {
+    if (len == 0) {
+      len = 1;  // avoid getting error for allocating zero bytes
+    }
+    fp->uf_tm_count = 0;
+    fp->uf_tm_self = profile_zero();
+    fp->uf_tm_total = profile_zero();
 
-  if (fp->uf_tml_count == NULL) {
-    fp->uf_tml_count = xcalloc(len, sizeof(int));
+    if (fp->uf_tml_count == NULL) {
+      fp->uf_tml_count = xcalloc(len, sizeof(int));
+    }
+
+    if (fp->uf_tml_total == NULL) {
+      fp->uf_tml_total = xcalloc(len, sizeof(proftime_T));
+    }
+
+    if (fp->uf_tml_self == NULL) {
+      fp->uf_tml_self = xcalloc(len, sizeof(proftime_T));
+    }
+
+    fp->uf_tml_idx = -1;
+    fp->uf_prof_initialized = true;
   }
-
-  if (fp->uf_tml_total == NULL) {
-    fp->uf_tml_total = xcalloc(len, sizeof(proftime_T));
-  }
-
-  if (fp->uf_tml_self == NULL) {
-    fp->uf_tml_self = xcalloc(len, sizeof(proftime_T));
-  }
-
-  fp->uf_tml_idx = -1;
 
   fp->uf_profiling = TRUE;
 }
@@ -21672,7 +21672,7 @@ void func_dump_profile(FILE *fd)
     if (!HASHITEM_EMPTY(hi)) {
       --todo;
       fp = HI2UF(hi);
-      if (fp->uf_profiling) {
+      if (fp->uf_prof_initialized) {
         sorttab[st_len++] = fp;
 
         if (fp->uf_name[0] == K_SPECIAL)
@@ -22174,6 +22174,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   char_u      *name;
   proftime_T wait_start;
   proftime_T call_start;
+  int started_profiling = false;
   bool did_save_redo = false;
   save_redo_T save_redo;
 
@@ -22393,8 +22394,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     do_profiling_yes
     && !fp->uf_profiling && has_profiling(false, fp->uf_name, NULL);
 
-  if (func_not_yet_profiling_but_should)
+  if (func_not_yet_profiling_but_should) {
+    started_profiling = true;
     func_do_profile(fp);
+  }
 
   bool func_or_func_caller_profiling =
     do_profiling_yes
@@ -22441,6 +22444,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
         profile_add(fc->caller->func->uf_tm_children, call_start);
       fc->caller->func->uf_tml_children =
         profile_add(fc->caller->func->uf_tml_children, call_start);
+    }
+    if (started_profiling) {
+      // make a ":profdel func" stop profiling the function
+      fp->uf_profiling = false;
     }
   }
 
