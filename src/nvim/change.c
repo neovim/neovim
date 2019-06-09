@@ -329,21 +329,6 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 }
 
 /*
- * Like changed_bytes() but also adjust text properties for "added" bytes.
- * When "added" is negative text was deleted.
- */
-    void
-inserted_bytes(linenr_T lnum, colnr_T col, int added UNUSED)
-{
-    changed_bytes(lnum, col);
-
-#ifdef FEAT_TEXT_PROP
-    if (curbuf->b_has_textprop && added != 0)
-	adjust_prop_columns(lnum, col, added);
-#endif
-}
-
-/*
  * Appended "count" lines below line "lnum" in the current buffer.
  * Must be called AFTER the change and after mark_adjust().
  * Takes care of marking the buffer to be redrawn and sets the changed flag.
