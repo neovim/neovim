@@ -1786,59 +1786,6 @@ int gchar_pos(pos_T *pos)
 }
 
 /*
- * Changed lines for the current buffer.
- * Must be called AFTER the change and after mark_adjust().
- * - mark the buffer changed by calling changed()
- * - mark the windows on this buffer to be redisplayed
- * - invalidate cached values
- * "lnum" is the first line that needs displaying, "lnume" the first line
- * below the changed lines (BEFORE the change).
- * When only inserting lines, "lnum" and "lnume" are equal.
- * Takes care of calling changed() and updating b_mod_*.
- * Careful: may trigger autocommands that reload the buffer.
- */
-void
-changed_lines(
-    linenr_T lnum,        // first line with change
-    colnr_T col,          // column in first line with change
-    linenr_T lnume,       // line below last changed line
-    long xtra,            // number of extra lines (negative when deleting)
-    bool do_buf_event  // some callers like undo/redo call changed_lines()
-                       // and then increment changedtick *again*. This flag
-                       // allows these callers to send the nvim_buf_lines_event
-                       // events after they're done modifying changedtick.
-)
-{
-  changed_lines_buf(curbuf, lnum, lnume, xtra);
-
-  if (xtra == 0 && curwin->w_p_diff && !diff_internal()) {
-    // When the number of lines doesn't change then mark_adjust() isn't
-    // called and other diff buffers still need to be marked for
-    // displaying.
-    linenr_T wlnum;
-
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
-        wlnum = diff_lnum_win(lnum, wp);
-        if (wlnum > 0) {
-          changed_lines_buf(wp->w_buffer, wlnum,
-              lnume - lnum + wlnum, 0L);
-        }
-      }
-    }
-  }
-
-  changed_common(lnum, col, lnume, xtra);
-
-  if (do_buf_event) {
-    int64_t num_added = (int64_t)(lnume + xtra - lnum);
-    int64_t num_removed = lnume - lnum;
-    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
-  }
-}
-
-/*
  * unchanged() is called when the changed flag must be reset for buffer 'buf'
  */
 void 

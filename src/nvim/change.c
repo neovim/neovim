@@ -414,37 +414,45 @@ void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
  * Takes care of calling changed() and updating b_mod_*.
  * Careful: may trigger autocommands that reload the buffer.
  */
-    void
+void
 changed_lines(
-    linenr_T	lnum,	    // first line with change
-    colnr_T	col,	    // column in first line with change
-    linenr_T	lnume,	    // line below last changed line
-    long	xtra)	    // number of extra lines (negative when deleting)
+    linenr_T lnum,        // first line with change
+    colnr_T col,          // column in first line with change
+    linenr_T lnume,       // line below last changed line
+    long xtra,            // number of extra lines (negative when deleting)
+    bool do_buf_event  // some callers like undo/redo call changed_lines()
+                       // and then increment changedtick *again*. This flag
+                       // allows these callers to send the nvim_buf_lines_event
+                       // events after they're done modifying changedtick.
+)
 {
-    changed_lines_buf(curbuf, lnum, lnume, xtra);
+  changed_lines_buf(curbuf, lnum, lnume, xtra);
 
-#ifdef FEAT_DIFF
-    if (xtra == 0 && curwin->w_p_diff && !diff_internal())
-    {
-	// When the number of lines doesn't change then mark_adjust() isn't
-	// called and other diff buffers still need to be marked for
-	// displaying.
-	win_T	    *wp;
-	linenr_T    wlnum;
+  if (xtra == 0 && curwin->w_p_diff && !diff_internal()) {
+    // When the number of lines doesn't change then mark_adjust() isn't
+    // called and other diff buffers still need to be marked for
+    // displaying.
+    linenr_T wlnum;
 
-	FOR_ALL_WINDOWS(wp)
-	    if (wp->w_p_diff && wp != curwin)
-	    {
-		redraw_win_later(wp, VALID);
-		wlnum = diff_lnum_win(lnum, wp);
-		if (wlnum > 0)
-		    changed_lines_buf(wp->w_buffer, wlnum,
-						    lnume - lnum + wlnum, 0L);
-	    }
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_p_diff && wp != curwin) {
+        redraw_win_later(wp, VALID);
+        wlnum = diff_lnum_win(lnum, wp);
+        if (wlnum > 0) {
+          changed_lines_buf(wp->w_buffer, wlnum,
+              lnume - lnum + wlnum, 0L);
+        }
+      }
     }
-#endif
+  }
 
-    changed_common(lnum, col, lnume, xtra);
+  changed_common(lnum, col, lnume, xtra);
+
+  if (do_buf_event) {
+    int64_t num_added = (int64_t)(lnume + xtra - lnum);
+    int64_t num_removed = lnume - lnum;
+    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
+  }
 }
 
 /*
