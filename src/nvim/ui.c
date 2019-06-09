@@ -36,6 +36,7 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/window.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/msgpack_rpc/channel.h"
 #ifdef FEAT_TUI
 # include "nvim/tui/tui.h"
 #else
@@ -215,7 +216,20 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  screen_resize(width, height);
+  if (!is_remote_client) {
+    screen_resize(width, height);
+  } else {
+    Array args = ARRAY_DICT_INIT;
+    Error err = ERROR_INIT;
+    ADD(args, INTEGER_OBJ((int)width));
+    ADD(args, INTEGER_OBJ((int)height));
+    rpc_send_call(channel_get_id(true, true), "nvim_ui_try_resize", args, &err);
+
+    if (ERROR_SET(&err)) {
+      logmsg(ERROR_LOG_LEVEL, "UI: ", NULL, -1, true, "%s", err.msg);
+    }
+    api_clear_error(&err);
+  }
   p_lz = save_p_lz;
 
   if (ext_widgets[kUIMessages]) {

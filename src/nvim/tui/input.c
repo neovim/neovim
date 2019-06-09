@@ -115,6 +115,10 @@ static void tinput_wait_enqueue(void **argv)
           .size = len})));
       Object result = rpc_send_call(channel_get_id(true, true), "nvim_input", args, &err);
       consumed = (size_t)result.data.integer;
+      if (ERROR_SET(&err)) {
+        logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
+      }
+      api_clear_error(&err);
     } else {
       consumed = input_enqueue((String){.data = buf, .size = len});
     }

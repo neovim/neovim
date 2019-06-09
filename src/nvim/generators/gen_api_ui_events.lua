@@ -93,7 +93,8 @@ function make_raw_line_and_call(output)
   arg_5 = arg_3;
 
   // checking if clearcol > endcol
-  if (!STRCMP(arg_4.items[size_of_cells-1].data.array.items[0].data.string.data, " ")) {
+  if (!STRCMP(arg_4.items[size_of_cells-1].data.array.items[0].data.string.data, " ")
+       && arg_4.items[size_of_cells-1].data.array.size == 3) {
     no_of_cells = size_of_cells - 1;
   }
 
@@ -103,6 +104,15 @@ function make_raw_line_and_call(output)
     if (arg_4.items[i].data.array.size == 3) {
       arg_5 += arg_4.items[i].data.array.items[2].data.integer - 1;
     }
+  }
+
+  if (!STRCMP(arg_4.items[size_of_cells-1].data.array.items[0].data.string.data, " ")
+        && arg_4.items[size_of_cells-1].data.array.size == 3) { 
+    arg_7 = arg_4.items[size_of_cells-1].data.array.items[1].data.integer;
+    arg_6 = arg_5 + arg_4.items[size_of_cells-1].data.array.items[2].data.integer;
+  } else {
+    arg_7 = 0;
+    arg_6 = arg_5;
   }
 
   size_t ncells = (size_t)(arg_5 - arg_3);
@@ -128,14 +138,6 @@ function make_raw_line_and_call(output)
       attrs[k] = attrs[k-1];
       k++;
     }
-  }
-
-  if (!STRCMP(arg_4.items[size_of_cells-1].data.array.items[0].data.string.data, " ")) { 
-    arg_7 = arg_4.items[size_of_cells-1].data.array.items[1].data.integer;
-    arg_6 = arg_5 + arg_4.items[size_of_cells-1].data.array.items[2].data.integer;
-  } else {
-    arg_7 = 0;
-    arg_6 = arg_5;
   }
   
   ]])
