@@ -713,14 +713,10 @@ static void init_locale(void)
 # endif
 
   char localepath[MAXPATHL] = { 0 };
-  char *exepath = localepath;
-  size_t exepathlen = MAXPATHL;
-  if (os_exepath(exepath, &exepathlen) != 0) {
-    path_guess_exepath(argv0 ? argv0 : "nvim", exepath, sizeof(exepath));
-  }
-  char *tail = (char *)path_tail_with_sep((char_u *)exepath);
+  snprintf(localepath, sizeof(localepath), "%s", get_vim_var_str(VV_PROGPATH));
+  char *tail = (char *)path_tail_with_sep((char_u *)localepath);
   *tail = NUL;
-  tail = (char *)path_tail((char_u *)exepath);
+  tail = (char *)path_tail((char_u *)localepath);
   xstrlcpy(tail, "share/locale",
            sizeof(localepath) - (size_t)(tail - localepath));
   bindtextdomain(PROJECT_NAME, localepath);
