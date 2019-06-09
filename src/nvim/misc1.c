@@ -1786,27 +1786,6 @@ int gchar_pos(pos_T *pos)
 }
 
 /*
- * unchanged() is called when the changed flag must be reset for buffer 'buf'
- */
-void 
-unchanged (
-    buf_T *buf,
-    int ff                 /* also reset 'fileformat' */
-)
-{
-  if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
-    buf->b_changed = false;
-    ml_setflags(buf);
-    if (ff)
-      save_file_ff(buf);
-    check_status(buf);
-    redraw_tabline = TRUE;
-    need_maketitle = TRUE;          /* set window title later */
-  }
-  buf_inc_changedtick(buf);
-}
-
-/*
  * check_status: called when the status bars for the buffer 'buf'
  *		 need to be updated
  */

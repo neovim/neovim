@@ -459,25 +459,18 @@ changed_lines(
  * Called when the changed flag must be reset for buffer "buf".
  * When "ff" is TRUE also reset 'fileformat'.
  */
-    void
 unchanged(buf_T *buf, int ff)
 {
-    if (buf->b_changed || (ff && file_ff_differs(buf, FALSE)))
-    {
-	buf->b_changed = 0;
-	ml_setflags(buf);
-	if (ff)
-	    save_file_ff(buf);
-	check_status(buf);
-	redraw_tabline = TRUE;
-#ifdef FEAT_TITLE
-	need_maketitle = TRUE;	    // set window title later
-#endif
-    }
-    ++CHANGEDTICK(buf);
-#ifdef FEAT_NETBEANS_INTG
-    netbeans_unmodified(buf);
-#endif
+  if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
+    buf->b_changed = false;
+    ml_setflags(buf);
+    if (ff)
+      save_file_ff(buf);
+    check_status(buf);
+    redraw_tabline = true;
+    need_maketitle = true; // set window title later
+  }
+  buf_inc_changedtick(buf);
 }
 
 /*
