@@ -2512,11 +2512,12 @@ int prompt_for_number(int *mouse_used)
     if (msg_row > 0) {
       cmdline_row = msg_row - 1;
     }
-    need_wait_return = FALSE;
-    msg_didany = FALSE;
-    msg_didout = FALSE;
-  } else
+    need_wait_return = false;
+    msg_didany = false;
+    msg_didout = false;
+  } else {
     cmdline_row = save_cmdline_row;
+  }
   State = save_State;
   // May need to restore mouse shape.
   setmouse();
