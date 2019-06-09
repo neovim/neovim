@@ -477,35 +477,31 @@ unchanged(buf_T *buf, int ff)
  * Insert string "p" at the cursor position.  Stops at a NUL byte.
  * Handles Replace mode and multi-byte characters.
  */
-    void
-ins_bytes(char_u *p)
+void ins_bytes(char_u *p)
 {
-    ins_bytes_len(p, (int)STRLEN(p));
+  ins_bytes_len(p, STRLEN(p));
 }
 
-/*
- * Insert string "p" with length "len" at the cursor position.
- * Handles Replace mode and multi-byte characters.
- */
-    void
-ins_bytes_len(char_u *p, int len)
+/// Insert string "p" with length "len" at the cursor position.
+/// Handles Replace mode and multi-byte characters.
+void ins_bytes_len(char_u *p, size_t len)
 {
-    int		i;
-    int		n;
-
-    if (has_mbyte)
-	for (i = 0; i < len; i += n)
-	{
-	    if (enc_utf8)
-		// avoid reading past p[len]
-		n = utfc_ptr2len_len(p + i, len - i);
-	    else
-		n = (*mb_ptr2len)(p + i);
-	    ins_char_bytes(p + i, n);
-	}
-    else
-	for (i = 0; i < len; ++i)
-	    ins_char(p[i]);
+  if (has_mbyte) {
+    size_t n;
+    for (size_t i = 0; i < len; i += n) {
+      if (enc_utf8) {
+        // avoid reading past p[len]
+        n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
+      } else {
+        n = (size_t)(*mb_ptr2len)(p + i);
+      }
+      ins_char_bytes(p + i, n);
+    }
+  } else {
+    for (size_t i = 0; i < len; i++) {
+      ins_char(p[i]);
+    }
+  }
 }
 
 /*

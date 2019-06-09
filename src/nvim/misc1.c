@@ -1380,37 +1380,6 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   return count;
 }
 
-/*
- * Insert string "p" at the cursor position.  Stops at a NUL byte.
- * Handles Replace mode and multi-byte characters.
- */
-void ins_bytes(char_u *p)
-{
-  ins_bytes_len(p, STRLEN(p));
-}
-
-/// Insert string "p" with length "len" at the cursor position.
-/// Handles Replace mode and multi-byte characters.
-void ins_bytes_len(char_u *p, size_t len)
-{
-  if (has_mbyte) {
-    size_t n;
-    for (size_t i = 0; i < len; i += n) {
-      if (enc_utf8) {
-        // avoid reading past p[len]
-        n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
-      } else {
-        n = (size_t)(*mb_ptr2len)(p + i);
-      }
-      ins_char_bytes(p + i, n);
-    }
-  } else {
-    for (size_t i = 0; i < len; i++) {
-      ins_char(p[i]);
-    }
-  }
-}
-
 /// Insert or replace a single character at the cursor position.
 /// When in REPLACE or VREPLACE mode, replace any existing character.
 /// Caller must have prepared for undo.
