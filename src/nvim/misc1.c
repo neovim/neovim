@@ -2508,9 +2508,10 @@ int prompt_for_number(int *mouse_used)
 
   i = get_number(TRUE, mouse_used);
   if (KeyTyped) {
-    /* don't call wait_return() now */
-    /* msg_putchar('\n'); */
-    cmdline_row = msg_row - 1;
+    // don't call wait_return() now
+    if (msg_row > 0) {
+      cmdline_row = msg_row - 1;
+    }
     need_wait_return = FALSE;
     msg_didany = FALSE;
     msg_didout = FALSE;
