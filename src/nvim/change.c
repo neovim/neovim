@@ -644,32 +644,32 @@ void ins_char_bytes(char_u *buf, size_t charlen)
  * Note: Does NOT handle Replace mode.
  * Caller must have prepared for undo.
  */
-    void
-ins_str(char_u *s)
+void ins_str(char_u *s)
 {
-    char_u	*oldp, *newp;
-    int		newlen = (int)STRLEN(s);
-    int		oldlen;
-    colnr_T	col;
-    linenr_T	lnum = curwin->w_cursor.lnum;
+  char_u      *oldp, *newp;
+  int newlen = (int)STRLEN(s);
+  int oldlen;
+  colnr_T col;
+  linenr_T lnum = curwin->w_cursor.lnum;
 
-    if (virtual_active() && curwin->w_cursor.coladd > 0)
-	coladvance_force(getviscol());
+  if (virtual_active() && curwin->w_cursor.coladd > 0)
+    coladvance_force(getviscol());
 
-    col = curwin->w_cursor.col;
-    oldp = ml_get(lnum);
-    oldlen = (int)STRLEN(oldp);
+  col = curwin->w_cursor.col;
+  oldp = ml_get(lnum);
+  oldlen = (int)STRLEN(oldp);
 
-    newp = alloc_check((unsigned)(oldlen + newlen + 1));
-    if (newp == NULL)
-	return;
-    if (col > 0)
-	mch_memmove(newp, oldp, (size_t)col);
-    mch_memmove(newp + col, s, (size_t)newlen);
-    mch_memmove(newp + col + newlen, oldp + col, (size_t)(oldlen - col + 1));
-    ml_replace(lnum, newp, FALSE);
-    inserted_bytes(lnum, col, newlen);
-    curwin->w_cursor.col += newlen;
+  newp = (char_u *)xmalloc((size_t)oldlen + (size_t)newlen + 1);
+  if (col > 0) {
+    memmove(newp, oldp, (size_t)col);
+  }
+  memmove(newp + col, s, (size_t)newlen);
+  int bytes = oldlen - col + 1;
+  assert(bytes >= 0);
+  memmove(newp + col + newlen, oldp + col, (size_t)bytes);
+  ml_replace(lnum, newp, false);
+  changed_bytes(lnum, col);
+  curwin->w_cursor.col += newlen;
 }
 
 /*

@@ -1398,39 +1398,6 @@ void ins_char(int c)
   ins_char_bytes(buf, n);
 }
 
-/*
- * Insert a string at the cursor position.
- * Note: Does NOT handle Replace mode.
- * Caller must have prepared for undo.
- */
-void ins_str(char_u *s)
-{
-  char_u      *oldp, *newp;
-  int newlen = (int)STRLEN(s);
-  int oldlen;
-  colnr_T col;
-  linenr_T lnum = curwin->w_cursor.lnum;
-
-  if (virtual_active() && curwin->w_cursor.coladd > 0)
-    coladvance_force(getviscol());
-
-  col = curwin->w_cursor.col;
-  oldp = ml_get(lnum);
-  oldlen = (int)STRLEN(oldp);
-
-  newp = (char_u *)xmalloc((size_t)oldlen + (size_t)newlen + 1);
-  if (col > 0) {
-    memmove(newp, oldp, (size_t)col);
-  }
-  memmove(newp + col, s, (size_t)newlen);
-  int bytes = oldlen - col + 1;
-  assert(bytes >= 0);
-  memmove(newp + col + newlen, oldp + col, (size_t)bytes);
-  ml_replace(lnum, newp, false);
-  changed_bytes(lnum, col);
-  curwin->w_cursor.col += newlen;
-}
-
 // Delete one character under the cursor.
 // If "fixpos" is true, don't leave the cursor on the NUL after the line.
 // Caller must have prepared for undo.
