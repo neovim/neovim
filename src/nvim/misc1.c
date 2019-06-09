@@ -1786,19 +1786,6 @@ int gchar_pos(pos_T *pos)
 }
 
 /*
- * Like appended_lines(), but adjust marks first.
- */
-void appended_lines_mark(linenr_T lnum, long count)
-{
-  // Skip mark_adjust when adding a line after the last one, there can't
-  // be marks there. But it's still needed in diff mode.
-  if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
-  }
-  changed_lines(lnum + 1, 0, lnum + 1, count, true);
-}
-
-/*
  * Deleted "count" lines at line "lnum" in the current buffer.
  * Must be called AFTER the change and after mark_adjust().
  * Takes care of marking the buffer to be redrawn and sets the changed flag.
