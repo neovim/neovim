@@ -48,6 +48,9 @@ endfunction
 let s:cache_enabled = 1
 let s:err = ''
 
+" eval_has_provider checks the variable to verify provider status
+let g:provider#clipboard#enabled = 0
+
 function! provider#clipboard#Error() abort
   return s:err
 endfunction
@@ -120,12 +123,11 @@ function! provider#clipboard#Executable() abort
   return ''
 endfunction
 
-if empty(provider#clipboard#Executable())
-  " provider#clipboard#Call() *must not* be defined if the provider is broken.
-  " Otherwise eval_has_provider() thinks the clipboard provider is
-  " functioning, and eval_call_provider() will happily call it.
-  finish
-endif
+" Call this to setup/reload the provider
+function! provider#clipboard#Reload()
+  " #enabled is used by eval_has_provider()
+  let g:provider#clipboard#enabled = !empty(provider#clipboard#Executable())
+endfunction
 
 function! s:clipboard.get(reg) abort
   if type(s:paste[a:reg]) == v:t_func
@@ -192,3 +194,5 @@ function! provider#clipboard#Call(method, args) abort
     let s:here = v:false
   endtry
 endfunction
+
+call provider#clipboard#Reload()

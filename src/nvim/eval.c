@@ -23968,52 +23968,27 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   return rettv;
 }
 
-bool eval_has_provider(const char *name)
+/// Check if a named provider is enabled
+bool eval_has_provider(const char *provider)
 {
-#define CHECK_PROVIDER(name) \
-  if (has_##name == -1) { \
-    has_##name = !!find_func((char_u *)"provider#" #name "#Call"); \
-    if (!has_##name) { \
-      script_autoload("provider#" #name "#Call", \
-                      sizeof("provider#" #name "#Call") - 1, \
-                      false); \
-      has_##name = !!find_func((char_u *)"provider#" #name "#Call"); \
-    } \
-  }
+  char enabled_varname[256];
+  int enabled_varname_len = snprintf(enabled_varname, sizeof(enabled_varname),
+                                     "provider#%s#enabled", provider);
 
-  static int has_clipboard = -1;
-  static int has_python = -1;
-  static int has_python3 = -1;
-  static int has_ruby = -1;
-  typval_T args[1];
-  args[0].v_type = VAR_UNKNOWN;
+  typval_T tv;
+  if (get_var_tv(enabled_varname, enabled_varname_len, &tv,
+                 NULL, false, false) == FAIL) {
+    char call_varname[256];
+    snprintf(call_varname, sizeof(call_varname), "provider#%s#Call", provider);
+    int has_call = !!find_func((char_u *)call_varname);
 
-  if (strequal(name, "clipboard")) {
-    CHECK_PROVIDER(clipboard);
-    return has_clipboard;
-  } else if (strequal(name, "python3")) {
-    CHECK_PROVIDER(python3);
-    return has_python3;
-  } else if (strequal(name, "python")) {
-    CHECK_PROVIDER(python);
-    return has_python;
-  } else if (strequal(name, "ruby")) {
-    bool need_check_ruby = (has_ruby == -1);
-    CHECK_PROVIDER(ruby);
-    if (need_check_ruby && has_ruby == 1) {
-      char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, args, true);
-      if (rubyhost) {
-        if (*rubyhost == NUL) {
-          // Invalid rubyhost executable. Gem is probably not installed.
-          has_ruby = 0;
-        }
-        xfree(rubyhost);
-      }
+    if (has_call && p_lpl) {
+      emsgf("Provider '%s' failed to set %s", provider, enabled_varname);
     }
-    return has_ruby;
+    return false;
   }
 
-  return false;
+  return (tv.v_type == VAR_NUMBER) ? tv.vval.v_number != 0: true;
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.

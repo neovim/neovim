@@ -10,6 +10,7 @@ endif
 let g:loaded_python_provider = 1
 
 let [s:prog, s:err] = provider#pythonx#Detect(2)
+let g:provider#python#enabled = !empty(s:prog)
 
 function! provider#python#Prog() abort
   return s:prog
@@ -18,11 +19,6 @@ endfunction
 function! provider#python#Error() abort
   return s:err
 endfunction
-
-if s:prog == ''
-  " Detection failed
-  finish
-endif
 
 " The Python provider plugin will run in a separate instance of the Python
 " host.

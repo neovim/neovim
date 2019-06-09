@@ -35,6 +35,7 @@ function! s:methods.set(lines, regtype, reg)
   let g:test_clip[a:reg] = [a:lines, a:regtype]
 endfunction
 
+let provider#clipboard#enabled = 1
 
 function! provider#clipboard#Call(method, args)
   return call(s:methods[a:method],a:args,s:methods)
