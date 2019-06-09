@@ -356,10 +356,9 @@ void appended_lines_mark(linenr_T lnum, long count)
  * Must be called AFTER the change and after mark_adjust().
  * Takes care of marking the buffer to be redrawn and sets the changed flag.
  */
-    void
-deleted_lines(linenr_T lnum, long count)
+void deleted_lines(linenr_T lnum, long count)
 {
-    changed_lines(lnum, 0, lnum + count, -count);
+  changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
 /*
@@ -367,47 +366,40 @@ deleted_lines(linenr_T lnum, long count)
  * Make sure the cursor is on a valid line before calling, a GUI callback may
  * be triggered to display the cursor.
  */
-    void
-deleted_lines_mark(linenr_T lnum, long count)
+void deleted_lines_mark(linenr_T lnum, long count)
 {
-    mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count);
-    changed_lines(lnum, 0, lnum + count, -count);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
+  changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
-/*
- * Marks the area to be redrawn after a change.
- */
-    static void
-changed_lines_buf(
-    buf_T	*buf,
-    linenr_T	lnum,	    // first line with change
-    linenr_T	lnume,	    // line below last changed line
-    long	xtra)	    // number of extra lines (negative when deleting)
+/// Marks the area to be redrawn after a change.
+///
+/// @param buf the buffer where lines were changed
+/// @param lnum first line with change
+/// @param lnume line below last changed line
+/// @param xtra number of extra lines (negative when deleting)
+void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
 {
-    if (buf->b_mod_set)
-    {
-	// find the maximum area that must be redisplayed
-	if (lnum < buf->b_mod_top)
-	    buf->b_mod_top = lnum;
-	if (lnum < buf->b_mod_bot)
-	{
-	    // adjust old bot position for xtra lines
-	    buf->b_mod_bot += xtra;
-	    if (buf->b_mod_bot < lnum)
-		buf->b_mod_bot = lnum;
-	}
-	if (lnume + xtra > buf->b_mod_bot)
-	    buf->b_mod_bot = lnume + xtra;
-	buf->b_mod_xlines += xtra;
+  if (buf->b_mod_set) {
+    // find the maximum area that must be redisplayed
+    if (lnum < buf->b_mod_top)
+      buf->b_mod_top = lnum;
+    if (lnum < buf->b_mod_bot) {
+      // adjust old bot position for xtra lines
+      buf->b_mod_bot += xtra;
+      if (buf->b_mod_bot < lnum)
+        buf->b_mod_bot = lnum;
     }
-    else
-    {
-	// set the area that must be redisplayed
-	buf->b_mod_set = TRUE;
-	buf->b_mod_top = lnum;
-	buf->b_mod_bot = lnume + xtra;
-	buf->b_mod_xlines = xtra;
-    }
+    if (lnume + xtra > buf->b_mod_bot)
+      buf->b_mod_bot = lnume + xtra;
+    buf->b_mod_xlines += xtra;
+  } else {
+    // set the area that must be redisplayed
+    buf->b_mod_set = true;
+    buf->b_mod_top = lnum;
+    buf->b_mod_bot = lnume + xtra;
+    buf->b_mod_xlines = xtra;
+  }
 }
 
 /*
