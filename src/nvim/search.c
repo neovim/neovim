@@ -4289,7 +4289,7 @@ static void search_stat(int dirc, pos_T *pos,
 
       if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
         if (cur == OUT_OF_TIME) {
-          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[??/?]");
+          vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[\??/?]");
         } else if (cnt > 99 && cur > 99) {
           vim_snprintf(t, SEARCH_STAT_BUF_LEN, "[>99/>99]");
         } else if (cnt > 99) {
