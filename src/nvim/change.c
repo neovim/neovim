@@ -60,64 +60,45 @@ void change_warning(int col)
  *
  * Careful: may trigger autocommands that reload the buffer.
  */
-    void
-changed(void)
+void changed(void)
 {
-#if defined(FEAT_XIM) && defined(FEAT_GUI_GTK)
-    if (p_imst == IM_ON_THE_SPOT)
-    {
-	// The text of the preediting area is inserted, but this doesn't
-	// mean a change of the buffer yet.  That is delayed until the
-	// text is committed. (this means preedit becomes empty)
-	if (im_is_preediting() && !xim_changed_while_preediting)
-	    return;
-	xim_changed_while_preediting = FALSE;
+
+  if (!curbuf->b_changed) {
+    int save_msg_scroll = msg_scroll;
+
+    // Give a warning about changing a read-only file.  This may also
+    // check-out the file, thus change "curbuf"!
+    change_warning(0);
+
+    // Create a swap file if that is wanted.
+    // Don't do this for "nofile" and "nowrite" buffer types.
+    if (curbuf->b_may_swap
+        && !bt_dontwrite(curbuf)
+        ) {
+      int save_need_wait_return = need_wait_return;
+
+      need_wait_return = false;
+      ml_open_file(curbuf);
+
+      // The ml_open_file() can cause an ATTENTION message.
+      // Wait two seconds, to make sure the user reads this unexpected
+      // message.  Since we could be anywhere, call wait_return() now,
+      // and don't let the emsg() set msg_scroll.
+      if (need_wait_return && emsg_silent == 0) {
+        ui_flush();
+        os_delay(2000L, true);
+        wait_return(TRUE);
+        msg_scroll = save_msg_scroll;
+      } else {
+        need_wait_return = save_need_wait_return;
+      }
     }
-#endif
+    changed_int();
+  }
+  buf_inc_changedtick(curbuf);
 
-    if (!curbuf->b_changed)
-    {
-	int	save_msg_scroll = msg_scroll;
-
-	// Give a warning about changing a read-only file.  This may also
-	// check-out the file, thus change "curbuf"!
-	change_warning(0);
-
-	// Create a swap file if that is wanted.
-	// Don't do this for "nofile" and "nowrite" buffer types.
-	if (curbuf->b_may_swap
-#ifdef FEAT_QUICKFIX
-		&& !bt_dontwrite(curbuf)
-#endif
-		)
-	{
-	    int save_need_wait_return = need_wait_return;
-
-	    need_wait_return = FALSE;
-	    ml_open_file(curbuf);
-
-	    // The ml_open_file() can cause an ATTENTION message.
-	    // Wait two seconds, to make sure the user reads this unexpected
-	    // message.  Since we could be anywhere, call wait_return() now,
-	    // and don't let the emsg() set msg_scroll.
-	    if (need_wait_return && emsg_silent == 0)
-	    {
-		out_flush();
-		ui_delay(2000L, TRUE);
-		wait_return(TRUE);
-		msg_scroll = save_msg_scroll;
-	    }
-	    else
-		need_wait_return = save_need_wait_return;
-	}
-	changed_internal();
-    }
-    ++CHANGEDTICK(curbuf);
-
-#ifdef FEAT_SEARCH_EXTRA
-    // If a pattern is highlighted, the position may now be invalid.
-    highlight_match = FALSE;
-#endif
+  // If a pattern is highlighted, the position may now be invalid.
+  highlight_match = false;
 }
 
 /*
