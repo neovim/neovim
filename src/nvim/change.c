@@ -525,140 +525,118 @@ ins_char(int c)
     ins_char_bytes(buf, n);
 }
 
-    void
-ins_char_bytes(char_u *buf, int charlen)
+void ins_char_bytes(char_u *buf, size_t charlen)
 {
-    int		c = buf[0];
-    int		newlen;		// nr of bytes inserted
-    int		oldlen;		// nr of bytes deleted (0 when not replacing)
-    char_u	*p;
-    char_u	*newp;
-    char_u	*oldp;
-    int		linelen;	// length of old line including NUL
-    colnr_T	col;
-    linenr_T	lnum = curwin->w_cursor.lnum;
-    int		i;
+  // Break tabs if needed.
+  if (virtual_active() && curwin->w_cursor.coladd > 0) {
+    coladvance_force(getviscol());
+  }
 
-    // Break tabs if needed.
-    if (virtual_active() && curwin->w_cursor.coladd > 0)
-	coladvance_force(getviscol());
+  size_t col = (size_t)curwin->w_cursor.col;
+  linenr_T lnum = curwin->w_cursor.lnum;
+  char_u *oldp = ml_get(lnum);
+  size_t linelen = STRLEN(oldp) + 1;  // length of old line including NUL
 
-    col = curwin->w_cursor.col;
-    oldp = ml_get(lnum);
-    linelen = (int)STRLEN(oldp) + 1;
+  // The lengths default to the values for when not replacing.
+  size_t oldlen = 0;        // nr of bytes inserted
+  size_t newlen = charlen;  // nr of bytes deleted (0 when not replacing)
 
-    // The lengths default to the values for when not replacing.
-    oldlen = 0;
-    newlen = charlen;
-
-    if (State & REPLACE_FLAG)
-    {
-	if (State & VREPLACE_FLAG)
-	{
-	    colnr_T	new_vcol = 0;   // init for GCC
-	    colnr_T	vcol;
-	    int		old_list;
-
-	    // Disable 'list' temporarily, unless 'cpo' contains the 'L' flag.
-	    // Returns the old value of list, so when finished,
-	    // curwin->w_p_list should be set back to this.
-	    old_list = curwin->w_p_list;
-	    if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL)
-		curwin->w_p_list = FALSE;
-
-	    // In virtual replace mode each character may replace one or more
-	    // characters (zero if it's a TAB).  Count the number of bytes to
-	    // be deleted to make room for the new character, counting screen
-	    // cells.  May result in adding spaces to fill a gap.
-	    getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
-	    new_vcol = vcol + chartabsize(buf, vcol);
-	    while (oldp[col + oldlen] != NUL && vcol < new_vcol)
-	    {
-		vcol += chartabsize(oldp + col + oldlen, vcol);
-		// Don't need to remove a TAB that takes us to the right
-		// position.
-		if (vcol > new_vcol && oldp[col + oldlen] == TAB)
-		    break;
-		oldlen += (*mb_ptr2len)(oldp + col + oldlen);
-		// Deleted a bit too much, insert spaces.
-		if (vcol > new_vcol)
-		    newlen += vcol - new_vcol;
-	    }
-	    curwin->w_p_list = old_list;
-	}
-	else if (oldp[col] != NUL)
-	{
-	    // normal replace
-	    oldlen = (*mb_ptr2len)(oldp + col);
-	}
-
-
-	// Push the replaced bytes onto the replace stack, so that they can be
-	// put back when BS is used.  The bytes of a multi-byte character are
-	// done the other way around, so that the first byte is popped off
-	// first (it tells the byte length of the character).
-	replace_push(NUL);
-	for (i = 0; i < oldlen; ++i)
-	{
-	    if (has_mbyte)
-		i += replace_push_mb(oldp + col + i) - 1;
-	    else
-		replace_push(oldp[col + i]);
-	}
+  if (State & REPLACE_FLAG) {
+    if (State & VREPLACE_FLAG) {
+      // Disable 'list' temporarily, unless 'cpo' contains the 'L' flag.
+      // Returns the old value of list, so when finished,
+      // curwin->w_p_list should be set back to this.
+      int old_list = curwin->w_p_list;
+      if (old_list && vim_strchr(p_cpo, CPO_LISTWM) == NULL) {
+        curwin->w_p_list = false;
+      }
+      // In virtual replace mode each character may replace one or more
+      // characters (zero if it's a TAB).  Count the number of bytes to
+      // be deleted to make room for the new character, counting screen
+      // cells.  May result in adding spaces to fill a gap.
+      colnr_T vcol;
+      getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
+      colnr_T new_vcol = vcol + chartabsize(buf, vcol);
+      while (oldp[col + oldlen] != NUL && vcol < new_vcol) {
+        vcol += chartabsize(oldp + col + oldlen, vcol);
+        // Don't need to remove a TAB that takes us to the right
+        // position.
+        if (vcol > new_vcol && oldp[col + oldlen] == TAB) {
+          break;
+        }
+        oldlen += (size_t)(*mb_ptr2len)(oldp + col + oldlen);
+        // Deleted a bit too much, insert spaces.
+        if (vcol > new_vcol) {
+          newlen += (size_t)(vcol - new_vcol);
+        }
+      }
+      curwin->w_p_list = old_list;
+    } else if (oldp[col] != NUL)  {
+      // normal replace
+      oldlen = (size_t)(*mb_ptr2len)(oldp + col);
     }
 
-    newp = alloc_check((unsigned)(linelen + newlen - oldlen));
-    if (newp == NULL)
-	return;
 
-    // Copy bytes before the cursor.
-    if (col > 0)
-	mch_memmove(newp, oldp, (size_t)col);
-
-    // Copy bytes after the changed character(s).
-    p = newp + col;
-    if (linelen > col + oldlen)
-	mch_memmove(p + newlen, oldp + col + oldlen,
-					    (size_t)(linelen - col - oldlen));
-
-    // Insert or overwrite the new character.
-    mch_memmove(p, buf, charlen);
-    i = charlen;
-
-    // Fill with spaces when necessary.
-    while (i < newlen)
-	p[i++] = ' ';
-
-    // Replace the line in the buffer.
-    ml_replace(lnum, newp, FALSE);
-
-    // mark the buffer as changed and prepare for displaying
-    inserted_bytes(lnum, col, newlen - oldlen);
-
-    // If we're in Insert or Replace mode and 'showmatch' is set, then briefly
-    // show the match for right parens and braces.
-    if (p_sm && (State & INSERT)
-	    && msg_silent == 0
-#ifdef FEAT_INS_EXPAND
-	    && !ins_compl_active()
-#endif
-       )
-    {
-	if (has_mbyte)
-	    showmatch(mb_ptr2char(buf));
-	else
-	    showmatch(c);
+    /* Push the replaced bytes onto the replace stack, so that they can be
+     * put back when BS is used.  The bytes of a multi-byte character are
+     * done the other way around, so that the first byte is popped off
+     * first (it tells the byte length of the character). */
+    replace_push(NUL);
+    for (size_t i = 0; i < oldlen; i++) {
+      if (has_mbyte) {
+        i += (size_t)replace_push_mb(oldp + col + i) - 1;
+      } else {
+        replace_push(oldp[col + i]);
+      }
     }
+  }
 
-#ifdef FEAT_RIGHTLEFT
-    if (!p_ri || (State & REPLACE_FLAG))
-#endif
-    {
-	// Normal insert: move cursor right
-	curwin->w_cursor.col += charlen;
-    }
+  char_u *newp = xmalloc((size_t)(linelen + newlen - oldlen));
 
-    // TODO: should try to update w_row here, to avoid recomputing it later.
+  // Copy bytes before the cursor.
+  if (col > 0) {
+    memmove(newp, oldp, (size_t)col);
+  }
+
+  // Copy bytes after the changed character(s).
+  char_u *p = newp + col;
+  if (linelen > col + oldlen) {
+    memmove(p + newlen, oldp + col + oldlen,
+            (size_t)(linelen - col - oldlen));
+  }
+
+  // Insert or overwrite the new character.
+  memmove(p, buf, charlen);
+
+  // Fill with spaces when necessary.
+  for (size_t i = charlen; i < newlen; i++) {
+    p[i] = ' ';
+  }
+
+  // Replace the line in the buffer.
+  ml_replace(lnum, newp, false);
+
+  // mark the buffer as changed and prepare for displaying
+  changed_bytes(lnum, (colnr_T)col);
+
+  /*
+   * If we're in Insert or Replace mode and 'showmatch' is set, then briefly
+   * show the match for right parens and braces.
+   */
+  if (p_sm && (State & INSERT)
+      && msg_silent == 0
+      && !ins_compl_active()
+      ) {
+    showmatch(utf_ptr2char(buf));
+  }
+
+  if (!p_ri || (State & REPLACE_FLAG)) {
+    // Normal insert: move cursor right
+    curwin->w_cursor.col += (int)charlen;
+  }
+  /*
+   * TODO: should try to update w_row here, to avoid recomputing it later.
+   */
 }
 
 /*
