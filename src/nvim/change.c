@@ -1,17 +1,11 @@
-/* vi:set ts=8 sts=4 sw=4 noet:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
+// This is an open source non-commercial project. Dear PVS-Studio, please check
+// it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 /*
  * change.c: functions related to changing text
  */
 
-#include "vim.h"
+#include "nvim/vim.h"
 
 /*
  * If the file is readonly, give a warning message with the first change.
