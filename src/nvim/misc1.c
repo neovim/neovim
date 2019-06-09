@@ -1785,18 +1785,6 @@ int gchar_pos(pos_T *pos)
   return utf_ptr2char(ml_get_pos(pos));
 }
 
-/*
- * Internal part of changed(), no user interaction.
- */
-void changed_int(void)
-{
-  curbuf->b_changed = true;
-  ml_setflags(curbuf);
-  check_status(curbuf);
-  redraw_tabline = TRUE;
-  need_maketitle = TRUE;            /* set window title later */
-}
-
 
 /*
  * Changed bytes within a single line for the current buffer.

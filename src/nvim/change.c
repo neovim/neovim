@@ -93,7 +93,7 @@ void changed(void)
         need_wait_return = save_need_wait_return;
       }
     }
-    changed_int();
+    changed_internal();
   }
   buf_inc_changedtick(curbuf);
 
@@ -105,16 +105,13 @@ void changed(void)
  * Internal part of changed(), no user interaction.
  * Also used for recovery.
  */
-    void
-changed_internal(void)
+void changed_internal(void)
 {
-    curbuf->b_changed = TRUE;
-    ml_setflags(curbuf);
-    check_status(curbuf);
-    redraw_tabline = TRUE;
-#ifdef FEAT_TITLE
-    need_maketitle = TRUE;	    // set window title later
-#endif
+  curbuf->b_changed = true;
+  ml_setflags(curbuf);
+  check_status(curbuf);
+  redraw_tabline = true;
+  need_maketitle = true; // set window title later
 }
 
 /*
