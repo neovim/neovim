@@ -32,11 +32,13 @@ local function change_cb(self, ev, bufnr, tick, start_row, oldstopline, stop_row
   self.valid = false
 end
 
-local function create_parser(bufnr)
+local function create_parser(bufnr, ft)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  local ft = a.nvim_buf_get_option(bufnr, "filetype")
+  if ft == nil then
+    ft = a.nvim_buf_get_option(bufnr, "filetype")
+  end
   local self = setmetatable({bufnr=bufnr, valid=false}, Parser)
   self._parser = vim._create_ts_parser(ft)
   self:parse_tree()
@@ -51,5 +53,5 @@ end
 
 -- TODO: weak table with reusable parser per buffer.
 
-return {create_parser=create_parser}
+return {create_parser=create_parser, add_language=vim._ts_add_language}
 

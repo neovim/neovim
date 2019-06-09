@@ -19,6 +19,8 @@ exit_suite --continue
 
 enter_suite tests
 
+export TREE_SITTER_DIR=$HOME/tree-sitter-build/
+
 if test "$CLANG_SANITIZER" != "TSAN" ; then
   # Additional threads are only created when the builtin UI starts, which
   # doesn't happen in the unit/functional tests

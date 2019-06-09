@@ -94,6 +94,28 @@ npm.cmd install -g neovim
 Get-Command -CommandType Application neovim-node-host.cmd
 npm.cmd link neovim
 
+#npm.cmd install -g tree-sitter-cli
+#npm.cmd link tree-sitter-cli
+
+mkdir c:\treesitter
+$env:TREE_SITTER_DIR = "c:\treesitter"
+#$env:PATH = "c:\treesitter;$env:PATH"
+$client = new-object System.Net.WebClient
+cd c:\treesitter
+
+if ($bits -eq 32) {
+  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.5/tree-sitter-windows-x86.gz","c:\treesitter\tree-sitter-cli.gz")
+}
+elseif ($bits -eq 64) {
+  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.5/tree-sitter-windows-x64.gz","c:\treesitter\tree-sitter-cli.gz")
+}
+python -c "import gzip, shutil; f1,f2 = gzip.open('tree-sitter-cli.gz', 'rb'),  open('tree-sitter.exe', 'wb'); shutil.copyfileobj(f1, f2); f2.close()"
+
+$client.DownloadFile("https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2","c:\treesitter\tree_sitter_c.zip")
+Expand-Archive c:\treesitter\tree_sitter_c.zip -DestinationPath c:\treesitter\
+cd c:\treesitter\tree-sitter-c-0.15.2
+c:\treesitter\tree-sitter.exe test
+
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }

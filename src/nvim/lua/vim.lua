@@ -232,6 +232,9 @@ local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
     return t.inspect
+  elseif key == 'tree_sitter' then
+    t.tree_sitter = require('vim.tree_sitter')
+    return t.tree_sitter
   elseif require('vim.shared')[key] ~= nil then
     -- Expose all `vim.shared` functions on the `vim` module.
     t[key] = require('vim.shared')[key]
