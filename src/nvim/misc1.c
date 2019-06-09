@@ -1398,42 +1398,6 @@ void ins_char(int c)
   ins_char_bytes(buf, n);
 }
 
-// Delete one character under the cursor.
-// If "fixpos" is true, don't leave the cursor on the NUL after the line.
-// Caller must have prepared for undo.
-//
-// return FAIL for failure, OK otherwise
-int del_char(bool fixpos)
-{
-  if (has_mbyte) {
-    /* Make sure the cursor is at the start of a character. */
-    mb_adjust_cursor();
-    if (*get_cursor_pos_ptr() == NUL)
-      return FAIL;
-    return del_chars(1L, fixpos);
-  }
-  return del_bytes(1, fixpos, true);
-}
-
-/*
- * Like del_bytes(), but delete characters instead of bytes.
- */
-int del_chars(long count, int fixpos)
-{
-  int bytes = 0;
-  long i;
-  char_u      *p;
-  int l;
-
-  p = get_cursor_pos_ptr();
-  for (i = 0; i < count && *p != NUL; ++i) {
-    l = (*mb_ptr2len)(p);
-    bytes += l;
-    p += l;
-  }
-  return del_bytes(bytes, fixpos, TRUE);
-}
-
 /// Delete "count" bytes under the cursor.
 /// If "fixpos" is true, don't leave the cursor on the NUL after the line.
 /// Caller must have prepared for undo.
