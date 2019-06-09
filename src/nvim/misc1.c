@@ -1785,53 +1785,6 @@ int gchar_pos(pos_T *pos)
   return utf_ptr2char(ml_get_pos(pos));
 }
 
-
-/*
- * Changed bytes within a single line for the current buffer.
- * - marks the windows on this buffer to be redisplayed
- * - marks the buffer changed by calling changed()
- * - invalidates cached values
- * Careful: may trigger autocommands that reload the buffer.
- */
-void changed_bytes(linenr_T lnum, colnr_T col)
-{
-  changedOneline(curbuf, lnum);
-  changed_common(lnum, col, lnum + 1, 0L);
-  // notify any channels that are watching
-  buf_updates_send_changes(curbuf, lnum, 1, 1, true);
-
-  /* Diff highlighting in other diff windows may need to be updated too. */
-  if (curwin->w_p_diff) {
-    linenr_T wlnum;
-
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (wp->w_p_diff && wp != curwin) {
-        redraw_win_later(wp, VALID);
-        wlnum = diff_lnum_win(lnum, wp);
-        if (wlnum > 0)
-          changedOneline(wp->w_buffer, wlnum);
-      }
-    }
-  }
-}
-
-static void changedOneline(buf_T *buf, linenr_T lnum)
-{
-  if (buf->b_mod_set) {
-    /* find the maximum area that must be redisplayed */
-    if (lnum < buf->b_mod_top)
-      buf->b_mod_top = lnum;
-    else if (lnum >= buf->b_mod_bot)
-      buf->b_mod_bot = lnum + 1;
-  } else {
-    /* set the area that must be redisplayed to one line */
-    buf->b_mod_set = true;
-    buf->b_mod_top = lnum;
-    buf->b_mod_bot = lnum + 1;
-    buf->b_mod_xlines = 0;
-  }
-}
-
 /*
  * Appended "count" lines below line "lnum" in the current buffer.
  * Must be called AFTER the change and after mark_adjust().

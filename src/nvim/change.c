@@ -282,25 +282,21 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
     curwin->w_last_cursormoved.lnum = 0;
 }
 
-    static void
-changedOneline(buf_T *buf, linenr_T lnum)
+static void changedOneline(buf_T *buf, linenr_T lnum)
 {
-    if (buf->b_mod_set)
-    {
-	// find the maximum area that must be redisplayed
-	if (lnum < buf->b_mod_top)
-	    buf->b_mod_top = lnum;
-	else if (lnum >= buf->b_mod_bot)
-	    buf->b_mod_bot = lnum + 1;
-    }
-    else
-    {
-	// set the area that must be redisplayed to one line
-	buf->b_mod_set = TRUE;
-	buf->b_mod_top = lnum;
-	buf->b_mod_bot = lnum + 1;
-	buf->b_mod_xlines = 0;
-    }
+  if (buf->b_mod_set) {
+    // find the maximum area that must be redisplayed
+    if (lnum < buf->b_mod_top)
+      buf->b_mod_top = lnum;
+    else if (lnum >= buf->b_mod_bot)
+      buf->b_mod_bot = lnum + 1;
+  } else {
+    // set the area that must be redisplayed to one line
+    buf->b_mod_set = true;
+    buf->b_mod_top = lnum;
+    buf->b_mod_bot = lnum + 1;
+    buf->b_mod_xlines = 0;
+  }
 }
 
 /*
@@ -310,29 +306,26 @@ changedOneline(buf_T *buf, linenr_T lnum)
  * - invalidates cached values
  * Careful: may trigger autocommands that reload the buffer.
  */
-    void
-changed_bytes(linenr_T lnum, colnr_T col)
+void changed_bytes(linenr_T lnum, colnr_T col)
 {
-    changedOneline(curbuf, lnum);
-    changed_common(lnum, col, lnum + 1, 0L);
+  changedOneline(curbuf, lnum);
+  changed_common(lnum, col, lnum + 1, 0L);
+  // notify any channels that are watching
+  buf_updates_send_changes(curbuf, lnum, 1, 1, true);
 
-#ifdef FEAT_DIFF
-    // Diff highlighting in other diff windows may need to be updated too.
-    if (curwin->w_p_diff)
-    {
-	win_T	    *wp;
-	linenr_T    wlnum;
+  // Diff highlighting in other diff windows may need to be updated too.
+  if (curwin->w_p_diff) {
+    linenr_T wlnum;
 
-	FOR_ALL_WINDOWS(wp)
-	    if (wp->w_p_diff && wp != curwin)
-	    {
-		redraw_win_later(wp, VALID);
-		wlnum = diff_lnum_win(lnum, wp);
-		if (wlnum > 0)
-		    changedOneline(wp->w_buffer, wlnum);
-	    }
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      if (wp->w_p_diff && wp != curwin) {
+        redraw_win_later(wp, VALID);
+        wlnum = diff_lnum_win(lnum, wp);
+        if (wlnum > 0)
+          changedOneline(wp->w_buffer, wlnum);
+      }
     }
-#endif
+  }
 }
 
 /*
