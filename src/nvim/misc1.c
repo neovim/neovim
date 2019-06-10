@@ -507,24 +507,6 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   return count;
 }
 
-/// Insert or replace a single character at the cursor position.
-/// When in REPLACE or VREPLACE mode, replace any existing character.
-/// Caller must have prepared for undo.
-/// For multi-byte characters we get the whole character, the caller must
-/// convert bytes to a character.
-void ins_char(int c)
-{
-  char_u buf[MB_MAXBYTES + 1];
-  size_t n = (size_t)utf_char2bytes(c, buf);
-
-  // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
-  // Happens for CTRL-Vu9900.
-  if (buf[0] == 0) {
-    buf[0] = '\n';
-  }
-  ins_char_bytes(buf, n);
-}
-
 int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)
 {

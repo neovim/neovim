@@ -502,16 +502,16 @@ void ins_bytes_len(char_u *p, size_t len)
 /// convert bytes to a character.
 void ins_char(int c)
 {
-    char_u buf[MB_MAXBYTES + 1];
-    int    n = (*mb_char2bytes)(c, buf);
+  char_u buf[MB_MAXBYTES + 1];
+  size_t n = (size_t)utf_char2bytes(c, buf);
 
-    // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
-    // Happens for CTRL-Vu9900.
-    if (buf[0] == 0) {
-      buf[0] = '\n';
-    }
+  // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
+  // Happens for CTRL-Vu9900.
+  if (buf[0] == 0) {
+    buf[0] = '\n';
+  }
 
-    ins_char_bytes(buf, n);
+  ins_char_bytes(buf, n);
 }
 
 void ins_char_bytes(char_u *buf, size_t charlen)
