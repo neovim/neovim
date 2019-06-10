@@ -372,6 +372,14 @@ void ui_grid_cursor_goto(handle_T grid_handle, int new_row, int new_col)
   pending_cursor_update = true;
 }
 
+/// moving the cursor grid will implicitly move the cursor
+void ui_check_cursor_grid(handle_T grid_handle)
+{
+  if (cursor_grid_handle == grid_handle) {
+    pending_cursor_update = true;
+  }
+}
+
 void ui_mode_info_set(void)
 {
   pending_mode_info_update = true;
