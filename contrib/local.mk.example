@@ -7,6 +7,9 @@
 # These CFLAGS can be used in addition to those specified in CMakeLists.txt:
 # CMAKE_EXTRA_FLAGS="-DCMAKE_C_FLAGS=-ftrapv -Wlogical-op"
 
+# To turn compiler warnings into errors:
+# CMAKE_EXTRA_FLAGS += "-DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -Werror"
+
 # Sets the build type; defaults to Debug. Valid values:
 #
 # - Debug:          Disables optimizations (-O0), enables debug information.
