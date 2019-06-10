@@ -3,7 +3,7 @@
 
 #include "nvim/api/private/defs.h"
 
-typedef Object (*ApiRedrawWrapper)(Array args);                                     
+typedef void (*ApiRedrawWrapper)(Array args);                                     
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 #include "redraw.h.generated.h"
