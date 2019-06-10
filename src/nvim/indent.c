@@ -7,6 +7,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/change.h"
 #include "nvim/indent.h"
 #include "nvim/eval.h"
 #include "nvim/charset.h"

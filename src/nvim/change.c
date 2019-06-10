@@ -3,7 +3,33 @@
 
 /// change.c: functions related to changing text
 
-#include "nvim/vim.h"
+#include "nvim/assert.h"
+#include "nvim/buffer.h"
+#include "nvim/buffer_updates.h"
+#include "nvim/change.h"
+#include "nvim/charset.h"
+#include "nvim/cursor.h"
+#include "nvim/diff.h"
+#include "nvim/edit.h"
+#include "nvim/eval.h"
+#include "nvim/fileio.h"
+#include "nvim/fold.h"
+#include "nvim/indent.h"
+#include "nvim/indent_c.h"
+#include "nvim/mark.h"
+#include "nvim/memline.h"
+#include "nvim/misc1.h"
+#include "nvim/move.h"
+#include "nvim/option.h"
+#include "nvim/screen.h"
+#include "nvim/search.h"
+#include "nvim/state.h"
+#include "nvim/ui.h"
+#include "nvim/undo.h"
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "change.c.generated.h"
+#endif
 
 /// If the file is readonly, give a warning message with the first change.
 /// Don't do this for autocommands.
@@ -510,7 +536,6 @@ void ins_char(int c)
   if (buf[0] == 0) {
     buf[0] = '\n';
   }
-
   ins_char_bytes(buf, n);
 }
 

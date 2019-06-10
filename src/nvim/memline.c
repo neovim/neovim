@@ -47,6 +47,7 @@
 #include "nvim/vim.h"
 #include "nvim/memline.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/eval.h"
 #include "nvim/getchar.h"
@@ -1178,7 +1179,7 @@ void ml_recover(void)
     /* Recovering an empty file results in two lines and the first line is
      * empty.  Don't set the modified flag then. */
     if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == NUL)) {
-      changed_int();
+      changed_internal();
       buf_inc_changedtick(curbuf);
     }
   } else {
@@ -1188,7 +1189,7 @@ void ml_recover(void)
       i = STRCMP(p, ml_get(idx + lnum));
       xfree(p);
       if (i != 0) {
-        changed_int();
+        changed_internal();
         buf_inc_changedtick(curbuf);
         break;
       }
