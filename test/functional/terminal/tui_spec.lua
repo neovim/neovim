@@ -268,14 +268,13 @@ describe('TUI', function()
   end)
 end)
 
-describe('TUI with non-tty file descriptors', function()
-  before_each(helpers.clear)
-
+describe('TUI', function()
+  before_each(clear)
   after_each(function()
-    os.remove('testF') -- ensure test file is removed
+    os.remove('testF')
   end)
 
-  it('can handle pipes as stdout and stderr', function()
+  it('with non-tty (pipe) stdout/stderr', function()
     local screen = thelpers.screen_setup(0, '"'..nvim_prog
       ..' -u NONE -i NONE --cmd \'set noswapfile noshowcmd noruler\' --cmd \'normal iabc\' > /dev/null 2>&1 && cat testF && rm testF"')
     feed_data(':w testF\n:q\n')
@@ -286,6 +285,22 @@ describe('TUI with non-tty file descriptors', function()
                                                         |
       [Process exited 0]{1: }                               |
                                                         |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it('<C-h> #10134', function()
+    local screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..[[", "-u", "NONE", "-i", "NONE", "--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]..']')
+
+    command([[call chansend(b:terminal_job_id, "\<C-h>")]])
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      <C-h>                                             |
       {3:-- TERMINAL --}                                    |
     ]])
   end)

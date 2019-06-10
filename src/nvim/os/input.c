@@ -50,6 +50,11 @@ void input_init(void)
   input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
 }
 
+void input_global_fd_init(int fd)
+{
+  global_fd = fd;
+}
+
 /// Global TTY (or pipe for "-es") input stream, before UI starts.
 int input_global_fd(void)
 {
@@ -62,7 +67,7 @@ void input_start(int fd)
     return;
   }
 
-  global_fd = fd;
+  input_global_fd_init(fd);
   rstream_init_fd(&main_loop, &read_stream, fd, READ_BUFFER_SIZE);
   rstream_start(&read_stream, input_read_cb, NULL);
 }
