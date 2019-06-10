@@ -181,28 +181,29 @@ enum {
   0, \
 })
 
-/* characters for p_go: */
-#define GO_ASEL         'a'             /* autoselect */
-#define GO_ASELML       'A'             /* autoselect modeless selection */
-#define GO_BOT          'b'             /* use bottom scrollbar */
-#define GO_CONDIALOG    'c'             /* use console dialog */
-#define GO_TABLINE      'e'             /* may show tabline */
-#define GO_FORG         'f'             /* start GUI in foreground */
-#define GO_GREY         'g'             /* use grey menu items */
-#define GO_HORSCROLL    'h'             /* flexible horizontal scrolling */
-#define GO_ICON         'i'             /* use Vim icon */
-#define GO_LEFT         'l'             /* use left scrollbar */
-#define GO_VLEFT        'L'             /* left scrollbar with vert split */
-#define GO_MENUS        'm'             /* use menu bar */
-#define GO_NOSYSMENU    'M'             /* don't source system menu */
-#define GO_POINTER      'p'             /* pointer enter/leave callbacks */
-#define GO_ASELPLUS     'P'             /* autoselectPlus */
-#define GO_RIGHT        'r'             /* use right scrollbar */
-#define GO_VRIGHT       'R'             /* right scrollbar with vert split */
-#define GO_TOOLBAR      'T'             /* add toolbar */
-#define GO_FOOTER       'F'             /* add footer */
-#define GO_VERTICAL     'v'             /* arrange dialog buttons vertically */
-#define GO_ALL          "aAbcefFghilmMprTv" /* all possible flags for 'go' */
+// characters for p_go:
+#define GO_ASEL         'a'             // autoselect
+#define GO_ASELML       'A'             // autoselect modeless selection
+#define GO_BOT          'b'             // use bottom scrollbar
+#define GO_CONDIALOG    'c'             // use console dialog
+#define GO_TABLINE      'e'             // may show tabline
+#define GO_FORG         'f'             // start GUI in foreground
+#define GO_GREY         'g'             // use grey menu items
+#define GO_HORSCROLL    'h'             // flexible horizontal scrolling
+#define GO_ICON         'i'             // use Vim icon
+#define GO_LEFT         'l'             // use left scrollbar
+#define GO_VLEFT        'L'             // left scrollbar with vert split
+#define GO_MENUS        'm'             // use menu bar
+#define GO_NOSYSMENU    'M'             // don't source system menu
+#define GO_POINTER      'p'             // pointer enter/leave callbacks
+#define GO_ASELPLUS     'P'             // autoselectPlus
+#define GO_RIGHT        'r'             // use right scrollbar
+#define GO_VRIGHT       'R'             // right scrollbar with vert split
+#define GO_TOOLBAR      'T'             // add toolbar
+#define GO_FOOTER       'F'             // add footer
+#define GO_VERTICAL     'v'             // arrange dialog buttons vertically
+#define GO_KEEPWINSIZE  'k'             // keep GUI window size
+#define GO_ALL          "aAbcefFghilmMprTvk"  // all possible flags for 'go'
 
 /* flags for 'comments' option */
 #define COM_NEST        'n'             /* comments strings nest */
