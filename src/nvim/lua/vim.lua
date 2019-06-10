@@ -299,6 +299,25 @@ local function _collect_results(jobs, status)
   return results
 end
 
+-- Maximum number of processes spawned in async handlers
+-- TODO(abdelhakeem): set to number of logical cores?
+local _proc_max = 8
+
+-- Async handlers for commands
+local _async_handlers_tbl = {
+}
+
+-- Invokes the async handler of "cmd".
+-- Used by ex_async_handler().
+local function _async_handler(cmd)
+  local handler, args = cmd:match('^([^%s]+)%s*(.*)$')
+  local handler_fn = _async_handlers_tbl[handler]
+  if handler_fn == nil then
+    error('Command has no async handler: '..handler)
+  end
+  handler_fn(args)
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -311,6 +330,7 @@ local module = {
   _put_result = _put_result,
   _append_result = _append_result,
   _collect_results = _collect_results,
+  _async_handler = _async_handler,
 }
 
 setmetatable(module, {

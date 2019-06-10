@@ -67,7 +67,7 @@ describe("'wildmenu'", function()
                                |
       ~                        |
       ~                        |
-      !  #  &  <  =  >  @  >   |
+      !  #  &  &:  <  =  >  >  |
       :!^                       |
     ]])
   end)
@@ -140,7 +140,7 @@ describe("'wildmenu'", function()
     feed([[:<Tab>]])      -- Invoke wildmenu.
     -- Check only the last 2 lines, because the shell output is
     -- system-dependent.
-    screen:expect{any='!  #  &  <  =  >  @  >   |\n:!^'}
+    screen:expect{any='!  #  &  &:  <  =  >  >  |\n:!^'}
     screen:expect_unchanged()
   end)
 
