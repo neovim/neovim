@@ -15,8 +15,26 @@ function(BuildLuv)
     message(FATAL_ERROR "Must pass at least one of CONFIGURE_COMMAND, BUILD_COMMAND, INSTALL_COMMAND")
   endif()
 
+  ExternalProject_Add(lua-compat-5.3
+    PREFIX ${DEPS_BUILD_DIR}
+    URL ${LUA_COMPAT53_URL}
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/lua-compat-5.3
+      -DURL=${LUA_COMPAT53_URL}
+      -DEXPECTED_SHA256=${LUA_COMPAT53_SHA256}
+      -DTARGET=lua-compat-5.3
+      -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    PATCH_COMMAND ""
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND "")
+
   ExternalProject_Add(luv-static
     PREFIX ${DEPS_BUILD_DIR}
+    DEPENDS lua-compat-5.3
     URL ${LUV_URL}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luv
     DOWNLOAD_COMMAND ${CMAKE_COMMAND}
@@ -94,9 +112,12 @@ endif()
 
 if(CMAKE_GENERATOR MATCHES "Unix Makefiles" AND
         (CMAKE_SYSTEM_NAME MATCHES ".*BSD" OR CMAKE_SYSTEM_NAME MATCHES "DragonFly"))
-  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} "-DCMAKE_MAKE_PROGRAM=gmake" --build .)
+        set(LUV_BUILD_COMMAND ${CMAKE_COMMAND}
+          "-DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3"
+          "-DCMAKE_MAKE_PROGRAM=gmake" --build .)
 else()
-  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND} --build .)
+  set(LUV_BUILD_COMMAND ${CMAKE_COMMAND}
+    "-DLUA_COMPAT53_DIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3" --build .)
 endif()
 set(LUV_INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install)
 
