@@ -1749,35 +1749,31 @@ theend:
 /*
  * Delete from cursor to end of line.
  * Caller must have prepared for undo.
- * If "fixpos" is TRUE fix the cursor position when done.
- *
- * Return FAIL for failure, OK otherwise.
  */
-    int
-truncate_line(int fixpos)
+void
+truncate_line (
+    int fixpos                 /* if TRUE fix the cursor position when done */
+)
 {
-    char_u	*newp;
-    linenr_T	lnum = curwin->w_cursor.lnum;
-    colnr_T	col = curwin->w_cursor.col;
+  char_u      *newp;
+  linenr_T lnum = curwin->w_cursor.lnum;
+  colnr_T col = curwin->w_cursor.col;
 
-    if (col == 0)
-	newp = vim_strsave((char_u *)"");
-    else
-	newp = vim_strnsave(ml_get(lnum), col);
+  if (col == 0) {
+    newp = vim_strsave((char_u *)"");
+  } else {
+    newp = vim_strnsave(ml_get(lnum), (size_t)col);
+  }
+  ml_replace(lnum, newp, false);
 
-    if (newp == NULL)
-	return FAIL;
+  /* mark the buffer as changed and prepare for displaying */
+  changed_bytes(lnum, curwin->w_cursor.col);
 
-    ml_replace(lnum, newp, FALSE);
-
-    // mark the buffer as changed and prepare for displaying
-    changed_bytes(lnum, curwin->w_cursor.col);
-
-    // If "fixpos" is TRUE we don't want to end up positioned at the NUL.
-    if (fixpos && curwin->w_cursor.col > 0)
-	--curwin->w_cursor.col;
-
-    return OK;
+  /*
+   * If "fixpos" is TRUE we don't want to end up positioned at the NUL.
+   */
+  if (fixpos && curwin->w_cursor.col > 0)
+    --curwin->w_cursor.col;
 }
 
 /*

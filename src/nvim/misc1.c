@@ -526,36 +526,6 @@ void ins_char(int c)
 }
 
 /*
- * Delete from cursor to end of line.
- * Caller must have prepared for undo.
- */
-void
-truncate_line (
-    int fixpos                 /* if TRUE fix the cursor position when done */
-)
-{
-  char_u      *newp;
-  linenr_T lnum = curwin->w_cursor.lnum;
-  colnr_T col = curwin->w_cursor.col;
-
-  if (col == 0) {
-    newp = vim_strsave((char_u *)"");
-  } else {
-    newp = vim_strnsave(ml_get(lnum), (size_t)col);
-  }
-  ml_replace(lnum, newp, false);
-
-  /* mark the buffer as changed and prepare for displaying */
-  changed_bytes(lnum, curwin->w_cursor.col);
-
-  /*
-   * If "fixpos" is TRUE we don't want to end up positioned at the NUL.
-   */
-  if (fixpos && curwin->w_cursor.col > 0)
-    --curwin->w_cursor.col;
-}
-
-/*
  * Delete "nlines" lines at the cursor.
  * Saves the lines for undo first if "undo" is TRUE.
  */
