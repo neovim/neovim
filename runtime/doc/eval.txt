@@ -5532,7 +5532,7 @@ log10({expr})						*log10()*
 
 luaeval({expr}[, {expr}])
 		Evaluate Lua expression {expr} and return its result converted
-		to Vim data structures. See |lua-luaeval| for more details.
+		to Vim data structures. See |lua-eval| for more details.
 
 map({expr1}, {expr2})					*map()*
 		{expr1} must be a |List| or a |Dictionary|.

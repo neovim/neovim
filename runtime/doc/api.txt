@@ -203,8 +203,8 @@ User reloads the buffer with ":edit", emits: >
 In-process lua plugins can also recieve buffer updates, in the form of lua
 callbacks. These callbacks are called frequently in various contexts, buffer
 contents or window layout should not be changed inside these |textlock|.
-|lua-vim.schedule| can be used to defer these operations to the main loop,
-where they are allowed.
+|vim.schedule| can be used to defer these operations to the main loop, where
+they are allowed.
 
 |nvim_buf_attach| will take keyword args for the callbacks. "on_lines" will
 receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline}, {new_lastline}).

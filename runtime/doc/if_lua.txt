@@ -258,8 +258,7 @@ position are restricted when the command is executed in the |sandbox|.
 
 
 ==============================================================================
-luaeval()						*lua-luaeval* *lua-eval*
-							*luaeval()*
+luaeval()						*lua-eval* *luaeval()*
 
 The (dual) equivalent of "vim.eval" for passing Lua values to Nvim is
 "luaeval". "luaeval" takes an expression string and an optional argument used 
@@ -372,40 +371,95 @@ For example, to use the "nvim_get_current_line()" API function, call
     print(tostring(vim.api.nvim_get_current_line()))
 
 ------------------------------------------------------------------------------
+VIM.LOOP							*lua-loop*
+
+`vim.loop` exposes all features of the Nvim event-loop.  This is a lower-level
+API that provides functionality for networking, filesystem, and process
+management.
+
+See http://docs.libuv.org for complete documentation.
+See https://github.com/luvit/luv/tree/master/examples for examples.
+
+Example: repeating timer
+    1. Save this code to a file.
+    2. Execute it with ":luafile %". >
+
+    -- Create a timer handle (implementation detail: uv_timer_t).
+    local timer = vim.loop.new_timer()
+    local i = 0
+    -- Waits 1000ms, then repeats every 750ms until timer:close().
+    timer:start(1000, 750, function()
+      print('timer invoked! i='..tostring(i))
+      if i > 4 then
+        timer:close()  -- Always close handles to avoid leaks.
+      end
+      i = i + 1
+    end)
+    print('sleeping');
+
+
+Example: TCP echo-server				*tcp-server*
+    1. Save this code to a file.
+    2. Execute it with ":luafile %".
+    3. Note the port number.
+    4. Connect from any TCP client (e.g. "nc 0.0.0.0 36795"): >
+
+    local function create_server(host, port, on_connection)
+      local server = vim.loop.new_tcp()
+      server:bind(host, port)
+      server:listen(128, function(err)
+        assert(not err, err)  -- Check for errors.
+        local sock = vim.loop.new_tcp()
+        server:accept(sock)  -- Accept client connection.
+        on_connection(sock)  -- Start reading messages.
+      end)
+      return server
+    end
+    local server = create_server('0.0.0.0', 0, function(sock)
+      sock:read_start(function(err, chunk)
+        assert(not err, err)  -- Check for errors.
+        if chunk then
+          sock:write(chunk)  -- Echo received messages to the channel.
+        else  -- EOF (stream closed).
+          sock:close()  -- Always close handles to avoid leaks.
+        end
+      end)
+    end)
+    print('TCP echo-server listening on port: '..server:getsockname().port)
+
+------------------------------------------------------------------------------
 VIM							*lua-util*
 
-vim.stricmp(a, b)					*lua-vim.stricmp*
-	Function used for case-insensitive string comparison.  Takes two 
-	string arguments and returns 0, 1 or -1 if strings are equal, a is 
-	greater then b or a is lesser then b respectively.
+vim.stricmp({a}, {b})					*vim.stricmp()*
+        Compares strings case-insensitively.  Returns 0, 1 or -1 if strings
+        are equal, {a} is greater than {b} or {a} is lesser than {b},
+        respectively.
 
-vim.schedule(callback)					*lua-vim.schedule*
-	Schedule `callback` to be called soon by the main event loop. This is
-        useful in contexts where some functionality is blocked, like an
-        autocommand or callback running with |textlock|. Then the scheduled
-        callback could invoke this functionality later when it is allowed.
+vim.schedule({callback})				*vim.schedule()*
+        Schedules {callback} to be invoked soon by the main event-loop. Useful
+        to avoid |textlock| or other temporary restrictions.
 
-vim.type_idx						*lua-vim.type_idx*
+vim.type_idx						*vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
-	values from |lua-vim.types| allows typing the empty table (it is 
+	values from |vim.types| allows typing the empty table (it is 
 	unclear whether empty lua table represents empty list or empty array) 
 	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 
 	more details.
 
-vim.val_idx						*lua-vim.val_idx*
+vim.val_idx						*vim.val_idx*
 	Value index for tables representing |Float|s.  A table representing 
 	floating-point value 1.0 looks like this: >
             {
               [vim.type_idx] = vim.types.float,
               [vim.val_idx] = 1.0,
             }
-<	See also |lua-vim.type_idx| and |lua-special-tbl|.
+<	See also |vim.type_idx| and |lua-special-tbl|.
 
-vim.types						*lua-vim.types*
-	Table with possible values for |lua-vim.type_idx|.  Contains two sets 
-	of key-value pairs: first maps possible values for |lua-vim.type_idx| 
+vim.types						*vim.types*
+	Table with possible values for |vim.type_idx|.  Contains two sets 
+	of key-value pairs: first maps possible values for |vim.type_idx| 
 	to human-readable strings, second maps human-readable type names to 
-	values for |lua-vim.type_idx|.  Currently contains pairs for `float`, 
+	values for |vim.type_idx|.  Currently contains pairs for `float`, 
 	`array` and `dictionary` types.
 
 	Note: one must expect that values corresponding to `vim.types.float`, 
