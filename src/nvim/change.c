@@ -1,22 +1,18 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * change.c: functions related to changing text
- */
+/// change.c: functions related to changing text
 
 #include "nvim/vim.h"
 
-/*
- * If the file is readonly, give a warning message with the first change.
- * Don't do this for autocommands.
- * Doesn't use emsg(), because it flushes the macro buffer.
- * If we have undone all changes b_changed will be false, but "b_did_warn"
- * will be true.
- * "col" is the column for the message; non-zero when in insert mode and
- * 'showmode' is on.
- * Careful: may trigger autocommands that reload the buffer.
- */
+/// If the file is readonly, give a warning message with the first change.
+/// Don't do this for autocommands.
+/// Doesn't use emsg(), because it flushes the macro buffer.
+/// If we have undone all changes b_changed will be false, but "b_did_warn"
+/// will be true.
+/// "col" is the column for the message; non-zero when in insert mode and
+/// 'showmode' is on.
+/// Careful: may trigger autocommands that reload the buffer.
 void change_warning(int col)
 {
   static char *w_readonly = N_("W10: Warning: Changing a readonly file");
@@ -25,16 +21,18 @@ void change_warning(int col)
       && curbufIsChanged() == 0
       && !autocmd_busy
       && curbuf->b_p_ro) {
-    ++curbuf_lock;
-    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, FALSE, curbuf);
-    --curbuf_lock;
-    if (!curbuf->b_p_ro)
-      return;
+    curbuf_lock++;
+    apply_autocmds(EVENT_FILECHANGEDRO, NULL, NULL, false, curbuf);
+    curbuf_lock--;
+    if (!curbuf->b_p_ro) {
+        return;
+    }
     // Do what msg() does, but with a column offset if the warning should
     // be after the mode message.
     msg_start();
-    if (msg_row == Rows - 1)
-      msg_col = col;
+    if (msg_row == Rows - 1) {
+        msg_col = col;
+    }
     msg_source(HL_ATTR(HLF_W));
     msg_ext_set_kind("wmsg");
     MSG_PUTS_ATTR(_(w_readonly), HL_ATTR(HLF_W) | MSG_HIST);
@@ -43,26 +41,24 @@ void change_warning(int col)
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode && ui_active()) {
       ui_flush();
-      os_delay(1000L, true); // give the user time to think about it
+      os_delay(1000L, true);  // give the user time to think about it
     }
     curbuf->b_did_warn = true;
-    redraw_cmdline = FALSE; // don't redraw and erase the message
-    if (msg_row < Rows - 1)
-      showmode();
+    redraw_cmdline = false;  // don't redraw and erase the message
+    if (msg_row < Rows - 1) {
+        showmode();
+    }
   }
 }
 
-/*
- * Call this function when something in the current buffer is changed.
- *
- * Most often called through changed_bytes() and changed_lines(), which also
- * mark the area of the display to be redrawn.
- *
- * Careful: may trigger autocommands that reload the buffer.
- */
+/// Call this function when something in the current buffer is changed.
+///
+/// Most often called through changed_bytes() and changed_lines(), which also
+/// mark the area of the display to be redrawn.
+///
+/// Careful: may trigger autocommands that reload the buffer.
 void changed(void)
 {
-
   if (!curbuf->b_changed) {
     int save_msg_scroll = msg_scroll;
 
@@ -87,7 +83,7 @@ void changed(void)
       if (need_wait_return && emsg_silent == 0) {
         ui_flush();
         os_delay(2000L, true);
-        wait_return(TRUE);
+        wait_return(true);
         msg_scroll = save_msg_scroll;
       } else {
         need_wait_return = save_need_wait_return;
@@ -101,168 +97,171 @@ void changed(void)
   highlight_match = false;
 }
 
-/*
- * Internal part of changed(), no user interaction.
- * Also used for recovery.
- */
+/// Internal part of changed(), no user interaction.
+/// Also used for recovery.
 void changed_internal(void)
 {
   curbuf->b_changed = true;
   ml_setflags(curbuf);
   check_status(curbuf);
   redraw_tabline = true;
-  need_maketitle = true; // set window title later
+  need_maketitle = true;  // set window title later
 }
 
-/*
- * Common code for when a change was made.
- * See changed_lines() for the arguments.
- * Careful: may trigger autocommands that reload the buffer.
- */
-static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra)
+/// Common code for when a change was made.
+/// See changed_lines() for the arguments.
+/// Careful: may trigger autocommands that reload the buffer.
+static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
+                           long xtra)
 {
   int i;
   int cols;
   pos_T       *p;
   int add;
 
-  /* mark the buffer as modified */
+  // mark the buffer as modified
   changed();
 
   if (curwin->w_p_diff && diff_internal()) {
     curtab->tp_diff_update = true;
   }
 
-  /* set the '. mark */
+  // set the '. mark
   if (!cmdmod.keepjumps) {
-    RESET_FMARK(&curbuf->b_last_change, ((pos_T) {lnum, col, 0}), 0);
+    RESET_FMARK(&curbuf->b_last_change, ((pos_T) { lnum, col, 0 }), 0);
 
-    /* Create a new entry if a new undo-able change was started or we
-     * don't have an entry yet. */
+    // Create a new entry if a new undo-able change was started or we
+    // don't have an entry yet.
     if (curbuf->b_new_change || curbuf->b_changelistlen == 0) {
-      if (curbuf->b_changelistlen == 0)
-        add = TRUE;
-      else {
-        /* Don't create a new entry when the line number is the same
-         * as the last one and the column is not too far away.  Avoids
-         * creating many entries for typing "xxxxx". */
+      if (curbuf->b_changelistlen == 0) {
+          add = true;
+      } else {
+        // Don't create a new entry when the line number is the same
+        // as the last one and the column is not too far away.  Avoids
+        // creating many entries for typing "xxxxx".
         p = &curbuf->b_changelist[curbuf->b_changelistlen - 1].mark;
-        if (p->lnum != lnum)
-          add = TRUE;
-        else {
-          cols = comp_textwidth(FALSE);
-          if (cols == 0)
-            cols = 79;
+        if (p->lnum != lnum) {
+            add = true;
+        } else {
+          cols = comp_textwidth(false);
+          if (cols == 0) {
+              cols = 79;
+          }
           add = (p->col + cols < col || col + cols < p->col);
         }
       }
       if (add) {
-        /* This is the first of a new sequence of undo-able changes
-         * and it's at some distance of the last change.  Use a new
-         * position in the changelist. */
+        // This is the first of a new sequence of undo-able changes
+        // and it's at some distance of the last change.  Use a new
+        // position in the changelist.
         curbuf->b_new_change = false;
 
         if (curbuf->b_changelistlen == JUMPLISTSIZE) {
-          /* changelist is full: remove oldest entry */
+          // changelist is full: remove oldest entry
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
           memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
-              sizeof(curbuf->b_changelist[0]) * (JUMPLISTSIZE - 1));
+                  sizeof(curbuf->b_changelist[0]) * (JUMPLISTSIZE - 1));
           FOR_ALL_TAB_WINDOWS(tp, wp) {
-            /* Correct position in changelist for other windows on
-             * this buffer. */
+            // Correct position in changelist for other windows on
+            // this buffer.
             if (wp->w_buffer == curbuf && wp->w_changelistidx > 0) {
-              --wp->w_changelistidx;
+              wp->w_changelistidx--;
             }
           }
         }
         FOR_ALL_TAB_WINDOWS(tp, wp) {
-          /* For other windows, if the position in the changelist is
-           * at the end it stays at the end. */
+          // For other windows, if the position in the changelist is
+          // at the end it stays at the end.
           if (wp->w_buffer == curbuf
               && wp->w_changelistidx == curbuf->b_changelistlen) {
-            ++wp->w_changelistidx;
+            wp->w_changelistidx++;
           }
         }
-        ++curbuf->b_changelistlen;
+        curbuf->b_changelistlen++;
       }
     }
     curbuf->b_changelist[curbuf->b_changelistlen - 1] =
       curbuf->b_last_change;
-    /* The current window is always after the last change, so that "g,"
-     * takes you back to it. */
+    // The current window is always after the last change, so that "g,"
+    // takes you back to it.
     curwin->w_changelistidx = curbuf->b_changelistlen;
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curbuf) {
-      /* Mark this window to be redrawn later. */
-      if (wp->w_redr_type < VALID)
-        wp->w_redr_type = VALID;
-
-      /* Check if a change in the buffer has invalidated the cached
-       * values for the cursor. */
-      /*
-       * Update the folds for this window.  Can't postpone this, because
-       * a following operator might work on the whole fold: ">>dd".
-       */
-      foldUpdate(wp, lnum, lnume + xtra - 1);
-
-      /* The change may cause lines above or below the change to become
-       * included in a fold.  Set lnum/lnume to the first/last line that
-       * might be displayed differently.
-       * Set w_cline_folded here as an efficient way to update it when
-       * inserting lines just above a closed fold. */
-      bool folded = hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL);
-      if (wp->w_cursor.lnum == lnum)
-        wp->w_cline_folded = folded;
-      folded = hasFoldingWin(wp, lnume, NULL, &lnume, false, NULL);
-      if (wp->w_cursor.lnum == lnume)
-        wp->w_cline_folded = folded;
-
-      /* If the changed line is in a range of previously folded lines,
-       * compare with the first line in that range. */
-      if (wp->w_cursor.lnum <= lnum) {
-        i = find_wl_entry(wp, lnum);
-        if (i >= 0 && wp->w_cursor.lnum > wp->w_lines[i].wl_lnum)
-          changed_line_abv_curs_win(wp);
+      // Mark this window to be redrawn later.
+      if (wp->w_redr_type < VALID) {
+          wp->w_redr_type = VALID;
       }
 
-      if (wp->w_cursor.lnum > lnum)
-        changed_line_abv_curs_win(wp);
-      else if (wp->w_cursor.lnum == lnum && wp->w_cursor.col >= col)
-        changed_cline_bef_curs_win(wp);
+      // Check if a change in the buffer has invalidated the cached
+      // values for the cursor.
+      // Update the folds for this window.  Can't postpone this, because
+      // a following operator might work on the whole fold: ">>dd".
+      foldUpdate(wp, lnum, lnume + xtra - 1);
+
+      // The change may cause lines above or below the change to become
+      // included in a fold.  Set lnum/lnume to the first/last line that
+      // might be displayed differently.
+      // Set w_cline_folded here as an efficient way to update it when
+      // inserting lines just above a closed fold. */
+      bool folded = hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL);
+      if (wp->w_cursor.lnum == lnum) {
+          wp->w_cline_folded = folded;
+      }
+      folded = hasFoldingWin(wp, lnume, NULL, &lnume, false, NULL);
+      if (wp->w_cursor.lnum == lnume) {
+          wp->w_cline_folded = folded;
+      }
+
+      // If the changed line is in a range of previously folded lines,
+      // compare with the first line in that range.
+      if (wp->w_cursor.lnum <= lnum) {
+        i = find_wl_entry(wp, lnum);
+        if (i >= 0 && wp->w_cursor.lnum > wp->w_lines[i].wl_lnum) {
+            changed_line_abv_curs_win(wp);
+        }
+      }
+
+      if (wp->w_cursor.lnum > lnum) {
+          changed_line_abv_curs_win(wp);
+      } else if (wp->w_cursor.lnum == lnum && wp->w_cursor.col >= col) {
+          changed_cline_bef_curs_win(wp);
+      }
       if (wp->w_botline >= lnum) {
-        /* Assume that botline doesn't change (inserted lines make
-         * other lines scroll down below botline). */
+        // Assume that botline doesn't change (inserted lines make
+        // other lines scroll down below botline).
         approximate_botline_win(wp);
       }
 
-      /* Check if any w_lines[] entries have become invalid.
-       * For entries below the change: Correct the lnums for
-       * inserted/deleted lines.  Makes it possible to stop displaying
-       * after the change. */
-      for (i = 0; i < wp->w_lines_valid; ++i)
+      // Check if any w_lines[] entries have become invalid.
+      // For entries below the change: Correct the lnums for
+      // inserted/deleted lines.  Makes it possible to stop displaying
+      // after the change.
+      for (i = 0; i < wp->w_lines_valid; i++) {
         if (wp->w_lines[i].wl_valid) {
           if (wp->w_lines[i].wl_lnum >= lnum) {
             if (wp->w_lines[i].wl_lnum < lnume) {
-              /* line included in change */
-              wp->w_lines[i].wl_valid = FALSE;
+              // line included in change
+              wp->w_lines[i].wl_valid = false;
             } else if (xtra != 0) {
-              /* line below change */
+              // line below change
               wp->w_lines[i].wl_lnum += xtra;
               wp->w_lines[i].wl_lastlnum += xtra;
             }
           } else if (wp->w_lines[i].wl_lastlnum >= lnum) {
-            /* change somewhere inside this range of folded lines,
-             * may need to be redrawn */
-            wp->w_lines[i].wl_valid = FALSE;
+            // change somewhere inside this range of folded lines,
+            // may need to be redrawn
+            wp->w_lines[i].wl_valid = false;
           }
         }
+      }
 
-      /* Take care of side effects for setting w_topline when folds have
-      * changed.  Esp. when the buffer was changed in another window. */
-      if (hasAnyFolding(wp))
+      // Take care of side effects for setting w_topline when folds have
+      // changed.  Esp. when the buffer was changed in another window.
+      if (hasAnyFolding(wp)) {
         set_topline(wp, wp->w_topline);
+      }
 
       // relative numbering may require updating more
       if (wp->w_p_rnu) {
@@ -271,25 +270,28 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
     }
   }
 
-  /* Call update_screen() later, which checks out what needs to be redrawn,
-   * since it notices b_mod_set and then uses b_mod_*. */
-  if (must_redraw < VALID)
+  // Call update_screen() later, which checks out what needs to be redrawn,
+  // since it notices b_mod_set and then uses b_mod_*.
+  if (must_redraw < VALID) {
     must_redraw = VALID;
+  }
 
-  /* when the cursor line is changed always trigger CursorMoved */
+  // when the cursor line is changed always trigger CursorMoved
   if (lnum <= curwin->w_cursor.lnum
-      && lnume + (xtra < 0 ? -xtra : xtra) > curwin->w_cursor.lnum)
+      && lnume + (xtra < 0 ? -xtra : xtra) > curwin->w_cursor.lnum) {
     curwin->w_last_cursormoved.lnum = 0;
+  }
 }
 
 static void changedOneline(buf_T *buf, linenr_T lnum)
 {
   if (buf->b_mod_set) {
     // find the maximum area that must be redisplayed
-    if (lnum < buf->b_mod_top)
-      buf->b_mod_top = lnum;
-    else if (lnum >= buf->b_mod_bot)
-      buf->b_mod_bot = lnum + 1;
+    if (lnum < buf->b_mod_top) {
+        buf->b_mod_top = lnum;
+    } else if (lnum >= buf->b_mod_bot) {
+        buf->b_mod_bot = lnum + 1;
+    }
   } else {
     // set the area that must be redisplayed to one line
     buf->b_mod_set = true;
@@ -299,13 +301,11 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
   }
 }
 
-/*
- * Changed bytes within a single line for the current buffer.
- * - marks the windows on this buffer to be redisplayed
- * - marks the buffer changed by calling changed()
- * - invalidates cached values
- * Careful: may trigger autocommands that reload the buffer.
- */
+/// Changed bytes within a single line for the current buffer.
+/// - marks the windows on this buffer to be redisplayed
+/// - marks the buffer changed by calling changed()
+/// - invalidates cached values
+/// Careful: may trigger autocommands that reload the buffer.
 void changed_bytes(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
@@ -321,26 +321,23 @@ void changed_bytes(linenr_T lnum, colnr_T col)
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
-        if (wlnum > 0)
-          changedOneline(wp->w_buffer, wlnum);
+        if (wlnum > 0) {
+            changedOneline(wp->w_buffer, wlnum);
+        }
       }
     }
   }
 }
 
-/*
- * Appended "count" lines below line "lnum" in the current buffer.
- * Must be called AFTER the change and after mark_adjust().
- * Takes care of marking the buffer to be redrawn and sets the changed flag.
- */
+/// Appended "count" lines below line "lnum" in the current buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// Takes care of marking the buffer to be redrawn and sets the changed flag.
 void appended_lines(linenr_T lnum, long count)
 {
   changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
-/*
- * Like appended_lines(), but adjust marks first.
- */
+/// Like appended_lines(), but adjust marks first.
 void appended_lines_mark(linenr_T lnum, long count)
 {
   // Skip mark_adjust when adding a line after the last one, there can't
@@ -351,21 +348,17 @@ void appended_lines_mark(linenr_T lnum, long count)
   changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
 
-/*
- * Deleted "count" lines at line "lnum" in the current buffer.
- * Must be called AFTER the change and after mark_adjust().
- * Takes care of marking the buffer to be redrawn and sets the changed flag.
- */
+/// Deleted "count" lines at line "lnum" in the current buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// Takes care of marking the buffer to be redrawn and sets the changed flag.
 void deleted_lines(linenr_T lnum, long count)
 {
   changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
-/*
- * Like deleted_lines(), but adjust marks first.
- * Make sure the cursor is on a valid line before calling, a GUI callback may
- * be triggered to display the cursor.
- */
+/// Like deleted_lines(), but adjust marks first.
+/// Make sure the cursor is on a valid line before calling, a GUI callback may
+/// be triggered to display the cursor.
 void deleted_lines_mark(linenr_T lnum, long count)
 {
   mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
@@ -382,16 +375,19 @@ void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
 {
   if (buf->b_mod_set) {
     // find the maximum area that must be redisplayed
-    if (lnum < buf->b_mod_top)
+    if (lnum < buf->b_mod_top) {
       buf->b_mod_top = lnum;
+    }
     if (lnum < buf->b_mod_bot) {
       // adjust old bot position for xtra lines
       buf->b_mod_bot += xtra;
-      if (buf->b_mod_bot < lnum)
+      if (buf->b_mod_bot < lnum) {
         buf->b_mod_bot = lnum;
+      }
     }
-    if (lnume + xtra > buf->b_mod_bot)
+    if (lnume + xtra > buf->b_mod_bot) {
       buf->b_mod_bot = lnume + xtra;
+    }
     buf->b_mod_xlines += xtra;
   } else {
     // set the area that must be redisplayed
@@ -402,18 +398,16 @@ void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume, long xtra)
   }
 }
 
-/*
- * Changed lines for the current buffer.
- * Must be called AFTER the change and after mark_adjust().
- * - mark the buffer changed by calling changed()
- * - mark the windows on this buffer to be redisplayed
- * - invalidate cached values
- * "lnum" is the first line that needs displaying, "lnume" the first line
- * below the changed lines (BEFORE the change).
- * When only inserting lines, "lnum" and "lnume" are equal.
- * Takes care of calling changed() and updating b_mod_*.
- * Careful: may trigger autocommands that reload the buffer.
- */
+/// Changed lines for the current buffer.
+/// Must be called AFTER the change and after mark_adjust().
+/// - mark the buffer changed by calling changed()
+/// - mark the windows on this buffer to be redisplayed
+/// - invalidate cached values
+/// "lnum" is the first line that needs displaying, "lnume" the first line
+/// below the changed lines (BEFORE the change).
+/// When only inserting lines, "lnum" and "lnume" are equal.
+/// Takes care of calling changed() and updating b_mod_*.
+/// Careful: may trigger autocommands that reload the buffer.
 void
 changed_lines(
     linenr_T lnum,        // first line with change
@@ -440,7 +434,7 @@ changed_lines(
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0) {
           changed_lines_buf(wp->w_buffer, wlnum,
-              lnume - lnum + wlnum, 0L);
+                            lnume - lnum + wlnum, 0L);
         }
       }
     }
@@ -455,28 +449,25 @@ changed_lines(
   }
 }
 
-/*
- * Called when the changed flag must be reset for buffer "buf".
- * When "ff" is TRUE also reset 'fileformat'.
- */
-unchanged(buf_T *buf, int ff)
+/// Called when the changed flag must be reset for buffer "buf".
+/// When "ff" is true also reset 'fileformat'.
+void unchanged(buf_T *buf, int ff)
 {
   if (buf->b_changed || (ff && file_ff_differs(buf, false))) {
     buf->b_changed = false;
     ml_setflags(buf);
-    if (ff)
+    if (ff) {
       save_file_ff(buf);
+    }
     check_status(buf);
     redraw_tabline = true;
-    need_maketitle = true; // set window title later
+    need_maketitle = true;  // set window title later
   }
   buf_inc_changedtick(buf);
 }
 
-/*
- * Insert string "p" at the cursor position.  Stops at a NUL byte.
- * Handles Replace mode and multi-byte characters.
- */
+/// Insert string "p" at the cursor position.  Stops at a NUL byte.
+/// Handles Replace mode and multi-byte characters.
 void ins_bytes(char_u *p)
 {
   ins_bytes_len(p, STRLEN(p));
@@ -504,23 +495,21 @@ void ins_bytes_len(char_u *p, size_t len)
   }
 }
 
-/*
- * Insert or replace a single character at the cursor position.
- * When in REPLACE or VREPLACE mode, replace any existing character.
- * Caller must have prepared for undo.
- * For multi-byte characters we get the whole character, the caller must
- * convert bytes to a character.
- */
-    void
-ins_char(int c)
+/// Insert or replace a single character at the cursor position.
+/// When in REPLACE or VREPLACE mode, replace any existing character.
+/// Caller must have prepared for undo.
+/// For multi-byte characters we get the whole character, the caller must
+/// convert bytes to a character.
+void ins_char(int c)
 {
-    char_u	buf[MB_MAXBYTES + 1];
-    int		n = (*mb_char2bytes)(c, buf);
+    char_u buf[MB_MAXBYTES + 1];
+    int    n = (*mb_char2bytes)(c, buf);
 
     // When "c" is 0x100, 0x200, etc. we don't want to insert a NUL byte.
     // Happens for CTRL-Vu9900.
-    if (buf[0] == 0)
-	buf[0] = '\n';
+    if (buf[0] == 0) {
+      buf[0] = '\n';
+    }
 
     ins_char_bytes(buf, n);
 }
@@ -577,10 +566,10 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     }
 
 
-    /* Push the replaced bytes onto the replace stack, so that they can be
-     * put back when BS is used.  The bytes of a multi-byte character are
-     * done the other way around, so that the first byte is popped off
-     * first (it tells the byte length of the character). */
+    // Push the replaced bytes onto the replace stack, so that they can be
+    // put back when BS is used.  The bytes of a multi-byte character are
+    // done the other way around, so that the first byte is popped off
+    // first (it tells the byte length of the character).
     replace_push(NUL);
     for (size_t i = 0; i < oldlen; i++) {
       if (has_mbyte) {
@@ -619,10 +608,8 @@ void ins_char_bytes(char_u *buf, size_t charlen)
   // mark the buffer as changed and prepare for displaying
   changed_bytes(lnum, (colnr_T)col);
 
-  /*
-   * If we're in Insert or Replace mode and 'showmatch' is set, then briefly
-   * show the match for right parens and braces.
-   */
+  // If we're in Insert or Replace mode and 'showmatch' is set, then briefly
+  // show the match for right parens and braces.
   if (p_sm && (State & INSERT)
       && msg_silent == 0
       && !ins_compl_active()
@@ -634,16 +621,12 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     // Normal insert: move cursor right
     curwin->w_cursor.col += (int)charlen;
   }
-  /*
-   * TODO: should try to update w_row here, to avoid recomputing it later.
-   */
+  // TODO(Bram): should try to update w_row here, to avoid recomputing it later.
 }
 
-/*
- * Insert a string at the cursor position.
- * Note: Does NOT handle Replace mode.
- * Caller must have prepared for undo.
- */
+/// Insert a string at the cursor position.
+/// Note: Does NOT handle Replace mode.
+/// Caller must have prepared for undo.
 void ins_str(char_u *s)
 {
   char_u      *oldp, *newp;
@@ -652,8 +635,9 @@ void ins_str(char_u *s)
   colnr_T col;
   linenr_T lnum = curwin->w_cursor.lnum;
 
-  if (virtual_active() && curwin->w_cursor.coladd > 0)
+  if (virtual_active() && curwin->w_cursor.coladd > 0) {
     coladvance_force(getviscol());
+  }
 
   col = curwin->w_cursor.col;
   oldp = ml_get(lnum);
@@ -682,16 +666,15 @@ int del_char(bool fixpos)
   if (has_mbyte) {
     // Make sure the cursor is at the start of a character.
     mb_adjust_cursor();
-    if (*get_cursor_pos_ptr() == NUL)
+    if (*get_cursor_pos_ptr() == NUL) {
       return FAIL;
+    }
     return del_chars(1L, fixpos);
   }
   return del_bytes(1, fixpos, true);
 }
 
-/*
- * Like del_bytes(), but delete characters instead of bytes.
- */
+/// Like del_bytes(), but delete characters instead of bytes.
 int del_chars(long count, int fixpos)
 {
   int bytes = 0;
@@ -700,12 +683,12 @@ int del_chars(long count, int fixpos)
   int l;
 
   p = get_cursor_pos_ptr();
-  for (i = 0; i < count && *p != NUL; ++i) {
+  for (i = 0; i < count && *p != NUL; i++) {
     l = (*mb_ptr2len)(p);
     bytes += l;
     p += l;
   }
-  return del_bytes(bytes, fixpos, TRUE);
+  return del_bytes(bytes, fixpos, true);
 }
 
 /// Delete "count" bytes under the cursor.
@@ -762,15 +745,13 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   // When count is too big, reduce it.
   int movelen = oldlen - col - count + 1;  // includes trailing NUL
   if (movelen <= 1) {
-    /*
-     * If we just took off the last character of a non-blank line, and
-     * fixpos is TRUE, we don't want to end up positioned at the NUL,
-     * unless "restart_edit" is set or 'virtualedit' contains "onemore".
-     */
+    // If we just took off the last character of a non-blank line, and
+    // fixpos is TRUE, we don't want to end up positioned at the NUL,
+    // unless "restart_edit" is set or 'virtualedit' contains "onemore".
     if (col > 0 && fixpos && restart_edit == 0
         && (ve_flags & VE_ONEMORE) == 0
         ) {
-      --curwin->w_cursor.col;
+      curwin->w_cursor.col--;
       curwin->w_cursor.coladd = 0;
       curwin->w_cursor.col -= utf_head_off(oldp, oldp + curwin->w_cursor.col);
     }
@@ -794,15 +775,15 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     ml_replace(lnum, newp, false);
   }
 
-  /* mark the buffer as changed and prepare for displaying */
+  // mark the buffer as changed and prepare for displaying
   changed_bytes(lnum, curwin->w_cursor.col);
 
   return OK;
 }
 
-// Copy the indent from ptr to the current line (and fill to size).
-// Leaves the cursor on the first non-blank in the line.
-// @return true if the line was changed.
+/// Copy the indent from ptr to the current line (and fill to size).
+/// Leaves the cursor on the first non-blank in the line.
+/// @return true if the line was changed.
 int copy_indent(int size, char_u *src)
 {
   char_u *p = NULL;
@@ -817,7 +798,7 @@ int copy_indent(int size, char_u *src)
 
   // Round 1: compute the number of characters needed for the indent
   // Round 2: copy the characters.
-  for (round = 1; round <= 2; ++round) {
+  for (round = 1; round <= 2; round++) {
     todo = size;
     ind_len = 0;
     ind_done = 0;
@@ -902,26 +883,24 @@ int copy_indent(int size, char_u *src)
   return true;
 }
 
-/*
- * open_line: Add a new line below or above the current line.
- *
- * For VREPLACE mode, we only add a new line when we get to the end of the
- * file, otherwise we just start replacing the next line.
- *
- * Caller must take care of undo.  Since VREPLACE may affect any number of
- * lines however, it may call u_save_cursor() again when starting to change a
- * new line.
- * "flags": OPENLINE_DELSPACES	delete spaces after cursor
- *	    OPENLINE_DO_COM	format comments
- *	    OPENLINE_KEEPTRAIL	keep trailing spaces
- *	    OPENLINE_MARKFIX	adjust mark positions after the line break
- *	    OPENLINE_COM_LIST	format comments with list or 2nd line indent
- *
- * "second_line_indent": indent for after ^^D in Insert mode or if flag
- *			  OPENLINE_COM_LIST
- *
- * Return TRUE for success, FALSE for failure
- */
+/// open_line: Add a new line below or above the current line.
+///
+/// For VREPLACE mode, we only add a new line when we get to the end of the
+/// file, otherwise we just start replacing the next line.
+///
+/// Caller must take care of undo.  Since VREPLACE may affect any number of
+/// lines however, it may call u_save_cursor() again when starting to change a
+/// new line.
+/// "flags": OPENLINE_DELSPACES delete spaces after cursor
+///          OPENLINE_DO_COM    format comments
+///          OPENLINE_KEEPTRAIL keep trailing spaces
+///          OPENLINE_MARKFIX   adjust mark positions after the line break
+///          OPENLINE_COM_LIST  format comments with list or 2nd line indent
+///
+/// "second_line_indent": indent for after ^^D in Insert mode or if flag
+///                       OPENLINE_COM_LIST
+///
+/// @return true on success, false on failure
 int open_line(
     int dir,                        // FORWARD or BACKWARD
     int flags,
@@ -1746,11 +1725,9 @@ theend:
   return retval;
 }
 
-/*
- * Delete from cursor to end of line.
- * Caller must have prepared for undo.
- * If "fixpos" is TRUE fix the cursor position when done.
- */
+/// Delete from cursor to end of line.
+/// Caller must have prepared for undo.
+/// If "fixpos" is true fix the cursor position when done.
 void truncate_line(int fixpos)
 {
   char_u      *newp;
@@ -1767,48 +1744,47 @@ void truncate_line(int fixpos)
   // mark the buffer as changed and prepare for displaying
   changed_bytes(lnum, curwin->w_cursor.col);
 
-  // If "fixpos" is TRUE we don't want to end up positioned at the NUL.
+  // If "fixpos" is true we don't want to end up positioned at the NUL.
   if (fixpos && curwin->w_cursor.col > 0) {
     curwin->w_cursor.col--;
   }
 }
 
-/*
- * Delete "nlines" lines at the cursor.
- * Saves the lines for undo first if "undo" is TRUE.
- */
-void del_lines (
-    long nlines,                    /* number of lines to delete */
-    int undo                       /* if TRUE, prepare for undo */
-)
+/// Delete "nlines" lines at the cursor.
+/// Saves the lines for undo first if "undo" is true.
+void del_lines(long nlines, int undo)
 {
   long n;
   linenr_T first = curwin->w_cursor.lnum;
 
-  if (nlines <= 0)
-    return;
+  if (nlines <= 0) {
+      return;
+  }
 
-  /* save the deleted lines for undo */
-  if (undo && u_savedel(first, nlines) == FAIL)
-    return;
+  // save the deleted lines for undo
+  if (undo && u_savedel(first, nlines) == FAIL) {
+      return;
+  }
 
   for (n = 0; n < nlines; ) {
-    if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
+    if (curbuf->b_ml.ml_flags & ML_EMPTY) {  // nothing to delete
       break;
+    }
 
     ml_delete(first, true);
     n++;
 
-    /* If we delete the last line in the file, stop */
-    if (first > curbuf->b_ml.ml_line_count)
-      break;
+    // If we delete the last line in the file, stop
+    if (first > curbuf->b_ml.ml_line_count) {
+        break;
+    }
   }
 
-  /* Correct the cursor position before calling deleted_lines_mark(), it may
-   * trigger a callback to display the cursor. */
+  // Correct the cursor position before calling deleted_lines_mark(), it may
+  // trigger a callback to display the cursor.
   curwin->w_cursor.col = 0;
   check_cursor_lnum();
 
-  /* adjust marks, mark the buffer as changed and prepare for displaying */
+  // adjust marks, mark the buffer as changed and prepare for displaying
   deleted_lines_mark(first, n);
 }
