@@ -117,21 +117,22 @@ higher precedence: it is applied after terminal colors are resolved.
 ==============================================================================
 Status Variables				*terminal-status*
 
-Terminal buffers maintain some information about the terminal in buffer-local
-variables:
-
-- *b:term_title* The settable title of the terminal, typically displayed in
-  the window title or tab title of a graphical terminal emulator. Programs
-  running in the terminal can set this title via an escape sequence.
-- |'channel'| The nvim channel ID for the underlying PTY.
-  |chansend()| can be used to send input to the terminal.
-
-These variables are initialized before TermOpen, so you can use them in
-a local 'statusline'. Example: >
+Terminal buffers maintain some buffer-local variables and options. The values
+are initialized before TermOpen, so you can use them in a local 'statusline'.
+Example: >
     :autocmd TermOpen * setlocal statusline=%{b:term_title}
-<
+
+- *b:term_title*  Terminal title (user-writable), typically displayed in the
+  window title or tab title of a graphical terminal emulator. Terminal
+  programs can set this by emitting an escape sequence.
+- |'channel'|  Terminal PTY |job-id|.  Can be used with |chansend()| to send
+  input to the terminal.
+
+Use |jobwait()| to check if the terminal job has finished: >
+    let exited = jobwait([&channel], 0)[0] >= 0
+
 ==============================================================================
-5. Debugging				*terminal-debug* *terminal-debugger*
+:Termdebug plugin				*terminal-debug*
 
 The Terminal debugging plugin can be used to debug a program with gdb and view
 the source code in a Vim window.  Since this is completely contained inside

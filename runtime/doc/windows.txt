@@ -520,9 +520,6 @@ CTRL-W >	Increase current window width by N (default 1).
 :vertical res[ize] [N]			*:vertical-resize* *CTRL-W_bar*
 CTRL-W |	Set current window width to N (default: widest possible).
 
-						*:mod* *:mode*
-:mod[e]		Detects the screen size and redraws the screen.
-
 You can also resize a window by dragging a status line up or down with the
 mouse.  Or by dragging a vertical separator line left or right.  This only
 works if the version of Vim that is being used supports the mouse and the

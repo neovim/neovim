@@ -58,6 +58,10 @@ Normal commands ~
 
 Options ~
 *'cscopeverbose'*	Enabled by default. Use |:silent| instead.
+*'exrc'* *'ex'*		Security risk: downloaded files could include
+			a malicious .nvimrc or .exrc file. See 'secure'.
+			Recommended alternative: define an autocommand in your
+			|vimrc| to set options for a matching directory.
 'gd'
 'gdefault'		Enables the |:substitute| flag 'g' by default.
 *'fe'*			'fenc'+'enc' before Vim 6.0; no longer used.
