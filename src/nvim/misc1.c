@@ -525,47 +525,6 @@ void ins_char(int c)
   ins_char_bytes(buf, n);
 }
 
-/*
- * Delete "nlines" lines at the cursor.
- * Saves the lines for undo first if "undo" is TRUE.
- */
-void 
-del_lines (
-    long nlines,                    /* number of lines to delete */
-    int undo                       /* if TRUE, prepare for undo */
-)
-{
-  long n;
-  linenr_T first = curwin->w_cursor.lnum;
-
-  if (nlines <= 0)
-    return;
-
-  /* save the deleted lines for undo */
-  if (undo && u_savedel(first, nlines) == FAIL)
-    return;
-
-  for (n = 0; n < nlines; ) {
-    if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
-      break;
-
-    ml_delete(first, true);
-    n++;
-
-    /* If we delete the last line in the file, stop */
-    if (first > curbuf->b_ml.ml_line_count)
-      break;
-  }
-
-  /* Correct the cursor position before calling deleted_lines_mark(), it may
-   * trigger a callback to display the cursor. */
-  curwin->w_cursor.col = 0;
-  check_cursor_lnum();
-
-  /* adjust marks, mark the buffer as changed and prepare for displaying */
-  deleted_lines_mark(first, n);
-}
-
 int gchar_pos(pos_T *pos)
   FUNC_ATTR_NONNULL_ARG(1)
 {

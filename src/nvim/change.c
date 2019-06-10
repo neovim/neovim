@@ -1777,37 +1777,38 @@ void truncate_line(int fixpos)
  * Delete "nlines" lines at the cursor.
  * Saves the lines for undo first if "undo" is TRUE.
  */
-    void
-del_lines(long nlines,	int undo)
+void del_lines (
+    long nlines,                    /* number of lines to delete */
+    int undo                       /* if TRUE, prepare for undo */
+)
 {
-    long	n;
-    linenr_T	first = curwin->w_cursor.lnum;
+  long n;
+  linenr_T first = curwin->w_cursor.lnum;
 
-    if (nlines <= 0)
-	return;
+  if (nlines <= 0)
+    return;
 
-    // save the deleted lines for undo
-    if (undo && u_savedel(first, nlines) == FAIL)
-	return;
+  /* save the deleted lines for undo */
+  if (undo && u_savedel(first, nlines) == FAIL)
+    return;
 
-    for (n = 0; n < nlines; )
-    {
-	if (curbuf->b_ml.ml_flags & ML_EMPTY)	    // nothing to delete
-	    break;
+  for (n = 0; n < nlines; ) {
+    if (curbuf->b_ml.ml_flags & ML_EMPTY)           /* nothing to delete */
+      break;
 
-	ml_delete(first, TRUE);
-	++n;
+    ml_delete(first, true);
+    n++;
 
-	// If we delete the last line in the file, stop
-	if (first > curbuf->b_ml.ml_line_count)
-	    break;
-    }
+    /* If we delete the last line in the file, stop */
+    if (first > curbuf->b_ml.ml_line_count)
+      break;
+  }
 
-    // Correct the cursor position before calling deleted_lines_mark(), it may
-    // trigger a callback to display the cursor.
-    curwin->w_cursor.col = 0;
-    check_cursor_lnum();
+  /* Correct the cursor position before calling deleted_lines_mark(), it may
+   * trigger a callback to display the cursor. */
+  curwin->w_cursor.col = 0;
+  check_cursor_lnum();
 
-    // adjust marks, mark the buffer as changed and prepare for displaying
-    deleted_lines_mark(first, n);
+  /* adjust marks, mark the buffer as changed and prepare for displaying */
+  deleted_lines_mark(first, n);
 }
