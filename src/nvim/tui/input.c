@@ -32,23 +32,6 @@ void tinput_init(TermInput *input, Loop *loop)
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
 
-  const char *term = os_getenv("TERM");
-  if (!term) {
-    term = "";  // termkey_new_abstract assumes non-null (#2745)
-  }
-
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
-  input->tk = termkey_new_abstract(term,
-                                   TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
-  termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, NULL);
-  termkey_start(input->tk);
-#else
-  input->tk = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
-#endif
-
-  int curflags = termkey_get_canonflags(input->tk);
-  termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
-
   // If stdin is not a pty, switch to stderr. For cases like:
   //    echo q | nvim -es
   //    ls *.md | xargs nvim
@@ -67,6 +50,24 @@ void tinput_init(TermInput *input, Loop *loop)
     input->in_fd = 2;
   }
 #endif
+  input_global_fd_init(input->in_fd);
+
+  const char *term = os_getenv("TERM");
+  if (!term) {
+    term = "";  // termkey_new_abstract assumes non-null (#2745)
+  }
+
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
+  input->tk = termkey_new_abstract(term,
+                                   TERMKEY_FLAG_UTF8 | TERMKEY_FLAG_NOSTART);
+  termkey_hook_terminfo_getstr(input->tk, input->tk_ti_hook_fn, NULL);
+  termkey_start(input->tk);
+#else
+  input->tk = termkey_new_abstract(term, TERMKEY_FLAG_UTF8);
+#endif
+
+  int curflags = termkey_get_canonflags(input->tk);
+  termkey_set_canonflags(input->tk, curflags | TERMKEY_CANON_DELBS);
 
   // setup input handle
   rstream_init_fd(loop, &input->read_stream, input->in_fd, 0xfff);
