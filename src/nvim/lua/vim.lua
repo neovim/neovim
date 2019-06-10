@@ -244,12 +244,90 @@ local function _collect_results(jobs, status)
   return results
 end
 
--- Maximum number of processes spawned in async handlers
--- TODO(abdelhakeem): set to number of logical cores?
-local _proc_max = 8
+-- Used by async handlers for vimgrep family of commands.
+--
+-- @param qf use quickfix list if true, otherwise use current
+--           window location list
+-- @param append append results to existing (quickfix/location) list
+local function _async_vimgrep(qf, append, args)
+  local setlist = qf and function(results, app)
+    vim.api.nvim_call_function('setqflist',
+                               { results, app and 'a' or ' ' })
+  end or function (results, app)
+    vim.api.nvim_call_function('setloclist',
+                               { 0, results, app and 'a' or ' ' })
+  end
+
+  -- Parse arguments
+  local pattern, global, path = args:match('^/(.*)/([jg]*)%s+(.+)$')
+  if path == nil or pattern == nil then
+    if vim.api.nvim_call_function('match', { args, [[^\i]] }) ~= -1 then
+      pattern, path = args:match('^([^%s]+)%s+(.+)$')
+    end
+  elseif pattern == '' then
+    pattern = vim.api.nvim_eval('@/')  -- Last used pattern
+  end
+  if path == nil or pattern == nil then
+    error('Path missing or invalid pattern')
+  end
+  global = global and global:find('g') and true or false
+  local paths = vim.api.nvim_call_function('substitute', {
+    path,
+    [[\(\%(`[^`]*`\|\\.\|[^[:space:] ]\)\+\)\s*]],
+    [[\=glob(submatch(1))."\n"]],
+    'g'
+  })
+  paths = vim.api.nvim_call_function('trim', { paths })
+  paths = vim.api.nvim_call_function('split', { paths, '\n' })
+
+  for i, v in ipairs(paths) do
+    paths[i] = { pattern, v, global }
+  end
+
+  -- Spawn jobs
+  local jobcount = vim.api.nvim_get_vvar('cores')  -- Ideal number of jobs
+  local jobs = vim.api.nvim_call_function('call_parallel', {
+    jobcount, 'nvim_grep', paths, { dummy = 1 }
+  })
+
+  -- Collect results
+  local results = vim.api.nvim_call_function('call_wait', { jobs })
+  local bufnr_tbl = {}
+  local length = 0
+  setlist({ }, append)
+  for _, v in ipairs(results) do
+    for _, list in ipairs(v.value) do
+      length = length + #list
+      for _, entry in ipairs(list) do
+        local bufnr = bufnr_tbl[entry.fname]
+        if bufnr == nil then
+          bufnr = vim.api.nvim_call_function('bufnr', {
+            entry.fname, true
+          })
+          bufnr_tbl[entry.fname] = bufnr
+        end
+        entry.bufnr = bufnr
+      end
+      setlist(list, true)
+    end
+  end
+  print('Found '..length..' matches')
+end
 
 -- Async handlers for commands
 local _async_handlers_tbl = {
+  ['vimgrep'] = function(args)
+    _async_vimgrep(true, false, args)
+  end,
+  ['vimgrepadd'] = function(args)
+    _async_vimgrep(true, true, args)
+  end,
+  ['lvimgrep'] = function(args)
+    _async_vimgrep(false, false, args)
+  end,
+  ['lvimgrepadd'] = function(args)
+    _async_vimgrep(false, true, args)
+  end,
 }
 
 -- Invokes the async handler of "cmd".
