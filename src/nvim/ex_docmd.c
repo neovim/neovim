@@ -2431,9 +2431,14 @@ static char_u *find_command(exarg_T *eap, int *full)
       while (ASCII_ISALNUM(*p))
         ++p;
 
-    /* check for non-alpha command */
-    if (p == eap->cmd && vim_strchr((char_u *)"@!=><&~#", *p) != NULL)
-      ++p;
+    // check for non-alpha command
+    if (p == eap->cmd) {
+      if (p[0] == '&' && p[1] == ':') {
+        p = p + 2;
+      } else if (vim_strchr((char_u *)"@!=><&~#", *p) != NULL) {
+        p++;
+      }
+    }
     len = (int)(p - eap->cmd);
     if (*eap->cmd == 'd' && (p[-1] == 'l' || p[-1] == 'p')) {
       /* Check for ":dl", ":dell", etc. to ":deletel": that's
@@ -2775,8 +2780,12 @@ const char * set_one_cmd_context(
       }
     }
     // check for non-alpha command
-    if (p == cmd && vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
-      p++;
+    if (p == cmd) {
+      if (p[0] == '&' && p[1] == ':') {
+        p = p + 2;
+      } else if (vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
+        p++;
+      }
     }
     len = (size_t)(p - cmd);
 
@@ -3052,6 +3061,7 @@ const char * set_one_cmd_context(
   /* Command modifiers: return the argument.
    * Also for commands with an argument that is a command. */
   case CMD_aboveleft:
+  case CMD_andcolon:
   case CMD_argdo:
   case CMD_belowright:
   case CMD_botright:
@@ -10122,6 +10132,27 @@ static void ex_terminal(exarg_T *eap)
   }
 
   do_cmdline_cmd(ex_cmd);
+}
+
+/// ":&:{cmd}" command
+///
+/// Invokes the async handler of "{cmd}" (i.e.: a function that invokes
+/// "{cmd}" in a number of separate processes and handles the results
+/// in a pre-defined way specific to each command.)
+///
+/// If "{cmd}" does not have an async handler, it causes an error.
+static void ex_async_handler(exarg_T *eap)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_to_string((const char *)eap->arg)));
+  Error err = ERROR_INIT;
+  nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("vim._async_handler(select(1, ...))"),
+      args, &err);
+  api_free_array(args);
+  if (ERROR_SET(&err)) {
+    eap->errmsg = (char_u *)err.msg;
+  }
 }
 
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').

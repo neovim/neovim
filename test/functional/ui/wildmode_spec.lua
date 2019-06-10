@@ -75,7 +75,7 @@ describe("'wildmenu'", function()
                                |
       ~                        |
       ~                        |
-      !  #  &  <  =  >  @  >   |
+      !  #  &  &:  <  =  >  >  |
       :!^                       |
     ]])
   end)
@@ -162,7 +162,7 @@ describe("'wildmenu'", function()
     feed([[:<Tab>]])      -- Invoke wildmenu.
     -- Check only the last 2 lines, because the shell output is
     -- system-dependent.
-    expect_stay_unchanged{any='!  #  &  <  =  >  @  >   |\n:!^'}
+    expect_stay_unchanged{any='!  #  &  &:  <  =  >  >  |\n:!^'}
   end)
 
   it('wildmode=list,full and display+=msgsep interaction #10092', function()
