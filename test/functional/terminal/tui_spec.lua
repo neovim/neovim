@@ -917,3 +917,24 @@ describe('TUI background color', function()
   assert_bg('f/3/f', 'light')
   assert_bg('f/4/f', 'light')
 end)
+
+describe('TUI key map', function()
+  local screen
+
+  it('<C-h> is working #10134', function()
+    clear()
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..[[", "-u", "NONE", "-i", "NONE", "--cmd", "set noruler", "--cmd", ':nnoremap <C-h> :echomsg "\<C-h\>"<CR>']]..']')
+
+    command('call chansend(b:terminal_job_id, "\\<C-h>")')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      <C-h>                                             |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+end)
