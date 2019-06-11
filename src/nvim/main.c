@@ -587,7 +587,13 @@ int main(int argc, char **argv)
   /*
    * Call the main command loop.  This never returns.
    */
-  normal_enter(false, false);
+  if (!is_remote_client) {
+    normal_enter(false, false);
+  } else {
+    // Since a nvim client can have just one TUI, ui_count reduces to 0 when it is closed
+    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, !ui_active());
+    getout(0);
+  }
 
 #if defined(WIN32) && !defined(MAKE_LIB)
   xfree(argv);

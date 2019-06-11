@@ -221,15 +221,9 @@ void ui_refresh(void)
     screen_resize(width, height);
   } else {
     Array args = ARRAY_DICT_INIT;
-    Error err = ERROR_INIT;
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
-    rpc_send_call(channel_get_id(true, true), "nvim_ui_try_resize", args, &err);
-
-    if (ERROR_SET(&err)) {
-      logmsg(ERROR_LOG_LEVEL, "UI: ", NULL, -1, true, "%s", err.msg);
-    }
-    api_clear_error(&err);
+    rpc_send_event(channel_get_id(true, true), "nvim_ui_try_resize", args);
   }
   p_lz = save_p_lz;
 
