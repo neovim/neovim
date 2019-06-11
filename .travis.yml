@@ -77,8 +77,9 @@ jobs:
     - if: branch = master
       os: linux
       env: CI_TARGET=lint
-    - stage: Flaky builds
-      os: linux
+
+    # Flaky builds
+    - os: linux
       compiler: gcc
       env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
