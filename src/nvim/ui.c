@@ -246,6 +246,16 @@ void ui_schedule_refresh(void)
   loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
 }
 
+void ui_stop_event(void **argv) 
+{
+  ui_call_stop();
+}
+
+void ui_schedule_stop(void)
+{
+  loop_schedule(&main_loop, event_create(ui_stop_event, 0));  
+}
+
 void ui_default_colors_set(void)
 {
   ui_call_default_colors_set(normal_fg, normal_bg, normal_sp,
