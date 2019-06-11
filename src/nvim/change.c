@@ -336,12 +336,10 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
 /// - marks the buffer changed by calling changed()
 /// - invalidates cached values
 /// Careful: may trigger autocommands that reload the buffer.
-void changed_bytes(linenr_T lnum, colnr_T col)
+void changed_bytes_impl(linenr_T lnum, colnr_T col)
 {
   changedOneline(curbuf, lnum);
   changed_common(lnum, col, lnum + 1, 0L);
-  // notify any channels that are watching
-  buf_updates_send_changes(curbuf, lnum, 1, 1, true);
 
   // Diff highlighting in other diff windows may need to be updated too.
   if (curwin->w_p_diff) {
@@ -359,22 +357,32 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   }
 }
 
+void changed_bytes(linenr_T lnum, colnr_T col)
+{
+  changed_bytes_impl(lnum, col);
+  // notify any channels that are watching
+  buf_updates_send_changes(curbuf, lnum, 1, 1, true, false);
+}
+
 /// insert/delete bytes at column
 ///
 /// Like changed_bytes() but also adjust extmark for "added" bytes.
 /// When "added" is negative text was deleted.
-static void inserted_bytes(linenr_T lnum, colnr_T col, int added)
+static void inserted_bytes(linenr_T lnum, colnr_T col, int old, int new)
 {
-  if (added > 0) {
-    extmark_col_adjust(curbuf, lnum, col+1, 0, added, kExtmarkUndo);
-  } else if (added < 0) {
+  int delta = new - old;
+  if (delta > 0) {
+    extmark_col_adjust(curbuf, lnum, col+1, 0, delta, kExtmarkUndo);
+  } else if (delta < 0) {
     // TODO(bfredl): next revision of extmarks should handle both these
     // with the same entry point. Also with more sane params..
     extmark_col_adjust_delete(curbuf, lnum, col+2,
-                              col+(-added)+1, kExtmarkUndo, 0);
+                              col+(-delta)+1, kExtmarkUndo, 0);
   }
 
-  changed_bytes(lnum, col);
+  changed_bytes_impl(lnum, col);
+  buf_updates_send_changes(curbuf, lnum, 1, 1, true, true);
+  buf_updates_send_byte_changes(curbuf, lnum, col, old, new);
 }
 
 /// Appended "count" lines below line "lnum" in the current buffer.
@@ -494,7 +502,7 @@ changed_lines(
   if (do_buf_event) {
     int64_t num_added = (int64_t)(lnume + xtra - lnum);
     int64_t num_removed = lnume - lnum;
-    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true);
+    buf_updates_send_changes(curbuf, lnum, num_added, num_removed, true, false);
   }
 }
 
@@ -648,7 +656,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
   ml_replace(lnum, newp, false);
 
   // mark the buffer as changed and prepare for displaying
-  inserted_bytes(lnum, (colnr_T)col, (int)(newlen - oldlen));
+  inserted_bytes(lnum, (colnr_T)col, (int)oldlen, (int)newlen);
 
   // If we're in Insert or Replace mode and 'showmatch' is set, then briefly
   // show the match for right parens and braces.
@@ -694,7 +702,7 @@ void ins_str(char_u *s)
   assert(bytes >= 0);
   memmove(newp + col + newlen, oldp + col, (size_t)bytes);
   ml_replace(lnum, newp, false);
-  inserted_bytes(lnum, col, newlen);
+  inserted_bytes(lnum, col, 0, newlen);
   curwin->w_cursor.col += newlen;
 }
 
@@ -815,7 +823,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   }
 
   // mark the buffer as changed and prepare for displaying
-  inserted_bytes(lnum, col, -count);
+  inserted_bytes(lnum, col, count, 0);
 
   return OK;
 }

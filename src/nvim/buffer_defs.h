@@ -461,11 +461,12 @@ typedef TV_DICTITEM_STRUCT(sizeof("changedtick")) ChangedtickDictItem;
 
 typedef struct {
   LuaRef on_lines;
+  LuaRef on_bytes;
   LuaRef on_changedtick;
   LuaRef on_detach;
   bool utf_sizes;
 } BufUpdateCallbacks;
-#define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, false }
+#define BUF_UPDATE_CALLBACKS_INIT { LUA_NOREF, LUA_NOREF, LUA_NOREF, LUA_NOREF, false }
 
 #define BUF_HAS_QF_ENTRY 1
 #define BUF_HAS_LL_ENTRY 2

@@ -170,6 +170,13 @@ Boolean nvim_buf_attach(uint64_t channel_id,
       }
       cb.on_lines = v->data.luaref;
       v->data.luaref = LUA_NOREF;
+    } else if (is_lua && strequal("on_bytes", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      cb.on_bytes = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_changedtick", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");

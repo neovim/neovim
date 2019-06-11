@@ -907,7 +907,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   changed_lines(last_line - num_lines + 1, 0, last_line + 1, -extra, false);
 
   // send update regarding the new lines that were added
-  buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true);
+  buf_updates_send_changes(curbuf, dest + 1, num_lines, 0, true, false);
 
   /*
    * Now we delete the original text -- webb
@@ -944,7 +944,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   }
 
   // send nvim_buf_lines_event regarding lines that were deleted
-  buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true);
+  buf_updates_send_changes(curbuf, line1 + extra, 0, num_lines, true, false);
 
   return OK;
 }
@@ -4321,7 +4321,7 @@ skip:
     int64_t num_added = last_line - first_line;
     int64_t num_removed = num_added - i;
     buf_updates_send_changes(curbuf, first_line, num_added, num_removed,
-                             do_buf_event);
+                             do_buf_event, false);
   }
 
   xfree(sub_firstline);   /* may have to free allocated copy of the line */

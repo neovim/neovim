@@ -170,7 +170,8 @@ void buf_updates_send_changes(buf_T *buf,
                               linenr_T firstline,
                               int64_t num_added,
                               int64_t num_removed,
-                              bool send_tick)
+                              bool send_tick,
+                              bool reducible)
 {
   size_t deleted_codepoints, deleted_codeunits;
   size_t deleted_bytes = ml_flush_deleted_bytes(buf, &deleted_codepoints,
@@ -236,7 +237,8 @@ void buf_updates_send_changes(buf_T *buf,
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
     BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
     bool keep = true;
-    if (cb.on_lines != LUA_NOREF) {
+    bool skip = (reducible && cb.on_bytes != LUA_NOREF);
+    if (cb.on_lines != LUA_NOREF && !skip) {
       Array args = ARRAY_DICT_INIT;
       Object items[8];
       args.size = 6;  // may be increased to 8 below
@@ -273,6 +275,58 @@ void buf_updates_send_changes(buf_T *buf,
         keep = false;
       }
       api_free_object(res);
+    }
+    if (keep) {
+      kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
+    }
+  }
+  kv_size(buf->update_callbacks) = j;
+}
+
+void buf_updates_send_byte_changes(buf_T *buf, linenr_T line,
+                                   colnr_T col, int old, int new)
+{
+  if (!buf_updates_active(buf)) {
+    return;
+  }
+
+  // notify each of the active callbakcs
+  size_t j = 0;
+  for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
+    BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
+    bool keep = true;
+    if (cb.on_bytes != LUA_NOREF) {
+      Array args = ARRAY_DICT_INIT;
+      Object items[6];
+      args.size = 6;
+      args.items = items;
+
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
+
+      // next argument is b:changedtick
+      args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
+
+      // the line that changed (zero-indexed)
+      args.items[2] = INTEGER_OBJ(line - 1);
+
+      // the column where text were inserted or deleted
+      args.items[3] = INTEGER_OBJ(col);
+
+      // the old length of the changed region
+      args.items[4] = INTEGER_OBJ(old);
+
+      // the new lenght of the changed region
+      args.items[5] = INTEGER_OBJ(new);
+
+      textlock++;
+      Object res = executor_exec_lua_cb(cb.on_bytes, "bytes", args, true, NULL);
+      textlock--;
+
+      if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
+        free_update_callbacks(cb);
+        keep = false;
+      }
     }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);

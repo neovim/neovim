@@ -744,7 +744,7 @@ void deleteFold(
     // notification that includes every line that was part of the fold
     int64_t num_changed = last_lnum - first_lnum;
     buf_updates_send_changes(curbuf, first_lnum, num_changed,
-                             num_changed, true);
+                             num_changed, true, false);
   }
 }
 
@@ -1588,11 +1588,12 @@ static void foldCreateMarkers(linenr_T start, linenr_T end)
    * changed when the start marker is inserted and the end isn't. */
   changed_lines(start, (colnr_T)0, end, 0L, false);
 
+  // TODO: why not just pass do_buf_event to changed_lines here??
   // Note: foldAddMarker() may not actually change start and/or end if
   // u_save() is unable to save the buffer line, but we send the
   // nvim_buf_lines_event anyway since it won't do any harm.
   int64_t num_changed = 1 + end - start;
-  buf_updates_send_changes(curbuf, start, num_changed, num_changed, true);
+  buf_updates_send_changes(curbuf, start, num_changed, num_changed, true, false);
 }
 
 /* foldAddMarker() {{{2 */
