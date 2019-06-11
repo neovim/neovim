@@ -142,7 +142,7 @@ function make_raw_line_and_call(output)
   
   ]])
   -- call ui_call_raw_line()
-  output:write('ui_call_raw_line(arg_1, arg_2, arg_3, arg_5, arg_6, arg_7, lineflags, chunk, attrs);\n')
+  output:write('ui_call_raw_line(arg_1, arg_2, arg_3, arg_5, arg_6, arg_7, lineflags, (const schar_T*) chunk, (const sattr_T*) attrs);\n')
 
   -- if (arg_6 >= default_grid.Columns) {
   --   arg_6 = default_grid.Columns - 1;
