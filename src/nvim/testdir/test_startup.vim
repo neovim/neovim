@@ -339,6 +339,88 @@ func Test_A_F_H_arg()
   call delete('Xtestout')
 endfunc
 
+func Test_invalid_args()
+  if !has('unix') || has('gui_running')
+    " can't get output of Vim.
+    return
+  endif
+
+  for opt in ['-Y', '--does-not-exist']
+    let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_equal('nvim: Unknown option argument: "' .. opt .. '"', out[0])
+    call assert_equal('More info with "nvim -h"',                       out[1])
+  endfor
+
+  for opt in ['-c', '-i', '-s', '-t', '-u', '-U', '-w', '-W', '--cmd', '--startuptime']
+    let out = split(system(GetVimCommand() .. ' '  .. opt), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_equal('nvim: Argument missing after: "' .. opt .. '"', out[0])
+    call assert_equal('More info with "nvim -h"',                      out[1])
+  endfor
+
+  if has('clientserver')
+    " FIXME: need to add --servername to this list
+    " but it causes vim-8.1.1282 to crash!
+    for opt in ['--remote', '--remote-send', '--remote-silent', '--remote-expr',
+          \     '--remote-tab', '--remote-tab-wait',
+          \     '--remote-tab-wait-silent', '--remote-tab-silent',
+          \     '--remote-wait', '--remote-wait-silent',
+          \    ]
+      let out = split(system(GetVimCommand() .. ' '  .. opt), "\n")
+      call assert_equal(1, v:shell_error)
+      call assert_match('^VIM - Vi IMproved .* (.*)$',             out[0])
+      call assert_equal('Argument missing after: "' .. opt .. '"', out[1])
+      call assert_equal('More info with: "vim -h"',                out[2])
+    endfor
+  endif
+
+  " FIXME: commented out as this causes vim-8.1.1282 to crash!
+  "if has('clipboard')
+  "  let out = split(system(GetVimCommand() .. ' --display'), "\n")
+  "  call assert_equal(1, v:shell_error)
+  "  call assert_match('^VIM - Vi IMproved .* (.*)$',         out[0])
+  "  call assert_equal('Argument missing after: "--display"', out[1])
+  "  call assert_equal('More info with: "vim -h"',            out[2])
+  "endif
+
+  let out = split(system(GetVimCommand() .. ' -ix'), "\n")
+  call assert_equal(1, v:shell_error)
+  call assert_equal('nvim: Garbage after option argument: "-ix"', out[0])
+  call assert_equal('More info with "nvim -h"',                   out[1])
+
+  " Not an error in Nvim.  The "-" file is allowed with -t, -q, or [file].
+  let out = split(system(GetVimCommand() .. ' - xxx -cq'), "\n")
+  call assert_equal(0, v:shell_error)
+
+  " Detect invalid repeated arguments '-t foo -t foo", '-q foo -q foo'.
+  for opt in ['-t', '-q']
+    let out = split(system(GetVimCommand() .. repeat(' ' .. opt .. ' foo', 2)), "\n")
+    call assert_equal(1, v:shell_error)
+    call assert_equal('nvim: Too many edit arguments: "' .. opt .. '"', out[0])
+    call assert_equal('More info with "nvim -h"',                       out[1])
+  endfor
+
+  for opt in [' -cq', ' --cmd q', ' +', ' -S foo']
+    let out = split(system(GetVimCommand() .. repeat(opt, 11)), "\n")
+    call assert_equal(1, v:shell_error)
+    " FIXME: The error message given by Vim is not ideal in case of repeated
+    " -S foo since it does not mention -S.
+    call assert_equal('nvim: Too many "+command", "-c command" or "--cmd command" arguments', out[0])
+    call assert_equal('More info with "nvim -h"',                                             out[1])
+  endfor
+
+  if has('gui_gtk')
+    for opt in ['--socketid x', '--socketid 0xg']
+      let out = split(system(GetVimCommand() .. ' ' .. opt), "\n")
+      call assert_equal(1, v:shell_error)
+      call assert_match('^VIM - Vi IMproved .* (.*)$',        out[0])
+      call assert_equal('Invalid argument for: "--socketid"', out[1])
+      call assert_equal('More info with: "vim -h"',           out[2])
+    endfor
+  endif
+endfunc
+
 func Test_file_args()
   let after = [
 	\ 'call writefile(argv(), "Xtestout")',
