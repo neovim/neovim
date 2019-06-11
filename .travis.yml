@@ -60,8 +60,9 @@ jobs:
     - os: linux
       compiler: gcc
       env: >
+        GCOV=gcov
         FUNCTIONALTEST=functionaltest-lua
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON -DUSE_GCOV=ON"
         DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
     - os: linux
       # Travis creates a cache per compiler. Set a different value here to
