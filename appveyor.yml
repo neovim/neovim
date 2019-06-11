@@ -5,10 +5,7 @@ environment:
   DEPS_PREFIX: "C:/projects/nvim-deps/usr"
 image: Visual Studio 2017
 configuration:
-- MSVC_64
-- MSVC_32
 - MINGW_64-gcov
-- MINGW_32
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
