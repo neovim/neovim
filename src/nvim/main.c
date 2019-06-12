@@ -222,6 +222,8 @@ void early_init(void)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
+
+  init_signs();
 }
 
 #ifdef MAKE_LIB
@@ -1313,8 +1315,6 @@ static void init_path(const char *exename)
   // shipped with Windows package. This also mimics SearchPath().
   os_setenv_append_path(exepath);
 #endif
-
-    init_signs();
 }
 
 /// Get filename from command line, if any.
