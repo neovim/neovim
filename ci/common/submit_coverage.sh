@@ -3,7 +3,12 @@
 # Debug
 set -x
 echo "=== submit_coverage: $* ==="
+env
 pwd
+
+# TODO
+cd /c/projects/neovim || exit
+
 find . -name '*.gcno' -o -name '*.gcna'
 
 codecov_sh="${TEMP:-/tmp}/codecov.bash"
