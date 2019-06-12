@@ -5,6 +5,9 @@ set -x
 echo "=== submit_coverage: $* ==="
 env
 pwd
+echo "$PATH"
+command -v gcov
+gcov --version
 
 # TODO
 cd /c/projects/neovim || exit
