@@ -443,17 +443,11 @@ wingotofile:
     curwin->w_set_curswant = TRUE;
     break;
 
+  // Quickfix window only: view the result under the cursor in a new split.
   case K_KENTER:
   case CAR:
-    /*
-     * In a quickfix window a <CR> jumps to the error under the
-     * cursor in a new window.
-     */
     if (bt_quickfix(curbuf)) {
-      sprintf(cbuf, "split +%" PRId64 "%s",
-              (int64_t)curwin->w_cursor.lnum,
-              (curwin->w_llist_ref == NULL) ? "cc" : "ll");
-      do_cmdline_cmd(cbuf);
+      qf_view_result(true);
     }
     break;
 
