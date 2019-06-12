@@ -133,10 +133,6 @@ if ($uploadToCodecov) {
   C:\msys64\usr\bin\bash -lc "/c/projects/neovim/ci/common/submit_coverage.sh oldtest"
 }
 
-if ($uploadToCodecov) {
-  Get-Content $env:GCOV_ERROR_FILE
-}
-
 # Build artifacts
 cpack -G ZIP -C RelWithDebInfo
 if ($env:APPVEYOR_REPO_TAG_NAME -ne $null) {
