@@ -180,6 +180,15 @@ func Test_thesaurus()
   call Check_dir_option('thesaurus')
 endfun
 
+func Test_complete()
+  " Trailing single backslash used to cause invalid memory access.
+  set complete=s\
+  new
+  call feedkeys("i\<C-N>\<Esc>", 'xt')
+  bwipe!
+  set complete&
+endfun
+
 func Test_set_completion()
   call feedkeys(":set di\<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"set dictionary diff diffexpr diffopt digraph directory display', @:)
@@ -305,14 +314,23 @@ func Test_set_ttytype()
   endif
 endfunc
 
-func Test_complete()
-  " Trailing single backslash used to cause invalid memory access.
-  set complete=s\
-  new
-  call feedkeys("i\<C-N>\<Esc>", 'xt')
-  bwipe!
-  set complete&
-endfun
+func Test_set_all()
+  set tw=75
+  set iskeyword=a-z,A-Z
+  set nosplitbelow
+  let out = execute('set all')
+  call assert_match('textwidth=75', out)
+  call assert_match('iskeyword=a-z,A-Z', out)
+  call assert_match('nosplitbelow', out)
+  set tw& iskeyword& splitbelow&
+endfunc
+
+func Test_set_values()
+  " The file is only generated when running "make test" in the src directory.
+  if filereadable('opt_test.vim')
+    source opt_test.vim
+  endif
+endfunc
 
 func ResetIndentexpr()
   set indentexpr=
@@ -393,24 +411,6 @@ func Test_shortmess_F()
   call assert_match('bar', execute('file'))
   set shortmess&
   bwipe
-endfunc
-
-func Test_set_all()
-  set tw=75
-  set iskeyword=a-z,A-Z
-  set nosplitbelow
-  let out = execute('set all')
-  call assert_match('textwidth=75', out)
-  call assert_match('iskeyword=a-z,A-Z', out)
-  call assert_match('nosplitbelow', out)
-  set tw& iskeyword& splitbelow&
-endfunc
-
-func Test_set_values()
-  " The file is only generated when running "make test" in the src directory.
-  if filereadable('opt_test.vim')
-    source opt_test.vim
-  endif
 endfunc
 
 func Test_shortmess_F2()
