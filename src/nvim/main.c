@@ -141,6 +141,7 @@ static const char *err_extra_cmd =
 
 void event_init(void)
 {
+  log_init();
   loop_init(&main_loop, NULL);
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
@@ -185,7 +186,6 @@ bool event_teardown(void)
 /// Needed for unit tests. Must be called after `time_init()`.
 void early_init(void)
 {
-  log_init();
   env_init();
   fs_init();
   handle_init();
@@ -222,6 +222,8 @@ void early_init(void)
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
+
+  init_signs();
 }
 
 #ifdef MAKE_LIB
@@ -257,12 +259,13 @@ int main(int argc, char **argv)
 
   init_startuptime(&params);
 
+  event_init();
+
   early_init();
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
 
-  event_init();
   // Process the command line arguments.  File names are put in the global
   // argument list "global_alist".
   command_line_scan(&params);
@@ -1312,8 +1315,6 @@ static void init_path(const char *exename)
   // shipped with Windows package. This also mimics SearchPath().
   os_setenv_append_path(exepath);
 #endif
-
-    init_signs();
 }
 
 /// Get filename from command line, if any.

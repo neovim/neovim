@@ -221,6 +221,11 @@ describe('startup', function()
     clear{args={'--embed'}}
     eq(2, eval('1+1'))
   end)
+
+  it('does not crash when expanding cdpath during early_init', function()
+    clear{env={CDPATH='~doesnotexist'}}
+    eq(',~doesnotexist', eval('&cdpath'))
+  end)
 end)
 
 describe('sysinit', function()
