@@ -49,7 +49,7 @@ if ($compiler -eq 'MINGW') {
   # in MSYS2, but we cannot build inside the MSYS2 shell.
   $cmakeGenerator = 'Ninja'
   $cmakeGeneratorArgs = '-v'
-  $mingwPackages = @('ninja', 'cmake', 'perl', 'diffutils', 'unibilium', 'gcc').ForEach({
+  $mingwPackages = @('ninja', 'cmake', 'perl', 'diffutils', 'unibilium').ForEach({
     "mingw-w64-$arch-$_"
   })
 
