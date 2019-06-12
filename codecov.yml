@@ -24,12 +24,4 @@ coverage:
         only_pulls: true
     changes: no
 
-parsers:
-  gcov:
-    branch_detection:
-      conditional: yes
-      loop: yes
-      method: no
-      macro: no
-
 comment: off

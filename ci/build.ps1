@@ -43,6 +43,7 @@ if ($compiler -eq 'MINGW') {
   if ($compileOption -eq 'gcov') {
     $nvimCmakeVars['USE_GCOV'] = 'ON'
     $uploadToCodecov = $true
+    $env:GCOV = "C:\msys64\mingw$bits\bin\gcov"
   }
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
@@ -119,13 +120,16 @@ cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGenera
   foreach { $failed = $failed -or
     $_ -match 'functional tests failed with error'; $_ }
 if ($failed) {
+  if ($uploadToCodecov) {
+    bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+  }
   exit $LastExitCode
 }
 Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {
-  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c || echo 'codecov upload failed.'"
+  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
 }
 
 # Old tests
@@ -135,7 +139,7 @@ $env:PATH = "C:\msys64\usr\bin;$env:PATH"
 & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
-  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c || echo 'codecov upload failed.'"
+  bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
 }
 
 # Build artifacts

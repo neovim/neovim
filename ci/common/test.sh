@@ -3,10 +3,7 @@
 
 submit_coverage() {
   if [ -n "${GCOV}" ]; then
-    if curl --fail --output codecov.bash --silent https://codecov.io/bash; then
-      bash codecov.bash -c || echo "codecov upload failed."
-      rm -f codecov.bash
-    fi
+    "${CI_DIR}/common/submit_coverage.sh" "$@" || echo 'codecov upload failed.'
   fi
 }
 
