@@ -122,7 +122,7 @@ Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {
-  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
+  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim/build; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
 }
 
 # Old tests
@@ -130,7 +130,7 @@ $env:PATH = "C:\msys64\usr\bin;$env:PATH"
 & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
-  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
+  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim/build; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
 }
 
 if ($uploadToCodecov) {
