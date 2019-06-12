@@ -50,7 +50,8 @@ describe('executable()', function()
 
     it('not set', function()
       eq(0, call('executable', 'Xtest_not_executable'))
-      eq(0, call('executable', './Xtest_not_executable'))
+      local expected = iswin() and 0 or 1
+      eq(expected, call('executable', './Xtest_not_executable'))
     end)
 
     it('set, unqualified and not in $PATH', function()
