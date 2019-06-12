@@ -141,6 +141,7 @@ static const char *err_extra_cmd =
 
 void event_init(void)
 {
+  log_init();
   loop_init(&main_loop, NULL);
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
@@ -185,7 +186,6 @@ bool event_teardown(void)
 /// Needed for unit tests. Must be called after `time_init()`.
 void early_init(void)
 {
-  log_init();
   env_init();
   fs_init();
   handle_init();
