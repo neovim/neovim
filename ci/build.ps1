@@ -122,7 +122,7 @@ Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {
-  /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+  bash /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
 }
 
 # Old tests
@@ -130,7 +130,7 @@ $env:PATH = "C:\msys64\usr\bin;$env:PATH"
 & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
-  /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+  bash /c/projects/neovim/ci/common/submit_coverage.sh oldtest
 }
 
 # Build artifacts
