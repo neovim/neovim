@@ -133,6 +133,10 @@ if ($uploadToCodecov) {
   C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
 }
 
+if ($uploadToCodecov) {
+  Get-Content $env:GCOV_ERROR_FILE
+}
+
 # Build artifacts
 cpack -G ZIP -C RelWithDebInfo
 if ($env:APPVEYOR_REPO_TAG_NAME -ne $null) {
