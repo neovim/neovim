@@ -3372,3 +3372,21 @@ func Test_lbuffer_with_bwipe()
     au!
   augroup END
 endfunc
+
+" Tests for the "CTRL-W <CR>" command.
+func Xview_result_split_tests(cchar)
+  call s:setup_commands(a:cchar)
+
+  " Test that "CTRL-W <CR>" in a qf/ll window fails with empty list.
+  call g:Xsetlist([])
+  Xopen
+  let l:win_count = winnr('$')
+  call assert_fails('execute "normal! \<C-W>\<CR>"', 'E42')
+  call assert_equal(l:win_count, winnr('$'))
+  Xclose
+endfunc
+
+func Test_view_result_split()
+  call Xview_result_split_tests('c')
+  call Xview_result_split_tests('l')
+endfunc

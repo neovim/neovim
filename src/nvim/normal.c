@@ -5227,12 +5227,8 @@ static void nv_down(cmdarg_T *cap)
     cap->arg = FORWARD;
     nv_page(cap);
   } else if (bt_quickfix(curbuf) && cap->cmdchar == CAR) {
-    // In a quickfix window a <CR> jumps to the error under the cursor.
-    if (curwin->w_llist_ref == NULL) {
-      do_cmdline_cmd(".cc");  // quickfix window
-    } else {
-      do_cmdline_cmd(".ll");  // location list window
-    }
+    // Quickfix window only: view the result under the cursor.
+    qf_view_result(false);
   } else {
     // In the cmdline window a <CR> executes the command.
     if (cmdwin_type != 0 && cap->cmdchar == CAR) {
