@@ -17,6 +17,9 @@ fi
 # (https://github.com/codecov/codecov-bash/pull/159#issuecomment-498960314).
 find build -type f -name '*.gcno' -execdir gcov -pb {} \;
 
+# Debug
+find . -name '*.gcov'
+
 # -X gcov: disable gcov, done manually above.
 # -Z: exit non-zero on failure
 # -c: clear discovered files
