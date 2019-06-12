@@ -9,19 +9,15 @@ configuration:
 - MSVC_32
 - MINGW_64
 - MINGW_32
-- MINGW_64-gcov
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
-    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
       $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
       Exit-AppVeyorBuild
     }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-matrix:
-  allow_failures:
-    - configuration: MINGW_64-gcov
 install: []
 before_build:
 - ps: Install-Product node 8
