@@ -246,3 +246,7 @@ func! Screenline(lnum)
   let line = join(chars, '')
   return matchstr(line, '^.\{-}\ze\s*$')
 endfunc
+
+func CanRunGui()
+  return has('gui') && ($DISPLAY != "" || has('gui_running'))
+endfunc
