@@ -19,6 +19,9 @@ find build -type f -name '*.gcno' -execdir gcov -pb {} \;
 
 # Debug
 find . -name '*.gcov'
+ls -l "$GCOV_ERROR_FILE"
+head "$GCOV_ERROR_FILE"
+tail "$GCOV_ERROR_FILE"
 
 # Download codecov-bash once.
 codecov_sh="${TEMP:-/tmp}/codecov.bash"
