@@ -33,6 +33,18 @@ if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
   write-host "cache dir $($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
+
+write-host "=== DEBUG ==="
+write-host "PATH: $env:PATH"
+C:\msys64\usr\bin\bash -l -c 'echo $PATH'
+bash -l -c 'echo $PATH'
+
+C:\msys64\usr\bin\bash -l -c 'env | sort'
+bash -l -c 'env | sort'
+
+C:\msys64\usr\bin\bash -c 'env | sort'
+bash -c 'env | sort'
+
 if ($compiler -eq 'MINGW') {
   if ($bits -eq 32) {
     $arch = 'i686'
