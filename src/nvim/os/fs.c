@@ -320,6 +320,9 @@ static bool is_executable_ext(char *name, char_u **abspath)
       }
       // Skip it.
       ext++;
+      if (*ext == NUL) {
+        break;
+      }
       continue;
     }
 
@@ -336,6 +339,9 @@ static bool is_executable_ext(char *name, char_u **abspath)
       }
     }
     ext = ext_end;
+    if (*ext == NUL) {
+      break;
+    }
   }
   return false;
 }
