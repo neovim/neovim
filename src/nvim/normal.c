@@ -3386,8 +3386,8 @@ bool add_to_showcmd(int c)
 
 void add_to_showcmd_c(int c)
 {
-  if (!add_to_showcmd(c))
-    setcursor();
+  add_to_showcmd(c);
+  setcursor();
 }
 
 /*
@@ -3448,18 +3448,18 @@ static void display_showcmd(void)
     return;
   }
 
+  int showcmd_row = (int)Rows - 1;
+  grid_puts_line_start(&default_grid, showcmd_row);
+
   if (!showcmd_is_clear) {
-    grid_puts(&default_grid, showcmd_buf, (int)Rows - 1, sc_col, 0);
+    grid_puts(&default_grid, showcmd_buf, showcmd_row, sc_col, 0);
   }
 
-  /*
-   * clear the rest of an old message by outputting up to SHOWCMD_COLS
-   * spaces
-   */
-  grid_puts(&default_grid, (char_u *)"          " + len, (int)Rows - 1,
+  // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
+  grid_puts(&default_grid, (char_u *)"          " + len, showcmd_row,
             sc_col + len, 0);
 
-  setcursor();              /* put cursor back where it belongs */
+  grid_puts_line_flush(false);
 }
 
 /*

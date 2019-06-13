@@ -5141,7 +5141,7 @@ win_redr_custom (
   /*
    * Draw each snippet with the specified highlighting.
    */
-  screen_puts_line_start(row);
+  grid_puts_line_start(&default_grid, row);
 
   curattr = attr;
   p = buf;
@@ -5164,7 +5164,7 @@ win_redr_custom (
   grid_puts(&default_grid, p >= buf + len ? (char_u *)"" : p, row, col,
             curattr);
 
-  grid_puts_line_flush(&default_grid, false);
+  grid_puts_line_flush(false);
 
   if (wp == NULL) {
     // Fill the tab_page_click_defs array for clicking in the tab pages line.
@@ -5310,18 +5310,20 @@ void grid_puts(ScreenGrid *grid, char_u *text, int row, int col, int attr)
   grid_puts_len(grid, text, -1, row, col, attr);
 }
 
+static ScreenGrid *put_dirty_grid = NULL;
 static int put_dirty_row = -1;
 static int put_dirty_first = INT_MAX;
 static int put_dirty_last = 0;
 
-/// Start a group of screen_puts_len calls that builds a single screen line.
+/// Start a group of grid_puts_len calls that builds a single grid line.
 ///
-/// Must be matched with a screen_puts_line_flush call before moving to
+/// Must be matched with a grid_puts_line_flush call before moving to
 /// another line.
-void screen_puts_line_start(int row)
+void grid_puts_line_start(ScreenGrid *grid, int row)
 {
   assert(put_dirty_row == -1);
   put_dirty_row = row;
+  put_dirty_grid = grid;
 }
 
 /// like grid_puts(), but output "text[len]".  When "len" is -1 output up to
@@ -5353,10 +5355,10 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   }
 
   if (put_dirty_row == -1) {
-    screen_puts_line_start(row);
+    grid_puts_line_start(grid, row);
     do_flush = true;
   } else {
-    if (row != put_dirty_row) {
+    if (grid != put_dirty_grid || row != put_dirty_row) {
       abort();
     }
   }
@@ -5459,31 +5461,31 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   }
 
   if (do_flush) {
-    grid_puts_line_flush(grid, true);
+    grid_puts_line_flush(true);
   }
 }
 
-/// End a group of screen_puts_len calls and send the screen buffer to the UI
+/// End a group of grid_puts_len calls and send the screen buffer to the UI
 /// layer.
 ///
-/// @param grid       The grid which contains the buffer.
 /// @param set_cursor Move the visible cursor to the end of the changed region.
 ///                   This is a workaround for not yet refactored code paths
 ///                   and shouldn't be used in new code.
-void grid_puts_line_flush(ScreenGrid *grid, bool set_cursor)
+void grid_puts_line_flush(bool set_cursor)
 {
   assert(put_dirty_row != -1);
   if (put_dirty_first < put_dirty_last) {
     if (set_cursor) {
-      ui_grid_cursor_goto(grid->handle, put_dirty_row,
-                          MIN(put_dirty_last, grid->Columns-1));
+      ui_grid_cursor_goto(put_dirty_grid->handle, put_dirty_row,
+                          MIN(put_dirty_last, put_dirty_grid->Columns-1));
     }
-    ui_line(grid, put_dirty_row, put_dirty_first, put_dirty_last,
+    ui_line(put_dirty_grid, put_dirty_row, put_dirty_first, put_dirty_last,
             put_dirty_last, 0, false);
     put_dirty_first = INT_MAX;
     put_dirty_last = 0;
   }
   put_dirty_row = -1;
+  put_dirty_grid = NULL;
 }
 
 /*
