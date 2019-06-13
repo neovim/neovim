@@ -388,17 +388,20 @@ static void set_bg_deferred(void **argv)
 // During startup, tui.c requests the background color (see `ext.get_bg`).
 //
 // Here in input.c, we watch for the terminal response `\e]11;COLOR\a`.  If
-// COLOR matches `rgb:RRRR/GGGG/BBBB` where R, G, and B are hex digits, then
-// compute the luminance[1] of the RGB color and classify it as light/dark
+// COLOR matches `rgb:RRRR/GGGG/BBBB/AAAA` where R, G, B, and A are hex digits,
+// then compute the luminance[1] of the RGB color and classify it as light/dark
 // accordingly. Note that the color components may have anywhere from one to
 // four hex digits, and require scaling accordingly as values out of 4, 8, 12,
-// or 16 bits.
+// or 16 bits. Also note the A(lpha) component is optional, and is parsed but
+// ignored in the calculations.
 //
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
 static bool handle_background_color(TermInput *input)
 {
   size_t count = 0;
   size_t component = 0;
+  size_t header_size = 0;
+  size_t num_components = 0;
   uint16_t rgb[] = { 0, 0, 0 };
   uint16_t rgb_max[] = { 0, 0, 0 };
   bool eat_backslash = false;
@@ -406,48 +409,54 @@ static bool handle_background_color(TermInput *input)
   bool bad = false;
   if (rbuffer_size(input->read_stream.buffer) >= 9
       && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgb:", 9)) {
-    rbuffer_consumed(input->read_stream.buffer, 9);
-    RBUFFER_EACH(input->read_stream.buffer, c, i) {
-      count = i + 1;
-      if (eat_backslash) {
-        done = true;
-        break;
-      } else if (c == '\x07') {
-        done = true;
-        break;
-      } else if (c == '\x1b') {
-        eat_backslash = true;
-      } else if (bad) {
-        // ignore
-      } else if (c == '/') {
-        if (component < 3) {
-          component++;
-        }
-      } else if (ascii_isxdigit(c)) {
-        if (component < 3 && rgb_max[component] != 0xffff) {
-          rgb_max[component] = (uint16_t)((rgb_max[component] << 4) | 0xf);
-          rgb[component] = (uint16_t)((rgb[component] << 4) | hex2nr(c));
-        }
-      } else {
-        bad = true;
-      }
-    }
-    rbuffer_consumed(input->read_stream.buffer, count);
-    if (done && !bad && rgb_max[0] && rgb_max[1] && rgb_max[2]) {
-      double r = (double)rgb[0] / (double)rgb_max[0];
-      double g = (double)rgb[1] / (double)rgb_max[1];
-      double b = (double)rgb[2] / (double)rgb_max[2];
-      double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
-      char *bgvalue = luminance < 0.5 ? "dark" : "light";
-      DLOG("bg response: %s", bgvalue);
-      loop_schedule_deferred(&main_loop,
-                             event_create(set_bg_deferred, 1, bgvalue));
-    } else {
-      DLOG("failed to parse bg response");
-    }
-    return true;
+    header_size = 9;
+    num_components = 3;
+  } else if (rbuffer_size(input->read_stream.buffer) >= 10
+             && !rbuffer_cmp(input->read_stream.buffer, "\x1b]11;rgba:", 10)) {
+    header_size = 10;
+    num_components = 4;
+  } else {
+    return false;
   }
-  return false;
+  rbuffer_consumed(input->read_stream.buffer, header_size);
+  RBUFFER_EACH(input->read_stream.buffer, c, i) {
+    count = i + 1;
+    if (eat_backslash) {
+      done = true;
+      break;
+    } else if (c == '\x07') {
+      done = true;
+      break;
+    } else if (c == '\x1b') {
+      eat_backslash = true;
+    } else if (bad) {
+      // ignore
+    } else if ((c == '/') && (++component < num_components)) {
+      // work done in condition
+    } else if (ascii_isxdigit(c)) {
+      if (component < 3 && rgb_max[component] != 0xffff) {
+        rgb_max[component] = (uint16_t)((rgb_max[component] << 4) | 0xf);
+        rgb[component] = (uint16_t)((rgb[component] << 4) | hex2nr(c));
+      }
+    } else {
+      bad = true;
+    }
+  }
+  rbuffer_consumed(input->read_stream.buffer, count);
+  if (done && !bad && rgb_max[0] && rgb_max[1] && rgb_max[2]) {
+    double r = (double)rgb[0] / (double)rgb_max[0];
+    double g = (double)rgb[1] / (double)rgb_max[1];
+    double b = (double)rgb[2] / (double)rgb_max[2];
+    double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
+    char *bgvalue = luminance < 0.5 ? "dark" : "light";
+    DLOG("bg response: %s", bgvalue);
+    loop_schedule_deferred(&main_loop,
+                           event_create(set_bg_deferred, 1, bgvalue));
+  } else {
+    DLOG("failed to parse bg response");
+    return false;
+  }
+  return true;
 }
 
 static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
