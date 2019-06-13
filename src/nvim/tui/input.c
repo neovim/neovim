@@ -451,7 +451,7 @@ static bool handle_background_color(TermInput *input)
     char *bgvalue = luminance < 0.5 ? "dark" : "light";
     DLOG("bg response: %s", bgvalue);
     loop_schedule_deferred(&main_loop,
-        event_create(set_bg_deferred, 1, bgvalue));
+                           event_create(set_bg_deferred, 1, bgvalue));
   } else {
     DLOG("failed to parse bg response");
     return false;
