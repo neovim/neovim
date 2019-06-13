@@ -4707,6 +4707,7 @@ getwininfo([{winid}])					*getwininfo()*
 			height		window height (excluding winbar)
 			loclist		1 if showing a location list
 			quickfix	1 if quickfix or location list window
+			terminal	1 if a terminal window
 			tabnr		tab page number
 			topline		first displayed buffer line 
 			variables	a reference to the dictionary with
