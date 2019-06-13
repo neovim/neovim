@@ -6,17 +6,9 @@ environment:
 image: Visual Studio 2017
 configuration:
 - MSVC_64
-- MSVC_32
-- MINGW_64
 - MINGW_32
 - MINGW_64-gcov
-init:
-- ps: |
-    # Pull requests: skip some build configurations to save time.
-    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
-      $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
-      Exit-AppVeyorBuild
-    }
+init: []
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 matrix:
