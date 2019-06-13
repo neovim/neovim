@@ -412,7 +412,7 @@ void pum_redraw(void)
     idx = i + pum_first;
     attr = (idx == pum_selected) ? attr_select : attr_norm;
 
-    screen_puts_line_start(row);
+    grid_puts_line_start(&pum_grid, row);
 
     // prepend a space if there is room
     if (extra_space) {
@@ -564,7 +564,7 @@ void pum_redraw(void)
                      ? attr_thumb : attr_scroll);
       }
     }
-    grid_puts_line_flush(&pum_grid, false);
+    grid_puts_line_flush(false);
     row++;
   }
 }
