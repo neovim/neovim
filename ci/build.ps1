@@ -33,6 +33,8 @@ if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
   write-host "cache dir $($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
+$env:PATH = "C:\msys64\usr\bin;$env:PATH"
+
 if ($compiler -eq 'MINGW') {
   if ($bits -eq 32) {
     $arch = 'i686'
@@ -122,15 +124,14 @@ Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {
-  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
+  bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
 }
 
 # Old tests
-$env:PATH = "C:\msys64\usr\bin;$env:PATH"
-& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
+& make -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
-  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
+  bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
 }
 
 # Build artifacts
