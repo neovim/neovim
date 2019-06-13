@@ -118,26 +118,36 @@ find_git_remote() {
   echo "$git_remote"
 }
 
+# Assign variables for a given Vim tag, patch version, or commit.
+# Might exit in case it cannot be found.
 assign_commit_details() {
-  if [[ ${1} =~ [0-9]\.[0-9]\.[0-9]{3,4} ]]; then
+  local vim_commit_ref
+  if [[ ${1} =~ v?[0-9]\.[0-9]\.[0-9]{3,4} ]]; then
     # Interpret parameter as version number (tag).
-    vim_version="${1}"
-    vim_tag="v${1}"
-    vim_commit=$(cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" "${vim_tag}")
+    if [[ "${1:0:1}" == v ]]; then
+      vim_version="${1:1}"
+      vim_tag="${1}"
+    else
+      vim_version="${1}"
+      vim_tag="v${1}"
+    fi
+    vim_commit_ref="$vim_tag"
     local munge_commit_line=true
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:12}"
     vim_tag=
-    vim_commit=$(cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" "${vim_version}")
+    vim_commit_ref="$vim_version"
     local munge_commit_line=false
   fi
 
+  vim_commit=$(git -C "${VIM_SOURCE_DIR}" log -1 --format="%H" "${vim_commit_ref}" --) || {
+    >&2 msg_err "Couldn't find Vim revision '${vim_commit_ref}'."
+    exit 3
+  }
+
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
-  vim_message="$(cd "${VIM_SOURCE_DIR}" \
-    && git log -1 --pretty='format:%B' "${vim_commit}" \
+  vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
       | sed -e 's/\(#[0-9]\{1,\}\)/vim\/vim\1/g')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
@@ -202,10 +212,6 @@ get_vimpatch() {
 
   assign_commit_details "${1}"
 
-  git log -1 "${vim_commit}" -- >/dev/null 2>&1 || {
-    >&2 msg_err "Couldn't find Vim revision '${vim_commit}'."
-    exit 3
-  }
   msg_ok "Found Vim revision '${vim_commit}'."
 
   local patch_content
