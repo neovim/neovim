@@ -33,8 +33,6 @@ if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
   write-host "cache dir $($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
-$env:PATH = "C:\msys64\usr\bin;$env:PATH"
-
 if ($compiler -eq 'MINGW') {
   if ($bits -eq 32) {
     $arch = 'i686'
@@ -59,11 +57,11 @@ if ($compiler -eq 'MINGW') {
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
 
   # Avoid pacman "warning" which causes non-zero return code. https://github.com/open62541/open62541/issues/2068
-  & mkdir -p /var/cache/pacman/pkg
+  & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
 
   # Build third-party dependencies
-  pacman --verbose --noconfirm -Su ; exitIfFailed
-  pacman --verbose --noconfirm --needed -S $mingwPackages ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
+  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
@@ -124,14 +122,14 @@ Set-PSDebug -Strict -Trace 1
 
 
 if ($uploadToCodecov) {
-  bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
+  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F functionaltest || echo 'codecov upload failed.'"
 }
 
 # Old tests
-& make -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
+& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
-  bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
+  C:\msys64\usr\bin\bash -lc "cd /c/projects/neovim; bash <(curl -s https://codecov.io/bash) -c -F oldtest || echo 'codecov upload failed.'"
 }
 
 # Build artifacts
