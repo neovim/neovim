@@ -59,11 +59,11 @@ if ($compiler -eq 'MINGW') {
   $env:PATH = "C:\msys64\mingw$bits\bin;$env:PATH"
 
   # Avoid pacman "warning" which causes non-zero return code. https://github.com/open62541/open62541/issues/2068
-  & C:\msys64\usr\bin\mkdir -p /var/cache/pacman/pkg
+  & mkdir -p /var/cache/pacman/pkg
 
   # Build third-party dependencies
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm -Su" ; exitIfFailed
-  C:\msys64\usr\bin\bash -lc "pacman --verbose --noconfirm --needed -S $mingwPackages" ; exitIfFailed
+  pacman --verbose --noconfirm -Su ; exitIfFailed
+  pacman --verbose --noconfirm --needed -S $mingwPackages ; exitIfFailed
 }
 elseif ($compiler -eq 'MSVC') {
   $cmakeGeneratorArgs = '/verbosity:normal'
