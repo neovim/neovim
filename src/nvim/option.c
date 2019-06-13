@@ -626,7 +626,11 @@ void set_init_1(void)
       char *p;
 # ifdef UNIX
       if (*names[n] == NUL) {
+#  ifdef __APPLE__
+        p = "/private/tmp";
+#  else
         p = "/tmp";
+#  endif
         mustfree = false;
       } else
 # endif
