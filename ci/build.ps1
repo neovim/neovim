@@ -126,7 +126,7 @@ if ($uploadToCodecov) {
 }
 
 # Old tests
-& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
+& make -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 
 if ($uploadToCodecov) {
   bash /c/projects/neovim/ci/common/submit_coverage.sh oldtest
