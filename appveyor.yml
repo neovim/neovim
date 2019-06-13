@@ -7,15 +7,14 @@ environment:
   GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
 image: Visual Studio 2017
 configuration:
+- MINGW_64-gcov
+- MINGW_32
 - MSVC_64
 - MSVC_32
-- MINGW_64
-- MINGW_32
-- MINGW_64-gcov
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
-    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
       $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
       Exit-AppVeyorBuild
     }
