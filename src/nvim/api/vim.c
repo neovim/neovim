@@ -2364,6 +2364,8 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
 /// @param[in]  global  Report multiple matches occurring on the same line.
 /// @param[out] err     Error details, if any.
 ///
+/// @see |:vimgrep|
+///
 /// @return  List of search results in |getqflist()|-style format with an
 ///          additional "fname" field for the filename.
 Array nvim_grep(String pattern, String path, Boolean global, Error *err)
