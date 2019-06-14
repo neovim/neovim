@@ -189,7 +189,6 @@ return {
     },
     {
       full_name='belloff', abbreviation='bo',
-      deny_duplicates=true, -- luacheck: ignore 314
       type='string', list='comma', scope={'global'},
       deny_duplicates=true,
       vi_def=true,
