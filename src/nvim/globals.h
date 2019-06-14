@@ -985,9 +985,6 @@ EXTERN char_u e_notmp[] INIT(= N_("E483: Can't get temp file name"));
 EXTERN char_u e_notopen[] INIT(= N_("E484: Can't open file %s"));
 EXTERN char_u e_notopen_2[] INIT(= N_("E484: Can't open file %s: %s"));
 EXTERN char_u e_notread[] INIT(= N_("E485: Can't read file %s"));
-EXTERN char_u e_nowrtmsg[] INIT(= N_(
-        "E37: No write since last change (add ! to override)"));
-EXTERN char_u e_nowrtmsg_nobang[] INIT(= N_("E37: No write since last change"));
 EXTERN char_u e_null[] INIT(= N_("E38: Null argument"));
 EXTERN char_u e_number_exp[] INIT(= N_("E39: Number expected"));
 EXTERN char_u e_openerrf[] INIT(= N_("E40: Can't open errorfile %s"));

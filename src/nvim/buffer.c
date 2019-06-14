@@ -1425,7 +1425,7 @@ do_buffer(
       }
     }
     if (bufIsChanged(curbuf)) {
-      EMSG(_(e_nowrtmsg));
+      no_write_message();
       return FAIL;
     }
   }
@@ -1624,6 +1624,16 @@ void do_autochdir(void)
       shorten_fnames(true);
     }
   }
+}
+
+void no_write_message(void)
+{
+  EMSG(_("E37: No write since last change (add ! to override)"));
+}
+
+void no_write_message_nobang(void)
+{
+  EMSG(_("E37: No write since last change"));
 }
 
 //

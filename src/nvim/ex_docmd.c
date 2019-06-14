@@ -6216,7 +6216,7 @@ ex_win_close(
       }
       need_hide = false;
     } else {
-      EMSG(_(e_nowrtmsg));
+      no_write_message();
       return;
     }
   }

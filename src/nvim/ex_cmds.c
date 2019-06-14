@@ -2076,7 +2076,7 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
     }
     if (curbufIsChanged()) {
       no_wait_return--;
-      EMSG(_(e_nowrtmsg));
+      no_write_message();
       retval = GETFILE_NOT_WRITTEN;     // File has been changed.
       goto theend;
     }
