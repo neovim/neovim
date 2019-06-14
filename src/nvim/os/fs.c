@@ -312,7 +312,8 @@ static bool is_executable_ext(char *name, char_u **abspath)
   if (!pathext) {
     pathext = ".com;.exe;.bat;.cmd";
   }
-  for (const char *ext = pathext; *(ext - 1) && *ext; ext++) {
+  for (const char *ext = pathext;
+       (ext == pathext || *(ext - 1)) && *ext; ext++) {
     // If $PATHEXT itself contains dot:
     if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
       if (is_executable(name, abspath)) {
