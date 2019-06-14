@@ -38,8 +38,8 @@
 -- Returns:
 --    {errcode}, {output}
 local function _system(cmd)
-  local out = vim.api.nvim_call_function('system', { cmd })
-  local err = vim.api.nvim_get_vvar('shell_error')
+  local out = vim.api.nvim_call_function('system', { cmd }) --luacheck: ignore 113
+  local err = vim.api.nvim_get_vvar('shell_error') --luacheck: ignore 113
   return err, out
 end
 
@@ -54,7 +54,7 @@ local function _os_proc_info(pid)
   if 1 == err and string.gsub(name, '%s*', '') == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
-    local args_str = vim.api.nvim_call_function('string', { cmd })
+    local args_str = vim.api.nvim_call_function('string', { cmd }) --luacheck: ignore 113
     error('command failed: '..args_str)
   end
   local _, ppid = _system({ 'ps', '-p', pid, '-o', 'ppid=', })
@@ -80,7 +80,7 @@ local function _os_proc_children(ppid)
   if 1 == err and string.gsub(rv, '%s*', '') == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
-    local args_str = vim.api.nvim_call_function('string', { cmd })
+    local args_str = vim.api.nvim_call_function('string', { cmd }) --luacheck: ignore 113
     error('command failed: '..args_str)
   end
   local children = {}
@@ -100,7 +100,7 @@ end
 local last_nvim_paths = {}
 local function _update_package_paths()
   local cur_nvim_paths = {}
-  local rtps = vim.api.nvim_list_runtime_paths()
+  local rtps = vim.api.nvim_list_runtime_paths() --luacheck: ignore 113
   local sep = package.config:sub(1, 1)
   for _, key in ipairs({'path', 'cpath'}) do
     local orig_str = package[key] .. ';'
