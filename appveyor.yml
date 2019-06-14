@@ -3,25 +3,23 @@ environment:
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: "-t7z -m0=lzma -mx=9"
   DEPS_BUILD_DIR: "C:/projects/nvim-deps"
   DEPS_PREFIX: "C:/projects/nvim-deps/usr"
+  # Silence/redirect errors due to missing locking support (via libgcov).
+  GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
 image: Visual Studio 2017
 configuration:
+- MINGW_64-gcov
+- MINGW_32
 - MSVC_64
 - MSVC_32
-- MINGW_64
-- MINGW_32
-- MINGW_64-gcov
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
-    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32|MINGW_64-gcov)$') {
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
       $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
       Exit-AppVeyorBuild
     }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-matrix:
-  allow_failures:
-    - configuration: MINGW_64-gcov
 install: []
 before_build:
 - ps: Install-Product node 8

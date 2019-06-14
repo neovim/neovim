@@ -430,6 +430,7 @@ local function clear(...)
         'PATH',
         'NVIM_LOG_FILE',
         'NVIM_RPLUGIN_MANIFEST',
+        'GCOV_ERROR_FILE',
       }) do
         if not env_tbl[k] then
           env_tbl[k] = os.getenv(k)
