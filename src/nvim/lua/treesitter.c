@@ -157,6 +157,51 @@ int ts_lua_register_lang(lua_State *L)
   return 1;
 }
 
+int ts_lua_inspect_lang(lua_State *L)
+{
+  if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
+    return luaL_error(L, "string expected");
+  }
+  const char *lang_name = lua_tostring(L, 1);
+
+  TSLanguage *lang = pmap_get(cstr_t)(langs, lang_name);
+  if (!lang) {
+    return luaL_error(L, "no such language: %s", lang_name);
+  }
+
+  lua_createtable(L, 0, 2);  // [retval]
+
+  size_t nsymbols = (size_t)ts_language_symbol_count(lang);
+
+  lua_createtable(L, nsymbols-1, 1);  // [retval, symbols]
+  for (size_t i = 0; i < nsymbols; i++) {
+    TSSymbolType t = ts_language_symbol_type(lang, i);
+    if (t == TSSymbolTypeAuxiliary) {
+      // not used by the API
+      continue;
+    }
+    lua_createtable(L, 2, 0);  // [retval, symbols, elem]
+    lua_pushstring(L, ts_language_symbol_name(lang, i));
+    lua_rawseti(L, -2, 1);
+    lua_pushboolean(L, t == TSSymbolTypeRegular);
+    lua_rawseti(L, -2, 2);  // [retval, symbols, elem]
+    lua_rawseti(L, -2, i);  // [retval, symbols]
+  }
+
+  lua_setfield(L, -2, "symbols");  // [retval]
+
+  // TODO: this seems to be empty, what langs have fields?
+  size_t nfields = (size_t)ts_language_field_count(lang);
+  lua_createtable(L, nfields-1, 1);  // [retval, fields]
+  for (size_t i = 0; i < nfields; i++) {
+    lua_pushstring(L, ts_language_field_name_for_id(lang, i));
+    lua_rawseti(L, -2, i);  // [retval, fields]
+  }
+
+  lua_setfield(L, -2, "fields");  // [retval]
+  return 1;
+}
+
 int tslua_push_parser(lua_State *L, const char *lang_name)
 {
   TSParser *parser = ts_parser_new();

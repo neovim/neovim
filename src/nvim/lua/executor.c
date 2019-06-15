@@ -841,4 +841,7 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, ts_lua_register_lang);
   lua_setfield(lstate, -2, "_ts_add_language");
+
+  lua_pushcfunction(lstate, ts_lua_inspect_lang);
+  lua_setfield(lstate, -2, "_ts_inspect_language");
 }

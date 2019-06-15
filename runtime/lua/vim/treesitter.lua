@@ -53,5 +53,9 @@ end
 
 -- TODO: weak table with reusable parser per buffer.
 
-return {create_parser=create_parser, add_language=vim._ts_add_language}
+return {
+  create_parser=create_parser,
+  add_language=vim._ts_add_language,
+  inspect_language=vim._ts_inspect_language,
+}
 
