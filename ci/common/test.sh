@@ -4,7 +4,7 @@
 submit_coverage() {
   if [ -n "${GCOV}" ]; then
     if curl --fail --output codecov.bash --silent https://codecov.io/bash; then
-      bash codecov.bash -c -F "$1" || echo "codecov upload failed."
+      bash codecov.bash -c || echo "codecov upload failed."
       rm -f codecov.bash
     fi
   fi
