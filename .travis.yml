@@ -68,7 +68,7 @@ jobs:
       # store 32-bit dependencies in a separate cache.
       compiler: gcc
       env: BUILD_32BIT=ON
-    - if: branch = master
+    - if: branch = master AND commit_message !~ /\[skip.lint\]/
       os: linux
       env: CI_TARGET=lint
 
