@@ -143,7 +143,21 @@ void buf_updates_unregister_all(buf_T *buf)
   }
 
   for (size_t i = 0; i < kv_size(buf->update_callbacks); i++) {
-    free_update_callbacks(kv_A(buf->update_callbacks, i));
+    BufUpdateCallbacks cb = kv_A(buf->update_callbacks, i);
+    if (cb.on_detach != LUA_NOREF) {
+      Array args = ARRAY_DICT_INIT;
+      Object items[1];
+      args.size = 1;
+      args.items = items;
+
+      // the first argument is always the buffer handle
+      args.items[0] = BUFFER_OBJ(buf->handle);
+
+      textlock++;
+      executor_exec_lua_cb(cb.on_detach, "detach", args, false);
+      textlock--;
+    }
+    free_update_callbacks(cb);
   }
   kv_destroy(buf->update_callbacks);
   kv_init(buf->update_callbacks);
@@ -237,13 +251,14 @@ void buf_updates_send_changes(buf_T *buf,
       args.items[4] = INTEGER_OBJ(firstline - 1 + num_added);
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args);
+      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         free_update_callbacks(cb);
         keep = false;
       }
+      api_free_object(res);
     }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);
@@ -276,13 +291,15 @@ void buf_updates_changedtick(buf_T *buf)
       args.items[1] = INTEGER_OBJ(buf_get_changedtick(buf));
 
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick", args);
+      Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick",
+                                        args, true);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
         free_update_callbacks(cb);
         keep = false;
       }
+      api_free_object(res);
     }
     if (keep) {
       kv_A(buf->update_callbacks, j++) = kv_A(buf->update_callbacks, i);

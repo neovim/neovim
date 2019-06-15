@@ -520,7 +520,8 @@ Object executor_exec_lua_api(const String str, const Array args, Error *err)
   return nlua_pop_Object(lstate, false, err);
 }
 
-Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args)
+Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
+                            bool retval)
 {
   lua_State *const lstate = nlua_enter();
   nlua_pushref(lstate, ref);
@@ -529,7 +530,7 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args)
     nlua_push_Object(lstate, args.items[i]);
   }
 
-  if (lua_pcall(lstate, (int)args.size+1, 1, 0)) {
+  if (lua_pcall(lstate, (int)args.size+1, retval ? 1 : 0, 0)) {
     // TODO(bfredl): callbacks:s might not always be msg-safe, for instance
     // lua callbacks for redraw events. Later on let the caller deal with the
     // error instead.
@@ -538,7 +539,11 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args)
   }
   Error err = ERROR_INIT;
 
-  return nlua_pop_Object(lstate, false, &err);
+  if (retval) {
+    return nlua_pop_Object(lstate, false, &err);
+  } else {
+    return NIL;
+  }
 }
 
 /// Run lua string

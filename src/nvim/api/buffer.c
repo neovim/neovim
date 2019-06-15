@@ -12,6 +12,7 @@
 #include "nvim/api/buffer.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/lua/executor.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -137,24 +138,38 @@ Boolean nvim_buf_attach(uint64_t channel_id,
     if (is_lua && strequal("on_lines", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        return false;
+        goto error;
       }
       cb.on_lines = v->data.luaref;
       v->data.integer = LUA_NOREF;
     } else if (is_lua && strequal("on_changedtick", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        return false;
+        goto error;
       }
       cb.on_changedtick = v->data.luaref;
       v->data.integer = LUA_NOREF;
+    } else if (is_lua && strequal("on_detach", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      cb.on_detach = v->data.luaref;
+      v->data.integer = LUA_NOREF;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
-      return false;
+      goto error;
     }
   }
 
   return buf_updates_register(buf, channel_id, cb, send_buffer);
+
+error:
+  // TODO(bfredl): ASAN build should check that the ref table is empty?
+  executor_free_luaref(cb.on_lines);
+  executor_free_luaref(cb.on_changedtick);
+  executor_free_luaref(cb.on_detach);
+  return false;
 }
 
 /// Deactivates buffer-update events on the channel.
