@@ -6,8 +6,8 @@ func! TSTest()
     return
   end
   " TODO: module!
-  lua theparser = vim.tree_sitter.create_parser(0)
-  lua require'tree_sitter_demo'
+  lua theparser = vim.treesitter.create_parser(0)
+  lua require'treesitter_demo'
   let g:has_ts = v:true
 endfunc
 

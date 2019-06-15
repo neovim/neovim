@@ -145,7 +145,7 @@ set(CONV_SOURCES
   ex_cmds.c
   ex_docmd.c
   fileio.c
-  lua/tree_sitter.c
+  lua/treesitter.c
   mbyte.c
   memline.c
   message.c

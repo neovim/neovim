@@ -31,7 +31,7 @@
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
-#include "nvim/lua/tree_sitter.h"
+#include "nvim/lua/treesitter.h"
 
 #include "luv/luv.h"
 

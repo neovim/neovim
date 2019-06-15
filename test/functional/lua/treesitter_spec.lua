@@ -15,7 +15,7 @@ describe('tree-sitter API', function()
   -- error tests not requiring a parser library
   it('handles basic errors', function()
     --eq({false, 'Error executing lua: vim.schedule: expected function'},
-    --   meth_pcall(meths.execute_lua, "parser = vim.tree_sitter.create_parser(0, 'nosuchlang')", {}))
+    --   meth_pcall(meths.execute_lua, "parser = vim.treesitter.create_parser(0, 'nosuchlang')", {}))
 
 
 
@@ -34,7 +34,7 @@ describe('tree-sitter API', function()
       local path = ts_path .. '/bin/c'..(iswin() and '.dll' or '.so')
       exec_lua([[
         local path = ...
-        vim.tree_sitter.add_language(path,'c')
+        vim.treesitter.add_language(path,'c')
 
       ]], path)
     end)
@@ -46,7 +46,7 @@ describe('tree-sitter API', function()
         }]])
 
       exec_lua([[
-        parser = vim.tree_sitter.create_parser(0, "c")
+        parser = vim.treesitter.create_parser(0, "c")
         tree = parser:parse_tree()
         root = tree:root()
       ]])

@@ -20,9 +20,9 @@
 // NOT state-safe, delete when GC is confimed working:
 static int debug_n_trees = 0, debug_n_cursors = 0;
 
-#define REG_KEY "tree_sitter-private"
+#define REG_KEY "treesitter-private"
 
-#include "nvim/lua/tree_sitter.h"
+#include "nvim/lua/treesitter.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/memline.h"
 
@@ -32,7 +32,7 @@ typedef struct {
 } Tslua_parser;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/tree_sitter.c.generated.h"
+# include "lua/treesitter.c.generated.h"
 #endif
 
 static struct luaL_Reg parser_meta[] = {

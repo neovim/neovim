@@ -1,3 +1,4 @@
+-- TODO: externalize this
 local a = vim.api
 _G.a = vim.api
 
