@@ -156,7 +156,7 @@ func WaitFor(expr, ...)
     endif
     sleep 10m
   endfor
-  return timeout
+  throw 'WaitFor() timed out after ' . timeout . ' msec'
 endfunc
 
 " Wait for up to a given milliseconds.
