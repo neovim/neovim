@@ -20,15 +20,13 @@
 // NOT state-safe, delete when GC is confimed working:
 static int debug_n_trees = 0, debug_n_cursors = 0;
 
-#define REG_KEY "treesitter-private"
-
 #include "nvim/lua/treesitter.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/memline.h"
 
 typedef struct {
     TSParser *parser;
-    TSTree *tree;
+    TSTree *tree;  // internal tree, used for editing/reparsing
 } Tslua_parser;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -67,18 +65,18 @@ static struct luaL_Reg node_meta[] = {
 
 PMap(cstr_t) *langs;
 
-void build_meta(lua_State *L, const luaL_Reg *meta)
+void build_meta(lua_State *L, const char* tname, const luaL_Reg *meta)
 {
-  // [env, target]
-  for (size_t i = 0; meta[i].name != NULL; i++) {
-    lua_pushcfunction(L, meta[i].func);  // [env, target, func]
-    lua_pushvalue(L, -3);  // [env, target, func, env]
-    lua_setfenv(L, -2);  // [env, target, func]
-    lua_setfield(L, -2, meta[i].name);  // [env, target]
-  }
+  if (luaL_newmetatable(L, tname)) {  // [meta]
+    for (size_t i = 0; meta[i].name != NULL; i++) {
+      lua_pushcfunction(L, meta[i].func);  // [meta, func]
+      lua_setfield(L, -2, meta[i].name);  // [meta]
+    }
 
-  lua_pushvalue(L, -1);  // [env, target, target]
-  lua_setfield(L, -2, "__index");  // [env, target]
+    lua_pushvalue(L, -1);  // [meta, meta]
+    lua_setfield(L, -2, "__index");  // [meta]
+  }
+  lua_pop(L, 1);  // [] (don't use it now)
 }
 
 
@@ -91,22 +89,12 @@ void tslua_init(lua_State *L)
 
   langs = pmap_new(cstr_t)();
 
-  lua_createtable(L, 0, 0);
-
   // type metatables
-  lua_createtable(L, 0, 0);
-  build_meta(L, parser_meta);
-  lua_setfield(L, -2, "parser-meta");
+  build_meta(L, "treesitter_parser", parser_meta);
 
-  lua_createtable(L, 0, 0);
-  build_meta(L, tree_meta);
-  lua_setfield(L, -2, "tree-meta");
+  build_meta(L, "treesitter_tree", tree_meta);
 
-  lua_createtable(L, 0, 0);
-  build_meta(L, node_meta);
-  lua_setfield(L, -2, "node-meta");
-
-  lua_setfield(L, LUA_REGISTRYINDEX, REG_KEY);
+  build_meta(L, "treesitter_node", node_meta);
 
   lua_pushcfunction(L, tslua_debug);
   lua_setglobal(L, "_tslua_debug");
@@ -173,23 +161,14 @@ int tslua_push_parser(lua_State *L, const char *lang_name)
   p->parser = parser;
   p->tree = NULL;
 
-  lua_getfield(L, LUA_REGISTRYINDEX, REG_KEY);  // [udata, env]
-  lua_getfield(L, -1, "parser-meta");  // [udata, env, meta]
-  lua_setmetatable(L, -3);  // [udata, env]
-  lua_pop(L, 1);  // [udata]
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_parser");  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
   return 1;
 }
 
 static Tslua_parser *parser_check(lua_State *L)
 {
-  if (!lua_gettop(L)) {
-    return 0;
-  }
-  if (!lua_isuserdata(L, 1)) {
-    return 0;
-  }
-  // TODO: typecheck!
-  return lua_touserdata(L, 1);
+  return luaL_checkudata(L, 1, "treesitter_parser");
 }
 
 static int parser_gc(lua_State *L)
@@ -313,31 +292,22 @@ void tslua_push_tree(lua_State *L, TSTree *tree)
 {
   TSTree **ud = lua_newuserdata(L, sizeof(TSTree *));  // [udata]
   *ud = tree;
-  lua_getfield(L, LUA_REGISTRYINDEX, REG_KEY);  // [udata, env]
-  lua_getfield(L, -1, "tree-meta");  // [udata, env, meta]
-  lua_setmetatable(L, -3);  // [udata, env]
-  lua_pop(L, 1);  // [udata]
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_tree");  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
 
   // table used for node wrappers to keep a reference to tree wrapper
   // NB: in lua 5.3 the uservalue for the node could just be the tree, but
   // in lua 5.1 the uservalue (fenv) must be a table.
-  lua_createtable(L, 1, 0); // [udata, reftable]
-  lua_pushvalue(L, -2); // [udata, reftable, udata]
-  lua_rawseti(L, -2, 1); // [udata, reftable]
-  lua_setfenv(L, -2); // [udata]
+  lua_createtable(L, 1, 0);  // [udata, reftable]
+  lua_pushvalue(L, -2);  // [udata, reftable, udata]
+  lua_rawseti(L, -2, 1);  // [udata, reftable]
+  lua_setfenv(L, -2);  // [udata]
   debug_n_trees++;
 }
 
 static TSTree *tree_check(lua_State *L)
 {
-  if (!lua_gettop(L)) {
-    return 0;
-  }
-  if (!lua_isuserdata(L, 1)) {
-    return 0;
-  }
-  // TODO: typecheck!
-  TSTree **ud = lua_touserdata(L, 1);
+  TSTree **ud = luaL_checkudata(L, 1, "treesitter_tree");
   return *ud;
 }
 
@@ -385,7 +355,7 @@ static void push_node(lua_State *L, TSNode node)
   }
   TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
   *ud = node;
-  lua_getfield(L, LUA_ENVIRONINDEX, "node-meta");  // [src, udata, meta]
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_node");  // [src, udata, meta]
   lua_setmetatable(L, -2);  // [src, udata]
   lua_getfenv(L, -2);  // [src, udata, reftable]
   lua_setfenv(L, -2);  // [src, udata]
@@ -393,16 +363,12 @@ static void push_node(lua_State *L, TSNode node)
 
 static bool node_check(lua_State *L, TSNode *res)
 {
-  if (!lua_gettop(L)) {
-    return 0;
+  TSNode *ud = luaL_checkudata(L, 1, "treesitter_node");
+  if (ud) {
+    *res = *ud;
+    return true;
   }
-  if (!lua_isuserdata(L, 1)) {
-    return 0;
-  }
-  // TODO: typecheck!
-  TSNode *ud = lua_touserdata(L, 1);
-  *res = *ud;
-  return true;
+  return false;
 }
 
 
