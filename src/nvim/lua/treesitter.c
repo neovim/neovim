@@ -54,11 +54,19 @@ static struct luaL_Reg node_meta[] = {
   { "__len", node_child_count },
   { "range", node_range },
   { "start", node_start },
+  { "end_", node_end },
   { "type", node_type },
   { "symbol", node_symbol },
+  { "named", node_named },
+  { "missing", node_missing },
+  { "has_error", node_has_error },
+  { "sexpr", node_sexpr },
   { "child_count", node_child_count },
+  { "named_child_count", node_named_child_count },
   { "child", node_child },
+  { "named_child", node_named_child },
   { "descendant_for_point_range", node_descendant_for_point_range },
+  { "named_descendant_for_point_range", node_named_descendant_for_point_range },
   { "parent", node_parent },
   { NULL, NULL }
 };
@@ -417,6 +425,20 @@ static int node_start(lua_State *L)
   return 3;
 }
 
+static int node_end(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSPoint end = ts_node_end_point(node);
+  uint32_t end_byte = ts_node_end_byte(node);
+  lua_pushnumber(L, end.row);
+  lua_pushnumber(L, end.column);
+  lua_pushnumber(L, end_byte);
+  return 3;
+}
+
 static int node_child_count(lua_State *L)
 {
   TSNode node;
@@ -424,6 +446,17 @@ static int node_child_count(lua_State *L)
     return 0;
   }
   uint32_t count = ts_node_child_count(node);
+  lua_pushnumber(L, count);
+  return 1;
+}
+
+static int node_named_child_count(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  uint32_t count = ts_node_named_child_count(node);
   lua_pushnumber(L, count);
   return 1;
 }
@@ -449,6 +482,48 @@ static int node_symbol(lua_State *L)
   return 1;
 }
 
+static int node_named(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  lua_pushboolean(L, ts_node_is_named(node));
+  return 1;
+}
+
+static int node_sexpr(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  char *allocated = ts_node_string(node);
+  lua_pushstring(L, allocated);
+  xfree(allocated);
+  return 1;
+}
+
+static int node_missing(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  lua_pushboolean(L, ts_node_is_missing(node));
+  return 1;
+}
+
+static int node_has_error(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  lua_pushboolean(L, ts_node_has_error(node));
+  return 1;
+}
+
 static int node_child(lua_State *L)
 {
   TSNode node;
@@ -457,6 +532,20 @@ static int node_child(lua_State *L)
   }
   long num = lua_tointeger(L, 2);
   TSNode child = ts_node_child(node, (uint32_t)num);
+
+  lua_pushvalue(L, 1);
+  push_node(L, child);
+  return 1;
+}
+
+static int node_named_child(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  long num = lua_tointeger(L, 2);
+  TSNode child = ts_node_named_child(node, (uint32_t)num);
 
   lua_pushvalue(L, 1);
   push_node(L, child);
@@ -474,6 +563,23 @@ static int node_descendant_for_point_range(lua_State *L)
   TSPoint end = { (uint32_t)lua_tointeger(L, 4),
                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_descendant_for_point_range(node, start, end);
+
+  lua_pushvalue(L, 1);
+  push_node(L, child);
+  return 1;
+}
+
+static int node_named_descendant_for_point_range(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSPoint start = { (uint32_t)lua_tointeger(L, 2),
+                   (uint32_t)lua_tointeger(L, 3) };
+  TSPoint end = { (uint32_t)lua_tointeger(L, 4),
+                 (uint32_t)lua_tointeger(L, 5) };
+  TSNode child = ts_node_named_descendant_for_point_range(node, start, end);
 
   lua_pushvalue(L, 1);
   push_node(L, child);
