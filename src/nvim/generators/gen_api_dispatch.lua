@@ -324,12 +324,10 @@ local mpack_output = io.open(mpack_outputf, 'wb')
 mpack_output:write(mpack.pack(functions))
 mpack_output:close()
 
-==== BASE ====
-local function include_headers(output, headers)
-  for i = 1, #headers do
-    if headers[i]:sub(-12) ~= '.generated.h' then
-      output:write('\n#include "nvim/'..headers[i]..'"')
-==== BASE ====
+local function include_headers(output_handle, headers_to_include)
+  for i = 1, #headers_to_include do
+    if headers_to_include[i]:sub(-12) ~= '.generated.h' then
+      output_handle:write('\n#include "nvim/'..headers_to_include[i]..'"')
     end
   end
 end
@@ -390,12 +388,14 @@ local function process_function(fn)
   local cparams = ''
   local free_code = {}
   for j = #fn.parameters,1,-1 do
-==== BASE ====
-    param = fn.parameters[j]
-    cparam = string.format('arg%u', j)
-    param_type = real_type(param[1])
-    lc_param_type = param_type:lower()
-==== BASE ====
+    local param = fn.parameters[j]
+    local cparam = string.format('arg%u', j)
+    local param_type = real_type(param[1])
+    local lc_param_type = real_type(param[1]):lower()
+    local extra = ((param_type == "Object" or param_type == "Dictionary") and "false, ") or ""
+    if param[1] == "DictionaryOf(LuaRef)" then
+      extra = "true, "
+    end
     write_shifted_output(output, string.format([[
     const %s %s = nlua_pop_%s(lstate, %s&err);
 
