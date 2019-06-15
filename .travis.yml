@@ -49,7 +49,7 @@ env:
 
 jobs:
   include:
-    - stage: normal builds
+    - stage: baseline builds
       os: linux
       compiler: clang-4.0
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
@@ -68,15 +68,18 @@ jobs:
       # store 32-bit dependencies in a separate cache.
       compiler: gcc
       env: BUILD_32BIT=ON
-    - os: osx
+    - if: branch = master
+      os: linux
+      env: CI_TARGET=lint
+
+    - stage: OSX builds
+      os: osx
       compiler: clang
       osx_image: xcode10.1  # macOS 10.13
     - os: osx
       compiler: gcc
       osx_image: xcode10.1  # macOS 10.13
-    - if: branch = master
-      os: linux
-      env: CI_TARGET=lint
+
     - stage: Flaky builds
       os: linux
       compiler: gcc
