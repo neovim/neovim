@@ -828,8 +828,7 @@ static int create_tslua_parser(lua_State *L)
     return luaL_error(L, "string expected");
   }
 
-  const char *lang_name = lua_tostring(L,1);
-
+  const char *lang_name = lua_tostring(L, 1);
   return tslua_push_parser(L, lang_name);
 }
 

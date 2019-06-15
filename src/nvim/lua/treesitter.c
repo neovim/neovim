@@ -34,38 +34,38 @@ typedef struct {
 #endif
 
 static struct luaL_Reg parser_meta[] = {
-  {"__gc", parser_gc},
-  {"__tostring", parser_tostring},
-  {"parse_buf", parser_parse_buf},
-  {"edit", parser_edit},
-  {"tree", parser_tree},
-  {NULL, NULL}
+  { "__gc", parser_gc },
+  { "__tostring", parser_tostring },
+  { "parse_buf", parser_parse_buf },
+  { "edit", parser_edit },
+  { "tree", parser_tree },
+  { NULL, NULL }
 };
 
 static struct luaL_Reg tree_meta[] = {
-  {"__gc", tree_gc},
-  {"__tostring", tree_tostring},
-  {"root", tree_root},
-  {NULL, NULL}
+  { "__gc", tree_gc },
+  { "__tostring", tree_tostring },
+  { "root", tree_root },
+  { NULL, NULL }
 };
 
 static struct luaL_Reg node_meta[] = {
-  {"__tostring", node_tostring},
-  {"__len", node_child_count},
-  {"range", node_range},
-  {"start", node_start},
-  {"type", node_type},
-  {"symbol", node_symbol},
-  {"child_count", node_child_count},
-  {"child", node_child},
-  {"descendant_for_point_range", node_descendant_for_point_range},
-  {"parent", node_parent},
-  {NULL, NULL}
+  { "__tostring", node_tostring },
+  { "__len", node_child_count },
+  { "range", node_range },
+  { "start", node_start },
+  { "type", node_type },
+  { "symbol", node_symbol },
+  { "child_count", node_child_count },
+  { "child", node_child },
+  { "descendant_for_point_range", node_descendant_for_point_range },
+  { "parent", node_parent },
+  { NULL, NULL }
 };
 
 PMap(cstr_t) *langs;
 
-void build_meta(lua_State *L, const char* tname, const luaL_Reg *meta)
+void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
 {
   if (luaL_newmetatable(L, tname)) {  // [meta]
     for (size_t i = 0; meta[i].name != NULL; i++) {
@@ -86,7 +86,6 @@ void build_meta(lua_State *L, const char* tname, const luaL_Reg *meta)
 /// all global state is stored in the regirstry of the lua_State
 void tslua_init(lua_State *L)
 {
-
   langs = pmap_new(cstr_t)();
 
   // type metatables
@@ -114,8 +113,8 @@ int ts_lua_register_lang(lua_State *L)
     return luaL_error(L, "string expected");
   }
 
-  const char *path = lua_tostring(L,1);
-  const char *lang_name = lua_tostring(L,2);
+  const char *path = lua_tostring(L, 1);
+  const char *lang_name = lua_tostring(L, 2);
 
   if (pmap_has(cstr_t)(langs, lang_name)) {
     return 0;
@@ -129,12 +128,14 @@ int ts_lua_register_lang(lua_State *L)
   // at exit, to keep LeakSanitizer happy.
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
-    return luaL_error(L, "Failed to load parser: uv_dlopen: %s", uv_dlerror(&lib));
+    return luaL_error(L, "Failed to load parser: uv_dlopen: %s",
+                      uv_dlerror(&lib));
   }
 
   TSLanguage *(*lang_parser)(void);
   if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
-    return luaL_error(L, "Failed to load parser: uv_dlsym: %s", uv_dlerror(&lib));
+    return luaL_error(L, "Failed to load parser: uv_dlsym: %s",
+                      uv_dlerror(&lib));
   }
 
   TSLanguage *lang = lang_parser();
@@ -192,26 +193,29 @@ static int parser_tostring(lua_State *L)
   return 1;
 }
 
-static const char *input_cb(void *payload, uint32_t byte_index, TSPoint position, uint32_t *bytes_read)
+static const char *input_cb(void *payload, uint32_t byte_index,
+                            TSPoint position, uint32_t *bytes_read)
 {
-   buf_T *bp  = payload;
-   static char buf[200];
-   if ((linenr_T)position.row >= bp->b_ml.ml_line_count) {
-     *bytes_read = 0;
-     return "";
-   }
-   char_u *line = ml_get_buf(bp, position.row+1, false);
-   size_t len = STRLEN(line);
-   size_t tocopy = MIN(len-position.column,200);
+  buf_T *bp  = payload;
+#define BUFSIZE 256
+  static char buf[BUFSIZE];
+  if ((linenr_T)position.row >= bp->b_ml.ml_line_count) {
+    *bytes_read = 0;
+    return "";
+  }
+  char_u *line = ml_get_buf(bp, position.row+1, false);
+  size_t len = STRLEN(line);
+  size_t tocopy = MIN(len-position.column, BUFSIZE);
 
-   // TODO: translate embedded \n to \000
-   memcpy(buf, line+position.column, tocopy);
-   *bytes_read = (uint32_t)tocopy;
-   if (tocopy < 200) {
-     buf[tocopy] = '\n';
-     (*bytes_read)++;
-   }
-   return buf;
+  // TODO: translate embedded \n to \000
+  memcpy(buf, line+position.column, tocopy);
+  *bytes_read = (uint32_t)tocopy;
+  if (tocopy < 200) {
+    buf[tocopy] = '\n';
+    (*bytes_read)++;
+  }
+  return buf;
+#undef BUFSIZE
 }
 
 static int parser_parse_buf(lua_State *L)
@@ -223,7 +227,7 @@ static int parser_parse_buf(lua_State *L)
 
   long bufnr = lua_tointeger(L, 2);
   void *payload = handle_get_buffer(bufnr);
-  TSInput input = {payload, input_cb, TSInputEncodingUTF8};
+  TSInput input = { payload, input_cb, TSInputEncodingUTF8 };
   TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
   if (p->tree) {
     ts_tree_delete(p->tree);
@@ -251,10 +255,9 @@ static int parser_tree(lua_State *L)
 
 static int parser_edit(lua_State *L)
 {
-  if(lua_gettop(L) < 10) {
+  if (lua_gettop(L) < 10) {
     lua_pushstring(L, "not enough args to parser:edit()");
-    lua_error(L);
-    return 0; // unreachable
+    return lua_error(L);
   }
 
   Tslua_parser *p = parser_check(L);
@@ -350,7 +353,7 @@ static int tree_root(lua_State *L)
 static void push_node(lua_State *L, TSNode node)
 {
   if (ts_node_is_null(node)) {
-    lua_pushnil(L); // [src, nil]
+    lua_pushnil(L);  // [src, nil]
     return;
   }
   TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
@@ -466,10 +469,10 @@ static int node_descendant_for_point_range(lua_State *L)
   if (!node_check(L, &node)) {
     return 0;
   }
-  TSPoint start = {(uint32_t)lua_tointeger(L, 2),
-                   (uint32_t)lua_tointeger(L, 3)};
-  TSPoint end = {(uint32_t)lua_tointeger(L, 4),
-                 (uint32_t)lua_tointeger(L, 5)};
+  TSPoint start = { (uint32_t)lua_tointeger(L, 2),
+                   (uint32_t)lua_tointeger(L, 3) };
+  TSPoint end = { (uint32_t)lua_tointeger(L, 4),
+                 (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_descendant_for_point_range(node, start, end);
 
   lua_pushvalue(L, 1);
