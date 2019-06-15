@@ -105,7 +105,10 @@ mkdir build
 cd build
 cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
-bin\nvim --version ; exitIfFailed
+.\bin\nvim --version ; exitIfFailed
+
+# Ensure that the "win32" feature is set.
+.\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
 
 # Functional tests
 # The $LastExitCode from MSBuild can't be trusted
