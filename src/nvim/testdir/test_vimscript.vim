@@ -1,4 +1,4 @@
-" Test various aspects of the Vim language.
+" Test various aspects of the Vim script language.
 " Most of this was formerly in test49.
 
 "-------------------------------------------------------------------------------
