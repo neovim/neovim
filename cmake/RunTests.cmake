@@ -24,23 +24,27 @@ if(BUSTED_OUTPUT_TYPE STREQUAL junit)
   set(EXTRA_ARGS OUTPUT_FILE ${BUILD_DIR}/${TEST_TYPE}test-junit.xml)
 endif()
 
+set(BUSTED_ARGS $ENV{BUSTED_ARGS})
+separate_arguments(BUSTED_ARGS)
+
 if(DEFINED ENV{TEST_TAG} AND NOT "$ENV{TEST_TAG}" STREQUAL "")
-  set(TEST_TAG "--tags=$ENV{TEST_TAG}")
+  list(APPEND BUSTED_ARGS "--tags='$ENV{TEST_TAG}'")
 endif()
 
 if(DEFINED ENV{TEST_FILTER} AND NOT "$ENV{TEST_FILTER}" STREQUAL "")
-  set(TEST_FILTER "--filter=$ENV{TEST_FILTER}")
+  list(APPEND BUSTED_ARGS --filter="$ENV{TEST_FILTER}")
 endif()
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${WORKING_DIR}/Xtest-tmpdir)
 set(ENV{TMPDIR} ${WORKING_DIR}/Xtest-tmpdir)
 set(ENV{SYSTEM_NAME} ${SYSTEM_NAME})
 execute_process(
-  COMMAND ${BUSTED_PRG} ${TEST_TAG} ${TEST_FILTER} -v -o ${BUSTED_OUTPUT_TYPE}
+  COMMAND ${BUSTED_PRG} -v -o ${BUSTED_OUTPUT_TYPE}
     --lua=${LUA_PRG} --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
     --lpath=?.lua
+    ${BUSTED_ARGS}
     ${TEST_PATH}
   WORKING_DIRECTORY ${WORKING_DIR}
   ERROR_VARIABLE err
