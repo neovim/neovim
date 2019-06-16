@@ -332,6 +332,22 @@ describe('ui/ext_messages', function()
     }}
   end)
 
+  it("doesn't crash with column adjustment #10069", function()
+    feed(':let [x,y] = [1,2]<cr>')
+    feed(':let x y<cr>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={
+      {content = {{ "x                     #1" }}, kind = ""},
+      {content = {{ "y                     #2" }}, kind = ""},
+      {content = {{ "Press ENTER or type command to continue", 4 }}, kind = "return_prompt"}
+    }}
+  end)
+
   it('&showmode', function()
     command('imap <f2> <cmd>echomsg "stuff"<cr>')
     feed('i')
