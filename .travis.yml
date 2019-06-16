@@ -51,6 +51,9 @@ jobs:
   include:
     - stage: baseline builds
       os: linux
+      compiler: gcc
+      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - os: linux
       compiler: clang-4.0
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
       env: >
@@ -82,13 +85,9 @@ jobs:
 
     - stage: Flaky builds
       os: linux
-      compiler: gcc
-      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
-    - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
   allow_failures:
-    - env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - env: CLANG_SANITIZER=TSAN
   fast_finish: true
 
