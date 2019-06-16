@@ -116,6 +116,7 @@ static const char *msg_ext_kind = NULL;
 static Array msg_ext_chunks = ARRAY_DICT_INIT;
 static garray_T msg_ext_last_chunk = GA_INIT(sizeof(char), 40);
 static sattr_T msg_ext_last_attr = -1;
+static size_t msg_ext_cur_len = 0;
 
 static bool msg_ext_overwrite = false;  ///< will overwrite last message
 static int msg_ext_visible = 0;  ///< number of messages currently visible
@@ -1877,8 +1878,9 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
       msg_ext_last_attr = attr;
     }
     // Concat pieces with the same highlight
-    ga_concat_len(&msg_ext_last_chunk, (char *)str,
-                  strnlen((char *)str, maxlen));  // -V781
+    size_t len = strnlen((char *)str, maxlen);
+    ga_concat_len(&msg_ext_last_chunk, (char *)str, len);  // -V781
+    msg_ext_cur_len += len;
     return;
   }
 
@@ -2770,6 +2772,7 @@ void msg_ext_ui_flush(void)
     }
     msg_ext_kind = NULL;
     msg_ext_chunks = (Array)ARRAY_DICT_INIT;
+    msg_ext_cur_len = 0;
     msg_ext_overwrite = false;
   }
 }
@@ -2782,6 +2785,7 @@ void msg_ext_flush_showmode(void)
     msg_ext_emit_chunk();
     ui_call_msg_showmode(msg_ext_chunks);
     msg_ext_chunks = (Array)ARRAY_DICT_INIT;
+    msg_ext_cur_len = 0;
   }
 }
 
@@ -3018,7 +3022,10 @@ void give_warning(char_u *message, bool hl) FUNC_ATTR_NONNULL_ARG(1)
   } else {
     keep_msg_attr = 0;
   }
-  msg_ext_set_kind("wmsg");
+
+  if (msg_ext_kind == NULL) {
+    msg_ext_set_kind("wmsg");
+  }
 
   if (msg_attr((const char *)message, keep_msg_attr) && msg_scrolled == 0) {
     set_keep_msg(message, keep_msg_attr);
@@ -3043,6 +3050,14 @@ void msg_advance(int col)
 {
   if (msg_silent != 0) {        /* nothing to advance to */
     msg_col = col;              /* for redirection, may fill it up later */
+    return;
+  }
+  if (ui_has(kUIMessages)) {
+    // TODO(bfredl): use byte count as a basic proxy.
+    // later on we might add proper support for formatted messages.
+    while (msg_ext_cur_len < (size_t)col) {
+      msg_putchar(' ');
+    }
     return;
   }
   if (col >= Columns)           /* not enough room */

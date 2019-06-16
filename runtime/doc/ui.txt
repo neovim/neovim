@@ -706,6 +706,7 @@ events, which the UI must handle.
 		"rpc_error"	Error response from |rpcrequest()|
 		"return_prompt"	|press-enter| prompt after a multiple messages
 		"quickfix"	Quickfix navigation message
+		"search_count"	Search count message ("S" flag of 'shortmess')
 		"wmsg"		Warning ("search hit BOTTOM", |W10|, …)
 	    New kinds may be added in the future; clients should treat unknown
 	    kinds as the empty kind.
