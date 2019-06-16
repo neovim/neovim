@@ -1934,8 +1934,9 @@ void do_wqall(exarg_T *eap)
   int error = 0;
   int save_forceit = eap->forceit;
 
-  if (eap->cmdidx == CMD_xall || eap->cmdidx == CMD_wqall)
-    exiting = TRUE;
+  if (eap->cmdidx == CMD_xall || eap->cmdidx == CMD_wqall) {
+    exiting = true;
+  }
 
   FOR_ALL_BUFFERS(buf) {
     if (!bufIsChanged(buf)) {
