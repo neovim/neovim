@@ -81,75 +81,19 @@ function call_ui_event_method(output, ev)
 end
 
 function make_raw_line_and_call(output)
-  -- arg_1 = grid, arg_2 = row, arg_3 = startcol, arg_4 = cells, arg_5 = endcol, arg_6 = clearcol, arg_7 = clearattr
-  
   output:write([[
-  Integer arg_5, arg_6, arg_7;
-  LineFlags lineflags = kLineFlagWrap;
-  schar_T *chunk;
-  sattr_T *attrs;
-  size_t size_of_cells = arg_4.size;
-  size_t no_of_cells = size_of_cells;
-  arg_5 = arg_3;
-
-  // checking if clearcol > endcol
-  if (!STRCMP(arg_4.items[size_of_cells-1].data.array.items[0].data.string.data, " ")
-       && arg_4.items[size_of_cells-1].data.array.size == 3) {
-    no_of_cells = size_of_cells - 1;
-  }
-
-  // getting endcol
-  for (size_t i = 0; i < no_of_cells; i++) {
-    arg_5++;
-    if (arg_4.items[i].data.array.size == 3) {
-      arg_5 += arg_4.items[i].data.array.items[2].data.integer - 1;
-    }
-  }
-
-  if (!STRCMP(arg_4.items[size_of_cells-1].data.array.items[0].data.string.data, " ")
-        && arg_4.items[size_of_cells-1].data.array.size == 3) { 
-    arg_7 = arg_4.items[size_of_cells-1].data.array.items[1].data.integer;
-    arg_6 = arg_5 + arg_4.items[size_of_cells-1].data.array.items[2].data.integer;
-  } else {
-    arg_7 = 0;
-    arg_6 = arg_5;
-  }
-
-  size_t ncells = (size_t)(arg_5 - arg_3);
-  chunk = xmalloc(ncells * sizeof(schar_T) + 1);
-  attrs = xmalloc(ncells * sizeof(sattr_T) + 1);
-
-  size_t j = 0;
-  size_t k = 0;
-  for (size_t i = 0; i < no_of_cells; i++) {
-    STRCPY(chunk[j++], arg_4.items[i].data.array.items[0].data.string.data);
-    if (arg_4.items[i].data.array.size == 3) {
-      // repeat present
-      for (size_t i_intr = 1; i_intr < (size_t)arg_4.items[i].data.array.items[2].data.integer; i_intr++) {
-        STRCPY(chunk[j++], arg_4.items[i].data.array.items[0].data.string.data);
-        attrs[k++] = (sattr_T)arg_4.items[i].data.array.items[1].data.integer;
-      }
-    } else if (arg_4.items[i].data.array.size == 2) {
-      // repeat = 1 but attrs != last_hl
-      attrs[k++] = (sattr_T)arg_4.items[i].data.array.items[1].data.integer;
-    }
-    if (j > k) {
-      // attrs == last_hl
-      attrs[k] = attrs[k-1];
-      k++;
-    }
-  }
-  
-  ]])
-  -- call ui_call_raw_line()
-  output:write('ui_call_raw_line(arg_1, arg_2, arg_3, arg_5, arg_6, arg_7, lineflags, (const schar_T*) chunk, (const sattr_T*) attrs);\n')
-
-  -- if (arg_6 >= default_grid.Columns) {
-  --   arg_6 = default_grid.Columns - 1;
-  -- }
-  -- if (arg_2 >= default_grid.Rows) {
-  --   arg_2 = default_grid.Rows - 1;
-  -- }
+  RawLineReturn raw_line =  grid_line_to_raw_line(args);
+  Integer grid = raw_line.int_values.items[0].data.integer;
+  Integer row = raw_line.int_values.items[1].data.integer;
+  Integer startcol = raw_line.int_values.items[2].data.integer;
+  Integer endcol = raw_line.int_values.items[3].data.integer;
+  Integer clearcol = raw_line.int_values.items[4].data.integer;
+  Integer clearattr = raw_line.int_values.items[5].data.integer;
+  LineFlags lineflags = (int)raw_line.int_values.items[6].data.integer;
+  const schar_T* chunk = raw_line.chunk;
+  const sattr_T* attrs = raw_line.attrs;
+  ui_call_raw_line(grid, row, startcol, endcol, clearcol, clearattr, lineflags, (const schar_T*) chunk, (const sattr_T*) attrs);
+]])
 end
 
 
@@ -266,8 +210,8 @@ for i = 1, #events do
 
   if ev.redraw then
     redraw_output:write('void ui_redraw_event_'..ev.name..'(Array args)\n{\n')
-    extract_and_write_arglist(redraw_output, ev)
     if not (ev.name == 'grid_line') then
+      extract_and_write_arglist(redraw_output, ev)
       call_ui_event_method(redraw_output, ev)
     else
       make_raw_line_and_call(redraw_output)

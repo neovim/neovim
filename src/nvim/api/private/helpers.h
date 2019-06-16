@@ -102,6 +102,13 @@ typedef struct {
   int did_emsg;
 } TryState;
 
+/// Helper structure for used for returning raw_line
+typedef struct {
+  Array int_values;
+  const schar_T *chunk;
+  const sattr_T *attrs;
+} RawLineReturn;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
 #endif
