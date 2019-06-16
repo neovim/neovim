@@ -6018,7 +6018,7 @@ static void ex_highlight(exarg_T *eap)
  */
 void not_exiting(void)
 {
-  exiting = FALSE;
+  exiting = false;
 }
 
 static bool before_quit_autocmds(win_T *wp, bool quit_all, int forceit)

@@ -584,9 +584,7 @@ int main(int argc, char **argv)
 void getout(int exitval)
   FUNC_ATTR_NORETURN
 {
-  tabpage_T   *tp, *next_tp;
-
-  exiting = TRUE;
+  exiting = true;
 
   /* When running in Ex mode an error causes us to exit with a non-zero exit
    * code.  POSIX requires this, although it's not 100% clear from the
@@ -603,8 +601,10 @@ void getout(int exitval)
   hash_debug_results();
 
   if (get_vim_var_nr(VV_DYING) <= 1) {
-    /* Trigger BufWinLeave for all windows, but only once per buffer. */
-    for (tp = first_tabpage; tp != NULL; tp = next_tp) {
+    const tabpage_T *next_tp;
+
+    // Trigger BufWinLeave for all windows, but only once per buffer.
+    for (const tabpage_T *tp = first_tabpage; tp != NULL; tp = next_tp) {
       next_tp = tp->tp_next;
       FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
         if (wp->w_buffer == NULL) {
