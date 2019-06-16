@@ -20,6 +20,7 @@ func Test_cancel_ptjump()
   call assert_equal(2, winnr('$'))
 
   call delete('Xtags')
+  set tags&
   quit
 endfunc
 
@@ -104,6 +105,7 @@ func Test_tagjump_switchbuf()
   enew | only
   call delete('Xfile1')
   call delete('Xtags')
+  set tags&
   set switchbuf&vim
 endfunc
 
@@ -424,7 +426,7 @@ func Test_tagnr_recall()
   tag
   call assert_equal(bufname('%'), 'Xtest.h')
 
-  set tag&
+  set tags&
   call delete('Xtags')
   bwipe Xtest.h
   bwipe Xtest.c
@@ -460,6 +462,7 @@ func Test_tag_line_toolong()
   endtry
   call assert_equal('Ignoring long line in tags file', split(execute('messages'), '\n')[-1])
   call delete('Xtags')
+  set tags&
   let &verbose = old_vbs
 endfunc
 
