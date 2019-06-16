@@ -17,9 +17,6 @@
 
 #include "tree_sitter/api.h"
 
-// NOT state-safe, delete when GC is confimed working:
-static int debug_n_trees = 0, debug_n_cursors = 0;
-
 #include "nvim/lua/treesitter.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/memline.h"
@@ -102,18 +99,7 @@ void tslua_init(lua_State *L)
   build_meta(L, "treesitter_tree", tree_meta);
 
   build_meta(L, "treesitter_node", node_meta);
-
-  lua_pushcfunction(L, tslua_debug);
-  lua_setglobal(L, "_tslua_debug");
 }
-
-static int tslua_debug(lua_State *L)
-{
-  lua_pushinteger(L, debug_n_trees);
-  lua_pushinteger(L, debug_n_cursors);
-  return 2;
-}
-
 
 int ts_lua_register_lang(lua_State *L)
 {
@@ -280,6 +266,9 @@ static int parser_parse_buf(lua_State *L)
 
   long bufnr = lua_tointeger(L, 2);
   void *payload = handle_get_buffer(bufnr);
+  if (!payload) {
+    return luaL_error(L, "invalid buffer handle: %d", bufnr);
+  }
   TSInput input = { payload, input_cb, TSInputEncodingUTF8 };
   TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
   if (p->tree) {
@@ -287,7 +276,7 @@ static int parser_parse_buf(lua_State *L)
   }
   p->tree = new_tree;
 
-  tslua_push_tree(L, ts_tree_copy(p->tree));
+  tslua_push_tree(L, p->tree);
   return 1;
 }
 
@@ -298,11 +287,7 @@ static int parser_tree(lua_State *L)
     return 0;
   }
 
-  if (p->tree) {
-    tslua_push_tree(L, ts_tree_copy(p->tree));
-  } else {
-    lua_pushnil(L);
-  }
+  tslua_push_tree(L, p->tree);
   return 1;
 }
 
@@ -342,12 +327,15 @@ static int parser_edit(lua_State *L)
 
 /// push tree interface on lua stack.
 ///
-/// This takes "ownership" of the tree and will free it
-/// when the wrapper object is garbage collected
+/// This makes a copy of the tree, so ownership of the argument is unaffected.
 void tslua_push_tree(lua_State *L, TSTree *tree)
 {
+  if (tree == NULL) {
+    lua_pushnil(L);
+    return;
+  }
   TSTree **ud = lua_newuserdata(L, sizeof(TSTree *));  // [udata]
-  *ud = tree;
+  *ud = ts_tree_copy(tree);
   lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_tree");  // [udata, meta]
   lua_setmetatable(L, -2);  // [udata]
 
@@ -358,7 +346,6 @@ void tslua_push_tree(lua_State *L, TSTree *tree)
   lua_pushvalue(L, -2);  // [udata, reftable, udata]
   lua_rawseti(L, -2, 1);  // [udata, reftable]
   lua_setfenv(L, -2);  // [udata]
-  debug_n_trees++;
 }
 
 static TSTree *tree_check(lua_State *L)
@@ -375,7 +362,6 @@ static int tree_gc(lua_State *L)
   }
 
   ts_tree_delete(tree);
-  debug_n_trees--;
   return 0;
 }
 
