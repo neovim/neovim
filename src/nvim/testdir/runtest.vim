@@ -35,8 +35,11 @@ if &lines < 24 || &columns < 80
   echoerr error
   split test.log
   $put =error
-  w
-  cquit
+  write
+  split messages
+  call append(line('$'), error)
+  write
+  qa!
 endif
 
 " Common with all tests on all systems.
