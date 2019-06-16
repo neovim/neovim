@@ -12,7 +12,7 @@
 "	A fully commented version of this file is available on github
 "
 "
-"  If you find a bug, please open a ticket on github.org
+"  If you find a bug, please open a ticket on github.com
 "  ( https://github.com/2072/PHP-Indenting-for-VIm/issues ) with an example of
 "  code that breaks the algorithm.
 "

@@ -3653,7 +3653,9 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
 
 /*
  * Check for an abbreviation.
- * Cursor is at ptr[col]. When inserting, mincol is where insert started.
+ * Cursor is at ptr[col].
+ * When inserting, mincol is where insert started.
+ * For the command line, mincol is what is to be skipped over.
  * "c" is the character typed before check_abbr was called.  It may have
  * ABBR_OFF added to avoid prepending a CTRL-V to it.
  *

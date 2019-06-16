@@ -261,7 +261,7 @@ syn keyword phpStatement return break continue exit goto yield contained
 syn keyword phpKeyword var const contained
 
 " Type
-syn keyword phpType bool boolean int integer real double float string array object NULL callable iterable contained
+syn keyword phpType void bool boolean int integer real double float string array object NULL callable iterable contained
 
 " Structure
 syn keyword phpStructure namespace extends implements instanceof parent self contained

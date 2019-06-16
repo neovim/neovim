@@ -1827,8 +1827,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 	contain a list of words.  This can be one word per line, or several
 	words per line, separated by non-keyword characters (white space is
 	preferred).  Maximum line length is 510 bytes.
-	When this option is empty, or an entry "spell" is present, spell
-	checking is enabled the currently active spelling is used. |spell|
+
+	When this option is empty or an entry "spell" is present, and spell
+	checking is enabled, words in the word lists for the currently active
+	'spelllang' are used. See |spell|.
+
 	To include a comma in a file name precede it with a backslash.  Spaces
 	after a comma are ignored, otherwise spaces are included in the file
 	name.  See |option-backslash| about using backslashes.
