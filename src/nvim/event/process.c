@@ -24,7 +24,7 @@
 
 /// Externally defined with gcov.
 #ifdef USE_GCOV
-void __gcov_dump(void);
+void __gcov_flush(void);
 #endif
 
 // Time for a process to exit cleanly before we send KILL.
@@ -56,8 +56,8 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   }
 
 #ifdef USE_GCOV
-  // Dump coverage data before forking, to avoid "Merge mismatch" errors.
-  __gcov_dump();
+  // Flush coverage data before forking, to avoid "Merge mismatch" errors.
+  __gcov_flush();
 #endif
 
   int status;
