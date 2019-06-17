@@ -166,9 +166,7 @@ nolog:
 RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim
 
 newtests: newtestssilent
-	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
-	                 cat messages && cat test.log;                      \
-	             fi"
+	@/bin/sh -c "if test -f messages && grep -q 'SKIPPED\|FAILED' messages; then cat messages; fi"
 
 newtestssilent: $(NEW_TESTS)
 
