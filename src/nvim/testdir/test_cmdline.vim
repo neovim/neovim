@@ -294,6 +294,7 @@ func Test_getcompletion()
   endfor
 
   call delete('Xtags')
+  set tags&
 
   call assert_fails('call getcompletion("", "burp")', 'E475:')
 endfunc
