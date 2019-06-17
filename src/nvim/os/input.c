@@ -448,7 +448,7 @@ static void process_interrupts(void)
 
   size_t consume_count = 0;
   RBUFFER_EACH_REVERSE(input_buffer, c, i) {
-    if ((uint8_t)c == 3) {
+    if ((uint8_t)c == Ctrl_C) {
       got_int = true;
       consume_count = i;
       break;
@@ -456,7 +456,7 @@ static void process_interrupts(void)
   }
 
   if (got_int && consume_count) {
-    // Remove everything typed before the CTRL-C
+    // Remove all unprocessed input (typeahead) before the CTRL-C.
     rbuffer_consumed(input_buffer, consume_count);
   }
 }

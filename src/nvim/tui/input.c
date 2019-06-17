@@ -16,7 +16,8 @@
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 
-#define PASTETOGGLE_KEY "<Paste>"
+#define PASTE_KEY "<Paste>"
+#define PASTEPOST_KEY "<PastePost>"
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -292,9 +293,12 @@ static void tk_getkeys(TermInput *input, bool force)
     }
   }
 
-  if (result != TERMKEY_RES_AGAIN || input->paste_enabled) {
+  if (result != TERMKEY_RES_AGAIN) {
     return;
   }
+  // else: Partial keypress event was found in the buffer, but it does not
+  // yet contain all the bytes required. `key` structure indicates what
+  // termkey_getkey_force() would return.
 
   int ms  = get_key_code_timeout();
 
@@ -326,8 +330,8 @@ static bool handle_focus_event(TermInput *input)
   if (rbuffer_size(input->read_stream.buffer) > 2
       && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[I", 3)
           || !rbuffer_cmp(input->read_stream.buffer, "\x1b[O", 3))) {
-    // Advance past the sequence
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
+    // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 3);
     aucmd_schedule_focusgained(focus_gained);
     return true;
@@ -343,14 +347,29 @@ static bool handle_bracketed_paste(TermInput *input)
     bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 6);
-    if (input->paste_enabled == enable) {
+    if (enable && input->paste_enabled) {
+      // Bogus "paste start"; forward it.
+      tinput_enqueue(input, "<C-v><Esc>200~", sizeof("<C-v><Esc>200~") - 1);
+      return true;
+    } else if (!enable && !input->paste_enabled) {
+      // Bogus "paste stop"; ignore it.
       return true;
     }
-    tinput_enqueue(input, PASTETOGGLE_KEY, sizeof(PASTETOGGLE_KEY) - 1);
+
     input->paste_enabled = enable;
+    if (enable) {
+      loop_schedule(&main_loop, event_create(apply_pastepre, 0));
+    } else {
+      tinput_enqueue(input, PASTEPOST_KEY, sizeof(PASTEPOST_KEY) - 1);
+    }
     return true;
   }
   return false;
+}
+
+static void apply_pastepre(void **argv)  // MAIN thread
+{
+  //TODO
 }
 
 static bool handle_forced_escape(TermInput *input)
@@ -477,9 +496,11 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
       continue;
     }
 
-    // Find the next 'esc' and push everything up to it(excluding). This is done
-    // so the `handle_bracketed_paste`/`handle_forced_escape` calls above work
-    // as expected.
+    //
+    // Find the next ESC and push everything up to it (excluding), so it will
+    // be the first thing encountered on the next iteration. The `handle_*`
+    // calls (above) depend on this.
+    //
     size_t count = 0;
     RBUFFER_EACH(input->read_stream.buffer, c, i) {
       count = i + 1;
@@ -488,7 +509,6 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
         break;
       }
     }
-
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
       // termkey_push_bytes can return (size_t)-1, so it is possible that
@@ -505,7 +525,8 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
     }
   } while (rbuffer_size(input->read_stream.buffer));
   tinput_flush(input, true);
-  // Make sure the next input escape sequence fits into the ring buffer
-  // without wrap around, otherwise it could be misinterpreted.
+  // Make sure the next input escape sequence fits into the ring buffer without
+  // wraparound, else it could be misinterpreted (because rbuffer_read_ptr()
+  // exposes the underlying buffer to callers unaware of the wraparound).
   rbuffer_reset(input->read_stream.buffer);
 }

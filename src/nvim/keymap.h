@@ -239,14 +239,12 @@ enum key_extra {
 
   , KE_DROP = 95              // DnD data is available
   // , KE_CURSORHOLD = 96     // CursorHold event
-  , KE_NOP = 97               // doesn't do something
+  , KE_NOP = 97               // no-op: does nothing
   , KE_FOCUSGAINED = 98       // focus gained
   , KE_FOCUSLOST = 99         // focus lost
   // , KE_MOUSEMOVE = 100     // mouse moved with no button down
   // , KE_CANCEL = 101        // return from vgetc
   , KE_EVENT = 102            // event
-  , KE_PASTE = 103            // special key to toggle the 'paste' option.
-                              // sent only by UIs
   , KE_COMMAND = 104          // <Cmd> special key
 };
 
@@ -443,7 +441,6 @@ enum key_extra {
 #define K_DROP          TERMCAP2KEY(KS_EXTRA, KE_DROP)
 
 #define K_EVENT         TERMCAP2KEY(KS_EXTRA, KE_EVENT)
-#define K_PASTE         TERMCAP2KEY(KS_EXTRA, KE_PASTE)
 #define K_COMMAND       TERMCAP2KEY(KS_EXTRA, KE_COMMAND)
 
 /* Bits for modifier mask */
