@@ -190,12 +190,18 @@ func s:feedkeys(timer)
 endfunc
 
 " Get the command to run Vim, with -u NONE and --headless arguments.
+" If there is an argument use it instead of "NONE".
 " Returns an empty string on error.
-func GetVimCommand()
+func GetVimCommand(...)
+  if a:0 == 0
+    let name = 'NONE'
+  else
+    let name = a:1
+  endif
   let cmd = v:progpath
-  let cmd = substitute(cmd, '-u \f\+', '-u NONE', '')
-  if cmd !~ '-u NONE'
-    let cmd = cmd . ' -u NONE'
+  let cmd = substitute(cmd, '-u \f\+', '-u ' . name, '')
+  if cmd !~ '-u '. name
+    let cmd = cmd . ' -u ' . name
   endif
   let cmd .= ' --headless -i NONE'
   let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
