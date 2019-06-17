@@ -7336,6 +7336,17 @@ int syn_name2id(const char_u *name)
   return i + 1;
 }
 
+/// Lookup a highlight group name and return its attributes.
+/// Return zero if not found.
+int syn_name2attr(char_u *name) {
+  int id = syn_name2id(name);
+
+  if (id != 0) {
+    return syn_id2attr(syn_get_final_id(id));
+  }
+  return 0;
+}
+
 /*
  * Return TRUE if highlight group "name" exists.
  */
