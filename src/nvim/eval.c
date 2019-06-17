@@ -17921,6 +17921,7 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   argv[0].vval.v_number = timer->timer_id;
   typval_T rettv = TV_INITIAL_VALUE;
   called_emsg = false;
+  int save_ex_pressedreturn = get_pressedreturn();
 
   callback_call(&timer->callback, 1, argv, &rettv);
 
@@ -17933,6 +17934,7 @@ static void timer_due_cb(TimeWatcher *tw, void *data)
   }
   did_emsg = save_did_emsg;
   called_emsg = save_called_emsg;
+  set_pressedreturn(save_ex_pressedreturn);
 
   if (timer->emsg_count >= 3) {
     timer_stop(timer);

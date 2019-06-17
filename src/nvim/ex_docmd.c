@@ -10064,6 +10064,16 @@ static void ex_folddo(exarg_T *eap)
   ml_clearmarked();      // clear rest of the marks
 }
 
+int get_pressedreturn(void)
+{
+    return ex_pressedreturn;
+}
+
+void set_pressedreturn(int val)
+{
+     ex_pressedreturn = val;
+}
+
 static void ex_terminal(exarg_T *eap)
 {
   char ex_cmd[1024];
