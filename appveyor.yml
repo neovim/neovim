@@ -27,6 +27,8 @@ before_build:
 - ps: Install-Product node 8
 build_script:
 - powershell ci\build.ps1
+after_build:
+- ps: cat $env:GCOV_ERROR_FILE
 cache:
 - C:\projects\nvim-deps -> third-party\**
 artifacts:
