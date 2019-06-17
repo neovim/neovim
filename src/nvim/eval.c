@@ -14851,7 +14851,8 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
   listitem_T  *li = NULL;
   long        added = 0;
   linenr_T    lcount;
-  buf_T       *curbuf_save;
+  buf_T       *curbuf_save = NULL;
+  win_T       *curwin_save = NULL;
   int         is_curbuf = buf == curbuf;
 
   // When using the current buffer ml_mfp will be set if needed.  Useful when
@@ -14862,8 +14863,19 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
     return;
   }
 
-  curbuf_save = curbuf;
-  curbuf = buf;
+  if (!is_curbuf) {
+    wininfo_T *wip;
+
+    curbuf_save = curbuf;
+    curwin_save = curwin;
+    curbuf = buf;
+    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+      if (wip->wi_win != NULL) {
+        curwin = wip->wi_win;
+        break;
+      }
+    }
+  }
 
   lcount = curbuf->b_ml.ml_line_count;
 
@@ -14926,7 +14938,10 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
     appended_lines_mark(lcount, added);
   }
 
-  curbuf = curbuf_save;
+  if (!is_curbuf) {
+     curbuf = curbuf_save;
+     curwin = curwin_save;
+  }
 }
 
 /// "setbufline()" function
