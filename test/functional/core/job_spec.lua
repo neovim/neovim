@@ -8,6 +8,7 @@ local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim
 local command = helpers.command
 local funcs = helpers.funcs
 local retry = helpers.retry
+local matches = helpers.matches
 local meths = helpers.meths
 local NIL = helpers.NIL
 local wait = helpers.wait
@@ -569,7 +570,13 @@ describe('jobs', function()
       \  ])
       call rpcnotify(g:channel, 'wait', g:exits)
       ]])
-      eq({'notification', 'wait', {4}}, next_msg())
+      -- eq({'notification', 'wait', {4}}, next_msg())
+      local msg = next_msg()
+      eq('notification', msg[1])
+      eq('wait', msg[2])
+      matches('^[34]$', tostring(msg[3][1]))
+      eq(#msg, 3)
+      eq(#msg[3], 1)
     end)
 
     it('will return status codes in the order of passed ids', function()
