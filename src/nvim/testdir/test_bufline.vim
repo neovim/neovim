@@ -32,7 +32,7 @@ func Test_setline_startup()
   if cmd == ''
     return
   endif
-  call writefile(['call setline(1, "Hello")', 'w Xtest', 'q!'], 'Xscript')
+  call writefile(['call setline(1, "Hello")', 'silent w Xtest', 'q!'], 'Xscript')
   call system(cmd)
   call assert_equal(['Hello'], readfile('Xtest'))
 
