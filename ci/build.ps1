@@ -129,6 +129,8 @@ if ($uploadToCodecov) {
 }
 
 # Old tests
+# Add MSYS to path, required for e.g. `find` used in test scripts.
+# But would break functionaltests, where its `more` would be used then.
 $env:PATH = "C:\msys64\usr\bin;$env:PATH"
 & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
 

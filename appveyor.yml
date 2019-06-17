@@ -20,6 +20,8 @@ init:
     }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+matrix:
+  fast_finish: true
 install: []
 before_build:
 - ps: Install-Product node 8

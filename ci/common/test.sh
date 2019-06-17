@@ -32,11 +32,12 @@ check_core_dumps() {
     shift
   fi
   local app="${1:-${BUILD_DIR}/bin/nvim}"
+  local cores
   if test "${TRAVIS_OS_NAME}" = osx ; then
-    local cores="$(find /cores/ -type f -print)"
+    cores="$(find /cores/ -type f -print)"
     local _sudo='sudo'
   else
-    local cores="$(find ./ -type f -name 'core.*' -print)"
+    cores="$(find ./ -type f -name 'core.*' -print)"
     local _sudo=
   fi
 
@@ -94,7 +95,7 @@ run_unittests() {(
     fail 'unittests' F 'Unit tests failed'
   fi
   submit_coverage unittest
-  check_core_dumps "$(which luajit)"
+  check_core_dumps "$(command -v luajit)"
   exit_suite
 )}
 
