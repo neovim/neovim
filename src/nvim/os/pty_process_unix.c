@@ -36,6 +36,11 @@
 # include "os/pty_process_unix.c.generated.h"
 #endif
 
+/// Externally defined with gcov.
+#ifdef USE_GCOV
+void __gcov_flush(void);
+#endif
+
 /// termios saved at startup (for TUI) or initialized by pty_process_spawn().
 static struct termios termios_default;
 
@@ -58,6 +63,11 @@ int pty_process_spawn(PtyProcess *ptyproc)
     // TODO(jkeyes): We could pass NULL to forkpty() instead ...
     init_termios(&termios_default);
   }
+
+#ifdef USE_GCOV
+  // Flush coverage data before forking, to avoid "Merge mismatch" errors.
+  __gcov_flush();
+#endif
 
   int status = 0;  // zero or negative error code (libuv convention)
   Process *proc = (Process *)ptyproc;
