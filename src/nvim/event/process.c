@@ -37,6 +37,11 @@ static bool process_is_tearing_down = false;
 int process_spawn(Process *proc, bool in, bool out, bool err)
   FUNC_ATTR_NONNULL_ALL
 {
+#ifdef USE_GCOV
+  // Flush coverage data before forking, to avoid "Merge mismatch" errors.
+  __gcov_flush();
+#endif
+
   if (in) {
     uv_pipe_init(&proc->loop->uv, &proc->in.uv.pipe, 0);
   } else {
@@ -54,11 +59,6 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   } else {
     proc->err.closed = true;
   }
-
-#ifdef USE_GCOV
-  // Flush coverage data before forking, to avoid "Merge mismatch" errors.
-  __gcov_flush();
-#endif
 
   int status;
   switch (proc->type) {
