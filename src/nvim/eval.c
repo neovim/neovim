@@ -14843,6 +14843,105 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+/// Set line or list of lines in buffer "buf".
+static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
+                             typval_T *rettv)
+{
+  list_T      *l = NULL;
+  listitem_T  *li = NULL;
+  long        added = 0;
+  linenr_T    lcount;
+  buf_T       *curbuf_save;
+  int         is_curbuf = buf == curbuf;
+
+  if (buf == NULL || buf->b_ml.ml_mfp == NULL || lnum < 1) {
+    rettv->vval.v_number = 1;  // FAIL
+    return;
+  }
+
+  curbuf_save = curbuf;
+  curbuf = buf;
+
+  lcount = curbuf->b_ml.ml_line_count;
+
+  const char *line = NULL;
+
+  if (lines->v_type == VAR_LIST) {
+    l = lines->vval.v_list;
+    li = tv_list_first(l);
+  } else {
+    line = tv_get_string_chk(lines);
+  }
+
+  // Default result is zero == OK.
+  for (;; ) {
+    if (lines->v_type == VAR_LIST) {
+      // List argument, get next string.
+      if (li == NULL) {
+        break;
+      }
+      line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
+      li = TV_LIST_ITEM_NEXT(l, li);
+    }
+
+    rettv->vval.v_number = 1;  // FAIL
+    if (line == NULL || lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1) {
+      break;
+    }
+
+    /* When coming here from Insert mode, sync undo, so that this can be
+     * undone separately from what was previously inserted. */
+    if (u_sync_once == 2) {
+      u_sync_once = 1;       /* notify that u_sync() was called */
+      u_sync(TRUE);
+    }
+
+    if (lnum <= curbuf->b_ml.ml_line_count) {
+      // Existing line, replace it.
+      if (u_savesub(lnum) == OK
+          && ml_replace(lnum, (char_u *)line, true) == OK) {
+        changed_bytes(lnum, 0);
+        if (is_curbuf && lnum == curwin->w_cursor.lnum) {
+          check_cursor_col();
+        }
+        rettv->vval.v_number = 0;  // OK
+      }
+    } else if (added > 0 || u_save(lnum - 1, lnum) == OK) {
+      // lnum is one past the last line, append the line.
+      added++;
+      if (ml_append(lnum - 1, (char_u *)line, 0, false) == OK) {
+        rettv->vval.v_number = 0;  // OK
+      }
+    }
+
+    if (l == NULL)                      /* only one string argument */
+      break;
+    ++lnum;
+  }
+
+  if (added > 0) {
+    appended_lines_mark(lcount, added);
+  }
+
+  curbuf = curbuf_save;
+}
+
+/// "setbufline()" function
+static void f_setbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+    linenr_T lnum;
+    buf_T    *buf;
+
+    buf = tv_get_buf(&argvars[0], false);
+    if (buf == NULL) {
+      rettv->vval.v_number = 1;  // FAIL
+    } else {
+      lnum = tv_get_lnum_buf(&argvars[1], buf);
+
+      set_buffer_lines(buf, lnum, &argvars[2], rettv);
+    }
+}
+
 /*
  * "setbufvar()" function
  */
@@ -14975,67 +15074,8 @@ static void f_setfperm(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  list_T      *l = NULL;
-  listitem_T  *li = NULL;
-  long added = 0;
-  linenr_T lcount = curbuf->b_ml.ml_line_count;
-
   linenr_T lnum = tv_get_lnum(&argvars[0]);
-  const char *line = NULL;
-  if (argvars[1].v_type == VAR_LIST) {
-    l = argvars[1].vval.v_list;
-    li = tv_list_first(l);
-  } else {
-    line = tv_get_string_chk(&argvars[1]);
-  }
-
-  // Default result is zero == OK.
-  for (;; ) {
-    if (argvars[1].v_type == VAR_LIST) {
-      // List argument, get next string.
-      if (li == NULL) {
-        break;
-      }
-      line = tv_get_string_chk(TV_LIST_ITEM_TV(li));
-      li = TV_LIST_ITEM_NEXT(l, li);
-    }
-
-    rettv->vval.v_number = 1;  // FAIL
-    if (line == NULL || lnum < 1 || lnum > curbuf->b_ml.ml_line_count + 1) {
-      break;
-    }
-
-    /* When coming here from Insert mode, sync undo, so that this can be
-     * undone separately from what was previously inserted. */
-    if (u_sync_once == 2) {
-      u_sync_once = 1;       /* notify that u_sync() was called */
-      u_sync(TRUE);
-    }
-
-    if (lnum <= curbuf->b_ml.ml_line_count) {
-      // Existing line, replace it.
-      if (u_savesub(lnum) == OK
-          && ml_replace(lnum, (char_u *)line, true) == OK) {
-        changed_bytes(lnum, 0);
-        if (lnum == curwin->w_cursor.lnum)
-          check_cursor_col();
-        rettv->vval.v_number = 0;               /* OK */
-      }
-    } else if (added > 0 || u_save(lnum - 1, lnum) == OK) {
-      // lnum is one past the last line, append the line.
-      added++;
-      if (ml_append(lnum - 1, (char_u *)line, 0, false) == OK) {
-        rettv->vval.v_number = 0;  // OK
-      }
-    }
-
-    if (l == NULL)                      /* only one string argument */
-      break;
-    ++lnum;
-  }
-
-  if (added > 0)
-    appended_lines_mark(lcount, added);
+  set_buffer_lines(curbuf, lnum, &argvars[1], rettv);
 }
 
 /// Create quickfix/location list from VimL values
