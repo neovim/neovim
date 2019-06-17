@@ -7546,7 +7546,7 @@ void highlight_changed(void)
    */
   ga_grow(&highlight_ga, 10);
   hlcnt = highlight_ga.ga_len;
-  if (id_S == 0) {  /* Make sure id_S is always valid to simplify code below */
+  if (id_S == -1) {  // Make sure id_S is always valid to simplify code below
     memset(&HL_TABLE()[hlcnt + 9], 0, sizeof(struct hl_group));
     id_S = hlcnt + 10;
   }
