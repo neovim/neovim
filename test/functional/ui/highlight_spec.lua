@@ -438,6 +438,54 @@ describe('highlight', function()
     })
   end)
 
+  it('nocombine', function()
+    screen:detach()
+    screen = Screen.new(25,6)
+    screen:set_default_attr_ids{
+      [1] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue1},
+      [3] = {underline = true, reverse = true, foreground = Screen.colors.SlateBlue},
+      [4] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
+      [5] = {foreground = Screen.colors.Red},
+    }
+    screen:attach()
+    feed_command('syntax on')
+    feed_command('hi! Underlined cterm=underline gui=underline')
+    feed_command('syn keyword Underlined foobar')
+    feed_command('hi Search cterm=inverse,nocombine gui=inverse,nocombine')
+    insert([[
+      foobar
+      foobar
+      ]])
+    screen:expect{grid=[[
+      {1:foobar}                   |
+      {1:foobar}                   |
+      ^                         |
+      {2:~                        }|
+      {2:~                        }|
+                               |
+    ]]}
+
+    feed('/foo')
+    screen:expect{grid=[[
+      {3:foo}{1:bar}                   |
+      {4:foo}{1:bar}                   |
+                               |
+      {2:~                        }|
+      {2:~                        }|
+      /foo^                     |
+    ]]}
+    feed('<cr>')
+    screen:expect{grid=[[
+      {4:^foo}{1:bar}                   |
+      {4:foo}{1:bar}                   |
+                               |
+      {2:~                        }|
+      {2:~                        }|
+      {5:search hit...uing at TOP} |
+    ]]}
+  end)
+
   it('guisp (special/undercurl)', function()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
