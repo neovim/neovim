@@ -167,10 +167,7 @@ if(NOT MSVC)
   check_c_compiler_flag(-Wno-static-in-inline HAS_WNO_STATIC_IN_INLINE_FLAG)
   if(HAS_WNO_STATIC_IN_INLINE_FLAG)
     set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline -Wno-conversion")
-  else()
-    set_source_files_properties(
-      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+      eval.c PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-static-in-inline")
   endif()
 endif()
 
