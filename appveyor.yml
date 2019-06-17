@@ -23,8 +23,6 @@ init:
 matrix:
   fast_finish: true
 install: []
-matrix:
-  fast_finish: true
 before_build:
 - ps: Install-Product node 8
 build_script:
