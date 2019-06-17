@@ -635,7 +635,8 @@ func Test_OptionSet()
 
   " Cleanup
   au! OptionSet
-  for opt in ['nu', 'ai', 'acd', 'ar', 'bs', 'backup', 'cul', 'cp']
+  " set tags&
+  for opt in ['nu', 'ai', 'acd', 'ar', 'bs', 'backup', 'cul', 'cp', 'tags']
     exe printf(":set %s&vim", opt)
   endfor
   call test_override('starting', 0)
