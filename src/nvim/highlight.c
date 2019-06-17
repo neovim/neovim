@@ -308,8 +308,16 @@ int hl_combine_attr(int char_attr, int prim_attr)
   // start with low-priority attribute, and override colors if present below.
   HlAttrs new_en = char_aep;
 
-  new_en.cterm_ae_attr |= spell_aep.cterm_ae_attr;
-  new_en.rgb_ae_attr |= spell_aep.rgb_ae_attr;
+  if (spell_aep.cterm_ae_attr & HL_NOCOMBINE) {
+    new_en.cterm_ae_attr = spell_aep.cterm_ae_attr;
+  } else {
+    new_en.cterm_ae_attr |= spell_aep.cterm_ae_attr;
+  }
+  if (spell_aep.rgb_ae_attr & HL_NOCOMBINE) {
+    new_en.rgb_ae_attr = spell_aep.rgb_ae_attr;
+  } else {
+    new_en.rgb_ae_attr |= spell_aep.rgb_ae_attr;
+  }
 
   if (spell_aep.cterm_fg_color > 0) {
     new_en.cterm_fg_color = spell_aep.cterm_fg_color;
