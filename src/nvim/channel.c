@@ -835,16 +835,15 @@ Array channel_all_info(void)
   return ret;
 }
 
-/*
-* Since there can only be one server that a client TUI can join,
-* it must be the only channel of type 
-* kChannelStreamSocket -- if remote client
-*
-* @param is_tcp_channel
-* @param is_rpc_channel
-* @return channel_id
-*/
-uint64_t channel_get_id(bool tcp, bool rpc){
+// Since there can only be one server that a client TUI can join,
+// it must be the only channel of type
+// kChannelStreamSocket -- if remote client
+//
+// @param is_tcp_channel
+// @param is_rpc_channel
+// @return channel_id
+uint64_t channel_get_id(bool tcp, bool rpc)
+{
   Channel *channel;
   uint64_t rv = 0;
   // if (!tcp && rpc){

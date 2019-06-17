@@ -635,7 +635,7 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb)
   for (size_t i = 0; i < dict.size; i++) {
     char *key = dict.items[i].key.data;
     Object val = dict.items[i].value;
-    
+
     if (!strcmp(key, "bold")) {
       mask = mask | HL_BOLD;
     } else if (!strcmp(key, "standout")) {
@@ -654,14 +654,14 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb)
       foreground = (int32_t)val.data.integer;
     } else if (!strcmp(key, "background")) {
       background = (int32_t)val.data.integer;
-    } 
+    }
   }
 
   if (use_rgb) {
     hlattrs.rgb_ae_attr = mask;
     hlattrs.rgb_bg_color = background;
     hlattrs.rgb_fg_color = foreground;
-    hlattrs.rgb_sp_color = special;    
+    hlattrs.rgb_sp_color = special;
   } else {
     hlattrs.cterm_ae_attr = mask;
     if (background != -1) {

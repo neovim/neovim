@@ -31,6 +31,7 @@
 #include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
+#include "nvim/ui.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 #define log_client_msg(...)

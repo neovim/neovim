@@ -1466,7 +1466,7 @@ RawLineReturn grid_line_to_raw_line(Array args)
   Integer startcol = args.items[2].data.integer;
   Array cells = args.items[3].data.array;
   Integer endcol, clearcol, clearattr;
-  // TODO: Accomodate other LineFlags when they are included in grid_line
+  // TODO(hlpr98): Accomodate other LineFlags when included in grid_line
   LineFlags lineflags = 0;
   schar_T *chunk;
   sattr_T *attrs;
@@ -1475,8 +1475,9 @@ RawLineReturn grid_line_to_raw_line(Array args)
   endcol = startcol;
 
   // checking if clearcol > endcol
-  if (!STRCMP(cells.items[size_of_cells-1].data.array.items[0].data.string.data, " ")
-       && cells.items[size_of_cells-1].data.array.size == 3) {
+  if (!STRCMP(cells.items[size_of_cells-1].data.array
+              .items[0].data.string.data, " ")
+      && cells.items[size_of_cells-1].data.array.size == 3) {
     no_of_cells = size_of_cells - 1;
   }
 
@@ -1488,10 +1489,12 @@ RawLineReturn grid_line_to_raw_line(Array args)
     }
   }
 
-  if (!STRCMP(cells.items[size_of_cells-1].data.array.items[0].data.string.data, " ")
-        && cells.items[size_of_cells-1].data.array.size == 3) { 
+  if (!STRCMP(cells.items[size_of_cells-1].data.array
+              .items[0].data.string.data, " ")
+      && cells.items[size_of_cells-1].data.array.size == 3) {
     clearattr = cells.items[size_of_cells-1].data.array.items[1].data.integer;
-    clearcol = endcol + cells.items[size_of_cells-1].data.array.items[2].data.integer;
+    clearcol = endcol + cells.items[size_of_cells-1].data.array
+                                                      .items[2].data.integer;
   } else {
     clearattr = 0;
     clearcol = endcol;
@@ -1507,7 +1510,9 @@ RawLineReturn grid_line_to_raw_line(Array args)
     STRCPY(chunk[j++], cells.items[i].data.array.items[0].data.string.data);
     if (cells.items[i].data.array.size == 3) {
       // repeat present
-      for (size_t i_intr = 1; i_intr < (size_t)cells.items[i].data.array.items[2].data.integer; i_intr++) {
+      for (size_t i_intr = 1;
+           i_intr < (size_t)cells.items[i].data.array.items[2].data.integer;
+           i_intr++) {
         STRCPY(chunk[j++], cells.items[i].data.array.items[0].data.string.data);
         attrs[k++] = (sattr_T)cells.items[i].data.array.items[1].data.integer;
       }
@@ -1531,7 +1536,9 @@ RawLineReturn grid_line_to_raw_line(Array args)
   ADD(arr, INTEGER_OBJ(clearattr));
   ADD(arr, INTEGER_OBJ(lineflags));
 
-  RawLineReturn rv = {.int_values = arr, .chunk = (const schar_T*)chunk, .attrs = (const sattr_T*)attrs};
+  RawLineReturn rv = { .int_values = arr,
+                      .chunk = (const schar_T *)chunk,
+                      .attrs = (const sattr_T *)attrs };
 
   return rv;
 }

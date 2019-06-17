@@ -371,7 +371,8 @@ int main(int argc, char **argv)
   }
 
   // Setting up the remote connection.
-  // This has to be always after ui_builtin_start or after the start of atleast one GUI 
+  // This has to be always after ui_builtin_start or
+  // after the start of atleast one GUI
   // as size of "uis[]" must be greater than 1
   if (params.server_name) {
     input_stop();  // Stop reading input, let the UI take over.
@@ -383,7 +384,7 @@ int main(int argc, char **argv)
         mch_exit(1);
     }
   }
-  
+
   // Execute --cmd arguments.
   exe_pre_commands(&params);
 
@@ -590,7 +591,8 @@ int main(int argc, char **argv)
   if (!is_remote_client) {
     normal_enter(false, false);
   } else {
-    // Since a nvim client can have just one TUI, ui_count reduces to 0 when it is closed
+    // Since a nvim client can have just one TUI,
+    // ui_count reduces to 0 when it is closed
     LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, !ui_active());
     getout(0);
   }
