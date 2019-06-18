@@ -1,23 +1,19 @@
 local helpers = require('test.functional.helpers')(after_each)
 local plugin_helpers = require('test.functional.plugin.helpers')
-
 local Screen = require('test.functional.ui.screen')
-
 local command, eval, rawfeed = helpers.command, helpers.eval, helpers.rawfeed
-
-before_each(function()
-  plugin_helpers.reset()
-  helpers.clear()
-  command('syntax on')
-  command('set filetype=man')
-end)
+local clear = helpers.clear
 
 describe(':Man', function()
   describe('man.lua: highlight_line()', function()
     local screen
 
     before_each(function()
-      command('syntax off') -- Ignore syntax groups
+      plugin_helpers.reset()
+      clear()
+      command('syntax on')
+      command('set filetype=man')
+      command('syntax off')  -- Ignore syntax groups
       screen = Screen.new(52, 5)
       screen:set_default_attr_ids({
         b = { bold = true },
@@ -129,6 +125,23 @@ describe(':Man', function()
       {b:·} double                                            |
       ~                                                   |
                                                           |
+      ]])
+    end)
+
+    it('handles : characters in input', function()
+      rawfeed([[
+        i<C-v><C-[>[40m    0  <C-v><C-[>[41m    1  <C-v><C-[>[42m    2  <C-v><C-[>[43m    3
+        <C-v><C-[>[44m    4  <C-v><C-[>[45m    5  <C-v><C-[>[46m    6  <C-v><C-[>[47m    7  <C-v><C-[>[100m    8  <C-v><C-[>[101m    9
+        <C-v><C-[>[102m   10  <C-v><C-[>[103m   11  <C-v><C-[>[104m   12  <C-v><C-[>[105m   13  <C-v><C-[>[106m   14  <C-v><C-[>[107m   15
+        <C-v><C-[>[48:5:16m   16  <ESC>]])
+      eval('man#init_pager()')
+
+      screen:expect([[
+       ^    0      1      2      3                          |
+           4      5      6      7      8      9            |
+          10     11     12     13     14     15            |
+          16                                               |
+                                                           |
       ]])
     end)
   end)

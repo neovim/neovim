@@ -107,7 +107,9 @@ local function highlight_line(line, linenr)
       -- followed by '[', then a series of parameter and intermediate bytes in
       -- the range 0x20 - 0x3f, then 'm'. (See ECMA-48, sections 5.4 & 8.3.117)
       local sgr = prev_char:match("^%[([\032-\063]*)m$")
-      if sgr then
+      -- Ignore escape sequences with : characters, as specified by ITU's T.416
+      -- Open Document Architecture and interchange format.
+      if sgr and not string.find(sgr, ":") then
         local match
         while sgr and #sgr > 0 do
           -- Match against SGR parameters, which may be separated by ';'
