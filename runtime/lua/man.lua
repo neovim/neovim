@@ -115,8 +115,7 @@ local function highlight_line(line, linenr)
           add_attr_hl(match + 0) -- coerce to number
         end
         escape = false
-      end
-    elseif not prev_char:match("^%[[\032-\063]*$") then
+      elseif not prev_char:match("^%[[\032-\063]*$") then
         -- Stop looking if this isn't a partial CSI sequence
         escape = false
       end
