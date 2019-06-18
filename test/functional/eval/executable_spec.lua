@@ -23,13 +23,16 @@ describe('executable()', function()
     print(string.format('=== debug:PATH: %s', os.getenv('PATH')))
     print(call('system', 'echo %PATH%'))
     print(call('executable', sibling_exe))
+    print(call('exepath', 'cmd.exe'))
 
+    print("=== clear ===")
     -- eq(expected, call('executable', sibling_exe))
     -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
     clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
-    print(string.format('=== debug:PATH: %s', os.getenv('PATH')))
+    -- print(string.format('=== debug:PATH: %s', os.getenv('PATH')))
     print(call('system', 'echo %PATH%'))
     print(call('executable', sibling_exe))
+    print(call('exepath', 'cmd.exe'))
 
     if iswin() then
       eq('arg1=lemon;arg2=sky;arg3=tree;',
