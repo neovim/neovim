@@ -5370,7 +5370,7 @@ void ex_cexpr(exarg_T *eap)
       }
       if (res > 0
           && (eap->cmdidx == CMD_cexpr || eap->cmdidx == CMD_lexpr)
-          && qi == ll_get_or_alloc_list(curwin)) {
+          && qi == GET_LOC_LIST(curwin)) {
         // Jump to the first error if autocmds didn't free the list.
         qf_jump(qi, 0, 0, eap->forceit);
       }
