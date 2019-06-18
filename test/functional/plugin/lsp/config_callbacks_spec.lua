@@ -19,8 +19,8 @@ describe('LSP Callback Configuration', function()
 
         eq = function(a, b)
           if(a ~= b) then
-            print(require('neovim.util').tostring(a))
-            print(require('neovim.util').tostring(b))
+            print(require('nvim.util').tostring(a))
+            print(require('nvim.util').tostring(b))
           end
 
           assert(a == b)
@@ -30,8 +30,8 @@ describe('LSP Callback Configuration', function()
   end)
 
   it('should have some default configurations', function()
-    lua[[callback_list = lsp_callbacks.get_list_of_callbacks('textDocument/hover')]]
-    lua[[hover = lsp_callbacks.callbacks.textDocument.hover.default[1] ]]
+    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
+    lua[[hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ]]
 
     lua[[eq(callback_list[1], hover)]]
   end)
@@ -40,7 +40,7 @@ describe('LSP Callback Configuration', function()
     lua[[test_func = function(a, b) return a + b end]]
 
     lua[[lsp_config.add_callback('textDocument/hover', test_func)]]
-    lua[[callback_list = lsp_callbacks.get_list_of_callbacks('textDocument/hover')]]
+    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
 
     lua[[assert(callback_list[2] == test_func)]]
   end)
@@ -50,17 +50,17 @@ describe('LSP Callback Configuration', function()
     lua[[lsp_config.add_callback('textDocument/hover', filetype_func, false, 'python')]]
 
     -- Get the default callback list
-    lua[[callback_list = lsp_callbacks.get_list_of_callbacks('textDocument/hover')]]
-    lua[[hover = lsp_callbacks.callbacks.textDocument.hover.default[1] ]]
+    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
+    lua[[hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ]]
 
     lua[[eq(callback_list[1], hover)]]
 
     -- Get the callback list for a filetype
-    lua[[callback_list = lsp_callbacks.get_list_of_callbacks('textDocument/hover', nil, 'python')]]
-    lua[[eq(callback_list[2], filetype_func)]]
+    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', nil, nil, 'python')]]
+    lua[[assert(callback_list[2] == filetype_func)]]
 
     -- Can override by getting default only
-    lua[[callback_list = lsp_callbacks.get_list_of_callbacks('textDocument/hover', nil, 'python', true)]]
+    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', nil, true, 'python')]]
     lua[[eq(1, #callback_list)]]
   end)
 
@@ -68,7 +68,7 @@ describe('LSP Callback Configuration', function()
       lua[[override_func = function(a, b) return a - b end]]
 
       lua[[lsp_config.add_callback('textDocument/definition', override_func, true)]]
-      lua[[callback_list = lsp_callbacks.get_list_of_callbacks('textDocument/definition')]]
+      lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/definition')]]
       lua[[eq(callback_list[1], override_func)]]
       lua[[eq(#callback_list, 1)]]
   end)

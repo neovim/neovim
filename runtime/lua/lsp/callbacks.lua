@@ -356,7 +356,7 @@ add_default_callback('textDocument/hover', function(self, data)
 
         if i == 1 then
           long_string = value
-        else 
+        else
           long_string = long_string .. "\n" .. value
         end
       end
