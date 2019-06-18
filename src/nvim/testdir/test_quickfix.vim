@@ -3373,6 +3373,17 @@ func Test_lbuffer_with_bwipe()
   augroup END
 endfunc
 
+func Test_setloclist_in_aucmd()
+  " This was using freed memory.
+  augroup nasty
+    au * * call setloclist(0, [], 'f')
+  augroup END
+  lexpr "x"
+  augroup nasty
+    au!
+  augroup END
+endfunc
+
 " Tests for the "CTRL-W <CR>" command.
 func Xview_result_split_tests(cchar)
   call s:setup_commands(a:cchar)
