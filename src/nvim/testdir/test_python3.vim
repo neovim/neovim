@@ -2,7 +2,7 @@
 " TODO: move tests from test88.in here.
 
 if !has('python3')
-  finish
+  throw 'Skipped: does not have +python3'
 endif
 
 func Test_py3do()

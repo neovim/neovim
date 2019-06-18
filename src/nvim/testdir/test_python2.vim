@@ -2,7 +2,7 @@
 " TODO: move tests from test87.in here.
 
 if !has('python')
-  finish
+  throw 'Skipped: does not have +python2'
 endif
 
 func Test_pydo()
