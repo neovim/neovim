@@ -20,10 +20,18 @@ describe('executable()', function()
     local sibling_exe = 'printargs-test'
     -- Windows: siblings are in Nvim's "pseudo-$PATH".
     local expected = iswin() and 1 or 0
-    eq(expected, call('executable', sibling_exe))
+    print(string.format('=== debug:PATH: %s', os.getenv('PATH')))
+    print(call('system', 'echo %PATH%'))
+    print(call('executable', sibling_exe))
+
+    -- eq(expected, call('executable', sibling_exe))
+    -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
+    clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
+    print(string.format('=== debug:PATH: %s', os.getenv('PATH')))
+    print(call('system', 'echo %PATH%'))
+    print(call('executable', sibling_exe))
+
     if iswin() then
-      -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
-      -- clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
       eq('arg1=lemon;arg2=sky;arg3=tree;',
          call('system', sibling_exe..' lemon sky tree'))
     end
