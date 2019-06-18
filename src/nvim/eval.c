@@ -5165,7 +5165,7 @@ bool garbage_collect(bool testing)
   {
     Channel *data;
     map_foreach_value(channels, data, {
-      set_ref_in_callback_reader(&data->on_stdout, copyID, NULL, NULL);
+      set_ref_in_callback_reader(&data->on_data, copyID, NULL, NULL);
       set_ref_in_callback_reader(&data->on_stderr, copyID, NULL, NULL);
       set_ref_in_callback(&data->on_exit, copyID, NULL, NULL);
     })
