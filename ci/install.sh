@@ -18,6 +18,10 @@ CC=cc python3 -m pip -q install --upgrade pynvim
 echo "Install neovim module for Python 2."
 CC=cc python2 -m pip -q install --upgrade pynvim
 
+# Sanity check
+python  -c "import pynvim; print(str(pynvim))"
+python3 -c "import pynvim; print(str(pynvim))"
+
 echo "Install neovim RubyGem."
 gem install --no-document --version ">= 0.8.0" neovim
 
