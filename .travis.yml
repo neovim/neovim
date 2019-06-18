@@ -51,12 +51,8 @@ jobs:
   include:
     - stage: baseline builds
       os: linux
-      compiler: clang-4.0
-      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
-      env: >
-        CLANG_SANITIZER=ASAN_UBSAN
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        ASAN_SYMBOLIZE=asan_symbolize-4.0
+      compiler: gcc
+      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: gcc
       env: >
@@ -72,7 +68,7 @@ jobs:
       os: linux
       env: CI_TARGET=lint
 
-    - stage: OSX builds
+    - stage: Other builds
       os: osx
       compiler: clang
       osx_image: xcode10.1  # macOS 10.13
@@ -80,15 +76,17 @@ jobs:
       compiler: gcc
       osx_image: xcode10.1  # macOS 10.13
 
-    - stage: Flaky builds
-      os: linux
-      compiler: gcc
-      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - os: linux
+      compiler: clang-4.0
+      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
+      env: >
+        CLANG_SANITIZER=ASAN_UBSAN
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        ASAN_SYMBOLIZE=asan_symbolize-4.0
     - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
   allow_failures:
-    - env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - env: CLANG_SANITIZER=TSAN
   fast_finish: true
 
