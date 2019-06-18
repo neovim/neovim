@@ -6,6 +6,7 @@ local util = require('nvim.util')
 
 local log = require('lsp.log')
 local get_request_function = require('lsp.request').get_request_function
+local get_notification_function = require('lsp.notification').get_notification_function
 
 local Message = {
   jsonrpc = "2.0"
@@ -104,11 +105,40 @@ function ResponseError:new()
 end
 
 local NotificationMessage = {}
+local notification_mt = { __index = NotificationMessage }
+setmetatable(NotificationMessage, { __index = Message })
+function NotificationMessage:new(client, method, params)
+  assert(self)
 
-function NotificationMessage:new(client, message, params)
-  local o = Message:new{client=client, message=message, params=params}
-  self.__index = self
-  return o
+  local notification_func = get_notification_function(method)
+  local notification_params, acceptable_method
+  if notification_func and type(notification_func) == 'function' then
+    notification_params, acceptable_method = notification_func(client, params)
+  else
+    log.debug(string.format('No notification function found for: %s', util.tostring(method)))
+    notification_params = params
+  end
+
+  if acceptable_method == false then
+    log.debug(string.format('[LSP:Notification] Method "%s" is not supported by server %s', method, client.name))
+    return nil
+  end
+
+  local object = {
+    method = method,
+    params = notification_params
+  }
+
+  setmetatable(object, notification_mt)
+  return object
+end
+
+function NotificationMessage:json()
+  return json.encode({
+    jsonrpc = self.jsonrpc,
+    method = self.method,
+    params = self.params,
+  })
 end
 
 return {

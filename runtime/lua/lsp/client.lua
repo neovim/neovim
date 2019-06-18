@@ -107,9 +107,7 @@ client.initialize = function(self)
     return data.capabilities
   end)
 
-  -- Open the document for the language server.
-  -- We only send this automatically on starting the server.
-  self:request_async('textDocument/didOpen')
+  self:notify('initialized')
 
   return result
 end
@@ -201,7 +199,25 @@ end
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
 client.notify = function(self, method, params)
-  self:request_async(method, params)
+  if self.job_id == nil then
+    log.warn('Client does not have valid job_id: ', self.name)
+    return nil
+  end
+
+  local notification = message.NotificationMessage:new(self, method, params)
+
+  if notification == nil then
+    return nil
+  end
+
+  if should_send_message(self, notification) then
+    lsp_doautocmd(method, 'pre')
+    log.debug("Sending Notification: [["..notification:data().."]]")
+    vim.api.nvim_call_function('chansend', {self.job_id, notification:data()})
+    lsp_doautocmd(method, 'post')
+  else
+    log.debug(string.format('Notification "%s" was cancelled with params %s', method, util.tostring(params)))
+  end
 end
 
 --- Parse an LSP Message's header

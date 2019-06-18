@@ -25,14 +25,14 @@ endfunction
 
 " TODO(tjdevries): Make sure this works correctly
 " TODO(tjdevries): Figure out how to call a passed callback
-function! lsp#request(request, ...) abort
-  let arguments = get(a:000, 0, {})
+function! lsp#request(method, ...) abort
+  let params = get(a:000, 0, {})
   let optional_callback = get(a:000, 1, v:null)
   let filetype = get(a:000, 2, v:null)
 
-  let request_id = luaeval(s:client_string . '.request(_A.request, _A.arguments, _A.callback, _A.filetype)', {
-          \ 'request': a:request,
-          \ 'arguments': arguments,
+  let request_id = luaeval(s:client_string . '.request(_A.method, _A.params, _A.callback, _A.filetype)', {
+          \ 'method': a:method,
+          \ 'params': params,
           \ 'callback': optional_callback,
           \ 'filetype': filetype,
         \ })
@@ -44,19 +44,33 @@ endfunction
 " Async request to the lsp server.
 "
 " Do not wait until completion
-function! lsp#request_async(request, ...) abort
-  let arguments = get(a:000, 0, {})
+function! lsp#request_async(method, ...) abort
+  let params = get(a:000, 0, {})
   let optional_callback = get(a:000, 1, v:null)
   let filetype = get(a:000, 2, v:null)
 
-  let result = luaeval(s:client_string . '.request_async(_A.request, _A.arguments, _A.callback, _A.filetype)', {
-          \ 'request': a:request,
-          \ 'arguments': arguments,
+  let result = luaeval(s:client_string . '.request_async(_A.method, _A.params, _A.callback, _A.filetype)', {
+          \ 'method': a:method,
+          \ 'params': params,
           \ 'callback': optional_callback,
           \ 'filetype': filetype,
         \ })
 
   return result
+endfunction
+
+""
+" Notify to the lsp server.
+function! lsp#notify(method, ...) abort
+  let params = get(a:000, 0, {})
+  let optional_callback = get(a:000, 1, v:null)
+  let filetype = get(a:000, 2, v:null)
+
+  luaeval(s:client_string . '.notify(_A.method, _A.params, _A.filetype)', {
+          \ 'method': a:method,
+          \ 'params': params,
+          \ 'filetype': filetype,
+        \ })
 endfunction
 
 ""
@@ -74,7 +88,6 @@ function! lsp#handle(request, data, ...) abort abort
         \ 'default_only': default_only,
         \ })
 endfunction
-
 
 ""
 " Private functions to manage language server.
@@ -105,7 +118,6 @@ function lsp#__jobstart(cmd) abort
     echoerr '"' to_execute '" is not a valid executable'
     throw LSP/BadConfig
   endif
-
 
   let job_id = jobstart(a:cmd, s:LspClient)
 

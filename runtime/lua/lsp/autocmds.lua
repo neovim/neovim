@@ -29,7 +29,9 @@ local initialized_buffers = {}
 local initialized_autocmds = {}
 
 
-local default_autocmds = {
+local default_request_autocmds = {}
+
+local default_notify_autocmds = {
   ['textDocument/didOpen'] = {
     -- After initialization, make sure to tell the LSP that we opened the file
     {'User', 'LSP/initialize/post'},
@@ -127,22 +129,26 @@ local get_autocmd_event_name = function(autocmd_item, autocmd_pattern)
 end
 
 --- Register an autocmd with neovim
--- @param request_name (string)         - Name of the request to register
+-- @param method_name (string)          - Name of the method to register
 -- @param autocmd_item (string|table)   - The autocmd event that will trigger this autocmd
+-- @param message_type (string)         - LSP message type which is 'request_async' or 'notify'
 -- @param autocmd_pattern (string)      - (Optional) See |autocmd-patterns|. If not specified, '*'
-local nvim_enable_autocmd = function(request_name, autocmd_item, autocmd_pattern)
+local nvim_enable_autocmd = function(method_name, autocmd_item, message_type, autocmd_pattern)
   local autocmd_event = get_autocmd_event_name(autocmd_item, autocmd_pattern)
 
   if #autocmd_event == 0 then
+    return
+  elseif message_type ~= 'request_async' or message_type ~= 'notify' then
     return
   end
 
   local silent_level = 'silent!'
   local command = string.format(
-    [[%s autocmd %s lua require('lsp.plugin').client.request_async('%s')]],
+    [[%s autocmd %s lua require('lsp.plugin').client.%s('%s')]],
     silent_level,
     autocmd_event,
-    request_name
+    message_type,
+    method_name
   )
 
   vim.api.nvim_command(command)
@@ -157,17 +163,18 @@ local nvim_enable_autocmd = function(request_name, autocmd_item, autocmd_pattern
 end
 
 --- Export the autocmds from the table
--- @param autocmd_table (table)     - (Optional) Table to give the list of autocmds to generate.
+-- @param autocmd_table (table)     - Table to give the list of autocmds to generate.
 --                                      If not passed in, then we will use the default tables.
+-- @param message_type (string)     - LSP message type which is 'request_async' or 'notify'
 -- @param autocmd_pattern (string)  - (Optional) See |autocmd-patterns|. If not specified, '<buffer>'
-local export_autocmds = function(autocmd_table, autocmd_pattern)
-  if util.table.is_empty(autocmd_table) then
-    autocmd_table = default_autocmds
+local export_autocmds = function(autocmd_table, message_type, autocmd_pattern)
+  if message_type ~= 'request_async' or message_type ~= 'notify' then
+    return
   end
 
-  for request_name, autocmd_list in pairs(autocmd_table) do
+  for method_name, autocmd_list in pairs(autocmd_table) do
     for _, autocmd_item in ipairs(autocmd_list) do
-      nvim_enable_autocmd(request_name, autocmd_item, autocmd_pattern)
+      nvim_enable_autocmd(method_name, autocmd_item, message_type, autocmd_pattern)
     end
   end
 end
@@ -182,7 +189,8 @@ local initialize_buffer_autocmds = function(autocmd_pattern)
   initialized_buffers[buf_number] = true
 
   -- Set up the default autocmds for a buffer
-  export_autocmds(default_autocmds, autocmd_pattern)
+  export_autocmds(default_request_autocmds, 'request_async', autocmd_pattern)
+  export_autocmds(default_notify_autocmds, 'notify', autocmd_pattern)
 end
 
 --- Initialize the filetype autocmd that will set up autocmds on a per-buffer basis

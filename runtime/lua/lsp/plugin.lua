@@ -111,6 +111,23 @@ plugin.client.wait_request = function(request_id, filetype)
   return plugin.client.get(filetype)._results[request_id]
 end
 
+--- Send a notification to a server
+plugin.client.notify = function(method, arguments, filetype)
+  filetype = lsp_util.get_filetype(filetype)
+  if filetype == nil or filetype == '' then
+    return
+  end
+
+  local current_client = plugin.client.get(filetype)
+
+  if current_client == nil then
+    log.warn('notify() failed', 'No client available for: ', filetype, ' with method: ', method)
+    return
+  end
+
+  current_client:notify(method, arguments)
+end
+
 plugin.client.has_started = function(filetype)
   return plugin.client.get(filetype) ~= nil
 end

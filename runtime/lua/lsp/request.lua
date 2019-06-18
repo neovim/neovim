@@ -128,30 +128,6 @@ requests.textDocument.references = function(client, params)
   return structures.ReferenceParams(params), true
 end
 
-requests.textDocument.didOpen = function(client, params)
-  return structures.DidOpenTextDocumentParams(params), true
-end
-
-requests.textDocument.willSave = function(client, params)
-  if not client.capabilities.synchronization.willSave then
-    return nil, false
-  end
-
-  return structures.WillSaveTextDocumentParams(params), true
-end
-
-requests.textDocument.didSave = function(client, params)
-  if not client.capabilities.synchronization.didSave then
-    return nil, false
-  end
-
-  return structures.DidSaveTextDocumentParams(params), true
-end
-
-requests.textDocument.didChange = function(client, params)
-  return structures.DidChangeTextDocumentParams(params), true
-end
-
 requests.textDocument.completion = function(client, params)
   if not client.capabilities.completionProvider then
     return nil, false
