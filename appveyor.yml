@@ -28,7 +28,10 @@ before_build:
 build_script:
 - powershell ci\build.ps1
 after_build:
-- ps: cat $env:GCOV_ERROR_FILE
+- ps: |
+    if ($env:GCOV_ERROR_FILE) {
+      cat $env:GCOV_ERROR_FILE
+    }
 cache:
 - C:\projects\nvim-deps -> third-party\**
 artifacts:
