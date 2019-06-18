@@ -107,15 +107,18 @@ local function highlight_line(line, linenr)
       -- followed by '[', then a series of parameter and intermediate bytes in
       -- the range 0x20 - 0x3f, then 'm'. (See ECMA-48, sections 5.4 & 8.3.117)
       local sgr = prev_char:match("^%[([\032-\063]*)m$")
-      if sgr then
-        local match
-        while sgr and #sgr > 0 do
-          -- Match against SGR parameters, which may be separated by ';'
-          match, sgr = sgr:match("^(%d*);?(.*)")
-          add_attr_hl(match + 0) -- coerce to number
+      if sgr and not string.find(sgr, ":") then
+        if sgr then
+          local match
+          while sgr and #sgr > 0 do
+            -- Match against SGR parameters, which may be separated by ';'
+            match, sgr = sgr:match("^(%d*);?(.*)")
+            add_attr_hl(match + 0) -- coerce to number
+          end
+          escape = false
         end
-        escape = false
-      elseif not prev_char:match("^%[[\032-\063]*$") then
+      end
+    elseif not prev_char:match("^%[[\032-\063]*$") then
         -- Stop looking if this isn't a partial CSI sequence
         escape = false
       end
