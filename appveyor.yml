@@ -27,7 +27,7 @@ before_build:
 - ps: Install-Product node 8
 build_script:
 - powershell ci\build.ps1
-after_build:
+on_finish:
 - ps: |
     if ($env:GCOV_ERROR_FILE) {
       cat $env:GCOV_ERROR_FILE
