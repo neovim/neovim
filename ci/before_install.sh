@@ -7,28 +7,34 @@ if [[ "${CI_TARGET}" == lint ]]; then
   exit
 fi
 
-echo 'python info:'
+echo 'Python info:'
 (
-  2>&1 python --version || true
-  2>&1 python2 --version || true
-  2>&1 python3 --version || true
-  2>&1 pip --version || true
-  2>&1 pip2 --version || true
-  2>&1 pip3 --version || true
-  echo 'pyenv versions:'
-  2>&1 pyenv versions || true
-) | sed 's/^/  /'
+  set -x
+  python3 --version
+  python2 --version
+  python --version
+  pip3 --version
+  pip2 --version
+  pip --version
+  pyenv versions
+) 2>&1 | sed 's/^/  /' || true
 
-if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
-  echo "Upgrade Python 3 pip"
-  python3 -m pip -q install --user --upgrade pip
-else
-  echo "Upgrade Python 2 pip"
-  python2.7 -m pip -q install --user --upgrade pip
-  echo "Upgrade Python 3 pip"
-  # Allow failure. pyenv pip3 on travis is broken:
-  # https://github.com/travis-ci/travis-ci/issues/8363
-  python3 -m pip -q install --user --upgrade pip || true
+# Use pyenv, but not for OSX on Travis, where it only has the "system" version.
+if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
+  echo 'Setting Python versions via pyenv'
+  # Prefer python2 as python for /usr/bin/asan_symbolize-4.0.
+  pyenv global 2.7.15:3.7
+
+  echo 'Updated Python info:'
+  (
+    set -x
+    python3 --version
+    python2 --version
+    python --version
+
+    pip3 --version
+    pip2 --version
+  ) 2>&1 | sed 's/^/  /'
 fi
 
 echo "Install node (LTS)"
