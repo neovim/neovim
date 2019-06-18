@@ -10,8 +10,7 @@ endif
 let b:did_indent = 1
 
 " Some preliminary setting
-setlocal indentkeys=!,o,O=end,=case,=else,=elseif,=otherwise,=catch
-
+setlocal indentkeys=!,o,O,=else,=elif,=end,=end_try_catch,=end_unwind_protect,=endclassdef,=endenumeration,=endevents,=endfor,=endfunction,=endif,=endmethods,=endparfor,=endproperties,=endswitch,=endwhile
 
 setlocal indentexpr=GetMatlabIndent(v:lnum)
 
@@ -21,14 +20,14 @@ if exists("*GetMatlabIndent")
 endif
 
 function GetMatlabIndent(lnum)
-  " Give up if this line is explicitly joined.
-  if getline(a:lnum - 1) =~ '\\$'
-    return -1
+  " don't indent sections
+  if getline(a:lnum) =~ '^\s*%% '
+    return 0
   endif
 
-  " Search backwards for the first non-empty line.
+  " Search backwards for the first non-empty line that's not a section
   let plnum = a:lnum - 1
-  while plnum > 0 && getline(plnum) =~ '^\s*$'
+  while plnum > 0 && getline(plnum) =~ '^\s*\($\|%% \)'
     let plnum = plnum - 1
   endwhile
 
@@ -39,35 +38,16 @@ function GetMatlabIndent(lnum)
 
   let curind = indent(plnum)
 
-  " If the current line is a stop-block statement...
-  if getline(v:lnum) =~ '^\s*\(end\|else\|elseif\|case\|otherwise\|catch\)\>'
-    " See if this line does not follow the line right after an openblock
-    if getline(plnum) =~ '^\s*\(for\|if\|else\|elseif\|case\|while\|switch\|try\|otherwise\|catch\)\>'
-    " See if the user has already dedented
-    elseif indent(v:lnum) > curind - shiftwidth()
-      " If not, recommend one dedent
-	let curind = curind - shiftwidth()
-    else
-      " Otherwise, trust the user
-      return -1
-    endif
-"  endif
-
-  " If the previous line opened a block
-  elseif getline(plnum) =~ '^\s*\(for\|if\|else\|elseif\|case\|while\|switch\|try\|otherwise\|catch\)\>'
-    " See if the user has already indented
-    if indent(v:lnum) < curind + shiftwidth()
-      "If not, recommend indent
-      let curind = curind + shiftwidth()
-    else
-      " Otherwise, trust the user
-      return -1
-    endif
+  " incr indent if previous non-empty line opens a block
+  if getline(plnum) =~ '^\s*\(function\|for\|if\|else\|elseif\|case\|while\|switch\|try\|otherwise\|catch\)\>'
+    let curind = curind + shiftwidth()
   endif
 
+  " decr indent if current line closes the block
+  if getline(a:lnum) =~ '^\s*\(\|else\|elif\|end\|end_try_catch\|end_unwind_protect\|endclassdef\|endenumeration\|endevents\|endfor\|endfunction\|endif\|endmethods\|endparfor\|endproperties\|endswitch\|endwhile\)\>'
+    let curind = curind - shiftwidth()
+  endif
 
-
-  " If we got to here, it means that the user takes the standardversion, so we return it
   return curind
 endfunction
 
