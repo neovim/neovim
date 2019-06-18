@@ -19,17 +19,7 @@ exit_suite --continue
 
 enter_suite tests
 
-if test "$CLANG_SANITIZER" != "TSAN" ; then
-  # Additional threads are only created when the builtin UI starts, which
-  # doesn't happen in the unit/functional tests
-  if test "${FUNCTIONALTEST}" != "functionaltest-lua"; then
-    run_test run_unittests
-  fi
-  run_test run_functionaltests
-fi
 run_test run_oldtests
-
-run_test install_nvim
 
 exit_suite --continue
 
