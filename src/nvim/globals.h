@@ -510,7 +510,7 @@ EXTERN int sc_col;              /* column for shown command */
 // First NO_SCREEN, then NO_BUFFERS, then 0 when startup finished.
 EXTERN int starting INIT(= NO_SCREEN);
 // true when planning to exit. Might keep running if there is a changed buffer.
-EXTERN int exiting INIT(= false);
+EXTERN bool exiting INIT(= false);
 // is stdin a terminal?
 EXTERN int stdin_isatty INIT(= true);
 // is stdout a terminal?

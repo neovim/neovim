@@ -20,10 +20,10 @@ return {
     ['and']={args=2},
     api_info={},
     append={args=2},
-    argc={},
+    argc={args={0, 1}},
     argidx={},
     arglistid={args={0, 2}},
-    argv={args={0, 1}},
+    argv={args={0, 2}},
     asin={args=1, func="float_op_wrapper", data="&asin"},  -- WJMc
     assert_beeps={args={1, 2}},
     assert_equal={args={2, 3}},
