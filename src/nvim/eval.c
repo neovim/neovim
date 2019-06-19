@@ -8372,6 +8372,19 @@ static void f_exepath(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = path;
 }
 
+/// Find a window: When using a Window ID in any tab page, when using a number
+/// in the current tab page.
+win_T * find_win_by_nr_or_id(typval_T *vp)
+{
+  int nr = (int)tv_get_number_chk(vp, NULL);
+
+  if (nr >= LOWEST_WIN_ID) {
+    return win_id2wp(vp);
+  }
+
+  return find_win_by_nr(vp, NULL);
+}
+
 /*
  * "exists()" function
  */
