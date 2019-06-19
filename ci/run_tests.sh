@@ -21,6 +21,8 @@ env | sort
 command -v python
 python --version
 python -c 'print(__import__("sys").path)'
+nvim --headless -c 'py3 import vim; print(vim, __import__("inspect").getfile(vim.__class__))' -cq
+
 build/bin/nvim -u NONE -c 'exe !has("python")."cq"' || { echo "Python 2 is not available"; exit 1;}
 build/bin/nvim -u NONE -c 'exe !has("python3")."cq"' || { echo "Python 3 is not available"; exit 1;}
 
