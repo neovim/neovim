@@ -10238,7 +10238,7 @@ static void get_qf_loc_list(int is_qf, win_T *wp, typval_T *what_arg,
 /// "getloclist()" function
 static void f_getloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
+  win_T *wp = find_win_by_nr(&argvars[0], NULL);
   get_qf_loc_list(false, wp, &argvars[1], rettv);
 }
 
@@ -10627,7 +10627,7 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   tv_list_alloc_ret(rettv, 2);
-  const win_T *const wp = find_win_by_nr_or_id(&argvars[0]);
+  const win_T *const wp = find_win_by_nr(&argvars[0], NULL);
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_winrow + 1);
   tv_list_append_number(rettv->vval.v_list, wp == NULL ? 0 : wp->w_wincol + 1);
 }
@@ -12778,7 +12778,7 @@ static int matchadd_dict_arg(typval_T *tv, const char **conceal_char,
   }
 
   if ((di = tv_dict_find(tv->vval.v_dict, S_LEN("window"))) != NULL) {
-    *win = find_win_by_nr_or_id(&di->di_tv);
+    *win = find_win_by_nr(&di->di_tv, NULL);
     if (*win == NULL) {
       EMSG(_("E957: Invalid window number"));
       return FAIL;
@@ -15089,7 +15089,7 @@ static void f_setloclist(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = -1;
 
-  win = find_win_by_nr_or_id(&argvars[0]);
+  win = find_win_by_nr(&argvars[0], NULL);
   if (win != NULL) {
     set_qf_ll_list(win, &argvars[1], rettv);
   }
@@ -18302,15 +18302,18 @@ static void f_win_id2win(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = win_id2win(argvars);
 }
 
-/// "winbufnr(nr)" function
+/*
+ * "winbufnr(nr)" function
+ */
 static void f_winbufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
-  if (wp == NULL) {
+  win_T       *wp;
+
+  wp = find_win_by_nr(&argvars[0], NULL);
+  if (wp == NULL)
     rettv->vval.v_number = -1;
-  } else {
+  else
     rettv->vval.v_number = wp->w_buffer->b_fnum;
-  }
 }
 
 /*
@@ -18322,15 +18325,18 @@ static void f_wincol(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = curwin->w_wcol + 1;
 }
 
-/// "winheight(nr)" function
+/*
+ * "winheight(nr)" function
+ */
 static void f_winheight(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
-  if (wp == NULL) {
+  win_T       *wp;
+
+  wp = find_win_by_nr(&argvars[0], NULL);
+  if (wp == NULL)
     rettv->vval.v_number = -1;
-  } else {
+  else
     rettv->vval.v_number = wp->w_height;
-  }
 }
 
 // "winlayout()" function
@@ -18613,15 +18619,18 @@ static char *save_tv_as_string(typval_T *tv, ptrdiff_t *const len, bool endnl)
   return ret;
 }
 
-/// "winwidth(nr)" function
+/*
+ * "winwidth(nr)" function
+ */
 static void f_winwidth(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  win_T *wp = find_win_by_nr_or_id(&argvars[0]);
-  if (wp == NULL) {
+  win_T       *wp;
+
+  wp = find_win_by_nr(&argvars[0], NULL);
+  if (wp == NULL)
     rettv->vval.v_number = -1;
-  } else {
+  else
     rettv->vval.v_number = wp->w_width;
-  }
 }
 
 /// "wordcount()" function
