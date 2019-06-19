@@ -18,6 +18,8 @@ build_nvim
 # Ensure that Python support is available.
 # XXX: move to build_nvim?  Why is build_nvim in run_tests?!
 env | sort
+command -v python
+python -c 'print(__import__("vim"))'
 build/bin/nvim -u NONE -c 'exe !has("python")."cq"' || { echo "Python 2 is not available"; exit 1;}
 build/bin/nvim -u NONE -c 'exe !has("python3")."cq"' || { echo "Python 3 is not available"; exit 1;}
 
