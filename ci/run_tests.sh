@@ -34,6 +34,9 @@ build/bin/nvim --headless -c 'py3 import vim; print(vim, __import__("inspect").g
 build/bin/nvim -u NONE -c 'exe !has("python")."cq"' || { echo "Python 2 is not available"; exit 1;}
 build/bin/nvim -u NONE -c 'exe !has("python3")."cq"' || { echo "Python 3 is not available"; exit 1;}
 
+nvim -u NONE -c checkhealth -c 'call writefile(getline(1, "$"), "/tmp/checkhealth.txt")' -cqall
+cat /tmp/checkhealth.txt
+
 exit_suite --continue
 
 # Test.
