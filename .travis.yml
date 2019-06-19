@@ -12,6 +12,7 @@ env:
     - DEPS_BUILD_DIR="$HOME/nvim-deps"
     # Install directory for Neovim.
     - INSTALL_PREFIX="$HOME/nvim-install"
+    - PATH="$INSTALL_PREFIX/bin:$PATH"
     # Log directory for Clang sanitizers and Valgrind.
     - LOG_DIR="$BUILD_DIR/log"
     # Nvim log file.
