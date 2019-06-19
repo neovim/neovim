@@ -8,6 +8,7 @@ source "${CI_DIR}/common/build.sh"
 source "${CI_DIR}/common/test.sh"
 source "${CI_DIR}/common/suite.sh"
 
+# Build.
 enter_suite build
 
 check_core_dumps --delete quiet
@@ -15,7 +16,12 @@ check_core_dumps --delete quiet
 prepare_build
 build_nvim
 
-top_make install
+exit_suite --continue
+
+# Install.
+enter_suite install
+
+install_nvim
 
 # Ensure that Python support is available.
 # XXX: move to build_nvim?  Why is build_nvim in run_tests?!
@@ -30,6 +36,7 @@ build/bin/nvim -u NONE -c 'exe !has("python3")."cq"' || { echo "Python 3 is not 
 
 exit_suite --continue
 
+# Test.
 enter_suite tests
 
 run_test run_oldtests
