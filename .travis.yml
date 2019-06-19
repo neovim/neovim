@@ -51,14 +51,15 @@ jobs:
   include:
     - stage: baseline builds
       os: linux
-      compiler: gcc
-      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      compiler: clang-4.0
+      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
+      env: >
+        CLANG_SANITIZER=ASAN_UBSAN
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        ASAN_SYMBOLIZE=asan_symbolize-4.0
     - os: linux
       compiler: gcc
-      env: >
-        FUNCTIONALTEST=functionaltest-lua
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
+      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       # Travis creates a cache per compiler. Set a different value here to
       # store 32-bit dependencies in a separate cache.
@@ -77,12 +78,11 @@ jobs:
       osx_image: xcode10.1  # macOS 10.13
 
     - os: linux
-      compiler: clang-4.0
-      # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
+      compiler: gcc
       env: >
-        CLANG_SANITIZER=ASAN_UBSAN
+        FUNCTIONALTEST=functionaltest-lua
         CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        ASAN_SYMBOLIZE=asan_symbolize-4.0
+        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
     - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
