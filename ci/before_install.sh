@@ -32,8 +32,8 @@ if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
     python2 --version
     python --version
 
-    pip3 --version
-    pip2 --version
+    python3 -m pip --version
+    python2 -m pip --version
   ) 2>&1 | sed 's/^/  /'
 fi
 
