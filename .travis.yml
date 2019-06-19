@@ -49,7 +49,7 @@ env:
 
 jobs:
   include:
-    - stage: baseline builds
+    - stage: baseline
       os: linux
       compiler: clang-4.0
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
@@ -69,7 +69,7 @@ jobs:
       os: linux
       env: CI_TARGET=lint
 
-    - stage: Other builds
+    - stage: second stage
       os: osx
       compiler: clang
       osx_image: xcode10.1  # macOS 10.13
