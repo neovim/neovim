@@ -15,6 +15,8 @@ check_core_dumps --delete quiet
 prepare_build
 build_nvim
 
+top_make install
+
 # Ensure that Python support is available.
 # XXX: move to build_nvim?  Why is build_nvim in run_tests?!
 env | sort
