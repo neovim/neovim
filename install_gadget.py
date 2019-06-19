@@ -106,21 +106,40 @@ GADGETS = {
     },
     'do': lambda name, root: InstallTclProDebug( name, root )
   },
-  'vscode-mono-debug': {
+  'netcoredbg': {
     'language': 'csharp',
     'enabled': False,
     'download': {
-      'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
-             'publishers/ms-vscode/vsextensions/mono-debug/${version}/'
-             'vspackage',
-      'target': 'vscode-mono-debug.tar.gz',
+      'url': ( 'https://github.com/Samsung/netcoredbg/releases/download/latest/'
+               '${file_name}' ),
       'format': 'tar',
     },
     'all': {
-      'file_name': 'vscode-mono-debug.vsix',
-      'version': '0.15.8',
-      'checksum':
-          '723eb2b621b99d65a24f215cb64b45f5fe694105613a900a03c859a62a810470',
+      'version': 'master'
+    },
+    'macos': {
+      'file_name': 'netcoredbg-osx-master.tar.gz',
+      'checksum': '',
+    },
+    'linux': {
+      'file_name': 'netcoredbg-linux-master.tar.gz',
+      'checksum': '',
+    },
+    'do': lambda name, root: MakeSymlink( gadget_dir,
+                                          name,
+                                          os.path.join( root, 'netcoredbg' ) ),
+    'adapters': {
+      'netcoredbg': {
+        "name": "netcoredbg",
+        "command": [
+          "${gadgetDir}/netcoredbg/netcoredbg",
+          "--interpreter=vscode"
+        ],
+        "attach": {
+          "pidProperty": "processId",
+          "pidSelect": "ask"
+        },
+      },
     }
   },
   'vscode-bash-debug': {
@@ -340,6 +359,12 @@ parser.add_argument( '--all',
 
 for name, gadget in GADGETS.items():
   if not gadget.get( 'enabled', True ):
+    parser.add_argument(
+      '--force-enable-' + gadget[ 'language' ],
+      action = 'store_true',
+      help = 'Install the unsupported {} debug adapter for {} support'.format(
+        name,
+        gadget[ 'language' ] ) )
     continue
 
   parser.add_argument(
@@ -361,13 +386,13 @@ failed = []
 all_adapters = {}
 for name, gadget in GADGETS.items():
   if not gadget.get( 'enabled', True ):
-    continue
-
-  if not args.all and not getattr( args, 'enable_' + gadget[ 'language' ] ):
-    continue
-
-  if getattr( args, 'disable_' + gadget[ 'language' ] ):
-    continue
+    if not getattr( args, 'force_enable_' + gadget[ 'language' ] ):
+      continue
+  else:
+    if not args.all and not getattr( args, 'enable_' + gadget[ 'language' ] ):
+      continue
+    if getattr( args, 'disable_' + gadget[ 'language' ] ):
+      continue
 
   try:
     v = {}
