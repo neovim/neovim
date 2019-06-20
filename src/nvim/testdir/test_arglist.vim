@@ -74,7 +74,6 @@ func Test_argadd()
   call assert_equal(1, len(argv()))
   call assert_equal('some file', get(argv(), 0, ''))
 
-  call delete('Xargadd')
   %argd
   new
   arga
