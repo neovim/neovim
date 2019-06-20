@@ -116,6 +116,7 @@ typedef enum {
     VV_TYPE_FLOAT,
     VV_TYPE_BOOL,
     VV_EXITING,
+    VV_CORES,
 } VimVarIndex;
 
 /// All recognized msgpack types

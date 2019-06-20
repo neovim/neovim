@@ -420,6 +420,7 @@ static struct vimvar {
   VV(VV_TYPE_FLOAT,     "t_float",          VAR_NUMBER, VV_RO),
   VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
+  VV(VV_CORES,          "cores",            VAR_NUMBER, VV_RO),
 };
 #undef VV
 
@@ -636,6 +637,11 @@ void eval_init(void)
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
+  uv_cpu_info_t *cpuinfo;
+  int cpucount;
+  uv_cpu_info(&cpuinfo, &cpucount);
+  uv_free_cpu_info(cpuinfo, cpucount);
+  set_vim_var_nr(VV_CORES, cpucount);
 }
 
 #if defined(EXITFREE)
