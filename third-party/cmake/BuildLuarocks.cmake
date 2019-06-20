@@ -203,7 +203,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build nvim-client 0.2.0-1 ${LUAROCKS_BUILDARGS}
+    ARGS build nvim-client 0.2.0-1 ${LUAROCKS_BUILDARGS} CFLAGS=-Werror
     DEPENDS luv)
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)
