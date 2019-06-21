@@ -957,6 +957,7 @@ eval_to_bool(
 
 static int eval_expr_typval(const typval_T *expr, typval_T *argv,
                             int argc, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
 {
   int dummy;
 
@@ -1000,10 +1001,11 @@ static int eval_expr_typval(const typval_T *expr, typval_T *argv,
 /// Like eval_to_bool() but using a typval_T instead of a string.
 /// Works for string, funcref and partial.
 static bool eval_expr_to_bool(const typval_T *expr, bool *error)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  typval_T rettv;
+  typval_T argv, rettv;
 
-  if (eval_expr_typval(expr, NULL, 0, &rettv) == FAIL) {
+  if (eval_expr_typval(expr, &argv, 0, &rettv) == FAIL) {
     *error = true;
     return false;
   }
@@ -6365,6 +6367,7 @@ call_func(
     partial_T *partial,             // optional, can be NULL
     dict_T *selfdict_in             // Dictionary for "self"
 )
+  FUNC_ATTR_NONNULL_ARG(5)
 {
   int ret = FAIL;
   int error = ERROR_NONE;
