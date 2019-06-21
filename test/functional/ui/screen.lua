@@ -1194,6 +1194,10 @@ function Screen:render(headers, attr_state, preview)
   return rv
 end
 
+local remove_all_metatables = function(item, path)
+  if path[#path] ~= inspect.METATABLE then return item end
+end
+
 function Screen:print_snapshot(attrs, ignore)
   attrs = attrs or self._default_attr_ids
   if ignore == nil then
@@ -1247,8 +1251,8 @@ function Screen:print_snapshot(attrs, ignore)
   io.stdout:write( "]]"..attrstr)
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil then
-      -- TODO(bfredl): improve formating, remove ext metatables
-      io.stdout:write(", "..k.."="..inspect(ext_state[k]))
+      -- TODO(bfredl): improve formatting
+      io.stdout:write(", "..k.."="..inspect(ext_state[k],{process=remove_all_metatables}))
     end
   end
   print((keys and "}" or ")").."\n")

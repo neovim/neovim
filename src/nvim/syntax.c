@@ -7211,6 +7211,7 @@ static bool syn_list_header(const bool did_header, const int outlen,
 {
   int endcol = 19;
   bool newline = true;
+  bool adjust = true;
 
   if (!did_header) {
     msg_putchar('\n');
@@ -7219,6 +7220,9 @@ static bool syn_list_header(const bool did_header, const int outlen,
     }
     msg_outtrans(HL_TABLE()[id - 1].sg_name);
     endcol = 15;
+  } else if (ui_has(kUIMessages) || msg_silent) {
+    msg_putchar(' ');
+    adjust = false;
   } else if (msg_col + outlen + 1 >= Columns)   {
     msg_putchar('\n');
     if (got_int) {
@@ -7230,12 +7234,14 @@ static bool syn_list_header(const bool did_header, const int outlen,
     }
   }
 
-  if (msg_col >= endcol)        /* output at least one space */
-    endcol = msg_col + 1;
-  if (Columns <= endcol)        /* avoid hang for tiny window */
-    endcol = Columns - 1;
+  if (adjust) {
+    if (msg_col >= endcol) {
+      // output at least one space
+      endcol = msg_col + 1;
+    }
 
-  msg_advance(endcol);
+    msg_advance(endcol);
+  }
 
   /* Show "xxx" with the attributes. */
   if (!did_header) {
