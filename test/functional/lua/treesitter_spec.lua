@@ -1,11 +1,9 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
 
-local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
 local insert = helpers.insert
-local meth_pcall = helpers.meth_pcall
 local exec_lua = helpers.exec_lua
 local iswin = helpers.iswin
 local feed = helpers.feed

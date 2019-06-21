@@ -50,7 +50,7 @@ local function create_parser(bufnr, ft, id)
   self:parse()
     -- TODO: use weakref to self, so that the parser is free'd is no plugin is
     -- using it.
-  local function lines_cb(ev, ...)
+  local function lines_cb(_, ...)
     return on_lines(self, ...)
   end
   local detach_cb = nil

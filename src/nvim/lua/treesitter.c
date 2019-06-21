@@ -1,9 +1,9 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// lua bindings for tree-siter.
-// NB: this file should contain a generic lua interface for
-// tree-sitter trees and nodes, and could be broken out as a reusable library
+// lua bindings for tree-sitter.
+// NB: this file mostly contains a generic lua interface for tree-sitter
+// trees and nodes, and could be broken out as a reusable lua package
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -22,9 +22,9 @@
 #include "nvim/memline.h"
 
 typedef struct {
-    TSParser *parser;
-    TSTree *tree;  // internal tree, used for editing/reparsing
-} Tslua_parser;
+  TSParser *parser;
+  TSTree *tree;  // internal tree, used for editing/reparsing
+} TSLua_parser;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "lua/treesitter.c.generated.h"
@@ -68,9 +68,9 @@ static struct luaL_Reg node_meta[] = {
   { NULL, NULL }
 };
 
-PMap(cstr_t) *langs;
+static PMap(cstr_t) *langs;
 
-void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
+static void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
 {
   if (luaL_newmetatable(L, tname)) {  // [meta]
     for (size_t i = 0; meta[i].name != NULL; i++) {
@@ -84,8 +84,6 @@ void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
   lua_pop(L, 1);  // [] (don't use it now)
 }
 
-
-
 /// init the tslua library
 ///
 /// all global state is stored in the regirstry of the lua_State
@@ -95,13 +93,11 @@ void tslua_init(lua_State *L)
 
   // type metatables
   build_meta(L, "treesitter_parser", parser_meta);
-
   build_meta(L, "treesitter_tree", tree_meta);
-
   build_meta(L, "treesitter_node", node_meta);
 }
 
-int ts_lua_register_lang(lua_State *L)
+int tslua_register_lang(lua_State *L)
 {
   if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
     return luaL_error(L, "string expected");
@@ -114,22 +110,27 @@ int ts_lua_register_lang(lua_State *L)
     return 0;
   }
 
-  // TODO: unsafe!
-  char symbol_buf[128] = "tree_sitter_";
-  STRCAT(symbol_buf, lang_name);
+#define BUFSIZE 128
+  char symbol_buf[BUFSIZE];
+  snprintf(symbol_buf, BUFSIZE, "tree_sitter_%s", lang_name);
+#undef BUFSIZE
 
-  // TODO: we should maybe keep the uv_lib_t around, and close them
-  // at exit, to keep LeakSanitizer happy.
   uv_lib_t lib;
   if (uv_dlopen(path, &lib)) {
-    return luaL_error(L, "Failed to load parser: uv_dlopen: %s",
-                      uv_dlerror(&lib));
+    snprintf((char *)IObuff, IOSIZE, "Failed to load parser: uv_dlopen: %s",
+             uv_dlerror(&lib));
+    uv_dlclose(&lib);
+    lua_pushstring(L, (char *)IObuff);
+    return lua_error(L);
   }
 
   TSLanguage *(*lang_parser)(void);
   if (uv_dlsym(&lib, symbol_buf, (void **)&lang_parser)) {
-    return luaL_error(L, "Failed to load parser: uv_dlsym: %s",
-                      uv_dlerror(&lib));
+    snprintf((char *)IObuff, IOSIZE, "Failed to load parser: uv_dlsym: %s",
+             uv_dlerror(&lib));
+    uv_dlclose(&lib);
+    lua_pushstring(L, (char *)IObuff);
+    return lua_error(L);
   }
 
   TSLanguage *lang = lang_parser();
@@ -143,7 +144,7 @@ int ts_lua_register_lang(lua_State *L)
   return 1;
 }
 
-int ts_lua_inspect_lang(lua_State *L)
+int tslua_inspect_lang(lua_State *L)
 {
   if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
     return luaL_error(L, "string expected");
@@ -176,7 +177,6 @@ int ts_lua_inspect_lang(lua_State *L)
 
   lua_setfield(L, -2, "symbols");  // [retval]
 
-  // TODO: this seems to be empty, what langs have fields?
   size_t nfields = (size_t)ts_language_field_count(lang);
   lua_createtable(L, nfields-1, 1);  // [retval, fields]
   for (size_t i = 0; i < nfields; i++) {
@@ -190,14 +190,14 @@ int ts_lua_inspect_lang(lua_State *L)
 
 int tslua_push_parser(lua_State *L, const char *lang_name)
 {
-  TSParser *parser = ts_parser_new();
   TSLanguage *lang = pmap_get(cstr_t)(langs, lang_name);
   if (!lang) {
     return luaL_error(L, "no such language: %s", lang_name);
   }
 
+  TSParser *parser = ts_parser_new();
   ts_parser_set_language(parser, lang);
-  Tslua_parser *p = lua_newuserdata(L, sizeof(Tslua_parser));  // [udata]
+  TSLua_parser *p = lua_newuserdata(L, sizeof(TSLua_parser));  // [udata]
   p->parser = parser;
   p->tree = NULL;
 
@@ -206,14 +206,14 @@ int tslua_push_parser(lua_State *L, const char *lang_name)
   return 1;
 }
 
-static Tslua_parser *parser_check(lua_State *L)
+static TSLua_parser *parser_check(lua_State *L)
 {
   return luaL_checkudata(L, 1, "treesitter_parser");
 }
 
 static int parser_gc(lua_State *L)
 {
-  Tslua_parser *p = parser_check(L);
+  TSLua_parser *p = parser_check(L);
   if (!p) {
     return 0;
   }
@@ -238,6 +238,7 @@ static const char *input_cb(void *payload, uint32_t byte_index,
   buf_T *bp  = payload;
 #define BUFSIZE 256
   static char buf[BUFSIZE];
+
   if ((linenr_T)position.row >= bp->b_ml.ml_line_count) {
     *bytes_read = 0;
     return "";
@@ -246,10 +247,13 @@ static const char *input_cb(void *payload, uint32_t byte_index,
   size_t len = STRLEN(line);
   size_t tocopy = MIN(len-position.column, BUFSIZE);
 
-  // TODO: translate embedded \n to \000
   memcpy(buf, line+position.column, tocopy);
+  // Translate embedded \n to NUL
+  memchrsub(buf, '\n', '\0', tocopy);
   *bytes_read = (uint32_t)tocopy;
-  if (tocopy < 200) {
+  if (tocopy < BUFSIZE) {
+    // now add the final \n. If it didn't fit, input_cb will be called again
+    // on the same line with advanced column.
     buf[tocopy] = '\n';
     (*bytes_read)++;
   }
@@ -259,7 +263,7 @@ static const char *input_cb(void *payload, uint32_t byte_index,
 
 static int parser_parse_buf(lua_State *L)
 {
-  Tslua_parser *p = parser_check(L);
+  TSLua_parser *p = parser_check(L);
   if (!p) {
     return 0;
   }
@@ -282,7 +286,7 @@ static int parser_parse_buf(lua_State *L)
 
 static int parser_tree(lua_State *L)
 {
-  Tslua_parser *p = parser_check(L);
+  TSLua_parser *p = parser_check(L);
   if (!p) {
     return 0;
   }
@@ -298,7 +302,7 @@ static int parser_edit(lua_State *L)
     return lua_error(L);
   }
 
-  Tslua_parser *p = parser_check(L);
+  TSLua_parser *p = parser_check(L);
   if (!p) {
     return 0;
   }
