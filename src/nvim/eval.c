@@ -14715,7 +14715,7 @@ do_searchpair(
     /* clear the start flag to avoid getting stuck here */
     options &= ~SEARCH_START;
 
-    /* If the skip pattern matches, ignore this match. */
+    // If the skip pattern matches, ignore this match.
     if (use_skip) {
       save_pos = curwin->w_cursor;
       curwin->w_cursor = pos;
