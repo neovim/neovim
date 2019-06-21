@@ -288,14 +288,24 @@ func Test_searchpair()
   new
   call setline(1, ['other code here', '', '[', '" cursor here', ']'])
   4
-  let a=searchpair('\[','',']','bW')
+  let a = searchpair('\[','',']','bW')
   call assert_equal(3, a)
   set nomagic
   4
-  let a=searchpair('\[','',']','bW')
+  let a = searchpair('\[','',']','bW')
   call assert_equal(3, a)
   set magic
   q!
+endfunc
+
+func Test_searchpair_errors()
+  call assert_fails("call searchpair([0], 'middle', 'end', 'bW', 'skip', 99, 100)", 'E730: using List as a String')
+  call assert_fails("call searchpair('start', {-> 0}, 'end', 'bW', 'skip', 99, 100)", 'E729: using Funcref as a String')
+  call assert_fails("call searchpair('start', 'middle', {'one': 1}, 'bW', 'skip', 99, 100)", 'E731: using Dictionary as a String')
+  call assert_fails("call searchpair('start', 'middle', 'end', 'flags', 'skip', 99, 100)", 'E475: Invalid argument: flags')
+  call assert_fails("call searchpair('start', 'middle', 'end', 'bW', 0, 99, 100)", 'E475: Invalid argument: 0')
+  call assert_fails("call searchpair('start', 'middle', 'end', 'bW', 'func', -99, 100)", 'E475: Invalid argument: -99')
+  call assert_fails("call searchpair('start', 'middle', 'end', 'bW', 'func', 99, -100)", 'E475: Invalid argument: -100')
 endfunc
 
 func Test_searchpair_skip()
@@ -312,8 +322,6 @@ func Test_searchpair_skip()
     3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', {-> 0}))
     3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', function('Zero')))
     3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', function('Partial', [0])))
-    " invalid argument
-    3 | call assert_equal(0, searchpair('{', '', '}', 'bWn', 0))
     bw!
 endfunc
 

@@ -14527,7 +14527,8 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   long lnum_stop = 0;
   long time_limit = 0;
 
-  // Get the three pattern arguments: start, middle, end.
+  // Get the three pattern arguments: start, middle, end. Will result in an
+  // error if not a valid argument.
   char nbuf1[NUMBUFLEN];
   char nbuf2[NUMBUFLEN];
   const char *spat = tv_get_string_chk(&argvars[0]);
@@ -14566,16 +14567,19 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
     if (skip->v_type != VAR_FUNC
         && skip->v_type != VAR_PARTIAL
         && skip->v_type != VAR_STRING) {
+      emsgf(_(e_invarg2), tv_get_string(&argvars[4]));
       goto theend;  // Type error.
     }
     if (argvars[5].v_type != VAR_UNKNOWN) {
       lnum_stop = tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
+        emsgf(_(e_invarg2), tv_get_string(&argvars[5]));
         goto theend;
       }
       if (argvars[6].v_type != VAR_UNKNOWN) {
         time_limit = tv_get_number_chk(&argvars[6], NULL);
         if (time_limit < 0) {
+          emsgf(_(e_invarg2), tv_get_string(&argvars[6]));
           goto theend;
         }
       }
