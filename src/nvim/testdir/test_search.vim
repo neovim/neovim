@@ -298,6 +298,25 @@ func Test_searchpair()
   q!
 endfunc
 
+func Test_searchpair_skip()
+    func Zero()
+	return 0
+    endfunc
+    func Partial(x)
+	return a:x
+    endfunc
+    new
+    call setline(1, ['{', 'foo', 'foo', 'foo', '}'])
+    3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', ''))
+    3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', '0'))
+    3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', {-> 0}))
+    3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', function('Zero')))
+    3 | call assert_equal(1, searchpair('{', '', '}', 'bWn', function('Partial', [0])))
+    " invalid argument
+    3 | call assert_equal(0, searchpair('{', '', '}', 'bWn', 0))
+    bw!
+endfunc
+
 func Test_searchc()
   " These commands used to cause memory overflow in searchc().
   new

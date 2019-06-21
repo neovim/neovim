@@ -955,6 +955,63 @@ eval_to_bool(
   return retval;
 }
 
+static int eval_expr_typval(const typval_T *expr, typval_T *argv,
+                            int argc, typval_T *rettv)
+{
+  int dummy;
+
+  if (expr->v_type == VAR_FUNC) {
+    const char_u *const s = expr->vval.v_string;
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
+      return FAIL;
+    }
+  } else if (expr->v_type == VAR_PARTIAL) {
+    partial_T *const partial = expr->vval.v_partial;
+    const char_u *const s = partial_name(partial);
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+      return FAIL;
+    }
+  } else {
+    char buf[NUMBUFLEN];
+    char_u *s = (char_u *)tv_get_string_buf_chk(expr, buf);
+    if (s == NULL) {
+      return FAIL;
+    }
+    s = skipwhite(s);
+    if (eval1(&s, rettv, true) == FAIL) {
+      return FAIL;
+    }
+    if (*s != NUL) {  // check for trailing chars after expr
+      emsgf(_(e_invexpr2), s);
+      return FAIL;
+    }
+  }
+  return OK;
+}
+
+/// Like eval_to_bool() but using a typval_T instead of a string.
+/// Works for string, funcref and partial.
+static bool eval_expr_to_bool(const typval_T *expr, bool *error)
+{
+  typval_T rettv;
+
+  if (eval_expr_typval(expr, NULL, 0, &rettv) == FAIL) {
+    *error = true;
+    return false;
+  }
+  const bool res = (tv_get_number_chk(&rettv, error) != 0);
+  tv_clear(&rettv);
+  return res;
+}
+
 /// Top level evaluation function, returning a string
 ///
 /// @param[in]  arg  String to evaluate.
@@ -8864,40 +8921,12 @@ static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
   typval_T rettv;
   typval_T argv[3];
   int retval = FAIL;
-  int dummy;
 
   tv_copy(tv, &vimvars[VV_VAL].vv_tv);
   argv[0] = vimvars[VV_KEY].vv_tv;
   argv[1] = vimvars[VV_VAL].vv_tv;
-  if (expr->v_type == VAR_FUNC) {
-    const char_u *const s = expr->vval.v_string;
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
-      goto theend;
-    }
-  } else if (expr->v_type == VAR_PARTIAL) {
-    partial_T *partial = expr->vval.v_partial;
-
-    const char_u *const s = partial_name(partial);
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
-      goto theend;
-    }
-  } else {
-    char buf[NUMBUFLEN];
-    const char *s = tv_get_string_buf_chk(expr, buf);
-    if (s == NULL) {
-      goto theend;
-    }
-    s = (const char *)skipwhite((const char_u *)s);
-    if (eval1((char_u **)&s, &rettv, true) == FAIL) {
-      goto theend;
-    }
-
-    if (*s != NUL) {  // check for trailing chars after expr
-      emsgf(_(e_invexpr2), s);
-      goto theend;
-    }
+  if (eval_expr_typval(expr, argv, 2, &rettv) == FAIL) {
+    goto theend;
   }
   if (map) {
     // map(): replace the list item value.
@@ -14501,7 +14530,6 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   // Get the three pattern arguments: start, middle, end.
   char nbuf1[NUMBUFLEN];
   char nbuf2[NUMBUFLEN];
-  char nbuf3[NUMBUFLEN];
   const char *spat = tv_get_string_chk(&argvars[0]);
   const char *mpat = tv_get_string_buf_chk(&argvars[1], nbuf1);
   const char *epat = tv_get_string_buf_chk(&argvars[2], nbuf2);
@@ -14529,13 +14557,15 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   }
 
   // Optional fifth argument: skip expression.
-  const char *skip;
+  const typval_T *skip;
   if (argvars[3].v_type == VAR_UNKNOWN
       || argvars[4].v_type == VAR_UNKNOWN) {
-    skip = "";
+    skip = NULL;
   } else {
-    skip = tv_get_string_buf_chk(&argvars[4], nbuf3);
-    if (skip == NULL) {
+    skip = &argvars[4];
+    if (skip->v_type != VAR_FUNC
+        && skip->v_type != VAR_PARTIAL
+        && skip->v_type != VAR_STRING) {
       goto theend;  // Type error.
     }
     if (argvars[5].v_type != VAR_UNKNOWN) {
@@ -14553,7 +14583,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   }
 
   retval = do_searchpair(
-      (char_u *)spat, (char_u *)mpat, (char_u *)epat, dir, (char_u *)skip,
+      (char_u *)spat, (char_u *)mpat, (char_u *)epat, dir, skip,
       flags, match_pos, lnum_stop, time_limit);
 
 theend:
@@ -14601,7 +14631,7 @@ do_searchpair(
     char_u *mpat,          // middle pattern
     char_u *epat,          // end pattern
     int dir,               // BACKWARD or FORWARD
-    char_u *skip,          // skip expression
+    const typval_T *skip,  // skip expression
     int flags,             // SP_SETPCMARK and other SP_ values
     pos_T *match_pos,
     linenr_T lnum_stop,    // stop at this line if not zero
@@ -14619,6 +14649,7 @@ do_searchpair(
   int n;
   int r;
   int nest = 1;
+  bool use_skip = false;
   int options = SEARCH_KEEP;
   proftime_T tm;
   size_t pat2_len;
@@ -14646,6 +14677,13 @@ do_searchpair(
   }
   if (flags & SP_START) {
     options |= SEARCH_START;
+  }
+
+  if (skip != NULL) {
+    // Empty string means to not use the skip expression.
+    if (skip->v_type == VAR_STRING || skip->v_type == VAR_FUNC) {
+      use_skip = skip->vval.v_string != NULL && *skip->vval.v_string != NUL;
+    }
   }
 
   save_cursor = curwin->w_cursor;
@@ -14678,11 +14716,11 @@ do_searchpair(
     options &= ~SEARCH_START;
 
     /* If the skip pattern matches, ignore this match. */
-    if (*skip != NUL) {
+    if (use_skip) {
       save_pos = curwin->w_cursor;
       curwin->w_cursor = pos;
-      bool err;
-      r = eval_to_bool(skip, &err, NULL, false);
+      bool err = false;
+      r = eval_expr_to_bool(skip, &err);
       curwin->w_cursor = save_pos;
       if (err) {
         /* Evaluating {skip} caused an error, break here. */
