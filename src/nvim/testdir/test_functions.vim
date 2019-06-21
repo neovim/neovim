@@ -1,4 +1,5 @@
 " Tests for various functions.
+source shared.vim
 
 " Must be done first, since the alternate buffer must be unset.
 func Test_00_bufexists()
@@ -1150,6 +1151,17 @@ func Test_libcall_libcallnr()
     let libc = 'msvcrt.dll'
   elseif has('mac')
     let libc = 'libSystem.B.dylib'
+  elseif system('uname -s') =~ 'SunOS'
+    " Set the path to libc.so according to the architecture.
+    let test_bits = system('file ' . GetVimProg())
+    let test_arch = system('uname -p')
+    if test_bits =~ '64-bit' && test_arch =~ 'sparc'
+      let libc = '/usr/lib/sparcv9/libc.so'
+    elseif test_bits =~ '64-bit' && test_arch =~ 'i386'
+      let libc = '/usr/lib/amd64/libc.so'
+    else
+      let libc = '/usr/lib/libc.so'
+    endif
   else
     " On Unix, libc.so can be in various places.
     " Interestingly, using an empty string for the 1st argument of libcall
