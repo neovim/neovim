@@ -41,7 +41,7 @@ set(UNIBILIUM_INCLUDE_DIRS ${UNIBILIUM_INCLUDE_DIR})
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set UNIBILIUM_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(unibilium DEFAULT_MSG
+find_package_handle_standard_args(Unibilium DEFAULT_MSG
   UNIBILIUM_LIBRARY UNIBILIUM_INCLUDE_DIR)
 
 mark_as_advanced(UNIBILIUM_INCLUDE_DIR UNIBILIUM_LIBRARY)
