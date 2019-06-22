@@ -23,7 +23,8 @@
 
 #include "nvim/os/os_defs.h"       // bring lots of system header files
 
-/// length of a buffer to store a number in ASCII (64 bits binary + NUL)
+// length of a buffer to store a number in ASCII (64 bits binary + NUL)
+// if this changes the max numberwidth test in test/functional/options/num_options_spec.lua should be updated
 enum { NUMBUFLEN = 65 };
 
 #define MAX_TYPENR 65535
