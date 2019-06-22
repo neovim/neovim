@@ -113,7 +113,7 @@ class VariablesView( object ):
              old_scopes[ i ][ 'name' ] == scope[ 'name' ] ):
           scope[ '_expanded' ] = old_scopes[ i ].get( '_expanded', False )
           scope[ '_old_variables' ] = old_scopes[ i ].get( '_variables', [] )
-        elif not scope[ 'expensive' ]:
+        elif not scope.get( 'expensive' ):
           # Expand any non-expensive scope unless manually collapsed
           scope[ '_expanded' ] = True
 
