@@ -2551,17 +2551,21 @@ void qf_list(exarg_T *eap)
       }
 
       // Support for filtering entries using :filter /pat/ clist
-      int filter_entry = 1;
+      // Match against the module name, file name, search pattern and
+      // text of the entry.
+      bool filter_entry = true;
       if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
         filter_entry &= message_filtered(qfp->qf_module);
       }
-      if (fname != NULL) {
+      if (filter_entry && fname != NULL) {
         filter_entry &= message_filtered(fname);
       }
-      if (qfp->qf_pattern != NULL) {
+      if (filter_entry && qfp->qf_pattern != NULL) {
         filter_entry &= message_filtered(qfp->qf_pattern);
       }
-      filter_entry &= message_filtered(qfp->qf_text);
+      if (filter_entry) {
+        filter_entry &= message_filtered(qfp->qf_text);
+      }
       if (filter_entry) {
         goto next_entry;
       }
