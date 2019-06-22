@@ -2528,9 +2528,9 @@ void qf_list(exarg_T *eap)
   qfp = qi->qf_lists[qi->qf_curlist].qf_start;
   for (i = 1; !got_int && i <= qi->qf_lists[qi->qf_curlist].qf_count; ) {
     if ((qfp->qf_valid || all) && idx1 <= i && i <= idx2) {
-      msg_putchar('\n');
-      if (got_int)
+      if (got_int) {
         break;
+      }
 
       fname = NULL;
       if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
@@ -2549,6 +2549,23 @@ void qf_list(exarg_T *eap)
           vim_snprintf((char *)IObuff, IOSIZE, "%2d %s", i, (char *)fname);
         }
       }
+
+      // Support for filtering entries using :filter /pat/ clist
+      int filter_entry = 1;
+      if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
+        filter_entry &= message_filtered(qfp->qf_module);
+      }
+      if (fname != NULL) {
+        filter_entry &= message_filtered(fname);
+      }
+      if (qfp->qf_pattern != NULL) {
+        filter_entry &= message_filtered(qfp->qf_pattern);
+      }
+      filter_entry &= message_filtered(qfp->qf_text);
+      if (filter_entry) {
+        goto next_entry;
+      }
+      msg_putchar('\n');
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
                         ? HL_ATTR(HLF_QFL) : HL_ATTR(HLF_D));
       if (qfp->qf_lnum == 0) {
@@ -2579,6 +2596,7 @@ void qf_list(exarg_T *eap)
       ui_flush();                      /* show one line at a time */
     }
 
+next_entry:
     qfp = qfp->qf_next;
     if (qfp == NULL) {
       break;

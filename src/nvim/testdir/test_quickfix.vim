@@ -3373,6 +3373,23 @@ func Test_lbuffer_with_bwipe()
   augroup END
 endfunc
 
+" Tests for the ':filter /pat/ clist' command
+func Test_filter_clist()
+  cexpr ['Xfile1:10:10:Line 10', 'Xfile2:15:15:Line 15']
+  call assert_equal([' 2 Xfile2:15 col 15: Line 15'],
+			\ split(execute('filter /Line 15/ clist'), "\n"))
+  call assert_equal([' 1 Xfile1:10 col 10: Line 10'],
+			\ split(execute('filter /Xfile1/ clist'), "\n"))
+  call assert_equal([], split(execute('filter /abc/ clist'), "\n"))
+
+  call setqflist([{'module' : 'abc', 'pattern' : 'pat1'},
+			\ {'module' : 'pqr', 'pattern' : 'pat2'}], ' ')
+  call assert_equal([' 2 pqr:pat2:  '],
+			\ split(execute('filter /pqr/ clist'), "\n"))
+  call assert_equal([' 1 abc:pat1:  '],
+			\ split(execute('filter /pat1/ clist'), "\n"))
+endfunc
+
 func Test_setloclist_in_aucmd()
   " This was using freed memory.
   augroup nasty
