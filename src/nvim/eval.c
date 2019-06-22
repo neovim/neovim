@@ -955,6 +955,28 @@ eval_to_bool(
   return retval;
 }
 
+// Call eval1() and give an error message if not done at a lower level.
+static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
+
+  const int ret = eval1(arg, rettv, evaluate);
+  if (ret == FAIL) {
+    // Report the invalid expression unless the expression evaluation has
+    // been cancelled due to an aborting error, an interrupt, or an
+    // exception, or we already gave a more specific error.
+    // Also check called_emsg for when using assert_fails().
+    if (!aborting()
+        && did_emsg == did_emsg_before
+        && called_emsg == called_emsg_before) {
+      emsgf(_(e_invexpr2), arg);
+    }
+  }
+  return ret;
+}
+
 static int eval_expr_typval(const typval_T *expr, typval_T *argv,
                             int argc, typval_T *rettv)
   FUNC_ATTR_NONNULL_ARG(1, 2, 4)
@@ -987,7 +1009,7 @@ static int eval_expr_typval(const typval_T *expr, typval_T *argv,
       return FAIL;
     }
     s = skipwhite(s);
-    if (eval1(&s, rettv, true) == FAIL) {
+    if (eval1_emsg(&s, rettv, true) == FAIL) {
       return FAIL;
     }
     if (*s != NUL) {  // check for trailing chars after expr
@@ -6368,7 +6390,7 @@ call_func(
     partial_T *partial,             // optional, can be NULL
     dict_T *selfdict_in             // Dictionary for "self"
 )
-  FUNC_ATTR_NONNULL_ARG(5)
+  FUNC_ATTR_NONNULL_ARG(1, 3, 5, 9)
 {
   int ret = FAIL;
   int error = ERROR_NONE;
@@ -8891,6 +8913,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
       }
       hash_unlock(ht);
     } else {
+      // argvars[0].v_type == VAR_LIST
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
@@ -8921,6 +8944,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 }
 
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T rettv;
   typval_T argv[3];
@@ -14655,7 +14679,6 @@ do_searchpair(
   pos_T save_cursor;
   pos_T save_pos;
   int n;
-  int r;
   int nest = 1;
   bool use_skip = false;
   int options = SEARCH_KEEP;
@@ -14728,7 +14751,7 @@ do_searchpair(
       save_pos = curwin->w_cursor;
       curwin->w_cursor = pos;
       bool err = false;
-      r = eval_expr_to_bool(skip, &err);
+      const bool r = eval_expr_to_bool(skip, &err);
       curwin->w_cursor = save_pos;
       if (err) {
         /* Evaluating {skip} caused an error, break here. */
@@ -20525,7 +20548,6 @@ void ex_execute(exarg_T *eap)
   char_u      *arg = eap->arg;
   typval_T rettv;
   int ret = OK;
-  char_u      *p;
   garray_T ga;
   int save_did_emsg = did_emsg;
 
@@ -20534,17 +20556,8 @@ void ex_execute(exarg_T *eap)
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n') {
-    p = arg;
-    if (eval1(&arg, &rettv, !eap->skip) == FAIL) {
-      /*
-       * Report the invalid expression unless the expression evaluation
-       * has been cancelled due to an aborting error, an interrupt, or an
-       * exception.
-       */
-      if (!aborting() && did_emsg == save_did_emsg) {
-        EMSG2(_(e_invexpr2), p);
-      }
-      ret = FAIL;
+    ret = eval1_emsg(&arg, &rettv, !eap->skip);
+    if (ret == FAIL) {
       break;
     }
 
