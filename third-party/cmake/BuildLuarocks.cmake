@@ -181,30 +181,36 @@ if(USE_BUNDLED_BUSTED)
     DEPENDS busted)
   add_custom_target(luacheck
     DEPENDS ${LUACHECK_EXE})
+  set(nvim_client_depends luacheck)
 
-  set(LUV_DEPS luacheck luv-static lua-compat-5.3)
-  if(MINGW AND CMAKE_CROSSCOMPILING)
-    set(LUV_DEPS ${LUV_DEPS} libuv_host)
+  if(USE_BUNDLED_LUV)
+    set(LUV_DEPS luacheck luv-static lua-compat-5.3)
+    if(MINGW AND CMAKE_CROSSCOMPILING)
+      set(LUV_DEPS ${LUV_DEPS} libuv_host)
+    endif()
+    set(LUV_ARGS "CFLAGS=-O0 -g3 -fPIC")
+    if(USE_BUNDLED_LIBUV)
+      list(APPEND LUV_ARGS LIBUV_DIR=${HOSTDEPS_INSTALL_DIR})
+    endif()
+    # DEPENDS on the previous module, because Luarocks breaks if parallel.
+    SET(LUV_PRIVATE_ARGS LUA_COMPAT53_INCDIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3)
+    add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv
+      COMMAND ${LUAROCKS_BINARY}
+      ARGS make ${LUAROCKS_BUILDARGS} ${LUV_ARGS} ${LUV_PRIVATE_ARGS}
+      WORKING_DIRECTORY ${DEPS_BUILD_DIR}/src/luv
+      DEPENDS ${LUV_DEPS})
+    add_custom_target(luv
+      DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv)
+    set(nvim_client_depends luv)
+  else()
+    set(nvim_client_depends luacheck)
   endif()
-  set(LUV_ARGS "CFLAGS=-O0 -g3 -fPIC")
-  if(USE_BUNDLED_LIBUV)
-    list(APPEND LUV_ARGS LIBUV_DIR=${HOSTDEPS_INSTALL_DIR})
-  endif()
-  # DEPENDS on the previous module, because Luarocks breaks if parallel.
-  SET(LUV_PRIVATE_ARGS LUA_COMPAT53_INCDIR=${DEPS_BUILD_DIR}/src/lua-compat-5.3)
-  add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv
-    COMMAND ${LUAROCKS_BINARY}
-    ARGS make ${LUAROCKS_BUILDARGS} ${LUV_ARGS} ${LUV_PRIVATE_ARGS}
-    WORKING_DIRECTORY ${DEPS_BUILD_DIR}/src/luv
-    DEPENDS ${LUV_DEPS})
-  add_custom_target(luv
-    DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/luv)
 
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client
     COMMAND ${LUAROCKS_BINARY}
     ARGS build nvim-client 0.2.0-1 ${LUAROCKS_BUILDARGS}
-    DEPENDS luv)
+    DEPENDS ${nvim_client_depends})
   add_custom_target(nvim-client
     DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/nvim-client)
 
