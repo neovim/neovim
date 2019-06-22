@@ -1221,7 +1221,8 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
 /// Allocate a dictionary item
 ///
-/// @note that the value of the item (->di_tv) still needs to be initialized.
+/// @note that the type and value of the item (->di_tv) still needs to
+///       be initialized.
 ///
 /// @param[in]  key  Key, is copied to the new item.
 /// @param[in]  key_len  Key length.
@@ -1235,12 +1236,14 @@ dictitem_T *tv_dict_item_alloc_len(const char *const key, const size_t key_len)
   memcpy(di->di_key, key, key_len);
   di->di_key[key_len] = NUL;
   di->di_flags = DI_FLAGS_ALLOC;
+  di->di_tv.v_lock = VAR_UNLOCKED;
   return di;
 }
 
 /// Allocate a dictionary item
 ///
-/// @note that the value of the item (->di_tv) still needs to be initialized.
+/// @note that the type and value of the item (->di_tv) still needs to
+///       be initialized.
 ///
 /// @param[in]  key  Key, is copied to the new item.
 ///
@@ -1572,7 +1575,6 @@ int tv_dict_add_list(dict_T *const d, const char *const key,
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
-  item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_LIST;
   item->di_tv.vval.v_list = list;
   tv_list_ref(list);
@@ -1597,7 +1599,6 @@ int tv_dict_add_dict(dict_T *const d, const char *const key,
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
-  item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_DICT;
   item->di_tv.vval.v_dict = dict;
   dict->dv_refcount++;
@@ -1621,7 +1622,6 @@ int tv_dict_add_nr(dict_T *const d, const char *const key,
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
-  item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_NUMBER;
   item->di_tv.vval.v_number = nr;
   if (tv_dict_add(d, item) == FAIL) {
@@ -1644,7 +1644,6 @@ int tv_dict_add_special(dict_T *const d, const char *const key,
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
-  item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_SPECIAL;
   item->di_tv.vval.v_special = val;
   if (tv_dict_add(d, item) == FAIL) {
@@ -1706,7 +1705,6 @@ int tv_dict_add_allocated_str(dict_T *const d,
 {
   dictitem_T *const item = tv_dict_item_alloc_len(key, key_len);
 
-  item->di_tv.v_lock = VAR_UNLOCKED;
   item->di_tv.v_type = VAR_STRING;
   item->di_tv.vval.v_string = (char_u *)val;
   if (tv_dict_add(d, item) == FAIL) {
