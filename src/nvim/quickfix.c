@@ -4739,11 +4739,8 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, dict_T *retdict)
 /// Return the quickfix list title as 'title' in retdict
 static int qf_getprop_title(qf_info_T *qi, int qf_idx, dict_T *retdict)
 {
-    char_u *t = qi->qf_lists[qf_idx].qf_title;
-    if (t == NULL) {
-      t = (char_u *)"";
-    }
-    return tv_dict_add_str(retdict, S_LEN("title"), (const char *)t);
+    return tv_dict_add_str(retdict, S_LEN("title"),
+                           (const char *)qi->qf_lists[qf_idx].qf_title);
 }
 
 /// Return the quickfix list items/entries as 'items' in retdict
