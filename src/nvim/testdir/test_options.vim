@@ -385,8 +385,10 @@ func Test_backupskip()
   for var in  ['$TMPDIR', '$TMP', '$TEMP']
     if exists(var)
       let varvalue = substitute(expand(var), '\\', '/', 'g')
-      let found = (index(bsklist, varvalue.'/*') >= 0)
-      call assert_true(found, var . ' not in option bsk: ' . &bsk)
+      let varvalue = substitute(varvalue, '/$', '', '')
+      let varvalue .= '/*'
+      let found = (index(bsklist, varvalue) >= 0)
+      call assert_true(found, var . ' (' . varvalue . ') not in option bsk: ' . &bsk)
     endif
   endfor
 endfunc
