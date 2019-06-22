@@ -357,7 +357,7 @@ func Test_backupskip()
   for var in  ['$TEMPDIR', '$TMP', '$TEMP']
     if exists(var)
       let varvalue = substitute(expand(var), '\\', '/', 'g')
-      call assert_match(varvalue . '.\*', bskvalue)
+      call assert_match(varvalue . '/\=\*', bskvalue)
     endif
   endfor
 endfunc
