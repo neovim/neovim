@@ -391,6 +391,15 @@ func Test_backupskip()
       call assert_true(found, var . ' (' . varvalue . ') not in option bsk: ' . &bsk)
     endif
   endfor
+
+  " Duplicates should be filtered out (option has P_NODUP)
+  let backupskip = &backupskip
+  set backupskip=
+  set backupskip+=/test/dir
+  set backupskip+=/other/dir
+  set backupskip+=/test/dir
+  call assert_equal('/test/dir,/other/dir', &backupskip)
+  let &backupskip = backupskip
 endfunc
 
 func Test_copy_winopt()
