@@ -4145,6 +4145,10 @@ static int ins_compl_get_exp(pos_T *ini)
           found_new_match = OK;
           break;
         }
+        if (pos->lnum == last_match_pos.lnum
+            && pos->col == last_match_pos.col) {
+          break;
+        }
       }
       p_scs = save_p_scs;
       p_ws = save_p_ws;
