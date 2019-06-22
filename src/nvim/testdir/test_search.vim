@@ -325,6 +325,16 @@ func Test_searchpair_skip()
     bw!
 endfunc
 
+func Test_searchpair_leak()
+  new
+  call setline(1, 'if one else another endif')
+
+  " The error in the skip expression caused memory to leak.
+  call assert_fails("call searchpair('\\<if\\>', '\\<else\\>', '\\<endif\\>', '', '\"foo\" 2')", 'E15:')
+
+  bwipe!
+endfunc
+
 func Test_searchc()
   " These commands used to cause memory overflow in searchc().
   new

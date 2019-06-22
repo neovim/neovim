@@ -991,6 +991,7 @@ static int eval_expr_typval(const typval_T *expr, typval_T *argv,
       return FAIL;
     }
     if (*s != NUL) {  // check for trailing chars after expr
+      tv_clear(rettv);
       emsgf(_(e_invexpr2), s);
       return FAIL;
     }
