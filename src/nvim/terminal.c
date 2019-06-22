@@ -256,9 +256,9 @@ Terminal *terminal_open(TerminalOptions opts)
       if (color_val != -1) {
         VTermColor color;
         vterm_color_rgb(&color,
-          (uint8_t)(color_val >> 16) & 0xFF,
-          (uint8_t)(color_val >> 8) & 0xFF,
-          (uint8_t)(color_val >> 0) & 0xFF);
+                        (uint8_t)((color_val >> 16) & 0xFF),
+                        (uint8_t)((color_val >> 8) & 0xFF),
+                        (uint8_t)((color_val >> 0) & 0xFF));
         vterm_state_set_palette_color(state, i, &color);
       }
     }
@@ -604,10 +604,12 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int vt_bg = RGB_(cell.bg.rgb.red, cell.bg.rgb.green, cell.bg.rgb.blue);
     vt_fg = vt_fg != default_vt_fg ? vt_fg : - 1;
     vt_bg = vt_bg != default_vt_bg ? vt_bg : - 1;
-    int vt_fg_idx = VTERM_COLOR_IS_DEFAULT_FG(&cell.fg) ? 0 :
-                    VTERM_COLOR_IS_INDEXED(&cell.fg) ? cell.fg.indexed.idx + 1 : 0;
-    int vt_bg_idx = VTERM_COLOR_IS_DEFAULT_BG(&cell.bg) ? 0 :
-                    VTERM_COLOR_IS_INDEXED(&cell.bg) ? cell.bg.indexed.idx + 1 : 0;
+    int vt_fg_idx = VTERM_COLOR_IS_DEFAULT_FG(&cell.fg)
+        ? 0 : VTERM_COLOR_IS_INDEXED(&cell.fg)
+            ? cell.fg.indexed.idx + 1 : 0;
+    int vt_bg_idx = VTERM_COLOR_IS_DEFAULT_BG(&cell.bg)
+        ? 0 : VTERM_COLOR_IS_INDEXED(&cell.bg)
+            ? cell.bg.indexed.idx + 1 : 0;
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
