@@ -276,7 +276,7 @@ static int ins_need_undo;               /* call u_save() before inserting a
 static bool did_add_space = false;      // auto_format() added an extra space
                                         // under the cursor
 static TriState dont_sync_undo = kFalse;  // CTRL-G U prevents syncing undo
-                                          // for the next left/right cursor
+                                          // for the next left/right cursor key
 
 static linenr_T o_lnum = 0;
 
@@ -1037,7 +1037,7 @@ check_pum:
     if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)) {
       ins_s_left();
     } else {
-      ins_left(dont_sync_undo == kFalse);
+      ins_left();
     }
     break;
 
@@ -1050,7 +1050,7 @@ check_pum:
     if (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_CTRL)) {
       ins_s_right();
     } else {
-      ins_right(dont_sync_undo == kFalse);
+      ins_right();
     }
     break;
 
@@ -8103,9 +8103,10 @@ static void ins_mousescroll(int dir)
 
 
 
-static void ins_left(bool end_change)
+static void ins_left(void)
 {
   pos_T tpos;
+  const bool end_change = dont_sync_undo == kFalse;  // end undoable change
 
   if ((fdo_flags & FDO_HOR) && KeyTyped)
     foldOpenCursor();
@@ -8167,23 +8168,31 @@ static void ins_end(int c)
 
 static void ins_s_left(void)
 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  const bool end_change = dont_sync_undo == kFalse;  // end undoable change
+  if ((fdo_flags & FDO_HOR) && KeyTyped) {
     foldOpenCursor();
+  }
   undisplay_dollar();
   if (curwin->w_cursor.lnum > 1 || curwin->w_cursor.col > 0) {
-    start_arrow(&curwin->w_cursor);
+    start_arrow_with_change(&curwin->w_cursor, end_change);
+    if (!end_change) {
+      AppendCharToRedobuff(K_S_LEFT);
+    }
     (void)bck_word(1L, false, false);
     curwin->w_set_curswant = true;
   } else {
     vim_beep(BO_CRSR);
   }
+  dont_sync_undo = kFalse;
 }
 
 /// @param end_change      end undoable change
-static void ins_right(bool end_change)
+static void ins_right(void)
 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  const bool end_change = dont_sync_undo == kFalse;  // end undoable change
+  if ((fdo_flags & FDO_HOR) && KeyTyped) {
     foldOpenCursor();
+  }
   undisplay_dollar();
   if (gchar_cursor() != NUL || virtual_active()) {
     start_arrow_with_change(&curwin->w_cursor, end_change);
@@ -8220,17 +8229,23 @@ static void ins_right(bool end_change)
 
 static void ins_s_right(void)
 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  const bool end_change = dont_sync_undo == kFalse;  // end undoable change
+  if ((fdo_flags & FDO_HOR) && KeyTyped) {
     foldOpenCursor();
+  }
   undisplay_dollar();
   if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count
       || gchar_cursor() != NUL) {
-    start_arrow(&curwin->w_cursor);
+    start_arrow_with_change(&curwin->w_cursor, end_change);
+    if (!end_change) {
+      AppendCharToRedobuff(K_S_RIGHT);
+    }
     (void)fwd_word(1L, false, 0);
     curwin->w_set_curswant = true;
   } else {
     vim_beep(BO_CRSR);
   }
+  dont_sync_undo = kFalse;
 }
 
 static void
