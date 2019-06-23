@@ -31,6 +31,30 @@ describe('Signs', function()
   end)
 
   describe(':sign place', function()
+    it('allows signs with combining characters', function()
+      feed('ia<cr>b<cr><esc>')
+      command('sign define piet1 text=𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄ texthl=Search')
+      command('sign define piet2 text=𠜎̀́̂̃̄̅ texthl=Search')
+      command('sign place 1 line=1 name=piet1 buffer=1')
+      command('sign place 2 line=2 name=piet2 buffer=1')
+      screen:expect([[
+        {1:𐌢̀́̂̃̅̄𐌢̀́̂̃̅̄}a                                                  |
+        {1:𠜎̀́̂̃̄̅}b                                                  |
+        {2:  }^                                                   |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]])
+    end)
+
     it('shadows previously placed signs', function()
       feed('ia<cr>b<cr>c<cr><esc>')
       command('sign define piet text=>> texthl=Search')
