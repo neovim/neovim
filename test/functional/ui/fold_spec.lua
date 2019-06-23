@@ -28,6 +28,22 @@ describe("folded lines", function()
     screen:detach()
   end)
 
+  it("work with more than one signcolumn", function()
+    command("set signcolumn=yes:9")
+    feed("i<cr><esc>")
+    feed("vkzf")
+    screen:expect([[
+        {5:                  ^+--  2 lines: ·············}|
+        {1:~                                            }|
+        {1:~                                            }|
+        {1:~                                            }|
+        {1:~                                            }|
+        {1:~                                            }|
+        {1:~                                            }|
+                                                     |
+    ]])
+  end)
+
   it("highlighting with relative line numbers", function()
     command("set relativenumber foldmethod=marker")
     feed_command("set foldcolumn=2")
