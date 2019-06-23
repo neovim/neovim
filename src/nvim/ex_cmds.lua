@@ -601,6 +601,12 @@ return {
     func='ex_wrongmodifier',
   },
   {
+    command='const',
+    flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_const',
+  },
+  {
     command='copen',
     flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
     addr_type=ADDR_LINES,
