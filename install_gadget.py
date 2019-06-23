@@ -142,6 +142,35 @@ GADGETS = {
       },
     }
   },
+  'vscode-mono-debug': {
+    'language': 'csharp',
+    'enabled': False,
+    'download': {
+      'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
+             'publishers/ms-vscode/vsextensions/mono-debug/${version}/'
+             'vspackage',
+      'target': 'vscode-mono-debug.tar.gz',
+      'format': 'tar',
+    },
+    'all': {
+      'file_name': 'vscode-mono-debug.vsix',
+      'version': '0.15.8',
+      'checksum':
+          '723eb2b621b99d65a24f215cb64b45f5fe694105613a900a03c859a62a810470',
+    },
+    'adapters': {
+      'vscode-mono-debug': {
+        "name": "mono-debug",
+        "command": [
+          "mono",
+          "${gadgetDir}/vscode-mono-debug/bin/Release/mono-debug.exe"
+        ],
+        "attach": {
+          "pidSelect": "none"
+        },
+      },
+    }
+  },
   'vscode-bash-debug': {
     'language': 'bash',
     'download': {
@@ -357,28 +386,34 @@ parser.add_argument( '--all',
                      action = 'store_true',
                      help = 'Enable all completers' )
 
+done_languages = set()
 for name, gadget in GADGETS.items():
+  lang = gadget[ 'language' ]
+  if lang in done_languages:
+    continue
+
+  done_languages.add( lang )
   if not gadget.get( 'enabled', True ):
     parser.add_argument(
-      '--force-enable-' + gadget[ 'language' ],
+      '--force-enable-' + lang,
       action = 'store_true',
       help = 'Install the unsupported {} debug adapter for {} support'.format(
         name,
-        gadget[ 'language' ] ) )
+        lang ) )
     continue
 
   parser.add_argument(
-    '--enable-' + gadget[ 'language' ],
+    '--enable-' + lang,
     action = 'store_true',
     help = 'Install the {} debug adapter for {} support'.format(
       name,
-      gadget[ 'language' ] ) )
+      lang ) )
 
   parser.add_argument(
-    '--disable-' + gadget[ 'language' ],
+    '--disable-' + lang,
     action = 'store_true',
     help = 'Don\t install the {} debug adapter for {} support '
-           '(when supplying --all)'.format( name, gadget[ 'language' ] ) )
+           '(when supplying --all)'.format( name, lang ) )
 
 args = parser.parse_args()
 
