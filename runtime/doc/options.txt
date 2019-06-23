@@ -3781,12 +3781,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
 
-						*'makespellmem'* *'msm'*
-'makespellmem' 'msm'		string	(default "460000,2000,500")
-			global
-	Values relevant only when compressing a spell file, see |spell|.
-	This option cannot be set from a |modeline| or in the |sandbox|.
-
 						*'matchpairs'* *'mps'*
 'matchpairs' 'mps'	string	(default "(:),{:},[:]")
 			local to buffer
@@ -3897,6 +3891,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:set mkspellmem=900000,3000,800
 <	If you have less than 512 Mbyte |:mkspell| may fail for some
 	languages, no matter what you set 'mkspellmem' to.
+
+	This option cannot be set from a |modeline| or in the |sandbox|.
 
 				   *'modeline'* *'ml'* *'nomodeline'* *'noml'*
 'modeline' 'ml'		boolean	(Vim default: on (off for root),
