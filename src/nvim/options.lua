@@ -1540,6 +1540,7 @@ return {
       full_name='modelineexpr', abbreviation='mle',
       type='bool', scope={'global'},
       vi_def=true,
+      secure=true,
       varname='p_mle',
       defaults={if_true={vi=false}}
     },
