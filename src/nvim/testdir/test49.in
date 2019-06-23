@@ -4,7 +4,7 @@ If after adding a new test, the test output doesn't appear properly in
 test49.failed, try to add one or more "G"s at the line ending in "test.out"
 
 STARTTEST
-:se nomore
+:se nomore modelineexpr
 :lang mess C
 :so test49.vim
 :" Go back to this file and append the results from register r.
