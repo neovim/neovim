@@ -18,6 +18,19 @@ func Test_define_var_with_lock()
     const b = v:true
     const n = v:null
 
+    call assert_true(exists('i'))
+    call assert_true(exists('f'))
+    call assert_true(exists('s'))
+    call assert_true(exists('F'))
+    call assert_true(exists('l'))
+    call assert_true(exists('d'))
+    if has('channel')
+        call assert_true(exists('j'))
+        call assert_true(exists('c'))
+    endif
+    call assert_true(exists('b'))
+    call assert_true(exists('n'))
+
     call assert_fails('let i = 1', 'E741:')
     call assert_fails('let f = 1.1', 'E741:')
     call assert_fails('let s = "vim"', 'E741:')
@@ -197,6 +210,17 @@ func Test_const_with_special_variables()
     call assert_fails('const &filetype = "vim"', 'E996:')
     call assert_fails('const &l:filetype = "vim"', 'E996:')
     call assert_fails('const &g:encoding = "utf-8"', 'E996:')
+endfunc
+
+func Test_const_with_eval_name()
+    let s = 'foo'
+
+    " eval name with :const should work
+    const abc_{s} = 1
+    const {s}{s} = 1
+
+    let s2 = 'abc_foo'
+    call assert_fails('const {s2} = "bar"', 'E995:')
 endfunc
 
 func Test_lock_depth_is_1()

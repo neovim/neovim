@@ -9631,15 +9631,10 @@ This does NOT work: >
 			If the system does not support deleting an environment
 			variable, it is made empty.
 
-						*:cons* *:const* *E996*
+						*:cons* *:const*
 :cons[t] {var-name} = {expr1}
 :cons[t] [{name1}, {name2}, ...] = {expr1}
-:cons[t] [{name1}, {name2}, ...] .= {expr1}
 :cons[t] [{name}, ..., ; {lastname}] = {expr1}
-:cons[t] {var-name} =<< [trim] {marker}
-text...
-text...
-{marker}
 			Similar to |:let|, but additionally lock the variable
 			after setting the value.  This is the same as locking
 			the variable with |:lockvar| just after |:let|, thus: >
@@ -9653,7 +9648,11 @@ text...
 			|:const| does not allow to for changing a variable. >
 				:let x = 1
 				:const x = 2  " Error!
-<
+<							*E996*
+			Note that environment variables, option values and
+			register values cannot be used here, since they cannot
+			be locked.
+
 :lockv[ar][!] [depth] {name} ...			*:lockvar* *:lockv*
 			Lock the internal variable {name}.  Locking means that
 			it can no longer be changed (until it is unlocked).
