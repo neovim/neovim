@@ -55,7 +55,7 @@ endfunction()
 
 set(LUV_SRC_DIR ${DEPS_BUILD_DIR}/src/luv)
 set(LUV_INCLUDE_FLAGS
-  "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.0")
+  "-I${DEPS_INSTALL_DIR}/include -I${DEPS_INSTALL_DIR}/include/luajit-2.1")
 
 # Replace luv default rockspec with the alternate one under the "rockspecs"
 # directory
