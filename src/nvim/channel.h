@@ -62,6 +62,13 @@ static inline bool callback_reader_set(CallbackReader reader)
 
 typedef struct {
   Callback callback;
+
+  // parallel call
+  int count;           // number of workers
+  list_T *work_queue;  // argument lists to consume
+  int next;            // position of next list to consume from "work_queue"
+  Array results;       // accumulated results
+  typval_T callee;     // called function
 } AsyncCall;
 
 struct Channel {
@@ -166,6 +173,17 @@ static inline void put_result(uint64_t job, Object result, Error *err)
   ADD(args, copy_object(result));
   nvim_execute_lua(
       STATIC_CSTR_AS_STRING("return vim._put_result(select(1, ...))"),
+      args, err);
+  api_free_array(args);
+}
+
+static inline void append_result(uint64_t job, Object result, Error *err)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ((long)job));
+  ADD(args, copy_object(result));
+  nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("return vim._append_result(select(1, ...))"),
       args, err);
   api_free_array(args);
 }

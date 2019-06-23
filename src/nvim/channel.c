@@ -236,6 +236,11 @@ void asynccall_clear(AsyncCall **async_call)
   FUNC_ATTR_NONNULL_ALL
 {
   callback_free(&(*async_call)->callback);
+  if ((*async_call)->work_queue) {  // parallel call
+    tv_list_unref((*async_call)->work_queue);
+    api_free_array((*async_call)->results);
+    tv_clear(&(*async_call)->callee);
+  }
   xfree(*async_call);
   *async_call = NULL;
 }
@@ -245,10 +250,6 @@ static void free_channel_event(void **argv)
   Channel *chan = argv[0];
   if (chan->is_rpc) {
     rpc_free(chan);
-  }
-
-  if (chan->async_call) {
-    asynccall_clear(&chan->async_call);
   }
 
   callback_reader_free(&chan->on_data);

@@ -7654,6 +7654,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   chan->async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
   chan->async_call->callback = callback;
+  chan->async_call->work_queue = NULL;
 
   Array call_async_args = ARRAY_DICT_INIT;
   ADD(call_async_args, vim_to_object(callee));
@@ -7666,6 +7667,78 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   rettv->vval.v_number = chan->id;
+}
+
+/// "call_parallel(count, callee, arglists, opts[, callback])" function
+static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  typval_T *count = NULL;
+  typval_T *callee = NULL;
+  typval_T *arglists = NULL;
+  typval_T *opts = NULL;
+  Callback callback = CALLBACK_NONE;
+
+  count = &argvars[0];
+  if (count->v_type != VAR_NUMBER || count->vval.v_number < 1) {
+    EMSG2(_(e_invarg2),
+          "First argument of call_parallel() must be a positive number");
+    return;
+  }
+
+  callee = &argvars[1];
+  if (callee->v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2),
+          "Second argument of call_parallel() must be a string");
+    return;
+  }
+
+  arglists = &argvars[2];
+  if (arglists->v_type != VAR_LIST) {
+    EMSG2(_(e_invarg2),
+          "Third argument of call_parallel() must be a list");
+    return;
+  }
+
+  opts = &argvars[3];
+  if (opts->v_type != VAR_DICT) {
+    EMSG2(_(e_invarg2),
+          "Fourth argument of call_parallel() must be a dictionary");
+    return;
+  }
+
+  if (argvars[4].v_type != VAR_UNKNOWN
+      && !callback_from_typval(&callback, &argvars[4])) {
+    EMSG2(_(e_invarg2),
+          "Fifth argument of call_parallel() "
+          "must be a function name or funcref");
+    return;
+  }
+
+  AsyncCall *async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
+  async_call->callback = callback;
+  async_call->count = tv_list_len(arglists->vval.v_list);
+  if (count->vval.v_number < async_call->count) {
+    async_call->count = count->vval.v_number;
+  }
+  async_call->work_queue = arglists->vval.v_list;
+  tv_list_ref(arglists->vval.v_list);
+  async_call->next = 0;
+  async_call->results = (Array)ARRAY_DICT_INIT;
+  tv_copy(callee, &async_call->callee);
+
+  tv_list_alloc_ret(rettv, async_call->count);
+  for (int i = 0; i < async_call->count; i++) {
+    Channel *chan = acquire_asynccall_channel();
+    tv_list_append_number(rettv->vval.v_list, chan->id);
+    chan->async_call = async_call;
+    Array call_async_args = ARRAY_DICT_INIT;
+    ADD(call_async_args, vim_to_object(callee));
+    ADD(call_async_args, STRING_OBJ(cstr_to_string("")));
+    listitem_T *args =
+      tv_list_find(async_call->work_queue, async_call->next++);
+    ADD(call_async_args, vim_to_object(TV_LIST_ITEM_TV(args)));
+    rpc_send_event(chan->id, "nvim__async_invoke", call_async_args);
+  }
 }
 
 /// "call_wait(ids[, timeout])" function

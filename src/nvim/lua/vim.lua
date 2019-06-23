@@ -220,6 +220,16 @@ local function _put_result(job, result)
   _call_results[job] = result
 end
 
+-- Appends async call result to a channel in "_call_results".
+-- Used for parallel calls by append_result().
+local function _append_result(job, result)
+  if _call_results[job] == nil then
+    _call_results[job] = { result }
+  else
+    table.insert(_call_results[job], result)
+  end
+end
+
 -- Removes the async call results of the given job ids from "_call_results"
 -- and returns them in an array of maps with "status" and "value" keys.
 local function _collect_results(jobs, status)
@@ -243,6 +253,7 @@ local module = {
   _grep = _grep,
   _create_nvim_job = _create_nvim_job,
   _put_result = _put_result,
+  _append_result = _append_result,
   _collect_results = _collect_results,
 }
 

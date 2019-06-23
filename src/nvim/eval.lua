@@ -57,6 +57,7 @@ return {
     byteidxcomp={args=2},
     call={args={2, 3}},
     call_async={args={3, 4}},
+    call_parallel={args={4, 5}},
     call_wait={args={1, 2}},
     ceil={args=1, func="float_op_wrapper", data="&ceil"},
     changenr={},
