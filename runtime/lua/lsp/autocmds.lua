@@ -3,7 +3,7 @@
 -- This file contains a table of all the functions that should be fired via autocmds.
 -- The table is set up such that:
 -- {
---   'request/name' : {'BufWritePre', {'User', 'LSPRequestName'}}
+--   'request/name' : {'BufWritePre', 'BufWritePre'}
 -- }
 
 local log = require('lsp.log')
@@ -18,8 +18,6 @@ local AutocmdEnum = Enum:new({
 
 
 local AcceptedAutocmdPostfixes = Enum:new({
-  pre = 'pre',
-  post = 'post',
   response = 'response',
   notification = 'notification',
 })
@@ -33,9 +31,6 @@ local default_request_autocmds = {}
 
 local default_notify_autocmds = {
   ['textDocument/didOpen'] = {
-    -- After initialization, make sure to tell the LSP that we opened the file
-    {'User', 'LSP/initialize/post'},
-
     'BufReadPost',
     -- 'BufEnter',
   },
@@ -60,9 +55,6 @@ local default_notify_autocmds = {
 
     'TextChanged',
     'InsertLeave',
-
-    {'User', 'LSP/textDocument/completion/pre'},
-    {'User', 'LSP/textDocument/rename/pre'},
   },
 }
 

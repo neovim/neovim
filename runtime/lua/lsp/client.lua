@@ -151,12 +151,6 @@ end
 -- If a callback is passed,
 --  it will be registered to run when the response is received.
 --
--- It will also issue autocommands in Vim so that other plugins can do things on LSP actions.
---  For example, when sending the request: 'textDocument/hover',
---  it will send:
---      LSP/textDocument/hover/pre
---      LSP/textDocument/hover/post
---
 -- @param method (string|table) : The identifier for the type of message that is being requested
 -- @param params (table)        : Optional parameters to pass to override default parameters for a request
 -- @param cb     (function)     : An optional function pointer to call once the request has been completed
@@ -184,10 +178,8 @@ client.request_async = function(self, method, params, cb)
 
 
   if should_send_message(self, req) then
-    lsp_doautocmd(method, 'pre')
     log.debug("Sending Request: [["..req:data().."]]")
     vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
-    lsp_doautocmd(method, 'post')
   else
     log.debug(string.format('Request "%s" was cancelled with params %s', method, util.tostring(params)))
   end
@@ -211,10 +203,8 @@ client.notify = function(self, method, params)
   end
 
   if should_send_message(self, notification) then
-    lsp_doautocmd(method, 'pre')
     log.debug("Sending Notification: [["..notification:data().."]]")
     vim.api.nvim_call_function('chansend', {self.job_id, notification:data()})
-    lsp_doautocmd(method, 'post')
   else
     log.debug(string.format('Notification "%s" was cancelled with params %s', method, util.tostring(params)))
   end
