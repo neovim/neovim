@@ -686,6 +686,10 @@ local curbufmeths = create_callindex(curbuf)
 local curwinmeths = create_callindex(curwin)
 local curtabmeths = create_callindex(curtab)
 
+local function exec_lua(code, ...)
+  return meths.execute_lua(code, {...})
+end
+
 local function redir_exec(cmd)
   meths.set_var('__redir_exec_cmd', cmd)
   nvim_command([[
@@ -778,6 +782,7 @@ local module = {
   curwinmeths = curwinmeths,
   eval = nvim_eval,
   exc_exec = exc_exec,
+  exec_lua = exec_lua,
   expect = expect,
   expect_any = expect_any,
   expect_msg_seq = expect_msg_seq,

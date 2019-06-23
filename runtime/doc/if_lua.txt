@@ -382,20 +382,26 @@ management.  Try this command to see available functions: >
 See http://docs.libuv.org for complete documentation.
 See https://github.com/luvit/luv/tree/master/examples for examples.
 
-Note: it is not safe to directly invoke the Nvim API from `vim.loop`
-callbacks.  This will crash: >
+						*E5560* *lua-loop-callbacks*
+Note: it is not allowed to directly invoke most of the Nvim API from `vim.loop`
+callbacks.  This will result in an error: >
 
     local timer = vim.loop.new_timer()
     timer:start(1000, 0, function()
-      vim.api.nvim_command('sleep 100m')  -- BROKEN, will crash.
+      vim.api.nvim_command('echomsg "test"')
     end)
 
-Instead wrap the API call with |vim.schedule()|. >
+The `vim.schedule_wrap` helper can be used to defer the callback until it
+is safe to execute API methods. >
 
     local timer = vim.loop.new_timer()
-    timer:start(1000, 0, function()
-      vim.schedule(function() vim.api.nvim_command('sleep 100m') end)
-    end)
+    timer:start(1000, 0, vim.schedule_wrap(function()
+      vim.api.nvim_command('echomsg "test"')
+    end))
+
+A subset of the API is available in direct luv callbacks ("fast" callbacks),
+most notably |nvim_get_mode()| and |nvim_input()|.
+
 
 Example: repeating timer
     1. Save this code to a file.
