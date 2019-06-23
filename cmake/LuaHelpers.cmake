@@ -23,6 +23,10 @@ function(check_lua_deps LUA_PRG_PATH MODULES RESULT_VAR)
       "[${LUA_PRG_PATH}] file not found")
   endif()
 
+  execute_process(COMMAND ${LUA_PRG_PATH} -e "print(string.format([[package.path: %s, package.cpath: %s]], package.path, package.cpath))"
+    OUTPUT_VARIABLE out)
+  message(STATUS "Lua paths: ${out}")
+
   foreach(module ${MODULES})
     check_lua_module(${LUA_PRG_PATH} ${module} has_module)
     if(NOT has_module)
