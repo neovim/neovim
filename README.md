@@ -85,6 +85,11 @@ of hackery that makes it challenging to support generally. These languages are
 on a best-efforts basis:
 
 - Java (see caveats)
+- C# (c-sharp) using dotnet core
+
+## Languages known not to work
+
+- C# (c-sharp) using mono debug adapter (vimspector unable to set breakpoints)
 
 ## Other languages
 
@@ -145,12 +150,14 @@ RHEL 7.6.
 
 The debug adapters themselves have certain runtime dependencies:
 
-| Language     | Switch            | Adapter           | Dependencies           |
-|--------------|-------------------|-------------------|------------------------|
-| C, C++, etc. | `--enable-c`      | vscode-cpptools   | mono-core              |
-| Python       | `--enable-python` | vscode-python     | Python 2.7 or Python 3 |
-| TCL          | `--enable-tcl`    | tclpro            | TCL 8.5                |
-| Bourne Shell | `--enable-bash`   | vscode-bash-debug | Bash v??               |
+| Language         | Status       | Switch                       | Adapter           | Dependencies           |
+|------------------|--------------|------------------------------|-------------------|------------------------|
+| C, C++, etc.     | Supported    | `--all` or ` --enable-c`     | vscode-cpptools   | mono-core              |
+| Python           | Supported    | `--all` or `--enable-python` | vscode-python     | Python 2.7 or Python 3 |
+| TCL              | Experimental | `--all` or `--enable-tcl`    | tclpro            | TCL 8.5                |
+| Bourne Shell     | Experimental | `--all` or `--enable-bash`   | vscode-bash-debug | Bash v??               |
+| C# (dotnet core) | Experimental | `--force-enable-csharp`      | netcoredbg        | DotNet core            |
+| C# (mono)        | Experimental | `--force-enable-csharp`      | vscode-mono-debug | Mono                   |
 
 For other languages, you'll need some other way to install the gadget.
 
@@ -525,6 +532,53 @@ Example `.vimspector.json`
 
 See [my fork of TclProDebug](https://github.com/puremourning/TclProDebug) for instructions.
 
+* C# - dotnet core
+
+Requires `install_gadget.py --force-enable-c-sharp`
+
+```json
+{
+  "configurations": {
+    "launch - netcoredbg": {
+      "adapter": "netcoredbg",
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/bin/Debug/netcoreapp2.2/csharp.dll",
+        "args": [],
+        "stopAtEntry": true
+      }
+    }
+  }
+}
+```
+
+* C# - mono
+
+Requires `install_gadget.py --force-enable-c-sharp`.
+
+***Known not to work.****
+
+```json
+{
+  "configurations": {
+    "launch - mono": {
+      "adapter": "vscode-mono-debug",
+      "configuration": {
+        "request": "launch",
+        "program": "${workspaceRoot}/bin/Debug/netcoreapp2.2/csharp.dll",
+        "args": [],
+        "cwd": "${workspaceRoot}",
+        "runtimeExecutable": "mono",
+        "runtimeArgs": [],
+        "env": [],
+        "externalConsole": false,
+        "console": "integratedTerminal"
+      }
+    }
+  }
+}
+```
+
 Also the mock debugger, but that isn't actually useful.
 
 ## Partially supported
@@ -537,12 +591,6 @@ Also the mock debugger, but that isn't actually useful.
   manually (however you might do so) and you can tell vimspector the port
   on which it is listening. See [this issue](https://github.com/puremourning/vimspector/issues/3)
   for more background.
-
-## Unsupported
-
-Known not to work:
-* C-sharp. The license appears to require that it is only used with Visual
-  Studio Code.
 
 # FAQ
 

@@ -106,6 +106,42 @@ GADGETS = {
     },
     'do': lambda name, root: InstallTclProDebug( name, root )
   },
+  'netcoredbg': {
+    'language': 'csharp',
+    'enabled': False,
+    'download': {
+      'url': ( 'https://github.com/Samsung/netcoredbg/releases/download/latest/'
+               '${file_name}' ),
+      'format': 'tar',
+    },
+    'all': {
+      'version': 'master'
+    },
+    'macos': {
+      'file_name': 'netcoredbg-osx-master.tar.gz',
+      'checksum': '',
+    },
+    'linux': {
+      'file_name': 'netcoredbg-linux-master.tar.gz',
+      'checksum': '',
+    },
+    'do': lambda name, root: MakeSymlink( gadget_dir,
+                                          name,
+                                          os.path.join( root, 'netcoredbg' ) ),
+    'adapters': {
+      'netcoredbg': {
+        "name": "netcoredbg",
+        "command": [
+          "${gadgetDir}/netcoredbg/netcoredbg",
+          "--interpreter=vscode"
+        ],
+        "attach": {
+          "pidProperty": "processId",
+          "pidSelect": "ask"
+        },
+      },
+    }
+  },
   'vscode-mono-debug': {
     'language': 'csharp',
     'enabled': False,
@@ -121,6 +157,18 @@ GADGETS = {
       'version': '0.15.8',
       'checksum':
           '723eb2b621b99d65a24f215cb64b45f5fe694105613a900a03c859a62a810470',
+    },
+    'adapters': {
+      'vscode-mono-debug': {
+        "name": "mono-debug",
+        "command": [
+          "mono",
+          "${gadgetDir}/vscode-mono-debug/bin/Release/mono-debug.exe"
+        ],
+        "attach": {
+          "pidSelect": "none"
+        },
+      },
     }
   },
   'vscode-bash-debug': {
@@ -338,22 +386,34 @@ parser.add_argument( '--all',
                      action = 'store_true',
                      help = 'Enable all completers' )
 
+done_languages = set()
 for name, gadget in GADGETS.items():
+  lang = gadget[ 'language' ]
+  if lang in done_languages:
+    continue
+
+  done_languages.add( lang )
   if not gadget.get( 'enabled', True ):
+    parser.add_argument(
+      '--force-enable-' + lang,
+      action = 'store_true',
+      help = 'Install the unsupported {} debug adapter for {} support'.format(
+        name,
+        lang ) )
     continue
 
   parser.add_argument(
-    '--enable-' + gadget[ 'language' ],
+    '--enable-' + lang,
     action = 'store_true',
     help = 'Install the {} debug adapter for {} support'.format(
       name,
-      gadget[ 'language' ] ) )
+      lang ) )
 
   parser.add_argument(
-    '--disable-' + gadget[ 'language' ],
+    '--disable-' + lang,
     action = 'store_true',
     help = 'Don\t install the {} debug adapter for {} support '
-           '(when supplying --all)'.format( name, gadget[ 'language' ] ) )
+           '(when supplying --all)'.format( name, lang ) )
 
 args = parser.parse_args()
 
@@ -361,13 +421,13 @@ failed = []
 all_adapters = {}
 for name, gadget in GADGETS.items():
   if not gadget.get( 'enabled', True ):
-    continue
-
-  if not args.all and not getattr( args, 'enable_' + gadget[ 'language' ] ):
-    continue
-
-  if getattr( args, 'disable_' + gadget[ 'language' ] ):
-    continue
+    if not getattr( args, 'force_enable_' + gadget[ 'language' ] ):
+      continue
+  else:
+    if not args.all and not getattr( args, 'enable_' + gadget[ 'language' ] ):
+      continue
+    if getattr( args, 'disable_' + gadget[ 'language' ] ):
+      continue
 
   try:
     v = {}
