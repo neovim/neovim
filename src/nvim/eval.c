@@ -8913,7 +8913,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
       }
       hash_unlock(ht);
     } else {
-      // argvars[0].v_type == VAR_LIST
+      assert(argvars[0].v_type == VAR_LIST);
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
