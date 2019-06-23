@@ -41,14 +41,14 @@ ifeq (,$(BUILD_TOOL))
   endif
 endif
 
+BUILD_CMD = $(BUILD_TOOL)
+
 ifneq ($(VERBOSE),)
   # Only need to handle Ninja here.  Make will inherit the VERBOSE variable.
   ifeq ($(BUILD_TYPE),Ninja)
-    VERBOSE_FLAG := -v
+    BUILD_CMD += -v
   endif
 endif
-
-BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
 
 DEPS_CMAKE_FLAGS ?=
 # Back-compat: USE_BUNDLED_DEPS was the old name.
