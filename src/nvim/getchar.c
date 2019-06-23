@@ -1260,9 +1260,10 @@ openscript (
     return;
   }
 
-  if (ignore_script)
-    /* Not reading from script, also don't open one.  Warning message? */
+  if (ignore_script) {
+    // Not reading from script, also don't open one.  Warning message?
     return;
+  }
 
   if (scriptin[curscript] != NULL)      /* already reading script */
     ++curscript;
