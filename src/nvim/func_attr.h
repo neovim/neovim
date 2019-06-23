@@ -205,8 +205,8 @@
 #endif
 
 #ifdef DEFINE_FUNC_ATTRIBUTES
-/// Non-deferred API function.
-# define FUNC_API_ASYNC
+/// Fast (non-deferred) API function.
+# define FUNC_API_FAST
 /// Internal C function not exposed in the RPC API.
 # define FUNC_API_NOEXPORT
 /// API function not exposed in VimL/eval.

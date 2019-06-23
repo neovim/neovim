@@ -309,7 +309,7 @@ for i = 1, #functions do
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .async = '..tostring(fn.async)..'});\n')
+               ', .fast = '..tostring(fn.fast)..'});\n')
 
 end
 

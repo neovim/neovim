@@ -35,11 +35,11 @@ local c_params = Ct(c_void + c_param_list)
 local c_proto = Ct(
   Cg(c_type, 'return_type') * Cg(c_id, 'name') *
   fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
-  Cg(Cc(false), 'async') *
+  Cg(Cc(false), 'fast') *
   (fill * Cg((P('FUNC_API_SINCE(') * C(num ^ 1)) * P(')'), 'since') ^ -1) *
   (fill * Cg((P('FUNC_API_DEPRECATED_SINCE(') * C(num ^ 1)) * P(')'),
               'deprecated_since') ^ -1) *
-  (fill * Cg((P('FUNC_API_ASYNC') * Cc(true)), 'async') ^ -1) *
+  (fill * Cg((P('FUNC_API_FAST') * Cc(true)), 'fast') ^ -1) *
   (fill * Cg((P('FUNC_API_NOEXPORT') * Cc(true)), 'noexport') ^ -1) *
   (fill * Cg((P('FUNC_API_REMOTE_ONLY') * Cc(true)), 'remote_only') ^ -1) *
   (fill * Cg((P('FUNC_API_REMOTE_IMPL') * Cc(true)), 'remote_impl') ^ -1) *
