@@ -38,8 +38,10 @@ func Test_define_var_with_lock()
     unlet F
     unlet l
     unlet d
-    unlet j
-    unlet c
+    if has('channel')
+        unlet j
+        unlet c
+    endif
     unlet b
     unlet n
 endfunc
