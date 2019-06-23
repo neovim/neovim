@@ -1775,7 +1775,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           if (len > len_max) {
               len = len_max;
           }
-          copy_text_attr(off + col, (char_u *)"  ", len,
+          char_u space_buf[18] = "                  ";
+          assert((size_t)len_max <= sizeof(space_buf));
+          copy_text_attr(off + col, space_buf, len,
                          win_hl_attr(wp, HLF_FL));
           col += len;
       }
