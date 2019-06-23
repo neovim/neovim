@@ -182,6 +182,21 @@ describe('TUI', function()
     ]])
   end)
 
+  it('handles pasting a specific amount of text', function()
+    -- Need extra time for this test, specially in ASAN.
+    screen.timeout = 60000
+    feed_data('i\027[200~'..string.rep('z', 64)..'\027[201~')
+    screen:expect([[
+      zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
+      zzzzzzzzzzzzzz{1: }                                   |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
   it('can handle arbitrarily long bursts of input', function()
     -- Need extra time for this test, specially in ASAN.
     screen.timeout = 60000
