@@ -253,6 +253,7 @@ typedef struct vimoption {
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
 #define P_NDNAME       0x20000000U  ///< only normal dir name chars allowed
 #define P_UI_OPTION    0x40000000U  ///< send option to remote ui
+#define P_MLE          0x80000000U  ///< under control of 'modelineexpr'
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -1325,6 +1326,11 @@ int do_set(
       if (opt_flags & OPT_MODELINE) {
         if (flags & (P_SECURE | P_NO_ML)) {
           errmsg = (char_u *)_("E520: Not allowed in a modeline");
+          goto skip;
+        }
+        if ((flags & P_MLE) && !p_mle) {
+          errmsg = (char_u *)_(
+              "E992: Not allowed in a modeline when 'modelineexpr' is off");
           goto skip;
         }
         // In diff mode some options are overruled.  This avoids that
