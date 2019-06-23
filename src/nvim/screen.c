@@ -2063,7 +2063,8 @@ win_line (
   int row;                            // row in the window, excl w_winrow
   ScreenGrid *grid = &wp->w_grid;     // grid specfic to the window
 
-  char_u extra[57];                   // sign, line number and 'fdc' must fit in here
+  char_u extra[57];                   // sign, line number and 'fdc' must
+                                      // fit in here
   int n_extra = 0;                    // number of extra chars
   char_u      *p_extra = NULL;        // string of extra chars, plus NUL
   char_u      *p_extra_free = NULL;   // p_extra needs to be freed
@@ -2720,9 +2721,10 @@ win_line (
                           c_extra = NUL;
                           c_final = NUL;
 
-                          // TODO(oni-link) Is sign text already extended to full
-                          // cell width?
-                          assert((size_t)win_signcol_width(wp) >= mb_string2cells(p_extra));
+                          // TODO(oni-link): Is sign text already extended to
+                          // full cell width?
+                          assert((size_t)win_signcol_width(wp)
+                                 >= mb_string2cells(p_extra));
                           // symbol(s) bytes + (filling spaces) (one byte each)
                           n_extra = symbol_blen +
                             (win_signcol_width(wp) - mb_string2cells(p_extra));
