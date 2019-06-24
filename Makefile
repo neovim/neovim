@@ -88,15 +88,18 @@ ifeq ($(call filter-true,$(USE_BUNDLED)),)
 	+$(BUILD_CMD) -C $(DEPS_BUILD_DIR)
 endif
 
-build/.ran-third-party-cmake:
+build/.ran-third-party-cmake::
+	mkdir -p build
+	touch $@
+
 ifeq ($(call filter-true,$(USE_BUNDLED)),)
+build/.ran-third-party-cmake:: $(DEPS_BUILD_DIR)
+$(DEPS_BUILD_DIR):
 	mkdir -p $(DEPS_BUILD_DIR)
 	cd $(DEPS_BUILD_DIR) && \
 		$(CMAKE_PRG) -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) $(BUNDLED_LUA_CMAKE_FLAG) \
 		$(DEPS_CMAKE_FLAGS) $(THIS_DIR)/third-party
 endif
-	mkdir -p build
-	touch $@
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
 oldtest: | nvim helptags
