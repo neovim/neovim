@@ -63,8 +63,7 @@ endfunction
 " Notify to the lsp server.
 function! lsp#notify(method, ...) abort
   let params = get(a:000, 0, {})
-  let optional_callback = get(a:000, 1, v:null)
-  let filetype = get(a:000, 2, v:null)
+  let filetype = get(a:000, 1, v:null)
 
   luaeval(s:client_string . '.notify(_A.method, _A.params, _A.filetype)', {
           \ 'method': a:method,
