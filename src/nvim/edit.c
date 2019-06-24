@@ -514,7 +514,7 @@ static int insert_check(VimState *state)
   // If typed something may trigger CursorHoldI again.
   if (s->c != K_EVENT
       // but not in CTRL-X mode, a script can't restore the state
-      && ctrl_x_mode == 0) {
+      && ctrl_x_mode == CTRL_X_NORMAL) {
     did_cursorhold = false;
   }
 
@@ -523,7 +523,10 @@ static int insert_check(VimState *state)
     s->inserted_space = false;
   }
 
-  if (can_cindent && cindent_on() && ctrl_x_mode == 0 && !compl_started) {
+  if (can_cindent
+      && cindent_on()
+      && ctrl_x_mode == CTRL_X_NORMAL
+      && !compl_started) {
     insert_do_cindent(s);
   }
 
@@ -1209,7 +1212,8 @@ check_pum:
     // if 'complete' is empty then plain ^P is no longer special,
     // but it is under other ^X modes
     if (*curbuf->b_p_cpt == NUL
-        && ctrl_x_mode != 0
+        && (ctrl_x_mode == CTRL_X_NORMAL
+            || ctrl_x_mode == CTRL_X_WHOLE_LINE)
         && !(compl_cont_status & CONT_LOCAL)) {
       goto normalchar;
     }
@@ -4535,12 +4539,12 @@ void ins_compl_check_keys(int frequency, int in_compl_func)
 {
   static int count = 0;
 
-  int c;
-
-  /* Don't check when reading keys from a script.  That would break the test
-   * scripts */
-  if (using_script())
+  // Don't check when reading keys from a script, :normal or feedkeys().
+  // That would break the test scripts.  But do check for keys when called
+  // from complete_check().
+  if (!in_compl_func && (using_script() || ex_normal_busy)) {
     return;
+  }
 
   /* Only do this at regular intervals */
   if (++count < frequency)
@@ -4549,7 +4553,7 @@ void ins_compl_check_keys(int frequency, int in_compl_func)
 
   /* Check for a typed key.  Do use mappings, otherwise vim_is_ctrl_x_key()
    * can't do its work correctly. */
-  c = vpeekc_any();
+  int c = vpeekc_any();
   if (c != NUL) {
     if (vim_is_ctrl_x_key(c) && c != Ctrl_X && c != Ctrl_R) {
       c = safe_vgetc();         /* Eat the character */
