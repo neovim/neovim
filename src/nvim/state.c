@@ -143,7 +143,7 @@ char *get_mode(void)
       }
       if (ins_compl_active()) {
         buf[1] = 'c';
-      } else if (ctrl_x_mode == 1) {
+      } else if (ctrl_x_mode_not_defined_yet()) {
         buf[1] = 'x';
       }
     }
