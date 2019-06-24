@@ -77,14 +77,14 @@ elseif(MSVC OR MINGW)
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
-    /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0/
-    /P ${DEPS_INSTALL_DIR} /TREE ${DEPS_INSTALL_DIR}
+    /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0
+    /P ${DEPS_INSTALL_DIR}/luarocks /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
     ${COMPILER_FLAG}
     /LUAMOD ${DEPS_BIN_DIR}/lua)
 
-  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks.bat)
+  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks/luarocks.bat)
 else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
