@@ -8,7 +8,7 @@ function! s:check_config() abort
   if !filereadable(vimrc)
     let ok = v:false
     let has_vim = filereadable(expand('~/.vimrc'))
-    call health#report_warn('Missing user config file: '.vimrc,
+    call health#report_warn((-1 == getfsize(vimrc) ? 'Missing' : 'Unreadable').' user config file: '.vimrc,
           \[ has_vim ? ':help nvim-from-vim' : ':help init.vim' ])
   endif
 
@@ -39,6 +39,12 @@ function! s:check_config() abort
     call health#report_error("'paste' is enabled. This option is only for pasting text.\nIt should not be set in your config.",
           \ [ 'Remove `set paste` from your init.vim, if applicable.',
           \   'Check `:verbose set paste?` to see if a plugin or script set the option.', ])
+  endif
+
+  let shadafile = (empty(&shadafile) || &shadafile ==# 'NONE') ? stdpath('data').'/shada/main.shada' : &shadafile
+  if !empty(shadafile) && (!filereadable(shadafile) || !filewritable(shadafile))
+    let ok = v:false
+    call health#report_error('shada file is not '.(filereadable(shadafile) ? 'writeable' : 'readable').":\n".shadafile)
   endif
 
   if ok
