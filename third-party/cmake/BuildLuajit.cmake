@@ -41,7 +41,6 @@ else()
   set(AMD64_ABI "")
 endif()
 set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
-                                CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
                                 ${AMD64_ABI}
@@ -94,7 +93,6 @@ elseif(MINGW)
   endif()
   BuildLuaJit(BUILD_COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
-                                CFLAGS+=-DLUAJIT_DISABLE_JIT
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
                                 CCDEBUG+=-g
