@@ -76,7 +76,7 @@ elseif(MINGW AND CMAKE_CROSSCOMPILING)
     # Similar to Unix + cross - fPIC
     INSTALL_COMMAND
       ${MAKE_PRG} PREFIX=${DEPS_INSTALL_DIR}
-        BUILDMODE=static install
+        install
         TARGET_SYS=${CMAKE_SYSTEM_NAME}
         CROSS=${CROSS_TARGET}-
         HOST_CC=${HOST_C_COMPILER} HOST_CFLAGS=${HOST_C_FLAGS}
@@ -98,10 +98,6 @@ elseif(MINGW)
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
                                 CCDEBUG+=-g
-                                BUILDMODE=static
-                      # Build a DLL too
-                      COMMAND ${LUAJIT_MAKE_PRG} CC=${DEPS_C_COMPILER} BUILDMODE=dynamic
-
           INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
 	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
 	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/bin
