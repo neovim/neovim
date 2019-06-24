@@ -3838,11 +3838,14 @@ static int ins_compl_get_exp(pos_T *ini)
     e_cpt = (compl_cont_status & CONT_LOCAL)
             ? (char_u *)"." : curbuf->b_p_cpt;
     last_match_pos = first_match_pos = *ini;
+  } else if (ins_buf != curbuf && !buf_valid(ins_buf)) {
+    ins_buf = curbuf;  // In case the buffer was wiped out.
   }
 
   compl_old_match = compl_curr_match;   // remember the last current match
   pos = (compl_direction == FORWARD) ? &last_match_pos : &first_match_pos;
-  /* For ^N/^P loop over all the flags/windows/buffers in 'complete' */
+
+  // For ^N/^P loop over all the flags/windows/buffers in 'complete'
   for (;; ) {
     found_new_match = FAIL;
     set_match_pos = FALSE;

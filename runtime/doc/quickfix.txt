@@ -1257,7 +1257,7 @@ to the file.
 Changing directory
 
 The following uppercase conversion characters specify the type of special
-format strings.  At most one of them may be given as a prefix at the begin
+format strings.  At most one of them may be given as a prefix at the beginning
 of a single comma-separated format pattern.
 Some compilers produce messages that consist of directory names that have to
 be prepended to each file name read by %f (example: GNU make).  The following

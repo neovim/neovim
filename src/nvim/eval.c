@@ -955,6 +955,88 @@ eval_to_bool(
   return retval;
 }
 
+// Call eval1() and give an error message if not done at a lower level.
+static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  const int did_emsg_before = did_emsg;
+  const int called_emsg_before = called_emsg;
+
+  const int ret = eval1(arg, rettv, evaluate);
+  if (ret == FAIL) {
+    // Report the invalid expression unless the expression evaluation has
+    // been cancelled due to an aborting error, an interrupt, or an
+    // exception, or we already gave a more specific error.
+    // Also check called_emsg for when using assert_fails().
+    if (!aborting()
+        && did_emsg == did_emsg_before
+        && called_emsg == called_emsg_before) {
+      emsgf(_(e_invexpr2), arg);
+    }
+  }
+  return ret;
+}
+
+static int eval_expr_typval(const typval_T *expr, typval_T *argv,
+                            int argc, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 4)
+{
+  int dummy;
+
+  if (expr->v_type == VAR_FUNC) {
+    const char_u *const s = expr->vval.v_string;
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
+      return FAIL;
+    }
+  } else if (expr->v_type == VAR_PARTIAL) {
+    partial_T *const partial = expr->vval.v_partial;
+    const char_u *const s = partial_name(partial);
+    if (s == NULL || *s == NUL) {
+      return FAIL;
+    }
+    if (call_func(s, (int)STRLEN(s), rettv, argc, argv, NULL,
+                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
+      return FAIL;
+    }
+  } else {
+    char buf[NUMBUFLEN];
+    char_u *s = (char_u *)tv_get_string_buf_chk(expr, buf);
+    if (s == NULL) {
+      return FAIL;
+    }
+    s = skipwhite(s);
+    if (eval1_emsg(&s, rettv, true) == FAIL) {
+      return FAIL;
+    }
+    if (*s != NUL) {  // check for trailing chars after expr
+      tv_clear(rettv);
+      emsgf(_(e_invexpr2), s);
+      return FAIL;
+    }
+  }
+  return OK;
+}
+
+/// Like eval_to_bool() but using a typval_T instead of a string.
+/// Works for string, funcref and partial.
+static bool eval_expr_to_bool(const typval_T *expr, bool *error)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
+{
+  typval_T argv, rettv;
+
+  if (eval_expr_typval(expr, &argv, 0, &rettv) == FAIL) {
+    *error = true;
+    return false;
+  }
+  const bool res = (tv_get_number_chk(&rettv, error) != 0);
+  tv_clear(&rettv);
+  return res;
+}
+
 /// Top level evaluation function, returning a string
 ///
 /// @param[in]  arg  String to evaluate.
@@ -6308,6 +6390,7 @@ call_func(
     partial_T *partial,             // optional, can be NULL
     dict_T *selfdict_in             // Dictionary for "self"
 )
+  FUNC_ATTR_NONNULL_ARG(1, 3, 5, 9)
 {
   int ret = FAIL;
   int error = ERROR_NONE;
@@ -8830,6 +8913,7 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
       }
       hash_unlock(ht);
     } else {
+      assert(argvars[0].v_type == VAR_LIST);
       vimvars[VV_KEY].vv_type = VAR_NUMBER;
 
       for (listitem_T *li = tv_list_first(l); li != NULL;) {
@@ -8860,44 +8944,17 @@ static void filter_map(typval_T *argvars, typval_T *rettv, int map)
 }
 
 static int filter_map_one(typval_T *tv, typval_T *expr, int map, int *remp)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   typval_T rettv;
   typval_T argv[3];
   int retval = FAIL;
-  int dummy;
 
   tv_copy(tv, &vimvars[VV_VAL].vv_tv);
   argv[0] = vimvars[VV_KEY].vv_tv;
   argv[1] = vimvars[VV_VAL].vv_tv;
-  if (expr->v_type == VAR_FUNC) {
-    const char_u *const s = expr->vval.v_string;
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, NULL, NULL) == FAIL) {
-      goto theend;
-    }
-  } else if (expr->v_type == VAR_PARTIAL) {
-    partial_T *partial = expr->vval.v_partial;
-
-    const char_u *const s = partial_name(partial);
-    if (call_func(s, (int)STRLEN(s), &rettv, 2, argv, NULL,
-                  0L, 0L, &dummy, true, partial, NULL) == FAIL) {
-      goto theend;
-    }
-  } else {
-    char buf[NUMBUFLEN];
-    const char *s = tv_get_string_buf_chk(expr, buf);
-    if (s == NULL) {
-      goto theend;
-    }
-    s = (const char *)skipwhite((const char_u *)s);
-    if (eval1((char_u **)&s, &rettv, true) == FAIL) {
-      goto theend;
-    }
-
-    if (*s != NUL) {  // check for trailing chars after expr
-      emsgf(_(e_invexpr2), s);
-      goto theend;
-    }
+  if (eval_expr_typval(expr, argv, 2, &rettv) == FAIL) {
+    goto theend;
   }
   if (map) {
     // map(): replace the list item value.
@@ -14498,10 +14555,10 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   long lnum_stop = 0;
   long time_limit = 0;
 
-  // Get the three pattern arguments: start, middle, end.
+  // Get the three pattern arguments: start, middle, end. Will result in an
+  // error if not a valid argument.
   char nbuf1[NUMBUFLEN];
   char nbuf2[NUMBUFLEN];
-  char nbuf3[NUMBUFLEN];
   const char *spat = tv_get_string_chk(&argvars[0]);
   const char *mpat = tv_get_string_buf_chk(&argvars[1], nbuf1);
   const char *epat = tv_get_string_buf_chk(&argvars[2], nbuf2);
@@ -14529,23 +14586,28 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   }
 
   // Optional fifth argument: skip expression.
-  const char *skip;
+  const typval_T *skip;
   if (argvars[3].v_type == VAR_UNKNOWN
       || argvars[4].v_type == VAR_UNKNOWN) {
-    skip = "";
+    skip = NULL;
   } else {
-    skip = tv_get_string_buf_chk(&argvars[4], nbuf3);
-    if (skip == NULL) {
+    skip = &argvars[4];
+    if (skip->v_type != VAR_FUNC
+        && skip->v_type != VAR_PARTIAL
+        && skip->v_type != VAR_STRING) {
+      emsgf(_(e_invarg2), tv_get_string(&argvars[4]));
       goto theend;  // Type error.
     }
     if (argvars[5].v_type != VAR_UNKNOWN) {
       lnum_stop = tv_get_number_chk(&argvars[5], NULL);
       if (lnum_stop < 0) {
+        emsgf(_(e_invarg2), tv_get_string(&argvars[5]));
         goto theend;
       }
       if (argvars[6].v_type != VAR_UNKNOWN) {
         time_limit = tv_get_number_chk(&argvars[6], NULL);
         if (time_limit < 0) {
+          emsgf(_(e_invarg2), tv_get_string(&argvars[6]));
           goto theend;
         }
       }
@@ -14553,7 +14615,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   }
 
   retval = do_searchpair(
-      (char_u *)spat, (char_u *)mpat, (char_u *)epat, dir, (char_u *)skip,
+      (char_u *)spat, (char_u *)mpat, (char_u *)epat, dir, skip,
       flags, match_pos, lnum_stop, time_limit);
 
 theend:
@@ -14601,7 +14663,7 @@ do_searchpair(
     char_u *mpat,          // middle pattern
     char_u *epat,          // end pattern
     int dir,               // BACKWARD or FORWARD
-    char_u *skip,          // skip expression
+    const typval_T *skip,  // skip expression
     int flags,             // SP_SETPCMARK and other SP_ values
     pos_T *match_pos,
     linenr_T lnum_stop,    // stop at this line if not zero
@@ -14617,8 +14679,8 @@ do_searchpair(
   pos_T save_cursor;
   pos_T save_pos;
   int n;
-  int r;
   int nest = 1;
+  bool use_skip = false;
   int options = SEARCH_KEEP;
   proftime_T tm;
   size_t pat2_len;
@@ -14646,6 +14708,13 @@ do_searchpair(
   }
   if (flags & SP_START) {
     options |= SEARCH_START;
+  }
+
+  if (skip != NULL) {
+    // Empty string means to not use the skip expression.
+    if (skip->v_type == VAR_STRING || skip->v_type == VAR_FUNC) {
+      use_skip = skip->vval.v_string != NULL && *skip->vval.v_string != NUL;
+    }
   }
 
   save_cursor = curwin->w_cursor;
@@ -14677,12 +14746,12 @@ do_searchpair(
     /* clear the start flag to avoid getting stuck here */
     options &= ~SEARCH_START;
 
-    /* If the skip pattern matches, ignore this match. */
-    if (*skip != NUL) {
+    // If the skip pattern matches, ignore this match.
+    if (use_skip) {
       save_pos = curwin->w_cursor;
       curwin->w_cursor = pos;
-      bool err;
-      r = eval_to_bool(skip, &err, NULL, false);
+      bool err = false;
+      const bool r = eval_expr_to_bool(skip, &err);
       curwin->w_cursor = save_pos;
       if (err) {
         /* Evaluating {skip} caused an error, break here. */
@@ -17773,7 +17842,6 @@ static void add_timer_info(typval_T *rettv, timer_T *timer)
     di->di_tv.v_type = VAR_FUNC;
     di->di_tv.vval.v_string = vim_strsave(timer->callback.data.funcref);
   }
-  di->di_tv.v_lock = 0;
 }
 
 static void add_timer_info_all(typval_T *rettv)
@@ -20480,7 +20548,6 @@ void ex_execute(exarg_T *eap)
   char_u      *arg = eap->arg;
   typval_T rettv;
   int ret = OK;
-  char_u      *p;
   garray_T ga;
   int save_did_emsg = did_emsg;
 
@@ -20489,17 +20556,8 @@ void ex_execute(exarg_T *eap)
   if (eap->skip)
     ++emsg_skip;
   while (*arg != NUL && *arg != '|' && *arg != '\n') {
-    p = arg;
-    if (eval1(&arg, &rettv, !eap->skip) == FAIL) {
-      /*
-       * Report the invalid expression unless the expression evaluation
-       * has been cancelled due to an aborting error, an interrupt, or an
-       * exception.
-       */
-      if (!aborting() && did_emsg == save_did_emsg) {
-        EMSG2(_(e_invexpr2), p);
-      }
-      ret = FAIL;
+    ret = eval1_emsg(&arg, &rettv, !eap->skip);
+    if (ret == FAIL) {
       break;
     }
 
@@ -21134,7 +21192,6 @@ void ex_function(exarg_T *eap)
         tv_clear(&fudi.fd_di->di_tv);
       }
       fudi.fd_di->di_tv.v_type = VAR_FUNC;
-      fudi.fd_di->di_tv.v_lock = 0;
       fudi.fd_di->di_tv.vval.v_string = vim_strsave(name);
 
       /* behave like "dict" was used */

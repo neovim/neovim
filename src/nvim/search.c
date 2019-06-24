@@ -3370,7 +3370,6 @@ current_tagblock(
 )
 {
   long count = count_arg;
-  long n;
   pos_T old_pos;
   pos_T start_pos;
   pos_T end_pos;
@@ -3379,7 +3378,6 @@ current_tagblock(
   char_u      *p;
   char_u      *cp;
   int len;
-  int r;
   bool do_include = include;
   bool save_p_ws = p_ws;
   int retval = FAIL;
@@ -3428,12 +3426,12 @@ again:
    * Search backwards for unclosed "<aaa>".
    * Put this position in start_pos.
    */
-  for (n = 0; n < count; ++n) {
-    if (do_searchpair((char_u *)
-            "<[^ \t>/!]\\+\\%(\\_s\\_[^>]\\{-}[^/]>\\|$\\|\\_s\\=>\\)",
-            (char_u *)"",
-            (char_u *)"</[^>]*>", BACKWARD, (char_u *)"", 0,
-            NULL, (linenr_T)0, 0L) <= 0) {
+  for (long n = 0; n < count; n++) {
+    if (do_searchpair(
+        (char_u *)"<[^ \t>/!]\\+\\%(\\_s\\_[^>]\\{-}[^/]>\\|$\\|\\_s\\=>\\)",
+        (char_u *)"",
+        (char_u *)"</[^>]*>", BACKWARD, NULL, 0,
+        NULL, (linenr_T)0, 0L) <= 0) {
       curwin->w_cursor = old_pos;
       goto theend;
     }
@@ -3459,8 +3457,8 @@ again:
   sprintf((char *)spat, "<%.*s\\>\\%%(\\s\\_[^>]\\{-}[^/]>\\|>\\)\\c", len, p);
   sprintf((char *)epat, "</%.*s>\\c", len, p);
 
-  r = do_searchpair(spat, (char_u *)"", epat, FORWARD, (char_u *)"",
-      0, NULL, (linenr_T)0, 0L);
+  const int r = do_searchpair(spat, (char_u *)"", epat, FORWARD, NULL,
+                              0, NULL, (linenr_T)0, 0L);
 
   xfree(spat);
   xfree(epat);

@@ -611,7 +611,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
   return OK;
 }
 
-/// ":breakadd".
+/// ":breakadd".  Also used for ":profile".
 void ex_breakadd(exarg_T *eap)
 {
   struct debuggy *bp;

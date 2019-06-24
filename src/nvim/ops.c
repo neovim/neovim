@@ -1638,10 +1638,23 @@ static void mb_adjust_opend(oparg_T *oap)
 /*
  * Put character 'c' at position 'lp'
  */
-static inline void pchar(pos_T lp, int c)
+static inline void pbyte(pos_T lp, int c)
 {
     assert(c <= UCHAR_MAX);
     *(ml_get_buf(curbuf, lp.lnum, true) + lp.col) = (char_u)c;
+}
+
+// Replace the character under the cursor with "c".
+// This takes care of multi-byte characters.
+static void replace_character(int c)
+{
+  const int n = State;
+
+  State = REPLACE;
+  ins_char(c);
+  State = n;
+  // Backup to the replaced character.
+  dec_cursor();
 }
 
 /*
@@ -1795,12 +1808,7 @@ int op_replace(oparg_T *oap, int c)
            * with a multi-byte and the other way around. */
           if (curwin->w_cursor.lnum == oap->end.lnum)
             oap->end.col += (*mb_char2len)(c) - (*mb_char2len)(n);
-          n = State;
-          State = REPLACE;
-          ins_char(c);
-          State = n;
-          /* Backup to the replaced character. */
-          dec_cursor();
+          replace_character(c);
         } else {
           if (n == TAB) {
             int end_vcol = 0;
@@ -1815,7 +1823,7 @@ int op_replace(oparg_T *oap, int c)
             if (curwin->w_cursor.lnum == oap->end.lnum)
               getvpos(&oap->end, end_vcol);
           }
-          pchar(curwin->w_cursor, c);
+          pbyte(curwin->w_cursor, c);
         }
       } else if (virtual_op && curwin->w_cursor.lnum == oap->end.lnum) {
         int virtcols = oap->end.coladd;
@@ -1830,9 +1838,14 @@ int op_replace(oparg_T *oap, int c)
         coladvance_force(getviscol2(oap->end.col, oap->end.coladd) + 1);
         curwin->w_cursor.col -= (virtcols + 1);
         for (; virtcols >= 0; virtcols--) {
-          pchar(curwin->w_cursor, c);
-          if (inc(&curwin->w_cursor) == -1)
+          if (utf_char2len(c) > 1) {
+            replace_character(c);
+          } else {
+            pbyte(curwin->w_cursor, c);
+          }
+          if (inc(&curwin->w_cursor) == -1) {
             break;
+          }
         }
       }
 
@@ -1953,23 +1966,20 @@ static int swapchars(int op_type, pos_T *pos, int length)
   return did_change;
 }
 
-/*
- * If op_type == OP_UPPER: make uppercase,
- * if op_type == OP_LOWER: make lowercase,
- * if op_type == OP_ROT13: do rot13 encoding,
- * else swap case of character at 'pos'
- * returns TRUE when something actually changed.
- */
-int swapchar(int op_type, pos_T *pos)
+// If op_type == OP_UPPER: make uppercase,
+// if op_type == OP_LOWER: make lowercase,
+// if op_type == OP_ROT13: do rot13 encoding,
+// else swap case of character at 'pos'
+// returns true when something actually changed.
+bool swapchar(int op_type, pos_T *pos)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
-  int c;
-  int nc;
+  const int c = gchar_pos(pos);
 
-  c = gchar_pos(pos);
-
-  /* Only do rot13 encoding for ASCII characters. */
-  if (c >= 0x80 && op_type == OP_ROT13)
-    return FALSE;
+  // Only do rot13 encoding for ASCII characters.
+  if (c >= 0x80 && op_type == OP_ROT13) {
+    return false;
+  }
 
   if (op_type == OP_UPPER && c == 0xdf) {
     pos_T sp = curwin->w_cursor;
@@ -1983,7 +1993,7 @@ int swapchar(int op_type, pos_T *pos)
     inc(pos);
   }
 
-  nc = c;
+  int nc = c;
   if (mb_islower(c)) {
     if (op_type == OP_ROT13) {
       nc = ROT13(c, 'a');
@@ -1998,7 +2008,7 @@ int swapchar(int op_type, pos_T *pos)
     }
   }
   if (nc != c) {
-    if (enc_utf8 && (c >= 0x80 || nc >= 0x80)) {
+    if (c >= 0x80 || nc >= 0x80) {
       pos_T sp = curwin->w_cursor;
 
       curwin->w_cursor = *pos;
@@ -2006,11 +2016,12 @@ int swapchar(int op_type, pos_T *pos)
       del_bytes(utf_ptr2len(get_cursor_pos_ptr()), FALSE, FALSE);
       ins_char(nc);
       curwin->w_cursor = sp;
-    } else
-      pchar(*pos, nc);
-    return TRUE;
+    } else {
+      pbyte(*pos, nc);
+    }
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*

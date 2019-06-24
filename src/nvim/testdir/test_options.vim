@@ -92,9 +92,6 @@ function! Test_path_keep_commas()
 endfunction
 
 func Test_filetype_valid()
-  if !has('autocmd')
-    return
-  endif
   set ft=valid_name
   call assert_equal("valid_name", &filetype)
   set ft=valid-name
@@ -347,19 +344,62 @@ func Test_set_indentexpr()
 endfunc
 
 func Test_backupskip()
+  " Option 'backupskip' may contain several comma-separated path
+  " specifications if one or more of the environment variables TMPDIR, TMP,
+  " or TEMP is defined.  To simplify testing, convert the string value into a
+  " list.
+  let bsklist = split(&bsk, ',')
+
   if has("mac")
-    call assert_match('/private/tmp/\*', &bsk)
+    let found = (index(bsklist, '/private/tmp/*') >= 0)
+    call assert_true(found, '/private/tmp not in option bsk: ' . &bsk)
   elseif has("unix")
-    call assert_match('/tmp/\*', &bsk)
+    let found = (index(bsklist, '/tmp/*') >= 0)
+    call assert_true(found, '/tmp not in option bsk: ' . &bsk)
   endif
 
-  let bskvalue = substitute(&bsk, '\\', '/', 'g')
-  for var in  ['$TEMPDIR', '$TMP', '$TEMP']
+  " If our test platform is Windows, the path(s) in option bsk will use
+  " backslash for the path separator and the components could be in short
+  " (8.3) format.  As such, we need to replace the backslashes with forward
+  " slashes and convert the path components to long format.  The expand()
+  " function will do this but it cannot handle comma-separated paths.  This is
+  " why bsk was converted from a string into a list of strings above.
+  "
+  " One final complication is that the wildcard "/*" is at the end of each
+  " path and so expand() might return a list of matching files.  To prevent
+  " this, we need to remove the wildcard before calling expand() and then
+  " append it afterwards.
+  if has('win32')
+    let item_nbr = 0
+    while item_nbr < len(bsklist)
+      let path_spec = bsklist[item_nbr]
+      let path_spec = strcharpart(path_spec, 0, strlen(path_spec)-2)
+      let path_spec = substitute(expand(path_spec), '\\', '/', 'g')
+      let bsklist[item_nbr] = path_spec . '/*'
+      let item_nbr += 1
+    endwhile
+  endif
+
+  " Option bsk will also include these environment variables if defined.
+  " If they're defined, verify they appear in the option value.
+  for var in  ['$TMPDIR', '$TMP', '$TEMP']
     if exists(var)
       let varvalue = substitute(expand(var), '\\', '/', 'g')
-      call assert_match(varvalue . '.\*', bskvalue)
+      let varvalue = substitute(varvalue, '/$', '', '')
+      let varvalue .= '/*'
+      let found = (index(bsklist, varvalue) >= 0)
+      call assert_true(found, var . ' (' . varvalue . ') not in option bsk: ' . &bsk)
     endif
   endfor
+
+  " Duplicates should be filtered out (option has P_NODUP)
+  let backupskip = &backupskip
+  set backupskip=
+  set backupskip+=/test/dir
+  set backupskip+=/other/dir
+  set backupskip+=/test/dir
+  call assert_equal('/test/dir,/other/dir', &backupskip)
+  let &backupskip = backupskip
 endfunc
 
 func Test_copy_winopt()

@@ -2528,9 +2528,9 @@ void qf_list(exarg_T *eap)
   qfp = qi->qf_lists[qi->qf_curlist].qf_start;
   for (i = 1; !got_int && i <= qi->qf_lists[qi->qf_curlist].qf_count; ) {
     if ((qfp->qf_valid || all) && idx1 <= i && i <= idx2) {
-      msg_putchar('\n');
-      if (got_int)
+      if (got_int) {
         break;
+      }
 
       fname = NULL;
       if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
@@ -2549,6 +2549,27 @@ void qf_list(exarg_T *eap)
           vim_snprintf((char *)IObuff, IOSIZE, "%2d %s", i, (char *)fname);
         }
       }
+
+      // Support for filtering entries using :filter /pat/ clist
+      // Match against the module name, file name, search pattern and
+      // text of the entry.
+      bool filter_entry = true;
+      if (qfp->qf_module != NULL && *qfp->qf_module != NUL) {
+        filter_entry &= message_filtered(qfp->qf_module);
+      }
+      if (filter_entry && fname != NULL) {
+        filter_entry &= message_filtered(fname);
+      }
+      if (filter_entry && qfp->qf_pattern != NULL) {
+        filter_entry &= message_filtered(qfp->qf_pattern);
+      }
+      if (filter_entry) {
+        filter_entry &= message_filtered(qfp->qf_text);
+      }
+      if (filter_entry) {
+        goto next_entry;
+      }
+      msg_putchar('\n');
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
                         ? HL_ATTR(HLF_QFL) : HL_ATTR(HLF_D));
       if (qfp->qf_lnum == 0) {
@@ -2579,6 +2600,7 @@ void qf_list(exarg_T *eap)
       ui_flush();                      /* show one line at a time */
     }
 
+next_entry:
     qfp = qfp->qf_next;
     if (qfp == NULL) {
       break;
@@ -4721,11 +4743,8 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, dict_T *retdict)
 /// Return the quickfix list title as 'title' in retdict
 static int qf_getprop_title(qf_info_T *qi, int qf_idx, dict_T *retdict)
 {
-    char_u *t = qi->qf_lists[qf_idx].qf_title;
-    if (t == NULL) {
-      t = (char_u *)"";
-    }
-    return tv_dict_add_str(retdict, S_LEN("title"), (const char *)t);
+    return tv_dict_add_str(retdict, S_LEN("title"),
+                           (const char *)qi->qf_lists[qf_idx].qf_title);
 }
 
 /// Return the quickfix list items/entries as 'items' in retdict

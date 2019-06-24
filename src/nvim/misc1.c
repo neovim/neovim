@@ -1765,6 +1765,7 @@ del_lines (
 }
 
 int gchar_pos(pos_T *pos)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // When searching columns is sometimes put at the end of a line.
   if (pos->col == MAXCOL) {

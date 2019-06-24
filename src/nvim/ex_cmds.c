@@ -335,7 +335,7 @@ static int linelen(int *has_tab)
   len = linetabsize(line);
   // Check for embedded TAB.
   if (has_tab != NULL) {
-    *has_tab = STRRCHR(first, TAB) != NULL;
+    *has_tab = vim_strchr(first, TAB) != NULL;
   }
   *last = save;
 
