@@ -61,6 +61,15 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
   elseif(USE_BUNDLED_LUA)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR})
+  else()
+    list(APPEND CMAKE_MODULE_PATH "../cmake")
+    find_package(LuaJit)
+    if(LUAJIT_FOUND)
+      list(APPEND LUAROCKS_OPTS
+        --lua-version=5.1
+        --with-lua-include=${LUAJIT_INCLUDE_DIRS}
+        --lua-suffix=jit)
+    endif()
   endif()
 
   BuildLuarocks(
