@@ -54,6 +54,7 @@ bool os_libcall(const char *libname,
   // open the dynamic loadable library
   if (uv_dlopen(libname, &lib)) {
       EMSG2(_("dlerror = \"%s\""), uv_dlerror(&lib));
+      uv_dlclose(&lib);
       return false;
   }
 
