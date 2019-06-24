@@ -7,9 +7,17 @@ environment:
   GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
 image: Visual Studio 2017
 configuration:
+- MINGW_64-gcov
 - MINGW_32
 - MSVC_64
-init: []
+- MSVC_32
+init:
+- ps: |
+    # Pull requests: skip some build configurations to save time.
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
+      $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
+      Exit-AppVeyorBuild
+    }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 matrix:
