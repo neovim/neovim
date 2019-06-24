@@ -44,7 +44,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 set(ENV{SYSTEM_NAME} ${SYSTEM_NAME})
 execute_process(
   COMMAND ${BUSTED_PRG} -v -o ${BUSTED_OUTPUT_TYPE}
-    --lua=${LUA_PRG} --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
+    --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
     --lpath=${BUILD_DIR}/?.lua
     --lpath=${WORKING_DIR}/runtime/lua/?.lua
     --lpath=?.lua
