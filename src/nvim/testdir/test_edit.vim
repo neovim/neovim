@@ -643,11 +643,11 @@ func! Test_edit_CTRL_L()
   call feedkeys("cct\<c-x>\<c-l>\<c-n>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 't', '', '', ''], getline(1, '$'))
   call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<esc>", 'tnix')
-  call assert_equal(['one', 'two', 'three', 't', '', '', ''], getline(1, '$'))
-  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 'two', '', '', ''], getline(1, '$'))
-  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
+  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 'three', '', '', ''], getline(1, '$'))
+  call feedkeys("cct\<c-x>\<c-l>\<c-n>\<c-n>\<c-n>\<c-n>\<esc>", 'tnix')
+  call assert_equal(['one', 'two', 'three', 't', '', '', ''], getline(1, '$'))
   call feedkeys("cct\<c-x>\<c-l>\<c-p>\<esc>", 'tnix')
   call assert_equal(['one', 'two', 'three', 'two', '', '', ''], getline(1, '$'))
   call feedkeys("cct\<c-x>\<c-l>\<c-p>\<c-p>\<esc>", 'tnix')
@@ -1408,7 +1408,6 @@ func Test_edit_complete_very_long_name()
   let save_columns = &columns
   " Need at least about 1100 columns to reproduce the problem.
   set columns=2000
-  call assert_equal(2000, &columns)
   set noswapfile
 
   let longfilename = longdirname . '/' . repeat('a', 255)

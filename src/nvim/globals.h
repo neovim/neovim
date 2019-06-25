@@ -700,11 +700,10 @@ EXTERN int arrow_used;                  /* Normally FALSE, set to TRUE after
                                          * to call u_sync() */
 EXTERN int ins_at_eol INIT(= FALSE);      /* put cursor after eol when
                                              restarting edit after CTRL-O */
-EXTERN char_u   *edit_submode INIT(= NULL); /* msg for CTRL-X submode */
-EXTERN char_u   *edit_submode_pre INIT(= NULL); /* prepended to edit_submode */
-EXTERN char_u   *edit_submode_extra INIT(= NULL); /* appended to edit_submode */
-EXTERN hlf_T edit_submode_highl;        /* highl. method for extra info */
-EXTERN int ctrl_x_mode INIT(= 0);       /* Which Ctrl-X mode are we in? */
+EXTERN char_u *edit_submode INIT(= NULL);  // msg for CTRL-X submode
+EXTERN char_u *edit_submode_pre INIT(= NULL);  // prepended to edit_submode
+EXTERN char_u *edit_submode_extra INIT(= NULL);  // appended to edit_submode
+EXTERN hlf_T edit_submode_highl;        // highl. method for extra info
 
 EXTERN int no_abbr INIT(= TRUE);        /* TRUE when no abbreviations loaded */
 

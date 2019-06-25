@@ -641,7 +641,7 @@ func Test_popup_and_preview_autocommand()
   norm! gt
   call assert_equal(0, &previewwindow)
   norm! gT
-  call assert_equal(12, tabpagenr('$'))
+  call assert_equal(10, tabpagenr('$'))
   tabonly
   pclose
   augroup MyBufAdd
