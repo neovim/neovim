@@ -263,6 +263,7 @@ return {
     serverlist={},
     serverstart={args={0, 1}},
     serverstop={args=1},
+    setbufline={args=3},
     setbufvar={args=3},
     setcharsearch={args=1},
     setcmdpos={args=1},

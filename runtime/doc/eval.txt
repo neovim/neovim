@@ -2286,6 +2286,9 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 server2client({clientid}, {string})
 				Number	send reply string
 serverlist()			String	get a list of available servers
+setbufline( {expr}, {lnum}, {line})
+				Number	set line {lnum} to {line} in buffer
+					{expr}
 setbufvar({expr}, {varname}, {val})	set {varname} in buffer {expr} to {val}
 setcharsearch({dict})		Dict	set character search from {dict}
 setcmdpos({pos})		Number	set cursor position in command-line
@@ -6997,6 +7000,19 @@ serverstop({address})					*serverstop()*
 		If |v:servername| is stopped it is set to the next available
 		address returned by |serverlist()|.
 
+setbufline({expr}, {lnum}, {text})			*setbufline()*
+		Set line {lnum} to {text} in buffer {expr}.  To insert
+		lines use |append()|.
+
+		For the use of {expr}, see |bufname()| above.
+
+		{lnum} is used like with |setline()|.
+		This works like |setline()| for the specified buffer.
+		On success 0 is returned, on failure 1 is returned.
+
+		If {expr} is not a valid buffer or {lnum} is not valid, an
+		error message is given.
+
 setbufvar({expr}, {varname}, {val})			*setbufvar()*
 		Set option or local variable {varname} in buffer {expr} to
 		{val}.
@@ -7064,13 +7080,19 @@ setfperm({fname}, {mode})				*setfperm()* *chmod*
 
 setline({lnum}, {text})					*setline()*
 		Set line {lnum} of the current buffer to {text}.  To insert
-		lines use |append()|.
+		lines use |append()|. To set lines in another buffer use
+		|setbufline()|.
+
 		{lnum} is used like with |getline()|.
 		When {lnum} is just below the last line the {text} will be
 		added as a new line.
+
 		If this succeeds, 0 is returned.  If this fails (most likely
-		because {lnum} is invalid) 1 is returned.  Example: >
+		because {lnum} is invalid) 1 is returned.
+
+		Example: >
 			:call setline(5, strftime("%c"))
+
 <		When {text} is a |List| then line {lnum} and following lines
 		will be set to the items in the list.  Example: >
 			:call setline(5, ['aaa', 'bbb', 'ccc'])
