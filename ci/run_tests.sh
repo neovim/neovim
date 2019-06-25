@@ -13,7 +13,10 @@ enter_suite build
 check_core_dumps --delete quiet
 
 prepare_build
+build_nvim
 
 exit_suite --continue
+
+run_test install_nvim
 
 end_tests
