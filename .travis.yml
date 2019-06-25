@@ -55,7 +55,7 @@ jobs:
   fast_finish: true
 
 before_script:  ci/before_script.sh
-script:         true
+script:         ci/script.sh
 
 addons:
   apt:
