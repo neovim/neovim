@@ -52,9 +52,6 @@ jobs:
     - stage: baseline
       os: linux
       compiler: gcc
-    - stage: second
-      os: linux
-      compiler: clang
   fast_finish: true
 
 before_script:  ci/before_script.sh
