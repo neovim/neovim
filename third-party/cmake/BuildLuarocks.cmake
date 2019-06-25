@@ -81,12 +81,12 @@ elseif(MSVC OR MINGW)
   endif()
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
-  BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
+  BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
     /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0
-    /P ${DEPS_INSTALL_DIR}/luarocks /TREE ${DEPS_INSTALL_DIR}
+    /P ${DEPS_INSTALL_DIR} /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
     ${COMPILER_FLAG}
