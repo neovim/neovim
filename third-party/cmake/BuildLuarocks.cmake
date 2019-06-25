@@ -122,7 +122,7 @@ list(APPEND THIRD_PARTY_DEPS mpack)
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build lpeg 1.0.1-1 ${LUAROCKS_BUILDARGS}
+  ARGS --verbose build lpeg 1.0.1-1 ${LUAROCKS_BUILDARGS}
   DEPENDS mpack)
 add_custom_target(lpeg
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg)
