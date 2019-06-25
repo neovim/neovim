@@ -997,6 +997,7 @@ static void syn_stack_free_block(synblock_T *block)
       clear_syn_state(p);
     }
     XFREE_CLEAR(block->b_sst_array);
+    block->b_sst_first = NULL;
     block->b_sst_len = 0;
   }
 }
@@ -1108,9 +1109,6 @@ static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
   synstate_T  *p, *prev, *np;
   linenr_T n;
 
-  if (block->b_sst_array == NULL)       /* nothing to do */
-    return;
-
   prev = NULL;
   for (p = block->b_sst_first; p != NULL; ) {
     if (p->sst_lnum + block->b_syn_sync_linebreaks > buf->b_mod_top) {
@@ -1158,8 +1156,9 @@ static int syn_stack_cleanup(void)
   int dist;
   int retval = FALSE;
 
-  if (syn_block->b_sst_array == NULL || syn_block->b_sst_first == NULL)
+  if (syn_block->b_sst_first == NULL) {
     return retval;
+  }
 
   /* Compute normal distance between non-displayed entries. */
   if (syn_block->b_sst_len <= Rows)
@@ -2923,8 +2922,9 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     if (r > 0)
       ++st->match;
   }
-  if (timed_out) {
+  if (timed_out && !syn_win->w_s->b_syn_slow) {
     syn_win->w_s->b_syn_slow = true;
+    MSG(_("'redrawtime' exceeded, syntax highlighting disabled"));
   }
 
   if (r > 0) {
@@ -3124,11 +3124,11 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
   arg = skipwhite(arg);
   if (*arg == NUL) {
     MSG_PUTS("\n");
-    MSG_PUTS(_("syntax iskeyword "));
     if (curwin->w_s->b_syn_isk != empty_option) {
+      MSG_PUTS(_("syntax iskeyword "));
       msg_outtrans(curwin->w_s->b_syn_isk);
     } else {
-      msg_outtrans((char_u *)"not set");
+      msg_outtrans((char_u *)_("syntax iskeyword not set"));
     }
   } else {
     if (STRNICMP(arg, "clear", 5) == 0) {
