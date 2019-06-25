@@ -97,6 +97,10 @@ endif()
 
 list(APPEND THIRD_PARTY_DEPS luarocks)
 
+# DEBUG
+add_custom_target(luarocks_debug1 ${LUAROCKS_BINARY} DEPENDS luarocks)
+add_custom_target(luarocks_debug2 ${LUAROCKS_BINARY} config DEPENDS luarocks)
+
 if(USE_BUNDLED_LUAJIT)
   add_dependencies(luarocks luajit)
   if(MINGW AND CMAKE_CROSSCOMPILING)
