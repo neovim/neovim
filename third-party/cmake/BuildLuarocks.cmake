@@ -86,11 +86,11 @@ elseif(MSVC OR MINGW)
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
     /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0
-    /P ${DEPS_INSTALL_DIR}
+    /P ${DEPS_INSTALL_DIR}/luarocks
     ${COMPILER_FLAG}
     )
 
-  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks.bat)
+  set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks/luarocks.bat)
 else()
   message(FATAL_ERROR "Trying to build luarocks in an unsupported system ${CMAKE_SYSTEM_NAME}/${CMAKE_C_COMPILER_ID}")
 endif()
