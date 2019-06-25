@@ -74,6 +74,10 @@ elseif ($compiler -eq 'MSVC') {
   }
 }
 
+function convertToCmakeArgs($vars) {
+  return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
+}
+
 cd $nvimCmakeVars["DEPS_BUILD_DIR"]
 cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
