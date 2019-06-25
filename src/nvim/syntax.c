@@ -997,6 +997,7 @@ static void syn_stack_free_block(synblock_T *block)
       clear_syn_state(p);
     }
     XFREE_CLEAR(block->b_sst_array);
+    block->b_sst_first = NULL;
     block->b_sst_len = 0;
   }
 }
@@ -1108,9 +1109,6 @@ static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
   synstate_T  *p, *prev, *np;
   linenr_T n;
 
-  if (block->b_sst_array == NULL)       /* nothing to do */
-    return;
-
   prev = NULL;
   for (p = block->b_sst_first; p != NULL; ) {
     if (p->sst_lnum + block->b_syn_sync_linebreaks > buf->b_mod_top) {
@@ -1158,8 +1156,9 @@ static int syn_stack_cleanup(void)
   int dist;
   int retval = FALSE;
 
-  if (syn_block->b_sst_array == NULL || syn_block->b_sst_first == NULL)
+  if (syn_block->b_sst_first == NULL) {
     return retval;
+  }
 
   /* Compute normal distance between non-displayed entries. */
   if (syn_block->b_sst_len <= Rows)
