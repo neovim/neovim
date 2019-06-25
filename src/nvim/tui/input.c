@@ -109,16 +109,12 @@ static void tinput_wait_enqueue(void **argv)
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
     if(is_remote_client){
       Array args = ARRAY_DICT_INIT;
-      Error err = ERROR_INIT;
+      // Error err = ERROR_INIT;
       ADD(args, STRING_OBJ(((String){
           .data = xstrdup(buf), 
           .size = len})));
-      Object result = rpc_send_call(channel_get_id(true, true), "nvim_input", args, &err);
-      consumed = (size_t)result.data.integer;
-      if (ERROR_SET(&err)) {
-        logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
-      }
-      api_clear_error(&err);
+      bool result = rpc_send_event(channel_get_id(true, true), "nvim_input", args);
+      consumed = result ? len : 0;
     } else {
       consumed = input_enqueue((String){.data = buf, .size = len});
     }
@@ -130,23 +126,29 @@ static void tinput_wait_enqueue(void **argv)
       break;
     }
   }
-  uv_mutex_lock(&input->key_buffer_mutex);
-  input->waiting = false;
-  uv_cond_signal(&input->key_buffer_cond);
-  uv_mutex_unlock(&input->key_buffer_mutex);
+  if (!is_remote_client) {
+    uv_mutex_lock(&input->key_buffer_mutex);
+    input->waiting = false;
+    uv_cond_signal(&input->key_buffer_cond);
+    uv_mutex_unlock(&input->key_buffer_mutex);
+  } 
 }
 
 static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
-    uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
-    input->waiting = true;
-    while (input->waiting) {
-      uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
+    if (!is_remote_client) {
+      uv_mutex_lock(&input->key_buffer_mutex);
+      loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
+      input->waiting = true;
+      while (input->waiting) {
+        uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
+      }
+      uv_mutex_unlock(&input->key_buffer_mutex);
+    } else {
+      tinput_wait_enqueue((void**)&input);
     }
-    uv_mutex_unlock(&input->key_buffer_mutex);
   } while (rbuffer_size(input->key_buffer) > drain_boundary);
 }
 

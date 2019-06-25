@@ -128,6 +128,7 @@ typedef struct {
     int get_bg;
   } unibi_ext;
   char *space_buf;
+  bool stopped;
 } TUIData;
 
 static bool volatile got_winch = false;
@@ -208,7 +209,17 @@ UI *tui_start(void)
   ui->ui_ext[kUILinegrid] = true;
   ui->ui_ext[kUITermColors] = true;
 
-  return ui_bridge_attach(ui, tui_main, tui_scheduler);
+  UI *rv = NULL;
+  if (!is_remote_client) {
+    rv = ui_bridge_attach(ui, tui_main, tui_scheduler);
+  } else {
+    // when remote client neglect ui_bridge
+    tui_client_main(ui);
+    ui_attach_impl(ui);
+    rv = ui;
+  }
+
+  return rv;
 }
 
 static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
@@ -419,13 +430,15 @@ static void tui_terminal_stop(UI *ui)
 static void tui_stop(UI *ui)
 {
   tui_terminal_stop(ui);
-  ui->data = NULL;  // Flag UI as "stopped".
+  TUIData *data = ui->data;
+  data->stopped = true;
 }
 
 /// Returns true if UI `ui` is stopped.
-static bool tui_is_stopped(UI *ui)
+bool tui_is_stopped(UI *ui)
 {
-  return ui->data == NULL;
+  TUIData *data = ui->data;
+  return data->stopped;
 }
 
 /// Main function of the TUI thread.
@@ -435,6 +448,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   loop_init(&tui_loop, NULL);
   TUIData *data = xcalloc(1, sizeof(TUIData));
   ui->data = data;
+  data->stopped = false;
   data->bridge = bridge;
   data->loop = &tui_loop;
   data->is_starting = true;
@@ -481,6 +495,76 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   signal_watcher_close(&data->cont_handle, NULL);
   signal_watcher_close(&data->winch_handle, NULL);
   loop_close(&tui_loop, false);
+  kv_destroy(data->invalid_regions);
+  kv_destroy(data->attrs);
+  xfree(data->space_buf);
+  xfree(data);
+}
+
+// Main loop for TUI when its a client
+//
+// TODO(hlpr98): Refactor original tui_main to do this
+void tui_client_main(UI *ui)
+{
+  TUIData *data = xcalloc(1, sizeof(TUIData));
+  ui->data = data;
+  data->stopped = false;
+  // TODO(hlp98): Should be removed
+  data->bridge = xcalloc(1, sizeof(UIBridgeData));
+  data->loop = &main_loop;
+  kv_init(data->invalid_regions);
+  signal_watcher_init(data->loop, &data->winch_handle, ui);
+  signal_watcher_init(data->loop, &data->cont_handle, data);
+#ifdef UNIX
+  signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
+#endif
+
+  // TODO(bfredl): zero hl is empty, send this explicitly?
+  kv_push(data->attrs, HLATTRS_INIT);
+
+#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
+  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
+#endif
+  tinput_init(&data->input, &main_loop);
+  tui_terminal_start(ui);
+  loop_schedule(&main_loop, event_create(show_termcap_event, 1, data->ut));
+
+  // "Active" loop: first ~100 ms of startup.
+  for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
+    ms += (loop_poll_events(&main_loop, 20) ? 20 : 1);
+  }
+}
+
+void tui_client_execute(void) {
+  UI *ui = get_ui_by_index(1);
+  LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
+  tui_io_driven_loop(ui);
+  loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
+  ui_detach_impl(ui);
+  getout(0);
+}
+
+void tui_io_driven_loop(UI *ui){
+  if (!tui_is_stopped(ui)) {
+    tui_terminal_after_startup(ui);
+    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
+    // terminal response may not get processed until user hits a key.
+    loop_schedule(&main_loop, event_create(tui_dummy_event, 0));
+  }
+  // "Passive" (I/O-driven) loop: TUI thread "main loop".
+  while (!tui_is_stopped(ui)) {
+    loop_poll_events(&main_loop, -1);
+  }
+  TUIData *data = ui->data;
+  tinput_destroy(&data->input);
+  signal_watcher_stop(&data->cont_handle);
+  signal_watcher_close(&data->cont_handle, NULL);
+  signal_watcher_close(&data->winch_handle, NULL);
+}
+
+void tui_data_destroy(void **argv) {
+  UI *ui = argv[0];
+  TUIData *data = ui->data;
   kv_destroy(data->invalid_regions);
   kv_destroy(data->attrs);
   xfree(data->space_buf);

@@ -130,10 +130,16 @@ void ui_builtin_start(void)
 }
 
 uint64_t ui_client_start(char *server_name)
-{   
-  is_remote_client = true; // The TUI is a remote client
+{
   ui_comp_detach(uis[1]);  // Bypassing compositor in client
-  return tui_ui_client_init(server_name);    
+  uint64_t rv = tui_ui_client_init(server_name);
+  return rv;
+}
+
+UI* get_ui_by_index(int idx)
+{
+  assert(idx < 16);
+  return uis[idx];
 }
 
 bool ui_rgb_attached(void)
@@ -251,10 +257,10 @@ void ui_stop_event(void **argv)
   ui_call_stop();
 }
 
-void ui_schedule_stop(void)
-{
-  loop_schedule(&main_loop, event_create(ui_stop_event, 0));  
-}
+// void ui_schedule_stop(void)
+// {
+//   loop_schedule(&main_loop, event_create(ui_stop_event, 0));  
+// }
 
 void ui_default_colors_set(void)
 {

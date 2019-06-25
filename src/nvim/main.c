@@ -74,6 +74,7 @@
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
 #include "nvim/redraw.h"
+#include "nvim/tui/tui.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
@@ -352,9 +353,9 @@ int main(int argc, char **argv)
   // give embedders a chance to set up nvim, by processing a request before
   // startup. This allows an external UI to show messages and prompts from
   // --cmd and buffer loading (e.g. swap files)
-  bool early_ui = false;
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
+  is_remote_client = params.server_name != NULL;
   if (use_remote_ui || use_builtin_ui) {
     TIME_MSG("waiting for UI to make request");
     if (use_remote_ui) {
@@ -374,7 +375,7 @@ int main(int argc, char **argv)
   // This has to be always after ui_builtin_start or
   // after the start of atleast one GUI
   // as size of "uis[]" must be greater than 1
-  if (params.server_name) {
+  if (is_remote_client) {
     input_stop();  // Stop reading input, let the UI take over.
     uint64_t rv = ui_client_start(params.server_name);
     if (!rv) {
@@ -590,11 +591,8 @@ int main(int argc, char **argv)
    */
   if (!is_remote_client) {
     normal_enter(false, false);
-  } else {
-    // Since a nvim client can have just one TUI,
-    // ui_count reduces to 0 when it is closed
-    LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, -1, !ui_active());
-    getout(0);
+  } else {  
+    tui_client_execute();
   }
 
 #if defined(WIN32) && !defined(MAKE_LIB)

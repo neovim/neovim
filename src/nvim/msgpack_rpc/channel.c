@@ -222,7 +222,7 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
     call_set_error(channel, buf, WARN_LOG_LEVEL);
     if (is_remote_client) {
       // Stopping client TUI
-      ui_schedule_stop();
+      ui_stop_event(NULL);
     }
     goto end;
   }
