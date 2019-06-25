@@ -142,8 +142,9 @@ clean:
 	$(MAKE) -C src/nvim/testdir clean
 	$(MAKE) -C runtime/doc clean
 
-distclean: clean
+distclean:
 	rm -rf $(DEPS_BUILD_DIR) build
+	$(MAKE) clean
 
 install: | nvim
 	+$(BUILD_CMD) -C build install
