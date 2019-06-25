@@ -98,6 +98,7 @@ elseif(MINGW)
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
                                 CCDEBUG+=-g
+                                BUILDMODE=dynamic
           INSTALL_COMMAND ${CMAKE_COMMAND} -E make_directory ${DEPS_INSTALL_DIR}/bin
 	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/luajit.exe ${DEPS_INSTALL_DIR}/bin
 	    COMMAND ${CMAKE_COMMAND} -E copy ${DEPS_BUILD_DIR}/src/luajit/src/lua51.dll ${DEPS_INSTALL_DIR}/bin
