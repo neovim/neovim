@@ -2762,6 +2762,13 @@ return {
       defaults={if_true={vi="menu"}}
     },
     {
+      full_name='winblend', abbreviation='winbl',
+      type='number', scope={'window'},
+      vi_def=true,
+      redraw={'current_window'},
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='winhighlight', abbreviation='winhl',
       type='string', scope={'window'},
       vi_def=true,

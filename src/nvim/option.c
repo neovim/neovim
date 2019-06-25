@@ -74,6 +74,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
@@ -4391,11 +4392,10 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &p_pb) {
     p_pb = MAX(MIN(p_pb, 100), 0);
-    if (old_value != 0) {
-      hl_invalidate_blends();
-    }
+    hl_invalidate_blends();
+    pum_grid.blending = (p_pb > 0);
     if (pum_drawn()) {
-      pum_recompose();
+      pum_redraw();
     }
   } else if (pp == &p_pyx) {
     if (p_pyx != 0 && p_pyx != 2 && p_pyx != 3) {
@@ -4418,6 +4418,11 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
     }
   } else if (pp == &curwin->w_p_nuw) {
     curwin->w_nrwidth_line_count = 0;
+  } else if (pp == &curwin->w_p_winbl && value != old_value) {
+    // 'floatblend'
+    curwin->w_p_winbl = MAX(MIN(curwin->w_p_winbl, 100), 0);
+    curwin->w_hl_needs_update = true;
+    curwin->w_grid.blending = curwin->w_p_winbl > 0;
   }
 
 
@@ -5713,6 +5718,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
   case PV_FCS:    return (char_u *)&(curwin->w_p_fcs);
   case PV_LCS:    return (char_u *)&(curwin->w_p_lcs);
+  case PV_WINBL:  return (char_u *)&(curwin->w_p_winbl);
   default:        IEMSG(_("E356: get_varp ERROR"));
   }
   // always return a valid pointer to avoid a crash!
@@ -5792,6 +5798,7 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_winhl = vim_strsave(from->wo_winhl);
   to->wo_fcs = vim_strsave(from->wo_fcs);
   to->wo_lcs = vim_strsave(from->wo_lcs);
+  to->wo_winbl = from->wo_winbl;
   check_winopt(to);             // don't want NULL pointers
 }
 
@@ -5854,7 +5861,8 @@ void didset_window_options(win_T *wp)
   briopt_check(wp);
   set_chars_option(wp, &wp->w_p_fcs);
   set_chars_option(wp, &wp->w_p_lcs);
-  parse_winhl_opt(wp);
+  parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
+  wp->w_grid.blending = wp->w_p_winbl > 0;
 }
 
 

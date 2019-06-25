@@ -482,13 +482,13 @@ void update_screen(int type)
   }
 
   end_search_hl();
+
   // May need to redraw the popup menu.
-  if (pum_drawn() && redraw_popupmenu) {
+  if (pum_drawn() && must_redraw_pum) {
     pum_redraw();
   }
 
   send_grid_resize = false;
-  redraw_popupmenu = false;
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */

@@ -3764,6 +3764,196 @@ describe('floating windows', function()
         end
       end)
     end)
+
+    it("'winblend' option", function()
+      screen:try_resize(50,9)
+      screen:set_default_attr_ids({
+        [1] = {background = Screen.colors.LightMagenta},
+        [2] = {foreground = Screen.colors.Grey0, background = tonumber('0xffcfff')},
+        [3] = {foreground = tonumber('0xb282b2'), background = tonumber('0xffcfff')},
+        [4] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta},
+        [5] = {foreground = tonumber('0x990000'), background = tonumber('0xfff1ff')},
+        [6] = {foreground = tonumber('0x332533'), background = tonumber('0xfff1ff')},
+      })
+      insert([[
+        Lorem ipsum dolor sit amet, consectetur
+        adipisicing elit, sed do eiusmod tempor
+        incididunt ut labore et dolore magna aliqua.
+        Ut enim ad minim veniam, quis nostrud
+        exercitation ullamco laboris nisi ut aliquip ex
+        ea commodo consequat. Duis aute irure dolor in
+        reprehenderit in voluptate velit esse cillum
+        dolore eu fugiat nulla pariatur. Excepteur sint
+        occaecat cupidatat non proident, sunt in culpa
+        qui officia deserunt mollit anim id est
+        laborum.]])
+      local buf = meths.create_buf(false,false)
+      meths.buf_set_lines(buf, 0, -1, true, {"test", "", "popup    text"})
+      local win = meths.open_win(buf, false, {relative='editor', width=15, height=3, row=2, col=5})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+                                                            |
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 4
+          {1:test           }|
+          {1:               }|
+          {1:popup    text  }|
+        ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{1:test           }. Duis aute irure dolor in    |
+          repre{1:               }uptate velit esse cillum      |
+          dolor{1:popup    text  }la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      meths.win_set_option(win, "winblend", 30)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+                                                            |
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 4
+          {1:test           }|
+          {1:               }|
+          {1:popup    text  }|
+        ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}, unchanged=true}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
+          repre{3:henderit in vol}uptate velit esse cillum      |
+          dolor{2:popup}{3:fugi}{2:text}{3:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      command('hi SpecialRegion guifg=Red blend=0')
+      meths.buf_add_highlight(buf, -1, "SpecialRegion", 2, 0, -1)
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+                                                            |
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 4
+          {1:test           }|
+          {1:               }|
+          {4:popup    text}{1:  }|
+        ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
+          repre{3:henderit in vol}uptate velit esse cillum      |
+          dolor{4:popup    text}{3:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      command('hi SpecialRegion guifg=Red blend=80')
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+                                                            |
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 4
+          {1:test           }|
+          {1:               }|
+          {4:popup    text}{1:  }|
+        ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}, unchanged=true}
+      else
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
+          repre{3:henderit in vol}uptate velit esse cillum      |
+          dolor{5:popup}{6:fugi}{5:text}{3:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+    end)
   end
 
   describe('with ext_multigrid', function()
