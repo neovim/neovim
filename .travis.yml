@@ -55,8 +55,9 @@ jobs:
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
       env: >
         CLANG_SANITIZER=ASAN_UBSAN
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON -DUSE_GCOV=ON"
         ASAN_SYMBOLIZE=asan_symbolize-4.0
+        GCOV=gcov
     - os: linux
       compiler: gcc
       env: >
@@ -80,9 +81,6 @@ jobs:
       compiler: gcc
       osx_image: xcode10.1  # macOS 10.13
 
-    - os: linux
-      compiler: gcc
-      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: clang
       env: CLANG_SANITIZER=TSAN
