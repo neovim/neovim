@@ -81,3 +81,9 @@ function convertToCmakeArgs($vars) {
 cd $nvimCmakeVars["DEPS_BUILD_DIR"]
 cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
+cd $buildDir
+
+# Build Neovim
+mkdir build
+cd build
+cmake -G $cmakeGenerator $(convertToCmakeArgs($nvimCmakeVars)) .. ; exitIfFailed
