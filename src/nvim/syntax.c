@@ -2922,8 +2922,9 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
     if (r > 0)
       ++st->match;
   }
-  if (timed_out) {
+  if (timed_out && !syn_win->w_s->b_syn_slow) {
     syn_win->w_s->b_syn_slow = true;
+    MSG(_("'redrawtime' exceeded, syntax highlighting disabled"));
   }
 
   if (r > 0) {
@@ -3123,11 +3124,11 @@ static void syn_cmd_iskeyword(exarg_T *eap, int syncing)
   arg = skipwhite(arg);
   if (*arg == NUL) {
     MSG_PUTS("\n");
-    MSG_PUTS(_("syntax iskeyword "));
     if (curwin->w_s->b_syn_isk != empty_option) {
+      MSG_PUTS(_("syntax iskeyword "));
       msg_outtrans(curwin->w_s->b_syn_isk);
     } else {
-      msg_outtrans((char_u *)"not set");
+      msg_outtrans((char_u *)_("syntax iskeyword not set"));
     }
   } else {
     if (STRNICMP(arg, "clear", 5) == 0) {
