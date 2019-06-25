@@ -59,7 +59,6 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR})
   else()
-    list(APPEND CMAKE_MODULE_PATH "../cmake")
     find_package(LuaJit)
     if(LUAJIT_FOUND)
       list(APPEND LUAROCKS_OPTS
