@@ -82,10 +82,16 @@ jobs:
 
     - os: linux
       compiler: gcc
-      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
-    - os: linux
-      compiler: clang
-      env: CLANG_SANITIZER=TSAN
+      env: >
+        GCOV=gcov
+        CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      # Default cache, without ccache.
+      cache:
+        apt: true
+        directories:
+          - "$HOME/.cache/pip"
+          - "$HOME/.cache/nvim-deps"
+          - "$HOME/.cache/nvim-deps-downloads"
   allow_failures:
     - env: CLANG_SANITIZER=TSAN
   fast_finish: true
