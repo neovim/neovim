@@ -228,7 +228,16 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   luv_set_loop(lstate, &main_loop.uv);
   luv_set_callback(lstate, nlua_luv_cfpcall);
   luaopen_luv(lstate);
-  lua_setfield(lstate, -2, "loop");
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "loop");
+
+  // package.loaded.luv = vim.loop
+  // otherwise luv will be reinitialized when require'luv'
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "luv");
+  lua_pop(lstate, 3);
 
   lua_setglobal(lstate, "vim");
   return 0;

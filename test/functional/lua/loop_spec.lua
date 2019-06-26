@@ -142,4 +142,8 @@ describe('vim.loop', function()
     ]])
     eq({blocking=false, mode='n'}, exec_lua("return _G.mode"))
   end)
+
+  it("is equal to require('luv')", function()
+    eq(true, exec_lua("return vim.loop == require('luv')"))
+  end)
 end)
