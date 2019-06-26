@@ -27,7 +27,7 @@ checkprefix:
 	@if [ -f build/.ran-cmake ]; then \
 	  cached_prefix=$(shell $(CMAKE_PRG) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
 	  if ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
-			echo "Re-running CMake for changed CMAKE_INSTALL_PREFIX."; \
+	    echo "Re-running CMake for changed CMAKE_INSTALL_PREFIX."; \
 	    $(RM) build/.ran-cmake; \
 	  fi \
 	fi
@@ -161,7 +161,7 @@ distclean:
 	rm -rf $(DEPS_BUILD_DIR) build
 	$(MAKE) clean
 
-install: checkprefix build/.ran-cmake nvim
+install: checkprefix nvim
 	+$(BUILD_CMD) -C build install
 
 clint: build/.ran-cmake
