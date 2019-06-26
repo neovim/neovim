@@ -14,10 +14,25 @@ CMAKE_EXTRA_FLAGS ?=
 # CMAKE_INSTALL_PREFIX
 #   - May be passed directly or as part of CMAKE_EXTRA_FLAGS.
 #   - `checkprefix` target checks that it matches the CMake-cached value. #9615
+ifeq (,$(CMAKE_EXTRA_FLAGS))
+CMAKE_INSTALL_PREFIX ?=
+else
 CMAKE_INSTALL_PREFIX ?= $(shell echo $(CMAKE_EXTRA_FLAGS) | 2>/dev/null \
     grep -o 'CMAKE_INSTALL_PREFIX=[^ ]\+' | cut -d '=' -f2)
+endif
 ifneq (,$(CMAKE_INSTALL_PREFIX))
-  CMAKE_FLAGS += -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
+  CMAKE_EXTRA_FLAGS += -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
+
+checkprefix:
+	@if [ -f build/.ran-cmake ]; then \
+	  cached_prefix=$(shell $(CMAKE_PRG) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
+	  if ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
+			echo "Re-running CMake for changed CMAKE_INSTALL_PREFIX."; \
+	    $(RM) build/.ran-cmake; \
+	  fi \
+	fi
+else
+checkprefix: ;
 endif
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
@@ -69,7 +84,7 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 all: nvim
 
-nvim: checkprefix build/.ran-cmake deps
+nvim: build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
 
 libnvim: build/.ran-cmake deps
@@ -146,7 +161,7 @@ distclean:
 	rm -rf $(DEPS_BUILD_DIR) build
 	$(MAKE) clean
 
-install: | nvim
+install: checkprefix build/.ran-cmake nvim
 	+$(BUILD_CMD) -C build install
 
 clint: build/.ran-cmake
@@ -171,14 +186,5 @@ appimage-%:
 	bash scripts/genappimage.sh $*
 
 lint: check-single-includes clint testlint lualint
-
-checkprefix:
-	@cached_prefix=$$("$(CMAKE_PRG)" -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
-	if [ -n "$(CMAKE_INSTALL_PREFIX)" ] && [ -n "$$cached_prefix" ] && ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
-		printf "\nerror: CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s'\n" "$$cached_prefix"; \
-		printf "       Run this command, then try again:\n"; \
-		printf "         cmake build -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)\n"; \
-		exit 1; \
-	fi;
 
 .PHONY: test testlint lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
