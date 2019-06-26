@@ -1978,6 +1978,7 @@ static int command_line_changed(CommandLineState *s)
 static void abandon_cmdline(void)
 {
   XFREE_CLEAR(ccline.cmdbuff);
+  ccline.redraw_state = kCmdRedrawNone;
   if (msg_scrolled == 0) {
     compute_cmdrow();
   }
