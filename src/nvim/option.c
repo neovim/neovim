@@ -251,6 +251,7 @@ typedef struct vimoption {
 #define P_RWINONLY     0x10000000U  ///< only redraw current window
 #define P_NDNAME       0x20000000U  ///< only normal dir name chars allowed
 #define P_UI_OPTION    0x40000000U  ///< send option to remote ui
+#define P_MLE          0x80000000U  ///< under control of 'modelineexpr'
 
 #define HIGHLIGHT_INIT \
   "8:SpecialKey,~:EndOfBuffer,z:TermCursor,Z:TermCursorNC,@:NonText," \
@@ -1209,7 +1210,7 @@ do_set (
         }
         len++;
         if (opt_idx == -1) {
-          key = find_key_option(arg + 1);
+          key = find_key_option(arg + 1, true);
         }
       } else {
         len = 0;
@@ -1223,7 +1224,7 @@ do_set (
         }
         opt_idx = findoption_len((const char *)arg, (size_t)len);
         if (opt_idx == -1) {
-          key = find_key_option(arg);
+          key = find_key_option(arg, false);
         }
       }
 
@@ -1288,6 +1289,11 @@ do_set (
       if (opt_flags & OPT_MODELINE) {
         if (flags & (P_SECURE | P_NO_ML)) {
           errmsg = (char_u *)_("E520: Not allowed in a modeline");
+          goto skip;
+        }
+        if ((flags & P_MLE) && !p_mle) {
+          errmsg = (char_u *)_(
+              "E992: Not allowed in a modeline when 'modelineexpr' is off");
           goto skip;
         }
         /* In diff mode some options are overruled.  This avoids that
@@ -1364,6 +1370,10 @@ do_set (
             && nextchar != NUL && !ascii_iswhite(afterchar))
           errmsg = e_trailing;
       } else {
+
+        int value_is_replaced = !prepending && !adding && !removing;
+        int value_checked = false;
+
         if (flags & P_BOOL) {                       /* boolean */
           if (nextchar == '=' || nextchar == ':') {
             errmsg = e_invarg;
@@ -1783,12 +1793,32 @@ do_set (
             // buffer is closed by autocommands.
             saved_newval = (newval != NULL) ? xstrdup((char *)newval) : 0;
 
-            // Handle side effects, and set the global value for
-            // ":set" on local options. Note: when setting 'syntax'
-            // or 'filetype' autocommands may be triggered that can
-            // cause havoc.
-            errmsg = did_set_string_option(opt_idx, (char_u **)varp,
-                new_value_alloced, oldval, errbuf, opt_flags);
+            {
+              uint32_t *p = insecure_flag(opt_idx, opt_flags);
+              const int secure_saved = secure;
+
+              // When an option is set in the sandbox, from a
+              // modeline or in secure mode, then deal with side
+              // effects in secure mode.  Also when the value was
+              // set with the P_INSECURE flag and is not
+              // completely replaced.
+              if ((opt_flags & OPT_MODELINE)
+                  || sandbox != 0
+                  || (!value_is_replaced && (*p & P_INSECURE))) {
+                secure = 1;
+              }
+
+              // Handle side effects, and set the global value
+              // for ":set" on local options. Note: when setting
+              // 'syntax' or 'filetype' autocommands may be
+              // triggered that can cause havoc.
+              errmsg = did_set_string_option(opt_idx, (char_u **)varp,
+                                             new_value_alloced, oldval,
+                                             errbuf, sizeof(errbuf),
+                                             opt_flags, &value_checked);
+
+              secure = secure_saved;
+            }
 
             if (errmsg == NULL) {
               if (!starting) {
@@ -1815,8 +1845,7 @@ do_set (
         }
 
         if (opt_idx >= 0)
-          did_set_option(opt_idx, opt_flags,
-              !prepending && !adding && !removing);
+          did_set_option(opt_idx, opt_flags, value_is_replaced, value_checked);
       }
 
 skip:
@@ -1881,7 +1910,9 @@ static void
 did_set_option (
     int opt_idx,
     int opt_flags,              /* possibly with OPT_MODELINE */
-    int new_value              /* value was replaced completely */
+    int new_value,              /* value was replaced completely */
+    int value_checked           /* value was checked to be safe, no need to
+                                   set P_INSECURE */
 )
 {
   options[opt_idx].flags |= P_WAS_SET;
@@ -1890,20 +1921,22 @@ did_set_option (
    * set the P_INSECURE flag.  Otherwise, if a new value is stored reset the
    * flag. */
   uint32_t *p = insecure_flag(opt_idx, opt_flags);
-  if (secure
-      || sandbox != 0
-      || (opt_flags & OPT_MODELINE))
+  if (!value_checked && (secure
+                         || sandbox != 0
+                         || (opt_flags & OPT_MODELINE))) {
     *p = *p | P_INSECURE;
-  else if (new_value)
+  } else if (new_value) {
     *p = *p & ~P_INSECURE;
+  }
 }
 
-static char_u *illegal_char(char_u *errbuf, int c)
+static char_u *illegal_char(char_u *errbuf, size_t errbuflen, int c)
 {
-  if (errbuf == NULL)
+  if (errbuf == NULL) {
     return (char_u *)"";
-  sprintf((char *)errbuf, _("E539: Illegal character <%s>"),
-      (char *)transchar(c));
+  }
+  vim_snprintf((char *)errbuf, errbuflen, _("E539: Illegal character <%s>"),
+               (char *)transchar(c));
   return errbuf;
 }
 
@@ -1913,10 +1946,12 @@ static char_u *illegal_char(char_u *errbuf, int c)
  */
 static int string_to_key(char_u *arg)
 {
-  if (*arg == '<')
-    return find_key_option(arg + 1);
-  if (*arg == '^')
+  if (*arg == '<') {
+    return find_key_option(arg + 1, true);
+  }
+  if (*arg == '^') {
     return Ctrl_chr(arg[1]);
+  }
   return *arg;
 }
 
@@ -2392,10 +2427,12 @@ static char *set_string_option(const int opt_idx, const char *const value,
   char *const saved_oldval = xstrdup(oldval);
   char *const saved_newval = xstrdup(s);
 
+  int value_checked = false;
   char *const r = (char *)did_set_string_option(
-      opt_idx, (char_u **)varp, (int)true, (char_u *)oldval, NULL, opt_flags);
+      opt_idx, (char_u **)varp, (int)true, (char_u *)oldval,
+      NULL, 0, opt_flags, &value_checked);
   if (r == NULL) {
-    did_set_option(opt_idx, opt_flags, true);
+    did_set_option(opt_idx, opt_flags, true, value_checked);
   }
 
   // call autocommand after handling side effects
@@ -2431,13 +2468,16 @@ static bool valid_filetype(char_u *val)
  * Returns NULL for success, or an error message for an error.
  */
 static char_u *
-did_set_string_option (
-    int opt_idx,                            /* index in options[] table */
-    char_u **varp,                     /* pointer to the option variable */
-    int new_value_alloced,                  /* new value was allocated */
-    char_u *oldval,                    /* previous value of the option */
-    char_u *errbuf,                    /* buffer for errors, or NULL */
-    int opt_flags                          /* OPT_LOCAL and/or OPT_GLOBAL */
+did_set_string_option(
+    int opt_idx,                       // index in options[] table
+    char_u **varp,                     // pointer to the option variable
+    int new_value_alloced,             // new value was allocated
+    char_u *oldval,                    // previous value of the option
+    char_u *errbuf,                    // buffer for errors, or NULL
+    size_t errbuflen,                  // length of errors buffer
+    int opt_flags,                     // OPT_LOCAL and/or OPT_GLOBAL
+    int *value_checked                 // value was checked to be safe, no
+                                       // need to set P_INSECURE
 )
 {
   char_u      *errmsg = NULL;
@@ -2655,8 +2695,20 @@ did_set_string_option (
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
+      int secure_save = secure;
+
+      // Reset the secure flag, since the value of 'keymap' has
+      // been checked to be safe.
+      secure = 0;
+
       // load or unload key mapping tables
       errmsg = keymap_init();
+
+      secure = secure_save;
+
+      // Since we check the value, there is no need to set P_INSECURE,
+      // even when the value comes from a modeline.
+      *value_checked = true;
     }
 
     if (errmsg == NULL) {
@@ -2742,7 +2794,7 @@ did_set_string_option (
       while (*s && *s != ':') {
         if (vim_strchr((char_u *)COM_ALL, *s) == NULL
             && !ascii_isdigit(*s) && *s != '-') {
-          errmsg = illegal_char(errbuf, *s);
+          errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
         }
         ++s;
@@ -2794,7 +2846,7 @@ did_set_string_option (
     for (s = p_shada; *s; ) {
       /* Check it's a valid character */
       if (vim_strchr((char_u *)"!\"%'/:<@cfhnrs", *s) == NULL) {
-        errmsg = illegal_char(errbuf, *s);
+        errmsg = illegal_char(errbuf, errbuflen, *s);
         break;
       }
       if (*s == 'n') {          /* name is always last one */
@@ -2814,9 +2866,9 @@ did_set_string_option (
 
         if (!ascii_isdigit(*(s - 1))) {
           if (errbuf != NULL) {
-            sprintf((char *)errbuf,
-                _("E526: Missing number after <%s>"),
-                transchar_byte(*(s - 1)));
+            vim_snprintf((char *)errbuf, errbuflen,
+                         _("E526: Missing number after <%s>"),
+                         transchar_byte(*(s - 1)));
             errmsg = errbuf;
           } else
             errmsg = (char_u *)"";
@@ -2994,7 +3046,7 @@ did_set_string_option (
       if (!*s)
         break;
       if (vim_strchr((char_u *)".wbuksid]tU", *s) == NULL) {
-        errmsg = illegal_char(errbuf, *s);
+        errmsg = illegal_char(errbuf, errbuflen, *s);
         break;
       }
       if (*++s != NUL && *s != ',' && *s != ' ') {
@@ -3008,9 +3060,9 @@ did_set_string_option (
           }
         } else {
           if (errbuf != NULL) {
-            sprintf((char *)errbuf,
-                _("E535: Illegal character after <%c>"),
-                *--s);
+            vim_snprintf((char *)errbuf, errbuflen,
+                         _("E535: Illegal character after <%c>"),
+                         *--s);
             errmsg = errbuf;
           } else
             errmsg = (char_u *)"";
@@ -3167,12 +3219,20 @@ did_set_string_option (
       errmsg = e_invarg;
     } else {
       value_changed = STRCMP(oldval, *varp) != 0;
+
+      // Since we check the value, there is no need to set P_INSECURE,
+      // even when the value comes from a modeline.
+      *value_checked = true;
     }
   } else if (gvarp == &p_syn) {
     if (!valid_filetype(*varp)) {
       errmsg = e_invarg;
     } else {
       value_changed = STRCMP(oldval, *varp) != 0;
+
+      // Since we check the value, there is no need to set P_INSECURE,
+      // even when the value comes from a modeline.
+      *value_checked = true;
     }
   } else if (varp == &curwin->w_p_winhl) {
     if (!parse_winhl_opt(curwin)) {
@@ -3198,7 +3258,7 @@ did_set_string_option (
     if (p != NULL) {
       for (s = *varp; *s; ++s)
         if (vim_strchr(p, *s) == NULL) {
-          errmsg = illegal_char(errbuf, *s);
+          errmsg = illegal_char(errbuf, errbuflen, *s);
           break;
         }
     }
@@ -3262,6 +3322,11 @@ did_set_string_option (
       // already set to this value.
       if (!(opt_flags & OPT_MODELINE) || value_changed) {
         static int ft_recursive = 0;
+        int secure_save = secure;
+
+        // Reset the secure flag, since the value of 'filetype' has
+        // been checked to be safe.
+        secure = 0;
 
         ft_recursive++;
         did_filetype = true;
@@ -3274,6 +3339,7 @@ did_set_string_option (
         if (varp != &(curbuf->b_p_ft)) {
           varp = NULL;
         }
+        secure = secure_save;
       }
     }
     if (varp == &(curwin->w_s->b_p_spl)) {
@@ -3291,11 +3357,13 @@ did_set_string_option (
        * '.encoding'.
        */
       for (p = q; *p != NUL; ++p)
-        if (vim_strchr((char_u *)"_.,", *p) != NULL)
+        if (!ASCII_ISALNUM(*p) && *p != '-')
           break;
-      vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
-                   (int)(p - q), q);
-      source_runtime(fname, DIP_ALL);
+      if (p > q) {
+        vim_snprintf((char *)fname, sizeof(fname), "spell/%.*s.vim",
+                     (int)(p - q), q);
+        source_runtime(fname, DIP_ALL);
+      }
     }
   }
 
@@ -3554,7 +3622,7 @@ char_u *check_stl_option(char_u *s)
       continue;
     }
     if (vim_strchr(STL_ALL, *s) == NULL) {
-      return illegal_char(errbuf, *s);
+      return illegal_char(errbuf, sizeof(errbuf), *s);
     }
     if (*s == '{') {
       s++;
@@ -4893,19 +4961,20 @@ char *set_option_value(const char *const name, const long number,
   return NULL;
 }
 
-/*
- * Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
- */
-int find_key_option_len(const char_u *arg, size_t len)
+// Translate a string like "t_xx", "<t_xx>" or "<S-Tab>" to a key number.
+// When "has_lt" is true there is a '<' before "*arg_arg".
+// Returns 0 when the key is not recognized.
+int find_key_option_len(const char_u *arg_arg, size_t len, bool has_lt)
 {
-  int key;
+  int key = 0;
   int modifiers;
+  const char_u *arg = arg_arg;
 
   // Don't use get_special_key_code() for t_xx, we don't want it to call
   // add_termcap_entry().
   if (len >= 4 && arg[0] == 't' && arg[1] == '_') {
     key = TERMCAP2KEY(arg[2], arg[3]);
-  } else {
+  } else if (has_lt)  {
     arg--;  // put arg at the '<'
     modifiers = 0;
     key = find_special_key(&arg, len + 1, &modifiers, true, true, false);
@@ -4916,9 +4985,9 @@ int find_key_option_len(const char_u *arg, size_t len)
   return key;
 }
 
-static int find_key_option(const char_u *arg)
+static int find_key_option(const char_u *arg, bool has_lt)
 {
-  return find_key_option_len(arg, STRLEN(arg));
+  return find_key_option_len(arg, STRLEN(arg), has_lt);
 }
 
 /*

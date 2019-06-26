@@ -478,14 +478,17 @@ backslash in front of the ':' will be removed.  Example:
    /* vi:set dir=c\:\tmp: */ ~
 This sets the 'dir' option to "c:\tmp".  Only a single backslash before the
 ':' is removed.  Thus to include "\:" you have to specify "\\:".
-
+							*E992*
 No other commands than "set" are supported, for security reasons (somebody
 might create a Trojan horse text file with modelines).  And not all options
-can be set.  For some options a flag is set, so that when it's used the
-|sandbox| is effective.  Still, there is always a small risk that a modeline
-causes trouble.  E.g., when some joker sets 'textwidth' to 5 all your lines
-are wrapped unexpectedly.  So disable modelines before editing untrusted text.
-The mail ftplugin does this, for example.
+can be set.  For some options a flag is set, so that when the value is used
+the |sandbox| is effective.  Some options can only be set from the modeline
+when 'modelineexpr' is set (the default is off).
+
+Still, there is always a small risk that a modeline causes trouble.  E.g.,
+when some joker sets 'textwidth' to 5 all your lines are wrapped unexpectedly.
+So disable modelines before editing untrusted text.  The mail ftplugin does
+this, for example.
 
 Hint: If you would like to do something else than setting an option, you could
 define an autocommand that checks the file for a specific string.  For
@@ -2439,7 +2442,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The expression will be evaluated in the |sandbox| if set from a
 	modeline, see |sandbox-option|.
 	This option can't be set from a |modeline| when the 'diff' option is
-	on.
+	on or the 'modelineexpr' option is off.
 
 	It is not allowed to change text or jump to another window while
 	evaluating 'foldexpr' |textlock|.
@@ -2554,6 +2557,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The expression will be evaluated in the |sandbox| if set from a
 	modeline, see |sandbox-option|.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	It is not allowed to change text or jump to another window while
 	evaluating 'foldtext' |textlock|.
@@ -2589,16 +2593,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The expression will be evaluated in the |sandbox| when set from a
 	modeline, see |sandbox-option|.  That stops the option from working,
 	since changing the buffer text is not allowed.
-
-					*'formatoptions'* *'fo'*
-'formatoptions' 'fo'	string (default: "tcqj", Vi default: "vt")
-			local to buffer
-	This is a sequence of letters which describes how automatic
-	formatting is to be done.  See |fo-table|.  When the 'paste' option is
-	on, no formatting is done (like 'formatoptions' is empty).  Commas can
-	be inserted for readability.
-	To avoid problems with flags that are added in the future, use the
-	"+=" and "-=" feature of ":set" |add-option-flags|.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
+	NOTE: This option is set to "" when 'compatible' is set.
 
 					*'formatlistpat'* *'flp'*
 'formatlistpat' 'flp'	string (default: "^\s*\d\+[\]:.)}\t ]\s*")
@@ -2612,6 +2608,16 @@ A jump table for the options with a short description can be found at |Q_op|.
 	like there is no match.
 	The default recognizes a number, followed by an optional punctuation
 	character and white space.
+
+					*'formatoptions'* *'fo'*
+'formatoptions' 'fo'	string (default: "tcqj", Vi default: "vt")
+			local to buffer
+	This is a sequence of letters which describes how automatic
+	formatting is to be done.  See |fo-table|.  When the 'paste' option is
+	on, no formatting is done (like 'formatoptions' is empty).  Commas can
+	be inserted for readability.
+	To avoid problems with flags that are added in the future, use the
+	"+=" and "-=" feature of ":set" |add-option-flags|.
 
 						*'formatprg'* *'fp'*
 'formatprg' 'fp'	string (default "")
@@ -2642,6 +2648,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- |:preserve| is called
 	- system signals low battery life
 	- Nvim exits abnormally
+
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 				   *'gdefault'* *'gd'* *'nogdefault'* *'nogd'*
 'gdefault' 'gd'		boolean	(default off)
@@ -2978,6 +2987,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'guitabtooltip' is used for the tooltip, see below.
 	The expression will be evaluated in the |sandbox| when set from a
 	modeline, see |sandbox-option|.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	Only used when the GUI tab pages line is displayed.  'e' must be
 	present in 'guioptions'.  For the non-GUI tab pages line 'tabline' is
@@ -3106,6 +3116,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option contains printf-style '%' items, they will be
 	expanded according to the rules used for 'statusline'.  See
 	'titlestring' for example settings.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 			*'ignorecase'* *'ic'* *'noignorecase'* *'noic'*
 'ignorecase' 'ic'	boolean	(default off)
@@ -3209,6 +3220,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The expression will be evaluated in the |sandbox| when set from a
 	modeline, see |sandbox-option|.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	It is not allowed to change text or jump to another window while
 	evaluating 'includeexpr' |textlock|.
@@ -3277,6 +3289,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The expression will be evaluated in the |sandbox| when set from a
 	modeline, see |sandbox-option|.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	It is not allowed to change text or jump to another window while
 	evaluating 'indentexpr' |textlock|.
@@ -3879,10 +3892,23 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	If you have less than 512 Mbyte |:mkspell| may fail for some
 	languages, no matter what you set 'mkspellmem' to.
 
+	This option cannot be set from a |modeline| or in the |sandbox|.
+
 				   *'modeline'* *'ml'* *'nomodeline'* *'noml'*
 'modeline' 'ml'		boolean	(Vim default: on (off for root),
 				 Vi default: off)
 			local to buffer
+	If 'modeline' is on 'modelines' gives the number of lines that is
+	checked for set commands.  If 'modeline' is off or 'modelines' is zero
+	no lines are checked.  See |modeline|.
+
+			   *'modelineexpr'* *'mle'* *'nomodelineexpr'* *'nomle'*
+'modelineexpr' 'mle'	boolean (default: off)
+			global
+	When on allow some options that are an expression to be set in the
+	modeline.  Check the option for whether it is affected by
+	'modelineexpr'.  Also see |modeline|.
+
 						*'modelines'* *'mls'*
 'modelines' 'mls'	number	(default 5)
 			global
@@ -4622,6 +4648,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is not empty, it determines the content of the ruler
 	string, as displayed for the 'ruler' option.
 	The format of this option is like that of 'statusline'.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
+
 	The default ruler width is 17 characters.  To make the ruler 15
 	characters wide, put "%15(" at the start and "%)" at the end.
 	Example: >
@@ -5252,7 +5280,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		"Pattern not found", "Back at original", etc.
 	  q	use "recording" instead of "recording @a"
 	  F	don't give the file info when editing a file, like `:silent`
-		was used for the command
+		was used for the command; note that this also affects messages
+		from autocommands
 
 	This gives you the opportunity to avoid that a change between buffers
 	requires you to hit <Enter>, but still gives as useful a message as
@@ -5527,7 +5556,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	After this option has been set successfully, Vim will source the files
 	"spell/LANG.vim" in 'runtimepath'.  "LANG" is the value of 'spelllang'
-	up to the first comma, dot or underscore.
+	up to the first character that is not an ASCII letter and not a dash.
 	Also see |set-spc-auto|.
 
 
@@ -5773,6 +5802,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'statusline' option will be evaluated in the |sandbox| if set from
 	a modeline, see |sandbox-option|.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	It is not allowed to change text or jump to another window while
 	evaluating 'statusline' |textlock|.
@@ -5926,6 +5956,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	|tabpagenr()|, |tabpagewinnr()| and |tabpagebuflist()| to figure out
 	the text to be displayed.  Use "%1T" for the first label, "%2T" for
 	the second one, etc.  Use "%X" items for closing labels.
+
+	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	Keep in mind that only one of the tab pages is the current one, others
 	are invisible and you can't jump to their windows.
@@ -6203,8 +6235,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When this option is not empty, it will be used for the title of the
 	window.  This happens only when the 'title' option is on.
+
 	When this option contains printf-style '%' items, they will be
 	expanded according to the rules used for 'statusline'.
+	This option cannot be set in a modeline when 'modelineexpr' is off.
+
 	Example: >
 	    :auto BufEnter * let &titlestring = hostname() . "/" . expand("%:p")
 	    :set title titlestring=%<%F%=%l/%L-%P titlelen=70
@@ -6238,6 +6273,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	undo file that exists is used.  When it cannot be read an error is
 	given, no further entry is used.
 	See |undo-persistence|.
+	This option cannot be set from a |modeline| or in the |sandbox|, for
+	security reasons.
 
 				*'undofile'* *'noundofile'* *'udf'* *'noudf'*
 'undofile' 'udf'	boolean	(default off)

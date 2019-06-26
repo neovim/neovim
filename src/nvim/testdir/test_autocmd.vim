@@ -652,6 +652,29 @@ func Test_OptionSet_diffmode_close()
   "delfunc! AutoCommandOptionSet
 endfunc
 
+func Test_OptionSet_modeline()
+  throw 'skipped: Nvim does not support test_override()'
+  call test_override('starting', 1)
+  au! OptionSet
+  augroup set_tabstop
+    au OptionSet tabstop call timer_start(1, {-> execute("echo 'Handler called'", "")})
+  augroup END
+  call writefile(['vim: set ts=7 sw=5 :', 'something'], 'XoptionsetModeline')
+  set modeline
+  let v:errmsg = ''
+  call assert_fails('split XoptionsetModeline', 'E12:')
+  call assert_equal(7, &ts)
+  call assert_equal('', v:errmsg)
+
+  augroup set_tabstop
+    au!
+  augroup END
+  bwipe!
+  set ts&
+  call delete('XoptionsetModeline')
+  call test_override('starting', 0)
+endfunc
+
 " Test for Bufleave autocommand that deletes the buffer we are about to edit.
 func Test_BufleaveWithDelete()
   new | edit Xfile1

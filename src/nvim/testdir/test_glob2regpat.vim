@@ -1,12 +1,12 @@
 " Test glob2regpat()
 
-func Test_invalid()
+func Test_glob2regpat_invalid()
   call assert_fails('call glob2regpat(1.33)', 'E806:')
   call assert_fails('call glob2regpat("}")', 'E219:')
   call assert_fails('call glob2regpat("{")', 'E220:')
 endfunc
 
-func Test_valid()
+func Test_glob2regpat_valid()
   call assert_equal('^foo\.', glob2regpat('foo.*'))
   call assert_equal('^foo.$', glob2regpat('foo?'))
   call assert_equal('\.vim$', glob2regpat('*.vim'))

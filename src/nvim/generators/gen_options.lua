@@ -79,6 +79,7 @@ local get_flags = function(o)
     {'pri_mkrc'},
     {'deny_in_modelines', 'P_NO_ML'},
     {'deny_duplicates', 'P_NODUP'},
+    {'modelineexpr', 'P_MLE'},
   }) do
     local key_name = flag_desc[1]
     local def_name = flag_desc[2] or ('P_' .. key_name:upper())
