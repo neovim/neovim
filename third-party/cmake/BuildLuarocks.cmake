@@ -88,6 +88,7 @@ elseif(MSVC OR MINGW)
     /BIN ${DEPS_BIN_DIR}
     /INC ${DEPS_INSTALL_DIR}/include/luajit-2.0
     /P ${DEPS_INSTALL_DIR}/luarocks
+    /CONFIG ${DEPS_INSTALL_DIR}/luarocks
     /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
     /CMOD ${DEPS_BIN_DIR}
