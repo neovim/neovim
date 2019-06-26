@@ -75,10 +75,10 @@ jobs:
     - stage: second stage
       os: osx
       compiler: clang
-      osx_image: xcode10.1  # macOS 10.13
+      osx_image: xcode10.2  # macOS 10.14
     - os: osx
       compiler: gcc
-      osx_image: xcode10.1  # macOS 10.13
+      osx_image: xcode10.2  # macOS 10.14
 
     - os: linux
       compiler: gcc
