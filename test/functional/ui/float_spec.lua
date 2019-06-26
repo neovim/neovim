@@ -3774,6 +3774,8 @@ describe('floating windows', function()
         [4] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta},
         [5] = {foreground = tonumber('0x990000'), background = tonumber('0xfff1ff')},
         [6] = {foreground = tonumber('0x332533'), background = tonumber('0xfff1ff')},
+        [7] = {background = tonumber('0xffcfff'), bold = true, foreground = tonumber('0x0000d8')},
+        [8] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1}
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -3947,6 +3949,49 @@ describe('floating windows', function()
           ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
           repre{3:henderit in vol}uptate velit esse cillum      |
           dolor{5:popup}{6:fugi}{5:text}{3:ul}la pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+                                                            |
+        ]])
+      end
+
+      -- Test scrolling by mouse
+      if multigrid then
+        meths.input_mouse('wheel', 'down', '', 4, 2, 2)
+        screen:expect{grid=[[
+        ## grid 1
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+          [2:--------------------------------------------------]|
+                                                            |
+        ## grid 2
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea commodo consequat. Duis aute irure dolor in    |
+          reprehenderit in voluptate velit esse cillum      |
+          dolore eu fugiat nulla pariatur. Excepteur sint   |
+          occaecat cupidatat non proident, sunt in culpa    |
+          qui officia deserunt mollit anim id est           |
+          laborum^.                                          |
+        ## grid 4
+          {4:popup    text}{1:  }|
+          {8:~              }|
+          {8:~              }|
+        ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}}
+      else
+        meths.input_mouse('wheel', 'down', '', 0, 4, 7)
+        screen:expect([[
+          Ut enim ad minim veniam, quis nostrud             |
+          exercitation ullamco laboris nisi ut aliquip ex   |
+          ea co{5:popup}{6: con}{5:text}{3:at}. Duis aute irure dolor in    |
+          repre{7:~}{3:enderit in vol}uptate velit esse cillum      |
+          dolor{7:~}{3: eu fugiat nul}la pariatur. Excepteur sint   |
           occaecat cupidatat non proident, sunt in culpa    |
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
