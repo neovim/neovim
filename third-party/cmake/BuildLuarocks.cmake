@@ -82,7 +82,7 @@ elseif(MSVC OR MINGW)
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
   # Set CMOD and LUAMOD to match package.cpath / package.path of installed LuaJIT.
-  BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q
+  BuildLuarocks(INSTALL_COMMAND install.bat /NOREG /NOADMIN /Q
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
     /BIN ${DEPS_BIN_DIR}
