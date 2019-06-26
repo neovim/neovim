@@ -89,9 +89,8 @@ elseif(MSVC OR MINGW)
     /P ${DEPS_INSTALL_DIR}/luarocks
     /TREE ${DEPS_INSTALL_DIR}
     /SCRIPTS ${DEPS_BIN_DIR}
-    /CMOD ${DEPS_BIN_DIR}
     ${COMPILER_FLAG}
-    /LUAMOD ${DEPS_BIN_DIR}/lua)
+    )
 
   set(LUAROCKS_BINARY ${DEPS_INSTALL_DIR}/luarocks/luarocks.bat)
 else()

@@ -142,7 +142,7 @@ set(LUAJIT_SHA256 033fa4ef19f559ef18a9b9fb017d0cb8be58befe05ab604e92814234910f1c
 set(LUA_URL https://www.lua.org/ftp/lua-5.1.5.tar.gz)
 set(LUA_SHA256 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333)
 
-set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/ccab32f2a64f990c75023cad39d6b3966e9aeabb.tar.gz)
+set(LUAROCKS_URL https://github.com/luarocks/luarocks/archive/v3.1.3.tar.gz)
 set(LUAROCKS_SHA256 SKIP)
 
 set(UNIBILIUM_URL https://github.com/mauke/unibilium/archive/v2.0.0.tar.gz)
