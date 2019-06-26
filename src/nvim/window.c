@@ -90,36 +90,47 @@ do_window (
   else
     Prenum1 = Prenum;
 
-# define CHECK_CMDWIN if (cmdwin_type != 0) { EMSG(_(e_cmdwin)); break; }
+# define CHECK_CMDWIN \
+  do { \
+    if (cmdwin_type != 0) { \
+      EMSG(_(e_cmdwin)); \
+      return; \
+    } \
+  } while (0)
 
   switch (nchar) {
   /* split current window in two parts, horizontally */
   case 'S':
   case Ctrl_S:
   case 's':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    /* When splitting the quickfix window open a new buffer in it,
-     * don't replicate the quickfix buffer. */
-    if (bt_quickfix(curbuf))
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
+    // When splitting the quickfix window open a new buffer in it,
+    // don't replicate the quickfix buffer.
+    if (bt_quickfix(curbuf)) {
       goto newwindow;
+    }
     (void)win_split((int)Prenum, 0);
     break;
 
   /* split current window in two parts, vertically */
   case Ctrl_V:
   case 'v':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    /* When splitting the quickfix window open a new buffer in it,
-     * don't replicate the quickfix buffer. */
-    if (bt_quickfix(curbuf))
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
+    // When splitting the quickfix window open a new buffer in it,
+    // don't replicate the quickfix buffer.
+    if (bt_quickfix(curbuf)) {
       goto newwindow;
+    }
     (void)win_split((int)Prenum, WSP_VERT);
     break;
 
   /* split current window and edit alternate file */
   case Ctrl_HAT:
   case '^':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
     cmd_with_count("split #", (char_u *)cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
@@ -127,7 +138,8 @@ do_window (
   /* open new window */
   case Ctrl_N:
   case 'n':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
 newwindow:
     if (Prenum)
       /* window height */
@@ -160,7 +172,8 @@ newwindow:
   /* close preview window */
   case Ctrl_Z:
   case 'z':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
     do_cmdline_cmd("pclose");
     break;
 
@@ -183,7 +196,8 @@ newwindow:
   /* close all but current window */
   case Ctrl_O:
   case 'o':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
     cmd_with_count("only", (char_u *)cbuf, sizeof(cbuf), Prenum);
     do_cmdline_cmd(cbuf);
     break;
@@ -193,11 +207,11 @@ newwindow:
   case 'w':
   /* cursor to previous window with wrap around */
   case 'W':
-    CHECK_CMDWIN
-    if (ONE_WINDOW && Prenum != 1)             /* just one window */
+    CHECK_CMDWIN;
+    if (ONE_WINDOW && Prenum != 1) {  // just one window
       beep_flush();
-    else {
-      if (Prenum) {                             /* go to specified window */
+    } else {
+      if (Prenum) {  // go to specified window
         for (wp = firstwin; --Prenum > 0; ) {
           if (wp->w_next == NULL)
             break;
@@ -233,14 +247,16 @@ newwindow:
   case 'j':
   case K_DOWN:
   case Ctrl_J:
-    CHECK_CMDWIN win_goto_ver(FALSE, Prenum1);
+    CHECK_CMDWIN;
+    win_goto_ver(false, Prenum1);
     break;
 
   /* cursor to window above */
   case 'k':
   case K_UP:
   case Ctrl_K:
-    CHECK_CMDWIN win_goto_ver(TRUE, Prenum1);
+    CHECK_CMDWIN;
+    win_goto_ver(true, Prenum1);
     break;
 
   /* cursor to left window */
@@ -248,14 +264,16 @@ newwindow:
   case K_LEFT:
   case Ctrl_H:
   case K_BS:
-    CHECK_CMDWIN win_goto_hor(TRUE, Prenum1);
+    CHECK_CMDWIN;
+    win_goto_hor(true, Prenum1);
     break;
 
   /* cursor to right window */
   case 'l':
   case K_RIGHT:
   case Ctrl_L:
-    CHECK_CMDWIN win_goto_hor(FALSE, Prenum1);
+    CHECK_CMDWIN;
+    win_goto_hor(false, Prenum1);
     break;
 
   /* move window to new tab page */
@@ -309,20 +327,23 @@ newwindow:
   /* exchange current and next window */
   case 'x':
   case Ctrl_X:
-    CHECK_CMDWIN win_exchange(Prenum);
+    CHECK_CMDWIN;
+    win_exchange(Prenum);
     break;
 
   /* rotate windows downwards */
   case Ctrl_R:
   case 'r':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    win_rotate(FALSE, (int)Prenum1);                /* downwards */
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
+    win_rotate(false, (int)Prenum1);  // downwards
     break;
 
   /* rotate windows upwards */
   case 'R':
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
-    win_rotate(TRUE, (int)Prenum1);                 /* upwards */
+    CHECK_CMDWIN;
+    reset_VIsual_and_resel();  // stop Visual mode
+    win_rotate(true, (int)Prenum1);  // upwards
     break;
 
   /* move window to the very top/bottom/left/right */
@@ -330,9 +351,10 @@ newwindow:
   case 'J':
   case 'H':
   case 'L':
-    CHECK_CMDWIN win_totop((int)Prenum,
-        ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
-        | ((nchar == 'H' || nchar == 'K') ? WSP_TOP : WSP_BOT));
+    CHECK_CMDWIN;
+    win_totop((int)Prenum,
+              ((nchar == 'H' || nchar == 'L') ? WSP_VERT : 0)
+              | ((nchar == 'H' || nchar == 'K') ? WSP_TOP : WSP_BOT));
     break;
 
   /* make all windows the same height */
@@ -373,15 +395,16 @@ newwindow:
 
   /* jump to tag and split window if tag exists (in preview window) */
   case '}':
-    CHECK_CMDWIN
-    if (Prenum)
+    CHECK_CMDWIN;
+    if (Prenum) {
       g_do_tagpreview = Prenum;
-    else
+    } else {
       g_do_tagpreview = p_pvh;
+    }
     FALLTHROUGH;
   case ']':
   case Ctrl_RSB:
-    CHECK_CMDWIN
+    CHECK_CMDWIN;
     // Keep visual mode, can select words to use as a tag.
     if (Prenum)
       postponed_split = Prenum;
@@ -402,7 +425,7 @@ newwindow:
   case 'F':
   case Ctrl_F:
 wingotofile:
-    CHECK_CMDWIN
+    CHECK_CMDWIN;
 
     ptr = grab_file_name(Prenum1, &lnum);
     if (ptr != NULL) {
@@ -434,11 +457,11 @@ wingotofile:
     FALLTHROUGH;
   case 'd':                         // Go to definition, using 'define'
   case Ctrl_D:
-    CHECK_CMDWIN
-    if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0)
+    CHECK_CMDWIN;
+    if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0) {
       break;
-    find_pattern_in_path(ptr, 0, len, TRUE,
-                         Prenum == 0 ? TRUE : FALSE,
+    }
+    find_pattern_in_path(ptr, 0, len, true, Prenum == 0,
                          type, Prenum1, ACTION_SPLIT, 1, MAXLNUM);
     curwin->w_set_curswant = TRUE;
     break;
@@ -455,7 +478,7 @@ wingotofile:
   /* CTRL-W g  extended commands */
   case 'g':
   case Ctrl_G:
-    CHECK_CMDWIN
+    CHECK_CMDWIN;
     no_mapping++;
     if (xchar == NUL) {
       xchar = plain_vgetc();
@@ -1631,11 +1654,9 @@ static void win_exchange(long Prenum)
   redraw_win_later(wp, NOT_VALID);
 }
 
-/*
- * rotate windows: if upwards TRUE the second window becomes the first one
- *		   if upwards FALSE the first window becomes the second one
- */
-static void win_rotate(int upwards, int count)
+// rotate windows: if upwards true the second window becomes the first one
+//                 if upwards false the first window becomes the second one
+static void win_rotate(bool upwards, int count)
 {
   win_T       *wp1;
   win_T       *wp2;
