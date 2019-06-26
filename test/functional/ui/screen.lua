@@ -946,6 +946,14 @@ function Screen:_handle_cmdline_show(content, pos, firstc, prompt, indent, level
   if firstc == '' then firstc = nil end
   if prompt == '' then prompt = nil end
   if indent == 0 then indent = nil end
+
+  -- check position is valid #10000
+  local len = 0
+  for _, chunk in ipairs(content) do
+    len = len + string.len(chunk[2])
+  end
+  assert(pos <= len)
+
   self.cmdline[level] = {content=content, pos=pos, firstc=firstc,
                          prompt=prompt, indent=indent}
 end

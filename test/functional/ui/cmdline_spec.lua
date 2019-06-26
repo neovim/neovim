@@ -761,7 +761,41 @@ local function test_cmdline(linegrid)
     }}, wildmenu_items=expected, wildmenu_pos=0}
   end)
 
+  it("doesn't send invalid events when aborting mapping #10000", function()
+    command('cnoremap ab c')
+
+    feed(':xa')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]], cmdline={{
+      content = { { "x" } },
+      firstc = ":",
+      pos = 1,
+      special = { "a", false }
+    }}}
+
+    -- This used to send an invalid event where pos where larger than the total
+    -- lenght of content. Checked in _handle_cmdline_show.
+    feed('<esc>')
+    screen:expect([[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]])
+  end)
+
 end
+
+-- the representation of cmdline and cmdline_block contents changed with ext_linegrid
+-- (which uses indexed highlights) so make sure to test both
+describe('ui/ext_cmdline', function() test_cmdline(true) end)
+describe('ui/ext_cmdline (legacy highlights)', function() test_cmdline(false) end)
 
 describe('cmdline redraw', function()
   local screen
@@ -813,8 +847,3 @@ describe('cmdline redraw', function()
     ]], unchanged=true}
   end)
 end)
-
--- the representation of cmdline and cmdline_block contents changed with ext_linegrid
--- (which uses indexed highlights) so make sure to test both
-describe('ui/ext_cmdline', function() test_cmdline(true) end)
-describe('ui/ext_cmdline (legacy highlights)', function() test_cmdline(false) end)
