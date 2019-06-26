@@ -6516,6 +6516,10 @@ static void float_op_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void api_wrapper(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
   ApiDispatchWrapper fn = (ApiDispatchWrapper)fptr;
 
   Array args = ARRAY_DICT_INIT;
