@@ -1,9 +1,9 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/* for debugging */
-/* #define CHECK(c, s)	if (c) EMSG(s) */
-#define CHECK(c, s)
+// for debugging
+// #define CHECK(c, s) do { if (c) EMSG(s); } while (0)
+#define CHECK(c, s) do { } while (0)
 
 /*
  * memline.c: Contains the functions for appending, deleting and changing the

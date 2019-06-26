@@ -1709,7 +1709,6 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   int col;
   int txtcol;
   int off;
-  int ri;
 
   /* Build the fold line:
    * 1. Add the cmdwin_type for the command-line window
@@ -1753,15 +1752,18 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     col += fdc;
   }
 
-# define RL_MEMSET(p, v, l)  if (wp->w_p_rl) { \
-    for (ri = 0; ri < l; ri++) { \
-      linebuf_attr[off + (wp->w_grid.Columns - (p) - (l)) + ri] = v; \
+# define RL_MEMSET(p, v, l) \
+  do { \
+    if (wp->w_p_rl) { \
+      for (int ri = 0; ri < l; ri++) { \
+        linebuf_attr[off + (wp->w_grid.Columns - (p) - (l)) + ri] = v; \
+      } \
+    } else { \
+      for (int ri = 0; ri < l; ri++) { \
+        linebuf_attr[off + (p) + ri] = v; \
+      } \
     } \
-  } else { \
-    for (ri = 0; ri < l; ri++) { \
-      linebuf_attr[off + (p) + ri] = v; \
-    } \
-  }
+  } while (0)
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */

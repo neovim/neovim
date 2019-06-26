@@ -4344,8 +4344,8 @@ find_pattern_in_path(
     char_u *ptr,            // pointer to search pattern
     int dir,                // direction of expansion
     size_t len,             // length of search pattern
-    int whole,              // match whole words only
-    int skip_comments,      // don't match inside comments
+    bool whole,             // match whole words only
+    bool skip_comments,     // don't match inside comments
     int type,               // Type of search; are we looking for a type?
                             // a macro?
     long count,
