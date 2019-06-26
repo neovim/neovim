@@ -58,7 +58,7 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR}
       --with-lua-include=${HOSTDEPS_INSTALL_DIR}/include/luajit-2.1
-      --lua-suffix=jit)
+      --with-lua-interpreter=luajit)
   elseif(USE_BUNDLED_LUA)
     list(APPEND LUAROCKS_OPTS
       --with-lua=${HOSTDEPS_INSTALL_DIR})
