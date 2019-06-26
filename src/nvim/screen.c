@@ -153,6 +153,8 @@ static bool conceal_cursor_used = false;
 
 static bool redraw_popupmenu = false;
 
+static bool resizing = false;
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.c.generated.h"
 #endif
@@ -275,7 +277,9 @@ int update_screen(int type)
   int did_one;
 
   // Don't do anything if the screen structures are (not yet) valid.
-  if (!default_grid.chars) {
+  // A VimResized autocmd can invoke redrawing in the middle of a resize,
+  // which would bypass the checks in screen_resize for popupmenu etc.
+  if (!default_grid.chars || resizing) {
     return FAIL;
   }
 
@@ -5989,7 +5993,14 @@ void grid_assign_handle(ScreenGrid *grid)
 /// needed.
 void screenalloc(void)
 {
-  static bool entered = false;  // avoid recursiveness
+  // It's possible that we produce an out-of-memory message below, which
+  // will cause this function to be called again.  To break the loop, just
+  // return here.
+  if (resizing) {
+    return;
+  }
+  resizing = true;
+
   int retry_count = 0;
 
 retry:
@@ -6003,17 +6014,9 @@ retry:
       || Rows == 0
       || Columns == 0
       || (!full_screen && default_grid.chars == NULL)) {
+    resizing = false;
     return;
   }
-
-  /*
-   * It's possible that we produce an out-of-memory message below, which
-   * will cause this function to be called again.  To break the loop, just
-   * return here.
-   */
-  if (entered)
-    return;
-  entered = TRUE;
 
   /*
    * Note that the window sizes are updated before reallocating the arrays,
@@ -6055,8 +6058,7 @@ retry:
 
   must_redraw = CLEAR;  // need to clear the screen later
 
-  entered = FALSE;
-  --RedrawingDisabled;
+  RedrawingDisabled--;
 
   /*
    * Do not apply autocommands more than 3 times to avoid an endless loop
@@ -6068,6 +6070,8 @@ retry:
     * jump back to check if we need to allocate the screen again. */
     goto retry;
   }
+
+  resizing = false;
 }
 
 void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
