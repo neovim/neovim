@@ -1,6 +1,6 @@
 func! OnEvent(id, data, event)
   let l:payload = json_decode(a:data[2])
-  
+
   if l:payload['method'] ==# "meta/setResponses"
     let l:response = luaeval('require("fake_lsp").setResponses(_A)', l:payload)
     "let l:response.result = v:null

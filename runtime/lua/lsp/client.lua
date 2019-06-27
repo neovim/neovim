@@ -103,11 +103,12 @@ client.initialize = function(self)
   initialize_filetype_autocmds(self.ft)
 
   local result = self:request_async('initialize', nil, function(_, data)
+    self:notify('initialized')
+    self:notify('textDocument/didOpen')
     self.capabilities =  EmptyDictionary:new(data.capabilities)
     return data.capabilities
   end)
 
-  self:notify('initialized')
 
   return result
 end
