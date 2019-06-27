@@ -56,7 +56,8 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
 
 static inline bool process_is_stopped(Process *proc)
 {
-  return proc->stopped_time != 0;
+  bool exited = (proc->status >= 0);
+  return exited || (proc->stopped_time != 0);
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

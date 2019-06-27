@@ -762,6 +762,14 @@ static void set_info_event(void **argv)
   channel_decref(chan);
 }
 
+bool channel_job_running(uint64_t id)
+{
+  Channel *chan = find_channel(id);
+  return (chan
+          && chan->streamtype == kChannelStreamProc
+          && !process_is_stopped(&chan->stream.proc));
+}
+
 Dictionary channel_info(uint64_t id)
 {
   Channel *chan = find_channel(id);
