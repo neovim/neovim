@@ -102,7 +102,7 @@ function s:LspClient.on_exit(job_id, data, event) abort
   call luaeval("require('lsp.client').job_exit(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
 endfunction
 
-function lsp#__jobstart(cmd) abort
+function! lsp#__jobstart(cmd) abort
   let to_execute = ''
   if type(a:cmd) == v:t_string
     let to_execute = split(a:cmd, ' ', 0)[0]
