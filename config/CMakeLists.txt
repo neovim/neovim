@@ -32,7 +32,6 @@ if(NOT HAVE_SYS_WAIT_H AND UNIX)
 endif()
 check_include_files(sys/utsname.h HAVE_SYS_UTSNAME_H)
 check_include_files(termios.h HAVE_TERMIOS_H)
-check_include_files(utime.h HAVE_UTIME_H)
 check_include_files(sys/uio.h HAVE_SYS_UIO_H)
 
 # Functions
@@ -53,8 +52,6 @@ check_function_exists(setsid HAVE_SETSID)
 check_function_exists(sigaction HAVE_SIGACTION)
 check_function_exists(strcasecmp HAVE_STRCASECMP)
 check_function_exists(strncasecmp HAVE_STRNCASECMP)
-check_function_exists(utime HAVE_UTIME)
-check_function_exists(utimes HAVE_UTIMES)
 
 # Symbols
 check_symbol_exists(FD_CLOEXEC "fcntl.h" HAVE_FD_CLOEXEC)

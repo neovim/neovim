@@ -746,6 +746,22 @@ bool os_path_exists(const char_u *path)
   return os_stat((char *)path, &statbuf) == kLibuvSuccess;
 }
 
+/// Sets file access and modification times.
+///
+/// @see POSIX utime(2)
+///
+/// @param path   File path.
+/// @param atime  Last access time.
+/// @param mtime  Last modification time.
+///
+/// @return 0 on success, or negative error code.
+int os_file_settime(const char *path, double atime, double mtime)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_utime, path, atime, mtime, NULL);
+  return r;
+}
+
 /// Check if a file is readable.
 ///
 /// @return true if `name` is readable, otherwise false.

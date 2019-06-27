@@ -38,9 +38,6 @@
 #cmakedefine HAVE_SYS_UTSNAME_H
 #cmakedefine HAVE_SYS_WAIT_H
 #cmakedefine HAVE_TERMIOS_H
-#cmakedefine HAVE_UTIME
-#cmakedefine HAVE_UTIME_H
-#cmakedefine HAVE_UTIMES
 #cmakedefine HAVE_WORKING_LIBINTL
 #cmakedefine HAVE_WSL
 #cmakedefine UNIX
