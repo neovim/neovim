@@ -4,24 +4,15 @@
 #  UNIBILIUM_INCLUDE_DIRS - The unibilium include directories
 #  UNIBILIUM_LIBRARIES - The libraries needed to use unibilium
 
-if(NOT USE_BUNDLED_UNIBILIUM)
-  find_package(PkgConfig)
-  if (PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_UNIBILIUM QUIET unibilium)
-  endif()
-else()
-  set(PC_UNIBILIUM_INCLUDEDIR)
-  set(PC_UNIBILIUM_INCLUDE_DIRS)
-  set(PC_UNIBILIUM_LIBDIR)
-  set(PC_UNIBILIUM_LIBRARY_DIRS)
-  set(LIMIT_SEARCH NO_DEFAULT_PATH)
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+  pkg_check_modules(PC_UNIBILIUM QUIET unibilium)
 endif()
 
 set(UNIBILIUM_DEFINITIONS ${PC_UNIBILIUM_CFLAGS_OTHER})
 
 find_path(UNIBILIUM_INCLUDE_DIR unibilium.h
-          PATHS ${PC_UNIBILIUM_INCLUDEDIR} ${PC_UNIBILIUM_INCLUDE_DIRS}
-          ${LIMIT_SEARCH})
+          PATHS ${PC_UNIBILIUM_INCLUDEDIR} ${PC_UNIBILIUM_INCLUDE_DIRS})
 
 # If we're asked to use static linkage, add libunibilium.a as a preferred library name.
 if(UNIBILIUM_USE_STATIC)
@@ -32,8 +23,7 @@ endif()
 list(APPEND UNIBILIUM_NAMES unibilium)
 
 find_library(UNIBILIUM_LIBRARY NAMES ${UNIBILIUM_NAMES}
-  HINTS ${PC_UNIBILIUM_LIBDIR} ${PC_UNIBILIUM_LIBRARY_DIRS}
-  ${LIMIT_SEARCH})
+  HINTS ${PC_UNIBILIUM_LIBDIR} ${PC_UNIBILIUM_LIBRARY_DIRS})
 
 set(UNIBILIUM_LIBRARIES ${UNIBILIUM_LIBRARY})
 set(UNIBILIUM_INCLUDE_DIRS ${UNIBILIUM_INCLUDE_DIR})
