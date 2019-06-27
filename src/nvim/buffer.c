@@ -5241,8 +5241,8 @@ char_u *buf_spname(buf_T *buf)
   // There is no _file_ when 'buftype' is "nofile", b_sfname
   // contains the name as specified by the user.
   if (bt_nofile(buf)) {
-    if (buf->b_sfname != NULL) {
-      return buf->b_sfname;
+    if (buf->b_fname != NULL) {
+      return buf->b_fname;
     }
     return (char_u *)_("[Scratch]");
   }
