@@ -25,7 +25,7 @@ checkprefix:
 	@if [ -f build/.ran-cmake ]; then \
 	  cached_prefix=$(shell $(CMAKE_PRG) -L -N build | 2>/dev/null grep 'CMAKE_INSTALL_PREFIX' | cut -d '=' -f2); \
 	  if ! [ "$(CMAKE_INSTALL_PREFIX)" = "$$cached_prefix" ]; then \
-	    printf "CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s' - re-running CMake.\n" "$$cached_prefix"; \
+	    printf "Re-running CMake: CMAKE_INSTALL_PREFIX '$(CMAKE_INSTALL_PREFIX)' does not match cached value '%s'.\n" "$$cached_prefix"; \
 	    $(RM) build/.ran-cmake; \
 	  fi \
 	fi
