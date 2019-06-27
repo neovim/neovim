@@ -2605,14 +2605,22 @@ void buflist_list(exarg_T *eap)
       continue;
     }
 
+    const int changed_char = (buf->b_flags & BF_READERR)
+      ? 'x'
+      : (bufIsChanged(buf) ? '+' : ' ');
+    const int ro_char = !MODIFIABLE(buf)
+      ? '-'
+      : (buf->b_p_ro ? '=' : ' ');
+
     msg_putchar('\n');
-    len = vim_snprintf((char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
+    len = vim_snprintf(
+        (char *)IObuff, IOSIZE - 20, "%3d%c%c%c%c%c \"%s\"",
         buf->b_fnum,
         buf->b_p_bl ? ' ' : 'u',
         buf == curbuf ? '%' : (curwin->w_alt_fnum == buf->b_fnum ? '#' : ' '),
         buf->b_ml.ml_mfp == NULL ? ' ' : (buf->b_nwindows == 0 ? 'h' : 'a'),
-        !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' '),
-        (buf->b_flags & BF_READERR) ? 'x' : (bufIsChanged(buf) ? '+' : ' '),
+        ro_char,
+        changed_char,
         NameBuff);
 
     if (len > IOSIZE - 20) {
