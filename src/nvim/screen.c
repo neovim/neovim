@@ -269,14 +269,14 @@ void update_curbuf(int type)
 /// and redraw_all_later() to mark parts of the screen as needing a redraw.
 ///
 /// @param type set to a NOT_VALID to force redraw of entire screen
-void update_screen(int type)
+int update_screen(int type)
 {
   static int did_intro = FALSE;
   int did_one;
 
   // Don't do anything if the screen structures are (not yet) valid.
   if (!default_grid.chars) {
-    return;
+    return FAIL;
   }
 
   if (must_redraw) {
@@ -299,9 +299,10 @@ void update_screen(int type)
   if (!redrawing() || updating_screen) {
     redraw_later(type);                 /* remember type for next time */
     must_redraw = type;
-    if (type > INVERTED_ALL)
-      curwin->w_lines_valid = 0;        /* don't use w_lines[].wl_size now */
-    return;
+    if (type > INVERTED_ALL) {
+      curwin->w_lines_valid = 0;  // don't use w_lines[].wl_size now
+    }
+    return FAIL;
   }
 
   updating_screen = TRUE;
@@ -511,6 +512,7 @@ void update_screen(int type)
 
   // either cmdline is cleared, not drawn or mode is last drawn
   cmdline_was_last_drawn = false;
+  return OK;
 }
 
 /*
