@@ -41,7 +41,7 @@ endif()
 set(ENV{TMPDIR} "${BUILD_DIR}/Xtest_tmpdir/${rel_test_path}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{TMPDIR})
 
-set(ENV{SYSTEM_NAME} ${SYSTEM_NAME})
+set(ENV{SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_NAME})  # used by test/helpers.lua.
 execute_process(
   COMMAND ${BUSTED_PRG} -v -o ${BUSTED_OUTPUT_TYPE}
     --lazy --helper=${TEST_DIR}/${TEST_TYPE}/preload.lua
