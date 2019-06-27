@@ -133,8 +133,10 @@
 /// Alternative for compilers without __builtin_xx_overflow ?
 ///   https://stackoverflow.com/a/44830670/152142
 ///
-/// @param MAX Maximum value of the narrowest type of operand.
-///            Not used if compiler supports __builtin_add_overflow.
+/// @param a  Operand 1.
+/// @param b  Operand 2.
+/// @param c  Where to store the result.
+/// @param t  Result type. Not used if compiler supports __builtin_add_overflow.
 #ifdef HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_ADD(a, b, c, t) \
   do { \
@@ -150,6 +152,7 @@
 
 /// @def STRICT_SUB
 /// @brief Subtracts (a - b) and stores result in `c`.  Aborts on overflow.
+/// @see STRICT_ADD
 #ifdef HAVE_BUILTIN_ADD_OVERFLOW
 # define STRICT_SUB(a, b, c, t) \
   do { \
