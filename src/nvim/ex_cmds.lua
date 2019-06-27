@@ -2799,6 +2799,12 @@ return {
     func='ex_tag',
   },
   {
+    command='tmenu',
+    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_menu',
+  },
+  {
     command='tmap',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,
@@ -2809,12 +2815,6 @@ return {
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_mapclear',
-  },
-  {
-    command='tmenu',
-    flags=bit.bor(RANGE, NOTADR, ZEROR, EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_menu',
   },
   {
     command='tnext',
@@ -2859,16 +2859,16 @@ return {
     func='ex_tag',
   },
   {
-    command='tunmap',
-    flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
-    addr_type=ADDR_LINES,
-    func='ex_unmap',
-  },
-  {
     command='tunmenu',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_menu',
+  },
+  {
+    command='tunmap',
+    flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_unmap',
   },
   {
     command='undo',

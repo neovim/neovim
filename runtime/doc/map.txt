@@ -438,6 +438,7 @@ When listing mappings the characters in the first two columns are:
 	i	Insert
 	l	":lmap" mappings for Insert, Command-line and Lang-Arg
 	c	Command-line
+	t	Terminal-Job
 
 Just before the {rhs} a special character can appear:
 	*	indicates that it is not remappable
@@ -536,9 +537,9 @@ scenario: >
 	:imap <M-C> foo
 	:set encoding=utf-8
 The mapping for <M-C> is defined with the latin1 encoding, resulting in a 0xc3
-byte.  If you type the character แ (0xe1 <M-a>) in UTF-8 encoding this is the
+byte.  If you type the character รก (0xe1 <M-a>) in UTF-8 encoding this is the
 two bytes 0xc3 0xa1.  You don't want the 0xc3 byte to be mapped then or
-otherwise it would be impossible to type the แ character.
+otherwise it would be impossible to type the รก character.
 
 					*<Leader>* *mapleader*
 To define a mapping which uses the "mapleader" variable, the special string
