@@ -163,6 +163,7 @@ describe('timers', function()
       endfunc
     ]])
     command("call timer_start(10, 'MyHandler', {'repeat': -1})")
+    eq(0,eval("g:val"))
     run(nil, nil, nil, load_adjust(50))
     retry(nil, 5000, function()
       eq(3, eval("g:val"))
