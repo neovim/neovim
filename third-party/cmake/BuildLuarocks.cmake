@@ -52,6 +52,10 @@ if(NOT MSVC)
   set(LUAROCKS_BUILDARGS CC=${HOSTDEPS_C_COMPILER} LD=${HOSTDEPS_C_COMPILER})
 endif()
 
+# Lua version, used with rocks directories.
+# Defaults to 5.1 for bundled LuaJIT/Lua.
+set(lua_version "5.1")
+
 if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
 
   if(USE_BUNDLED_LUAJIT)
@@ -69,6 +73,21 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
         --lua-version=5.1
         --with-lua-include=${LUAJIT_INCLUDE_DIRS}
         --lua-suffix=jit)
+    endif()
+
+    # Get lua_version used with rocks output.
+    if(LUAJIT_FOUND)
+      set(lua_exe "luajit")
+    else()
+      set(lua_exe "lua")
+    endif()
+    execute_process(
+      COMMAND ${lua_exe} -e "print(string.sub(_VERSION, 5))"
+      OUTPUT_VARIABLE lua_version
+      ERROR_VARIABLE err
+      RESULT_VARIABLE res)
+    if(NOT res EQUAL 0)
+      message(FATAL_ERROR "Could not get lua_version with ${lua_exe}: ${err}")
     endif()
   endif()
 
@@ -111,7 +130,7 @@ if(USE_BUNDLED_LUAJIT)
 elseif(USE_BUNDLED_LUA)
   add_dependencies(luarocks lua)
 endif()
-set(ROCKS_DIR ${HOSTDEPS_LIB_DIR}/luarocks/rocks)
+set(ROCKS_DIR ${HOSTDEPS_LIB_DIR}/luarocks/rocks-${lua_version})
 
 # mpack
 add_custom_command(OUTPUT ${ROCKS_DIR}/mpack
