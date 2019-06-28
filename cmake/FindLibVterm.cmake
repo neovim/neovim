@@ -4,24 +4,15 @@
 #  LIBVTERM_INCLUDE_DIRS - The libvterm include directories
 #  LIBVTERM_LIBRARIES - The libraries needed to use libvterm
 
-if(NOT USE_BUNDLED_LIBVTERM)
-  find_package(PkgConfig)
-  if (PKG_CONFIG_FOUND)
-    pkg_check_modules(PC_LIBVTERM QUIET vterm)
-  endif()
-else()
-  set(PC_LIBVTERM_INCLUDEDIR)
-  set(PC_LIBVTERM_INCLUDE_DIRS)
-  set(PC_LIBVTERM_LIBDIR)
-  set(PC_LIBVTERM_LIBRARY_DIRS)
-  set(LIMIT_SEARCH NO_DEFAULT_PATH)
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+  pkg_check_modules(PC_LIBVTERM QUIET vterm)
 endif()
 
 set(LIBVTERM_DEFINITIONS ${PC_LIBVTERM_CFLAGS_OTHER})
 
 find_path(LIBVTERM_INCLUDE_DIR vterm.h
-          PATHS ${PC_LIBVTERM_INCLUDEDIR} ${PC_LIBVTERM_INCLUDE_DIRS}
-          ${LIMIT_SEARCH})
+          PATHS ${PC_LIBVTERM_INCLUDEDIR} ${PC_LIBVTERM_INCLUDE_DIRS})
 
 # If we're asked to use static linkage, add libuv.a as a preferred library name.
 if(LIBVTERM_USE_STATIC)
@@ -32,8 +23,7 @@ endif()
 list(APPEND LIBVTERM_NAMES vterm)
 
 find_library(LIBVTERM_LIBRARY NAMES ${LIBVTERM_NAMES}
-  HINTS ${PC_LIBVTERM_LIBDIR} ${PC_LIBVTERM_LIBRARY_DIRS}
-  ${LIMIT_SEARCH})
+  HINTS ${PC_LIBVTERM_LIBDIR} ${PC_LIBVTERM_LIBRARY_DIRS})
 
 set(LIBVTERM_LIBRARIES ${LIBVTERM_LIBRARY})
 set(LIBVTERM_INCLUDE_DIRS ${LIBVTERM_INCLUDE_DIR})

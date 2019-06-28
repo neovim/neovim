@@ -4,26 +4,17 @@
 #  MSGPACK_INCLUDE_DIRS - The msgpack include directories
 #  MSGPACK_LIBRARIES - The libraries needed to use msgpack
 
-if(NOT USE_BUNDLED_MSGPACK)
-  find_package(PkgConfig)
-  if (PKG_CONFIG_FOUND)
-    pkg_search_module(PC_MSGPACK QUIET
-      msgpackc>=${Msgpack_FIND_VERSION}
-      msgpack>=${Msgpack_FIND_VERSION})
-  endif()
-else()
-  set(PC_MSGPACK_INCLUDEDIR)
-  set(PC_MSGPACK_INCLUDE_DIRS)
-  set(PC_MSGPACK_LIBDIR)
-  set(PC_MSGPACK_LIBRARY_DIRS)
-  set(LIMIT_SEARCH NO_DEFAULT_PATH)
+find_package(PkgConfig)
+if (PKG_CONFIG_FOUND)
+  pkg_search_module(PC_MSGPACK QUIET
+    msgpackc>=${Msgpack_FIND_VERSION}
+    msgpack>=${Msgpack_FIND_VERSION})
 endif()
 
 set(MSGPACK_DEFINITIONS ${PC_MSGPACK_CFLAGS_OTHER})
 
 find_path(MSGPACK_INCLUDE_DIR msgpack/version_master.h
-  HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS}
-  ${LIMIT_SEARCH})
+  HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS})
 
 if(MSGPACK_INCLUDE_DIR)
   file(READ ${MSGPACK_INCLUDE_DIR}/msgpack/version_master.h msgpack_version_h)
@@ -53,8 +44,7 @@ find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   # Check each directory for all names to avoid using headers/libraries from
   # different places.
   NAMES_PER_DIR
-  HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
-  ${LIMIT_SEARCH})
+  HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS})
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)
 
