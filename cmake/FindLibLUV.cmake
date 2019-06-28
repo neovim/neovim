@@ -6,7 +6,7 @@
 
 find_package(PkgConfig)
 if (PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_LIBTERMKEY QUIET luv)
+  pkg_check_modules(PC_LIBLUV QUIET luv)
 endif()
 
 set(LIBLUV_DEFINITIONS ${PC_LIBLUV_CFLAGS_OTHER})
