@@ -29,6 +29,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/channel.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -2608,9 +2609,10 @@ void buflist_list(exarg_T *eap)
     const int changed_char = (buf->b_flags & BF_READERR)
       ? 'x'
       : (bufIsChanged(buf) ? '+' : ' ');
-    const int ro_char = !MODIFIABLE(buf)
-      ? '-'
-      : (buf->b_p_ro ? '=' : ' ');
+    int ro_char = !MODIFIABLE(buf) ? '-' : (buf->b_p_ro ? '=' : ' ');
+    if (buf->terminal) {
+      ro_char = channel_job_running((uint64_t)buf->b_p_channel) ? 'R' : 'F';
+    }
 
     msg_putchar('\n');
     len = vim_snprintf(
