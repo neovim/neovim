@@ -5333,9 +5333,10 @@ jobwait({ids}[, {timeout}])				*jobwait()*
 
 		{ids} is a list of |job-id|s to wait for.
 		{timeout} is the maximum number of milliseconds to wait.
-		{timeout} of zero can be used to check if a job-id is valid,
-		without waiting.
 
+		Use zero {timeout} to check the status of a job: >
+			let exited = jobwait([{job-id}], 0)[0] >= 0
+<
 		During jobwait() callbacks for jobs not in the {ids} list may
 		be invoked. The screen will not redraw unless |:redraw| is
 		invoked by a callback.

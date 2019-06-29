@@ -12,22 +12,24 @@ Various commands					*various*
 1. Various commands					*various-cmds*
 
 							*CTRL-L*
-CTRL-L			Clear and redraw the screen.  The redraw may happen
+CTRL-L			Clears and redraws the screen.  The redraw may happen
 			later, after processing typeahead.
 
+							*:mod* *:mode*
+:mod[e]			Clears and redraws the screen.
+
 							*:redr* *:redraw*
-:redr[aw][!]		Redraw the screen right now.  When ! is included it is
-			cleared first.
-			Useful to update the screen halfway through executing
-			a script or function (or a mapping if 'lazyredraw'
-			set).
+:redr[aw][!]		Redraws pending screen updates now, or the entire
+			screen if "!" is included.  To CLEAR the screen use
+			|:mode| or |CTRL-L|.
+			Useful to update the screen during a script or
+			function (or a mapping if 'lazyredraw' set).
 
 						*:redraws* *:redrawstatus*
-:redraws[tatus][!]	Redraw the status line of the current window.  When !
-			is included all status lines are redrawn.
-			Useful to update the status line(s) when 'statusline'
-			includes an item that doesn't cause automatic
-			updating.
+:redraws[tatus][!]	Redraws the status line of the current window, or all
+			status lines if "!" is included.
+			Useful if 'statusline' includes an item that doesn't
+			cause automatic updating.
 
 							*N<Del>*
 <Del>			When entering a number: Remove the last digit.

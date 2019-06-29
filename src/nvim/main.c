@@ -146,11 +146,7 @@ void event_init(void)
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
-  // Initialize input events
   input_init();
-  // Timer to wake the event loop if a timeout argument is passed to
-  // `event_poll`
-  // Signals
   signal_init();
   // finish mspgack-rpc initialization
   channel_init();
@@ -346,10 +342,8 @@ int main(int argc, char **argv)
     p_lpl = false;
   }
 
-  // give embedders a chance to set up nvim, by processing a request before
-  // startup. This allows an external UI to show messages and prompts from
-  // --cmd and buffer loading (e.g. swap files)
-  bool early_ui = false;
+  // Wait for UIs to set up Nvim or show early messages
+  // and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
   if (use_remote_ui || use_builtin_ui) {
@@ -364,7 +358,6 @@ int main(int argc, char **argv)
     // prepare screen now, so external UIs can display messages
     starting = NO_BUFFERS;
     screenclear();
-    early_ui = true;
     TIME_MSG("initialized screen early for UI");
   }
 
@@ -461,7 +454,7 @@ int main(int argc, char **argv)
 
   setmouse();  // may start using the mouse
 
-  if (exmode_active || early_ui) {
+  if (exmode_active || use_remote_ui || use_builtin_ui) {
     // Don't clear the screen when starting in Ex mode, or when a UI might have
     // displayed messages.
     redraw_later(VALID);

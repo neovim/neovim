@@ -1,7 +1,15 @@
+---
+name: Feature request
+about: Request an enhancement for Nvim
+title: ''
+labels: enhancement
+
+---
+
 <!-- Before reporting: search existing issues and check the FAQ. -->
 
 - `nvim --version`:
-- Vim (version: ) behaves differently?
+- `vim -u DEFAULTS` (version: ) behaves differently?
 - Operating system/version:
 - Terminal name/version:
 - `$TERM`:
@@ -10,8 +18,6 @@
 
 ```
 nvim -u NORC
-# Alternative for shell-related problems:
-# env -i TERM=ansi-256color "$(which nvim)"
 
 ```
 

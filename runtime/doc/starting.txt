@@ -451,14 +451,10 @@ accordingly.  Vim proceeds in this order:
 	-  Environment variable $EXINIT, used as an Ex command line.
 
      c. If the 'exrc' option is on (which is NOT the default), the current
-	directory is searched for three files.  The first that exists is used,
+	directory is searched for two files.  The first that exists is used,
 	the others are ignored.
-	-  The file ".nvimrc" (for Unix)
-		    "_nvimrc" (for Win32)
-	-  The file "_nvimrc" (for Unix)
-		    ".nvimrc" (for Win32)
-	-  The file ".exrc"  (for Unix)
-		    "_exrc"  (for Win32)
+	-  The file ".nvimrc"
+	-  The file ".exrc"
 
 4. Enable filetype and indent plugins.
 	This does the same as the commands: >

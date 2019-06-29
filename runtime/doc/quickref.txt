@@ -38,7 +38,7 @@ N is used to indicate an optional count that can be given before the command.
 |l|	N  l		right (also: <Space> or <Right> key)
 |0|	   0		to first character in the line (also: <Home> key)
 |^|	   ^		to first non-blank character in the line
-|$|	N  $		to the last character in the line (N-1 lines lower)
+|$|	N  $		to the next EOL (end of line) position
 			   (also: <End> key)
 |g0|	   g0		to first character in screen line (differs from "0"
 			   when lines wrap)
