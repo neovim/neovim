@@ -18,6 +18,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/getchar.h"
+#include "nvim/misc1.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
