@@ -5,6 +5,7 @@ local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
 local curbufmeths = helpers.curbufmeths
 local load_adjust = helpers.load_adjust
+local retry = helpers.retry
 
 describe('timers', function()
   before_each(function()
@@ -161,10 +162,12 @@ describe('timers', function()
         endif
       endfunc
     ]])
-    command("call timer_start(50, 'MyHandler', {'repeat': -1})")
+    command("call timer_start(10, 'MyHandler', {'repeat': -1})")
     eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(300))
-    eq(3,eval("g:val"))
+    run(nil, nil, nil, load_adjust(50))
+    retry(nil, 5000, function()
+      eq(3, eval("g:val"))
+    end)
   end)
 
   it('can have two timers', function()
