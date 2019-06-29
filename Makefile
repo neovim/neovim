@@ -5,6 +5,8 @@ filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
 # See contrib/local.mk.example
 -include local.mk
 
+all: nvim
+
 CMAKE_PRG ?= $(shell (command -v cmake3 || echo cmake))
 CMAKE_BUILD_TYPE ?= Debug
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
@@ -79,8 +81,6 @@ endif
 # For use where we want to make sure only a single job is run.  This does issue 
 # a warning, but we need to keep SCRIPTS argument.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
-
-all: nvim
 
 nvim: build/.ran-cmake deps
 	+$(BUILD_CMD) -C build
