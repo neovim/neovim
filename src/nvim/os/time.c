@@ -9,6 +9,7 @@
 
 #include <uv.h>
 
+#include "nvim/assert.h"
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/event/loop.h"
@@ -22,6 +23,7 @@ static uv_cond_t delay_cond;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/time.c.generated.h"
 #endif
+
 /// Initializes the time module
 void time_init(void)
 {
@@ -29,13 +31,51 @@ void time_init(void)
   uv_cond_init(&delay_cond);
 }
 
-/// Obtain a high-resolution timer value
+/// Gets the current time with microsecond (μs) precision.
 ///
-/// @return a timer value, not related to the time of day and not subject
-///         to clock drift. The value is expressed in nanoseconds.
+/// Subject to system-clock quirks (drift, going backwards, skipping).
+/// But it is much faster than os_hrtime() on some systems. #10328
+///
+/// @see gettimeofday(2)
+///
+/// @return Current time in microseconds.
+uint64_t os_utime(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  uv_timeval64_t tm;
+  int e = uv_gettimeofday(&tm);
+  if (e != 0 || tm.tv_sec < 0 || tm.tv_usec < 0) {
+    return 0;
+  }
+  uint64_t rv = (uint64_t)tm.tv_sec * 1000 * 1000;  // s => μs
+  STRICT_ADD(rv, tm.tv_usec, &rv, uint64_t);
+  return rv;
+}
+
+/// Gets a high-resolution (nanosecond), monotonically-increasing time relative
+/// to an arbitrary time in the past.
+///
+/// Not related to the time of day and therefore not subject to clock drift.
+///
+/// @return Relative time value with nanosecond precision.
 uint64_t os_hrtime(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return uv_hrtime();
+}
+
+/// Gets a millisecond-resolution, monotonically-increasing time relative to an
+/// arbitrary time in the past.
+///
+/// Not related to the time of day and therefore not subject to clock drift.
+/// The value is cached by the loop, it will not change until the next
+/// loop-tick (unless uv_update_time is called).
+///
+/// @return Relative time value with millisecond precision.
+uint64_t os_now(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return uv_now(&main_loop.uv);
 }
 
 /// Sleeps for `ms` milliseconds.
