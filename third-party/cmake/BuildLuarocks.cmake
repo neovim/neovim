@@ -111,7 +111,7 @@ endif()
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/mpack
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build mpack 1.0.7-0 ${LUAROCKS_BUILDARGS}
+  ARGS build mpack 1.0.8-0 ${LUAROCKS_BUILDARGS}
   DEPENDS luarocks)
 add_custom_target(mpack
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/mpack)
@@ -120,7 +120,7 @@ list(APPEND THIRD_PARTY_DEPS mpack)
 # DEPENDS on the previous module, because Luarocks breaks if parallel.
 add_custom_command(OUTPUT ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg
   COMMAND ${LUAROCKS_BINARY}
-  ARGS build lpeg 1.0.1-1 ${LUAROCKS_BUILDARGS}
+  ARGS build lpeg 1.0.2-1 ${LUAROCKS_BUILDARGS}
   DEPENDS mpack)
 add_custom_target(lpeg
   DEPENDS ${HOSTDEPS_LIB_DIR}/luarocks/rocks/lpeg)
@@ -174,7 +174,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build busted 2.0.rc12-1 ${LUAROCKS_BUILDARGS}
+    ARGS build busted 2.0.rc13-0 ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted
     DEPENDS ${BUSTED_EXE})
@@ -182,7 +182,7 @@ if(USE_BUNDLED_BUSTED)
   # DEPENDS on the previous module, because Luarocks breaks if parallel.
   add_custom_command(OUTPUT ${LUACHECK_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build luacheck 0.21.2-1 ${LUAROCKS_BUILDARGS}
+    ARGS build luacheck 0.23.0-1 ${LUAROCKS_BUILDARGS}
     DEPENDS busted)
   add_custom_target(luacheck
     DEPENDS ${LUACHECK_EXE})

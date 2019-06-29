@@ -659,6 +659,7 @@ describe('put command', function()
   end)
 
   describe('put after the line with virtualedit', function()
+    -- luacheck: ignore 621
     local test_string = [[
     Line of words 1  test_stringx"
     	Line of words 2]]
@@ -855,6 +856,7 @@ describe('put command', function()
   end)
 
   describe('. register special tests', function()
+    -- luacheck: ignore 621
     before_each(reset)
     it('applies control character actions', function()
       feed('i<C-t><esc>u')
