@@ -1663,13 +1663,13 @@ void listdigraphs(void)
       printdigraph(&tmp);
     }
     dp++;
-    os_breakcheck();
+    fast_breakcheck();
   }
 
   dp = (digr_T *)user_digraphs.ga_data;
   for (int i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
     printdigraph(dp);
-    os_breakcheck();
+    fast_breakcheck();
     dp++;
   }
 }
