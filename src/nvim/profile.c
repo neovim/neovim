@@ -61,7 +61,7 @@ proftime_T profile_setlimit(int64_t msec) FUNC_ATTR_WARN_UNUSED_RESULT
   }
   assert(msec <= (INT64_MAX / 1000LL) - 1);
 
-  proftime_T usec = (proftime_T) msec * 1000ULL;
+  proftime_T usec = (proftime_T)msec * 1000ULL;
   return os_utime() + usec;
 }
 
@@ -219,7 +219,7 @@ void time_pop(proftime_T tp)
 static void time_diff(proftime_T then, proftime_T now)
 {
   proftime_T diff = profile_sub(now, then);
-  fprintf(time_fd, "%07.3lf", (double) diff / 1.0E3);
+  fprintf(time_fd, "%07.3lf", (double)diff / 1.0E3);
 }
 
 /// Initializes the startuptime code.
