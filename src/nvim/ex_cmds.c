@@ -1939,7 +1939,7 @@ void do_wqall(exarg_T *eap)
   }
 
   FOR_ALL_BUFFERS(buf) {
-    if (!bufIsChanged(buf)) {
+    if (!bufIsChanged(buf) || bt_dontwrite(buf)) {
       continue;
     }
     /*
