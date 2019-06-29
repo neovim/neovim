@@ -1,5 +1,7 @@
 " Test for the search command
 
+source shared.vim
+
 func Test_search_cmdline()
   " See test/functional/legacy/search_spec.lua
   throw 'skipped: Nvim does not support test_override()'
