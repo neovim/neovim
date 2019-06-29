@@ -30,11 +30,11 @@ set(BUSTED_ARGS $ENV{BUSTED_ARGS})
 separate_arguments(BUSTED_ARGS)
 
 if(DEFINED ENV{TEST_TAG} AND NOT "$ENV{TEST_TAG}" STREQUAL "")
-  list(APPEND BUSTED_ARGS --tags="$ENV{TEST_TAG}")
+  list(APPEND BUSTED_ARGS --tags $ENV{TEST_TAG})
 endif()
 
 if(DEFINED ENV{TEST_FILTER} AND NOT "$ENV{TEST_FILTER}" STREQUAL "")
-  list(APPEND BUSTED_ARGS --filter="$ENV{TEST_FILTER}")
+  list(APPEND BUSTED_ARGS --filter $ENV{TEST_FILTER})
 endif()
 
 # TMPDIR: use relative test path (for parallel test runs / isolation).
