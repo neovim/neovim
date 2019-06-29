@@ -14,11 +14,9 @@ CMAKE_EXTRA_FLAGS ?=
 # CMAKE_INSTALL_PREFIX
 #   - May be passed directly or as part of CMAKE_EXTRA_FLAGS.
 #   - `checkprefix` target checks that it matches the CMake-cached value. #9615
-ifneq (,$(CMAKE_INSTALL_PREFIX))
-ifneq (,$(CMAKE_EXTRA_FLAGS))
+ifneq (,$(CMAKE_INSTALL_PREFIX)$(CMAKE_EXTRA_FLAGS))
 CMAKE_INSTALL_PREFIX := $(shell echo $(CMAKE_EXTRA_FLAGS) | 2>/dev/null \
     grep -o 'CMAKE_INSTALL_PREFIX=[^ ]\+' | cut -d '=' -f2)
-endif
 endif
 ifneq (,$(CMAKE_INSTALL_PREFIX))
 CMAKE_EXTRA_FLAGS += -DCMAKE_INSTALL_PREFIX=$(CMAKE_INSTALL_PREFIX)
