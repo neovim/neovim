@@ -7,7 +7,7 @@ if(USE_GCOV)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
-  add_compile_definitions(USE_GCOV)
+  add_definitions(-DUSE_GCOV)
 endif()
 endif()
 

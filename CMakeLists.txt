@@ -5,13 +5,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(nvim C)
 
-if(POLICY CMP0059)
-  # Needed for use of DEFINITIONS variable, which is used to collect the
-  # compilation flags for reporting in "nvim --version"
-  # https://github.com/neovim/neovim/pull/8558#issuecomment-398033140
-  cmake_policy(SET CMP0059 OLD)
-endif()
-
 # Point CMake at any custom modules we may ship
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -273,22 +266,23 @@ int main(void)
 
 if(MSVC)
   # XXX: /W4 gives too many warnings. #3241
-  add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+  add_compile_options(/W3)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
   add_definitions(-DWIN32)
 else()
-  add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
+  add_compile_options(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99 -Wshadow -Wconversion
     -Wmissing-prototypes)
 
   check_c_compiler_flag(-Wimplicit-fallthrough HAS_WIMPLICIT_FALLTHROUGH_FLAG)
   if(HAS_WIMPLICIT_FALLTHROUGH_FLAG)
-    add_definitions(-Wimplicit-fallthrough)
+    add_compile_options(-Wimplicit-fallthrough)
   endif()
 
   # On FreeBSD 64 math.h uses unguarded C11 extension, which taints clang
   # 3.4.1 used there.
   if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" AND CMAKE_C_COMPILER_ID MATCHES "Clang")
-    add_definitions(-Wno-c11-extensions)
+    add_compile_options(-Wno-c11-extensions)
   endif()
 endif()
 
@@ -304,7 +298,7 @@ endif()
 # OpenBSD's GCC (4.2.1) doesn't have -Wvla
 check_c_compiler_flag(-Wvla HAS_WVLA_FLAG)
 if(HAS_WVLA_FLAG)
-  add_definitions(-Wvla)
+  add_compile_options(-Wvla)
 endif()
 
 if(UNIX)
@@ -313,15 +307,15 @@ if(UNIX)
   check_c_compiler_flag(-fstack-protector HAS_FSTACK_PROTECTOR_FLAG)
 
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
-    add_definitions(-fstack-protector-strong)
+    add_compile_options(-fstack-protector-strong)
   elseif(HAS_FSTACK_PROTECTOR_FLAG)
-    add_definitions(-fstack-protector --param ssp-buffer-size=4)
+    add_compile_options(-fstack-protector --param ssp-buffer-size=4)
   endif()
 endif()
 
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
 if(HAS_DIAG_COLOR_FLAG)
-  add_definitions(-fdiagnostics-color=auto)
+  add_compile_options(-fdiagnostics-color=auto)
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -332,7 +326,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   # So we must disable -Warray-bounds globally for GCC (for kbtree.h, #7083).
   check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
   if(HAS_NO_ARRAY_BOUNDS_FLAG)
-    add_definitions(-Wno-array-bounds)
+    add_compile_options(-Wno-array-bounds)
   endif()
 endif()
 
@@ -340,10 +334,10 @@ option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
 
 if(TRAVIS_CI_BUILD)
   message(STATUS "Travis/QuickBuild CI build enabled")
-  add_definitions(-Werror)
+  add_compile_options(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char
-    add_definitions(-funsigned-char)
+    add_compile_options(-funsigned-char)
   endif()
 endif()
 

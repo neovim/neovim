@@ -5,9 +5,10 @@ include(GNUInstallDirs)
 find_package(Perl)
 
 if(MSVC)
-  add_definitions(/W3 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
+  add_compile_options(/W3)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 else()
-  add_definitions(-Wall -std=c99)
+  add_compile_options(-Wall -std=c99)
 endif()
 
 # Generate includes from tables
