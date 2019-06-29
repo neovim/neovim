@@ -6467,6 +6467,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   int id;
   int idx;
   struct hl_group item_before;
+  bool did_change = false;
   bool dodefault = false;
   bool doclear = false;
   bool dolink = false;
@@ -6839,6 +6840,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               *namep = NULL;
               HL_TABLE()[idx].sg_rgb_fg = -1;
             }
+            did_change = true;
           }
         }
 
@@ -6862,6 +6864,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               *namep = NULL;
               HL_TABLE()[idx].sg_rgb_bg = -1;
             }
+            did_change = true;
           }
         }
 
@@ -6885,6 +6888,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
               *namep = NULL;
               HL_TABLE()[idx].sg_rgb_sp = -1;
             }
+            did_change = true;
           }
         }
 
@@ -6946,9 +6950,15 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // Only call highlight_changed() once, after a sequence of highlight
   // commands, and only if an attribute actually changed
-  if (memcmp(&HL_TABLE()[idx], &item_before, sizeof(item_before)) != 0
+  if ((did_change
+       || memcmp(&HL_TABLE()[idx], &item_before, sizeof(item_before)) != 0)
       && !did_highlight_changed) {
-    redraw_all_later(NOT_VALID);
+    // Do not trigger a redraw when highlighting is changed while
+    // redrawing.  This may happen when evaluating 'statusline' changes the
+    // StatusLine group.
+    if (!updating_screen) {
+      redraw_all_later(NOT_VALID);
+    }
     need_highlight_changed = true;
   }
 }
