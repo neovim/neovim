@@ -36,6 +36,8 @@ void time_init(void)
 /// Subject to system-clock quirks (drift, going backwards, skipping).
 /// But it is much faster than os_hrtime() on some systems. #10328
 ///
+/// @see gettimeofday(2)
+///
 /// @return Current time in microseconds.
 uint64_t os_utime(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
