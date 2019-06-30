@@ -2750,7 +2750,7 @@ return {
       full_name='wildoptions', abbreviation='wop',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,
-      vi_def=true,
+      vim=true,
       varname='p_wop',
       defaults={if_true={vi='', vim='pum,tagfile'}}
     },
