@@ -172,11 +172,22 @@ local function __index(t, key)
   end
 end
 
+--- Defers the wrapped callback until when the nvim API is safe to call.
+---
+--- See |vim-loop-callbacks|
+local function schedule_wrap(cb)
+  return (function (...)
+    local args = {...}
+    vim.schedule(function() cb(unpack(args)) end)
+  end)
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
   _os_proc_info = _os_proc_info,
   _system = _system,
+  schedule_wrap = schedule_wrap,
 }
 
 setmetatable(module, {

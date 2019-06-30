@@ -1061,6 +1061,9 @@ EXTERN char_u e_cmdmap_key[] INIT(=N_(
 EXTERN char_u e_api_error[] INIT(=N_(
     "E5555: API call: %s"));
 
+EXTERN char e_luv_api_disabled[] INIT(=N_(
+    "E5560: %s must not be called in a lua loop callback"));
+
 EXTERN char_u e_floatonly[] INIT(=N_(
     "E5601: Cannot close window, only floating window would remain"));
 EXTERN char_u e_floatexchange[] INIT(=N_(

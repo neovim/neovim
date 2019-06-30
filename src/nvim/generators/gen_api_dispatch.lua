@@ -309,7 +309,7 @@ for i = 1, #functions do
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, '..
                '(MsgpackRpcRequestHandler) {.fn = handle_'..  (fn.impl_name or fn.name)..
-               ', .async = '..tostring(fn.async)..'});\n')
+               ', .fast = '..tostring(fn.fast)..'});\n')
 
 end
 
@@ -349,6 +349,7 @@ output:write([[
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 ]])
 include_headers(output, headers)
 output:write('\n')
@@ -372,6 +373,14 @@ local function process_function(fn)
     binding=lua_c_function_name,
     api=fn.name
   }
+
+  if not fn.fast then
+    write_shifted_output(output, string.format([[
+    if (!nlua_is_deferred_safe(lstate)) {
+      return luaL_error(lstate, e_luv_api_disabled, "%s");
+    }
+    ]], fn.name))
+  end
   local cparams = ''
   local free_code = {}
   for j = #fn.parameters,1,-1 do

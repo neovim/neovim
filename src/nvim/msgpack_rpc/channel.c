@@ -344,7 +344,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
   evdata->args = args;
   evdata->request_id = request_id;
   channel_incref(channel);
-  if (handler.async) {
+  if (handler.fast) {
     bool is_get_mode = handler.fn == handle_nvim_get_mode;
 
     if (is_get_mode && !input_blocking()) {

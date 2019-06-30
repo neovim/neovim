@@ -33,6 +33,8 @@
 
 #include "luv/luv.h"
 
+static int in_fast_callback = 0;
+
 typedef struct {
   Error err;
   String lua_err_str;
@@ -110,6 +112,50 @@ static int nlua_stricmp(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
+static void nlua_luv_error_event(void **argv)
+{
+  char *error = (char *)argv[0];
+  msg_ext_set_kind("lua_error");
+  emsgf_multiline("Error executing luv callback:\n%s", error);
+  xfree(error);
+}
+
+static int nlua_luv_cfpcall(lua_State *lstate, int nargs, int nresult,
+                            int flags)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int retval;
+
+  // luv callbacks might be executed at any os_breakcheck/line_breakcheck
+  // call, so using the API directly here is not safe.
+  in_fast_callback++;
+
+  int top = lua_gettop(lstate);
+  int status = lua_pcall(lstate, nargs, nresult, 0);
+  if (status) {
+    if (status == LUA_ERRMEM && !(flags & LUVF_CALLBACK_NOEXIT)) {
+      // consider out of memory errors unrecoverable, just like xmalloc()
+      mch_errmsg(e_outofmem);
+      mch_errmsg("\n");
+      preserve_exit();
+    }
+    const char *error = lua_tostring(lstate, -1);
+
+    multiqueue_put(main_loop.events, nlua_luv_error_event,
+                   1, xstrdup(error));
+    lua_pop(lstate, 1);  // error mesage
+    retval = -status;
+  } else {  // LUA_OK
+    if (nresult == LUA_MULTRET) {
+      nresult = lua_gettop(lstate) - top + nargs + 1;
+    }
+    retval = nresult;
+  }
+
+  in_fast_callback--;
+  return retval;
+}
+
 static void nlua_schedule_event(void **argv)
 {
   LuaRef cb = (LuaRef)(ptrdiff_t)argv[0];
@@ -180,8 +226,18 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
+  luv_set_callback(lstate, nlua_luv_cfpcall);
   luaopen_luv(lstate);
-  lua_setfield(lstate, -2, "loop");
+  lua_pushvalue(lstate, -1);
+  lua_setfield(lstate, -3, "loop");
+
+  // package.loaded.luv = vim.loop
+  // otherwise luv will be reinitialized when require'luv'
+  lua_getglobal(lstate, "package");
+  lua_getfield(lstate, -1, "loaded");
+  lua_pushvalue(lstate, -3);
+  lua_setfield(lstate, -2, "luv");
+  lua_pop(lstate, 3);
 
   lua_setglobal(lstate, "vim");
   return 0;
@@ -544,6 +600,13 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
   } else {
     return NIL;
   }
+}
+
+/// check if the current execution context is safe for calling deferred API
+/// methods. Luv callbacks are unsafe as they are called inside the uv loop.
+bool nlua_is_deferred_safe(lua_State *lstate)
+{
+  return in_fast_callback == 0;
 }
 
 /// Run lua string
