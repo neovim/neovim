@@ -2752,7 +2752,7 @@ return {
       deny_duplicates=true,
       vi_def=true,
       varname='p_wop',
-      defaults={if_true={vi=""}}
+      defaults={if_true={vi='', vim='pum,tagfile'}}
     },
     {
       full_name='winaltkeys', abbreviation='wak',
