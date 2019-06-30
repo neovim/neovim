@@ -55,11 +55,14 @@ if (HAVE_WORKING_LIBINTL)
   # On some systems (linux+glibc) libintl is passively available.
   # If HAVE_WORKING_LIBINTL then we consider the requirement satisfied.
   # Unset REQUIRED so that libfind_process(LibIntl) can proceed.
-  message(STATUS "Found libintl (passively available)")
+  if(LibIntl_FIND_REQUIRED)
+    unset(LibIntl_FIND_REQUIRED)
+  endif()
+  set(LibIntl_FIND_QUIETLY ON)
 
   check_variable_exists(_nl_msg_cat_cntr HAVE_NL_MSG_CAT_CNTR)
-else()
-  set(LibIntl_PROCESS_INCLUDES LibIntl_INCLUDE_DIR)
-  set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY)
-  libfind_process(LibIntl)
 endif()
+
+set(LibIntl_PROCESS_INCLUDES LibIntl_INCLUDE_DIR)
+set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY)
+libfind_process(LibIntl)
