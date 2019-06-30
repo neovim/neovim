@@ -10892,6 +10892,89 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+// Dummy timer callback. Used by f_wait().
+static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
+{
+  if (!uv_timer_get_repeat(&tw->uv)) {
+    time_watcher_start(tw, dummy_timer_due_cb, 0, 0);
+  }
+}
+
+// Dummy timer close callback. Used by f_wait().
+static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
+{
+  multiqueue_free(tw->events);
+  xfree(tw);
+}
+
+/// "wait(timeout, condition[, interval])" function
+static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = -1;
+
+  if (argvars[0].v_type != VAR_NUMBER) {
+    EMSG2(_(e_invarg2), "First argument of wait() must be a number");
+    return;
+  }
+
+  int timeout = argvars[0].vval.v_number;
+  typval_T expr = argvars[1];
+
+  int interval = -1;
+  typval_T *tv_interval = &argvars[2];
+
+  TimeWatcher *tw = NULL;
+
+  if (tv_interval->v_type == VAR_NUMBER) {
+    interval = tv_interval->vval.v_number;
+    if (interval < 0) {
+      EMSG2(_(e_invarg2),
+            "Third argument of wait() must be a non-negative number");
+      return;
+    }
+    // Start dummy timer
+    tw = xmalloc(sizeof(TimeWatcher));
+    time_watcher_init(&main_loop, tw, NULL);
+    tw->events = multiqueue_new_child(main_loop.events);
+    tw->blockable = true;
+    time_watcher_start(tw, dummy_timer_due_cb, interval, interval);
+  } else if (tv_interval->v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2),
+          "Third argument of wait() must be a non-negative number");
+    return;
+  }
+
+  typval_T argv = TV_INITIAL_VALUE;
+  typval_T exprval = TV_INITIAL_VALUE;
+  bool error = false;
+  int save_called_emsg = called_emsg;
+  called_emsg = false;
+
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, timeout,
+                            eval_expr_typval(&expr, &argv, 0, &exprval) != OK
+                            || tv_get_number_chk(&exprval, &error)
+                            || called_emsg || error || got_int);
+
+  if (called_emsg || error) {
+    rettv->vval.v_number = -3;
+  } else if (got_int) {
+    got_int = false;
+    vgetc();
+    rettv->vval.v_number = -2;
+  } else if (tv_get_number_chk(&exprval, &error)) {
+    rettv->vval.v_number = 0;
+  }
+
+  called_emsg = save_called_emsg;
+
+  // Stop dummy timer
+  if (tw) {
+    time_watcher_stop(tw);
+    time_watcher_close(tw, dummy_timer_close_cb);
+  }
+}
+
 // "win_screenpos()" function
 static void f_win_screenpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {

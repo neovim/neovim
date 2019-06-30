@@ -959,6 +959,7 @@ Timers:						*timer-functions*
 	timer_stop()		stop a timer
 	timer_stopall()		stop all timers
 	timer_info()		get information about timers
+	wait()			wait for a condition
 
 Tags:						*tag-functions*
 	taglist()		get list of matching tags

@@ -366,6 +366,7 @@ return {
     values={args=1},
     virtcol={args=1},
     visualmode={args={0, 1}},
+    wait={args={2,3}},
     wildmenumode={},
     win_findbuf={args=1},
     win_getid={args={0,2}},
