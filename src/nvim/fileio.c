@@ -58,10 +58,6 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 
-#if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
-# include <utime.h>             /* for struct utimbuf */
-#endif
-
 #define BUFSIZE         8192    /* size of normal write buffer */
 #define SMBUFSIZE       256     /* size of emergency write buffer */
 
@@ -189,10 +185,6 @@ struct bw_info {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fileio.c.generated.h"
 #endif
-
-#ifdef UNIX
-#endif
-
 
 static char *e_auchangedbuf = N_(
     "E812: Autocommands changed buffer or buffer name");
@@ -2198,34 +2190,6 @@ static void check_marks_read(void)
   curbuf->b_marks_read = true;
 }
 
-#ifdef UNIX
-static void 
-set_file_time (
-    char_u *fname,
-    time_t atime,               /* access time */
-    time_t mtime               /* modification time */
-)
-{
-# if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
-  struct utimbuf buf;
-
-  buf.actime  = atime;
-  buf.modtime = mtime;
-  (void)utime((char *)fname, &buf);
-# else
-#  if defined(HAVE_UTIMES)
-  struct timeval tvp[2];
-
-  tvp[0].tv_sec   = atime;
-  tvp[0].tv_usec  = 0;
-  tvp[1].tv_sec   = mtime;
-  tvp[1].tv_usec  = 0;
-  (void)utimes((char *)fname, (const struct timeval *)&tvp);
-#  endif
-# endif
-}
-#endif /* UNIX */
-
 /*
  * buf_write() - write to file "fname" lines "start" through "end"
  *
@@ -2887,9 +2851,9 @@ buf_write (
           }
 
 #ifdef UNIX
-          set_file_time(backup,
-                        file_info_old.stat.st_atim.tv_sec,
-                        file_info_old.stat.st_mtim.tv_sec);
+          os_file_settime((char *)backup,
+                          file_info_old.stat.st_atim.tv_sec,
+                          file_info_old.stat.st_mtim.tv_sec);
 #endif
 #ifdef HAVE_ACL
           mch_set_acl(backup, acl);
@@ -3572,9 +3536,9 @@ restore_backup:
         vim_rename(backup, (char_u *)org);
         XFREE_CLEAR(backup);                   // don't delete the file
 #ifdef UNIX
-        set_file_time((char_u *)org,
-                      file_info_old.stat.st_atim.tv_sec,
-                      file_info_old.stat.st_mtim.tv_sec);
+        os_file_settime(org,
+                        file_info_old.stat.st_atim.tv_sec,
+                        file_info_old.stat.st_mtim.tv_sec);
 #endif
       }
     }
