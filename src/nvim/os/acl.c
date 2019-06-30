@@ -6,7 +6,7 @@
 #include "nvim/os/acl.h"
 
 #ifdef WIN32
-# include <accctrl.h>
+# include <aclapi.h>
 #endif
 
 #if defined(HAVE_ACL) && defined(__APPLE__)
