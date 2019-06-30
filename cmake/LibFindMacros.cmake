@@ -52,6 +52,10 @@ function (libfind_pkg_detect PREFIX)
   if (libraryargs)
     find_library(${PREFIX}_LIBRARY NAMES ${libraryargs} HINTS ${${PREFIX}_PKGCONF_LIBRARY_DIRS})
   endif()
+  # Read pkg-config version
+  if (${PREFIX}_PKGCONF_VERSION)
+    set(${PREFIX}_VERSION ${${PREFIX}_PKGCONF_VERSION} PARENT_SCOPE)
+  endif()
 endfunction()
 
 # Extracts a version #define from a version.h file, output stored to <PREFIX>_VERSION.
@@ -132,7 +136,7 @@ function (libfind_process PREFIX)
     else()
       # If plural forms don't exist or they equal singular forms
       if ((NOT DEFINED ${i}_INCLUDE_DIRS AND NOT DEFINED ${i}_LIBRARIES) OR
-          ({i}_INCLUDE_DIR STREQUAL ${i}_INCLUDE_DIRS AND ${i}_LIBRARY STREQUAL ${i}_LIBRARIES))
+          (${i}_INCLUDE_DIR STREQUAL ${i}_INCLUDE_DIRS AND ${i}_LIBRARY STREQUAL ${i}_LIBRARIES))
         # Singular forms can be used
         if (DEFINED ${i}_INCLUDE_DIR)
           list(APPEND includeopts ${i}_INCLUDE_DIR)
@@ -209,12 +213,12 @@ function (libfind_process PREFIX)
         message(STATUS "  ${PREFIX}_LIBRARY_OPTS=${libraryopts}")
         message(STATUS "  ${PREFIX}_LIBRARIES=${libs}")
       endif()
-      set (${PREFIX}_INCLUDE_OPTS ${includeopts} PARENT_SCOPE)
-      set (${PREFIX}_LIBRARY_OPTS ${libraryopts} PARENT_SCOPE)
-      set (${PREFIX}_INCLUDE_DIRS ${includes} PARENT_SCOPE)
-      set (${PREFIX}_LIBRARIES ${libs} PARENT_SCOPE)
-      set (${PREFIX}_FOUND TRUE PARENT_SCOPE)
     endif()
+    set (${PREFIX}_INCLUDE_OPTS ${includeopts} PARENT_SCOPE)
+    set (${PREFIX}_LIBRARY_OPTS ${libraryopts} PARENT_SCOPE)
+    set (${PREFIX}_INCLUDE_DIRS ${includes} PARENT_SCOPE)
+    set (${PREFIX}_LIBRARIES ${libs} PARENT_SCOPE)
+    set (${PREFIX}_FOUND TRUE PARENT_SCOPE)
     return()
   endif()
 
