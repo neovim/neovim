@@ -3210,7 +3210,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	so far, matches.  The matched string is highlighted.  If the pattern
 	is invalid or not found, nothing is shown.  The screen will be updated
 	often, this is only useful on fast terminals.
-<	Note that the match will be shown, but the cursor will return to its
+	Note that the match will be shown, but the cursor will return to its
 	original position when no match is found and when pressing <Esc>.  You
 	still need to finish the search command with <Enter> to move the
 	cursor to the match.

@@ -1,4 +1,5 @@
-# Contributing to Neovim
+Contributing to Neovim
+======================
 
 Getting started
 ---------------
@@ -10,6 +11,18 @@ low-risk/isolated tasks:
 - Try a [complexity:low] issue.
 - Fix bugs found by [Clang](#clang-scan-build), [PVS](#pvs-studio) or
   [Coverity](#coverity).
+
+Reporting problems
+------------------
+
+- [Check the FAQ][wiki-faq].
+- [Search existing issues][github-issues] (including closed!)
+- Update Neovim to the latest version to see if your problem persists.
+- Disable plugins incrementally, to narrow down the cause of the issue.
+- When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/FAQ#backtrace-linux).
+- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
+- Check `$NVIM_LOG_FILE`, if it exists.
+- Include `cmake --system-information` for build-related issues.
 
 Developer guidelines
 --------------------
@@ -23,18 +36,6 @@ Developer guidelines
   make distclean
   make  # Nvim build system uses ninja automatically, if available.
   ```
-
-Reporting problems
-------------------
-
-- [Check the FAQ][wiki-faq].
-- [Search existing issues][github-issues] (including closed!)
-- Update Neovim to the latest version to see if your problem persists.
-- Disable plugins incrementally, to narrow down the cause of the issue.
-- When reporting a crash, [include a stacktrace](https://github.com/neovim/neovim/wiki/Development-tips#backtrace-linux).
-- [Bisect][git-bisect] to the cause of a regression, if you are able. This is _extremely_ helpful.
-- Check `$NVIM_LOG_FILE`, if it exists.
-- Include `cmake --system-information` for build-related issues.
 
 Pull requests (PRs)
 ---------------------
@@ -64,20 +65,10 @@ Pull requests (PRs)
 Pull requests have three stages: `[WIP]` (Work In Progress), `[RFC]` (Request
 For Comment) and `[RDY]` (Ready).
 
-- Untagged PRs are assumed to be `[RFC]`, i.e. you are requesting a review.
-- Prepend `[WIP]` to the PR title if you are _not_ requesting feedback and the
-  work is still in flux.
-- Prepend `[RDY]` to the PR title if you are _done_ with the PR and are only
-  waiting on it to be merged.
-
-For example, a typical workflow is:
-
-1. You open a `[WIP]` PR where the work is _not_ ready for feedback, you just want to
-   let others know what you are doing.
-2. Once the PR is ready for review, you replace `[WIP]` in the title with `[RFC]`.
-   You may add fix up commits to address issues that come up during review.
-3. Once the PR is ready for merging, you rebase/squash your work appropriately and
-   then replace `[RFC]` in the title with `[RDY]`.
+- `[RFC]` is assumed by default, i.e. you are requesting a review.
+- Add `[WIP]` to the PR title if you are _not_ requesting feedback and the work
+  is still in flux.
+- Add `[RDY]` if you are _done_ and only waiting on merge.
 
 ### Commit messages
 
@@ -106,19 +97,18 @@ and [AppVeyor].
 - CI runs [ASan] and other analyzers.
     - To run valgrind locally: `VALGRIND=1 make test`
     - To run Clang ASan/UBSan locally: `CC=clang make CMAKE_FLAGS="-DCLANG_ASAN_UBSAN=ON"`
-- The `lint` build ([#3174][3174]) checks modified lines _and their immediate
-  neighbors_. This is to encourage incrementally updating the legacy style to
-  meet our style guidelines.
+- The [lint](#lint) build checks modified lines _and their immediate
+  neighbors_, to encourage incrementally updating the legacy style to meet our
+  [style](#style). (See [#3174][3174] for background.)
 - [How to investigate QuickBuild failures](https://github.com/neovim/neovim/pull/4718#issuecomment-217631350)
-
-QuickBuild uses this invocation:
-
-    mkdir -p build/${params.get("buildType")} \
-    && cd build/${params.get("buildType")} \
-    && cmake -G "Unix Makefiles" -DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_BUILD_TYPE=${params.get("buildType")}
-    -DTRAVIS_CI_BUILD=ON ../.. && ${node.getAttribute("make", "make")}
-    VERBOSE=1 nvim unittest-prereqs functionaltest-prereqs
-
+    - QuickBuild uses this invocation:
+      ```
+      mkdir -p build/${params.get("buildType")} \
+      && cd build/${params.get("buildType")} \
+      && cmake -G "Unix Makefiles" -DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_BUILD_TYPE=${params.get("buildType")}
+      -DTRAVIS_CI_BUILD=ON ../.. && ${node.getAttribute("make", "make")}
+      VERBOSE=1 nvim unittest-prereqs functionaltest-prereqs
+      ```
 
 ### Clang scan-build
 
@@ -165,6 +155,41 @@ master build. To view the defects, just request access; you will be approved.
   git log --oneline --no-merges --grep coverity
   ```
 
+
+Coding
+------
+
+### Lint
+
+You can run the linter locally by:
+
+    make lint
+
+The lint step downloads the [master error list] and excludes them, so only lint
+errors related to the local changes are reported.
+
+You can lint a single file (but this will _not_ exclude legacy errors):
+
+    ./src/clint.py src/nvim/ops.c
+
+### Style
+
+The repo includes a `.clang-format` config file which (mostly) matches the
+[style-guide].  You can use `clang-format` to format code with the `gq`
+operator in Nvim:
+
+    if !empty(findfile('.clang-format', ';'))
+      setlocal formatprg=clang-format\ -style=file
+    endif
+
+### Navigate
+
+- Use **[universal-ctags](https://github.com/universal-ctags/ctags).**
+  ("Exuberant ctags", the typical `ctags` binary provided by your distro, is
+  unmaintained and won't recognize many function signatures in Neovim source.)
+- Explore the source code [on the web](https://sourcegraph.com/github.com/neovim/neovim).
+
+
 Reviewing
 ---------
 
@@ -203,3 +228,4 @@ as context, use the `-W` argument as well.
 [Merge a Vim patch]: https://github.com/neovim/neovim/wiki/Merging-patches-from-upstream-Vim
 [Clang report]: https://neovim.io/doc/reports/clang/
 [complexity:low]: https://github.com/neovim/neovim/issues?q=is%3Aopen+is%3Aissue+label%3Acomplexity%3Alow
+[master error list]: https://raw.githubusercontent.com/neovim/doc/gh-pages/reports/clint/errors.json

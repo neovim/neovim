@@ -5351,10 +5351,11 @@ jobwait({ids}[, {timeout}])				*jobwait()*
 		Wait for a set of jobs to complete.
 
 		{ids} is a list of |job-id|s to wait for.
-		{timeout} is the maximum number of milliseconds to wait.
+		{timeout} is the maximum waiting time in milliseconds, -1
+		means forever.
 
-		Use zero {timeout} to check the status of a job: >
-			let exited = jobwait([{job-id}], 0)[0] >= 0
+		Timeout of 0 can be used to check the status of a job: >
+			let running = jobwait([{job-id}], 0)[0] == -1
 <
 		During jobwait() callbacks for jobs not in the {ids} list may
 		be invoked. The screen will not redraw unless |:redraw| is
@@ -8572,13 +8573,10 @@ timer_start({time}, {callback} [, {options}])
 		waiting for input.
 
 		{options} is a dictionary.  Supported entries:
-		   "repeat"	Number of times to repeat calling the
-				callback.  -1 means forever.  When not present
-				the callback will be called once.
+		   "repeat"	Number of times to repeat the callback.
+				-1 means forever.  Default is 1.
 				If the timer causes an error three times in a
-				row the repeat is cancelled.  This avoids that
-				Vim becomes unusable because of all the error
-				messages.
+				row the repeat is cancelled.
 
 		Example: >
 			func MyHandler(timer)
@@ -8586,8 +8584,7 @@ timer_start({time}, {callback} [, {options}])
 			endfunc
 			let timer = timer_start(500, 'MyHandler',
 				\ {'repeat': 3})
-<		This will invoke MyHandler() three times at 500 msec
-		intervals.
+<		This invokes MyHandler() three times at 500 msec intervals.
 
 timer_stop({timer})					*timer_stop()*
 		Stop a timer.  The timer callback will no longer be invoked.
