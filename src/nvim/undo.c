@@ -1104,22 +1104,22 @@ void u_write_undo(const char *const name, const bool forceit, buf_T *const buf,
               && !acl_get_permset(entry, &permset)) {
             if (!acl_delete_perm(permset, ACL_EXECUTE)) {
               if (!acl_set_permset(entry, permset)) {
-                ELOG("failed set permset to entry: %s", uv_strerror(errno));
+                ELOG("failed set permset to entry: %s", strerror(errno));
               }
             } else {
               ELOG("failed delete ACL_EXECUTE from permset: %s",
-                   uv_strerror(errno));
+                   strerror(errno));
             }
           } else if (tag != ACL_UNDEFINED_TAG) {
-            ELOG("failed get permset from entry: %s", uv_strerror(errno));
+            ELOG("failed get permset from entry: %s", strerror(errno));
           }
         } else {
-          ELOG("failed get tag type from entry: %s", uv_strerror(errno));
+          ELOG("failed get tag type from entry: %s", strerror(errno));
         }
       } while ((ret = acl_get_entry(acl, ACL_NEXT_ENTRY, &entry)) == 1);
     }
     if (ret == -1) {
-      ELOG("failed get entry from acl: %s", uv_strerror(errno));
+      ELOG("failed get entry from acl: %s", strerror(errno));
     }
   }
 #endif

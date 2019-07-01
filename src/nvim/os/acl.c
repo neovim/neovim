@@ -154,7 +154,7 @@ void os_set_acl(const char_u *fname, vim_acl_T aclent)
   }
 # else  // WIN32
   if (acl_set_file((char *)fname, _ACL_TYPE, aclent) != 0 && errno != 0) {
-    ELOG("failed to set acl on a file: %s", uv_strerror(errno));
+    ELOG("failed to set acl on a file: %s", strerror(errno));
   }
 # endif
 #endif
