@@ -5047,6 +5047,11 @@ showoptions(
     // collect the items in items[]
     item_count = 0;
     for (p = &options[0]; p->fullname != NULL; p++) {
+      // apply :filter /pat/
+      if (message_filtered((char_u *)p->fullname)) {
+        continue;
+      }
+
       varp = NULL;
       if (opt_flags != 0) {
         if (p->indir != PV_NONE) {
