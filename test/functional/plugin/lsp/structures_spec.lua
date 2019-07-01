@@ -24,7 +24,7 @@ describe('structures.lua', function()
 
   before_each(function()
     clear()
-    funcs.eval('let g:structure_test = v:null')
+    command('let g:structure_test = v:null')
     insert(old_file)
     command('new')
     insert(current_file)
