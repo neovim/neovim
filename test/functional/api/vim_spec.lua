@@ -339,6 +339,15 @@ describe('API', function()
                  "did\nthe\nfail"},
          meth_pcall(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
     end)
+
+    it('uses native float values', function()
+      eq(2.5, meths.execute_lua("return select(1, ...)", {2.5}))
+      eq("2.5", meths.execute_lua("return vim.inspect(...)", {2.5}))
+
+      -- "special" float values are still accepted as return values.
+      eq(2.5, meths.execute_lua("return vim.api.nvim_eval('2.5')", {}))
+      eq("{\n  [false] = 2.5,\n  [true] = 3\n}", meths.execute_lua("return vim.inspect(vim.api.nvim_eval('2.5'))", {}))
+    end)
   end)
 
   describe('nvim_input', function()

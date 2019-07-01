@@ -441,7 +441,7 @@ local function process_function(fn)
     end
     write_shifted_output(output, string.format([[
     const %s ret = %s(%s);
-    nlua_push_%s(lstate, ret);
+    nlua_push_%s(lstate, ret, true);
     api_free_%s(ret);
   %s
   %s
