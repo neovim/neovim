@@ -539,8 +539,7 @@ void tui_client_execute(void) {
   UI *ui = get_ui_by_index(1);
   LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   tui_io_driven_loop(ui);
-  loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
-  ui_detach_impl(ui);
+  tui_exit_safe(ui);
   getout(0);
 }
 
@@ -555,11 +554,6 @@ void tui_io_driven_loop(UI *ui){
   while (!tui_is_stopped(ui)) {
     loop_poll_events(&main_loop, -1);
   }
-  TUIData *data = ui->data;
-  tinput_destroy(&data->input);
-  signal_watcher_stop(&data->cont_handle);
-  signal_watcher_close(&data->cont_handle, NULL);
-  signal_watcher_close(&data->winch_handle, NULL);
 }
 
 void tui_data_destroy(void **argv) {
@@ -569,6 +563,17 @@ void tui_data_destroy(void **argv) {
   kv_destroy(data->attrs);
   xfree(data->space_buf);
   xfree(data);
+  xfree(ui);
+}
+
+void tui_exit_safe(UI *ui) {
+  TUIData *data = ui->data;
+  tinput_destroy(&data->input);
+  signal_watcher_stop(&data->cont_handle);
+  signal_watcher_close(&data->cont_handle, NULL);
+  signal_watcher_close(&data->winch_handle, NULL);
+  loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
+  ui_detach_impl(ui);
 }
 
 static void tui_dummy_event(void **argv)

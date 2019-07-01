@@ -380,8 +380,8 @@ int main(int argc, char **argv)
     uint64_t rv = ui_client_start(params.server_name);
     if (!rv) {
         // cannot continue without a channel
-        ui_call_stop();
         mch_msg("Could not establish connection with remote server\n");
+        tui_exit_safe(get_ui_by_index(1));
         mch_exit(1);
     }
   }
