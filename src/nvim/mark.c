@@ -1213,8 +1213,8 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
 
   // When pointer is below last jump, remove the jump if it matches the current
   // line.  This avoids useless/phantom jumps. #9805
-  if (wp->w_jumplistlen
-      && wp->w_jumplistidx == wp->w_jumplistlen) {
+  if (loadfiles  // otherwise (i.e.: Shada), last entry should be kept
+      && wp->w_jumplistlen && wp->w_jumplistidx == wp->w_jumplistlen) {
     const xfmark_T *fm_last = &wp->w_jumplist[wp->w_jumplistlen - 1];
     if (fm_last->fmark.fnum == curbuf->b_fnum
         && fm_last->fmark.mark.lnum == wp->w_cursor.lnum) {

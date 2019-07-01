@@ -3516,8 +3516,8 @@ void ex_display(exarg_T *eap)
  * display a string for do_dis()
  * truncate at end of screen line
  */
-static void 
-dis_msg (
+static void
+dis_msg(
     char_u *p,
     int skip_esc                       /* if TRUE, ignore trailing ESC */
 )
@@ -3857,8 +3857,8 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
 /*
  * Implementation of the format operator 'gq'.
  */
-void 
-op_format (
+void
+op_format(
     oparg_T *oap,
     int keep_cursor                        /* keep cursor on same text char */
 )
@@ -3937,8 +3937,8 @@ void op_formatexpr(oparg_T *oap)
     op_format(oap, FALSE);
 }
 
-int 
-fex_format (
+int
+fex_format(
     linenr_T lnum,
     long count,
     int c                  /* character to be inserted */
@@ -3980,8 +3980,8 @@ fex_format (
  * Lines after the cursor line are saved for undo, caller must have saved the
  * first line.
  */
-void 
-format_lines (
+void
+format_lines(
     linenr_T line_count,
     int avoid_fex                          /* don't use 'formatexpr' */
 )
@@ -5892,33 +5892,45 @@ static inline bool reg_empty(const yankreg_T *const reg)
               && *(reg->y_array[0]) == NUL));
 }
 
-/// Iterate over registerrs
+/// Iterate over global registers.
+///
+/// @see op_register_iter
+const void *op_global_reg_iter(const void *const iter, char *const name,
+                               yankreg_T *const reg, bool *is_unnamed)
+  FUNC_ATTR_NONNULL_ARG(2, 3, 4) FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return op_reg_iter(iter, y_regs, name, reg, is_unnamed);
+}
+
+/// Iterate over registers `regs`.
 ///
 /// @param[in]   iter      Iterator. Pass NULL to start iteration.
+/// @param[in]   regs      Registers list to be iterated.
 /// @param[out]  name      Register name.
 /// @param[out]  reg       Register contents.
 ///
-/// @return Pointer that needs to be passed to next `op_register_iter` call or
+/// @return Pointer that must be passed to next `op_register_iter` call or
 ///         NULL if iteration is over.
-const void *op_register_iter(const void *const iter, char *const name,
-                             yankreg_T *const reg, bool *is_unnamed)
-  FUNC_ATTR_NONNULL_ARG(2, 3) FUNC_ATTR_WARN_UNUSED_RESULT
+const void *op_reg_iter(const void *const iter, const yankreg_T *const regs,
+                        char *const name, yankreg_T *const reg,
+                        bool *is_unnamed)
+  FUNC_ATTR_NONNULL_ARG(3, 4, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   *name = NUL;
   const yankreg_T *iter_reg = (iter == NULL
-                               ? &(y_regs[0])
-                               : (const yankreg_T *const) iter);
-  while (iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS && reg_empty(iter_reg)) {
+                               ? &(regs[0])
+                               : (const yankreg_T *const)iter);
+  while (iter_reg - &(regs[0]) < NUM_SAVED_REGISTERS && reg_empty(iter_reg)) {
     iter_reg++;
   }
-  if (iter_reg - &(y_regs[0]) == NUM_SAVED_REGISTERS || reg_empty(iter_reg)) {
+  if (iter_reg - &(regs[0]) == NUM_SAVED_REGISTERS || reg_empty(iter_reg)) {
     return NULL;
   }
-  int iter_off = (int)(iter_reg - &(y_regs[0]));
+  int iter_off = (int)(iter_reg - &(regs[0]));
   *name = (char)get_register_name(iter_off);
   *reg = *iter_reg;
   *is_unnamed = (iter_reg == y_previous);
-  while (++iter_reg - &(y_regs[0]) < NUM_SAVED_REGISTERS) {
+  while (++iter_reg - &(regs[0]) < NUM_SAVED_REGISTERS) {
     if (!reg_empty(iter_reg)) {
       return (void *) iter_reg;
     }
@@ -5927,7 +5939,7 @@ const void *op_register_iter(const void *const iter, char *const name,
 }
 
 /// Get a number of non-empty registers
-size_t op_register_amount(void)
+size_t op_reg_amount(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   size_t ret = 0;
@@ -5946,7 +5958,7 @@ size_t op_register_amount(void)
 /// @param[in]  is_unnamed  Whether to set the unnamed regiseter to reg
 ///
 /// @return true on success, false on failure.
-bool op_register_set(const char name, const yankreg_T reg, bool is_unnamed)
+bool op_reg_set(const char name, const yankreg_T reg, bool is_unnamed)
 {
   int i = op_reg_index(name);
   if (i == -1) {
@@ -5966,7 +5978,7 @@ bool op_register_set(const char name, const yankreg_T reg, bool is_unnamed)
 /// @param[in]  name  Register name.
 ///
 /// @return Pointer to the register contents or NULL.
-const yankreg_T *op_register_get(const char name)
+const yankreg_T *op_reg_get(const char name)
 {
   int i = op_reg_index(name);
   if (i == -1) {
@@ -5980,7 +5992,7 @@ const yankreg_T *op_register_get(const char name)
 /// @param[in]  name  Register name.
 ///
 /// @return true on success, false on failure.
-bool op_register_set_previous(const char name)
+bool op_reg_set_previous(const char name)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int i = op_reg_index(name);

@@ -303,15 +303,6 @@ typedef struct {
   list_T      *fi_list;         /* list being used */
 } forinfo_T;
 
-/*
- * enum used by var_flavour()
- */
-typedef enum {
-  VAR_FLAVOUR_DEFAULT,          /* doesn't start with uppercase */
-  VAR_FLAVOUR_SESSION,          /* starts with uppercase, some lower */
-  VAR_FLAVOUR_SHADA             /* all uppercase */
-} var_flavour_T;
-
 /* values for vv_flags: */
 #define VV_COMPAT       1       /* compatible, also used without "v:" */
 #define VV_RO           2       /* read-only */
@@ -5261,7 +5252,7 @@ bool garbage_collect(bool testing)
       yankreg_T reg;
       char name = NUL;
       bool is_unnamed = false;
-      reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
+      reg_iter = op_global_reg_iter(reg_iter, &name, &reg, &is_unnamed);
       if (name != NUL) {
         ABORTING(set_ref_dict)(reg.additional_data, copyID);
       }
@@ -15618,7 +15609,7 @@ free_lstval:
 
   if (set_unnamed) {
     // Discard the result. We already handle the error case.
-    if (op_register_set_previous(regname)) { }
+    if (op_reg_set_previous(regname)) { }
   }
 }
 
@@ -23278,7 +23269,7 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen,
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
 const void *var_shada_iter(const void *const iter, const char **const name,
-                           typval_T *rettv)
+                           typval_T *rettv, var_flavour_T flavour)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
@@ -23289,7 +23280,7 @@ const void *var_shada_iter(const void *const iter, const char **const name,
     hi = globvarht.ht_array;
     while ((size_t) (hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || var_flavour(hi->hi_key) != VAR_FLAVOUR_SHADA)) {
+               || !(var_flavour(hi->hi_key) & flavour))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -23301,7 +23292,7 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && var_flavour(hi->hi_key) == VAR_FLAVOUR_SHADA) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
       return hi;
     }
   }
