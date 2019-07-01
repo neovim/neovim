@@ -6,6 +6,7 @@ local insert = helpers.insert
 local meths = helpers.meths
 local command = helpers.command
 local funcs = helpers.funcs
+local get_pathsep = helpers.get_pathsep
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -1502,6 +1503,53 @@ describe('builtin popupmenu', function()
       {1:~ }{s: långfile1      }{1:                                }|
       {3:lå}{n: långfile2      }{3:                                }|
       :b långfile1^                                      |
+    ]])
+
+    -- position is calculated correctly with "longest"
+    feed('<esc>')
+    command('set wildmode=longest:full,full')
+    feed(':b lå<tab>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {4:långfile2                                         }|
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~ }{n: långfile1      }{1:                                }|
+      {3:lå}{n: långfile2      }{3:                                }|
+      :b långfile^                                       |
+    ]])
+
+    -- special case: when patterns ends with "/", show menu items aligned
+    -- after the "/"
+    feed('<esc>')
+    command("close")
+    command('set wildmode=full')
+    command("cd test/functional/fixtures/")
+    feed(':e compdir/<tab>')
+    screen:expect([[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~         }{s: file1          }{1:                        }|
+      {1:~         }{n: file2          }{1:                        }|
+      :e compdir]]..get_pathsep()..[[file1^                                  |
     ]])
   end)
 
