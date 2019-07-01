@@ -7,7 +7,7 @@ environment:
   GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
 image: Visual Studio 2017
 configuration:
-- MINGW_64
+- MINGW_32
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
