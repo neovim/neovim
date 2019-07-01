@@ -105,8 +105,11 @@ func Test_filter_commands()
   unlet test_filter_c
 
   " Test filtering :set command
+  let helplang=&helplang
+  set helplang=en
   let res = join(split(execute("filter /^help/ set"), "\n")[1:], " ")
   call assert_match('^\s*helplang=\w*$', res)
+  let &helplang=helplang
 
   " Test filtering :llist command
   call setloclist(0, [{"filename": "/path/vim.c"}, {"filename": "/path/vim.h"}, {"module": "Main.Test"}])
