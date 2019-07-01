@@ -1,11 +1,11 @@
 #ifndef NVIM_OS_ACL_H
 #define NVIM_OS_ACL_H
 
+#include "nvim/vim.h"
+
 #ifdef HAVE_SYS_ACL_H
 #include <sys/acl.h>
 #endif
-
-#include "nvim/vim.h"
 
 #ifdef HAVE_ACL
 # ifdef WIN32
