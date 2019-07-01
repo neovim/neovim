@@ -568,6 +568,9 @@ void tui_data_destroy(void **argv) {
 
 void tui_exit_safe(UI *ui) {
   TUIData *data = ui->data;
+  if (!tui_is_stopped(ui)) {
+    tui_stop(ui);
+  }
   tinput_destroy(&data->input);
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);
