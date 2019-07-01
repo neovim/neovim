@@ -10,10 +10,14 @@
 #endif
 
 #if defined(__clang__) && __clang__ == 1 && __clang_major__ >= 6
-// Workaround glibc + Clang 6+ bug. #8274
-// https://bugzilla.redhat.com/show_bug.cgi?id=1472437
+  // Workaround glibc + Clang 6+ bug. #8274
+  // https://bugzilla.redhat.com/show_bug.cgi?id=1472437
 # pragma clang diagnostic push
 # pragma clang diagnostic ignored "-Wconversion"
+#elif __GNUC__ >= 9
+  // Workaround glibc + GCC 9 bug. #10286
+  _Pragma("GCC diagnostic push")
+  _Pragma("GCC diagnostic ignored \"-Wconversion\"")
 #endif
 int xfpclassify(double d)
 {
@@ -39,4 +43,6 @@ int xisnan(double d)
 }
 #if defined(__clang__) && __clang__ == 1 && __clang_major__ >= 6
 # pragma clang diagnostic pop
+#elif __GNUC__ >= 9
+  _Pragma("GCC diagnostic pop")
 #endif
