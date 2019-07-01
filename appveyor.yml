@@ -7,7 +7,7 @@ environment:
   GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
 
   # TEST: for LuaRocks with MSVC?!
-  VCINSTALLDIR: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/"
+  # VCINSTALLDIR: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/"
 image: Visual Studio 2017
 configuration:
 - MSVC_32
