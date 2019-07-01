@@ -4657,7 +4657,7 @@ win_redr_status_matches (
     int showtail
 )
 {
-#define L_MATCH(m) (showtail ? sm_gettail(matches[m]) : matches[m])
+#define L_MATCH(m) (showtail ? sm_gettail(matches[m], false) : matches[m])
   int row;
   char_u      *buf;
   int len;
