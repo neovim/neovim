@@ -7,10 +7,7 @@ environment:
   GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
 image: Visual Studio 2017
 configuration:
-- MINGW_64-gcov
-- MINGW_32
-- MSVC_64
-- MSVC_32
+- MINGW_64
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
@@ -34,7 +31,7 @@ after_build:
       Get-Content $env:GCOV_ERROR_FILE -Tail 10
     }
 cache:
-- C:\projects\nvim-deps -> third-party\**
+- C:\projects\nvim-deps
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe
