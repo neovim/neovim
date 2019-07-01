@@ -2177,10 +2177,8 @@ static char_u *option_expand(int opt_idx, char_u *val)
   return NameBuff;
 }
 
-/*
- * After setting various option values: recompute variables that depend on
- * option values.
- */
+// After setting various option values: recompute variables that depend on
+// option values.
 static void didset_options(void)
 {
   // initialize the table for 'iskeyword' et.al.
@@ -2195,6 +2193,7 @@ static void didset_options(void)
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
   (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
+  (void)opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
   (void)spell_check_msm();
   (void)spell_check_sps();
   (void)compile_cap_prog(curwin->w_s);

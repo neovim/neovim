@@ -7,17 +7,18 @@ endif
 let s:did_load = 1
 
 " Align Nvim defaults to Vim.
-set sidescroll=0
-set directory^=.
-set undodir^=.
 set backspace=
-set nrformats+=octal
-set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
-set listchars=eol:$
+set directory^=.
 set fillchars=vert:\|,fold:-
-set shortmess-=F
 set laststatus=1
+set listchars=eol:$
+set nohidden smarttab noautoindent noautoread complete-=i noruler noshowcmd
+set nrformats+=octal
+set shortmess-=F
+set sidescroll=0
 set tags=./tags,tags
+set undodir^=.
+set wildoptions=
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'

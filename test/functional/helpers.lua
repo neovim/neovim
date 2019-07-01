@@ -28,7 +28,7 @@ local nvim_prog = (
 -- Default settings for the test session.
 local nvim_set  = 'set shortmess+=IS background=light noswapfile noautoindent'
                   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-                  ..' belloff= noshowcmd noruler nomore'
+                  ..' belloff= wildoptions-=pum noshowcmd noruler nomore'
 local nvim_argv = {nvim_prog, '-u', 'NONE', '-i', 'NONE',
                    '--cmd', nvim_set, '--embed'}
 -- Directory containing nvim.
