@@ -95,8 +95,10 @@ Or:
 
 This also contains tools xgettext, msgformat and others.
 
-libintl.dll should be placed in same directory with (g)vim.exe, or some
-place where PATH environment value describe.  Vim also finds libintl-8.dll.
+libintl.dll should be placed in same directory as (g)vim.exe, or one of the
+directories listed in the PATH environment value.  Vim also looks for the
+alternate names "libintl-8.dll" and "intl.dll".
+
 Message files (vim.mo) have to be placed in "$VIMRUNTIME/lang/xx/LC_MESSAGES",
 where "xx" is the abbreviation of the language (mostly two letters).
 
