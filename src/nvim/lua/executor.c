@@ -562,7 +562,7 @@ Object executor_exec_lua_api(const String str, const Array args, Error *err)
   }
 
   for (size_t i = 0; i < args.size; i++) {
-    nlua_push_Object(lstate, args.items[i]);
+    nlua_push_Object(lstate, args.items[i], false);
   }
 
   if (lua_pcall(lstate, (int)args.size, 1, 0)) {
@@ -583,7 +583,7 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
   nlua_pushref(lstate, ref);
   lua_pushstring(lstate, name);
   for (size_t i = 0; i < args.size; i++) {
-    nlua_push_Object(lstate, args.items[i]);
+    nlua_push_Object(lstate, args.items[i], false);
   }
 
   if (lua_pcall(lstate, (int)args.size+1, retval ? 1 : 0, 0)) {
