@@ -1,13 +1,11 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
--- local eq = helpers.eq
--- local funcs = helpers.funcs
--- local command = helpers.command
+local eq = helpers.eq
 local source = helpers.source
 local dedent = helpers.dedent
 
-local lua = helpers.exec_lua
+local exec_lua = helpers.exec_lua
 
 describe('LSP Callback Configuration', function()
   before_each(function()
@@ -18,18 +16,9 @@ describe('LSP Callback Configuration', function()
         lsp_callbacks = require('lsp.callbacks')
         lsp_config = require('lsp.config.callbacks')
 
-        eq = function(a, b)
-          if(a ~= b) then
-            print(require('nvim.util').tostring(a))
-            print(require('nvim.util').tostring(b))
-          end
-
-          assert(a == b)
-        end
-
-        table_key_length = function(table)
+        count_callback = function()
           local callback_length = 0
-          for _k, _v in pairs(table) do
+          for _k, _v in pairs(lsp_callbacks._callback_mapping) do
             callback_length = callback_length + 1
           end
           return callback_length
@@ -39,64 +28,65 @@ describe('LSP Callback Configuration', function()
   end)
 
   it('should have no default callback', function()
-    lua[[eq(table_key_length(lsp_callbacks._callback_mapping), 0)]]
+    eq(0, exec_lua("return count_callback()"))
   end)
 
   it('should have a textDocument/hover default callback', function()
-    lua[[lsp_callbacks.add_text_document_hover_callback()]]
-    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
-    lua[[hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ]]
+    exec_lua("lsp_callbacks.add_text_document_hover_callback()")
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
 
-    lua[[eq(callback_list[1], hover)]]
-    lua[[eq(table_key_length(lsp_callbacks._callback_mapping), 1)]]
+    eq(false, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].default[1] == null"))
+    eq(1, exec_lua("return count_callback()"))
   end)
 
   it('should have some default configurations', function()
-    lua[[lsp_callbacks.add_all_default_callbacks()]]
-    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
-    lua[[hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ]]
+    exec_lua("lsp_callbacks.add_all_default_callbacks()")
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+    exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ")
 
-    lua[[eq(callback_list[1], hover)]]
+    eq(true, exec_lua("return callback_list[1] == hover"))
   end)
 
   it('should handle generic configurations', function()
-    lua[[lsp_callbacks.add_all_default_callbacks()]]
-    lua[[test_func = function(a, b) return a + b end]]
+    exec_lua("lsp_callbacks.add_all_default_callbacks()")
+    exec_lua("test_func = function(a, b) return a + b end")
 
-    lua[[lsp_config.add_callback('textDocument/hover', test_func)]]
-    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
+    exec_lua("lsp_config.add_callback('textDocument/hover', test_func)")
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
 
-    lua[[assert(callback_list[2] == test_func)]]
+    eq(true, exec_lua("return callback_list[2] == test_func"))
   end)
 
   it('should handle filetype configurations', function()
-    lua[[lsp_callbacks.add_all_default_callbacks()]]
-    lua[[filetype_func = function(a, b) return a + b end]]
-    lua[[lsp_config.add_callback('textDocument/hover', filetype_func, false, 'python')]]
+    exec_lua("lsp_callbacks.add_all_default_callbacks()")
+    exec_lua("filetype_func = function(a, b) return a + b end")
+    exec_lua("lsp_config.add_callback('textDocument/hover', filetype_func, false, 'python')")
 
     -- Get the default callback list
-    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')]]
-    lua[[hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ]]
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+    exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ")
 
-    lua[[eq(callback_list[1], hover)]]
+    eq(true, exec_lua("return callback_list[1] == hover"))
 
     -- Get the callback list for a filetype
-    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', nil, 'python')]]
-    lua[[assert(callback_list[2] == filetype_func)]]
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', nil, 'python')")
+    exec_lua("assert(callback_list[2] == filetype_func)")
 
     -- Can override by getting default only
-    lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', true, 'python')]]
-    lua[[eq(1, #callback_list)]]
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', true, 'python')")
+
+    eq(true, exec_lua("return #callback_list == 1"))
   end)
 
   it('should handle overriding default configuration', function()
-      lua[[lsp_callbacks.add_all_default_callbacks()]]
-      lua[[override_func = function(a, b) return a - b end]]
+      exec_lua("lsp_callbacks.add_all_default_callbacks()")
+      exec_lua("override_func = function(a, b) return a - b end")
 
-      lua[[lsp_config.add_callback('textDocument/definition', override_func, true)]]
-      lua[[callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/definition')]]
-      lua[[eq(callback_list[1], override_func)]]
-      lua[[eq(#callback_list, 1)]]
+      exec_lua("lsp_config.add_callback('textDocument/definition', override_func, true)")
+      exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/definition')")
+
+      eq(true, exec_lua("return callback_list[1] == override_func"))
+      eq(true, exec_lua("return #callback_list == 1"))
   end)
 
   it('should handle running default callback even after adding configuration', function()
