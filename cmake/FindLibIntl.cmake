@@ -58,6 +58,7 @@ if (HAVE_WORKING_LIBINTL)
   if(LibIntl_FIND_REQUIRED)
     unset(LibIntl_FIND_REQUIRED)
   endif()
+  set(LibIntl_FIND_QUIETLY ON)
 
   check_variable_exists(_nl_msg_cat_cntr HAVE_NL_MSG_CAT_CNTR)
 endif()
