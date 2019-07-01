@@ -671,6 +671,39 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_get_context', function()
+    it('gets editor state', function()
+      eq({
+          pos = {
+            col = 0,
+            coladd = 0,
+            lnum = 0 },
+          reg = {},
+         },
+         nvim('get_context', {nil}))
+
+      -- Set some registers.
+      feed('ifoo bar<esc>yy')
+      feed('"ayiw')
+      -- eq('x', require('inspect')(nvim('get_context')))
+      eq({
+          pos = {
+            col = 0,
+            coladd = 0,
+            lnum = 0 },
+          reg = {
+            ['0'] = {
+              lines = { "foo bar" },
+            },
+            a = {
+              lines = { "bar" },
+            },
+          },
+         },
+         nvim('get_context', {nil}))
+    end)
+  end)
+
   describe('nvim_replace_termcodes', function()
     it('escapes K_SPECIAL as K_SPECIAL KS_SPECIAL KE_FILLER', function()
       eq('\128\254X', helpers.nvim('replace_termcodes', '\128', true, true, true))

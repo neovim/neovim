@@ -21,6 +21,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
+#include "nvim/context.h"
 #include "nvim/file_search.h"
 #include "nvim/highlight.h"
 #include "nvim/window.h"
@@ -1250,6 +1251,25 @@ Dictionary nvim_get_color_map(void)
   return colors;
 }
 
+/// Gets a map of the current editor state.
+///
+/// @param kinds  Context kinds ("reg", "pos", …) to gather, or NIL for all.
+///
+/// @return map of global context
+Dictionary nvim_get_context(Array kinds)
+  FUNC_API_SINCE(6)
+{
+  Context ctx = {
+    .pos = {
+      .lnum = 0,
+      .col = 0,
+      .coladd = 0,
+    },
+    .reg = NULL,
+  };
+  ctx_save(&ctx, kCtxAll);
+  return ctx_to_dict(&ctx);
+}
 
 /// Gets the current mode. |mode()|
 /// "blocking" is true if Nvim is waiting for input.

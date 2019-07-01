@@ -1328,13 +1328,13 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           break;
         }
         if (!force) {
-          const yankreg_T *const reg = op_register_get(cur_entry.data.reg.name);
+          const yankreg_T *const reg = op_reg_get(cur_entry.data.reg.name);
           if (reg == NULL || reg->timestamp >= cur_entry.timestamp) {
             shada_free_shada_entry(&cur_entry);
             break;
           }
         }
-        if (!op_register_set(cur_entry.data.reg.name, (yankreg_T) {
+        if (!op_reg_set(cur_entry.data.reg.name, (yankreg_T) {
           .y_array = (char_u **)cur_entry.data.reg.contents,
           .y_size = cur_entry.data.reg.contents_size,
           .y_type = cur_entry.data.reg.type,
@@ -2496,7 +2496,7 @@ static inline void shada_initialize_registers(WriteMergerState *const wms,
     yankreg_T reg;
     char name = NUL;
     bool is_unnamed = false;
-    reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
+    reg_iter = op_global_reg_iter(reg_iter, &name, &reg, &is_unnamed);
     if (name == NUL) {
       break;
     }
