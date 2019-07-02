@@ -39,10 +39,11 @@ enter_suite() {
 
 exit_suite() {
   set +x
-  travis_fold end "${NVIM_TEST_CURRENT_SUITE}"
   if test $FAILED -ne 0 ; then
     echo "Suite ${NVIM_TEST_CURRENT_SUITE} failed, summary:"
     echo "${FAIL_SUMMARY}"
+  else
+    travis_fold end "${NVIM_TEST_CURRENT_SUITE}"
   fi
   export NVIM_TEST_CURRENT_SUITE="${NVIM_TEST_CURRENT_SUITE%/*}"
   if test "$1" != "--continue" ; then
