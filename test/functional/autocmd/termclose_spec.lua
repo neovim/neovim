@@ -20,6 +20,7 @@ describe('TermClose event', function()
   it('triggers when fast-exiting terminal job stops', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
+    -- shell-test exits immediately.
     retry(nil, nil, function() neq(-1, eval('jobwait([&channel], 0)[0]')) end)
     eq(23, eval('g:test_termclose'))
   end)
