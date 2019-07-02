@@ -137,7 +137,7 @@ describe(':terminal (with fake shell)', function()
 
   it('with no argument, acts like termopen()', function()
     terminal_with_fake_shell()
-    retry(3, 4 * screen.timeout, function()
+    retry(nil, 4 * screen.timeout, function()
     screen:expect([[
       ^ready $                                           |
       [Process exited 0]                                |
