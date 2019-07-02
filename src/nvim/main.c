@@ -375,7 +375,7 @@ int main(int argc, char **argv)
   // This has to be always after ui_builtin_start or
   // after the start of atleast one GUI
   // as size of "uis[]" must be greater than 1
-  if (is_remote_client) {
+  if (is_remote_client || use_builtin_ui) {
     input_stop();  // Stop reading input, let the UI take over.
     uint64_t rv = ui_client_start(params.server_name);
     if (!rv) {
@@ -589,7 +589,7 @@ int main(int argc, char **argv)
   /*
    * Call the main command loop.  This never returns.
    */
-  if (!is_remote_client) {
+  if (!is_remote_client && use_remote_ui) {
     normal_enter(false, false);
   } else {  
     tui_client_execute();

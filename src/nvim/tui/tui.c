@@ -142,41 +142,56 @@ static bool cursor_style_enabled = false;
 /*
 Connecting the remote server.
 */
-uint64_t tui_ui_client_init(char *servername){
+uint64_t tui_ui_client_init(char *servername)
+{
+  uint64_t rc_id;
+  if (servername != NULL) {
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
-    uint64_t rc_id = servername == NULL ? 0 : channel_connect(true,
-                     servername, true, on_data, 50, &error);   // connected to channel
+    rc_id = servername == NULL ? 0 : channel_connect(true,
+                      servername, true, on_data, 50, &error);   // connected to channel
+  } else {
+    char **argv = xmalloc(3 * sizeof(char*));
+    argv[0] = xstrdup("nvim");
+    argv[1] = xstrdup("--embed");
+    argv[2] = NULL; // last value of argv should be NULL
+    varnumber_T exit_status;
+    Channel *channel = channel_job_start(argv, CALLBACK_READER_INIT,
+                                  CALLBACK_READER_INIT, CALLBACK_NONE,
+                                  false, true, true, NULL, 0, 0, NULL,
+                                  &exit_status);
+    rc_id = channel->id;
+  }
+  Array args = ARRAY_DICT_INIT;
+  int width = INT_MAX;
+  int height = INT_MAX;
+  Dictionary opts = ARRAY_DICT_INIT;
+  Error err = ERROR_INIT;
 
-    Array args = ARRAY_DICT_INIT;
-    int width = INT_MAX;
-    int height = INT_MAX;
-    Dictionary opts = ARRAY_DICT_INIT;
-    Error err = ERROR_INIT;
+  PUT(opts, "rgb", BOOLEAN_OBJ(true));
+  // PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
+  // PUT(opts, "ext_cmdline", BOOLEAN_OBJ(true));
+  PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
+  // PUT(opts, "ext_multigrid", BOOLEAN_OBJ(true));
+  // PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
+  PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
-    PUT(opts, "rgb", BOOLEAN_OBJ(true));
-    // PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
-    // PUT(opts, "ext_cmdline", BOOLEAN_OBJ(true));
-    PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
-    // PUT(opts, "ext_multigrid", BOOLEAN_OBJ(true));
-    // PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
-    PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
+  ADD(args, INTEGER_OBJ((int)width));
+  ADD(args, INTEGER_OBJ((int)height));
+  ADD(args, DICTIONARY_OBJ(opts));
 
-    ADD(args, INTEGER_OBJ((int)width));
-    ADD(args, INTEGER_OBJ((int)height));
-    ADD(args, DICTIONARY_OBJ(opts));
+  // Telling to the server that you exist as a Client
+  // rpc_send_event(rc_id, "nvim_ui_attach", args);
+  rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
 
-    // Telling to the server that you exist as a Client
-    rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
- 
-    if (ERROR_SET(&err)) {
-      rc_id = 0;
-      logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
-    }
+  if (ERROR_SET(&err)) {
+    rc_id = 0;
+    logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
+  }
 
-    api_clear_error(&err);
+  api_clear_error(&err);
 
-    return rc_id;
+  return rc_id;
 }
 
 UI *tui_start(void)
@@ -210,14 +225,14 @@ UI *tui_start(void)
   ui->ui_ext[kUITermColors] = true;
 
   UI *rv = NULL;
-  if (!is_remote_client) {
-    rv = ui_bridge_attach(ui, tui_main, tui_scheduler);
-  } else {
+  // if (!is_remote_client) {
+    // rv = ui_bridge_attach(ui, tui_main, tui_scheduler);
+  // } else {
     // when remote client neglect ui_bridge
     tui_client_main(ui);
     ui_attach_impl(ui);
     rv = ui;
-  }
+  // }
 
   return rv;
 }

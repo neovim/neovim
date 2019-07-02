@@ -846,8 +846,14 @@ uint64_t channel_get_id(bool tcp, bool rpc)
 {
   Channel *channel;
   uint64_t rv = 0;
-  map_foreach_value(channels, channel, {
-      rv = channel->streamtype == kChannelStreamSocket ? channel->id : 0;
+  if (!tcp && rpc) {
+    map_foreach_value(channels, channel, {
+      rv = channel->streamtype == kChannelStreamProc ? channel->id : 0;
     });
+  } else {
+    map_foreach_value(channels, channel, {
+        rv = channel->streamtype == kChannelStreamSocket ? channel->id : 0;
+      });
+  }
   return rv;
 }

@@ -107,13 +107,13 @@ static void tinput_wait_enqueue(void **argv)
   TermInput *input = argv[0];
   size_t consumed = 0;
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    if(is_remote_client){
+    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
       Array args = ARRAY_DICT_INIT;
       // Error err = ERROR_INIT;
       ADD(args, STRING_OBJ(((String){
           .data = xstrdup(buf), 
           .size = len})));
-      bool result = rpc_send_event(channel_get_id(true, true), "nvim_input", args);
+      bool result = rpc_send_event(channel_get_id(false, true), "nvim_input", args);
       consumed = result ? len : 0;
     } else {
       consumed = input_enqueue((String){.data = buf, .size = len});
