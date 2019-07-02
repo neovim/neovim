@@ -425,23 +425,21 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
   win_T *the_curwin = curwin;
   tabpage_T *the_curtab = curtab;
 
-  // Force unloading or deleting when 'bufhidden' says so, but not for terminal
-  // buffers.
+  // Force unloading or deleting when 'bufhidden' says so.
   // The caller must take care of NOT deleting/freeing when 'bufhidden' is
   // "hide" (otherwise we could never free or delete a buffer).
-  if (!buf->terminal) {
-    if (buf->b_p_bh[0] == 'd') {         // 'bufhidden' == "delete"
-      del_buf = true;
-      unload_buf = true;
-    } else if (buf->b_p_bh[0] == 'w') {  // 'bufhidden' == "wipe"
-      del_buf = true;
-      unload_buf = true;
-      wipe_buf = true;
-    } else if (buf->b_p_bh[0] == 'u')    // 'bufhidden' == "unload"
-      unload_buf = true;
+  if (buf->b_p_bh[0] == 'd') {         // 'bufhidden' == "delete"
+    del_buf = true;
+    unload_buf = true;
+  } else if (buf->b_p_bh[0] == 'w') {  // 'bufhidden' == "wipe"
+    del_buf = true;
+    unload_buf = true;
+    wipe_buf = true;
+  } else if (buf->b_p_bh[0] == 'u') {  // 'bufhidden' == "unload"
+    unload_buf = true;
   }
 
-  if (buf->terminal && (unload_buf || del_buf || wipe_buf)) {
+  if (buf->terminal && (buf->b_nwindows == 1 || del_buf)) {
     // terminal buffers can only be wiped
     unload_buf = true;
     del_buf = true;
