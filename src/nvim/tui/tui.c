@@ -163,10 +163,11 @@ uint64_t tui_ui_client_init(char *servername)
     rc_id = channel->id;
   }
   Array args = ARRAY_DICT_INIT;
-  int width = INT_MAX;
-  int height = INT_MAX;
+  UI *ui = get_ui_by_index(1);
+  int width = ui->width;
+  int height = ui->height;
   Dictionary opts = ARRAY_DICT_INIT;
-  Error err = ERROR_INIT;
+  // Error err = ERROR_INIT;
 
   PUT(opts, "rgb", BOOLEAN_OBJ(true));
   // PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
@@ -181,15 +182,15 @@ uint64_t tui_ui_client_init(char *servername)
   ADD(args, DICTIONARY_OBJ(opts));
 
   // Telling to the server that you exist as a Client
-  // rpc_send_event(rc_id, "nvim_ui_attach", args);
-  rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
+  rpc_send_event(rc_id, "nvim_ui_attach", args);
+  // rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
 
-  if (ERROR_SET(&err)) {
-    rc_id = 0;
-    logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
-  }
+  // if (ERROR_SET(&err)) {
+  //   rc_id = 0;
+  //   logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
+  // }
 
-  api_clear_error(&err);
+  // api_clear_error(&err);
 
   return rc_id;
 }

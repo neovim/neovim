@@ -107,16 +107,21 @@ static void tinput_wait_enqueue(void **argv)
   TermInput *input = argv[0];
   size_t consumed = 0;
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
+    if (!is_remote_client && (embedded_mode && !headless_mode)) {
+      consumed = input_enqueue((String){.data = buf, .size = len});
+    } else {
       Array args = ARRAY_DICT_INIT;
       // Error err = ERROR_INIT;
       ADD(args, STRING_OBJ(((String){
           .data = xstrdup(buf), 
           .size = len})));
-      bool result = rpc_send_event(channel_get_id(false, true), "nvim_input", args);
-      consumed = result ? len : 0;
-    } else {
-      consumed = input_enqueue((String){.data = buf, .size = len});
+      if (is_remote_client) {
+        bool result = rpc_send_event(channel_get_id(true, true), "nvim_input", args);
+        consumed = result ? len : 0;
+      } else if ((!headless_mode && !embedded_mode && !silent_mode)){
+        bool result = rpc_send_event(channel_get_id(false, true), "nvim_input", args);
+        consumed = result ? len : 0;
+      }
     }
     if (consumed) {
       rbuffer_consumed(input->key_buffer, consumed);
@@ -126,7 +131,7 @@ static void tinput_wait_enqueue(void **argv)
       break;
     }
   }
-  if (!is_remote_client) {
+  if (!is_remote_client && (embedded_mode && !headless_mode)) {
     uv_mutex_lock(&input->key_buffer_mutex);
     input->waiting = false;
     uv_cond_signal(&input->key_buffer_cond);
@@ -138,7 +143,7 @@ static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
-    if (!is_remote_client) {
+    if (!is_remote_client && (embedded_mode && !headless_mode)) {
       uv_mutex_lock(&input->key_buffer_mutex);
       loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
       input->waiting = true;

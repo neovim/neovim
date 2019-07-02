@@ -220,7 +220,7 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
     snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
     call_set_error(channel, buf, WARN_LOG_LEVEL);
-    if (is_remote_client) {
+    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
       // Stopping client TUI
       ui_stop_event(NULL);
     }

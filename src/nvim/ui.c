@@ -223,13 +223,17 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  if (!is_remote_client) {
+  if (!is_remote_client && embedded_mode) {
     screen_resize(width, height);
   } else {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
-    rpc_send_event(channel_get_id(true, true), "nvim_ui_try_resize", args);
+    if (is_remote_client) {
+      rpc_send_event(channel_get_id(true, true), "nvim_ui_try_resize", args);
+    } else if ((!headless_mode && !embedded_mode && !silent_mode)) {
+      rpc_send_event(channel_get_id(false, true), "nvim_ui_try_resize", args);
+    }
   }
   p_lz = save_p_lz;
 
