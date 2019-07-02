@@ -792,6 +792,7 @@ void ex_jumps(exarg_T *eap)
 
       // apply :filter /pat/ or file name not available
       if (name == NULL || message_filtered(name)) {
+        xfree(name);
         continue;
       }
 
