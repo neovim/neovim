@@ -4969,6 +4969,8 @@ MatchParen	The character under the cursor or just before it, if it
 
 							*hl-ModeMsg*
 ModeMsg		'showmode' message (e.g., "-- INSERT --")
+							*hl-MsgArea*
+MsgArea		Area for messages and cmdline
 							*hl-MsgSeparator*
 MsgSeparator	Separator for scrolled messages, `msgsep` flag of 'display'
 							*hl-MoreMsg*

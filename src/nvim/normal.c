@@ -3455,16 +3455,18 @@ static void display_showcmd(void)
     return;
   }
 
+  msg_grid_validate();
   int showcmd_row = Rows - 1;
-  grid_puts_line_start(&default_grid, showcmd_row);
+  grid_puts_line_start(&msg_grid_adj, showcmd_row);
 
   if (!showcmd_is_clear) {
-    grid_puts(&default_grid, showcmd_buf, showcmd_row, sc_col, 0);
+    grid_puts(&msg_grid_adj, showcmd_buf, showcmd_row, sc_col,
+              HL_ATTR(HLF_MSG));
   }
 
   // clear the rest of an old message by outputting up to SHOWCMD_COLS spaces
-  grid_puts(&default_grid, (char_u *)"          " + len, showcmd_row,
-            sc_col + len, 0);
+  grid_puts(&msg_grid_adj, (char_u *)"          " + len, showcmd_row,
+            sc_col + len, HL_ATTR(HLF_MSG));
 
   grid_puts_line_flush(false);
 }

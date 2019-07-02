@@ -2989,6 +2989,7 @@ ambw_end:
       errmsg = e_invarg;
     } else {
       (void)init_chartab();
+      msg_grid_validate();
     }
   } else if (varp == &p_ead) {  // 'eadirection'
     if (check_opt_strings(p_ead, p_ead_values, false) != OK) {

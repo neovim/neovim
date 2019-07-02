@@ -14648,6 +14648,21 @@ static void f_rpcstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+static void screenchar_adjust_grid(ScreenGrid **grid, int *row, int *col)
+{
+  // TODO(bfredl): this is a hack for legacy tests which use screenchar()
+  // to check printed messages on the screen (but not floats etc
+  // as these are not legacy features). If the compositor is refactored to
+  // have its own buffer, this should just read from it instead.
+  msg_scroll_flush();
+  if (msg_grid.chars && msg_grid.comp_index > 0 && *row >= msg_grid.comp_row
+      && *row < (msg_grid.Rows + msg_grid.comp_row)
+      && *col < msg_grid.Columns) {
+    *grid = &msg_grid;
+    *row -= msg_grid.comp_row;
+  }
+}
+
 /*
  * "screenattr()" function
  */
@@ -14655,13 +14670,15 @@ static void f_screenattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int c;
 
-  const int row = (int)tv_get_number_chk(&argvars[0], NULL) - 1;
-  const int col = (int)tv_get_number_chk(&argvars[1], NULL) - 1;
+  int row = (int)tv_get_number_chk(&argvars[0], NULL) - 1;
+  int col = (int)tv_get_number_chk(&argvars[1], NULL) - 1;
   if (row < 0 || row >= default_grid.Rows
       || col < 0 || col >= default_grid.Columns) {
     c = -1;
   } else {
-    c = default_grid.attrs[default_grid.line_offset[row] + col];
+    ScreenGrid *grid = &default_grid;
+    screenchar_adjust_grid(&grid, &row, &col);
+    c = grid->attrs[grid->line_offset[row] + col];
   }
   rettv->vval.v_number = c;
 }
@@ -14671,17 +14688,17 @@ static void f_screenattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_screenchar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int off;
   int c;
 
-  const int row = tv_get_number_chk(&argvars[0], NULL) - 1;
-  const int col = tv_get_number_chk(&argvars[1], NULL) - 1;
+  int row = tv_get_number_chk(&argvars[0], NULL) - 1;
+  int col = tv_get_number_chk(&argvars[1], NULL) - 1;
   if (row < 0 || row >= default_grid.Rows
       || col < 0 || col >= default_grid.Columns) {
     c = -1;
   } else {
-    off = default_grid.line_offset[row] + col;
-    c = utf_ptr2char(default_grid.chars[off]);
+    ScreenGrid *grid = &default_grid;
+    screenchar_adjust_grid(&grid, &row, &col);
+    c = utf_ptr2char(grid->chars[grid->line_offset[row] + col]);
   }
   rettv->vval.v_number = c;
 }

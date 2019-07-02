@@ -697,6 +697,7 @@ static void ui_ext_win_position(win_T *wp)
       ui_comp_put_grid(&wp->w_grid, comp_row, comp_col, wp->w_height,
                        wp->w_width, valid, on_top);
       ui_check_cursor_grid(wp->w_grid.handle);
+      wp->w_grid.focusable = wp->w_float_config.focusable;
       if (!valid) {
         wp->w_grid.valid = false;
         redraw_win_later(wp, NOT_VALID);
@@ -5359,6 +5360,9 @@ void win_drag_status_line(win_T *dragwin, int offset)
   }
   row = win_comp_pos();
   grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
+  if (msg_grid.chars) {
+    clear_cmdline = true;
+  }
   cmdline_row = row;
   p_ch = Rows - cmdline_row;
   if (p_ch < 1)

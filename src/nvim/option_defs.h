@@ -399,6 +399,7 @@ static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", "msgsep",
 #define DY_LASTLINE             0x001
 #define DY_TRUNCATE             0x002
 #define DY_UHEX                 0x004
+// code should use msg_use_msgsep() to check if msgsep is active
 #define DY_MSGSEP               0x008
 EXTERN int p_ed;                // 'edcompatible'
 EXTERN int p_emoji;             // 'emoji'

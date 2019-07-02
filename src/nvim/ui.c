@@ -333,6 +333,7 @@ void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
 void ui_line(ScreenGrid *grid, int row, int startcol, int endcol, int clearcol,
              int clearattr, bool wrap)
 {
+  assert(0 <= row && row < grid->Rows);
   LineFlags flags = wrap ? kLineFlagWrap : 0;
   if (startcol == -1) {
     startcol = 0;
@@ -404,6 +405,7 @@ void ui_flush(void)
   cmdline_ui_flush();
   win_ui_flush_positions();
   msg_ext_ui_flush();
+  msg_scroll_flush();
 
   if (pending_cursor_update) {
     ui_call_grid_cursor_goto(cursor_grid_handle, cursor_row, cursor_col);

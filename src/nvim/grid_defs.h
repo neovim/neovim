@@ -43,6 +43,10 @@ typedef struct {
   unsigned *line_offset;
   char_u   *line_wraps;
 
+  // last column that was drawn (not cleared with the default background).
+  // only used when "throttled" is set. Not allocated by grid_alloc!
+  int *dirty_col;
+
   // the size of the allocated grid.
   int Rows;
   int Columns;
@@ -50,12 +54,17 @@ typedef struct {
   // The state of the grid is valid. Otherwise it needs to be redrawn.
   bool valid;
 
+  // only draw internally and don't send updates yet to the compositor or
+  // external UI.
+  bool throttled;
+
   // offsets for the grid relative to the global screen
   int row_offset;
   int col_offset;
 
   // whether the compositor should blend the grid with the background grid
   bool blending;
+  bool focusable;
 
   // state owned by the compositor.
   int comp_row;
@@ -64,7 +73,7 @@ typedef struct {
   bool comp_disabled;
 } ScreenGrid;
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, 0, 0, false, 0, 0, \
-                           false, 0, 0, 0,  false }
+#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
+                           false, 0, 0, false, true, 0, 0, 0,  false }
 
 #endif  // NVIM_GRID_DEFS_H

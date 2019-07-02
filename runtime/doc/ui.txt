@@ -543,6 +543,8 @@ The multigrid extension gives UIs more control over how windows are displayed:
   occupies on the global layout. So the UI could use a different font size
   per-window. Or reserve space around the border of the window for its own
   elements, such as scrollbars from the UI toolkit.
+- A dedicated grid is used for messages, which may scroll over the window
+  area. (Alternatively |ext_messages| can be used).
 
 By default, the grid size is handled by Nvim and set to the outer grid size
 (i.e. the size of the window frame in Nvim) whenever the split is created.
@@ -573,18 +575,19 @@ tabs.
 ["win_hide", grid]
 	Stop displaying the window. The window can be shown again later.
 
-["win_scroll_over_start"]
-	Hint that following `grid_scroll` on the default grid should
-	scroll over windows. This is a temporary workaround to allow
-	UIs to use the builtin message drawing. Later on, messages will be
-	drawn on a dedicated grid. Using |ui-messages| also avoids this issue.
-
-["win_scroll_over_reset"]
-	Hint that scrolled over windows should be redrawn again, and not be
-	overdrawn by default grid scrolling anymore.
-
 ["win_close", grid]
 	Close the window.
+
+["msg_set_pos", grid, row, scrolled, sep_char]
+	Display messages on `grid`.  The grid will be displayed at `row` on the
+	default grid (grid=1), covering the full column width. `scrolled`
+	indicates whether the message area has been scrolled to cover other
+	grids. It can be useful to draw a separator then ('display' msgsep
+	flag). The Builtin TUI draws a full line filled with `sep_char` and
+	|hl-MsgSeparator| highlight.
+
+	When |ext_messages| is active, no message grid is used, and this event
+	will not be sent.
 
 ==============================================================================
 Popupmenu Events						 *ui-popupmenu*
