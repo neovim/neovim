@@ -441,8 +441,8 @@ void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 
   if (buf->terminal && (buf->b_nwindows == 1 || del_buf)) {
     // terminal buffers can only be wiped
-    unload_buf = true;
     del_buf = true;
+    unload_buf = true;
     wipe_buf = true;
   }
 
