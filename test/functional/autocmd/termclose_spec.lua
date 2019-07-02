@@ -3,8 +3,8 @@ local helpers = require('test.functional.helpers')(after_each)
 
 local clear, command, nvim, nvim_dir =
   helpers.clear, helpers.command, helpers.nvim, helpers.nvim_dir
-local eval, eq, retry =
-  helpers.eval, helpers.eq, helpers.retry
+local eval, eq, neq, retry =
+  helpers.eval, helpers.eq, helpers.neq, helpers.retry
 local ok = helpers.ok
 local feed = helpers.feed
 local iswin = helpers.iswin
@@ -21,7 +21,7 @@ describe('TermClose event', function()
     command('autocmd TermClose * let g:test_termclose = 23')
     command('terminal')
     retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
-    assert(-1 ~= eval('jobwait([&channel], 0)[0]'))
+    neq(-1, eval('jobwait([&channel], 0)[0]'))
   end)
 
   it('triggers when long-running terminal job gets stopped', function()
