@@ -15,10 +15,8 @@ end
 -- @param filetype_specific         (optional)  Use this to only have a callback executed for certain filetypes
 --
 -- @returns another
-configure.add_callback = function(method, cb, override_default_callback, filetype_specific)
-  if override_default_callback then
-    callbacks.set_default_callback(method, cb)
-  elseif filetype_specific ~= nil then
+configure.add_callback = function(method, cb, filetype_specific)
+  if filetype_specific ~= nil then
     callbacks.add_filetype_callback(method, cb, filetype_specific)
   else
     callbacks.add_callback(method, cb)
@@ -27,10 +25,6 @@ end
 
 configure.set_option = function(method, option, value)
   callbacks.set_option(method, option, value)
-end
-
-configure.disable_default_callback = function(method)
-  configure.add_callback(method, nil, true)
 end
 
 return configure

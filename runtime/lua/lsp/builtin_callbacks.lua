@@ -1,11 +1,6 @@
 -- luacheck: globals vim
 -- Implements the following default callbacks:
 --  textDocument/publishDiagnostics
---  TODO: notification: textDocument/didOpen
---  TODO: notification: textDocument/willSave
---  TODO: textDocument/willSaveWaitUntil
---  TODO: notification: textDocument/didSave
---  TODO: notification: textDocument/didClose
 
 --  IN PROGRESS: textDocument/completion
 --  TODO: completionItem/resolve
@@ -39,13 +34,15 @@ local handle_workspace = require('lsp.handle.workspace')
 
 
 -- Callback definition section
-local add_default_callback = function(callback_mapping, callback_object, name, callback, options)
-  callback_mapping[name] = callback_object.new(name, callback, options)
+local add_callback = function(callback_mapping, callback_object, name, callback, options)
+  callback_object_instance = callback_object.new(name, options)
+  callback_object_instance:add_callback(callback)
+  callback_mapping[name] = callback_object_instance
 end
 
 -- 3 nvim/error_callback
 local add_nvim_error_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'nvim/error_callback', function(original, error_message)
+  add_callback(callback_mapping, callback_object, 'nvim/error_callback', function(original, error_message)
     local message = ''
     if error_message.message ~= nil and type(error_message.message) == 'string' then
       message = error_message.message
@@ -63,7 +60,7 @@ end
 
 -- 3 textDocument/publishDiagnostics
 local add_text_document_publish_diagnostics_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'textDocument/publishDiagnostics', function(self, data)
+  add_callback(callback_mapping, callback_object, 'textDocument/publishDiagnostics', function(self, data)
     local diagnostic_list
     if self.options.use_quickfix then
       diagnostic_list = QuickFix:new('Language Server Diagnostics')
@@ -114,7 +111,7 @@ end
 
 -- 3 textDocument/completion
 local add_text_document_completion_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'textDocument/completion', function(self, data)
+  add_callback(callback_mapping, callback_object, 'textDocument/completion', function(self, data)
     if data == nil then
       print(self)
       return
@@ -126,7 +123,7 @@ end
 
 -- 3 textDocument/references
 local add_text_document_references_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'textDocument/references', function(self, data)
+  add_callback(callback_mapping, callback_object, 'textDocument/references', function(self, data)
     local locations = data
     local loclist = {}
 
@@ -166,7 +163,7 @@ end
 
 -- 3 textDocument/rename
 local add_text_document_rename_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'textDocument/rename', function(self, data)
+  add_callback(callback_mapping, callback_object, 'textDocument/rename', function(self, data)
     if data == nil then
       print(self)
       return nil
@@ -180,7 +177,7 @@ end
 
 -- 3 textDocument/hover
 local add_text_document_hover_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'textDocument/hover', function(self, data)
+  add_callback(callback_mapping, callback_object, 'textDocument/hover', function(self, data)
     log.trace('textDocument/hover', data, self)
 
     if data.range ~= nil then
@@ -234,7 +231,7 @@ end
 
 -- 3 textDocument/definition
 local add_text_document_definition_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'textDocument/definition', function(self, data)
+  add_callback(callback_mapping, callback_object, 'textDocument/definition', function(self, data)
     log.trace('callback:textDocument/definiton', data, self)
 
     if data == nil or data == {} then
@@ -280,7 +277,7 @@ end
 -- 2 window
 -- 3 window/showMessage
 local add_window_show_message_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'window/showMessage', function(self, data)
+  add_callback(callback_mapping, callback_object, 'window/showMessage', function(self, data)
     if data == nil or type(data) ~= 'table' then
       print(self)
       return nil
@@ -304,7 +301,7 @@ end
 -- 3 window/showMessageRequest
 -- TODO: Should probably find some unique way to handle requests from server -> client
 local add_window_show_message_request_callback = function(callback_mapping, callback_object)
-  add_default_callback(callback_mapping, callback_object, 'window/showMessageRequest', function(self, data)
+  add_callback(callback_mapping, callback_object, 'window/showMessageRequest', function(self, data)
     if data == nil or type(data) ~= 'table' then
       print(self)
       return nil
@@ -318,7 +315,7 @@ local add_window_show_message_request_callback = function(callback_mapping, call
   end, { })
 end
 
-local add_all_default_callbacks = function(callback_mapping, callback_object)
+local add_all_builtin_callbacks = function(callback_mapping, callback_object)
   add_nvim_error_callback(callback_mapping, callback_object)
   add_text_document_publish_diagnostics_callback(callback_mapping, callback_object)
   add_text_document_completion_callback(callback_mapping, callback_object)
@@ -333,13 +330,13 @@ end
 -- 2 workspace
 -- 3 workspace/symbol
 -- TODO: Find a server that supports this request, and also figure out workspaces :)
--- add_default_callback('workspace/symbol', function(self, data)
+-- add_callback('workspace/symbol', function(self, data)
 --   print(self, data)
 -- end, { })
 
 return {
   -- Adding default callback functions
-  add_all_default_callbacks = add_all_default_callbacks,
+  add_all_builtin_callbacks = add_all_builtin_callbacks,
   add_nvim_error_callback = add_nvim_error_callback,
   add_text_document_publish_diagnostics_callback = add_text_document_publish_diagnostics_callback,
   add_text_document_completion_callback = add_text_document_completion_callback,

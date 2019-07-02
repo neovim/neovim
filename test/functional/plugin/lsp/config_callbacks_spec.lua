@@ -27,28 +27,28 @@ describe('LSP Callback Configuration', function()
     ]]))
   end)
 
-  it('should have no default callback', function()
+  it('should have no builtin callback', function()
     eq(0, exec_lua("return count_callback()"))
   end)
 
-  it('should have a textDocument/hover default callback', function()
+  it('should have a textDocument/hover builtin callback', function()
     exec_lua("lsp_callbacks.add_text_document_hover_callback()")
     exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
 
-    eq(false, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].default[1] == null"))
+    eq(false, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].common[1] == null"))
     eq(1, exec_lua("return count_callback()"))
   end)
 
-  it('should have some default configurations', function()
-    exec_lua("lsp_callbacks.add_all_default_callbacks()")
+  it('should have some builtin configurations', function()
+    exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
     exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
-    exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ")
+    exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ")
 
     eq(true, exec_lua("return callback_list[1] == hover"))
   end)
 
   it('should handle generic configurations', function()
-    exec_lua("lsp_callbacks.add_all_default_callbacks()")
+    exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
     exec_lua("test_func = function(a, b) return a + b end")
 
     exec_lua("lsp_config.add_callback('textDocument/hover', test_func)")
@@ -58,49 +58,46 @@ describe('LSP Callback Configuration', function()
   end)
 
   it('should handle filetype configurations', function()
-    exec_lua("lsp_callbacks.add_all_default_callbacks()")
+    exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
     exec_lua("filetype_func = function(a, b) return a + b end")
-    exec_lua("lsp_config.add_callback('textDocument/hover', filetype_func, false, 'python')")
+    exec_lua("lsp_config.add_callback('textDocument/hover', filetype_func, 'python')")
 
-    -- Get the default callback list
+    -- Get the builtin callback list
     exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
-    exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].default[1] ")
+    exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ")
 
     eq(true, exec_lua("return callback_list[1] == hover"))
 
     -- Get the callback list for a filetype
-    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', nil, 'python')")
-    exec_lua("assert(callback_list[2] == filetype_func)")
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', 'python')")
+    eq(true, exec_lua("return callback_list[2] == filetype_func"))
 
-    -- Can override by getting default only
-    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', true, 'python')")
-
-    eq(true, exec_lua("return #callback_list == 1"))
+    eq(true, exec_lua("return #callback_list == 2"))
   end)
 
-  it('should handle overriding default configuration', function()
-      exec_lua("lsp_callbacks.add_all_default_callbacks()")
+  it('should handle overriding builtin configuration', function()
+      exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
       exec_lua("override_func = function(a, b) return a - b end")
 
-      exec_lua("lsp_config.add_callback('textDocument/definition', override_func, true)")
+      exec_lua("lsp_config.add_callback('textDocument/definition', override_func)")
       exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/definition')")
 
-      eq(true, exec_lua("return callback_list[1] == override_func"))
-      eq(true, exec_lua("return #callback_list == 1"))
+      eq(true, exec_lua("return callback_list[2] == override_func"))
+      eq(true, exec_lua("return #callback_list == 2"))
   end)
 
-  it('should handle running default callback even after adding configuration', function()
+  it('should handle running builtin callback even after adding configuration', function()
   end)
 
   it('should not run filetype configuration in other filetypes', function()
   end)
 
-  it('should allow complete disabling of default configuration', function()
+  it('should allow complete disabling of builtin configuration', function()
   end)
 
   it('should handle adding callbacks for new/custom methods', function()
   end)
 
-  it('should be able to determine whether default configuration exists for a method', function()
+  it('should be able to determine whether builtin configuration exists for a method', function()
   end)
 end)
