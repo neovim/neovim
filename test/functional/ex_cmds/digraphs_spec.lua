@@ -33,6 +33,4 @@ describe(':digraphs', function()
       {3:Press ENTER or type command to continue}^                          |
     ]])
   end)
-
 end)
-
