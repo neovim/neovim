@@ -40,6 +40,8 @@ static void help(void)
   puts("      ...");
   puts("      96: test");
   puts("    will be printed because byte `a' is equal to 97.");
+  puts("  shell-test INTERACT");
+  puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
 }
 
 int main(int argc, char **argv)
@@ -89,8 +91,31 @@ int main(int argc, char **argv)
 
       printf("3: \xc3\xa5\xcc"); wait();
       printf("\xb2\n"); wait();
+    } else if (strcmp(argv[1], "INTERACT") == 0) {
+      char input[256];
+      char cmd[100];
+      int arg;
+      int input_argc;
+
+      while (1) {
+        fprintf(stderr, "interact $ ");
+
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+          break;  // EOF
+        }
+
+        input_argc = sscanf(input, "%s %d", cmd, &arg);
+        if(1 == input_argc) {
+          arg = 0;
+        }
+        if (strcmp(cmd, "exit") == 0) {
+            return arg;
+        } else {
+          fprintf(stderr, "command not found: %s\n", cmd);
+        }
+      }
     } else {
-      fprintf(stderr, "Unknown first argument\n");
+      fprintf(stderr, "Unknown first argument: %s\n", argv[1]);
       return 3;
     }
     return 0;

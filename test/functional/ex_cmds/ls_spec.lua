@@ -4,6 +4,8 @@ local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
+local nvim = helpers.nvim
+local nvim_dir = helpers.nvim_dir
 local retry = helpers.retry
 
 describe(':ls', function()
@@ -12,6 +14,8 @@ describe(':ls', function()
   end)
 
   it('R, F for :terminal buffers', function()
+    nvim('set_option', 'shell', string.format('"%s" INTERACT', nvim_dir..'/shell-test'))
+
     command('edit foo')
     command('set hidden')
     command('terminal')
