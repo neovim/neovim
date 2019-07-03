@@ -42,7 +42,9 @@ function(BuildLuv)
       -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luv
       -DURL=${LUV_URL}
       -DEXPECTED_SHA256=${LUV_SHA256}
-      -DTARGET=luv
+      -DTARGET=luv-static
+      # The source is shared with BuildLuarocks (with USE_BUNDLED_LUV).
+      -DSRC_DIR=${DEPS_BUILD_DIR}/src/luv
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     PATCH_COMMAND "${_luv_PATCH_COMMAND}"
