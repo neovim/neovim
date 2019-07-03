@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local feed = helpers.feed
+local command = helpers.command
 local Screen = require('test.functional.ui.screen')
 
 describe(':digraphs', function()
@@ -21,7 +22,7 @@ describe(':digraphs', function()
   end)
 
   it('displays digraphs', function()
-    feed(':digraphs<CR>')
+    command('digraphs')
     screen:expect([[
       E` {6:È}  200    E^ {6:Ê}  202    E" {6:Ë}  203    I` {6:Ì}  204    I^ {6:Î}  206    |
       I" {6:Ï}  207    N~ {6:Ñ}  209    O` {6:Ò}  210    O^ {6:Ô}  212    O~ {6:Õ}  213    |
