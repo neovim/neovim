@@ -2369,6 +2369,7 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         /* Can't add "v:" variable. */
         if (lp->ll_dict == &vimvardict) {
           EMSG2(_(e_illvar), name);
+          tv_clear(&var1);
           return NULL;
         }
 
