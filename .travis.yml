@@ -108,6 +108,7 @@ jobs:
       env:
         - GCOV=gcov
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+        - GCOV_ERROR_FILE="/tmp/libgcov-errors.log"
         - *common-job-env
     - name: clang-tsan
       os: linux

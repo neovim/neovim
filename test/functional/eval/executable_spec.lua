@@ -21,8 +21,6 @@ describe('executable()', function()
     -- Windows: siblings are in Nvim's "pseudo-$PATH".
     local expected = iswin() and 1 or 0
     if iswin() then
-      -- $PATH on AppVeyor CI might be oversized, redefine it to a minimal one.
-      clear({env={PATH=[[C:\Windows\system32;C:\Windows]]}})
       eq('arg1=lemon;arg2=sky;arg3=tree;',
          call('system', sibling_exe..' lemon sky tree'))
     end
