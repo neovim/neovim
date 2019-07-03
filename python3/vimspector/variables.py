@@ -33,9 +33,9 @@ class VariablesView( object ):
     self._connection = connection
 
     # Allows us to hit <CR> to expand/collapse variables
-    vim.current.window = self._vars.win
-    vim.command(
-      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
+    with utils.LetCurrentWindow( self._vars.win ):
+      vim.command(
+        'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
 
     # This is actually the tree (scopes are alwyas the root)
     #  it's just a list of DAP scope dicts, with one magic key (_variables)
@@ -52,11 +52,11 @@ class VariablesView( object ):
     self._watches = []
 
     # Allows us to hit <CR> to expand/collapse variables
-    vim.current.window = self._watch.win
-    vim.command(
-      'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
-    vim.command(
-      'nnoremap <buffer> <DEL> :call vimspector#DeleteWatch()<CR>' )
+    with utils.LetCurrentWindow( self._watch.win ):
+      vim.command(
+        'nnoremap <buffer> <CR> :call vimspector#ExpandVariable()<CR>' )
+      vim.command(
+        'nnoremap <buffer> <DEL> :call vimspector#DeleteWatch()<CR>' )
 
     utils.SetUpScratchBuffer( self._vars.win.buffer, 'vimspector.Variables' )
     utils.SetUpPromptBuffer( self._watch.win.buffer,

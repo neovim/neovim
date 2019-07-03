@@ -35,18 +35,17 @@ class CodeView( object ):
       'breakpoints': []
     }
 
-    vim.current.window = self._window
+    with utils.LetCurrentWindow( self._window ):
+      vim.command( 'nnoremenu WinBar.Continue :call vimspector#Continue()<CR>' )
+      vim.command( 'nnoremenu WinBar.Next :call vimspector#StepOver()<CR>' )
+      vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
+      vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
+      vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
+      vim.command( 'nnoremenu WinBar.Stop :call vimspector#Stop()<CR>' )
+      vim.command( 'nnoremenu WinBar.Restart :call vimspector#Restart()<CR>' )
+      vim.command( 'nnoremenu WinBar.Reset :call vimspector#Reset()<CR>' )
 
-    vim.command( 'nnoremenu WinBar.Continue :call vimspector#Continue()<CR>' )
-    vim.command( 'nnoremenu WinBar.Next :call vimspector#StepOver()<CR>' )
-    vim.command( 'nnoremenu WinBar.Step :call vimspector#StepInto()<CR>' )
-    vim.command( 'nnoremenu WinBar.Finish :call vimspector#StepOut()<CR>' )
-    vim.command( 'nnoremenu WinBar.Pause :call vimspector#Pause()<CR>' )
-    vim.command( 'nnoremenu WinBar.Stop :call vimspector#Stop()<CR>' )
-    vim.command( 'nnoremenu WinBar.Restart :call vimspector#Restart()<CR>' )
-    vim.command( 'nnoremenu WinBar.Reset :call vimspector#Reset()<CR>' )
-
-    vim.command( 'sign define vimspectorPC text=-> texthl=Search' )
+      vim.command( 'sign define vimspectorPC text=-> texthl=Search' )
 
 
   def SetCurrentFrame( self, frame ):
@@ -61,7 +60,7 @@ class CodeView( object ):
     if 'path' not in frame[ 'source' ]:
       return False
 
-    vim.current.window = self._window
+    utils.JumpToWindow( self._window )
 
     try:
       utils.OpenFileInCurrentWindow( frame[ 'source' ][ 'path' ] )
@@ -210,8 +209,7 @@ class CodeView( object ):
     buffer_number = None
     with utils.TemporaryVimOptions( { 'splitright': True,
                                       'equalalways': False } ):
-      with utils.RestoreCurrentWindow():
-        vim.current.window = self._window
+      with utils.LetCurrentWindow( self._window ):
         # TODO/FIXME: Do something about closing this when we reset ?
         vim_cmd =  'term_start( {}, {} )'.format( json.dumps( args ),
                                                   json.dumps( options ) )
