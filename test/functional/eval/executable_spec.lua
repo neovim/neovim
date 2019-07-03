@@ -29,6 +29,8 @@ describe('executable()', function()
     local is_executable = call('executable', sibling_exe)
     if iswin() and is_executable ~= expected then
       pending('XXX: sometimes fails on AppVeyor')
+    else
+      eq(expected, is_executable)
     end
   end)
 
