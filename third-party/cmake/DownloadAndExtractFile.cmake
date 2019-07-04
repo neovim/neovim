@@ -18,7 +18,10 @@ if(NOT DEFINED TARGET)
   message(FATAL_ERROR "TARGET must be defined.")
 endif()
 
-set(SRC_DIR ${PREFIX}/src/${TARGET})
+if(NOT DEFINED SRC_DIR)
+  set(SRC_DIR ${PREFIX}/src/${TARGET})
+endif()
+set(BINARY_DIR ${PREFIX}/src/${TARGET}-build)
 
 # Check whether the source has been downloaded. If true, skip it.
 # Useful for external downloads like homebrew.
@@ -153,6 +156,13 @@ message(STATUS "extracting... [rename]")
 file(REMOVE_RECURSE ${SRC_DIR})
 get_filename_component(contents ${contents} ABSOLUTE)
 file(RENAME ${contents} ${SRC_DIR})
+
+# Remove any existing BINARY_DIR, to force a new build.
+# Without this a necessary output (e.g. libluv.a) might not be updated/installed.
+#
+message(STATUS "extracting... [clean binary dir]")
+file(REMOVE_RECURSE ${BINARY_DIR})
+file(MAKE_DIRECTORY ${BINARY_DIR})
 
 # Clean up:
 #
