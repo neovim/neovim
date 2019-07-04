@@ -1,16 +1,16 @@
 -- Script creates the following tables in unicode_tables.generated.h:
 --
--- 1. doublewidth and ambiguous tables: sorted list of non-overlapping closed 
---    intervals. Codepoints in these intervals have double (W or F) or ambiguous 
+-- 1. doublewidth and ambiguous tables: sorted list of non-overlapping closed
+--    intervals. Codepoints in these intervals have double (W or F) or ambiguous
 --    (A) east asian width respectively.
--- 2. combining table: same as the above, but characters inside are combining 
+-- 2. combining table: same as the above, but characters inside are combining
 --    characters (i.e. have general categories equal to Mn, Mc or Me).
--- 3. foldCase, toLower and toUpper tables used to convert characters to 
---    folded/lower/upper variants. In these tables first two values are 
---    character ranges: like in previous tables they are sorted and must be 
---    non-overlapping. Third value means step inside the range: e.g. if it is 
---    2 then interval applies only to first, third, fifth, … character in range. 
---    Fourth value is number that should be added to the codepoint to yield 
+-- 3. foldCase, toLower and toUpper tables used to convert characters to
+--    folded/lower/upper variants. In these tables first two values are
+--    character ranges: like in previous tables they are sorted and must be
+--    non-overlapping. Third value means step inside the range: e.g. if it is
+--    2 then interval applies only to first, third, fifth, … character in range.
+--    Fourth value is number that should be added to the codepoint to yield
 --    folded/lower/upper codepoint.
 -- 4. emoji_width and emoji_all tables: sorted lists of non-overlapping closed
 --    intervals of Emoji characters.  emoji_width contains all the characters
@@ -38,7 +38,7 @@ local split_on_semicolons = function(s)
   local ret = {}
   local idx = 1
   while idx <= #s + 1 do
-    item = s:match('^[^;]*', idx)
+    local item = s:match('^[^;]*', idx)
     idx = idx + #item + 1
     if idx <= #s + 1 then
       assert(s:sub(idx - 1, idx - 1) == ';')
@@ -208,7 +208,7 @@ local build_width_table = function(ut_fp, dataprops, widthprops, widths,
       -- But use all chars from a range.
       local dp = dataprops[dataidx]
       if (n_last > n) or (not (({Mn=true, Mc=true, Me=true})[dp[3]])) then
-        if start >= 0 and end_ + 1 == n then
+        if start >= 0 and end_ + 1 == n then -- luacheck: ignore 542
           -- Continue with the same range.
         else
           if start >= 0 then
@@ -235,6 +235,8 @@ local build_emoji_table = function(ut_fp, emojiprops, doublewidth, ambiwidth)
   for _, p in ipairs(emojiprops) do
     if p[2]:match('Emoji%s+#') then
       local rng_start, rng_end = p[1]:find('%.%.')
+      local n
+      local n_last
       if rng_start then
         n = tonumber(p[1]:sub(1, rng_start - 1), 16)
         n_last = tonumber(p[1]:sub(rng_end + 1), 16)

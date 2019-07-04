@@ -14,12 +14,6 @@ run_test 'make clint-full' clint
 
 exit_suite --continue
 
-enter_suite 'testlint'
-
-run_test 'make testlint' testlint
-
-exit_suite --continue
-
 enter_suite 'lualint'
 
 run_test 'make lualint' lualint

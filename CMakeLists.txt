@@ -666,37 +666,12 @@ if(BUSTED_LUA_PRG)
 endif()
 
 if(LUACHECK_PRG)
-  add_custom_target(testlint
-    COMMAND ${CMAKE_COMMAND}
-      -DLUACHECK_PRG=${LUACHECK_PRG}
-      -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -DIGNORE_PATTERN="*/preload.lua"
-      -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake)
-
-  add_custom_target(
-    lintbuiltinlua
-    COMMAND
-      ${CMAKE_COMMAND}
-        -DLUACHECK_PRG=${LUACHECK_PRG}
-        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/lua
-        -DREAD_GLOBALS=vim
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
-  )
-  add_custom_target(
-    lintruntimelua
-    COMMAND
-      ${CMAKE_COMMAND}
-        -DLUACHECK_PRG=${LUACHECK_PRG}
-        -DLUAFILES_DIR=${CMAKE_CURRENT_SOURCE_DIR}/runtime/lua
-        -DREAD_GLOBALS=vim
-        -P ${PROJECT_SOURCE_DIR}/cmake/RunLuacheck.cmake
-  )
-  # TODO(ZyX-I): Run linter for all lua code in src
-  add_custom_target(
-    lualint
-    DEPENDS lintruntimelua
-    DEPENDS lintbuiltinlua
-  )
+  add_custom_target(lualint
+    COMMAND ${LUACHECK_PRG} -q runtime/ src/ test/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+else()
+  add_custom_target(lualint false
+    COMMENT "lualint: LUACHECK_PRG not defined")
 endif()
 
 set(CPACK_PACKAGE_NAME "Neovim")

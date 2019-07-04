@@ -1,20 +1,20 @@
-mpack = require('mpack')
+local mpack = require('mpack')
 
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
 assert(#arg == 7)
-input = io.open(arg[2], 'rb')
-proto_output = io.open(arg[3], 'wb')
-call_output = io.open(arg[4], 'wb')
-remote_output = io.open(arg[5], 'wb')
-bridge_output = io.open(arg[6], 'wb')
-metadata_output = io.open(arg[7], 'wb')
+local input = io.open(arg[2], 'rb')
+local proto_output = io.open(arg[3], 'wb')
+local call_output = io.open(arg[4], 'wb')
+local remote_output = io.open(arg[5], 'wb')
+local bridge_output = io.open(arg[6], 'wb')
+local metadata_output = io.open(arg[7], 'wb')
 
-c_grammar = require('generators.c_grammar')
+local c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
-function write_signature(output, ev, prefix, notype)
+local function write_signature(output, ev, prefix, notype)
   output:write('('..prefix)
   if prefix == "" and #ev.parameters == 0 then
     output:write('void')
@@ -32,7 +32,7 @@ function write_signature(output, ev, prefix, notype)
   output:write(')')
 end
 
-function write_arglist(output, ev, need_copy)
+local function write_arglist(output, ev, need_copy)
   output:write('  Array args = ARRAY_DICT_INIT;\n')
   for j = 1, #ev.parameters do
     local param = ev.parameters[j]
@@ -51,7 +51,7 @@ function write_arglist(output, ev, need_copy)
 end
 
 for i = 1, #events do
-  ev = events[i]
+  local ev = events[i]
   assert(ev.return_type == 'void')
 
   if ev.since == nil and not ev.noexport then
@@ -75,11 +75,11 @@ for i = 1, #events do
     end
 
     if not ev.bridge_impl and not ev.noexport then
-      send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
-      argc = 1
+      local send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
+      local argc = 1
       for j = 1, #ev.parameters do
         local param = ev.parameters[j]
-        copy = 'copy_'..param[2]
+        local copy = 'copy_'..param[2]
         if param[1] == 'String' then
           send = send..'  String copy_'..param[2]..' = copy_string('..param[2]..');\n'
           argv = argv..', '..copy..'.data, INT2PTR('..copy..'.size)'
@@ -160,7 +160,6 @@ for i = 1, #events do
     call_output:write(";\n")
     call_output:write("}\n\n")
   end
-
 end
 
 proto_output:close()
@@ -169,9 +168,9 @@ remote_output:close()
 bridge_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
-exported_attributes = {'name', 'parameters',
+local exported_attributes = {'name', 'parameters',
                        'since', 'deprecated_since'}
-exported_events = {}
+local exported_events = {}
 for _,ev in ipairs(events) do
   local ev_exported = {}
   for _,attr in ipairs(exported_attributes) do
@@ -187,7 +186,7 @@ for _,ev in ipairs(events) do
   end
 end
 
-packed = mpack.pack(exported_events)
-dump_bin_array = require("generators.dump_bin_array")
+local packed = mpack.pack(exported_events)
+local dump_bin_array = require("generators.dump_bin_array")
 dump_bin_array(metadata_output, 'ui_events_metadata', packed)
 metadata_output:close()

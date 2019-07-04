@@ -7,8 +7,8 @@ if nvimsrcdir == '--help' then
 Usage:
   lua genex_cmds.lua src/nvim build/include build/src/nvim/auto
 
-Will generate files build/include/ex_cmds_enum.generated.h with cmdidx_T 
-enum and build/src/nvim/auto/ex_cmds_defs.generated.h with main Ex commands 
+Will generate files build/include/ex_cmds_enum.generated.h with cmdidx_T
+enum and build/src/nvim/auto/ex_cmds_defs.generated.h with main Ex commands
 definitions.
 ]])
   os.exit(0)
@@ -23,10 +23,7 @@ local enumfile = io.open(enumfname, 'w')
 local defsfile = io.open(defsfname, 'w')
 
 local defs = require('ex_cmds')
-local lastchar = nil
 
-local i
-local cmd
 local first = true
 
 local byte_a = string.byte('a')
@@ -58,7 +55,7 @@ defsfile:write(string.format([[
 static CommandDefinition cmdnames[%u] = {
 ]], #defs))
 local cmds, cmdidxs1, cmdidxs2 = {}, {}, {}
-for i, cmd in ipairs(defs) do
+for _, cmd in ipairs(defs) do
   local enumname = cmd.enum or ('CMD_' .. cmd.command)
   local byte_cmd = cmd.command:sub(1, 1):byte()
   if byte_a <= byte_cmd and byte_cmd <= byte_z then

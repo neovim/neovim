@@ -13,16 +13,17 @@ local source_file = arg[1]
 local target_file = arg[2]
 local varname = arg[3]
 
-source = io.open(source_file, 'r')
-target = io.open(target_file, 'w')
+local source = io.open(source_file, 'r')
+local target = io.open(target_file, 'w')
 
 target:write('#include <stdint.h>\n\n')
 target:write(('static const uint8_t %s[] = {\n'):format(varname))
 
-num_bytes = 0
-MAX_NUM_BYTES = 15  -- 78 / 5: maximum number of bytes on one line
+local num_bytes = 0
+local MAX_NUM_BYTES = 15  -- 78 / 5: maximum number of bytes on one line
 target:write(' ')
 
+local increase_num_bytes
 increase_num_bytes = function()
   num_bytes = num_bytes + 1
   if num_bytes == MAX_NUM_BYTES then
@@ -33,7 +34,7 @@ end
 
 for line in source:lines() do
   for i = 1,string.len(line) do
-    byte = string.byte(line, i)
+    local byte = string.byte(line, i)
     assert(byte ~= 0)
     target:write(string.format(' %3u,', byte))
     increase_num_bytes()
