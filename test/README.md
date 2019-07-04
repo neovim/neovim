@@ -208,8 +208,6 @@ Guidelines
       [contained in an `it()` block](https://github.com/neovim/neovim/blob/d21690a66e7eb5ebef18046c7a79ef898966d786/test/functional/ex_cmds/grep_spec.lua#L11).
       Provide empty function argument if the `pending()` call is outside of `it()`
       ([example](https://github.com/neovim/neovim/commit/5c1dc0fbe7388528875aff9d7b5055ad718014de#diff-bf80b24c724b0004e8418102f68b0679R18)).
-- Use `make testlint` for using the shipped luacheck program ([supported by syntastic](https://github.com/scrooloose/syntastic/blob/d6b96c079be137c83009827b543a83aa113cc011/doc/syntastic-checkers.txt#L3546))
-  to lint all tests.
 - Really long `source([=[...]=])` blocks may break syntax highlighting. Try
   `:syntax sync fromstart` to fix it.
 
@@ -235,7 +233,7 @@ by the semantic component they are testing.
 Lint
 ====
 
-`make lint` (and `make testlint`) runs [luacheck](https://github.com/mpeterv/luacheck)
+`make lint` (and `make lualint`) runs [luacheck](https://github.com/mpeterv/luacheck)
 on the test code.
 
 If a luacheck warning must be ignored, specify the warning code. Example:

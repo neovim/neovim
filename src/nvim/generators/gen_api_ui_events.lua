@@ -75,7 +75,6 @@ for i = 1, #events do
     end
 
     if not ev.bridge_impl and not ev.noexport then
-
       local send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
       local argc = 1
       for j = 1, #ev.parameters do
@@ -161,7 +160,6 @@ for i = 1, #events do
     call_output:write(";\n")
     call_output:write("}\n\n")
   end
-
 end
 
 proto_output:close()
