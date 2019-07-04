@@ -24,6 +24,7 @@
 #include "nvim/message.h"
 #include "nvim/assert.h"
 #include "nvim/misc1.h"
+#include "nvim/option.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
@@ -312,7 +313,8 @@ static bool is_executable_ext(char *name, char_u **abspath)
   if (!pathext) {
     pathext = ".com;.exe;.bat;.cmd";
   }
-  for (const char *ext = pathext; *ext; ext++) {
+  const char *ext = pathext;
+  while (*ext) {
     // If $PATHEXT itself contains dot:
     if (ext[0] == '.' && (ext[1] == '\0' || ext[1] == ENV_SEPCHAR)) {
       if (is_executable(name, abspath)) {
@@ -320,13 +322,17 @@ static bool is_executable_ext(char *name, char_u **abspath)
       }
       // Skip it.
       ext++;
+      if (*ext) {
+        ext++;
+      }
       continue;
     }
 
-    const char *ext_end = xstrchrnul(ext, ENV_SEPCHAR);
-    size_t ext_len = (size_t)(ext_end - ext);
+    const char *ext_end = ext;
+    size_t ext_len =
+      copy_option_part((char_u **)&ext_end, (char_u *)buf_end,
+                       sizeof(os_buf) - (size_t)(buf_end - os_buf), ENV_SEPSTR);
     if (ext_len != 0) {
-      STRLCPY(buf_end, ext, ext_len + 1);
       bool in_pathext = nameext_len == ext_len
         && 0 == mb_strnicmp((char_u *)nameext, (char_u *)ext, ext_len);
 
