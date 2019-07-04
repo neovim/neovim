@@ -129,10 +129,10 @@ void ui_builtin_start(void)
 #endif
 }
 
-uint64_t ui_client_start(char *server_name)
+uint64_t ui_client_start(char *server_name, int argc, char **argv)
 {
   ui_comp_detach(uis[1]);  // Bypassing compositor in client
-  uint64_t rv = tui_ui_client_init(server_name);
+  uint64_t rv = tui_ui_client_init(server_name, argc, argv);
   return rv;
 }
 
@@ -223,9 +223,7 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  if (!is_remote_client && embedded_mode) {
-    screen_resize(width, height);
-  } else {
+  if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
@@ -234,6 +232,8 @@ void ui_refresh(void)
     } else if ((!headless_mode && !embedded_mode && !silent_mode)) {
       rpc_send_event(channel_get_id(false, true), "nvim_ui_try_resize", args);
     }
+  } else {
+    screen_resize(width, height);    
   }
   p_lz = save_p_lz;
 

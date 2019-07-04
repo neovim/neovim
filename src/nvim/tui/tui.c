@@ -142,21 +142,25 @@ static bool cursor_style_enabled = false;
 /*
 Connecting the remote server.
 */
-uint64_t tui_ui_client_init(char *servername)
+uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
 {
   uint64_t rc_id;
-  if (servername != NULL) {
+  if (is_remote_client) {
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
     rc_id = servername == NULL ? 0 : channel_connect(true,
                       servername, true, on_data, 50, &error);   // connected to channel
   } else {
-    char **argv = xmalloc(3 * sizeof(char*));
-    argv[0] = xstrdup("nvim");
-    argv[1] = xstrdup("--embed");
-    argv[2] = NULL; // last value of argv should be NULL
+    char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
+    int args_idx = 0;
+    args[args_idx++] = xstrdup("nvim");
+    args[args_idx++] = xstrdup("--embed");
+    for (int i = 1; i < argc; i++) {
+      args[args_idx++] = xstrdup(argv[i]);
+    }
+    args[args_idx++] = NULL; // last value of argv should be NULL
     varnumber_T exit_status;
-    Channel *channel = channel_job_start(argv, CALLBACK_READER_INIT,
+    Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
                                   CALLBACK_READER_INIT, CALLBACK_NONE,
                                   false, true, true, NULL, 0, 0, NULL,
                                   &exit_status);

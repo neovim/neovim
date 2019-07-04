@@ -377,13 +377,14 @@ int main(int argc, char **argv)
   // as size of "uis[]" must be greater than 1
   if (is_remote_client || use_builtin_ui) {
     input_stop();  // Stop reading input, let the UI take over.
-    uint64_t rv = ui_client_start(params.server_name);
+    uint64_t rv = ui_client_start(params.server_name, params.argc, params.argv);
     if (!rv) {
         // cannot continue without a channel
         tui_exit_safe(get_ui_by_index(1));
         mch_msg("Could not establish connection with remote server\n");
         getout(1);
     }
+    goto end;
   }
 
   // Execute --cmd arguments.
@@ -589,10 +590,11 @@ int main(int argc, char **argv)
   /*
    * Call the main command loop.  This never returns.
    */
-  if (!is_remote_client && use_remote_ui) {
-    normal_enter(false, false);
-  } else {  
+  end:
+  if (is_remote_client || use_builtin_ui) {
     tui_client_execute();
+  } else {
+    normal_enter(false, false);
   }
 
 #if defined(WIN32) && !defined(MAKE_LIB)
