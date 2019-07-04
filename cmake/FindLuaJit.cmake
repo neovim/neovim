@@ -13,7 +13,7 @@ set(LUAJIT_DEFINITIONS ${PC_LUAJIT_CFLAGS_OTHER})
 
 find_path(LUAJIT_INCLUDE_DIR luajit.h
           PATHS ${PC_LUAJIT_INCLUDEDIR} ${PC_LUAJIT_INCLUDE_DIRS}
-          PATH_SUFFIXES luajit-2.0)
+          PATH_SUFFIXES luajit-2.0 luajit-2.1)
 
 # If we're asked to use static linkage, add libluajit-5.1.a as a preferred
 # library name.
