@@ -10,6 +10,7 @@ local eq = helpers.eq
 local eval = helpers.eval
 local matches = helpers.matches
 local exec_lua = helpers.exec_lua
+local retry = helpers.retry
 
 before_each(clear)
 
@@ -52,8 +53,10 @@ describe('vim.loop', function()
 
     eq(0, meths.get_var('coroutine_cnt'))
     exec_lua(code)
-    sleep(50)
-    eq(2, meths.get_var('coroutine_cnt'))
+    retry(2, nil, function()
+      sleep(50)
+      eq(2, meths.get_var('coroutine_cnt'))
+    end)
     eq(3, meths.get_var('coroutine_cnt_1'))
   end)
 
