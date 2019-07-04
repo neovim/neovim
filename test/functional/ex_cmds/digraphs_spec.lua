@@ -1,5 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
+local command = helpers.command
 local feed = helpers.feed
 local Screen = require('test.functional.ui.screen')
 
@@ -21,18 +22,17 @@ describe(':digraphs', function()
   end)
 
   it('displays digraphs', function()
+    command('set more')
     feed(':digraphs<CR>')
     screen:expect([[
-      E` {6:È}  200    E^ {6:Ê}  202    E" {6:Ë}  203    I` {6:Ì}  204    I^ {6:Î}  206    |
-      I" {6:Ï}  207    N~ {6:Ñ}  209    O` {6:Ò}  210    O^ {6:Ô}  212    O~ {6:Õ}  213    |
-      /\ {6:×}  215    U` {6:Ù}  217    U^ {6:Û}  219    Ip {6:Þ}  222    a` {6:à}  224    |
-      a^ {6:â}  226    a~ {6:ã}  227    a" {6:ä}  228    a@ {6:å}  229    e` {6:è}  232    |
-      e^ {6:ê}  234    e" {6:ë}  235    i` {6:ì}  236    i^ {6:î}  238    n~ {6:ñ}  241    |
-      o` {6:ò}  242    o^ {6:ô}  244    o~ {6:õ}  245    u` {6:ù}  249    u^ {6:û}  251    |
-      y" {6:ÿ}  255                                                        |
-      {3:Press ENTER or type command to continue}^                          |
+      :digraphs                                                        |
+      NU {6:^@}  10    SH {6:^A}   1    SX {6:^B}   2    EX {6:^C}   3    ET {6:^D}   4    |
+      EQ {6:^E}   5    AK {6:^F}   6    BL {6:^G}   7    BS {6:^H}   8    HT {6:^I}   9    |
+      LF {6:^@}  10    VT {6:^K}  11    FF {6:^L}  12    CR {6:^M}  13    SO {6:^N}  14    |
+      SI {6:^O}  15    DL {6:^P}  16    D1 {6:^Q}  17    D2 {6:^R}  18    D3 {6:^S}  19    |
+      D4 {6:^T}  20    NK {6:^U}  21    SY {6:^V}  22    EB {6:^W}  23    CN {6:^X}  24    |
+      EM {6:^Y}  25    SB {6:^Z}  26    EC {6:^[}  27    FS {6:^\}  28    GS {6:^]}  29    |
+      {3:-- More --}^                                                       |
     ]])
   end)
-
 end)
-
