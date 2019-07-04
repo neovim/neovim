@@ -51,6 +51,41 @@ function! SetUp_Test_Signs_Placed_Using_API_Are_Shown()
   let g:vimspector_enable_mappings = 'VISUAL_STUDIO'
 endfunction
 
+function! AssertSignGroupSingletonAtLine( group,
+                                        \ line,
+                                        \ sign_name )
+
+  let signs = sign_getplaced( '%', {
+    \ 'group': a:group,
+    \ 'line': a:line,
+    \ } )
+
+  call assert_equal( 1, len( signs ) )
+  call assert_equal( 1, len( signs[ 0 ].signs ) )
+  call assert_equal( a:sign_name, signs[ 0 ].signs[ 0 ].name )
+endfunction
+
+
+function! AssertSignGroupEmptyAtLine( group, line )
+  let signs = sign_getplaced( '%', {
+    \ 'group': 'VimspectorBP',
+    \ 'line': line( '.' )
+    \ } )
+
+  call assert_equal( 1, len( signs ) )
+  call assert_equal( 0, len( signs[ 0 ].signs ) )
+endfunction
+
+
+function! AssertSignGroupEmpty( group )
+  let signs = sign_getplaced( '%', {
+    \ 'group': 'VimspectorBP'
+    \ } )
+  call assert_equal( 1, len( signs ) )
+  call assert_equal( 0, len( signs[ 0 ].signs ) )
+endfunction
+
+
 function! Test_Signs_Placed_Using_API_Are_Shown()
   " We need a real file
   edit testdata/cpp/simple/simple.cpp
@@ -60,41 +95,50 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
   call vimspector#ToggleBreakpoint()
 
   call assert_true( exists( '*vimspector#ToggleBreakpoint' ) )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ) )
-  call assert_equal( 1, len( signs[ 0 ].signs ) )
-  call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
+  call AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                     \ line( '.' ),
+                                     \ 'vimspectorBP' )
 
   " Disable breakpoint
   call vimspector#ToggleBreakpoint()
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ) )
-  call assert_equal( 1, len( signs[ 0 ].signs ) )
-  call assert_equal( 'vimspectorBPDisabled', signs[ 0 ].signs[ 0 ].name )
+  call AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                     \ line( '.' ),
+                                     \ 'vimspectorBPDisabled' )
 
   " Remove breakpoint
   call vimspector#ToggleBreakpoint()
 
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ) )
-  call assert_equal( 0, len( signs[ 0 ].signs ) )
+  call AssertSignGroupEmptyAtLine( 'VimspectorBP', line( '.' ) )
 
   call vimspector#ClearBreakpoints()
+  call AssertSignGroupEmpty( 'VimspectorBP' )
+
   %bwipeout!
+endfunction
+
+function! AssertPCIsAtLineInBuffer( buffer, line )
+  let signs = sign_getplaced( a:buffer, {
+    \ 'group': 'VimspectorCode',
+    \ } )
+
+  call assert_equal( 1, len( signs ), 'Sign-buffers' )
+  call assert_equal( 2, len( signs[ 0 ].signs ), 'Signs in buffer' )
+
+  let pc_index = -1
+  let index = 0
+  while index < len( signs[ 0 ].signs )
+    let s = signs[ 0 ].signs[ index ]
+    if s.name ==# 'vimspectorPC'
+      if pc_index >= 0
+        call assert_report( 'Found too many PC signs!' )
+      endif
+      let pc_index = index
+    endif
+    let index = index + 1
+  endwhile
+  call assert_true( pc_index >= 0 )
+  call assert_equal( a:line, signs[ 0 ].signs[ pc_index ].lnum )
+
 endfunction
 
 function! SetUp_Test_Use_Mappings_HUMAN()
@@ -110,48 +154,25 @@ function! Test_Use_Mappings_HUMAN()
 
   " Add the breakpoing
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 1, len( signs[ 0 ].signs ), 1 )
-  call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
+  call AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                     \ line( '.' ),
+                                     \ 'vimspectorBP' )
 
   " Disable the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 1, len( signs[ 0 ].signs ), 1 )
-  call assert_equal( 'vimspectorBPDisabled', signs[ 0 ].signs[ 0 ].name )
+  call AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                     \ line( '.' ),
+                                     \ 'vimspectorBPDisabled' )
 
   " Delete the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 0, len( signs[ 0 ].signs ) )
+  call AssertSignGroupEmptyAtLine( 'VimspectorBP', line( '.' ) )
 
   " Add it again
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 1, len( signs[ 0 ].signs ), 1 )
-  call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
+  call AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                     \ line( '.' ),
+                                     \ 'vimspectorBP' )
 
   " Here we go. Start Debugging
   call feedkeys( "\<F5>", 'xt' )
@@ -165,28 +186,7 @@ function! Test_Use_Mappings_HUMAN()
         \ }, 10000 )
   call assert_equal( 15, line( '.' ), 'Current line' )
   call assert_equal( 1, col( '.' ), 'Current column' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorCode',
-    \ } )
-
-  call assert_equal( 1, len( signs ), 'Sign-buffers' )
-  call assert_equal( 2, len( signs[ 0 ].signs ), 'Signs in buffer' )
-
-  let pc_index = -1
-  let index = 0
-  while index < len( signs[ 0 ].signs )
-    let s = signs[ 0 ].signs[ index ]
-    if s.name ==# 'vimspectorPC'
-      if pc_index >= 0
-        call assert_report( 'Found too many PC signs!' )
-      endif
-      let pc_index = index
-    endif
-    let index = index + 1
-  endwhile
-  call assert_true( pc_index >= 0 )
-  call assert_equal( 15, signs[ 0 ].signs[ pc_index ].lnum )
+  call AssertPCIsAtLineInBuffer( '%', 15 )
 
   " Step
   call feedkeys( "\<F10>", 'xt' )
@@ -194,38 +194,13 @@ function! Test_Use_Mappings_HUMAN()
   call WaitForAssert( {-> assert_equal( 16, line( '.' ), 'Current line' ) } )
   call assert_equal( 'simple.cpp', bufname( '%' ), 'Current buffer' )
   call assert_equal( 1, col( '.' ), 'Current column' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorCode',
-    \ } )
-
-  call assert_equal( 1, len( signs ), 'Sign-buffers' )
-  call assert_equal( 2, len( signs[ 0 ].signs ), 'Signs in buffer' )
-
-  let pc_index = -1
-  let index = 0
-  while index < len( signs[ 0 ].signs )
-    let s = signs[ 0 ].signs[ index ]
-    if s.name ==# 'vimspectorPC'
-      if pc_index >= 0
-        call assert_report( 'Found too many PC signs!' )
-      endif
-      let pc_index = index
-    endif
-    let index = index + 1
-  endwhile
-  call assert_true( pc_index >= 0 )
-  call assert_equal( 16, signs[ 0 ].signs[ pc_index ].lnum )
+  call AssertPCIsAtLineInBuffer( '%', 16 )
 
   call vimspector#Reset()
 
   call vimspector#ClearBreakpoints()
 
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP'
-    \ } )
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 0, len( signs[ 0 ].signs ) )
+  call AssertSignGroupEmpty( 'VimspectorBP' )
 
   lcd -
   %bwipeout!
