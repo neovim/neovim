@@ -315,7 +315,11 @@ endif()
 
 check_c_compiler_flag(-fdiagnostics-color=auto HAS_DIAG_COLOR_FLAG)
 if(HAS_DIAG_COLOR_FLAG)
-  add_compile_options(-fdiagnostics-color=auto)
+  if(CMAKE_GENERATOR MATCHES "Ninja")
+    add_compile_options(-fdiagnostics-color=always)
+  else()
+    add_compile_options(-fdiagnostics-color=auto)
+  endif()
 endif()
 
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
