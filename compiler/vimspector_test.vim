@@ -23,8 +23,9 @@ let current_compiler = "vimspector_test"
 setlocal errorformat=
         \Found\ errors\ in\ %f:%.%#:
 
-let &l:makeprg=fnamemodify( findfile( 'run_tests', '.;' ), ':p' )
-            \ . ' $* 2>&1'
+let s:run_tests = findfile( 'run_tests', '.;' )
+let s:root_dir = fnamemodify( s:run_tests, ':h' )
+let &l:makeprg=fnamemodify( s:run_tests, ':p' ) . ' $* 2>&1'
 
 let s:make_cmd = get( g:, 'vimspector_test_make_cmd', 'Make' )
 
@@ -86,17 +87,35 @@ function! s:RunTestUnderCursor()
   echo "Running test '" . l:test_func_name . "'"
 
   let l:test_arg = expand( '%:p:t' ) . ':' . l:test_func_name
-  execute s:make_cmd . ' ' . l:test_arg
+  let l:cwd = getcwd()
+  execute 'lcd ' . s:root_dir
+  try
+    execute s:make_cmd . ' ' . l:test_arg
+  finally
+    execute 'lcd ' . l:cwd
+  endtry
 endfunction
 
 function! s:RunTest()
   update
-  execute s:make_cmd . ' %:p:t'
+  let l:cwd = getcwd()
+  execute 'lcd ' . s:root_dir
+  try
+    execute s:make_cmd . ' %:p:t'
+  finally
+    execute 'lcd ' . l:cwd
+  endtry
 endfunction
 
 function! s:RunAllTests()
   update
-  execute s:make_cmd
+  let l:cwd = getcwd()
+  execute 'lcd ' . s:root_dir
+  try
+    execute s:make_cmd
+  finally
+    execute 'lcd ' . l:cwd
+  endtry
 endfunction
 
 if ! has( 'gui_running' )

@@ -17,8 +17,6 @@ if !has('terminal')
   finish
 endif
 
-source lib/shared.vim
-
 " Run Vim with "arguments" in a new terminal window.
 " By default uses a size of 20 lines and 75 columns.
 " Returns the buffer number of the terminal.

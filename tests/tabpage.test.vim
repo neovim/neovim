@@ -1,5 +1,3 @@
-source lib/shared.vim
-
 function! SetUp()
   if exists ( 'g:loaded_vimpector' )
     unlet g:loaded_vimpector

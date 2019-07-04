@@ -28,7 +28,7 @@
 " When debugging a test it can be useful to add messages to v:errors:
 "	call add(v:errors, "this happened")
 
-set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
+set rtp=$PWD/lib,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
 if has('packages')
   let &packpath = &rtp
 endif
