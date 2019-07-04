@@ -53,4 +53,3 @@ ExternalProject_Add(libtermkey
 endif()
 
 list(APPEND THIRD_PARTY_DEPS libtermkey)
-add_dependencies(libtermkey unibilium)

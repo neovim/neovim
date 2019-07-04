@@ -191,6 +191,9 @@ endif()
 
 if(USE_BUNDLED_LIBTERMKEY)
   include(BuildLibtermkey)
+  if(USE_BUNDLED_UNIBILIUM)
+    add_dependencies(libtermkey unibilium)
+  endif()
 endif()
 
 if(USE_BUNDLED_LIBVTERM)
