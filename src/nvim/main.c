@@ -281,7 +281,9 @@ int main(int argc, char **argv)
     }
   }
 
-  server_init(params.listen_addr);
+  if (!(is_remote_client || (!headless_mode && !embedded_mode && !silent_mode))) {
+    server_init(params.listen_addr);
+  }
 
   if (GARGCOUNT > 0) {
     fname = get_fname(&params, cwd);
