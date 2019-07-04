@@ -46,6 +46,13 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_SLOPPINESS=time_macros,file_macro
     - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
+    # Indirection for shorter / more distinct entry in job's env listing.
+    - _TCB_=$TRAVIS_BRANCH
+
+anchors:
+  envs: &common-job-env
+    # Do not fall back to cache for "master" for PR on "release" branch.
+    _TCB_: $_TCB_
 
 jobs:
   include:
@@ -53,40 +60,57 @@ jobs:
       os: linux
       compiler: clang-4.0
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
-      env: >
-        CLANG_SANITIZER=ASAN_UBSAN
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        ASAN_SYMBOLIZE=asan_symbolize-4.0
+      env:
+        <<: *common-job-env
+        CLANG_SANITIZER: ASAN_UBSAN
+        CMAKE_FLAGS: "$CMAKE_FLAGS -DPREFER_LUA=ON"
+        ASAN_SYMBOLIZE: asan_symbolize-4.0
     - os: linux
       compiler: gcc
-      env: >
-        FUNCTIONALTEST=functionaltest-lua
-        CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
+      env:
+        <<: *common-job-env
+        FUNCTIONALTEST: functionaltest-lua
+        CMAKE_FLAGS: "$CMAKE_FLAGS -DPREFER_LUA=ON"
+        DEPS_CMAKE_FLAGS: "$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
     - os: linux
       # Travis creates a cache per compiler. Set a different value here to
       # store 32-bit dependencies in a separate cache.
       compiler: gcc
-      env: BUILD_32BIT=ON
+      env:
+        <<: *common-job-env
+        BUILD_32BIT: ON
     - os: osx
       compiler: clang
       osx_image: xcode9.4  # macOS 10.13
+      env: *common-job-env
     - os: osx
       compiler: gcc
       osx_image: xcode9.4  # macOS 10.13
+      env: *common-job-env
     - if: branch = master
       os: linux
       env: CI_TARGET=lint
+
     - stage: Flaky builds
       os: linux
       compiler: gcc
-      env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
+      env:
+        <<: *common-job-env
+        GCOV: gcov
+        CMAKE_FLAGS: "$CMAKE_FLAGS -DUSE_GCOV=ON"
     - os: linux
       compiler: clang
-      env: CLANG_SANITIZER=TSAN
+      env:
+        <<: *common-job-env
+        CLANG_SANITIZER: TSAN
   allow_failures:
-    - env: GCOV=gcov CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
-    - env: CLANG_SANITIZER=TSAN
+    - env:
+      <<: *common-job-env
+      GCOV: gcov
+      CMAKE_FLAGS: "$CMAKE_FLAGS -DUSE_GCOV=ON"
+    - env:
+      <<: *common-job-env
+      CLANG_SANITIZER: TSAN
   fast_finish: true
 
 before_install: ci/before_install.sh
