@@ -106,7 +106,7 @@ class OutputView( object ):
     self._buffers.clear()
 
   def _ShowOutput( self, category ):
-    vim.current.window = self._window
+    utils.JumpToWindow( self._window )
     vim.command( 'bu {0}'.format( self._buffers[ category ].buf.name ) )
     vim.command( 'normal G' )
 
@@ -144,8 +144,7 @@ class OutputView( object ):
   def _ToggleFlag( self, category, flag ):
     if self._buffers[ category ].flag != flag:
       self._buffers[ category ].flag = flag
-      with utils.RestoreCurrentWindow():
-        vim.current.window = self._window
+      with utils.LetCurrentWindow( self._window ):
         self._RenderWinBar( category )
 
 
@@ -154,9 +153,7 @@ class OutputView( object ):
 
 
   def _CreateBuffer( self, category, file_name = None, cmd = None ):
-    with utils.RestoreCurrentWindow():
-      vim.current.window = self._window
-
+    with utils.LetCurrentWindow( self._window ):
       with utils.RestoreCurrentBuffer( self._window ):
 
         if file_name is not None:
