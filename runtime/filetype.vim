@@ -701,6 +701,9 @@ au BufNewFile,BufRead *.t.html			setf tilde
 " HTML (.shtml and .stm for server side)
 au BufNewFile,BufRead *.html,*.htm,*.shtml,*.stm  call dist#ft#FThtml()
 
+" Vue.js Single File Components work as HTML.
+au BufNewFile,BufRead *.vue			setf html
+
 " HTML with Ruby - eRuby
 au BufNewFile,BufRead *.erb,*.rhtml		setf eruby
 
