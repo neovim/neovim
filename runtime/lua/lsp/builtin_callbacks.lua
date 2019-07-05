@@ -24,6 +24,8 @@
 --  TODO: documentLink/resolve
 
 local log = require('lsp.log')
+local util = require('nvim.util')
+local lsp_util = require('lsp.util')
 local protocol = require('lsp.protocol')
 local errorCodes = protocol.errorCodes
 
@@ -38,7 +40,7 @@ local handle_workspace = require('lsp.handle.workspace')
 --      options = table
 --    }
 -- }
-BuiltinCallbacks = {}
+local BuiltinCallbacks = {}
 
 -- nvim/error_callback
 BuiltinCallbacks['nvim/error_callback'] = {

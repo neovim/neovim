@@ -3,7 +3,6 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local insert = helpers.insert
-local exe_lua = helpers.meths.execute_lua
 local nvim = helpers.nvim
 
 local function set_responses(responses)
@@ -11,6 +10,7 @@ local function set_responses(responses)
 end
 
 describe('plugin with a server', function()
+  local screen
 
   before_each(function()
     clear()

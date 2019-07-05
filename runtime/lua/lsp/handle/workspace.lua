@@ -1,4 +1,3 @@
-
 local textDocument = require('lsp.handle.textDocument')
 
 local workspace = {}

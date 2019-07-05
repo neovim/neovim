@@ -1,3 +1,4 @@
+-- luacheck: globals vim
 
 vim.lsp = {
   client = require('lsp.plugin').client,

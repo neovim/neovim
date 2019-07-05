@@ -213,7 +213,8 @@ end
 
 
 return {
-  default_autocmds = default_autocmds,
+  default_request_autocmds = default_request_autocmds,
+  default_notify_autocmds = default_notify_autocmds,
   export_autocmds = export_autocmds,
   lsp_doautocmd = lsp_doautocmd,
   get_autocmd_event_name = get_autocmd_event_name,

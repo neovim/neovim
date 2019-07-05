@@ -2,7 +2,6 @@
 
 local log = require('lsp.log')
 local util = require('nvim.util')
-local lsp_util = require('lsp.util')
 local BuiltinCallbacks = require('lsp.builtin_callbacks').BuiltinCallbacks
 
 -- {
@@ -22,6 +21,36 @@ CallbackObject.__index = function(self, key)
   end
 
   return rawget(self, key)
+end
+
+-- Operation function for CallbackMapping and CallbackObject section
+local get_callback_object_by_method = function(method)
+  if type(method) ~= 'string' then
+    return nil
+  end
+
+  if CallbackMapping[method] == nil then
+    CallbackMapping[method] = CallbackObject.new(method)
+  end
+
+  return CallbackMapping[method]
+end
+
+-- @params method
+-- @params success
+-- @params data
+-- @params filetype
+
+-- @return callback result
+local call_callbacks_for_method = function(method, success, data, filetype)
+  local cb = get_callback_object_by_method(method)
+
+  if cb:has_no_callbacks(filetype) then
+    log.debug('Unsupported method:', method)
+    return
+  end
+
+  return cb(success, data, filetype)
 end
 
 -- CallbackObject section
@@ -107,19 +136,6 @@ CallbackObject.get_list_of_callbacks = function(self, filetype)
   return callback_list
 end
 
--- Operation function for CallbackMapping and CallbackObject section
-local get_callback_object_by_method = function(method)
-  if type(method) ~= 'string' then
-    return nil
-  end
-
-  if CallbackMapping[method] == nil then
-    CallbackMapping[method] = CallbackObject.new(method)
-  end
-
-  return CallbackMapping[method]
-end
-
 local call_callbacks = function(callback_list, success, params)
   local results = {}
 
@@ -128,23 +144,6 @@ local call_callbacks = function(callback_list, success, params)
   end
 
   return unpack(results)
-end
-
--- @params method
--- @params success
--- @params data
--- @params filetype
-
--- @return callback result
-local call_callbacks_for_method = function(method, success, data, filetype)
-  local cb = get_callback_object_by_method(method)
-
-  if cb:has_no_callbacks(filetype) then
-    log.debug('Unsupported method:', method)
-    return
-  end
-
-  return cb(success, data, filetype)
 end
 
 local add_callback = function(method, new_callback)
@@ -181,7 +180,7 @@ end
 
 --- Set the all builtin callbacks to CallbackMapping
 local set_all_builtin_callbacks = function()
-  for method_name, _method in pairs(BuiltinCallbacks) do
+  for method_name in pairs(BuiltinCallbacks) do
     set_builtin_callback(method_name)
   end
 end

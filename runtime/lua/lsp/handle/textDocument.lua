@@ -1,4 +1,3 @@
-
 local util = require('nvim.util')
 
 local textDocument = {}
@@ -11,7 +10,7 @@ textDocument.apply_TextEdits = function(TextDocumentEdit)
   end
 end
 
-textDocument.apply_TextEdit = function(VersionedTextDocumentIdentifier, TextEdit)
+textDocument.apply_TextEdit = function(TextEdit)
   local range = TextEdit.range
 
   local range_start = range['start']

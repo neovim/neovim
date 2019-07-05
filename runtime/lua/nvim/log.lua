@@ -34,7 +34,7 @@ log.write_file = function(self, level, message)
   local file_pointer = assert(io.open(self.outfile, 'a+'))
 
   if file_pointer ~= nil then
-    local log_message = message .. "\n"
+    local log_message = "[" .. level .. "] " .. message .. "\n"
     file_pointer:write(log_message)
     file_pointer:close()
   end

@@ -15,7 +15,7 @@ describe('callbacks for textDocument', function()
     it('should set nothing with an empty location list', function()
       source(dedent([[
         lua << EOF
-          local callbacks = require('runtime.lua.lsp.callbacks').callbacks
+          local callbacks = require('lsp.callbacks').callbacks
           callbacks.textDocument.references({})
         EOF
       ]]))

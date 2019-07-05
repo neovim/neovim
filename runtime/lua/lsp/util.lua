@@ -30,8 +30,8 @@ end
 
 lsp_util.get_line_from_path = function(path, line_number)
   local buf_number = vim.api.nvim_call_function('bufnr', { path })
+  local text
 
-  local text = ''
   if buf_number == -1 then
     text = util.get_file_line(path, line_number)
   else
@@ -67,7 +67,7 @@ end
 -- On the protocol level, URIs are passed as strings.
 -- The corresponding JSON structure.
 lsp_util.get_text_document_identifier = function()
-  filename = vim.api.nvim_call_function('expand', { '<afile>:p' })
+  local filename = vim.api.nvim_call_function('expand', { '<afile>:p' })
   if not filename then
     filename = vim.api.nvim_call_function('expand', { '%:p' })
   end
