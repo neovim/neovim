@@ -119,10 +119,14 @@ func s:StartDebug_internal(dict)
   let s:startsigncolumn = &signcolumn
 
   let s:save_columns = 0
+  let s:allleft = 0
   if exists('g:termdebug_wide')
     if &columns < g:termdebug_wide
       let s:save_columns = &columns
       let &columns = g:termdebug_wide
+      " If we make the Vim window wider, use the whole left halve for the debug
+      " windows.
+      let s:allleft = 1
     endif
     let s:vertical = 1
   else
@@ -157,6 +161,9 @@ func s:StartDebug_term(dict)
     " Assuming the source code window will get a signcolumn, use two more
     " columns for that, thus one less for the terminal window.
     exe (&columns / 2 - 1) . "wincmd |"
+    if s:allleft
+      " use the whole left column
+      wincmd H
   endif
 
   " Create a hidden terminal window to communicate with gdb
@@ -557,7 +564,8 @@ let s:evalFromBalloonExprResult = ''
 func s:HandleEvaluate(msg)
   let value = substitute(a:msg, '.*value="\(.*\)"', '\1', '')
   let value = substitute(value, '\\"', '"', 'g')
-  let value = substitute(value, '', '\1', '')
+  let value = substitute(value, '
+', '\1', '')
   if s:evalFromBalloonExpr
     if s:evalFromBalloonExprResult == ''
       let s:evalFromBalloonExprResult = s:evalexpr . ': ' . value
