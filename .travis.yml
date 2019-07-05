@@ -95,6 +95,8 @@ jobs:
         - GCOV=gcov-9
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
         - GCOV_ERROR_FILE="/tmp/libgcov-errors.log"
+        - USE_LUACOV=1
+        - BUSTED_ARGS="--coverage"
         - *common-job-env
       addons:
         apt:

@@ -1,0 +1,19 @@
+-- Configuration file for LuaCov
+
+local source = require("lfs").currentdir()
+
+local function pesc(s)
+  assert(type(s) == 'string', s)
+  return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
+end
+
+return {
+  include = {
+    -- Absolute paths (starting with source dir, not hidden (i.e. .deps)).
+    pesc(source) .. "[/\\][^.].+",
+    -- Relative (non-hidden) paths.
+    '^[^/\\.]',
+  },
+}
+
+-- vim: ft=lua tw=80 sw=2 et
