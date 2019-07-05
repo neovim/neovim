@@ -5,6 +5,7 @@ local eval = helpers.eval
 local eq = helpers.eq
 local command = helpers.command
 local set_method_error = helpers.set_method_error
+local meths = helpers.meths
 
 
 describe('ui/ext_messages', function()
@@ -329,6 +330,22 @@ describe('ui/ext_messages', function()
       {1:~                        }|
     ]], messages={
       {content = {{"/line        [2/2]"}}, kind = "search_count"}
+    }}
+  end)
+
+  it(':hi Group output', function()
+    feed(':hi ErrorMsg<cr>')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+    ]], messages={
+      {content = {{"\nErrorMsg      " }, {"xxx", 2}, {" "},
+                  {"ctermfg=", 5 }, { "15 " }, { "ctermbg=", 5 }, { "1 " },
+                  {"guifg=", 5 }, { "White " }, { "guibg=", 5 }, { "Red" }},
+       kind = ""}
     }}
   end)
 
@@ -786,6 +803,7 @@ describe('ui/builtin messages', function()
       [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [3] = {bold = true, reverse = true},
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {foreground = Screen.colors.Blue1},
     })
   end)
 
@@ -805,6 +823,38 @@ describe('ui/builtin messages', function()
         set_method_error("complete\nerror\n\nmessage")
       end
     end}
+  end)
+
+  it(':hi Group output', function()
+    screen:try_resize(70,7)
+    feed(':hi ErrorMsg<cr>')
+    screen:expect([[
+                                                                            |
+      {1:~                                                                     }|
+      {1:~                                                                     }|
+      {3:                                                                      }|
+      :hi ErrorMsg                                                          |
+      ErrorMsg       {2:xxx} {5:ctermfg=}15 {5:ctermbg=}1 {5:guifg=}White {5:guibg=}Red         |
+      {4:Press ENTER or type command to continue}^                               |
+    ]])
+
+    feed('<cr>')
+    screen:try_resize(30,7)
+    feed(':hi ErrorMsg<cr>')
+    screen:expect([[
+      :hi ErrorMsg                  |
+      ErrorMsg       {2:xxx} {5:ctermfg=}15 |
+                         {5:ctermbg=}1  |
+                         {5:guifg=}White|
+                         {5:guibg=}Red  |
+      {4:Press ENTER or type command to}|
+      {4: continue}^                     |
+    ]])
+    feed('<cr>')
+
+    -- screen size doesn't affect internal output #10285
+    eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
+       meths.command_output("hi ErrorMsg"))
   end)
 end)
 
