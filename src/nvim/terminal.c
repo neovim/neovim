@@ -331,7 +331,10 @@ void terminal_close(Terminal *term, char *msg)
   }
 
   if (buf) {
+    aco_save_T aco;
+    aucmd_prepbuf(&aco, buf);
     apply_autocmds(EVENT_TERMCLOSE, NULL, NULL, false, buf);
+    aucmd_restbuf(&aco);
   }
 }
 
