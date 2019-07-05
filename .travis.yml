@@ -119,7 +119,11 @@ jobs:
     - name: clang-tsan
   fast_finish: true
 
-script:         true
+before_install: ci/before_install.sh
+install:        ci/install.sh
+before_script:  ci/before_script.sh
+script:         ci/script.sh
+before_cache:   ci/before_cache.sh
 
 addons:
   apt:
