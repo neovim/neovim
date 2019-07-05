@@ -56,6 +56,7 @@ anchors:
 jobs:
   include:
     - stage: normal builds
+      name: clang-asan
       os: linux
       compiler: clang-4.0
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
@@ -64,35 +65,41 @@ jobs:
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         - ASAN_SYMBOLIZE=asan_symbolize-4.0
         - *common-job-env
-    - os: linux
+    - name: gcc-functionaltest-lua
+      os: linux
       compiler: gcc
       env:
         - FUNCTIONALTEST=functionaltest-lua
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
         - *common-job-env
-    - os: linux
+    - name: gcc-32bit
+      os: linux
       # Travis creates a cache per compiler. Set a different value here to
       # store 32-bit dependencies in a separate cache.
       compiler: gcc
       env:
         - BUILD_32BIT: ON
         - *common-job-env
-    - os: osx
+    - name: "OSX: clang"
+      os: osx
       compiler: clang
       osx_image: xcode9.4  # macOS 10.13
       env: *common-job-env
-    - os: osx
+    - name: "OSX: gcc"
+      os: osx
       compiler: gcc
       osx_image: xcode9.4  # macOS 10.13
       env: *common-job-env
     - if: branch = master
+      name: lint
       os: linux
       env:
         - CI_TARGET=lint
         - *common-job-env
 
     - stage: Flaky builds
+      name: gcc-coverage
       os: linux
       compiler: gcc
       env:
@@ -101,6 +108,7 @@ jobs:
         - *common-job-env
       install: false
     - os: linux
+      name: clang-tsan
       compiler: clang
       env:
         - CLANG_SANITIZER=TSAN
