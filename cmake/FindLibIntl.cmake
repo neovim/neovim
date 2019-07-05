@@ -39,7 +39,6 @@ endif()
 if (LibIntl_LIBRARY)
   set(CMAKE_REQUIRED_LIBRARIES "${LibIntl_LIBRARY}")
 endif()
-
 check_c_source_compiles("
 #include <libintl.h>
 
@@ -50,6 +49,9 @@ int main(int argc, char** argv) {
   bind_textdomain_codeset(\"foo\", \"bar\");
   textdomain(\"foo\");
 }" HAVE_WORKING_LIBINTL)
+if (LibIntl_LIBRARY)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+endif()
 
 if (HAVE_WORKING_LIBINTL)
   # On some systems (linux+glibc) libintl is passively available.
