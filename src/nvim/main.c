@@ -594,7 +594,7 @@ int main(int argc, char **argv)
    */
   end:
   if (is_remote_client || use_builtin_ui) {
-    tui_client_execute();
+    tui_execute();
   } else {
     normal_enter(false, false);
   }

@@ -1,7 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
+// Terminal UI functions. Invoked (by UI_CALL) on the UI process.
 
 #include <assert.h>
 #include <stdbool.h>
@@ -34,7 +34,6 @@
 #include "nvim/os/tty.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/tui.h"
@@ -42,6 +41,7 @@
 #include "nvim/cursor_shape.h"
 #include "nvim/macros.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/eval.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.
@@ -70,7 +70,6 @@ typedef struct {
 } Rect;
 
 typedef struct {
-  UIBridgeData *bridge;
   Loop *loop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
@@ -153,7 +152,7 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
   } else {
     char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
     int args_idx = 0;
-    args[args_idx++] = xstrdup("nvim");
+    args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
     args[args_idx++] = xstrdup("--embed");
     for (int i = 1; i < argc; i++) {
       args[args_idx++] = xstrdup(argv[i]);
@@ -171,14 +170,9 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
   int width = ui->width;
   int height = ui->height;
   Dictionary opts = ARRAY_DICT_INIT;
-  // Error err = ERROR_INIT;
 
   PUT(opts, "rgb", BOOLEAN_OBJ(true));
-  // PUT(opts, "ext_tabline", BOOLEAN_OBJ(true));
-  // PUT(opts, "ext_cmdline", BOOLEAN_OBJ(true));
   PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
-  // PUT(opts, "ext_multigrid", BOOLEAN_OBJ(true));
-  // PUT(opts, "ext_hlstate", BOOLEAN_OBJ(true));
   PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
 
   ADD(args, INTEGER_OBJ((int)width));
@@ -187,21 +181,13 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
 
   // Telling to the server that you exist as a Client
   rpc_send_event(rc_id, "nvim_ui_attach", args);
-  // rpc_send_call(rc_id, "nvim_ui_attach", args, &err);
-
-  // if (ERROR_SET(&err)) {
-  //   rc_id = 0;
-  //   logmsg(ERROR_LOG_LEVEL, "TUI: ", NULL, -1, true, "%s", err.msg);
-  // }
-
-  // api_clear_error(&err);
 
   return rc_id;
 }
 
 UI *tui_start(void)
 {
-  UI *ui = xcalloc(1, sizeof(UI));  // Freed by ui_bridge_stop().
+  UI *ui = xcalloc(1, sizeof(UI));  // Freed by tui_data_destroy().
   ui->stop = tui_stop;
   ui->grid_resize = tui_grid_resize;
   ui->grid_clear = tui_grid_clear;
@@ -228,18 +214,11 @@ UI *tui_start(void)
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
   ui->ui_ext[kUILinegrid] = true;
   ui->ui_ext[kUITermColors] = true;
+  
+  tui_main(ui);
+  ui_attach_impl(ui);
 
-  UI *rv = NULL;
-  // if (!is_remote_client) {
-    // rv = ui_bridge_attach(ui, tui_main, tui_scheduler);
-  // } else {
-    // when remote client neglect ui_bridge
-    tui_client_main(ui);
-    ui_attach_impl(ui);
-    rv = ui;
-  // }
-
-  return rv;
+  return ui;
 }
 
 static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
@@ -438,7 +417,7 @@ static void tui_terminal_stop(UI *ui)
   if (uv_is_closing(STRUCT_CAST(uv_handle_t, &data->output_handle))) {
     // Race between SIGCONT (tui.c) and SIGHUP (os/signal.c)? #8075
     ELOG("TUI already stopped (race?)");
-    ui->data = NULL;  // Flag UI as "stopped".
+    data->stopped = true; 
     return;
   }
   tinput_stop(&data->input);
@@ -461,76 +440,15 @@ bool tui_is_stopped(UI *ui)
   return data->stopped;
 }
 
-/// Main function of the TUI thread.
-static void tui_main(UIBridgeData *bridge, UI *ui)
-{
-  Loop tui_loop;
-  loop_init(&tui_loop, NULL);
-  TUIData *data = xcalloc(1, sizeof(TUIData));
-  ui->data = data;
-  data->stopped = false;
-  data->bridge = bridge;
-  data->loop = &tui_loop;
-  data->is_starting = true;
-  kv_init(data->invalid_regions);
-  signal_watcher_init(data->loop, &data->winch_handle, ui);
-  signal_watcher_init(data->loop, &data->cont_handle, data);
-#ifdef UNIX
-  signal_watcher_start(&data->cont_handle, sigcont_cb, SIGCONT);
-#endif
-
-  // TODO(bfredl): zero hl is empty, send this explicitly?
-  kv_push(data->attrs, HLATTRS_INIT);
-
-#if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
-  data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
-#endif
-  tinput_init(&data->input, &tui_loop);
-  tui_terminal_start(ui);
-
-  // Allow main thread to continue, we are ready to handle UI callbacks.
-  CONTINUE(bridge);
-
-  loop_schedule_deferred(&main_loop,
-                         event_create(show_termcap_event, 1, data->ut));
-
-  // "Active" loop: first ~100 ms of startup.
-  for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
-    ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
-  }
-  if (!tui_is_stopped(ui)) {
-    tui_terminal_after_startup(ui);
-    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
-    // terminal response may not get processed until user hits a key.
-    loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
-  }
-  // "Passive" (I/O-driven) loop: TUI thread "main loop".
-  while (!tui_is_stopped(ui)) {
-    loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
-  }
-
-  ui_bridge_stopped(bridge);
-  tinput_destroy(&data->input);
-  signal_watcher_stop(&data->cont_handle);
-  signal_watcher_close(&data->cont_handle, NULL);
-  signal_watcher_close(&data->winch_handle, NULL);
-  loop_close(&tui_loop, false);
-  kv_destroy(data->invalid_regions);
-  kv_destroy(data->attrs);
-  xfree(data->space_buf);
-  xfree(data);
-}
-
 // Main loop for TUI when its a client
 //
 // TODO(hlpr98): Refactor original tui_main to do this
-void tui_client_main(UI *ui)
+void tui_main(UI *ui)
 {
   TUIData *data = xcalloc(1, sizeof(TUIData));
   ui->data = data;
   data->stopped = false;
   // TODO(hlp98): Should be removed
-  data->bridge = xcalloc(1, sizeof(UIBridgeData));
   data->loop = &main_loop;
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
@@ -549,13 +467,13 @@ void tui_client_main(UI *ui)
   tui_terminal_start(ui);
   loop_schedule(&main_loop, event_create(show_termcap_event, 1, data->ut));
 
-  // "Active" loop: first ~100 ms of startup.
-  for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
-    ms += (loop_poll_events(&main_loop, 20) ? 20 : 1);
-  }
+  // // "Active" loop: first ~100 ms of startup.
+  // for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
+  //   ms += (loop_poll_events(&main_loop, 20) ? 20 : 1);
+  // }
 }
 
-void tui_client_execute(void) {
+void tui_execute(void) {
   UI *ui = get_ui_by_index(1);
   LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   tui_io_driven_loop(ui);
@@ -563,6 +481,7 @@ void tui_client_execute(void) {
   getout(0);
 }
 
+// Doesn't return untill the TUI is closed (by call of tui_stop())
 void tui_io_driven_loop(UI *ui){
   if (!tui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
@@ -595,20 +514,14 @@ void tui_exit_safe(UI *ui) {
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);
   signal_watcher_close(&data->winch_handle, NULL);
+  // tui_data_destroy() needs to be scheduled to ensure proper 
+  // order of calls
   loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
   ui_detach_impl(ui);
 }
 
 static void tui_dummy_event(void **argv)
 {
-}
-
-/// Handoff point between the main (ui_bridge) thread and the TUI thread.
-static void tui_scheduler(Event event, void *d)
-{
-  UI *ui = d;
-  TUIData *data = ui->data;
-  loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
 }
 
 #ifdef UNIX
@@ -1388,8 +1301,6 @@ static void suspend_event(void **argv)
     tui_mouse_on(ui);
   }
   stream_set_blocking(input_global_fd(), false);  // libuv expects this
-  // resume the main thread
-  CONTINUE(data->bridge);
 }
 #endif
 
@@ -1546,8 +1457,8 @@ end:
     height = DFLT_ROWS;
   }
 
-  data->bridge->bridge.width = ui->width = width;
-  data->bridge->bridge.height = ui->height = height;
+  ui->width = width;
+  ui->height = height;
 }
 
 static void unibi_goto(UI *ui, int row, int col)

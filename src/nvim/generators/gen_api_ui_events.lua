@@ -3,14 +3,13 @@ local mpack = require('mpack')
 local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
-assert(#arg == 8)
+assert(#arg == 7)
 input = io.open(arg[2], 'rb')
 proto_output = io.open(arg[3], 'wb')
 call_output = io.open(arg[4], 'wb')
 remote_output = io.open(arg[5], 'wb')
-bridge_output = io.open(arg[6], 'wb')
-metadata_output = io.open(arg[7], 'wb')
-redraw_output = io.open(arg[8], 'wb')
+metadata_output = io.open(arg[6], 'wb')
+redraw_output = io.open(arg[7], 'wb')
 
 c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
@@ -120,62 +119,6 @@ for i = 1, #events do
       remote_output:write('  push_call(ui, "'..ev.name..'", args);\n')
       remote_output:write('}\n\n')
     end
-
-    if not ev.bridge_impl and not ev.noexport then
-      local send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
-      local argc = 1
-      for j = 1, #ev.parameters do
-        local param = ev.parameters[j]
-        local copy = 'copy_'..param[2]
-        if param[1] == 'String' then
-          send = send..'  String copy_'..param[2]..' = copy_string('..param[2]..');\n'
-          argv = argv..', '..copy..'.data, INT2PTR('..copy..'.size)'
-          recv = (recv..'  String '..param[2]..
-                          ' = (String){.data = argv['..argc..'],'..
-                          '.size = (size_t)argv['..(argc+1)..']};\n')
-          recv_argv = recv_argv..', '..param[2]
-          recv_cleanup = recv_cleanup..'  api_free_string('..param[2]..');\n'
-          argc = argc+2
-        elseif param[1] == 'Array' then
-          send = send..'  Array '..copy..' = copy_array('..param[2]..');\n'
-          argv = argv..', '..copy..'.items, INT2PTR('..copy..'.size)'
-          recv = (recv..'  Array '..param[2]..
-                          ' = (Array){.items = argv['..argc..'],'..
-                          '.size = (size_t)argv['..(argc+1)..']};\n')
-          recv_argv = recv_argv..', '..param[2]
-          recv_cleanup = recv_cleanup..'  api_free_array('..param[2]..');\n'
-          argc = argc+2
-        elseif param[1] == 'Object' then
-          send = send..'  Object *'..copy..' = xmalloc(sizeof(Object));\n'
-          send = send..'  *'..copy..' = copy_object('..param[2]..');\n'
-          argv = argv..', '..copy
-          recv = recv..'  Object '..param[2]..' = *(Object *)argv['..argc..'];\n'
-          recv_argv = recv_argv..', '..param[2]
-          recv_cleanup = (recv_cleanup..'  api_free_object('..param[2]..');\n'..
-                          '  xfree(argv['..argc..']);\n')
-          argc = argc+1
-        elseif param[1] == 'Integer' or param[1] == 'Boolean' then
-          argv = argv..', INT2PTR('..param[2]..')'
-          recv_argv = recv_argv..', PTR2INT(argv['..argc..'])'
-          argc = argc+1
-        else
-          assert(false)
-        end
-      end
-      bridge_output:write('static void ui_bridge_'..ev.name..
-                          '_event(void **argv)\n{\n')
-      bridge_output:write('  UI *ui = UI(argv[0]);\n')
-      bridge_output:write(recv)
-      bridge_output:write('  ui->'..ev.name..'(ui'..recv_argv..');\n')
-      bridge_output:write(recv_cleanup)
-      bridge_output:write('}\n\n')
-
-      bridge_output:write('static void ui_bridge_'..ev.name)
-      write_signature(bridge_output, ev, 'UI *ui')
-      bridge_output:write('\n{\n')
-      bridge_output:write(send)
-      bridge_output:write('  UI_BRIDGE_CALL(ui, '..ev.name..', '..argc..', ui'..argv..');\n}\n\n')
-    end
   end
 
   if not (ev.remote_only and ev.remote_impl) then
@@ -243,7 +186,6 @@ redraw_output:write('\n}\n\n')
 proto_output:close()
 call_output:close()
 remote_output:close()
-bridge_output:close()
 redraw_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
