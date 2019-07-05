@@ -21256,9 +21256,10 @@ void ex_function(exarg_T *eap)
         overwrite = true;
       } else {
         // redefine existing function
-        ga_clear_strings(&(fp->uf_args));
-        ga_clear_strings(&(fp->uf_lines));
         XFREE_CLEAR(name);
+        func_clear_items(fp);
+        fp->uf_profiling = false;
+        fp->uf_prof_initialized = false;
       }
     }
   } else {
@@ -21353,12 +21354,9 @@ void ex_function(exarg_T *eap)
   } else {
     fp->uf_scoped = NULL;
   }
-  fp->uf_tml_count = NULL;
-  fp->uf_tml_total = NULL;
-  fp->uf_tml_self = NULL;
-  fp->uf_profiling = FALSE;
-  if (prof_def_func())
+  if (prof_def_func()) {
     func_do_profile(fp);
+  }
   fp->uf_varargs = varargs;
   if (sandbox) {
     flags |= FC_SANDBOX;
@@ -22210,6 +22208,19 @@ static bool func_remove(ufunc_T *fp)
   return false;
 }
 
+static void func_clear_items(ufunc_T *fp)
+{
+  ga_clear_strings(&(fp->uf_args));
+  ga_clear_strings(&(fp->uf_lines));
+
+  xfree(fp->uf_tml_count);
+  fp->uf_tml_count = NULL;
+  xfree(fp->uf_tml_total);
+  fp->uf_tml_total = NULL;
+  xfree(fp->uf_tml_self);
+  fp->uf_tml_self = NULL;
+}
+
 /// Free all things that a function contains. Does not free the function
 /// itself, use func_free() for that.
 ///
@@ -22222,11 +22233,7 @@ static void func_clear(ufunc_T *fp, bool force)
   fp->uf_cleared = true;
 
   // clear this function
-  ga_clear_strings(&(fp->uf_args));
-  ga_clear_strings(&(fp->uf_lines));
-  xfree(fp->uf_tml_count);
-  xfree(fp->uf_tml_total);
-  xfree(fp->uf_tml_self);
+  func_clear_items(fp);
   funccal_unref(fp->uf_scoped, fp, force);
 }
 
