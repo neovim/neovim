@@ -140,7 +140,7 @@ endfunc
 
 func s:StartDebug_term(dict)
   " Open a terminal window without a job, to run the debugged program in.
-  execute 'new'
+  execute s:vertical ? 'vnew' : 'new'
   let s:pty_job_id = termopen('tail -f /dev/null;#gdb program')
   if s:pty_job_id == 0
     echoerr 'invalid argument (or job table is full) while opening terminal window'
