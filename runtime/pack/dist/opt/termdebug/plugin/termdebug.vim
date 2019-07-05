@@ -564,8 +564,7 @@ let s:evalFromBalloonExprResult = ''
 func s:HandleEvaluate(msg)
   let value = substitute(a:msg, '.*value="\(.*\)"', '\1', '')
   let value = substitute(value, '\\"', '"', 'g')
-  let value = substitute(value, '
-', '\1', '')
+  let value = substitute(value, '', '\1', '')
   if s:evalFromBalloonExpr
     if s:evalFromBalloonExprResult == ''
       let s:evalFromBalloonExprResult = s:evalexpr . ': ' . value
