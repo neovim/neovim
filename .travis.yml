@@ -106,14 +106,12 @@ jobs:
         - GCOV=gcov
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
         - *common-job-env
-      install: false
     - os: linux
       name: clang-tsan
       compiler: clang
       env:
         - CLANG_SANITIZER=TSAN
         - *common-job-env
-      install: false
   allow_failures:
     - name: gcc-coverage
     - name: clang-tsan
