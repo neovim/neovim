@@ -49,8 +49,9 @@ env:
 
 anchors:
   envs: &common-job-env
-    # Do not fall back to cache for "master" for PR on "release" branch.
-    _=$TRAVIS_BRANCH
+    # Do not fall back to cache for "master" for PR on "release" branch:
+    # adds the target branch to the cache key.
+    __=$TRAVIS_BRANCH
 
 jobs:
   include:
