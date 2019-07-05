@@ -115,13 +115,8 @@ jobs:
         - *common-job-env
       install: false
   allow_failures:
-    - env:
-      - GCOV: gcov
-      - CMAKE_FLAGS: "$CMAKE_FLAGS -DUSE_GCOV=ON"
-      - *common-job-env
-    - env:
-      - CLANG_SANITIZER: TSAN
-      - *common-job-env
+    - name: gcc-coverage
+    - name: clang-tsan
   fast_finish: true
 
 script:         true
