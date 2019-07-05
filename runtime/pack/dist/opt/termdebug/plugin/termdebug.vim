@@ -164,6 +164,7 @@ func s:StartDebug_term(dict)
     if s:allleft
       " use the whole left column
       wincmd H
+    endif
   endif
 
   " Create a hidden terminal window to communicate with gdb
