@@ -3,16 +3,16 @@
 local log = require('lsp.log')
 local util = require('nvim.util')
 local lsp_util = require('lsp.util')
-local builtin_callbacks = require('lsp.builtin_callbacks')
+local BuiltinCallbacks = require('lsp.builtin_callbacks').BuiltinCallbacks
 
 -- {
---   'method_name' : CallbackObject
+--   method_name = CallbackObject
 -- }
 local CallbackMapping = setmetatable({}, {})
 
 -- {
---   'common': CallbackObject,
---   'filetype': CallbackObject.
+--   common = { CallbackObject },
+--   filetype = { CallbackObject }.
 -- }
 local CallbackObject = {}
 
@@ -170,44 +170,20 @@ local get_list_of_callbacks = function(method, filetype)
   return cb:get_list_of_callbacks(filetype)
 end
 
-local add_all_builtin_callbacks = function()
-  builtin_callbacks.add_all_builtin_callbacks(CallbackMapping, CallbackObject)
+--- Set a builtin callback to CallbackMapping
+-- @param method               (required) The name of the lsp method to set a callback to
+local set_builtin_callback = function(method)
+  local builtin_callback = BuiltinCallbacks[method]
+  local callback_object = CallbackObject.new(method, builtin_callback['options'])
+  callback_object:add_callback(builtin_callback['callback'])
+  CallbackMapping[method] = callback_object
 end
 
-local add_nvim_error_callback = function()
-  builtin_callbacks.add_nvim_error_callback(CallbackMapping, CallbackObject)
-end
-
-local add_text_document_publish_diagnostics_callback = function()
-  builtin_callbacks.add_text_document_publish_diagnostics_callback(CallbackMapping, CallbackObject)
-end
-
-local add_text_document_completion_callback = function()
-  builtin_callbacks.add_text_document_completion_callback(CallbackMapping, CallbackObject)
-end
-
-local add_text_document_references_callback = function()
-  builtin_callbacks.add_text_document_references_callback(CallbackMapping, CallbackObject)
-end
-
-local add_text_document_rename_callback = function()
-  builtin_callbacks.add_text_document_rename_callback(CallbackMapping, CallbackObject)
-end
-
-local add_text_document_hover_callback = function()
-  builtin_callbacks.add_text_document_hover_callback(CallbackMapping, CallbackObject)
-end
-
-local add_text_document_definition_callback = function()
-  builtin_callbacks.add_text_document_definition_callback(CallbackMapping, CallbackObject)
-end
-
-local add_window_show_message_callback = function()
-  builtin_callbacks.add_window_show_message_callback(CallbackMapping, CallbackObject)
-end
-
-local add_window_show_message_request_callback = function()
-  builtin_callbacks.add_window_show_message_request_callback(CallbackMapping, CallbackObject)
+--- Set the all builtin callbacks to CallbackMapping
+local set_all_builtin_callbacks = function()
+  for method_name, _method in pairs(BuiltinCallbacks) do
+    set_builtin_callback(method_name)
+  end
 end
 
 return {
@@ -220,16 +196,8 @@ return {
   set_option = set_option,
 
   -- Adding builtin callback functions
-  add_all_builtin_callbacks = add_all_builtin_callbacks,
-  add_nvim_error_callback = add_nvim_error_callback,
-  add_text_document_publish_diagnostics_callback = add_text_document_publish_diagnostics_callback,
-  add_text_document_completion_callback = add_text_document_completion_callback,
-  add_text_document_references_callback = add_text_document_references_callback,
-  add_text_document_rename_callback = add_text_document_rename_callback,
-  add_text_document_hover_callback = add_text_document_hover_callback,
-  add_text_document_definition_callback = add_text_document_definition_callback,
-  add_window_show_message_callback = add_window_show_message_callback,
-  add_window_show_message_request_callback = add_window_show_message_request_callback,
+  set_all_builtin_callbacks = set_all_builtin_callbacks,
+  set_builtin_callback = set_builtin_callback,
 
   -- Generally private functions
   _callback_mapping = CallbackMapping,

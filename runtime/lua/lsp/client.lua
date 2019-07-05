@@ -327,7 +327,7 @@ client.on_message = function(self, json_message)
   -- Handle notifications
   if json_message.method and json_message.params then
     log.debug('notification: ', json_message.method)
-    call_callbacks_for_method(json_message.method, true, json_message.params)
+    call_callbacks_for_method(json_message.method, true, json_message.params, nil)
     lsp_doautocmd(json_message.method, 'notification')
 
     return
@@ -343,7 +343,7 @@ client.on_message = function(self, json_message)
     if cb then
       result = { cb(success, data) }
     else
-      result = { call_callbacks_for_method(method, success, data) }
+      result = { call_callbacks_for_method(method, success, data, nil) }
     end
 
     -- Clear the old callback

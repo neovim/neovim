@@ -32,17 +32,17 @@ local LocationList = require('nvim.location_list')
 local handle_completion = require('lsp.handle.completion')
 local handle_workspace = require('lsp.handle.workspace')
 
+-- {
+--    method_name = {
+--      callback = function,
+--      options = table
+--    }
+-- }
+BuiltinCallbacks = {}
 
--- Callback definition section
-local add_callback = function(callback_mapping, callback_object, name, callback, options)
-  callback_object_instance = callback_object.new(name, options)
-  callback_object_instance:add_callback(callback)
-  callback_mapping[name] = callback_object_instance
-end
-
--- 3 nvim/error_callback
-local add_nvim_error_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'nvim/error_callback', function(original, error_message)
+-- nvim/error_callback
+BuiltinCallbacks['nvim/error_callback'] = {
+  callback = function(original, error_message)
     local message = ''
     if error_message.message ~= nil and type(error_message.message) == 'string' then
       message = error_message.message
@@ -55,12 +55,13 @@ local add_nvim_error_callback = function(callback_mapping, callback_object)
     vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', original.method, message))
 
     return
-  end)
-end
+  end,
+  options = {}
+}
 
--- 3 textDocument/publishDiagnostics
-local add_text_document_publish_diagnostics_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'textDocument/publishDiagnostics', function(self, data)
+-- textDocument/publishDiagnostics
+BuiltinCallbacks['textDocument/publishDiagnostics']= {
+  callback = function(self, data)
     local diagnostic_list
     if self.options.use_quickfix then
       diagnostic_list = QuickFix:new('Language Server Diagnostics')
@@ -103,27 +104,26 @@ local add_text_document_publish_diagnostics_callback = function(callback_mapping
     end
 
     return
-  end, {
-    auto_list = false,
-    use_quickfix = false,
-  })
-end
+  end,
+  options = { auto_list = false, use_quickfix = false, },
+}
 
--- 3 textDocument/completion
-local add_text_document_completion_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'textDocument/completion', function(self, data)
+-- textDocument/completion
+BuiltinCallbacks['textDocument/completion'] = {
+  callback = function(self, data)
     if data == nil then
       print(self)
       return
     end
 
     return handle_completion.getLabels(data)
-  end)
-end
+  end,
+  options = {}
+}
 
--- 3 textDocument/references
-local add_text_document_references_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'textDocument/references', function(self, data)
+-- textDocument/references
+BuiltinCallbacks['textDocument/references'] = {
+  callback = function(self, data)
     local locations = data
     local loclist = {}
 
@@ -158,12 +158,13 @@ local add_text_document_references_callback = function(callback_mapping, callbac
     end
 
     return result
-  end, { auto_location_list = true })
-end
+  end,
+  options = { auto_location_list = true },
+}
 
--- 3 textDocument/rename
-local add_text_document_rename_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'textDocument/rename', function(self, data)
+-- textDocument/rename
+BuiltinCallbacks['textDocument/rename'] = {
+  callback = function(self, data)
     if data == nil then
       print(self)
       return nil
@@ -172,12 +173,14 @@ local add_text_document_rename_callback = function(callback_mapping, callback_ob
     vim.api.nvim_set_var('textDocument_rename', data)
 
     handle_workspace.apply_WorkspaceEdit(data)
-  end, { })
-end
+  end,
+  options = {}
+}
 
--- 3 textDocument/hover
-local add_text_document_hover_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'textDocument/hover', function(self, data)
+
+-- textDocument/hover
+BuiltinCallbacks['textDocument/hover'] = {
+  callback = function(self, data)
     log.trace('textDocument/hover', data, self)
 
     if data.range ~= nil then
@@ -226,12 +229,13 @@ local add_text_document_hover_callback = function(callback_mapping, callback_obj
       vim.api.nvim_out_write(long_string .. '\n')
       return long_string
     end
-  end)
-end
+  end,
+  options = {}
+}
 
--- 3 textDocument/definition
-local add_text_document_definition_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'textDocument/definition', function(self, data)
+-- textDocument/definition
+BuiltinCallbacks['textDocument/definition'] = {
+  callback = function(self, data)
     log.trace('callback:textDocument/definiton', data, self)
 
     if data == nil or data == {} then
@@ -271,13 +275,13 @@ local add_text_document_definition_callback = function(callback_mapping, callbac
     )
 
     return true
-  end)
-end
+  end,
+  options = {}
+}
 
--- 2 window
--- 3 window/showMessage
-local add_window_show_message_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'window/showMessage', function(self, data)
+-- window/showMessage
+BuiltinCallbacks['window/showMessage'] = {
+  callback = function(self, data)
     if data == nil or type(data) ~= 'table' then
       print(self)
       return nil
@@ -295,55 +299,10 @@ local add_window_show_message_callback = function(callback_mapping, callback_obj
     end
 
     return data
-  end, { })
-end
-
--- 3 window/showMessageRequest
--- TODO: Should probably find some unique way to handle requests from server -> client
-local add_window_show_message_request_callback = function(callback_mapping, callback_object)
-  add_callback(callback_mapping, callback_object, 'window/showMessageRequest', function(self, data)
-    if data == nil or type(data) ~= 'table' then
-      print(self)
-      return nil
-    end
-
-    local message_type = data['type']
-    local message = data['message']
-    local actions = data['actions']
-
-    print(message_type, message, actions)
-  end, { })
-end
-
-local add_all_builtin_callbacks = function(callback_mapping, callback_object)
-  add_nvim_error_callback(callback_mapping, callback_object)
-  add_text_document_publish_diagnostics_callback(callback_mapping, callback_object)
-  add_text_document_completion_callback(callback_mapping, callback_object)
-  add_text_document_references_callback(callback_mapping, callback_object)
-  add_text_document_rename_callback(callback_mapping, callback_object)
-  add_text_document_hover_callback(callback_mapping, callback_object)
-  add_text_document_definition_callback(callback_mapping, callback_object)
-  add_window_show_message_callback(callback_mapping, callback_object)
-  add_window_show_message_request_callback(callback_mapping, callback_object)
-end
-
--- 2 workspace
--- 3 workspace/symbol
--- TODO: Find a server that supports this request, and also figure out workspaces :)
--- add_callback('workspace/symbol', function(self, data)
---   print(self, data)
--- end, { })
+  end,
+  options = {}
+}
 
 return {
-  -- Adding default callback functions
-  add_all_builtin_callbacks = add_all_builtin_callbacks,
-  add_nvim_error_callback = add_nvim_error_callback,
-  add_text_document_publish_diagnostics_callback = add_text_document_publish_diagnostics_callback,
-  add_text_document_completion_callback = add_text_document_completion_callback,
-  add_text_document_references_callback = add_text_document_references_callback,
-  add_text_document_rename_callback = add_text_document_rename_callback,
-  add_text_document_hover_callback = add_text_document_hover_callback,
-  add_text_document_definition_callback = add_text_document_definition_callback,
-  add_window_show_message_callback = add_window_show_message_callback,
-  add_window_show_message_request_callback = add_window_show_message_request_callback,
+  BuiltinCallbacks = BuiltinCallbacks
 }

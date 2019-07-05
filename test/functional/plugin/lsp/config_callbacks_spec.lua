@@ -32,33 +32,38 @@ describe('LSP Callback Configuration', function()
   end)
 
   it('should have a textDocument/hover builtin callback', function()
-    exec_lua("lsp_callbacks.add_text_document_hover_callback()")
+    exec_lua("lsp_callbacks.set_builtin_callback('textDocument/hover')")
     exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
 
-    eq(false, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].common[1] == null"))
+    eq(true, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ~= nil"))
     eq(1, exec_lua("return count_callback()"))
   end)
 
   it('should have some builtin configurations', function()
-    exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
+    exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
     exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
     exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ")
 
     eq(true, exec_lua("return callback_list[1] == hover"))
   end)
 
-  it('should handle generic configurations', function()
-    exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
+  it('should handle common configurations', function()
+    exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
     exec_lua("test_func = function(a, b) return a + b end")
 
     exec_lua("lsp_config.add_callback('textDocument/hover', test_func)")
     exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
 
+    eq(true, exec_lua("return #callback_list == 2"))
+    eq(true, exec_lua("return callback_list[2] == test_func"))
+
+    exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', 'python')")
+
     eq(true, exec_lua("return callback_list[2] == test_func"))
   end)
 
   it('should handle filetype configurations', function()
-    exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
+    exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
     exec_lua("filetype_func = function(a, b) return a + b end")
     exec_lua("lsp_config.add_callback('textDocument/hover', filetype_func, 'python')")
 
@@ -76,7 +81,7 @@ describe('LSP Callback Configuration', function()
   end)
 
   it('should handle overriding builtin configuration', function()
-      exec_lua("lsp_callbacks.add_all_builtin_callbacks()")
+      exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
       exec_lua("override_func = function(a, b) return a - b end")
 
       exec_lua("lsp_config.add_callback('textDocument/definition', override_func)")
