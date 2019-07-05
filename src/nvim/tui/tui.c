@@ -133,7 +133,8 @@ typedef struct {
 static bool volatile got_winch = false;
 static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
-
+uint64_t connect_channel_id = 0;
+char *termname_local;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
 #endif
@@ -182,6 +183,15 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
   // Telling to the server that you exist as a Client
   rpc_send_event(rc_id, "nvim_ui_attach", args);
 
+  // Setting terminfo
+  args = (Array)ARRAY_DICT_INIT;
+  opts = (Dictionary)ARRAY_DICT_INIT;
+  PUT(opts, "termname", STRING_OBJ(cstr_as_string(termname_local)));
+  PUT(opts, "t_Co", INTEGER_OBJ(t_colors));
+  ADD(args, DICTIONARY_OBJ(opts));
+  rpc_send_event(rc_id, "nvim_set_terminfo", args);
+  
+  connect_channel_id = rc_id;
   return rc_id;
 }
 
@@ -229,13 +239,6 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
     return 0U;
   }
   return unibi_run(str, data->params, buf, len);
-}
-
-static void termname_set_event(void **argv)
-{
-  char *termname = argv[0];
-  set_tty_option("term", termname);
-  // Do not free termname, it is freed by set_tty_option.
 }
 
 static void terminfo_start(UI *ui)
@@ -289,8 +292,7 @@ static void terminfo_start(UI *ui)
     data->ut = terminfo_from_builtin(term, &termname);
   }
   // Update 'term' option.
-  loop_schedule_deferred(&main_loop,
-                         event_create(termname_set_event, 1, termname));
+  termname_local = xstrdup(termname);
 
   // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
@@ -440,9 +442,7 @@ bool tui_is_stopped(UI *ui)
   return data->stopped;
 }
 
-// Main loop for TUI when its a client
-//
-// TODO(hlpr98): Refactor original tui_main to do this
+// Main loop for TUI
 void tui_main(UI *ui)
 {
   TUIData *data = xcalloc(1, sizeof(TUIData));
@@ -481,7 +481,7 @@ void tui_execute(void) {
   getout(0);
 }
 
-// Doesn't return untill the TUI is closed (by call of tui_stop())
+// Doesn't return until the TUI is closed (by call of tui_stop())
 void tui_io_driven_loop(UI *ui){
   if (!tui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
@@ -489,7 +489,7 @@ void tui_io_driven_loop(UI *ui){
     // terminal response may not get processed until user hits a key.
     loop_schedule(&main_loop, event_create(tui_dummy_event, 0));
   }
-  // "Passive" (I/O-driven) loop: TUI thread "main loop".
+  // "Passive" (I/O-driven) loop: TUI process's "main loop".
   while (!tui_is_stopped(ui)) {
     loop_poll_events(&main_loop, -1);
   }
@@ -514,8 +514,7 @@ void tui_exit_safe(UI *ui) {
   signal_watcher_stop(&data->cont_handle);
   signal_watcher_close(&data->cont_handle, NULL);
   signal_watcher_close(&data->winch_handle, NULL);
-  // tui_data_destroy() needs to be scheduled to ensure proper 
-  // order of calls
+  // tui_data_destroy() needs to be scheduled to ensure proper order of calls
   loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
   ui_detach_impl(ui);
 }
@@ -1187,6 +1186,9 @@ static void tui_hl_attr_define(UI *ui, Integer id, HlAttrs attrs,
                                HlAttrs cterm_attrs, Array info)
 {
   TUIData *data = ui->data;
+  attrs.cterm_ae_attr = cterm_attrs.cterm_ae_attr;
+  attrs.cterm_fg_color = cterm_attrs.cterm_fg_color;
+  attrs.cterm_bg_color = cterm_attrs.cterm_bg_color;
   kv_a(data->attrs, (size_t)id) = attrs;
 }
 
@@ -1340,6 +1342,12 @@ static void tui_option_set(UI *ui, String name, Object value)
 
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
+    if (connect_channel_id) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, STRING_OBJ(cstr_as_string(xstrdup("rgb"))));
+      ADD(args, BOOLEAN_OBJ(value.data.boolean));
+      rpc_send_event(connect_channel_id, "nvim_ui_set_option", args);
+    }
   }
 }
 

@@ -664,12 +664,8 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb)
     hlattrs.rgb_sp_color = special;
   } else {
     hlattrs.cterm_ae_attr = mask;
-    if (background != -1) {
-      hlattrs.cterm_bg_color = background;
-    }
-    if (foreground != -1) {
-      hlattrs.cterm_fg_color = foreground;
-    }
+    hlattrs.cterm_bg_color = background == -1 ? cterm_normal_bg_color : background + 1;
+    hlattrs.cterm_fg_color = foreground == -1 ? cterm_normal_fg_color : foreground + 1;
   }
 
   return hlattrs;

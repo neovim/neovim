@@ -20,6 +20,8 @@
 #include "nvim/screen.h"
 #include "nvim/window.h"
 #include "nvim/redraw.h"
+#include "nvim/option.h"
+#include "nvim/aucmd.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -180,6 +182,39 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   PUT(opts, "rgb", BOOLEAN_OBJ(enable_rgb));
   nvim_ui_attach(channel_id, width, height, opts, err);
   api_free_dictionary(opts);
+}
+
+void nvim_set_terminfo(uint64_t channel_id, Dictionary options, Error *error)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  for (size_t i = 0; i < options.size; i++) {
+    if (!strcmp(options.items[i].key.data, "termname")) {
+      set_tty_option("term", xstrdup(options.items[i].value.data.string.data));
+      continue;
+    }
+    if (!strcmp(options.items[i].key.data, "t_Co")) {
+      t_colors = (int)options.items[i].value.data.integer;
+      continue;
+    }
+  }
+}
+
+void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  aucmd_schedule_focusgained((bool)gained);
 }
 
 /// Deactivates UI events on the channel.
@@ -705,16 +740,10 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
 void redraw(uint64_t channel_id, Array uidata, Error *error)
 FUNC_API_FAST
 {
-  Array call = ARRAY_DICT_INIT;
-  char *method_name;
-  size_t size;
-
-  Array uidata_copy = copy_array(uidata);
-
-  for (size_t i = 0; i < uidata_copy.size; i++) {
-    call = uidata_copy.items[i].data.array;
-    method_name = call.items[0].data.string.data;
-    size = call.items[0].data.string.size;
+  for (size_t i = 0; i < uidata.size; i++) {
+    Array call = copy_array(uidata.items[i].data.array);
+    char *method_name = xstrdup(call.items[0].data.string.data);
+    size_t size = call.items[0].data.string.size;
 
     ApiRedrawWrapper handler_method = get_redraw_event_handler(method_name,
                                                                size,
@@ -731,6 +760,7 @@ FUNC_API_FAST
       }
     }
     api_clear_error(error);
+    api_free_array(call);
+    xfree(method_name);
   }
-  api_free_array(call);
 }

@@ -275,8 +275,8 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      [[['height', 6], ['override', v:false], ['rgb', v:|
-      false], ['width', 50]]]                           |
+      [[['chan', 1], ['height', 6], ['override', v:false|
+      ], ['rgb', v:false], ['width', 50]]]              |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]=])

@@ -109,7 +109,6 @@ static void tinput_wait_enqueue(void **argv)
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
     if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
       Array args = ARRAY_DICT_INIT;
-      // Error err = ERROR_INIT;
       ADD(args, STRING_OBJ(((String){
           .data = xstrdup(buf), 
           .size = len})));
@@ -352,7 +351,18 @@ static bool handle_focus_event(TermInput *input)
     // Advance past the sequence
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     rbuffer_consumed(input->read_stream.buffer, 3);
-    aucmd_schedule_focusgained(focus_gained);
+    
+    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, BOOLEAN_OBJ(focus_gained));
+      if (is_remote_client) {
+        rpc_send_event(channel_get_id(true, true), "nvim_ui_set_focus", args);
+      } else if ((!headless_mode && !embedded_mode && !silent_mode)){
+        rpc_send_event(channel_get_id(false, true), "nvim_ui_set_focus", args);
+      }
+    } else {
+      aucmd_schedule_focusgained(focus_gained);
+    }
     return true;
   }
   return false;
