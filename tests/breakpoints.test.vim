@@ -1,18 +1,9 @@
 function! SetUp()
-  if exists ( 'g:loaded_vimpector' )
-    unlet g:loaded_vimpector
-  endif
-
-  source vimrc
-
-  " This is a bit of a hack
-  runtime! plugin/**/*.vim
+  call vimspector#test#setup#SetUpWithMappings( v:none )
 endfunction
 
 function! ClearDown()
-  if exists( '*vimspector#internal#state#Reset' )
-    call vimspector#internal#state#Reset()
-  endif
+  call vimspector#test#setup#ClearDown()
 endfunction
 
 function! SetUp_Test_Mappings_Are_Added_HUMAN()
