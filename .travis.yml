@@ -80,7 +80,6 @@ addons:
       - gperf
       - language-pack-tr
       - libc6-dev-i386
-      - libtool-bin
       - locales
       - ninja-build
       - pkg-config
