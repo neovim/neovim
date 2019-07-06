@@ -146,19 +146,7 @@ util.is_quickfix_open = function()
 end
 
 util.table.is_empty = function(table)
-  if table == nil then
-    return true
-  end
-
-  if not table then
-    return true
-  end
-
-  if type(table) ~= type({}) and type(table) ~= 'userdata' then
-    return true
-  end
-
-  if table == {} then
+  if not next(table) then
     return true
   end
 
