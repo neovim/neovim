@@ -7292,7 +7292,7 @@ static buf_T *find_buffer(typval_T *avar)
 // "bufadd(expr)" function
 static void f_bufadd(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  char_u *name = tv_get_string(&argvars[0]);
+  char_u *name = (char_u *)tv_get_string(&argvars[0]);
 
   rettv->vval.v_number = buflist_add(*name == NUL ? NULL : name, 0);
 }
@@ -7317,7 +7317,7 @@ static void f_buflisted(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 // "bufload(expr)" function
-static void f_bufload(typval_T *argvars, typval_T *rettv unused)
+static void f_bufload(typval_T *argvars, typval_T *unused, FunPtr fptr)
 {
   buf_T *buf = get_buf_arg(&argvars[0]);
 
