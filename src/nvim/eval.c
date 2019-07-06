@@ -22025,6 +22025,7 @@ static bool script_autoload(const char *const name, const size_t name_len,
 }
 
 /// Return the autoload script name for a function or variable name
+/// Caller must make sure that "name" contains AUTOLOAD_CHAR.
 ///
 /// @param[in]  name  Variable/function name.
 /// @param[in]  name_len  Name length.
