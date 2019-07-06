@@ -12,15 +12,19 @@ end
 -- @param method                    (required)  The name of the method to associate with the callback
 -- @param cb                        (required)  The callback to execute (or nil to disable -- probably)
 -- @param override_default_callback (optional)  Use this as the default callback for method, overrides filetype
--- @param filetype_specific         (optional)  Use this to only have a callback executed for certain filetypes
---
--- @returns another
-configure.add_callback = function(method, cb, filetype_specific)
-  if filetype_specific ~= nil then
-    callbacks.add_filetype_callback(method, cb, filetype_specific)
-  else
-    callbacks.add_callback(method, cb)
-  end
+-- @param filetype                  (optional)  Use this to only have a callback executed for certain filetypes
+configure.add_callback = function(method, cb, filetype)
+  callbacks.add_callback(method, cb, filetype)
+end
+
+--- Set a callback that will be called whenever method is handled.
+--- If the callbacks have already been defined, those are overrided by this callback.
+-- @param method                    (required)  The name of the method to associate with the callback
+-- @param cb                        (required)  The callback to execute (or nil to disable -- probably)
+-- @param override_default_callback (optional)  Use this as the default callback for method, overrides filetype
+-- @param filetype                  (optional)  Use this to only have a callback executed for certain filetypes
+configure.set_callback = function(method, cb, filetype)
+  callbacks.set_callback(method, cb, filetype)
 end
 
 configure.set_option = function(method, option, value)

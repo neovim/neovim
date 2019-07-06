@@ -101,34 +101,66 @@ CallbackObject.new = function(method, options)
 end
 
 CallbackObject.has_no_callbacks = function(self, filetype)
-  return #self:get_list_of_callbacks(filetype) == 0
+  return util.table.is_empty(self:get_list_of_callbacks(filetype))
 end
 
-CallbackObject.add_callback = function(self, new_callback)
-  table.insert(self.common, new_callback)
+CallbackObject.add_callback = function(self, new_callback, filetype)
+  if filetype then
+    self:add_filetype_callback(new_callback, filetype)
+  else
+    self:add_common_callback(new_callback)
+  end
 end
 
 CallbackObject.add_filetype_callback = function(self, new_callback, filetype)
-  if self.filetype[filetype] == nil then
+  if not self.filetype[filetype] then
     self.filetype[filetype] = {}
   end
 
   table.insert(self.filetype[filetype], new_callback)
 end
 
+CallbackObject.add_common_callback = function(self, new_callback)
+  table.insert(self.common, new_callback)
+end
+
+CallbackObject.set_callback = function(self, new_callback, filetype)
+  if filetype then
+    self:set_filetype_callback(new_callback, filetype)
+  else
+    self:set_common_callback(new_callback)
+  end
+end
+
+CallbackObject.set_filetype_callback = function(self, new_callback, filetype)
+  self.filetype[filetype] = {}
+  table.insert(self.filetype[filetype], new_callback)
+end
+
+CallbackObject.set_common_callback = function(self, new_callback)
+  self.common = {}
+  table.insert(self.common, new_callback)
+end
+
+--- Get list of callbacks.
+--- If filetype argument is present and there are specific filetype callbacks, it returns only specific filetype callbacks.
+--- But if filetype argument is present and there aren't any specific filetype callbacks, it returns common callbacks.
+-- @params (optional) filetype string
 CallbackObject.get_list_of_callbacks = function(self, filetype)
   local callback_list = {}
 
-  for _, value in ipairs(self.common) do
-    table.insert(callback_list, value)
-  end
-
-  if filetype ~= nil then
+  if filetype then
     if self.filetype[filetype] == nil then
       self.filetype[filetype] = {}
     end
 
     for _, value in ipairs(self.filetype[filetype]) do
+      table.insert(callback_list, value)
+    end
+  end
+
+  if not filetype or (filetype and util.table.is_empty(callback_list)) then
+    for _, value in ipairs(self.common) do
       table.insert(callback_list, value)
     end
   end
@@ -146,12 +178,12 @@ local call_callbacks = function(callback_list, success, params)
   return unpack(results)
 end
 
-local add_callback = function(method, new_callback)
-  get_callback_object_by_method(method):add_callback(new_callback)
+local add_callback = function(method, new_callback, filetype)
+  get_callback_object_by_method(method):add_callback(new_callback, filetype)
 end
 
-local add_filetype_callback = function(method, new_callback, filetype)
-  get_callback_object_by_method(method):add_filetype_callback(new_callback, filetype)
+local set_callback = function(method, new_callback, filetype)
+  get_callback_object_by_method(method):set_callback(new_callback, filetype)
 end
 
 local set_option = function(method, option, value)
@@ -174,7 +206,7 @@ end
 local set_builtin_callback = function(method)
   local builtin_callback = BuiltinCallbacks[method]
   local callback_object = CallbackObject.new(method, builtin_callback['options'])
-  callback_object:add_callback(builtin_callback['callback'])
+  callback_object:set_callback(builtin_callback['callback'])
   CallbackMapping[method] = callback_object
 end
 
@@ -191,7 +223,7 @@ return {
 
   -- Configuring callback objects
   add_callback = add_callback,
-  add_filetype_callback = add_filetype_callback,
+  set_callback = set_callback,
   set_option = set_option,
 
   -- Adding builtin callback functions
