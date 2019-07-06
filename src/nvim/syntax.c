@@ -6829,7 +6829,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
 
           xfree(HL_TABLE()[idx].sg_rgb_fg_name);
-          if (strcmp(arg, "NONE")) {
+          if (strcmp(arg, "NONE") != 0) {
             HL_TABLE()[idx].sg_rgb_fg_name = (char_u *)xstrdup((char *)arg);
             HL_TABLE()[idx].sg_rgb_fg = name_to_color((const char_u *)arg);
           } else {
