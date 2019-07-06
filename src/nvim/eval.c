@@ -22213,12 +22213,9 @@ static void func_clear_items(ufunc_T *fp)
   ga_clear_strings(&(fp->uf_args));
   ga_clear_strings(&(fp->uf_lines));
 
-  xfree(fp->uf_tml_count);
-  fp->uf_tml_count = NULL;
-  xfree(fp->uf_tml_total);
-  fp->uf_tml_total = NULL;
-  xfree(fp->uf_tml_self);
-  fp->uf_tml_self = NULL;
+  XFREE_CLEAR(fp->uf_tml_count);
+  XFREE_CLEAR(fp->uf_tml_total);
+  XFREE_CLEAR(fp->uf_tml_self);
 }
 
 /// Free all things that a function contains. Does not free the function
