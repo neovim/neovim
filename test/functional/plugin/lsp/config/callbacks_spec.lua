@@ -35,7 +35,7 @@ describe('LSP Callback Configuration', function()
 
   describe("'textDocument/hover' builtin callback is set", function()
     it("should have a 'textDocument/hover' builtin callback", function()
-      exec_lua("lsp_callbacks.set_builtin_callback('textDocument/hover')")
+      exec_lua("lsp_config.set_builtin_callback('textDocument/hover')")
       exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
 
       eq(true, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ~= nil"))
@@ -45,7 +45,7 @@ describe('LSP Callback Configuration', function()
 
   describe("all builtin callbacks are set", function()
     it('should have some builtin callbacks', function()
-      exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
+      exec_lua("lsp_config:set_all_builtin_callbacks()")
       exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
       exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ")
 
@@ -55,7 +55,7 @@ describe('LSP Callback Configuration', function()
 
   describe("add two callbacks that are not for specific filetypes to same method", function()
     before_each(function()
-      exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
+      exec_lua("lsp_config:set_all_builtin_callbacks()")
       exec_lua("test_func = function(a, b) return a + b end")
       exec_lua("lsp_config.add_callback('textDocument/hover', test_func)")
     end)
@@ -81,7 +81,7 @@ describe('LSP Callback Configuration', function()
 
   describe("add two callbacks to the same method. one of those is for specific filetypes", function()
     before_each(function()
-      exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
+      exec_lua("lsp_config:set_all_builtin_callbacks()")
       exec_lua("filetype_func = function(a, b) return a + b end")
       exec_lua("lsp_config.add_callback('textDocument/hover', filetype_func, 'python')")
     end)
@@ -108,7 +108,7 @@ describe('LSP Callback Configuration', function()
 
   describe("set a callback that is not for specific filetypes after adding a callbacks to the same method", function()
     it('should have only a callback which is defined after', function()
-        exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
+        exec_lua("lsp_config:set_all_builtin_callbacks()")
         exec_lua("override_func = function(a, b) return a - b end")
 
         exec_lua("lsp_config.set_callback('textDocument/hover', override_func)")
@@ -121,7 +121,7 @@ describe('LSP Callback Configuration', function()
 
   describe("set a callback that is for specific filetypes after adding a callbacks to the same method", function()
     it('should have only a callback which is defined after', function()
-        exec_lua("lsp_callbacks.set_all_builtin_callbacks()")
+        exec_lua("lsp_config:set_all_builtin_callbacks()")
         exec_lua("override_func = function(a, b) return a - b end")
 
         exec_lua("lsp_config.set_callback('textDocument/hover', override_func, 'python')")

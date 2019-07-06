@@ -1,4 +1,5 @@
 local callbacks = require('lsp.callbacks')
+local BuiltinCallbacks = require('lsp.builtin_callbacks').BuiltinCallbacks
 
 local configure = {}
 
@@ -29,6 +30,27 @@ end
 
 configure.set_option = function(method, option, value)
   callbacks.set_option(method, option, value)
+end
+
+--- Set a builtin callback to CallbackMapping
+-- @param method               (required) The name of the lsp method to set a callback to
+configure.set_builtin_callback = function(method)
+  local builtin_callback = BuiltinCallbacks[method]
+  local callback_object = callbacks._callback_object.new(method, builtin_callback['options'])
+  callback_object:set_callback(builtin_callback['callback'])
+  callbacks._callback_mapping[method] = callback_object
+end
+
+--- Set a builtin error callback to CallbackMapping
+configure.set_builtin_error_callback = function(self)
+  self.set_builtin_callback('nvim/error_callback')
+end
+
+--- Set the all builtin callbacks to CallbackMapping
+configure.set_all_builtin_callbacks = function(self)
+  for method_name in pairs(BuiltinCallbacks) do
+    self.set_builtin_callback(method_name)
+  end
 end
 
 return configure

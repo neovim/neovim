@@ -2,7 +2,6 @@
 
 local log = require('lsp.log')
 local util = require('nvim.util')
-local BuiltinCallbacks = require('lsp.builtin_callbacks').BuiltinCallbacks
 
 -- {
 --   method_name = CallbackObject
@@ -56,7 +55,7 @@ end
 -- CallbackObject section
 CallbackObject.__call = function(self, success, data, filetype)
   if self.name ~= 'nvim/error_callback' and not success then
-    call_callbacks_for_method('nvim/error_callback', data)
+    call_callbacks_for_method('nvim/error_callback', data, filetype)
   end
 
   if not filetype and util.table.is_empty(self.common) then
@@ -201,22 +200,6 @@ local get_list_of_callbacks = function(method, filetype)
   return cb:get_list_of_callbacks(filetype)
 end
 
---- Set a builtin callback to CallbackMapping
--- @param method               (required) The name of the lsp method to set a callback to
-local set_builtin_callback = function(method)
-  local builtin_callback = BuiltinCallbacks[method]
-  local callback_object = CallbackObject.new(method, builtin_callback['options'])
-  callback_object:set_callback(builtin_callback['callback'])
-  CallbackMapping[method] = callback_object
-end
-
---- Set the all builtin callbacks to CallbackMapping
-local set_all_builtin_callbacks = function()
-  for method_name in pairs(BuiltinCallbacks) do
-    set_builtin_callback(method_name)
-  end
-end
-
 return {
   -- Calling configured callback objects
   call_callbacks_for_method = call_callbacks_for_method,
@@ -225,10 +208,6 @@ return {
   add_callback = add_callback,
   set_callback = set_callback,
   set_option = set_option,
-
-  -- Adding builtin callback functions
-  set_all_builtin_callbacks = set_all_builtin_callbacks,
-  set_builtin_callback = set_builtin_callback,
 
   -- Generally private functions
   _callback_mapping = CallbackMapping,
