@@ -23,7 +23,7 @@ echo 'Python info:'
 if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
   echo 'Setting Python versions via pyenv'
   # Prefer python2 as python for /usr/bin/asan_symbolize-4.0.
-  pyenv global 2.7.15:3.7
+  pyenv global 2.7:3.7
 
   echo 'Updated Python info:'
   (
