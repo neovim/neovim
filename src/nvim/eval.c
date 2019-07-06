@@ -7326,7 +7326,7 @@ static void f_bufload(typval_T *argvars, typval_T *unused, FunPtr fptr)
 
     aucmd_prepbuf(&aco, buf);
     swap_exists_action = SEA_NONE;
-    open_buffer(FALSE, NULL, 0);
+    open_buffer(false, NULL, 0);
     aucmd_restbuf(&aco);
   }
 }
