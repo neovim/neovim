@@ -2006,8 +2006,10 @@ atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
 browse({save}, {title}, {initdir}, {default})
 				String	put up a file requester
 browsedir({title}, {initdir})	String	put up a directory requester
+bufadd({name})			Number	add a buffer to the buffer list
 bufexists({expr})		Number	|TRUE| if buffer {expr} exists
 buflisted({expr})		Number	|TRUE| if buffer {expr} is listed
+bufload({expr})			Number	load buffer {expr} if not loaded yet
 bufloaded({expr})		Number	|TRUE| if buffer {expr} is loaded
 bufname({expr})		String	Name of the buffer {expr}
 bufnr({expr} [, {create}])	Number	Number of the buffer {expr}
@@ -2679,6 +2681,14 @@ browsedir({title}, {initdir})
 		When the "Cancel" button is hit, something went wrong, or
 		browsing is not possible, an empty string is returned.
 
+bufadd({name})						*bufadd()*
+		Add a buffer to the buffer list with {name}.
+		If a buffer for file {name} already exists, return that buffer
+		number.  Otherwise return the buffer number of the newly
+		created buffer.  When {name} is an empty string then a new
+		buffer is always created.
+		The buffer will not have' 'buflisted' set.
+
 bufexists({expr})					*bufexists()*
 		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists.
@@ -2704,6 +2714,15 @@ bufexists({expr})					*bufexists()*
 buflisted({expr})					*buflisted()*
 		The result is a Number, which is |TRUE| if a buffer called
 		{expr} exists and is listed (has the 'buflisted' option set).
+		The {expr} argument is used like with |bufexists()|.
+
+bufload({expr})						*bufload()*
+		Ensure the buffer {expr} is loaded.  When the buffer name
+		refers to an existing file then the file is read.  Otherwise
+		the buffer will be empty.  If the buffer was already loaded
+		then there is no change.
+		If there is an existing swap file for the file of the buffer,
+		there will be no dialog, the buffer will be loaded anyway.
 		The {expr} argument is used like with |bufexists()|.
 
 bufloaded({expr})					*bufloaded()*
