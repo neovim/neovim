@@ -2085,7 +2085,7 @@ win_line (
   int lcs_eol_one = wp->w_p_lcs_chars.eol;     // 'eol'  until it's been used
   int lcs_prec_todo = wp->w_p_lcs_chars.prec;  // 'prec' until it's been used
 
-  /* saved "extra" items for when draw_state becomes WL_LINE (again) */
+  // saved "extra" items for when draw_state becomes WL_LINE (again)
   int saved_n_extra = 0;
   char_u      *saved_p_extra = NULL;
   int saved_c_extra = 0;

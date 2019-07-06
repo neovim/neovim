@@ -2495,7 +2495,7 @@ static void realloc_cmdbuff(int len)
 static char_u   *arshape_buf = NULL;
 
 # if defined(EXITFREE)
-void free_cmdline_buf(void)
+void free_arshape_buf(void)
 {
   xfree(arshape_buf);
 }
