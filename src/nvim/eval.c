@@ -15854,7 +15854,6 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         if (notanum) {
           return;
         }
-        lnum = tv_get_lnum(&di->di_tv);
       }
       if ((di = tv_dict_find(dict, "id", -1)) != NULL) {
         // get sign placed with this identifier
@@ -20682,11 +20681,11 @@ void ex_echohl(exarg_T *eap)
  */
 void ex_execute(exarg_T *eap)
 {
-  char_u      *arg = eap->arg;
+  char_u *arg = eap->arg;
   typval_T rettv;
   int ret = OK;
   garray_T ga;
-  int save_did_emsg = did_emsg;
+  int save_did_emsg;
 
   ga_init(&ga, 1, 80);
 
