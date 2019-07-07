@@ -284,14 +284,18 @@ highlighting, or |api-highlights|.
 By default, floats will use |hl-NormalFloat| as normal highlight, which
 links to |hl-Pmenu| in the builtin color scheme. The 'winhighlight' option can
 be used to override it. Currently, floating windows don't support any visual
-decorations like a border or additional widgets like scrollbar.
+decorations like a border or additional widgets like scrollbar. By default,
+floats will inherit options from the current window. This is not always
+useful for some options, like 'number'. Use `style='minimal'` flag to
+|nvim_open_win()| to disable many UI features that are unwanted for a simple
+float, like end-of-buffer region or special columns.
 
 Here is an example for creating a float with scratch buffer: >
 
     let buf = nvim_create_buf(v:false, v:true)
     call nvim_buf_set_lines(buf, 0, -1, v:true, ["test", "text"])
     let opts = {'relative': 'cursor', 'width': 10, 'height': 2, 'col': 0,
-        \ 'row': 1, 'anchor': 'NW'}
+        \ 'row': 1, 'anchor': 'NW', 'style': 'minimal'}
     let win = nvim_open_win(buf, 0, opts)
     " optional: change highlight, otherwise Pmenu is used
     call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')

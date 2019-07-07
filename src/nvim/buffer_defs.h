@@ -972,7 +972,6 @@ struct matchitem {
 };
 
 typedef int FloatAnchor;
-typedef int FloatRelative;
 
 enum {
   kFloatAnchorEast  = 1,
@@ -985,14 +984,19 @@ enum {
 // SE -> kFloatAnchorSouth | kFloatAnchorEast
 EXTERN const char *const float_anchor_str[] INIT(= { "NW", "NE", "SW", "SE" });
 
-enum {
+typedef enum {
   kFloatRelativeEditor = 0,
   kFloatRelativeWindow = 1,
   kFloatRelativeCursor = 2,
-};
+} FloatRelative;
 
 EXTERN const char *const float_relative_str[] INIT(= { "editor", "window",
                                                        "cursor" });
+
+typedef enum {
+  kWinStyleUnused = 0,
+  kWinStyleMinimal,  /// Minimal UI: no number column, eob markers, etc
+} WinStyle;
 
 typedef struct {
   Window window;
@@ -1002,12 +1006,14 @@ typedef struct {
   FloatRelative relative;
   bool external;
   bool focusable;
+  WinStyle style;
 } FloatConfig;
 
 #define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
                                           .row = 0, .col = 0, .anchor = 0, \
                                           .relative = 0, .external = false, \
-                                          .focusable = true })
+                                          .focusable = true, \
+                                          .style = kWinStyleUnused })
 
 // Structure to store last cursor position and topline.  Used by check_lnums()
 // and reset_lnums().

@@ -1064,6 +1064,19 @@ fail:
 ///   - `external`: GUI should display the window as an external
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
+///   - `style`: Configure the apparance of the window. Currently only takes
+///       one non-empty value:
+///       - "minimal"  Nvim will display the window with many UI options
+///                    disabled. This is useful when displaing a temporary
+///                    float where the text should not be edited. Disables
+///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
+///                    'spell' and 'list' options. 'signcolumn' is changed to
+///                    `auto`. The end-of-buffer region is hidden by setting
+///                    `eob` flag of 'fillchars' to a space char, and clearing
+///                    the |EndOfBuffer| region in 'winhighlight'.
+///
+///       top-level window. Currently accepts no other positioning
+///       configuration together with this.
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
@@ -1084,6 +1097,11 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
   }
   if (buffer > 0) {
     nvim_win_set_buf(wp->handle, buffer, err);
+  }
+
+  if (fconfig.style == kWinStyleMinimal) {
+    win_set_minimal_style(wp);
+    didset_window_options(wp);
   }
   return wp->handle;
 }

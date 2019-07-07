@@ -584,13 +584,41 @@ win_T *win_new_float(win_T *wp, FloatConfig fconfig, Error *err)
   wp->w_status_height = 0;
   wp->w_vsep_width = 0;
 
-  // TODO(bfredl): use set_option_to() after merging #9110 ?
-  wp->w_p_nu = false;
-  wp->w_allbuf_opt.wo_nu = false;
   win_config_float(wp, fconfig);
   wp->w_pos_changed = true;
   redraw_win_later(wp, VALID);
   return wp;
+}
+
+void win_set_minimal_style(win_T *wp)
+{
+  wp->w_p_nu = false;
+  wp->w_p_rnu = false;
+  wp->w_p_cul = false;
+  wp->w_p_cuc = false;
+  wp->w_p_spell = false;
+  wp->w_p_list = false;
+
+  // Hide EOB region: use " " fillchar and cleared highlighting
+  if (wp->w_p_fcs_chars.eob != ' ') {
+    char_u *old = wp->w_p_fcs;
+    wp->w_p_fcs = ((*old == NUL)
+                   ? (char_u *)xstrdup("eob: ")
+                   : concat_str(old, (char_u *)",eob: "));
+    xfree(old);
+  }
+  if (wp->w_hl_ids[HLF_EOB] != -1) {
+    char_u *old = wp->w_p_winhl;
+    wp->w_p_winhl = ((*old == NUL)
+                     ? (char_u *)xstrdup("EndOfBuffer:")
+                     : concat_str(old, (char_u *)",EndOfBuffer:"));
+    xfree(old);
+  }
+
+  if (wp->w_p_scl[0] != 'a') {
+    xfree(wp->w_p_scl);
+    wp->w_p_scl = (char_u *)xstrdup("auto");
+  }
 }
 
 void win_config_float(win_T *wp, FloatConfig fconfig)
@@ -820,6 +848,20 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         api_set_error(err, kErrorTypeValidation,
                       "'focusable' key must be Boolean");
         return false;
+      }
+    } else if (!strcmp(key, "style")) {
+      if (val.type != kObjectTypeString) {
+        api_set_error(err, kErrorTypeValidation,
+                      "'style' key must be String");
+        return false;
+      }
+      if (val.data.string.data[0] == NUL) {
+        fconfig->style = kWinStyleUnused;
+      } else if (striequal(val.data.string.data, "minimal")) {
+        fconfig->style = kWinStyleMinimal;
+      }  else {
+        api_set_error(err, kErrorTypeValidation,
+                      "Invalid value of 'style' key");
       }
     } else {
       api_set_error(err, kErrorTypeValidation,
