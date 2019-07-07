@@ -15850,8 +15850,8 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       if ((di = tv_dict_find(dict, "lnum", -1)) != NULL) {
         // get signs placed at this line
-        lnum = (linenr_T)tv_get_number_chk(&di->di_tv, &notanum);
-        if (notanum) {
+        lnum = tv_get_lnum(&di->di_tv);
+        if (lnum <= 0) {
           return;
         }
       }
