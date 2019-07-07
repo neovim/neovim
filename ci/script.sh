@@ -11,3 +11,9 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]]; then
 else
   ci/run_${CI_TARGET}.sh
 fi
+
+if [[ -s "${GCOV_ERROR_FILE}" ]]; then
+  echo '=== Unexpected gcov errors: ==='
+  cat "${GCOV_ERROR_FILE}"
+  exit 1
+fi

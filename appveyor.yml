@@ -32,6 +32,8 @@ after_build:
     if (Test-Path $env:GCOV_ERROR_FILE) {
       Get-Content $env:GCOV_ERROR_FILE -Head 10
       Get-Content $env:GCOV_ERROR_FILE -Tail 10
+    } else {
+      write-host "no GCOV_ERROR_FILE"
     }
 cache:
 - C:\projects\nvim-deps -> third-party\**

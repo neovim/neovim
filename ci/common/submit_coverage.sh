@@ -25,6 +25,7 @@ python3 -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 
 
 # Upload to codecov.
 # -X gcov: disable gcov, done manually above.
+# -X fix: disable fixing of reports (not necessary, rather slow)
 # -Z: exit non-zero on failure
 # -F: flag(s)
 # NOTE: ignoring flags for now, since this causes timeouts on codecov.io then,
@@ -32,7 +33,7 @@ python3 -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 
 # Flags must match pattern ^[\w\,]+$ ("," as separator).
 codecov_flags="$(uname -s),${1}"
 codecov_flags=$(echo "$codecov_flags" | sed 's/[^,_a-zA-Z0-9]/_/g')
-if ! "$codecov_sh" -f coverage.xml -X gcov -Z -F "${codecov_flags}"; then
+if ! "$codecov_sh" -f coverage.xml -X gcov -X fix -Z -F "${codecov_flags}"; then
   echo "codecov upload failed."
 fi
 
