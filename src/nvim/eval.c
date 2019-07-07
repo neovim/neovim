@@ -15827,11 +15827,11 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   buf_T *buf = NULL;
   dict_T *dict;
-  dictitem_T *dict_item;
-  linenr_T line_number = 0;
+  dictitem_T *di;
+  linenr_T lnum = 0;
   int sign_id = 0;
   const char *group = NULL;
-  bool not_a_number = false;
+  bool notanum = false;
 
   tv_list_alloc_ret(rettv, 0);
 
@@ -15848,22 +15848,22 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
         EMSG(_(e_dictreq));
         return;
       }
-      if ((dict_item = tv_dict_find(dict, "lnum", -1)) != NULL) {
+      if ((di = tv_dict_find(dict, "lnum", -1)) != NULL) {
         // get signs placed at this line
-        line_number = tv_get_lnum(&dict_item->di_tv);
-        if (line_number <= 0) {
+        lnum = tv_get_lnum(&di->di_tv);
+        if (lnum <= 0) {
           return;
         }
       }
-      if ((dict_item = tv_dict_find(dict, "id", -1)) != NULL) {
+      if ((di = tv_dict_find(dict, "id", -1)) != NULL) {
         // get sign placed with this identifier
-        sign_id = (int)tv_get_number_chk(&dict_item->di_tv, &not_a_number);
-        if (not_a_number) {
+        sign_id = (int)tv_get_number_chk(&di->di_tv, &notanum);
+        if (notanum) {
           return;
         }
       }
-      if ((dict_item = tv_dict_find(dict, "group", -1)) != NULL) {
-        group = tv_get_string_chk(&dict_item->di_tv);
+      if ((di = tv_dict_find(dict, "group", -1)) != NULL) {
+        group = tv_get_string_chk(&di->di_tv);
         if (group == NULL) {
           return;
         }
@@ -15874,7 +15874,7 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  sign_get_placed(buf, line_number, sign_id, (const char_u *)group,
+  sign_get_placed(buf, lnum, sign_id, (const char_u *)group,
                   rettv->vval.v_list);
 }
 
