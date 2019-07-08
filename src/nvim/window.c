@@ -652,6 +652,17 @@ void win_config_float(win_T *wp, FloatConfig fconfig)
   }
 }
 
+void win_check_anchored_floats(win_T *win)
+{
+  for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    // float might be anchored to moved window
+    if (wp->w_float_config.relative == kFloatRelativeWindow
+        && wp->w_float_config.window == win->handle) {
+      wp->w_pos_changed = true;
+    }
+  }
+}
+
 static void ui_ext_win_position(win_T *wp)
 {
   if (!wp->w_floating) {
@@ -673,6 +684,13 @@ static void ui_ext_win_position(win_T *wp)
         screen_adjust_grid(&grid, &row_off, &col_off);
         row += row_off;
         col += col_off;
+        if (c.bufpos.lnum >= 0) {
+          pos_T pos = { c.bufpos.lnum+1, c.bufpos.col, 0 };
+          int trow, tcol, tcolc, tcole;
+          textpos2screenpos(win, &pos, &trow, &tcol, &tcolc, &tcole, true);
+          row += trow-1;
+          col += tcol-1;
+        }
       }
       api_clear_error(&dummy);
     }
@@ -745,6 +763,18 @@ static bool parse_float_relative(String relative, FloatRelative *out)
   return true;
 }
 
+static bool parse_float_bufpos(Array bufpos, lpos_T *out)
+{
+  if (bufpos.size != 2
+      || bufpos.items[0].type != kObjectTypeInteger
+      || bufpos.items[1].type != kObjectTypeInteger) {
+    return false;
+  }
+  out->lnum = bufpos.items[0].data.integer;
+  out->col = bufpos.items[1].data.integer;
+  return true;
+}
+
 bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
                         Error *err)
 {
@@ -753,6 +783,7 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
   bool has_row = false, has_col = false, has_relative = false;
   bool has_external = false, has_window = false;
   bool has_width = false, has_height = false;
+  bool has_bufpos = false;
 
   for (size_t i = 0; i < config.size; i++) {
     char *key = config.items[i].key.data;
@@ -832,6 +863,18 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
         return false;
       }
       fconfig->window = val.data.integer;
+    } else if (!strcmp(key, "bufpos")) {
+      if (val.type != kObjectTypeArray) {
+        api_set_error(err, kErrorTypeValidation,
+                      "'bufpos' key must be Array");
+        return false;
+      }
+      if (!parse_float_bufpos(val.data.array, &fconfig->bufpos)) {
+        api_set_error(err, kErrorTypeValidation,
+                      "Invalid value of 'bufpos' key");
+        return false;
+      }
+      has_bufpos = true;
     } else if (!strcmp(key, "external")) {
       if (val.type == kObjectTypeInteger) {
         fconfig->external = val.data.integer;
@@ -884,6 +927,21 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
   if ((has_relative && fconfig->relative == kFloatRelativeWindow)
       && (!has_window || fconfig->window == 0)) {
     fconfig->window = curwin->handle;
+  }
+
+  if (has_window && !has_bufpos) {
+    fconfig->bufpos.lnum = -1;
+  }
+
+  if (has_bufpos) {
+    if (!has_row) {
+      fconfig->row = (fconfig->anchor & kFloatAnchorSouth) ? 0 : 1;
+      has_row = true;
+    }
+    if (!has_col) {
+      fconfig->col = 0;
+      has_col = true;
+    }
   }
 
   if (has_relative && has_external) {
@@ -4732,7 +4790,8 @@ void shell_new_rows(void)
   if (!frame_check_height(topframe, h))
     frame_new_height(topframe, h, FALSE, FALSE);
 
-  (void)win_comp_pos();                 /* recompute w_winrow and w_wincol */
+  (void)win_comp_pos();  // recompute w_winrow and w_wincol
+  win_reconfig_floats();  // The size of floats might change
   compute_cmdrow();
   curtab->tp_ch_used = p_ch;
 
@@ -4753,7 +4812,8 @@ void shell_new_columns(void)
     frame_new_width(topframe, Columns, false, false);
   }
 
-  (void)win_comp_pos();                 /* recompute w_winrow and w_wincol */
+  (void)win_comp_pos();  // recompute w_winrow and w_wincol
+  win_reconfig_floats();  // The size of floats might change
 }
 
 /*
@@ -4809,13 +4869,21 @@ int win_comp_pos(void)
 
   frame_comp_pos(topframe, &row, &col);
 
-  // Too often, but when we support anchoring floats to split windows,
-  // this will be needed
   for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
-    win_config_float(wp, wp->w_float_config);
+    // float might be anchored to moved window
+    if (wp->w_float_config.relative == kFloatRelativeWindow) {
+      wp->w_pos_changed = true;
+    }
   }
 
   return row;
+}
+
+void win_reconfig_floats(void)
+{
+  for (win_T *wp = lastwin; wp && wp->w_floating; wp = wp->w_prev) {
+    win_config_float(wp, wp->w_float_config);
+  }
 }
 
 /*

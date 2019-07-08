@@ -95,6 +95,8 @@ static void comp_botline(win_T *wp)
   wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
 
   set_empty_rows(wp, done);
+
+  win_check_anchored_floats(wp);
 }
 
 void reset_cursorline(void)
@@ -310,6 +312,7 @@ void update_topline(void)
     }
   }
   curwin->w_valid |= VALID_TOPLINE;
+  win_check_anchored_floats(curwin);
 
   /*
    * Need to redraw when topline changed.
@@ -827,7 +830,8 @@ void curs_columns(
         new_leftcol = 0;
       if (new_leftcol != (int)curwin->w_leftcol) {
         curwin->w_leftcol = new_leftcol;
-        /* screen has to be redrawn with new curwin->w_leftcol */
+        win_check_anchored_floats(curwin);
+        // screen has to be redrawn with new curwin->w_leftcol
         redraw_later(NOT_VALID);
       }
     }
@@ -941,6 +945,74 @@ void curs_columns(
   }
 
   curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
+}
+
+/// Compute the screen position of text character at "pos" in window "wp"
+/// The resulting values are one-based, zero when character is not visible.
+///
+/// @param[out] rowp screen row
+/// @param[out] scolp start screen column
+/// @param[out] ccolp cursor screen column
+/// @param[out] ecolp end screen column
+void textpos2screenpos(win_T *wp, pos_T *pos, int *rowp, int *scolp,
+                       int *ccolp, int *ecolp, bool local)
+{
+  colnr_T scol = 0, ccol = 0, ecol = 0;
+  int row = 0;
+  int rowoff = 0;
+  colnr_T coloff = 0;
+  bool visible_row = false;
+
+  if (pos->lnum >= wp->w_topline && pos->lnum < wp->w_botline) {
+    row = plines_m_win(wp, wp->w_topline, pos->lnum - 1) + 1;
+    visible_row = true;
+  } else if (pos->lnum < wp->w_topline) {
+    row = 0;
+  } else {
+    row = wp->w_height_inner;
+  }
+
+  bool existing_row = (pos->lnum > 0
+                       && pos->lnum <= wp->w_buffer->b_ml.ml_line_count);
+
+  if ((local && existing_row) || visible_row) {
+    colnr_T off;
+    colnr_T col;
+    int     width;
+
+    getvcol(wp, pos, &scol, &ccol, &ecol);
+
+    // similar to what is done in validate_cursor_col()
+    col = scol;
+    off = win_col_off(wp);
+    col += off;
+    width = wp->w_width - off + win_col_off2(wp);
+
+    // long line wrapping, adjust row
+    if (wp->w_p_wrap && col >= (colnr_T)wp->w_width && width > 0) {
+      // use same formula as what is used in curs_columns()
+      rowoff = visible_row ? ((col - wp->w_width) / width + 1) : 0;
+      col -= rowoff * width;
+    }
+
+    col -= wp->w_leftcol;
+
+    if (col >= 0 && col < width) {
+      coloff = col - scol + (local ? 0 : wp->w_wincol) + 1;
+    } else {
+      scol = ccol = ecol = 0;
+      // character is left or right of the window
+      if (local) {
+        coloff = col < 0 ? -1 : wp->w_width_inner + 1;
+      } else {
+        row = 0;
+      }
+    }
+  }
+  *rowp = (local ? 0 : wp->w_winrow) + row + rowoff;
+  *scolp = scol + coloff;
+  *ccolp = ccol + coloff;
+  *ecolp = ecol + coloff;
 }
 
 /*
@@ -1099,6 +1171,7 @@ check_topfill (
       }
     }
   }
+  win_check_anchored_floats(curwin);
 }
 
 /*
