@@ -61,7 +61,7 @@ proftime_T profile_setlimit(int64_t msec) FUNC_ATTR_WARN_UNUSED_RESULT
   }
   assert(msec <= (INT64_MAX / 1000LL) - 1);
 
-  proftime_T usec = (proftime_T)msec * 1000ULL;
+  proftime_T usec = msec * 1000;
   return os_utime() + usec;
 }
 
@@ -111,7 +111,7 @@ proftime_T profile_add(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 /// @return `tm1` - `tm2`
 proftime_T profile_sub(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
-  return tm1 > tm2 ? tm1 - tm2 : 0;  // os_utime() may go backwards.
+  return tm1 - tm2;
 }
 
 /// Adds the `self` time from the total time and the `children` time.
