@@ -4418,12 +4418,19 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
   ssize_t change_cnt = 0;
   linenr_T amount = Prenum1;
 
+  // do_addsub() might trigger re-evaluation of 'foldexpr' halfway, when the
+  // buffer is not completly updated yet. Postpone updating folds until before
+  // the call to changed_lines().
+  compl_busy = true;
+
   if (!VIsual_active) {
     pos = curwin->w_cursor;
     if (u_save_cursor() == FAIL) {
+      compl_busy = false;
       return;
     }
     change_cnt = do_addsub(oap->op_type, &pos, 0, amount);
+    compl_busy = false;
     if (change_cnt) {
       changed_lines(pos.lnum, 0, pos.lnum + 1, 0L, true);
     }
@@ -4434,6 +4441,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 
     if (u_save((linenr_T)(oap->start.lnum - 1),
                (linenr_T)(oap->end.lnum + 1)) == FAIL) {
+      compl_busy = false;
       return;
     }
 
@@ -4480,6 +4488,8 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
         amount += Prenum1;
       }
     }
+
+    compl_busy = false;
     if (change_cnt) {
       changed_lines(oap->start.lnum, 0, oap->end.lnum + 1, 0L, true);
     }
