@@ -80,6 +80,8 @@ jobs:
       compiler: gcc
       env:
         - BUILD_32BIT=ON
+        # Minimum required CMake.
+        - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
         - *common-job-env
     - if: branch = master AND commit_message !~ /\[skip.lint\]/
       name: lint

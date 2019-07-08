@@ -46,3 +46,16 @@ fi
 source ~/.nvm/nvm.sh
 nvm install --lts
 nvm use --lts
+
+if [[ -n "$CMAKE_URL" ]]; then
+  echo "Installing custom CMake: $CMAKE_URL"
+  curl --retry 5 --silent --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+  mkdir -p "$HOME/.local/bin" /opt/cmake-custom
+  bash /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
+  ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
+  cmake_version="$(cmake --version)"
+  echo "$cmake_version" | grep -qF '2.8.12' || {
+    echo "Unexpected CMake version: $cmake_version"
+    exit 1
+  }
+fi
