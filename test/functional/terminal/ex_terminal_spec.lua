@@ -261,4 +261,14 @@ describe(':terminal (with fake shell)', function()
     eq('scripts/shadacat.py', eval('bufname("%")'))
   end)
 
+  it('with bufhidden=delete #3958', function()
+    command('set hidden')
+    eq(1, eval('&hidden'))
+    command('autocmd BufNew * setlocal bufhidden=delete')
+    for _ = 1, 5 do
+      source([[
+      execute 'edit '.reltimestr(reltime())
+      terminal]])
+    end
+  end)
 end)
