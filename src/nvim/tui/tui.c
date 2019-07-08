@@ -133,7 +133,6 @@ typedef struct {
 static bool volatile got_winch = false;
 static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
-uint64_t connect_channel_id = 0;
 char *termname_local;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
@@ -191,7 +190,7 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
   ADD(args, DICTIONARY_OBJ(opts));
   rpc_send_event(rc_id, "nvim_set_terminfo", args);
   
-  connect_channel_id = rc_id;
+  connected_channel_id = rc_id;
   return rc_id;
 }
 
@@ -281,18 +280,16 @@ static void terminfo_start(UI *ui)
 #endif
 
   // Set up unibilium/terminfo.
-  char *termname = NULL;
+  termname_local = NULL;
   if (term) {
     data->ut = unibi_from_term(term);
     if (data->ut) {
-      termname = xstrdup(term);
+      termname_local = xstrdup(term);
     }
   }
   if (!data->ut) {
-    data->ut = terminfo_from_builtin(term, &termname);
+    data->ut = terminfo_from_builtin(term, &termname_local);
   }
-  // Update 'term' option.
-  termname_local = xstrdup(termname);
 
   // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
@@ -1342,11 +1339,11 @@ static void tui_option_set(UI *ui, String name, Object value)
 
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
-    if (connect_channel_id) {
+    if (connected_channel_id) {
       Array args = ARRAY_DICT_INIT;
       ADD(args, STRING_OBJ(cstr_as_string(xstrdup("rgb"))));
       ADD(args, BOOLEAN_OBJ(value.data.boolean));
-      rpc_send_event(connect_channel_id, "nvim_ui_set_option", args);
+      rpc_send_event(connected_channel_id, "nvim_ui_set_option", args);
     }
   }
 }

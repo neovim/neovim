@@ -343,6 +343,9 @@ EXTERN scid_T current_SID INIT(= 0);
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
 
+// ID of the conneted channel. Used by TUI
+EXTERN uint64_t connected_channel_id INIT(= 0);
+
 EXTERN bool did_source_packages INIT(= false);
 
 // Scope information for the code that indirectly triggered the current

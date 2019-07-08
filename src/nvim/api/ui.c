@@ -196,11 +196,16 @@ void nvim_set_terminfo(uint64_t channel_id, Dictionary options, Error *error)
   for (size_t i = 0; i < options.size; i++) {
     if (!strcmp(options.items[i].key.data, "termname")) {
       set_tty_option("term", xstrdup(options.items[i].value.data.string.data));
-      continue;
-    }
-    if (!strcmp(options.items[i].key.data, "t_Co")) {
+    } else if (!strcmp(options.items[i].key.data, "t_Co")) {
       t_colors = (int)options.items[i].value.data.integer;
-      continue;
+    } else if (!strcmp(options.items[i].key.data, "bg")
+              && !option_was_set("bg")
+              && !strequal((char *)p_bg, options.items[i].value.data.string.data)) {
+      set_option_value("bg",
+                      0L,
+                      options.items[i].value.data.string.data,
+                      0);
+      reset_option_was_set("bg");
     }
   }
 }

@@ -227,11 +227,7 @@ void ui_refresh(void)
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
-    if (is_remote_client) {
-      rpc_send_event(channel_get_id(true, true), "nvim_ui_try_resize", args);
-    } else if ((!headless_mode && !embedded_mode && !silent_mode)) {
-      rpc_send_event(channel_get_id(false, true), "nvim_ui_try_resize", args);
-    }
+    rpc_send_event(connected_channel_id, "nvim_ui_try_resize", args);
   } else {
     screen_resize(width, height);    
   }

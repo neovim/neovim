@@ -16,6 +16,7 @@
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 #include "nvim/msgpack_rpc/channel.h"
+#include "nvim/ui.h"
 
 #define PASTETOGGLE_KEY "<Paste>"
 #define KEY_BUFFER_SIZE 0xfff
@@ -112,14 +113,10 @@ static void tinput_wait_enqueue(void **argv)
       ADD(args, STRING_OBJ(((String){
           .data = xstrdup(buf), 
           .size = len})));
-      if (is_remote_client) {
-        bool result = rpc_send_event(channel_get_id(true, true), "nvim_input", args);
-        consumed = result ? len : 0;
-      } else if ((!headless_mode && !embedded_mode && !silent_mode)){
-        bool result = rpc_send_event(channel_get_id(false, true), "nvim_input", args);
-        consumed = result ? len : 0;
-      }
+      bool result = rpc_send_event(connected_channel_id, "nvim_input", args);
+      consumed = result ? len : 0;
     } else {
+      // TODO(hlpr98): Remove this
       consumed = input_enqueue((String){.data = buf, .size = len});      
     }
     if (consumed) {
@@ -145,6 +142,7 @@ static void tinput_flush(TermInput *input, bool wait_until_empty)
     if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
       tinput_wait_enqueue((void**)&input);
     } else {
+      // TODO(hlpr98): Remove this
       uv_mutex_lock(&input->key_buffer_mutex);
       loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
       input->waiting = true;
@@ -355,12 +353,9 @@ static bool handle_focus_event(TermInput *input)
     if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
       Array args = ARRAY_DICT_INIT;
       ADD(args, BOOLEAN_OBJ(focus_gained));
-      if (is_remote_client) {
-        rpc_send_event(channel_get_id(true, true), "nvim_ui_set_focus", args);
-      } else if ((!headless_mode && !embedded_mode && !silent_mode)){
-        rpc_send_event(channel_get_id(false, true), "nvim_ui_set_focus", args);
-      }
+      rpc_send_event(connected_channel_id, "nvim_ui_set_focus", args);
     } else {
+      // TODO(hlpr98): Remove this
       aucmd_schedule_focusgained(focus_gained);
     }
     return true;
@@ -401,21 +396,15 @@ static bool handle_forced_escape(TermInput *input)
   return false;
 }
 
-static void set_bg_deferred(void **argv)
+static void set_bg(char *bgvalue)
 {
-  char *bgvalue = argv[0];
-  if (!option_was_set("bg") && !strequal((char *)p_bg, bgvalue)) {
-    // Value differs, apply it.
-    if (starting) {
-      // Wait until after startup, so OptionSet is triggered.
-      do_cmdline_cmd((bgvalue[0] == 'l')
-                     ? "autocmd VimEnter * ++once ++nested set bg=light"
-                     : "autocmd VimEnter * ++once ++nested set bg=dark");
-    } else {
-      set_option_value("bg", 0L, bgvalue, 0);
-      reset_option_was_set("bg");
-    }
-  }
+  Array args = ARRAY_DICT_INIT;
+  Dictionary opts = ARRAY_DICT_INIT;
+  PUT(opts, "bg", STRING_OBJ(cstr_as_string(xstrdup(bgvalue))));
+  
+  ADD(args, DICTIONARY_OBJ(opts));
+  
+  rpc_send_event(connected_channel_id, "nvim_set_terminfo", args);
 }
 
 // During startup, tui.c requests the background color (see `ext.get_bg`).
@@ -483,8 +472,7 @@ static bool handle_background_color(TermInput *input)
     double luminance = (0.299 * r) + (0.587 * g) + (0.114 * b);  // CCIR 601
     char *bgvalue = luminance < 0.5 ? "dark" : "light";
     DLOG("bg response: %s", bgvalue);
-    loop_schedule_deferred(&main_loop,
-                           event_create(set_bg_deferred, 1, bgvalue));
+    set_bg(bgvalue);
   } else {
     DLOG("failed to parse bg response");
     return false;
