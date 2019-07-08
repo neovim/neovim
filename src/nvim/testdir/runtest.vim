@@ -282,7 +282,7 @@ let s:flaky_tests = [
       \ ]
 
 " Pattern indicating a common flaky test failure.
-let s:flaky_errors_re = 'StopVimInTerminal'
+let s:flaky_errors_re = 'StopVimInTerminal\|VerifyScreenDump'
 
 " Locate Test_ functions and execute them.
 redir @q
