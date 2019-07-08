@@ -375,7 +375,7 @@ newwindow:
   /* set current window height */
   case Ctrl__:
   case '_':
-    win_setheight(Prenum ? (int)Prenum : 9999);
+    win_setheight(Prenum ? (int)Prenum : Rows-1);
     break;
 
   /* increase current window width */
@@ -390,7 +390,7 @@ newwindow:
 
   /* set current window width */
   case '|':
-    win_setwidth(Prenum != 0 ? (int)Prenum : 9999);
+    win_setwidth(Prenum != 0 ? (int)Prenum : Columns);
     break;
 
   /* jump to tag and split window if tag exists (in preview window) */
@@ -694,6 +694,7 @@ static void ui_ext_win_position(win_T *wp)
       bool on_top = (curwin == wp) || !curwin->w_floating;
       ui_comp_put_grid(&wp->w_grid, comp_row, comp_col, wp->w_height,
                        wp->w_width, valid, on_top);
+      ui_check_cursor_grid(wp->w_grid.handle);
       if (!valid) {
         wp->w_grid.valid = false;
         redraw_win_later(wp, NOT_VALID);
@@ -4865,13 +4866,9 @@ void win_setheight_win(int height, win_T *win)
   }
 
   if (win->w_floating) {
-    if (win->w_float_config.external) {
-      win->w_float_config.height = height;
-      win_config_float(win, win->w_float_config);
-    } else {
-      beep_flush();
-      return;
-    }
+    win->w_float_config.height = height;
+    win_config_float(win, win->w_float_config);
+    redraw_win_later(win, NOT_VALID);
   } else {
     frame_setheight(win->w_frame, height + win->w_status_height);
 
@@ -4886,9 +4883,9 @@ void win_setheight_win(int height, win_T *win)
     cmdline_row = row;
     msg_row = row;
     msg_col = 0;
+    redraw_all_later(NOT_VALID);
   }
 
-  redraw_all_later(NOT_VALID);
 }
 
 
@@ -5071,21 +5068,17 @@ void win_setwidth_win(int width, win_T *wp)
       width = 1;
   }
   if (wp->w_floating) {
-    if (wp->w_float_config.external) {
-      wp->w_float_config.width = width;
-      win_config_float(wp, wp->w_float_config);
-    } else {
-      beep_flush();
-      return;
-    }
+    wp->w_float_config.width = width;
+    win_config_float(wp, wp->w_float_config);
+    redraw_win_later(wp, NOT_VALID);
   } else {
     frame_setwidth(wp->w_frame, width + wp->w_vsep_width);
 
     // recompute the window positions
     (void)win_comp_pos();
+    redraw_all_later(NOT_VALID);
   }
 
-  redraw_all_later(NOT_VALID);
 }
 
 /*
