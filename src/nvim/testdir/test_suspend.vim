@@ -53,6 +53,8 @@ func Test_suspend()
   " Quit gracefully to dump coverage information.
   call term_sendkeys(buf, ":qall!\<CR>")
   call term_wait(buf)
+  " Wait until Vim actually exited and shell shows a prompt
+  call WaitForAssert({-> assert_match('[$#] $', term_getline(buf, '.'))})
   call Stop_shell_in_terminal(buf)
 
   exe buf . 'bwipe!'
