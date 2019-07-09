@@ -18,8 +18,6 @@ Strip = namedtuple('Strip', 'start_line start_column end_line end_column')
 
 
 def main(progname, cfname, only_static, move_all):
-  only_static = False
-
   cfname = os.path.abspath(os.path.normpath(cfname))
 
   hfname1 = os.path.splitext(cfname)[0] + os.extsep + 'h'
