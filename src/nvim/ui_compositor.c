@@ -290,10 +290,14 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
 {
   // in case we start on the right half of a double-width char, we need to
   // check the left half. But skip it in output if it wasn't doublewidth.
-  int skip = 0;
+  int skipstart = 0, skipend = 0;
   if (startcol > 0 && (flags & kLineFlagInvalid)) {
     startcol--;
-    skip = 1;
+    skipstart = 1;
+  }
+  if (endcol < default_grid.Columns && (flags & kLineFlagInvalid)) {
+    endcol++;
+    skipend = 1;
   }
 
   int col = (int)startcol;
@@ -345,20 +349,27 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     if (linebuf[col-startcol][0] == NUL) {
       linebuf[col-startcol][0] = ' ';
       linebuf[col-startcol][1] = NUL;
+      if (col == endcol-1) {
+        skipend = 0;
+      }
     } else if (n > 1 && linebuf[col-startcol+1][0] == NUL) {
-      skip = 0;
+      skipstart = 0;
     }
     if (grid->comp_col+grid->Columns > until
         && grid->chars[off+n][0] == NUL) {
       linebuf[until-1-startcol][0] = ' ';
       linebuf[until-1-startcol][1] = '\0';
       if (col == startcol && n == 1) {
-        skip = 0;
+        skipstart = 0;
       }
     }
 
     col = until;
   }
+  if (linebuf[endcol-startcol-1][0] == NUL) {
+    skipend = 0;
+  }
+
   assert(endcol <= chk_width);
   assert(row < chk_height);
 
@@ -368,9 +379,10 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     flags = flags & ~kLineFlagWrap;
   }
 
-  ui_composed_call_raw_line(1, row, startcol+skip, endcol, endcol, 0, flags,
-                            (const schar_T *)linebuf+skip,
-                            (const sattr_T *)attrbuf+skip);
+  ui_composed_call_raw_line(1, row, startcol+skipstart,
+                            endcol-skipend, endcol-skipend, 0, flags,
+                            (const schar_T *)linebuf+skipstart,
+                            (const sattr_T *)attrbuf+skipstart);
 }
 
 static void compose_area(Integer startrow, Integer endrow,
