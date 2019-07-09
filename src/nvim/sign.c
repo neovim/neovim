@@ -83,11 +83,8 @@ static signgroup_T * sign_group_ref(const char_u *groupname)
   hi = hash_lookup(&sg_table, (char *)groupname, STRLEN(groupname), hash);
   if (HASHITEM_EMPTY(hi)) {
     // new group
-    group = (signgroup_T *)xmalloc(
-        (unsigned)(sizeof(signgroup_T) + STRLEN(groupname)));
-    if (group == NULL) {
-      return NULL;
-    }
+    group = xmalloc((unsigned)(sizeof(signgroup_T) + STRLEN(groupname)));
+
     STRCPY(group->sg_name, groupname);
     group->refcount = 1;
     group->next_sign_id = 1;
@@ -188,10 +185,6 @@ static void insert_sign(
   newsign->typenr = typenr;
   if (group != NULL) {
     newsign->group = sign_group_ref(group);
-    if (newsign->group == NULL) {
-      xfree(newsign);
-      return;
-    }
   } else {
     newsign->group = NULL;
   }
@@ -1347,8 +1340,8 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
 /// Otherwise, return information about the specified sign.
 void sign_getlist(const char_u *name, list_T *retlist)
 {
-  sign_T  *sp = first_sign;
-  dict_T  *dict;
+  sign_T *sp = first_sign;
+  dict_T *dict;
 
   if (name != NULL) {
     sp = sign_find(name, NULL);
@@ -1358,9 +1351,7 @@ void sign_getlist(const char_u *name, list_T *retlist)
   }
 
   for (; sp != NULL && !got_int; sp = sp->sn_next) {
-    if ((dict = tv_dict_alloc()) == NULL) {
-      return;
-    }
+    dict = tv_dict_alloc();
     tv_list_append_dict(retlist, dict);
     sign_getinfo(sp, dict);
 
@@ -1374,16 +1365,15 @@ void sign_getlist(const char_u *name, list_T *retlist)
 list_T *get_buffer_signs(buf_T *buf)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  signlist_T  *sign;
-  dict_T  *d;
-  list_T *const l = tv_list_alloc(kListLenMayKnow);
+  signlist_T *sign;
+  dict_T *dict;
+  list_T *const list = tv_list_alloc(kListLenMayKnow);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    if ((d = sign_get_info(sign)) != NULL) {
-      tv_list_append_dict(l, d);
-    }
+    dict = sign_get_info(sign);
+    tv_list_append_dict(list, dict);
   }
-  return l;
+  return list;
 }
 
 /// Return information about all the signs placed in a buffer
@@ -1394,22 +1384,17 @@ static void sign_get_placed_in_buf(
     const char_u *sign_group,
     list_T *retlist)
 {
-  dict_T  *d;
-  list_T  *l;
-  signlist_T  *sign;
-  dict_T  *sdict;
+  dict_T *dict;
+  list_T *list;
+  signlist_T *sign;
 
-  if ((d = tv_dict_alloc()) == NULL) {
-    return;
-  }
-  tv_list_append_dict(retlist, d);
+  dict = tv_dict_alloc();
+  tv_list_append_dict(retlist, dict);
 
-  tv_dict_add_nr(d, S_LEN("bufnr"), (long)buf->b_fnum);
+  tv_dict_add_nr(dict, S_LEN("bufnr"), (long)buf->b_fnum);
 
-  if ((l = tv_list_alloc(kListLenMayKnow)) == NULL) {
-    return;
-  }
-  tv_dict_add_list(d, S_LEN("signs"), l);
+  list = tv_list_alloc(kListLenMayKnow);
+  tv_dict_add_list(dict, S_LEN("signs"), list);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (!sign_in_group(sign, sign_group)) {
@@ -1419,9 +1404,7 @@ static void sign_get_placed_in_buf(
         || (sign_id == 0 && lnum == sign->lnum)
         || (lnum == 0 && sign_id == sign->id)
         || (lnum == sign->lnum && sign_id == sign->id)) {
-      if ((sdict = sign_get_info(sign)) != NULL) {
-        tv_list_append_dict(l, sdict);
-      }
+      tv_list_append_dict(list, sign_get_info(sign));
     }
   }
 }
