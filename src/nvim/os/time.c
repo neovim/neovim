@@ -39,7 +39,7 @@ void time_init(void)
 /// @see gettimeofday(2)
 ///
 /// @return Current time in microseconds.
-uint64_t os_utime(void)
+int64_t os_utime(void)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   uv_timeval64_t tm;
@@ -47,8 +47,8 @@ uint64_t os_utime(void)
   if (e != 0 || tm.tv_sec < 0 || tm.tv_usec < 0) {
     return 0;
   }
-  uint64_t rv = (uint64_t)tm.tv_sec * 1000 * 1000;  // s => μs
-  STRICT_ADD(rv, tm.tv_usec, &rv, uint64_t);
+  int64_t rv = tm.tv_sec * 1000 * 1000;  // s => μs
+  STRICT_ADD(rv, tm.tv_usec, &rv, int64_t);
   return rv;
 }
 

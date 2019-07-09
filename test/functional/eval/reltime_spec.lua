@@ -33,4 +33,14 @@ describe('reltimestr(), reltimefloat()', function()
     ok(reltimefloat(differs) < 1.0)
 
   end)
+
+  it('reltime() allows negative result #10452', function()
+    local older_time = reltime()
+    command('sleep 1m')
+    local newer_time = reltime()
+    -- Should be something like -0.002123.
+    local rv = tonumber(reltimestr(reltime(newer_time, older_time)))
+    ok(rv < 0)
+    ok(rv > -10)
+  end)
 end)
