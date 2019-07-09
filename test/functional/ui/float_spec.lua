@@ -172,6 +172,121 @@ describe('floating windows', function()
       end
     end)
 
+    it('draws correctly with redrawdebug=compositor', function()
+      -- NB: we do not test that it produces the "correct" debug info
+      -- (as it is intermediate only, and is allowed to change by internal
+      -- refactors). Only check that it doesn't cause permanent glitches,
+      -- or something.
+      command("set redrawdebug=compositor")
+      command("set wd=1")
+      local buf = meths.create_buf(false,false)
+      local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=2, col=5})
+      local expected_pos = {
+          [3]={{id=1001}, 'NW', 1, 2, 5, true},
+      }
+
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {1:                    }|
+          {2:~                   }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~                                       }|
+          {0:~    }{1:                    }{0:               }|
+          {0:~    }{2:~                   }{0:               }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+          ]])
+      end
+
+
+      meths.win_set_config(win, {relative='editor', row=0, col=10})
+      expected_pos[3][4] = 0
+      expected_pos[3][5] = 10
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ## grid 3
+          {1:                    }|
+          {2:~                   }|
+        ]], float_pos=expected_pos}
+      else
+        screen:expect([[
+          ^          {1:                    }          |
+          {0:~         }{2:~                   }{0:          }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]])
+      end
+
+      meths.win_close(win, false)
+      if multigrid then
+        screen:expect([[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+        ]])
+      else
+        screen:expect([[
+          ^                                        |
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+          {0:~                                       }|
+                                                  |
+        ]])
+      end
+    end)
+
     it('return their configuration', function()
       local buf = meths.create_buf(false, false)
       local win = meths.open_win(buf, false, {relative='editor', width=20, height=2, row=3, col=5})

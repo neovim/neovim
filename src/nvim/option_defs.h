@@ -511,6 +511,13 @@ EXTERN char_u   *p_pm;          // 'patchmode'
 EXTERN char_u   *p_path;        // 'path'
 EXTERN char_u   *p_cdpath;      // 'cdpath'
 EXTERN long p_pyx;              // 'pyxversion'
+EXTERN char_u *p_rdb;           // 'redrawdebug'
+EXTERN unsigned rdb_flags;
+# ifdef IN_OPTION_C
+static char *(p_rdb_values[]) = { "compositor", NULL };
+# endif
+# define RDB_COMPOSITOR         0x001
+
 EXTERN long p_rdt;              // 'redrawtime'
 EXTERN int p_remap;             // 'remap'
 EXTERN long p_re;               // 'regexpengine'

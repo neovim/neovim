@@ -54,6 +54,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
+#include "nvim/ui_compositor.h"
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/shada.h"
@@ -220,6 +221,7 @@ void early_init(void)
   set_lang_var();               // set v:lang and v:ctype
 
   init_signs();
+  ui_comp_syn_init();
 }
 
 #ifdef MAKE_LIB

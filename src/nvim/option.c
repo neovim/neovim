@@ -2191,6 +2191,7 @@ static void didset_options(void)
   (void)opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true);
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, true);
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, true);
+  (void)opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true);
   (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   (void)opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
@@ -2648,6 +2649,10 @@ did_set_string_option(
     }
   } else if (varp == &p_vop) {  // 'viewoptions'
     if (opt_strings_flags(p_vop, p_ssop_values, &vop_flags, true) != OK) {
+      errmsg = e_invarg;
+    }
+  } else if (varp == &p_rdb) {  // 'redrawdebug'
+    if (opt_strings_flags(p_rdb, p_rdb_values, &rdb_flags, true) != OK) {
       errmsg = e_invarg;
     }
   } else if (varp == &p_sbo) {  // 'scrollopt'
