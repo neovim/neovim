@@ -7,8 +7,6 @@ local Enum = require('nvim.meta').Enum
 local EmptyDictionary = require('nvim.meta').EmptyDictionary
 
 local message = require('lsp.message')
-local initialize_filetype_autocmds = require('lsp.autocmds').initialize_filetype_autocmds
-local lsp_doautocmd = require('lsp.autocmds').lsp_doautocmd
 local call_callbacks_for_method = require('lsp.callbacks').call_callbacks_for_method
 local should_send_message = require('lsp.checks').should_send
 
@@ -98,17 +96,12 @@ client.new = function(name, ft, cmd)
 end
 
 client.initialize = function(self)
-  -- Initialize autocmd for filetypes == self.ft
-  --    These will create buffer local autocmds in each buffer
-  initialize_filetype_autocmds(self.ft)
-
   local result = self:request_async('initialize', nil, function(_, data)
     self:notify('initialized')
     self:notify('textDocument/didOpen')
     self.capabilities =  EmptyDictionary:new(data.capabilities)
     return data.capabilities
   end)
-
 
   return result
 end
@@ -328,7 +321,6 @@ client.on_message = function(self, json_message)
   if json_message.method and json_message.params then
     log.debug('notification: ', json_message.method)
     call_callbacks_for_method(json_message.method, true, json_message.params, nil)
-    lsp_doautocmd(json_message.method, 'notification')
 
     return
   -- Handle responses
@@ -338,7 +330,6 @@ client.on_message = function(self, json_message)
     local success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
 
-    lsp_doautocmd(method, 'response')
     local result
     if cb then
       result = { cb(success, data) }

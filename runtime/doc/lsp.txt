@@ -185,24 +185,6 @@ your daily workflow.
     nnoremap <buffer> <C-]> :call lsp#request_async('textDocument/definition')
 
 ================================================================================
-                                                                 *lsp-autocmds*
-
-The language server implementation in Neovim will fire |autocmd-User| events
-upon each request and response so that users can attach to whenever these
-events are triggered.
-
-For the request 'textDocument/hover', the following autocmds will be fired:
-
-    Before sending the request:
-        'textDocument/hover/pre'
-
-    After sending the request:
-        'textDocument/hover/post'
-
-    Before handling the response:
-        'textDocument/hover/response'
-
-================================================================================
                                                             *lsp-configuration*
 
 <
