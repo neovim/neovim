@@ -883,6 +883,7 @@ EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
 EXTERN bool is_remote_client INIT(= false);       // Initially the TUI is not
                                                   // a remote client                                        
 
+EXTERN bool TUI_process INIT(= false);            // This is the TUI process
 
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character

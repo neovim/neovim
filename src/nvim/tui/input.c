@@ -108,17 +108,13 @@ static void tinput_wait_enqueue(void **argv)
   TermInput *input = argv[0];
   size_t consumed = 0;
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
-    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, STRING_OBJ(((String){
-          .data = xstrdup(buf), 
-          .size = len})));
-      bool result = rpc_send_event(connected_channel_id, "nvim_input", args);
-      consumed = result ? len : 0;
-    } else {
-      // TODO(hlpr98): Remove this
-      consumed = input_enqueue((String){.data = buf, .size = len});      
-    }
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(((String){
+        .data = xstrdup(buf), 
+        .size = len})));
+    bool result = rpc_send_event(connected_channel_id, "nvim_input", args);
+    consumed = result ? len : 0;
+  
     if (consumed) {
       rbuffer_consumed(input->key_buffer, consumed);
     }
@@ -127,30 +123,13 @@ static void tinput_wait_enqueue(void **argv)
       break;
     }
   }
-  if (!(is_remote_client || (!headless_mode && !embedded_mode && !silent_mode))) {
-    uv_mutex_lock(&input->key_buffer_mutex);
-    input->waiting = false;
-    uv_cond_signal(&input->key_buffer_cond);
-    uv_mutex_unlock(&input->key_buffer_mutex);
-  } 
 }
 
 static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
-    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
-      tinput_wait_enqueue((void**)&input);
-    } else {
-      // TODO(hlpr98): Remove this
-      uv_mutex_lock(&input->key_buffer_mutex);
-      loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
-      input->waiting = true;
-      while (input->waiting) {
-        uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
-      }
-      uv_mutex_unlock(&input->key_buffer_mutex);
-    }
+    tinput_wait_enqueue((void**)&input);
   } while (rbuffer_size(input->key_buffer) > drain_boundary);
 }
 
@@ -349,15 +328,10 @@ static bool handle_focus_event(TermInput *input)
     // Advance past the sequence
     bool focus_gained = *rbuffer_get(input->read_stream.buffer, 2) == 'I';
     rbuffer_consumed(input->read_stream.buffer, 3);
-    
-    if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, BOOLEAN_OBJ(focus_gained));
-      rpc_send_event(connected_channel_id, "nvim_ui_set_focus", args);
-    } else {
-      // TODO(hlpr98): Remove this
-      aucmd_schedule_focusgained(focus_gained);
-    }
+  
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, BOOLEAN_OBJ(focus_gained));
+    rpc_send_event(connected_channel_id, "nvim_ui_set_focus", args);
     return true;
   }
   return false;

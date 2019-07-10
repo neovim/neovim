@@ -134,6 +134,7 @@ static bool volatile got_winch = false;
 static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
 char *termname_local;
+varnumber_T server_process_exit_status = 0L;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
 #endif
@@ -158,11 +159,11 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
       args[args_idx++] = xstrdup(argv[i]);
     }
     args[args_idx++] = NULL; // last value of argv should be NULL
-    varnumber_T exit_status;
+
     Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
                                   CALLBACK_READER_INIT, CALLBACK_NONE,
                                   false, true, true, NULL, 0, 0, NULL,
-                                  &exit_status);
+                                  &server_process_exit_status);
     rc_id = channel->id;
   }
   Array args = ARRAY_DICT_INIT;
@@ -475,7 +476,7 @@ void tui_execute(void) {
   LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   tui_io_driven_loop(ui);
   tui_exit_safe(ui);
-  getout(0);
+  getout((int)server_process_exit_status);
 }
 
 // Doesn't return until the TUI is closed (by call of tui_stop())

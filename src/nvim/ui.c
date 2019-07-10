@@ -223,7 +223,7 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  if (is_remote_client || (!headless_mode && !embedded_mode && !silent_mode)) {
+  if (TUI_process) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, INTEGER_OBJ((int)width));
     ADD(args, INTEGER_OBJ((int)height));
@@ -250,11 +250,6 @@ static void ui_refresh_event(void **argv)
 void ui_schedule_refresh(void)
 {
   loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
-}
-
-void ui_stop_event(void **argv) 
-{
-  ui_call_stop();
 }
 
 void ui_default_colors_set(void)

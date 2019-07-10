@@ -358,6 +358,7 @@ int main(int argc, char **argv)
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
   is_remote_client = params.server_name != NULL;
+  TUI_process = is_remote_client || use_builtin_ui;
   if (use_remote_ui || use_builtin_ui) {
     TIME_MSG("waiting for UI to make request");
     if (use_remote_ui) {
@@ -377,7 +378,7 @@ int main(int argc, char **argv)
   // This has to be always after ui_builtin_start or
   // after the start of atleast one GUI
   // as size of "uis[]" must be greater than 1
-  if (is_remote_client || use_builtin_ui) {
+  if (TUI_process) {
     input_stop();  // Stop reading input, let the UI take over.
     uint64_t rv = ui_client_start(params.server_name, params.argc, params.argv);
     if (!rv) {
@@ -593,7 +594,7 @@ int main(int argc, char **argv)
    * Call the main command loop.  This never returns.
    */
   end:
-  if (is_remote_client || use_builtin_ui) {
+  if (TUI_process) {
     tui_execute();
   } else {
     normal_enter(false, false);
