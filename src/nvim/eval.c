@@ -26,6 +26,7 @@
 #include "nvim/buffer.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
@@ -8012,6 +8013,112 @@ static void f_cscope_connection(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = cs_connection(num, (char_u *)dbpath,
                                        (char_u *)prepend);
+}
+
+/// "ctxget([{index}])" function
+static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  size_t index = 0;
+  if (argvars[0].v_type == VAR_NUMBER) {
+    index = argvars[0].vval.v_number;
+  } else if (argvars[0].v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "expected nothing or a Number as an argument");
+    return;
+  }
+
+  Context *ctx = ctx_get(index);
+  if (ctx == NULL) {
+    EMSG3(_(e_invargNval), "index", "out of bounds");
+    return;
+  }
+
+  Dictionary ctx_dict = ctx_to_dict(ctx);
+  Error err = ERROR_INIT;
+  object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
+  api_free_dictionary(ctx_dict);
+  api_clear_error(&err);
+}
+
+/// "ctxpop()" function
+static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (!ctx_restore(NULL, kCtxAll)) {
+    EMSG(_("Context stack is empty"));
+  }
+}
+
+/// "ctxpush([{types}])" function
+static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int types = kCtxAll;
+  if (argvars[0].v_type == VAR_LIST) {
+    types = 0;
+    TV_LIST_ITER(argvars[0].vval.v_list, li, {
+      typval_T *tv_li = TV_LIST_ITEM_TV(li);
+      if (tv_li->v_type == VAR_STRING) {
+        if (strequal((char *)tv_li->vval.v_string, "regs")) {
+          types |= kCtxRegs;
+        } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
+          types |= kCtxJumps;
+        } else if (strequal((char *)tv_li->vval.v_string, "buflist")) {
+          types |= kCtxBuflist;
+        } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
+          types |= kCtxGVars;
+        }
+      }
+    });
+  } else if (argvars[0].v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "expected nothing or a List as an argument");
+    return;
+  }
+  ctx_save(NULL, types);
+}
+
+/// "ctxset({context}[, {index}])" function
+static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_DICT) {
+    EMSG2(_(e_invarg2), "expected dictionary as first argument");
+    return;
+  }
+
+  size_t index = 0;
+  if (argvars[1].v_type == VAR_NUMBER) {
+    index = argvars[1].vval.v_number;
+  } else if (argvars[1].v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "expected nothing or a Number as second argument");
+    return;
+  }
+
+  Context *ctx = ctx_get(index);
+  if (ctx == NULL) {
+    EMSG3(_(e_invargNval), "index", "out of bounds");
+    return;
+  }
+
+  int save_did_emsg = did_emsg;
+  did_emsg = false;
+
+  Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
+  Context tmp = CONTEXT_INIT;
+  ctx_from_dict(dict, &tmp);
+
+  if (did_emsg) {
+    ctx_free(&tmp);
+  } else {
+    ctx_free(ctx);
+    *ctx = tmp;
+  }
+
+  api_free_dictionary(dict);
+  did_emsg = save_did_emsg;
+}
+
+/// "ctxsize()" function
+static void f_ctxsize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = ctx_size();
 }
 
 /// "cursor(lnum, col)" function, or

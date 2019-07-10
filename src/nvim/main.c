@@ -14,6 +14,7 @@
 #include "nvim/main.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/diff.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -671,6 +672,8 @@ void getout(int exitval)
   if (garbage_collect_at_exit) {
     garbage_collect(false);
   }
+
+  free_ctx_stack();
 
   mch_exit(exitval);
 }
