@@ -14,9 +14,6 @@ if(WIN32)
     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UnibiliumCMakeLists.txt
       ${DEPS_BUILD_DIR}/src/unibilium/CMakeLists.txt
-      COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_CURRENT_SOURCE_DIR}/msvc-compat/unistd.h
-        ${DEPS_BUILD_DIR}/src/unibilium/msvc-compat/unistd.h
       COMMAND ${CMAKE_COMMAND} ${DEPS_BUILD_DIR}/src/unibilium
         -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
         # Pass toolchain

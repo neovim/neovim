@@ -18,10 +18,6 @@ else()
 endif()
 target_compile_definitions(unibilium PUBLIC TERMINFO_DIRS=${TERMINFO_DIRS})
 
-if(MSVC)
-  target_include_directories(unibilium PUBLIC ${PROJECT_SOURCE_DIR}/msvc-compat)
-endif()
-
 include(GNUInstallDirs)
 install(TARGETS unibilium
   PUBLIC_HEADER
