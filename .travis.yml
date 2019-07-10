@@ -5,7 +5,7 @@ language: c
 env:
   global:
     # Set "false" to force rebuild of third-party dependencies.
-    - CACHE_ENABLE=true
+    - CACHE_ENABLE=false
     # Build directory for Neovim.
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
