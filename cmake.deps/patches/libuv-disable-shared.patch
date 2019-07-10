@@ -1,0 +1,117 @@
+From 326a1845f924432332071d03d156b7df4af7c46f Mon Sep 17 00:00:00 2001
+From: Tim Tavlintsev <ttavlintsev@enttec.com>
+Date: Thu, 21 Jul 2022 16:42:21 +1000
+Subject: [PATCH] Add CMake option LIBUV_BUILD_SHARED to enable/disable shared
+ library build Fix #3637
+
+---
+ CMakeLists.txt | 66 +++++++++++++++++++++++++++++---------------------
+ 1 file changed, 38 insertions(+), 28 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2c42c3ff..a8e19980 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -28,6 +28,8 @@ cmake_dependent_option(LIBUV_BUILD_BENCH
+   "Build the benchmarks when building unit tests and we are the root project" ON
+   "LIBUV_BUILD_TESTS" OFF)
+ 
++option(LIBUV_BUILD_SHARED "Build shared lib" ON)
++
+ # Qemu Build
+ option(QEMU "build for qemu" OFF)
+ if(QEMU)
+@@ -390,25 +392,27 @@ if(APPLE OR CMAKE_SYSTEM_NAME MATCHES "DragonFly|FreeBSD|Linux|NetBSD|OpenBSD")
+   list(APPEND uv_test_libraries util)
+ endif()
+ 
+-add_library(uv SHARED ${uv_sources})
+-target_compile_definitions(uv
+-  INTERFACE
+-    USING_UV_SHARED=1
+-  PRIVATE
+-    BUILDING_UV_SHARED=1
+-    ${uv_defines})
+-target_compile_options(uv PRIVATE ${uv_cflags})
+-target_include_directories(uv
+-  PUBLIC
+-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+-  PRIVATE
+-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
+-if(CMAKE_SYSTEM_NAME STREQUAL "OS390")
+-  target_include_directories(uv PUBLIC $<BUILD_INTERFACE:${ZOSLIB_DIR}/include>)
+-  set_target_properties(uv PROPERTIES LINKER_LANGUAGE CXX)
++if(LIBUV_BUILD_SHARED)
++  add_library(uv SHARED ${uv_sources})
++  target_compile_definitions(uv
++    INTERFACE
++      USING_UV_SHARED=1
++    PRIVATE
++      BUILDING_UV_SHARED=1
++      ${uv_defines})
++  target_compile_options(uv PRIVATE ${uv_cflags})
++  target_include_directories(uv
++    PUBLIC
++      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
++      $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++    PRIVATE
++      $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
++  if(CMAKE_SYSTEM_NAME STREQUAL "OS390")
++    target_include_directories(uv PUBLIC $<BUILD_INTERFACE:${ZOSLIB_DIR}/include>)
++    set_target_properties(uv PROPERTIES LINKER_LANGUAGE CXX)
++  endif()
++  target_link_libraries(uv ${uv_libraries})
+ endif()
+-target_link_libraries(uv ${uv_libraries})
+ 
+ add_library(uv_a STATIC ${uv_sources})
+ target_compile_definitions(uv_a PRIVATE ${uv_defines})
+@@ -669,28 +673,34 @@ string(REPLACE ";" " " LIBS "${LIBS}")
+ file(STRINGS configure.ac configure_ac REGEX ^AC_INIT)
+ string(REGEX MATCH "([0-9]+)[.][0-9]+[.][0-9]+" PACKAGE_VERSION "${configure_ac}")
+ set(UV_VERSION_MAJOR "${CMAKE_MATCH_1}")
+-# The version in the filename is mirroring the behaviour of autotools.
+-set_target_properties(uv PROPERTIES
+-  VERSION ${UV_VERSION_MAJOR}.0.0
+-  SOVERSION ${UV_VERSION_MAJOR})
++
+ set(includedir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
+ set(libdir ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
+ set(prefix ${CMAKE_INSTALL_PREFIX})
+-configure_file(libuv.pc.in libuv.pc @ONLY)
+ configure_file(libuv-static.pc.in libuv-static.pc @ONLY)
+ 
+ install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+ install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DOCDIR})
+-install(FILES ${PROJECT_BINARY_DIR}/libuv.pc ${PROJECT_BINARY_DIR}/libuv-static.pc
++install(FILES ${PROJECT_BINARY_DIR}/libuv-static.pc
+         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+-install(TARGETS uv EXPORT libuvConfig
+-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ install(TARGETS uv_a EXPORT libuvConfig
+         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ install(EXPORT libuvConfig DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libuv)
+ 
++if(LIBUV_BUILD_SHARED)
++  # The version in the filename is mirroring the behaviour of autotools.
++  set_target_properties(uv PROPERTIES
++          VERSION ${UV_VERSION_MAJOR}.0.0
++          SOVERSION ${UV_VERSION_MAJOR})
++  configure_file(libuv.pc.in libuv.pc @ONLY)
++  install(FILES ${PROJECT_BINARY_DIR}/libuv.pc
++          DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
++  install(TARGETS uv EXPORT libuvConfig
++          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
++endif()
++
+ if(MSVC)
+   set(CMAKE_DEBUG_POSTFIX d)
+ endif()
+-- 
+2.37.0
+
