@@ -116,6 +116,14 @@ function vim.tbl_contains(t, value)
   return false
 end
 
+-- Returns true if the table is empty, and contains no indexed or keyed values.
+--
+--@param t Table to check
+function vim.tbl_isempty(t)
+  -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+  return next(t) == nil
+end
+
 --- Merges two or more map-like tables.
 ---
 --@see |extend()|

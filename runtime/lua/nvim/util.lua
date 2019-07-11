@@ -1,11 +1,8 @@
--- luacheck: globals vim
-
+local shared = require('vim.shared')
 local util = {
   table = {},
   quickfix = {},
 }
-
-vim = vim or {}
 
 util.split = function(s, sep, nMax, bRegexp)
   assert(sep ~= '')
@@ -145,14 +142,6 @@ util.is_quickfix_open = function()
   end)
 end
 
-util.table.is_empty = function(table)
-  if not next(table) then
-    return true
-  end
-
-  return false
-end
-
 --- Combine the contents of two tables.
 -- It will override existing values in t1 if they are already in t2.
 --
@@ -204,7 +193,7 @@ end
 --
 -- @returns: Modified t1
 util.table.extend = function(t1, t2)
-  if not util.table.is_empty(t2) then
+  if not shared.tbl_isempty(t2) then
     local len_t1 = #t1
 
     for i, v in ipairs(t2) do

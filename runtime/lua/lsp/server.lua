@@ -1,7 +1,5 @@
+local shared = require('vim.shared')
 
-local util = require('nvim.util')
-
-local log = require('lsp.log')
 local lsp_util = require('lsp.util')
 
 local server = {}
@@ -46,7 +44,7 @@ server.get_name = function(filetype)
 
   local ft_config = server.configured_servers[filetype]
 
-  if util.table.is_empty(ft_config) then
+  if shared.tbl_isempty(ft_config) then
     return nil
   end
 
@@ -68,26 +66,24 @@ server.get_command = function(cmd, filetype)
 
   local ft_config = server.configured_servers[filetype]
 
-  if util.table.is_empty(ft_config) then return nil end
+  if shared.tbl_isempty(ft_config) then return nil end
 
   return ft_config.command
 end
 
 server.default_callbacks = {
-
   root_uri = function()
     return 'file://' .. (vim.api.nvim_call_function('getcwd', { }) or '/tmp/')
   end,
-
 }
 
-server.get_callback = function(ftype, callback_name)
-  local ft_config = server.configured_servers[ftype]
+server.get_callback = function(filetype, callback_name)
+  local ft_config = server.configured_servers[filetype]
 
   local callback
-  if util.table.is_empty(ft_config)
-      or util.table.is_empty(ft_config.configuration)
-      or util.table.is_empty(ft_config.configuration.callbacks)
+  if shared.tbl_isempty(ft_config)
+      or shared.tbl_isempty(ft_config.configuration)
+      or shared.tbl_isempty(ft_config.configuration.callbacks)
       or ft_config.configuration.callback_name[callback_name] == nil then
     callback = server.default_callbacks[callback_name]
   else
