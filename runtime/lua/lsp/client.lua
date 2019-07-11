@@ -1,7 +1,6 @@
--- luacheck: globals vim
-
 local json = require('lsp.json')
 local util = require('nvim.util')
+local shared = require('vim.shared')
 
 local Enum = require('nvim.meta').Enum
 local EmptyDictionary = require('nvim.meta').EmptyDictionary
@@ -218,7 +217,7 @@ client._parse_header = function(header)
     if line ~= '' then
       local temp_lines = util.split(line, ':')
       for t_index, t_line in pairs(temp_lines) do
-        temp_lines[t_index] = util.trim(t_line)
+        temp_lines[t_index] = shared.trim(t_line)
       end
 
       split_lines[temp_lines[1]:lower():gsub('-', '_')] = temp_lines[2]

@@ -1,6 +1,4 @@
-local shared = require('vim.shared')
 local util = {
-  table = {},
   quickfix = {},
 }
 
@@ -43,10 +41,6 @@ util.tostring = function(obj)
   end
 
   return stringified
-end
-
-util.trim = function(s)
-  return s:gsub("^%s+", ""):gsub("%s+$", "")
 end
 
 util.handle_uri = function(uri)
@@ -140,68 +134,6 @@ util.is_quickfix_open = function()
   return util.is_filtetype_open_in_tab('qf', function(buffer_id)
     return (#vim.api.nvim_call_function('getloclist', { buffer_id }) == 0)
   end)
-end
-
---- Combine the contents of two tables.
--- It will override existing values in t1 if they are already in t2.
---
--- @note: This does not modify t1. It returns a new table
--- @return: A new table with the combined contents of t1 and t2
-util.table.combine = function(t1, t2)
-  local t3 = {}
-
-  util.table.merge(t3, t1)
-  util.table.merge(t3, t2)
-
-  return t3
-end
-
-
---- Combine the contents of two tables.
--- It will override existing values in t1 if they are already in t2.
---
--- @note: This modifies t1.
-util.table.merge = function(t1, t2)
-  for k, v in pairs(t2) do
-    t1[k] = v
-  end
-
-  return t1
-end
-
---- Concatenate list t2 to the end of t1.
--- Only useful for lists with numberic indeces.
---
--- NOTE: It NOT modify t1
---
--- @returns: A new table with t1 concatenated with t2
-util.table.chain = function(t1, t2)
-  local t3 = {}
-
-  util.table.extend(t3, t1)
-  util.table.extend(t3, t2)
-
-  return t3
-end
-
-
---- Concatenate list t2 to the end of t1.
---
--- Only useful for lists with numberic indeces.
---
--- NOTE: It will modify table t1.
---
--- @returns: Modified t1
-util.table.extend = function(t1, t2)
-  if not shared.tbl_isempty(t2) then
-    local len_t1 = #t1
-
-    for i, v in ipairs(t2) do
-      t1[len_t1 + i] = v
-    end
-  end
-
-  return t1
 end
 
 return util
