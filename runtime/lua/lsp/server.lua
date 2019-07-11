@@ -7,22 +7,21 @@ server.__index = server
 
 server.configured_servers = {}
 
-server.add = function(ftype, command, additional_configuration)
-  local ftype_list
-  if type(ftype) == 'string' then
-    ftype_list = { ftype }
-  elseif type(ftype) == 'table' then
-    ftype_list = ftype
+server.add = function(filetype, command, additional_configuration)
+  local filetype_list
+  if type(filetype) == 'string' then
+    filetype_list = { filetype }
+  elseif type(filetype) == 'table' then
+    filetype_list = filetype
   else
-    log.warn('ftype must be a string or a list of strings')
+    error('filetype must be a string or a list of strings', 2)
   end
 
   if type(command) ~= 'table' and type(command) ~= 'string' then
-    log.warn('Command must be a string or a list')
-    return false
+    error('Command must be a string or a list', 2)
   end
 
-  for _, cur_type in pairs(ftype_list) do
+  for _, cur_type in pairs(filetype_list) do
     if server.configured_servers[cur_type] == nil then
       vim.api.nvim_command(
         string.format([[autocmd FileType %s silent call lsp#start("%s")]], cur_type, cur_type)

@@ -24,7 +24,6 @@ local error_level = Enum:new({
   info = 2,
 })
 
-
 local ActiveJobs = {}
 
 ActiveJobs.add = function(id, obj)
@@ -122,6 +121,7 @@ end
 --                          otherwise it'll wait til the client is done
 client.request = function(self, method, params, cb)
   if not method then
+    error("No request method supplied", 2)
     return nil
   end
 
@@ -169,7 +169,6 @@ client.request_async = function(self, method, params, cb)
       method = req.method,
     }
   end
-
 
   if should_send_message(self, req) then
     log.debug("Sending Request: [["..req:data().."]]")
