@@ -78,9 +78,8 @@ set nomore
 " Output all messages in English.
 lang mess C
 
-" Nvim does not have runtime/doc/tags in the source, therefore point the help
-" at the built one.
-set helpfile=$BUILD_DIR/runtime/doc/help.txt
+" Nvim: append runtime from build dir, which contains the generated doc/tags.
+let &runtimepath .= ','.expand($BUILD_DIR).'/runtime/'
 
 " Always use forward slashes.
 set shellslash
