@@ -221,6 +221,19 @@ void ui_refresh(void)
   ui_cursor_shape();
 }
 
+int ui_pum_get_height(void)
+{
+  int pum_height = 0;
+  for (size_t i = 1; i < ui_count; i++) {
+    int ui_pum_height = uis[i]->pum_height;
+    if (ui_pum_height) {
+      pum_height =
+        pum_height != 0 ? MIN(pum_height, ui_pum_height) : ui_pum_height;
+    }
+  }
+  return pum_height;
+}
+
 static void ui_refresh_event(void **argv)
 {
   ui_refresh();
