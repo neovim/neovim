@@ -492,7 +492,7 @@ function Screen:_wait(check, flags)
       end
     elseif success_seen and #args > 0 then
       failure_after_success = true
-      --print(require('vim.inspect')(args))
+      -- print(inspect(args))
     end
 
     return true
@@ -576,8 +576,7 @@ end
 function Screen:_redraw(updates)
   local did_flush = false
   for k, update in ipairs(updates) do
-    -- print('--')
-    -- print(require('vim.inspect')(update))
+    -- print('--', inspect(update))
     local method = update[1]
     for i = 2, #update do
       local handler_name = '_handle_'..method
@@ -1339,7 +1338,7 @@ end
 
 
 function Screen:_pprint_hlstate(item)
-    --print(require('vim.inspect')(item))
+    -- print(inspect(item))
     local attrdict = "{"..self:_pprint_attrs(item[1]).."}, "
     local attrdict2, hlinfo
     if self._hlstate_cterm then
