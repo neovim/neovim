@@ -47,20 +47,13 @@ env:
     # Default since 3.3, but Travis (Xenial) has 3.2.4; required with newer gcc/clang.
     - CCACHE_CPP2=1
 
-anchors:
-  envs: &common-job-env
-    # Do not fall back to cache for "master" for PR on "release" branch:
-    # adds the target branch to the cache key.
-    FOR_TRAVIS_CACHE=v1-$TRAVIS_BRANCH
-
-addons:
+addons: &common_addons
   apt:
-    packages: &common-apt-packages
+    packages: &common_apt_packages
       - apport
       - autoconf
       - automake
       - build-essential
-      - clang
       - cmake
       - cscope
       - gcc-multilib
@@ -81,6 +74,18 @@ addons:
       - ccache
       - ninja
 
+anchors:
+  envs: &common_job_env
+    # Do not fall back to cache for "master" for PR on "release" branch:
+    # adds the target branch to the cache key.
+    FOR_TRAVIS_CACHE=v1-$TRAVIS_BRANCH
+
+  addons:
+    apt: &clang_apt
+      packages:
+        - *common_apt_packages
+        - clang
+
 jobs:
   include:
     - stage: baseline
@@ -91,7 +96,9 @@ jobs:
       env:
         - CLANG_SANITIZER=ASAN_UBSAN
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        - *common-job-env
+        - *common_job_env
+      addons:
+        apt: *clang_apt
     - name: gcc-coverage (gcc 9)
       os: linux
       compiler: gcc-9
@@ -99,20 +106,20 @@ jobs:
         - GCOV=gcov-9
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
         - GCOV_ERROR_FILE="/tmp/libgcov-errors.log"
-        - *common-job-env
+        - *common_job_env
       addons:
         apt:
           sources:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages:
-            - *common-apt-packages
+            - *common_apt_packages
             - gcc-9
     - if: branch = master AND commit_message !~ /\[skip.lint\]/
       name: lint
       os: linux
       env:
         - CI_TARGET=lint
-        - *common-job-env
+        - *common_job_env
 
     - stage: second stage
       name: "macOS: clang"
@@ -120,7 +127,10 @@ jobs:
       compiler: clang
       osx_image: xcode10.2  # macOS 10.14
       env:
-        - *common-job-env
+        - *common_job_env
+      addons:
+        <<: *common_addons
+        apt: *clang_apt
     - name: gcc-functionaltest-lua
       os: linux
       compiler: gcc
@@ -128,7 +138,7 @@ jobs:
         - FUNCTIONALTEST=functionaltest-lua
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
-        - *common-job-env
+        - *common_job_env
     - name: gcc-32bit
       os: linux
       # Travis creates a cache per compiler. Set a different value here to
@@ -138,13 +148,15 @@ jobs:
         - BUILD_32BIT=ON
         # Minimum required CMake.
         - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
-        - *common-job-env
+        - *common_job_env
     - name: clang-tsan
       os: linux
       compiler: clang
       env:
         - CLANG_SANITIZER=TSAN
-        - *common-job-env
+        - *common_job_env
+      addons:
+        apt: *clang_apt
   fast_finish: true
 
 before_install: ci/before_install.sh
