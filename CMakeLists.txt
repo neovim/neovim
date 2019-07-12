@@ -323,18 +323,6 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  # 1. Array-bounds testing is broken in some GCC versions before 4.8.5.
-  #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=56273
-  # 2. But _Pragma("...ignored") is broken (unresolved) in GCC 5+:
-  #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66099
-  # So we must disable -Warray-bounds globally for GCC (for kbtree.h, #7083).
-  check_c_compiler_flag(-Warray-bounds HAS_WARRAY_BOUNDS)
-  if(HAS_WARRAY_BOUNDS)
-    add_compile_options(-Wno-array-bounds)
-  endif()
-endif()
-
 option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
 
 if(TRAVIS_CI_BUILD)
