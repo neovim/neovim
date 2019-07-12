@@ -379,8 +379,8 @@ static void shift_block(oparg_T *oap, int amount)
     /* if we're splitting a TAB, allow for it */
     bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
     const int len = (int)STRLEN(bd.textstart) + 1;
-    newp = (char_u *)xmalloc((size_t)(bd.textcol + i + j + len));
-    memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
+    newp = (char_u *)xmalloc((size_t)bd.textcol + (size_t)i + (size_t)j + (size_t)len);
+    memset(newp, NUL, (size_t)bd.textcol + (size_t)i + (size_t)j + (size_t)len);
     memmove(newp, oldp, (size_t)bd.textcol);
     memset(newp + bd.textcol, TAB, (size_t)i);
     memset(newp + bd.textcol + i, ' ', (size_t)j);
@@ -1471,7 +1471,7 @@ int op_delete(oparg_T *oap)
       // copy up to deleted part
       memmove(newp, oldp, (size_t)bd.textcol);
       // insert spaces
-      memset(newp + bd.textcol, ' ', (size_t)(bd.startspaces + bd.endspaces));
+      memset(newp + bd.textcol, ' ', (size_t)bd.startspaces + (size_t)bd.endspaces);
       // copy the part after the deleted part
       oldp += bd.textcol + bd.textlen;
       STRMOVE(newp + bd.textcol + bd.startspaces + bd.endspaces, oldp);
@@ -1743,7 +1743,7 @@ int op_replace(oparg_T *oap, int c)
       oldp = get_cursor_line_ptr();
       oldlen = (int)STRLEN(oldp);
 
-      size_t newp_size = (size_t)(bd.textcol + bd.startspaces);
+      size_t newp_size = (size_t)bd.textcol + (size_t)bd.startspaces;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
         newp_size += (size_t)numc;
         if (!bd.is_short) {
@@ -1772,11 +1772,11 @@ int op_replace(oparg_T *oap, int c)
             newp_len += bd.endspaces;
             // copy the part after the changed part
             memmove(newp + newp_len, oldp,
-                    (size_t)(oldlen - bd.textcol - bd.textlen + 1));
+                    (size_t)oldlen - (size_t)bd.textcol - (size_t )bd.textlen + 1);
         }
       } else {
         // Replacing with \r or \n means splitting the line.
-        after_p_len = (size_t)(oldlen - bd.textcol - bd.textlen + 1);
+        after_p_len = (size_t)oldlen - (size_t)bd.textcol - (size_t)bd.textlen + 1;
         after_p = (char_u *)xmalloc(after_p_len);
         memmove(after_p, oldp, after_p_len);
       }
@@ -2602,8 +2602,9 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
 static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx)
 {
-  char_u *pnew = xmallocz((size_t)(bd->startspaces + bd->endspaces
-                                   + bd->textlen));
+  char_u *pnew = xmallocz((size_t)bd->startspaces
+          + (size_t)bd->endspaces
+          + (size_t)bd->textlen);
   reg->y_array[y_idx] = pnew;
   memset(pnew, ' ', (size_t)bd->startspaces);
   pnew += bd->startspaces;
@@ -3086,7 +3087,7 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       ptr += bd.endspaces;
       // move the text after the cursor to the end of the line.
       memmove(ptr, oldp + bd.textcol + delcount,
-              (size_t)((int)oldlen - bd.textcol - delcount + 1));
+              oldlen - (size_t)bd.textcol - (size_t)delcount + 1);
       ml_replace(curwin->w_cursor.lnum, newp, false);
 
       ++curwin->w_cursor.lnum;
@@ -3209,11 +3210,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           xfree(newp);
 
           oldp = ml_get(lnum);
-          newp = (char_u *) xmalloc((size_t)(col + yanklen + 1));
+          newp = (char_u *) xmalloc((size_t)col + (size_t)yanklen + 1);
           /* copy first part of line */
           memmove(newp, oldp, (size_t)col);
           /* append to first line */
-          memmove(newp + col, y_array[0], (size_t)(yanklen + 1));
+          memmove(newp + col, y_array[0], (size_t)yanklen + 1);
           ml_replace(lnum, newp, false);
 
           curwin->w_cursor.lnum = lnum;
@@ -3709,7 +3710,7 @@ int do_join(size_t count,
   col = sumsize - currsize - spaces[count - 1];
 
   /* allocate the space for the new line */
-  newp = (char_u *) xmalloc((size_t)(sumsize + 1));
+  newp = (char_u *) xmalloc((size_t)sumsize + 1);
   cend = newp + sumsize;
   *cend = 0;
 
@@ -5472,7 +5473,7 @@ void cursor_pos_info(dict_T *dict)
           byte_count_cursor = byte_count
             + line_count_info(ml_get(lnum), &word_count_cursor,
                               &char_count_cursor,
-                              (varnumber_T)(curwin->w_cursor.col + 1),
+                              (varnumber_T)curwin->w_cursor.col + 1,
                               eol_size);
         }
       }
@@ -5491,7 +5492,7 @@ void cursor_pos_info(dict_T *dict)
         if (l_VIsual_mode == Ctrl_V && curwin->w_curswant < MAXCOL) {
           getvcols(curwin, &min_pos, &max_pos, &min_pos.col, &max_pos.col);
           vim_snprintf((char *)buf1, sizeof(buf1), _("%" PRId64 " Cols; "),
-                       (int64_t)(oparg.end_vcol - oparg.start_vcol + 1));
+                       (int64_t)oparg.end_vcol - (int64_t)oparg.start_vcol + 1);
         } else {
           buf1[0] = NUL;
         }

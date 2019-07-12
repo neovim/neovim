@@ -6080,7 +6080,7 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
   int new_row;
   ScreenGrid new = *grid;
 
-  size_t ncells = (size_t)((rows+1) * columns);
+  size_t ncells = ((size_t)rows+1) * (size_t)columns;
   new.chars = xmalloc(ncells * sizeof(schar_T));
   new.attrs = xmalloc(ncells * sizeof(sattr_T));
   new.line_offset = xmalloc((size_t)(rows * sizeof(unsigned)));

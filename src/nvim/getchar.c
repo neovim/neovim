@@ -914,7 +914,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
      * the end */
     memmove(s1 + newoff + offset + addlen,
         typebuf.tb_buf + typebuf.tb_off + offset,
-        (size_t)(typebuf.tb_len - offset + 1));
+        (size_t)typebuf.tb_len - (size_t)offset + 1);
     if (typebuf.tb_buf != typebuf_init)
       xfree(typebuf.tb_buf);
     typebuf.tb_buf = s1;
@@ -1065,7 +1065,7 @@ void del_typebuf(int len, int offset)
     /* adjust typebuf.tb_buf (include the NUL at the end) */
     memmove(typebuf.tb_buf + typebuf.tb_off + offset,
         typebuf.tb_buf + i + len,
-        (size_t)(typebuf.tb_len - offset + 1));
+        (size_t)typebuf.tb_len - (size_t )offset + 1);
     /* adjust typebuf.tb_noremap[] */
     memmove(typebuf.tb_noremap + typebuf.tb_off + offset,
         typebuf.tb_noremap + i + len,
