@@ -34,7 +34,6 @@ env:
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
-    - ASAN_SYMBOLIZE=asan_symbolize
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
     # If this file exists, the cache is valid (compile was successful).
@@ -62,7 +61,7 @@ addons:
       - autoconf
       - automake
       - build-essential
-      - clang-4.0
+      - clang
       - cmake
       - cscope
       - gcc-multilib
@@ -88,12 +87,11 @@ jobs:
     - stage: baseline
       name: clang-asan
       os: linux
-      compiler: clang-4.0
+      compiler: clang
       # Use Lua so that ASAN can test our embedded Lua support. 8fec4d53d0f6
       env:
         - CLANG_SANITIZER=ASAN_UBSAN
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
-        - ASAN_SYMBOLIZE=asan_symbolize-4.0
         - *common-job-env
     - name: gcc-functionaltest-lua
       os: linux
