@@ -90,7 +90,8 @@ func Test_tagfiles()
   help
   let tf = tagfiles()
   call assert_equal(1, len(tf))
-  call assert_equal(fnamemodify(expand('$VIMRUNTIME/doc/tags'), ':p:gs?\\?/?'),
+  " Nvim: expectation based on &helpfile (explicitly set in runtest.vim).
+  call assert_equal(fnamemodify(fnamemodify(&helpfile, ':h').'/tags', ':p:gs?\\?/?'),
 	\           fnamemodify(tf[0], ':p:gs?\\?/?'))
   helpclose
   call assert_equal(['Xtags1', 'Xtags2'], tagfiles())
