@@ -5,6 +5,7 @@
 #include <math.h>
 #include <assert.h>
 
+#include "nvim/assert.h"
 #include "nvim/profile.h"
 #include "nvim/os/time.h"
 #include "nvim/func_attr.h"
@@ -23,7 +24,9 @@ static proftime_T prof_wait_time;
 /// @return the current time
 proftime_T profile_start(void) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return os_utime();
+  uint64_t now = os_hrtime();
+  assert(now <= INT64_MAX);
+  return (proftime_T)now;
 }
 
 /// Computes the time elapsed.
@@ -31,7 +34,9 @@ proftime_T profile_start(void) FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return Elapsed time from `tm` until now.
 proftime_T profile_end(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return profile_sub(os_utime(), tm);
+  uint64_t now = os_hrtime();
+  assert(now <= INT64_MAX);
+  return profile_sub((proftime_T)now, tm);
 }
 
 /// Gets a string representing time `tm`.
@@ -43,7 +48,7 @@ proftime_T profile_end(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 const char *profile_msg(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char buf[50];
-  snprintf(buf, sizeof(buf), "%10.6lf", (double)tm / 1000000.0);
+  snprintf(buf, sizeof(buf), "%10.6lf", (double)tm / 1000000000.0);
   return buf;
 }
 
@@ -59,10 +64,11 @@ proftime_T profile_setlimit(int64_t msec) FUNC_ATTR_WARN_UNUSED_RESULT
     // no limit
     return profile_zero();
   }
-  assert(msec <= (INT64_MAX / 1000LL) - 1);
-
-  proftime_T usec = msec * 1000;
-  return os_utime() + usec;
+  assert(msec <= (INT64_MAX / 1000000LL) - 1);
+  proftime_T nsec = msec * 1000000LL;
+  int64_t rv;
+  STRICT_ADD(os_hrtime(), nsec, &rv, int64_t);
+  return rv;
 }
 
 /// Checks if current time has passed `tm`.
@@ -75,7 +81,9 @@ bool profile_passed_limit(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
     // timer was not set
     return false;
   }
-  return profile_cmp(os_utime(), tm) < 0;
+  uint64_t now = os_hrtime();
+  assert(now <= INT64_MAX);
+  return profile_cmp((proftime_T)now, tm) < 0;
 }
 
 /// Gets the zero time.
@@ -103,15 +111,19 @@ proftime_T profile_divide(proftime_T tm, int count) FUNC_ATTR_CONST
 /// @return `tm1` + `tm2`
 proftime_T profile_add(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
-  return tm1 + tm2;
+  int64_t rv;
+  STRICT_ADD(tm1, tm2, &rv, int64_t);
+  return rv;
 }
 
-/// Subtracts time `tm2` from `tm1`.
+/// Subtracts time `tm2` from `tm1` (may be negative).
 ///
 /// @return `tm1` - `tm2`
 proftime_T profile_sub(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
-  return tm1 - tm2;
+  int64_t rv;
+  STRICT_SUB(tm1, tm2, &rv, int64_t);
+  return rv;
 }
 
 /// Adds the `self` time from the total time and the `children` time.
@@ -219,7 +231,7 @@ void time_pop(proftime_T tp)
 static void time_diff(proftime_T then, proftime_T now)
 {
   proftime_T diff = profile_sub(now, then);
-  fprintf(time_fd, "%07.3lf", (double)diff / 1.0E3);
+  fprintf(time_fd, "%07.3lf", (double)diff / 1.0E6);
 }
 
 /// Initializes the startuptime code.
