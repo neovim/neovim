@@ -99,23 +99,24 @@ RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
 RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
 
+CLEAN_FILES := *.out \
+  *.failed          \
+  *.res             \
+  *.rej             \
+  *.orig            \
+  *.tlog            \
+  test.log          \
+  messages          \
+  $(RM_ON_RUN)      \
+  $(RM_ON_START)    \
+  valgrind.*        \
+  .*.swp            \
+  .*.swo            \
+  .gdbinit          \
+  $(TMPDIR)         \
+  del
 clean:
-	-rm -rf *.out          \
-	        *.failed       \
-	        *.res          \
-	        *.rej          \
-	        *.orig         \
-	        *.tlog         \
-	        test.log       \
-	        messages       \
-	        $(RM_ON_RUN)   \
-	        $(RM_ON_START) \
-	        valgrind.*     \
-	        .*.swp         \
-	        .*.swo         \
-	        .gdbinit       \
-	        $(TMPDIR)      \
-	        del
+	$(RM) -rf $(CLEAN_FILES)
 
 test1.out: .gdbinit test1.in
 	@echo "[OLDTEST-PREP] Running test1"
