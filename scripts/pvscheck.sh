@@ -369,7 +369,6 @@ run_analysis() {(
     analyze \
       --threads "$(get_jobs_num)" \
       --output-file PVS-studio.log \
-      --verbose \
       --file build/compile_commands.json \
       --sourcetree-root . || true
 
