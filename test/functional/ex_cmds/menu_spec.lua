@@ -83,7 +83,7 @@ describe('menu_get', function()
   it("path='', modes='a'", function()
     local m = funcs.menu_get("","a");
     -- HINT: To print the expected table and regenerate the tests:
-    -- print(require('inspect')(m))
+    -- print(require('vim.inspect')(m))
     local expected = {
       {
         shortcut = "T",

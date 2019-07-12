@@ -81,7 +81,7 @@ local dedent = helpers.dedent
 local get_session = helpers.get_session
 local create_callindex = helpers.create_callindex
 
-local inspect = require('inspect')
+local inspect = require('vim.inspect')
 
 local function isempty(v)
   return type(v) == 'table' and next(v) == nil
@@ -492,7 +492,7 @@ function Screen:_wait(check, flags)
       end
     elseif success_seen and #args > 0 then
       failure_after_success = true
-      --print(require('inspect')(args))
+      -- print(inspect(args))
     end
 
     return true
@@ -576,8 +576,7 @@ end
 function Screen:_redraw(updates)
   local did_flush = false
   for k, update in ipairs(updates) do
-    -- print('--')
-    -- print(require('inspect')(update))
+    -- print('--', inspect(update))
     local method = update[1]
     for i = 2, #update do
       local handler_name = '_handle_'..method
@@ -1339,7 +1338,7 @@ end
 
 
 function Screen:_pprint_hlstate(item)
-    --print(require('inspect')(item))
+    -- print(inspect(item))
     local attrdict = "{"..self:_pprint_attrs(item[1]).."}, "
     local attrdict2, hlinfo
     if self._hlstate_cterm then
