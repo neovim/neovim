@@ -129,20 +129,12 @@ add_custom_command(OUTPUT ${ROCKS_DIR}/lpeg
 add_custom_target(lpeg DEPENDS ${ROCKS_DIR}/lpeg)
 list(APPEND THIRD_PARTY_DEPS lpeg)
 
-# inspect
-add_custom_command(OUTPUT ${ROCKS_DIR}/inspect
-  COMMAND ${LUAROCKS_BINARY}
-  ARGS build inspect 3.1.1-0 ${LUAROCKS_BUILDARGS}
-  DEPENDS lpeg)
-add_custom_target(inspect DEPENDS ${ROCKS_DIR}/inspect)
-list(APPEND THIRD_PARTY_DEPS inspect)
-
 if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
   # luabitop
   add_custom_command(OUTPUT ${ROCKS_DIR}/luabitop
     COMMAND ${LUAROCKS_BINARY}
     ARGS build luabitop 1.0.2-3 ${LUAROCKS_BUILDARGS}
-    DEPENDS inspect)
+    DEPENDS lpeg)
   add_custom_target(luabitop DEPENDS ${ROCKS_DIR}/luabitop)
   list(APPEND THIRD_PARTY_DEPS luabitop)
 endif()
@@ -151,7 +143,7 @@ if(USE_BUNDLED_BUSTED)
   if((NOT USE_BUNDLED_LUAJIT) AND USE_BUNDLED_LUA)
     set(PENLIGHT_DEPENDS luabitop)
   else()
-    set(PENLIGHT_DEPENDS inspect)
+    set(PENLIGHT_DEPENDS lpeg)
   endif()
 
   # penlight
