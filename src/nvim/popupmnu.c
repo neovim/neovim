@@ -145,7 +145,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
     extra_width = 0;
 
     win_T *pvwin = NULL;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_pvw) {
         pvwin = wp;
         break;

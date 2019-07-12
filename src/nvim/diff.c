@@ -121,7 +121,7 @@ void diff_buf_adjust(win_T *win)
     // When there is no window showing a diff for this buffer, remove
     // it from the diffs.
     bool found_win = false;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if ((wp->w_buffer == win->w_buffer) && wp->w_p_diff) {
         found_win = true;
       }
@@ -635,7 +635,7 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 /// @param dofold Also recompute the folds
 static void diff_redraw(int dofold)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (!wp->w_p_diff) {
       continue;
     }
@@ -1415,7 +1415,7 @@ void ex_diffoff(exarg_T *eap)
 {
   int diffwin = false;
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (eap->forceit ? wp->w_p_diff : (wp == curwin)) {
       // Set 'diff' off. If option values were saved in
       // diff_win_options(), restore the ones whose settings seem to have
@@ -2766,7 +2766,7 @@ theend:
 /// @param skip_idx
 static void diff_fold_update(diff_T *dp, int skip_idx)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     for (int i = 0; i < DB_COUNT; ++i) {
       if ((curtab->tp_diffbuf[i] == wp->w_buffer) && (i != skip_idx)) {
         foldUpdate(wp, dp->df_lnum[i], dp->df_lnum[i] + dp->df_count[i]);

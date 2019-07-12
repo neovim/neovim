@@ -2434,7 +2434,7 @@ void spell_reload(void)
   spell_free_all();
 
   // Go through all buffers and handle 'spelllang'.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     // Only load the wordlists when 'spelllang' is set and there is a
     // window for this buffer in which 'spell' is set.
     if (*wp->w_s->b_p_spl != NUL) {

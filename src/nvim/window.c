@@ -180,7 +180,7 @@ newwindow:
   /* cursor to preview window */
   case 'P':
     wp = NULL;
-    FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+    FOR_ALL_WINDOWS(wp2) {
       if (wp2->w_p_pvw) {
         wp = wp2;
         break;
@@ -1501,7 +1501,7 @@ bool win_valid(win_T *win) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
     return false;
   }
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp == win) {
       return true;
     }
@@ -1533,7 +1533,7 @@ int win_count(void)
 {
   int count = 0;
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     ++count;
   }
   return count;
@@ -2241,7 +2241,7 @@ bool one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   bool seen_one = false;
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp != aucmd_win && (!wp->w_floating || wp == curwin)) {
       if (seen_one) {
         return false;
@@ -4408,7 +4408,7 @@ win_T *buf_jump_open_win(buf_T *buf)
     win_enter(curwin, false);
     return curwin;
   } else {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_buffer == buf) {
         win_enter(wp, false);
         return wp;
@@ -4746,7 +4746,7 @@ void win_size_save(garray_T *gap)
 {
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2);
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     ((int *)gap->ga_data)[gap->ga_len++] =
       wp->w_width + wp->w_vsep_width;
     ((int *)gap->ga_data)[gap->ga_len++] = wp->w_height;
@@ -4765,7 +4765,7 @@ void win_size_restore(garray_T *gap)
     for (int j = 0; j < 2; ++j)
     {
       int i = 0;
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      FOR_ALL_WINDOWS(wp) {
         int width = ((int *)gap->ga_data)[i++];
         int height = ((int *)gap->ga_data)[i++];
         if (!wp->w_floating) {
@@ -5220,7 +5220,7 @@ void win_setminheight(void)
   while (p_wmh > 0) {
     /* TODO: handle vertical splits */
     room = -p_wh;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       room += wp->w_height - p_wmh;
     }
     if (room >= 0)
@@ -5992,7 +5992,7 @@ bool only_one_window(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
   }
 
   int count = 0;
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer != NULL
         && (!((bt_help(wp->w_buffer) && !bt_help(curbuf)) || wp->w_floating
               || wp->w_p_pvw) || wp == curwin) && wp != aucmd_win) {
@@ -6688,7 +6688,7 @@ int win_id2win(typval_T *argvars)
   int nr = 1;
   int id = tv_get_number(&argvars[0]);
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->handle == id) {
       return nr;
     }

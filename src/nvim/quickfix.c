@@ -2001,7 +2001,7 @@ static int jump_to_help_window(qf_info_T *qi, int *opened_window)
   if (cmdmod.tab != 0) {
     wp = NULL;
   } else {
-    FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+    FOR_ALL_WINDOWS(wp2) {
       if (bt_help(wp2->w_buffer)) {
         wp = wp2;
         break;
@@ -2065,7 +2065,7 @@ static int qf_jump_to_usable_window(int qf_fnum, int *opened_window)
   if (ll_ref != NULL) {
     // Find a window using the same location list that is not a
     // quickfix window.
-    FOR_ALL_WINDOWS_IN_TAB(usable_win_ptr2, curtab) {
+    FOR_ALL_WINDOWS(usable_win_ptr2) {
       if (usable_win_ptr2->w_llist == ll_ref
           && !bt_quickfix(usable_win_ptr2->w_buffer)) {
         usable_win_ptr = usable_win_ptr2;
@@ -2077,7 +2077,7 @@ static int qf_jump_to_usable_window(int qf_fnum, int *opened_window)
 
   if (!usable_win) {
     // Locate a window showing a normal buffer
-    FOR_ALL_WINDOWS_IN_TAB(win2, curtab) {
+    FOR_ALL_WINDOWS(win2) {
       if (win2->w_buffer->b_p_bt[0] == NUL) {
         win = win2;
         usable_win = 1;
@@ -2125,7 +2125,7 @@ win_found:
       win = usable_win_ptr;
       if (win == NULL) {
         // Find the window showing the selected file
-        FOR_ALL_WINDOWS_IN_TAB(win2, curtab) {
+        FOR_ALL_WINDOWS(win2) {
           if (win2->w_buffer->b_fnum == qf_fnum) {
             win = win2;
             break;
@@ -3185,7 +3185,7 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
 /// Only searches in the current tabpage.
 static win_T *qf_find_win(qf_info_T *qi)
 {
-  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+  FOR_ALL_WINDOWS(win) {
     if (is_qf_win(win, qi)) {
       return win;
     }
@@ -5094,7 +5094,7 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
 // Find the non-location list window with the specified location list.
 static win_T * find_win_with_ll(qf_info_T *qi)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if ((wp->w_llist == qi) && !bt_quickfix(wp->w_buffer)) {
       return wp;
     }
@@ -5445,7 +5445,7 @@ void ex_helpgrep(exarg_T *eap)
       wp = curwin;
     } else {
       // Find an existing help window
-      FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+      FOR_ALL_WINDOWS(wp2) {
         if (bt_help(wp2->w_buffer)) {
           wp = wp2;
           break;

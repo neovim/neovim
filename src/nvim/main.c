@@ -500,7 +500,7 @@ int main(int argc, char **argv)
 
   if (params.diff_mode) {
     /* set options in each window for "nvim -d". */
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       diff_win_options(wp, TRUE);
     }
   }

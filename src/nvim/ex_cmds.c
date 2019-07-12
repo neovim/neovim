@@ -4419,7 +4419,7 @@ prepare_tagpreview (
    */
   if (!curwin->w_p_pvw) {
     bool found_win = false;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_pvw) {
         win_enter(wp, undo_sync);
         found_win = true;
@@ -4545,7 +4545,7 @@ void ex_help(exarg_T *eap)
       wp = NULL;
     } else {
       wp = NULL;
-      FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
+      FOR_ALL_WINDOWS(wp2) {
         if (bt_help(wp2->w_buffer)) {
           wp = wp2;
           break;
@@ -5517,7 +5517,7 @@ void ex_helptags(exarg_T *eap)
  */
 void ex_helpclose(exarg_T *eap)
 {
-  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+  FOR_ALL_WINDOWS(win) {
     if (bt_help(win->w_buffer)) {
       win_close(win, false);
       return;

@@ -3714,7 +3714,7 @@ static char_u *did_set_spell_option(bool is_spellfile)
   }
 
   if (errmsg == NULL) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_buffer == curbuf && wp->w_p_spell) {
         errmsg = did_set_spelllang(wp);
         break;
@@ -3977,7 +3977,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
   } else if ((int *)varp == &curwin->w_p_pvw) {
     // There can be only one window with 'previewwindow' set.
     if (curwin->w_p_pvw) {
-      FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+      FOR_ALL_WINDOWS(win) {
         if (win->w_p_pvw && win != curwin) {
           curwin->w_p_pvw = false;
           return N_("E590: A preview window already exists");

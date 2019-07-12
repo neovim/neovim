@@ -465,7 +465,7 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   }
   // When using a timer that closes a window the window might not actually
   // exist.
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp == fp->fr_win) {
       return wp;
     }
@@ -485,7 +485,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
     }
   } else if (*gridp == 0) {
     ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (&wp->w_grid != grid || !wp->w_float_config.focusable) {
         continue;
       }

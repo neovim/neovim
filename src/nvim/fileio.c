@@ -6406,7 +6406,7 @@ void aucmd_prepbuf(aco_save_T *aco, buf_T *buf)
     win = curwin;
   } else {
     win = NULL;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_buffer == buf) {
         win = wp;
         break;

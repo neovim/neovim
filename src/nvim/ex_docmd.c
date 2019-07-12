@@ -1083,7 +1083,7 @@ static int current_win_nr(win_T *win)
 {
   int nr = 0;
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     ++nr;
     if (wp == win)
       break;
@@ -6164,7 +6164,7 @@ static void ex_close(exarg_T *eap)
     if (eap->addr_count == 0) {
       ex_win_close(eap->forceit, curwin, NULL);
     } else {
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      FOR_ALL_WINDOWS(wp) {
         winnr++;
         if (winnr == eap->line2) {
           win = wp;
@@ -6183,7 +6183,7 @@ static void ex_close(exarg_T *eap)
  */
 static void ex_pclose(exarg_T *eap)
 {
-  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+  FOR_ALL_WINDOWS(win) {
     if (win->w_p_pvw) {
       ex_win_close(eap->forceit, win, NULL);
       break;
@@ -6392,7 +6392,7 @@ static void ex_hide(exarg_T *eap)
             int winnr = 0;
             win_T *win = NULL;
 
-            FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+            FOR_ALL_WINDOWS(wp) {
                 winnr++;
                 if (winnr == eap->line2) {
                     win = wp;
@@ -7135,7 +7135,7 @@ static void ex_syncbind(exarg_T *eap)
    */
   if (curwin->w_p_scb) {
     topline = curwin->w_topline;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_scb && wp->w_buffer) {
         y = wp->w_buffer->b_ml.ml_line_count - p_so;
         if (topline > y) {
@@ -7154,7 +7154,7 @@ static void ex_syncbind(exarg_T *eap)
   /*
    * Set all scrollbind windows to the same topline.
    */
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     curwin = wp;
     if (curwin->w_p_scb) {
       curbuf = curwin->w_buffer;

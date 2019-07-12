@@ -511,7 +511,7 @@ void fmarks_check_names(buf_T *buf)
   for (i = 0; i < NGLOBALMARKS; ++i)
     fmarks_check_one(&namedfm[i], name, buf);
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     for (i = 0; i < wp->w_jumplistlen; ++i) {
       fmarks_check_one(&wp->w_jumplist[i], name, buf);
     }
@@ -1129,7 +1129,7 @@ void mark_col_adjust(
   /*
    * Adjust items in all windows related to the current buffer.
    */
-  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
+  FOR_ALL_WINDOWS(win) {
     /* marks in the jumplist */
     for (i = 0; i < win->w_jumplistlen; ++i) {
       if (win->w_jumplist[i].fmark.fnum == fnum) {

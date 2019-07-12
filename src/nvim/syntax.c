@@ -1012,7 +1012,7 @@ void syn_stack_free_all(synblock_T *block)
   syn_stack_free_block(block);
 
   /* When using "syntax" fold method, must update all folds. */
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_s == block && foldmethodIsSyntax(wp)) {
       foldUpdateAll(wp);
     }
@@ -1099,7 +1099,7 @@ void syn_stack_apply_changes(buf_T *buf)
 {
   syn_stack_apply_changes_block(&buf->b_s, buf);
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if ((wp->w_buffer == buf) && (wp->w_s != &buf->b_s)) {
       syn_stack_apply_changes_block(wp->w_s, buf);
     }

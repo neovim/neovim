@@ -2143,7 +2143,7 @@ void do_check_cursorbind(void)
    * loop through the cursorbound windows
    */
   VIsual_select = VIsual_active = 0;
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     curwin = wp;
     curbuf = curwin->w_buffer;
     /* skip original window  and windows with 'noscrollbind' */

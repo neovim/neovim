@@ -186,7 +186,7 @@ void redraw_win_later(win_T *wp, int type)
  */
 void redraw_all_later(int type)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     redraw_win_later(wp, type);
   }
   // This may be needed when switching tabs.
@@ -197,7 +197,7 @@ void redraw_all_later(int type)
 
 void screen_invalidate_highlights(void)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     redraw_win_later(wp, NOT_VALID);
     wp->w_grid.valid = false;
   }
@@ -213,7 +213,7 @@ void redraw_curbuf_later(int type)
 
 void redraw_buf_later(buf_T *buf, int type)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer == buf) {
       redraw_win_later(wp, type);
     }
@@ -222,7 +222,7 @@ void redraw_buf_later(buf_T *buf, int type)
 
 void redraw_buf_line_later(buf_T *buf,  linenr_T line)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer == buf
         && line >= wp->w_topline && line < wp->w_botline) {
       redrawWinline(wp, line);
@@ -328,7 +328,7 @@ int update_screen(int type)
       if (valid == 0) {
         redraw_tabline = true;
       }
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      FOR_ALL_WINDOWS(wp) {
         if (W_ENDROW(wp) > valid) {
           wp->w_redr_type = NOT_VALID;
           wp->w_lines_valid = 0;
@@ -343,7 +343,7 @@ int update_screen(int type)
       check_for_delay(false);
       grid_ins_lines(&default_grid, 0, msg_scrolled, (int)Rows,
                      0, (int)Columns);
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      FOR_ALL_WINDOWS(wp) {
         if (wp->w_floating) {
           continue;
         }
@@ -440,7 +440,7 @@ int update_screen(int type)
    * Correct stored syntax highlighting info for changes in each displayed
    * buffer.  Each buffer must only be done once.
    */
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     update_window_hl(wp, type >= NOT_VALID);
 
     if (wp->w_buffer->b_mod_set) {
@@ -466,7 +466,7 @@ int update_screen(int type)
   search_hl.rm.regprog = NULL;
 
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_redr_type == CLEAR && wp->w_floating && wp->w_grid.chars) {
       grid_invalidate(&wp->w_grid);
       wp->w_redr_type = NOT_VALID;
@@ -497,7 +497,7 @@ int update_screen(int type)
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     wp->w_buffer->b_mod_set = false;
   }
 
@@ -4529,7 +4529,7 @@ void rl_mirror(char_u *str)
 void status_redraw_all(void)
 {
 
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_status_height) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
@@ -4546,7 +4546,7 @@ void status_redraw_curbuf(void)
 /// Marks all status lines of the specified buffer for redraw.
 void status_redraw_buf(buf_T *buf)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_status_height != 0 && wp->w_buffer == buf) {
       wp->w_redr_status = true;
       redraw_later(VALID);
@@ -4559,7 +4559,7 @@ void status_redraw_buf(buf_T *buf)
  */
 void redraw_statuslines(void)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_redr_status) {
       win_redr_status(wp);
     }
@@ -6192,7 +6192,7 @@ void screenclear(void)
   redraw_tabline = true;
   redraw_popupmenu = true;
   pum_invalidate();
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_floating) {
       wp->w_redr_type = CLEAR;
     }
@@ -7280,7 +7280,7 @@ void win_new_shellsize(void)
 
 win_T *get_win_by_grid_handle(handle_T handle)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_grid.handle == handle) {
       return wp;
     }

@@ -1854,7 +1854,7 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   if (curwin->w_p_diff) {
     linenr_T wlnum;
 
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
@@ -1958,7 +1958,7 @@ changed_lines(
     // displaying.
     linenr_T wlnum;
 
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
@@ -2204,7 +2204,7 @@ unchanged (
  */
 void check_status(buf_T *buf)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer == buf && wp->w_status_height) {
       wp->w_redr_status = TRUE;
       if (must_redraw < VALID) {

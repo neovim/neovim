@@ -3546,7 +3546,7 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
    * loop through the scrollbound windows and scroll accordingly
    */
   VIsual_select = VIsual_active = 0;
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS(wp) {
     curwin = wp;
     curbuf = curwin->w_buffer;
     /* skip original window  and windows with 'noscrollbind' */
@@ -4522,7 +4522,7 @@ dozet:
   if (old_fen != curwin->w_p_fen) {
     if (foldmethodIsDiff(curwin) && curwin->w_p_scb) {
       /* Adjust 'foldenable' in diff-synced windows. */
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+      FOR_ALL_WINDOWS(wp) {
         if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
           wp->w_p_fen = curwin->w_p_fen;
           changed_window_setting_win(wp);
@@ -4643,7 +4643,7 @@ static void nv_clear(cmdarg_T *cap)
   if (!checkclearop(cap->oap)) {
     /* Clear all syntax states to force resyncing. */
     syn_stack_free_all(curwin->w_s);
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       wp->w_s->b_syn_slow = false;
     }
     redraw_later(CLEAR);

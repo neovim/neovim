@@ -3902,7 +3902,7 @@ op_format (
   }
 
   if (oap->is_VIsual) {
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_old_cursor_lnum != 0) {
         /* When lines have been inserted or deleted, adjust the end of
          * the Visual area to be redrawn. */
