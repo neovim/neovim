@@ -55,6 +55,34 @@ anchors:
     # adds the target branch to the cache key.
     FOR_TRAVIS_CACHE=$TRAVIS_BRANCH
 
+addons:
+  apt:
+    packages: &common-apt-packages
+      - apport
+      - autoconf
+      - automake
+      - build-essential
+      - clang-4.0
+      - cmake
+      - cscope
+      - gcc-multilib
+      - gdb
+      - gperf
+      - language-pack-tr
+      - libc6-dev-i386
+      - libtool-bin
+      - locales
+      - ninja-build
+      - pkg-config
+      - unzip
+      - valgrind
+      - xclip
+  homebrew:
+    update: true
+    packages:
+      - ccache
+      - ninja
+
 jobs:
   include:
     - stage: baseline
@@ -106,14 +134,22 @@ jobs:
       env:
         - *common-job-env
 
-    - name: gcc-coverage
+    - name: gcc-coverage (gcc 9)
       os: linux
-      compiler: gcc
+      compiler: gcc-9
       env:
         - GCOV=gcov
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
         - GCOV_ERROR_FILE="/tmp/libgcov-errors.log"
         - *common-job-env
+      addons:
+        apt:
+          sources:
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+          packages:
+            - *common-apt-packages
+            - gcc-9
+
     - name: clang-tsan
       os: linux
       compiler: clang
@@ -129,34 +165,6 @@ install:        ci/install.sh
 before_script:  ci/before_script.sh
 script:         ci/script.sh
 before_cache:   ci/before_cache.sh
-
-addons:
-  apt:
-    packages:
-      - apport
-      - autoconf
-      - automake
-      - build-essential
-      - clang-4.0
-      - cmake
-      - cscope
-      - gcc-multilib
-      - gdb
-      - gperf
-      - language-pack-tr
-      - libc6-dev-i386
-      - libtool-bin
-      - locales
-      - ninja-build
-      - pkg-config
-      - unzip
-      - valgrind
-      - xclip
-  homebrew:
-    update: true
-    packages:
-      - ccache
-      - ninja
 
 branches:
   only:
