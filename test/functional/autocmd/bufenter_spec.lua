@@ -33,9 +33,10 @@ describe('autocmd BufEnter', function()
   end)
 
   it('triggered by ":split normal|:help|:bw"', function()
+    -- Add runtime from build dir for doc/tags (used with :help).
+    command(string.format([[set rtp+=%s/runtime]], helpers.test_build_dir))
     command("split normal")
     command("wincmd j")
-    command("helptags runtime/doc")
     command("help")
     command("wincmd L")
     command("autocmd BufEnter normal let g:bufentered = 1")
