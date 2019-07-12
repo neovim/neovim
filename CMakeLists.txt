@@ -329,8 +329,8 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
   # 2. But _Pragma("...ignored") is broken (unresolved) in GCC 5+:
   #    https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66099
   # So we must disable -Warray-bounds globally for GCC (for kbtree.h, #7083).
-  check_c_compiler_flag(-Wno-array-bounds HAS_NO_ARRAY_BOUNDS_FLAG)
-  if(HAS_NO_ARRAY_BOUNDS_FLAG)
+  check_c_compiler_flag(-Warray-bounds HAS_WARRAY_BOUNDS)
+  if(HAS_WARRAY_BOUNDS)
     add_compile_options(-Wno-array-bounds)
   endif()
 endif()
