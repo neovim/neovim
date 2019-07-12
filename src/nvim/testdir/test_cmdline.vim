@@ -242,7 +242,6 @@ func Test_getcompletion()
   let l = getcompletion('break', 'compiler')
   call assert_equal([], l)
 
-  helptags ALL
   let l = getcompletion('last', 'help')
   call assert_true(index(l, ':tablast') >= 0)
   let l = getcompletion('giveup', 'help')

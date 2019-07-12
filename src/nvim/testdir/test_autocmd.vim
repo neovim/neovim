@@ -300,7 +300,6 @@ func Test_augroup_warning()
 endfunc
 
 func Test_BufReadCmdHelp()
-  helptags ALL
   " This used to cause access to free memory
   au BufReadCmd * e +h
   help
@@ -382,7 +381,6 @@ func Test_three_windows()
 
   only
 
-  helptags ALL
   help
   wincmd w
   1quit

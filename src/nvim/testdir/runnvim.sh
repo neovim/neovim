@@ -28,7 +28,7 @@ main() {(
   . "$CI_DIR/common/suite.sh"
   . "$CI_DIR/common/test.sh"
 
-  export VIMRUNTIME="$root/runtime"
+  export VIMRUNTIME="${BUILD_DIR}/runtime"
   if ! "$nvim_prg" \
     -u NONE -i NONE \
     --headless \
