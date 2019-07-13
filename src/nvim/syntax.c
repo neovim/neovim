@@ -7224,7 +7224,7 @@ static bool syn_list_header(const bool did_header, const int outlen,
     }
     msg_outtrans(HL_TABLE()[id - 1].sg_name);
     endcol = 15;
-  } else if (ui_has(kUIMessages) || msg_silent) {
+  } else if ((ui_has(kUIMessages) || msg_silent) && outlen < 999) {
     msg_putchar(' ');
     adjust = false;
   } else if (msg_col + outlen + 1 >= Columns)   {

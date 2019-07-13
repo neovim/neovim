@@ -804,6 +804,7 @@ describe('ui/builtin messages', function()
       [3] = {bold = true, reverse = true},
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [5] = {foreground = Screen.colors.Blue1},
+      [6] = {bold = true, foreground = Screen.colors.Magenta},
     })
   end)
 
@@ -855,6 +856,46 @@ describe('ui/builtin messages', function()
     -- screen size doesn't affect internal output #10285
     eq('ErrorMsg       xxx ctermfg=15 ctermbg=1 guifg=White guibg=Red',
        meths.command_output("hi ErrorMsg"))
+  end)
+
+  it(':syntax list langGroup output', function()
+    command("syntax on")
+    command("set syntax=vim")
+    screen:try_resize(110,7)
+    feed(':syntax list vimComment<cr>')
+    screen:expect([[
+      {6:--- Syntax items ---}                                                                                          |
+      vimComment     {5:xxx} {5:match} /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  {5:excludenl} {5:contains}=@vimCommentGroup,vimCommentString |
+                                                                                                                    |
+                         {5:match} /\<endif\s\+".*$/ms=s+5,lc=5  {5:contains}=@vimCommentGroup,vimCommentString             |
+                         {5:match} /\<else\s\+".*$/ms=s+4,lc=4  {5:contains}=@vimCommentGroup,vimCommentString              |
+                         {5:links to} Comment                                                                           |
+      {4:Press ENTER or type command to continue}^                                                                       |
+    ]])
+
+    feed('<cr>')
+    screen:try_resize(55,7)
+    feed(':syntax list vimComment<cr>')
+    screen:expect([[
+                                                             |
+                         {5:match} /\<endif\s\+".*$/ms=s+5,lc=5  |
+      {5:contains}=@vimCommentGroup,vimCommentString             |
+                         {5:match} /\<else\s\+".*$/ms=s+4,lc=4  {5:c}|
+      {5:ontains}=@vimCommentGroup,vimCommentString              |
+                         {5:links to} Comment                    |
+      {4:Press ENTER or type command to continue}^                |
+    ]])
+    feed('<cr>')
+
+    -- ignore final whitespace inside string
+    -- luacheck: push ignore
+    eq([[--- Syntax items ---
+vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vimCommentGroup,vimCommentString 
+                   match /\<endif\s\+".*$/ms=s+5,lc=5  contains=@vimCommentGroup,vimCommentString 
+                   match /\<else\s\+".*$/ms=s+4,lc=4  contains=@vimCommentGroup,vimCommentString 
+                   links to Comment]],
+       meths.command_output('syntax list vimComment'))
+    -- luacheck: pop
   end)
 end)
 
