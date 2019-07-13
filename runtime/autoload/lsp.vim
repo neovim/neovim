@@ -9,14 +9,14 @@ catch
   finish
 endtry
 
-let s:client_string = "require('lsp.plugin').client"
+let s:lsp_plugin = "require('lsp.plugin')"
 
 function! lsp#start(...) abort
   let start_filetype = get(a:000, 0, &filetype)
   let force = get(a:000, 1, v:false)
 
-  if force || !luaeval(s:client_string . '.has_started(_A)', start_filetype)
-    call luaeval(s:client_string . '.start(nil, _A).name', start_filetype)
+  if force || !luaeval(s:lsp_plugin . '.has_started(_A)', start_filetype)
+    call luaeval(s:lsp_plugin . '.start_client(nil, _A).name', start_filetype)
     " call lsp#api_exec('client.start(nil, "%s")', start_filetype)
   else
     echom '[LSP] Client for ' . start_filetype . ' has already started'
@@ -30,7 +30,7 @@ function! lsp#request(method, ...) abort
   let optional_callback = get(a:000, 1, v:null)
   let filetype = get(a:000, 2, v:null)
 
-  let request_id = luaeval(s:client_string . '.request(_A.method, _A.params, _A.callback, _A.filetype)', {
+  let request_id = luaeval(s:lsp_plugin . '.request(_A.method, _A.params, _A.callback, _A.filetype)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'callback': optional_callback,
@@ -49,7 +49,7 @@ function! lsp#request_async(method, ...) abort
   let optional_callback = get(a:000, 1, v:null)
   let filetype = get(a:000, 2, v:null)
 
-  let result = luaeval(s:client_string . '.request_async(_A.method, _A.params, _A.callback, _A.filetype)', {
+  let result = luaeval(s:lsp_plugin . '.request_async(_A.method, _A.params, _A.callback, _A.filetype)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'callback': optional_callback,
@@ -65,7 +65,7 @@ function! lsp#notify(method, ...) abort
   let params = get(a:000, 0, {})
   let filetype = get(a:000, 1, v:null)
 
-  luaeval(s:client_string . '.notify(_A.method, _A.params, _A.filetype)', {
+  luaeval(s:lsp_plugin . '.notify(_A.method, _A.params, _A.filetype)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'filetype': filetype,
@@ -80,7 +80,7 @@ function! lsp#handle(request, data, ...) abort abort
   let default_only = get(a:000, 1, v:true)
 
   " and then calls it with the provided data
-  return luaeval(s:client_string . '.handle(_A.filetype, _A.method, _A.data, _A.default_only)', {
+  return luaeval(s:lsp_plugin . '.handle(_A.filetype, _A.method, _A.data, _A.default_only)', {
         \ 'filetype': file_type,
         \ 'method': a:request,
         \ 'data': a:data,
