@@ -31,27 +31,6 @@ void time_init(void)
   uv_cond_init(&delay_cond);
 }
 
-/// Gets the current time with microsecond (μs) precision.
-///
-/// Subject to system-clock quirks (drift, going backwards, skipping).
-/// But it is much faster than os_hrtime() on some systems. #10328
-///
-/// @see gettimeofday(2)
-///
-/// @return Current time in microseconds.
-int64_t os_utime(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  uv_timeval64_t tm;
-  int e = uv_gettimeofday(&tm);
-  if (e != 0 || tm.tv_sec < 0 || tm.tv_usec < 0) {
-    return 0;
-  }
-  int64_t rv = tm.tv_sec * 1000 * 1000;  // s => μs
-  STRICT_ADD(rv, tm.tv_usec, &rv, int64_t);
-  return rv;
-}
-
 /// Gets a high-resolution (nanosecond), monotonically-increasing time relative
 /// to an arbitrary time in the past.
 ///
