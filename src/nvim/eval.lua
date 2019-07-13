@@ -40,11 +40,13 @@ return {
     atan2={args=2},
     browse={args=4},
     browsedir={args=2},
+    bufadd={args=1},
     bufexists={args=1},
     buffer_exists={args=1, func='f_bufexists'},  -- obsolete
     buffer_name={args=1, func='f_bufname'},  -- obsolete
     buffer_number={args=1, func='f_bufnr'},  -- obsolete
     buflisted={args=1},
+    bufload={args=1},
     bufloaded={args=1},
     bufname={args=1},
     bufnr={args={1, 2}},
