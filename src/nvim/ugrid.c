@@ -75,7 +75,7 @@ void ugrid_scroll(UGrid *grid, int top, int bot, int left, int right, int count)
     UCell *source_row = grid->cells[i + count] + left;
     assert(right >= left && left >= 0);
     memcpy(target_row, source_row,
-           sizeof(UCell) * (size_t)right - (size_t)left + 1);
+           sizeof(UCell) * ((size_t)right - (size_t)left + 1));
   }
 }
 
