@@ -1366,14 +1366,14 @@ list_T *get_buffer_signs(buf_T *buf)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   signlist_T *sign;
-  dict_T *dict;
-  list_T *const list = tv_list_alloc(kListLenMayKnow);
+  dict_T *d;
+  list_T *const l = tv_list_alloc(kListLenMayKnow);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
-    dict = sign_get_info(sign);
-    tv_list_append_dict(list, dict);
+    d = sign_get_info(sign);
+    tv_list_append_dict(l, d);
   }
-  return list;
+  return l;
 }
 
 /// Return information about all the signs placed in a buffer
