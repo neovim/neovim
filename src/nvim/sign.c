@@ -1341,7 +1341,7 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
 void sign_getlist(const char_u *name, list_T *retlist)
 {
   sign_T *sp = first_sign;
-  dict_T *d;
+  dict_T *dict;
 
   if (name != NULL) {
     sp = sign_find(name, NULL);
@@ -1351,9 +1351,9 @@ void sign_getlist(const char_u *name, list_T *retlist)
   }
 
   for (; sp != NULL && !got_int; sp = sp->sn_next) {
-    d = tv_dict_alloc();
-    tv_list_append_dict(retlist, d);
-    sign_getinfo(sp, d);
+    dict = tv_dict_alloc();
+    tv_list_append_dict(retlist, dict);
+    sign_getinfo(sp, dict);
 
     if (name != NULL) {     // handle only the specified sign
       break;
