@@ -2,32 +2,6 @@ local util = {
   quickfix = {},
 }
 
-util.split = function(s, sep, nMax, bRegexp)
-  assert(sep ~= '')
-  assert(nMax == nil or nMax >= 1)
-
-  local aRecord = {}
-
-  if s:len() > 0 then
-    local bPlain = not bRegexp
-    nMax = nMax or -1
-
-    local nField, nStart = 1, 1
-    local nFirst, nLast = s:find(sep, nStart, bPlain)
-    while nFirst and nMax ~= 0 do
-      aRecord[nField] = s:sub(nStart, nFirst - 1)
-      nField = nField + 1
-      nStart = nLast + 1
-      nFirst, nLast = s:find(sep, nStart, bPlain)
-      nMax = nMax - 1
-    end
-
-    aRecord[nField] = s:sub(nStart)
-  end
-
-  return aRecord
-end
-
 util.tostring = function(obj)
   local stringified = ''
   if type(obj) == 'table' then

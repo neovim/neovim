@@ -1,5 +1,3 @@
--- luacheck: globals vim
-
 -- Register requests
 -- Default requests
 -- Override requests
@@ -18,8 +16,7 @@
 --
 --          @returns (table): The resulting params for the request
 
-local nvim_util = require('nvim.util')
-
+local shared = require('vim.shared')
 local structures = require('lsp.structures')
 
 local notifications = {
@@ -67,7 +64,7 @@ end
 local get_notification_function = function(method)
   local method_table
   if type(method) == 'string' then
-    method_table = nvim_util.split(method, '/')
+    method_table = shared.split(method, '/', true)
   elseif type(method) == 'table' then
     method_table = method
   else

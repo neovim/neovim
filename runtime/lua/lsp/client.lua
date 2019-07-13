@@ -209,13 +209,13 @@ client._parse_header = function(header)
     return nil, nil
   end
 
-  local lines = util.split(header, '\\r\\n')
+  local lines = shared.split(header, '\\r\\n', true)
 
   local split_lines = {}
 
   for _, line in pairs(lines) do
     if line ~= '' then
-      local temp_lines = util.split(line, ':')
+      local temp_lines = shared.split(line, ':', true)
       for t_index, t_line in pairs(temp_lines) do
         temp_lines[t_index] = shared.trim(t_line)
       end
