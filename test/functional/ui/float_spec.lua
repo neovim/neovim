@@ -4659,6 +4659,96 @@ describe('floating windows', function()
                                                   |
         ]])
       end
+
+      -- The interaction between 'winblend' and doublewidth chars in the background
+      -- does not look very good. But check no chars get incorrectly placed
+      -- at least. Also check invisible EndOfBuffer region blends correctly.
+      meths.buf_set_lines(buf, 0, -1, true, {" x x  x   xx", "  x x  x   x"})
+      win = meths.open_win(buf, false, {relative='editor', width=12, height=3, row=0, col=11, style='minimal'})
+      meths.win_set_option(win, 'winblend', 30)
+      screen:set_default_attr_ids({
+        [1] = {foreground = tonumber('0xb282b2'), background = tonumber('0xffcfff')},
+        [2] = {foreground = Screen.colors.Grey0, background = tonumber('0xffcfff')},
+        [3] = {bold = true, foreground = Screen.colors.Blue1},
+        [4] = {background = tonumber('0xffcfff'), bold = true, foreground = tonumber('0xb282ff')},
+        [5] = {background = Screen.colors.LightMagenta},
+      })
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          # TODO: 测试字典信息的准确性            |
+          # FIXME: 测试字典信息的准确^性           |
+          {3:~                                       }|
+          {3:~                                       }|
+          {3:~                                       }|
+          {3:~                                       }|
+        ## grid 5
+          {5: x x  x   xx}|
+          {5:  x x  x   x}|
+          {5:            }|
+        ]], float_pos={
+          [5] = { {
+              id = 1003
+            }, "NW", 1, 0, 11, true }
+        }}
+      else
+        screen:expect([[
+          # TODO: 测 {2: x x  x}{1:息}{2: xx} 确性            |
+          # FIXME: 测{1:试}{2:x x  x}{1:息}{2: x}准确^性           |
+          {3:~          }{4:            }{3:                 }|
+          {3:~                                       }|
+          {3:~                                       }|
+          {3:~                                       }|
+                                                  |
+        ]])
+      end
+
+      meths.win_set_config(win, {relative='editor', row=0, col=12})
+      if multigrid then
+        screen:expect{grid=[[
+        ## grid 1
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+          [2:----------------------------------------]|
+                                                  |
+        ## grid 2
+          # TODO: 测试字典信息的准确性            |
+          # FIXME: 测试字典信息的准确^性           |
+          {3:~                                       }|
+          {3:~                                       }|
+          {3:~                                       }|
+          {3:~                                       }|
+        ## grid 5
+          {5: x x  x   xx}|
+          {5:  x x  x   x}|
+          {5:            }|
+        ]], float_pos={
+          [5] = { {
+              id = 1003
+            }, "NW", 1, 0, 12, true }
+        }}
+      else
+        screen:expect([[
+          # TODO: 测试{2: x x}{1:信}{2:x }{1:的}{2:xx}确性            |
+          # FIXME: 测 {2:  x x}{1:信}{2:x }{1:的}{2:x} 确^性           |
+          {3:~           }{4:            }{3:                }|
+          {3:~                                       }|
+          {3:~                                       }|
+          {3:~                                       }|
+                                                  |
+        ]])
+      end
     end)
   end
 
