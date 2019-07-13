@@ -6079,10 +6079,10 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
 {
   int new_row;
   ScreenGrid new = *grid;
-  /* Since amount of cells could not be negative we expect both
-   * rows and columns to be positive */
+  // Since amount of cells could not be negative we expect both
+  // rows and columns to be positive
   assert(rows >= 0 && columns >= 0);
-  size_t ncells = ((size_t)rows + 1) * columns;
+  size_t ncells = (size_t)rows * columns;
   new.chars = xmalloc(ncells * sizeof(schar_T));
   new.attrs = xmalloc(ncells * sizeof(sattr_T));
   new.line_offset = xmalloc((size_t)(rows * sizeof(unsigned)));
