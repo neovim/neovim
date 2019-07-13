@@ -1341,7 +1341,7 @@ static void sign_getinfo(sign_T *sp, dict_T *retdict)
 void sign_getlist(const char_u *name, list_T *retlist)
 {
   sign_T *sp = first_sign;
-  dict_T *dict;
+  dict_T *d;
 
   if (name != NULL) {
     sp = sign_find(name, NULL);
@@ -1351,9 +1351,9 @@ void sign_getlist(const char_u *name, list_T *retlist)
   }
 
   for (; sp != NULL && !got_int; sp = sp->sn_next) {
-    dict = tv_dict_alloc();
-    tv_list_append_dict(retlist, dict);
-    sign_getinfo(sp, dict);
+    d = tv_dict_alloc();
+    tv_list_append_dict(retlist, d);
+    sign_getinfo(sp, d);
 
     if (name != NULL) {     // handle only the specified sign
       break;
@@ -1384,17 +1384,17 @@ static void sign_get_placed_in_buf(
     const char_u *sign_group,
     list_T *retlist)
 {
-  dict_T *dict;
-  list_T *list;
+  dict_T *d;
+  list_T *l;
   signlist_T *sign;
 
-  dict = tv_dict_alloc();
-  tv_list_append_dict(retlist, dict);
+  d = tv_dict_alloc();
+  tv_list_append_dict(retlist, d);
 
-  tv_dict_add_nr(dict, S_LEN("bufnr"), (long)buf->b_fnum);
+  tv_dict_add_nr(d, S_LEN("bufnr"), (long)buf->b_fnum);
 
-  list = tv_list_alloc(kListLenMayKnow);
-  tv_dict_add_list(dict, S_LEN("signs"), list);
+  l = tv_list_alloc(kListLenMayKnow);
+  tv_dict_add_list(d, S_LEN("signs"), l);
 
   FOR_ALL_SIGNS_IN_BUF(buf, sign) {
     if (!sign_in_group(sign, sign_group)) {
@@ -1404,7 +1404,7 @@ static void sign_get_placed_in_buf(
         || (sign_id == 0 && lnum == sign->lnum)
         || (lnum == 0 && sign_id == sign->id)
         || (lnum == sign->lnum && sign_id == sign->id)) {
-      tv_list_append_dict(list, sign_get_info(sign));
+      tv_list_append_dict(l, sign_get_info(sign));
     }
   }
 }
