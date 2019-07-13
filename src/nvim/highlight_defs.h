@@ -36,6 +36,7 @@ typedef struct attr_entry {
   .rgb_sp_color = -1, \
   .cterm_fg_color = 0, \
   .cterm_bg_color = 0, \
+  .hl_blend = -1, \
 }
 
 /// Values for index in highlight_attr[].

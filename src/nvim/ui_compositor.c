@@ -344,11 +344,22 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
 
     // 'pumblend' and 'winblend'
     if (grid->blending) {
-      for (int i = col-(int)startcol; i < until-startcol; i++) {
-        bool thru = strequal((char *)linebuf[i], " ");  // negative space
+      int width;
+      for (int i = col-(int)startcol; i < until-startcol; i += width) {
+        width = 1;
+        // negative space
+        bool thru = strequal((char *)linebuf[i], " ") && bg_line[i][0] != NUL;
+        if (i+1 < endcol-startcol && bg_line[i+1][0] == NUL) {
+          width = 2;
+          thru &= strequal((char *)linebuf[i+1], " ");
+        }
         attrbuf[i] = (sattr_T)hl_blend_attrs(bg_attrs[i], attrbuf[i], &thru);
+        if (width == 2) {
+          attrbuf[i+1] = (sattr_T)hl_blend_attrs(bg_attrs[i+1],
+                                                 attrbuf[i+1], &thru);
+        }
         if (thru) {
-          memcpy(linebuf[i], bg_line[i], sizeof(linebuf[i]));
+          memcpy(linebuf[i], bg_line[i], (size_t)width * sizeof(linebuf[i]));
         }
       }
     }
