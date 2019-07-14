@@ -14,6 +14,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/syntax.h"
 #include "nvim/charset.h"
 #include "nvim/cursor_shape.h"
@@ -7500,6 +7501,12 @@ void highlight_changed(void)
 
     highlight_attr[hlf] = hl_get_ui_attr(hlf, final_id,
                                          hlf == (int)HLF_INACTIVE);
+
+    if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
+      ui_call_hl_group_set(cstr_as_string((char *)hlf_names[hlf]),
+                           highlight_attr[hlf]);
+      highlight_attr_last[hlf] = highlight_attr[hlf];
+    }
   }
 
   /* Setup the user highlights

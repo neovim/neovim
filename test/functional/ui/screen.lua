@@ -165,6 +165,7 @@ function Screen.new(width, height)
     showmode = {},
     showcmd = {},
     ruler = {},
+    hl_groups = {},
     _default_attr_ids = nil,
     _default_attr_ignore = nil,
     _mouse_enabled = true,
@@ -322,7 +323,7 @@ function Screen:expect(expected, attr_ids, attr_ignore)
     assert(not (attr_ids ~= nil or attr_ignore ~= nil))
     local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
-                    reset=true, timeout=true, request_cb=true}
+                    reset=true, timeout=true, request_cb=true, hl_groups=true}
     for _, v in ipairs(ext_keys) do
       is_key[v] = true
     end
@@ -418,9 +419,10 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
     -- (e.g. no external cmdline visible). Some extensions require
     -- preprocessing to represent highlights in a reproducible way.
     local extstate = self:_extstate_repr(attr_state)
-    if expected['mode'] ~= nil then
-      extstate['mode'] = self.mode
+    if expected.mode ~= nil then
+      extstate.mode = self.mode
     end
+
     -- Convert assertion errors into invalid screen state descriptions.
     for _, k in ipairs(concat_tables(ext_keys, {'mode'})) do
       -- Empty states are considered the default and need not be mentioned.
@@ -428,6 +430,17 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
         local status, res = pcall(eq, expected[k], extstate[k], k)
         if not status then
           return (tostring(res)..'\nHint: full state of "'..k..'":\n  '..inspect(extstate[k]))
+        end
+      end
+    end
+
+    if expected.hl_groups ~= nil then
+      for name, id in pairs(expected.hl_groups) do
+        local expected_hl = attr_state.ids[id]
+        local actual_hl = self._attr_table[self.hl_groups[name]][(self._options.rgb and 1) or 2]
+        local status, res = pcall(eq, expected_hl, actual_hl, "highlight "..name)
+        if not status then
+          return tostring(res)
         end
       end
     end
@@ -834,6 +847,10 @@ function Screen:_handle_hl_attr_define(id, rgb_attrs, cterm_attrs, info)
   self._attr_table[id] = {rgb_attrs, cterm_attrs}
   self._hl_info[id] = info
   self._new_attrs = true
+end
+
+function Screen:_handle_hl_group_set(name, id)
+  self.hl_groups[name] = id
 end
 
 function Screen:get_hl(val)
@@ -1411,16 +1428,16 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     end
     return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][1])
   else
-    for id, a in pairs(attr_state.ids) do
-      if self:_equal_attrs(a, attrs) then
-         return id
-       end
-    end
     if self:_equal_attrs(attrs, {}) or
         attr_state.ignore == true or
         self:_attr_index(attr_state.ignore, attrs) ~= nil then
       -- ignore this attrs
       return nil
+    end
+    for id, a in pairs(attr_state.ids) do
+      if self:_equal_attrs(a, attrs) then
+         return id
+       end
     end
     if attr_state.mutable then
       table.insert(attr_state.ids, attrs)
