@@ -5490,8 +5490,9 @@ void cursor_pos_info(dict_T *dict)
       if (l_VIsual_active) {
         if (l_VIsual_mode == Ctrl_V && curwin->w_curswant < MAXCOL) {
           getvcols(curwin, &min_pos, &max_pos, &min_pos.col, &max_pos.col);
-          vim_snprintf((char *)buf1, sizeof(buf1), _("%" PRId64 " Cols; "),
-                       (int64_t)(oparg.end_vcol - oparg.start_vcol + 1));
+          int64_t varargs;
+          STRICT_SUB(oparg.end_vcol, oparg.start_vcol + 1, &varargs ,int64_t);
+          vim_snprintf((char *)buf1, sizeof(buf1), _("%" PRId64 " Cols; "), varargs);
         } else {
           buf1[0] = NUL;
         }
