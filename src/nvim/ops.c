@@ -3085,8 +3085,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
       // move the text after the cursor to the end of the line.
-      memmove(ptr, oldp + bd.textcol + delcount,
-              (size_t)((int)oldlen - bd.textcol - delcount + 1));
+      size_t columns;
+      STRICT_SUB(oldlen, bd.textcol, &columns, size_t);
+      STRICT_SUB(columns, delcount +1, &columns, size_t);
+      memmove(ptr, oldp + bd.textcol + delcount, columns);
       ml_replace(curwin->w_cursor.lnum, newp, false);
 
       ++curwin->w_cursor.lnum;
@@ -3209,11 +3211,11 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           xfree(newp);
 
           oldp = ml_get(lnum);
-          newp = (char_u *) xmalloc((size_t)(col + yanklen + 1));
+          newp = (char_u *) xmalloc((size_t)col + (size_t)yanklen + 1);
           /* copy first part of line */
           memmove(newp, oldp, (size_t)col);
           /* append to first line */
-          memmove(newp + col, y_array[0], (size_t)(yanklen + 1));
+          memmove(newp + col, y_array[0], (size_t)yanklen + 1);
           ml_replace(lnum, newp, false);
 
           curwin->w_cursor.lnum = lnum;
@@ -3709,7 +3711,7 @@ int do_join(size_t count,
   col = sumsize - currsize - spaces[count - 1];
 
   /* allocate the space for the new line */
-  newp = (char_u *) xmalloc((size_t)(sumsize + 1));
+  newp = (char_u *) xmalloc((size_t)sumsize + 1);
   cend = newp + sumsize;
   *cend = 0;
 
@@ -5472,7 +5474,7 @@ void cursor_pos_info(dict_T *dict)
           byte_count_cursor = byte_count
             + line_count_info(ml_get(lnum), &word_count_cursor,
                               &char_count_cursor,
-                              (varnumber_T)(curwin->w_cursor.col + 1),
+                              (varnumber_T)curwin->w_cursor.col + 1,
                               eol_size);
         }
       }
