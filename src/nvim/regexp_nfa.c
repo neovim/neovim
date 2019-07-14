@@ -3002,8 +3002,8 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
     return NULL; \
   }
 
-  if (nfa_calc_size == FALSE) {
-    /* Allocate space for the stack. Max states on the stack : nstate */
+  if (nfa_calc_size == false) {
+    // Allocate space for the stack. Max states on the stack: "nstate".
     stack = xmalloc((nstate + 1) * sizeof(Frag_T));
     stackp = stack;
     stack_end = stack + (nstate + 1);
