@@ -15,6 +15,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/getchar.h"
@@ -912,9 +913,10 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, bool silent)
     memmove(s1 + newoff + offset, str, (size_t)addlen);
     /* copy the old chars, after the insertion point, including the	NUL at
      * the end */
+    int bytes = typebuf.tb_len - offset + 1;
+    assert(bytes > 0);
     memmove(s1 + newoff + offset + addlen,
-        typebuf.tb_buf + typebuf.tb_off + offset,
-        (size_t)(typebuf.tb_len - offset + 1));
+        typebuf.tb_buf + typebuf.tb_off + offset, (size_t)bytes);
     if (typebuf.tb_buf != typebuf_init)
       xfree(typebuf.tb_buf);
     typebuf.tb_buf = s1;
@@ -1063,9 +1065,10 @@ void del_typebuf(int len, int offset)
       typebuf.tb_off = MAXMAPLEN;
     }
     /* adjust typebuf.tb_buf (include the NUL at the end) */
+    int bytes = typebuf.tb_len - offset + 1;
+    assert(bytes > 0);
     memmove(typebuf.tb_buf + typebuf.tb_off + offset,
-        typebuf.tb_buf + i + len,
-        (size_t)(typebuf.tb_len - offset + 1));
+        typebuf.tb_buf + i + len, (size_t)bytes);
     /* adjust typebuf.tb_noremap[] */
     memmove(typebuf.tb_noremap + typebuf.tb_off + offset,
         typebuf.tb_noremap + i + len,
