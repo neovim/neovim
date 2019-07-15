@@ -3608,7 +3608,7 @@ syn_list_one(
       continue;
     }
 
-    (void)syn_list_header(did_header, 999, id);
+    (void)syn_list_header(did_header, 0, id, true);
     did_header = true;
     last_matchgroup = 0;
     if (spp->sp_type == SPTYPE_MATCH) {
@@ -3657,7 +3657,7 @@ syn_list_one(
 
   /* list the link, if there is one */
   if (HL_TABLE()[id - 1].sg_link && (did_header || link_only) && !got_int) {
-    (void)syn_list_header(did_header, 999, id);
+    (void)syn_list_header(did_header, 0, id, true);
     msg_puts_attr("links to", attr);
     msg_putchar(' ');
     msg_outtrans(HL_TABLE()[HL_TABLE()[id - 1].sg_link - 1].sg_name);
@@ -3799,7 +3799,6 @@ static bool syn_list_keywords(
     const int attr
 )
 {
-  int outlen;
   int prev_contained = 0;
   const int16_t *prev_next_list = NULL;
   const int16_t *prev_cont_in_list = NULL;
@@ -3817,17 +3816,20 @@ static bool syn_list_keywords(
     todo--;
     for (keyentry_T *kp = HI2KE(hi); kp != NULL && !got_int; kp = kp->ke_next) {
       if (kp->k_syn.id == id) {
+        int outlen = 0;
+        bool force_newline = false;
         if (prev_contained != (kp->flags & HL_CONTAINED)
             || prev_skipnl != (kp->flags & HL_SKIPNL)
             || prev_skipwhite != (kp->flags & HL_SKIPWHITE)
             || prev_skipempty != (kp->flags & HL_SKIPEMPTY)
             || prev_cont_in_list != kp->k_syn.cont_in_list
-            || prev_next_list != kp->next_list)
-          outlen = 9999;
-        else
+            || prev_next_list != kp->next_list) {
+            force_newline = true;
+        } else {
           outlen = (int)STRLEN(kp->keyword);
-        /* output "contained" and "nextgroup" on each line */
-        if (syn_list_header(did_header, outlen, id)) {
+        }
+        // output "contained" and "nextgroup" on each line
+        if (syn_list_header(did_header, outlen, id, force_newline)) {
           prev_contained = 0;
           prev_next_list = NULL;
           prev_cont_in_list = NULL;
@@ -7046,7 +7048,7 @@ static void highlight_list_one(const int id)
                             sgp->sg_blend+1, NULL, "blend");
 
   if (sgp->sg_link && !got_int) {
-    (void)syn_list_header(didh, 9999, id);
+    (void)syn_list_header(didh, 0, id, true);
     didh = true;
     msg_puts_attr("links to", HL_ATTR(HLF_D));
     msg_putchar(' ');
@@ -7091,7 +7093,8 @@ static bool highlight_list_arg(
       }
     }
 
-    (void)syn_list_header(didh, (int)(vim_strsize(ts) + STRLEN(name) + 1), id);
+    (void)syn_list_header(didh, (int)(vim_strsize(ts) + STRLEN(name) + 1), id,
+                          false);
     didh = true;
     if (!got_int) {
       if (*name != NUL) {
@@ -7209,9 +7212,10 @@ const char *highlight_color(const int id, const char *const what,
 /// @param did_header did header already
 /// @param outlen length of string that comes
 /// @param id highlight group id
+/// @param force_newline always start a new line
 /// @return true when started a new line.
 static bool syn_list_header(const bool did_header, const int outlen,
-                            const int id)
+                            const int id, bool force_newline)
 {
   int endcol = 19;
   bool newline = true;
@@ -7224,10 +7228,10 @@ static bool syn_list_header(const bool did_header, const int outlen,
     }
     msg_outtrans(HL_TABLE()[id - 1].sg_name);
     endcol = 15;
-  } else if (ui_has(kUIMessages) || msg_silent) {
+  } else if ((ui_has(kUIMessages) || msg_silent) && !force_newline) {
     msg_putchar(' ');
     adjust = false;
-  } else if (msg_col + outlen + 1 >= Columns)   {
+  } else if (msg_col + outlen + 1 >= Columns || force_newline)   {
     msg_putchar('\n');
     if (got_int) {
       return true;

@@ -1217,7 +1217,7 @@ int do_search(
           xfree(msgbuf);
           msgbuf = r;
           // move reversed text to beginning of buffer
-          while (*r != NUL && *r == ' ') {
+          while (*r == ' ') {
             r++;
           }
           size_t pat_len = msgbuf + STRLEN(msgbuf) - r;

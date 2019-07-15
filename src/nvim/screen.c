@@ -3778,7 +3778,7 @@ win_line (
      * At end of the text line or just after the last character.
      */
     if (c == NUL) {
-      long prevcol = (long)(ptr - line) - (c == NUL);
+      long prevcol = (long)(ptr - line) - 1;
 
       /* we're not really at that column when skipping some text */
       if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
