@@ -33,13 +33,12 @@ static void help(void)
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
   puts("  shell-test -t {prompt text} EXE \"prog args...\"");
   puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
-  puts("  shell-test REP {byte} \"line line line\"");
-  puts("    Prints \"{lnr}: line line line\\n\" to stdout {byte} times.");
-  puts("    I.e. for `shell-test REP ab \"test\"'");
+  puts("  shell-test REP {count} \"line line line\"");
+  puts("    Prints \"{lnr}: line line line\\n\" to stdout {count} times.");
+  puts("    I.e. for `shell-test REP 97 \"test\"'");
   puts("      0: test");
   puts("      ...");
   puts("      96: test");
-  puts("    will be printed because byte `a' is equal to 97.");
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
 }
@@ -71,8 +70,12 @@ int main(int argc, char **argv)
         fprintf(stderr, "Not enough REP arguments\n");
         return 4;
       }
-      uint8_t number = (uint8_t) *argv[2];
-      for (uint8_t i = 0; i < number; i++) {
+      int count = 0;
+      if (sscanf(argv[2], "%d", &count) != 1) {
+        fprintf(stderr, "Invalid count: %s\n", argv[2]);
+        return 4;
+      }
+      for (uint8_t i = 0; i < count; i++) {
         printf("%d: %s\n", (int) i, argv[3]);
       }
     } else if (strcmp(argv[1], "UTF-8") == 0) {
