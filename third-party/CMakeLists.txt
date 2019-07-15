@@ -1,6 +1,6 @@
 # This is not meant to be included by the top-level.
 cmake_minimum_required (VERSION 2.8.12)
-project(NVIM_DEPS)
+project(NVIM_DEPS C)
 
 # Needed for: check_c_compiler_flag()
 include(CheckCCompilerFlag)
@@ -101,6 +101,7 @@ set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
 
 if(CMAKE_OSX_SYSROOT)
   set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
 endif()
 
 # Cross compiling: use these for dependencies built for the
