@@ -2,12 +2,12 @@ local shared = require('vim.shared')
 
 local lsp_util = require('lsp.util')
 
-local server = {}
-server.__index = server
+local server_config = {}
+server_config.__index = server_config
 
-server.configured_servers = {}
+server_config.configured_servers = {}
 
-server.add = function(filetype, command, additional_configuration)
+server_config.add = function(filetype, command, additional_configuration)
   local filetype_list
   if type(filetype) == 'string' then
     filetype_list = { filetype }
@@ -22,13 +22,13 @@ server.add = function(filetype, command, additional_configuration)
   end
 
   for _, cur_type in pairs(filetype_list) do
-    if server.configured_servers[cur_type] == nil then
+    if server_config.configured_servers[cur_type] == nil then
       vim.api.nvim_command(
         string.format([[autocmd FileType %s silent call lsp#start("%s")]], cur_type, cur_type)
       )
 
       -- Add the configuration to our current servers
-      server.configured_servers[cur_type] = {
+      server_config.configured_servers[cur_type] = {
         command = command,
         configuration = additional_configuration or {},
       }
@@ -38,10 +38,10 @@ server.add = function(filetype, command, additional_configuration)
   return true
 end
 
-server.get_name = function(filetype)
+server_config.get_name = function(filetype)
   filetype = lsp_util.get_filetype(filetype)
 
-  local ft_config = server.configured_servers[filetype]
+  local ft_config = server_config.configured_servers[filetype]
 
   if shared.tbl_isempty(ft_config) then
     return nil
@@ -56,35 +56,35 @@ server.get_name = function(filetype)
   end
 end
 
-server.get_command = function(cmd, filetype)
+server_config.get_command = function(cmd, filetype)
   if cmd ~= nil then
     return cmd
   end
 
   filetype = lsp_util.get_filetype(filetype)
 
-  local ft_config = server.configured_servers[filetype]
+  local ft_config = server_config.configured_servers[filetype]
 
   if shared.tbl_isempty(ft_config) then return nil end
 
   return ft_config.command
 end
 
-server.default_callbacks = {
+server_config.default_callbacks = {
   root_uri = function()
     return 'file://' .. (vim.api.nvim_call_function('getcwd', { }) or '/tmp/')
   end,
 }
 
-server.get_callback = function(filetype, callback_name)
-  local ft_config = server.configured_servers[filetype]
+server_config.get_callback = function(filetype, callback_name)
+  local ft_config = server_config.configured_servers[filetype]
 
   local callback
   if shared.tbl_isempty(ft_config)
       or shared.tbl_isempty(ft_config.configuration)
       or shared.tbl_isempty(ft_config.configuration.callbacks)
       or ft_config.configuration.callback_name[callback_name] == nil then
-    callback = server.default_callbacks[callback_name]
+    callback = server_config.default_callbacks[callback_name]
   else
     callback = ft_config.configuration.callback_name[callback_name]
   end
@@ -95,4 +95,4 @@ server.get_callback = function(filetype, callback_name)
 end
 
 
-return server
+return server_config

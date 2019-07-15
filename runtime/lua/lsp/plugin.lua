@@ -1,6 +1,6 @@
 local Client = require('lsp.client')
 local callbacks = require('lsp.callbacks')
-local server_config = require('lsp.server')
+local server_config = require('lsp.server_config')
 
 local log = require('lsp.log')
 local lsp_util = require('lsp.util')

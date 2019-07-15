@@ -17,7 +17,7 @@
 --          @returns (table): The resulting params for the request
 
 local shared = require('vim.shared')
-local server_config = require('lsp.server')
+local server_config = require('lsp.server_config')
 local structures = require('lsp.structures')
 
 local requests = {

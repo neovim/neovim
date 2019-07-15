@@ -24,8 +24,8 @@ After installing a language server to your machine, you must let Neovim know
 how to start and interact with that language server. To do so, use the
 following APIs:
 
-                                                             *lsp#server#add()*
-lsp#server#add({ftype}, {cmd}, {configuration}):
+                                                      *lsp#server_config#add()*
+lsp#server_config#add({ftype}, {cmd}, {configuration}):
     Used to add a language server.
 
     This will add an autocmd that will start the server and handle any other
@@ -53,10 +53,10 @@ lsp#server#add({ftype}, {cmd}, {configuration}):
                 Example:~
 >
   " Python example
-  call lsp#server#add('python', 'pyls')
+  call lsp#server_config#add('python', 'pyls')
 
   " Typescript configuration
-  call lsp#server#add('typescript', {
+  call lsp#server_config#add('typescript', {
       \ 'name': 'ts', ....
       \ 'callbacks': {
         \ 'root_uri': { server -> RootFinderFromPlugin() }
