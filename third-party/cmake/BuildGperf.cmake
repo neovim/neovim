@@ -2,6 +2,7 @@
 # cross compiling we still want to build for the HOST system, whenever
 # writing a recipe that is meant for cross-compile, use the HOSTDEPS_* variables
 # instead of DEPS_* - check the main CMakeLists.txt for a list.
+enable_language(CXX)
 
 # BuildGperf(CONFIGURE_COMMAND ... BUILD_COMMAND ... INSTALL_COMMAND ...)
 # Reusable function to build Gperf, wraps ExternalProject_Add.

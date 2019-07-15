@@ -138,7 +138,6 @@ addons:
       - clang-4.0
       - cmake
       - cscope
-      - g++-multilib
       - gcc-multilib
       - gdb
       - gperf
