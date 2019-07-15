@@ -3210,10 +3210,10 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
           xfree(newp);
 
           oldp = ml_get(lnum);
-          newp = (char_u *) xmalloc((size_t)col + (size_t)yanklen + 1);
-          /* copy first part of line */
+          newp = (char_u *)xmalloc((size_t)col + (size_t)yanklen + 1);
+          // copy first part of line
           memmove(newp, oldp, (size_t)col);
-          /* append to first line */
+          // append to first line
           memmove(newp + col, y_array[0], (size_t)yanklen + 1);
           ml_replace(lnum, newp, false);
 
@@ -3706,11 +3706,11 @@ int do_join(size_t count,
     }
   }
 
-  /* store the column position before last line */
+  // store the column position before last line
   col = sumsize - currsize - spaces[count - 1];
 
-  /* allocate the space for the new line */
-  newp = (char_u *) xmalloc((size_t)sumsize + 1);
+  // allocate the space for the new line
+  newp = (char_u *)xmalloc((size_t)sumsize + 1);
   cend = newp + sumsize;
   *cend = 0;
 
