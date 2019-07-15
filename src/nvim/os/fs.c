@@ -364,7 +364,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 #ifdef WIN32
   // Prepend ".;" to $PATH.
   size_t pathlen = strlen(path_env);
-  char *path = memcpy(xmallocz(pathlen + 3), "." ENV_SEPSTR, 2);
+  char *path = memcpy(xmallocz(pathlen + 2), "." ENV_SEPSTR, 2);
   memcpy(path + 2, path_env, pathlen);
 #else
   char *path = xstrdup(path_env);
