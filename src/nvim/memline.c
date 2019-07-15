@@ -2403,13 +2403,26 @@ int ml_replace(linenr_T lnum, char_u *line, bool copy)
   if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
     return FAIL;
 
+  bool readlen = true;
+
   if (copy) {
     line = vim_strsave(line);
   }
-  if (curbuf->b_ml.ml_line_lnum != lnum)            /* other line buffered */
+  if (curbuf->b_ml.ml_line_lnum != lnum) {           /* other line buffered */
     ml_flush_line(curbuf);                          /* flush it */
-  else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY)   /* same line allocated */
+  } else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY) {  /* same line allocated */
+    // TODO FIXME: see other "TODO FIXME"
+    curbuf->deleted_bytes += STRLEN(curbuf->b_ml.ml_line_ptr)+1;
     xfree(curbuf->b_ml.ml_line_ptr);             /* free it */
+    readlen = false; // already read it.
+  }
+
+  if (readlen) {
+    if (true) { // TODO: buffer updates active
+      curbuf->deleted_bytes += STRLEN(ml_get_buf(curbuf, lnum, false))+1;
+    }
+  }
+
   curbuf->b_ml.ml_line_ptr = line;
   curbuf->b_ml.ml_line_lnum = lnum;
   curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
@@ -2491,6 +2504,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   else
     line_size = ((dp->db_index[idx - 1]) & DB_INDEX_MASK) - line_start;
 
+  buf->deleted_bytes += line_size;
 
   /*
    * special case: If there is only one line in the data block it becomes empty.
@@ -2676,6 +2690,13 @@ void ml_clearmarked(void)
   return;
 }
 
+size_t ml_flush_deleted_bytes(buf_T *buf)
+{
+  size_t ret = buf->deleted_bytes;
+  buf->deleted_bytes = 0;
+  return ret;
+}
+
 /*
  * flush ml_line if necessary
  */
@@ -2703,6 +2724,8 @@ static void ml_flush_line(buf_T *buf)
     if (entered)
       return;
     entered = TRUE;
+
+    buf->flush_count++;
 
     lnum = buf->b_ml.ml_line_lnum;
     new_line = buf->b_ml.ml_line_ptr;

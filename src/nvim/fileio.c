@@ -1755,6 +1755,7 @@ failed:
       ml_delete(curbuf->b_ml.ml_line_count, false);
       linecnt--;
     }
+    curbuf->deleted_bytes = 0;
     linecnt = curbuf->b_ml.ml_line_count - linecnt;
     if (filesize == 0)
       linecnt = 0;

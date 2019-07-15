@@ -1176,6 +1176,29 @@ free_exit:
   return 0;
 }
 
+Dictionary nvim__buf_stats(Buffer buffer, Error *err)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return rv;
+  }
+
+  // Number of times the cached line was flushed.
+  // This should generally not increase while editing the same
+  // line in the same mode.
+  PUT(rv, "flush_count", INTEGER_OBJ(buf->flush_count));
+  // lnum of current line
+  PUT(rv, "current_lnum", INTEGER_OBJ(buf->b_ml.ml_line_lnum));
+  // whether the line has unflushed changes.
+  PUT(rv, "line_dirty", BOOLEAN_OBJ(buf->b_ml.ml_flags & ML_LINE_DIRTY));
+  // NB: this should be zero at any time API functions are called,
+  // this exists to debug issues
+  PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+  return rv;
+}
+
 // Check if deleting lines made the cursor position invalid.
 // Changed lines from `lo` to `hi`; added `extra` lines (negative if deleted).
 static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)

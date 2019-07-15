@@ -169,6 +169,8 @@ void buf_updates_send_changes(buf_T *buf,
                               int64_t num_removed,
                               bool send_tick)
 {
+  size_t deleted_bytes = ml_flush_deleted_bytes(buf);
+
   if (!buf_updates_active(buf)) {
     return;
   }
@@ -231,8 +233,8 @@ void buf_updates_send_changes(buf_T *buf,
     bool keep = true;
     if (cb.on_lines != LUA_NOREF) {
       Array args = ARRAY_DICT_INIT;
-      Object items[5];
-      args.size = 5;
+      Object items[6];
+      args.size = 6;
       args.items = items;
 
       // the first argument is always the buffer handle
@@ -250,6 +252,8 @@ void buf_updates_send_changes(buf_T *buf,
       // the last line in the updated range
       args.items[4] = INTEGER_OBJ(firstline - 1 + num_added);
 
+      // byte count of previous contents
+      args.items[5] = INTEGER_OBJ((Integer)deleted_bytes);
       textlock++;
       Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true);
       textlock--;

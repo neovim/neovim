@@ -1685,6 +1685,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   bool was_alloced = ml_line_alloced();     // check if oldp was allocated
   char_u *newp;
   if (was_alloced) {
+    curbuf->deleted_bytes += (size_t)oldlen+1;
     newp = oldp;                            // use same allocated memory
   } else {                                  // need to allocate a new line
     newp = xmalloc((size_t)(oldlen + 1 - count));
