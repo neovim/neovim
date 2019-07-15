@@ -3085,10 +3085,9 @@ void do_put(int regname, yankreg_T *reg, int dir, long count, int flags)
       memset(ptr, ' ', (size_t)bd.endspaces);
       ptr += bd.endspaces;
       // move the text after the cursor to the end of the line.
-      size_t columns;
-      STRICT_SUB(oldlen, bd.textcol, &columns, size_t);
-      STRICT_SUB(columns, delcount +1, &columns, size_t);
-      memmove(ptr, oldp + bd.textcol + delcount, columns);
+      int columns = (int)oldlen - bd.textcol - delcount + 1;
+      assert(columns >= 0);
+      memmove(ptr, oldp + bd.textcol + delcount, size_t(columns));
       ml_replace(curwin->w_cursor.lnum, newp, false);
 
       ++curwin->w_cursor.lnum;
