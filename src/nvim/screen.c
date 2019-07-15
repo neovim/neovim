@@ -3778,7 +3778,7 @@ win_line (
      * At end of the text line or just after the last character.
      */
     if (c == NUL) {
-      long prevcol = (long)(ptr - line) - (c == NUL);
+      long prevcol = (long)(ptr - line) - 1;
 
       /* we're not really at that column when skipping some text */
       if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
@@ -6079,8 +6079,6 @@ void grid_alloc(ScreenGrid *grid, int rows, int columns, bool copy, bool valid)
 {
   int new_row;
   ScreenGrid new = *grid;
-  // Since amount of cells could not be negative we expect both
-  // rows and columns to be positive
   assert(rows >= 0 && columns >= 0);
   size_t ncells = (size_t)rows * columns;
   new.chars = xmalloc(ncells * sizeof(schar_T));
