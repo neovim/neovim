@@ -13830,7 +13830,7 @@ static void f_reltimestr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
   if (list2proftime(&argvars[0], &tm) == OK) {
-    rettv->vval.v_string = (char_u *) xstrdup(profile_msg(tm));
+    rettv->vval.v_string = (char_u *)xstrdup(profile_msg(tm));
   }
 }
 

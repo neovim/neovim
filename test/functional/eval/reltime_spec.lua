@@ -38,9 +38,13 @@ describe('reltimestr(), reltimefloat()', function()
     local older_time = reltime()
     command('sleep 1m')
     local newer_time = reltime()
-    -- Should be something like -0.002123.
+
+    -- Start/end swapped: should be something like -0.002123.
     local rv = tonumber(reltimestr(reltime(newer_time, older_time)))
-    ok(rv < 0)
-    ok(rv > -10)
+    ok(rv < 0 and rv > -10)
+
+    -- Not swapped: should be something like 0.002123.
+    rv = tonumber(reltimestr(reltime(older_time, newer_time)))
+    ok(rv > 0 and rv < 10)
   end)
 end)

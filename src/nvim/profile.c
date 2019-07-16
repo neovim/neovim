@@ -24,9 +24,7 @@ static proftime_T prof_wait_time;
 /// @return the current time
 proftime_T profile_start(void) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  uint64_t now = os_hrtime();
-  assert(now <= INT64_MAX);
-  return (proftime_T)now;
+  return os_hrtime();
 }
 
 /// Computes the time elapsed.
@@ -34,9 +32,7 @@ proftime_T profile_start(void) FUNC_ATTR_WARN_UNUSED_RESULT
 /// @return Elapsed time from `tm` until now.
 proftime_T profile_end(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  uint64_t now = os_hrtime();
-  assert(now <= INT64_MAX);
-  return profile_sub((proftime_T)now, tm);
+  return profile_sub(os_hrtime(), tm);
 }
 
 /// Gets a string representing time `tm`.
@@ -48,7 +44,8 @@ proftime_T profile_end(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 const char *profile_msg(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char buf[50];
-  snprintf(buf, sizeof(buf), "%10.6lf", (double)tm / 1000000000.0);
+  snprintf(buf, sizeof(buf), "%10.6lf",
+           (double)profile_signed(tm) / 1000000000.0);
   return buf;
 }
 
@@ -65,12 +62,8 @@ proftime_T profile_setlimit(int64_t msec) FUNC_ATTR_WARN_UNUSED_RESULT
     return profile_zero();
   }
   assert(msec <= (INT64_MAX / 1000000LL) - 1);
-  proftime_T nsec = msec * 1000000LL;
-  uint64_t now = os_hrtime();
-  assert(now <= INT64_MAX);
-  int64_t rv;
-  STRICT_ADD((proftime_T)now, nsec, &rv, int64_t);
-  return rv;
+  proftime_T nsec = (proftime_T)msec * 1000000ULL;
+  return os_hrtime() + nsec;
 }
 
 /// Checks if current time has passed `tm`.
@@ -83,9 +76,8 @@ bool profile_passed_limit(proftime_T tm) FUNC_ATTR_WARN_UNUSED_RESULT
     // timer was not set
     return false;
   }
-  uint64_t now = os_hrtime();
-  assert(now <= INT64_MAX);
-  return profile_cmp((proftime_T)now, tm) < 0;
+
+  return profile_cmp(os_hrtime(), tm) < 0;
 }
 
 /// Gets the zero time.
@@ -113,19 +105,20 @@ proftime_T profile_divide(proftime_T tm, int count) FUNC_ATTR_CONST
 /// @return `tm1` + `tm2`
 proftime_T profile_add(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
-  int64_t rv;
-  STRICT_ADD(tm1, tm2, &rv, int64_t);
-  return rv;
+  return tm1 + tm2;
 }
 
-/// Subtracts time `tm2` from `tm1` (may be negative).
+/// Subtracts time `tm2` from `tm1`.
+///
+/// Unsigned overflow (wraparound) occurs if `tm2` is greater than `tm1`.
+/// Use `profile_signed()` to get the signed integer value.
+///
+/// @see profile_signed
 ///
 /// @return `tm1` - `tm2`
 proftime_T profile_sub(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
-  int64_t rv;
-  STRICT_SUB(tm1, tm2, &rv, int64_t);
-  return rv;
+  return tm1 - tm2;
 }
 
 /// Adds the `self` time from the total time and the `children` time.
@@ -176,22 +169,31 @@ bool profile_equal(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
   return tm1 == tm2;
 }
 
-/// Calculates the sign of a 64-bit integer.
+/// Converts a proftime_T value `tm` to a signed integer.
 ///
-/// @return -1, 0, or +1
-static inline int sgn64(int64_t x) FUNC_ATTR_CONST
+/// @return signed representation of the given time value
+int64_t profile_signed(proftime_T tm)
+  FUNC_ATTR_CONST
 {
-  return (int) ((x > 0) - (x < 0));
+  // (tm > INT64_MAX) is >=150 years, so we can assume it was produced by
+  // arithmetic of two proftime_T values.  For human-readable representation
+  // (and Vim-compat) we want the difference after unsigned wraparound. #10452
+  return (tm <= INT64_MAX) ? (int64_t)tm : -(int64_t)(UINT64_MAX - tm);
 }
 
 /// Compares profiling times.
 ///
 /// Times `tm1` and `tm2` must be less than 150 years apart.
 ///
-/// @return <0, 0 or >0 if `tm2` < `tm1`, `tm2` == `tm1` or `tm2` > `tm1`
+/// @return <0: `tm2` < `tm1`
+///          0: `tm2` == `tm1`
+///         >0: `tm2` > `tm1`
 int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
-  return sgn64((int64_t)(tm2 - tm1));
+  if (tm1 == tm2) {
+    return 0;
+  }
+  return profile_signed(tm2 - tm1) < 0 ? -1 : 1;
 }
 
 /// globals for use in the startuptime related functionality (time_*).
