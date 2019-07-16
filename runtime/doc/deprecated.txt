@@ -44,6 +44,11 @@ Functions ~
 *jobclose()*		Obsolete name for |chanclose()|
 *jobsend()*		Obsolete name for |chansend()|
 *last_buffer_nr()*	Obsolete name for bufnr("$").
+*rpcstop()*		Deprecated. Instead use |jobstop()| to stop any job,
+			or chanclose(id, "rpc") to close RPC communication
+			without stopping the job. Use chanclose(id) to close
+			any socket.
+
 
 Modifiers ~
 *cpo-<*

@@ -12227,8 +12227,16 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  const char *error = NULL;
+  if (data->is_rpc) {
+    // Ignore return code, but show error later.
+    (void)channel_close(data->id, kChannelPartRpc, &error);
+  }
   process_stop((Process *)&data->stream.proc);
   rettv->vval.v_number = 1;
+  if (error) {
+    EMSG(error);
+  }
 }
 
 // "jobwait(ids[, timeout])" function

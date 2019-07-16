@@ -147,7 +147,7 @@ function! s:RegistrationCommands(host) abort
         \ a:host, string(map(registered, "fnamemodify(v:val, ':t')")))
 
   " Delete the temporary host clone
-  call rpcstop(s:hosts[host_id].channel)
+  call jobstop(s:hosts[host_id].channel)
   call remove(s:hosts, host_id)
   call remove(s:plugins_for_host, host_id)
   return lines

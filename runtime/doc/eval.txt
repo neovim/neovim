@@ -6708,11 +6708,6 @@ rpcstart({prog}[, {argv}])					*rpcstart()*
 <		with >
 			:let id = jobstart(['prog', 'arg1', 'arg2'], {'rpc': v:true})
 
-rpcstop({channel})						*rpcstop()*
-		Deprecated. Instead use |jobstop()| to stop any job, and
-		chanclose(id, "rpc") to close RPC communication without
-		stopping the job. Use chanclose(id) to close any socket.
-
 screenattr({row}, {col})					*screenattr()*
 		Like |screenchar()|, but return the attribute.  This is a rather
 		arbitrary number that can only be used to compare to the
