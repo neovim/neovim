@@ -351,7 +351,7 @@ static reg_extmatch_T *next_match_extmatch = NULL;
 
 /*
  * A state stack is an array of integers or stateitem_T, stored in a
- * garray_T.  A state stack is invalid if it's itemsize entry is zero.
+ * garray_T.  A state stack is invalid if its itemsize entry is zero.
  */
 #define INVALID_STATE(ssp)  ((ssp)->ga_itemsize == 0)
 #define VALID_STATE(ssp)    ((ssp)->ga_itemsize != 0)
@@ -7028,6 +7028,10 @@ static void highlight_list_one(const int id)
 {
   struct hl_group *const sgp = &HL_TABLE()[id - 1];  // index is ID minus one
   bool didh = false;
+
+  if (message_filtered(sgp->sg_name)) {
+    return;
+  }
 
   didh = highlight_list_arg(id, didh, LIST_ATTR,
       sgp->sg_cterm, NULL, "cterm");

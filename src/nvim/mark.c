@@ -656,48 +656,51 @@ show_one_mark(
     int c,
     char_u *arg,
     pos_T *p,
-    char_u *name,
-    int current                    /* in current file */
+    char_u *name_arg,
+    int current                   // in current file
 )
 {
-  static int did_title = FALSE;
-  int mustfree = FALSE;
+  static bool did_title = false;
+  bool mustfree = false;
+  char_u *name = name_arg;
 
-  if (c == -1) {                            /* finish up */
-    if (did_title)
-      did_title = FALSE;
-    else {
-      if (arg == NULL)
+  if (c == -1) {  // finish up
+    if (did_title) {
+      did_title = false;
+    } else {
+      if (arg == NULL) {
         MSG(_("No marks set"));
-      else
+      } else {
         EMSG2(_("E283: No marks matching \"%s\""), arg);
-    }
-  }
-  /* don't output anything if 'q' typed at --more-- prompt */
-  else if (!got_int
-           && (arg == NULL || vim_strchr(arg, c) != NULL)
-           && p->lnum != 0) {
-    if (!did_title) {
-      /* Highlight title */
-      MSG_PUTS_TITLE(_("\nmark line  col file/text"));
-      did_title = TRUE;
-    }
-    msg_putchar('\n');
-    if (!got_int) {
-      sprintf((char *)IObuff, " %c %6ld %4d ", c, p->lnum, p->col);
-      msg_outtrans(IObuff);
-      if (name == NULL && current) {
-        name = mark_line(p, 15);
-        mustfree = TRUE;
       }
-      if (name != NULL) {
-        msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
-        if (mustfree) {
-          xfree(name);
+    }
+  } else if (!got_int
+             && (arg == NULL || vim_strchr(arg, c) != NULL)
+             && p->lnum != 0) {
+    // don't output anything if 'q' typed at --more-- prompt
+    if (name == NULL && current) {
+      name = mark_line(p, 15);
+      mustfree = true;
+    }
+    if (!message_filtered(name)) {
+      if (!did_title) {
+        // Highlight title
+        msg_puts_title(_("\nmark line  col file/text"));
+        did_title = true;
+      }
+      msg_putchar('\n');
+      if (!got_int) {
+        snprintf((char *)IObuff, IOSIZE, " %c %6ld %4d ", c, p->lnum, p->col);
+        msg_outtrans(IObuff);
+        if (name != NULL) {
+          msg_outtrans_attr(name, current ? HL_ATTR(HLF_D) : 0);
         }
       }
+      ui_flush();  // show one line at a time
     }
-    ui_flush();                    /* show one line at a time */
+    if (mustfree) {
+      xfree(name);
+    }
   }
 }
 
@@ -786,8 +789,12 @@ void ex_jumps(exarg_T *eap)
   for (i = 0; i < curwin->w_jumplistlen && !got_int; ++i) {
     if (curwin->w_jumplist[i].fmark.mark.lnum != 0) {
       name = fm_getname(&curwin->w_jumplist[i].fmark, 16);
-      if (name == NULL)             /* file name not available */
+
+      // apply :filter /pat/ or file name not available
+      if (name == NULL || message_filtered(name)) {
+        xfree(name);
         continue;
+      }
 
       msg_putchar('\n');
       if (got_int) {

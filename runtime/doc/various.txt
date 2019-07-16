@@ -358,7 +358,20 @@ g8			Print the hex values of the bytes used in the
 			The pattern is matched against the relevant part of
 			the output, not necessarily the whole line. Only some
 			commands support filtering, try it out to check if it
-			works.
+			works. Some of the commands that support filtering:
+			   |:#|          - filter whole line
+			   |:clist|      - filter by file name or module name
+			   |:command|    - filter by command name
+			   |:files|      - filter by file name
+			   |:highlight|  - filter by highlight group
+			   |:jumps|      - filter by file name
+			   |:let|        - filter by variable name
+			   |:list|       - filter whole line
+			   |:llist|      - filter by file name or module name
+			   |:marks|      - filter by text in the current file,
+					   or file name for other files
+			   |:oldfiles|   - filter by file name
+			   |:set|        - filter by variable name
 
 			Only normal messages are filtered, error messages are
 			not.

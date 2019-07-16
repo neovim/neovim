@@ -87,3 +87,61 @@ func Test_filter_cmd_with_filter()
   call assert_equal('a|b', out)
   set shelltemp&
 endfunction
+
+func Test_filter_commands()
+  let g:test_filter_a = 1
+  let b:test_filter_b = 2
+  let test_filter_c = 3
+
+  " Test filtering :let command
+  let res = split(execute("filter /^test_filter/ let"), "\n")
+  call assert_equal(["test_filter_a         #1"], res)
+
+  let res = split(execute("filter /\\v^(b:)?test_filter/ let"), "\n")
+  call assert_equal(["test_filter_a         #1", "b:test_filter_b       #2"], res)
+
+  unlet g:test_filter_a
+  unlet b:test_filter_b
+  unlet test_filter_c
+
+  " Test filtering :set command
+  let helplang=&helplang
+  set helplang=en
+  let res = join(split(execute("filter /^help/ set"), "\n")[1:], " ")
+  call assert_match('^\s*helplang=\w*$', res)
+  let &helplang=helplang
+
+  " Test filtering :llist command
+  call setloclist(0, [{"filename": "/path/vim.c"}, {"filename": "/path/vim.h"}, {"module": "Main.Test"}])
+  let res = split(execute("filter /\\.c$/ llist"), "\n")
+  call assert_equal([" 1 /path/vim.c:  "], res)
+
+  let res = split(execute("filter /\\.Test$/ llist"), "\n")
+  call assert_equal([" 3 Main.Test:  "], res)
+
+  " Test filtering :jump command
+  e file.c
+  e file.h
+  e file.hs
+  let res = split(execute("filter /\.c$/ jumps"), "\n")[1:]
+  call assert_equal(["   2     1    0 file.c", ">"], res)
+
+  " Test filtering :marks command
+  b file.c
+  mark A
+  b file.h
+  mark B
+  let res = split(execute("filter /\.c$/ marks"), "\n")[1:]
+  call assert_equal([" A      1    0 file.c"], res)
+
+  call setline(1, ['one', 'two', 'three'])
+  1mark a
+  2mark b
+  3mark c
+  let res = split(execute("filter /two/ marks abc"), "\n")[1:]
+  call assert_equal([" b      2    0 two"], res)
+
+  bwipe! file.c
+  bwipe! file.h
+  bwipe! file.hs
+endfunc

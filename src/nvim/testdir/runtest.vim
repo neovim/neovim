@@ -263,7 +263,7 @@ else
 endif
 
 " Names of flaky tests.
-let s:flaky = [
+let s:flaky_tests = [
       \ 'Test_cursorhold_insert()',
       \ 'Test_exit_callback_interval()',
       \ 'Test_oneshot()',
@@ -280,6 +280,9 @@ let s:flaky = [
       \ 'Test_with_partial_callback()',
       \ 'Test_lambda_with_timer()',
       \ ]
+
+" Pattern indicating a common flaky test failure.
+let s:flaky_errors_re = 'StopVimInTerminal\|VerifyScreenDump'
 
 " Locate Test_ functions and execute them.
 redir @q
@@ -305,7 +308,9 @@ for s:test in sort(s:tests)
   " Repeat a flaky test.  Give up when:
   " - it fails again with the same message
   " - it fails five times (with a different mesage)
-  if len(v:errors) > 0 && index(s:flaky, s:test) >= 0
+  if len(v:errors) > 0
+        \ && (index(s:flaky_tests, s:test) >= 0
+        \      || v:errors[0] =~ s:flaky_errors_re)
     while 1
       call add(s:messages, 'Found errors in ' . s:test . ':')
       call extend(s:messages, v:errors)

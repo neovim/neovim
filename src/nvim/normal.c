@@ -1376,9 +1376,8 @@ static void set_vcount_ca(cmdarg_T *cap, bool *set_prevcount)
   *set_prevcount = false;    /* only set v:prevcount once */
 }
 
-/*
- * Handle an operator after visual mode or when the movement is finished
- */
+// Handle an operator after Visual mode or when the movement is finished.
+// "gui_yank" is true when yanking text for the clipboard.
 void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
 {
   oparg_T     *oap = cap->oap;
@@ -1402,8 +1401,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
    * If an operation is pending, handle it...
    */
   if ((finish_op
-       || VIsual_active
-       ) && oap->op_type != OP_NOP) {
+       || VIsual_active)
+      && oap->op_type != OP_NOP) {
+    // Yank can be redone when 'y' is in 'cpoptions', but not when yanking
+    // for the clipboard.
+    const bool redo_yank = vim_strchr(p_cpo, CPO_YANK) != NULL && !gui_yank;
+
     // Avoid a problem with unwanted linebreaks in block mode
     if (curwin->w_p_lbr) {
       curwin->w_valid &= ~VALID_VIRTCOL;
@@ -1433,9 +1436,9 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       VIsual_reselect = false;
     }
 
-    /* Only redo yank when 'y' flag is in 'cpoptions'. */
-    /* Never redo "zf" (define fold). */
-    if ((vim_strchr(p_cpo, CPO_YANK) != NULL || oap->op_type != OP_YANK)
+    // Only redo yank when 'y' flag is in 'cpoptions'.
+    // Never redo "zf" (define fold).
+    if ((redo_yank || oap->op_type != OP_YANK)
         && ((!VIsual_active || oap->motion_force)
             // Also redo Operator-pending Visual mode mappings.
             || (cap->cmdchar == ':' && oap->op_type != OP_COLON))
@@ -1608,8 +1611,8 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         resel_VIsual_line_count = oap->line_count;
       }
 
-      /* can't redo yank (unless 'y' is in 'cpoptions') and ":" */
-      if ((vim_strchr(p_cpo, CPO_YANK) != NULL || oap->op_type != OP_YANK)
+      // can't redo yank (unless 'y' is in 'cpoptions') and ":"
+      if ((redo_yank || oap->op_type != OP_YANK)
           && oap->op_type != OP_COLON
           && oap->op_type != OP_FOLD
           && oap->op_type != OP_FOLDOPEN

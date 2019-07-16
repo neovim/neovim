@@ -518,6 +518,43 @@ func Test_winrestcmd()
   only
 endfunc
 
+function! Fun_RenewFile()
+  sleep 2
+  silent execute '!echo "1" > tmp.txt'
+  sp
+  wincmd p
+  edit! tmp.txt
+endfunction
+
+func Test_window_prevwin()
+  " Can we make this work on MS-Windows?
+  if !has('unix')
+    return
+  endif
+
+  set hidden autoread
+  call writefile(['2'], 'tmp.txt')
+  new tmp.txt
+  q
+  " Need to wait a bit for the timestamp to be older.
+  call Fun_RenewFile()
+  call assert_equal(2, winnr())
+  wincmd p
+  call assert_equal(1, winnr())
+  wincmd p
+  q
+  call Fun_RenewFile()
+  call assert_equal(2, winnr())
+  wincmd p
+  call assert_equal(1, winnr())
+  wincmd p
+  " reset
+  q
+  call delete('tmp.txt')
+  set hidden&vim autoread&vim
+  delfunc Fun_RenewFile
+endfunc
+
 func Test_relative_cursor_position_in_one_line_window()
   new
   only

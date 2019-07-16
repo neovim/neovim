@@ -435,10 +435,11 @@ EXTERN win_T    *firstwin;              /* first window */
 EXTERN win_T    *lastwin;               /* last window */
 EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
 # define ONE_WINDOW (firstwin == lastwin)
-/*
- * When using this macro "break" only breaks out of the inner loop. Use "goto"
- * to break out of the tabpage loop.
- */
+# define FOR_ALL_FRAMES(frp, first_frame) \
+  for (frp = first_frame; frp != NULL; frp = frp->fr_next)  // NOLINT
+
+// When using this macro "break" only breaks out of the inner loop. Use "goto"
+// to break out of the tabpage loop.
 # define FOR_ALL_TAB_WINDOWS(tp, wp) \
   FOR_ALL_TABS(tp) \
     FOR_ALL_WINDOWS_IN_TAB(wp, tp)
