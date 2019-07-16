@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 
-typedef int64_t proftime_T;
+typedef uint64_t proftime_T;
 
 #define TIME_MSG(s) do { \
     if (time_fd != NULL) time_msg(s, NULL); \
