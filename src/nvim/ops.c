@@ -1760,6 +1760,8 @@ int op_replace(oparg_T *oap, int c)
       // insert replacement chars CHECK FOR ALLOCATED SPACE
       // REPLACE_CR_NCHAR/REPLACE_NL_NCHAR is used for entering CR literally.
       size_t after_p_len = 0;
+      int col = oldlen - bd.textcol - bd.textlen + 1;
+      assert(col >= 0);
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
           // strlen(newp) at this point
           int newp_len = bd.textcol + bd.startspaces;
@@ -1771,12 +1773,11 @@ int op_replace(oparg_T *oap, int c)
             memset(newp + newp_len, ' ', (size_t)bd.endspaces);
             newp_len += bd.endspaces;
             // copy the part after the changed part
-            memmove(newp + newp_len, oldp,
-                    (size_t)(oldlen - bd.textcol - bd.textlen + 1));
+            memmove(newp + newp_len, oldp, (size_t)col);
         }
       } else {
         // Replacing with \r or \n means splitting the line.
-        after_p_len = (size_t)(oldlen - bd.textcol - bd.textlen + 1);
+        after_p_len = (size_t)col;
         after_p = (char_u *)xmalloc(after_p_len);
         memmove(after_p, oldp, after_p_len);
       }
