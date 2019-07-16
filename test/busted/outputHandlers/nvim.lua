@@ -1,6 +1,4 @@
-local s = require 'say'
 local pretty = require 'pl.pretty'
-local term = require 'term'
 local global_helpers = require('test.helpers')
 
 local colors
@@ -65,8 +63,6 @@ return function(options)
     },
   }
 
-  c = nil
-
   local fileCount = 0
   local fileTestCount = 0
   local testCount = 0
@@ -76,7 +72,6 @@ return function(options)
   local errorCount = 0
 
   local pendingDescription = function(pending)
-    local name = pending.name
     local string = ''
 
     if type(pending.message) == 'string' then
@@ -175,7 +170,7 @@ return function(options)
     return nil, true
   end
 
-  handler.suiteStart = function(suite, count, total, randomseed)
+  handler.suiteStart = function(_suite, count, total, randomseed)
     if total > 1 then
       io.write(repeatSuiteString:format(count, total))
     end
@@ -196,7 +191,7 @@ return function(options)
     end
   end
 
-  handler.suiteEnd = function(suite, count, total)
+  handler.suiteEnd = function(suite, _count, _total)
     local elapsedTime_ms = getElapsedTime(suite)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
@@ -225,14 +220,14 @@ return function(options)
     return nil, true
   end
 
-  handler.testStart = function(element, parent)
+  handler.testStart = function(element, _parent)
     io.write(runString:format(handler.getFullName(element)))
     io.flush()
 
     return nil, true
   end
 
-  handler.testEnd = function(element, parent, status, debug)
+  handler.testEnd = function(element, _parent, status, _debug)
     local elapsedTime_ms = getElapsedTime(element)
     local string
 
@@ -263,7 +258,7 @@ return function(options)
     return nil, true
   end
 
-  handler.testFailure = function(element, parent, message, debug)
+  handler.testFailure = function(_element, _parent, _message, _debug)
     io.write(failureString)
     io.flush()
 
@@ -272,7 +267,7 @@ return function(options)
     return nil, true
   end
 
-  handler.testError = function(element, parent, message, debug)
+  handler.testError = function(_element, _parent, _message, _debug)
     io.write(errorString)
     io.flush()
 
@@ -281,7 +276,7 @@ return function(options)
     return nil, true
   end
 
-  handler.error = function(element, parent, message, debug)
+  handler.error = function(element, _parent, _message, _debug)
     if element.descriptor ~= 'it' then
       io.write(failureDescription(handler.errors[#handler.errors]))
       io.flush()

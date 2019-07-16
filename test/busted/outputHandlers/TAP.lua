@@ -44,7 +44,7 @@ return function(options)
     end
   end
 
-  handler.testStart = function(element, parent)
+  handler.testStart = function(element, _parent)
     local trace = element.trace
     if options.verbose and trace and trace.short_src then
       local fileline = trace.short_src .. ' @ ' ..  trace.currentline .. ': '
@@ -56,7 +56,7 @@ return function(options)
     return nil, true
   end
 
-  handler.testEnd = function(element, parent, status, trace)
+  handler.testEnd = function(_element, _parent, status, _trace)
     counter = counter + 1
     if status == 'success' then
       local t = handler.successes[#handler.successes]
@@ -74,7 +74,7 @@ return function(options)
     return nil, true
   end
 
-  handler.error = function(element, parent, message, debug)
+  handler.error = function(element, _parent, _message, _debug)
     if element.descriptor ~= 'it' then
       counter = counter + 1
       showFailure(handler.errors[#handler.errors])
