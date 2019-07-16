@@ -226,7 +226,10 @@ return function(options)
   end
 
   handler.testStart = function(element, parent)
-    io.write(runString:format(handler.getFullName(element)))
+    local nvim = require('test.functional.helpers')(function() end)
+    local mode = nvim.request('nvim_get_mode')
+    local pid = mode['blocking'] and 'blocked,mode='..mode['mode'] or nvim.eval('getpid()')
+    io.write(tostring(pid)..' '..runString:format(handler.getFullName(element)))
     io.flush()
 
     return nil, true
