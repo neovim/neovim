@@ -107,7 +107,7 @@ int main(int argc, char **argv)
           break;  // EOF
         }
 
-        input_argc = sscanf(input, "%s %d", cmd, &arg);
+        input_argc = sscanf(input, "%99s %d", cmd, &arg);
         if(1 == input_argc) {
           arg = 0;
         }
