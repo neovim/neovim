@@ -495,9 +495,14 @@ open_line (
     }
     if (lead_len > 0) {
       // allocate buffer (may concatenate p_extra later)
-      leader = xmalloc((size_t)(lead_len + lead_repl_len + extra_space
-                                + extra_len + (second_line_indent > 0
-                                               ? second_line_indent : 0) + 1));
+      int bytes = lead_len
+          + lead_repl_len
+          + extra_space
+          + extra_len
+          + (second_line_indent > 0 ? second_line_indent : 0)
+          + 1;
+      assert(bytes >= 0);
+      leader = xmalloc((size_t)bytes);
       allocated = leader;  // remember to free it later
 
       STRLCPY(leader, saved_line, lead_len + 1);
@@ -1556,11 +1561,14 @@ void ins_str(char_u *s)
   oldp = ml_get(lnum);
   oldlen = (int)STRLEN(oldp);
 
-  newp = (char_u *) xmalloc((size_t)(oldlen + newlen + 1));
-  if (col > 0)
+  newp = (char_u *)xmalloc((size_t)oldlen + (size_t)newlen + 1);
+  if (col > 0) {
     memmove(newp, oldp, (size_t)col);
+  }
   memmove(newp + col, s, (size_t)newlen);
-  memmove(newp + col + newlen, oldp + col, (size_t)(oldlen - col + 1));
+  int bytes = oldlen - col + 1;
+  assert(bytes >= 0);
+  memmove(newp + col + newlen, oldp + col, (size_t)bytes);
   ml_replace(lnum, newp, false);
   changed_bytes(lnum, col);
   curwin->w_cursor.col += newlen;
