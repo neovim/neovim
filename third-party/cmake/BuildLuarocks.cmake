@@ -163,7 +163,7 @@ if(USE_BUNDLED_BUSTED)
   endif()
   add_custom_command(OUTPUT ${BUSTED_EXE}
     COMMAND ${LUAROCKS_BINARY}
-    ARGS build busted 2.0.rc13-0 ${LUAROCKS_BUILDARGS}
+    ARGS build busted 2.0.0 ${LUAROCKS_BUILDARGS}
     DEPENDS penlight)
   add_custom_target(busted DEPENDS ${BUSTED_EXE})
 
