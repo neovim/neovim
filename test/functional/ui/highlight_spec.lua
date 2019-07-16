@@ -311,6 +311,38 @@ describe('highlight defaults', function()
       [1] = {foreground=Screen.colors.Blue},
     })
   end)
+
+  it('are sent to UIs', function()
+    screen:try_resize(53, 4)
+    screen:set_default_attr_ids({
+      [0] = {},
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {italic=true}
+    })
+    screen:expect{grid=[[
+      ^                                                     |
+      {1:~                                                    }|
+      {1:~                                                    }|
+                                                           |
+    ]], hl_groups={EndOfBuffer=1, MsgSeparator=2}}
+
+    command('highlight EndOfBuffer gui=italic')
+    screen:expect{grid=[[
+      ^                                                     |
+      {3:~                                                    }|
+      {3:~                                                    }|
+                                                           |
+    ]], hl_groups={EndOfBuffer=3, MsgSeparator=2}}
+
+    command('highlight clear EndOfBuffer')
+    screen:expect{grid=[[
+      ^                                                     |
+      ~                                                    |
+      ~                                                    |
+                                                           |
+    ]], hl_groups={EndOfBuffer=0, MsgSeparator=2}}
+  end)
 end)
 
 describe('highlight', function()

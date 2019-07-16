@@ -150,6 +150,7 @@ EXTERN const char *hlf_names[] INIT(= {
 
 
 EXTERN int highlight_attr[HLF_COUNT];       // Highl. attr for each context.
+EXTERN int highlight_attr_last[HLF_COUNT];  // copy for detecting changed groups
 EXTERN int highlight_user[9];                   // User[1-9] attributes
 EXTERN int highlight_stlnc[9];                  // On top of user
 EXTERN int cterm_normal_fg_color INIT(= 0);

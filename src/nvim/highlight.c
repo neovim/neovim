@@ -106,14 +106,19 @@ static int get_attr_entry(HlEntry entry)
 /// When a UI connects, we need to send it the table of highlights used so far.
 void ui_send_all_hls(UI *ui)
 {
-  if (!ui->hl_attr_define) {
-    return;
+  if (ui->hl_attr_define) {
+    for (size_t i = 1; i < kv_size(attr_entries); i++) {
+      Array inspect = hl_inspect((int)i);
+      ui->hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,
+                         kv_A(attr_entries, i).attr, inspect);
+      api_free_array(inspect);
+    }
   }
-  for (size_t i = 1; i < kv_size(attr_entries); i++) {
-    Array inspect = hl_inspect((int)i);
-    ui->hl_attr_define(ui, (Integer)i, kv_A(attr_entries, i).attr,
-                       kv_A(attr_entries, i).attr, inspect);
-    api_free_array(inspect);
+  if (ui->hl_group_set) {
+    for (size_t hlf = 0; hlf < HLF_COUNT; hlf++) {
+      ui->hl_group_set(ui, cstr_as_string((char *)hlf_names[hlf]),
+                       highlight_attr[hlf]);
+    }
   }
 }
 
@@ -251,6 +256,7 @@ void clear_hl_tables(bool reinit)
     map_clear(int, int)(combine_attr_entries);
     map_clear(int, int)(blend_attr_entries);
     map_clear(int, int)(blendthrough_attr_entries);
+    memset(highlight_attr_last, -1, sizeof(highlight_attr_last));
     highlight_attr_set_all();
     highlight_changed();
     screen_invalidate_highlights();

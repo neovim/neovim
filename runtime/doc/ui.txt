@@ -316,6 +316,14 @@ numerical highlight ids to the actual attributes.
 	`info` is an empty array by default, and will be used by the
 	|ui-hlstate| extension explained below.
 
+["hl_group_set", name, hl_id]
+	The bulitin highlight group `name` was set to use the attributes `hl_id`
+	defined by a previous `hl_attr_define` call. This event is not needed
+	to render the grids which use attribute ids directly, but is useful
+	for an UI who want to render its own elements with consistent
+	highlighting. For instance an UI using |ui-popupmenu| events, might
+	use the |hl-Pmenu| family of builtin highlights.
+
 							    *ui-event-grid_line*
 ["grid_line", grid, row, col_start, cells]
 	Redraw a continuous part of a `row` on a `grid`, starting at the column

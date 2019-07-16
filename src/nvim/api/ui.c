@@ -123,6 +123,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->mode_change = remote_ui_mode_change;
   ui->grid_scroll = remote_ui_grid_scroll;
   ui->hl_attr_define = remote_ui_hl_attr_define;
+  ui->hl_group_set = remote_ui_hl_group_set;
   ui->raw_line = remote_ui_raw_line;
   ui->bell = remote_ui_bell;
   ui->visual_bell = remote_ui_visual_bell;
