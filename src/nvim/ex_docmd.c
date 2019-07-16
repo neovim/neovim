@@ -8457,9 +8457,9 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
     break;
   case 's': cmd = DT_SELECT;            /* ":tselect" */
     break;
-  case 'p': cmd = DT_PREV;              /* ":tprevious" */
-    break;
-  case 'N': cmd = DT_PREV;              /* ":tNext" */
+  case 'p':                             /* ":tprevious" */
+  case 'N':                             /* ":tNext" */
+    cmd = DT_PREV;
     break;
   case 'n': cmd = DT_NEXT;              /* ":tnext" */
     break;
