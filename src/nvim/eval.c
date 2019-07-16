@@ -10026,13 +10026,13 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (strcmp(tv_get_string(&argvars[1]), "cmdline") == 0) {
     set_one_cmd_context(&xpc, tv_get_string(&argvars[0]));
-    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
     goto theend;
   }
 
   ExpandInit(&xpc);
   xpc.xp_pattern = (char_u *)tv_get_string(&argvars[0]);
-  xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
+  xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   xpc.xp_context = cmdcomplete_str_to_type(
       (char_u *)tv_get_string(&argvars[1]));
   if (xpc.xp_context == EXPAND_NOTHING) {
@@ -10042,17 +10042,17 @@ static void f_getcompletion(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (xpc.xp_context == EXPAND_MENUS) {
     set_context_in_menu_cmd(&xpc, (char_u *)"menu", xpc.xp_pattern, false);
-    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
   if (xpc.xp_context == EXPAND_CSCOPE) {
     set_context_in_cscope_cmd(&xpc, (const char *)xpc.xp_pattern, CMD_cscope);
-    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
   if (xpc.xp_context == EXPAND_SIGN) {
     set_context_in_sign_cmd(&xpc, xpc.xp_pattern);
-    xpc.xp_pattern_len = (int)STRLEN(xpc.xp_pattern);
+    xpc.xp_pattern_len = STRLEN(xpc.xp_pattern);
   }
 
 theend:
@@ -21138,7 +21138,8 @@ void ex_function(exarg_T *eap)
       goto erret;
     }
     if (show_block) {
-      ui_ext_cmdline_block_append(indent, (const char *)theline);
+      assert(indent >= 0);
+      ui_ext_cmdline_block_append((size_t)indent, (const char *)theline);
     }
 
     /* Detect line continuation: sourcing_lnum increased more than one. */

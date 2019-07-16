@@ -2273,14 +2273,13 @@ static int vgetorpeek(int advance)
             curwin->w_wrow = old_wrow;
           }
 
-          /* this looks nice when typing a dead character map */
-          if ((State & CMDLINE)
-              && cmdline_star == 0
-              && ptr2cells(typebuf.tb_buf + typebuf.tb_off
-                  + typebuf.tb_len - 1) == 1) {
-            putcmdline(typebuf.tb_buf[typebuf.tb_off
-                                      + typebuf.tb_len - 1], FALSE);
-            c1 = 1;
+          // this looks nice when typing a dead character map
+          if ((State & CMDLINE) && cmdline_star == 0) {
+            char_u *p = typebuf.tb_buf + typebuf.tb_off + typebuf.tb_len - 1;
+            if (ptr2cells(p) == 1 && *p < 128) {
+              putcmdline((char)(*p), false);
+              c1 = 1;
+            }
           }
         }
 

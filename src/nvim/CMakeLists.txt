@@ -139,7 +139,6 @@ set(CONV_SOURCES
   eval.c
   ex_cmds.c
   ex_docmd.c
-  ex_getln.c
   fileio.c
   mbyte.c
   memline.c
