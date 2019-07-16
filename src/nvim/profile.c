@@ -66,8 +66,10 @@ proftime_T profile_setlimit(int64_t msec) FUNC_ATTR_WARN_UNUSED_RESULT
   }
   assert(msec <= (INT64_MAX / 1000000LL) - 1);
   proftime_T nsec = msec * 1000000LL;
+  uint64_t now = os_hrtime();
+  assert(now <= INT64_MAX);
   int64_t rv;
-  STRICT_ADD(os_hrtime(), nsec, &rv, int64_t);
+  STRICT_ADD((proftime_T)now, nsec, &rv, int64_t);
   return rv;
 }
 
