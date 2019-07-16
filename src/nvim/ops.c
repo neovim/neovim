@@ -1471,7 +1471,8 @@ int op_delete(oparg_T *oap)
       // copy up to deleted part
       memmove(newp, oldp, (size_t)bd.textcol);
       // insert spaces
-      memset(newp + bd.textcol, ' ', (size_t)(bd.startspaces + bd.endspaces));
+      memset(newp + bd.textcol, ' ', (size_t)bd.startspaces +
+             (size_t)bd.endspaces);
       // copy the part after the deleted part
       oldp += bd.textcol + bd.textlen;
       STRMOVE(newp + bd.textcol + bd.startspaces + bd.endspaces, oldp);
@@ -1743,7 +1744,7 @@ int op_replace(oparg_T *oap, int c)
       oldp = get_cursor_line_ptr();
       oldlen = (int)STRLEN(oldp);
 
-      size_t newp_size = (size_t)(bd.textcol + bd.startspaces);
+      size_t newp_size = (size_t)bd.textcol + (size_t)bd.startspaces;
       if (had_ctrl_v_cr || (c != '\r' && c != '\n')) {
         newp_size += (size_t)numc;
         if (!bd.is_short) {
