@@ -379,8 +379,10 @@ static void shift_block(oparg_T *oap, int amount)
     /* if we're splitting a TAB, allow for it */
     bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
     const int len = (int)STRLEN(bd.textstart) + 1;
-    newp = (char_u *)xmalloc((size_t)(bd.textcol + i + j + len));
-    memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
+    int col = bd.textcol + i +j + len;
+    assert(col >= 0);
+    newp = (char_u *)xmalloc((size_t)col);
+    memset(newp, NUL, (size_t)col);
     memmove(newp, oldp, (size_t)bd.textcol);
     memset(newp + bd.textcol, TAB, (size_t)i);
     memset(newp + bd.textcol + i, ' ', (size_t)j);
