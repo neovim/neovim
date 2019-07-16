@@ -34,10 +34,9 @@ describe(':edit term://*', function()
   it("runs TermOpen early enough to set buffer-local 'scrollback'", function()
     local columns, lines = 20, 4
     local scr = get_screen(columns, lines)
-    local rep = 'a'
+    local rep = 97
     meths.set_option('shellcmdflag', 'REP ' .. rep)
     command('set shellxquote=')  -- win: avoid extra quotes
-    local rep_size = rep:byte()  -- 'a' => 97
     local sb = 10
     command('autocmd TermOpen * :setlocal scrollback='..tostring(sb)
             ..'|call feedkeys("G", "n")')
@@ -45,8 +44,8 @@ describe(':edit term://*', function()
 
     local bufcontents = {}
     local winheight = curwinmeths.get_height()
-    local buf_cont_start = rep_size - sb - winheight + 2
-    for i = buf_cont_start,(rep_size - 1) do
+    local buf_cont_start = rep - sb - winheight + 2
+    for i = buf_cont_start,(rep - 1) do
       bufcontents[#bufcontents + 1] = ('%d: foobar'):format(i)
     end
     bufcontents[#bufcontents + 1] = ''
