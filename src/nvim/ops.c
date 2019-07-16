@@ -2606,8 +2606,9 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
 
 static void yank_copy_line(yankreg_T *reg, struct block_def *bd, size_t y_idx)
 {
-  char_u *pnew = xmallocz((size_t)(bd->startspaces + bd->endspaces
-                                   + bd->textlen));
+  int size = bd->startspaces + bd->endspaces + bd->textlen;
+  assert(size >= 0);
+  char_u *pnew = xmallocz((size_t)size);
   reg->y_array[y_idx] = pnew;
   memset(pnew, ' ', (size_t)bd->startspaces);
   pnew += bd->startspaces;
