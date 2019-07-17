@@ -13,6 +13,8 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
+local filter = global_helpers.filter
+local map = global_helpers.map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
@@ -763,6 +765,22 @@ local function load_adjust(num)
   return math.ceil(num * load_factor)
 end
 
+local function parse_context(ctx)
+  local parsed = {}
+  for _, item in ipairs({'regs', 'jumps', 'buflist', 'gvars'}) do
+    parsed[item] = filter(function(v)
+      return type(v) == 'table'
+    end, nvim_call('msgpackparse', ctx[item]))
+  end
+  parsed['buflist'] = parsed['buflist'][1]
+  return map(function(v)
+    if #v == 0 then
+      return nil
+    end
+    return v
+  end, parsed)
+end
+
 local module = {
   NIL = mpack.NIL,
   alter_slashes = alter_slashes,
@@ -810,6 +828,7 @@ local module = {
   nvim_prog_abs = nvim_prog_abs,
   nvim_set = nvim_set,
   os_name = os_name,
+  parse_context = parse_context,
   pathroot = pathroot,
   pending_win32 = pending_win32,
   prepend_argv = prepend_argv,
