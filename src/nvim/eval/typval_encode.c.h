@@ -382,7 +382,7 @@ static int _TYPVAL_ENCODE_CONVERT_ONE_VALUE(
     case VAR_SPECIAL: {
       switch (tv->vval.v_special) {
         case kSpecialVarNull: {
-          TYPVAL_ENCODE_CONV_NIL(tv);
+          TYPVAL_ENCODE_CONV_NIL(tv);  // -V1037
           break;
         }
         case kSpecialVarTrue:
