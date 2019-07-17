@@ -46,8 +46,8 @@ env:
     - CCACHE_COMPRESS=1
     - CCACHE_SLOPPINESS=time_macros,file_macro
     - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
-    # Default since 3.3, but Travis (Xenial) has 3.2.4; workaround (#10533).
-    - CCACHE_HASHDIR=1
+    # Default since 3.3, but Travis (Xenial) has 3.2.4; required with newer gcc/clang.
+    - CCACHE_CPP2=1
 
 anchors:
   envs: &common-job-env
