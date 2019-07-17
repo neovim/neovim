@@ -384,10 +384,7 @@ void msgpack_rpc_from_object(const Object result, msgpack_packer *const res)
                   && kObjectTypeTabpage == kObjectTypeWindow + 1,
                   "Buffer, window and tabpage enum items are in order");
     switch (cur.aobj->type) {
-      case kObjectTypeNil: {
-        msgpack_pack_nil(res);
-        break;
-      }
+      case kObjectTypeNil:
       case kObjectTypeLuaRef: {
         // TODO(bfredl): could also be an error. Though kObjectTypeLuaRef
         // should only appear when the caller has opted in to handle references,
