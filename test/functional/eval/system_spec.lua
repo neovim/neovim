@@ -203,13 +203,12 @@ describe('system()', function()
     end)
 
     it('prints verbose information', function()
+      nvim('set_option', 'shell', 'fake_shell')
+      nvim('set_option', 'shellcmdflag', 'cmdflag')
+
       screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')
-      if iswin() then
-        screen:expect{any=[[Executing command: "'cmd.exe' '/s' '/c' '"echo hi"'"]]}
-      else
-        screen:expect{any=[[Executing command: "'/[^']*sh' '%-c' 'echo hi'"]]}
-      end
+      screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' 'echo hi'"]]}
       feed('<cr>')
     end)
 
