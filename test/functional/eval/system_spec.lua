@@ -208,7 +208,11 @@ describe('system()', function()
 
       screen:try_resize(72, 14)
       feed(':4verbose echo system("echo hi")<cr>')
-      screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' 'echo hi'"]]}
+      if iswin() then
+        screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' '"echo hi"'"]]}
+      else
+        screen:expect{any=[[Executing command: "'fake_shell' 'cmdflag' 'echo hi'"]]}
+      end
       feed('<cr>')
     end)
 
