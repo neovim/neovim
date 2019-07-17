@@ -119,7 +119,6 @@ static void redraw_for_cursorline(win_T *wp)
         // the current window.
         redrawWinline(wp, wp->w_last_cursorline);
         redrawWinline(wp, wp->w_cursor.lnum);
-        redraw_win_later(wp, VALID);
       } else {
         redraw_win_later(wp, SOME_VALID);
       }
