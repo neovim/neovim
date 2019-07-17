@@ -70,9 +70,8 @@ if(UNIX OR (MINGW AND CMAKE_CROSSCOMPILING))
     find_package(LuaJit)
     if(LUAJIT_FOUND)
       list(APPEND LUAROCKS_OPTS
-        --lua-version=5.1
         --with-lua-include=${LUAJIT_INCLUDE_DIRS}
-        --lua-suffix=jit)
+        --with-lua-interpreter=luajit)
     endif()
 
     # Get lua_version used with rocks output.
