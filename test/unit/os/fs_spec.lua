@@ -27,7 +27,7 @@ cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h', './src/nvim/path.h')
 cppimport('sys/stat.h')
 cppimport('fcntl.h')
-cppimport('uv.h')
+cimport('uv.h')
 
 local s = ''
 for i = 0, 255 do
@@ -540,7 +540,7 @@ describe('fs.c', function()
 
       itp('returns UV_EEXIST for O_CREAT|O_EXCL on a existing file', function()
         assert_file_exists(existing_file)
-        eq(ffi.C.kUV_EEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
+        eq(ffi.C.UV_EEXIST, (os_open(existing_file, (bit.bor(ffi.C.kO_CREAT, ffi.C.kO_EXCL)), 0)))
       end)
 
       itp('sets `rwx` permissions for O_CREAT 700 which then can be closed', function()
