@@ -6474,6 +6474,7 @@ void do_highlight(const char *line, const bool forceit, const bool init)
   int id;
   int idx;
   struct hl_group item_before;
+  bool did_change = false;
   bool dodefault = false;
   bool doclear = false;
   bool dolink = false;
@@ -6830,18 +6831,23 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           }
         }
       } else if (strcmp(key, "GUIFG") == 0)   {
+        char_u **const namep = &HL_TABLE()[idx].sg_rgb_fg_name;
+
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
             HL_TABLE()[idx].sg_set |= SG_GUI;
           }
 
-          xfree(HL_TABLE()[idx].sg_rgb_fg_name);
-          if (strcmp(arg, "NONE")) {
-            HL_TABLE()[idx].sg_rgb_fg_name = (char_u *)xstrdup((char *)arg);
-            HL_TABLE()[idx].sg_rgb_fg = name_to_color((const char_u *)arg);
-          } else {
-            HL_TABLE()[idx].sg_rgb_fg_name = NULL;
-            HL_TABLE()[idx].sg_rgb_fg = -1;
+          if (*namep == NULL || STRCMP(*namep, arg) != 0) {
+            xfree(*namep);
+            if (strcmp(arg, "NONE") != 0) {
+              *namep = (char_u *)xstrdup(arg);
+              HL_TABLE()[idx].sg_rgb_fg = name_to_color((char_u *)arg);
+            } else {
+              *namep = NULL;
+              HL_TABLE()[idx].sg_rgb_fg = -1;
+            }
+            did_change = true;
           }
         }
 
@@ -6849,18 +6855,23 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           normal_fg = HL_TABLE()[idx].sg_rgb_fg;
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
+        char_u **const namep = &HL_TABLE()[idx].sg_rgb_bg_name;
+
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
             HL_TABLE()[idx].sg_set |= SG_GUI;
           }
 
-          xfree(HL_TABLE()[idx].sg_rgb_bg_name);
-          if (STRCMP(arg, "NONE") != 0) {
-            HL_TABLE()[idx].sg_rgb_bg_name = (char_u *)xstrdup((char *)arg);
-            HL_TABLE()[idx].sg_rgb_bg = name_to_color((const char_u *)arg);
-          } else {
-            HL_TABLE()[idx].sg_rgb_bg_name = NULL;
-            HL_TABLE()[idx].sg_rgb_bg = -1;
+          if (*namep == NULL || STRCMP(*namep, arg) != 0) {
+            xfree(*namep);
+            if (STRCMP(arg, "NONE") != 0) {
+              *namep = (char_u *)xstrdup(arg);
+              HL_TABLE()[idx].sg_rgb_bg = name_to_color((char_u *)arg);
+            } else {
+              *namep = NULL;
+              HL_TABLE()[idx].sg_rgb_bg = -1;
+            }
+            did_change = true;
           }
         }
 
@@ -6868,18 +6879,23 @@ void do_highlight(const char *line, const bool forceit, const bool init)
           normal_bg = HL_TABLE()[idx].sg_rgb_bg;
         }
       } else if (strcmp(key, "GUISP") == 0)   {
+        char_u **const namep = &HL_TABLE()[idx].sg_rgb_sp_name;
+
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
           if (!init) {
             HL_TABLE()[idx].sg_set |= SG_GUI;
           }
 
-          xfree(HL_TABLE()[idx].sg_rgb_sp_name);
-          if (strcmp(arg, "NONE") != 0) {
-            HL_TABLE()[idx].sg_rgb_sp_name = (char_u *)xstrdup((char *)arg);
-            HL_TABLE()[idx].sg_rgb_sp = name_to_color((const char_u *)arg);
-          } else {
-            HL_TABLE()[idx].sg_rgb_sp_name = NULL;
-            HL_TABLE()[idx].sg_rgb_sp = -1;
+          if (*namep == NULL || STRCMP(*namep, arg) != 0) {
+            xfree(*namep);
+            if (strcmp(arg, "NONE") != 0) {
+              *namep = (char_u *)xstrdup(arg);
+              HL_TABLE()[idx].sg_rgb_sp = name_to_color((char_u *)arg);
+            } else {
+              *namep = NULL;
+              HL_TABLE()[idx].sg_rgb_sp = -1;
+            }
+            did_change = true;
           }
         }
 
@@ -6941,9 +6957,15 @@ void do_highlight(const char *line, const bool forceit, const bool init)
 
   // Only call highlight_changed() once, after a sequence of highlight
   // commands, and only if an attribute actually changed
-  if (memcmp(&HL_TABLE()[idx], &item_before, sizeof(item_before)) != 0
+  if ((did_change
+       || memcmp(&HL_TABLE()[idx], &item_before, sizeof(item_before)) != 0)
       && !did_highlight_changed) {
-    redraw_all_later(NOT_VALID);
+    // Do not trigger a redraw when highlighting is changed while
+    // redrawing.  This may happen when evaluating 'statusline' changes the
+    // StatusLine group.
+    if (!updating_screen) {
+      redraw_all_later(NOT_VALID);
+    }
     need_highlight_changed = true;
   }
 }

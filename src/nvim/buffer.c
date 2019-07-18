@@ -3366,7 +3366,6 @@ int build_stl_str_hl(
   char_u      *usefmt = fmt;
   const int save_must_redraw = must_redraw;
   const int save_redr_type = curwin->w_redr_type;
-  const int save_highlight_shcnaged = need_highlight_changed;
 
   // When the format starts with "%!" then evaluate it as an expression and
   // use the result as the actual format string.
@@ -4430,12 +4429,12 @@ int build_stl_str_hl(
     cur_tab_rec->def.func = NULL;
   }
 
-  // We do not want redrawing a stausline, ruler, title, etc. to trigger
-  // another redraw, it may cause an endless loop.  This happens when a
-  // statusline changes a highlight group.
-  must_redraw = save_must_redraw;
-  curwin->w_redr_type = save_redr_type;
-  need_highlight_changed = save_highlight_shcnaged;
+  // When inside update_screen we do not want redrawing a stausline, ruler,
+  // title, etc. to trigger another redraw, it may cause an endless loop.
+  if (updating_screen) {
+    must_redraw = save_must_redraw;
+    curwin->w_redr_type = save_redr_type;
+  }
 
   return width;
 }
