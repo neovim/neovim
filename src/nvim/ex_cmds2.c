@@ -3186,7 +3186,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
     }
     si = &SCRIPT_ITEM(current_SID);
     si->sn_name = fname_exp;
-    fname_exp = NULL;
+    fname_exp = vim_strsave(si->sn_name);  // used for autocmd
     if (file_id_ok) {
       si->file_id_valid = true;
       si->file_id = file_id;
@@ -3288,7 +3288,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   convert_setup(&cookie.conv, NULL, NULL);
 
   if (trigger_source_post) {
-    apply_autocmds(EVENT_SOURCEPOST, si->sn_name, si->sn_name, false, curbuf);
+    apply_autocmds(EVENT_SOURCEPOST, fname_exp, fname_exp, false, curbuf);
   }
 
 theend:
