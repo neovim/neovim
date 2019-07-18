@@ -1263,8 +1263,8 @@ static int nfa_regatom(void)
       IEMSGN("INTERNAL: Unknown character class char: %" PRId64, c);
       return FAIL;
     }
-    /* When '.' is followed by a composing char ignore the dot, so that
-     * the composing char is matched here. */
+    // When '.' is followed by a composing char ignore the dot, so that
+    // the composing char is matched here.
     if (enc_utf8 && c == Magic('.') && utf_iscomposing(peekchr())) {
       old_regparse = regparse;
       c = getchr();
@@ -1279,25 +1279,26 @@ static int nfa_regatom(void)
     break;
 
   case Magic('n'):
-    if (reg_string)
-      /* In a string "\n" matches a newline character. */
+    if (reg_string) {
+      // In a string "\n" matches a newline character.
       EMIT(NL);
-    else {
-      /* In buffer text "\n" matches the end of a line. */
+    } else {
+      // In buffer text "\n" matches the end of a line.
       EMIT(NFA_NEWL);
       regflags |= RF_HASNL;
     }
     break;
 
   case Magic('('):
-    if (nfa_reg(REG_PAREN) == FAIL)
-      return FAIL;                  /* cascaded error */
+    if (nfa_reg(REG_PAREN) == FAIL) {
+      return FAIL;                  // cascaded error
+    }
     break;
 
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
-    EMSGN(_(e_misplaced), no_Magic(c));
+    EMSGN(_(e_misplaced), no_Magic(c));  // -V1037
     return FAIL;
 
   case Magic('='):
@@ -1306,7 +1307,7 @@ static int nfa_regatom(void)
   case Magic('@'):
   case Magic('*'):
   case Magic('{'):
-    /* these should follow an atom, not form an atom */
+    // these should follow an atom, not form an atom
     EMSGN(_(e_misplaced), no_Magic(c));
     return FAIL;
 
@@ -1314,8 +1315,8 @@ static int nfa_regatom(void)
   {
     char_u      *lp;
 
-    /* Previous substitute pattern.
-     * Generated as "\%(pattern\)". */
+    // Previous substitute pattern.
+    // Generated as "\%(pattern\)".
     if (reg_prev_sub == NULL) {
       EMSG(_(e_nopresub));
       return FAIL;
