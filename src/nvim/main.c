@@ -379,8 +379,15 @@ int main(int argc, char **argv)
   // after the start of atleast one GUI
   // as size of "uis[]" must be greater than 1
   if (TUI_process) {
+    // Read file (text, not commands) from stdin if:
+    //    - stdin is not a tty
+    if (params.edit_type == EDIT_STDIN && !recoverymode) {
+      read_stdin();
+    }
     input_stop();  // Stop reading input, let the UI take over.
-    uint64_t rv = ui_client_start(params.server_name, params.argc, params.argv);
+    uint64_t rv = ui_client_start(params.server_name, params.argc, params.argv, 
+                                  (params.edit_type == EDIT_STDIN 
+                                  && !recoverymode));
     if (!rv) {
         // cannot continue without a channel
         tui_exit_safe(get_ui_by_index(1));
@@ -477,7 +484,7 @@ int main(int argc, char **argv)
   // are the same terminal: "cat | vim -".
   // Using autocommands here may cause trouble...
   if (params.edit_type == EDIT_STDIN && !recoverymode) {
-    read_stdin();
+    read_stdin(); 
   }
 
   setmouse();  // may start using the mouse

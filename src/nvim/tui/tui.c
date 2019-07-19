@@ -42,6 +42,7 @@
 #include "nvim/macros.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/eval.h"
+#include "nvim/memline.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.
@@ -142,7 +143,7 @@ varnumber_T server_process_exit_status = 0L;
 /*
 Connecting the remote server.
 */
-uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
+uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_stdin)
 {
   uint64_t rc_id;
   if (is_remote_client) {
@@ -156,6 +157,10 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
     args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
     args[args_idx++] = xstrdup("--embed");
     for (int i = 1; i < argc; i++) {
+      if (!STRCMP("-", argv[i])) {
+        // don't pass "-" to embed instance
+        continue;
+      }
       args[args_idx++] = xstrdup(argv[i]);
     }
     args[args_idx++] = NULL; // last value of argv should be NULL
@@ -166,6 +171,25 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv)
                                   &server_process_exit_status);
     rc_id = channel->id;
   }
+
+  // passing "stdin" data to server
+  linenr_T line_count = pass_stdin ? curbuf->b_ml.ml_line_count : 0;
+  while (--line_count >= 0) {
+    // send the line to server and delete it from curbuf
+    Array args = ARRAY_DICT_INIT;
+    Object l =  STRING_OBJ(cstr_as_string(xstrdup((const char *)ml_get(1))));
+    Array array = {.items = &l, .size = 1};
+    ADD(args, INTEGER_OBJ(0)); // curbuf
+    ADD(args, INTEGER_OBJ(0));
+    ADD(args, INTEGER_OBJ(-1)); // append to last line
+    ADD(args, BOOLEAN_OBJ(false));
+    ADD(args, ARRAY_OBJ(copy_array(array)));
+
+    rpc_send_event(rc_id, "nvim_buf_set_lines", args);
+
+    ml_delete((linenr_T)1, false);
+  }
+
   Array args = ARRAY_DICT_INIT;
   UI *ui = get_ui_by_index(1);
   int width = ui->width;

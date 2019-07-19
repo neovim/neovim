@@ -129,10 +129,10 @@ void ui_builtin_start(void)
 #endif
 }
 
-uint64_t ui_client_start(char *server_name, int argc, char **argv)
+uint64_t ui_client_start(char *server_name, int argc, char **argv, bool pass_stdin)
 {
   ui_comp_detach(uis[1]);  // Bypassing compositor in client
-  uint64_t rv = tui_ui_client_init(server_name, argc, argv);
+  uint64_t rv = tui_ui_client_init(server_name, argc, argv, pass_stdin);
   return rv;
 }
 
