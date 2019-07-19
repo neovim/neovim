@@ -3774,15 +3774,14 @@ win_line (
       n_attr3 = 1;
     }
 
-    /*
-     * At end of the text line or just after the last character.
-     */
+    // At end of the text line or just after the last character.
     if (c == NUL) {
       long prevcol = (long)(ptr - line) - 1;
 
-      /* we're not really at that column when skipping some text */
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
-        ++prevcol;
+      // we're not really at that column when skipping some text
+      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
+        prevcol++;
+      }
 
       // Invert at least one char, used for Visual and empty line or
       // highlight match at end of line. If it's beyond the last
@@ -3805,8 +3804,7 @@ win_line (
           && ((area_attr != 0 && vcol == fromcol
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
-                   || lnum == curwin->w_cursor.lnum)
-               && c == NUL)
+                   || lnum == curwin->w_cursor.lnum))
               // highlight 'hlsearch' match at end of line
               || prevcol_hl_flag)) {
         int n = 0;
