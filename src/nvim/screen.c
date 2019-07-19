@@ -4045,14 +4045,15 @@ win_line (
       }
     }
 
-    /* advance to the next 'colorcolumn' */
-    if (draw_color_col)
+    // advance to the next 'colorcolumn'
+    if (draw_color_col) {
       draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
+    }
 
-    /* Highlight the cursor column if 'cursorcolumn' is set.  But don't
-     * highlight the cursor position itself.
-     * Also highlight the 'colorcolumn' if it is different than
-     * 'cursorcolumn' */
+    // Highlight the cursor column if 'cursorcolumn' is set.  But don't
+    // highlight the cursor position itself.
+    // Also highlight the 'colorcolumn' if it is different than
+    // 'cursorcolumn'
     vcol_save_attr = -1;
     if (draw_state == WL_LINE && !lnum_in_visual_area
         && search_attr == 0 && area_attr == 0) {
@@ -4071,10 +4072,8 @@ win_line (
       char_attr = hl_combine_attr(line_attr_lowprio, char_attr);
     }
 
-    /*
-     * Store character to be displayed.
-     * Skip characters that are left of the screen for 'nowrap'.
-     */
+    // Store character to be displayed.
+    // Skip characters that are left of the screen for 'nowrap'.
     vcol_prev = vcol;
     if (draw_state < WL_LINE || n_skip <= 0) {
       //
