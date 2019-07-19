@@ -173,19 +173,26 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
   }
 
   // passing "stdin" data to server
-  linenr_T line_count = pass_stdin ? curbuf->b_ml.ml_line_count : 0;
-  while (--line_count >= 0) {
+  linenr_T line_count = pass_stdin ? -curbuf->b_ml.ml_line_count : -2;
+  while (--line_count >= 0
+        || ++line_count == -curbuf->b_ml.ml_line_count) {
     // send the line to server and delete it from curbuf
     Array args = ARRAY_DICT_INIT;
     Object l =  STRING_OBJ(cstr_as_string(xstrdup((const char *)ml_get(1))));
     Array array = {.items = &l, .size = 1};
     ADD(args, INTEGER_OBJ(0)); // curbuf
-    ADD(args, INTEGER_OBJ(0));
-    ADD(args, INTEGER_OBJ(-1)); // append to last line
+    if (line_count < 0 ) {
+      ADD(args, INTEGER_OBJ(0));
+      line_count = -line_count - 1;
+    } else {
+      ADD(args, INTEGER_OBJ(-1)); // append to last line
+    }
+    ADD(args, INTEGER_OBJ(-1));
     ADD(args, BOOLEAN_OBJ(false));
     ADD(args, ARRAY_OBJ(copy_array(array)));
 
     rpc_send_event(rc_id, "nvim_buf_set_lines", args);
+    api_free_object(l);
 
     ml_delete((linenr_T)1, false);
   }
@@ -500,7 +507,8 @@ void tui_execute(void) {
   LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   tui_io_driven_loop(ui);
   tui_exit_safe(ui);
-  getout((int)server_process_exit_status);
+  // getout((int)server_process_exit_status);
+  getout(0);
 }
 
 // Doesn't return until the TUI is closed (by call of tui_stop())
@@ -1413,6 +1421,9 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
     // printed immediately without an intervening newline.
     final_column_wrap(ui);
   }
+
+  xfree((void *) chunk);
+  xfree((void *) attrs);
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)

@@ -91,6 +91,7 @@ function make_raw_line_and_call(output)
   LineFlags lineflags = (int)raw_line.int_values.items[6].data.integer;
   const schar_T* chunk = raw_line.chunk;
   const sattr_T* attrs = raw_line.attrs;
+  api_free_array(raw_line.int_values);
   ui_call_raw_line(grid, row, startcol, endcol, clearcol, clearattr, lineflags, (const schar_T*) chunk, (const sattr_T*) attrs);
 ]])
 end
