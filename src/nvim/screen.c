@@ -3774,15 +3774,14 @@ win_line (
       n_attr3 = 1;
     }
 
-    /*
-     * At end of the text line or just after the last character.
-     */
+    // At end of the text line or just after the last character.
     if (c == NUL) {
       long prevcol = (long)(ptr - line) - 1;
 
-      /* we're not really at that column when skipping some text */
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
-        ++prevcol;
+      // we're not really at that column when skipping some text
+      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
+        prevcol++;
+      }
 
       // Invert at least one char, used for Visual and empty line or
       // highlight match at end of line. If it's beyond the last
@@ -3805,8 +3804,7 @@ win_line (
           && ((area_attr != 0 && vcol == fromcol
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
-                   || lnum == curwin->w_cursor.lnum)
-               && c == NUL)
+                   || lnum == curwin->w_cursor.lnum))
               // highlight 'hlsearch' match at end of line
               || prevcol_hl_flag)) {
         int n = 0;
@@ -4033,7 +4031,7 @@ win_line (
         && filler_todo <= 0
         && (wp->w_p_rl ? col == 0 : col == grid->Columns - 1)
         && (*ptr != NUL
-            || (wp->w_p_list && lcs_eol_one > 0)
+            || lcs_eol_one > 0
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
       c = wp->w_p_lcs_chars.ext;
       char_attr = win_hl_attr(wp, HLF_AT);
@@ -4047,14 +4045,15 @@ win_line (
       }
     }
 
-    /* advance to the next 'colorcolumn' */
-    if (draw_color_col)
+    // advance to the next 'colorcolumn'
+    if (draw_color_col) {
       draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
+    }
 
-    /* Highlight the cursor column if 'cursorcolumn' is set.  But don't
-     * highlight the cursor position itself.
-     * Also highlight the 'colorcolumn' if it is different than
-     * 'cursorcolumn' */
+    // Highlight the cursor column if 'cursorcolumn' is set.  But don't
+    // highlight the cursor position itself.
+    // Also highlight the 'colorcolumn' if it is different than
+    // 'cursorcolumn'
     vcol_save_attr = -1;
     if (draw_state == WL_LINE && !lnum_in_visual_area
         && search_attr == 0 && area_attr == 0) {
@@ -4073,10 +4072,8 @@ win_line (
       char_attr = hl_combine_attr(line_attr_lowprio, char_attr);
     }
 
-    /*
-     * Store character to be displayed.
-     * Skip characters that are left of the screen for 'nowrap'.
-     */
+    // Store character to be displayed.
+    // Skip characters that are left of the screen for 'nowrap'.
     vcol_prev = vcol;
     if (draw_state < WL_LINE || n_skip <= 0) {
       //
