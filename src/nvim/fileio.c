@@ -1423,30 +1423,32 @@ retry:
               }
             }
           }
-          if (enc_utf8) {               /* produce UTF-8 */
+          if (enc_utf8) {               // produce UTF-8
             dest -= utf_char2len(u8c);
             assert(u8c <= INT_MAX);
             (void)utf_char2bytes((int)u8c, dest);
-          } else {                    /* produce Latin1 */
-            --dest;
+          } else {                    // produce Latin1
+            dest--;
             if (u8c >= 0x100) {
-              /* character doesn't fit in latin1, retry with
-               * another fenc when possible, otherwise just
-               * report the error. */
-              if (can_retry)
+              // character doesn't fit in latin1, retry with
+              // another fenc when possible, otherwise just
+              // report the error.
+              if (can_retry) {
                 goto rewind_retry;
-              if (conv_error == 0)
+              }
+              if (conv_error == 0) {
                 conv_error = readfile_linenr(linecnt, ptr, p);
-              if (bad_char_behavior == BAD_DROP)
-                ++dest;
-              else if (bad_char_behavior == BAD_KEEP) {
+              }
+              if (bad_char_behavior == BAD_DROP) {
+                dest++;
+              } else if (bad_char_behavior == BAD_KEEP) {
                 assert(u8c <= UCHAR_MAX);
                 *dest = (char_u)u8c;
-              }
-              else if (eap != NULL && eap->bad_char != 0)
+              } else if (eap != NULL && eap->bad_char != 0) {
                 *dest = bad_char_behavior;
-              else
+              } else {
                 *dest = 0xBF;
+              }
             } else {
               assert(u8c <= UCHAR_MAX);
               *dest = (char_u)u8c;
