@@ -169,7 +169,7 @@ bool profile_equal(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
   return tm1 == tm2;
 }
 
-/// Converts a proftime_T value `tm` to a signed integer.
+/// Converts time duration `tm` (`profile_sub` result) to a signed integer.
 ///
 /// @return signed representation of the given time value
 int64_t profile_signed(proftime_T tm)
