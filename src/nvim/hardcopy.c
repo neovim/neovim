@@ -582,9 +582,9 @@ static void prt_header(prt_settings_T *const psettings, const int pagenum,
  */
 static void prt_message(char_u *s)
 {
-  grid_fill(&default_grid, (int)Rows - 1, (int)Rows, 0, (int)Columns, ' ', ' ',
-            0);
-  grid_puts(&default_grid, s, (int)Rows - 1, 0, HL_ATTR(HLF_R));
+  // TODO(bfredl): delete this
+  grid_fill(&default_grid, Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
+  grid_puts(&default_grid, s, Rows - 1, 0, HL_ATTR(HLF_R));
   ui_flush();
 }
 

@@ -143,7 +143,7 @@ struct exarg {
 struct expand {
   int xp_context;               // type of expansion
   char_u *xp_pattern;           // start of item to expand
-  int xp_pattern_len;           // bytes in xp_pattern before cursor
+  size_t xp_pattern_len;           // bytes in xp_pattern before cursor
   char_u *xp_arg;               // completion function
   int xp_scriptID;              // SID for completion function
   int xp_backslash;             // one of the XP_BS_ values

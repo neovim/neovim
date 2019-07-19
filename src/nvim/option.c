@@ -4165,7 +4165,6 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
   char_u      *errmsg = NULL;
   long old_value = *(long *)varp;
   long old_Rows = Rows;                 // remember old Rows
-  long old_Columns = Columns;           // remember old Columns
   long        *pp = (long *)varp;
 
   // Disallow changing some options from secure mode.
@@ -4432,36 +4431,41 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
 
 
   // Check the (new) bounds for Rows and Columns here.
-  if (Rows < min_rows() && full_screen) {
+  if (p_lines < min_rows() && full_screen) {
     if (errbuf != NULL) {
       vim_snprintf((char *)errbuf, errbuflen,
           _("E593: Need at least %d lines"), min_rows());
       errmsg = errbuf;
     }
-    Rows = min_rows();
+    p_lines = min_rows();
   }
-  if (Columns < MIN_COLUMNS && full_screen) {
+  if (p_columns < MIN_COLUMNS && full_screen) {
     if (errbuf != NULL) {
       vim_snprintf((char *)errbuf, errbuflen,
           _("E594: Need at least %d columns"), MIN_COLUMNS);
       errmsg = errbuf;
     }
-    Columns = MIN_COLUMNS;
+    p_columns = MIN_COLUMNS;
   }
-  limit_screen_size();
 
+  // True max size is defined by check_shellsize()
+  p_lines = MIN(p_lines, INT_MAX);
+  p_columns = MIN(p_columns, INT_MAX);
 
   // If the screen (shell) height has been changed, assume it is the
   // physical screenheight.
-  if (old_Rows != Rows || old_Columns != Columns) {
+  if (p_lines != Rows || p_columns != Columns) {
     // Changing the screen size is not allowed while updating the screen.
     if (updating_screen) {
       *pp = old_value;
     } else if (full_screen) {
-      screen_resize((int)Columns, (int)Rows);
+      screen_resize((int)p_columns, (int)p_lines);
     } else {
+      // TODO(bfredl): is this branch ever needed?
       // Postpone the resizing; check the size and cmdline position for
       // messages.
+      Rows = (int)p_lines;
+      Columns = (int)p_columns;
       check_shellsize();
       if (cmdline_row > Rows - p_ch && Rows > p_ch) {
         assert(p_ch >= 0 && Rows - p_ch <= INT_MAX);
@@ -5079,8 +5083,8 @@ showoptions(
      * display the items
      */
     if (run == 1) {
-      assert(Columns <= LONG_MAX - GAP
-             && Columns + GAP >= LONG_MIN + 3
+      assert(Columns <= INT_MAX - GAP
+             && Columns + GAP >= INT_MIN + 3
              && (Columns + GAP - 3) / INC >= INT_MIN
              && (Columns + GAP - 3) / INC <= INT_MAX);
       cols = (int)((Columns + GAP - 3) / INC);

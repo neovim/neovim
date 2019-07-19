@@ -2654,7 +2654,7 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
     }
     xstrlcat((char *)buf, title, IOSIZE);
   }
-  trunc_string(buf, buf, (int)Columns - 1, IOSIZE);
+  trunc_string(buf, buf, Columns - 1, IOSIZE);
   msg(buf);
 }
 

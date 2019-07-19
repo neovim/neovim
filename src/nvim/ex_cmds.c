@@ -1230,7 +1230,7 @@ static void do_filter(
 
   /* Create the shell command in allocated memory. */
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
-  ui_cursor_goto((int)Rows - 1, 0);
+  ui_cursor_goto(Rows - 1, 0);
 
   if (do_out) {
     if (u_save((linenr_T)(line2), (linenr_T)(line2 + 1)) == FAIL) {

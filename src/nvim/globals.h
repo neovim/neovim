@@ -88,18 +88,15 @@ EXTERN struct nvim_stats_s {
 #define NO_BUFFERS      1       // not all buffers loaded yet
 //                      0          not starting anymore
 
-/*
- * Number of Rows and Columns in the screen.
- * Must be long to be able to use them as options in option.c.
- * Note: Use default_grid.Rows and default_grid.Columns to access items in
- * default_grid.chars[]. They may have different values when the screen
- * wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
- * up).
- */
+// Number of Rows and Columns in the screen.
+// Note: Use default_grid.Rows and default_grid.Columns to access items in
+// default_grid.chars[]. They may have different values when the screen
+// wasn't (re)allocated yet after setting Rows or Columns (e.g., when starting
+// up).
 #define DFLT_COLS       80              // default value for 'columns'
 #define DFLT_ROWS       24              // default value for 'lines'
-EXTERN long Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
-EXTERN long Columns INIT(= DFLT_COLS);  // nr of columns in the screen
+EXTERN int Rows INIT(= DFLT_ROWS);     // nr of rows in the screen
+EXTERN int Columns INIT(= DFLT_COLS);  // nr of columns in the screen
 
 // We use 64-bit file functions here, if available.  E.g. ftello() returns
 // off_t instead of long, which helps if long is 32 bit and off_t is 64 bit.

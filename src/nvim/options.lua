@@ -379,10 +379,9 @@ return {
       full_name='columns', abbreviation='co',
       type='number', scope={'global'},
       no_mkrc=true,
-      nodefault=true,
       vi_def=true,
       redraw={'everything'},
-      varname='Columns',
+      varname='p_columns',
       defaults={if_true={vi=macros('DFLT_COLS')}}
     },
     {
@@ -1384,10 +1383,9 @@ return {
       full_name='lines',
       type='number', scope={'global'},
       no_mkrc=true,
-      nodefault=true,
       vi_def=true,
       redraw={'everything'},
-      varname='Rows',
+      varname='p_lines',
       defaults={if_true={vi=macros('DFLT_ROWS')}}
     },
     {

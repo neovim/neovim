@@ -341,8 +341,7 @@ int update_screen(int type)
       type = CLEAR;
     } else if (type != CLEAR) {
       check_for_delay(false);
-      grid_ins_lines(&default_grid, 0, msg_scrolled, (int)Rows,
-                     0, (int)Columns);
+      grid_ins_lines(&default_grid, 0, msg_scrolled, Rows, 0, Columns);
       FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_floating) {
           continue;
@@ -1463,7 +1462,7 @@ static void win_update(win_T *wp)
       // Last line isn't finished: Display "@@@" in the last screen line.
       grid_puts_len(&wp->w_grid, (char_u *)"@@", 2, scr_row, 0, at_attr);
 
-      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, (int)wp->w_grid.Columns,
+      grid_fill(&wp->w_grid, scr_row, scr_row + 1, 2, wp->w_grid.Columns,
                 '@', ' ', at_attr);
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
@@ -4820,7 +4819,7 @@ win_redr_status_matches (
       grid_puts(&default_grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
-    grid_fill(&default_grid, row, row + 1, clen, (int)Columns,
+    grid_fill(&default_grid, row, row + 1, clen, Columns,
               fillchar, fillchar, attr);
   }
 
@@ -6805,13 +6804,11 @@ static void draw_tabline(void)
       c = '_';
     else
       c = ' ';
-    grid_fill(&default_grid, 0, 1, col, (int)Columns, c, c,
-              attr_fill);
+    grid_fill(&default_grid, 0, 1, col, Columns, c, c, attr_fill);
 
     /* Put an "X" for closing the current tab if there are several. */
     if (first_tabpage->tp_next != NULL) {
-      grid_putchar(&default_grid, 'X', 0, (int)Columns - 1,
-                   attr_nosel);
+      grid_putchar(&default_grid, 'X', 0, Columns - 1, attr_nosel);
       tab_page_click_defs[Columns - 1] = (StlClickDefinition) {
         .type = kStlClickTabClose,
         .tabnr = 999,
@@ -7174,6 +7171,8 @@ void screen_resize(int width, int height)
   check_shellsize();
   height = Rows;
   width = Columns;
+  p_lines = Rows;
+  p_columns = Columns;
   ui_call_grid_resize(1, width, height);
 
   send_grid_resize = true;
