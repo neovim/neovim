@@ -289,7 +289,7 @@ readfile (
   int wasempty;                         /* buffer was empty before reading */
   colnr_T len;
   long size = 0;
-  char_u      *p = NULL;
+  uint8_t      *p = NULL;
   off_T filesize = 0;
   int skip_read = false;
   context_sha256_T sha_ctx;
