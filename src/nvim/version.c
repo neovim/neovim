@@ -2130,8 +2130,8 @@ static void version_msg(char *s)
   int len = (int)STRLEN(s);
 
   if (!got_int
-      && (len < (int)Columns)
-      && (msg_col + len >= (int)Columns)
+      && (len < Columns)
+      && (msg_col + len >= Columns)
       && (*s != '\n')) {
     msg_putchar('\n');
   }

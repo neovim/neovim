@@ -846,11 +846,11 @@ void curs_columns(
 
   prev_skipcol = curwin->w_skipcol;
 
-  int p_lines = 0;
+  int plines = 0;
   if ((curwin->w_wrow >= curwin->w_height_inner
        || ((prev_skipcol > 0
             || curwin->w_wrow + p_so >= curwin->w_height_inner)
-           && (p_lines =
+           && (plines =
                plines_win_nofill(curwin, curwin->w_cursor.lnum, false)) - 1
            >= curwin->w_height_inner))
       && curwin->w_height_inner != 0
@@ -869,20 +869,21 @@ void curs_columns(
       extra = 1;
     /* Compute last display line of the buffer line that we want at the
      * bottom of the window. */
-    if (p_lines == 0)
-      p_lines = plines_win(curwin, curwin->w_cursor.lnum, false);
-    --p_lines;
-    if (p_lines > curwin->w_wrow + p_so) {
+    if (plines == 0) {
+      plines = plines_win(curwin, curwin->w_cursor.lnum, false);
+    }
+    plines--;
+    if (plines > curwin->w_wrow + p_so) {
       assert(p_so <= INT_MAX);
       n = curwin->w_wrow + (int)p_so;
+    } else {
+      n = plines;
     }
-    else
-      n = p_lines;
     if ((colnr_T)n >= curwin->w_height_inner + curwin->w_skipcol / width) {
       extra += 2;
     }
 
-    if (extra == 3 || p_lines < p_so * 2) {
+    if (extra == 3 || plines < p_so * 2) {
       // not enough room for 'scrolloff', put cursor in the middle
       n = curwin->w_virtcol / width;
       if (n > curwin->w_height_inner / 2) {
@@ -891,8 +892,8 @@ void curs_columns(
         n = 0;
       }
       // don't skip more than necessary
-      if (n > p_lines - curwin->w_height_inner + 1) {
-        n = p_lines - curwin->w_height_inner + 1;
+      if (n > plines - curwin->w_height_inner + 1) {
+        n = plines - curwin->w_height_inner + 1;
       }
       curwin->w_skipcol = n * width;
     } else if (extra == 1) {

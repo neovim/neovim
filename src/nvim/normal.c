@@ -3451,7 +3451,7 @@ static void display_showcmd(void)
     return;
   }
 
-  int showcmd_row = (int)Rows - 1;
+  int showcmd_row = Rows - 1;
   grid_puts_line_start(&default_grid, showcmd_row);
 
   if (!showcmd_is_clear) {

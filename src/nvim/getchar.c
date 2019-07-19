@@ -1928,7 +1928,7 @@ static int vgetorpeek(int advance)
               set_option_value("paste", !p_paste, NULL, 0);
               if (!(State & INSERT)) {
                 msg_col = 0;
-                msg_row = (int)Rows - 1;
+                msg_row = Rows - 1;
                 msg_clr_eos();                          // clear ruler
               }
               status_redraw_all();

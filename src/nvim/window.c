@@ -1892,8 +1892,8 @@ void win_equal(
   if (dir == 0)
     dir = *p_ead;
   win_equal_rec(next_curwin == NULL ? curwin : next_curwin, current,
-      topframe, dir, 0, tabline_height(),
-      (int)Columns, topframe->fr_height);
+                topframe, dir, 0, tabline_height(),
+                Columns, topframe->fr_height);
 }
 
 /*
@@ -4742,9 +4742,10 @@ void shell_new_columns(void)
 
   /* First try setting the widths of windows with 'winfixwidth'.  If that
    * doesn't result in the right width, forget about that option. */
-  frame_new_width(topframe, (int)Columns, FALSE, TRUE);
-  if (!frame_check_width(topframe, Columns))
-    frame_new_width(topframe, (int)Columns, FALSE, FALSE);
+  frame_new_width(topframe, Columns, false, true);
+  if (!frame_check_width(topframe, Columns)) {
+    frame_new_width(topframe, Columns, false, false);
+  }
 
   (void)win_comp_pos();                 /* recompute w_winrow and w_wincol */
 }
@@ -4890,7 +4891,7 @@ void win_setheight_win(int height, win_T *win)
     // If there is extra space created between the last window and the command
     // line, clear it.
     if (full_screen && msg_scrolled == 0 && row < cmdline_row) {
-      grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+      grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
     }
     cmdline_row = row;
     msg_row = row;
@@ -5352,7 +5353,7 @@ void win_drag_status_line(win_T *dragwin, int offset)
       fr = fr->fr_next;
   }
   row = win_comp_pos();
-  grid_fill(&default_grid, row, cmdline_row, 0, (int)Columns, ' ', ' ', 0);
+  grid_fill(&default_grid, row, cmdline_row, 0, Columns, ' ', ' ', 0);
   cmdline_row = row;
   p_ch = Rows - cmdline_row;
   if (p_ch < 1)
@@ -5721,8 +5722,7 @@ void command_height(void)
 
       // clear the lines added to cmdline
       if (full_screen) {
-        grid_fill(&default_grid, cmdline_row, (int)Rows, 0, (int)Columns, ' ',
-                  ' ', 0);
+        grid_fill(&default_grid, cmdline_row, Rows, 0, Columns, ' ', ' ', 0);
       }
       msg_row = cmdline_row;
       redraw_cmdline = TRUE;

@@ -3499,15 +3499,17 @@ static void cursorcmd(void)
   }
 
   if (cmdmsg_rl) {
-    msg_row = cmdline_row  + (ccline.cmdspos / (int)(Columns - 1));
-    msg_col = (int)Columns - (ccline.cmdspos % (int)(Columns - 1)) - 1;
-    if (msg_row <= 0)
+    msg_row = cmdline_row  + (ccline.cmdspos / (Columns - 1));
+    msg_col = Columns - (ccline.cmdspos % (Columns - 1)) - 1;
+    if (msg_row <= 0) {
       msg_row = Rows - 1;
+    }
   } else {
-    msg_row = cmdline_row + (ccline.cmdspos / (int)Columns);
-    msg_col = ccline.cmdspos % (int)Columns;
-    if (msg_row >= Rows)
+    msg_row = cmdline_row + (ccline.cmdspos / Columns);
+    msg_col = ccline.cmdspos % Columns;
+    if (msg_row >= Rows) {
       msg_row = Rows - 1;
+    }
   }
 
   ui_cursor_goto(msg_row, msg_col);
@@ -4168,14 +4170,15 @@ static int showmatches(expand_T *xp, int wildmenu)
         maxlen = j;
     }
 
-    if (xp->xp_context == EXPAND_TAGS_LISTFILES)
+    if (xp->xp_context == EXPAND_TAGS_LISTFILES) {
       lines = num_files;
-    else {
-      /* compute the number of columns and lines for the listing */
-      maxlen += 2;          /* two spaces between file names */
-      columns = ((int)Columns + 2) / maxlen;
-      if (columns < 1)
+    } else {
+      // compute the number of columns and lines for the listing
+      maxlen += 2;          // two spaces between file names
+      columns = (Columns + 2) / maxlen;
+      if (columns < 1) {
         columns = 1;
+      }
       lines = (num_files + columns - 1) / columns;
     }
 
@@ -5964,13 +5967,14 @@ void ex_history(exarg_T *eap)
         if (hist[i].hisstr != NULL
             && hist[i].hisnum >= j && hist[i].hisnum <= k) {
           msg_putchar('\n');
-          sprintf((char *)IObuff, "%c%6d  ", i == idx ? '>' : ' ',
-              hist[i].hisnum);
-          if (vim_strsize(hist[i].hisstr) > (int)Columns - 10)
+          snprintf((char *)IObuff, IOSIZE, "%c%6d  ", i == idx ? '>' : ' ',
+                   hist[i].hisnum);
+          if (vim_strsize(hist[i].hisstr) > Columns - 10) {
             trunc_string(hist[i].hisstr, IObuff + STRLEN(IObuff),
-                (int)Columns - 10, IOSIZE - (int)STRLEN(IObuff));
-          else
+                         Columns - 10, IOSIZE - (int)STRLEN(IObuff));
+          } else {
             STRCAT(IObuff, hist[i].hisstr);
+          }
           msg_outtrans(IObuff);
           ui_flush();
         }
