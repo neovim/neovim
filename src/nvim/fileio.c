@@ -1275,7 +1275,7 @@ retry:
 # endif
 
       if (fio_flags != 0) {
-        int u8c;
+        unsigned int u8c;
         char_u  *dest;
         char_u  *tail = NULL;
 
@@ -1425,7 +1425,8 @@ retry:
           }
           if (enc_utf8) {               /* produce UTF-8 */
             dest -= utf_char2len(u8c);
-            (void)utf_char2bytes(u8c, dest);
+            assert(u8c <= INT_MAX);
+            (void)utf_char2bytes((int)u8c, dest);
           } else {                    /* produce Latin1 */
             --dest;
             if (u8c >= 0x100) {
@@ -1438,14 +1439,18 @@ retry:
                 conv_error = readfile_linenr(linecnt, ptr, p);
               if (bad_char_behavior == BAD_DROP)
                 ++dest;
-              else if (bad_char_behavior == BAD_KEEP)
-                *dest = u8c;
+              else if (bad_char_behavior == BAD_KEEP) {
+                assert(u8c <= UCHAR_MAX);
+                *dest = (char_u)u8c;
+              }
               else if (eap != NULL && eap->bad_char != 0)
                 *dest = bad_char_behavior;
               else
                 *dest = 0xBF;
-            } else
-              *dest = u8c;
+            } else {
+              assert(u8c <= UCHAR_MAX);
+              *dest = (char_u)u8c;
+            }
           }
         }
 
