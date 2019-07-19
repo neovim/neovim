@@ -1424,6 +1424,7 @@ retry:
             }
           }
           assert(u8c <= INT_MAX);
+          // produce UTF-8
           dest -= utf_char2len((int)u8c);
           (void)utf_char2bytes((int)u8c, dest);
         }
