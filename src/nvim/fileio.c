@@ -258,8 +258,8 @@ static AutoPat *last_autopat[NUM_EVENTS] = {
  *
  * return FAIL for failure, NOTDONE for directory (failure), or OK
  */
-int 
-readfile (
+int
+readfile(
     char_u *fname,
     char_u *sfname,
     linenr_T from,
@@ -289,7 +289,7 @@ readfile (
   int wasempty;                         /* buffer was empty before reading */
   colnr_T len;
   long size = 0;
-  char_u      *p = NULL;
+  uint8_t *p = NULL;
   off_T filesize = 0;
   int skip_read = false;
   context_sha256_T sha_ctx;
@@ -1275,7 +1275,7 @@ retry:
 # endif
 
       if (fio_flags != 0) {
-        int u8c;
+        unsigned int u8c;
         char_u  *dest;
         char_u  *tail = NULL;
 
@@ -1423,33 +1423,13 @@ retry:
               }
             }
           }
-          if (enc_utf8) {               /* produce UTF-8 */
-            dest -= utf_char2len(u8c);
-            (void)utf_char2bytes(u8c, dest);
-          } else {                    /* produce Latin1 */
-            --dest;
-            if (u8c >= 0x100) {
-              /* character doesn't fit in latin1, retry with
-               * another fenc when possible, otherwise just
-               * report the error. */
-              if (can_retry)
-                goto rewind_retry;
-              if (conv_error == 0)
-                conv_error = readfile_linenr(linecnt, ptr, p);
-              if (bad_char_behavior == BAD_DROP)
-                ++dest;
-              else if (bad_char_behavior == BAD_KEEP)
-                *dest = u8c;
-              else if (eap != NULL && eap->bad_char != 0)
-                *dest = bad_char_behavior;
-              else
-                *dest = 0xBF;
-            } else
-              *dest = u8c;
-          }
+          assert(u8c <= INT_MAX);
+          // produce UTF-8
+          dest -= utf_char2len((int)u8c);
+          (void)utf_char2bytes((int)u8c, dest);
         }
 
-        /* move the linerest to before the converted characters */
+        // move the linerest to before the converted characters
         line_start = dest - linerest;
         memmove(line_start, buffer, (size_t)linerest);
         size = (long)((ptr + real_size) - dest);
@@ -1457,18 +1437,19 @@ retry:
       } else if (enc_utf8 && !curbuf->b_p_bin) {
         int incomplete_tail = FALSE;
 
-        /* Reading UTF-8: Check if the bytes are valid UTF-8. */
-        for (p = ptr;; ++p) {
+        // Reading UTF-8: Check if the bytes are valid UTF-8.
+        for (p = ptr;; p++) {
           int todo = (int)((ptr + size) - p);
           int l;
 
-          if (todo <= 0)
+          if (todo <= 0) {
             break;
+          }
           if (*p >= 0x80) {
-            /* A length of 1 means it's an illegal byte.  Accept
-             * an incomplete character at the end though, the next
-             * read() will get the next bytes, we'll check it
-             * then. */
+            // A length of 1 means it's an illegal byte.  Accept
+            // an incomplete character at the end though, the next
+            // read() will get the next bytes, we'll check it
+            // then.
             l = utf_ptr2len_len(p, todo);
             if (l > todo && !incomplete_tail) {
               /* Avoid retrying with a different encoding when
@@ -1723,7 +1704,7 @@ failed:
     // Remember the current file format.
     save_file_ff(curbuf);
     // If editing a new file: set 'fenc' for the current buffer.
-    // Also for ":read ++edit file". 
+    // Also for ":read ++edit file".
     set_string_option_direct((char_u *)"fenc", -1, fenc,
         OPT_FREE | OPT_LOCAL, 0);
   }
@@ -2022,11 +2003,11 @@ bool is_dev_fd_file(char_u *fname)
  * line number where we are now.
  * Used for error messages that include a line number.
  */
-static linenr_T 
-readfile_linenr (
-    linenr_T linecnt,               /* line count before reading more bytes */
-    char_u *p,                 /* start of more bytes read */
-    char_u *endp              /* end of more bytes read */
+static linenr_T
+readfile_linenr(
+    linenr_T linecnt,         // line count before reading more bytes
+    char_u *p,                // start of more bytes read
+    char_u *endp              // end of more bytes read
 )
 {
   char_u      *s;
@@ -2206,8 +2187,8 @@ static void check_marks_read(void)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
-buf_write (
+int
+buf_write(
     buf_T *buf,
     char_u *fname,
     char_u *sfname,
@@ -4707,17 +4688,15 @@ int vim_rename(const char_u *from, const char_u *to)
 
 static int already_warned = FALSE;
 
-/*
- * Check if any not hidden buffer has been changed.
- * Postpone the check if there are characters in the stuff buffer, a global
- * command is being executed, a mapping is being executed or an autocommand is
- * busy.
- * Returns TRUE if some message was written (screen should be redrawn and
- * cursor positioned).
- */
-int 
-check_timestamps (
-    int focus                      /* called for GUI focus event */
+// Check if any not hidden buffer has been changed.
+// Postpone the check if there are characters in the stuff buffer, a global
+// command is being executed, a mapping is being executed or an autocommand is
+// busy.
+// Returns TRUE if some message was written (screen should be redrawn and
+// cursor positioned).
+int
+check_timestamps(
+    int focus                      // called for GUI focus event
 )
 {
   int didit = 0;
@@ -4819,8 +4798,8 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
  * return 2 if a message has been displayed.
  * return 0 otherwise.
  */
-int 
-buf_check_timestamp (
+int
+buf_check_timestamp(
     buf_T *buf,
     int focus               /* called for GUI focus event */
 )
@@ -6268,12 +6247,10 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
   return OK;
 }
 
-/*
- * Implementation of ":doautocmd [group] event [fname]".
- * Return OK for success, FAIL for failure;
- */
-int 
-do_doautocmd (
+// Implementation of ":doautocmd [group] event [fname]".
+// Return OK for success, FAIL for failure;
+int
+do_doautocmd(
     char_u *arg,
     int do_msg,  // give message for no matching autocmds?
     bool *did_something
@@ -7057,11 +7034,9 @@ void unblock_autocmds(void)
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, FALSE, curbuf);
 }
 
-/*
- * Find next autocommand pattern that matches.
- */
-static void 
-auto_next_pat (
+// Find next autocommand pattern that matches.
+static void
+auto_next_pat(
     AutoPatCmd *apc,
     int stop_at_last                   /* stop when 'last' flag is set */
 )
