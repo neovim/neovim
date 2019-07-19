@@ -44,7 +44,7 @@
 "
 
 if !has('python3')
-    echo "Error: Required vim compiled with +python3"
+    echo 'Error: Requires python3 + pynvim.  :help provider-python'
     finish
 endif
 
