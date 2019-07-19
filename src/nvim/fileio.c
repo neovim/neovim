@@ -258,7 +258,7 @@ static AutoPat *last_autopat[NUM_EVENTS] = {
  *
  * return FAIL for failure, NOTDONE for directory (failure), or OK
  */
-int 
+int
 readfile (
     char_u *fname,
     char_u *sfname,
@@ -289,7 +289,7 @@ readfile (
   int wasempty;                         /* buffer was empty before reading */
   colnr_T len;
   long size = 0;
-  uint8_t      *p = NULL;
+  uint8_t *p = NULL;
   off_T filesize = 0;
   int skip_read = false;
   context_sha256_T sha_ctx;
@@ -1423,37 +1423,9 @@ retry:
               }
             }
           }
-          if (enc_utf8) {               // produce UTF-8
-            dest -= utf_char2len(u8c);
-            assert(u8c <= INT_MAX);
-            (void)utf_char2bytes((int)u8c, dest);
-          } else {                    // produce Latin1
-            dest--;
-            if (u8c >= 0x100) {
-              // character doesn't fit in latin1, retry with
-              // another fenc when possible, otherwise just
-              // report the error.
-              if (can_retry) {
-                goto rewind_retry;
-              }
-              if (conv_error == 0) {
-                conv_error = readfile_linenr(linecnt, ptr, p);
-              }
-              if (bad_char_behavior == BAD_DROP) {
-                dest++;
-              } else if (bad_char_behavior == BAD_KEEP) {
-                assert(u8c <= UCHAR_MAX);
-                *dest = (char_u)u8c;
-              } else if (eap != NULL && eap->bad_char != 0) {
-                *dest = bad_char_behavior;
-              } else {
-                *dest = 0xBF;
-              }
-            } else {
-              assert(u8c <= UCHAR_MAX);
-              *dest = (char_u)u8c;
-            }
-          }
+          assert(u8c <= INT_MAX);
+          dest -= utf_char2len((int)u8c);
+          (void)utf_char2bytes((int)u8c, dest);
         }
 
         /* move the linerest to before the converted characters */
@@ -1730,7 +1702,7 @@ failed:
     // Remember the current file format.
     save_file_ff(curbuf);
     // If editing a new file: set 'fenc' for the current buffer.
-    // Also for ":read ++edit file". 
+    // Also for ":read ++edit file".
     set_string_option_direct((char_u *)"fenc", -1, fenc,
         OPT_FREE | OPT_LOCAL, 0);
   }
@@ -2029,7 +2001,7 @@ bool is_dev_fd_file(char_u *fname)
  * line number where we are now.
  * Used for error messages that include a line number.
  */
-static linenr_T 
+static linenr_T
 readfile_linenr (
     linenr_T linecnt,               /* line count before reading more bytes */
     char_u *p,                 /* start of more bytes read */
@@ -2213,7 +2185,7 @@ static void check_marks_read(void)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 buf_write (
     buf_T *buf,
     char_u *fname,
@@ -4722,7 +4694,7 @@ static int already_warned = FALSE;
  * Returns TRUE if some message was written (screen should be redrawn and
  * cursor positioned).
  */
-int 
+int
 check_timestamps (
     int focus                      /* called for GUI focus event */
 )
@@ -4826,7 +4798,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
  * return 2 if a message has been displayed.
  * return 0 otherwise.
  */
-int 
+int
 buf_check_timestamp (
     buf_T *buf,
     int focus               /* called for GUI focus event */
@@ -6279,7 +6251,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
  * Implementation of ":doautocmd [group] event [fname]".
  * Return OK for success, FAIL for failure;
  */
-int 
+int
 do_doautocmd (
     char_u *arg,
     int do_msg,  // give message for no matching autocmds?
@@ -7067,7 +7039,7 @@ void unblock_autocmds(void)
 /*
  * Find next autocommand pattern that matches.
  */
-static void 
+static void
 auto_next_pat (
     AutoPatCmd *apc,
     int stop_at_last                   /* stop when 'last' flag is set */
