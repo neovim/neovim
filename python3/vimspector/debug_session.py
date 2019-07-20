@@ -113,9 +113,11 @@ class DebugSession( object ):
       'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() )
     }
     self._variables.update(
-      utils.ParseVariables( adapter.get( 'variables', {} ) ) )
+      utils.ParseVariables( adapter.get( 'variables', {} ),
+                            self._variables ) )
     self._variables.update(
-      utils.ParseVariables( configuration.get( 'variables', {} ) ) )
+      utils.ParseVariables( configuration.get( 'variables', {} ),
+                            self._variables ) )
     self._variables.update( launch_variables )
 
     utils.ExpandReferencesInDict( configuration, self._variables )
