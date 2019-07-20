@@ -4038,6 +4038,9 @@ static void nv_mousescroll(cmdarg_T *cap)
   } else {
     mouse_scroll_horiz(cap->arg);
   }
+  if (curwin != old_curwin && curwin->w_p_cul) {
+    redraw_for_cursorline(curwin);
+  }
 
   curwin->w_redr_status = true;
 
