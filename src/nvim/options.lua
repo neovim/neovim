@@ -543,7 +543,7 @@ return {
       full_name='cursorcolumn', abbreviation='cuc',
       type='bool', scope={'window'},
       vi_def=true,
-      redraw={'current_window'},
+      redraw={'current_window_only'},
       defaults={if_true={vi=false}}
     },
     {

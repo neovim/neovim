@@ -44,3 +44,23 @@ func Test_curswant_with_autocommand()
   quit!
 endfunc
 
+" Tests for behavior of curswant with cursorcolumn/line
+func Test_curswant_with_cursorcolumn()
+  new
+  call setline(1, ['01234567', ''])
+  exe "normal! ggf6j"
+  call assert_equal(6, winsaveview().curswant)
+  set cursorcolumn
+  call assert_equal(6, winsaveview().curswant)
+  quit!
+endfunc
+
+func Test_curswant_with_cursorline()
+  new
+  call setline(1, ['01234567', ''])
+  exe "normal! ggf6j"
+  call assert_equal(6, winsaveview().curswant)
+  set cursorline
+  call assert_equal(6, winsaveview().curswant)
+  quit!
+endfunc
