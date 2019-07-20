@@ -8465,10 +8465,7 @@ static void f_executable(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *name = tv_get_string(&argvars[0]);
 
   // Check in $PATH and also check directly if there is a directory name
-  rettv->vval.v_number = (
-      os_can_exe(name, NULL, true)
-      || (gettail_dir(name) != name
-          && os_can_exe(name, NULL, false)));
+  rettv->vval.v_number = os_can_exe(name, NULL, true);
 }
 
 typedef struct {

@@ -887,6 +887,14 @@ func Test_Executable()
   elseif has('unix')
     call assert_equal(1, executable('cat'))
     call assert_equal(0, executable('nodogshere'))
+
+    " get "cat" path and remove the leading /
+    let catcmd = exepath('cat')[1:]
+    new
+    lcd /
+    call assert_equal(1, executable(catcmd))
+    call assert_equal('/' .. catcmd, exepath(catcmd))
+    bwipe
   endif
 endfunc
 

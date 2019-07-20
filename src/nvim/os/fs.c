@@ -242,23 +242,12 @@ int os_exepath(char *buffer, size_t *size)
 bool os_can_exe(const char *name, char **abspath, bool use_path)
   FUNC_ATTR_NONNULL_ARG(1)
 {
-  bool no_path = !use_path || path_is_absolute((char_u *)name);
-  // If the filename is "qualified" (relative or absolute) do not check $PATH.
-#ifdef WIN32
-  no_path |= (name[0] == '.'
-              && ((name[1] == '/' || name[1] == '\\')
-                  || (name[1] == '.' && (name[2] == '/' || name[2] == '\\'))));
-#else
-  no_path |= (name[0] == '.'
-              && (name[1] == '/' || (name[1] == '.' && name[2] == '/')));
-#endif
-
-  if (no_path) {
+  if (!use_path || gettail_dir(name) != name) {
 #ifdef WIN32
     if (is_executable_ext(name, abspath)) {
 #else
     // Must have path separator, cannot execute files in the current directory.
-    if (gettail_dir(name) != name
+    if ((use_path || gettail_dir(name) != name)
         && is_executable(name, abspath)) {
 #endif
       return true;
