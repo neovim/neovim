@@ -807,7 +807,9 @@ function Screen:_handle_mouse_off()
 end
 
 function Screen:_handle_mode_change(mode, idx)
-  assert(mode == self._mode_info[idx+1].name)
+  if self._mode_info ~= nil then
+    assert(mode == self._mode_info[idx+1].name)
+  end
   self.mode = mode
 end
 

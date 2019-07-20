@@ -391,7 +391,7 @@ describe('TUI', function()
       {1:x}                                                 |
       {4:~                                                 }|
       {5:[No Name] [+]                   3,1            All}|
-                                                        |
+      :set ruler                                        |
       {3:-- TERMINAL --}                                    |
     ]]
     local expected_attr = {

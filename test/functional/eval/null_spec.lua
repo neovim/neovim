@@ -121,7 +121,7 @@ describe('NULL', function()
     null_test('does not make Neovim crash when v:oldfiles gets assigned to that', ':let v:oldfiles = L|oldfiles', 0)
     null_expr_test('does not make complete() crash or error out',
                    'execute(":normal i\\<C-r>=complete(1, L)[-1]\\n")',
-                   '', '\n', function()
+                   0, '', function()
       eq({''}, curbufmeths.get_lines(0, -1, false))
     end)
     null_expr_test('is accepted by setmatches()', 'setmatches(L)', 0, 0)
