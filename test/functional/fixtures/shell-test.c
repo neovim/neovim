@@ -11,10 +11,10 @@
 #include <unistd.h>
 #endif
 
-static void wait(void)
+static void flush_wait(void)
 {
   fflush(stdout);
-  usleep(10*1000);
+  usleep(10*1000);  // Wait 10 ms.
 }
 
 static void help(void)
@@ -33,12 +33,13 @@ static void help(void)
   puts("    Prints \"ready $ prog args...\\n\" to stderr.");
   puts("  shell-test -t {prompt text} EXE \"prog args...\"");
   puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
-  puts("  shell-test REP {count} \"line line line\"");
-  puts("    Prints \"{lnr}: line line line\\n\" to stdout {count} times.");
-  puts("    I.e. for `shell-test REP 97 \"test\"'");
-  puts("      0: test");
+  puts("  shell-test REP N {text}");
+  puts("    Prints \"{lnr}: {text}\\n\" to stdout N times, taking N milliseconds.");
+  puts("    Example:");
+  puts("      shell-test REP 97 \"foo bar\"");
+  puts("      0: foo bar");
   puts("      ...");
-  puts("      96: test");
+  puts("      96: foo bar");
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
 }
@@ -66,8 +67,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "%s\n", argv[2]);
       }
     } else if (strcmp(argv[1], "REP") == 0) {
-      if (argc < 4) {
-        fprintf(stderr, "Not enough REP arguments\n");
+      if (argc != 4) {
+        fprintf(stderr, "REP expects exactly 3 arguments\n");
         return 4;
       }
       int count = 0;
@@ -77,23 +78,25 @@ int main(int argc, char **argv)
       }
       for (uint8_t i = 0; i < count; i++) {
         printf("%d: %s\n", (int) i, argv[3]);
+        fflush(stdout);
+        usleep(1000);  // Wait 1 ms (simulate typical output).
       }
     } else if (strcmp(argv[1], "UTF-8") == 0) {
       // test split-up UTF-8 sequence
-      printf("\xc3"); wait();
-      printf("\xa5\n"); wait();
+      printf("\xc3"); flush_wait();
+      printf("\xa5\n"); flush_wait();
 
       // split up a 2+2 grapheme clusters all possible ways
-      printf("ref: \xc3\xa5\xcc\xb2\n"); wait();
+      printf("ref: \xc3\xa5\xcc\xb2\n"); flush_wait();
 
-      printf("1: \xc3"); wait();
-      printf("\xa5\xcc\xb2\n"); wait();
+      printf("1: \xc3"); flush_wait();
+      printf("\xa5\xcc\xb2\n"); flush_wait();
 
-      printf("2: \xc3\xa5"); wait();
-      printf("\xcc\xb2\n"); wait();
+      printf("2: \xc3\xa5"); flush_wait();
+      printf("\xcc\xb2\n"); flush_wait();
 
-      printf("3: \xc3\xa5\xcc"); wait();
-      printf("\xb2\n"); wait();
+      printf("3: \xc3\xa5\xcc"); flush_wait();
+      printf("\xb2\n"); flush_wait();
     } else if (strcmp(argv[1], "INTERACT") == 0) {
       char input[256];
       char cmd[100];
@@ -121,7 +124,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "Unknown first argument: %s\n", argv[1]);
       return 3;
     }
-    wait();  // Flush stdout.
+    fflush(stdout);
     return 0;
   } else if (argc == 1) {
     fprintf(stderr, "ready $ ");

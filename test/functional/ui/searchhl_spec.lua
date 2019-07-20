@@ -150,6 +150,7 @@ describe('search highlighting', function()
     feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 5000 foo<cr>]])
 
     feed(':file term<CR>')
+    feed('G')  -- Follow :terminal output.
     feed(':vnew<CR>')
     insert([[
       foo bar baz
