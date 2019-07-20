@@ -447,6 +447,18 @@ screen:redraw_debug() to show all intermediate screen states.  ]])
   end, expected)
 end
 
+function Screen:expect_unchanged(waittime_ms, ignore_attrs, request_cb)
+  waittime_ms = waittime_ms and waittime_ms or 100
+  -- Collect the current screen state.
+  self:sleep(waittime_ms, request_cb)
+  local kwargs = self:get_snapshot(nil, ignore_attrs)
+  -- Wait for potential changes.
+  self:sleep(waittime_ms, request_cb)
+  kwargs.unchanged = true
+  -- Check that screen state did not change.
+  self:expect(kwargs)
+end
+
 function Screen:_wait(check, flags)
   local err, checked = false, false
   local success_seen = false
@@ -477,8 +489,8 @@ function Screen:_wait(check, flags)
     immediate_seen = true
   end
 
-  -- for an unchanged test, flags.timeout means the time during the state is
-  -- expected to be unchanged, so always wait this full time.
+  -- For an "unchanged" test, flags.timeout is the time during which the state
+  -- must not change, so always wait this full time.
   if (flags.unchanged or flags.intermediate) and flags.timeout ~= nil then
     minimal_timeout = timeout
   end
@@ -1214,7 +1226,9 @@ local remove_all_metatables = function(item, path)
   if path[#path] ~= inspect.METATABLE then return item end
 end
 
-function Screen:print_snapshot(attrs, ignore)
+-- Returns the current screen state in the form of a screen:expect()
+-- keyword-args map.
+function Screen:get_snapshot(attrs, ignore)
   attrs = attrs or self._default_attr_ids
   if ignore == nil then
     ignore = self._default_attr_ignore
@@ -1237,15 +1251,32 @@ function Screen:print_snapshot(attrs, ignore)
   local lines = self:render(true, attr_state, true)
 
   local ext_state = self:_extstate_repr(attr_state)
-  local keys = false
   for k, v in pairs(ext_state) do
     if isempty(v) then
       ext_state[k] = nil -- deleting keys while iterating is ok
-    else
-      keys = true
     end
   end
 
+  -- Build keyword-args for screen:expect().
+  local kwargs = {}
+  if attr_state.modified then
+    kwargs['attr_ids'] = {}
+    for i, a in pairs(attr_state.ids) do
+      kwargs['attr_ids'][i] = a
+    end
+  end
+  kwargs['grid'] = table.concat(lines, '\n')
+  for _, k in ipairs(ext_keys) do
+    if ext_state[k] ~= nil then
+      kwargs[k] = ext_state[k]
+    end
+  end
+
+  return kwargs, ext_state, attr_state
+end
+
+function Screen:print_snapshot(attrs, ignore)
+  local kwargs, ext_state, attr_state = self:get_snapshot(attrs, ignore)
   local attrstr = ""
   if attr_state.modified then
     local attrstrs = {}
@@ -1259,11 +1290,10 @@ function Screen:print_snapshot(attrs, ignore)
       local keyval = (type(i) == "number") and "["..tostring(i).."]" or i
       table.insert(attrstrs, "  "..keyval.." = "..dict..",")
     end
-    attrstr = (", "..(keys and "attr_ids=" or "")
-               .."{\n"..table.concat(attrstrs, "\n").."\n}")
+    attrstr = (", attr_ids={\n"..table.concat(attrstrs, "\n").."\n}")
   end
-  print( "\nscreen:expect"..(keys and "{grid=" or "(").."[[")
-  print( table.concat(lines, '\n'))
+  print( "\nscreen:expect{grid=[[")
+  print(kwargs.grid)
   io.stdout:write( "]]"..attrstr)
   for _, k in ipairs(ext_keys) do
     if ext_state[k] ~= nil then
@@ -1271,7 +1301,7 @@ function Screen:print_snapshot(attrs, ignore)
       io.stdout:write(", "..k.."="..inspect(ext_state[k],{process=remove_all_metatables}))
     end
   end
-  print((keys and "}" or ")").."\n")
+  print("}\n")
   io.stdout:flush()
 end
 
