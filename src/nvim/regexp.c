@@ -2058,10 +2058,14 @@ static char_u *regatom(int *flagp)
             EMSG2_RET_NULL(_(e_missing_sb),
                 reg_magic == MAGIC_ALL);
           br = regnode(BRANCH);
-          if (ret == NULL)
+          if (ret == NULL) {
             ret = br;
-          else
+          } else {
             regtail(lastnode, br);
+            if (reg_toolong) {
+              return NULL;
+            }
+          }
 
           ungetchr();
           one_exactly = TRUE;
@@ -2083,6 +2087,9 @@ static char_u *regatom(int *flagp)
           for (br = ret; br != lastnode; ) {
             if (OP(br) == BRANCH) {
               regtail(br, lastbranch);
+              if (reg_toolong) {
+                return NULL;
+              }
               br = OPERAND(br);
             } else
               br = regnext(br);

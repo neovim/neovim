@@ -183,3 +183,12 @@ func Test_large_class()
   call assert_equal(1, "\u3042" =~# '[\u3000-\u4000]')
   set re=0
 endfunc
+
+func Test_optmatch_toolong()
+  set re=1
+  " Can only handle about 8000 characters.
+  let pat = '\\%[' .. repeat('x', 9000) .. ']'
+  call assert_fails('call match("abc def", "' .. pat .. '")', 'E339:')
+  set re=0
+endfunc
+
