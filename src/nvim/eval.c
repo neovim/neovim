@@ -13843,11 +13843,7 @@ static void f_reltime(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_append_number(rettv->vval.v_list, u.split.low);
 }
 
-/// f_reltimestr - return a string that represents the value of {time}
-///
-/// @return The string representation of the argument, the format is the
-///         number of seconds followed by a dot, followed by the number
-///         of microseconds.
+/// "reltimestr()" function
 static void f_reltimestr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -16578,9 +16574,7 @@ static void f_uniq(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   do_sort_uniq(argvars, rettv, false);
 }
 
-//
 // "reltimefloat()" function
-//
 static void f_reltimefloat(typval_T *argvars , typval_T *rettv, FunPtr fptr)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -16589,7 +16583,7 @@ static void f_reltimefloat(typval_T *argvars , typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_FLOAT;
   rettv->vval.v_float = 0;
   if (list2proftime(&argvars[0], &tm) == OK) {
-    rettv->vval.v_float = ((float_T)tm) / 1000000000;
+    rettv->vval.v_float = (float_T)profile_signed(tm) / 1000000000.0;
   }
 }
 
