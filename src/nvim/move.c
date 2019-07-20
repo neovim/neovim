@@ -104,6 +104,7 @@ void reset_cursorline(void)
 
 // Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is set.
 void redraw_for_cursorline(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
   if ((wp->w_p_rnu || win_cursorline_standout(wp))
       && (wp->w_valid & VALID_CROW) == 0
