@@ -961,6 +961,7 @@ eval_to_bool(
 static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
   FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  const char_u *const start = *arg;
   const int did_emsg_before = did_emsg;
   const int called_emsg_before = called_emsg;
 
@@ -973,7 +974,7 @@ static int eval1_emsg(char_u **arg, typval_T *rettv, bool evaluate)
     if (!aborting()
         && did_emsg == did_emsg_before
         && called_emsg == called_emsg_before) {
-      emsgf(_(e_invexpr2), arg);
+      emsgf(_(e_invexpr2), start);
     }
   }
   return ret;
