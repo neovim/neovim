@@ -1251,12 +1251,9 @@ function Screen:get_snapshot(attrs, ignore)
   local lines = self:render(true, attr_state, true)
 
   local ext_state = self:_extstate_repr(attr_state)
-  local keys = false
   for k, v in pairs(ext_state) do
     if isempty(v) then
       ext_state[k] = nil -- deleting keys while iterating is ok
-    else
-      keys = true
     end
   end
 
@@ -1275,11 +1272,11 @@ function Screen:get_snapshot(attrs, ignore)
     end
   end
 
-  return kwargs, ext_state, attr_state, keys
+  return kwargs, ext_state, attr_state
 end
 
 function Screen:print_snapshot(attrs, ignore)
-  local kwargs, ext_state, attr_state, keys = self:get_snapshot(attrs, ignore)
+  local kwargs, ext_state, attr_state = self:get_snapshot(attrs, ignore)
   local attrstr = ""
   if attr_state.modified then
     local attrstrs = {}
@@ -1293,10 +1290,9 @@ function Screen:print_snapshot(attrs, ignore)
       local keyval = (type(i) == "number") and "["..tostring(i).."]" or i
       table.insert(attrstrs, "  "..keyval.." = "..dict..",")
     end
-    attrstr = (", "..(keys and "attr_ids=" or "")
-               .."{\n"..table.concat(attrstrs, "\n").."\n}")
+    attrstr = (", attr_ids={\n"..table.concat(attrstrs, "\n").."\n}")
   end
-  print( "\nscreen:expect"..(keys and "{grid=" or "(").."[[")
+  print( "\nscreen:expect{grid=[[")
   print(kwargs.grid)
   io.stdout:write( "]]"..attrstr)
   for _, k in ipairs(ext_keys) do
@@ -1305,7 +1301,7 @@ function Screen:print_snapshot(attrs, ignore)
       io.stdout:write(", "..k.."="..inspect(ext_state[k],{process=remove_all_metatables}))
     end
   end
-  print((keys and "}" or ")").."\n")
+  print("}\n")
   io.stdout:flush()
 end
 
