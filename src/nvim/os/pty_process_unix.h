@@ -11,6 +11,7 @@ typedef struct pty_process {
   uint16_t width, height;
   struct winsize winsize;
   int tty_fd;
+  bool echo;
 } PtyProcess;
 
 static inline PtyProcess pty_process_init(Loop *loop, void *data)
@@ -21,6 +22,7 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
   rv.width = 80;
   rv.height = 24;
   rv.tty_fd = -1;
+  rv.echo = true;
   return rv;
 }
 
