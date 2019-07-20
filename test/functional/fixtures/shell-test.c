@@ -121,6 +121,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "Unknown first argument: %s\n", argv[1]);
       return 3;
     }
+    wait();  // Flush stdout.
     return 0;
   } else if (argc == 1) {
     fprintf(stderr, "ready $ ");
