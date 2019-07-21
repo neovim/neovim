@@ -149,9 +149,8 @@ endfunction
 function! Test_Use_Mappings_HUMAN()
   lcd testdata/cpp/simple
   edit simple.cpp
+  call setpos( '.', [ 0, 15, 1 ] )
 
-  15
-  normal 0
   call AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
 
   call AssertSignGroupEmptyAtLine( 'VimspectorBP',
@@ -207,6 +206,7 @@ endfunction
 function Test_StopAtEntry()
   lcd testdata/cpp/simple
   edit simple.cpp
+  call setpos( '.', [ 0, 15, 1 ] )
 
   " Test stopAtEntry behaviour
   call feedkeys( "\<F5>", 'xt' )
