@@ -453,13 +453,13 @@ char *FullName_save(const char *fname, bool force)
 /// Saves the absolute path.
 /// @param name An absolute or relative path.
 /// @return The absolute path of `name`.
-char_u *save_abs_path(const char_u *name)
+char *save_abs_path(const char *name)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  if (!path_is_absolute(name)) {
-    return (char_u *)FullName_save((char *)name, true);
+  if (!path_is_absolute((char_u *)name)) {
+    return FullName_save(name, true);
   }
-  return vim_strsave((char_u *) name);
+  return (char *)vim_strsave((char_u *)name);
 }
 
 /// Checks if a path has a wildcard character including '~', unless at the end.
@@ -1401,7 +1401,7 @@ void addfile(
   // If the file isn't executable, may not add it.  Do accept directories.
   // When invoked from expand_shellcmd() do not use $PATH.
   if (!isdir && (flags & EW_EXEC)
-      && !os_can_exe(f, NULL, !(flags & EW_SHELLCMD))) {
+      && !os_can_exe((char *)f, NULL, !(flags & EW_SHELLCMD))) {
     return;
   }
 
@@ -2306,7 +2306,7 @@ void path_guess_exepath(const char *argv0, char *buf, size_t bufsize)
       xstrlcpy((char *)NameBuff, dir, dir_len + 1);
       xstrlcat((char *)NameBuff, PATHSEPSTR, sizeof(NameBuff));
       xstrlcat((char *)NameBuff, argv0, sizeof(NameBuff));
-      if (os_can_exe(NameBuff, NULL, false)) {
+      if (os_can_exe((char *)NameBuff, NULL, false)) {
         xstrlcpy(buf, (char *)NameBuff, bufsize);
         return;
       }
