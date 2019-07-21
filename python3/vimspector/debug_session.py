@@ -776,6 +776,9 @@ class DebugSession( object ):
     return self._breakpoints.ToggleBreakpoint()
 
   def ClearBreakpoints( self ):
+    if self._connection:
+      self._codeView.ClearBreakpoints()
+
     return self._breakpoints.ClearBreakpoints()
 
   def AddFunctionBreakpoint( self, function ):

@@ -98,6 +98,12 @@ class ProjectBreakpoints( object ):
 
   def ClearBreakpoints( self ):
     # These are the user-entered breakpoints.
+    for file_name, breakpoints in self._line_breakpoints.items():
+      for bp in breakpoints:
+        if 'sign_id' in bp:
+          vim.command( 'sign unplace {0} group=VimspectorBP'.format(
+            bp[ 'sign_id' ] ) )
+
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
     self._exceptionBreakpoints = None
@@ -177,13 +183,13 @@ class ProjectBreakpoints( object ):
     for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
       for bp in line_breakpoints:
-        if bp[ 'state' ] != 'ENABLED':
-          continue
-
         if 'sign_id' in bp:
           vim.command( 'sign unplace {0} group=VimspectorBP'.format(
             bp[ 'sign_id' ] ) )
           del bp[ 'sign_id' ]
+
+        if bp[ 'state' ] != 'ENABLED':
+          continue
 
         breakpoints.append( { 'line': bp[ 'line' ] } )
 
