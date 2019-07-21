@@ -2735,7 +2735,7 @@ void preserve_exit(void)
  */
 
 #ifndef BREAKCHECK_SKIP
-#  define BREAKCHECK_SKIP 32
+#  define BREAKCHECK_SKIP 1000
 #endif
 
 static int breakcheck_count = 0;
