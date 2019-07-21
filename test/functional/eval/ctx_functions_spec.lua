@@ -10,6 +10,8 @@ local feed = helpers.feed
 local map = helpers.map
 local nvim = helpers.nvim
 local parse_context = helpers.parse_context
+local redir_exec = helpers.redir_exec
+local source = helpers.source
 local trim = helpers.trim
 local write_file = helpers.write_file
 
@@ -124,6 +126,109 @@ describe('context functions', function()
 
       call('ctxpop')
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
+    end)
+
+    it('saves and restores script functions properly', function()
+      source([[
+      function s:greet(name)
+        echom 'Hello, '.a:name.'!'
+      endfunction
+
+      function s:greet_all(name, ...)
+        echom 'Hello, '.a:name.'!'
+        for more in a:000
+          echom 'Hello, '.more.'!'
+        endfor
+      endfunction
+
+      function Greet(name)
+        call call('s:greet', [a:name])
+      endfunction
+
+      function GreetAll(name, ...)
+        call call('s:greet_all', extend([a:name], a:000))
+      endfunction
+
+      function SaveSFuncs()
+        call ctxpush(['sfuncs'])
+      endfunction
+
+      function DeleteSFuncs()
+        delfunction s:greet
+        delfunction s:greet_all
+      endfunction
+
+      function RestoreFuncs()
+        call ctxpop()
+      endfunction
+      ]])
+
+      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
+      eq('\nHello, World!'..
+         '\nHello, One!'..
+         '\nHello, Two!'..
+         '\nHello, Three!',
+         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+
+      call('SaveSFuncs')
+      call('DeleteSFuncs')
+
+      eq('\nError detected while processing function Greet:'..
+         '\nline    1:'..
+         '\nE117: Unknown function: s:greet',
+         redir_exec([[call Greet('World')]]))
+      eq('\nError detected while processing function GreetAll:'..
+         '\nline    1:'..
+         '\nE117: Unknown function: s:greet_all',
+         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+
+      call('RestoreFuncs')
+
+      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
+      eq('\nHello, World!'..
+         '\nHello, One!'..
+         '\nHello, Two!'..
+         '\nHello, Three!',
+         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+    end)
+
+    it('saves and restores functions properly', function()
+      source([[
+      function Greet(name)
+        echom 'Hello, '.a:name.'!'
+      endfunction
+
+      function GreetAll(name, ...)
+        echom 'Hello, '.a:name.'!'
+        for more in a:000
+          echom 'Hello, '.more.'!'
+        endfor
+      endfunction
+      ]])
+
+      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
+      eq('\nHello, World!'..
+         '\nHello, One!'..
+         '\nHello, Two!'..
+         '\nHello, Three!',
+         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
+
+      call('ctxpush', {'funcs'})
+      command('delfunction Greet')
+      command('delfunction GreetAll')
+
+      expect_err('Vim:E117: Unknown function: Greet', call, 'Greet', 'World')
+      expect_err('Vim:E117: Unknown function: Greet', call, 'GreetAll',
+                 'World', 'One', 'Two', 'Three')
+
+      call('ctxpop')
+
+      eq('\nHello, World!', redir_exec([[call Greet('World')]]))
+      eq('\nHello, World!'..
+         '\nHello, One!'..
+         '\nHello, Two!'..
+         '\nHello, Three!',
+         redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
     end)
 
     it('errors out when context stack is empty', function()
