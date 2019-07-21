@@ -159,7 +159,17 @@ bool os_char_avail(void)
 // Check for CTRL-C typed by reading all available characters.
 void os_breakcheck(void)
 {
-  int save_us = updating_screen;
+  static bool recursive = false;
+  const int save_updating_screen = updating_screen;
+
+  // We could be called recursively if stderr is redirected, calling
+  // fill_input_buf() calls settmode() when stdin isn't a tty.  settmode()
+  // calls vgetorpeek() which calls os_breakcheck() again.
+  if (recursive) {
+    return;
+  }
+  recursive = true;
+
   // We do not want screen_resize() to redraw here.
   updating_screen++;
 
@@ -167,7 +177,8 @@ void os_breakcheck(void)
     loop_poll_events(&main_loop, 0);
   }
 
-  updating_screen = save_us;
+  updating_screen = save_updating_screen;
+  recursive = false;
 }
 
 void input_enable_events(void)
