@@ -201,6 +201,11 @@ func AfterTheTest()
     call add(s:errors, 'Found errors in ' . s:testid . ':')
     call extend(s:errors, v:errors)
     let v:errors = []
+
+    let log = readfile( expand( '~/.vimspector.log' ) )
+    let logfile = s:testid . '.vimspector.log'
+    call writefile( log, logfile, 's' )
+    call add( s:messages, 'Wrote log for failed test: ' . logfile )
   endif
 endfunc
 
@@ -314,7 +319,7 @@ for s:test in sort(s:tests)
 
   " Repeat a flaky test.  Give up when:
   " - it fails again with the same message
-  " - it fails five times (with a different mesage)
+  " - it fails five times (with a different message)
   if len(v:errors) > 0
         \ && (index(s:flaky_tests, s:test) >= 0
         \      || v:errors[0] =~ s:flaky_errors_re)

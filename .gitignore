@@ -13,3 +13,5 @@ package/
 README.md.orig.*
 README.md.toc.*
 .DS_Store
+*.vimspector.log
+support/test/csharp/*.exe*
