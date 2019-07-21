@@ -638,6 +638,11 @@ class DebugSession( object ):
     # doesn't respond top threads request when attaching via gdbserver. At
     # least it would apear that way.
     #
+    # As it turns out this is due to a bug in gdbserver which means that
+    # attachment doesn't work due to sending the signal to the process group
+    # leader rather than the process. The workaround is to manually SIGTRAP the
+    # PID.
+    #
     if self._launch_complete and self._init_complete:
       for h in self._on_init_complete_handlers:
         h()
