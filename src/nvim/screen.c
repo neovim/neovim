@@ -171,6 +171,7 @@ void redraw_later(int type)
 }
 
 void redraw_win_later(win_T *wp, int type)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (!exiting && wp->w_redr_type < type) {
     wp->w_redr_type = type;
@@ -243,6 +244,7 @@ redrawWinline(
     win_T *wp,
     linenr_T lnum
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   if (lnum >= wp->w_topline
       && lnum < wp->w_botline) {
@@ -518,26 +520,27 @@ int update_screen(int type)
   return OK;
 }
 
-/*
- * Return TRUE if the cursor line in window "wp" may be concealed, according
- * to the 'concealcursor' option.
- */
-int conceal_cursor_line(win_T *wp)
+// Return true if the cursor line in window "wp" may be concealed, according
+// to the 'concealcursor' option.
+bool conceal_cursor_line(const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
   int c;
 
-  if (*wp->w_p_cocu == NUL)
-    return FALSE;
-  if (get_real_state() & VISUAL)
+  if (*wp->w_p_cocu == NUL) {
+    return false;
+  }
+  if (get_real_state() & VISUAL) {
     c = 'v';
-  else if (State & INSERT)
+  } else if (State & INSERT) {
     c = 'i';
-  else if (State & NORMAL)
+  } else if (State & NORMAL) {
     c = 'n';
-  else if (State & CMDLINE)
+  } else if (State & CMDLINE) {
     c = 'c';
-  else
-    return FALSE;
+  } else {
+    return false;
+  }
   return vim_strchr(wp->w_p_cocu, c) != NULL;
 }
 
@@ -559,7 +562,8 @@ void conceal_check_cursor_line(void)
 ///
 /// If true, both old and new cursorline will need
 /// need to be redrawn when moving cursor within windows.
-bool win_cursorline_standout(win_T *wp)
+bool win_cursorline_standout(const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
   return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
 }
