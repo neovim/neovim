@@ -222,6 +222,8 @@ static void terminfo_start(UI *ui)
 #ifdef WIN32
   os_tty_guess_term(&term, data->out_fd);
   os_setenv("TERM", term, 1);
+  // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
+  term = os_getenv("TERM");
 #endif
 
   // Set up unibilium/terminfo.
