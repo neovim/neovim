@@ -17,6 +17,7 @@ from collections import defaultdict
 
 import vim
 import os
+import logging
 
 import json
 from vimspector import utils
@@ -25,6 +26,8 @@ from vimspector import utils
 class ProjectBreakpoints( object ):
   def __init__( self ):
     self._connection = None
+    self._logger = logging.getLogger( __name__ )
+    utils.SetUpLogging( self._logger )
 
     # These are the user-entered breakpoints.
     self._line_breakpoints = defaultdict( list )
@@ -119,6 +122,11 @@ class ProjectBreakpoints( object ):
             vim.command( 'sign unplace {0} group=VimspectorBP'.format(
               bp[ 'sign_id' ] ) )
           del self._line_breakpoints[ file_name ][ index ]
+
+    self._logger.debug( "Toggle found bp at {}:{} ? {}".format(
+      file_name,
+      line,
+      found_bp ) )
 
     if not found_bp:
       self._line_breakpoints[ file_name ].append( {
