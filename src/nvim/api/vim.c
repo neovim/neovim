@@ -1293,6 +1293,10 @@ Dictionary nvim_get_context(Array types)
           int_types |= kCtxBuflist;
         } else if (strequal(current, "gvars")) {
           int_types |= kCtxGVars;
+        } else if (strequal(current, "sfuncs")) {
+          int_types |= kCtxSFuncs;
+        } else if (strequal(current, "funcs")) {
+          int_types |= kCtxFuncs;
         }
       }
     }

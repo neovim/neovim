@@ -5,20 +5,23 @@
 
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
+#include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
 #endif
 
-int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxGVars);
+int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxGVars | kCtxSFuncs
+               | kCtxFuncs);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
 /// Clears and frees the context stack
-void free_ctx_stack(void)
+void ctx_free_all(void)
 {
   for (size_t i = 0; i < kv_size(ctx_stack); i++) {
     ctx_free(&kv_A(ctx_stack, i));
@@ -60,6 +63,9 @@ void ctx_free(Context *ctx)
   if (ctx->gvars.data) {
     msgpack_sbuffer_destroy(&ctx->gvars);
   }
+  if (ctx->funcs.items) {
+    api_free_array(ctx->funcs);
+  }
 }
 
 /// Saves the editor state to a context.
@@ -79,14 +85,23 @@ void ctx_save(Context *ctx, const int flags)
   if (flags & kCtxRegs) {
     ctx_save_regs(ctx);
   }
+
   if (flags & kCtxJumps) {
     ctx_save_jumps(ctx);
   }
+
   if (flags & kCtxBuflist) {
     ctx_save_buflist(ctx);
   }
+
   if (flags & kCtxGVars) {
     ctx_save_gvars(ctx);
+  }
+
+  if (flags & kCtxFuncs) {
+    ctx_save_funcs(ctx, false);
+  } else if (flags & kCtxSFuncs) {
+    ctx_save_funcs(ctx, true);
   }
 }
 
@@ -117,14 +132,21 @@ bool ctx_restore(Context *ctx, const int flags)
   if (flags & kCtxRegs) {
     ctx_restore_regs(ctx);
   }
+
   if (flags & kCtxJumps) {
     ctx_restore_jumps(ctx);
   }
+
   if (flags & kCtxBuflist) {
     ctx_restore_buflist(ctx);
   }
+
   if (flags & kCtxGVars) {
     ctx_restore_gvars(ctx);
+  }
+
+  if (flags & kCtxFuncs) {
+    ctx_restore_funcs(ctx);
   }
 
   if (free_ctx) {
@@ -213,6 +235,46 @@ static inline void ctx_restore_gvars(Context *ctx)
   shada_read_sbuf(&ctx->gvars, kShaDaWantInfo | kShaDaForceit);
 }
 
+/// Saves functions to a context.
+///
+/// @param  ctx         Save to this context.
+/// @param  scriptonly  Save script-local (s:) functions only.
+static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
+  FUNC_ATTR_NONNULL_ALL
+{
+  ctx->funcs = (Array)ARRAY_DICT_INIT;
+  Error err = ERROR_INIT;
+
+  HASHTAB_ITER(&func_hashtab, hi, {
+    const char_u *const name = hi->hi_key;
+    bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
+    bool isscript = (name[0] == K_SPECIAL);
+
+    if (!islambda && (!scriptonly || isscript)) {
+      size_t cmd_len = sizeof("func! ") + STRLEN(name);
+      char *cmd = xmalloc(cmd_len);
+      snprintf(cmd, cmd_len, "func! %s", name);
+      String func_body = nvim_command_output(cstr_as_string(cmd), &err);
+      xfree(cmd);
+      if (!ERROR_SET(&err)) {
+        ADD(ctx->funcs, STRING_OBJ(func_body));
+      }
+      api_clear_error(&err);
+    }
+  });
+}
+
+/// Restores functions from a context.
+///
+/// @param  ctx  Restore from this context.
+static inline void ctx_restore_funcs(Context *ctx)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (size_t i = 0; i < ctx->funcs.size; i++) {
+    do_cmdline_cmd(ctx->funcs.items[i].data.string.data);
+  }
+}
+
 /// Convert msgpack_sbuffer to readfile()-style array.
 ///
 /// @param[in]  sbuf  msgpack_sbuffer to convert.
@@ -277,6 +339,7 @@ Dictionary ctx_to_dict(Context *ctx)
   PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
   PUT(rv, "buflist", ARRAY_OBJ(sbuf_to_array(ctx->buflist)));
   PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
+  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
 
   return rv;
 }
@@ -310,6 +373,9 @@ int ctx_from_dict(Dictionary dict, Context *ctx)
     } else if (strequal(item.key.data, "gvars")) {
       types |= kCtxGVars;
       ctx->gvars = array_to_sbuf(item.value.data.array);
+    } else if (strequal(item.key.data, "funcs")) {
+      types |= kCtxFuncs;
+      ctx->funcs = copy_object(item.value).data.array;
     }
   }
 
