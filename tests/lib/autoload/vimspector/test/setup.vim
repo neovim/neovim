@@ -21,13 +21,12 @@ endfunction
 
 function! vimspector#test#setup#Reset() abort
   call vimspector#Reset()
-  call AssertSignGroupEmpty( 'VimspectorCode' )
-
-  call vimspector#ClearBreakpoints()
-  call AssertSignGroupEmpty( 'VimspectorBP' )
-
   call WaitForAssert( {->
         \ assert_true( pyxeval( '_vimspector_session._connection is None' ) )
         \ } )
+
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
+  call vimspector#ClearBreakpoints()
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
 endfunction
 
