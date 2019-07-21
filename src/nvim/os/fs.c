@@ -230,7 +230,7 @@ int os_exepath(char *buffer, size_t *size)
 /// Checks if the file `name` is executable.
 ///
 /// @param[in]  name     Filename to check.
-/// @param[out] abspath  Returns resolved executable path, if not NULL.
+/// @param[out,allocated] abspath  Returns resolved exe path, if not NULL.
 /// @param[in] use_path  Also search $PATH.
 ///
 /// @return true if `name` is executable and
@@ -271,6 +271,9 @@ bool os_can_exe(const char_u *name, char_u **abspath, bool use_path)
 }
 
 /// Returns true if `name` is an executable file.
+///
+/// @param[in]            name     Filename to check.
+/// @param[out,allocated] abspath  Returns full exe path, if not NULL.
 static bool is_executable(const char *name, char_u **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
