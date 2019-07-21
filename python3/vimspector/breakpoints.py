@@ -55,6 +55,7 @@ class ProjectBreakpoints( object ):
     self._exceptionBreakpoints = None
     self._server_capabilities = {}
     self._connection = None
+    self.UpdateUI()
 
     # for each breakpoint:
     # clear its resolved status
@@ -160,6 +161,8 @@ class ProjectBreakpoints( object ):
     if not self._breakpoints_handler:
       def handler( source, msg ):
         return self._ShowBreakpoints()
+
+      assert False
     else:
       handler = self._breakpoints_handler
 
