@@ -107,13 +107,23 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
   %bwipeout!
 endfunction
 
+function! AssertCursorIsAtLineInBuffer( buffer, line, column )
+  call WaitForAssert( {->
+        \ assert_equal( a:buffer, bufname( '%' ), 'Current buffer' )
+        \ }, 10000 )
+  call WaitForAssert( {->
+        \ assert_equal( a:line, line( '.' ), 'Current line' )
+        \ }, 10000 )
+  call assert_equal( a:column, col( '.' ), 'Current column' )
+endfunction
+
 function! AssertPCIsAtLineInBuffer( buffer, line )
   let signs = sign_getplaced( a:buffer, {
     \ 'group': 'VimspectorCode',
     \ } )
 
   call assert_equal( 1, len( signs ), 'Sign-buffers' )
-  call assert_equal( 2, len( signs[ 0 ].signs ), 'Signs in buffer' )
+  call assert_true( len( signs[ 0 ].signs ) >= 1, 'Signs in buffer' )
 
   let pc_index = -1
   let index = 0
@@ -141,28 +151,29 @@ function! Test_Use_Mappings_HUMAN()
   edit simple.cpp
 
   15
-  call assert_equal( 15, line( '.' ) )
+  normal 0
+  call AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
 
   " Add the breakpoing
   call feedkeys( "\<F9>", 'xt' )
   call AssertSignGroupSingletonAtLine( 'VimspectorBP',
-                                     \ line( '.' ),
+                                     \ 15,
                                      \ 'vimspectorBP' )
 
   " Disable the breakpoint
   call feedkeys( "\<F9>", 'xt' )
   call AssertSignGroupSingletonAtLine( 'VimspectorBP',
-                                     \ line( '.' ),
+                                     \ 15,
                                      \ 'vimspectorBPDisabled' )
 
   " Delete the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-  call AssertSignGroupEmptyAtLine( 'VimspectorBP', line( '.' ) )
+  call AssertSignGroupEmptyAtLine( 'VimspectorBP', 15 )
 
   " Add it again
   call feedkeys( "\<F9>", 'xt' )
   call AssertSignGroupSingletonAtLine( 'VimspectorBP',
-                                     \ line( '.' ),
+                                     \ 15,
                                      \ 'vimspectorBP' )
 
   " Here we go. Start Debugging
@@ -172,25 +183,42 @@ function! Test_Use_Mappings_HUMAN()
   let cur_tabnr = tabpagenr()
   call assert_equal( 5, len( gettabinfo( cur_tabnr )[ 0 ].windows ) )
 
-  call WaitForAssert( {->
-        \ assert_equal( 'simple.cpp', bufname( '%' ), 'Current buffer' )
-        \ }, 10000 )
-  call assert_equal( 15, line( '.' ), 'Current line' )
-  call assert_equal( 1, col( '.' ), 'Current column' )
-  call AssertPCIsAtLineInBuffer( '%', 15 )
+  call AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
 
   " Step
   call feedkeys( "\<F10>", 'xt' )
 
-  call WaitForAssert( {-> assert_equal( 16, line( '.' ), 'Current line' ) } )
-  call assert_equal( 'simple.cpp', bufname( '%' ), 'Current buffer' )
-  call assert_equal( 1, col( '.' ), 'Current column' )
+  call AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
   call AssertPCIsAtLineInBuffer( '%', 16 )
 
   call vimspector#Reset()
+  call AssertSignGroupEmpty( 'VimspectorCode' )
 
   call vimspector#ClearBreakpoints()
+  call AssertSignGroupEmpty( 'VimspectorBP' )
 
+  lcd -
+  %bwipeout!
+endfunction
+
+function! SetUp_Test_StopAtEntry()
+  let g:vimspector_enable_mappings = 'HUMAN'
+endfunction
+
+function Test_StopAtEntry()
+  lcd testdata/cpp/simple
+  edit simple.cpp
+
+  " Test stopAtEntry behaviour
+  call feedkeys( "\<F5>", 'xt' )
+
+  call AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
+  call AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+
+  call vimspector#Reset()
+  call AssertSignGroupEmpty( 'VimspectorCode' )
+
+  call vimspector#ClearBreakpoints()
   call AssertSignGroupEmpty( 'VimspectorBP' )
 
   lcd -
