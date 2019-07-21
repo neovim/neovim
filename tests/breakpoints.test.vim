@@ -154,7 +154,10 @@ function! Test_Use_Mappings_HUMAN()
   normal 0
   call AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
 
-  " Add the breakpoing
+  call AssertSignGroupEmptyAtLine( 'VimspectorBP',
+                                 \ 15 )
+
+  " Add the breakpoint
   call feedkeys( "\<F9>", 'xt' )
   call AssertSignGroupSingletonAtLine( 'VimspectorBP',
                                      \ 15,
@@ -191,11 +194,7 @@ function! Test_Use_Mappings_HUMAN()
   call AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
   call AssertPCIsAtLineInBuffer( '%', 16 )
 
-  call vimspector#Reset()
-  call AssertSignGroupEmpty( 'VimspectorCode' )
-
-  call vimspector#ClearBreakpoints()
-  call AssertSignGroupEmpty( 'VimspectorBP' )
+  call vimspector#test#setup#Reset()
 
   lcd -
   %bwipeout!
@@ -215,11 +214,7 @@ function Test_StopAtEntry()
   call AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
   call AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
 
-  call vimspector#Reset()
-  call AssertSignGroupEmpty( 'VimspectorCode' )
-
-  call vimspector#ClearBreakpoints()
-  call AssertSignGroupEmpty( 'VimspectorBP' )
+  call vimspector#test#setup#Reset()
 
   lcd -
   %bwipeout!

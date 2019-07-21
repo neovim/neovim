@@ -1,4 +1,4 @@
-function! vimspector#test#setup#SetUpWithMappings( mappings )
+function! vimspector#test#setup#SetUpWithMappings( mappings ) abort
   if exists ( 'g:loaded_vimpector' )
     unlet g:loaded_vimpector
   endif
@@ -13,8 +13,21 @@ function! vimspector#test#setup#SetUpWithMappings( mappings )
   runtime! plugin/**/*.vim
 endfunction
 
-function! vimspector#test#setup#ClearDown()
+function! vimspector#test#setup#ClearDown() abort
   if exists( '*vimspector#internal#state#Reset' )
     call vimspector#internal#state#Reset()
   endif
 endfunction
+
+function! vimspector#test#setup#Reset() abort
+  call vimspector#Reset()
+  call AssertSignGroupEmpty( 'VimspectorCode' )
+
+  call vimspector#ClearBreakpoints()
+  call AssertSignGroupEmpty( 'VimspectorBP' )
+
+  call WaitForAssert( {->
+        \ assert_true( pyxeval( '_vimspector_session._connection is None' ) )
+        \ } )
+endfunction
+
