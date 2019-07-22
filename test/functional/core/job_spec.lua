@@ -183,7 +183,7 @@ describe('jobs', function()
     )
     nvim('command', "call jobstop(j)")
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, iswin() and 15 or 0}}, next_msg())
+    eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
 
   it('preserves NULs', function()
@@ -217,7 +217,7 @@ describe('jobs', function()
     eq({'notification', 'stdout', {0, {'abc', 'xyz'}}}, next_msg())
     nvim('command', "call jobstop(j)")
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, iswin() and 15 or 0}}, next_msg())
+    eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
 
   it('preserves newlines', function()
@@ -234,7 +234,7 @@ describe('jobs', function()
       next_msg())
     nvim('command', "call jobstop(j)")
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, iswin() and 15 or 0}}, next_msg())
+    eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
 
   it('avoids sending final newline', function()
@@ -244,7 +244,7 @@ describe('jobs', function()
       next_msg())
     nvim('command', "call jobstop(j)")
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    eq({'notification', 'exit', {0, iswin() and 15 or 0}}, next_msg())
+    eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
 
   it('closes the job streams with jobclose', function()
@@ -284,18 +284,7 @@ describe('jobs', function()
     neq(NIL, meths.get_proc(pid))
     nvim('command', 'call jobstop(j)')
     eq({'notification', 'stdout', {0, {''}}}, next_msg())
-    if iswin() then
-      expect_msg_seq(
-        -- win64
-        { {'notification', 'exit', {0, 1}}
-        },
-        -- win32
-        { {'notification', 'exit', {0, 15}}
-        }
-      )
-    else
-      eq({'notification', 'exit', {0, 0}}, next_msg())
-    end
+    eq({'notification', 'exit', {0, 143}}, next_msg())
     eq(NIL, meths.get_proc(pid))
   end)
 

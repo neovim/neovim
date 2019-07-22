@@ -159,7 +159,7 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///                 0 for no wait. -1 to wait until the process quits.
 /// @return Exit code of the process. proc->status will have the same value.
 ///         -1 if the timeout expired while the process is still running.
-///         -2 if the user interruped the wait.
+///         -2 if the user interrupted the wait.
 int process_wait(Process *proc, int ms, MultiQueue *events)
   FUNC_ATTR_NONNULL_ARG(1)
 {
@@ -220,6 +220,7 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
     return;
   }
   proc->stopped_time = os_hrtime();
+  proc->exit_signal = SIGTERM;
 
   switch (proc->type) {
     case kProcessTypeUv:
@@ -253,8 +254,10 @@ static void children_kill_cb(uv_timer_t *handle)
     }
     uint64_t term_sent = UINT64_MAX == proc->stopped_time;
     if (kProcessTypePty != proc->type || term_sent) {
+      proc->exit_signal = SIGKILL;
       os_proc_tree_kill(proc->pid, SIGKILL);
     } else {
+      proc->exit_signal = SIGTERM;
       os_proc_tree_kill(proc->pid, SIGTERM);
       proc->stopped_time = UINT64_MAX;  // Flag: SIGTERM was sent.
       // Restart timer.
@@ -403,4 +406,3 @@ static void on_process_stream_close(Stream *stream, void *data)
   Process *proc = data;
   decref(proc);
 }
-
