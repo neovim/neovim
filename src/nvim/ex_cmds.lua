@@ -2151,6 +2151,12 @@ return {
     func='ex_redrawstatus',
   },
   {
+    command='redrawtabline',
+    flags=bit.bor(TRLBAR, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_redrawtabline',
+  },
+  {
     command='registers',
     flags=bit.bor(EXTRA, NOTRLCOM, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,

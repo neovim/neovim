@@ -6650,7 +6650,7 @@ static void recording_mode(int attr)
 /*
  * Draw the tab pages line at the top of the Vim window.
  */
-static void draw_tabline(void)
+void draw_tabline(void)
 {
   int tabcount = 0;
   int tabwidth = 0;

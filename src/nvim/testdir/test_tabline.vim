@@ -1,19 +1,22 @@
-function! TablineWithCaughtError()
+
+source shared.vim
+
+func TablineWithCaughtError()
   let s:func_in_tabline_called = 1
   try
     call eval('unknown expression')
   catch
   endtry
   return ''
-endfunction
+endfunc
 
-function! TablineWithError()
+func TablineWithError()
   let s:func_in_tabline_called = 1
   call eval('unknown expression')
   return ''
-endfunction
+endfunc
 
-function! Test_caught_error_in_tabline()
+func Test_caught_error_in_tabline()
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
@@ -24,9 +27,9 @@ function! Test_caught_error_in_tabline()
   call assert_equal(tabline, &tabline)
   set tabline=
   let &showtabline = showtabline_save
-endfunction
+endfunc
 
-function! Test_tabline_will_be_disabled_with_error()
+func Test_tabline_will_be_disabled_with_error()
   let showtabline_save = &showtabline
   set showtabline=2
   let s:func_in_tabline_called = 0
@@ -40,4 +43,24 @@ function! Test_tabline_will_be_disabled_with_error()
   call assert_equal('', &tabline)
   set tabline=
   let &showtabline = showtabline_save
-endfunction
+endfunc
+
+func Test_redrawtabline()
+  if has('gui')
+    set guioptions-=e
+  endif
+  let showtabline_save = &showtabline
+  set showtabline=2
+  set tabline=%{bufnr('$')}
+  edit Xtabline1
+  edit Xtabline2
+  redraw
+  call assert_match(bufnr('$') . '', Screenline(1))
+  au BufAdd * redrawtabline
+  badd Xtabline3
+  call assert_match(bufnr('$') . '', Screenline(1))
+
+  set tabline=
+  let &showtabline = showtabline_save
+  au! Bufadd
+endfunc
