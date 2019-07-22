@@ -76,8 +76,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "Invalid count: %s\n", argv[2]);
         return 4;
       }
-      for (uint8_t i = 0; i < count; i++) {
-        printf("%d: %s\n", (int) i, argv[3]);
+      for (int i = 0; i < count; i++) {
+        printf("%d: %s\n", i, argv[3]);
         fflush(stdout);
         usleep(1000);  // Wait 1 ms (simulate typical output).
       }
