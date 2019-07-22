@@ -1626,7 +1626,7 @@ static void spell_load_lang(char_u *lang)
     if (starting) {
       // Prompt the user at VimEnter if spell files are missing. #3027
       // Plugins aren't loaded yet, so spellfile.vim cannot handle this case.
-      char autocmd_buf[128] = { 0 };
+      char autocmd_buf[512] = { 0 };
       snprintf(autocmd_buf, sizeof(autocmd_buf),
                "autocmd VimEnter * call spellfile#LoadFile('%s')|set spell",
                lang);

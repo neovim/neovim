@@ -10156,7 +10156,7 @@ Dictionary commands_array(buf_T *buf)
   Dictionary rv = ARRAY_DICT_INIT;
   Object obj = NIL;
   (void)obj;  // Avoid "dead assignment" warning.
-  char str[10];
+  char str[20];
   garray_T *gap = (buf == NULL) ? &ucmds : &buf->b_ucmds;
 
   for (int i = 0; i < gap->ga_len; i++) {

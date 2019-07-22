@@ -1713,7 +1713,7 @@ static void win_rotate(bool upwards, int count)
     return;
   }
 
-  if (firstwin == curwin && lastwin_nofloating() == curwin) {
+  if (count <= 0 || (firstwin == curwin && lastwin_nofloating() == curwin)) {
     // nothing to do
     beep_flush();
     return;
