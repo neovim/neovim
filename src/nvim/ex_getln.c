@@ -2058,7 +2058,7 @@ char *getcmdline_prompt(const char firstc, const char *const prompt,
  * another window or buffer.  Used when editing the command line etc.
  */
 int text_locked(void) {
-  if (cmdwin_type != 0)
+  if (modal_active())
     return TRUE;
   return textlock != 0;
 }
@@ -2073,7 +2073,8 @@ void text_locked_msg(void)
 }
 
 char_u * get_text_locked_msg(void) {
-  if (cmdwin_type != 0) {
+  if (modal_active()) {
+    // TODO: different errors!
     return e_cmdwin;
   } else {
     return e_secure;
@@ -6025,6 +6026,8 @@ int hist_type2char(int type)
   return NUL;
 }
 
+static bufref_T cmdwin_bufref;
+
 /// Open a window on the current command line and history.  Allow editing in
 /// the window.  Returns when the window is closed.
 /// Returns:
@@ -6033,53 +6036,28 @@ int hist_type2char(int type)
 ///     K_IGNORE if editing continues
 static int open_cmdwin(void)
 {
-  struct cmdline_info save_ccline;
-  bufref_T            old_curbuf;
-  bufref_T            bufref;
-  win_T               *old_curwin = curwin;
-  win_T               *wp;
-  int i;
-  linenr_T lnum;
-  garray_T winsizes;
-  char_u typestr[2];
-  int save_restart_edit = restart_edit;
-  int save_State = State;
-  int save_exmode = exmode_active;
-  int save_cmdmsg_rl = cmdmsg_rl;
-
   /* Can't do this recursively.  Can't do it when typing a password. */
-  if (cmdwin_type != 0
-      || cmdline_star > 0
-      ) {
+  if (modal_active() || cmdline_star > 0) {
     beep_flush();
     return K_IGNORE;
   }
 
-  set_bufref(&old_curbuf, curbuf);
+  int result = do_modal(kModalCmdwin, false);
 
-  /* Save current window sizes. */
-  win_size_save(&winsizes);
-
-  /* Don't execute autocommands while creating the window. */
-  block_autocmds();
-
-  // When using completion in Insert mode with <C-R>=<C-F> one can open the
-  // command line window, but we don't want the popup menu then.
-  pum_undisplay(true);
-
-  // don't use a new tab page
-  cmdmod.tab = 0;
-  cmdmod.noswapfile = 1;
-
-  /* Create a window for the command-line buffer. */
-  if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
-    beep_flush();
-    unblock_autocmds();
-    return K_IGNORE;
+  // win_close() may have already wiped the buffer when 'bh' is
+  // set to 'wipe'.
+  if (bufref_valid(&cmdwin_bufref)) {
+    close_buffer(NULL, cmdwin_bufref.br_buf, DOBUF_WIPE, false);
   }
-  cmdwin_type = get_cmdline_type();
+
+  return result;
+}
+
+void cmdwin_init(void) {
+  cmdwin_firstc = get_cmdline_type();
   cmdwin_level = ccline.level;
 
+  block_autocmds();
   // Create empty command-line buffer.
   buf_open_scratch(0, "[Command Line]");
   // Command-line buffer has bufhidden=wipe, unlike a true "scratch" buffer.
@@ -6097,7 +6075,7 @@ static int open_cmdwin(void)
   /* Showing the prompt may have set need_wait_return, reset it. */
   need_wait_return = FALSE;
 
-  const int histtype = hist_char2type(cmdwin_type);
+  const int histtype = hist_char2type(cmdwin_firstc);
   if (histtype == HIST_CMD || histtype == HIST_DEBUG) {
     if (p_wc == TAB) {
       add_map((char_u *)"<buffer> <Tab> <C-X><C-V>", INSERT);
@@ -6114,9 +6092,9 @@ static int open_cmdwin(void)
   /* Fill the buffer with the history. */
   init_history();
   if (hislen > 0 && histtype != HIST_INVALID) {
-    i = hisidx[histtype];
+    int i = hisidx[histtype];
     if (i >= 0) {
-      lnum = 0;
+      int lnum = 0;
       do {
         if (++i == hislen)
           i = 0;
@@ -6138,130 +6116,61 @@ static int open_cmdwin(void)
     ccline.redraw_state = kCmdRedrawNone;
     ui_call_cmdline_hide(ccline.level);
   }
-  redraw_later(SOME_VALID);
+}
 
-  // Save the command line info, can be used recursively.
-  save_cmdline(&save_ccline);
-
-  /* No Ex mode here! */
-  exmode_active = 0;
-
-  State = NORMAL;
-  setmouse();
-
-  // Trigger CmdwinEnter autocommands.
-  typestr[0] = (char_u)cmdwin_type;
-  typestr[1] = NUL;
-  apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
-  if (restart_edit != 0)        /* autocmd with ":startinsert" */
-    stuffcharReadbuff(K_NOP);
-
-  i = RedrawingDisabled;
-  RedrawingDisabled = 0;
-  int save_count = save_batch_count();
-
-  /*
-   * Call the main loop until <CR> or CTRL-C is typed.
-   */
-  cmdwin_result = 0;
-  normal_enter(true, false);
-
-  RedrawingDisabled = i;
-  restore_batch_count(save_count);
-
-  const bool save_KeyTyped = KeyTyped;
-
-  /* Trigger CmdwinLeave autocommands. */
-  apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
-
-  /* Restore KeyTyped in case it is modified by autocommands */
-  KeyTyped = save_KeyTyped;
-
-  // Restore the command line info.
-  restore_cmdline(&save_ccline);
-  cmdwin_type = 0;
+void cmdwin_finish(void) {
+  cmdwin_firstc = 0;
   cmdwin_level = 0;
 
-  exmode_active = save_exmode;
+  /* autocmds may abort script processing */
+  if (aborting() && modal_result != K_IGNORE)
+    modal_result = Ctrl_C;
+  /* Set the new command line from the cmdline buffer. */
+  xfree(ccline.cmdbuff);
+  if (modal_result == K_XF1 || modal_result == K_XF2) {  // :qa[!] typed
+    const char *p = (modal_result == K_XF2) ? "qa" : "qa!";
 
-  /* Safety check: The old window or buffer was deleted: It's a bug when
-   * this happens! */
-  if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)) {
-    cmdwin_result = Ctrl_C;
-    EMSG(_("E199: Active window or buffer deleted"));
-  } else {
-    /* autocmds may abort script processing */
-    if (aborting() && cmdwin_result != K_IGNORE)
-      cmdwin_result = Ctrl_C;
-    /* Set the new command line from the cmdline buffer. */
-    xfree(ccline.cmdbuff);
-    if (cmdwin_result == K_XF1 || cmdwin_result == K_XF2) {  // :qa[!] typed
-      const char *p = (cmdwin_result == K_XF2) ? "qa" : "qa!";
-
-      if (histtype == HIST_CMD) {
-        // Execute the command directly.
-        ccline.cmdbuff = (char_u *)xstrdup(p);
-        cmdwin_result = CAR;
-      } else {
-        // First need to cancel what we were doing.
-        ccline.cmdbuff = NULL;
-        stuffcharReadbuff(':');
-        stuffReadbuff(p);
-        stuffcharReadbuff(CAR);
-      }
-    } else if (cmdwin_result == Ctrl_C) {
-      /* :q or :close, don't execute any command
-       * and don't modify the cmd window. */
-      ccline.cmdbuff = NULL;
-    } else
-      ccline.cmdbuff = vim_strsave(get_cursor_line_ptr());
-    if (ccline.cmdbuff == NULL) {
-      ccline.cmdbuff = vim_strsave((char_u *)"");
-      ccline.cmdlen = 0;
-      ccline.cmdbufflen = 1;
-      ccline.cmdpos = 0;
-      cmdwin_result = Ctrl_C;
+    const int histtype = hist_char2type(cmdwin_firstc);
+    if (histtype == HIST_CMD) {
+      // Execute the command directly.
+      ccline.cmdbuff = (char_u *)xstrdup(p);
+      modal_result = CAR;
     } else {
-      ccline.cmdlen = (int)STRLEN(ccline.cmdbuff);
-      ccline.cmdbufflen = ccline.cmdlen + 1;
-      ccline.cmdpos = curwin->w_cursor.col;
-      if (ccline.cmdpos > ccline.cmdlen)
-        ccline.cmdpos = ccline.cmdlen;
-      if (cmdwin_result == K_IGNORE) {
-        ccline.cmdspos = cmd_screencol(ccline.cmdpos);
-        redrawcmd();
-      }
+      // First need to cancel what we were doing.
+      ccline.cmdbuff = NULL;
+      stuffcharReadbuff(':');
+      stuffReadbuff(p);
+      stuffcharReadbuff(CAR);
     }
-
-    /* Don't execute autocommands while deleting the window. */
-    block_autocmds();
-    // Avoid command-line window first character being concealed
-    curwin->w_p_cole = 0;
-    wp = curwin;
-    set_bufref(&bufref, curbuf);
-    win_goto(old_curwin);
-    win_close(wp, true);
-
-    // win_close() may have already wiped the buffer when 'bh' is
-    // set to 'wipe'.
-    if (bufref_valid(&bufref)) {
-      close_buffer(NULL, bufref.br_buf, DOBUF_WIPE, false);
+  } else if (modal_result == Ctrl_C) {
+    /* :q or :close, don't execute any command
+     * and don't modify the cmd window. */
+    ccline.cmdbuff = NULL;
+  } else
+    ccline.cmdbuff = vim_strsave(get_cursor_line_ptr());
+  if (ccline.cmdbuff == NULL) {
+    ccline.cmdbuff = vim_strsave((char_u *)"");
+    ccline.cmdlen = 0;
+    ccline.cmdbufflen = 1;
+    ccline.cmdpos = 0;
+    modal_result = Ctrl_C;
+  } else {
+    ccline.cmdlen = (int)STRLEN(ccline.cmdbuff);
+    ccline.cmdbufflen = ccline.cmdlen + 1;
+    ccline.cmdpos = curwin->w_cursor.col;
+    if (ccline.cmdpos > ccline.cmdlen)
+      ccline.cmdpos = ccline.cmdlen;
+    if (modal_result == K_IGNORE) {
+      ccline.cmdspos = cmd_screencol(ccline.cmdpos);
+      redrawcmd();
     }
-
-    /* Restore window sizes. */
-    win_size_restore(&winsizes);
-
-    unblock_autocmds();
   }
 
-  ga_clear(&winsizes);
-  restart_edit = save_restart_edit;
-  cmdmsg_rl = save_cmdmsg_rl;
+  set_bufref(&cmdwin_bufref, curbuf);
+}
 
-  State = save_State;
-  setmouse();
-
-  return cmdwin_result;
+bool is_cmdwin(win_T *wp) {
+  return cmdwin_active() && curwin == wp;
 }
 
 /// Get script string

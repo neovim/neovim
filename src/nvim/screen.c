@@ -1719,7 +1719,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   int off;
 
   /* Build the fold line:
-   * 1. Add the cmdwin_type for the command-line window
+   * 1. Add the cmdwin_firstc for the command-line window
    * 2. Add the 'foldcolumn'
    * 3. Add the 'number' or 'relativenumber' column
    * 4. Compose the text
@@ -1730,11 +1730,11 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   off = 0;
 
   /*
-   * 1. Add the cmdwin_type for the command-line window
+   * 1. Add the cmdwin_firstc for the command-line window
    * Ignores 'rightleft', this window is never right-left.
    */
-  if (cmdwin_type != 0 && wp == curwin) {
-    schar_from_ascii(linebuf_char[off], cmdwin_type);
+  if (is_cmdwin(wp)) {
+    schar_from_ascii(linebuf_char[off], cmdwin_firstc);
     linebuf_attr[off] = win_hl_attr(wp, HLF_AT);
     col++;
   }
@@ -2678,10 +2678,10 @@ win_line (
     if (draw_state != WL_LINE) {
       if (draw_state == WL_CMDLINE - 1 && n_extra == 0) {
         draw_state = WL_CMDLINE;
-        if (cmdwin_type != 0 && wp == curwin) {
+        if (is_cmdwin(wp)) {
           /* Draw the cmdline character. */
           n_extra = 1;
-          c_extra = cmdwin_type;
+          c_extra = cmdwin_firstc;
           c_final = NUL;
           char_attr = win_hl_attr(wp, HLF_AT);
         }
