@@ -744,7 +744,9 @@ describe("TUI 't_Co' (terminal colors)", function()
 
   -- others:
 
-  it("TERM=interix uses 8 colors", function()
+  -- TODO(blueyed): this is made pending, since it causes failure + later hang
+  --                when using non-compatible libvterm (#9494/#10179).
+  pending("TERM=interix uses 8 colors", function()
     assert_term_colors("interix", nil, 8)
   end)
 
