@@ -2,9 +2,10 @@
 include(CMakeParseArguments)
 
 # This is similar to the build recipes, but instead downloads a third party
-# binary and installs it under the the DEPS_PREFIX. The INSTALL_COMMAND is
-# executed in the folder where downloaded files are extracted and the
-# ${DEPS_INSTALL_DIR} holds the path to the third-party install root.
+# binary and installs it under the DEPS_PREFIX.
+# The INSTALL_COMMAND is executed in the folder where downloaded files are
+# extracted and the ${DEPS_INSTALL_DIR} holds the path to the third-party
+# install root.
 function(GetBinaryDep)
   cmake_parse_arguments(_gettool
     "BUILD_IN_SOURCE"

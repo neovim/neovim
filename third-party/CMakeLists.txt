@@ -237,9 +237,9 @@ if(USE_BUNDLED_LIBICONV)
   include(BuildLibiconv)
 endif()
 
-include(GetBinaryDeps)
-
 if(WIN32)
+  include(GetBinaryDeps)
+
   GetBinaryDep(TARGET wintools
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${DEPS_INSTALL_DIR}/bin)
 
