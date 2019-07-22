@@ -7874,6 +7874,22 @@ static void ex_redrawstatus(exarg_T *eap)
   ui_flush();
 }
 
+// ":redrawtabline": force redraw of the tabline
+static void ex_redrawtabline(exarg_T *eap FUNC_ATTR_UNUSED)
+{
+  const int r = RedrawingDisabled;
+  const int p = p_lz;
+
+  RedrawingDisabled = 0;
+  p_lz = false;
+
+  draw_tabline();
+
+  RedrawingDisabled = r;
+  p_lz = p;
+  ui_flush();
+}
+
 static void close_redir(void)
 {
   if (redir_fd != NULL) {

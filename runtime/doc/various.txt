@@ -31,6 +31,11 @@ CTRL-L			Clears and redraws the screen.  The redraw may happen
 			Useful if 'statusline' includes an item that doesn't
 			cause automatic updating.
 
+						*:redrawt* *:redrawtabline*
+:redrawt[abline]	Redraw the tabline.  Useful to update the tabline when
+			'tabline' includes an item that doesn't trigger
+			automatic updating.
+
 							*N<Del>*
 <Del>			When entering a number: Remove the last digit.
 			Note: if you like to use <BS> for this, add this

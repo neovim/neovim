@@ -6027,6 +6027,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the text to be displayed.  Use "%1T" for the first label, "%2T" for
 	the second one, etc.  Use "%X" items for closing labels.
 
+	When changing something that is used in 'tabline' that does not
+	trigger it to be updated, use |:redrawtabline|.
 	This option cannot be set in a modeline when 'modelineexpr' is off.
 
 	Keep in mind that only one of the tab pages is the current one, others
