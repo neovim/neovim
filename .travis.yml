@@ -154,8 +154,6 @@ jobs:
       env:
         - CLANG_SANITIZER=TSAN
         - *common-job-env
-  allow_failures:
-    - name: clang-tsan
   fast_finish: true
 
 before_install: ci/before_install.sh
