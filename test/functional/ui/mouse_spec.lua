@@ -150,13 +150,6 @@ describe('ui/mouse/input', function()
     end)
 
     it('in tabline to the left moves tab left', function()
-      if helpers.skip_fragile(pending,
-        os.getenv("TRAVIS") and (helpers.os_name() == "osx"
-          or os.getenv("CLANG_SANITIZER") == "ASAN_UBSAN"))  -- #4874
-      then
-        return
-      end
-
       feed_command('%delete')
       insert('this is foo')
       feed_command('silent file foo | tabnew | file bar')
