@@ -2076,9 +2076,10 @@ void list_in_columns(char_u **items, int size, int current)
   // Sacrifice it to fit in one more column if possible.
   int ncol = (int)(Columns + 1) / width;
   int nrow = item_count / ncol + (item_count % ncol ? 1 : 0);
+  int cur_row = 1;
 
-  // i counts columns then rows.  idx counts rows then columns.
-  for (i = 0; !got_int && i < nrow * ncol; ++i) {
+  // "i" counts columns then rows.  "idx" counts rows then columns.
+  for (i = 0; !got_int && i < nrow * ncol; i++) {
     int idx = (i / ncol) + (i % ncol) * nrow;
     if (idx < item_count) {
       int last_col = (i + 1) % ncol == 0;
@@ -2090,17 +2091,14 @@ void list_in_columns(char_u **items, int size, int current)
         msg_putchar(']');
       }
       if (last_col) {
-        if (msg_col > 0) {
+        if (msg_col > 0 && cur_row < nrow) {
           msg_putchar('\n');
         }
+        cur_row++;
       } else {
         while (msg_col % width) {
           msg_putchar(' ');
         }
-      }
-    } else {
-      if (msg_col > 0) {
-        msg_putchar('\n');
       }
     }
   }

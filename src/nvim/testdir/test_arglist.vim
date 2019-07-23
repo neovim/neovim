@@ -122,10 +122,7 @@ func Test_argument()
 
   call assert_equal(['d', 'c', 'b', 'a', 'c'], g:buffers)
 
-  redir => result
-  args
-  redir END
-  call assert_equal('a   b   [c] d', trim(result))
+  call assert_equal("\na   b   [c] d   ", execute(':args'))
 
   .argd
   call assert_equal(['a', 'b', 'd'], argv())
