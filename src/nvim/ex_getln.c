@@ -6169,10 +6169,6 @@ void cmdwin_finish(void) {
   set_bufref(&cmdwin_bufref, curbuf);
 }
 
-bool is_cmdwin(win_T *wp) {
-  return cmdwin_active() && curwin == wp;
-}
-
 /// Get script string
 ///
 /// Used for commands which accept either `:command script` or

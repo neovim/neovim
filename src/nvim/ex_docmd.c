@@ -10126,6 +10126,33 @@ static void ex_terminal(exarg_T *eap)
   do_cmdline_cmd(ex_cmd);
 }
 
+// modal terminal window 
+
+static exarg_T *modal_eap = NULL;
+void ex_modal(exarg_T *eap)
+{
+  // TODO: this is ugly. We should be able to launch the pty first
+  // and only if that worked, open the modal window
+  modal_eap = eap;
+
+  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  fconfig.width = Columns;
+  fconfig.height = Rows/2;
+  fconfig.row = Rows - fconfig.height-1;
+  fconfig.style = kWinStyleMinimal;
+  do_modal(kModalTerminal, &fconfig);
+}
+
+void modal_terminal_init(void)
+{
+  ex_terminal(modal_eap);
+  modal_eap = NULL;
+
+  // terminal mode.
+  stuffReadbuff("i");
+}
+
+// }}}
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
 ///
 /// @param[in] cmd Commandline to check. May start with a range or modifier.

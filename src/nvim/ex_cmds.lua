@@ -1689,6 +1689,12 @@ return {
     func='ex_mkrc',
   },
   {
+    command='modal',
+    flags=bit.bor(BANG, FILES, CMDWIN),
+    addr_type=ADDR_LINES,
+    func='ex_modal',
+  },
+  {
     command='mode',
     flags=bit.bor(WORD1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,

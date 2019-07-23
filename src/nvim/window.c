@@ -37,8 +37,10 @@
 #include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/ops.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -6786,12 +6788,11 @@ win_T *lastwin_nofloating(void) {
   return res;
 }
 
-int do_modal(ModalType type, bool use_float) {
+int do_modal(ModalType type, FloatConfig *float_config) {
   bufref_T            old_curbuf;
   win_T               *old_curwin = curwin;
   win_T               *wp;
   int i;
-  linenr_T lnum;
   garray_T winsizes;
   char_u typestr[2];
   int save_restart_edit = restart_edit;
@@ -6820,8 +6821,14 @@ int do_modal(ModalType type, bool use_float) {
   cmdmod.noswapfile = 1;
 
   // Create modal window
-  if (use_float) {
-    abort();
+  if (float_config) {
+    Error err = ERROR_INIT;
+    wp = win_new_float(NULL, *float_config, &err);
+    if (ERROR_SET(&err)) {
+      EMSG(err.msg); // TODO: context!!
+    }
+    win_enter(wp, false);
+    RESET_BINDING(wp);
   } else if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
     beep_flush();
     unblock_autocmds();
@@ -6831,6 +6838,8 @@ int do_modal(ModalType type, bool use_float) {
 
   if (type == kModalCmdwin) {
     cmdwin_init();
+  } else if (type == kModalTerminal) {
+    modal_terminal_init();
   } else {
     abort();
   }
@@ -6894,6 +6903,8 @@ int do_modal(ModalType type, bool use_float) {
   } else {
     if (type == kModalCmdwin) {
       cmdwin_finish();
+    } else if (type == kModalTerminal) {
+      // TODO: wipe?
     } else {
       abort();
     }
@@ -6907,7 +6918,7 @@ int do_modal(ModalType type, bool use_float) {
     win_close(wp, true);
 
 
-    if (!use_float) {
+    if (!float_config) {
       /* Restore window sizes. */
       win_size_restore(&winsizes);
     }
@@ -6924,3 +6935,8 @@ int do_modal(ModalType type, bool use_float) {
 
   return modal_result;
 }
+
+bool is_cmdwin(win_T *wp) {
+  return cmdwin_active() && curwin == wp;
+}
+

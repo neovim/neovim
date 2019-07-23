@@ -626,8 +626,8 @@ static void channel_process_exit_cb(Process *proc, int status, void *data)
 {
   Channel *chan = data;
   if (chan->term) {
-    char msg[sizeof("\r\n[Process exited ]") + NUMBUFLEN];
-    snprintf(msg, sizeof msg, "\r\n[Process exited %d]", proc->status);
+    char msg[sizeof("\r\nexit status . Press ENTER to continue.") + NUMBUFLEN];
+    snprintf(msg, sizeof msg, "\r\nExit status %d. Press ENTER to continue.", proc->status);
     terminal_close(chan->term, msg);
   }
 

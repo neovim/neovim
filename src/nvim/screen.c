@@ -6441,7 +6441,7 @@ int showmode(void)
   msg_ext_ui_flush();
 
   do_mode = ((p_smd && msg_silent == 0)
-             && ((State & TERM_FOCUS)
+             && (((State & TERM_FOCUS) && !modal_active())
                  || (State & INSERT)
                  || restart_edit
                  || VIsual_active));

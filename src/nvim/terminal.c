@@ -61,6 +61,7 @@
 #include "nvim/screen.h"
 #include "nvim/keymap.h"
 #include "nvim/edit.h"
+#include "nvim/ex_cmds_defs.h"
 #include "nvim/mouse.h"
 #include "nvim/memline.h"
 #include "nvim/map.h"
@@ -425,7 +426,9 @@ void terminal_enter(void)
   if (s->close) {
     bool wipe = s->term->buf_handle != 0;
     s->term->opts.close_cb(s->term->opts.data);
-    if (wipe) {
+    if (modal_active()) {
+      modal_result = true;
+    } else if (wipe) {
       do_cmdline_cmd("bwipeout!");
     }
   }
@@ -1359,5 +1362,4 @@ static char *get_config_string(char *key)
 }
 
 // }}}
-
 // vim: foldmethod=marker
