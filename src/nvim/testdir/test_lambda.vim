@@ -23,30 +23,36 @@ function! Test_lambda_with_timer()
     return
   endif
 
-  source load.vim
-
   let s:n = 0
   let s:timer_id = 0
-  function! s:Foo()
-    "let n = 0
-    let s:timer_id = timer_start(50, {-> execute("let s:n += 1 | echo s:n", "")}, {"repeat": -1})
-  endfunction
+  func! s:Foo()
+    let s:timer_id = timer_start(10, {-> execute("let s:n += 1 | echo s:n", "")}, {"repeat": -1})
+  endfunc
 
   call s:Foo()
-  sleep 210m
+  " check timer works
+  for i in range(0, 10)
+    if s:n > 0
+      break
+    endif
+    sleep 10m
+  endfor
+
   " do not collect lambda
   call test_garbagecollect_now()
-  let m = LoadAdjust(s:n)
-  sleep 230m
+
+  " check timer still works
+  let m = s:n
+  for i in range(0, 10)
+    if s:n > m
+      break
+    endif
+    sleep 10m
+  endfor
+
   call timer_stop(s:timer_id)
-
-  let n = LoadAdjust(s:n)
-  let nine = LoadAdjust(9)
-
-  call assert_true(m > 1)
-  call assert_true(n > m + 1)
-  call assert_true(n < nine)
-endfunction
+  call assert_true(s:n > m)
+endfunc
 
 function! Test_lambda_with_partial()
   let l:Cb = function({... -> ['zero', a:1, a:2, a:3]}, ['one', 'two'])
