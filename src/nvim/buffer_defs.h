@@ -133,14 +133,14 @@ typedef struct buffheader buffheader_T;
  */
 struct buffblock {
   buffblock_T *b_next;  // pointer to next buffblock
-  char_u b_str[];       // contents (flexible array)
+  char_u b_str[1];      // contents (actually longer)
 };
 
 /*
  * header used for the stuff buffer and the redo buffer
  */
 struct buffheader {
-  buffblock_T *bh_first;  // first block of the list
+  buffblock_T bh_first;  // first (dummy) block of list
   buffblock_T *bh_curr;  // buffblock for appending
   size_t bh_index;          // index for reading
   size_t bh_space;          // space in bh_curr for appending
