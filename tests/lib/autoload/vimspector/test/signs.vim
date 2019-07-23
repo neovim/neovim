@@ -46,10 +46,10 @@ function! vimspector#test#signs#AssertSignGroupSingletonAtLine( group,
 
   return assert_equal( 1,
                      \ len( signs ),
-                     \ 'Num buffers named %' ) &&
+                     \ 'Num buffers named %' ) ||
        \ assert_equal( 1,
                      \ len( signs[ 0 ].signs ),
-                     \ 'Num signs in ' . a:group . ' at ' . a:line ) &&
+                     \ 'Num signs in ' . a:group . ' at ' . a:line ) ||
        \ assert_equal( a:sign_name,
                      \ signs[ 0 ].signs[ 0 ].name,
                      \ 'Sign in group ' . a:group . ' at ' . a:line )
@@ -64,7 +64,7 @@ function! vimspector#test#signs#AssertSignGroupEmptyAtLine( group, line ) abort
 
   return assert_equal( 1,
                      \ len( signs ),
-                     \ 'Num buffers named %' ) &&
+                     \ 'Num buffers named %' ) ||
        \ assert_equal( 0,
                      \ len( signs[ 0 ].signs ),
                      \ 'Num signs in ' . a:group . ' at ' . a:line )
@@ -77,7 +77,7 @@ function! vimspector#test#signs#AssertSignGroupEmpty( group ) abort
     \ } )
   return assert_equal( 1,
                      \ len( signs ),
-                     \ 'Num buffers named %' ) &&
+                     \ 'Num buffers named %' ) ||
        \ assert_equal( 0,
                      \ len( signs[ 0 ].signs ),
                      \ 'Num signs in ' . a:group )

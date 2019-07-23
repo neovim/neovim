@@ -183,14 +183,20 @@ class DebugSession( object ):
       self._outputView.ConnectionUp( self._connection )
       self._breakpoints.ConnectionUp( self._connection )
 
-      def update_breakpoints( source, message ):
-        if 'body' not in message:
-          return
-        self._codeView.AddBreakpoints( source,
-                                       message[ 'body' ][ 'breakpoints' ] )
-        self._codeView.ShowBreakpoints()
+      class Handler( breakpoints.ServerBreakpointHandler ):
+        def __init__( self, codeView ):
+          self.codeView = codeView
 
-      self._breakpoints.SetBreakpointsHandler( update_breakpoints )
+        def ClearBreakpoints( self ):
+          self.codeView.ClearBreakpoints()
+
+        def AddBreakpoints( self, source, message ):
+          if 'body' not in message:
+            return
+          self.codeView.AddBreakpoints( source,
+                                        message[ 'body' ][ 'breakpoints' ] )
+
+      self._breakpoints.SetBreakpointsHandler( Handler( self._codeView ) )
 
     if self._connection:
       self._StopDebugAdapter( start )

@@ -116,6 +116,11 @@ func RunTheTest(test)
     try
       let s:test = a:test
       let s:testid = g:testpath . ':' . a:test
+      let test_filesafe = substitute( a:test, ')', '_', 'g' )
+      let test_filesafe = substitute( test_filesafe, '(', '_', 'g' )
+      let test_filesafe = substitute( test_filesafe, ',', '_', 'g' )
+      let test_filesafe = substitute( test_filesafe, ':', '_', 'g' )
+      let s:testid_filesafe = g:testpath . '_' . test_filesafe
       au VimLeavePre * call EarlyExit(s:test)
       exe 'call ' . a:test
       au! VimLeavePre
@@ -203,7 +208,7 @@ func AfterTheTest()
     let v:errors = []
 
     let log = readfile( expand( '~/.vimspector.log' ) )
-    let logfile = s:testid . '.vimspector.log'
+    let logfile = s:testid_filesafe . '.vimspector.log'
     call writefile( log, logfile, 's' )
     call add( s:messages, 'Wrote log for failed test: ' . logfile )
   endif

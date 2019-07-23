@@ -15,12 +15,23 @@
 
 from collections import defaultdict
 
+import abc
 import vim
 import os
 import logging
 
 import json
 from vimspector import utils
+
+
+class ServerBreakpointHandler( object ):
+  @abc.abstractmethod
+  def ClearBreakpoints( self ):
+    pass
+
+  @abc.abstractmethod
+  def AddBreakpoints( self, source, message ):
+    pass
 
 
 class ProjectBreakpoints( object ):
@@ -118,21 +129,26 @@ class ProjectBreakpoints( object ):
       return
 
     found_bp = False
+    action = 'New'
     for index, bp in enumerate( self._line_breakpoints[ file_name ] ):
       if bp[ 'line' ] == line:
         found_bp = True
-        if bp[ 'state' ] == 'ENABLED':
+        if bp[ 'state' ] == 'ENABLED' and not self._connection:
           bp[ 'state' ] = 'DISABLED'
+          action = 'Disable'
         else:
           if 'sign_id' in bp:
             vim.command( 'sign unplace {0} group=VimspectorBP'.format(
               bp[ 'sign_id' ] ) )
           del self._line_breakpoints[ file_name ][ index ]
+          action = 'Delete'
+          break
 
-    self._logger.debug( "Toggle found bp at {}:{} ? {}".format(
+    self._logger.debug( "Toggle found bp at {}:{} ? {} ({})".format(
       file_name,
       line,
-      found_bp ) )
+      found_bp,
+      action ) )
 
     if not found_bp:
       self._line_breakpoints[ file_name ].append( {
@@ -172,13 +188,10 @@ class ProjectBreakpoints( object ):
 
 
   def SendBreakpoints( self ):
-    if not self._breakpoints_handler:
-      def handler( source, msg ):
-        return self._ShowBreakpoints()
+    assert self._breakpoints_handler is not None
 
-      assert False
-    else:
-      handler = self._breakpoints_handler
+    # Clear any existing breakpoints prior to sending new ones
+    self._breakpoints_handler.ClearBreakpoints()
 
     for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
@@ -199,7 +212,7 @@ class ProjectBreakpoints( object ):
       }
 
       self._connection.DoRequest(
-        lambda msg: handler( source, msg ),
+        lambda msg: self._breakpoints_handler.AddBreakpoints( source, msg ),
         {
           'command': 'setBreakpoints',
           'arguments': {
@@ -212,7 +225,7 @@ class ProjectBreakpoints( object ):
 
     if self._server_capabilities.get( 'supportsFunctionBreakpoints' ):
       self._connection.DoRequest(
-        lambda msg: handler( None, msg ),
+        lambda msg: self._breakpoints_handler.AddBreakpoints( None, msg ),
         {
           'command': 'setFunctionBreakpoints',
           'arguments': {

@@ -182,14 +182,25 @@ function Test_DisableBreakpointWhileDebugging()
 
   " Remove the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-  call vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorCode', 16 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorCode',
+                                                          \ 16 )
+        \ } )
 
   " Add the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
-        \ 'VimspectorCode',
-        \ 16,
-        \ 'vimspectorBP' )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertSignGroupSingletonAtLine(
+           \ 'VimspectorCode',
+           \ 16,
+           \ 'vimspectorBP' )
+        \ } )
+
+  " Run to breakpoint
+  call setpos( '.', [ 0, 15, 1 ] )
+  call feedkeys( "\<F5>", 'xt' )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
+  call vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 16 )
 
   call vimspector#Reset()
   call WaitForAssert( {->
