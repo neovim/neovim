@@ -86,7 +86,7 @@
 #define READBIN    "rb"
 #define APPENDBIN  "ab"
 
-#  define mch_fopen(n, p)       fopen((n), (p))
+#  define mch_fopen(n, p)       os_fopen((n), (p))
 
 /* mch_open_rw(): invoke os_open() with third argument for user R/W. */
 #if defined(UNIX)  /* open in rw------- mode */
