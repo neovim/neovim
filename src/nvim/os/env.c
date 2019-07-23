@@ -105,6 +105,10 @@ bool os_env_exists(const char *name)
   return (r == 0 || r == UV_ENOBUFS);
 }
 
+/// Sets an environment variable.
+///
+/// @warning Existing pointers to the result of os_getenv("foo") are
+///          INVALID after os_setenv("foo", …).
 int os_setenv(const char *name, const char *value, int overwrite)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -121,9 +125,11 @@ int os_setenv(const char *name, const char *value, int overwrite)
   }
 #endif
   uv_mutex_lock(&mutex);
-  pmap_del2(envmap, name);
   int r = uv_os_setenv(name, value);
   assert(r != UV_EINVAL);
+  // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
+  // could be a previous os_getenv() result.
+  pmap_del2(envmap, name);
   if (r != 0) {
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }

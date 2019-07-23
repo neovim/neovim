@@ -222,6 +222,8 @@ static void terminfo_start(UI *ui)
 #ifdef WIN32
   os_tty_guess_term(&term, data->out_fd);
   os_setenv("TERM", term, 1);
+  // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
+  term = os_getenv("TERM");
 #endif
 
   // Set up unibilium/terminfo.
@@ -1585,6 +1587,11 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       unibi_set_if_empty(ut, unibi_set_left_margin_parm, "\x1b[%i%p1%ds");
       unibi_set_if_empty(ut, unibi_set_right_margin_parm, "\x1b[%i;%p2%ds");
     }
+
+#ifdef WIN32
+    // XXX: workaround libuv implicit LF => CRLF conversion. #10558
+    unibi_set_str(ut, unibi_cursor_down, "\x1b[B");
+#endif
   } else if (rxvt) {
     // 2017-04 terminfo.src lacks these.  Unicode rxvt has them.
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
