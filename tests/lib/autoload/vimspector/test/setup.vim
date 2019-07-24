@@ -14,9 +14,6 @@ function! vimspector#test#setup#SetUpWithMappings( mappings ) abort
 endfunction
 
 function! vimspector#test#setup#ClearDown() abort
-  if exists( '*vimspector#internal#state#Reset' )
-    call vimspector#internal#state#Reset()
-  endif
 endfunction
 
 function! vimspector#test#setup#Reset() abort
@@ -31,5 +28,9 @@ function! vimspector#test#setup#Reset() abort
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
   call vimspector#ClearBreakpoints()
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
+
+  if exists( '*vimspector#internal#state#Reset' )
+    call vimspector#internal#state#Reset()
+  endif
 endfunction
 
