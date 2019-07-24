@@ -21,7 +21,10 @@ if ! [ -f "$codecov_sh" ]; then
   python3 -m pip install --quiet --user gcovr
 fi
 
-python3 -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 --exclude '.*/auto/.*' --root build --delete -o coverage.xml --xml
+(
+  cd build
+  python3 -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 --exclude '.*/auto/.*' --root .. --delete -o ../coverage.xml --xml
+)
 
 # Upload to codecov.
 # -X gcov: disable gcov, done manually above.
