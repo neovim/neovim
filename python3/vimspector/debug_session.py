@@ -249,13 +249,20 @@ class DebugSession( object ):
       self._Reset()
 
   def _Reset( self ):
+    self._logger.info( "Debugging complete." )
     if self._uiTab:
+      self._logger.debug( "Clearing down UI with stack_trace: %s",
+                          traceback.format_stack() )
       vim.current.tabpage = self._uiTab
       self._stackTraceView.Reset()
       self._variablesView.Reset()
       self._outputView.Reset()
       self._codeView.Reset()
       vim.command( 'tabclose!' )
+      self._stackTraceView = None
+      self._variablesView = None
+      self._outputView = None
+      self._codeView = None
       self._uiTab = None
 
     # make sure that we're displaying signs in any still-open buffers

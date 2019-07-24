@@ -23,7 +23,7 @@ function! vimspector#test#setup#Reset() abort
         \ } )
   call WaitForAssert( {->
         \ assert_true( pyxeval( '_vimspector_session._uiTab is None' ) )
-        \ } )
+        \ }, 10000 )
 
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
   call vimspector#ClearBreakpoints()
