@@ -62,6 +62,20 @@ file(GLOB RM_FILES ${BUILD_DIR}/Xtest_*)
 file(REMOVE_RECURSE ${RM_FILES})
 
 if(NOT res EQUAL 0)
-  message(STATUS "Output to stderr:\n${err}")
+  message(STATUS "Tests exited non-zero: ${res}")
+  if("${err}" STREQUAL "")
+    message(STATUS "No output to stderr.")
+  else()
+    message(STATUS "Output to stderr:\n${err}")
+  endif()
+
+  # Dump the logfile on CI (if not displayed and moved already).
+  if($ENV{CI})
+    if(EXISTS $ENV{NVIM_LOG_FILE} AND NOT EXISTS $ENV{NVIM_LOG_FILE}.displayed)
+      file(READ $ENV{NVIM_LOG_FILE} out)
+      message(STATUS "$NVIM_LOG_FILE: $ENV{NVIM_LOG_FILE}\n${out}")
+    endif()
+  endif()
+
   message(FATAL_ERROR "${TEST_TYPE} tests failed with error: ${res}")
 endif()

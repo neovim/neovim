@@ -682,7 +682,7 @@ function module.isCI()
 end
 
 -- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
--- Also removes the file, if the current environment looks like CI.
+-- Also moves the file to "${NVIM_LOG_FILE}.displayed" on CI environments.
 function module.read_nvim_log()
   local logfile = os.getenv('NVIM_LOG_FILE') or '.nvimlog'
   local is_ci = module.isCI()
@@ -696,7 +696,7 @@ function module.read_nvim_log()
   end
   log = log..('-'):rep(78)..'\n'
   if is_ci then
-    os.remove(logfile)
+    os.rename(logfile, logfile .. '.displayed')
   end
   return log
 end
