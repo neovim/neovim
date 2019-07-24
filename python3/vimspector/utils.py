@@ -69,8 +69,6 @@ def SetUpCommandBuffer( cmd, name ):
       name,
       cmd ) )
 
-  UserMessage( 'Bufs: {}'.format( [ int( b ) for b in bufs ] ), persist = True )
-
   return [ vim.buffers[ b ] for b in bufs ]
 
 
