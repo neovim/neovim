@@ -74,11 +74,26 @@ list(GET status 0 status_code)
 list(GET status 1 status_string)
 
 if(NOT status_code EQUAL 0)
-  message(FATAL_ERROR "error: downloading '${URL}' failed
+  # Retry on certain errors, e.g. CURLE_COULDNT_RESOLVE_HOST, which is often
+  # seen with libtermkey (www.leonerd.org.uk).
+  if(status_code EQUAL 6)  # "Couldn't resolve host name"
+    message(STATUS "warning: retrying '${URL}' (${status_string}, status ${status_code})")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 10)
+    file(DOWNLOAD ${URL} ${file}
+      ${timeout_args}
+      ${hash_args}
+      STATUS status
+      LOG log)
+    list(GET status 0 status_code)
+    list(GET status 1 status_string)
+  endif()
+  if(NOT status_code EQUAL 0)
+    message(FATAL_ERROR "error: downloading '${URL}' failed
   status_code: ${status_code}
   status_string: ${status_string}
   log: ${log}
 ")
+  endif()
 endif()
 
 set(NULL_SHA256 "0000000000000000000000000000000000000000000000000000000000000000")
