@@ -744,6 +744,8 @@ class DebugSession( object ):
     self._variablesView.Clear()
 
   def OnServerExit( self, status ):
+    self._logger.info( "The server has terminated with status %s",
+                       status )
     self.Clear()
 
     self._connection.Reset()
@@ -759,7 +761,7 @@ class DebugSession( object ):
 
   def OnEvent_terminated( self, message ):
     # We will handle this when the server actually exists
-    utils.UserMessage( "Debugging was terminated." )
+    utils.UserMessage( "Debugging was terminated by the server." )
 
   def OnEvent_output( self, message ):
     if self._outputView:
