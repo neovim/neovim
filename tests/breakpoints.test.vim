@@ -141,7 +141,7 @@ endfunction
 function Test_StopAtEntry()
   lcd testdata/cpp/simple
   edit simple.cpp
-  call setpos( '.', [ 0, 15, 1 ] )
+  call setpos( '.', [ 0, 1, 1 ] )
 
   " Test stopAtEntry behaviour
   call feedkeys( "\<F5>", 'xt' )
@@ -213,6 +213,9 @@ function Test_DisableBreakpointWhileDebugging()
   call vimspector#Reset()
   call WaitForAssert( {->
         \ assert_true ( pyxeval( '_vimspector_session._connection is None' ) )
+        \ } )
+  call WaitForAssert( {->
+        \ assert_true( pyxeval( '_vimspector_session._uiTab is None' ) )
         \ } )
 
   " Check breakpoint is now a user breakpoint

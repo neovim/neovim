@@ -24,6 +24,9 @@ function! vimspector#test#setup#Reset() abort
   call WaitForAssert( {->
         \ assert_true( pyxeval( '_vimspector_session._connection is None' ) )
         \ } )
+  call WaitForAssert( {->
+        \ assert_true( pyxeval( '_vimspector_session._uiTab is None' ) )
+        \ } )
 
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
   call vimspector#ClearBreakpoints()

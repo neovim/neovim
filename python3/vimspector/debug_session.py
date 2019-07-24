@@ -218,6 +218,7 @@ class DebugSession( object ):
     if self._connection:
       self._connection.OnData( data )
 
+
   def OnServerStderr( self, data ):
     self._logger.info( "Server stderr: %s", data )
     if self._outputView:
