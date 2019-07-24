@@ -1503,6 +1503,8 @@ static int nfa_regatom(void)
         c = getchr();
       }
       if (c == 'l' || c == 'c' || c == 'v') {
+        int limit = INT_MAX;
+
         if (c == 'l') {
           // \%{n}l  \%{n}<l  \%{n}>l
           EMIT(cmp == '<' ? NFA_LNUM_LT :
@@ -1518,13 +1520,12 @@ static int nfa_regatom(void)
           // \%{n}v  \%{n}<v  \%{n}>v
           EMIT(cmp == '<' ? NFA_VCOL_LT :
                cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
+          limit = INT_MAX / MB_MAXBYTES;
         }
-#if SIZEOF_INT < SIZEOF_LONG
-        if (n > INT_MAX) {
+        if (n >= limit) {
           EMSG(_("E951: \\% value too large"));
           return FAIL;
         }
-#endif
         EMIT((int)n);
         break;
       } else if (c == '\'' && n == 0) {
