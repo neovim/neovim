@@ -555,14 +555,6 @@ if(BUSTED_PRG)
   get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
 
-  # When running tests from 'ninja' we need to use the
-  # console pool: to do so we need to use the USES_TERMINAL
-  # option, but this is only available in CMake 3.2
-  set(TEST_TARGET_ARGS)
-  if(NOT (${CMAKE_VERSION} VERSION_LESS 3.2.0))
-    list(APPEND TEST_TARGET_ARGS "USES_TERMINAL")
-  endif()
-
   set(UNITTEST_PREREQS nvim-test unittest-headers)
   set(FUNCTIONALTEST_PREREQS nvim printenv-test printargs-test shell-test streams-test tty-test ${GENERATED_HELP_TAGS})
   set(BENCHMARK_PREREQS nvim tty-test)
@@ -590,8 +582,7 @@ if(BUSTED_PRG)
         -DBUILD_DIR=${CMAKE_BINARY_DIR}
         -DTEST_TYPE=unit
         -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-      DEPENDS ${UNITTEST_PREREQS}
-      ${TEST_TARGET_ARGS})
+      DEPENDS ${UNITTEST_PREREQS})
     set_target_properties(unittest PROPERTIES FOLDER test)
   else()
     message(WARNING "disabling unit tests: no Luajit FFI in ${LUA_PRG}")
@@ -620,8 +611,7 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS}
-    ${TEST_TARGET_ARGS})
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
   set_target_properties(functionaltest functionaltest-prereqs
     PROPERTIES FOLDER test)
 
@@ -636,8 +626,7 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=benchmark
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${BENCHMARK_PREREQS}
-    ${TEST_TARGET_ARGS})
+    DEPENDS ${BENCHMARK_PREREQS})
   set_target_properties(benchmark benchmark-prereqs PROPERTIES FOLDER test)
 endif()
 
@@ -653,8 +642,7 @@ if(BUSTED_LUA_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${PROJECT_SOURCE_DIR}/cmake/RunTests.cmake
-    DEPENDS ${FUNCTIONALTEST_PREREQS}
-    ${TEST_TARGET_ARGS})
+    DEPENDS ${FUNCTIONALTEST_PREREQS})
     set_target_properties(functionaltest-lua PROPERTIES FOLDER test)
 endif()
 
