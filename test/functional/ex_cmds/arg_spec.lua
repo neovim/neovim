@@ -22,7 +22,7 @@ describe(":argument", function()
 
       local bufname_after = funcs.bufname("%")
       local bufnr_after = funcs.bufnr("%")
-      eq("\n["..bufname_before.."] ", helpers.eval('execute("args")'))
+      eq("["..bufname_before.."]", helpers.eval('trim(execute("args"))'))
       ok(funcs.line('$') > 1)
       eq(bufname_before, bufname_after)
       eq(bufnr_before, bufnr_after)
