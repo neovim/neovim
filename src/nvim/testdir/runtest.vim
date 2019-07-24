@@ -278,7 +278,6 @@ let s:flaky_tests = [
       \ 'Test_terminal_redir_file()',
       \ 'Test_terminal_tmap()',
       \ 'Test_with_partial_callback()',
-      \ 'Test_lambda_with_timer()',
       \ ]
 
 " Pattern indicating a common flaky test failure.
