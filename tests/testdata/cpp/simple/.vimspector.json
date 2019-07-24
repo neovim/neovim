@@ -5,7 +5,7 @@
       "configuration": {
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceRoot}/simple",
+        "program": "${workspaceRoot}/${fileBasenameNoExtension}",
         "args": [],
         "cwd": "${workspaceRoot}",
         "environment": [],
