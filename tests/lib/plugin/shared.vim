@@ -126,7 +126,7 @@ endfunc
 " When running into the timeout an exception is thrown, thus the function does
 " not return.
 func WaitFor(expr, ...)
-  let timeout = get(a:000, 0, 5000)
+  let timeout = get(a:000, 0, 10000)
   let slept = s:WaitForCommon(a:expr, v:null, timeout)
   if slept < 0
     throw 'WaitFor() timed out after ' . timeout . ' msec'
