@@ -737,6 +737,7 @@ EXTERN int RedrawingDisabled INIT(= 0);
 
 EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
 EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
+EXTERN int stdin_filedesc INIT(= 0);        /* used in readfile() */
 
 // typeahead buffer
 EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });

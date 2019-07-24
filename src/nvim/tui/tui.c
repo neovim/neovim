@@ -157,10 +157,10 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
     args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
     args[args_idx++] = xstrdup("--embed");
     for (int i = 1; i < argc; i++) {
-      if (!STRCMP("-", argv[i])) {
-        // don't pass "-" to embed instance
-        continue;
-      }
+      // if (!STRCMP("-", argv[i]) && !(pass_stdin && !stdin_isatty)) {
+      //   // don't pass "-" to embed instance
+      //   continue;
+      // }
       args[args_idx++] = xstrdup(argv[i]);
     }
     args[args_idx++] = NULL; // last value of argv should be NULL
@@ -170,33 +170,16 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
                                   false, true, true, NULL, 0, 0, NULL,
                                   &server_process_exit_status);
     rc_id = channel->id;
-  }
 
-  // passing "stdin" data to server
-  linenr_T line_count = pass_stdin ? -curbuf->b_ml.ml_line_count : -2;
-  while (--line_count >= 0
-        || ++line_count == -curbuf->b_ml.ml_line_count) {
-    // send the line to server and delete it from curbuf
-    Array args = ARRAY_DICT_INIT;
-    Object l =  STRING_OBJ(cstr_as_string(xstrdup((const char *)ml_get(1))));
-    Array array = {.items = &l, .size = 1};
-    ADD(args, INTEGER_OBJ(0)); // curbuf
-    if (line_count < 0 ) {
-      ADD(args, INTEGER_OBJ(0));
-      line_count = -line_count - 1;
-    } else {
-      ADD(args, INTEGER_OBJ(-1)); // append to last line
+    if (pass_stdin && !stdin_isatty) {
+      Array arg = ARRAY_DICT_INIT;
+      ADD(arg, INTEGER_OBJ(3));
+      rpc_send_event(rc_id, "nvim_read_stdin", arg);
+      close(0);
+      dup(2);
     }
-    ADD(args, INTEGER_OBJ(-1));
-    ADD(args, BOOLEAN_OBJ(false));
-    ADD(args, ARRAY_OBJ(copy_array(array)));
-
-    rpc_send_event(rc_id, "nvim_buf_set_lines", args);
-    api_free_object(l);
-
-    ml_delete((linenr_T)1, false);
   }
-
+  
   Array args = ARRAY_DICT_INIT;
   UI *ui = get_ui_by_index(1);
   int width = ui->width;

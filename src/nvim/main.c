@@ -381,9 +381,9 @@ int main(int argc, char **argv)
   if (TUI_process) {
     // Read file (text, not commands) from stdin if:
     //    - stdin is not a tty
-    if (params.edit_type == EDIT_STDIN && !recoverymode) {
-      read_stdin();
-    }
+    // if (params.edit_type == EDIT_STDIN && !recoverymode) {
+    //   read_stdin();
+    // }
     input_stop();  // Stop reading input, let the UI take over.
     uint64_t rv = ui_client_start(params.server_name, params.argc, params.argv, 
                                   (params.edit_type == EDIT_STDIN 

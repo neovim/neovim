@@ -270,7 +270,7 @@ readfile(
     int flags
 )
 {
-  int fd = 0;
+  int fd = stdin_filedesc;
   int newfile = (flags & READ_NEW);
   int check_readonly;
   int filtering = (flags & READ_FILTER);
@@ -1732,7 +1732,7 @@ failed:
   xfree(buffer);
 
   if (read_stdin) {
-    close(0);
+    close(fd);
 #ifndef WIN32
     // On Unix, use stderr for stdin, makes shell commands work.
     vim_ignored = dup(2);

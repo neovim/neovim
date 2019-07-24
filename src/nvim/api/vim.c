@@ -45,6 +45,7 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/ui.h"
+#include <unistd.h>
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -2354,3 +2355,34 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   }
   return ret;
 }
+
+Boolean nvim_read_stdin(uint64_t channel_id, Integer filedesc, Error *err)
+FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  stdin_isatty = os_isatty((int)filedesc);
+  stdin_filedesc = (int)filedesc;
+  return true;
+}
+
+// // Read text from stdin.
+// static int read_stdin(void)
+// {
+//   // When getting the ATTENTION prompt here, use a dialog.
+//   swap_exists_action = SEA_DIALOG;
+//   no_wait_return = true;
+//   int save_msg_didany = msg_didany;
+//   set_buflisted(true);
+//   int rv = open_buffer(true, NULL, 0);  // create memfile and read file
+//   if (BUFEMPTY() && curbuf->b_next != NULL) {
+//     // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
+//     do_cmdline_cmd("silent! bnext");
+//     // Delete the empty stdin buffer.
+//     do_cmdline_cmd("bwipeout 1");
+//   }
+//   no_wait_return = false;
+//   msg_didany = save_msg_didany;
+//   TIME_MSG("reading stdin");
+
+//   return rv;
+//   // check_swap_exists_action();
+// }

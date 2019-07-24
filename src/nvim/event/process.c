@@ -63,7 +63,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   int status;
   switch (proc->type) {
     case kProcessTypeUv:
-      status = libuv_process_spawn((LibuvProcess *)proc);
+      status = libuv_process_spawn((LibuvProcess *)proc);      
       break;
     case kProcessTypePty:
       status = pty_process_spawn((PtyProcess *)proc);
