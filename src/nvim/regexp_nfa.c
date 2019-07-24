@@ -1493,13 +1493,13 @@ static int nfa_regatom(void)
 
     default:
     {
-      long n = 0;
-      int cmp = c;
+      int64_t n = 0;
+      const int cmp = c;
 
       if (c == '<' || c == '>')
         c = getchr();
       while (ascii_isdigit(c)) {
-        if (n > (INT_MAX - (c - '0')) / 10) {
+        if (n > (INT32_MAX - (c - '0')) / 10) {
           EMSG(_("E951: \\% value too large"));
           return FAIL;
         }
@@ -1507,7 +1507,7 @@ static int nfa_regatom(void)
         c = getchr();
       }
       if (c == 'l' || c == 'c' || c == 'v') {
-        int limit = INT_MAX;
+        int32_t limit = INT32_MAX;
 
         if (c == 'l') {
           // \%{n}l  \%{n}<l  \%{n}>l
@@ -1524,7 +1524,7 @@ static int nfa_regatom(void)
           // \%{n}v  \%{n}<v  \%{n}>v
           EMIT(cmp == '<' ? NFA_VCOL_LT :
                cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
-          limit = INT_MAX / MB_MAXBYTES;
+          limit = INT32_MAX / MB_MAXBYTES;
         }
         if (n >= limit) {
           EMSG(_("E951: \\% value too large"));
