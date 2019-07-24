@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 import shlex
+import traceback
 
 from vimspector import ( breakpoints,
                          code,
@@ -63,6 +64,8 @@ class DebugSession( object ):
     self._server_capabilities = {}
 
   def Start( self, launch_variables = {} ):
+    self._logger.info( "User requested start debug session with %s",
+                       launch_variables )
     self._configuration = None
     self._adapter = None
 
@@ -162,13 +165,16 @@ class DebugSession( object ):
 
   def _StartWithConfiguration( self, configuration, adapter ):
     def start():
+      self._logger.debug( "Starting debugger from stack context: %s",
+                          traceback.format_stack() )
+
       self._configuration = configuration
       self._adapter = adapter
 
-      self._logger.info( 'Configuration: {0}'.format( json.dumps(
-        self._configuration ) ) )
-      self._logger.info( 'Adapter: {0}'.format( json.dumps(
-        self._adapter ) ) )
+      self._logger.info( 'Configuration: %s',
+                         json.dumps( self._configuration ) )
+      self._logger.info( 'Adapter: %s',
+                         json.dumps( self._adapter ) )
 
       if not self._uiTab:
         self._SetUpUI()
@@ -319,9 +325,9 @@ class DebugSession( object ):
       self._variablesView.ShowBalloon( self._stackTraceView.GetCurrentFrame(),
                                        expression )
     else:
-      self._logger.debug( 'Winnr {0} is not the code window {1}'.format(
-        winnr,
-        self._codeView._window.number ) )
+      self._logger.debug( 'Winnr %s is not the code window %s',
+                          winnr,
+                          self._codeView._window.number )
 
   def ExpandFrameOrThread( self ):
     self._stackTraceView.ExpandFrameOrThread()
@@ -394,8 +400,8 @@ class DebugSession( object ):
                          persist = True )
       return
 
-    self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
-      self._adapter ) ) )
+    self._logger.info( 'Starting debug adapter with: %s',
+                       json.dumps( self._adapter ) )
 
     self._init_complete = False
     self._on_init_complete_handlers = []
