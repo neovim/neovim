@@ -77,7 +77,7 @@ if(NOT status_code EQUAL 0)
   # Retry on certain errors, e.g. CURLE_COULDNT_RESOLVE_HOST, which is often
   # seen with libtermkey (www.leonerd.org.uk).
   if(status_code EQUAL 6)  # "Couldn't resolve host name"
-    message(STATUS "error: downloading '${URL}' failed (${status_string}, status ${status_code}) - retrying in 10s...")
+    message(STATUS "warning: retrying '${URL}' (${status_string}, status ${status_code})")
     execute_process(COMMAND ${CMAKE_COMMAND} -E sleep 10)
     file(DOWNLOAD ${URL} ${file}
       ${timeout_args}
