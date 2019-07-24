@@ -450,12 +450,12 @@ end
 function Screen:expect_unchanged(waittime_ms, ignore_attrs, request_cb)
   waittime_ms = waittime_ms and waittime_ms or 100
   -- Collect the current screen state.
-  self:sleep(waittime_ms, request_cb)
+  self:sleep(0, request_cb)
   local kwargs = self:get_snapshot(nil, ignore_attrs)
-  -- Wait for potential changes.
-  self:sleep(waittime_ms, request_cb)
+
+  -- Check that screen state does not change.
   kwargs.unchanged = true
-  -- Check that screen state did not change.
+  kwargs.timeout = waittime_ms
   self:expect(kwargs)
 end
 

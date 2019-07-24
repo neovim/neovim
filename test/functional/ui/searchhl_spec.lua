@@ -158,6 +158,7 @@ describe('search highlighting', function()
       bar foo baz
     ]])
     feed('/foo')
+    helpers.wait()
     screen:expect_unchanged()
   end)
 
