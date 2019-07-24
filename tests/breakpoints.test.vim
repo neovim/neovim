@@ -124,7 +124,9 @@ function! Test_Use_Mappings_HUMAN()
   call feedkeys( "\<F10>", 'xt' )
 
   call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
-  call vimspector#test#signs#AssertPCIsAtLineInBuffer( '%', 16 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cp', 16 )
+        \ } )
 
   call vimspector#test#setup#Reset()
 
@@ -145,7 +147,9 @@ function Test_StopAtEntry()
   call feedkeys( "\<F5>", 'xt' )
 
   call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
-  call vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+        \ } )
 
   call vimspector#test#setup#Reset()
 
@@ -166,7 +170,9 @@ function Test_DisableBreakpointWhileDebugging()
   call feedkeys( "\<F5>", 'xt' )
 
   call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
-  call vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+        \ } )
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
 
   call setpos( '.', [ 0, 16, 1 ] )
@@ -200,7 +206,9 @@ function Test_DisableBreakpointWhileDebugging()
   call setpos( '.', [ 0, 15, 1 ] )
   call feedkeys( "\<F5>", 'xt' )
   call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
-  call vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 16 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 16 )
+        \ } )
 
   call vimspector#Reset()
   call WaitForAssert( {->

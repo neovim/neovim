@@ -15,23 +15,29 @@ function! vimspector#test#signs#AssertPCIsAtLineInBuffer( buffer, line ) abort
     \ 'group': 'VimspectorCode',
     \ } )
 
-  call assert_equal( 1, len( signs ), 'Number of buffers named ' . a:buffer )
-  call assert_true( len( signs[ 0 ].signs ) >= 1,
-                  \ 'At least one VimspectorCode sign' )
+  if assert_equal( 1, len( signs ), 'Number of buffers named ' . a:buffer )
+    return 1
+  endif
+
+  if assert_true( len( signs[ 0 ].signs ) >= 1,
+                \ 'At least one VimspectorCode sign' )
+    return 1
+  endif
 
   let pc_index = -1
   let index = 0
   while index < len( signs[ 0 ].signs )
     let s = signs[ 0 ].signs[ index ]
     if s.name ==# 'vimspectorPC'
-      call assert_false( pc_index >= 0, 'Too many PC signs' )
+      if assert_false( pc_index >= 0, 'Too many PC signs' )
+        return 1
+      endif
       let pc_index = index
     endif
     let index = index + 1
   endwhile
-  call assert_true( pc_index >= 0 )
-  call assert_equal( a:line, signs[ 0 ].signs[ pc_index ].lnum )
-
+  return assert_true( pc_index >= 0 ) ||
+       \ assert_equal( a:line, signs[ 0 ].signs[ pc_index ].lnum )
 endfunction
 
 function! vimspector#test#signs#AssertSignGroupSingletonAtLine( group,
