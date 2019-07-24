@@ -60,7 +60,7 @@ stages:
     pool:
       vmImage: 'macOS-10.13'
     steps:
-    - bash: brew install macvim
+    - bash: brew install --HEAD --fetch-HEAD macvim
       displayName: 'Install vim'
 
     - bash: python3 install_gadget.py --all
