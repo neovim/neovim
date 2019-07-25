@@ -3961,7 +3961,7 @@ addstate (
 
   // This function is called recursively.  When the depth is too much we run
   // out of stack and crash, limit recursiveness here.
-  if (++depth >= 10000 || subs == NULL) {
+  if (++depth >= 5000 || subs == NULL) {
     depth--;
     return NULL;
   }
