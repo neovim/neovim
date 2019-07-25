@@ -85,3 +85,9 @@ func Test_multi_failure()
   call assert_fails('/a\{a}', 'E870:')
   set re=0
 endfunc
+
+func Test_recursive_addstate()
+  " This will call addstate() recursively until it runs into the limit.
+  let lnum = search('\v((){328}){389}')
+  call assert_equal(0, lnum)
+endfunc
