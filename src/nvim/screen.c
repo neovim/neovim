@@ -1477,7 +1477,7 @@ static void win_update(win_T *wp)
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
-      win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.Rows, at_attr);
+      win_draw_end(wp, '@', ' ', true, srow, wp->w_grid.Rows, HLF_AT);
       wp->w_botline = lnum;
     }
   } else {
@@ -1593,6 +1593,7 @@ static int win_fill_end(win_T *wp, int c1, int c2, int off, int width, int row,
 static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
                          int endrow, hlf_T hl)
 {
+  assert(hl >= 0 && hl < HLF_COUNT);
   int n = 0;
 
   if (draw_margin) {
@@ -1615,8 +1616,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, bool draw_margin, int row,
     }
   }
 
-  int attr = hl_combine_attr(wp->w_hl_attr_normal,
-                             hl ? win_hl_attr(wp, hl) : 0);
+  int attr = hl_combine_attr(wp->w_hl_attr_normal, win_hl_attr(wp, hl));
 
   if (wp->w_p_rl) {
     grid_fill(&wp->w_grid, row, endrow, wp->w_wincol, W_ENDCOL(wp) - 1 - n,
