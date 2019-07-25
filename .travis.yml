@@ -136,7 +136,7 @@ jobs:
       os: linux
       compiler: gcc-9
       env:
-        - GCOV=gcov
+        - GCOV=gcov-9
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
         - GCOV_ERROR_FILE="/tmp/libgcov-errors.log"
         - *common-job-env
