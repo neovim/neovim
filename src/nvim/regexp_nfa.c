@@ -4082,7 +4082,7 @@ skip_add:
     /* When there are backreferences or PIMs the number of states may
      * be (a lot) bigger than anticipated. */
     if (l->n == l->len) {
-      int newlen = l->len * 3 / 2 + 50;
+      const int newlen = l->len * 3 / 2 + 50;
 
       if (subs != &temp_subs) {
         /* "subs" may point into the current array, need to make a
@@ -4093,7 +4093,8 @@ skip_add:
         subs = &temp_subs;
       }
 
-      l->t = xrealloc(l->t, newlen * sizeof(nfa_thread_T));
+      nfa_thread_T *const newt = xrealloc(l->t, newlen * sizeof(*newt));
+      l->t = newt;
       l->len = newlen;
     }
 
@@ -4342,7 +4343,7 @@ static regsubs_T *addstate_here(
    * addstate(). */
   regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
   if (r == NULL) {
-    return r;
+    return NULL;
   }
 
   // when "*ip" was at the end of the list, nothing to do
@@ -4362,9 +4363,10 @@ static regsubs_T *addstate_here(
     if (l->n + count - 1 >= l->len) {
       /* not enough space to move the new states, reallocate the list
        * and move the states to the right position */
+      const int newlen = l->len * 3 / 2 + 50;
 
-      l->len = l->len * 3 / 2 + 50;
-      nfa_thread_T *newl = xmalloc(l->len * sizeof(nfa_thread_T));
+      nfa_thread_T *const newl = xmalloc(newlen * sizeof(*newl));
+      l->len = newlen;
       memmove(&(newl[0]),
           &(l->t[0]),
           sizeof(nfa_thread_T) * listidx);

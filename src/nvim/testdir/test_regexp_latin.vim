@@ -91,3 +91,10 @@ func Test_recursive_addstate()
   let lnum = search('\v((){328}){389}')
   call assert_equal(0, lnum)
 endfunc
+
+func Test_out_of_memory()
+  new
+  s/^/,n
+  " This will be slow...
+  call assert_fails('call search("\\v((n||<)+);")', 'E363:')
+endfunc
