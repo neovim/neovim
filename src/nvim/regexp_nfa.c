@@ -3932,13 +3932,13 @@ state_in_list (
 // Add "state" and possibly what follows to state list ".".
 // Returns "subs_arg", possibly copied into temp_subs.
 // Returns NULL when recursiveness is too deep.
-static regsubs_T *
-addstate (
-    nfa_list_T *l,             /* runtime state list */
-    nfa_state_T *state,         /* state to update */
-    regsubs_T *subs_arg,      /* pointers to subexpressions */
-    nfa_pim_T *pim,           /* postponed look-behind match */
-    int off_arg)    /* byte offset, when -1 go to next line */
+static regsubs_T *addstate(
+    nfa_list_T *l,        // runtime state list
+    nfa_state_T *state,   // state to update
+    regsubs_T *subs_arg,  // pointers to subexpressions
+    nfa_pim_T *pim,       // postponed look-behind match
+    int off_arg)          // byte offset, when -1 go to next line
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int subidx;
   int off = off_arg;
@@ -4339,6 +4339,7 @@ static regsubs_T *addstate_here(
     nfa_pim_T *pim,       // postponed look-behind match
     int *ip
 )
+  FUNC_ATTR_NONNULL_ARG(1, 2, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int tlen = l->n;
   int count;
