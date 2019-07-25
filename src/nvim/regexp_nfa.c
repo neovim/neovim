@@ -4079,11 +4079,17 @@ skip_add:
         goto skip_add;
     }
 
-    /* When there are backreferences or PIMs the number of states may
-     * be (a lot) bigger than anticipated. */
+    // When there are backreferences or PIMs the number of states may
+    // be (a lot) bigger than anticipated.
     if (l->n == l->len) {
       const int newlen = l->len * 3 / 2 + 50;
+      const size_t newsize = newlen * sizeof(nfa_thread_T);
 
+      if ((long)(newsize >> 10) >= p_mmp) {
+        EMSG(_(e_maxmempat));
+        depth--;
+        return NULL;
+      }
       if (subs != &temp_subs) {
         /* "subs" may point into the current array, need to make a
          * copy before it becomes invalid. */
@@ -4093,7 +4099,7 @@ skip_add:
         subs = &temp_subs;
       }
 
-      nfa_thread_T *const newt = xrealloc(l->t, newlen * sizeof(*newt));
+      nfa_thread_T *const newt = xrealloc(l->t, newsize);
       l->t = newt;
       l->len = newlen;
     }
@@ -4364,8 +4370,13 @@ static regsubs_T *addstate_here(
       /* not enough space to move the new states, reallocate the list
        * and move the states to the right position */
       const int newlen = l->len * 3 / 2 + 50;
+      const size_t newsize = newlen * sizeof(nfa_thread_T);
 
-      nfa_thread_T *const newl = xmalloc(newlen * sizeof(*newl));
+      if ((long)(newsize >> 10) >= p_mmp) {
+        EMSG(_(e_maxmempat));
+        return NULL;
+      }
+      nfa_thread_T *const newl = xmalloc(newsize);
       l->len = newlen;
       memmove(&(newl[0]),
           &(l->t[0]),
