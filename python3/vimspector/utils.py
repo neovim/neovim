@@ -343,7 +343,7 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
     obj[ k ] = expand_refs_in_object( obj[ k ] )
 
 
-def ParseVariables( variables ):
+def ParseVariables( variables, mapping, **kwargs ):
   new_variables = {}
   for n, v in variables.items():
     if isinstance( v, dict ):
@@ -353,7 +353,7 @@ def ParseVariables( variables ):
 
         new_v = v.copy()
         # Bit of a hack. Allows environment variables to be used.
-        ExpandReferencesInDict( new_v, {} )
+        ExpandReferencesInDict( new_v, mapping, **kwargs )
 
         env = os.environ.copy()
         env.update( new_v.get( 'env' ) or {} )
@@ -380,3 +380,10 @@ def DisplayBaloon( is_term, display ):
 
   vim.eval( "balloon_show( {0} )".format(
     json.dumps( display ) ) )
+
+
+def GetBufferFilepath( buf ):
+  if not buf.name:
+    return ''
+
+  return os.path.normpath( buf.name )

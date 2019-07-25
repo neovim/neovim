@@ -107,15 +107,47 @@ class DebugSession( object ):
     # TODO: Do we want some form of persistence ? e.g. self._staticVariables,
     # set from an api call like SetLaunchParam( 'var', 'value' ), perhaps also a
     # way to load .vimspector.local.json which just sets variables
+    #
+    # Additional vars as defined by VSCode:
+    #
+    # ${workspaceFolder} - the path of the folder opened in VS Code
+    # ${workspaceFolderBasename} - the name of the folder opened in VS Code
+    #                              without any slashes (/)
+    # ${file} - the current opened file
+    # ${relativeFile} - the current opened file relative to workspaceFolder
+    # ${fileBasename} - the current opened file's basename
+    # ${fileBasenameNoExtension} - the current opened file's basename with no
+    #                              file extension
+    # ${fileDirname} - the current opened file's dirname
+    # ${fileExtname} - the current opened file's extension
+    # ${cwd} - the task runner's current working directory on startup
+    # ${lineNumber} - the current selected line number in the active file
+    # ${selectedText} - the current selected text in the active file
+    # ${execPath} - the path to the running VS Code executable
+
+    current_file = utils.GetBufferFilepath( vim.current.buffer )
+
     self._variables = {
       'dollar': '$', # HACK. Hote '$$' also works.
       'workspaceRoot': self._workspace_root,
-      'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() )
+      'workspaceFolder': self._workspace_root,
+      'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() ),
+      'file': current_file,
+      'relativeFile': os.path.relpath( current_file, self._workspace_root ),
+      'fileBasename': os.path.basename( current_file ),
+      'fileBasenameNoExtension':
+        os.path.splitext( os.path.basename( current_file ) )[ 0 ],
+      'fileDirname': os.path.dirname( current_file ),
+      'fileExtname':
+        os.path.splitext( os.path.basename( current_file ) )[ 1 ],
+      'cwd': os.getcwd(),
     }
     self._variables.update(
-      utils.ParseVariables( adapter.get( 'variables', {} ) ) )
+      utils.ParseVariables( adapter.get( 'variables', {} ),
+                            self._variables ) )
     self._variables.update(
-      utils.ParseVariables( configuration.get( 'variables', {} ) ) )
+      utils.ParseVariables( configuration.get( 'variables', {} ),
+                            self._variables ) )
     self._variables.update( launch_variables )
 
     utils.ExpandReferencesInDict( configuration, self._variables )
