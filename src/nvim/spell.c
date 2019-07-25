@@ -3262,7 +3262,7 @@ static void spell_suggest_file(suginfo_T *su, char_u *fname)
   char_u cword[MAXWLEN];
 
   // Open the file.
-  fd = mch_fopen((char *)fname, "r");
+  fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
     EMSG2(_(e_notopen), fname);
     return;

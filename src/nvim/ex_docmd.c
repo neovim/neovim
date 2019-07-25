@@ -8106,8 +8106,9 @@ open_exfile (
     return NULL;
   }
 
-  if ((fd = mch_fopen((char *)fname, mode)) == NULL)
+  if ((fd = os_fopen((char *)fname, mode)) == NULL) {
     EMSG2(_("E190: Cannot open \"%s\" for writing"), fname);
+  }
 
   return fd;
 }

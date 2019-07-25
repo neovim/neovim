@@ -2844,7 +2844,7 @@ static void ins_compl_files(int count, char_u **files, int thesaurus, int flags,
   int add_r;
 
   for (i = 0; i < count && !got_int && !compl_interrupted; i++) {
-    fp = mch_fopen((char *)files[i], "r");      /* open dictionary file */
+    fp = os_fopen((char *)files[i], "r");  // open dictionary file
     if (flags != DICT_EXACT) {
       vim_snprintf((char *)IObuff, IOSIZE,
                    _("Scanning dictionary: %s"), (char *)files[i]);

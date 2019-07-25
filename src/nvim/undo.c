@@ -1299,7 +1299,7 @@ void u_read_undo(char *name, char_u *hash, char_u *orig_name)
     verbose_leave();
   }
 
-  FILE *fp = mch_fopen(file_name, "r");
+  FILE *fp = os_fopen(file_name, "r");
   if (fp == NULL) {
     if (name != NULL || p_verbose > 0) {
       EMSG2(_("E822: Cannot open undo file for reading: %s"), file_name);

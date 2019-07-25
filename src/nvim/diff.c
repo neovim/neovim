@@ -951,7 +951,7 @@ static int check_external_diff(diffio_T *diffio)
   TriState ok = kFalse;
   for (;;) {
     ok = kFalse;
-    FILE *fd = mch_fopen((char *)diffio->dio_orig.din_fname, "w");
+    FILE *fd = os_fopen((char *)diffio->dio_orig.din_fname, "w");
 
     if (fd == NULL) {
       io_error = true;
@@ -960,7 +960,7 @@ static int check_external_diff(diffio_T *diffio)
         io_error = true;
       }
       fclose(fd);
-      fd = mch_fopen((char *)diffio->dio_new.din_fname, "w");
+      fd = os_fopen((char *)diffio->dio_new.din_fname, "w");
 
       if (fd == NULL) {
         io_error = true;
@@ -971,7 +971,7 @@ static int check_external_diff(diffio_T *diffio)
         fclose(fd);
         fd = NULL;
         if (diff_file(diffio) == OK) {
-          fd = mch_fopen((char *)diffio->dio_diff.dout_fname, "r");
+          fd = os_fopen((char *)diffio->dio_diff.dout_fname, "r");
         }
 
         if (fd == NULL) {
@@ -1505,7 +1505,7 @@ static void diff_read(int idx_orig, int idx_new, diffout_T *dout)
   if (dout->dout_fname == NULL) {
     diffstyle = DIFF_UNIFIED;
   } else {
-    fd = mch_fopen((char *)dout->dout_fname, "r");
+    fd = os_fopen((char *)dout->dout_fname, "r");
     if (fd == NULL) {
       EMSG(_("E98: Cannot read diff output"));
       return;

@@ -1670,7 +1670,7 @@ static int prt_open_resource(struct prt_ps_resource_S *resource)
   FILE        *fd_resource;
   struct prt_dsc_line_S dsc_line;
 
-  fd_resource = mch_fopen((char *)resource->filename, READBIN);
+  fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     EMSG2(_("E624: Can't open file \"%s\""), resource->filename);
     return FALSE;
@@ -2343,11 +2343,11 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
       EMSG(_(e_notmp));
       return FAIL;
     }
-    prt_ps_fd = mch_fopen((char *)prt_ps_file_name, WRITEBIN);
+    prt_ps_fd = os_fopen((char *)prt_ps_file_name, WRITEBIN);
   } else {
     p = expand_env_save(psettings->outfile);
     if (p != NULL) {
-      prt_ps_fd = mch_fopen((char *)p, WRITEBIN);
+      prt_ps_fd = os_fopen((char *)p, WRITEBIN);
       xfree(p);
     }
   }
@@ -2382,7 +2382,7 @@ static int prt_add_resource(struct prt_ps_resource_S *resource)
   char_u resource_buffer[512];
   size_t bytes_read;
 
-  fd_resource = mch_fopen((char *)resource->filename, READBIN);
+  fd_resource = os_fopen((char *)resource->filename, READBIN);
   if (fd_resource == NULL) {
     EMSG2(_("E456: Can't open file \"%s\""), resource->filename);
     return FALSE;

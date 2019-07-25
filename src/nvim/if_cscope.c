@@ -1008,10 +1008,10 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose,
     qf_info_T   *qi = NULL;
     win_T       *wp = NULL;
 
-    f = mch_fopen((char *)tmp, "w");
-    if (f == NULL)
+    f = os_fopen((char *)tmp, "w");
+    if (f == NULL) {
       EMSG2(_(e_notopen), tmp);
-    else {
+    } else {
       cs_file_results(f, nummatches);
       fclose(f);
       if (use_ll)           /* Use location list */

@@ -990,7 +990,7 @@ void profile_dump(void)
   FILE        *fd;
 
   if (profile_fname != NULL) {
-    fd = mch_fopen((char *)profile_fname, "w");
+    fd = os_fopen((char *)profile_fname, "w");
     if (fd == NULL) {
       EMSG2(_(e_notopen), profile_fname);
     } else {
@@ -1139,7 +1139,7 @@ static void script_dump_profile(FILE *fd)
       fprintf(fd, "\n");
       fprintf(fd, "count  total (s)   self (s)\n");
 
-      sfd = mch_fopen((char *)si->sn_name, "r");
+      sfd = os_fopen((char *)si->sn_name, "r");
       if (sfd == NULL) {
         fprintf(fd, "Cannot open file!\n");
       } else {
@@ -2858,7 +2858,7 @@ static int requires_py_version(char_u *filename)
     lines = 5;
   }
 
-  file = mch_fopen((char *)filename, "r");
+  file = os_fopen((char *)filename, "r");
   if (file != NULL) {
     for (i = 0; i < lines; i++) {
       if (vim_fgets(IObuff, IOSIZE, file)) {
