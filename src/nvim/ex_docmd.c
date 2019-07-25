@@ -2451,7 +2451,7 @@ static char_u *find_command(exarg_T *eap, int *full)
 
     if (ASCII_ISLOWER(eap->cmd[0])) {
       const int c1 = eap->cmd[0];
-      const int c2 = eap->cmd[1];
+      const int c2 = len == 1 ? NUL : eap->cmd[1];
 
       if (command_count != (int)CMD_SIZE) {
         iemsg((char *)_("E943: Command table needs to be updated, run 'make'"));

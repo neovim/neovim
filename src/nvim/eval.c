@@ -15731,7 +15731,7 @@ static void f_setwinvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
 static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 {
-  if (check_restricted() || check_secure()) {
+  if (check_secure()) {
     return;
   }
 

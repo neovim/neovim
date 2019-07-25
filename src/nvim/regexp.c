@@ -247,9 +247,9 @@
 
 #define BRACE_COMPLEX   140 /* -149 node Match nodes between m & n times */
 
-#define NOPEN           150     /*	Mark this point in input as start of
-                                 \%( subexpr. */
-#define NCLOSE          151     /*	Analogous to NOPEN. */
+#define NOPEN           150     // Mark this point in input as start of
+                                // \%( subexpr.
+#define NCLOSE          151     // Analogous to NOPEN.
 
 #define MULTIBYTECODE   200     /* mbc	Match one multi-byte character */
 #define RE_BOF          201     /*	Match "" at beginning of file. */
@@ -348,13 +348,13 @@ typedef enum regstate_E {
  * more things.
  */
 typedef struct regitem_S {
-  regstate_T rs_state;          /* what we are doing, one of RS_ above */
-  char_u      *rs_scan;         /* current node in program */
+  regstate_T rs_state;          // what we are doing, one of RS_ above
+  uint16_t   rs_no;             // submatch nr or BEHIND/NOBEHIND
+  char_u     *rs_scan;          // current node in program
   union {
     save_se_T sesave;
     regsave_T regsave;
-  } rs_un;                      /* room for saving reginput */
-  short rs_no;                  /* submatch nr or BEHIND/NOBEHIND */
+  } rs_un;                      // room for saving reginput
 } regitem_T;
 
 

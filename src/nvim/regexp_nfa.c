@@ -1493,16 +1493,22 @@ static int nfa_regatom(void)
 
     default:
     {
-      long n = 0;
-      int cmp = c;
+      int64_t n = 0;
+      const int cmp = c;
 
       if (c == '<' || c == '>')
         c = getchr();
       while (ascii_isdigit(c)) {
+        if (n > (INT32_MAX - (c - '0')) / 10) {
+          EMSG(_("E951: \\% value too large"));
+          return FAIL;
+        }
         n = n * 10 + (c - '0');
         c = getchr();
       }
       if (c == 'l' || c == 'c' || c == 'v') {
+        int32_t limit = INT32_MAX;
+
         if (c == 'l') {
           // \%{n}l  \%{n}<l  \%{n}>l
           EMIT(cmp == '<' ? NFA_LNUM_LT :
@@ -1518,13 +1524,12 @@ static int nfa_regatom(void)
           // \%{n}v  \%{n}<v  \%{n}>v
           EMIT(cmp == '<' ? NFA_VCOL_LT :
                cmp == '>' ? NFA_VCOL_GT : NFA_VCOL);
+          limit = INT32_MAX / MB_MAXBYTES;
         }
-#if SIZEOF_INT < SIZEOF_LONG
-        if (n > INT_MAX) {
+        if (n >= limit) {
           EMSG(_("E951: \\% value too large"));
           return FAIL;
         }
-#endif
         EMIT((int)n);
         break;
       } else if (c == '\'' && n == 0) {
@@ -3926,13 +3931,14 @@ state_in_list (
 
 // Add "state" and possibly what follows to state list ".".
 // Returns "subs_arg", possibly copied into temp_subs.
-static regsubs_T *
-addstate (
-    nfa_list_T *l,             /* runtime state list */
-    nfa_state_T *state,         /* state to update */
-    regsubs_T *subs_arg,      /* pointers to subexpressions */
-    nfa_pim_T *pim,           /* postponed look-behind match */
-    int off_arg)    /* byte offset, when -1 go to next line */
+// Returns NULL when recursiveness is too deep.
+static regsubs_T *addstate(
+    nfa_list_T *l,        // runtime state list
+    nfa_state_T *state,   // state to update
+    regsubs_T *subs_arg,  // pointers to subexpressions
+    nfa_pim_T *pim,       // postponed look-behind match
+    int off_arg)          // byte offset, when -1 go to next line
+  FUNC_ATTR_NONNULL_ARG(1, 2) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int subidx;
   int off = off_arg;
@@ -3951,6 +3957,14 @@ addstate (
 #ifdef REGEXP_DEBUG
   int did_print = FALSE;
 #endif
+  static int depth = 0;
+
+  // This function is called recursively.  When the depth is too much we run
+  // out of stack and crash, limit recursiveness here.
+  if (++depth >= 5000 || subs == NULL) {
+    depth--;
+    return NULL;
+  }
 
   if (off_arg <= -ADDSTATE_HERE_OFFSET) {
     add_here = true;
@@ -4054,6 +4068,7 @@ skip_add:
                   abs(state->id), l->id, state->c, code,
                   pim == NULL ? "NULL" : "yes", l->has_pim, found);
 #endif
+        depth--;
         return subs;
         }
       }
@@ -4064,11 +4079,17 @@ skip_add:
         goto skip_add;
     }
 
-    /* When there are backreferences or PIMs the number of states may
-     * be (a lot) bigger than anticipated. */
+    // When there are backreferences or PIMs the number of states may
+    // be (a lot) bigger than anticipated.
     if (l->n == l->len) {
-      int newlen = l->len * 3 / 2 + 50;
+      const int newlen = l->len * 3 / 2 + 50;
+      const size_t newsize = newlen * sizeof(nfa_thread_T);
 
+      if ((long)(newsize >> 10) >= p_mmp) {
+        EMSG(_(e_maxmempat));
+        depth--;
+        return NULL;
+      }
       if (subs != &temp_subs) {
         /* "subs" may point into the current array, need to make a
          * copy before it becomes invalid. */
@@ -4078,7 +4099,8 @@ skip_add:
         subs = &temp_subs;
       }
 
-      l->t = xrealloc(l->t, newlen * sizeof(nfa_thread_T));
+      nfa_thread_T *const newt = xrealloc(l->t, newsize);
+      l->t = newt;
       l->len = newlen;
     }
 
@@ -4197,6 +4219,9 @@ skip_add:
     }
 
     subs = addstate(l, state->out, subs, pim, off_arg);
+    if (subs == NULL) {
+      break;
+    }
     // "subs" may have changed, need to set "sub" again.
     if (state->c >= NFA_ZOPEN && state->c <= NFA_ZOPEN9) {  // -V560
       sub = &subs->synt;
@@ -4218,7 +4243,7 @@ skip_add:
     if (nfa_has_zend && (REG_MULTI
                          ? subs->norm.list.multi[0].end_lnum >= 0
                          : subs->norm.list.line[0].end != NULL)) {
-      /* Do not overwrite the position set by \ze. */
+      // Do not overwrite the position set by \ze.
       subs = addstate(l, state->out, subs, pim, off_arg);
       break;
     }
@@ -4279,6 +4304,9 @@ skip_add:
     }
 
     subs = addstate(l, state->out, subs, pim, off_arg);
+    if (subs == NULL) {
+      break;
+    }
     // "subs" may have changed, need to set "sub" again.
     if (state->c >= NFA_ZCLOSE && state->c <= NFA_ZCLOSE9) {  // -V560
       sub = &subs->synt;
@@ -4294,6 +4322,7 @@ skip_add:
     sub->in_use = save_in_use;
     break;
   }
+  depth--;
   return subs;
 }
 
@@ -4303,14 +4332,14 @@ skip_add:
  * This makes sure the order of states to be tried does not change, which
  * matters for alternatives.
  */
-static void 
-addstate_here (
-    nfa_list_T *l,         /* runtime state list */
-    nfa_state_T *state,     /* state to update */
-    regsubs_T *subs,      /* pointers to subexpressions */
-    nfa_pim_T *pim,       /* postponed look-behind match */
+static regsubs_T *addstate_here(
+    nfa_list_T *l,        // runtime state list
+    nfa_state_T *state,   // state to update
+    regsubs_T *subs,      // pointers to subexpressions
+    nfa_pim_T *pim,       // postponed look-behind match
     int *ip
 )
+  FUNC_ATTR_NONNULL_ARG(1, 2, 5) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int tlen = l->n;
   int count;
@@ -4319,26 +4348,37 @@ addstate_here (
   /* First add the state(s) at the end, so that we know how many there are.
    * Pass the listidx as offset (avoids adding another argument to
    * addstate(). */
-  addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
+  regsubs_T *r = addstate(l, state, subs, pim, -listidx - ADDSTATE_HERE_OFFSET);
+  if (r == NULL) {
+    return NULL;
+  }
 
-  /* when "*ip" was at the end of the list, nothing to do */
-  if (listidx + 1 == tlen)
-    return;
+  // when "*ip" was at the end of the list, nothing to do
+  if (listidx + 1 == tlen) {
+    return r;
+  }
 
-  /* re-order to put the new state at the current position */
+  // re-order to put the new state at the current position
   count = l->n - tlen;
-  if (count == 0)
-    return;     /* no state got added */
+  if (count == 0) {
+    return r;  // no state got added
+  }
   if (count == 1) {
-    /* overwrite the current state */
+    // overwrite the current state
     l->t[listidx] = l->t[l->n - 1];
   } else if (count > 1) {
     if (l->n + count - 1 >= l->len) {
       /* not enough space to move the new states, reallocate the list
        * and move the states to the right position */
+      const int newlen = l->len * 3 / 2 + 50;
+      const size_t newsize = newlen * sizeof(nfa_thread_T);
 
-      l->len = l->len * 3 / 2 + 50;
-      nfa_thread_T *newl = xmalloc(l->len * sizeof(nfa_thread_T));
+      if ((long)(newsize >> 10) >= p_mmp) {
+        EMSG(_(e_maxmempat));
+        return NULL;
+      }
+      nfa_thread_T *const newl = xmalloc(newsize);
+      l->len = newlen;
       memmove(&(newl[0]),
           &(l->t[0]),
           sizeof(nfa_thread_T) * listidx);
@@ -4363,6 +4403,8 @@ addstate_here (
   }
   --l->n;
   *ip = listidx - 1;
+
+  return r;
 }
 
 /*
@@ -4992,6 +5034,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
   int add_count;
   int add_off = 0;
   int toplevel = start->c == NFA_MOPEN;
+  regsubs_T *r;
 #ifdef NFA_REGEXP_DEBUG_LOG
   FILE        *debug = fopen(NFA_REGEXP_DEBUG_LOG, "a");
 
@@ -5059,9 +5102,14 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
     } else
       m->norm.list.line[0].start = reginput;
     m->norm.in_use = 1;
-    addstate(thislist, start->out, m, NULL, 0);
-  } else
-    addstate(thislist, start, m, NULL, 0);
+    r = addstate(thislist, start->out, m, NULL, 0);
+  } else {
+    r = addstate(thislist, start, m, NULL, 0);
+  }
+  if (r == NULL) {
+    nfa_match = NFA_TOO_EXPENSIVE;
+    goto theend;
+  }
 
 #define ADD_STATE_IF_MATCH(state) \
   if (result) { \
@@ -5328,8 +5376,11 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           // t->state->out1 is the corresponding END_INVISIBLE
           // node; Add its out to the current list (zero-width
           // match).
-          addstate_here(thislist, t->state->out1->out, &t->subs,
-              &pim, &listidx);
+          if (addstate_here(thislist, t->state->out1->out, &t->subs,
+                            &pim, &listidx) == NULL) {
+            nfa_match = NFA_TOO_EXPENSIVE;
+            goto theend;
+          }
         }
       }
       break;
@@ -6145,12 +6196,17 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
           pim = &pim_copy;
         }
 
-        if (add_here)
-          addstate_here(thislist, add_state, &t->subs, pim, &listidx);
-        else {
-          addstate(nextlist, add_state, &t->subs, pim, add_off);
-          if (add_count > 0)
+        if (add_here) {
+          r = addstate_here(thislist, add_state, &t->subs, pim, &listidx);
+        } else {
+          r = addstate(nextlist, add_state, &t->subs, pim, add_off);
+          if (add_count > 0) {
             nextlist->t[nextlist->n - 1].count = add_count;
+          }
+        }
+        if (r == NULL) {
+          nfa_match = NFA_TOO_EXPENSIVE;
+          goto theend;
         }
       }
     }     // for (thislist = thislist; thislist->state; thislist++)
@@ -6220,10 +6276,17 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
               (colnr_T)(reginput - regline) + clen;
           else
             m->norm.list.line[0].start = reginput + clen;
-          addstate(nextlist, start->out, m, NULL, clen);
+          if (addstate(nextlist, start->out, m, NULL, clen) == NULL) {
+            nfa_match = NFA_TOO_EXPENSIVE;
+            goto theend;
+          }
         }
-      } else
-        addstate(nextlist, start, m, NULL, clen);
+      } else {
+        if (addstate(nextlist, start, m, NULL, clen) == NULL) {
+          nfa_match = NFA_TOO_EXPENSIVE;
+          goto theend;
+        }
+      }
     }
 
 #ifdef REGEXP_DEBUG
