@@ -18,12 +18,16 @@ if ! [ -f "$codecov_sh" ]; then
   curl --retry 5 --silent --fail -o "$codecov_sh" https://codecov.io/bash
   chmod +x "$codecov_sh"
 
-  python3 -m pip install --quiet --user gcovr
+  python3 -m pip install --quiet --user https://github.com/RPGillespie6/fastcov/archive/master.zip
 fi
 
 (
   cd build
-  python3 -m gcovr --branches --exclude-unreachable-branches --print-summary -j 2 --exclude '.*/auto/.*' --root .. --delete -o ../coverage.xml --xml
+  fastcov -b --lcov -o lcov.info -i ../src --gcov "$GCOV"
+
+  # DEBUG
+  lcov --version
+  lcov --rc lcov_branch_coverage=1 --list lcov.info
 )
 
 # Upload to codecov.
@@ -36,13 +40,12 @@ fi
 # Flags must match pattern ^[\w\,]+$ ("," as separator).
 codecov_flags="$(uname -s),${1}"
 codecov_flags=$(echo "$codecov_flags" | sed 's/[^,_a-zA-Z0-9]/_/g')
-if ! "$codecov_sh" -f coverage.xml -X gcov -X fix -Z -F "${codecov_flags}"; then
+if ! "$codecov_sh" -f build/lcov.info -X gcov -X fix -Z -F "${codecov_flags}"; then
   echo "codecov upload failed."
 fi
 
 # Cleanup always, especially collected data.
 find . \( -name '*.gcov' -o -name '*.gcda' \) -ls -delete | wc -l
-rm -f coverage.xml
 
 # Upload Lua coverage  (generated manually on AppVeyor/Windows).
 if [ "$USE_LUACOV" = 1 ] && [ "$1" != "oldtest" ]; then

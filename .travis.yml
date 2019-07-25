@@ -117,6 +117,8 @@ jobs:
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages:
             - *common-apt-packages
+            # DEBUG
+            - lcov
             - gcc-9
     - if: branch = master AND commit_message !~ /\[skip.lint\]/
       name: lint
