@@ -15,13 +15,8 @@ coverage:
   range: "70...100"
 
   status:
-    project:
-      default:
-        threshold: 1
-    patch:
-      default:
-        threshold: 1
-        only_pulls: true
+    project: yes
+    patch: yes
     changes: no
 
 comment: off
