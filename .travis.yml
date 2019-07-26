@@ -49,10 +49,22 @@ env:
     - CCACHE_CPP2=1
 
 anchors:
-  envs: &common-job-env
-    # Do not fall back to cache for "master" for PR on "release" branch:
-    # adds the target branch to the cache key.
-    FOR_TRAVIS_CACHE=$TRAVIS_BRANCH
+  jobs: &common_job
+    # 1. Skip jobs using "[skip JOB_GROUP]".
+    # 2. Only run certain jobs using "[only JOB_GROUP]"
+    # 3. Only run "lint" job on master branch (or PRs for master)
+    #
+    # Currently the following job groups are handled: "coverage", "lint".
+    if: |
+      commit_message !~ concat('\[skip.',env(JOB_GROUP),'\]') AND \
+      (commit_message !~ /\[only.*\]/ OR \
+       commit_message =~ concat('\[only.',env(JOB_GROUP),'\]')) AND \
+      (env(JOB_GROUP) != lint OR branch = master)
+
+    env: &common-job-env
+      # Do not fall back to cache for "master" for PR on "release" branch:
+      # adds the target branch to the cache key.
+      FOR_TRAVIS_CACHE=$TRAVIS_BRANCH
 
 addons:
   apt:
@@ -85,6 +97,7 @@ addons:
 jobs:
   include:
     - stage: baseline
+      <<: *common_job
       name: clang-asan
       os: linux
       compiler: clang
@@ -94,6 +107,7 @@ jobs:
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         - *common-job-env
     - name: gcc-functionaltest-lua
+      <<: *common_job
       os: linux
       compiler: gcc
       env:
@@ -102,6 +116,7 @@ jobs:
         - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
         - *common-job-env
     - name: gcc-32bit
+      <<: *common_job
       os: linux
       # Travis creates a cache per compiler. Set a different value here to
       # store 32-bit dependencies in a separate cache.
@@ -111,25 +126,27 @@ jobs:
         # Minimum required CMake.
         - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
         - *common-job-env
-    - if: branch = master AND commit_message !~ /\[skip.lint\]/
-      name: lint
+    - name: lint
+      <<: *common_job
       os: linux
       env:
         - CI_TARGET=lint
+        - JOB_GROUP=lint
         - *common-job-env
 
     - stage: second stage
       name: "macOS: clang"
+      <<: *common_job
       os: osx
       compiler: clang
       osx_image: xcode10.2  # macOS 10.14
-      env:
-        - *common-job-env
 
     - name: gcc-coverage (gcc 9)
+      <<: *common_job
       os: linux
       compiler: gcc-9
       env:
+        - JOB_GROUP=coverage
         - GCOV=gcov-9
         - CMAKE_FLAGS="$CMAKE_FLAGS -DUSE_GCOV=ON"
         - GCOV_ERROR_FILE="/tmp/libgcov-errors.log"
@@ -143,6 +160,7 @@ jobs:
             - gcc-9
 
     - name: clang-tsan
+      <<: *common_job
       os: linux
       compiler: clang
       env:

@@ -18,6 +18,14 @@ init:
       $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
       Exit-AppVeyorBuild
     }
+    # Support "[only coverage]" to run only the coverage job.
+    if ($env:APPVEYOR_REPO_COMMIT_MESSAGE -match '[only coverage]') {
+      if ($env:CONFIGURATION -notmatch '-gcov$') {
+        $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
+        Set-PSDebug -Off
+        Exit-AppVeyorBuild
+      }
+    }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 matrix:
