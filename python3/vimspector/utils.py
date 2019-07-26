@@ -33,6 +33,10 @@ def SetUpLogging( logger ):
     logger.addHandler( _log_handler )
 
 
+_logger = logging.getLogger( __name__ )
+SetUpLogging( _logger )
+
+
 def BufferNumberForFile( file_name ):
   return int( vim.eval( 'bufnr( "{0}", 1 )'.format( file_name ) ) )
 
@@ -343,33 +347,45 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
     obj[ k ] = expand_refs_in_object( obj[ k ] )
 
 
-def ParseVariables( variables, mapping, **kwargs ):
+def ParseVariables( variables_list, mapping, **kwargs ):
   new_variables = {}
-  for n, v in variables.items():
-    if isinstance( v, dict ):
-      if 'shell' in v:
-        import subprocess
-        import shlex
+  new_mapping = mapping.copy()
 
-        new_v = v.copy()
-        # Bit of a hack. Allows environment variables to be used.
-        ExpandReferencesInDict( new_v, mapping, **kwargs )
+  if not isinstance( variables_list, list ):
+    variables_list = [ variables_list ]
 
-        env = os.environ.copy()
-        env.update( new_v.get( 'env' ) or {} )
-        cmd = new_v[ 'shell' ]
-        if not isinstance( cmd, list ):
-          cmd = shlex.split( cmd )
+  for variables in variables_list:
+    new_mapping.update( new_variables )
+    for n, v in variables.items():
+      if isinstance( v, dict ):
+        if 'shell' in v:
+          import subprocess
+          import shlex
 
-        new_variables[ n ] = subprocess.check_output(
-          cmd,
-          cwd = new_v.get( 'cwd' ) or os.getcwd(),
-          env = env ).decode( 'utf-8' ).strip()
+          new_v = v.copy()
+          # Bit of a hack. Allows environment variables to be used.
+          ExpandReferencesInDict( new_v, new_mapping, **kwargs )
+
+          env = os.environ.copy()
+          env.update( new_v.get( 'env' ) or {} )
+          cmd = new_v[ 'shell' ]
+          if not isinstance( cmd, list ):
+            cmd = shlex.split( cmd )
+
+          new_variables[ n ] = subprocess.check_output(
+            cmd,
+            cwd = new_v.get( 'cwd' ) or os.getcwd(),
+            env = env ).decode( 'utf-8' ).strip()
+
+          _logger.debug( "Set new_variables[ %s ] to '%s' from %s",
+                         n,
+                         new_variables[ n ],
+                         new_v )
+        else:
+          raise ValueError(
+            "Unsupported variable defn {}: Missing 'shell'".format( n ) )
       else:
-        raise ValueError(
-          "Unsupported variable defn {}: Missing 'shell'".format( n ) )
-    else:
-      new_variables[ n ] = v
+        new_variables[ n ] = v
 
   return new_variables
 
