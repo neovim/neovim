@@ -609,8 +609,7 @@ static void win_update(win_T *wp)
                                    updating.  999 when no bot area updating */
   int scrolled_down = FALSE;            /* TRUE when scrolled down when
                                            w_topline got smaller a bit */
-  matchitem_T *cur;             /* points to the match list */
-  int top_to_mod = FALSE;              /* redraw above mod_top */
+  bool top_to_mod = false;      // redraw above mod_top
 
   int row;                      /* current window row to display */
   linenr_T lnum;                /* current buffer lnum to display */
@@ -705,21 +704,20 @@ static void win_update(win_T *wp)
       if (mod_bot == 0 || mod_bot < buf->b_mod_bot)
         mod_bot = buf->b_mod_bot;
 
-      /* When 'hlsearch' is on and using a multi-line search pattern, a
-       * change in one line may make the Search highlighting in a
-       * previous line invalid.  Simple solution: redraw all visible
-       * lines above the change.
-       * Same for a match pattern.
-       */
+      // When 'hlsearch' is on and using a multi-line search pattern, a
+      // change in one line may make the Search highlighting in a
+      // previous line invalid.  Simple solution: redraw all visible
+      // lines above the change.
+      // Same for a match pattern.
       if (search_hl.rm.regprog != NULL
-          && re_multiline(search_hl.rm.regprog))
-        top_to_mod = TRUE;
-      else {
-        cur = wp->w_match_head;
+          && re_multiline(search_hl.rm.regprog)) {
+        top_to_mod = true;
+      } else {
+        const matchitem_T *cur = wp->w_match_head;
         while (cur != NULL) {
           if (cur->match.regprog != NULL
               && re_multiline(cur->match.regprog)) {
-            top_to_mod = TRUE;
+            top_to_mod = true;
             break;
           }
           cur = cur->next;
