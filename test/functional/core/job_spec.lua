@@ -655,7 +655,6 @@ describe('jobs', function()
     end)
 
     it('can be called recursively', function()
-      if helpers.pending_win32(pending) then return end  -- TODO: Need `cat`.
       source([[
       let g:opts = {}
       let g:counter = 0
