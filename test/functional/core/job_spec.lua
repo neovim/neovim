@@ -690,12 +690,15 @@ describe('jobs', function()
         \ ])
       endfunction
       ]])
-      feed_command('call Run()')
+      command('call Run()')
       local r
+      local inspect = require('vim.inspect')
       for i = 10, 1, -1 do
         r = next_msg()
+        print(i, "msg1", inspect(r))
         eq('job '..i..' closed', r[3][1])
         r = next_msg()
+        print(i, "msg2", inspect(r))
         eq('job '..i..' exited', r[3][1])
       end
       eq(10, nvim('eval', 'g:counter'))
