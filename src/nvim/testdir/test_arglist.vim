@@ -74,7 +74,6 @@ func Test_argadd()
   call assert_equal(1, len(argv()))
   call assert_equal('some file', get(argv(), 0, ''))
 
-  call delete('Xargadd')
   %argd
   new
   arga
@@ -451,4 +450,11 @@ func Test_arg_all_expand()
   next notexist Xx\ x runtest.vim
   call assert_equal('notexist Xx\ x runtest.vim', expand('##'))
   call delete('Xx x')
+endfunc
+
+func Test_large_arg()
+  " Argument longer or equal to the number of columns used to cause
+  " access to invalid memory.
+  exe 'argadd ' .repeat('x', &columns)
+  args
 endfunc
