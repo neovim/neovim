@@ -1303,8 +1303,9 @@ find_tags (
           }
         }
 
-        if ((fp = mch_fopen((char *)tag_fname, "r")) == NULL)
+        if ((fp = os_fopen((char *)tag_fname, "r")) == NULL) {
           continue;
+        }
 
         if (p_verbose >= 5) {
           verbose_enter();

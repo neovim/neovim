@@ -22,6 +22,7 @@ describe('fileio', function()
     os.remove('Xtest_startup_file1')
     os.remove('Xtest_startup_file1~')
     os.remove('Xtest_startup_file2')
+    os.remove('Xtest_тест.md')
     rmdir('Xtest_startup_swapdir')
   end)
 
@@ -85,7 +86,22 @@ describe('fileio', function()
 
     eq('foobar', foobar_contents);
     eq('foo', bar_contents);
+  end)
 
+  it('readfile() on multibyte filename #10586', function()
+    clear()
+    local text = {
+      'line1',
+      '  ...line2...  ',
+      '',
+      'line3!',
+      'тест yay тест.',
+      '',
+    }
+    local fname = 'Xtest_тест.md'
+    funcs.writefile(text, fname, 's')
+    table.insert(text, '')
+    eq(text, funcs.readfile(fname, 'b'))
   end)
 end)
 

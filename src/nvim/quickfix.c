@@ -863,7 +863,7 @@ qf_init_ext(
   fields.errmsg = xmalloc(fields.errmsglen);
   fields.pattern = xmalloc(CMDBUFFSIZE + 1);
 
-  if (efile != NULL && (state.fd = mch_fopen((char *)efile, "r")) == NULL) {
+  if (efile != NULL && (state.fd = os_fopen((char *)efile, "r")) == NULL) {
     EMSG2(_(e_openerrf), efile);
     goto qf_init_end;
   }
@@ -5495,7 +5495,7 @@ void ex_helpgrep(exarg_T *eap)
                                + STRLEN(fnames[fi]) - 3, 3) == 0)) {
             continue;
           }
-          fd = mch_fopen((char *)fnames[fi], "r");
+          fd = os_fopen((char *)fnames[fi], "r");
           if (fd != NULL) {
             lnum = 1;
             while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {

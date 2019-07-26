@@ -404,10 +404,11 @@ end:
 /// calls (read, write, lseek, fcntl, etc.). If the operation fails, a libuv
 /// error code is returned, and no file is created or modified.
 ///
+/// @param path Filename
 /// @param flags Bitwise OR of flags defined in <fcntl.h>
 /// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
-/// @return file descriptor, or libuv error code on failure
+/// @return file descriptor, or negative error code on failure
 int os_open(const char *path, int flags, int mode)
 {
   if (path == NULL) {  // uv_fs_open asserts on NULL. #7561
@@ -416,6 +417,68 @@ int os_open(const char *path, int flags, int mode)
   int r;
   RUN_UV_FS_FUNC(r, uv_fs_open, path, flags, mode, NULL);
   return r;
+}
+
+/// Compatibility wrapper conforming to fopen(3).
+///
+/// Windows: works with UTF-16 filepaths by delegating to libuv (os_open).
+///
+/// Future: remove this, migrate callers to os/fileio.c ?
+///         But file_open_fd does not support O_RDWR yet.
+///
+/// @param path  Filename
+/// @param flags  String flags, one of { r w a r+ w+ a+ rb wb ab }
+/// @return FILE pointer, or NULL on error.
+FILE *os_fopen(const char *path, const char *flags)
+{
+  assert(flags != NULL && strlen(flags) > 0 && strlen(flags) <= 2);
+  int iflags = 0;
+  // Per table in fopen(3) manpage.
+  if (flags[1] == '\0' || flags[1] == 'b') {
+    switch (flags[0]) {
+      case 'r':
+        iflags = O_RDONLY;
+        break;
+      case 'w':
+        iflags = O_WRONLY | O_CREAT | O_TRUNC;
+        break;
+      case 'a':
+        iflags = O_WRONLY | O_CREAT | O_APPEND;
+        break;
+      default:
+        abort();
+    }
+#ifdef WIN32
+    if (flags[1] == 'b') {
+      iflags |= O_BINARY;
+    }
+#endif
+  } else {
+    // char 0 must be one of ('r','w','a').
+    // char 1 is always '+' ('b' is handled above).
+    assert(flags[1] == '+');
+    switch (flags[0]) {
+      case 'r':
+        iflags = O_RDWR;
+        break;
+      case 'w':
+        iflags = O_RDWR | O_CREAT | O_TRUNC;
+        break;
+      case 'a':
+        iflags = O_RDWR | O_CREAT | O_APPEND;
+        break;
+      default:
+        abort();
+    }
+  }
+  // Per open(2) manpage.
+  assert((iflags|O_RDONLY) || (iflags|O_WRONLY) || (iflags|O_RDWR));
+  // Per fopen(3) manpage: default to 0666, it will be umask-adjusted.
+  int fd = os_open(path, iflags, 0666);
+  if (fd < 0) {
+    return NULL;
+  }
+  return fdopen(fd, flags);
 }
 
 /// Sets file descriptor `fd` to close-on-exec.
@@ -829,12 +892,12 @@ int os_mkdir_recurse(const char *const dir, int32_t mode,
   // We're done when it's "/" or "c:/".
   const size_t dirlen = strlen(dir);
   char *const curdir = xmemdupz(dir, dirlen);
-  char *const past_head = (char *) get_past_head((char_u *) curdir);
+  char *const past_head = (char *)get_past_head((char_u *)curdir);
   char *e = curdir + dirlen;
   const char *const real_end = e;
   const char past_head_save = *past_head;
-  while (!os_isdir((char_u *) curdir)) {
-    e = (char *) path_tail_with_sep((char_u *) curdir);
+  while (!os_isdir((char_u *)curdir)) {
+    e = (char *)path_tail_with_sep((char_u *)curdir);
     if (e <= past_head) {
       *past_head = NUL;
       break;
@@ -986,7 +1049,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 ///
 /// @return `true` if the two FileInfos represent the same file.
 bool os_fileinfo_id_equal(const FileInfo *file_info_1,
-                           const FileInfo *file_info_2)
+                          const FileInfo *file_info_2)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino

@@ -13616,7 +13616,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Always open the file in binary mode, library functions have a mind of
   // their own about CR-LF conversion.
   const char *const fname = tv_get_string(&argvars[0]);
-  if (*fname == NUL || (fd = mch_fopen(fname, READBIN)) == NULL) {
+  if (*fname == NUL || (fd = os_fopen(fname, READBIN)) == NULL) {
     EMSG2(_(e_notopen), *fname == NUL ? _("<empty>") : fname);
     return;
   }

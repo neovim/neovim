@@ -586,7 +586,7 @@ spell_load_file (
   int c = 0;
   int res;
 
-  fd = mch_fopen((char *)fname, "r");
+  fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
     if (!silent)
       EMSG2(_(e_notopen), fname);
@@ -885,9 +885,10 @@ void suggest_load_files(void)
         continue;
       }
       STRCPY(dotp, ".sug");
-      fd = mch_fopen((char *)slang->sl_fname, "r");
-      if (fd == NULL)
+      fd = os_fopen((char *)slang->sl_fname, "r");
+      if (fd == NULL) {
         goto nextone;
+      }
 
       // <SUGHEADER>: <fileID> <versionnr> <timestamp>
       for (i = 0; i < VIMSUGMAGICL; ++i)
@@ -1984,7 +1985,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   char_u      *sofoto = NULL;           // SOFOTO value
 
   // Open the file.
-  fd = mch_fopen((char *)fname, "r");
+  fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
     EMSG2(_(e_notopen), fname);
     return NULL;
@@ -3019,7 +3020,7 @@ static int spell_read_dic(spellinfo_T *spin, char_u *fname, afffile_T *affile)
   int duplicate = 0;
 
   // Open the file.
-  fd = mch_fopen((char *)fname, "r");
+  fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
     EMSG2(_(e_notopen), fname);
     return FAIL;
@@ -3539,7 +3540,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
   int regionmask;
 
   // Open the file.
-  fd = mch_fopen((char *)fname, "r");
+  fd = os_fopen((char *)fname, "r");
   if (fd == NULL) {
     EMSG2(_(e_notopen), fname);
     return FAIL;
@@ -4185,7 +4186,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
   int retval = OK;
   int regionmask;
 
-  FILE *fd = mch_fopen((char *)fname, "w");
+  FILE *fd = os_fopen((char *)fname, "w");
   if (fd == NULL) {
     EMSG2(_(e_notopen), fname);
     return FAIL;
@@ -4986,7 +4987,7 @@ static int offset2bytes(int nr, char_u *buf)
 static void sug_write(spellinfo_T *spin, char_u *fname)
 {
   // Create the file.  Note that an existing file is silently overwritten!
-  FILE *fd = mch_fopen((char *)fname, "w");
+  FILE *fd = os_fopen((char *)fname, "w");
   if (fd == NULL) {
     EMSG2(_(e_notopen), fname);
     return;
@@ -5365,7 +5366,7 @@ spell_add_word (
   if (bad || undo) {
     // When the word appears as good word we need to remove that one,
     // since its flags sort before the one with WF_BANNED.
-    fd = mch_fopen((char *)fname, "r");
+    fd = os_fopen((char *)fname, "r");
     if (fd != NULL) {
       while (!vim_fgets(line, MAXWLEN * 2, fd)) {
         fpos = fpos_next;
@@ -5376,7 +5377,7 @@ spell_add_word (
           // the start of the line.  Mixing reading and writing
           // doesn't work for all systems, close the file first.
           fclose(fd);
-          fd = mch_fopen((char *)fname, "r+");
+          fd = os_fopen((char *)fname, "r+");
           if (fd == NULL) {
             break;
           }
@@ -5399,7 +5400,7 @@ spell_add_word (
   }
 
   if (!undo) {
-    fd = mch_fopen((char *)fname, "a");
+    fd = os_fopen((char *)fname, "a");
     if (fd == NULL && new_spf) {
       char_u *p;
 
@@ -5415,7 +5416,7 @@ spell_add_word (
         *p = NUL;
         os_mkdir((char *)fname, 0755);
         *p = c;
-        fd = mch_fopen((char *)fname, "a");
+        fd = os_fopen((char *)fname, "a");
       }
     }
 

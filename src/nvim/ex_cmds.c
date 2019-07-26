@@ -4557,7 +4557,7 @@ void ex_help(exarg_T *eap)
     } else {
       // There is no help window yet.
       // Try to open the file specified by the "helpfile" option.
-      if ((helpfd = mch_fopen((char *)p_hf, READBIN)) == NULL) {
+      if ((helpfd = os_fopen((char *)p_hf, READBIN)) == NULL) {
         smsg(_("Sorry, help file \"%s\" not found"), p_hf);
         goto erret;
       }
@@ -5087,7 +5087,7 @@ void fix_help_buffer(void)
                 continue;
               }
 
-              FILE *const fd = mch_fopen((char *)fnames[fi], "r");
+              FILE *const fd = os_fopen((char *)fnames[fi], "r");
               if (fd == NULL) {
                 continue;
               }
@@ -5223,7 +5223,7 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
     return;
   }
 
-  FILE *const fd_tags = mch_fopen((char *)NameBuff, "w");
+  FILE *const fd_tags = os_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);
     FreeWild(filecount, files);
@@ -5247,7 +5247,7 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
    * Go over all the files and extract the tags.
    */
   for (int fi = 0; fi < filecount && !got_int; fi++) {
-    FILE *const fd = mch_fopen((char *)files[fi], "r");
+    FILE *const fd = os_fopen((char *)files[fi], "r");
     if (fd == NULL) {
       EMSG2(_("E153: Unable to open %s for reading"), files[fi]);
       continue;
