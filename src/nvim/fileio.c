@@ -4248,15 +4248,13 @@ void shorten_buf_fname(buf_T *buf, char_u *dirname, int force)
       buf->b_sfname = vim_strsave(p);
       buf->b_fname = buf->b_sfname;
     }
-    if (p == NULL || buf->b_fname == NULL) {
+    if (p == NULL) {
       buf->b_fname = buf->b_ffname;
     }
   }
 }
 
-/*
- * Shorten filenames for all buffers.
- */
+/// Shorten filenames for all buffers.
 void shorten_fnames(int force)
 {
   char_u dirname[MAXPATHL];
@@ -4265,8 +4263,8 @@ void shorten_fnames(int force)
   FOR_ALL_BUFFERS(buf) {
       shorten_buf_fname(buf, dirname, force);
 
-    /* Always make the swap file name a full path, a "nofile" buffer may
-     * also have a swap file. */
+    // Always make the swap file name a full path, a "nofile" buffer may
+    // also have a swap file.
     mf_fullname(buf->b_ml.ml_mfp);
   }
   status_redraw_all();
