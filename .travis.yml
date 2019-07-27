@@ -125,12 +125,6 @@ jobs:
       osx_image: xcode10.2  # macOS 10.14
       env:
         - *common-job-env
-    - name: "macOS: gcc"
-      os: osx
-      compiler: gcc
-      osx_image: xcode10.2  # macOS 10.14
-      env:
-        - *common-job-env
 
     - name: gcc-coverage (gcc 9)
       os: linux
