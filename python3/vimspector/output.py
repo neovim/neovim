@@ -103,7 +103,7 @@ class OutputView( object ):
         if 'E516' not in e:
           raise
 
-    self._buffers.clear()
+    self._buffers = {}
 
   def _ShowOutput( self, category ):
     utils.JumpToWindow( self._window )

@@ -126,7 +126,7 @@ endfunc
 " When running into the timeout an exception is thrown, thus the function does
 " not return.
 func WaitFor(expr, ...)
-  let timeout = get(a:000, 0, 5000)
+  let timeout = get(a:000, 0, 10000)
   let slept = s:WaitForCommon(a:expr, v:null, timeout)
   if slept < 0
     throw 'WaitFor() timed out after ' . timeout . ' msec'
@@ -134,8 +134,9 @@ func WaitFor(expr, ...)
   return slept
 endfunc
 
-" Wait for up to five seconds for "assert" to return zero.  "assert" must be a
-" (lambda) function containing one assert function.  Example:
+" Wait for up to five seconds for "assert" to return without adding to v:errors.
+" "assert" must be a (lambda) function containing one assert function.
+" Example:
 "	call WaitForAssert({-> assert_equal("dead", job_status(job)})
 "
 " A second argument can be used to specify a different timeout in msec.
@@ -160,13 +161,15 @@ func s:WaitForCommon(expr, assert, timeout)
   endif
 
   while 1
+    let errors_before = len( v:errors )
     if type(a:expr) == v:t_func
       let success = a:expr()
     elseif type(a:assert) == v:t_func
-      let success = a:assert() == 0
+      let success = a:assert() == 0 && len( v:errors ) == errors_before
     else
       let success = eval(a:expr)
     endif
+
     if success
       return slept
     endif
@@ -174,9 +177,10 @@ func s:WaitForCommon(expr, assert, timeout)
     if slept >= a:timeout
       break
     endif
+
     if type(a:assert) == v:t_func
-      " Remove the error added by the assert function.
-      call remove(v:errors, -1)
+      " Remove the errors added by the assert function.
+      call remove(v:errors, -1 * len( v:errors ) - errors_before )
     endif
 
     sleep 10m

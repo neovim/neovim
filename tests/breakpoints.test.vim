@@ -1,20 +1,9 @@
-source lib/shared.vim
-
 function! SetUp()
-  if exists ( 'g:loaded_vimpector' )
-    unlet g:loaded_vimpector
-  endif
-
-  source vimrc
-
-  " This is a bit of a hack
-  runtime! plugin/**/*.vim
+  call vimspector#test#setup#SetUpWithMappings( v:none )
 endfunction
 
 function! ClearDown()
-  if exists( '*vimspector#internal#state#Reset' )
-    call vimspector#internal#state#Reset()
-  endif
+  call vimspector#test#setup#ClearDown()
 endfunction
 
 function! SetUp_Test_Mappings_Are_Added_HUMAN()
@@ -62,40 +51,27 @@ function! Test_Signs_Placed_Using_API_Are_Shown()
   call vimspector#ToggleBreakpoint()
 
   call assert_true( exists( '*vimspector#ToggleBreakpoint' ) )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ) )
-  call assert_equal( 1, len( signs[ 0 ].signs ) )
-  call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                                           \ line( '.' ),
+                                                           \ 'vimspectorBP' )
 
   " Disable breakpoint
   call vimspector#ToggleBreakpoint()
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ) )
-  call assert_equal( 1, len( signs[ 0 ].signs ) )
-  call assert_equal( 'vimspectorBPDisabled', signs[ 0 ].signs[ 0 ].name )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
+        \ 'VimspectorBP',
+        \ line( '.' ),
+        \ 'vimspectorBPDisabled' )
 
   " Remove breakpoint
   call vimspector#ToggleBreakpoint()
 
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ) )
-  call assert_equal( 0, len( signs[ 0 ].signs ) )
+  call vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorBP',
+                                                       \ line( '.' ) )
 
   call vimspector#ClearBreakpoints()
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
+
   %bwipeout!
 endfunction
 
@@ -106,54 +82,34 @@ endfunction
 function! Test_Use_Mappings_HUMAN()
   lcd testdata/cpp/simple
   edit simple.cpp
+  call setpos( '.', [ 0, 15, 1 ] )
 
-  15
-  call assert_equal( 15, line( '.' ) )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
+  call vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorBP', 15 )
 
-  " Add the breakpoing
+  " Add the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 1, len( signs[ 0 ].signs ), 1 )
-  call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                                           \ 15,
+                                                           \ 'vimspectorBP' )
 
   " Disable the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 1, len( signs[ 0 ].signs ), 1 )
-  call assert_equal( 'vimspectorBPDisabled', signs[ 0 ].signs[ 0 ].name )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
+        \ 'VimspectorBP',
+        \ 15,
+        \ 'vimspectorBPDisabled' )
 
   " Delete the breakpoint
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 0, len( signs[ 0 ].signs ) )
+  call vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorBP', 15 )
 
   " Add it again
   call feedkeys( "\<F9>", 'xt' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP',
-    \ 'line': line( '.' )
-    \ } )
-
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 1, len( signs[ 0 ].signs ), 1 )
-  call assert_equal( 'vimspectorBP', signs[ 0 ].signs[ 0 ].name )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
+        \ 'VimspectorBP',
+        \ 15,
+        \ 'vimspectorBP' )
 
   " Here we go. Start Debugging
   call feedkeys( "\<F5>", 'xt' )
@@ -162,72 +118,130 @@ function! Test_Use_Mappings_HUMAN()
   let cur_tabnr = tabpagenr()
   call assert_equal( 5, len( gettabinfo( cur_tabnr )[ 0 ].windows ) )
 
-  call WaitForAssert( {->
-        \ assert_equal( 'simple.cpp', bufname( '%' ), 'Current buffer' )
-        \ }, 10000 )
-  call assert_equal( 15, line( '.' ), 'Current line' )
-  call assert_equal( 1, col( '.' ), 'Current column' )
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorCode',
-    \ } )
-
-  call assert_equal( 1, len( signs ), 'Sign-buffers' )
-  call assert_equal( 2, len( signs[ 0 ].signs ), 'Signs in buffer' )
-
-  let pc_index = -1
-  let index = 0
-  while index < len( signs[ 0 ].signs )
-    let s = signs[ 0 ].signs[ index ]
-    if s.name ==# 'vimspectorPC'
-      if pc_index >= 0
-        call assert_report( 'Found too many PC signs!' )
-      endif
-      let pc_index = index
-    endif
-    let index = index + 1
-  endwhile
-  call assert_true( pc_index >= 0 )
-  call assert_equal( 15, signs[ 0 ].signs[ pc_index ].lnum )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
 
   " Step
   call feedkeys( "\<F10>", 'xt' )
 
-  call WaitForAssert( {-> assert_equal( 16, line( '.' ), 'Current line' ) } )
-  call assert_equal( 'simple.cpp', bufname( '%' ), 'Current buffer' )
-  call assert_equal( 1, col( '.' ), 'Current column' )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cp', 16 )
+        \ } )
 
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorCode',
-    \ } )
+  call vimspector#test#setup#Reset()
 
-  call assert_equal( 1, len( signs ), 'Sign-buffers' )
-  call assert_equal( 2, len( signs[ 0 ].signs ), 'Signs in buffer' )
+  lcd -
+  %bwipeout!
+endfunction
 
-  let pc_index = -1
-  let index = 0
-  while index < len( signs[ 0 ].signs )
-    let s = signs[ 0 ].signs[ index ]
-    if s.name ==# 'vimspectorPC'
-      if pc_index >= 0
-        call assert_report( 'Found too many PC signs!' )
-      endif
-      let pc_index = index
-    endif
-    let index = index + 1
-  endwhile
-  call assert_true( pc_index >= 0 )
-  call assert_equal( 16, signs[ 0 ].signs[ pc_index ].lnum )
+function! SetUp_Test_StopAtEntry()
+  let g:vimspector_enable_mappings = 'HUMAN'
+endfunction
+
+function Test_StopAtEntry()
+  lcd testdata/cpp/simple
+  edit simple.cpp
+  call setpos( '.', [ 0, 1, 1 ] )
+
+  " Test stopAtEntry behaviour
+  call feedkeys( "\<F5>", 'xt' )
+
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+        \ } )
+
+  call vimspector#test#setup#Reset()
+
+  lcd -
+  %bwipeout!
+endfunction
+
+function! SetUp_Test_DisableBreakpointWhileDebugging()
+  let g:vimspector_enable_mappings = 'HUMAN'
+endfunction
+
+function Test_DisableBreakpointWhileDebugging()
+  lcd testdata/cpp/simple
+  edit simple.cpp
+  call setpos( '.', [ 0, 15, 1 ] )
+
+  " Test stopAtEntry behaviour
+  call feedkeys( "\<F5>", 'xt' )
+
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 15, 1 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 15 )
+        \ } )
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
+
+  call setpos( '.', [ 0, 16, 1 ] )
+
+  " Add the breakpoint
+  call feedkeys( "\<F9>", 'xt' )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertSignGroupSingletonAtLine(
+          \ 'VimspectorCode',
+          \ 16,
+          \ 'vimspectorBP' )
+        \ } )
+
+  " Remove the breakpoint
+  call feedkeys( "\<F9>", 'xt' )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorCode',
+                                                          \ 16 )
+        \ } )
+
+  " Add the breakpoint
+  call feedkeys( "\<F9>", 'xt' )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertSignGroupSingletonAtLine(
+           \ 'VimspectorCode',
+           \ 16,
+           \ 'vimspectorBP' )
+        \ } )
+
+  " Run to breakpoint
+  call setpos( '.', [ 0, 15, 1 ] )
+  call feedkeys( "\<F5>", 'xt' )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( 'simple.cpp', 16, 1 )
+  call WaitForAssert( {->
+        \ vimspector#test#signs#AssertPCIsAtLineInBuffer( 'simple.cpp', 16 )
+        \ } )
 
   call vimspector#Reset()
+  call WaitForAssert( {->
+        \ assert_true ( pyxeval( '_vimspector_session._connection is None' ) )
+        \ } )
+  call WaitForAssert( {->
+        \ assert_true( pyxeval( '_vimspector_session._uiTab is None' ) )
+        \ } )
+
+  " Check breakpoint is now a user breakpoint
+  call setpos( '.', [ bufnr( 'simple.cpp' ), 1, 1 ] )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
+        \ 'VimspectorBP',
+        \ 16,
+        \ 'vimspectorBP' )
+
+  " Disable the breakpoint
+  call setpos( '.', [ bufnr( 'simple.cpp' ), 16, 1 ] )
+  call feedkeys( "\<F9>", 'xt' )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
+        \ 'VimspectorBP',
+        \ 16,
+        \ 'vimspectorBPDisabled' )
+
+  " And delete it
+  call feedkeys( "\<F9>", 'xt' )
+  call vimspector#test#signs#AssertSignGroupEmptyAtLine(
+        \ 'VimspectorBP',
+        \ 16 )
 
   call vimspector#ClearBreakpoints()
-
-  let signs = sign_getplaced( '%', {
-    \ 'group': 'VimspectorBP'
-    \ } )
-  call assert_equal( 1, len( signs ), 1 )
-  call assert_equal( 0, len( signs[ 0 ].signs ) )
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
+  call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
 
   lcd -
   %bwipeout!

@@ -1,15 +1,9 @@
-source lib/shared.vim
-
 function! SetUp()
-  if exists ( 'g:loaded_vimpector' )
-    unlet g:loaded_vimpector
-  endif
+  call vimspector#test#setup#SetUpWithMappings( 'HUMAN' )
+endfunction
 
-  let g:vimspector_enable_mappings = 'HUMAN'
-  source vimrc
-
-  " This is a bit of a hack
-  runtime! plugin/**/*.vim
+function! ClearDown()
+  call vimspector#test#setup#ClearDown()
 endfunction
 
 function! Test_Step_With_Different_Tabpage()

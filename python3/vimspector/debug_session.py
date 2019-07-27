@@ -19,6 +19,7 @@ import json
 import os
 import subprocess
 import shlex
+import traceback
 
 from vimspector import ( breakpoints,
                          code,
@@ -39,6 +40,7 @@ class DebugSession( object ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
+    self._logger.info( "**** INITIALISING NEW VIMSPECTOR SESSION ****" )
     self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
     self._logger.info( 'gadgetDir = %s',
                        install.GetGadgetDir( VIMSPECTOR_HOME,
@@ -63,6 +65,8 @@ class DebugSession( object ):
     self._server_capabilities = {}
 
   def Start( self, launch_variables = {} ):
+    self._logger.info( "User requested start debug session with %s",
+                       launch_variables )
     self._configuration = None
     self._adapter = None
 
@@ -162,13 +166,16 @@ class DebugSession( object ):
 
   def _StartWithConfiguration( self, configuration, adapter ):
     def start():
+      self._logger.debug( "Starting debugger from stack context: %s",
+                          traceback.format_stack() )
+
       self._configuration = configuration
       self._adapter = adapter
 
-      self._logger.info( 'Configuration: {0}'.format( json.dumps(
-        self._configuration ) ) )
-      self._logger.info( 'Adapter: {0}'.format( json.dumps(
-        self._adapter ) ) )
+      self._logger.info( 'Configuration: %s',
+                         json.dumps( self._configuration ) )
+      self._logger.info( 'Adapter: %s',
+                         json.dumps( self._adapter ) )
 
       if not self._uiTab:
         self._SetUpUI()
@@ -183,16 +190,23 @@ class DebugSession( object ):
       self._outputView.ConnectionUp( self._connection )
       self._breakpoints.ConnectionUp( self._connection )
 
-      def update_breakpoints( source, message ):
-        if 'body' not in message:
-          return
-        self._codeView.AddBreakpoints( source,
-                                       message[ 'body' ][ 'breakpoints' ] )
-        self._codeView.ShowBreakpoints()
+      class Handler( breakpoints.ServerBreakpointHandler ):
+        def __init__( self, codeView ):
+          self.codeView = codeView
 
-      self._breakpoints.SetBreakpointsHandler( update_breakpoints )
+        def ClearBreakpoints( self ):
+          self.codeView.ClearBreakpoints()
+
+        def AddBreakpoints( self, source, message ):
+          if 'body' not in message:
+            return
+          self.codeView.AddBreakpoints( source,
+                                        message[ 'body' ][ 'breakpoints' ] )
+
+      self._breakpoints.SetBreakpointsHandler( Handler( self._codeView ) )
 
     if self._connection:
+      self._logger.debug( "_StopDebugAdapter with callback: start" )
       self._StopDebugAdapter( start )
       return
 
@@ -212,6 +226,7 @@ class DebugSession( object ):
     if self._connection:
       self._connection.OnData( data )
 
+
   def OnServerStderr( self, data ):
     self._logger.info( "Server stderr: %s", data )
     if self._outputView:
@@ -227,22 +242,31 @@ class DebugSession( object ):
     self._connection = None
 
   def Stop( self ):
+    self._logger.debug( "Stop debug adapter with no callback" )
     self._StopDebugAdapter()
 
   def Reset( self ):
     if self._connection:
+      self._logger.debug( "Stop debug adapter with callback : self._Reset()" )
       self._StopDebugAdapter( lambda: self._Reset() )
     else:
       self._Reset()
 
   def _Reset( self ):
+    self._logger.info( "Debugging complete." )
     if self._uiTab:
+      self._logger.debug( "Clearing down UI with stack_trace: %s",
+                          traceback.format_stack() )
       vim.current.tabpage = self._uiTab
       self._stackTraceView.Reset()
       self._variablesView.Reset()
       self._outputView.Reset()
       self._codeView.Reset()
       vim.command( 'tabclose!' )
+      self._stackTraceView = None
+      self._variablesView = None
+      self._outputView = None
+      self._codeView = None
       self._uiTab = None
 
     # make sure that we're displaying signs in any still-open buffers
@@ -312,9 +336,9 @@ class DebugSession( object ):
       self._variablesView.ShowBalloon( self._stackTraceView.GetCurrentFrame(),
                                        expression )
     else:
-      self._logger.debug( 'Winnr {0} is not the code window {1}'.format(
-        winnr,
-        self._codeView._window.number ) )
+      self._logger.debug( 'Winnr %s is not the code window %s',
+                          winnr,
+                          self._codeView._window.number )
 
   def ExpandFrameOrThread( self ):
     self._stackTraceView.ExpandFrameOrThread()
@@ -387,8 +411,8 @@ class DebugSession( object ):
                          persist = True )
       return
 
-    self._logger.info( 'Starting debug adapter with: {0}'.format( json.dumps(
-      self._adapter ) ) )
+    self._logger.info( 'Starting debug adapter with: %s',
+                       json.dumps( self._adapter ) )
 
     self._init_complete = False
     self._on_init_complete_handlers = []
@@ -428,12 +452,13 @@ class DebugSession( object ):
 
   def _StopDebugAdapter( self, callback = None ):
     def handler( *args ):
-      vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
-        self._connection_type ) )
-
       if callback:
+        self._logger.debug( "Setting server exit handler before disconnect" )
         assert not self._run_on_server_exit
         self._run_on_server_exit = callback
+
+      vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
+        self._connection_type ) )
 
     arguments = {}
     if self._server_capabilities.get( 'supportTerminateDebuggee' ):
@@ -638,6 +663,11 @@ class DebugSession( object ):
     # doesn't respond top threads request when attaching via gdbserver. At
     # least it would apear that way.
     #
+    # As it turns out this is due to a bug in gdbserver which means that
+    # attachment doesn't work due to sending the signal to the process group
+    # leader rather than the process. The workaround is to manually SIGTRAP the
+    # PID.
+    #
     if self._launch_complete and self._init_complete:
       for h in self._on_init_complete_handlers:
         h()
@@ -719,6 +749,8 @@ class DebugSession( object ):
     self._variablesView.Clear()
 
   def OnServerExit( self, status ):
+    self._logger.info( "The server has terminated with status %s",
+                       status )
     self.Clear()
 
     self._connection.Reset()
@@ -730,11 +762,14 @@ class DebugSession( object ):
     self._ResetServerState()
 
     if self._run_on_server_exit:
+      self._logger.debug( "Running server exit handler" )
       self._run_on_server_exit()
+    else:
+      self._logger.debug( "No server exit handler" )
 
   def OnEvent_terminated( self, message ):
     # We will handle this when the server actually exists
-    utils.UserMessage( "Debugging was terminated." )
+    utils.UserMessage( "Debugging was terminated by the server." )
 
   def OnEvent_output( self, message ):
     if self._outputView:
@@ -771,6 +806,9 @@ class DebugSession( object ):
     return self._breakpoints.ToggleBreakpoint()
 
   def ClearBreakpoints( self ):
+    if self._connection:
+      self._codeView.ClearBreakpoints()
+
     return self._breakpoints.ClearBreakpoints()
 
   def AddFunctionBreakpoint( self, function ):

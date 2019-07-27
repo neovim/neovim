@@ -1,7 +1,11 @@
-CXXFLAGS=-g -O0
+CXXFLAGS=-g -O0 -std=c++17
 
-simple: simple.cpp
+.PHONY: all
+
+TARGETS=simple variables
+
+all: $(TARGETS)
 
 clean:
-	rm -f simple
-	rm -rf simple.dSYM
+	rm -f $(TARGETS)
+	rm -rf $(TARGETS:%=%.dSYM)

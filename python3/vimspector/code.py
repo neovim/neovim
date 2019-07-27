@@ -128,23 +128,11 @@ class CodeView( object ):
     # Not found. Assume new
     self.AddBreakpoints( None, [ bp ] )
 
-  def DeleteBreakpoint( self, bp ):
-    if 'id' not in bp:
-      return
-
-    for _, breakpoint_list in self._breakpoints.items():
-      for index, breakpoint in enumerate( breakpoint_list ):
-        if 'id' in breakpoint and breakpoint[ 'id' ] == bp[ 'id' ]:
-          del breakpoint_list[ index ]
-          return
-
-    # Not found. Shrug.
-
   def _UndisplaySigns( self ):
     for sign_id in self._signs[ 'breakpoints' ]:
       vim.command( 'sign unplace {} group=VimspectorCode'.format( sign_id ) )
 
-    self._signs[ 'breakpoints' ].clear()
+    self._signs[ 'breakpoints' ] = []
 
   def ClearBreakpoints( self ):
     self._UndisplaySigns()
@@ -169,7 +157,7 @@ class CodeView( object ):
                             sign_id,
                             breakpoint[ 'line' ],
                             'vimspectorBP' if breakpoint[ 'verified' ]
-                            else 'vimspectorBPDisabled',
+                                           else 'vimspectorBPDisabled',
                             file_name ) )
 
 

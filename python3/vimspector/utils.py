@@ -69,8 +69,6 @@ def SetUpCommandBuffer( cmd, name ):
       name,
       cmd ) )
 
-  UserMessage( 'Bufs: {}'.format( [ int( b ) for b in bufs ] ), persist = True )
-
   return [ vim.buffers[ b ] for b in bufs ]
 
 
@@ -227,6 +225,11 @@ def Escape( msg ):
 
 
 def UserMessage( msg, persist=False ):
+  if persist:
+    _logger.warning( 'User Msg: ' + msg )
+  else:
+    _logger.info( 'User Msg: ' + msg )
+
   vim.command( 'redraw' )
   cmd = 'echom' if persist else 'echo'
   for line in msg.split( '\n' ):
@@ -283,7 +286,7 @@ def AppendToBuffer( buf, line_or_lines, modified=False ):
   except Exception:
     # There seem to be a lot of Vim bugs that lead to E315, whose help says that
     # this is an internal error. Ignore the error, but write a trace to the log.
-    logging.getLogger( __name__ ).exception(
+    _logger.exception(
       'Internal error while updating buffer %s (%s)', buf.name, buf.number )
   finally:
     if not modified:
