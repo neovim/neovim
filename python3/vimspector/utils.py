@@ -308,8 +308,8 @@ def IsCurrent( window, buf ):
 # TODO: Should we just run the substitution on the whole JSON string instead?
 # That woul dallow expansion in bool and number values, such as ports etc. ?
 def ExpandReferencesInDict( obj, mapping, **kwargs ):
-  def expand_refs_in_string( s ):
-    s = os.path.expanduser( s )
+  def expand_refs_in_string( orig_s ):
+    s = os.path.expanduser( orig_s )
     s = os.path.expandvars( s )
 
     # Parse any variables passed in in mapping, and ask for any that weren't,
@@ -326,6 +326,11 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
         # the key surrounded by '' for unknowable reasons.
         key = e.args[ 0 ]
         mapping[ key ] = AskForInput( 'Enter value for {}: '.format( key ) )
+        _logger.debug( "Value for %s not set in %s (from %s): set to %s",
+                       key,
+                       s,
+                       orig_s,
+                       mapping[ key ] )
       except ValueError as e:
         UserMessage( 'Invalid $ in string {}: {}'.format( s, e ),
                      persist = True )
@@ -380,10 +385,11 @@ def ParseVariables( variables_list, mapping, **kwargs ):
             cwd = new_v.get( 'cwd' ) or os.getcwd(),
             env = env ).decode( 'utf-8' ).strip()
 
-          _logger.debug( "Set new_variables[ %s ] to '%s' from %s",
+          _logger.debug( "Set new_variables[ %s ] to '%s' from %s from %s",
                          n,
                          new_variables[ n ],
-                         new_v )
+                         new_v,
+                         v )
         else:
           raise ValueError(
             "Unsupported variable defn {}: Missing 'shell'".format( n ) )
