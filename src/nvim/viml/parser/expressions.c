@@ -2330,7 +2330,7 @@ viml_pexpr_parse_invalid_comma:
             break;
           } else if (eastnode_type == kExprNodeSubscript) {
             is_subscript = true;
-            can_be_ternary = false;
+            // can_be_ternary = false;
             assert(!is_ternary);
             break;
           } else if (eastnode_type == kExprNodeColon) {

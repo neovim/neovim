@@ -2056,7 +2056,7 @@ static int qf_jump_to_usable_window(int qf_fnum, int *opened_window)
   win_T       *usable_win_ptr = NULL;
   int         usable_win;
   int         flags;
-  win_T       *win = NULL;
+  win_T       *win;
   win_T       *altwin;
 
   usable_win = 0;
@@ -2079,7 +2079,6 @@ static int qf_jump_to_usable_window(int qf_fnum, int *opened_window)
     // Locate a window showing a normal buffer
     FOR_ALL_WINDOWS_IN_TAB(win2, curtab) {
       if (win2->w_buffer->b_p_bt[0] == NUL) {
-        win = win2;
         usable_win = 1;
         break;
       }

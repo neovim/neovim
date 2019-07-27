@@ -3508,7 +3508,9 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
 {
   int round, i, len, entries;
   char_u *p, *s;
-  int c1 = 0, c2 = 0, c3 = 0;
+  int c1;
+  int c2 = 0;
+  int c3 = 0;
 
   struct chars_tab {
     int     *cp;    ///< char value
@@ -3575,7 +3577,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          c1 = c2 = c3 = 0;
+          c2 = c3 = 0;
           s = p + len + 1;
 
           // TODO(bfredl): use schar_T representation and utfc_ptr2len
