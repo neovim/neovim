@@ -2038,6 +2038,9 @@ static void version_msg(char *s)
 static void list_features(void)
 {
   list_in_columns((char_u **)features, -1, -1);
+  if (msg_col > 0) {
+    msg_putchar('\n');
+  }
   MSG_PUTS("See \":help feature-compile\"\n\n");
 }
 
@@ -2065,7 +2068,7 @@ void list_in_columns(char_u **items, int size, int current)
     // Not enough screen columns - show one per line
     for (i = 0; i < item_count; i++) {
       version_msg_wrap(items[i], i == current);
-      if (msg_col > 0) {
+      if (msg_col > 0 && i < item_count - 1) {
         msg_putchar('\n');
       }
     }
@@ -2099,6 +2102,14 @@ void list_in_columns(char_u **items, int size, int current)
         while (msg_col % width) {
           msg_putchar(' ');
         }
+      }
+    } else {
+      // this row is out of items, thus at the end of the row
+      if (msg_col > 0) {
+        if (cur_row < nrow) {
+          msg_putchar('\n');
+        }
+        cur_row++;
       }
     }
   }
