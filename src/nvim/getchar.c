@@ -3943,70 +3943,75 @@ void vim_unescape_csi(char_u *p)
   *d = NUL;
 }
 
-/*
- * Write map commands for the current mappings to an .exrc file.
- * Return FAIL on error, OK otherwise.
- */
-int 
+/// Write map commands for the current mappings to an .exrc file.
+/// Return FAIL on error, OK otherwise.
+int
 makemap (
     FILE *fd,
-    buf_T *buf           /* buffer for local mappings or NULL */
+    buf_T *buf  // buffer for local mappings or NULL
 )
 {
   mapblock_T  *mp;
-  char_u c1, c2, c3;
+  char_u      c1;
+  char_u      c2;
+  char_u      c3;
   char_u      *p;
   char        *cmd;
-  int abbr;
-  int hash;
-  bool did_cpo = false;
+  int         abbr;
+  int         hash;
+  bool        did_cpo = false;
 
   validate_maphash();
 
-  /*
-   * Do the loop twice: Once for mappings, once for abbreviations.
-   * Then loop over all map hash lists.
-   */
+  // Do the loop twice: Once for mappings, once for abbreviations.
+  // Then loop over all map hash lists.
   for (abbr = 0; abbr < 2; ++abbr)
     for (hash = 0; hash < 256; ++hash) {
       if (abbr) {
-        if (hash > 0)                   /* there is only one abbr list */
+        if (hash > 0)                   // there is only one abbr list
           break;
-        if (buf != NULL)
+        if (buf != NULL) {
           mp = buf->b_first_abbr;
-        else
+        } else {
           mp = first_abbr;
+        }
       } else {
-        if (buf != NULL)
+        if (buf != NULL) {
           mp = buf->b_maphash[hash];
-        else
+        } else {
           mp = maphash[hash];
+        }
       }
 
       for (; mp; mp = mp->m_next) {
-        /* skip script-local mappings */
-        if (mp->m_noremap == REMAP_SCRIPT)
+        // skip script-local mappings
+        if (mp->m_noremap == REMAP_SCRIPT) {
           continue;
+        }
 
-        /* skip mappings that contain a <SNR> (script-local thing),
-         * they probably don't work when loaded again */
-        for (p = mp->m_str; *p != NUL; ++p)
+        // skip mappings that contain a <SNR> (script-local thing),
+        // they probably don't work when loaded again
+        for (p = mp->m_str; *p != NUL; ++p) {
           if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
-              && p[2] == (int)KE_SNR)
+              && p[2] == (int) KE_SNR) {
             break;
-        if (*p != NUL)
+          }
+        }
+        if (*p != NUL) {
           continue;
+        }
 
-        /* It's possible to create a mapping and then ":unmap" certain
-         * modes.  We recreate this here by mapping the individual
-         * modes, which requires up to three of them. */
+        // It's possible to create a mapping and then ":unmap" certain
+        // modes.  We recreate this here by mapping the individual
+        // modes, which requires up to three of them.
         c1 = NUL;
         c2 = NUL;
         c3 = NUL;
-        if (abbr)
+        if (abbr) {
           cmd = "abbr";
-        else
+        } else {
           cmd = "map";
+        }
         switch (mp->m_mode) {
         case NORMAL + VISUAL + SELECTMODE + OP_PENDING:
           break;
@@ -4083,9 +4088,10 @@ makemap (
           IEMSG(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
-        do {            /* do this twice if c2 is set, 3 times with c3 */
-          /* When outputting <> form, need to make sure that 'cpo'
-           * is set to the Vim default. */
+        do {
+          // do this twice if c2 is set, 3 times with c3
+          // When outputting <> form, need to make sure that 'cpo'
+          // is set to the Vim default.
           if (!did_cpo) {
             if (*mp->m_str == NUL) {  // Will use <Nop>.
               did_cpo = true;
@@ -4104,30 +4110,35 @@ makemap (
                 return FAIL;
             }
           }
-          if (c1 && putc(c1, fd) < 0)
+          if (c1 && putc(c1, fd) < 0) {
             return FAIL;
-          if (mp->m_noremap != REMAP_YES && fprintf(fd, "nore") < 0)
+          }
+          if (mp->m_noremap != REMAP_YES && fprintf(fd, "nore") < 0) {
             return FAIL;
-          if (fputs(cmd, fd) < 0)
+          }
+          if (fputs(cmd, fd) < 0) {
             return FAIL;
-          if (buf != NULL && fputs(" <buffer>", fd) < 0)
+          }
+          if (buf != NULL && fputs(" <buffer>", fd) < 0) {
             return FAIL;
-          if (mp->m_nowait && fputs(" <nowait>", fd) < 0)
+          }
+          if (mp->m_nowait && fputs(" <nowait>", fd) < 0) {
             return FAIL;
-          if (mp->m_silent && fputs(" <silent>", fd) < 0)
+          }
+          if (mp->m_silent && fputs(" <silent>", fd) < 0) {
             return FAIL;
-          if (mp->m_noremap == REMAP_SCRIPT
-              && fputs("<script>", fd) < 0)
+          }
+          if (mp->m_expr && fputs(" <expr>", fd) < 0) {
             return FAIL;
-          if (mp->m_expr && fputs(" <expr>", fd) < 0)
-            return FAIL;
+          }
 
-          if (       putc(' ', fd) < 0
-                     || put_escstr(fd, mp->m_keys, 0) == FAIL
-                     || putc(' ', fd) < 0
-                     || put_escstr(fd, mp->m_str, 1) == FAIL
-                     || put_eol(fd) < 0)
+          if (putc(' ', fd) < 0
+              || put_escstr(fd, mp->m_keys, 0) == FAIL
+              || putc(' ', fd) < 0
+              || put_escstr(fd, mp->m_str, 1) == FAIL
+              || put_eol(fd) < 0) {
             return FAIL;
+          }
           c1 = c2;
           c2 = c3;
           c3 = NUL;
