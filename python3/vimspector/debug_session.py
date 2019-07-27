@@ -452,13 +452,13 @@ class DebugSession( object ):
 
   def _StopDebugAdapter( self, callback = None ):
     def handler( *args ):
-      vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
-        self._connection_type ) )
-
       if callback:
-        self._logger.debug( "Setting server exit handler for disconnect" )
+        self._logger.debug( "Setting server exit handler before disconnect" )
         assert not self._run_on_server_exit
         self._run_on_server_exit = callback
+
+      vim.eval( 'vimspector#internal#{}#StopDebugSession()'.format(
+        self._connection_type ) )
 
     arguments = {}
     if self._server_capabilities.get( 'supportTerminateDebuggee' ):
