@@ -1275,53 +1275,21 @@ int get_spellword(list_T *const list, const char **ret_word)
 
 
 // Call some vim script function and return the result in "*rettv".
-// Uses argv[argc] for the function arguments.  Only Number and String
-// arguments are currently supported.
+// Uses argv[argc-1] for the function arguments. argv[argc]
+// should have type VAR_UNKNOWN.
 //
 // Return OK or FAIL.
 int call_vim_function(
     const char_u *func,
     int argc,
-    const char_u *const *const argv,
-    bool safe,                       // use the sandbox
-    int str_arg_only,               // all arguments are strings
+    typval_T *argv,
+    int safe,                       // use the sandbox
     typval_T *rettv
 )
 {
-  varnumber_T n;
-  int len;
   int doesrange;
   void        *save_funccalp = NULL;
   int ret;
-
-  typval_T *argvars = xmalloc((argc + 1) * sizeof(typval_T));
-
-  for (int i = 0; i < argc; i++) {
-    // Pass a NULL or empty argument as an empty string
-    if (argv[i] == NULL || *argv[i] == NUL) {
-      argvars[i].v_type = VAR_STRING;
-      argvars[i].vval.v_string = (char_u *)"";
-      continue;
-    }
-
-    if (str_arg_only) {
-      len = 0;
-    } else {
-      // Recognize a number argument, the others must be strings. A dash
-      // is a string too.
-      vim_str2nr(argv[i], NULL, &len, STR2NR_ALL, &n, NULL, 0);
-      if (len == 1 && *argv[i] == '-') {
-        len = 0;
-      }
-    }
-    if (len != 0 && len == (int)STRLEN(argv[i])) {
-      argvars[i].v_type = VAR_NUMBER;
-      argvars[i].vval.v_number = n;
-    } else {
-      argvars[i].v_type = VAR_STRING;
-      argvars[i].vval.v_string = (char_u *)argv[i];
-    }
-  }
 
   if (safe) {
     save_funccalp = save_funccal();
@@ -1329,14 +1297,13 @@ int call_vim_function(
   }
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
-  ret = call_func(func, (int)STRLEN(func), rettv, argc, argvars, NULL,
+  ret = call_func(func, (int)STRLEN(func), rettv, argc, argv, NULL,
                   curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                   &doesrange, true, NULL, NULL);
   if (safe) {
     --sandbox;
     restore_funccal(save_funccalp);
   }
-  xfree(argvars);
 
   if (ret == FAIL) {
     tv_clear(rettv);
@@ -1344,47 +1311,44 @@ int call_vim_function(
 
   return ret;
 }
-
 /// Call Vim script function and return the result as a number
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
-/// @param[in]  argv  Array with string arguments.
+/// @param[in]  argv  Array with typval_T arguments.
 /// @param[in]  safe  Use with sandbox.
 ///
 /// @return -1 when calling function fails, result of function otherwise.
 varnumber_T call_func_retnr(char_u *func, int argc,
-                            const char_u *const *const argv, int safe)
+                            typval_T *argv, int safe)
 {
   typval_T rettv;
   varnumber_T retval;
 
-  /* All arguments are passed as strings, no conversion to number. */
-  if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
+  if (call_vim_function(func, argc, argv, safe, &rettv) == FAIL) {
     return -1;
-
+  }
   retval = tv_get_number_chk(&rettv, NULL);
   tv_clear(&rettv);
   return retval;
 }
-
 /// Call Vim script function and return the result as a string
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
-/// @param[in]  argv  Array with string arguments.
+/// @param[in]  argv  Array with typval_T arguments.
 /// @param[in]  safe  Use the sandbox.
 ///
 /// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
 char *call_func_retstr(const char *const func, int argc,
-                       const char_u *const *argv,
+                       typval_T *argv,
                        bool safe)
   FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;
   // All arguments are passed as strings, no conversion to number.
-  if (call_vim_function((const char_u *)func, argc, argv, safe, true, &rettv)
+  if (call_vim_function((const char_u *)func, argc, argv, safe, &rettv)
       == FAIL) {
     return NULL;
   }
@@ -1393,24 +1357,24 @@ char *call_func_retstr(const char *const func, int argc,
   tv_clear(&rettv);
   return retval;
 }
-
 /// Call Vim script function and return the result as a List
 ///
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
-/// @param[in]  argv  Array with string arguments.
+/// @param[in]  argv  Array with typval_T arguments.
 /// @param[in]  safe  Use the sandbox.
 ///
 /// @return [allocated] NULL when calling function fails or return tv is not a
 ///                     List, allocated List otherwise.
-void *call_func_retlist(char_u *func, int argc, const char_u *const *argv,
+void *call_func_retlist(char_u *func, int argc, typval_T *argv,
                         bool safe)
 {
   typval_T rettv;
 
-  /* All arguments are passed as strings, no conversion to number. */
-  if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
+  // All arguments are passed as strings, no conversion to number.
+  if (call_vim_function(func, argc, argv, safe, &rettv) == FAIL) {
     return NULL;
+  }
 
   if (rettv.v_type != VAR_LIST) {
     tv_clear(&rettv);
@@ -23892,6 +23856,8 @@ bool eval_has_provider(const char *name)
   static int has_python = -1;
   static int has_python3 = -1;
   static int has_ruby = -1;
+  typval_T args[1];
+  args[0].v_type = VAR_UNKNOWN;
 
   if (strequal(name, "clipboard")) {
     CHECK_PROVIDER(clipboard);
@@ -23906,7 +23872,7 @@ bool eval_has_provider(const char *name)
     bool need_check_ruby = (has_ruby == -1);
     CHECK_PROVIDER(ruby);
     if (need_check_ruby && has_ruby == 1) {
-      char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, NULL, true);
+      char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, args, true);
       if (rubyhost) {
         if (*rubyhost == NUL) {
           // Invalid rubyhost executable. Gem is probably not installed.
