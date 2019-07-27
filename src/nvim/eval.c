@@ -26,6 +26,7 @@
 #include "nvim/buffer.h"
 #include "nvim/channel.h"
 #include "nvim/charset.h"
+#include "nvim/context.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
@@ -302,15 +303,6 @@ typedef struct {
   listwatch_T fi_lw;            /* keep an eye on the item used. */
   list_T      *fi_list;         /* list being used */
 } forinfo_T;
-
-/*
- * enum used by var_flavour()
- */
-typedef enum {
-  VAR_FLAVOUR_DEFAULT,          /* doesn't start with uppercase */
-  VAR_FLAVOUR_SESSION,          /* starts with uppercase, some lower */
-  VAR_FLAVOUR_SHADA             /* all uppercase */
-} var_flavour_T;
 
 /* values for vv_flags: */
 #define VV_COMPAT       1       /* compatible, also used without "v:" */
@@ -5261,7 +5253,7 @@ bool garbage_collect(bool testing)
       yankreg_T reg;
       char name = NUL;
       bool is_unnamed = false;
-      reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
+      reg_iter = op_global_reg_iter(reg_iter, &name, &reg, &is_unnamed);
       if (name != NUL) {
         ABORTING(set_ref_dict)(reg.additional_data, copyID);
       }
@@ -8021,6 +8013,116 @@ static void f_cscope_connection(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   rettv->vval.v_number = cs_connection(num, (char_u *)dbpath,
                                        (char_u *)prepend);
+}
+
+/// "ctxget([{index}])" function
+static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  size_t index = 0;
+  if (argvars[0].v_type == VAR_NUMBER) {
+    index = argvars[0].vval.v_number;
+  } else if (argvars[0].v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "expected nothing or a Number as an argument");
+    return;
+  }
+
+  Context *ctx = ctx_get(index);
+  if (ctx == NULL) {
+    EMSG3(_(e_invargNval), "index", "out of bounds");
+    return;
+  }
+
+  Dictionary ctx_dict = ctx_to_dict(ctx);
+  Error err = ERROR_INIT;
+  object_to_vim(DICTIONARY_OBJ(ctx_dict), rettv, &err);
+  api_free_dictionary(ctx_dict);
+  api_clear_error(&err);
+}
+
+/// "ctxpop()" function
+static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (!ctx_restore(NULL, kCtxAll)) {
+    EMSG(_("Context stack is empty"));
+  }
+}
+
+/// "ctxpush([{types}])" function
+static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int types = kCtxAll;
+  if (argvars[0].v_type == VAR_LIST) {
+    types = 0;
+    TV_LIST_ITER(argvars[0].vval.v_list, li, {
+      typval_T *tv_li = TV_LIST_ITEM_TV(li);
+      if (tv_li->v_type == VAR_STRING) {
+        if (strequal((char *)tv_li->vval.v_string, "regs")) {
+          types |= kCtxRegs;
+        } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
+          types |= kCtxJumps;
+        } else if (strequal((char *)tv_li->vval.v_string, "buflist")) {
+          types |= kCtxBuflist;
+        } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
+          types |= kCtxGVars;
+        } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
+          types |= kCtxSFuncs;
+        } else if (strequal((char *)tv_li->vval.v_string, "funcs")) {
+          types |= kCtxFuncs;
+        }
+      }
+    });
+  } else if (argvars[0].v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "expected nothing or a List as an argument");
+    return;
+  }
+  ctx_save(NULL, types);
+}
+
+/// "ctxset({context}[, {index}])" function
+static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type != VAR_DICT) {
+    EMSG2(_(e_invarg2), "expected dictionary as first argument");
+    return;
+  }
+
+  size_t index = 0;
+  if (argvars[1].v_type == VAR_NUMBER) {
+    index = argvars[1].vval.v_number;
+  } else if (argvars[1].v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "expected nothing or a Number as second argument");
+    return;
+  }
+
+  Context *ctx = ctx_get(index);
+  if (ctx == NULL) {
+    EMSG3(_(e_invargNval), "index", "out of bounds");
+    return;
+  }
+
+  int save_did_emsg = did_emsg;
+  did_emsg = false;
+
+  Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
+  Context tmp = CONTEXT_INIT;
+  ctx_from_dict(dict, &tmp);
+
+  if (did_emsg) {
+    ctx_free(&tmp);
+  } else {
+    ctx_free(ctx);
+    *ctx = tmp;
+  }
+
+  api_free_dictionary(dict);
+  did_emsg = save_did_emsg;
+}
+
+/// "ctxsize()" function
+static void f_ctxsize(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = ctx_size();
 }
 
 /// "cursor(lnum, col)" function, or
@@ -15618,7 +15720,7 @@ free_lstval:
 
   if (set_unnamed) {
     // Discard the result. We already handle the error case.
-    if (op_register_set_previous(regname)) { }
+    if (op_reg_set_previous(regname)) { }
   }
 }
 
@@ -20883,7 +20985,7 @@ void ex_function(exarg_T *eap)
             continue;
           }
           if (!func_name_refcount(fp->uf_name)) {
-            list_func_head(fp, false);
+            list_func_head(fp, false, false);
           }
         }
       }
@@ -20914,7 +21016,7 @@ void ex_function(exarg_T *eap)
             fp = HI2UF(hi);
             if (!isdigit(*fp->uf_name)
                 && vim_regexec(&regmatch, fp->uf_name, 0))
-              list_func_head(fp, FALSE);
+              list_func_head(fp, false, false);
           }
         }
         vim_regfree(regmatch.regprog);
@@ -20964,9 +21066,12 @@ void ex_function(exarg_T *eap)
   saved_did_emsg = did_emsg;
   did_emsg = FALSE;
 
-  /*
-   * ":function func" with only function name: list function.
-   */
+  //
+  // ":function func" with only function name: list function.
+  // If bang is given:
+  //  - include "!" in function head
+  //  - exclude line numbers from function body
+  //
   if (!paren) {
     if (!ends_excmd(*skipwhite(p))) {
       EMSG(_(e_trailing));
@@ -20978,17 +21083,20 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !got_int) {
       fp = find_func(name);
       if (fp != NULL) {
-        list_func_head(fp, TRUE);
-        for (int j = 0; j < fp->uf_lines.ga_len && !got_int; ++j) {
-          if (FUNCLINE(fp, j) == NULL)
+        list_func_head(fp, !eap->forceit, eap->forceit);
+        for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
+          if (FUNCLINE(fp, j) == NULL) {
             continue;
-          msg_putchar('\n');
-          msg_outnum((long)j + 1);
-          if (j < 9) {
-            msg_putchar(' ');
           }
-          if (j < 99) {
-            msg_putchar(' ');
+          msg_putchar('\n');
+          if (!eap->forceit) {
+            msg_outnum((long)j + 1);
+            if (j < 9) {
+              msg_putchar(' ');
+            }
+            if (j < 99) {
+              msg_putchar(' ');
+            }
           }
           msg_prt_line(FUNCLINE(fp, j), false);
           ui_flush();                  // show a line at a time
@@ -20996,7 +21104,7 @@ void ex_function(exarg_T *eap)
         }
         if (!got_int) {
           msg_putchar('\n');
-          msg_puts("   endfunction");
+          msg_puts(eap->forceit ? "endfunction" : "   endfunction");
         }
       } else
         emsg_funcname(N_("E123: Undefined function: %s"), name);
@@ -21686,15 +21794,17 @@ static inline bool eval_fname_sid(const char *const name)
   return *name == 's' || TOUPPER_ASC(name[2]) == 'I';
 }
 
-/*
- * List the head of the function: "name(arg1, arg2)".
- */
-static void list_func_head(ufunc_T *fp, int indent)
+/// List the head of the function: "name(arg1, arg2)".
+///
+/// @param[in]  fp      Function pointer.
+/// @param[in]  indent  Indent line.
+/// @param[in]  force   Include bang "!" (i.e.: "function!").
+static void list_func_head(ufunc_T *fp, int indent, bool force)
 {
   msg_start();
   if (indent)
     MSG_PUTS("   ");
-  MSG_PUTS("function ");
+  MSG_PUTS(force ? "function! " : "function ");
   if (fp->uf_name[0] == K_SPECIAL) {
     MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
@@ -23278,7 +23388,7 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen,
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
 const void *var_shada_iter(const void *const iter, const char **const name,
-                           typval_T *rettv)
+                           typval_T *rettv, var_flavour_T flavour)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
 {
   const hashitem_T *hi;
@@ -23289,7 +23399,7 @@ const void *var_shada_iter(const void *const iter, const char **const name,
     hi = globvarht.ht_array;
     while ((size_t) (hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || var_flavour(hi->hi_key) != VAR_FLAVOUR_SHADA)) {
+               || !(var_flavour(hi->hi_key) & flavour))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -23301,7 +23411,7 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && var_flavour(hi->hi_key) == VAR_FLAVOUR_SHADA) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
       return hi;
     }
   }

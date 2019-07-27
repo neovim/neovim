@@ -151,15 +151,6 @@ KHASH_SET_INIT_STR(strset)
 /// Callback function for add_search_pattern
 typedef void (*SearchPatternGetter)(SearchPattern *);
 
-/// Flags for shada_read_file and children
-typedef enum {
-  kShaDaWantInfo = 1,       ///< Load non-mark information
-  kShaDaWantMarks = 2,      ///< Load local file marks and change list
-  kShaDaForceit = 4,        ///< Overwrite info already read
-  kShaDaGetOldfiles = 8,    ///< Load v:oldfiles.
-  kShaDaMissingError = 16,  ///< Error out when os_open returns -ENOENT.
-} ShaDaReadFileFlags;
-
 /// Possible ShaDa entry types
 ///
 /// @warning Enum values are part of the API and must not be altered.
@@ -1328,13 +1319,13 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
           break;
         }
         if (!force) {
-          const yankreg_T *const reg = op_register_get(cur_entry.data.reg.name);
+          const yankreg_T *const reg = op_reg_get(cur_entry.data.reg.name);
           if (reg == NULL || reg->timestamp >= cur_entry.timestamp) {
             shada_free_shada_entry(&cur_entry);
             break;
           }
         }
-        if (!op_register_set(cur_entry.data.reg.name, (yankreg_T) {
+        if (!op_reg_set(cur_entry.data.reg.name, (yankreg_T) {
           .y_array = (char_u **)cur_entry.data.reg.contents,
           .y_size = cur_entry.data.reg.contents_size,
           .y_type = cur_entry.data.reg.type,
@@ -2496,7 +2487,7 @@ static inline void shada_initialize_registers(WriteMergerState *const wms,
     yankreg_T reg;
     char name = NUL;
     bool is_unnamed = false;
-    reg_iter = op_register_iter(reg_iter, &name, &reg, &is_unnamed);
+    reg_iter = op_global_reg_iter(reg_iter, &name, &reg, &is_unnamed);
     if (name == NUL) {
       break;
     }
@@ -2550,6 +2541,19 @@ static inline void replace_numbered_mark(WriteMergerState *const wms,
           * (ARRAY_SIZE(wms->numbered_marks) - 1 - idx));
   wms->numbered_marks[idx] = entry;
   wms->numbered_marks[idx].data.data.filemark.name = (char)('0' + (int)idx);
+}
+
+/// Find buffers ignored due to their location.
+///
+/// @param[out]  removable_bufs  Cache of buffers ignored due to their location.
+static inline void find_removable_bufs(khash_t(bufset) *removable_bufs)
+{
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->b_ffname != NULL && shada_removable((char *)buf->b_ffname)) {
+      int kh_ret;
+      (void)kh_put(bufset, removable_bufs, (uintptr_t)buf, &kh_ret);
+    }
+  }
 }
 
 /// Write ShaDa file
@@ -2621,12 +2625,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     set_last_cursor(wp);
   }
 
-  FOR_ALL_BUFFERS(buf) {
-    if (buf->b_ffname != NULL && shada_removable((char *) buf->b_ffname)) {
-      int kh_ret;
-      (void) kh_put(bufset, &removable_bufs, (uintptr_t) buf, &kh_ret);
-    }
-  }
+  find_removable_bufs(&removable_bufs);
 
   // Write header
   if (shada_pack_entry(packer, (ShadaEntry) {
@@ -2673,7 +2672,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     do {
       typval_T vartv;
       const char *name = NULL;
-      var_iter = var_shada_iter(var_iter, &name, &vartv);
+      var_iter = var_shada_iter(var_iter, &name, &vartv, VAR_FLAVOUR_SHADA);
       if (name == NULL) {
         break;
       }
@@ -2737,49 +2736,7 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
   }
 
   // Initialize jump list
-  const void *jump_iter = NULL;
-  cleanup_jumplist(curwin, false);
-  setpcmark();
-  do {
-    xfmark_T fm;
-    jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
-
-    if (fm.fmark.mark.lnum == 0) {
-      iemsgf("ShaDa: mark lnum zero (ji:%p, js:%p, len:%i)",
-             (void *)jump_iter, (void *)&curwin->w_jumplist[0],
-             curwin->w_jumplistlen);
-      continue;
-    }
-    const buf_T *const buf = (fm.fmark.fnum == 0
-                              ? NULL
-                              : buflist_findnr(fm.fmark.fnum));
-    if (buf != NULL
-        ? in_bufset(&removable_bufs, buf)
-        : fm.fmark.fnum != 0) {
-      continue;
-    }
-    const char *const fname = (char *) (fm.fmark.fnum == 0
-                                        ? (fm.fname == NULL ? NULL : fm.fname)
-                                        : buf->b_ffname);
-    if (fname == NULL) {
-      continue;
-    }
-    wms->jumps[wms->jumps_size++] = (PossiblyFreedShadaEntry) {
-      .can_free_entry = false,
-      .data = {
-        .type = kSDItemJump,
-        .timestamp = fm.fmark.timestamp,
-        .data = {
-          .filemark = {
-            .name = NUL,
-            .mark = fm.fmark.mark,
-            .fname = (char *) fname,
-            .additional_data = fm.fmark.additional_data,
-          }
-        }
-      }
-    };
-  } while (jump_iter != NULL);
+  wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
 
   // Initialize global marks
   if (dump_global_marks) {
@@ -4116,4 +4073,225 @@ static bool shada_removable(const char *name)
   }
   xfree(new_name);
   return retval;
+}
+
+/// Initialize ShaDa jumplist entries.
+///
+/// @param[in,out]  jumps           Array of ShaDa entries to set.
+/// @param[in]      removable_bufs  Cache of buffers ignored due to their
+///                                 location.
+///
+/// @return number of jumplist entries
+static inline size_t shada_init_jumps(
+    PossiblyFreedShadaEntry *jumps, khash_t(bufset) *const removable_bufs)
+{
+  // Initialize jump list
+  size_t jumps_size = 0;
+  const void *jump_iter = NULL;
+  setpcmark();
+  cleanup_jumplist(curwin, false);
+  do {
+    xfmark_T fm;
+    jump_iter = mark_jumplist_iter(jump_iter, curwin, &fm);
+
+    if (fm.fmark.mark.lnum == 0) {
+      iemsgf("ShaDa: mark lnum zero (ji:%p, js:%p, len:%i)",
+             (void *)jump_iter, (void *)&curwin->w_jumplist[0],
+             curwin->w_jumplistlen);
+      continue;
+    }
+    const buf_T *const buf = (fm.fmark.fnum == 0
+                              ? NULL
+                              : buflist_findnr(fm.fmark.fnum));
+    if (buf != NULL
+        ? in_bufset(removable_bufs, buf)
+        : fm.fmark.fnum != 0) {
+      continue;
+    }
+    const char *const fname = (char *) (fm.fmark.fnum == 0
+                                        ? (fm.fname == NULL ? NULL : fm.fname)
+                                        : buf->b_ffname);
+    if (fname == NULL) {
+      continue;
+    }
+    jumps[jumps_size++] = (PossiblyFreedShadaEntry) {
+      .can_free_entry = false,
+      .data = {
+        .type = kSDItemJump,
+        .timestamp = fm.fmark.timestamp,
+        .data = {
+          .filemark = {
+            .name = NUL,
+            .mark = fm.fmark.mark,
+            .fname = (char *) fname,
+            .additional_data = fm.fmark.additional_data,
+          }
+        }
+      }
+    };
+  } while (jump_iter != NULL);
+  return jumps_size;
+}
+
+/// Write registers ShaDa entries in given msgpack_sbuffer.
+///
+/// @param[in]  sbuf  target msgpack_sbuffer to write to.
+void shada_encode_regs(msgpack_sbuffer *const sbuf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  WriteMergerState wms;
+  shada_initialize_registers(&wms, -1);
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  for (size_t i = 0; i < ARRAY_SIZE(wms.registers); i++) {
+    if (wms.registers[i].data.type == kSDItemRegister) {
+      shada_pack_pfreed_entry(&packer, wms.registers[i], 0);
+    }
+  }
+}
+
+/// Write jumplist ShaDa entries in given msgpack_sbuffer.
+///
+/// @param[in]  sbuf            target msgpack_sbuffer to write to.
+void shada_encode_jumps(msgpack_sbuffer *const sbuf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
+  find_removable_bufs(&removable_bufs);
+  PossiblyFreedShadaEntry jumps[JUMPLISTSIZE];
+  size_t jumps_size = shada_init_jumps(jumps, &removable_bufs);
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  for (size_t i = 0; i < jumps_size; i++) {
+    shada_pack_pfreed_entry(&packer, jumps[i], 0);
+  }
+}
+
+/// Write buffer list ShaDa entry in given msgpack_sbuffer.
+///
+/// @param[in]  sbuf            target msgpack_sbuffer to write to.
+void shada_encode_buflist(msgpack_sbuffer *const sbuf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  khash_t(bufset) removable_bufs = KHASH_EMPTY_TABLE(bufset);
+  find_removable_bufs(&removable_bufs);
+  ShadaEntry buflist_entry = shada_get_buflist(&removable_bufs);
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  shada_pack_entry(&packer, buflist_entry, 0);
+  xfree(buflist_entry.data.buffer_list.buffers);
+}
+
+/// Write global variables ShaDa entries in given msgpack_sbuffer.
+///
+/// @param[in]  sbuf            target msgpack_sbuffer to write to.
+void shada_encode_gvars(msgpack_sbuffer *const sbuf)
+  FUNC_ATTR_NONNULL_ALL
+{
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
+  const void *var_iter = NULL;
+  const Timestamp cur_timestamp = os_time();
+  do {
+    typval_T vartv;
+    const char *name = NULL;
+    var_iter = var_shada_iter(
+        var_iter, &name, &vartv,
+        VAR_FLAVOUR_DEFAULT | VAR_FLAVOUR_SESSION | VAR_FLAVOUR_SHADA);
+    if (name == NULL) {
+      break;
+    }
+    if (vartv.v_type != VAR_FUNC && vartv.v_type != VAR_PARTIAL) {
+      typval_T tgttv;
+      tv_copy(&vartv, &tgttv);
+      shada_pack_entry(&packer, (ShadaEntry) {
+        .type = kSDItemVariable,
+        .timestamp = cur_timestamp,
+        .data = {
+          .global_var = {
+            .name = (char *)name,
+            .value = tgttv,
+            .additional_elements = NULL,
+          }
+        }
+      }, 0);
+      tv_clear(&tgttv);
+    }
+    tv_clear(&vartv);
+  } while (var_iter != NULL);
+}
+
+/// Wrapper for reading from msgpack_sbuffer.
+///
+/// @return number of bytes read.
+static ptrdiff_t read_sbuf(ShaDaReadDef *const sd_reader, void *const dest,
+                           const size_t size)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
+  const uintmax_t bytes_read = MIN(size, sbuf->size - sd_reader->fpos);
+  if (bytes_read < size) {
+    sd_reader->eof = true;
+  }
+  memcpy(dest, sbuf->data + sd_reader->fpos, (size_t)bytes_read);
+  sd_reader->fpos += bytes_read;
+  return (ptrdiff_t)bytes_read;
+}
+
+/// Wrapper for read that ignores bytes read from msgpack_sbuffer.
+///
+/// Used for skipping.
+///
+/// @param[in,out]  sd_reader  ShaDaReadDef with msgpack_sbuffer.
+/// @param[in]      offset     Amount of bytes to skip.
+///
+/// @return FAIL in case of failure, OK in case of success. May set
+///         sd_reader->eof.
+static int sd_sbuf_reader_skip_read(ShaDaReadDef *const sd_reader,
+                                    const size_t offset)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
+  const uintmax_t bytes_skipped = MIN(offset, sbuf->size - sd_reader->fpos);
+  if (bytes_skipped < offset) {
+    sd_reader->eof = true;
+    return FAIL;
+  }
+  sd_reader->fpos += offset;
+  return OK;
+}
+
+/// Prepare ShaDaReadDef with msgpack_sbuffer for reading.
+///
+/// @param[in]   sbuf       msgpack_sbuffer to read from.
+/// @param[out]  sd_reader  Location where reader structure will be saved.
+static void open_shada_sbuf_for_reading(const msgpack_sbuffer *const sbuf,
+                                        ShaDaReadDef *sd_reader)
+  FUNC_ATTR_NONNULL_ALL
+{
+  *sd_reader = (ShaDaReadDef) {
+    .read = &read_sbuf,
+    .close = NULL,
+    .skip = &sd_sbuf_reader_skip_read,
+    .error = NULL,
+    .eof = false,
+    .fpos = 0,
+    .cookie = (void *)sbuf,
+  };
+}
+
+/// Read ShaDa from msgpack_sbuffer.
+///
+/// @param[in]  file   msgpack_sbuffer to read from.
+/// @param[in]  flags  Flags, see ShaDaReadFileFlags enum.
+void shada_read_sbuf(msgpack_sbuffer *const sbuf, const int flags)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(sbuf != NULL);
+  if (sbuf->data == NULL) {
+    return;
+  }
+  ShaDaReadDef sd_reader;
+  open_shada_sbuf_for_reading(sbuf, &sd_reader);
+  shada_read(&sd_reader, flags);
 }

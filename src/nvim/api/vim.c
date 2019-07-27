@@ -21,6 +21,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
+#include "nvim/context.h"
 #include "nvim/file_search.h"
 #include "nvim/highlight.h"
 #include "nvim/window.h"
@@ -1268,6 +1269,67 @@ Dictionary nvim_get_color_map(void)
   return colors;
 }
 
+/// Gets a map of the current editor state.
+///
+/// @param  types  Context types ("regs", "jumps", "buflist", "gvars", ...)
+///                to gather, or NIL for all.
+///
+/// @return map of global context
+Dictionary nvim_get_context(Array types)
+  FUNC_API_SINCE(6)
+{
+  int int_types = 0;
+  if (types.size == 1 && types.items[0].type == kObjectTypeNil) {
+    int_types = kCtxAll;
+  } else {
+    for (size_t i = 0; i < types.size; i++) {
+      if (types.items[i].type == kObjectTypeString) {
+        const char *const current = types.items[i].data.string.data;
+        if (strequal(current, "regs")) {
+          int_types |= kCtxRegs;
+        } else if (strequal(current, "jumps")) {
+          int_types |= kCtxJumps;
+        } else if (strequal(current, "buflist")) {
+          int_types |= kCtxBuflist;
+        } else if (strequal(current, "gvars")) {
+          int_types |= kCtxGVars;
+        } else if (strequal(current, "sfuncs")) {
+          int_types |= kCtxSFuncs;
+        } else if (strequal(current, "funcs")) {
+          int_types |= kCtxFuncs;
+        }
+      }
+    }
+  }
+
+  Context ctx = CONTEXT_INIT;
+  ctx_save(&ctx, int_types);
+  Dictionary dict = ctx_to_dict(&ctx);
+  ctx_free(&ctx);
+  return dict;
+}
+
+/// Sets the current editor state to that in given context dictionary.
+///
+/// @param ctx_dict  Context dictionary.
+Object nvim_load_context(Dictionary dict)
+  FUNC_API_SINCE(6)
+{
+  Context ctx = CONTEXT_INIT;
+
+  int save_did_emsg = did_emsg;
+  did_emsg = false;
+
+  ctx_from_dict(dict, &ctx);
+  if (!did_emsg) {
+    ctx_restore(&ctx, kCtxAll);
+  }
+
+  ctx_free(&ctx);
+
+  did_emsg = save_did_emsg;
+  return (Object)OBJECT_INIT;
+}
 
 /// Gets the current mode. |mode()|
 /// "blocking" is true if Nvim is waiting for input.
