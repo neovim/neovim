@@ -69,6 +69,7 @@ check_logs() {
   for log in $(find "${1}" -type f -name "${2}" -size +0); do
     cat "${log}"
     err=1
+    rm "${log}"
   done
   if test -n "${err}" ; then
     fail 'logs' E 'Runtime errors detected.'
@@ -81,7 +82,7 @@ valgrind_check() {
 
 asan_check() {
   if test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
-    check_logs "${1}" "*san.*" | asan_symbolize
+    check_logs "${1}" "*san.*"
   fi
 }
 
