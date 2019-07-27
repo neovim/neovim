@@ -3946,7 +3946,7 @@ void vim_unescape_csi(char_u *p)
 /// Write map commands for the current mappings to an .exrc file.
 /// Return FAIL on error, OK otherwise.
 int
-makemap (
+makemap(
     FILE *fd,
     buf_T *buf  // buffer for local mappings or NULL
 )
@@ -3965,11 +3965,12 @@ makemap (
 
   // Do the loop twice: Once for mappings, once for abbreviations.
   // Then loop over all map hash lists.
-  for (abbr = 0; abbr < 2; ++abbr)
-    for (hash = 0; hash < 256; ++hash) {
+  for (abbr = 0; abbr < 2; abbr++) {
+    for (hash = 0; hash < 256; hash++) {
       if (abbr) {
-        if (hash > 0)                   // there is only one abbr list
+        if (hash > 0) {  // there is only one abbr list
           break;
+        }
         if (buf != NULL) {
           mp = buf->b_first_abbr;
         } else {
@@ -3982,6 +3983,9 @@ makemap (
           mp = maphash[hash];
         }
       }
+    }
+  }
+
 
       for (; mp; mp = mp->m_next) {
         // skip script-local mappings
@@ -3991,9 +3995,9 @@ makemap (
 
         // skip mappings that contain a <SNR> (script-local thing),
         // they probably don't work when loaded again
-        for (p = mp->m_str; *p != NUL; ++p) {
+        for (p = mp->m_str; *p != NUL; p++) {
           if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
-              && p[2] == (int) KE_SNR) {
+              && p[2] == (int)KE_SNR) {
             break;
           }
         }
@@ -4144,7 +4148,7 @@ makemap (
           c3 = NUL;
         } while (c1 != NUL);
       }
-    }
+
 
   if (did_cpo)
     if (fprintf(fd, "let &cpo=s:cpo_save") < 0
