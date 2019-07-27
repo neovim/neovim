@@ -671,6 +671,7 @@ void free_all_mem(void)
 
   eval_clear();
   api_vim_free_all_mem();
+  ctx_free_all();
 
   // Free all buffers.  Reset 'autochdir' to avoid accessing things that
   // were freed already.

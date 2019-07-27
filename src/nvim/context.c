@@ -21,7 +21,7 @@ int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxGVars | kCtxSFuncs
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
 /// Clears and frees the context stack
-void free_ctx_stack(void)
+void ctx_free_all(void)
 {
   for (size_t i = 0; i < kv_size(ctx_stack); i++) {
     ctx_free(&kv_A(ctx_stack, i));

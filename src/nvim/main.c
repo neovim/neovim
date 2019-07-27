@@ -673,8 +673,6 @@ void getout(int exitval)
     garbage_collect(false);
   }
 
-  free_ctx_stack();
-
   mch_exit(exitval);
 }
 
