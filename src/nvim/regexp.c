@@ -3778,7 +3778,7 @@ static int regmatch(
     int *timed_out              // flag set on timeout or NULL
 )
 {
-  char_u        *next;          /* Next node. */
+  char_u        *next;          // Next node.
   int op;
   int c;
   regitem_T     *rp;
@@ -3796,12 +3796,10 @@ static int regmatch(
   regstack.ga_len = 0;
   backpos.ga_len = 0;
 
-  /*
-   * Repeat until "regstack" is empty.
-   */
+  // Repeat until "regstack" is empty.
   for (;; ) {
-    /* Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
-     * Allow interrupting them with CTRL-C. */
+    // Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
+    // Allow interrupting them with CTRL-C.
     fast_breakcheck();
 
 #ifdef REGEXP_DEBUG
@@ -3811,10 +3809,8 @@ static int regmatch(
     }
 #endif
 
-    /*
-     * Repeat for items that can be matched sequentially, without using the
-     * regstack.
-     */
+    // Repeat for items that can be matched sequentially, without using the
+    // regstack.
     for (;; ) {
       if (got_int || scan == NULL) {
         status = RA_FAIL;
@@ -3843,8 +3839,9 @@ static int regmatch(
           mch_errmsg(_("External submatches:\n"));
           for (i = 0; i < NSUBEXP; i++) {
             mch_errmsg("    \"");
-            if (re_extmatch_in->matches[i] != NULL)
+            if (re_extmatch_in->matches[i] != NULL) {
               mch_errmsg((char *)re_extmatch_in->matches[i]);
+            }
             mch_errmsg("\"\n");
           }
         }
@@ -3866,13 +3863,15 @@ static int regmatch(
         c = utf_ptr2char(reginput);
         switch (op) {
         case BOL:
-          if (reginput != regline)
+          if (reginput != regline) {
             status = RA_NOMATCH;
+          }
           break;
 
         case EOL:
-          if (c != NUL)
+          if (c != NUL) {
             status = RA_NOMATCH;
+          }
           break;
 
         case RE_BOF:
@@ -3902,7 +3901,7 @@ static int regmatch(
           break;
 
         case RE_MARK:
-          /* Compare the mark position to the match position. */
+          // Compare the mark position to the match position.
         {
           int mark = OPERAND(scan)[0];
           int cmp = OPERAND(scan)[1];
@@ -3926,8 +3925,9 @@ static int regmatch(
         break;
 
         case RE_VISUAL:
-          if (!reg_match_visual())
+          if (!reg_match_visual()) {
             status = RA_NOMATCH;
+          }
           break;
 
         case RE_LNUM:
@@ -3942,8 +3942,9 @@ static int regmatch(
         case RE_COL:
           assert(reginput - regline + 1 >= 0
                  && (uintmax_t)(reginput - regline + 1) <= UINT32_MAX);
-          if (!re_num_cmp((uint32_t)(reginput - regline + 1), scan))
+          if (!re_num_cmp((uint32_t)(reginput - regline + 1), scan)) {
             status = RA_NOMATCH;
+          }
           break;
 
         case RE_VCOL:
@@ -3956,10 +3957,10 @@ static int regmatch(
           }
           break;
 
-        case BOW:       /* \<word; reginput points to w */
-          if (c == NUL)         /* Can't match at end of line */
+        case BOW:                 // \<word; reginput points to w
+          if (c == NUL) {         // Can't match at end of line
             status = RA_NOMATCH;
-          else if (has_mbyte) {
+          } else if (has_mbyte) {
             int this_class;
 
             // Get class of current and previous char (if it exists).
@@ -3978,10 +3979,10 @@ static int regmatch(
           }
           break;
 
-        case EOW:       /* word\>; reginput points after d */
-          if (reginput == regline)      /* Can't match at start of line */
+        case EOW:                       // word\>; reginput points after d
+          if (reginput == regline) {    // Can't match at start of line
             status = RA_NOMATCH;
-          else if (has_mbyte) {
+          } else if (has_mbyte) {
             int this_class, prev_class;
 
             // Get class of current and previous char (if it exists).
@@ -3996,28 +3997,31 @@ static int regmatch(
               status = RA_NOMATCH;
             }
           }
-          break;   /* Matched with EOW */
+          break;                        // Matched with EOW
 
         case ANY:
-          /* ANY does not match new lines. */
-          if (c == NUL)
+          // ANY does not match new lines.
+          if (c == NUL) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case IDENT:
-          if (!vim_isIDc(c))
+          if (!vim_isIDc(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case SIDENT:
-          if (ascii_isdigit(*reginput) || !vim_isIDc(c))
+          if (ascii_isdigit(*reginput) || !vim_isIDc(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case KWORD:
@@ -4038,157 +4042,179 @@ static int regmatch(
           break;
 
         case FNAME:
-          if (!vim_isfilec(c))
+          if (!vim_isfilec(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case SFNAME:
-          if (ascii_isdigit(*reginput) || !vim_isfilec(c))
+          if (ascii_isdigit(*reginput) || !vim_isfilec(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case PRINT:
-          if (!vim_isprintc(PTR2CHAR(reginput)))
+          if (!vim_isprintc(PTR2CHAR(reginput))) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case SPRINT:
-          if (ascii_isdigit(*reginput) || !vim_isprintc(PTR2CHAR(reginput)))
+          if (ascii_isdigit(*reginput) || !vim_isprintc(PTR2CHAR(reginput))) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case WHITE:
-          if (!ascii_iswhite(c))
+          if (!ascii_iswhite(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NWHITE:
-          if (c == NUL || ascii_iswhite(c))
+          if (c == NUL || ascii_iswhite(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case DIGIT:
-          if (!ri_digit(c))
+          if (!ri_digit(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NDIGIT:
-          if (c == NUL || ri_digit(c))
+          if (c == NUL || ri_digit(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case HEX:
-          if (!ri_hex(c))
+          if (!ri_hex(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NHEX:
-          if (c == NUL || ri_hex(c))
+          if (c == NUL || ri_hex(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case OCTAL:
-          if (!ri_octal(c))
+          if (!ri_octal(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NOCTAL:
-          if (c == NUL || ri_octal(c))
+          if (c == NUL || ri_octal(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case WORD:
-          if (!ri_word(c))
+          if (!ri_word(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NWORD:
-          if (c == NUL || ri_word(c))
+          if (c == NUL || ri_word(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case HEAD:
-          if (!ri_head(c))
+          if (!ri_head(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NHEAD:
-          if (c == NUL || ri_head(c))
+          if (c == NUL || ri_head(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case ALPHA:
-          if (!ri_alpha(c))
+          if (!ri_alpha(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NALPHA:
-          if (c == NUL || ri_alpha(c))
+          if (c == NUL || ri_alpha(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case LOWER:
-          if (!ri_lower(c))
+          if (!ri_lower(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NLOWER:
-          if (c == NUL || ri_lower(c))
+          if (c == NUL || ri_lower(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case UPPER:
-          if (!ri_upper(c))
+          if (!ri_upper(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case NUPPER:
-          if (c == NUL || ri_upper(c))
+          if (c == NUL || ri_upper(c)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case EXACTLY:
@@ -4236,12 +4262,13 @@ static int regmatch(
 
         case ANYOF:
         case ANYBUT:
-          if (c == NUL)
+          if (c == NUL) {
             status = RA_NOMATCH;
-          else if ((cstrchr(OPERAND(scan), c) == NULL) == (op == ANYOF))
+          } else if ((cstrchr(OPERAND(scan), c) == NULL) == (op == ANYOF)) {
             status = RA_NOMATCH;
-          else
+          } else {
             ADVANCE_REGINPUT();
+          }
           break;
 
         case MULTIBYTECODE:
@@ -4277,12 +4304,14 @@ static int regmatch(
                   break;
                 }
               }
-            } else
-              for (i = 0; i < len; ++i)
+            } else {
+              for (i = 0; i < len; i++) {
                 if (opnd[i] != reginput[i]) {
                   status = RA_NOMATCH;
                   break;
                 }
+              }
+            }
             reginput += len;
           } else
             status = RA_NOMATCH;
@@ -4304,32 +4333,34 @@ static int regmatch(
         {
           int i;
 
-          /*
-           * When we run into BACK we need to check if we don't keep
-           * looping without matching any input.  The second and later
-           * times a BACK is encountered it fails if the input is still
-           * at the same position as the previous time.
-           * The positions are stored in "backpos" and found by the
-           * current value of "scan", the position in the RE program.
-           */
+          // When we run into BACK we need to check if we don't keep
+          // looping without matching any input.  The second and later
+          // times a BACK is encountered it fails if the input is still
+          // at the same position as the previous time.
+          // The positions are stored in "backpos" and found by the
+          // current value of "scan", the position in the RE program.
           backpos_T *bp = (backpos_T *)backpos.ga_data;
-          for (i = 0; i < backpos.ga_len; ++i)
-            if (bp[i].bp_scan == scan)
+          for (i = 0; i < backpos.ga_len; i++) {
+            if (bp[i].bp_scan == scan) {
               break;
+            }
+          }
           if (i == backpos.ga_len) {
             backpos_T *p = GA_APPEND_VIA_PTR(backpos_T, &backpos);
             p->bp_scan = scan;
-          } else if (reg_save_equal(&bp[i].bp_pos))
-            /* Still at same position as last time, fail. */
+          } else if (reg_save_equal(&bp[i].bp_pos)) {
+            // Still at same position as last time, fail
             status = RA_NOMATCH;
+          }
 
-          if (status != RA_FAIL && status != RA_NOMATCH)
+          if (status != RA_FAIL && status != RA_NOMATCH) {
             reg_save(&bp[i].bp_pos, &backpos);
+          }
         }
         break;
 
-        case MOPEN + 0:     /* Match start: \zs */
-        case MOPEN + 1:     /* \( */
+        case MOPEN + 0:     // Match start: \zs
+        case MOPEN + 1:     // \(
         case MOPEN + 2:
         case MOPEN + 3:
         case MOPEN + 4:
@@ -4342,9 +4373,9 @@ static int regmatch(
           no = op - MOPEN;
           cleanup_subexpr();
           rp = regstack_push(RS_MOPEN, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = no;
             save_se(&rp->rs_un.sesave, &rex.reg_startpos[no],
                     &rex.reg_startp[no]);
@@ -4353,11 +4384,12 @@ static int regmatch(
         }
         break;
 
-        case NOPEN:         /* \%( */
-        case NCLOSE:        /* \) after \%( */
-          if (regstack_push(RS_NOPEN, scan) == NULL)
+        case NOPEN:         // \%(
+        case NCLOSE:        // \) after \%(
+          if (regstack_push(RS_NOPEN, scan) == NULL) {
             status = RA_FAIL;
-          /* We simply continue and handle the result when done. */
+          }
+          // We simply continue and handle the result when done.
           break;
 
         case ZOPEN + 1:
@@ -4373,19 +4405,19 @@ static int regmatch(
           no = op - ZOPEN;
           cleanup_zsubexpr();
           rp = regstack_push(RS_ZOPEN, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = no;
             save_se(&rp->rs_un.sesave, &reg_startzpos[no],
-                &reg_startzp[no]);
-            /* We simply continue and handle the result when done. */
+                    &reg_startzp[no]);
+            // We simply continue and handle the result when done.
           }
         }
         break;
 
-        case MCLOSE + 0:    /* Match end: \ze */
-        case MCLOSE + 1:    /* \) */
+        case MCLOSE + 0:    // Match end: \ze
+        case MCLOSE + 1:    // \)
         case MCLOSE + 2:
         case MCLOSE + 3:
         case MCLOSE + 4:
@@ -4408,7 +4440,7 @@ static int regmatch(
         }
         break;
 
-        case ZCLOSE + 1:    /* \) after \z( */
+        case ZCLOSE + 1:    // \) after \z(
         case ZCLOSE + 2:
         case ZCLOSE + 3:
         case ZCLOSE + 4:
@@ -4421,13 +4453,13 @@ static int regmatch(
           no = op - ZCLOSE;
           cleanup_zsubexpr();
           rp = regstack_push(RS_ZCLOSE, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = no;
             save_se(&rp->rs_un.sesave, &reg_endzpos[no],
-                &reg_endzp[no]);
-            /* We simply continue and handle the result when done. */
+                    &reg_endzp[no]);
+            // We simply continue and handle the result when done. */
           }
         }
         break;
@@ -4484,7 +4516,7 @@ static int regmatch(
             }
           }
 
-          /* Matched the backref, skip over it. */
+          // Matched the backref, skip over it.
           reginput += len;
         }
         break;
@@ -4507,26 +4539,28 @@ static int regmatch(
               && re_extmatch_in->matches[no] != NULL) {
             len = (int)STRLEN(re_extmatch_in->matches[no]);
             if (cstrncmp(re_extmatch_in->matches[no],
-                    reginput, &len) != 0)
+                         reginput, &len) != 0) {
               status = RA_NOMATCH;
-            else
+            } else {
               reginput += len;
+            }
           } else {
-            /* Backref was not set: Match an empty string. */
+            // Backref was not set: Match an empty string.
           }
         }
         break;
 
         case BRANCH:
         {
-          if (OP(next) != BRANCH)       /* No choice. */
-            next = OPERAND(scan);               /* Avoid recursion. */
-          else {
+          if (OP(next) != BRANCH) {     // No choice.
+            next = OPERAND(scan);       // Avoid recursion.
+          } else {
             rp = regstack_push(RS_BRANCH, scan);
-            if (rp == NULL)
+            if (rp == NULL) {
               status = RA_FAIL;
-            else
-              status = RA_BREAK;                /* rest is below */
+            } else {
+              status = RA_BREAK;        // rest is below
+            }
           }
         }
         break;
@@ -4563,44 +4597,44 @@ static int regmatch(
           no = op - BRACE_COMPLEX;
           ++brace_count[no];
 
-          /* If not matched enough times yet, try one more */
+          // If not matched enough times yet, try one more
           if (brace_count[no] <= (brace_min[no] <= brace_max[no]
                                   ? brace_min[no] : brace_max[no])) {
             rp = regstack_push(RS_BRCPLX_MORE, scan);
-            if (rp == NULL)
+            if (rp == NULL) {
               status = RA_FAIL;
-            else {
+            } else {
               rp->rs_no = no;
               reg_save(&rp->rs_un.regsave, &backpos);
               next = OPERAND(scan);
-              /* We continue and handle the result when done. */
+              // We continue and handle the result when done.
             }
             break;
           }
 
-          /* If matched enough times, may try matching some more */
+          // If matched enough times, may try matching some more
           if (brace_min[no] <= brace_max[no]) {
-            /* Range is the normal way around, use longest match */
+            // Range is the normal way around, use longest match
             if (brace_count[no] <= brace_max[no]) {
               rp = regstack_push(RS_BRCPLX_LONG, scan);
-              if (rp == NULL)
+              if (rp == NULL) {
                 status = RA_FAIL;
-              else {
+              } else {
                 rp->rs_no = no;
                 reg_save(&rp->rs_un.regsave, &backpos);
                 next = OPERAND(scan);
-                /* We continue and handle the result when done. */
+                // We continue and handle the result when done.
               }
             }
           } else {
-            /* Range is backwards, use shortest match first */
+            // Range is backwards, use shortest match first
             if (brace_count[no] <= brace_min[no]) {
               rp = regstack_push(RS_BRCPLX_SHORT, scan);
-              if (rp == NULL)
+              if (rp == NULL) {
                 status = RA_FAIL;
-              else {
+              } else {
                 reg_save(&rp->rs_un.regsave, &backpos);
-                /* We continue and handle the result when done. */
+                // We continue and handle the result when done.
               }
             }
           }
@@ -4613,10 +4647,8 @@ static int regmatch(
         {
           regstar_T rst;
 
-          /*
-           * Lookahead to avoid useless match attempts when we know
-           * what character comes next.
-           */
+          // Lookahead to avoid useless match attempts when we know
+          // what character comes next.
           if (OP(next) == EXACTLY) {
             rst.nextb = *OPERAND(next);
             if (rex.reg_ic) {
@@ -4640,12 +4672,10 @@ static int regmatch(
             rst.maxval = bl_maxval;
           }
 
-          /*
-           * When maxval > minval, try matching as much as possible, up
-           * to maxval.  When maxval < minval, try matching at least the
-           * minimal number (since the range is backwards, that's also
-           * maxval!).
-           */
+          // When maxval > minval, try matching as much as possible, up
+          // to maxval.  When maxval < minval, try matching at least the
+          // minimal number (since the range is backwards, that's also
+          // maxval!).
           rst.count = regrepeat(OPERAND(scan), rst.maxval);
           if (got_int) {
             status = RA_FAIL;
@@ -4653,9 +4683,9 @@ static int regmatch(
           }
           if (rst.minval <= rst.maxval
               ? rst.count >= rst.minval : rst.count >= rst.maxval) {
-            /* It could match.  Prepare for trying to match what
-             * follows.  The code is below.  Parameters are stored in
-             * a regstar_T on the regstack. */
+            // It could match.  Prepare for trying to match what
+            // follows.  The code is below.  Parameters are stored in
+            // a regstar_T on the regstack.
             if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
               EMSG(_(e_maxmempat));
               status = RA_FAIL;
@@ -4663,12 +4693,12 @@ static int regmatch(
               ga_grow(&regstack, sizeof(regstar_T));
               regstack.ga_len += sizeof(regstar_T);
               rp = regstack_push(rst.minval <= rst.maxval
-                  ? RS_STAR_LONG : RS_STAR_SHORT, scan);
-              if (rp == NULL)
+                                 ? RS_STAR_LONG : RS_STAR_SHORT, scan);
+              if (rp == NULL) {
                 status = RA_FAIL;
-              else {
+              } else {
                 *(((regstar_T *)rp) - 1) = rst;
-                status = RA_BREAK;                  /* skip the restore bits */
+                status = RA_BREAK;                  // skip the restore bits
               }
             }
           } else
@@ -4681,19 +4711,19 @@ static int regmatch(
         case MATCH:
         case SUBPAT:
           rp = regstack_push(RS_NOMATCH, scan);
-          if (rp == NULL)
+          if (rp == NULL) {
             status = RA_FAIL;
-          else {
+          } else {
             rp->rs_no = op;
             reg_save(&rp->rs_un.regsave, &backpos);
             next = OPERAND(scan);
-            /* We continue and handle the result when done. */
+            // We continue and handle the result when done.
           }
           break;
 
         case BEHIND:
         case NOBEHIND:
-          /* Need a bit of room to store extra positions. */
+          // Need a bit of room to store extra positions.
           if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
             EMSG(_(e_maxmempat));
             status = RA_FAIL;
@@ -4701,17 +4731,17 @@ static int regmatch(
             ga_grow(&regstack, sizeof(regbehind_T));
             regstack.ga_len += sizeof(regbehind_T);
             rp = regstack_push(RS_BEHIND1, scan);
-            if (rp == NULL)
+            if (rp == NULL) {
               status = RA_FAIL;
-            else {
-              /* Need to save the subexpr to be able to restore them
-               * when there is a match but we don't use it. */
+            } else {
+              // Need to save the subexpr to be able to restore them
+              // when there is a match but we don't use it.
               save_subexpr(((regbehind_T *)rp) - 1);
 
               rp->rs_no = op;
               reg_save(&rp->rs_un.regsave, &backpos);
-              /* First try if what follows matches.  If it does then we
-               * check the behind match by looping. */
+              // First try if what follows matches.  If it does then we
+              // check the behind match by looping.
             }
           }
           break;
@@ -4719,10 +4749,12 @@ static int regmatch(
         case BHPOS:
           if (REG_MULTI) {
             if (behind_pos.rs_u.pos.col != (colnr_T)(reginput - regline)
-                || behind_pos.rs_u.pos.lnum != reglnum)
+                || behind_pos.rs_u.pos.lnum != reglnum) {
               status = RA_NOMATCH;
-          } else if (behind_pos.rs_u.ptr != reginput)
+            }
+          } else if (behind_pos.rs_u.ptr != reginput) {
             status = RA_NOMATCH;
+          }
           break;
 
         case NEWL:
@@ -4737,7 +4769,7 @@ static int regmatch(
           break;
 
         case END:
-          status = RA_MATCH;    /* Success! */
+          status = RA_MATCH;    // Success!
           break;
 
         default:
@@ -4750,24 +4782,21 @@ static int regmatch(
         }
       }
 
-      /* If we can't continue sequentially, break the inner loop. */
-      if (status != RA_CONT)
+      // If we can't continue sequentially, break the inner loop.
+      if (status != RA_CONT) {
         break;
-
-      /* Continue in inner loop, advance to next item. */
+      }
+      // Continue in inner loop, advance to next item.
       scan = next;
+    }  // end of inner loop
 
-    } /* end of inner loop */
-
-    /*
-     * If there is something on the regstack execute the code for the state.
-     * If the state is popped then loop and use the older state.
-     */
+    // If there is something on the regstack execute the code for the state.
+    // If the state is popped then loop and use the older state.
     while (!GA_EMPTY(&regstack) && status != RA_FAIL) {
       rp = (regitem_T *)((char *)regstack.ga_data + regstack.ga_len) - 1;
       switch (rp->rs_state) {
       case RS_NOPEN:
-        /* Result is passed on as-is, simply pop the state. */
+        // Result is passed on as-is, simply pop the state.
         regstack_pop(&scan);
         break;
 
@@ -4781,10 +4810,11 @@ static int regmatch(
         break;
 
       case RS_ZOPEN:
-        /* Pop the state.  Restore pointers when there is no match. */
-        if (status == RA_NOMATCH)
+        // Pop the state.  Restore pointers when there is no match.
+        if (status == RA_NOMATCH) {
           restore_se(&rp->rs_un.sesave, &reg_startzpos[rp->rs_no],
-              &reg_startzp[rp->rs_no]);
+                     &reg_startzp[rp->rs_no]);
+        }
         regstack_pop(&scan);
         break;
 
@@ -4798,29 +4828,30 @@ static int regmatch(
         break;
 
       case RS_ZCLOSE:
-        /* Pop the state.  Restore pointers when there is no match. */
-        if (status == RA_NOMATCH)
+        // Pop the state.  Restore pointers when there is no match.
+        if (status == RA_NOMATCH) {
           restore_se(&rp->rs_un.sesave, &reg_endzpos[rp->rs_no],
-              &reg_endzp[rp->rs_no]);
+                     &reg_endzp[rp->rs_no]);
+        }
         regstack_pop(&scan);
         break;
 
       case RS_BRANCH:
-        if (status == RA_MATCH)
-          /* this branch matched, use it */
+        if (status == RA_MATCH) {
+          // this branch matched, use it
           regstack_pop(&scan);
-        else {
+        } else {
           if (status != RA_BREAK) {
-            /* After a non-matching branch: try next one. */
+            // After a non-matching branch: try next one.
             reg_restore(&rp->rs_un.regsave, &backpos);
             scan = rp->rs_scan;
           }
           if (scan == NULL || OP(scan) != BRANCH) {
-            /* no more branches, didn't find a match */
+            // no more branches, didn't find a match
             status = RA_NOMATCH;
             regstack_pop(&scan);
           } else {
-            /* Prepare to try a branch. */
+            // Prepare to try a branch.
             rp->rs_scan = regnext(scan);
             reg_save(&rp->rs_un.regsave, &backpos);
             scan = OPERAND(scan);
@@ -4829,33 +4860,35 @@ static int regmatch(
         break;
 
       case RS_BRCPLX_MORE:
-        /* Pop the state.  Restore pointers when there is no match. */
+        // Pop the state.  Restore pointers when there is no match.
         if (status == RA_NOMATCH) {
           reg_restore(&rp->rs_un.regsave, &backpos);
-          --brace_count[rp->rs_no];             /* decrement match count */
+          brace_count[rp->rs_no]--;             // decrement match count
         }
         regstack_pop(&scan);
         break;
 
       case RS_BRCPLX_LONG:
-        /* Pop the state.  Restore pointers when there is no match. */
+        // Pop the state.  Restore pointers when there is no match.
         if (status == RA_NOMATCH) {
-          /* There was no match, but we did find enough matches. */
+          // There was no match, but we did find enough matches.
           reg_restore(&rp->rs_un.regsave, &backpos);
-          --brace_count[rp->rs_no];
-          /* continue with the items after "\{}" */
+          brace_count[rp->rs_no]--;
+          // continue with the items after "\{}"
           status = RA_CONT;
         }
         regstack_pop(&scan);
-        if (status == RA_CONT)
+        if (status == RA_CONT) {
           scan = regnext(scan);
+        }
         break;
 
       case RS_BRCPLX_SHORT:
-        /* Pop the state.  Restore pointers when there is no match. */
-        if (status == RA_NOMATCH)
-          /* There was no match, try to match one more item. */
+        // Pop the state.  Restore pointers when there is no match.
+        if (status == RA_NOMATCH) {
+          // There was no match, try to match one more item.
           reg_restore(&rp->rs_un.regsave, &backpos);
+        }
         regstack_pop(&scan);
         if (status == RA_NOMATCH) {
           scan = OPERAND(scan);
@@ -4864,19 +4897,21 @@ static int regmatch(
         break;
 
       case RS_NOMATCH:
-        /* Pop the state.  If the operand matches for NOMATCH or
-        * doesn't match for MATCH/SUBPAT, we fail.  Otherwise backup,
-        * except for SUBPAT, and continue with the next item. */
-        if (status == (rp->rs_no == NOMATCH ? RA_MATCH : RA_NOMATCH))
+        // Pop the state.  If the operand matches for NOMATCH or
+        // doesn't match for MATCH/SUBPAT, we fail.  Otherwise backup,
+        // except for SUBPAT, and continue with the next item.
+        if (status == (rp->rs_no == NOMATCH ? RA_MATCH : RA_NOMATCH)) {
           status = RA_NOMATCH;
-        else {
+        } else {
           status = RA_CONT;
-          if (rp->rs_no != SUBPAT)              /* zero-width */
+          if (rp->rs_no != SUBPAT) {            // zero-width
             reg_restore(&rp->rs_un.regsave, &backpos);
+          }
         }
         regstack_pop(&scan);
-        if (status == RA_CONT)
+        if (status == RA_CONT) {
           scan = regnext(scan);
+        }
         break;
 
       case RS_BEHIND1:
@@ -4884,21 +4919,21 @@ static int regmatch(
           regstack_pop(&scan);
           regstack.ga_len -= sizeof(regbehind_T);
         } else {
-          /* The stuff after BEHIND/NOBEHIND matches.  Now try if
-           * the behind part does (not) match before the current
-           * position in the input.  This must be done at every
-           * position in the input and checking if the match ends at
-           * the current position. */
+          // The stuff after BEHIND/NOBEHIND matches.  Now try if
+          // the behind part does (not) match before the current
+          // position in the input.  This must be done at every
+          // position in the input and checking if the match ends at
+          // the current position.
 
-          /* save the position after the found match for next */
+          // save the position after the found match for next
           reg_save(&(((regbehind_T *)rp) - 1)->save_after, &backpos);
 
-          /* Start looking for a match with operand at the current
-           * position.  Go back one character until we find the
-           * result, hitting the start of the line or the previous
-           * line (for multi-line matching).
-           * Set behind_pos to where the match should end, BHPOS
-           * will match it.  Save the current value. */
+          // Start looking for a match with operand at the current
+          // position.  Go back one character until we find the
+          // result, hitting the start of the line or the previous
+          // line (for multi-line matching).
+          // Set behind_pos to where the match should end, BHPOS
+          // will match it.  Save the current value.
           (((regbehind_T *)rp) - 1)->save_behind = behind_pos;
           behind_pos = rp->rs_un.regsave;
 
@@ -4910,19 +4945,17 @@ static int regmatch(
         break;
 
       case RS_BEHIND2:
-        /*
-         * Looping for BEHIND / NOBEHIND match.
-         */
+        // Looping for BEHIND / NOBEHIND match.
         if (status == RA_MATCH && reg_save_equal(&behind_pos)) {
-          /* found a match that ends where "next" started */
+          // found a match that ends where "next" started
           behind_pos = (((regbehind_T *)rp) - 1)->save_behind;
-          if (rp->rs_no == BEHIND)
+          if (rp->rs_no == BEHIND) {
             reg_restore(&(((regbehind_T *)rp) - 1)->save_after,
-                &backpos);
-          else {
-            /* But we didn't want a match.  Need to restore the
-             * subexpr, because what follows matched, so they have
-             * been set. */
+                        &backpos);
+          } else {
+            // But we didn't want a match.  Need to restore the
+            // subexpr, because what follows matched, so they have
+            // been set. */
             status = RA_NOMATCH;
             restore_subexpr(((regbehind_T *)rp) - 1);
           }
@@ -4931,8 +4964,8 @@ static int regmatch(
         } else {
           long limit;
 
-          /* No match or a match that doesn't end where we want it: Go
-           * back one character.  May go to previous line once. */
+          // No match or a match that doesn't end where we want it: Go
+          // back one character.  May go to previous line once.
           no = OK;
           limit = OPERAND_MIN(rp->rs_scan);
           if (REG_MULTI) {
@@ -4941,16 +4974,16 @@ static int regmatch(
                      < behind_pos.rs_u.pos.lnum
                      ? (colnr_T)STRLEN(regline)
                      : behind_pos.rs_u.pos.col)
-                    - rp->rs_un.regsave.rs_u.pos.col >= limit))
+                    - rp->rs_un.regsave.rs_u.pos.col >= limit)) {
               no = FAIL;
-            else if (rp->rs_un.regsave.rs_u.pos.col == 0) {
+            } else if (rp->rs_un.regsave.rs_u.pos.col == 0) {
               if (rp->rs_un.regsave.rs_u.pos.lnum
                   < behind_pos.rs_u.pos.lnum
                   || reg_getline(
                       --rp->rs_un.regsave.rs_u.pos.lnum)
-                  == NULL)
+                  == NULL) {
                 no = FAIL;
-              else {
+              } else {
                 reg_restore(&rp->rs_un.regsave, &backpos);
                 rp->rs_un.regsave.rs_u.pos.col =
                   (colnr_T)STRLEN(regline);
@@ -4977,26 +5010,26 @@ static int regmatch(
             }
           }
           if (no == OK) {
-            /* Advanced, prepare for finding match again. */
+            // Advanced, prepare for finding match again.
             reg_restore(&rp->rs_un.regsave, &backpos);
             scan = OPERAND(rp->rs_scan) + 4;
             if (status == RA_MATCH) {
-              /* We did match, so subexpr may have been changed,
-               * need to restore them for the next try. */
+              // We did match, so subexpr may have been changed,
+              // need to restore them for the next try.
               status = RA_NOMATCH;
               restore_subexpr(((regbehind_T *)rp) - 1);
             }
           } else {
-            /* Can't advance.  For NOBEHIND that's a match. */
+            // Can't advance.  For NOBEHIND that's a match.
             behind_pos = (((regbehind_T *)rp) - 1)->save_behind;
             if (rp->rs_no == NOBEHIND) {
               reg_restore(&(((regbehind_T *)rp) - 1)->save_after,
                   &backpos);
               status = RA_MATCH;
             } else {
-              /* We do want a proper match.  Need to restore the
-               * subexpr if we had a match, because they may have
-               * been set. */
+              // We do want a proper match.  Need to restore the
+              // subexpr if we had a match, because they may have
+              // been set. */
               if (status == RA_MATCH) {
                 status = RA_NOMATCH;
                 restore_subexpr(((regbehind_T *)rp) - 1);
@@ -5019,19 +5052,20 @@ static int regmatch(
           break;
         }
 
-        /* Tried once already, restore input pointers. */
-        if (status != RA_BREAK)
+        // Tried once already, restore input pointers.
+        if (status != RA_BREAK) {
           reg_restore(&rp->rs_un.regsave, &backpos);
-
-        /* Repeat until we found a position where it could match. */
+        }
+        // Repeat until we found a position where it could match.
         for (;; ) {
           if (status != RA_BREAK) {
-            /* Tried first position already, advance. */
+            // Tried first position already, advance.
             if (rp->rs_state == RS_STAR_LONG) {
-              /* Trying for longest match, but couldn't or
-               * didn't match -- back up one char. */
-              if (--rst->count < rst->minval)
+              // Trying for longest match, but couldn't or
+              // didn't match -- back up one char.
+              if (--rst->count < rst->minval) {
                 break;
+              }
               if (reginput == regline) {
                 // backup to last char of previous line
                 reglnum--;
@@ -5046,21 +5080,24 @@ static int regmatch(
                 MB_PTR_BACK(regline, reginput);
               }
             } else {
-              /* Range is backwards, use shortest match first.
-               * Careful: maxval and minval are exchanged!
-               * Couldn't or didn't match: try advancing one
-               * char. */
+              // Range is backwards, use shortest match first.
+              // Careful: maxval and minval are exchanged!
+              // Couldn't or didn't match: try advancing one
+              // char.
               if (rst->count == rst->minval
-                  || regrepeat(OPERAND(rp->rs_scan), 1L) == 0)
+                  || regrepeat(OPERAND(rp->rs_scan), 1L) == 0) {
                 break;
-              ++rst->count;
+              }
+              rst->count++;
             }
-            if (got_int)
+            if (got_int) {
               break;
-          } else
+            }
+          } else {
             status = RA_NOMATCH;
+          }
 
-          /* If it could match, try it. */
+          // If it could match, try it.
           if (rst->nextb == NUL || *reginput == rst->nextb
               || *reginput == rst->nextb_ic) {
             reg_save(&rp->rs_un.regsave, &backpos);
@@ -5070,7 +5107,7 @@ static int regmatch(
           }
         }
         if (status != RA_CONT) {
-          /* Failed. */
+          // Failed.
           regstack_pop(&scan);
           regstack.ga_len -= sizeof(regstar_T);
           status = RA_NOMATCH;
@@ -5079,26 +5116,24 @@ static int regmatch(
       break;
       }
 
-      /* If we want to continue the inner loop or didn't pop a state
-       * continue matching loop */
+      // If we want to continue the inner loop or didn't pop a state
+      // continue matching loop
       if (status == RA_CONT || rp == (regitem_T *)
-          ((char *)regstack.ga_data + regstack.ga_len) - 1)
+          ((char *)regstack.ga_data + regstack.ga_len) - 1) {
         break;
+      }
     }
 
-    /* May need to continue with the inner loop, starting at "scan". */
-    if (status == RA_CONT)
+    // May need to continue with the inner loop, starting at "scan".
+    if (status == RA_CONT) {
       continue;
+    }
 
-    /*
-     * If the regstack is empty or something failed we are done.
-     */
+    // If the regstack is empty or something failed we are done.
     if (GA_EMPTY(&regstack) || status == RA_FAIL) {
       if (scan == NULL) {
-        /*
-         * We get here only if there's trouble -- normally "case END" is
-         * the terminating point.
-         */
+        // We get here only if there's trouble -- normally "case END" is
+        // the terminating point.
         EMSG(_(e_re_corr));
 #ifdef REGEXP_DEBUG
         printf("Premature EOL\n");
@@ -5106,10 +5141,8 @@ static int regmatch(
       }
       return status == RA_MATCH;
     }
-
-  } /* End of loop until the regstack is empty. */
-
-  /* NOTREACHED */
+  }  // End of loop until the regstack is empty.
+  // NOTREACHED
 }
 
 /*
