@@ -302,6 +302,35 @@ Here is an example for creating a float with scratch buffer: >
 >
 To close the float, |nvim_win_close()| can be used.
 ==============================================================================
+Context                                                          *api-context*
+
+                                                                     *context*
+The editor state is represented by the Context concept. This includes things
+like the current |jumplist|, values of |registers|, and others (see
+|context-types|).
+
+                                                               *context-types*
+The following Context items are supported:
+- "jumps"               |jumplist|
+- "regs"                |registers|
+- "buflist"             |buffer-list|
+- "gvars"               |global-variable|s
+- "sfuncs"              |script-local| functions
+- "funcs"               global and |script-local| functions
+
+                                                                *context-dict*
+Context objects are dictionaries with the following key-value pairs:
+- "jumps", "regs", "buflist", "gvars":
+      |readfile()|-style |List| representation of corresponding msgpack
+      objects (see |msgpackdump()| and |msgpackparse()|).
+- "funcs" (includes |script-local| functions as well):
+      |List| of |:function| declaration |String|s.
+
+                                                               *context-stack*
+An initially-empty internal Context stack is maintained by the ctx-family
+functions (see |ctx-functions|).
+==============================================================================
+
 Global Functions                                                  *api-global*
 
 nvim_command({command})                                       *nvim_command()*
@@ -819,6 +848,24 @@ nvim_get_color_map()                                    *nvim_get_color_map()*
 
                 Return: ~
                     Map of color names and RGB values.
+
+nvim_get_context({types})                                 *nvim_get_context()*
+                Returns a Context map for the current editor state.
+
+                Parameters: ~
+                    {types}  Context types ("regs", "jumps", "buflist",
+                             "gvars", ...) to gather, or [|v:null|] for all
+                             (see |context-types|).
+
+                Return: ~
+                    map of global context (see |context-dict|).
+
+nvim_load_context({dict})                                *nvim_load_context()*
+                Sets the current editor state to that in given |context|
+                dictionary.
+
+                Parameters: ~
+                    {dict}  Context dictionary (see |context-dict|).
 
 nvim_get_mode()                                              *nvim_get_mode()*
                 Gets the current mode. |mode()| "blocking" is true if Nvim is
