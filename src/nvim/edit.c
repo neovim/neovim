@@ -3694,7 +3694,7 @@ expand_by_function (
   curbuf_save = curbuf;
 
   // Call a function, which returns a list or dict.
-  if (call_vim_function(funcname, 2, args, false, &rettv) == OK) {
+  if (call_vim_function(funcname, 2, args, &rettv, false) == OK) {
     switch (rettv.v_type) {
     case VAR_LIST:
       matchlist = rettv.vval.v_list;

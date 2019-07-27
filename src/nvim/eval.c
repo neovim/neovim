@@ -1275,7 +1275,7 @@ int get_spellword(list_T *const list, const char **ret_word)
 
 
 // Call some vim script function and return the result in "*rettv".
-// Uses argv[argc-1] for the function arguments. argv[argc]
+// Uses argv[0] to argv[argc-1] for the function arguments. argv[argc]
 // should have type VAR_UNKNOWN.
 //
 // Return OK or FAIL.
@@ -1283,8 +1283,8 @@ int call_vim_function(
     const char_u *func,
     int argc,
     typval_T *argv,
-    int safe,                       // use the sandbox
-    typval_T *rettv
+    typval_T *rettv,
+    bool safe                       // use the sandbox
 )
 {
   int doesrange;
@@ -1325,7 +1325,7 @@ varnumber_T call_func_retnr(char_u *func, int argc,
   typval_T rettv;
   varnumber_T retval;
 
-  if (call_vim_function(func, argc, argv, safe, &rettv) == FAIL) {
+  if (call_vim_function(func, argc, argv, &rettv, safe) == FAIL) {
     return -1;
   }
   retval = tv_get_number_chk(&rettv, NULL);
@@ -1348,7 +1348,7 @@ char *call_func_retstr(const char *const func, int argc,
 {
   typval_T rettv;
   // All arguments are passed as strings, no conversion to number.
-  if (call_vim_function((const char_u *)func, argc, argv, safe, &rettv)
+  if (call_vim_function((const char_u *)func, argc, argv, &rettv, safe)
       == FAIL) {
     return NULL;
   }
@@ -1372,7 +1372,7 @@ void *call_func_retlist(char_u *func, int argc, typval_T *argv,
   typval_T rettv;
 
   // All arguments are passed as strings, no conversion to number.
-  if (call_vim_function(func, argc, argv, safe, &rettv) == FAIL) {
+  if (call_vim_function(func, argc, argv, &rettv, safe) == FAIL) {
     return NULL;
   }
 
