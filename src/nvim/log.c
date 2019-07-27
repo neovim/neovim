@@ -12,7 +12,6 @@
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #if !defined(WIN32)
 # include <sys/time.h>  // for gettimeofday()

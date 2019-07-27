@@ -25,9 +25,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
 

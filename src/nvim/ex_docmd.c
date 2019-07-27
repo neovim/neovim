@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <inttypes.h>
 

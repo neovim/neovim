@@ -8,7 +8,6 @@
 /// Functions for Ex command line for the +eval feature.
 #include <assert.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <limits.h>
 

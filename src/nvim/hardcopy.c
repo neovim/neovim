@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 #include <inttypes.h>
-#include <stdint.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"

@@ -3,7 +3,6 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <stdint.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"

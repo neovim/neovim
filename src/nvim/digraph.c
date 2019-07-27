@@ -7,7 +7,6 @@
 
 #include <assert.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
