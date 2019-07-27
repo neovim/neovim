@@ -40,6 +40,7 @@ class DebugSession( object ):
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
+    self._logger.info( "**** INITIALISING NEW VIMSPECTOR SESSION ****" )
     self._logger.info( 'VIMSPECTOR_HOME = %s', VIMSPECTOR_HOME )
     self._logger.info( 'gadgetDir = %s',
                        install.GetGadgetDir( VIMSPECTOR_HOME,
@@ -205,6 +206,7 @@ class DebugSession( object ):
       self._breakpoints.SetBreakpointsHandler( Handler( self._codeView ) )
 
     if self._connection:
+      self._logger.debug( "_StopDebugAdapter with callback: start" )
       self._StopDebugAdapter( start )
       return
 
@@ -240,10 +242,12 @@ class DebugSession( object ):
     self._connection = None
 
   def Stop( self ):
+    self._logger.debug( "Stop debug adapter with no callback" )
     self._StopDebugAdapter()
 
   def Reset( self ):
     if self._connection:
+      self._logger.debug( "Stop debug adapter with callback : self._Reset()" )
       self._StopDebugAdapter( lambda: self._Reset() )
     else:
       self._Reset()
@@ -452,6 +456,7 @@ class DebugSession( object ):
         self._connection_type ) )
 
       if callback:
+        self._logger.debug( "Setting server exit handler for disconnect" )
         assert not self._run_on_server_exit
         self._run_on_server_exit = callback
 
@@ -757,7 +762,10 @@ class DebugSession( object ):
     self._ResetServerState()
 
     if self._run_on_server_exit:
+      self._logger.debug( "Running server exit handler" )
       self._run_on_server_exit()
+    else:
+      self._logger.debug( "No server exit handler" )
 
   def OnEvent_terminated( self, message ):
     # We will handle this when the server actually exists
