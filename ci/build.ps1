@@ -14,8 +14,10 @@ $depsCmakeVars = @{
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
-  DEPS_BUILD_DIR=$(if ($env:DEPS_BUILD_DIR -ne $null) {$env:DEPS_BUILD_DIR} else {".deps"});
   DEPS_PREFIX=$(if ($env:DEPS_PREFIX -ne $null) {$env:DEPS_PREFIX} else {".deps/usr"});
+}
+if ($env:DEPS_BUILD_DIR -eq $null) {
+  $env:DEPS_BUILD_DIR = ".deps";
 }
 $uploadToCodeCov = $false
 
@@ -26,11 +28,11 @@ function exitIfFailed() {
   }
 }
 
-if (-Not (Test-Path -PathType container $nvimCmakeVars["DEPS_BUILD_DIR"])) {
-  write-host "cache dir not found: $($nvimCmakeVars['DEPS_BUILD_DIR'])"
-  mkdir $nvimCmakeVars["DEPS_BUILD_DIR"]
+if (-Not (Test-Path -PathType container $env:DEPS_BUILD_DIR)) {
+  write-host "cache dir not found: $($env:DEPS_BUILD_DIR)"
+  mkdir $env:DEPS_BUILD_DIR
 } else {
-  write-host "cache dir $($nvimCmakeVars['DEPS_BUILD_DIR']) size: $(Get-ChildItem $nvimCmakeVars['DEPS_BUILD_DIR'] -recurse | Measure-Object -property length -sum | Select -expand sum)"
+  write-host "cache dir $($env:DEPS_BUILD_DIR) size: $(Get-ChildItem $env:DEPS_BUILD_DIR -recurse | Measure-Object -property length -sum | Select -expand sum)"
 }
 
 if ($compiler -eq 'MINGW') {
@@ -96,7 +98,7 @@ function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
 }
 
-cd $nvimCmakeVars["DEPS_BUILD_DIR"]
+cd $env:DEPS_BUILD_DIR
 cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd $buildDir
