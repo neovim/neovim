@@ -2580,10 +2580,35 @@ static bool pum_enough_matches(void)
   return i >= 2;
 }
 
-/*
- * Show the popup menu for the list of matches.
- * Also adjusts "compl_shown_match" to an entry that is actually displayed.
- */
+static void trigger_complete_changed_event(int cur)
+{
+  static bool recursive = false;
+
+  if (recursive) {
+    return;
+  }
+
+  dict_T *v_event = get_vim_var_dict(VV_EVENT);
+  if (cur < 0) {
+    tv_dict_add_dict(v_event, S_LEN("completed_item"), tv_dict_alloc());
+  } else {
+    dict_T *item = ins_compl_dict_alloc(compl_curr_match);
+    tv_dict_add_dict(v_event, S_LEN("completed_item"), item);
+  }
+  pum_set_event_info(v_event);
+  tv_dict_set_keys_readonly(v_event);
+
+  recursive = true;
+  textlock++;
+  apply_autocmds(EVENT_COMPLETECHANGED, NULL, NULL, false, curbuf);
+  textlock--;
+  recursive = false;
+
+  tv_dict_clear(v_event);
+}
+
+/// Show the popup menu for the list of matches.
+/// Also adjusts "compl_shown_match" to an entry that is actually displayed.
 void ins_compl_show_pum(void)
 {
   compl_T     *compl;
@@ -2715,22 +2740,9 @@ void ins_compl_show_pum(void)
   pum_display(compl_match_array, compl_match_arraysize, cur, array_changed, 0);
   curwin->w_cursor.col = col;
 
-  if (!has_event(EVENT_COMPLETECHANGED)) {
-    return;
+  if (has_event(EVENT_COMPLETECHANGED)) {
+    trigger_complete_changed_event(cur);
   }
-  dict_T *dict = get_vim_var_dict(VV_EVENT);
-  if (cur < 0) {
-    tv_dict_add_dict(dict, S_LEN("completed_item"), tv_dict_alloc());
-  } else {
-    dict_T *item = ins_compl_dict_alloc(compl_curr_match);
-    tv_dict_add_dict(dict, S_LEN("completed_item"), item);
-  }
-  pum_set_boundings(dict);
-  tv_dict_set_keys_readonly(dict);
-  textlock++;
-  apply_autocmds(EVENT_COMPLETECHANGED, NULL, NULL, false, curbuf);
-  textlock--;
-  tv_dict_clear(dict);
 }
 
 #define DICT_FIRST      (1)     /* use just first element in "dict" */

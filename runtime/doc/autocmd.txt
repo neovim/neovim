@@ -590,18 +590,19 @@ CompleteDone			After Insert mode completion is done.  Either
 				completed item.
 
 CompleteChanged 					*CompleteChanged*
-				After each time popup menu changed, not fired
-				on popup menu hide, use |CompleteDone| for popup
-				menu hide.
+				After each time the Insert mode completion
+				menu changed.  Not fired on popup menu hide,
+				use |CompleteDone| for that.  Never triggered
+				recursively.
 
 				Sets these |v:event| keys:
 				    completed_item
-				    height
-				    width
-				    row
-				    col
-				    size
-				    scrollbar
+				    height		nr of items visible
+				    width		screen cells
+				    row			top screen row
+				    col			leftmost screen column
+				    size		total nr of items
+				    scrollbar		TRUE if visible
 
 				It is not allowed to change the text |textlock|.
 

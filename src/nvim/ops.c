@@ -1402,7 +1402,7 @@ int op_delete(oparg_T *oap)
     yankreg_T *reg = NULL;
     int did_yank = false;
     if (oap->regname != 0) {
-      //yank without message
+      // yank without message
       did_yank = op_yank(oap, false, true);
       if (!did_yank) {
         // op_yank failed, don't do anything
@@ -3447,7 +3447,7 @@ void ex_display(exarg_T *eap)
           MSG_PUTS_ATTR("^J", attr);
           n -= 2;
         }
-        for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019
+        for (p = yb->y_array[j]; *p && (n -= ptr2cells(p)) >= 0; p++) {  // -V1019 NOLINT(whitespace/line_length)
           clen = (*mb_ptr2len)(p);
           msg_outtrans_len(p, clen);
           p += clen - 1;
