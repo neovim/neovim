@@ -3110,6 +3110,7 @@ void get_complete_info(list_T *what_list, dict_T *retdict)
                          ? compl_curr_match->cp_number - 1 : -1);
   }
 
+  (void)ret;
   // TODO(vim):
   // if (ret == OK && (what_flag & CI_WHAT_INSERTED))
 }

@@ -3143,7 +3143,6 @@ win_line (
           c = '>';
           mb_c = c;
           mb_l = 1;
-          mb_utf8 = false;
           multi_attr = win_hl_attr(wp, HLF_AT);
 
           // put the pointer back to output the double-width

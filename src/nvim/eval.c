@@ -16032,10 +16032,12 @@ static void f_sign_getplaced(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       if ((di = tv_dict_find(dict, "lnum", -1)) != NULL) {
         // get signs placed at this line
-        lnum = tv_get_lnum(&di->di_tv);
-        if (lnum <= 0) {
+        lnum = (linenr_T)tv_get_number_chk(&di->di_tv, &notanum);
+        if (notanum) {
           return;
         }
+        (void)lnum;
+        lnum = tv_get_lnum(&di->di_tv);
       }
       if ((di = tv_dict_find(dict, "id", -1)) != NULL) {
         // get sign placed with this identifier
@@ -16164,6 +16166,7 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (notanum) {
         goto cleanup;
       }
+      (void)lnum;
       lnum = tv_get_lnum(&di->di_tv);
     }
     if ((di = tv_dict_find(dict, "priority", -1)) != NULL) {
