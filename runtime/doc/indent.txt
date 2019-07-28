@@ -585,8 +585,9 @@ The basics for using flexible indenting are explained in section |30.3| of the
 user manual.
 
 If you want to write your own indent file, it must set the 'indentexpr'
-option.  Setting the 'indentkeys' option is often useful.  See the
-$VIMRUNTIME/indent directory for examples.
+option.  Setting the 'indentkeys' option is often useful.
+See the $VIMRUNTIME/indent/README.txt file for hints.
+See the $VIMRUNTIME/indent directory for examples.
 
 
 REMARKS ABOUT SPECIFIC INDENT FILES ~

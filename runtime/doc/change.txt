@@ -800,7 +800,7 @@ the |substitute()| function with the following exceptions:
   - magic is always set without regard to 'magic'.
   - A ~ inserts a tilde literally.
   - <CR> and \r inserts a carriage-return (CTRL-M).
-  - \<CR> does not have a special meaning. it's just one of \x.
+  - \<CR> does not have a special meaning. It's just one of \x.
 
 Examples: >
   :s/a\|b/xxx\0xxx/g		 modifies "a b"	     to "xxxaxxx xxxbxxx"

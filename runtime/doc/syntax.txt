@@ -917,6 +917,9 @@ to the respective variable.  Example: >
 To disable them use ":unlet".  Example: >
 	:unlet c_comment_strings
 
+An alternative is to switch to the C++ highlighting: >
+	:set filetype=cpp
+
 Variable		Highlight ~
 *c_gnu*			GNU gcc specific items
 *c_comment_strings*	strings and numbers inside a comment

@@ -625,7 +625,7 @@ func! s:CSSIndent()
     return eval(b:hi_css1indent)
   endif
 
-  " If the current line starts with "}" align with it's match.
+  " If the current line starts with "}" align with its match.
   if curtext =~ '^\s*}'
     call cursor(v:lnum, 1)
     try

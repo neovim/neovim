@@ -147,10 +147,10 @@ function() or funcref().  When calling the function the Dictionary and/or
 arguments will be passed to the function.  Example: >
 
 	let Cb = function('Callback', ['foo'], myDict)
-	call Cb()
+	call Cb('bar')
 
 This will invoke the function as if using: >
-	call myDict.Callback('foo')
+	call myDict.Callback('foo', 'bar')
 
 Note that binding a function to a Dictionary also happens when the function is
 a member of the Dictionary: >
@@ -8819,7 +8819,7 @@ win_getid([{win} [, {tab}]])				*win_getid()*
 		Get the |window-ID| for the specified window.
 		When {win} is missing use the current window.
 		With {win} this is the window number.  The top window has
-		number 1.  Use `win_getid(winnr())` for the current window.
+		number 1.
 		Without {tab} use the current tab, otherwise the tab with
 		number {tab}.  The first tab has number one.
 		Return zero if the window cannot be found.
