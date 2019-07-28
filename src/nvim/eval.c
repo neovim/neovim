@@ -526,6 +526,35 @@ const list_T *eval_msgpack_type_lists[] = {
   [kMPExt] = NULL,
 };
 
+// Return "n1" divided by "n2", taking care of dividing by zero.
+varnumber_T num_divide(varnumber_T n1, varnumber_T n2)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  varnumber_T result;
+
+  if (n2 == 0) {  // give an error message?
+    if (n1 == 0) {
+      result = VARNUMBER_MIN;  // similar to NaN
+    } else if (n1 < 0) {
+      result = -VARNUMBER_MAX;
+    } else {
+      result = VARNUMBER_MAX;
+    }
+  } else {
+    result = n1 / n2;
+  }
+
+  return result;
+}
+
+// Return "n1" modulus "n2", taking care of dividing by zero.
+varnumber_T num_modulus(varnumber_T n1, varnumber_T n2)
+  FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  // Give an error when n2 is 0?
+  return (n2 == 0) ? 0 : (n1 % n2);
+}
+
 /*
  * Initialize the global and v: variables.
  */
@@ -2047,8 +2076,8 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
               case '+': n = numval + n; break;
               case '-': n = numval - n; break;
               case '*': n = numval * n; break;
-              case '/': n = numval / n; break;
-              case '%': n = numval % n; break;
+              case '/': n = num_divide(numval, n); break;
+              case '%': n = num_modulus(numval, n); break;
             }
           } else if (opt_type == 0 && stringval != NULL) {  // string
             char *const oldstringval = stringval;
@@ -4178,22 +4207,9 @@ static int eval6(char_u **arg, typval_T *rettv, int evaluate, int want_string)
         if (op == '*') {
           n1 = n1 * n2;
         } else if (op == '/') {
-          if (n2 == 0) {                // give an error message?
-            if (n1 == 0) {
-              n1 = VARNUMBER_MIN;  // similar to NaN
-            } else if (n1 < 0) {
-              n1 = -VARNUMBER_MAX;
-            } else {
-              n1 = VARNUMBER_MAX;
-            }
-          } else {
-            n1 = n1 / n2;
-          }
+          n1 = num_divide(n1, n2);
         } else {
-          if (n2 == 0)                  /* give an error message? */
-            n1 = 0;
-          else
-            n1 = n1 % n2;
+          n1 = num_modulus(n1, n2);
         }
         rettv->v_type = VAR_NUMBER;
         rettv->vval.v_number = n1;
@@ -9600,6 +9616,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dictitem_T  *di;
   dict_T      *d;
   typval_T    *tv = NULL;
+  bool what_is_dict = false;
 
   if (argvars[0].v_type == VAR_LIST) {
     if ((l = argvars[0].vval.v_list) != NULL) {
@@ -9641,7 +9658,10 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           func_ref(rettv->vval.v_string);
         }
       } else if (strcmp(what, "dict") == 0) {
-        tv_dict_set_ret(rettv, pt->pt_dict);
+        what_is_dict = true;
+        if (pt->pt_dict != NULL) {
+          tv_dict_set_ret(rettv, pt->pt_dict);
+        }
       } else if (strcmp(what, "args") == 0) {
         rettv->v_type = VAR_LIST;
         if (tv_list_alloc_ret(rettv, pt->pt_argc) != NULL) {
@@ -9652,7 +9672,12 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       } else {
         EMSG2(_(e_invarg2), what);
       }
-      return;
+
+      // When {what} == "dict" and pt->pt_dict == NULL, evaluate the
+      // third argument
+      if (!what_is_dict) {
+        return;
+      }
     }
   } else {
     EMSG2(_(e_listdictarg), "get()");

@@ -74,8 +74,8 @@ int eexe_mod_op(typval_T *const tv1, const typval_T *const tv2,
               case '+': n += tv_get_number(tv2); break;
               case '-': n -= tv_get_number(tv2); break;
               case '*': n *= tv_get_number(tv2); break;
-              case '/': n /= tv_get_number(tv2); break;
-              case '%': n %= tv_get_number(tv2); break;
+              case '/': n = num_divide(n, tv_get_number(tv2)); break;
+              case '%': n = num_modulus(n, tv_get_number(tv2)); break;
             }
             tv_clear(tv1);
             tv1->v_type = VAR_NUMBER;

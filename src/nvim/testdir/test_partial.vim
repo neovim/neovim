@@ -285,6 +285,11 @@ func Test_get_partial_items()
   call assert_equal('MyDictFunc', get(Func, 'name'))
   call assert_equal([], get(Func, 'args'))
   call assert_true(empty( get(Func, 'dict')))
+
+  let P = function('substitute', ['hello there', 'there'])
+  let dict = {'partial has': 'no dict'}
+  call assert_equal(dict, get(P, 'dict', dict))
+  call assert_equal(0, get(l:P, 'dict'))
 endfunc
 
 func Test_compare_partials()
