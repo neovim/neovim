@@ -864,13 +864,11 @@ int searchit(
       }
       at_first_line = FALSE;
 
-      /*
-       * Stop the search if wrapscan isn't set, "stop_lnum" is
-       * specified, after an interrupt, after a match and after looping
-       * twice.
-       */
+      // Stop the search if wrapscan isn't set, "stop_lnum" is
+      // specified, after an interrupt, after a match and after looping
+      // twice.
       if (!p_ws || stop_lnum != 0 || got_int || called_emsg
-          || (timed_out != NULL && timed_out)
+          || (timed_out != NULL && *timed_out)
           || break_loop
           || found || loop) {
         break;
