@@ -3448,7 +3448,7 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
 {
   mapblock_T  *mp;
   int hash;
-  bool expand_buffer = false;
+  bool exp_buffer = false;
 
   validate_maphash();
 
@@ -3459,12 +3459,12 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
         if (hash > 0) {  // There is only one abbr list.
           break;
         }
-        if (expand_buffer) {
+        if (exp_buffer) {
           mp = curbuf->b_first_abbr;
         } else {
           mp = first_abbr;
         }
-      } else if (expand_buffer) {
+      } else if (exp_buffer) {
         mp = curbuf->b_maphash[hash];
       } else {
         mp = maphash[hash];
@@ -3476,10 +3476,10 @@ int map_to_exists_mode(const char *const rhs, const int mode, const bool abbr)
         }
       }
     }
-    if (expand_buffer) {
+    if (exp_buffer) {
       break;
     }
-    expand_buffer = true;
+    exp_buffer = true;
   }
 
   return false;
