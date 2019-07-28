@@ -1326,7 +1326,7 @@ static int qf_parse_multiline_pfx(qf_info_T *qi, int qf_idx, int idx,
     if (qfprev == NULL) {
       return QF_FAIL;
     }
-    if (*fields->errmsg && !qfl->qf_multiignore) {
+    if (*fields->errmsg) {
       size_t textlen = strlen((char *)qfprev->qf_text);
       size_t errlen  = strlen((char *)fields->errmsg);
       qfprev->qf_text = xrealloc(qfprev->qf_text, textlen + errlen + 2);
@@ -2212,7 +2212,6 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
                        oldwin == curwin ? curwin : NULL);
     }
   } else {
-    int old_qf_curlist = qi->qf_curlist;
     unsigned save_qfid = qi->qf_lists[qi->qf_curlist].qf_id;
 
     retval = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
@@ -2229,8 +2228,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
         EMSG(_(e_loc_list_changed));
         *abort = true;
       }
-    } else if (old_qf_curlist != qi->qf_curlist
-               || !is_qf_entry_present(qi, qf_ptr)) {
+    } else if (!is_qf_entry_present(qi, qf_ptr)) {
       if (IS_QF_STACK(qi)) {
         EMSG(_("E925: Current quickfix was changed"));
       } else {
