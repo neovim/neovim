@@ -1400,9 +1400,11 @@ int op_delete(oparg_T *oap)
    */
   if (oap->regname != '_') {
     yankreg_T *reg = NULL;
+    int did_yank = false;
     if (oap->regname != 0) {
       //yank without message
-      if (!op_yank(oap, false)) {
+      did_yank = op_yank(oap, false, true);
+      if (!did_yank) {
         // op_yank failed, don't do anything
         return OK;
       }
@@ -1423,6 +1425,7 @@ int op_delete(oparg_T *oap)
       y_regs[1].y_array = NULL;                 // set register "1 to empty
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
+      did_yank = true;
     }
 
     /* Yank into small delete register when no named register specified
@@ -1431,13 +1434,14 @@ int op_delete(oparg_T *oap)
         && oap->line_count == 1) {
       reg = get_yank_register('-', YREG_YANK);
       op_yank_reg(oap, false, reg, false);
+      did_yank = true;
     }
 
-    if (oap->regname == 0) {
+    if (did_yank || oap->regname == 0) {
       if (reg == NULL) {
         abort();
       }
-      set_clipboard(0, reg);
+      set_clipboard(oap->regname, reg);
       do_autocmd_textyankpost(oap, reg);
     }
 
@@ -2376,8 +2380,9 @@ void free_register(yankreg_T *reg)
 ///
 /// @param oap operator arguments
 /// @param message show message when more than `&report` lines are yanked.
+/// @param deleting whether the function was called from a delete operation.
 /// @returns whether the operation register was writable.
-bool op_yank(oparg_T *oap, bool message)
+bool op_yank(oparg_T *oap, bool message, int deleting)
   FUNC_ATTR_NONNULL_ALL
 {
   // check for read-only register
@@ -2391,8 +2396,11 @@ bool op_yank(oparg_T *oap, bool message)
 
   yankreg_T *reg = get_yank_register(oap->regname, YREG_YANK);
   op_yank_reg(oap, message, reg, is_append_register(oap->regname));
-  set_clipboard(oap->regname, reg);
-  do_autocmd_textyankpost(oap, reg);
+  // op_delete will set_clipboard and do_autocmd
+  if (!deleting) {
+    set_clipboard(oap->regname, reg);
+    do_autocmd_textyankpost(oap, reg);
+  }
 
   return true;
 }

@@ -1817,7 +1817,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
         }
       } else {
         curwin->w_p_lbr = lbr_saved;
-        (void)op_yank(oap, !gui_yank);
+        (void)op_yank(oap, !gui_yank, false);
       }
       check_cursor_col();
       break;
