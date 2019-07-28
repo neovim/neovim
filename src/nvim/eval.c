@@ -9600,6 +9600,7 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   dictitem_T  *di;
   dict_T      *d;
   typval_T    *tv = NULL;
+  bool what_is_dict = false;
 
   if (argvars[0].v_type == VAR_LIST) {
     if ((l = argvars[0].vval.v_list) != NULL) {
@@ -9641,7 +9642,10 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           func_ref(rettv->vval.v_string);
         }
       } else if (strcmp(what, "dict") == 0) {
-        tv_dict_set_ret(rettv, pt->pt_dict);
+        what_is_dict = true;
+        if (pt->pt_dict != NULL) {
+          tv_dict_set_ret(rettv, pt->pt_dict);
+        }
       } else if (strcmp(what, "args") == 0) {
         rettv->v_type = VAR_LIST;
         if (tv_list_alloc_ret(rettv, pt->pt_argc) != NULL) {
@@ -9652,7 +9656,12 @@ static void f_get(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       } else {
         EMSG2(_(e_invarg2), what);
       }
-      return;
+
+      // When {what} == "dict" and pt->pt_dict == NULL, evaluate the
+      // third argument
+      if (!what_is_dict) {
+        return;
+      }
     }
   } else {
     EMSG2(_(e_listdictarg), "get()");

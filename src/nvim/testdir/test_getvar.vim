@@ -1,4 +1,5 @@
-" Tests for getwinvar(), gettabvar() and gettabwinvar().
+" Tests for getwinvar(), gettabvar(), gettabwinvar() and get().
+
 func Test_var()
   " Use strings to test for memory leaks.  First, check that in an empty
   " window, gettabvar() returns the correct value
@@ -102,3 +103,44 @@ func Test_gettabvar_in_tabline()
   close
   redrawstatus!
 endfunc
+
+" Test get() function using default value.
+
+" get({dict}, {key} [, {default}])
+func Test_get_dict()
+  let d = {'foo': 42}
+  call assert_equal(42, get(d, 'foo', 99))
+  call assert_equal(999, get(d, 'bar', 999))
+endfunc
+
+" get({list}, {idx} [, {default}])
+func Test_get_list()
+  let l = [1,2,3]
+  call assert_equal(1, get(l, 0, 999))
+  call assert_equal(3, get(l, -1, 999))
+  call assert_equal(999, get(l, 3, 999))
+endfunc
+
+" get({blob}, {idx} [, {default}]) - in test_blob.vim
+
+" get({lambda}, {what} [, {default}])
+func Test_get_lambda()
+  let l:L = {-> 42}
+  call assert_match('^<lambda>', get(l:L, 'name'))
+  call assert_equal(l:L, get(l:L, 'func'))
+  call assert_equal({'lambda has': 'no dict'}, get(l:L, 'dict', {'lambda has': 'no dict'}))
+  call assert_equal(0, get(l:L, 'dict'))
+  call assert_equal([], get(l:L, 'args'))
+endfunc
+
+" get({func}, {what} [, {default}])
+func Test_get_func()
+  let l:F = function('tr')
+  call assert_equal('tr', get(l:F, 'name'))
+  call assert_equal(l:F, get(l:F, 'func'))
+  call assert_equal({'func has': 'no dict'}, get(l:F, 'dict', {'func has': 'no dict'}))
+  call assert_equal(0, get(l:F, 'dict'))
+  call assert_equal([], get(l:F, 'args'))
+endfunc
+
+" get({partial}, {what} [, {default}]) - in test_partial.vim
