@@ -359,7 +359,7 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
                                                  attrbuf[i+1], &thru);
         }
         if (thru) {
-          memcpy(linebuf[i], bg_line[i], (size_t)width * sizeof(linebuf[i]));
+          memcpy(linebuf + i, bg_line + i, (size_t)width * sizeof(linebuf[i]));
         }
       }
     }
