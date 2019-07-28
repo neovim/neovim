@@ -2229,8 +2229,6 @@ msgpackdump({list})		List	dump a list of objects to msgpack
 msgpackparse({list})		List	parse msgpack to a list of objects
 nextnonblank({lnum})		Number	line nr of non-blank line >= {lnum}
 nr2char({expr}[, {utf8}])	String	single char with ASCII/UTF8 value {expr}
-option_restore({list})		none	restore options saved by option_save()
-option_save({list})		List	save options values
 nvim_...({args}...)		any	call nvim |api| functions
 or({expr}, {expr})		Number  bitwise OR
 pathshorten({expr})		String	shorten directory names in a path
