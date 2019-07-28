@@ -1,7 +1,5 @@
 local shared = require('vim.shared')
 
-local lsp_util = require('lsp.util')
-
 local server_config = {}
 server_config.__index = server_config
 
@@ -39,7 +37,9 @@ server_config.add = function(filetype, command, additional_configuration)
 end
 
 server_config.get_name = function(filetype)
-  filetype = lsp_util.get_filetype(filetype)
+  if filetype == nil then
+    error('filetype must be required', 2)
+  end
 
   local ft_config = server_config.configured_servers[filetype]
 
@@ -56,12 +56,10 @@ server_config.get_name = function(filetype)
   end
 end
 
-server_config.get_command = function(cmd, filetype)
-  if cmd ~= nil then
-    return cmd
+server_config.get_command = function(filetype)
+  if filetype == nil then
+    error('filetype must be required', 2)
   end
-
-  filetype = lsp_util.get_filetype(filetype)
 
   local ft_config = server_config.configured_servers[filetype]
 

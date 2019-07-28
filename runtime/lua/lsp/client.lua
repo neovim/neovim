@@ -94,7 +94,7 @@ client.new = function(name, ft, cmd)
 end
 
 client.initialize = function(self)
-  local result = self:request_async('initialize', nil, function(_, data)
+  local result = self:request_async('initialize', nil, nil, function(_, data)
     self:notify('initialized')
     self:notify('textDocument/didOpen')
     self.capabilities =  EmptyDictionary:new(data.capabilities)
@@ -118,13 +118,14 @@ end
 -- @param params: the parameters to send
 -- @param cb (optional): If sent, will call this when it's done
 --                          otherwise it'll wait til the client is done
-client.request = function(self, method, params, cb)
+client.request = function(self, method, params, bufnr, cb)
   if not method then
     error("No request method supplied", 2)
     return nil
   end
 
-  local request_id = self:request_async(method, params, cb)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local request_id = self:request_async(method, params, bufnr, cb)
 
   -- local later = os.time() + require('lsp.conf.request').timeout
   local later = os.time() + 10
@@ -149,7 +150,14 @@ end
 -- @param cb     (function)     : An optional function pointer to call once the request has been completed
 --                                  If a string is passed, it will execute a VimL funciton of that name
 --                                  To disable handling the request, pass "false"
-client.request_async = function(self, method, params, cb)
+client.request_async = function(self, method, params, bufnr, cb)
+  if not method then
+    error("No request method supplied", 2)
+    return nil
+  end
+
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+
   if self.job_id == nil then
     log.warn('Client does not have valid job_id: ', self.name)
     return nil
@@ -166,6 +174,7 @@ client.request_async = function(self, method, params, cb)
     self._callbacks[req.id] = {
       cb = cb,
       method = req.method,
+      bufnr = bufnr,
     }
   end
 

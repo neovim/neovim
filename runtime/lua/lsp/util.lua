@@ -2,12 +2,9 @@ local util = require('nvim.util')
 
 local lsp_util = {}
 
-lsp_util.get_filetype = function(filetype)
-  if not filetype then
-    filetype = vim.api.nvim_buf_get_option(0, 'filetype')
-  end
-
-  return filetype
+lsp_util.get_filetype = function(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_bufnr()
+  return vim.api.nvim_buf_get_option(bufnr, 'filetype')
 end
 
 lsp_util.get_uri = function(filename)

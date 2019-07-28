@@ -13,9 +13,9 @@ local plugin = { client_map = {} }
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: A client object that has been initialized
-plugin.start_client = function(self, cmd, filetype)
-  filetype = lsp_util.get_filetype(filetype)
-  cmd = server_config.get_command(cmd, filetype)
+plugin.start_client = function(cmd, filetype, bufnr)
+  filetype = filetype or lsp_util.get_filetype(bufnr)
+  cmd = cmd or server_config.get_command(filetype)
 
   local name = server_config.get_name(filetype)
 
@@ -30,7 +30,7 @@ plugin.start_client = function(self, cmd, filetype)
   client:initialize()
 
   -- Store the client in our map
-  self.client_map[filetype] = client
+  plugin.client_map[filetype] = client
 
   return client
 end
@@ -39,11 +39,9 @@ end
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: Client Object or nil
-plugin.get_client = function(self, filetype)
-  filetype = lsp_util.get_filetype(filetype)
-
+plugin.get_client = function(filetype)
   -- TODO: Throw error if no client started?
-  return self.client_map[filetype]
+  return plugin.client_map[filetype]
 end
 
 --- Send a request to a server and return the response
@@ -53,8 +51,8 @@ end
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: The result of the request
-plugin.request = function(method, arguments, cb, filetype)
-  filetype = lsp_util.get_filetype(filetype)
+plugin.request = function(method, arguments, filetype, bufnr, cb)
+  filetype = filetype or lsp_util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
   end
@@ -66,12 +64,12 @@ plugin.request = function(method, arguments, cb, filetype)
     return
   end
 
-  return current_client:request(method, arguments, cb)
+  return current_client:request(method, arguments, bufnr, cb)
 end
 
 --- Send a request to a server, but don't wait for the response
-plugin.request_async = function(method, arguments, cb, filetype)
-  filetype = lsp_util.get_filetype(filetype)
+plugin.request_async = function(method, arguments, filetype, bufnr, cb)
+  filetype = filetype or lsp_util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
   end
@@ -83,7 +81,7 @@ plugin.request_async = function(method, arguments, cb, filetype)
     return
   end
 
-  current_client:request_async(method, arguments, cb)
+  current_client:request_async(method, arguments, bufnr, cb)
 end
 
 plugin.request_autocmd = function(method, arguments, cb, filetype)
@@ -105,8 +103,8 @@ plugin.wait_request = function(request_id, filetype)
 end
 
 --- Send a notification to a server
-plugin.notify = function(method, arguments, filetype)
-  filetype = lsp_util.get_filetype(filetype)
+plugin.notify = function(method, arguments, filetype, bufnr)
+  filetype = filetype or lsp_util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
   end
