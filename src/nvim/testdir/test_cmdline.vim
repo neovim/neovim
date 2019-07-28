@@ -232,6 +232,15 @@ func Test_getcompletion()
   let l = getcompletion('not', 'mapclear')
   call assert_equal([], l)
 
+  let l = getcompletion('.', 'shellcmd')
+  call assert_equal(['./', '../'], l[0:1])
+  call assert_equal(-1, match(l[2:], '^\.\.\?/$'))
+  let root = has('win32') ? 'C:\\' : '/'
+  let l = getcompletion(root, 'shellcmd')
+  let expected = map(filter(glob(root . '*', 0, 1),
+        \ 'isdirectory(v:val) || executable(v:val)'), 'isdirectory(v:val) ? v:val . ''/'' : v:val')
+  call assert_equal(expected, l)
+
   if has('cscope')
     let l = getcompletion('', 'cscope')
     let cmds = ['add', 'find', 'help', 'kill', 'reset', 'show']
@@ -273,8 +282,7 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   " For others test if the name is recognized.
-  let names = ['buffer', 'environment', 'file_in_path',
-	\ 'mapping', 'shellcmd', 'tag', 'tag_listfiles', 'user']
+  let names = ['buffer', 'environment', 'file_in_path', 'mapping', 'tag', 'tag_listfiles', 'user']
   if has('cmdline_hist')
     call add(names, 'history')
   endif

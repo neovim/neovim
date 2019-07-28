@@ -4946,7 +4946,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 {
   char_u      *pat;
   int i;
-  char_u      *path;
+  char_u      *path = NULL;
   garray_T ga;
   char_u *buf = xmalloc(MAXPATHL);
   size_t l;
@@ -4965,15 +4965,14 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   flags |= EW_FILE | EW_EXEC | EW_SHELLCMD;
 
   bool mustfree = false;  // Track memory allocation for *path.
-  // For an absolute name we don't use $PATH.
-  if (path_is_absolute(pat)) {
-    path = (char_u *)" ";
-  } else if (pat[0] == '.' && (vim_ispathsep(pat[1])
-                               || (pat[1] == '.'
-                                   && vim_ispathsep(pat[2])))) {
+  if (pat[0] == '.' && (vim_ispathsep(pat[1])
+                        || (pat[1] == '.' && vim_ispathsep(pat[2])))) {
     path = (char_u *)".";
   } else {
-    path = (char_u *)vim_getenv("PATH");
+    // For an absolute name we don't use $PATH.
+    if (!path_is_absolute(pat)) {
+      path = (char_u *)vim_getenv("PATH");
+    }
     if (path == NULL) {
       path = (char_u *)"";
     } else {
@@ -4987,6 +4986,8 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
    * current directory, to find "subdir/cmd".
    */
   ga_init(&ga, (int)sizeof(char *), 10);
+  hashtab_T found_ht;
+  hash_init(&found_ht);
   for (s = path; ; s = e) {
     if (*s == NUL) {
       if (did_curdir) {
@@ -4998,13 +4999,10 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
       did_curdir = true;
     }
 
-    if (*s == ' ') {
-      s++;              // Skip space used for absolute path name.
-    }
-
-    e = vim_strchr(s, ':');
-    if (e == NULL)
+    e = vim_strchr(s, ENV_SEPCHAR);
+    if (e == NULL) {
       e = s + STRLEN(s);
+    }
 
     l = (size_t)(e - s);
     if (l > MAXPATHL - 5) {
@@ -5020,14 +5018,24 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
     if (ret == OK) {
       ga_grow(&ga, *num_file);
       {
-        for (i = 0; i < *num_file; ++i) {
-          s = (*file)[i];
-          if (STRLEN(s) > l) {
-            /* Remove the path again. */
-            STRMOVE(s, s + l);
-            ((char_u **)ga.ga_data)[ga.ga_len++] = s;
-          } else
-            xfree(s);
+        for (i = 0; i < *num_file; i++) {
+          char_u *name = (*file)[i];
+
+          if (STRLEN(name) > l) {
+            // Check if this name was already found.
+            hash_T hash = hash_hash(name + l);
+            hashitem_T *hi =
+              hash_lookup(&found_ht, (const char *)(name + l),
+                          STRLEN(name + l), hash);
+            if (HASHITEM_EMPTY(hi)) {
+              // Remove the path that was prepended.
+              STRMOVE(name, name + l);
+              ((char_u **)ga.ga_data)[ga.ga_len++] = name;
+              hash_add_item(&found_ht, hi, name, hash);
+              name = NULL;
+            }
+          }
+          xfree(name);
         }
         xfree(*file);
       }
@@ -5043,6 +5051,7 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   if (mustfree) {
     xfree(path);
   }
+  hash_clear(&found_ht);
 }
 
 /// Call "user_expand_func()" to invoke a user defined Vim script function and
