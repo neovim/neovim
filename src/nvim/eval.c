@@ -16064,9 +16064,6 @@ static void f_sign_jump(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     sign_group = NULL;  // global sign group
   } else {
     sign_group = xstrdup(sign_group_chk);
-    if (sign_group == NULL) {
-      return;
-    }
   }
 
   // Buffer to place the sign
@@ -16115,9 +16112,6 @@ static void f_sign_place(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     group = NULL;  // global sign group
   } else {
     group = vim_strsave((const char_u *)group_chk);
-    if (group == NULL) {
-      return;
-    }
   }
 
   // Sign name
@@ -16210,9 +16204,6 @@ static void f_sign_unplace(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     group = NULL;  // global sign group
   } else {
     group = vim_strsave((const char_u *)group_chk);
-    if (group == NULL) {
-      return;
-    }
   }
 
   if (argvars[1].v_type != VAR_UNKNOWN) {

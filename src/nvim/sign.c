@@ -253,11 +253,7 @@ char_u * sign_typenr2name(int typenr)
 /// Return information about a sign in a Dict
 dict_T * sign_get_info(signlist_T *sign)
 {
-  dict_T  *d;
-
-  if ((d = tv_dict_alloc()) == NULL) {
-    return NULL;
-  }
+  dict_T  *d = tv_dict_alloc();
   tv_dict_add_nr(d,  S_LEN("id"), sign->id);
   tv_dict_add_str(d, S_LEN("group"), ((sign->group == NULL)
                                       ? (char *)""
