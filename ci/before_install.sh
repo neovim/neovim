@@ -16,13 +16,16 @@ echo 'Python info:'
   pip3 --version
   pip2 --version
   pip --version
+
+  pyenv --version
   pyenv versions
 ) 2>&1 | sed 's/^/  /' || true
 
 # Use pyenv, but not for OSX on Travis, where it only has the "system" version.
 if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
   echo 'Setting Python versions via pyenv'
-  # Prefer python2 as python for /usr/bin/asan_symbolize-4.0.
+
+  # Prefer Python 2 over 3 (more conservative).
   pyenv global 2.7.15:3.7
 
   echo 'Updated Python info:'
