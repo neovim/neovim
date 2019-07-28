@@ -15183,7 +15183,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
     // undone separately from what was previously inserted.
     if (u_sync_once == 2) {
       u_sync_once = 1;  // notify that u_sync() was called
-      u_sync(TRUE);
+      u_sync(true);
     }
 
     if (lnum <= curbuf->b_ml.ml_line_count) {
