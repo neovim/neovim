@@ -274,7 +274,7 @@ typedef struct {
       char sep;
       list_T *additional_elements;
     } history_item;
-    struct reg {
+    struct reg {  // yankreg_T
       char name;
       MotionType type;
       char **contents;
@@ -4139,15 +4139,19 @@ static inline size_t shada_init_jumps(
 void shada_encode_regs(msgpack_sbuffer *const sbuf)
   FUNC_ATTR_NONNULL_ALL
 {
-  WriteMergerState wms;
-  shada_initialize_registers(&wms, -1);
+  WriteMergerState *const wms = xcalloc(1, sizeof(*wms));
+  shada_initialize_registers(wms, -1);
   msgpack_packer packer;
   msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
-  for (size_t i = 0; i < ARRAY_SIZE(wms.registers); i++) {
-    if (wms.registers[i].data.type == kSDItemRegister) {
-      shada_pack_pfreed_entry(&packer, wms.registers[i], 0);
+  for (size_t i = 0; i < ARRAY_SIZE(wms->registers); i++) {
+    if (wms->registers[i].data.type == kSDItemRegister) {
+      if (kSDWriteFailed
+          == shada_pack_pfreed_entry(&packer, wms->registers[i], 0)) {
+        abort();
+      }
     }
   }
+  xfree(wms);
 }
 
 /// Write jumplist ShaDa entries in given msgpack_sbuffer.
@@ -4163,7 +4167,9 @@ void shada_encode_jumps(msgpack_sbuffer *const sbuf)
   msgpack_packer packer;
   msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
   for (size_t i = 0; i < jumps_size; i++) {
-    shada_pack_pfreed_entry(&packer, jumps[i], 0);
+    if (kSDWriteFailed == shada_pack_pfreed_entry(&packer, jumps[i], 0)) {
+      abort();
+    }
   }
 }
 
@@ -4178,7 +4184,9 @@ void shada_encode_buflist(msgpack_sbuffer *const sbuf)
   ShadaEntry buflist_entry = shada_get_buflist(&removable_bufs);
   msgpack_packer packer;
   msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
-  shada_pack_entry(&packer, buflist_entry, 0);
+  if (kSDWriteFailed == shada_pack_entry(&packer, buflist_entry, 0)) {
+    abort();
+  }
   xfree(buflist_entry.data.buffer_list.buffers);
 }
 
@@ -4204,7 +4212,7 @@ void shada_encode_gvars(msgpack_sbuffer *const sbuf)
     if (vartv.v_type != VAR_FUNC && vartv.v_type != VAR_PARTIAL) {
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
-      shada_pack_entry(&packer, (ShadaEntry) {
+      ShaDaWriteResult r = shada_pack_entry(&packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
         .data = {
@@ -4215,6 +4223,9 @@ void shada_encode_gvars(msgpack_sbuffer *const sbuf)
           }
         }
       }, 0);
+      if (kSDWriteFailed == r) {
+        abort();
+      }
       tv_clear(&tgttv);
     }
     tv_clear(&vartv);
@@ -4252,8 +4263,9 @@ static int sd_sbuf_reader_skip_read(ShaDaReadDef *const sd_reader,
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   msgpack_sbuffer *sbuf = (msgpack_sbuffer *)sd_reader->cookie;
-  const uintmax_t bytes_skipped = MIN(offset, sbuf->size - sd_reader->fpos);
-  if (bytes_skipped < offset) {
+  assert(sbuf->size >= sd_reader->fpos);
+  const uintmax_t skip_bytes = MIN(offset, sbuf->size - sd_reader->fpos);
+  if (skip_bytes < offset) {
     sd_reader->eof = true;
     return FAIL;
   }
