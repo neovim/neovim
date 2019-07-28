@@ -346,11 +346,6 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     to_return.sid = not opts.sid and 0 or opts.sid
     to_return.buffer = not opts.buffer and 0 or opts.buffer
 
-    -- mode 't' doesn't print when calling maparg
-    if mode == 't' then
-      to_return.mode = ''
-    end
-
     return to_return
   end
 
