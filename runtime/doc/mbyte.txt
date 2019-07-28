@@ -707,11 +707,12 @@ To input multibyte characters on Windows, you can use an Input Method Editor
 IME many many many times.  Because IME with status on is hooking all of your
 key inputs, you cannot input 'j', 'k', or almost all of keys to Vim directly.
 
-This |+multi_byte_ime| feature help this.  It reduce times of switch status of
-IME manually.  In normal mode, there are almost no need working IME, even
-editing multibyte text.  So exiting insert mode with ESC, Vim memorize last
-status of IME and force turn off IME.  When re-enter insert mode, Vim revert
-IME status to that memorized automatically.
+The |+multi_byte_ime| feature helps for this.  It reduces the number of times
+the IME status has to be switched manually.  In Normal mode, there is almost
+no need to use IME, even when editing multibyte text.  So when exiting Insert
+mode, Vim memorizes the last status of IME and turns off IME.  When
+re-entering Insert mode, Vim sets the IME status to that memorized status
+automatically.
 
 This works on not only insert-normal mode, but also search-command input and
 replace mode.
