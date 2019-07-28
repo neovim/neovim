@@ -60,9 +60,9 @@ Enable the sanitizer(s) via these environment variables:
 
     # Change to detect_leaks=1 to detect memory leaks (slower).
     export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
-    export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-5.0/bin/llvm-symbolizer
+    export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
 
-    export MSAN_SYMBOLIZER_PATH=/usr/lib/llvm-5.0/bin/llvm-symbolizer
+    export MSAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
     export TSAN_OPTIONS="external_symbolizer_path=/usr/lib/llvm-5.0/bin/llvm-symbolizer log_path=${HOME}/logs/tsan"
 
 Logs will be written to `${HOME}/logs/*san.PID`.
