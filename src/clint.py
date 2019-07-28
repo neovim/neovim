@@ -48,7 +48,6 @@ from __future__ import unicode_literals
 
 import codecs
 import copy
-import fileinput
 import getopt
 import math  # for log
 import os
@@ -565,6 +564,7 @@ class _CppLintState(object):
         if fname is None:
             return
         self.record_errors_file = open(fname, 'w')
+
 
 _cpplint_state = _CppLintState()
 
@@ -2123,7 +2123,7 @@ def CheckExpressionAlignment(filename, clean_lines, linenum, error, startpos=0):
                                   'Inner expression indentation should be 4')
             else:
                 if (pos != level_starts[depth][0] + 1
-                    + (level_starts[depth][2] == '{')):
+                        + (level_starts[depth][2] == '{')):
                     if depth not in ignore_error_levels:
                         error(filename, linenum, 'whitespace/alignment', 2,
                               ('Inner expression should be aligned '
@@ -2296,7 +2296,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     line = clean_lines.elided[linenum]  # get rid of comments and strings
 
     # Don't try to do spacing checks for operator methods
-    line = re.sub(r'operator(==|!=|<|<<|<=|>=|>>|>)\(', 'operator\(', line)
+    line = re.sub(r'operator(==|!=|<|<<|<=|>=|>>|>)\(', r'operator\(', line)
 
     # We allow no-spaces around = within an if: "if ( (a=Foo()) == 0 )".
     # Otherwise not.  Note we only check for non-spaces on *both* sides;
@@ -2597,8 +2597,8 @@ def CheckBraces(filename, clean_lines, linenum, error):
         if (not Search(r'[,;:}{(]\s*$', prevline) and
                 not Match(r'\s*#', prevline)):
             error(filename, linenum, 'whitespace/braces', 4,
-                    '{ should almost always be at the end'
-                    ' of the previous line')
+                  '{ should almost always be at the end'
+                  ' of the previous line')
 
     # Brace must appear after function signature, but on the *next* line
     if Match(r'^(?:\w+(?: ?\*+)? )+\w+\(', line):
@@ -3178,8 +3178,8 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
     if not Search(r'eval/typval\.[ch]$', filename):
         match = Search(r'(?:\.|->)'
                        r'(?:lv_(?:first|last|refcount|len|watch|idx(?:_item)?'
-                                r'|copylist|lock)'
-                          r'|li_(?:next|prev|tv))\b', line)
+                       r'|copylist|lock)'
+                       r'|li_(?:next|prev|tv))\b', line)
         if match:
             error(filename, linenum, 'runtime/deprecated', 4,
                   'Accessing list_T internals directly is prohibited (hint: see commit d46e37cb4c71)')
