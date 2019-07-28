@@ -282,8 +282,7 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   " For others test if the name is recognized.
-  let names = ['buffer', 'environment', 'file_in_path',
-	\ 'mapping', 'shellcmd', 'tag', 'tag_listfiles', 'user']
+  let names = ['buffer', 'environment', 'file_in_path', 'mapping', 'tag', 'tag_listfiles', 'user']
   if has('cmdline_hist')
     call add(names, 'history')
   endif
