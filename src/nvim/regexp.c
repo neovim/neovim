@@ -4353,7 +4353,7 @@ static int regmatch(
             status = RA_NOMATCH;
           }
 
-          if (status != RA_FAIL && status != RA_NOMATCH) {
+          if (status != RA_NOMATCH) {
             reg_save(&bp[i].bp_pos, &backpos);
           }
         }
