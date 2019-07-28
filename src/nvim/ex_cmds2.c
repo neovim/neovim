@@ -1793,17 +1793,14 @@ void ex_args(exarg_T *eap)
     // ":args": list arguments.
     if (ARGCOUNT > 0) {
       char_u **items = xmalloc(sizeof(char_u *) * (size_t)ARGCOUNT);
-
-      if (items != NULL) {
-        // Overwrite the command, for a short list there is no scrolling
-        // required and no wait_return().
-        gotocmdline(true);
-        for (int i = 0; i < ARGCOUNT; i++) {
-          items[i] = alist_name(&ARGLIST[i]);
-        }
-        list_in_columns(items, ARGCOUNT, curwin->w_arg_idx);
-        xfree(items);
+      // Overwrite the command, for a short list there is no scrolling
+      // required and no wait_return().
+      gotocmdline(true);
+      for (int i = 0; i < ARGCOUNT; i++) {
+        items[i] = alist_name(&ARGLIST[i]);
       }
+      list_in_columns(items, ARGCOUNT, curwin->w_arg_idx);
+      xfree(items);
     }
   } else if (eap->cmdidx == CMD_arglocal) {
     garray_T        *gap = &curwin->w_alist->al_ga;
