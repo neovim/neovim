@@ -993,7 +993,7 @@ remembered.  You can return to that position with the "''" and "``" command,
 unless the line containing that position was changed or deleted.  The
 following commands are "jump" commands: "'", "`", "G", "/", "?", "n", "N",
 "%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and the
-commands that start editing a new file. 
+commands that start editing a new file.
 
 							*CTRL-O*
 CTRL-O			Go to [count] Older cursor position in jump list

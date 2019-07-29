@@ -600,14 +600,14 @@ the use of square and curly brackets, and otherwise by community convention.
 These conventions are not universally followed, so the Clojure indent script
 offers a few configurable options, listed below.
 
-If the current vim does not include searchpairpos(), the indent script falls
+If the current vim does not include |searchpairpos()|, the indent script falls
 back to normal 'lisp' indenting, and the following options are ignored.
 
 							*g:clojure_maxlines*
 
-Set maximum scan distance of searchpairpos(). Larger values trade performance
-for correctness when dealing with very long forms. A value of 0 will scan
-without limits.
+Set maximum scan distance of |searchpairpos()|. Larger values trade
+performance for correctness when dealing with very long forms. A value of 0
+will scan without limits.
 >
 	" Default
 	let g:clojure_maxlines = 100
@@ -933,14 +933,14 @@ given are the defaults.  Note that the variables are set to an expression, so
 that you can change the value of 'shiftwidth' later.
 
 Indent after an open paren: >
-	let g:pyindent_open_paren = '&sw * 2'
+	let g:pyindent_open_paren = 'shiftwidth() * 2'
 Indent after a nested paren: >
-	let g:pyindent_nested_paren = '&sw'
+	let g:pyindent_nested_paren = 'shiftwidth()'
 Indent for a continuation line: >
-	let g:pyindent_continue = '&sw * 2'
+	let g:pyindent_continue = 'shiftwidth() * 2'
 
-The method uses searchpair() to look back for unclosed parenthesis.  This can
-sometimes be slow, thus it timeouts after 150 msec.  If you notice the
+The method uses |searchpair()| to look back for unclosed parenthesis.  This
+can sometimes be slow, thus it timeouts after 150 msec.  If you notice the
 indenting isn't correct, you can set a larger timeout in msec: >
 	let g:pyindent_searchpair_timeout = 500
 
@@ -1036,7 +1036,7 @@ Furthermore, setting the variable b:verilog_indent_width to change the
 indenting width (default is 'shiftwidth'): >
 
   let b:verilog_indent_width = 4
-  let b:verilog_indent_width = &sw * 2
+  let b:verilog_indent_width = shiftwidth() * 2
 
 In addition, you can turn the verbose mode for debug issue: >
 
@@ -1159,7 +1159,7 @@ VIM							*ft-vim-indent*
 For indenting Vim scripts there is one variable that specifies the amount of
 indent for a continuation line, a line that starts with a backslash: >
 
-	:let g:vim_indent_cont = &sw * 3
+	:let g:vim_indent_cont = shiftwidth() * 3
 
 Three times shiftwidth is the default value.
 

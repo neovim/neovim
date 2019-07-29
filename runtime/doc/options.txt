@@ -1935,7 +1935,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 				diff library.
 
                 algorithm:{text} Use the specified diff algorithm with the
-				internal diff engine. Currently supported 
+				internal diff engine. Currently supported
 				algorithms are:
 				myers      the default algorithm
 				minimal    spend extra time to generate the
@@ -6217,10 +6217,11 @@ A jump table for the options with a short description can be found at |Q_op|.
 'thesaurus' 'tsr'	string	(default "")
 			global or local to buffer |global-local|
 	List of file names, separated by commas, that are used to lookup words
-	for thesaurus completion commands |i_CTRL-X_CTRL-T|.  Each line in
-	the file should contain words with similar meaning, separated by
-	non-keyword characters (white space is preferred).  Maximum line
-	length is 510 bytes.
+	for thesaurus completion commands |i_CTRL-X_CTRL-T|.
+
+	Each line in the file should contain words with similar meaning,
+	separated by non-keyword characters (white space is preferred).
+	Maximum line length is 510 bytes.
 
 	To include a comma in a file name precede it with a backslash.  Spaces
 	after a comma are ignored, otherwise spaces are included in the file

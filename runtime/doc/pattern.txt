@@ -295,7 +295,7 @@ the "*" is under your right hand middle finger (search to the right and down).
 
 								*E956*
 In very rare cases a regular expression is used recursively.  This can happen
-when executing a pattern takes a long time and when checkig for messages on
+when executing a pattern takes a long time and when checking for messages on
 channels a callback is invoked that also uses a pattern or an autocommand is
 triggered.  In most cases this should be fine, but if a pattern is in use when
 it's used again it fails.  Usually this means there is something wrong with
