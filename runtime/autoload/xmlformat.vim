@@ -1,9 +1,9 @@
 " Vim plugin for formatting XML
-" Last Change: Thu, 22 May 2018 21:26:55 +0100
-" Version: 0.1
-" Author: Christian Brabandt <cb@256bit.org>
-" Repository:   https://github.com/chrisbra/vim-xml-ftplugin
-" License: VIM License
+" Last Change: Thu, 07 Dec 2018
+"     Version: 0.1
+"      Author: Christian Brabandt <cb@256bit.org>
+"  Repository: https://github.com/chrisbra/vim-xml-ftplugin
+"     License: VIM License
 " Documentation: see :h xmlformat.txt (TODO!)
 " ---------------------------------------------------------------------
 " Load Once: {{{1
@@ -85,7 +85,11 @@ func! s:Trim(item)
 endfunc
 " Check if tag is a new opening tag <tag> {{{1
 func! s:StartTag(tag)
-  return a:tag =~? '^\s*<[^/?]'
+  let is_comment = s:IsComment(a:tag)
+  return a:tag =~? '^\s*<[^/?]' && !is_comment
+endfunc
+func! s:IsComment(tag)
+  return a:tag =~? '<!--'
 endfunc
 " Remove one level of indentation {{{1
 func! s:DecreaseIndent()

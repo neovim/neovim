@@ -216,8 +216,9 @@ endfunc "}}}
 " Add known tag pairs.
 " Self-closing tags and tags that are sometimes {{{
 " self-closing (e.g., <p>) are not here (when encountering </p> we can find
-" the matching <p>, but not the other way around).  Known self-closing tags:
-" 'p', 'img', 'source'.
+" the matching <p>, but not the other way around).
+" Known self-closing tags: " 'p', 'img', 'source', 'area', 'keygen', 'track',
+" 'wbr'.
 " Old HTML tags:
 call s:AddITags(s:indent_tags, [
     \ 'a', 'abbr', 'acronym', 'address', 'b', 'bdo', 'big',
@@ -232,11 +233,11 @@ call s:AddITags(s:indent_tags, [
 
 " New HTML5 elements:
 call s:AddITags(s:indent_tags, [
-    \ 'area', 'article', 'aside', 'audio', 'bdi', 'canvas',
-    \ 'command', 'data', 'datalist', 'details', 'embed', 'figcaption',
-    \ 'figure', 'footer', 'header', 'keygen', 'main', 'mark', 'meter',
-    \ 'nav', 'output', 'picture', 'progress', 'rp', 'rt', 'ruby', 'section',
-    \ 'summary', 'svg', 'time', 'track', 'video', 'wbr'])
+    \ 'article', 'aside', 'audio', 'bdi', 'canvas', 'command', 'data',
+    \ 'datalist', 'details', 'dialog', 'embed', 'figcaption', 'figure',
+    \ 'footer', 'header', 'hgroup', 'main', 'mark', 'meter', 'nav', 'output',
+    \ 'picture', 'progress', 'rp', 'rt', 'ruby', 'section', 'summary',
+    \ 'svg', 'time', 'video'])
 
 " Tags added for web components:
 call s:AddITags(s:indent_tags, [
@@ -934,7 +935,7 @@ func! s:InsideTag(foundHtmlString)
       let idx = match(text, '<' . s:tagname . '\s\+\zs\w')
     endif
     if idx == -1
-      " after just <tag indent one level more
+      " after just "<tag" indent one level more
       let idx = match(text, '<' . s:tagname . '$')
       if idx >= 0
 	call cursor(lnum, idx)

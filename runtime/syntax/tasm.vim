@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language: TASM: turbo assembler by Borland
 " Maintaner: FooLman of United Force <foolman@bigfoot.com>
-" Last Change: 2012 Feb 03 by Thilo Six
+" Last Change: 2012 Feb 03 by Thilo Six, and 2018 Nov 27.
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -109,7 +109,7 @@ hi def link tasmComment Comment
 hi def link tasmLabel Label
 
 
-let b:curret_syntax = "tasm"
+let b:current_syntax = "tasm"
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

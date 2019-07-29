@@ -1,0 +1,19 @@
+# vim: set filetype=tcl shiftwidth=4 tabstop=4:
+
+# START_INDENT
+proc abc {} {
+set a 5
+if {[some_cmd]==1} {
+foreach i [list {1 2 3}] {
+# Does this comment affect anything?
+puts $i
+}
+}
+}
+
+command_with_a_long_time -arg1 "First" \
+-arg2 "Second" \
+-arg3 "Third"
+
+puts "Move indent back after line continuation is complete"
+# END_INDENT

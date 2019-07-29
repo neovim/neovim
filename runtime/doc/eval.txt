@@ -482,7 +482,7 @@ To loop over the values use the |values()| function:  >
 	:endfor
 
 If you want both the key and the value use the |items()| function.  It returns
-a List in which each item is a	List with two items, the key and the value: >
+a List in which each item is a List with two items, the key and the value: >
 	:for [key, value] in items(mydict)
 	:   echo key . ': ' . value
 	:endfor
@@ -1408,7 +1408,9 @@ Note that this means that filetype plugins don't get a different set of script
 variables for each buffer.  Use local buffer variables instead |b:var|.
 
 
-Predefined Vim variables:			*vim-variable* *v:var* *v:*
+PREDEFINED VIM VARIABLES			*vim-variable* *v:var* *v:*
+								*E963*
+Some variables can be set by the user, but the type cannot be changed.
 
 					*v:beval_col* *beval_col-variable*
 v:beval_col	The number of the column, over which the mouse pointer is.
@@ -7936,7 +7938,8 @@ str2float({expr})					*str2float()*
 		as when using a floating point number in an expression, see
 		|floating-point-format|.  But it's a bit more permissive.
 		E.g., "1e40" is accepted, while in an expression you need to
-		write "1.0e40".
+		write "1.0e40".  The hexadecimal form "0x123" is also
+		accepted, but not others, like binary or octal.
 		Text after the number is silently ignored.
 		The decimal point is always '.', no matter what the locale is
 		set to.  A comma ends the number: "12,345.67" is converted to

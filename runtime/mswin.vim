@@ -1,9 +1,9 @@
 " Set options and add mapping such that Vim behaves a lot like MS-Windows
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2017 Oct 28
+" Last Change:	2018 Dec 07
 
-" bail out if this isn't wanted (mrsvim.vim uses this).
+" Bail out if this isn't wanted.
 if exists("g:skip_loading_mswin") && g:skip_loading_mswin
   finish
 endif
