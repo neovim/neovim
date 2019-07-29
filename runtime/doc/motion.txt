@@ -107,7 +107,7 @@ This cannot be repeated: >
 	endif<CR>
 Note that when using ":" any motion becomes characterwise exclusive.
 
-
+								*forced-motion*
 FORCING A MOTION TO BE LINEWISE, CHARACTERWISE OR BLOCKWISE
 
 When a motion is not of the type you would like to use, you can force another

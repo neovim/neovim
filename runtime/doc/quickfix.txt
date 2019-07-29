@@ -1515,7 +1515,7 @@ The backslashes before the pipe character are required to avoid it to be
 recognized as a command separator.  The backslash before each space is
 required for the set command.
 
-					    *cfilter-plugin* *Cfilter* *Lfilter*
+					    *cfilter-plugin* *:Cfilter* *:Lfilter*
 If you have too many matching messages, you can use the cfilter plugin to
 reduce the number of entries.  Load the plugin with: >
    packadd cfilter

@@ -398,11 +398,11 @@ Use of "\m" makes the pattern after it be interpreted as if 'magic' is set,
 ignoring the actual value of the 'magic' option.
 Use of "\M" makes the pattern after it be interpreted as if 'nomagic' is used.
 							*/\v* */\V*
-Use of "\v" means that in the pattern after it all ASCII characters except
-'0'-'9', 'a'-'z', 'A'-'Z' and '_' have a special meaning.  "very magic"
+Use of "\v" means that after it, all ASCII characters except '0'-'9', 'a'-'z',
+'A'-'Z' and '_' have special meaning: "very magic"
 
-Use of "\V" means that in the pattern after it only the backslash and the
-terminating character (/ or ?) has a special meaning.  "very nomagic"
+Use of "\V" means that after it, only a backslash and terminating character
+(usually / or ?) have special meaning: "very nomagic"
 
 Examples:
 after:	  \v	   \m	    \M	     \V		matches ~

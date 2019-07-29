@@ -7516,9 +7516,9 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 		list of signs placed in that buffer is returned.  For the use
 		of {expr}, see |bufname()|. The optional {dict} can contain
 		the following entries:
-			group	select only signs in this group
-			id	select sign with this identifier
-			lnum	select signs placed in this line. For the use
+		   group	select only signs in this group
+		   id		select sign with this identifier
+		   lnum		select signs placed in this line. For the use
 				of {lnum}, see |line()|.
 		If {group} is '*', then signs in all the groups including the
 		global group are returned. If {group} is not supplied or is an
@@ -7559,11 +7559,11 @@ sign_getplaced([{expr} [, {dict}]])			*sign_getplaced()*
 			echo sign_getplaced("eval.c", {'lnum' : 10})
 
 			" Get sign with identifier 10 placed in a.py
-			echo sign_getplaced("a.py", {'id' : 10'})
+			echo sign_getplaced("a.py", {'id' : 10})
 
 			" Get sign with id 20 in group 'g1' placed in a.py
 			echo sign_getplaced("a.py", {'group' : 'g1',
-							\  'id' : 20'})
+							\  'id' : 20})
 
 			" Get a List of all the placed signs
 			echo sign_getplaced()
@@ -7648,7 +7648,7 @@ sign_undefine([{name}])					*sign_undefine()*
 <
 sign_unplace({group} [, {dict}])			*sign_unplace()*
 		Remove a previously placed sign in one or more buffers.  This
-		is similar to the |:sign-unplace()| command.
+		is similar to the |:sign-unplace| command.
 
 		{group} is the sign group name. To use the global sign group,
 		use an empty string.  If {group} is set to '*', then all the
