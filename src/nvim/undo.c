@@ -2961,8 +2961,21 @@ static char_u *u_save_line(linenr_T lnum)
 ///
 /// @return true if the buffer has changed
 bool bufIsChanged(buf_T *buf)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return !bt_dontwrite(buf) && (buf->b_changed || file_ff_differs(buf, true));
+}
+
+// Return true if any buffer has changes.  Also buffers that are not written.
+bool anyBufIsChanged(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  FOR_ALL_BUFFERS(buf) {
+    if (bufIsChanged(buf)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// Check if the 'modified' flag is set, or 'ff' has changed (only need to
