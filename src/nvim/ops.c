@@ -2519,9 +2519,9 @@ static void op_yank_reg(oparg_T *oap, bool message, yankreg_T *reg, bool append)
         endcol = (colnr_T)STRLEN(p);
       if (startcol > endcol
           || is_oneChar
-          )
+          ) {
         bd.textlen = 0;
-      else {
+      } else {
         bd.textlen = endcol - startcol + oap->inclusive;
       }
       bd.textstart = p + startcol;

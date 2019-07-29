@@ -1245,12 +1245,12 @@ static void botline_forw(lineoff_T *lp)
   } else {
     ++lp->lnum;
     lp->fill = 0;
-    if (lp->lnum > curbuf->b_ml.ml_line_count)
+    if (lp->lnum > curbuf->b_ml.ml_line_count) {
       lp->height = MAXCOL;
-    else if (hasFolding(lp->lnum, NULL, &lp->lnum))
-      /* Add a closed fold */
+    } else if (hasFolding(lp->lnum, NULL, &lp->lnum)) {
+      // Add a closed fold
       lp->height = 1;
-    else {
+    } else {
       lp->height = plines_nofill(lp->lnum);
     }
   }

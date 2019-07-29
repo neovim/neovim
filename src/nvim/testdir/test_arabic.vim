@@ -524,54 +524,6 @@ func Test_shape_final()
   bwipe!
 endfunc
 
-func Test_shape_final_to_medial()
-  new
-  set arabicshape
-
-  " Shaping arabic {testchar} arabic   Tests chg_c_f2m().
-  " This does not test much...
-  " pair[0] = testchar,  pair[1] = current-result
-  for pair in [[s:a_f_YEH_HAMZA, s:a_f_BEH],
-	\[s:a_f_WAW_HAMZA, s:a_s_BEH],
-	\[s:a_f_ALEF, s:a_s_BEH],
-	\[s:a_f_TEH_MARBUTA, s:a_s_BEH],
-	\[s:a_f_DAL, s:a_s_BEH],
-	\[s:a_f_THAL, s:a_s_BEH],
-	\[s:a_f_REH, s:a_s_BEH],
-	\[s:a_f_ZAIN, s:a_s_BEH],
-	\[s:a_f_WAW, s:a_s_BEH],
-	\[s:a_f_ALEF_MAKSURA, s:a_s_BEH],
-	\[s:a_f_BEH, s:a_f_BEH],
-	\[s:a_f_TEH, s:a_f_BEH],
-	\[s:a_f_THEH, s:a_f_BEH],
-	\[s:a_f_JEEM, s:a_f_BEH],
-	\[s:a_f_HAH, s:a_f_BEH],
-	\[s:a_f_KHAH, s:a_f_BEH],
-	\[s:a_f_SEEN, s:a_f_BEH],
-	\[s:a_f_SHEEN, s:a_f_BEH],
-	\[s:a_f_SAD, s:a_f_BEH],
-	\[s:a_f_DAD, s:a_f_BEH],
-	\[s:a_f_TAH, s:a_f_BEH],
-	\[s:a_f_ZAH, s:a_f_BEH],
-	\[s:a_f_AIN, s:a_f_BEH],
-	\[s:a_f_GHAIN, s:a_f_BEH],
-	\[s:a_f_FEH, s:a_f_BEH],
-	\[s:a_f_QAF, s:a_f_BEH],
-	\[s:a_f_KAF, s:a_f_BEH],
-	\[s:a_f_LAM, s:a_f_BEH],
-	\[s:a_f_MEEM, s:a_f_BEH],
-	\[s:a_f_NOON, s:a_f_BEH],
-	\[s:a_f_HEH, s:a_f_BEH],
-	\[s:a_f_YEH, s:a_f_BEH],
-	\ ]
-    call setline(1, ' ' . s:a_BEH . pair[0])
-    call assert_equal([' ' . pair[1] . pair[0]], ScreenLines(1, 3))
-  endfor
-
-  set arabicshape&
-  bwipe!
-endfunc
-
 func Test_shape_combination_final()
   new
   set arabicshape

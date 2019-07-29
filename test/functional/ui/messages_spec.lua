@@ -631,7 +631,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
       {1:~                        }|
     ]], messages={{
-      content = {{ "Type  :qa!  and press <Enter> to abandon all changes and exit Nvim" }},
+      content = {{ "Type  :qa  and press <Enter> to exit Nvim" }},
       kind = ""}
     }}
 
@@ -678,7 +678,7 @@ describe('ui/ext_messages', function()
       {1:~                        }|
     ]], messages={
       {kind="echomsg", content={{"howdy"}}},
-      {kind="", content={{"Type  :qa!  and press <Enter> to abandon all changes and exit Nvim"}}},
+      {kind="", content={{"Type  :qa  and press <Enter> to exit Nvim"}}},
       {kind="echoerr", content={{"bork", 2}}},
       {kind="emsg", content={{"E117: Unknown function: nosuchfunction", 2}}}
     }}
