@@ -516,6 +516,7 @@ if(NOT BUSTED_OUTPUT_TYPE)
 endif()
 
 find_program(LUACHECK_PRG luacheck)
+find_program(FLAKE8_PRG flake8)
 find_program(GPERF_PRG gperf)
 
 include(InstallHelpers)
@@ -665,6 +666,15 @@ if(LUACHECK_PRG)
 else()
   add_custom_target(lualint false
     COMMENT "lualint: LUACHECK_PRG not defined")
+endif()
+
+if(FLAKE8_PRG)
+  add_custom_target(pylint
+    COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+else()
+  add_custom_target(pylint false
+    COMMENT "flake8: FLAKE8_PRG not defined")
 endif()
 
 set(CPACK_PACKAGE_NAME "Neovim")

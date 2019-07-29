@@ -4,6 +4,7 @@ set -e
 set -o pipefail
 
 if [[ "${CI_TARGET}" == lint ]]; then
+  python -m pip -q install --user --upgrade flake8
   exit
 fi
 
