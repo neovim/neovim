@@ -22,8 +22,6 @@ def main(argv):
     args = argparser.parse_args(argv)
 
     with args.file:
-        include_dirs = []
-
         iwyu = Popen(['include-what-you-use', '-xc'] + args.iwyu_args + ['/dev/stdin'],
                      stdin=PIPE, stdout=PIPE, stderr=PIPE)
 

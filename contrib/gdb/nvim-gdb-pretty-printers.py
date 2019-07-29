@@ -26,13 +26,13 @@ def get_color_code(bg, color_num):
             prefix += 1
         color_num %= 8
     else:
-        prefix = '48;5;' if bg else '38;5;' 
+        prefix = '48;5;' if bg else '38;5;'
     return '\x1b[{0}{1}m'.format(prefix, color_num)
 
 
 def highlight(attrs):
     fg, bg = [int(attrs['foreground']), int(attrs['background'])]
-    rv = [SGR0] # start with sgr0
+    rv = [SGR0]  # start with sgr0
     if fg != -1:
         rv.append(get_color_code(False, fg))
     if bg != -1:

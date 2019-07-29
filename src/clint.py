@@ -2610,9 +2610,13 @@ def CheckBraces(filename, clean_lines, linenum, error):
                   'Brace starting function body must be placed on its own line')
         else:
             func_start_linenum = end_linenum + 1
-            while not clean_lines.lines[func_start_linenum] == '{':
-                attrline = Match(r'^((?!# *define).*?)(?:FUNC_ATTR|FUNC_API|REAL_FATTR)_\w+(?:\(\d+(, \d+)*\))?',
-                                 clean_lines.lines[func_start_linenum])
+            while not clean_lines.lines[func_start_linenum] == "{":
+                attrline = Match(
+                    r'^((?!# *define).*?)'
+                    r'(?:FUNC_ATTR|FUNC_API|REAL_FATTR)_\w+'
+                    r'(?:\(\d+(, \d+)*\))?',
+                    clean_lines.lines[func_start_linenum],
+                )
                 if attrline:
                     if len(attrline.group(1)) != 2:
                         error(filename, func_start_linenum,
@@ -3182,7 +3186,8 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
                        r'|li_(?:next|prev|tv))\b', line)
         if match:
             error(filename, linenum, 'runtime/deprecated', 4,
-                  'Accessing list_T internals directly is prohibited (hint: see commit d46e37cb4c71)')
+                  'Accessing list_T internals directly is prohibited '
+                  '(hint: see commit d46e37cb4c71)')
 
     # Check for suspicious usage of "if" like
     # } if (a == b) {

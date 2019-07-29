@@ -36,7 +36,6 @@ import shutil
 import textwrap
 import subprocess
 import collections
-import pprint
 
 from xml.dom import minidom
 
@@ -295,10 +294,9 @@ def render_params(parent, width=62):
         out += '{}{}\n'.format(name, desc)
     return out.rstrip()
 
-# Renders a node as Vim help text, recursively traversing all descendants.
-
 
 def render_node(n, text, prefix='', indent='', width=62):
+    """Renders a node as Vim help text, recursively traversing all descendants."""
     text = ''
     # space_preceding = (len(text) > 0 and ' ' == text[-1][-1])
     # text += (int(not space_preceding) * ' ')
@@ -322,9 +320,11 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += ' [verbatim] {}'.format(get_text(n))
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
-            text += indent + prefix + \
-                render_node(c, text, indent=indent +
-                            (' ' * len(prefix)), width=width)
+            text += (
+                indent
+                + prefix
+                + render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
+            )
     elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
             text += render_node(c, text, indent=indent, width=width)
@@ -693,7 +693,8 @@ def gen_docs(config):
         for filename in CONFIG[mode]['section_order']:
             if filename not in sections:
                 raise RuntimeError(
-                    'found new module "{}"; update the "section_order" map'.format(filename))
+                    'found new module "{}"; update the "section_order" map'.format(
+                        filename))
             title, helptag, section_doc = sections.pop(filename)
             i += 1
             if filename not in CONFIG[mode]['append_only']:

@@ -86,7 +86,7 @@ SITENAVI_SEARCH = '<table width="100%"><tbody><tr><td>' + SITENAVI_LINKS_WEB + \
 
 TEXTSTART = """
 <div id="d1">
-<pre id="sp">                                                                                </pre>
+<pre id="sp">""" + (" " * 80) + """</pre>
 <div id="d2">
 <pre>
 """
