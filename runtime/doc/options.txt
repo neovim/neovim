@@ -1661,7 +1661,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 			deleted only once.  Also when repeating "R" with "."
 			and a count.
 								*cpo-y*
-		y	A yank command can be redone with ".".
+		y	A yank command can be redone with ".".  Think twice if
+			you really want to use this, it may break some
+			plugins, since most people expect "." to only repeat a
+			change.
 								*cpo-Z*
 		Z	When using "w!" while the 'readonly' option is set,
 			don't reset 'readonly'.

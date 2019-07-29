@@ -1429,8 +1429,9 @@ tag	      command	      action ~
 |:recover|	:rec[over]	recover a file from a swap file
 |:redo|		:red[o]		redo one undone change
 |:redir|	:redi[r]	redirect messages to a file or register
-|:redraw|	:redr[aw]	force a redraw of the display
-|:redrawstatus|	:redraws[tatus]	force a redraw of the status line(s)
+|:redraw|	:redr[aw]	  force a redraw of the display
+|:redrawstatus|	:redraws[tatus]	  force a redraw of the status line(s)
+|:redrawtabline|  :redrawt[abline]  force a redraw of the tabline
 |:registers|	:reg[isters]	display the contents of registers
 |:resize|	:res[ize]	change current window height
 |:retab|	:ret[ab]	change tab size

@@ -97,14 +97,14 @@ processing a quickfix or location list command, it will be aborted.
 :[count]lne[xt][!]	Same as ":cnext", except the location list for the
 			current window is used instead of the quickfix list.
 
-:[count]cN[ext][!]			*:cp* *:cprevious* *:cN* *:cNext*
+:[count]cN[ext][!]		*:cp* *:cprevious*  *:cprev* *:cN* *:cNext*
 :[count]cp[revious][!]	Display the [count] previous error in the list that
 			includes a file name.  If there are no file names at
 			all, go to the [count] previous error.  See |:cc| for
 			[!] and 'switchbuf'.
 
 
-:[count]lN[ext][!]			*:lp* *:lprevious* *:lN* *:lNext*
+:[count]lN[ext][!]		*:lp* *:lprevious* *:lprev* *:lN* *:lNext*
 :[count]lp[revious][!]	Same as ":cNext" and ":cprevious", except the location
 			list for the current window is used instead of the
 			quickfix list.
@@ -354,6 +354,23 @@ modify the title of a quickfix and location list respectively. Examples: >
 	echo getqflist({'title' : 1})
 	call setloclist(3, [], 'a', {'title' : 'Cmd output'})
 	echo getloclist(3, {'title' : 1})
+<
+							*quickfix-index*
+When you jump to a quickfix/location list entry using any of the quickfix
+commands (e.g. |:cc|, |:cnext|, |:cprev|, etc.), that entry becomes the
+currently selected entry. The index of the currently selected entry in a
+quickfix/location list can be obtained using the getqflist()/getloclist()
+functions. Examples: >
+	echo getqflist({'idx' : 0}).idx
+	echo getqflist({'id' : qfid, 'idx' : 0}).idx
+	echo getloclist(2, {'idx' : 0}).idx
+<
+For a new quickfix list, the first entry is selected and the index is 1.  Any
+entry in any quickfix/location list can be set as the currently selected entry
+using the setqflist() function. Examples: >
+	call setqflist([], 'a', {'idx' : 12})
+	call setqflist([], 'a', {'id' : qfid, 'idx' : 7})
+	call setloclist(1, [], 'a', {'idx' : 7})
 <
 							*quickfix-size*
 You can get the number of entries (size) in a quickfix and a location list

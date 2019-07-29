@@ -1,9 +1,9 @@
 " Vim completion script
-" Language:             Ruby
-" Maintainer:           Mark Guzman <segfault@hasno.info>
-" URL:                  https://github.com/vim-ruby/vim-ruby
-" Release Coordinator:  Doug Kearns <dougkearns@gmail.com>
-" Maintainer Version:   0.8.1
+" Language:		Ruby
+" Maintainer:		Mark Guzman <segfault@hasno.info>
+" URL:			https://github.com/vim-ruby/vim-ruby
+" Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
+" Last Change:		2019 Jan 06
 " ----------------------------------------------------------------------------
 "
 " Ruby IRB/Complete author: Keiju ISHITSUKA(keiju@ishitsuka.com)
@@ -103,7 +103,7 @@ function! s:GetBufferRubyEntity( name, type, ... )
     endif
 
     let curpos = getpos(".")
-    let [enum,ecol] = searchpairpos( crex, '', '\(end\|}\)', 'wr' )
+    let [enum,ecol] = searchpairpos( crex, '', '\(end\|}\)', 'W' )
     call cursor(lastpos[1], lastpos[2])
 
     if lnum > enum
@@ -253,15 +253,27 @@ class VimRubyCompletion
 
 # {{{ buffer analysis magic
   def load_requires
+
+    custom_paths = VIM::evaluate("get(g:, 'rubycomplete_load_paths', [])")
+
+    if !custom_paths.empty?
+      $LOAD_PATH.concat(custom_paths).uniq!
+    end
+
     buf = VIM::Buffer.current
     enum = buf.line_number
     nums = Range.new( 1, enum )
     nums.each do |x|
+
       ln = buf[x]
       begin
-        eval( "require %s" % $1 ) if /.*require\s*(.*)$/.match( ln )
-      rescue Exception
-        #ignore?
+        if /.*require_relative\s*(.*)$/.match( ln )
+          eval( "require %s" % File.expand_path($1) )
+        elsif /.*require\s*(["'].*?["'])/.match( ln )
+          eval( "require %s" % $1 )
+        end
+      rescue Exception => e
+        dprint e.inspect
       end
     end
   end
@@ -344,8 +356,13 @@ class VimRubyCompletion
         if x != cur_line
           next if x == 0
           ln = buf[x]
-          if /^\s*(module|class|def|include)\s+/.match(ln)
-            clscnt += 1 if $1 == "class"
+          is_const = false
+          if /^\s*(module|class|def|include)\s+/.match(ln) || is_const = /^\s*?[A-Z]([A-z]|[1-9])*\s*?[|]{0,2}=\s*?.+\s*?/.match(ln)
+            clscnt += 1 if /class|module/.match($1)
+            # We must make sure to load each constant only once to avoid errors
+            if is_const
+                ln.gsub!(/\s*?[|]{0,2}=\s*?/, '||=')
+            end
             #dprint "\$1$1
             classdef += "%s\n" % ln
             classdef += "end\n" if /def\s+/.match(ln)
@@ -422,7 +439,6 @@ class VimRubyCompletion
   def get_buffer_classes
     return get_buffer_entity_list( "class" )
   end
-
 
   def load_rails
     allow_rails = VIM::evaluate("exists('g:rubycomplete_rails') && g:rubycomplete_rails")
@@ -529,7 +545,6 @@ class VimRubyCompletion
         ret += ActiveRecord::ConnectionAdapters::SchemaStatements.methods
     end
 
-
     return ret
   end
 
@@ -587,11 +602,13 @@ class VimRubyCompletion
 # {{{ main completion code
   def self.preload_rails
     a = VimRubyCompletion.new
-    require 'Thread'
-    Thread.new(a) do |b|
-      begin
-      b.load_rails
-      rescue
+    if VIM::evaluate("has('nvim')") == 0
+      require 'thread'
+      Thread.new(a) do |b|
+        begin
+        b.load_rails
+        rescue
+        end
       end
     end
     a.load_rails
@@ -612,7 +629,6 @@ class VimRubyCompletion
 
     want_gems = VIM::evaluate("get(g:, 'rubycomplete_load_gemfile')")
     load_gems unless want_gems.to_i.zero?
-    
 
     input = VIM::Buffer.current.line
     cpos = VIM::Window.current.cursor[1] - 1
@@ -666,6 +682,7 @@ class VimRubyCompletion
         message = Regexp.quote($4)
         dprint "const or cls 2 [recv: \'%s\', msg: \'%s\']" % [ receiver, message ]
         load_buffer_class( receiver )
+        load_buffer_module( receiver )
         begin
           classes = eval("#{receiver}.constants")
           #methods = eval("#{receiver}.methods")
@@ -786,7 +803,6 @@ class VimRubyCompletion
       methods += Kernel.public_methods
     end
 
-
     include_object = VIM::evaluate("exists('g:rubycomplete_include_object') && g:rubycomplete_include_object")
     methods = clean_sel( methods, message )
     methods = (methods-Object.instance_methods) if include_object == "0"
@@ -828,6 +844,5 @@ let s:rubycomplete_rails_loaded = 0
 
 call s:DefRuby()
 "}}} ruby-side code
-
 
 " vim:tw=78:sw=4:ts=8:et:fdm=marker:ft=vim:norl:

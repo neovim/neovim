@@ -69,7 +69,7 @@ To force conversion from String to Number, add zero to it: >
 To avoid a leading zero to cause octal conversion, or for using a different
 base, use |str2nr()|.
 
-							*TRUE* *FALSE*
+						*TRUE* *FALSE* *Boolean*
 For boolean operators Numbers are used.  Zero is FALSE, non-zero is TRUE.
 You can also use |v:false| and |v:true|.  When TRUE is returned from a
 function it is the Number one, FALSE is the number zero.
@@ -92,7 +92,8 @@ Note that " " and "0" are also non-empty strings, thus considered to be TRUE.
 A List, Dictionary or Float is not a Number or String, thus evaluate to FALSE.
 
 				*E745* *E728* *E703* *E729* *E730* *E731*
-List, Dictionary and Funcref types are not automatically converted.
+|List|, |Dictionary|, |Funcref|, and |Blob| types are not automatically
+converted.
 
 							*E805* *E806* *E808*
 When mixing Number and Float the Number is converted to Float.  Otherwise
@@ -5419,6 +5420,7 @@ len({expr})	The result is a Number, which is the length of the argument.
 		used, as with |strlen()|.
 		When {expr} is a |List| the number of items in the |List| is
 		returned.
+		When {expr} is a |Blob| the number of bytes is returned.
 		When {expr} is a |Dictionary| the number of entries in the
 		|Dictionary| is returned.
 		Otherwise an error is given.

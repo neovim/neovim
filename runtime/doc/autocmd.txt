@@ -1043,8 +1043,10 @@ TermResponse			After the response to t_RV is received from
 				anything else that takes time is involved).
 							*TextChanged*
 TextChanged			After a change was made to the text in the
-				current buffer in Normal mode.  That is when
-				|b:changedtick| has changed.
+				current buffer in Normal mode.  That is after
+				|b:changedtick| has changed (also when that
+				happened before the TextChanged autocommand
+				was defined).
 				Not triggered when there is typeahead or when
 				an operator is pending.
 				Careful: This is triggered very often, don't

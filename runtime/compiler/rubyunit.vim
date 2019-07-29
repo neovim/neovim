@@ -3,6 +3,7 @@
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
 " URL:			https://github.com/vim-ruby/vim-ruby
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>
+" Last Change:		2014 Mar 23
 
 if exists("current_compiler")
   finish
