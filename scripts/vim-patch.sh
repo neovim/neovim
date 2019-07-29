@@ -21,8 +21,8 @@ usage() {
   echo
   echo "Options:"
   echo "    -h                 Show this message and exit."
-  echo "    -l                 List missing Vim patches."
-  echo "    -L                 List missing Vim patches (for scripts)."
+  echo "    -l [git-log opts]  List missing Vim patches."
+  echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
   echo "    -M                 List all merged patch-numbers (at current v:version)."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.0.xxx) or a Git hash."
@@ -367,7 +367,7 @@ submit_pr() {
 
 # Gets all Vim commits since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD
+  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
@@ -390,6 +390,7 @@ list_vimpatch_numbers() {
 }
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
+# "$@" is passed to list_vim_commits, as extra arguments to git-log.
 list_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
   declare -A tokens
@@ -414,7 +415,7 @@ list_missing_vimpatches() {
   fi
 
   # Get missing Vim commits
-  for vim_commit in $(list_vim_commits); do
+  for vim_commit in $(list_vim_commits "$@"); do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${vim_commit:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
@@ -445,7 +446,7 @@ show_vimpatches() {
     runtime_commits[$commit]=1
   done
 
-  list_missing_vimpatches | while read -r vim_commit; do
+  list_missing_vimpatches "$@" | while read -r vim_commit; do
     if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
@@ -571,11 +572,13 @@ while getopts "hlLMVp:P:g:r:s" opt; do
       exit 0
       ;;
     l)
-      show_vimpatches
+      shift  # remove opt
+      show_vimpatches "$@"
       exit 0
       ;;
     L)
-      list_missing_vimpatches
+      shift  # remove opt
+      list_missing_vimpatches "$@"
       exit 0
       ;;
     M)
