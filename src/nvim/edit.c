@@ -3695,14 +3695,19 @@ expand_by_function (
     return;
 
   // Call 'completefunc' to obtain the list of matches.
-  const char_u *const args[2] = { (char_u *)"0", base };
+  typval_T args[3];
+  args[0].v_type = VAR_NUMBER;
+  args[1].v_type = VAR_STRING;
+  args[2].v_type = VAR_UNKNOWN;
+  args[0].vval.v_number = 0;
+  args[1].vval.v_string = base != NULL ? base : (char_u *)"";
 
   pos = curwin->w_cursor;
   curwin_save = curwin;
   curbuf_save = curbuf;
 
-  /* Call a function, which returns a list or dict. */
-  if (call_vim_function(funcname, 2, args, FALSE, FALSE, &rettv) == OK) {
+  // Call a function, which returns a list or dict.
+  if (call_vim_function(funcname, 2, args, &rettv, false) == OK) {
     switch (rettv.v_type) {
     case VAR_LIST:
       matchlist = rettv.vval.v_list;
@@ -4905,7 +4910,13 @@ static int ins_complete(int c, bool enable_pum)
         return FAIL;
       }
 
-      const char_u *const args[2] = { (char_u *)"1", NULL };
+      typval_T args[3];
+      args[0].v_type = VAR_NUMBER;
+      args[1].v_type = VAR_STRING;
+      args[2].v_type = VAR_UNKNOWN;
+      args[0].vval.v_number = 1;
+      args[1].vval.v_string = (char_u *)"";
+
       pos = curwin->w_cursor;
       curwin_save = curwin;
       curbuf_save = curbuf;

@@ -200,7 +200,7 @@ static Array cmdline_block = ARRAY_DICT_INIT;
  */
 typedef void *(*user_expand_func_T)(const char_u *,
                                     int,
-                                    const char_u * const *,
+                                    typval_T *,
                                     bool);
 
 static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL};
@@ -5060,8 +5060,8 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
                                     expand_T *xp, int *num_file, char_u ***file)
 {
   char_u keep = 0;
-  char_u num[50];
-  char_u      *args[3];
+  typval_T args[4];
+  char_u *pat = NULL;
   int save_current_SID = current_SID;
   void        *ret;
   struct cmdline_info save_ccline;
@@ -5076,10 +5076,14 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
     ccline.cmdbuff[ccline.cmdlen] = 0;
   }
 
-  args[0] = vim_strnsave(xp->xp_pattern, xp->xp_pattern_len);
-  args[1] = xp->xp_line;
-  sprintf((char *)num, "%d", xp->xp_col);
-  args[2] = num;
+  pat = vim_strnsave(xp->xp_pattern, xp->xp_pattern_len);
+  args[0].v_type = VAR_STRING;
+  args[1].v_type = VAR_STRING;
+  args[2].v_type = VAR_NUMBER;
+  args[3].v_type = VAR_UNKNOWN;
+  args[0].vval.v_string = pat;
+  args[1].vval.v_string = xp->xp_line;
+  args[2].vval.v_number = xp->xp_col;
 
   /* Save the cmdline, we don't know what the function may do. */
   save_ccline = ccline;
@@ -5089,7 +5093,7 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
 
   ret = user_expand_func(xp->xp_arg,
                          3,
-                         (const char_u * const *)args,
+                         args,
                          false);
 
   ccline = save_ccline;
@@ -5097,7 +5101,7 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
   if (ccline.cmdbuff != NULL)
     ccline.cmdbuff[ccline.cmdlen] = keep;
 
-  xfree(args[0]);
+  xfree(pat);
   return ret;
 }
 
