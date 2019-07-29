@@ -2430,9 +2430,10 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
       rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
       return;
     } else {
-      release_asynccall_channel(channel);
       async_call->count -= 1;
+      release_asynccall_channel(channel);
       if (async_call->count) {
+        channel->async_call = NULL;
         return;
       }
     }
@@ -2447,8 +2448,6 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     callback_call(&channel->async_call->callback, 1, argv, &rettv);
     tv_clear(&argv[0]);
   }
-
-  free_asynccall(channel->async_call);
 }
 
 void nvim_error_event(uint64_t channel_id, Integer type, String message,
@@ -2458,6 +2457,9 @@ void nvim_error_event(uint64_t channel_id, Integer type, String message,
   Channel *channel = find_channel(channel_id);
   if (channel && channel->async_call) {
     EMSG3(_("multiproc: job %" PRIu64 ": %s"), channel_id, message.data);
+    if (channel->async_call->work_queue && --channel->async_call->count) {
+      channel->async_call = NULL;
+    }
     release_asynccall_channel(channel);
   }
 }

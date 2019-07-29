@@ -251,6 +251,10 @@ static void free_channel_event(void **argv)
     rpc_free(chan);
   }
 
+  if (chan->async_call && chan->async_call->count == 0) {
+    free_asynccall(chan->async_call);
+  }
+
   callback_reader_free(&chan->on_data);
   callback_reader_free(&chan->on_stderr);
   callback_free(&chan->on_exit);
