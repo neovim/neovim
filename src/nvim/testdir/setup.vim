@@ -1,10 +1,36 @@
 " Common preparations for running tests.
 
 " Only load this once.
-if exists('s:did_load')
-  finish
+if 1
+  if exists('s:did_load')
+    finish
+  endif
+  let s:did_load = 1
 endif
-let s:did_load = 1
+
+" Make sure 'runtimepath' and 'packpath' does not include $HOME.
+set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
+if has('packages')
+  let &packpath = &rtp
+endif
+
+" Only when the +eval feature is present. 
+if 1
+  " Make sure the .Xauthority file can be found after changing $HOME.
+  if $XAUTHORITY == ''
+    let $XAUTHORITY = $HOME . '/.Xauthority'
+  endif
+
+  " Avoid storing shell history.
+  let $HISTFILE = ""
+
+  " Make sure $HOME does not get read or written.
+  " It must exist, gnome tries to create $HOME/.gnome2
+  let $HOME = getcwd() . '/XfakeHOME'
+  if !isdirectory($HOME)
+    call mkdir($HOME)
+  endif
+endif
 
 " Align Nvim defaults to Vim.
 set backspace=
@@ -22,20 +48,6 @@ set wildoptions=
 
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
-
-
-" Make sure 'runtimepath' and 'packpath' does not include $HOME.
-set rtp=$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after
-let &packpath = &rtp
-
-" Avoid storing shell history.
-let $HISTFILE = ""
-
-" Make sure $HOME does not get read or written.
-let $HOME = expand(getcwd() . '/XfakeHOME')
-if !isdirectory($HOME)
-  call mkdir($HOME)
-endif
 
 " Use default shell on Windows to avoid segfault, caused by TUI
 if has('win32')
