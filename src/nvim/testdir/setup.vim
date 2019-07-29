@@ -57,6 +57,10 @@ set wildoptions=
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 
+" Don't depend on system locale, always use utf-8.
+" Ref: https://github.com/neovim/neovim/pull/2929
+set encoding=utf-8
+
 " Use default shell on Windows to avoid segfault, caused by TUI
 if has('win32')
   let $SHELL = ''
