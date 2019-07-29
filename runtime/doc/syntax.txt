@@ -752,8 +752,6 @@ When 1, generate XHTML 1.0 instead (XML compliant HTML).
     :let g:html_use_xhtml = 1
 <
 
- vim:tw=78:sw=4:ts=8:sts=4:ft=help:norl:ai:noet:
-
 ABEL						*abel.vim* *ft-abel-syntax*
 
 ABEL highlighting provides some user-defined options.  To enable them, assign

@@ -1,0 +1,17 @@
+% vim: set ft=matlab sw=4 :
+
+% START_INDENT
+if true
+    disp foo
+elseif false
+    disp bar
+end
+% END_INDENT
+
+% START_INDENT
+try
+    statements
+catch exception
+    statements
+end
+% END_INDENT
