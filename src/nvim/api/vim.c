@@ -2523,8 +2523,7 @@ Array nvim_grep(String pattern, String path, Boolean global, Error *err)
   ADD(args, STRING_OBJ(pattern));
   ADD(args, STRING_OBJ(path));
   ADD(args, BOOLEAN_OBJ(global));
-  Object results = nvim_execute_lua(
-      STATIC_CSTR_AS_STRING("return vim._grep(select(1, ...))"), args, err);
+  Object results = EXEC_LUA_STATIC("return vim._grep(...)", args, err);
   xfree(args.items);
   if (results.type == kObjectTypeArray) {
     result_array = results.data.array;
