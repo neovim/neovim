@@ -1,6 +1,6 @@
 *pi_matchit.txt*   Extended "%" matching
 
-For Vim version 6.3.  Last change:  2018 Dec 31
+For Vim version 8.1.  Last change:  2019 Jan 28
 
 *matchit* *matchit.vim*
 
@@ -62,12 +62,8 @@ for how to specify matching patterns.
 
 MODES:			*matchit-modes* *matchit-v_%* *matchit-o_%*
 
-Mostly, % and related motions (|g%| and |[%| and |]%|) work just like built-in
-motion commands in |Operator-pending| and |Visual| modes.  However, you
-cannot make these motions |linewise| or |characterwise|, since the |:omap|s
-that define them start with "v" in order to make the default behavior
-inclusive.  (See |o_v|.)  In other words, "dV%" will not work.  The
-work-around is to go through Visual mode:  "V%d" will work.
+Mostly, % and related motions (|g%| and |[%| and |]%|) should just work like built-in
+|motion| commands in |Operator-pending| and |Visual| modes (as of 8.1.648)
 
 LANGUAGES:					*matchit-languages*
 
@@ -352,12 +348,6 @@ The back reference '\'.d refers to the same thing as '\'.b:match_table[d] in
 
 ==============================================================================
 5. Known Bugs and Limitations				*matchit-bugs*
-
-The various |:vmap|s defined in the script (%, |g%|, |[%|, |]%|, |a%|) may
-have undesired effects in Select mode |Select-mode-mapping|.  At least, if you
-want to replace the selection with any character in "ag%[]" there will be a
-pause of |'updatetime'| first. E.g., "yV%" would normally work linewise, but
-the plugin mapping makes it characterwise.
 
 It would be nice if "\0" were recognized as the entire pattern.  That is, it
 would be nice if "foo:\end\0" had the same effect as "\(foo\):\end\1".

@@ -770,7 +770,7 @@ System functions and manipulation of files:
 	systemlist()		get the result of a shell command as a list
 	hostname()		name of the system
 	readfile()		read a file into a List of lines
-	writefile()		write a List of lines into a file
+	writefile()		write a List of lines or Blob into a file
 
 Date and Time:				*date-functions* *time-functions*
 	getftime()		get last modification time of a file

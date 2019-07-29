@@ -1,9 +1,11 @@
 "     Language: xml
 "   Repository: https://github.com/chrisbra/vim-xml-ftplugin
-" Last Changed: Dec 07th, 2018
+" Last Changed: Jan 28, 2019
 "   Maintainer: Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Johannes Zellner <johannes@zellner.org>
 " Last Change:
+" 20190128 - Make sure to find previous tag
+"            https://github.com/chrisbra/vim-xml-ftplugin/issues/4
 " 20181116 - Fix indentation when tags start with a colon or an underscore
 "            https://github.com/vim/vim/pull/926
 " 20181022 - Do not overwrite indentkeys setting
@@ -88,15 +90,16 @@ endfun
 fun! XmlIndentGet(lnum, use_syntax_check)
     " Find a non-empty line above the current line.
     let plnum = prevnonblank(a:lnum - 1)
-    " Find previous line with a tag (regardless whether open or closed)
-    let ptag = search('.\{-}<[/:A-Z_a-z]', 'bnw')
-
     " Hit the start of the file, use zero indent.
     if plnum == 0
         return 0
     endif
-    let syn_name = ''
+    " Find previous line with a tag (regardless whether open or closed,
+    " but always start restrict the match to a line before the current one
+    let ptag_pattern = '\%(.\{-}<[/:A-Z_a-z]\)'. '\%(\&\%<'. line('.').'l\)'
+    let ptag = search(ptag_pattern, 'bnw')
 
+    let syn_name = ''
     if a:use_syntax_check
         let check_lnum = <SID>XmlIndentSynCheck(plnum)
         let check_alnum = <SID>XmlIndentSynCheck(a:lnum)

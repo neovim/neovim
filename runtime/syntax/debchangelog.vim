@@ -3,7 +3,7 @@
 " Maintainer:  Debian Vim Maintainers
 " Former Maintainers: Gerfried Fuchs <alfie@ist.org>
 "                     Wichert Akkerman <wakkerma@debian.org>
-" Last Change: 2018 Oct 30
+" Last Change: 2019 Jan 26
 " URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/debchangelog.vim
 
 " Standard syntax initialization
@@ -14,7 +14,7 @@ endif
 " Case doesn't matter for us
 syn case ignore
 
-let s:urgency='urgency=\(low\|medium\|high\|critical\)\( [^[:space:],][^,]*\)\='
+let s:urgency='urgency=\(low\|medium\|high\|emergency\|critical\)\( [^[:space:],][^,]*\)\='
 let s:binNMU='binary-only=yes'
 
 " Define some common expressions we can use later on

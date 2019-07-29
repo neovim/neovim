@@ -120,7 +120,7 @@ the resulting files if they are what you expected.
 USING A SPECIFIC SWAP FILE
 
 If you know which swap file needs to be used, you can recover by giving the
-swap file name.  Vim will then finds out the name of the original file from
+swap file name.  Vim will then find out the name of the original file from
 the swap file.
 
 Example: >

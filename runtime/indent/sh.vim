@@ -3,10 +3,11 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
-" Latest Revision:     2018-03-26
+" Latest Revision:     2019-02-02
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20190201  - Better check for closing if sections
 "          20180724  - make check for zsh syntax more rigid (needs word-boundaries)
 "          20180326  - better support for line continuation
 "          20180325  - better detection of function definitions
@@ -59,6 +60,7 @@ function! s:indent_value(option)
 endfunction
 
 function! GetShIndent()
+  let curline = getline(v:lnum)
   let lnum = prevnonblank(v:lnum - 1)
   if lnum == 0
     return 0
@@ -72,7 +74,7 @@ function! GetShIndent()
   " Check contents of previous lines
   if line =~ '^\s*\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>' ||
         \  (&ft is# 'zsh' && line =~ '\<\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>')
-    if line !~ '\<\%(fi\|esac\|done\|end\)\>\s*\%(#.*\)\=$'
+    if !s:is_end_expression(line)
       let ind += s:indent_value('default')
     endif
   elseif s:is_case_label(line, pnum)
@@ -90,7 +92,10 @@ function! GetShIndent()
     endif
   elseif s:end_block(line) && !s:start_block(line)
     let ind -= s:indent_value('default')
-  elseif pnum != 0 && s:is_continuation_line(pline) && !s:end_block(getline(v:lnum))
+  elseif pnum != 0 &&
+        \ s:is_continuation_line(pline) &&
+        \ !s:end_block(curline) &&
+        \ !s:is_end_expression(curline)
     " only add indent, if line and pline is in the same block
     let i = v:lnum
     let ind2 = indent(s:find_continued_lnum(pnum))
@@ -106,8 +111,15 @@ function! GetShIndent()
 
   let pine = line
   " Check content of current line
-  let line = getline(v:lnum)
-  if line =~ '^\s*\%(then\|do\|else\|elif\|fi\|done\|end\)\>' || s:end_block(line)
+  let line = curline
+  " Current line is a endif line, so get indent from start of "if condition" line
+  " TODO: should we do the same for other "end" lines?
+  if curline =~ '^\s*\%(fi\)\s*\%(#.*\)\=$'
+    let previous_line = search('if.\{-\};\s*then\s*\%(#.*\)\=$', 'bnW')
+    if previous_line > 0
+      let ind = indent(previous_line)
+    endif
+  elseif line =~ '^\s*\%(then\|do\|else\|elif\|done\|end\)\>' || s:end_block(line)
     let ind -= s:indent_value('default')
   elseif line =~ '^\s*esac\>' && s:is_case_empty(getline(v:lnum - 1))
     let ind -= s:indent_value('default')
@@ -210,8 +222,8 @@ endfunction
 
 function! s:is_here_doc(line)
     if a:line =~ '^\w\+$'
-	let here_pat = '<<-\?'. s:escape(a:line). '\$'
-	return search(here_pat, 'bnW') > 0
+      let here_pat = '<<-\?'. s:escape(a:line). '\$'
+      return search(here_pat, 'bnW') > 0
     endif
     return 0
 endfunction
@@ -254,6 +266,10 @@ endfunction
 
 function! s:is_comment(line)
   return a:line =~ '^\s*#'
+endfunction
+
+function! s:is_end_expression(line)
+  return a:line =~ '\<\%(fi\|esac\|done\|end\)\>\s*\%(#.*\)\=$'
 endfunction
 
 let &cpo = s:cpo_save

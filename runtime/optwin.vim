@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2018 May 15
+" Last Change:	2019 Jan 27
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -395,11 +395,9 @@ endif
 call <SID>Header("syntax, highlighting and spelling")
 call append("$", "background\t\"dark\" or \"light\"; the background color brightness")
 call <SID>OptionG("bg", &bg)
-if has("autocmd")
-  call append("$", "filetype\ttype of file; triggers the FileType event when set")
-  call append("$", "\t(local to buffer)")
-  call <SID>OptionL("ft")
-endif
+call append("$", "filetype\ttype of file; triggers the FileType event when set")
+call append("$", "\t(local to buffer)")
+call <SID>OptionL("ft")
 if has("syntax")
   call append("$", "syntax\tname of syntax highlighting used")
   call append("$", "\t(local to buffer)")
@@ -454,10 +452,8 @@ if has("statusline")
 endif
 call append("$", "equalalways\tmake all windows the same size when adding/removing windows")
 call <SID>BinOptionG("ea", &ea)
-if has("vertsplit")
-  call append("$", "eadirection\tin which direction 'equalalways' works: \"ver\", \"hor\" or \"both\"")
-  call <SID>OptionG("ead", &ead)
-endif
+call append("$", "eadirection\tin which direction 'equalalways' works: \"ver\", \"hor\" or \"both\"")
+call <SID>OptionG("ead", &ead)
 call append("$", "winheight\tminimal number of lines used for the current window")
 call append("$", " \tset wh=" . &wh)
 call append("$", "winminheight\tminimal number of lines used for any window")
@@ -465,15 +461,13 @@ call append("$", " \tset wmh=" . &wmh)
 call append("$", "winfixheight\tkeep the height of the window")
 call append("$", "\t(local to window)")
 call <SID>BinOptionL("wfh")
-if has("vertsplit")
 call append("$", "winfixwidth\tkeep the width of the window")
 call append("$", "\t(local to window)")
 call <SID>BinOptionL("wfw")
-  call append("$", "winwidth\tminimal number of columns used for the current window")
-  call append("$", " \tset wiw=" . &wiw)
-  call append("$", "winminwidth\tminimal number of columns used for any window")
-  call append("$", " \tset wmw=" . &wmw)
-endif
+call append("$", "winwidth\tminimal number of columns used for the current window")
+call append("$", " \tset wiw=" . &wiw)
+call append("$", "winminwidth\tminimal number of columns used for any window")
+call append("$", " \tset wmw=" . &wmw)
 call append("$", "helpheight\tinitial height of the help window")
 call append("$", " \tset hh=" . &hh)
 if has("quickfix")
@@ -490,22 +484,16 @@ call append("$", "\tto a buffer")
 call <SID>OptionG("swb", &swb)
 call append("$", "splitbelow\ta new window is put below the current one")
 call <SID>BinOptionG("sb", &sb)
-if has("vertsplit")
-  call append("$", "splitright\ta new window is put right of the current one")
-  call <SID>BinOptionG("spr", &spr)
-endif
-if has("scrollbind")
-  call append("$", "scrollbind\tthis window scrolls together with other bound windows")
-  call append("$", "\t(local to window)")
-  call <SID>BinOptionL("scb")
-  call append("$", "scrollopt\t\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'")
-  call <SID>OptionG("sbo", &sbo)
-endif
-if has("cursorbind")
-  call append("$", "cursorbind\tthis window's cursor moves together with other bound windows")
-  call append("$", "\t(local to window)")
-  call <SID>BinOptionL("crb")
-endif
+call append("$", "splitright\ta new window is put right of the current one")
+call <SID>BinOptionG("spr", &spr)
+call append("$", "scrollbind\tthis window scrolls together with other bound windows")
+call append("$", "\t(local to window)")
+call <SID>BinOptionL("scb")
+call append("$", "scrollopt\t\"ver\", \"hor\" and/or \"jump\"; list of options for 'scrollbind'")
+call <SID>OptionG("sbo", &sbo)
+call append("$", "cursorbind\tthis window's cursor moves together with other bound windows")
+call append("$", "\t(local to window)")
+call <SID>BinOptionL("crb")
 if has("terminal")
   call append("$", "termsize\tsize of a terminal window")
   call append("$", "\t(local to window)")
@@ -1040,12 +1028,10 @@ if has("wildmenu")
   call append("$", "wildmenu\tcommand-line completion shows a list of matches")
   call <SID>BinOptionG("wmnu", &wmnu)
 endif
-if has("vertsplit")
-  call append("$", "cedit\tkey used to open the command-line window")
-  call <SID>OptionG("cedit", &cedit)
-  call append("$", "cmdwinheight\theight of the command-line window")
-  call <SID>OptionG("cwh", &cwh)
-endif
+call append("$", "cedit\tkey used to open the command-line window")
+call <SID>OptionG("cedit", &cedit)
+call append("$", "cmdwinheight\theight of the command-line window")
+call <SID>OptionG("cwh", &cwh)
 
 
 call <SID>Header("executing external commands")
@@ -1208,14 +1194,10 @@ endif
 
 
 call <SID>Header("various")
-if has("virtualedit")
-  call append("$", "virtualedit\twhen to use virtual editing: \"block\", \"insert\" and/or \"all\"")
-  call <SID>OptionG("ve", &ve)
-endif
-if has("autocmd")
-  call append("$", "eventignore\tlist of autocommand events which are to be ignored")
-  call <SID>OptionG("ei", &ei)
-endif
+call append("$", "virtualedit\twhen to use virtual editing: \"block\", \"insert\" and/or \"all\"")
+call <SID>OptionG("ve", &ve)
+call append("$", "eventignore\tlist of autocommand events which are to be ignored")
+call <SID>OptionG("ei", &ei)
 call append("$", "loadplugins\tload plugin scripts when starting up")
 call <SID>BinOptionG("lpl", &lpl)
 call append("$", "exrc\tenable reading .vimrc/.exrc/.gvimrc in the current directory")
