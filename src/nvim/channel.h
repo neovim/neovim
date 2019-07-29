@@ -69,7 +69,6 @@ typedef struct {
   int next;            // position of next list to consume from "work_queue"
   Array results;       // accumulated results
   typval_T callee;     // called function
-  Dictionary context;  // context dictionary
 } AsyncCall;
 
 struct Channel {

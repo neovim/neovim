@@ -7758,7 +7758,6 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   async_call->next = 0;
   async_call->results = (Array)ARRAY_DICT_INIT;
   tv_copy(callee, &async_call->callee);
-  async_call->context = context;
 
   tv_list_alloc_ret(rettv, async_call->count);
   for (int i = 0; i < async_call->count; i++) {
@@ -7781,6 +7780,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
+  api_free_dictionary(context);
   return;
 
 fail:

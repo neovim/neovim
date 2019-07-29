@@ -2422,8 +2422,7 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     if (async_call->next < tv_list_len(work_queue)) {
       Array rpc_args = ARRAY_DICT_INIT;
       ADD(rpc_args, vim_to_object(&channel->async_call->callee));
-      ADD(rpc_args,
-          DICTIONARY_OBJ(copy_dictionary(channel->async_call->context)));
+      ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
       listitem_T *args = tv_list_find(work_queue, async_call->next++);
       ADD(rpc_args, vim_to_object(TV_LIST_ITEM_TV(args)));
       rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
