@@ -3954,10 +3954,10 @@ void vim_unescape_csi(char_u *p)
  * Write map commands for the current mappings to an .exrc file.
  * Return FAIL on error, OK otherwise.
  */
-int 
-makemap (
+int
+makemap(
     FILE *fd,
-    buf_T *buf           /* buffer for local mappings or NULL */
+    buf_T *buf           // buffer for local mappings or NULL
 )
 {
   mapblock_T  *mp;
@@ -3970,50 +3970,56 @@ makemap (
 
   validate_maphash();
 
-  /*
-   * Do the loop twice: Once for mappings, once for abbreviations.
-   * Then loop over all map hash lists.
-   */
-  for (abbr = 0; abbr < 2; ++abbr)
-    for (hash = 0; hash < 256; ++hash) {
+  // Do the loop twice: Once for mappings, once for abbreviations.
+  // Then loop over all map hash lists.
+  for (abbr = 0; abbr < 2; abbr++) {
+    for (hash = 0; hash < 256; hash++) {
       if (abbr) {
-        if (hash > 0)                   /* there is only one abbr list */
+        if (hash > 0) {                 // there is only one abbr list
           break;
-        if (buf != NULL)
+        }
+        if (buf != NULL) {
           mp = buf->b_first_abbr;
-        else
+        } else {
           mp = first_abbr;
+        }
       } else {
-        if (buf != NULL)
+        if (buf != NULL) {
           mp = buf->b_maphash[hash];
-        else
+        } else {
           mp = maphash[hash];
+        }
       }
 
       for (; mp; mp = mp->m_next) {
-        /* skip script-local mappings */
-        if (mp->m_noremap == REMAP_SCRIPT)
+        // skip script-local mappings
+        if (mp->m_noremap == REMAP_SCRIPT) {
           continue;
+        }
 
-        /* skip mappings that contain a <SNR> (script-local thing),
-         * they probably don't work when loaded again */
-        for (p = mp->m_str; *p != NUL; ++p)
+        // skip mappings that contain a <SNR> (script-local thing),
+        // they probably don't work when loaded again
+        for (p = mp->m_str; *p != NUL; p++) {
           if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
-              && p[2] == (int)KE_SNR)
+              && p[2] == (int)KE_SNR) {
             break;
-        if (*p != NUL)
+          }
+        }
+        if (*p != NUL) {
           continue;
+        }
 
-        /* It's possible to create a mapping and then ":unmap" certain
-         * modes.  We recreate this here by mapping the individual
-         * modes, which requires up to three of them. */
+        // It's possible to create a mapping and then ":unmap" certain
+        // modes.  We recreate this here by mapping the individual
+        // modes, which requires up to three of them.
         c1 = NUL;
         c2 = NUL;
         c3 = NUL;
-        if (abbr)
+        if (abbr) {
           cmd = "abbr";
-        else
+        } else {
           cmd = "map";
+        }
         switch (mp->m_mode) {
         case NORMAL + VISUAL + SELECTMODE + OP_PENDING:
           break;
@@ -4071,8 +4077,9 @@ makemap (
           c2 = 'o';
           break;
         case CMDLINE + INSERT:
-          if (!abbr)
+          if (!abbr) {
             cmd = "map!";
+          }
           break;
         case CMDLINE:
           c1 = 'c';
@@ -4090,9 +4097,10 @@ makemap (
           IEMSG(_("E228: makemap: Illegal mode"));
           return FAIL;
         }
-        do {            /* do this twice if c2 is set, 3 times with c3 */
-          /* When outputting <> form, need to make sure that 'cpo'
-           * is set to the Vim default. */
+        do {
+          // do this twice if c2 is set, 3 times with c3 */
+          // When outputting <> form, need to make sure that 'cpo'
+          // is set to the Vim default.
           if (!did_cpo) {
             if (*mp->m_str == NUL) {  // Will use <Nop>.
               did_cpo = true;
@@ -4107,63 +4115,69 @@ makemap (
               if (fprintf(fd, "let s:cpo_save=&cpo") < 0
                   || put_eol(fd) < 0
                   || fprintf(fd, "set cpo&vim") < 0
-                  || put_eol(fd) < 0)
+                  || put_eol(fd) < 0) {
                 return FAIL;
+              }
             }
           }
-          if (c1 && putc(c1, fd) < 0)
+          if (c1 && putc(c1, fd) < 0) {
             return FAIL;
-          if (mp->m_noremap != REMAP_YES && fprintf(fd, "nore") < 0)
+          }
+          if (mp->m_noremap != REMAP_YES && fprintf(fd, "nore") < 0) {
             return FAIL;
-          if (fputs(cmd, fd) < 0)
+          }
+          if (fputs(cmd, fd) < 0) {
             return FAIL;
-          if (buf != NULL && fputs(" <buffer>", fd) < 0)
+          }
+          if (buf != NULL && fputs(" <buffer>", fd) < 0) {
             return FAIL;
-          if (mp->m_nowait && fputs(" <nowait>", fd) < 0)
+          }
+          if (mp->m_nowait && fputs(" <nowait>", fd) < 0) {
             return FAIL;
-          if (mp->m_silent && fputs(" <silent>", fd) < 0)
+          }
+          if (mp->m_silent && fputs(" <silent>", fd) < 0) {
             return FAIL;
-          if (mp->m_noremap == REMAP_SCRIPT
-              && fputs("<script>", fd) < 0)
+          }
+          if (mp->m_expr && fputs(" <expr>", fd) < 0) {
             return FAIL;
-          if (mp->m_expr && fputs(" <expr>", fd) < 0)
-            return FAIL;
+          }
 
-          if (       putc(' ', fd) < 0
-                     || put_escstr(fd, mp->m_keys, 0) == FAIL
-                     || putc(' ', fd) < 0
-                     || put_escstr(fd, mp->m_str, 1) == FAIL
-                     || put_eol(fd) < 0)
+          if (putc(' ', fd) < 0
+              || put_escstr(fd, mp->m_keys, 0) == FAIL
+              || putc(' ', fd) < 0
+              || put_escstr(fd, mp->m_str, 1) == FAIL
+              || put_eol(fd) < 0) {
             return FAIL;
+          }
           c1 = c2;
           c2 = c3;
           c3 = NUL;
         } while (c1 != NUL);
       }
     }
-
-  if (did_cpo)
+  }
+  if (did_cpo) {
     if (fprintf(fd, "let &cpo=s:cpo_save") < 0
         || put_eol(fd) < 0
         || fprintf(fd, "unlet s:cpo_save") < 0
-        || put_eol(fd) < 0)
+        || put_eol(fd) < 0) {
       return FAIL;
+    }
+  }
   return OK;
 }
 
-/*
- * write escape string to file
- * "what": 0 for :map lhs, 1 for :map rhs, 2 for :set
- *
- * return FAIL for failure, OK otherwise
- */
+// write escape string to file
+// "what": 0 for :map lhs, 1 for :map rhs, 2 for :set
+//
+// return FAIL for failure, OK otherwise
 int put_escstr(FILE *fd, char_u *strstart, int what)
 {
   char_u      *str = strstart;
   int c;
   int modifiers;
 
-  /* :map xx <Nop> */
+  // :map xx <Nop>
   if (*str == NUL && what == 1) {
     if (fprintf(fd, "<Nop>") < 0)
       return FAIL;
