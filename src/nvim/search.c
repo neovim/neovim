@@ -1137,7 +1137,7 @@ int do_search(
 
       // Get the offset, so we know how long it is.
       if (spats[0].off.line || spats[0].off.end || spats[0].off.off) {
-        p = off_buf;
+        p = off_buf;  // -V507
         *p++ = dirc;
         if (spats[0].off.end) {
           *p++ = 'e';
