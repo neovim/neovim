@@ -776,13 +776,14 @@ FilterReadPre			Before reading a file from a filter command.
 				Not triggered when 'shelltemp' is off.
 							*FilterWritePost*
 FilterWritePost			After writing a file for a filter command or
-				making a diff.
+				making a diff with an external diff (see
+				DiffUpdated for internal diff).
 				Vim checks the pattern against the name of
 				the current buffer as with FilterWritePre.
 				Not triggered when 'shelltemp' is off.
 							*FilterWritePre*
 FilterWritePre			Before writing a file for a filter command or
-				making a diff.
+				making a diff with an external diff.
 				Vim checks the pattern against the name of
 				the current buffer, not the name of the
 				temporary file that is the output of the

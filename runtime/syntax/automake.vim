@@ -1,9 +1,9 @@
 " Vim syntax file
-" Language:	automake Makefile.am
-" Maintainer:   Debian VIM Maintainers <pkg-vim-maintainers@lists.alioth.debian.org>
-" Former Maintainer:	John Williams <jrw@pobox.com>
-" Last Change:	2011-06-13
-" URL: http://anonscm.debian.org/hg/pkg-vim/vim/raw-file/unstable/runtime/syntax/automake.vim
+" Language: automake Makefile.am
+" Maintainer: Debian Vim Maintainers
+" Former Maintainer: John Williams <jrw@pobox.com>
+" Last Change: 2018 Dec 27
+" URL: https://salsa.debian.org/vim-team/vim-debian/blob/master/syntax/automake.vim
 "
 " XXX This file is in need of a new maintainer, Debian VIM Maintainers maintain
 "     it only because patches have been submitted for it by Debian users and the
@@ -18,7 +18,7 @@
 " EXTRA_SOURCES.
 
 " Standard syntax initialization
-if exists("b:current_syntax")
+if exists('b:current_syntax')
   finish
 endif
 
@@ -37,8 +37,8 @@ syn match automakeConditional "^\(if\s*!\=\w\+\|else\|endif\)\s*$"
 
 syn match automakeSubst     "@\w\+@"
 syn match automakeSubst     "^\s*@\w\+@"
-syn match automakeComment1 "#.*$" contains=automakeSubst
-syn match automakeComment2 "##.*$"
+syn match automakeComment1 "#.*$" contains=automakeSubst,@Spell
+syn match automakeComment2 "##.*$" contains=@Spell
 
 syn match automakeMakeError "$[{(][^})]*[^a-zA-Z0-9_})][^})]*[})]" " GNU make function call
 syn match automakeMakeError "^AM_LDADD\s*\ze+\==" " Common mistake
@@ -72,6 +72,6 @@ hi def link automakeMakeSString makeSString
 hi def link automakeMakeBString makeBString
 
 
-let b:current_syntax = "automake"
+let b:current_syntax = 'automake'
 
 " vi: ts=8 sw=4 sts=4

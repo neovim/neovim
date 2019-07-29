@@ -92,7 +92,7 @@ See |sign_define()| for the equivalent Vim script function.
 :sign define {name} {argument}...
 		Define a new sign or set attributes for an existing sign.
 		The {name} can either be a number (all digits) or a name
-		starting with a non-digit.  Leading digits are ignored, thus
+		starting with a non-digit.  Leading zeros are ignored, thus
 		"0012", "012" and "12" are considered the same name.
 		About 120 different signs can be defined.
 

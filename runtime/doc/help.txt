@@ -9,7 +9,7 @@ Close this window:  Use ":q<Enter>".
 
 Jump to a subject:  Position the cursor on a tag (e.g. |bars|) and hit CTRL-].
    With the mouse:  Double-click the left mouse button on a tag, e.g. |bars|.
-	Jump back:  Type CTRL-T or CTRL-O.  Repeat to go further back.
+	Jump back:  Type CTRL-O.  Repeat to go further back.
 
 Get specific help:  It is possible to go directly to whatever you want help
 		    on, by giving an argument to the |:help| command.
@@ -30,13 +30,17 @@ Get specific help:  It is possible to go directly to whatever you want help
 		    help entries for "word".
 		    Or use ":helpgrep word". |:helpgrep|
 
+  Getting started:  Do the Vim tutor, a 20 minute interactive training for the
+		    basic commands, see |vimtutor|.
+		    Read the user manual from start to end: |usr_01.txt|
+
 Vim stands for Vi IMproved.  Most of Vim was made by Bram Moolenaar, but only
 through the help of many others.  See |credits|.
 ------------------------------------------------------------------------------
 						*doc-file-list* *Q_ct*
 BASIC:
 |quickref|	Overview of the most common commands you will use
-|tutor|		30 minutes training course for beginners
+|tutor|		20 minutes training course for beginners
 |copying|	About copyrights
 |iccf|		Helping poor children in Uganda
 |sponsor|	Sponsor Vim development, become a registered Vim user

@@ -2670,9 +2670,29 @@ later, and part earlier) adds.
 
 RESTRUCTURED TEXT			*rst.vim* *ft-rst-syntax*
 
-You may set what syntax definitions should be used for code blocks via >
+Syntax highlighting is enabled for code blocks within the document for a
+select number of file types.  See $VIMRUNTIME/syntax/rst.vim for the default
+syntax list.
+
+To set a user-defined list of code block syntax highlighting: >
 	let rst_syntax_code_list = ['vim', 'lisp', ...]
-<
+
+To assign multiple code block types to a single syntax, define
+`rst_syntax_code_list` as a mapping: >
+	let rst_syntax_code_list = {
+		\ 'cpp' = ['cpp', 'c++'],
+                \ 'bash' = ['bash', 'sh'],
+		...
+	}
+
+To use color highlighting for emphasis text: >
+	let rst_use_emphasis_colors = 1
+
+To enable folding of sections: >
+	let rst_fold_enabled = 1
+
+Note that folding can cause performance issues on some platforms.
+
 
 REXX						*rexx.vim* *ft-rexx-syntax*
 

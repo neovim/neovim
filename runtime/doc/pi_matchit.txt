@@ -1,6 +1,6 @@
 *pi_matchit.txt*   Extended "%" matching
 
-For Vim version 6.3.  Last change:  2017 May 14
+For Vim version 6.3.  Last change:  2018 Dec 31
 
 *matchit* *matchit.vim*
 

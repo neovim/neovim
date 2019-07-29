@@ -1,5 +1,5 @@
 "  matchit.vim: (global plugin) Extended "%" matching
-"  Last Change: 2018 Jul 3 by Christian Brabandt
+"  Last Change: 2018 Dec 31
 "  Maintainer:  Benji Fisher PhD   <benji@member.AMS.org>
 "  Version:     1.13.3, for Vim 6.3+
 "		Fix from Tommy Allen included.
@@ -38,8 +38,7 @@
 " TODO:  Add a level of indirection, so that custom % scripts can use my
 "   work but extend it.
 
-" allow user to prevent loading
-" and prevent duplicate loading
+" Allow user to prevent loading and prevent duplicate loading.
 if exists("loaded_matchit") || &cp
   finish
 endif
