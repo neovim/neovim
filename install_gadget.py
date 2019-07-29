@@ -52,7 +52,8 @@ GADGETS = {
     },
     'linux': {
       'file_name': 'cpptools-linux.vsix',
-      'checksum': None,
+      'checksum':
+        'c0f424bd6d5e016d70126587c80b92d981729c708ce524f2cce4c3f524b41d71'
     },
     'macos': {
       'file_name': 'cpptools-osx.vsix',
