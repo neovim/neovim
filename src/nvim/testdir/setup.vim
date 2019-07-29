@@ -50,6 +50,15 @@ if exists('+shellslash')
   let &shell = empty($COMSPEC) ? exepath('cmd.exe') : $COMSPEC
   set shellcmdflag=/s/c shellxquote=\" shellredir=>%s\ 2>&1
   let &shellpipe = &shellredir
+
+  " TODO/XXX: Vim has this in dos.vim (for MingW also):
+  " " Settings for test script execution
+  " " Always use "COMMAND.COM", don't use the value of "$SHELL".
+  " set shell=c:\COMMAND.COM shellquote= shellxquote= shellcmdflag=/c shellredir=>
+  " " This is used only when the +eval feature is available.
+  " if executable("cmd.exe")
+  "    set shell=cmd.exe
+  " endif
 else
   source unix.vim
 endif
