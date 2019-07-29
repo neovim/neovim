@@ -346,20 +346,9 @@ Upon loading a file, Vim finds the relevant syntax file as follows:
 	syntax.
 
 ==============================================================================
-4. Syntax file remarks					*:syn-file-remarks*
+4. Conversion to HTML				*2html.vim* *convert-to-HTML*
 
-						*b:current_syntax-variable*
-Vim stores the name of the syntax that has been loaded in the
-"b:current_syntax" variable.  You can use this if you want to load other
-settings, depending on which syntax is active.	Example: >
-   :au BufReadPost * if b:current_syntax == "csh"
-   :au BufReadPost *   do-some-things
-   :au BufReadPost * endif
-
-
-2HTML						*2html.vim* *convert-to-HTML*
-
-This is not a syntax file itself, but a script that converts the current
+2html is not a syntax file itself, but a script that converts the current
 window into HTML. Vim opens a new window in which it builds the HTML file.
 
 After you save the resulting file, you can view it with any browser. The
@@ -751,6 +740,18 @@ When 1, generate XHTML 1.0 instead (XML compliant HTML).
 >
     :let g:html_use_xhtml = 1
 <
+==============================================================================
+5. Syntax file remarks					*:syn-file-remarks*
+
+						*b:current_syntax-variable*
+Vim stores the name of the syntax that has been loaded in the
+"b:current_syntax" variable.  You can use this if you want to load other
+settings, depending on which syntax is active.	Example: >
+   :au BufReadPost * if b:current_syntax == "csh"
+   :au BufReadPost *   do-some-things
+   :au BufReadPost * endif
+
+
 
 ABEL						*abel.vim* *ft-abel-syntax*
 
@@ -3440,7 +3441,7 @@ The syntax script for zsh allows for syntax-based folding: >
 	:let g:zsh_fold_enable = 1
 
 ==============================================================================
-5. Defining a syntax					*:syn-define* *E410*
+6. Defining a syntax					*:syn-define* *E410*
 
 Vim understands three types of syntax items:
 
@@ -3799,7 +3800,7 @@ DEFINING REGIONS	*:syn-region* *:syn-start* *:syn-skip* *:syn-end*
 The maximum number of syntax groups is 19999.
 
 ==============================================================================
-6. :syntax arguments					*:syn-arguments*
+7. :syntax arguments					*:syn-arguments*
 
 The :syntax commands that define syntax items take a number of arguments.
 The common ones are explained here.  The arguments may be given in any order
@@ -4120,7 +4121,7 @@ IMPLICIT CONCEAL					*:syn-conceal-implicit*
 	Show either "syntax conceal on" or "syntax conceal off" (translated).
 
 ==============================================================================
-7. Syntax patterns				*:syn-pattern* *E401* *E402*
+8. Syntax patterns				*:syn-pattern* *E401* *E402*
 
 In the syntax commands, a pattern must be surrounded by two identical
 characters.  This is like it works for the ":s" command.  The most common to
@@ -4298,7 +4299,7 @@ Note that only matches within a single line can be used.  Multi-line matches
 cannot be referred to.
 
 ==============================================================================
-8. Syntax clusters					*:syn-cluster* *E400*
+9. Syntax clusters					*:syn-cluster* *E400*
 
 :sy[ntax] cluster {cluster-name} [contains={group-name}..]
 				 [add={group-name}..]
@@ -4344,7 +4345,7 @@ This also has implications for nested clusters: >
 The maximum number of clusters is 9767.
 
 ==============================================================================
-9. Including syntax files				*:syn-include* *E397*
+10. Including syntax files				*:syn-include* *E397*
 
 It is often useful for one language's syntax file to include a syntax file for
 a related language.  Depending on the exact relationship, this can be done in
@@ -4385,7 +4386,7 @@ two different ways:
 The maximum number of includes is 999.
 
 ==============================================================================
-10. Synchronizing				*:syn-sync* *E403* *E404*
+11. Synchronizing				*:syn-sync* *E403* *E404*
 
 Vim wants to be able to start redrawing in any position in the document.  To
 make this possible it needs to know the syntax state at the position where
@@ -4577,7 +4578,7 @@ You can clear specific sync patterns with: >
    :syntax sync clear {sync-group-name} ..
 
 ==============================================================================
-11. Listing syntax items		*:syntax* *:sy* *:syn* *:syn-list*
+12. Listing syntax items		*:syntax* *:sy* *:syn* *:syn-list*
 
 This command lists all the syntax items: >
 
@@ -5090,7 +5091,7 @@ Without the "default" in the C syntax file, the highlighting would be
 overruled when the syntax file is loaded.
 
 ==============================================================================
-14. Cleaning up						*:syn-clear* *E391*
+15. Cleaning up						*:syn-clear* *E391*
 
 If you want to clear the syntax stuff for the current buffer, you can use this
 command: >
@@ -5180,7 +5181,7 @@ syntax/syncolor.vim files are loaded:
 		them.
 
 ==============================================================================
-15. Highlighting tags					*tag-highlight*
+16. Highlighting tags					*tag-highlight*
 
 If you want to highlight all the tags in your file, you can use the following
 mappings.
@@ -5215,7 +5216,7 @@ And put these lines in your vimrc: >
    autocmd BufRead,BufNewFile *.[ch] endif
 
 ==============================================================================
-16. Window-local syntax				*:ownsyntax*
+17. Window-local syntax				*:ownsyntax*
 
 Normally all windows on a buffer share the same syntax settings. It is
 possible, however, to set a particular window on a file to have its own

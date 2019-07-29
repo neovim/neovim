@@ -886,9 +886,9 @@ When the result is a |List| then the items are joined with separating line
 breaks.  Thus each item becomes a line, except that they can contain line
 breaks themselves.
 
-The whole matched text can be accessed with "submatch(0)".  The text matched
-with the first pair of () with "submatch(1)".  Likewise for further
-sub-matches in ().
+The |submatch()| function can be used to obtain matched text.  The whole
+matched text can be accessed with "submatch(0)".  The text matched with the
+first pair of () with "submatch(1)".  Likewise for further sub-matches in ().
 
 Be careful: The separation character must not appear in the expression!
 Consider using a character like "@" or ":".  There is no problem if the result

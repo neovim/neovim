@@ -368,7 +368,7 @@ function FalconGetIndent(...)
 		return indent('.')
 	    endif
 	else
-	    call cursor(clnum, vcol)
+	    call cursor(clnum, 0)  " FIXME: column was vcol
 	end
     endif
 

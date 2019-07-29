@@ -106,7 +106,6 @@ Basic editing ~
 |scroll.txt|	scrolling the text in the window
 |insert.txt|	Insert and Replace mode
 |change.txt|	deleting and replacing text
-|indent.txt|	automatic indenting for C and other languages
 |undo.txt|	Undo and Redo
 |repeat.txt|	repeating commands, Vim scripts and debugging
 |visual.txt|	using the Visual mode (selecting a text area)
@@ -119,30 +118,36 @@ Advanced editing ~
 |pattern.txt|	regexp patterns and search commands
 |map.txt|	key mapping and abbreviations
 |tagsrch.txt|	tags and special searches
-|quickfix.txt|	commands for a quick edit-compile-fix cycle
 |windows.txt|	commands for using multiple windows and buffers
 |tabpage.txt|	commands for using multiple tab pages
-|syntax.txt|	syntax highlighting
 |spell.txt|	spell checking
 |diff.txt|	working with two to four versions of the same file
 |autocmd.txt|	automatically executing commands on an event
-|filetype.txt|	settings done specifically for a type of file
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
 
 Special issues ~
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
-|digraph.txt|	list of available digraphs
-|mbyte.txt|	multi-byte text support
-|mlang.txt|	non-English language support
-|arabic.txt|	Arabic language support and editing
-|hebrew.txt|	Hebrew language support and editing
-|russian.txt|	Russian language support and editing
+
+Programming language support ~
+|indent.txt|	automatic indenting for C and other languages
+|syntax.txt|	syntax highlighting
+|textprop.txt|	Attaching properties to text for highlighting or other
+|filetype.txt|	settings done specifically for a type of file
+|quickfix.txt|	commands for a quick edit-compile-fix cycle
 |ft_ada.txt|	Ada (the programming language) support
 |ft_rust.txt|	Filetype plugin for Rust
 |ft_sql.txt|	about the SQL filetype plugin
+
+Language support ~
+|digraph.txt|	list of available digraphs
+|mbyte.txt|	multi-byte text support
+|mlang.txt|	non-English language support
 |rileft.txt|	right-to-left editing mode
+|arabic.txt|	Arabic language support and editing
+|hebrew.txt|	Hebrew language support and editing
+|russian.txt|	Russian language support and editing
 
 GUI ~
 |gui.txt|	Graphical User Interface (GUI)

@@ -1,4 +1,4 @@
-# vim: set filetype=tcl shiftwidth=4 tabstop=4:
+# vim: set filetype=tcl shiftwidth=4 tabstop=8 expandtab :
 
 # START_INDENT
 proc abc {} {

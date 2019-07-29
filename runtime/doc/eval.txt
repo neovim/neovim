@@ -4698,7 +4698,7 @@ gettagstack([{nr}])					*gettagstack()*
 
 getwinpos([{timeout}])					*getwinpos()*
 		The result is a list with two numbers, the result of
-		getwinposx() and getwinposy() combined: 
+		getwinposx() and getwinposy() combined:
 			[x-pos, y-pos]
 		{timeout} can be used to specify how long to wait in msec for
 		a response from the terminal.  When omitted 100 msec is used.

@@ -15,3 +15,66 @@ catch exception
     statements
 end
 % END_INDENT
+
+% START_INDENT
+if true, ...
+	if true
+	disp hello
+	end
+end
+% END_INDENT
+
+% START_INDENT
+switch a
+    case expr
+	if true, foo; end
+	disp hello
+    otherwise
+	disp bar
+end
+% END_INDENT
+
+% START_INDENT
+if true
+    A(1:end - 1)
+    disp foo
+end
+% END_INDENT
+
+% START_INDENT
+A = [{
+    }
+    ] ...
+    disp foo
+disp bar
+% END_INDENT
+
+% START_INDENT
+% INDENT_EXE let b:MATLAB_function_indent = 0
+function foo
+disp foo
+    function nested
+    disp bar
+    end
+end
+% END_INDENT
+
+% START_INDENT
+% INDENT_EXE let b:MATLAB_function_indent = 1
+function foo
+disp foo
+    function nested
+	disp bar
+    end
+end
+% END_INDENT
+
+% START_INDENT
+% INDENT_EXE let b:MATLAB_function_indent = 2
+function foo
+    disp foo
+    function nested
+	disp bar
+    end
+end
+% END_INDENT
