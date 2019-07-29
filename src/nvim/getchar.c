@@ -4123,9 +4123,6 @@ makemap (
             return FAIL;
           if (mp->m_silent && fputs(" <silent>", fd) < 0)
             return FAIL;
-          if (mp->m_noremap == REMAP_SCRIPT
-              && fputs("<script>", fd) < 0)
-            return FAIL;
           if (mp->m_expr && fputs(" <expr>", fd) < 0)
             return FAIL;
 
