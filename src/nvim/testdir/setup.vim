@@ -6,6 +6,8 @@ if exists('s:did_load')
 endif
 let s:did_load = 1
 
+source unix.vim
+
 " Align Nvim defaults to Vim.
 set backspace=
 set directory^=.
