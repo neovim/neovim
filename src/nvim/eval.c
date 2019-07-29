@@ -7652,7 +7652,6 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
     EMSG(_("Failed to send RPC request to async call job"));
     release_asynccall_channel(chan);
-    free_asynccall(chan->async_call);
     goto fail;
   }
 
@@ -7746,10 +7745,12 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 fail:
   TV_LIST_ITER(rettv->vval.v_list, li, {
     uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
-    release_asynccall_channel(find_channel(channel_id));
+    Channel *chan = find_channel(channel_id);
+    chan->async_call = NULL;
+    release_asynccall_channel(chan);
   });
+  free_asynccall(async_call);
   tv_clear(rettv);
-  callback_free(&callback);
   api_free_dictionary(context);
 }
 
