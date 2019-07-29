@@ -855,7 +855,8 @@ int pum_get_height(void)
   return pum_height;
 }
 
-void pum_set_boundings(dict_T *dict)
+/// Add size information about the pum to "dict".
+void pum_set_event_info(dict_T *dict)
 {
   if (!pum_visible()) {
     return;
