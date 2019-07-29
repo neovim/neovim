@@ -38,7 +38,21 @@ if 1
   endif
 endif
 
-source unix.vim
+" Nvim: we are using "-u NONE" (to disable syntax etc reliably).
+" But keeping unix.vim is good in general (mentioned in help), and required
+" for oldesttest likely still.
+if exists('+shellslash')
+  " Native Windows build.
+  " Use default shell on Windows to avoid segfault, caused by TUI
+  " TODO: revisit?!
+  let $SHELL = ''
+  let $TERM = ''
+  let &shell = empty($COMSPEC) ? exepath('cmd.exe') : $COMSPEC
+  set shellcmdflag=/s/c shellxquote=\" shellredir=>%s\ 2>&1
+  let &shellpipe = &shellredir
+else
+  source unix.vim
+endif
 
 " Align Nvim defaults to Vim.
 set backspace=
@@ -60,12 +74,3 @@ let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
 " Don't depend on system locale, always use utf-8.
 " Ref: https://github.com/neovim/neovim/pull/2929
 set encoding=utf-8
-
-" Use default shell on Windows to avoid segfault, caused by TUI
-if has('win32')
-  let $SHELL = ''
-  let $TERM = ''
-  let &shell = empty($COMSPEC) ? exepath('cmd.exe') : $COMSPEC
-  set shellcmdflag=/s/c shellxquote=\" shellredir=>%s\ 2>&1
-  let &shellpipe = &shellredir
-endif
