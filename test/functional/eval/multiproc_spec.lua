@@ -1,7 +1,13 @@
 local helpers = require('test.functional.helpers')(after_each)
-local clear, command, eq, eval, next_msg, nvim, source, tbl_flatten =
-  helpers.clear, helpers.command, helpers.eq, helpers.eval, helpers.next_msg,
-  helpers.nvim, helpers.source, helpers.tbl_flatten
+local call = helpers.call
+local clear = helpers.clear
+local eq = helpers.eq
+local eval = helpers.eval
+local expect_msg_seq = helpers.expect_msg_seq
+local next_msg = helpers.next_msg
+local nvim = helpers.nvim
+local source = helpers.source
+local tbl_flatten = helpers.tbl_flatten
 
 describe('multiproc', function()
   before_each(function()
@@ -11,16 +17,38 @@ describe('multiproc', function()
   end)
 
   describe('call_async', function()
-    it('invokes callback passing it the return value', function()
+    before_each(function()
       source([[
       function! Callback(return_value) abort
         call rpcnotify(g:channel, 'done', a:return_value)
       endfunction
-      call call_async('nvim__id', ['multiproc'], {}, 'Callback')
-      call call_async('nvim_eval', ['1+2+3'], {}, 'Callback')
       ]])
-      eq({'notification', 'done', {'multiproc'}}, next_msg())
-      eq({'notification', 'done', {6}}, next_msg())
+    end)
+
+    it('invokes callback passing it the return value', function()
+      call('call_async', 'nvim__id', {'multiproc'}, {done = 'Callback'})
+      call('call_async', 'nvim_eval', {'1+2+3'}, {done = 'Callback'})
+      expect_msg_seq(
+        { {'notification', 'done', {'multiproc'}},
+          {'notification', 'done', {6}} },
+        { {'notification', 'done', {6}},
+          {'notification', 'done', {'multiproc'}} }
+      )
+    end)
+
+    it('loads passed context properly', function()
+      nvim('set_var', 'args', {'multiproc', '1+2+3'})
+      local ctx = nvim('get_context', {'gvars'})
+      call('call_async', 'nvim_eval', {'args[0]'},
+           {done = 'Callback', context = ctx})
+      call('call_async', 'nvim_eval', {'eval(args[1])'},
+           {done = 'Callback', context = ctx})
+      expect_msg_seq(
+        { {'notification', 'done', {'multiproc'}},
+          {'notification', 'done', {6}} },
+        { {'notification', 'done', {6}},
+          {'notification', 'done', {'multiproc'}} }
+      )
     end)
   end)
 
@@ -37,25 +65,24 @@ describe('multiproc', function()
 
     it('returns async call results', function()
       source([[
-      let jobs = [ call_async('nvim__id', ['first job'], {}),
-                 \ call_async('nvim__id', ['second job'], {}),
-                 \ call_async('nvim_eval', ['1+2+3'], {}),
-                 \ call_async('nvim_eval', ['float2nr(pow(2, 6))'], {}),
-                 \ call_async('trim', ['   trim me   '], {}) ]
+      let jobs = [ call_async('nvim__id', ['first job']),
+                 \ call_async('nvim__id', ['second job']),
+                 \ call_async('nvim_eval', ['1+2+3']),
+                 \ call_async('nvim_eval', ['float2nr(pow(2, 6))']),
+                 \ call_async('trim', ['   trim me   ']) ]
       ]])
       eq({'first job', 'second job', 6, 64, 'trim me'},
          eval([[map(call_wait(jobs), 'v:val.value')]]))
     end)
 
     it('returns after callback is invoked', function()
-      command(
-        [[call call_wait([call_async('nvim__id', [''], {}, 'Callback')])]])
+      call('call_wait', {call('call_async', 'nvim__id', {''}, {done = 'Callback'})})
       eq(true, eval('g:callback_done'))
     end)
 
     it('returns on timeout', function()
-      command(
-        [[call call_wait([call_async('nvim__id', [''], {}, 'Callback')], 0)]])
+      call('call_wait', {call('call_async', 'nvim_command', {'5sleep'},
+           {done = 'Callback'})}, 0)
       eq(false, eval('g:callback_done'))
     end)
   end)
@@ -66,10 +93,10 @@ describe('multiproc', function()
       function! Callback(return_value) abort
         call rpcnotify(g:channel, 'done', sort(a:return_value, 'n'))
       endfunction
-      let jobs = call_parallel(4, 'eval',
+      let jobs = call_parallel('eval',
                              \ [ ['2*1'], ['2*2'], ['2*3'], ['2*4'],
                              \   ['2*5'], ['2*6'], ['2*7'], ['2*8'] ],
-                             \ {}, 'Callback')
+                             \ {'done': 'Callback', 'count': 4})
       ]])
       local wait_result = tbl_flatten(eval([[map(call_wait(jobs), 'v:val.value')]]))
       table.sort(wait_result)

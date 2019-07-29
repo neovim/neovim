@@ -1311,23 +1311,20 @@ Dictionary nvim_get_context(Array types)
 
 /// Sets the current editor state to that in given context dictionary.
 ///
-/// @param ctx_dict  Context dictionary.
-Object nvim_load_context(Dictionary dict)
+/// @param[in]    ctx_dict  Context dictionary.
+/// @param[out]   err       Error details, if any.
+Object nvim_load_context(Dictionary dict, Error *err)
   FUNC_API_SINCE(6)
 {
   Context ctx = CONTEXT_INIT;
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
-
-  ctx_from_dict(dict, &ctx);
-  if (!did_emsg) {
+  if (ctx_from_dict(dict, &ctx)) {
     ctx_restore(&ctx, kCtxAll);
+  } else {
+    api_set_error(err, kErrorTypeException, "malformed context dictionary");
   }
 
   ctx_free(&ctx);
-
-  did_emsg = save_did_emsg;
   return (Object)OBJECT_INIT;
 }
 
@@ -2390,7 +2387,7 @@ Array nvim_grep(String pattern, String path, Boolean global, Error *err)
 }
 
 void nvim__async_invoke(uint64_t channel_id, String callee,
-                        String context, Array args, Error *err)
+                        Dictionary context, Array args, Error *err)
 {
   // Only allow parent (embedding process)
   if (channel_id != CHAN_STDIO) {
@@ -2399,8 +2396,7 @@ void nvim__async_invoke(uint64_t channel_id, String callee,
     return;
   }
 
-  // TODO(abdelhakeem): load context data
-
+  nvim_load_context(context, err);
   Array result = ARRAY_DICT_INIT;
   ADD(result, _call_function(callee, args, NULL, err));
   if (!ERROR_SET(err)) {
@@ -2427,7 +2423,8 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     if (async_call->next < tv_list_len(work_queue)) {
       Array rpc_args = ARRAY_DICT_INIT;
       ADD(rpc_args, vim_to_object(&channel->async_call->callee));
-      ADD(rpc_args, STRING_OBJ(cstr_to_string("")));
+      ADD(rpc_args,
+          DICTIONARY_OBJ(copy_dictionary(channel->async_call->context)));
       listitem_T *args = tv_list_find(work_queue, async_call->next++);
       ADD(rpc_args, vim_to_object(TV_LIST_ITEM_TV(args)));
       rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
@@ -2451,7 +2448,7 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     tv_clear(&argv[0]);
   }
 
-  asynccall_clear(&channel->async_call);
+  free_asynccall(channel->async_call);
 }
 
 void nvim_error_event(uint64_t channel_id, Integer type, String message,

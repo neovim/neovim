@@ -232,17 +232,16 @@ void callback_reader_start(CallbackReader *reader, const char *type)
   reader->type = type;
 }
 
-void asynccall_clear(AsyncCall **async_call)
+void free_asynccall(AsyncCall *asynccall)
   FUNC_ATTR_NONNULL_ALL
 {
-  callback_free(&(*async_call)->callback);
-  if ((*async_call)->work_queue) {  // parallel call
-    tv_list_unref((*async_call)->work_queue);
-    api_free_array((*async_call)->results);
-    tv_clear(&(*async_call)->callee);
+  callback_free(&asynccall->callback);
+  if (asynccall->work_queue) {  // parallel call
+    tv_list_unref(asynccall->work_queue);
+    api_free_array(asynccall->results);
+    tv_clear(&asynccall->callee);
   }
-  xfree(*async_call);
-  *async_call = NULL;
+  xfree(asynccall);
 }
 
 static void free_channel_event(void **argv)
