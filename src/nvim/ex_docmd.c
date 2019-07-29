@@ -10146,9 +10146,7 @@ static void ex_async_handler(exarg_T *eap)
   Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_to_string((const char *)eap->arg)));
   Error err = ERROR_INIT;
-  nvim_execute_lua(
-      STATIC_CSTR_AS_STRING("vim._async_handler(select(1, ...))"),
-      args, &err);
+  EXEC_LUA_STATIC("vim._async_handler(...)", args, &err);
   api_free_array(args);
   if (ERROR_SET(&err)) {
     eap->errmsg = (char_u *)err.msg;

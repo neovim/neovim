@@ -172,9 +172,7 @@ static inline void put_result(uint64_t job, Object result, Error *err)
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ((long)job));
   ADD(args, copy_object(result));
-  nvim_execute_lua(
-      STATIC_CSTR_AS_STRING("return vim._put_result(select(1, ...))"),
-      args, err);
+  EXEC_LUA_STATIC("vim._put_result(...)", args, err);
   api_free_array(args);
 }
 
@@ -183,9 +181,7 @@ static inline void append_result(uint64_t job, Object result, Error *err)
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ((long)job));
   ADD(args, copy_object(result));
-  nvim_execute_lua(
-      STATIC_CSTR_AS_STRING("return vim._append_result(select(1, ...))"),
-      args, err);
+  EXEC_LUA_STATIC("vim._append_result(...)", args, err);
   api_free_array(args);
 }
 

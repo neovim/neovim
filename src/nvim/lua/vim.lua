@@ -285,9 +285,8 @@ local function _async_vimgrep(qf, append, args)
   end
 
   -- Spawn jobs
-  local jobcount = vim.api.nvim_get_vvar('cores')  -- Ideal number of jobs
   local jobs = vim.api.nvim_call_function('call_parallel', {
-    jobcount, 'nvim_grep', paths, { dummy = 1 }
+    'nvim_grep', paths
   })
 
   -- Collect results

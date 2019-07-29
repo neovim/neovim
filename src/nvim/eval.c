@@ -7806,9 +7806,8 @@ static void f_call_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   ADD(args, vim_to_object(&argvars[0]));  // jobs
   ADD(args, vim_to_object(rettv));  // status
   Error err = ERROR_INIT;
-  Object results = nvim_execute_lua(
-      STATIC_CSTR_AS_STRING("return vim._collect_results(select(1, ...))"),
-      args, &err);
+  Object results =
+    EXEC_LUA_STATIC("return vim._collect_results(...)", args, &err);
   api_free_array(args);
   object_to_vim(results, rettv, &err);
   api_free_object(results);
