@@ -979,6 +979,15 @@ Context Stack:					*ctx-functions*
 	ctxset()		set context at given index from top
 	ctxsize()		return context stack size
 
+Multiprocessing:		  *multiproc-functions* *async-call-functions*
+	call_async()		asynchronously call a function in a separate
+				process and return its job id
+	call_parallel()		asynchronously call a function in a number of
+				worker processes until the argument list is
+				exhausted and return worker job ids
+	call_wait()		wait for a set of async calls to complete and
+				return their results
+
 Various:					*various-functions*
 	mode()			get current editing mode
 	visualmode()		last visual mode used

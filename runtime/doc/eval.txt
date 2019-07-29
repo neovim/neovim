@@ -1495,6 +1495,11 @@ v:completed_item
 		|CompleteDone|.  Empty if the completion failed, or after
 		leaving and re-entering insert mode.
 
+				*v:cores* *cores-variable*
+v:cores		The number of logical cores on the system. Default job count
+		for |call_parallel()| as it defines the ideal number of
+		parallel workers for optimal multiprocessing gains.
+
 					*v:count* *count-variable*
 v:count		The count given for the last Normal mode command.  Can be used
 		to get the count before a mapping.  Read-only.  Example: >
@@ -1704,6 +1709,19 @@ v:insertmode	Used for the |InsertEnter| and |InsertChange| autocommand
 			i	Insert mode
 			r	Replace mode
 			v	Virtual Replace mode
+
+						*v:jobs* *jobs-variable*
+v:jobs		|List| of corresponding jobs in callbacks for |call_async()|
+		and |call_parallel()|. Not valid anywhere else.
+		It is always advised to collect async call results
+		(|async-calls|) in the "opts.done" callback if there is no
+		intention to collect them somewhere else so that they do not
+		take up space in the internal result table.  Example: >
+			function Callback(results)
+			  call call_wait(v:jobs)
+			  " Use results...
+			endfunction
+<		Read-only.
 
 						*v:key* *key-variable*
 v:key		Key of the current item of a |Dictionary|.  Only valid while
@@ -2042,6 +2060,14 @@ byteidx({expr}, {nr})		Number	byte index of {nr}'th char in {expr}
 byteidxcomp({expr}, {nr})	Number	byte index of {nr}'th char in {expr}
 call({func}, {arglist} [, {dict}])
 				any	call {func} with arguments {arglist}
+call_async({func}, {args}[, {opts}])
+				Number	asynchronously call {func} with
+					arguments {args}
+call_parallel({func}, {arglists}[, {opts}])
+				List	asynchronously call {func} with
+					arguments from {arglists} in a number
+					of worker processes
+call_wait({ids}[, {timeout}])	List	Wait for a set of async calls
 ceil({expr})			Float	round {expr} up
 changenr()			Number	current change number
 chanclose({id}[, {stream}])	Number	Closes a channel or one of its streams
@@ -2904,7 +2930,7 @@ call_async({func}, {args}[, {opts}])     		*call_async()*
 		{func} can either be a |Funcref| or the name of a function.
 		Returns the |job-id| of the child process running the
 		function. (see |call_wait()|).
-		When the called function returns, opts.done is invoked with
+		When the called function returns, "opts.done" is invoked with
 		the return value as an argument.  Example: >
 			call call_async(
 			      \ 'nvim_grep',
@@ -2914,8 +2940,8 @@ call_async({func}, {args}[, {opts}])     		*call_async()*
 <
 		{opt} is a dictionary specifying some options of the call,
 		it can have the following key-value pairs:
-			done	  callback function
-			context	  context dictionary (|context-dict|)
+			done	  callback function (see |v:jobs|)
+			context	  context dictionary
 
 		For more info see |multiproc-usage|.
 
@@ -2927,7 +2953,7 @@ call_parallel({func}, {arglists}[, {opts}])     	*call_parallel()*
 		{func} can either be a |Funcref| or the name of a function.
 		Returns a |List| of the |job-id|s of the worker processes.
 		(see |call_wait()|).
-		When {arglists} is exhausted, {callback} is invoked with
+		When {arglists} is exhausted, "opts.done" is invoked with
 		a |List| of the return values as an argument.  Example: >
 			let arglists = glob('**/*.h', 1, 1)
 			let arglists = map(arglists,
@@ -2936,15 +2962,11 @@ call_parallel({func}, {arglists}[, {opts}])     	*call_parallel()*
 			      \ 'nvim_grep', arglists,
 			      \	{'done': {result -> 'do something'}})
 <
-		{opts} is interpreted just as in |call_async|, except that
-		there can be an additional key, "count", which is the count
-		of worker processes to spawn (default: |v:cores|).
-
-		Note that, unlike with |call_async|, the value returned
-		in the "value" key of |call_wait| for a job spawned with
-		|call_parallel| is a list of return values. This list can
-		contain as less as one return value or more if the job
-		consumed more than one argument list.
+		{opts} is interpreted just as in |call_async()|, except
+		that there can be the following additional options:
+			itemdone	per-item callback function
+			count   	number of workers
+					(default: |v:cores|)
 
 		For more info see |multiproc-usage|.
 
@@ -2958,7 +2980,13 @@ call_wait({ids}[, {timeout}])	                        *call_wait()*
 			value	return value of corresponding async call
 			        (if any, otherwise it is not present).
 		Any callbacks registered for jobs in {ids} are invoked before
-		|call_wait| returns.
+		|call_wait()| returns.
+
+		Note that, unlike with |call_async()|, the value returned
+		in the "value" key of |call_wait()| for a job spawned with
+		|call_parallel()| is a list of return values. This list
+		can contain as less as one return value or more if the
+		job consumed more than one argument list.
 
 		For more info see |multiproc-usage|.
 
