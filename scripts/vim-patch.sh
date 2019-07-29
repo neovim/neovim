@@ -34,6 +34,11 @@ usage() {
   echo
   echo "    \$VIM_SOURCE_DIR controls where Vim sources are found"
   echo "    (default: '${VIM_SOURCE_DIR_DEFAULT}')"
+  echo
+  echo "Examples:"
+  echo
+  echo " - List missing patches for a given file (in the Vim source):"
+  echo "   $0 -l -- src/edit.c"
 }
 
 msg_ok() {
