@@ -20,7 +20,7 @@ function Main()
   let results = jobwait([job], 5 * 60 * 1000)
   " TODO(ZyX-I): Get colors
   let screen = getline(1, '$')
-  bwipeout!
+  bwipeout!  " kills the job always.
   let stringified_events = map(s:logger.d_events,
         \'v:val[0] . ": " . ' .
         \'join(map(v:val[1], '.
@@ -43,9 +43,6 @@ function Main()
         \])
   write
   if results[0] != 0
-    if results[0] != -1
-      call jobstop(job)
-    endif
     cquit
   else
     qall
