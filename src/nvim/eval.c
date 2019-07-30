@@ -8520,9 +8520,9 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   for (i = 0; ; i++) {
 # ifdef WIN32
-    short_u *p;
+    uint16_t *p;
 
-    if ((p = (short_u *)_wenviron[i]) == NULL) {
+    if ((p = (uint16_t *)_wenviron[i]) == NULL) {
       return;
     }
     entry = utf16_to_enc(p, NULL);
