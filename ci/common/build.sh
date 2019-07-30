@@ -33,7 +33,7 @@ build_deps() {
     export CCACHE_RECACHE=1
   elif test -f "${CACHE_MARKER}" ; then
     echo "Using third-party dependencies from Travis cache (last update: $(_stat "${CACHE_MARKER}"))."
-    cp -a "${CACHE_NVIM_DEPS}"/. "${DEPS_BUILD_DIR}"
+    cp -a "${CACHE_NVIM_DEPS_DIR}"/. "${DEPS_BUILD_DIR}"
   fi
 
   # Even if we're using cached dependencies, run CMake and make to

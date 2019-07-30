@@ -34,9 +34,9 @@ env:
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
-    - CACHE_NVIM_DEPS="$HOME/.cache/nvim-deps"
+    - CACHE_NVIM_DEPS_DIR="$HOME/.cache/nvim-deps"
     # If this file exists, the cache is valid (compile was successful).
-    - CACHE_MARKER="$CACHE_NVIM_DEPS/.travis_cache_marker"
+    - CACHE_MARKER="$CACHE_NVIM_DEPS_DIR/.travis_cache_marker"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
@@ -164,7 +164,7 @@ cache:
   apt: true
   ccache: true
   directories:
-    - "$CACHE_NVIM_DEPS"
+    - "$CACHE_NVIM_DEPS_DIR"
 
 notifications:
   webhooks:

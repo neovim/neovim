@@ -19,8 +19,8 @@ find "${HOME}/.ccache" -name stats -delete
 if ended_successfully; then
   # Do not cache downloads.  They should not be needed with up-to-date deps.
   rm -rf "${DEPS_BUILD_DIR}/build/downloads"
-  rm -rf "${CACHE_NVIM_DEPS}"
-  mv "${DEPS_BUILD_DIR}" "${CACHE_NVIM_DEPS}"
+  rm -rf "${CACHE_NVIM_DEPS_DIR}"
+  mv "${DEPS_BUILD_DIR}" "${CACHE_NVIM_DEPS_DIR}"
 
   touch "${CACHE_MARKER}"
   echo "Updated third-party dependencies (timestamp: $(_stat "${CACHE_MARKER}"))."
