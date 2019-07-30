@@ -391,6 +391,8 @@ int main(int argc, char **argv)
     if (!rv) {
         // cannot continue without a channel
         tui_exit_safe(get_ui_by_index(1));
+        logmsg(ERROR_LOG_LEVEL, "RPC: ", NULL, -1, true,
+             "Could not establish connection with address : %s", params.server_name);
         mch_msg("Could not establish connection with remote server\n");
         getout(1);
     }

@@ -16,6 +16,8 @@ local nvim_prog = helpers.nvim_prog
 local nvim_set = helpers.nvim_set
 local ok = helpers.ok
 local read_file = helpers.read_file
+local spawn = helpers.spawn
+local set_session = helpers.set_session
 
 if helpers.pending_win32(pending) then return end
 
@@ -978,5 +980,116 @@ describe('TUI background color', function()
     assert_bg('rgba', '0/0/0/f', 'dark')
     assert_bg('rgba', 'f/f/f/0', 'light')
     assert_bg('rgba', 'f/f/f/f', 'light')
+  end)
+end)
+
+-- These tests require `thelpers` because --headless/--embed
+-- does not initialize the TUI.
+describe("TUI as a client", function()
+
+  it("connects to remote instance (full)", function()
+    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', '127.0.0.1:7777', '-c', ":%! echo 'Hello, World'" })
+    -- wait till the server session starts
+    helpers.sleep(1000)
+
+    clear()
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+
+    screen.timeout = 1000
+    screen:expect([[
+      {1:H}ello, World                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                   1,1            All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(":q!\n")
+    server:close()
+  end)
+
+  it("connects to remote instance (--headless)", function()
+    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--listen', '127.0.0.1:7777', '-c', ":%! echo 'Hello, World'" })
+    -- wait till the server session starts
+    helpers.sleep(1000)
+
+    clear()
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+
+    screen.timeout = 1000
+    screen:expect([[
+      {1:H}ello, World                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                   1,1            All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(":q!\n")
+    server:close()
+  end)
+
+  it("throws error when no server exists", function()
+    clear()
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+
+    screen.timeout = 1000
+    screen:expect([[
+      Could not establish connection with remote server |
+                                                        |
+      [Process exited 1]{1: }                               |
+                                                        |
+                                                        |
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  it("exits when server quits", function()
+    clear()
+    local server_super = spawn(helpers.nvim_argv)
+    local client_super = spawn(helpers.nvim_argv)
+
+    set_session(server_super, true)
+    screen_server = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.1:7777"]')
+
+    helpers.feed("iHello, World<esc>")
+
+    set_session(client_super, true)
+    screen_client = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+  
+    -- assert that client has connected to server
+    screen_client.timeout = 1000
+    screen_client:expect([[
+      Hello, Worl{1:d}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                   1,12           All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    -- quitting the server
+    set_session(server_super, true)
+    feed_data(":q!\n")
+    screen_server.timeout = 1000
+    screen_server:expect({any="Process exited 0"})
+
+    -- assert that client has exited
+    set_session(client_super, true)
+    screen_client:expect({any="Process exited 0"})
+
+    server_super:close()
+    client_super:close()
   end)
 end)
