@@ -8532,7 +8532,7 @@ static void f_getenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *p = (char_u *)vim_getenv(tv_get_string(&argvars[0]));
 
-  if (p == NULL || *p == NUL) {
+  if (p == NULL) {
     rettv->v_type = VAR_SPECIAL;
     rettv->vval.v_number = kSpecialVarNull;
     return;
