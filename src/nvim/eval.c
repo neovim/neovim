@@ -8509,6 +8509,7 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tv_dict_add_str(rettv->vval.v_dict,
                     (char *)envname, STRLEN((char *)envname),
                     value == NULL ? "" : value);
+    xfree(envname);
   }
 }
 
