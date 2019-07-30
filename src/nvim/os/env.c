@@ -45,6 +45,7 @@ void env_init(void)
 }
 
 /// Like getenv(), but returns NULL if the variable is empty.
+/// @see os_env_exists
 const char *os_getenv(const char *name)
   FUNC_ATTR_NONNULL_ALL
 {

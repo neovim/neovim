@@ -8499,47 +8499,18 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int i = 0;
-  char_u *entry, *value;
-# ifdef WIN32
-  extern wchar_t **_wenviron;
-# else
-  extern char **environ;
-# endif
 
   tv_dict_alloc_ret(rettv);
 
-# ifdef WIN32
-  if (*_wenviron == NULL) {
-    return;
-  }
-# else
-  if (*environ == NULL) {
-    return;
-  }
-# endif
-
   for (i = 0; ; i++) {
-# ifdef WIN32
-    uint16_t *p;
-
-    if ((p = (uint16_t *)_wenviron[i]) == NULL) {
-      return;
+    char *envname = os_getenvname_at_index((size_t)i);
+    if (envname == NULL) {
+      break;
     }
-    entry = utf16_to_enc(p, NULL);
-# else
-    if ((entry = (char_u *)environ[i]) == NULL) {
-      return;
-    }
-    entry = vim_strsave(entry);
-# endif
-    if ((value = vim_strchr(entry, '=')) == NULL) {
-      xfree(entry);
-      continue;
-    }
-    *value++ = NUL;
-    tv_dict_add_str(rettv->vval.v_dict, (char *)entry, STRLEN((char *)entry),
-                    (const char *)value);
-    xfree(entry);
+    const char *value = os_getenv(envname);
+    tv_dict_add_str(rettv->vval.v_dict,
+                    (char *)envname, STRLEN((char *)envname),
+                    value == NULL ? "" : value);
   }
 }
 
