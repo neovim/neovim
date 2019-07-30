@@ -20,6 +20,8 @@ if [[ -n "${LLVM_SYMBOLIZER}" ]] && [[ ! $(type -P "${LLVM_SYMBOLIZER}") ]]; the
   exit 1
 fi
 
+echo "before_script.sh: ccache stats (will be cleared)"
+ccache -s
 # Reset ccache stats for real results in before_cache.
 ccache --zero-stats
 

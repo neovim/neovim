@@ -10,8 +10,6 @@ env:
     - BUILD_DIR="$TRAVIS_BUILD_DIR/build"
     # Build directory for third-party dependencies.
     - DEPS_BUILD_DIR="$HOME/nvim-deps"
-    # Directory where third-party dependency sources are downloaded to.
-    - DEPS_DOWNLOAD_DIR="$TRAVIS_BUILD_DIR/deps-downloads"
     # Install directory for Neovim.
     - INSTALL_PREFIX="$HOME/nvim-install"
     # Log directory for Clang sanitizers and Valgrind.
@@ -25,7 +23,7 @@ env:
                    -DBUSTED_OUTPUT_TYPE=nvim
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=3"
-    - DEPS_CMAKE_FLAGS="-DDEPS_DOWNLOAD_DIR:PATH=$DEPS_DOWNLOAD_DIR -DUSE_BUNDLED_GPERF=OFF"
+    - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_GPERF=OFF"
     # Additional CMake flags for 32-bit builds.
     - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
                          -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
@@ -36,8 +34,9 @@ env:
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
+    - CACHE_NVIM_DEPS_DIR="$HOME/.cache/nvim-deps"
     # If this file exists, the cache is valid (compile was successful).
-    - CACHE_MARKER="$HOME/.cache/nvim-deps/.travis_cache_marker"
+    - CACHE_MARKER="$CACHE_NVIM_DEPS_DIR/.travis_cache_marker"
     # default target name for functional tests
     - FUNCTIONALTEST=functionaltest
     - CI_TARGET=tests
@@ -52,7 +51,7 @@ anchors:
   envs: &common-job-env
     # Do not fall back to cache for "master" for PR on "release" branch:
     # adds the target branch to the cache key.
-    FOR_TRAVIS_CACHE=$TRAVIS_BRANCH
+    FOR_TRAVIS_CACHE=v1-$TRAVIS_BRANCH
 
 addons:
   apt:
@@ -165,9 +164,7 @@ cache:
   apt: true
   ccache: true
   directories:
-    - "$HOME/.cache/pip"
-    - "$HOME/.cache/nvim-deps"
-    - "$HOME/.cache/nvim-deps-downloads"
+    - "$CACHE_NVIM_DEPS_DIR"
 
 notifications:
   webhooks:

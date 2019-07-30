@@ -27,15 +27,13 @@ build_deps() {
   fi
 
   mkdir -p "${DEPS_BUILD_DIR}"
-  mkdir -p "${DEPS_DOWNLOAD_DIR}"
 
   # Use cached dependencies if $CACHE_MARKER exists.
   if test "${CACHE_ENABLE}" = "false" ; then
     export CCACHE_RECACHE=1
   elif test -f "${CACHE_MARKER}" ; then
     echo "Using third-party dependencies from Travis cache (last update: $(_stat "${CACHE_MARKER}"))."
-    cp -a "${HOME}/.cache/nvim-deps"/. "${DEPS_BUILD_DIR}"
-    cp -a "${HOME}/.cache/nvim-deps-downloads"/. "${DEPS_DOWNLOAD_DIR}"
+    cp -a "${CACHE_NVIM_DEPS_DIR}"/. "${DEPS_BUILD_DIR}"
   fi
 
   # Even if we're using cached dependencies, run CMake and make to
