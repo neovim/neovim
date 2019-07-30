@@ -142,7 +142,8 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_args)
   int current_state = State;
   bool forward_output = true;
 
-  // While the child is running, ignore terminating signals
+  // While the child is running, ignore terminating signals. process_wait()
+  // signals the process group (which includes nvim). #8217
   signal_reject_deadly();
 
   if (opts & (kShellOptHideMess | kShellOptExpand)) {
@@ -211,9 +212,13 @@ int os_system(char **argv,
               const char *input,
               size_t len,
               char **output,
-              size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
+              size_t *nread)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
-  return do_os_system(argv, input, len, output, nread, true, false);
+  signal_reject_deadly();
+  int exitcode = do_os_system(argv, input, len, output, nread, true, false);
+  signal_accept_deadly();
+  return exitcode;
 }
 
 static int do_os_system(char **argv,
@@ -250,6 +255,7 @@ static int do_os_system(char **argv,
   MultiQueue *events = multiqueue_new_child(main_loop.events);
   proc->events = events;
   proc->argv = argv;
+  proc->detach = kNone;  // No setsid(). #8217
   int status = process_spawn(proc, has_input, true, true);
   if (status) {
     loop_poll_events(&main_loop, 0);

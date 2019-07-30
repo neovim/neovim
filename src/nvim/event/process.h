@@ -4,6 +4,7 @@
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
+#include "nvim/types.h"
 
 typedef enum {
   kProcessTypeUv,
@@ -25,7 +26,8 @@ struct process {
   Stream in, out, err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;
-  bool closed, detach;
+  bool closed;
+  TriState detach;  // None=no_setsid, False=setsid, True=setsid+forget
   MultiQueue *events;
 };
 
@@ -50,7 +52,7 @@ static inline Process process_init(Loop *loop, ProcessType type, void *data)
     .closed = false,
     .internal_close_cb = NULL,
     .internal_exit_cb = NULL,
-    .detach = false
+    .detach = kFalse,
   };
 }
 
