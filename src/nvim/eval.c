@@ -8498,11 +8498,9 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "environ()" function
 static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int i = 0;
-
   tv_dict_alloc_ret(rettv);
 
-  for (i = 0; ; i++) {
+  for (int i = 0; ; i++) {
     char *envname = os_getenvname_at_index((size_t)i);
     if (envname == NULL) {
       break;
