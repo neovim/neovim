@@ -8537,7 +8537,6 @@ static void f_getenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     rettv->vval.v_number = kSpecialVarNull;
     return;
   }
-  p = vim_strsave(p);
   rettv->vval.v_string = p;
   rettv->v_type = VAR_STRING;
 }
