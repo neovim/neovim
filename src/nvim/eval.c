@@ -8498,48 +8498,19 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "environ()" function
 static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  int i = 0;
-  char_u *entry, *value;
-# ifdef WIN32
-  extern wchar_t **_wenviron;
-# else
-  extern char **environ;
-# endif
-
   tv_dict_alloc_ret(rettv);
 
-# ifdef WIN32
-  if (*_wenviron == NULL) {
-    return;
-  }
-# else
-  if (*environ == NULL) {
-    return;
-  }
-# endif
-
-  for (i = 0; ; i++) {
-# ifdef WIN32
-    uint16_t *p;
-
-    if ((p = (uint16_t *)_wenviron[i]) == NULL) {
-      return;
+  for (int i = 0; ; i++) {
+    // TODO(justinmk): use os_copyfullenv from #7202 ?
+    char *envname = os_getenvname_at_index((size_t)i);
+    if (envname == NULL) {
+      break;
     }
-    entry = utf16_to_enc(p, NULL);
-# else
-    if ((entry = (char_u *)environ[i]) == NULL) {
-      return;
-    }
-    entry = vim_strsave(entry);
-# endif
-    if ((value = vim_strchr(entry, '=')) == NULL) {
-      xfree(entry);
-      continue;
-    }
-    *value++ = NUL;
-    tv_dict_add_str(rettv->vval.v_dict, (char *)entry, STRLEN((char *)entry),
-                    (const char *)value);
-    xfree(entry);
+    const char *value = os_getenv(envname);
+    tv_dict_add_str(rettv->vval.v_dict,
+                    (char *)envname, STRLEN((char *)envname),
+                    value == NULL ? "" : value);
+    xfree(envname);
   }
 }
 
@@ -8561,12 +8532,11 @@ static void f_getenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *p = (char_u *)vim_getenv(tv_get_string(&argvars[0]));
 
-  if (p == NULL || *p == NUL) {
+  if (p == NULL) {
     rettv->v_type = VAR_SPECIAL;
     rettv->vval.v_number = kSpecialVarNull;
     return;
   }
-  p = vim_strsave(p);
   rettv->vval.v_string = p;
   rettv->v_type = VAR_STRING;
 }
