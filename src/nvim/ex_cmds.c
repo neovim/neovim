@@ -5324,13 +5324,11 @@ static void helptags_one(char_u *const dir, const char_u *const ext,
 
   FreeWild(filecount, files);
 
-  if (!got_int) {
+  if (!got_int && ga.ga_data != NULL) {
     /*
      * Sort the tags.
      */
-    if (ga.ga_data != NULL) {
-      sort_strings((char_u **)ga.ga_data, ga.ga_len);
-    }
+    sort_strings((char_u **)ga.ga_data, ga.ga_len);
 
     /*
      * Check for duplicates.
