@@ -797,7 +797,7 @@ describe('jobs', function()
       eq(ppid, info.ppid)
     end
     -- Kill the root of the tree.
-    funcs.jobstop(j)
+    eq(1, funcs.jobstop(j))
     -- Assert that the children were killed.
     retry(nil, nil, function()
       for _, child_pid in ipairs(children) do
