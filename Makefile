@@ -138,6 +138,9 @@ functionaltest-lua: | nvim
 lualint: | build/.ran-cmake deps
 	$(BUILD_CMD) -C build lualint
 
+pylint: | build/.ran-cmake deps
+	$(BUILD_CMD) -C build pylint
+
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
@@ -179,6 +182,6 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes clint lualint
+lint: check-single-includes clint lualint pylint
 
-.PHONY: test lualint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
+.PHONY: test lualint pylint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix

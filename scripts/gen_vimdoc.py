@@ -36,7 +36,6 @@ import shutil
 import textwrap
 import subprocess
 import collections
-import pprint
 
 from xml.dom import minidom
 
@@ -57,54 +56,55 @@ seen_funcs = set()
 lua2dox_filter = os.path.join(base_dir, 'scripts', 'lua2dox_filter')
 
 CONFIG = {
-  'api': {
-    'filename': 'api.txt',
-    # String used to find the start of the generated part of the doc.
-    'section_start_token': '*api-global*',
-    # Section ordering.
-    'section_order' : [
-      'vim.c',
-      'buffer.c',
-      'window.c',
-      'tabpage.c',
-      'ui.c',
-    ],
-    # List of files/directories for doxygen to read, separated by blanks
-    'files': os.path.join(base_dir, 'src/nvim/api'),
-    # file patterns used by doxygen
-    'file_patterns': '*.h *.c',
-    # Only function with this prefix are considered
-    'func_name_prefix': 'nvim_',
-    # Section name overrides.
-    'section_name': {
-        'vim.c': 'Global',
+    'api': {
+        'filename': 'api.txt',
+        # String used to find the start of the generated part of the doc.
+        'section_start_token': '*api-global*',
+        # Section ordering.
+        'section_order': [
+            'vim.c',
+            'buffer.c',
+            'window.c',
+            'tabpage.c',
+            'ui.c',
+        ],
+        # List of files/directories for doxygen to read, separated by blanks
+        'files': os.path.join(base_dir, 'src/nvim/api'),
+        # file patterns used by doxygen
+        'file_patterns': '*.h *.c',
+        # Only function with this prefix are considered
+        'func_name_prefix': 'nvim_',
+        # Section name overrides.
+        'section_name': {
+            'vim.c': 'Global',
+        },
+        # Module name overrides (for Lua).
+        'module_override': {},
+        # Append the docs for these modules, do not start a new section.
+        'append_only': [],
     },
-    # Module name overrides (for Lua).
-    'module_override': {},
-    # Append the docs for these modules, do not start a new section.
-    'append_only' : [],
-  },
-  'lua': {
-    'filename': 'if_lua.txt',
-    'section_start_token': '*lua-vim*',
-    'section_order' : [
-      'vim.lua',
-      'shared.lua',
-    ],
-    'files': ' '.join([
-        os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
-        os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
+    'lua': {
+        'filename': 'if_lua.txt',
+        'section_start_token': '*lua-vim*',
+        'section_order': [
+            'vim.lua',
+            'shared.lua',
+        ],
+        'files': ' '.join([
+            os.path.join(base_dir, 'src/nvim/lua/vim.lua'),
+            os.path.join(base_dir, 'runtime/lua/vim/shared.lua'),
         ]),
-    'file_patterns': '*.lua',
-    'func_name_prefix': '',
-    'section_name': {},
-    'module_override': {
-        'shared': 'vim',  # `shared` functions are exposed on the `vim` module.
+        'file_patterns': '*.lua',
+        'func_name_prefix': '',
+        'section_name': {},
+        'module_override': {
+            # `shared` functions are exposed on the `vim` module.
+            'shared': 'vim',
+        },
+        'append_only': [
+            'shared.lua',
+        ],
     },
-    'append_only' : [
-      'shared.lua',
-    ],
-  },
 }
 
 param_exclude = (
@@ -120,6 +120,7 @@ annotation_map = {
 # Tracks `xrefsect` titles.  As of this writing, used only for separating
 # deprecated functions.
 xrefs = set()
+
 
 def debug_this(s, n):
     o = n if isinstance(n, str) else n.toprettyxml(indent='  ', newl='\n')
@@ -191,7 +192,7 @@ def len_lastline(text):
     if -1 == lastnl:
         return len(text)
     if '\n' == text[-1]:
-        return lastnl - (1+ text.rfind('\n', 0, lastnl))
+        return lastnl - (1 + text.rfind('\n', 0, lastnl))
     return len(text) - (1 + lastnl)
 
 
@@ -208,6 +209,7 @@ def is_inline(n):
         if not is_inline(c):
             return False
     return True
+
 
 def doc_wrap(text, prefix='', width=70, func=False, indent=None):
     """Wraps text to `width`.
@@ -237,8 +239,8 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
     if indent_only:
         prefix = indent
 
-    tw = textwrap.TextWrapper(break_long_words = False,
-                              break_on_hyphens = False,
+    tw = textwrap.TextWrapper(break_long_words=False,
+                              break_on_hyphens=False,
                               width=width,
                               initial_indent=prefix,
                               subsequent_indent=indent)
@@ -287,13 +289,14 @@ def render_params(parent, width=62):
         desc_node = get_child(node, 'parameterdescription')
         if desc_node:
             desc = parse_parblock(desc_node, width=width,
-                    indent=(' ' * len(name)))
+                                  indent=(' ' * len(name)))
 
         out += '{}{}\n'.format(name, desc)
     return out.rstrip()
 
-# Renders a node as Vim help text, recursively traversing all descendants.
+
 def render_node(n, text, prefix='', indent='', width=62):
+    """Renders a node as Vim help text, recursively traversing all descendants."""
     text = ''
     # space_preceding = (len(text) > 0 and ' ' == text[-1][-1])
     # text += (int(not space_preceding) * ' ')
@@ -317,7 +320,11 @@ def render_node(n, text, prefix='', indent='', width=62):
         text += ' [verbatim] {}'.format(get_text(n))
     elif n.nodeName == 'listitem':
         for c in n.childNodes:
-            text += indent + prefix + render_node(c, text, indent=indent+(' ' * len(prefix)), width=width)
+            text += (
+                indent
+                + prefix
+                + render_node(c, text, indent=indent + (' ' * len(prefix)), width=width)
+            )
     elif n.nodeName in ('para', 'heading'):
         for c in n.childNodes:
             text += render_node(c, text, indent=indent, width=width)
@@ -326,7 +333,7 @@ def render_node(n, text, prefix='', indent='', width=62):
     elif n.nodeName == 'itemizedlist':
         for c in n.childNodes:
             text += '{}\n'.format(render_node(c, text, prefix='• ',
-                indent=indent, width=width))
+                                              indent=indent, width=width))
     elif n.nodeName == 'orderedlist':
         i = 1
         for c in n.childNodes:
@@ -334,7 +341,7 @@ def render_node(n, text, prefix='', indent='', width=62):
                 text += '\n'
                 continue
             text += '{}\n'.format(render_node(c, text, prefix='{}. '.format(i),
-                indent=indent, width=width))
+                                              indent=indent, width=width))
             i = i + 1
     elif n.nodeName == 'simplesect' and 'note' == n.getAttribute('kind'):
         text += 'Note:\n    '
@@ -356,6 +363,7 @@ def render_node(n, text, prefix='', indent='', width=62):
             n.nodeName, n.toprettyxml(indent='  ', newl='\n')))
     return text
 
+
 def render_para(parent, indent='', width=62):
     """Renders Doxygen <para> containing arbitrary nodes.
 
@@ -363,7 +371,7 @@ def render_para(parent, indent='', width=62):
     """
     if is_inline(parent):
         return clean_lines(doc_wrap(render_node(parent, ''),
-            indent=indent, width=width).strip())
+                                    indent=indent, width=width).strip())
 
     # Ordered dict of ordered lists.
     groups = collections.OrderedDict([
@@ -407,17 +415,19 @@ def render_para(parent, indent='', width=62):
     if len(groups['return']) > 0:
         chunks.append('\nReturn: ~')
         for child in groups['return']:
-            chunks.append(render_node(child, chunks[-1][-1], indent=indent, width=width))
+            chunks.append(render_node(
+                child, chunks[-1][-1], indent=indent, width=width))
     if len(groups['seealso']) > 0:
         chunks.append('\nSee also: ~')
         for child in groups['seealso']:
-            chunks.append(render_node(child, chunks[-1][-1], indent=indent, width=width))
+            chunks.append(render_node(
+                child, chunks[-1][-1], indent=indent, width=width))
     for child in groups['xrefs']:
         title = get_text(get_child(child, 'xreftitle'))
         xrefs.add(title)
         xrefdesc = render_para(get_child(child, 'xrefdescription'), width=width)
         chunks.append(doc_wrap(xrefdesc, prefix='{}: '.format(title),
-                              width=width) + '\n')
+                               width=width) + '\n')
 
     return clean_lines('\n'.join(chunks).strip())
 
@@ -587,6 +597,7 @@ def delete_lines_below(filename, tokenstr):
     with open(filename, 'wt') as fp:
         fp.writelines(lines[0:i])
 
+
 def gen_docs(config):
     """Generate documentation.
 
@@ -619,7 +630,8 @@ def gen_docs(config):
                 continue
 
             groupname = get_text(find_first(compound, 'name'))
-            groupxml = os.path.join(base, '%s.xml' % compound.getAttribute('refid'))
+            groupxml = os.path.join(base, '%s.xml' %
+                                    compound.getAttribute('refid'))
 
             desc = find_first(minidom.parse(groupxml), 'detaileddescription')
             if desc:
@@ -635,7 +647,7 @@ def gen_docs(config):
             if filename.endswith('.c') or filename.endswith('.lua'):
                 functions, deprecated = parse_source_xml(
                     os.path.join(base, '%s.xml' %
-                        compound.getAttribute('refid')), mode)
+                                 compound.getAttribute('refid')), mode)
 
                 if not functions and not deprecated:
                     continue
@@ -680,12 +692,15 @@ def gen_docs(config):
         i = 0
         for filename in CONFIG[mode]['section_order']:
             if filename not in sections:
-                raise RuntimeError('found new module "{}"; update the "section_order" map'.format(filename))
+                raise RuntimeError(
+                    'found new module "{}"; update the "section_order" map'.format(
+                        filename))
             title, helptag, section_doc = sections.pop(filename)
             i += 1
             if filename not in CONFIG[mode]['append_only']:
                 docs += sep
-                docs += '\n%s%s' % (title, helptag.rjust(text_width - len(title)))
+                docs += '\n%s%s' % (title,
+                                    helptag.rjust(text_width - len(title)))
             docs += section_doc
             docs += '\n\n\n'
 
@@ -693,7 +708,7 @@ def gen_docs(config):
         docs += ' vim:tw=78:ts=8:ft=help:norl:\n'
 
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
-                CONFIG[mode]['filename'])
+                                CONFIG[mode]['filename'])
 
         delete_lines_below(doc_file, CONFIG[mode]['section_start_token'])
         with open(doc_file, 'ab') as fp:
