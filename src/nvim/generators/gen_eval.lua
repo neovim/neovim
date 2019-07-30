@@ -8,7 +8,7 @@ local funcs_file = arg[4]
 if nvimsrcdir == '--help' then
   print([[
 Usage:
-  lua geneval.lua src/nvim build/src/nvim/auto
+  lua gen_eval.lua src/nvim build/src/nvim/auto
 
 Will generate build/src/nvim/auto/funcs.generated.h with definition of functions
 static const array.
