@@ -21,8 +21,8 @@ usage() {
   echo
   echo "Options:"
   echo "    -h                 Show this message and exit."
-  echo "    -l                 List missing Vim patches."
-  echo "    -L                 List missing Vim patches (for scripts)."
+  echo "    -l [git-log opts]  List missing Vim patches."
+  echo "    -L [git-log opts]  List missing Vim patches (for scripts)."
   echo "    -M                 List all merged patch-numbers (at current v:version)."
   echo "    -p {vim-revision}  Download and generate a Vim patch. vim-revision"
   echo "                       can be a Vim version (8.0.xxx) or a Git hash."
@@ -34,6 +34,11 @@ usage() {
   echo
   echo "    \$VIM_SOURCE_DIR controls where Vim sources are found"
   echo "    (default: '${VIM_SOURCE_DIR_DEFAULT}')"
+  echo
+  echo "Examples:"
+  echo
+  echo " - List missing patches for a given file (in the Vim source):"
+  echo "   $0 -l -- src/edit.c"
 }
 
 msg_ok() {
@@ -110,30 +115,44 @@ commit_message() {
 }
 
 find_git_remote() {
-  git remote -v \
-    | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}'
+  git_remote=$(git remote -v \
+    | awk '$2 ~ /github.com[:\/]neovim\/neovim/ && $3 == "(fetch)" {print $1; exit}')
+  if [[ -z "$git_remote" ]]; then
+    git_remote="origin"
+  fi
+  echo "$git_remote"
 }
 
+# Assign variables for a given Vim tag, patch version, or commit.
+# Might exit in case it cannot be found.
 assign_commit_details() {
-  if [[ ${1} =~ [0-9]\.[0-9]\.[0-9]{3,4} ]]; then
+  local vim_commit_ref
+  if [[ ${1} =~ v?[0-9]\.[0-9]\.[0-9]{3,4} ]]; then
     # Interpret parameter as version number (tag).
-    vim_version="${1}"
-    vim_tag="v${1}"
-    vim_commit=$(cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" "${vim_tag}")
+    if [[ "${1:0:1}" == v ]]; then
+      vim_version="${1:1}"
+      vim_tag="${1}"
+    else
+      vim_version="${1}"
+      vim_tag="v${1}"
+    fi
+    vim_commit_ref="$vim_tag"
     local munge_commit_line=true
   else
     # Interpret parameter as commit hash.
     vim_version="${1:0:12}"
     vim_tag=
-    vim_commit=$(cd "${VIM_SOURCE_DIR}" \
-      && git log -1 --format="%H" "${vim_version}")
+    vim_commit_ref="$vim_version"
     local munge_commit_line=false
   fi
 
+  vim_commit=$(git -C "${VIM_SOURCE_DIR}" log -1 --format="%H" "${vim_commit_ref}" --) || {
+    >&2 msg_err "Couldn't find Vim revision '${vim_commit_ref}'."
+    exit 3
+  }
+
   vim_commit_url="https://github.com/vim/vim/commit/${vim_commit}"
-  vim_message="$(cd "${VIM_SOURCE_DIR}" \
-    && git log -1 --pretty='format:%B' "${vim_commit}" \
+  vim_message="$(git -C "${VIM_SOURCE_DIR}" log -1 --pretty='format:%B' "${vim_commit}" \
       | sed -e 's/\(#[0-9]\{1,\}\)/vim\/vim\1/g')"
   if [[ ${munge_commit_line} == "true" ]]; then
     # Remove first line of commit message.
@@ -198,10 +217,6 @@ get_vimpatch() {
 
   assign_commit_details "${1}"
 
-  git log -1 "${vim_commit}" -- >/dev/null 2>&1 || {
-    >&2 msg_err "Couldn't find Vim revision '${vim_commit}'."
-    exit 3
-  }
   msg_ok "Found Vim revision '${vim_commit}'."
 
   local patch_content
@@ -357,7 +372,7 @@ submit_pr() {
 
 # Gets all Vim commits since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD
+  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
@@ -380,6 +395,7 @@ list_vimpatch_numbers() {
 }
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
+# "$@" is passed to list_vim_commits, as extra arguments to git-log.
 list_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
   declare -A tokens
@@ -404,7 +420,7 @@ list_missing_vimpatches() {
   fi
 
   # Get missing Vim commits
-  for vim_commit in $(list_vim_commits); do
+  for vim_commit in $(list_vim_commits "$@"); do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${vim_commit:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
@@ -435,7 +451,7 @@ show_vimpatches() {
     runtime_commits[$commit]=1
   done
 
-  list_missing_vimpatches | while read -r vim_commit; do
+  list_missing_vimpatches "$@" | while read -r vim_commit; do
     if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
@@ -561,11 +577,13 @@ while getopts "hlLMVp:P:g:r:s" opt; do
       exit 0
       ;;
     l)
-      show_vimpatches
+      shift  # remove opt
+      show_vimpatches "$@"
       exit 0
       ;;
     L)
-      list_missing_vimpatches
+      shift  # remove opt
+      list_missing_vimpatches "$@"
       exit 0
       ;;
     M)
