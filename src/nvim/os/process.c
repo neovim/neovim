@@ -89,21 +89,12 @@ bool os_proc_tree_kill(int pid, int sig)
 bool os_proc_tree_kill(int pid, int sig)
 {
   assert(sig == SIGTERM || sig == SIGKILL);
-  int pgid = getpgid(pid);
-  if (pgid > 0) {  // Ignore error. Never kill self (pid=0).
-    if (pgid == pid) {
-      ILOG("sending %s to process group: -%d",
-           sig == SIGTERM ? "SIGTERM" : "SIGKILL", pgid);
-      int rv = uv_kill(-pgid, sig);
-      return rv == 0;
-    } else {
-      // Should never happen, because process_spawn() did setsid() in the child.
-      ELOG("pgid %d != pid %d", pgid, pid);
-    }
-  } else {
-    ELOG("getpgid(%d) returned %d", pid, pgid);
+  if (pid == 0) {
+    // Never kill self (pid=0).
+    return false;
   }
-  return false;
+  ILOG("sending %s to PID %d", sig == SIGTERM ? "SIGTERM" : "SIGKILL", -pid);
+  return uv_kill(-pid, sig) == 0;
 }
 #endif
 
