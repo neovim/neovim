@@ -8495,6 +8495,54 @@ static void f_empty(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = n;
 }
 
+/// "environ()" function
+static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  int i = 0;
+  char_u *entry, *value;
+# ifdef WIN32
+  extern wchar_t **_wenviron;
+# else
+  extern char **environ;
+# endif
+
+  tv_dict_alloc_ret(rettv);
+
+# ifdef WIN32
+  if (*_wenviron == NULL) {
+    return;
+  }
+# else
+  if (*environ == NULL) {
+    return;
+  }
+# endif
+
+  for (i = 0; ; i++) {
+# ifdef WIN32
+    uint16_t *p;
+
+    if ((p = (uint16_t *)_wenviron[i]) == NULL) {
+      return;
+    }
+    entry = utf16_to_enc(p, NULL);
+# else
+    if ((entry = (char_u *)environ[i]) == NULL) {
+      return;
+    }
+    entry = vim_strsave(entry);
+# endif
+    if ((value = vim_strchr(entry, '=')) == NULL) {
+      xfree(entry);
+      continue;
+    }
+    *value++ = NUL;
+    tv_dict_add_str(rettv->vval.v_dict, (char *)entry, STRLEN((char *)entry),
+                    (const char *)value);
+    xfree(entry);
+  }
+}
+
 /*
  * "escape({string}, {chars})" function
  */
@@ -8505,6 +8553,21 @@ static void f_escape(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_string = vim_strsave_escaped(
       (const char_u *)tv_get_string(&argvars[0]),
       (const char_u *)tv_get_string_buf(&argvars[1], buf));
+  rettv->v_type = VAR_STRING;
+}
+
+/// "getenv()" function
+static void f_getenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *p = (char_u *)vim_getenv(tv_get_string(&argvars[0]));
+
+  if (p == NULL || *p == NUL) {
+    rettv->v_type = VAR_SPECIAL;
+    rettv->vval.v_number = kSpecialVarNull;
+    return;
+  }
+  p = vim_strsave(p);
+  rettv->vval.v_string = p;
   rettv->v_type = VAR_STRING;
 }
 
@@ -15319,6 +15382,20 @@ static void f_setcmdpos(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 }
 
+/// "setenv()" function
+static void f_setenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char namebuf[NUMBUFLEN];
+  char valbuf[NUMBUFLEN];
+  const char *name = tv_get_string_buf(&argvars[0], namebuf);
+
+  if (argvars[1].v_type == VAR_SPECIAL
+      && argvars[1].vval.v_number == kSpecialVarNull) {
+    os_unsetenv(name);
+  } else {
+    vim_setenv(name, tv_get_string_buf(&argvars[1], valbuf));
+  }
+}
 
 /// "setfperm({fname}, {mode})" function
 static void f_setfperm(typval_T *argvars, typval_T *rettv, FunPtr fptr)
