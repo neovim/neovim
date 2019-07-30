@@ -8718,7 +8718,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *p = tv_get_string(&argvars[0]);
   if (*p == '$') {  // Environment variable.
     // First try "normal" environment variables (fast).
-    if (os_getenv(p + 1) != NULL) {
+    if (os_env_exists(p + 1)) {
       n = true;
     } else {
       // Try expanding things like $VIM and ${HOME}.
