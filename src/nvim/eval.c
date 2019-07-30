@@ -8501,6 +8501,7 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_dict_alloc_ret(rettv);
 
   for (int i = 0; ; i++) {
+    // TODO(justinmk): use os_copyfullenv from #7202 ?
     char *envname = os_getenvname_at_index((size_t)i);
     if (envname == NULL) {
       break;
