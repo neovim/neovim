@@ -8537,7 +8537,8 @@ static void f_environ(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       continue;
     }
     *value++ = NUL;
-    tv_dict_add_str(rettv->vval.v_dict, (char *)entry, STRLEN((char *)entry), (char *)value);
+    tv_dict_add_str(rettv->vval.v_dict, (char *)entry, STRLEN((char *)entry),
+                    (const char *)value);
     xfree(entry);
   }
 }
