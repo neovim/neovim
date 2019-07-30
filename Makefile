@@ -184,4 +184,10 @@ appimage-%:
 
 lint: check-single-includes clint lualint pylint
 
+build/%:
+	$(BUILD_CMD) -C build $(patsubst build/%,%,$@)
+
+$(DEPS_BUILD_DIR)/%:
+	$(BUILD_CMD) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
+
 .PHONY: test lualint pylint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
