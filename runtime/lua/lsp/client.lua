@@ -121,7 +121,6 @@ end
 client.request = function(self, method, params, bufnr, cb)
   if not method then
     error("No request method supplied", 2)
-    return nil
   end
 
   bufnr = bufnr or vim.api.nvim_get_current_buf()
@@ -153,7 +152,6 @@ end
 client.request_async = function(self, method, params, bufnr, cb)
   if not method then
     error("No request method supplied", 2)
-    return nil
   end
 
   bufnr = bufnr or vim.api.nvim_get_current_buf()
