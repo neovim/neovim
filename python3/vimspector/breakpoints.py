@@ -187,11 +187,21 @@ class ProjectBreakpoints( object ):
     self._breakpoints_handler = handler
 
 
-  def SendBreakpoints( self ):
+  def SendBreakpoints( self, doneHandler = None ):
     assert self._breakpoints_handler is not None
 
     # Clear any existing breakpoints prior to sending new ones
     self._breakpoints_handler.ClearBreakpoints()
+
+    awaiting = 0
+    def response_handler( source, msg ):
+      if msg:
+        self._breakpoints_handler.AddBreakpoints( source, msg )
+      nonlocal awaiting
+      awaiting = awaiting - 1
+      if awaiting == 0 and doneHandler:
+        doneHandler()
+
 
     for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
@@ -211,8 +221,9 @@ class ProjectBreakpoints( object ):
         'path': file_name,
       }
 
+      awaiting = awaiting + 1
       self._connection.DoRequest(
-        lambda msg: self._breakpoints_handler.AddBreakpoints( source, msg ),
+        lambda msg: response_handler( source, msg ),
         {
           'command': 'setBreakpoints',
           'arguments': {
@@ -224,8 +235,9 @@ class ProjectBreakpoints( object ):
       )
 
     if self._server_capabilities.get( 'supportsFunctionBreakpoints' ):
+      awaiting = awaiting + 1
       self._connection.DoRequest(
-        lambda msg: self._breakpoints_handler.AddBreakpoints( None, msg ),
+        lambda msg: response_handler( None, msg ),
         {
           'command': 'setFunctionBreakpoints',
           'arguments': {
@@ -241,13 +253,17 @@ class ProjectBreakpoints( object ):
       self._SetUpExceptionBreakpoints()
 
     if self._exceptionBreakpoints:
+      awaiting = awaiting + 1
       self._connection.DoRequest(
-        None, # There is nothing on the response to this
+        lambda msg: response_handler( None, None ),
         {
           'command': 'setExceptionBreakpoints',
           'arguments': self._exceptionBreakpoints
         }
       )
+
+    if awaiting == 0 and doneHandler:
+      doneHandler()
 
 
   def _SetUpExceptionBreakpoints( self ):

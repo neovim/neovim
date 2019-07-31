@@ -683,18 +683,19 @@ class DebugSession( object ):
 
 
   def OnEvent_initialized( self, message ):
-    self._codeView.ClearBreakpoints()
-    self._breakpoints.SendBreakpoints()
+    def onBreakpointsDone():
+      if self._server_capabilities.get( 'supportsConfigurationDoneRequest' ):
+        self._connection.DoRequest(
+          lambda msg: self._OnInitializeComplete(),
+          {
+            'command': 'configurationDone',
+          }
+        )
+      else:
+        self._OnInitializeComplete()
 
-    if self._server_capabilities.get( 'supportsConfigurationDoneRequest' ):
-      self._connection.DoRequest(
-        lambda msg: self._OnInitializeComplete(),
-        {
-          'command': 'configurationDone',
-        }
-      )
-    else:
-      self._OnInitializeComplete()
+    self._codeView.ClearBreakpoints()
+    self._breakpoints.SendBreakpoints( onBreakpointsDone )
 
   def OnEvent_thread( self, message ):
     self._stackTraceView.OnThreadEvent( message[ 'body' ] )
