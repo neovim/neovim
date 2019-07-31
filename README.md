@@ -587,7 +587,7 @@ Requires:
 
 * `install_gadget.py --enable-go`
 * [Delve][delve-install] installed, e.g. `go get -u github.com/go-delve/delve/cmd/dlv`
-* Delve to be in your PATH, or specify the `dlvToolpath` launch option
+* Delve to be in your PATH, or specify the `dlvToolPath` launch option
 
 ```json
 {
