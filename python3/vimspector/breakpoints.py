@@ -194,6 +194,7 @@ class ProjectBreakpoints( object ):
     self._breakpoints_handler.ClearBreakpoints()
 
     awaiting = 0
+
     def response_handler( source, msg ):
       if msg:
         self._breakpoints_handler.AddBreakpoints( source, msg )
