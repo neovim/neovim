@@ -168,7 +168,7 @@ client.request_async = function(self, method, params, bufnr, cb)
   end
 
   -- After handling callback semantics, store it to call on reply.
-  if cb ~= false then
+  if cb then
     self._callbacks[req.id] = {
       cb = cb,
       method = req.method,

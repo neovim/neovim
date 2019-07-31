@@ -78,16 +78,14 @@ server_config.get_callback = function(filetype, callback_name)
   local ft_config = server_config.configured_servers[filetype]
 
   local callback
-  if shared.tbl_isempty(ft_config)
-      or shared.tbl_isempty(ft_config.configuration)
-      or shared.tbl_isempty(ft_config.configuration.callbacks)
-      or ft_config.configuration.callback_name[callback_name] == nil then
+  if (ft_config or shared.tbl_isempty(ft_config))
+      or (ft_config.configuration or shared.tbl_isempty(ft_config.configuration))
+      or (ft_config.configuration.callbacks or shared.tbl_isempty(ft_config.configuration.callbacks))
+      or (ft_config.configuration.callback_name or ft_config.configuration.callback_name[callback_name] == nil) then
     callback = server_config.default_callbacks[callback_name]
   else
     callback = ft_config.configuration.callback_name[callback_name]
   end
-
-  if callback == nil then return nil end
 
   return callback
 end
