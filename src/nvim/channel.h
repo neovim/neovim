@@ -68,7 +68,7 @@ typedef struct {
   list_T *work_queue;  // argument lists to consume
   int next;            // position of next list to consume from "work_queue"
   Array results;       // accumulated results
-  typval_T callee;     // called function
+  char_u *callee;      // called function
 } AsyncCall;
 
 struct Channel {
@@ -154,11 +154,16 @@ static inline Stream *channel_outstream(Channel *chan)
 
 static inline Channel *acquire_asynccall_channel(void)
 {
-  typval_T jobid_tv = TV_INITIAL_VALUE;
-  executor_exec_lua(
-      STATIC_CSTR_AS_STRING("return vim._create_nvim_job()"),
-      &jobid_tv);
-  return find_channel((uint64_t)jobid_tv.vval.v_number);
+  Channel *channel = NULL;
+  Error err = ERROR_INIT;
+  Integer jobid = EXEC_LUA_STATIC(
+      "return vim._create_nvim_job()",
+      (Array)ARRAY_DICT_INIT, &err).data.integer;
+  if (!ERROR_SET(&err)) {
+    channel = find_channel((uint64_t)jobid);
+  }
+  api_clear_error(&err);
+  return channel;
 }
 
 static inline void release_asynccall_channel(Channel *channel)
