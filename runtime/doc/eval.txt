@@ -2875,8 +2875,7 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 call_async({func}, {args}[, {opts}])     		*call_async()*
 		Asynchronously call function {func} with the items in |List|
 		{args} as arguments.
-		{func} can either be a |Funcref| or the name of a built-in
-		function (|functions|).
+		{func} can either be a |Funcref| or the name of a function.
 		Returns the |job-id| of the child process running the
 		function. (see |call_wait()|).
 		When the called function returns, opts.done is invoked with
@@ -2899,8 +2898,7 @@ call_parallel({func}, {arglists}[, {opts}])     	*call_parallel()*
 		processes (default: |v:cores|) with items from |List|
 		{arglists} as arguments. {arglists} contains |List|s of
 		arguments, one list per call.
-		{func} can either be a |Funcref| or the name of a built-in
-		function (|functions|).
+		{func} can either be a |Funcref| or the name of a function.
 		Returns a |List| of the |job-id|s of the worker processes.
 		(see |call_wait()|).
 		When {arglists} is exhausted, {callback} is invoked with

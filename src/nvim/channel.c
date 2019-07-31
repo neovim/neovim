@@ -239,7 +239,7 @@ void free_asynccall(AsyncCall *asynccall)
   if (asynccall->work_queue) {  // parallel call
     tv_list_unref(asynccall->work_queue);
     api_free_array(asynccall->results);
-    tv_clear(&asynccall->callee);
+    xfree(asynccall->callee);
   }
   xfree(asynccall);
 }

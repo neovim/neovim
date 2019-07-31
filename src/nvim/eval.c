@@ -7636,23 +7636,65 @@ static inline bool get_asynccall_opts(
   return true;
 }
 
+/// Add user function definition to given context dictionary.
+///
+/// The name of the added function (and accordingly "*name") is changed in the
+/// following cases:
+///
+/// - Calls in the child process do not run in a script context, hence
+///   script-local functions will be prefixed with a <SNR> instead of "s:".
+///
+/// - Lambda functions cannot be defined with ":func" or directly called,
+///   hence lambda functions will be prefixed with "<SNR>_lambda_"
+///   instead of "<lambda>".
+///
+/// param[in/out]  ctx   Context dictionary.
+/// param[in/out]  name  Function name.
+static inline bool ctx_dict_add_userfunc(Dictionary *ctx, char **name)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, DICTIONARY_OBJ(*ctx));
+  ADD(args, STRING_OBJ(cstr_as_string(*name)));
+  Error err = ERROR_INIT;
+  Array rv = EXEC_LUA_STATIC(
+      "return vim._add_userfunc(...)", args, &err).data.array;
+  xfree(args.items);
+  bool success = false;
+  if (!ERROR_SET(&err)) {
+    success = true;
+    api_free_dictionary(*ctx);
+    *ctx = rv.items[0].data.dictionary;
+    *name = rv.items[1].data.string.data;
+  } else {
+    EMSG(err.msg);
+  }
+  api_clear_error(&err);
+  return success;
+}
+
 /// "call_async(callee, args[, opts])" function
 static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = -1;
 
-  typval_T *callee = NULL;
+  char_u *callee = NULL;
   typval_T *args = NULL;
   typval_T *opts = NULL;
   Callback callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
 
-  // TODO(abdelhakeem): support artibrary user-defined functions
-  callee = &argvars[0];
-  if (callee->v_type != VAR_STRING) {
+  if (argvars[0].v_type == VAR_FUNC) {
+    callee = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL) {
+    callee = partial_name(argvars[0].vval.v_partial);
+  } else {
+    callee = (char_u *)tv_get_string(&argvars[0]);
+  }
+
+  if (*callee == NUL) {
     EMSG2(_(e_invarg2),
-          "First argument of call_async() must be a string");
+          "First argument of call_async() must be a valid function");
     return;
   }
 
@@ -7674,6 +7716,17 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  bool free_callee = false;
+  bool isscript = (callee[0] == 's' && callee[1] == ':');
+  if (!builtin_function((char *)callee, -1) || isscript) {
+    if (ctx_dict_add_userfunc(&context, (char **)&callee)) {
+      free_callee = true;
+    } else {
+      EMSG(_("Failed to prepare function for async call"));
+      goto fail;
+    }
+  }
+
   Channel *chan = acquire_asynccall_channel();
   if (!chan) {
     EMSG(_("Failed to spawn job for async call"));
@@ -7686,7 +7739,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   chan->async_call->work_queue = NULL;
 
   Array call_async_args = ARRAY_DICT_INIT;
-  ADD(call_async_args, vim_to_object(callee));
+  ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
   ADD(call_async_args, DICTIONARY_OBJ(context));
   ADD(call_async_args, vim_to_object(args));
 
@@ -7696,10 +7749,16 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     goto fail;
   }
 
+  if (free_callee) {
+    xfree(callee);
+  }
   rettv->vval.v_number = chan->id;
   return;
 
 fail:
+  if (free_callee) {
+    xfree(callee);
+  }
   callback_free(&callback);
   api_free_dictionary(context);
 }
@@ -7707,17 +7766,24 @@ fail:
 /// "call_parallel(callee, arglists[, opts])" function
 static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  typval_T *callee = NULL;
+  char_u *callee = NULL;
   typval_T *arglists = NULL;
   typval_T *opts = NULL;
   const typval_T *count = &vimvars[VV_CORES].vv_di.di_tv;
   Callback callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
 
-  callee = &argvars[0];
-  if (callee->v_type != VAR_STRING) {
+  if (argvars[0].v_type == VAR_FUNC) {
+    callee = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL) {
+    callee = partial_name(argvars[0].vval.v_partial);
+  } else {
+    callee = (char_u *)tv_get_string(&argvars[0]);
+  }
+
+  if (*callee == NUL) {
     EMSG2(_(e_invarg2),
-          "First argument of call_parallel() must be a string");
+          "First argument of call_parallel() must be a valid function");
     return;
   }
 
@@ -7749,6 +7815,16 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  bool isscript = (callee[0] == 's' && callee[1] == ':');
+  if (!builtin_function((char *)callee, -1) || isscript) {
+    if (!ctx_dict_add_userfunc(&context, (char **)&callee)) {
+      EMSG(_("Failed to prepare function for async call"));
+      goto fail;
+    }
+  } else {
+    callee = vim_strsave(callee);
+  }
+
   AsyncCall *async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
   async_call->callback = callback;
   async_call->count =
@@ -7757,7 +7833,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_ref(arglists->vval.v_list);
   async_call->next = 0;
   async_call->results = (Array)ARRAY_DICT_INIT;
-  tv_copy(callee, &async_call->callee);
+  async_call->callee = callee;
 
   tv_list_alloc_ret(rettv, async_call->count);
   for (int i = 0; i < async_call->count; i++) {
@@ -7769,7 +7845,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tv_list_append_number(rettv->vval.v_list, chan->id);
     chan->async_call = async_call;
     Array call_async_args = ARRAY_DICT_INIT;
-    ADD(call_async_args, vim_to_object(callee));
+    ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
     ADD(call_async_args, DICTIONARY_OBJ(copy_dictionary(context)));
     listitem_T *args =
       tv_list_find(async_call->work_queue, async_call->next++);
@@ -7788,7 +7864,9 @@ fail:
     uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
     release_asynccall_channel(find_channel(channel_id));
   });
-  free_asynccall(async_call);
+  if (async_call) {
+    free_asynccall(async_call);
+  }
   tv_clear(rettv);
   callback_free(&callback);
   api_free_dictionary(context);
@@ -22816,7 +22894,10 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   ga_init(&fc->fc_funcs, sizeof(ufunc_T *), 1);
   func_ptr_ref(fp);
 
-  if (STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+  // <lambda>{N} or <SNR>_lambda_{N} (see ctx_dict_add_userfunc)
+  if (STRNCMP(fp->uf_name, "<lambda>", 8) == 0
+      || (fp->uf_name[0] == K_SPECIAL
+          && STRNCMP(fp->uf_name+3, "_lambda_", 8) == 0)) {
     islambda = true;
   }
 
