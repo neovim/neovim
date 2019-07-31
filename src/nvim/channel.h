@@ -68,7 +68,7 @@ typedef struct {
   list_T *work_queue;  // argument lists to consume
   int next;            // position of next list to consume from "work_queue"
   Array results;       // accumulated results
-  typval_T callee;     // called function
+  char_u *callee;      // called function
 } AsyncCall;
 
 struct Channel {

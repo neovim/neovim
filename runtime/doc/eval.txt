@@ -2898,6 +2898,70 @@ call({func}, {arglist} [, {dict}])			*call()* *E699*
 		{dict} is for functions with the "dict" attribute.  It will be
 		used to set the local variable "self". |Dictionary-function|
 
+call_async({func}, {args}[, {opts}])     		*call_async()*
+		Asynchronously call function {func} with the items in |List|
+		{args} as arguments.
+		{func} can either be a |Funcref| or the name of a function.
+		Returns the |job-id| of the child process running the
+		function. (see |call_wait()|).
+		When the called function returns, opts.done is invoked with
+		the return value as an argument.  Example: >
+			call call_async(
+			      \ 'nvim_grep',
+			      \	['int', '**/*.h', v:false],
+			      \	{'done': {result ->
+			      \	  nvim_command('echo len(result)')}})
+<
+		{opt} is a dictionary specifying some options of the call,
+		it can have the following key-value pairs:
+			done	  callback function
+			context	  context dictionary (|context-dict|)
+
+		For more info see |multiproc-usage|.
+
+call_parallel({func}, {arglists}[, {opts}])     	*call_parallel()*
+		Asynchronously call function {func} in a number of worker
+		processes (default: |v:cores|) with items from |List|
+		{arglists} as arguments. {arglists} contains |List|s of
+		arguments, one list per call.
+		{func} can either be a |Funcref| or the name of a function.
+		Returns a |List| of the |job-id|s of the worker processes.
+		(see |call_wait()|).
+		When {arglists} is exhausted, {callback} is invoked with
+		a |List| of the return values as an argument.  Example: >
+			let arglists = glob('**/*.h', 1, 1)
+			let arglists = map(arglists,
+					 \ '["int", v:val, v:false]')
+			call call_parallel(
+			      \ 'nvim_grep', arglists,
+			      \	{'done': {result -> 'do something'}})
+<
+		{opts} is interpreted just as in |call_async|, except that
+		there can be an additional key, "count", which is the count
+		of worker processes to spawn (default: |v:cores|).
+
+		Note that, unlike with |call_async|, the value returned
+		in the "value" key of |call_wait| for a job spawned with
+		|call_parallel| is a list of return values. This list can
+		contain as less as one return value or more if the job
+		consumed more than one argument list.
+
+		For more info see |multiproc-usage|.
+
+call_wait({ids}[, {timeout}])	                        *call_wait()*
+		Wait for a set of async calls, returning the results of
+		completed ones.
+		{ids} and {timeout} are interpreted as in |jobwait|.
+		Returns a |List| of |Dictionary| entries, one per job, with
+		the following key-value pairs:
+			status	wait-result as returned by |jobwait|.
+			value	return value of corresponding async call
+			        (if any, otherwise it is not present).
+		Any callbacks registered for jobs in {ids} are invoked before
+		|call_wait| returns.
+
+		For more info see |multiproc-usage|.
+
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to
 		{expr} as a |Float| (round up).

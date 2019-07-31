@@ -2532,6 +2532,14 @@ Array nvim_grep(String pattern, String path, Boolean global, Error *err)
   return result_array;
 }
 
+/// Invokes a function and sends back its return value to the parent in
+/// an asynchronous RPC notification.
+///
+/// @param[in]   channel_id  Parent channel ID.
+/// @param[in]   callee      Function to call.
+/// @param[in]   context     Context Dictionary to load before the call.
+/// @param[in]   args        Function arguments.
+/// @param[out]  err         Error details, if any.
 void nvim__async_invoke(uint64_t channel_id, String callee,
                         Dictionary context, Array args, Error *err)
 {
@@ -2550,6 +2558,11 @@ void nvim__async_invoke(uint64_t channel_id, String callee,
   }
 }
 
+/// Sent to the parent channel in an async call to notify it of the result.
+///
+/// @param[in]   channel_id  Child channel ID.
+/// @param[in]   result      Asynchronous call return value.
+/// @param[out]  err         Error details, if any.
 void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
 {
   Channel *channel = find_channel(channel_id);
@@ -2568,7 +2581,8 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     result = ARRAY_OBJ(async_call->results);
     if (async_call->next < tv_list_len(work_queue)) {
       Array rpc_args = ARRAY_DICT_INIT;
-      ADD(rpc_args, vim_to_object(&channel->async_call->callee));
+      ADD(rpc_args,
+          STRING_OBJ(cstr_to_string((char *)channel->async_call->callee)));
       ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
       listitem_T *args = tv_list_find(work_queue, async_call->next++);
       ADD(rpc_args, vim_to_object(TV_LIST_ITEM_TV(args)));
