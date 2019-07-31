@@ -113,4 +113,106 @@ describe('multiproc', function()
       eq(expected, wait_result)
     end)
   end)
+
+  it('supports user-defined functions', function()
+    nvim('set_var', 'A',  { { -1,  0,  0,  0 },
+                            {  0, -1,  0,  0 },
+                            {  0,  0, -1,  0 },
+                            {  0,  0,  0, -1 } })
+
+    nvim('set_var', 'B', { { 1, 2, 3, 4 },
+                           { 5, 6, 7, 8 },
+                           { 1, 2, 3, 4 },
+                           { 5, 6, 7, 8 } })
+
+    source([[
+    function CalculateElement(i, j)
+      let value = 0
+      let b_idx = 0
+      for a in g:A[a:i]
+        let value += a * g:B[b_idx][a:j]
+        let b_idx += 1
+      endfor
+      return [a:i, a:j, value]
+    endfunction
+    ]])
+
+    -- Prepare arguments and result (all zeros)
+    local result = {}
+    local indices = {}
+    for i = 0,3 do
+      table.insert(result, {})
+      for j = 0,3 do
+        table.insert(result[i+1], 0)
+        table.insert(indices, {i, j})
+      end
+    end
+    nvim('set_var', 'Result', result)
+
+    source([[
+    function Retrieve(r)
+      for e in a:r
+        let g:Result[ e[0] ][ e[1] ] = e[2]
+      endfor
+    endfunction
+    ]])
+
+    local jobs = call('call_parallel', 'CalculateElement', indices,
+                      { count = 2,
+                        done = 'Retrieve',
+                        context = nvim('get_context', {'gvars'})})
+    call('call_wait', jobs)
+    eq({ { -1, -2, -3, -4 },
+         { -5, -6, -7, -8 },
+         { -1, -2, -3, -4 },
+         { -5, -6, -7, -8 } }, nvim('get_var', 'Result'))
+  end)
+
+  it('supports script functions', function()
+    source([[
+    function s:greet(name)
+      return 'Hello, '.a:name.'!'
+    endfunction
+
+    function s:retrieve(r)
+      let g:r = a:r
+    endfunction
+
+    call call_wait(
+    \ [call_async('s:greet', ['Neovim'], { 'done': 's:retrieve' })])
+    ]])
+
+    eq('Hello, Neovim!', nvim('get_var', 'r'))
+  end)
+
+  it('supports Funcrefs', function()
+    source([[
+    function s:greet(name)
+      return 'Hello, '.a:name.'!'
+    endfunction
+
+    function Greet(name)
+      return 'Hello, '.a:name.'!'
+    endfunction
+
+    function s:retrieve(r)
+      call add(g:r, a:r)
+    endfunction
+
+    let g:r = []
+
+    call call_wait([
+    \ call_async(funcref('s:greet'), ['Neovim'], { 'done': 's:retrieve' }),
+    \ call_async(funcref('Greet'),   ['Neovim'], { 'done': 's:retrieve' })])
+    ]])
+
+    eq({'Hello, Neovim!', 'Hello, Neovim!'}, nvim('get_var', 'r'))
+  end)
+
+  it('supports lambda expressions', function()
+    source([[
+    let g:r = call_wait([call_async({ name -> 'Hi, '.name.'!' }, ['Neovim'])])
+    ]])
+    eq('Hi, Neovim!', nvim('get_var', 'r')[1].value)
+  end)
 end)
