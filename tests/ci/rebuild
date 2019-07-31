@@ -2,4 +2,10 @@
 
 set -e
 
-docker build --no-cache -t puremourning/vimspector:test image/
+if [ "$1" = "--continue" ]; then
+  OPTS=""
+else
+  OPTS="--no-cache"
+fi
+
+docker build ${OPTS} -t puremourning/vimspector:test image/

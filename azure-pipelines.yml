@@ -37,6 +37,9 @@ stages:
       image: 'puremourning/vimspector:test'
       options: --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
     steps:
+    - bash: go get -u github.com/go-delve/delve/cmd/dlv
+      displayName: 'Install Delve for Go'
+
     - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'
 
@@ -62,6 +65,9 @@ stages:
     steps:
     - bash: brew install macvim
       displayName: 'Install vim'
+
+    - bash: go get -u github.com/go-delve/delve/cmd/dlv
+      displayName: 'Install Delve for Go'
 
     - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'

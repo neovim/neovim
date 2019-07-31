@@ -4,6 +4,8 @@ CONTAINER=puremourning/vimspector:manual
 
 if [ "$@" ];then
   CMD="$@"
+else
+  CMD="bash -l"
 fi
 
 docker run --cap-add=SYS_PTRACE \
