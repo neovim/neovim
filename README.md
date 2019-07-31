@@ -86,6 +86,7 @@ on a best-efforts basis:
 
 - Java (see caveats)
 - C# (c-sharp) using dotnet core
+- Go (requires separate installation of [Delve][])
 
 ## Languages known not to work
 
@@ -158,6 +159,7 @@ The debug adapters themselves have certain runtime dependencies:
 | Bourne Shell     | Experimental | `--all` or `--enable-bash`   | vscode-bash-debug | Bash v??               |
 | C# (dotnet core) | Experimental | `--force-enable-csharp`      | netcoredbg        | DotNet core            |
 | C# (mono)        | Experimental | `--force-enable-csharp`      | vscode-mono-debug | Mono                   |
+| Go               | Experimental | `--enable-go`                | vscode-go         | Go, [Delve][]          |
 
 For other languages, you'll need some other way to install the gadget.
 
@@ -579,6 +581,30 @@ Requires `install_gadget.py --force-enable-c-sharp`.
 }
 ```
 
+* Go 
+
+Requires:
+
+* `install_gadget.py --enable-go`
+* [Delve][delve-install] installed, e.g. `go get -u github.com/go-delve/delve/cmd/dlv`
+* Delve to be in your PATH, or specify the `dlvToolPath` launch option
+
+```json
+{
+  "configurations": {
+    "run": {
+      "adapter": "vscode-go",
+      "configuration": {
+        "request": "launch",
+        "program": "${fileDirname}",
+        "mode": "debug",
+        "dlvToolPath": "$HOME/go/bin/dlv"
+      }
+    }
+  }
+}
+```
+
 Also the mock debugger, but that isn't actually useful.
 
 ## Partially supported
@@ -610,3 +636,5 @@ Copyright © 2018 Ben Jackson
 [gitter]: https://gitter.im/vimspector/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link
 [java-debug-server]: https://github.com/Microsoft/java-debug
 [website]: https://puremourning.github.io/vimspector-web/
+[delve]: https://github.com/go-delve/delve
+[delve-install]: https://github.com/go-delve/delve/tree/master/Documentation/installation

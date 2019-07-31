@@ -43,8 +43,8 @@ GADGETS = {
   'vscode-cpptools': {
     'language': 'c',
     'download': {
-      'url': ( 'https://github.com/Microsoft/vscode-cpptools/releases/download/'
-               '${version}/${file_name}' ),
+      'url': 'https://github.com/Microsoft/vscode-cpptools/releases/download/'
+             '${version}/${file_name}',
     },
     'do': lambda name, root: InstallCppTools( name, root ),
     'all': {
@@ -80,8 +80,8 @@ GADGETS = {
   'vscode-python': {
     'language': 'python',
     'download': {
-      'url': ( 'https://github.com/Microsoft/vscode-python/releases/download/'
-               '${version}/${file_name}' ),
+      'url': 'https://github.com/Microsoft/vscode-python/releases/download/'
+             '${version}/${file_name}',
     },
     'all': {
       'version': '2019.5.17059',
@@ -111,8 +111,8 @@ GADGETS = {
     'language': 'csharp',
     'enabled': False,
     'download': {
-      'url': ( 'https://github.com/Samsung/netcoredbg/releases/download/latest/'
-               '${file_name}' ),
+      'url': 'https://github.com/Samsung/netcoredbg/releases/download/latest/'
+             '${file_name}',
       'format': 'tar',
     },
     'all': {
@@ -175,15 +175,37 @@ GADGETS = {
   'vscode-bash-debug': {
     'language': 'bash',
     'download': {
-      'url': ( 'https://github.com/rogalmic/vscode-bash-debug/releases/'
-               'download/${version}/${file_name}' ),
+      'url': 'https://github.com/rogalmic/vscode-bash-debug/releases/'
+             'download/${version}/${file_name}',
     },
     'all': {
       'file_name': 'bash-debug-0.3.5.vsix',
       'version': 'v0.3.5',
       'checksum': '',
     }
-  }
+  },
+  'vscode-go': {
+    'language': 'go',
+    'download': {
+      'url': 'https://github.com/microsoft/vscode-go/releases/download/'
+             '${version}/${file_name}'
+    },
+    'all': {
+      'version': '0.11.4',
+      'file_name': 'Go-0.11.4.vsix',
+      'checksum':
+        'ff7d7b944da5448974cb3a0086f4a2fd48e2086742d9c013d6964283d416027e'
+    },
+    'adapters': {
+      'vscode-go': {
+        'name': 'delve',
+        'command': [
+          'node',
+          '${gadgetDir}/vscode-go/out/src/debugAdapter/goDebug.js'
+        ],
+      },
+    },
+  },
 }
 
 
