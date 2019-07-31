@@ -7621,12 +7621,14 @@ static inline bool ctx_dict_add_userfunc(Dictionary *ctx, char **name)
   xfree(args.items);
   bool success = true;
   if (ERROR_SET(&err)) {
+    api_free_array(rv);
     success = false;
     EMSG(err.msg);
   } else {
     api_free_dictionary(*ctx);
     *ctx = rv.items[0].data.dictionary;
     *name = rv.items[1].data.string.data;
+    xfree(rv.items);
   }
   api_clear_error(&err);
   return success;
