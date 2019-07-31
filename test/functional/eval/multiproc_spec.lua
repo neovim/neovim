@@ -1,11 +1,14 @@
 local helpers = require('test.functional.helpers')(after_each)
 local call = helpers.call
 local clear = helpers.clear
+local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
 local expect_msg_seq = helpers.expect_msg_seq
+local feed = helpers.feed
 local next_msg = helpers.next_msg
 local nvim = helpers.nvim
+local parse_context = helpers.parse_context
 local source = helpers.source
 local tbl_flatten = helpers.tbl_flatten
 
@@ -37,18 +40,22 @@ describe('multiproc', function()
     end)
 
     it('loads passed context properly', function()
-      nvim('set_var', 'args', {'multiproc', '1+2+3'})
-      local ctx = nvim('get_context', {'gvars'})
-      call('call_async', 'nvim_eval', {'args[0]'},
-           {done = 'Callback', context = ctx})
-      call('call_async', 'nvim_eval', {'eval(args[1])'},
-           {done = 'Callback', context = ctx})
-      expect_msg_seq(
-        { {'notification', 'done', {'multiproc'}},
-          {'notification', 'done', {6}} },
-        { {'notification', 'done', {6}},
-          {'notification', 'done', {'multiproc'}} }
-      )
+      feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
+      feed('gg')
+      feed('G')
+      command('edit! BUF1')
+      command('edit BUF2')
+      nvim('set_var', 'one', 1)
+      nvim('set_var', 'Two', 2)
+      nvim('set_var', 'THREE', 3)
+
+      local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
+      local sent_ctx = nvim('get_context', ctx_items)
+      call('call_async', 'nvim_get_context', {ctx_items},
+           {done = 'Callback', context = sent_ctx})
+      local msg = next_msg()
+      msg[3][1] = parse_context(msg[3][1])
+      eq({'notification', 'done', {parse_context(sent_ctx)}}, msg)
     end)
   end)
 
