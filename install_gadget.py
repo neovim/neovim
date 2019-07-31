@@ -193,7 +193,8 @@ GADGETS = {
     'all': {
       'version': '0.11.4',
       'file_name': 'Go-0.11.4.vsix',
-      'checksum': ''
+      'checksum':
+        'ff7d7b944da5448974cb3a0086f4a2fd48e2086742d9c013d6964283d416027e'
     },
     'adapters': {
       'vscode-go': {
