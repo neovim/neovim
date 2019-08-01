@@ -38,20 +38,30 @@ stages:
       options: --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
     steps:
     - bash: go get -u github.com/go-delve/delve/cmd/dlv
+      noProfile: false
+      noRc: false
       displayName: 'Install Delve for Go'
 
     - bash: python3 install_gadget.py --all
+      noProfile: false
+      noRc: false
       displayName: 'Install gadgets'
 
     - bash: vim --version
+      noProfile: false
+      noRc: false
       displayName: 'Print vim version information'
 
     - bash: ./run_tests
+      noProfile: false
+      noRc: false
       displayName: 'Run the tests'
       env:
         VIMSPECTOR_MIMODE: gdb
 
     - bash: ./make_package linux $(Build.SourceVersion)
+      noProfile: false
+      noRc: false
       displayName: 'Package'
 
     - task: PublishPipelineArtifact@0
