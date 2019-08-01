@@ -37,31 +37,36 @@ stages:
       image: 'puremourning/vimspector:test'
       options: --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
     steps:
-    - bash: go get -u github.com/go-delve/delve/cmd/dlv
-      noProfile: false
-      noRc: false
+    - task: bash@3
+      inputs:
+        targetType: inline
+        script: go get -u github.com/go-delve/delve/cmd/dlv
+        noProfile: false
+        noRc: false
       displayName: 'Install Delve for Go'
 
-    - bash: python3 install_gadget.py --all
-      noProfile: false
-      noRc: false
+    - task: bash@3
+      inputs:
+        targetType: inline
+        script: python3 install_gadget.py --all
+        noProfile: false
+        noRc: false
       displayName: 'Install gadgets'
 
     - bash: vim --version
-      noProfile: false
-      noRc: false
       displayName: 'Print vim version information'
 
-    - bash: ./run_tests
-      noProfile: false
-      noRc: false
-      displayName: 'Run the tests'
+    - task: bash@3
+      inputs:
+        targetType: inline
+        script: ./run_tests
+        noProfile: false
+        noRc: false
       env:
         VIMSPECTOR_MIMODE: gdb
+      displayName: 'Run the tests'
 
     - bash: ./make_package linux $(Build.SourceVersion)
-      noProfile: false
-      noRc: false
       displayName: 'Package'
 
     - task: PublishPipelineArtifact@0
