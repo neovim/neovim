@@ -310,7 +310,7 @@ _  <underscore>		[count] - 1 lines downward, on the first non-blank
 G			Goto line [count], default last line, on the first
 			non-blank character |linewise|.  If 'startofline' not
 			set, keep the same column.
-			G is a one of |jump-motions|.
+			G is one of the |jump-motions|.
 
 							*<C-End>*
 <C-End>			Goto line [count], default last line, on the last
@@ -989,7 +989,7 @@ These commands are not marks themselves, but jump to a mark:
 
 A "jump" is a command that normally moves the cursor several lines away.  If
 you make the cursor "jump" the position of the cursor before the jump is
-remembered.  You can return to that position with the "''" and "``" command,
+remembered.  You can return to that position with the "''" and "``" commands,
 unless the line containing that position was changed or deleted.  The
 following commands are "jump" commands: "'", "`", "G", "/", "?", "n", "N",
 "%", "(", ")", "[[", "]]", "{", "}", ":s", ":tag", "L", "M", "H" and the

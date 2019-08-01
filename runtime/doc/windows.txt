@@ -807,6 +807,12 @@ CTRL-W gF						*CTRL-W_gF*
 		{not available when the |+file_in_path| feature was disabled
 		at compile time}
 
+CTRL-W gt						*CTRL-W_gt*
+		Go to next tab page, same as `gt`.
+
+CTRL-W gT						*CTRL-W_gT*
+		Go to previous tab page, same as `gT`.
+
 Also see |CTRL-W_CTRL-I|: open window for an included file that includes
 the keyword under the cursor.
 

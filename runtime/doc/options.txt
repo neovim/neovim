@@ -324,9 +324,9 @@ Setting the filetype
 
 			When the optional FALLBACK argument is present, a
 			later :setfiletype command will override the
-			'filetype'.  This is to used for filetype detections
-			that are just a guess.  |did_filetype()| will return
-			false after this command.
+			'filetype'.  This is to be used for filetype
+			detections that are just a guess.  |did_filetype()|
+			will return false after this command.
 
 				*option-window* *optwin*
 :bro[wse] se[t]			*:set-browse* *:browse-set* *:opt* *:options*

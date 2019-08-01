@@ -569,6 +569,8 @@ tag		command		   action in Normal mode	~
 |CTRL-W_gF|	CTRL-W g F	   edit file name under the cursor in a new
 				   tab page and jump to the line number
 				   following the file name.
+|CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
+|CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
 |CTRL-W_i|	CTRL-W i	   split window and jump to declaration of
 				   identifier under the cursor
@@ -858,7 +860,7 @@ tag		char	      note action in Normal mode	~
 
 These can be used after an operator, but before a {motion} has been entered.
 
-tag		char		action in Insert mode	~
+tag		char		action in Operator-pending mode	~
 -----------------------------------------------------------------------
 |o_v|		v		force operator to work characterwise
 |o_V|		V		force operator to work linewise
@@ -986,7 +988,7 @@ Normal characters are inserted at the current cursor position.
 "Completion" below refers to context-sensitive completion.  It will complete
 file names, tags, commands etc. as appropriate.
 
-tag		command	      action in Command-line editing mode	~
+tag		command		action in Command-line editing mode	~
 ------------------------------------------------------------------------------
 		CTRL-@		not used
 |c_CTRL-A|	CTRL-A		do completion on the pattern in front of the
@@ -1085,7 +1087,7 @@ This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].
 The commands are sorted on the non-optional part of their name.
 
-tag	      command	      action ~
+tag		command		action ~
 ------------------------------------------------------------------------------
 |:!|		:!		filter lines or execute an external command
 |:!!|		:!!		repeat last ":!" command

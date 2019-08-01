@@ -192,7 +192,7 @@ typing commands at the command-line.
 		  \ | wincmd p | diffthis
 
 This adds the ":DiffOrig" command.  Use this in a modified buffer to see the
-differences with the file it was loaded from.  See |diff|.
+differences with the file it was loaded from.  See |diff| and |:DiffOrig|.
 
 >
 	set nolangremap
