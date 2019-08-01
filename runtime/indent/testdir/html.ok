@@ -1,0 +1,26 @@
+" vim: set ft=html sw=4 :
+
+
+" START_INDENT
+<div>
+    <div>
+	text
+    </div>
+</div>
+
+<div
+    class="foo bar">
+    text
+</div>
+
+<div class="foo bar"
+    data="something">
+    text
+</div>
+
+<div class="foo
+    bar">
+    text
+</div>
+
+" END_INDENT

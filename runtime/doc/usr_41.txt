@@ -612,6 +612,7 @@ String manipulation:					*string-functions*
 	repeat()		repeat a string multiple times
 	eval()			evaluate a string expression
 	execute()		execute an Ex command and get the output
+	trim()			trim characters from a string
 
 List manipulation:					*list-functions*
 	get()			get an item without error for wrong index
@@ -769,7 +770,7 @@ System functions and manipulation of files:
 	systemlist()		get the result of a shell command as a list
 	hostname()		name of the system
 	readfile()		read a file into a List of lines
-	writefile()		write a List of lines into a file
+	writefile()		write a List of lines or Blob into a file
 
 Date and Time:				*date-functions* *time-functions*
 	getftime()		get last modification time of a file
@@ -798,6 +799,9 @@ Buffers, windows and the argument list:
 	bufwinnr()		get the window number of a specific buffer
 	winbufnr()		get the buffer number of a specific window
 	getbufline()		get a list of lines from the specified buffer
+	setbufline()		replace a line in the specified buffer
+	appendbufline()		append a list of lines in the specified buffer
+	deletebufline()		delete lines from a specified buffer
 	win_findbuf()		find windows containing a buffer
 	win_getid()		get window ID of a window
 	win_gotoid()		go to window with ID
@@ -808,6 +812,8 @@ Buffers, windows and the argument list:
 	getwininfo()		get a list with window information
 	getchangelist()		get a list of change list entries
 	getjumplist()		get a list of jump list entries
+	swapinfo()		information about a swap file
+	swapname()		get the swap file path of a buffer
 
 Command line:					*command-line-functions*
 	getcmdline()		get the current command line
@@ -906,6 +912,7 @@ Window size and position:			*window-size-functions*
 	winheight()		get height of a specific window
 	winwidth()		get width of a specific window
 	win_screenpos()		get screen position of a window
+	winlayout()		get layout of windows in a tab page
 	winrestcmd()		return command to restore window sizes
 	winsaveview()		get view of current window
 	winrestview()		restore saved view of current window
@@ -928,6 +935,7 @@ Signs:						*sign-functions*
 
 Testing:				    *test-functions*
 	assert_equal()		assert that two expressions values are equal
+	assert_equalfile()	assert that two file contents are equal
 	assert_notequal()	assert that two expressions values are not equal
 	assert_inrange()	assert that an expression is inside a range
 	assert_match()		assert that a pattern matches the value
@@ -940,7 +948,21 @@ Testing:				    *test-functions*
 
 Timers:						*timer-functions*
 	timer_start()		create a timer
+	timer_pause()		pause or unpause a timer
 	timer_stop()		stop a timer
+	timer_stopall()		stop all timers
+	timer_info()		get information about timers
+
+Tags:						*tag-functions*
+	taglist()		get list of matching tags
+	tagfiles()		get a list of tags files
+	gettagstack()		get the tag stack of a window
+	settagstack()		modify the tag stack of a window
+
+Prompt Buffer:					*promptbuffer-functions*
+	prompt_setcallback()	set prompt callback for a buffer
+	prompt_setinterrupt()	set interrupt callback for a buffer
+	prompt_setprompt()	set the prompt text for a buffer
 
 Various:					*various-functions*
 	mode()			get current editing mode
@@ -969,15 +991,11 @@ Various:					*various-functions*
 
 	wordcount()		get byte/word/char count of buffer
 
-	taglist()		get list of matching tags
-	tagfiles()		get a list of tags files
-	gettagstack()		get the tag stack
-	settagstack()		modify the tag stack
-
 	luaeval()		evaluate Lua expression
 	py3eval()		evaluate Python expression (|+python3|)
 	pyeval()		evaluate Python expression (|+python|)
 	pyxeval()		evaluate |python_x| expression
+	debugbreak()		interrupt a program being debugged
 
 ==============================================================================
 *41.7*	Defining a function

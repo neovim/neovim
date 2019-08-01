@@ -4,7 +4,7 @@
 " Maintainers:  Markus Mottl      <markus.mottl@gmail.com>
 "               Karl-Heinz Sylla  <Karl-Heinz.Sylla@gmd.de>
 "               Issac Trotts      <ijtrotts@ucdavis.edu>
-" URL:          http://www.ocaml.info/vim/syntax/ocaml.vim
+" URL:          https://github.com/rgrinberg/vim-ocaml
 " Last Change:  2012 May 12 - Added Dominique Pellé's spell checking patch (MM)
 "               2012 Feb 01 - Improved module path highlighting (MM)
 "               2010 Oct 11 - Added highlighting of lnot (MM, thanks to Erick Matsen)

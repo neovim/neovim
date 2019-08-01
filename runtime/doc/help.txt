@@ -9,7 +9,7 @@ Close this window:  Use ":q<Enter>".
 
 Jump to a subject:  Position the cursor on a tag (e.g. |bars|) and hit CTRL-].
    With the mouse:  Double-click the left mouse button on a tag, e.g. |bars|.
-	Jump back:  Type CTRL-T or CTRL-O.  Repeat to go further back.
+	Jump back:  Type CTRL-O.  Repeat to go further back.
 
 Get specific help:  It is possible to go directly to whatever you want help
 		    on, by giving an argument to the |:help| command.
@@ -30,13 +30,17 @@ Get specific help:  It is possible to go directly to whatever you want help
 		    help entries for "word".
 		    Or use ":helpgrep word". |:helpgrep|
 
+  Getting started:  Do the Vim tutor, a 20 minute interactive training for the
+		    basic commands, see |vimtutor|.
+		    Read the user manual from start to end: |usr_01.txt|
+
 Vim stands for Vi IMproved.  Most of Vim was made by Bram Moolenaar, but only
 through the help of many others.  See |credits|.
 ------------------------------------------------------------------------------
 						*doc-file-list* *Q_ct*
 BASIC:
 |quickref|	Overview of the most common commands you will use
-|tutor|		30 minutes training course for beginners
+|tutor|		20 minutes training course for beginners
 |copying|	About copyrights
 |iccf|		Helping poor children in Uganda
 |sponsor|	Sponsor Vim development, become a registered Vim user
@@ -106,7 +110,6 @@ Basic editing ~
 |scroll.txt|	scrolling the text in the window
 |insert.txt|	Insert and Replace mode
 |change.txt|	deleting and replacing text
-|indent.txt|	automatic indenting for C and other languages
 |undo.txt|	Undo and Redo
 |repeat.txt|	repeating commands, Vim scripts and debugging
 |visual.txt|	using the Visual mode (selecting a text area)
@@ -119,30 +122,36 @@ Advanced editing ~
 |pattern.txt|	regexp patterns and search commands
 |map.txt|	key mapping and abbreviations
 |tagsrch.txt|	tags and special searches
-|quickfix.txt|	commands for a quick edit-compile-fix cycle
 |windows.txt|	commands for using multiple windows and buffers
 |tabpage.txt|	commands for using multiple tab pages
-|syntax.txt|	syntax highlighting
 |spell.txt|	spell checking
 |diff.txt|	working with two to four versions of the same file
 |autocmd.txt|	automatically executing commands on an event
-|filetype.txt|	settings done specifically for a type of file
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
 
 Special issues ~
 |print.txt|	printing
 |remote.txt|	using Vim as a server or client
-|digraph.txt|	list of available digraphs
-|mbyte.txt|	multi-byte text support
-|mlang.txt|	non-English language support
-|arabic.txt|	Arabic language support and editing
-|hebrew.txt|	Hebrew language support and editing
-|russian.txt|	Russian language support and editing
+
+Programming language support ~
+|indent.txt|	automatic indenting for C and other languages
+|syntax.txt|	syntax highlighting
+|textprop.txt|	Attaching properties to text for highlighting or other
+|filetype.txt|	settings done specifically for a type of file
+|quickfix.txt|	commands for a quick edit-compile-fix cycle
 |ft_ada.txt|	Ada (the programming language) support
 |ft_rust.txt|	Filetype plugin for Rust
 |ft_sql.txt|	about the SQL filetype plugin
+
+Language support ~
+|digraph.txt|	list of available digraphs
+|mbyte.txt|	multi-byte text support
+|mlang.txt|	non-English language support
 |rileft.txt|	right-to-left editing mode
+|arabic.txt|	Arabic language support and editing
+|hebrew.txt|	Hebrew language support and editing
+|russian.txt|	Russian language support and editing
 
 GUI ~
 |gui.txt|	Graphical User Interface (GUI)

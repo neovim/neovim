@@ -37,6 +37,7 @@ There are two steps in using signs:
    displayed.  A defined sign can be placed several times in different lines
    and files.
 
+							*sign-column*
 When signs are defined for a file, Vim will automatically add a column of two
 characters to display them in.  When the last sign is unplaced the column
 disappears again.  This behavior can be changed with the 'signcolumn' option.
@@ -49,7 +50,7 @@ Example to set the color: >
 							*sign-identifier*
 Each placed sign is identified by a number called the sign identifier. This
 identifier is used to jump to the sign or to remove the sign. The identifier
-is assigned when placing the sign using the |sign-place| command or the
+is assigned when placing the sign using the |:sign-place| command or the
 |sign_place()| function. Each sign identifier should be a unique number. If
 multiple placed signs use the same identifier, then jumping to or removing a
 sign becomes unpredictable. To avoid overlapping identifiers, sign groups can
@@ -69,6 +70,10 @@ Each placed sign is assigned a priority value. When multiple signs are placed
 on the same line, the attributes of the sign with the highest priority is used
 independent of the sign group. The default priority for a sign is 10. The
 priority is assigned at the time of placing a sign.
+
+When the line on which the sign is placed is deleted, the sign is moved to the
+next line (or the last line of the buffer, if there is no next line).  When
+the delete is undone the sign does not move back.
 
 ==============================================================================
 2. Commands					*sign-commands* *:sig* *:sign*
@@ -92,7 +97,7 @@ See |sign_define()| for the equivalent Vim script function.
 :sign define {name} {argument}...
 		Define a new sign or set attributes for an existing sign.
 		The {name} can either be a number (all digits) or a name
-		starting with a non-digit.  Leading digits are ignored, thus
+		starting with a non-digit.  Leading zeros are ignored, thus
 		"0012", "012" and "12" are considered the same name.
 		About 120 different signs can be defined.
 

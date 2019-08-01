@@ -64,6 +64,10 @@ the differences.
 - 'wildmenu' is enabled
 - 'wildoptions' defaults to "pum,tagfile"
 
+- The |man.vim| plugin is enabled, to provide the |:Man| command.
+- The |matchit| plugin is enabled. To disable it in your config: >
+    :let loaded_matchit = 1
+
 ==============================================================================
 3. New Features						       *nvim-features*
 

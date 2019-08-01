@@ -1,6 +1,6 @@
 " Vim autoload file for the tohtml plugin.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2013 Sep 03
+" Last Change: 2018 Nov 11
 "
 " Additional contributors:
 "
@@ -544,12 +544,16 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
     " add required javascript in reverse order so we can just call append again
     " and again without adjusting {{{
 
-    " insert script closing tag
-    call append(style_start, [
-	  \ '',
-	  \ s:settings.use_xhtml ? '//]]>' : '-->',
-	  \ "</script>"
-	  \ ])
+    let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids || !empty(s:settings.prevent_copy)
+
+    " insert script closing tag if needed
+    if s:uses_script
+      call append(style_start, [
+	    \ '',
+	    \ s:settings.use_xhtml ? '//]]>' : '-->',
+	    \ "</script>"
+	    \ ])
+    endif
 
     " insert script which corrects the size of small input elements in
     " prevent_copy mode. See 2html.vim for details on why this is needed and how
@@ -575,55 +579,61 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 	    \ '}'
 	    \ ])
     endif
-    "
+
     " insert javascript to get IDs from line numbers, and to open a fold before
     " jumping to any lines contained therein
-    call append(style_start, [
-	  \ "  /* Always jump to new location even if the line was hidden inside a fold, or",
-	  \ "   * we corrected the raw number to a line ID.",
-	  \ "   */",
-	  \ "  if (lineElem) {",
-	  \ "    lineElem.scrollIntoView(true);",
-	  \ "  }",
-	  \ "  return true;",
-	  \ "}",
-	  \ "if ('onhashchange' in window) {",
-	  \ "  window.onhashchange = JumpToLine;",
-	  \ "}"
-	  \ ])
-    if s:settings.dynamic_folds
+    if s:settings.line_ids
+      call append(style_start, [
+	    \ "  /* Always jump to new location even if the line was hidden inside a fold, or",
+	    \ "   * we corrected the raw number to a line ID.",
+	    \ "   */",
+	    \ "  if (lineElem) {",
+	    \ "    lineElem.scrollIntoView(true);",
+	    \ "  }",
+	    \ "  return true;",
+	    \ "}",
+	    \ "if ('onhashchange' in window) {",
+	    \ "  window.onhashchange = JumpToLine;",
+	    \ "}"
+	    \ ])
+
+      if s:settings.dynamic_folds
+	call append(style_start, [
+	      \ "",
+	      \ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
+	      \ "  var node = lineElem;",
+	      \ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
+	      \ "  {",
+	      \ "    if (node.className == 'closed-fold')",
+	      \ "    {",
+	      \ "      /* toggle open the fold ID (remove window ID) */",
+	      \ "      toggleFold(node.id.substr(4));",
+	      \ "    }",
+	      \ "    node = node.parentNode;",
+	      \ "  }",
+	      \ ])
+      endif
+    endif
+
+    if s:settings.line_ids
       call append(style_start, [
 	    \ "",
-	    \ "  /* navigate upwards in the DOM tree to open all folds containing the line */",
-	    \ "  var node = lineElem;",
-	    \ "  while (node && node.id != 'vimCodeElement".s:settings.id_suffix."')",
-	    \ "  {",
-	    \ "    if (node.className == 'closed-fold')",
-	    \ "    {",
-	    \ "      /* toggle open the fold ID (remove window ID) */",
-	    \ "      toggleFold(node.id.substr(4));",
-	    \ "    }",
-	    \ "    node = node.parentNode;",
+	    \ "/* function to open any folds containing a jumped-to line before jumping to it */",
+	    \ "function JumpToLine()",
+	    \ "{",
+	    \ "  var lineNum;",
+	    \ "  lineNum = window.location.hash;",
+	    \ "  lineNum = lineNum.substr(1); /* strip off '#' */",
+	    \ "",
+	    \ "  if (lineNum.indexOf('L') == -1) {",
+	    \ "    lineNum = 'L'+lineNum;",
 	    \ "  }",
+	    \ "  if (lineNum.indexOf('W') == -1) {",
+	    \ "    lineNum = 'W1'+lineNum;",
+	    \ "  }",
+	    \ "  var lineElem = document.getElementById(lineNum);"
 	    \ ])
     endif
-    call append(style_start, [
-	  \ "",
-	  \ "/* function to open any folds containing a jumped-to line before jumping to it */",
-	  \ "function JumpToLine()",
-	  \ "{",
-	  \ "  var lineNum;",
-	  \ "  lineNum = window.location.hash;",
-	  \ "  lineNum = lineNum.substr(1); /* strip off '#' */",
-	  \ "",
-	  \ "  if (lineNum.indexOf('L') == -1) {",
-	  \ "    lineNum = 'L'+lineNum;",
-	  \ "  }",
-	  \ "  if (lineNum.indexOf('W') == -1) {",
-	  \ "    lineNum = 'W1'+lineNum;",
-	  \ "  }",
-	  \ "  lineElem = document.getElementById(lineNum);"
-	  \ ])
 
     " Insert javascript to toggle matching folds open and closed in all windows,
     " if dynamic folding is active.
@@ -648,11 +658,13 @@ func! tohtml#Diff2HTML(win_list, buf_list) "{{{
 	    \ ])
     endif
 
-    " insert script tag; javascript is always needed for the line number
-    " normalization for URL hashes
-    call append(style_start, [
-	  \ "<script type='text/javascript'>",
-	  \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
+    if s:uses_script
+      " insert script tag; javascript is always needed for the line number
+      " normalization for URL hashes
+      call append(style_start, [
+	    \ "<script type='text/javascript'>",
+	    \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
+    endif
 
     " Insert styles from all the generated html documents and additional styles
     " for the table-based layout of the side-by-side diff. The diff should take
@@ -767,7 +779,7 @@ func! tohtml#GetUserSettings() "{{{
     if user_settings.no_pre == 0
       call tohtml#GetOption(user_settings,
 	    \ 'expand_tabs',
-	    \ &expandtab || &ts != 8 || user_settings.number_lines ||
+	    \ &expandtab || &ts != 8 || &vts != '' || user_settings.number_lines ||
 	    \   (user_settings.dynamic_folds && !user_settings.no_foldcolumn))
     else
       let user_settings.expand_tabs = 1

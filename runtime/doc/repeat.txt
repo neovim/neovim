@@ -306,7 +306,10 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			|<SID>|.
 
 :scr[iptnames][!] {scriptId}			*:script*
-			Edit script {scriptId}.  Suggested name is ":script".
+			Edit script {scriptId}.  Although ":scriptnames name"
+			works, using ":script name" is recommended.
+			When the current buffer can't be |abandon|ed and the !
+			is not present, the command fails.
 
 						*:fini* *:finish* *E168*
 :fini[sh]		Stop sourcing a script.  Can only be used in a Vim

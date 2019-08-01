@@ -1,82 +1,33 @@
 " Vim plugin for converting a syntax highlighted file to HTML.
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2015 Sep 08
+" Last Change: 2018 Nov 11
 "
 " The core of the code is in $VIMRUNTIME/autoload/tohtml.vim and
 " $VIMRUNTIME/syntax/2html.vim
 "
-" TODO: {{{
-"   * Options for generating the CSS in external style sheets. New :TOcss
-"     command to convert the current color scheme into a (mostly) generic CSS
-"     stylesheet which can be re-used. Alternate stylesheet support? Good start
-"     by Erik Falor
-"     ( https://groups.google.com/d/topic/vim_use/7XTmC4D22dU/discussion ).
-"   * Add optional argument to :TOhtml command to specify mode (gui, cterm,
-"     term) to use for the styling. Suggestion by "nacitar".
-"   * Add way to override or specify which RGB colors map to the color numbers
-"     in cterm. Get better defaults than just guessing? Suggestion by "nacitar".
-"   * Disable filetype detection until after all processing is done.
-"   * Add option for not generating the hyperlink on stuff that looks like a
-"     URL? Or just color the link to fit with the colorscheme (and only special
-"     when hovering)?
-"   * Bug: Opera does not allow printing more than one page if uncopyable
-"     regions is turned on. Possible solution: Add normal text line numbers with
-"     display:none, set to display:inline for print style sheets, and hide
-"     <input> elements for print, to allow Opera printing multiple pages (and
-"     other uncopyable areas?). May need to make the new text invisible to IE
-"     with conditional comments to prevent copying it, IE for some reason likes
-"     to copy hidden text. Other browsers too?
-"   * Bug: still a 1px gap throughout the fold column when html_prevent_copy is
-"     "fn" in some browsers. Specifically, in Chromium on Ubuntu (but not Chrome
-"     on Windows). Perhaps it is font related?
-"   * Bug: still some gaps in the fold column when html_prevent_copy contains
-"     'd' and showing the whole diff (observed in multiple browsers). Only gaps
-"     on diff lines though.
-"   * Undercurl support via CSS3, with fallback to dotted or something:
-"	https://groups.google.com/d/topic/vim_use/BzXA6He1pHg/discussion
-"   * Redo updates for modified default foldtext (v11) when/if the patch is
-"     accepted to modify it.
-"   * Test case +diff_one_file-dynamic_folds+expand_tabs-hover_unfold
-"		+ignore_conceal-ignore_folding+no_foldcolumn+no_pre+no_progress
-"		+number_lines-pre_wrap-use_css+use_xhtml+whole_filler.xhtml
-"     does not show the whole diff filler as it is supposed to?
-"   * Bug: when 'isprint' is wrong for the current encoding, will generate
-"     invalid content. Can/should anything be done about this? Maybe a separate
-"     plugin to correct 'isprint' based on encoding?
-"   * Check to see if the windows-125\d encodings actually work in Unix without
-"     the 8bit- prefix. Add prefix to autoload dictionaries for Unix if not.
-"   * Font auto-detection similar to
-"     http://www.vim.org/scripts/script.php?script_id=2384 but for a variety of
-"     platforms.
-"   * Error thrown when sourcing 2html.vim directly when plugins are not loaded.
-"   * Pull in code from http://www.vim.org/scripts/script.php?script_id=3113 :
-"	- listchars support
-"	- full-line background highlight
-"	- other?
-"   * Make it so deleted lines in a diff don't create side-scrolling (get it
-"     free with full-line background highlight above).
-"   * Restore open/closed folds and cursor position after processing each file
-"     with option not to restore for speed increase.
-"   * Add extra meta info (generation time, etc.)?
-"   * Tidy up so we can use strict doctype in even more situations
-"   * Implementation detail: add threshold for writing the lines to the html
-"     buffer before we're done (5000 or so lines should do it)
-"   * TODO comments for code cleanup scattered throughout
-"}}}
-
 if exists('g:loaded_2html_plugin')
   finish
 endif
-let g:loaded_2html_plugin = 'vim7.4_v2'
+let g:loaded_2html_plugin = 'vim8.1_v1'
 
 "
 " Changelog: {{{
-"   7.4_v2  (this version): Fix error raised when converting a diff containing
+"   8.1_v1  (this version): Fix Bitbucket issue #6: Don't generate empty script
+"                           tag.
+"                           Fix Bitbucket issue #5: javascript should
+"                           declare variables with "var".
+"                           Fix Bitbucket issue #13: errors thrown sourcing
+"                           2html.vim directly when plugins not loaded.
+"                           Fix Bitbucket issue #16: support 'vartabstop'.
+"
+"   7.4 updates: {{{
+"   7.4_v2  (Vim 7.4.0899): Fix error raised when converting a diff containing
 "                           an empty buffer. Jan Stocker: allow g:html_font to
 "                           take a list so it is easier to specfiy fallback
 "                           fonts in the generated CSS.
 "   7.4_v1  (Vim 7.4.0000): Fix modeline mangling for new "Vim:" format, and
 "			    also for version-specific modelines like "vim>703:".
+"}}}
 "
 "   7.3 updates: {{{
 "   7.3_v14 (Vim 7.3.1246): Allow suppressing line number anchors using
@@ -170,9 +121,69 @@ let g:loaded_2html_plugin = 'vim7.4_v2'
 "}}}
 "}}}
 
+" TODO: {{{
+"   * Check the issue tracker:
+"     https://bitbucket.org/fritzophrenic/vim-tohtml/issues?status=new&status=open
+"   * Options for generating the CSS in external style sheets. New :TOcss
+"     command to convert the current color scheme into a (mostly) generic CSS
+"     stylesheet which can be re-used. Alternate stylesheet support? Good start
+"     by Erik Falor
+"     ( https://groups.google.com/d/topic/vim_use/7XTmC4D22dU/discussion ).
+"   * Add optional argument to :TOhtml command to specify mode (gui, cterm,
+"     term) to use for the styling. Suggestion by "nacitar".
+"   * Add way to override or specify which RGB colors map to the color numbers
+"     in cterm. Get better defaults than just guessing? Suggestion by "nacitar".
+"   * Disable filetype detection until after all processing is done.
+"   * Add option for not generating the hyperlink on stuff that looks like a
+"     URL? Or just color the link to fit with the colorscheme (and only special
+"     when hovering)?
+"   * Bug: Opera does not allow printing more than one page if uncopyable
+"     regions is turned on. Possible solution: Add normal text line numbers with
+"     display:none, set to display:inline for print style sheets, and hide
+"     <input> elements for print, to allow Opera printing multiple pages (and
+"     other uncopyable areas?). May need to make the new text invisible to IE
+"     with conditional comments to prevent copying it, IE for some reason likes
+"     to copy hidden text. Other browsers too?
+"   * Bug: still a 1px gap throughout the fold column when html_prevent_copy is
+"     "fn" in some browsers. Specifically, in Chromium on Ubuntu (but not Chrome
+"     on Windows). Perhaps it is font related?
+"   * Bug: still some gaps in the fold column when html_prevent_copy contains
+"     'd' and showing the whole diff (observed in multiple browsers). Only gaps
+"     on diff lines though.
+"   * Undercurl support via CSS3, with fallback to dotted or something:
+"	https://groups.google.com/d/topic/vim_use/BzXA6He1pHg/discussion
+"   * Redo updates for modified default foldtext (v11) when/if the patch is
+"     accepted to modify it.
+"   * Test case +diff_one_file-dynamic_folds+expand_tabs-hover_unfold
+"		+ignore_conceal-ignore_folding+no_foldcolumn+no_pre+no_progress
+"		+number_lines-pre_wrap-use_css+use_xhtml+whole_filler.xhtml
+"     does not show the whole diff filler as it is supposed to?
+"   * Bug: when 'isprint' is wrong for the current encoding, will generate
+"     invalid content. Can/should anything be done about this? Maybe a separate
+"     plugin to correct 'isprint' based on encoding?
+"   * Check to see if the windows-125\d encodings actually work in Unix without
+"     the 8bit- prefix. Add prefix to autoload dictionaries for Unix if not.
+"   * Font auto-detection similar to
+"     http://www.vim.org/scripts/script.php?script_id=2384 but for a variety of
+"     platforms.
+"   * Pull in code from http://www.vim.org/scripts/script.php?script_id=3113 :
+"	- listchars support
+"	- full-line background highlight
+"	- other?
+"   * Make it so deleted lines in a diff don't create side-scrolling (get it
+"     free with full-line background highlight above).
+"   * Restore open/closed folds and cursor position after processing each file
+"     with option not to restore for speed increase.
+"   * Add extra meta info (generation time, etc.)?
+"   * Tidy up so we can use strict doctype in even more situations
+"   * Implementation detail: add threshold for writing the lines to the html
+"     buffer before we're done (5000 or so lines should do it)
+"   * TODO comments for code cleanup scattered throughout
+"}}}
+
 " Define the :TOhtml command when:
 " - 'compatible' is not set
-" - this plugin was not already loaded
+" - this plugin or user override was not already loaded
 " - user commands are available. {{{
 if !&cp && !exists(":TOhtml") && has("user_commands")
   command -range=% -bar TOhtml :call tohtml#Convert2HTML(<line1>, <line2>)

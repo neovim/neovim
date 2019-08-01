@@ -3,7 +3,7 @@
 " Maintainer: Marshall Ward <marshall.ward@gmail.com>
 " Previous Maintainer: Nikolai Weibull <now@bitwi.se>
 " Website: https://github.com/marshallward/vim-restructuredtext
-" Latest Revision: 2018-07-23
+" Latest Revision: 2018-12-29
 
 if exists("b:current_syntax")
   finish
@@ -59,6 +59,7 @@ syn keyword     rstTodo             contained FIXME TODO XXX NOTE
 
 execute 'syn region rstComment contained' .
       \ ' start=/.*/'
+      \ ' skip=+^$+' .
       \ ' end=/^\s\@!/ contains=rstTodo'
 
 execute 'syn region rstFootnote contained matchgroup=rstDirective' .

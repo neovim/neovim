@@ -1,6 +1,6 @@
 " Vim syntax support file
 " Maintainer: Ben Fritz <fritzophrenic@gmail.com>
-" Last Change: 2015 Sep 08
+" Last Change: 2018 Nov 11
 "
 " Additional contributors:
 "
@@ -633,6 +633,45 @@ if s:current_syntax == ''
   let s:current_syntax = 'none'
 endif
 
+" If the user is sourcing this script directly then the plugin version isn't
+" known because the main plugin script didn't load. In the usual case where the
+" user still has the full Vim runtime installed, or has this full plugin
+" installed in a package or something, then we can extract the version from the
+" main plugin file at it's usual spot relative to this file. Otherwise the user
+" is assembling their runtime piecemeal and we have no idea what versions of
+" other files may be present so don't even try to make a guess or assume the
+" presence of other specific files with specific meaning.
+"
+" We don't want to actually source the main plugin file here because the user
+" may have a good reason not to (e.g. they define their own TOhtml command or
+" something).
+"
+" If this seems way too complicated and convoluted, it is. Probably I should
+" have put the version information in the autoload file from the start. But the
+" version has been in the global variable for so long that changing it could
+" break a lot of user scripts.
+if exists("g:loaded_2html_plugin")
+  let s:pluginversion = g:loaded_2html_plugin
+else
+  if !exists("g:unloaded_tohtml_plugin")
+    let s:main_plugin_path = expand("<sfile>:p:h:h")."/plugin/tohtml.vim"
+    if filereadable(s:main_plugin_path)
+      let s:lines = readfile(s:main_plugin_path, "", 20)
+      call filter(s:lines, 'v:val =~ "loaded_2html_plugin = "')
+      if empty(s:lines)
+	let g:unloaded_tohtml_plugin = "unknown"
+      else
+	let g:unloaded_tohtml_plugin = substitute(s:lines[0], '.*loaded_2html_plugin = \([''"]\)\(\%(\1\@!.\)\+\)\1', '\2', '')
+      endif
+      unlet s:lines
+    else
+      let g:unloaded_tohtml_plugin = "unknown"
+    endif
+    unlet s:main_plugin_path
+  endif
+  let s:pluginversion = g:unloaded_tohtml_plugin
+endif
+
 " Split window to create a buffer with the HTML file.
 let s:orgbufnr = winbufnr(0)
 let s:origwin_stl = &l:stl
@@ -721,7 +760,7 @@ endif
 call extend(s:lines, [
       \ ("<title>".expand("%:p:~")."</title>"),
       \ ("<meta name=\"Generator\" content=\"Vim/".v:version/100.".".v:version%100.'"'.s:tag_close),
-      \ ("<meta name=\"plugin-version\" content=\"".g:loaded_2html_plugin.'"'.s:tag_close)
+      \ ("<meta name=\"plugin-version\" content=\"".s:pluginversion.'"'.s:tag_close)
       \ ])
 call add(s:lines, '<meta name="syntax" content="'.s:current_syntax.'"'.s:tag_close)
 call add(s:lines, '<meta name="settings" content="'.
@@ -807,12 +846,15 @@ if s:settings.use_css
   endif
 endif
 
-" insert script tag; javascript is always needed for the line number
-" normalization for URL hashes
-call extend(s:lines, [
-      \ "",
-      \ "<script type='text/javascript'>",
-      \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
+let s:uses_script = s:settings.dynamic_folds || s:settings.line_ids || !empty(s:settings.prevent_copy)
+
+" insert script tag if needed
+if s:uses_script
+  call extend(s:lines, [
+        \ "",
+        \ "<script type='text/javascript'>",
+        \ s:settings.use_xhtml ? '//<![CDATA[' : "<!--"])
+endif
 
 " insert javascript to toggle folds open and closed
 if s:settings.dynamic_folds
@@ -849,8 +891,9 @@ if s:settings.line_ids
 	\ "  if (lineNum.indexOf('L') == -1) {",
 	\ "    lineNum = 'L'+lineNum;",
 	\ "  }",
-	\ "  lineElem = document.getElementById(lineNum);"
+	\ "  var lineElem = document.getElementById(lineNum);"
 	\ ])
+
   if s:settings.dynamic_folds
     call extend(s:lines, [
 	  \ "",
@@ -940,12 +983,14 @@ if !empty(s:settings.prevent_copy)
 	\ ])
 endif
 
-" insert script closing tag
-call extend(s:lines, [
-      \ '',
-      \ s:settings.use_xhtml ? '//]]>' : '-->',
-      \ "</script>"
-      \ ])
+" insert script closing tag if needed
+if s:uses_script
+  call extend(s:lines, [
+        \ '',
+        \ s:settings.use_xhtml ? '//]]>' : '-->',
+        \ "</script>"
+        \ ])
+endif
 
 call extend(s:lines, ["</head>"])
 if !empty(s:settings.prevent_copy)
@@ -1525,10 +1570,22 @@ while s:lnum <= s:end
 	if s:settings.expand_tabs
 	  let s:offset = 0
 	  let s:idx = stridx(s:expandedtab, "\t")
+	  let s:tablist = split(&vts,',')
+	  if empty(s:tablist)
+	    let s:tablist = [ &ts ]
+	  endif
+	  let s:tabidx = 0
+	  let s:tabwidth = 0
 	  while s:idx >= 0
+	    while s:startcol+s:idx > s:tabwidth + s:tablist[s:tabidx] 
+	      let s:tabwidth += s:tablist[s:tabidx]
+	      if s:tabidx < len(s:tablist)-1
+		let s:tabidx = s:tabidx+1
+	      endif
+	    endwhile
 	    if has("multi_byte_encoding")
 	      if s:startcol + s:idx == 1
-		let s:i = &ts
+		let s:i = s:tablist[s:tabidx]
 	      else
 		if s:idx == 0
 		  let s:prevc = matchstr(s:line, '.\%' . (s:startcol + s:idx + s:offset) . 'c')
@@ -1536,11 +1593,11 @@ while s:lnum <= s:end
 		  let s:prevc = matchstr(s:expandedtab, '.\%' . (s:idx + 1) . 'c')
 		endif
 		let s:vcol = virtcol([s:lnum, s:startcol + s:idx + s:offset - len(s:prevc)])
-		let s:i = &ts - (s:vcol % &ts)
+		let s:i = s:tablist[s:tabidx] - (s:vcol - s:tabwidth)
 	      endif
 	      let s:offset -= s:i - 1
 	    else
-	      let s:i = &ts - ((s:idx + s:startcol - 1) % &ts)
+	      let s:i = s:tablist[s:tabidx] - ((s:idx + s:startcol - 1) - s:tabwidth)
 	    endif
 	    let s:expandedtab = substitute(s:expandedtab, '\t', repeat(' ', s:i), '')
 	    let s:idx = stridx(s:expandedtab, "\t")
