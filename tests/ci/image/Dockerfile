@@ -47,7 +47,7 @@ RUN mkdir -p /home/linuxbrew/.linuxbrew &&\
     git clone  https://github.com/Homebrew/brew /home/linuxbrew/.linuxbrew/Homebrew && \
     ln -s /home/linuxbrew/.linuxbrew/Homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin && \
     echo "eval \$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" \
-        > /etc/skel/.bashrc
+        > /etc/bash.bashrc
 
 RUN /home/linuxbrew/.linuxbrew/bin/brew install golang
 
