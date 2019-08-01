@@ -4,8 +4,11 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
+local expect_err = helpers.expect_err
 local expect_msg_seq = helpers.expect_msg_seq
 local feed = helpers.feed
+local feed_command = helpers.feed_command
+local matches = helpers.matches
 local next_msg = helpers.next_msg
 local nvim = helpers.nvim
 local parse_context = helpers.parse_context
@@ -37,6 +40,11 @@ describe('multiproc', function()
         { {'notification', 'done', {6}},
           {'notification', 'done', {'multiproc'}} }
       )
+    end)
+
+    it('reports errors from children', function()
+      expect_err('multiproc: job 3: Vim:E117: Unknown function: foo',
+                 call, 'call_wait', {call('call_async', 'foo', {})})
     end)
 
     it('loads passed context properly', function()
@@ -111,6 +119,35 @@ describe('multiproc', function()
       eq({3, 4, 5, 6}, eval('jobs'))
       eq({'notification', 'done', {expected}}, next_msg())
       eq(expected, wait_result)
+    end)
+
+    it('reports errors from children', function()
+      feed_command([=[call call_wait(call_parallel('foo', [[], []]))]=])
+      feed('<CR>')
+      matches('multiproc: job [3-4]: Vim:E117: Unknown function: foo\n'..
+              'multiproc: job [3-4]: Vim:E117: Unknown function: foo',
+              nvim('command_output', 'messages'))
+    end)
+
+    it('errors out on invalid opt values', function()
+      feed_command([=[call call_parallel('foo', [[], []], {'done':{}})]=])
+      feed('<CR>')
+      eq('E921: Invalid callback argument\n'..
+         'E475: Invalid value for argument opts: '..
+         "value of 'done' should be a function",
+         nvim('command_output', 'messages'))
+      expect_err('E475: Invalid value for argument opts: '..
+                 "value of 'context' should be a dictionary",
+                 call, 'call_parallel', 'nvim__id', {'Neovim'}, {context = 1})
+      expect_err('E475: Invalid value for argument opts: '..
+                 "value of 'count' should be a positive number",
+                 call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = 'foo'})
+      expect_err('E475: Invalid value for argument opts: '..
+                 "value of 'count' should be a positive number",
+                 call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = 0})
+      expect_err('E475: Invalid value for argument opts: '..
+                 "value of 'count' should be a positive number",
+                 call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = -1})
     end)
   end)
 
