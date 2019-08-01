@@ -51,7 +51,7 @@ end
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: The result of the request
-plugin.request = function(method, arguments, filetype, bufnr, cb)
+plugin.request = function(method, arguments, filetype, cb, bufnr)
   filetype = filetype or lsp_util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
@@ -64,11 +64,11 @@ plugin.request = function(method, arguments, filetype, bufnr, cb)
     return
   end
 
-  return current_client:request(method, arguments, bufnr, cb)
+  return current_client:request(method, arguments, cb, bufnr)
 end
 
 --- Send a request to a server, but don't wait for the response
-plugin.request_async = function(method, arguments, filetype, bufnr, cb)
+plugin.request_async = function(method, arguments, filetype, cb, bufnr)
   filetype = filetype or lsp_util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
@@ -81,7 +81,7 @@ plugin.request_async = function(method, arguments, filetype, bufnr, cb)
     return
   end
 
-  current_client:request_async(method, arguments, bufnr, cb)
+  current_client:request_async(method, arguments, cb, bufnr)
 end
 
 plugin.request_autocmd = function(method, arguments, cb, filetype)

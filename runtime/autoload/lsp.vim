@@ -31,13 +31,12 @@ function! lsp#request(method, ...) abort
   let bufnr = get(a:000, 2, v:null)
   let optional_callback = get(a:000, 3, v:null)
 
-  let result = luaeval(s:lsp_plugin . '.request(_A.method, _A.params, _A.filetype, _A.bufnr, _A.callback)', {
+  let result = luaeval(s:lsp_plugin . '.request(_A.method, _A.params, _A.filetype, _A.callback, _A.bufnr)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'filetype': filetype,
-          \ 'bufnr': bufnr,
-          \ 'filetype': filetype,
           \ 'callback': optional_callback,
+          \ 'bufnr': bufnr,
         \ })
 
   return request_id
@@ -53,13 +52,12 @@ function! lsp#request_async(method, ...) abort
   let bufnr = get(a:000, 2, v:null)
   let optional_callback = get(a:000, 3, v:null)
 
-  let result = luaeval(s:lsp_plugin . '.request_async(_A.method, _A.params, _A.filetype, _A.bufnr, _A.callback)', {
+  let result = luaeval(s:lsp_plugin . '.request_async(_A.method, _A.params, _A.filetype, _A.callback, _A.bufnr)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'filetype': filetype,
-          \ 'bufnr': bufnr,
-          \ 'filetype': filetype,
           \ 'callback': optional_callback,
+          \ 'bufnr': bufnr,
         \ })
 
   return result

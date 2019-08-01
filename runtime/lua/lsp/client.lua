@@ -94,12 +94,12 @@ client.new = function(name, ft, cmd)
 end
 
 client.initialize = function(self)
-  local result = self:request_async('initialize', nil, nil, function(_, data)
+  local result = self:request_async('initialize', nil, function(_, data)
     self:notify('initialized')
     self:notify('textDocument/didOpen')
     self.capabilities =  EmptyDictionary:new(data.capabilities)
     return data.capabilities
-  end)
+  end, nil)
 
   return result
 end
@@ -118,7 +118,7 @@ end
 -- @param params: the parameters to send
 -- @param cb (optional): If sent, will call this when it's done
 --                          otherwise it'll wait til the client is done
-client.request = function(self, method, params, bufnr, cb)
+client.request = function(self, method, params, cb, bufnr)
   if not method then
     error("No request method supplied", 2)
   end
@@ -149,7 +149,7 @@ end
 -- @param cb     (function)     : An optional function pointer to call once the request has been completed
 --                                  If a string is passed, it will execute a VimL funciton of that name
 --                                  To disable handling the request, pass "false"
-client.request_async = function(self, method, params, bufnr, cb)
+client.request_async = function(self, method, params, cb, bufnr)
   if not method then
     error("No request method supplied", 2)
   end
