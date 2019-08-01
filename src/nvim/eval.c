@@ -7887,9 +7887,16 @@ static void f_call_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object results =
     EXEC_LUA_STATIC("return vim._collect_results(...)", args, &err);
   api_free_array(args);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+  }
   object_to_vim(results, rettv, &err);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+  }
   api_free_object(results);
-  api_clear_error(&err);
 }
 
 /*
