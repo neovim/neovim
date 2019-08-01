@@ -113,6 +113,11 @@ void stream_close_handle(Stream *stream)
   FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
+    if (uv_stream_get_write_queue_size(stream->uvstream) > 0) {
+      WLOG("closed Stream (%p) with %zu unwritten bytes",
+           (void *)stream,
+           uv_stream_get_write_queue_size(stream->uvstream));
+    }
     uv_close((uv_handle_t *)stream->uvstream, close_cb);
   } else {
     uv_close((uv_handle_t *)&stream->uv.idle, close_cb);
