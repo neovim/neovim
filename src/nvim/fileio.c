@@ -4845,9 +4845,8 @@ buf_check_timestamp(
     // set b_mtime to stop further warnings (e.g., when executing
     // FileChangedShell autocmd)
     if (!file_info_ok) {
-      // When 'autoread' is set we'll check the file again to see if it
-      // re-appears.
-      buf->b_mtime = (buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar);
+      // Check the file again later to see if it re-appears.
+      buf->b_mtime = -1;
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
     } else {
