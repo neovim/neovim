@@ -50,6 +50,10 @@ conversion to be available, it might fail.  For the NUL character you will see
 "10".  That's because NUL characters are internally represented with a NL
 character.  When you write the file it will become a NUL character.
 
+Example: >
+	digraph oe 339
+This defines the "oe" digraph for a character that is number 339 in Unicode.
+
 ==============================================================================
 2. Using digraphs					*digraphs-use*
 

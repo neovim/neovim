@@ -99,10 +99,9 @@ not recognized by Vim will just be converted to lower case and underscores
 replaced with '-' signs.
 
 If 'printencoding' is empty or Vim cannot find the file then it will use
-'encoding' (if Vim is compiled with |+multi_byte| and it is set an 8-bit
-encoding) to find the print character encoding file.  If Vim is unable to find
-a character encoding file then it will use the "latin1" print character
-encoding file.
+'encoding' (if it is set an 8-bit encoding) to find the print character
+encoding file.  If Vim is unable to find a character encoding file then it
+will use the "latin1" print character encoding file.
 
 When 'encoding' is set to a multi-byte encoding, Vim will try to convert
 characters to the printing encoding for printing (if 'printencoding' is empty

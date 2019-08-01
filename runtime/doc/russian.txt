@@ -52,8 +52,7 @@ automatic installs.  Vim also needs to be compiled with |+gettext| feature for
 user interface items translations to work.
 
 After downloading an archive from RuVim project, unpack it into your
-$VIMRUNTIME directory.  We recommend using UTF-8 archive, if your version of
-Vim is compiled with |+multi_byte| feature enabled.
+$VIMRUNTIME directory.  We recommend using UTF-8 archive.
 
 In order to use the Russian documentation, make sure you have set the
 'helplang' option to "ru".

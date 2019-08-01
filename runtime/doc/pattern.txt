@@ -1125,7 +1125,7 @@ x	A single character, with no special meaning, matches itself
 	  The "Func" column shows what library function is used.  The
 	  implementation depends on the system.  Otherwise:
 	  (1) Uses islower() for ASCII and Vim builtin rules for other
-	  characters when built with the |+multi_byte| feature.
+	  characters.
 	  (2) Uses Vim builtin rules
 	  (3) As with (1) but using isupper()
 							*/[[=* *[==]*

@@ -599,6 +599,15 @@ your |vimrc|: >
 	let rrst_dynamic_comments = 0
 
 
+RESTRUCTUREDTEXT					*ft-rst-plugin*
+
+The following formatting setting are optionally available: >
+	setlocal expandtab shiftwidth=3 softtabstop=3 tabstop=8
+
+To enable this behavior, set the following variable in your vimrc: >
+	let g:rst_style = 1
+
+
 RPM SPEC						*ft-spec-plugin*
 
 Since the text for this plugin is rather long it has been put in a separate

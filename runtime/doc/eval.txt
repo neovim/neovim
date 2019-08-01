@@ -6341,8 +6341,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 							*printf-S*
 		S	The text of the String argument is used.  If a
 			precision is specified, no more display cells than the
-			number specified are used.  Without the |+multi_byte|
-			feature works just like 's'.
+			number specified are used.
 
 							*printf-f* *E807*
 		f F	The Float argument is converted into a string of the
@@ -7990,10 +7989,10 @@ strcharpart({src}, {start} [, {len}])			*strcharpart()*
 
 strdisplaywidth({expr} [, {col}])			*strdisplaywidth()*
 		The result is a Number, which is the number of display cells
-		String {expr} occupies on the screen when it starts at {col}.
-		When {col} is omitted zero is used.  Otherwise it is the
-		screen column where to start.  This matters for Tab
-		characters.
+		String {expr} occupies on the screen when it starts at {col}
+		(first column is zero).  When {col} is omitted zero is used.
+		Otherwise it is the screen column where to start.  This
+		matters for Tab characters.
 		The option settings of the current window are used.  This
 		matters for anything that's displayed differently, such as
 		'tabstop' and 'display'.

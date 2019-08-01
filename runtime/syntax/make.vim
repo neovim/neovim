@@ -1,8 +1,9 @@
 " Vim syntax file
 " Language:	Makefile
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		http://www.fleiner.com/vim/syntax/make.vim
-" Last Change:	2015 Feb 28
+" Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>
+" Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
+" URL:		https://github.com/vim/vim/syntax/make.vim
+" Last Change:	2019 Feb 08
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -64,7 +65,7 @@ syn match makeCmdNextLine	"\\\n."he=e-1 contained
 
 
 " Statements / Functions (GNU make)
-syn match makeStatement contained "(\(subst\|abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
+syn match makeStatement contained "(\(abspath\|addprefix\|addsuffix\|and\|basename\|call\|dir\|error\|eval\|file\|filter-out\|filter\|findstring\|firstword\|flavor\|foreach\|guile\|if\|info\|join\|lastword\|notdir\|or\|origin\|patsubst\|realpath\|shell\|sort\|strip\|subst\|suffix\|value\|warning\|wildcard\|word\|wordlist\|words\)\>"ms=s+1
 
 " Comment
 if exists("make_microsoft")
