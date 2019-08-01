@@ -1819,6 +1819,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 <	When using the ":set" command, you need to double the backslashes!
 	To avoid that use `:let` with a single quote string: >
 		let &l:define = '^\s*\ze\k\+\s*=\s*function('
+<
 
 			*'delcombine'* *'deco'* *'nodelcombine'* *'nodeco'*
 'delcombine' 'deco'	boolean (default off)
@@ -5614,7 +5615,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		set spelllang=en_us,nl,medical
 <	This means US English, Dutch and medical words are recognized.  Words
 	that are not recognized will be highlighted.
-	The word list name must not include a comma or dot.  Using a dash is
+	The word list name must consist of alphanumeric characters, a dash or
+	an underscore.  It should not include a comma or dot.  Using a dash is
 	recommended to separate the two letter language name from a
 	specification.  Thus "en-rare" is used for rare English words.
 	A region name must come last and have the form "_xx", where "xx" is

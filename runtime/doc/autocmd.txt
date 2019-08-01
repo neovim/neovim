@@ -597,7 +597,7 @@ CompleteChanged 					*CompleteChanged*
 				recursively.
 
 				Sets these |v:event| keys:
-				    completed_item
+				    completed_item	See |complete-items|.
 				    height		nr of items visible
 				    width		screen cells
 				    row			top screen row
