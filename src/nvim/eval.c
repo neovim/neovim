@@ -7772,6 +7772,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const typval_T *count = &vimvars[VV_CORES].vv_di.di_tv;
   Callback callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
+  AsyncCall *async_call = NULL;
 
   if (argvars[0].v_type == VAR_FUNC) {
     callee = argvars[0].vval.v_string;
@@ -7825,7 +7826,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     callee = vim_strsave(callee);
   }
 
-  AsyncCall *async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
+  async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
   async_call->callback = callback;
   async_call->count =
     MIN(count->vval.v_number, tv_list_len(arglists->vval.v_list));
