@@ -223,10 +223,6 @@ void process_stop(Process *proc) FUNC_ATTR_NONNULL_ALL
 
   switch (proc->type) {
     case kProcessTypeUv:
-      // Close the process's stdin. If the process doesn't close its own
-      // stdout/stderr, they will be closed when it exits(possibly due to being
-      // terminated after a timeout)
-      stream_may_close(&proc->in);
       os_proc_tree_kill(proc->pid, SIGTERM);
       break;
     case kProcessTypePty:
