@@ -392,8 +392,8 @@ endfunction
   endfun
 
   " This variable contain a dictionnary of list. Each element of the dictionnary
-  " represent an annotation system. An annotation system is a list with :
-  " - annotation file name as it's key
+  " represent an annotation system. An annotation system is a list with:
+  " - annotation file name as its key
   " - annotation file path as first element of the contained list
   " - build path as second element of the contained list
   " - annot_file_last_mod (contain the date of .annot file) as third element

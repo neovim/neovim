@@ -5343,7 +5343,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  O	message for reading a file overwrites any previous message.
 		Also for quickfix message (e.g., ":cn").
 	  s	don't give "search hit BOTTOM, continuing at TOP" or "search
-		hit TOP, continuing at BOTTOM" messages
+		hit TOP, continuing at BOTTOM" messages; when using the search
+		count do not show "W" after the count message (see S below)
 	  t	truncate file message at the start if it is too long to fit
 		on the command-line, "<" will appear in the left most column.
 		Ignored in Ex mode.

@@ -179,6 +179,12 @@ Command-line editing and history.			|cmdline-editing|
 	forward/backward one character.  The shifted right/left cursor keys
 	can be used to move forward/backward one word.  CTRL-B/CTRL-E can be
 	used to go to the begin/end of the command-line.
+	{Vi: can only alter the last character in the line}
+	{Vi: when hitting <Esc> the command-line is executed.  This is
+	unexpected for most people; therefore it was changed in Vim.  But when
+	the <Esc> is part of a mapping, the command-line is executed.  If you
+	want the Vi behaviour also when typing <Esc>, use ":cmap ^V<Esc>
+	^V^M"}
 							|cmdline-history|
 	The command-lines are remembered.  The up/down cursor keys can be used
 	to recall previous command-lines.  The 'history' option can be set to

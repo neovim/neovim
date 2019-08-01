@@ -57,7 +57,7 @@ function GetMmaIndent()
     if getline(v:lnum) =~ '[^[]*]\s*$'
         " move to the closing bracket
         call search(']','bW')
-        " and find it's partner's indent
+        " and find its partner's indent
         let ind = indent(searchpair('\[','',']','bWn'))
     " same for ( blocks
     elseif getline(v:lnum) =~ '[^(]*)$'
