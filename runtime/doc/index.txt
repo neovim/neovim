@@ -1496,7 +1496,8 @@ tag		command		action ~
 |:sbrewind|	:sbr[ewind]	split window and go to first file in the
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
-|:scriptencoding| :scripte[ncoding]	encoding used in sourced Vim script
+|:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
+|:scriptversion|  :scriptv[ersion]   version of Vim script used
 |:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already

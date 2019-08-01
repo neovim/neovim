@@ -2245,6 +2245,7 @@ py3eval({expr})			any	evaluate |python3| expression
 pyxeval({expr})			any	evaluate |python_x| expression
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
+readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
 readfile({fname} [, {binary} [, {max}]])
 				List	get list of lines from file {fname}
 reg_executing()			Number	get the executing register name
@@ -4769,6 +4770,9 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 
 		If the expansion fails, the result is an empty String or List.
 
+		You can also use |readdir()| if you need to do complicated
+		things, such as limiting the number of matches.
+
 		A name for a non-existing file is not included.  A symbolic
 		link is only included if it points to an existing file.
 		However, when the {alllinks} argument is present and it is
@@ -6472,6 +6476,17 @@ readfile({fname} [, {binary} [, {max}]])
 		When the file can't be opened an error message is given and
 		the result is an empty list.
 		Also see |writefile()|.
+
+							*readdir()*
+readdir({directory} [, {expr}])
+		Return a list with file and directory names in {directory}.
+		You can also use |glob()| if you don't need to do complicated
+		things, such as limiting the number of matches.
+
+		When {expr} is omitted all entries are included.
+		When {expr} is given, it is evaluated to check what to do:
+			If {expr} results in -1 then no further entries will
+			be handled.
 
 reg_executing()						*reg_executing()*
 		Returns the single letter name of the register being executed.
