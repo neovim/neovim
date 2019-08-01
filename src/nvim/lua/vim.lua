@@ -184,20 +184,18 @@ end
 
 -- Used by nvim_grep().
 local function _grep(pattern, path, global)
-  if type(pattern) ~= 'string' then
-    error('invalid pattern, expected string')
-  elseif type(path) ~= 'string' then
-    error('invalid path, expected string')
-  elseif type(global) ~= 'boolean' then
-    error('invalid value for global flag, expected boolean')
-  end
   local g = global and 'g' or ''
-  vim.api.nvim_command('silent! vimgrep /'..pattern..'/j'..g..' '..path)
-  local results = vim.api.nvim_call_function('getqflist', {})
-  for _, result in ipairs(results) do
-    result.fname = vim.api.nvim_buf_get_name(result.bufnr)
-  end
-  return results
+  local vimgrep_cmd = ([[
+    try
+      silent vimgrep /${pattern}/j${g} ${path}
+    catch /E480:/
+    endtry
+  ]]):gsub('${pattern}', pattern)
+     :gsub('${g}', g)
+     :gsub('${path}', path)
+  vim.api.nvim_command(vimgrep_cmd)
+  return vim.api.nvim_eval(
+      [[map(getqflist(), 'extend(v:val, {"fname": bufname(v:val.bufnr)})')]])
 end
 
 -- Creates a new nvim job (for async calls) and returns its id.
