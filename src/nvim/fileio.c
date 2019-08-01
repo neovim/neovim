@@ -4840,6 +4840,8 @@ buf_check_timestamp(
           || time_differs(file_info.stat.st_mtim.tv_sec, buf->b_mtime)
           || (int)file_info.stat.st_mode != buf->b_orig_mode
           )) {
+    const long prev_b_mtime = buf->b_mtime;
+
     retval = 1;
 
     // set b_mtime to stop further warnings (e.g., when executing
@@ -4903,9 +4905,12 @@ buf_check_timestamp(
           return 2;
       }
       if (!n) {
-        if (*reason == 'd')
-          mesg = _("E211: File \"%s\" no longer available");
-        else {
+        if (*reason == 'd') {
+          // Only give the message once.
+          if (prev_b_mtime != -1) {
+            mesg = _("E211: File \"%s\" no longer available");
+          }
+        } else {
           helpmesg = TRUE;
           can_reload = TRUE;
           /*
