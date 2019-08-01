@@ -1880,6 +1880,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		context:{n}	Use a context of {n} lines between a change
 				and a fold that contains unchanged lines.
 				When omitted a context of six lines is used.
+				When using zero the context is actually one,
+				since folds require a line in between, also
+				for a deleted line.
 				See |fold-diff|.
 
 		iblank		Ignore changes where lines are all blank.  Adds

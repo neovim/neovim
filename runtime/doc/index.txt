@@ -155,6 +155,20 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_s|		CTRL-X s	spelling suggestions
 {not available when compiled without the |+insert_expand| feature}
 
+commands in completion mode (see |popupmenu-keys|)
+
+|complete_CTRL-E| CTRL-E	stop completion and go back to original text
+|complete_CTRL-Y| CTRL-Y	accept selected match and stop completion
+		CTRL-L		insert one character from the current match
+		<CR>		insert currently selected match
+		<BS>		delete one character and redo search
+		CTRL-H		same as <BS>
+		<Up>		select the previous match
+		<Down>		select the next match
+		<PageUp>	select a match several entries back
+		<PageDown>	select a match several entries forward
+		other		stop completion and insert the typed character
+
 ==============================================================================
 2. Normal mode						*normal-index*
 
@@ -838,6 +852,17 @@ tag		char	      note action in Normal mode	~
 |zz|		zz		   redraw, cursor line at center of window
 |z<Left>|	z<Left>		   same as "zh"
 |z<Right>|	z<Right>	   same as "zl"
+
+==============================================================================
+2.6 Operator-pending mode			*operator-pending-index*
+
+These can be used after an operator, but before a {motion} has been entered.
+
+tag		char		action in Insert mode	~
+-----------------------------------------------------------------------
+|o_v|		v		force operator to work characterwise
+|o_V|		V		force operator to work linewise
+|o_CTRL-V|	CTRL-V		force operator to work blockwise
 
 ==============================================================================
 3. Visual mode						*visual-index*

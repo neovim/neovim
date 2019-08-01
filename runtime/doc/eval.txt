@@ -2576,9 +2576,9 @@ assert_false({actual} [, {msg}])				*assert_false()*
 		"Expected False but got {actual}" is produced.
 
 assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
-		This asserts number values.  When {actual}  is lower than
-		{lower} or higher than {upper} an error message is added to
-		|v:errors|.
+		This asserts number and |Float| values.  When {actual}  is lower
+		than {lower} or higher than {upper} an error message is added
+		to |v:errors|.  Also see |assert-return|.
 		When {msg} is omitted an error in the form
 		"Expected range {lower} - {upper}, but got {actual}" is
 		produced.
@@ -4631,7 +4631,7 @@ gettabinfo([{arg}])					*gettabinfo()*
 			tabnr		tab page number.
 			variables	a reference to the dictionary with
 					tabpage-local variables
-			windows		List of |window-ID|s in the tag page.
+			windows		List of |window-ID|s in the tab page.
 
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page

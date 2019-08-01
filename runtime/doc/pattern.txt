@@ -1201,7 +1201,7 @@ x	A single character, with no special meaning, matches itself
 \%u20AC	Matches the character specified with up to four hexadecimal
 	characters.
 \%U1234abcd	Matches the character specified with up to eight hexadecimal
-	characters.
+	characters, up to 0x7fffffff
 
 ==============================================================================
 7. Ignoring case in a pattern					*/ignorecase*
