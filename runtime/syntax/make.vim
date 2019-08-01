@@ -3,7 +3,7 @@
 " Maintainer:	Roland Hieber <rohieb+vim-iR0jGdkV@rohieb.name>
 " Previous Maintainer:	Claudio Fleiner <claudio@fleiner.com>
 " URL:		https://github.com/vim/vim/syntax/make.vim
-" Last Change:	2019 Feb 08
+" Last Change:	2019 Apr 02
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -19,7 +19,7 @@ syn match makeSpecial	"^\s*[@+-]\+"
 syn match makeNextLine	"\\\n\s*"
 
 " some directives
-syn match makePreCondit	"^ *\(ifeq\>\|else\>\|endif\>\|ifneq\>\|ifdef\>\|ifndef\>\)"
+syn match makePreCondit	"^ *\(ifn\=\(eq\|def\)\>\|else\(\s\+ifn\=\(eq\|def\)\)\=\>\|endif\>\)"
 syn match makeInclude	"^ *[-s]\=include"
 syn match makeStatement	"^ *vpath"
 syn match makeExport    "^ *\(export\|unexport\)\>"
@@ -32,8 +32,8 @@ syn region makeDefine start="^\s*define\s" end="^\s*endef\s*\(#.*\)\?$" contains
 
 " Microsoft Makefile specials
 syn case ignore
-syn match makeInclude	"^! *include"
-syn match makePreCondit "! *\(cmdswitches\|error\|message\|include\|if\|ifdef\|ifndef\|else\|elseif\|else if\|else\s*ifdef\|else\s*ifndef\|endif\|undef\)\>"
+syn match makeInclude	"^!\s*include"
+syn match makePreCondit "^!\s*\(cmdswitches\|error\|message\|include\|if\|ifdef\|ifndef\|else\|else\s*if\|else\s*ifdef\|else\s*ifndef\|endif\|undef\)\>"
 syn case match
 
 " identifiers
@@ -101,17 +101,17 @@ syn sync match makeCommandSync groupthere makeCommands "^[A-Za-z0-9_./$()%-][A-Z
 " Define the default highlighting.
 " Only when an item doesn't have highlighting yet
 
-hi def link makeNextLine		makeSpecial
+hi def link makeNextLine	makeSpecial
 hi def link makeCmdNextLine	makeSpecial
-hi def link makeSpecTarget		Statement
+hi def link makeSpecTarget	Statement
 if !exists("make_no_commands")
-hi def link makeCommands		Number
+hi def link makeCommands	Number
 endif
-hi def link makeImplicit		Function
+hi def link makeImplicit	Function
 hi def link makeTarget		Function
 hi def link makeInclude		Include
-hi def link makePreCondit		PreCondit
-hi def link makeStatement		Statement
+hi def link makePreCondit	PreCondit
+hi def link makeStatement	Statement
 hi def link makeIdent		Identifier
 hi def link makeSpecial		Special
 hi def link makeComment		Comment
