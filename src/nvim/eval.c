@@ -7659,14 +7659,14 @@ static inline bool ctx_dict_add_userfunc(Dictionary *ctx, char **name)
   Array rv = EXEC_LUA_STATIC(
       "return vim._add_userfunc(...)", args, &err).data.array;
   xfree(args.items);
-  bool success = false;
-  if (!ERROR_SET(&err)) {
-    success = true;
+  bool success = true;
+  if (ERROR_SET(&err)) {
+    success = false;
+    EMSG(err.msg);
+  } else {
     api_free_dictionary(*ctx);
     *ctx = rv.items[0].data.dictionary;
     *name = rv.items[1].data.string.data;
-  } else {
-    EMSG(err.msg);
   }
   api_clear_error(&err);
   return success;
