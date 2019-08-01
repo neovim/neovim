@@ -38,7 +38,8 @@ RUN mkdir -p $HOME/vim && \
     git clone https://github.com/vim/vim && \
     cd vim && \
     git checkout ${VIM_VERSION} && \
-    make -j 4 install
+    make -j 4 && \
+    make install
 
 # linuxbrew (homebrew)
 RUN mkdir -p /home/linuxbrew/.linuxbrew &&\
@@ -53,4 +54,5 @@ RUN /home/linuxbrew/.linuxbrew/bin/brew install golang
 
 # clean up
 RUN /home/linuxbrew/.linuxbrew/bin/brew cleanup && \
-    rm -rf ~/.cache
+    rm -rf ~/.cache && \
+    rm -rf $HOME/vim
