@@ -1028,10 +1028,11 @@ tag		command		action in Command-line editing mode	~
 				command-line from history.
 |c_CTRL-Q|	CTRL-Q		same as CTRL-V, unless it's used for terminal
 				control flow
-|c_CTRL-R|	CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+|c_CTRL-R|	CTRL-R {regname}
 				insert the contents of a register or object
 				under the cursor as if typed
-|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {regname}
+|c_CTRL-R_CTRL-O| CTRL-R CTRL-O {regname}
 				insert the contents of a register or object
 				under the cursor literally
 		CTRL-S		(used for terminal control flow)

@@ -1,7 +1,8 @@
 " Vim filetype plugin file
 " Language:	cobol
-" Author:	Tim Pope <vimNOSPAM@tpope.info>
-" Last Update:	By ZyX: use shiftwidth()
+" Maintainer: Ankit Jain <ajatkj@yahoo.co.in>
+"     (formerly Tim Pope <vimNOSPAM@tpope.info>)
+" Last Update:	By Ankit Jain (changed maintainer) on 22.03.2019
 
 " Insert mode mappings: <C-T> <C-D> <Tab>
 " Normal mode mappings: < > << >> [[ ]] [] ][

@@ -7,6 +7,8 @@
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20190316  - Make use of searchpairpos for nested if sections
+"                      fixes #11
 "          20190201  - Better check for closing if sections
 "          20180724  - make check for zsh syntax more rigid (needs word-boundaries)
 "          20180326  - better support for line continuation
@@ -115,7 +117,7 @@ function! GetShIndent()
   " Current line is a endif line, so get indent from start of "if condition" line
   " TODO: should we do the same for other "end" lines?
   if curline =~ '^\s*\%(fi\)\s*\%(#.*\)\=$'
-    let previous_line = search('if.\{-\};\s*then\s*\%(#.*\)\=$', 'bnW')
+    let previous_line = searchpair('\<if\>', '', '\<fi\>', 'bnW')
     if previous_line > 0
       let ind = indent(previous_line)
     endif

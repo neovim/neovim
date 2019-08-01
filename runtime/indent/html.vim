@@ -2,7 +2,7 @@
 " Header: "{{{
 " Maintainer:	Bram Moolenaar
 " Original Author: Andy Wokula <anwoku@yahoo.de>
-" Last Change:	2018 Mar 28
+" Last Change:	2019 Mar 20
 " Version:	1.0
 " Description:	HTML indent script with cached state for faster indenting on a
 "		range of lines.
@@ -902,11 +902,18 @@ func! s:InsideTag(foundHtmlString)
   "{{{
   if a:foundHtmlString
     " Inside an attribute string.
-    " Align with the previous line or use an external function.
+    " Align with the opening quote or use an external function.
     let lnum = v:lnum - 1
     if lnum > 1
       if exists('b:html_indent_tag_string_func')
         return b:html_indent_tag_string_func(lnum)
+      endif
+      " If there is a double quote in the previous line, indent with the
+      " character after it.
+      if getline(lnum) =~ '"'
+	call cursor(lnum, 0)
+	normal f"
+	return virtcol('.')
       endif
       return indent(lnum)
     endif
