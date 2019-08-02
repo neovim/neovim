@@ -791,13 +791,13 @@ function module.parse_context(ctx)
       return type(v) == 'table'
     end, module.call('msgpackparse', ctx[item]))
   end
-  parsed['buflist'] = parsed['buflist'][1]
+  ctx['buflist'] = ctx['buflist'][1]
   return map(function(v)
     if #v == 0 then
-      return nil
+      v = nil
     end
     return v
-  end, parsed)
+  end, ctx)
 end
 
 module = global_helpers.tbl_extend('error', module, global_helpers)

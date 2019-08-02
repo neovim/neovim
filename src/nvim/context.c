@@ -10,6 +10,7 @@
 #include "nvim/shada.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/msgpack_rpc/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "context.c.generated.h"
@@ -275,51 +276,99 @@ static inline void ctx_restore_funcs(Context *ctx)
   }
 }
 
-/// Convert msgpack_sbuffer to readfile()-style array.
+/// Unpack a msgpack_sbuffer into an Array of API Objects.
 ///
-/// @param[in]  sbuf  msgpack_sbuffer to convert.
+/// @param[in]  sbuf  msgpack_sbuffer to read from.
 ///
-/// @return readfile()-style array representation of "sbuf".
+/// @return Array of API Objects unpacked from given msgpack_sbuffer.
 static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
 {
-  list_T *const list = tv_list_alloc(kListLenMayKnow);
-  tv_list_append_string(list, "", 0);
-  if (sbuf.size > 0) {
-    encode_list_write(list, sbuf.data, sbuf.size);
+  Array rv = ARRAY_DICT_INIT;
+
+  if (sbuf.size == 0) {
+    return rv;
   }
 
-  typval_T list_tv = (typval_T) {
-    .v_lock = VAR_UNLOCKED,
-    .v_type = VAR_LIST,
-    .vval.v_list = list
-  };
+  msgpack_unpacker *const unpacker = msgpack_unpacker_new(IOSIZE);
+  if (unpacker == NULL) {
+    EMSG(_(e_outofmem));
+    return rv;
+  }
 
-  Array array = vim_to_object(&list_tv).data.array;
-  tv_clear(&list_tv);
-  return array;
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+
+  if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
+    EMSG(_(e_outofmem));
+    goto exit;
+  }
+
+  bool did_try_to_free = false;
+  size_t offset = 0;
+  while (offset < sbuf.size) {
+    size_t read_bytes = MIN(IOSIZE, sbuf.size - offset);
+    memcpy(msgpack_unpacker_buffer(unpacker), sbuf.data + offset, read_bytes);
+    msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
+    while (unpacker->off < unpacker->used) {
+      Object obj = OBJECT_INIT;
+      msgpack_unpack_return ret = msgpack_unpacker_next(unpacker, &unpacked);
+      switch (ret) {
+        case MSGPACK_UNPACK_SUCCESS:
+          msgpack_rpc_to_object(&unpacked.data, &obj);
+          ADD(rv, obj);
+          break;
+        case MSGPACK_UNPACK_CONTINUE:
+          EMSG("Incomplete msgpack string");
+          goto exit;
+        case MSGPACK_UNPACK_EXTRA_BYTES:
+          EMSG("Extra bytes in msgpack string");
+          goto exit;
+        case MSGPACK_UNPACK_PARSE_ERROR:
+          EMSG("Failed to parse msgpack string");
+          goto exit;
+        case MSGPACK_UNPACK_NOMEM_ERROR:
+          if (!did_try_to_free) {
+            did_try_to_free = true;
+            try_to_free_memory();
+          } else {
+            EMSG(_(e_outofmem));
+            goto exit;
+          }
+          break;
+      }
+    }
+    offset += read_bytes;
+  }
+
+exit:
+  msgpack_unpacked_destroy(&unpacked);
+  msgpack_unpacker_free(unpacker);
+  return rv;
 }
 
-/// Convert readfile()-style array to msgpack_sbuffer.
+/// Pack API Objects from an Array into a msgpack_sbuffer.
 ///
-/// @param[in]  array  readfile()-style array to convert.
+/// @param[in]  array  Array of API Objects to pack.
 ///
-/// @return msgpack_sbuffer with conversion result.
+/// @return msgpack_sbuffer with packed objects.
 static inline msgpack_sbuffer array_to_sbuf(Array array)
 {
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
+  msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
 
-  typval_T list_tv;
-  Error err = ERROR_INIT;
-  object_to_vim(ARRAY_OBJ(array), &list_tv, &err);
-
-  if (!encode_vim_list_to_buf(list_tv.vval.v_list, &sbuf.size, &sbuf.data)) {
-    EMSG(_("E474: Failed to convert list to msgpack string buffer"));
+  for (size_t i = 0; i < array.size; i++) {
+    Error err = ERROR_INIT;
+    typval_T tv = TV_INITIAL_VALUE;
+    // TODO(abdelhakeem): refactor ShaDa module to avoid stuff like this
+    if (object_to_vim(array.items[i], &tv, &err)) {
+      encode_vim_to_msgpack(packer, &tv, "");
+      tv_clear(&tv);
+    }
+    api_clear_error(&err);
   }
-  sbuf.alloc = sbuf.size;
 
-  tv_clear(&list_tv);
-  api_clear_error(&err);
+  msgpack_packer_free(packer);
   return sbuf;
 }
 
