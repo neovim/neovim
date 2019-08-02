@@ -3108,7 +3108,7 @@ in your vimrc, and :set fdm=syntax.  I suggest doing the latter via a
 modeline at the end of your LaTeX file: >
 	% vim: fdm=syntax
 If your system becomes too slow, then you might wish to look into >
-	https://vimhelp.appspot.com/vim_faq.txt.html#faq-29.7
+	https://vimhelp.org/vim_faq.txt.html#faq-29.7
 <
 						*g:tex_nospell*
  Tex: No Spell Checking Wanted~

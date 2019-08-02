@@ -266,9 +266,16 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			after loading your .vimrc file.  With this command it
 			can be done earlier.
 
-			Packages will be loaded only once.  After this command
-			it won't happen again.  When the optional ! is added
-			this command will load packages even when done before.
+			Packages will be loaded only once.  Using
+			`:packloadall` a second time will have no effect.
+			When the optional ! is added this command will load
+			packages even when done before.
+
+			Note that when using `:packloadall` in the |vimrc|
+			file, the 'runtimepath' option is updated, and later
+			all plugins in 'runtimepath' will be loaded, which
+			means they are loaded again.  Plugins are expected to
+			handle that.
 
 			An error only causes sourcing the script where it
 			happens to be aborted, further plugins will be loaded.
