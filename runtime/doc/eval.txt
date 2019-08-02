@@ -2889,7 +2889,7 @@ call_async({func}, {args}[, {opts}])     		*call_async()*
 		{opt} is a dictionary specifying some options of the call,
 		it can have the following key-value pairs:
 			done	  callback function
-			context	  context dictionary (|context-dict|)
+			context	  context dictionary
 
 		For more info see |multiproc-usage|.
 
