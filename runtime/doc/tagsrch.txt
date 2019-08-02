@@ -303,7 +303,6 @@ message is given.
 							*tag-preview*
 The tag match list can also be used in the preview window.  The commands are
 the same as above, with a "p" prepended.
-{not available when compiled without the |+quickfix| feature}
 
 							*:pts* *:ptselect*
 :pts[elect][!] [name]	Does ":tselect[!] [name]" and shows the new tag in a

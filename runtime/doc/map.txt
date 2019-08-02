@@ -790,8 +790,6 @@ g@{motion}		Call the function set by the 'operatorfunc' option.
 			    "block"	{motion} was |blockwise-visual|
 			Although "block" would rarely appear, since it can
 			only result from Visual mode where "g@" is not useful.
-			{not available when compiled without the |+eval|
-			feature}
 
 Here is an example that counts the number of spaces with <F4>: >
 

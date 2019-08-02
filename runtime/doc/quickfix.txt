@@ -1088,8 +1088,6 @@ need to write down a "todo" list.
 				If you use ":compiler foo" in "file.foo" and
 				then ":compiler! bar" in another buffer, Vim
 				will keep on using "foo" in "file.foo".
-				{not available when compiled without the
-				|+eval| feature}
 
 
 The Vim plugins in the "compiler" directory will set options to use the

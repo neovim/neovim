@@ -257,7 +257,6 @@ argument.
 							*-D*
 -D		Debugging.  Go to debugging mode when executing the first
 		command from a script. |debug-mode|
-		{not available when compiled without the |+eval| feature}
 
 							*-n*
 -n		No |swap-file| will be used.  Recovery after a crash will be

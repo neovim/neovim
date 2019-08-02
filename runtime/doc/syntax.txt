@@ -3985,7 +3985,6 @@ This will make each {} block form one fold.
 The fold will start on the line where the item starts, and end where the item
 ends.  If the start and end are within the same line, there is no fold.
 The 'foldnestmax' option limits the nesting of syntax folds.
-{not available when Vim was compiled without |+folding| feature}
 
 
 			*:syn-contains* *E405* *E406* *E407* *E408* *E409*

@@ -294,7 +294,6 @@ More information about packages can be found here: |packages|.
 Vim's functionality can be extended by adding plugins.  A plugin is nothing
 more than a Vim script file that is loaded automatically when Vim starts.  You
 can add a plugin very easily by dropping it in your plugin directory.
-{not available when Vim was compiled without the |+eval| feature}
 
 There are two types of plugins:
 

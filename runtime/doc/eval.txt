@@ -5473,8 +5473,6 @@ libcall({libname}, {funcname}, {argument})
 		the DLL is not in the usual places.
 		For Unix: When compiling your own plugins, remember that the
 		object code must be compiled as position-independent ('PIC').
-		{only in Win32 and some Unix versions, when the |+libcall|
-		feature is present}
 		Examples: >
 			:echo libcall("libc.so", "getenv", "HOME")
 <
@@ -5482,8 +5480,6 @@ libcall({libname}, {funcname}, {argument})
 libcallnr({libname}, {funcname}, {argument})
 		Just like |libcall()|, but used for a function that returns an
 		int instead of a string.
-		{only in Win32 on some Unix versions, when the |+libcall|
-		feature is present}
 		Examples: >
 			:echo libcallnr("/usr/lib/libc.so", "getpid", "")
 			:call libcallnr("libc.so", "printf", "Hello World!\n")
@@ -6411,7 +6407,6 @@ py3eval({expr})						*py3eval()*
 		Lists are represented as Vim |List| type.
 		Dictionaries are represented as Vim |Dictionary| type with
 		keys converted to strings.
-		{only available when compiled with the |+python3| feature}
 
 							*E858* *E859*
 pyeval({expr})						*pyeval()*
@@ -6422,7 +6417,6 @@ pyeval({expr})						*pyeval()*
 		Lists are represented as Vim |List| type.
 		Dictionaries are represented as Vim |Dictionary| type,
 		non-string keys result in error.
-		{only available when compiled with the |+python| feature}
 
 pyxeval({expr})						*pyxeval()*
 		Evaluate Python expression {expr} and return its result
@@ -6556,7 +6550,6 @@ remote_expr({server}, {string} [, {idvar} [, {timeout}]])
 		seconds.  Otherwise a timeout of 600 seconds is used.
 		See also |clientserver| |RemoteReply|.
 		This function is not available in the |sandbox|.
-		{only available when compiled with the |+clientserver| feature}
 		Note: Any errors will cause a local error message to be issued
 		and the result will be the empty string.
 
@@ -6592,7 +6585,6 @@ remote_peek({serverid} [, {retvar}])		*remote_peek()*
 		Returns -1 if something is wrong.
 		See also |clientserver|.
 		This function is not available in the |sandbox|.
-		{only available when compiled with the |+clientserver| feature}
 		Examples: >
 			:let repl = ""
 			:echo "PEEK: ".remote_peek(id, "repl").": ".repl
@@ -6603,7 +6595,6 @@ remote_read({serverid}, [{timeout}])			*remote_read()*
 		reply is available.
 		See also |clientserver|.
 		This function is not available in the |sandbox|.
-		{only available when compiled with the |+clientserver| feature}
 		Example: >
 			:echo remote_read(id)
 <
@@ -6617,7 +6608,6 @@ remote_send({server}, {string} [, {idvar}])
 		there.
 		See also |clientserver| |RemoteReply|.
 		This function is not available in the |sandbox|.
-		{only available when compiled with the |+clientserver| feature}
 
 		Note: Any errors will be reported in the server and may mess
 		up the display.
@@ -6634,7 +6624,6 @@ remote_send({server}, {string} [, {idvar}])
 remote_startserver({name})
 		Become the server {name}.  This fails if already running as a
 		server, when |v:servername| is not empty.
-		{only available when compiled with the |+clientserver| feature}
 
 remove({list}, {idx} [, {end}])				*remove()*
 		Without {end}: Remove the item at {idx} from |List| {list} and
@@ -6806,7 +6795,6 @@ search({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*search()*
 		{timeout} is 500 the search stops after half a second.
 		The value must not be negative.  A zero value is like not
 		giving the argument.
-		{only available when compiled with the |+reltime| feature}
 
 							*search()-sub-match*
 		With the 'p' flag the returned value is one more than the
@@ -6982,7 +6970,6 @@ searchpos({pattern} [, {flags} [, {stopline} [, {timeout}]]])	*searchpos()*
 server2client({clientid}, {string})			*server2client()*
 		Send a reply string to {clientid}.  The most recent {clientid}
 		that sent a string can be retrieved with expand("<client>").
-		{only available when compiled with the |+clientserver| feature}
 		Note:
 		This id has to be stored before the next command can be
 		received.  I.e. before returning from the received command and
