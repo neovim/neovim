@@ -676,7 +676,7 @@ After doing this once, Nvim sets the $VIMRUNTIME environment variable.
 In case you need the value of $VIMRUNTIME in a shell (e.g., for a script that
 greps in the help files) you might be able to use this: >
 
-	VIMRUNTIME="$(nvim -e --cmd 'echo $VIMRUNTIME|quit' 2>&1)"
+	VIMRUNTIME="$(nvim --clean --headless --cmd 'echo $VIMRUNTIME|q')"
 
 ==============================================================================
 4. Suspending						*suspend*

@@ -19,7 +19,7 @@ endif
 if exists("g:rustc_makeprg_no_percent") && g:rustc_makeprg_no_percent != 0
 	CompilerSet makeprg=rustc
 else
-	CompilerSet makeprg=rustc\ \%
+	CompilerSet makeprg=rustc\ \%:S
 endif
 
 " Old errorformat (before nightly 2016/08/10)

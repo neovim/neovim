@@ -189,16 +189,16 @@ To see the LuaJIT version: >
     :lua print(jit.version)
 <
 
-:[range]lua << {endmarker}
+:[range]lua << [endmarker]
 {script}
 {endmarker}
-			Execute Lua script {script}.
+                        Execute Lua script {script}.  Useful for including Lua
+                        code in Vim scripts.
 
-{endmarker} must NOT be preceded by any white space.  If {endmarker} is
-omitted from after the "<<", a dot '.' must be used after {script}, like
-for the |:append| and |:insert| commands.
-This form of the |:lua| command is mainly useful for including Lua code
-in Vim scripts.
+The {endmarker} must NOT be preceded by any white space.
+
+If [endmarker] is omitted from after the "<<", a dot '.' must be used after
+{script}, like for the |:append| and |:insert| commands.
 
 Example:
 >

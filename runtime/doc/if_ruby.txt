@@ -19,15 +19,19 @@ downloading Ruby there.
 :rub[y] {cmd}		Execute Ruby command {cmd}.  A command to try it out: >
 				:ruby print "Hello"
 
-:rub[y] << {endpattern}
+:rub[y] << [endpattern]
 {script}
 {endpattern}
 			Execute Ruby script {script}.
-			{endpattern} must NOT be preceded by any white space.
-			If {endpattern} is omitted, it defaults to a dot '.'
-			like for the |:append| and |:insert| commands.  This
-			form of the |:ruby| command is mainly useful for
+			The {endpattern} after {script} must NOT be preceded
+			by any white space.
+
+			If [endpattern] is omitted, it defaults to a dot '.'
+			like for the |:append| and |:insert| commands.
+
+			This form of the |:ruby| command is mainly useful for
 			including ruby code in vim scripts.
+
 			Note: This command doesn't work when the Ruby feature
 			wasn't compiled in.  To avoid errors, see
 			|script-here|.

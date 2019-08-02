@@ -325,7 +325,7 @@ After setting this variable, reload the syntax script: >
 FINDING THE DIFFERENCES					*diff-diffexpr*
 
 The 'diffexpr' option can be set to use something else than the standard
-"diff" program to compare two files and find the differences.
+"diff" program to compare two files and find the differences. *E959*
 
 When 'diffexpr' is empty, Vim uses this command to find the differences
 between file1 and file2: >

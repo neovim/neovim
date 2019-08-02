@@ -22,7 +22,7 @@ CompilerSet errorformat=
 		\%-Z%p%^%.%#,
 		\%-G%.%#,
 " Compiler call
-CompilerSet makeprg=df\ /nologo\ /noobj\ /c\ %
+CompilerSet makeprg=df\ /nologo\ /noobj\ /c\ %:S
 " Visual fortran defaults to printing output on stderr
 " Adjust option shellpipe accordingly
 

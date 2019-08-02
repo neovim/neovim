@@ -3,10 +3,13 @@
 " Maintainer:          Christian Brabandt <cb@256bit.org>
 " Original Author:     Nikolai Weibull <now@bitwi.se>
 " Previous Maintainer: Peter Aronoff <telemachus@arpinum.org>
-" Latest Revision:     2019-04-27
+" Latest Revision:     2019-07-26
 " License:             Vim (see :h license)
 " Repository:          https://github.com/chrisbra/vim-sh-indent
 " Changelog:
+"          20190726  - Correctly skip if keywords in syntax comments
+"                      (issue #17)
+"          20190603  - Do not indent in zsh filetypes with an `if` in comments
 "          20190428  - De-indent fi correctly when typing with
 "                      https://github.com/chrisbra/vim-sh-indent/issues/15
 "          20190325  - Indent fi; correctly
@@ -80,8 +83,9 @@ function! GetShIndent()
   let ind = indent(lnum)
 
   " Check contents of previous lines
+  " should not apply to e.g. commented lines
   if line =~ '^\s*\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>' ||
-        \  (&ft is# 'zsh' && line =~ '\<\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>')
+        \  (&ft is# 'zsh' && line =~ '^\s*\<\%(if\|then\|do\|else\|elif\|case\|while\|until\|for\|select\|foreach\)\>')
     if !s:is_end_expression(line)
       let ind += s:indent_value('default')
     endif
@@ -129,7 +133,8 @@ function! GetShIndent()
   " Current line is a endif line, so get indent from start of "if condition" line
   " TODO: should we do the same for other "end" lines?
   if curline =~ '^\s*\%(fi\);\?\s*\%(#.*\)\=$'
-    let previous_line = searchpair('\<if\>', '', '\<fi\>\zs', 'bnW')
+    let ind = indent(v:lnum)
+    let previous_line = searchpair('\<if\>', '', '\<fi\>\zs', 'bnW', 'synIDattr(synID(line("."),col("."), 1),"name") =~? "comment"')
     if previous_line > 0
       let ind = indent(previous_line)
     endif

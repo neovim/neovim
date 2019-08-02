@@ -1,9 +1,10 @@
 "     Language: xml
 "   Repository: https://github.com/chrisbra/vim-xml-ftplugin
-" Last Changed: Feb 04, 2019
+" Last Changed: July 27, 2019
 "   Maintainer: Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Johannes Zellner <johannes@zellner.org>
 " Last Change:
+" 20190726 - Correctly handle non-tagged data
 " 20190204 - correctly handle wrap tags
 "            https://github.com/chrisbra/vim-xml-ftplugin/issues/5
 " 20190128 - Make sure to find previous tag
@@ -33,6 +34,8 @@ set cpo&vim
 " Attention: Parameter use_syntax_check is used by the docbk.vim indent script
 setlocal indentexpr=XmlIndentGet(v:lnum,1)
 setlocal indentkeys=o,O,*<Return>,<>>,<<>,/,{,},!^F
+" autoindent: used when the indentexpr returns -1
+setlocal autoindent
 
 if !exists('b:xml_indent_open')
     let b:xml_indent_open = '.\{-}<[:A-Z_a-z]'
@@ -103,37 +106,43 @@ fun! XmlIndentGet(lnum, use_syntax_check)
         return 0
     endif
     " Find previous line with a tag (regardless whether open or closed,
-    " but always start restrict the match to a line before the current one
+    " but always restrict the match to a line before the current one
     " Note: xml declaration: <?xml version="1.0"?>
     "       won't be found, as it is not a legal tag name
-    let ptag_pattern = '\%(.\{-}<[/:A-Z_a-z]\)'. '\%(\&\%<'. line('.').'l\)'
+    let ptag_pattern = '\%(.\{-}<[/:A-Z_a-z]\)'. '\%(\&\%<'. a:lnum .'l\)'
     let ptag = search(ptag_pattern, 'bnW')
     " no previous tag
     if ptag == 0
         return 0
     endif
 
-    let syn_name = ''
+    let pline = getline(ptag)
+    let pind  = indent(ptag)
+
+    let syn_name_start = '' " Syntax element at start of line (excluding whitespace)
+    let syn_name_end = ''   " Syntax element at end of line
+    let curline = getline(a:lnum)
     if a:use_syntax_check
         let check_lnum = <SID>XmlIndentSynCheck(ptag)
         let check_alnum = <SID>XmlIndentSynCheck(a:lnum)
         if check_lnum == 0 || check_alnum == 0
             return indent(a:lnum)
         endif
-        let syn_name = synIDattr(synID(a:lnum, strlen(getline(a:lnum)) - 1, 1), 'name')
+        let syn_name_end   = synIDattr(synID(a:lnum, strlen(curline) - 1, 1), 'name')
+        let syn_name_start = synIDattr(synID(a:lnum, match(curline, '\S') + 1, 1), 'name')
     endif
 
-    if syn_name =~ 'Comment'
+    if syn_name_end =~ 'Comment' && syn_name_start =~ 'Comment'
         return <SID>XmlIndentComment(a:lnum)
+    elseif empty(syn_name_start) && empty(syn_name_end)
+        " non-xml tag content: use indent from 'autoindent'
+        return pind + shiftwidth()
     endif
 
-    let pline = getline(ptag)
-    let pind  = indent(ptag)
     " Get indent from previous tag line
     let ind = <SID>XmlIndentSum(pline, -1, pind)
-    let t_ind = ind
     " Determine indent from current line
-    let ind = <SID>XmlIndentSum(getline(a:lnum), 0, ind)
+    let ind = <SID>XmlIndentSum(curline, 0, ind)
     return ind
 endfun
 
@@ -148,7 +157,7 @@ func! <SID>HasNoTagEnd(line)
 endfunc
 
 " return indent for a commented line,
-" the middle part might be indented on additional level
+" the middle part might be indented one additional level
 func! <SID>XmlIndentComment(lnum)
     let ptagopen = search(b:xml_indent_open, 'bnW')
     let ptagclose = search(b:xml_indent_close, 'bnW')

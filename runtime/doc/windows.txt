@@ -138,6 +138,10 @@ CTRL-W CTRL-S						*CTRL-W_CTRL-S*
 		Note: CTRL-S does not work on all terminals and might block
 		further input, use CTRL-Q to get going again.
 		Also see |++opt| and |+cmd|.
+							*E242*
+		Be careful when splitting a window in an autocommand, it may
+		mess up the window layout if this happens while making other
+		window layout changes.
 
 CTRL-W CTRL-V						*CTRL-W_CTRL-V*
 CTRL-W v						*CTRL-W_v*
@@ -635,6 +639,8 @@ can also get to them with the buffer list commands, like ":bnext".
 		|:vertical| was prepended).
 		Buf/Win Enter/Leave autocommands are not executed for the new
 		windows here, that's only done when they are really entered.
+		If autocommands change the window layout while this command is
+		busy an error will be given. *E249*
 
 :[N]sa[rgument][!] [++opt] [+cmd] [N]			*:sa* *:sargument*
 		Short for ":split | argument [N]": split window and go to Nth

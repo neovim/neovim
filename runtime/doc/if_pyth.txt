@@ -19,18 +19,17 @@ Commands						*python-commands*
 			the `:python` command is working: >
 				:python print "Hello"
 
-:[range]py[thon] << {endmarker}
+:[range]py[thon] << [endmarker]
 {script}
 {endmarker}
-			Execute Python script {script}.
-			Note: This command doesn't work when Python isn't
-			available.  To avoid errors, see |script-here|.
+			Execute Python script {script}.  Useful for including
+			python code in Vim scripts.  Requires Python, see
+			|script-here|.
 
-{endmarker} must NOT be preceded by any white space.  If {endmarker} is
-omitted from after the "<<", a dot '.' must be used after {script}, like
-for the |:append| and |:insert| commands.
-This form of the |:python| command is mainly useful for including python code
-in Vim scripts.
+The {endmarker} below the {script} must NOT be preceded by any white space.
+
+If [endmarker] is omitted from after the "<<", a dot '.' must be used after
+{script}, like for the |:append| and |:insert| commands.
 
 Example: >
 	function! IcecreamInitialize()

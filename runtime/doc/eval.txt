@@ -1589,7 +1589,7 @@ v:exception	The value of the exception most recently caught and not
 	:try
 	:  throw "oops"
 	:catch /.*/
-	:  echo "caught" v:exception
+	:  echo "caught " .. v:exception
 	:endtry
 <		Output: "caught oops".
 
@@ -3983,7 +3983,10 @@ get({list}, {idx} [, {default}])			*get()*
 get({dict}, {key} [, {default}])
 		Get item with key {key} from |Dictionary| {dict}.  When this
 		item is not available return {default}.  Return zero when
-		{default} is omitted.
+		{default} is omitted.  Useful example: >
+			let val = get(g:, 'var_name', 'default')
+<		This gets the value of g:var_name if it exists, and uses
+		'default' when it does not exist.
 get({func}, {what})
 		Get item {what} from Funcref {func}.  Possible values for
 		{what} are:
@@ -6645,7 +6648,8 @@ remove({list}, {idx} [, {end}])				*remove()*
 			:echo "last item: " . remove(mylist, -1)
 			:call remove(mylist, 0, 9)
 remove({dict}, {key})
-		Remove the entry from {dict} with key {key}.  Example: >
+		Remove the entry from {dict} with key {key} and return it.
+		Example: >
 			:echo "removed " . remove(dict, "one")
 <		If there is no {key} in {dict} this is an error.
 
