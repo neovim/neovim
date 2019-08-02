@@ -4807,13 +4807,12 @@ buf_check_timestamp(
   char_u      *path;
   char        *mesg = NULL;
   char        *mesg2 = "";
-  int helpmesg = FALSE;
-  int reload = FALSE;
-  int can_reload = FALSE;
+  bool helpmesg = false;
+  bool reload = false;
+  bool can_reload = false;
   uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
-  static int busy = FALSE;
-  int n;
+  static bool busy = false;
   char_u      *s;
   char        *reason;
 
@@ -4838,16 +4837,16 @@ buf_check_timestamp(
       && buf->b_mtime != 0
       && (!(file_info_ok = os_fileinfo((char *)buf->b_ffname, &file_info))
           || time_differs(file_info.stat.st_mtim.tv_sec, buf->b_mtime)
-          || (int)file_info.stat.st_mode != buf->b_orig_mode
-          )) {
+          || (int)file_info.stat.st_mode != buf->b_orig_mode)) {
+    const long prev_b_mtime = buf->b_mtime;
+
     retval = 1;
 
     // set b_mtime to stop further warnings (e.g., when executing
     // FileChangedShell autocmd)
     if (!file_info_ok) {
-      // When 'autoread' is set we'll check the file again to see if it
-      // re-appears.
-      buf->b_mtime = buf->b_p_ar;
+      // Check the file again later to see if it re-appears.
+      buf->b_mtime = -1;
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
     } else {
@@ -4856,28 +4855,25 @@ buf_check_timestamp(
 
     /* Don't do anything for a directory.  Might contain the file
      * explorer. */
-    if (os_isdir(buf->b_fname))
-      ;
-
-    /*
-     * If 'autoread' is set, the buffer has no changes and the file still
-     * exists, reload the buffer.  Use the buffer-local option value if it
-     * was set, the global option value otherwise.
-     */
-    else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
-             && !bufIsChanged(buf) && file_info_ok)
-      reload = TRUE;
-    else {
-      if (!file_info_ok)
+    if (os_isdir(buf->b_fname)) {
+    } else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
+               && !bufIsChanged(buf) && file_info_ok) {
+      // If 'autoread' is set, the buffer has no changes and the file still
+      // exists, reload the buffer.  Use the buffer-local option value if it
+      // was set, the global option value otherwise.
+      reload = true;
+    } else {
+      if (!file_info_ok) {
         reason = "deleted";
-      else if (bufIsChanged(buf))
+      } else if (bufIsChanged(buf)) {
         reason = "conflict";
-      else if (orig_size != buf->b_orig_size || buf_contents_changed(buf))
+      } else if (orig_size != buf->b_orig_size || buf_contents_changed(buf)) {
         reason = "changed";
-      else if (orig_mode != buf->b_orig_mode)
+      } else if (orig_mode != buf->b_orig_mode) {
         reason = "mode";
-      else
+      } else {
         reason = "time";
+      }
 
       // Only give the warning if there are no FileChangedShell
       // autocommands.
@@ -4886,8 +4882,8 @@ buf_check_timestamp(
       set_vim_var_string(VV_FCS_REASON, reason, -1);
       set_vim_var_string(VV_FCS_CHOICE, "", -1);
       allbuf_lock++;
-      n = apply_autocmds(EVENT_FILECHANGEDSHELL,
-                         buf->b_fname, buf->b_fname, false, buf);
+      bool n = apply_autocmds(EVENT_FILECHANGEDSHELL,
+                              buf->b_fname, buf->b_fname, false, buf);
       allbuf_lock--;
       busy = false;
       if (n) {
@@ -4895,25 +4891,28 @@ buf_check_timestamp(
           EMSG(_("E246: FileChangedShell autocommand deleted buffer"));
         }
         s = get_vim_var_str(VV_FCS_CHOICE);
-        if (STRCMP(s, "reload") == 0 && *reason != 'd')
-          reload = TRUE;
-        else if (STRCMP(s, "ask") == 0)
-          n = FALSE;
-        else
+        if (STRCMP(s, "reload") == 0 && *reason != 'd') {
+          reload = true;
+        } else if (STRCMP(s, "ask") == 0) {
+          n = false;
+        } else {
           return 2;
+        }
       }
       if (!n) {
-        if (*reason == 'd')
-          mesg = _("E211: File \"%s\" no longer available");
-        else {
-          helpmesg = TRUE;
-          can_reload = TRUE;
-          /*
-           * Check if the file contents really changed to avoid
-           * giving a warning when only the timestamp was set (e.g.,
-           * checked out of CVS).  Always warn when the buffer was
-           * changed.
-           */
+        if (*reason == 'd') {
+          // Only give the message once.
+          if (prev_b_mtime != -1) {
+            mesg = _("E211: File \"%s\" no longer available");
+          }
+        } else {
+          helpmesg = true;
+          can_reload = true;
+
+          // Check if the file contents really changed to avoid
+          // giving a warning when only the timestamp was set (e.g.,
+          // checked out of CVS).  Always warn when the buffer was
+          // changed.
           if (reason[2] == 'n') {
             mesg = _(
                 "W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as well");
@@ -4939,7 +4938,7 @@ buf_check_timestamp(
     retval = 1;
     mesg = _("W13: Warning: File \"%s\" has been created after editing started");
     buf->b_flags |= BF_NEW_W;
-    can_reload = TRUE;
+    can_reload = true;
   }
 
   if (mesg != NULL) {
