@@ -1154,7 +1154,6 @@ list of buffers. |unlisted-buffer|
 		the way when you're browsing code/text buffers.  The next three
 		commands also work like this.
 
-
 							*:sbn* *:sbnext*
 :[N]sbn[ext] [+cmd] [N]
 		Split window and go to [N]th next buffer in buffer list.

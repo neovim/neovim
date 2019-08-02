@@ -771,6 +771,7 @@ Short explanation of each option:		*option-list*
 'menuitems'	  'mis'     maximum number of items in a menu
 'mkspellmem'	  'msm'     memory used before |:mkspell| compresses the tree
 'modeline'	  'ml'	    recognize modelines at start or end of file
+'modelineexpr'	  'mle'	    allow setting expression options from a modeline
 'modelines'	  'mls'     number of lines checked for modelines
 'modifiable'	  'ma'	    changes to the text are not possible
 'modified'	  'mod'     buffer has been modified

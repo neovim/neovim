@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Jan 27
+" Last Change:	2019 May 25
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -932,6 +932,8 @@ call <SID>Header("reading and writing files")
 call append("$", "modeline\tenable using settings from modelines when reading a file")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("ml")
+call append("$", "modelineexpr\tallow setting expression options from a modeline")
+call <SID>BinOptionG("mle", &mle)
 call append("$", "modelines\tnumber of lines to check for modelines")
 call append("$", " \tset mls=" . &mls)
 call append("$", "binary\tbinary file editing")

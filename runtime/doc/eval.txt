@@ -1010,8 +1010,9 @@ There must not be white space before or after the dot.
 
 Examples: >
 	:let dict = {"one": 1, 2: "two"}
-	:echo dict.one
-	:echo dict .2
+	:echo dict.one		" shows "1"
+	:echo dict.2		" shows "two"
+	:echo dict .2		" error because of space before the dot
 
 Note that the dot is also used for String concatenation.  To avoid confusion
 always put spaces around the dot for String concatenation.
@@ -9327,7 +9328,7 @@ This function can then be called with: >
 						*:cal* *:call* *E107* *E117*
 :[range]cal[l] {name}([arguments])
 		Call a function.  The name of the function and its arguments
-		are as specified with |:function|.  Up to 20 arguments can be
+		are as specified with `:function`.  Up to 20 arguments can be
 		used.  The returned value is discarded.
 		Without a range and for functions that accept a range, the
 		function is called once.  When a range is given the cursor is
@@ -9381,9 +9382,9 @@ Using an autocommand ~
 This is introduced in the user manual, section |41.14|.
 
 The autocommand is useful if you have a plugin that is a long Vim script file.
-You can define the autocommand and quickly quit the script with |:finish|.
+You can define the autocommand and quickly quit the script with `:finish`.
 That makes Vim startup faster.  The autocommand should then load the same file
-again, setting a variable to skip the |:finish| command.
+again, setting a variable to skip the `:finish` command.
 
 Use the FuncUndefined autocommand event with a pattern that matches the
 function(s) to be defined.  Example: >

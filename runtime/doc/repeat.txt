@@ -165,7 +165,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 :so[urce] {file}	Read Ex commands from {file}.  These are commands that
 			start with a ":".
 			Triggers the |SourcePre| autocommand.
-
+							*:source!*
 :so[urce]! {file}	Read Vim commands from {file}.  These are commands
 			that are executed from Normal mode, like you type
 			them.
@@ -173,6 +173,7 @@ For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 			|:bufdo|, in a loop or when another command follows
 			the display won't be updated while executing the
 			commands.
+			Cannot be used in the |sandbox|.
 
 							*:ru* *:runtime*
 :ru[ntime][!] [where] {file} ..
