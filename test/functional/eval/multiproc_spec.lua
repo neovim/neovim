@@ -10,7 +10,7 @@ local feed_command = helpers.feed_command
 local matches = helpers.matches
 local next_msg = helpers.next_msg
 local nvim = helpers.nvim
-local parse_context = helpers.parse_context
+local filter_context = helpers.filter_context
 local pcall_err = helpers.pcall_err
 local source = helpers.source
 local tbl_flatten = helpers.tbl_flatten
@@ -62,8 +62,8 @@ describe('multiproc', function()
       call('call_async', 'nvim_get_context', {ctx_items},
            {done = 'Callback', context = sent_ctx})
       local msg = next_msg()
-      msg[3][1] = parse_context(msg[3][1])
-      eq({'notification', 'done', {parse_context(sent_ctx)}}, msg)
+      msg[3][1] = filter_context(msg[3][1])
+      eq({'notification', 'done', {filter_context(sent_ctx)}}, msg)
     end)
   end)
 

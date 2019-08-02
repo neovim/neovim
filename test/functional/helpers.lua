@@ -775,20 +775,19 @@ function module.load_adjust(num)
   return math.ceil(num * load_factor)
 end
 
-function module.parse_context(ctx)
-  local parsed = {}
+function module.filter_context(ctx)
   for _, item in ipairs({'regs', 'jumps', 'buflist', 'gvars'}) do
-    parsed[item] = filter(function(v)
+    ctx[item] = filter(function(v)
       return type(v) == 'table'
-    end, module.call('msgpackparse', ctx[item]))
+    end,  ctx[item])
   end
-  parsed['buflist'] = parsed['buflist'][1]
+  ctx['buflist'] = ctx['buflist'][1]
   return map(function(v)
     if #v == 0 then
-      return nil
+      v = nil
     end
     return v
-  end, parsed)
+  end, ctx)
 end
 
 function module.add_builddir_to_rtp()

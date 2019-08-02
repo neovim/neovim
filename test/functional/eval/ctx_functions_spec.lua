@@ -8,7 +8,7 @@ local eval = helpers.eval
 local feed = helpers.feed
 local map = helpers.map
 local nvim = helpers.nvim
-local parse_context = helpers.parse_context
+local filter_context = helpers.filter_context
 local redir_exec = helpers.redir_exec
 local source = helpers.source
 local trim = helpers.trim
@@ -315,56 +315,56 @@ describe('context functions', function()
       }
 
       call('ctxpush')
-      eq(with_all, parse_context(call('ctxget')))
-      eq(with_all, parse_context(call('ctxget', 0)))
+      eq(with_all, filter_context(call('ctxget')))
+      eq(with_all, filter_context(call('ctxget', 0)))
 
       call('ctxpush', {'gvars'})
-      eq(with_gvars, parse_context(call('ctxget')))
-      eq(with_gvars, parse_context(call('ctxget', 0)))
-      eq(with_all, parse_context(call('ctxget', 1)))
+      eq(with_gvars, filter_context(call('ctxget')))
+      eq(with_gvars, filter_context(call('ctxget', 0)))
+      eq(with_all, filter_context(call('ctxget', 1)))
 
       call('ctxpush', {'buflist'})
-      eq(with_buflist, parse_context(call('ctxget')))
-      eq(with_buflist, parse_context(call('ctxget', 0)))
-      eq(with_gvars, parse_context(call('ctxget', 1)))
-      eq(with_all, parse_context(call('ctxget', 2)))
+      eq(with_buflist, filter_context(call('ctxget')))
+      eq(with_buflist, filter_context(call('ctxget', 0)))
+      eq(with_gvars, filter_context(call('ctxget', 1)))
+      eq(with_all, filter_context(call('ctxget', 2)))
 
       call('ctxpush', {'jumps'})
-      eq(with_jumps, parse_context(call('ctxget')))
-      eq(with_jumps, parse_context(call('ctxget', 0)))
-      eq(with_buflist, parse_context(call('ctxget', 1)))
-      eq(with_gvars, parse_context(call('ctxget', 2)))
-      eq(with_all, parse_context(call('ctxget', 3)))
+      eq(with_jumps, filter_context(call('ctxget')))
+      eq(with_jumps, filter_context(call('ctxget', 0)))
+      eq(with_buflist, filter_context(call('ctxget', 1)))
+      eq(with_gvars, filter_context(call('ctxget', 2)))
+      eq(with_all, filter_context(call('ctxget', 3)))
 
       call('ctxpush', {'regs'})
-      eq(with_regs, parse_context(call('ctxget')))
-      eq(with_regs, parse_context(call('ctxget', 0)))
-      eq(with_jumps, parse_context(call('ctxget', 1)))
-      eq(with_buflist, parse_context(call('ctxget', 2)))
-      eq(with_gvars, parse_context(call('ctxget', 3)))
-      eq(with_all, parse_context(call('ctxget', 4)))
+      eq(with_regs, filter_context(call('ctxget')))
+      eq(with_regs, filter_context(call('ctxget', 0)))
+      eq(with_jumps, filter_context(call('ctxget', 1)))
+      eq(with_buflist, filter_context(call('ctxget', 2)))
+      eq(with_gvars, filter_context(call('ctxget', 3)))
+      eq(with_all, filter_context(call('ctxget', 4)))
 
       call('ctxpop')
-      eq(with_jumps, parse_context(call('ctxget')))
-      eq(with_jumps, parse_context(call('ctxget', 0)))
-      eq(with_buflist, parse_context(call('ctxget', 1)))
-      eq(with_gvars, parse_context(call('ctxget', 2)))
-      eq(with_all, parse_context(call('ctxget', 3)))
+      eq(with_jumps, filter_context(call('ctxget')))
+      eq(with_jumps, filter_context(call('ctxget', 0)))
+      eq(with_buflist, filter_context(call('ctxget', 1)))
+      eq(with_gvars, filter_context(call('ctxget', 2)))
+      eq(with_all, filter_context(call('ctxget', 3)))
 
       call('ctxpop')
-      eq(with_buflist, parse_context(call('ctxget')))
-      eq(with_buflist, parse_context(call('ctxget', 0)))
-      eq(with_gvars, parse_context(call('ctxget', 1)))
-      eq(with_all, parse_context(call('ctxget', 2)))
+      eq(with_buflist, filter_context(call('ctxget')))
+      eq(with_buflist, filter_context(call('ctxget', 0)))
+      eq(with_gvars, filter_context(call('ctxget', 1)))
+      eq(with_all, filter_context(call('ctxget', 2)))
 
       call('ctxpop')
-      eq(with_gvars, parse_context(call('ctxget')))
-      eq(with_gvars, parse_context(call('ctxget', 0)))
-      eq(with_all, parse_context(call('ctxget', 1)))
+      eq(with_gvars, filter_context(call('ctxget')))
+      eq(with_gvars, filter_context(call('ctxget', 0)))
+      eq(with_all, filter_context(call('ctxget', 1)))
 
       call('ctxpop')
-      eq(with_all, parse_context(call('ctxget')))
-      eq(with_all, parse_context(call('ctxget', 0)))
+      eq(with_all, filter_context(call('ctxget')))
+      eq(with_all, filter_context(call('ctxget', 0)))
     end)
   end)
 
