@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:     TypeScript
 " Maintainer:   Bram Moolenaar
-" Last Change:	2019 Jun 06
+" Last Change:	2019 Jun 07
 " Based On:     Herrington Darkholme's yats.vim
 " Changes:      See https:github.com/HerringtonDarkholme/yats.vim
 " Credits:      See yats.vim
@@ -790,6 +790,12 @@ if get(g:, 'yats_host_keyword', 1)
   syntax keyword typescriptNodeGlobal containedin=typescriptIdentifierName setInterval
   syntax keyword typescriptNodeGlobal containedin=typescriptIdentifierName clearInterval
   hi def link typescriptNodeGlobal Structure
+
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName describe it test
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName before after
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName beforeEach afterEach
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName beforeAll afterAll
+  syntax keyword typescriptGlobal containedin=typescriptIdentifierName expect assert
 
   "runtime syntax/yats/web.vim
   syntax keyword typescriptBOM containedin=typescriptIdentifierName AbortController

@@ -79,18 +79,21 @@ changed, to avoid confusion when using ":tnext".  It is changed when using
 ":tag {name}".
 
 The ignore-case matches are not found for a ":tag" command when:
-- the 'ignorecase' option is off and 'tagcase' is "followic"
+- 'tagcase' is "followic" and the 'ignorecase' option is off
+- 'tagcase' is "followscs" and the 'ignorecase' option is off and the
+  'smartcase' option is off or the pattern contains an upper case character.
 - 'tagcase' is "match"
 - 'tagcase' is "smart" and the pattern contains an upper case character.
-- 'tagcase' is "followscs" and 'smartcase' option is on and the pattern
-  contains an upper case character.
 
 The ignore-case matches are found when:
 - a pattern is used (starting with a "/")
 - for ":tselect"
-- when 'tagcase' is "followic" and 'ignorecase' is off
-- when 'tagcase' is "match"
-- when 'tagcase' is "followscs" and the 'smartcase' option is off
+- when 'tagcase' is "followic" and 'ignorecase' is on
+- when 'tagcase' is "followscs" and 'ignorecase' is on or the 'smartcase'
+  option is on and the pattern does not contain an upper case character
+- when 'tagcase' is "ignore"
+- when 'tagcase' is "smart" and the patter does not contain an upper case
+  character
 
 Note that using ignore-case tag searching disables binary searching in the
 tags file, which causes a slowdown.  This can be avoided by fold-case sorting
@@ -488,7 +491,7 @@ Some programs that generate tags files:
 ctags			As found on most Unix systems.  Only supports C.  Only
 			does the basic work.
 							*Exuberant_ctags*
-exuberant ctags		This a very good one.  It works for C, C++, Java,
+exuberant ctags		This is a very good one.  It works for C, C++, Java,
 			Fortran, Eiffel and others.  It can generate tags for
 			many items.  See http://ctags.sourceforge.net.
 JTags			For Java, in Java.  It can be found at
@@ -802,7 +805,7 @@ CTRL-W d		Open a new window, with the cursor on the first
 			(default: whole file).
 			See |:search-args| for [/] and [!].
 
-					*:che*  *:chec* *:check* *:checkpath*
+					*:che* *:chec* *:check* *:checkpath*
 :che[ckpath]		List all the included files that could not be found.
 
 :che[ckpath]!		List all the included files.
