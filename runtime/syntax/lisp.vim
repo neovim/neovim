@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:    Lisp
 " Maintainer:  Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change: Mar 26, 2019
-" Version:     28
+" Last Change: Jul 11, 2019
+" Version:     29
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
 "
 "  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols taken from HyperSpec
@@ -54,7 +54,7 @@ if exists("g:lisp_rainbow") && g:lisp_rainbow != 0
  syn region lispParen8 contained matchgroup=hlLevel8 start="`\=(" end=")" skip="|.\{-}|" contains=@lispListCluster,lispParen9
  syn region lispParen9 contained matchgroup=hlLevel9 start="`\=(" end=")" skip="|.\{-}|" contains=@lispListCluster,lispParen0
 else
- syn region lispList			matchgroup=Delimiter start="("   skip="|.\{-}|"			matchgroup=Delimiter end=")"	contains=@lispListCluster
+ syn region lispList			matchgroup=lispParen start="("   skip="|.\{-}|"			matchgroup=lispParen end=")"	contains=@lispListCluster
  syn region lispBQList			matchgroup=PreProc   start="`("  skip="|.\{-}|"			matchgroup=PreProc   end=")"		contains=@lispListCluster
 endif
 
@@ -608,6 +608,8 @@ if !exists("skip_lisp_syntax_inits")
     hi def hlLevel8 ctermfg=blue	guifg=darkslateblue
     hi def hlLevel9 ctermfg=darkmagenta	guifg=darkviolet
    endif
+  else
+    hi def link lispParen Delimiter
   endif
 
 endif

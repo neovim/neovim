@@ -9699,6 +9699,11 @@ This does NOT work: >
 			register values cannot be used here, since they cannot
 			be locked.
 
+:cons[t]
+:cons[t] {var-name}
+			If no argument is given or only {var-name} is given,
+			the behavior is the same as |:let|.
+
 :lockv[ar][!] [depth] {name} ...			*:lockvar* *:lockv*
 			Lock the internal variable {name}.  Locking means that
 			it can no longer be changed (until it is unlocked).

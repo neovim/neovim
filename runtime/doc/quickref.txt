@@ -798,6 +798,7 @@ Short explanation of each option:		*option-list*
 'perldll'		    name of the Perl dynamic library
 'preserveindent'  'pi'	    preserve the indent structure when reindenting
 'previewheight'   'pvh'     height of the preview window
+'previewpopup'    'pvp'     use popup window for preview
 'previewwindow'   'pvw'     identifies the preview window
 'printdevice'	  'pdev'    name of the printer to be used for :hardcopy
 'printencoding'   'penc'    encoding to be used for printing

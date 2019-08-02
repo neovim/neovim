@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 May 25
+" Last Change:	2019 Jul 18
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -471,6 +471,8 @@ call append("$", " \tset wmw=" . &wmw)
 call append("$", "helpheight\tinitial height of the help window")
 call append("$", " \tset hh=" . &hh)
 if has("quickfix")
+  call append("$", "previewpopup\tuse a popup window for preview")
+  call append("$", " \tset pvp=" . &pvp)
   call append("$", "previewheight\tdefault height for the preview window")
   call append("$", " \tset pvh=" . &pvh)
   call append("$", "previewwindow\tidentifies the preview window")

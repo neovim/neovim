@@ -557,9 +557,9 @@ You can use CTRL-W <Enter> to open a new window and jump to the error there.
 
 When the quickfix window has been filled, two autocommand events are
 triggered.  First the 'filetype' option is set to "qf", which triggers the
-FileType event.  Then the BufReadPost event is triggered, using "quickfix" for
-the buffer name.  This can be used to perform some action on the listed
-errors.  Example: >
+FileType event (also see |qf.vim|).  Then the BufReadPost event is triggered,
+using "quickfix" for the buffer name.  This can be used to perform some action
+on the listed errors.  Example: >
 	au BufReadPost quickfix  setlocal modifiable
 		\ | silent exe 'g/^/s//\=line(".")." "/'
 		\ | setlocal nomodifiable

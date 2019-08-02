@@ -2591,7 +2591,6 @@ preceding last option and unsetting all other ones): >
 Note: only existence of these options matter, not their value. You can replace
       1 above with anything.
 
-
 QUAKE						*quake.vim* *ft-quake-syntax*
 
 The Quake syntax definition should work for most any FPS (First Person
