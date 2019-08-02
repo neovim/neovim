@@ -227,12 +227,15 @@ static void terminfo_start(UI *ui)
 #endif
 
   // Set up unibilium/terminfo.
-  data->ut = unibi_from_env();
   char *termname = NULL;
-  if (!term || !data->ut) {
+  if (term) {
+    data->ut = unibi_from_term(term);
+    if (data->ut) {
+      termname = xstrdup(term);
+    }
+  }
+  if (!data->ut) {
     data->ut = terminfo_from_builtin(term, &termname);
-  } else {
-    termname = xstrdup(term);
   }
   // Update 'term' option.
   loop_schedule_deferred(&main_loop,
