@@ -706,6 +706,9 @@ au BufNewFile,BufRead *.html,*.htm,*.shtml,*.stm  call dist#ft#FThtml()
 " Vue.js Single File Component
 au BufNewFile,BufRead *.vue			setf vuejs
 
+" Vue.js Single File Component
+au BufNewFile,BufRead *.vue			setf vue
+
 " HTML with Ruby - eRuby
 au BufNewFile,BufRead *.erb,*.rhtml		setf eruby
 

@@ -474,6 +474,7 @@ let s:filename_checks = {
     \ 'voscm': ['file.cm'],
     \ 'vrml': ['file.wrl'],
     \ 'vroom': ['file.vroom'],
+    \ 'vue': ['file.vue'],
     \ 'wast': ['file.wast', 'file.wat'],
     \ 'webmacro': ['file.wm'],
     \ 'wget': ['.wgetrc', 'wgetrc'],
