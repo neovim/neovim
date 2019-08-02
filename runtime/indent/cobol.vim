@@ -1,7 +1,12 @@
 " Vim indent file
 " Language:	cobol
-" Author:	Tim Pope <vimNOSPAM@tpope.info>
+" Maintainer: Ankit Jain <ajatkj@yahoo.co.in>
+"     (formerly Tim Pope <vimNOSPAM@tpope.info>)
 " $Id: cobol.vim,v 1.1 2007/05/05 18:08:19 vimboss Exp $
+" Last Update:	By Ankit Jain on 22.03.2019
+" Ankit Jain      22.03.2019     Changes & fixes:
+"                                Allow chars in 1st 6 columns
+"                                #C22032019
 
 if exists("b:did_indent")
     finish
@@ -66,7 +71,9 @@ function! GetCobolIndent(lnum) abort
     let ashft = minshft + 1
     let bshft = ashft + 4
     " (Obsolete) numbered lines
-    if getline(a:lnum) =~? '^\s*\d\{6\}\%($\|[ */$CD-]\)'
+    " #C22032019: Columns 1-6 could have alphabets as well as numbers
+    "if getline(a:lnum) =~? '^\s*\d\{6\}\%($\|[ */$CD-]\)'
+    if getline(a:lnum) =~? '^\s*[a-zA-Z0-9]\{6\}\%($\|[ */$CD-]\)'
         return 0
     endif
     let cline = s:stripped(a:lnum)

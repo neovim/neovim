@@ -155,6 +155,20 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_s|		CTRL-X s	spelling suggestions
 {not available when compiled without the |+insert_expand| feature}
 
+commands in completion mode (see |popupmenu-keys|)
+
+|complete_CTRL-E| CTRL-E	stop completion and go back to original text
+|complete_CTRL-Y| CTRL-Y	accept selected match and stop completion
+		CTRL-L		insert one character from the current match
+		<CR>		insert currently selected match
+		<BS>		delete one character and redo search
+		CTRL-H		same as <BS>
+		<Up>		select the previous match
+		<Down>		select the next match
+		<PageUp>	select a match several entries back
+		<PageDown>	select a match several entries forward
+		other		stop completion and insert the typed character
+
 ==============================================================================
 2. Normal mode						*normal-index*
 
@@ -555,6 +569,8 @@ tag		command		   action in Normal mode	~
 |CTRL-W_gF|	CTRL-W g F	   edit file name under the cursor in a new
 				   tab page and jump to the line number
 				   following the file name.
+|CTRL-W_gt|	CTRL-W g t	   same as `gt`: go to next tab page
+|CTRL-W_gT|	CTRL-W g T	   same as `gT`: go to previous tab page
 |CTRL-W_h|	CTRL-W h	   go to Nth left window (stop at first window)
 |CTRL-W_i|	CTRL-W i	   split window and jump to declaration of
 				   identifier under the cursor
@@ -840,6 +856,17 @@ tag		char	      note action in Normal mode	~
 |z<Right>|	z<Right>	   same as "zl"
 
 ==============================================================================
+2.6 Operator-pending mode			*operator-pending-index*
+
+These can be used after an operator, but before a {motion} has been entered.
+
+tag		char		action in Operator-pending mode	~
+-----------------------------------------------------------------------
+|o_v|		v		force operator to work characterwise
+|o_V|		V		force operator to work linewise
+|o_CTRL-V|	CTRL-V		force operator to work blockwise
+
+==============================================================================
 3. Visual mode						*visual-index*
 
 Most commands in Visual mode are the same as in Normal mode.  The ones listed
@@ -961,7 +988,7 @@ Normal characters are inserted at the current cursor position.
 "Completion" below refers to context-sensitive completion.  It will complete
 file names, tags, commands etc. as appropriate.
 
-tag		command	      action in Command-line editing mode	~
+tag		command		action in Command-line editing mode	~
 ------------------------------------------------------------------------------
 		CTRL-@		not used
 |c_CTRL-A|	CTRL-A		do completion on the pattern in front of the
@@ -1001,10 +1028,11 @@ tag		command	      action in Command-line editing mode	~
 				command-line from history.
 |c_CTRL-Q|	CTRL-Q		same as CTRL-V, unless it's used for terminal
 				control flow
-|c_CTRL-R|	CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+|c_CTRL-R|	CTRL-R {regname}
 				insert the contents of a register or object
 				under the cursor as if typed
-|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {regname}
+|c_CTRL-R_CTRL-O| CTRL-R CTRL-O {regname}
 				insert the contents of a register or object
 				under the cursor literally
 		CTRL-S		(used for terminal control flow)
@@ -1060,7 +1088,7 @@ This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].
 The commands are sorted on the non-optional part of their name.
 
-tag	      command	      action ~
+tag		command		action ~
 ------------------------------------------------------------------------------
 |:!|		:!		filter lines or execute an external command
 |:!!|		:!!		repeat last ":!" command
@@ -1468,7 +1496,8 @@ tag	      command	      action ~
 |:sbrewind|	:sbr[ewind]	split window and go to first file in the
 				buffer list
 |:scriptnames|	:scr[iptnames]	list names of all sourced Vim scripts
-|:scriptencoding| :scripte[ncoding]	encoding used in sourced Vim script
+|:scriptencoding| :scripte[ncoding]  encoding used in sourced Vim script
+|:scriptversion|  :scriptv[ersion]   version of Vim script used
 |:scscope|	:scs[cope]	split window and execute cscope command
 |:set|		:se[t]		show or set options
 |:setfiletype|	:setf[iletype]	set 'filetype', unless it was set already

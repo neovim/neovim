@@ -2245,6 +2245,7 @@ py3eval({expr})			any	evaluate |python3| expression
 pyxeval({expr})			any	evaluate |python_x| expression
 range({expr} [, {max} [, {stride}]])
 				List	items from {expr} to {max}
+readdir({dir} [, {expr}])	List	file names in {dir} selected by {expr}
 readfile({fname} [, {binary} [, {max}]])
 				List	get list of lines from file {fname}
 reg_executing()			Number	get the executing register name
@@ -2576,9 +2577,9 @@ assert_false({actual} [, {msg}])				*assert_false()*
 		"Expected False but got {actual}" is produced.
 
 assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
-		This asserts number values.  When {actual}  is lower than
-		{lower} or higher than {upper} an error message is added to
-		|v:errors|.
+		This asserts number and |Float| values.  When {actual}  is lower
+		than {lower} or higher than {upper} an error message is added
+		to |v:errors|.  Also see |assert-return|.
 		When {msg} is omitted an error in the form
 		"Expected range {lower} - {upper}, but got {actual}" is
 		produced.
@@ -3009,7 +3010,7 @@ complete_info([{what}])
 		completion.  See |ins-completion|.
 		The items are:
 		   mode		Current completion mode name string.
-				See |completion_info_mode| for the values.
+				See |complete_info_mode| for the values.
 		   pum_visible	|TRUE| if popup menu is visible.
 				See |pumvisible()|.
 		   items	List of completion matches.  Each item is a
@@ -4631,7 +4632,7 @@ gettabinfo([{arg}])					*gettabinfo()*
 			tabnr		tab page number.
 			variables	a reference to the dictionary with
 					tabpage-local variables
-			windows		List of |window-ID|s in the tag page.
+			windows		List of |window-ID|s in the tab page.
 
 gettabvar({tabnr}, {varname} [, {def}])				*gettabvar()*
 		Get the value of a tab-local variable {varname} in tab page
@@ -4768,6 +4769,9 @@ glob({expr} [, {nosuf} [, {list} [, {alllinks}]]])		*glob()*
 		matches, they are separated by <NL> characters.
 
 		If the expansion fails, the result is an empty String or List.
+
+		You can also use |readdir()| if you need to do complicated
+		things, such as limiting the number of matches.
 
 		A name for a non-existing file is not included.  A symbolic
 		link is only included if it points to an existing file.
@@ -6341,8 +6345,7 @@ printf({fmt}, {expr1} ...)				*printf()*
 							*printf-S*
 		S	The text of the String argument is used.  If a
 			precision is specified, no more display cells than the
-			number specified are used.  Without the |+multi_byte|
-			feature works just like 's'.
+			number specified are used.
 
 							*printf-f* *E807*
 		f F	The Float argument is converted into a string of the
@@ -6473,6 +6476,17 @@ readfile({fname} [, {binary} [, {max}]])
 		When the file can't be opened an error message is given and
 		the result is an empty list.
 		Also see |writefile()|.
+
+							*readdir()*
+readdir({directory} [, {expr}])
+		Return a list with file and directory names in {directory}.
+		You can also use |glob()| if you don't need to do complicated
+		things, such as limiting the number of matches.
+
+		When {expr} is omitted all entries are included.
+		When {expr} is given, it is evaluated to check what to do:
+			If {expr} results in -1 then no further entries will
+			be handled.
 
 reg_executing()						*reg_executing()*
 		Returns the single letter name of the register being executed.
@@ -7990,10 +8004,10 @@ strcharpart({src}, {start} [, {len}])			*strcharpart()*
 
 strdisplaywidth({expr} [, {col}])			*strdisplaywidth()*
 		The result is a Number, which is the number of display cells
-		String {expr} occupies on the screen when it starts at {col}.
-		When {col} is omitted zero is used.  Otherwise it is the
-		screen column where to start.  This matters for Tab
-		characters.
+		String {expr} occupies on the screen when it starts at {col}
+		(first column is zero).  When {col} is omitted zero is used.
+		Otherwise it is the screen column where to start.  This
+		matters for Tab characters.
 		The option settings of the current window are used.  This
 		matters for anything that's displayed differently, such as
 		'tabstop' and 'display'.

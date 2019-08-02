@@ -523,8 +523,7 @@ only supported by new versions of ctags (such as Exuberant ctags).
 		be any identifier.  It cannot contain a <Tab>.
 {TAB}		One <Tab> character.  Note: previous versions allowed any
 		white space here.  This has been abandoned to allow spaces in
-		{tagfile}.  It can be re-enabled by including the
-		|+tag_any_white| feature at compile time. *tag-any-white*
+		{tagfile}.
 {tagfile}	The file that contains the definition of {tagname}.  It can
 		have an absolute or relative path.  It may contain environment
 		variables and wildcards (although the use of wildcards is
@@ -572,8 +571,7 @@ ignored.  (Case is ignored when 'ignorecase' is set and 'tagcase' is
 The value '2' should be used then:
 	!_TAG_FILE_SORTED<Tab>2<Tab>{anything} ~
 
-The other tag that Vim recognizes, but only when compiled with the
-|+multi_byte| feature, is the encoding of the tags file:
+The other tag that Vim recognizes is the encoding of the tags file:
 	!_TAG_FILE_ENCODING<Tab>utf-8<Tab>{anything} ~
 Here "utf-8" is the encoding used for the tags.  Vim will then convert the tag
 being searched for from 'encoding' to the encoding of the tags file.  And when

@@ -2,8 +2,8 @@
 " Language:		shell (sh) Korn shell (ksh) bash (sh)
 " Maintainer:		Charles E. Campbell  <NdrOchipS@PcampbellAfamily.Mbiz>
 " Previous Maintainer:	Lennart Schultz <Lennart.Schultz@ecmwf.int>
-" Last Change:		Nov 23, 2018
-" Version:		185
+" Last Change:		Mar 26, 2019
+" Version:		186
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_SH
 " For options and settings, please use:      :help ft-sh-syntax
 " This file includes many ideas from Eric Brunet (eric.brunet@ens.fr)
@@ -89,7 +89,7 @@ if g:sh_fold_enabled && &fdm == "manual"
 endif
 
 " set up the syntax-highlighting iskeyword
-if has("patch-7.4.1142")
+if (v:version == 704 && has("patch-7.4.1142")) || v:version > 704
  if exists("b:is_bash")
   exe "syn iskeyword ".&iskeyword.",-,:"
  else

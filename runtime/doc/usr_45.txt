@@ -152,12 +152,6 @@ language than the text.
 language, the default should work fine and you don't need to do anything.  The
 following is only relevant when you want to edit different languages.
 
-	Note:
-	Using different encodings only works when Vim was compiled to handle
-	it.  To find out if it works, use the ":version" command and check the
-	output for "+multi_byte".  If it's there, you are OK.  If you see
-	"-multi_byte" you will have to find another Vim.
-
 
 USING UNICODE IN THE GUI
 

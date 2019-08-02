@@ -1,9 +1,11 @@
 "     Language: xml
 "   Repository: https://github.com/chrisbra/vim-xml-ftplugin
-" Last Changed: Jan 28, 2019
+" Last Changed: Feb 04, 2019
 "   Maintainer: Christian Brabandt <cb@256bit.org>
 " Previous Maintainer:  Johannes Zellner <johannes@zellner.org>
 " Last Change:
+" 20190204 - correctly handle wrap tags
+"            https://github.com/chrisbra/vim-xml-ftplugin/issues/5
 " 20190128 - Make sure to find previous tag
 "            https://github.com/chrisbra/vim-xml-ftplugin/issues/4
 " 20181116 - Fix indentation when tags start with a colon or an underscore
@@ -74,13 +76,20 @@ fun! <SID>XmlIndentSynCheck(lnum)
 endfun
 
 " [-- return the sum of indents of a:lnum --]
-fun! <SID>XmlIndentSum(lnum, style, add)
-    let line = getline(a:lnum)
-    if a:style == match(line, '^\s*</')
+fun! <SID>XmlIndentSum(line, style, add)
+    if <SID>IsXMLContinuation(a:line) && a:style == 0
+        " no complete tag, add one additional indent level
+        " but only for the current line
+        return a:add + shiftwidth()
+    elseif <SID>HasNoTagEnd(a:line)
+        " no complete tag, return initial indent
+        return a:add
+    endif
+    if a:style == match(a:line, '^\s*</')
         return (shiftwidth() *
-        \  (<SID>XmlIndentWithPattern(line, b:xml_indent_open)
-        \ - <SID>XmlIndentWithPattern(line, b:xml_indent_close)
-        \ - <SID>XmlIndentWithPattern(line, '.\{-}/>'))) + a:add
+        \  (<SID>XmlIndentWithPattern(a:line, b:xml_indent_open)
+        \ - <SID>XmlIndentWithPattern(a:line, b:xml_indent_close)
+        \ - <SID>XmlIndentWithPattern(a:line, '.\{-}/>'))) + a:add
     else
         return a:add
     endif
@@ -89,19 +98,24 @@ endfun
 " Main indent function
 fun! XmlIndentGet(lnum, use_syntax_check)
     " Find a non-empty line above the current line.
-    let plnum = prevnonblank(a:lnum - 1)
-    " Hit the start of the file, use zero indent.
-    if plnum == 0
+    if prevnonblank(a:lnum - 1) == 0
+        " Hit the start of the file, use zero indent.
         return 0
     endif
     " Find previous line with a tag (regardless whether open or closed,
     " but always start restrict the match to a line before the current one
+    " Note: xml declaration: <?xml version="1.0"?>
+    "       won't be found, as it is not a legal tag name
     let ptag_pattern = '\%(.\{-}<[/:A-Z_a-z]\)'. '\%(\&\%<'. line('.').'l\)'
-    let ptag = search(ptag_pattern, 'bnw')
+    let ptag = search(ptag_pattern, 'bnW')
+    " no previous tag
+    if ptag == 0
+        return 0
+    endif
 
     let syn_name = ''
     if a:use_syntax_check
-        let check_lnum = <SID>XmlIndentSynCheck(plnum)
+        let check_lnum = <SID>XmlIndentSynCheck(ptag)
         let check_alnum = <SID>XmlIndentSynCheck(a:lnum)
         if check_lnum == 0 || check_alnum == 0
             return indent(a:lnum)
@@ -113,18 +127,31 @@ fun! XmlIndentGet(lnum, use_syntax_check)
         return <SID>XmlIndentComment(a:lnum)
     endif
 
+    let pline = getline(ptag)
+    let pind  = indent(ptag)
     " Get indent from previous tag line
-    let ind = <SID>XmlIndentSum(ptag, -1, indent(ptag))
+    let ind = <SID>XmlIndentSum(pline, -1, pind)
+    let t_ind = ind
     " Determine indent from current line
-    let ind = <SID>XmlIndentSum(a:lnum, 0, ind)
+    let ind = <SID>XmlIndentSum(getline(a:lnum), 0, ind)
     return ind
 endfun
+
+func! <SID>IsXMLContinuation(line)
+    " Checks, whether or not the line matches a start-of-tag
+    return a:line !~ '^\s*<'
+endfunc
+
+func! <SID>HasNoTagEnd(line)
+    " Checks whether or not the line matches '>' (so finishes a tag)
+    return a:line !~ '>\s*$'
+endfunc
 
 " return indent for a commented line,
 " the middle part might be indented on additional level
 func! <SID>XmlIndentComment(lnum)
-    let ptagopen = search(b:xml_indent_open, 'bnw')
-    let ptagclose = search(b:xml_indent_close, 'bnw')
+    let ptagopen = search(b:xml_indent_open, 'bnW')
+    let ptagclose = search(b:xml_indent_close, 'bnW')
     if getline(a:lnum) =~ '<!--'
         " if previous tag was a closing tag, do not add
         " one additional level of indent
@@ -136,10 +163,10 @@ func! <SID>XmlIndentComment(lnum)
         endif
     elseif getline(a:lnum) =~ '-->'
         " end of comment, same as start of comment
-        return indent(search('<!--', 'bnw'))
+        return indent(search('<!--', 'bnW'))
     else
         " middle part of comment, add one additional level
-        return indent(search('<!--', 'bnw')) + shiftwidth()
+        return indent(search('<!--', 'bnW')) + shiftwidth()
     endif
 endfunc
 

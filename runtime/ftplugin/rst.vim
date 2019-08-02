@@ -30,7 +30,7 @@ setlocal formatoptions+=tcroql
 "
 " More sophisticated indentation rules should be revisted in the future.
 
-if !exists("g:rst_style") || g:rst_style != 0
+if exists("g:rst_style") && g:rst_style != 0
     setlocal expandtab shiftwidth=3 softtabstop=3 tabstop=8
 endif
 

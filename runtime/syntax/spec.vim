@@ -3,7 +3,7 @@
 " Language:    SPEC: Build/install scripts for Linux RPM packages
 " Maintainer:  Igor Gnatenko i.gnatenko.brain@gmail.com
 " Former Maintainer:  Donovan Rebbechi elflord@panix.com (until March 2014)
-" Last Change: Sat Apr 9 15:30 2016 Filip Szymański
+" Last Change: 2019 May 07
 
 " quit when a syntax file was already loaded
 if exists("b:current_syntax")
@@ -86,9 +86,9 @@ syn region specSectionMacroBracketArea oneline matchgroup=specSectionMacro start
 "%% Files Section %%
 "TODO %config valid parameters: missingok\|noreplace
 "TODO %verify valid parameters: \(not\)\= \(md5\|atime\|...\)
-syn region specFilesArea matchgroup=specSection start='^%[Ff][Ii][Ll][Ee][Ss]\>' skip='%\(attrib\|defattr\|attr\|dir\|config\|docdir\|doc\|lang\|verify\|ghost\)\>' end='^%[a-zA-Z]'me=e-2 contains=specFilesOpts,specFilesDirective,@specListedFiles,specComment,specCommandSpecial,specMacroIdentifier
+syn region specFilesArea matchgroup=specSection start='^%[Ff][Ii][Ll][Ee][Ss]\>' skip='%\(attrib\|defattr\|attr\|dir\|config\|docdir\|doc\|lang\|license\|verify\|ghost\|exclude\)\>' end='^%[a-zA-Z]'me=e-2 contains=specFilesOpts,specFilesDirective,@specListedFiles,specComment,specCommandSpecial,specMacroIdentifier
 "tip: remember to include new itens in specFilesArea above
-syn match  specFilesDirective contained '%\(attrib\|defattr\|attr\|dir\|config\|docdir\|doc\|lang\|verify\|ghost\)\>'
+syn match  specFilesDirective contained '%\(attrib\|defattr\|attr\|dir\|config\|docdir\|doc\|lang\|license\|verify\|ghost\|exclude\)\>'
 
 "valid options for certain section headers
 syn match specDescriptionOpts contained '\s-[ln]\s*\a'ms=s+1,me=e-1

@@ -1,7 +1,7 @@
 " markdown Text with R statements
 " Language: markdown with R code chunks
 " Homepage: https://github.com/jalvesaq/R-Vim-runtime
-" Last Change: Sat Aug 25, 2018  03:44PM
+" Last Change: Thu Apr 18, 2019  09:17PM
 "
 "   For highlighting pandoc extensions to markdown like citations and TeX and
 "   many other advanced features like folding of markdown sections, it is
@@ -54,14 +54,14 @@ runtime syntax/markdown.vim
 " Now highlight chunks:
 for s:type in g:rmd_fenced_languages
   if s:type =~ '='
-    let s:lng = substitute(s:type, '=.*', '')
-    let s:nm  = substitute(s:type, '.*=', '')
+    let s:ft = substitute(s:type, '.*=', '', '')
+    let s:nm = substitute(s:type, '=.*', '', '')
   else
-    let s:lng = s:type
+    let s:ft = s:type
     let s:nm  = s:type
   endif
   unlet! b:current_syntax
-  exe 'syn include @Rmd'.s:nm.' syntax/'.s:lng.'.vim'
+  exe 'syn include @Rmd'.s:nm.' syntax/'.s:ft.'.vim'
   if g:rmd_syn_hl_chunk
     exe 'syn region rmd'.s:nm.'ChunkDelim matchgroup=rmdCodeDelim start="^\s*```\s*{\s*'.s:nm.'\>" matchgroup=rmdCodeDelim end="}$" keepend containedin=rmd'.s:nm.'Chunk contains=@Rmd'.s:nm
     exe 'syn region rmd'.s:nm.'Chunk start="^\s*```\s*{\s*'.s:nm.'\>.*$" matchgroup=rmdCodeDelim end="^\s*```\ze\s*$" keepend contains=rmd'.s:nm.'ChunkDelim,@Rmd'.s:nm

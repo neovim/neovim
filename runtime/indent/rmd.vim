@@ -39,7 +39,7 @@ endfunction
 function s:GetYamlIndent()
   let pline = getline(v:lnum - 1)
   if pline =~ ':\s*$'
-    return indent(v:lnum) + &sw
+    return indent(v:lnum) + shiftwidth()
   elseif pline =~ '^\s*- '
     return indent(v:lnum) + 2
   endif

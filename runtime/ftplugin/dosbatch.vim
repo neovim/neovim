@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:    MS-DOS .bat files
 " Maintainer:  Mike Williams <mrw@eandem.co.uk>
-" Last Change: 8th May 2012
+" Last Change: 14th April 2019
 
 " Only do this when not done yet for this buffer
 if exists("b:did_ftplugin")
@@ -16,6 +16,7 @@ set cpo&vim
 
 " BAT comment formatting
 setlocal comments=b:rem,b:@rem,b:REM,b:@REM,:::
+setlocal commentstring=::\ %s
 setlocal formatoptions-=t formatoptions+=rol
 
 " Define patterns for the browse file filter

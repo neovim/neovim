@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:    Lisp
 " Maintainer:  Charles E. Campbell <NdrOchipS@PcampbellAfamily.Mbiz>
-" Last Change: Feb 15, 2018
-" Version:     27
+" Last Change: Mar 26, 2019
+" Version:     28
 " URL:	http://www.drchip.org/astronaut/vim/index.html#SYNTAX_LISP
 "
 "  Thanks to F Xavier Noria for a list of 978 Common Lisp symbols taken from HyperSpec
@@ -16,10 +16,10 @@ endif
 
 if exists("g:lisp_isk")
  exe "setl isk=".g:lisp_isk
-elseif !has("patch-7.4.1142")
- setl isk=38,42,43,45,47-58,60-62,64-90,97-122,_
-else
+elseif (v:version == 704 && has("patch-7.4.1142")) || v:version > 704
  syn iskeyword 38,42,43,45,47-58,60-62,64-90,97-122,_
+else
+ setl isk=38,42,43,45,47-58,60-62,64-90,97-122,_
 endif
 
 if exists("g:lispsyntax_ignorecase") || exists("g:lispsyntax_clisp")

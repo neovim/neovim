@@ -9,17 +9,17 @@
 </div>
 
 <div
-    class="foo bar">
+     class="foo bar">
     text
 </div>
 
 <div class="foo bar"
-    data="something">
+     data="something">
     text
 </div>
 
 <div class="foo
-    bar">
+	    bar">
     text
 </div>
 

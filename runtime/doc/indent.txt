@@ -944,6 +944,11 @@ can sometimes be slow, thus it timeouts after 150 msec.  If you notice the
 indenting isn't correct, you can set a larger timeout in msec: >
 	let g:pyindent_searchpair_timeout = 500
 
+If looking back for unclosed parenthesis is still too slow, especially during
+a copy-paste operation, or if you don't need indenting inside multi-line
+parentheses, you can completely disable this feature: >
+	let g:pyindent_disable_parentheses_indenting = 1
+
 
 R								*ft-r-indent*
 

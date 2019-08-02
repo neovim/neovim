@@ -670,11 +670,13 @@ being disabled.  Remove the 'C' flag from the 'cpoptions' option to enable it.
 This happens when an Ex command with mandatory argument(s) was executed, but
 no argument has been specified.
 
-							*E474* *E475*  >
+							*E474* *E475* *E983*  >
   Invalid argument
   Invalid argument: {arg}
+  Duplicate argument: {arg}
 
-An Ex command has been executed, but an invalid argument has been specified.
+An Ex command or function has been executed, but an invalid argument has been
+specified.
 
 							*E488*  >
   Trailing characters
