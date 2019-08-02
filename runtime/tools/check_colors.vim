@@ -1,11 +1,12 @@
-" This script tests a color scheme for some errors. Load the scheme and source
-" this script. e.g. :e colors/desert.vim | :so check_colors.vim
-" Will output possible errors.
+" This script tests a color scheme for some errors and lists potential errors.
+" Load the scheme and source this script, like this:
+"    :edit colors/desert.vim | :so colors/tools/check_colors.vim
 
 let s:save_cpo= &cpo
 set cpo&vim
 
 func! Test_check_colors()
+  let l:savedview = winsaveview()
   call cursor(1,1)
   let err={}
 
@@ -17,17 +18,78 @@ func! Test_check_colors()
   endif
 
   " 2) Check for some well-defined highlighting groups
-  " Some items, check several groups, e.g. Diff, Spell
-  let hi_groups = ['ColorColumn', 'Diff', 'ErrorMsg', 'Folded',
-        \ 'FoldColumn', 'IncSearch', 'LineNr', 'ModeMsg', 'MoreMsg', 'NonText',
-        \ 'Normal', 'Pmenu', 'Todo', 'Search', 'Spell', 'StatusLine', 'TabLine',
-        \ 'Title', 'Visual', 'WarningMsg', 'WildMenu']
+  let hi_groups = [
+        \ 'ColorColumn',
+        \ 'Comment',
+        \ 'Conceal',
+        \ 'Constant',
+        \ 'Cursor',
+        \ 'CursorColumn',
+        \ 'CursorLine',
+        \ 'CursorLineNr',
+        \ 'DiffAdd',
+        \ 'DiffChange',
+        \ 'DiffDelete',
+        \ 'DiffText',
+        \ 'Directory',
+        \ 'EndOfBuffer',
+        \ 'Error',
+        \ 'ErrorMsg',
+        \ 'FoldColumn',
+        \ 'Folded',
+        \ 'Identifier',
+        \ 'Ignore',
+        \ 'IncSearch',
+        \ 'LineNr',
+        \ 'MatchParen',
+        \ 'ModeMsg',
+        \ 'MoreMsg',
+        \ 'NonText',
+        \ 'Normal',
+        \ 'Pmenu',
+        \ 'PmenuSbar',
+        \ 'PmenuSel',
+        \ 'PmenuThumb',
+        \ 'PreProc',
+        \ 'Question',
+        \ 'QuickFixLine',
+        \ 'Search',
+        \ 'SignColumn',
+        \ 'Special',
+        \ 'SpecialKey',
+        \ 'SpellBad',
+        \ 'SpellCap',
+        \ 'SpellLocal',
+        \ 'SpellRare',
+        \ 'Statement',
+        \ 'StatusLine',
+        \ 'StatusLineNC',
+        \ 'StatusLineTerm',
+        \ 'StatusLineTermNC',
+        \ 'TabLine',
+        \ 'TabLineFill',
+        \ 'TabLineSel',
+        \ 'Title',
+        \ 'Todo',
+        \ 'ToolbarButton',
+        \ 'ToolbarLine',
+        \ 'Type',
+        \ 'Underlined',
+        \ 'VertSplit',
+        \ 'Visual',
+        \ 'VisualNOS',
+        \ 'WarningMsg',
+        \ 'WildMenu',
+        \ ]
   let groups={}
   for group in hi_groups
     if search('\c@suppress\s\+'.group, 'cnW')
       " skip check, if the script contains a line like
       " @suppress Visual:
       let groups[group] = 'Ignoring '.group
+      continue
+    endif
+    if search('hi\%[ghlight]!\= \+link \+'.group, 'cnW') " Linked group
       continue
     endif
     if !search('hi\%[ghlight] \+'.group, 'cnW')
@@ -43,12 +105,15 @@ func! Test_check_colors()
       let groups[group] = 'Missing bg terminal color for '.group
       continue
     endif
-    call search('hi\%[ghlight] \+'.group, 'cW')
-    " only check in the current line
-    if !search('guifg', 'cnW', line('.'))   || !search('ctermfg', 'cnW', line('.'))
-      " do not check for background colors, they could be intentionally left out
-      let groups[group] = 'Missing fg definition for '.group
+    if !search('hi\%[ghlight] \+'.group. '.*guifg=', 'cnW')
+      let groups[group] = 'Missing guifg definition for '.group
+      continue
     endif
+    if !search('hi\%[ghlight] \+'.group. '.*ctermfg=', 'cnW')
+      let groups[group] = 'Missing ctermfg definition for '.group
+      continue
+    endif
+    " do not check for background colors, they could be intentionally left out
     call cursor(1,1)
   endfor
   let err['highlight'] = groups
@@ -91,15 +156,43 @@ func! Test_check_colors()
   endif
 
   " 7) Does not define filetype specific groups like vimCommand, htmlTag,
-  let hi_groups = ['vim', 'html', 'python', 'sh', 'ruby']
+  let hi_groups = filter(getcompletion('', 'filetype'), { _,v -> v !~# '\%[no]syn\%(color\|load\|tax\)' })
+  let ft_groups = []
+  " let group = '\%('.join(hi_groups, '\|').'\)' " More efficient than a for loop, but less informative
   for group in hi_groups
-    let pat='\Chi\%[ghlight]\s*\zs'.group.'\w\+\>'
+    let pat='\Chi\%[ghlight]!\= *\%[link] \+\zs'.group.'\w\+\>\ze \+.' " Skips `hi clear`
+    if search(pat, 'cW')
+      call add(ft_groups, matchstr(getline('.'), pat))
+    endif
+    call cursor(1,1)
+  endfor
+  if !empty(ft_groups)
+    let err['filetype'] = get(err, 'filetype', 'Should not define: ') . join(uniq(sort(ft_groups)))
+  endif
+
+  " 8) Were debugPC and debugBreakpoint defined?
+  for group in ['debugPC', 'debugBreakpoint']
+    let pat='\Chi\%[ghlight]!\= *\%[link] \+\zs'.group.'\>'
     if search(pat, 'cnW')
       let line = search(pat, 'cW')
       let err['filetype'] = get(err, 'filetype', 'Should not define: ') . matchstr(getline('.'), pat). ' '
     endif
     call cursor(1,1)
   endfor
+
+  " 9) Normal should be defined first, not use reverse, fg or bg
+  call cursor(1,1)
+  let pat = 'hi\%[light] \+\%(link\|clear\)\@!\w\+\>'
+  call search(pat, 'cW') " Look for the first hi def, skipping `hi link` and `hi clear`
+  if getline('.') !~# '\m\<Normal\>'
+    let err['highlight']['Normal'] = 'Should be defined first'
+  elseif getline('.') =~# '\m\%(=\%(fg\|bg\)\)'
+    let err['highlight']['Normal'] = "Should not use 'fg' or 'bg'"
+  elseif getline('.') =~# '\m=\%(inv\|rev\)erse'
+    let err['highlight']['Normal'] = 'Should not use reverse mode'
+  endif
+
+  call winrestview(l:savedview)
   let g:err = err
 
   " print Result
@@ -107,11 +200,11 @@ func! Test_check_colors()
 endfu
 
 fu! Result(err)
-  let do_roups = 0
+  let do_groups = 0
   echohl Title|echomsg "---------------"|echohl Normal
   for key in sort(keys(a:err))
     if key is# 'highlight'
-      let do_groups = 1
+      let do_groups = !empty(a:err[key])
       continue
     else
       if a:err[key] !~ 'OK'

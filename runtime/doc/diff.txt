@@ -175,7 +175,7 @@ hidden buffers.  You can use ":hide" to close a window without unloading the
 buffer.  If you don't want a buffer to remain used for the diff do ":set
 nodiff" before hiding it.
 
-							*:dif* *:diffupdate*
+						*:dif* *:diff* *:diffupdate*
 :dif[fupdate][!]		Update the diff highlighting and folds.
 
 Vim attempts to keep the differences updated when you make changes to the
@@ -325,7 +325,7 @@ After setting this variable, reload the syntax script: >
 FINDING THE DIFFERENCES					*diff-diffexpr*
 
 The 'diffexpr' option can be set to use something else than the standard
-"diff" program to compare two files and find the differences.
+"diff" program to compare two files and find the differences. *E959*
 
 When 'diffexpr' is empty, Vim uses this command to find the differences
 between file1 and file2: >

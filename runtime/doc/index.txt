@@ -153,7 +153,6 @@ commands in CTRL-X submode				*i_CTRL-X_index*
 |i_CTRL-X_CTRL-V|	CTRL-X CTRL-V	complete like in : command line
 |i_CTRL-X_CTRL-]|	CTRL-X CTRL-]	complete tags
 |i_CTRL-X_s|		CTRL-X s	spelling suggestions
-{not available when compiled without the |+insert_expand| feature}
 
 commands in completion mode (see |popupmenu-keys|)
 
@@ -1195,6 +1194,7 @@ tag		command		action ~
 |:compiler|	:comp[iler]	do settings for a specific compiler
 |:continue|	:con[tinue]	go back to :while
 |:confirm|	:conf[irm]	prompt user when confirmation required
+|:const|	:cons[t]	create a variable as a constant
 |:copen|	:cope[n]	open quickfix window
 |:cprevious|	:cp[revious]	go to previous error
 |:cpfile|	:cpf[ile]	go to last error in previous file

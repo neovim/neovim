@@ -555,7 +555,7 @@ You can use the argument list with the following commands, and with the
 expression functions |argc()| and |argv()|.  These all work on the argument
 list of the current window.
 
-							*:ar* *:args*
+							*:ar* *:arg* *:args*
 :ar[gs]			Print the argument list, with the current file in
 			square brackets.
 

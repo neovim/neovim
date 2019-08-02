@@ -2591,7 +2591,6 @@ preceding last option and unsetting all other ones): >
 Note: only existence of these options matter, not their value. You can replace
       1 above with anything.
 
-
 QUAKE						*quake.vim* *ft-quake-syntax*
 
 The Quake syntax definition should work for most any FPS (First Person
@@ -3108,7 +3107,7 @@ in your vimrc, and :set fdm=syntax.  I suggest doing the latter via a
 modeline at the end of your LaTeX file: >
 	% vim: fdm=syntax
 If your system becomes too slow, then you might wish to look into >
-	https://vimhelp.appspot.com/vim_faq.txt.html#faq-29.7
+	https://vimhelp.org/vim_faq.txt.html#faq-29.7
 <
 						*g:tex_nospell*
  Tex: No Spell Checking Wanted~
@@ -3986,7 +3985,6 @@ This will make each {} block form one fold.
 The fold will start on the line where the item starts, and end where the item
 ends.  If the start and end are within the same line, there is no fold.
 The 'foldnestmax' option limits the nesting of syntax folds.
-{not available when Vim was compiled without |+folding| feature}
 
 
 			*:syn-contains* *E405* *E406* *E407* *E408* *E409*
@@ -5124,6 +5122,15 @@ load the syntax file.
 The command also deletes the "b:current_syntax" variable, since no syntax is
 loaded after this command.
 
+To clean up specific syntax groups for the current buffer: >
+  :syntax clear {group-name} ..
+This removes all patterns and keywords for {group-name}.
+
+To clean up specific syntax group lists for the current buffer: >
+  :syntax clear @{grouplist-name} ..
+This sets {grouplist-name}'s contents to an empty list.
+
+						*:syntax-off* *:syn-off*
 If you want to disable syntax highlighting for all buffers, you need to remove
 the autocommands that load the syntax files: >
   :syntax off
@@ -5132,14 +5139,6 @@ What this command actually does, is executing the command >
   :source $VIMRUNTIME/syntax/nosyntax.vim
 See the "nosyntax.vim" file for details.  Note that for this to work
 $VIMRUNTIME must be valid.  See |$VIMRUNTIME|.
-
-To clean up specific syntax groups for the current buffer: >
-  :syntax clear {group-name} ..
-This removes all patterns and keywords for {group-name}.
-
-To clean up specific syntax group lists for the current buffer: >
-  :syntax clear @{grouplist-name} ..
-This sets {grouplist-name}'s contents to an empty list.
 
 						*:syntax-reset* *:syn-reset*
 If you have changed the colors and messed them up, use this command to get the

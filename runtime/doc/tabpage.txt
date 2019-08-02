@@ -74,8 +74,6 @@ For the related autocommands see |tabnew-autocmd|.
 :[count]tabf[ind] [++opt] [+cmd] {file}			*:tabf* *:tabfind*
 		Open a new tab page and edit {file} in 'path', like with
 		|:find|.  For [count] see |:tabnew| above.
-		{not available when the |+file_in_path| feature was disabled
-		at compile time}
 
 :[count]tab {cmd}					*:tab*
 		Execute {cmd} and when it opens a new window open a new tab

@@ -298,25 +298,25 @@ Exceptions:
   spell file is used.
 
 For example, with these values:
-	'runtimepath' is "~/.config/nvim,/usr/local/share/nvim/runtime/,~/.config/nvim/after"
+	'runtimepath' is "~/.config/nvim,/usr/share/nvim/runtime/,~/.config/nvim/after"
 	'encoding'    is "iso-8859-2"
 	'spelllang'   is "pl"
 
 Vim will look for:
 1. ~/.config/nvim/spell/pl.iso-8859-2.spl
-2. /usr/local/share/nvim/runtime/spell/pl.iso-8859-2.spl
+2. /usr/share/nvim/runtime/spell/pl.iso-8859-2.spl
 3. ~/.config/nvim/spell/pl.iso-8859-2.add.spl
-4. /usr/local/share/nvim/runtime/spell/pl.iso-8859-2.add.spl
+4. /usr/share/nvim/runtime/spell/pl.iso-8859-2.add.spl
 5. ~/.config/nvim/after/spell/pl.iso-8859-2.add.spl
 
 This assumes 1. is not found and 2. is found.
 
 If 'encoding' is "latin1" Vim will look for:
 1. ~/.config/nvim/spell/pl.latin1.spl
-2. /usr/local/share/nvim/runtime/spell/pl.latin1.spl
+2. /usr/share/nvim/runtime/spell/pl.latin1.spl
 3. ~/.config/nvim/after/spell/pl.latin1.spl
 4. ~/.config/nvim/spell/pl.ascii.spl
-5. /usr/local/share/nvim/runtime/spell/pl.ascii.spl
+5. /usr/share/nvim/runtime/spell/pl.ascii.spl
 6. ~/.config/nvim/after/spell/pl.ascii.spl
 
 This assumes none of them are found (Polish doesn't make sense when leaving

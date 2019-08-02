@@ -579,6 +579,16 @@ To disable this behavior, set the following variable in your vimrc: >
 	let g:python_recommended_style = 0
 
 
+QF QUICKFIX					    *qf.vim* *ft-qf-plugin*
+
+The "qf" filetype is used for the quickfix window, see |quickfix-window|.
+
+The quickfix filetype plugin includes configuration for displaying the command
+that produced the quickfix list in the |status-line|. To disable this setting,
+configure as follows: >
+	:let g:qf_disable_statusline = 1
+
+
 R MARKDOWN						*ft-rmd-plugin*
 
 By default ftplugin/html.vim is not sourced. If you want it sourced, add to

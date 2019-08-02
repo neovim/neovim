@@ -257,7 +257,6 @@ argument.
 							*-D*
 -D		Debugging.  Go to debugging mode when executing the first
 		command from a script. |debug-mode|
-		{not available when compiled without the |+eval| feature}
 
 							*-n*
 -n		No |swap-file| will be used.  Recovery after a crash will be
@@ -676,7 +675,7 @@ After doing this once, Nvim sets the $VIMRUNTIME environment variable.
 In case you need the value of $VIMRUNTIME in a shell (e.g., for a script that
 greps in the help files) you might be able to use this: >
 
-	VIMRUNTIME="$(nvim -e --cmd 'echo $VIMRUNTIME|quit' 2>&1)"
+	VIMRUNTIME="$(nvim --clean --headless --cmd 'echo $VIMRUNTIME|q')"
 
 ==============================================================================
 4. Suspending						*suspend*
@@ -731,7 +730,7 @@ vimrc file.
 			options to [file] (default ".exrc" in the current
 			directory).
 
-							*:mkv* *:mkvimrc*
+						*:mkv* *:mkvi* *:mkvimrc*
 :mkv[imrc][!] [file]	Like ":mkexrc", but the default is ".nvimrc" in the
 			current directory.  The ":version" command is also
 			written to the file.

@@ -877,12 +877,33 @@ MenuPopup			Just before showing the popup menu (under the
 							*OptionSet*
 OptionSet			After setting an option (except during
 				|startup|).  The |autocmd-pattern| is matched
-				against the long option name.
-				|v:option_old| indicates the old option value,
-				|v:option_new| indicates the new value,
+				against the long option name.  |<amatch>|
+				indicates what option has been set.
+
 				|v:option_type| indicates whether it's global
-				or local scoped and |<amatch>| indicates which
-				option was set.
+				or local scoped.
+				|v:option_command| indicates what type of
+				set/let command was used (follow the tag to
+				see the table).
+				|v:option_new| indicates the newly set value.
+				|v:option_oldlocal| has the old local value.
+				|v:option_oldglobal| has the old global value.
+				|v:option_old| indicates the old option value.
+
+				|v:option_oldlocal| is only set when |:set|
+				or |:setlocal| or a |modeline| was used to set
+				the option. Similarly |v:option_oldglobal| is
+				only set when |:set| or |:setglobal| was used.
+
+				Note that when setting a |global-local| string
+				option with |:set|, then |v:option_old| is the
+				old global value. However, for all other kinds
+				of options (local string options, global-local
+				number options, ...) it is the old local
+				value.
+
+				OptionSet is not triggered on startup and for
+				the 'key' option for obvious reasons.
 
 				Usage example: Check for the existence of the
 				directory in the 'backupdir' and 'undodir'
@@ -1051,8 +1072,7 @@ TextChanged			After a change was made to the text in the
 				was defined).
 				Not triggered when there is typeahead or when
 				an operator is pending.
-				Note: This can not be skipped with
-				`:noautocmd`.
+				Note: Cannot be skipped with `:noautocmd`.
 				Careful: This is triggered very often, don't
 				do anything that the user does not expect or
 				that is slow.
@@ -1352,7 +1372,7 @@ have changed autocommands, or when Vim has executed the wrong autocommands
 Note that the 'eventignore' option applies here too.  Events listed in this
 option will not cause any commands to be executed.
 
-					*:do* *:doau* *:doautocmd* *E217*
+				*:do* *:doau* *:doaut* *:doautocmd* *E217*
 :do[autocmd] [<nomodeline>] [group] {event} [fname]
 			Apply the autocommands matching [fname] (default:
 			current file name) for {event} to the current buffer.

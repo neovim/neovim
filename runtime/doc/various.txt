@@ -283,7 +283,7 @@ g8			Print the hex values of the bytes used in the
 							*:!!*
 :!!			Repeat last ":!{cmd}".
 
-							*:ve* *:version*
+							*:ve* *:ver* *:version*
 :ve[rsion]		Print editor version and build information.
 			See also |feature-compile|.
 
@@ -451,7 +451,6 @@ or an autocommand will also display where it was last defined.  If it was
 defined manually then there will be no "Last set" message.  When it was
 defined while executing a function, user command or autocommand, the script in
 which it was defined is reported.
-{not available when compiled without the |+eval| feature}
 
 							*K*
 [count]K       		Run a program to lookup the keyword under the

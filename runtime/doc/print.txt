@@ -44,8 +44,6 @@ Note: If you have problems printing with |:hardcopy|, an alternative is to use
 			{filename}.
 			Things like "%" are expanded |cmdline-special|
 			Careful: An existing file is silently overwritten.
-			{only available when compiled with the |+postscript|
-			feature}
 			On MS-Windows use the "print to file" feature of the
 			printer driver.
 

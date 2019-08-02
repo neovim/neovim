@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:	Vim help file
 " Maintainer:	Bram Moolenaar (Bram@vim.org)
-" Last Change:	2017 Oct 19
+" Last Change:	2019 May 12
 
 " Quit when a (custom) syntax file was already loaded
 if exists("b:current_syntax")
@@ -11,7 +11,7 @@ endif
 let s:cpo_save = &cpo
 set cpo&vim
 
-syn match helpHeadline		"^[-A-Z .][-A-Z0-9 .()]*[ \t]\+\*"me=e-1
+syn match helpHeadline		"^[-A-Z .][-A-Z0-9 .()_]*[ \t]\+\*"me=e-1
 syn match helpSectionDelim	"^===.*===$"
 syn match helpSectionDelim	"^---.*--$"
 if has("conceal")

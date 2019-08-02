@@ -1,11 +1,8 @@
-" Language   : Netrw Remote-Directory Listing Syntax
+" Language   : Netrw Listing Syntax
 " Maintainer : Charles E. Campbell
-" Last change: Oct 06, 2014
-" Version    : 19
+" Last change: Oct 31, 2016
+" Version    : 20	NOT RELEASED
 " ---------------------------------------------------------------------
-
-" Syntax Clearing: {{{1
-" quit when a syntax file was already loaded
 if exists("b:current_syntax")
  finish
 endif
@@ -55,24 +52,30 @@ syn match  netrwLink		"-->"				contained skipwhite
 " -----------------------------
 " Special filetype highlighting {{{1
 " -----------------------------
-if exists("g:netrw_special_syntax") && netrw_special_syntax
- syn match netrwBak		"\(\S\+ \)*\S\+\.bak\>"				contains=netrwTreeBar,@NoSpell
- syn match netrwCompress	"\(\S\+ \)*\S\+\.\%(gz\|bz2\|Z\|zip\)\>"	contains=netrwTreeBar,@NoSpell
- if has("unix")
-  syn match netrwCoreDump	"\<core\%(\.\d\+\)\=\>"				contains=netrwTreeBar,@NoSpell
+if exists("g:netrw_special_syntax") && g:netrw_special_syntax
+ if exists("+suffixes") && &suffixes != ""
+  let suflist= join(split(&suffixes,','))
+  let suflist= escape(substitute(suflist," ",'\\|','g'),'.~')
+  exe "syn match netrwSpecFile '\\(\\S\\+ \\)*\\S*\\(".suflist."\\)\\>'  contains=netrwTreeBar,@NoSpell"
  endif
- syn match netrwLex		"\(\S\+ \)*\S\+\.\%(l\|lex\)\>"			contains=netrwTreeBar,@NoSpell
- syn match netrwYacc		"\(\S\+ \)*\S\+\.y\>"				contains=netrwTreeBar,@NoSpell
- syn match netrwData		"\(\S\+ \)*\S\+\.dat\>"				contains=netrwTreeBar,@NoSpell
- syn match netrwDoc		"\(\S\+ \)*\S\+\.\%(doc\|txt\|pdf\|ps\)"	contains=netrwTreeBar,@NoSpell
- syn match netrwHdr		"\(\S\+ \)*\S\+\.\%(h\|hpp\)\>"			contains=netrwTreeBar,@NoSpell
- syn match netrwLib		"\(\S\+ \)*\S*\.\%(a\|so\|lib\|dll\)\>"		contains=netrwTreeBar,@NoSpell
- syn match netrwMakeFile	"\<[mM]akefile\>\|\(\S\+ \)*\S\+\.mak\>"	contains=netrwTreeBar,@NoSpell
- syn match netrwObj		"\(\S\+ \)*\S*\.\%(o\|obj\)\>"			contains=netrwTreeBar,@NoSpell
- syn match netrwTags		"\<\(ANmenu\|ANtags\)\>"			contains=netrwTreeBar,@NoSpell
- syn match netrwTags    	"\<tags\>"					contains=netrwTreeBar,@NoSpell
- syn match netrwTilde		"\(\S\+ \)*\S\+\~\*\=\>"			contains=netrwTreeBar,@NoSpell
- syn match netrwTmp		"\<tmp\(\S\+ \)*\S\+\>\|\(\S\+ \)*\S*tmp\>"	contains=netrwTreeBar,@NoSpell
+ syn match netrwBak		"\(\S\+ \)*\S\+\.bak\>"					contains=netrwTreeBar,@NoSpell
+ syn match netrwCompress	"\(\S\+ \)*\S\+\.\%(gz\|bz2\|Z\|zip\)\>"		contains=netrwTreeBar,@NoSpell
+ if has("unix")
+  syn match netrwCoreDump	"\<core\%(\.\d\+\)\=\>"					contains=netrwTreeBar,@NoSpell
+ endif
+ syn match netrwLex		"\(\S\+ \)*\S\+\.\%(l\|lex\)\>"				contains=netrwTreeBar,@NoSpell
+ syn match netrwYacc		"\(\S\+ \)*\S\+\.y\>"					contains=netrwTreeBar,@NoSpell
+ syn match netrwData		"\(\S\+ \)*\S\+\.dat\>"					contains=netrwTreeBar,@NoSpell
+ syn match netrwDoc		"\(\S\+ \)*\S\+\.\%(doc\|txt\|pdf\|ps\|docx\)\>"	contains=netrwTreeBar,@NoSpell
+ syn match netrwHdr		"\(\S\+ \)*\S\+\.\%(h\|hpp\)\>"				contains=netrwTreeBar,@NoSpell
+ syn match netrwLib		"\(\S\+ \)*\S*\.\%(a\|so\|lib\|dll\)\>"			contains=netrwTreeBar,@NoSpell
+ syn match netrwMakeFile	"\<[mM]akefile\>\|\(\S\+ \)*\S\+\.mak\>"		contains=netrwTreeBar,@NoSpell
+ syn match netrwObj		"\(\S\+ \)*\S*\.\%(o\|obj\)\>"				contains=netrwTreeBar,@NoSpell
+ syn match netrwPix		"\c\(\S\+ \)*\S*\.\%(bmp\|fits\=\|gif\|je\=pg\|pcx\|ppc\|pgm\|png\|ppm\|psd\|rgb\|tif\|xbm\|xcf\)\>"	contains=netrwTreeBar,@NoSpell
+ syn match netrwTags		"\<\(ANmenu\|ANtags\)\>"				contains=netrwTreeBar,@NoSpell
+ syn match netrwTags    	"\<tags\>"						contains=netrwTreeBar,@NoSpell
+ syn match netrwTilde		"\(\S\+ \)*\S\+\~\*\=\>"				contains=netrwTreeBar,@NoSpell
+ syn match netrwTmp		"\<tmp\(\S\+ \)*\S\+\>\|\(\S\+ \)*\S*tmp\>"		contains=netrwTreeBar,@NoSpell
 endif
 
 " ---------------------------------------------------------------------
@@ -101,20 +104,41 @@ if !exists("did_drchip_netrwlist_syntax")
  hi default link netrwLink	Special
 
  " special syntax highlighting (see :he g:netrw_special_syntax)
- hi default link netrwBak	NonText
- hi default link netrwCompress	Folded
  hi default link netrwCoreDump	WarningMsg
  hi default link netrwData	DiffChange
  hi default link netrwHdr	netrwPlain
  hi default link netrwLex	netrwPlain
  hi default link netrwLib	DiffChange
  hi default link netrwMakefile	DiffChange
- hi default link netrwObj	Folded
- hi default link netrwTilde	Folded
- hi default link netrwTmp	Folded
- hi default link netrwTags	Folded
  hi default link netrwYacc	netrwPlain
+ hi default link netrwPix	Special
+
+ hi default link netrwBak	netrwGray
+ hi default link netrwCompress	netrwGray
+ hi default link netrwSpecFile	netrwGray
+ hi default link netrwObj	netrwGray
+ hi default link netrwTags	netrwGray
+ hi default link netrwTilde	netrwGray
+ hi default link netrwTmp	netrwGray
 endif
+
+ " set up netrwGray to be understated (but not Ignore'd or Conceal'd, as those
+ " can be hard/impossible to read). Users may override this in a colorscheme by
+ " specifying netrwGray highlighting.
+ redir => s:netrwgray
+  sil hi netrwGray
+ redir END
+ if s:netrwgray !~ 'guifg'
+  if has("gui") && has("gui_running")
+   if &bg == "dark"
+    exe "hi netrwGray gui=NONE guifg=gray30"
+   else
+    exe "hi netrwGray gui=NONE guifg=gray70"
+   endif
+  else
+   hi link netrwGray	Folded
+  endif
+ endif
 
 " Current Syntax: {{{1
 let   b:current_syntax = "netrwlist"

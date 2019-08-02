@@ -696,80 +696,6 @@ For example, when you are using kinput2 as |IM-server| and sh, >
 <
 
 ==============================================================================
-Input on MS-Windows					*mbyte-IME*
-
-(Windows IME support)				*multibyte-ime* *IME*
-
-{only works Windows GUI and compiled with the |+multi_byte_ime| feature}
-
-To input multibyte characters on Windows, you can use an Input Method Editor
-(IME).  In process of your editing text, you must switch status (on/off) of
-IME many many many times.  Because IME with status on is hooking all of your
-key inputs, you cannot input 'j', 'k', or almost all of keys to Vim directly.
-
-This |+multi_byte_ime| feature help this.  It reduce times of switch status of
-IME manually.  In normal mode, there are almost no need working IME, even
-editing multibyte text.  So exiting insert mode with ESC, Vim memorize last
-status of IME and force turn off IME.  When re-enter insert mode, Vim revert
-IME status to that memorized automatically.
-
-This works on not only insert-normal mode, but also search-command input and
-replace mode.
-The options 'iminsert', 'imsearch' and 'imcmdline' can be used to chose
-the different input methods or disable them temporarily.
-
-WHAT IS IME
-    IME is a part of East asian version Windows.  That helps you to input
-    multibyte character.  English and other language version Windows does not
-    have any IME.  (Also there is no need usually.) But there is one that
-    called Microsoft Global IME.  Global IME is a part of Internet Explorer
-    4.0 or above.  You can get more information about Global IME, at below
-    URL.
-
-WHAT IS GLOBAL IME					*global-ime*
-    Global IME enables input of Chinese, Japanese, and Korean text into Vim
-    buffer on any language version of Windows.  Global IME is built in, and
-    the Input Locales can be added through Control Panel/Regional
-    Options/Input Locales.  Please see below URL for detail of Global IME.
-    You can also find various language version of Global IME at same place.
-
-    - Global IME detailed information.
-	http://search.microsoft.com/results.aspx?q=global+ime
-
-    - Active Input Method Manager (Global IME)
-	http://msdn.microsoft.com/en-us/library/aa741221(v=VS.85).aspx
-
-    Support for Global IME is an experimental feature.
-
-NOTE: For IME to work you must make sure the input locales of your language
-are added to your system.  The exact location of this depends on the version
-of Windows you use.  For example, on my Windows 2000 box:
-1. Control Panel
-2. Regional Options
-3. Input Locales Tab
-4. Add Installed input locales -> Chinese(PRC)
-   The default is still English (United Stated)
-
-
-Cursor color when IME or XIM is on				*CursorIM*
-    There is a little cute feature for IME.  Cursor can indicate status of IME
-    by changing its color.  Usually status of IME was indicated by little icon
-    at a corner of desktop (or taskbar).  It is not easy to verify status of
-    IME.  But this feature help this.
-    This works in the same way when using XIM.
-
-    You can select cursor color when status is on by using highlight group
-    CursorIM.  For example, add these lines to your |ginit.vim|: >
-
-	if has('multi_byte_ime')
-	    highlight Cursor guifg=NONE guibg=Green
-	    highlight CursorIM guifg=NONE guibg=Purple
-	endif
-<
-    Cursor color with off IME is green.  And purple cursor indicates that
-    status is on.
-
-==============================================================================
 Input with a keymap					*mbyte-keymap*
 
 When the keyboard doesn't produce the characters you want to enter in your
@@ -777,7 +703,6 @@ text, you can use the 'keymap' option.  This will translate one or more
 (English) characters to another (non-English) character.  This only happens
 when typing text, not when typing Vim commands.  This avoids having to switch
 between two keyboard settings.
-{only available when compiled with the |+keymap| feature}
 
 The value of the 'keymap' option specifies a keymap file to use.  The name of
 this file is one of these two:

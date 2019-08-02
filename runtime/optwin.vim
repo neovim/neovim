@@ -1,7 +1,7 @@
 " These commands create the option window.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Jan 27
+" Last Change:	2019 Jul 18
 
 " If there already is an option window, jump to that one.
 let buf = bufnr('option-window')
@@ -471,6 +471,8 @@ call append("$", " \tset wmw=" . &wmw)
 call append("$", "helpheight\tinitial height of the help window")
 call append("$", " \tset hh=" . &hh)
 if has("quickfix")
+  " call append("$", "previewpopup\tuse a popup window for preview")
+  " call append("$", " \tset pvp=" . &pvp)
   call append("$", "previewheight\tdefault height for the preview window")
   call append("$", " \tset pvh=" . &pvh)
   call append("$", "previewwindow\tidentifies the preview window")
@@ -932,6 +934,8 @@ call <SID>Header("reading and writing files")
 call append("$", "modeline\tenable using settings from modelines when reading a file")
 call append("$", "\t(local to buffer)")
 call <SID>BinOptionL("ml")
+call append("$", "modelineexpr\tallow setting expression options from a modeline")
+call <SID>BinOptionG("mle", &mle)
 call append("$", "modelines\tnumber of lines to check for modelines")
 call append("$", " \tset mls=" . &mls)
 call append("$", "binary\tbinary file editing")

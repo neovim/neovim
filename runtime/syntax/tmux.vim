@@ -1,5 +1,5 @@
 " Language: tmux(1) configuration file
-" Version: 2.7 (git-e4e060f2)
+" Version: 2.9a (git-0d64531f)
 " URL: https://github.com/ericpruitt/tmux.vim/
 " Maintainer: Eric Pruitt <eric.pruitt@gmail.com>
 " License: 2-Clause BSD (http://opensource.org/licenses/BSD-2-Clause)
@@ -64,60 +64,51 @@ endfor
 syn keyword tmuxOptions
 \ buffer-limit command-alias default-terminal escape-time exit-empty
 \ activity-action assume-paste-time base-index bell-action default-command
-\ default-shell destroy-unattached detach-on-destroy
+\ default-shell default-size destroy-unattached detach-on-destroy
 \ display-panes-active-colour display-panes-colour display-panes-time
 \ display-time exit-unattached focus-events history-file history-limit
-\ key-table lock-after-time lock-command message-attr message-bg
-\ message-command-attr message-command-bg message-command-fg
-\ message-command-style message-fg message-limit message-style mouse
-\ aggressive-resize allow-rename alternate-screen automatic-rename
-\ automatic-rename-format clock-mode-colour clock-mode-style force-height
-\ force-width main-pane-height main-pane-width mode-attr mode-bg mode-fg
-\ mode-keys mode-style monitor-activity monitor-bell monitor-silence
-\ other-pane-height other-pane-width pane-active-border-bg
-\ pane-active-border-fg pane-active-border-style pane-base-index
-\ pane-border-bg pane-border-fg pane-border-format pane-border-status
-\ pane-border-style prefix prefix2 remain-on-exit renumber-windows
-\ repeat-time set-clipboard set-titles set-titles-string silence-action
-\ status status-attr status-bg status-fg status-interval status-justify
-\ status-keys status-left status-left-attr status-left-bg status-left-fg
-\ status-left-length status-left-style status-position status-right
-\ status-right-attr status-right-bg status-right-fg status-right-length
+\ key-table lock-after-time lock-command message-command-style message-limit
+\ message-style mouse aggressive-resize allow-rename alternate-screen
+\ automatic-rename automatic-rename-format clock-mode-colour
+\ clock-mode-style main-pane-height main-pane-width mode-keys mode-style
+\ monitor-activity monitor-bell monitor-silence other-pane-height
+\ other-pane-width pane-active-border-style pane-base-index
+\ pane-border-format pane-border-status pane-border-style prefix prefix2
+\ remain-on-exit renumber-windows repeat-time set-clipboard set-titles
+\ set-titles-string silence-action status status-bg status-fg status-format
+\ status-interval status-justify status-keys status-left status-left-length
+\ status-left-style status-position status-right status-right-length
 \ status-right-style status-style synchronize-panes terminal-overrides
 \ update-environment user-keys visual-activity visual-bell visual-silence
-\ window-active-style window-status-activity-attr window-status-activity-bg
-\ window-status-activity-fg window-status-activity-style window-status-attr
-\ window-status-bell-attr window-status-bell-bg window-status-bell-fg
-\ window-status-bell-style window-status-bg window-status-current-attr
-\ window-status-current-bg window-status-current-fg
-\ window-status-current-format window-status-current-style window-status-fg
-\ window-status-format window-status-last-attr window-status-last-bg
-\ window-status-last-fg window-status-last-style window-status-separator
-\ window-status-style window-style word-separators wrap-search xterm-keys
+\ window-active-style window-size window-status-activity-style
+\ window-status-bell-style window-status-current-format
+\ window-status-current-style window-status-format window-status-last-style
+\ window-status-separator window-status-style window-style word-separators
+\ wrap-search xterm-keys
 
 syn keyword tmuxCommands
 \ attach attach-session bind bind-key break-pane breakp capture-pane
 \ capturep choose-buffer choose-client choose-tree clear-history clearhist
 \ clock-mode command-prompt confirm confirm-before copy-mode detach
-\ detach-client display display-message display-panes displayp find-window
-\ findw if if-shell join-pane joinp kill-pane kill-server kill-session
-\ kill-window killp has-session has killw link-window linkw list-buffers
-\ list-clients list-commands list-keys list-panes list-sessions list-windows
-\ load-buffer loadb lock lock-client lock-server lock-session last-pane
-\ lastp lockc locks last-window last ls lsb delete-buffer deleteb lsc lscm
-\ lsk lsp lsw move-pane move-window movep movew new new-session new-window
-\ neww next next-layout next-window nextl paste-buffer pasteb pipe-pane
-\ pipep prev previous-layout previous-window prevl refresh refresh-client
-\ rename rename-session rename-window renamew resize-pane resizep
-\ respawn-pane respawn-window respawnp respawnw rotate-window rotatew run
-\ run-shell save-buffer saveb select-layout select-pane select-window
-\ selectl selectp selectw send send-keys send-prefix set set-buffer
-\ set-environment set-hook set-option set-window-option setb setenv setw
-\ show show-buffer show-environment show-hooks show-messages show-options
-\ show-window-options showb showenv showmsgs showw source source-file
-\ split-window splitw start start-server suspend-client suspendc swap-pane
-\ swap-window swapp swapw switch-client switchc unbind unbind-key
-\ unlink-window unlinkw wait wait-for
+\ detach-client display display-menu display-message display-panes displayp
+\ find-window findw if if-shell join-pane joinp kill-pane kill-server
+\ kill-session kill-window killp has-session has killw link-window linkw
+\ list-buffers list-clients list-commands list-keys list-panes list-sessions
+\ list-windows load-buffer loadb lock lock-client lock-server lock-session
+\ lockc last-pane lastp locks ls last-window last lsb lsc delete-buffer
+\ deleteb lscm lsk lsp lsw menu move-pane move-window movep movew new
+\ new-session new-window neww next next-layout next-window nextl
+\ paste-buffer pasteb pipe-pane pipep prev previous-layout previous-window
+\ prevl refresh refresh-client rename rename-session rename-window renamew
+\ resize-pane resize-window resizep resizew respawn-pane respawn-window
+\ respawnp respawnw rotate-window rotatew run run-shell save-buffer saveb
+\ select-layout select-pane select-window selectl selectp selectw send
+\ send-keys send-prefix set set-buffer set-environment set-hook set-option
+\ set-window-option setb setenv setw show show-buffer show-environment
+\ show-hooks show-messages show-options show-window-options showb showenv
+\ showmsgs showw source source-file split-window splitw start start-server
+\ suspend-client suspendc swap-pane swap-window swapp swapw switch-client
+\ switchc unbind unbind-key unlink-window unlinkw wait wait-for
 
 let &cpo = s:original_cpo
 unlet! s:original_cpo s:bg s:i

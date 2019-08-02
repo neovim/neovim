@@ -99,12 +99,13 @@ Read this from start to end to learn the essential commands.
 |usr_05.txt|  Set your settings
 		|05.1|	The vimrc file
 		|05.2|	The example vimrc file explained
-		|05.3|	Simple mappings
-		|05.4|	Adding a package
-		|05.5|	Adding a plugin
-		|05.6|	Adding a help file
-		|05.7|	The option window
-		|05.8|	Often used options
+		|05.3|	The defaults.vim file explained
+		|05.4|	Simple mappings
+		|05.5|	Adding a package
+		|05.6|	Adding a plugin
+		|05.7|	Adding a help file
+		|05.8|	The option window
+		|05.9|	Often used options
 
 |usr_06.txt|  Using syntax highlighting
 		|06.1|	Switching it on

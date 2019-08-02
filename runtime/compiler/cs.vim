@@ -1,8 +1,8 @@
 " Vim compiler file
-" Compiler:	Microsoft Visual Studio C#
-" Maintainer:	Zhou YiChao (broken.zhou@gmail.com)
-" Previous Maintainer:	Joseph H. Yao (hyao@sina.com)
-" Last Change:	2012 Apr 30
+" Compiler:               Microsoft Visual Studio C#
+" Maintainer:             Yichao Zhou (broken.zhou@gmail.com)
+" Previous Maintainer:    Joseph H. Yao (hyao@sina.com)
+" Last Change:            Jul 22, 2019
 
 if exists("current_compiler")
   finish
@@ -20,7 +20,7 @@ CompilerSet errorformat+=%f(%l\\,%v):\ %t%*[^:]:\ %m,
             \%trror%*[^:]:\ %m,
             \%tarning%*[^:]:\ %m
 
-CompilerSet makeprg=csc\ %
+CompilerSet makeprg=csc\ %:S
 
 let &cpo = s:keepcpo
 unlet s:keepcpo

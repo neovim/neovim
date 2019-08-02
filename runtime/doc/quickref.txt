@@ -771,6 +771,7 @@ Short explanation of each option:		*option-list*
 'menuitems'	  'mis'     maximum number of items in a menu
 'mkspellmem'	  'msm'     memory used before |:mkspell| compresses the tree
 'modeline'	  'ml'	    recognize modelines at start or end of file
+'modelineexpr'	  'mle'	    allow setting expression options from a modeline
 'modelines'	  'mls'     number of lines checked for modelines
 'modifiable'	  'ma'	    changes to the text are not possible
 'modified'	  'mod'     buffer has been modified
@@ -797,6 +798,7 @@ Short explanation of each option:		*option-list*
 'perldll'		    name of the Perl dynamic library
 'preserveindent'  'pi'	    preserve the indent structure when reindenting
 'previewheight'   'pvh'     height of the preview window
+'previewpopup'    'pvp'     use popup window for preview
 'previewwindow'   'pvw'     identifies the preview window
 'printdevice'	  'pdev'    name of the printer to be used for :hardcopy
 'printencoding'   'penc'    encoding to be used for printing
@@ -927,6 +929,7 @@ Short explanation of each option:		*option-list*
 'winaltkeys'	  'wak'     when the windows system handles ALT keys
 'window'	  'wi'	    nr of lines to scroll for CTRL-F and CTRL-B
 'winheight'	  'wh'	    minimum number of lines for the current window
+'winhighlight'	  'winhl'   window-local highlighting
 'winfixheight'	  'wfh'     keep window height when opening/closing windows
 'winfixwidth'	  'wfw'     keep window width when opening/closing windows
 'winminheight'	  'wmh'     minimum number of lines for any window

@@ -193,13 +193,12 @@ too slow, you might want to disable syntax highlighting for a moment: >
 
 When editing another file (or the same one) the colors will come back.
 
-							*:syn-off*
 If you want to stop highlighting completely use: >
 
 	:syntax off
 
 This will completely disable syntax highlighting and remove it immediately for
-all buffers.
+all buffers.  See |:syntax-off| for more details.
 
 							*:syn-manual*
 If you want syntax highlighting only for specific files, use this: >

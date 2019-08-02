@@ -2,8 +2,8 @@
 " Language: fstab file
 " Maintainer: Radu Dineiu <radu.dineiu@gmail.com>
 " URL: https://raw.github.com/rid9/vim-fstab/master/fstab.vim
-" Last Change: 2017 Nov 09
-" Version: 1.2
+" Last Change: 2019 Jun 06
+" Version: 1.3
 "
 " Credits:
 "   David Necas (Yeti) <yeti@physics.muni.cz>
@@ -68,7 +68,7 @@ syn match fsOptionsString /[a-zA-Z0-9_-]\+/
 syn keyword fsOptionsYesNo yes no
 syn cluster fsOptionsCheckCluster contains=fsOptionsExt2Check,fsOptionsFatCheck
 syn keyword fsOptionsSize 512 1024 2048
-syn keyword fsOptionsGeneral async atime auto bind current defaults dev devgid devmode devmtime devuid dirsync exec force fstab kudzu loop mand move noatime noauto noclusterr noclusterw nodev nodevmtime nodiratime noexec nomand norelatime nosuid nosymfollow nouser owner rbind rdonly relatime remount ro rq rw suid suiddir supermount sw sync union update user users wxallowed xx
+syn keyword fsOptionsGeneral async atime auto bind current defaults dev devgid devmode devmtime devuid dirsync exec force fstab kudzu loop mand move noatime noauto noclusterr noclusterw nodev nodevmtime nodiratime noexec nomand norelatime nosuid nosymfollow nouser owner rbind rdonly relatime remount ro rq rw suid suiddir supermount sw sync union update user users wxallowed xx nofail
 syn match fsOptionsGeneral /_netdev/
 
 " Options: adfs

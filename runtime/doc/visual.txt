@@ -292,8 +292,6 @@ mode.
 ==============================================================================
 5. Blockwise operators					*blockwise-operators*
 
-{not available when compiled without the |+visualextra| feature}
-
 Reminder: Use 'virtualedit' to be able to select blocks that start or end
 after the end of a line or halfway through a tab.
 

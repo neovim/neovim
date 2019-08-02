@@ -1,8 +1,8 @@
 " Vim syntax file
 " Language:	TeX
 " Maintainer:	Charles E. Campbell <NdrchipO@ScampbellPfamily.AbizM>
-" Last Change:	Apr 01, 2019
-" Version:	113
+" Last Change:	May 14, 2019
+" Version:	114
 " URL:		http://www.drchip.org/astronaut/vim/index.html#SYNTAX_TEX
 "
 " Notes: {{{1
@@ -947,6 +947,7 @@ if has("conceal") && &enc == 'utf-8'
   call s:Greek('texGreek','\\eta\>'		,'η')
   call s:Greek('texGreek','\\theta\>'		,'θ')
   call s:Greek('texGreek','\\vartheta\>'	,'ϑ')
+  call s:Greek('texGreek','\\iota\>'            ,'ι')
   call s:Greek('texGreek','\\kappa\>'		,'κ')
   call s:Greek('texGreek','\\lambda\>'		,'λ')
   call s:Greek('texGreek','\\mu\>'		,'μ')
@@ -969,11 +970,12 @@ if has("conceal") && &enc == 'utf-8'
   call s:Greek('texGreek','\\Delta\>'		,'Δ')
   call s:Greek('texGreek','\\Theta\>'		,'Θ')
   call s:Greek('texGreek','\\Lambda\>'		,'Λ')
-  call s:Greek('texGreek','\\Xi\>'		,'Χ')
+  call s:Greek('texGreek','\\Xi\>'              ,'Ξ')
   call s:Greek('texGreek','\\Pi\>'		,'Π')
   call s:Greek('texGreek','\\Sigma\>'		,'Σ')
   call s:Greek('texGreek','\\Upsilon\>'		,'Υ')
   call s:Greek('texGreek','\\Phi\>'		,'Φ')
+  call s:Greek('texGreek','\\Chi\>'		,'Χ')
   call s:Greek('texGreek','\\Psi\>'		,'Ψ')
   call s:Greek('texGreek','\\Omega\>'		,'Ω')
   delfun s:Greek
