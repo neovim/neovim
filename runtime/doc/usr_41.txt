@@ -105,20 +105,21 @@ We won't explain how |:for| and |range()| work until later.  Follow the links
 if you are impatient.
 
 
-THREE KINDS OF NUMBERS
+FOUR KINDS OF NUMBERS
 
-Numbers can be decimal, hexadecimal or octal.  A hexadecimal number starts
-with "0x" or "0X".  For example "0x1f" is decimal 31.  An octal number starts
-with a zero.  "017" is decimal 15.  Careful: don't put a zero before a decimal
-number, it will be interpreted as an octal number!
+Numbers can be decimal, hexadecimal, octal or binary.  A hexadecimal number
+starts with "0x" or "0X".  For example "0x1f" is decimal 31.  An octal number
+starts with a zero.  "017" is decimal 15.  A binary number starts with "0b" or
+"0B".  For example "0b101" is decimal 5.  Careful: don't put a zero before a
+decimal number, it will be interpreted as an octal number!
    The ":echo" command always prints decimal numbers.  Example: >
 
 	:echo 0x7f 036
 <	127 30 ~
 
-A number is made negative with a minus sign.  This also works for hexadecimal
-and octal numbers.   A minus sign is also used for subtraction.  Compare this
-with the previous example: >
+A number is made negative with a minus sign.  This also works for hexadecimal,
+octal and binary numbers.  A minus sign is also used for subtraction.  Compare
+this with the previous example: >
 
 	:echo 0x7f -036
 <	97 ~
@@ -612,6 +613,7 @@ String manipulation:					*string-functions*
 	repeat()		repeat a string multiple times
 	eval()			evaluate a string expression
 	execute()		execute an Ex command and get the output
+	win_execute()		like execute() but in a specified window
 	trim()			trim characters from a string
 
 List manipulation:					*list-functions*
