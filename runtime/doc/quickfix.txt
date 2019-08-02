@@ -87,7 +87,7 @@ processing a quickfix or location list command, it will be aborted.
 :ll[!] [nr]		Same as ":cc", except the location list for the
 			current window is used instead of the quickfix list.
 
-							*:cn* *:cnext* *E553*
+						*:cn* *:cne* *:cnext* *E553*
 :[count]cn[ext][!]	Display the [count] next error in the list that
 			includes a file name.  If there are no file names at
 			all, go to the [count] next error.  See |:cc| for
@@ -177,7 +177,7 @@ processing a quickfix or location list command, it will be aborted.
 			'encoding' option, you can use the 'makeencoding'
 			option to specify the encoding.
 
-							*:lf* *:lfile*
+							*:lf* *:lfi* *:lfile*
 :lf[ile][!] [errorfile]	Same as ":cfile", except the location list for the
 			current window is used instead of the quickfix list.
 			You can not use the -q command-line option to set
@@ -192,7 +192,7 @@ processing a quickfix or location list command, it will be aborted.
 			option to specify the encoding.
 
 
-:lg[etfile] [errorfile]					*:lg* *:lgetfile*
+:lg[etfile] [errorfile]					*:lg* *:lge* *:lgetfile*
 			Same as ":cgetfile", except the location list for the
 			current window is used instead of the quickfix list.
 
@@ -230,7 +230,7 @@ processing a quickfix or location list command, it will be aborted.
 			the current window is used instead of the quickfix
 			list.
 
-							*:cad* *:caddbuffer*
+						*:cad* *:cadd* *:caddbuffer*
 :cad[dbuffer] [bufnr]	Read the error list from the current buffer and add
 			the errors to the current quickfix list.  If a
 			quickfix list is not present, then a new list is
@@ -277,7 +277,7 @@ processing a quickfix or location list command, it will be aborted.
 			Example: >
     :g/mypattern/caddexpr expand("%") . ":" . line(".") .  ":" . getline(".")
 <
-							*:lad* *:laddexpr*
+						*:lad* *:addd* *:laddexpr*
 :lad[dexpr] {expr}	Same as ":caddexpr", except the location list for the
 			current window is used instead of the quickfix list.
 

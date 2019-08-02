@@ -283,7 +283,7 @@ g8			Print the hex values of the bytes used in the
 							*:!!*
 :!!			Repeat last ":!{cmd}".
 
-							*:ve* *:version*
+							*:ve* *:ver* *:version*
 :ve[rsion]		Print editor version and build information.
 			See also |feature-compile|.
 

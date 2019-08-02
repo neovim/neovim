@@ -9750,7 +9750,7 @@ This does NOT work: >
 			opposite of |:lockvar|.
 
 
-:if {expr1}			*:if* *:endif* *:en* *E171* *E579* *E580*
+:if {expr1}			*:if* *:end* *:endif* *:en* *E171* *E579* *E580*
 :en[dif]		Execute the commands until the next matching ":else"
 			or ":endif" if {expr1} evaluates to non-zero.
 

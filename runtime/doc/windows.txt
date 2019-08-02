@@ -192,7 +192,7 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 :[N]sv[iew] [++opt] [+cmd] {file}		*:sv* *:sview* *splitview*
 		Same as ":split", but set 'readonly' option for this buffer.
 
-:[N]sf[ind] [++opt] [+cmd] {file}		*:sf* *:sfind* *splitfind*
+:[N]sf[ind] [++opt] [+cmd] {file}	     *:sf* *:sfi* *:sfind* *splitfind*
 		Same as ":split", but search for {file} in 'path' like in
 		|:find|.  Doesn't split if {file} is not found.
 
@@ -1174,7 +1174,7 @@ list of buffers. |unlisted-buffer|
 		Uses 'switchbuf'.
 		Also see |+cmd|.
 
-:br[ewind][!] [+cmd]					*:br* *:brewind*
+:br[ewind][!] [+cmd]					*:br* *:bre* *:brewind*
 		Go to first buffer in buffer list.  If the buffer list is
 		empty, go to the first unlisted buffer.
 		See |:buffer-!| for [!].

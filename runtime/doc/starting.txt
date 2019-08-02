@@ -731,7 +731,7 @@ vimrc file.
 			options to [file] (default ".exrc" in the current
 			directory).
 
-							*:mkv* *:mkvimrc*
+						*:mkv* *:mkvi* *:mkvimrc*
 :mkv[imrc][!] [file]	Like ":mkexrc", but the default is ".nvimrc" in the
 			current directory.  The ":version" command is also
 			written to the file.

@@ -802,7 +802,7 @@ CTRL-W d		Open a new window, with the cursor on the first
 			(default: whole file).
 			See |:search-args| for [/] and [!].
 
-							*:che* *:checkpath*
+					*:che*  *:chec* *:check* *:checkpath*
 :che[ckpath]		List all the included files that could not be found.
 
 :che[ckpath]!		List all the included files.

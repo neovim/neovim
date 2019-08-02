@@ -5124,6 +5124,15 @@ load the syntax file.
 The command also deletes the "b:current_syntax" variable, since no syntax is
 loaded after this command.
 
+To clean up specific syntax groups for the current buffer: >
+  :syntax clear {group-name} ..
+This removes all patterns and keywords for {group-name}.
+
+To clean up specific syntax group lists for the current buffer: >
+  :syntax clear @{grouplist-name} ..
+This sets {grouplist-name}'s contents to an empty list.
+
+						*:syntax-off* *:syn-off*
 If you want to disable syntax highlighting for all buffers, you need to remove
 the autocommands that load the syntax files: >
   :syntax off
@@ -5132,14 +5141,6 @@ What this command actually does, is executing the command >
   :source $VIMRUNTIME/syntax/nosyntax.vim
 See the "nosyntax.vim" file for details.  Note that for this to work
 $VIMRUNTIME must be valid.  See |$VIMRUNTIME|.
-
-To clean up specific syntax groups for the current buffer: >
-  :syntax clear {group-name} ..
-This removes all patterns and keywords for {group-name}.
-
-To clean up specific syntax group lists for the current buffer: >
-  :syntax clear @{grouplist-name} ..
-This sets {grouplist-name}'s contents to an empty list.
 
 						*:syntax-reset* *:syn-reset*
 If you have changed the colors and messed them up, use this command to get the
