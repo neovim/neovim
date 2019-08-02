@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 May 06
+" Last Change:	2019 Jul 27
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -702,12 +702,6 @@ au BufNewFile,BufRead *.t.html			setf tilde
 
 " HTML (.shtml and .stm for server side)
 au BufNewFile,BufRead *.html,*.htm,*.shtml,*.stm  call dist#ft#FThtml()
-
-" Vue.js Single File Component
-au BufNewFile,BufRead *.vue			setf vuejs
-
-" Vue.js Single File Component
-au BufNewFile,BufRead *.vue			setf vue
 
 " HTML with Ruby - eRuby
 au BufNewFile,BufRead *.erb,*.rhtml		setf eruby
@@ -1781,11 +1775,14 @@ au BufNewFile,BufRead *.wrl			setf vrml
 " Vroom (vim testing and executable documentation)
 au BufNewFile,BufRead *.vroom			setf vroom
 
-" Webmacro
-au BufNewFile,BufRead *.wm			setf webmacro
+" Vue.js Single File Component
+au BufNewFile,BufRead *.vue			setf vue
 
 " WebAssembly
 au BufNewFile,BufRead *.wast,*.wat		setf wast
+
+" Webmacro
+au BufNewFile,BufRead *.wm			setf webmacro
 
 " Wget config
 au BufNewFile,BufRead .wgetrc,wgetrc		setf wget
