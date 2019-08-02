@@ -86,7 +86,7 @@ func Test_WindowsHome()
     let $HOME = '%USERPROFILE%\bar'
     let $HOMEDRIVE = 'unused'
     let $HOMEPATH = 'unused'
-    " call CheckHome('C:\foo\bar', '%USERPROFILE%\bar')
+    call CheckHome('C:\foo\bar', '%USERPROFILE%\bar')
 
     " Invalid $HOME is kept
     let $USERPROFILE = 'C:\foo'
