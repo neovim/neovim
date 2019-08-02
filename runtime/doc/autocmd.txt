@@ -1051,8 +1051,7 @@ TextChanged			After a change was made to the text in the
 				was defined).
 				Not triggered when there is typeahead or when
 				an operator is pending.
-				Note: This can not be skipped with
-				`:noautocmd`.
+				Note: Cannot be skipped with `:noautocmd`.
 				Careful: This is triggered very often, don't
 				do anything that the user does not expect or
 				that is slow.

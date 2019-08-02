@@ -5038,7 +5038,6 @@ iconv({expr}, {from}, {to})				*iconv()*
 		Note that Vim uses UTF-8 for all Unicode encodings, conversion
 		from/to UCS-2 is automatically changed to use UTF-8.  You
 		cannot use UCS-2 in a string anyway, because of the NUL bytes.
-		{only available when compiled with the |+multi_byte| feature}
 
 							*indent()*
 indent({lnum})	The result is a Number, which is indent of line {lnum} in the
