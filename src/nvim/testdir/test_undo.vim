@@ -376,10 +376,9 @@ funct Test_undofile()
     " Replace windows drive such as C:... into C%...
     let cwd = substitute(cwd, '^\([a-zA-Z]\):', '\1%', 'g')
   endif
-  let pathsep = has('win32') ? '\' : '/'
-  let cwd = substitute(cwd . pathsep . 'Xundofoo', pathsep, '%', 'g')
+  let cwd = substitute(cwd . '/Xundofoo', '/', '%', 'g')
   if has('persistent_undo')
-    call assert_equal('Xundodir' . pathsep . cwd, undofile('Xundofoo'))
+    call assert_equal('Xundodir/' . cwd, undofile('Xundofoo'))
   else
     call assert_equal('', undofile('Xundofoo'))
   endif
