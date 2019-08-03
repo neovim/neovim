@@ -477,3 +477,12 @@ func Test_large_arg()
   exe 'argadd ' .repeat('x', &columns)
   args
 endfunc
+
+func Test_argdo()
+  next! Xa.c Xb.c Xc.c
+  new
+  let l = []
+  argdo call add(l, expand('%'))
+  call assert_equal(['Xa.c', 'Xb.c', 'Xc.c'], l)
+  bwipe Xa.c Xb.c Xc.c
+endfunc
