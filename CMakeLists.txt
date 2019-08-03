@@ -408,7 +408,7 @@ endif()
 option(FEAT_TUI "Enable the Terminal UI" ON)
 
 if(FEAT_TUI)
-  find_package(Unibilium REQUIRED)
+  find_package(Unibilium 2.0 REQUIRED)
   include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
   list(APPEND CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
