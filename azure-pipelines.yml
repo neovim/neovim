@@ -48,7 +48,9 @@ stages:
     - bash: vim --version
       displayName: 'Print vim version information'
 
-    - bash: ./run_tests
+    - bash: |
+        eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        ./run_tests
       displayName: 'Run the tests'
       env:
         VIMSPECTOR_MIMODE: gdb
