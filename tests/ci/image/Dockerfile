@@ -16,7 +16,8 @@ RUN apt-get update && \
                      tcllib \
                      gdb \
                      lldb \
-                     curl && \
+                     curl \
+                     nodejs && \
   apt-get -y autoremove
 
 RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime && \

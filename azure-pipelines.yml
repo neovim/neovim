@@ -65,8 +65,8 @@ stages:
     pool:
       vmImage: 'macOS-10.13'
     steps:
-    - bash: brew install macvim
-      displayName: 'Install vim'
+    - bash: brew unlink node@6 && brew install macvim node
+      displayName: 'Install vim and node'
 
     - bash: go get -u github.com/go-delve/delve/cmd/dlv
       displayName: 'Install Delve for Go'
