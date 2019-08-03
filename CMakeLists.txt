@@ -409,10 +409,10 @@ option(FEAT_TUI "Enable the Terminal UI" ON)
 
 if(FEAT_TUI)
   find_package(Unibilium 2.0 REQUIRED)
-  include_directories(SYSTEM ${Unibilium_INCLUDE_DIRS})
+  include_directories(SYSTEM ${UNIBILIUM_INCLUDE_DIRS})
 
-  list(APPEND CMAKE_REQUIRED_INCLUDES "${Unibilium_INCLUDE_DIRS}")
-  list(APPEND CMAKE_REQUIRED_LIBRARIES "${Unibilium_LIBRARIES}")
+  list(APPEND CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
+  list(APPEND CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
   check_c_source_compiles("
   #include <unibilium.h>
 
@@ -422,8 +422,8 @@ if(FEAT_TUI)
     return unibi_num_from_var(unibi_var_from_num(0));
   }
   " UNIBI_HAS_VAR_FROM)
-  list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${Unibilium_INCLUDE_DIRS}")
-  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${Unibilium_LIBRARIES}")
+  list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${UNIBILIUM_INCLUDE_DIRS}")
+  list(REMOVE_ITEM CMAKE_REQUIRED_LIBRARIES "${UNIBILIUM_LIBRARIES}")
   if(UNIBI_HAS_VAR_FROM)
     add_definitions(-DNVIM_UNIBI_HAS_VAR_FROM)
   endif()

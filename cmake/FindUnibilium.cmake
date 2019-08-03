@@ -1,12 +1,12 @@
 # - Try to find unibilium
 # Once done this will define
-#  Unibilium_FOUND - System has unibilium
-#  Unibilium_INCLUDE_DIRS - The unibilium include directories
-#  Unibilium_LIBRARIES - The libraries needed to use unibilium
+#  UNIBILIUM_FOUND - System has unibilium
+#  UNIBILIUM_INCLUDE_DIRS - The unibilium include directories
+#  UNIBILIUM_LIBRARIES - The libraries needed to use unibilium
 
 include(LibFindMacros)
 
-libfind_pkg_detect(Unibilium unibilium
+libfind_pkg_detect(UNIBILIUM unibilium
   FIND_PATH unibilium.h
   FIND_LIBRARY unibilium)
-libfind_process(Unibilium)
+libfind_process(UNIBILIUM)
