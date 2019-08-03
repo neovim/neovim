@@ -126,6 +126,8 @@ bool ctx_restore(Context *ctx, const int flags)
     free_ctx = true;
   }
 
+  try_start();
+
   char_u *op_shada;
   get_option_value((char_u *)"shada", NULL, &op_shada, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
@@ -157,7 +159,11 @@ bool ctx_restore(Context *ctx, const int flags)
   set_option_value("shada", 0L, (char *)op_shada, OPT_GLOBAL);
   xfree(op_shada);
 
-  return true;
+  Error err = ERROR_INIT;
+  bool result = !try_end(&err);
+  api_clear_error(&err);
+
+  return result;
 }
 
 /// Saves the global registers to a context.
@@ -397,15 +403,10 @@ Dictionary ctx_to_dict(Context *ctx)
 ///
 /// @param[in]   dict  Context Dictionary representation.
 /// @param[out]  ctx   Context object to store conversion result into.
-///
-/// @return true on success, false otherwise
-bool ctx_from_dict(Dictionary dict, Context *ctx)
+void ctx_from_dict(Dictionary dict, Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
-
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
 
   for (size_t i = 0; i < dict.size; i++) {
     KeyValuePair item = dict.items[i];
@@ -424,8 +425,4 @@ bool ctx_from_dict(Dictionary dict, Context *ctx)
       ctx->funcs = copy_object(item.value).data.array;
     }
   }
-
-  bool result = !did_emsg;
-  did_emsg = save_did_emsg;
-  return result;
 }

@@ -8348,15 +8348,8 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
-  Context tmp = CONTEXT_INIT;
-
-  if (ctx_from_dict(dict, &tmp)) {
-    ctx_free(ctx);
-    *ctx = tmp;
-  } else {
-    ctx_free(&tmp);
-  }
-
+  ctx_free(ctx);
+  ctx_from_dict(dict, ctx);
   api_free_dictionary(dict);
 }
 
