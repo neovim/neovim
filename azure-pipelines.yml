@@ -50,6 +50,7 @@ stages:
 
     - bash: |
         eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        export GOPATH=$HOME/go
         ./run_tests
       displayName: 'Run the tests'
       env:
