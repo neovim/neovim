@@ -37,13 +37,21 @@ stages:
       image: 'puremourning/vimspector:test'
       options: --cap-add=SYS_PTRACE --security-opt seccomp=unconfined
     steps:
+    - bash: |
+        eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        go get -u github.com/go-delve/delve/cmd/dlv
+      displayName: 'Install Delve for Go'
+
     - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'
 
     - bash: vim --version
       displayName: 'Print vim version information'
 
-    - bash: ./run_tests
+    - bash: |
+        eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        export GOPATH=$HOME/go
+        ./run_tests
       displayName: 'Run the tests'
       env:
         VIMSPECTOR_MIMODE: gdb
@@ -60,8 +68,11 @@ stages:
     pool:
       vmImage: 'macOS-10.13'
     steps:
-    - bash: brew install macvim
-      displayName: 'Install vim'
+    - bash: brew unlink node@6 && brew install macvim node
+      displayName: 'Install vim and node'
+
+    - bash: go get -u github.com/go-delve/delve/cmd/dlv
+      displayName: 'Install Delve for Go'
 
     - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets'

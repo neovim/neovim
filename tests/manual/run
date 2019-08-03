@@ -2,12 +2,8 @@
 
 CONTAINER=puremourning/vimspector:manual
 
-if [ "$@" ];then
-  CMD="$@"
-fi
-
 docker run --cap-add=SYS_PTRACE \
            --security-opt seccomp=unconfined \
            --mount src="$(pwd)/../..",target=/home/dev/vimspector,type=bind \
            -it ${CONTAINER} \
-           $CMD
+           "$@"
