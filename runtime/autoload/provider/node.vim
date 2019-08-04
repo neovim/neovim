@@ -1,7 +1,7 @@
 if exists('g:loaded_node_provider')
   finish
 endif
-let g:loaded_node_provider = 0
+let g:loaded_node_provider = 1
 
 function! s:is_minimum_version(version, min_major, min_minor) abort
   if empty(a:version)
@@ -140,9 +140,9 @@ endfunction
 
 let s:err = ''
 let s:prog = provider#node#Detect()
-let g:loaded_node_provider = !empty(s:prog)
+let g:loaded_node_provider = empty(s:prog) ? 1 : 2
 
-if !g:loaded_node_provider
+if g:loaded_node_provider != 2
   let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
 endif
 

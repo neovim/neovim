@@ -8,7 +8,7 @@ if exists('g:loaded_python_provider')
   finish
 endif
 let [s:prog, s:err] = provider#pythonx#Detect(2)
-let g:loaded_python_provider = !empty(s:prog)
+let g:loaded_python_provider = empty(s:prog) ? 1 : 2
 
 function! provider#python#Prog() abort
   return s:prog

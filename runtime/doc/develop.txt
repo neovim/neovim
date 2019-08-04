@@ -106,12 +106,12 @@ in eval.c:
 - eval_call_provider(name, method, arguments): calls provider#{name}#Call
   with the method and arguments.
 - eval_has_provider(name): Checks the `g:loaded_{name}_provider` variable
-  which must be set by the provider script to indicate whether it is enabled
-  and working. Called by |has()| to check if features are available.
+  which must be set to 2 by the provider script to indicate that it is
+  "enabled and working". Called by |has()| to check if features are available.
 
 For example, the Python provider is implemented by the
 "autoload/provider/python.vim" script, which sets `g:loaded_python_provider`
-to TRUE only if a valid external Python host is found.  Then `has("python")`
+to 2 only if a valid external Python host is found.  Then `has("python")`
 reflects whether Python support is working.
 
 							*provider-reload*

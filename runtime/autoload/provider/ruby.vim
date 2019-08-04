@@ -2,7 +2,7 @@
 if exists('g:loaded_ruby_provider')
   finish
 endif
-let g:loaded_ruby_provider = 0
+let g:loaded_ruby_provider = 1
 
 function! provider#ruby#Detect() abort
   return s:prog
@@ -62,9 +62,9 @@ endfunction
 let s:err = ''
 let s:prog = s:detect()
 let s:plugin_path = expand('<sfile>:p:h') . '/script_host.rb'
-let g:loaded_ruby_provider = !empty(s:prog)
+let g:loaded_ruby_provider = empty(s:prog) ? 1 : 2
 
-if !g:loaded_ruby_provider
+if g:loaded_ruby_provider != 2
   let s:err = 'Cannot find the neovim RubyGem. Try :checkhealth'
 endif
 

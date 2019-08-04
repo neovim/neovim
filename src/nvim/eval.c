@@ -23996,7 +23996,9 @@ bool eval_has_provider(const char *provider)
     }
   }
 
-  return (tv.v_type == VAR_NUMBER) ? !!tv.vval.v_number : false;
+  return (tv.v_type == VAR_NUMBER)
+    ? 2 == tv.vval.v_number  // Value of 2 means "loaded and working".
+    : false;
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.

@@ -1,4 +1,4 @@
-let g:loaded_clipboard_provider = 1
+let g:loaded_clipboard_provider = 2
 
 let g:test_clip = { '+': [''], '*': [''], }
 
