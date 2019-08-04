@@ -2414,7 +2414,9 @@ void nvim__async_invoke(uint64_t channel_id, Integer scid, String callee,
   Array result = ARRAY_DICT_INIT;
   ADD(result, INTEGER_OBJ(scid));
   ADD(result, _call_function(callee, args, NULL, err));
-  if (!ERROR_SET(err)) {
+  if (ERROR_SET(err)) {
+    api_free_array(result);
+  } else {
     rpc_send_event(channel_id, "nvim__async_done_event", result);
   }
 }
