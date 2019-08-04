@@ -627,6 +627,8 @@ EXTERN pos_T Insstart_orig;
 EXTERN int orig_line_count INIT(= 0);       /* Line count when "gR" started */
 EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 
+// increase around internal delete/replace
+EXTERN int inhibit_delete_count INIT(= 0);
 
 /*
  * These flags are set based upon 'fileencoding'.

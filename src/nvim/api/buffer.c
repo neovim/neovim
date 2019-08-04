@@ -109,9 +109,11 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
 ///        a `nvim_buf_changedtick_event`. Not used for lua callbacks.
 /// @param  opts  Optional parameters.
-///               `on_lines`: lua callback received on change.
+///               `on_lines`:       lua callback received on change.
 ///               `on_changedtick`: lua callback received on changedtick
 ///                                 increment without text change.
+///               `utf_sizes`:      include UTF-32 and UTF-16 size of
+///                                 the replaced region.
 ///               See |api-buffer-updates-lua| for more information
 /// @param[out] err Error details, if any
 /// @return False when updates couldn't be enabled because the buffer isn't
@@ -156,6 +158,12 @@ Boolean nvim_buf_attach(uint64_t channel_id,
       }
       cb.on_detach = v->data.luaref;
       v->data.integer = LUA_NOREF;
+    } else if (is_lua && strequal("utf_sizes", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
+        goto error;
+      }
+      cb.utf_sizes = v->data.boolean;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1196,6 +1204,7 @@ Dictionary nvim__buf_stats(Buffer buffer, Error *err)
   // NB: this should be zero at any time API functions are called,
   // this exists to debug issues
   PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+
   return rv;
 }
 

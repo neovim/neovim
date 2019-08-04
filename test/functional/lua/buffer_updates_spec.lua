@@ -13,7 +13,8 @@ local origlines = {"original line 1",
                    "original line 3",
                    "original line 4",
                    "original line 5",
-                   "original line 6"}
+                   "original line 6",
+                   "    indented line"}
 
 describe('lua: buffer event callbacks', function()
   before_each(function()
@@ -21,14 +22,14 @@ describe('lua: buffer event callbacks', function()
     exec_lua([[
       local events = {}
 
-      function test_register(bufnr, id, changedtick)
+      function test_register(bufnr, id, changedtick, utf_sizes)
         local function callback(...)
           table.insert(events, {id, ...})
           if test_unreg == id then
             return true
           end
         end
-        local opts = {on_lines=callback, on_detach=callback}
+        local opts = {on_lines=callback, on_detach=callback, utf_sizes=utf_sizes}
         if changedtick then
           opts.on_changedtick = callback
         end
@@ -48,18 +49,26 @@ describe('lua: buffer event callbacks', function()
   -- assert the wrong thing), but masks errors with unflushed lines (as
   -- nvim_buf_get_offset forces a flush of the memline). To be safe run the
   -- test both ways.
-  local function check(verify)
+  local function check(verify,utf_sizes)
     local lastsize
     meths.buf_set_lines(0, 0, -1, true, origlines)
     if verify then
       lastsize = meths.buf_get_offset(0, meths.buf_line_count(0))
     end
-    exec_lua("return test_register(...)", 0, "test1")
+    exec_lua("return test_register(...)", 0, "test1",false,utf_sizes)
     local tick = meths.buf_get_changedtick(0)
 
     local verify_name = "test1"
     local function check_events(expected)
       local events = exec_lua("return get_events(...)" )
+      if utf_sizes then
+        -- this test case uses ASCII only, so sizes sshould be the same.
+        -- Unicode is tested below.
+        for _, event in ipairs(expected) do
+          event[9] = event[8]
+          event[10] = event[8]
+        end
+      end
       eq(expected, events)
       if verify then
         for _, event in ipairs(events) do
@@ -75,6 +84,7 @@ describe('lua: buffer event callbacks', function()
       end
     end
 
+    command('set autoindent')
     command('normal! GyyggP')
     tick = tick + 1
     check_events({{ "test1", "lines", 1, tick, 0, 0, 1, 0}})
@@ -83,7 +93,7 @@ describe('lua: buffer event callbacks', function()
     tick = tick + 1
     check_events({{ "test1", "lines", 1, tick, 3, 5, 4, 32 }})
 
-    exec_lua("return test_register(...)", 0, "test2", true)
+    exec_lua("return test_register(...)", 0, "test2", true, utf_sizes)
     tick = tick + 1
     command('undo')
 
@@ -124,7 +134,13 @@ describe('lua: buffer event callbacks', function()
     tick = tick + 1
     check_events({{ "test2", "lines", 1, tick, 4, 5, 5, 19 }})
 
-    feed('<esc>')
+    feed('<esc>Go')
+    tick = tick + 1
+    check_events({{ "test2", "lines", 1, tick, 11, 11, 12, 0 }})
+
+    feed('x')
+    tick = tick + 1
+    check_events({{ "test2", "lines", 1, tick, 11, 12, 12, 5 }})
 
     command('bwipe!')
     check_events({{ "test2", "detach", 1 }})
@@ -137,4 +153,54 @@ describe('lua: buffer event callbacks', function()
   it('works with verify', function()
     check(true)
   end)
+
+  it('works with utf_sizes and ASCII text', function()
+    check(false,true)
+  end)
+
+  it('works with utf_sizes and unicode text', function()
+    local unicode_text = {"ascii text",
+                          "latin text åäö",
+                          "BMP text ɧ αλφά",
+                          "BMP text 汉语 ↥↧",
+                          "SMP 🤦 🦄🦃",
+                          "combining å بِيَّة"}
+    meths.buf_set_lines(0, 0, -1, true, unicode_text)
+    feed('gg')
+    exec_lua("return test_register(...)", 0, "test1", false, true)
+    local tick = meths.buf_get_changedtick(0)
+
+    feed('dd')
+    tick = tick + 1
+    eq({{ "test1", "lines", 1, tick, 0, 1, 0, 11, 11, 11 }}, exec_lua("return get_events(...)" ))
+
+    feed('A<bs>')
+    tick = tick + 1
+    eq({{ "test1", "lines", 1, tick, 0, 1, 1, 18, 15, 15 }}, exec_lua("return get_events(...)" ))
+
+    feed('<esc>jylp')
+    tick = tick + 1
+    eq({{ "test1", "lines", 1, tick, 1, 2, 2, 21, 16, 16 }}, exec_lua("return get_events(...)" ))
+
+    feed('+eea<cr>')
+    tick = tick + 1
+    eq({{ "test1", "lines", 1, tick, 2, 3, 4, 23, 15, 15 }}, exec_lua("return get_events(...)" ))
+
+    feed('<esc>jdw')
+    tick = tick + 1
+    -- non-BMP chars count as 2 UTF-2 codeunits
+    eq({{ "test1", "lines", 1, tick, 4, 5, 5, 18, 9, 12 }}, exec_lua("return get_events(...)" ))
+
+    feed('+rx')
+    tick = tick + 1
+    -- count the individual codepoints of a composed character.
+    eq({{ "test1", "lines", 1, tick, 5, 6, 6, 27, 20, 20 }}, exec_lua("return get_events(...)" ))
+
+    feed('kJ')
+    tick = tick + 1
+    -- NB: this is inefficient (but not really wrong).
+    eq({{ "test1", "lines", 1,   tick, 4, 5, 5, 14, 5, 8 },
+        { "test1", "lines", 1, tick+1, 5, 6, 5, 27, 20, 20 }}, exec_lua("return get_events(...)" ))
+  end)
+
 end)

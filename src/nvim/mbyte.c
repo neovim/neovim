@@ -1438,6 +1438,39 @@ int utf16_to_utf8(const wchar_t *strw, char **str)
 
 #endif
 
+/// Measure the length of a string in corresponding UTF-32 and UTF-16 units.
+///
+/// Invalid UTF-8 bytes, or embedded surrogates, count as one code point/unit
+/// each.
+///
+/// The out parameters are incremented. This is used to measure the size of
+/// a buffer region consisting of multiple line segments.
+///
+/// @param s the string
+/// @param len maximum length (an earlier NUL terminates)
+/// @param[out] codepoints incremented with UTF-32 code point size
+/// @param[out] codeunits incremented with UTF-16 code unit size
+void mb_utflen(const char_u *s, size_t len, size_t *codepoints,
+               size_t *codeunits)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t count = 0, extra = 0;
+  size_t clen;
+  for (size_t i = 0; i < len && s[i] != NUL; i += clen) {
+    clen = utf_ptr2len_len(s+i, len-i);
+    // NB: gets the byte value of invalid sequence bytes.
+    // we only care whether the char fits in the BMP or not
+    int c = (clen > 1) ? utf_ptr2char(s+i) : s[i];
+    count++;
+    if (c > 0xFFFF) {
+      extra++;
+    }
+  }
+  *codepoints += count;
+  *codeunits += count + extra;
+}
+
+
 /*
  * Version of strnicmp() that handles multi-byte characters.
  * Needed for Big5, Shift-JIS and UTF-8 encoding.  Other DBCS encodings can

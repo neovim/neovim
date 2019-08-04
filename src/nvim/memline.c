@@ -2383,6 +2383,23 @@ static int ml_append_int(
   return OK;
 }
 
+void ml_add_deleted_len(char_u *ptr, ssize_t len)
+{
+  if (inhibit_delete_count) {
+    return;
+  }
+  if (len == -1) {
+    len = STRLEN(ptr);
+  }
+  curbuf->deleted_bytes += len+1;
+  if (curbuf->update_need_codepoints) {
+    mb_utflen(ptr, len, &curbuf->deleted_codepoints,
+              &curbuf->deleted_codeunits);
+    curbuf->deleted_codepoints++;  // NL char
+    curbuf->deleted_codeunits++;
+  }
+}
+
 /*
  * Replace line lnum, with buffering, in current buffer.
  *
@@ -2408,19 +2425,17 @@ int ml_replace(linenr_T lnum, char_u *line, bool copy)
   if (copy) {
     line = vim_strsave(line);
   }
-  if (curbuf->b_ml.ml_line_lnum != lnum) {           /* other line buffered */
-    ml_flush_line(curbuf);                          /* flush it */
-  } else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY) {  /* same line allocated */
-    // TODO FIXME: see other "TODO FIXME"
-    curbuf->deleted_bytes += STRLEN(curbuf->b_ml.ml_line_ptr)+1;
-    xfree(curbuf->b_ml.ml_line_ptr);             /* free it */
-    readlen = false; // already read it.
+  if (curbuf->b_ml.ml_line_lnum != lnum) {  // other line buffered
+    ml_flush_line(curbuf);  // flush it
+  } else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY) {  // same line allocated
+    ml_add_deleted_len(curbuf->b_ml.ml_line_ptr, -1);
+    readlen = false;  // already added the length
+
+    xfree(curbuf->b_ml.ml_line_ptr);  // free it
   }
 
-  if (readlen) {
-    if (true) { // TODO: buffer updates active
-      curbuf->deleted_bytes += STRLEN(ml_get_buf(curbuf, lnum, false))+1;
-    }
+  if (readlen && kv_size(curbuf->update_callbacks)) {
+    ml_add_deleted_len(ml_get_buf(curbuf, lnum, false), -1);
   }
 
   curbuf->b_ml.ml_line_ptr = line;
@@ -2504,7 +2519,10 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, bool message)
   else
     line_size = ((dp->db_index[idx - 1]) & DB_INDEX_MASK) - line_start;
 
-  buf->deleted_bytes += line_size;
+  // Line should always have an NL char internally (represented as NUL),
+  // even if 'noeol' is set.
+  assert(line_size >= 1);
+  ml_add_deleted_len((char_u *)dp + line_start, line_size-1);
 
   /*
    * special case: If there is only one line in the data block it becomes empty.
@@ -2690,10 +2708,14 @@ void ml_clearmarked(void)
   return;
 }
 
-size_t ml_flush_deleted_bytes(buf_T *buf)
+size_t ml_flush_deleted_bytes(buf_T *buf, size_t *codepoints, size_t *codeunits)
 {
   size_t ret = buf->deleted_bytes;
+  *codepoints = buf->deleted_codepoints;
+  *codeunits = buf->deleted_codeunits;
   buf->deleted_bytes = 0;
+  buf->deleted_codepoints = 0;
+  buf->deleted_codeunits = 0;
   return ret;
 }
 
