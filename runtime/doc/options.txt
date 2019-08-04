@@ -5161,7 +5161,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	To use powershell (on Windows): >
 		set shell=powershell shellquote=( shellpipe=\| shellxquote=
 		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
-		set shellredir=\|\ Out-File\ -Encoding\ ASCII
+		set shellredir=\|\ Out-File\ -Encoding\ UTF8
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
