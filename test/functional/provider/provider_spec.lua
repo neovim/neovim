@@ -1,6 +1,6 @@
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
+local clear, eval = helpers.clear, helpers.eval
 local command = helpers.command
 local expect_err = helpers.expect_err
 
@@ -9,7 +9,7 @@ describe('providers', function()
     clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp')
   end)
 
-  it('must define g:loaded_xx_provider', function()
+  it('with #Call(), missing g:loaded_xx_provider', function()
     command('set loadplugins')
     -- Using test-fixture with broken impl:
     -- test/functional/fixtures/autoload/provider/python.vim
@@ -17,9 +17,10 @@ describe('providers', function()
       eval, "has('python')")
   end)
 
-  it('without Call() but with g:loaded_xx_provider', function()
+  it('with g:loaded_xx_provider, missing #Call()', function()
     -- Using test-fixture with broken impl:
     -- test/functional/fixtures/autoload/provider/ruby.vim
-    eq(1, eval("has('ruby')"))
+    expect_err('Vim:provider: ruby: g:loaded_ruby_provider=2 but provider#ruby#Call is not defined',
+      eval, "has('ruby')")
   end)
 end)

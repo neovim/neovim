@@ -23996,8 +23996,7 @@ bool eval_has_provider(const char *name)
     if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
       // Show a hint if Call() is defined but g:loaded_xx_provider is missing.
       snprintf(buf, sizeof(buf), "provider#%s#Call", name);
-      bool has_call = !!find_func((char_u *)buf);
-      if (has_call && p_lpl) {
+      if (!!find_func((char_u *)buf) && p_lpl) {
         emsgf("provider: %s: missing required variable g:loaded_%s_provider",
               name, name);
       }
@@ -24005,9 +24004,21 @@ bool eval_has_provider(const char *name)
     }
   }
 
-  return (tv.v_type == VAR_NUMBER)
+  bool ok = (tv.v_type == VAR_NUMBER)
     ? 2 == tv.vval.v_number  // Value of 2 means "loaded and working".
     : false;
+
+  if (ok) {
+    // Call() must be defined if provider claims to be working.
+    snprintf(buf, sizeof(buf), "provider#%s#Call", name);
+    if (!find_func((char_u *)buf)) {
+      emsgf("provider: %s: g:loaded_%s_provider=2 but %s is not defined",
+            name, name, buf);
+      ok = false;
+    }
+  }
+
+  return ok;
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.
