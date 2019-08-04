@@ -61,7 +61,7 @@ class DebugSession( object ):
     self._configuration = None
     self._init_complete = False
     self._launch_complete = False
-    self._on_init_complete_handlers = None
+    self._on_init_complete_handlers = []
     self._server_capabilities = {}
 
   def Start( self, launch_variables = {} ):
@@ -671,8 +671,7 @@ class DebugSession( object ):
     if self._launch_complete and self._init_complete:
       for h in self._on_init_complete_handlers:
         h()
-
-      self._on_init_complete_handlers = None
+      self._on_init_complete_handlers = []
 
       self._stackTraceView.LoadThreads( True )
 
