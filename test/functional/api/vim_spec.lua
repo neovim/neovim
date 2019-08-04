@@ -949,6 +949,11 @@ describe('API', function()
       nvim('load_context', ctx)
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
     end)
+
+    it('errors out on malformed context dictionary', function()
+      matches('API call: malformed context dictionary',
+              pcall_err(eval, [[nvim_load_context({'regs': [1]})]]))
+    end)
   end)
 
   describe('nvim_replace_termcodes', function()
@@ -1768,6 +1773,25 @@ describe('API', function()
           text = 'Lorem ipsum dolor sit amet,', },
       }
       eq(expected, results)
+    end)
+
+    it('reports pattern errors', function()
+      matches([[Unmatched \%(]],
+              pcall_err(eval, [[nvim_grep('\(badpat', 'whatever', 1)]]))
+    end)
+  end)
+
+  describe('nvim__async_invoke', function()
+    it('only accepts request from parent', function()
+      matches([[only parent can issue 'nvim__async_invoke']],
+              pcall_err(eval, [[nvim__async_invoke('', {}, [])]]))
+    end)
+  end)
+
+  describe('nvim__async_done_event', function()
+    it('only accepts request from async call job', function()
+      matches([[only async call jobs can issue 'nvim__async_done_event']],
+              pcall_err(eval, [[nvim__async_done_event('')]]))
     end)
   end)
 end)

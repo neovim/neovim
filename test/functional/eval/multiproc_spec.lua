@@ -31,6 +31,11 @@ describe('multiproc', function()
       ]])
     end)
 
+    it('does not work in sandbox', function()
+      matches('Failed to spawn job for async call',
+              pcall_err(command, [[sandbox call call_async('nvim__id', [1])]]))
+    end)
+
     it('invokes callback passing it the return value', function()
       call('call_async', 'nvim__id', {'multiproc'}, {done = 'Callback'})
       call('call_async', 'nvim_eval', {'1+2+3'}, {done = 'Callback'})
@@ -122,7 +127,8 @@ describe('multiproc', function()
     end)
 
     it('reports errors from children', function()
-      feed_command([=[call call_wait(call_parallel('foo', [[], []]))]=])
+      feed_command(
+          [=[call call_wait(call_parallel('foo', [[], []], {'count':2}))]=])
       feed('<CR>')
       matches('multiproc: job [3-4]: Vim:E117: Unknown function: foo\n'..
               'multiproc: job [3-4]: Vim:E117: Unknown function: foo',
@@ -210,20 +216,41 @@ describe('multiproc', function()
   end)
 
   it('supports script functions', function()
-    source([[
+    source([=[
+    function s:get_greeting()
+      return 'Hello'
+    endfunction
+
     function s:greet(name)
       return 'Hello, '.a:name.'!'
     endfunction
 
     function s:retrieve(r)
-      let g:r = a:r
+      call add(g:r, a:r)
     endfunction
 
-    call call_wait(
-    \ [call_async('s:greet', ['Neovim'], { 'done': 's:retrieve' })])
-    ]])
+    let g:r = []
 
-    eq('Hello, Neovim!', nvim('get_var', 'r'))
+    call call_wait(
+    \ [call_async('s:greet', ['Neovim'],
+    \             { 'done': 's:retrieve',
+    \               'context': nvim_get_context(['sfuncs']) })])
+    call call_wait(
+    \ call_parallel('s:greet', [['Neovim'], ['Neovim']],
+    \               { 'count': 1,
+    \                 'done': 's:retrieve',
+    \                 'context': nvim_get_context(['sfuncs']) }))
+    call call_wait(
+    \ call_parallel('s:greet', [['Neovim'], ['Neovim']],
+    \               { 'count': 2,
+    \                 'done': 's:retrieve',
+    \                 'context': nvim_get_context(['sfuncs']) }))
+    ]=])
+
+    eq({'Hello, Neovim!',
+        {'Hello, Neovim!', 'Hello, Neovim!'},
+        {'Hello, Neovim!', 'Hello, Neovim!'}},
+       nvim('get_var', 'r'))
   end)
 
   it('supports Funcrefs', function()
@@ -251,9 +278,13 @@ describe('multiproc', function()
   end)
 
   it('supports lambda expressions', function()
-    source([[
-    let g:r = call_wait([call_async({ name -> 'Hi, '.name.'!' }, ['Neovim'])])
-    ]])
-    eq('Hi, Neovim!', nvim('get_var', 'r')[1].value)
+    source([=[
+    let g:r1 = call_wait([call_async({ name -> 'Hi, '.name.'!' }, ['Neovim'])])
+    let g:r2 = call_wait(
+    \ call_parallel({ name -> 'Hi, '.name.'!' }, [['Neovim'], ['Neovim']], {
+    \                 'count': 1 }))
+    ]=])
+    eq('Hi, Neovim!', nvim('get_var', 'r1')[1].value)
+    eq({'Hi, Neovim!', 'Hi, Neovim!'}, nvim('get_var', 'r2')[1].value)
   end)
 end)

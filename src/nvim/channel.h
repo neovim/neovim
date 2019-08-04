@@ -154,11 +154,17 @@ static inline Stream *channel_outstream(Channel *chan)
 
 static inline Channel *acquire_asynccall_channel(void)
 {
-  typval_T jobid_tv = TV_INITIAL_VALUE;
-  executor_exec_lua(
-      STATIC_CSTR_AS_STRING("return vim._create_nvim_job()"),
-      &jobid_tv);
-  return find_channel((uint64_t)jobid_tv.vval.v_number);
+  Error err = ERROR_INIT;
+  Object jobid = EXEC_LUA_STATIC("return vim._create_nvim_job()",
+                                 (Array)ARRAY_DICT_INIT, &err);
+
+  if (ERROR_SET(&err)) {
+    api_free_object(jobid);
+    api_clear_error(&err);
+    return NULL;
+  }
+
+  return find_channel((uint64_t)jobid.data.integer);
 }
 
 static inline void release_asynccall_channel(Channel *channel)
