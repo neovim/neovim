@@ -1,2 +1,2 @@
 " A dummy test provider
-let g:provider#brokencall#enabled = 1
+let g:loaded_brokencall_provider = 1

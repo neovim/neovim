@@ -1,19 +1,21 @@
 
 local helpers = require('test.functional.helpers')(after_each)
-local clear, eq, feed_command, eval = helpers.clear, helpers.eq, helpers.feed_command, helpers.eval
+local clear, eq, eval = helpers.clear, helpers.eq, helpers.eval
+local command = helpers.command
+local expect_err = helpers.expect_err
 
-describe('Providers', function()
+describe('providers', function()
   before_each(function()
     clear('--cmd', 'let &rtp = "test/functional/fixtures,".&rtp')
   end)
 
-  it('must set the enabled variable or fail', function()
-    eq(42, eval("provider#brokenenabled#Call('dosomething', [])"))
-	feed_command("call has('brokenenabled')")
-    eq(0, eval("has('brokenenabled')"))
+  it('must define g:loaded_xx_provider', function()
+    command('set loadplugins')
+    expect_err('Vim:provider: brokenenabled: missing required variable g:loaded_brokenenabled_provider',
+      eval, "has('brokenenabled')")
   end)
 
-  it('without Call() are enabled', function()
+  it('without Call() but with g:loaded_xx_provider', function()
     eq(1, eval("has('brokencall')"))
   end)
 end)

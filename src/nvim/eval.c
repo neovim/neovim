@@ -23968,27 +23968,35 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   return rettv;
 }
 
-/// Check if a named provider is enabled
+/// Checks if a named provider is enabled.
 bool eval_has_provider(const char *provider)
 {
-  char enabled_varname[256];
-  int enabled_varname_len = snprintf(enabled_varname, sizeof(enabled_varname),
-                                     "provider#%s#enabled", provider);
-
+  char buf[256];
+  int len;
   typval_T tv;
-  if (get_var_tv(enabled_varname, enabled_varname_len, &tv,
-                 NULL, false, false) == FAIL) {
-    char call_varname[256];
-    snprintf(call_varname, sizeof(call_varname), "provider#%s#Call", provider);
-    int has_call = !!find_func((char_u *)call_varname);
 
-    if (has_call && p_lpl) {
-      emsgf("Provider '%s' failed to set %s", provider, enabled_varname);
+  // Get the g:loaded_xx_provider variable.
+  len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", provider);
+  if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+    // Trigger autoload once.
+    len = snprintf(buf, sizeof(buf), "provider#%s#bogus", provider);
+    script_autoload(buf, len, false);
+
+    // Retry the (non-autoload-style) variable.
+    len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", provider);
+    if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+      // Show a hint if Call() is defined but g:loaded_xx_provider is missing.
+      snprintf(buf, sizeof(buf), "provider#%s#Call", provider);
+      bool has_call = !!find_func((char_u *)buf);
+      if (has_call && p_lpl) {
+        emsgf("provider: %s: missing required variable g:loaded_%s_provider",
+              provider, provider);
+      }
+      return false;
     }
-    return false;
   }
 
-  return (tv.v_type == VAR_NUMBER) ? tv.vval.v_number != 0: true;
+  return (tv.v_type == VAR_NUMBER) ? !!tv.vval.v_number : false;
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.

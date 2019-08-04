@@ -1,8 +1,7 @@
 if exists('g:loaded_node_provider')
   finish
 endif
-let g:loaded_node_provider = 1
-let g:provider#node#enabled = 0
+let g:loaded_node_provider = 0
 
 function! s:is_minimum_version(version, min_major, min_minor) abort
   if empty(a:version)
@@ -141,12 +140,10 @@ endfunction
 
 let s:err = ''
 let s:prog = provider#node#Detect()
+let g:loaded_node_provider = !empty(s:prog)
 
-if empty(s:prog)
+if !g:loaded_node_provider
   let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
-else
-  let g:provider#node#enabled = 1
 endif
 
 call remote#host#RegisterPlugin('node-provider', 'node', [])
-

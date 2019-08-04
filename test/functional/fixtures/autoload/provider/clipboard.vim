@@ -1,3 +1,5 @@
+let g:loaded_clipboard_provider = 1
+
 let g:test_clip = { '+': [''], '*': [''], }
 
 let s:methods = {}
@@ -34,8 +36,6 @@ function! s:methods.set(lines, regtype, reg)
   end
   let g:test_clip[a:reg] = [a:lines, a:regtype]
 endfunction
-
-let provider#clipboard#enabled = 1
 
 function! provider#clipboard#Call(method, args)
   return call(s:methods[a:method],a:args,s:methods)

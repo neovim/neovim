@@ -7,10 +7,8 @@
 if exists('g:loaded_python_provider')
   finish
 endif
-let g:loaded_python_provider = 1
-
 let [s:prog, s:err] = provider#pythonx#Detect(2)
-let g:provider#python#enabled = !empty(s:prog)
+let g:loaded_python_provider = !empty(s:prog)
 
 function! provider#python#Prog() abort
   return s:prog
