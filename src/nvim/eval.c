@@ -7638,15 +7638,10 @@ static inline bool get_asynccall_opts(
 
 /// Add user function definition to given context dictionary.
 ///
-/// The name of the added function (and accordingly "*name") is changed in the
-/// following cases:
-///
-/// - Calls in the child process do not run in a script context, hence
-///   script-local functions will be prefixed with a <SNR> instead of "s:".
-///
-/// - Lambda functions cannot be defined with ":func" or directly called,
-///   hence lambda functions will be prefixed with "<SNR>_lambda_"
-///   instead of "<lambda>".
+/// For lambda functions, the name of the added function (and accordingly
+/// "*name") is changed because lambda functions cannot be defined with
+/// ":func" or directly called, hence lambda functions will be prefixed with
+/// "<SNR>_lambda_" instead of "<lambda>".
 ///
 /// param[in/out]  ctx   Context dictionary.
 /// param[in/out]  name  Function name.
@@ -7670,6 +7665,42 @@ static inline bool ctx_dict_add_userfunc(Dictionary *ctx, char **name)
   }
   api_clear_error(&err);
   return success;
+}
+
+/// Return ID of script where function was defined.
+///
+/// @param[in]  name  Function name.
+///
+/// @return ID of script where function was defined or current_SID.
+static inline scid_T find_func_scid(const char_u *name)
+{
+  scid_T scid = current_SID;
+  ufunc_T *fp = find_func(name);
+
+  if (fp == NULL) {
+    try_start();
+
+    // Translate function name
+    int flag = TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD;
+    char *const _name = (char *)trans_function_name(
+        (char_u **)&name, false, flag, NULL, NULL);
+
+    Error err = ERROR_INIT;
+    if (try_end(&err)) {
+      api_clear_error(&err);
+    }
+
+    if (_name) {
+      fp = find_func((char_u *)_name);
+      xfree(_name);
+    }
+  }
+
+  if (fp) {
+    scid = fp->uf_script_ID;
+  }
+
+  return scid;
 }
 
 /// "call_async(callee, args[, opts])" function
@@ -7698,6 +7729,8 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  Integer scid = (Integer)find_func_scid(callee);
+
   args = &argvars[1];
   if (args->v_type != VAR_LIST) {
     EMSG2(_(e_invarg2),
@@ -7717,7 +7750,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   bool free_callee = false;
-  bool isscript = (callee[0] == 's' && callee[1] == ':');
+  bool isscript = eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     if (ctx_dict_add_userfunc(&context, (char **)&callee)) {
       free_callee = true;
@@ -7739,6 +7772,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   chan->async_call->work_queue = NULL;
 
   Array call_async_args = ARRAY_DICT_INIT;
+  ADD(call_async_args, INTEGER_OBJ(scid));
   ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
   ADD(call_async_args, DICTIONARY_OBJ(context));
   ADD(call_async_args, vim_to_object(args));
@@ -7788,6 +7822,8 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  Integer scid = (Integer)find_func_scid(callee);
+
   arglists = &argvars[1];
   if (arglists->v_type != VAR_LIST) {
     EMSG2(_(e_invarg2),
@@ -7816,7 +7852,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  bool isscript = (callee[0] == 's' && callee[1] == ':');
+  bool isscript = eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     if (!ctx_dict_add_userfunc(&context, (char **)&callee)) {
       EMSG(_("Failed to prepare function for async call"));
@@ -7846,6 +7882,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tv_list_append_number(rettv->vval.v_list, chan->id);
     chan->async_call = async_call;
     Array call_async_args = ARRAY_DICT_INIT;
+    ADD(call_async_args, INTEGER_OBJ(scid));
     ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
     ADD(call_async_args, DICTIONARY_OBJ(copy_dictionary(context)));
     listitem_T *args =

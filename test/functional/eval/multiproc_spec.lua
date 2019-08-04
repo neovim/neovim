@@ -212,8 +212,12 @@ describe('multiproc', function()
 
   it('supports script functions', function()
     source([[
+    function s:get_greeting()
+      return 'Hello'
+    endfunction
+
     function s:greet(name)
-      return 'Hello, '.a:name.'!'
+      return s:get_greeting().', '.a:name.'!'
     endfunction
 
     function s:retrieve(r)
@@ -221,7 +225,9 @@ describe('multiproc', function()
     endfunction
 
     call call_wait(
-    \ [call_async('s:greet', ['Neovim'], { 'done': 's:retrieve' })])
+    \ [call_async('s:greet', ['Neovim'],
+    \             { 'done': 's:retrieve',
+    \               'context': nvim_get_context(['sfuncs']) })])
     ]])
 
     eq('Hello, Neovim!', nvim('get_var', 'r'))
@@ -234,7 +240,7 @@ describe('multiproc', function()
     endfunction
 
     function Greet(name)
-      return 'Hello, '.a:name.'!'
+      return s:greet(a:name)
     endfunction
 
     function s:retrieve(r)
@@ -245,7 +251,9 @@ describe('multiproc', function()
 
     call call_wait([
     \ call_async(funcref('s:greet'), ['Neovim'], { 'done': 's:retrieve' }),
-    \ call_async(funcref('Greet'),   ['Neovim'], { 'done': 's:retrieve' })])
+    \ call_async(funcref('Greet'),   ['Neovim'],
+    \            { 'done': 's:retrieve',
+    \              'context': nvim_get_context(['sfuncs']) })])
     ]])
 
     eq({'Hello, Neovim!', 'Hello, Neovim!'}, nvim('get_var', 'r'))

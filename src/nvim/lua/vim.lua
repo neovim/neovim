@@ -219,11 +219,18 @@ local function _add_userfunc(ctx, name)
   if ctx['funcs'] == nil then
     ctx['funcs'] = {}
   end
-  name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
-  local body = vim.api.nvim_command_output('func! '..name)
+
+  -- Function name used to query function definition
+  local query_name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
+
+  -- Called function name
+  name = name:gsub('^<lambda>', '<SNR>_lambda_')
+
+  -- Function definition
+  local body = vim.api.nvim_command_output('func! '..query_name)
   body = body:gsub('^function! <lambda>', 'function! <SNR>_lambda_')
-  name = body:match('^function! ([^%(]+)')
   table.insert(ctx['funcs'], body)
+
   return { ctx, name }
 end
 

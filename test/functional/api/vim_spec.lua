@@ -1576,7 +1576,7 @@ describe('API', function()
 
   describe('nvim__async_invoke', function()
     it('only accepts request from parent', function()
-      local err = exc_exec([[call nvim__async_invoke('', {}, [])]])
+      local err = exc_exec([[call nvim__async_invoke(0, '', {}, [])]])
       eq([[Vim(call):E5555: API call: only parent can issue ]]..
          [['nvim__async_invoke']], err)
     end)
@@ -1584,7 +1584,7 @@ describe('API', function()
 
   describe('nvim__async_done_event', function()
     it('only accepts request from async call job', function()
-      local err = exc_exec([[call nvim__async_done_event('')]])
+      local err = exc_exec([[call nvim__async_done_event(0, '')]])
       eq([[Vim(call):E5555: API call: only async call jobs can issue ]]..
          [['nvim__async_done_event']], err)
     end)
