@@ -11,11 +11,15 @@ describe('providers', function()
 
   it('must define g:loaded_xx_provider', function()
     command('set loadplugins')
-    expect_err('Vim:provider: brokenenabled: missing required variable g:loaded_brokenenabled_provider',
-      eval, "has('brokenenabled')")
+    -- Using test-fixture with broken impl:
+    -- test/functional/fixtures/autoload/provider/python.vim
+    expect_err('Vim:provider: python: missing required variable g:loaded_python_provider',
+      eval, "has('python')")
   end)
 
   it('without Call() but with g:loaded_xx_provider', function()
-    eq(1, eval("has('brokencall')"))
+    -- Using test-fixture with broken impl:
+    -- test/functional/fixtures/autoload/provider/ruby.vim
+    eq(1, eval("has('ruby')"))
   end)
 end)
