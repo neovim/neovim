@@ -17,6 +17,7 @@ local source = helpers.source
 local next_msg = helpers.next_msg
 local write_file = helpers.write_file
 
+local exc_exec = helpers.exc_exec
 local expect_err = helpers.expect_err
 local format_string = helpers.format_string
 local intchar2lua = helpers.intchar2lua
@@ -743,6 +744,11 @@ describe('API', function()
       eq({'a', 'b' ,'c'}, eval('[g:one, g:Two, g:THREE]'))
       nvim('load_context', ctx)
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
+    end)
+
+    it('errors out on malformed context dictionary', function()
+      local err = exc_exec([[call nvim_load_context({'regs': [1]})]])
+      eq('Vim(call):E5555: API call: malformed context dictionary', err)
     end)
   end)
 
@@ -1559,6 +1565,28 @@ describe('API', function()
           text = 'Lorem ipsum dolor sit amet,', },
       }
       eq(expected, results)
+    end)
+
+    it('reports pattern errors', function()
+      local err = exc_exec([[call nvim_grep('\(badpat', 'whatever', 1)]])
+      err = err:match('Vim%(vimgrep%):(.*)')
+      eq([[E54: Unmatched \(]], err)
+    end)
+  end)
+
+  describe('nvim__async_invoke', function()
+    it('only accepts request from parent', function()
+      local err = exc_exec([[call nvim__async_invoke('', {}, [])]])
+      eq([[Vim(call):E5555: API call: only parent can issue ]]..
+         [['nvim__async_invoke']], err)
+    end)
+  end)
+
+  describe('nvim__async_done_event', function()
+    it('only accepts request from async call job', function()
+      local err = exc_exec([[call nvim__async_done_event('')]])
+      eq([[Vim(call):E5555: API call: only async call jobs can issue ]]..
+         [['nvim__async_done_event']], err)
     end)
   end)
 end)

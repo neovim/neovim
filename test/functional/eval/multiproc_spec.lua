@@ -31,6 +31,11 @@ describe('multiproc', function()
       ]])
     end)
 
+    it('does not work in sandbox', function()
+      expect_err('Failed to spawn job for async call',
+                 command, [[sandbox call call_async('nvim__id', [1])]])
+    end)
+
     it('invokes callback passing it the return value', function()
       call('call_async', 'nvim__id', {'multiproc'}, {done = 'Callback'})
       call('call_async', 'nvim_eval', {'1+2+3'}, {done = 'Callback'})
