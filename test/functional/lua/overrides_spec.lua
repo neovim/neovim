@@ -207,6 +207,81 @@ describe('debug.debug', function()
       {cr:Press ENTER or type command to continue}^              |
     ]])
   end)
+
+  it("can be safely exited with 'cont'", function()
+    feed('<cr>')
+    feed(':lua debug.debug() print("x")<cr>')
+    screen:expect{grid=[[
+                                                           |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> ^                                          |
+    ]]}
+
+    feed("conttt<cr>") -- misspelled cont; invalid syntax
+    screen:expect{grid=[[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> conttt                                    |
+      {E:E5115: Error while loading debug string: (debug comma}|
+      {E:nd):1: '=' expected near '<eof>'}                     |
+      lua_debug> ^                                          |
+    ]]}
+
+    feed("cont<cr>") -- exactly "cont", exit now
+    screen:expect{grid=[[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> conttt                                    |
+      {E:E5115: Error while loading debug string: (debug comma}|
+      {E:nd):1: '=' expected near '<eof>'}                     |
+      lua_debug> cont                                      |
+      x                                                    |
+      {cr:Press ENTER or type command to continue}^              |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+  end)
 end)
 
 describe('package.path/package.cpath', function()

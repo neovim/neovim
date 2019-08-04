@@ -449,11 +449,10 @@ int nlua_debug(lua_State *lstate)
     if (luaL_loadbuffer(lstate, (const char *)input.vval.v_string,
                         STRLEN(input.vval.v_string), "=(debug command)")) {
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
-    }
-    tv_clear(&input);
-    if (lua_pcall(lstate, 0, 0, 0)) {
+    } else if (lua_pcall(lstate, 0, 0, 0)) {
       nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
     }
+    tv_clear(&input);
   }
   return 0;
 }
