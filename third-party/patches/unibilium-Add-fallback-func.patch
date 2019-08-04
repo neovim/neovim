@@ -11,7 +11,7 @@ index 7d78fa1..67e704a 100644
 +
  #endif /* GUARD_UNIBILIUM_H_ */
 diff --git a/uniutil.c b/uniutil.c
-index 2e266a7..11a56e1 100644
+index 2e266a7..e953787 100644
 --- a/uniutil.c
 +++ b/uniutil.c
 @@ -39,6 +39,12 @@ enum {MAX_BUF = 4096};
@@ -40,7 +40,7 @@ index 2e266a7..11a56e1 100644
          errno = EINVAL;
          return NULL;
      }
-@@ -194,17 +201,29 @@ unibi_term *unibi_from_term(const char *term) {
+@@ -194,15 +201,26 @@ unibi_term *unibi_from_term(const char *term) {
      }
  
      if ((env = getenv("TERMINFO_DIRS"))) {
@@ -63,14 +63,9 @@ index 2e266a7..11a56e1 100644
  unibi_term *unibi_from_env(void) {
      const char *term = getenv("TERM");
      if (!term) {
--        errno = ENOENT;
--        return NULL;
 +        if (fallback_func) {
 +            return fallback_func(term);
-+        } else {
-+            errno = ENOENT;
-+            return NULL;
 +        }
+         errno = ENOENT;
+         return NULL;
      }
- 
-     return unibi_from_term(term);
