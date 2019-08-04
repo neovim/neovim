@@ -123,7 +123,7 @@ function! s:check_performance() abort
   else
     call health#report_info(buildtype)
     call health#report_warn(
-          \ 'Non-optimized build-type. Nvim will be slower.',
+          \ 'Non-optimized '.(has('debug')?'(DEBUG) ':'').'build. Nvim will be slower.',
           \ ['Install a different Nvim package, or rebuild with `CMAKE_BUILD_TYPE=RelWithDebInfo`.',
           \  s:suggest_faq])
   endif
