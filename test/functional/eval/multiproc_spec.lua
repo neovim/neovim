@@ -279,10 +279,10 @@ describe('multiproc', function()
     source([=[
     let g:r1 = call_wait([call_async({ name -> 'Hi, '.name.'!' }, ['Neovim'])])
     let g:r2 = call_wait(
-    \ call_parallel({ name -> 'Hi, '.name.'!' }, [['Neovim'], ['Neovim']]))
+    \ call_parallel({ name -> 'Hi, '.name.'!' }, [['Neovim'], ['Neovim']], {
+    \                 'count': 1 }))
     ]=])
     eq('Hi, Neovim!', nvim('get_var', 'r1')[1].value)
-    eq({'Hi, Neovim!'}, nvim('get_var', 'r2')[1].value)
-    eq({'Hi, Neovim!'}, nvim('get_var', 'r2')[2].value)
+    eq({'Hi, Neovim!', 'Hi, Neovim!'}, nvim('get_var', 'r2')[1].value)
   end)
 end)
