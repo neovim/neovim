@@ -1673,6 +1673,25 @@ func Test_ReadWrite_Autocmds()
   call delete('test.out')
 endfunc
 
+func Test_throw_in_BufWritePre()
+  new
+  call setline(1, ['one', 'two', 'three'])
+  call assert_false(filereadable('Xthefile'))
+  augroup throwing
+    au BufWritePre X* throw 'do not write'
+  augroup END
+  try
+    w Xthefile
+  catch
+    let caught = 1
+  endtry
+  call assert_equal(1, caught)
+  call assert_false(filereadable('Xthefile'))
+
+  bwipe!
+  au! throwing
+endfunc
+
 func Test_FileChangedShell_reload()
   if !has('unix')
     return
