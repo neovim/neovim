@@ -75,6 +75,7 @@ describe('vim.loop', function()
     exec_lua([[
       local timer = vim.loop.new_timer()
       timer:start(20, 0, function ()
+        _G.is_fast = vim.in_fast_event()
         timer:close()
         vim.api.nvim_set_var("valid", true)
         vim.api.nvim_command("echomsg 'howdy'")
@@ -89,18 +90,20 @@ describe('vim.loop', function()
       {1:~                                                 }|
       {2:                                                  }|
       {3:Error executing luv callback:}                     |
-      {3:[string "<nvim>"]:4: E5560: nvim_set_var must not }|
+      {3:[string "<nvim>"]:5: E5560: nvim_set_var must not }|
       {3:be called in a lua loop callback}                  |
       {4:Press ENTER or type command to continue}^           |
     ]])
     feed('<cr>')
     eq(false, eval("get(g:, 'valid', v:false)"))
+    eq(true, exec_lua("return _G.is_fast"))
 
     -- callbacks can be scheduled to be executed in the main event loop
     -- where the entire API is available
     exec_lua([[
       local timer = vim.loop.new_timer()
       timer:start(20, 0, vim.schedule_wrap(function ()
+        _G.is_fast = vim.in_fast_event()
         timer:close()
         vim.api.nvim_set_var("valid", true)
         vim.api.nvim_command("echomsg 'howdy'")
@@ -120,6 +123,7 @@ describe('vim.loop', function()
       howdy                                             |
     ]])
     eq(true, eval("get(g:, 'valid', v:false)"))
+    eq(false, exec_lua("return _G.is_fast"))
 
     -- fast (not deferred) API functions are allowed to be called directly
     exec_lua([[

@@ -223,6 +223,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // schedule
   lua_pushcfunction(lstate, &nlua_schedule);
   lua_setfield(lstate, -2, "schedule");
+  // in_fast_event
+  lua_pushcfunction(lstate, &nlua_in_fast_event);
+  lua_setfield(lstate, -2, "in_fast_event");
 
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
@@ -455,6 +458,12 @@ int nlua_debug(lua_State *lstate)
     tv_clear(&input);
   }
   return 0;
+}
+
+int nlua_in_fast_event(lua_State *lstate)
+{
+  lua_pushboolean(lstate, in_fast_callback > 0);
+  return 1;
 }
 
 #ifdef WIN32
