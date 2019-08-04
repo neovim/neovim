@@ -3558,11 +3558,9 @@ set_context_in_map_cmd (
   return NULL;
 }
 
-/*
- * Find all mapping/abbreviation names that match regexp 'prog'.
- * For command line expansion of ":[un]map" and ":[un]abbrev" in all modes.
- * Return OK if matches found, FAIL otherwise.
- */
+// Find all mapping/abbreviation names that match regexp "regmatch".
+// For command line expansion of ":[un]map" and ":[un]abbrev" in all modes.
+// Return OK if matches found, FAIL otherwise.
 int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
 {
   mapblock_T  *mp;
@@ -3622,7 +3620,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
         mp = maphash[hash];
       for (; mp; mp = mp->m_next) {
         if (mp->m_mode & expand_mapmodes) {
-          p = translate_mapping(mp->m_keys, true, CPO_TO_CPO_FLAGS);
+          p = translate_mapping(mp->m_keys, CPO_TO_CPO_FLAGS);
           if (p != NULL && vim_regexec(regmatch, p, (colnr_T)0)) {
             if (round == 1)
               ++count;
@@ -4346,16 +4344,15 @@ void add_map(char_u *map, int mode)
 // corresponding external one recognized by :map/:abbrev commands.
 //
 // This function is called when expanding mappings/abbreviations on the
-// command-line, and for building the "Ambiguous mapping..." error message.
+// command-line.
 //
-// It uses a growarray to build the translation string since the
-// latter can be wider than the original description. The caller has to
-// free the string afterwards.
+// It uses a growarray to build the translation string since the latter can be
+// wider than the original description. The caller has to free the string
+// afterwards.
 //
 // Returns NULL when there is a problem.
 static char_u * translate_mapping (
     char_u *str,
-    int expmap,   // True when expanding mappings on command-line
     int cpo_flags  // Value of various flags present in &cpo
 )
 {
@@ -4373,12 +4370,8 @@ static char_u * translate_mapping (
         modifiers = *++str;
         c = *++str;
       }
-      
+
       if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-        if (expmap) {
-          ga_clear(&ga);
-          return NULL;
-        }
         c = TO_SPECIAL(str[1], str[2]);
         if (c == K_ZERO) {
           // display <Nul> as ^@
@@ -4387,10 +4380,6 @@ static char_u * translate_mapping (
         str += 2;
       }
       if (IS_SPECIAL(c) || modifiers) {         // special key
-        if (expmap) {
-          ga_clear(&ga);
-          return NULL;
-        }
         ga_concat(&ga, get_special_key_name(c, modifiers));
         continue;         /* for (str) */
       }
