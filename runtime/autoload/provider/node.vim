@@ -140,8 +140,9 @@ endfunction
 
 let s:err = ''
 let s:prog = provider#node#Detect()
+let g:loaded_node_provider = empty(s:prog) ? 1 : 2
 
-if empty(s:prog)
+if g:loaded_node_provider != 2
   let s:err = 'Cannot find the "neovim" node package. Try :checkhealth'
 endif
 

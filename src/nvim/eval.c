@@ -23968,52 +23968,57 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   return rettv;
 }
 
+/// Checks if a named provider is enabled.
 bool eval_has_provider(const char *name)
 {
-#define CHECK_PROVIDER(name) \
-  if (has_##name == -1) { \
-    has_##name = !!find_func((char_u *)"provider#" #name "#Call"); \
-    if (!has_##name) { \
-      script_autoload("provider#" #name "#Call", \
-                      sizeof("provider#" #name "#Call") - 1, \
-                      false); \
-      has_##name = !!find_func((char_u *)"provider#" #name "#Call"); \
-    } \
+  if (!strequal(name, "clipboard")
+      && !strequal(name, "python")
+      && !strequal(name, "python3")
+      && !strequal(name, "ruby")
+      && !strequal(name, "node")) {
+    // Avoid autoload for non-provider has() features.
+    return false;
   }
 
-  static int has_clipboard = -1;
-  static int has_python = -1;
-  static int has_python3 = -1;
-  static int has_ruby = -1;
-  typval_T args[1];
-  args[0].v_type = VAR_UNKNOWN;
+  char buf[256];
+  int len;
+  typval_T tv;
 
-  if (strequal(name, "clipboard")) {
-    CHECK_PROVIDER(clipboard);
-    return has_clipboard;
-  } else if (strequal(name, "python3")) {
-    CHECK_PROVIDER(python3);
-    return has_python3;
-  } else if (strequal(name, "python")) {
-    CHECK_PROVIDER(python);
-    return has_python;
-  } else if (strequal(name, "ruby")) {
-    bool need_check_ruby = (has_ruby == -1);
-    CHECK_PROVIDER(ruby);
-    if (need_check_ruby && has_ruby == 1) {
-      char *rubyhost = call_func_retstr("provider#ruby#Detect", 0, args, true);
-      if (rubyhost) {
-        if (*rubyhost == NUL) {
-          // Invalid rubyhost executable. Gem is probably not installed.
-          has_ruby = 0;
-        }
-        xfree(rubyhost);
+  // Get the g:loaded_xx_provider variable.
+  len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
+  if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+    // Trigger autoload once.
+    len = snprintf(buf, sizeof(buf), "provider#%s#bogus", name);
+    script_autoload(buf, len, false);
+
+    // Retry the (non-autoload-style) variable.
+    len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
+    if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
+      // Show a hint if Call() is defined but g:loaded_xx_provider is missing.
+      snprintf(buf, sizeof(buf), "provider#%s#Call", name);
+      if (!!find_func((char_u *)buf) && p_lpl) {
+        emsgf("provider: %s: missing required variable g:loaded_%s_provider",
+              name, name);
       }
+      return false;
     }
-    return has_ruby;
   }
 
-  return false;
+  bool ok = (tv.v_type == VAR_NUMBER)
+    ? 2 == tv.vval.v_number  // Value of 2 means "loaded and working".
+    : false;
+
+  if (ok) {
+    // Call() must be defined if provider claims to be working.
+    snprintf(buf, sizeof(buf), "provider#%s#Call", name);
+    if (!find_func((char_u *)buf)) {
+      emsgf("provider: %s: g:loaded_%s_provider=2 but %s is not defined",
+            name, name, buf);
+      ok = false;
+    }
+  }
+
+  return ok;
 }
 
 /// Writes "<sourcing_name>:<sourcing_lnum>" to `buf[bufsize]`.

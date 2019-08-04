@@ -84,12 +84,11 @@ Developer guidelines				        *dev-guidelines*
 
 PROVIDERS 						*dev-provider*
 
-A goal of Nvim is to allow extension of the editor without special knowledge
-in the core. But some Vim components are too tightly coupled; in those cases
-a "provider" hook is exposed.
+A primary goal of Nvim is to allow extension of the editor without special
+knowledge in the core.  Some core functions are delegated to "providers"
+implemented as external scripts.
 
-Consider two examples of integration with external systems that are
-implemented in Vim and are now decoupled from Nvim core as providers:
+Examples:
 
 1. In the Vim source code, clipboard logic accounts for more than 1k lines of
    C source code (ui.c), to perform two tasks that are now accomplished with
@@ -101,29 +100,28 @@ implemented in Vim and are now decoupled from Nvim core as providers:
    scripting is performed by an external host process implemented in ~2k lines
    of Python.
 
-Ideally we could implement Python and clipboard integration in pure vimscript
-and without touching the C code. But this is infeasible without compromising
-backwards compatibility with Vim; that's where providers help.
+The provider framework invokes VimL from C.  It is composed of two functions
+in eval.c:
 
-The provider framework helps call vimscript from C. It is composed of two
-functions in eval.c:
-
-- eval_call_provider(name, method, arguments): calls provider#(name)#Call
+- eval_call_provider(name, method, arguments): calls provider#{name}#Call
   with the method and arguments.
-- eval_has_provider(name): Checks if a provider is implemented. Returns true
-  if the provider#(name)#Call function is implemented. Called by |has()|
-  (vimscript) to check if features are available.
-
-The provider#(name)#Call function implements integration with an external
-system, because shell commands and |RPC| clients are easier to work with in
-vimscript.
+- eval_has_provider(name): Checks the `g:loaded_{name}_provider` variable
+  which must be set to 2 by the provider script to indicate that it is
+  "enabled and working". Called by |has()| to check if features are available.
 
 For example, the Python provider is implemented by the
-autoload/provider/python.vim script; the provider#python#Call function is only
-defined if a valid external Python host is found. That works well with the
-`has('python')` expression (normally used by Python plugins) because if the
-Python host isn't installed then the plugin will "think" it is running in
-a Vim compiled without the "+python" feature.
+"autoload/provider/python.vim" script, which sets `g:loaded_python_provider`
+to 2 only if a valid external Python host is found.  Then `has("python")`
+reflects whether Python support is working.
+
+							*provider-reload*
+Sometimes a GUI or other application may want to force a provider to
+"reload".  To reload a provider, undefine its "loaded" flag, then use
+|:runtime| to reload it: >
+
+    :unlet g:loaded_clipboard_provider
+    :runtime autoload/provider/clipboard.vim
+
 
 DOCUMENTATION						*dev-doc*
 

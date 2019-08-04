@@ -1,6 +1,16 @@
 " The clipboard provider uses shell commands to communicate with the clipboard.
 " The provider function will only be registered if a supported command is
 " available.
+
+if exists('g:loaded_clipboard_provider')
+  finish
+endif
+" Default to 1.  provider#clipboard#Executable() may set 2.
+" To force a reload:
+"   :unlet g:loaded_clipboard_provider
+"   :runtime autoload/provider/clipboard.vim
+let g:loaded_clipboard_provider = 1
+
 let s:copy = {}
 let s:paste = {}
 let s:clipboard = {}
@@ -120,13 +130,6 @@ function! provider#clipboard#Executable() abort
   return ''
 endfunction
 
-if empty(provider#clipboard#Executable())
-  " provider#clipboard#Call() *must not* be defined if the provider is broken.
-  " Otherwise eval_has_provider() thinks the clipboard provider is
-  " functioning, and eval_call_provider() will happily call it.
-  finish
-endif
-
 function! s:clipboard.get(reg) abort
   if type(s:paste[a:reg]) == v:t_func
     return s:paste[a:reg]()
@@ -192,3 +195,6 @@ function! provider#clipboard#Call(method, args) abort
     let s:here = v:false
   endtry
 endfunction
+
+" eval_has_provider() decides based on this variable.
+let g:loaded_clipboard_provider = empty(provider#clipboard#Executable()) ? 1 : 2
