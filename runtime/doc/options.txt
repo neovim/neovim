@@ -5159,8 +5159,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	unescaping, so to keep yourself sane use |:let-&| like shown above.
 							*shell-powershell*
 	To use powershell (on Windows): >
-		set shell=powershell shellquote=( shellpipe=\| shellredir=> shellxquote=
+		set shell=powershell shellquote=( shellpipe=\| shellxquote=
 		set shellcmdflag=-NoLogo\ -NoProfile\ -ExecutionPolicy\ RemoteSigned\ -Command
+		set shellredir=\|\ Out-File\ -Encoding\ UTF8
 
 <	This option cannot be set from a |modeline| or in the |sandbox|, for
 	security reasons.
