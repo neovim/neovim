@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local plugin_helpers = require('test.functional.plugin.helpers')
 
 local clear = helpers.clear
 local curbuf_contents = helpers.curbuf_contents
@@ -41,7 +40,7 @@ end)
 
 describe('health.vim', function()
   before_each(function()
-    plugin_helpers.reset()
+    clear{args={'-u', 'NORC'}}
     -- Provides functions:
     --    health#broken#check()
     --    health#success1#check()

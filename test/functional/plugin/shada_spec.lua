@@ -1,4 +1,6 @@
+local paths = require('test.config.paths')
 local helpers = require('test.functional.helpers')(after_each)
+local clear = helpers.clear
 local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
   helpers.eq, helpers.eval, helpers.command, helpers.nvim, helpers.exc_exec,
   helpers.funcs, helpers.feed, helpers.curbuf
@@ -7,11 +9,20 @@ local read_file = helpers.read_file
 
 local mpack = require('mpack')
 
-local plugin_helpers = require('test.functional.plugin.helpers')
-local reset = plugin_helpers.reset
-
 local shada_helpers = require('test.functional.shada.helpers')
 local get_shada_rw = shada_helpers.get_shada_rw
+
+local function reset(shada_file)
+  -- TODO(justinmk): why is this needed?
+  local rtp_value = ('\'%s/runtime\''):format(
+      paths.test_source_path:gsub('\'', '\'\''))
+  clear{args_rm={'-u', '-i'},
+        args={'-u', 'NORC',
+              '-i', shada_file or 'NONE',
+              '--cmd', 'set laststatus&',
+              '--cmd', 'let &runtimepath='..rtp_value,
+        }}
+end
 
 local mpack_eq = function(expected, mpack_result)
   local mpack_keys = {'type', 'timestamp', 'length', 'value'}

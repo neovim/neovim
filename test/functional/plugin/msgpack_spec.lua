@@ -1,15 +1,15 @@
 local helpers = require('test.functional.helpers')(after_each)
+local clear = helpers.clear
 local meths = helpers.meths
 local eq, nvim_eval, nvim_command, exc_exec =
   helpers.eq, helpers.eval, helpers.command, helpers.exc_exec
 local ok = helpers.ok
 local NIL = helpers.NIL
 
-local plugin_helpers = require('test.functional.plugin.helpers')
-local reset = plugin_helpers.reset
-
 describe('autoload/msgpack.vim', function()
-  before_each(reset)
+  before_each(function()
+    clear{args={'-u', 'NORC'}}
+  end)
 
   local sp = function(typ, val)
     return ('{"_TYPE": v:msgpack_types.%s, "_VAL": %s}'):format(typ, val)
