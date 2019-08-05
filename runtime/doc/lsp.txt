@@ -77,7 +77,7 @@ API is defined:
 lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
     Creates and sends a request to the server for [filetype]. Will fill in any
     missing required arguments as defined by the language server protocol. Will
-    call the default callback for the request (if it exists), unless an
+    call the built-in callback for the request (if you set that and it exists), unless an
     [callback] is specified, in which case that will be called upon completion
     of the request.
 
@@ -120,10 +120,9 @@ lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
 
             [callback]: An optional callback that will be executed
             once the response has been received. If this is passed and not
-            |v:null|, then the |lsp-default-callback| will not be executed for
-            this request. If this request does not have a
-            |lsp-default-callback| and this parameter is not passed, then no
-            callback will be executed upon receiving the request.
+            |v:null|, then the |lsp-built-in-callback| will not be executed for
+            this request. If you do not set |built-in-callbacks| or this request does not have a
+            a specify filetype callback, then no callback will be executed upon receiving the request.
 
             The callback must be a string with the name of the vimscript
             function to call. The signature must be:
@@ -161,7 +160,7 @@ lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
 autocmd CursorHold :lua require('lsp.plugin').client.request_async('textDocument/hover', {})
 
 ================================================================================
-                                                         *lsp-default-callback*
+                                                         *lsp-built-in-callback*
 
 The following requests have built-in callbacks defined to handle the response
 in an idiomatic vim fashion.
@@ -170,6 +169,24 @@ in an idiomatic vim fashion.
   textDocument/hover~
   textDocument/publishDiagnostics~
   textDocument/references~
+
+require('lsp.config').callbacks.set_all_builtin_callbacks()
+  You can set all built-in callbaks
+
+require('lsp.config').callbacks.set_builtin_callback({method})
+    You can set a specify built-in callback.
+        Parameters:~
+            {method}: The name of the request, as specified by the
+            language server protocol.
+                Example: 'textDocument/hover'
+
+require('lsp.config').callbacks.set_builtin_callbacks({methods})
+    You can set specify built-in callbacks.
+        Parameters:~
+            {method}: The name of the request, as specified by the
+            language server protocol.
+                Example: {'textDocument/hover', 'textDocument/publishDiagnostics'}
+
 
 ================================================================================
                                                          *lsp-common-behavior*
@@ -187,7 +204,6 @@ your daily workflow.
 ================================================================================
                                                             *lsp-configuration*
 
-<
 
                                                               *lsp-add_check()*
 require('lsp.checks').add_check({request}, {cb})

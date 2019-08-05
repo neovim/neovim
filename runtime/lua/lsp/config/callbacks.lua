@@ -33,23 +33,34 @@ configure.set_option = function(method, option, value)
 end
 
 --- Set a builtin callback to CallbackMapping
--- @param method               (required) The name of the lsp method to set a callback to
+-- @param method                   (required) The name of the lsp method to set a callback to
 configure.set_builtin_callback = function(method)
   local builtin_callback = BuiltinCallbacks[method]
+  if builtin_callback == nil then
+    error(string.format('the method "%s" is not implemented' , method), 2)
+  end
   local callback_object = callbacks._callback_object.new(method, builtin_callback['options'])
   callback_object:set_callback(builtin_callback['callback'])
   callbacks._callback_mapping[method] = callback_object
 end
 
+--- Set a builtin callback to CallbackMapping
+-- @param methods                   (required) The table of name of the lsp method to set a callback to
+configure.set_builtin_callbacks = function(methods)
+  for _, method in ipairs(methods) do
+    configure.set_builtin_callback(method)
+  end
+end
+
 --- Set a builtin error callback to CallbackMapping
-configure.set_builtin_error_callback = function(self)
-  self.set_builtin_callback('nvim/error_callback')
+configure.set_builtin_error_callback = function()
+  configure.set_builtin_callback('nvim/error_callback')
 end
 
 --- Set the all builtin callbacks to CallbackMapping
-configure.set_all_builtin_callbacks = function(self)
+configure.set_all_builtin_callbacks = function()
   for method_name in pairs(BuiltinCallbacks) do
-    self.set_builtin_callback(method_name)
+    configure.set_builtin_callback(method_name)
   end
 end
 
