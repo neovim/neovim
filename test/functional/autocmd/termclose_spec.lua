@@ -22,7 +22,7 @@ describe('TermClose event', function()
     command('terminal')
     -- shell-test exits immediately.
     retry(nil, nil, function() neq(-1, eval('jobwait([&channel], 0)[0]')) end)
-    eq(23, eval('g:test_termclose'))
+    retry(nil, nil, function() eq(23, eval('g:test_termclose')) end)
   end)
 
   it('triggers when long-running terminal job gets stopped', function()

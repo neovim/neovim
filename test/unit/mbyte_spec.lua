@@ -8,6 +8,9 @@ local mbyte = helpers.cimport("./src/nvim/mbyte.h")
 local charset = helpers.cimport('./src/nvim/charset.h')
 
 describe('mbyte', function()
+  if helpers.isCI('quickbuild') then
+    pending("crashes on quickbuild", function() end)
+  end
 
   -- Array for composing characters
   local intp = ffi.typeof('int[?]')

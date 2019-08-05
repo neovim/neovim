@@ -1,5 +1,4 @@
 local helpers = require('test.functional.helpers')(after_each)
-local plugin_helpers = require('test.functional.plugin.helpers')
 local Screen = require('test.functional.ui.screen')
 local command, eval, rawfeed = helpers.command, helpers.eval, helpers.rawfeed
 local clear = helpers.clear
@@ -9,7 +8,6 @@ describe(':Man', function()
     local screen
 
     before_each(function()
-      plugin_helpers.reset()
       clear()
       command('syntax on')
       command('set filetype=man')
