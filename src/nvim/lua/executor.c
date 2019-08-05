@@ -223,6 +223,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // schedule
   lua_pushcfunction(lstate, &nlua_schedule);
   lua_setfield(lstate, -2, "schedule");
+  // in_fast_event
+  lua_pushcfunction(lstate, &nlua_in_fast_event);
+  lua_setfield(lstate, -2, "in_fast_event");
 
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
@@ -323,6 +326,42 @@ void executor_exec_lua(const String str, typval_T *const ret_tv)
   nlua_pop_typval(lstate, ret_tv);
 }
 
+static void nlua_print_event(void **argv)
+{
+  char *str = argv[0];
+  const size_t len = (size_t)(intptr_t)argv[1]-1;  // exclude final NUL
+
+  for (size_t i = 0; i < len;) {
+    const size_t start = i;
+    while (i < len) {
+      switch (str[i]) {
+        case NUL: {
+          str[i] = NL;
+          i++;
+          continue;
+        }
+        case NL: {
+          // TODO(bfredl): use proper multiline msg? Probably should implement
+          // print() in lua in terms of nvim_message(), when it is available.
+          str[i] = NUL;
+          i++;
+          break;
+        }
+        default: {
+          i++;
+          continue;
+        }
+      }
+      break;
+    }
+    msg((char_u *)str + start);
+  }
+  if (len && str[len - 1] == NUL) {  // Last was newline
+    msg((char_u *)"");
+  }
+  xfree(str);
+}
+
 /// Print as a Vim message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -362,47 +401,24 @@ static int nlua_print(lua_State *const lstate)
     lua_pop(lstate, 1);
   }
 #undef PRINT_ERROR
-  lua_pop(lstate, nargs + 1);
   ga_append(&msg_ga, NUL);
-  {
-    const size_t len = (size_t)msg_ga.ga_len - 1;
-    char *const str = (char *)msg_ga.ga_data;
 
-    for (size_t i = 0; i < len;) {
-      const size_t start = i;
-      while (i < len) {
-        switch (str[i]) {
-          case NUL: {
-            str[i] = NL;
-            i++;
-            continue;
-          }
-          case NL: {
-            str[i] = NUL;
-            i++;
-            break;
-          }
-          default: {
-            i++;
-            continue;
-          }
-        }
-        break;
-      }
-      msg((char_u *)str + start);
-    }
-    if (len && str[len - 1] == NUL) {  // Last was newline
-      msg((char_u *)"");
-    }
+  if (in_fast_callback) {
+    multiqueue_put(main_loop.events, nlua_print_event,
+                   2, msg_ga.ga_data, msg_ga.ga_len);
+  } else {
+    nlua_print_event((void *[]){ msg_ga.ga_data,
+                                 (void *)(intptr_t)msg_ga.ga_len });
   }
-  ga_clear(&msg_ga);
   return 0;
+
 nlua_print_error:
-  emsgf(_("E5114: Error while converting print argument #%i: %.*s"),
-        curargidx, (int)errmsg_len, errmsg);
   ga_clear(&msg_ga);
-  lua_pop(lstate, lua_gettop(lstate));
-  return 0;
+  const char *fmt = _("E5114: Error while converting print argument #%i: %.*s");
+  size_t len = (size_t)vim_snprintf((char *)IObuff, IOSIZE, fmt, curargidx,
+                                    (int)errmsg_len, errmsg);
+  lua_pushlstring(lstate, (char *)IObuff, len);
+  return lua_error(lstate);
 }
 
 /// debug.debug: interaction with user while debugging.
@@ -436,13 +452,18 @@ int nlua_debug(lua_State *lstate)
     if (luaL_loadbuffer(lstate, (const char *)input.vval.v_string,
                         STRLEN(input.vval.v_string), "=(debug command)")) {
       nlua_error(lstate, _("E5115: Error while loading debug string: %.*s"));
-    }
-    tv_clear(&input);
-    if (lua_pcall(lstate, 0, 0, 0)) {
+    } else if (lua_pcall(lstate, 0, 0, 0)) {
       nlua_error(lstate, _("E5116: Error while calling debug string: %.*s"));
     }
+    tv_clear(&input);
   }
   return 0;
+}
+
+int nlua_in_fast_event(lua_State *lstate)
+{
+  lua_pushboolean(lstate, in_fast_callback > 0);
+  return 1;
 }
 
 #ifdef WIN32

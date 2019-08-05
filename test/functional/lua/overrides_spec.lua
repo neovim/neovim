@@ -14,6 +14,7 @@ local command = helpers.command
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
 local alter_slashes = helpers.alter_slashes
+local exec_lua = helpers.exec_lua
 
 local screen
 
@@ -53,11 +54,11 @@ describe('print', function()
       v_tblout = setmetatable({}, meta_tblout)
     ]])
     eq('', redir_exec('luafile ' .. fname))
-    eq('\nE5114: Error while converting print argument #2: [NULL]',
+    eq('\nE5105: Error while calling lua chunk: E5114: Error while converting print argument #2: [NULL]',
        redir_exec('lua print("foo", v_nilerr, "bar")'))
-    eq('\nE5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
+    eq('\nE5105: Error while calling lua chunk: E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
        redir_exec('lua print("foo", v_abcerr, "bar")'))
-    eq('\nE5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
+    eq('\nE5105: Error while calling lua chunk: E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
        redir_exec('lua print("foo", v_tblout, "bar")'))
   end)
   it('prints strings with NULs and NLs correctly', function()
@@ -75,6 +76,29 @@ describe('print', function()
     eq('\n def', redir_exec('lua print("", "def")'))
     eq('\nabc ', redir_exec('lua print("abc", "")'))
     eq('\nabc  def', redir_exec('lua print("abc", "", "def")'))
+  end)
+  it('defers printing in luv event handlers', function()
+    exec_lua([[
+      local cmd = ...
+      function test()
+        local timer = vim.loop.new_timer()
+        local done = false
+        timer:start(10, 0, function()
+          print("very fast")
+          timer:close()
+          done = true
+        end)
+        -- be kind to slow travis OS X jobs:
+        -- loop until we know for sure the callback has been executed
+        while not done do
+          os.execute(cmd)
+          vim.loop.run("nowait") -- fake os_breakcheck()
+        end
+        print("very slow")
+        vim.api.nvim_command("sleep 1m") -- force deferred event processing
+      end
+    ]], (iswin() and "timeout 1") or "sleep 0.1")
+    eq('\nvery slow\nvery fast',redir_exec('lua test()'))
   end)
 end)
 
@@ -182,6 +206,81 @@ describe('debug.debug', function()
       {E:n local 'a' (a nil value)}                            |
       {cr:Press ENTER or type command to continue}^              |
     ]])
+  end)
+
+  it("can be safely exited with 'cont'", function()
+    feed('<cr>')
+    feed(':lua debug.debug() print("x")<cr>')
+    screen:expect{grid=[[
+                                                           |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> ^                                          |
+    ]]}
+
+    feed("conttt<cr>") -- misspelled cont; invalid syntax
+    screen:expect{grid=[[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> conttt                                    |
+      {E:E5115: Error while loading debug string: (debug comma}|
+      {E:nd):1: '=' expected near '<eof>'}                     |
+      lua_debug> ^                                          |
+    ]]}
+
+    feed("cont<cr>") -- exactly "cont", exit now
+    screen:expect{grid=[[
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      lua_debug> conttt                                    |
+      {E:E5115: Error while loading debug string: (debug comma}|
+      {E:nd):1: '=' expected near '<eof>'}                     |
+      lua_debug> cont                                      |
+      x                                                    |
+      {cr:Press ENTER or type command to continue}^              |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
   end)
 end)
 
