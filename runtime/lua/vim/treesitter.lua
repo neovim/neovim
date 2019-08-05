@@ -17,27 +17,12 @@ function Parser:parse()
   return self.tree
 end
 
-local function on_lines(self, bufnr, _, start_row, oldstopline, stop_row)
+local function on_lines(self, bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
   local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
-  -- a bit messy, should we expose edited but not reparsed tree?
-  -- are multiple edits safe in general?
-  local root = self._parser:tree():root()
-  -- TODO: add proper lookup function!
-  local inode = root:descendant_for_point_range(oldstopline+9000,0, oldstopline,0)
-  if inode == nil then
-    local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
-    self._parser:edit(start_byte,stop_byte,stop_byte,
-                      start_row,0,stop_row,0,stop_row,0)
-  else
-    local fakeoldstoprow, fakeoldstopcol, fakebyteoldstop = inode:start()
-    local fake_rows = fakeoldstoprow-oldstopline
-    local fakestop = stop_row+fake_rows
-    local fakebytestop = a.nvim_buf_get_offset(bufnr,fakestop)+fakeoldstopcol
-    self._parser:edit(start_byte, fakebyteoldstop, fakebytestop,
-                      start_row, 0,
-                      fakeoldstoprow, fakeoldstopcol,
-                      fakestop, fakeoldstopcol)
-  end
+  local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
+  local old_stop_byte = start_byte + old_byte_size
+  self._parser:edit(start_byte,old_stop_byte,stop_byte,
+                    start_row,0,old_stop_row,0,stop_row,0)
   self.valid = false
 end
 
