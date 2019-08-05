@@ -3143,6 +3143,7 @@ win_line (
           c = '>';
           mb_c = c;
           mb_l = 1;
+          (void)mb_l;
           multi_attr = win_hl_attr(wp, HLF_AT);
 
           // put the pointer back to output the double-width
@@ -3153,9 +3154,9 @@ win_line (
           n_extra -= mb_l - 1;
           p_extra += mb_l - 1;
         }
-        ++p_extra;
+        p_extra++;
       }
-      --n_extra;
+      n_extra--;
     } else {
       int c0;
 
