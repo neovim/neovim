@@ -1945,6 +1945,7 @@ static int vgetorpeek(int advance)
             // No matching mapping found or found a non-matching mapping that
             // matches at least what the matching mapping matched
             keylen = 0;
+            (void)keylen;  // suppress clang/dead assignment
             // If there was no mapping, use the character from the typeahead
             // buffer right here. Otherwise, use the mapping (loop around).
             if (mp == NULL) {
