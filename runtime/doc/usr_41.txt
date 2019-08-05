@@ -770,6 +770,9 @@ System functions and manipulation of files:
 	rename()		rename a file
 	system()		get the result of a shell command as a string
 	systemlist()		get the result of a shell command as a list
+	environ()		get all environment variables
+	getenv()		get one environment variable
+	setenv()		set an environment variable
 	hostname()		name of the system
 	readfile()		read a file into a List of lines
 	readdir()		get a List of file names in a directory
@@ -899,6 +902,7 @@ GUI:						*gui-functions*
 	getwinposy()		Y position of the Vim window
 	balloon_show()		set the balloon content
 	balloon_split()		split a message for a balloon
+	balloon_gettext()	get the text in the balloon
 
 Vim server:					*server-functions*
 	serverlist()		return the list of server names
