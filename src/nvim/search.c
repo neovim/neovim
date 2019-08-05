@@ -1130,7 +1130,7 @@ int do_search(
         && !cmd_silent && msg_silent == 0) {
       char_u      *trunc;
       char_u      off_buf[40];
-      int         off_len = 0;
+      size_t      off_len = 0;
 
       // Compute msg_row early.
       msg_start();
@@ -1170,10 +1170,10 @@ int do_search(
           len = 0;  // adjusted below
         } else if (msg_scrolled != 0) {
           // Use all the columns.
-          len = (int)(Rows - msg_row) * Columns - 1;
+          len = (Rows - msg_row) * Columns - 1;
         } else {
           // Use up to 'showcmd' column.
-          len = (int)(Rows - msg_row - 1) * Columns + sc_col - 1;
+          len = (Rows - msg_row - 1) * Columns + sc_col - 1;
         }
         if (len < STRLEN(p) + off_len + SEARCH_STAT_BUF_LEN + 3) {
           len = STRLEN(p) + off_len + SEARCH_STAT_BUF_LEN + 3;
@@ -1183,7 +1183,7 @@ int do_search(
         len = STRLEN(p) + off_len + 3;
       }
 
-      msgbuf = xmalloc((int)len);
+      msgbuf = xmalloc(len);
       {
         memset(msgbuf, ' ', len);
         msgbuf[0] = dirc;
