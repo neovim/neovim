@@ -3272,7 +3272,7 @@ return {
     command='&:',
     enum='CMD_andcolon',
     flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
+    addr_type=ADDR_OTHER,
     func='ex_async_handler',
   },
 }

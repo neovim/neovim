@@ -7712,7 +7712,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   bool free_callee = false;
-  bool isscript = eval_fname_script((char *)callee);
+  bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     if (ctx_dict_add_userfunc(&context, (char **)&callee)) {
       free_callee = true;
@@ -7813,7 +7813,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  bool isscript = eval_fname_script((char *)callee);
+  bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     if (!ctx_dict_add_userfunc(&context, (char **)&callee)) {
       EMSG(_("Failed to prepare function for async call"));
