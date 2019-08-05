@@ -276,11 +276,13 @@ end
 local function _async_vimgrep(qf, append, args)
   -- setlist(results, app)
   -- Adds "results" to qf/loc list (append if "app" is true).
-  local setlist = (function(setlist_cmd)
+  local setlist = (function(setlist_cmd, select_idx)
     return function(results, app)
-      vim.api.nvim_call_function(setlist_cmd, { results, app and 'a' or ' ' })
+      vim.api.nvim_call_function(
+          setlist_cmd,
+          {select(select_idx, 0, results, app and 'a' or ' ')})
     end
-  end)(qf and 'setqflist' or 'setloclist')
+  end)(qf and 'setqflist' or 'setloclist', qf and 2 or 1)
 
   -- Parse arguments
   -- &:vimgrep /{pattern}/[g][j] {file} ...
