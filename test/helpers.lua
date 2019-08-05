@@ -674,11 +674,13 @@ function module.write_file(name, text, no_dedent, append)
   file:close()
 end
 
-function module.isCI()
-  local is_travis = nil ~= os.getenv('TRAVIS')
-  local is_appveyor = nil ~= os.getenv('APPVEYOR')
-  local is_quickbuild = nil ~= lfs.attributes('/usr/home/quickbuild')
-  return is_travis or is_appveyor or is_quickbuild
+function module.isCI(name)
+  local any = (name == nil)
+  assert(any or name == 'appveyor' or name == 'quickbuild' or name == 'travis')
+  local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
+  local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
+  local qb = ((any or name == 'quickbuild') and nil ~= lfs.attributes('/usr/home/quickbuild'))
+  return tr or av or qb
 end
 
 -- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
