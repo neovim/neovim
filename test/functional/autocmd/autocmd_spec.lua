@@ -260,4 +260,26 @@ describe('autocmd', function()
     eq({false, 'Vim(call):E5555: API call: Invalid window id'},
        meth_pcall(command, "call nvim_set_current_win(g:winid)"))
   end)
+
+  it(':doautocmd does not warn "No matching autocommands" #10689', function()
+    local screen = Screen.new(32, 3)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+    })
+
+    feed(':doautocmd User Foo<cr>')
+    screen:expect{grid=[[
+      ^                                |
+      {1:~                               }|
+      :doautocmd User Foo             |
+    ]]}
+    feed(':autocmd! SessionLoadPost<cr>')
+    feed(':doautocmd SessionLoadPost<cr>')
+    screen:expect{grid=[[
+      ^                                |
+      {1:~                               }|
+      :doautocmd SessionLoadPost      |
+    ]]}
+  end)
 end)

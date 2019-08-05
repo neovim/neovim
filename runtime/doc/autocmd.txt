@@ -1087,14 +1087,12 @@ TextChangedP			After a change was made to the text in the
 				popup menu is visible.  Otherwise the same as
 				TextChanged.
 							*User*
-User				Never executed automatically.  To be used for
-				autocommands that are only executed with
-				":doautocmd".
-				Note that when `:doautocmd User MyEvent` is
-				used while there are no matching autocommands,
-				you will get an error.  If you don't want
-				that, define a dummy autocommand yourself.
-							*UserGettingBored*
+User				Not executed automatically.  Use |:doautocmd|
+				to trigger this, typically for "custom events"
+				in a plugin.  Example: >
+				    :autocmd User MyPlugin echom 'got MyPlugin event'
+				    :doautocmd User MyPlugin
+<							*UserGettingBored*
 UserGettingBored		When the user presses the same key 42 times.
 				Just kidding! :-)
 							*VimEnter*
@@ -1389,18 +1387,17 @@ option will not cause any commands to be executed.
 			When the [group] argument is not given, Vim executes
 			the autocommands for all groups.  When the [group]
 			argument is included, Vim executes only the matching
-			autocommands for that group.  Note: if you use an
-			undefined group name, Vim gives you an error message.
+			autocommands for that group.  Undefined group is an
+			error.
 							*<nomodeline>*
 			After applying the autocommands the modelines are
 			processed, so that their settings overrule the
-			settings from autocommands, like what happens when
-			editing a file. This is skipped when the <nomodeline>
-			argument is present. You probably want to use
-			<nomodeline> for events that are not used when loading
-			a buffer, such as |User|.
-			Processing modelines is also skipped when no
-			matching autocommands were executed.
+			settings from autocommands when editing a file. This
+			is skipped if <nomodeline> is specified. You probably
+			want to use <nomodeline> for events not used when
+			loading a buffer, such as |User|.
+			Modelines are also skipped when no matching
+			autocommands were executed.
 
 						*:doautoa* *:doautoall*
 :doautoa[ll] [<nomodeline>] [group] {event} [fname]

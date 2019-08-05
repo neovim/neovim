@@ -310,6 +310,9 @@ other arguments if used).
 
 |input()| and |inputdialog()| support user-defined cmdline highlighting.
 
+Commands:
+  |:doautocmd| does not warn about "No matching autocommands".
+
 Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
   groups
