@@ -190,9 +190,9 @@ local function _grep(pattern, path, global)
       silent vimgrep /${pattern}/j${g} ${path}
     catch /E480:/
     endtry
-  ]]):gsub('${pattern}', pattern)
-     :gsub('${g}', g)
-     :gsub('${path}', path)
+  ]]):gsub('${pattern}', pattern, 1)
+     :gsub('${g}', g, 1)
+     :gsub('${path}', path, 1)
   vim.api.nvim_command(vimgrep_cmd)
   return vim.api.nvim_eval(
       [[map(getqflist(), 'extend(v:val, {"fname": bufname(v:val.bufnr)})')]])
@@ -274,36 +274,42 @@ end
 --           window location list
 -- @param append append results to existing (quickfix/location) list
 local function _async_vimgrep(qf, append, args)
-  local setlist = qf and function(results, app)
-    vim.api.nvim_call_function('setqflist',
-                               { results, app and 'a' or ' ' })
-  end or function (results, app)
-    vim.api.nvim_call_function('setloclist',
-                               { 0, results, app and 'a' or ' ' })
-  end
+  -- setlist(results, app)
+  -- Adds "results" to qf/loc list (append if "app" is true).
+  local setlist = (function(setlist_cmd)
+    return function(results, app)
+      vim.api.nvim_call_function(setlist_cmd, { results, app and 'a' or ' ' })
+    end
+  end)(qf and 'setqflist' or 'setloclist')
 
   -- Parse arguments
-  local pattern, global, path = args:match('^/(.*)/([jg]*)%s+(.+)$')
+  -- &:vimgrep /{pattern}/[g][j] {file} ...
+  local pattern, global, path = args:match('^/(.*)/([jg]*)%s+(.+)%s*$')
   if path == nil or pattern == nil then
     if vim.api.nvim_call_function('match', { args, [[^\i]] }) ~= -1 then
-      pattern, path = args:match('^([^%s]+)%s+(.+)$')
+      -- &:vimgrep {pattern} {file} ...
+      pattern, path = args:match('^([^%s]+)%s+(.+)%s*$')
     end
   elseif pattern == '' then
     pattern = vim.api.nvim_eval('@/')  -- Last used pattern
   end
+
   if path == nil or pattern == nil then
     error('Path missing or invalid pattern')
   end
+
   global = global and global:find('g') and true or false
+
   local paths = vim.api.nvim_call_function('substitute', {
     path,
-    [[\(\%(`[^`]*`\|\\.\|[^[:space:] ]\)\+\)\s*]],
+    [=[\(\%(`[^`]*`\|\\.\|[^[:space:]]\)\+\)]=],
     [[\=glob(submatch(1))."\n"]],
     'g'
   })
   paths = vim.api.nvim_call_function('trim', { paths })
   paths = vim.api.nvim_call_function('split', { paths, '\n' })
 
+  -- Prepare call_parallel argument lists
   for i, v in ipairs(paths) do
     paths[i] = { pattern, v, global }
   end
@@ -353,15 +359,30 @@ local _async_handlers_tbl = {
   end,
 }
 
+-- Default command async handler.
+local function _async_handler_default(cmd)
+  cmd = '"'..cmd:gsub("'", "''"):gsub('\\', '\\\\'):gsub('"', '\\"')..'"'
+  local handler_cmd = ([=[
+    call call_async(
+      'eval',
+      ['[nvim_command_output(cmd), nvim_get_context([v:null])]'],
+      { 'context': nvim_get_context([v:null]),
+        'done': { rv -> nvim_command('echo rv[0]') +
+                        nvim_load_context(rv[1]) } })
+  ]=]):gsub('\n', ''):gsub('cmd', cmd, 1)
+  vim.api.nvim_command(handler_cmd)
+end
+
 -- Invokes the async handler of "cmd".
 -- Used by ex_async_handler().
 local function _async_handler(cmd)
   local handler, args = cmd:match('^([^%s]+)%s*(.*)$')
   local handler_fn = _async_handlers_tbl[handler]
   if handler_fn == nil then
-    error('Command has no async handler: '..handler)
+    _async_handler_default(cmd)
+  else
+    handler_fn(args)
   end
-  handler_fn(args)
 end
 
 local module = {

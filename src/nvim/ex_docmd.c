@@ -10137,10 +10137,16 @@ static void ex_terminal(exarg_T *eap)
 /// ":&:{cmd}" command
 ///
 /// Invokes the async handler of "{cmd}" (i.e.: a function that invokes
-/// "{cmd}" in a number of separate processes and handles the results
+/// "{cmd}" in separate process(es) and handles the results
 /// in a pre-defined way specific to each command.)
 ///
-/// If "{cmd}" does not have an async handler, it causes an error.
+/// If "{cmd}" does not have an async handler, a default handler that does
+/// the following is invoked:
+///
+///   1. Asynchronously run the command in a separate process with a
+///      snapshot of the current context (via nvim_get_context([v:null])).
+///   2. Re-emit command output in the parent (i.e.: calling) process.
+///   3. Load the (possibly modified) context returned by the child.
 static void ex_async_handler(exarg_T *eap)
 {
   Array args = ARRAY_DICT_INIT;
