@@ -1,19 +1,17 @@
 local helpers = require('test.functional.helpers')(after_each)
-local plugin_helpers = require('test.functional.plugin.helpers')
 local Screen = require('test.functional.ui.screen')
 
+local clear = helpers.clear
 local command = helpers.command
 local meths = helpers.meths
 local feed = helpers.feed
 local eq = helpers.eq
 
-local reset = plugin_helpers.reset
-
 describe('matchparen', function()
   local screen
 
   before_each(function()
-    reset()
+    clear{args={'-u', 'NORC'}}
     screen = Screen.new(20,5)
     screen:attach()
     screen:set_default_attr_ids( {
