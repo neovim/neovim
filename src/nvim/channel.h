@@ -64,11 +64,12 @@ typedef struct {
   Callback callback;
 
   // parallel call
-  int count;           // number of workers
-  list_T *work_queue;  // argument lists to consume
-  int next;            // position of next list to consume from "work_queue"
-  Array results;       // accumulated results
-  char_u *callee;      // called function
+  Callback item_callback;    ///< per-item callback
+  int count;                 ///< number of workers
+  list_T *work_queue;        ///< argument lists to consume
+  int next;                  ///< next list to consume from "work_queue"
+  Array results;             ///< accumulated results
+  char_u *callee;            ///< called function
 } AsyncCall;
 
 struct Channel {
@@ -152,7 +153,7 @@ static inline Stream *channel_outstream(Channel *chan)
   abort();
 }
 
-static inline Channel *acquire_asynccall_channel(void)
+static inline Channel *asynccall_channel_acquire(void)
 {
   Channel *channel = NULL;
   Error err = ERROR_INIT;
@@ -166,12 +167,29 @@ static inline Channel *acquire_asynccall_channel(void)
   return channel;
 }
 
-static inline void release_asynccall_channel(Channel *channel)
+static inline void asynccall_channel_release(Channel *channel)
 {
   process_stop((Process *)&channel->stream.proc);
 }
 
-static inline void put_result(uint64_t job, Object result, Error *err)
+bool callback_call(Callback *const, const int,
+                   typval_T *const, typval_T *const);
+
+static inline void asynccall_callback_call(
+    Callback *cb, Object *result, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+  typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
+  if (object_to_vim(*result, &argv[0], err)) {
+    typval_T rettv = TV_INITIAL_VALUE;
+    callback_call(cb, 1, argv, &rettv);
+    tv_clear(&rettv);
+    tv_clear(&argv[0]);
+  }
+}
+
+static inline void asynccall_put_result(
+    uint64_t job, Object result, Error *err)
 {
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ((long)job));
@@ -180,7 +198,8 @@ static inline void put_result(uint64_t job, Object result, Error *err)
   xfree(args.items);
 }
 
-static inline void append_result(uint64_t job, Object result, Error *err)
+static inline void asynccall_append_result(
+    uint64_t job, Object result, Error *err)
 {
   Array args = ARRAY_DICT_INIT;
   ADD(args, INTEGER_OBJ((long)job));

@@ -108,22 +108,43 @@ describe('multiproc', function()
   end)
 
   describe('call_parallel', function()
-    it('works', function()
+    before_each(function()
       source([[
       function! Callback(return_value) abort
         call rpcnotify(g:channel, 'done', sort(a:return_value, 'n'))
       endfunction
+      ]])
+    end)
+
+    it('works', function()
+      source([[
       let jobs = call_parallel('eval',
                              \ [ ['2*1'], ['2*2'], ['2*3'], ['2*4'],
                              \   ['2*5'], ['2*6'], ['2*7'], ['2*8'] ],
                              \ {'done': 'Callback', 'count': 4})
       ]])
-      local wait_result = tbl_flatten(eval([[map(call_wait(jobs), 'v:val.value')]]))
+      local wait_result = tbl_flatten(
+          eval([[map(call_wait(jobs), 'v:val.value')]]))
       table.sort(wait_result)
       local expected = {2, 4, 6, 8, 10, 12, 14, 16}
       eq({3, 4, 5, 6}, eval('jobs'))
       eq({'notification', 'done', {expected}}, next_msg())
       eq(expected, wait_result)
+    end)
+
+    it('invokes "done" and "itemdone" callbacks', function()
+      source([[
+      function! ItemCallback(return_value) abort
+        call add(g:my_results, a:return_value)
+      endfunction
+      ]])
+      nvim('set_var', 'my_results', {})
+      call('call_parallel', 'eval', {{'3*1'}, {'3*2'}, {'3*3'}},
+           { count = 2,
+             done = 'Callback',
+             itemdone = 'ItemCallback' })
+      eq({'notification', 'done', {{3, 6, 9}}}, next_msg())
+      eq({3, 6, 9}, eval('sort(g:my_results, "n")'))
     end)
 
     it('reports errors from children', function()
@@ -136,12 +157,14 @@ describe('multiproc', function()
     end)
 
     it('errors out on invalid opt values', function()
+      feed_command([=[call call_parallel('foo', [[], []], {'itemdone':{}})]=])
+      feed('<CR>')
+      eq('E475: Invalid value for argument opts: '..
+         "value of 'itemdone' should be a function", eval('v:errmsg'))
       feed_command([=[call call_parallel('foo', [[], []], {'done':{}})]=])
       feed('<CR>')
-      eq('E921: Invalid callback argument\n'..
-         'E475: Invalid value for argument opts: '..
-         "value of 'done' should be a function",
-         nvim('command_output', 'messages'))
+      eq('E475: Invalid value for argument opts: '..
+         "value of 'done' should be a function", eval('v:errmsg'))
       expect_err('E475: Invalid value for argument opts: '..
                  "value of 'context' should be a dictionary",
                  call, 'call_parallel', 'nvim__id', {'Neovim'}, {context = 1})
