@@ -8,9 +8,6 @@ $compileOption = $Matches.option
 $bits = $Matches.bits
 $cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
 $buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
-$depsCmakeVars = @{
-  CMAKE_BUILD_TYPE = $cmakeBuildType;
-}
 $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
@@ -99,7 +96,7 @@ function convertToCmakeArgs($vars) {
 }
 
 cd $env:DEPS_BUILD_DIR
-cmake -G $cmakeGenerator $(convertToCmakeArgs($depsCmakeVars)) "$buildDir/third-party/" ; exitIfFailed
+cmake -G $cmakeGenerator "$buildDir/third-party/" ; exitIfFailed
 cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 cd $buildDir
 
