@@ -109,9 +109,11 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
 ///        a `nvim_buf_changedtick_event`. Not used for lua callbacks.
 /// @param  opts  Optional parameters.
-///               `on_lines`: lua callback received on change.
+///               `on_lines`:       lua callback received on change.
 ///               `on_changedtick`: lua callback received on changedtick
 ///                                 increment without text change.
+///               `utf_sizes`:      include UTF-32 and UTF-16 size of
+///                                 the replaced region.
 ///               See |api-buffer-updates-lua| for more information
 /// @param[out] err Error details, if any
 /// @return False when updates couldn't be enabled because the buffer isn't
@@ -156,6 +158,12 @@ Boolean nvim_buf_attach(uint64_t channel_id,
       }
       cb.on_detach = v->data.luaref;
       v->data.integer = LUA_NOREF;
+    } else if (is_lua && strequal("utf_sizes", k.data)) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
+        goto error;
+      }
+      cb.utf_sizes = v->data.boolean;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       goto error;
@@ -1174,6 +1182,30 @@ Integer nvim_buf_set_virtual_text(Buffer buffer,
 free_exit:
   kv_destroy(virt_text);
   return 0;
+}
+
+Dictionary nvim__buf_stats(Buffer buffer, Error *err)
+{
+  Dictionary rv = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return rv;
+  }
+
+  // Number of times the cached line was flushed.
+  // This should generally not increase while editing the same
+  // line in the same mode.
+  PUT(rv, "flush_count", INTEGER_OBJ(buf->flush_count));
+  // lnum of current line
+  PUT(rv, "current_lnum", INTEGER_OBJ(buf->b_ml.ml_line_lnum));
+  // whether the line has unflushed changes.
+  PUT(rv, "line_dirty", BOOLEAN_OBJ(buf->b_ml.ml_flags & ML_LINE_DIRTY));
+  // NB: this should be zero at any time API functions are called,
+  // this exists to debug issues
+  PUT(rv, "dirty_bytes", INTEGER_OBJ((Integer)buf->deleted_bytes));
+
+  return rv;
 }
 
 // Check if deleting lines made the cursor position invalid.

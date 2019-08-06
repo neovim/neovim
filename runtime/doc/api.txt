@@ -200,17 +200,26 @@ User reloads the buffer with ":edit", emits: >
   nvim_buf_detach_event[{buf}]
 
                                                         *api-buffer-updates-lua*
-In-process lua plugins can also recieve buffer updates, in the form of lua
+In-process lua plugins can also receive buffer updates, in the form of lua
 callbacks. These callbacks are called frequently in various contexts, buffer
 contents or window layout should not be changed inside these |textlock|.
 |vim.schedule| can be used to defer these operations to the main loop, where
 they are allowed.
 
 |nvim_buf_attach| will take keyword args for the callbacks. "on_lines" will
-receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline}, {new_lastline}).
-Unlike remote channels the text contents are not passed. The new text can be
-accessed inside the callback as
-`vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)`
+receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline},
+{new_lastline}, {old_byte_size}[, {old_utf32_size}, {old_utf16_size}]).
+Unlike remote channel events the text contents are not passed. The new text can
+be accessed inside the callback as
+
+    `vim.api.nvim_buf_get_lines(buf, firstline, new_lastline, true)`
+
+{old_byte_size} is the total size of the replaced region {firstline} to
+{lastline} in bytes, including the final newline after {lastline}. if
+`utf_sizes` is set to true in |nvim_buf_attach()| keyword args, then the
+UTF-32 and UTF-16 sizes of the deleted region is also passed as additional
+arguments {old_utf32_size} and {old_utf16_size}.
+
 "on_changedtick" is invoked when |b:changedtick| was incremented but no text
 was changed. The parameters recieved are ("changedtick", {buf}, {changedtick}).
 
