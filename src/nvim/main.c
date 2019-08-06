@@ -664,9 +664,6 @@ void getout(int exitval)
     ui_call_set_title(cstr_as_string((char *)p_titleold));
   }
 
-#if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
-  iconv_end();
-#endif
   cs_end();
   if (garbage_collect_at_exit) {
     garbage_collect(false);

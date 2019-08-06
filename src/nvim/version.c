@@ -52,12 +52,8 @@ static char *features[] = {
 "-acl",
 #endif
 
-#if (defined(HAVE_ICONV_H) && defined(USE_ICONV)) || defined(DYNAMIC_ICONV)
-# ifdef DYNAMIC_ICONV
-"+iconv/dyn",
-# else
+#if defined(HAVE_ICONV)
 "+iconv",
-# endif
 #else
 "-iconv",
 #endif

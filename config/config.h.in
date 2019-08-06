@@ -22,7 +22,6 @@
 #cmakedefine HAVE_GETPWNAM
 #cmakedefine HAVE_GETPWUID
 #cmakedefine HAVE_ICONV
-#cmakedefine HAVE_ICONV_H
 #cmakedefine HAVE_LANGINFO_H
 #cmakedefine HAVE_LOCALE_H
 #cmakedefine HAVE_NL_LANGINFO_CODESET

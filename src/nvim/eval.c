@@ -11259,7 +11259,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "fork",
 #endif
     "gettext",
-#if defined(HAVE_ICONV_H) && defined(USE_ICONV)
+#if defined(HAVE_ICONV)
     "iconv",
 #endif
     "insert_expand",
@@ -11372,10 +11372,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       n = stdout_isatty;
     } else if (STRICMP(name, "multi_byte_encoding") == 0) {
       n = has_mbyte != 0;
-#if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
-    } else if (STRICMP(name, "iconv") == 0) {
-      n = iconv_enabled(false);
-#endif
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
 #ifdef UNIX
