@@ -994,7 +994,7 @@ describe("TUI as a client", function()
 
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1018,7 +1018,7 @@ describe("TUI as a client", function()
 
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1038,7 +1038,7 @@ describe("TUI as a client", function()
   it("throws error when no server exists", function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1065,7 +1065,7 @@ describe("TUI as a client", function()
 
     set_session(client_super, true)
     screen_client = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--servername", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
   
     -- assert that client has connected to server
     screen_client.timeout = 1000

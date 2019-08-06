@@ -8,7 +8,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/bufhl_defs.h"
 #include "nvim/highlight_defs.h"
-#include "nvim/redraw.h"
+#include "nvim/ui_client.h"
 
 #if defined(__NetBSD__)
 # undef uint64_t

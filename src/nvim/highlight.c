@@ -636,23 +636,23 @@ HlAttrs dict2hlattrs(Dictionary dict, bool use_rgb)
     char *key = dict.items[i].key.data;
     Object val = dict.items[i].value;
 
-    if (!strcmp(key, "bold")) {
+    if (strequal(key, "bold")) {
       mask = mask | HL_BOLD;
-    } else if (!strcmp(key, "standout")) {
+    } else if (strequal(key, "standout")) {
       mask = mask | HL_STANDOUT;
-    } else if (!strcmp(key, "underline")) {
+    } else if (strequal(key, "underline")) {
       mask = mask | HL_UNDERLINE;
-    } else if (!strcmp(key, "undercurl")) {
+    } else if (strequal(key, "undercurl")) {
       mask = mask | HL_UNDERCURL;
-    } else if (!strcmp(key, "italic")) {
+    } else if (strequal(key, "italic")) {
       mask = mask | HL_ITALIC;
-    } else if (!strcmp(key, "reverse")) {
+    } else if (strequal(key, "reverse")) {
       mask = mask | HL_INVERSE;
-    } else if (!strcmp(key, "special")) {
+    } else if (strequal(key, "special")) {
       special = (int32_t)val.data.integer;
-    } else if (!strcmp(key, "foreground")) {
+    } else if (strequal(key, "foreground")) {
       foreground = (int32_t)val.data.integer;
-    } else if (!strcmp(key, "background")) {
+    } else if (strequal(key, "background")) {
       background = (int32_t)val.data.integer;
     }
   }

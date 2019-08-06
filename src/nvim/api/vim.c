@@ -16,6 +16,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/window.h"
+#include "nvim/api/ui.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
@@ -2356,33 +2357,35 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   return ret;
 }
 
+/// Invokes the nvim server to read from stdin when it is not a tty
+///
+/// It enables functionalities like:
+/// - echo "1f u c4n r34d th1s u r34lly n33d t0 g37 r357"| nvim -
+/// - cat path/to/a/file | nvim -
+/// It has to be called before |nvim_ui_attach()| is called in order
+/// to ensure proper functioning.
+///
+/// @param channel_id: The channel id of the GUI-client
+/// @param filedesc: The file descriptor of the GUI-client process' stdin
+/// @param[out] err Error details, if any
+/// @return Boolean : true if filedesc was not a tty
+///                   false otherwise 
 Boolean nvim_read_stdin(uint64_t channel_id, Integer filedesc, Error *err)
 FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
+  if (remote_ui_get(channel_id)) {
+    // If nvim_ui_attach is already called then abort
+    api_set_error(err, kErrorTypeValidation,
+                  "nvim_ui_attach has already been called");
+    return false;
+  }
   stdin_isatty = os_isatty((int)filedesc);
+  if (stdin_isatty) {
+    // If the passed filedesc is a tty
+    api_set_error(err, kErrorTypeValidation,
+                  "The passed file descriptor was a tty");
+    return false;
+  }
   stdin_filedesc = (int)filedesc;
   return true;
 }
-
-// // Read text from stdin.
-// static int read_stdin(void)
-// {
-//   // When getting the ATTENTION prompt here, use a dialog.
-//   swap_exists_action = SEA_DIALOG;
-//   no_wait_return = true;
-//   int save_msg_didany = msg_didany;
-//   set_buflisted(true);
-//   int rv = open_buffer(true, NULL, 0);  // create memfile and read file
-//   if (BUFEMPTY() && curbuf->b_next != NULL) {
-//     // stdin was empty, go to buffer 2 (e.g. "echo file1 | xargs nvim"). #8561
-//     do_cmdline_cmd("silent! bnext");
-//     // Delete the empty stdin buffer.
-//     do_cmdline_cmd("bwipeout 1");
-//   }
-//   no_wait_return = false;
-//   msg_didany = save_msg_didany;
-//   TIME_MSG("reading stdin");
-
-//   return rv;
-//   // check_swap_exists_action();
-// }

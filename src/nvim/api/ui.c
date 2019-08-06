@@ -19,7 +19,7 @@
 #include "nvim/highlight.h"
 #include "nvim/screen.h"
 #include "nvim/window.h"
-#include "nvim/redraw.h"
+#include "nvim/ui_client.h"
 #include "nvim/option.h"
 #include "nvim/aucmd.h"
 
@@ -184,32 +184,7 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   api_free_dictionary(opts);
 }
 
-void nvim_set_terminfo(uint64_t channel_id, Dictionary options, Error *error)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
-{
-  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
-    api_set_error(error, kErrorTypeException,
-                  "UI not attached to channel: %" PRId64, channel_id);
-    return;
-  }
-
-  for (size_t i = 0; i < options.size; i++) {
-    if (!strcmp(options.items[i].key.data, "termname")) {
-      set_tty_option("term", xstrdup(options.items[i].value.data.string.data));
-    } else if (!strcmp(options.items[i].key.data, "t_Co")) {
-      t_colors = (int)options.items[i].value.data.integer;
-    } else if (!strcmp(options.items[i].key.data, "bg")
-              && !option_was_set("bg")
-              && !strequal((char *)p_bg, options.items[i].value.data.string.data)) {
-      set_option_value("bg",
-                      0L,
-                      options.items[i].value.data.string.data,
-                      0);
-      reset_option_was_set("bg");
-    }
-  }
-}
-
+/// Tells the nvim server if focus was gained by the GUI or not
 void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
@@ -273,6 +248,39 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
 
+  if (strequal(name.data, "term_name")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_name must be a String");
+      return;
+    }
+    set_tty_option("term", xstrdup(value.data.string.data));
+    return;
+  }
+  if (strequal(name.data, "term_colors")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_colors must be a Integer");
+      return;
+    }
+    t_colors = (int)value.data.integer;
+    return;
+  }
+  if (strequal(name.data, "term_background")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_background must be a String");
+      return;
+    }
+    if (option_was_set("bg")
+        || strequal((char *)p_bg, value.data.string.data)) {
+      api_set_error(error, kErrorTypeValidation, "background is already set");
+      return;
+    }
+    set_option_value("bg",
+                    0L,
+                    value.data.string.data,
+                    0);
+    reset_option_was_set("bg");
+    return;
+  }
   ui_set_option(ui, false, name, value, error);
 }
 
@@ -742,6 +750,17 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
 }
 
+/// Handler for "redraw" events sent by the NVIM server
+///
+/// This function will be called by handle_request (in msgpack_rpc/channle.c)
+/// The individual ui_events sent by the server are individually handled
+/// by their respective handlers defined in ui_events_redraw.generated.h
+///
+/// @note The "flush" event is called only once and only after handling all
+///       the other events
+/// @param channel_id: The id of the rpc channel
+/// @param uidata: The dense array containing the ui_events sent by the server
+/// @param[out] err Error details, if any
 void redraw(uint64_t channel_id, Array uidata, Error *error)
 FUNC_API_FAST
 {
@@ -768,4 +787,11 @@ FUNC_API_FAST
     api_free_array(call);
     xfree(method_name);
   }
+}
+
+void *remote_ui_get(uint64_t channel_id)
+FUNC_API_NOEXPORT
+{
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  return (void *)ui;
 }

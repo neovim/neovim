@@ -149,7 +149,8 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
   if (is_remote_client) {
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
-    rc_id = servername == NULL ? 0 : channel_connect(true,
+    bool is_tcp = strrchr(servername, ':') ? true : false;
+    rc_id = servername == NULL ? 0 : channel_connect(is_tcp,
                       servername, true, on_data, 50, &error);   // connected to channel
   } else {
     char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
@@ -181,7 +182,7 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
   }
   
   Array args = ARRAY_DICT_INIT;
-  UI *ui = get_ui_by_index(1);
+  UI *ui = ui_get_by_index(1);
   int width = ui->width;
   int height = ui->height;
   Dictionary opts = ARRAY_DICT_INIT;
@@ -199,11 +200,14 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
 
   // Setting terminfo
   args = (Array)ARRAY_DICT_INIT;
-  opts = (Dictionary)ARRAY_DICT_INIT;
-  PUT(opts, "termname", STRING_OBJ(cstr_as_string(termname_local)));
-  PUT(opts, "t_Co", INTEGER_OBJ(t_colors));
-  ADD(args, DICTIONARY_OBJ(opts));
-  rpc_send_event(rc_id, "nvim_set_terminfo", args);
+  ADD(args, STRING_OBJ(cstr_to_string("term_name")));
+  ADD(args, STRING_OBJ(cstr_as_string(termname_local)));
+  rpc_send_event(rc_id, "nvim_ui_set_option", args);
+
+  args = (Array)ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_to_string("term_colors")));
+  ADD(args, INTEGER_OBJ(t_colors));
+  rpc_send_event(rc_id, "nvim_ui_set_option", args);
   
   connected_channel_id = rc_id;
   return rc_id;
@@ -448,19 +452,18 @@ static void tui_stop(UI *ui)
 }
 
 /// Returns true if UI `ui` is stopped.
-bool tui_is_stopped(UI *ui)
+static bool tui_is_stopped(UI *ui)
 {
   TUIData *data = ui->data;
   return data->stopped;
 }
 
-// Main loop for TUI
-void tui_main(UI *ui)
+// Main function for TUI
+static void tui_main(UI *ui)
 {
   TUIData *data = xcalloc(1, sizeof(TUIData));
   ui->data = data;
   data->stopped = false;
-  // TODO(hlp98): Should be removed
   data->loop = &main_loop;
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
@@ -479,14 +482,10 @@ void tui_main(UI *ui)
   tui_terminal_start(ui);
   loop_schedule(&main_loop, event_create(show_termcap_event, 1, data->ut));
 
-  // // "Active" loop: first ~100 ms of startup.
-  // for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
-  //   ms += (loop_poll_events(&main_loop, 20) ? 20 : 1);
-  // }
 }
 
 void tui_execute(void) {
-  UI *ui = get_ui_by_index(1);
+  UI *ui = ui_get_by_index(1);
   LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   tui_io_driven_loop(ui);
   tui_exit_safe(ui);
@@ -495,20 +494,14 @@ void tui_execute(void) {
 }
 
 // Doesn't return until the TUI is closed (by call of tui_stop())
-void tui_io_driven_loop(UI *ui){
-  if (!tui_is_stopped(ui)) {
-    tui_terminal_after_startup(ui);
-    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
-    // terminal response may not get processed until user hits a key.
-    loop_schedule(&main_loop, event_create(tui_dummy_event, 0));
-  }
+static void tui_io_driven_loop(UI *ui){
   // "Passive" (I/O-driven) loop: TUI process's "main loop".
   while (!tui_is_stopped(ui)) {
     loop_poll_events(&main_loop, -1);
   }
 }
 
-void tui_data_destroy(void **argv) {
+static void tui_data_destroy(void **argv) {
   UI *ui = argv[0];
   TUIData *data = ui->data;
   kv_destroy(data->invalid_regions);
@@ -530,10 +523,6 @@ void tui_exit_safe(UI *ui) {
   // tui_data_destroy() needs to be scheduled to ensure proper order of calls
   loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
   ui_detach_impl(ui);
-}
-
-static void tui_dummy_event(void **argv)
-{
 }
 
 #ifdef UNIX

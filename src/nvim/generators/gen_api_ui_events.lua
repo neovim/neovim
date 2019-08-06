@@ -4,12 +4,12 @@ local nvimdir = arg[1]
 package.path = nvimdir .. '/?.lua;' .. package.path
 
 assert(#arg == 7)
-input = io.open(arg[2], 'rb')
-proto_output = io.open(arg[3], 'wb')
-call_output = io.open(arg[4], 'wb')
-remote_output = io.open(arg[5], 'wb')
-metadata_output = io.open(arg[6], 'wb')
-redraw_output = io.open(arg[7], 'wb')
+local input = io.open(arg[2], 'rb')
+local proto_output = io.open(arg[3], 'wb')
+local call_output = io.open(arg[4], 'wb')
+local remote_output = io.open(arg[5], 'wb')
+local metadata_output = io.open(arg[6], 'wb')
+local redraw_output = io.open(arg[7], 'wb')
 
 c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))

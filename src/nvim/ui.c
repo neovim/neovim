@@ -136,7 +136,7 @@ uint64_t ui_client_start(char *server_name, int argc, char **argv, bool pass_std
   return rv;
 }
 
-UI* get_ui_by_index(int idx)
+UI* ui_get_by_index(int idx)
 {
   assert(idx < 16);
   return uis[idx];

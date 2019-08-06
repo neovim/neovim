@@ -373,12 +373,10 @@ static bool handle_forced_escape(TermInput *input)
 static void set_bg(char *bgvalue)
 {
   Array args = ARRAY_DICT_INIT;
-  Dictionary opts = ARRAY_DICT_INIT;
-  PUT(opts, "bg", STRING_OBJ(cstr_as_string(xstrdup(bgvalue))));
+  ADD(args, STRING_OBJ(cstr_to_string("term_background")));
+  ADD(args, STRING_OBJ(cstr_as_string(xstrdup(bgvalue))));
   
-  ADD(args, DICTIONARY_OBJ(opts));
-  
-  rpc_send_event(connected_channel_id, "nvim_set_terminfo", args);
+  rpc_send_event(connected_channel_id, "nvim_ui_set_option", args);
 }
 
 // During startup, tui.c requests the background color (see `ext.get_bg`).
