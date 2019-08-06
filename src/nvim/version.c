@@ -2034,14 +2034,19 @@ static void version_msg(char *s)
   version_msg_wrap((char_u *)s, false);
 }
 
-/// List all features aligned in columns, dictionary style.
+/// List all features.
+/// This does not use list_in_columns (as in Vim), because there are only a
+/// few, and we do not start at a new line.
 static void list_features(void)
 {
-  list_in_columns((char_u **)features, -1, -1);
-  if (msg_col > 0) {
-    msg_putchar('\n');
+  version_msg(_("\n\nFeatures: "));
+  for (int i = 0; features[i] != NULL; i++) {
+    version_msg(features[i]);
+    if (features[i+1] != NULL) {
+      version_msg(" ");
+    }
   }
-  MSG_PUTS("See \":help feature-compile\"\n\n");
+  version_msg("\nSee \":help feature-compile\"\n\n");
 }
 
 /// List string items nicely aligned in columns.
@@ -2149,8 +2154,6 @@ void list_version(void)
     }
   }
 #endif  // ifdef HAVE_PATHDEF
-
-  version_msg(_("\n\nFeatures: "));
 
   list_features();
 
