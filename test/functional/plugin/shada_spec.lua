@@ -13,14 +13,8 @@ local shada_helpers = require('test.functional.shada.helpers')
 local get_shada_rw = shada_helpers.get_shada_rw
 
 local function reset(shada_file)
-  -- TODO(justinmk): why is this needed?
-  local rtp_value = ('\'%s/runtime\''):format(
-      paths.test_source_path:gsub('\'', '\'\''))
-  clear{args_rm={'-u', '-i'},
-        args={'-u', 'NORC',
+  clear{ args={'-u', 'NORC',
               '-i', shada_file or 'NONE',
-              '--cmd', 'set laststatus&',
-              '--cmd', 'let &runtimepath='..rtp_value,
         }}
 end
 
@@ -2554,6 +2548,8 @@ describe('syntax/shada.vim', function()
   it('works', function()
     nvim_command('syntax on')
     nvim_command('setlocal syntax=shada')
+    -- TODO(justinmk): why is this needed?
+    nvim_command('set laststatus&')
     curbuf('set_lines', 0, 1, true, {
       'Header with timestamp ' .. epoch .. ':',
       '  % Key  Value',
@@ -2890,4 +2886,3 @@ describe('syntax/shada.vim', function()
     eq(exp, act)
   end)
 end)
-
