@@ -456,8 +456,8 @@ else
         if bytes_written == -1 then
           local err = ffi.errno(0)
           if err ~= ffi.C.kPOSIXErrnoEINTR then
-            assert(false, ("write() error: %u: %s"):format(
-                err, ffi.string(ffi.C.strerror(err))))
+            assert(false, ("write() error: %u: %s ('%s')"):format(
+                err, ffi.string(ffi.C.strerror(err)), s))
           end
         elseif bytes_written == 0 then
           break
