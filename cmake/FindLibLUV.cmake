@@ -14,12 +14,6 @@ set(LIBLUV_DEFINITIONS ${PC_LIBLUV_CFLAGS_OTHER})
 find_path(LIBLUV_INCLUDE_DIR luv/luv.h
           PATHS ${PC_LIBLUV_INCLUDEDIR} ${PC_LIBLUV_INCLUDE_DIRS})
 
-# If we're asked to use static linkage, add libluv.a as a preferred library name.
-if(LIBLUV_USE_STATIC)
-  list(APPEND LIBLUV_NAMES
-    "${CMAKE_STATIC_LIBRARY_PREFIX}luv${CMAKE_STATIC_LIBRARY_SUFFIX}")
-endif()
-
 list(APPEND LIBLUV_NAMES luv)
 
 find_library(LIBLUV_LIBRARY NAMES ${LIBLUV_NAMES}

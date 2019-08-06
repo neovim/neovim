@@ -4,9 +4,6 @@
 #  LIBUV_FOUND - system has libuv
 #  LIBUV_INCLUDE_DIRS - the libuv include directories
 #  LIBUV_LIBRARIES - link these to use libuv
-#
-# Set the LIBUV_USE_STATIC variable to specify if static libraries should
-# be preferred to shared ones.
 
 find_package(PkgConfig)
 if (PKG_CONFIG_FOUND)
@@ -15,12 +12,6 @@ endif()
 
 find_path(LIBUV_INCLUDE_DIR uv.h
   HINTS ${PC_LIBUV_INCLUDEDIR} ${PC_LIBUV_INCLUDE_DIRS})
-
-# If we're asked to use static linkage, add libuv.a as a preferred library name.
-if(LIBUV_USE_STATIC)
-  list(APPEND LIBUV_NAMES
-    "${CMAKE_STATIC_LIBRARY_PREFIX}uv${CMAKE_STATIC_LIBRARY_SUFFIX}")
-endif(LIBUV_USE_STATIC)
 
 list(APPEND LIBUV_NAMES uv)
 
