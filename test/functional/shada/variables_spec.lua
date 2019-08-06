@@ -4,9 +4,7 @@ local meths, funcs, nvim_command, eq, exc_exec =
   helpers.meths, helpers.funcs, helpers.command, helpers.eq, helpers.exc_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear
+local reset, clear = shada_helpers.reset, shada_helpers.clear
 
 describe('ShaDa support code', function()
   before_each(reset)
@@ -25,8 +23,7 @@ describe('ShaDa support code', function()
   local autotest = function(tname, varname, varval, val_is_expr)
     it('is able to dump and read back ' .. tname .. ' variable automatically',
     function()
-      set_additional_cmd('set shada+=!')
-      reset()
+      reset('set shada+=!')
       if val_is_expr then
         nvim_command('let g:' .. varname .. ' = ' .. varval)
         varval = meths.get_var(varname)
@@ -36,7 +33,7 @@ describe('ShaDa support code', function()
       -- Exit during `reset` is not a regular exit: it does not write shada
       -- automatically
       nvim_command('qall')
-      reset()
+      reset('set shada+=!')
       eq(varval, meths.get_var(varname))
     end)
   end
@@ -55,8 +52,7 @@ describe('ShaDa support code', function()
     meths.set_var('STRVAR', 'foo')
     nvim_command('set shada+=!')
     nvim_command('wshada')
-    set_additional_cmd('set shada-=!')
-    reset()
+    reset('set shada-=!')
     nvim_command('rshada')
     eq(0, funcs.exists('g:STRVAR'))
   end)
@@ -98,7 +94,6 @@ describe('ShaDa support code', function()
     meths.set_var('LSTVAR', {'«'})
     meths.set_var('DCTVAR', {['«']='«'})
     meths.set_var('NESTEDVAR', {['«']={{'«'}, {['«']='«'}, {a='Test'}}})
-    set_additional_cmd('')
     nvim_command('qall')
     reset()
     eq('«', meths.get_var('STRVAR'))
@@ -131,11 +126,10 @@ describe('ShaDa support code', function()
     nvim_command('let F = function("tr")')
     meths.set_var('U', '10')
     nvim_command('set shada+=!')
-    set_additional_cmd('set shada+=!')
     eq('Vim(wshada):E5004: Error while dumping variable g:F, itself: attempt to dump function reference',
        exc_exec('wshada'))
     meths.set_option('shada', '')
-    reset()
+    reset('set shada+=!')
     eq('10', meths.get_var('U'))
   end)
 
@@ -148,8 +142,7 @@ describe('ShaDa support code', function()
     eq('Vim(wshada):E5005: Unable to dump variable g:L: container references itself in index 0',
        exc_exec('wshada'))
     meths.set_option('shada', '')
-    set_additional_cmd('set shada+=!')
-    reset()
+    reset('set shada+=!')
     eq('10', meths.get_var('U'))
   end)
 end)
