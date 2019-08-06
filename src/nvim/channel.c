@@ -13,6 +13,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/ascii.h"
+#include "nvim/api/vim.h"
 
 static bool did_stdio = false;
 PMap(uint64_t) *channels = NULL;
@@ -232,7 +233,59 @@ void callback_reader_start(CallbackReader *reader, const char *type)
   reader->type = type;
 }
 
-void free_asynccall(AsyncCall *asynccall)
+Channel *asynccall_channel_acquire(void)
+{
+  Channel *channel = NULL;
+  Error err = ERROR_INIT;
+  Integer jobid = EXEC_LUA_STATIC(
+      "return vim._create_nvim_job()",
+      (Array)ARRAY_DICT_INIT, &err).data.integer;
+  if (!ERROR_SET(&err)) {
+    channel = find_channel((uint64_t)jobid);
+  }
+  api_clear_error(&err);
+  return channel;
+}
+
+void asynccall_channel_release(Channel *channel)
+{
+  process_stop((Process *)&channel->stream.proc);
+}
+
+void asynccall_callback_call(
+    Callback *cb, Object *result, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+  typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
+  if (object_to_vim(*result, &argv[0], err)) {
+    typval_T rettv = TV_INITIAL_VALUE;
+    callback_call(cb, 1, argv, &rettv);
+    tv_clear(&rettv);
+    tv_clear(&argv[0]);
+  }
+}
+
+void asynccall_put_result(
+    uint64_t job, Object result, Error *err)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ((long)job));
+  ADD(args, result);
+  EXEC_LUA_STATIC("vim._put_result(...)", args, err);
+  xfree(args.items);
+}
+
+void asynccall_append_result(
+    uint64_t job, Object result, Error *err)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ((long)job));
+  ADD(args, result);
+  EXEC_LUA_STATIC("vim._append_result(...)", args, err);
+  xfree(args.items);
+}
+
+void asynccall_free(AsyncCall *asynccall)
   FUNC_ATTR_NONNULL_ALL
 {
   callback_free(&asynccall->callback);
@@ -253,7 +306,7 @@ static void free_channel_event(void **argv)
   }
 
   if (chan->async_call && chan->async_call->count == 0) {
-    free_asynccall(chan->async_call);
+    asynccall_free(chan->async_call);
   }
 
   callback_reader_free(&chan->on_data);

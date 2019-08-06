@@ -76,6 +76,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/globals.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
