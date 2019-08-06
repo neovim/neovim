@@ -242,7 +242,7 @@ def InputSave():
   vim.eval( 'inputsave()' )
   try:
     yield
-  except Exception:
+  finally:
     vim.eval( 'inputrestore()' )
 
 
@@ -262,7 +262,6 @@ def SelectFromList( prompt, options ):
 
 
 def AskForInput( prompt ):
-  # TODO: Handle the ctrl-c and such responses returning empty or something
   with InputSave():
     try:
       return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
