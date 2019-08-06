@@ -463,9 +463,6 @@ endif()
 if(ENABLE_LIBICONV)
   find_package(Iconv REQUIRED)
   include_directories(SYSTEM ${Iconv_INCLUDE_DIRS})
-  if(MSVC)
-    set(CMAKE_REQUIRED_INCLUDES ${ICONV_INCLUDE_DIR})
-  endif()
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
