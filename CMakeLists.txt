@@ -668,15 +668,6 @@ else()
     COMMENT "lualint: LUACHECK_PRG not defined")
 endif()
 
-if(FLAKE8_PRG)
-  add_custom_target(pylint
-    COMMAND ${FLAKE8_PRG} contrib/ scripts/ src/ test/
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-else()
-  add_custom_target(pylint false
-    COMMENT "flake8: FLAKE8_PRG not defined")
-endif()
-
 set(CPACK_PACKAGE_NAME "Neovim")
 set(CPACK_PACKAGE_VENDOR "neovim.io")
 set(CPACK_PACKAGE_VERSION ${NVIM_VERSION_MEDIUM})
