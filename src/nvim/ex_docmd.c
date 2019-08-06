@@ -10155,7 +10155,8 @@ static void ex_async_handler(exarg_T *eap)
   EXEC_LUA_STATIC("vim._async_handler(...)", args, &err);
   api_free_array(args);
   if (ERROR_SET(&err)) {
-    eap->errmsg = (char_u *)err.msg;
+    EMSG(err.msg);
+    api_clear_error(&err);
   }
 }
 
