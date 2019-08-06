@@ -2591,9 +2591,11 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
 
   AsyncCall *async_call = channel->async_call;
   list_T *work_queue = async_call->work_queue;
+
   if (work_queue) {  // parallel call
-    append_result(channel_id, result, err);
+    asynccall_append_result(channel_id, result, err);
     ADD(async_call->results, copy_object(result));
+    asynccall_callback_call(&channel->async_call->item_callback, &result, err);
     result = ARRAY_OBJ(async_call->results);
     if (async_call->next < tv_list_len(work_queue)) {
       Array rpc_args = ARRAY_DICT_INIT;
@@ -2607,24 +2609,19 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
       return;
     } else {
       async_call->count -= 1;
-      release_asynccall_channel(channel);
+      asynccall_channel_release(channel);
       if (async_call->count) {
+        // avoid "async_call" getting freed when other workers are alive
         channel->async_call = NULL;
         return;
       }
     }
   } else {  // normal async call
-    release_asynccall_channel(channel);
-    put_result(channel_id, result, err);
+    asynccall_channel_release(channel);
+    asynccall_put_result(channel_id, result, err);
   }
 
-  typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
-  if (object_to_vim(result, &argv[0], err)) {
-    typval_T rettv = TV_INITIAL_VALUE;  // dummy
-    callback_call(&channel->async_call->callback, 1, argv, &rettv);
-    tv_clear(&argv[0]);
-  }
-
+  asynccall_callback_call(&channel->async_call->callback, &result, err);
   free_asynccall(channel->async_call);
   channel->async_call = NULL;
 }
@@ -2637,8 +2634,9 @@ void nvim_error_event(uint64_t channel_id, Integer type, String message,
   if (channel && channel->async_call) {
     EMSG3(_("multiproc: job %" PRIu64 ": %s"), channel_id, message.data);
     if (channel->async_call->work_queue && --channel->async_call->count) {
+      // avoid "async_call" getting freed when other workers are alive
       channel->async_call = NULL;
     }
-    release_asynccall_channel(channel);
+    asynccall_channel_release(channel);
   }
 }

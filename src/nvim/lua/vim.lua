@@ -256,7 +256,7 @@ local function _grep(pattern, path, global)
 end
 
 -- Creates a new nvim job (for async calls) and returns its id.
--- Used by acquire_asynccall_channel().
+-- Used by asynccall_channel_acquire().
 local function _create_nvim_job()
   local progpath = vim.api.nvim_get_vvar('progpath')
   return vim.api.nvim_call_function('jobstart', {
@@ -296,13 +296,13 @@ end
 local _call_results = {}
 
 -- Puts async call result in "_call_results".
--- Used by put_result().
+-- Used by asynccall_put_result().
 local function _put_result(job, result)
   _call_results[job] = result
 end
 
 -- Appends async call result to a channel in "_call_results".
--- Used for parallel calls by append_result().
+-- Used for parallel calls by asynccall_append_result().
 local function _append_result(job, result)
   if _call_results[job] == nil then
     _call_results[job] = { result }
