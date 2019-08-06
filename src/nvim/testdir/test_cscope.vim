@@ -123,8 +123,8 @@ func Test_cscopeWithCscopeConnections()
     if cs_version >= 15.8
       for cmd in ['cs find a item', 'cs find 9 item']
         let a = execute(cmd)
-        call assert_equal(['', '(1 of 4): <<test_mf_hash>> item = (mf_hashitem_T *)lalloc_clear(sizeof(mf_hashtab_T), FALSE);'], split(a, '\n', 1))
-        call assert_equal('	item = (mf_hashitem_T *)lalloc_clear(sizeof(mf_hashtab_T), FALSE);', getline('.'))
+        call assert_equal(['', '(1 of 4): <<test_mf_hash>> item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);'], split(a, '\n', 1))
+        call assert_equal('	item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);', getline('.'))
         cnext
         call assert_equal('	item = mf_hash_find(&ht, key);', getline('.'))
         cnext
