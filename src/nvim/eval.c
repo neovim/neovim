@@ -7874,7 +7874,7 @@ fail:
     asynccall_channel_release(chan);
   });
   if (async_call) {
-    free_asynccall(async_call);
+    asynccall_free(async_call);
   }
   tv_clear(rettv);
   api_free_dictionary(context);

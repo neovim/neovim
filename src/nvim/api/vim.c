@@ -2622,7 +2622,7 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
   }
 
   asynccall_callback_call(&channel->async_call->callback, &result, err);
-  free_asynccall(channel->async_call);
+  asynccall_free(channel->async_call);
   channel->async_call = NULL;
 }
 
