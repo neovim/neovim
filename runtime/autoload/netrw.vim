@@ -9633,7 +9633,7 @@ fun! s:PerformListing(islocal)
   " Set up the banner {{{3
   if g:netrw_banner
 "   call Decho("--set up banner",'~'.expand("<slnum>"))
-   NetrwKeepj call setline(1,'" ============================================================================')
+   NetrwKeepj call setline(1,'" ==============================================================================')
    if exists("g:netrw_pchk")
     " this undocumented option allows pchk to run with different versions of netrw without causing spurious
     " failure detections.
