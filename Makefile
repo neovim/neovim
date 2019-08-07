@@ -185,7 +185,7 @@ appimage-%:
 lint: check-single-includes clint lualint
 	@# Run pylint only if flake8 is installed.
 	@command -v flake8 \
-		&& { $(MAKE) pylint; exit $?; } \
+		&& { $(MAKE) pylint; exit $$?; } \
 		|| echo "SKIP: pylint (flake8 not found)"
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
