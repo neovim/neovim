@@ -250,7 +250,7 @@ check_c_source_compiles("
 int main(void)
 {
   void *trace[1];
-  int trace_size = backtrace(trace, 1);
+  backtrace(trace, 1);
   return 0;
 }
 " HAVE_EXECINFO_BACKTRACE)
@@ -258,7 +258,7 @@ int main(void)
 check_c_source_compiles("
 int main(void)
 {
-  int a;
+  int a = 42;
   __builtin_add_overflow(a, a, &a);
   __builtin_sub_overflow(a, a, &a);
   return 0;
