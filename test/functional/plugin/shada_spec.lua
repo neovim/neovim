@@ -1,4 +1,3 @@
-local paths = require('test.config.paths')
 local helpers = require('test.functional.helpers')(after_each)
 local clear = helpers.clear
 local eq, nvim_eval, nvim_command, nvim, exc_exec, funcs, nvim_feed, curbuf =
