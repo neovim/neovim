@@ -693,9 +693,9 @@ describe('API', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
       eq({}, filter_context(nvim('get_context', ctx_items)))
 
-      feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
+      feed('i1<cr>22<cr>333<c-[>ddddddqahjklquuu')
       feed('gg')
-      feed('G')
+      feed('Gll')
       command('edit! BUF1')
       command('edit BUF2')
       nvim('set_var', 'one', 1)
@@ -706,8 +706,8 @@ describe('API', function()
         ['regs'] = {
           {['type'] = 1, ['content'] = {'1'},
            ['name'] = '1', ['unnamed'] = true},
-          {['type'] = 1, ['content'] = {'2'}, ['name'] = '2'},
-          {['type'] = 1, ['content'] = {'3'}, ['name'] = '3'},
+          {['type'] = 1, ['content'] = {'22'}, ['name'] = '2'},
+          {['type'] = 1, ['content'] = {'333'}, ['name'] = '3'},
           {['content'] = {'hjkl'}, ['name'] = 'a'},
         },
 
@@ -715,13 +715,16 @@ describe('API', function()
         filter(map(add(
         getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
         'filter(
-        { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-        { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+        { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum,
+          "col": (exists("v:val.col") ? v:val.col + 1 : 1)},
+        { k, v -> index(["line", "col"], k) == -1 || v != 1 })'),
+        '!empty(v:val.file)')
         ]]):gsub('\n', '')),
 
-        ['buflist'] = eval([[
-        filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
-        ]]),
+        ['buflist'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
 
         ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
       }

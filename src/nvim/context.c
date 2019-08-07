@@ -407,28 +407,39 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
   api_free_string(kv->key); \
   kv->key = STATIC_CSTR_TO_STRING(name);
 
-/// Map key names of ShaDa register entries to user-friendly names.
+/// Map key names of ShaDa entries to user-friendly context key names.
 ///
+/// "c"  -> "col"
+/// "f"  -> "file"
+/// "l"  -> "line"
 /// "n"  -> "name"
 /// "rc" -> "content"
 /// "rt" -> "type"
 /// "ru" -> "unnamed"
 /// "rw" -> "width"
 ///
-/// @param[in/out]  regs  Array of decoded ShaDa register entries.
+/// @param[in/out]  regs  Array of decoded ShaDa entries.
 ///
-/// @return Mapped array (regs).
-static inline Array ctx_regs_from_shada(Array regs)
+/// @return Mapped array (arr).
+static inline Array ctx_keys_from_shada(Array arr)
 {
-  for (size_t i = 0; i < regs.size; i++) {
-    if (regs.items[i].type != kObjectTypeDictionary) {
-      EMSG("Invalid register entry type. Expected a dictionary");
-      break;
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeDictionary) {
+      continue;
     }
-    Dictionary entry = regs.items[i].data.dictionary;
+    Dictionary entry = arr.items[i].data.dictionary;
     for (size_t j = 0; j < entry.size; j++) {
       KeyValuePair *kv = &entry.items[j];
       switch (kv->key.data[0]) {
+        case 'c':
+          RENAME_KEY(kv, "col");
+          break;
+        case 'f':
+          RENAME_KEY(kv, "file");
+          break;
+        case 'l':
+          RENAME_KEY(kv, "line");
+          break;
         case 'n':
           RENAME_KEY(kv, "name");
           kv->value = STRING_OBJ(STATIC_CSTR_TO_STRING(
@@ -453,46 +464,61 @@ static inline Array ctx_regs_from_shada(Array regs)
       }
     }
   }
-  return regs;
+  return arr;
 }
 
-/// Map user-friendly key names of context register entries to ShaDa names.
+/// Map user-friendly key names of context entries to ShaDa key names.
 ///
+/// "col"     -> "c"
+/// "file"    -> "f"
+/// "line"    -> "l"
 /// "name"    -> "n"
 /// "content" -> "rc"
 /// "type"    -> "rt"
 /// "unnamed" -> "ru"
 /// "width"   -> "rw"
 ///
-/// @param[in/out]  regs  Array of context register entries.
+/// @param[in/out]  arr  Array of context entries.
 ///
-/// @return Mapped array (regs).
-static inline Array ctx_regs_to_shada(Array regs)
+/// @return Mapped array (arr).
+static inline Array ctx_keys_to_shada(Array arr)
 {
-  for (size_t i = 0; i < regs.size; i++) {
-    if (regs.items[i].type != kObjectTypeDictionary) {
-      EMSG("Invalid register entry type. Expected a dictionary");
-      break;
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeDictionary) {
+      continue;
     }
-    Dictionary entry = regs.items[i].data.dictionary;
+    Dictionary entry = arr.items[i].data.dictionary;
     for (size_t j = 0; j < entry.size; j++) {
       KeyValuePair *kv = &entry.items[j];
       switch (kv->key.data[0]) {
+        case 'c':
+          if (kv->key.size > 3) {  // "content"
+            goto reg_keys;
+          }
+          RENAME_KEY(kv, "c");
+          break;
+        case 'f':
+          RENAME_KEY(kv, "f");
+          break;
+        case 'l':
+          RENAME_KEY(kv, "l");
+          break;
         case 'n':
           RENAME_KEY(kv, "n");
           Object value = INTEGER_OBJ(kv->value.data.string.data[0]);
           api_free_object(kv->value);
           kv->value = value;
           break;
-        default: {
-          char key[] = { 'r', kv->key.data[0], 0 };
-          RENAME_KEY(kv, key);
-          break;
-        }
+        default:
+reg_keys: {
+            char key[] = { 'r', kv->key.data[0], 0 };
+            RENAME_KEY(kv, key);
+            break;
+          }
       }
     }
   }
-  return regs;
+  return arr;
 }
 
 #undef RENAME_KEY
@@ -509,11 +535,12 @@ Dictionary ctx_to_dict(Context *ctx)
 
   Dictionary rv = ARRAY_DICT_INIT;
 
-  PUT(rv, "regs", ARRAY_OBJ(ctx_regs_from_shada(sbuf_to_array(ctx->regs))));
-  PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
+  PUT(rv, "regs", ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->regs))));
+  PUT(rv, "jumps", ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->jumps))));
   if (ctx->buflist.size) {
     Array buflist = sbuf_to_array(ctx->buflist);
-    PUT(rv, "buflist", buflist.items[0]);
+    PUT(rv, "buflist",
+        ARRAY_OBJ(ctx_keys_from_shada(buflist.items[0].data.array)));
     xfree(buflist.items);
   }
   PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
@@ -537,15 +564,18 @@ void ctx_from_dict(Dictionary dict, Context *ctx)
       continue;
     }
     if (strequal(item.key.data, "regs")) {
-      ctx->regs = array_to_sbuf(ctx_regs_to_shada(item.value.data.array),
+      ctx->regs = array_to_sbuf(ctx_keys_to_shada(item.value.data.array),
                                 kSDItemRegister);
     } else if (strequal(item.key.data, "jumps")) {
-      ctx->jumps = array_to_sbuf(item.value.data.array, kSDItemJump);
+      ctx->jumps = array_to_sbuf(ctx_keys_to_shada(item.value.data.array),
+                                 kSDItemJump);
     } else if (strequal(item.key.data, "buflist")) {
       Array shada_buflist = (Array) {
         .size = 1,
         .capacity = 1,
-        .items = (Object[]) { item.value }
+        .items = (Object[]) {
+          ARRAY_OBJ(ctx_keys_to_shada(item.value.data.array))
+        }
       };
       ctx->buflist = array_to_sbuf(shada_buflist, kSDItemBufferList);
     } else if (strequal(item.key.data, "gvars")) {

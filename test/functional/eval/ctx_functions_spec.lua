@@ -295,15 +295,16 @@ describe('context functions', function()
         filter(map(add(
         getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
         'filter(
-        { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-        { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+        { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum },
+        { k, v -> k != "line" || v != 1 })'), '!empty(v:val.file)')
         ]]):gsub('\n', ''))
       }
 
       local with_buflist = {
-        ['buflist'] = eval([[
-        filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
-        ]])
+        ['buflist'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
       }
 
       local with_gvars = {
