@@ -403,6 +403,92 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
   return sbuf;
 }
 
+#define RENAME_KEY(kv, name) \
+  api_free_string(kv->key); \
+  kv->key = STATIC_CSTR_TO_STRING(name);
+
+/// Map key names of ShaDa register entries to user-friendly names.
+///
+/// "n"  -> "name"
+/// "rc" -> "content"
+/// "rt" -> "type"
+/// "ru" -> "unnamed"
+/// "rw" -> "width"
+///
+/// @param[in/out]  regs  Array of decoded ShaDa register entries.
+///
+/// @return Mapped array (regs).
+static inline Array ctx_regs_from_shada(Array regs)
+{
+  for (size_t i = 0; i < regs.size; i++) {
+    Dictionary entry = regs.items[i].data.dictionary;
+    for (size_t j = 0; j < entry.size; j++) {
+      KeyValuePair *kv = &entry.items[j];
+      switch (kv->key.data[0]) {
+        case 'n':
+          RENAME_KEY(kv, "name");
+          kv->value = STRING_OBJ(STATIC_CSTR_TO_STRING(
+              ((char[]) { (char)kv->value.data.integer, 0 })));
+          break;
+        case 'r':
+          switch (kv->key.data[1]) {
+            case 'c':
+              RENAME_KEY(kv, "content");
+              break;
+            case 't':
+              RENAME_KEY(kv, "type");
+              break;
+            case 'u':
+              RENAME_KEY(kv, "unnamed");
+              break;
+            case 'w':
+              RENAME_KEY(kv, "width");
+              break;
+          }
+          break;
+      }
+    }
+  }
+  return regs;
+}
+
+/// Map user-friendly key names of context register entries to ShaDa names.
+///
+/// "name"    -> "n"
+/// "content" -> "rc"
+/// "type"    -> "rt"
+/// "unnamed" -> "ru"
+/// "width"   -> "rw"
+///
+/// @param[in/out]  regs  Array of context register entries.
+///
+/// @return Mapped array (regs).
+static inline Array ctx_regs_to_shada(Array regs)
+{
+  for (size_t i = 0; i < regs.size; i++) {
+    Dictionary entry = regs.items[i].data.dictionary;
+    for (size_t j = 0; j < entry.size; j++) {
+      KeyValuePair *kv = &entry.items[j];
+      switch (kv->key.data[0]) {
+        case 'n':
+          RENAME_KEY(kv, "n");
+          Object value = INTEGER_OBJ(kv->value.data.string.data[0]);
+          api_free_object(kv->value);
+          kv->value = value;
+          break;
+        default: {
+          char key[] = { 'r', kv->key.data[0], 0 };
+          RENAME_KEY(kv, key);
+          break;
+        }
+      }
+    }
+  }
+  return regs;
+}
+
+#undef RENAME_KEY
+
 /// Converts Context to Dictionary representation.
 ///
 /// @param[in]  ctx  Context to convert.
@@ -415,7 +501,7 @@ Dictionary ctx_to_dict(Context *ctx)
 
   Dictionary rv = ARRAY_DICT_INIT;
 
-  PUT(rv, "regs", ARRAY_OBJ(sbuf_to_array(ctx->regs)));
+  PUT(rv, "regs", ARRAY_OBJ(ctx_regs_from_shada(sbuf_to_array(ctx->regs))));
   PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
   if (ctx->buflist.size) {
     Array buflist = sbuf_to_array(ctx->buflist);
@@ -443,14 +529,15 @@ void ctx_from_dict(Dictionary dict, Context *ctx)
       continue;
     }
     if (strequal(item.key.data, "regs")) {
-      ctx->regs = array_to_sbuf(item.value.data.array, kSDItemRegister);
+      ctx->regs = array_to_sbuf(ctx_regs_to_shada(item.value.data.array),
+                                kSDItemRegister);
     } else if (strequal(item.key.data, "jumps")) {
       ctx->jumps = array_to_sbuf(item.value.data.array, kSDItemJump);
     } else if (strequal(item.key.data, "buflist")) {
       Array shada_buflist = (Array) {
         .size = 1,
         .capacity = 1,
-        .items = (Object[1]) { item.value }
+        .items = (Object[]) { item.value }
       };
       ctx->buflist = array_to_sbuf(shada_buflist, kSDItemBufferList);
     } else if (strequal(item.key.data, "gvars")) {

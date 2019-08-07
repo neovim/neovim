@@ -704,10 +704,11 @@ describe('API', function()
 
       local expected_ctx = {
         ['regs'] = {
-          {['rt'] = 1, ['rc'] = {'1'}, ['n'] = 49, ['ru'] = true},
-          {['rt'] = 1, ['rc'] = {'2'}, ['n'] = 50},
-          {['rt'] = 1, ['rc'] = {'3'}, ['n'] = 51},
-          {['rc'] = {'hjkl'}, ['n'] = 97},
+          {['type'] = 1, ['content'] = {'1'},
+           ['name'] = '1', ['unnamed'] = true},
+          {['type'] = 1, ['content'] = {'2'}, ['name'] = '2'},
+          {['type'] = 1, ['content'] = {'3'}, ['name'] = '3'},
+          {['content'] = {'hjkl'}, ['name'] = 'a'},
         },
 
         ['jumps'] = eval(([[
