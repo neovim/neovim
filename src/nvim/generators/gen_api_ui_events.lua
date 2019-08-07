@@ -79,24 +79,6 @@ function call_ui_event_method(output, ev)
   output:write(');\n')
 end
 
-function make_raw_line_and_call(output)
-  output:write([[
-  RawLineReturn raw_line =  grid_line_to_raw_line(args);
-  Integer grid = raw_line.int_values.items[0].data.integer;
-  Integer row = raw_line.int_values.items[1].data.integer;
-  Integer startcol = raw_line.int_values.items[2].data.integer;
-  Integer endcol = raw_line.int_values.items[3].data.integer;
-  Integer clearcol = raw_line.int_values.items[4].data.integer;
-  Integer clearattr = raw_line.int_values.items[5].data.integer;
-  LineFlags lineflags = (int)raw_line.int_values.items[6].data.integer;
-  const schar_T* chunk = raw_line.chunk;
-  const sattr_T* attrs = raw_line.attrs;
-  api_free_array(raw_line.int_values);
-  ui_call_raw_line(grid, row, startcol, endcol, clearcol, clearattr, lineflags, (const schar_T*) chunk, (const sattr_T*) attrs);
-]])
-end
-
-
 for i = 1, #events do
   local ev = events[i]
   assert(ev.return_type == 'void')
@@ -152,14 +134,10 @@ for i = 1, #events do
     call_output:write("}\n\n")
   end
 
-  if ev.redraw then
+  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) then
     redraw_output:write('void ui_redraw_event_'..ev.name..'(Array args)\n{\n')
-    if not (ev.name == 'grid_line') then
-      extract_and_write_arglist(redraw_output, ev)
-      call_ui_event_method(redraw_output, ev)
-    else
-      make_raw_line_and_call(redraw_output)
-    end
+    extract_and_write_arglist(redraw_output, ev)
+    call_ui_event_method(redraw_output, ev)
     redraw_output:write('}\n\n')
   end
 end
@@ -174,7 +152,7 @@ void redraw_methods_table_init(void)
 
 for i = 1, #events do
   local fn = events[i]
-  if fn.redraw then
+  if (not fn.noexport) and ((not fn.remote_only) or fn.client_impl) then
     redraw_output:write('  add_redraw_event_handler('..
                 '(String) {.data = "'..fn.name..'", '..
                 '.size = sizeof("'..fn.name..'") - 1}, '..
