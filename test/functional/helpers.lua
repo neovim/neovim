@@ -778,7 +778,7 @@ function module.parse_context(ctx)
   for _, item in ipairs({'regs', 'jumps', 'buflist', 'gvars'}) do
     parsed[item] = filter(function(v)
       return type(v) == 'table'
-    end, module.nvim_call('msgpackparse', ctx[item]))
+    end, module.call('msgpackparse', ctx[item]))
   end
   parsed['buflist'] = parsed['buflist'][1]
   return map(function(v)
