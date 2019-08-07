@@ -734,8 +734,8 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
     return FAIL;
   }
 
-  /* If 'delcombine' is set and deleting (less than) one character, only
-   * delete the last combining character. */
+  // If 'delcombine' is set and deleting (less than) one character, only
+  // delete the last combining character.
   if (p_deco && use_delcombine && enc_utf8
       && utfc_ptr2len(oldp + col) >= count) {
     int cc[MAX_MCO];
@@ -743,7 +743,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
 
     (void)utfc_ptr2char(oldp + col, cc);
     if (cc[0] != NUL) {
-      /* Find the last composing char, there can be several. */
+      // Find the last composing char, there can be several.
       n = col;
       do {
         col = n;
@@ -1731,7 +1731,7 @@ theend:
   xfree(next_line);
   xfree(allocated);
   return retval;
-}
+}  // NOLINT(readability/fn_size)
 
 /// Delete from cursor to end of line.
 /// Caller must have prepared for undo.
