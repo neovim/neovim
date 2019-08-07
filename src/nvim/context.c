@@ -320,8 +320,11 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
       msgpack_unpack_return ret = msgpack_unpacker_next(unpacker, &unpacked);
       switch (ret) {
         case MSGPACK_UNPACK_SUCCESS:
-          msgpack_rpc_to_object(&unpacked.data, &obj);
-          ADD(rv, obj);
+          if (unpacked.data.type == MSGPACK_OBJECT_ARRAY
+              || unpacked.data.type == MSGPACK_OBJECT_MAP) {
+            msgpack_rpc_to_object(&unpacked.data, &obj);
+            ADD(rv, obj);
+          }
           break;
         case MSGPACK_UNPACK_CONTINUE:
           EMSG("Incomplete msgpack string");
@@ -346,32 +349,68 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
     offset += read_bytes;
   }
 
+  if (rv.size == 1 && rv.items[0].type == kObjectTypeArray) {
+    Array tmp = rv;
+    rv = rv.items[0].data.array;
+    xfree(tmp.items);
+  }
+
 exit:
   msgpack_unpacked_destroy(&unpacked);
   msgpack_unpacker_free(unpacker);
   return rv;
 }
 
-/// Pack API Objects from an Array into a msgpack_sbuffer.
+/// Pack an Object into a msgpack_sbuffer.
 ///
-/// @param[in]  array  Array of API Objects to pack.
+/// @param[in]  array  Object to pack.
 ///
-/// @return msgpack_sbuffer with packed objects.
-static inline msgpack_sbuffer array_to_sbuf(Array array)
+/// @return msgpack_sbuffer with packed object.
+static inline msgpack_sbuffer object_to_sbuf(Object obj)
 {
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
 
+  // msgpack_rpc_from_object packs Strings as STR, ShaDa expects BIN
+  Error err = ERROR_INIT;
+  typval_T tv = TV_INITIAL_VALUE;
+  if (object_to_vim(obj, &tv, &err)) {
+    encode_vim_to_msgpack(packer, &tv, "");
+    tv_clear(&tv);
+  }
+  api_clear_error(&err);
+
+  msgpack_packer_free(packer);
+  return sbuf;
+}
+
+/// Pack API Objects from an Array into a ShaDa-format msgpack_sbuffer.
+///
+/// @param[in]  array  Array of API Objects to pack.
+///
+/// @return ShaDa-format msgpack_sbuffer with packed objects.
+static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
+{
+  msgpack_sbuffer sbuf;
+  msgpack_sbuffer_init(&sbuf);
+  msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
+
+  if (type == kSDItemBufferList) {
+    array = (Array) {
+      .size = 1,
+      .capacity = 1,
+      .items = (Object[1]) { ARRAY_OBJ(array) }
+    };
+  }
+
   for (size_t i = 0; i < array.size; i++) {
-    Error err = ERROR_INIT;
-    typval_T tv = TV_INITIAL_VALUE;
-    // TODO(abdelhakeem): refactor ShaDa module to avoid stuff like this
-    if (object_to_vim(array.items[i], &tv, &err)) {
-      encode_vim_to_msgpack(packer, &tv, "");
-      tv_clear(&tv);
-    }
-    api_clear_error(&err);
+    msgpack_sbuffer sbuf_current = object_to_sbuf(array.items[i]);
+    msgpack_pack_uint64(packer, (uint64_t)type);
+    msgpack_pack_uint64(packer, os_time());
+    msgpack_pack_uint64(packer, sbuf_current.size);
+    msgpack_pack_bin_body(packer, sbuf_current.data, sbuf_current.size);
+    msgpack_sbuffer_destroy(&sbuf_current);
   }
 
   msgpack_packer_free(packer);
@@ -414,13 +453,13 @@ void ctx_from_dict(Dictionary dict, Context *ctx)
       continue;
     }
     if (strequal(item.key.data, "regs")) {
-      ctx->regs = array_to_sbuf(item.value.data.array);
+      ctx->regs = array_to_sbuf(item.value.data.array, kSDItemRegister);
     } else if (strequal(item.key.data, "jumps")) {
-      ctx->jumps = array_to_sbuf(item.value.data.array);
+      ctx->jumps = array_to_sbuf(item.value.data.array, kSDItemJump);
     } else if (strequal(item.key.data, "buflist")) {
-      ctx->buflist = array_to_sbuf(item.value.data.array);
+      ctx->buflist = array_to_sbuf(item.value.data.array, kSDItemBufferList);
     } else if (strequal(item.key.data, "gvars")) {
-      ctx->gvars = array_to_sbuf(item.value.data.array);
+      ctx->gvars = array_to_sbuf(item.value.data.array, kSDItemVariable);
     } else if (strequal(item.key.data, "funcs")) {
       ctx->funcs = copy_object(item.value).data.array;
     }

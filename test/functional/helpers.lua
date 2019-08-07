@@ -14,7 +14,6 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.filter
 local map = global_helpers.map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
@@ -784,14 +783,7 @@ function module.load_adjust(num)
   return math.ceil(num * load_factor)
 end
 
-function module.parse_context(ctx)
-  local parsed = {}
-  for _, item in ipairs({'regs', 'jumps', 'buflist', 'gvars'}) do
-    parsed[item] = filter(function(v)
-      return type(v) == 'table'
-    end, module.call('msgpackparse', ctx[item]))
-  end
-  ctx['buflist'] = ctx['buflist'][1]
+function module.filter_context(ctx)
   return map(function(v)
     if #v == 0 then
       v = nil
