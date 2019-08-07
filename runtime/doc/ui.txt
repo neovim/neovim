@@ -51,8 +51,8 @@ with these (optional) keys:
 	`ext_termcolors`	Use external default colors.
 							*term-info*
 	`term_name`			Sets the name of the terminal.
-	`term_colors`		Sets the termcolors.
-	`term_background`	Sets the background. 
+	`term_colors`		Sets the number of supported colors.
+	`term_background`	Sets the default value of `background`.
 
 Specifying an unknown option is an error; UIs can check the |api-metadata|
 `ui_options` key for supported options.

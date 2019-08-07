@@ -271,7 +271,7 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
     }
     if (option_was_set("bg")
         || strequal((char *)p_bg, value.data.string.data)) {
-      api_set_error(error, kErrorTypeValidation, "background is already set");
+      // background is already set... ignore
       return;
     }
     set_option_value("bg",
