@@ -503,21 +503,15 @@ void ins_bytes(char_u *p)
 /// Handles Replace mode and multi-byte characters.
 void ins_bytes_len(char_u *p, size_t len)
 {
-  if (has_mbyte) {
-    size_t n;
-    for (size_t i = 0; i < len; i += n) {
-      if (enc_utf8) {
-        // avoid reading past p[len]
-        n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
-      } else {
-        n = (size_t)(*mb_ptr2len)(p + i);
-      }
-      ins_char_bytes(p + i, n);
+  size_t n;
+  for (size_t i = 0; i < len; i += n) {
+    if (enc_utf8) {
+      // avoid reading past p[len]
+      n = (size_t)utfc_ptr2len_len(p + i, (int)(len - i));
+    } else {
+      n = (size_t)(*mb_ptr2len)(p + i);
     }
-  } else {
-    for (size_t i = 0; i < len; i++) {
-      ins_char(p[i]);
-    }
+    ins_char_bytes(p + i, n);
   }
 }
 
@@ -597,11 +591,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
     // first (it tells the byte length of the character).
     replace_push(NUL);
     for (size_t i = 0; i < oldlen; i++) {
-      if (has_mbyte) {
-        i += (size_t)replace_push_mb(oldp + col + i) - 1;
-      } else {
-        replace_push(oldp[col + i]);
-      }
+      i += (size_t)replace_push_mb(oldp + col + i) - 1;
     }
   }
 
@@ -688,15 +678,12 @@ void ins_str(char_u *s)
 // return FAIL for failure, OK otherwise
 int del_char(bool fixpos)
 {
-  if (has_mbyte) {
-    // Make sure the cursor is at the start of a character.
-    mb_adjust_cursor();
-    if (*get_cursor_pos_ptr() == NUL) {
-      return FAIL;
-    }
-    return del_chars(1L, fixpos);
+  // Make sure the cursor is at the start of a character.
+  mb_adjust_cursor();
+  if (*get_cursor_pos_ptr() == NUL) {
+    return FAIL;
   }
-  return del_bytes(1, fixpos, true);
+  return del_chars(1L, fixpos);
 }
 
 /// Like del_bytes(), but delete characters instead of bytes.
@@ -983,11 +970,7 @@ int open_line(
     replace_push(NUL);
     p = saved_line + curwin->w_cursor.col;
     while (*p != NUL) {
-      if (has_mbyte) {
-          p += replace_push_mb(p);
-      } else {
-          replace_push(*p++);
-      }
+      p += replace_push_mb(p);
     }
     saved_line[curwin->w_cursor.col] = NUL;
   }
