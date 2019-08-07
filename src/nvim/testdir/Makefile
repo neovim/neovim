@@ -16,7 +16,6 @@ export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 SCRIPTS_DEFAULT = \
 	test42.out             \
 	test48.out             \
-	test52.out             \
 	test64.out             \
 
 ifneq ($(OS),Windows_NT)
