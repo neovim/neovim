@@ -47,18 +47,6 @@
 #
 # DEPS_CMAKE_FLAGS += -DUSE_BUNDLED=OFF
 
-# By default, bundled libraries are statically linked to nvim.
-# This has no effect for non-bundled deps, which are always dynamically linked.
-# Uncomment these entries to instead use dynamic linking.
-#
-# CMAKE_EXTRA_FLAGS += -DLIBTERMKEY_USE_STATIC=OFF
-# CMAKE_EXTRA_FLAGS += -DLIBUNIBILIUM_USE_STATIC=OFF
-# CMAKE_EXTRA_FLAGS += -DLIBUV_USE_STATIC=OFF
-# CMAKE_EXTRA_FLAGS += -DLIBVTERM_USE_STATIC=OFF
-# CMAKE_EXTRA_FLAGS += -DLUAJIT_USE_STATIC=OFF
-# CMAKE_EXTRA_FLAGS += -DMSGPACK_USE_STATIC=OFF
-#
-#
 # .DEFAULT_GOAL := nvim
 #
 # Run doxygen over the source code.

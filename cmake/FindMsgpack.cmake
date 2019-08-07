@@ -26,13 +26,6 @@ else()
   set(MSGPACK_VERSION_STRING)
 endif()
 
-# If we're asked to use static linkage, add libmsgpack{,c}.a as a preferred library name.
-if(MSGPACK_USE_STATIC)
-  list(APPEND MSGPACK_NAMES
-    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpackc${CMAKE_STATIC_LIBRARY_SUFFIX}"
-    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpack${CMAKE_STATIC_LIBRARY_SUFFIX}")
-endif()
-
 if(MSVC)
   # The import library for the msgpack DLL has a different name
   list(APPEND MSGPACK_NAMES msgpackc_import)
