@@ -349,12 +349,6 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
     offset += read_bytes;
   }
 
-  if (rv.size == 1 && rv.items[0].type == kObjectTypeArray) {
-    Array tmp = rv;
-    rv = rv.items[0].data.array;
-    xfree(tmp.items);
-  }
-
 exit:
   msgpack_unpacked_destroy(&unpacked);
   msgpack_unpacker_free(unpacker);
@@ -396,14 +390,6 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
 
-  if (type == kSDItemBufferList) {
-    array = (Array) {
-      .size = 1,
-      .capacity = 1,
-      .items = (Object[1]) { ARRAY_OBJ(array) }
-    };
-  }
-
   for (size_t i = 0; i < array.size; i++) {
     msgpack_sbuffer sbuf_current = object_to_sbuf(array.items[i]);
     msgpack_pack_uint64(packer, (uint64_t)type);
@@ -431,7 +417,11 @@ Dictionary ctx_to_dict(Context *ctx)
 
   PUT(rv, "regs", ARRAY_OBJ(sbuf_to_array(ctx->regs)));
   PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
-  PUT(rv, "buflist", ARRAY_OBJ(sbuf_to_array(ctx->buflist)));
+  if (ctx->buflist.size) {
+    Array buflist = sbuf_to_array(ctx->buflist);
+    PUT(rv, "buflist", buflist.items[0]);
+    xfree(buflist.items);
+  }
   PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
   PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
 
@@ -457,7 +447,12 @@ void ctx_from_dict(Dictionary dict, Context *ctx)
     } else if (strequal(item.key.data, "jumps")) {
       ctx->jumps = array_to_sbuf(item.value.data.array, kSDItemJump);
     } else if (strequal(item.key.data, "buflist")) {
-      ctx->buflist = array_to_sbuf(item.value.data.array, kSDItemBufferList);
+      Array shada_buflist = (Array) {
+        .size = 1,
+        .capacity = 1,
+        .items = (Object[1]) { item.value }
+      };
+      ctx->buflist = array_to_sbuf(shada_buflist, kSDItemBufferList);
     } else if (strequal(item.key.data, "gvars")) {
       ctx->gvars = array_to_sbuf(item.value.data.array, kSDItemVariable);
     } else if (strequal(item.key.data, "funcs")) {
