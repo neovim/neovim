@@ -421,6 +421,10 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
 static inline Array ctx_regs_from_shada(Array regs)
 {
   for (size_t i = 0; i < regs.size; i++) {
+    if (regs.items[i].type != kObjectTypeDictionary) {
+      EMSG("Invalid register entry type. Expected a dictionary");
+      break;
+    }
     Dictionary entry = regs.items[i].data.dictionary;
     for (size_t j = 0; j < entry.size; j++) {
       KeyValuePair *kv = &entry.items[j];
@@ -466,6 +470,10 @@ static inline Array ctx_regs_from_shada(Array regs)
 static inline Array ctx_regs_to_shada(Array regs)
 {
   for (size_t i = 0; i < regs.size; i++) {
+    if (regs.items[i].type != kObjectTypeDictionary) {
+      EMSG("Invalid register entry type. Expected a dictionary");
+      break;
+    }
     Dictionary entry = regs.items[i].data.dictionary;
     for (size_t j = 0; j < entry.size; j++) {
       KeyValuePair *kv = &entry.items[j];
