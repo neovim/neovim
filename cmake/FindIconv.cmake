@@ -10,10 +10,6 @@ include(LibFindMacros)
 find_path(ICONV_INCLUDE_DIR NAMES iconv.h)
 find_library(ICONV_LIBRARY NAMES iconv libiconv)
 
-if(ICONV_INCLUDE_DIR)
-  list(APPEND CMAKE_REQUIRED_INCLUDES "${ICONV_INCLUDE_DIR}")
-endif()
-
 set(Iconv_PROCESS_INCLUDES ICONV_INCLUDE_DIR)
 if(ICONV_LIBRARY)
   set(Iconv_PROCESS_LIBS ICONV_LIBRARY)
