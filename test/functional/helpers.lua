@@ -266,7 +266,7 @@ end
 
 -- Evaluates a VimL expression.
 -- Fails on VimL error, but does not update v:errmsg.
-function module.nvim_eval(expr)
+function module.eval(expr)
   return module.request('nvim_eval', expr)
 end
 
@@ -274,9 +274,9 @@ module.os_name = (function()
   local name = nil
   return (function()
     if not name then
-      if module.nvim_eval('has("win32")') == 1 then
+      if module.eval('has("win32")') == 1 then
         name = 'windows'
-      elseif module.nvim_eval('has("macunix")') == 1 then
+      elseif module.eval('has("macunix")') == 1 then
         name = 'osx'
       else
         name = 'unix'
@@ -632,7 +632,7 @@ function module.exc_exec(cmd)
       let g:__exception = v:exception
     endtry
   ]]):format(cmd:gsub('\n', '\\n'):gsub('[\\"]', '\\%0')))
-  local ret = module.nvim_eval('get(g:, "__exception", 0)')
+  local ret = module.eval('get(g:, "__exception", 0)')
   module.command('unlet! g:__exception')
   return ret
 end
@@ -726,7 +726,7 @@ end
 -- Useful for communicating with child instances.
 function module.new_pipename()
   -- HACK: Start a server temporarily, get the name, then stop it.
-  local pipename = module.nvim_eval('serverstart()')
+  local pipename = module.eval('serverstart()')
   module.funcs.serverstop(pipename)
   return pipename
 end
