@@ -52,21 +52,22 @@ Context *ctx_get(size_t index)
 void ctx_free(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (ctx->regs.data) {
+  if (ctx->regs.size) {
     msgpack_sbuffer_destroy(&ctx->regs);
   }
-  if (ctx->jumps.data) {
+  if (ctx->jumps.size) {
     msgpack_sbuffer_destroy(&ctx->jumps);
   }
-  if (ctx->buflist.data) {
+  if (ctx->buflist.size) {
     msgpack_sbuffer_destroy(&ctx->buflist);
   }
-  if (ctx->gvars.data) {
+  if (ctx->gvars.size) {
     msgpack_sbuffer_destroy(&ctx->gvars);
   }
   if (ctx->funcs.items) {
     api_free_array(ctx->funcs);
   }
+  *ctx = CONTEXT_INIT;
 }
 
 /// Saves the editor state to a context.
@@ -304,33 +305,38 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
 
-  if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
-    EMSG(_(e_outofmem));
-    goto exit;
-  }
-
+  bool need_more = false;
   bool did_try_to_free = false;
   size_t offset = 0;
   while (offset < sbuf.size) {
-    size_t read_bytes = MIN(IOSIZE, sbuf.size - offset);
+    if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
+      EMSG(_(e_outofmem));
+      goto exit;
+    }
+    size_t read_bytes = MIN(unpacker->free, sbuf.size - offset);
     memcpy(msgpack_unpacker_buffer(unpacker), sbuf.data + offset, read_bytes);
+    offset += read_bytes;
     msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
-    while (unpacker->off < unpacker->used) {
+    need_more = false;
+    while (!need_more && unpacker->off < unpacker->used) {
       Object obj = OBJECT_INIT;
       msgpack_unpack_return ret = msgpack_unpacker_next(unpacker, &unpacked);
       switch (ret) {
         case MSGPACK_UNPACK_SUCCESS:
-          msgpack_rpc_to_object(&unpacked.data, &obj);
-          ADD(rv, obj);
+          if (unpacked.data.type == MSGPACK_OBJECT_ARRAY
+              || unpacked.data.type == MSGPACK_OBJECT_MAP) {
+            msgpack_rpc_to_object(&unpacked.data, &obj);
+            ADD(rv, obj);
+          }
           break;
         case MSGPACK_UNPACK_CONTINUE:
-          EMSG("Incomplete msgpack string");
-          goto exit;
+          need_more = true;
+          break;
         case MSGPACK_UNPACK_EXTRA_BYTES:
-          EMSG("Extra bytes in msgpack string");
+          EMSG2(_(e_intern2), "Context: extra bytes in msgpack string");
           goto exit;
         case MSGPACK_UNPACK_PARSE_ERROR:
-          EMSG("Failed to parse msgpack string");
+          EMSG2(_(e_intern2), "Context: failed to parse msgpack string");
           goto exit;
         case MSGPACK_UNPACK_NOMEM_ERROR:
           if (!did_try_to_free) {
@@ -343,7 +349,10 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
           break;
       }
     }
-    offset += read_bytes;
+  }
+
+  if (need_more) {
+    EMSG("Incomplete msgpack string");
   }
 
 exit:
@@ -352,31 +361,154 @@ exit:
   return rv;
 }
 
-/// Pack API Objects from an Array into a msgpack_sbuffer.
+/// Pack an Object into a msgpack_sbuffer.
+///
+/// @param[in]  array  Object to pack.
+///
+/// @return msgpack_sbuffer with packed object.
+static inline msgpack_sbuffer object_to_sbuf(Object obj)
+{
+  msgpack_sbuffer sbuf;
+  msgpack_sbuffer_init(&sbuf);
+  msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
+
+  // msgpack_rpc_from_object packs Strings as STR, ShaDa expects BIN
+  Error err = ERROR_INIT;
+  typval_T tv = TV_INITIAL_VALUE;
+  if (object_to_vim(obj, &tv, &err)) {
+    encode_vim_to_msgpack(packer, &tv, "");
+    tv_clear(&tv);
+  }
+  api_clear_error(&err);
+
+  msgpack_packer_free(packer);
+  return sbuf;
+}
+
+/// Pack API Objects from an Array into a ShaDa-format msgpack_sbuffer.
 ///
 /// @param[in]  array  Array of API Objects to pack.
 ///
-/// @return msgpack_sbuffer with packed objects.
-static inline msgpack_sbuffer array_to_sbuf(Array array)
+/// @return ShaDa-format msgpack_sbuffer with packed objects.
+static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
 {
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
 
   for (size_t i = 0; i < array.size; i++) {
-    Error err = ERROR_INIT;
-    typval_T tv = TV_INITIAL_VALUE;
-    // TODO(abdelhakeem): refactor ShaDa module to avoid stuff like this
-    if (object_to_vim(array.items[i], &tv, &err)) {
-      encode_vim_to_msgpack(packer, &tv, "");
-      tv_clear(&tv);
-    }
-    api_clear_error(&err);
+    msgpack_sbuffer sbuf_current = object_to_sbuf(array.items[i]);
+    msgpack_pack_uint64(packer, (uint64_t)type);
+    msgpack_pack_uint64(packer, os_time());
+    msgpack_pack_uint64(packer, sbuf_current.size);
+    msgpack_pack_bin_body(packer, sbuf_current.data, sbuf_current.size);
+    msgpack_sbuffer_destroy(&sbuf_current);
   }
 
   msgpack_packer_free(packer);
   return sbuf;
 }
+
+#define CONTEXT_MAP_KEY_DO(kv, from, to, code) \
+  if (strequal((kv)->key.data, (from))) { \
+    api_free_string((kv)->key); \
+    (kv)->key = STATIC_CSTR_TO_STRING((to)); \
+    code \
+  }
+
+#define CONTEXT_MAP_KEY(kv, from, to) \
+  CONTEXT_MAP_KEY_DO((kv), (from), (to), {})
+
+/// Map key names of ShaDa entries to user-friendly context key names.
+///
+/// "c"  -> "col"
+/// "f"  -> "file"
+/// "l"  -> "line"
+/// "n"  -> "name"
+/// "rc" -> "content"
+/// "rt" -> "type"
+/// "ru" -> "unnamed"
+/// "rw" -> "width"
+///
+/// @param[in/out]  regs  Array of decoded ShaDa entries.
+///
+/// @return Mapped array (arr).
+static inline Array ctx_keys_from_shada(Array arr)
+{
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeDictionary) {
+      continue;
+    }
+
+    Dictionary entry = arr.items[i].data.dictionary;
+    for (size_t j = 0; j < entry.size; j++) {
+      KeyValuePair *kv = &entry.items[j];
+      CONTEXT_MAP_KEY(kv, "c", "col");
+      CONTEXT_MAP_KEY(kv, "f", "file");
+      CONTEXT_MAP_KEY(kv, "l", "line");
+      CONTEXT_MAP_KEY_DO(kv, "n", "name", {
+        if (kv->value.type == kObjectTypeInteger) {
+          kv->value = STRING_OBJ(STATIC_CSTR_TO_STRING(
+              ((char[]) { (char)kv->value.data.integer, 0 })));
+        }
+      });
+      CONTEXT_MAP_KEY(kv, "rc", "content");
+      CONTEXT_MAP_KEY(kv, "rt", "type");
+      CONTEXT_MAP_KEY(kv, "ru", "unnamed");
+      CONTEXT_MAP_KEY(kv, "rw", "width");
+    }
+  }
+
+  return arr;
+}
+
+/// Map user-friendly key names of context entries to ShaDa key names.
+///
+/// "col"     -> "c"
+/// "file"    -> "f"
+/// "line"    -> "l"
+/// "name"    -> "n"
+/// "content" -> "rc"
+/// "type"    -> "rt"
+/// "unnamed" -> "ru"
+/// "width"   -> "rw"
+///
+/// @param[in/out]  arr  Array of context entries.
+///
+/// @return Mapped array (arr).
+static inline Array ctx_keys_to_shada(Array arr)
+{
+  for (size_t i = 0; i < arr.size; i++) {
+    if (arr.items[i].type != kObjectTypeDictionary) {
+      continue;
+    }
+
+    Dictionary entry = arr.items[i].data.dictionary;
+    for (size_t j = 0; j < entry.size; j++) {
+      KeyValuePair *kv = &entry.items[j];
+      CONTEXT_MAP_KEY(kv, "col", "c");
+      CONTEXT_MAP_KEY(kv, "file", "f");
+      CONTEXT_MAP_KEY(kv, "line", "l");
+      CONTEXT_MAP_KEY_DO(kv, "name", "n", {
+        if (kv->value.type == kObjectTypeString
+            && kv->value.data.string.size == 1) {
+          Object value = INTEGER_OBJ(kv->value.data.string.data[0]);
+          api_free_object(kv->value);
+          kv->value = value;
+        }
+      });
+      CONTEXT_MAP_KEY(kv, "content", "rc");
+      CONTEXT_MAP_KEY(kv, "type", "rt");
+      CONTEXT_MAP_KEY(kv, "unnamed", "ru");
+      CONTEXT_MAP_KEY(kv, "width", "rw");
+    }
+  }
+
+  return arr;
+}
+
+#undef CONTEXT_MAP_KEY
+#undef CONTEXT_MAP_KEY_DO
 
 /// Converts Context to Dictionary representation.
 ///
@@ -390,11 +522,34 @@ Dictionary ctx_to_dict(Context *ctx)
 
   Dictionary rv = ARRAY_DICT_INIT;
 
-  PUT(rv, "regs", ARRAY_OBJ(sbuf_to_array(ctx->regs)));
-  PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
-  PUT(rv, "buflist", ARRAY_OBJ(sbuf_to_array(ctx->buflist)));
-  PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
-  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
+  if (ctx->regs.size) {
+    PUT(rv, "regs",
+        ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->regs))));
+  }
+
+  if (ctx->jumps.size) {
+    PUT(rv, "jumps",
+        ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->jumps))));
+  }
+
+  if (ctx->buflist.size) {
+    Array buflist = sbuf_to_array(ctx->buflist);
+    assert(buflist.size == 1);
+    assert(buflist.items[0].type == kObjectTypeArray);
+    Array ctx_buflist = ctx_keys_from_shada(buflist.items[0].data.array);
+    if (ctx_buflist.size) {
+      PUT(rv, "buflist", ARRAY_OBJ(ctx_buflist));
+    }
+    xfree(buflist.items);
+  }
+
+  if (ctx->gvars.size) {
+    PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
+  }
+
+  if (ctx->funcs.size) {
+    PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
+  }
 
   return rv;
 }
@@ -414,13 +569,22 @@ void ctx_from_dict(Dictionary dict, Context *ctx)
       continue;
     }
     if (strequal(item.key.data, "regs")) {
-      ctx->regs = array_to_sbuf(item.value.data.array);
+      ctx->regs = array_to_sbuf(ctx_keys_to_shada(item.value.data.array),
+                                kSDItemRegister);
     } else if (strequal(item.key.data, "jumps")) {
-      ctx->jumps = array_to_sbuf(item.value.data.array);
+      ctx->jumps = array_to_sbuf(ctx_keys_to_shada(item.value.data.array),
+                                 kSDItemJump);
     } else if (strequal(item.key.data, "buflist")) {
-      ctx->buflist = array_to_sbuf(item.value.data.array);
+      Array shada_buflist = (Array) {
+        .size = 1,
+        .capacity = 1,
+        .items = (Object[]) {
+          ARRAY_OBJ(ctx_keys_to_shada(item.value.data.array))
+        }
+      };
+      ctx->buflist = array_to_sbuf(shada_buflist, kSDItemBufferList);
     } else if (strequal(item.key.data, "gvars")) {
-      ctx->gvars = array_to_sbuf(item.value.data.array);
+      ctx->gvars = array_to_sbuf(item.value.data.array, kSDItemVariable);
     } else if (strequal(item.key.data, "funcs")) {
       ctx->funcs = copy_object(item.value).data.array;
     }

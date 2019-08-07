@@ -14,9 +14,7 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local filter = global_helpers.filter
 local is_os = global_helpers.is_os
-local map = global_helpers.map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
 local tbl_contains = global_helpers.tbl_contains
@@ -773,21 +771,6 @@ if global_helpers.isCI() then
 end
 function module.load_adjust(num)
   return math.ceil(num * load_factor)
-end
-
-function module.filter_context(ctx)
-  for _, item in ipairs({'regs', 'jumps', 'buflist', 'gvars'}) do
-    ctx[item] = filter(function(v)
-      return type(v) == 'table'
-    end,  ctx[item])
-  end
-  ctx['buflist'] = ctx['buflist'][1]
-  return map(function(v)
-    if #v == 0 then
-      v = nil
-    end
-    return v
-  end, ctx)
 end
 
 function module.add_builddir_to_rtp()

@@ -12,7 +12,6 @@ local meths = helpers.meths
 local matches = helpers.matches
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
-local filter_context = helpers.filter_context
 local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
@@ -897,11 +896,11 @@ describe('API', function()
   describe('nvim_get_context', function()
     it('returns context dictionary of current editor state', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, filter_context(nvim('get_context', ctx_items)))
+      eq({}, nvim('get_context', ctx_items))
 
-      feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
+      feed('i1<cr>22<cr>333<c-[>ddddddqahjklquuu')
       feed('gg')
-      feed('G')
+      feed('Gll')
       command('edit! BUF1')
       command('edit BUF2')
       nvim('set_var', 'one', 1)
@@ -910,33 +909,40 @@ describe('API', function()
 
       local expected_ctx = {
         ['regs'] = {
-          {['rt'] = 1, ['rc'] = {'1'}, ['n'] = 49, ['ru'] = true},
-          {['rt'] = 1, ['rc'] = {'2'}, ['n'] = 50},
-          {['rt'] = 1, ['rc'] = {'3'}, ['n'] = 51},
-          {['rc'] = {'hjkl'}, ['n'] = 97},
+          {['type'] = 1, ['content'] = {'1'},
+           ['name'] = '1', ['unnamed'] = true},
+          {['type'] = 1, ['content'] = {'22'}, ['name'] = '2'},
+          {['type'] = 1, ['content'] = {'333'}, ['name'] = '3'},
+          {['content'] = {'hjkl'}, ['name'] = 'a'},
         },
 
         ['jumps'] = eval(([[
         filter(map(getjumplist()[0], 'filter(
-          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+          { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum },
+          { k, v -> k != "line" || v != 1 })'), '!empty(v:val.file)')
         ]]):gsub('\n', '')),
 
-        ['buflist'] = eval([[
-        filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
-        ]]),
+        ['buflist'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
 
         ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
       }
 
-      eq(expected_ctx, filter_context(nvim('get_context', ctx_items)))
+      eq(expected_ctx, nvim('get_context', ctx_items))
+    end)
+
+    it('handles large context properly', function()
+      command([[let g:huge = range(4096)]])
+      eq(eval('g:huge'), nvim('get_context', {'gvars'}).gvars[1][2])
     end)
   end)
 
   describe('nvim_load_context', function()
     it('sets current editor state to given context dictionary', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, filter_context(nvim('get_context', ctx_items)))
+      eq({}, nvim('get_context', ctx_items))
 
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
