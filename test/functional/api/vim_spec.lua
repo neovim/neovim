@@ -731,6 +731,11 @@ describe('API', function()
 
       eq(expected_ctx, filter_context(nvim('get_context', ctx_items)))
     end)
+
+    it('handles large context properly', function()
+      command([[let g:huge = range(4096)]])
+      eq(eval('g:huge'), nvim('get_context', {'gvars'}).gvars[1][2])
+    end)
   end)
 
   describe('nvim_load_context', function()

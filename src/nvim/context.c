@@ -311,11 +311,14 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
 
   bool did_try_to_free = false;
   size_t offset = 0;
+  bool need_more = false;
   while (offset < sbuf.size) {
     size_t read_bytes = MIN(IOSIZE, sbuf.size - offset);
     memcpy(msgpack_unpacker_buffer(unpacker), sbuf.data + offset, read_bytes);
+    offset += read_bytes;
     msgpack_unpacker_buffer_consumed(unpacker, read_bytes);
-    while (unpacker->off < unpacker->used) {
+    need_more = false;
+    while (!need_more && unpacker->off < unpacker->used) {
       Object obj = OBJECT_INIT;
       msgpack_unpack_return ret = msgpack_unpacker_next(unpacker, &unpacked);
       switch (ret) {
@@ -327,13 +330,17 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
           }
           break;
         case MSGPACK_UNPACK_CONTINUE:
-          EMSG("Incomplete msgpack string");
-          goto exit;
+          if (!msgpack_unpacker_reserve_buffer(unpacker, IOSIZE)) {
+            EMSG(_(e_outofmem));
+            goto exit;
+          }
+          need_more = true;
+          break;
         case MSGPACK_UNPACK_EXTRA_BYTES:
-          EMSG("Extra bytes in msgpack string");
+          EMSG2(_(e_intern2), "Context: extra bytes in msgpack string");
           goto exit;
         case MSGPACK_UNPACK_PARSE_ERROR:
-          EMSG("Failed to parse msgpack string");
+          EMSG2(_(e_intern2), "Context: failed to parse msgpack string");
           goto exit;
         case MSGPACK_UNPACK_NOMEM_ERROR:
           if (!did_try_to_free) {
@@ -346,7 +353,10 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
           break;
       }
     }
-    offset += read_bytes;
+  }
+
+  if (need_more) {
+    EMSG2(_(e_intern2), "Context: incomplete msgpack string");
   }
 
 exit:
