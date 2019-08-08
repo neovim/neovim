@@ -1470,6 +1470,31 @@ void mb_utflen(const char_u *s, size_t len, size_t *codepoints,
   *codeunits += count + extra;
 }
 
+ssize_t mb_utf_index_to_bytes(const char_u *s, size_t len,
+                              size_t index, bool use_utf16_units)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t count = 0;
+  size_t clen, i;
+  if (index == 0) {
+    return 0;
+  }
+  for (i = 0; i < len && s[i] != NUL; i += clen) {
+    clen = utf_ptr2len_len(s+i, len-i);
+    // NB: gets the byte value of invalid sequence bytes.
+    // we only care whether the char fits in the BMP or not
+    int c = (clen > 1) ? utf_ptr2char(s+i) : s[i];
+    count++;
+    if (use_utf16_units && c > 0xFFFF) {
+      count++;
+    }
+    if (count >= index) {
+      return i+clen;
+    }
+  }
+  return -1;
+}
+
 
 /*
  * Version of strnicmp() that handles multi-byte characters.

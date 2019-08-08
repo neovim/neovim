@@ -2,12 +2,12 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local funcs = helpers.funcs
-local meths = helpers.meths
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local meth_pcall = helpers.meth_pcall
+local exec_lua = helpers.exec_lua
 
 before_each(clear)
 
@@ -110,28 +110,53 @@ describe('lua function', function()
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0B\\0")'))
   end)
 
+  it("vim.str_utfindex/str_byteindex", function()
+    exec_lua([[_G.test_text = "xy åäö ɧ 汉语 ↥ 🤦x🦄 å بِيَّ"]])
+    local indicies32 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,29,33,34,35,37,38,40,42,44,46,48}
+    local indicies16 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,28,29,33,33,34,35,37,38,40,42,44,46,48}
+    for i,k in pairs(indicies32) do
+      eq(k, exec_lua("return vim.str_byteindex(_G.test_text, ...)", i), i)
+    end
+    for i,k in pairs(indicies16) do
+      eq(k, exec_lua("return vim.str_byteindex(_G.test_text, ..., true)", i), i)
+    end
+    local i32, i16 = 0, 0
+    for k = 0,48 do
+      if indicies32[i32] < k then
+        i32 = i32 + 1
+      end
+      if indicies16[i16] < k then
+        i16 = i16 + 1
+        if indicies16[i16+1] == indicies16[i16] then
+          i16 = i16 + 1
+        end
+      end
+      eq({i32, i16}, exec_lua("return {vim.str_utfindex(_G.test_text, ...)}", k), k)
+    end
+  end)
+
   it("vim.schedule", function()
-    meths.execute_lua([[
+    exec_lua([[
       test_table = {}
       vim.schedule(function()
         table.insert(test_table, "xx")
       end)
       table.insert(test_table, "yy")
-    ]], {})
-    eq({"yy","xx"}, meths.execute_lua("return test_table", {}))
+    ]])
+    eq({"yy","xx"}, exec_lua("return test_table"))
 
     -- type checked args
     eq({false, 'Error executing lua: vim.schedule: expected function'},
-       meth_pcall(meths.execute_lua, "vim.schedule('stringly')", {}))
+       meth_pcall(exec_lua, "vim.schedule('stringly')"))
 
     eq({false, 'Error executing lua: vim.schedule: expected function'},
-       meth_pcall(meths.execute_lua, "vim.schedule()", {}))
+       meth_pcall(exec_lua, "vim.schedule()"))
 
-    meths.execute_lua([[
+    exec_lua([[
       vim.schedule(function()
         error("big failure\nvery async")
       end)
-    ]], {})
+    ]])
 
     feed("<cr>")
     eq('Error executing vim.schedule lua callback: [string "<nvim>"]:2: big failure\nvery async', eval("v:errmsg"))
@@ -139,7 +164,7 @@ describe('lua function', function()
 
   it("vim.split", function()
     local split = function(str, sep)
-      return meths.execute_lua('return vim.split(...)', {str, sep})
+      return exec_lua('return vim.split(...)', str, sep)
     end
 
     local tests = {
@@ -172,7 +197,7 @@ describe('lua function', function()
 
   it('vim.trim', function()
     local trim = function(s)
-      return meths.execute_lua('return vim.trim(...)', { s })
+      return exec_lua('return vim.trim(...)', s)
     end
 
     local trims = {
@@ -194,7 +219,7 @@ describe('lua function', function()
   it('vim.inspect', function()
     -- just make sure it basically works, it has its own test suite
     local inspect = function(t, opts)
-      return meths.execute_lua('return vim.inspect(...)', { t, opts })
+      return exec_lua('return vim.inspect(...)', t, opts)
     end
 
     eq('2', inspect(2))
@@ -202,18 +227,18 @@ describe('lua function', function()
        inspect({ a = { b = 1 } }, { newline = '+', indent = '' }))
 
     -- special value vim.inspect.KEY works
-    eq('{  KEY_a = "x",  KEY_b = "y"}', meths.execute_lua([[
+    eq('{  KEY_a = "x",  KEY_b = "y"}', exec_lua([[
       return vim.inspect({a="x", b="y"}, {newline = '', process = function(item, path)
         if path[#path] == vim.inspect.KEY then
           return 'KEY_'..item
         end
         return item
       end})
-    ]], {}))
+    ]]))
   end)
 
   it("vim.deepcopy", function()
-    local is_dc = meths.execute_lua([[
+    local is_dc = exec_lua([[
       local a = { x = { 1, 2 }, y = 5}
       local b = vim.deepcopy(a)
 
@@ -222,7 +247,7 @@ describe('lua function', function()
 
       return b.x[1] == 1 and b.x[2] == 2 and b.y == 5 and count == 2
              and tostring(a) ~= tostring(b)
-    ]], {})
+    ]])
 
     assert(is_dc)
   end)
