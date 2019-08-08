@@ -63,7 +63,9 @@ server_config.get_command = function(filetype)
 
   local ft_config = server_config.configured_servers[filetype]
 
-  if shared.tbl_isempty(ft_config) then return nil end
+  if ft_config == nil or shared.tbl_isempty(ft_config) then
+    error(string.format('%s filetype is not set language server config', filetype), 2)
+  end
 
   return ft_config.command
 end
