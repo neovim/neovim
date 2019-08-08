@@ -51,12 +51,7 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    if helpers.skip_fragile(pending,
-        (helpers.isCI('travis') and helpers.os_name() == 'osx')) then
-      return
-    end
-    child_session.feed_data(
-      ":!for i in $(seq 2 30000); do echo XXXXXXXXXX $i; done\n")
+    child_session.feed_data(":!"..nvim_dir.."/shell-test REP_NODELAY 30001 foo\n")
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
@@ -65,10 +60,10 @@ describe("shell command :!", function()
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
     screen:expect([[
-      XXXXXXXXXX 29997                                  |
-      XXXXXXXXXX 29998                                  |
-      XXXXXXXXXX 29999                                  |
-      XXXXXXXXXX 30000                                  |
+      29997: foo                                        |
+      29998: foo                                        |
+      29999: foo                                        |
+      30000: foo                                        |
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |

@@ -40,6 +40,7 @@ static void help(void)
   puts("      0: foo bar");
   puts("      ...");
   puts("      96: foo bar");
+  puts("  shell-test REP_NODELAY N {text}");
   puts("  shell-test INTERACT");
   puts("    Prints \"interact $ \" to stderr, and waits for \"exit\" input.");
 }
@@ -66,7 +67,8 @@ int main(int argc, char **argv)
       if (argc >= 3) {
         fprintf(stderr, "%s\n", argv[2]);
       }
-    } else if (strcmp(argv[1], "REP") == 0) {
+    } else if (strcmp(argv[1], "REP") == 0 ||
+               strcmp(argv[1], "REP_NODELAY") == 0) {
       if (argc != 4) {
         fprintf(stderr, "REP expects exactly 3 arguments\n");
         return 4;
@@ -76,10 +78,17 @@ int main(int argc, char **argv)
         fprintf(stderr, "Invalid count: %s\n", argv[2]);
         return 4;
       }
-      for (int i = 0; i < count; i++) {
-        printf("%d: %s\n", i, argv[3]);
-        fflush(stdout);
-        usleep(1000);  // Wait 1 ms (simulate typical output).
+      if (strcmp(argv[1], "REP_NODELAY") == 0) {
+        for (int i = 0; i < count; i++) {
+          printf("%d: %s\n", i, argv[3]);
+          fflush(stdout);
+        }
+      } else {
+        for (int i = 0; i < count; i++) {
+          printf("%d: %s\n", i, argv[3]);
+          fflush(stdout);
+          usleep(1000);  // Wait 1 ms (simulate typical output).
+        }
       }
     } else if (strcmp(argv[1], "UTF-8") == 0) {
       // test split-up UTF-8 sequence
