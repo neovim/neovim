@@ -302,6 +302,10 @@ end
 local function nvim_feed(input)
   while #input > 0 do
     local written = module.request('nvim_input', input)
+    if written == nil then
+      module.assert_alive()
+      error('nvim_input returned nil (Nvim process terminated?)')
+    end
     input = input:sub(written + 1)
   end
 end
@@ -584,6 +588,11 @@ end
 function module.expect_any(contents)
   contents = dedent(contents)
   return ok(nil ~= string.find(module.curbuf_contents(), contents, 1, true))
+end
+
+-- Checks that the Nvim session did not terminate.
+function module.assert_alive()
+  eq(2, module.eval('1+1'))
 end
 
 local function do_rmdir(path)
