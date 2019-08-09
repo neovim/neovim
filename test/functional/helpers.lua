@@ -419,6 +419,14 @@ end
 --    clear('-e')
 --    clear{args={'-e'}, args_rm={'-i'}, env={TERM=term}}
 function module.clear(...)
+  local argv, env = module.new_argv(...)
+  module.set_session(module.spawn(argv, nil, env))
+end
+
+-- Builds an argument list for use in clear().
+--
+--@see clear() for parameters.
+function module.new_argv(...)
   local args = {unpack(module.nvim_argv)}
   table.insert(args, '--headless')
   local new_args
@@ -458,7 +466,7 @@ function module.clear(...)
   for _, arg in ipairs(new_args) do
     table.insert(args, arg)
   end
-  module.set_session(module.spawn(args, nil, env))
+  return args, env
 end
 
 function module.insert(...)

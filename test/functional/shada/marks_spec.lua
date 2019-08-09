@@ -6,11 +6,7 @@ local meths, curwinmeths, curbufmeths, nvim_command, funcs, eq =
 local exc_exec, redir_exec = helpers.exc_exec, helpers.redir_exec
 
 local shada_helpers = require('test.functional.shada.helpers')
-local reset, set_additional_cmd, clear =
-  shada_helpers.reset, shada_helpers.set_additional_cmd,
-  shada_helpers.clear
-local add_argv = shada_helpers.add_argv
-local nvim_argv = shada_helpers.nvim_argv
+local reset, clear = shada_helpers.reset, shada_helpers.clear
 
 local nvim_current_line = function()
   return curwinmeths.get_cursor()[1]
@@ -71,8 +67,7 @@ describe('ShaDa support code', function()
     nvim_command('2')
     nvim_command('kB')
     nvim_command('wshada')
-    set_additional_cmd('set shada=\'0,f0')
-    reset()
+    reset('set shada=\'0,f0')
     nvim_command('language C')
     nvim_command('normal! `A')
     eq(testfilename, funcs.fnamemodify(curbufmeths.get_name(), ':t'))
@@ -223,17 +218,32 @@ describe('ShaDa support code', function()
   -- during -c used to add item with zero lnum to jump list.
   it('does not create incorrect file for non-existent buffers when writing from -c',
   function()
-    add_argv('--cmd', 'silent edit ' .. non_existent_testfilename, '-c', 'qall')
-    local argv = nvim_argv(nil, false) -- no --embed
+    local argv = helpers.new_argv{
+      args_rm={
+        '-i',
+        '--embed',  -- no --embed
+      },
+      args={
+        '-i', meths.get_var('tmpname'),  -- Use same shada file as parent.
+        '--cmd', 'silent edit '..non_existent_testfilename,
+        '-c', 'qall'},
+    }
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))
   end)
 
   it('does not create incorrect file for non-existent buffers opened from -c',
   function()
-    add_argv('-c', 'silent edit ' .. non_existent_testfilename,
-             '-c', 'autocmd VimEnter * qall')
-    local argv = nvim_argv(nil, false) -- no --embed
+    local argv = helpers.new_argv{
+      args_rm={
+        '-i',
+        '--embed',  -- no --embed
+      },
+      args={
+        '-i', meths.get_var('tmpname'),  -- Use same shada file as parent.
+        '-c', 'silent edit '..non_existent_testfilename,
+        '-c', 'autocmd VimEnter * qall'},
+    }
     eq('', funcs.system(argv))
     eq(0, exc_exec('rshada'))
   end)
