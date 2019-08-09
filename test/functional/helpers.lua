@@ -165,11 +165,12 @@ function module.expect_msg_seq(...)
     end
     return string.format('%s\n%s\n%s', err1, string.rep('=', 78), err2)
   end
+  local msg_timeout = module.load_adjust(10000)  -- Big timeout for ASAN/valgrind.
   for anum = 1, #seqs do
     local expected_seq = seqs[anum]
     -- Collect enough messages to compare the next expected sequence.
     while #actual_seq < #expected_seq do
-      local msg = module.next_msg(10000)  -- Big timeout for ASAN/valgrind.
+      local msg = module.next_msg(msg_timeout)
       local msg_type = msg and msg[2] or nil
       if msg == nil then
         error(cat_err(final_error,
@@ -770,14 +771,14 @@ function module.alter_slashes(obj)
   end
 end
 
-
-local load_factor = nil
+local load_factor = 1
+if global_helpers.isCI() then
+  -- Compute load factor only once (but outside of any tests).
+  module.clear()
+  module.request('nvim_command', 'source src/nvim/testdir/load.vim')
+  load_factor = module.request('nvim_eval', 'g:test_load_factor')
+end
 function module.load_adjust(num)
-  if load_factor == nil then  -- Compute load factor only once.
-    module.clear()
-    module.request('nvim_command', 'source src/nvim/testdir/load.vim')
-    load_factor = module.request('nvim_eval', 'g:test_load_factor')
-  end
   return math.ceil(num * load_factor)
 end
 
