@@ -20,13 +20,6 @@ endif()
 check_symbol_exists(_NSGetEnviron crt_externs.h HAVE__NSGETENVIRON)
 
 # Headers
-if(ICONV_INCLUDE_DIR)
-  list(APPEND CMAKE_REQUIRED_INCLUDES "${ICONV_INCLUDE_DIR}")
-endif()
-check_include_files(iconv.h HAVE_ICONV_H)
-if(ICONV_INCLUDE_DIR)
-  list(REMOVE_ITEM CMAKE_REQUIRED_INCLUDES "${ICONV_INCLUDE_DIR}")
-endif()
 check_include_files(langinfo.h HAVE_LANGINFO_H)
 check_include_files(locale.h HAVE_LOCALE_H)
 check_include_files(pwd.h HAVE_PWD_H)

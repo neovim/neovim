@@ -655,16 +655,6 @@ EXTERN int inhibit_delete_count INIT(= 0);
 /// Encoding used when 'fencs' is set to "default"
 EXTERN char_u *fenc_default INIT(= NULL);
 
-# if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
-/* Pointers to functions and variables to be loaded at runtime */
-EXTERN size_t (*iconv)(iconv_t cd, const char **inbuf, size_t *inbytesleft,
-                       char **outbuf, size_t *outbytesleft);
-EXTERN iconv_t (*iconv_open)(const char *tocode, const char *fromcode);
-EXTERN int (*iconv_close)(iconv_t cd);
-EXTERN int (*iconvctl)(iconv_t cd, int request, void *argument);
-EXTERN int* (*iconv_errno)(void);
-# endif
-
 /// "State" is the main state of Vim.
 /// There are other variables that modify the state:
 ///    Visual_mode:    When State is NORMAL or INSERT.

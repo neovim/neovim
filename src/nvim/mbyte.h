@@ -63,7 +63,7 @@ typedef enum {
 typedef struct {
   int vc_type;  ///< Zero or more ConvFlags.
   int vc_factor;  ///< Maximal expansion factor.
-# ifdef USE_ICONV
+# ifdef HAVE_ICONV
   iconv_t vc_fd;  ///< Value for CONV_ICONV.
 # endif
   bool vc_fail;  ///< What to do with invalid characters: if true, fail,
