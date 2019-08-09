@@ -1306,7 +1306,7 @@ static void refresh_screen(Terminal *term, buf_T *buf)
 
 static void adjust_topline(Terminal *term, buf_T *buf, long added)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == buf) {
       linenr_T ml_end = buf->b_ml.ml_line_count;
       bool following = ml_end == wp->w_cursor.lnum + added;  // cursor at end?
