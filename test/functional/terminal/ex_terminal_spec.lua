@@ -27,11 +27,7 @@ describe(':terminal', function()
       echomsg "msg3"
     ]])
     -- Invoke a command that emits frequent terminal activity.
-    if iswin() then
-      feed_command([[terminal for /L \%I in (1,0,2) do echo \%I]])
-    else
-      feed_command([[terminal while true; do echo X; done]])
-    end
+    feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 9999 !terminal_output!<cr>]])
     feed([[<C-\><C-N>]])
     wait()
     -- Wait for some terminal activity.

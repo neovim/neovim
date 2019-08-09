@@ -7,6 +7,7 @@ local funcs = helpers.funcs
 local eq = helpers.eq
 local eval = helpers.eval
 local retry = helpers.retry
+local nvim_dir = helpers.nvim_dir
 
 describe("'wildmenu'", function()
   local screen
@@ -83,13 +84,8 @@ describe("'wildmenu'", function()
   it('is preserved during :terminal activity', function()
     command('set wildmenu wildmode=full')
     command('set scrollback=4')
-    if iswin() then
-      feed([[:terminal for /L \%I in (1,1,5000) do @(echo foo & echo foo & echo foo)<cr>]])
-    else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'foo\nfoo\nfoo\n'; sleep 0.1; done<cr>]])
-    end
-
-    feed([[<C-\><C-N>gg]])
+    feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 5000 !terminal_output!<cr>]])
+    feed('G')  -- Follow :terminal output.
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
     -- NB: in earlier versions terminal output was redrawn during cmdline mode.
     -- For now just assert that the screen remains unchanged.
@@ -114,13 +110,7 @@ describe("'wildmenu'", function()
 
     -- Exiting cmdline should show the buffer.
     feed([[<C-\><C-N>]])
-    screen:expect([[
-      ^foo                      |
-      foo                      |
-      foo                      |
-      foo                      |
-                               |
-    ]])
+    screen:expect{any=[[!terminal_output!]]}
   end)
 
   it('ignores :redrawstatus called from a timer #7108', function()
