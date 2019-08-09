@@ -288,7 +288,7 @@ static void chld_handler(uv_signal_t *handle, int signum)
     if (WIFEXITED(stat)) {
       proc->status = WEXITSTATUS(stat);
     } else if (WIFSIGNALED(stat)) {
-      proc->status = WTERMSIG(stat);
+      proc->status = 128 + WTERMSIG(stat);
     }
     proc->internal_exit_cb(proc);
   }

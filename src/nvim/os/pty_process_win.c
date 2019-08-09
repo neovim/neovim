@@ -252,7 +252,7 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 
   DWORD exit_code = 0;
   GetExitCodeProcess(ptyproc->process_handle, &exit_code);
-  proc->status = (int)exit_code;
+  proc->status = proc->exit_signal ? 128 + proc->exit_signal : (int)exit_code;
 
   CloseHandle(ptyproc->process_handle);
   ptyproc->process_handle = NULL;

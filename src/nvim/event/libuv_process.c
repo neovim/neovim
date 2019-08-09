@@ -101,6 +101,10 @@ static void close_cb(uv_handle_t *handle)
 static void exit_cb(uv_process_t *handle, int64_t status, int term_signal)
 {
   Process *proc = handle->data;
-  proc->status = (int)status;
+#if defined(WIN32)
+  // Use stored/expected signal.
+  term_signal = proc->exit_signal;
+#endif
+  proc->status = term_signal ? 128 + term_signal : (int)status;
   proc->internal_exit_cb(proc);
 }

@@ -67,7 +67,7 @@ For |on_stdout| and |on_stderr| see |channel-callback|.
 							*on_exit*
 Arguments passed to on_exit callback:
   0: |job-id|
-  1: Exit-code of the process.
+  1: Exit-code of the process, or 128+SIGNUM if by signal (e.g. 143 on SIGTERM).
   2: Event type: "exit"
 
 
