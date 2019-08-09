@@ -16759,6 +16759,8 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           break;
         }
         str += len;
+        capcol -= len;
+        len = 0;
       }
     }
   }
