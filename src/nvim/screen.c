@@ -5372,8 +5372,11 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
 
   screen_adjust_grid(&grid, &row, &col);
 
-  // safety check
-  if (grid->chars == NULL || row >= grid->Rows || col >= grid->Columns) {
+  // Safety check. The check for negative row and column is to fix issue
+  // vim/vim#4102. TODO: find out why row/col could be negative.
+  if (grid->chars == NULL
+      || row >= grid->Rows || row < 0
+      || col >= grid->Columns || col < 0) {
     return;
   }
 
