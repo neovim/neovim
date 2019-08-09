@@ -4242,6 +4242,7 @@ static void search_stat(int dirc, pos_T *pos,
     // STRNICMP ignores case, but we should not ignore case.
     // Unfortunately, there is no STRNICMP function.
     if (!(chgtick == buf_get_changedtick(curbuf)
+          && lastpat != NULL  // supress clang/NULL passed as nonnull parameter
           && STRNICMP(lastpat, spats[last_idx].pat, STRLEN(lastpat)) == 0
           && STRLEN(lastpat) == STRLEN(spats[last_idx].pat)
           && equalpos(lastpos, curwin->w_cursor)
