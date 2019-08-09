@@ -85,6 +85,7 @@
 
 #include "nvim/buffer.h"
 #include "nvim/ascii.h"
+#include "nvim/change.h"
 #include "nvim/undo.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"

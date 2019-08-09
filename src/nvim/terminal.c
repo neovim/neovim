@@ -53,6 +53,7 @@
 #include "nvim/macros.h"
 #include "nvim/mbyte.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
 #include "nvim/ascii.h"
 #include "nvim/getchar.h"
 #include "nvim/ui.h"

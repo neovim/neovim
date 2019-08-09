@@ -18,6 +18,7 @@
 #endif
 #include "nvim/ex_cmds2.h"
 #include "nvim/buffer.h"
+#include "nvim/change.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"

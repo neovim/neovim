@@ -5,6 +5,7 @@
 #include <inttypes.h>
 
 #include "nvim/assert.h"
+#include "nvim/change.h"
 #include "nvim/cursor.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"

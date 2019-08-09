@@ -7,6 +7,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/change.h"
 #include "nvim/indent.h"
 #include "nvim/eval.h"
 #include "nvim/charset.h"
@@ -313,109 +314,6 @@ int set_indent(int size, int flags)
   }
   curwin->w_cursor.col = ind_len;
   return retval;
-}
-
-
-// Copy the indent from ptr to the current line (and fill to size).
-// Leaves the cursor on the first non-blank in the line.
-// @return true if the line was changed.
-int copy_indent(int size, char_u *src)
-{
-  char_u *p = NULL;
-  char_u *line = NULL;
-  char_u *s;
-  int todo;
-  int ind_len;
-  int line_len = 0;
-  int tab_pad;
-  int ind_done;
-  int round;
-
-  // Round 1: compute the number of characters needed for the indent
-  // Round 2: copy the characters.
-  for (round = 1; round <= 2; ++round) {
-    todo = size;
-    ind_len = 0;
-    ind_done = 0;
-    s = src;
-
-    // Count/copy the usable portion of the source line.
-    while (todo > 0 && ascii_iswhite(*s)) {
-      if (*s == TAB) {
-        tab_pad = (int)curbuf->b_p_ts
-                  - (ind_done % (int)curbuf->b_p_ts);
-
-        // Stop if this tab will overshoot the target.
-        if (todo < tab_pad) {
-          break;
-        }
-        todo -= tab_pad;
-        ind_done += tab_pad;
-      } else {
-        todo--;
-        ind_done++;
-      }
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = *s;
-      }
-      s++;
-    }
-
-    // Fill to next tabstop with a tab, if possible.
-    tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
-
-    if ((todo >= tab_pad) && !curbuf->b_p_et) {
-      todo -= tab_pad;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = TAB;
-      }
-    }
-
-    // Add tabs required for indent.
-    while (todo >= (int)curbuf->b_p_ts && !curbuf->b_p_et) {
-      todo -= (int)curbuf->b_p_ts;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = TAB;
-      }
-    }
-
-    // Count/add spaces required for indent.
-    while (todo > 0) {
-      todo--;
-      ind_len++;
-
-      if (p != NULL) {
-        *p++ = ' ';
-      }
-    }
-
-    if (p == NULL) {
-      // Allocate memory for the result: the copied indent, new indent
-      // and the rest of the line.
-      line_len = (int)STRLEN(get_cursor_line_ptr()) + 1;
-      assert(ind_len + line_len >= 0);
-      size_t line_size;
-      STRICT_ADD(ind_len, line_len, &line_size, size_t);
-      line = xmalloc(line_size);
-      p = line;
-    }
-  }
-
-  // Append the original line
-  memmove(p, get_cursor_line_ptr(), (size_t)line_len);
-
-  // Replace the line
-  ml_replace(curwin->w_cursor.lnum, line, false);
-
-  // Put the cursor after the indent.
-  curwin->w_cursor.col = ind_len;
-  return true;
 }
 
 
