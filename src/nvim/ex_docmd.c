@@ -4060,10 +4060,9 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
   return p;
 }
 
-/*
- * Expand file name in Ex command argument.
- * Return FAIL for failure, OK otherwise.
- */
+// Expand file name in Ex command argument.
+// When an error is detected, "errormsgp" is set to a non-NULL pointer.
+// Return FAIL for failure, OK otherwise.
 int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 {
   int has_wildcards;            /* need to expand wildcards */
