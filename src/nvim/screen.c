@@ -4374,6 +4374,12 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
 
   screen_adjust_grid(&grid, &row, &coloff);
 
+  // Safety check. Avoids clang warnings down the call stack.
+  if (grid->chars == NULL || row >= grid->Rows || col >= grid->Columns) {
+    DLOG("invalid state, skipped");
+    return;
+  }
+
   off_from = 0;
   off_to = grid->line_offset[row] + coloff;
   max_off_from = linebuf_size;
