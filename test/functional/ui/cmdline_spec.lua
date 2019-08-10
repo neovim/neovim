@@ -828,7 +828,7 @@ describe('cmdline redraw', function()
   end)
 
   it('with <Cmd>', function()
-    command('cmap a <Cmd>0<CR>')  -- no-op
+    command('cmap a <Cmd>call sin(0)<CR>')  -- no-op
     feed(':012345678901234567890123456789')
     screen:expect{grid=[[
                              |
