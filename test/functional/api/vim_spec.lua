@@ -957,8 +957,16 @@ describe('API', function()
     end)
 
     it('errors out on malformed context dictionary', function()
-      matches('API call: malformed context dictionary',
-              pcall_err(eval, [[nvim_load_context({'regs': [1]})]]))
+      local err = 'API call: malformed context dictionary'
+      matches(err, pcall_err(eval, [[nvim_load_context({'regs': [1]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'regs': [{'name': '0'}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'regs': [{'name': '0', 'content': 1}]})]]))
+      matches(err, pcall_err(
+        eval, [=[nvim_load_context({'gvars': [['1', '2']]})]=]))
+      matches(err, pcall_err(
+        eval, [=[nvim_load_context({'funcs': [['1', '2']]})]=]))
     end)
   end)
 
