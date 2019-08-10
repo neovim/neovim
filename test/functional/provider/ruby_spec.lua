@@ -8,7 +8,6 @@ local eval = helpers.eval
 local expect = helpers.expect
 local expect_err = helpers.expect_err
 local feed = helpers.feed
-local feed_command = helpers.feed_command
 local funcs = helpers.funcs
 local insert = helpers.insert
 local meths = helpers.meths
