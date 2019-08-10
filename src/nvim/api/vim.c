@@ -2583,28 +2583,30 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
 {
   Channel *channel = find_channel(channel_id);
   // Only allow async call jobs
-  if (!channel || !channel->async_call) {
+  if (!channel || !channel->is_asynccall) {
     api_set_error(err, kErrorTypeValidation,
                   "only async call jobs can issue 'nvim__async_done_event'");
     return;
   }
 
   AsyncCall *async_call = channel->async_call;
-  list_T *work_queue = async_call->work_queue;
+  if (async_call == NULL) {  // dead worker, ignore its events
+    return;
+  }
 
-  if (work_queue) {  // parallel call
+  if (async_call->is_parallel) {
+    Array work_queue = async_call->work_queue;
     asynccall_append_result(channel_id, result, err);
     ADD(async_call->results, copy_object(result));
     asynccall_callback_call(&channel->async_call->item_callback, &result, err);
     result = ARRAY_OBJ(async_call->results);
-    if (async_call->next < tv_list_len(work_queue)) {
+    if (async_call->next < work_queue.size) {
       Array rpc_args = ARRAY_DICT_INIT;
       ADD(rpc_args, INTEGER_OBJ(scid));
       ADD(rpc_args,
           STRING_OBJ(cstr_to_string((char *)channel->async_call->callee)));
       ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
-      listitem_T *args = tv_list_find(work_queue, async_call->next++);
-      ADD(rpc_args, vim_to_object(TV_LIST_ITEM_TV(args)));
+      ADD(rpc_args, copy_object(work_queue.items[async_call->next++]));
       rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
       return;
     } else {
@@ -2633,7 +2635,7 @@ void nvim_error_event(uint64_t channel_id, Integer type, String message,
   Channel *channel = find_channel(channel_id);
   if (channel && channel->async_call) {
     EMSG3(_("multiproc: job %" PRIu64 ": %s"), channel_id, message.data);
-    if (channel->async_call->work_queue && --channel->async_call->count) {
+    if (channel->async_call->work_queue.size && --channel->async_call->count) {
       // avoid "async_call" getting freed when other workers are alive
       channel->async_call = NULL;
     }

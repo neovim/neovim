@@ -244,6 +244,7 @@ Channel *asynccall_channel_acquire(void)
       (Array)ARRAY_DICT_INIT, &err).data.integer;
   if (!ERROR_SET(&err)) {
     channel = find_channel((uint64_t)jobid);
+    channel->is_asynccall = true;
   }
   api_clear_error(&err);
   return channel;
@@ -291,9 +292,9 @@ void asynccall_free(AsyncCall *asynccall)
   FUNC_ATTR_NONNULL_ALL
 {
   callback_free(&asynccall->callback);
-  if (asynccall->work_queue) {  // parallel call
+  if (asynccall->is_parallel) {
     callback_free(&asynccall->item_callback);
-    tv_list_unref(asynccall->work_queue);
+    api_free_array(asynccall->work_queue);
     api_free_array(asynccall->results);
     xfree(asynccall->callee);
   }

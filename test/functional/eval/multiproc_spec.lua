@@ -115,6 +115,8 @@ describe('multiproc', function()
     end)
 
     it('works', function()
+      eq({}, call('call_parallel', 'eval', {},
+                  {done = 'Callback', itemdone = 'Callback'}))
       source([[
       let jobs = call_parallel('eval',
                              \ [ ['2*1'], ['2*2'], ['2*3'], ['2*4'],
@@ -128,6 +130,7 @@ describe('multiproc', function()
       eq({3, 4, 5, 6}, eval('jobs'))
       eq({'notification', 'done', {expected}}, next_msg())
       eq(expected, wait_result)
+      eq({}, call('call_parallel', 'eval', {}))
     end)
 
     it('invokes "done" and "itemdone" callbacks', function()
@@ -179,6 +182,31 @@ describe('multiproc', function()
                         {count = -1}))
       eq('E475: Invalid value for argument opts: '..
          "value of 'done' should be a function", eval('v:errmsg'))
+    end)
+
+    it('fails gracefully on error spawning a child', function()
+      if helpers.is_os('win') or helpers.is_os('mac') then
+        pending('works on unix only', function() end)
+        return
+      end
+
+      local script = [=[
+      function SaveExitCode(id, code, event)
+        let g:exitcode = a:code
+      endfunction
+
+      let g:job = jobstart('ulimit -n 32; '.
+       \                 v:progpath.' -u NONE -i NONE -n --headless --embed',
+       \                 { 'rpc': v:true, 'on_exit': 'SaveExitCode' })
+
+      call rpcrequest(g:job, 'nvim_command', 'call call_wait(call_parallel(
+       \ "eval", [["foo"]] + map(range(128), "[v:val]"), { "count": 128 }))')
+      ]=]
+
+      matches('Failed to spawn job for async call', pcall_err(source, script))
+      command([[call rpcnotify(g:job, 'nvim_command', 'quit')]])
+      command([[call jobwait([g:job])]])
+      eq(0, eval('g:exitcode'))
     end)
   end)
 

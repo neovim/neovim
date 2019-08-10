@@ -7763,11 +7763,13 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char_u *callee = NULL;
   typval_T *arglists = NULL;
   typval_T *opts = NULL;
-  const typval_T *count = &vimvars[VV_CORES].vv_di.di_tv;
+  int count = vimvars[VV_CORES].vv_di.di_tv.vval.v_number;
   Callback callback = CALLBACK_NONE;
   Callback item_callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
   AsyncCall *async_call = NULL;
+
+  tv_list_alloc_ret(rettv, count);
 
   if (argvars[0].v_type == VAR_FUNC) {
     callee = argvars[0].vval.v_string;
@@ -7801,12 +7803,13 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
     dictitem_T *di_count = tv_dict_find(dict_opts, S_LEN("count"));
     if (di_count != NULL) {
-      count = &di_count->di_tv;
-      if (count->v_type != VAR_NUMBER || count->vval.v_number <= 0) {
+      typval_T *tv_count = &di_count->di_tv;
+      if (tv_count->v_type != VAR_NUMBER || tv_count->vval.v_number <= 0) {
         EMSG3(_(e_invargNval), "opts",
               "value of 'count' should be a positive number");
         goto fail;
       }
+      count = tv_count->vval.v_number;
     }
 
     dictitem_T *di_itemdone = tv_dict_find(dict_opts, S_LEN("itemdone"));
@@ -7822,6 +7825,13 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
+  count = MIN(count, tv_list_len(arglists->vval.v_list));
+  if (count == 0) {
+    callback_free(&callback);
+    callback_free(&item_callback);
+    goto free;
+  }
+
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     if (!ctx_dict_add_userfunc(&context, (char **)&callee)) {
@@ -7833,16 +7843,14 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   async_call = (AsyncCall *)xcalloc(1, sizeof(AsyncCall));
+  async_call->is_parallel = true;
   async_call->callback = callback;
   async_call->item_callback = item_callback;
-  async_call->count =
-    MIN(count->vval.v_number, tv_list_len(arglists->vval.v_list));
-  async_call->work_queue = arglists->vval.v_list;
-  tv_list_ref(arglists->vval.v_list);
+  async_call->count = count;
+  async_call->work_queue = vim_to_object(arglists).data.array;
   async_call->callee = callee;
 
-  tv_list_alloc_ret(rettv, async_call->count);
-  for (int i = 0; i < async_call->count; i++) {
+  for (size_t i = 0; i < async_call->count; i++) {
     Channel *chan = asynccall_channel_acquire();
     if (!chan) {
       EMSG(_("Failed to spawn job for async call"));
@@ -7854,15 +7862,20 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ADD(call_async_args, INTEGER_OBJ(scid));
     ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
     ADD(call_async_args, DICTIONARY_OBJ(copy_dictionary(context)));
-    listitem_T *args =
-      tv_list_find(async_call->work_queue, async_call->next++);
-    ADD(call_async_args, vim_to_object(TV_LIST_ITEM_TV(args)));
+    ADD(call_async_args,
+        copy_object(async_call->work_queue.items[async_call->next++]));
     if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
       EMSG(_("Failed to send RPC request to async call job"));
       goto fail;
     }
   }
 
+  async_call = NULL;
+
+free:
+  if (async_call) {
+    asynccall_free(async_call);
+  }
   api_free_dictionary(context);
   return;
 
@@ -7873,11 +7886,8 @@ fail:
     chan->async_call = NULL;
     asynccall_channel_release(chan);
   });
-  if (async_call) {
-    asynccall_free(async_call);
-  }
   tv_clear(rettv);
-  api_free_dictionary(context);
+  goto free;
 }
 
 /// "call_wait(ids[, timeout])" function
