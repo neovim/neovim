@@ -520,67 +520,67 @@ describe('API', function()
   describe('nvim_get_mode', function()
     it("during normal-mode `g` returns blocking=true", function()
       nvim("input", "o")                -- add a line
-      eq({mode='i', blocking=false}, nvim("get_mode"))
+      eq({mode='i', blocking=false, wintype=''}, nvim("get_mode"))
       nvim("input", [[<C-\><C-N>]])
       eq(2, nvim("eval", "line('.')"))
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
 
       nvim("input", "g")
-      eq({mode='n', blocking=true}, nvim("get_mode"))
+      eq({mode='n', blocking=true, wintype=''}, nvim("get_mode"))
 
       nvim("input", "k")                -- complete the operator
       eq(1, nvim("eval", "line('.')"))  -- verify the completed operator
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
     end)
 
     it("returns the correct result multiple consecutive times", function()
       for _ = 1,5 do
-        eq({mode='n', blocking=false}, nvim("get_mode"))
+        eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
       end
       nvim("input", "g")
       for _ = 1,4 do
-        eq({mode='n', blocking=true}, nvim("get_mode"))
+        eq({mode='n', blocking=true, wintype=''}, nvim("get_mode"))
       end
       nvim("input", "g")
       for _ = 1,7 do
-        eq({mode='n', blocking=false}, nvim("get_mode"))
+        eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
       end
     end)
 
     it("during normal-mode CTRL-W, returns blocking=true", function()
       nvim("input", "<C-W>")
-      eq({mode='n', blocking=true}, nvim("get_mode"))
+      eq({mode='n', blocking=true, wintype=''}, nvim("get_mode"))
 
       nvim("input", "s")                  -- complete the operator
       eq(2, nvim("eval", "winnr('$')"))   -- verify the completed operator
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
     end)
 
     it("during press-enter prompt returns blocking=true", function()
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
       command("echom 'msg1'")
       command("echom 'msg2'")
       command("echom 'msg3'")
       command("echom 'msg4'")
       command("echom 'msg5'")
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
       nvim("input", ":messages<CR>")
-      eq({mode='r', blocking=true}, nvim("get_mode"))
+      eq({mode='r', blocking=true, wintype=''}, nvim("get_mode"))
     end)
 
     it("during getchar() returns blocking=false", function()
       nvim("input", ":let g:test_input = nr2char(getchar())<CR>")
       -- Events are enabled during getchar(), RPC calls are *not* blocked. #5384
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
       eq(0, nvim("eval", "exists('g:test_input')"))
       nvim("input", "J")
       eq("J", nvim("eval", "g:test_input"))
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
     end)
 
     -- TODO: bug #6247#issuecomment-286403810
     it("batched with input", function()
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
       command("echom 'msg1'")
       command("echom 'msg2'")
       command("echom 'msg3'")
@@ -593,21 +593,26 @@ describe('API', function()
         {'nvim_get_mode', {}},
         {'nvim_eval',     {'1'}},
       }
-      eq({ { {mode='n', blocking=false},
+      eq({ { {mode='n', blocking=false, wintype=''},
              13,
-             {mode='n', blocking=false},  -- TODO: should be blocked=true ?
+             -- TODO: should be blocked=true ?
+             {mode='n', blocking=false, wintype=''},
              1 },
            NIL}, meths.call_atomic(req))
-      eq({mode='r', blocking=true}, nvim("get_mode"))
+      eq({mode='r', blocking=true, wintype=''}, nvim("get_mode"))
     end)
     it("during insert-mode map-pending, returns blocking=true #6166", function()
       command("inoremap xx foo")
       nvim("input", "ix")
-      eq({mode='i', blocking=true}, nvim("get_mode"))
+      eq({mode='i', blocking=true, wintype=''}, nvim("get_mode"))
     end)
     it("during normal-mode gU, returns blocking=false #6166", function()
       nvim("input", "gu")
-      eq({mode='no', blocking=false}, nvim("get_mode"))
+      eq({mode='no', blocking=false, wintype=''}, nvim("get_mode"))
+    end)
+    it('in cmdline-window', function()
+      feed('q:')
+      eq({mode='n', blocking=false, wintype='cmdline_:'}, nvim("get_mode"))
     end)
   end)
 
