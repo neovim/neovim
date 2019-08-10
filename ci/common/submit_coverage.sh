@@ -36,7 +36,10 @@ fi
 # Flags must match pattern ^[\w\,]+$ ("," as separator).
 codecov_flags="$(uname -s),${1}"
 codecov_flags=$(echo "$codecov_flags" | sed 's/[^,_a-zA-Z0-9]/_/g')
-if ! "$codecov_sh" -f coverage.xml -X gcov -X fix -Z -F "${codecov_flags}"; then
+# Specify branch explicitly - codecov uses target branch for PRs.
+# Ref: https://github.com/codecov/codecov-bash/pull/190
+branch="${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+if ! "$codecov_sh" -f coverage.xml -X gcov -X fix -B "$branch" -Z -F "${codecov_flags}"; then
   echo "codecov upload failed."
 fi
 
