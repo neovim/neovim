@@ -178,6 +178,28 @@ describe('multiproc', function()
                  "value of 'count' should be a positive number",
                  call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = -1})
     end)
+
+    it('fails gracefully on error spawning a child', function()
+      if helpers.pending_win32(pending) then return end
+
+      local script = [=[
+      function SaveExitCode(id, code, event)
+        let g:exitcode = a:code
+      endfunction
+
+      let g:job = jobstart('ulimit -n 64; '.
+       \                 v:progpath.' -u NONE -i NONE -n --headless --embed',
+       \                 { 'rpc': v:true, 'on_exit': 'SaveExitCode' })
+
+      call rpcrequest(g:job, 'nvim_command', 'call call_wait(call_parallel(
+       \ "eval", [["foo"]] + map(range(128), "[v:val]"), { "count": 128 }))')
+      ]=]
+
+      expect_err('Failed to spawn job for async call', source, script)
+      command([[call rpcnotify(g:job, 'nvim_command', 'quit')]])
+      command([[call jobwait([g:job])]])
+      eq(0, eval('g:exitcode'))
+    end)
   end)
 
   it('supports user-defined functions', function()

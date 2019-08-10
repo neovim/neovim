@@ -242,6 +242,7 @@ Channel *asynccall_channel_acquire(void)
       (Array)ARRAY_DICT_INIT, &err).data.integer;
   if (!ERROR_SET(&err)) {
     channel = find_channel((uint64_t)jobid);
+    channel->is_asynccall = true;
   }
   api_clear_error(&err);
   return channel;
@@ -305,7 +306,7 @@ static void free_channel_event(void **argv)
     rpc_free(chan);
   }
 
-  if (chan->async_call && chan->async_call->count == 0) {
+  if (chan->async_call) {
     asynccall_free(chan->async_call);
   }
 

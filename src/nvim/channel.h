@@ -87,6 +87,7 @@ struct Channel {
   bool is_rpc;
   RpcState rpc;
   Terminal *term;
+  bool is_asynccall;
   AsyncCall *async_call;
 
   CallbackReader on_data;

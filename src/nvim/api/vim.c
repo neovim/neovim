@@ -2432,13 +2432,17 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
 {
   Channel *channel = find_channel(channel_id);
   // Only allow async call jobs
-  if (!channel || !channel->async_call) {
+  if (!channel || !channel->is_asynccall) {
     api_set_error(err, kErrorTypeValidation,
                   "only async call jobs can issue 'nvim__async_done_event'");
     return;
   }
 
   AsyncCall *async_call = channel->async_call;
+  if (async_call == NULL) {  // dead worker, ignore its events
+    return;
+  }
+
   list_T *work_queue = async_call->work_queue;
 
   if (work_queue) {  // parallel call

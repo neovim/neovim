@@ -7909,7 +7909,9 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 fail:
   TV_LIST_ITER(rettv->vval.v_list, li, {
     uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
-    asynccall_channel_release(find_channel(channel_id));
+    Channel *channel = find_channel(channel_id);
+    channel->async_call = NULL;
+    asynccall_channel_release(channel);
   });
   if (async_call) {
     asynccall_free(async_call);
