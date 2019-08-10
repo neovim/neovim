@@ -2236,8 +2236,13 @@ parse_match (
     p = tagp->command;
     if (find_extra(&p) == OK) {
       tagp->command_end = p;
-      p += 2;           /* skip ";\"" */
-      if (*p++ == TAB)
+      if (p > tagp->command && p[-1] == '|') {
+        tagp->command_end = p - 1;  // drop trailing bar
+      } else {
+        tagp->command_end = p;
+      }
+      p += 2;  // skip ";\""
+      if (*p++ == TAB) {
         while (ASCII_ISALPHA(*p)) {
           if (STRNCMP(p, "kind:", 5) == 0) {
             tagp->tagkind = p + 5;
@@ -2253,6 +2258,7 @@ parse_match (
             break;
           p = pt + 1;
         }
+      }
     }
     if (tagp->tagkind != NULL) {
       for (p = tagp->tagkind;
@@ -2677,22 +2683,30 @@ static int find_extra(char_u **pp)
 {
   char_u      *str = *pp;
 
-  /* Repeat for addresses separated with ';' */
+  // Repeat for addresses separated with ';'
   for (;; ) {
-    if (ascii_isdigit(*str))
+    if (ascii_isdigit(*str)) {
       str = skipdigits(str);
-    else if (*str == '/' || *str == '?') {
-      str = skip_regexp(str + 1, *str, FALSE, NULL);
-      if (*str != **pp)
+    } else if (*str == '/' || *str == '?') {
+      str = skip_regexp(str + 1, *str, false, NULL);
+      if (*str != **pp) {
         str = NULL;
-      else
-        ++str;
-    } else
-      str = NULL;
+      } else {
+        str++;
+      }
+    } else {
+      // not a line number or search string, look for terminator.
+      str = (char_u *)strstr((char *)str, "|;\"");
+      if (str != NULL) {
+        str++;
+        break;
+      }
+    }
     if (str == NULL || *str != ';'
-        || !(ascii_isdigit(str[1]) || str[1] == '/' || str[1] == '?'))
+        || !(ascii_isdigit(str[1]) || str[1] == '/' || str[1] == '?')) {
       break;
-    ++str;      /* skip ';' */
+    }
+    str++;  // skip ';'
   }
 
   if (str != NULL && STRNCMP(str, ";\"", 2) == 0) {
