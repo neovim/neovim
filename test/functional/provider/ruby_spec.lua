@@ -101,10 +101,13 @@ end)
 
 describe('ruby provider', function()
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
-    command([=[autocmd BufDelete * ruby VIM::command('let g:bufdelete_called = expand("<afile>")')]=])
+    command([=[
+      let g:bufdelete_called = []
+      autocmd BufDelete * ruby VIM::command('let g:bufdelete_called += [expand("<afile>")]')
+    ]=])
     command('help help')
     eq('help', eval('&buftype'))
     eq(2, eval('1+1'))  -- Still alive?
-    eq('runtime/doc/helphelp.txt', eval('g:bufdelete_called'))
+    eq({'runtime/doc/helphelp.txt'}, eval('g:bufdelete_called'))
   end)
 end)
