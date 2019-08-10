@@ -73,5 +73,11 @@ set tags=./tags,tags
 set undodir^=.
 set wildoptions=
 
+" Disable syntax / "filetype plugin indent on" (not necessary with "-u NONE").
+if exists('syntax_on')
+  syntax off
+  filetype plugin indent off
+endif
+
 " Prevent Nvim log from writing to stderr.
 let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
