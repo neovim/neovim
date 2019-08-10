@@ -541,14 +541,19 @@ void nvim_win_close(Window window, Boolean force, Error *err)
   if (!win) {
     return;
   }
-  tabpage_T *tabpage = win_find_tabpage(win);
 
+  if (cmdwin_type != 0) {
+    if (win == curwin) {
+      cmdwin_result = Ctrl_C;
+    } else {
+      api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
+    }
+    return;
+  }
+
+  tabpage_T *tabpage = win_find_tabpage(win);
   TryState tstate;
   try_enter(&tstate);
-  if (cmdwin_type != 0 && win == curwin) {
-    cmdwin_result = Ctrl_C;
-  } else {
-    ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
-  }
+  ex_win_close(force, win, tabpage == curtab ? NULL : tabpage);
   vim_ignored = try_leave(&tstate, err);
 }
