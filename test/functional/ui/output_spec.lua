@@ -12,8 +12,6 @@ local command = helpers.command
 local nvim_dir = helpers.nvim_dir
 
 describe("shell command :!", function()
-  if helpers.pending_win32(pending) then return end
-
   local screen
   before_each(function()
     clear()
@@ -36,6 +34,7 @@ describe("shell command :!", function()
   end)
 
   it("displays output without LF/EOF. #4646 #4569 #3772", function()
+    if helpers.pending_win32(pending) then return end
     -- NOTE: We use a child nvim (within a :term buffer)
     --       to avoid triggering a UI flush.
     child_session.feed_data(":!printf foo; sleep 200\n")
