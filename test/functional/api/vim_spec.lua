@@ -756,8 +756,18 @@ describe('API', function()
     end)
 
     it('errors out on malformed context dictionary', function()
-      local err = exc_exec([[call nvim_load_context({'regs': [1]})]])
-      eq('Vim(call):E5555: API call: malformed context dictionary', err)
+      local expected_err = 'Vim(call):E5555: '..
+                           'API call: malformed context dictionary'
+      eq(expected_err, exc_exec([[call nvim_load_context({'regs': [1]})]]))
+      eq(expected_err,
+         exc_exec([[call nvim_load_context({'regs': [{'name': '0'}]})]]))
+      eq(expected_err,
+         exc_exec([[call nvim_load_context(]]..
+                  [[{'regs': [{'name': '0', 'content': 1}]})]]))
+      eq(expected_err,
+         exc_exec([=[call nvim_load_context({'gvars': [['1', '2']]})]=]))
+      eq(expected_err,
+         exc_exec([=[call nvim_load_context({'funcs': [['1', '2']]})]=]))
     end)
   end)
 

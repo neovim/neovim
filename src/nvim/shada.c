@@ -1315,10 +1315,15 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemVariable: {
+        bool save_did_emsg = did_emsg;
+        did_emsg = false;
         var_set_global(cur_entry.data.global_var.name,
                        cur_entry.data.global_var.value);
-        cur_entry.data.global_var.value.v_type = VAR_UNKNOWN;
+        if (!did_emsg) {
+          cur_entry.data.global_var.value.v_type = VAR_UNKNOWN;
+        }
         shada_free_shada_entry(&cur_entry);
+        did_emsg = save_did_emsg;
         break;
       }
       case kSDItemJump:
