@@ -101,7 +101,11 @@ end)
 
 describe('ruby provider', function()
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
-    command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
+    command([=[autocmd BufDelete * ruby VIM::command('let g:bufdelete_called = expand("<afile>")')]=])
+    local fname = eval('fnamemodify(tempname(), ":.")')
+    feed_command(string.format("exe 'split' '%s'", fname))
+    feed_command("bwipeout!")
+    eq(fname, eval('g:bufdelete_called'))
     feed_command('help help')
     eq(2, eval('1+1'))  -- Still alive?
   end)
