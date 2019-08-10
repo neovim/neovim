@@ -537,7 +537,14 @@ only supported by new versions of ctags (such as Exuberant ctags).
 {term}		;" The two characters semicolon and double quote.  This is
 		interpreted by Vi as the start of a comment, which makes the
 		following be ignored.  This is for backwards compatibility
-		with Vi, it ignores the following fields.
+		with Vi, it ignores the following fields. Example:
+			APP	file	/^static int APP;$/;"	v
+		When {tagaddress} is not a line number or search pattern, then
+		{term} must be |;".  Here the bar ends the command (excluding
+		the bar) and ;" is used to have Vi ignore the rest of the
+		line.  Example:
+			APP	file.c	call cursor(3, 4)|;"	v
+			
 {field} ..	A list of optional fields.  Each field has the form:
 
 			<Tab>{fieldname}:{value}

@@ -5,7 +5,9 @@ func Test_taglist()
 	\ "FFoo\tXfoo\t1",
 	\ "FBar\tXfoo\t2",
 	\ "BFoo\tXbar\t1",
-	\ "BBar\tXbar\t2"
+	\ "BBar\tXbar\t2",
+	\ "Kindly\tXbar\t3;\"\tv\tfile:",
+	\ "Command\tXbar\tcall cursor(3, 4)|;\"\td",
 	\ ], 'Xtags')
   set tags=Xtags
   split Xtext
@@ -14,6 +16,18 @@ func Test_taglist()
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xtext"), {i, v -> v.name}))
   call assert_equal(['FFoo', 'BFoo'], map(taglist("Foo", "Xfoo"), {i, v -> v.name}))
   call assert_equal(['BFoo', 'FFoo'], map(taglist("Foo", "Xbar"), {i, v -> v.name}))
+
+  let kind = taglist("Kindly")
+  call assert_equal(1, len(kind))
+  call assert_equal('v', kind[0]['kind'])
+  call assert_equal('3', kind[0]['cmd'])
+  call assert_equal(1, kind[0]['static'])
+  call assert_equal('Xbar', kind[0]['filename'])
+
+  let cmd = taglist("Command")
+  call assert_equal(1, len(cmd))
+  call assert_equal('d', cmd[0]['kind'])
+  call assert_equal('call cursor(3, 4)', cmd[0]['cmd'])
 
   call delete('Xtags')
   set tags&
