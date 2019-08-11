@@ -811,7 +811,6 @@ endfunc
 " Test for autocommand that deletes the current buffer on BufLeave event.
 " Also test deleting the last buffer, should give a new, empty buffer.
 func Test_BufLeave_Wipe()
-  throw 'skipped: TODO: '
   %bwipe!
   let content = ['start of test file Xxx',
 	      \ 'this is a test',
