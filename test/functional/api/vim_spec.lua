@@ -967,6 +967,7 @@ describe('API', function()
         eval, [=[nvim_load_context({'gvars': [['1', '2']]})]=]))
       matches(err, pcall_err(
         eval, [=[nvim_load_context({'funcs': [['1', '2']]})]=]))
+      matches(err, pcall_err(eval, [=[nvim_load_context({'funcs': [1]})]=]))
     end)
   end)
 
