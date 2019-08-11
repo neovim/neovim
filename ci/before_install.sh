@@ -7,10 +7,10 @@ if [[ "${CI_TARGET}" == lint ]]; then
   exit
 fi
 
-if [[ "${TRAVIS_OS_NAME}" == windows ]]; then
-  choco install python
-  choco install python2
-fi
+# if [[ "${TRAVIS_OS_NAME}" == windows ]]; then
+#   choco install python
+#   choco install python2
+# fi
 
 echo 'Python info:'
 (
