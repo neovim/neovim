@@ -44,4 +44,5 @@ func Test_source_sandbox()
   call assert_equal('hello', getline(1))
   call assert_fails('sandbox source! Xsourcehello', 'E48:')
   bwipe!
+  call delete('Xsourcehello')
 endfunc
