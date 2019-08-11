@@ -111,6 +111,8 @@ bool os_env_exists(const char *name)
 
 /// Sets an environment variable.
 ///
+/// Windows (Vim-compat): Empty string (:let $FOO="") undefines the env var.
+///
 /// @warning Existing pointers to the result of os_getenv("foo") are
 ///          INVALID after os_setenv("foo", …).
 int os_setenv(const char *name, const char *value, int overwrite)
@@ -122,6 +124,10 @@ int os_setenv(const char *name, const char *value, int overwrite)
 #ifdef WIN32
   if (!overwrite && os_getenv(name) != NULL) {
     return 0;
+  }
+  if (value[0] == '\0') {
+    // Windows (Vim-compat): Empty string undefines the env var.
+    return os_unsetenv(name);
   }
 #else
   if (!overwrite && os_env_exists(name)) {
