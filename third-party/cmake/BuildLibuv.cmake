@@ -7,7 +7,7 @@ function(BuildLibuv)
   cmake_parse_arguments(_libuv
     "BUILD_IN_SOURCE"
     "TARGET"
-    "CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
+    "PATCH_COMMAND;CONFIGURE_COMMAND;BUILD_COMMAND;INSTALL_COMMAND"
     ${ARGN})
 
   if(NOT _libuv_CONFIGURE_COMMAND AND NOT _libuv_BUILD_COMMAND
@@ -31,6 +31,7 @@ function(BuildLibuv)
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     BUILD_IN_SOURCE ${_libuv_BUILD_IN_SOURCE}
+    PATCH_COMMAND "${_libuv_PATCH_COMMAND}"
     CONFIGURE_COMMAND "${_libuv_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libuv_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libuv_INSTALL_COMMAND}")
@@ -77,6 +78,9 @@ elseif(WIN32)
         -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         -DBUILD_SHARED_LIBS=${BUILD_SHARED}
         -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+    PATCH_COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv init
+      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/libuv apply --ignore-whitespace
+      ${CMAKE_CURRENT_SOURCE_DIR}/patches/libuv-Fix-uv-os-getenv.patch
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
     INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install --config ${CMAKE_BUILD_TYPE})
 

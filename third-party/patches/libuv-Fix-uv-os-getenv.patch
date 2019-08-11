@@ -1,0 +1,48 @@
+diff --git a/src/win/util.c b/src/win/util.c
+index c994984f..6ed83fdd 100644
+--- a/src/win/util.c
++++ b/src/win/util.c
+@@ -1413,15 +1413,22 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
+     return r;
+ 
+   len = GetEnvironmentVariableW(name_w, var, MAX_ENV_VAR_LENGTH);
++  r = GetLastError();
+   uv__free(name_w);
+   assert(len < MAX_ENV_VAR_LENGTH); /* len does not include the null */
+ 
+   if (len == 0) {
+-    r = GetLastError();
+ 
+     if (r == ERROR_ENVVAR_NOT_FOUND)
+       return UV_ENOENT;
+ 
++    /* Handle defined, but empty environment variables. */
++    if (r == ERROR_SUCCESS) {
++      buffer[0] = '\0';
++      *size = 0;
++      return 0;
++    }
++
+     return uv_translate_sys_error(r);
+   }
+ 
+diff --git a/test/test-env-vars.c b/test/test-env-vars.c
+index 641050e6..54791541 100644
+--- a/test/test-env-vars.c
++++ b/test/test-env-vars.c
+@@ -55,6 +55,15 @@ TEST_IMPL(env_vars) {
+   r = uv_os_unsetenv(NULL);
+   ASSERT(r == UV_EINVAL);
+ 
++  /* Setting an environment variable to the empty string does not delete it. */
++  r = uv_os_setenv(name, "");
++  ASSERT(r == 0);
++  size = BUF_SIZE;
++  r = uv_os_getenv(name, buf, &size);
++  ASSERT(r == 0);
++  ASSERT(size == 0);
++  ASSERT(strlen(buf) == 0);
++
+   /* Successfully set an environment variable */
+   r = uv_os_setenv(name, "123456789");
+   ASSERT(r == 0);
