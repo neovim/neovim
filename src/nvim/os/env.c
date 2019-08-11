@@ -102,9 +102,6 @@ bool os_env_exists(const char *name)
   assert(r != UV_EINVAL);
   if (r != 0 && r != UV_ENOENT && r != UV_ENOBUFS) {
     ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
-#ifdef WIN32
-    return (r == UV_UNKNOWN);
-#endif
   }
   return (r == 0 || r == UV_ENOBUFS);
 }
