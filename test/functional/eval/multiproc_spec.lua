@@ -187,7 +187,7 @@ describe('multiproc', function()
         let g:exitcode = a:code
       endfunction
 
-      let g:job = jobstart('ulimit -n 64; '.
+      let g:job = jobstart('ulimit -n 32; '.
        \                 v:progpath.' -u NONE -i NONE -n --headless --embed',
        \                 { 'rpc': v:true, 'on_exit': 'SaveExitCode' })
 
