@@ -40,3 +40,6 @@ cache:
 artifacts:
 - path: build/Neovim.zip
 - path: build/bin/nvim.exe
+branches:
+  only:
+    - master
