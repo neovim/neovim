@@ -768,6 +768,8 @@ describe('API', function()
          exc_exec([=[call nvim_load_context({'gvars': [['1', '2']]})]=]))
       eq(expected_err,
          exc_exec([=[call nvim_load_context({'funcs': [['1', '2']]})]=]))
+      eq(expected_err,
+         exc_exec([=[call nvim_load_context({'funcs': [1]})]=]))
     end)
   end)
 

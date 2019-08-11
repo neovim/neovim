@@ -278,6 +278,10 @@ static inline void ctx_restore_funcs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
   for (size_t i = 0; i < ctx->funcs.size; i++) {
+    if (ctx->funcs.items[i].type != kObjectTypeString) {
+      EMSG("Context: invalid function entry");
+      continue;
+    }
     do_cmdline_cmd(ctx->funcs.items[i].data.string.data);
   }
 }
