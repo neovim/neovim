@@ -36,7 +36,7 @@ func Test_external_env()
 
   call setenv('FOO', v:null)
   if has('win32')
-    let result = system('set | grep ^FOO=')
+    let result = system('set | findstr "^FOO="')
   else
     let result = system('env | grep ^FOO=')
   endif
