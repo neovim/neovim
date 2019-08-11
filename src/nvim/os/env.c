@@ -305,13 +305,10 @@ void init_homedir(void)
   // variable, esp. "%USERPROFILE%".  Happens when $USERPROFILE isn't set
   // when $HOME is being set.
   if (var != NULL && *var == '%') {
-    char *p;
-    const char *exp;
-
-    p = strchr(var + 1, '%');
+    const char *p = strchr(var + 1, '%');
     if (p != NULL) {
       vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
-      exp = os_getenv(os_buf);
+      const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
         vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
@@ -320,14 +317,11 @@ void init_homedir(void)
     }
   }
 
-  if (var != NULL && *var == NUL) {
-    // empty is same as not set
-    var = NULL;
-  }
-
   // Default home dir is C:/
   // Best assumption we can make in such a situation.
-  if (var == NULL) {
+  if (var == NULL
+      // Empty means "undefined"
+      || *var == NUL) {
     var = "C:/";
   }
 #endif
