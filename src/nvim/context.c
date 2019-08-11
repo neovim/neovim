@@ -360,7 +360,7 @@ static inline Array sbuf_to_array(msgpack_sbuffer sbuf)
   }
 
   if (need_more) {
-    EMSG2(_(e_intern2), "Context: incomplete msgpack string");
+    EMSG("Context: incomplete msgpack string");
   }
 
 exit:
