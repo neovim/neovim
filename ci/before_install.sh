@@ -10,7 +10,6 @@ fi
 if [[ "${TRAVIS_OS_NAME}" == windows ]]; then
   choco install python
   choco install python2
-  choco install nvm
 fi
 
 echo 'Python info:'
@@ -55,11 +54,11 @@ if [[ "${TRAVIS_OS_NAME}" != windows ]]; then
   fi
 
   # NOTE: fails on Windows (https://travis-ci.org/neovim/neovim/builds/570469965)
+  # "choco install nvm" does not provide "nvm"?!
   source ~/.nvm/nvm.sh
+  nvm install --lts
+  nvm use --lts
 fi
-
-nvm install --lts
-nvm use --lts
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"
