@@ -40,16 +40,19 @@ if [[ "${TRAVIS_OS_NAME}" != osx ]] && command -v pyenv; then
   ) 2>&1 | sed 's/^/  /'
 fi
 
-echo "Install node (LTS)"
+if [[ "${TRAVIS_OS_NAME}" != windows ]]; then
+  echo "Install node (LTS)"
 
-if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
-  mkdir -p ~/.nvm
-  curl -o ~/.nvm/nvm.sh https://raw.githubusercontent.com/creationix/nvm/master/nvm.sh
+  if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
+    mkdir -p ~/.nvm
+    curl -o ~/.nvm/nvm.sh https://raw.githubusercontent.com/creationix/nvm/master/nvm.sh
+  fi
+
+  # NOTE: fails on Windows (https://travis-ci.org/neovim/neovim/builds/570469965)
+  source ~/.nvm/nvm.sh
+  nvm install --lts
+  nvm use --lts
 fi
-
-source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"
