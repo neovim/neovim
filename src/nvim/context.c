@@ -417,9 +417,14 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
   return sbuf;
 }
 
-#define RENAME_KEY(kv, name) \
-  api_free_string(kv->key); \
-  kv->key = STATIC_CSTR_TO_STRING(name);
+#define CONTEXT_MAP_KEY_DO(kv, from, to, code) \
+  if (strequal(kv->key.data, from)) { \
+    api_free_string(kv->key); \
+    kv->key = STATIC_CSTR_TO_STRING(to); \
+    code \
+  }
+
+#define CONTEXT_MAP_KEY(kv, from, to) CONTEXT_MAP_KEY_DO(kv, from, to, {})
 
 /// Map key names of ShaDa entries to user-friendly context key names.
 ///
@@ -441,43 +446,26 @@ static inline Array ctx_keys_from_shada(Array arr)
     if (arr.items[i].type != kObjectTypeDictionary) {
       continue;
     }
+
     Dictionary entry = arr.items[i].data.dictionary;
     for (size_t j = 0; j < entry.size; j++) {
       KeyValuePair *kv = &entry.items[j];
-      switch (kv->key.data[0]) {
-        case 'c':
-          RENAME_KEY(kv, "col");
-          break;
-        case 'f':
-          RENAME_KEY(kv, "file");
-          break;
-        case 'l':
-          RENAME_KEY(kv, "line");
-          break;
-        case 'n':
-          RENAME_KEY(kv, "name");
+      CONTEXT_MAP_KEY(kv, "c", "col");
+      CONTEXT_MAP_KEY(kv, "f", "file");
+      CONTEXT_MAP_KEY(kv, "l", "line");
+      CONTEXT_MAP_KEY_DO(kv, "n", "name", {
+        if (kv->value.type == kObjectTypeInteger) {
           kv->value = STRING_OBJ(STATIC_CSTR_TO_STRING(
               ((char[]) { (char)kv->value.data.integer, 0 })));
-          break;
-        case 'r':
-          switch (kv->key.data[1]) {
-            case 'c':
-              RENAME_KEY(kv, "content");
-              break;
-            case 't':
-              RENAME_KEY(kv, "type");
-              break;
-            case 'u':
-              RENAME_KEY(kv, "unnamed");
-              break;
-            case 'w':
-              RENAME_KEY(kv, "width");
-              break;
-          }
-          break;
-      }
+        }
+      });
+      CONTEXT_MAP_KEY(kv, "rc", "content");
+      CONTEXT_MAP_KEY(kv, "rt", "type");
+      CONTEXT_MAP_KEY(kv, "ru", "unnamed");
+      CONTEXT_MAP_KEY(kv, "rw", "width");
     }
   }
+
   return arr;
 }
 
@@ -501,41 +489,33 @@ static inline Array ctx_keys_to_shada(Array arr)
     if (arr.items[i].type != kObjectTypeDictionary) {
       continue;
     }
+
     Dictionary entry = arr.items[i].data.dictionary;
     for (size_t j = 0; j < entry.size; j++) {
       KeyValuePair *kv = &entry.items[j];
-      switch (kv->key.data[0]) {
-        case 'c':
-          if (kv->key.size > 3) {  // "content"
-            goto reg_keys;
-          }
-          RENAME_KEY(kv, "c");
-          break;
-        case 'f':
-          RENAME_KEY(kv, "f");
-          break;
-        case 'l':
-          RENAME_KEY(kv, "l");
-          break;
-        case 'n':
-          RENAME_KEY(kv, "n");
+      CONTEXT_MAP_KEY(kv, "col", "c");
+      CONTEXT_MAP_KEY(kv, "file", "f");
+      CONTEXT_MAP_KEY(kv, "line", "l");
+      CONTEXT_MAP_KEY_DO(kv, "name", "n", {
+        if (kv->value.type == kObjectTypeString
+            && kv->value.data.string.size == 1) {
           Object value = INTEGER_OBJ(kv->value.data.string.data[0]);
           api_free_object(kv->value);
           kv->value = value;
-          break;
-        default:
-reg_keys: {
-            char key[] = { 'r', kv->key.data[0], 0 };
-            RENAME_KEY(kv, key);
-            break;
-          }
-      }
+        }
+      });
+      CONTEXT_MAP_KEY(kv, "content", "rc");
+      CONTEXT_MAP_KEY(kv, "type", "rt");
+      CONTEXT_MAP_KEY(kv, "unnamed", "ru");
+      CONTEXT_MAP_KEY(kv, "width", "rw");
     }
   }
+
   return arr;
 }
 
-#undef RENAME_KEY
+#undef CONTEXT_MAP_KEY
+#undef CONTEXT_MAP_KEY_DO
 
 /// Converts Context to Dictionary representation.
 ///
