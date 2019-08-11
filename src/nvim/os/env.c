@@ -304,6 +304,30 @@ void init_homedir(void)
   if (var == NULL) {
     var = os_getenv("USERPROFILE");
   }
+
+  // Weird but true: $HOME may contain an indirect reference to another
+  // variable, esp. "%USERPROFILE%".  Happens when $USERPROFILE isn't set
+  // when $HOME is being set.
+  if (var != NULL && *var == '%') {
+    const char *p = strchr(var + 1, '%');
+    if (p != NULL) {
+      vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
+      const char *exp = os_getenv(os_buf);
+      if (exp != NULL && *exp != NUL
+          && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
+        vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
+        var = os_buf;
+      }
+    }
+  }
+
+  // Default home dir is C:/
+  // Best assumption we can make in such a situation.
+  if (var == NULL
+      // Empty means "undefined"
+      || *var == NUL) {
+    var = "C:/";
+  }
 #endif
 
   if (var != NULL) {
@@ -705,16 +729,16 @@ char *vim_getenv(const char *name)
   // init_path() should have been called before now.
   assert(get_vim_var_str(VV_PROGPATH)[0] != NUL);
 
-  const char *kos_env_path = os_getenv(name);
-  if (kos_env_path != NULL) {
-    return xstrdup(kos_env_path);
-  }
-
 #ifdef WIN32
   if (strcmp(name, "HOME") == 0) {
     return xstrdup(homedir);
   }
 #endif
+
+  const char *kos_env_path = os_getenv(name);
+  if (kos_env_path != NULL) {
+    return xstrdup(kos_env_path);
+  }
 
   bool vimruntime = (strcmp(name, "VIMRUNTIME") == 0);
   if (!vimruntime && strcmp(name, "VIM") != 0) {
