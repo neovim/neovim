@@ -43,6 +43,7 @@ fi
 echo "Install node (LTS)"
 
 if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
+  mkdir -p ~/.nvm
   curl -o ~/.nvm/nvm.sh https://raw.githubusercontent.com/creationix/nvm/master/nvm.sh
 fi
 
