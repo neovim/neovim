@@ -6,7 +6,7 @@ let s:last_location = -1
 " Omni completion with LSP
 function! lsp#completion#omni(findstart, base) abort
   " If we haven't started, then don't return anything useful
-  if !luaeval("require('lsp.plugin').client.has_started()")
+  if !luaeval("require('lsp.api').plugin.client_has_started()")
     return a:findstart ? -1 : []
   endif
 
@@ -19,7 +19,7 @@ function! lsp#completion#omni(findstart, base) abort
 
     return len(line_to_cursor) - length
   elseif a:findstart == 0
-    let params = luaeval("require('lsp.structures').CompletionParams("
+    let params = luaeval("require('lsp.api').structures.CompletionParams("
                          \ . "{ position = { character = _A }})",
                          \  col('.') + len(a:base))
     let results = lsp#request('textDocument/completion', params)

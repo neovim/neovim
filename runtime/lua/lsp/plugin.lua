@@ -119,11 +119,20 @@ plugin.notify = function(method, arguments, filetype, bufnr)
   current_client:notify(method, arguments)
 end
 
-plugin.has_started = function(filetype)
+plugin.client_has_started = function(filetype)
   return plugin.get_client(filetype) ~= nil
 end
+
 plugin.handle = function(filetype, method, data, default_only)
   return callbacks.call_callbacks_for_method(method, true, data, default_only, filetype)
+end
+
+plugin.client_job_stdout = function(id, data)
+  Client.job_stdout(id, data)
+end
+
+plugin.client_job_exit = function(id, data)
+  Client.job_exit(id, data)
 end
 
 return plugin
