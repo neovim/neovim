@@ -2389,3 +2389,39 @@ FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
   stdin_filedesc = (int)filedesc;
   return true;
 }
+
+/// Sets if the stdin and stdout are ttyin or not. Used when `nvim` is
+/// launched as a `embed` `job` with its stdin and stout as pipes.
+///
+/// @param channel_id: The channel id of the GUI-client
+/// @param values: A dictionary containing "isatty" info on stdin and
+///                stout of the parent process.
+/// @param[out] err Error details, if any
+/// @return Boolean : false if errored and
+///                   true otherwise
+Boolean nvim_set_stdin_stdout(uint64_t channel_id, Dictionary values, Error *err)
+FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!embedded_mode) {
+    // not `--embed` mode
+    api_set_error(err, kErrorTypeValidation,
+                  "Not launched in embed mode");
+    return false;
+  }
+  if (remote_ui_get(channel_id)) {
+    // If nvim_ui_attach is already called then abort
+    api_set_error(err, kErrorTypeValidation,
+                  "nvim_ui_attach has already been called");
+    return false;
+  }
+  
+  for (size_t i = 0; i < values.size; i++) {
+    if (strequal("stdin", values.items[i].key.data)) {
+      stdin_isatty = (int)values.items[i].value.data.integer;
+    } else if (strequal("stdout", values.items[i].key.data)) {
+      stdout_isatty = (int)values.items[i].value.data.integer;
+    }
+  }
+
+  return true;
+}

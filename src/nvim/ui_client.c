@@ -112,8 +112,3 @@ void ui_redraw_event_grid_line(Array args)
 
   ui_call_raw_line(grid, row, startcol, endcol, clearcol, clearattr, lineflags, (const schar_T*) chunk, (const sattr_T*) attrs);
 }
-
-void ui_redraw_event_hl_group_set(Array args)
-{
-  //dummy implimentation since TUI doesn't use this.
-}

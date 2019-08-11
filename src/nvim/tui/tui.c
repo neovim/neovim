@@ -158,10 +158,6 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
     args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
     args[args_idx++] = xstrdup("--embed");
     for (int i = 1; i < argc; i++) {
-      // if (!STRCMP("-", argv[i]) && !(pass_stdin && !stdin_isatty)) {
-      //   // don't pass "-" to embed instance
-      //   continue;
-      // }
       args[args_idx++] = xstrdup(argv[i]);
     }
     args[args_idx++] = NULL; // last value of argv should be NULL
@@ -172,8 +168,15 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
                                   &server_process_exit_status);
     rc_id = channel->id;
 
+    Array arg = ARRAY_DICT_INIT;
+    Dictionary dict = ARRAY_DICT_INIT;
+    PUT(dict, "stdin", INTEGER_OBJ(stdin_isatty));
+    PUT(dict, "stdout", INTEGER_OBJ(stdout_isatty));
+    ADD(arg, DICTIONARY_OBJ(dict));
+    rpc_send_event(rc_id, "nvim_set_stdin_stdout", arg);
+
     if (pass_stdin && !stdin_isatty) {
-      Array arg = ARRAY_DICT_INIT;
+      arg = (Array)ARRAY_DICT_INIT;
       ADD(arg, INTEGER_OBJ(3));
       rpc_send_event(rc_id, "nvim_read_stdin", arg);
       close(0);

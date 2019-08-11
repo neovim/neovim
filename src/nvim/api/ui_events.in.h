@@ -74,7 +74,7 @@ void hl_attr_define(Integer id, HlAttrs rgb_attrs, HlAttrs cterm_attrs,
                     Array info)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL;
 void hl_group_set(String name, Integer id)
-  FUNC_API_SINCE(6) FUNC_API_CLIENT_IMPL;
+  FUNC_API_SINCE(6);
 void grid_resize(Integer grid, Integer width, Integer height)
   FUNC_API_SINCE(5) FUNC_API_REMOTE_IMPL FUNC_API_COMPOSITOR_IMPL;
 void grid_clear(Integer grid)
