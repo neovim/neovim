@@ -3483,6 +3483,7 @@ void compute_cmdrow(void)
     cmdline_row = wp->w_winrow + wp->w_height
                   + wp->w_status_height;
   }
+  lines_left = cmdline_row;
 }
 
 static void cursorcmd(void)

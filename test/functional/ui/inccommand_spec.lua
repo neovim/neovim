@@ -2634,3 +2634,19 @@ it(':substitute with inccommand, timer-induced :redraw #9777', function()
     :%s/foo/ZZZ^                   |
   ]])
 end)
+
+it('long :%s/ with inccommand does not collapse cmdline', function()
+  local screen = Screen.new(10,5)
+  clear()
+  common_setup(screen)
+  command('set inccommand=nosplit')
+  feed(':%s/AAAAAAA', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
+    'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A')
+  screen:expect([[
+    {15:~           }|
+    {15:~           }|
+    :%s/AAAAAAAA|
+    AAAAAAAAAAAA|
+    AAAAAAA^     |
+  ]])
+end)
