@@ -130,6 +130,7 @@ describe('multiproc', function()
       eq({3, 4, 5, 6}, eval('jobs'))
       eq({'notification', 'done', {expected}}, next_msg())
       eq(expected, wait_result)
+      eq({}, call('call_parallel', 'eval', {}))
     end)
 
     it('invokes "done" and "itemdone" callbacks', function()
