@@ -150,8 +150,9 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
     CallbackReader on_data = CALLBACK_READER_INIT;
     const char *error = NULL;
     bool is_tcp = strrchr(servername, ':') ? true : false;
+    // connected to channel
     rc_id = servername == NULL ? 0 : channel_connect(is_tcp,
-                      servername, true, on_data, 50, &error);   // connected to channel
+                      servername, true, on_data, 50, &error);
   } else {
     char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
     int args_idx = 0;
@@ -168,16 +169,11 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
                                   &server_process_exit_status);
     rc_id = channel->id;
 
-    Array arg = ARRAY_DICT_INIT;
-    Dictionary dict = ARRAY_DICT_INIT;
-    PUT(dict, "stdin", INTEGER_OBJ(stdin_isatty));
-    PUT(dict, "stdout", INTEGER_OBJ(stdout_isatty));
-    ADD(arg, DICTIONARY_OBJ(dict));
-    rpc_send_event(rc_id, "nvim_set_stdin_stdout", arg);
-
     if (pass_stdin && !stdin_isatty) {
+      Array arg = ARRAY_DICT_INIT;
       arg = (Array)ARRAY_DICT_INIT;
       ADD(arg, INTEGER_OBJ(3));
+      ADD(arg, BOOLEAN_OBJ(implicit_readstdin));
       rpc_send_event(rc_id, "nvim_read_stdin", arg);
       close(0);
       dup(2);
@@ -193,6 +189,12 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
   PUT(opts, "rgb", BOOLEAN_OBJ(true));
   PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
   PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
+  PUT(opts, "term_name", STRING_OBJ(cstr_as_string(termname_local)));
+  PUT(opts, "term_colors", INTEGER_OBJ(t_colors));
+  if (!is_remote_client) {
+    PUT(opts, "term_ttyin", INTEGER_OBJ(stdin_isatty));
+    PUT(opts, "term_ttyout", INTEGER_OBJ(stdout_isatty));
+  }
 
   ADD(args, INTEGER_OBJ((int)width));
   ADD(args, INTEGER_OBJ((int)height));
@@ -200,17 +202,6 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
 
   // Telling to the server that you exist as a Client
   rpc_send_event(rc_id, "nvim_ui_attach", args);
-
-  // Setting terminfo
-  args = (Array)ARRAY_DICT_INIT;
-  ADD(args, STRING_OBJ(cstr_to_string("term_name")));
-  ADD(args, STRING_OBJ(cstr_as_string(termname_local)));
-  rpc_send_event(rc_id, "nvim_ui_set_option", args);
-
-  args = (Array)ARRAY_DICT_INIT;
-  ADD(args, STRING_OBJ(cstr_to_string("term_colors")));
-  ADD(args, INTEGER_OBJ(t_colors));
-  rpc_send_event(rc_id, "nvim_ui_set_option", args);
   
   connected_channel_id = rc_id;
   return rc_id;

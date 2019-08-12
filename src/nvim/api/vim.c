@@ -46,7 +46,6 @@
 #include "nvim/viml/parser/expressions.h"
 #include "nvim/viml/parser/parser.h"
 #include "nvim/ui.h"
-#include <unistd.h>
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -2367,10 +2366,12 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
 ///
 /// @param channel_id: The channel id of the GUI-client
 /// @param filedesc: The file descriptor of the GUI-client process' stdin
+/// @param implicit: Tells if read_stdin call is implicit.
+///                  i.e for cases like `echo xxx | nvim`
 /// @param[out] err Error details, if any
 /// @return Boolean : true if filedesc was not a tty
 ///                   false otherwise 
-Boolean nvim_read_stdin(uint64_t channel_id, Integer filedesc, Error *err)
+Boolean nvim_read_stdin(uint64_t channel_id, Integer filedesc, Boolean implicit, Error *err)
 FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
 {
   if (remote_ui_get(channel_id)) {
@@ -2387,41 +2388,6 @@ FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
     return false;
   }
   stdin_filedesc = (int)filedesc;
-  return true;
-}
-
-/// Sets if the stdin and stdout are ttyin or not. Used when `nvim` is
-/// launched as a `embed` `job` with its stdin and stout as pipes.
-///
-/// @param channel_id: The channel id of the GUI-client
-/// @param values: A dictionary containing "isatty" info on stdin and
-///                stout of the parent process.
-/// @param[out] err Error details, if any
-/// @return Boolean : false if errored and
-///                   true otherwise
-Boolean nvim_set_stdin_stdout(uint64_t channel_id, Dictionary values, Error *err)
-FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
-{
-  if (!embedded_mode) {
-    // not `--embed` mode
-    api_set_error(err, kErrorTypeValidation,
-                  "Not launched in embed mode");
-    return false;
-  }
-  if (remote_ui_get(channel_id)) {
-    // If nvim_ui_attach is already called then abort
-    api_set_error(err, kErrorTypeValidation,
-                  "nvim_ui_attach has already been called");
-    return false;
-  }
-  
-  for (size_t i = 0; i < values.size; i++) {
-    if (strequal("stdin", values.items[i].key.data)) {
-      stdin_isatty = (int)values.items[i].value.data.integer;
-    } else if (strequal("stdout", values.items[i].key.data)) {
-      stdout_isatty = (int)values.items[i].value.data.integer;
-    }
-  }
-
+  implicit_readstdin = implicit;
   return true;
 }

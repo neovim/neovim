@@ -988,13 +988,44 @@ end)
 describe("TUI as a client", function()
 
   it("connects to remote instance (full)", function()
-    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--listen', '127.0.0.1:7777', '-c', ":%! echo 'Hello, World'" })
+    clear()
+    local server_super = spawn(helpers.nvim_argv)
+    local client_super = spawn(helpers.nvim_argv)
+
+    set_session(server_super, true)
+    screen_server = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.1:7777"]')
+
+    helpers.feed("iHello, World<esc>")
+
+    set_session(client_super, true)
+    screen = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
+
+    screen.timeout = 1000
+    screen:expect([[
+      Hello, Worl{1:d}                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                   1,12           All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+
+    feed_data(":q!\n")
+    server_super:close()
+    client_super:close()
+  end)
+
+  it("connects to remote instance (--headless)", function()
+    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--listen', '127.0.0.1:8888', '-c', ":%! echo 'Hello, World'" })
     -- wait till the server session starts
     helpers.sleep(1000)
 
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:8888"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1011,34 +1042,41 @@ describe("TUI as a client", function()
     server:close()
   end)
 
-  it("connects to remote instance (--headless)", function()
-    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--listen', '127.0.0.1:7777', '-c', ":%! echo 'Hello, World'" })
-    -- wait till the server session starts
-    helpers.sleep(1000)
-
+  it("connects to remote instance (pipe)", function()
     clear()
+    local server_super = spawn(helpers.nvim_argv)
+    local client_super = spawn(helpers.nvim_argv)
+
+    set_session(server_super, true)
+    screen_server = thelpers.screen_setup(0, '["'..nvim_prog
+      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.77"]')
+
+    helpers.feed("iHello, World<esc>")
+
+    set_session(client_super, true)
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.77"]')
 
     screen.timeout = 1000
     screen:expect([[
-      {1:H}ello, World                                      |
+      Hello, Worl{1:d}                                      |
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      {5:[No Name] [+]                   1,1            All}|
+      {5:[No Name] [+]                   1,12           All}|
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
 
     feed_data(":q!\n")
-    server:close()
+    server_super:close()
+    client_super:close()
   end)
 
   it("throws error when no server exists", function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:9999"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1059,13 +1097,13 @@ describe("TUI as a client", function()
 
     set_session(server_super, true)
     screen_server = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.1:6666"]')
 
     helpers.feed("iHello, World<esc>")
 
     set_session(client_super, true)
     screen_client = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:6666"]')
   
     -- assert that client has connected to server
     screen_client.timeout = 1000

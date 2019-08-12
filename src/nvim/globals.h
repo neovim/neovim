@@ -886,6 +886,10 @@ EXTERN bool is_remote_client INIT(= false);       // Initially the TUI is not
 
 EXTERN bool TUI_process INIT(= false);            // This is the TUI process
 
+EXTERN bool implicit_readstdin INIT(= false);     // Used in embed job created
+                                                  // by TUI process only in
+                                                  // builtin tui
+
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character
 EXTERN char psepcN INIT(= '/');            // abnormal path separator character

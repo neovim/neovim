@@ -247,40 +247,6 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
     return;
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
-
-  if (strequal(name.data, "term_name")) {
-    if (value.type != kObjectTypeString) {
-      api_set_error(error, kErrorTypeValidation, "term_name must be a String");
-      return;
-    }
-    set_tty_option("term", xstrdup(value.data.string.data));
-    return;
-  }
-  if (strequal(name.data, "term_colors")) {
-    if (value.type != kObjectTypeInteger) {
-      api_set_error(error, kErrorTypeValidation, "term_colors must be a Integer");
-      return;
-    }
-    t_colors = (int)value.data.integer;
-    return;
-  }
-  if (strequal(name.data, "term_background")) {
-    if (value.type != kObjectTypeString) {
-      api_set_error(error, kErrorTypeValidation, "term_background must be a String");
-      return;
-    }
-    if (option_was_set("bg")
-        || strequal((char *)p_bg, value.data.string.data)) {
-      // background is already set... ignore
-      return;
-    }
-    set_option_value("bg",
-                    0L,
-                    value.data.string.data,
-                    0);
-    reset_option_was_set("bg");
-    return;
-  }
   ui_set_option(ui, false, name, value, error);
 }
 
@@ -307,6 +273,60 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
     if (!init && !ui->ui_ext[kUILinegrid]) {
       ui_refresh();
     }
+    return;
+  }
+  
+  if (strequal(name.data, "term_name")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_name must be a String");
+      return;
+    }
+    set_tty_option("term", xstrdup(value.data.string.data));
+    return;
+  }
+
+  if (strequal(name.data, "term_colors")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_colors must be a Integer");
+      return;
+    }
+    t_colors = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_background")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_background must be a String");
+      return;
+    }
+    if (option_was_set("bg")
+        || strequal((char *)p_bg, value.data.string.data)) {
+      // background is already set... ignore
+      return;
+    }
+    set_option_value("bg",
+                    0L,
+                    value.data.string.data,
+                    0);
+    reset_option_was_set("bg");
+    return;
+  }
+
+  if (strequal(name.data, "term_ttyin")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_ttyin must be a Integer");
+      return;
+    }
+    stdin_isatty = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_ttyout")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_ttyout must be a Integer");
+      return;
+    }
+    stdout_isatty = (int)value.data.integer;
     return;
   }
 

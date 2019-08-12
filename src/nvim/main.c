@@ -356,7 +356,6 @@ int main(int argc, char **argv)
   // and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
-  is_remote_client = params.server_name != NULL;
   TUI_process = is_remote_client || use_builtin_ui;
   if (use_remote_ui || use_builtin_ui) {
     TIME_MSG("waiting for UI to make request");
@@ -479,8 +478,8 @@ int main(int argc, char **argv)
   // writing end of the pipe doesn't like, e.g., in case stdin and stderr
   // are the same terminal: "cat | vim -".
   // Using autocommands here may cause trouble...
-  if (params.edit_type == EDIT_STDIN && !recoverymode) {
-    read_stdin(); 
+  if ((params.edit_type == EDIT_STDIN || implicit_readstdin) && !recoverymode) {
+    read_stdin();
   }
 
   setmouse();  // may start using the mouse
@@ -864,6 +863,7 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRNICMP(argv[0] + argv_idx, "connect", 7) == 0) {
             want_argument = true;
             argv_idx += 7;
+            is_remote_client = true;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = true;
             argv_idx += 3;
@@ -1269,6 +1269,11 @@ scripterror:
   // Handle "foo | nvim". EDIT_FILE may be overwritten now. #6299
   if (edit_stdin(had_stdin_file, parmp)) {
     parmp->edit_type = EDIT_STDIN;
+    if ((!headless_mode && !embedded_mode && !silent_mode)
+        && !is_remote_client) {
+      // must be set only in builtin TUI
+      implicit_readstdin = true;
+    }
   }
 
   TIME_MSG("parsing arguments");
