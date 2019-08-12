@@ -3,12 +3,16 @@ local util = require('nvim.util')
 local lsp_util = {}
 
 lsp_util.get_filetype = function(bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_bufnr()
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
   return vim.api.nvim_buf_get_option(bufnr, 'filetype')
 end
 
-lsp_util.get_uri = function(filename)
-  return 'file://' .. filename
+lsp_util.get_uri = function(location)
+  if location then
+    return 'file://' .. location
+  else
+    return ''
+  end
 end
 
 
@@ -69,6 +73,23 @@ lsp_util.get_text_document_identifier = function()
     filename = vim.api.nvim_call_function('expand', { '%:p' })
   end
   return { url = filename }
+end
+
+lsp_util.get_buffer_uri = function(bufnr)
+  local location
+  if bufnr then
+     location = vim.api.nvim_command("echo expand('#" .. bufnr .. ":p')")
+  else
+    location = vim.api.nvim_command("echo expand('%" .. ":p')")
+  end
+  return lsp_util.get_uri(location)
+end
+
+lsp_util.get_text_document_params = function()
+  return {
+    textDocument = lsp_util.get_text_document_identifier(),
+    position = lsp_util.get_position(),
+  }
 end
 
 return lsp_util
