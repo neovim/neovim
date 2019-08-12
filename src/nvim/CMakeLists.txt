@@ -381,9 +381,14 @@ if(WIN32)
   list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
+# Use "luv" as imported library, to work around CMake using "-lluv" for
+# "luv.so".  #10407
+add_library(luv UNKNOWN IMPORTED)
+set_property(TARGET luv PROPERTY IMPORTED_LOCATION ${LIBLUV_LIBRARIES})
+
 # Put these last on the link line, since multiple things may depend on them.
 list(APPEND NVIM_LINK_LIBRARIES
-  ${LIBLUV_LIBRARIES}
+  luv
   ${LIBUV_LIBRARIES}
   ${MSGPACK_LIBRARIES}
   ${LIBVTERM_LIBRARIES}
@@ -401,6 +406,7 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
+# Add IPO flags (for LTO), or error if CMake does not know the flags. #8654
 if(POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif()
