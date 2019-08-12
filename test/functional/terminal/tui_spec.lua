@@ -850,7 +850,7 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(':set shell='..nvim_dir..'/shell-test\n')
     feed_data(':set noshowmode laststatus=0\n')
 
-    retry(2, 3 * screen.timeout, function()
+    retry(3, nil, function()
       feed_data(':terminal\n')
       screen:sleep(1)
       feed_data('\027[I')
