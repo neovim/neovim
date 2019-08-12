@@ -5,10 +5,8 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
-local feed = helpers.feed
-local feed_command = helpers.feed_command
+local expect_err = helpers.expect_err
 local funcs = helpers.funcs
-local matches = helpers.matches
 local nvim = helpers.nvim
 local source = helpers.source
 local write_file = helpers.write_file
@@ -137,15 +135,14 @@ describe('async handlers', function()
     end)
 
     it('reports pattern and path errors', function()
-      feed_command([[&:vimgrep // async_vimgrep_spec_file1]])
-      feed('<CR>')
-      wait_all()
-      matches('E35: No previous regular expression', eval('v:errmsg'))
-
-      feed_command([[&:vimgrep /foo/]])
-      feed('<CR>')
-      wait_all()
-      matches('Path missing or invalid pattern', eval('v:errmsg'))
+      expect_err('E35: No previous regular expression', function()
+        command([[&:vimgrep // async_vimgrep_spec_file1]])
+        wait_all()
+      end)
+      expect_err('Path missing or invalid pattern', function()
+        command([[&:vimgrep /foo/]])
+        wait_all()
+      end)
     end)
   end)
 end)

@@ -274,16 +274,6 @@ end
 --           window location list
 -- @param append append results to existing (quickfix/location) list
 local function _async_vimgrep(qf, append, args)
-  -- setlist(results, app)
-  -- Adds "results" to qf/loc list (append if "app" is true).
-  local setlist = (function(setlist_cmd, select_idx)
-    return function(results, app)
-      vim.api.nvim_call_function(
-          setlist_cmd,
-          {select(select_idx, 0, results, app and 'a' or ' ')})
-    end
-  end)(qf and 'setqflist' or 'setloclist', qf and 2 or 1)
-
   -- Parse arguments
   -- &:vimgrep /{pattern}/[g][j] {file} ...
   local pattern, global, path = args:match('^/(.*)/([jg]*)%s+(.+)%s*$')
@@ -311,38 +301,51 @@ local function _async_vimgrep(qf, append, args)
   paths = vim.api.nvim_call_function('trim', { paths })
   paths = vim.api.nvim_call_function('split', { paths, '\n' })
 
-  -- Prepare call_parallel argument lists
+  -- Prepare call_parallel arguments
   for i, v in ipairs(paths) do
     paths[i] = { pattern, v, global }
   end
 
-  -- Spawn jobs
-  local jobs = vim.api.nvim_call_function('call_parallel', {
-    'nvim_grep', paths
-  })
+  vim.api.nvim_command([[call ctxpush(['gvars', 'funcs'])]])
+  vim.api.nvim_set_var('_count', 0)
 
-  -- Collect results
-  local results = vim.api.nvim_call_function('call_wait', { jobs })
-  local bufnr_tbl = {}
-  local length = 0
-  setlist({ }, append)
-  for _, v in ipairs(results) do
-    for _, list in ipairs(v.value) do
-      length = length + #list
-      for _, entry in ipairs(list) do
-        local bufnr = bufnr_tbl[entry.fname]
-        if bufnr == nil then
-          bufnr = vim.api.nvim_call_function('bufnr', {
-            entry.fname, true
-          })
-          bufnr_tbl[entry.fname] = bufnr
-        end
-        entry.bufnr = bufnr
-      end
-      setlist(list, true)
+  if qf then
+    vim.api.nvim_command([[
+    function! _itemdone(results)
+      let g:_count += len(a:results)
+      call setqflist(map(a:results, { _, r -> ]]..
+    [[  extend(r, { 'bufnr': bufnr(r.fname, 1) }) }), 'a')
+    endfunction
+    ]])
+  else
+    vim.api.nvim_command([[
+    function! _itemdone(results)
+      let g:_count += len(a:results)
+      call setloclist(0, map(a:results, { _, r -> ]]..
+    [[  extend(r, { 'bufnr': bufnr(r.fname, 1) }) }), 'a')
+    endfunction
+    ]])
+  end
+
+  vim.api.nvim_command([[
+  function! _done(...)
+    echom 'Found '.g:_count.' matches'
+    call timer_start(0, { -> ctxpop() })
+  endfunction
+  ]])
+
+  -- Clear list (if append is false) and spawn jobs
+  if not append then
+    if qf then
+      vim.api.nvim_call_function('setqflist', {{}})
+    else
+      vim.api.nvim_call_function('setloclist', {0, {}})
     end
   end
-  print('Found '..length..' matches')
+
+  vim.api.nvim_call_function('call_parallel', {
+    'nvim_grep', paths, { itemdone = '_itemdone', done = '_done' }
+  })
 end
 
 -- Async handlers for commands
