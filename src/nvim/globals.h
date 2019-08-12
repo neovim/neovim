@@ -895,11 +895,6 @@ EXTERN disptick_T display_tick INIT(= 0);
  * cursor position in Insert mode. */
 EXTERN linenr_T spell_redraw_lnum INIT(= 0);
 
-#ifdef USE_MCH_ERRMSG
-// Grow array to collect error messages in until they can be displayed.
-EXTERN garray_T error_ga INIT(= GA_EMPTY_INIT_VALUE);
-#endif
-
 
 /*
  * The error messages that can be shared are included here.

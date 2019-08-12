@@ -1989,7 +1989,7 @@ static char_u *ex_let_one(char_u *arg, typval_T *const tv,
           }
         }
         if (p != NULL) {
-          vim_setenv(name, p);
+          os_setenv(name, p, 1);
           if (STRICMP(name, "HOME") == 0) {
             init_homedir();
           } else if (didset_vim && STRICMP(name, "VIM") == 0) {
@@ -15359,7 +15359,7 @@ static void f_setenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       && argvars[1].vval.v_number == kSpecialVarNull) {
     os_unsetenv(name);
   } else {
-    vim_setenv(name, tv_get_string_buf(&argvars[1], valbuf));
+    os_setenv(name, tv_get_string_buf(&argvars[1], valbuf), 1);
   }
 }
 

@@ -1392,9 +1392,6 @@ do_shell(
   msg_row = Rows - 1;
   msg_col = 0;
 
-  // display any error messages now
-  display_errors();
-
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);
 }
 

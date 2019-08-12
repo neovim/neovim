@@ -2609,11 +2609,11 @@ did_set_string_option(
   } else if (varp == &p_hf) {  // 'helpfile'
     // May compute new values for $VIM and $VIMRUNTIME
     if (didset_vim) {
-      vim_setenv("VIM", "");
+      os_setenv("VIM", "", 1);
       didset_vim = false;
     }
     if (didset_vimruntime) {
-      vim_setenv("VIMRUNTIME", "");
+      os_setenv("VIMRUNTIME", "", 1);
       didset_vimruntime = false;
     }
   } else if (varp == &curwin->w_p_cc) {  // 'colorcolumn'
@@ -6778,7 +6778,7 @@ void vimrc_found(char_u *fname, char_u *envname)
       // Set $MYVIMRC to the first vimrc file found.
       p = FullName_save((char *)fname, false);
       if (p != NULL) {
-        vim_setenv((char *)envname, p);
+        os_setenv((char *)envname, p, 1);
         xfree(p);
       }
     } else {
