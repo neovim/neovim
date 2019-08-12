@@ -406,7 +406,7 @@ endif()
 
 set(NVIM_EXEC_LINK_LIBRARIES ${NVIM_LINK_LIBRARIES} ${LUA_PREFERRED_LIBRARIES})
 
-# Enable LTO (Link Time Optimization) #8654
+# Add IPO flags (for LTO), or error if CMake does not know the flags. #8654
 if(POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif()
