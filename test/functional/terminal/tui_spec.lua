@@ -1014,18 +1014,23 @@ describe("TUI as a client", function()
     ]])
 
     feed_data(":q!\n")
+
+    -- tear down
+    helpers.feed("<esc>:q!<CR>")
+    set_session(server_super, true)
+    helpers.feed("<esc>:q!<CR>")
     server_super:close()
     client_super:close()
   end)
 
   it("connects to remote instance (--headless)", function()
-    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--listen', '127.0.0.1:8888', '-c', ":%! echo 'Hello, World'" })
+    local server = spawn({ nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless', '--listen', '127.0.0.1:7777', '-c', ":%! echo 'Hello, World'" })
     -- wait till the server session starts
     helpers.sleep(1000)
 
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:8888"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1049,13 +1054,13 @@ describe("TUI as a client", function()
 
     set_session(server_super, true)
     screen_server = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.77"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.119"]')
 
     helpers.feed("iHello, World<esc>")
 
     set_session(client_super, true)
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.77"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.119"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1069,6 +1074,11 @@ describe("TUI as a client", function()
     ]])
 
     feed_data(":q!\n")
+
+    -- tear down
+    helpers.feed("<esc>:q!<CR>")
+    set_session(server_super, true)
+    helpers.feed("<esc>:q!<CR>")
     server_super:close()
     client_super:close()
   end)
@@ -1076,7 +1086,7 @@ describe("TUI as a client", function()
   it("throws error when no server exists", function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:9999"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
 
     screen.timeout = 1000
     screen:expect([[
@@ -1097,13 +1107,13 @@ describe("TUI as a client", function()
 
     set_session(server_super, true)
     screen_server = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.1:6666"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--listen", "127.0.0.1:7777"]')
 
     helpers.feed("iHello, World<esc>")
 
     set_session(client_super, true)
     screen_client = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:6666"]')
+      ..'", "-u", "NONE", "-i", "NONE", "--connect", "127.0.0.1:7777"]')
   
     -- assert that client has connected to server
     screen_client.timeout = 1000
@@ -1127,7 +1137,14 @@ describe("TUI as a client", function()
     set_session(client_super, true)
     screen_client:expect({any="Process exited 0"})
 
+    -- tear down
+    helpers.feed("<esc>:q!<CR>")
+    set_session(server_super, true)
+    helpers.feed("<esc>:q!<CR>")
     server_super:close()
     client_super:close()
+
+    -- Restore the original session
+    set_session(spawn(helpers.nvim_argv), true)
   end)
 end)

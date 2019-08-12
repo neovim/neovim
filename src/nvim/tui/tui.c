@@ -135,7 +135,6 @@ static bool volatile got_winch = false;
 static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
 char *termname_local;
-varnumber_T server_process_exit_status = 0L;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
 #endif
@@ -154,6 +153,7 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
     rc_id = servername == NULL ? 0 : channel_connect(is_tcp,
                       servername, true, on_data, 50, &error);
   } else {
+    varnumber_T exit_status;
     char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
     int args_idx = 0;
     args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
@@ -166,7 +166,7 @@ uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_s
     Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
                                   CALLBACK_READER_INIT, CALLBACK_NONE,
                                   false, true, true, NULL, 0, 0, NULL,
-                                  &server_process_exit_status);
+                                  &exit_status);
     rc_id = channel->id;
 
     if (pass_stdin && !stdin_isatty) {
@@ -483,7 +483,6 @@ void tui_execute(void) {
   LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
   tui_io_driven_loop(ui);
   tui_exit_safe(ui);
-  // getout((int)server_process_exit_status);
   getout(0);
 }
 

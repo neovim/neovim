@@ -53,6 +53,8 @@ with these (optional) keys:
 	`term_name`			Sets the name of the terminal.
 	`term_colors`		Sets the number of supported colors.
 	`term_background`	Sets the default value of `background`.
+	`term_ttyin`		Tells if `stdin` is a `tty` or not.
+	`term_ttyout`		Tells if `stdout` is a `tty` or not.
 
 Specifying an unknown option is an error; UIs can check the |api-metadata|
 `ui_options` key for supported options.

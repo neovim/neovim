@@ -102,6 +102,10 @@ void mch_exit(int r)
   free_all_mem();
 #endif
 
+
+  if (TUI_process && !is_remote_client) {
+    r = (int)server_process_exit_status;
+  }
   exit(r);
 }
 

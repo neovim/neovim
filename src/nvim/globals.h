@@ -889,6 +889,8 @@ EXTERN bool TUI_process INIT(= false);            // This is the TUI process
 EXTERN bool implicit_readstdin INIT(= false);     // Used in embed job created
                                                   // by TUI process only in
                                                   // builtin tui
+                                                  
+EXTERN long server_process_exit_status INIT(= false); // Used by TUI process
 
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character
