@@ -203,6 +203,14 @@ describe('startup', function()
                     { 'set encoding', '' }))
   end)
 
+  it('stdin with -es/-Es and --embed', function()
+      eq("Error: flags -es and -Es are incompatible with --embed.\n",
+        funcs.system({nvim_prog, '--embed', '-es' }))
+
+      eq("Error: flags -es and -Es are incompatible with --embed.\n",
+        funcs.system({nvim_prog, '--embed', '-Es' }))
+  end)
+
   it('-es/-Es disables swapfile, user config #8540', function()
     for _,arg in ipairs({'-es', '-Es'}) do
       local out = funcs.system({nvim_prog, arg,
