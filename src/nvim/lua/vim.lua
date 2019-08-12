@@ -291,55 +291,113 @@ local function _add_userfunc(ctx, name)
   return { ctx, name }
 end
 
--- Maps job ids of completed async calls to their results.
--- Entries should get removed when collected by call_wait().
-local _call_results = {}
+local async_invoke_called = false
 
--- Puts async call result in "_call_results".
--- Used by asynccall_put_result().
-local function _put_result(job, result)
-  _call_results[job] = result
-end
-
--- Appends async call result to a channel in "_call_results".
--- Used for parallel calls by asynccall_append_result().
-local function _append_result(job, result)
-  if _call_results[job] == nil then
-    _call_results[job] = { result }
-  else
-    table.insert(_call_results[job], result)
+-- Load the given context dictionary and call the given function within
+-- a function-call context.
+-- Used by nvim__async_invoke() in "nvim/api/vim.c".
+--
+-- @returns Result of function call
+local function _async_invoke(ctx, callee_ctx, fn, args)
+  if not async_invoke_called then
+    vim.api.nvim_command(
+      [[function <SNR>ASYNC_INIT(ctx, callee_ctx, fn)
+          call nvim_load_context(a:ctx)
+          call nvim_load_context(a:callee_ctx)
+          function <SNR>_lambda_CALL(args) closure
+            return call(function(a:fn), args)
+          endfunction
+        endfunction
+      ]])
+    vim.api.nvim_call_function('<SNR>ASYNC_INIT', {ctx, callee_ctx, fn})
+    vim.api.nvim_command('delfunction <SNR>ASYNC_INIT')
+    async_invoke_called = true
   end
 end
 
--- Removes the async call results of the given job ids from "_call_results"
+-- Maps job ids of completed async calls to their results.
+-- Entries should get removed when collected by call_wait().
+local async_call_results = {}
+
+-- Puts async call result in "async_call_results".
+-- Used by asynccall_put_result().
+local function _put_result(job, result)
+  async_call_results[job] = result
+end
+
+-- Appends async call result to a channel in "async_call_results".
+-- Used for parallel calls by asynccall_append_result().
+local function _append_result(job, result)
+  if async_call_results[job] == nil then
+    async_call_results[job] = { result }
+  else
+    table.insert(async_call_results[job], result)
+  end
+end
+
+-- Removes the async call results of the given job ids from "async_call_results"
 -- and returns them in an array of maps with "status" and "value" keys.
 local function _collect_results(jobs, status)
   local results = {}
   for i, v in ipairs(jobs) do
     table.insert(results, {
       status = status[i],
-      value = _call_results[v]
+      value = async_call_results[v]
     })
-    _call_results[v] = nil
+    async_call_results[v] = nil
   end
   return results
 end
 
+
+local async_vimgrep_info = {
+  in_progress = false,
+  jobs = {},
+  paths = {},
+  count = 0,
+}
+
+local function _async_vimgrep_paths()
+  return async_vimgrep_info.paths
+end
+
+-- Per-item callback for _async_vimgrep().
+local function _async_vimgrep_itemdone(results)
+  async_vimgrep_info.count = async_vimgrep_info.count + #results
+  results = vim.api.nvim_call_function('map', {
+    results, [[extend(v:val, { 'bufnr': bufnr(v:val.fname, 1) })]]
+  })
+  async_vimgrep_info.itemdone(results)
+end
+
+-- Done callback for _async_vimgrep().
+local function _async_vimgrep_done()
+  vim.api.nvim_call_function('call_wait', {async_vimgrep_info.jobs})
+  print('Found '..async_vimgrep_info.count..' matches')
+  async_vimgrep_info.in_progress = false
+  async_vimgrep_info.jobs = {}
+  async_vimgrep_info.paths = {}
+  async_vimgrep_info.count = 0
+end
+
 -- Used by async handlers for vimgrep family of commands.
 --
+-- @param bang "!" included in command; override command in progress
 -- @param qf use quickfix list if true, otherwise use current
 --           window location list
 -- @param append append results to existing (quickfix/location) list
-local function _async_vimgrep(qf, append, args)
-  -- setlist(results, app)
-  -- Adds "results" to qf/loc list (append if "app" is true).
-  local setlist = (function(setlist_cmd, select_idx)
-    return function(results, app)
+-- @param args command arguments
+local function _async_vimgrep(bang, qf, append, args)
+  if async_vimgrep_info.in_progress then
+    if bang then
       vim.api.nvim_call_function(
-          setlist_cmd,
-          {select(select_idx, 0, results, app and 'a' or ' ')})
+        'map', {async_vimgrep_info.jobs, 'jobstop(v:val)'})
+      _async_vimgrep_done()
+    else
+      error('Another &:[l]vimgrep[add] command is in progress. '..
+            'Use &:[l]vimgrep[add]! to override.')
     end
-  end)(qf and 'setqflist' or 'setloclist', qf and 2 or 1)
+  end
 
   -- Parse arguments
   -- &:vimgrep /{pattern}/[g][j] {file} ...
@@ -351,6 +409,9 @@ local function _async_vimgrep(qf, append, args)
     end
   elseif pattern == '' then
     pattern = vim.api.nvim_eval('@/')  -- Last used pattern
+    if pattern == '' then
+      error('E35: No previous regular expression')
+    end
   end
 
   if path == nil or pattern == nil then
@@ -368,54 +429,56 @@ local function _async_vimgrep(qf, append, args)
   paths = vim.api.nvim_call_function('trim', { paths })
   paths = vim.api.nvim_call_function('split', { paths, '\n' })
 
-  -- Prepare call_parallel argument lists
+  -- Prepare call_parallel arguments
   for i, v in ipairs(paths) do
     paths[i] = { pattern, v, global }
   end
 
-  -- Spawn jobs
-  local jobcount = vim.api.nvim_get_vvar('cores')  -- Ideal number of jobs
-  local jobs = vim.api.nvim_call_function('call_parallel', {
-    'nvim_grep', paths, { count = jobcount }
-  })
-
-  -- Collect results
-  local results = vim.api.nvim_call_function('call_wait', { jobs })
-  local bufnr_tbl = {}
-  local length = 0
-  setlist({ }, append)
-  for _, v in ipairs(results) do
-    for _, list in ipairs(v.value) do
-      length = length + #list
-      for _, entry in ipairs(list) do
-        local bufnr = bufnr_tbl[entry.fname]
-        if bufnr == nil then
-          bufnr = vim.api.nvim_call_function('bufnr', {
-            entry.fname, true
-          })
-          bufnr_tbl[entry.fname] = bufnr
-        end
-        entry.bufnr = bufnr
-      end
-      setlist(list, true)
+  if qf then
+    async_vimgrep_info.itemdone = function(results)
+      vim.api.nvim_call_function('setqflist', {results, 'a'})
+    end
+  else
+    async_vimgrep_info.itemdone = function(results)
+      vim.api.nvim_call_function('setloclist', {0, results, 'a'})
     end
   end
-  print('Found '..length..' matches')
+
+  -- Clear list (if append is false) and spawn jobs
+  if not append then
+    if qf then
+      vim.api.nvim_call_function('setqflist', {{}})
+    else
+      vim.api.nvim_call_function('setloclist', {0, {}})
+    end
+  end
+
+  async_vimgrep_info.in_progress = true
+  async_vimgrep_info.paths = paths
+  local cmd = ([[
+  echo call_parallel('nvim_grep', luaeval('vim._async_vimgrep_paths()'), {
+    'itemdone': { results ->
+       luaeval('vim._async_vimgrep_itemdone(_A)', results) },
+    'done': { ->
+       luaeval('vim._async_vimgrep_done()') },
+  })
+  ]]):gsub('\n', '')
+  async_vimgrep_info.jobs = vim.api.nvim_eval(vim.api.nvim_command_output(cmd))
 end
 
 -- Async handlers for commands
-local _async_handlers_tbl = {
-  ['vimgrep'] = function(args)
-    _async_vimgrep(true, false, args)
+local async_handlers_tbl = {
+  ['vimgrep'] = function(bang, args)
+    _async_vimgrep(bang, true, false, args)
   end,
-  ['vimgrepadd'] = function(args)
-    _async_vimgrep(true, true, args)
+  ['vimgrepadd'] = function(bang, args)
+    _async_vimgrep(bang, true, true, args)
   end,
-  ['lvimgrep'] = function(args)
-    _async_vimgrep(false, false, args)
+  ['lvimgrep'] = function(bang, args)
+    _async_vimgrep(bang, false, false, args)
   end,
-  ['lvimgrepadd'] = function(args)
-    _async_vimgrep(false, true, args)
+  ['lvimgrepadd'] = function(bang, args)
+    _async_vimgrep(bang, false, true, args)
   end,
 }
 
@@ -436,12 +499,12 @@ end
 -- Invokes the async handler of "cmd".
 -- Used by ex_async_handler().
 local function _async_handler(cmd)
-  local handler, args = cmd:match('^([^%s]+)%s*(.*)$')
-  local handler_fn = _async_handlers_tbl[handler]
+  local handler, bang, args = cmd:match('^([^%s!]+)%s*(!?)%s*(.*)$')
+  local handler_fn = async_handlers_tbl[handler]
   if handler_fn == nil then
     _async_handler_default(cmd)
   else
-    handler_fn(args)
+    handler_fn(#bang > 0, args)
   end
 end
 
@@ -457,6 +520,9 @@ local module = {
   _put_result = _put_result,
   _append_result = _append_result,
   _collect_results = _collect_results,
+  _async_vimgrep_paths = _async_vimgrep_paths,
+  _async_vimgrep_itemdone = _async_vimgrep_itemdone,
+  _async_vimgrep_done = _async_vimgrep_done,
   _async_handler = _async_handler,
   _add_userfunc = _add_userfunc,
 }

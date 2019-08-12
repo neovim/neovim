@@ -7887,6 +7887,7 @@ fail:
     asynccall_channel_release(chan);
   });
   tv_clear(rettv);
+  callback_free(&callback);
   goto free;
 }
 
