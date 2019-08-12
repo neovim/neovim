@@ -182,6 +182,10 @@ describe('multiproc', function()
 
     it('fails gracefully on error spawning a child', function()
       if helpers.pending_win32(pending) then return end
+      if helpers.isCI('quickbuild') then
+        pending("flaky on quickbuild", function() end)
+        return
+      end
 
       local script = [=[
       function SaveExitCode(id, code, event)
