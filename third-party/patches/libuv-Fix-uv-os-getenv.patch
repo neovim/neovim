@@ -1,10 +1,12 @@
 diff --git a/src/win/util.c b/src/win/util.c
-index c994984f..6ed83fdd 100644
+index c994984f..2b7f2d8b 100644
 --- a/src/win/util.c
 +++ b/src/win/util.c
-@@ -1413,15 +1413,22 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
+@@ -1412,16 +1412,23 @@ int uv_os_getenv(const char* name, char* buffer, size_t* size) {
+   if (r != 0)
      return r;
  
++  SetLastError(0);
    len = GetEnvironmentVariableW(name_w, var, MAX_ENV_VAR_LENGTH);
 +  r = GetLastError();
    uv__free(name_w);
@@ -12,7 +14,7 @@ index c994984f..6ed83fdd 100644
  
    if (len == 0) {
 -    r = GetLastError();
- 
+-
      if (r == ERROR_ENVVAR_NOT_FOUND)
        return UV_ENOENT;
  
