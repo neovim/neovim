@@ -1223,6 +1223,10 @@ scripterror:
     }
   }
 
+  if (embedded_mode && silent_mode) {
+    mainerr(_("--embed conflicts with -es/-Es"), NULL);
+  }
+
   // If there is a "+123" or "-c" command, set v:swapcommand to the first one.
   if (parmp->n_commands > 0) {
     const size_t swcmd_len = STRLEN(parmp->commands[0]) + 3;

@@ -7403,3 +7403,6 @@ msgstr ""
 "Source C (*.c, *.h)\t*.c;*.h\n"
 "Source C++ (*.cpp, *.hpp)\t*.cpp;*.hpp\n"
 "Fichiers Vim (*.vim, _vimrc, _gvimrc)\t*.vim;_vimrc;_gvimrc\n"
+
+msgid "--embed conflicts with -es/-Es"
+msgstr "les paramètres -es/-ES sont incompatibles avec --embed"

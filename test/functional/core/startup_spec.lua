@@ -217,6 +217,13 @@ describe('startup', function()
     end
   end)
 
+  it('fails on --embed with -es/-Es', function()
+    eq('nvim: --embed conflicts with -es/-Es\nMore info with "nvim -h"\n',
+      funcs.system({nvim_prog, '--embed', '-es' }))
+    eq('nvim: --embed conflicts with -es/-Es\nMore info with "nvim -h"\n',
+      funcs.system({nvim_prog, '--embed', '-Es' }))
+  end)
+
   it('does not crash if --embed is given twice', function()
     clear{args={'--embed'}}
     eq(2, eval('1+1'))
