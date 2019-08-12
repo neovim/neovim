@@ -14,7 +14,7 @@ func ListMonths()
   if !empty(entered)
     let mth = filter(mth, 'v:val=~"^".entered')
   endif
-  call complete(1, mth)
+  call complete(1, mth) 
   return ''
 endfunc
 
@@ -72,7 +72,7 @@ func Test_popup_complete()
   call feedkeys("aJu\<f5>\<c-p>l\<c-y>", 'tx')
   call assert_equal(["Jul"], getline(1,2))
   %d
-
+  
   " any-non printable, non-white character: Add this character and
   " reduce number of matches
   call feedkeys("aJu\<f5>\<c-p>l\<c-n>\<c-y>", 'tx')
@@ -94,7 +94,7 @@ func Test_popup_complete()
   call feedkeys("aJ\<f5>".repeat("\<c-n>",3)."\<c-l>\<esc>", 'tx')
   call assert_equal(["J"], getline(1,2))
   %d
-
+  
   " <c-l> - Insert one character from the current match
   call feedkeys("aJ\<f5>".repeat("\<c-n>",4)."\<c-l>\<esc>", 'tx')
   call assert_equal(["January"], getline(1,2))
@@ -516,6 +516,35 @@ func Test_completion_ctrl_e_without_autowrap()
   q!
 endfunc
 
+func DummyCompleteSix()
+  call complete(1, ['Hello', 'World'])
+  return ''
+endfunction
+
+" complete() correctly clears the list of autocomplete candidates
+" See #1411
+func Test_completion_clear_candidate_list()
+  new
+  %d
+  " select first entry from the completion popup
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>", "tx")
+  call assert_equal('Hello', getline(1))
+  %d
+  " select second entry from the completion popup
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>", "tx")
+  call assert_equal('World', getline(1))
+  %d
+  " select original text
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>\<C-N>", "tx")
+  call assert_equal('    xxx', getline(1))
+  %d
+  " back at first entry from completion list
+  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>\<C-N>\<C-N>", "tx")
+  call assert_equal('Hello', getline(1))
+
+  bw!
+endfunc
+
 func Test_completion_respect_bs_option()
   new
   let li = ["aaa", "aaa12345", "aaaabcdef", "aaaABC"]
@@ -573,82 +602,6 @@ func Test_completion_comment_formatting()
   endtry
   call assert_equal(['', '/*', ' *', ' */'], getline(1,4))
   bwipe!
-endfunc
-
-func DummyCompleteSix()
-  call complete(1, ['Hello', 'World'])
-  return ''
-endfunction
-
-" complete() correctly clears the list of autocomplete candidates
-func Test_completion_clear_candidate_list()
-  new
-  %d
-  " select first entry from the completion popup
-  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>", "tx")
-  call assert_equal('Hello', getline(1))
-  %d
-  " select second entry from the completion popup
-  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>", "tx")
-  call assert_equal('World', getline(1))
-  %d
-  " select original text
-  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>\<C-N>", "tx")
-  call assert_equal('    xxx', getline(1))
-  %d
-  " back at first entry from completion list
-  call feedkeys("a    xxx\<C-N>\<C-R>=DummyCompleteSix()\<CR>\<C-N>\<C-N>\<C-N>", "tx")
-  call assert_equal('Hello', getline(1))
-
-  bw!
-endfunc
-
-func Test_popup_complete_backwards()
-  new
-  call setline(1, ['Post', 'Port', 'Po'])
-  let expected=['Post', 'Port', 'Port']
-  call cursor(3,2)
-  call feedkeys("A\<C-X>". repeat("\<C-P>", 3). "rt\<cr>", 'tx')
-  call assert_equal(expected, getline(1,'$'))
-  bwipe!
-endfunc
-
-func Test_popup_and_preview_autocommand()
-  " This used to crash Vim
-  if !has('python')
-    return
-  endif
-  let h = winheight(0)
-  if h < 15
-    return
-  endif
-  new
-  augroup MyBufAdd
-    au!
-    au BufAdd * nested tab sball
-  augroup END
-  set omnifunc=pythoncomplete#Complete
-  call setline(1, 'import os')
-  " make the line long
-  call setline(2, '                                 os.')
-  $
-  call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<enter>\<esc>", 'tx')
-  call assert_equal("import os", getline(1))
-  call assert_match('                                 os.\(EX_IOERR\|O_CREAT\)$', getline(2))
-  call assert_equal(1, winnr('$'))
-  " previewwindow option is not set
-  call assert_equal(0, &previewwindow)
-  norm! gt
-  call assert_equal(0, &previewwindow)
-  norm! gT
-  call assert_equal(10, tabpagenr('$'))
-  tabonly
-  pclose
-  augroup MyBufAdd
-    au!
-  augroup END
-  augroup! MyBufAdd
-  bw!
 endfunc
 
 func MessCompleteMonths()
@@ -737,6 +690,55 @@ func Test_popup_and_window_resize()
   call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0] + 1))
   " cursor line also shows !
   call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0]))
+  bwipe!
+endfunc
+
+func Test_popup_and_preview_autocommand()
+  " This used to crash Vim
+  if !has('python')
+    return
+  endif
+  let h = winheight(0)
+  if h < 15
+    return
+  endif
+  new
+  augroup MyBufAdd
+    au!
+    au BufAdd * nested tab sball
+  augroup END
+  set omnifunc=pythoncomplete#Complete
+  call setline(1, 'import os')
+  " make the line long
+  call setline(2, '                                 os.')
+  $
+  call feedkeys("A\<C-X>\<C-O>\<C-N>\<C-N>\<C-N>\<enter>\<esc>", 'tx')
+  call assert_equal("import os", getline(1))
+  call assert_match('                                 os.\(EX_IOERR\|O_CREAT\)$', getline(2))
+  call assert_equal(1, winnr('$'))
+  " previewwindow option is not set
+  call assert_equal(0, &previewwindow)
+  norm! gt
+  call assert_equal(0, &previewwindow)
+  norm! gT
+  call assert_equal(10, tabpagenr('$'))
+  tabonly
+  pclose
+  augroup MyBufAdd
+    au!
+  augroup END
+  augroup! MyBufAdd
+  bw!
+endfunc
+
+
+func Test_popup_complete_backwards()
+  new
+  call setline(1, ['Post', 'Port', 'Po'])
+  let expected=['Post', 'Port', 'Port']
+  call cursor(3,2)
+  call feedkeys("A\<C-X>". repeat("\<C-P>", 3). "rt\<cr>", 'tx')
+  call assert_equal(expected, getline(1,'$'))
   bwipe!
 endfunc
 
