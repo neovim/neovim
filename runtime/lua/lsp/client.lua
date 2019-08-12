@@ -168,13 +168,11 @@ client.request_async = function(self, method, params, cb, bufnr)
   end
 
   -- After handling callback semantics, store it to call on reply.
-  if cb then
-    self._callbacks[req.id] = {
-      cb = cb,
-      method = req.method,
-      bufnr = bufnr,
-    }
-  end
+  self._callbacks[req.id] = {
+    cb = cb,
+    method = req.method,
+    bufnr = bufnr,
+  }
 
   if should_send_message(self, req) then
     log.debug("Sending Request: [["..req:data().."]]")
@@ -330,7 +328,12 @@ client.on_message = function(self, json_message)
     return
   -- Handle responses
   elseif not json_message.method and json_message.id then
-    local cb = self._callbacks[json_message.id].cb
+    local cb
+
+    if self._callbacks[json_message.id] and self._callbacks[json_message.id].cb then
+      cb = self._callbacks[json_message.id].cb
+    end
+
     local method = self._callbacks[json_message.id].method
     local success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
