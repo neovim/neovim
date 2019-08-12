@@ -669,10 +669,10 @@ func Test_popup_and_window_resize()
   if h < 15
     return
   endif
-  let g:buf = term_start([$NVIM_PRG, '--clean', '-c', 'set noswapfile'], {'term_rows': h / 3})
-  call term_sendkeys(g:buf, (h / 3 - 1)."o\<esc>G")
-  call term_sendkeys(g:buf, "i\<c-x>")
+  let g:buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': h / 3})
+  call term_sendkeys(g:buf, (h / 3 - 1)."o\<esc>")
   call term_wait(g:buf, 200)
+  call term_sendkeys(g:buf, "Gi\<c-x>")
   call term_sendkeys(g:buf, "\<c-v>")
   call term_wait(g:buf, 100)
   " popup first entry "!" must be at the top

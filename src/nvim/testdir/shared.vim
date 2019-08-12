@@ -196,22 +196,40 @@ func s:feedkeys(timer)
   call feedkeys('x', 'nt')
 endfunc
 
+" Get $VIMPROG to run Vim executable.
+" The Makefile writes it as the first line in the "vimcmd" file.
+" Nvim: uses $NVIM_TEST_ARG0.
+func GetVimProg()
+  if empty($NVIM_TEST_ARG0)
+    " Assume the script was sourced instead of running "make".
+    return '../../../build/bin/nvim'
+  endif
+  return $NVIM_TEST_ARG0
+endfunc
+
 " Get the command to run Vim, with -u NONE and --headless arguments.
 " If there is an argument use it instead of "NONE".
-" Returns an empty string on error.
 func GetVimCommand(...)
   if a:0 == 0
     let name = 'NONE'
   else
     let name = a:1
   endif
-  let cmd = v:progpath
+  let cmd = GetVimProg()
   let cmd = substitute(cmd, '-u \f\+', '-u ' . name, '')
   if cmd !~ '-u '. name
     let cmd = cmd . ' -u ' . name
   endif
   let cmd .= ' --headless -i NONE'
   let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
+  return cmd
+endfunc
+
+" Get the command to run Vim, with --clean.
+func GetVimCommandClean()
+  let cmd = GetVimCommand()
+  let cmd = substitute(cmd, '-u NONE', '--clean', '')
+  let cmd = substitute(cmd, '--headless', '', '')
   return cmd
 endfunc
 
