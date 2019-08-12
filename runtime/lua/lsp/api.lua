@@ -7,6 +7,7 @@ vim.lsp = {
   },
   config = require('lsp.config'),
   structures = require('lsp.structures'),
+  util = require('lsp.util'),
 }
 
 return vim.lsp
