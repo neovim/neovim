@@ -8,7 +8,7 @@ local log = nvim_log:new('LSP')
 
 log:set_console_level('warn')
 log:set_file_level('bad_level')
-log:set_outfile(vim.api.nvim_call_function('expand', {'~'}) .. '/test_logfile.txt')
+log:set_outfile(vim.api.nvim_call_function('stdpath', {'data'}) .. '/language_client.log')
 
 return log
 
