@@ -57,6 +57,19 @@ else
   set encoding=latin1
 endif
 
+" REDIR_TEST_TO_NULL has a very permissive SwapExists autocommand which is for
+" the test_name.vim file itself. Replace it here with a more restrictive one,
+" so we still catch mistakes.
+let s:test_script_fname = expand('%')
+au! SwapExists * call HandleSwapExists()
+func HandleSwapExists()
+  " Only ignore finding a swap file for the test script (the user might be
+  " editing it and do ":make test_name") and the output file.
+  if expand('<afile>') == 'messages' || expand('<afile>') =~ s:test_script_fname
+    let v:swapchoice = 'e'
+  endif
+endfunc
+
 " Avoid stopping at the "hit enter" prompt
 set nomore
 
@@ -150,6 +163,7 @@ func RunTheTest(test)
 
   " Clear any autocommands
   au!
+  au SwapExists * call HandleSwapExists()
 
   " Close any extra tab pages and windows and make the current one not modified.
   while tabpagenr('$') > 1
