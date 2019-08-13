@@ -3672,28 +3672,28 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
 }
 
 
-/*
- * Execute user defined complete function 'completefunc' or 'omnifunc', and
- * get matches in "matches".
- */
+// Execute user defined complete function 'completefunc' or 'omnifunc', and
+// get matches in "matches".
 static void
-expand_by_function (
-    int type,                   /* CTRL_X_OMNI or CTRL_X_FUNCTION */
+expand_by_function(
+    int type,                   // CTRL_X_OMNI or CTRL_X_FUNCTION
     char_u *base
 )
 {
-  list_T      *matchlist = NULL;
-  dict_T      *matchdict = NULL;
-  char_u      *funcname;
+  list_T *matchlist = NULL;
+  dict_T *matchdict = NULL;
+  char_u *funcname;
   pos_T pos;
-  win_T       *curwin_save;
-  buf_T       *curbuf_save;
+  win_T *curwin_save;
+  buf_T *curbuf_save;
   typval_T rettv;
   const int save_State = State;
 
+  assert(curbuf != NULL);
   funcname = (type == CTRL_X_FUNCTION) ? curbuf->b_p_cfu : curbuf->b_p_ofu;
-  if (*funcname == NUL)
+  if (*funcname == NUL) {
     return;
+  }
 
   // Call 'completefunc' to obtain the list of matches.
   typval_T args[3];
