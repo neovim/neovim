@@ -1001,7 +1001,6 @@ void set_init_2(bool headless)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-  parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
   (void)parse_printoptions();      // parse 'printoptions' default value
 }
 
@@ -1010,6 +1009,8 @@ void set_init_2(bool headless)
  */
 void set_init_3(void)
 {
+  parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
+
   // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
   // This is done after other initializations, where 'shell' might have been
   // set, but only if they have not been set before.
