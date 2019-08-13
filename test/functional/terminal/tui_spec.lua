@@ -851,7 +851,9 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(':set noshowmode laststatus=0\n')
 
     feed_data(':terminal\n')
-    screen:sleep(1)
+    -- Wait for terminal to be ready.
+    screen:expect{any='-- TERMINAL --'}
+
     feed_data('\027[I')
     screen:expect{grid=[[
       {1:r}eady $                                           |
