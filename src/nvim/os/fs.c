@@ -1180,12 +1180,10 @@ char *os_resolve_shortcut(const char *fname)
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
     wchar_t *p;
-    const int conversion_result = utf8_to_utf16(fname, &p);
+    const int conversion_result = utf8_to_utf16(fname, len, &p);
     if (conversion_result != 0) {
       EMSG2("utf8_to_utf16 failed: %d", conversion_result);
-    }
-
-    if (p != NULL) {
+    } else if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
       hr = pslw->lpVtbl->QueryInterface(
           pslw, &IID_IPersistFile, (void **)&ppf);
