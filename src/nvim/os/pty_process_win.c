@@ -51,26 +51,26 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
   if (cfg == NULL) {
-    emsg = "Failed, winpty_config_new.";
+    emsg = "winpty_config_new failed";
     goto cleanup;
   }
 
   winpty_config_set_initial_size(cfg, ptyproc->width, ptyproc->height);
   winpty_object = winpty_open(cfg, &err);
   if (winpty_object == NULL) {
-    emsg = "Failed, winpty_open.";
+    emsg = "winpty_open failed";
     goto cleanup;
   }
 
-  status = utf16_to_utf8(winpty_conin_name(winpty_object), &in_name);
+  status = utf16_to_utf8(winpty_conin_name(winpty_object), -1, &in_name);
   if (status != 0) {
-    emsg = "Failed to convert in_name from utf16 to utf8.";
+    emsg = "utf16_to_utf8(winpty_conin_name) failed";
     goto cleanup;
   }
 
-  status = utf16_to_utf8(winpty_conout_name(winpty_object), &out_name);
+  status = utf16_to_utf8(winpty_conout_name(winpty_object), -1, &out_name);
   if (status != 0) {
-    emsg = "Failed to convert out_name from utf16 to utf8.";
+    emsg = "utf16_to_utf8(winpty_conout_name) failed";
     goto cleanup;
   }
 
@@ -95,7 +95,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   if (proc->cwd != NULL) {
     status = utf8_to_utf16(proc->cwd, -1, &cwd);
     if (status != 0) {
-      emsg = "utf8_to_utf16 failed";
+      emsg = "utf8_to_utf16(proc->cwd) failed";
       goto cleanup;
     }
   }
@@ -160,11 +160,11 @@ int pty_process_spawn(PtyProcess *ptyproc)
 cleanup:
   if (status) {
     // In the case of an error of MultiByteToWideChar or CreateProcessW.
-    ELOG("%s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
     status = os_translate_sys_error(status);
   } else if (err != NULL) {
     status = (int)winpty_error_code(err);
-    ELOG("%s: error code: %d", emsg, status);
+    ELOG("pty_process_spawn: %s: error code: %d", emsg, status);
     status = translate_winpty_error(status);
   }
   winpty_error_free(err);

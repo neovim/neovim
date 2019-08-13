@@ -178,7 +178,7 @@ char *os_getenvname_at_index(size_t index)
   for (wchar_t *it = env; *it != L'\0' || *(it + 1) != L'\0'; it++) {
     if (index == current_index) {
       char *utf8_str;
-      int conversion_result = utf16_to_utf8(it, &utf8_str);
+      int conversion_result = utf16_to_utf8(it, -1, &utf8_str);
       if (conversion_result != 0) {
         EMSG2("utf16_to_utf8 failed: %d", conversion_result);
         break;
@@ -258,7 +258,7 @@ void os_get_hostname(char *hostname, size_t size)
   host_utf16[host_wsize] = '\0';
 
   char *host_utf8;
-  int conversion_result = utf16_to_utf8(host_utf16, &host_utf8);
+  int conversion_result = utf16_to_utf8(host_utf16, -1, &host_utf8);
   if (conversion_result != 0) {
     EMSG2("utf16_to_utf8 failed: %d", conversion_result);
     return;

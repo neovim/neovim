@@ -1208,7 +1208,7 @@ char *os_resolve_shortcut(const char *fname)
       ZeroMemory(wsz, MAX_PATH * sizeof(wchar_t));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        const int conversion_result = utf16_to_utf8(wsz, &rfname);
+        const int conversion_result = utf16_to_utf8(wsz, -1, &rfname);
         if (conversion_result != 0) {
           EMSG2("utf16_to_utf8 failed: %d", conversion_result);
         }
