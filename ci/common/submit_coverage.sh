@@ -18,7 +18,8 @@ if ! [ -f "$codecov_sh" ]; then
   curl --retry 5 --silent --fail -o "$codecov_sh" https://codecov.io/bash
   chmod +x "$codecov_sh"
 
-  python3 -m pip install --quiet --user https://github.com/RPGillespie6/fastcov/archive/master.zip
+  python3 -m pip install --quiet --user fastcov
+  fastcov --version
 fi
 
 (
