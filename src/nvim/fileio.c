@@ -777,9 +777,8 @@ readfile(
     fenc = curbuf->b_p_fenc;            // use format from buffer
     fenc_alloced = false;
   } else {
-    fenc_next = p_fencs;                /* try items in 'fileencodings' */
-    fenc = next_fenc(&fenc_next);
-    fenc_alloced = true;
+    fenc_next = p_fencs;                // try items in 'fileencodings'
+    fenc = next_fenc(&fenc_next, &fenc_alloced);
   }
 
   /*
@@ -869,8 +868,7 @@ retry:
       if (fenc_alloced)
         xfree(fenc);
       if (fenc_next != NULL) {
-        fenc = next_fenc(&fenc_next);
-        fenc_alloced = (fenc_next != NULL);
+        fenc = next_fenc(&fenc_next, &fenc_alloced);
       } else {
         fenc = (char_u *)"";
         fenc_alloced = false;
@@ -2082,19 +2080,19 @@ void set_forced_fenc(exarg_T *eap)
   }
 }
 
-/*
- * Find next fileencoding to use from 'fileencodings'.
- * "pp" points to fenc_next.  It's advanced to the next item.
- * When there are no more items, an empty string is returned and *pp is set to
- * NULL.
- * When *pp is not set to NULL, the result is in allocated memory.
- */
-static char_u *next_fenc(char_u **pp)
+// Find next fileencoding to use from 'fileencodings'.
+// "pp" points to fenc_next.  It's advanced to the next item.
+// When there are no more items, an empty string is returned and *pp is set to
+// NULL.
+// When *pp is not set to NULL, the result is in allocated memory and "alloced"
+// is set to true.
+static char_u *next_fenc(char_u **pp, bool *alloced)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
   char_u      *r;
 
+  *alloced = false;
   if (**pp == NUL) {
     *pp = NULL;
     return (char_u *)"";
@@ -2110,6 +2108,7 @@ static char_u *next_fenc(char_u **pp)
     xfree(r);
     r = p;
   }
+  *alloced = true;
   return r;
 }
 
