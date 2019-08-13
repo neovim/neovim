@@ -853,7 +853,7 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(':terminal\n')
     screen:sleep(1)
     feed_data('\027[I')
-    screen:expect({grid=[[
+    screen:expect{grid=[[
       {1:r}eady $                                           |
       [Process exited 0]                                |
                                                         |
@@ -861,7 +861,7 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       gained                                            |
       {3:-- TERMINAL --}                                    |
-    ]], timeout=(3 * screen.timeout)})
+    ]], timeout=(3 * screen.timeout)}
 
     feed_data('\027[O')
     screen:expect([[
