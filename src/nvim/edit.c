@@ -3689,7 +3689,7 @@ expand_by_function(
   typval_T rettv;
   const int save_State = State;
 
-  assert(curbuf != NULL && curbuf->b_p_cfu != NULL && curbuf->b_p_ofu != NULL);
+  assert(curbuf != NULL);
   funcname = (type == CTRL_X_FUNCTION) ? curbuf->b_p_cfu : curbuf->b_p_ofu;
   if (*funcname == NUL) {
     return;
