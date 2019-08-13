@@ -13640,10 +13640,6 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_pyeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (p_pyx == 0) {
-      p_pyx = 2;
-  }
-
   script_host_eval("python", argvars, rettv);
 }
 
@@ -13652,10 +13648,6 @@ static void f_pyeval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_py3eval(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (p_pyx == 0) {
-      p_pyx = 3;
-  }
-
   script_host_eval("python3", argvars, rettv);
 }
 

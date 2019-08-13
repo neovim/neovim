@@ -2830,9 +2830,9 @@ void ex_options(exarg_T *eap)
 void init_pyxversion(void)
 {
   if (p_pyx == 0) {
-    if (!eval_has_provider("python3")) {
+    if (eval_has_provider("python3")) {
       p_pyx = 3;
-    } else if (!eval_has_provider("python")) {
+    } else if (eval_has_provider("python")) {
       p_pyx = 2;
     }
   }
