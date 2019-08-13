@@ -52,21 +52,22 @@ Context *ctx_get(size_t index)
 void ctx_free(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (ctx->regs.data) {
+  if (ctx->regs.size) {
     msgpack_sbuffer_destroy(&ctx->regs);
   }
-  if (ctx->jumps.data) {
+  if (ctx->jumps.size) {
     msgpack_sbuffer_destroy(&ctx->jumps);
   }
-  if (ctx->buflist.data) {
+  if (ctx->buflist.size) {
     msgpack_sbuffer_destroy(&ctx->buflist);
   }
-  if (ctx->gvars.data) {
+  if (ctx->gvars.size) {
     msgpack_sbuffer_destroy(&ctx->gvars);
   }
   if (ctx->funcs.items) {
     api_free_array(ctx->funcs);
   }
+  *ctx = CONTEXT_INIT;
 }
 
 /// Saves the editor state to a context.
@@ -529,16 +530,34 @@ Dictionary ctx_to_dict(Context *ctx)
 
   Dictionary rv = ARRAY_DICT_INIT;
 
-  PUT(rv, "regs", ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->regs))));
-  PUT(rv, "jumps", ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->jumps))));
+  if (ctx->regs.size) {
+    PUT(rv, "regs",
+        ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->regs))));
+  }
+
+  if (ctx->jumps.size) {
+    PUT(rv, "jumps",
+        ARRAY_OBJ(ctx_keys_from_shada(sbuf_to_array(ctx->jumps))));
+  }
+
   if (ctx->buflist.size) {
     Array buflist = sbuf_to_array(ctx->buflist);
-    PUT(rv, "buflist",
-        ARRAY_OBJ(ctx_keys_from_shada(buflist.items[0].data.array)));
+    assert(buflist.size == 1);
+    assert(buflist.items[0].type == kObjectTypeArray);
+    Array ctx_buflist = ctx_keys_from_shada(buflist.items[0].data.array);
+    if (ctx_buflist.size) {
+      PUT(rv, "buflist", ARRAY_OBJ(ctx_buflist));
+    }
     xfree(buflist.items);
   }
-  PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
-  PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
+
+  if (ctx->gvars.size) {
+    PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
+  }
+
+  if (ctx->funcs.size) {
+    PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
+  }
 
   return rv;
 }

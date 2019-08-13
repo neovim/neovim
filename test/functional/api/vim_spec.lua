@@ -11,7 +11,6 @@ local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local os_name = helpers.os_name
-local filter_context = helpers.filter_context
 local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
@@ -691,7 +690,7 @@ describe('API', function()
   describe('nvim_get_context', function()
     it('returns context dictionary of current editor state', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, filter_context(nvim('get_context', ctx_items)))
+      eq({}, nvim('get_context', ctx_items))
 
       feed('i1<cr>22<cr>333<c-[>ddddddqahjklquuu')
       feed('gg')
@@ -729,7 +728,7 @@ describe('API', function()
         ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
       }
 
-      eq(expected_ctx, filter_context(nvim('get_context', ctx_items)))
+      eq(expected_ctx, nvim('get_context', ctx_items))
     end)
 
     it('handles large context properly', function()
@@ -741,7 +740,7 @@ describe('API', function()
   describe('nvim_load_context', function()
     it('sets current editor state to given context dictionary', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, filter_context(nvim('get_context', ctx_items)))
+      eq({}, nvim('get_context', ctx_items))
 
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)

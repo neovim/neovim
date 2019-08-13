@@ -9,7 +9,6 @@ local expect_err = helpers.expect_err
 local feed = helpers.feed
 local map = helpers.map
 local nvim = helpers.nvim
-local filter_context = helpers.filter_context
 local redir_exec = helpers.redir_exec
 local source = helpers.source
 local trim = helpers.trim
@@ -319,56 +318,56 @@ describe('context functions', function()
       }
 
       call('ctxpush')
-      eq(with_all, filter_context(call('ctxget')))
-      eq(with_all, filter_context(call('ctxget', 0)))
+      eq(with_all, call('ctxget'))
+      eq(with_all, call('ctxget', 0))
 
       call('ctxpush', {'gvars'})
-      eq(with_gvars, filter_context(call('ctxget')))
-      eq(with_gvars, filter_context(call('ctxget', 0)))
-      eq(with_all, filter_context(call('ctxget', 1)))
+      eq(with_gvars, call('ctxget'))
+      eq(with_gvars, call('ctxget', 0))
+      eq(with_all, call('ctxget', 1))
 
       call('ctxpush', {'buflist'})
-      eq(with_buflist, filter_context(call('ctxget')))
-      eq(with_buflist, filter_context(call('ctxget', 0)))
-      eq(with_gvars, filter_context(call('ctxget', 1)))
-      eq(with_all, filter_context(call('ctxget', 2)))
+      eq(with_buflist, call('ctxget'))
+      eq(with_buflist, call('ctxget', 0))
+      eq(with_gvars, call('ctxget', 1))
+      eq(with_all, call('ctxget', 2))
 
       call('ctxpush', {'jumps'})
-      eq(with_jumps, filter_context(call('ctxget')))
-      eq(with_jumps, filter_context(call('ctxget', 0)))
-      eq(with_buflist, filter_context(call('ctxget', 1)))
-      eq(with_gvars, filter_context(call('ctxget', 2)))
-      eq(with_all, filter_context(call('ctxget', 3)))
+      eq(with_jumps, call('ctxget'))
+      eq(with_jumps, call('ctxget', 0))
+      eq(with_buflist, call('ctxget', 1))
+      eq(with_gvars, call('ctxget', 2))
+      eq(with_all, call('ctxget', 3))
 
       call('ctxpush', {'regs'})
-      eq(with_regs, filter_context(call('ctxget')))
-      eq(with_regs, filter_context(call('ctxget', 0)))
-      eq(with_jumps, filter_context(call('ctxget', 1)))
-      eq(with_buflist, filter_context(call('ctxget', 2)))
-      eq(with_gvars, filter_context(call('ctxget', 3)))
-      eq(with_all, filter_context(call('ctxget', 4)))
+      eq(with_regs, call('ctxget'))
+      eq(with_regs, call('ctxget', 0))
+      eq(with_jumps, call('ctxget', 1))
+      eq(with_buflist, call('ctxget', 2))
+      eq(with_gvars, call('ctxget', 3))
+      eq(with_all, call('ctxget', 4))
 
       call('ctxpop')
-      eq(with_jumps, filter_context(call('ctxget')))
-      eq(with_jumps, filter_context(call('ctxget', 0)))
-      eq(with_buflist, filter_context(call('ctxget', 1)))
-      eq(with_gvars, filter_context(call('ctxget', 2)))
-      eq(with_all, filter_context(call('ctxget', 3)))
+      eq(with_jumps, call('ctxget'))
+      eq(with_jumps, call('ctxget', 0))
+      eq(with_buflist, call('ctxget', 1))
+      eq(with_gvars, call('ctxget', 2))
+      eq(with_all, call('ctxget', 3))
 
       call('ctxpop')
-      eq(with_buflist, filter_context(call('ctxget')))
-      eq(with_buflist, filter_context(call('ctxget', 0)))
-      eq(with_gvars, filter_context(call('ctxget', 1)))
-      eq(with_all, filter_context(call('ctxget', 2)))
+      eq(with_buflist, call('ctxget'))
+      eq(with_buflist, call('ctxget', 0))
+      eq(with_gvars, call('ctxget', 1))
+      eq(with_all, call('ctxget', 2))
 
       call('ctxpop')
-      eq(with_gvars, filter_context(call('ctxget')))
-      eq(with_gvars, filter_context(call('ctxget', 0)))
-      eq(with_all, filter_context(call('ctxget', 1)))
+      eq(with_gvars, call('ctxget'))
+      eq(with_gvars, call('ctxget', 0))
+      eq(with_all, call('ctxget', 1))
 
       call('ctxpop')
-      eq(with_all, filter_context(call('ctxget')))
-      eq(with_all, filter_context(call('ctxget', 0)))
+      eq(with_all, call('ctxget'))
+      eq(with_all, call('ctxget', 0))
     end)
   end)
 
