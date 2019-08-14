@@ -12,14 +12,14 @@ endtry
 let s:lsp_plugin = "require('lsp.api').plugin"
 
 function! lsp#start(...) abort
-  let start_filetype = get(a:000, 0, &filetype)
+  let filetype = get(a:000, 0, &filetype)
   let force = get(a:000, 1, v:false)
 
-  if force || !luaeval(s:lsp_plugin . '.client_has_started(_A)', start_filetype)
-    call luaeval(s:lsp_plugin . '.start_client(nil, _A).name', start_filetype)
-    " call lsp#api_exec('client.start(nil, "%s")', start_filetype)
+  if force || !luaeval(s:lsp_plugin . '.client_has_started(_A)', filetype)
+    call luaeval(s:lsp_plugin . '.start_client(nil, _A).name', filetype)
+    " call lsp#api_exec('client.start(nil, "%s")', filetype)
   else
-    echom '[LSP] Client for ' . start_filetype . ' has already started'
+    echom '[LSP] Client for ' . filetype . ' has already started'
   endif
 endfunction
 
@@ -39,7 +39,7 @@ function! lsp#request(method, ...) abort
           \ 'bufnr': bufnr,
         \ })
 
-  return request_id
+  return result
 endfunction
 
 ""

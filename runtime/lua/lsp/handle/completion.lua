@@ -26,7 +26,8 @@ completion.getLabels = function(data)
     table.insert(result, {
       word = completion_item.label,
       kind = completion.map_CompletionItemKind_to_vim(completion_item.kind),
-      info = completion_item.documentation,
+      info = completion_item.detail,
+      dup = 0,
     })
   end
 
@@ -35,27 +36,11 @@ end
 
 
 completion.map_CompletionItemKind_to_vim = function(item_kind)
-  if item_kind == nil then
+  if CompletionItemKind[item_kind - 1] then
+    return CompletionItemKind[item_kind - 1]
+  else
     return ''
   end
-
-  if item_kind == CompletionItemKind.Variable then
-    return 'v'
-  end
-
-  if item_kind == CompletionItemKind.Function then
-    return 'f'
-  end
-
-  if item_kind == CompletionItemKind.Field
-      or item_kind == CompletionItemKind.Property
-      then
-    return 'm'
-  end
-
-  return ''
 end
-
-
 
 return completion
