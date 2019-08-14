@@ -582,7 +582,22 @@ static bool emsg_multiline(const char *s, bool multiline)
         }
         redir_write(s, strlen(s));
       }
+
+      // Log (silent) errors as debug messages.
+      if (sourcing_name != NULL && sourcing_lnum != 0) {
+        DLOG("%s (%s:%ld)", s, sourcing_name, (long)sourcing_lnum);
+      } else {
+        DLOG("%s", s);
+      }
+
       return true;
+    }
+
+    // Log errors as warnings.
+    if (sourcing_name != NULL && sourcing_lnum != 0) {
+      WLOG("%s (%s:%ld)", s, sourcing_name, (long)sourcing_lnum);
+    } else {
+      WLOG("%s", s);
     }
 
     ex_exitval = 1;
