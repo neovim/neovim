@@ -1148,6 +1148,13 @@ describe('API', function()
     before_each(function()
       meths.set_option('isident', '')
     end)
+
+    local it
+    if (helpers.isCI('appveyor') and os.getenv('CONFIGURATION') == 'MSVC_32') then
+      -- 'works with &opt' is flaky on MSVC_32, but not easy to skip alone.  #10241
+      it = pending
+    end
+
     local function simplify_east_api_node(line, east_api_node)
       if east_api_node == NIL then
         return nil
