@@ -1151,7 +1151,7 @@ describe('API', function()
 
     local itp = it
     if (helpers.isCI('appveyor') and os.getenv('CONFIGURATION') == 'MSVC_32') then
-      -- 'works with &opt' is flaky on MSVC_32, but not easy to skip alone.  #10241
+      -- For "works with &opt" (flaky on MSVC_32), but not easy to skip alone.  #10241
       itp = pending
     end
 
