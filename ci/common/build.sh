@@ -84,7 +84,7 @@ build_nvim() {
   fi
 
   # Invoke nvim to trigger *San early.
-  if ! (bin/nvim --version && bin/nvim -u NONE -e -cq | cat -A) ; then
+  if ! (bin/nvim --version && bin/nvim -u NONE -e -cq | cat -vet) ; then
     check_sanitizer "${LOG_DIR}"
     exit 1
   fi
