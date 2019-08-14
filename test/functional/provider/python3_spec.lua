@@ -91,6 +91,7 @@ describe('python3 provider', function()
   end)
 
   it('pyxeval #10758', function()
+    eq(0, eval([[&pyxversion]]))
     eq(3, eval([[pyxeval('sys.version_info[:3][0]')]]))
     eq(3, eval([[&pyxversion]]))
   end)
