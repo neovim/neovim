@@ -4375,7 +4375,7 @@ static void grid_put_linebuf(ScreenGrid *grid, int row, int coloff, int endcol,
   screen_adjust_grid(&grid, &row, &coloff);
 
   // Safety check. Avoids clang warnings down the call stack.
-  if (grid->chars == NULL || row >= grid->Rows || col >= grid->Columns) {
+  if (grid->chars == NULL || row >= grid->Rows || coloff >= grid->Columns) {
     DLOG("invalid state, skipped");
     return;
   }

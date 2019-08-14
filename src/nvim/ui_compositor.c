@@ -480,8 +480,26 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
   if (curgrid != &default_grid) {
     flags = flags & ~kLineFlagWrap;
   }
-  assert(row < default_grid.Rows);
-  assert(clearcol <= default_grid.Columns);
+
+  assert(endcol <= clearcol);
+
+  // TODO(bfredl): this should not really be necessary. But on some condition
+  // when resizing nvim, a window will be attempted to be drawn on the older
+  // and possibly larger global screen size.
+  if (row >= default_grid.Rows) {
+    DLOG("compositor: invalid row %"PRId64" on grid %"PRId64, row, grid);
+    return;
+  }
+  if (clearcol > default_grid.Columns) {
+    DLOG("compositor: invalid last column %"PRId64" on grid %"PRId64,
+         clearcol, grid);
+    if (startcol >= default_grid.Columns) {
+      return;
+    }
+    clearcol = default_grid.Columns;
+    endcol = MIN(endcol, clearcol);
+  }
+
   if (flags & kLineFlagInvalid
       || kv_size(layers) > curgrid->comp_index+1
       || curgrid->blending) {
