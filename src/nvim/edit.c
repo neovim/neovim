@@ -3842,26 +3842,24 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
                        (char_u **)cptext, true, dir, 0, adup, aequal);
 }
 
-/*
- * Get the next expansion(s), using "compl_pattern".
- * The search starts at position "ini" in curbuf and in the direction
- * compl_direction.
- * When "compl_started" is FALSE start at that position, otherwise continue
- * where we stopped searching before.
- * This may return before finding all the matches.
- * Return the total number of matches or -1 if still unknown -- Acevedo
- */
+// Get the next expansion(s), using "compl_pattern".
+// The search starts at position "ini" in curbuf and in the direction
+// compl_direction.
+// When "compl_started" is FALSE start at that position, otherwise continue
+// where we stopped searching before.
+// This may return before finding all the matches.
+// Return the total number of matches or -1 if still unknown -- Acevedo
 static int ins_compl_get_exp(pos_T *ini)
 {
   static pos_T first_match_pos;
   static pos_T last_match_pos;
-  static char_u       *e_cpt = (char_u *)"";    /* curr. entry in 'complete' */
-  static int found_all = FALSE;                 /* Found all matches of a
-                                                   certain type. */
-  static buf_T        *ins_buf = NULL;          /* buffer being scanned */
+  static char_u *e_cpt = (char_u *)"";   // curr. entry in 'complete'
+  static int found_all = false;          // Found all matches of a
+                                         // certain type.
+  static buf_T *ins_buf = NULL;          // buffer being scanned
 
-  pos_T       *pos;
-  char_u      **matches;
+  pos_T *pos;
+  char_u **matches;
   int save_p_scs;
   bool save_p_ws;
   int save_p_ic;
@@ -3870,11 +3868,13 @@ static int ins_compl_get_exp(pos_T *ini)
   int len;
   int found_new_match;
   int type = ctrl_x_mode;
-  char_u      *ptr;
-  char_u      *dict = NULL;
+  char_u *ptr;
+  char_u *dict = NULL;
   int dict_f = 0;
   int set_match_pos;
   int l_ctrl_x_mode = ctrl_x_mode;
+
+  assert(curbuf != NULL);
 
   if (!compl_started) {
     FOR_ALL_BUFFERS(buf) {
@@ -3899,9 +3899,9 @@ static int ins_compl_get_exp(pos_T *ini)
 
     assert(l_ctrl_x_mode == ctrl_x_mode);
 
-    /* For ^N/^P pick a new entry from e_cpt if compl_started is off,
-     * or if found_all says this entry is done.  For ^X^L only use the
-     * entries from 'complete' that look in loaded buffers. */
+    // For ^N/^P pick a new entry from e_cpt if compl_started is off,
+    // or if found_all says this entry is done.  For ^X^L only use the
+    // entries from 'complete' that look in loaded buffers.
     if ((l_ctrl_x_mode == CTRL_X_NORMAL
          || CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode))
         && (!compl_started || found_all)) {
@@ -3923,23 +3923,24 @@ static int ins_compl_get_exp(pos_T *ini)
         last_match_pos = first_match_pos;
         type = 0;
 
-        /* Remember the first match so that the loop stops when we
-         * wrap and come back there a second time. */
-        set_match_pos = TRUE;
+        // Remember the first match so that the loop stops when we
+        // wrap and come back there a second time.
+        set_match_pos = true;
       } else if (vim_strchr((char_u *)"buwU", *e_cpt) != NULL
                  && (ins_buf =
-                       ins_compl_next_buf(ins_buf, *e_cpt)) != curbuf) {
-        /* Scan a buffer, but not the current one. */
-        if (ins_buf->b_ml.ml_mfp != NULL) {         /* loaded buffer */
-          compl_started = TRUE;
+                     ins_compl_next_buf(ins_buf, *e_cpt)) != curbuf) {
+        // Scan a buffer, but not the current one.
+        if (ins_buf->b_ml.ml_mfp != NULL) {         // loaded buffer
+          compl_started = true;
           first_match_pos.col = last_match_pos.col = 0;
           first_match_pos.lnum = ins_buf->b_ml.ml_line_count + 1;
           last_match_pos.lnum = 0;
           type = 0;
-        } else {      /* unloaded buffer, scan like dictionary */
-          found_all = TRUE;
-          if (ins_buf->b_fname == NULL)
+        } else {      // unloaded buffer, scan like dictionary
+          found_all = true;
+          if (ins_buf->b_fname == NULL) {
             continue;
+          }
           type = CTRL_X_DICTIONARY;
           dict = ins_buf->b_fname;
           dict_f = DICT_EXACT;
@@ -3977,7 +3978,7 @@ static int ins_compl_get_exp(pos_T *ini)
           type = -1;
         }
 
-        /* in any case e_cpt is advanced to the next entry */
+        // in any case e_cpt is advanced to the next entry
         (void)copy_option_part(&e_cpt, IObuff, IOSIZE, ",");
 
         found_all = TRUE;
@@ -4024,12 +4025,12 @@ static int ins_compl_get_exp(pos_T *ini)
       break;
 
     case CTRL_X_TAGS:
-      /* set p_ic according to p_ic, p_scs and pat for find_tags(). */
+      // set p_ic according to p_ic, p_scs and pat for find_tags().
       save_p_ic = p_ic;
       p_ic = ignorecase(compl_pattern);
 
-      /* Find up to TAG_MANY matches.  Avoids that an enormous number
-       * of matches is found when compl_pattern is empty */
+      // Find up to TAG_MANY matches.  Avoids that an enormous number
+      // of matches is found when compl_pattern is empty
       if (find_tags(compl_pattern, &num_matches, &matches,
                     TAG_REGEXP | TAG_NAMES | TAG_NOIC | TAG_INS_COMP
                     | (l_ctrl_x_mode != CTRL_X_NORMAL ? TAG_VERBOSE : 0),
@@ -4041,9 +4042,8 @@ static int ins_compl_get_exp(pos_T *ini)
 
     case CTRL_X_FILES:
       if (expand_wildcards(1, &compl_pattern, &num_matches, &matches,
-              EW_FILE|EW_DIR|EW_ADDSLASH|EW_SILENT) == OK) {
-
-        /* May change home directory back to "~". */
+                           EW_FILE|EW_DIR|EW_ADDSLASH|EW_SILENT) == OK) {
+        // May change home directory back to "~".
         tilde_replace(compl_pattern, num_matches, matches);
         ins_compl_add_matches(num_matches, matches, p_fic || p_wic);
       }
@@ -4068,19 +4068,17 @@ static int ins_compl_get_exp(pos_T *ini)
         ins_compl_add_matches(num_matches, matches, p_ic);
       break;
 
-    default:            /* normal ^P/^N and ^X^L */
-      /*
-       * If 'infercase' is set, don't use 'smartcase' here
-       */
+    default:            // normal ^P/^N and ^X^L
+      // If 'infercase' is set, don't use 'smartcase' here
       save_p_scs = p_scs;
       assert(ins_buf);
       if (ins_buf->b_p_inf)
         p_scs = FALSE;
 
-      /*	Buffers other than curbuf are scanned from the beginning or the
-       *	end but never from the middle, thus setting nowrapscan in this
-       *	buffers is a good idea, on the other hand, we always set
-       *	wrapscan for curbuf to avoid missing matches -- Acevedo,Webb */
+      // Buffers other than curbuf are scanned from the beginning or the
+      // end but never from the middle, thus setting nowrapscan in this
+      // buffers is a good idea, on the other hand, we always set
+      // wrapscan for curbuf to avoid missing matches -- Acevedo,Webb
       save_p_ws = p_ws;
       if (ins_buf != curbuf)
         p_ws = false;
@@ -4089,8 +4087,7 @@ static int ins_compl_get_exp(pos_T *ini)
       for (;; ) {
         int flags = 0;
 
-        ++msg_silent;          /* Don't want messages for wrapscan. */
-
+        msg_silent++;          // Don't want messages for wrapscan.
         // CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode) || word-wise search that
         // has added a word that was at the beginning of the line.
         if (CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode)
@@ -4107,47 +4104,52 @@ static int ins_compl_get_exp(pos_T *ini)
         }
         msg_silent--;
         if (!compl_started || set_match_pos) {
-          /* set "compl_started" even on fail */
-          compl_started = TRUE;
+          // set "compl_started" even on fail
+          compl_started = true;
           first_match_pos = *pos;
           last_match_pos = *pos;
-          set_match_pos = FALSE;
+          set_match_pos = false;
         } else if (first_match_pos.lnum == last_match_pos.lnum
-                   && first_match_pos.col == last_match_pos.col)
+                   && first_match_pos.col == last_match_pos.col) {
           found_new_match = FAIL;
+        }
         if (found_new_match == FAIL) {
           if (ins_buf == curbuf)
             found_all = TRUE;
           break;
         }
 
-        /* when ADDING, the text before the cursor matches, skip it */
-        if (    (compl_cont_status & CONT_ADDING) && ins_buf == curbuf
-                && ini->lnum == pos->lnum
-                && ini->col  == pos->col)
+        // when ADDING, the text before the cursor matches, skip it
+        if ((compl_cont_status & CONT_ADDING) && ins_buf == curbuf
+            && ini->lnum == pos->lnum
+            && ini->col  == pos->col) {
           continue;
-        ptr = ml_get_buf(ins_buf, pos->lnum, FALSE) + pos->col;
+        }
+        ptr = ml_get_buf(ins_buf, pos->lnum, false) + pos->col;
         if (CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode)) {
           if (compl_cont_status & CONT_ADDING) {
-            if (pos->lnum >= ins_buf->b_ml.ml_line_count)
+            if (pos->lnum >= ins_buf->b_ml.ml_line_count) {
               continue;
-            ptr = ml_get_buf(ins_buf, pos->lnum + 1, FALSE);
-            if (!p_paste)
+            }
+            ptr = ml_get_buf(ins_buf, pos->lnum + 1, false);
+            if (!p_paste) {
               ptr = skipwhite(ptr);
+            }
           }
           len = (int)STRLEN(ptr);
         } else {
-          char_u      *tmp_ptr = ptr;
+          char_u *tmp_ptr = ptr;
 
           if (compl_cont_status & CONT_ADDING) {
             tmp_ptr += compl_length;
-            /* Skip if already inside a word. */
-            if (vim_iswordp(tmp_ptr))
+            // Skip if already inside a word.
+            if (vim_iswordp(tmp_ptr)) {
               continue;
-            /* Find start of next word. */
+            }
+            // Find start of next word.
             tmp_ptr = find_word_start(tmp_ptr);
           }
-          /* Find end of this word. */
+          // Find end of this word.
           tmp_ptr = find_word_end(tmp_ptr);
           len = (int)(tmp_ptr - ptr);
 
@@ -4160,15 +4162,16 @@ static int ins_compl_get_exp(pos_T *ini)
               STRNCPY(IObuff, ptr, len);
               ptr = ml_get_buf(ins_buf, pos->lnum + 1, false);
               tmp_ptr = ptr = skipwhite(ptr);
-              /* Find start of next word. */
+              // Find start of next word.
               tmp_ptr = find_word_start(tmp_ptr);
-              /* Find end of next word. */
+              // Find end of next word.
               tmp_ptr = find_word_end(tmp_ptr);
               if (tmp_ptr > ptr) {
                 if (*ptr != ')' && IObuff[len - 1] != TAB) {
-                  if (IObuff[len - 1] != ' ')
+                  if (IObuff[len - 1] != ' ') {
                     IObuff[len++] = ' ';
-                  /* IObuf =~ "\k.* ", thus len >= 2 */
+                  }
+                  // IObuf =~ "\k.* ", thus len >= 2
                   if (p_js
                       && (IObuff[len - 2] == '.'
                           || IObuff[len - 2] == '?'
@@ -4176,9 +4179,10 @@ static int ins_compl_get_exp(pos_T *ini)
                     IObuff[len++] = ' ';
                   }
                 }
-                /* copy as much as possible of the new word */
-                if (tmp_ptr - ptr >= IOSIZE - len)
+                // copy as much as possible of the new word
+                if (tmp_ptr - ptr >= IOSIZE - len) {
                   tmp_ptr = ptr + IOSIZE - len - 1;
+                }
                 STRNCPY(IObuff + len, ptr, tmp_ptr - ptr);
                 len += (int)(tmp_ptr - ptr);
                 flags |= CONT_S_IPOS;
@@ -4214,9 +4218,10 @@ static int ins_compl_get_exp(pos_T *ini)
         || found_new_match != FAIL) {
       if (got_int)
         break;
-      /* Fill the popup menu as soon as possible. */
-      if (type != -1)
+      // Fill the popup menu as soon as possible.
+      if (type != -1) {
         ins_compl_check_keys(0, false);
+      }
 
       if ((l_ctrl_x_mode != CTRL_X_NORMAL
            && !CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode))
@@ -4225,7 +4230,7 @@ static int ins_compl_get_exp(pos_T *ini)
       }
       compl_started = TRUE;
     } else {
-      /* Mark a buffer scanned when it has been scanned completely */
+      // Mark a buffer scanned when it has been scanned completely
       if (type == 0 || type == CTRL_X_PATH_PATTERNS) {
         assert(ins_buf);
         ins_buf->b_scanned = true;
@@ -4242,7 +4247,7 @@ static int ins_compl_get_exp(pos_T *ini)
     found_new_match = FAIL;
   }
 
-  i = -1;               /* total of matches, unknown */
+  i = -1;               // total of matches, unknown
   if (found_new_match == FAIL
       || (l_ctrl_x_mode != CTRL_X_NORMAL
           && !CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode))) {
@@ -4263,7 +4268,7 @@ static int ins_compl_get_exp(pos_T *ini)
   return i;
 }
 
-/* Delete the old text being completed. */
+// Delete the old text being completed.
 static void ins_compl_delete(void)
 {
   int col;
