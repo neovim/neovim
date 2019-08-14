@@ -84,12 +84,11 @@ build_nvim() {
   fi
 
   # Invoke nvim to trigger *San early.
-  if ! (bin/nvim --version && bin/nvim -u NONE -e -c ':qall') ; then
-    asan_check "${LOG_DIR}"
+  if ! (bin/nvim --version && bin/nvim -u NONE -e -cq | cat -A) ; then
+    check_sanitizer "${LOG_DIR}"
     exit 1
   fi
-  asan_check "${LOG_DIR}"
-
+  check_sanitizer "${LOG_DIR}"
 
   cd "${TRAVIS_BUILD_DIR}"
 }

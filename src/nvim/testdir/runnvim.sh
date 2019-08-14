@@ -64,7 +64,7 @@ main() {(
   fi
   valgrind_check .
   if test -n "$LOG_DIR" ; then
-    asan_check "$LOG_DIR"
+    check_sanitizer "$LOG_DIR"
   fi
   check_core_dumps
   if test "$FAILED" = 1 ; then
