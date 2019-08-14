@@ -1149,7 +1149,7 @@ describe('API', function()
       meths.set_option('isident', '')
     end)
 
-    local itp = it
+    local it_maybe_pending = it
     if (helpers.isCI('appveyor') and os.getenv('CONFIGURATION') == 'MSVC_32') then
       -- For "works with &opt" (flaky on MSVC_32), but not easy to skip alone.  #10241
       itp = pending
