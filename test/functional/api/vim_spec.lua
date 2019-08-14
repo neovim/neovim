@@ -1149,10 +1149,10 @@ describe('API', function()
       meths.set_option('isident', '')
     end)
 
-    local it
+    local itp = it
     if (helpers.isCI('appveyor') and os.getenv('CONFIGURATION') == 'MSVC_32') then
       -- 'works with &opt' is flaky on MSVC_32, but not easy to skip alone.  #10241
-      it = pending
+      itp = pending
     end
 
     local function simplify_east_api_node(line, east_api_node)
@@ -1352,7 +1352,7 @@ describe('API', function()
     end
     assert:set_parameter('TableFormatLevel', 1000000)
     require('test.unit.viml.expressions.parser_tests')(
-        it, _check_parsing, hl, fmtn)
+        itp, _check_parsing, hl, fmtn)
   end)
 
   describe('nvim_list_uis', function()
