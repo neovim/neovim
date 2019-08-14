@@ -227,7 +227,7 @@ describe('timers', function()
       {0:~                                       }|
       {0:~                                       }|
       :good^                                   |
-    ]], intermediate=true, timeout=1000}
+    ]], intermediate=true}
 
     eq(1, eval('g:val'))
   end)
