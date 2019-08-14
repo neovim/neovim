@@ -9181,7 +9181,7 @@ makeopens(
 
     // Take care of tab-local working directories if applicable
     if (tp->tp_localdir) {
-      if (fputs("if has('nvim') | tcd ", fd) < 0
+      if (fputs("if exists(':tcd') == 2 | tcd ", fd) < 0
           || ses_put_fname(fd, tp->tp_localdir, &ssop_flags) == FAIL
           || fputs(" | endif", fd) < 0
           || put_eol(fd) == FAIL) {
