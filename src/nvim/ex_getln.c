@@ -1021,9 +1021,11 @@ static int command_line_execute(VimState *state, int key)
 
   // <S-Tab> goes to last match, in a clumsy way
   if (s->c == K_S_TAB && KeyTyped) {
-    if (nextwild(&s->xpc, WILD_EXPAND_KEEP, 0, s->firstc != '@') == OK
-        && nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@') == OK
-        && nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@') == OK) {
+    if (nextwild(&s->xpc, WILD_EXPAND_KEEP, 0, s->firstc != '@') == OK) {
+      showmatches(&s->xpc, p_wmnu
+                  && ((wim_flags[s->wim_index] & WIM_LIST) == 0));
+      nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
+      nextwild(&s->xpc, WILD_PREV, 0, s->firstc != '@');
       return command_line_changed(s);
     }
   }
