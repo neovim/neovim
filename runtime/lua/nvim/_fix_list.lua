@@ -13,9 +13,6 @@ FixList.new = function(self, set, get, open, close, title)
     _close = close,
   }, {
     __index = self,
-    __len = function(future_self)
-      return #(future_self.list)
-    end,
   })
 
   return obj
@@ -29,10 +26,6 @@ FixList.add = function(self, line, col, text, filename, message_type)
     filename = filename,
     ['type'] = message_type
   })
-end
-
-FixList.__len = function(self)
-  return #(self.list)
 end
 
 FixList.len = function(self)
