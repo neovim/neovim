@@ -182,7 +182,7 @@ function! s:clipboard.set(lines, regtype, reg) abort
   endif
 
   " The previous provider instance should exit when the new one takes
-  " ownership, but ensure it gets kill to not fill up the job table.
+  " ownership, but kill it to be sure we don't fill up the job table.
   if exists('prev_job')
     call timer_start(1000, {... ->
           \ jobwait([prev_job], 0)[0] == -1
