@@ -24,8 +24,8 @@
 --  TODO: documentLink/resolve
 
 local log = require('lsp.log')
-local util = require('nvim.util')
-local lsp_util = require('lsp.util')
+local nvim_util = require('nvim.util')
+local util = require('lsp.util')
 local protocol = require('lsp.protocol')
 local errorCodes = protocol.errorCodes
 
@@ -92,7 +92,7 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
         range.start.line + 1,
         range.start.character + 1,
         '[' .. source .. ']' .. message,
-        lsp_util.get_filename(data.uri),
+        util.get_filename(data.uri),
         message_type
       )
     end
@@ -135,8 +135,8 @@ BuiltinCallbacks['textDocument/references'] = {
       local line = start.line + 1
       local character = start.character + 1
 
-      local path = util.handle_uri(loc["uri"])
-      local text = lsp_util.get_line_from_path(path, line)
+      local path = nvim_util.handle_uri(loc["uri"])
+      local text = util.get_line_from_path(path, line)
 
       table.insert(loclist, {
           filename = path,
@@ -150,7 +150,7 @@ BuiltinCallbacks['textDocument/references'] = {
 
     if self.options.auto_location_list then
       if loclist ~= {} then
-        if not util.is_loclist_open() then
+        if not nvim_util.is_loclist_open() then
           vim.api.nvim_command('lopen')
           vim.api.nvim_command('wincmd p')
         end
@@ -199,7 +199,7 @@ BuiltinCallbacks['textDocument/hover'] = {
     -- TODO: Use floating windows when they become available
     local long_string = ''
     if data.contents ~= nil then
-      if util.is_array(data.contents) == true then
+      if nvim_util.is_array(data.contents) == true then
         for i, item in ipairs(data.contents) do
           local value
           if type(item) == 'table' then
@@ -263,9 +263,9 @@ BuiltinCallbacks['textDocument/definition'] = {
       return
     end
 
-    local data_file = lsp_util.get_filename(data.uri)
+    local data_file = util.get_filename(data.uri)
 
-    if data_file ~= lsp_util.get_uri(current_file) then
+    if data_file ~= util.get_uri(current_file) then
       vim.api.nvim_command('silent edit ' .. data_file)
     end
 

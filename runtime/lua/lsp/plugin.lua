@@ -3,7 +3,7 @@ local callbacks = require('lsp.callbacks')
 local server_config = require('lsp.server_config')
 
 local log = require('lsp.log')
-local lsp_util = require('lsp.util')
+local util = require('lsp.util')
 
 local plugin = { client_map = {} }
 
@@ -14,7 +14,7 @@ local plugin = { client_map = {} }
 --
 -- @returns: A client object that has been initialized
 plugin.start_client = function(cmd, filetype, bufnr)
-  filetype = filetype or lsp_util.get_filetype(bufnr)
+  filetype = filetype or util.get_filetype(bufnr)
   cmd = cmd or server_config.get_command(filetype)
 
   local name = server_config.get_name(filetype)
@@ -52,7 +52,7 @@ end
 --
 -- @returns: The result of the request
 plugin.request = function(method, arguments, filetype, cb, bufnr)
-  filetype = filetype or lsp_util.get_filetype(bufnr)
+  filetype = filetype or util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
   end
@@ -69,7 +69,7 @@ end
 
 --- Send a request to a server, but don't wait for the response
 plugin.request_async = function(method, arguments, filetype, cb, bufnr)
-  filetype = filetype or lsp_util.get_filetype(bufnr)
+  filetype = filetype or util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
   end
@@ -104,7 +104,7 @@ end
 
 --- Send a notification to a server
 plugin.notify = function(method, arguments, filetype, bufnr)
-  filetype = filetype or lsp_util.get_filetype(bufnr)
+  filetype = filetype or util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
   end
