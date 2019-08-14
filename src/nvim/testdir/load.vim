@@ -6,8 +6,8 @@ function! s:load_factor() abort
 
   for _ in range(5)
     let g:val = 0
-    call timer_start(timeout, {-> nvim_set_var('val', 1)})
     let start = reltime()
+    call timer_start(timeout, {-> nvim_set_var('val', 1)})
     while 1
       sleep 10m
       if g:val == 1
