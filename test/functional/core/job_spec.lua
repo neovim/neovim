@@ -707,11 +707,10 @@ describe('jobs', function()
       it('will return -1 if the wait timed out', function()
         source([[
         call rpcnotify(g:channel, 'wait', jobwait([
-        \  jobstart('exit 4'),
         \  jobstart((has('win32') ? 'Start-Sleep 10' : 'sleep 10').'; exit 5'),
-        \  ], has('win32') ? 6000 : 100))
+        \  ], 100))
         ]])
-        eq({'notification', 'wait', {{4, -1}}}, next_msg())
+        eq({'notification', 'wait', {{-1}}}, next_msg())
       end)
 
       it('can pass 0 to check if a job exists', function()
