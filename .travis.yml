@@ -76,7 +76,7 @@ addons:
       - valgrind
       - xclip
   homebrew:
-    update: true
+    update: false
     packages:
       - ccache
       - ninja
