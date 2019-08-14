@@ -135,14 +135,10 @@ describe('async handlers', function()
     end)
 
     it('reports pattern and path errors', function()
-      expect_err('E35: No previous regular expression', function()
-        command([[&:vimgrep // async_vimgrep_spec_file1]])
-        wait_all()
-      end)
-      expect_err('Path missing or invalid pattern', function()
-        command([[&:vimgrep /foo/]])
-        wait_all()
-      end)
+      expect_err('E35: No previous regular expression', command,
+                 [[&:vimgrep // async_vimgrep_spec_file1]])
+      expect_err('Path missing or invalid pattern', command,
+                 [[&:vimgrep /foo/]])
     end)
   end)
 end)

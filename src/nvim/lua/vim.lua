@@ -284,6 +284,9 @@ local function _async_vimgrep(qf, append, args)
     end
   elseif pattern == '' then
     pattern = vim.api.nvim_eval('@/')  -- Last used pattern
+    if pattern == '' then
+      error('E35: No previous regular expression')
+    end
   end
 
   if path == nil or pattern == nil then
