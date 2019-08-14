@@ -159,9 +159,7 @@ function! s:clipboard.set(lines, regtype, reg) abort
   end
 
   if s:selections[a:reg].owner > 0
-    " The previous provider instance should exit when the new one takes
-    " ownership, but kill it to be sure we don't fill up the job table.
-    call jobstop(s:selections[a:reg].owner)
+    let prev_job = s:selections[a:reg].owner
   end
   let s:selections[a:reg] = copy(s:selection)
   let selection = s:selections[a:reg]
@@ -175,13 +173,23 @@ function! s:clipboard.set(lines, regtype, reg) abort
     call jobsend(jobid, a:lines)
     call jobclose(jobid, 'stdin')
     let selection.owner = jobid
+    let ret = 1
   else
     echohl WarningMsg
     echomsg 'clipboard: failed to execute: '.(s:copy[a:reg])
     echohl None
-    return 0
+    let ret = 1
   endif
-  return 1
+
+  " The previous provider instance should exit when the new one takes
+  " ownership, but kill it to be sure we don't fill up the job table.
+  if exists('prev_job')
+    call timer_start(1000, {... ->
+          \ jobwait([prev_job], 0)[0] == -1
+          \ && jobstop(prev_job)})
+  endif
+
+  return ret
 endfunction
 
 function! provider#clipboard#Call(method, args) abort
