@@ -90,6 +90,12 @@ describe('python3 provider', function()
     eq({1, 2, {['key'] = 'val'}}, eval([[py3eval('[1, 2, {"key": "val"}]')]]))
   end)
 
+  it('pyxeval #10758', function()
+    eq(0, eval([[&pyxversion]]))
+    eq(3, eval([[pyxeval('sys.version_info[:3][0]')]]))
+    eq(3, eval([[&pyxversion]]))
+  end)
+
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
     source([=[
       python3 << EOF
