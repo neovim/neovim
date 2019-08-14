@@ -585,7 +585,7 @@ static bool emsg_multiline(const char *s, bool multiline)
 
       // Log (silent) errors as debug messages.
       if (sourcing_name != NULL && sourcing_lnum != 0) {
-        DLOG("%s (%s:%ld)", s, sourcing_name, (long)sourcing_lnum);
+        DLOG("%s (%s (line %ld))", s, sourcing_name, (long)sourcing_lnum);
       } else {
         DLOG("%s", s);
       }
@@ -595,9 +595,9 @@ static bool emsg_multiline(const char *s, bool multiline)
 
     // Log errors as warnings.
     if (sourcing_name != NULL && sourcing_lnum != 0) {
-      WLOG("%s (%s:%ld)", s, sourcing_name, (long)sourcing_lnum);
+      ILOG("%s (%s (line %ld))", s, sourcing_name, (long)sourcing_lnum);
     } else {
-      WLOG("%s", s);
+      ILOG("%s", s);
     }
 
     ex_exitval = 1;
