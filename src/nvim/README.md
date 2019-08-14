@@ -63,7 +63,7 @@ Enable the sanitizer(s) via these environment variables:
     export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
 
     export MSAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
-    export TSAN_OPTIONS="external_symbolizer_path=/usr/lib/llvm-5.0/bin/llvm-symbolizer log_path=${HOME}/logs/tsan"
+    export TSAN_OPTIONS="log_path=${HOME}/logs/tsan:suppressions=${NVIM_PATH}/src/.tsan-suppressions"
 
 Logs will be written to `${HOME}/logs/*san.PID`.
 
