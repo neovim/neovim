@@ -1152,7 +1152,7 @@ describe('API', function()
     local it_maybe_pending = it
     if (helpers.isCI('appveyor') and os.getenv('CONFIGURATION') == 'MSVC_32') then
       -- For "works with &opt" (flaky on MSVC_32), but not easy to skip alone.  #10241
-      itp = pending
+      it_maybe_pending = pending
     end
 
     local function simplify_east_api_node(line, east_api_node)
