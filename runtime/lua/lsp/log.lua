@@ -11,4 +11,3 @@ log:set_file_level('bad_level')
 log:set_outfile(vim.api.nvim_call_function('stdpath', {'data'}) .. '/language_client.log')
 
 return log
-

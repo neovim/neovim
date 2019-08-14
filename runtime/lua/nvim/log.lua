@@ -12,7 +12,7 @@ log.levels = Enum:new({
   debug = 2,
   info  = 3,
   warn  = 4,
-  ['error'] = 5,
+  error = 5,
   fatal = 6,
 })
 
@@ -34,7 +34,7 @@ log.write_file = function(self, level, message)
   local file_pointer = assert(io.open(self.outfile, 'a+'))
 
   if file_pointer ~= nil then
-    local log_message = "[" .. level .. "] " .. message .. "\n"
+    local log_message = level .. " " .. os.date("%Y-%m-%dT%H:%M:%S") .. " " .. message .. "\n"
     file_pointer:write(log_message)
     file_pointer:close()
   end
@@ -58,13 +58,12 @@ log.create_functions = function(new_log, new_logger)
         end
 
         local info = debug.getinfo(2, "Sl")
-        local log_message = string.format("<< [%-6s%s] %s:%-4s >>\n      %s %s",
-          name,
-          os.date("%H:%M:%S"),
+        local log_message = string.format(
+          "%s:%-4s %s",
           info.short_src,
           info.currentline,
-          logger.prefix,
-          message)
+          message
+        )
 
         if self.levels[name] >= logger.file_level then
           log.write_file(logger, name, log_message)
