@@ -1,6 +1,6 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local feed, eq, eval = helpers.feed, helpers.eq, helpers.eval
+local feed, eq, eval, ok = helpers.feed, helpers.eq, helpers.eval, helpers.ok
 local source, nvim_async, run = helpers.source, helpers.nvim_async, helpers.run
 local clear, command, funcs = helpers.clear, helpers.command, helpers.funcs
 local curbufmeths = helpers.curbufmeths
@@ -19,59 +19,71 @@ describe('timers', function()
   end)
 
   it('works one-shot', function()
-    command("call timer_start(50, 'MyHandler')")
-    eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(200))
+    eq(0, eval("[timer_start(10, 'MyHandler'), g:val][1]"))
+    run(nil, nil, nil, load_adjust(100))
     eq(1,eval("g:val"))
   end)
 
   it('works one-shot when repeat=0', function()
-    command("call timer_start(50, 'MyHandler', {'repeat': 0})")
-    eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(200))
-    eq(1,eval("g:val"))
+    eq(0, eval("[timer_start(10, 'MyHandler', {'repeat': 0}), g:val][1]"))
+    run(nil, nil, nil, load_adjust(100))
+    eq(1, eval("g:val"))
   end)
 
-
   it('works with repeat two', function()
-    command("call timer_start(50, 'MyHandler', {'repeat': 2})")
-    eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(300))
-    eq(2,eval("g:val"))
+    eq(0, eval("[timer_start(10, 'MyHandler', {'repeat': 2}), g:val][1]"))
+    run(nil, nil, nil, load_adjust(20))
+    retry(nil, load_adjust(300), function()
+      eq(2, eval("g:val"))
+    end)
   end)
 
   it('are triggered during sleep', function()
-    command("call timer_start(50, 'MyHandler', {'repeat': 2})")
+    source([[
+      let g:val = -1
+      func! MyHandler(timer)
+        if g:val >= 0
+          let g:val += 1
+          if g:val == 2
+            call timer_stop(a:timer)
+          endif
+        endif
+      endfunc
+    ]])
+    eval("timer_start(10, 'MyHandler', {'repeat': -1})")
     nvim_async("command", "sleep 10")
-    eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(300))
-    eq(2,eval("g:val"))
+    eq(-1, eval("g:val"))  -- timer did nothing yet.
+    nvim_async("command", "let g:val = 0")
+    run(nil, nil, nil, load_adjust(20))
+    retry(nil, nil, function()
+      eq(2, eval("g:val"))
+    end)
   end)
 
   it('works with zero timeout', function()
     -- timer_start does still not invoke the callback immediately
-    eq(0,eval("[timer_start(0, 'MyHandler', {'repeat': 1000}), g:val][1]"))
-    run(nil, nil, nil, load_adjust(400))
-    eq(1000,eval("g:val"))
+    eq(0, eval("[timer_start(0, 'MyHandler', {'repeat': 1000}), g:val][1]"))
+    retry(nil, nil, function()
+      eq(1000, eval("g:val"))
+    end)
   end)
 
   it('can be started during sleep', function()
     nvim_async("command", "sleep 10")
     -- this also tests that remote requests works during sleep
-    eval("timer_start(50, 'MyHandler', {'repeat': 2})")
-    eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(300))
-    eq(2,eval("g:val"))
+    eq(0, eval("[timer_start(10, 'MyHandler', {'repeat': 2}), g:val][1]"))
+    run(nil, nil, nil, load_adjust(20))
+    retry(nil, load_adjust(300), function() eq(2,eval("g:val")) end)
   end)
 
   it('are paused when event processing is disabled', function()
-    command("call timer_start(50, 'MyHandler', {'repeat': -1})")
-    run(nil, nil, nil, load_adjust(100))
+    command("call timer_start(5, 'MyHandler', {'repeat': -1})")
+    run(nil, nil, nil, load_adjust(10))
     local count = eval("g:val")
     -- shows two line error message and thus invokes the return prompt.
     -- if we start to allow event processing here, we need to change this test.
     feed(':throw "fatal error"<CR>')
-    run(nil, nil, nil, load_adjust(300))
+    run(nil, nil, nil, load_adjust(30))
     feed("<cr>")
     local diff = eval("g:val") - count
     assert(0 <= diff and diff <= 4,
@@ -79,12 +91,13 @@ describe('timers', function()
   end)
 
   it('are triggered in blocking getchar() call', function()
-    command("call timer_start(50, 'MyHandler', {'repeat': -1})")
-    nvim_async("command", "let g:c = getchar()")
-    run(nil, nil, nil, load_adjust(300))
+    command("call timer_start(5, 'MyHandler', {'repeat': -1})")
+    nvim_async("command", "let g:val = 0 | let g:c = getchar()")
+    retry(nil, nil, function()
+      ok(eval("g:val") >= 2)
+      eq(0, eval("getchar(1)"))
+    end)
     feed("c")
-    local count = eval("g:val")
-    assert(count >= 3, 'expected count >= 3, got: '..tostring(count))
     eq(99, eval("g:c"))
   end)
 
@@ -99,12 +112,15 @@ describe('timers', function()
     source([[
       func! AddItem(timer)
         call nvim_buf_set_lines(0, 2, 2, v:true, ['ITEM 3'])
+
+        " Meant to test for what Vim tests in Test_peek_and_get_char.
         call getchar(1)
+
         redraw
       endfunc
-      call timer_start(200, 'AddItem')
     ]])
     nvim_async("command", "let g:c2 = getchar()")
+    nvim_async("command", "call timer_start("..load_adjust(100)..", 'AddItem')")
 
     screen:expect([[
       ITEM 1                                  |
@@ -137,18 +153,15 @@ describe('timers', function()
   end)
 
   it('can be stopped', function()
-    local t = eval("timer_start(50, 'MyHandler', {'repeat': -1})")
-    eq(0,eval("g:val"))
-    run(nil, nil, nil, load_adjust(300))
-    funcs.timer_stop(t)
+    local t_init_val = eval("[timer_start(5, 'MyHandler', {'repeat': -1}), g:val]")
+    eq(0, t_init_val[2])
+    run(nil, nil, nil, load_adjust(30))
+    funcs.timer_stop(t_init_val[1])
     local count = eval("g:val")
-    run(nil, nil, nil, load_adjust(300))
+    run(nil, load_adjust(300), nil, load_adjust(30))
     local count2 = eval("g:val")
     -- when count is eval:ed after timer_stop this should be non-racy
     eq(count, count2)
-    assert((3 <= count and count <= load_adjust(7)),
-           string.format('expected (3 <= count <= %s), got: %s',
-                         load_adjust(7), tostring(count)))
   end)
 
   it('can be stopped from the handler', function()
@@ -162,8 +175,8 @@ describe('timers', function()
         endif
       endfunc
     ]])
+    eq(0, eval("g:val"))
     command("call timer_start(10, 'MyHandler', {'repeat': -1})")
-    eq(0,eval("g:val"))
     retry(nil, nil, function()
       eq(3, eval("g:val"))
     end)
@@ -176,9 +189,9 @@ describe('timers', function()
         let g:val2 += 1
       endfunc
     ]])
-    command("call timer_start(20, 'MyHandler',  {'repeat': 3})")
-    command("call timer_start(40, 'MyHandler2', {'repeat': 2})")
-    run(nil, nil, nil, load_adjust(300))
+    command("call timer_start(2, 'MyHandler',  {'repeat': 3})")
+    command("call timer_start(4, 'MyHandler2', {'repeat': 2})")
+    run(nil, nil, nil, load_adjust(30))
     eq(3,eval("g:val"))
     eq(2,eval("g:val2"))
   end)
@@ -188,13 +201,15 @@ describe('timers', function()
       let g:val = 0
       func! MyHandler(timer)
         call timer_stop(a:timer)
-        sleep 100m
+        sleep 10m
         let g:val += 1
       endfunc
     ]])
     command("call timer_start(5, 'MyHandler', {'repeat': 1})")
-    run(nil, nil, nil, load_adjust(300))
-    eq(1,eval("g:val"))
+    run(nil, nil, nil, load_adjust(10))
+    retry(nil, load_adjust(100), function()
+      eq(1, eval("g:val"))
+    end)
   end)
 
 
@@ -231,5 +246,4 @@ describe('timers', function()
 
     eq(1, eval('g:val'))
   end)
-
 end)
