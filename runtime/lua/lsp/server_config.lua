@@ -96,4 +96,9 @@ server_config.get_callback = function(filetype, callback_name)
 end
 
 
-return server_config
+return {
+  add = server_config.add,
+  get_name = server_config.get_name,
+  get_command = server_config.get_command,
+  get_callback = server_config.get_callback,
+}

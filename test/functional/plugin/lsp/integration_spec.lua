@@ -25,7 +25,7 @@ describe('plugin with a server', function()
   end)
 
   it('textDocument/hover', function()
-    command('call lsp#server#add("text",["nvim", "--headless", '..
+    command('call lsp#server_config#add("text",["nvim", "--headless", '..
             '"--cmd", "source test/functional/fixtures/nvim_fake_lsp.vim"])'
             )
     insert([[
@@ -61,7 +61,7 @@ describe('plugin with a server', function()
   end)
 
   it('can deal with garbage responses', function()
-    command('call lsp#server#add("text",["nvim", "--headless", '..
+    command('call lsp#server_config#add("text",["nvim", "--headless", '..
             '"--cmd", "source test/functional/fixtures/nvim_fake_lsp.vim"])'
             )
     insert([[
@@ -112,7 +112,7 @@ describe('plugin with a server', function()
       "A\\u20dd\\u20dd",
     }
 
-    helpers.command('echo lsp#request("textDocument/hover")<Enter>')
+    helpers.command('echo lsp#request("textDocument/hover")')
   end)
 
 end)

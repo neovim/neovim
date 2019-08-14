@@ -2,9 +2,7 @@
 
 vim.lsp = {
   plugin = require('lsp.plugin'),
-  server_config = {
-    add = require('lsp.server_config').add,
-  },
+  server_config = require('lsp.server_config'),
   config = require('lsp.config'),
   structures = require('lsp.structures'),
   util = require('lsp.util'),
