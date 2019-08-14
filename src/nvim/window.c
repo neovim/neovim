@@ -598,6 +598,7 @@ void win_set_minimal_style(win_T *wp)
   wp->w_p_cuc = false;
   wp->w_p_spell = false;
   wp->w_p_list = false;
+  wp->w_p_fdc = 0;
 
   // Hide EOB region: use " " fillchar and cleared highlighting
   if (wp->w_p_fcs_chars.eob != ' ') {
@@ -615,6 +616,7 @@ void win_set_minimal_style(win_T *wp)
     xfree(old);
   }
 
+  // signcolumn: use 'auto'
   if (wp->w_p_scl[0] != 'a') {
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");

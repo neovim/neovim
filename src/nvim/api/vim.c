@@ -1071,10 +1071,10 @@ fail:
 ///                    disabled. This is useful when displaing a temporary
 ///                    float where the text should not be edited. Disables
 ///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
-///                    'spell' and 'list' options. 'signcolumn' is changed to
-///                    `auto`. The end-of-buffer region is hidden by setting
-///                    `eob` flag of 'fillchars' to a space char, and clearing
-///                    the |EndOfBuffer| region in 'winhighlight'.
+///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
+///                    is changed to `auto`. The end-of-buffer region is hidden
+///                    by setting `eob` flag of 'fillchars' to a space char,
+///                    and clearing the |EndOfBuffer| region in 'winhighlight'.
 ///
 ///       top-level window. Currently accepts no other positioning
 ///       configuration together with this.
