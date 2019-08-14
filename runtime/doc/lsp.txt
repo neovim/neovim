@@ -66,7 +66,7 @@ lsp#server_config#add({ftype}, {cmd}, {configuration}):
                                                                   *lsp-request*
 Requests
 
-To make a request of the language server client running in Nvim, the following
+To make a request to the language server client running in Nvim, the following
 API is defined:
 >
     :call lsp#request(method, arguments, callback, filetype)
@@ -122,7 +122,7 @@ lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
             once the response has been received. If this is passed and not
             |v:null|, then the |lsp-built-in-callback| will not be executed for
             this request. If you do not set |built-in-callbacks| or this request does not have a
-            a specify filetype callback, then no callback will be executed upon receiving the request.
+            specific filetype callback, then no callback will be executed upon receiving the request.
 
             The callback must be a string with the name of the vimscript
             function to call. The signature must be:
@@ -133,10 +133,10 @@ lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
                 and false means the request failed.
 
                 The parameter {data} is a dictionary containing the possible
-                response data (or error) data as specified by the language
+                response data (or error) as specified by the language
                 server protocol.
 
-                The callback will be executed from lua running:
+                The callback will be executed from Lua running:
 
                     `vim.api.nvim_call_function('func_name', { success, data })`
 
@@ -149,7 +149,7 @@ lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
                                                           *lsp#request_async()*
 lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
     Creates and sends a request to the server for [filetype]. This request
-    will not block and will call desired the [callback] upon completion.
+    will not block and will call the desired [callback] upon completion.
 
     Returns the request ID.
 
@@ -168,7 +168,7 @@ autocmd CursorHold *
                                                          *lsp-built-in-callback*
 
 The following requests have built-in callbacks defined to handle the response
-in an idiomatic vim fashion.
+in an idiomatic way.
 
   textDocument/definition~
   textDocument/hover~
@@ -176,17 +176,17 @@ in an idiomatic vim fashion.
   textDocument/references~
 
 vim.lsp.config.callbacks.set_all_builtin_callbacks()
-  You can set all built-in callbaks
+  You can enable all built-in callbacks
 
 vim.lsp.config.callbacks.set_builtin_callback({method})
-    You can set a specify built-in callback.
+    You can enable a specific built-in callback.
         Parameters:~
             {method}: The name of the request, as specified by the
             language server protocol.
                 Example: 'textDocument/hover'
 
 vim.lsp.config.callbacks.set_builtin_callbacks({methods})
-    You can set specify built-in callbacks.
+    You can set specific built-in callbacks.
         Parameters:~
             {method}: The name of the request, as specified by the
             language server protocol.
@@ -196,7 +196,7 @@ vim.lsp.config.callbacks.set_builtin_callbacks({methods})
 ================================================================================
                                                          *lsp-common-behavior*
 
-Many of the Language Server Protocol messages are similar to common commandds
+Many of the Language Server Protocol messages are similar to common commands
 in nvim. Here are some example configurations that could integrate LSP into
 your daily workflow.
 
@@ -222,7 +222,7 @@ require('lsp.checks').add_check({request}, {cb})
         {cb}: A callback to execute to determine if the {request} should be
         sent.
 
-        If `false`, the {request} will never be sent.
+        If `false`, the {request} will not be sent.
 
     Example:~
         To disable `'textDocument/hover'` in all python files, you could use
@@ -243,7 +243,7 @@ require('lsp.checks').add_check({request}, {cb})
 
 <
         To completely disable a message request, you can simply pass
-        `false` as the callback.
+        `false` as the callback, or use the following:
 
 >
     :lua vim.lsp.config.callbacks.disable('textDocument/hover')
@@ -258,7 +258,7 @@ lsp#configure#file_log_level({level})
                                                                *lsp-completion*
 
 To configure completion for a language server, add the following in your
-init.vim
+init.vim:
 
 >
   augroup MyLanguageServer
@@ -281,7 +281,7 @@ the Neovim's built-in LSP callbacks to perform the hovering action.
 
 To do so, the following APIs are provided:
 
-    In VimL, use:  >
+    In Vim script, use:  >
 
         call lsp#handle({request}, {data})
 <
