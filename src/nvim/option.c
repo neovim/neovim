@@ -1001,45 +1001,35 @@ void set_init_2(bool headless)
     p_window = Rows - 1;
   }
   set_number_default("window", Rows - 1);
-  parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
   (void)parse_printoptions();      // parse 'printoptions' default value
 }
 
-/*
- * Initialize the options, part three: After reading the .vimrc
- */
+/// Initialize the options, part three: After reading the .vimrc
 void set_init_3(void)
 {
+  parse_shape_opt(SHAPE_CURSOR);   // set cursor shapes from 'guicursor'
+
   // Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
   // This is done after other initializations, where 'shell' might have been
   // set, but only if they have not been set before.
-  int idx_srr;
-  int do_srr;
-  int idx_sp;
-  int do_sp;
-
-  idx_srr = findoption("srr");
-  if (idx_srr < 0) {
-    do_srr = false;
-  } else {
-    do_srr = !(options[idx_srr].flags & P_WAS_SET);
-  }
-  idx_sp = findoption("sp");
-  if (idx_sp < 0) {
-    do_sp = false;
-  } else {
-    do_sp = !(options[idx_sp].flags & P_WAS_SET);
-  }
+  int idx_srr = findoption("srr");
+  int do_srr = (idx_srr < 0)
+    ? false
+    : !(options[idx_srr].flags & P_WAS_SET);
+  int idx_sp = findoption("sp");
+  int do_sp = (idx_sp < 0)
+    ? false
+    : !(options[idx_sp].flags & P_WAS_SET);
 
   size_t len = 0;
   char_u *p = (char_u *)invocation_path_tail(p_sh, &len);
   p = vim_strnsave(p, len);
 
   {
-    /*
-     * Default for p_sp is "| tee", for p_srr is ">".
-     * For known shells it is changed here to include stderr.
-     */
+    //
+    // Default for p_sp is "| tee", for p_srr is ">".
+    // For known shells it is changed here to include stderr.
+    //
     if (       fnamecmp(p, "csh") == 0
                || fnamecmp(p, "tcsh") == 0
                ) {
@@ -1081,7 +1071,7 @@ void set_init_3(void)
     }
   }
 
-  set_title_defaults();
+  set_title_defaults();  // 'title', 'icon'
 }
 
 /*

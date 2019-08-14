@@ -396,8 +396,7 @@ int main(int argc, char **argv)
     mch_exit(0);
   }
 
-  // Set a few option defaults after reading vimrc files: 'title', 'icon',
-  // 'shellpipe', 'shellredir'.
+  // Set some option defaults after reading vimrc files.
   set_init_3();
   TIME_MSG("inits 3");
 
