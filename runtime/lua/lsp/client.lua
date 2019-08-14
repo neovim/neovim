@@ -25,42 +25,59 @@ local error_level = Enum:new({
 
 local ActiveJobs = {}
 
-ActiveJobs.add = function(id, obj)
-  ActiveJobs[id] = obj
+ActiveJobs.add = function(job_id, obj)
+  ActiveJobs[job_id] = obj
 end
 
-ActiveJobs.remove = function(id)
-  ActiveJobs[id] = nil
+ActiveJobs.remove = function(job_id)
+  ActiveJobs[job_id] = nil
 end
 
 local client = {}
 client.__index = client
 
-client.job_stdout = function(id, data)
-  if ActiveJobs[id] == nil then
+client.job_stdout = function(job_id, data)
+  if ActiveJobs[job_id] == nil then
     return
   end
 
-  ActiveJobs[id]:on_stdout(data)
+  ActiveJobs[job_id]:on_stdout(data)
 end
 
-client.job_exit = function(id, data)
-  if ActiveJobs[id] == nil then
+client.job_exit = function(job_id, data)
+  if ActiveJobs[job_id] == nil then
     return
   end
 
-  ActiveJobs[id]:on_exit(data)
+  ActiveJobs[job_id]:on_exit(data)
+end
+
+client.start_job = function(cmd)
+  local job_id = vim.api.nvim_call_function('jobstart', {
+      cmd, {
+        on_stdout = 'lsp#_on_event',
+        on_stderr = 'lsp#_on_event',
+        on_exit = 'lsp#_on_event',
+      }
+    })
+  if job_id == 0 then
+    error('Failed to starting language server job')
+  elseif job_id == -1 then
+    error(string.format('Failed to starting language server job. "%s" is not executable', cmd))
+  end
+
+  return job_id
 end
 
 client.new = function(name, ft, cmd)
   log.debug('Starting new client: ', name, cmd)
 
-  local job_id = vim.api.nvim_call_function('lsp#__jobstart', { cmd })
+  local job_id = client.start_job(cmd)
 
   assert(job_id)
   assert(job_id > 0)
 
-  log.trace('Client id: ', job_id)
+  log.debug('Client id: ', job_id)
 
   local self = setmetatable({
     job_id = job_id,

@@ -15,6 +15,11 @@ local plugin = { client_map = {} }
 -- @returns: A client object that has been initialized
 plugin.start_client = function(cmd, filetype, bufnr)
   filetype = filetype or util.get_filetype(bufnr)
+
+  if plugin.get_client(filetype) then
+    error(string.format('%s for %s has already started', cmd, filetype))
+  end
+
   cmd = cmd or server_config.get_command(filetype)
 
   local name = server_config.get_name(filetype)
@@ -109,12 +114,16 @@ plugin.client_has_started = function(filetype)
   return plugin.get_client(filetype) ~= nil
 end
 
-plugin.client_job_stdout = function(id, data)
-  Client.job_stdout(id, data)
-end
-
-plugin.client_job_exit = function(id, data)
-  Client.job_exit(id, data)
+plugin.client_job_handler = function(job_id, data, event)
+  if event == 'stdout' then
+    Client.job_stdout(job_id, data)
+  elseif event == 'stderr' then
+    log.error('job_id: ', job_id, ' stderr: ', data)
+  elseif event == 'exit' then
+    Client.job_exit(job_id, data)
+  else
+    error(string.format('Unknown event type %s', event), 2)
+  end
 end
 
 return {
@@ -124,6 +133,5 @@ return {
   notify = plugin.notify,
   handle = plugin.handle,
   client_has_started = plugin.client_has_started,
-  client_job_stdout = plugin.client_job_stdout,
-  client_job_exit = plugin.client_job_exit,
+  client_job_handler = plugin.client_job_handler,
 }

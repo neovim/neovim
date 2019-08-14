@@ -22,7 +22,10 @@ server_config.add = function(filetype, command, additional_configuration)
   for _, cur_type in pairs(filetype_list) do
     if server_config.configured_servers[cur_type] == nil then
       vim.api.nvim_command(
-        string.format([[autocmd FileType %s silent call lsp#start("%s")]], cur_type, cur_type)
+        string.format(
+            [[autocmd FileType %s silent :lua require('lsp.api').plugin.start_client(nil, %s)]],
+            cur_type, cur_type, cur_type
+          )
       )
 
       -- Add the configuration to our current servers

@@ -11,18 +11,6 @@ endtry
 
 let s:lsp_plugin = "require('lsp.api').plugin"
 
-function! lsp#start(...) abort
-  let filetype = get(a:000, 0, &filetype)
-  let force = get(a:000, 1, v:false)
-
-  if force || !luaeval(s:lsp_plugin . '.client_has_started(_A)', filetype)
-    call luaeval(s:lsp_plugin . '.start_client(nil, _A).name', filetype)
-    " call lsp#api_exec('client.start(nil, "%s")', filetype)
-  else
-    echom '[LSP] Client for ' . filetype . ' has already started'
-  endif
-endfunction
-
 " TODO(tjdevries): Make sure this works correctly
 " TODO(tjdevries): Figure out how to call a passed callback
 function! lsp#request(method, ...) abort
@@ -96,42 +84,10 @@ endfunction
 " Private functions to manage language server.
 "   Easier to configure on the viml side, since you can pass callbacks to the
 "   API, which -- at the time -- isn't possible with lua {{{
-let s:LspClient = {}
-
-function s:LspClient.on_stdout(job_id, data, event) abort
-  call luaeval("require('lsp.api').plugin.client_job_stdout(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
-endfunction
-
-function s:LspClient.on_exit(job_id, data, event) abort
-  call luaeval("require('lsp.api').plugin.client_job_exit(_A.id, _A.data)", {'id': a:job_id, 'data': a:data})
-endfunction
-
-function! lsp#__jobstart(cmd) abort
-  let to_execute = ''
-  if type(a:cmd) == v:t_string
-    let to_execute = split(a:cmd, ' ', 0)[0]
-  elseif type(a:cmd) == v:t_list && len(a:cmd) > 0
-    let to_execute = a:cmd[0]
-  else
-    echoerr 'Invalid command arguments for LSP'
-    throw LSP/BadConfig
-  endif
-
-  if !executable(to_execute)
-    echoerr '"' to_execute '" is not a valid executable'
-    throw LSP/BadConfig
-  endif
-
-  let job_id = jobstart(a:cmd, s:LspClient)
-
-  if job_id == 0
-    echoerr 'Invalid arguments for LSP'
-    throw LSP/failed
-  elseif job_id == -1
-    echoerr 'Not a valid executable: ' . string(a:cmd)
-    throw LSP/failed
-  endif
-
-  return job_id
+function! lsp#_on_event(job_id, data, event) abort
+  call luaeval(
+        \ "require('lsp.api').plugin.client_job_handler(_A.job_id, _A.data, _A.event)",
+        \ {'job_id': a:job_id, 'data': a:data, 'event': a:event}
+        \ )
 endfunction
 " }}}
