@@ -84,24 +84,6 @@ plugin.request_async = function(method, arguments, filetype, cb, bufnr)
   current_client:request_async(method, arguments, cb, bufnr)
 end
 
-plugin.request_autocmd = function(method, arguments, cb, filetype)
-  if not plugin.has_started(filetype) then
-    return
-  end
-
-  plugin.request(method, arguments, cb, filetype)
-
-  return true
-end
-
-plugin.wait_request = function(request_id, filetype)
-  if plugin.get_client(filetype) == nil then
-    return
-  end
-
-  return plugin.get_client(filetype)._results[request_id]
-end
-
 --- Send a notification to a server
 plugin.notify = function(method, arguments, filetype, bufnr)
   filetype = filetype or util.get_filetype(bufnr)
@@ -119,12 +101,12 @@ plugin.notify = function(method, arguments, filetype, bufnr)
   current_client:notify(method, arguments)
 end
 
-plugin.client_has_started = function(filetype)
-  return plugin.get_client(filetype) ~= nil
-end
-
 plugin.handle = function(filetype, method, data, default_only)
   return callbacks.call_callbacks_for_method(method, true, data, default_only, filetype)
+end
+
+plugin.client_has_started = function(filetype)
+  return plugin.get_client(filetype) ~= nil
 end
 
 plugin.client_job_stdout = function(id, data)
@@ -135,4 +117,13 @@ plugin.client_job_exit = function(id, data)
   Client.job_exit(id, data)
 end
 
-return plugin
+return {
+  start_client = plugin.start_client,
+  request = plugin.request,
+  request_async = plugin.request_async,
+  notify = plugin.notify,
+  handle = plugin.handle,
+  client_has_started = plugin.client_has_started,
+  client_job_stdout = plugin.client_job_stdout,
+  client_job_exit = plugin.client_job_exit,
+}
