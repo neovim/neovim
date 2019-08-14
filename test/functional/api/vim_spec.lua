@@ -1352,7 +1352,7 @@ describe('API', function()
     end
     assert:set_parameter('TableFormatLevel', 1000000)
     require('test.unit.viml.expressions.parser_tests')(
-        itp, _check_parsing, hl, fmtn)
+        it_maybe_pending, _check_parsing, hl, fmtn)
   end)
 
   describe('nvim_list_uis', function()
