@@ -7,7 +7,7 @@
 function! lsp#server_config#add(ftype, command, ...) abort
   let config = get(a:, 1, {})
 
-  call luaeval('require("lsp.api").server_config.add(_A.ftype, _A.command, _A.config)', {
+  call luaeval('vim.lsp.server_config.add(_A.ftype, _A.command, _A.config)', {
         \ 'ftype': a:ftype,
         \ 'command': a:command,
         \ 'config': config,

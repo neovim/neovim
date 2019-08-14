@@ -3,13 +3,13 @@
 
 try
   " Try and load the LSP API.
-  lua require('lsp.api')
+  lua require('vim.lsp')
 catch
   echom 'Language Server Protocol is currently not able to run.'
   finish
 endtry
 
-let s:lsp_plugin = "require('lsp.api').plugin"
+let s:lsp_plugin = "vim.lsp.plugin"
 
 " TODO(tjdevries): Make sure this works correctly
 " TODO(tjdevries): Figure out how to call a passed callback
@@ -86,7 +86,7 @@ endfunction
 "   API, which -- at the time -- isn't possible with lua {{{
 function! lsp#_on_event(job_id, data, event) abort
   call luaeval(
-        \ "require('lsp.api').plugin.client_job_handler(_A.job_id, _A.data, _A.event)",
+        \ "vim.lsp.plugin.client_job_handler(_A.job_id, _A.data, _A.event)",
         \ {'job_id': a:job_id, 'data': a:data, 'event': a:event}
         \ )
 endfunction

@@ -158,10 +158,10 @@ lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
     Example:
 
 autocmd CursorHold *
-    \ :lua require('lsp.api').plugin.request_async(
+    \ :lua vim.lsp.plugin.request_async(
     \     'textDocument/hover',
-    \     require('lsp.api').util.get_text_document_params(),
-    \     require('lsp.api').util.get_filetype()
+    \     vim.lsp.util.get_text_document_params(),
+    \     vim.lsp.util.get_filetype()
     \ )
 
 ================================================================================
@@ -175,17 +175,17 @@ in an idiomatic vim fashion.
   textDocument/publishDiagnostics~
   textDocument/references~
 
-require('lsp.api').config.callbacks.set_all_builtin_callbacks()
+vim.lsp.config.callbacks.set_all_builtin_callbacks()
   You can set all built-in callbaks
 
-require('lsp.api').config..callbacks.set_builtin_callback({method})
+vim.lsp.config.callbacks.set_builtin_callback({method})
     You can set a specify built-in callback.
         Parameters:~
             {method}: The name of the request, as specified by the
             language server protocol.
                 Example: 'textDocument/hover'
 
-require('lsp.api').config..callbacks.set_builtin_callbacks({methods})
+vim.lsp.config.callbacks.set_builtin_callbacks({methods})
     You can set specify built-in callbacks.
         Parameters:~
             {method}: The name of the request, as specified by the
@@ -246,7 +246,7 @@ require('lsp.checks').add_check({request}, {cb})
         `false` as the callback.
 
 >
-    :lua require('lsp.api').config.callbacks.disable('textDocument/hover')
+    :lua vim.lsp.config.callbacks.disable('textDocument/hover')
 <
 
 

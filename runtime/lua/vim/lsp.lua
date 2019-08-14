@@ -1,6 +1,6 @@
 -- luacheck: globals vim
 
-vim.lsp = {
+local lsp = {
   plugin = require('lsp.plugin'),
   server_config = require('lsp.server_config'),
   config = require('lsp.config'),
@@ -8,4 +8,4 @@ vim.lsp = {
   util = require('lsp.util'),
 }
 
-return vim.lsp
+return lsp
