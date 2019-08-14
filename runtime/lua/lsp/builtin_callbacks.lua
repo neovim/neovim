@@ -62,6 +62,7 @@ BuiltinCallbacks['nvim/error_callback'] = {
 }
 
 -- textDocument/publishDiagnostics
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 BuiltinCallbacks['textDocument/publishDiagnostics']= {
   callback = function(self, data)
     local diagnostic_list
@@ -111,6 +112,7 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
 }
 
 -- textDocument/completion
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
     if data == nil then
@@ -124,6 +126,7 @@ BuiltinCallbacks['textDocument/completion'] = {
 }
 
 -- textDocument/references
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
 BuiltinCallbacks['textDocument/references'] = {
   callback = function(self, data)
     local locations = data
@@ -181,25 +184,17 @@ BuiltinCallbacks['textDocument/rename'] = {
 
 
 -- textDocument/hover
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
     log.trace('textDocument/hover', data, self)
 
-    if data.range ~= nil then
-      -- Doesn't handle multi-line highlights
-      local _ = vim.api.nvim_buf_add_highlight(0,
-        -1,
-        'Error',
-        data.range.start.line,
-        data.range.start.character,
-        data.range['end'].character
-      )
-    end
-
     -- TODO: Use floating windows when they become available
     local long_string = ''
     if data.contents ~= nil then
+
       if nvim_util.is_array(data.contents) == true then
+        -- MarkedString[]
         for i, item in ipairs(data.contents) do
           local value
           if type(item) == 'table' then
@@ -219,14 +214,18 @@ BuiltinCallbacks['textDocument/hover'] = {
 
         log.debug('Hover: ', long_string)
       elseif type(data.contents) == 'table' then
+        -- MarkupContent or { language: string; value: string }
+
         long_string = long_string .. (data.contents.value or '')
       else
+        -- string
         long_string = data.contents
       end
 
       if long_string == '' then
         long_string = 'LSP: No information available'
       end
+
 
       vim.api.nvim_out_write(long_string .. '\n')
       return long_string
@@ -236,6 +235,7 @@ BuiltinCallbacks['textDocument/hover'] = {
 }
 
 -- textDocument/definition
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_definition
 BuiltinCallbacks['textDocument/definition'] = {
   callback = function(self, data)
     log.trace('callback:textDocument/definiton', data, self)
@@ -282,6 +282,7 @@ BuiltinCallbacks['textDocument/definition'] = {
 }
 
 -- window/showMessage
+-- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
 BuiltinCallbacks['window/showMessage'] = {
   callback = function(self, data)
     if data == nil or type(data) ~= 'table' then
