@@ -70,7 +70,7 @@ describe('API', function()
     nvim('command', 'split')
     nvim('command', 'autocmd WinEnter * startinsert')
     nvim('command', 'wincmd w')
-    eq({mode='i', blocking=false}, nvim("get_mode"))
+    eq({mode='i', blocking=false, wintype=''}, nvim("get_mode"))
   end)
 
   describe('nvim_command', function()
@@ -115,12 +115,12 @@ describe('API', function()
       nvim('input', [[:echo "hi\nhi2"<CR>]])
 
       -- Verify hit-enter prompt.
-      eq({mode='r', blocking=true}, nvim("get_mode"))
+      eq({mode='r', blocking=true, wintype=''}, nvim("get_mode"))
       nvim('input', [[<C-c>]])
 
       -- Verify NO hit-enter prompt.
       nvim('command_output', [[echo "hi\nhi2"]])
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
     end)
 
     it('captures command output', function()
@@ -167,7 +167,7 @@ describe('API', function()
          string.match(rv, "E%d*:.*"))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       -- Verify NO hit-enter prompt.
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
     end)
 
     it('VimL execution error: fails with specific error', function()
@@ -176,7 +176,7 @@ describe('API', function()
       eq("E86: Buffer 42 does not exist", string.match(rv, "E%d*:.*"))
       eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
       -- Verify NO hit-enter prompt.
-      eq({mode='n', blocking=false}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype=''}, nvim("get_mode"))
     end)
   end)
 
@@ -612,7 +612,9 @@ describe('API', function()
     end)
     it('in cmdline-window', function()
       feed('q:')
-      eq({mode='n', blocking=false, wintype='cmdline_:'}, nvim("get_mode"))
+      eq({mode='n', blocking=false, wintype='cmdline'}, nvim("get_mode"))
+      feed('i')
+      eq({mode='i', blocking=false, wintype='cmdline'}, nvim("get_mode"))
     end)
   end)
 
