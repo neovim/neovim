@@ -30,7 +30,7 @@ env:
                          -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
-    - TSAN_OPTIONS="log_path=$LOG_DIR/tsan:suppressions=$TRAVIS_BUILD_DIR/src/.tsan-suppressions"
+    - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
     - UBSAN_OPTIONS="print_stacktrace=1 log_path=$LOG_DIR/ubsan"
     # Environment variables for Valgrind.
     - VALGRIND_LOG="$LOG_DIR/valgrind-%p.log"
