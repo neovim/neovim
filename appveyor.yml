@@ -18,6 +18,11 @@ init:
       $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
       Exit-AppVeyorBuild
     }
+    # Non-PRs: skip MSVC_32 run for PRs already.
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_32)$') {
+      $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
+      Exit-AppVeyorBuild
+    }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 matrix:
