@@ -103,6 +103,7 @@ typedef struct {
   bool busy, is_invisible;
   bool cork, overflow;
   bool cursor_color_changed;
+  bool is_starting;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
@@ -396,6 +397,7 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   ui->data = data;
   data->bridge = bridge;
   data->loop = &tui_loop;
+  data->is_starting = true;
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
@@ -888,7 +890,7 @@ static void tui_grid_resize(UI *ui, Integer g, Integer width, Integer height)
     r->right = MIN(r->right, grid->width);
   }
 
-  if (!got_winch && (!starting || did_user_set_dimensions)) {
+  if (!got_winch && (!data->is_starting || did_user_set_dimensions)) {
     // Resize the _host_ terminal.
     UNIBI_SET_NUM_VAR(data->params[0], (int)height);
     UNIBI_SET_NUM_VAR(data->params[1], (int)width);
@@ -1051,6 +1053,7 @@ static void tui_mode_change(UI *ui, String mode, Integer mode_idx)
 {
   TUIData *data = ui->data;
   tui_set_mode(ui, (ModeShape)mode_idx);
+  data->is_starting = false;  // mode entered, no longer starting
   data->showing_mode = (ModeShape)mode_idx;
 }
 
@@ -1355,7 +1358,7 @@ static void tui_guess_size(UI *ui)
   int width = 0, height = 0;
 
   // 1 - look for non-default 'columns' and 'lines' options during startup
-  if (starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
+  if (data->is_starting && (Columns != DFLT_COLS || Rows != DFLT_ROWS)) {
     did_user_set_dimensions = true;
     assert(Columns >= INT_MIN && Columns <= INT_MAX);
     assert(Rows >= INT_MIN && Rows <= INT_MAX);
