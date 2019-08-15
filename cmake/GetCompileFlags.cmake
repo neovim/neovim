@@ -13,6 +13,11 @@ function(get_compile_flags _compile_flags)
   get_directory_property(compile_definitions
     DIRECTORY "src/nvim"
     COMPILE_DEFINITIONS)
+  get_target_property(compile_definitions_target nvim COMPILE_DEFINITIONS)
+  if(compile_definitions_target)
+    list(APPEND compile_definitions ${compile_definitions_target})
+    list(REMOVE_DUPLICATES compile_definitions)
+  endif()
   # NOTE: list(JOIN) requires CMake 3.12, string(CONCAT) requires CMake 3.
   string(REPLACE ";" " -D" compile_definitions "${compile_definitions}")
   if(compile_definitions)
@@ -28,6 +33,11 @@ function(get_compile_flags _compile_flags)
   get_directory_property(compile_options
     DIRECTORY "src/nvim"
     COMPILE_OPTIONS)
+  get_target_property(compile_options_target nvim COMPILE_OPTIONS)
+  if(compile_options_target)
+    list(APPEND compile_options ${compile_options_target})
+    list(REMOVE_DUPLICATES compile_options)
+  endif()
   # NOTE: list(JOIN) requires CMake 3.12.
   string(REPLACE ";" " " compile_options "${compile_options}")
   string(REPLACE
