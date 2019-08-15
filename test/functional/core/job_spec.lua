@@ -776,7 +776,13 @@ describe('jobs', function()
     local children
     retry(nil, nil, function()
       children = meths.get_proc_children(ppid)
-      eq((iswin() and 4 or 3), #children)
+      if iswin() then
+        -- On Windows there is conhost.exe always,
+        -- and e.g. vctip.exe might appear.  #10783
+        ok(#children >= 4 and #children <= 5)
+      else
+        eq(3, #children)
+      end
     end)
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do
