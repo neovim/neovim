@@ -164,6 +164,9 @@ cache:
   directories:
     - "$CACHE_NVIM_DEPS_DIR"
 
+git:
+  quiet: true
+
 notifications:
   webhooks:
     urls:
