@@ -585,15 +585,16 @@ static bool emsg_multiline(const char *s, bool multiline)
 
       // Log (silent) errors as debug messages.
       if (sourcing_name != NULL && sourcing_lnum != 0) {
-        DLOG("%s (%s (line %ld))", s, sourcing_name, (long)sourcing_lnum);
+        DLOG("(:silent) %s (%s (line %ld))",
+             s, sourcing_name, (long)sourcing_lnum);
       } else {
-        DLOG("%s", s);
+        DLOG("(:silent) %s", s);
       }
 
       return true;
     }
 
-    // Log errors as warnings.
+    // Log editor errors as INFO.
     if (sourcing_name != NULL && sourcing_lnum != 0) {
       ILOG("%s (%s (line %ld))", s, sourcing_name, (long)sourcing_lnum);
     } else {
