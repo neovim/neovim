@@ -419,13 +419,14 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
 }
 
 #define CONTEXT_MAP_KEY_DO(kv, from, to, code) \
-  if (strequal(kv->key.data, from)) { \
-    api_free_string(kv->key); \
-    kv->key = STATIC_CSTR_TO_STRING(to); \
+  if (strequal((kv)->key.data, (from))) { \
+    api_free_string((kv)->key); \
+    (kv)->key = STATIC_CSTR_TO_STRING((to)); \
     code \
   }
 
-#define CONTEXT_MAP_KEY(kv, from, to) CONTEXT_MAP_KEY_DO(kv, from, to, {})
+#define CONTEXT_MAP_KEY(kv, from, to) \
+  CONTEXT_MAP_KEY_DO((kv), (from), (to), {})
 
 /// Map key names of ShaDa entries to user-friendly context key names.
 ///
