@@ -293,7 +293,7 @@ static bool is_executable(const char *name, char **abspath)
 /// Checks if file `name` is executable under any of these conditions:
 /// - extension is in $PATHEXT and `name` is executable
 /// - result of any $PATHEXT extension appended to `name` is executable
-static bool is_executable_ext(char *name, char **abspath)
+static bool is_executable_ext(const char *name, char **abspath)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   const bool is_unix_shell = strstr((char *)path_tail(p_sh), "sh") != NULL;
@@ -1180,12 +1180,10 @@ char *os_resolve_shortcut(const char *fname)
                         &IID_IShellLinkW, (void **)&pslw);
   if (hr == S_OK) {
     wchar_t *p;
-    const int conversion_result = utf8_to_utf16(fname, &p);
-    if (conversion_result != 0) {
-      EMSG2("utf8_to_utf16 failed: %d", conversion_result);
-    }
-
-    if (p != NULL) {
+    const int r = utf8_to_utf16(fname, -1, &p);
+    if (r != 0) {
+      EMSG2("utf8_to_utf16 failed: %d", r);
+    } else if (p != NULL) {
       // Get a pointer to the IPersistFile interface.
       hr = pslw->lpVtbl->QueryInterface(
           pslw, &IID_IPersistFile, (void **)&ppf);
@@ -1210,9 +1208,9 @@ char *os_resolve_shortcut(const char *fname)
       ZeroMemory(wsz, MAX_PATH * sizeof(wchar_t));
       hr = pslw->lpVtbl->GetPath(pslw, wsz, MAX_PATH, &ffdw, 0);
       if (hr == S_OK && wsz[0] != NUL) {
-        const int conversion_result = utf16_to_utf8(wsz, &rfname);
-        if (conversion_result != 0) {
-          EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+        const int r2 = utf16_to_utf8(wsz, -1, &rfname);
+        if (r2 != 0) {
+          EMSG2("utf16_to_utf8 failed: %d", r2);
         }
       }
 

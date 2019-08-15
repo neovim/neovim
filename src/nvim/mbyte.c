@@ -1356,83 +1356,86 @@ static int utf_strnicmp(const char_u *s1, const char_u *s2, size_t n1,
 # define CP_UTF8 65001  /* magic number from winnls.h */
 #endif
 
-/// Reassigns `strw` to a new, allocated pointer to a UTF16 string.
-int utf8_to_utf16(const char *str, wchar_t **strw)
+/// Converts string from UTF-8 to UTF-16.
+///
+/// @param utf8  UTF-8 string.
+/// @param utf8len  Length of `utf8`. May be -1 if `utf8` is NUL-terminated.
+/// @param utf16[out,allocated]  NUL-terminated UTF-16 string, or NULL on error
+/// @return 0 on success, or libuv error code
+int utf8_to_utf16(const char *utf8, int utf8len, wchar_t **utf16)
   FUNC_ATTR_NONNULL_ALL
 {
-  ssize_t wchar_len = 0;
-
-  // Compute the length needed to store the converted widechar string.
-  wchar_len = MultiByteToWideChar(CP_UTF8,
-                                  0,     // dwFlags: must be 0 for utf8
-                                  str,   // lpMultiByteStr: string to convert
-                                  -1,    // -1 => process up to NUL
-                                  NULL,  // lpWideCharStr: converted string
-                                  0);    // 0  => return length, don't convert
-  if (wchar_len == 0) {
-    return GetLastError();
+  // Compute the length needed for the converted UTF-16 string.
+  int bufsize = MultiByteToWideChar(CP_UTF8,
+                                    0,     // dwFlags: must be 0 for UTF-8
+                                    utf8,  // -1: process up to NUL
+                                    utf8len,
+                                    NULL,
+                                    0);    // 0: get length, don't convert
+  if (bufsize == 0) {
+    *utf16 = NULL;
+    return uv_translate_sys_error(GetLastError());
   }
 
-  ssize_t buf_sz = wchar_len * sizeof(wchar_t);
+  // Allocate the destination buffer adding an extra byte for the terminating
+  // NULL. If `utf8len` is not -1 MultiByteToWideChar will not add it, so
+  // we do it ourselves always, just in case.
+  *utf16 = xmalloc(sizeof(wchar_t) * (bufsize + 1));
 
-  if (buf_sz == 0) {
-    *strw = NULL;
-    return 0;
+  // Convert to UTF-16.
+  bufsize = MultiByteToWideChar(CP_UTF8, 0, utf8, utf8len, *utf16, bufsize);
+  if (bufsize == 0) {
+    XFREE_CLEAR(*utf16);
+    return uv_translate_sys_error(GetLastError());
   }
 
-  char *buf = xmalloc(buf_sz);
-  char *pos = buf;
-
-  int r = MultiByteToWideChar(CP_UTF8,
-                              0,
-                              str,
-                              -1,
-                              (wchar_t *)pos,
-                              wchar_len);
-  assert(r == wchar_len);
-  if (r != wchar_len) {
-    EMSG2("MultiByteToWideChar failed: %d", r);
-  }
-  *strw = (wchar_t *)pos;
-
+  (*utf16)[bufsize] = L'\0';
   return 0;
 }
 
-/// Reassigns `str` to a new, allocated pointer to a UTF8 string.
-int utf16_to_utf8(const wchar_t *strw, char **str)
+/// Converts string from UTF-16 to UTF-8.
+///
+/// @param utf16  UTF-16 string.
+/// @param utf16len  Length of `utf16`. May be -1 if `utf16` is NUL-terminated.
+/// @param utf8[out,allocated]  NUL-terminated UTF-8 string, or NULL on error
+/// @return 0 on success, or libuv error code
+int utf16_to_utf8(const wchar_t *utf16, int utf16len, char **utf8)
   FUNC_ATTR_NONNULL_ALL
 {
-  *str = NULL;
-  // Compute the space required to store the string as UTF-8.
-  DWORD utf8_len = WideCharToMultiByte(CP_UTF8,
-                                       0,
-                                       strw,
-                                       -1,
-                                       NULL,
-                                       0,
-                                       NULL,
-                                       NULL);
-  if (utf8_len == 0) {
-    return GetLastError();
+  // Compute the space needed for the converted UTF-8 string.
+  DWORD bufsize = WideCharToMultiByte(CP_UTF8,
+                                      0,
+                                      utf16,
+                                      utf16len,
+                                      NULL,
+                                      0,
+                                      NULL,
+                                      NULL);
+  if (bufsize == 0) {
+    *utf8 = NULL;
+    return uv_translate_sys_error(GetLastError());
   }
 
-  *str = xmallocz(utf8_len);
+  // Allocate the destination buffer adding an extra byte for the terminating
+  // NULL. If `utf16len` is not -1 WideCharToMultiByte will not add it, so
+  // we do it ourselves always, just in case.
+  *utf8 = xmalloc(bufsize + 1);
 
   // Convert to UTF-8.
-  utf8_len = WideCharToMultiByte(CP_UTF8,
-                                 0,
-                                 strw,
-                                 -1,
-                                 *str,
-                                 utf8_len,
-                                 NULL,
-                                 NULL);
-  if (utf8_len == 0) {
-    XFREE_CLEAR(*str);
-    return GetLastError();
+  bufsize = WideCharToMultiByte(CP_UTF8,
+                                0,
+                                utf16,
+                                utf16len,
+                                *utf8,
+                                bufsize,
+                                NULL,
+                                NULL);
+  if (bufsize == 0) {
+    XFREE_CLEAR(*utf8);
+    return uv_translate_sys_error(GetLastError());
   }
-  (*str)[utf8_len] = '\0';
 
+  (*utf8)[bufsize] = '\0';
   return 0;
 }
 
