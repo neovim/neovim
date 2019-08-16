@@ -8,6 +8,7 @@ packages:
 - autoconf-2.69p2
 - automake-1.15.1
 - gettext-0.19.8.1p3
+- gettext-tools-0.19.8.1
 - ninja-1.8.2p0
 
 sources:
