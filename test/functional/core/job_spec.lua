@@ -777,9 +777,9 @@ describe('jobs', function()
     retry(nil, nil, function()
       children = meths.get_proc_children(ppid)
       if iswin() then
-        -- On Windows there is conhost.exe always,
-        -- and e.g. vctip.exe might appear.  #10783
-        ok(#children >= 4 and #children <= 5)
+        -- On Windows conhost.exe may exist, and
+        -- e.g. vctip.exe might appear.  #10783
+        ok(#children >= 3 and #children <= 5)
       else
         eq(3, #children)
       end
