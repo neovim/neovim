@@ -7,6 +7,7 @@ packages:
 - unzip-6.0p11
 - autoconf-2.69p2
 - automake-1.15.1
+- gettext-0.19.8.1p3
 
 sources:
 - https://github.com/neovim/neovim
