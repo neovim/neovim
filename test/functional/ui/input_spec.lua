@@ -103,6 +103,11 @@ describe('mappings', function()
     check_mapping('<kequal>','<kequal>')
     check_mapping('<KPEquals>','<kequal>')
   end)
+
+  it('support meta + multibyte char mapping', function()
+    add_mapping('<m-ä>', '<m-ä>')
+    check_mapping('<m-ä>', '<m-ä>')
+  end)
 end)
 
 describe('feeding large chunks of input with <Paste>', function()
