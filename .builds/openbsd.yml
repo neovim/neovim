@@ -25,5 +25,5 @@ tasks:
     cd ..
     mkdir build
     cd build
-    cmake ..
+    cmake -G Ninja ..
     gmake
