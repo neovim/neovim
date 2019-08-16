@@ -404,6 +404,9 @@ Mapping <kHome> will not work then.
 Note: If numlock is on, the |TUI| receives plain ASCII values, so
 mappings to <k0> - <k9> and <kPoint> will not work.
 
+Note: Nvim supports mapping multibyte chars with modifiers such as `<M-ä>`.
+Which combinations actually are usable depends on the terminal emulator or GUI.
+
 								*<>*
 Examples are often given in the <> notation.  Sometimes this is just to make
 clear what you need to type, but often it can be typed literally, e.g., with

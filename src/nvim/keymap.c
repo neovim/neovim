@@ -604,7 +604,7 @@ int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
         // Anything accepted, like <C-?>.
         // <C-"> or <M-"> are not special in strings as " is
         // the string delimiter. With a backslash it works: <M-\">
-        if (end - bp > l && !(in_string && bp[1] == '"') && bp[2] == '>') {
+        if (end - bp > l && !(in_string && bp[1] == '"') && bp[l+1] == '>') {
           bp += l;
         } else if (end - bp > 2 && in_string && bp[1] == '\\'
                    && bp[2] == '"' && bp[3] == '>') {
