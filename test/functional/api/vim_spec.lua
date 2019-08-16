@@ -16,7 +16,6 @@ local source = helpers.source
 local next_msg = helpers.next_msg
 local write_file = helpers.write_file
 
-local exc_exec = helpers.exc_exec
 local expect_err = helpers.expect_err
 local format_string = helpers.format_string
 local intchar2lua = helpers.intchar2lua
@@ -755,20 +754,20 @@ describe('API', function()
     end)
 
     it('errors out on malformed context dictionary', function()
-      local expected_err = 'Vim(call):E5555: '..
-                           'API call: malformed context dictionary'
-      eq(expected_err, exc_exec([[call nvim_load_context({'regs': [1]})]]))
-      eq(expected_err,
-         exc_exec([[call nvim_load_context({'regs': [{'name': '0'}]})]]))
-      eq(expected_err,
-         exc_exec([[call nvim_load_context(]]..
-                  [[{'regs': [{'name': '0', 'content': 1}]})]]))
-      eq(expected_err,
-         exc_exec([=[call nvim_load_context({'gvars': [['1', '2']]})]=]))
-      eq(expected_err,
-         exc_exec([=[call nvim_load_context({'funcs': [['1', '2']]})]=]))
-      eq(expected_err,
-         exc_exec([=[call nvim_load_context({'funcs': [1]})]=]))
+      local expected_err = 'malformed context dictionary'
+      expect_err(expected_err, command,
+                 [[call nvim_load_context({'regs': [1]})]])
+      expect_err(expected_err, command,
+                 [[call nvim_load_context({'regs': [{'name': '0'}]})]])
+      expect_err(expected_err, command,
+                 [[call nvim_load_context(]]..
+                 [[{'regs': [{'name': '0', 'content': 1}]})]])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'gvars': [['1', '2']]})]=])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'funcs': [['1', '2']]})]=])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'funcs': [1]})]=])
     end)
   end)
 
@@ -1588,25 +1587,22 @@ describe('API', function()
     end)
 
     it('reports pattern errors', function()
-      local err = exc_exec([[call nvim_grep('\(badpat', 'whatever', 1)]])
-      err = err:match('Vim%(vimgrep%):(.*)')
-      eq([[E54: Unmatched \(]], err)
+      expect_err([[E54: Unmatched \%(]], command,
+                 [[call nvim_grep('\(badpat', 'whatever', 1)]])
     end)
   end)
 
   describe('nvim__async_invoke', function()
     it('only accepts request from parent', function()
-      local err = exc_exec([[call nvim__async_invoke(0, '', {}, [])]])
-      eq([[Vim(call):E5555: API call: only parent can issue ]]..
-         [['nvim__async_invoke']], err)
+      expect_err([[only parent can issue 'nvim__async_invoke']], command,
+                 [[call nvim__async_invoke(0, '', {}, [])]])
     end)
   end)
 
   describe('nvim__async_done_event', function()
     it('only accepts request from async call job', function()
-      local err = exc_exec([[call nvim__async_done_event(0, '')]])
-      eq([[Vim(call):E5555: API call: only async call jobs can issue ]]..
-         [['nvim__async_done_event']], err)
+      expect_err([[only async call jobs can issue 'nvim__async_done_event']],
+                 command, [[call nvim__async_done_event(0, '')]])
     end)
   end)
 end)

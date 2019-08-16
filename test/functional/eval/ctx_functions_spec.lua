@@ -231,7 +231,7 @@ describe('context functions', function()
     end)
 
     it('errors out when context stack is empty', function()
-      local err = 'Vim:Context stack is empty'
+      local err = 'Context stack is empty'
       expect_err(err, call, 'ctxpop')
       expect_err(err, call, 'ctxpop')
       call('ctxpush')
