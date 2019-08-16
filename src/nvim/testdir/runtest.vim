@@ -286,6 +286,7 @@ let s:flaky_tests = [
       \ 'Test_quoteplus()',
       \ 'Test_quotestar()',
       \ 'Test_reltime()',
+      \ 'Test_repeat_many()',
       \ 'Test_repeat_three()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',

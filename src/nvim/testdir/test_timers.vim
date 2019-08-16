@@ -48,7 +48,7 @@ func Test_repeat_many()
   endif
   sleep 200m
   call timer_stop(timer)
-  call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(4), g:val)
+  call assert_inrange((has('mac') ? 1 : 2), LoadAdjust(5), g:val)
 endfunc
 
 func Test_with_partial_callback()
