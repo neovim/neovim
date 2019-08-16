@@ -13,15 +13,15 @@ sources:
 
 tasks:
 - build:
-	export AUTOCONF_VERSION=2.69
-	export AUTOMAKE_VERSION=1.15
-	cd neovim
-	mkdir .deps
-	cd .deps
-	cmake ../third-party/
-	gmake
-	cd ..
-	mkdir build
-	cd build
-	cmake ..
-	gmake
+    export AUTOCONF_VERSION=2.69
+    export AUTOMAKE_VERSION=1.15
+    cd neovim
+    mkdir .deps
+    cd .deps
+    cmake ../third-party/
+    gmake
+    cd ..
+    mkdir build
+    cd build
+    cmake ..
+    gmake
