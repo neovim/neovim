@@ -7769,6 +7769,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   chan->async_call = (AsyncCall *)xcalloc(1, sizeof(AsyncCall));
+  chan->async_call->refcount = 1;
   chan->async_call->callback = callback;
 
   Array call_async_args = ARRAY_DICT_INIT;
@@ -7808,8 +7809,6 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Callback item_callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
   AsyncCall *async_call = NULL;
-
-  tv_list_alloc_ret(rettv, count);
 
   if (argvars[0].v_type == VAR_FUNC) {
     callee = argvars[0].vval.v_string;
@@ -7866,6 +7865,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   count = MIN(count, tv_list_len(arglists->vval.v_list));
+  tv_list_alloc_ret(rettv, count);
   if (count == 0) {
     goto done;
   }
@@ -7881,6 +7881,8 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   async_call = (AsyncCall *)xcalloc(1, sizeof(AsyncCall));
+  async_call->refcount = 1;
+  async_call->is_parallel = true;
   async_call->callback = callback;
   async_call->item_callback = item_callback;
   async_call->count = count;
@@ -7896,6 +7898,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
     tv_list_append_number(rettv->vval.v_list, chan->id);
     chan->async_call = async_call;
+    async_call->refcount += 1;
     Array call_async_args = ARRAY_DICT_INIT;
     ADD(call_async_args, INTEGER_OBJ(scid));
     ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
@@ -7909,6 +7912,8 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
+  asynccall_decref(async_call);
+
 done:
   api_free_dictionary(context);
   return;
@@ -7917,12 +7922,12 @@ fail:
   TV_LIST_ITER(rettv->vval.v_list, li, {
     uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
     Channel *channel = find_channel(channel_id);
-    channel->async_call = NULL;
     asynccall_channel_release(channel);
   });
   tv_clear(rettv);
+  tv_list_alloc_ret(rettv, 0);
   if (async_call) {
-    asynccall_free(async_call);
+    asynccall_decref(async_call);
   }
   callback_free(&callback);
   api_free_dictionary(context);

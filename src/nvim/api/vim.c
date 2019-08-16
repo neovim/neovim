@@ -2432,20 +2432,16 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
 {
   Channel *channel = find_channel(channel_id);
   // Only allow async call jobs
-  if (!channel || !channel->is_asynccall) {
+  if (!channel || channel->async_call == NULL) {
     api_set_error(err, kErrorTypeValidation,
                   "only async call jobs can issue 'nvim__async_done_event'");
     return;
   }
 
   AsyncCall *async_call = channel->async_call;
-  if (async_call == NULL) {  // dead worker, ignore its events
-    return;
-  }
 
-  list_T *work_queue = async_call->work_queue;
-
-  if (work_queue) {  // parallel call
+  if (async_call->is_parallel) {
+    list_T *work_queue = async_call->work_queue;
     asynccall_append_result(channel_id, result, err);
     ADD(async_call->results, copy_object(result));
     asynccall_callback_call(&channel->async_call->item_callback, &result, err);
@@ -2464,12 +2460,11 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
       async_call->count -= 1;
       asynccall_channel_release(channel);
       if (async_call->count) {
-        // avoid "async_call" getting freed when other workers are alive
-        channel->async_call = NULL;
+        // Do not invoke callback yet
         return;
       }
     }
-  } else {  // normal async call
+  } else {
     asynccall_channel_release(channel);
     asynccall_put_result(channel_id, result, err);
   }
@@ -2484,10 +2479,6 @@ void nvim_error_event(uint64_t channel_id, Integer type, String message,
   Channel *channel = find_channel(channel_id);
   if (channel && channel->async_call) {
     EMSG3(_("multiproc: job %" PRIu64 ": %s"), channel_id, message.data);
-    if (channel->async_call->work_queue && --channel->async_call->count) {
-      // avoid "async_call" getting freed when other workers are alive
-      channel->async_call = NULL;
-    }
     asynccall_channel_release(channel);
   }
 }
