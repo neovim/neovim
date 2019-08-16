@@ -333,6 +333,7 @@ local function _async_vimgrep(qf, append, args)
   vim.api.nvim_command([[
   function! _done(...)
     echom 'Found '.g:_count.' matches'
+    call call_wait(g:_jobs)
     call timer_start(0, { -> ctxpop() })
   endfunction
   ]])
@@ -346,9 +347,10 @@ local function _async_vimgrep(qf, append, args)
     end
   end
 
-  vim.api.nvim_call_function('call_parallel', {
+  local jobs = vim.api.nvim_call_function('call_parallel', {
     'nvim_grep', paths, { itemdone = '_itemdone', done = '_done' }
   })
+  vim.api.nvim_set_var('_jobs', jobs)
 end
 
 -- Async handlers for commands
