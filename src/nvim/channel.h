@@ -58,6 +58,7 @@ static inline bool callback_reader_set(CallbackReader reader)
 }
 
 typedef struct {
+  size_t refcount;
   Callback callback;
   bool is_parallel;
 
@@ -88,7 +89,6 @@ struct Channel {
   bool is_rpc;
   RpcState rpc;
   Terminal *term;
-  bool is_asynccall;
   AsyncCall *async_call;
 
   CallbackReader on_data;

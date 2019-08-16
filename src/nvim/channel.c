@@ -244,7 +244,6 @@ Channel *asynccall_channel_acquire(void)
       (Array)ARRAY_DICT_INIT, &err).data.integer;
   if (!ERROR_SET(&err)) {
     channel = find_channel((uint64_t)jobid);
-    channel->is_asynccall = true;
   }
   api_clear_error(&err);
   return channel;
@@ -288,9 +287,13 @@ void asynccall_append_result(
   xfree(args.items);
 }
 
-void asynccall_free(AsyncCall *asynccall)
+void asynccall_decref(AsyncCall *asynccall)
   FUNC_ATTR_NONNULL_ALL
 {
+  if (--asynccall->refcount) {
+    return;
+  }
+
   callback_free(&asynccall->callback);
   if (asynccall->is_parallel) {
     callback_free(&asynccall->item_callback);
@@ -298,6 +301,7 @@ void asynccall_free(AsyncCall *asynccall)
     api_free_array(asynccall->results);
     xfree(asynccall->callee);
   }
+
   xfree(asynccall);
 }
 
@@ -309,7 +313,7 @@ static void free_channel_event(void **argv)
   }
 
   if (chan->async_call) {
-    asynccall_free(chan->async_call);
+    asynccall_decref(chan->async_call);
   }
 
   callback_reader_free(&chan->on_data);
