@@ -20,7 +20,7 @@ EXTERN handle_T next_namespace_id INIT(= 1);
 ///
 /// @return Return value of lua code if present or NIL.
 #define EXEC_LUA_STATIC(code, args, err) \
-  nvim_execute_lua(STATIC_CSTR_AS_STRING(code), args, err)
+  nvim_execute_lua(STATIC_CSTR_AS_STRING((code)), (args), (err))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.h.generated.h"
