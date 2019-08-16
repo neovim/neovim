@@ -14,9 +14,17 @@ configuration:
 init:
 - ps: |
     # Pull requests: skip some build configurations to save time.
-    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -and $env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
-      $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
-      Exit-AppVeyorBuild
+    if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) {
+      if ($env:CONFIGURATION -match '^(MSVC_64|MINGW_32)$') {
+        $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
+        Exit-AppVeyorBuild
+      }
+    } else {
+      # Non-PRs: skip MSVC_32 run for PRs already.
+      if ($env:CONFIGURATION -match '^(MSVC_32)$') {
+        $env:APPVEYOR_CACHE_SKIP_SAVE = "true"
+        Exit-AppVeyorBuild
+      }
     }
 # RDP
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
