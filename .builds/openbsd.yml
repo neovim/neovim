@@ -4,9 +4,9 @@ packages:
 - gmake
 - cmake
 - libtool
-- unzip
+- unzip-6.0p11
 - autoconf-2.69p2
-- automake-1.15p0
+- automake-1.15.1
 
 sources:
 - https://github.com/neovim/neovim
