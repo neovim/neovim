@@ -7886,11 +7886,10 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   async_call->callback = callback;
   async_call->item_callback = item_callback;
   async_call->count = count;
-  async_call->work_queue = arglists->vval.v_list;
-  tv_list_ref(arglists->vval.v_list);
+  async_call->work_queue = vim_to_object(arglists).data.array;
   async_call->callee = callee;
 
-  for (int i = 0; i < async_call->count; i++) {
+  for (size_t i = 0; i < async_call->count; i++) {
     Channel *chan = asynccall_channel_acquire();
     if (!chan) {
       EMSG(_("Failed to spawn job for async call"));
@@ -7903,9 +7902,8 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ADD(call_async_args, INTEGER_OBJ(scid));
     ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
     ADD(call_async_args, DICTIONARY_OBJ(copy_dictionary(context)));
-    listitem_T *args =
-      tv_list_find(async_call->work_queue, async_call->next++);
-    ADD(call_async_args, vim_to_object(TV_LIST_ITEM_TV(args)));
+    ADD(call_async_args,
+        copy_object(async_call->work_queue.items[async_call->next++]));
     if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
       EMSG(_("Failed to send RPC request to async call job"));
       goto fail;

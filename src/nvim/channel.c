@@ -294,8 +294,8 @@ void asynccall_decref(AsyncCall *asynccall)
 
   callback_free(&asynccall->callback);
   if (asynccall->is_parallel) {
-    tv_list_unref(asynccall->work_queue);
     callback_free(&asynccall->item_callback);
+    api_free_array(asynccall->work_queue);
     api_free_array(asynccall->results);
     xfree(asynccall->callee);
   }

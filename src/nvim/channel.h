@@ -63,10 +63,10 @@ typedef struct {
   Callback callback;
 
   // parallel call
-  int count;                 ///< number of workers
-  int next;                  ///< next item to consume
-  list_T *work_queue;        ///< argument lists to consume
+  size_t count;              ///< number of workers
+  size_t next;               ///< next item to consume
   Callback item_callback;    ///< per-item callback
+  Array work_queue;          ///< argument lists to consume
   Array results;             ///< accumulated results (for callback)
   char_u *callee;            ///< called function name
 } AsyncCall;
