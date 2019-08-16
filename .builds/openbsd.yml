@@ -21,9 +21,9 @@ tasks:
     mkdir .deps
     cd .deps
     cmake ../third-party/
-    gmake
+    ninja
     cd ..
     mkdir build
     cd build
     cmake -G Ninja ..
-    gmake
+    ninja
