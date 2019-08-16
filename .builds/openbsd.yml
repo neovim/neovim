@@ -1,0 +1,27 @@
+image: openbsd/6.5
+
+packages:
+- gmake
+- cmake
+- libtool
+- unzip
+- autoconf-2.69p2
+- automake-1.15p0
+
+sources:
+- https://github.com/neovim/neovim
+
+tasks:
+- build:
+	export AUTOCONF_VERSION=2.69
+	export AUTOMAKE_VERSION=1.15
+	cd neovim
+	mkdir .deps
+	cd .deps
+	cmake ../third-party/
+	gmake
+	cd ..
+	mkdir build
+	cd build
+	cmake ..
+	gmake
