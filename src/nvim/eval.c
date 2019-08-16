@@ -8344,8 +8344,10 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (!ctx_restore(NULL, kCtxAll)) {
-    EMSG(_("Context stack is empty"));
+  Error err = ctx_restore(NULL, kCtxAll);
+  if (ERROR_SET(&err)) {
+    EMSG2("Context: %s", err.msg);
+    api_clear_error(&err);
   }
 }
 

@@ -1467,8 +1467,11 @@ Object nvim_load_context(Dictionary dict, Error *err)
   Context ctx = CONTEXT_INIT;
   ctx_from_dict(dict, &ctx);
 
-  if (!ctx_restore(&ctx, kCtxAll)) {
-    api_set_error(err, kErrorTypeException, "malformed context dictionary");
+  Error _err = ctx_restore(&ctx, kCtxAll);
+  if (ERROR_SET(&_err)) {
+    api_set_error(err, kErrorTypeException,
+                  "malformed context dictionary: %s", _err.msg);
+    api_clear_error(&_err);
   }
 
   ctx_free(&ctx);

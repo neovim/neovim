@@ -116,12 +116,14 @@ void ctx_save(Context *ctx, const int flags)
 /// @param  flags  Flags, see ContextTypeFlags enum.
 ///
 /// @return true on success, false otherwise (i.e.: empty context stack).
-bool ctx_restore(Context *ctx, const int flags)
+Error ctx_restore(Context *ctx, const int flags)
 {
+  Error err = ERROR_INIT;
   bool free_ctx = false;
   if (ctx == NULL) {
     if (ctx_stack.size == 0) {
-      return false;
+      api_set_error(&err, kErrorTypeValidation, "Context stack is empty");
+      return err;
     }
     ctx = &kv_pop(ctx_stack);
     free_ctx = true;
@@ -160,11 +162,8 @@ bool ctx_restore(Context *ctx, const int flags)
   set_option_value("shada", 0L, (char *)op_shada, OPT_GLOBAL);
   xfree(op_shada);
 
-  Error err = ERROR_INIT;
-  bool result = !try_end(&err);
-  api_clear_error(&err);
-
-  return result;
+  try_end(&err);
+  return err;
 }
 
 /// Saves the global registers to a context.
