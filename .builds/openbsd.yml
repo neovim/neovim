@@ -21,7 +21,7 @@ tasks:
     cd neovim
     mkdir .deps
     cd .deps
-    cmake ../third-party/
+    cmake -G Ninja ../third-party/
     ninja
     cd ..
     mkdir build
