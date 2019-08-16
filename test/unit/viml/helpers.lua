@@ -5,19 +5,30 @@ local cimport = helpers.cimport
 local kvi_new = helpers.kvi_new
 local kvi_init = helpers.kvi_init
 local conv_enum = helpers.conv_enum
+local pagealloc = helpers.pagealloc
 local make_enum_conv_tab = helpers.make_enum_conv_tab
 
 local lib = cimport('./src/nvim/viml/parser/expressions.h')
 
-local function new_pstate(strings)
+local function new_pstate(strings, do_pagealloc)
   local strings_idx = 0
+  local frees = {}
   local function get_line(_, ret_pline)
     strings_idx = strings_idx + 1
     local str = strings[strings_idx]
     local data, size
     if type(str) == 'string' then
-      data = str
       size = #str
+      if do_pagealloc then
+        local start, free = pagealloc(size)
+        frees[#frees + 1] = free
+        data = ffi.gc(start, nil)
+        for i = 0, (size - 1) do
+          start[i] = str:byte(i + 1)
+        end
+      else
+        data = str
+      end
     elseif type(str) == 'nil' then
       data = nil
       size = 0
@@ -49,6 +60,13 @@ local function new_pstate(strings)
   local ret = ffi.new('ParserState', state)
   kvi_init(ret.reader.lines)
   kvi_init(ret.stack)
+  if do_pagealloc then
+    ret = ffi.gc(ret, function(_)
+      for _, free in ipairs(frees) do
+        free()
+      end
+    end)
+  end
   return ret
 end
 

@@ -30,6 +30,10 @@ extern MemCalloc mem_calloc;
 
 /// When unit testing: pointer to the `realloc()` function, may be altered
 extern MemRealloc mem_realloc;
+
+size_t mem_pagesize(void);
+void *mem_pagealloc(size_t);
+void mem_pagefree(void *, size_t);
 #endif
 
 #ifdef EXITFREE

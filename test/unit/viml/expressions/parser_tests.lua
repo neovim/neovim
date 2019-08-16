@@ -12,6 +12,13 @@ return function(itp, _check_parsing, hl, fmtn)
       funcname='check_asgn_parsing',
     }, ...)
   end
+  local function check_pagealloc_parsing(...)
+    return _check_parsing({
+      flags={0, 1, 2, 3},
+      funcname='check_pagealloc_parsing',
+      pagealloc=true,
+    }, ...)
+  end
   itp('works with + and @a', function()
     check_parsing('@a', {
       ast = {
@@ -1075,6 +1082,62 @@ return function(itp, _check_parsing, hl, fmtn)
         },
       },
     })
+    check_parsing('@a(@b,@c,)', {
+      --           0123456789
+      ast = {
+        {
+          'Call:0:2:(',
+          children = {
+            'Register(name=a):0:0:@a',
+            {
+              'Comma:0:5:,',
+              children = {
+                'Register(name=b):0:3:@b',
+                {
+                  'Comma:0:8:,',
+                  children = {
+                    'Register(name=c):0:6:@c',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    }, {
+      hl('Register', '@a'),
+      hl('CallingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('Comma', ','),
+      hl('Register', '@c'),
+      hl('Comma', ','),
+      hl('CallingParenthesis', ')'),
+    })
+    check_parsing('(@b,)', {
+      --           01234
+      ast = {
+        {
+          'Nested:0:0:(',
+          children = {
+            {
+              'Comma:0:3:,',
+              children = {
+                'Register(name=b):0:1:@b',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',)',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('NestingParenthesis', '('),
+      hl('Register', '@b'),
+      hl('InvalidComma', ','),
+      hl('NestingParenthesis', ')'),
+    })
   end)
   itp('works with variable names, including curly braces ones', function()
     check_parsing('var', {
@@ -1909,7 +1972,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '}',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Expected value, got closing figure brace: %.*s',
       },
     }, {
       hl('InvalidFigureBrace', '}'),
@@ -4556,6 +4619,111 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('IdentifierName', 'f'),
       hl('SubscriptBracket', ']'),
     })
+
+    check_parsing('[:]', {
+      --           012
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Colon:0:1::',
+              children = {
+                'Missing:0:1:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ':]',
+        msg = 'E15: Colon outside of dictionary or ternary operator: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('InvalidColon', ':'),
+      hl('List', ']'),
+    })
+
+    check_parsing('[,]', {
+      --           012
+      ast = {
+        {
+          'ListLiteral:0:0:[',
+          children = {
+            {
+              'Comma:0:1:,',
+              children = {
+                'Missing:0:1:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',]',
+        msg = 'E15: Expected value, got comma: %.*s',
+      },
+    }, {
+      hl('List', '['),
+      hl('InvalidComma', ','),
+      hl('List', ']'),
+    })
+
+    check_parsing('a[,]', {
+      --           0123
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comma:0:2:,',
+              children = {
+                'Missing:0:2:',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',]',
+        msg = 'E15: Expected value, got comma: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('InvalidComma', ','),
+      hl('SubscriptBracket', ']'),
+    })
+
+    check_parsing('a[1,]', {
+      --           01234
+      ast = {
+        {
+          'Subscript:0:1:[',
+          children = {
+            'PlainIdentifier(scope=0,ident=a):0:0:a',
+            {
+              'Comma:0:3:,',
+              children = {
+                'Integer(val=1):0:2:1',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = ',]',
+        msg = 'E15: Comma outside of call, lambda or literal: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'a'),
+      hl('SubscriptBracket', '['),
+      hl('Number', '1'),
+      hl('InvalidComma', ','),
+      hl('SubscriptBracket', ']'),
+    })
   end)
   itp('supports list literals', function()
     check_parsing('[]', {
@@ -4731,7 +4899,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = ']',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Expected value, got closing bracket: %.*s',
       },
     }, {
       hl('InvalidList', ']'),
@@ -4749,7 +4917,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = ']',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Unexpected closing bracket: %.*s',
       },
     }, {
       hl('IdentifierName', 'a'),
@@ -4975,8 +5143,8 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('SingleQuote', '\''),
     })
     check_parsing('\'\'\'a\'\'\'\'bc\'', {
-      --           01234567890
-      --           0         1
+      --           0 1 2 34 5 6 7 890
+      --           0                1
       ast = {
         fmtn('SingleQuotedString', 'val="\'a\'\'bc"', ':0:0:\'\'\'a\'\'\'\'bc\''),
       },
@@ -4990,7 +5158,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('SingleQuote', '\''),
     })
     check_parsing('"\\"\\"\\"\\""', {
-      --           0123456789
+      --           01 23 45 67 89
       ast = {
         fmtn('DoubleQuotedString', 'val="\\"\\"\\"\\""', ':0:0:"\\"\\"\\"\\""'),
       },
@@ -5003,8 +5171,8 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"abc\\"def\\"ghi\\"jkl\\"mno"', {
-      --           0123456789012345678901234
-      --           0         1         2
+      --           01234 56789 01234 56789 01234
+      --           0           1           2
       ast = {
         fmtn('DoubleQuotedString', 'val="abc\\"def\\"ghi\\"jkl\\"mno"', ':0:0:"abc\\"def\\"ghi\\"jkl\\"mno"'),
       },
@@ -5022,10 +5190,10 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\b\\e\\f\\r\\t\\\\"', {
-      --           0123456789012345
-      --           0         1
+      --           01 23 45 67 89 01 2 3
+      --           0              1
       ast = {
-        [[DoubleQuotedString(val="\008\027\012\r\t\\"):0:0:"\b\e\f\r\t\\"]],
+        fmtn('DoubleQuotedString', [[val="\008\027\012\r\t\\"]], [[:0:0:"\b\e\f\r\t\\"]]),
       },
     }, {
       hl('DoubleQuote', '"'),
@@ -5038,7 +5206,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\n\n"', {
-      --           01234
+      --           01 23 4
       ast = {
         fmtn('DoubleQuotedString', 'val="\\n\\n"', ':0:0:"\\n\n"'),
       },
@@ -5049,7 +5217,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\x00"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\x00"'),
       },
@@ -5059,7 +5227,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\xFF"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\255"', ':0:0:"\\xFF"'),
       },
@@ -5069,7 +5237,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\xF"', {
-      --           012345
+      --           01 235
       ast = {
         fmtn('DoubleQuotedString', 'val="\\015"', ':0:0:"\\xF"'),
       },
@@ -5079,7 +5247,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\u00AB"', {
-      --           01234567
+      --           01 234567
       ast = {
         fmtn('DoubleQuotedString', 'val="«"', ':0:0:"\\u00AB"'),
       },
@@ -5089,7 +5257,8 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\U000000AB"', {
-      --           01234567
+      --           01 2345678901
+      --           0          1
       ast = {
         fmtn('DoubleQuotedString', 'val="«"', ':0:0:"\\U000000AB"'),
       },
@@ -5099,7 +5268,7 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
     })
     check_parsing('"\\x"', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="x"', ':0:0:"\\x"'),
       },
@@ -5110,7 +5279,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\x', {
-      --           012
+      --           0 12
       ast = {
         fmtn('DoubleQuotedString', 'val="x"', ':0:0:"\\x'),
       },
@@ -5124,7 +5293,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\xF', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="\\015"', ':0:0:"\\xF'),
       },
@@ -5138,7 +5307,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u"', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="u"', ':0:0:"\\u"'),
       },
@@ -5149,7 +5318,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u', {
-      --           012
+      --           01 2
       ast = {
         fmtn('DoubleQuotedString', 'val="u"', ':0:0:"\\u'),
       },
@@ -5163,7 +5332,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U', {
-      --           012
+      --           01 2
       ast = {
         fmtn('DoubleQuotedString', 'val="U"', ':0:0:"\\U'),
       },
@@ -5177,7 +5346,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U"', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="U"', ':0:0:"\\U"'),
       },
@@ -5188,7 +5357,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\xFX"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\015X"', ':0:0:"\\xFX"'),
       },
@@ -5200,7 +5369,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\XFX"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\015X"', ':0:0:"\\XFX"'),
       },
@@ -5212,7 +5381,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\xX"', {
-      --           01234
+      --           01 234
       ast = {
         fmtn('DoubleQuotedString', 'val="xX"', ':0:0:"\\xX"'),
       },
@@ -5224,7 +5393,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\XX"', {
-      --           01234
+      --           01 234
       ast = {
         fmtn('DoubleQuotedString', 'val="XX"', ':0:0:"\\XX"'),
       },
@@ -5236,7 +5405,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\uX"', {
-      --           01234
+      --           01 234
       ast = {
         fmtn('DoubleQuotedString', 'val="uX"', ':0:0:"\\uX"'),
       },
@@ -5248,7 +5417,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\UX"', {
-      --           01234
+      --           01 234
       ast = {
         fmtn('DoubleQuotedString', 'val="UX"', ':0:0:"\\UX"'),
       },
@@ -5260,7 +5429,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\x0X"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\x0X"'),
       },
@@ -5272,7 +5441,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\X0X"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\X0X"'),
       },
@@ -5284,7 +5453,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u0X"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u0X"'),
       },
@@ -5296,7 +5465,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U0X"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U0X"'),
       },
@@ -5308,7 +5477,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\x00X"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\x00X"'),
       },
@@ -5320,7 +5489,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\X00X"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\X00X"'),
       },
@@ -5332,7 +5501,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u00X"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u00X"'),
       },
@@ -5344,7 +5513,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U00X"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U00X"'),
       },
@@ -5356,7 +5525,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u000X"', {
-      --           01234567
+      --           01 234567
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u000X"'),
       },
@@ -5368,7 +5537,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U000X"', {
-      --           01234567
+      --           01 234567
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U000X"'),
       },
@@ -5380,7 +5549,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u0000X"', {
-      --           012345678
+      --           01 2345678
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\u0000X"'),
       },
@@ -5392,7 +5561,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U0000X"', {
-      --           012345678
+      --           01 2345678
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U0000X"'),
       },
@@ -5404,7 +5573,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U00000X"', {
-      --           0123456789
+      --           01 23456789
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U00000X"'),
       },
@@ -5416,8 +5585,8 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U000000X"', {
-      --           01234567890
-      --           0         1
+      --           01 234567890
+      --           0          1
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U000000X"'),
       },
@@ -5429,8 +5598,8 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U0000000X"', {
-      --           012345678901
-      --           0         1
+      --           01 2345678901
+      --           0          1
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U0000000X"'),
       },
@@ -5442,8 +5611,8 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U00000000X"', {
-      --           0123456789012
-      --           0         1
+      --           01 23456789012
+      --           0          1
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000X"', ':0:0:"\\U00000000X"'),
       },
@@ -5455,7 +5624,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\x000X"', {
-      --           01234567
+      --           01 234567
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0000X"', ':0:0:"\\x000X"'),
       },
@@ -5467,7 +5636,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\X000X"', {
-      --           01234567
+      --           01 234567
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0000X"', ':0:0:"\\X000X"'),
       },
@@ -5479,7 +5648,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\u00000X"', {
-      --           0123456789
+      --           01 23456789
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0000X"', ':0:0:"\\u00000X"'),
       },
@@ -5491,8 +5660,8 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\U000000000X"', {
-      --           01234567890123
-      --           0         1
+      --           01 234567890123
+      --           0          1
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0000X"', ':0:0:"\\U000000000X"'),
       },
@@ -5504,7 +5673,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\0"', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\0"'),
       },
@@ -5515,7 +5684,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\00"', {
-      --           01234
+      --           01 234
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\00"'),
       },
@@ -5526,7 +5695,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\000"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\000"', ':0:0:"\\000"'),
       },
@@ -5537,7 +5706,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\0000"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0000"', ':0:0:"\\0000"'),
       },
@@ -5549,7 +5718,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\8"', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="8"', ':0:0:"\\8"'),
       },
@@ -5560,7 +5729,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\08"', {
-      --           01234
+      --           01 234
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0008"', ':0:0:"\\08"'),
       },
@@ -5572,7 +5741,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\008"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0008"', ':0:0:"\\008"'),
       },
@@ -5584,7 +5753,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\0008"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="\\0008"', ':0:0:"\\0008"'),
       },
@@ -5596,7 +5765,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\777"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\255"', ':0:0:"\\777"'),
       },
@@ -5607,7 +5776,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\050"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\40"', ':0:0:"\\050"'),
       },
@@ -5618,7 +5787,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\<C-u>"', {
-      --           012345
+      --           01 2345
       ast = {
         fmtn('DoubleQuotedString', 'val="\\021"', ':0:0:"\\<C-u>"'),
       },
@@ -5629,7 +5798,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\<', {
-      --           012
+      --           01 2
       ast = {
         fmtn('DoubleQuotedString', 'val="<"', ':0:0:"\\<'),
       },
@@ -5643,7 +5812,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\<"', {
-      --           0123
+      --           01 23
       ast = {
         fmtn('DoubleQuotedString', 'val="<"', ':0:0:"\\<"'),
       },
@@ -5654,7 +5823,7 @@ return function(itp, _check_parsing, hl, fmtn)
     })
 
     check_parsing('"\\<C-u"', {
-      --           0123456
+      --           01 23456
       ast = {
         fmtn('DoubleQuotedString', 'val="<C-u"', ':0:0:"\\<C-u"'),
       },
@@ -5662,6 +5831,142 @@ return function(itp, _check_parsing, hl, fmtn)
       hl('DoubleQuote', '"'),
       hl('DoubleQuotedUnknownEscape', '\\<'),
       hl('DoubleQuotedBody', 'C-u'),
+      hl('DoubleQuote', '"'),
+    })
+
+    check_parsing('"<>', {
+      --           012
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<>"', ':0:0:"<>'),
+      },
+      err = {
+        arg = '"<>',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', '<>'),
+    })
+
+    check_parsing('"\\<>', {
+      --           01 23
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<>"', ':0:0:"\\<>'),
+      },
+      err = {
+        arg = '"\\<>',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '>'),
+    })
+
+    check_parsing('"\\<-', {
+      --           01 23
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<-"', ':0:0:"\\<-'),
+      },
+      err = {
+        arg = '"\\<-',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '-'),
+    })
+
+    check_parsing('"\\<M-', {
+      --           01 234
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<M-"', ':0:0:"\\<M-'),
+      },
+      err = {
+        arg = '"\\<M-',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', 'M-'),
+    })
+
+    check_parsing('"\\<M-"', {
+      --           01 2345
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<M-"', ':0:0:"\\<M-"'),
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\<'),
+      hl('DoubleQuotedBody', 'M-'),
+      hl('DoubleQuote', '"'),
+    })
+
+    check_parsing('"\\<M-">"', {
+      --           01 234567
+      ast = {
+        {
+          'Comparison(type=Greater,inv=0,ccs=UseOption):0:6:>',
+          children = {
+            fmtn('DoubleQuotedString', 'val="<M-"', ':0:0:"\\<M-"'),
+            fmtn('DoubleQuotedString', 'val=NULL', ':0:7:"'),
+          },
+        },
+      },
+      err = {
+        arg = '"',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedUnknownEscape', '\\<'),
+      hl('DoubleQuotedBody', 'M-'),
+      hl('DoubleQuote', '"'),
+      hl('Comparison', '>'),
+      hl('InvalidDoubleQuote', '"'),
+    })
+
+    check_parsing('"\\<M-\\"', {
+      --           01 2345 6
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<M-\\""', ':0:0:"\\<M-\\"'),
+      },
+      err = {
+        arg = '"\\<M-\\"',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', 'M-'),
+      hl('InvalidDoubleQuotedEscape', '\\"'),
+    })
+
+    check_parsing('"\\<M-\\">', {
+      --           01 2345 67
+      ast = {
+        fmtn('DoubleQuotedString', 'val="\128\252\\008\\""', ':0:0:"\\<M-\\">'),
+      },
+      err = {
+        arg = '"\\<M-\\">',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedEscape', '\\<M-\\">'),
+    })
+
+    check_parsing('"\\<M-\\">"', {
+      --           01 2345 678
+      ast = {
+        fmtn('DoubleQuotedString', 'val="\128\252\\008\\""', ':0:0:"\\<M-\\">"'),
+      },
+    }, {
+      hl('DoubleQuote', '"'),
+      hl('DoubleQuotedEscape', '\\<M-\\">'),
       hl('DoubleQuote', '"'),
     })
   end)
@@ -6472,8 +6777,8 @@ return function(itp, _check_parsing, hl, fmtn)
       },
     })
 
-    check_parsing('(1+&)', {
-      --           01234
+    check_pagealloc_parsing('(1+&)', {
+      --                     01234
       ast = {
         {
           'Nested:0:0:(',
@@ -7045,7 +7350,7 @@ return function(itp, _check_parsing, hl, fmtn)
     check_parsing('"\\U\\', {
       --           0123
       ast = {
-        [[DoubleQuotedString(val="U\\"):0:0:"\U\]],
+        fmtn('DoubleQuotedString', 'val="U\\\\"', ':0:0:"\\U\\'),
       },
       err = {
         arg = '"\\U\\',
@@ -7205,7 +7510,7 @@ return function(itp, _check_parsing, hl, fmtn)
       },
       err = {
         arg = '}l',
-        msg = 'E15: Unexpected closing figure brace: %.*s',
+        msg = 'E15: Expected value, got closing figure brace: %.*s',
       },
     }, {
       hl('InvalidFigureBrace', '}'),
@@ -7262,6 +7567,377 @@ return function(itp, _check_parsing, hl, fmtn)
           [9] = hl('InvalidSpacing', '\0'),
         },
       },
+    })
+    -- Just an addition, actually found by KLEE is 90]$
+    check_parsing('90}$', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              fmtn('UnknownFigure', '---', ':0:2:'),
+              children = {
+                'Integer(val=90):0:0:90',
+              },
+            },
+            'Environment(ident=):0:3:$',
+          },
+        },
+      },
+      err = {
+        arg = '}$',
+        msg = 'E15: Unexpected closing figure brace: %.*s',
+      },
+    }, {
+      hl('Number', '90'),
+      hl('InvalidFigureBrace', '}'),
+      hl('InvalidEnvironmentSigil', '$'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              fmtn('UnknownFigure', '---', ':0:2:'),
+              children = {
+                'Integer(val=90):0:0:90',
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    -- Just an addition, actually found by KLEE is 90]$
+    check_parsing('90)$', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              'Nested:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+              },
+            },
+            'Environment(ident=):0:3:$',
+          },
+        },
+      },
+      err = {
+        arg = ')$',
+        msg = 'E15: Unexpected closing parenthesis: %.*s',
+      },
+    }, {
+      hl('Number', '90'),
+      hl('InvalidNestingParenthesis', ')'),
+      hl('InvalidEnvironmentSigil', '$'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'Nested:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    check_parsing('90]$', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:3:',
+          children = {
+            {
+              'ListLiteral:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+              },
+            },
+            'Environment(ident=):0:3:$',
+          },
+        },
+      },
+      err = {
+        arg = ']$',
+        msg = 'E15: Unexpected closing bracket: %.*s',
+      },
+    }, {
+      hl('Number', '90'),
+      hl('InvalidList', ']'),
+      hl('InvalidEnvironmentSigil', '$'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'ListLiteral:0:2:',
+              children = {
+                'Integer(val=90):0:0:90',
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 3,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    check_pagealloc_parsing('"\\<', {
+      --                     01 2
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<"', ':0:0:"\\<'),
+      },
+      err = {
+        arg = '"\\<',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+    })
+    -- Just an addition, actually found by KLEE is *]08
+    check_parsing('*)08', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            {
+              'Nested:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                    'Missing:0:1:',
+                  },
+                },
+              },
+            },
+            'Integer(val=8):0:2:08',
+          },
+        },
+      },
+      err = {
+        arg = '*)08',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('InvalidMultiplication', '*'),
+      hl('InvalidNestingParenthesis', ')'),
+      hl('InvalidNumber', '08'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'Nested:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                    'Missing:0:1:',
+                  },
+                },
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 2,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    -- Just an addition, actually found by KLEE is *]08
+    check_parsing('*}08', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            {
+              fmtn('UnknownFigure', '---', ':0:1:'),
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+              },
+            },
+            'Integer(val=8):0:2:08',
+          },
+        },
+      },
+      err = {
+        arg = '*}08',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('InvalidMultiplication', '*'),
+      hl('InvalidFigureBrace', '}'),
+      hl('InvalidNumber', '08'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              fmtn('UnknownFigure', '---', ':0:1:'),
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 2,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    check_parsing('*]08', {
+      --           0123
+      ast = {
+        {
+          'OpMissing:0:2:',
+          children = {
+            {
+              'ListLiteral:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+              },
+            },
+            'Integer(val=8):0:2:08',
+          },
+        },
+      },
+      err = {
+        arg = '*]08',
+        msg = 'E15: Unexpected multiplication-like operator: %.*s',
+      },
+    }, {
+      hl('InvalidMultiplication', '*'),
+      hl('InvalidList', ']'),
+      hl('InvalidNumber', '08'),
+    }, {
+      [1] = {
+        ast = {
+          ast = {
+            {
+              'ListLiteral:0:1:',
+              children = {
+                {
+                  'Multiplication:0:0:*',
+                  children = {
+                    'Missing:0:0:',
+                  },
+                },
+                REMOVE_THIS,
+              },
+            },
+          },
+          len = 2,
+        },
+        hl_fs = {
+          [3] = REMOVE_THIS,
+        },
+      },
+    })
+    check_pagealloc_parsing('"\0\0\\Xa\\\248', {
+      --                     01 2 3 456 7
+      ast = {
+        fmtn('DoubleQuotedString', 'val="\\000\\000\\n\248"', ':0:0:"'),
+      },
+      err = {
+        arg = '"\000\000\\Xa\\\248',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', ''),
+      hl('InvalidDoubleQuotedEscape', '\\Xa', 2),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\\248'),
+    })
+    check_pagealloc_parsing('"\\<\\<-\000', {
+      --                     01 23 456
+      ast = {
+        fmtn('DoubleQuotedString', 'val="<<-\\000"', ':0:0:"\\<\\<-'),
+      },
+      err = {
+        arg = '"\\<\\<-\000',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '-\0'),
+    })
+    check_pagealloc_parsing('"\000\\"\\<-\001', {
+      --                     01   2 34 567
+      ast = {
+        fmtn('DoubleQuotedString', 'val="\\000\\"<-\\001"', ':0:0:"'),
+      },
+      err = {
+        arg = '"\000\\"\\<-\001',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', ''),
+      hl('InvalidDoubleQuotedEscape', '\\"', 1),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedBody', '-\001'),
+    })
+    check_pagealloc_parsing('"\000\\\\\\n\\<\\\193\128', {
+      --                     01   2 3 4 56 78 9   0
+      --                     0                    1
+      ast = {
+        fmtn('DoubleQuotedString', 'val="\\000\\\\\\n<\193\128"', ':0:0:"'),
+      },
+      err = {
+        arg = '"\000\\\\\\n\\<\\\193\128',
+        msg = 'E114: Missing double quote: %.*s',
+      },
+    }, {
+      hl('InvalidDoubleQuote', '"'),
+      hl('InvalidDoubleQuotedBody', ''),
+      hl('InvalidDoubleQuotedEscape', '\\\\', 1),
+      hl('InvalidDoubleQuotedEscape', '\\n'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\<'),
+      hl('InvalidDoubleQuotedUnknownEscape', '\\\193\128'),
     })
   end)
   itp('works with assignments', function()
@@ -8233,7 +8909,7 @@ return function(itp, _check_parsing, hl, fmtn)
         {
           'OpMissing:0:6:',
           children = {
-            'DoubleQuotedString(val="«»"):0:0:"«»"',
+            fmtn('DoubleQuotedString', 'val="«»"', ':0:0:"«»"'),
             {
               'ComplexIdentifier:0:8:',
               children = {
@@ -8258,7 +8934,7 @@ return function(itp, _check_parsing, hl, fmtn)
       [1] = {
         ast = {
           ast = {
-            'DoubleQuotedString(val="«»"):0:0:"«»"',
+            fmtn('DoubleQuotedString', 'val="«»"', ':0:0:"«»"'),
           },
           len = 6,
         },
@@ -8274,12 +8950,12 @@ return function(itp, _check_parsing, hl, fmtn)
         {
           'OpMissing:0:3:',
           children = {
-            'DoubleQuotedString(val="\192"):0:0:"\192"',
+            fmtn('DoubleQuotedString', 'val="\192"', ':0:0:"\192"'),
             {
               'OpMissing:0:4:',
               children = {
                 'PlainIdentifier(scope=0,ident=\192):0:3:\192',
-                'DoubleQuotedString(val="foo"):0:4:"foo"',
+                fmtn('DoubleQuotedString', 'val="foo"', ':0:4:"foo"'),
               },
             },
           },
@@ -8301,7 +8977,7 @@ return function(itp, _check_parsing, hl, fmtn)
       [1] = {
         ast = {
           ast = {
-            'DoubleQuotedString(val="\192"):0:0:"\192"',
+            fmtn('DoubleQuotedString', 'val="\192"', ':0:0:"\192"'),
           },
           len = 3,
         },
@@ -8312,6 +8988,86 @@ return function(itp, _check_parsing, hl, fmtn)
           [7] = REMOVE_THIS,
         },
       },
+    })
+  end)
+  itp('correctly works with missing operator priority', function()
+    -- Regression test for #7889.
+    check_parsing('0 0 *', {
+      --           01234
+      ast = {
+        {
+          'OpMissing:0:1:',
+          children = {
+            'Integer(val=0):0:0:0',
+            {
+              'Multiplication:0:3: *',
+              children = {
+                'Integer(val=0):0:1: 0',
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = '0 *',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('Number', '0'),
+      hl('InvalidSpacing', ' '),
+      hl('Number', '0'),
+      hl('Multiplication', '*', 1),
+    }, {
+      [1] = {
+        ast = {
+          len = 2,
+          ast = {
+            'Integer(val=0):0:0:0',
+          },
+          err = REMOVE_THIS,
+        },
+        hl_fs = {
+          [2] = REMOVE_THIS,
+          [3] = REMOVE_THIS,
+          [4] = REMOVE_THIS,
+        },
+      },
+    })
+
+    check_parsing('system(\'\'ls *', {
+      --           01234567 8 9012
+      --           0           1
+      ast = {
+        {
+          'Call:0:6:(',
+          children = {
+            'PlainIdentifier(scope=0,ident=system):0:0:system',
+            {
+              'OpMissing:0:9:',
+              children = {
+                fmtn('SingleQuotedString', 'val=NULL', ':0:7:\'\''),
+                {
+                  'Multiplication:0:11: *',
+                  children = {
+                    'PlainIdentifier(scope=0,ident=ls):0:9:ls',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      err = {
+        arg = 'ls *',
+        msg = 'E15: Missing operator: %.*s',
+      },
+    }, {
+      hl('IdentifierName', 'system'),
+      hl('CallingParenthesis', '('),
+      hl('SingleQuote', '\''),
+      hl('SingleQuote', '\''),
+      hl('InvalidIdentifierName', 'ls'),
+      hl('Multiplication', '*', 1),
     })
   end)
 end
