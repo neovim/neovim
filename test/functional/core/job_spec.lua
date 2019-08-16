@@ -768,22 +768,79 @@ describe('jobs', function()
     --                ..c.."', '-c', '"..c.."'])")
 
     -- Create child with several descendants.
+    if iswin() then
+      source([[
+      function! s:formatprocs(pid, prefix)
+        let result = ''
+        let result .= a:prefix . printf("%-24.24s%6s %12.12s %s\n",
+              \                         s:procs[a:pid]['name'],
+              \                         a:pid,
+              \                         s:procs[a:pid]['Session Name'],
+              \                         s:procs[a:pid]['Session'])
+        if has_key(s:procs[a:pid], 'children')
+          for pid in s:procs[a:pid]['children']
+            let result .= s:formatprocs(pid, a:prefix . '  ')
+          endfor
+        endif
+        return result
+      endfunction
+
+      function! PsTree() abort
+        let s:procs = {}
+        for proc in map(
+              \       map(
+              \         systemlist('tasklist /NH'),
+              \         'substitute(v:val, "\r", "", "")'),
+              \       'split(v:val, "\\s\\+")')
+          if len(proc) == 6
+            let s:procs[proc[1]] ..']]'..[[= {'name': proc[0],
+                  \               'Session Name': proc[2],
+                  \               'Session': proc[3]}
+          endif
+        endfor
+        for pid in keys(s:procs)
+          let children = nvim_get_proc_children(str2nr(pid))
+          if !empty(children)
+            let s:procs[pid]['children'] = children
+            for cpid in children
+              let s:procs[printf('%d', cpid)]['parent'] = str2nr(pid)
+            endfor
+          endif
+        endfor
+        let result = ''
+        for pid in sort(keys(s:procs), {i1, i2 -> i1 - i2})
+          if !has_key(s:procs[pid], 'parent')
+            let result .= s:formatprocs(pid, '')
+          endif
+        endfor
+        return result
+      endfunction
+      ]])
+    end
     local sleep_cmd = (iswin()
       and 'ping -n 31 127.0.0.1'
       or  'sleep 30')
     local j = eval("jobstart('"..sleep_cmd..' | '..sleep_cmd..' | '..sleep_cmd.."')")
     local ppid = funcs.jobpid(j)
     local children
-    retry(nil, nil, function()
-      children = meths.get_proc_children(ppid)
-      if iswin() then
+    if iswin() then
+      local status, result = pcall(retry, nil, nil, function()
+        children = meths.get_proc_children(ppid)
         -- On Windows conhost.exe may exist, and
         -- e.g. vctip.exe might appear.  #10783
         ok(#children >= 3 and #children <= 5)
-      else
-        eq(3, #children)
+      end)
+      if not status then
+        print('')
+        print(eval('PsTree()'))
+        error(result)
       end
-    end)
+    else
+      retry(nil, nil,  function()
+        children = meths.get_proc_children(ppid)
+        eq(3, #children)
+      end)
+    end
     -- Assert that nvim_get_proc() sees the children.
     for _, child_pid in ipairs(children) do
       local info = meths.get_proc(child_pid)
