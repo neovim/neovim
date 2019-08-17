@@ -31,12 +31,14 @@
 
 " Check that the screen size is at least 24 x 80 characters.
 if &lines < 24 || &columns < 80 
-  let error = 'Screen size too small! Tests require at least 24 lines with 80 characters'
+  let error = 'Screen size too small! Tests require at least 24 lines with 80 characters, got ' .. &lines .. ' lines with ' .. &columns .. ' characters'
   echoerr error
   split test.log
   $put =error
   write
   split messages
+  call append(line('$'), '')
+  call append(line('$'), 'From ' . expand('%') . ':')
   call append(line('$'), error)
   write
   qa!
@@ -161,7 +163,7 @@ func RunTheTest(test)
     endtry
   endif
 
-  " Clear any autocommands
+  " Clear any autocommands and put back the catch-all for SwapExists.
   au!
   au SwapExists * call HandleSwapExists()
 
