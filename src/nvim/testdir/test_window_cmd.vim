@@ -42,6 +42,8 @@ function Test_window_cmd_wincmd_gf()
   function s:swap_exists()
     let v:swapchoice = s:swap_choice
   endfunc
+  " Remove the catch-all that runtest.vim adds
+  au! SwapExists
   augroup test_window_cmd_wincmd_gf
     autocmd!
     exec "autocmd SwapExists " . fname . " call s:swap_exists()"
