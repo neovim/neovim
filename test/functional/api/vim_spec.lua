@@ -1614,14 +1614,14 @@ describe('API', function()
   describe('nvim__async_invoke', function()
     it('only accepts request from parent', function()
       expect_err([[only parent can issue 'nvim__async_invoke']], command,
-                 [[call nvim__async_invoke(0, '', {}, [])]])
+                 [[call nvim__async_invoke('', 0, {}, [])]])
     end)
   end)
 
   describe('nvim__async_done_event', function()
     it('only accepts request from async call job', function()
       expect_err([[only async call jobs can issue 'nvim__async_done_event']],
-                 command, [[call nvim__async_done_event(0, '')]])
+                 command, [[call nvim__async_done_event('')]])
     end)
   end)
 end)
