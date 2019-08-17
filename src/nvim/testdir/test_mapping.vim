@@ -231,7 +231,7 @@ endfunc
 
 func Test_map_meta_multibyte()
   imap <M-á> foo
-  call assert_equal('foo', maparg("\<M-á>", 'i'))
+  call assert_match('i  <M-á>\s*foo', execute('imap'))
   iunmap <M-á>
 endfunc
 
