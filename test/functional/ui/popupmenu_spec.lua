@@ -1644,6 +1644,7 @@ describe('builtin popupmenu', function()
       [42] = {foreground = tonumber('0x0c0c0c'), background = tonumber('0xe5a8e5')},
       [43] = {background = tonumber('0x7f5d7f'), bold = true, foreground = tonumber('0x3f3f3f')},
       [44] = {foreground = tonumber('0x3f3f3f'), background = tonumber('0x7f5d7f')},
+      [45] = {background = Screen.colors.WebGray, blend=0},
     })
     command('syntax on')
     command('set mouse=a')
@@ -1761,7 +1762,7 @@ describe('builtin popupmenu', function()
       Lorem ipsum d{1:ol}or sit amet, consectetur                     |
       adipisicing elit, sed do eiusmod tempor                     |
       bla bla incididunt^                                          |
-      incidid{22: incididunt     }{27: }d{1:ol}ore magna aliqua.                |
+      incidid{45: incididunt     }{27: }d{1:ol}ore magna aliqua.                |
       Ut enim{28: }{29:ut}{28: minim veniam}{25:,} quis nostrud                       |
       exercit{28:a}{29:labore}{28:llamco la}{25:b}oris nisi ut aliquip ex             |
       {2:[No Nam}{30:e}{43:et}{30:[+]          }{32: }{2:                                    }|

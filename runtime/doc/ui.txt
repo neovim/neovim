@@ -292,6 +292,8 @@ numerical highlight ids to the actual attributes.
 	`bold`:		bold text.
 	`underline`:	underlined text. The line has `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
+	`blend`:	Blend level (0-100). Could be used by UIs to support
+			blending floating windows to the background.
 
 	For absent color keys the default color should be used. Don't store
 	the default value in the table, rather a sentinel value, so that
