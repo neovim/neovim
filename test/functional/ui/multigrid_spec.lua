@@ -1206,7 +1206,7 @@ describe('ext_multigrid', function()
     ]])
   end)
 
-  it('handles switich tabs', function()
+  it('handles switch tabs', function()
     command('vsp')
     screen:expect([[
     ## grid 1
@@ -1271,7 +1271,7 @@ describe('ext_multigrid', function()
       [4:-----------------------------------------------------]|
       {11:[No Name]                                            }|
                                                            |
-    ## grid 2
+    ## grid 2 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1284,7 +1284,7 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 3
+    ## grid 3 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1328,7 +1328,7 @@ describe('ext_multigrid', function()
       [4:-----------------------------------------------------]|
       {12:[No Name]                                            }|
                                                            |
-    ## grid 2
+    ## grid 2 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1341,7 +1341,7 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 3
+    ## grid 3 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1409,13 +1409,13 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 4
+    ## grid 4 (hidden)
                                                            |
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ## grid 5
+    ## grid 5 (hidden)
                                                            |
       {1:~                                                    }|
       {1:~                                                    }|
@@ -1440,7 +1440,7 @@ describe('ext_multigrid', function()
       [4:-----------------------------------------------------]|
       {12:[No Name]                                            }|
                                                            |
-    ## grid 2
+    ## grid 2 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1452,7 +1452,7 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 3
+    ## grid 3 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|

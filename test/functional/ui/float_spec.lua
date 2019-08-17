@@ -4144,14 +4144,14 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnew                                 |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
-          ## grid 3
+          ## grid 3 (hidden)
             {1:y                   }|
             {2:~                   }|
           ## grid 4
@@ -4193,7 +4193,7 @@ describe('floating windows', function()
           ## grid 3
             {1:y                   }|
             {2:~                   }|
-          ## grid 4
+          ## grid 4 (hidden)
                                                     |
             {0:~                                       }|
             {0:~                                       }|
@@ -4223,13 +4223,13 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnext                                |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
-          ## grid 3
+          ## grid 3 (hidden)
             {1:y                   }|
             {2:~                   }|
           ## grid 4
@@ -4267,7 +4267,7 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnew                                 |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
@@ -4313,7 +4313,7 @@ describe('floating windows', function()
             {0:~                                                                }|
             {0:~                                                                }|
             {0:~                                                                }|
-          ## grid 4
+          ## grid 4 (hidden)
                                                     |
             {0:~                                       }|
             {0:~                                       }|
@@ -4333,7 +4333,7 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnext                                |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|

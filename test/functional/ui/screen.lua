@@ -1212,7 +1212,11 @@ function Screen:render(headers, attr_state, preview)
   local rv = {}
   for igrid,grid in pairs(self._grids) do
     if headers then
-      table.insert(rv, "## grid "..igrid)
+      local suffix = ""
+      if igrid > 1 and self.win_position[igrid] == nil and self.float_pos[igrid] == nil then
+        suffix = " (hidden)"
+      end
+      table.insert(rv, "## grid "..igrid..suffix)
     end
     for i = 1, grid.height do
       local cursor = self._cursor.grid == igrid and self._cursor.row == i
