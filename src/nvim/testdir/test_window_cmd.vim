@@ -144,6 +144,21 @@ func Test_window_preview()
   call assert_fails('wincmd P', 'E441:')
 endfunc
 
+func Test_window_preview_from_help()
+  filetype on
+  call writefile(['/* some C code */'], 'Xpreview.c')
+  help
+  pedit Xpreview.c
+  wincmd P
+  call assert_equal(1, &previewwindow)
+  call assert_equal('c', &filetype)
+  wincmd z
+
+  filetype off
+  close
+  call delete('Xpreview.c')
+endfunc
+
 func Test_window_exchange()
   e Xa
 
@@ -519,6 +534,7 @@ func Test_winrestcmd()
 endfunc
 
 function! Fun_RenewFile()
+  " Need to wait a bit for the timestamp to be older.
   sleep 2
   silent execute '!echo "1" > tmp.txt'
   sp
@@ -536,7 +552,6 @@ func Test_window_prevwin()
   call writefile(['2'], 'tmp.txt')
   new tmp.txt
   q
-  " Need to wait a bit for the timestamp to be older.
   call Fun_RenewFile()
   call assert_equal(2, winnr())
   wincmd p
