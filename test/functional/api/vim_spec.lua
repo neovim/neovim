@@ -768,6 +768,25 @@ describe('API', function()
                  [=[call nvim_load_context({'funcs': [['1', '2']]})]=])
       expect_err(expected_err, command,
                  [=[call nvim_load_context({'funcs': [1]})]=])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'funcs': [{'definition': ''}]})]=])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'funcs': [{'definition': 0}]})]=])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'funcs': [{'sid': 0}]})]=])
+      expect_err(expected_err, command,
+                 [=[call nvim_load_context({'funcs': [{'sid': ''}]})]=])
+      local cmd = ([=[
+      call nvim_load_context({'funcs': [{
+        'sid': 0,
+        'definition': "
+          function! s:script_func() \n
+            return '' \n
+          endfunction \n
+        "
+      }]})
+      ]=]):gsub('\n', '')
+      expect_err('Using <SID> not in a script context', command, cmd)
     end)
   end)
 

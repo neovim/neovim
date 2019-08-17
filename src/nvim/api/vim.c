@@ -1320,7 +1320,8 @@ Object nvim_load_context(Dictionary dict, Error *err)
   Context ctx = CONTEXT_INIT;
   ctx_from_dict(dict, &ctx);
 
-  Error _err = ctx_restore(&ctx, kCtxAll);
+  Error _err = ERROR_INIT;
+  ctx_restore(&ctx, kCtxAll, &_err);
   if (ERROR_SET(&_err)) {
     api_set_error(err, kErrorTypeException,
                   "malformed context dictionary: %s", _err.msg);
@@ -2392,12 +2393,12 @@ Array nvim_grep(String pattern, String path, Boolean global, Error *err)
 /// an asynchronous RPC notification.
 ///
 /// @param[in]   channel_id  Parent channel ID.
-/// @param[in]   scid        current_SID value where callee was defined.
 /// @param[in]   callee      Function to call.
+/// @param[in]   sid         current_SID value to call function with.
 /// @param[in]   context     Context Dictionary to load before the call.
 /// @param[in]   args        Function arguments.
 /// @param[out]  err         Error details, if any.
-void nvim__async_invoke(uint64_t channel_id, Integer scid, String callee,
+void nvim__async_invoke(uint64_t channel_id, String callee, Integer sid,
                         Dictionary context, Array args, Error *err)
 {
   // Only allow parent (embedding process)
@@ -2407,16 +2408,14 @@ void nvim__async_invoke(uint64_t channel_id, Integer scid, String callee,
     return;
   }
 
-  current_SID = (int)scid;
-  if (current_SID > 0) {
-    script_items_grow();
-    new_script_vars(current_SID);
-  }
-
   nvim_load_context(context, err);
   Array result = ARRAY_DICT_INIT;
-  ADD(result, INTEGER_OBJ(scid));
+
+  scid_T save_current_SID = current_SID;
+  current_SID = (int)sid;
   ADD(result, _call_function(callee, args, NULL, err));
+  current_SID = save_current_SID;
+
   if (ERROR_SET(err)) {
     api_free_array(result);
   } else {
@@ -2427,11 +2426,9 @@ void nvim__async_invoke(uint64_t channel_id, Integer scid, String callee,
 /// Sent to the parent channel in an async call to notify it of the result.
 ///
 /// @param[in]   channel_id  Child channel ID.
-/// @param[in]   scid        current_SID value where callee was defined.
 /// @param[in]   result      Asynchronous call return value.
 /// @param[out]  err         Error details, if any.
-void nvim__async_done_event(uint64_t channel_id, Integer scid,
-                            Object result, Error *err)
+void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
 {
   Channel *channel = find_channel(channel_id);
   // Only allow async call jobs
@@ -2451,9 +2448,9 @@ void nvim__async_done_event(uint64_t channel_id, Integer scid,
     result = ARRAY_OBJ(async_call->results);
     if (async_call->next < work_queue.size) {
       Array rpc_args = ARRAY_DICT_INIT;
-      ADD(rpc_args, INTEGER_OBJ(scid));
       ADD(rpc_args,
           STRING_OBJ(cstr_to_string((char *)channel->async_call->callee)));
+      ADD(rpc_args, INTEGER_OBJ(channel->async_call->sid));
       ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
       ADD(rpc_args, copy_object(work_queue.items[async_call->next++]));
       rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);

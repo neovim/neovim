@@ -7636,73 +7636,61 @@ static inline bool get_asynccall_opts(
   return true;
 }
 
-/// Add user function definition to given context dictionary.
+/// Add user function entry to given context dictionary.
 ///
-/// For lambda functions, the name of the added function (and accordingly
-/// "*name") is changed because lambda functions cannot be defined with
-/// ":func" or directly called, hence lambda functions will be prefixed with
-/// "<SNR>_lambda_" instead of "<lambda>".
+/// @see ctx_pack_func().
 ///
-/// param[in/out]  ctx   Context dictionary.
-/// param[in/out]  name  Function name.
-static inline bool ctx_dict_add_userfunc(Dictionary *ctx, char **name)
+/// @param[in/out]  ctx   Context dictionary to add function entry to.
+/// @param[in/out]  name  Function name.
+/// @param[out]     err   Error details, if any.
+static void ctx_dict_add_userfunc(Dictionary *ctx, char **name, Error *err)
+  FUNC_ATTR_NONNULL_ALL
 {
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, DICTIONARY_OBJ(*ctx));
-  ADD(args, STRING_OBJ(cstr_as_string(*name)));
-  Error err = ERROR_INIT;
-  Array rv = EXEC_LUA_STATIC(
-      "return vim._add_userfunc(...)", args, &err).data.array;
-  xfree(args.items);
-  bool success = true;
-  if (ERROR_SET(&err)) {
-    api_free_array(rv);
-    success = false;
-    EMSG(err.msg);
-  } else {
-    api_free_dictionary(*ctx);
-    *ctx = rv.items[0].data.dictionary;
-    *name = rv.items[1].data.string.data;
-    xfree(rv.items);
-  }
-  api_clear_error(&err);
-  return success;
-}
+  char_u fname_buf[FLEN_FIXED + 1];
+  char_u *tofree = NULL;
+  int error;
 
-/// Return ID of script where function was defined.
-///
-/// @param[in]  name  Function name.
-///
-/// @return ID of script where function was defined or current_SID.
-static inline scid_T find_func_scid(const char_u *name)
-{
-  scid_T scid = current_SID;
-  ufunc_T *fp = find_func(name);
+  char_u *fname = fname_trans_sid((char_u *)(*name), fname_buf, &tofree,
+                                  &error);
+  ufunc_T *fp = find_func(fname);
+  xfree(tofree);
 
   if (fp == NULL) {
-    try_start();
-
-    // Translate function name
-    int flag = TFN_INT | TFN_QUIET | TFN_NO_AUTOLOAD;
-    char *const _name = (char *)trans_function_name(
-        (char_u **)&name, false, flag, NULL, NULL);
-
-    Error err = ERROR_INIT;
-    if (try_end(&err)) {
-      api_clear_error(&err);
-    }
-
-    if (_name) {
-      fp = find_func((char_u *)_name);
-      xfree(_name);
-    }
+    api_set_error(err, kErrorTypeValidation, "E123: Undefined function: %s",
+                  *name);
+    return;
   }
 
-  if (fp) {
-    scid = fp->uf_script_ID;
+  Dictionary func = ctx_pack_func(fp, err);
+  if (ERROR_SET(err)) {
+    return;
   }
 
-  return scid;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, DICTIONARY_OBJ(*ctx));
+  ADD(args, DICTIONARY_OBJ(func));
+  Object ctx_new = EXEC_LUA_STATIC("return vim._ctx_add_func(...)", args, err);
+  api_free_dictionary(func);
+  xfree(args.items);
+  if (ERROR_SET(err)) {
+    api_free_object(ctx_new);
+    return;
+  }
+
+  args = (Array)ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_as_string(*name)));
+  Object name_new = EXEC_LUA_STATIC(
+      "return vim._ctx_get_func_name(...)", args, err);
+  xfree(args.items);
+  if (ERROR_SET(err)) {
+    api_free_object(name_new);
+    return;
+  }
+
+  api_free_dictionary(*ctx);
+  *ctx = ctx_new.data.dictionary;
+
+  *name = name_new.data.string.data;
 }
 
 /// "call_async(callee, args[, opts])" function
@@ -7731,8 +7719,6 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  Integer scid = (Integer)find_func_scid(callee);
-
   args = &argvars[1];
   if (args->v_type != VAR_LIST) {
     EMSG2(_(e_invarg2),
@@ -7754,11 +7740,14 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool free_callee = false;
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
-    if (ctx_dict_add_userfunc(&context, (char **)&callee)) {
-      free_callee = true;
-    } else {
-      EMSG(_("Failed to prepare function for async call"));
+    Error err = ERROR_INIT;
+    ctx_dict_add_userfunc(&context, (char **)&callee, &err);
+    if (ERROR_SET(&err)) {
+      EMSG2("Failed to prepare function for async call: %s", err.msg);
+      api_clear_error(&err);
       goto fail;
+    } else {
+      free_callee = true;
     }
   }
 
@@ -7773,8 +7762,8 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   chan->async_call->callback = callback;
 
   Array call_async_args = ARRAY_DICT_INIT;
-  ADD(call_async_args, INTEGER_OBJ(scid));
   ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
+  ADD(call_async_args, INTEGER_OBJ(current_SID));
   ADD(call_async_args, DICTIONARY_OBJ(context));
   ADD(call_async_args, vim_to_object(args));
 
@@ -7824,8 +7813,6 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  Integer scid = (Integer)find_func_scid(callee);
-
   arglists = &argvars[1];
   if (arglists->v_type != VAR_LIST) {
     EMSG2(_(e_invarg2),
@@ -7872,8 +7859,11 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
-    if (!ctx_dict_add_userfunc(&context, (char **)&callee)) {
-      EMSG(_("Failed to prepare function for async call"));
+    Error err = ERROR_INIT;
+    ctx_dict_add_userfunc(&context, (char **)&callee, &err);
+    if (ERROR_SET(&err)) {
+      EMSG2("Failed to prepare function for async call: %s", err.msg);
+      api_clear_error(&err);
       goto fail;
     }
   } else {
@@ -7888,6 +7878,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   async_call->count = count;
   async_call->work_queue = vim_to_object(arglists).data.array;
   async_call->callee = callee;
+  async_call->sid = current_SID;
 
   for (size_t i = 0; i < async_call->count; i++) {
     Channel *chan = asynccall_channel_acquire();
@@ -7898,13 +7889,13 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     tv_list_append_number(rettv->vval.v_list, chan->id);
     chan->async_call = async_call;
     async_call->refcount += 1;
-    Array call_async_args = ARRAY_DICT_INIT;
-    ADD(call_async_args, INTEGER_OBJ(scid));
-    ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
-    ADD(call_async_args, DICTIONARY_OBJ(copy_dictionary(context)));
-    ADD(call_async_args,
+    Array call_parallel_args = ARRAY_DICT_INIT;
+    ADD(call_parallel_args, STRING_OBJ(cstr_to_string((char *)callee)));
+    ADD(call_parallel_args, INTEGER_OBJ(current_SID));
+    ADD(call_parallel_args, DICTIONARY_OBJ(copy_dictionary(context)));
+    ADD(call_parallel_args,
         copy_object(async_call->work_queue.items[async_call->next++]));
-    if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
+    if (!rpc_send_event(chan->id, "nvim__async_invoke", call_parallel_args)) {
       EMSG(_("Failed to send RPC request to async call job"));
       goto fail;
     }
@@ -8384,7 +8375,8 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  Error err = ctx_restore(NULL, kCtxAll);
+  Error err = ERROR_INIT;
+  ctx_restore(NULL, kCtxAll, &err);
   if (ERROR_SET(&err)) {
     EMSG2("Context: %s", err.msg);
     api_clear_error(&err);
@@ -21356,7 +21348,7 @@ void ex_function(exarg_T *eap)
             continue;
           }
           if (!func_name_refcount(fp->uf_name)) {
-            list_func_head(fp, false, false);
+            list_func_head(fp, false);
           }
         }
       }
@@ -21387,7 +21379,7 @@ void ex_function(exarg_T *eap)
             fp = HI2UF(hi);
             if (!isdigit(*fp->uf_name)
                 && vim_regexec(&regmatch, fp->uf_name, 0))
-              list_func_head(fp, false, false);
+              list_func_head(fp, false);
           }
         }
         vim_regfree(regmatch.regprog);
@@ -21454,20 +21446,18 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !got_int) {
       fp = find_func(name);
       if (fp != NULL) {
-        list_func_head(fp, !eap->forceit, eap->forceit);
+        list_func_head(fp, true);
         for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
           if (FUNCLINE(fp, j) == NULL) {
             continue;
           }
           msg_putchar('\n');
-          if (!eap->forceit) {
-            msg_outnum((long)j + 1);
-            if (j < 9) {
-              msg_putchar(' ');
-            }
-            if (j < 99) {
-              msg_putchar(' ');
-            }
+          msg_outnum((long)j + 1);
+          if (j < 9) {
+            msg_putchar(' ');
+          }
+          if (j < 99) {
+            msg_putchar(' ');
           }
           msg_prt_line(FUNCLINE(fp, j), false);
           ui_flush();                  // show a line at a time
@@ -21475,7 +21465,7 @@ void ex_function(exarg_T *eap)
         }
         if (!got_int) {
           msg_putchar('\n');
-          msg_puts(eap->forceit ? "endfunction" : "   endfunction");
+          msg_puts("   endfunction");
         }
       } else
         emsg_funcname(N_("E123: Undefined function: %s"), name);
@@ -22169,13 +22159,12 @@ static inline bool eval_fname_sid(const char *const name)
 ///
 /// @param[in]  fp      Function pointer.
 /// @param[in]  indent  Indent line.
-/// @param[in]  force   Include bang "!" (i.e.: "function!").
-static void list_func_head(ufunc_T *fp, int indent, bool force)
+static void list_func_head(ufunc_T *fp, int indent)
 {
   msg_start();
   if (indent)
     MSG_PUTS("   ");
-  MSG_PUTS(force ? "function! " : "function ");
+  MSG_PUTS("function ");
   if (fp->uf_name[0] == K_SPECIAL) {
     MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
