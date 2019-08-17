@@ -102,32 +102,23 @@ static void tinput_done_event(void **argv)
   input_done();
 }
 
+// TODO: send [''] to indicate EOF.
 static Array string_to_array(const String input)
 {
-  Array ret = { .size = 0, .items = NULL };
-  for (size_t i = 0; i < input.size; i++) {
-    const char *const start = input.data + i;
-    const char *const end = xmemscan(start, NL, input.size - i);
-    i += (size_t) (end - start);
-    ret.size++;
-  }
-  ret.items = xmalloc(ret.size * sizeof(*ret.items));
-  size_t array_idx = 0;
+  Array ret = ARRAY_DICT_INIT;
   for (size_t i = 0; i < input.size; i++) {
     const char *const start = input.data + i;
     const size_t line_len
-        = (size_t) ((char *) xmemscan(start, NL, input.size - i)
-                                      - start);
+      = (size_t)((char *)xmemscan(start, NL, input.size - i) - start);
     i += line_len;
 
-    String item = {
+    String s = {
       .size = line_len,
       .data = xmemdupz(start, line_len),
     };
-    memchrsub(item.data, NUL, NL, line_len);
-    ret.items[array_idx++] = STRING_OBJ(item);
+    memchrsub(s.data, NUL, NL, line_len);
+    ADD(ret, STRING_OBJ(s));
   }
-  ret.capacity = ret.size;
 
   return ret;
 }
@@ -152,6 +143,12 @@ static void tinput_wait_enqueue(void **argv)
       api_free_object(keys_array);
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
+      if (ERROR_SET(&err)) {
+        msg_putchar('\n');
+        // TODO(justinmk): emsgf() does not display, why?
+        msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, "paste: %s", err.msg);
+        api_clear_error(&err);
+      }
     } else {
       const size_t consumed = input_enqueue(keys);
       if (consumed) {
@@ -341,7 +338,7 @@ static void tk_getkeys(TermInput *input, bool force)
     }
   }
 
-  if (result != TERMKEY_RES_AGAIN || input->paste_enabled) {
+  if (result != TERMKEY_RES_AGAIN) {
     return;
   }
   // else: Partial keypress event was found in the buffer, but it does not
@@ -412,6 +409,7 @@ static bool handle_bracketed_paste(TermInput *input)
   return false;
 }
 
+// ESC NUL => <Esc>
 static bool handle_forced_escape(TermInput *input)
 {
   if (rbuffer_size(input->read_stream.buffer) > 1
@@ -549,14 +547,28 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
         break;
       }
     }
+    // Push bytes directly (paste).
+    if (input->paste_enabled) {
+      RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
+        size_t consumed = MIN(count, len);
+        assert(consumed <= input->read_stream.buffer->size);
+        tinput_enqueue(input, ptr, consumed);
+        rbuffer_consumed(input->read_stream.buffer, consumed);
+        if (!(count -= consumed)) {
+          break;
+        }
+      }
+      continue;
+    }
+    // Push through libtermkey (translates to "<keycode>" strings, etc.).
     RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
       size_t consumed = termkey_push_bytes(input->tk, ptr, MIN(count, len));
       // termkey_push_bytes can return (size_t)-1, so it is possible that
       // `consumed > input->read_stream.buffer->size`, but since tk_getkeys is
-      // called soon, it shouldn't happen
+      // called soon, it shouldn't happen.
       assert(consumed <= input->read_stream.buffer->size);
       rbuffer_consumed(input->read_stream.buffer, consumed);
-      // Need to process the keys now since there's no guarantee "count" will
+      // Process the keys now: there is no guarantee `count` will
       // fit into libtermkey's input buffer.
       tk_getkeys(input, false);
       if (!(count -= consumed)) {
