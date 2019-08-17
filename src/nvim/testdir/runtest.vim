@@ -280,6 +280,7 @@ endif
 let s:flaky_tests = [
       \ 'Test_cursorhold_insert()',
       \ 'Test_exit_callback_interval()',
+      \ 'Test_map_timeout_with_timer_interrupt()',
       \ 'Test_oneshot()',
       \ 'Test_out_cb()',
       \ 'Test_paused()',

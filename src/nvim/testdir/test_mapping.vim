@@ -229,6 +229,12 @@ func Test_map_meta_quotes()
   iunmap <M-">
 endfunc
 
+func Test_map_meta_multibyte()
+  imap <M-á> foo
+  call assert_match('i  <M-á>\s*foo', execute('imap'))
+  iunmap <M-á>
+endfunc
+
 func Test_abbr_after_line_join()
   new
   abbr foo bar
@@ -282,7 +288,7 @@ func Test_map_timeout_with_timer_interrupt()
   let g:val = 0
   nnoremap \12 :let g:val = 1<CR>
   nnoremap \123 :let g:val = 2<CR>
-  set timeout timeoutlen=1000
+  set timeout timeoutlen=200
 
   func ExitCb(job, status)
     let g:timer = timer_start(1, {_ -> feedkeys("3\<Esc>", 't')})
