@@ -76,7 +76,7 @@ describe('ext_multigrid', function()
 
   it('positions windows correctly', function()
     command('vsplit')
-    screen:expect([[
+    screen:expect{grid=[[
     ## grid 1
       [3:--------------------------]{12:│}[2:--------------------------]|
       [3:--------------------------]{12:│}[2:--------------------------]|
@@ -118,15 +118,15 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({
-        [2] = { win = 1000, startrow = 0, startcol = 27, width = 26, height = 12 },
-        [3] = { win = 1001, startrow = 0, startcol =  0, width = 26, height = 12 }
+        [2] = { win = {id=1000}, startrow = 0, startcol = 27, width = 26, height = 12 },
+        [3] = { win = {id=1001}, startrow = 0, startcol =  0, width = 26, height = 12 }
       }, screen.win_position)
-    end)
+    end}
     command('wincmd l')
     command('split')
-    screen:expect([[
+    screen:expect{grid=[[
     ## grid 1
       [3:--------------------------]{12:│}[4:--------------------------]|
       [3:--------------------------]{12:│}[4:--------------------------]|
@@ -168,16 +168,16 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({
-        [2] = { win = 1000, startrow = 7, startcol = 27, width = 26, height =  5 },
-        [3] = { win = 1001, startrow = 0, startcol =  0, width = 26, height = 12 },
-        [4] = { win = 1002, startrow = 0, startcol = 27, width = 26, height =  6 }
+        [2] = { win = {id=1000}, startrow = 7, startcol = 27, width = 26, height =  5 },
+        [3] = { win = {id=1001}, startrow = 0, startcol =  0, width = 26, height = 12 },
+        [4] = { win = {id=1002}, startrow = 0, startcol = 27, width = 26, height =  6 }
       }, screen.win_position)
-    end)
+    end}
     command('wincmd h')
     command('q')
-    screen:expect([[
+    screen:expect{grid=[[
     ## grid 1
       [4:-----------------------------------------------------]|
       [4:-----------------------------------------------------]|
@@ -206,12 +206,12 @@ describe('ext_multigrid', function()
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ]], nil, nil, function()
+    ]], condition=function()
       eq({
-        [2] = { win = 1000, startrow = 7, startcol = 0, width = 53, height =  5 },
-        [4] = { win = 1002, startrow = 0, startcol = 0, width = 53, height =  6 }
+        [2] = { win = {id=1000}, startrow = 7, startcol = 0, width = 53, height =  5 },
+        [4] = { win = {id=1002}, startrow = 0, startcol = 0, width = 53, height =  6 }
       }, screen.win_position)
-    end)
+    end}
   end)
 
   describe('split', function ()
@@ -1206,7 +1206,7 @@ describe('ext_multigrid', function()
     ]])
   end)
 
-  it('handles switich tabs', function()
+  it('handles switch tabs', function()
     command('vsp')
     screen:expect([[
     ## grid 1
@@ -1271,7 +1271,7 @@ describe('ext_multigrid', function()
       [4:-----------------------------------------------------]|
       {11:[No Name]                                            }|
                                                            |
-    ## grid 2
+    ## grid 2 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1284,7 +1284,7 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 3
+    ## grid 3 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1328,7 +1328,7 @@ describe('ext_multigrid', function()
       [4:-----------------------------------------------------]|
       {12:[No Name]                                            }|
                                                            |
-    ## grid 2
+    ## grid 2 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1341,7 +1341,7 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 3
+    ## grid 3 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1409,13 +1409,13 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 4
+    ## grid 4 (hidden)
                                                            |
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
       {1:~                                                    }|
-    ## grid 5
+    ## grid 5 (hidden)
                                                            |
       {1:~                                                    }|
       {1:~                                                    }|
@@ -1440,7 +1440,7 @@ describe('ext_multigrid', function()
       [4:-----------------------------------------------------]|
       {12:[No Name]                                            }|
                                                            |
-    ## grid 2
+    ## grid 2 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|
@@ -1452,7 +1452,7 @@ describe('ext_multigrid', function()
       {1:~                         }|
       {1:~                         }|
       {1:~                         }|
-    ## grid 3
+    ## grid 3 (hidden)
                                 |
       {1:~                         }|
       {1:~                         }|

@@ -100,7 +100,7 @@ void raw_line(Integer grid, Integer row, Integer startcol,
 void event(char *name, Array args, bool *args_consumed)
   FUNC_API_NOEXPORT;
 
-void win_pos(Integer grid, Integer win, Integer startrow,
+void win_pos(Integer grid, Window win, Integer startrow,
              Integer startcol, Integer width, Integer height)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_float_pos(Integer grid, Window win, String anchor, Integer anchor_grid,

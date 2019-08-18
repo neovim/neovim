@@ -233,6 +233,7 @@ int hl_get_underline(void)
           .rgb_fg_color = -1,
           .rgb_bg_color = -1,
           .rgb_sp_color = -1,
+          .hl_blend = -1,
       },
       .kind = kHlUI,
       .id1 = 0,
@@ -427,6 +428,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
   cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
                                   fattrs.rgb_bg_color);
 
+  cattrs.hl_blend = -1;  // blend property was consumed
+
   HlKind kind = *through ? kHlBlendThrough : kHlBlend;
   id = get_attr_entry((HlEntry){ .attr = cattrs, .kind = kind,
                                  .id1 = back_attr, .id2 = front_attr });
@@ -612,6 +615,10 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
     if (cterm_normal_bg_color != ae.cterm_bg_color) {
       PUT(hl, "background", INTEGER_OBJ(ae.cterm_bg_color - 1));
     }
+  }
+
+  if (ae.hl_blend > -1) {
+      PUT(hl, "blend", INTEGER_OBJ(ae.hl_blend));
   }
 
   return hl;

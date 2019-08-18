@@ -316,9 +316,10 @@ local ext_keys = {
 -- cmdline_block:  Expected ext_cmdline block (for function definitions)
 -- wildmenu_items: Expected items for ext_wildmenu
 -- wildmenu_pos:   Expected position for ext_wildmenu
-function Screen:expect(expected, attr_ids, attr_ignore)
+function Screen:expect(expected, attr_ids, attr_ignore, ...)
   local grid, condition = nil, nil
   local expected_rows = {}
+  assert(next({...}) == nil, "invalid args to expect()")
   if type(expected) == "table" then
     assert(not (attr_ids ~= nil or attr_ignore ~= nil))
     local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
@@ -1211,7 +1212,11 @@ function Screen:render(headers, attr_state, preview)
   local rv = {}
   for igrid,grid in pairs(self._grids) do
     if headers then
-      table.insert(rv, "## grid "..igrid)
+      local suffix = ""
+      if igrid > 1 and self.win_position[igrid] == nil and self.float_pos[igrid] == nil then
+        suffix = " (hidden)"
+      end
+      table.insert(rv, "## grid "..igrid..suffix)
     end
     for i = 1, grid.height do
       local cursor = self._cursor.grid == igrid and self._cursor.row == i
@@ -1491,7 +1496,7 @@ function Screen:_equal_attrs(a, b)
        a.underline == b.underline and a.undercurl == b.undercurl and
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and a.background == b.background and
-       a.special == b.special
+       a.special == b.special and a.blend == b.blend
 end
 
 function Screen:_equal_info(a, b)

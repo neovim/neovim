@@ -4144,14 +4144,14 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnew                                 |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
-          ## grid 3
+          ## grid 3 (hidden)
             {1:y                   }|
             {2:~                   }|
           ## grid 4
@@ -4193,7 +4193,7 @@ describe('floating windows', function()
           ## grid 3
             {1:y                   }|
             {2:~                   }|
-          ## grid 4
+          ## grid 4 (hidden)
                                                     |
             {0:~                                       }|
             {0:~                                       }|
@@ -4223,13 +4223,13 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnext                                |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
             {0:~                                       }|
-          ## grid 3
+          ## grid 3 (hidden)
             {1:y                   }|
             {2:~                   }|
           ## grid 4
@@ -4267,7 +4267,7 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnew                                 |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
@@ -4313,7 +4313,7 @@ describe('floating windows', function()
             {0:~                                                                }|
             {0:~                                                                }|
             {0:~                                                                }|
-          ## grid 4
+          ## grid 4 (hidden)
                                                     |
             {0:~                                       }|
             {0:~                                       }|
@@ -4333,7 +4333,7 @@ describe('floating windows', function()
             [4:----------------------------------------]|
             [4:----------------------------------------]|
             :tabnext                                |
-          ## grid 2
+          ## grid 2 (hidden)
             x                                       |
             {0:~                                       }|
             {0:~                                       }|
@@ -4365,7 +4365,11 @@ describe('floating windows', function()
         [5] = {foreground = tonumber('0x990000'), background = tonumber('0xfff1ff')},
         [6] = {foreground = tonumber('0x332533'), background = tonumber('0xfff1ff')},
         [7] = {background = tonumber('0xffcfff'), bold = true, foreground = tonumber('0x0000d8')},
-        [8] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1}
+        [8] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1},
+        [9] = {background = Screen.colors.LightMagenta, blend=30},
+        [10] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend=0},
+        [11] = {foreground = Screen.colors.Red, background = Screen.colors.LightMagenta, blend=80},
+        [12] = {background = Screen.colors.LightMagenta, bold = true, foreground = Screen.colors.Blue1, blend=30},
       })
       insert([[
         Lorem ipsum dolor sit amet, consectetur
@@ -4445,9 +4449,9 @@ describe('floating windows', function()
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
         ## grid 4
-          {1:test           }|
-          {1:               }|
-          {1:popup    text  }|
+          {9:test           }|
+          {9:               }|
+          {9:popup    text  }|
         ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}, unchanged=true}
       else
         screen:expect([[
@@ -4487,9 +4491,9 @@ describe('floating windows', function()
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
         ## grid 4
-          {1:test           }|
-          {1:               }|
-          {4:popup    text}{1:  }|
+          {9:test           }|
+          {9:               }|
+          {10:popup    text}{9:  }|
         ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}}
       else
         screen:expect([[
@@ -4497,7 +4501,7 @@ describe('floating windows', function()
           exercitation ullamco laboris nisi ut aliquip ex   |
           ea co{2:test}{3:o consequat}. Duis aute irure dolor in    |
           repre{3:henderit in vol}uptate velit esse cillum      |
-          dolor{4:popup    text}{3:ul}la pariatur. Excepteur sint   |
+          dolor{10:popup    text}{3:ul}la pariatur. Excepteur sint   |
           occaecat cupidatat non proident, sunt in culpa    |
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
@@ -4528,9 +4532,9 @@ describe('floating windows', function()
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
         ## grid 4
-          {1:test           }|
-          {1:               }|
-          {4:popup    text}{1:  }|
+          {9:test           }|
+          {9:               }|
+          {11:popup    text}{9:  }|
         ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}, unchanged=true}
       else
         screen:expect([[
@@ -4570,9 +4574,9 @@ describe('floating windows', function()
           qui officia deserunt mollit anim id est           |
           laborum^.                                          |
         ## grid 4
-          {4:popup    text}{1:  }|
-          {8:~              }|
-          {8:~              }|
+          {11:popup    text}{9:  }|
+          {12:~              }|
+          {12:~              }|
         ]], float_pos={[4] = {{id = 1002}, "NW", 1, 2, 5, true}}}
       else
         meths.input_mouse('wheel', 'down', '', 0, 4, 7)
@@ -4672,7 +4676,7 @@ describe('floating windows', function()
         [2] = {foreground = Screen.colors.Grey0, background = tonumber('0xffcfff')},
         [3] = {bold = true, foreground = Screen.colors.Blue1},
         [4] = {background = tonumber('0xffcfff'), bold = true, foreground = tonumber('0xb282ff')},
-        [5] = {background = Screen.colors.LightMagenta},
+        [5] = {background = Screen.colors.LightMagenta, blend=30},
       })
       if multigrid then
         screen:expect{grid=[[
