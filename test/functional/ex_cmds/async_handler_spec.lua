@@ -44,8 +44,10 @@ describe('async handlers', function()
       nvim('set_var', 'done', {})
 
       source([[
+      let s:counter = 1
       function s:do_interesting_stuff()
-        call add(g:done, len(g:done)+1)
+        call add(g:done, s:counter)
+        let s:counter += 1
       endfunction
 
       function DoInterestingStuff()

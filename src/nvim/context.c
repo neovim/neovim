@@ -17,8 +17,8 @@
 # include "context.c.generated.h"
 #endif
 
-int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxGVars | kCtxSFuncs
-               | kCtxFuncs);
+int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxGVars | kCtxSVars
+               | kCtxSFuncs | kCtxFuncs);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
@@ -62,8 +62,8 @@ void ctx_free(Context *ctx)
   if (ctx->buflist.size) {
     msgpack_sbuffer_destroy(&ctx->buflist);
   }
-  if (ctx->gvars.size) {
-    msgpack_sbuffer_destroy(&ctx->gvars);
+  if (ctx->vars.size) {
+    msgpack_sbuffer_destroy(&ctx->vars);
   }
   if (ctx->funcs.items) {
     api_free_array(ctx->funcs);
@@ -76,8 +76,8 @@ void ctx_free(Context *ctx)
 /// If "context" is NULL, pushes context on context stack.
 /// Use "flags" to select particular types of context.
 ///
-/// @param  ctx    Save to this context, or push on context stack if NULL.
-/// @param  flags  Flags, see ContextTypeFlags enum.
+/// @param[in]  ctx    Save to this context, or push on context stack if NULL.
+/// @param[in]  flags  Flags, see ContextTypeFlags enum.
 void ctx_save(Context *ctx, const int flags)
 {
   if (ctx == NULL) {
@@ -97,8 +97,13 @@ void ctx_save(Context *ctx, const int flags)
     ctx_save_buflist(ctx);
   }
 
+  if (flags & kCtxSVars && current_SID > 0
+      && current_SID <= ga_scripts.ga_len) {
+    ctx_save_vars(&SCRIPT_VARS(current_SID), ctx, "s:");
+  }
+
   if (flags & kCtxGVars) {
-    ctx_save_gvars(ctx);
+    ctx_save_vars(&globvarht, ctx, NULL);
   }
 
   if (flags & kCtxFuncs) {
@@ -115,9 +120,8 @@ void ctx_save(Context *ctx, const int flags)
 ///
 /// @param[in]   ctx    Restore from this context.
 ///                     Pop from context stack if NULL.
-/// @param[in]   flags  Flags, see ContextTypeFlags enum.
 /// @param[out]  err    Error details, if any.
-void ctx_restore(Context *ctx, const int flags, Error *err)
+void ctx_restore(Context *ctx, Error *err)
 {
   bool free_ctx = false;
   if (ctx == NULL) {
@@ -135,25 +139,11 @@ void ctx_restore(Context *ctx, const int flags, Error *err)
   get_option_value((char_u *)"shada", NULL, &op_shada, OPT_GLOBAL);
   set_option_value("shada", 0L, "!,'100,%", OPT_GLOBAL);
 
-  if (flags & kCtxRegs) {
-    ctx_restore_regs(ctx);
-  }
-
-  if (flags & kCtxJumps) {
-    ctx_restore_jumps(ctx);
-  }
-
-  if (flags & kCtxBuflist) {
-    ctx_restore_buflist(ctx);
-  }
-
-  if (flags & kCtxGVars) {
-    ctx_restore_gvars(ctx);
-  }
-
-  if (flags & kCtxFuncs) {
-    ctx_restore_funcs(ctx);
-  }
+  ctx_restore_regs(ctx);
+  ctx_restore_jumps(ctx);
+  ctx_restore_buflist(ctx);
+  ctx_restore_vars(ctx);
+  ctx_restore_funcs(ctx);
 
   if (free_ctx) {
     ctx_free(ctx);
@@ -167,7 +157,7 @@ void ctx_restore(Context *ctx, const int flags, Error *err)
 
 /// Saves the global registers to a context.
 ///
-/// @param  ctx    Save to this context.
+/// @param[in]  ctx    Save to this context.
 static inline void ctx_save_regs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -177,7 +167,7 @@ static inline void ctx_save_regs(Context *ctx)
 
 /// Restores the global registers from a context.
 ///
-/// @param  ctx   Restore from this context.
+/// @param[in]  ctx   Restore from this context.
 static inline void ctx_restore_regs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -186,7 +176,7 @@ static inline void ctx_restore_regs(Context *ctx)
 
 /// Saves the jumplist to a context.
 ///
-/// @param  ctx  Save to this context.
+/// @param[in]  ctx  Save to this context.
 static inline void ctx_save_jumps(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -196,7 +186,7 @@ static inline void ctx_save_jumps(Context *ctx)
 
 /// Restores the jumplist from a context.
 ///
-/// @param  ctx  Restore from this context.
+/// @param[in]  ctx  Restore from this context.
 static inline void ctx_restore_jumps(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -205,7 +195,7 @@ static inline void ctx_restore_jumps(Context *ctx)
 
 /// Saves the buffer list to a context.
 ///
-/// @param  ctx  Save to this context.
+/// @param[in]  ctx  Save to this context.
 static inline void ctx_save_buflist(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -215,30 +205,35 @@ static inline void ctx_save_buflist(Context *ctx)
 
 /// Restores the buffer list from a context.
 ///
-/// @param  ctx  Restore from this context.
+/// @param[in]  ctx  Restore from this context.
 static inline void ctx_restore_buflist(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
   shada_read_sbuf(&ctx->buflist, kShaDaWantInfo | kShaDaForceit);
 }
 
-/// Saves global variables to a context.
+/// Saves variables from given hashtable to a context.
 ///
-/// @param  ctx  Save to this context.
-static inline void ctx_save_gvars(Context *ctx)
-  FUNC_ATTR_NONNULL_ALL
+/// @param[in]  ht      Hashtable to read variables from.
+/// @param[in]  ctx     Save to this context.
+/// @param[in]  prefix  String to be prefixed to variable names or NULL.
+static inline void ctx_save_vars(const hashtab_T *ht, Context *ctx,
+                                 const char *prefix)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  msgpack_sbuffer_init(&ctx->gvars);
-  shada_encode_gvars(&ctx->gvars);
+  if (ctx->vars.size == 0) {
+    msgpack_sbuffer_init(&ctx->vars);
+  }
+  shada_encode_vars(ht, &ctx->vars, prefix);
 }
 
-/// Restores global variables from a context.
+/// Restores variables from a context.
 ///
-/// @param  ctx  Restore from this context.
-static inline void ctx_restore_gvars(Context *ctx)
+/// @param[in]  ctx  Restore from this context.
+static inline void ctx_restore_vars(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
-  shada_read_sbuf(&ctx->gvars, kShaDaWantInfo | kShaDaForceit);
+  shada_read_sbuf(&ctx->vars, kShaDaWantInfo | kShaDaForceit);
 }
 
 /// Packs a context function entry.
@@ -270,6 +265,15 @@ Dictionary ctx_pack_func(ufunc_T *fp, Error *err)
 
 end:
   return entry;
+}
+
+void ctx_set_current_SID(scid_T new_current_SID)
+{
+  current_SID = new_current_SID;
+  if (current_SID > 0) {
+    script_items_grow();
+    new_script_vars(current_SID);
+  }
 }
 
 #define CONTEXT_UNPACK_KEY(kv, _key, _type, err) \
@@ -306,11 +310,7 @@ void ctx_unpack_func(Dictionary func, Error *err)
 
   // Set current_SID to function SID
   scid_T save_current_SID = current_SID;
-  current_SID = (int)sid.data.integer;
-  if (current_SID > 0) {
-    script_items_grow();
-    new_script_vars(current_SID);
-  }
+  ctx_set_current_SID((int)sid.data.integer);
 
   // Define function
   nvim_command(definition.data.string, err);
@@ -324,8 +324,8 @@ void ctx_unpack_func(Dictionary func, Error *err)
 
 /// Saves functions to a context.
 ///
-/// @param  ctx         Save to this context.
-/// @param  scriptonly  Save script-local (s:) functions only.
+/// @param[in]  ctx         Save to this context.
+/// @param[in]  scriptonly  Save script-local (s:) functions only.
 static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -351,7 +351,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
 /// Restores functions from a context.
 ///
-/// @param  ctx  Restore from this context.
+/// @param[in]  ctx  Restore from this context.
 static inline void ctx_restore_funcs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -486,11 +486,12 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
   msgpack_sbuffer sbuf;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer *packer = msgpack_packer_new(&sbuf, msgpack_sbuffer_write);
+  const Timestamp cur_timestamp = os_time();
 
   for (size_t i = 0; i < array.size; i++) {
     msgpack_sbuffer sbuf_current = object_to_sbuf(array.items[i]);
     msgpack_pack_uint64(packer, (uint64_t)type);
-    msgpack_pack_uint64(packer, os_time());
+    msgpack_pack_uint64(packer, cur_timestamp);
     msgpack_pack_uint64(packer, sbuf_current.size);
     msgpack_pack_bin_body(packer, sbuf_current.data, sbuf_current.size);
     msgpack_sbuffer_destroy(&sbuf_current);
@@ -635,8 +636,8 @@ Dictionary ctx_to_dict(Context *ctx)
     xfree(buflist.items);
   }
 
-  if (ctx->gvars.size) {
-    PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
+  if (ctx->vars.size) {
+    PUT(rv, "vars", ARRAY_OBJ(sbuf_to_array(ctx->vars)));
   }
 
   if (ctx->funcs.size) {
@@ -675,8 +676,8 @@ void ctx_from_dict(Dictionary dict, Context *ctx)
         }
       };
       ctx->buflist = array_to_sbuf(shada_buflist, kSDItemBufferList);
-    } else if (strequal(item.key.data, "gvars")) {
-      ctx->gvars = array_to_sbuf(item.value.data.array, kSDItemVariable);
+    } else if (strequal(item.key.data, "vars")) {
+      ctx->vars = array_to_sbuf(item.value.data.array, kSDItemVariable);
     } else if (strequal(item.key.data, "funcs")) {
       ctx->funcs = copy_object(item.value).data.array;
     }

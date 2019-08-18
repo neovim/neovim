@@ -98,6 +98,50 @@ describe('context functions', function()
       eq({'', unpack(buflist)}, call('map', call('getbufinfo'), 'v:val.name'))
     end)
 
+    it('saves and restores script-local variables properly', function()
+      source([[
+      function SEval(name)
+        return eval(a:name)
+      endfunction
+
+      function SExec(cmd)
+        return execute(a:cmd)
+      endfunction
+
+      let s:one = 1
+      let s:Two = 2
+      let s:THREE = 3
+      ]])
+
+      eq({1, 2 ,3},
+         eval([[map(['s:one', 's:Two', 's:THREE'], 'SEval(v:val)')]]))
+
+      call('SEval', [[ctxpush()]])
+      call('SEval', [[ctxpush(['svars'])]])
+
+      call('SExec', [[unlet s:one]])
+      call('SExec', [[unlet s:Two]])
+      call('SExec', [[unlet s:THREE]])
+      expect_err('E121: Undefined variable: s:one', eval, 'SEval(s:one)')
+      expect_err('E121: Undefined variable: s:Two', eval, 'SEval(s:Two)')
+      expect_err('E121: Undefined variable: s:THREE', eval, 'SEval(s:THREE)')
+
+      call('SEval', [[ctxpop()]])
+      eq({1, 2 ,3},
+         eval([[map(['s:one', 's:Two', 's:THREE'], 'SEval(v:val)')]]))
+
+      call('SExec', [[unlet s:one]])
+      call('SExec', [[unlet s:Two]])
+      call('SExec', [[unlet s:THREE]])
+      expect_err('E121: Undefined variable: s:one', eval, 'SEval(s:one)')
+      expect_err('E121: Undefined variable: s:Two', eval, 'SEval(s:Two)')
+      expect_err('E121: Undefined variable: s:THREE', eval, 'SEval(s:THREE)')
+
+      call('SEval', [[timer_start(0, { -> ctxpop() })]])
+      eq({1, 2 ,3},
+         eval([[map(['s:one', 's:Two', 's:THREE'], 'SEval(v:val)')]]))
+    end)
+
     it('saves and restores global variables properly', function()
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
@@ -299,14 +343,14 @@ describe('context functions', function()
       }
 
       local with_gvars = {
-        ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}}
+        ['vars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}}
       }
 
       local with_all = {
         ['regs'] = with_regs['regs'],
         ['jumps'] = with_jumps['jumps'],
         ['buflist'] = with_buflist['buflist'],
-        ['gvars'] = with_gvars['gvars'],
+        ['vars'] = with_gvars['vars'],
       }
 
       call('ctxpush')

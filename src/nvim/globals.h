@@ -262,6 +262,9 @@ EXTERN int debug_did_msg INIT(= false);         // did "debug mode" message
 EXTERN int debug_tick INIT(= 0);                // breakpoint change count
 EXTERN int debug_backtrace_level INIT(= 0);     // breakpoint backtrace level
 
+/// g: value
+#define globvarht globvardict.dv_hashtab
+
 // Values for "do_profiling".
 #define PROF_NONE       0       ///< profiling not started
 #define PROF_YES        1       ///< profiling busy
@@ -349,7 +352,7 @@ EXTERN bool did_source_packages INIT(= false);
 // provider function call
 EXTERN struct caller_scope {
   scid_T SID;
-  uint8_t *sourcing_name, *autocmd_fname, *autocmd_match; 
+  uint8_t *sourcing_name, *autocmd_fname, *autocmd_match;
   linenr_T sourcing_lnum;
   int autocmd_bufnr;
   void *funccalp;

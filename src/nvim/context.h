@@ -10,7 +10,7 @@ typedef struct {
   msgpack_sbuffer regs;     ///< Registers.
   msgpack_sbuffer jumps;    ///< Jumplist.
   msgpack_sbuffer buflist;  ///< Buffer list.
-  msgpack_sbuffer gvars;    ///< Global variables.
+  msgpack_sbuffer vars;     ///< Variables.
   Array funcs;              ///< Functions.
 } Context;
 typedef kvec_t(Context) ContextVec;
@@ -25,7 +25,7 @@ typedef kvec_t(Context) ContextVec;
   .regs = MSGPACK_SBUFFER_INIT, \
   .jumps = MSGPACK_SBUFFER_INIT, \
   .buflist = MSGPACK_SBUFFER_INIT, \
-  .gvars = MSGPACK_SBUFFER_INIT, \
+  .vars = MSGPACK_SBUFFER_INIT, \
   .funcs = ARRAY_DICT_INIT, \
 }
 
@@ -33,9 +33,10 @@ typedef enum {
   kCtxRegs = 1,       ///< Registers
   kCtxJumps = 2,      ///< Jumplist
   kCtxBuflist = 4,    ///< Buffer list
-  kCtxGVars = 8,      ///< Global variables
-  kCtxSFuncs = 16,    ///< Script functions
-  kCtxFuncs = 32,     ///< Functions
+  kCtxSVars = 8,      ///< Script-local variables
+  kCtxGVars = 16,     ///< Global variables
+  kCtxSFuncs = 32,    ///< Script functions
+  kCtxFuncs = 64,     ///< All functions
 } ContextTypeFlags;
 
 extern int kCtxAll;
