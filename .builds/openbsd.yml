@@ -33,5 +33,6 @@ tasks:
     ./bin/nvim --version
 - test: |
     export LC_CTYPE=en_US.UTF-8
-    cd neovim/build
-    cmake --build . --config Debug --target oldtest
+    cd neovim
+    # oldtests
+    gmake -C src/nvim/testdir NVIM_PRG=`pwd`/build/bin/nvim
