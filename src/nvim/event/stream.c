@@ -97,6 +97,10 @@ void stream_close(Stream *stream, stream_close_cb on_stream_close, void *data)
   stream->close_cb = on_stream_close;
   stream->close_cb_data = data;
 
+#ifdef WIN32
+  uv_tty_set_mode(&stream->uv.tty, UV_TTY_MODE_NORMAL);
+#endif
+
   if (!stream->pending_reqs) {
     stream_close_handle(stream);
   }
