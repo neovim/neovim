@@ -1,5 +1,7 @@
 " Tests for using Ctrl-A/Ctrl-X using DBCS.
-if !has('multi_byte')
+" neovim needs an iconv to handle cp932. Please do not remove the following
+" conditions.
+if !has('iconv')
   finish
 endif
 scriptencoding cp932

@@ -202,9 +202,13 @@ endfunc
 func GetVimProg()
   if empty($NVIM_TEST_ARG0)
     " Assume the script was sourced instead of running "make".
-    return '../../../build/bin/nvim'
+    return v:progpath
   endif
-  return $NVIM_TEST_ARG0
+  if has('win32')
+    return substitute($NVIM_TEST_ARG0, '/', '\\', 'g')
+  else
+    return $NVIM_TEST_ARG0
+  endif
 endfunc
 
 " Get the command to run Vim, with -u NONE and --headless arguments.

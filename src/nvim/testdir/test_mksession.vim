@@ -206,11 +206,10 @@ func Test_mkview_loadview_with_viewdir()
 
   " The directory Xviewdir/ should have been created and the view
   " should be stored in that directory.
-  let pathsep = has('win32') ? '\' : '/'
-  call assert_equal('Xviewdir' . pathsep .
+  call assert_equal('Xviewdir/' .
         \           substitute(
         \             substitute(
-        \               expand('%:p'), pathsep, '=+', 'g'), ':', '=-', 'g') . '=1.vim',
+        \               expand('%:p'), '/', '=+', 'g'), ':', '=-', 'g') . '=1.vim',
         \           glob('Xviewdir/*'))
   call assert_equal(1, &number)
   call assert_match('\*:mkview\*$', getline('.'))

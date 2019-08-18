@@ -16,13 +16,18 @@ export TMPDIR := $(abspath ../../../Xtest-tmpdir)
 SCRIPTS_DEFAULT = \
 	test42.out             \
 	test48.out             \
-	test52.out             \
 	test64.out             \
 
 ifneq ($(OS),Windows_NT)
   SCRIPTS_DEFAULTS := $(SCRIPTS_DEFAULT) \
 	test49.out             \
 
+endif
+
+ifeq ($(OS),Windows_NT)
+  FIXFF = fixff
+else
+  FIXFF =
 endif
 
 SCRIPTS ?= $(SCRIPTS_DEFAULT)
@@ -74,7 +79,7 @@ ifdef TESTNUM
 	SCRIPTS := test$(TESTNUM).out
 endif
 
-nongui: nolog $(SCRIPTS) newtests report
+nongui: nolog $(FIXFF) $(SCRIPTS) newtests report
 
 .gdbinit:
 	@echo "[OLDTEST-PREP] Setting up .gdbinit"
@@ -94,6 +99,16 @@ report:
 test1.out: $(NVIM_PRG)
 
 $(SCRIPTS): $(NVIM_PRG) test1.out
+
+NO_PLUGINS = --noplugin --headless
+NO_INITS = -U NONE $(NO_PLUGINS)
+
+# TODO: find a way to avoid changing the distributed files.
+fixff:
+	-$(NVIM_PRG) -u unix.vim $(NO_INITS) "+argdo set ff=dos|upd" +q \
+	  *.in *.ok
+	-$(NVIM_PRG) -u unix.vim $(NO_INITS) "+argdo set ff=dos|upd" +q \
+	  dotest.in
 
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok

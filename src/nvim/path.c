@@ -852,8 +852,13 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
     int j = 0;
 
     while ((fname[j] == path_part[i][j]
-            ) && fname[j] != NUL && path_part[i][j] != NUL)
+#ifdef WIN32
+            || (vim_ispathsep(fname[j]) && vim_ispathsep(path_part[i][j]))
+#endif
+            )  // NOLINT(whitespace/parens)
+           && fname[j] != NUL && path_part[i][j] != NUL) {
       j++;
+    }
     if (j > maxlen) {
       maxlen = j;
       cutoff = &fname[j];
