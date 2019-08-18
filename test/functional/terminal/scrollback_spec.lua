@@ -406,7 +406,7 @@ describe("'scrollback' option", function()
     if iswin() then
       feed_data('for /L %I in (1,1,30) do @(echo line%I)\r')
     else
-      feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+      feed_data('awk "BEGIN{for(n=1;n<=30;n++) print \\\"line\\\" n}"\n')
     end
     screen:expect{any='line30                        '}
     retry(nil, nil, function() expect_lines(7) end)
@@ -431,7 +431,7 @@ describe("'scrollback' option", function()
     if iswin() then
       feed_data('for /L %I in (1,1,30) do @(echo line%I)\r')
     else
-      feed_data('for i in $(seq 1 30); do echo "line$i"; done\n')
+      feed_data('awk "BEGIN{for(n=1;n<=30;n++) print \\\"line\\\" n}"\n')
     end
 
     screen:expect{any='line30                        '}
@@ -448,7 +448,7 @@ describe("'scrollback' option", function()
     if iswin() then
       feed_data('for /L %I in (1,1,40) do @(echo line%I)\r')
     else
-      feed_data('for i in $(seq 1 40); do echo "line$i"; done\n')
+      feed_data('awk "BEGIN{for(n=1;n<=40;n++) print \\\"line\\\" n}"\n')
     end
 
     screen:expect{any='line40                        '}

@@ -1203,7 +1203,9 @@ describe("TUI 'term' option", function()
   end)
 
   it('gets system-provided term if $TERM is valid', function()
-    if is_bsd then  -- BSD lacks terminfo, builtin is always used.
+    if string.lower(uname()) == "openbsd" then
+      assert_term("xterm", "xterm")
+    elseif is_bsd then  -- BSD lacks terminfo, builtin is always used.
       assert_term("xterm", "builtin_xterm")
     elseif is_macos then
       local status, _ = pcall(assert_term, "xterm", "xterm")
