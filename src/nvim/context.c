@@ -262,6 +262,9 @@ Dictionary ctx_pack_func(ufunc_T *fp, Error *err)
 
   PUT(entry, "definition", def);
   PUT(entry, "sid", INTEGER_OBJ(fp->uf_script_ctx.sc_sid));
+  if (fp->uf_flags & FC_SANDBOX) {
+    PUT(entry, "sandboxed", BOOLEAN_OBJ(true));
+  }
 
 end:
   return entry;
@@ -298,11 +301,13 @@ void ctx_unpack_func(Dictionary func, Error *err)
 {
   Object definition = OBJECT_INIT;
   Object sid = OBJECT_INIT;
+  Object sandboxed = OBJECT_INIT;
 
   for (size_t i = 0; i < func.size; i++) {
     KeyValuePair *kv = &func.items[i];
     CONTEXT_UNPACK_KEY(kv, definition, kObjectTypeString, err);
     CONTEXT_UNPACK_KEY(kv, sid, kObjectTypeInteger, err);
+    CONTEXT_UNPACK_KEY(kv, sandboxed, kObjectTypeBoolean, err);
   }
 
   CONTEXT_CHECK_KEY(definition, err);
@@ -311,6 +316,12 @@ void ctx_unpack_func(Dictionary func, Error *err)
   // Set current_sctx.sc_sid to function SID
   scid_T save_current_SID = current_sctx.sc_sid;
   ctx_set_current_SID((int)sid.data.integer);
+
+  // Handle sandboxed function
+  if (sandboxed.type == kObjectTypeBoolean && sandboxed.data.boolean
+      && definition.data.string.size > sizeof("function!")) {
+    memcpy(definition.data.string.data, S_LEN("san fu!  "));
+  }
 
   // Define function
   nvim_command(definition.data.string, err);
