@@ -266,6 +266,21 @@ describe('context functions', function()
          redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
     end)
 
+    it('saves/restores sandboxed functions', function()
+      source([[
+      sandbox function SandboxedFunction()
+        edit foo
+      endfunction
+      ]])
+
+      expect_err('Not allowed in sandbox', call, 'SandboxedFunction')
+      call('ctxpush')
+      command([[delfunction SandboxedFunction]])
+      expect_err('Unknown function', call, 'SandboxedFunction')
+      call('ctxpop')
+      expect_err('Not allowed in sandbox', call, 'SandboxedFunction')
+    end)
+
     it('errors out when context stack is empty', function()
       local err = 'Context stack is empty'
       expect_err(err, call, 'ctxpop')

@@ -251,6 +251,15 @@ typedef int scid_T;
 // Structure to hold info for a function that is currently being executed.
 typedef struct funccall_S funccall_T;
 
+// flags used in uf_flags
+#define FC_ABORT    0x01          // abort function on error
+#define FC_RANGE    0x02          // function accepts range
+#define FC_DICT     0x04          // Dict function, uses "self"
+#define FC_CLOSURE  0x08          // closure, uses outer scope variables
+#define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
+#define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
+#define FC_SANDBOX  0x40          // function defined in the sandbox
+
 /// Structure to hold info for a user function.
 struct ufunc {
   int          uf_varargs;       ///< variable nr of arguments
