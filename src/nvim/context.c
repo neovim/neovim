@@ -345,8 +345,8 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
   HASHTAB_ITER(&func_hashtab, hi, {
     ufunc_T *fp = HI2UF(hi);
-    bool islambda = (STRNCMP(fp->uf_name, "<lambda>", 8) == 0);
-    bool isscript = (fp->uf_name[0] == K_SPECIAL);
+    bool islambda = ISLAMBDA(fp->uf_name);
+    bool isscript = (fp->uf_name[0] == K_SPECIAL) && !islambda;
 
     if (!islambda && (!scriptonly || isscript)) {
       Dictionary func = ctx_pack_func(fp, &err);
