@@ -96,17 +96,19 @@ end
 -- Default paste function.
 local function _paste(data)
   -- local eof = (data == {''})
-  local curline = vim.api.nvim_call_function('line', {'.'})
+  local curline = vim.api.nvim_call_function('line', {'.'}) - 1
   vim.api.nvim_buf_set_lines(
       0,
       curline,
       curline,
       false,
       data)
-  vim.api.nvim_call_function('cursor', {curline + #data, 1})
+  vim.api.nvim_call_function(
+      'cursor',
+      {curline + #data, 9999999})
+  -- TODO: do not redraw (slow!) until paste is finished.
   -- if eof then
-  --   vim.api.nvim_command('redraw')
-  -- end
+  vim.api.nvim_command('redraw')
   return 0
 end
 

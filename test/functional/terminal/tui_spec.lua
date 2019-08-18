@@ -146,10 +146,8 @@ describe('TUI', function()
     ]], attrs)
   end)
 
-  it('automatically sends <Paste> for bracketed paste sequences', function()
+  it('bracketed Paste', function()
     -- Pasting can be really slow in the TUI, specially in ASAN.
-    -- This will be fixed later but for now we require a high timeout.
-    screen.timeout = 60000
     feed_data('i\027[200~')
     screen:expect([[
       {1: }                                                 |
@@ -157,27 +155,28 @@ describe('TUI', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
-      {3:-- INSERT (paste) --}                              |
+      {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('pasted from terminal')
     screen:expect([[
       pasted from terminal{1: }                             |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name] [+]                                     }|
-      {3:-- INSERT (paste) --}                              |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027[201~')
-    screen:expect([[
-      pasted from terminal{1: }                             |
-      {4:~                                                 }|
+                                                        |
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    feed_data('\027[201~')  -- End paste.
+    feed_data('\027\000')   -- ESC: go to Normal mode.
+    screen:expect([[
+      pasted from termina{1:l}                              |
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
       {3:-- TERMINAL --}                                    |
     ]])
   end)

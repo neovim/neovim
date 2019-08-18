@@ -16,8 +16,6 @@
 #include "nvim/os/input.h"
 #include "nvim/event/rstream.h"
 
-#define PASTE_KEY "<Paste>"
-#define PASTEPOST_KEY "<PastePost>"
 #define KEY_BUFFER_SIZE 0xfff
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -401,9 +399,7 @@ static bool handle_bracketed_paste(TermInput *input)
       return true;
     }
 
-    if (!enable) {
-      tinput_flush(input, true);
-    }
+    tinput_flush(input, true);
     input->paste_enabled = enable;
     return true;
   }
