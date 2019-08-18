@@ -8,8 +8,8 @@
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
--- Most functions should live directly on `vim.`, not sub-modules. The only
--- "forbidden" names are those claimed by legacy `if_lua`:
+-- Most functions should live directly in `vim.`, not in submodules.
+-- The only "forbidden" names are those claimed by legacy `if_lua`:
 --    $ vim
 --    :lua for k,v in pairs(vim) do print(k) end
 --    buffer
@@ -161,6 +161,16 @@ local function inspect(object, options)  -- luacheck: no unused
   error(object, options)  -- Stub for gen_vimdoc.py
 end
 
+--- Defers the wrapped callback until the Nvim API is safe to call.
+---
+--@see |vim-loop-callbacks|
+local function schedule_wrap(cb)
+  return (function (...)
+    local args = {...}
+    vim.schedule(function() cb(unpack(args)) end)
+  end)
+end
+
 local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
@@ -170,16 +180,6 @@ local function __index(t, key)
     t[key] = require('vim.shared')[key]
     return t[key]
   end
-end
-
---- Defers the wrapped callback until when the nvim API is safe to call.
----
---- See |vim-loop-callbacks|
-local function schedule_wrap(cb)
-  return (function (...)
-    local args = {...}
-    vim.schedule(function() cb(unpack(args)) end)
-  end)
 end
 
 local module = {
