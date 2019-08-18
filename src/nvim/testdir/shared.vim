@@ -202,11 +202,7 @@ endfunc
 func GetVimProg()
   if empty($NVIM_TEST_ARG0)
     " Assume the script was sourced instead of running "make".
-    if has('win32')
-      return '..\\..\\..\\build\\bin\\nvim.exe'
-    else
-      return '../../../build/bin/nvim'
-    endif
+    return v:progpath
   endif
   if has('win32')
     return substitute($NVIM_TEST_ARG0, '/', '\\', 'g')
