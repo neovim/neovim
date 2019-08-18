@@ -93,6 +93,23 @@ local function _os_proc_children(ppid)
   return children
 end
 
+-- Default paste function.
+local function _paste(data)
+  -- local eof = (data == {''})
+  local curline = vim.api.nvim_call_function('line', {'.'})
+  vim.api.nvim_buf_set_lines(
+      0,
+      curline,
+      curline,
+      false,
+      data)
+  vim.api.nvim_call_function('cursor', {curline + #data, 1})
+  -- if eof then
+  --   vim.api.nvim_command('redraw')
+  -- end
+  return 0
+end
+
 -- TODO(ZyX-I): Create compatibility layer.
 --{{{1 package.path updater function
 -- Last inserted paths. Used to clear out items from package.[c]path when they
@@ -186,6 +203,7 @@ local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
   _os_proc_info = _os_proc_info,
+  _paste = _paste,
   _system = _system,
   schedule_wrap = schedule_wrap,
 }

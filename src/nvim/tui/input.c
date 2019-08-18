@@ -132,8 +132,9 @@ static void tinput_wait_enqueue(void **argv)
       Object keys_array = ARRAY_OBJ(string_to_array(keys));
       Array args = { .capacity = 1, .size = 1, .items = &keys_array };
       Error err = ERROR_INIT;
-      Object fret = nvim_call_function(STATIC_CSTR_AS_STRING("PasteCallback"),
-                                       args, &err);
+      Object fret
+        = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
+                           args, &err);
       if ((fret.type == kObjectTypeInteger && fret.data.integer)
           || (fret.type == kObjectTypeBoolean && fret.data.boolean)
           || (fret.type == kObjectTypeString && fret.data.string.size)) {
