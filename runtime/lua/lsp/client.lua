@@ -192,7 +192,8 @@ client.request_async = function(self, method, params, cb, bufnr)
   }
 
   if should_send_message(self, req) then
-    log.debug("Sending Request: [["..req:data().."]]")
+    log.debug("Send request --->: [["..req:data().."]]")
+    log.client.debug("Send request --->: [["..req:data().."]]")
     vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
   else
     log.debug(string.format('Request "%s" was cancelled with params %s', method, util.tostring(params)))
@@ -217,7 +218,8 @@ client.notify = function(self, method, params)
   end
 
   if should_send_message(self, notification) then
-    log.debug("Sending Notification: [["..notification:data().."]]")
+    log.debug("Send notification --->: [["..notification:data().."]]")
+    log.client.debug("Send notification --->: [["..notification:data().."]]")
     vim.api.nvim_call_function('chansend', {self.job_id, notification:data()})
   else
     log.debug(string.format('Notification "%s" was cancelled with params %s', method, util.tostring(params)))
@@ -335,11 +337,10 @@ client.on_stdout = function(self, data)
 end
 
 client.on_message = function(self, json_message)
-  log.trace('on_message: ', json_message)
-
   -- Handle notifications
   if json_message.method and json_message.params then
-    log.debug('notification: ', json_message.method)
+    log.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..util.tostring(json_message.params))
+    log.server.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..util.tostring(json_message.params))
     call_callbacks_for_method(json_message.method, true, json_message.params, nil)
 
     return
@@ -351,9 +352,17 @@ client.on_message = function(self, json_message)
       cb = self._callbacks[json_message.id].cb
     end
 
+    local id = json_message.id
     local method = self._callbacks[json_message.id].method
     local success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
+    if success then
+      log.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..util.tostring(data))
+      log.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..util.tostring(data))
+    else
+      log.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..util.tostring(data))
+      log.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..util.tostring(data))
+    end
 
     local result
     if cb then

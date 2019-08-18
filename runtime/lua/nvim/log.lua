@@ -7,34 +7,28 @@ local log = {}
 log.__index = log
 
 log.levels = Enum:new({
-  bad_level = 0,
-  trace = 1,
-  debug = 2,
-  info  = 3,
-  warn  = 4,
-  error = 5,
-  fatal = 6,
+  debug = 0,
+  info  = 1,
+  warn  = 2,
+  error = 3,
 })
 
-
-log.set_outfile = function(logger, file_name)
-  -- TODO(tjdevries): Check that it's a valid file path
-  logger.outfile = file_name
+log.set_outfile = function(logger, dir_name, file_name)
+  if vim.api.nvim_call_function('isdirectory', {dir_name}) == 0 then
+    vim.api.nvim_call_function('mkdir', {dir_name, 'p'})
+  end
+  logger.outfile = dir_name .. file_name
 end
 
-log.set_console_level = function(logger, level)
-  logger.console_level = log.levels[level]
-end
-
-log.set_file_level = function(logger, level)
-  logger.file_level = log.levels[level]
+log.set_log_level = function(logger, level)
+  logger.log_level = log.levels[level]
 end
 
 log.write_file = function(self, level, message)
   local file_pointer = assert(io.open(self.outfile, 'a+'))
 
   if file_pointer ~= nil then
-    local log_message = level .. " " .. os.date("%Y-%m-%dT%H:%M:%S") .. " " .. message .. "\n"
+    local log_message = level .. "\t" .. os.date("%Y-%m-%d %H:%M:%S") .. "\t" .. message .. "\n"
     file_pointer:write(log_message)
     file_pointer:close()
   end
@@ -45,10 +39,7 @@ log.create_functions = function(new_log, new_logger)
   for name in pairs(log.levels) do
     if log[name] == nil then
       log[name] = function(self, logger, ...)
-        -- If both levels are too high, just quit
-        if self.levels[name] < logger.console_level and
-            self.levels[name] < logger.file_level then
-
+        if self.levels[name] < logger.log_level then
           return
         end
 
@@ -59,18 +50,14 @@ log.create_functions = function(new_log, new_logger)
 
         local info = debug.getinfo(2, "Sl")
         local log_message = string.format(
-          "%s:%-4s %s",
+          "%s:%s\t%s",
           info.short_src,
           info.currentline,
           message
         )
 
-        if self.levels[name] >= logger.file_level then
+        if self.levels[name] >= logger.log_level then
           log.write_file(logger, name, log_message)
-        end
-
-        if self.levels[name] >= logger.console_level then
-          print(log_message .. "\n")
         end
       end
     end

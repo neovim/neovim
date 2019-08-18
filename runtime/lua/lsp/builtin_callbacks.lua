@@ -187,7 +187,7 @@ BuiltinCallbacks['textDocument/rename'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
-    log.trace('textDocument/hover', data, self)
+    log.debug('textDocument/hover', data, self)
 
     -- TODO: Use floating windows when they become available
     local long_string = ''
@@ -238,7 +238,7 @@ BuiltinCallbacks['textDocument/hover'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_definition
 BuiltinCallbacks['textDocument/definition'] = {
   callback = function(self, data)
-    log.trace('callback:textDocument/definiton', data, self)
+    log.debug('callback:textDocument/definiton', data, self)
 
     if data == nil or data == {} then
       log.info('No definition found')

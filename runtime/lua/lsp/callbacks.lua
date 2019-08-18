@@ -57,7 +57,7 @@ CallbackObject.__call = function(self, success, data, filetype)
   end
 
   if not filetype and shared.tbl_isempty(self.common) then
-      log.trace('Request: "', self.method, '" had no registered callbacks')
+      log.debug('Request: "', self.method, '" had no registered callbacks')
     return nil
   end
 
