@@ -96,7 +96,7 @@ end
 -- Default paste function.
 local function _paste(data)
   -- local eof = (data == {''})
-  local curline = vim.api.nvim_call_function('line', {'.'}) - 1
+  local curline = vim.api.nvim_call_function('line', {'.'})
   vim.api.nvim_buf_set_lines(
       0,
       curline,

@@ -146,8 +146,7 @@ describe('TUI', function()
     ]], attrs)
   end)
 
-  it('bracketed Paste', function()
-    -- Pasting can be really slow in the TUI, specially in ASAN.
+  it('paste: Insert mode', function()
     feed_data('i\027[200~')
     screen:expect([[
       {1: }                                                 |
@@ -160,8 +159,8 @@ describe('TUI', function()
     ]])
     feed_data('pasted from terminal')
     screen:expect([[
-      pasted from terminal{1: }                             |
                                                         |
+      pasted from terminal{1: }                             |
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
@@ -171,8 +170,8 @@ describe('TUI', function()
     feed_data('\027[201~')  -- End paste.
     feed_data('\027\000')   -- ESC: go to Normal mode.
     screen:expect([[
-      pasted from termina{1:l}                              |
                                                         |
+      pasted from termina{1:l}                              |
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
@@ -181,14 +180,12 @@ describe('TUI', function()
     ]])
   end)
 
-  it('handles pasting a specific amount of text', function()
-    -- Need extra time for this test, specially in ASAN.
-    screen.timeout = 60000
+  it('pasting a specific amount of text #10311', function()
     feed_data('i\027[200~'..string.rep('z', 64)..'\027[201~')
     screen:expect([[
+                                                        |
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz{1: }                                   |
-      {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
@@ -196,9 +193,7 @@ describe('TUI', function()
     ]])
   end)
 
-  it('can handle arbitrarily long bursts of input', function()
-    -- Need extra time for this test, specially in ASAN.
-    screen.timeout = 60000
+  it('big burst of input (bracketed paste)', function()
     feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
