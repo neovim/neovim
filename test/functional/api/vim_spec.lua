@@ -927,7 +927,7 @@ describe('API', function()
                '!empty(v:val.file)')
         ]]):gsub('\n', '')),
 
-        ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
+        ['vars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
       }
 
       eq(expected_ctx, nvim('get_context', ctx_items))
@@ -935,7 +935,7 @@ describe('API', function()
 
     it('handles large context properly', function()
       command([[let g:huge = range(4096)]])
-      eq(eval('g:huge'), nvim('get_context', {'gvars'}).gvars[1][2])
+      eq(eval('g:huge'), nvim('get_context', {'gvars'}).vars[1][2])
     end)
   end)
 
@@ -964,7 +964,7 @@ describe('API', function()
       matches(err, pcall_err(
         eval, [[nvim_load_context({'regs': [{'name': '0', 'content': 1}]})]]))
       matches(err, pcall_err(
-        eval, [=[nvim_load_context({'gvars': [['1', '2']]})]=]))
+        eval, [=[nvim_load_context({'vars': [['1', '2']]})]=]))
       matches(err, pcall_err(
         eval, [=[nvim_load_context({'funcs': [['1', '2']]})]=]))
       matches(err, pcall_err(eval, [=[nvim_load_context({'funcs': [1]})]=]))

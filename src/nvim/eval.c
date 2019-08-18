@@ -191,9 +191,6 @@ static char_u * const namespace_char = (char_u *)"abglstvw";
 /// Variable used for g:
 static ScopeDictDictItem globvars_var;
 
-/// g: value
-#define globvarht globvardict.dv_hashtab
-
 /*
  * Old Vim variables such as "v:version" are also available without the "v:".
  * Also in functions.  We need a special hashtable for them.
@@ -202,21 +199,13 @@ static hashtab_T compat_hashtab;
 
 hashtab_T func_hashtab;
 
+var_flavour_T VAR_FLAVOUR_ALL =
+  VAR_FLAVOUR_DEFAULT | VAR_FLAVOUR_SESSION | VAR_FLAVOUR_SHADA;
+
 // Used for checking if local variables or arguments used in a lambda.
 static int *eval_lavars_used = NULL;
 
-/*
- * Array to hold the hashtab with variables local to each sourced script.
- * Each item holds a variable (nameless) that points to the dict_T.
- */
-typedef struct {
-  ScopeDictDictItem sv_var;
-  dict_T sv_dict;
-} scriptvar_T;
-
-static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
-#define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
-#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+garray_T ga_scripts = { 0, 0, sizeof(scriptvar_T *), 4, NULL };
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
@@ -8336,7 +8325,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   Error err = ERROR_INIT;
-  ctx_restore(NULL, kCtxAll, &err);
+  ctx_restore(NULL, &err);
   if (ERROR_SET(&err)) {
     EMSG2("Context: %s", err.msg);
     api_clear_error(&err);
@@ -8358,6 +8347,8 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           types |= kCtxJumps;
         } else if (strequal((char *)tv_li->vval.v_string, "buflist")) {
           types |= kCtxBuflist;
+        } else if (strequal((char *)tv_li->vval.v_string, "svars")) {
+          types |= kCtxSVars;
         } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
           types |= kCtxGVars;
         } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
@@ -23856,30 +23847,33 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen,
   return v;
 }
 
-/// Iterate over global variables
+/// Iterate over variables in hashtable.
 ///
-/// @warning No modifications to global variable dictionary must be performed
-///          while iteration is in progress.
+/// @warning No modifications to the given variable dictionary must be
+///          performed while iteration is in progress.
 ///
+/// @param[in]   ht     Hashtable to iterate over.
 /// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[in]   flav   Variable name "flavour" to consider. See var_flavour_T.
 /// @param[out]  name   Variable name.
 /// @param[out]  rettv  Variable value.
 ///
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
-const void *var_shada_iter(const void *const iter, const char **const name,
-                           typval_T *rettv, var_flavour_T flavour)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+const void *var_shada_iter(const hashtab_T *ht, const void *const iter,
+                           var_flavour_T flav, const char **const name,
+                           typval_T *rettv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 4, 5)
 {
   const hashitem_T *hi;
-  const hashitem_T *hifirst = globvarht.ht_array;
-  const size_t hinum = (size_t) globvarht.ht_mask + 1;
+  const hashitem_T *hifirst = ht->ht_array;
+  const size_t hinum = (size_t)ht->ht_mask + 1;
   *name = NULL;
   if (iter == NULL) {
-    hi = globvarht.ht_array;
-    while ((size_t) (hi - hifirst) < hinum
+    hi = ht->ht_array;
+    while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || !(var_flavour(hi->hi_key) & flavour))) {
+               || !(var_flavour(hi->hi_key) & flav))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -23891,14 +23885,14 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flav)) {
       return hi;
     }
   }
   return NULL;
 }
 
-void var_set_global(const char *const name, typval_T vartv)
+void var_set(const char *const name, typval_T vartv)
 {
   funccall_T *const saved_current_funccal = current_funccal;
   current_funccal = NULL;

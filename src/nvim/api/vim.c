@@ -1439,6 +1439,8 @@ Dictionary nvim_get_context(Array types)
           int_types |= kCtxJumps;
         } else if (strequal(current, "buflist")) {
           int_types |= kCtxBuflist;
+        } else if (strequal(current, "svars")) {
+          int_types |= kCtxSVars;
         } else if (strequal(current, "gvars")) {
           int_types |= kCtxGVars;
         } else if (strequal(current, "sfuncs")) {
@@ -1468,7 +1470,7 @@ Object nvim_load_context(Dictionary dict, Error *err)
   ctx_from_dict(dict, &ctx);
 
   Error _err = ERROR_INIT;
-  ctx_restore(&ctx, kCtxAll, &_err);
+  ctx_restore(&ctx, &_err);
   if (ERROR_SET(&_err)) {
     api_set_error(err, kErrorTypeException,
                   "malformed context dictionary: %s", _err.msg);
@@ -2555,11 +2557,11 @@ void nvim__async_invoke(uint64_t channel_id, String callee, Integer sid,
     return;
   }
 
-  nvim_load_context(context, err);
   Array result = ARRAY_DICT_INIT;
 
   scid_T save_current_SID = current_sctx.sc_sid;
-  current_sctx.sc_sid = (int)sid;
+  ctx_set_current_SID((int)sid);
+  nvim_load_context(context, err);
   ADD(result, _call_function(callee, args, NULL, err));
   current_sctx.sc_sid = save_current_SID;
 

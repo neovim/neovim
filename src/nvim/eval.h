@@ -15,6 +15,19 @@
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
 
+//
+// Array to hold the hashtab with variables local to each sourced script.
+// Each item holds a variable (nameless) that points to the dict_T.
+//
+typedef struct {
+  ScopeDictDictItem sv_var;
+  dict_T sv_dict;
+} scriptvar_T;
+
+extern garray_T ga_scripts;
+#define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
+#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+
 // All user-defined functions are found in this hashtable.
 extern hashtab_T func_hashtab;
 
@@ -30,6 +43,8 @@ typedef enum {
   VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
   VAR_FLAVOUR_SHADA   = 4    // all uppercase
 } var_flavour_T;
+
+extern var_flavour_T VAR_FLAVOUR_ALL;
 
 /// Defines for Vim variables
 typedef enum {
