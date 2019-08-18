@@ -940,3 +940,14 @@ char_u *replace_termcodes(const char_u *from, const size_t from_len,
   return *bufp;
 }
 
+/// Logs a single key as a human-readable keycode.
+void log_key(int log_level, int key)
+{
+  if (log_level < MIN_LOG_LEVEL) {
+    return;
+  }
+  char *keyname = key == K_EVENT
+    ? "K_EVENT"
+    : (char *)get_special_key_name(key, mod_mask);
+  LOG(log_level, "input: %s", keyname);
+}
