@@ -273,6 +273,21 @@ describe('context functions', function()
          redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
     end)
 
+    it('saves and restores sandboxed functions', function()
+      source([[
+      sandbox function SandboxedFunction()
+        edit foo
+      endfunction
+      ]])
+
+      matches('Not allowed in sandbox', pcall_err(call, 'SandboxedFunction'))
+      call('ctxpush')
+      command([[delfunction SandboxedFunction]])
+      matches('Unknown function', pcall_err(call, 'SandboxedFunction'))
+      call('ctxpop')
+      matches('Not allowed in sandbox', pcall_err(call, 'SandboxedFunction'))
+    end)
+
     it('errors out when context stack is empty', function()
       local err = 'Vim:Context: Context stack is empty'
       eq(err, pcall_err(call, 'ctxpop'))
