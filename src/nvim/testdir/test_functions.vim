@@ -1170,6 +1170,8 @@ func Test_libcall_libcallnr()
     else
       let libc = '/usr/lib/libc.so'
     endif
+  elseif system('uname -s') =~ 'OpenBSD'
+    let libc = 'libc.so'
   else
     " On Unix, libc.so can be in various places.
     " Interestingly, using an empty string for the 1st argument of libcall
