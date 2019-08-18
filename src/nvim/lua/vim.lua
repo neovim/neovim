@@ -109,7 +109,7 @@ local function _paste(data)
   -- TODO: do not redraw (slow!) until paste is finished.
   -- if eof then
   vim.api.nvim_command('redraw')
-  return 0
+  return true  -- Paste will not continue if not returning `true`.
 end
 
 -- TODO(ZyX-I): Create compatibility layer.

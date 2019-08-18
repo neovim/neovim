@@ -133,9 +133,8 @@ static void tinput_wait_enqueue(void **argv)
       Object fret
         = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
                            args, &err);
-      if ((fret.type == kObjectTypeInteger && fret.data.integer)
-          || (fret.type == kObjectTypeBoolean && fret.data.boolean)
-          || (fret.type == kObjectTypeString && fret.data.string.size)) {
+      if (fret.type != kObjectTypeBoolean || !fret.data.boolean) {
+        // Abort paste if handler does not return true.
         input->paste_enabled = false;
       }
       api_free_object(fret);
