@@ -99,6 +99,56 @@ describe('context functions', function()
       eq({'', unpack(bufs)}, call('map', call('getbufinfo'), 'v:val.name'))
     end)
 
+    it('saves and restores script-local variables properly', function()
+      source([[
+      function SEval(name)
+        return eval(a:name)
+      endfunction
+
+      function SExec(cmd)
+        return execute(a:cmd)
+      endfunction
+
+      let s:one = 1
+      let s:Two = 2
+      let s:THREE = 3
+      ]])
+
+      eq({1, 2 ,3},
+         eval([[map(['s:one', 's:Two', 's:THREE'], 'SEval(v:val)')]]))
+
+      call('SEval', [[ctxpush()]])
+      call('SEval', [[ctxpush(['svars'])]])
+
+      call('SExec', [[unlet s:one]])
+      call('SExec', [[unlet s:Two]])
+      call('SExec', [[unlet s:THREE]])
+      matches('E121: Undefined variable: s:one',
+              pcall_err(eval, [[SEval('s:one')]]))
+      matches('E121: Undefined variable: s:Two',
+              pcall_err(eval, [[SEval('s:Two')]]))
+      matches('E121: Undefined variable: s:THREE',
+              pcall_err(eval, [[SEval('s:THREE')]]))
+
+      call('SEval', [[ctxpop()]])
+      eq({1, 2 ,3},
+         eval([[map(['s:one', 's:Two', 's:THREE'], 'SEval(v:val)')]]))
+
+      call('SExec', [[unlet s:one]])
+      call('SExec', [[unlet s:Two]])
+      call('SExec', [[unlet s:THREE]])
+      matches('E121: Undefined variable: s:one',
+              pcall_err(eval, [[SEval('s:one')]]))
+      matches('E121: Undefined variable: s:Two',
+              pcall_err(eval, [[SEval('s:Two')]]))
+      matches('E121: Undefined variable: s:THREE',
+              pcall_err(eval, [[SEval('s:THREE')]]))
+
+      call('SEval', [[timer_start(0, { -> ctxpop() })]])
+      eq({1, 2 ,3},
+         eval([[map(['s:one', 's:Two', 's:THREE'], 'SEval(v:val)')]]))
+    end)
+
     it('saves and restores global variables properly', function()
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
@@ -236,7 +286,7 @@ describe('context functions', function()
 
     it('errors out on malformed context dictionary', function()
       call('ctxpush')
-      call('ctxset', {gvars = {{'1', '2'}}})
+      call('ctxset', {vars = {{'1', '2'}}})
       matches('Context: Vim:E461: Illegal variable name: 1',
          pcall_err(call, 'ctxpop'))
     end)
@@ -304,15 +354,15 @@ describe('context functions', function()
         ]]):gsub('\n', '')),
       }
 
-      local with_gvars = {
-        ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}}
+      local with_vars = {
+        ['vars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}}
       }
 
       local with_all = {
         ['regs'] = with_regs['regs'],
         ['jumps'] = with_jumps['jumps'],
         ['bufs'] = with_bufs['bufs'],
-        ['gvars'] = with_gvars['gvars'],
+        ['vars'] = with_vars['vars'],
       }
 
       call('ctxpush')
@@ -320,21 +370,21 @@ describe('context functions', function()
       eq(with_all, call('ctxget', 0))
 
       call('ctxpush', {'gvars'})
-      eq(with_gvars, call('ctxget'))
-      eq(with_gvars, call('ctxget', 0))
+      eq(with_vars, call('ctxget'))
+      eq(with_vars, call('ctxget', 0))
       eq(with_all, call('ctxget', 1))
 
       call('ctxpush', {'bufs'})
       eq(with_bufs, call('ctxget'))
       eq(with_bufs, call('ctxget', 0))
-      eq(with_gvars, call('ctxget', 1))
+      eq(with_vars, call('ctxget', 1))
       eq(with_all, call('ctxget', 2))
 
       call('ctxpush', {'jumps'})
       eq(with_jumps, call('ctxget'))
       eq(with_jumps, call('ctxget', 0))
       eq(with_bufs, call('ctxget', 1))
-      eq(with_gvars, call('ctxget', 2))
+      eq(with_vars, call('ctxget', 2))
       eq(with_all, call('ctxget', 3))
 
       call('ctxpush', {'regs'})
@@ -342,25 +392,25 @@ describe('context functions', function()
       eq(with_regs, call('ctxget', 0))
       eq(with_jumps, call('ctxget', 1))
       eq(with_bufs, call('ctxget', 2))
-      eq(with_gvars, call('ctxget', 3))
+      eq(with_vars, call('ctxget', 3))
       eq(with_all, call('ctxget', 4))
 
       call('ctxpop')
       eq(with_jumps, call('ctxget'))
       eq(with_jumps, call('ctxget', 0))
       eq(with_bufs, call('ctxget', 1))
-      eq(with_gvars, call('ctxget', 2))
+      eq(with_vars, call('ctxget', 2))
       eq(with_all, call('ctxget', 3))
 
       call('ctxpop')
       eq(with_bufs, call('ctxget'))
       eq(with_bufs, call('ctxget', 0))
-      eq(with_gvars, call('ctxget', 1))
+      eq(with_vars, call('ctxget', 1))
       eq(with_all, call('ctxget', 2))
 
       call('ctxpop')
-      eq(with_gvars, call('ctxget'))
-      eq(with_gvars, call('ctxget', 0))
+      eq(with_vars, call('ctxget'))
+      eq(with_vars, call('ctxget', 0))
       eq(with_all, call('ctxget', 1))
 
       call('ctxpop')

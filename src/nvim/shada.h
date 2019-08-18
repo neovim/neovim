@@ -2,6 +2,7 @@
 #define NVIM_SHADA_H
 
 #include <msgpack.h>
+#include "nvim/hashtab.h"
 
 /// Flags for shada_read_file and children
 typedef enum {

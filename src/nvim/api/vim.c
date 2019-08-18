@@ -1455,6 +1455,8 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
           int_types |= kCtxJumps;
         } else if (strequal(s, "bufs")) {
           int_types |= kCtxBufs;
+        } else if (strequal(s, "svars")) {
+          int_types |= kCtxSVars;
         } else if (strequal(s, "gvars")) {
           int_types |= kCtxGVars;
         } else if (strequal(s, "sfuncs")) {
@@ -1488,7 +1490,7 @@ Object nvim_load_context(Dictionary dict, Error *err)
 
   ctx_from_dict(dict, &ctx, &_err);
   if (!ERROR_SET(&_err)) {
-    ctx_restore(&ctx, kCtxAll, &_err);
+    ctx_restore(&ctx, &_err);
   }
 
   if (ERROR_SET(&_err)) {
