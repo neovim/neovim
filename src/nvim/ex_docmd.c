@@ -8432,13 +8432,15 @@ static void ex_pedit(exarg_T *eap)
 {
   win_T       *curwin_save = curwin;
 
+  // Open the preview window or popup and make it the current window.
   g_do_tagpreview = p_pvh;
   prepare_tagpreview(true);
-  keep_help_flag = bt_help(curwin_save->w_buffer);
+
+  // Edit the file.
   do_exedit(eap, NULL);
-  keep_help_flag = FALSE;
+
   if (curwin != curwin_save && win_valid(curwin_save)) {
-    /* Return cursor to where we were */
+    // Return cursor to where we were
     validate_cursor();
     redraw_later(VALID);
     win_enter(curwin_save, true);
