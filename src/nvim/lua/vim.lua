@@ -95,15 +95,23 @@ end
 
 -- Default paste function.
 local function _paste(data)
+  local call = vim.api.nvim_call_function
+  local mode = call('mode', {})
+  if mode == 't' then
+    call('chansend',
+        {vim.api.nvim_buf_get_option(0, 'channel'), data})
+    return true
+  end
+
   -- local eof = (data == {''})
-  local curline = vim.api.nvim_call_function('line', {'.'})
+  local curline = call('line', {'.'})
   vim.api.nvim_buf_set_lines(
       0,
       curline,
       curline,
       false,
       data)
-  vim.api.nvim_call_function(
+  call(
       'cursor',
       {curline + #data, 9999999})
   -- TODO: do not redraw (slow!) until paste is finished.
