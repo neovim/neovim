@@ -22214,7 +22214,8 @@ static int eval_fname_script(const char *const p)
   // the standard library function.
   if (p[0] == '<'
       && (mb_strnicmp((char_u *)p + 1, (char_u *)"SID>", 4) == 0
-          || mb_strnicmp((char_u *)p + 1, (char_u *)"SNR>", 4) == 0)) {
+          || ((mb_strnicmp((char_u *)p + 1, (char_u *)"SNR>", 4) == 0)
+              && !ISLAMBDA((char_u *)p)))) {
     return 5;
   }
   if (p[0] == 's' && p[1] == ':') {
@@ -22704,7 +22705,7 @@ char_u *get_user_func_name(expand_T *xp, int idx)
     fp = HI2UF(hi);
 
     if ((fp->uf_flags & FC_DICT)
-        || STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+        || ISLAMBDA(fp->uf_name)) {
       return (char_u *)"";       // don't show dict and lambda functions
     }
 
@@ -22746,7 +22747,7 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
 /// looked up by name.
 static bool func_name_refcount(char_u *name)
 {
-  return isdigit(*name) || *name == '<';
+  return isdigit(*name) || ISLAMBDA(name);
 }
 
 /// ":delfunction {name}"
@@ -23042,12 +23043,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   ga_init(&fc->fc_funcs, sizeof(ufunc_T *), 1);
   func_ptr_ref(fp);
 
-  // <lambda>{N} or <SNR>_lambda_{N} (see ctx_dict_add_userfunc)
-  if (STRNCMP(fp->uf_name, "<lambda>", 8) == 0
-      || (fp->uf_name[0] == K_SPECIAL
-          && STRNCMP(fp->uf_name+3, "_lambda_", 8) == 0)) {
-    islambda = true;
-  }
+  islambda = ISLAMBDA(fp->uf_name);
 
   // Note about using fc->fixvar[]: This is an array of FIXVAR_CNT variables
   // with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free

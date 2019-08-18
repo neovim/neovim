@@ -37,6 +37,12 @@ EXTERN ufunc_T dumuf;
 #define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
+// <lambda>{N} or <SNR>_lambda_{N} (see ctx_pack_func).
+#define ISLAMBDA(fn) \
+    ((STRNCMP((fn), "<lambda>", 8) == 0) \
+     || (((fn)[0] == K_SPECIAL) \
+         && (STRNCMP((fn) + 3, "_lambda_", 8) == 0)))
+
 /// enum used by var_flavour()
 typedef enum {
   VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
