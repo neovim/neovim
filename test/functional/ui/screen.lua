@@ -391,27 +391,31 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
     end
 
     if grid ~= nil then
+      local err_msg, msg_expected_rows = nil, {}
       -- `expected` must match the screen lines exactly.
       if #actual_rows ~= #expected_rows then
-        return "Expected screen state's row count(" .. #expected_rows
-        .. ') differs from configured height(' .. #actual_rows .. ') of Screen.'
+        err_msg = "Expected screen height " .. #expected_rows
+        .. ' differs from actual height ' .. #actual_rows .. '.'
       end
-      for i = 1, #actual_rows do
+      for i = 1, #expected_rows do
+         msg_expected_rows[i] = expected_rows[i]
         if expected_rows[i] ~= actual_rows[i] and expected_rows[i] ~= "{IGNORE}|" then
-          local msg_expected_rows = {}
-          for j = 1, #expected_rows do
-            msg_expected_rows[j] = expected_rows[j]
-          end
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
-          actual_rows[i] = '*' .. actual_rows[i]
-          return (
-            'Row ' .. tostring(i) .. ' did not match.\n'
-            ..'Expected:\n  |'..table.concat(msg_expected_rows, '\n  |')..'\n'
-            ..'Actual:\n  |'..table.concat(actual_rows, '\n  |')..'\n\n'..[[
+          if i <= #actual_rows then
+            actual_rows[i] = '*' .. actual_rows[i]
+          end
+          if err_msg == nil then
+            err_msg = 'Row ' .. tostring(i) .. ' did not match.'
+          end
+        end
+      end
+      if err_msg ~= nil then
+        return (
+          err_msg..'\nExpected:\n  |'..table.concat(msg_expected_rows, '\n  |')..'\n'
+          ..'Actual:\n  |'..table.concat(actual_rows, '\n  |')..'\n\n'..[[
 To print the expect() call that would assert the current screen state, use
 screen:snapshot_util(). In case of non-deterministic failures, use
 screen:redraw_debug() to show all intermediate screen states.  ]])
-        end
       end
     end
 
