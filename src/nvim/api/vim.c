@@ -1459,6 +1459,12 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
           int_types |= kCtxSVars;
         } else if (strequal(s, "gvars")) {
           int_types |= kCtxGVars;
+        } else if (strequal(s, "bvars")) {
+          int_types |= kCtxBVars;
+        } else if (strequal(s, "wvars")) {
+          int_types |= kCtxWVars;
+        } else if (strequal(s, "tvars")) {
+          int_types |= kCtxTVars;
         } else if (strequal(s, "sfuncs")) {
           int_types |= kCtxSFuncs;
         } else if (strequal(s, "funcs")) {

@@ -30,13 +30,16 @@ typedef kvec_t(Context) ContextVec;
 }
 
 typedef enum {
-  kCtxRegs = 1,       ///< Registers
-  kCtxJumps = 2,      ///< Jumplist
-  kCtxBufs = 4,       ///< Buffer list
-  kCtxSVars = 8,      ///< Script-local variables
-  kCtxGVars = 16,     ///< Global variables
-  kCtxSFuncs = 32,    ///< Script functions
-  kCtxFuncs = 64,     ///< All functions
+  kCtxRegs    =   (1 << 0),  ///< Registers
+  kCtxJumps   =   (1 << 1),  ///< Jumplist
+  kCtxBufs    =   (1 << 2),  ///< Buffer list
+  kCtxSVars   =   (1 << 3),  ///< Script-local variables
+  kCtxGVars   =   (1 << 4),  ///< Global variables
+  kCtxBVars   =   (1 << 5),  ///< Buffer variables
+  kCtxWVars   =   (1 << 6),  ///< Window variables
+  kCtxTVars   =   (1 << 7),  ///< Tab variables
+  kCtxSFuncs  =   (1 << 8),  ///< Script functions
+  kCtxFuncs   =   (1 << 9),  ///< All functions
 } ContextTypeFlags;
 
 extern int kCtxAll;
