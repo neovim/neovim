@@ -113,7 +113,7 @@ run_functionaltests() {(
 run_oldtests() {(
   enter_suite oldtests
   ulimit -c unlimited || true
-  if ! make -C "${TRAVIS_BUILD_DIR}/src/nvim/testdir"; then
+  if ! make oldtest; then
     reset
     fail 'oldtests' F 'Legacy tests failed'
   fi
