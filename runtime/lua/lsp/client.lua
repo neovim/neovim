@@ -52,7 +52,7 @@ client.job_exit = function(job_id, data)
   ActiveJobs[job_id]:on_exit(data)
 end
 
-client.start_job = function(cmd)
+local start_job = function(cmd)
   local job_id = vim.api.nvim_call_function('jobstart', {
       cmd, {
         on_stdout = 'lsp#_on_event',
@@ -72,7 +72,7 @@ end
 client.new = function(name, ft, cmd)
   log.debug('Starting new client: ', name, cmd)
 
-  local job_id = client.start_job(cmd)
+  local job_id = start_job(cmd)
 
   assert(job_id)
   assert(job_id > 0)
