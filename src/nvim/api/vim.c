@@ -1443,6 +1443,12 @@ Dictionary nvim_get_context(Array types)
           int_types |= kCtxSVars;
         } else if (strequal(current, "gvars")) {
           int_types |= kCtxGVars;
+        } else if (strequal(current, "bvars")) {
+          int_types |= kCtxBVars;
+        } else if (strequal(current, "wvars")) {
+          int_types |= kCtxWVars;
+        } else if (strequal(current, "tvars")) {
+          int_types |= kCtxTVars;
         } else if (strequal(current, "sfuncs")) {
           int_types |= kCtxSFuncs;
         } else if (strequal(current, "funcs")) {
