@@ -6,13 +6,13 @@ local dedent = helpers.dedent
 
 before_each(clear)
 
-describe('LSP plugin', function()
+describe('Language Client API ', function()
   describe('default callbacks', function()
     it('should return callbacks for things we have defined', function()
       source(dedent([[
         lua << EOF
-          local plugin = require('lsp.plugin')
-          assert(plugin.is_supported_request('textDocument/references'))
+          local lsp = require('vim.lsp')
+          assert(lsp.is_supported_request('textDocument/references'))
         EOF
       ]]))
     end)

@@ -9,7 +9,7 @@ catch
   finish
 endtry
 
-let s:lsp_plugin = "vim.lsp.plugin"
+let s:lsp_module = "vim.lsp"
 
 " TODO(tjdevries): Make sure this works correctly
 " TODO(tjdevries): Figure out how to call a passed callback
@@ -19,7 +19,7 @@ function! lsp#request(method, ...) abort
   let bufnr = get(a:000, 2, v:null)
   let optional_callback = get(a:000, 3, v:null)
 
-  let result = luaeval(s:lsp_plugin . '.request(_A.method, _A.params, _A.filetype, _A.callback, _A.bufnr)', {
+  let result = luaeval(s:lsp_module . '.request(_A.method, _A.params, _A.filetype, _A.callback, _A.bufnr)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'filetype': filetype,
@@ -40,7 +40,7 @@ function! lsp#request_async(method, ...) abort
   let bufnr = get(a:000, 2, v:null)
   let optional_callback = get(a:000, 3, v:null)
 
-  let result = luaeval(s:lsp_plugin . '.request_async(_A.method, _A.params, _A.filetype, _A.callback, _A.bufnr)', {
+  let result = luaeval(s:lsp_module . '.request_async(_A.method, _A.params, _A.filetype, _A.callback, _A.bufnr)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'filetype': filetype,
@@ -57,7 +57,7 @@ function! lsp#notify(method, ...) abort
   let params = get(a:000, 0, {})
   let filetype = get(a:000, 1, &filetype)
 
-  luaeval(s:lsp_plugin . '.notify(_A.method, _A.params, _A.filetype)', {
+  luaeval(s:lsp_module . '.notify(_A.method, _A.params, _A.filetype)', {
           \ 'method': a:method,
           \ 'params': params,
           \ 'filetype': filetype,
@@ -72,7 +72,7 @@ function! lsp#handle(request, data, ...) abort abort
   let default_only = get(a:000, 1, v:true)
 
   " and then calls it with the provided data
-  return luaeval(s:lsp_plugin . '.handle(_A.filetype, _A.method, _A.data, _A.default_only)', {
+  return luaeval(s:lsp_module . '.handle(_A.filetype, _A.method, _A.data, _A.default_only)', {
         \ 'filetype': file_type,
         \ 'method': a:request,
         \ 'data': a:data,
@@ -86,7 +86,7 @@ endfunction
 "   API, which -- at the time -- isn't possible with lua {{{
 function! lsp#_on_event(job_id, data, event) abort
   call luaeval(
-        \ "vim.lsp.plugin.client_job_handler(_A.job_id, _A.data, _A.event)",
+        \ "vim.lsp.client_job_handler(_A.job_id, _A.data, _A.event)",
         \ {'job_id': a:job_id, 'data': a:data, 'event': a:event}
         \ )
 endfunction

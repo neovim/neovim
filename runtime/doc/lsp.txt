@@ -158,7 +158,7 @@ lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
     Example:
 
 autocmd CursorHold *
-    \ :lua vim.lsp.plugin.request_async(
+    \ :lua vim.lsp.request_async(
     \     'textDocument/hover',
     \     vim.lsp.util.get_text_document_params(),
     \     vim.lsp.util.get_filetype()

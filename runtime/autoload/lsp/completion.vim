@@ -4,7 +4,7 @@ let s:last_location = -1
 " Omni completion with LSP
 function! lsp#completion#omni(findstart, base) abort
   " If we haven't started, then don't return anything useful
-  if !luaeval("vim.lsp.plugin.client_has_started(_A)", &filetype)
+  if !luaeval("vim.lsp.client_has_started(_A)", &filetype)
     return a:findstart ? -1 : []
   endif
 
