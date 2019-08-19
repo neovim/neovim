@@ -158,14 +158,15 @@ describe(':terminal buffer', function()
   end)
 
   it('handles loss of focus gracefully', function()
-    if helpers.pending_win32(pending) then return end
     -- Change the statusline to avoid printing the file name, which varies.
     nvim('set_option', 'statusline', '==========')
     feed_command('set laststatus=0')
 
     -- Save the buffer number of the terminal for later testing.
     local tbuf = eval('bufnr("%")')
-
+    local exitcmd = helpers.iswin()
+      and "['cmd', '/c', 'exit']"
+      or "['sh', '-c', 'exit']"
     source([[
     function! SplitWindow(id, data, event)
       new
@@ -173,7 +174,7 @@ describe(':terminal buffer', function()
     endfunction
 
     startinsert
-    call jobstart(['sh', '-c', 'exit'], {'on_exit': function("SplitWindow")})
+    call jobstart(]]..exitcmd..[[, {'on_exit': function("SplitWindow")})
     call feedkeys("\<C-\>", 't')  " vim will expect <C-n>, but be exited out of
                                   " the terminal before it can be entered.
     ]])

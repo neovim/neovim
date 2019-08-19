@@ -37,7 +37,6 @@ describe(':terminal', function()
   end)
 
   it('does not change size on WinEnter', function()
-    if helpers.pending_win32(pending) then return end
     feed('<c-\\><c-n>')
     feed('k')
     feed_command('2split')
