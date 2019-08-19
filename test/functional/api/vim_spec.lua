@@ -5,6 +5,7 @@ local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
 local eval = helpers.eval
+local expect = helpers.expect
 local funcs = helpers.funcs
 local iswin = helpers.iswin
 local meth_pcall = helpers.meth_pcall
@@ -365,6 +366,40 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_put', function()
+    it('inserts text', function()
+      -- linewise
+      nvim('put', {'line 1','line 2','line 3'}, 'l', false)
+      expect([[
+
+        line 1
+        line 2
+        line 3]])
+      command('%delete _')
+      -- charwise
+      nvim('put', {'line 1','line 2','line 3'}, 'c', false)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      -- blockwise
+      nvim('put', {'AA','BB'}, 'b', false)
+      expect([[
+        lAAine 1
+        lBBine 2
+        line 3]])
+      command('%delete _')
+      -- Empty lines list.
+      nvim('put', {}, 'c', false)
+      expect([[]])
+      -- Single empty line.
+      nvim('put', {''}, 'c', false)
+      expect([[
+      ]])
+      eq('', nvim('eval', 'v:errmsg'))
+    end)
+  end)
+
   describe('nvim_strwidth', function()
     it('works', function()
       eq(3, nvim('strwidth', 'abc'))
@@ -626,12 +661,12 @@ describe('API', function()
       -- Make any RPC request (can be non-async: op-pending does not block).
       nvim('get_current_buf')
       -- Buffer should not change.
-      helpers.expect([[
+      expect([[
         FIRST LINE
         SECOND LINE]])
       -- Now send input to complete the operator.
       nvim('input', 'j')
-      helpers.expect([[
+      expect([[
         first line
         second line]])
     end)
@@ -664,7 +699,7 @@ describe('API', function()
       nvim('get_api_info')
       -- Send input to complete the mapping.
       nvim('input', 'd')
-      helpers.expect([[
+      expect([[
         FIRST LINE
         SECOND LINE]])
       eq('it worked...', helpers.eval('g:foo'))
@@ -680,7 +715,7 @@ describe('API', function()
       nvim('get_api_info')
       -- Send input to complete the mapping.
       nvim('input', 'x')
-      helpers.expect([[
+      expect([[
         FIRST LINE
         SECOND LINfooE]])
     end)

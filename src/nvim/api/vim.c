@@ -1206,21 +1206,18 @@ Dictionary nvim_get_namespaces(void)
   return retval;
 }
 
-/// @param lines contents. One empty line for no-op, zero lines to emulate error
+/// Inserts text at cursor.
+///
+/// Compare |:put| and |p| which are always linewise.
+///
+/// @param lines contents
 /// @param type type ("c", "l", "b") or empty to guess from contents
-/// @param name if emulates put from a register, otherwise empty
-/// @param prev True to emulate "P" otherwise "p"
-/// @param count repeat count
-/// @param[out] err details of an error that have occurred, if any.
-void nvim_put(ArrayOf(String) lines, String type, String regname, Boolean prev, Integer count, Error *err)
+/// @param direction behave like |P| instead of |p|
+/// @param[out] err Error details, if any
+void nvim_put(ArrayOf(String) lines, String type, Boolean direction,
+              Error *err)
   FUNC_API_SINCE(6)
 {
-  if (regname.size > 1) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "regname must be a single ASCII char or the empty string");
-    return;
-  }
   yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
   if (!prepare_yankreg_from_object(reg, type, lines.size)) {
     api_set_error(err,
@@ -1228,6 +1225,9 @@ void nvim_put(ArrayOf(String) lines, String type, String regname, Boolean prev, 
                   "Invalid regtype %s",
                   type.data);
     return;
+  }
+  if (lines.size == 0) {
+    goto cleanup;  // Nothing to do.
   }
 
   for (size_t i = 0; i < lines.size; i++) {
@@ -1244,7 +1244,6 @@ void nvim_put(ArrayOf(String) lines, String type, String regname, Boolean prev, 
 
   finish_yankreg_from_object(reg, false);
 
-  int name = regname.size ? regname.data[0] : NUL;
   bool VIsual_was_active = VIsual_active;
   int flags = 0;
   if (State & INSERT) {
@@ -1253,13 +1252,12 @@ void nvim_put(ArrayOf(String) lines, String type, String regname, Boolean prev, 
     // TODO: fix VIsual when cursor is before, or emulate the delete as well
     flags |= lt(VIsual, curwin->w_cursor) ? PUT_CURSEND : 0;
   }
-  do_put(name, reg, prev ? BACKWARD : FORWARD, (long)count, flags);
+  do_put(0, reg, direction ? BACKWARD : FORWARD, 1, flags);
   VIsual_active = VIsual_was_active;
 
 cleanup:
   free_register(reg);
   xfree(reg);
-
 }
 
 /// Subscribes to event broadcasts.
