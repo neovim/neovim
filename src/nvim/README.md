@@ -44,28 +44,30 @@ Behavior Sanitizer: UBSan, Memory Sanitizer: MSan, Thread Sanitizer: TSan) is
 a good way to catch undefined behavior, leaks and other errors as soon as they
 happen.  It's significantly faster than Valgrind.
 
-Requires clang 3.4 or later:
+Requires clang 3.4 or later, and `llvm-symbolizer` must be in `$PATH`:
 
     clang --version
 
-Build Nvim with sanitizer instrumentation:
+Build Nvim with sanitizer instrumentation (choose one):
 
     CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_MSAN=ON"
+    CC=clang make CMAKE_EXTRA_FLAGS="-DCLANG_TSAN=ON"
 
 Create a directory to store logs:
 
     mkdir -p "$HOME/logs"
 
-Enable the sanitizer(s) via these environment variables:
+Configure the sanitizer(s) via these environment variables:
 
     # Change to detect_leaks=1 to detect memory leaks (slower).
     export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
-    export ASAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
-
-    export MSAN_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer
+    export MSAN_OPTIONS="log_path=${HOME}/logs/tsan"
     export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
 
-Logs will be written to `${HOME}/logs/*san.PID`.
+Logs will be written to `${HOME}/logs/*san.PID` then.
+
+For more information: https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
 
 TUI debugging
 -------------
