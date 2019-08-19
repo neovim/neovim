@@ -94,26 +94,14 @@ local function _os_proc_children(ppid)
 end
 
 -- Default paste function.
-local function _paste(data)
+local function _paste(lines)
+  -- local eof = (lines == {''})
   local call = vim.api.nvim_call_function
   local mode = call('mode', {})
-  if mode == 't' then
-    call('chansend',
-        {vim.api.nvim_buf_get_option(0, 'channel'), data})
-    return true
-  end
-
-  -- local eof = (data == {''})
   local curline = call('line', {'.'})
-  vim.api.nvim_buf_set_lines(
-      0,
-      curline,
-      curline,
-      false,
-      data)
-  call(
-      'cursor',
-      {curline + #data, 9999999})
+  -- vim.api.nvim_set_option('paste', true)
+  vim.api.nvim_put(lines, 'c', false)
+  -- vim.api.nvim_set_option('paste', false)
   -- TODO: do not redraw (slow!) until paste is finished.
   -- if eof then
   vim.api.nvim_command('redraw')

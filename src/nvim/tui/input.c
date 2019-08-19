@@ -100,7 +100,6 @@ static void tinput_done_event(void **argv)
   input_done();
 }
 
-// TODO: send [''] to indicate EOF.
 static Array string_to_array(const String input)
 {
   Array ret = ARRAY_DICT_INIT;

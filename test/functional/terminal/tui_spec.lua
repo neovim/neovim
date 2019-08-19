@@ -1,5 +1,9 @@
 -- TUI acceptance tests.
 -- Uses :terminal as a way to send keys and assert screen state.
+--
+-- "bracketed paste" terminal feature:
+-- http://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Bracketed-Paste-Mode
+
 local helpers = require('test.functional.helpers')(after_each)
 local uname = helpers.uname
 local thelpers = require('test.functional.terminal.helpers')
@@ -159,8 +163,8 @@ describe('TUI', function()
     ]])
     feed_data('pasted from terminal')
     screen:expect([[
-                                                        |
       pasted from terminal{1: }                             |
+      {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
@@ -170,8 +174,8 @@ describe('TUI', function()
     feed_data('\027[201~')  -- End paste.
     feed_data('\027\000')   -- ESC: go to Normal mode.
     screen:expect([[
-                                                        |
       pasted from termina{1:l}                              |
+      {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
@@ -183,9 +187,9 @@ describe('TUI', function()
   it('pasting a specific amount of text #10311', function()
     feed_data('i\027[200~'..string.rep('z', 64)..'\027[201~')
     screen:expect([[
-                                                        |
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz{1: }                                   |
+      {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
@@ -209,6 +213,76 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('forwards spurious "start paste" sequence', function()
+    -- If multiple "start paste" sequences are sent without a corresponding
+    -- "stop paste" sequence, only the first occurrence should be consumed.
+
+    -- Send the "start paste" sequence.
+    feed_data('i\027[200~')
+    feed_data('\npasted from terminal (1)\n')
+    -- Send spurious "start paste" sequence.
+    feed_data('\027[200~')
+    feed_data('\n')
+    -- Send the "stop paste" sequence.
+    feed_data('\027[201~')
+
+    screen:expect{grid=[[
+                                                        |
+      pasted from terminal (1)                          |
+      {6:^[}[200~{1: }                                          |
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]],
+    attr_ids={
+      [1] = {reverse = true},
+      [2] = {background = tonumber('0x00000b')},
+      [3] = {bold = true},
+      [4] = {foreground = tonumber('0x00000c')},
+      [5] = {bold = true, reverse = true},
+      [6] = {foreground = tonumber('0x000051')},
+    }}
+  end)
+
+  it('ignores spurious "stop paste" sequence', function()
+    -- If "stop paste" sequence is received without a preceding "start paste"
+    -- sequence, it should be ignored.
+    feed_data('i')
+    -- Send "stop paste" sequence.
+    feed_data('\027[201~')
+    screen:expect([[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      {3:-- INSERT --}                                      |
+      {3:-- TERMINAL --}                                    |
+    ]])
+  end)
+
+  -- TODO
+  it('in normal-mode', function()
+  end)
+
+  -- TODO
+  it('in command-mode', function()
+  end)
+
+  -- TODO
+  it('sets undo-point after consecutive pastes', function()
+  end)
+
+  -- TODO
+  it('handles missing "stop paste" sequence', function()
+  end)
+
+  -- TODO: error when pasting into 'nomodifiable' buffer:
+  --      [error @ do_put:2656] 17043 - Failed to save undo information
+  it("handles 'nomodifiable' buffer gracefully", function()
   end)
 
   it('allows termguicolors to be set at runtime', function()
