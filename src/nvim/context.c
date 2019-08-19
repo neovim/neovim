@@ -17,8 +17,8 @@
 # include "context.c.generated.h"
 #endif
 
-int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSVars
-               | kCtxSFuncs | kCtxFuncs);
+int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxSVars | kCtxGVars
+               | kCtxBVars | kCtxWVars | kCtxTVars | kCtxSFuncs | kCtxFuncs);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
@@ -104,6 +104,18 @@ void ctx_save(Context *ctx, const int flags)
 
   if (flags & kCtxGVars) {
     ctx_save_vars(&globvarht, ctx, NULL);
+  }
+
+  if (flags & kCtxBVars) {
+    ctx_save_vars(&curbuf->b_vars->dv_hashtab, ctx, "b:");
+  }
+
+  if (flags & kCtxWVars) {
+    ctx_save_vars(&curwin->w_vars->dv_hashtab, ctx, "w:");
+  }
+
+  if (flags & kCtxTVars) {
+    ctx_save_vars(&curtab->tp_vars->dv_hashtab, ctx, "t:");
   }
 
   if (flags & kCtxFuncs) {

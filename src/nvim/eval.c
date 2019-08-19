@@ -8087,6 +8087,12 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           types |= kCtxSVars;
         } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
           types |= kCtxGVars;
+        } else if (strequal((char *)tv_li->vval.v_string, "bvars")) {
+          types |= kCtxBVars;
+        } else if (strequal((char *)tv_li->vval.v_string, "wvars")) {
+          types |= kCtxWVars;
+        } else if (strequal((char *)tv_li->vval.v_string, "tvars")) {
+          types |= kCtxTVars;
         } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
           types |= kCtxSFuncs;
         } else if (strequal((char *)tv_li->vval.v_string, "funcs")) {
@@ -23617,7 +23623,8 @@ const void *var_shada_iter(const hashtab_T *ht, const void *const iter,
     hi = ht->ht_array;
     while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || !(var_flavour(hi->hi_key) & flav))) {
+               || !(var_flavour(hi->hi_key) & flav)
+               || (TV_DICT_HI2DI(hi)->di_flags & DI_FLAGS_RO))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -23629,7 +23636,8 @@ const void *var_shada_iter(const hashtab_T *ht, const void *const iter,
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flav)) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flav)
+        && !(TV_DICT_HI2DI(hi)->di_flags & DI_FLAGS_RO)) {
       return hi;
     }
   }

@@ -178,6 +178,29 @@ describe('context functions', function()
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
     end)
 
+    it('saves and restores b:, w:, and t: variables properly', function()
+      command('let [b:one, w:Two, t:THREE] = [1, 2, 3]')
+      eq({1, 2 ,3}, eval('[b:one, w:Two, t:THREE]'))
+      call('ctxpush')
+      call('ctxpush', {'bvars', 'wvars', 'tvars'})
+
+      command('unlet b:one w:Two t:THREE')
+      matches('E121: Undefined variable: b:one', pcall_err(eval, 'b:one'))
+      matches('E121: Undefined variable: w:Two', pcall_err(eval, 'w:Two'))
+      matches('E121: Undefined variable: t:THREE', pcall_err(eval, 't:THREE'))
+
+      call('ctxpop')
+      eq({1, 2 ,3}, eval('[b:one, w:Two, t:THREE]'))
+
+      command('unlet b:one w:Two t:THREE')
+      matches('E121: Undefined variable: b:one', pcall_err(eval, 'b:one'))
+      matches('E121: Undefined variable: w:Two', pcall_err(eval, 'w:Two'))
+      matches('E121: Undefined variable: t:THREE', pcall_err(eval, 't:THREE'))
+
+      call('ctxpop')
+      eq({1, 2 ,3}, eval('[b:one, w:Two, t:THREE]'))
+    end)
+
     it('saves and restores script functions properly', function()
       source([[
       function s:greet(name)
