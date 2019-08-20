@@ -29,7 +29,8 @@ describe('TUI', function()
   before_each(function()
     clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler undodir=. directory=. viewdir=. backupdir=."]')
+      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "'
+      ..nvim_set..' laststatus=2 background=dark'..'"]')
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -151,6 +152,7 @@ describe('TUI', function()
   end)
 
   it('paste: Insert mode', function()
+    -- "bracketed paste"
     feed_data('i\027[200~')
     screen:expect([[
       {1: }                                                 |
@@ -184,26 +186,30 @@ describe('TUI', function()
     ]])
   end)
 
-  it('pasting a specific amount of text #10311', function()
+  it('paste: exactly 64 bytes #10311', function()
+    -- "bracketed paste"
     feed_data('i\027[200~'..string.rep('z', 64)..'\027[201~')
+    feed_data('\003')  -- CTRL-C
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
-      zzzzzzzzzzzzzz{1: }                                   |
+      zzzzzzzzzzzzz{1:z}                                    |
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
-      {3:-- INSERT --}                                      |
+                                                        |
       {3:-- TERMINAL --}                                    |
     ]])
   end)
 
-  it('big burst of input (bracketed paste)', function()
+  it('paste: big burst of input', function()
     feed_command('set ruler')
     local t = {}
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
-    feed_data('i\027[200~'..table.concat(t, '\n')..'\027[201~')
+    local expected = table.concat(t, '\n')
+    -- "bracketed paste"
+    feed_data('i\027[200~'..expected..'\027[201~')
     screen:expect([[
       item 2997                                         |
       item 2998                                         |
@@ -231,8 +237,8 @@ describe('TUI', function()
     screen:expect{grid=[[
                                                         |
       pasted from terminal (1)                          |
-      {6:^[}[200~{1: }                                          |
-      {4:~                                                 }|
+      {6:^[}[200~                                           |
+      {1: }                                                 |
       {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
