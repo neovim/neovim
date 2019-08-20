@@ -1,3 +1,4 @@
+set nocp
 if 1
   " This is executed with the eval feature
   set nocp
