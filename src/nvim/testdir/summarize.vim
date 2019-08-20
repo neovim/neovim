@@ -5,7 +5,7 @@ if 1
     if a:type ==# 'executed'
       let g:executed += (a:match+0)
     elseif a:type ==# 'failed'
-      let g:failed = a:match+0
+      let g:failed += a:match+0
     elseif a:type ==# 'skipped'
       let g:skipped += 1
       call extend(g:skipped_output, ["\t".a:match])
