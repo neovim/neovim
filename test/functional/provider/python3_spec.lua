@@ -112,21 +112,7 @@ describe('python3 provider', function()
       autocmd BufUnload * python3 foo()]=])
     feed_command("exe 'split' tempname()")
     feed_command("bwipeout!")
-    -- TEST: does this cause the hang?
-    -- [----------] Running tests from /home/travis/build/neovim/neovim/test/functional/provider/python3_spec.lua
-    -- [ RUN      ] python3 provider feature test: 0.73 ms OK
-    -- [ RUN      ] python3 provider python3_execute: 2.31 ms OK
-    -- [ RUN      ] python3 provider does not truncate error message <1 MB: 17.18 ms OK
-    -- [ RUN      ] python3 provider python3_execute with nested commands: 4.57 ms OK
-    -- [ RUN      ] python3 provider python3_execute with range: 6.40 ms OK
-    -- [ RUN      ] python3 provider py3file: 4.31 ms OK
-    -- [ RUN      ] python3 provider py3do: 8.08 ms OK
-    -- [ RUN      ] python3 provider py3eval: 1.88 ms OK
-    -- [ RUN      ] python3 provider RPC call to expand("<afile>") during BufDelete #5245 #5617:
-    -- No output has been received in the last 10m0s, this potentially indicates a stalled build or something wrong with the build itself.
-    -- Check the details on how to adjust your build configuration on: https://docs.travis-ci.com/user/common-build-problems/#Build-times-out-because-no-output-was-received
-    -- The build has been terminated
-    -- feed_command('help help')
+    feed_command('help help')
     eq(2, eval('1+1'))  -- Still alive?
   end)
 end)
