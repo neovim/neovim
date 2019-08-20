@@ -1,7 +1,7 @@
 " Test 'autochdir' behavior
 
 if !exists("+autochdir")
-  finish
+  throw 'Skipped: autochdir feature missing'
 endif
 
 func Test_set_filename()

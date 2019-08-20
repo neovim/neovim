@@ -3,7 +3,7 @@
 " functional tests that check the shaping works with real text.
 
 if !has('arabic')
-  finish
+  throw 'Skipped: arabic feature missing'
 endif
 
 source view_util.vim

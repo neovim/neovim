@@ -268,6 +268,9 @@ if expand('%') =~ 'test_vimscript.vim'
 else
   try
     source %
+  catch /^\cskipped/
+    call add(s:messages, '    Skipped')
+    call add(s:skipped, 'SKIPPED ' . expand('%') . ': ' . substitute(v:exception, '^\S*\s\+', '',  ''))
   catch
     let s:fail += 1
     call add(s:errors, 'Caught exception: ' . v:exception . ' @ ' . v:throwpoint)
