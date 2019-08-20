@@ -24,10 +24,7 @@ func Test_cd_no_arg()
     call assert_equal(path, getcwd())
   else
     " Test that cd without argument echoes cwd on non-Unix systems.
-    let shellslash = &shellslash
-    set shellslash
     call assert_match(getcwd(), execute('cd'))
-    let &shellslash = shellslash
   endif
 endfunc
 
