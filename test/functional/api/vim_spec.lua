@@ -369,34 +369,53 @@ describe('API', function()
   describe('nvim_put', function()
     it('inserts text', function()
       -- linewise
-      nvim('put', {'line 1','line 2','line 3'}, 'l', false)
+      nvim('put', {'line 1','line 2','line 3'}, 'l', true, true)
       expect([[
 
         line 1
         line 2
         line 3]])
+      eq({0,4,1,0}, funcs.getpos('.'))
       command('%delete _')
       -- charwise
-      nvim('put', {'line 1','line 2','line 3'}, 'c', false)
+      nvim('put', {'line 1','line 2','line 3'}, 'c', true, false)
       expect([[
         line 1
         line 2
         line 3]])
-      command('1')
+      eq({0,1,1,0}, funcs.getpos('.'))  -- follow=false
       -- blockwise
-      nvim('put', {'AA','BB'}, 'b', false)
+      nvim('put', {'AA','BB'}, 'b', true, true)
       expect([[
         lAAine 1
         lBBine 2
         line 3]])
+      eq({0,2,4,0}, funcs.getpos('.'))
       command('%delete _')
       -- Empty lines list.
-      nvim('put', {}, 'c', false)
+      nvim('put', {}, 'c', true, true)
+      eq({0,1,1,0}, funcs.getpos('.'))
       expect([[]])
       -- Single empty line.
-      nvim('put', {''}, 'c', false)
+      nvim('put', {''}, 'c', true, true)
+      eq({0,1,1,0}, funcs.getpos('.'))
       expect([[
       ]])
+      nvim('put', {'AB'}, 'c', true, true)
+      -- after=false, follow=true
+      nvim('put', {'line 1','line 2'}, 'c', false, true)
+      expect([[
+        Aline 1
+        line 2B]])
+      eq({0,2,7,0}, funcs.getpos('.'))
+      command('%delete _')
+      nvim('put', {'AB'}, 'c', true, true)
+      -- after=false, follow=false
+      nvim('put', {'line 1','line 2'}, 'c', false, false)
+      expect([[
+        Aline 1
+        line 2B]])
+      eq({0,1,2,0}, funcs.getpos('.'))
       eq('', nvim('eval', 'v:errmsg'))
     end)
   end)

@@ -1206,7 +1206,7 @@ Dictionary nvim_get_namespaces(void)
   return retval;
 }
 
-/// Inserts text at cursor.
+/// Puts text at cursor.
 ///
 /// Compare |:put| and |p| which are always linewise.
 ///
@@ -1216,10 +1216,11 @@ Dictionary nvim_get_namespaces(void)
 ///              - "c" |characterwise| mode
 ///              - "l" |linewise| mode
 ///              - ""  guess by contents
-/// @param direction  Behave like |P| instead of |p|
+/// @param after  Insert after cursor (like |p|), or before (like |P|).
+/// @param follow  Place cursor at end of inserted text.
 /// @param[out] err Error details, if any
-void nvim_put(ArrayOf(String) lines, String type, Boolean direction,
-              Error *err)
+void nvim_put(ArrayOf(String) lines, String type, Boolean after,
+              Boolean follow, Error *err)
   FUNC_API_SINCE(6)
 {
   yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
@@ -1249,9 +1250,10 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean direction,
   finish_yankreg_from_object(reg, false);
 
   bool VIsual_was_active = VIsual_active;
-  int flags = PUT_CURSEND;
   msg_silent++;  // Avoid "N more lines" message.
-  do_put(0, reg, direction ? BACKWARD : FORWARD, 1, flags);
+  do_put(0, reg,
+         after ? FORWARD : BACKWARD, 1,
+         follow ? PUT_CURSEND : 0);
   msg_silent--;
   VIsual_active = VIsual_was_active;
 

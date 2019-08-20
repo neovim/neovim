@@ -100,7 +100,7 @@ local function _paste(lines)
   local mode = call('mode', {})
   local curline = call('line', {'.'})
   -- vim.api.nvim_set_option('paste', true)
-  vim.api.nvim_put(lines, 'c', false)
+  vim.api.nvim_put(lines, 'c', true, true)
   -- vim.api.nvim_set_option('paste', false)
   -- TODO: do not redraw (slow!) until paste is finished.
   -- if eof then
