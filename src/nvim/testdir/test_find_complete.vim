@@ -3,8 +3,6 @@
 " Do all the tests in a separate window to avoid E211 when we recursively
 " delete the Xfind directory during cleanup
 func Test_find_complete()
-  let shellslash = &shellslash
-  set shellslash
   set belloff=all
 
   " On windows a stale "Xfind" directory may exist, remove it so that
@@ -162,5 +160,4 @@ func Test_find_complete()
   exe 'cd ' . cwd
   call delete('Xfind', 'rf')
   set path&
-  let &shellslash = shellslash
 endfunc

@@ -86,11 +86,8 @@ func Test_statusline()
   call assert_match('^Xstatusline\s*$', s:get_statusline())
 
   " %F: Full path to the file in the buffer.
-  let shellslash = &shellslash
-  set shellslash
   set statusline=%F
   call assert_match('/testdir/Xstatusline\s*$', s:get_statusline())
-  let &shellslash = shellslash
 
   " %h: Help buffer flag, text is "[help]".
   " %H: Help buffer flag, text is ",HLP".
