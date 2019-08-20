@@ -1645,19 +1645,22 @@ deleteFoldMarkers(
                 foldendmarkerlen);
 }
 
-/* foldDelMarker() {{{2 */
-/*
- * Delete marker "marker[markerlen]" at the end of line "lnum".
- * Delete 'commentstring' if it matches.
- * If the marker is not found, there is no error message.  Could a missing
- * close-marker.
- */
+// foldDelMarker() {{{2
+//
+// Delete marker "marker[markerlen]" at the end of line "lnum".
+// Delete 'commentstring' if it matches.
+// If the marker is not found, there is no error message.  Could be a missing
+// close-marker.
 static void foldDelMarker(linenr_T lnum, char_u *marker, size_t markerlen)
 {
   char_u      *newline;
   char_u      *cms = curbuf->b_p_cms;
   char_u      *cms2;
 
+  // end marker may be missing and fold extends below the last line
+  if (lnum > curbuf->b_ml.ml_line_count) {
+    return;
+  }
   char_u *line = ml_get(lnum);
   for (char_u *p = line; *p != NUL; ++p) {
     if (STRNCMP(p, marker, markerlen) != 0) {
@@ -2426,15 +2429,18 @@ static linenr_T foldUpdateIEMSRecurse(
    * lvl >= level: fold continues below "bot"
    */
 
-  /* Current fold at least extends until lnum. */
+  // Current fold at least extends until lnum.
   if (fp->fd_len < flp->lnum - fp->fd_top) {
     fp->fd_len = flp->lnum - fp->fd_top;
     fp->fd_small = kNone;
     fold_changed = true;
+  } else if (fp->fd_top + fp->fd_len > linecount) {
+    // running into the end of the buffer (deleted last line)
+    fp->fd_len = linecount - fp->fd_top + 1;
   }
 
-  /* Delete contained folds from the end of the last one found until where
-   * we stopped looking. */
+  // Delete contained folds from the end of the last one found until where
+  // we stopped looking.
   foldRemove(&fp->fd_nested, startlnum2 - fp->fd_top,
       flp->lnum - 1 - fp->fd_top);
 
