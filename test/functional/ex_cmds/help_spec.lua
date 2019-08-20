@@ -9,7 +9,6 @@ describe(':help', function()
   before_each(clear)
 
   it('window closed makes cursor return to a valid win/buf #9773', function()
-    command(string.format([[set rtp+=%s/runtime]], helpers.test_build_dir))
     command('help help')
     eq(1001, funcs.win_getid())
     command('quit')
