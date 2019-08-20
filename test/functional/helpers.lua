@@ -37,10 +37,7 @@ module.nvim_prog = (
 module.nvim_set = (
   'set shortmess+=IS background=light noswapfile noautoindent'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
-  ..' belloff= wildoptions-=pum noshowcmd noruler nomore'
-  -- Add runtime from build for ":help" to find build/runtime/doc/tags.
-  ..' rtp+='..string.format([[set rtp+=%s/runtime]], global_helpers.test_build_dir)
-  )
+  ..' belloff= wildoptions-=pum noshowcmd noruler nomore')
 module.nvim_argv = {
   module.nvim_prog, '-u', 'NONE', '-i', 'NONE',
   '--cmd', module.nvim_set, '--embed'}
