@@ -25,12 +25,14 @@ if helpers.pending_win32(pending) then return end
 
 describe('TUI', function()
   local screen
+  local child_session
 
   before_each(function()
     clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "'
-      ..nvim_set..' laststatus=2 background=dark'..'"]')
+    local child_server = helpers.new_pipename()
+    screen = thelpers.screen_setup(0,
+      string.format([=[["%s", "--listen", "%s", "-u", "NONE", "-i", "NONE", "--cmd", "%s laststatus=2 background=dark"]]=],
+        nvim_prog, child_server, nvim_set))
     screen:expect([[
       {1: }                                                 |
       {4:~                                                 }|
@@ -40,6 +42,7 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
+    child_session = helpers.connect(child_server)
   end)
 
   after_each(function()
