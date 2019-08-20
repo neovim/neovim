@@ -2,8 +2,6 @@
 
 " Test for 'include' without \zs or \ze
 func Test_checkpath1()
-  let save_shellslash = &shellslash
-  set shellslash
   call mkdir("Xdir1/dir2", "p")
   call writefile(['#include    "bar.a"'], 'Xdir1/dir2/foo.a')
   call writefile(['#include    "baz.a"'], 'Xdir1/dir2/bar.a')
@@ -27,7 +25,6 @@ func Test_checkpath1()
   call delete("./Xbase.a")
   call delete("Xdir1", "rf")
   set path&
-  let &shellslash = save_shellslash
 endfunc
 
 func DotsToSlashes()
@@ -36,8 +33,6 @@ endfunc
 
 " Test for 'include' with \zs and \ze
 func Test_checkpath2()
-  let save_shellslash = &shellslash
-  set shellslash
   call mkdir("Xdir1/dir2", "p")
   call writefile(['%inc    /bar/'], 'Xdir1/dir2/foo.b')
   call writefile(['%inc    /baz/'], 'Xdir1/dir2/bar.b')
@@ -66,7 +61,6 @@ func Test_checkpath2()
   set path&
   set include&
   set includeexpr&
-  let &shellslash = save_shellslash
 endfunc
 
 func StripNewlineChar()
@@ -78,8 +72,6 @@ endfunc
 
 " Test for 'include' with \zs and no \ze
 func Test_checkpath3()
-  let save_shellslash = &shellslash
-  set shellslash
   call mkdir("Xdir1/dir2", "p")
   call writefile(['%inc    bar.c'], 'Xdir1/dir2/foo.c')
   call writefile(['%inc    baz.c'], 'Xdir1/dir2/bar.c')
@@ -109,5 +101,4 @@ func Test_checkpath3()
   set path&
   set include&
   set includeexpr&
-  let &shellslash = save_shellslash
 endfunc
