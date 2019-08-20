@@ -740,3 +740,19 @@ func Test_folds_marker_in_comment2()
   set foldmethod&
   bwipe!
 endfunc
+
+func Test_fold_delete_with_marker()
+  new
+  call setline(1, ['func Func() {{{1', 'endfunc'])
+  1,2yank
+  new
+  set fdm=marker
+  call setline(1, 'x')
+  normal! Vp
+  normal! zd
+  call assert_equal(['func Func() ', 'endfunc'], getline(1, '$'))
+
+  set fdm&
+  bwipe!
+  bwipe!
+endfunc

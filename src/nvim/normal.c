@@ -7827,13 +7827,15 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
       // 'virtualedit' and past the end of the line, we use the 'c' operator in
       // do_put(), which requires the visual selection to still be active.
       if (!VIsual_active || VIsual_mode == 'V' || regname != '.') {
-        // Now delete the selected text.
+        // Now delete the selected text. Avoid messages here.
         cap->cmdchar = 'd';
         cap->nchar = NUL;
         cap->oap->regname = NUL;
+        msg_silent++;
         nv_operator(cap);
         do_pending_operator(cap, 0, false);
         empty = (curbuf->b_ml.ml_flags & ML_EMPTY);
+        msg_silent--;
 
         // delete PUT_LINE_BACKWARD;
         cap->oap->regname = regname;
@@ -7882,6 +7884,7 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
      * line that needs to be deleted now. */
     if (empty && *ml_get(curbuf->b_ml.ml_line_count) == NUL) {
       ml_delete(curbuf->b_ml.ml_line_count, true);
+      deleted_lines(curbuf->b_ml.ml_line_count + 1, 1);
 
       /* If the cursor was in that line, move it to the end of the last
        * line. */
