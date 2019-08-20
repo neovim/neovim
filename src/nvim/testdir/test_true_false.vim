@@ -134,8 +134,6 @@ func Test_non_zero_arg()
   " call test_settime(93784)
   " call Try_arg_non_zero("mode(%v%)", 'x', 'x!')
   " call test_settime(0)
-  let shellslash = &shellslash
-  set shellslash
 
   call Try_arg_non_zero("shellescape('foo%', %v%)", "'foo%'", "'foo\\%'")
 
@@ -154,6 +152,4 @@ func Test_non_zero_arg()
     let r = visualmode(v)
     call assert_equal('', r, 'result for ' . v . ' is not "" but ' . r)
   endfor
-
-  let &shellslash = shellslash
 endfunc
