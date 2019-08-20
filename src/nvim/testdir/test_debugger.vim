@@ -22,7 +22,7 @@ endfunc
 " Debugger tests
 func Test_Debugger()
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
   " Create a Vim script with some functions

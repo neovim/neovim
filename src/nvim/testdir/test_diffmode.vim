@@ -723,7 +723,7 @@ endfunc
 
 func Test_diff_with_cursorline()
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
   call writefile([
@@ -750,7 +750,7 @@ endfunc
 
 func Test_diff_of_diff()
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot run Vim in a terminal window'
   endif
   if !has("rightleft")
     throw 'Skipped: rightleft not supported'

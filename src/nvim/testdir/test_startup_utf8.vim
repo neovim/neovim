@@ -63,7 +63,7 @@ endfunc
 
 func Test_detect_ambiwidth()
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
   " Use the title termcap entries to output the escape sequence.

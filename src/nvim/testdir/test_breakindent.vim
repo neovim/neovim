@@ -5,7 +5,7 @@
 " It helps to change the tabstop setting and force a redraw (e.g. see
 " Test_breakindent08())
 if !exists('+breakindent')
-  finish
+  throw 'Skipped: breakindent option not supported'
 endif
 
 source view_util.vim

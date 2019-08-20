@@ -1,7 +1,7 @@
 " Tests for the +clientserver feature.
 
 if !has('job') || !has('clientserver')
-  finish
+  throw 'Skipped: job and/or clientserver feature missing'
 endif
 
 source shared.vim
