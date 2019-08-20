@@ -129,10 +129,10 @@ build/runtime/doc/tags helptags: | nvim
 helphtml: | nvim build/runtime/doc/tags
 	+$(BUILD_CMD) -C build doc_html
 
-functionaltest: | nvim build/runtime/doc/tags
+functionaltest: | nvim
 	+$(BUILD_CMD) -C build functionaltest
 
-functionaltest-lua: | nvim build/runtime/doc/tags
+functionaltest-lua: | nvim
 	+$(BUILD_CMD) -C build functionaltest-lua
 
 lualint: | build/.ran-cmake deps
