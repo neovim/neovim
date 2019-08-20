@@ -976,8 +976,8 @@ func Test_balloon_show()
 endfunc
 
 func Test_shellescape()
-  let [save_shell, save_shellslash] = [&shell, &shellslash]
-  set shell=bash shellslash
+  let save_shell = &shell
+  set shell=bash
   call assert_equal("'text'", shellescape('text'))
   call assert_equal("'te\"xt'", shellescape('te"xt'))
   call assert_equal("'te'\\''xt'", shellescape("te'xt"))
@@ -991,13 +991,13 @@ func Test_shellescape()
 
   call assert_equal("'te\nxt'", shellescape("te\nxt"))
   call assert_equal("'te\\\nxt'", shellescape("te\nxt", 1))
-  set shell=tcsh shellslash
+  set shell=tcsh
   call assert_equal("'te\\!xt'", shellescape("te!xt"))
   call assert_equal("'te\\\\!xt'", shellescape("te!xt", 1))
   call assert_equal("'te\\\nxt'", shellescape("te\nxt"))
   call assert_equal("'te\\\\\nxt'", shellescape("te\nxt", 1))
 
-  let [&shell, &shellslash] = [save_shell, save_shellslash]
+  let &shell = save_shell
 endfunc
 
 func Test_redo_in_nested_functions()
