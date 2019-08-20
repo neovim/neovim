@@ -139,8 +139,6 @@ func XlistTests(cchar)
 	      \ ' 5:50 col 25  55: one'], l)
 
   " Test for module names, one needs to explicitly set `'valid':v:true` so
-  let save_shellslash = &shellslash
-  set shellslash
   call g:Xsetlist([
         \ {'lnum':10,'col':5,'type':'W','module':'Data.Text','text':'ModuleWarning','nr':11,'valid':v:true},
         \ {'lnum':20,'col':10,'type':'W','module':'Data.Text','filename':'Data/Text.hs','text':'ModuleWarning','nr':22,'valid':v:true},
@@ -149,7 +147,6 @@ func XlistTests(cchar)
   call assert_equal([' 1 Data.Text:10 col 5 warning  11: ModuleWarning',
         \ ' 2 Data.Text:20 col 10 warning  22: ModuleWarning',
         \ ' 3 Data/Text.hs:30 col 15 warning  33: FileWarning'], l)
-  let &shellslash = save_shellslash
 
   " Error cases
   call assert_fails('Xlist abc', 'E488:')
