@@ -50,12 +50,7 @@ if 1
   catch  " Catch-all
   finally
     call writefile(output, 'test_result.log')  " overwrites an existing file
-    q!
   endtry
 endif
 
-" This is executed without the eval feature
-%d
-r test.log
-w test_result.log
 q!
