@@ -2,8 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command, eval = helpers.command, helpers.eval
-local eq = helpers.eq
+local command = helpers.command
 
 describe('ui mode_change event', function()
   local screen
