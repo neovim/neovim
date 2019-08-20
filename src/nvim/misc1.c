@@ -61,7 +61,7 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "misc1.c.generated.h"
 #endif
-/* All user names (for ~user completion as done by shell). */
+// All user names (for ~user completion as done by shell).
 static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 
 /*
