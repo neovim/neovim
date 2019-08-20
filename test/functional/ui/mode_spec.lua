@@ -2,8 +2,7 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local command, eval = helpers.command, helpers.eval
-local eq = helpers.eq
+local command = helpers.command
 
 describe('ui mode_change event', function()
   local screen
@@ -63,7 +62,7 @@ describe('ui mode_change event', function()
     ]], mode="normal"}
 
     command("set showmatch")
-    eq(eval('&matchtime'), 5) -- tenths of seconds
+    command("set matchtime=1") -- tenths of seconds
     feed('a(stuff')
     screen:expect{grid=[[
       word(stuff^               |
@@ -80,7 +79,6 @@ describe('ui mode_change event', function()
       {2:-- INSERT --}             |
     ]], mode="showmatch"}
 
-    screen:sleep(400)
     screen:expect{grid=[[
       word(stuff)^              |
       {0:~                        }|
