@@ -500,7 +500,8 @@ function Screen:_wait(check, flags)
   local did_miminal_timeout = false
 
   local function notification_cb(method, args)
-    assert(method == 'redraw')
+    assert(method == 'redraw', string.format(
+      'notification_cb: unexpected method (%s, args=%s)', method, inspect(args)))
     did_flush = self:_redraw(args)
     if not did_flush then
       return
