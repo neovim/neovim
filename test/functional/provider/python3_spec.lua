@@ -98,7 +98,6 @@ describe('python3 provider', function()
 
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
     -- Add runtime from build dir for doc/tags (used with :help).
-    -- Without this it hangs on Travis, but not locally?!
     command(string.format([[set rtp+=%s/runtime]], helpers.test_build_dir))
 
     source([=[
