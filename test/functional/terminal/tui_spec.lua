@@ -190,9 +190,16 @@ describe('TUI', function()
   end)
 
   it('paste: exactly 64 bytes #10311', function()
+    local expected = string.rep('z', 64)
     -- "bracketed paste"
-    feed_data('i\027[200~'..string.rep('z', 64)..'\027[201~')
+    feed_data('i\027[200~'..expected..'\027[201~')
     feed_data(' end')
+    expected = expected..' end'
+    retry(nil, nil, function()
+      local _, buflines = child_session:request(
+        'nvim_buf_get_lines', 0, 0, -1, false)
+      eq({expected}, buflines)
+    end)
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz end{1: }                               |
@@ -210,9 +217,13 @@ describe('TUI', function()
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
-    local expected = table.concat(t, '\n')
     -- "bracketed paste"
-    feed_data('i\027[200~'..expected..'\027[201~')
+    feed_data('i\027[200~'..table.concat(t, '\n')..'\027[201~')
+    retry(nil, nil, function()
+      local _, buflines = child_session:request(
+        'nvim_buf_get_lines', 0, 0, -1, false)
+      eq(t, buflines)
+    end)
     feed_data(' end')
     screen:expect([[
       item 2997                                         |

@@ -382,6 +382,7 @@ describe('API', function()
         line 1
         line 2
         line 3]])
+      command('1')
       -- blockwise
       nvim('put', {'AA','BB'}, 'b', false)
       expect([[
