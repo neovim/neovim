@@ -25,7 +25,7 @@
 void tinput_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
-  input->paste_enabled = false;
+  input->paste = 0;
   input->in_fd = 0;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
@@ -130,19 +130,20 @@ static void tinput_wait_enqueue(void **argv)
   TermInput *input = argv[0];
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
     const String keys = { .data = buf, .size = len };
-    if (input->paste_enabled) {
-      Object keys_array = ARRAY_OBJ(string_to_array(keys));
-      Array args = { .capacity = 1, .size = 1, .items = &keys_array };
+    if (input->paste) {
       Error err = ERROR_INIT;
-      Object fret
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, ARRAY_OBJ(string_to_array(keys)));
+      ADD(args, INTEGER_OBJ(input->paste));
+      Object rv
         = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
                            args, &err);
-      if (fret.type != kObjectTypeBoolean || !fret.data.boolean) {
-        // Abort paste if handler does not return true.
-        input->paste_enabled = false;
-      }
-      api_free_object(fret);
-      api_free_object(keys_array);
+      input->paste = (rv.type == kObjectTypeBoolean && rv.data.boolean)
+        ? 2   // Paste phase: "continue".
+        : 0;  // Abort paste if handler does not return true.
+
+      api_free_object(rv);
+      api_free_array(args);
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
       if (ERROR_SET(&err)) {
@@ -392,18 +393,27 @@ static bool handle_bracketed_paste(TermInput *input)
       && (!rbuffer_cmp(input->read_stream.buffer, "\x1b[200~", 6)
           || !rbuffer_cmp(input->read_stream.buffer, "\x1b[201~", 6))) {
     bool enable = *rbuffer_get(input->read_stream.buffer, 4) == '0';
-    if (input->paste_enabled && enable) {
-      // Pasting "enable paste" code literally.
-      return false;
+    if (input->paste && enable) {
+      return false;  // Pasting "start paste" code literally.
     }
     // Advance past the sequence
     rbuffer_consumed(input->read_stream.buffer, 6);
-    if (input->paste_enabled == enable) {
-      return true;
+    if (!!input->paste == enable) {
+      return true;  // Spurious "disable paste" code.
     }
 
-    tinput_flush(input, true);
-    input->paste_enabled = enable;
+    if (enable) {
+      // Flush before starting paste.
+      tinput_flush(input, true);
+      // Paste phase: "first-chunk".
+      input->paste = 1;
+    } else {
+      // Paste phase: "last-chunk".
+      input->paste = 3;
+      tinput_flush(input, true);
+      // Paste phase: "disabled".
+      input->paste = 0;
+    }
     return true;
   }
   return false;
@@ -548,7 +558,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
       }
     }
     // Push bytes directly (paste).
-    if (input->paste_enabled) {
+    if (input->paste) {
       RBUFFER_UNTIL_EMPTY(input->read_stream.buffer, ptr, len) {
         size_t consumed = MIN(count, len);
         assert(consumed <= input->read_stream.buffer->size);

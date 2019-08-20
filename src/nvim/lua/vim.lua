@@ -94,19 +94,39 @@ local function _os_proc_children(ppid)
 end
 
 -- Default paste function.
-local function _paste(lines)
-  -- local eof = (lines == {''})
-  local call = vim.api.nvim_call_function
-  local mode = call('mode', {})
-  local curline = call('line', {'.'})
-  -- vim.api.nvim_set_option('paste', true)
-  vim.api.nvim_put(lines, 'c', true, true)
-  -- vim.api.nvim_set_option('paste', false)
-  -- TODO: do not redraw (slow!) until paste is finished.
-  -- if eof then
-  vim.api.nvim_command('redraw')
-  return true  -- Paste will not continue if not returning `true`.
-end
+local _paste = (function()
+  local tdots = 0
+  local tredraw = 0
+  local tick = 0
+  return function(lines, phase)
+    local call = vim.api.nvim_call_function
+    local now = vim.loop.now()
+    if phase == 1 then
+      tdots = now
+      tredraw = now
+      tick = 0
+      if (call('mode', {})):find('[vV]') then
+        vim.api.nvim_feedkeys('', 'n', false)
+      end
+    end
+    vim.api.nvim_put(lines, 'c', true, true)
+    if (now - tredraw >= 1000) or phase == 1 or phase == 3 then
+      tredraw = now
+      vim.api.nvim_command('redraw')
+      vim.api.nvim_command('redrawstatus')
+    end
+    if (now - tdots >= 100) then
+      local dots = ('.'):rep(tick % 4)
+      tdots = now
+      tick = tick + 1
+      vim.api.nvim_command(('echo "%s"'):format(dots))
+    end
+    if phase == 3 then
+      vim.api.nvim_command('echo ""')
+    end
+    return true  -- Paste will not continue if not returning `true`.
+  end
+end)()
 
 -- TODO(ZyX-I): Create compatibility layer.
 --{{{1 package.path updater function
