@@ -41,7 +41,7 @@ func! Test_display_foldcolumn()
 endfunc
 
 func! Test_display_foldtext_mbyte()
-  if !has("folding") || !has("multi_byte")
+  if !has("folding")
     return
   endif
   call NewWindow(10, 40)

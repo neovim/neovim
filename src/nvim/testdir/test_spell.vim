@@ -137,10 +137,8 @@ func Test_spellinfo()
   set enc=cp1250 spell spelllang=en
   call assert_match("^\nfile: .*/runtime/spell/en.ascii.spl\n$", execute('spellinfo'))
 
-  if has('multi_byte')
-    set enc=utf-8 spell spelllang=en
-    call assert_match("^\nfile: .*/runtime/spell/en.utf-8.spl\n$", execute('spellinfo'))
-  endif
+  set enc=utf-8 spell spelllang=en
+  call assert_match("^\nfile: .*/runtime/spell/en.utf-8.spl\n$", execute('spellinfo'))
 
   set enc=latin1 spell spelllang=en_us,en_nz
   call assert_match("^\n" .

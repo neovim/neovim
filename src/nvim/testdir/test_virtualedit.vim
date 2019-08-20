@@ -48,11 +48,9 @@ func Test_replace_end_of_line()
   call setline(1, range(20))
   exe "normal! gg2jv10lr-"
   call assert_equal(["1", "-----------", "3"], getline(2,4))
-  if has('multi_byte')
-    call setline(1, range(20))
-    exe "normal! gg2jv10lr\<c-k>hh"
-    call assert_equal(["1", "───────────", "3"], getline(2,4))
-  endif
+  call setline(1, range(20))
+  exe "normal! gg2jv10lr\<c-k>hh"
+  call assert_equal(["1", "───────────", "3"], getline(2,4))
 
   bwipe!
   set virtualedit=

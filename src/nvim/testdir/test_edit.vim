@@ -37,12 +37,10 @@ func! Test_edit_01()
   call assert_equal([''], getline(1,'$'))
   %d
   " 4) delete a multibyte character
-  if has("multi_byte")
-    call setline(1, "\u0401")
-    call feedkeys("i\<del>\<esc>", 'tnix')
-    call assert_equal([''], getline(1,'$'))
-    %d
-  endif
+  call setline(1, "\u0401")
+  call feedkeys("i\<del>\<esc>", 'tnix')
+  call assert_equal([''], getline(1,'$'))
+  %d
   " 5.1) delete linebreak with 'bs' option containing eol
   let _bs=&bs
   set bs=eol
@@ -452,7 +450,7 @@ endfunc
 
 func! Test_edit_CTRL_()
   " disabled for Windows builds, why?
-  if !has("multi_byte") || !has("rightleft") || has("win32")
+  if !has("rightleft") || has("win32")
     return
   endif
   let _encoding=&encoding
@@ -620,7 +618,7 @@ func! Test_edit_CTRL_K()
   endtry
   call delete('Xdictionary.txt')
 
-  if has("multi_byte") && !has("nvim")
+  if exists('*test_override')
     call test_override("char_avail", 1)
     set showcmd
     %d

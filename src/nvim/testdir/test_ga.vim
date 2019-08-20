@@ -21,10 +21,6 @@ func Test_ga_command()
 
   call assert_equal("\n<e>  101,  Hex 65,  Octal 145",   Do_ga('e'))
 
-  if !has('multi_byte')
-    return
-  endif
-
   " Test a few multi-bytes characters.
   call assert_equal("\n<é> 233, Hex 00e9, Oct 351, Digr e'",    Do_ga('é'))
   call assert_equal("\n<ẻ> 7867, Hex 1ebb, Oct 17273, Digr e2", Do_ga('ẻ'))

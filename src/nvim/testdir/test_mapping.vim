@@ -1,9 +1,5 @@
 " Tests for mappings and abbreviations
 
-if !has('multi_byte')
-  finish
-endif
-
 source shared.vim
 
 func Test_abbreviation()

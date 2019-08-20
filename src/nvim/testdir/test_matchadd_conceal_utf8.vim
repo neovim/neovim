@@ -1,5 +1,5 @@
 " Test for matchadd() and conceal feature using utf-8.
-if !has('conceal') || !has('multi_byte')
+if !has('conceal')
   finish
 endif
 

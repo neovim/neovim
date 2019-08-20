@@ -1,7 +1,4 @@
 " Tests for startup using utf-8.
-if !has('multi_byte')
-  finish
-endif
 
 source shared.vim
 " source screendump.vim

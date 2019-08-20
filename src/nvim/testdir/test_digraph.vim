@@ -1,6 +1,6 @@
 " Tests for digraphs
 
-if !has("digraphs") || !has("multi_byte")
+if !has("digraphs")
   finish
 endif
 

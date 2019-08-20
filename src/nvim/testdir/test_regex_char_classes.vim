@@ -1,9 +1,6 @@
 " Tests for regexp with backslash and other special characters inside []
 " Also test backslash for hex/octal numbered character.
 "
-if !has('multi_byte')
-  finish
-endif
 
 scriptencoding utf-8
 

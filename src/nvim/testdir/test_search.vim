@@ -480,9 +480,6 @@ endfunc
 
 " Test for search('multi-byte char', 'bce')
 func Test_search_multibyte()
-  if !has('multi_byte')
-    return
-  endif
   let save_enc = &encoding
   set encoding=utf8
   enew!

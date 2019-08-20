@@ -1,7 +1,4 @@
 " Tests for related f{char} and t{char} using utf-8.
-if !has('multi_byte')
-  finish
-endif
 
 " Test for t,f,F,T movement commands
 function! Test_search_cmds()
