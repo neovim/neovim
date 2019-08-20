@@ -1256,7 +1256,9 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean direction,
     // TODO: fix VIsual when cursor is before, or emulate the delete as well
     flags |= lt(VIsual, curwin->w_cursor) ? PUT_CURSEND : 0;
   }
+  msg_silent++;  // Avoid "N more lines" message.
   do_put(0, reg, direction ? BACKWARD : FORWARD, 1, flags);
+  msg_silent--;
   VIsual_active = VIsual_was_active;
 
 cleanup:
