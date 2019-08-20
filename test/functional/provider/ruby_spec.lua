@@ -105,9 +105,6 @@ describe('ruby provider', function()
     command(string.format([[set rtp+=%s/runtime]], helpers.test_build_dir))
 
     command([=[autocmd BufDelete * ruby VIM::evaluate('expand("<afile>")')]=])
-    command('enew')
-    command('set buftype=help')
-    eq('TEST', eval('tagfiles()'))
     feed_command('help help')
     eq(2, eval('1+1'))  -- Still alive?
   end)
