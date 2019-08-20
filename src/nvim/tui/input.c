@@ -104,9 +104,9 @@ static Array string_to_array(const String input)
 {
   Array ret = ARRAY_DICT_INIT;
   for (size_t i = 0; i < input.size; i++) {
-    const char *const start = input.data + i;
-    const size_t line_len
-      = (size_t)((char *)xmemscan(start, NL, input.size - i) - start);
+    const char *start = input.data + i;
+    const char *end = xmemscan(start, NL, input.size - i);
+    const size_t line_len = (size_t)(end - start);
     i += line_len;
 
     String s = {
@@ -115,6 +115,11 @@ static Array string_to_array(const String input)
     };
     memchrsub(s.data, NUL, NL, line_len);
     ADD(ret, STRING_OBJ(s));
+    // If line ends at end-of-buffer, add empty final item.
+    // This is "readfile()-style", see also ":help channel-lines".
+    if (i + 1 == input.size && end[0] == NL) {
+      ADD(ret, STRING_OBJ(cchar_to_string(NUL)));
+    }
   }
 
   return ret;

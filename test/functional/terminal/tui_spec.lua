@@ -189,20 +189,20 @@ describe('TUI', function()
   it('paste: exactly 64 bytes #10311', function()
     -- "bracketed paste"
     feed_data('i\027[200~'..string.rep('z', 64)..'\027[201~')
-    feed_data('\003')  -- CTRL-C
+    feed_data(' end')
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
-      zzzzzzzzzzzzz{1:z}                                    |
+      zzzzzzzzzzzzzz end{1: }                               |
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
-                                                        |
+      {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
   end)
 
   it('paste: big burst of input', function()
-    feed_command('set ruler')
+    feed_data(':set ruler\013')
     local t = {}
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
@@ -210,12 +210,13 @@ describe('TUI', function()
     local expected = table.concat(t, '\n')
     -- "bracketed paste"
     feed_data('i\027[200~'..expected..'\027[201~')
+    feed_data(' end')
     screen:expect([[
       item 2997                                         |
       item 2998                                         |
       item 2999                                         |
-      item 3000{1: }                                        |
-      {5:[No Name] [+]                   3000,10        Bot}|
+      item 3000 end{1: }                                    |
+      {5:[No Name] [+]                   3000,14        Bot}|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])

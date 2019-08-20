@@ -1210,9 +1210,13 @@ Dictionary nvim_get_namespaces(void)
 ///
 /// Compare |:put| and |p| which are always linewise.
 ///
-/// @param lines contents
-/// @param type type ("c", "l", "b") or empty to guess from contents
-/// @param direction behave like |P| instead of |p|
+/// @param lines  |readfile()|-style list of lines. |channel-lines|
+/// @param type  Edit behavior:
+///              - "b" |blockwise-visual| mode
+///              - "c" |characterwise| mode
+///              - "l" |linewise| mode
+///              - ""  guess by contents
+/// @param direction  Behave like |P| instead of |p|
 /// @param[out] err Error details, if any
 void nvim_put(ArrayOf(String) lines, String type, Boolean direction,
               Error *err)
