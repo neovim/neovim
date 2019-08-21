@@ -233,7 +233,7 @@ describe('timers', function()
       {0:~                                       }|
       {0:~                                       }|
       :good^                                   |
-    ]]}
+    ]], intermediate=true}
   end)
 
 end)
