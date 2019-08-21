@@ -20240,7 +20240,8 @@ static void check_vars(const char *name, size_t len)
   const char *varname;
   hashtab_T *ht = find_var_ht(name, len, &varname);
 
-  if (ht == get_funccal_local_ht() || ht == get_funccal_args_ht()) {
+  if (ht == get_funccal_local_ht(current_funccal)
+      || ht == get_funccal_args_ht()) {
     if (find_var(name, len, NULL, true) != NULL) {
       *eval_lavars_used = true;
     }
@@ -20483,7 +20484,7 @@ static dictitem_T *find_var_in_ht(hashtab_T *const ht,
 }
 
 // Get function call environment based on backtrace debug level
-static funccall_T *get_funccal(void)
+funccall_T *get_funccal(void)
 {
   funccall_T *funccal = current_funccal;
   if (debug_backtrace_level > 0) {
@@ -20501,6 +20502,17 @@ static funccall_T *get_funccal(void)
   return funccal;
 }
 
+/// Get parent scope funccall_T for the given funccall_T (closure).
+///
+/// @param[in]  fc  Pointer to funccall_T to get parent scope of.
+///
+/// @return Pointer to parent scope funccall_T of "fc" or NULL.
+funccall_T *get_funccal_parent_scope(funccall_T *fc)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return fc->func->uf_scoped;
+}
+
 /// Return the hashtable used for argument in the current funccal.
 /// Return NULL if there is no current funccal.
 static hashtab_T *get_funccal_args_ht(void)
@@ -20511,14 +20523,15 @@ static hashtab_T *get_funccal_args_ht(void)
   return &get_funccal()->l_avars.dv_hashtab;
 }
 
-/// Return the hashtable used for local variables in the current funccal.
-/// Return NULL if there is no current funccal.
-hashtab_T *get_funccal_local_ht(void)
+/// Return the hashtable used for local variables in the given funccal.
+///
+/// @param[in]  fc  Pointer to funccall_T.
+///
+/// @return Hashtable used for local variables in "fc".
+///         NULL if "fc" is NULL.
+hashtab_T *get_funccal_local_ht(funccall_T *fc)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->l_vars.dv_hashtab;
+  return fc ? &fc->l_vars.dv_hashtab : NULL;
 }
 
 /// Find the dict and hashtable used for a variable

@@ -15,6 +15,8 @@ local trim = helpers.trim
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 
+local NIL = helpers.NIL
+
 describe('context functions', function()
   local fname1 = 'Xtest-functional-eval-ctx1'
   local fname2 = 'Xtest-functional-eval-ctx2'
@@ -235,6 +237,105 @@ describe('context functions', function()
       eq({1, 2, 3}, eval('g:vars3'))
       eq({0, 0, 0}, eval('g:vars4'))
       eq({1, 2, 3}, eval('g:vars5'))
+    end)
+
+    it('saves and restores parent-scope variables for closures', function()
+      source([[
+      let g:states = []
+
+      function Parent()
+        function! PushState(...) closure
+          call add(g:states, map(deepcopy(a:000),
+           \                     'exists(v:val) ? eval(v:val) : v:null'))
+        endfunction
+
+        let name = 'Parent'
+        let parent_data = 'Parent data'
+        call ctxpush(['lvars'])
+        call PushState('l:name', 'l:parent_data')
+
+        unlet l:name l:parent_data
+        call PushState('l:name', 'l:parent_data')
+
+        call ctxpop()
+        call PushState('l:name', 'l:parent_data')
+
+        function! NotClosure()
+          function! PushState(...) closure
+            call add(g:states, map(deepcopy(a:000),
+             \                     'exists(v:val) ? eval(v:val) : v:null'))
+          endfunction
+
+          let name = 'NotClosure'
+          call ctxpush(['lvars'])
+          call PushState('l:name', 'l:parent_data')
+
+          unlet l:name
+          call PushState('l:name', 'l:parent_data')
+
+          call ctxpop()
+          call PushState('l:name', 'l:parent_data')
+        endfunction
+
+        function! Closure1() closure
+          function! PushState(...) closure
+            call add(g:states, map(deepcopy(a:000),
+             \                     'exists(v:val) ? eval(v:val) : v:null'))
+          endfunction
+
+          let name = 'Closure1'
+          let closure1_data = 'Closure1 data'
+          call ctxpush(['lvars'])
+          call PushState('l:name', 'l:parent_data', 'l:closure1_data')
+
+          unlet l:name l:parent_data l:closure1_data
+          call PushState('l:name', 'l:parent_data', 'l:closure1_data')
+
+          call ctxpop()
+          call PushState('l:name', 'l:parent_data', 'l:closure1_data')
+
+          function! Closure2() closure
+            function! PushState(...) closure
+              call add(g:states, map(deepcopy(a:000),
+               \                     'exists(v:val) ? eval(v:val) : v:null'))
+            endfunction
+
+            let name = 'Closure2'
+            let closure2_data = 'Closure2 data'
+            call ctxpush(['lvars'])
+            call PushState('l:name', 'l:parent_data', 'l:closure1_data',
+             \             'l:closure2_data')
+
+            unlet l:name l:parent_data l:closure1_data l:closure2_data
+            call PushState('l:name', 'l:parent_data', 'l:closure1_data',
+             \             'l:closure2_data')
+
+            call ctxpop()
+            call PushState('l:name', 'l:parent_data', 'l:closure1_data',
+             \             'l:closure2_data')
+          endfunction
+        endfunction
+      endfunction
+
+      call Parent()
+      call NotClosure()
+      call Closure1()
+      call Closure2()
+      ]])
+
+      eq({{'Parent', 'Parent data'},
+          {NIL, NIL},
+          {'Parent', 'Parent data'},
+          {'NotClosure', NIL},
+          {NIL, NIL},
+          {'NotClosure', NIL},
+          {'Closure1', 'Parent data', 'Closure1 data'},
+          {NIL, NIL, NIL},
+          {'Closure1', 'Parent data', 'Closure1 data'},
+          {'Closure2', 'Parent data', 'Closure1 data', 'Closure2 data'},
+          {NIL, NIL, NIL, NIL},
+          {'Closure2', 'Parent data', 'Closure1 data', 'Closure2 data'}},
+         eval('g:states'))
     end)
 
     it('saves and restores script functions properly', function()
