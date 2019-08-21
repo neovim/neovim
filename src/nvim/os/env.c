@@ -412,6 +412,7 @@ void expand_env_esc(char_u *restrict srcp,
                     bool esc,
                     bool one,
                     char_u *prefix)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   char_u      *tail;
   char_u      *var;

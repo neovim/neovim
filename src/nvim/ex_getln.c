@@ -4212,24 +4212,24 @@ static int showmatches(expand_T *xp, int wildmenu)
             || xp->xp_context == EXPAND_BUFFERS) {
           /* highlight directories */
           if (xp->xp_numfiles != -1) {
-            char_u  *halved_slash;
-            char_u  *exp_path;
-
-            /* Expansion was done before and special characters
-             * were escaped, need to halve backslashes.  Also
-             * $HOME has been replaced with ~/. */
-            exp_path = expand_env_save_opt(files_found[k], TRUE);
-            halved_slash = backslash_halve_save(
-                exp_path != NULL ? exp_path : files_found[k]);
+            // Expansion was done before and special characters
+            // were escaped, need to halve backslashes.  Also
+            // $HOME has been replaced with ~/.
+            char_u *exp_path = expand_env_save_opt(files_found[k], true);
+            char_u *path = exp_path != NULL ? exp_path : files_found[k];
+            char_u *halved_slash = backslash_halve_save(path);
             j = os_isdir(halved_slash);
             xfree(exp_path);
-            xfree(halved_slash);
-          } else
-            /* Expansion was done here, file names are literal. */
+            if (halved_slash != path) {
+              xfree(halved_slash);
+            }
+          } else {
+            // Expansion was done here, file names are literal.
             j = os_isdir(files_found[k]);
-          if (showtail)
+          }
+          if (showtail) {
             p = L_SHOWFILE(k);
-          else {
+          } else {
             home_replace(NULL, files_found[k], NameBuff, MAXPATHL,
                 TRUE);
             p = NameBuff;

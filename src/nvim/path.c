@@ -1262,7 +1262,10 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       } else {
         addfile(&ga, t, flags);
       }
-      xfree(t);
+
+      if (t != p) {
+        xfree(t);
+      }
     }
 
     if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH))
