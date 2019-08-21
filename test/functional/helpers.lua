@@ -445,6 +445,8 @@ function module.new_argv(...)
       for _, k in ipairs({
         'HOME',
         'ASAN_OPTIONS',
+        'TSAN_OPTIONS',
+        'MSAN_OPTIONS',
         'LD_LIBRARY_PATH',
         'PATH',
         'NVIM_LOG_FILE',
