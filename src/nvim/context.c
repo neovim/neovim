@@ -119,9 +119,21 @@ void ctx_save(Context *ctx, const int flags)
     ctx_save_vars(&curtab->tp_vars->dv_hashtab, ctx, "t:");
   }
 
-  hashtab_T *funccal_local_ht = get_funccal_local_ht();
-  if ((flags & kCtxLVars) && funccal_local_ht) {
-    ctx_save_vars(funccal_local_ht, ctx, "l:");
+  if (flags & kCtxLVars) {
+    hashtab_T lvar_ht;
+    hash_init(&lvar_ht);
+    funccall_T *current_scope = get_funccal();
+    while (current_scope) {
+      HASHTAB_ITER(get_funccal_local_ht(current_scope), hi, {
+        hashitem_T *lvar_hi = hash_find(&lvar_ht, hi->hi_key);
+        if (HASHITEM_EMPTY(lvar_hi)) {
+          lvar_hi->hi_key = hi->hi_key;
+        }
+      });
+      current_scope = get_funccal_parent_scope(current_scope);
+    }
+    ctx_save_vars(&lvar_ht, ctx, "l:");
+    hash_clear(&lvar_ht);
   }
 
   if (flags & kCtxFuncs) {
