@@ -139,7 +139,7 @@ if ($uploadToCodecov) {
 # But would break functionaltests, where its `more` would be used then.
 $OldPath = $env:PATH
 $env:PATH = "C:\msys64\usr\bin;$env:PATH"
-& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1
+& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
 $env:PATH = $OldPath
 
 if ($uploadToCodecov) {
