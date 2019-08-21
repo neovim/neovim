@@ -2353,14 +2353,15 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
       }
 
       if (lp->ll_di == NULL) {
-        /* Can't add "v:" variable. */
-        if (lp->ll_dict == &vimvardict) {
+        // Can't add "v:" or "a:" variable.
+        if (lp->ll_dict == &vimvardict
+            || &lp->ll_dict->dv_hashtab == get_funccal_args_ht()) {
           EMSG2(_(e_illvar), name);
           tv_clear(&var1);
           return NULL;
         }
 
-        /* Key does not exist in dict: may need to add it. */
+        // Key does not exist in dict: may need to add it.
         if (*p == '[' || *p == '.' || unlet) {
           if (!quiet) {
             emsgf(_(e_dictkey), key);
@@ -20489,8 +20490,8 @@ static void set_var_const(const char *name, const size_t name_len,
     }
     tv_clear(&v->di_tv);
   } else {  // Add a new variable.
-    // Can't add "v:" variable.
-    if (ht == &vimvarht) {
+    // Can't add "v:" or "a:" variable.
+    if (ht == &vimvarht || ht == get_funccal_args_ht()) {
       emsgf(_(e_illvar), name);
       return;
     }
@@ -22622,7 +22623,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     name = v->di_key;
     STRCPY(name, "self");
 #endif
-    v->di_flags = DI_FLAGS_RO + DI_FLAGS_FIX;
+    v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     tv_dict_add(&fc->l_vars, v);
     v->di_tv.v_type = VAR_DICT;
     v->di_tv.v_lock = 0;
@@ -22638,6 +22639,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   init_var_dict(&fc->l_avars, &fc->l_avars_var, VAR_SCOPE);
   add_nr_var(&fc->l_avars, (dictitem_T *)&fc->fixvar[fixvar_idx++], "0",
              (varnumber_T)(argcount - fp->uf_args.ga_len));
+  fc->l_avars.dv_lock = VAR_FIXED;
   // Use "name" to avoid a warning from some compiler that checks the
   // destination size.
   v = (dictitem_T *)&fc->fixvar[fixvar_idx++];

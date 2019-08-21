@@ -4183,7 +4183,7 @@ static int ins_compl_get_exp(pos_T *ini)
                 if (tmp_ptr - ptr >= IOSIZE - len) {
                   tmp_ptr = ptr + IOSIZE - len - 1;
                 }
-                STRNCPY(IObuff + len, ptr, tmp_ptr - ptr);
+                STRLCPY(IObuff + len, ptr, IOSIZE - len);
                 len += (int)(tmp_ptr - ptr);
                 flags |= CONT_S_IPOS;
               }

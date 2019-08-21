@@ -666,7 +666,7 @@ describe('list and dictionary types', function()
       Vim(put):E741: 
       {'a': 99, 'b': 100}
       No remove() of write-protected scope-level variable:
-      Vim(put):E795: 
+      Vim(put):E742: 
       No extend() of write-protected scope-level variable:
       Vim(put):E742: 
       No :unlet of variable in locked scope:
