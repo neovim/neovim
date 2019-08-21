@@ -1285,28 +1285,7 @@ Dictionary nvim_get_context(Array types)
   } else {
     for (size_t i = 0; i < types.size; i++) {
       if (types.items[i].type == kObjectTypeString) {
-        const char *const current = types.items[i].data.string.data;
-        if (strequal(current, "regs")) {
-          int_types |= kCtxRegs;
-        } else if (strequal(current, "jumps")) {
-          int_types |= kCtxJumps;
-        } else if (strequal(current, "buflist")) {
-          int_types |= kCtxBuflist;
-        } else if (strequal(current, "svars")) {
-          int_types |= kCtxSVars;
-        } else if (strequal(current, "gvars")) {
-          int_types |= kCtxGVars;
-        } else if (strequal(current, "bvars")) {
-          int_types |= kCtxBVars;
-        } else if (strequal(current, "wvars")) {
-          int_types |= kCtxWVars;
-        } else if (strequal(current, "tvars")) {
-          int_types |= kCtxTVars;
-        } else if (strequal(current, "sfuncs")) {
-          int_types |= kCtxSFuncs;
-        } else if (strequal(current, "funcs")) {
-          int_types |= kCtxFuncs;
-        }
+        CONTEXT_TYPE_FROM_STR(int_types, types.items[i].data.string.data);
       }
     }
   }

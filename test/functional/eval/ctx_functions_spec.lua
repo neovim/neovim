@@ -122,9 +122,9 @@ describe('context functions', function()
       call('SExec', [[unlet s:one]])
       call('SExec', [[unlet s:Two]])
       call('SExec', [[unlet s:THREE]])
-      expect_err('E121: Undefined variable: s:one', eval, 'SEval(s:one)')
-      expect_err('E121: Undefined variable: s:Two', eval, 'SEval(s:Two)')
-      expect_err('E121: Undefined variable: s:THREE', eval, 'SEval(s:THREE)')
+      expect_err('E121: Undefined variable: s:one', eval, [[SEval('s:one')]])
+      expect_err('E121: Undefined variable: s:Two', eval, [[SEval('s:Two')]])
+      expect_err('E121: Undefined variable: s:THREE', eval, [[SEval('s:THREE')]])
 
       call('SEval', [[ctxpop()]])
       eq({1, 2 ,3},
@@ -133,9 +133,9 @@ describe('context functions', function()
       call('SExec', [[unlet s:one]])
       call('SExec', [[unlet s:Two]])
       call('SExec', [[unlet s:THREE]])
-      expect_err('E121: Undefined variable: s:one', eval, 'SEval(s:one)')
-      expect_err('E121: Undefined variable: s:Two', eval, 'SEval(s:Two)')
-      expect_err('E121: Undefined variable: s:THREE', eval, 'SEval(s:THREE)')
+      expect_err('E121: Undefined variable: s:one', eval, [[SEval('s:one')]])
+      expect_err('E121: Undefined variable: s:Two', eval, [[SEval('s:Two')]])
+      expect_err('E121: Undefined variable: s:THREE', eval, [[SEval('s:THREE')]])
 
       call('SEval', [[timer_start(0, { -> ctxpop() })]])
       eq({1, 2 ,3},
@@ -192,6 +192,42 @@ describe('context functions', function()
 
       call('ctxpop')
       eq({1, 2 ,3}, eval('[b:one, w:Two, t:THREE]'))
+    end)
+
+    it('saves and restores function-local variables properly', function()
+      source([[
+      function Test()
+        let l:one = 1
+        let l:Two = 2
+        let THREE = 3
+
+        let g:vars1 = [l:one, l:Two, l:THREE]
+        call ctxpush()
+        call ctxset(filter(ctxget(), 'v:key != "funcs"'))
+        call ctxpush(['lvars'])
+
+        unlet l:one l:Two l:THREE
+        let g:vars2 =
+         \ map(['l:one', 'l:Two', 'l:THREE'], 'exists(v:val) ? {v:val} : 0')
+
+        call ctxpop()
+        let g:vars3 = [l:one, l:Two, l:THREE]
+
+        unlet l:one l:Two l:THREE
+        let g:vars4 =
+         \ map(['l:one', 'l:Two', 'l:THREE'], 'exists(v:val) ? {v:val} : 0')
+
+        call ctxpop()
+        let g:vars5 = [l:one, l:Two, l:THREE]
+      endfunction
+      call Test()
+      ]])
+
+      eq({1, 2, 3}, eval('g:vars1'))
+      eq({0, 0, 0}, eval('g:vars2'))
+      eq({1, 2, 3}, eval('g:vars3'))
+      eq({0, 0, 0}, eval('g:vars4'))
+      eq({1, 2, 3}, eval('g:vars5'))
     end)
 
     it('saves and restores script functions properly', function()
@@ -381,7 +417,7 @@ describe('context functions', function()
       }
 
       local with_gvars = {
-        ['vars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}}
+        ['vars'] = {{'g:one', 1}, {'g:Two', 2}, {'g:THREE', 3}}
       }
 
       local with_all = {

@@ -1318,7 +1318,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         bool save_did_emsg = did_emsg;
         did_emsg = false;
         var_set(cur_entry.data.var.name,
-                cur_entry.data.var.value);
+                cur_entry.data.var.value, flags & kShadaKeepFunccall);
         if (!did_emsg) {
           cur_entry.data.var.value.v_type = VAR_UNKNOWN;
         }

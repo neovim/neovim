@@ -8372,27 +8372,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     TV_LIST_ITER(argvars[0].vval.v_list, li, {
       typval_T *tv_li = TV_LIST_ITEM_TV(li);
       if (tv_li->v_type == VAR_STRING) {
-        if (strequal((char *)tv_li->vval.v_string, "regs")) {
-          types |= kCtxRegs;
-        } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
-          types |= kCtxJumps;
-        } else if (strequal((char *)tv_li->vval.v_string, "buflist")) {
-          types |= kCtxBuflist;
-        } else if (strequal((char *)tv_li->vval.v_string, "svars")) {
-          types |= kCtxSVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
-          types |= kCtxGVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "bvars")) {
-          types |= kCtxBVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "wvars")) {
-          types |= kCtxWVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "tvars")) {
-          types |= kCtxTVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
-          types |= kCtxSFuncs;
-        } else if (strequal((char *)tv_li->vval.v_string, "funcs")) {
-          types |= kCtxFuncs;
-        }
+        CONTEXT_TYPE_FROM_STR(types, (char *)tv_li->vval.v_string);
       }
     });
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
@@ -20438,7 +20418,7 @@ static hashtab_T *get_funccal_args_ht(void)
 
 /// Return the hashtable used for local variables in the current funccal.
 /// Return NULL if there is no current funccal.
-static hashtab_T *get_funccal_local_ht(void)
+hashtab_T *get_funccal_local_ht(void)
 {
   if (current_funccal == NULL) {
     return NULL;
@@ -23771,10 +23751,12 @@ const void *var_shada_iter(const hashtab_T *ht, const void *const iter,
   return NULL;
 }
 
-void var_set(const char *const name, typval_T vartv)
+void var_set(const char *const name, typval_T vartv, bool keep_funccal)
 {
   funccall_T *const saved_current_funccal = current_funccal;
-  current_funccal = NULL;
+  if (!keep_funccal) {
+    current_funccal = NULL;
+  }
   set_var(name, strlen(name), &vartv, false);
   current_funccal = saved_current_funccal;
 }
