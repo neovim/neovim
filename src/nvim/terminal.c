@@ -72,6 +72,7 @@
 #include "nvim/ex_cmds.h"
 #include "nvim/window.h"
 #include "nvim/fileio.h"
+#include "nvim/eval/decode.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/time.h"
 #include "nvim/os/input.h"
@@ -153,6 +154,18 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
   .sb_popline  = term_sb_pop,
 };
 
+static int parse_osc(const char *command, size_t cmdlen, void *user);
+
+static VTermParserCallbacks vterm_parser_fallbacks = {
+	.text = NULL,
+	.control = NULL,
+	.escape = NULL,
+	.csi = NULL,
+	.osc = parse_osc,
+	.dcs = NULL,
+	.resize = NULL
+};
+
 static PMap(ptr_t) *invalidated_terminals;
 
 void terminal_init(void)
@@ -169,6 +182,132 @@ void terminal_teardown(void)
   multiqueue_free(refresh_timer.events);
   time_watcher_close(&refresh_timer, NULL);
   pmap_free(ptr_t)(invalidated_terminals);
+}
+
+static void handle_drop_command(listitem_T *arg1)
+{
+  char_u *fname = (char_u *)tv_get_string(&arg1->li_tv);
+  listitem_T *opt_item = arg1->li_next;
+	exarg_T ea = { 0 };
+  char_u *tofree = NULL;
+  int bufnr = buflist_add(fname, BLN_LISTED | BLN_NOOPT);
+
+  FOR_ALL_TAB_WINDOWS(tp, wp)
+  {
+    if (wp->w_buffer->b_fnum == bufnr)
+    {
+      /* buffer is in a window already, go there */
+      goto_tabpage_win(tp, wp);
+      return;
+    }
+  }
+
+  if (opt_item
+  && opt_item->li_tv.v_type == VAR_DICT
+  && opt_item->li_tv.vval.v_dict)
+  {
+    dict_T *dict = opt_item->li_tv.vval.v_dict;
+
+    {
+      char_u *p = (char_u *)tv_dict_get_string(dict, "ff", FALSE);
+      if (!p)
+        p = (char_u *)tv_dict_get_string(dict, "fileformat", FALSE);
+
+      if (p && check_ff_value(p) == OK) {
+        ea.force_ff = *p;
+      }
+    }
+
+    {
+      char_u *p = (char_u *)tv_dict_get_string(dict, "enc", FALSE);
+      if (!p)
+        p = (char_u *)tv_dict_get_string(dict, "encoding", FALSE);
+
+      if (p)
+      {
+        const int fixedlen = sizeof("sbuf ++enc=");
+        ea.cmd = xmalloc(STRLEN(p) + fixedlen);
+        if (ea.cmd)
+        {
+          sprintf((char *)ea.cmd, "sbuf ++enc=%s", p);
+          ea.force_enc = fixedlen - 1;
+          tofree = ea.cmd;
+        }
+      }
+    }
+
+    {
+      char_u *p = (char_u *)tv_dict_get_string(dict, "bad", FALSE);
+      if (p)
+        populate_bad_opt(&ea, p);
+    }
+
+    if (tv_dict_find(dict, "bin", -1))
+      ea.force_bin = FORCE_BIN;
+    if (tv_dict_find(dict, "binary", -1))
+      ea.force_bin = FORCE_BIN;
+    if (tv_dict_find(dict, "nobin", -1))
+      ea.force_bin = FORCE_NOBIN;
+    if (tv_dict_find(dict, "nobinary", -1))
+      ea.force_bin = FORCE_NOBIN;
+  }
+
+  if (!ea.cmd)
+    ea.cmd = (char_u *)"split";
+  ea.arg = (char_u *)fname;
+  ea.cmdidx = CMD_split;
+  ex_splitview(&ea);
+
+
+  free(tofree);
+}
+
+static void handle_terminal_osc(void **argv)
+{
+  typval_T *command_arg = argv[0];
+
+  if (command_arg->v_type != VAR_LIST || command_arg->vval.v_list == NULL) {
+    return;
+  }
+
+  listitem_T *item = command_arg->vval.v_list->lv_first;
+  if (item == NULL) {
+    EMSG(_("E474: Invalid argument"));
+    return;
+  }
+
+  char_u *cmd = (char_u *)tv_get_string(&item->li_tv); /* FIXME: prettier */
+  listitem_T *arg1 = item->li_next;
+
+  if (!arg1) {
+    /* vim emits no error */
+  } else if (STRCMP(cmd, "drop") == 0) {
+    handle_drop_command(arg1);
+  /*} else if (STRCMP(cmd, "call") == 0) {
+    handle_call_command(term, channel, arg1); FIXME*/
+  } else {
+    /* vim emits no error */
+  }
+
+  tv_free(command_arg);
+}
+
+static int parse_osc(const char *command, size_t cmdlen, void *user)
+{
+  /* We recognize only OSC 5 1 ; {command} */
+  if (cmdlen < 3 || strncmp(command, "51;", 3))
+    return 0; /* not handled */
+
+  typval_T *command_arg = xcalloc(1, sizeof(*command_arg));
+  if (json_decode_string(command + 3, cmdlen - 3, command_arg) == FAIL) {
+    return 1;
+  }
+
+  loop_schedule_deferred(
+      &main_loop,
+      event_create(handle_terminal_osc, 1, command_arg));
+
+  return 1; /* handled */
 }
 
 // public API {{{
@@ -194,6 +333,8 @@ Terminal *terminal_open(TerminalOptions opts)
   vterm_screen_set_callbacks(rv->vts, &vterm_screen_callbacks, rv);
   vterm_screen_set_damage_merge(rv->vts, VTERM_DAMAGE_SCROLL);
   vterm_screen_reset(rv->vts, 1);
+  vterm_state_set_unrecognised_fallbacks(state, &vterm_parser_fallbacks, NULL /*rv->vt*/);
+
   // force a initial refresh of the screen to ensure the buffer will always
   // have as many lines as screen rows when refresh_scrollback is called
   rv->invalid_start = 0;
