@@ -4539,6 +4539,20 @@ skip_cmd_arg (
   return p;
 }
 
+int populate_bad_opt(exarg_T *eap, char_u *argvalue)
+{
+  if (STRICMP(argvalue, "keep") == 0)
+    eap->bad_char = BAD_KEEP;
+  else if (STRICMP(argvalue, "drop") == 0)
+    eap->bad_char = BAD_DROP;
+  else if (MB_BYTE2LEN(*argvalue) == 1 && argvalue[1] == NUL)
+    eap->bad_char = *argvalue;
+  else
+    return FAIL;
+
+  return OK;
+}
+
 /*
  * Get "++opt=arg" argument.
  * Return FAIL or OK.
@@ -4607,13 +4621,7 @@ static int getargopt(exarg_T *eap)
     /* Check ++bad= argument.  Must be a single-byte character, "keep" or
      * "drop". */
     p = eap->cmd + bad_char_idx;
-    if (STRICMP(p, "keep") == 0)
-      eap->bad_char = BAD_KEEP;
-    else if (STRICMP(p, "drop") == 0)
-      eap->bad_char = BAD_DROP;
-    else if (MB_BYTE2LEN(*p) == 1 && p[1] == NUL)
-      eap->bad_char = *p;
-    else
+    if (populate_bad_opt(eap, p) == FAIL)
       return FAIL;
   }
 
