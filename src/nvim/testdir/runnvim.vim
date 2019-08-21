@@ -11,7 +11,7 @@ endfunction
 let s:escaped_char = {"\n": '\n', "\r": '\r', "\t": '\t'}
 function! s:escape_non_printable(char) abort
   let r = get(s:escaped_char, a:char)
-  return r == 0 ? printf('<%x>', char2nr(a:char)) : string(r)
+  return r is 0 ? printf('<%x>', char2nr(a:char)) : r
 endfunction
 
 function Main()
