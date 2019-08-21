@@ -191,8 +191,14 @@ describe('TUI', function()
 
   it('paste: exactly 64 bytes #10311', function()
     local expected = string.rep('z', 64)
+    feed_data('i')
+    -- Wait for Insert-mode (avoid "typeahead race" #10826).
+    retry(nil, nil, function()
+      local _, m = child_session:request('nvim_get_mode')
+      eq('i', m.mode)
+    end)
     -- "bracketed paste"
-    feed_data('i\027[200~'..expected..'\027[201~')
+    feed_data('\027[200~'..expected..'\027[201~')
     feed_data(' end')
     expected = expected..' end'
     retry(nil, nil, function()
@@ -217,8 +223,14 @@ describe('TUI', function()
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
+    feed_data('i')
+    -- Wait for Insert-mode (avoid "typeahead race" #10826).
+    retry(nil, nil, function()
+      local _, m = child_session:request('nvim_get_mode')
+      eq('i', m.mode)
+    end)
     -- "bracketed paste"
-    feed_data('i\027[200~'..table.concat(t, '\n')..'\027[201~')
+    feed_data('\027[200~'..table.concat(t, '\n')..'\027[201~')
     retry(nil, nil, function()
       local _, buflines = child_session:request(
         'nvim_buf_get_lines', 0, 0, -1, false)
