@@ -426,7 +426,7 @@ describe('context functions', function()
          redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
     end)
 
-    it('saves/restores sandboxed functions', function()
+    it('saves and restores sandboxed functions', function()
       source([[
       sandbox function SandboxedFunction()
         edit foo
