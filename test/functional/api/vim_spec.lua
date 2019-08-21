@@ -935,7 +935,7 @@ describe('API', function()
                '!empty(v:val.file)')
         ]]):gsub('\n', '')),
 
-        ['vars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
+        ['vars'] = {{'g:one', 1}, {'g:Two', 2}, {'g:THREE', 3}},
       }
 
       eq(expected_ctx, nvim('get_context', opts))

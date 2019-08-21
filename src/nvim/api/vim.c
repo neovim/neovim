@@ -1448,29 +1448,8 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
   if (types.size > 0) {
     for (size_t i = 0; i < types.size; i++) {
       if (types.items[i].type == kObjectTypeString) {
-        const char *const s = types.items[i].data.string.data;
-        if (strequal(s, "regs")) {
-          int_types |= kCtxRegs;
-        } else if (strequal(s, "jumps")) {
-          int_types |= kCtxJumps;
-        } else if (strequal(s, "bufs")) {
-          int_types |= kCtxBufs;
-        } else if (strequal(s, "svars")) {
-          int_types |= kCtxSVars;
-        } else if (strequal(s, "gvars")) {
-          int_types |= kCtxGVars;
-        } else if (strequal(s, "bvars")) {
-          int_types |= kCtxBVars;
-        } else if (strequal(s, "wvars")) {
-          int_types |= kCtxWVars;
-        } else if (strequal(s, "tvars")) {
-          int_types |= kCtxTVars;
-        } else if (strequal(s, "sfuncs")) {
-          int_types |= kCtxSFuncs;
-        } else if (strequal(s, "funcs")) {
-          int_types |= kCtxFuncs;
-        } else {
-          api_set_error(err, kErrorTypeValidation, "unexpected type: %s", s);
+        CONTEXT_TYPE_FROM_STR(int_types, types.items[i].data.string.data, err);
+        if (ERROR_SET(err)) {
           return (Dictionary)ARRAY_DICT_INIT;
         }
       }
