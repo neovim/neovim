@@ -209,7 +209,7 @@ describe('timers', function()
         let g:val = 1
       endfunc
     ]])
-    command("call timer_start(100,  'MyHandler', {'repeat': 1})")
+    command("call timer_start(10,  'MyHandler', {'repeat': 1})")
     feed(":good")
     screen:expect([[
                                               |
@@ -220,6 +220,12 @@ describe('timers', function()
       :good^                                   |
     ]])
 
+    -- Wait for timer to have finished / echoed.
+    retry(nil, nil, function()
+      eq(1, eval('g:val'))
+    end)
+
+    -- "evil" was not printed.
     screen:expect{grid=[[
                                               |
       {0:~                                       }|
@@ -227,9 +233,7 @@ describe('timers', function()
       {0:~                                       }|
       {0:~                                       }|
       :good^                                   |
-    ]], intermediate=true}
-
-    eq(1, eval('g:val'))
+    ]]}
   end)
 
 end)
