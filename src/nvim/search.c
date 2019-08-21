@@ -4683,8 +4683,7 @@ search_line:
     }
     if (matched) {
       if (action == ACTION_EXPAND) {
-        int reuse = 0;
-        int add_r;
+        bool cont_s_ipos = false;
         char_u  *aux;
 
         if (depth == -1 && lnum == curwin->w_cursor.lnum)
@@ -4738,7 +4737,7 @@ search_line:
               p = aux + IOSIZE - i - 1;
             STRNCPY(IObuff + i, aux, p - aux);
             i += (int)(p - aux);
-            reuse |= CONT_S_IPOS;
+            cont_s_ipos = true;
           }
           IObuff[i] = NUL;
           aux = IObuff;
@@ -4747,14 +4746,15 @@ search_line:
             goto exit_matched;
         }
 
-        add_r = ins_compl_add_infercase(aux, i, p_ic,
-            curr_fname == curbuf->b_fname ? NULL : curr_fname,
-            dir, reuse);
-        if (add_r == OK)
-          /* if dir was BACKWARD then honor it just once */
+        const int add_r = ins_compl_add_infercase(
+            aux, i, p_ic, curr_fname == curbuf->b_fname ? NULL : curr_fname,
+            dir, cont_s_ipos);
+        if (add_r == OK) {
+          // if dir was BACKWARD then honor it just once
           dir = FORWARD;
-        else if (add_r == FAIL)
+        } else if (add_r == FAIL) {
           break;
+        }
       } else if (action == ACTION_SHOW_ALL) {
         found = TRUE;
         if (!did_show)

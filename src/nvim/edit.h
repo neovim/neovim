@@ -13,6 +13,15 @@
 #define CPT_USER_DATA   4   // "user data"
 #define CPT_COUNT       5   // Number of entries
 
+// values for cp_flags
+typedef enum {
+  CP_ORIGINAL_TEXT = 1,  // the original text when the expansion begun
+  CP_FREE_FNAME = 2,     // cp_fname is allocated
+  CP_CONT_S_IPOS = 4,    // use CONT_S_IPOS for compl_cont_status
+  CP_EQUAL = 8,          // ins_compl_equal() always returns true
+  CP_ICASE = 16,         // ins_compl_equal ignores case
+} cp_flags_T;
+
 typedef int (*IndentGetter)(void);
 
 /* Values for in_cinkeys() */

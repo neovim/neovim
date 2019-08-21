@@ -7332,7 +7332,7 @@ static void dump_word(slang_T *slang, char_u *word, char_u *pat, int *dir, int d
               ? mb_strnicmp(p, pat, STRLEN(pat)) == 0
               : STRNCMP(p, pat, STRLEN(pat)) == 0)
              && ins_compl_add_infercase(p, (int)STRLEN(p),
-                                        p_ic, NULL, *dir, 0) == OK) {
+                                        p_ic, NULL, *dir, false) == OK) {
     // if dir was BACKWARD then honor it just once
     *dir = FORWARD;
   }
