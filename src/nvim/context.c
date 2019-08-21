@@ -119,9 +119,8 @@ void ctx_save(Context *ctx, const int flags)
     ctx_save_vars(&curtab->tp_vars->dv_hashtab, ctx, "t:");
   }
 
-  hashtab_T *funccal_local_ht = get_funccal_local_ht();
-  if ((flags & kCtxLVars) && funccal_local_ht) {
-    ctx_save_vars(funccal_local_ht, ctx, "l:");
+  if (flags & kCtxLVars) {
+    ctx_save_lvars(ctx, get_funccal());
   }
 
   if (flags & kCtxFuncs) {
@@ -253,6 +252,28 @@ static inline void ctx_restore_vars(Context *ctx)
 {
   shada_read_sbuf(&ctx->vars,
                   kShaDaWantInfo | kShaDaForceit | kShadaKeepFunccall);
+}
+
+/// Saves local variables for the given funccall_T to a context.
+///
+/// @param[in]  ctx  Save to this context.
+/// @param[in]  fc   Pointer to funccall_T to get local variables from.
+void ctx_save_lvars(Context *ctx, funccall_T *fc)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  hashtab_T lvar_ht;
+  hash_init(&lvar_ht);
+  while (fc) {
+    HASHTAB_ITER(get_funccal_local_ht(fc), hi, {
+      hashitem_T *lvar_hi = hash_find(&lvar_ht, hi->hi_key);
+      if (HASHITEM_EMPTY(lvar_hi)) {
+        lvar_hi->hi_key = hi->hi_key;
+      }
+    });
+    fc = get_funccal_parent_scope(fc);
+  }
+  ctx_save_vars(&lvar_ht, ctx, "l:");
+  hash_clear(&lvar_ht);
 }
 
 /// Packs a context function entry.
