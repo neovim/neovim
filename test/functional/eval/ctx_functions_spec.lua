@@ -201,6 +201,42 @@ describe('context functions', function()
       eq({1, 2 ,3}, eval('[b:one, w:Two, t:THREE]'))
     end)
 
+    it('saves and restores function-local variables properly', function()
+      source([[
+      function Test()
+        let l:one = 1
+        let l:Two = 2
+        let THREE = 3
+
+        let g:vars1 = [l:one, l:Two, l:THREE]
+        call ctxpush()
+        call ctxset(filter(ctxget(), 'v:key != "funcs"'))
+        call ctxpush(['lvars'])
+
+        unlet l:one l:Two l:THREE
+        let g:vars2 =
+         \ map(['l:one', 'l:Two', 'l:THREE'], 'exists(v:val) ? {v:val} : 0')
+
+        call ctxpop()
+        let g:vars3 = [l:one, l:Two, l:THREE]
+
+        unlet l:one l:Two l:THREE
+        let g:vars4 =
+         \ map(['l:one', 'l:Two', 'l:THREE'], 'exists(v:val) ? {v:val} : 0')
+
+        call ctxpop()
+        let g:vars5 = [l:one, l:Two, l:THREE]
+      endfunction
+      call Test()
+      ]])
+
+      eq({1, 2, 3}, eval('g:vars1'))
+      eq({0, 0, 0}, eval('g:vars2'))
+      eq({1, 2, 3}, eval('g:vars3'))
+      eq({0, 0, 0}, eval('g:vars4'))
+      eq({1, 2, 3}, eval('g:vars5'))
+    end)
+
     it('saves and restores script functions properly', function()
       source([[
       function s:greet(name)
@@ -386,7 +422,7 @@ describe('context functions', function()
       }
 
       local with_gvars = {
-        ['vars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}}
+        ['vars'] = {{'g:one', 1}, {'g:Two', 2}, {'g:THREE', 3}}
       }
 
       local with_all = {

@@ -18,7 +18,8 @@
 #endif
 
 int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxSVars | kCtxGVars
-               | kCtxBVars | kCtxWVars | kCtxTVars | kCtxSFuncs | kCtxFuncs);
+               | kCtxBVars | kCtxWVars | kCtxTVars | kCtxLVars | kCtxSFuncs
+               | kCtxFuncs);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
@@ -97,13 +98,13 @@ void ctx_save(Context *ctx, const int flags)
     ctx_save_buflist(ctx);
   }
 
-  if (flags & kCtxSVars && current_sctx.sc_sid > 0
-      && current_sctx.sc_sid <= ga_scripts.ga_len) {
+  if ((flags & kCtxSVars) && (current_sctx.sc_sid > 0)
+      && (current_sctx.sc_sid <= ga_scripts.ga_len)) {
     ctx_save_vars(&SCRIPT_VARS(current_sctx.sc_sid), ctx, "s:");
   }
 
   if (flags & kCtxGVars) {
-    ctx_save_vars(&globvarht, ctx, NULL);
+    ctx_save_vars(&globvarht, ctx, "g:");
   }
 
   if (flags & kCtxBVars) {
@@ -116,6 +117,11 @@ void ctx_save(Context *ctx, const int flags)
 
   if (flags & kCtxTVars) {
     ctx_save_vars(&curtab->tp_vars->dv_hashtab, ctx, "t:");
+  }
+
+  hashtab_T *funccal_local_ht = get_funccal_local_ht();
+  if ((flags & kCtxLVars) && funccal_local_ht) {
+    ctx_save_vars(funccal_local_ht, ctx, "l:");
   }
 
   if (flags & kCtxFuncs) {
@@ -245,7 +251,8 @@ static inline void ctx_save_vars(const hashtab_T *ht, Context *ctx,
 static inline void ctx_restore_vars(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
-  shada_read_sbuf(&ctx->vars, kShaDaWantInfo | kShaDaForceit);
+  shada_read_sbuf(&ctx->vars,
+                  kShaDaWantInfo | kShaDaForceit | kShadaKeepFunccall);
 }
 
 /// Packs a context function entry.
