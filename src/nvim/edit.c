@@ -2064,6 +2064,7 @@ static bool ins_compl_accept_char(int c)
 /// @param[in]  cont_s_ipos  next ^X<> will set initial_pos
 int ins_compl_add_infercase(char_u *str_arg, int len, bool icase, char_u *fname,
                             int dir, bool cont_s_ipos)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u *str = str_arg;
   int i, c;
@@ -2425,6 +2426,7 @@ static void ins_compl_longest_match(compl_T *match)
  * Frees matches[].
  */
 static void ins_compl_add_matches(int num_matches, char_u **matches, int icase)
+  FUNC_ATTR_NONNULL_ALL
 {
   int add_r = OK;
   int dir = compl_direction;
@@ -3304,6 +3306,7 @@ static void ins_compl_restart(void)
  * Set the first match, the original text.
  */
 static void ins_compl_set_original_text(char_u *str)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Replace the original text entry.
   // The CP_ORIGINAL_TEXT flag is either at the first item or might possibly be
