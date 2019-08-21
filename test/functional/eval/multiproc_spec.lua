@@ -190,9 +190,8 @@ describe('multiproc', function()
     end)
 
     it('fails gracefully on error spawning a child', function()
-      if helpers.pending_win32(pending) then return end
-      if helpers.isCI('quickbuild') then
-        pending("flaky on quickbuild", function() end)
+      if helpers.os_name() ~= 'unix' then
+        pending('works on unix only', function() end)
         return
       end
 
