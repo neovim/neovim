@@ -59,8 +59,8 @@ end
 function module.neq(expected, actual, context)
   return assert.are_not.same(expected, actual, context)
 end
-function module.ok(res)
-  return assert.is_true(res)
+function module.ok(res, msg)
+  return assert.is_true(res, msg)
 end
 function module.near(actual, expected, tolerance)
   return assert.is.near(actual, expected, tolerance)

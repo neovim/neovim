@@ -169,8 +169,7 @@ describe('server -> client', function()
         if method == "notification" then
           eq('done!', eval('rpcrequest('..cid..', "nested")'))
         elseif method == "nested_done" then
-          -- this should never have been sent
-          ok(false)
+          ok(false, 'this should never have been sent')
         end
       end
 

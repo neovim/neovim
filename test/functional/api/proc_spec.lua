@@ -4,8 +4,8 @@ local clear = helpers.clear
 local eq = helpers.eq
 local funcs = helpers.funcs
 local iswin = helpers.iswin
+local neq = helpers.neq
 local nvim_argv = helpers.nvim_argv
-local ok = helpers.ok
 local request = helpers.request
 local retry = helpers.retry
 local NIL = helpers.NIL
@@ -63,8 +63,9 @@ describe('api', function()
       local pid = funcs.getpid()
       local pinfo = request('nvim_get_proc', pid)
       eq((iswin() and 'nvim.exe' or 'nvim'), pinfo.name)
-      ok(pinfo.pid == pid)
-      ok(type(pinfo.ppid) == 'number' and pinfo.ppid ~= pid)
+      eq(pinfo.pid, pid)
+      eq(type(pinfo.ppid), 'number')
+      neq(pinfo.ppid, pid)
     end)
 
     it('validates input', function()
