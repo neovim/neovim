@@ -101,6 +101,9 @@ test1.out: $(NVIM_PRG)
 $(SCRIPTS): $(NVIM_PRG) test1.out
 
 NO_PLUGINS = --noplugin --headless
+# In vim, if the -u command line option is specified, compatible is turned on
+# and viminfo is not read. Unlike vim, neovim reads viminfo and requires the
+# -i command line option.
 NO_INITS = -U NONE -i viminfo $(NO_PLUGINS)
 
 # TODO: find a way to avoid changing the distributed files.
