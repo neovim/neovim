@@ -101,7 +101,7 @@ test1.out: $(NVIM_PRG)
 $(SCRIPTS): $(NVIM_PRG) test1.out
 
 NO_PLUGINS = --noplugin --headless
-NO_INITS = -U NONE $(NO_PLUGINS)
+NO_INITS = -U NONE -i viminfo $(NO_PLUGINS)
 
 # TODO: find a way to avoid changing the distributed files.
 fixff:
