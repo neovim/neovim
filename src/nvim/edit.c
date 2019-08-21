@@ -176,18 +176,18 @@ static int compl_no_insert = FALSE;             /* FALSE: select & insert
 static int compl_no_select = FALSE;             /* FALSE: select & insert
                                                    TRUE: noselect */
 
-static int compl_used_match;            // Selected one of the matches.  When
-                                        // FALSE the match was edited or using
-                                        // the longest common string.
+static bool compl_used_match;       // Selected one of the matches.
+                                    // When false the match was edited or using
+                                    // the longest common string.
 
 static int compl_was_interrupted = FALSE;         /* didn't finish finding
                                                      completions. */
 
 static int compl_restarting = FALSE;            /* don't insert match */
 
-/* When the first completion is done "compl_started" is set.  When it's
- * FALSE the word to be completed must be located. */
-static int compl_started = FALSE;
+// When the first completion is done "compl_started" is set.  When it's
+// false the word to be completed must be located.
+static bool compl_started = false;
 
 // Which Ctrl-X mode are we in?
 static int ctrl_x_mode = CTRL_X_NORMAL;
@@ -2384,7 +2384,7 @@ static void ins_compl_longest_match(compl_T *match)
      * again after redrawing. */
     if (!had_match)
       ins_compl_delete();
-    compl_used_match = FALSE;
+    compl_used_match = false;
   } else {
     /* Reduce the text if this match differs from compl_leader. */
     p = compl_leader;
@@ -2416,7 +2416,7 @@ static void ins_compl_longest_match(compl_T *match)
         ins_compl_delete();
     }
 
-    compl_used_match = FALSE;
+    compl_used_match = false;
   }
 }
 
@@ -2514,8 +2514,8 @@ void set_completion(colnr_T startcol, list_T *list)
 
   ins_compl_add_list(list);
   compl_matches = ins_compl_make_cyclic();
-  compl_started = TRUE;
-  compl_used_match = TRUE;
+  compl_started = true;
+  compl_used_match = true;
   compl_cont_status = 0;
   int save_w_wrow = curwin->w_wrow;
   int save_w_leftcol = curwin->w_leftcol;
@@ -3037,7 +3037,7 @@ static void ins_compl_free(void)
 static void ins_compl_clear(void)
 {
   compl_cont_status = 0;
-  compl_started = FALSE;
+  compl_started = false;
   compl_matches = 0;
   XFREE_CLEAR(compl_pattern);
   XFREE_CLEAR(compl_leader);
@@ -3213,7 +3213,7 @@ static void ins_compl_new_leader(void)
   ins_compl_del_pum();
   ins_compl_delete();
   ins_bytes(compl_leader + ins_compl_len());
-  compl_used_match = FALSE;
+  compl_used_match = false;
 
   if (compl_started) {
     ins_compl_set_original_text(compl_leader);
@@ -3294,7 +3294,7 @@ static void ins_compl_restart(void)
    * will stay to the last popup menu and reduce flicker */
   update_screen(0);
   ins_compl_free();
-  compl_started = FALSE;
+  compl_started = false;
   compl_matches = 0;
   compl_cont_status = 0;
   compl_cont_mode = 0;
@@ -3382,8 +3382,7 @@ static bool ins_compl_prep(int c)
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET
       || (ctrl_x_mode == CTRL_X_NORMAL && !compl_started)) {
     compl_get_longest = (strstr((char *)p_cot, "longest") != NULL);
-    compl_used_match = TRUE;
-
+    compl_used_match = true;
   }
 
   if (ctrl_x_mode == CTRL_X_NOT_DEFINED_YET) {
@@ -3574,7 +3573,7 @@ static bool ins_compl_prep(int c)
       auto_format(FALSE, TRUE);
 
       ins_compl_free();
-      compl_started = FALSE;
+      compl_started = false;
       compl_matches = 0;
       if (!shortmess(SHM_COMPLETIONMENU)) {
         msg_clr_cmdline();                // necessary for "noshowmode"
@@ -3858,7 +3857,7 @@ int ins_compl_add_tv(typval_T *const tv, const Direction dir)
 // Get the next expansion(s), using "compl_pattern".
 // The search starts at position "ini" in curbuf and in the direction
 // compl_direction.
-// When "compl_started" is FALSE start at that position, otherwise continue
+// When "compl_started" is false start at that position, otherwise continue
 // where we stopped searching before.
 // This may return before finding all the matches.
 // Return the total number of matches or -1 if still unknown -- Acevedo
@@ -4241,7 +4240,7 @@ static int ins_compl_get_exp(pos_T *ini)
           || compl_interrupted) {
         break;
       }
-      compl_started = TRUE;
+      compl_started = true;
     } else {
       // Mark a buffer scanned when it has been scanned completely
       if (type == 0 || type == CTRL_X_PATH_PATTERNS) {
@@ -4249,10 +4248,10 @@ static int ins_compl_get_exp(pos_T *ini)
         ins_buf->b_scanned = true;
       }
 
-      compl_started = FALSE;
+      compl_started = false;
     }
   }
-  compl_started = TRUE;
+  compl_started = true;
 
   if ((l_ctrl_x_mode == CTRL_X_NORMAL
        || CTRL_X_MODE_LINE_OR_EVAL(l_ctrl_x_mode))
@@ -4373,7 +4372,7 @@ ins_compl_next (
   compl_T *found_compl = NULL;
   int found_end = FALSE;
   int advance;
-  int started = compl_started;
+  const bool started = compl_started;
 
   /* When user complete function return -1 for findstart which is next
    * time of 'always', compl_shown_match become NULL. */
@@ -4493,7 +4492,7 @@ ins_compl_next (
   /* Insert the text of the new completion, or the compl_leader. */
   if (compl_no_insert && !started) {
     ins_bytes(compl_orig_text + ins_compl_len());
-    compl_used_match = FALSE;
+    compl_used_match = false;
   } else if (insert_match) {
     if (!compl_get_longest || compl_used_match) {
       ins_compl_insert(in_compl_func);
@@ -4501,7 +4500,7 @@ ins_compl_next (
       ins_bytes(compl_leader + ins_compl_len());
     }
   } else {
-    compl_used_match = FALSE;
+    compl_used_match = false;
   }
 
   if (!allow_get_expansion) {
