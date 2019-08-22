@@ -101,13 +101,16 @@ test1.out: $(NVIM_PRG)
 $(SCRIPTS): $(NVIM_PRG) test1.out
 
 NO_PLUGINS = --noplugin --headless
-NO_INITS = -U NONE $(NO_PLUGINS)
+# In vim, if the -u command line option is specified, compatible is turned on
+# and viminfo is not read. Unlike vim, neovim reads viminfo and requires the
+# -i command line option.
+NO_INITS = -U NONE -i NONE $(NO_PLUGINS)
 
 # TODO: find a way to avoid changing the distributed files.
 fixff:
-	-$(NVIM_PRG) -u unix.vim $(NO_INITS) "+argdo set ff=dos|upd" +q \
+	-$(NVIM_PRG) $(NO_INITS) -u unix.vim "+argdo set ff=dos|upd" +q \
 	  *.in *.ok
-	-$(NVIM_PRG) -u unix.vim $(NO_INITS) "+argdo set ff=dos|upd" +q \
+	-$(NVIM_PRG) $(NO_INITS) -u unix.vim "+argdo set ff=dos|upd" +q \
 	  dotest.in
 
 RM_ON_RUN   := test.out X* viminfo
