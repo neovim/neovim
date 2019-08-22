@@ -52,7 +52,7 @@ describe('multiproc', function()
     end)
 
     it('reports errors from children', function()
-      expect_err('multiproc: job 3: Vim:E117: Unknown function: foo',
+      expect_err('Unknown function: foo',
                  call, 'call_wait', {call('call_async', 'foo', {})})
     end)
 
@@ -161,8 +161,8 @@ describe('multiproc', function()
       feed_command(
           [=[call call_wait(call_parallel('foo', [[], []], {'count':2}))]=])
       feed('<CR>')
-      matches('multiproc: job [3-4]: Vim:E117: Unknown function: foo\n'..
-              'multiproc: job [3-4]: Vim:E117: Unknown function: foo',
+      matches('multiproc: job [3-4]:.+Unknown function: foo\n'..
+              'multiproc: job [3-4]:.+Unknown function: foo',
               nvim('command_output', 'messages'))
     end)
 
@@ -342,5 +342,23 @@ describe('multiproc', function()
     ]=])
     eq('Hi, Neovim!', nvim('get_var', 'r1')[1].value)
     eq({'Hi, Neovim!', 'Hi, Neovim!'}, nvim('get_var', 'r2')[1].value)
+  end)
+
+  it('loads packed l: vars from context', function()
+    source([=[
+    function Test()
+      let l:one = 1
+      let l:Two = 2
+      let THREE = 3
+      let g:job1 = call_async('eval', ['[l:one, l:Two, THREE]'], {
+       \ 'context': nvim_get_context(['lvars']) })
+      let g:job2 = call_parallel('eval', [['l:one'], ['l:Two'], ['THREE']], {
+       \ 'context': nvim_get_context(['lvars']), 'count': 1 })
+    endfunction
+    call Test()
+    ]=])
+
+    eq({1, 2, 3}, eval('call_wait([g:job1])[0].value'))
+    eq({1, 2, 3}, eval('call_wait(g:job2)[0].value'))
   end)
 end)

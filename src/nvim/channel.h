@@ -68,7 +68,6 @@ typedef struct {
   Callback item_callback;    ///< per-item callback
   Array work_queue;          ///< argument lists to consume
   Array results;             ///< accumulated results (for callback)
-  char_u *callee;            ///< called function name
   scid_T sid;                ///< current_SID value
 } AsyncCall;
 

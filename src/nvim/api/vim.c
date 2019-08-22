@@ -2399,8 +2399,15 @@ void nvim__async_invoke(uint64_t channel_id, String callee, Integer sid,
 
   scid_T save_current_SID = current_SID;
   ctx_set_current_SID((int)sid);
-  nvim_load_context(context, err);
-  ADD(result, _call_function(callee, args, NULL, err));
+
+  Array lua_args = ARRAY_DICT_INIT;
+  ADD(lua_args, DICTIONARY_OBJ(context));
+  ADD(lua_args, STRING_OBJ(callee));
+  ADD(lua_args, ARRAY_OBJ(args));
+  Object rv = EXEC_LUA_STATIC("return vim._async_invoke(...)", lua_args, err);
+  ADD(result, rv);
+  xfree(lua_args.items);
+
   current_SID = save_current_SID;
 
   if (ERROR_SET(err)) {
@@ -2435,8 +2442,7 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     result = ARRAY_OBJ(async_call->results);
     if (async_call->next < work_queue.size) {
       Array rpc_args = ARRAY_DICT_INIT;
-      ADD(rpc_args,
-          STRING_OBJ(cstr_to_string((char *)channel->async_call->callee)));
+      ADD(rpc_args, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
       ADD(rpc_args, INTEGER_OBJ(channel->async_call->sid));
       ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
       ADD(rpc_args, copy_object(work_queue.items[async_call->next++]));

@@ -297,7 +297,6 @@ void asynccall_decref(AsyncCall *asynccall)
     callback_free(&asynccall->item_callback);
     api_free_array(asynccall->work_queue);
     api_free_array(asynccall->results);
-    xfree(asynccall->callee);
   }
 
   xfree(asynccall);

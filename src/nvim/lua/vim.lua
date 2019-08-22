@@ -208,6 +208,34 @@ local function _create_nvim_job()
   })
 end
 
+local _async_invoke_called = false
+
+-- Load the given context dictionary and call the given function within
+-- a function-call context.
+-- Used by nvim__async_invoke() in "nvim/api/vim.c".
+--
+-- @param ctx Context dictionary
+-- @param fn Name of function to call
+-- @param args Table of function call arguments
+--
+-- @returns Result of function call
+local function _async_invoke(ctx, fn, args)
+  if not _async_invoke_called then
+    vim.api.nvim_command(
+      [[function <SNR>ASYNC_INIT(ctx, fn)
+          call nvim_load_context(a:ctx)
+          function <SNR>_lambda_CALL(args) closure
+            return call(function(a:fn), args)
+          endfunction
+        endfunction
+      ]])
+    vim.api.nvim_call_function('<SNR>ASYNC_INIT', {ctx, fn})
+    vim.api.nvim_command('delfunction <SNR>ASYNC_INIT')
+    _async_invoke_called = true
+  end
+  return vim.api.nvim_call_function('<SNR>_lambda_CALL', {args})
+end
+
 -- Returns function name for use in context dictionary.
 -- Used by ctx_dict_add_userfunc() in "nvim/eval.c".
 --
@@ -418,6 +446,7 @@ local module = {
   schedule_wrap = schedule_wrap,
   _grep = _grep,
   _create_nvim_job = _create_nvim_job,
+  _async_invoke = _async_invoke,
   _ctx_get_func_name = _ctx_get_func_name,
   _ctx_get_func_def = _ctx_get_func_def,
   _ctx_add_func = _ctx_add_func,
