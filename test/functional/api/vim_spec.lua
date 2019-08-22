@@ -178,6 +178,11 @@ describe('API', function()
       -- Verify NO hit-enter prompt.
       eq({mode='n', blocking=false}, nvim("get_mode"))
     end)
+
+    it('Does not cause heap buffer overflow with large output', function()
+      eq(eval('string(range(1000000))'),
+         nvim('command_output', 'echo range(1000000)'))
+    end)
   end)
 
   describe('nvim_eval', function()

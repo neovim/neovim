@@ -364,7 +364,7 @@ String nvim_command_output(String command, Error *err)
     };
     // redir usually (except :echon) prepends a newline.
     if (s.data[0] == '\n') {
-      memmove(s.data, s.data + 1, s.size);
+      memmove(s.data, s.data + 1, s.size - 1);
       s.data[s.size - 1] = '\0';
       s.size = s.size - 1;
     }
