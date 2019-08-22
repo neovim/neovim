@@ -215,21 +215,23 @@ local _async_invoke_called = false
 -- Used by nvim__async_invoke() in "nvim/api/vim.c".
 --
 -- @param ctx Context dictionary
+-- @param ctx Context dictionary for callee
 -- @param fn Name of function to call
 -- @param args Table of function call arguments
 --
 -- @returns Result of function call
-local function _async_invoke(ctx, fn, args)
+local function _async_invoke(ctx, callee_ctx, fn, args)
   if not _async_invoke_called then
     vim.api.nvim_command(
-      [[function <SNR>ASYNC_INIT(ctx, fn)
+      [[function <SNR>ASYNC_INIT(ctx, callee_ctx, fn)
           call nvim_load_context(a:ctx)
+          call nvim_load_context(a:callee_ctx)
           function <SNR>_lambda_CALL(args) closure
             return call(function(a:fn), args)
           endfunction
         endfunction
       ]])
-    vim.api.nvim_call_function('<SNR>ASYNC_INIT', {ctx, fn})
+    vim.api.nvim_call_function('<SNR>ASYNC_INIT', {ctx, callee_ctx, fn})
     vim.api.nvim_command('delfunction <SNR>ASYNC_INIT')
     _async_invoke_called = true
   end
@@ -260,21 +262,6 @@ local function _ctx_get_func_def(name)
     :gsub('^%s*function', 'function!')
     :gsub('\n[0-9]+', '\n')
   return def
-end
-
--- Adds function entry to context dictionary.
--- Used by ctx_dict_add_userfunc() in "nvim/eval.c".
---
--- @param ctx Context dictionary to add to
--- @param func Function entry to add
---
--- @returns Context dictionary after adding function entry
-local function _ctx_add_func(ctx, func)
-  if ctx['funcs'] == nil then
-    ctx['funcs'] = {}
-  end
-  table.insert(ctx['funcs'], func)
-  return ctx
 end
 
 -- Maps job ids of completed async calls to their results.
@@ -449,7 +436,6 @@ local module = {
   _async_invoke = _async_invoke,
   _ctx_get_func_name = _ctx_get_func_name,
   _ctx_get_func_def = _ctx_get_func_def,
-  _ctx_add_func = _ctx_add_func,
   _put_result = _put_result,
   _append_result = _append_result,
   _collect_results = _collect_results,

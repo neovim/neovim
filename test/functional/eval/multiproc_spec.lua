@@ -358,12 +358,33 @@ describe('multiproc', function()
       let g:job1 = call_async('eval', ['[l:one, l:Two, THREE]'], {
        \ 'context': nvim_get_context(['lvars']) })
       let g:job2 = call_parallel('eval', [['l:one'], ['l:Two'], ['THREE']], {
-       \ 'context': nvim_get_context(['lvars']), 'count': 1 })
+       \ 'context': nvim_get_context(['lvars']), 'count': 1 })[0]
     endfunction
     call Test()
     ]=])
 
     eq({1, 2, 3}, eval('call_wait([g:job1])[0].value'))
-    eq({1, 2, 3}, eval('call_wait(g:job2)[0].value'))
+    eq({1, 2, 3}, eval('call_wait([g:job2])[0].value'))
+  end)
+
+  it('packs parent-scope l: vars for closures', function()
+    source([=[
+    function One()
+      let l:one = 1
+      function Two() closure
+        let l:Two = 2
+        function Three() closure
+          return map(['l:one', 'Two'], 'exists(v:val) ? eval(v:val) : 0')
+        endfunction
+      endfunction
+      call Two()
+    endfunction
+    call One()
+    let g:job1 = call_async('Three', [])
+    let g:job2 = call_parallel('Three', [[], []], { 'count': 1 })[0]
+    ]=])
+
+    eq({1, 2}, eval('call_wait([g:job1])[0].value'))
+    eq({{1, 2}, {1, 2}}, eval('call_wait([g:job2])[0].value'))
   end)
 end)

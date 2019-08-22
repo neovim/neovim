@@ -2379,14 +2379,16 @@ Array nvim_grep(String pattern, String path, Boolean global, Error *err)
 /// Invokes a function and sends back its return value to the parent in
 /// an asynchronous RPC notification.
 ///
-/// @param[in]   channel_id  Parent channel ID.
-/// @param[in]   callee      Function to call.
-/// @param[in]   sid         current_SID value to call function with.
-/// @param[in]   context     Context Dictionary to load before the call.
-/// @param[in]   args        Function arguments.
-/// @param[out]  err         Error details, if any.
+/// @param[in]   channel_id      Parent channel ID.
+/// @param[in]   callee          Function to call.
+/// @param[in]   sid             current_SID value to call function with.
+/// @param[in]   context         Context Dictionary to load before the call.
+/// @param[in]   callee_context  Context Dictionary to load before the call.
+/// @param[in]   args            Function arguments.
+/// @param[out]  err             Error details, if any.
 void nvim__async_invoke(uint64_t channel_id, String callee, Integer sid,
-                        Dictionary context, Array args, Error *err)
+                        Dictionary context, Dictionary callee_context,
+                        Array args, Error *err)
 {
   // Only allow parent (embedding process)
   if (channel_id != CHAN_STDIO) {
@@ -2402,6 +2404,7 @@ void nvim__async_invoke(uint64_t channel_id, String callee, Integer sid,
 
   Array lua_args = ARRAY_DICT_INIT;
   ADD(lua_args, DICTIONARY_OBJ(context));
+  ADD(lua_args, DICTIONARY_OBJ(callee_context));
   ADD(lua_args, STRING_OBJ(callee));
   ADD(lua_args, ARRAY_OBJ(args));
   Object rv = EXEC_LUA_STATIC("return vim._async_invoke(...)", lua_args, err);
@@ -2444,6 +2447,7 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
       Array rpc_args = ARRAY_DICT_INIT;
       ADD(rpc_args, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
       ADD(rpc_args, INTEGER_OBJ(channel->async_call->sid));
+      ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
       ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
       ADD(rpc_args, copy_object(work_queue.items[async_call->next++]));
       rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
