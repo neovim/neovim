@@ -180,9 +180,6 @@ describe('API', function()
     end)
 
     it('Does not cause heap buffer overflow with large output', function()
-      if not os.getenv('ASAN_OPTIONS') then
-        pending('should run with ASAN build', function() end)
-      end
       eq(eval('string(range(1000000))'),
          nvim('command_output', 'echo range(1000000)'))
     end)
