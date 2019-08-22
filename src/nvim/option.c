@@ -5456,6 +5456,7 @@ void comp_col(void)
   if (ru_col <= 0) {
     ru_col = 1;
   }
+  set_vim_var_nr(VV_MAXECHOSPACE, sc_col - 1);  // -1 for newline being added
 }
 
 // Unset local option value, similar to ":set opt<".

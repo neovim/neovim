@@ -395,6 +395,7 @@ static struct vimvar {
   VV(VV_OP,             "operator",         VAR_STRING, VV_RO),
   VV(VV_SEARCHFORWARD,  "searchforward",    VAR_NUMBER, 0),
   VV(VV_HLSEARCH,       "hlsearch",         VAR_NUMBER, 0),
+  VV(VV_MAXECHOSPACE,   "maxechospace",     VAR_NUMBER, 0),
   VV(VV_OLDFILES,       "oldfiles",         VAR_LIST, 0),
   VV(VV_WINDOWID,       "windowid",         VAR_NUMBER, VV_RO_SBX),
   VV(VV_PROGPATH,       "progpath",         VAR_STRING, VV_RO),
@@ -621,6 +622,7 @@ void eval_init(void)
   set_vim_var_nr(VV_STDERR,   CHAN_STDERR);
   set_vim_var_nr(VV_SEARCHFORWARD, 1L);
   set_vim_var_nr(VV_HLSEARCH, 1L);
+  set_vim_var_nr(VV_MAXECHOSPACE, sc_col);
   set_vim_var_nr(VV_COUNT1, 1);
   set_vim_var_nr(VV_TYPE_NUMBER, VAR_TYPE_NUMBER);
   set_vim_var_nr(VV_TYPE_STRING, VAR_TYPE_STRING);

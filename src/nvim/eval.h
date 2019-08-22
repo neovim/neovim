@@ -91,6 +91,7 @@ typedef enum {
     VV_OP,
     VV_SEARCHFORWARD,
     VV_HLSEARCH,
+    VV_MAXECHOSPACE,
     VV_OLDFILES,
     VV_WINDOWID,
     VV_PROGPATH,
