@@ -1900,7 +1900,8 @@ void backslash_halve(char_u *p)
 /// @param p
 ///
 /// @return String with the number of backslashes halved.
-char_u* backslash_halve_save(char_u *p)
+char_u *backslash_halve_save(const char_u *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   // TODO(philix): simplify and improve backslash_halve_save algorithm
   char_u *res = vim_strsave(p);
