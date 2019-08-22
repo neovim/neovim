@@ -195,6 +195,11 @@ describe('multiproc', function()
         return
       end
 
+      if helpers.isCI('quickbuild') then
+        pending("fails on quickbuild", function() end)
+        return
+      end
+
       local script = [=[
       function SaveExitCode(id, code, event)
         let g:exitcode = a:code
