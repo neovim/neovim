@@ -3,7 +3,7 @@
 set encoding=utf-8
 scriptencoding utf-8
 
-if !has('multi_byte') || !has('mksession')
+if !has('mksession')
   finish
 endif
 

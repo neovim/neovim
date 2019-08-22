@@ -1,7 +1,4 @@
 " Tests for startup using utf-8.
-if !has('multi_byte')
-  finish
-endif
 
 source shared.vim
 " source screendump.vim
@@ -66,7 +63,7 @@ endfunc
 
 func Test_detect_ambiwidth()
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot run Vim in a terminal window'
   endif
 
   " Use the title termcap entries to output the escape sequence.

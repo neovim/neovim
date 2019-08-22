@@ -1,9 +1,5 @@
 " Test for wordcount() function
 
-if !has('multi_byte')
-  finish
-endif
-
 func Test_wordcount()
   let save_enc = &enc
   set encoding=utf-8

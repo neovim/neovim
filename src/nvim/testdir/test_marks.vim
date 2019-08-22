@@ -122,9 +122,6 @@ func Test_marks_cmd()
 endfunc
 
 func Test_marks_cmd_multibyte()
-  if !has('multi_byte')
-    return
-  endif
   new Xone
   call setline(1, [repeat('á', &columns)])
   norm! ma

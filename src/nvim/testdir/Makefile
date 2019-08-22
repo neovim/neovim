@@ -86,15 +86,14 @@ nongui: nolog $(FIXFF) $(SCRIPTS) newtests report
 	@echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
 report:
+	$(RUN_VIMTEST) $(NO_INITS) -u NONE -S summarize.vim messages
 	@echo
 	@echo 'Test results:'
-	@/bin/sh -c "if test -f test.log; then \
-	                 cat test.log;         \
-	                 echo TEST FAILURE;    \
-	                 exit 1;               \
-	             else                      \
-	                 echo ALL DONE;        \
-	             fi"
+	@cat test_result.log
+	@/bin/sh -c "if test -f test.log; \
+		then echo TEST FAILURE; exit 1; \
+		else echo ALL DONE; \
+		fi"
 
 test1.out: $(NVIM_PRG)
 
@@ -124,6 +123,7 @@ CLEAN_FILES := *.out \
   *.orig            \
   *.tlog            \
   test.log          \
+  test_result.log   \
   messages          \
   $(RM_ON_RUN)      \
   $(RM_ON_START)    \
@@ -163,7 +163,7 @@ nolog:
 # New style of tests uses Vim script with assert calls.  These are easier
 # to write and a lot easier to read and debug.
 # Limitation: Only works with the +eval feature.
-RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin
+RUN_VIMTEST = $(TOOL) $(NVIM_PRG) -u unix.vim
 
 newtests: newtestssilent
 	@/bin/sh -c "if test -f messages && grep -q 'FAILED' messages; then \
@@ -176,4 +176,4 @@ newtestssilent: $(NEW_TESTS)
 	@echo "[OLDTEST] Running" $*
 	@rm -rf $*.failed test.ok $(RM_ON_RUN)
 	@mkdir -p $(TMPDIR)
-	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) -u NONE -S runtest.vim $*.vim
+	@/bin/sh runnvim.sh $(ROOT) $(NVIM_PRG) $* $(RUN_VIMTEST) $(NO_INITS) -u NONE -S runtest.vim $*.vim

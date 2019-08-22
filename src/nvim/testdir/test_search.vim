@@ -480,9 +480,6 @@ endfunc
 
 " Test for search('multi-byte char', 'bce')
 func Test_search_multibyte()
-  if !has('multi_byte')
-    return
-  endif
   let save_enc = &encoding
   set encoding=utf8
   enew!
@@ -499,7 +496,7 @@ func Test_incsearch_substitute_dump()
     return
   endif
   if !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot make screendumps'
   endif
   call writefile([
 	\ 'set incsearch hlsearch scrolloff=0',
@@ -530,7 +527,7 @@ endfunc
 
 func Test_incsearch_with_change()
   if !has('timers') || !exists('+incsearch') || !CanRunVimInTerminal()
-    return
+    throw 'Skipped: cannot make screendumps and/or timers feature and/or incsearch option missing'
   endif
 
   call writefile([

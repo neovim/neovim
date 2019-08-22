@@ -183,7 +183,7 @@ func Test_profile_errors()
 endfunc
 
 func Test_profile_truncate_mbyte()
-  if !has('multi_byte') || &enc !=# 'utf-8'
+  if &enc !=# 'utf-8'
     return
   endif
 

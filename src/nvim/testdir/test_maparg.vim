@@ -1,8 +1,5 @@
 " Tests for maparg().
 " Also test utf8 map with a 0x80 byte.
-if !has("multi_byte")
-  finish
-endif
 
 function s:SID()     
   return str2nr(matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$'))
