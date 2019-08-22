@@ -321,21 +321,6 @@ local function _ctx_get_func_def(name)
   return def
 end
 
--- Adds function entry to context dictionary.
--- Used by ctx_dict_add_userfunc() in "nvim/eval.c".
---
--- @param ctx Context dictionary to add to
--- @param func Function entry to add
---
--- @returns Context dictionary after adding function entry
-local function _ctx_add_func(ctx, func)
-  if ctx['funcs'] == nil then
-    ctx['funcs'] = {}
-  end
-  table.insert(ctx['funcs'], func)
-  return ctx
-end
-
 -- Maps job ids of completed async calls to their results.
 -- Entries should get removed when collected by call_wait().
 local async_call_results = {}
@@ -541,7 +526,6 @@ local module = {
   _async_invoke = _async_invoke,
   _ctx_get_func_name = _ctx_get_func_name,
   _ctx_get_func_def = _ctx_get_func_def,
-  _ctx_add_func = _ctx_add_func,
   _put_result = _put_result,
   _append_result = _append_result,
   _collect_results = _collect_results,

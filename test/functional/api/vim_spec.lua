@@ -1818,7 +1818,7 @@ describe('API', function()
   describe('nvim__async_invoke', function()
     it('only accepts request from parent', function()
       matches([[only parent can issue 'nvim__async_invoke']],
-              pcall_err(eval, [[nvim__async_invoke('', 0, {}, [])]]))
+              pcall_err(eval, [[nvim__async_invoke('', 0, {}, {}, [])]]))
     end)
   end)
 

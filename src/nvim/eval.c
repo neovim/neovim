@@ -7577,13 +7577,15 @@ static inline bool get_asynccall_opts(
 }
 
 /// Add user function entry to given context dictionary.
+/// Parent scope l: vars are added to the context if the function is a closure.
 ///
 /// @see ctx_pack_func().
 ///
-/// @param[in/out]  ctx   Context dictionary to add function entry to.
-/// @param[in/out]  name  Function name.
-/// @param[out]     err   Error details, if any.
-static void ctx_dict_add_userfunc(Dictionary *ctx, char **name, Error *err)
+/// @param[in/out]  ctx_dict  Context dictionary to add function entry to.
+/// @param[in/out]  name      Function name.
+/// @param[out]     err       Error details, if any.
+static void ctx_dict_add_userfunc(
+    Dictionary *ctx_dict, char **name, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
   char_u fname_buf[FLEN_FIXED + 1];
@@ -7606,31 +7608,28 @@ static void ctx_dict_add_userfunc(Dictionary *ctx, char **name, Error *err)
     return;
   }
 
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, DICTIONARY_OBJ(*ctx));
-  ADD(args, DICTIONARY_OBJ(func));
-  Object ctx_new = EXEC_LUA_STATIC("return vim._ctx_add_func(...)", args, err);
-  api_free_dictionary(func);
-  xfree(args.items);
-  if (ERROR_SET(err)) {
-    api_free_object(ctx_new);
-    return;
-  }
+  // Pack function
+  Context ctx = CONTEXT_INIT;
+  ADD(ctx.funcs, DICTIONARY_OBJ(func));
 
-  args = (Array)ARRAY_DICT_INIT;
+  // Pack l: vars for closure
+  ctx_save_lvars(&ctx, fp->uf_scoped);
+  Dictionary ctx_tmp = ctx_to_dict(&ctx);
+  ctx_free(&ctx);
+
+  Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_as_string(*name)));
-  Object name_new = EXEC_LUA_STATIC(
+  Object new_name = EXEC_LUA_STATIC(
       "return vim._ctx_get_func_name(...)", args, err);
   xfree(args.items);
   if (ERROR_SET(err)) {
-    api_free_object(name_new);
+    api_free_dictionary(ctx_tmp);
+    api_free_object(new_name);
     return;
   }
 
-  api_free_dictionary(*ctx);
-  *ctx = ctx_new.data.dictionary;
-
-  *name = name_new.data.string.data;
+  *ctx_dict = ctx_tmp;
+  *name = new_name.data.string.data;
 }
 
 /// "call_async(callee, args[, opts])" function
@@ -7645,6 +7644,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   typval_T *opts = NULL;
   Callback callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
+  Dictionary callee_context = ARRAY_DICT_INIT;
 
   if (argvars[0].v_type == VAR_FUNC) {
     callee = argvars[0].vval.v_string;
@@ -7681,7 +7681,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     Error err = ERROR_INIT;
-    ctx_dict_add_userfunc(&context, (char **)&callee, &err);
+    ctx_dict_add_userfunc(&callee_context, (char **)&callee, &err);
     if (ERROR_SET(&err)) {
       EMSG2("Failed to prepare function for async call: %s", err.msg);
       api_clear_error(&err);
@@ -7705,6 +7705,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
   ADD(call_async_args, INTEGER_OBJ(current_sctx.sc_sid));
   ADD(call_async_args, DICTIONARY_OBJ(context));
+  ADD(call_async_args, DICTIONARY_OBJ(callee_context));
   ADD(call_async_args, vim_to_object(args));
 
   if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
@@ -7725,6 +7726,7 @@ fail:
   }
   callback_free(&callback);
   api_free_dictionary(context);
+  api_free_dictionary(callee_context);
 }
 
 /// "call_parallel(callee, arglists[, opts])" function
@@ -7738,6 +7740,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Callback callback = CALLBACK_NONE;
   Callback item_callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
+  Dictionary callee_context = ARRAY_DICT_INIT;
   AsyncCall *async_call = NULL;
 
   if (argvars[0].v_type == VAR_FUNC) {
@@ -7803,7 +7806,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     Error err = ERROR_INIT;
-    ctx_dict_add_userfunc(&context, (char **)&callee, &err);
+    ctx_dict_add_userfunc(&callee_context, (char **)&callee, &err);
     if (ERROR_SET(&err)) {
       EMSG2("Failed to prepare function for async call: %s", err.msg);
       api_clear_error(&err);
@@ -7835,6 +7838,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ADD(call_parallel_args, STRING_OBJ(cstr_to_string((char *)callee)));
     ADD(call_parallel_args, INTEGER_OBJ(current_sctx.sc_sid));
     ADD(call_parallel_args, DICTIONARY_OBJ(copy_dictionary(context)));
+    ADD(call_parallel_args, DICTIONARY_OBJ(copy_dictionary(callee_context)));
     ADD(call_parallel_args,
         copy_object(async_call->work_queue.items[async_call->next++]));
     if (!rpc_send_event(chan->id, "nvim__async_invoke", call_parallel_args)) {
@@ -7851,6 +7855,7 @@ free:
     xfree(callee);
   }
   api_free_dictionary(context);
+  api_free_dictionary(callee_context);
   return;
 
 fail:
