@@ -496,8 +496,8 @@ local function _async_handler_default(cmd)
       'eval',
       ['[nvim_command_output(cmd), nvim_get_context([v:null])]'],
       { 'context': nvim_get_context([v:null]),
-        'done': { rv -> nvim_command('echo rv[0]') +
-                        nvim_load_context(rv[1]) } })
+        'done': { rv -> [call_wait(v:jobs), nvim_command('echo rv[0]'),
+                        nvim_load_context(rv[1])] } })
   ]=]):gsub('\n', ''):gsub('cmd', cmd, 1)
   vim.api.nvim_command(handler_cmd)
 end
