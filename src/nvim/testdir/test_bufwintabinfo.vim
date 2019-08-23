@@ -20,6 +20,13 @@ function Test_getbufwintabinfo()
     call assert_equal('vim', l[0].variables.editor)
     call assert_notequal(-1, index(l[0].windows, bufwinid('%')))
 
+    " Test for getbufinfo() with 'bufmodified'
+    call assert_equal(0, len(getbufinfo({'bufmodified' : 1})))
+    call setbufline('Xtestfile1', 1, ["Line1"])
+    let l = getbufinfo({'bufmodified' : 1})
+    call assert_equal(1, len(l))
+    call assert_equal(bufnr('Xtestfile1'), l[0].bufnr)
+
     if has('signs')
 	call append(0, ['Linux', 'Windows', 'Mac'])
 	sign define Mark text=>> texthl=Search

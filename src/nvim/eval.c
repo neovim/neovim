@@ -9692,6 +9692,7 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool filtered = false;
   bool sel_buflisted = false;
   bool sel_bufloaded = false;
+  bool sel_bufmodified = false;
 
   tv_list_alloc_ret(rettv, kListLenMayKnow);
 
@@ -9713,6 +9714,10 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       if (di != NULL && tv_get_number(&di->di_tv)) {
         sel_bufloaded = true;
       }
+      di = tv_dict_find(sel_d, S_LEN("bufmodified"));
+      if (di != NULL && tv_get_number(&di->di_tv)) {
+        sel_bufmodified = true;
+      }
     }
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
     // Information about one buffer.  Argument specifies the buffer
@@ -9732,7 +9737,8 @@ static void f_getbufinfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       continue;
     }
     if (filtered && ((sel_bufloaded && buf->b_ml.ml_mfp == NULL)
-                     || (sel_buflisted && !buf->b_p_bl))) {
+                     || (sel_buflisted && !buf->b_p_bl)
+                     || (sel_bufmodified && !buf->b_changed))) {
       continue;
     }
 

@@ -4041,6 +4041,7 @@ getbufinfo([{dict}])
 		be specified in {dict}:
 			buflisted	include only listed buffers.
 			bufloaded	include only loaded buffers.
+			bufmodified	include only modified buffers.
 
 		Otherwise, {expr} specifies a particular buffer to return
 		information for.  For the use of {expr}, see |bufname()|
