@@ -11,6 +11,7 @@ log.levels = Enum:new({
   info  = 1,
   warn  = 2,
   error = 3,
+  none = 4,
 })
 
 log.set_outfile = function(logger, dir_name, file_name)
@@ -39,7 +40,7 @@ log.create_functions = function(new_log, new_logger)
   for name in pairs(log.levels) do
     if log[name] == nil then
       log[name] = function(self, logger, ...)
-        if self.levels[name] < logger.log_level then
+        if logger.log_level == self.levels['none'] or self.levels[name] < logger.log_level then
           return
         end
 
