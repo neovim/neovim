@@ -22,7 +22,10 @@ function! lsp#completion#omni(findstart, base) abort
                          \  col('.') + len(a:base))
     let results = lsp#request('textDocument/completion', params)
 
-    call filter(results, {_, match -> match['word'] =~ '^' . a:base})
+    if !(results is v:null)
+      call filter(results, {_, match -> match['word'] =~ '^' . a:base})
+    endif
+
     return results
   else
     throw "LSP/omnifunc bad a:findstart" a:findstart
@@ -31,13 +34,17 @@ function! lsp#completion#omni(findstart, base) abort
 endfunction
 
 ""
-" 
+"
 function! lsp#completion#complete() abort
   let line_to_cursor = strpart(getline('.'), 0, col('.') - 1)
   let [string_result, start_position, end_position] = matchstrpos(line_to_cursor, '\k\+$')
+  let params = luaeval("vim.lsp.structures.CompletionParams()")
 
-  let results = lsp#request('textDocument/completion')
-  call complete(col('.') - (end_position - start_position), results)
+  let results = lsp#request('textDocument/completion', params)
+
+  if !(results is v:null)
+    call complete(col('.') - (end_position - start_position), results)
+  endif
 
   return ''
 endfunction

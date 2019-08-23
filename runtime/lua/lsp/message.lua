@@ -1,12 +1,7 @@
--- TODO:
---  Do the decoding from the message class?
-
 local json = require('lsp.json')
 local util = require('nvim.util')
-
+local shared = require('vim.shared')
 local log = require('lsp.log')
-local get_request_function = require('lsp.request').get_request_function
-local get_notification_function = require('lsp.notification').get_notification_function
 
 local Message = {
   jsonrpc = "2.0"
@@ -18,6 +13,28 @@ local get_id = function(name)
   local temp_id = message_id[name] or 0
   message_id[name] = temp_id + 1
   return temp_id
+end
+
+local check_language_server_capabilities = function(client, method)
+  local method_table
+  if type(method) == 'string' then
+    method_table = shared.split(method, '/', true)
+  elseif type(method) == 'table' then
+    method_table = method
+  else
+    return true
+  end
+
+  -- TODO: This should be a better implementation.
+  -- Almost methods naming rule is 'subject_name/opetation_name'.
+  -- almost capability properties naming rule is 'operation_nameProvider'.
+  -- And some language server has custom methods.
+  -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
+  if method_table[2] and client.server_capabilities[method_table[2]..'Provider'] == false then
+    return false
+  else
+    return true
+  end
 end
 
 function Message:new(o)
@@ -40,16 +57,7 @@ setmetatable(RequestMessage, { __index = Message })
 function RequestMessage:new(client, method, params)
   assert(self)
 
-  local request_func = get_request_function(method)
-  local request_params, acceptable_method
-  if request_func and type(request_func) == 'function' then
-    request_params, acceptable_method = request_func(client, params)
-  else
-    log.debug(string.format('No request function found for: %s', util.tostring(method)))
-    request_params = params
-  end
-
-  if acceptable_method == false then
+  if check_language_server_capabilities(client, method) == false then
     log.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
     return nil
   end
@@ -57,7 +65,7 @@ function RequestMessage:new(client, method, params)
   local object = {
     id = get_id(client),
     method = method,
-    params = request_params
+    params = params
   }
 
   setmetatable(object, request_mt)
@@ -110,23 +118,15 @@ setmetatable(NotificationMessage, { __index = Message })
 function NotificationMessage:new(client, method, params)
   assert(self)
 
-  local notification_func = get_notification_function(method)
-  local notification_params, acceptable_method
-  if notification_func and type(notification_func) == 'function' then
-    notification_params, acceptable_method = notification_func(client, params)
-  else
-    log.debug(string.format('No notification function found for: %s', util.tostring(method)))
-    notification_params = params
-  end
-
-  if acceptable_method == false then
-    log.debug(string.format('[LSP:Notification] Method "%s" is not supported by server %s', method, client.name))
+  if check_language_server_capabilities(client, method) == false then
+    log.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
+    log.client.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
     return nil
   end
 
   local object = {
     method = method,
-    params = notification_params
+    params = params
   }
 
   setmetatable(object, notification_mt)

@@ -8,6 +8,7 @@ local EmptyDictionary = require('nvim.meta').EmptyDictionary
 local message = require('lsp.message')
 local call_callbacks_for_method = require('lsp.callbacks').call_callbacks_for_method
 local should_send_message = require('lsp.checks').should_send
+local structures = require('lsp.structures')
 
 local log = require('lsp.log')
 
@@ -23,33 +24,33 @@ local error_level = Enum:new({
   info = 2,
 })
 
-local ActiveJobs = {}
+local PendingJobs = {}
 
-ActiveJobs.add = function(job_id, obj)
-  ActiveJobs[job_id] = obj
+PendingJobs.add = function(job_id, obj)
+  PendingJobs[job_id] = obj
 end
 
-ActiveJobs.remove = function(job_id)
-  ActiveJobs[job_id] = nil
+PendingJobs.remove = function(job_id)
+  PendingJobs[job_id] = nil
 end
 
 local client = {}
 client.__index = client
 
 client.job_stdout = function(job_id, data)
-  if ActiveJobs[job_id] == nil then
+  if PendingJobs[job_id] == nil then
     return
   end
 
-  ActiveJobs[job_id]:on_stdout(data)
+  PendingJobs[job_id]:on_stdout(data)
 end
 
 client.job_exit = function(job_id, data)
-  if ActiveJobs[job_id] == nil then
+  if PendingJobs[job_id] == nil then
     return
   end
 
-  ActiveJobs[job_id]:on_exit(data)
+  PendingJobs[job_id]:on_exit(data)
 end
 
 local start_job = function(cmd)
@@ -91,8 +92,9 @@ client.new = function(name, ft, cmd)
     _read_data = '',
     _current_header = {},
 
+    client_capabilities = EmptyDictionary:new(),
     -- Capabilities sent by server
-    capabilities = EmptyDictionary:new(),
+    server_capabilities = EmptyDictionary:new(),
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -105,20 +107,26 @@ client.new = function(name, ft, cmd)
     __data__ = {},
   }, client)
 
-  ActiveJobs.add(job_id, self)
+  PendingJobs.add(job_id, self)
 
   return self
 end
 
 client.initialize = function(self)
-  local result = self:request_async('initialize', nil, function(_, data)
-    self:notify('initialized')
-    self:notify('textDocument/didOpen')
+  local result = self:request_async('initialize', structures.InitializeParams(self), function(_, data)
+    self:set_server_capabilities(data)
+    self:notify('initialized', {})
+    self:notify('textDocument/didOpen', structures.DidOpenTextDocumentParams(self))
     self.capabilities =  EmptyDictionary:new(data.capabilities)
     return data.capabilities
   end, nil)
 
   return result
+end
+
+client.set_server_capabilities = function(self, data)
+  log.debug('Language server('..self.ft..') capabilities: '..util.tostring(data.capabilities))
+  self.server_capabilities = data.capabilities
 end
 
 client.close = function(self)
@@ -194,6 +202,7 @@ client.request_async = function(self, method, params, cb, bufnr)
   if should_send_message(self, req) then
     log.debug("Send request --->: [["..req:data().."]]")
     log.client.debug("Send request --->: [["..req:data().."]]")
+    log.debug("job_id: "..self.job_id)
     vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
   else
     log.debug(string.format('Request "%s" was cancelled with params %s', method, util.tostring(params)))
@@ -403,9 +412,9 @@ client.on_error = function(self, level, err_message)
 end
 
 client.on_exit = function(self, data)
-  log.info('Exiting job id: ', self.job_id, 'with data:', data)
+  log.info('Exiting job id: ', self.job_id, ' with data:', data)
 
-  ActiveJobs.remove(self.job_id)
+  PendingJobs.remove(self.job_id)
 end
 
 client.reset_state = function(self)
