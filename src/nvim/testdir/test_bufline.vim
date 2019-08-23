@@ -1,4 +1,4 @@
-" Tests for setbufline() and getbufline()
+" Tests for setbufline(), getbufline(), appendbufline(), deletebufline()
 
 source shared.vim
 
@@ -64,4 +64,51 @@ func Test_setline_startup()
 
   call delete('Xscript')
   call delete('Xtest')
+endfunc
+
+func Test_appendbufline()
+  new
+  let b = bufnr('%')
+  hide
+  call assert_equal(0, appendbufline(b, 0, ['foo', 'bar']))
+  call assert_equal(['foo'], getbufline(b, 1))
+  call assert_equal(['bar'], getbufline(b, 2))
+  call assert_equal(['foo', 'bar'], getbufline(b, 1, 2))
+  exe "bd!" b
+  call assert_equal([], getbufline(b, 1, 2))
+
+  split Xtest
+  call setline(1, ['a', 'b', 'c'])
+  let b = bufnr('%')
+  wincmd w
+  call assert_equal(1, appendbufline(b, 4, ['x']))
+  call assert_equal(1, appendbufline(1234, 1, ['x']))
+  call assert_equal(0, appendbufline(b, 3, ['d', 'e']))
+  call assert_equal(['c'], getbufline(b, 3))
+  call assert_equal(['d'], getbufline(b, 4))
+  call assert_equal(['e'], getbufline(b, 5))
+  call assert_equal([], getbufline(b, 6))
+  exe "bwipe! " . b
+endfunc
+
+func Test_deletebufline()
+  new
+  let b = bufnr('%')
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  hide
+  call assert_equal(0, deletebufline(b, 2))
+  call assert_equal(['aaa', 'ccc'], getbufline(b, 1, 2))
+  call assert_equal(0, deletebufline(b, 2, 8))
+  call assert_equal(['aaa'], getbufline(b, 1, 2))
+  exe "bd!" b
+  call assert_equal(1, deletebufline(b, 1))
+
+  split Xtest
+  call setline(1, ['a', 'b', 'c'])
+  let b = bufnr('%')
+  wincmd w
+  call assert_equal(1, deletebufline(b, 4))
+  call assert_equal(0, deletebufline(b, 1))
+  call assert_equal(['b', 'c'], getbufline(b, 1, 2))
+  exe "bwipe! " . b
 endfunc
