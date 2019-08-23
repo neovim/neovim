@@ -2223,7 +2223,7 @@ return {
       type='string', scope={'window'},
       vi_def=true,
       alloced=true,
-      redraw={'current_window'},
+      redraw={'everything'},
       defaults={if_true={vi="auto"}}
     },
     {

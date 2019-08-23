@@ -4095,8 +4095,20 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
       curbuf->b_p_iminsert = B_IMODE_NONE;
       curbuf->b_p_imsearch = B_IMODE_USE_INSERT;
     }
+  } else if (((int *)varp == &curwin->w_p_nu
+              || (int *)varp == &curwin->w_p_rnu)
+             && (*curwin->w_p_scl == 'n' && *(curwin->w_p_scl + 1) == 'u')
+             && curbuf->b_signlist != NULL) {
+    // If the 'number' or 'relativenumber' options are modified and
+    // 'signcolumn' is set to 'number', then clear the screen for a full
+    // refresh. Otherwise the sign icons are not displayed properly in the
+    // number column.  If the 'number' option is set and only the
+    // 'relativenumber' option is toggled, then don't refresh the screen
+    // (optimization).
+    if (!(curwin->w_p_nu && ((int *)varp == &curwin->w_p_rnu))) {
+      redraw_all_later(CLEAR);
+    }
   }
-
 
   /*
    * End of handling side effects for bool options.
