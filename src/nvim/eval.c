@@ -1224,9 +1224,7 @@ static void restore_vimvar(int idx, typval_T *save_tv)
 /// If there is a window for "curbuf", make it the current window.
 static void find_win_for_curbuf(void)
 {
-  wininfo_T *wip;
-
-  for (wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next) {
+  for (wininfo_T *wip = curbuf->b_wininfo; wip != NULL; wip = wip->wi_next) {
     if (wip->wi_win != NULL) {
       curwin = wip->wi_win;
       break;
@@ -8260,22 +8258,18 @@ static void f_dictwatcherdel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "deletebufline()" function
 static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  buf_T *buf;
-  linenr_T first, last;
-  linenr_T lnum;
-  long count;
-  int is_curbuf;
+  linenr_T last;
   buf_T *curbuf_save = NULL;
   win_T *curwin_save = NULL;
 
-  buf = tv_get_buf(&argvars[0], false);
+  buf_T *const buf = tv_get_buf(&argvars[0], false);
   if (buf == NULL) {
     rettv->vval.v_number = 1;  // FAIL
     return;
   }
-  is_curbuf = buf == curbuf;
+  const bool is_curbuf = buf == curbuf;
 
-  first = tv_get_lnum_buf(&argvars[1], buf);
+  const linenr_T first = tv_get_lnum_buf(&argvars[1], buf);
   if (argvars[2].v_type != VAR_UNKNOWN) {
     last = tv_get_lnum_buf(&argvars[2], buf);
   } else {
@@ -8297,7 +8291,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (last > curbuf->b_ml.ml_line_count) {
     last = curbuf->b_ml.ml_line_count;
   }
-  count = last - first + 1;
+  const long count = last - first + 1;
 
   // When coming here from Insert mode, sync undo, so that this can be
   // undone separately from what was previously inserted.
@@ -8311,7 +8305,7 @@ static void f_deletebufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  for (lnum = first; lnum <= last; lnum++) {
+  for (linenr_T lnum = first; lnum <= last; lnum++) {
     ml_delete(first, true);
   }
 
@@ -15116,17 +15110,10 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
   }
 
   if (!is_curbuf) {
-    wininfo_T *wip;
-
     curbuf_save = curbuf;
     curwin_save = curwin;
     curbuf = buf;
-    for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next) {
-      if (wip->wi_win != NULL) {
-        curwin = wip->wi_win;
-        break;
-      }
-    }
+    find_win_for_curbuf();
   }
 
   if (append) {

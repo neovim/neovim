@@ -1,4 +1,4 @@
-" Tests for setbufline(), getbufline(), appendbufline()
+" Tests for setbufline(), getbufline(), appendbufline(), deletebufline()
 
 source shared.vim
 
@@ -88,5 +88,27 @@ func Test_appendbufline()
   call assert_equal(['d'], getbufline(b, 4))
   call assert_equal(['e'], getbufline(b, 5))
   call assert_equal([], getbufline(b, 6))
+  exe "bwipe! " . b
+endfunc
+
+func Test_deletebufline()
+  new
+  let b = bufnr('%')
+  call setline(1, ['aaa', 'bbb', 'ccc'])
+  hide
+  call assert_equal(0, deletebufline(b, 2))
+  call assert_equal(['aaa', 'ccc'], getbufline(b, 1, 2))
+  call assert_equal(0, deletebufline(b, 2, 8))
+  call assert_equal(['aaa'], getbufline(b, 1, 2))
+  exe "bd!" b
+  call assert_equal(1, deletebufline(b, 1))
+
+  split Xtest
+  call setline(1, ['a', 'b', 'c'])
+  let b = bufnr('%')
+  wincmd w
+  call assert_equal(1, deletebufline(b, 4))
+  call assert_equal(0, deletebufline(b, 1))
+  call assert_equal(['b', 'c'], getbufline(b, 1, 2))
   exe "bwipe! " . b
 endfunc
