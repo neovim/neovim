@@ -52,21 +52,22 @@ function Test_getbufwintabinfo()
     let winlist = getwininfo()
     call assert_equal(5, len(winlist))
     call assert_equal(winwidth(1), winlist[0].width)
-    call assert_equal(0, winlist[0].wincol)
-    let tablineheight = winlist[0].winrow == 1 ? 1 : 0
-    call assert_equal(tablineheight, winlist[0].winrow)  " tabline adds one
+    call assert_equal(1, winlist[0].wincol)
+    " tabline adds one row in terminal, not in GUI
+    let tablineheight = winlist[0].winrow == 2 ? 1 : 0
+    call assert_equal(tablineheight + 1, winlist[0].winrow)
 
     call assert_equal(winbufnr(2), winlist[1].bufnr)
     call assert_equal(winheight(2), winlist[1].height)
-    call assert_equal(0, winlist[1].wincol)
-    call assert_equal(tablineheight + winheight(1) + 1, winlist[1].winrow)
+    call assert_equal(1, winlist[1].wincol)
+    call assert_equal(tablineheight + winheight(1) + 2, winlist[1].winrow)
 
     call assert_equal(1, winlist[2].winnr)
-    call assert_equal(tablineheight, winlist[2].winrow)
-    call assert_equal(0, winlist[2].wincol)
+    call assert_equal(tablineheight + 1, winlist[2].winrow)
+    call assert_equal(1, winlist[2].wincol)
 
-    call assert_equal(winlist[2].width + 1, winlist[3].wincol)
-    call assert_equal(0, winlist[4].wincol)
+    call assert_equal(winlist[2].width + 2, winlist[3].wincol)
+    call assert_equal(1, winlist[4].wincol)
 
     call assert_equal(1, winlist[0].tabnr)
     call assert_equal(1, winlist[1].tabnr)

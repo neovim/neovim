@@ -4741,25 +4741,6 @@ gettagstack([{nr}])					*gettagstack()*
 
 		See |tagstack| for more information about the tag stack.
 
-getwinpos([{timeout}])					*getwinpos()*
-		The result is a list with two numbers, the result of
-		getwinposx() and getwinposy() combined:
-			[x-pos, y-pos]
-		{timeout} can be used to specify how long to wait in msec for
-		a response from the terminal.  When omitted 100 msec is used.
-
-							*getwinposx()*
-getwinposx()	The result is a Number, which is the X coordinate in pixels of
-		the left hand side of the GUI Vim window.  The result will be
-		-1 if the information is not available.
-		The value can be used with `:winpos`.
-
-							*getwinposy()*
-getwinposy()	The result is a Number, which is the Y coordinate in pixels of
-		the top of the GUI Vim window.  The result will be -1 if the
-		information is not available.
-		The value can be used with `:winpos`.
-
 getwininfo([{winid}])					*getwininfo()*
 		Returns information about windows as a List with Dictionaries.
 
@@ -4788,6 +4769,25 @@ getwininfo([{winid}])					*getwininfo()*
 			winid		|window-ID|
 			winnr		window number
 			winrow		topmost screen column of the window
+
+getwinpos([{timeout}])					*getwinpos()*
+		The result is a list with two numbers, the result of
+		getwinposx() and getwinposy() combined:
+			[x-pos, y-pos]
+		{timeout} can be used to specify how long to wait in msec for
+		a response from the terminal.  When omitted 100 msec is used.
+
+							*getwinposx()*
+getwinposx()	The result is a Number, which is the X coordinate in pixels of
+		the left hand side of the GUI Vim window.  The result will be
+		-1 if the information is not available.
+		The value can be used with `:winpos`.
+
+							*getwinposy()*
+getwinposy()	The result is a Number, which is the Y coordinate in pixels of
+		the top of the GUI Vim window.  The result will be -1 if the
+		information is not available.
+		The value can be used with `:winpos`.
 
 getwinvar({winnr}, {varname} [, {def}])				*getwinvar()*
 		Like |gettabwinvar()| for the current tabpage.
@@ -8888,7 +8888,7 @@ win_id2win({expr})					*win_id2win()*
 win_screenpos({nr})					*win_screenpos()*
 		Return the screen position of window {nr} as a list with two
 		numbers: [row, col].  The first window always has position
-		[1, 1].
+		[1, 1], unless there is a tabline, then it is [2, 1].
 		{nr} can be the window number or the |window-ID|.
 		Return [0, 0] if the window cannot be found in the current
 		tabpage.
