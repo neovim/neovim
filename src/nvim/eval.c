@@ -10895,15 +10895,11 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
 {
-  if (!uv_timer_get_repeat(&tw->uv)) {
-    time_watcher_start(tw, dummy_timer_due_cb, 0, 0);
-  }
 }
 
 // Dummy timer close callback. Used by f_wait().
 static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
 {
-  multiqueue_free(tw->events);
   xfree(tw);
 }
 
@@ -10914,7 +10910,7 @@ static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = -1;
 
   if (argvars[0].v_type != VAR_NUMBER) {
-    EMSG2(_(e_invarg2), "First argument of wait() must be a number");
+    EMSG2(_(e_invargval), "1");
     return;
   }
 
@@ -10928,20 +10924,18 @@ static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (tv_interval->v_type == VAR_NUMBER) {
     interval = tv_interval->vval.v_number;
-    if (interval < 0) {
-      EMSG2(_(e_invarg2),
-            "Third argument of wait() must be a non-negative number");
+    if (interval <= 0) {
+      EMSG2(_(e_invargval), "3");
       return;
     }
     // Start dummy timer
     tw = xmalloc(sizeof(TimeWatcher));
     time_watcher_init(&main_loop, tw, NULL);
-    tw->events = multiqueue_new_child(main_loop.events);
+    tw->events = main_loop.events;
     tw->blockable = true;
     time_watcher_start(tw, dummy_timer_due_cb, interval, interval);
   } else if (tv_interval->v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2),
-          "Third argument of wait() must be a non-negative number");
+    EMSG2(_(e_invargval), "3");
     return;
   }
 
