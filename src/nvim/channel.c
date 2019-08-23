@@ -253,13 +253,26 @@ void asynccall_channel_release(Channel *channel)
 }
 
 void asynccall_callback_call(
-    Callback *cb, Object *result, Error *err)
+    Channel *ch, Callback *cb, Object *result, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
+  assert(ch->async_call != NULL);
+
   typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
   if (object_to_vim(*result, &argv[0], err)) {
     typval_T rettv = TV_INITIAL_VALUE;
+
+    if (cb == &ch->async_call->item_callback) {
+      Array jobs = ARRAY_DICT_INIT;
+      ADD(jobs, INTEGER_OBJ((long)ch->id));
+      asynccall_set_jobs(jobs);
+      api_free_array(jobs);
+    } else {
+      asynccall_set_jobs(ch->async_call->jobs);
+    }
+
     callback_call(cb, 1, argv, &rettv);
+    asynccall_unset_jobs();
     tv_clear(&rettv);
     tv_clear(&argv[0]);
   }
@@ -293,6 +306,7 @@ void asynccall_decref(AsyncCall *asynccall)
   }
 
   callback_free(&asynccall->callback);
+  api_free_array(asynccall->jobs);
   if (asynccall->is_parallel) {
     callback_free(&asynccall->item_callback);
     api_free_array(asynccall->work_queue);

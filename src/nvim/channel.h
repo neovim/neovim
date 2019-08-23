@@ -61,6 +61,7 @@ typedef struct {
   size_t refcount;
   bool is_parallel;
   Callback callback;
+  Array jobs;
 
   // parallel call
   size_t count;              ///< number of workers

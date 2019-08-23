@@ -51,6 +51,19 @@ describe('multiproc', function()
       )
     end)
 
+    it('sets v:jobs in callback', function()
+      source([[
+      function JobsCb(...)
+        let g:jobs = v:jobs
+      endfunction
+      ]])
+      expect_err('Undefined variable', eval, 'v:jobs')
+      local job = call('call_async', 'eval', {1}, {done = 'JobsCb'})
+      call('call_wait', {job})
+      eq({job}, eval('g:jobs'))
+      expect_err('Undefined variable', eval, 'v:jobs')
+    end)
+
     it('reports errors from children', function()
       expect_err('Unknown function: foo',
                  call, 'call_wait', {call('call_async', 'foo', {})})
@@ -155,6 +168,25 @@ describe('multiproc', function()
              itemdone = 'ItemCallback' })
       eq({'notification', 'done', {{3, 6, 9}}}, next_msg())
       eq({3, 6, 9}, eval('sort(g:my_results, "n")'))
+    end)
+
+    it('sets v:jobs in callback', function()
+      source([[
+      function JobsCb1(...)
+        let g:jobs1 = v:jobs
+      endfunction
+      let g:jobs2 = []
+      function JobsCb2(...)
+        call add(g:jobs2, v:jobs[0])
+      endfunction
+      ]])
+      expect_err('Undefined variable', eval, 'v:jobs')
+      local jobs = call('call_parallel', 'eval', {{1}, {2}, {3}},
+                        {done = 'JobsCb1', itemdone = 'JobsCb2', count = 3})
+      call('call_wait', jobs)
+      eq(jobs, eval('g:jobs1'))
+      eq(jobs, eval('sort(g:jobs2)'))
+      expect_err('Undefined variable', eval, 'v:jobs')
     end)
 
     it('reports errors from children', function()
