@@ -403,6 +403,7 @@ static struct vimvar {
   VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
   VV(VV_CORES,          "cores",            VAR_NUMBER, VV_RO),
+  VV(VV_JOBS,           "jobs",             VAR_UNKNOWN, VV_RO),
 };
 #undef VV
 
@@ -7544,6 +7545,26 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   func_call(func, &argvars[1], partial, selfdict, rettv);
 }
 
+void asynccall_set_jobs(Array jobs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  typval_T tv_jobs = TV_INITIAL_VALUE;
+  typval_T tv_tmp = TV_INITIAL_VALUE;
+  Error err = ERROR_INIT;
+  if (object_to_vim(ARRAY_OBJ(jobs), &tv_jobs, &err)) {
+    prepare_vimvar(VV_JOBS, &tv_tmp);
+    vimvars[VV_JOBS].vv_tv = tv_jobs;
+  }
+  api_clear_error(&err);
+}
+
+void asynccall_unset_jobs(void)
+{
+  typval_T tv_tmp = TV_INITIAL_VALUE;
+  restore_vimvar(VV_JOBS, &tv_tmp);
+  tv_clear(&tv_tmp);
+}
+
 /// Extract callback and context from async call options dictionary.
 ///
 /// @param[in]   opts  Options dictionary.
@@ -7551,7 +7572,7 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// @param[out]  ctx   Context Dictionary.
 ///
 /// @return true on success, false otherwise.
-static inline bool get_asynccall_opts(
+static inline bool asynccall_get_opts(
     dict_T *opts, Callback *cb, Dictionary *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -7576,15 +7597,16 @@ static inline bool get_asynccall_opts(
   return true;
 }
 
-/// Add user function entry to given context dictionary.
-/// Parent scope l: vars are added to the context if the function is a closure.
+/// Get a context dictionary with user function definition and parent scope
+/// l: variables for closures.
 ///
-/// @see ctx_pack_func().
+/// On success, an allocated string with the (possibly modified) function
+/// name is saved in "name" (@see ctx_pack_func()).
 ///
-/// @param[in/out]  ctx_dict  Context dictionary to add function entry to.
+/// @param[out]     ctx_dict  Context dictionary to add function entry to.
 /// @param[in/out]  name      Function name.
 /// @param[out]     err       Error details, if any.
-static void ctx_dict_add_userfunc(
+static void asynccall_get_userfunc(
     Dictionary *ctx_dict, char **name, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -7669,7 +7691,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   opts = &argvars[2];
   if (opts->v_type == VAR_DICT) {
-    if (!get_asynccall_opts(opts->vval.v_dict, &callback, &context)) {
+    if (!asynccall_get_opts(opts->vval.v_dict, &callback, &context)) {
       return;
     }
   } else if (opts->v_type != VAR_UNKNOWN) {
@@ -7681,7 +7703,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     Error err = ERROR_INIT;
-    ctx_dict_add_userfunc(&callee_context, (char **)&callee, &err);
+    asynccall_get_userfunc(&callee_context, (char **)&callee, &err);
     if (ERROR_SET(&err)) {
       EMSG2("Failed to prepare function for async call: %s", err.msg);
       api_clear_error(&err);
@@ -7718,6 +7740,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     xfree(callee);
   }
   rettv->vval.v_number = chan->id;
+  ADD(chan->async_call->jobs, INTEGER_OBJ(chan->id));
   return;
 
 fail:
@@ -7736,7 +7759,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool free_callee = false;
   typval_T *arglists = NULL;
   typval_T *opts = NULL;
-  int count = vimvars[VV_CORES].vv_di.di_tv.vval.v_number;
+  int count = vimvars[VV_CORES].vv_nr;
   Callback callback = CALLBACK_NONE;
   Callback item_callback = CALLBACK_NONE;
   Dictionary context = ARRAY_DICT_INIT;
@@ -7767,7 +7790,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   opts = &argvars[2];
   if (opts->v_type == VAR_DICT) {
     dict_T *dict_opts = opts->vval.v_dict;
-    if (!get_asynccall_opts(dict_opts, &callback, &context)) {
+    if (!asynccall_get_opts(dict_opts, &callback, &context)) {
       return;
     }
 
@@ -7806,7 +7829,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     Error err = ERROR_INIT;
-    ctx_dict_add_userfunc(&callee_context, (char **)&callee, &err);
+    asynccall_get_userfunc(&callee_context, (char **)&callee, &err);
     if (ERROR_SET(&err)) {
       EMSG2("Failed to prepare function for async call: %s", err.msg);
       api_clear_error(&err);
@@ -7832,6 +7855,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       goto fail;
     }
     tv_list_append_number(rettv->vval.v_list, chan->id);
+    ADD(async_call->jobs, INTEGER_OBJ(chan->id));
     chan->async_call = async_call;
     async_call->refcount += 1;
     Array call_parallel_args = ARRAY_DICT_INIT;

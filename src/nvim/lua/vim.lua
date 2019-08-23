@@ -296,7 +296,7 @@ local function _async_invoke(ctx, callee_ctx, fn, args)
 end
 
 -- Returns function name for use in context dictionary.
--- Used by ctx_dict_add_userfunc() in "nvim/eval.c".
+-- Used by asynccall_get_userfunc() in "nvim/eval.c".
 --
 -- @param name Function name
 --

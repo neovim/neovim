@@ -139,6 +139,7 @@ typedef enum {
     VV_ECHOSPACE,
     VV_EXITING,
     VV_CORES,
+    VV_JOBS,
 } VimVarIndex;
 
 /// All recognized msgpack types

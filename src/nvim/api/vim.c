@@ -2588,7 +2588,8 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     Array work_queue = async_call->work_queue;
     asynccall_append_result(channel_id, result, err);
     ADD(async_call->results, copy_object(result));
-    asynccall_callback_call(&channel->async_call->item_callback, &result, err);
+    asynccall_callback_call(channel, &channel->async_call->item_callback,
+                            &result, err);
     result = ARRAY_OBJ(async_call->results);
     if (async_call->next < work_queue.size) {
       Array rpc_args = ARRAY_DICT_INIT;
@@ -2612,9 +2613,8 @@ void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
     asynccall_put_result(channel_id, result, err);
   }
 
-  asynccall_callback_call(&channel->async_call->callback, &result, err);
-  asynccall_decref(channel->async_call);
-  channel->async_call = NULL;
+  asynccall_callback_call(channel, &channel->async_call->callback,
+                          &result, err);
 }
 
 void nvim_error_event(uint64_t channel_id, Integer type, String message,
