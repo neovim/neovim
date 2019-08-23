@@ -20,6 +20,7 @@ return {
     ['and']={args=2},
     api_info={},
     append={args=2},
+    appendbufline={args=3},
     argc={args={0, 1}},
     argidx={},
     arglistid={args={0, 2}},

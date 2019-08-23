@@ -537,7 +537,7 @@ func! Test_edit_CTRL_I()
   " Tab in completion mode
   let path=expand("%:p:h")
   new
-  call setline(1, [path."/", ''])
+  call setline(1, [path. "/", ''])
   call feedkeys("Arunt\<c-x>\<c-f>\<tab>\<cr>\<esc>", 'tnix')
   call assert_match('runtest\.vim', getline(1))
   %d

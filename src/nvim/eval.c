@@ -6741,61 +6741,24 @@ static void f_api_info(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   api_free_dictionary(metadata);
 }
 
-/*
- * "append(lnum, string/list)" function
- */
+// "append(lnum, string/list)" function
 static void f_append(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  long lnum;
-  list_T      *l = NULL;
-  listitem_T  *li = NULL;
-  typval_T    *tv;
-  long added = 0;
+  const linenr_T lnum = tv_get_lnum(&argvars[0]);
 
-  /* When coming here from Insert mode, sync undo, so that this can be
-   * undone separately from what was previously inserted. */
-  if (u_sync_once == 2) {
-    u_sync_once = 1;     /* notify that u_sync() was called */
-    u_sync(TRUE);
+  set_buffer_lines(curbuf, lnum, true, &argvars[1], rettv);
+}
+
+// "appendbufline(buf, lnum, string/list)" function
+static void f_appendbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  buf_T *const buf = tv_get_buf(&argvars[0], false);
+  if (buf == NULL) {
+    rettv->vval.v_number = 1;  // FAIL
+  } else {
+    const linenr_T lnum = tv_get_lnum_buf(&argvars[1], buf);
+    set_buffer_lines(buf, lnum, true, &argvars[2], rettv);
   }
-
-  lnum = tv_get_lnum(argvars);
-  if (lnum >= 0
-      && lnum <= curbuf->b_ml.ml_line_count
-      && u_save(lnum, lnum + 1) == OK) {
-    if (argvars[1].v_type == VAR_LIST) {
-      l = argvars[1].vval.v_list;
-      if (l == NULL) {
-        return;
-      }
-      li = tv_list_first(l);
-    }
-    for (;; ) {
-      if (l == NULL) {
-        tv = &argvars[1];  // Append a string.
-      } else if (li == NULL) {
-        break;  // End of list.
-      } else {
-        tv = TV_LIST_ITEM_TV(li);  // Append item from list.
-      }
-      const char *const line = tv_get_string_chk(tv);
-      if (line == NULL) {  // Type error.
-        rettv->vval.v_number = 1;  // Failed.
-        break;
-      }
-      ml_append(lnum + added, (char_u *)line, (colnr_T)0, false);
-      added++;
-      if (l == NULL) {
-        break;
-      }
-      li = TV_LIST_ITEM_NEXT(l, li);
-    }
-
-    appended_lines_mark(lnum, added);
-    if (curwin->w_cursor.lnum > lnum)
-      curwin->w_cursor.lnum += added;
-  } else
-    rettv->vval.v_number = 1;           /* Failed */
 }
 
 static void f_argc(typval_T *argvars, typval_T *rettv, FunPtr fptr)
@@ -15130,16 +15093,19 @@ static void f_serverstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 /// Set line or list of lines in buffer "buf".
-static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
-                             typval_T *rettv)
+static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
+                             const typval_T *lines, typval_T *rettv)
+  FUNC_ATTR_NONNULL_ARG(4, 5)
 {
+  linenr_T lnum = lnum_arg + (append ? 1 : 0);
+  const char *line = NULL;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
   long        added = 0;
-  linenr_T    lcount;
+  linenr_T append_lnum;
   buf_T       *curbuf_save = NULL;
   win_T       *curwin_save = NULL;
-  int         is_curbuf = buf == curbuf;
+  const bool is_curbuf = buf == curbuf;
 
   // When using the current buffer ml_mfp will be set if needed.  Useful when
   // setline() is used on startup.  For other buffers the buffer must be
@@ -15163,9 +15129,14 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
     }
   }
 
-  lcount = curbuf->b_ml.ml_line_count;
-
-  const char *line = NULL;
+  if (append) {
+    // appendbufline() uses the line number below which we insert
+    append_lnum = lnum - 1;
+  } else {
+    // setbufline() uses the line number above which we insert, we only
+    // append if it's below the last line
+    append_lnum = curbuf->b_ml.ml_line_count;
+  }
 
   if (lines->v_type == VAR_LIST) {
     l = lines->vval.v_list;
@@ -15197,7 +15168,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
       u_sync(true);
     }
 
-    if (lnum <= curbuf->b_ml.ml_line_count) {
+    if (!append && lnum <= curbuf->b_ml.ml_line_count) {
       // Existing line, replace it.
       if (u_savesub(lnum) == OK
           && ml_replace(lnum, (char_u *)line, true) == OK) {
@@ -15208,20 +15179,27 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum, typval_T *lines,
         rettv->vval.v_number = 0;  // OK
       }
     } else if (added > 0 || u_save(lnum - 1, lnum) == OK) {
-      // lnum is one past the last line, append the line.
+      // append the line.
       added++;
       if (ml_append(lnum - 1, (char_u *)line, 0, false) == OK) {
         rettv->vval.v_number = 0;  // OK
       }
     }
 
-    if (l == NULL)                      /* only one string argument */
+    if (l == NULL) {  // only one string argument
       break;
-    ++lnum;
+    }
+    lnum++;
   }
 
   if (added > 0) {
-    appended_lines_mark(lcount, added);
+    appended_lines_mark(append_lnum, added);
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf && wp->w_cursor.lnum > append_lnum) {
+        wp->w_cursor.lnum += added;
+      }
+    }
+    check_cursor_col();
   }
 
   if (!is_curbuf) {
@@ -15241,8 +15219,7 @@ static void f_setbufline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       rettv->vval.v_number = 1;  // FAIL
     } else {
       lnum = tv_get_lnum_buf(&argvars[1], buf);
-
-      set_buffer_lines(buf, lnum, &argvars[2], rettv);
+      set_buffer_lines(buf, lnum, false, &argvars[2], rettv);
     }
 }
 
@@ -15393,7 +15370,7 @@ static void f_setfperm(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_setline(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   linenr_T lnum = tv_get_lnum(&argvars[0]);
-  set_buffer_lines(curbuf, lnum, &argvars[1], rettv);
+  set_buffer_lines(curbuf, lnum, false, &argvars[1], rettv);
 }
 
 /// Create quickfix/location list from VimL values

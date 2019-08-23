@@ -2495,6 +2495,21 @@ append({lnum}, {text})					*append()*
 		0 for success.  Example: >
 			:let failed = append(line('$'), "# THE END")
 			:let failed = append(0, ["Chapter 1", "the beginning"])
+
+appendbufline({expr}, {lnum}, {text})			*appendbufline()*
+		Like |append()| but append the text in buffer {expr}.
+
+		For the use of {expr}, see |bufname()|.
+
+		{lnum} is used like with |append()|.  Note that using |line()|
+		would use the current buffer, not the one appending to.
+		Use "$" to append at the end of the buffer.
+
+		On success 0 is returned, on failure 1 is returned.
+
+		If {expr} is not a valid buffer or {lnum} is not valid, an
+		error message is given. Example: >
+			:let failed = appendbufline(13, 0, "# THE START")
 <
 							*argc()*
 argc([{winid}])
