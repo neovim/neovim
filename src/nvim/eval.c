@@ -15194,6 +15194,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
       }
     }
     check_cursor_col();
+    update_topline();
   }
 
   if (!is_curbuf) {
