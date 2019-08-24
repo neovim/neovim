@@ -298,19 +298,23 @@ describe('TUI', function()
   end)
 
   -- TODO
-  it('in normal-mode', function()
+  it('paste: normal-mode', function()
   end)
 
   -- TODO
-  it('in command-mode', function()
+  it('paste: command-mode inserts 1 line', function()
   end)
 
   -- TODO
-  it('sets undo-point after consecutive pastes', function()
+  it('paste: sets undo-point after consecutive pastes', function()
+  end)
+
+  it('paste: other modes', function()
+    -- Other modes act like CTRL-C + paste.
   end)
 
   -- TODO
-  it('handles missing "stop paste" sequence', function()
+  it('paste: handles missing "stop paste" sequence', function()
   end)
 
   -- TODO: error when pasting into 'nomodifiable' buffer:

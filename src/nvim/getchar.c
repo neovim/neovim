@@ -523,15 +523,12 @@ void AppendToRedobuff(const char *s)
   }
 }
 
-/*
- * Append to Redo buffer literally, escaping special characters with CTRL-V.
- * K_SPECIAL and CSI are escaped as well.
- */
-void 
-AppendToRedobuffLit (
-    char_u *str,
-    int len                    /* length of "str" or -1 for up to the NUL */
-)
+/// Append to Redo buffer literally, escaping special characters with CTRL-V.
+/// K_SPECIAL and CSI are escaped as well.
+///
+/// @param str  String to append
+/// @param len  Length of `str` or -1 for up to the NUL.
+void AppendToRedobuffLit(const char_u *str, int len)
 {
   if (block_redo) {
     return;

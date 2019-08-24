@@ -105,9 +105,10 @@ local _paste = (function()
       tdots = now
       tredraw = now
       tick = 0
-      if (call('mode', {})):find('[vV]') then
-        vim.api.nvim_feedkeys('', 'n', false)
-      end
+      -- TODO
+      -- if mode == 'i' or mode == 'R' then
+      --   nvim_cancel()
+      -- end
     end
     vim.api.nvim_put(lines, 'c', true, true)
     if (now - tredraw >= 1000) or phase == 1 or phase == 3 then
@@ -119,6 +120,8 @@ local _paste = (function()
       local dots = ('.'):rep(tick % 4)
       tdots = now
       tick = tick + 1
+      -- Use :echo because Lua print('') is a no-op, and we want to clear the
+      -- message when there are zero dots.
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
     if phase == 3 then

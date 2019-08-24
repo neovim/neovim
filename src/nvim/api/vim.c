@@ -1206,6 +1206,42 @@ Dictionary nvim_get_namespaces(void)
   return retval;
 }
 
+/// Paste
+///
+/// Invokes the `vim.paste` handler, which handles each mode appropriately.
+/// Sets redo/undo. Faster than |nvim_input()|.
+///
+/// @param data  Multiline input. May be binary (containing NUL bytes).
+/// @param phase  Pass -1 to paste as one big buffer (i.e. without streaming).
+///               To "stream" a paste, call `nvim_paste` sequentially with
+///               these `phase` values:
+///                 - 1: starts the paste (exactly once)
+///                 - 2: continues the paste (zero or more times)
+///                 - 3: ends the paste (exactly once)
+/// @param[out] err Error details, if any
+/// @return true if paste should continue, false if paste was canceled
+Boolean nvim_paste(String data, Integer phase, Error *err)
+  FUNC_API_SINCE(6)
+{
+  if (phase < -1 || phase > 3) {
+    api_set_error(err, kErrorTypeValidation, "Invalid phase: %"PRId64, phase);
+    return false;
+  }
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, ARRAY_OBJ(string_to_array(data)));
+  ADD(args, INTEGER_OBJ(phase));
+  Object rv
+    = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
+                       args, err);
+  // Abort paste if handler does not return true.
+  bool ok = !ERROR_SET(err)
+    && (rv.type == kObjectTypeBoolean && rv.data.boolean);
+  api_free_object(rv);
+  api_free_array(args);
+
+  return ok;
+}
+
 /// Puts text at cursor.
 ///
 /// Compare |:put| and |p| which are always linewise.
@@ -1225,11 +1261,8 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after,
 {
   yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
   if (!prepare_yankreg_from_object(reg, type, lines.size)) {
-    api_set_error(err,
-                  kErrorTypeValidation,
-                  "Invalid regtype %s",
-                  type.data);
-    return;
+    api_set_error(err, kErrorTypeValidation, "Invalid type: '%s'", type.data);
+    goto cleanup;
   }
   if (lines.size == 0) {
     goto cleanup;  // Nothing to do.
@@ -1237,9 +1270,8 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after,
 
   for (size_t i = 0; i < lines.size; i++) {
     if (lines.items[i].type != kObjectTypeString) {
-      api_set_error(err,
-                    kErrorTypeValidation,
-                    "All items in the lines array must be strings");
+      api_set_error(err, kErrorTypeValidation,
+                    "Invalid lines (expected array of strings)");
       goto cleanup;
     }
     String line = lines.items[i].data.string;

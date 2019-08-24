@@ -745,6 +745,35 @@ String ga_take_string(garray_T *ga)
   return str;
 }
 
+/// Creates "readfile()-style" ArrayOf(String).
+///
+/// - NUL bytes are replaced with NL (form-feed).
+/// - If last line ends with NL an extra empty list item is added.
+Array string_to_array(const String input)
+{
+  Array ret = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < input.size; i++) {
+    const char *start = input.data + i;
+    const char *end = xmemscan(start, NL, input.size - i);
+    const size_t line_len = (size_t)(end - start);
+    i += line_len;
+
+    String s = {
+      .size = line_len,
+      .data = xmemdupz(start, line_len),
+    };
+    memchrsub(s.data, NUL, NL, line_len);
+    ADD(ret, STRING_OBJ(s));
+    // If line ends at end-of-buffer, add empty final item.
+    // This is "readfile()-style", see also ":help channel-lines".
+    if (i + 1 == input.size && end[0] == NL) {
+      ADD(ret, STRING_OBJ(cchar_to_string(NUL)));
+    }
+  }
+
+  return ret;
+}
+
 /// Set, tweak, or remove a mapping in a mode. Acts as the implementation for
 /// functions like @ref nvim_buf_set_keymap.
 ///

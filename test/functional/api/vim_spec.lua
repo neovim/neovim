@@ -366,7 +366,44 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_paste', function()
+    it('validates args', function()
+      expect_err('Invalid phase: %-2', request,
+        'nvim_paste', 'foo', -2)
+      expect_err('Invalid phase: 4', request,
+        'nvim_paste', 'foo', 4)
+    end)
+    it('non-streaming', function()
+      -- With final "\n".
+      nvim('paste', 'line 1\nline 2\nline 3\n', -1)
+      expect([[
+        line 1
+        line 2
+        line 3
+        ]])
+      -- Cursor follows the paste.
+      eq({0,4,1,0}, funcs.getpos('.'))
+      eq(false, nvim('get_option', 'paste'))
+      command('%delete _')
+      -- Without final "\n".
+      nvim('paste', 'line 1\nline 2\nline 3', -1)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      -- Cursor follows the paste.
+      eq({0,3,6,0}, funcs.getpos('.'))
+      eq(false, nvim('get_option', 'paste'))
+    end)
+  end)
+
   describe('nvim_put', function()
+    it('validates args', function()
+      expect_err('Invalid lines %(expected array of strings%)', request,
+        'nvim_put', {42}, 'l', false, false)
+      expect_err("Invalid type: 'x'", request,
+        'nvim_put', {'foo'}, 'x', false, false)
+    end)
     it('inserts text', function()
       -- linewise
       nvim('put', {'line 1','line 2','line 3'}, 'l', true, true)

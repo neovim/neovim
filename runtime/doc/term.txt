@@ -219,12 +219,6 @@ effect on some UIs.
 ==============================================================================
 Using the mouse						*mouse-using*
 
-							*bracketed-paste-mode*
-Nvim enables bracketed paste by default. Bracketed paste mode allows terminal
-applications to distinguish between typed text and pasted text. Thus you can
-paste text without Nvim trying to format or indent the text.
-See also https://cirw.in/blog/bracketed-paste
-
 					*mouse-mode-table* *mouse-overview*
 Overview of what the mouse buttons do, when 'mousemodel' is "extend":
 

@@ -100,31 +100,6 @@ static void tinput_done_event(void **argv)
   input_done();
 }
 
-static Array string_to_array(const String input)
-{
-  Array ret = ARRAY_DICT_INIT;
-  for (size_t i = 0; i < input.size; i++) {
-    const char *start = input.data + i;
-    const char *end = xmemscan(start, NL, input.size - i);
-    const size_t line_len = (size_t)(end - start);
-    i += line_len;
-
-    String s = {
-      .size = line_len,
-      .data = xmemdupz(start, line_len),
-    };
-    memchrsub(s.data, NUL, NL, line_len);
-    ADD(ret, STRING_OBJ(s));
-    // If line ends at end-of-buffer, add empty final item.
-    // This is "readfile()-style", see also ":help channel-lines".
-    if (i + 1 == input.size && end[0] == NL) {
-      ADD(ret, STRING_OBJ(cchar_to_string(NUL)));
-    }
-  }
-
-  return ret;
-}
-
 static void tinput_wait_enqueue(void **argv)
 {
   TermInput *input = argv[0];
@@ -132,18 +107,9 @@ static void tinput_wait_enqueue(void **argv)
     const String keys = { .data = buf, .size = len };
     if (input->paste) {
       Error err = ERROR_INIT;
-      Array args = ARRAY_DICT_INIT;
-      ADD(args, ARRAY_OBJ(string_to_array(keys)));
-      ADD(args, INTEGER_OBJ(input->paste));
-      Object rv
-        = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
-                           args, &err);
-      input->paste = (rv.type == kObjectTypeBoolean && rv.data.boolean)
-        ? 2   // Paste phase: "continue".
-        : 0;  // Abort paste if handler does not return true.
-
-      api_free_object(rv);
-      api_free_array(args);
+      Boolean rv = nvim_paste(keys, input->paste, &err);
+      // Paste phase: "continue" (unless handler failed).
+      input->paste = rv && !ERROR_SET(&err) ? 2 : 0;
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
       if (ERROR_SET(&err)) {
