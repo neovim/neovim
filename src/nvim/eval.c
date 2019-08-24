@@ -7861,7 +7861,9 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   count = MIN(count, tv_list_len(arglists->vval.v_list));
   tv_list_alloc_ret(rettv, count);
   if (count == 0) {
-    goto done;
+    callback_free(&callback);
+    callback_free(&item_callback);
+    goto free;
   }
 
   bool isscript = !!eval_fname_script((char *)callee);
@@ -7909,9 +7911,10 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
   }
 
-  asynccall_decref(async_call);
-
-done:
+free:
+  if (async_call) {
+    asynccall_decref(async_call);
+  }
   if (free_callee) {
     xfree(callee);
   }
@@ -7920,22 +7923,13 @@ done:
   return;
 
 fail:
-  if (free_callee) {
-    xfree(callee);
-  }
   TV_LIST_ITER(rettv->vval.v_list, li, {
     uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
     Channel *channel = find_channel(channel_id);
     asynccall_channel_release(channel);
   });
   tv_clear(rettv);
-  tv_list_alloc_ret(rettv, 0);
-  if (async_call) {
-    asynccall_decref(async_call);
-  }
-  callback_free(&callback);
-  api_free_dictionary(context);
-  api_free_dictionary(callee_context);
+  goto free;
 }
 
 /// "call_wait(ids[, timeout])" function

@@ -139,6 +139,8 @@ describe('multiproc', function()
     end)
 
     it('works', function()
+      eq({}, call('call_parallel', 'eval', {},
+                  {done = 'Callback', itemdone = 'Callback'}))
       source([[
       let jobs = call_parallel('eval',
                              \ [ ['2*1'], ['2*2'], ['2*3'], ['2*4'],
