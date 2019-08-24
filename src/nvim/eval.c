@@ -11276,7 +11276,6 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 #endif
     "tablineat",
     "tag_binary",
-    "tag_old_static",
     "termguicolors",
     "termresponse",
     "textobjects",
@@ -12027,6 +12026,15 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   clear_lval(&lv);
+}
+
+// "isinf()" function
+static void f_isinf(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  if (argvars[0].v_type == VAR_FLOAT
+      && xisinf(argvars[0].vval.v_float)) {
+    rettv->vval.v_number = argvars[0].vval.v_float > 0.0 ? 1 : -1;
+  }
 }
 
 // "isnan()" function

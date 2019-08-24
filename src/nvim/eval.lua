@@ -189,6 +189,7 @@ return {
     insert={args={2, 3}},
     invert={args=1},
     isdirectory={args=1},
+    isinf={args=1},
     islocked={args=1},
     isnan={args=1},
     id={args=1},

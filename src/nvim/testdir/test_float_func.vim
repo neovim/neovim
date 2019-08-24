@@ -288,13 +288,24 @@ func Test_trunc()
   call assert_fails("call trunc('')", 'E808:')
 endfunc
 
+func Test_isinf()
+  call assert_equal(1, isinf(1.0/0.0))
+  call assert_equal(-1, isinf(-1.0/0.0))
+  call assert_false(isinf(1.0))
+  call assert_false(isinf(0.0/0.0))
+  call assert_false(isinf('a'))
+  call assert_false(isinf([]))
+  call assert_false(isinf({}))
+endfunc
+
 func Test_isnan()
-  call assert_equal(0, isnan(1.0))
-  call assert_equal(1, isnan(0.0/0.0))
-  call assert_equal(0, isnan(1.0/0.0))
-  call assert_equal(0, isnan('a'))
-  call assert_equal(0, isnan([]))
-  call assert_equal(0, isnan({}))
+  call assert_true(isnan(0.0/0.0))
+  call assert_false(isnan(1.0))
+  call assert_false(isnan(1.0/0.0))
+  call assert_false(isnan(-1.0/0.0))
+  call assert_false(isnan('a'))
+  call assert_false(isnan([]))
+  call assert_false(isnan({}))
 endfunc
 
 " This was converted from test65
