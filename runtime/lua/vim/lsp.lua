@@ -46,6 +46,7 @@ lsp.start_client = function(cmd, filetype, bufnr)
   -- Start the client
   log.debug('[LSP.lsp] Starting client...', name, '/', filetype, '/', cmd)
   local client = Client.new(name, filetype, cmd)
+  client:start()
 
   if client == nil then
     log.error('client was nil with arguments: ', cmd)
@@ -57,6 +58,13 @@ lsp.start_client = function(cmd, filetype, bufnr)
   clients[filetype] = client
 
   return client
+end
+
+lsp.stop_client = function(filetype)
+  local client = get_client(filetype)
+  if not (client == nil) then
+    client:stop()
+  end
 end
 
 --- Send a request to a server and return the response
@@ -122,18 +130,6 @@ end
 
 lsp.client_has_started = function(filetype)
   return get_client(filetype) ~= nil
-end
-
-lsp.client_job_handler = function(job_id, data, event)
-  if event == 'stdout' then
-    Client.job_stdout(job_id, data)
-  elseif event == 'stderr' then
-    log.error('job_id: ', job_id, ' stderr: ', data)
-  elseif event == 'exit' then
-    Client.job_exit(job_id, data)
-  else
-    error(string.format('Unknown event type %s', event), 2)
-  end
 end
 
 return lsp

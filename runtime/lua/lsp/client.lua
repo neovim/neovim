@@ -1,3 +1,4 @@
+local uv = vim.loop
 local json = require('lsp.json')
 local util = require('nvim.util')
 local shared = require('vim.shared')
@@ -24,65 +25,13 @@ local error_level = Enum:new({
   info = 2,
 })
 
-local PendingJobs = {}
-
-PendingJobs.add = function(job_id, obj)
-  PendingJobs[job_id] = obj
-end
-
-PendingJobs.remove = function(job_id)
-  PendingJobs[job_id] = nil
-end
-
 local client = {}
 client.__index = client
 
-client.job_stdout = function(job_id, data)
-  if PendingJobs[job_id] == nil then
-    return
-  end
-
-  PendingJobs[job_id]:on_stdout(data)
-end
-
-client.job_exit = function(job_id, data)
-  if PendingJobs[job_id] == nil then
-    return
-  end
-
-  PendingJobs[job_id]:on_exit(data)
-end
-
-local start_job = function(cmd)
-  local job_id = vim.api.nvim_call_function('jobstart', {
-      cmd, {
-        on_stdout = 'lsp#_on_event',
-        on_stderr = 'lsp#_on_event',
-        on_exit = 'lsp#_on_event',
-      }
-    })
-  if job_id == 0 then
-    error('Failed to starting language server job')
-  elseif job_id == -1 then
-    error(string.format('Failed to starting language server job. "%s" is not executable', cmd))
-  end
-
-  return job_id
-end
-
 client.new = function(name, ft, cmd)
-  log.debug('Starting new client: ', name, cmd)
-
-  local job_id = start_job(cmd)
-
-  assert(job_id)
-  assert(job_id > 0)
-
-  log.debug('Client id: ', job_id)
+  log.info('Starting new client: ', name, cmd.execute_path, cmd.args)
 
   local self = setmetatable({
-    job_id = job_id,
-
     name = name,
     ft = ft,
     cmd = cmd,
@@ -102,14 +51,62 @@ client.new = function(name, ft, cmd)
     --      2 - data: corresponding data for the message
     _callbacks = {},
     _results = {},
+    _stopped = false,
 
     -- Data fields, to be used internally
     __data__ = {},
+    stdin = nil,
+    stdout = nil,
+    stderr = nil,
+    handle = nil,
   }, client)
 
-  PendingJobs.add(job_id, self)
-
   return self
+end
+
+client.start = function(self)
+  self.stdin = uv.new_pipe(false)
+  self.stdout = uv.new_pipe(false)
+  self.stderr = uv.new_pipe(false)
+
+  local function on_exit()
+    log.info('filetype: '..self.ft..', exit: '..self.cmd)
+  end
+
+  local stdio = { self.stdin, self.stdout, self.stderr }
+  local opts = { args = self.cmd.args, stdio = stdio }
+  self.handle, self.pid = uv.spawn(self.cmd.execute_path, opts, on_exit)
+
+  uv.read_start(self.stdout, function (err, chunk)
+    --self.d("stdout",chunk, err)
+    if not err then
+      self:on_stdout(chunk)
+    end
+  end)
+
+  uv.read_start(self.stderr, function (err, chunk)
+    if err and chunk then
+      log.error('stderr: '..err..', data: '..chunk)
+    end
+  end)
+end
+
+client.stop = function(self)
+  if self._stopped then
+    return
+  end
+
+  self:request('shutdown', nil, function()end)
+  self:notify('exit', nil)
+
+  uv.shutdown(self.stdin, function()
+    uv.close(self.stdout)
+    uv.close(self.stderr)
+    uv.close(self.stdin)
+    uv.close(self.handle)
+  end)
+
+  self._stopped = true
 end
 
 client.initialize = function(self)
@@ -125,17 +122,7 @@ client.initialize = function(self)
 end
 
 client.set_server_capabilities = function(self, data)
-  log.debug('Language server('..self.ft..') capabilities: '..util.tostring(data.capabilities))
   self.server_capabilities = data.capabilities
-end
-
-client.close = function(self)
-  if self._closed then
-    return
-  end
-
-  self._closed = true
-  vim.api.nvim_call_function('jobclose', {self.job_id})
 end
 
 --- Make a request to the server
@@ -181,8 +168,8 @@ client.request_async = function(self, method, params, cb, bufnr)
 
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
-  if self.job_id == nil then
-    log.warn('Client does not have valid job_id: ', self.name)
+  if self._stopped then
+    log.info('Client closed. ', self.name)
     return nil
   end
 
@@ -200,10 +187,9 @@ client.request_async = function(self, method, params, cb, bufnr)
   }
 
   if should_send_message(self, req) then
+    uv.write(self.stdin, req:data())
     log.debug("Send request --->: [["..req:data().."]]")
     log.client.debug("Send request --->: [["..req:data().."]]")
-    log.debug("job_id: "..self.job_id)
-    vim.api.nvim_call_function('chansend', {self.job_id, req:data()})
   else
     log.debug(string.format('Request "%s" was cancelled with params %s', method, util.tostring(params)))
   end
@@ -215,8 +201,8 @@ end
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
 client.notify = function(self, method, params)
-  if self.job_id == nil then
-    log.warn('Client does not have valid job_id: ', self.name)
+  if self._stopped then
+    log.info('Client closed. ', self.name)
     return nil
   end
 
@@ -227,9 +213,9 @@ client.notify = function(self, method, params)
   end
 
   if should_send_message(self, notification) then
+    uv.write(self.stdin, notification:data())
     log.debug("Send notification --->: [["..notification:data().."]]")
     log.client.debug("Send notification --->: [["..notification:data().."]]")
-    vim.api.nvim_call_function('chansend', {self.job_id, notification:data()})
   else
     log.debug(string.format('Notification "%s" was cancelled with params %s', method, util.tostring(params)))
   end
@@ -271,8 +257,7 @@ client.on_stdout = function(self, data)
   end
 
   -- Concatenate the data that we have read previously onto the data that we just read
-  self._read_data = self._read_data .. table.concat(data, '\n')
-  --self:on_error(error_level.info,'[['..self._read_data..']]')
+  self._read_data = self._read_data..data..'\n'
 
   while true do
     if self._read_state == read_state.init then
@@ -327,25 +312,24 @@ client.on_stdout = function(self, data)
       local body = self._read_data:sub(1, self._read_length)
       self._read_data = self._read_data:sub(self._read_length + 1)
 
-      local ok, json_message = pcall(json.decode, body)
-
-      if not ok then
-        log.info('Not a valid message. Calling self:on_error')
-        -- TODO(KillTheMule): Is self.__read_data the thing to print here?
-        self:on_error(
-          error_level.reset_state,
-          string.format('_on_read error: bad json_message (%s)', body)--self._read_data)
-        )
-        return
-      end
-
-      self:on_message(json_message)
+      vim.schedule(function() self:on_message(body) end)
       self._read_state = read_state.init
     end
   end
 end
 
-client.on_message = function(self, json_message)
+client.on_message = function(self, body)
+  local ok, json_message = pcall(json.decode, body)
+
+  if not ok then
+    log.info('Not a valid message. Calling self:on_error')
+    -- TODO(KillTheMule): Is self.__read_data the thing to print here?
+    self:on_error(
+      error_level.reset_state,
+      string.format('_on_read error: bad json_message (%s)', body)--self._read_data)
+    )
+    return
+  end
   -- Handle notifications
   if json_message.method and json_message.params then
     log.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..util.tostring(json_message.params))
@@ -411,10 +395,8 @@ client.on_error = function(self, level, err_message)
   end
 end
 
-client.on_exit = function(self, data)
-  log.info('Exiting job id: ', self.job_id, ' with data:', data)
-
-  PendingJobs.remove(self.job_id)
+client.on_exit = function(data)
+  log.info('Exiting with data:', data)
 end
 
 client.reset_state = function(self)

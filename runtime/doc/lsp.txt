@@ -35,7 +35,12 @@ lsp#server_config#add({ftype}, {cmd}, {configuration}):
         {ftype}: A string or list of strings of filetypes to associate with
         this server.
 
-        {cmd}: See |jobstart()| for information on cmd.
+        {cmd} (dictionary): Executing language server command.
+            `execute_path` (string):
+              Executing language server command path.
+            `args` (array):
+              Command arguments.
+
 
         {configuration} (dictionary): Optional configuration for a server.
             `name`      (string):
@@ -53,7 +58,7 @@ lsp#server_config#add({ftype}, {cmd}, {configuration}):
                 Example:~
 >
   " Python example
-  call lsp#server_config#add('python', 'pyls')
+  call lsp#server_config#add('python', { 'execute_path': 'pyls', 'args': [] })
 
   " Typescript configuration
   call lsp#server_config#add('typescript', {

@@ -1,5 +1,4 @@
 local json = require('lsp.json')
-local util = require('nvim.util')
 local shared = require('vim.shared')
 local log = require('lsp.log')
 

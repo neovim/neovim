@@ -5,7 +5,7 @@ server_config.__index = server_config
 
 server_config.configured_servers = {}
 
-server_config.add = function(filetype, command, additional_configuration)
+server_config.add = function(filetype, command, configuration)
   local filetype_list
   if type(filetype) == 'string' then
     filetype_list = { filetype }
@@ -23,15 +23,20 @@ server_config.add = function(filetype, command, additional_configuration)
     if server_config.configured_servers[cur_type] == nil then
       vim.api.nvim_command(
         string.format(
-            [[autocmd FileType %s silent :lua require('vim.lsp').start_client(nil, %s)]],
+            [[autocmd FileType %s silent :lua require('vim.lsp').start_client(nil, '%s')]],
             cur_type, cur_type, cur_type
           )
       )
-
+      vim.api.nvim_command(
+        string.format(
+          [[autocmd VimLeavePre * :lua require('vim.lsp').stop_client('%s')]],
+          cur_type
+        )
+      )
       -- Add the configuration to our current servers
       server_config.configured_servers[cur_type] = {
         command = command,
-        configuration = additional_configuration or {},
+        configuration = configuration or {},
       }
     end
   end

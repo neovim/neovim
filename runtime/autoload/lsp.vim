@@ -79,15 +79,3 @@ function! lsp#handle(request, data, ...) abort abort
         \ 'default_only': default_only,
         \ })
 endfunction
-
-""
-" Private functions to manage language server.
-"   Easier to configure on the viml side, since you can pass callbacks to the
-"   API, which -- at the time -- isn't possible with lua {{{
-function! lsp#_on_event(job_id, data, event) abort
-  call luaeval(
-        \ "vim.lsp.client_job_handler(_A.job_id, _A.data, _A.event)",
-        \ {'job_id': a:job_id, 'data': a:data, 'event': a:event}
-        \ )
-endfunction
-" }}}
