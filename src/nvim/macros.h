@@ -109,7 +109,7 @@
 // MB_COPY_CHAR(f, t): copy one char from "f" to "t" and advance the pointers.
 // PTR2CHAR(): get character from pointer.
 
-// Get the length of the character p points to
+// Get the length of the character p points to, including composing chars.
 # define MB_PTR2LEN(p)          mb_ptr2len(p)
 // Advance multi-byte pointer, skip over composing chars.
 # define MB_PTR_ADV(p)      (p += mb_ptr2len((char_u *)p))

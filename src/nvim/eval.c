@@ -11241,6 +11241,7 @@ static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     "mac",
     "macunix",
     "osx",
+    "osxdarwin",
 #endif
     "menu",
     "mksession",
