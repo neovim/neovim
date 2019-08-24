@@ -70,7 +70,7 @@ static char *m_onlyone = N_("Already only one window");
 /*
  * all CTRL-W window commands are handled here, called from normal_cmd().
  */
-void 
+void
 do_window (
     int nchar,
     long Prenum,
@@ -1549,7 +1549,7 @@ int win_count(void)
  * Must be called when there is just one window, filling the whole screen
  * (excluding the command line).
  */
-int 
+int
 make_windows (
     int count,
     int vertical              /* split windows vertically if TRUE */
@@ -2694,15 +2694,16 @@ void win_free_all(void)
   while (first_tabpage->tp_next != NULL)
     tabpage_close(TRUE);
 
+  if (aucmd_win != NULL) {
+    win_remove(aucmd_win, NULL);
+    (void)win_free_mem(aucmd_win, &dummy, NULL);
+    aucmd_win = NULL;
+  }
+
   while (lastwin != NULL && lastwin->w_floating) {
     win_T *wp = lastwin;
     win_remove(lastwin, NULL);
     (void)win_free_mem(wp, &dummy, NULL);
-  }
-
-  if (aucmd_win != NULL) {
-    (void)win_free_mem(aucmd_win, &dummy, NULL);
-    aucmd_win = NULL;
   }
 
   while (firstwin != NULL)
@@ -2961,7 +2962,7 @@ static bool frame_has_win(const frame_T *frp, const win_T *wp)
  * Set a new height for a frame.  Recursively sets the height for contained
  * frames and windows.  Caller must take care of positions.
  */
-static void 
+static void
 frame_new_height (
     frame_T *topfrp,
     int height,
@@ -3147,7 +3148,7 @@ static void frame_add_statusline(frame_T *frp)
  * Set width of a frame.  Handles recursively going through contained frames.
  * May remove separator line for windows at the right side (for win_close()).
  */
-static void 
+static void
 frame_new_width (
     frame_T *topfrp,
     int width,
@@ -3334,7 +3335,7 @@ static int frame_minheight(frame_T *topfrp, win_T *next_curwin)
  * When "next_curwin" is NOWIN, don't use at least one column for the current
  * window.
  */
-static int 
+static int
 frame_minwidth (
     frame_T *topfrp,
     win_T *next_curwin       /* use p_wh and p_wiw for next_curwin */
@@ -3380,7 +3381,7 @@ frame_minwidth (
  *
  * Used by ":bdel" and ":only".
  */
-void 
+void
 close_others (
     int message,
     int forceit                        /* always hide all other windows */
@@ -3794,7 +3795,7 @@ int tabpage_index(tabpage_T *ftp)
  * FAIL.
  * Careful: When OK is returned need to get a new tab page very very soon!
  */
-static int 
+static int
 leave_tabpage (
     buf_T *new_curbuf,        /* what is going to be the new curbuf,
                                           NULL if unknown */
@@ -4527,7 +4528,7 @@ static win_T *win_alloc(win_T *after, int hidden)
 /*
  * Remove window 'wp' from the window list and free the structure.
  */
-static void 
+static void
 win_free (
     win_T *wp,
     tabpage_T *tp                /* tab page "win" is in, NULL for current */
@@ -4641,7 +4642,7 @@ void win_append(win_T *after, win_T *wp)
 /*
  * Remove a window from the window list.
  */
-void 
+void
 win_remove (
     win_T *wp,
     tabpage_T *tp                /* tab page "win" is in, NULL for current */
@@ -5903,7 +5904,7 @@ file_name_in_line (
  * Add or remove a status line for the bottom window(s), according to the
  * value of 'laststatus'.
  */
-void 
+void
 last_status (
     int morewin                    /* pretend there are two or more windows */
 )
@@ -6123,7 +6124,7 @@ static void clear_snapshot_rec(frame_T *fr)
  * This is only done if the screen size didn't change and the window layout is
  * still the same.
  */
-void 
+void
 restore_snapshot (
     int idx,
     int close_curwin                   /* closing current window */
@@ -6438,7 +6439,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
       }
     });
 
-    // Calculate top and bottom lines for redrawing area 
+    // Calculate top and bottom lines for redrawing area
     if (toplnum != 0){
       if (wp->w_buffer->b_mod_set) {
         if (wp->w_buffer->b_mod_top > toplnum) {
@@ -6458,7 +6459,7 @@ int match_add(win_T *wp, const char *const grp, const char *const pat,
       rtype = VALID;
     }
   }
- 
+
   /* Insert new match.  The match list is in ascending order with regard to
    * the match priorities. */
   cur = wp->w_match_head;

@@ -1510,5 +1510,10 @@ describe('API', function()
                             |
       ]])
     end)
+
+    it('does not cause heap-use-after-free on exit while setting options', function()
+      command('au OptionSet * q')
+      command('silent! call nvim_create_buf(0, 1)')
+    end)
   end)
 end)
