@@ -156,19 +156,19 @@ describe('TUI', function()
 
   it('paste: Insert mode', function()
     -- "bracketed paste"
-    feed_data('i\027[200~')
+    feed_data('i""\027i\027[200~')
     screen:expect([[
-      {1: }                                                 |
+      "{1:"}                                                |
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
-      {5:[No Name]                                         }|
+      {5:[No Name] [+]                                     }|
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('pasted from terminal')
     screen:expect([[
-      pasted from terminal{1: }                             |
+      "pasted from terminal{1:"}                            |
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|
@@ -179,7 +179,7 @@ describe('TUI', function()
     feed_data('\027[201~')  -- End paste.
     feed_data('\027\000')   -- ESC: go to Normal mode.
     screen:expect([[
-      pasted from termina{1:l}                              |
+      "pasted from termina{1:l}"                            |
       {4:~                                                 }|
       {4:~                                                 }|
       {4:~                                                 }|

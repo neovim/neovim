@@ -101,6 +101,7 @@ local _paste = (function()
   return function(lines, phase)
     local call = vim.api.nvim_call_function
     local now = vim.loop.now()
+    local mode = call('mode', {}):sub(1,1)
     if phase == 1 then
       tdots = now
       tredraw = now
@@ -110,7 +111,11 @@ local _paste = (function()
       --   nvim_cancel()
       -- end
     end
-    vim.api.nvim_put(lines, 'c', true, true)
+    if mode == 'i' or mode == 'R' then
+      vim.api.nvim_put(lines, 'c', false, true)
+    else
+      vim.api.nvim_put(lines, 'c', true, true)
+    end
     if (now - tredraw >= 1000) or phase == 1 or phase == 3 then
       tredraw = now
       vim.api.nvim_command('redraw')
