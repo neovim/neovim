@@ -2694,16 +2694,18 @@ void win_free_all(void)
   while (first_tabpage->tp_next != NULL)
     tabpage_close(TRUE);
 
-  if (aucmd_win != NULL) {
-    win_remove(aucmd_win, NULL);
-    (void)win_free_mem(aucmd_win, &dummy, NULL);
-    aucmd_win = NULL;
-  }
-
   while (lastwin != NULL && lastwin->w_floating) {
     win_T *wp = lastwin;
     win_remove(lastwin, NULL);
     (void)win_free_mem(wp, &dummy, NULL);
+    if (wp == aucmd_win) {
+      aucmd_win = NULL;
+    }
+  }
+
+  if (aucmd_win != NULL) {
+    (void)win_free_mem(aucmd_win, &dummy, NULL);
+    aucmd_win = NULL;
   }
 
   while (firstwin != NULL)
