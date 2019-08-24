@@ -47,6 +47,7 @@
 #include "nvim/indent_c.h"
 #include "nvim/indent.h"
 #include "nvim/mark.h"
+#include "nvim/math.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -12028,6 +12029,12 @@ static void f_islocked(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   clear_lval(&lv);
 }
 
+// "isnan()" function
+static void f_isnan(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->vval.v_number = argvars[0].v_type == VAR_FLOAT
+    && xisnan(argvars[0].vval.v_float);
+}
 
 /// Turn a dictionary into a list
 ///

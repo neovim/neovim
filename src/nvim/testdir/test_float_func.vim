@@ -289,7 +289,6 @@ func Test_trunc()
 endfunc
 
 func Test_isnan()
-  throw 'skipped: Nvim does not support isnan()'
   call assert_equal(0, isnan(1.0))
   call assert_equal(1, isnan(0.0/0.0))
   call assert_equal(0, isnan(1.0/0.0))

@@ -190,6 +190,7 @@ return {
     invert={args=1},
     isdirectory={args=1},
     islocked={args=1},
+    isnan={args=1},
     id={args=1},
     items={args=1},
     jobclose={args={1, 2}, func="f_chanclose"},
