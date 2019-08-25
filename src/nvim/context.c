@@ -5,6 +5,7 @@
 
 #include "nvim/context.h"
 #include "nvim/eval/encode.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/option.h"
 #include "nvim/shada.h"
@@ -112,18 +113,17 @@ void ctx_save(Context *ctx, const int flags)
 /// If "context" is NULL, pops context from context stack.
 /// Use "flags" to select particular types of context.
 ///
-/// @param  ctx    Restore from this context. Pop from context stack if NULL.
-/// @param  flags  Flags, see ContextTypeFlags enum.
-///
-/// @return true on success, false otherwise (i.e.: empty context stack).
-Error ctx_restore(Context *ctx, const int flags)
+/// @param[in]   ctx    Restore from this context.
+///                     Pop from context stack if NULL.
+/// @param[in]   flags  Flags, see ContextTypeFlags enum.
+/// @param[out]  err    Error details, if any.
+void ctx_restore(Context *ctx, const int flags, Error *err)
 {
-  Error err = ERROR_INIT;
   bool free_ctx = false;
   if (ctx == NULL) {
     if (ctx_stack.size == 0) {
-      api_set_error(&err, kErrorTypeValidation, "Context stack is empty");
-      return err;
+      api_set_error(err, kErrorTypeValidation, "Context stack is empty");
+      return;
     }
     ctx = &kv_pop(ctx_stack);
     free_ctx = true;
@@ -162,8 +162,7 @@ Error ctx_restore(Context *ctx, const int flags)
   set_option_value("shada", 0L, (char *)op_shada, OPT_GLOBAL);
   xfree(op_shada);
 
-  try_end(&err);
-  return err;
+  try_end(err);
 }
 
 /// Saves the global registers to a context.
@@ -242,6 +241,87 @@ static inline void ctx_restore_gvars(Context *ctx)
   shada_read_sbuf(&ctx->gvars, kShaDaWantInfo | kShaDaForceit);
 }
 
+/// Packs a context function entry.
+///
+/// For lambda functions, the name of the packed function is changed because
+/// lambda functions cannot be defined with ":func" or directly called, hence
+/// they will be prefixed with "<SNR>_lambda_" instead of "<lambda>".
+///
+/// @param[in]   fp   Function pointer.
+/// @param[out]  err  Error details, if any.
+///
+/// @return Function entry as a Dictionary.
+Dictionary ctx_pack_func(ufunc_T *fp, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Dictionary entry = ARRAY_DICT_INIT;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_as_string((char *)fp->uf_name)));
+  Object def = EXEC_LUA_STATIC("return vim._ctx_get_func_def(...)", args, err);
+  xfree(args.items);
+
+  if (ERROR_SET(err)) {
+    api_free_object(def);
+    goto end;
+  }
+
+  PUT(entry, "definition", def);
+  PUT(entry, "sid", INTEGER_OBJ(fp->uf_script_ctx.sc_sid));
+
+end:
+  return entry;
+}
+
+#define CONTEXT_UNPACK_KEY(kv, _key, _type, err) \
+  if (strequal((#_key), (kv)->key.data)) { \
+    if ((kv)->value.type != (_type)) { \
+      api_set_error((err), kErrorTypeValidation, \
+                    "Invalid type for '" #_key "'"); \
+      return; \
+    } \
+    (_key) = (kv)->value; \
+    continue; \
+  }
+
+#define CONTEXT_CHECK_KEY(key, err) \
+  if ((key).type == kObjectTypeNil) { \
+    api_set_error((err), kErrorTypeValidation, "Missing '" #key "'"); \
+    return; \
+  }
+
+void ctx_unpack_func(Dictionary func, Error *err)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  Object definition = OBJECT_INIT;
+  Object sid = OBJECT_INIT;
+
+  for (size_t i = 0; i < func.size; i++) {
+    KeyValuePair *kv = &func.items[i];
+    CONTEXT_UNPACK_KEY(kv, definition, kObjectTypeString, err);
+    CONTEXT_UNPACK_KEY(kv, sid, kObjectTypeInteger, err);
+  }
+
+  CONTEXT_CHECK_KEY(definition, err);
+  CONTEXT_CHECK_KEY(sid, err);
+
+  // Set current_sctx.sc_sid to function SID
+  scid_T save_current_SID = current_sctx.sc_sid;
+  current_sctx.sc_sid = (int)sid.data.integer;
+  if (current_sctx.sc_sid > 0) {
+    script_items_grow();
+    new_script_vars(current_sctx.sc_sid);
+  }
+
+  // Define function
+  nvim_command(definition.data.string, err);
+
+  // Restore previous current_sctx.sc_sid
+  current_sctx.sc_sid = save_current_SID;
+}
+
+#undef CONTEXT_CHECK_KEY
+#undef CONTEXT_UNPACK_KEY
+
 /// Saves functions to a context.
 ///
 /// @param  ctx         Save to this context.
@@ -253,20 +333,18 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
   Error err = ERROR_INIT;
 
   HASHTAB_ITER(&func_hashtab, hi, {
-    const char_u *const name = hi->hi_key;
-    bool islambda = (STRNCMP(name, "<lambda>", 8) == 0);
-    bool isscript = (name[0] == K_SPECIAL);
+    ufunc_T *fp = HI2UF(hi);
+    bool islambda = (STRNCMP(fp->uf_name, "<lambda>", 8) == 0);
+    bool isscript = (fp->uf_name[0] == K_SPECIAL);
 
     if (!islambda && (!scriptonly || isscript)) {
-      size_t cmd_len = sizeof("func! ") + STRLEN(name);
-      char *cmd = xmalloc(cmd_len);
-      snprintf(cmd, cmd_len, "func! %s", name);
-      String func_body = nvim_command_output(cstr_as_string(cmd), &err);
-      xfree(cmd);
-      if (!ERROR_SET(&err)) {
-        ADD(ctx->funcs, STRING_OBJ(func_body));
+      Dictionary func = ctx_pack_func(fp, &err);
+      if (ERROR_SET(&err)) {
+        EMSG2("Context: function: %s", err.msg);
+        api_clear_error(&err);
+        continue;
       }
-      api_clear_error(&err);
+      ADD(ctx->funcs, DICTIONARY_OBJ(func));
     }
   });
 }
@@ -278,11 +356,16 @@ static inline void ctx_restore_funcs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
   for (size_t i = 0; i < ctx->funcs.size; i++) {
-    if (ctx->funcs.items[i].type != kObjectTypeString) {
+    if (ctx->funcs.items[i].type != kObjectTypeDictionary) {
       EMSG("Context: invalid function entry");
       continue;
     }
-    do_cmdline_cmd(ctx->funcs.items[i].data.string.data);
+    Error err = ERROR_INIT;
+    ctx_unpack_func(ctx->funcs.items[i].data.dictionary, &err);
+    if (ERROR_SET(&err)) {
+      EMSG2("Context: function: %s", err.msg);
+      api_clear_error(&err);
+    }
   }
 }
 
@@ -417,6 +500,7 @@ static inline msgpack_sbuffer array_to_sbuf(Array array, ShadaEntryType type)
     api_free_string((kv)->key); \
     (kv)->key = STATIC_CSTR_TO_STRING((to)); \
     code \
+    continue; \
   }
 
 #define CONTEXT_MAP_KEY(kv, from, to) \

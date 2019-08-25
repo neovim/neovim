@@ -69,6 +69,7 @@ typedef struct {
   Array work_queue;          ///< argument lists to consume
   Array results;             ///< accumulated results (for callback)
   char_u *callee;            ///< called function name
+  scid_T sid;                ///< Current SID value
 } AsyncCall;
 
 struct Channel {

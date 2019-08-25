@@ -9312,8 +9312,7 @@ functions.
 					*:fu* *:function* *E128* *E129* *E123*
 :fu[nction]		List all functions and their arguments.
 
-:fu[nction][!] {name}	List function {name}, annotated with line numbers
-			unless "!" is given.
+:fu[nction] {name}	List function {name}.
 			{name} may be a |Dictionary| |Funcref| entry: >
 				:function dict.init
 

@@ -35,6 +35,11 @@ describe('multiproc', function()
               pcall_err(command, [[sandbox call call_async('nvim__id', [1])]]))
     end)
 
+    it('errors out when it cannot prepare user function', function()
+      matches('Failed to prepare function',
+              pcall_err(call, 'call_async', '<lambda>1', {}))
+    end)
+
     it('invokes callback passing it the return value', function()
       call('call_async', 'nvim__id', {'multiproc'}, {done = 'Callback'})
       call('call_async', 'nvim_eval', {'1+2+3'}, {done = 'Callback'})
@@ -112,6 +117,11 @@ describe('multiproc', function()
         call rpcnotify(g:channel, 'done', sort(a:return_value, 'n'))
       endfunction
       ]])
+    end)
+
+    it('errors out when it cannot prepare user function', function()
+      matches('Failed to prepare function',
+              pcall_err(call, 'call_async', '<lambda>1', {}))
     end)
 
     it('works', function()

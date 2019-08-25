@@ -265,32 +265,6 @@ local function _create_nvim_job()
   })
 end
 
--- Adds user function definition to given context dictionary.
--- Used by ctx_dict_add_userfunc() in nvim/eval.c
---
--- @param ctx  context dictionary
--- @param name function name
---
--- @return table containing new context dictionary and new name
-local function _add_userfunc(ctx, name)
-  if ctx['funcs'] == nil then
-    ctx['funcs'] = {}
-  end
-
-  -- Function name used to query function definition
-  local query_name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
-
-  -- Called function name
-  name = name:gsub('^<lambda>', '<SNR>_lambda_')
-
-  -- Function definition
-  local body = vim.api.nvim_command_output('func! '..query_name)
-  body = body:gsub('^function! <lambda>', 'function! <SNR>_lambda_')
-  table.insert(ctx['funcs'], body)
-
-  return { ctx, name }
-end
-
 local async_invoke_called = false
 
 -- Load the given context dictionary and call the given function within
@@ -313,6 +287,48 @@ local function _async_invoke(ctx, callee_ctx, fn, args)
     vim.api.nvim_command('delfunction <SNR>ASYNC_INIT')
     async_invoke_called = true
   end
+  return vim.api.nvim_call_function('<SNR>_lambda_CALL', {args})
+end
+
+-- Returns function name for use in context dictionary.
+-- Used by ctx_dict_add_userfunc() in "nvim/eval.c".
+--
+-- @param name Function name
+--
+-- @returns Function name as used in context
+local function _ctx_get_func_name(name)
+  name = name:gsub('^<lambda>', '<SNR>_lambda_')
+  return name
+end
+
+-- Returns function definiton for use in context dictionary.
+-- Used by ctx_pack_func() in "nvim/context.c".
+--
+-- @param name Function name
+--
+-- @returns Function definition string
+local function _ctx_get_func_def(name)
+  name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
+  local def = vim.api.nvim_command_output('func '..name)
+    :gsub('^%s*function <lambda>', 'function <SNR>_lambda_')
+    :gsub('^%s*function', 'function!')
+    :gsub('\n[0-9]+', '\n')
+  return def
+end
+
+-- Adds function entry to context dictionary.
+-- Used by ctx_dict_add_userfunc() in "nvim/eval.c".
+--
+-- @param ctx Context dictionary to add to
+-- @param func Function entry to add
+--
+-- @returns Context dictionary after adding function entry
+local function _ctx_add_func(ctx, func)
+  if ctx['funcs'] == nil then
+    ctx['funcs'] = {}
+  end
+  table.insert(ctx['funcs'], func)
+  return ctx
 end
 
 -- Maps job ids of completed async calls to their results.
@@ -517,6 +533,9 @@ local module = {
   schedule_wrap = schedule_wrap,
   _grep = _grep,
   _create_nvim_job = _create_nvim_job,
+  _ctx_get_func_name = _ctx_get_func_name,
+  _ctx_get_func_def = _ctx_get_func_def,
+  _ctx_add_func = _ctx_add_func,
   _put_result = _put_result,
   _append_result = _append_result,
   _collect_results = _collect_results,
@@ -524,7 +543,6 @@ local module = {
   _async_vimgrep_itemdone = _async_vimgrep_itemdone,
   _async_vimgrep_done = _async_vimgrep_done,
   _async_handler = _async_handler,
-  _add_userfunc = _add_userfunc,
 }
 
 setmetatable(module, {

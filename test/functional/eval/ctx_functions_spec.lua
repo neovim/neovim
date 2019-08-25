@@ -148,17 +148,9 @@ describe('context functions', function()
         call call('s:greet_all', extend([a:name], a:000))
       endfunction
 
-      function SaveSFuncs()
-        call ctxpush(['sfuncs'])
-      endfunction
-
       function DeleteSFuncs()
         delfunction s:greet
         delfunction s:greet_all
-      endfunction
-
-      function RestoreFuncs()
-        call ctxpop()
       endfunction
       ]])
 
@@ -169,7 +161,7 @@ describe('context functions', function()
          '\nHello, Three!',
          redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
-      call('SaveSFuncs')
+      call('ctxpush', {'sfuncs'})
       call('DeleteSFuncs')
 
       eq('\nError detected while processing function Greet:'..
@@ -181,7 +173,7 @@ describe('context functions', function()
          '\nE117: Unknown function: s:greet_all',
          redir_exec([[call GreetAll('World', 'One', 'Two', 'Three')]]))
 
-      call('RestoreFuncs')
+      call('ctxpop')
 
       eq('\nHello, World!', redir_exec([[call Greet('World')]]))
       eq('\nHello, World!'..
