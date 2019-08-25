@@ -2698,6 +2698,9 @@ void win_free_all(void)
     win_T *wp = lastwin;
     win_remove(lastwin, NULL);
     (void)win_free_mem(wp, &dummy, NULL);
+    if (wp == aucmd_win) {
+      aucmd_win = NULL;
+    }
   }
 
   if (aucmd_win != NULL) {
