@@ -115,6 +115,7 @@ typedef enum {
     VV_TYPE_DICT,
     VV_TYPE_FLOAT,
     VV_TYPE_BOOL,
+    VV_ECHOSPACE,
     VV_EXITING,
 } VimVarIndex;
 

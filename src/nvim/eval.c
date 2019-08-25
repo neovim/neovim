@@ -419,6 +419,7 @@ static struct vimvar {
   VV(VV_TYPE_DICT,      "t_dict",           VAR_NUMBER, VV_RO),
   VV(VV_TYPE_FLOAT,     "t_float",          VAR_NUMBER, VV_RO),
   VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
+  VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
 };
 #undef VV
@@ -634,6 +635,8 @@ void eval_init(void)
   set_vim_var_special(VV_TRUE, kSpecialVarTrue);
   set_vim_var_special(VV_NULL, kSpecialVarNull);
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
+
+  set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
 }
