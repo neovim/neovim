@@ -35,6 +35,16 @@ describe('multiproc', function()
               pcall_err(command, [[sandbox call call_async('nvim__id', [1])]]))
     end)
 
+    it('errors out on invalid arguments', function()
+      matches('using List as a String', pcall_err(call, 'call_async', {}, {1}))
+      matches('Invalid argument: args',
+              pcall_err(call, 'call_async', 'eval', 1))
+      matches('Invalid argument: opts',
+              pcall_err(call, 'call_async', 'eval', {1}, 1))
+      matches('Invalid callback argument',
+              pcall_err(call, 'call_async', 'eval', {1}, {done = 1}))
+    end)
+
     it('errors out when it cannot prepare user function', function()
       matches('Failed to prepare function',
               pcall_err(call, 'call_async', '<lambda>1', {}))
@@ -199,31 +209,30 @@ describe('multiproc', function()
               nvim('command_output', 'messages'))
     end)
 
-    it('errors out on invalid opt values', function()
-      feed_command([=[call call_parallel('foo', [[], []], {'itemdone':{}})]=])
-      feed('<CR>')
-      eq('E475: Invalid value for argument opts: '..
-         "value of 'itemdone' should be a function", eval('v:errmsg'))
-      feed_command([=[call call_parallel('foo', [[], []], {'done':{}})]=])
-      feed('<CR>')
-      matches('E475: Invalid value for argument opts: '..
-              "value of 'context' should be a dictionary",
-              pcall_err(call, 'call_parallel', 'nvim__id', {'Neovim'},
-                        {context = 1}))
-      matches('E475: Invalid value for argument opts: '..
-              "value of 'count' should be a positive number",
-              pcall_err(call, 'call_parallel', 'nvim__id', {'Neovim'},
-                        {count = 'foo'}))
-      matches('E475: Invalid value for argument opts: '..
-              "value of 'count' should be a positive number",
-              pcall_err(call, 'call_parallel', 'nvim__id', {'Neovim'},
-                        {count = 0}))
-      matches('E475: Invalid value for argument opts: '..
-              "value of 'count' should be a positive number",
-              pcall_err(call, 'call_parallel', 'nvim__id', {'Neovim'},
-                        {count = -1}))
-      eq('E475: Invalid value for argument opts: '..
-         "value of 'done' should be a function", eval('v:errmsg'))
+    it('errors out on invalid arguments', function()
+      matches('using List as a String',
+              pcall_err(call, 'call_parallel', {}, {{}}))
+      matches('Invalid argument: arglists',
+              pcall_err(call, 'call_parallel', 'eval', 1))
+      matches('Invalid argument: opts',
+              pcall_err(call, 'call_parallel', 'eval', {{}}, 1))
+      matches('Invalid callback argument', pcall_err(
+        eval, [=[call_parallel('foo', [[], []], {'itemdone':{}})]=]))
+      matches('Invalid callback argument', pcall_err(
+        eval, [=[call_parallel('foo', [[], []], {'done':{}})]=]))
+      matches('Invalid value for argument opts', pcall_err(
+        call, 'call_parallel', 'nvim__id', {'Neovim'}, {context = 1}))
+      matches('Invalid value for argument opts', pcall_err(
+        call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = 'foo'}))
+      matches('Invalid value for argument opts', pcall_err(
+        call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = 0}))
+      matches('Invalid value for argument opts', pcall_err(
+        call, 'call_parallel', 'nvim__id', {'Neovim'}, {count = -1}))
+    end)
+
+    it('errors out when it cannot prepare user function', function()
+      matches('Failed to prepare function',
+              pcall_err(call, 'call_parallel', '<lambda>1', {{}}))
     end)
 
     it('fails gracefully on error spawning a child', function()

@@ -7677,15 +7677,13 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (*callee == NUL) {
-    EMSG2(_(e_invarg2),
-          "First argument of call_async() must be a valid function");
+    EMSG2(_(e_invarg2), "callee");
     return;
   }
 
   args = &argvars[1];
   if (args->v_type != VAR_LIST) {
-    EMSG2(_(e_invarg2),
-          "Second argument of call_async() must be a list");
+    EMSG2(_(e_invarg2), "args");
     return;
   }
 
@@ -7695,8 +7693,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       return;
     }
   } else if (opts->v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2),
-          "Third argument of call_async() must be a dictionary");
+    EMSG2(_(e_invarg2), "opts");
     return;
   }
 
@@ -7775,15 +7772,13 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   if (*callee == NUL) {
-    EMSG2(_(e_invarg2),
-          "First argument of call_parallel() must be a valid function");
+    EMSG2(_(e_invarg2), "callee");
     return;
   }
 
   arglists = &argvars[1];
   if (arglists->v_type != VAR_LIST) {
-    EMSG2(_(e_invarg2),
-          "Second argument of call_parallel() must be a list");
+    EMSG2(_(e_invarg2), "arglists");
     return;
   }
 
@@ -7813,8 +7808,7 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       goto fail;
     }
   } else if (opts->v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2),
-          "Third argument of call_parallel() must be a dictionary");
+    EMSG2(_(e_invarg2), "opts");
     return;
   }
 
