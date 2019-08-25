@@ -588,6 +588,22 @@ vim.schedule({callback})				*vim.schedule()*
         Schedules {callback} to be invoked soon by the main event-loop. Useful
         to avoid |textlock| or other temporary restrictions.
 
+vim.fn.{func}({...})
+        Call vimL function {func} with arguments. {func} can be both builtin
+        functions and user functions. To call autoload functions, use the
+        syntax `vim.fn['some#function']({...})`
+
+        Note: unlike vim.api.|nvim_call_function| this converts values directly
+        between vimL values and lua values. If the vimL function returns a
+        float, it will be representeted directly as a lua number. Both empty
+        lists and dictonaries will be represented by an empty table.
+
+        Note: vim.fn keys are generated on demand. So `pairs(vim.fn)`
+        does NOT work to enumerate all functions.
+
+vim.call({func}, {...})
+        Call vim script function {func}. Equivalent to `vim.fn[func]({...})`
+
 vim.type_idx						*vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
 	values from |vim.types| allows typing the empty table (it is 

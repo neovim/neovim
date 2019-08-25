@@ -401,6 +401,8 @@ nlua_pop_typval_table_processing_end:
   return ret;
 }
 
+static bool typval_conv_special = false;
+
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
@@ -439,7 +441,13 @@ nlua_pop_typval_table_processing_end:
     lua_createtable(lstate, 0, 0)
 
 #define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary)
+    do { \
+      if (typval_conv_special) { \
+        nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary); \
+      } else { \
+        lua_createtable(lstate, 0, 0); \
+      } \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
     do { \
@@ -548,9 +556,11 @@ nlua_pop_typval_table_processing_end:
 /// @param[in]  tv  typval_T to convert.
 ///
 /// @return true in case of success, false otherwise.
-bool nlua_push_typval(lua_State *lstate, typval_T *const tv)
+bool nlua_push_typval(lua_State *lstate, typval_T *const tv, bool special)
 {
+  typval_conv_special = special;
   const int initial_size = lua_gettop(lstate);
+
   if (!lua_checkstack(lstate, initial_size + 2)) {
     emsgf(_("E1502: Lua failed to grow stack to %i"), initial_size + 4);
     return false;

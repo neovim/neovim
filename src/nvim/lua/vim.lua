@@ -242,6 +242,17 @@ local function __index(t, key)
   end
 end
 
+
+-- vim.fn.{func}(...)
+local function fn_index(t, key)
+  local function func(...)
+    return vim.call(key, ...)
+  end
+  t[key] = func
+  return func
+end
+local fn = setmetatable({}, {__index=fn_index})
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -249,6 +260,7 @@ local module = {
   _system = _system,
   paste = paste,
   schedule_wrap = schedule_wrap,
+  fn=fn,
 }
 
 setmetatable(module, {

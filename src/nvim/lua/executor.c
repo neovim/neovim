@@ -295,6 +295,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // in_fast_event
   lua_pushcfunction(lstate, &nlua_in_fast_event);
   lua_setfield(lstate, -2, "in_fast_event");
+  // call
+  lua_pushcfunction(lstate, &nlua_call);
+  lua_setfield(lstate, -2, "call");
 
   // vim.loop
   luv_set_loop(lstate, &main_loop.uv);
@@ -539,6 +542,64 @@ int nlua_in_fast_event(lua_State *lstate)
   return 1;
 }
 
+int nlua_call(lua_State *lstate)
+{
+  Error err = ERROR_INIT;
+  size_t name_len;
+  const char_u *name = (const char_u *)luaL_checklstring(lstate, 1, &name_len);
+  int nargs = lua_gettop(lstate)-1;
+  if (nargs > MAX_FUNC_ARGS) {
+    return luaL_error(lstate, "Function called with too many arguments");
+  }
+
+  typval_T vim_args[MAX_FUNC_ARGS + 1];
+  int i = 0;  // also used for freeing the variables
+  for (; i < nargs; i++) {
+    lua_pushvalue(lstate, (int)i+2);
+    if (!nlua_pop_typval(lstate, &vim_args[i])) {
+      api_set_error(&err, kErrorTypeException,
+                    "error converting argument %d", i+1);
+      goto free_vim_args;
+    }
+  }
+
+  // TODO(bfredl): this should be simplified in error handling refactor
+  struct msglist **saved_msg_list = msg_list;
+  struct msglist *private_msg_list = NULL;
+  msg_list = &private_msg_list;
+
+  force_abort = false;
+  suppress_errthrow = false;
+  current_exception = NULL;
+  did_emsg = false;
+
+  try_start();
+  typval_T rettv;
+  int dummy;
+  // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
+  // (see above) to capture abort-causing non-exception errors.
+  (void)call_func(name, (int)name_len, &rettv, nargs,
+                  vim_args, NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum,
+                  &dummy, true, NULL, NULL);
+  if (!try_end(&err)) {
+    nlua_push_typval(lstate, &rettv, false);
+  }
+  tv_clear(&rettv);
+
+  msg_list = saved_msg_list;
+
+free_vim_args:
+  while (i > 0) {
+    tv_clear(&vim_args[--i]);
+  }
+  if (ERROR_SET(&err)) {
+    lua_pushstring(lstate, err.msg);
+    api_clear_error(&err);
+    return lua_error(lstate);
+  }
+  return 1;
+}
+
 #ifdef WIN32
 /// os.getenv: override os.getenv to maintain coherency. #9681
 ///
@@ -623,7 +684,7 @@ void executor_eval_lua(const String str, typval_T *const arg,
   if (arg->v_type == VAR_UNKNOWN) {
     lua_pushnil(lstate);
   } else {
-    nlua_push_typval(lstate, arg);
+    nlua_push_typval(lstate, arg, true);
   }
   if (lua_pcall(lstate, 1, 1, 0)) {
     nlua_error(lstate,
