@@ -7353,14 +7353,19 @@ static buf_T * get_buf_arg(typval_T *arg)
  */
 static void f_bufname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  const buf_T *buf;
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  if (!tv_check_str_or_nr(&argvars[0])) {
-    return;
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    buf = curbuf;
+  } else {
+    if (!tv_check_str_or_nr(&argvars[0])) {
+      return;
+    }
+    emsg_off++;
+    buf = tv_get_buf(&argvars[0], false);
+    emsg_off--;
   }
-  emsg_off++;
-  const buf_T *const buf = tv_get_buf(&argvars[0], false);
-  emsg_off--;
   if (buf != NULL && buf->b_fname != NULL) {
     rettv->vval.v_string = (char_u *)xstrdup((char *)buf->b_fname);
   }
@@ -7371,15 +7376,21 @@ static void f_bufname(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_bufnr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
+  const buf_T *buf;
   bool error = false;
 
   rettv->vval.v_number = -1;
-  if (!tv_check_str_or_nr(&argvars[0])) {
-    return;
+
+  if (argvars[0].v_type == VAR_UNKNOWN) {
+    buf = curbuf;
+  } else {
+    if (!tv_check_str_or_nr(&argvars[0])) {
+      return;
+    }
+    emsg_off++;
+    buf = tv_get_buf(&argvars[0], false);
+    emsg_off--;
   }
-  emsg_off++;
-  const buf_T *buf = tv_get_buf(&argvars[0], false);
-  emsg_off--;
 
   // If the buffer isn't found and the second argument is not zero create a
   // new buffer.
@@ -15194,6 +15205,7 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
       }
     }
     check_cursor_col();
+    update_topline();
   }
 
   if (!is_curbuf) {

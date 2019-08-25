@@ -1,6 +1,7 @@
 " Tests for setbufline(), getbufline(), appendbufline(), deletebufline()
 
 source shared.vim
+" source screendump.vim
 
 func Test_setbufline_getbufline()
   new
@@ -111,4 +112,29 @@ func Test_deletebufline()
   call assert_equal(0, deletebufline(b, 1))
   call assert_equal(['b', 'c'], getbufline(b, 1, 2))
   exe "bwipe! " . b
+endfunc
+
+func Test_appendbufline_redraw()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot make screendumps'
+  endif
+  let lines =<< trim END
+    new foo
+    let winnr=bufwinnr('foo')
+    let buf=bufnr('foo')
+    wincmd p
+    call appendbufline(buf, '$', range(1,200))
+    exe winnr. 'wincmd w'
+    norm! G
+    wincmd p
+    call deletebufline(buf, 1, '$')
+    call appendbufline(buf, '$', 'Hello Vim world...')
+  END
+  call writefile(lines, 'XscriptMatchCommon')
+  let buf = RunVimInTerminal('-S XscriptMatchCommon', #{rows: 10})
+  call term_wait(buf)
+  call VerifyScreenDump(buf, 'Test_appendbufline_1', {})
+
+  call StopVimInTerminal(buf)
+  call delete('XscriptMatchCommon')
 endfunc

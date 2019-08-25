@@ -44,13 +44,13 @@ return {
     bufadd={args=1},
     bufexists={args=1},
     buffer_exists={args=1, func='f_bufexists'},  -- obsolete
-    buffer_name={args=1, func='f_bufname'},  -- obsolete
-    buffer_number={args=1, func='f_bufnr'},  -- obsolete
+    buffer_name={args={0, 1}, func='f_bufname'},  -- obsolete
+    buffer_number={args={0, 1}, func='f_bufnr'},  -- obsolete
     buflisted={args=1},
     bufload={args=1},
     bufloaded={args=1},
-    bufname={args=1},
-    bufnr={args={1, 2}},
+    bufname={args={0, 1}},
+    bufnr={args={0, 2}},
     bufwinid={args=1},
     bufwinnr={args=1},
     byte2line={args=1},

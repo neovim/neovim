@@ -379,10 +379,10 @@ func Test_argedit()
   " make sure to use a new buffer number for x when it is loaded
   bw! x
   new
-  let a = bufnr('')
+  let a = bufnr()
   argedit x
-  call assert_equal(a, bufnr(''))
-  call assert_equal('x', bufname(''))
+  call assert_equal(a, bufnr())
+  call assert_equal('x', bufname())
   %argd
   bw! x
 endfunc
