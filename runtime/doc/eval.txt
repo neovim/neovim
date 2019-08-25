@@ -3592,7 +3592,10 @@ expand({expr} [, {nosuf} [, {list}]])				*expand()*
 			<abuf>		autocmd buffer number (as a String!)
 			<amatch>	autocmd matched name
 			<sfile>		sourced script file or function name
-			<slnum>		sourced script file line number
+			<slnum>		sourced script line number or function
+					line number
+			<sflnum>	script file line number, also when in
+					a function
 			<cword>		word under the cursor
 			<cWORD>		WORD under the cursor
 			<client>	the {clientid} of the last received
@@ -5702,6 +5705,7 @@ maparg({name} [, {mode} [, {abbr} [, {dict}]]])			*maparg()*
 				     (|mapmode-ic|)
 		  "sid"	     The script local ID, used for <sid> mappings
 			     (|<SID>|).
+		  "lnum"     The line number in "sid", zero if unknown.
 		  "nowait"   Do not wait for other, longer mappings.
 			     (|:map-<nowait>|).
 

@@ -84,14 +84,14 @@ static int ex_pressedreturn = FALSE;
 static int did_lcd;
 
 typedef struct ucmd {
-  char_u      *uc_name;         /* The command name */
-  uint32_t uc_argt;             /* The argument type */
-  char_u      *uc_rep;          /* The command's replacement string */
-  long uc_def;                  /* The default value for a range/count */
-  int uc_compl;                 /* completion type */
-  int uc_addr_type;             /* The command's address type */
-  scid_T uc_scriptID;           /* SID where the command was defined */
-  char_u      *uc_compl_arg;    /* completion argument if any */
+  char_u      *uc_name;         // The command name
+  uint32_t uc_argt;             // The argument type
+  char_u      *uc_rep;          // The command's replacement string
+  long uc_def;                  // The default value for a range/count
+  int uc_compl;                 // completion type
+  int uc_addr_type;             // The command's address type
+  sctx_T uc_script_ctx;         // SCTX where the command was defined
+  char_u      *uc_compl_arg;    // completion argument if any
 } ucmd_T;
 
 #define UC_BUFFER       1       /* -buffer: local to current buffer */
@@ -2564,7 +2564,8 @@ find_ucmd (
           }
           if (xp != NULL) {
             xp->xp_arg = uc->uc_compl_arg;
-            xp->xp_scriptID = uc->uc_scriptID;
+            xp->xp_script_ctx = uc->uc_script_ctx;
+            xp->xp_script_ctx.sc_lnum += sourcing_lnum;
           }
           /* Do not search for further abbreviations
            * if this is an exact match. */
@@ -4879,7 +4880,8 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
   cmd->uc_argt = argt;
   cmd->uc_def = def;
   cmd->uc_compl = compl;
-  cmd->uc_scriptID = current_SID;
+  cmd->uc_script_ctx = current_sctx;
+  cmd->uc_script_ctx.sc_lnum += sourcing_lnum;
   cmd->uc_compl_arg = compl_arg;
   cmd->uc_addr_type = addr_type;
 
@@ -5070,9 +5072,10 @@ static void uc_list(char_u *name, size_t name_len)
       IObuff[len] = '\0';
       msg_outtrans(IObuff);
 
-      msg_outtrans_special(cmd->uc_rep, FALSE);
-      if (p_verbose > 0)
-        last_set_msg(cmd->uc_scriptID);
+      msg_outtrans_special(cmd->uc_rep, false);
+      if (p_verbose > 0) {
+        last_set_msg(cmd->uc_script_ctx);
+      }
       ui_flush();
       os_breakcheck();
       if (got_int)
@@ -5716,7 +5719,7 @@ static void do_ucmd(exarg_T *eap)
   size_t split_len = 0;
   char_u      *split_buf = NULL;
   ucmd_T      *cmd;
-  scid_T save_current_SID = current_SID;
+  const sctx_T save_current_sctx = current_sctx;
 
   if (eap->cmdidx == CMD_USER)
     cmd = USER_CMD(eap->useridx);
@@ -5797,10 +5800,10 @@ static void do_ucmd(exarg_T *eap)
     buf = xmalloc(totlen + 1);
   }
 
-  current_SID = cmd->uc_scriptID;
+  current_sctx.sc_sid = cmd->uc_script_ctx.sc_sid;
   (void)do_cmdline(buf, eap->getline, eap->cookie,
-      DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
-  current_SID = save_current_SID;
+                   DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
+  current_sctx = save_current_sctx;
   xfree(buf);
   xfree(split_buf);
 }
@@ -8538,6 +8541,8 @@ ssize_t find_cmdline_var(const char_u *src, size_t *usedlen)
 #define SPEC_ABUF   (SPEC_AFILE + 1)
     "<amatch>",                         // autocommand match name
 #define SPEC_AMATCH (SPEC_ABUF + 1)
+    "<sflnum>",                         // script file line number
+#define SPEC_SFLNUM (SPEC_AMATCH + 1)
   };
 
   for (size_t i = 0; i < ARRAY_SIZE(spec_str); ++i) {
@@ -8764,7 +8769,8 @@ eval_vars (
         return NULL;
       }
       break;
-    case SPEC_SLNUM:            /* line in file for ":so" command */
+
+    case SPEC_SLNUM:            // line in file for ":so" command
       if (sourcing_name == NULL || sourcing_lnum == 0) {
         *errormsg = (char_u *)_("E842: no line number to use for \"<slnum>\"");
         return NULL;
@@ -8772,6 +8778,17 @@ eval_vars (
       snprintf(strbuf, sizeof(strbuf), "%" PRIdLINENR, sourcing_lnum);
       result = (char_u *)strbuf;
       break;
+
+    case SPEC_SFLNUM:  // line in script file
+      if (current_sctx.sc_lnum + sourcing_lnum == 0) {
+        *errormsg = (char_u *)_("E961: no line number to use for \"<sflnum>\"");
+        return NULL;
+      }
+      snprintf((char *)strbuf, sizeof(strbuf), "%" PRIdLINENR,
+               current_sctx.sc_lnum + sourcing_lnum);
+      result = (char_u *)strbuf;
+      break;
+
     default:
       // should not happen
       *errormsg = (char_u *)"";
@@ -10193,7 +10210,7 @@ Dictionary commands_array(buf_T *buf)
 
     PUT(d, "name", STRING_OBJ(cstr_to_string((char *)cmd->uc_name)));
     PUT(d, "definition", STRING_OBJ(cstr_to_string((char *)cmd->uc_rep)));
-    PUT(d, "script_id", INTEGER_OBJ(cmd->uc_scriptID));
+    PUT(d, "script_id", INTEGER_OBJ(cmd->uc_script_ctx.sc_sid));
     PUT(d, "bang", BOOLEAN_OBJ(!!(cmd->uc_argt & BANG)));
     PUT(d, "bar", BOOLEAN_OBJ(!!(cmd->uc_argt & TRLBAR)));
     PUT(d, "register", BOOLEAN_OBJ(!!(cmd->uc_argt & REGSTR)));

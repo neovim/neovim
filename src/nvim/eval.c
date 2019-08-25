@@ -1815,13 +1815,11 @@ static void list_vim_vars(int *first)
   list_hashtable_vars(&vimvarht, "v:", false, first);
 }
 
-/*
- * List script-local variables, if there is a script.
- */
+// List script-local variables, if there is a script.
 static void list_script_vars(int *first)
 {
-  if (current_SID > 0 && current_SID <= ga_scripts.ga_len) {
-    list_hashtable_vars(&SCRIPT_VARS(current_SID), "s:", false, first);
+  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= ga_scripts.ga_len) {
+    list_hashtable_vars(&SCRIPT_VARS(current_sctx.sc_sid), "s:", false, first);
   }
 }
 
@@ -5981,7 +5979,8 @@ static int get_lambda_tv(char_u **arg, typval_T *rettv, bool evaluate)
     fp->uf_varargs = true;
     fp->uf_flags = flags;
     fp->uf_calls = 0;
-    fp->uf_script_ID = current_SID;
+    fp->uf_script_ctx = current_sctx;
+    fp->uf_script_ctx.sc_lnum += sourcing_lnum - newlines.ga_len;
 
     pt->pt_func = fp;
     pt->pt_refcount = 1;
@@ -6329,11 +6328,11 @@ static char_u *fname_trans_sid(const char_u *const name,
     fname_buf[2] = (int)KE_SNR;
     int i = 3;
     if (eval_fname_sid((const char *)name)) {  // "<SID>" or "s:"
-      if (current_SID <= 0) {
+      if (current_sctx.sc_sid <= 0) {
         *error = ERROR_SCRIPT;
       } else {
         snprintf((char *)fname_buf + 3, FLEN_FIXED + 1, "%" PRId64 "_",
-                 (int64_t)current_SID);
+                 (int64_t)current_sctx.sc_sid);
         i = (int)STRLEN(fname_buf);
       }
     }
@@ -9433,7 +9432,7 @@ static void common_function(typval_T *argvars, typval_T *rettv,
       // would also work, but some plugins depend on the name being
       // printable text.
       snprintf(sid_buf, sizeof(sid_buf), "<SNR>%" PRId64 "_",
-               (int64_t)current_SID);
+               (int64_t)current_sctx.sc_sid);
       name = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
       STRCPY(name, sid_buf);
       STRCAT(name, s + off);
@@ -12874,7 +12873,8 @@ void mapblock_fill_dict(dict_T *const dict,
   tv_dict_add_nr(dict, S_LEN("noremap"), noremap_value);
   tv_dict_add_nr(dict, S_LEN("expr"),  mp->m_expr ? 1 : 0);
   tv_dict_add_nr(dict, S_LEN("silent"), mp->m_silent ? 1 : 0);
-  tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ID);
+  tv_dict_add_nr(dict, S_LEN("sid"), (varnumber_T)mp->m_script_ctx.sc_sid);
+  tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)mp->m_script_ctx.sc_lnum);
   tv_dict_add_nr(dict, S_LEN("buffer"), (varnumber_T)buffer_value);
   tv_dict_add_nr(dict, S_LEN("nowait"), mp->m_nowait ? 1 : 0);
   tv_dict_add_allocated_str(dict, S_LEN("mode"), mapmode);
@@ -14549,7 +14549,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ADD(args, vim_to_object(tv));
   }
 
-  scid_T save_current_SID;
+  sctx_T save_current_sctx;
   uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
   linenr_T save_sourcing_lnum;
   int save_autocmd_bufnr;
@@ -14558,7 +14558,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (l_provider_call_nesting) {
     // If this is called from a provider function, restore the scope
     // information of the caller.
-    save_current_SID = current_SID;
+    save_current_sctx = current_sctx;
     save_sourcing_name = sourcing_name;
     save_sourcing_lnum = sourcing_lnum;
     save_autocmd_fname = autocmd_fname;
@@ -14566,7 +14566,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     save_autocmd_bufnr = autocmd_bufnr;
     save_funccalp = save_funccal();
 
-    current_SID = provider_caller_scope.SID;
+    current_sctx = provider_caller_scope.script_ctx;
     sourcing_name = provider_caller_scope.sourcing_name;
     sourcing_lnum = provider_caller_scope.sourcing_lnum;
     autocmd_fname = provider_caller_scope.autocmd_fname;
@@ -14584,7 +14584,7 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Object result = rpc_send_call(chan_id, method, args, &err);
 
   if (l_provider_call_nesting) {
-    current_SID = save_current_SID;
+    current_sctx = save_current_sctx;
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;
     autocmd_fname = save_autocmd_fname;
@@ -20119,7 +20119,7 @@ static dictitem_T *find_var_in_ht(hashtab_T *const ht,
   if (varname_len == 0) {
     // Must be something like "s:", otherwise "ht" would be NULL.
     switch (htname) {
-      case 's': return (dictitem_T *)&SCRIPT_SV(current_SID)->sv_var;
+      case 's': return (dictitem_T *)&SCRIPT_SV(current_sctx.sc_sid)->sv_var;
       case 'g': return (dictitem_T *)&globvars_var;
       case 'v': return (dictitem_T *)&vimvars_var;
       case 'b': return (dictitem_T *)&curbuf->b_bufvar;
@@ -20256,8 +20256,9 @@ static hashtab_T *find_var_ht_dict(const char *name, const size_t name_len,
   } else if (*name == 'l' && current_funccal != NULL) {  // local variable
     *d = &get_funccal()->l_vars;
   } else if (*name == 's'  // script variable
-             && current_SID > 0 && current_SID <= ga_scripts.ga_len) {
-    *d = &SCRIPT_SV(current_SID)->sv_dict;
+             && current_sctx.sc_sid > 0
+             && current_sctx.sc_sid <= ga_scripts.ga_len) {
+    *d = &SCRIPT_SV(current_sctx.sc_sid)->sv_dict;
   }
 
 end:
@@ -21628,7 +21629,8 @@ void ex_function(exarg_T *eap)
   }
   fp->uf_flags = flags;
   fp->uf_calls = 0;
-  fp->uf_script_ID = current_SID;
+  fp->uf_script_ctx = current_sctx;
+  fp->uf_script_ctx.sc_lnum += sourcing_lnum - newlines.ga_len - 1;
   goto ret_free;
 
 erret:
@@ -21815,12 +21817,12 @@ trans_function_name(
     if ((lv.ll_exp_name != NULL && eval_fname_sid(lv.ll_exp_name))
         || eval_fname_sid((const char *)(*pp))) {
       // It's "s:" or "<SID>".
-      if (current_SID <= 0) {
+      if (current_sctx.sc_sid <= 0) {
         EMSG(_(e_usingsid));
         goto theend;
       }
       sid_buf_len = snprintf(sid_buf, sizeof(sid_buf),
-                             "%" PRIdSCID "_", current_SID);
+                             "%" PRIdSCID "_", current_sctx.sc_sid);
       lead += sid_buf_len;
     }
   } else if (!(flags & TFN_INT)
@@ -21937,8 +21939,9 @@ static void list_func_head(ufunc_T *fp, int indent, bool force)
     msg_puts(" closure");
   }
   msg_clr_eos();
-  if (p_verbose > 0)
-    last_set_msg(fp->uf_script_ID);
+  if (p_verbose > 0) {
+    last_set_msg(fp->uf_script_ctx);
+  }
 }
 
 /// Find a function by name, return pointer to it in ufuncs.
@@ -22628,7 +22631,6 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
 {
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
-  scid_T save_current_SID;
   bool using_sandbox = false;
   funccall_T  *fc;
   int save_did_emsg;
@@ -22882,8 +22884,8 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
     script_prof_save(&wait_start);
   }
 
-  save_current_SID = current_SID;
-  current_SID = fp->uf_script_ID;
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx = fp->uf_script_ctx;
   save_did_emsg = did_emsg;
   did_emsg = FALSE;
 
@@ -22957,7 +22959,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   xfree(sourcing_name);
   sourcing_name = save_sourcing_name;
   sourcing_lnum = save_sourcing_lnum;
-  current_SID = save_current_SID;
+  current_sctx = save_current_sctx;
   if (do_profiling_yes) {
     script_prof_restore(&wait_start);
   }
@@ -23577,10 +23579,10 @@ int store_session_globals(FILE *fd)
  * Display script name where an item was last set.
  * Should only be invoked when 'verbose' is non-zero.
  */
-void last_set_msg(scid_T scriptID)
+void last_set_msg(sctx_T script_ctx)
 {
   const LastSet last_set = (LastSet){
-    .script_id = scriptID,
+    .script_ctx = script_ctx,
     .channel_id = 0,
   };
   option_last_set_msg(last_set);
@@ -23591,12 +23593,16 @@ void last_set_msg(scid_T scriptID)
 /// Should only be invoked when 'verbose' is non-zero.
 void option_last_set_msg(LastSet last_set)
 {
-  if (last_set.script_id != 0) {
+  if (last_set.script_ctx.sc_sid != 0) {
     bool should_free;
     char_u *p = get_scriptname(last_set, &should_free);
     verbose_enter();
     MSG_PUTS(_("\n\tLast set from "));
     MSG_PUTS(p);
+    if (last_set.script_ctx.sc_lnum > 0) {
+      MSG_PUTS(_(" line "));
+      msg_outnum((long)last_set.script_ctx.sc_lnum);
+    }
     if (should_free) {
       xfree(p);
     }
@@ -24042,7 +24048,7 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   // Save caller scope information
   struct caller_scope saved_provider_caller_scope = provider_caller_scope;
   provider_caller_scope = (struct caller_scope) {
-    .SID = current_SID,
+    .script_ctx = current_sctx,
     .sourcing_name = sourcing_name,
     .sourcing_lnum = sourcing_lnum,
     .autocmd_fname = autocmd_fname,

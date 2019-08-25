@@ -816,11 +816,12 @@ it, no matter how many backslashes.
 	   \\#			\#
 Also see |`=|.
 
-			       *:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
-			       *:<sfile>* *<sfile>* *:<afile>* *<afile>*
-			       *:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
-			       *:<cexpr>* *<cexpr>*
-			       *<slnum>* *E495* *E496* *E497* *E499* *E500*
+			       *:<cword>* *<cword>* *:<cWORD>* *<cWORD>*
+			       *:<cexpr>* *<cexpr>* *:<cfile>* *<cfile>*
+			       *:<afile>* *<afile>* *:<abuf>* *<abuf>*
+			       *:<amatch>* *<amatch>*
+			       *:<sfile>* *<sfile>* *:<slnum>* *<slnum>*
+			       *:<sflnum>* *<sflnum>* *E499* *E500*
 Note: these are typed literally, they are not special keys!
 	<cword>    is replaced with the word under the cursor (like |star|)
 	<cWORD>    is replaced with the WORD under the cursor (see |WORD|)
@@ -833,15 +834,16 @@ Note: these are typed literally, they are not special keys!
 		   |gf| uses)
 	<afile>    When executing autocommands, is replaced with the file name
 		   of the buffer being manipulated, or the file for a read or
-		   write.
+		   write.  *E495*
 	<abuf>     When executing autocommands, is replaced with the currently
 		   effective buffer number (for ":r file" and ":so file" it is
 		   the current buffer, the file being read/sourced is not in a
-		   buffer).
+		   buffer).  *E496*
 	<amatch>   When executing autocommands, is replaced with the match for
-		   which this autocommand was executed.  It differs from
-		   <afile> only when the file name isn't used to match with
-		   (for FileType, Syntax and SpellFileMissing events).
+		   which this autocommand was executed.  *E497*
+		   It differs from <afile> only when the file name isn't used
+		   to match with (for FileType, Syntax and SpellFileMissing
+		   events).
 	<sfile>    When executing a ":source" command, is replaced with the
 		   file name of the sourced file.  *E498*
 		   When executing a function, is replaced with:
@@ -851,9 +853,12 @@ Note: these are typed literally, they are not special keys!
 		   Note that filename-modifiers are useless when <sfile> is
 		   used inside a function.
 	<slnum>	   When executing a ":source" command, is replaced with the
-	           line number.  *E842*
+		   line number.  *E842*
 		   When executing a function it's the line number relative to
 		   the start of the function.
+	<sflnum>   When executing a script, is replaced with the line number.
+		   It differs from <slnum> in that <sflnum> is replaced with
+		   the script line number in any situation.  *E961*
 
 							 *filename-modifiers*
 *:_%:* *::8* *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs* *::S*

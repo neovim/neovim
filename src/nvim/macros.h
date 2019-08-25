@@ -9,6 +9,7 @@
 #else
 # ifndef INIT
 #  define INIT(...) __VA_ARGS__
+#  define COMMA ,
 # endif
 #endif
 

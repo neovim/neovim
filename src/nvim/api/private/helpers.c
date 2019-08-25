@@ -391,8 +391,10 @@ void set_option_to(uint64_t channel_id, void *to, int type,
     stringval = (char *)value.data.string.data;
   }
 
-  const scid_T save_current_SID = current_SID;
-  current_SID = channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_sid =
+    channel_id == LUA_INTERNAL_CALL ? SID_LUA : SID_API_CLIENT;
+  current_sctx.sc_lnum = 0;
   current_channel_id = channel_id;
 
   const int opt_flags = (type == SREQ_WIN && !(flags & SOPT_GLOBAL))
@@ -401,7 +403,7 @@ void set_option_to(uint64_t channel_id, void *to, int type,
   set_option_value_for(name.data, numval, stringval,
                        opt_flags, type, to, err);
 
-  current_SID = save_current_SID;
+  current_sctx = save_current_sctx;
 }
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS false

@@ -1638,11 +1638,12 @@ static void exe_pre_commands(mparm_T *parmp)
   if (cnt > 0) {
     curwin->w_cursor.lnum = 0;     /* just in case.. */
     sourcing_name = (char_u *)_("pre-vimrc command line");
-    current_SID = SID_CMDARG;
-    for (i = 0; i < cnt; ++i)
+    current_sctx.sc_sid = SID_CMDARG;
+    for (i = 0; i < cnt; i++) {
       do_cmdline_cmd(cmds[i]);
+    }
     sourcing_name = NULL;
-    current_SID = 0;
+    current_sctx.sc_sid = 0;
     TIME_MSG("--cmd commands");
   }
 }
@@ -1663,16 +1664,17 @@ static void exe_commands(mparm_T *parmp)
   if (parmp->tagname == NULL && curwin->w_cursor.lnum <= 1)
     curwin->w_cursor.lnum = 0;
   sourcing_name = (char_u *)"command line";
-  current_SID = SID_CARG;
-  for (i = 0; i < parmp->n_commands; ++i) {
+  current_sctx.sc_sid = SID_CARG;
+  for (i = 0; i < parmp->n_commands; i++) {
     do_cmdline_cmd(parmp->commands[i]);
     if (parmp->cmds_tofree[i])
       xfree(parmp->commands[i]);
   }
   sourcing_name = NULL;
-  current_SID = 0;
-  if (curwin->w_cursor.lnum == 0)
+  current_sctx.sc_sid = 0;
+  if (curwin->w_cursor.lnum == 0) {
     curwin->w_cursor.lnum = 1;
+  }
 
   if (!exmode_active)
     msg_scroll = FALSE;
@@ -1858,12 +1860,13 @@ static int execute_env(char *env)
     linenr_T save_sourcing_lnum = sourcing_lnum;
     sourcing_name = (char_u *)env;
     sourcing_lnum = 0;
-    scid_T save_sid = current_SID;
-    current_SID = SID_ENV;
+    const sctx_T save_current_sctx = current_sctx;
+    current_sctx.sc_sid = SID_ENV;
+    current_sctx.sc_lnum = 0;
     do_cmdline_cmd((char *)initstr);
     sourcing_name = save_sourcing_name;
     sourcing_lnum = save_sourcing_lnum;
-    current_SID = save_sid;
+    current_sctx = save_current_sctx;
     return OK;
   }
   return FAIL;
