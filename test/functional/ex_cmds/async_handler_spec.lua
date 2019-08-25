@@ -17,14 +17,14 @@ describe('async handlers', function()
 
   describe('default handler', function()
     it('runs command in child process', function()
-      command('&:let child_chans = nvim_list_chans()')
+      command('&:let g:child_chans = nvim_list_chans()')
       call('call_wait', {3})
       eq({id = 1, client = {}, mode = 'rpc', stream = 'stdio'},
          eval('child_chans[0]'))
     end)
 
     it('escapes quotes and backslashes properly', function()
-      command([[&:let msg = "Someone's friend said: \"Hello, World!\".\n"]]..
+      command([[&:let g:msg = "Someone's friend said: \"Hello, World!\".\n"]]..
               [[.'""World"?!". The world''s mean.']])
       call('call_wait', {3})
       eq([[Someone's friend said: "Hello, World!".]]..'\n'..
@@ -33,7 +33,7 @@ describe('async handlers', function()
 
     it('sends and receives context properly', function()
       nvim('set_var', 'name', 'Neovi')
-      command([[&:let name = name.'m']])
+      command([[&:let g:name = g:name.'m']])
       call('call_wait', {3})
       eq('Neovim', eval('name'))
 

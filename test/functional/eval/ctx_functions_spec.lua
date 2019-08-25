@@ -126,11 +126,11 @@ describe('context functions', function()
       call('SExec', [[unlet s:Two]])
       call('SExec', [[unlet s:THREE]])
       matches('E121: Undefined variable: s:one',
-              pcall_err(eval, 'SEval(s:one)'))
+              pcall_err(eval, [[SEval('s:one')]]))
       matches('E121: Undefined variable: s:Two',
-              pcall_err(eval, 'SEval(s:Two)'))
+              pcall_err(eval, [[SEval('s:Two')]]))
       matches('E121: Undefined variable: s:THREE',
-              pcall_err(eval, 'SEval(s:THREE)'))
+              pcall_err(eval, [[SEval('s:THREE')]]))
 
       call('SEval', [[ctxpop()]])
       eq({1, 2 ,3},
@@ -140,11 +140,11 @@ describe('context functions', function()
       call('SExec', [[unlet s:Two]])
       call('SExec', [[unlet s:THREE]])
       matches('E121: Undefined variable: s:one',
-              pcall_err(eval, 'SEval(s:one)'))
+              pcall_err(eval, [[SEval('s:one')]]))
       matches('E121: Undefined variable: s:Two',
-              pcall_err(eval, 'SEval(s:Two)'))
+              pcall_err(eval, [[SEval('s:Two')]]))
       matches('E121: Undefined variable: s:THREE',
-              pcall_err(eval, 'SEval(s:THREE)'))
+              pcall_err(eval, [[SEval('s:THREE')]]))
 
       call('SEval', [[timer_start(0, { -> ctxpop() })]])
       eq({1, 2 ,3},

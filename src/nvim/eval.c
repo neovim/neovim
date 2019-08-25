@@ -7640,6 +7640,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = -1;
 
   char_u *callee = NULL;
+  bool free_callee = false;
   typval_T *args = NULL;
   typval_T *opts = NULL;
   Callback callback = CALLBACK_NONE;
@@ -7677,7 +7678,6 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  bool free_callee = false;
   bool isscript = !!eval_fname_script((char *)callee);
   if (!builtin_function((char *)callee, -1) || isscript) {
     Error err = ERROR_INIT;
@@ -7731,6 +7731,7 @@ fail:
 static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   char_u *callee = NULL;
+  bool free_callee = false;
   typval_T *arglists = NULL;
   typval_T *opts = NULL;
   int count = vimvars[VV_CORES].vv_di.di_tv.vval.v_number;
@@ -7807,9 +7808,9 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       EMSG2("Failed to prepare function for async call: %s", err.msg);
       api_clear_error(&err);
       goto fail;
+    } else {
+      free_callee = true;
     }
-  } else {
-    callee = vim_strsave(callee);
   }
 
   async_call = (AsyncCall *)xcalloc(1, sizeof(AsyncCall));
@@ -7819,7 +7820,6 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   async_call->item_callback = item_callback;
   async_call->count = count;
   async_call->work_queue = vim_to_object(arglists).data.array;
-  async_call->callee = callee;
   async_call->sid = current_sctx.sc_sid;
 
   for (size_t i = 0; i < async_call->count; i++) {
@@ -7846,6 +7846,9 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 free:
   if (async_call) {
     asynccall_decref(async_call);
+  }
+  if (free_callee) {
+    xfree(callee);
   }
   api_free_dictionary(context);
   return;

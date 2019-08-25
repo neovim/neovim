@@ -271,6 +271,11 @@ local async_invoke_called = false
 -- a function-call context.
 -- Used by nvim__async_invoke() in "nvim/api/vim.c".
 --
+-- @param ctx Context dictionary
+-- @param callee_ctx Context dictionary of callee and closure scope
+-- @param fn Name of function to call
+-- @param args Table of function call arguments
+--
 -- @returns Result of function call
 local function _async_invoke(ctx, callee_ctx, fn, args)
   if not async_invoke_called then
@@ -533,6 +538,7 @@ local module = {
   schedule_wrap = schedule_wrap,
   _grep = _grep,
   _create_nvim_job = _create_nvim_job,
+  _async_invoke = _async_invoke,
   _ctx_get_func_name = _ctx_get_func_name,
   _ctx_get_func_def = _ctx_get_func_def,
   _ctx_add_func = _ctx_add_func,
