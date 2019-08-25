@@ -11,7 +11,7 @@ Chapter 26 of the user manual introduces repeating |usr_26.txt|.
                                       Type |gO| to see the table of contents.
 
 ==============================================================================
-1. Single repeats					*single-repeat*
+Single repeats						*single-repeat*
 
 							*.*
 .			Repeat last change, with count replaced with [count].
@@ -35,7 +35,7 @@ of area is used, see |visual-repeat|.
 
 
 ==============================================================================
-2. Multiple repeats					*multi-repeat*
+Multiple repeats					*multi-repeat*
 
 						*:g* *:global* *E148*
 :[range]g[lobal]/{pattern}/[cmd]
@@ -103,7 +103,7 @@ repeated for each matching line.  While doing this you cannot use ":global".
 To abort this type CTRL-C twice.
 
 ==============================================================================
-3. Complex repeats					*complex-repeat*
+Complex repeats						*complex-repeat*
 
 							*q* *recording*
 q{0-9a-zA-Z"}		Record typed characters into register {0-9a-zA-Z"}
@@ -157,7 +157,7 @@ q			Stops recording.
 			line [addr] (default is current line).
 
 ==============================================================================
-4. Using Vim scripts					*using-scripts*
+Using Vim scripts					*using-scripts*
 
 For writing a Vim script, see chapter 41 of the user manual |usr_41.txt|.
 
@@ -470,7 +470,7 @@ Rationale:
 	backslash is to make it very unlikely this is a normal comment line.
 
 ==============================================================================
-5. Using Vim packages					*packages*
+Using Vim packages					*packages*
 
 A Vim package is a directory that contains one or more plugins.  The
 advantages over normal plugins:
@@ -586,7 +586,7 @@ The "after" directory is most likely not useful in a package.  It's not
 disallowed though.
 
 ==============================================================================
-6. Creating Vim packages				*package-create*
+Creating Vim packages					*package-create*
 
 This assumes you write one or more plugins that you distribute as a package.
 
@@ -652,7 +652,7 @@ This works, because loading packages will first add all found directories to
 'runtimepath' before sourcing the plugins.
 
 ==============================================================================
-7. Debugging scripts					*debug-scripts*
+Debugging scripts					*debug-scripts*
 
 Besides the obvious messages that you can add to your scripts to find out what
 they are doing, Vim offers a debug mode.  This allows you to step through a
@@ -876,7 +876,7 @@ OBSCURE
 		user, don't use typeahead for debug commands.
 
 ==============================================================================
-8. Profiling						*profile* *profiling*
+Profiling						*profile* *profiling*
 
 Profiling means that Vim measures the time that is spent on executing
 functions and/or scripts.  The |+profile| feature is required for this.
@@ -992,6 +992,33 @@ mind there are various things that may clobber the results:
   mode kicks in or the processor frequency is reduced to save power.
 
 - The "self" time is wrong when a function is used recursively.
+
+==============================================================================
+Context							*Context* *context*
+
+The editor state is represented by the Context concept. This includes things
+like the current |jumplist|, values of |registers|, and more, described below.
+
+							*context-types*
+The following Context items are supported:
+	"jumps"		|jumplist|
+	"regs"		|registers|
+	"buflist"	|buffer-list|
+	"gvars"		|global-variable|s
+	"sfuncs"	|script-local| functions
+	"funcs"		global and |script-local| functions
+
+							*context-dict*
+Context objects are dictionaries with the following key-value pairs:
+- "jumps", "regs", "buflist", "gvars":
+      |readfile()|-style |List| representation of corresponding msgpack
+      objects (see |msgpackdump()| and |msgpackparse()|).
+- "funcs" (includes |script-local| functions as well):
+      |List| of |:function| definitions.
+
+							*context-stack*
+An initially-empty internal Context stack is maintained by the ctx-family
+functions (see |ctx-functions|).
 
 
  vim:tw=78:ts=8:noet:ft=help:norl:

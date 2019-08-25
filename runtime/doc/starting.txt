@@ -199,9 +199,8 @@ argument.
 		  -E reads stdin as text (into buffer 1).
 
 -es						*-es* *-Es* *-s-ex* *silent-mode*
--Es		Silent or batch mode.  Special case of |-s| (which takes an
-		argument while "-es" doesn't).  Disables most prompts,
-		messages, warnings and errors.
+-Es		Silent mode (no UI), for scripting.  Unrelated to |-s|.
+		Disables most prompts, messages, warnings and errors.
 
 		-es reads/executes stdin as Ex commands. >
 			printf "put ='foo'\n%%print\n" | nvim -es
