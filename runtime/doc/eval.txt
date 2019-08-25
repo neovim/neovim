@@ -2196,7 +2196,10 @@ insert({list}, {item} [, {idx}])
 				List	insert {item} in {list} [before {idx}]
 invert({expr})			Number  bitwise invert
 isdirectory({directory})	Number	|TRUE| if {directory} is a directory
+isinf({expr})			Number	determine if {expr} is infinity value
+					(positive or negative)
 islocked({expr})		Number	|TRUE| if {expr} is locked
+isnan({expr})			Number	|TRUE| if {expr} is NaN
 id({expr})			String	identifier of the container
 items({dict})			List	key-value pairs in {dict}
 jobpid({id})			Number	Returns pid of a job.
@@ -5292,6 +5295,14 @@ isdirectory({directory})				*isdirectory()*
 		exist, or isn't a directory, the result is |FALSE|.  {directory}
 		is any expression, which is used as a String.
 
+isinf({expr})						*isinf()*
+		Return 1 if {expr} is a positive infinity, or -1 a negative
+		infinity, otherwise 0. >
+			:echo isinf(1.0 / 0.0)
+<			1 >
+			:echo isinf(-1.0 / 0.0)
+<			-1
+
 islocked({expr})					*islocked()* *E786*
 		The result is a Number, which is |TRUE| when {expr} is the
 		name of a locked variable.
@@ -5327,6 +5338,10 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
+isnan({expr})						*isnan()*
+		Return |TRUE| if {expr} is a float with value NaN. >
+			echo isnan(0.0 / 0.0)
+<			1
 
 jobpid({job})						*jobpid()*
 		Return the PID (process id) of |job-id| {job}.
