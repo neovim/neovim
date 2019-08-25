@@ -13,6 +13,10 @@
 #define READ_KEEP_UNDO  0x20    // keep undo info
 #define READ_FIFO       0x40    // read from fifo or socket
 
+#define AUGROUP_DEFAULT    -1      /* default autocmd group */
+#define AUGROUP_ERROR      -2      /* erroneous autocmd group */
+#define AUGROUP_ALL        -3      /* all autocmd groups */
+
 #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
 
 /*

@@ -2250,6 +2250,56 @@ end:
   return rvobj;
 }
 
+Boolean nvim_add_autocommand(
+    uint64_t channel_id,
+    String event, String pat, DictionaryOf(LuaRef) opts, Error *err
+) FUNC_API_SINCE(6)
+{
+  char_u cmd = NUL;
+  char_u *next_ev;
+  LuaRef cb = LUA_NOREF;
+
+  event_T event_nr = event_name2nr((char_u *)event.data, &next_ev);
+  if (event_nr == NUM_EVENTS) {
+    api_set_error(err, kErrorTypeValidation, "unknown event: %s", event.data);
+    goto error;
+  }
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (channel_id == LUA_INTERNAL_CALL && strequal("on_event", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      cb = v->data.luaref;
+      v->data.integer = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
+    }
+  }
+
+  int retval = do_autocmd_event(
+    event_nr,
+    (char_u *)pat.data,
+    false,
+    false,
+    vim_strsave(&cmd),
+    cb,
+    FALSE,
+    AUGROUP_ALL
+  );
+
+  return retval != FAIL;
+error:
+  if (cb != LUA_NOREF) {
+    executor_free_luaref(cb);
+  }
+  return false;
+}
+
 /// Gets info describing process `pid`.
 ///
 /// @return Map of process properties, or NIL if process not found.

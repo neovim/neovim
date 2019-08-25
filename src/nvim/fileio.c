@@ -29,6 +29,7 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/iconv.h"
+#include "nvim/lua/executor.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
@@ -100,6 +101,7 @@
 typedef struct AutoCmd {
   char_u          *cmd;                 // Command to be executed (NULL when
                                         // command has been removed)
+  LuaRef          lua_cmd;              // Lua callback to execute.
   bool once;                            // "One shot": removed after execution
   char nested;                          // If autocommands nest here
   char last;                            // last command in list
@@ -5427,7 +5429,11 @@ static void show_autocmd(AutoPat *ap, event_T event)
     msg_col = 14;
     if (got_int)
       return;
-    msg_outtrans(ac->cmd);
+    if (ac->lua_cmd != LUA_NOREF) {
+      // TODO: what to print here?
+    } else {
+      msg_outtrans(ac->cmd);
+    }
     if (p_verbose > 0)
       last_set_msg(ac->scriptID);
     if (got_int)
@@ -5452,15 +5458,11 @@ static void au_remove_pat(AutoPat *ap)
 static void au_remove_cmds(AutoPat *ap)
 {
   for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
+    if (ac->lua_cmd != LUA_NOREF) {
+      executor_free_luaref(ac->lua_cmd);
+    }
     XFREE_CLEAR(ac->cmd);
   }
-  au_need_clean = true;
-}
-
-// Delete one command from an autocmd pattern.
-static void au_del_cmd(AutoCmd *ac)
-{
-  XFREE_CLEAR(ac->cmd);
   au_need_clean = true;
 }
 
@@ -5491,6 +5493,9 @@ static void au_cleanup(void)
         // the command has been marked for deletion.
         if (ap->pat == NULL || ac->cmd == NULL) {
           *prev_ac = ac->next;
+          if (ac->lua_cmd != LUA_NOREF) {
+            executor_free_luaref(ac->lua_cmd);
+          }
           xfree(ac->cmd);
           xfree(ac);
         } else {
@@ -5695,7 +5700,7 @@ void free_all_autocmds(void)
  * Return NUM_EVENTS if the event name was not found.
  * Return a pointer to the next event name in "end".
  */
-static event_T event_name2nr(const char_u *start, char_u **end)
+event_T event_name2nr(const char_u *start, char_u **end)
 {
   const char_u *p;
   int i;
@@ -5989,7 +5994,7 @@ void do_autocmd(char_u *arg_in, int forceit)
   if (*arg == '*' || *arg == NUL || *arg == '|') {
     for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS;
          event = (event_T)((int)event + 1)) {
-      if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
+      if (do_autocmd_event(event, pat, once, nested, cmd, LUA_NOREF, forceit, group)
           == FAIL) {
         break;
       }
@@ -5998,7 +6003,7 @@ void do_autocmd(char_u *arg_in, int forceit)
     while (*arg && *arg != '|' && !ascii_iswhite(*arg)) {
       event_T event = event_name2nr(arg, &arg);
       assert(event < NUM_EVENTS);
-      if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
+      if (do_autocmd_event(event, pat, once, nested, cmd, LUA_NOREF, forceit, group)
           == FAIL) {
         break;
       }
@@ -6044,8 +6049,8 @@ static int au_get_grouparg(char_u **argp)
 // If *cmd == NUL: show entries.
 // If forceit == TRUE: delete entries.
 // If group is not AUGROUP_ALL: only use this group.
-static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
-                            char_u *cmd, int forceit, int group)
+int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
+                            char_u *cmd, LuaRef lua_cmd, int forceit, int group)
 {
   AutoPat     *ap;
   AutoPat     **prev_ap;
@@ -6058,13 +6063,14 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
   int patlen;
   int is_buflocal;
   int buflocal_nr;
+  bool is_adding_autocmd = *cmd != NUL || lua_cmd != LUA_NOREF;
   char_u buflocal_pat[25];              /* for "<buffer=X>" */
 
   if (group == AUGROUP_ALL)
     findgroup = current_augroup;
   else
     findgroup = group;
-  allgroups = (group == AUGROUP_ALL && !forceit && *cmd == NUL);
+  allgroups = (group == AUGROUP_ALL && !forceit && !is_adding_autocmd);
 
   /*
    * Show or delete all patterns for an event.
@@ -6135,7 +6141,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
 
     // Find AutoPat entries with this pattern.  When adding a command it
     // always goes at or after the last one, so start at the end.
-    if (!forceit && *cmd != NUL && last_autopat[(int)event] != NULL) {
+    if (!forceit && is_adding_autocmd && last_autopat[(int)event] != NULL) {
       prev_ap = &last_autopat[(int)event];
     } else {
       prev_ap = &first_autopat[(int)event];
@@ -6161,7 +6167,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
            * this list.
            */
           if (forceit) {
-            if (*cmd != NUL && ap->next == NULL) {
+            if (is_adding_autocmd && ap->next == NULL) {
               au_remove_cmds(ap);
               break;
             }
@@ -6170,7 +6176,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
           /*
            * Show autocmd's for this autopat, or buflocals <buffer=X>
            */
-          else if (*cmd == NUL)
+          else if (!is_adding_autocmd)
             show_autocmd(ap, event);
 
           /*
@@ -6186,7 +6192,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
     /*
      * Add a new command.
      */
-    if (*cmd != NUL) {
+    if (is_adding_autocmd) {
       /*
        * If the pattern we want to add a command to does appear at the
        * end of the list (or not is not in the list at all), add the
@@ -6241,6 +6247,7 @@ static int do_autocmd_event(event_T event, char_u *pat, bool once, int nested,
         prev_ac = &ac->next;
       ac = xmalloc(sizeof(AutoCmd));
       ac->cmd = vim_strsave(cmd);
+      ac->lua_cmd = lua_cmd;
       ac->scriptID = current_SID;
       ac->next = NULL;
       *prev_ac = ac;
@@ -7104,7 +7111,13 @@ char_u *getnextac(int c, void *cookie, int indent)
 {
   AutoPatCmd      *acp = (AutoPatCmd *)cookie;
   char_u          *retval;
+  LuaRef          lua_cmd;
   AutoCmd         *ac;
+
+start:
+
+  retval = NULL;
+  lua_cmd = LUA_NOREF;
 
   /* Can be called again after returning the last line. */
   if (acp->curpat == NULL)
@@ -7141,11 +7154,13 @@ char_u *getnextac(int c, void *cookie, int indent)
     msg_puts("\n");  // don't overwrite this either
     verbose_leave_scroll();
   }
-  retval = vim_strsave(ac->cmd);
-  // Remove one-shot ("once") autocmd in anticipation of its execution.
-  if (ac->once) {
-    au_del_cmd(ac);
+
+  if (ac->lua_cmd == LUA_NOREF)  {
+    retval = vim_strsave(ac->cmd);
+  } else {
+    lua_cmd = ac->lua_cmd;
   }
+
   autocmd_nested = ac->nested;
   current_SID = ac->scriptID;
   if (ac->last) {
@@ -7154,7 +7169,26 @@ char_u *getnextac(int c, void *cookie, int indent)
     acp->nextcmd = ac->next;
   }
 
-  return retval;
+  if (retval != NULL) {
+    // Remove one-shot ("once") autocmd in anticipation of its execution.
+    if (ac->once) {
+      XFREE_CLEAR(ac->cmd);
+      au_need_clean = true;
+    }
+    return retval;
+  } else {
+    assert(ac->lua_cmd != LUA_NOREF);
+    Array args = ARRAY_DICT_INIT;
+    executor_exec_lua_cb(ac->lua_cmd, "autocommand", args, false);
+    if (ac->once) {
+      XFREE_CLEAR(ac->cmd);
+      executor_free_luaref(ac->lua_cmd);
+      au_need_clean = true;
+    }
+    // We skip returning to do_cmdline as we executed the command ourselves and
+    // instead start again.
+    goto start;
+  }
 }
 
 /// Return true if there is a matching autocommand for "fname".
