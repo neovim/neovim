@@ -5460,6 +5460,7 @@ static void au_remove_cmds(AutoPat *ap)
   for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
     if (ac->lua_cmd != LUA_NOREF) {
       executor_free_luaref(ac->lua_cmd);
+      ac->lua_cmd = LUA_NOREF;
     }
     XFREE_CLEAR(ac->cmd);
   }
@@ -5496,6 +5497,7 @@ static void au_cleanup(void)
           if (ac->lua_cmd != LUA_NOREF) {
             executor_free_luaref(ac->lua_cmd);
           }
+          ac->lua_cmd = LUA_NOREF;
           xfree(ac->cmd);
           xfree(ac);
         } else {
@@ -7161,6 +7163,13 @@ start:
     lua_cmd = ac->lua_cmd;
   }
 
+  // Remove one-shot ("once") autocmd in anticipation of its execution.
+  if (ac->once) {
+    XFREE_CLEAR(ac->cmd);
+    ac->lua_cmd = LUA_NOREF;
+    au_need_clean = true;
+  }
+
   autocmd_nested = ac->nested;
   current_SID = ac->scriptID;
   if (ac->last) {
@@ -7170,20 +7179,14 @@ start:
   }
 
   if (retval != NULL) {
-    // Remove one-shot ("once") autocmd in anticipation of its execution.
-    if (ac->once) {
-      XFREE_CLEAR(ac->cmd);
-      au_need_clean = true;
-    }
     return retval;
   } else {
-    assert(ac->lua_cmd != LUA_NOREF);
+    assert(lua_cmd != LUA_NOREF);
     Array args = ARRAY_DICT_INIT;
-    executor_exec_lua_cb(ac->lua_cmd, "autocommand", args, false);
+    executor_exec_lua_cb(lua_cmd, "autocommand", args, false);
+    // Now that we executed the autocommand we can free lua ref.
     if (ac->once) {
-      XFREE_CLEAR(ac->cmd);
-      executor_free_luaref(ac->lua_cmd);
-      au_need_clean = true;
+      executor_free_luaref(lua_cmd);
     }
     // We skip returning to do_cmdline as we executed the command ourselves and
     // instead start again.
