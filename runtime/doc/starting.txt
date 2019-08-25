@@ -350,7 +350,7 @@ argument.
 
 							*--embed*
 --embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
-		embed and control Nvim via the |rpc-api|.
+		embed and control Nvim via the RPC |API|.
 
 		Waits for the client ("embedder") to call |nvim_ui_attach()|
 		before sourcing startup files and reading buffers, so that UIs
