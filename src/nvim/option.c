@@ -5456,6 +5456,7 @@ void comp_col(void)
   if (ru_col <= 0) {
     ru_col = 1;
   }
+  set_vim_var_nr(VV_ECHOSPACE, sc_col - 1);
 }
 
 // Unset local option value, similar to ":set opt<".

@@ -64,3 +64,20 @@ func Test_message_completion()
   call feedkeys(":message \<C-A>\<C-B>\"\<CR>", 'tx')
   call assert_equal('"message clear', @:)
 endfunc
+
+func Test_echospace()
+  set noruler noshowcmd laststatus=1
+  call assert_equal(&columns - 1, v:echospace)
+  split
+  call assert_equal(&columns - 1, v:echospace)
+  set ruler
+  call assert_equal(&columns - 1, v:echospace)
+  close
+  call assert_equal(&columns - 19, v:echospace)
+  set showcmd noruler
+  call assert_equal(&columns - 12, v:echospace)
+  set showcmd ruler
+  call assert_equal(&columns - 29, v:echospace)
+
+  set ruler& showcmd&
+endfunc
