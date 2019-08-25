@@ -7564,7 +7564,39 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   func_call(func, &argvars[1], partial, selfdict, rettv);
 }
 
-/// "call_async(callee, args, opts[, callback])" function
+/// Extract callback and context from async call options dictionary.
+///
+/// @param[in]   opts  Options dictionary.
+/// @param[out]  cb    Callback object.
+/// @param[out]  ctx   Context Dictionary.
+///
+/// @return true on success, false otherwise.
+static inline bool get_asynccall_opts(
+    dict_T *opts, Callback *cb, Dictionary *ctx)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *di_callback = tv_dict_find(opts, S_LEN("done"));
+  dictitem_T *di_context = tv_dict_find(opts, S_LEN("context"));
+
+  if (di_callback != NULL && !callback_from_typval(cb, &di_callback->di_tv)) {
+    EMSG3(_(e_invargNval), "opts", "value of 'done' should be a function");
+    return false;
+  }
+
+  if (di_context != NULL) {
+    if (di_context->di_tv.v_type != VAR_DICT) {
+      EMSG3(_(e_invargNval), "opts",
+            "value of 'context' should be a dictionary");
+      callback_free(cb);
+      return false;
+    }
+    *ctx = vim_to_object(&di_context->di_tv).data.dictionary;
+  }
+
+  return true;
+}
+
+/// "call_async(callee, args[, opts])" function
 static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
@@ -7574,6 +7606,7 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   typval_T *args = NULL;
   typval_T *opts = NULL;
   Callback callback = CALLBACK_NONE;
+  Dictionary context = ARRAY_DICT_INIT;
 
   // TODO(abdelhakeem): support artibrary user-defined functions
   callee = &argvars[0];
@@ -7591,25 +7624,20 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   opts = &argvars[2];
-  if (opts->v_type != VAR_DICT) {
+  if (opts->v_type == VAR_DICT) {
+    if (!get_asynccall_opts(opts->vval.v_dict, &callback, &context)) {
+      return;
+    }
+  } else if (opts->v_type != VAR_UNKNOWN) {
     EMSG2(_(e_invarg2),
           "Third argument of call_async() must be a dictionary");
     return;
   }
 
-  // TODO(abdelhakeem): serialize and send context data as specified by "opts"
-
-  if (argvars[3].v_type != VAR_UNKNOWN
-      && !callback_from_typval(&callback, &argvars[3])) {
-    EMSG2(_(e_invarg2),
-          "Fourth argument of call_async() "
-          "must be a function name or funcref");
-    return;
-  }
-
   Channel *chan = acquire_asynccall_channel();
   if (!chan) {
-    return;
+    EMSG(_("Failed to spawn job for async call"));
+    goto fail;
   }
 
   chan->async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
@@ -7618,68 +7646,73 @@ static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Array call_async_args = ARRAY_DICT_INIT;
   ADD(call_async_args, vim_to_object(callee));
-  ADD(call_async_args, STRING_OBJ(cstr_to_string("")));
+  ADD(call_async_args, DICTIONARY_OBJ(context));
   ADD(call_async_args, vim_to_object(args));
 
   if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
+    EMSG(_("Failed to send RPC request to async call job"));
     release_asynccall_channel(chan);
-    return;
+    free_asynccall(chan->async_call);
+    goto fail;
   }
 
   rettv->vval.v_number = chan->id;
+  return;
+
+fail:
+  callback_free(&callback);
+  api_free_dictionary(context);
 }
 
-/// "call_parallel(count, callee, arglists, opts[, callback])" function
+/// "call_parallel(callee, arglists[, opts])" function
 static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  typval_T *count = NULL;
   typval_T *callee = NULL;
   typval_T *arglists = NULL;
   typval_T *opts = NULL;
+  const typval_T *count = &vimvars[VV_CORES].vv_di.di_tv;
   Callback callback = CALLBACK_NONE;
+  Dictionary context = ARRAY_DICT_INIT;
 
-  count = &argvars[0];
-  if (count->v_type != VAR_NUMBER || count->vval.v_number < 1) {
-    EMSG2(_(e_invarg2),
-          "First argument of call_parallel() must be a positive number");
-    return;
-  }
-
-  callee = &argvars[1];
+  callee = &argvars[0];
   if (callee->v_type != VAR_STRING) {
     EMSG2(_(e_invarg2),
-          "Second argument of call_parallel() must be a string");
+          "First argument of call_parallel() must be a string");
     return;
   }
 
-  arglists = &argvars[2];
+  arglists = &argvars[1];
   if (arglists->v_type != VAR_LIST) {
     EMSG2(_(e_invarg2),
-          "Third argument of call_parallel() must be a list");
+          "Second argument of call_parallel() must be a list");
     return;
   }
 
-  opts = &argvars[3];
-  if (opts->v_type != VAR_DICT) {
+  opts = &argvars[2];
+  if (opts->v_type == VAR_DICT) {
+    dict_T *dict_opts = opts->vval.v_dict;
+    if (!get_asynccall_opts(dict_opts, &callback, &context)) {
+      return;
+    }
+    dictitem_T *di_count = tv_dict_find(dict_opts, S_LEN("count"));
+    if (di_count != NULL) {
+      count = &di_count->di_tv;
+      if (count->v_type != VAR_NUMBER || count->vval.v_number <= 0) {
+        EMSG3(_(e_invargNval), "opts",
+              "value of 'count' should be a positive number");
+        goto fail;
+      }
+    }
+  } else if (opts->v_type != VAR_UNKNOWN) {
     EMSG2(_(e_invarg2),
-          "Fourth argument of call_parallel() must be a dictionary");
-    return;
-  }
-
-  if (argvars[4].v_type != VAR_UNKNOWN
-      && !callback_from_typval(&callback, &argvars[4])) {
-    EMSG2(_(e_invarg2),
-          "Fifth argument of call_parallel() "
-          "must be a function name or funcref");
+          "Third argument of call_parallel() must be a dictionary");
     return;
   }
 
   AsyncCall *async_call = (AsyncCall *)xmalloc(sizeof(AsyncCall));
   async_call->callback = callback;
-  async_call->count = tv_list_len(arglists->vval.v_list);
-  if (count->vval.v_number < async_call->count) {
-    async_call->count = count->vval.v_number;
-  }
+  async_call->count =
+    MIN(count->vval.v_number, tv_list_len(arglists->vval.v_list));
   async_call->work_queue = arglists->vval.v_list;
   tv_list_ref(arglists->vval.v_list);
   async_call->next = 0;
@@ -7689,16 +7722,35 @@ static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   tv_list_alloc_ret(rettv, async_call->count);
   for (int i = 0; i < async_call->count; i++) {
     Channel *chan = acquire_asynccall_channel();
+    if (!chan) {
+      EMSG(_("Failed to spawn job for async call"));
+      goto fail;
+    }
     tv_list_append_number(rettv->vval.v_list, chan->id);
     chan->async_call = async_call;
     Array call_async_args = ARRAY_DICT_INIT;
     ADD(call_async_args, vim_to_object(callee));
-    ADD(call_async_args, STRING_OBJ(cstr_to_string("")));
+    ADD(call_async_args, DICTIONARY_OBJ(copy_dictionary(context)));
     listitem_T *args =
       tv_list_find(async_call->work_queue, async_call->next++);
     ADD(call_async_args, vim_to_object(TV_LIST_ITEM_TV(args)));
-    rpc_send_event(chan->id, "nvim__async_invoke", call_async_args);
+    if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
+      EMSG(_("Failed to send RPC request to async call job"));
+      goto fail;
+    }
   }
+
+  api_free_dictionary(context);
+  return;
+
+fail:
+  TV_LIST_ITER(rettv->vval.v_list, li, {
+    uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
+    release_asynccall_channel(find_channel(channel_id));
+  });
+  tv_clear(rettv);
+  callback_free(&callback);
+  api_free_dictionary(context);
 }
 
 /// "call_wait(ids[, timeout])" function
@@ -8213,22 +8265,17 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
-
   Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
   Context tmp = CONTEXT_INIT;
-  ctx_from_dict(dict, &tmp);
 
-  if (did_emsg) {
-    ctx_free(&tmp);
-  } else {
+  if (ctx_from_dict(dict, &tmp)) {
     ctx_free(ctx);
     *ctx = tmp;
+  } else {
+    ctx_free(&tmp);
   }
 
   api_free_dictionary(dict);
-  did_emsg = save_did_emsg;
 }
 
 /// "ctxsize()" function

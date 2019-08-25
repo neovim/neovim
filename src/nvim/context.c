@@ -349,35 +349,34 @@ Dictionary ctx_to_dict(Context *ctx)
 /// @param[in]   dict  Context Dictionary representation.
 /// @param[out]  ctx   Context object to store conversion result into.
 ///
-/// @return types of included context items.
-int ctx_from_dict(Dictionary dict, Context *ctx)
+/// @return true on success, false otherwise
+bool ctx_from_dict(Dictionary dict, Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
   assert(ctx != NULL);
 
-  int types = 0;
+  int save_did_emsg = did_emsg;
+  did_emsg = false;
+
   for (size_t i = 0; i < dict.size; i++) {
     KeyValuePair item = dict.items[i];
     if (item.value.type != kObjectTypeArray) {
       continue;
     }
     if (strequal(item.key.data, "regs")) {
-      types |= kCtxRegs;
       ctx->regs = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "jumps")) {
-      types |= kCtxJumps;
       ctx->jumps = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "buflist")) {
-      types |= kCtxBuflist;
       ctx->buflist = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "gvars")) {
-      types |= kCtxGVars;
       ctx->gvars = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "funcs")) {
-      types |= kCtxFuncs;
       ctx->funcs = copy_object(item.value).data.array;
     }
   }
 
-  return types;
+  bool result = !did_emsg;
+  did_emsg = save_did_emsg;
+  return result;
 }
