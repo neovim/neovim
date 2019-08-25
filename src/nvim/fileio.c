@@ -30,6 +30,8 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/iconv.h"
+#include "nvim/lua/converter.h"
+#include "nvim/lua/executor.h"
 #include "nvim/mbyte.h"
 #include "nvim/memfile.h"
 #include "nvim/memline.h"
@@ -5304,8 +5306,6 @@ char_u *vim_tempname(void)
   return vim_strsave(template);
 }
 
-
-
 /// Tries matching a filename with a "pattern" ("prog" is NULL), or use the
 /// precompiled regprog "prog" ("pattern" is NULL).  That avoids calling
 /// vim_regcomp() often.
@@ -5372,7 +5372,7 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   char_u buf[100];
   char_u      *tail;
   char_u      *regpat;
-  char allow_dirs;
+  bool allow_dirs;
   bool match;
   char_u      *p;
 
@@ -5405,7 +5405,7 @@ bool match_file_list(char_u *list, char_u *sfname, char_u *ffname)
 char_u * file_pat_to_reg_pat(
     const char_u *pat,
     const char_u *pat_end,   // first char after pattern or NULL
-    char *allow_dirs,        // Result passed back out in here
+    bool *allow_dirs,        // Result passed back out in here
     int no_bslash            // Don't use a backward slash as pathsep
 )
   FUNC_ATTR_NONNULL_ARG(1)

@@ -171,6 +171,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
       ret.type = kObjectTypeNil;
     }
   }
+
   return ret;
 }
 
@@ -1254,6 +1255,17 @@ LuaRef nlua_pop_LuaRef(lua_State *const lstate, Error *err)
   LuaRef rv = nlua_ref(lstate, -1);
   lua_pop(lstate, 1);
   return rv;
+}
+
+LuaCallable nlua_init_callable(void)
+{
+    return (LuaCallable){ .func_ref = LUA_NOREF, .table_ref = LUA_NOREF };
+}
+
+/// Checks if a LuaCallable is callable.
+bool nlua_is_valid_callable(LuaCallable lua_cb)
+{
+    return lua_cb.func_ref != LUA_NOREF;
 }
 
 #define GENERATE_INDEX_FUNCTION(type) \

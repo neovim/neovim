@@ -92,6 +92,7 @@ CONFIG = {
             'buffer.c',
             'window.c',
             'tabpage.c',
+            'autocmd.c',
             'ui.c',
         ],
         # List of files/directories for doxygen to read, separated by blanks

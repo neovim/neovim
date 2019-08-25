@@ -14,6 +14,7 @@
 #define READ_KEEP_UNDO  0x20    // keep undo info
 #define READ_FIFO       0x40    // read from fifo or socket
 
+
 #define READ_STRING(x, y) (char_u *)read_string((x), (size_t)(y))
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

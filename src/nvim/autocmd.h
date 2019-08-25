@@ -4,6 +4,23 @@
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
 
+// TODO(tjdevries): Are we going to use these?
+typedef enum {
+  CALLABLE_CMD,
+  CALLABLE_VIM,
+  CALLABLE_LUA,
+} AutocmdCallableType;
+
+typedef struct callable_s AutocmdCallable;
+struct callable_s {
+  AutocmdCallableType type;
+  union {
+    char  *c_cmd;
+    char  *c_vim;
+    LuaRef c_lua;
+  } callable;
+};
+
 // Struct to save values in before executing autocommands for a buffer that is
 // not the current buffer.
 typedef struct {
@@ -16,9 +33,34 @@ typedef struct {
   char_u *globaldir;              ///< saved value of globaldir
 } aco_save_T;
 
+typedef enum {
+  COMMAND_EX,
+  COMMAND_VIML_FUNC,
+  COMMAND_LUA,
+} AutocmdCommandType;
+
+typedef struct command_s AutocmdCommand;
+struct command_s {
+  AutocmdCommandType type;
+  union {
+    char_u  *c_cmd;
+    char_u  *c_vim;
+    LuaRef   c_lua;
+  } callable;
+};
+
 typedef struct AutoCmd {
-  char_u          *cmd;                 // Command to be executed (NULL when
-                                        // command has been removed)
+  // TODO(tjdevries): Remove
+  // This is the original storage method.
+  // -> just stores a string of what to execute
+  char_u          *cmd;  // Command to be executed
+                         // (NULL when command has been removed)
+
+  // This is the new storage method.
+  // -> can store a string, or a lua ref!
+  // -> will choose which to execute based on it's type.
+  AutocmdCommand command;
+
   bool once;                            // "One shot": removed after execution
   bool nested;                          // If autocommands nest here
   bool last;                            // last command in list
@@ -36,7 +78,7 @@ typedef struct AutoPat {
   int group;                            // group ID
   int patlen;                           // strlen() of pat
   int buflocal_nr;                      // !=0 for buffer-local AutoPat
-  char allow_dirs;                      // Pattern may match whole path
+  bool allow_dirs;                      // Pattern may match whole path
   char last;                            // last pattern for apply_autocmds()
 } AutoPat;
 
@@ -77,5 +119,15 @@ EXTERN bool au_did_filetype INIT(= false);
 #define AUGROUP_DEFAULT    -1      // default autocmd group
 #define AUGROUP_ERROR      -2      // erroneous autocmd group
 #define AUGROUP_ALL        -3      // all autocmd groups
+
+#define BUFLOCAL_PAT_LEN 25
+
+
+// Iterates over all the events for auto commands
+#define FOR_ALL_AUEVENTS(event) \
+  for (event_T event = (event_T)0; (int)event < (int)NUM_EVENTS; event = (event_T)((int)event + 1)) // NOLINT
+
+#define FOR_ALL_AUPATS_IN_EVENT(event, ap) \
+  for (AutoPat *ap = first_autopat[event]; ap != NULL; ap = ap->next) // NOLINT
 
 #endif  // NVIM_AUTOCMD_H

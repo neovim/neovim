@@ -21,6 +21,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/map.h"
+#include "nvim/fileio.h"
 #include "nvim/message.h"
 #include "nvim/memline.h"
 #include "nvim/buffer_defs.h"
@@ -399,6 +400,7 @@ static int nlua_wait(lua_State *lstate)
 
   return 2;
 }
+
 
 /// Initialize lua interpreter state
 ///
@@ -935,6 +937,19 @@ void api_free_luaref(LuaRef ref)
   nlua_unref(lstate, ref);
 }
 
+void api_free_luacallable(LuaCallable lua_cb)
+{
+  if (lua_cb.func_ref != LUA_NOREF) {
+    api_free_luaref(lua_cb.func_ref);
+    lua_cb.func_ref = LUA_NOREF;
+  }
+
+  if (lua_cb.table_ref != LUA_NOREF) {
+    api_free_luaref(lua_cb.table_ref);
+    lua_cb.table_ref = LUA_NOREF;
+  }
+}
+
 /// push a value referenced in the registry
 void nlua_pushref(lua_State *lstate, LuaRef ref)
 {
@@ -1069,6 +1084,11 @@ int typval_exec_lua_callable(
   LuaRef cb = lua_cb.func_ref;
 
   nlua_pushref(lstate, cb);
+  ILOG("Lua After Type: %d %d", lua_type(lstate, -1), LUA_TTABLE);
+
+  if (lua_type(lstate, -1) == LUA_TTABLE) {
+    // assert(lua_cb.table_ref != LUA_NOREF);
+  }
 
   PUSH_ALL_TYPVALS(lstate, argvars, argcount, false);
 

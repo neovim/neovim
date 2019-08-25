@@ -18,11 +18,14 @@
 #include "nvim/getchar.h"
 #include "nvim/misc1.h"
 #include "nvim/option.h"
+#include "nvim/ops.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
 #include "nvim/state.h"
 #include "nvim/ui_compositor.h"
 #include "nvim/vim.h"
+#include "nvim/lua/executor.h"
+#include "nvim/ex_docmd_utils.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 #include "auevents_name_map.generated.h"
@@ -71,7 +74,6 @@ static AutoPatCmd *active_apc_list = NULL;  // stack of active autocommands
 /// List of autocmd group names
 static garray_T augroups = { 0, 0, sizeof(char_u *), 10, NULL };
 #define AUGROUP_NAME(i) (((char **)augroups.ga_data)[i])
-#define BUFLOCAL_PAT_LEN 25
 
 // use get_deleted_augroup() to get this
 static const char *deleted_augroup = NULL;
@@ -90,12 +92,24 @@ static bool autocmd_include_groups = false;
 
 static char_u *old_termresponse = NULL;
 
+typedef struct {
+  bool once;
+  bool nested;
+  bool forceit;
+  int group;
+} DoAutocmdInfo;
+
 static inline const char *get_deleted_augroup(void) FUNC_ATTR_ALWAYS_INLINE
 {
   if (deleted_augroup == NULL) {
     deleted_augroup = _("--Deleted--");
   }
   return deleted_augroup;
+}
+
+static inline bool is_pat_removed(AutoPat *ap)
+{
+  return ap->pat == NULL;
 }
 
 // Show the autocommands for one AutoPat.
@@ -108,8 +122,7 @@ static void show_autocmd(AutoPat *ap, event_T event)
   if (got_int) {
     return;
   }
-  // pattern has been removed
-  if (ap->pat == NULL) {
+  if (is_pat_removed(ap)) {
     return;
   }
 
@@ -138,9 +151,10 @@ static void show_autocmd(AutoPat *ap, event_T event)
   msg_outtrans(ap->pat);
 
   for (ac = ap->cmds; ac != NULL; ac = ac->next) {
-    if (ac->cmd == NULL) {  // skip removed commands
+    if (is_autocmd_removed(ac)) {  // skip removed commands
       continue;
     }
+
     if (msg_col >= 14) {
       msg_putchar('\n');
     }
@@ -148,7 +162,9 @@ static void show_autocmd(AutoPat *ap, event_T event)
     if (got_int) {
       return;
     }
-    msg_outtrans(ac->cmd);
+
+    autocmd_command_msg_out(ac);
+
     if (p_verbose > 0) {
       last_set_msg(ac->script_ctx);
     }
@@ -172,36 +188,18 @@ static void au_remove_pat(AutoPat *ap)
   au_need_clean = true;
 }
 
-// Mark all commands for a pattern for deletion.
-static void au_remove_cmds(AutoPat *ap)
-{
-  for (AutoCmd *ac = ap->cmds; ac != NULL; ac = ac->next) {
-    XFREE_CLEAR(ac->cmd);
-  }
-  au_need_clean = true;
-}
-
-// Delete one command from an autocmd pattern.
-static void au_del_cmd(AutoCmd *ac)
-{
-  XFREE_CLEAR(ac->cmd);
-  au_need_clean = true;
-}
-
 /// Cleanup autocommands and patterns that have been deleted.
 /// This is only done when not executing autocommands.
 static void au_cleanup(void)
 {
   AutoPat *ap, **prev_ap;
-  event_T event;
 
   if (autocmd_busy || !au_need_clean) {
     return;
   }
 
   // Loop over all events.
-  for (event = (event_T)0; (int)event < (int)NUM_EVENTS;
-       event = (event_T)((int)event + 1)) {
+  FOR_ALL_AUEVENTS(event) {
     // Loop over all autocommand patterns.
     prev_ap = &(first_autopat[(int)event]);
     for (ap = *prev_ap; ap != NULL; ap = *prev_ap) {
@@ -210,10 +208,12 @@ static void au_cleanup(void)
       // Loop over all commands for this pattern.
       AutoCmd **prev_ac = &(ap->cmds);
       for (AutoCmd *ac = *prev_ac; ac != NULL; ac = *prev_ac) {
-        // Remove the command if the pattern is to be deleted or when
-        // the command has been marked for deletion.
-        if (ap->pat == NULL || ac->cmd == NULL) {
+        // Remove the command if the pattern is to be deleted or
+        // when the command has been marked for deletion.
+        if (ap->pat == NULL || is_autocmd_removed(ac)) {
           *prev_ac = ac->next;
+          // TODO(autocmd): Why can't I use the free thing?
+          // ac = autocmd_command_free(ac, true);
           xfree(ac->cmd);
           xfree(ac);
         } else {
@@ -287,7 +287,7 @@ void aubuflocal_remove(buf_T *buf)
 
 // Add an autocmd group name.
 // Return its ID.  Returns AUGROUP_ERROR (< 0) for error.
-static int au_new_group(char_u *name)
+int au_new_group(char_u *name)
 {
   int i = au_find_group(name);
   if (i == AUGROUP_ERROR) {  // the group doesn't exist yet, add it.
@@ -348,7 +348,7 @@ static void au_del_group(char_u *name)
 /// @param name augroup name
 ///
 /// @return the ID or AUGROUP_ERROR (< 0) for error.
-static int au_find_group(const char_u *name)
+int au_find_group(const char_u *name)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   for (int i = 0; i < augroups.ga_len; i++) {
@@ -419,7 +419,7 @@ void free_all_autocmds(void)
 // Return the event number for event name "start".
 // Return NUM_EVENTS if the event name was not found.
 // Return a pointer to the next event name in "end".
-static event_T event_name2nr(const char_u *start, char_u **end)
+event_T event_name2nr(const char_u *start, char_u **end)
 {
   const char_u *p;
   int i;
@@ -696,6 +696,8 @@ void do_autocmd(char_u *arg_in, int forceit)
     MSG_PUTS_TITLE(_("\n--- Autocommands ---"));
   }
 
+  AutocmdCommand command = autocmd_command_create_ex_command(cmd);
+
   // Loop over the events.
   last_event = (event_T)-1;    // for listing the event name
   last_group = AUGROUP_ERROR;  // for listing the group name
@@ -703,10 +705,9 @@ void do_autocmd(char_u *arg_in, int forceit)
     if (!forceit && *cmd != NUL) {
       EMSG(_(e_cannot_define_autocommands_for_all_events));
     } else {
-      for (event_T event = (event_T)0; event < (int)NUM_EVENTS;
-           event = (event_T)(event + 1)) {
-        if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
-            == FAIL) {
+      FOR_ALL_AUEVENTS(event) {
+        if (define_one_autocmd(
+               event, pat, once, nested, command, group, forceit) == FAIL) {
           break;
         }
       }
@@ -715,7 +716,7 @@ void do_autocmd(char_u *arg_in, int forceit)
     while (*arg && *arg != '|' && !ascii_iswhite(*arg)) {
       event_T event = event_name2nr(arg, &arg);
       assert(event < NUM_EVENTS);
-      if (do_autocmd_event(event, pat, once, nested, cmd, forceit, group)
+      if (define_one_autocmd(event, pat, once, nested, command, group, forceit)
           == FAIL) {
         break;
       }
@@ -754,153 +755,255 @@ static int au_get_grouparg(char_u **argp)
   return group;
 }
 
+static void au_show_all_autopats_for_event_and_group(
+    event_T event,
+    int group
+)
+{
+  FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+    if (group == AUGROUP_ALL || ap->group == group) {
+      show_autocmd(ap, event);
+    }
+  }
+}
+
+#define FOR_AU_PATTERNS(pat, endpat, patlen, is_buflocal, buflocal_nr, block) \
+  for (; *pat; pat = (*endpat == ',' ? endpat + 1 : endpat)) { \
+    char_u buflocal_pat[BUFLOCAL_PAT_LEN]; \
+    endpat = pat; \
+    if (*endpat == ',') { \
+      continue; \
+    } \
+    endpat = advance_endpat_past_braces(endpat); \
+    ILOG("START OF LOOP: %s", pat); \
+    if (!au_get_next_pat(&pat, \
+                         &endpat, \
+                         &patlen, \
+                         &is_buflocal, \
+                         &buflocal_nr, \
+                         buflocal_pat)) { \
+      continue; \
+    } \
+    ILOG("END OF LOOP: %s", pat); \
+    block; \
+  }
+
+static bool au_get_next_pat(
+    char_u **ptr_pat,
+    char_u **ptr_endpat,
+    int *ptr_patlen,
+    bool *ptr_buflocal,
+    int *ptr_bufnr,
+    char_u *buflocal_pat
+)
+{
+  bool is_buflocal;
+  int buflocal_nr;
+
+  // Keep track of pat & endpat, and re-set the pointers at the end
+  char_u *pat = *ptr_pat;
+  char_u *endpat = *ptr_endpat;
+
+  *ptr_patlen = (int)(endpat - pat);
+  int patlen = *ptr_patlen;
+  if (pat) {
+    ILOG("Current pattern / patlen: '%s' / %d", pat, patlen);
+  }
+
+  // detect special <buflocal[=X]> buffer-local patterns
+  is_buflocal = false;
+  buflocal_nr = 0;
+
+  if (aupat_is_buflocal(pat, patlen)) {
+    // "<buffer...>": Error will be printed only for addition.
+    // printing and removing will proceed silently.
+    is_buflocal = true;
+    buflocal_nr = aupat_get_buflocal_nr(pat, patlen);
+
+    aupat_normalize_buflocal_pat(buflocal_pat, pat, patlen, buflocal_nr);
+
+    pat = buflocal_pat;                       // can modify pat and patlen
+    *ptr_patlen = (int)STRLEN(buflocal_pat);  //   but not endpat
+  }
+
+  *ptr_buflocal = is_buflocal;
+  *ptr_bufnr = buflocal_nr;
+
+  // Update parent pointers to be the new locations
+  *ptr_pat = pat;
+  *ptr_endpat = endpat;
+
+  return true;
+}
+
 // do_autocmd() for one event.
 // Defines an autocmd (does not execute; cf. apply_autocmds_group).
 //
 // If *pat == NUL: do for all patterns.
 // If *cmd == NUL: show entries.
-// If forceit == true: delete entries.
 // If group is not AUGROUP_ALL: only use this group.
-static int do_autocmd_event(event_T event,
-                            char_u *pat,
-                            bool once,
-                            int nested,
-                            char_u *cmd,
-                            int forceit,
-                            int group)
+int define_one_autocmd(event_T event,
+                       char_u *pat,
+                       bool once,
+                       bool nested,
+                       AutocmdCommand command,
+                       int group,
+                       bool is_delete)
 {
-  AutoPat *ap;
-  AutoPat **prev_ap;
-  AutoCmd *ac;
-  AutoCmd **prev_ac;
-  int brace_level;
-  char_u *endpat;
+  bool is_adding_autocmd = autocmd_command_is_new(command);
+  int retval = OK;
+
+  if (event == EVENT_INSERTCHARPRE) {
+    ILOG("CHAR PRE %s <<", pat);
+  }
+
+  if (is_delete) {
+    if (is_adding_autocmd) {
+      // au! [group] {event} {pat} new_command
+      retval = autocmd_delete_event(group, event, pat);
+      if (retval == FAIL) {
+        goto autocmd_event_cleanup;
+      }
+
+      retval = autocmd_register_event(group, event, pat, once, nested, command);
+    } else {
+      // au! [group] {event} {pat}
+      retval = autocmd_delete_event(group, event, pat);
+    }
+  } else {
+    if (is_adding_autocmd) {
+      // au [group] {event} {pat} new_command
+      retval = autocmd_register_event(group, event, pat, once, nested, command);
+    } else {
+      retval = autocmd_display_event(group, event, pat, once, nested);
+    }
+  }
+
+autocmd_event_cleanup:
+  au_cleanup();
+
+  return retval;
+}
+
+int autocmd_display_event(
+    int group,
+    event_T event,
+    char_u *pat,
+    bool once,
+    bool nested
+)
+{
   int findgroup;
   int allgroups;
   int patlen;
-  int is_buflocal;
+
+  char_u *endpat = NULL;
+  bool is_buflocal;
   int buflocal_nr;
-  char_u buflocal_pat[BUFLOCAL_PAT_LEN];  // for "<buffer=X>"
 
   if (group == AUGROUP_ALL) {
     findgroup = current_augroup;
   } else {
     findgroup = group;
   }
-  allgroups = (group == AUGROUP_ALL && !forceit && *cmd == NUL);
+  // allgroups = (group == AUGROUP_ALL && !forceit && !is_adding_autocmd);
+  allgroups = (group == AUGROUP_ALL);
 
   // Show or delete all patterns for an event.
   if (*pat == NUL) {
-    for (ap = first_autopat[event]; ap != NULL; ap = ap->next) {
-      if (forceit) {  // delete the AutoPat, if it's in the current group
-        if (ap->group == findgroup) {
-          au_remove_pat(ap);
-        }
-      } else if (group == AUGROUP_ALL || ap->group == group) {
-        show_autocmd(ap, event);
-      }
-    }
-  }
-
-  // Loop through all the specified patterns.
-  for (; *pat; pat = (*endpat == ',' ? endpat + 1 : endpat)) {
-    // Find end of the pattern.
-    // Watch out for a comma in braces, like "*.\{obj,o\}".
-    endpat = pat;
-    // ignore single comma
-    if (*endpat == ',') {
-      continue;
-    }
-    brace_level = 0;
-    for (; *endpat && (*endpat != ',' || brace_level || endpat[-1] == '\\');
-         endpat++) {
-      if (*endpat == '{') {
-        brace_level++;
-      } else if (*endpat == '}') {
-        brace_level--;
-      }
-    }
-    patlen = (int)(endpat - pat);
-
-    // detect special <buflocal[=X]> buffer-local patterns
-    is_buflocal = false;
-    buflocal_nr = 0;
-
-    if (patlen >= 8 && STRNCMP(pat, "<buffer", 7) == 0
-        && pat[patlen - 1] == '>') {
-      // "<buffer...>": Error will be printed only for addition.
-      // printing and removing will proceed silently.
-      is_buflocal = true;
-      if (patlen == 8) {
-        // "<buffer>"
-        buflocal_nr = curbuf->b_fnum;
-      } else if (patlen > 9 && pat[7] == '=') {
-        if (patlen == 13 && STRNICMP(pat, "<buffer=abuf>", 13) == 0) {
-          // "<buffer=abuf>"
-          buflocal_nr = autocmd_bufnr;
-        } else if (skipdigits(pat + 8) == pat + patlen - 1) {
-          // "<buffer=123>"
-          buflocal_nr = atoi((char *)pat + 8);
-        }
-      }
-    }
-
-    if (is_buflocal) {
-      // normalize pat into standard "<buffer>#N" form
-      snprintf(
-          (char *)buflocal_pat,
-          BUFLOCAL_PAT_LEN,
-          "<buffer=%d>",
-          buflocal_nr);
-
-      pat = buflocal_pat;                  // can modify pat and patlen
-      patlen = (int)STRLEN(buflocal_pat);  //   but not endpat
-    }
-
-    // Find AutoPat entries with this pattern.  When adding a command it
-    // always goes at or after the last one, so start at the end.
-    if (!forceit && *cmd != NUL && last_autopat[(int)event] != NULL) {
-      prev_ap = &last_autopat[(int)event];
-    } else {
-      prev_ap = &first_autopat[(int)event];
-    }
-    while ((ap = *prev_ap) != NULL) {
-      if (ap->pat != NULL) {
-        // Accept a pattern when:
-        // - a group was specified and it's that group, or a group was
-        //   not specified and it's the current group, or a group was
-        //   not specified and we are listing
-        // - the length of the pattern matches
-        // - the pattern matches.
-        // For <buffer[=X]>, this condition works because we normalize
-        // all buffer-local patterns.
-        if ((allgroups || ap->group == findgroup) && ap->patlen == patlen
-            && STRNCMP(pat, ap->pat, patlen) == 0) {
-          // Remove existing autocommands.
-          // If adding any new autocmd's for this AutoPat, don't
-          // delete the pattern from the autopat list, append to
-          // this list.
-          if (forceit) {
-            if (*cmd != NUL && ap->next == NULL) {
-              au_remove_cmds(ap);
-              break;
-            }
-            au_remove_pat(ap);
-          } else if (*cmd == NUL) {
-            // Show autocmd's for this autopat, or buflocals <buffer=X>
+    au_show_all_autopats_for_event_and_group(event, group);
+  } else {
+    FOR_AU_PATTERNS(pat, endpat, patlen, is_buflocal, buflocal_nr, {
+      FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+        ILOG("Looking for AP to display");
+        if (ap->pat != NULL) {
+          // Accept a pattern when:
+          // - a group was specified and it's that group, or a group was
+          //   not specified and it's the current group, or a group was
+          //   not specified and we are listing
+          // - the length of the pattern matches
+          // - the pattern matches.
+          // For <buffer[=X]>, this condition works because we normalize
+          // all buffer-local patterns.
+          if ((allgroups || ap->group == findgroup) && ap->patlen == patlen
+              && STRNCMP(pat, ap->pat, patlen) == 0) {
             show_autocmd(ap, event);
-
-          } else if (ap->next == NULL) {
-            // Add autocmd to this autopat, if it's the last one.
-            break;
           }
         }
       }
-      prev_ap = &ap->next;
-    }
+    });
+  }
 
-    // Add a new command.
-    if (*cmd != NUL) {
+  au_cleanup();  // may really delete removed patterns/commands now
+  return OK;
+}
+
+int autocmd_register_event(
+    int group,
+    event_T event,
+    char_u *pat,
+    bool once,
+    bool nested,
+    AutocmdCommand command
+)
+{
+  AutoPat *ap;
+  AutoPat **prev_ap;
+  AutoCmd *ac;
+  AutoCmd **prev_ac;
+  int findgroup;
+  int patlen;
+
+  char_u *endpat = NULL;
+  bool is_buflocal;
+  int buflocal_nr;
+
+  assert(command.type == COMMAND_EX);
+  assert(command.callable.c_cmd != NULL);
+
+  if (group == AUGROUP_ALL) {
+    findgroup = current_augroup;
+  } else {
+    findgroup = group;
+  }
+
+  // Show or delete all patterns for an event.
+  if (*pat == NUL) {
+    // TODO(autocmd): Should this still be here?
+    // should I just assert(false);
+    au_show_all_autopats_for_event_and_group(event, group);
+  } else {
+    FOR_AU_PATTERNS(pat, endpat, patlen, is_buflocal, buflocal_nr, {
+      // Find AutoPat entries with this pattern.  When adding a command it
+      // always goes at or after the last one, so start at the end.
+      if (last_autopat[(int)event] != NULL) {
+        prev_ap = &last_autopat[(int)event];
+      } else {
+        prev_ap = &first_autopat[(int)event];
+      }
+
+      while ((ap = *prev_ap) != NULL) {
+        ILOG("Looking for AP");
+        if (ap->pat != NULL) {
+          // Accept a pattern when:
+          // - a group was specified and it's that group, or a group was
+          //   not specified and it's the current group, or a group was
+          //   not specified and we are listing
+          // - the length of the pattern matches
+          // - the pattern matches.
+          // For <buffer[=X]>, this condition works because we normalize
+          // all buffer-local patterns.
+          if ((ap->group == findgroup) && ap->patlen == patlen
+              && STRNCMP(pat, ap->pat, patlen) == 0) {
+            // Add autocmd to this autopat, if it's the last one.
+            if (ap->next == NULL) {
+              break;
+            }
+          }
+        }
+        prev_ap = &ap->next;
+      }
+
       // If the pattern we want to add a command to does appear at the
       // end of the list (or not is not in the list at all), add the
       // pattern at the end of the list.
@@ -951,17 +1054,94 @@ static int do_autocmd_event(event_T event,
         prev_ac = &ac->next;
       }
       ac = xmalloc(sizeof(AutoCmd));
-      ac->cmd = vim_strsave(cmd);
+
+      // Shortly, you will be deleted.
+
+      ac->command.type = command.type;
+      if (command.type == COMMAND_EX) {
+        ac->cmd = vim_strsave((char_u *)command.callable.c_cmd);
+        ac->command.callable.c_cmd = vim_strsave(command.callable.c_cmd);
+      } else {
+        assert(false);
+      }
+
       ac->script_ctx = current_sctx;
       ac->script_ctx.sc_lnum += sourcing_lnum;
       ac->next = NULL;
       *prev_ac = ac;
       ac->once = once;
       ac->nested = nested;
-    }
+    });
   }
 
   au_cleanup();  // may really delete removed patterns/commands now
+  return OK;
+}
+
+/// TODO: TJ make sure this makes sense
+void au_remove_matching_aupats(
+    int group,
+    event_T event,
+    char_u *pat,
+    int patlen
+)
+{
+  FOR_ALL_AUPATS_IN_EVENT(event, ap) {
+    ILOG(">> CHECKING PATS: %s", pat);
+    if (*pat != NUL) {
+      if (ap->pat == NULL
+          || ap->patlen != patlen
+          || STRNCMP(pat, ap->pat, patlen) != 0) {
+        continue;
+      }
+    }
+
+    if (ap->group != group) {
+      continue;
+    }
+
+    ILOG(">> REMOVIN PATS %s", pat);
+    au_remove_pat(ap);
+  }
+}
+
+int autocmd_delete_event(
+    int group,
+    event_T event,
+    char_u *pat
+)
+{
+  int patlen = 0;
+  char_u *endpat = NULL;
+
+  bool _buflocal;
+  int _bufnr;
+
+  bool match_all_patterns = *pat == NUL;
+
+  // TODO(tjdevries): Think about this a bit more
+  if (match_all_patterns
+      && group == AUGROUP_ALL
+      && event == NUM_EVENTS) {
+    ILOG("ALL APTS");
+    return OK;
+  }
+
+  int findgroup = group == AUGROUP_ALL ? current_augroup : group;
+
+  // Show or delete all patterns for an event.
+  if (match_all_patterns) {
+    ILOG("Removing all patts");
+    au_remove_matching_aupats(findgroup, event, pat, 0);
+  } else {
+    FOR_AU_PATTERNS(pat, endpat, patlen, _buflocal, _bufnr, {
+      ILOG("Removing pat: %s // %s // %d", pat, endpat, patlen);
+      au_remove_matching_aupats(findgroup, event, pat, patlen);
+    });
+  }
+
+  au_cleanup();  // may really delete removed patterns/commands now
+
   return OK;
 }
 
@@ -1376,13 +1556,13 @@ bool trigger_cursorhold(void) FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 /// @param eap Ex command arguments
 ///
 /// @return true if some commands were executed.
-static bool apply_autocmds_group(event_T event,
-                                 char_u *fname,
-                                 char_u *fname_io,
-                                 bool force,
-                                 int group,
-                                 buf_T *buf,
-                                 exarg_T *eap)
+bool apply_autocmds_group(event_T event,
+                          char_u *fname,
+                          char_u *fname_io,
+                          bool force,
+                          int group,
+                          buf_T *buf,
+                          exarg_T *eap)
 {
   char_u *sfname = NULL;  // short file name
   char_u *tail;
@@ -1628,14 +1808,36 @@ static bool apply_autocmds_group(event_T event,
     }
 
     // Execute the autocmd. The `getnextac` callback handles iteration.
-    do_cmdline(NULL, getnextac, (void *)&patcmd,
-               DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
+    // do_cmdline(NULL, getnextac, (void *)&patcmd,
+    //            DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT);
+
+    // if (nesting == 1) {
+    //   // restore cursor and topline, unless they were changed
+    //   reset_lnums();
+    // }
+
+    // Option 1: "Simplest" option
+    //      OK, let's reverse the order...
+    //      Call get_next_autocmd -> returns command, viml func or lua func
+    //          If command, then run `do_cmdline`
+    //          else ...
+    //      Then finish.
+    //
+    //      Problem: We do all the setup of `do_cmdline` EVERY TIME...
+    //          viml is already slow :'(
+    //
+    // Option 2:
+    //  setup correct context
+    //  iterate over the autocmds
+    //      execute()
+    //      if once, then delete this command
+    //  teardown the context
+    autocmd_execute_for_matching_pat(&patcmd);
 
     if (nesting == 1) {
       // restore cursor and topline, unless they were changed
       reset_lnums();
     }
-
 
     if (eap != NULL) {
       (void)set_cmdarg(NULL, save_cmdarg);
@@ -1717,6 +1919,18 @@ BYPASS_AU:
   }
 
   return retval;
+}
+
+
+void autocmd_execute_for_matching_pat(AutoPatCmd *patcmd)
+{
+  int flags = DOCMD_NOWAIT | DOCMD_VERBOSE | DOCMD_REPEAT;
+
+  // WITH_CMDLINE_EXECUTION(do_cmdline(NULL, getnextac, (void *)patcmd, flags));
+  // prep_command(...)
+  // execute_cmdline_stuff();
+  do_cmdline(NULL, getnextac, (void *)patcmd, flags);
+  // post_command(...)
 }
 
 // Block triggering autocommands until unblock_autocmd() is called.
@@ -1862,11 +2076,15 @@ char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
     msg_puts("\n");  // don't overwrite this either
     verbose_leave_scroll();
   }
-  retval = vim_strsave(ac->cmd);
+
+  // TODO(remove_cmd): This will still be changed later to something else
+  // retval = vim_strsave(ac->cmd);
+  retval = vim_strsave(ac->command.callable.c_cmd);
   // Remove one-shot ("once") autocmd in anticipation of its execution.
   if (ac->once) {
-    au_del_cmd(ac);
+    autocmd_command_free(ac, false);
   }
+
   autocmd_nested = ac->nested;
   current_sctx = ac->script_ctx;
   if (ac->last) {
@@ -2116,4 +2334,162 @@ bool au_exists(const char *const arg) FUNC_ATTR_WARN_UNUSED_RESULT
 theend:
   xfree(arg_save);
   return retval;
+}
+
+static bool is_autocmd_removed(AutoCmd *ac)
+{
+  return ac->cmd == NULL;
+
+  AutocmdCommand command = ac->command;
+
+  switch (command.type) {
+    case COMMAND_EX:
+      return command.callable.c_cmd == NULL;
+    case COMMAND_VIML_FUNC:
+      ILOG("NOT IMPLEMENTED");
+      return autocmd_command_is_new(command);
+    case COMMAND_LUA:
+      return command.callable.c_lua == LUA_NOREF;
+    default:
+      return false;
+  }
+}
+
+static bool autocmd_command_is_new(AutocmdCommand command)
+{
+  switch (command.type) {
+    case COMMAND_EX:
+      return *command.callable.c_cmd != NUL;
+    case COMMAND_VIML_FUNC:
+      ILOG("NOT IMPLEMENTED");
+      return false;
+    case COMMAND_LUA:
+      return command.callable.c_lua != LUA_NOREF;
+  }
+
+  return false;
+}
+
+
+static void autocmd_command_msg_out(AutoCmd *ac)
+{
+  msg_outtrans((char_u *)ac->cmd);
+  return;
+
+  AutocmdCommand command = ac->command;
+
+  switch (command.type) {
+    case COMMAND_EX:
+      msg_outtrans((char_u *)command.callable.c_cmd);
+      break;
+    case COMMAND_VIML_FUNC:
+      ILOG("NOT IMPLEMENTED");
+      break;
+    case COMMAND_LUA:
+      msg_outtrans((char_u *)"<lua function>");
+      break;
+  }
+}
+
+/// Free an autocmd.
+/// @param ac The autocmd
+/// @param free_ac Whether to free all the memory or just the contents
+static void autocmd_command_free(AutoCmd *ac, bool free_ac)
+{
+  au_need_clean = true;
+
+  // TODO(remove_cmd): remove this
+  XFREE_CLEAR(ac->cmd);
+
+  AutocmdCommand command = ac->command;
+  switch (command.type) {
+    case COMMAND_EX:
+      XFREE_CLEAR(command.callable.c_cmd);
+      break;
+    case COMMAND_VIML_FUNC:
+      ILOG("NOT IMPLEMENTED");
+      break;
+    case COMMAND_LUA:
+      // api_free_luacallable(command.callable.c_lua);
+      break;
+  }
+
+  if (free_ac) {
+    XFREE_CLEAR(ac);
+  }
+}
+
+AutoPat *au_get_autopat_for_event(event_T event)
+{
+  return first_autopat[(int)event];
+}
+
+static char_u *advance_endpat_past_braces(char_u *endpat)
+{
+  int brace_level = 0;
+  for (; *endpat && (*endpat != ',' || brace_level || endpat[-1] == '\\');
+       (endpat)++) {
+    if (*endpat == '{') {
+      brace_level++;
+    } else if (*endpat == '}') {
+      brace_level--;
+    }
+  }
+
+  return endpat;
+}
+
+bool aupat_is_buflocal(char_u *pat, int patlen)
+{
+  return patlen >= 8
+    && STRNCMP(pat, "<buffer", 7) == 0
+    && (pat)[patlen - 1] == '>';
+}
+
+int aupat_get_buflocal_nr(char_u *pat, int patlen)
+{
+  assert(aupat_is_buflocal(pat, patlen));
+
+  if (patlen == 8) {
+    // "<buffer>"
+    return curbuf->b_fnum;
+  } else if (patlen > 9 && (pat)[7] == '=') {
+    if (patlen == 13 && STRNICMP(pat, "<buffer=abuf>", 13) == 0) {
+      // "<buffer=abuf>"
+      return autocmd_bufnr;
+    } else if (skipdigits(pat + 8) == pat + patlen - 1) {
+      // "<buffer=123>"
+      return atoi((char *)pat + 8);
+    }
+  }
+
+  return 0;
+}
+
+void aupat_normalize_buflocal_pat(
+    char_u *dest,
+    char_u *pat,
+    int patlen,
+    int buflocal_nr)
+{
+  assert(aupat_is_buflocal(pat, patlen));
+
+  if (buflocal_nr == 0) {
+    buflocal_nr = curbuf->handle;
+  }
+
+  // normalize pat into standard "<buffer>#N" form
+  snprintf(
+      (char *)dest,
+      BUFLOCAL_PAT_LEN,
+      "<buffer=%d>",
+      buflocal_nr);
+}
+
+AutocmdCommand autocmd_command_create_ex_command(char_u *cmd)
+{
+  return (AutocmdCommand){
+    .type = COMMAND_EX,
+    .callable = { .c_cmd = cmd },
+  };
 }

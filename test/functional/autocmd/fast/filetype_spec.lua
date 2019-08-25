@@ -1,0 +1,58 @@
+local helpers = require('test.functional.helpers')(after_each)
+
+local eval = helpers.eval
+local clear = helpers.clear
+local command = helpers.command
+
+describe('autocmd FileType', function()
+    before_each(clear)
+
+    describe(':help and Filetype', function()
+      it("is triggered by :help only once", function()
+          helpers.add_builddir_to_rtp()
+          command("let g:foo = 0")
+          command("autocmd FileType help let g:foo = g:foo + 1")
+          command("help help")
+          assert.same(1, eval('g:foo'))
+      end)
+
+      it("is triggered by :help only once, even with multiple patterns", function()
+          helpers.add_builddir_to_rtp()
+          command("let g:foo = 0")
+          command("autocmd FileType help,NotReal let g:foo = g:foo + 1")
+          command("help help")
+          assert.same(1, eval('g:foo'))
+      end)
+
+      it("is triggered by filetype once per autocmd", function()
+          command("let g:foo = 0")
+          command("autocmd FileType txt,lua let g:foo = g:foo + 1")
+          command("autocmd FileType python,txt let g:foo =  g:foo + 1")
+          command("set filetype=txt")
+          assert.same(2, eval('g:foo'))
+      end)
+
+      it("is triggered by :help only once after clearing with !", function()
+          helpers.add_builddir_to_rtp()
+          command("let g:foo = 0")
+          command("autocmd! FileType help let g:foo = g:foo + 1")
+          command("autocmd! FileType help let g:foo = g:foo + 1")
+          command("help help")
+          assert.same(1, eval('g:foo'))
+      end)
+    end)
+
+    it("is triggered only once and then clears once", function()
+        helpers.add_builddir_to_rtp()
+        command("let g:foo = 0")
+        command("autocmd FileType txt ++once :let g:foo = g:foo + 1")
+        command("set filetype=txt")
+        command("set filetype=lua")
+        command("set filetype=txt")
+        command("set filetype=lua")
+        command("set filetype=txt")
+        command("set filetype=lua")
+        command("set filetype=txt")
+        assert.same(1, eval('g:foo'))
+    end)
+end)

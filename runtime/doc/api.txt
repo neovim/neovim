@@ -2709,6 +2709,23 @@ nvim_tabpage_set_var({tabpage}, {name}, {value})
 
 
 ==============================================================================
+Autocmd Functions                                                *api-autocmd*
+
+nvim_autocmd_define({opts})                            *nvim_autocmd_define()*
+                Define an autocmd.
+
+                Parameters: ~
+                    {opts}  Dictionary Required keys: event: string |
+                            ArrayOf(string)
+
+nvim_autocmd_do({opts})                                    *nvim_autocmd_do()*
+                TODO: Documentation
+
+nvim_autocmd_group_define({name}, {opts})        *nvim_autocmd_group_define()*
+                TODO: Documentation
+
+
+==============================================================================
 UI Functions                                                          *api-ui*
 
 nvim_ui_attach({width}, {height}, {options})                *nvim_ui_attach()*
