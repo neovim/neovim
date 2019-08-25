@@ -1059,11 +1059,11 @@ fail:
 ///      - "SE" south-east
 ///   - `height`: window height (in character cells). Minimum of 1.
 ///   - `width`: window width (in character cells). Minimum of 1.
-///   - 'bufpos': position float relative text inside the window `win` (only
-///               when relative="win"). Takes a tuple of [line, column] where
-///               both are zero-index. Note: `row` and `col` if present, still
-///               applies relative this positio. By default `row=1` and `col=0`
-///               is used (with default NW anchor), to make the float
+///   - 'bufpos': position float relative text inside window `win` (only
+///               when relative="win"). Takes a tuple of zero-indexed
+///               [line, column]. Note: `row` and `col` if present, still
+///               applies relative this position. By default `row=1` and `col=0`
+///               are used (with default NW anchor), to make the float
 ///               behave like a tooltip under the buffer text.
 ///   - `row`: row position. Screen cell height are used as unit. Can be
 ///       floating point.

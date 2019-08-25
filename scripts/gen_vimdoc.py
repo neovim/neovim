@@ -113,7 +113,7 @@ param_exclude = (
 
 # Annotations are displayed as line items after API function descriptions.
 annotation_map = {
-    'FUNC_API_ASYNC': '{async}',
+    'FUNC_API_FAST': '{fast}',
 }
 
 
@@ -485,7 +485,7 @@ def parse_source_xml(filename, mode):
         # XXX: (doxygen 1.8.11) 'argsstring' only includes attributes of
         # non-void functions.  Special-case void functions here.
         if name == 'nvim_get_mode' and len(annotations) == 0:
-            annotations += 'FUNC_API_ASYNC'
+            annotations += 'FUNC_API_FAST'
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
 

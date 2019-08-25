@@ -110,10 +110,10 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 ///        `nvim_buf_lines_event`. Otherwise, the first notification will be
 ///        a `nvim_buf_changedtick_event`. Not used for lua callbacks.
 /// @param  opts  Optional parameters.
-///               `on_lines`:       lua callback received on change.
-///               `on_changedtick`: lua callback received on changedtick
+///             - `on_lines`:       lua callback received on change.
+///             - `on_changedtick`: lua callback received on changedtick
 ///                                 increment without text change.
-///               `utf_sizes`:      include UTF-32 and UTF-16 size of
+///             - `utf_sizes`:      include UTF-32 and UTF-16 size of
 ///                                 the replaced region.
 ///               See |api-buffer-updates-lua| for more information
 /// @param[out] err Error details, if any

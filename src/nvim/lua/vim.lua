@@ -215,9 +215,11 @@ paste = (function()
   end
 end)()
 
---- Defers the wrapped callback until the Nvim API is safe to call.
+--- Defers callback `cb` until the Nvim API is safe to call.
 ---
---@see |vim-loop-callbacks|
+---@see |lua-loop-callbacks|
+---@see |vim.schedule()|
+---@see |vim.in_fast_event()|
 local function schedule_wrap(cb)
   return (function (...)
     local args = {...}
