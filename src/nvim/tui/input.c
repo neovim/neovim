@@ -373,9 +373,9 @@ static bool handle_bracketed_paste(TermInput *input)
       tinput_flush(input, true);
       // Paste phase: "first-chunk".
       input->paste = 1;
-    } else {
+    } else if (input->paste != 0) {
       // Paste phase: "last-chunk".
-      input->paste = 3;
+      input->paste = input->paste == 2 ? 3 : -1;
       tinput_flush(input, true);
       // Paste phase: "disabled".
       input->paste = 0;

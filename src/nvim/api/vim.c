@@ -1212,7 +1212,7 @@ Dictionary nvim_get_namespaces(void)
 /// Sets redo/undo. Faster than |nvim_input()|.
 ///
 /// @param data  Multiline input. May be binary (containing NUL bytes).
-/// @param phase  Pass -1 to paste as one big buffer (i.e. without streaming).
+/// @param phase  -1: paste in a single call (i.e. without streaming).
 ///               To "stream" a paste, call `nvim_paste` sequentially with
 ///               these `phase` values:
 ///                 - 1: starts the paste (exactly once)
@@ -1227,8 +1227,13 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     api_set_error(err, kErrorTypeValidation, "Invalid phase: %"PRId64, phase);
     return false;
   }
+  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 1)) {
+    ResetRedobuff();
+    AppendCharToRedobuff('a');  // Dot-repeat.
+  }
+  Array lines = string_to_array(data);
   Array args = ARRAY_DICT_INIT;
-  ADD(args, ARRAY_OBJ(string_to_array(data)));
+  ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
   Object rv
     = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
@@ -1236,6 +1241,20 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
   // Abort paste if handler does not return true.
   bool ok = !ERROR_SET(err)
     && (rv.type == kObjectTypeBoolean && rv.data.boolean);
+  if (ok && !(State & CMDLINE)) {  // Dot-repeat.
+    for (size_t i = 0; i < lines.size; i++) {
+      String s = lines.items[i].data.string;
+      assert(data.size <= INT_MAX);
+      AppendToRedobuffLit((char_u *)s.data, (int)s.size);
+      // readfile()-style: "\n" is indicated by presence of N+1 item.
+      if (i + 1 < lines.size) {
+        AppendCharToRedobuff(NL);
+      }
+    }
+  }
+  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 3)) {
+    AppendCharToRedobuff(ESC);  // Dot-repeat.
+  }
   api_free_object(rv);
   api_free_array(args);
 

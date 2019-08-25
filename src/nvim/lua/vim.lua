@@ -93,35 +93,32 @@ local function _os_proc_children(ppid)
   return children
 end
 
--- Default paste function.
+-- Default nvim_paste() handler.
 local _paste = (function()
-  local tdots = 0
-  local tredraw = 0
-  local tick = 0
+  local tdots, tredraw, tick, got_line1 = 0, 0, 0, false
   return function(lines, phase)
     local call = vim.api.nvim_call_function
     local now = vim.loop.now()
     local mode = call('mode', {}):sub(1,1)
-    if phase == 1 then
-      tdots = now
-      tredraw = now
-      tick = 0
-      -- TODO
-      -- if mode == 'i' or mode == 'R' then
-      --   nvim_cancel()
-      -- end
+    if phase < 2 then  -- Reset flags.
+      tdots, tredraw, tick, got_line1 = now, now, 0, false
     end
-    if mode == 'i' or mode == 'R' then
+    if mode == 'c' and not got_line1 then  -- cmdline-mode: paste only 1 line.
+      got_line1 = (#lines > 1)
+      vim.api.nvim_set_option('paste', true)  -- For nvim_input().
+      local line1, _ = string.gsub(lines[1], '[\r\n\012\027]', ' ')
+      vim.api.nvim_input(line1)  -- Scrub "\r".
+    elseif mode == 'i' or mode == 'R' then
       vim.api.nvim_put(lines, 'c', false, true)
     else
       vim.api.nvim_put(lines, 'c', true, true)
     end
-    if (now - tredraw >= 1000) or phase == 1 or phase == 3 then
+    if (now - tredraw >= 1000) or phase == -1 or phase > 2 then
       tredraw = now
       vim.api.nvim_command('redraw')
       vim.api.nvim_command('redrawstatus')
     end
-    if (now - tdots >= 100) then
+    if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)
       tdots = now
       tick = tick + 1
@@ -129,8 +126,9 @@ local _paste = (function()
       -- message when there are zero dots.
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
-    if phase == 3 then
+    if phase == -1 or phase == 3 then
       vim.api.nvim_command('echo ""')
+      vim.api.nvim_set_option('paste', false)
     end
     return true  -- Paste will not continue if not returning `true`.
   end

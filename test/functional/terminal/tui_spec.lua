@@ -49,6 +49,24 @@ describe('TUI', function()
     screen:detach()
   end)
 
+  -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
+  local function wait_for_mode(mode)
+    retry(nil, nil, function()
+      local _, m = child_session:request('nvim_get_mode')
+      eq(mode, m.mode)
+    end)
+  end
+
+  -- Assert buffer contents in the child Nvim.
+  local function expect_child_buf_lines(expected)
+    assert(type({}) == type(expected))
+    retry(nil, nil, function()
+      local _, buflines = child_session:request(
+        'nvim_buf_get_lines', 0, 0, -1, false)
+      eq(expected, buflines)
+    end)
+  end
+
   it('rapid resize #7572 #7628', function()
     -- Need buffer rows to provoke the behavior.
     feed_data(":edit test/functional/fixtures/bigfile.txt:")
@@ -136,7 +154,7 @@ describe('TUI', function()
     ]])
   end)
 
-  it('accepts ascii control sequences', function()
+  it('accepts ASCII control sequences', function()
     feed_data('i')
     feed_data('\022\007') -- ctrl+g
     feed_data('\022\022') -- ctrl+v
@@ -187,25 +205,142 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
+    -- Dot-repeat/redo.
+    feed_data('2.')
+    screen:expect([[
+      "pasted from terminapasted from terminalpasted fro|
+      m termina{1:l}l"                                      |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines({'"pasted from terminal"'})
+    feed_data('u')
+    expect_child_buf_lines({''})
+  end)
+
+  it('paste: normal-mode', function()
+    feed_data(':set ruler')
+    wait_for_mode('c')
+    feed_data('\n')
+    wait_for_mode('n')
+    local expected = {'line 1', '  line 2', 'ESC:\027 / CR: \013'}
+    local expected_attr = {
+      [3] = {bold = true},
+      [4] = {foreground = tonumber('0x00000c')},
+      [5] = {bold = true, reverse = true},
+      [11] = {foreground = tonumber('0x000051')},
+      [12] = {reverse = true, foreground = tonumber('0x000051')},
+    }
+    -- "bracketed paste"
+    feed_data('\027[200~'..table.concat(expected,'\n')..'\027[201~')
+    screen:expect{
+      grid=[[
+        line 1                                            |
+          line 2                                          |
+        ESC:{11:^[} / CR: {12:^}{11:M}                                   |
+        {4:~                                                 }|
+        {5:[No Name] [+]                   3,13-14        All}|
+                                                          |
+        {3:-- TERMINAL --}                                    |
+      ]],
+      attr_ids=expected_attr}
+    -- Dot-repeat/redo.
+    feed_data('.')
+    screen:expect{
+      grid=[[
+          line 2                                          |
+        ESC:{11:^[} / CR: {11:^M}line 1                             |
+          line 2                                          |
+        ESC:{11:^[} / CR: {12:^}{11:M}                                   |
+        {5:[No Name] [+]                   5,13-14        Bot}|
+                                                          |
+        {3:-- TERMINAL --}                                    |
+      ]],
+      attr_ids=expected_attr}
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines(expected)
+    feed_data('u')
+    expect_child_buf_lines({''})
+  end)
+
+  it('paste: cmdline-mode inserts 1 line', function()
+    feed_data('ifoo\n')   -- Insert some text (for dot-repeat later).
+    feed_data('\027:""')  -- Enter Cmdline-mode.
+    feed_data('\027[D')   -- <Left> to place cursor between quotes.
+    wait_for_mode('c')
+    -- "bracketed paste"
+    feed_data('\027[200~line 1\nline 2\n\027[201~')
+    screen:expect{grid=[[
+      foo                                               |
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+      :"line 1{1:"}                                         |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Dot-repeat/redo.
+    feed_data('\027\000')
+    wait_for_mode('n')
+    feed_data('.')
+    screen:expect{grid=[[
+      foo                                               |
+      foo                                               |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+
+  it('paste: cmdline-mode collects chunks of unfinished line', function()
+    local function expect_cmdline(expected)
+      retry(nil, nil, function()
+        local _, cmdline = child_session:request(
+          'nvim_call_function', 'getcmdline', {})
+        eq(expected, cmdline)
+      end)
+    end
+    feed_data('\027:""')  -- Enter Cmdline-mode.
+    feed_data('\027[D')   -- <Left> to place cursor between quotes.
+    wait_for_mode('c')
+    feed_data('\027[200~stuff 1 ')
+    expect_cmdline('"stuff 1 "')
+    -- Discards everything after the first line.
+    feed_data('more\nstuff 2\nstuff 3\n')
+    expect_cmdline('"stuff 1 more"')
+    feed_data('stuff 3')
+    expect_cmdline('"stuff 1 more"')
+    -- End the paste sequence.
+    feed_data('\027[201~')
+    feed_data(' typed')
+    expect_cmdline('"stuff 1 more typed"')
+  end)
+
+  -- TODO
+  it('paste: other modes', function()
+    -- Other modes act like CTRL-C + paste.
+  end)
+
+  it("paste: in 'nomodifiable' buffer", function()
   end)
 
   it('paste: exactly 64 bytes #10311', function()
     local expected = string.rep('z', 64)
     feed_data('i')
-    -- Wait for Insert-mode (avoid "typeahead race" #10826).
-    retry(nil, nil, function()
-      local _, m = child_session:request('nvim_get_mode')
-      eq('i', m.mode)
-    end)
+    wait_for_mode('i')
     -- "bracketed paste"
     feed_data('\027[200~'..expected..'\027[201~')
     feed_data(' end')
     expected = expected..' end'
-    retry(nil, nil, function()
-      local _, buflines = child_session:request(
-        'nvim_buf_get_lines', 0, 0, -1, false)
-      eq({expected}, buflines)
-    end)
+    expect_child_buf_lines({expected})
     screen:expect([[
       zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz|
       zzzzzzzzzzzzzz end{1: }                               |
@@ -218,24 +353,16 @@ describe('TUI', function()
   end)
 
   it('paste: big burst of input', function()
-    feed_data(':set ruler\013')
+    feed_data(':set ruler\n')
     local t = {}
     for i = 1, 3000 do
       t[i] = 'item ' .. tostring(i)
     end
     feed_data('i')
-    -- Wait for Insert-mode (avoid "typeahead race" #10826).
-    retry(nil, nil, function()
-      local _, m = child_session:request('nvim_get_mode')
-      eq('i', m.mode)
-    end)
+    wait_for_mode('i')
     -- "bracketed paste"
     feed_data('\027[200~'..table.concat(t, '\n')..'\027[201~')
-    retry(nil, nil, function()
-      local _, buflines = child_session:request(
-        'nvim_buf_get_lines', 0, 0, -1, false)
-      eq(t, buflines)
-    end)
+    expect_child_buf_lines(t)
     feed_data(' end')
     screen:expect([[
       item 2997                                         |
@@ -246,9 +373,22 @@ describe('TUI', function()
       {3:-- INSERT --}                                      |
       {3:-- TERMINAL --}                                    |
     ]])
+    feed_data('\027\000')  -- ESC: go to Normal mode.
+    wait_for_mode('n')
+    -- Dot-repeat/redo.
+    feed_data('.')
+    screen:expect([[
+      item 2997                                         |
+      item 2998                                         |
+      item 2999                                         |
+      item 3000 en{1:d}d                                    |
+      {5:[No Name] [+]                   5999,13        Bot}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]])
   end)
 
-  it('forwards spurious "start paste" sequence', function()
+  it('paste: forwards spurious "start paste" code', function()
     -- If multiple "start paste" sequences are sent without a corresponding
     -- "stop paste" sequence, only the first occurrence should be consumed.
 
@@ -280,7 +420,7 @@ describe('TUI', function()
     }}
   end)
 
-  it('ignores spurious "stop paste" sequence', function()
+  it('paste: ignores spurious "stop paste" code', function()
     -- If "stop paste" sequence is received without a preceding "start paste"
     -- sequence, it should be ignored.
     feed_data('i')
@@ -298,28 +438,7 @@ describe('TUI', function()
   end)
 
   -- TODO
-  it('paste: normal-mode', function()
-  end)
-
-  -- TODO
-  it('paste: command-mode inserts 1 line', function()
-  end)
-
-  -- TODO
-  it('paste: sets undo-point after consecutive pastes', function()
-  end)
-
-  it('paste: other modes', function()
-    -- Other modes act like CTRL-C + paste.
-  end)
-
-  -- TODO
-  it('paste: handles missing "stop paste" sequence', function()
-  end)
-
-  -- TODO: error when pasting into 'nomodifiable' buffer:
-  --      [error @ do_put:2656] 17043 - Failed to save undo information
-  it("handles 'nomodifiable' buffer gracefully", function()
+  it('paste: handles missing "stop paste" code', function()
   end)
 
   it('allows termguicolors to be set at runtime', function()
