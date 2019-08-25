@@ -228,6 +228,21 @@ local function schedule_wrap(cb)
   end)
 end
 
+-- Returns function definiton for use in context dictionary.
+-- Used by ctx_pack_func() in "nvim/context.c".
+--
+-- @param name Function name
+--
+-- @returns Function definition string
+local function _ctx_get_func_def(name)
+  name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
+  local def = vim.api.nvim_command_output('func '..name)
+    :gsub('^%s*function <lambda>', 'function <SNR>_lambda_')
+    :gsub('^%s*function', 'function!')
+    :gsub('\n[0-9]+', '\n')
+  return def
+end
+
 local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
@@ -261,6 +276,7 @@ local module = {
   paste = paste,
   schedule_wrap = schedule_wrap,
   fn=fn,
+  _ctx_get_func_def = _ctx_get_func_def,
 }
 
 setmetatable(module, {

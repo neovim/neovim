@@ -1488,7 +1488,7 @@ Object nvim_load_context(Dictionary dict, Error *err)
 
   ctx_from_dict(dict, &ctx, &_err);
   if (!ERROR_SET(&_err)) {
-    _err = ctx_restore(&ctx, kCtxAll);
+    ctx_restore(&ctx, kCtxAll, &_err);
   }
 
   if (ERROR_SET(&_err)) {
