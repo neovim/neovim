@@ -28,12 +28,12 @@ local error_level = Enum:new({
 local client = {}
 client.__index = client
 
-client.new = function(name, ft, cmd)
+client.new = function(name, filetype, cmd)
   log.info('Starting new client: ', name, cmd.execute_path, cmd.args)
 
   local self = setmetatable({
     name = name,
-    ft = ft,
+    filetype = filetype,
     cmd = cmd,
 
     -- State for handling messages
@@ -70,7 +70,7 @@ client.start = function(self)
   self.stderr = uv.new_pipe(false)
 
   local function on_exit()
-    log.info('filetype: '..self.ft..', exit: '..self.cmd)
+    log.info('filetype: '..self.filetype..', exit: '..self.cmd)
   end
 
   local stdio = { self.stdin, self.stdout, self.stderr }
@@ -357,11 +357,12 @@ client.on_message = function(self, body)
       log.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..util.tostring(data))
     end
 
+    -- If no callback is passed with request, use the registered callback.
     local result
     if cb then
       result = { cb(success, data) }
     else
-      result = { call_callbacks_for_method(method, success, data, nil) }
+      result = { call_callbacks_for_method(method, success, data, self.filetype) }
     end
 
     -- Clear the old callback

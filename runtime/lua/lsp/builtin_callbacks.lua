@@ -45,6 +45,8 @@ local BuiltinCallbacks = {}
 -- nvim/error_callback
 BuiltinCallbacks['nvim/error_callback'] = {
   callback = function(original, error_message)
+    log.debug('callback:nvim/error_callback', original, error_message)
+
     local message = ''
     if error_message.message ~= nil and type(error_message.message) == 'string' then
       message = error_message.message
@@ -65,6 +67,8 @@ BuiltinCallbacks['nvim/error_callback'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 BuiltinCallbacks['textDocument/publishDiagnostics']= {
   callback = function(self, data)
+    log.debug('callback:textDocument/publishDiagnostics', self, data)
+
     local diagnostic_list
     if self.options.use_quickfix then
       diagnostic_list = QuickFix:new('Language Server Diagnostics')
@@ -115,12 +119,27 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
+    log.debug('callback:textDocument/completion', data, self)
+
     if data == nil then
       print(self)
       return
     end
 
-    return handle_completion.getLabels(data)
+    local matches = handle_completion.getMatches(data).matches
+    local corsol = vim.api.nvim_call_function('col', { '.' })
+    local line_to_cursor = vim.api.nvim_call_function(
+      'strpart', {
+        vim.api.nvim_call_function(
+          'getline', { '.' }
+        ),
+        0,
+        corsol - 1,
+      }
+    )
+    local position = vim.api.nvim_call_function('matchstrpos', { line_to_cursor, '\\k\\+$' })
+
+    vim.api.nvim_call_function('complete', { corsol - (position[2] - position[3]), matches })
   end,
   options = {}
 }
@@ -129,6 +148,8 @@ BuiltinCallbacks['textDocument/completion'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
 BuiltinCallbacks['textDocument/references'] = {
   callback = function(self, data)
+    log.debug('callback:textDocument/references', data, self)
+
     local locations = data
     local loclist = {}
 
@@ -170,6 +191,8 @@ BuiltinCallbacks['textDocument/references'] = {
 -- textDocument/rename
 BuiltinCallbacks['textDocument/rename'] = {
   callback = function(self, data)
+    log.debug('callback:textDocument/rename', data, self)
+
     if data == nil then
       print(self)
       return nil
@@ -212,7 +235,6 @@ BuiltinCallbacks['textDocument/hover'] = {
           end
         end
 
-        log.debug('Hover: ', long_string)
       elseif type(data.contents) == 'table' then
         -- MarkupContent or { language: string; value: string }
 
@@ -285,6 +307,8 @@ BuiltinCallbacks['textDocument/definition'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
 BuiltinCallbacks['window/showMessage'] = {
   callback = function(self, data)
+    log.debug('callback:window/showMessage', data, self)
+
     if data == nil or type(data) ~= 'table' then
       print(self)
       return nil

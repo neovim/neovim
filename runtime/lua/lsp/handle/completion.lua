@@ -2,28 +2,20 @@ local CompletionItemKind = require('lsp.protocol').CompletionItemKind
 
 local completion = {}
 
-completion.isCompletionList = function(data)
-  if data.items ~= nil then
-    return true
-  else
-    return false
-  end
-end
-
-completion.getItems = function(data)
-  if completion.isCompletionList(data) then
-    return data.items
-  else
-    return data
-  end
-end
-
-completion.getLabels = function(data)
+--- Getting vim complete-items with incomplete flag.
+-- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
+-- @return { matches = complete-items table, incomplete = boolean  }
+completion.getMatches = function(data)
   local items = completion.getItems(data)
 
-  local result = {}
+  local result = { matches = {}, incomlete = false }
+
+  if completion.isCompletionList(data) then
+    result.incomplete = data.isIncomplete
+  end
+
   for _, completion_item in ipairs(items) do
-    table.insert(result, {
+    table.insert(result.matches, {
       word = completion_item.label,
       kind = completion.map_CompletionItemKind_to_vim(completion_item.kind),
       info = completion_item.detail,
@@ -34,6 +26,26 @@ completion.getLabels = function(data)
   return result
 end
 
+completion.isCompletionList = function(data)
+  if type(data) == 'table' then
+    if data.items then
+      return true
+    end
+  end
+  return false
+end
+
+-- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
+completion.getItems = function(data)
+  if completion.isCompletionList(data) then
+    return data.items
+  elseif data ~= nil then
+    return data
+  else
+    return {}
+  end
+end
 
 completion.map_CompletionItemKind_to_vim = function(item_kind)
   if CompletionItemKind[item_kind - 1] then

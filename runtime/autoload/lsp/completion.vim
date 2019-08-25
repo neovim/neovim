@@ -36,15 +36,9 @@ endfunction
 ""
 "
 function! lsp#completion#complete() abort
-  let line_to_cursor = strpart(getline('.'), 0, col('.') - 1)
-  let [string_result, start_position, end_position] = matchstrpos(line_to_cursor, '\k\+$')
-  let params = luaeval("vim.lsp.structures.CompletionParams()")
-
-  let results = lsp#request('textDocument/completion', params)
-
-  if !(results is v:null)
-    call complete(col('.') - (end_position - start_position), results)
-  endif
-
+  call lsp#request_async(
+        \ 'textDocument/completion',
+        \ luaeval("vim.lsp.structures.CompletionParams()")
+        \ )
   return ''
 endfunction

@@ -266,6 +266,7 @@ To configure completion for a language server, add the following in your
 init.vim:
 
 >
+  call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/completion')")
   augroup MyLanguageServer
     au!
     autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#completion#complete()<CR>

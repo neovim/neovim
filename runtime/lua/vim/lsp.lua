@@ -4,6 +4,7 @@ local lsp = {
   server_config = require('lsp.server_config'),
   config = require('lsp.config'),
   structures = require('lsp.structures'),
+  builtin_callbacks = require('lsp.builtin_callbacks'),
   checks = require('lsp.checks'),
   util = require('lsp.util'),
 }

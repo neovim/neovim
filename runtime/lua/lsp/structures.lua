@@ -132,7 +132,7 @@ structures.InitializeParams = function(client)
     processId = vim.api.nvim_call_function('getpid', {}),
 
     -- TODO(tjdevries): Give the user a way to specify this by filetype
-    rootUri = server_config.get_callback(client.ft, 'root_uri')(),
+    rootUri = server_config.get_callback(client.filetype, 'root_uri')(),
 
     capabilities = {
       textDocument = {
