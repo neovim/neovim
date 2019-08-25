@@ -8080,7 +8080,8 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  Error err = ctx_restore(NULL, kCtxAll);
+  Error err = ERROR_INIT;
+  ctx_restore(NULL, kCtxAll, &err);
   if (ERROR_SET(&err)) {
     EMSG2("Context: %s", err.msg);
     api_clear_error(&err);
@@ -21199,7 +21200,7 @@ void ex_function(exarg_T *eap)
             continue;
           }
           if (!func_name_refcount(fp->uf_name)) {
-            list_func_head(fp, false, false);
+            list_func_head(fp, false);
           }
         }
       }
@@ -21230,7 +21231,7 @@ void ex_function(exarg_T *eap)
             fp = HI2UF(hi);
             if (!isdigit(*fp->uf_name)
                 && vim_regexec(&regmatch, fp->uf_name, 0))
-              list_func_head(fp, false, false);
+              list_func_head(fp, false);
           }
         }
         vim_regfree(regmatch.regprog);
@@ -21297,20 +21298,18 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !got_int) {
       fp = find_func(name);
       if (fp != NULL) {
-        list_func_head(fp, !eap->forceit, eap->forceit);
+        list_func_head(fp, true);
         for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
           if (FUNCLINE(fp, j) == NULL) {
             continue;
           }
           msg_putchar('\n');
-          if (!eap->forceit) {
-            msg_outnum((long)j + 1);
-            if (j < 9) {
-              msg_putchar(' ');
-            }
-            if (j < 99) {
-              msg_putchar(' ');
-            }
+          msg_outnum((long)j + 1);
+          if (j < 9) {
+            msg_putchar(' ');
+          }
+          if (j < 99) {
+            msg_putchar(' ');
           }
           msg_prt_line(FUNCLINE(fp, j), false);
           ui_flush();                  // show a line at a time
@@ -21318,7 +21317,7 @@ void ex_function(exarg_T *eap)
         }
         if (!got_int) {
           msg_putchar('\n');
-          msg_puts(eap->forceit ? "endfunction" : "   endfunction");
+          msg_puts("   endfunction");
         }
       } else
         emsg_funcname(N_("E123: Undefined function: %s"), name);
@@ -22017,13 +22016,12 @@ static inline bool eval_fname_sid(const char *const name)
 ///
 /// @param[in]  fp      Function pointer.
 /// @param[in]  indent  Indent line.
-/// @param[in]  force   Include bang "!" (i.e.: "function!").
-static void list_func_head(ufunc_T *fp, int indent, bool force)
+static void list_func_head(ufunc_T *fp, int indent)
 {
   msg_start();
   if (indent)
     MSG_PUTS("   ");
-  MSG_PUTS(force ? "function! " : "function ");
+  MSG_PUTS("function ");
   if (fp->uf_name[0] == K_SPECIAL) {
     MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);

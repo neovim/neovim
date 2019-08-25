@@ -1000,6 +1000,25 @@ describe('API', function()
       matches(err, pcall_err(
         eval, [=[nvim_load_context({'funcs': [['1', '2']]})]=]))
       matches(err, pcall_err(eval, [=[nvim_load_context({'funcs': [1]})]=]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'definition': ''}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'definition': 0}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'sid': 0}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'sid': ''}]})]]))
+      local cmd = ([=[
+      call nvim_load_context({'funcs': [{
+        'sid': 0,
+        'definition': "
+          function! s:script_func() \n
+            return '' \n
+          endfunction \n
+        "
+      }]})
+      ]=]):gsub('\n', '')
+      matches('Using <SID> not in a script context', pcall_err(command, cmd))
       matches(err, pcall_err(eval, [[nvim_load_context({'regs': 1})]]))
       matches(err, pcall_err(eval, [[nvim_load_context({'foo': []})]]))
     end)
