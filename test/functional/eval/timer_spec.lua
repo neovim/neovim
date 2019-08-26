@@ -203,17 +203,14 @@ describe('timers', function()
     screen:attach()
     screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     source([[
-      let g:val = -1
+      let g:val = 0
       func! MyHandler(timer)
-        if g:val >= 0
-          let g:val = 1
-          echo "evil"
-          call timer_stop(a:timer)
-        endif
+        echo "evil"
+        let g:val = 1
       endfunc
     ]])
-    command("call timer_start(10,  'MyHandler', {'repeat': -1})")
-    feed(":let g:val = 1<cr>:good")
+    command("call timer_start(100,  'MyHandler', {'repeat': 1})")
+    feed(":good")
     screen:expect([[
                                               |
       {0:~                                       }|
