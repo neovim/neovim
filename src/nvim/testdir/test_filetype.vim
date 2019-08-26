@@ -221,7 +221,8 @@ let s:filename_checks = {
     \ 'jam': ['file.jpl', 'file.jpr'],
     \ 'java': ['file.java', 'file.jav'],
     \ 'javacc': ['file.jj', 'file.jjt'],
-    \ 'javascript': ['file.js', 'file.javascript', 'file.es', 'file.jsx', 'file.mjs'],
+    \ 'javascript': ['file.js', 'file.javascript', 'file.es', 'file.mjs'],
+    \ 'javascriptreact': ['file.jsx'],
     \ 'jess': ['file.clp'],
     \ 'jgraph': ['file.jgr'],
     \ 'jovial': ['file.jov', 'file.j73', 'file.jovial'],
@@ -454,6 +455,7 @@ let s:filename_checks = {
     \ 'tssop': ['file.tssop'],
     \ 'twig': ['file.twig'],
     \ 'typescript': ['file.ts'],
+    \ 'typescriptreact': ['file.tsx'],
     \ 'uc': ['file.uc'],
     \ 'udevconf': ['/etc/udev/udev.conf'],
     \ 'udevperm': ['/etc/udev/permissions.d/file.permissions'],
@@ -608,5 +610,5 @@ endfunc
 
 func Test_setfiletype_completion()
   call feedkeys(":setfiletype java\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"setfiletype java javacc javascript', @:)
+  call assert_equal('"setfiletype java javacc javascript javascriptreact', @:)
 endfunc
