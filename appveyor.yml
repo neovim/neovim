@@ -6,6 +6,7 @@ environment:
   # Silence/redirect errors due to missing locking support (via libgcov).
   GCOV_ERROR_FILE: "$(TEMP)/libgcov-errors.log"
   TEST_FILE: "test/functional/core/job_spec.lua"
+  BUSTED_ARGS: --repeat=200 --no-keep-going
 image: Visual Studio 2017
 configuration:
 - MINGW_64-gcov
