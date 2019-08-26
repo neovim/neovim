@@ -8321,7 +8321,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_NUMBER) {
     index = argvars[0].vval.v_number;
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as an argument");
+    EMSG2(_(e_invarg2), "index");
     return;
   }
 
@@ -8344,7 +8344,7 @@ static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Error err = ERROR_INIT;
   ctx_restore(NULL, &err);
   if (ERROR_SET(&err)) {
-    EMSG2("Context: %s", err.msg);
+    EMSG(err.msg);
     api_clear_error(&err);
   }
 }
@@ -8362,7 +8362,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     });
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a List as an argument");
+    EMSG2(_(e_invarg2), "types");
     return;
   }
   ctx_save(NULL, types);
@@ -8372,7 +8372,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG2(_(e_invarg2), "expected dictionary as first argument");
+    EMSG2(_(e_invarg2), "context");
     return;
   }
 
@@ -8380,7 +8380,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[1].v_type == VAR_NUMBER) {
     index = argvars[1].vval.v_number;
   } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as second argument");
+    EMSG2(_(e_invarg2), "index");
     return;
   }
 
