@@ -51,7 +51,7 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    feed_command("!"..nvim_dir.."/shell-test REP_NODELAY 30001 foo")
+    child_session.feed_data(":!"..nvim_dir.."/shell-test REP_NODELAY 30001 "..string.rep("0123456789", 10).."\n")
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
@@ -60,10 +60,10 @@ describe("shell command :!", function()
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
     screen:expect([[
-      29997: foo                                        |
-      29998: foo                                        |
-      29999: foo                                        |
-      30000: foo                                        |
+      3456789                                           |
+      30000: 0123456789012345678901234567890123456789012|
+      34567890123456789012345678901234567890123456789012|
+      3456789                                           |
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
