@@ -178,6 +178,12 @@ describe('startup defaults', function()
     eq({ f }, eval('v:oldfiles'))
     os.remove('Xtest-foo')
     rmdir('Xtest-userdata')
+
+    -- Handles viminfo/viminfofile as alias for shada/shadafile.
+    eq('\n  shadafile=', eval('execute("set shadafile?")'))
+    eq('\n  shadafile=', eval('execute("set viminfofile?")'))
+    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set shada?")'))
+    eq("\n  shada=!,'100,<50,s10,h", eval('execute("set viminfo?")'))
   end)
 
   it("'packpath'", function()

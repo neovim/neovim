@@ -4643,6 +4643,15 @@ int findoption_len(const char *const arg, const size_t len)
   }
   if (s == NULL) {
     opt_idx = -1;
+  } else {
+    // Nvim: handle option aliases.
+    if (STRNCMP(options[opt_idx].fullname, "viminfo", 7) == 0) {
+      if (STRLEN(options[opt_idx].fullname) == 7) {
+        return findoption_len("shada", 5);
+      }
+      assert(STRCMP(options[opt_idx].fullname, "viminfofile") == 0);
+      return findoption_len("shadafile", 9);
+    }
   }
   return opt_idx;
 }

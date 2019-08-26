@@ -2659,21 +2659,14 @@ return {
       defaults={if_true={vi="folds,options,cursor,curdir"}}
     },
     {
+      -- Alias for "shada".
       full_name='viminfo', abbreviation='vi',
-      type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
-      secure=true,
-      varname='p_shada',
-      defaults={if_true={vi="", vim="!,'100,<50,s10,h"}}
+      type='string', scope={'global'}, nodefault=true,
     },
     {
+      -- Alias for "shadafile".
       full_name='viminfofile', abbreviation='vif',
-      type='string', list='onecomma', scope={'global'},
-      deny_duplicates=true,
-      vi_def=true,
-      secure=true,
-      varname='p_shadafile',
-      defaults={if_true={vi=""}}
+      type='string', scope={'global'}, nodefault=true,
     },
     {
       full_name='virtualedit', abbreviation='ve',
