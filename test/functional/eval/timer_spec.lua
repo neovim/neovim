@@ -203,14 +203,17 @@ describe('timers', function()
     screen:attach()
     screen:set_default_attr_ids( {[0] = {bold=true, foreground=255}} )
     source([[
-      let g:val = 0
+      let g:val = -1
       func! MyHandler(timer)
-        echo "evil"
-        let g:val = 1
+        if g:val >= 0
+          let g:val = 1
+          echo "evil"
+          call timer_stop(a:timer)
+        endif
       endfunc
     ]])
-    command("call timer_start(10,  'MyHandler', {'repeat': 1})")
-    feed(":good")
+    command("call timer_start(10,  'MyHandler', {'repeat': -1})")
+    feed(":let g:val = 1<cr>:good")
     screen:expect([[
                                               |
       {0:~                                       }|
@@ -220,12 +223,6 @@ describe('timers', function()
       :good^                                   |
     ]])
 
-    -- Wait for timer to have finished / echoed.
-    retry(nil, nil, function()
-      eq(1, eval('g:val'))
-    end)
-
-    -- "evil" was not printed.
     screen:expect{grid=[[
                                               |
       {0:~                                       }|
@@ -233,7 +230,8 @@ describe('timers', function()
       {0:~                                       }|
       {0:~                                       }|
       :good^                                   |
-    ]], intermediate=true}
-  end)
+    ]], intermediate=true, timeout=100}
 
+    eq(1, eval('g:val'))
+  end)
 end)
