@@ -11,9 +11,6 @@ if(WIN32)
       -DTARGET=unibilium
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    PATCH_COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/unibilium init
-      COMMAND ${GIT_EXECUTABLE} -C ${DEPS_BUILD_DIR}/src/unibilium apply --ignore-whitespace
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/unibilium-Relax-checks-for-extended-capability-to-support-new-.patch
     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_CURRENT_SOURCE_DIR}/cmake/UnibiliumCMakeLists.txt
       ${DEPS_BUILD_DIR}/src/unibilium/CMakeLists.txt
@@ -41,8 +38,6 @@ else()
       -DTARGET=unibilium
       -DUSE_EXISTING_SRC_DIR=${USE_EXISTING_SRC_DIR}
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    PATCH_COMMAND patch -d ${DEPS_BUILD_DIR}/src/unibilium -Np1 --input
-      ${CMAKE_CURRENT_SOURCE_DIR}/patches/unibilium-Relax-checks-for-extended-capability-to-support-new-.patch
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
