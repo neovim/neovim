@@ -405,8 +405,11 @@ static bool out_data_decide_throttle(size_t size)
     return false;
   } else if (!visit) {
     started = os_hrtime();
-  } else if (visit % 20 == 0) {
+  } else {
     uint64_t since = os_hrtime() - started;
+    if (since < (visit * 0.1L * NS_1_SECOND)) {
+      return true;
+    }
     if (since > (3 * NS_1_SECOND)) {
       received = visit = 0;
       return false;
@@ -415,12 +418,10 @@ static bool out_data_decide_throttle(size_t size)
 
   visit++;
   // Pulse "..." at the bottom of the screen.
-  size_t tick = (visit % 20 == 0)
-                ? 3  // Force all dots "..." on last visit.
-                : (visit % 4);
-  pulse_msg[0] = (tick == 0) ? ' ' : '.';
-  pulse_msg[1] = (tick == 0 || 1 == tick) ? ' ' : '.';
-  pulse_msg[2] = (tick == 0 || 1 == tick || 2 == tick) ? ' ' : '.';
+  size_t tick = visit % 4;
+  pulse_msg[0] = (tick > 0) ? '.' : ' ';
+  pulse_msg[1] = (tick > 1) ? '.' : ' ';
+  pulse_msg[2] = (tick > 2) ? '.' : ' ';
   if (visit == 1) {
     msg_putchar('\n');
   }
