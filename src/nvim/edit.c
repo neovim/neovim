@@ -3331,7 +3331,7 @@ static void ins_compl_addfrommatch(void)
   int len = (int)curwin->w_cursor.col - (int)compl_col;
   int c;
   compl_T     *cp;
-
+  assert(compl_shown_match != NULL);
   p = compl_shown_match->cp_str;
   if ((int)STRLEN(p) <= len) {   /* the match is too short */
     /* When still at the original match use the first entry that matches
