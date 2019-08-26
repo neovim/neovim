@@ -10,6 +10,7 @@ local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
+local retry = helpers.retry
 
 describe("shell command :!", function()
   local screen
@@ -54,7 +55,7 @@ describe("shell command :!", function()
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
-    screen:expect{any="\n%.", timeout=20000}
+    retry(nil, 20000, function() screen:expect{any="\n%."} end)
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
