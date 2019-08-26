@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 main() {(
   local separator="================================================================================"
@@ -16,13 +16,15 @@ main() {(
   export NVIM_TEST_ARGC=$#
   local arg
   local i=0
+  # shellcheck disable=SC2034  # (unused "arg", used in "eval").
   for arg ; do
     eval "export NVIM_TEST_ARG$i=\"\$arg\""
     i=$(( i+1 ))
   done
 
   export CI_DIR="$root/ci"
-  export BUILD_DIR="$(dirname "$nvim_prg")/.."
+  BUILD_DIR="$(dirname "$nvim_prg")/.."
+  export BUILD_DIR
   export FAILED=0
 
   . "$CI_DIR/common/suite.sh"
@@ -38,22 +40,26 @@ main() {(
   then
     fail "$test_name" F "Nvim exited with non-zero code"
   fi
-  echo "Stdout of :terminal runner" >> "$tlog"
-  echo "$separator" >> "$tlog"
-  cat "out-$tlog" >> "$tlog"
-  echo "$separator" >> "$tlog"
-  echo "Stderr of :terminal runner" >> "$tlog"
-  echo "$separator" >> "$tlog"
-  cat "err-$tlog" >> "$tlog"
-  echo "$separator" >> "$tlog"
+  {
+    echo "Stdout of :terminal runner"
+    echo "$separator"
+    cat "out-$tlog"
+    echo "$separator"
+    echo "Stderr of :terminal runner"
+    echo "$separator"
+    cat "err-$tlog"
+    echo "$separator"
+  } >> "$tlog"
   if test "$oldesttest" = 1 ; then
     if ! diff -q test.out "$test_name.ok" > /dev/null 2>&1 ; then
       if test -f test.out ; then
         fail "$test_name" F "Oldest test .out file differs from .ok file"
-        echo "Diff between test.out and $test_name.ok" >> "$tlog"
-        echo "$separator" >> "$tlog"
-        diff -a test.out "$test_name.ok" >> "$tlog"
-        echo "$separator" >> "$tlog"
+        {
+          echo "Diff between test.out and $test_name.ok"
+          echo "$separator"
+          diff -a test.out "$test_name.ok"
+          echo "$separator"
+        } >> "$tlog"
       else
         echo "No output in test.out" >> "$tlog"
       fi
