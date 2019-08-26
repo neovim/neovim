@@ -20,8 +20,6 @@ local NIL = helpers.NIL
 describe('context functions', function()
   local fname1 = 'Xtest-functional-eval-ctx1'
   local fname2 = 'Xtest-functional-eval-ctx2'
-  local outofbounds =
-    'Vim:E475: Invalid value for argument index: out of bounds'
 
   before_each(function()
     clear()
@@ -34,7 +32,17 @@ describe('context functions', function()
     os.remove(fname2)
   end)
 
+  it('frees context stack on exit', function()
+    call('ctxpush')
+    call('ctxpush')
+    eq(2, eval('ctxsize()'))
+  end)
+
   describe('ctxpush/ctxpop', function()
+    it('errors out on invalid arguments', function()
+      matches('Invalid argument', pcall_err(call, 'ctxpush', 1))
+    end)
+
     it('saves and restores registers properly', function()
       local regs = {'1', '2', '3', 'a'}
       local vals = {'1', '2', '3', 'hjkl'}
@@ -449,7 +457,7 @@ describe('context functions', function()
     end)
 
     it('errors out when context stack is empty', function()
-      local err = 'Vim:Context: Context stack is empty'
+      local err = 'Vim:Context stack is empty'
       eq(err, pcall_err(call, 'ctxpop'))
       eq(err, pcall_err(call, 'ctxpop'))
       call('ctxpush')
@@ -462,7 +470,7 @@ describe('context functions', function()
     it('errors out on malformed context dictionary', function()
       call('ctxpush')
       call('ctxset', {vars = {{'1', '2'}}})
-      matches('Context: Vim:E461: Illegal variable name: 1',
+      matches('Vim:E461: Illegal variable name: 1',
          pcall_err(call, 'ctxpop'))
     end)
   end)
@@ -486,12 +494,14 @@ describe('context functions', function()
   end)
 
   describe('ctxget()', function()
-    it('errors out when index is out of bounds', function()
-      eq(outofbounds, pcall_err(call, 'ctxget'))
+    it('errors out on invalid arguments', function()
+      matches('Invalid argument', pcall_err(call, 'ctxget', ''))
+      matches('out of bounds', pcall_err(call, 'ctxget'))
+      matches('out of bounds', pcall_err(call, 'ctxget'))
       call('ctxpush')
-      eq(outofbounds, pcall_err(call, 'ctxget', 1))
+      matches('out of bounds', pcall_err(call, 'ctxget', 1))
       call('ctxpop')
-      eq(outofbounds, pcall_err(call, 'ctxget', 0))
+      matches('out of bounds', pcall_err(call, 'ctxget', 0))
     end)
 
     it('returns context dictionary at index in context stack', function()
@@ -595,12 +605,14 @@ describe('context functions', function()
   end)
 
   describe('ctxset()', function()
-    it('errors out when index is out of bounds', function()
-      eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}))
+    it('errors out on invalid arguments', function()
+      matches('Invalid argument', pcall_err(call, 'ctxset', 1))
+      matches('Invalid argument', pcall_err(call, 'ctxset', {}, ''))
+      matches('out of bounds', pcall_err(call, 'ctxset', {dummy = 1}))
       call('ctxpush')
-      eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 1))
+      matches('out of bounds', pcall_err(call, 'ctxset', {dummy = 1}, 1))
       call('ctxpop')
-      eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 0))
+      matches('out of bounds', pcall_err(call, 'ctxset', {dummy = 1}, 0))
     end)
 
     it('errors out on malformed context dictionary', function()
