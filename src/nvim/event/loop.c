@@ -162,6 +162,10 @@ size_t loop_size(Loop *loop)
   return rv;
 }
 
+void loop_dummy_event(void **argv)
+{
+}
+
 static void async_cb(uv_async_t *handle)
 {
   Loop *l = handle->loop->data;

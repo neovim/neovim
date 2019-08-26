@@ -1252,11 +1252,15 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
       }
     }
   }
+  api_free_object(rv);
+  api_free_array(args);
   if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 3)) {
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
-  api_free_object(rv);
-  api_free_array(args);
+  if (phase == -1 || phase == 3) {
+    // XXX: Tickle main loop to ensure cursor is updated.
+    loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
+  }
 
   return ok;
 }
