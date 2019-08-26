@@ -97,9 +97,7 @@ describe('python3 provider', function()
   end)
 
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
-    -- Add runtime from build dir for doc/tags (used with :help).
-    command(string.format([[set rtp+=%s/runtime]], helpers.test_build_dir))
-
+    helpers.add_builddir_to_rtp()
     source([=[
       python3 << EOF
       import vim
