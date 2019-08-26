@@ -12,7 +12,7 @@ Server Protocol specification. The documentation can be found here:
 
 
 ================================================================================
-                                                                  *lsp-server*
+                                                                  *lsp-server-config*
 
 Neovim only exposes a powerful API for the language server protocol. To get
 the real benefits of this API, a language server must be installed. Many
@@ -74,12 +74,12 @@ Requests
 To make a request to the language server client running in Nvim, the following
 API is defined:
 >
-    :call lsp#request(method, arguments, callback, bufnr, filetype)
-    :call lsp#request_async(method, arguments, callback, bufnr, filetype)
+    :lua vim.lsp.request(method, arguments, callback, bufnr, filetype)
+    :lua vim.lsp.request_async(method, arguments, callback, bufnr, filetype)
 <
 
-                                                                *lsp#request()*
-lsp#request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
+                                                                *vim.lsp.request()*
+vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
     Creates and sends a request to the server for [filetype]. Will fill in any
     missing required arguments as defined by the language server protocol. Will
     call the built-in callback for the request (if you set that and it exists), unless an
@@ -154,14 +154,14 @@ lsp#request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
             Configuration for the default server can be found at
             |lsp-configuration|.
 
-                                                          *lsp#request_async()*
-lsp#request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
+                                                          *vim.lsp.request_async()*
+vim.lsp.request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
     Creates and sends a request to the server for [filetype]. This request
     will not block and will call the desired [callback] upon completion.
 
     Returns the request ID.
 
-    See |lsp#request()| for more information.
+    See |vim.lsp.request()| for more information.
 
     Example:
 
@@ -211,7 +211,7 @@ your daily workflow.
     This is essentially "go-to definition". Since this is generally done
     through tags, the following mapping might be considered idiomatic.
 
-    nnoremap <buffer> <C-]> :call lsp#request_async('textDocument/definition')
+    nnoremap <buffer> <C-]> :lua vim.lsp.request_async('textDocument/definition')
 
 ================================================================================
                                                             *lsp-configuration*
@@ -289,13 +289,13 @@ the Neovim's built-in LSP callbacks to perform the hovering action.
 
 To do so, the following APIs are provided:
 
-    In Vim script, use:  >
-
-        call lsp#handle({request}, {data})
+    In Vim script, use:
+>
+        call luaeval("vim.lsp.handle({request}, {data})")
 <
 
-                                                                 *lsp#handle()*
-lsp#handle({request}, {data})
+                                                                 *vim.lsp.handle()*
+vim.lsp.handle({request}, {data})
     Used to provide API access to Neovim's language server protocol
     implementation.
 
@@ -308,7 +308,7 @@ lsp#handle({request}, {data})
     Example:~
 >
         " Display "Hello", "World" on two lines
-        call lsp#handle('textDocument/hover', {'content': ['Hello', 'World']})
+        call luaeval("vim.lsp.handle('textDocument/hover', {'content': ['Hello', 'World']})")
 <
 
  vim:tw=78:ts=8:ft=help:norl:

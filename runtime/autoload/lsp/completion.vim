@@ -16,10 +16,8 @@ function! lsp#completion#omni(findstart, base) abort
 
     return len(line_to_cursor) - length
   elseif a:findstart == 0
-    let params = luaeval("vim.lsp.structures.CompletionParams("
-                         \ . "{ position = { character = _A }})",
-                         \  col('.') + len(a:base))
-    let results = lsp#request('textDocument/completion', params)
+    let results = luaeval("vim.lsp.request('textDocument/completion',"
+          \ ."vim.lsp.structures.CompletionParams({col = _A })",  col('.') + len(a:base))
 
     if !(results is v:null)
       call filter(results, {_, match -> match['word'] =~ '^' . a:base})
@@ -34,9 +32,6 @@ endfunction
 
 " Completion with LSP
 function! lsp#completion#complete() abort
-  call lsp#request_async(
-        \ 'textDocument/completion',
-        \ luaeval("vim.lsp.structures.CompletionParams()")
-        \ )
+  call luaeval("vim.lsp.request_async('textDocument/completion', vim.lsp.structures.CompletionParams()")
   return ''
 endfunction
