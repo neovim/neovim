@@ -267,4 +267,46 @@ func Test_mksession_quote_in_filename()
   call delete('Xtest_mks_quoted.out')
 endfunc
 
+func s:ClearMappings()
+  mapclear
+  omapclear
+  mapclear!
+  lmapclear
+  tmapclear
+endfunc
+
+func Test_mkvimrc()
+  let entries = [
+        \ ['', 'nothing', '<Nop>'],
+        \ ['n', 'normal', 'NORMAL'],
+        \ ['v', 'visual', 'VISUAL'],
+        \ ['s', 'select', 'SELECT'],
+        \ ['x', 'visualonly', 'VISUALONLY'],
+        \ ['o', 'operator', 'OPERATOR'],
+        \ ['i', 'insert', 'INSERT'],
+        \ ['l', 'lang', 'LANG'],
+        \ ['c', 'command', 'COMMAND'],
+        \ ['t', 'terminal', 'TERMINAL'],
+        \ ]
+  for entry in entries
+    exe entry[0] .. 'map ' .. entry[1] .. ' ' .. entry[2]
+  endfor
+
+  mkvimrc Xtestvimrc
+
+  call s:ClearMappings()
+  for entry in entries
+    call assert_equal('', maparg(entry[1], entry[0]))
+  endfor
+
+  source Xtestvimrc
+
+  for entry in entries
+    call assert_equal(entry[2], maparg(entry[1], entry[0]))
+  endfor
+
+  call s:ClearMappings()
+  call delete('Xtestvimrc')
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
