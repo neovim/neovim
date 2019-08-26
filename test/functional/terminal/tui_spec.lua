@@ -324,6 +324,57 @@ describe('TUI', function()
     expect_cmdline('"stuff 1 more typed"')
   end)
 
+  it('paste: recovers from vim.paste() failure', function()
+    child_session:request('nvim_execute_lua', [[
+      _G.save_paste_fn = vim._paste
+      vim._paste = function(lines, phase) error("fake fail") end
+    ]], {})
+    -- Start pasting...
+    feed_data('\027[200~line 1\nline 2\n')
+    screen:expect{grid=[[
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:                                                  }|
+      {8:paste: Error executing lua: [string "<nvim>"]:2: f}|
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Remaining chunks are discarded after vim.paste() failure.
+    feed_data('line 3\nline 4\n')
+    feed_data('line 5\nline 6\n')
+    feed_data('line 7\nline 8\n')
+    -- Stop paste.
+    feed_data('\027[201~')
+    feed_data('\n')  -- <Enter>
+    -- Editor should still work after failed/drained paste.
+    feed_data('ityped input...\027\000')
+    screen:expect{grid=[[
+      typed input..{1:.}                                    |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Paste works if vim.paste() succeeds.
+    child_session:request('nvim_execute_lua', [[
+      vim._paste = _G.save_paste_fn
+    ]], {})
+    feed_data('\027[200~line A\nline B\n\027[201~')
+    feed_data('\n')  -- <Enter>
+    screen:expect{grid=[[
+      typed input...line A                              |
+      line B                                            |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+
   -- TODO
   it('paste: other modes', function()
     -- Other modes act like CTRL-C + paste.

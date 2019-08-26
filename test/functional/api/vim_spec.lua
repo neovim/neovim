@@ -395,6 +395,11 @@ describe('API', function()
       eq({0,3,6,0}, funcs.getpos('.'))
       eq(false, nvim('get_option', 'paste'))
     end)
+    it('vim.paste() failure', function()
+      nvim('execute_lua', 'vim._paste = (function(lines, phase) error("fake fail") end)', {})
+      expect_err([[Error executing lua: %[string "%<nvim>"]:1: fake fail]],
+        request, 'nvim_paste', 'line 1\nline 2\nline 3', 1)
+    end)
   end)
 
   describe('nvim_put', function()
@@ -454,6 +459,25 @@ describe('API', function()
         line 2B]])
       eq({0,1,2,0}, funcs.getpos('.'))
       eq('', nvim('eval', 'v:errmsg'))
+    end)
+
+    it('detects charwise/linewise text (empty {type})', function()
+      -- linewise (final item is empty string)
+      nvim('put', {'line 1','line 2','line 3',''}, '', true, true)
+      expect([[
+
+        line 1
+        line 2
+        line 3]])
+      eq({0,4,1,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- charwise (final item is non-empty)
+      nvim('put', {'line 1','line 2','line 3'}, '', true, true)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      eq({0,3,6,0}, funcs.getpos('.'))
     end)
   end)
 

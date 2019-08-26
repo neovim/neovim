@@ -1206,7 +1206,7 @@ Dictionary nvim_get_namespaces(void)
   return retval;
 }
 
-/// Paste
+/// Pastes at cursor, in any mode.
 ///
 /// Invokes the `vim.paste` handler, which handles each mode appropriately.
 /// Sets redo/undo. Faster than |nvim_input()|.
@@ -1219,29 +1219,44 @@ Dictionary nvim_get_namespaces(void)
 ///                 - 2: continues the paste (zero or more times)
 ///                 - 3: ends the paste (exactly once)
 /// @param[out] err Error details, if any
-/// @return true if paste should continue, false if paste was canceled
+/// @return
+///     - true: Client may continue pasting.
+///     - false: Client must cancel the paste.
 Boolean nvim_paste(String data, Integer phase, Error *err)
   FUNC_API_SINCE(6)
 {
+  static bool draining = false;
+  bool cancel = false;
+
   if (phase < -1 || phase > 3) {
     api_set_error(err, kErrorTypeValidation, "Invalid phase: %"PRId64, phase);
     return false;
+  }
+  Array args = ARRAY_DICT_INIT;
+  Object rv = OBJECT_INIT;
+  if (phase == -1 || phase == 1) {  // Start of paste-stream.
+    draining = false;
+  } else if (draining) {
+    // Skip remaining chunks.  Report error only once per "stream".
+    goto theend;
+  }
+  Array lines = string_to_array(data);
+  ADD(args, ARRAY_OBJ(lines));
+  ADD(args, INTEGER_OBJ(phase));
+  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"), args,
+                        err);
+  if (ERROR_SET(err)) {
+    draining = true;
+    goto theend;
   }
   if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 1)) {
     ResetRedobuff();
     AppendCharToRedobuff('a');  // Dot-repeat.
   }
-  Array lines = string_to_array(data);
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, ARRAY_OBJ(lines));
-  ADD(args, INTEGER_OBJ(phase));
-  Object rv
-    = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"),
-                       args, err);
-  // Abort paste if handler does not return true.
-  bool ok = !ERROR_SET(err)
-    && (rv.type == kObjectTypeBoolean && rv.data.boolean);
-  if (ok && !(State & CMDLINE)) {  // Dot-repeat.
+  // vim.paste() decides if client should cancel.  Errors do NOT cancel: we
+  // want to drain remaining chunks (rather than divert them to main input).
+  cancel = (rv.type != kObjectTypeBoolean || !rv.data.boolean);
+  if (!cancel && !(State & CMDLINE)) {  // Dot-repeat.
     for (size_t i = 0; i < lines.size; i++) {
       String s = lines.items[i].data.string;
       assert(data.size <= INT_MAX);
@@ -1252,20 +1267,21 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
       }
     }
   }
-  api_free_object(rv);
-  api_free_array(args);
   if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 3)) {
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
-  if (phase == -1 || phase == 3) {
+theend:
+  api_free_object(rv);
+  api_free_array(args);
+  if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
     // XXX: Tickle main loop to ensure cursor is updated.
     loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
   }
 
-  return ok;
+  return !cancel;
 }
 
-/// Puts text at cursor.
+/// Puts text at cursor, in any mode.
 ///
 /// Compare |:put| and |p| which are always linewise.
 ///

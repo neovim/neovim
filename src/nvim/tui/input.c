@@ -107,13 +107,12 @@ static void tinput_wait_enqueue(void **argv)
     const String keys = { .data = buf, .size = len };
     if (input->paste) {
       Error err = ERROR_INIT;
-      Boolean rv = nvim_paste(keys, input->paste, &err);
-      // Paste phase: "continue" (unless handler failed).
-      input->paste = rv && !ERROR_SET(&err) ? 2 : 0;
+      // Paste phase: "continue" (unless handler canceled).
+      input->paste = !nvim_paste(keys, input->paste, &err)
+        ? 0 : (1 == input->paste ? 2 : input->paste);
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
       if (ERROR_SET(&err)) {
-        msg_putchar('\n');
         // TODO(justinmk): emsgf() does not display, why?
         msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, "paste: %s", err.msg);
         api_clear_error(&err);
@@ -373,7 +372,7 @@ static bool handle_bracketed_paste(TermInput *input)
       tinput_flush(input, true);
       // Paste phase: "first-chunk".
       input->paste = 1;
-    } else if (input->paste != 0) {
+    } else if (input->paste) {
       // Paste phase: "last-chunk".
       input->paste = input->paste == 2 ? 3 : -1;
       tinput_flush(input, true);
