@@ -74,12 +74,12 @@ Requests
 To make a request to the language server client running in Nvim, the following
 API is defined:
 >
-    :call lsp#request(method, arguments, callback, filetype)
-    :call lsp#request_async(method, arguments, callback, filetype)
+    :call lsp#request(method, arguments, callback, bufnr, filetype)
+    :call lsp#request_async(method, arguments, callback, bufnr, filetype)
 <
 
                                                                 *lsp#request()*
-lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
+lsp#request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
     Creates and sends a request to the server for [filetype]. Will fill in any
     missing required arguments as defined by the language server protocol. Will
     call the built-in callback for the request (if you set that and it exists), unless an
@@ -145,6 +145,9 @@ lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
 
                     `vim.api.nvim_call_function('func_name', { success, data })`
 
+            [bufnr]: The number of the buffer.
+            This is used for used as an application destination for processing.
+
             [filetype]: The filetype associated with the server.
             This will default to the current |filetype| if nothing is passed.
 
@@ -152,7 +155,7 @@ lsp#request({method} [, {arguments} [, {callback} [, {filetype}]]])
             |lsp-configuration|.
 
                                                           *lsp#request_async()*
-lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
+lsp#request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]]])
     Creates and sends a request to the server for [filetype]. This request
     will not block and will call the desired [callback] upon completion.
 
@@ -165,8 +168,7 @@ lsp#request_async({method} [, {arguments} [, {callback} [, {filetype}]]])
 autocmd CursorHold *
     \ :lua vim.lsp.request_async(
     \     'textDocument/hover',
-    \     vim.lsp.util.get_text_document_params(),
-    \     vim.lsp.util.get_filetype()
+    \     vim.lsp.util.get_text_document_params()
     \ )
 
 ================================================================================

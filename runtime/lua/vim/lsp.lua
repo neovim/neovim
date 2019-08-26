@@ -69,13 +69,13 @@ lsp.stop_client = function(filetype)
 end
 
 --- Send a request to a server and return the response
--- @param method (string): Name of the request method
+-- @param method [string]: Name of the request method
 -- @param arguments [string]: Arguments to send to the server
--- @param cb [function|string]: Either a function to call or a string to call in vim
--- @param filetype [string]: The filetype associated with the server
---
+-- @param cb [function|string] (optional): Either a function to call or a string to call in vim
+-- @param bufnr [number] (optional): The number of the buffer
+-- @param filetype [string] (optional): The filetype associated with the server
 -- @returns: The result of the request
-lsp.request = function(method, arguments, filetype, cb, bufnr)
+lsp.request = function(method, arguments, cb, bufnr, filetype)
   filetype = filetype or util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
@@ -92,7 +92,13 @@ lsp.request = function(method, arguments, filetype, cb, bufnr)
 end
 
 --- Send a request to a server, but don't wait for the response
-lsp.request_async = function(method, arguments, filetype, cb, bufnr)
+-- @param method [string]: Name of the request method
+-- @param arguments [string]: Arguments to send to the server
+-- @param cb [function|string] (optional): Either a function to call or a string to call in vim
+-- @param bufnr [number] (optional): The number of the buffer
+-- @param filetype [string] (optional): The filetype associated with the server
+-- @returns: The result of the request
+lsp.request_async = function(method, arguments, cb, bufnr, filetype)
   filetype = filetype or util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return
@@ -109,7 +115,12 @@ lsp.request_async = function(method, arguments, filetype, cb, bufnr)
 end
 
 --- Send a notification to a server
-lsp.notify = function(method, arguments, filetype, bufnr)
+-- @param method [string]: Name of the request method
+-- @param arguments [string]: Arguments to send to the server
+-- @param bufnr [number] (optional): The number of the buffer
+-- @param filetype [string] (optional): The filetype associated with the server
+-- @returns: The result of the request
+lsp.notify = function(method, arguments, bufnr, filetype)
   filetype = filetype or util.get_filetype(bufnr)
   if filetype == nil or filetype == '' then
     return

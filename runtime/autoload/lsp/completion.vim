@@ -1,6 +1,5 @@
 let s:last_location = -1
 
-""
 " Omni completion with LSP
 function! lsp#completion#omni(findstart, base) abort
   " If we haven't started, then don't return anything useful
@@ -33,8 +32,7 @@ function! lsp#completion#omni(findstart, base) abort
 
 endfunction
 
-""
-"
+" Completion with LSP
 function! lsp#completion#complete() abort
   call lsp#request_async(
         \ 'textDocument/completion',
