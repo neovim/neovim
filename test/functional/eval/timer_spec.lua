@@ -243,7 +243,7 @@ describe('timers', function()
       {0:~                                       }|
       {0:~                                       }|
       :good^                                   |
-    ]], intermediate=true, timeout=1000}
+    ]], intermediate=true, timeout=load_adjust(200)}
 
     eq(1, eval('g:val'))
   end)
