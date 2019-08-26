@@ -46,7 +46,7 @@ env:
     - CCACHE_BASEDIR="$TRAVIS_BUILD_DIR"
     # Default since 3.3, but Travis (Xenial) has 3.2.4; required with newer gcc/clang.
     - CCACHE_CPP2=1
-    - TEST_FILTER=test/functional/ui/wildmode_spec.lua
+    - TEST_FILE=test/functional/ui/wildmode_spec.lua
     - BUSTED_ARGS="--repeat=200 --no-keep-going"
 
 anchors:
