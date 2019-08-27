@@ -31,6 +31,7 @@
 #include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
+#include "nvim/ui.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 #define log_client_msg(...)
@@ -219,6 +220,10 @@ static void receive_msgpack(Stream *stream, RBuffer *rbuf, size_t c,
     snprintf(buf, sizeof(buf), "ch %" PRIu64 " was closed by the client",
              channel->id);
     call_set_error(channel, buf, WARN_LOG_LEVEL);
+    if (TUI_process) {
+      // Stopping client TUI
+      ui_call_stop();
+    }
     goto end;
   }
 

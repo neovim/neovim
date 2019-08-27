@@ -42,11 +42,18 @@ int libuv_process_spawn(LibuvProcess *uvproc)
   uvproc->uvopts.exit_cb = exit_cb;
   uvproc->uvopts.cwd = proc->cwd;
   uvproc->uvopts.env = NULL;  // Inherits the parent (nvim) env.
+
   uvproc->uvopts.stdio = uvproc->uvstdio;
   uvproc->uvopts.stdio_count = 3;
   uvproc->uvstdio[0].flags = UV_IGNORE;
   uvproc->uvstdio[1].flags = UV_IGNORE;
   uvproc->uvstdio[2].flags = UV_IGNORE;
+
+  if (TUI_process && !is_remote_client && !stdin_isatty) {
+    uvproc->uvopts.stdio_count = 4;
+    uvproc->uvstdio[3].data.fd = 0;
+    uvproc->uvstdio[3].flags = UV_INHERIT_FD;
+  }
   uvproc->uv.data = proc;
 
   if (!proc->in.closed) {

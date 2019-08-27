@@ -63,7 +63,7 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
   int status;
   switch (proc->type) {
     case kProcessTypeUv:
-      status = libuv_process_spawn((LibuvProcess *)proc);
+      status = libuv_process_spawn((LibuvProcess *)proc);      
       break;
     case kProcessTypePty:
       status = pty_process_spawn((PtyProcess *)proc);
@@ -393,6 +393,10 @@ static void on_process_exit(Process *proc)
   ILOG("exited: pid=%d status=%d stoptime=%" PRIu64, proc->pid, proc->status,
        proc->stopped_time);
 
+  if (TUI_process && !is_remote_client) {
+    // Set only in "builtin" TUI
+    server_process_exit_status = proc->status;
+  }
   // Process has terminated, but there could still be data to be read from the
   // OS. We are still in the libuv loop, so we cannot call code that polls for
   // more data directly. Instead delay the reading after the libuv loop by

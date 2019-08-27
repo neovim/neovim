@@ -19,6 +19,9 @@
 #include "nvim/highlight.h"
 #include "nvim/screen.h"
 #include "nvim/window.h"
+#include "nvim/ui_client.h"
+#include "nvim/option.h"
+#include "nvim/aucmd.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/ui.c.generated.h"
@@ -181,6 +184,19 @@ void ui_attach(uint64_t channel_id, Integer width, Integer height,
   api_free_dictionary(opts);
 }
 
+/// Tells the nvim server if focus was gained by the GUI or not
+void nvim_ui_set_focus(uint64_t channel_id, Boolean gained, Error *error)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (!pmap_has(uint64_t)(connected_uis, channel_id)) {
+    api_set_error(error, kErrorTypeException,
+                  "UI not attached to channel: %" PRId64, channel_id);
+    return;
+  }
+
+  aucmd_schedule_focusgained((bool)gained);
+}
+
 /// Deactivates UI events on the channel.
 ///
 /// Removes the client from the list of UIs. |nvim_list_uis()|
@@ -231,7 +247,6 @@ void nvim_ui_set_option(uint64_t channel_id, String name,
     return;
   }
   UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
-
   ui_set_option(ui, false, name, value, error);
 }
 
@@ -258,6 +273,60 @@ static void ui_set_option(UI *ui, bool init, String name, Object value,
     if (!init && !ui->ui_ext[kUILinegrid]) {
       ui_refresh();
     }
+    return;
+  }
+  
+  if (strequal(name.data, "term_name")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_name must be a String");
+      return;
+    }
+    set_tty_option("term", xstrdup(value.data.string.data));
+    return;
+  }
+
+  if (strequal(name.data, "term_colors")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_colors must be a Integer");
+      return;
+    }
+    t_colors = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_background")) {
+    if (value.type != kObjectTypeString) {
+      api_set_error(error, kErrorTypeValidation, "term_background must be a String");
+      return;
+    }
+    if (option_was_set("bg")
+        || strequal((char *)p_bg, value.data.string.data)) {
+      // background is already set... ignore
+      return;
+    }
+    set_option_value("bg",
+                    0L,
+                    value.data.string.data,
+                    0);
+    reset_option_was_set("bg");
+    return;
+  }
+
+  if (strequal(name.data, "term_ttyin")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_ttyin must be a Integer");
+      return;
+    }
+    stdin_isatty = (int)value.data.integer;
+    return;
+  }
+
+  if (strequal(name.data, "term_ttyout")) {
+    if (value.type != kObjectTypeInteger) {
+      api_set_error(error, kErrorTypeValidation, "term_ttyout must be a Integer");
+      return;
+    }
+    stdout_isatty = (int)value.data.integer;
     return;
   }
 
@@ -699,4 +768,50 @@ static void remote_ui_inspect(UI *ui, Dictionary *info)
 {
   UIData *data = ui->data;
   PUT(*info, "chan", INTEGER_OBJ((Integer)data->channel_id));
+}
+
+/// Handler for "redraw" events sent by the NVIM server
+///
+/// This function will be called by handle_request (in msgpack_rpc/channle.c)
+/// The individual ui_events sent by the server are individually handled
+/// by their respective handlers defined in ui_events_redraw.generated.h
+///
+/// @note The "flush" event is called only once and only after handling all
+///       the other events
+/// @param channel_id: The id of the rpc channel
+/// @param uidata: The dense array containing the ui_events sent by the server
+/// @param[out] err Error details, if any
+void redraw(uint64_t channel_id, Array uidata, Error *error)
+FUNC_API_FAST
+{
+  for (size_t i = 0; i < uidata.size; i++) {
+    Array call = copy_array(uidata.items[i].data.array);
+    char *method_name = xstrdup(call.items[0].data.string.data);
+    size_t size = call.items[0].data.string.size;
+
+    ApiRedrawWrapper handler_method = get_redraw_event_handler(method_name,
+                                                               size,
+                                                               error);
+    if (ERROR_SET(error)) {
+      logmsg(ERROR_LOG_LEVEL, "RPC: ", NULL, -1, true,
+             "No redraw handler by name: %s", method_name);
+    } else {
+      for (size_t j = 1; j < call.size; j++) {
+        Array internal_call_args = call.items[j].data.array;
+        logmsg(DEBUG_LOG_LEVEL, "RPC: ", NULL, -1, true,
+               "Invoke redraw handler by name: %s", method_name);
+        handler_method(internal_call_args);
+      }
+    }
+    api_clear_error(error);
+    api_free_array(call);
+    xfree(method_name);
+  }
+}
+
+void *remote_ui_get(uint64_t channel_id)
+FUNC_API_NOEXPORT
+{
+  UI *ui = pmap_get(uint64_t)(connected_uis, channel_id);
+  return (void *)ui;
 }

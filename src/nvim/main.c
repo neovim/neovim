@@ -73,6 +73,8 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/ui_client.h"
+#include "nvim/tui/tui.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
@@ -114,6 +116,7 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
+  char *server_name;                    // --connect {address}
 } mparm_T;
 
 // Values for edit_type.
@@ -147,6 +150,9 @@ void event_init(void)
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
+  // early initialisation of redraw_handlers table
+  redraw_methods_table_init();
+  // Initialize input events
   input_init();
   signal_init();
   // finish mspgack-rpc initialization
@@ -275,7 +281,9 @@ int main(int argc, char **argv)
     }
   }
 
-  server_init(params.listen_addr);
+  if (!(is_remote_client || (!headless_mode && !embedded_mode && !silent_mode))) {
+    server_init(params.listen_addr);
+  }
 
   if (GARGCOUNT > 0) {
     fname = get_fname(&params, cwd);
@@ -348,6 +356,7 @@ int main(int argc, char **argv)
   // and prompts (--cmd, swapfile dialog, …).
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
+  TUI_process = is_remote_client || use_builtin_ui;
   if (use_remote_ui || use_builtin_ui) {
     TIME_MSG("waiting for UI to make request");
     if (use_remote_ui) {
@@ -361,6 +370,26 @@ int main(int argc, char **argv)
     starting = NO_BUFFERS;
     screenclear();
     TIME_MSG("initialized screen early for UI");
+  }
+
+  // Setting up the remote connection.
+  // This has to be always after ui_builtin_start or
+  // after the start of atleast one GUI
+  // as size of "uis[]" must be greater than 1
+  if (TUI_process) {
+    input_stop();  // Stop reading input, let the UI take over.
+    uint64_t rv = ui_client_start(params.server_name, params.argc, params.argv, 
+                                  (params.edit_type == EDIT_STDIN 
+                                  && !recoverymode));
+    if (!rv) {
+        // cannot continue without a channel
+        tui_exit_safe(ui_get_by_index(1));
+        logmsg(ERROR_LOG_LEVEL, "RPC: ", NULL, -1, true,
+             "Could not establish connection with address : %s", params.server_name);
+        mch_msg("Could not establish connection with remote server\n");
+        getout(1);
+    }
+    goto end;
   }
 
   // Execute --cmd arguments.
@@ -449,7 +478,7 @@ int main(int argc, char **argv)
   // writing end of the pipe doesn't like, e.g., in case stdin and stderr
   // are the same terminal: "cat | vim -".
   // Using autocommands here may cause trouble...
-  if (params.edit_type == EDIT_STDIN && !recoverymode) {
+  if ((params.edit_type == EDIT_STDIN || implicit_readstdin) && !recoverymode) {
     read_stdin();
   }
 
@@ -566,7 +595,12 @@ int main(int argc, char **argv)
   /*
    * Call the main command loop.  This never returns.
    */
-  normal_enter(false, false);
+  end:
+  if (TUI_process) {
+    tui_execute();
+  } else {
+    normal_enter(false, false);
+  }
 
 #if defined(WIN32) && !defined(MAKE_LIB)
   xfree(argv);
@@ -826,6 +860,10 @@ static void command_line_scan(mparm_T *parmp)
             // Do nothing: file args are always literal. #7679
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0) {
             p_lpl = false;
+          } else if (STRNICMP(argv[0] + argv_idx, "connect", 7) == 0) {
+            want_argument = true;
+            argv_idx += 7;
+            is_remote_client = true;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = true;
             argv_idx += 3;
@@ -1082,6 +1120,9 @@ static void command_line_scan(mparm_T *parmp)
             } else if (strequal(argv[-1], "--listen")) {
               // "--listen {address}"
               parmp->listen_addr = argv[0];
+            } else if (strequal(argv[-1], "--connect")) {
+              // "--connect {address}"
+              parmp->server_name = argv[0];
             }
             // "--startuptime <file>" already handled
             break;
@@ -1228,6 +1269,11 @@ scripterror:
   // Handle "foo | nvim". EDIT_FILE may be overwritten now. #6299
   if (edit_stdin(had_stdin_file, parmp)) {
     parmp->edit_type = EDIT_STDIN;
+    if ((!headless_mode && !embedded_mode && !silent_mode)
+        && !is_remote_client) {
+      // must be set only in builtin TUI
+      implicit_readstdin = true;
+    }
   }
 
   TIME_MSG("parsing arguments");
@@ -1245,6 +1291,7 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
   paramp->listen_addr = NULL;
+  paramp->server_name = NULL;
 }
 
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
@@ -1963,6 +2010,7 @@ static void usage(void)
   mch_msg(_("  --embed               Use stdin/stdout as a msgpack-rpc channel\n"));
   mch_msg(_("  --headless            Don't start a user interface\n"));
   mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
+  mch_msg(_("  --connect <address>   Specify Nvim server to connect to\n"));
   mch_msg(_("  --noplugin            Don't load plugins\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));

@@ -8,10 +8,10 @@ local input = io.open(arg[2], 'rb')
 local proto_output = io.open(arg[3], 'wb')
 local call_output = io.open(arg[4], 'wb')
 local remote_output = io.open(arg[5], 'wb')
-local bridge_output = io.open(arg[6], 'wb')
-local metadata_output = io.open(arg[7], 'wb')
+local metadata_output = io.open(arg[6], 'wb')
+local redraw_output = io.open(arg[7], 'wb')
 
-local c_grammar = require('generators.c_grammar')
+c_grammar = require('generators.c_grammar')
 local events = c_grammar.grammar:match(input:read('*all'))
 
 local function write_signature(output, ev, prefix, notype)
@@ -50,6 +50,35 @@ local function write_arglist(output, ev, need_copy)
   end
 end
 
+function extract_and_write_arglist(output, ev)
+  local hlattrs_args_count = 0
+  for j = 1, #ev.parameters do
+    local param = ev.parameters[j]
+    local kind = param[1]
+    output:write('  '..kind..' arg_'..j..' = ')
+    if kind == 'HlAttrs' then
+      -- The first HlAttrs argument is rgb_attrs and second is cterm_attrs
+      output:write('dict2hlattrs(args.items['..(j-1)..'].data.dictionary, '..(hlattrs_args_count == 0 and 'true' or 'false')..');\n')
+      hlattrs_args_count = hlattrs_args_count + 1
+    elseif kind == 'Object' then
+      output:write('args.items['..(j-1)..'];\n')
+    else
+      output:write('args.items['..(j-1)..'].data.'..string.lower(kind)..';\n')
+    end
+  end
+end
+
+function call_ui_event_method(output, ev)
+  output:write('  ui_call_'..ev.name..'(')
+  for j = 1, #ev.parameters do
+    output:write('arg_'..j)
+    if j ~= #ev.parameters then
+      output:write(', ')
+    end
+  end
+  output:write(');\n')
+end
+
 for i = 1, #events do
   local ev = events[i]
   assert(ev.return_type == 'void')
@@ -72,62 +101,6 @@ for i = 1, #events do
       write_arglist(remote_output, ev, true)
       remote_output:write('  push_call(ui, "'..ev.name..'", args);\n')
       remote_output:write('}\n\n')
-    end
-
-    if not ev.bridge_impl and not ev.noexport then
-      local send, argv, recv, recv_argv, recv_cleanup = '', '', '', '', ''
-      local argc = 1
-      for j = 1, #ev.parameters do
-        local param = ev.parameters[j]
-        local copy = 'copy_'..param[2]
-        if param[1] == 'String' then
-          send = send..'  String copy_'..param[2]..' = copy_string('..param[2]..');\n'
-          argv = argv..', '..copy..'.data, INT2PTR('..copy..'.size)'
-          recv = (recv..'  String '..param[2]..
-                          ' = (String){.data = argv['..argc..'],'..
-                          '.size = (size_t)argv['..(argc+1)..']};\n')
-          recv_argv = recv_argv..', '..param[2]
-          recv_cleanup = recv_cleanup..'  api_free_string('..param[2]..');\n'
-          argc = argc+2
-        elseif param[1] == 'Array' then
-          send = send..'  Array '..copy..' = copy_array('..param[2]..');\n'
-          argv = argv..', '..copy..'.items, INT2PTR('..copy..'.size)'
-          recv = (recv..'  Array '..param[2]..
-                          ' = (Array){.items = argv['..argc..'],'..
-                          '.size = (size_t)argv['..(argc+1)..']};\n')
-          recv_argv = recv_argv..', '..param[2]
-          recv_cleanup = recv_cleanup..'  api_free_array('..param[2]..');\n'
-          argc = argc+2
-        elseif param[1] == 'Object' then
-          send = send..'  Object *'..copy..' = xmalloc(sizeof(Object));\n'
-          send = send..'  *'..copy..' = copy_object('..param[2]..');\n'
-          argv = argv..', '..copy
-          recv = recv..'  Object '..param[2]..' = *(Object *)argv['..argc..'];\n'
-          recv_argv = recv_argv..', '..param[2]
-          recv_cleanup = (recv_cleanup..'  api_free_object('..param[2]..');\n'..
-                          '  xfree(argv['..argc..']);\n')
-          argc = argc+1
-        elseif param[1] == 'Integer' or param[1] == 'Boolean' then
-          argv = argv..', INT2PTR('..param[2]..')'
-          recv_argv = recv_argv..', PTR2INT(argv['..argc..'])'
-          argc = argc+1
-        else
-          assert(false)
-        end
-      end
-      bridge_output:write('static void ui_bridge_'..ev.name..
-                          '_event(void **argv)\n{\n')
-      bridge_output:write('  UI *ui = UI(argv[0]);\n')
-      bridge_output:write(recv)
-      bridge_output:write('  ui->'..ev.name..'(ui'..recv_argv..');\n')
-      bridge_output:write(recv_cleanup)
-      bridge_output:write('}\n\n')
-
-      bridge_output:write('static void ui_bridge_'..ev.name)
-      write_signature(bridge_output, ev, 'UI *ui')
-      bridge_output:write('\n{\n')
-      bridge_output:write(send)
-      bridge_output:write('  UI_BRIDGE_CALL(ui, '..ev.name..', '..argc..', ui'..argv..');\n}\n\n')
     end
   end
 
@@ -160,12 +133,39 @@ for i = 1, #events do
     call_output:write(";\n")
     call_output:write("}\n\n")
   end
+
+  if (not ev.remote_only) and (not ev.noexport) and (not ev.client_impl) then
+    redraw_output:write('void ui_redraw_event_'..ev.name..'(Array args)\n{\n')
+    extract_and_write_arglist(redraw_output, ev)
+    call_ui_event_method(redraw_output, ev)
+    redraw_output:write('}\n\n')
+  end
 end
+
+-- Generate the map_init method for redraw handlers
+redraw_output:write([[
+void redraw_methods_table_init(void)
+{
+  redraw_methods = map_new(String, ApiRedrawWrapper)();
+
+]])
+
+for i = 1, #events do
+  local fn = events[i]
+  if (not fn.noexport) and ((not fn.remote_only) or fn.client_impl) then
+    redraw_output:write('  add_redraw_event_handler('..
+                '(String) {.data = "'..fn.name..'", '..
+                '.size = sizeof("'..fn.name..'") - 1}, '..
+                '(ApiRedrawWrapper) ui_redraw_event_'..fn.name..');\n')
+  end
+end
+
+redraw_output:write('\n}\n\n')
 
 proto_output:close()
 call_output:close()
 remote_output:close()
-bridge_output:close()
+redraw_output:close()
 
 -- don't expose internal attributes like "impl_name" in public metadata
 local exported_attributes = {'name', 'parameters',

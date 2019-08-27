@@ -1,7 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-// Terminal UI functions. Invoked (by ui_bridge.c) on the TUI thread.
+// Terminal UI functions. Invoked (by UI_CALL) on the UI process.
 
 #include <assert.h>
 #include <stdbool.h>
@@ -34,13 +34,15 @@
 #include "nvim/os/tty.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/ui_bridge.h"
 #include "nvim/ugrid.h"
 #include "nvim/tui/input.h"
 #include "nvim/tui/tui.h"
 #include "nvim/tui/terminfo.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/macros.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/eval.h"
+#include "nvim/memline.h"
 
 // Space reserved in two output buffers to make the cursor normal or invisible
 // when flushing. No existing terminal will require 32 bytes to do that.
@@ -69,7 +71,6 @@ typedef struct {
 } Rect;
 
 typedef struct {
-  UIBridgeData *bridge;
   Loop *loop;
   unibi_var_t params[9];
   char buf[OUTBUF_SIZE];
@@ -128,20 +129,88 @@ typedef struct {
     int set_underline_color;
   } unibi_ext;
   char *space_buf;
+  bool stopped;
 } TUIData;
 
 static bool volatile got_winch = false;
 static bool did_user_set_dimensions = false;
 static bool cursor_style_enabled = false;
-
+char *termname_local;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tui/tui.c.generated.h"
 #endif
 
+/*
+Connecting the remote server.
+*/
+uint64_t tui_ui_client_init(char *servername, int argc, char **argv, bool pass_stdin)
+{
+  uint64_t rc_id;
+  if (is_remote_client) {
+    CallbackReader on_data = CALLBACK_READER_INIT;
+    const char *error = NULL;
+    bool is_tcp = strrchr(servername, ':') ? true : false;
+    // connected to channel
+    rc_id = servername == NULL ? 0 : channel_connect(is_tcp,
+                      servername, true, on_data, 50, &error);
+  } else {
+    varnumber_T exit_status;
+    char **args = xmalloc(((size_t)(2 + argc)) * sizeof(char*));
+    int args_idx = 0;
+    args[args_idx++] = xstrdup((const char*)get_vim_var_str(VV_PROGPATH));
+    args[args_idx++] = xstrdup("--embed");
+    for (int i = 1; i < argc; i++) {
+      args[args_idx++] = xstrdup(argv[i]);
+    }
+    args[args_idx++] = NULL; // last value of argv should be NULL
+
+    Channel *channel = channel_job_start(args, CALLBACK_READER_INIT,
+                                  CALLBACK_READER_INIT, CALLBACK_NONE,
+                                  false, true, true, NULL, 0, 0, NULL,
+                                  &exit_status);
+    rc_id = channel->id;
+
+    if (pass_stdin && !stdin_isatty) {
+      Array arg = ARRAY_DICT_INIT;
+      arg = (Array)ARRAY_DICT_INIT;
+      ADD(arg, INTEGER_OBJ(3));
+      ADD(arg, BOOLEAN_OBJ(implicit_readstdin));
+      rpc_send_event(rc_id, "nvim_read_stdin", arg);
+      close(0);
+      dup(2);
+    }
+  }
+  
+  Array args = ARRAY_DICT_INIT;
+  UI *ui = ui_get_by_index(1);
+  int width = ui->width;
+  int height = ui->height;
+  Dictionary opts = ARRAY_DICT_INIT;
+
+  PUT(opts, "rgb", BOOLEAN_OBJ(true));
+  PUT(opts, "ext_linegrid",BOOLEAN_OBJ(true));
+  PUT(opts, "ext_termcolors", BOOLEAN_OBJ(true));
+  PUT(opts, "term_name", STRING_OBJ(cstr_as_string(termname_local)));
+  PUT(opts, "term_colors", INTEGER_OBJ(t_colors));
+  if (!is_remote_client) {
+    PUT(opts, "term_ttyin", INTEGER_OBJ(stdin_isatty));
+    PUT(opts, "term_ttyout", INTEGER_OBJ(stdout_isatty));
+  }
+
+  ADD(args, INTEGER_OBJ((int)width));
+  ADD(args, INTEGER_OBJ((int)height));
+  ADD(args, DICTIONARY_OBJ(opts));
+
+  // Telling to the server that you exist as a Client
+  rpc_send_event(rc_id, "nvim_ui_attach", args);
+  
+  connected_channel_id = rc_id;
+  return rc_id;
+}
 
 UI *tui_start(void)
 {
-  UI *ui = xcalloc(1, sizeof(UI));  // Freed by ui_bridge_stop().
+  UI *ui = xcalloc(1, sizeof(UI));  // Freed by tui_data_destroy().
   ui->stop = tui_stop;
   ui->grid_resize = tui_grid_resize;
   ui->grid_clear = tui_grid_clear;
@@ -168,8 +237,11 @@ UI *tui_start(void)
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
   ui->ui_ext[kUILinegrid] = true;
   ui->ui_ext[kUITermColors] = true;
+  
+  tui_main(ui);
+  ui_attach_impl(ui);
 
-  return ui_bridge_attach(ui, tui_main, tui_scheduler);
+  return ui;
 }
 
 static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
@@ -180,13 +252,6 @@ static size_t unibi_pre_fmt_str(TUIData *data, unsigned int unibi_index,
     return 0U;
   }
   return unibi_run(str, data->params, buf, len);
-}
-
-static void termname_set_event(void **argv)
-{
-  char *termname = argv[0];
-  set_tty_option("term", termname);
-  // Do not free termname, it is freed by set_tty_option.
 }
 
 static void terminfo_start(UI *ui)
@@ -230,19 +295,16 @@ static void terminfo_start(UI *ui)
 #endif
 
   // Set up unibilium/terminfo.
-  char *termname = NULL;
+  termname_local = NULL;
   if (term) {
     data->ut = unibi_from_term(term);
     if (data->ut) {
-      termname = xstrdup(term);
+      termname_local = xstrdup(term);
     }
   }
   if (!data->ut) {
-    data->ut = terminfo_from_builtin(term, &termname);
+    data->ut = terminfo_from_builtin(term, &termname_local);
   }
-  // Update 'term' option.
-  loop_schedule_deferred(&main_loop,
-                         event_create(termname_set_event, 1, termname));
 
   // None of the following work over SSH; see :help TERM .
   const char *colorterm = os_getenv("COLORTERM");
@@ -369,7 +431,7 @@ static void tui_terminal_stop(UI *ui)
   if (uv_is_closing(STRUCT_CAST(uv_handle_t, &data->output_handle))) {
     // Race between SIGCONT (tui.c) and SIGHUP (os/signal.c)? #8075
     ELOG("TUI already stopped (race?)");
-    ui->data = NULL;  // Flag UI as "stopped".
+    data->stopped = true; 
     return;
   }
   tinput_stop(&data->input);
@@ -381,25 +443,24 @@ static void tui_terminal_stop(UI *ui)
 static void tui_stop(UI *ui)
 {
   tui_terminal_stop(ui);
-  ui->data = NULL;  // Flag UI as "stopped".
+  TUIData *data = ui->data;
+  data->stopped = true;
 }
 
 /// Returns true if UI `ui` is stopped.
 static bool tui_is_stopped(UI *ui)
 {
-  return ui->data == NULL;
+  TUIData *data = ui->data;
+  return data->stopped;
 }
 
-/// Main function of the TUI thread.
-static void tui_main(UIBridgeData *bridge, UI *ui)
+// Main function for TUI
+static void tui_main(UI *ui)
 {
-  Loop tui_loop;
-  loop_init(&tui_loop, NULL);
   TUIData *data = xcalloc(1, sizeof(TUIData));
   ui->data = data;
-  data->bridge = bridge;
-  data->loop = &tui_loop;
-  data->is_starting = true;
+  data->stopped = false;
+  data->loop = &main_loop;
   kv_init(data->invalid_regions);
   signal_watcher_init(data->loop, &data->winch_handle, ui);
   signal_watcher_init(data->loop, &data->cont_handle, data);
@@ -413,52 +474,50 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18
   data->input.tk_ti_hook_fn = tui_tk_ti_getstr;
 #endif
-  tinput_init(&data->input, &tui_loop);
+  tinput_init(&data->input, &main_loop);
   tui_terminal_start(ui);
+  loop_schedule(&main_loop, event_create(show_termcap_event, 1, data->ut));
 
-  // Allow main thread to continue, we are ready to handle UI callbacks.
-  CONTINUE(bridge);
+}
 
-  loop_schedule_deferred(&main_loop,
-                         event_create(show_termcap_event, 1, data->ut));
+void tui_execute(void) {
+  UI *ui = ui_get_by_index(1);
+  LOOP_PROCESS_EVENTS(&main_loop, main_loop.events, -1);
+  tui_io_driven_loop(ui);
+  tui_exit_safe(ui);
+  getout(0);
+}
 
-  // "Active" loop: first ~100 ms of startup.
-  for (size_t ms = 0; ms < 100 && !tui_is_stopped(ui);) {
-    ms += (loop_poll_events(&tui_loop, 20) ? 20 : 1);
-  }
-  if (!tui_is_stopped(ui)) {
-    tui_terminal_after_startup(ui);
-    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
-    // terminal response may not get processed until user hits a key.
-    loop_schedule_deferred(&main_loop, event_create(tui_dummy_event, 0));
-  }
-  // "Passive" (I/O-driven) loop: TUI thread "main loop".
+// Doesn't return until the TUI is closed (by call of tui_stop())
+static void tui_io_driven_loop(UI *ui){
+  // "Passive" (I/O-driven) loop: TUI process's "main loop".
   while (!tui_is_stopped(ui)) {
-    loop_poll_events(&tui_loop, -1);  // tui_loop.events is never processed
+    loop_poll_events(&main_loop, -1);
   }
+}
 
-  ui_bridge_stopped(bridge);
-  tinput_destroy(&data->input);
-  signal_watcher_stop(&data->cont_handle);
-  signal_watcher_close(&data->cont_handle, NULL);
-  signal_watcher_close(&data->winch_handle, NULL);
-  loop_close(&tui_loop, false);
+static void tui_data_destroy(void **argv) {
+  UI *ui = argv[0];
+  TUIData *data = ui->data;
   kv_destroy(data->invalid_regions);
   kv_destroy(data->attrs);
   xfree(data->space_buf);
   xfree(data);
+  xfree(ui);
 }
 
-static void tui_dummy_event(void **argv)
-{
-}
-
-/// Handoff point between the main (ui_bridge) thread and the TUI thread.
-static void tui_scheduler(Event event, void *d)
-{
-  UI *ui = d;
+void tui_exit_safe(UI *ui) {
   TUIData *data = ui->data;
-  loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
+  if (!tui_is_stopped(ui)) {
+    tui_stop(ui);
+  }
+  tinput_destroy(&data->input);
+  signal_watcher_stop(&data->cont_handle);
+  signal_watcher_close(&data->cont_handle, NULL);
+  signal_watcher_close(&data->winch_handle, NULL);
+  // tui_data_destroy() needs to be scheduled to ensure proper order of calls
+  loop_schedule(&main_loop, event_create(tui_data_destroy, 1, ui));
+  ui_detach_impl(ui);
 }
 
 #ifdef UNIX
@@ -1125,6 +1184,9 @@ static void tui_hl_attr_define(UI *ui, Integer id, HlAttrs attrs,
                                HlAttrs cterm_attrs, Array info)
 {
   TUIData *data = ui->data;
+  attrs.cterm_ae_attr = cterm_attrs.cterm_ae_attr;
+  attrs.cterm_fg_color = cterm_attrs.cterm_fg_color;
+  attrs.cterm_bg_color = cterm_attrs.cterm_bg_color;
   kv_a(data->attrs, (size_t)id) = attrs;
 }
 
@@ -1228,19 +1290,13 @@ static void suspend_event(void **argv)
   tui_terminal_stop(ui);
   data->cont_received = false;
   stream_set_blocking(input_global_fd(), true);   // normalize stream (#2598)
-  kill(0, SIGTSTP);
-  while (!data->cont_received) {
-    // poll the event loop until SIGCONT is received
-    loop_poll_events(data->loop, -1);
-  }
+  kill(0, SIGTSTP);   // make TUI process run in background
   tui_terminal_start(ui);
   tui_terminal_after_startup(ui);
   if (enable_mouse) {
     tui_mouse_on(ui);
   }
   stream_set_blocking(input_global_fd(), false);  // libuv expects this
-  // resume the main thread
-  CONTINUE(data->bridge);
 }
 #endif
 
@@ -1280,6 +1336,12 @@ static void tui_option_set(UI *ui, String name, Object value)
 
     data->print_attr_id = -1;
     invalidate(ui, 0, data->grid.height, 0, data->grid.width);
+    if (connected_channel_id) {
+      Array args = ARRAY_DICT_INIT;
+      ADD(args, STRING_OBJ(cstr_as_string(xstrdup("rgb"))));
+      ADD(args, BOOLEAN_OBJ(value.data.boolean));
+      rpc_send_event(connected_channel_id, "nvim_ui_set_option", args);
+    }
   }
 }
 
@@ -1323,6 +1385,9 @@ static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
     // printed immediately without an intervening newline.
     final_column_wrap(ui);
   }
+
+  xfree((void *) chunk);
+  xfree((void *) attrs);
 }
 
 static void invalidate(UI *ui, int top, int bot, int left, int right)
@@ -1397,8 +1462,8 @@ end:
     height = DFLT_ROWS;
   }
 
-  data->bridge->bridge.width = ui->width = width;
-  data->bridge->bridge.height = ui->height = height;
+  ui->width = width;
+  ui->height = height;
 }
 
 static void unibi_goto(UI *ui, int row, int col)

@@ -9,7 +9,7 @@ typedef struct libuv_process {
   Process process;
   uv_process_t uv;
   uv_process_options_t uvopts;
-  uv_stdio_container_t uvstdio[3];
+  uv_stdio_container_t uvstdio[4];
 } LibuvProcess;
 
 static inline LibuvProcess libuv_process_init(Loop *loop, void *data)

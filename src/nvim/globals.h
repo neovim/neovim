@@ -343,6 +343,9 @@ EXTERN scid_T current_SID INIT(= 0);
 // ID of the current channel making a client API call
 EXTERN uint64_t current_channel_id INIT(= 0);
 
+// ID of the conneted channel. Used by TUI
+EXTERN uint64_t connected_channel_id INIT(= 0);
+
 EXTERN bool did_source_packages INIT(= false);
 
 // Scope information for the code that indirectly triggered the current
@@ -734,6 +737,7 @@ EXTERN int RedrawingDisabled INIT(= 0);
 
 EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
 EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
+EXTERN int stdin_filedesc INIT(= 0);        /* used in readfile() */
 
 // typeahead buffer
 EXTERN typebuf_T typebuf INIT(= { NULL, NULL, 0, 0, 0, 0, 0, 0, 0 });
@@ -877,6 +881,16 @@ EXTERN linenr_T printer_page_num;
 EXTERN bool typebuf_was_filled INIT(= false);     // received text from client
                                                   // or from feedkeys()
 
+EXTERN bool is_remote_client INIT(= false);       // Initially the TUI is not
+                                                  // a remote client                                        
+
+EXTERN bool TUI_process INIT(= false);            // This is the TUI process
+
+EXTERN bool implicit_readstdin INIT(= false);     // Used in embed job created
+                                                  // by TUI process only in
+                                                  // builtin tui
+                                                  
+EXTERN long server_process_exit_status INIT(= false); // Used by TUI process
 
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');            // normal path separator character

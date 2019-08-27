@@ -36,6 +36,7 @@
 #include "nvim/ui_compositor.h"
 #include "nvim/window.h"
 #include "nvim/cursor_shape.h"
+#include "nvim/msgpack_rpc/channel.h"
 #ifdef FEAT_TUI
 # include "nvim/tui/tui.h"
 #else
@@ -128,6 +129,19 @@ void ui_builtin_start(void)
 #endif
 }
 
+uint64_t ui_client_start(char *server_name, int argc, char **argv, bool pass_stdin)
+{
+  ui_comp_detach(uis[1]);  // Bypassing compositor in client
+  uint64_t rv = tui_ui_client_init(server_name, argc, argv, pass_stdin);
+  return rv;
+}
+
+UI* ui_get_by_index(int idx)
+{
+  assert(idx < 16);
+  return uis[idx];
+}
+
 bool ui_rgb_attached(void)
 {
   if (!headless_mode && p_tgc) {
@@ -209,7 +223,14 @@ void ui_refresh(void)
 
   int save_p_lz = p_lz;
   p_lz = false;  // convince redrawing() to return true ...
-  screen_resize(width, height);
+  if (TUI_process) {
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, INTEGER_OBJ((int)width));
+    ADD(args, INTEGER_OBJ((int)height));
+    rpc_send_event(connected_channel_id, "nvim_ui_try_resize", args);
+  } else {
+    screen_resize(width, height);    
+  }
   p_lz = save_p_lz;
 
   if (ext_widgets[kUIMessages]) {

@@ -16,6 +16,7 @@
 #include "nvim/api/private/dispatch.h"
 #include "nvim/api/buffer.h"
 #include "nvim/api/window.h"
+#include "nvim/api/ui.h"
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
@@ -2353,4 +2354,40 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     ADD(ret, ARRAY_OBJ(hl_inspect(attr)));
   }
   return ret;
+}
+
+/// Invokes the nvim server to read from stdin when it is not a tty
+///
+/// It enables functionalities like:
+/// - echo "1f u c4n r34d th1s u r34lly n33d t0 g37 r357"| nvim -
+/// - cat path/to/a/file | nvim -
+/// It has to be called before |nvim_ui_attach()| is called in order
+/// to ensure proper functioning.
+///
+/// @param channel_id: The channel id of the GUI-client
+/// @param filedesc: The file descriptor of the GUI-client process' stdin
+/// @param implicit: Tells if read_stdin call is implicit.
+///                  i.e for cases like `echo xxx | nvim`
+/// @param[out] err Error details, if any
+/// @return Boolean : true if filedesc was not a tty
+///                   false otherwise 
+Boolean nvim_read_stdin(uint64_t channel_id, Integer filedesc, Boolean implicit, Error *err)
+FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  if (remote_ui_get(channel_id)) {
+    // If nvim_ui_attach is already called then abort
+    api_set_error(err, kErrorTypeValidation,
+                  "nvim_ui_attach has already been called");
+    return false;
+  }
+  stdin_isatty = os_isatty((int)filedesc);
+  if (stdin_isatty) {
+    // If the passed filedesc is a tty
+    api_set_error(err, kErrorTypeValidation,
+                  "The passed file descriptor was a tty");
+    return false;
+  }
+  stdin_filedesc = (int)filedesc;
+  implicit_readstdin = implicit;
+  return true;
 }
