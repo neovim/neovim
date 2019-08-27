@@ -15217,8 +15217,14 @@ static void set_buffer_lines(buf_T *buf, linenr_T lnum_arg, bool append,
 
   if (added > 0) {
     appended_lines_mark(append_lnum, added);
+
+    // Only adjust the cursor for buffers other than the current, unless it
+    // is the current window. For curbuf and other windows it has been done
+    // in mark_adjust_internal().
     FOR_ALL_TAB_WINDOWS(tp, wp) {
-      if (wp->w_buffer == buf && wp->w_cursor.lnum > append_lnum) {
+      if (wp->w_buffer == buf
+          && (wp->w_buffer != curbuf || wp == curwin)
+          && wp->w_cursor.lnum > append_lnum) {
         wp->w_cursor.lnum += added;
       }
     }
