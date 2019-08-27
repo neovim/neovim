@@ -100,8 +100,12 @@ endif()
 set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
 
 if(CMAKE_OSX_SYSROOT)
-  set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
-  set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  if (DEPS_C_COMPILER)
+    set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  endif()
+  if (DEPS_CXX_COMPILER)
+    set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  endif()
 endif()
 
 # Cross compiling: use these for dependencies built for the
