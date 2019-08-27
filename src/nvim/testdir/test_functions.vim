@@ -592,6 +592,15 @@ func Test_mode()
   set complete&
 endfunc
 
+func Test_append()
+  enew!
+  split
+  call append(0, ["foo"])
+  split
+  only
+  undo
+endfunc
+
 func Test_getbufvar()
   let bnr = bufnr('%')
   let b:var_num = '1234'
