@@ -30,10 +30,6 @@ Asynchronous function calls, built on top of |job-control|, allow functions to
 be invoked in separate child processes in an unblocking manner, possibly
 utilizing the system's multiprocessing capabilities if it has multiple cores.
 
-The context of the invoked functions differs from the context of the parent
-Nvim instance and is defined by the {opts} argument to |call_async()| or
-|call_parallel()|.
-
 Similar to |jobwait()|, |call_wait()| blocks Nvim waiting for a set of jobs to
 complete, returning their exit statuses and return values (if present).
 
@@ -160,9 +156,64 @@ A job may be killed at any time with the |jobstop()| function:
 Individual streams can be closed without killing the job, see |chanclose()|.
 
 ==============================================================================
+Multiprocessing and Context				*multiproc-context*
+
+The |context| feature complements the multiprocessing feature since it allows
+parts of the parent context to be sent to children and used transparently.
+
+Child processes are spawned internally with: >
+    jobstart([v:progpath, '--embed', '--headless', '-u', 'NONE',
+            \ '-i', 'NONE', '-n'], { 'rpc': v:true })
+<
+The context of the invoked function differs from the context of the parent
+Nvim instance and is defined by the |context| field of the {opts} argument to
+|call_async()| and |call_parallel()|.
+
+For |closure|s, the outer-scope variables are internally packed with the call
+without the need to manually send them in the |context-dict| of {opts}.
+
+Non-|closure| |user-functions| have no access to |l:var|s sent in the context,
+built-in |functions| however have access to them.
+
+==============================================================================
 Multiprocessing Examples				*multiproc-usage*
 
-TODO(abdelhakeem): add detailed usage examples
+The following is an illustrated usage example of multiprocessing: >
+
+  " Assuming that "matrix1" and "matrix2" are square matrices with the
+  " same dimensions
+  function! ParallelMatrixMultiply(matrix1, matrix2)
+    " Function to call in parallel
+    function! s:calculate_row(index)
+      let row = repeat([0], g:len)
+      for j in range(g:len)
+        for k in range(g:len)
+          let row[k] += g:matrix1[a:index][j] * g:matrix2[j][k]
+        endfor
+      endfor
+      return [a:index, row]
+    endfunction
+
+    " Row callback
+    function! s:row_cb(row) closure
+      let rows[a:row[0]] = a:row[1]
+    endfunction
+
+    let len = len(a:matrix1)
+    let rows = repeat([0], len)
+    let arglists = map(range(len), '[v:val]')
+    let ctx = { 'vars': [['g:len', len],
+                       \ ['g:matrix1', a:matrix1],
+                       \ ['g:matrix2', a:matrix2]] }
+    let opts = { 'itemdone': 's:row_cb', 'context': ctx }
+    call call_wait(call_parallel('s:calculate_row', arglists, opts))
+    return rows
+  endfunction
+<
+Notice the utilization of |context| variables (|context-type-vars|) to avoid
+sending huge chunks of data again and again with each |RPC| call. As a rule of
+thumb, parameters whose values are supposed to be the same for all calls, like
+both matrices here, are better included in the sent context.
 
 ==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

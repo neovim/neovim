@@ -2089,12 +2089,12 @@ count({list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
 cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
-ctxget([{index}])		Dict	return the |context| dict at {index}
+ctxget([{index}])		Dict	return the |context-dict| at {index}
 ctxpop()			none	pop and restore |context| from the
 					|context-stack|
 ctxpush([{types}])		none	push the current |context| to the
 					|context-stack|
-ctxset({context}[, {index}])	none	set |context| at {index}
+ctxset({context}[, {index}])	none	set |context-dict| at {index}
 ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
@@ -2941,9 +2941,10 @@ call_async({func}, {args}[, {opts}])     		*call_async()*
 		{opt} is a dictionary specifying some options of the call,
 		it can have the following key-value pairs:
 			done	  callback function (see |v:jobs|)
-			context	  context dictionary
+			context	  context dictionary (|context-dict|)
 
-		For more info see |multiproc-usage|.
+		For more info see:
+		|multiproc|, |multiproc-context|, |multiproc-usage|
 
 call_parallel({func}, {arglists}[, {opts}])     	*call_parallel()*
 		Asynchronously call function {func} in a number of worker
@@ -2968,7 +2969,20 @@ call_parallel({func}, {arglists}[, {opts}])     	*call_parallel()*
 			count   	number of workers
 					(default: |v:cores|)
 
-		For more info see |multiproc-usage|.
+		For each child process, the sent |context| is loaded once and
+		preserved for next calls.
+
+		The values of |l:var|s loaded from the context are persistent
+		and mutable across calls.  Example: >
+		  let Inc = { -> trim(execute('let n += 1 | echo n')) }
+		  let arglists = repeat([[]], 5)
+		  let ctx = { 'vars': [['l:n', 0]] }
+		  let opts = { 'count': 1, 'context': ctx }
+		  echo call_wait(call_parallel(Inc, arglists, opts))
+<		  [{'status': 1, 'value': ['1', '2', '3', '4', '5']}]
+
+		For more info see:
+		|multiproc|, |multiproc-context|, |multiproc-usage|
 
 call_wait({ids}[, {timeout}])	                        *call_wait()*
 		Wait for a set of async calls, returning the results of
@@ -2988,7 +3002,8 @@ call_wait({ids}[, {timeout}])	                        *call_wait()*
 		can contain as less as one return value or more if the
 		job consumed more than one argument list.
 
-		For more info see |multiproc-usage|.
+		For more info see:
+		|multiproc|, |multiproc-context|, |multiproc-usage|
 
 ceil({expr})							*ceil()*
 		Return the smallest integral value greater than or equal to
@@ -3334,26 +3349,25 @@ cscope_connection([{num} , {dbpath} [, {prepend}]])
 <
 
 ctxget([{index}])					*ctxget()*
-		Returns a |Dictionary| representing the |context| at {index}
-		from the top of the |context-stack| (see |context-dict|).
-		If {index} is not given, it is assumed to be 0 (i.e.: top).
+		Returns the |context-dict| at {index} in the |context-stack|.
+		When {index} is not specified, it is assumed to be the top of
+		the stack (i.e.: 0).
+		Errors out when {index} is out of bounds.
 
 ctxpop()						*ctxpop()*
-		Pops and restores the |context| at the top of the
-		|context-stack|.
+		Pops and loads the top |context| from the |context-stack|.
+		Errors out when the context stack is empty.
 
 ctxpush([{types}])					*ctxpush()*
-		Pushes the current editor state (|context|) on the
-		|context-stack|.
-		If {types} is given and is a |List| of |String|s, it specifies
-		which |context-types| to include in the pushed context.
-		Otherwise, all context types are included.
+		Pushes the current editor |context| on the |context-stack|.
+		{types} is a |list| of the |context-types| to include. If not
+		given, all supported types are included.
 
 ctxset({context}[, {index}])				*ctxset()*
-		Sets the |context| at {index} from the top of the
-		|context-stack| to that represented by {context}.
-		{context} is a Dictionary with context data (|context-dict|).
-		If {index} is not given, it is assumed to be 0 (i.e.: top).
+		Sets the |context-dict| on the |context-stack| at {index} to
+		{context}. When {index} is not specified, it is assumed to be
+		the top of the stack (i.e.: 0).
+		Errors out when {index} is out of bounds.
 
 ctxsize()						*ctxsize()*
 		Returns the size of the |context-stack|.

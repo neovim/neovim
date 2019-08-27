@@ -43,6 +43,7 @@ typedef enum {
   kCtxFuncs   =   (1 << 10),  ///< All functions
 } ContextTypeFlags;
 
+extern int kCtxVars;
 extern int kCtxAll;
 
 #define CONTEXT_TYPE_FROM_STR(types, str) \
@@ -64,6 +65,8 @@ extern int kCtxAll;
     (types) |= kCtxTVars; \
   } else if (strequal((str), "lvars")) { \
     (types) |= kCtxLVars; \
+  } else if (strequal((str), "vars")) { \
+    (types) |= kCtxVars; \
   } else if (strequal((str), "sfuncs")) { \
     (types) |= kCtxSFuncs; \
   } else if (strequal((str), "funcs")) { \

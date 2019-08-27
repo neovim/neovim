@@ -346,6 +346,53 @@ describe('context functions', function()
          eval('g:states'))
     end)
 
+    it('saves and restores all variables properly', function()
+      source([[
+      let g:var = 'g:varval'
+      let s:var = 's:varval'
+      let b:var = 'b:varval'
+      let w:var = 'w:varval'
+      let t:var = 't:varval'
+
+      function Parent()
+        let l:var1 = 'l:var1val'
+        function Child() closure
+          let l:var2 = 'l:var2val'
+          function Grandchild(expr, type, ...) closure
+            if a:type == 0
+              return eval(a:expr)
+            elseif a:type == 1
+              return execute(a:expr)
+            elseif a:type == 2
+              return call(a:expr, a:000)
+            endif
+          endfunction
+        endfunction
+        call Child()
+      endfunction
+      call Parent()
+
+      function PopAndMap(expr1, expr2)
+        call ctxpop()
+        return map(a:expr1, a:expr2)
+      endfunction
+      ]])
+
+      local vars = { 'g:var', 's:var', 'b:var', 'w:var', 't:var', 'l:var1',
+                     'l:var2' }
+
+      eq(call('map', vars, [[v:val.'val']]),
+         call('map', vars, 'Grandchild(v:val, 0)'))
+      call('Grandchild', [[ctxpush(['vars'])]], 0)
+
+      call('map', vars, [[Grandchild('unlet '.v:val, 1)]])
+      eq(call('repeat', {0}, #vars),
+         call('map', vars, [[Grandchild('exists("'.v:val.'")', 0)]]))
+
+      eq(call('map', vars, [[v:val.'val']]),
+         call('Grandchild', 'PopAndMap', 2, vars, 'eval(v:val)'))
+    end)
+
     it('saves and restores script functions properly', function()
       source([[
       function s:greet(name)

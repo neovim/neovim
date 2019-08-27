@@ -972,12 +972,12 @@ Prompt Buffer:					*promptbuffer-functions*
 	prompt_setinterrupt()	set interrupt callback for a buffer
 	prompt_setprompt()	set the prompt text for a buffer
 
-Context Stack:					*ctx-functions*
-	ctxget()		return context at given index from top
-	ctxpop()		pop and restore top context
-	ctxpush()		push given context
-	ctxset()		set context at given index from top
-	ctxsize()		return context stack size
+Context Stack:					*context-functions*
+	ctxget()		get context map from |context-stack|
+	ctxpop()		load top context map from |context-stack|
+	ctxpush()		push current context on |context-stack|
+	ctxset()		set context map in |context-stack|
+	ctxsize()		get size of |context-stack|
 
 Multiprocessing:		  *multiproc-functions* *async-call-functions*
 	call_async()		asynchronously call a function in a separate

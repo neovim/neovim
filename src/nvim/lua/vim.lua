@@ -498,8 +498,8 @@ local function _async_handler_default(cmd)
   local handler_cmd = ([=[
     call call_async(
       'eval',
-      ['[nvim_command_output(cmd), nvim_get_context([v:null])]'],
-      { 'context': nvim_get_context([v:null]),
+      ['[nvim_command_output(cmd), nvim_get_context([])]'],
+      { 'context': nvim_get_context([]),
         'done': { rv -> [call_wait(v:jobs), nvim_command('echo rv[0]'),
                         nvim_load_context(rv[1])] } })
   ]=]):gsub('\n', ''):gsub('cmd', cmd, 1)

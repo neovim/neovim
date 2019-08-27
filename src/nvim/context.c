@@ -17,6 +17,8 @@
 # include "context.c.generated.h"
 #endif
 
+int kCtxVars = kCtxSVars | kCtxGVars | kCtxBVars | kCtxWVars | kCtxTVars
+               | kCtxLVars;
 int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxSVars | kCtxGVars
                | kCtxBVars | kCtxWVars | kCtxTVars | kCtxLVars | kCtxSFuncs
                | kCtxFuncs);
