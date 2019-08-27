@@ -2,6 +2,10 @@
 cmake_minimum_required (VERSION 2.8.12)
 project(NVIM_DEPS C)
 
+if(USE_BUNDLED_GPERF)
+  enable_language(CXX)
+endif()
+
 # Needed for: check_c_compiler_flag()
 include(CheckCCompilerFlag)
 
@@ -97,11 +101,15 @@ else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
 endif()
 
-set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+if(CMAKE_CXX_COMPILER)
+  set(DEPS_CXX_COMPILER "${CMAKE_CXX_COMPILER}")
+endif()
 
 if(CMAKE_OSX_SYSROOT)
   set(DEPS_C_COMPILER "${DEPS_C_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
-  set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  if(DEPS_CXX_COMPILER)
+    set(DEPS_CXX_COMPILER "${DEPS_CXX_COMPILER} -isysroot${CMAKE_OSX_SYSROOT}")
+  endif()
 endif()
 
 # Cross compiling: use these for dependencies built for the
