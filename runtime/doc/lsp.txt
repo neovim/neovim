@@ -168,7 +168,7 @@ vim.lsp.request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filet
 autocmd CursorHold *
     \ :lua vim.lsp.request_async(
     \     'textDocument/hover',
-    \     vim.lsp.util.get_text_document_params()
+    \     vim.lsp.structures.TextDocumentPositionParams()
     \ )
 
 ================================================================================
@@ -271,7 +271,21 @@ init.vim:
   call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/completion')")
   augroup MyLanguageServer
     au!
-    autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#completion#complete()<CR>
+    autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document#completion_complete()<CR>
+  augroup END
+<
+
+================================================================================
+                                                               *lsp-hover*
+
+To configure hover for a language server, add the following in your
+init.vim:
+
+>
+  call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/hover')")
+  augroup MyLanguageServer
+    au!
+    autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document#hover()<CR>
   augroup END
 <
 

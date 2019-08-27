@@ -1,7 +1,17 @@
+function! lsp#text_document#hover() abort
+  call luaeval("vim.lsp.request_async('textDocument/hover', vim.lsp.structures.TextDocumentPositionParams())")
+endfunction
+
+" Completion with LSP
+function! lsp#text_document#completion_complete() abort
+  call luaeval("vim.lsp.request_async('textDocument/completion', vim.lsp.structures.CompletionParams())")
+  return ''
+endfunction
+
 let s:last_location = -1
 
 " Omni completion with LSP
-function! lsp#completion#omni(findstart, base) abort
+function! lsp#text_document#completion_omni(findstart, base) abort
   " If we haven't started, then don't return anything useful
   if !luaeval("vim.lsp.client_has_started(_A)", &filetype)
     return a:findstart ? -1 : []
@@ -28,10 +38,4 @@ function! lsp#completion#omni(findstart, base) abort
     throw "LSP/omnifunc bad a:findstart" a:findstart
   endif
 
-endfunction
-
-" Completion with LSP
-function! lsp#completion#complete() abort
-  call luaeval("vim.lsp.request_async('textDocument/completion', vim.lsp.structures.CompletionParams()")
-  return ''
 endfunction

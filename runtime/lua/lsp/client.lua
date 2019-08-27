@@ -70,7 +70,7 @@ client.start = function(self)
   self.stderr = uv.new_pipe(false)
 
   local function on_exit()
-    log.info('filetype: '..self.filetype..', exit: '..self.cmd)
+    log.info('filetype: '..self.filetype..', exit: '..self.cmd.execute_path)
   end
 
   local stdio = { self.stdin, self.stdout, self.stderr }

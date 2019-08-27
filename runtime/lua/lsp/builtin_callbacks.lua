@@ -1,4 +1,3 @@
--- luacheck: globals vim
 -- Implements the following default callbacks:
 --  textDocument/publishDiagnostics
 
@@ -205,52 +204,61 @@ BuiltinCallbacks['textDocument/rename'] = {
   options = {}
 }
 
-
 -- textDocument/hover
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
+-- @params MarkedString | MarkedString[] | MarkupContent
 BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
     log.debug('textDocument/hover', data, self)
 
-    -- TODO: Use floating windows when they become available
-    local long_string = ''
     if data.contents ~= nil then
+      local contents = {}
 
       if nvim_util.is_array(data.contents) == true then
         -- MarkedString[]
-        for i, item in ipairs(data.contents) do
-          local value
+        for _, item in ipairs(data.contents) do
           if type(item) == 'table' then
-            value = item.value
+            table.insert(contents, '```'..item.language)
+            for _, line in pairs(vim.api.nvim_call_function('split', { item.value, '\\n' })) do
+              table.insert(contents, line)
+            end
+            table.insert(contents, '```')
           elseif item == nil then
-            value = ''
+            table.insert(contents, '')
           else
-            value = item
-          end
-
-          if i == 1 then
-            long_string = value
-          else
-            long_string = long_string .. "\n" .. value
+            for _, line in pairs(vim.api.nvim_call_function('split', { item, '\\n' })) do
+              table.insert(contents, line)
+            end
           end
         end
-
       elseif type(data.contents) == 'table' then
-        -- MarkupContent or { language: string; value: string }
-
-        long_string = long_string .. (data.contents.value or '')
+        -- MarkupContent
+        if data.contents.kind ~= nil then
+          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents, '\\n' })) do
+            table.insert(contents, line)
+          end
+        -- { language: string; value: string }
+        elseif data.contents.language ~= nil then
+          table.insert(contents, '```'..data.contents.language)
+          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents.value, '\\n' })) do
+            table.insert(contents, line)
+          end
+          table.insert(contents, '```')
+        else
+          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents, '\\n' })) do
+            table.insert(contents, line)
+          end
+        end
+      -- string
       else
-        -- string
-        long_string = data.contents
+        table.insert(contents, data.contents)
       end
 
-      if long_string == '' then
-        long_string = 'LSP: No information available'
+      if contents[1] == '' then
+        contents[1] = 'LSP: No information available'
       end
 
-
-      vim.api.nvim_out_write(long_string .. '\n')
-      return long_string
+      util.ui:open_floating_preview(contents, 'markdown')
     end
   end,
   options = {}
