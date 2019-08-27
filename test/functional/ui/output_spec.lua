@@ -10,7 +10,6 @@ local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
-local retry = helpers.retry
 
 describe("shell command :!", function()
   local screen
@@ -51,19 +50,21 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    child_session.feed_data(":!"..nvim_dir.."/shell-test REP_NODELAY 30001 "..string.rep("0123456789", 10).."\n")
+    child_session.feed_data(":!"..nvim_dir.."/shell-test REP_NODELAY 30001 foo\n")
+
+    screen:redraw_debug()
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
-    retry(nil, 20000, function() screen:expect{any="\n%."} end)
+    screen:expect{any="\n%.", timeout=20000}
 
     -- Final chunk of output should always be displayed, never skipped.
     -- (Throttling is non-deterministic, this test is merely a sanity check.)
     screen:expect([[
-      3456789                                           |
-      30000: 0123456789012345678901234567890123456789012|
-      34567890123456789012345678901234567890123456789012|
-      3456789                                           |
+      29997: foo                                        |
+      29998: foo                                        |
+      29999: foo                                        |
+      30000: foo                                        |
                                                         |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
