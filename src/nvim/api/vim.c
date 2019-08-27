@@ -1211,6 +1211,11 @@ Dictionary nvim_get_namespaces(void)
 /// Invokes the `vim.paste` handler, which handles each mode appropriately.
 /// Sets redo/undo. Faster than |nvim_input()|.
 ///
+/// Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
+/// but do not affect the return value (which is strictly decided by
+/// `vim.paste()`).  On error, subsequent calls are ignored ("drained") until
+/// the next paste is initiated (phase 1 or -1).
+///
 /// @param data  Multiline input. May be binary (containing NUL bytes).
 /// @param phase  -1: paste in a single call (i.e. without streaming).
 ///               To "stream" a paste, call `nvim_paste` sequentially with
@@ -1233,6 +1238,7 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     return false;
   }
   Array args = ARRAY_DICT_INIT;
+  Array args2 = ARRAY_DICT_INIT;
   Object rv = OBJECT_INIT;
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     draining = false;
@@ -1243,8 +1249,9 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
   Array lines = string_to_array(data);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
-  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
-                        err);
+  ADD(args2, STRING_OBJ(cstr_to_string("vim.paste(_A[1], _A[2])")));
+  ADD(args2, ARRAY_OBJ(args2));
+  rv = nvim_call_function(STATIC_CSTR_AS_STRING("luaeval"), args2, err);
   if (ERROR_SET(err)) {
     draining = true;
     goto theend;
@@ -1255,7 +1262,7 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
   }
   // vim.paste() decides if client should cancel.  Errors do NOT cancel: we
   // want to drain remaining chunks (rather than divert them to main input).
-  cancel = (rv.type != kObjectTypeBoolean || !rv.data.boolean);
+  cancel = (rv.type == kObjectTypeBoolean && !rv.data.boolean);
   if (!cancel && !(State & CMDLINE)) {  // Dot-repeat.
     for (size_t i = 0; i < lines.size; i++) {
       String s = lines.items[i].data.string;
@@ -1271,9 +1278,9 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
-  api_free_object(rv);
-  api_free_array(args);
+  api_free_array(args2);
   if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
+    draining = false;
     // XXX: Tickle main loop to ensure cursor is updated.
     loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
   }
@@ -1301,6 +1308,10 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after,
   yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
   if (!prepare_yankreg_from_object(reg, type, lines.size)) {
     api_set_error(err, kErrorTypeValidation, "Invalid type: '%s'", type.data);
+    goto cleanup;
+  }
+  if (!MODIFIABLE(curbuf)) {
+    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
     goto cleanup;
   }
   if (lines.size == 0) {

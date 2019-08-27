@@ -329,14 +329,27 @@ describe('TUI', function()
       _G.save_paste_fn = vim.paste
       vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
+    -- Prepare something for dot-repeat/redo.
+    feed_data('ifoo\n\027\000')
+    wait_for_mode('n')
+    screen:expect{grid=[[
+      foo                                               |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    wait_for_mode('n')
     -- Start pasting...
     feed_data('\027[200~line 1\nline 2\n')
     screen:expect{grid=[[
+      foo                                               |
                                                         |
       {4:~                                                 }|
-      {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: [string "<nvim>"]:2: f}|
+      {8:paste: Vim:E5108: Error while calling lua chunk fo}|
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
     ]]}
@@ -347,12 +360,23 @@ describe('TUI', function()
     -- Stop paste.
     feed_data('\027[201~')
     feed_data('\n')  -- <Enter>
+    --Dot-repeat/redo is not modified by failed paste.
+    feed_data('.')
+    screen:expect{grid=[[
+      foo                                               |
+      foo                                               |
+      {1: }                                                 |
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     -- Editor should still work after failed/drained paste.
     feed_data('ityped input...\027\000')
     screen:expect{grid=[[
+      foo                                               |
+      foo                                               |
       typed input..{1:.}                                    |
-      {4:~                                                 }|
-      {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
                                                         |
@@ -365,8 +389,34 @@ describe('TUI', function()
     feed_data('\027[200~line A\nline B\n\027[201~')
     feed_data('\n')  -- <Enter>
     screen:expect{grid=[[
+      foo                                               |
       typed input...line A                              |
       line B                                            |
+      {1: }                                                 |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+
+  it("paste: 'nomodifiable' buffer", function()
+    child_session:request('nvim_command', 'set nomodifiable')
+    feed_data('\027[200~fail 1\nfail 2\n\027[201~')
+    screen:expect{grid=[[
+                                                        |
+      {5:                                                  }|
+      {8:paste: Vim:E5108: Error while calling lua chunk fo}|
+      {8:r luaeval(): [string "-- Nvim-Lua stdlib: the `vim}|
+      {8:` module (:help l..."]:193: Buffer is not 'modifia}|
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data('\n')  -- <Enter>
+    child_session:request('nvim_command', 'set modifiable')
+    feed_data('\027[200~success 1\nsuccess 2\n\027[201~')
+    screen:expect{grid=[[
+      success 1                                         |
+      success 2                                         |
       {1: }                                                 |
       {4:~                                                 }|
       {5:[No Name] [+]                                     }|
@@ -378,9 +428,6 @@ describe('TUI', function()
   -- TODO
   it('paste: other modes', function()
     -- Other modes act like CTRL-C + paste.
-  end)
-
-  it("paste: in 'nomodifiable' buffer", function()
   end)
 
   it('paste: exactly 64 bytes #10311', function()

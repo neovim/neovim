@@ -409,6 +409,11 @@ describe('API', function()
       expect_err("Invalid type: 'x'", request,
         'nvim_put', {'foo'}, 'x', false, false)
     end)
+    it("fails if 'nomodifiable'", function()
+      command('set nomodifiable')
+      expect_err([[Buffer is not 'modifiable']], request,
+        'nvim_put', {'a','b'}, 'l', true, true)
+    end)
     it('inserts text', function()
       -- linewise
       nvim('put', {'line 1','line 2','line 3'}, 'l', true, true)
