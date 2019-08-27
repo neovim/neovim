@@ -54,6 +54,20 @@
 # include "api/vim.c.generated.h"
 #endif
 
+// `msg_list` controls the collection of abort-causing non-exception errors,
+// which would otherwise be ignored.  This pattern is from do_cmdline().
+//
+// TODO(bfredl): prepare error-handling at "top level" (nv_event).
+#define TRY_WRAP(code) \
+  do { \
+    struct msglist **saved_msg_list = msg_list; \
+    struct msglist *private_msg_list; \
+    msg_list = &private_msg_list; \
+    private_msg_list = NULL; \
+    code \
+    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+  } while (0)
+
 void api_vim_init(void)
   FUNC_API_NOEXPORT
 {
@@ -392,13 +406,7 @@ Object nvim_eval(String expr, Error *err)
   static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
 
-  // `msg_list` controls the collection of abort-causing non-exception errors,
-  // which would otherwise be ignored.  This pattern is from do_cmdline().
-  struct msglist **saved_msg_list = msg_list;
-  struct msglist *private_msg_list;
-  msg_list = &private_msg_list;
-  private_msg_list = NULL;
-
+  TRY_WRAP({
   // Initialize `force_abort`  and `suppress_errthrow` at the top level.
   if (!recursive) {
     force_abort = false;
@@ -423,8 +431,8 @@ Object nvim_eval(String expr, Error *err)
   }
 
   tv_clear(&rettv);
-  msg_list = saved_msg_list;  // Restore the exception context.
   recursive--;
+  });
 
   return rv;
 }
@@ -474,13 +482,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     }
   }
 
-  // `msg_list` controls the collection of abort-causing non-exception errors,
-  // which would otherwise be ignored.  This pattern is from do_cmdline().
-  struct msglist **saved_msg_list = msg_list;
-  struct msglist *private_msg_list;
-  msg_list = &private_msg_list;
-  private_msg_list = NULL;
-
+  TRY_WRAP({
   // Initialize `force_abort`  and `suppress_errthrow` at the top level.
   if (!recursive) {
     force_abort = false;
@@ -502,8 +504,8 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     rv = vim_to_object(&rettv);
   }
   tv_clear(&rettv);
-  msg_list = saved_msg_list;  // Restore the exception context.
   recursive--;
+  });
 
 free_vim_args:
   while (i > 0) {
@@ -1238,7 +1240,6 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     return false;
   }
   Array args = ARRAY_DICT_INIT;
-  Array args2 = ARRAY_DICT_INIT;
   Object rv = OBJECT_INIT;
   if (phase == -1 || phase == 1) {  // Start of paste-stream.
     draining = false;
@@ -1249,9 +1250,8 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
   Array lines = string_to_array(data);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
-  ADD(args2, STRING_OBJ(cstr_to_string("vim.paste(_A[1], _A[2])")));
-  ADD(args2, ARRAY_OBJ(args2));
-  rv = nvim_call_function(STATIC_CSTR_AS_STRING("luaeval"), args2, err);
+  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
+                        err);
   if (ERROR_SET(err)) {
     draining = true;
     goto theend;
@@ -1278,7 +1278,8 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
-  api_free_array(args2);
+  api_free_object(rv);
+  api_free_array(args);
   if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
     draining = false;
     // XXX: Tickle main loop to ensure cursor is updated.
@@ -1310,10 +1311,6 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after,
     api_set_error(err, kErrorTypeValidation, "Invalid type: '%s'", type.data);
     goto cleanup;
   }
-  if (!MODIFIABLE(curbuf)) {
-    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
-    goto cleanup;
-  }
   if (lines.size == 0) {
     goto cleanup;  // Nothing to do.
   }
@@ -1331,13 +1328,15 @@ void nvim_put(ArrayOf(String) lines, String type, Boolean after,
 
   finish_yankreg_from_object(reg, false);
 
-  bool VIsual_was_active = VIsual_active;
-  msg_silent++;  // Avoid "N more lines" message.
-  do_put(0, reg,
-         after ? FORWARD : BACKWARD, 1,
-         follow ? PUT_CURSEND : 0);
-  msg_silent--;
-  VIsual_active = VIsual_was_active;
+  TRY_WRAP({
+    try_start();
+    bool VIsual_was_active = VIsual_active;
+    msg_silent++;  // Avoid "N more lines" message.
+    do_put(0, reg, after ? FORWARD : BACKWARD, 1, follow ? PUT_CURSEND : 0);
+    msg_silent--;
+    VIsual_active = VIsual_was_active;
+    try_end(err);
+  });
 
 cleanup:
   free_register(reg);

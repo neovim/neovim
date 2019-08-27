@@ -411,7 +411,7 @@ describe('API', function()
     end)
     it("fails if 'nomodifiable'", function()
       command('set nomodifiable')
-      expect_err([[Buffer is not 'modifiable']], request,
+      expect_err([[Vim:E21: Cannot make changes, 'modifiable' is off]], request,
         'nvim_put', {'a','b'}, 'l', true, true)
     end)
     it('inserts text', function()

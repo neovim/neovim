@@ -185,6 +185,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]])
     feed_data('pasted from terminal')
+    expect_child_buf_lines({'"pasted from terminal"'})
     screen:expect([[
       "pasted from terminal{1:"}                            |
       {4:~                                                 }|
@@ -196,6 +197,7 @@ describe('TUI', function()
     ]])
     feed_data('\027[201~')  -- End paste.
     feed_data('\027\000')   -- ESC: go to Normal mode.
+    wait_for_mode('n')
     screen:expect([[
       "pasted from termina{1:l}"                            |
       {4:~                                                 }|
@@ -207,6 +209,8 @@ describe('TUI', function()
     ]])
     -- Dot-repeat/redo.
     feed_data('2.')
+    expect_child_buf_lines(
+      {'"pasted from terminapasted from terminalpasted from terminall"'})
     screen:expect([[
       "pasted from terminapasted from terminalpasted fro|
       m termina{1:l}l"                                      |
@@ -341,18 +345,10 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]}
-    wait_for_mode('n')
     -- Start pasting...
     feed_data('\027[200~line 1\nline 2\n')
-    screen:expect{grid=[[
-      foo                                               |
-                                                        |
-      {4:~                                                 }|
-      {5:                                                  }|
-      {8:paste: Vim:E5108: Error while calling lua chunk fo}|
-      {10:Press ENTER or type command to continue}{1: }          |
-      {3:-- TERMINAL --}                                    |
-    ]]}
+    wait_for_mode('n')
+    screen:expect{any='paste: Error executing lua'}
     -- Remaining chunks are discarded after vim.paste() failure.
     feed_data('line 3\nline 4\n')
     feed_data('line 5\nline 6\n')
@@ -402,15 +398,7 @@ describe('TUI', function()
   it("paste: 'nomodifiable' buffer", function()
     child_session:request('nvim_command', 'set nomodifiable')
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')
-    screen:expect{grid=[[
-                                                        |
-      {5:                                                  }|
-      {8:paste: Vim:E5108: Error while calling lua chunk fo}|
-      {8:r luaeval(): [string "-- Nvim-Lua stdlib: the `vim}|
-      {8:` module (:help l..."]:193: Buffer is not 'modifia}|
-      {10:Press ENTER or type command to continue}{1: }          |
-      {3:-- TERMINAL --}                                    |
-    ]]}
+    screen:expect{any='Vim:E21'}
     feed_data('\n')  -- <Enter>
     child_session:request('nvim_command', 'set modifiable')
     feed_data('\027[200~success 1\nsuccess 2\n\027[201~')
