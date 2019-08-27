@@ -326,8 +326,8 @@ describe('TUI', function()
 
   it('paste: recovers from vim.paste() failure', function()
     child_session:request('nvim_execute_lua', [[
-      _G.save_paste_fn = vim._paste
-      vim._paste = function(lines, phase) error("fake fail") end
+      _G.save_paste_fn = vim.paste
+      vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
     -- Start pasting...
     feed_data('\027[200~line 1\nline 2\n')
@@ -360,7 +360,7 @@ describe('TUI', function()
     ]]}
     -- Paste works if vim.paste() succeeds.
     child_session:request('nvim_execute_lua', [[
-      vim._paste = _G.save_paste_fn
+      vim.paste = _G.save_paste_fn
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
     feed_data('\n')  -- <Enter>

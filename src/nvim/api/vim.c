@@ -1243,7 +1243,7 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
   Array lines = string_to_array(data);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
-  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim._paste(...)"), args,
+  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
                         err);
   if (ERROR_SET(err)) {
     draining = true;

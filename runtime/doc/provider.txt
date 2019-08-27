@@ -222,11 +222,11 @@ a list of lines and `regtype` is a register type conforming to |setreg()|.
 Paste 							*provider-paste* *paste*
 
 "Paste" is a separate concept from |clipboard|: paste means "dump a bunch of
-text to the editor", whereas clipboard adds features like |quote-+| to get and
-set the OS clipboard buffer directly.  When you middle-click or CTRL-SHIFT-v
-(macOS: CMD-v) to paste text into your terminal, this is "paste", not
-"clipboard": the terminal application (Nvim) just gets a stream of text, it
-does not interact with the clipboard directly.
+text to the editor", whereas clipboard provides features like |quote-+| to get
+and set the OS clipboard directly.  For example, middle-click or CTRL-SHIFT-v
+(macOS: CMD-v) in your terminal is "paste", not "clipboard": the terminal
+application (Nvim) just gets a stream of text, it does not interact with the
+clipboard directly.
 
 							*bracketed-paste-mode*
 Pasting in the |TUI| depends on the "bracketed paste" terminal capability,
@@ -235,19 +235,21 @@ pasted text.  https://cirw.in/blog/bracketed-paste
 This works automatically if your terminal supports it.
 
 							*ui-paste*
-GUIs can opt-into Nvim's amazing paste-handling by calling |nvim_paste()|.
+GUIs can paste by calling |nvim_paste()|.
 
 PASTE BEHAVIOR ~
 
 Paste always inserts text after the cursor.  In cmdline-mode only the first
-line is pasted, to avoid accidentally executing many commands.
+line is pasted, to avoid accidentally executing many commands.  Use the
+|cmdline-window| if you really want to paste multiple lines to the cmdline.
 
 When pasting a huge amount of text, screen updates are throttled and the
 message area shows a "..." pulse.
 
-You can implement a custom paste handler.  Example: >
+You can implement a custom paste handler by redefining |vim.paste()|.
+Example: >
 
-  vim._paste = (function(lines, phase)
+  vim.paste = (function(lines, phase)
     vim.api.nvim_put(lines, 'c', true, true)
   end)
 

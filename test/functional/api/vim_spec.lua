@@ -396,7 +396,7 @@ describe('API', function()
       eq(false, nvim('get_option', 'paste'))
     end)
     it('vim.paste() failure', function()
-      nvim('execute_lua', 'vim._paste = (function(lines, phase) error("fake fail") end)', {})
+      nvim('execute_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
       expect_err([[Error executing lua: %[string "%<nvim>"]:1: fake fail]],
         request, 'nvim_paste', 'line 1\nline 2\nline 3', 1)
     end)
