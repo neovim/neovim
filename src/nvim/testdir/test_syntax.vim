@@ -389,7 +389,7 @@ endfunc
 
 func Test_ownsyntax_completion()
   call feedkeys(":ownsyntax java\<C-A>\<C-B>\"\<CR>", 'tx')
-  call assert_equal('"ownsyntax java javacc javascript', @:)
+  call assert_equal('"ownsyntax java javacc javascript javascriptreact', @:)
 endfunc
 
 func Test_highlight_invalid_arg()
