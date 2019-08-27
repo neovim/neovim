@@ -5,6 +5,7 @@ local NIL = helpers.NIL
 local clear, nvim, eq, neq = helpers.clear, helpers.nvim, helpers.eq, helpers.neq
 local command = helpers.command
 local eval = helpers.eval
+local expect = helpers.expect
 local funcs = helpers.funcs
 local iswin = helpers.iswin
 local meth_pcall = helpers.meth_pcall
@@ -365,6 +366,126 @@ describe('API', function()
     end)
   end)
 
+  describe('nvim_paste', function()
+    it('validates args', function()
+      expect_err('Invalid phase: %-2', request,
+        'nvim_paste', 'foo', -2)
+      expect_err('Invalid phase: 4', request,
+        'nvim_paste', 'foo', 4)
+    end)
+    it('non-streaming', function()
+      -- With final "\n".
+      nvim('paste', 'line 1\nline 2\nline 3\n', -1)
+      expect([[
+        line 1
+        line 2
+        line 3
+        ]])
+      -- Cursor follows the paste.
+      eq({0,4,1,0}, funcs.getpos('.'))
+      eq(false, nvim('get_option', 'paste'))
+      command('%delete _')
+      -- Without final "\n".
+      nvim('paste', 'line 1\nline 2\nline 3', -1)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      -- Cursor follows the paste.
+      eq({0,3,6,0}, funcs.getpos('.'))
+      eq(false, nvim('get_option', 'paste'))
+    end)
+    it('vim.paste() failure', function()
+      nvim('execute_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
+      expect_err([[Error executing lua: %[string "%<nvim>"]:1: fake fail]],
+        request, 'nvim_paste', 'line 1\nline 2\nline 3', 1)
+    end)
+  end)
+
+  describe('nvim_put', function()
+    it('validates args', function()
+      expect_err('Invalid lines %(expected array of strings%)', request,
+        'nvim_put', {42}, 'l', false, false)
+      expect_err("Invalid type: 'x'", request,
+        'nvim_put', {'foo'}, 'x', false, false)
+    end)
+    it("fails if 'nomodifiable'", function()
+      command('set nomodifiable')
+      expect_err([[Vim:E21: Cannot make changes, 'modifiable' is off]], request,
+        'nvim_put', {'a','b'}, 'l', true, true)
+    end)
+    it('inserts text', function()
+      -- linewise
+      nvim('put', {'line 1','line 2','line 3'}, 'l', true, true)
+      expect([[
+
+        line 1
+        line 2
+        line 3]])
+      eq({0,4,1,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- charwise
+      nvim('put', {'line 1','line 2','line 3'}, 'c', true, false)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      eq({0,1,1,0}, funcs.getpos('.'))  -- follow=false
+      -- blockwise
+      nvim('put', {'AA','BB'}, 'b', true, true)
+      expect([[
+        lAAine 1
+        lBBine 2
+        line 3]])
+      eq({0,2,4,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- Empty lines list.
+      nvim('put', {}, 'c', true, true)
+      eq({0,1,1,0}, funcs.getpos('.'))
+      expect([[]])
+      -- Single empty line.
+      nvim('put', {''}, 'c', true, true)
+      eq({0,1,1,0}, funcs.getpos('.'))
+      expect([[
+      ]])
+      nvim('put', {'AB'}, 'c', true, true)
+      -- after=false, follow=true
+      nvim('put', {'line 1','line 2'}, 'c', false, true)
+      expect([[
+        Aline 1
+        line 2B]])
+      eq({0,2,7,0}, funcs.getpos('.'))
+      command('%delete _')
+      nvim('put', {'AB'}, 'c', true, true)
+      -- after=false, follow=false
+      nvim('put', {'line 1','line 2'}, 'c', false, false)
+      expect([[
+        Aline 1
+        line 2B]])
+      eq({0,1,2,0}, funcs.getpos('.'))
+      eq('', nvim('eval', 'v:errmsg'))
+    end)
+
+    it('detects charwise/linewise text (empty {type})', function()
+      -- linewise (final item is empty string)
+      nvim('put', {'line 1','line 2','line 3',''}, '', true, true)
+      expect([[
+
+        line 1
+        line 2
+        line 3]])
+      eq({0,4,1,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- charwise (final item is non-empty)
+      nvim('put', {'line 1','line 2','line 3'}, '', true, true)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      eq({0,3,6,0}, funcs.getpos('.'))
+    end)
+  end)
+
   describe('nvim_strwidth', function()
     it('works', function()
       eq(3, nvim('strwidth', 'abc'))
@@ -626,12 +747,12 @@ describe('API', function()
       -- Make any RPC request (can be non-async: op-pending does not block).
       nvim('get_current_buf')
       -- Buffer should not change.
-      helpers.expect([[
+      expect([[
         FIRST LINE
         SECOND LINE]])
       -- Now send input to complete the operator.
       nvim('input', 'j')
-      helpers.expect([[
+      expect([[
         first line
         second line]])
     end)
@@ -664,7 +785,7 @@ describe('API', function()
       nvim('get_api_info')
       -- Send input to complete the mapping.
       nvim('input', 'd')
-      helpers.expect([[
+      expect([[
         FIRST LINE
         SECOND LINE]])
       eq('it worked...', helpers.eval('g:foo'))
@@ -680,7 +801,7 @@ describe('API', function()
       nvim('get_api_info')
       -- Send input to complete the mapping.
       nvim('input', 'x')
-      helpers.expect([[
+      expect([[
         FIRST LINE
         SECOND LINfooE]])
     end)

@@ -533,6 +533,25 @@ inspect({object}, {options})                                   *vim.inspect()*
                 See also: ~
                     https://github.com/kikito/inspect.lua
 
+paste({lines}, {phase})                                          *vim.paste()*
+                Paste handler, invoked by |nvim_paste()| when a conforming UI
+                (such as the |TUI|) pastes text into the editor.
+
+                Parameters: ~
+                    {lines}  |readfile()|-style list of lines to paste.
+                             |channel-lines|
+                    {phase}  -1: "non-streaming" paste: the call contains all
+                             lines. If paste is "streamed", `phase` indicates the stream state:
+                             • 1: starts the paste (exactly once)
+                             • 2: continues the paste (zero or more times)
+                             • 3: ends the paste (exactly once)
+
+                Return: ~
+                    false if client should cancel the paste.
+
+                See also: ~
+                    |paste|
+
 
 
 

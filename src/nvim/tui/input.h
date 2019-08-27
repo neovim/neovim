@@ -9,7 +9,8 @@
 
 typedef struct term_input {
   int in_fd;
-  bool paste_enabled;
+  // Phases: -1=all 0=disabled 1=first-chunk 2=continue 3=last-chunk
+  int8_t paste;
   bool waiting;
   TermKey *tk;
 #if TERMKEY_VERSION_MAJOR > 0 || TERMKEY_VERSION_MINOR > 18

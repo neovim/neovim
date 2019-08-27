@@ -793,6 +793,49 @@ nvim_get_namespaces()                                  *nvim_get_namespaces()*
                 Return: ~
                     dict that maps from names to namespace ids.
 
+nvim_paste({data}, {phase})                                     *nvim_paste()*
+                Pastes at cursor, in any mode.
+
+                Invokes the `vim.paste` handler, which handles each mode
+                appropriately. Sets redo/undo. Faster than |nvim_input()|.
+
+                Errors ('nomodifiable', `vim.paste()` failure, …) are
+                reflected in `err` but do not affect the return value (which
+                is strictly decided by `vim.paste()` ). On error, subsequent
+                calls are ignored ("drained") until the next paste is
+                initiated (phase 1 or -1).
+
+                Parameters: ~
+                    {data}   Multiline input. May be binary (containing NUL
+                             bytes).
+                    {phase}  -1: paste in a single call (i.e. without
+                             streaming). To "stream" a paste, call `nvim_paste` sequentially with these `phase` values:
+                             • 1: starts the paste (exactly once)
+                             • 2: continues the paste (zero or more times)
+                             • 3: ends the paste (exactly once)
+
+                Return: ~
+
+                    • true: Client may continue pasting.
+                    • false: Client must cancel the paste.
+
+nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
+                Puts text at cursor, in any mode.
+
+                Compare |:put| and |p| which are always linewise.
+
+                Parameters: ~
+                    {lines}   |readfile()|-style list of lines.
+                              |channel-lines|
+                    {type}    Edit behavior:
+                              • "b" |blockwise-visual| mode
+                              • "c" |characterwise| mode
+                              • "l" |linewise| mode
+                              • "" guess by contents
+                    {after}   Insert after cursor (like |p|), or before (like
+                              |P|).
+                    {follow}  Place cursor at end of inserted text.
+
 nvim_subscribe({event})                                     *nvim_subscribe()*
                 Subscribes to event broadcasts.
 

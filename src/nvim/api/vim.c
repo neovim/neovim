@@ -29,6 +29,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
+#include "nvim/mark.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/popupmnu.h"
@@ -36,6 +37,7 @@
 #include "nvim/eval.h"
 #include "nvim/eval/typval.h"
 #include "nvim/fileio.h"
+#include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
 #include "nvim/syntax.h"
@@ -51,6 +53,20 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/vim.c.generated.h"
 #endif
+
+// `msg_list` controls the collection of abort-causing non-exception errors,
+// which would otherwise be ignored.  This pattern is from do_cmdline().
+//
+// TODO(bfredl): prepare error-handling at "top level" (nv_event).
+#define TRY_WRAP(code) \
+  do { \
+    struct msglist **saved_msg_list = msg_list; \
+    struct msglist *private_msg_list; \
+    msg_list = &private_msg_list; \
+    private_msg_list = NULL; \
+    code \
+    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+  } while (0)
 
 void api_vim_init(void)
   FUNC_API_NOEXPORT
@@ -390,13 +406,7 @@ Object nvim_eval(String expr, Error *err)
   static int recursive = 0;  // recursion depth
   Object rv = OBJECT_INIT;
 
-  // `msg_list` controls the collection of abort-causing non-exception errors,
-  // which would otherwise be ignored.  This pattern is from do_cmdline().
-  struct msglist **saved_msg_list = msg_list;
-  struct msglist *private_msg_list;
-  msg_list = &private_msg_list;
-  private_msg_list = NULL;
-
+  TRY_WRAP({
   // Initialize `force_abort`  and `suppress_errthrow` at the top level.
   if (!recursive) {
     force_abort = false;
@@ -421,8 +431,8 @@ Object nvim_eval(String expr, Error *err)
   }
 
   tv_clear(&rettv);
-  msg_list = saved_msg_list;  // Restore the exception context.
   recursive--;
+  });
 
   return rv;
 }
@@ -472,13 +482,7 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     }
   }
 
-  // `msg_list` controls the collection of abort-causing non-exception errors,
-  // which would otherwise be ignored.  This pattern is from do_cmdline().
-  struct msglist **saved_msg_list = msg_list;
-  struct msglist *private_msg_list;
-  msg_list = &private_msg_list;
-  private_msg_list = NULL;
-
+  TRY_WRAP({
   // Initialize `force_abort`  and `suppress_errthrow` at the top level.
   if (!recursive) {
     force_abort = false;
@@ -500,8 +504,8 @@ static Object _call_function(String fn, Array args, dict_T *self, Error *err)
     rv = vim_to_object(&rettv);
   }
   tv_clear(&rettv);
-  msg_list = saved_msg_list;  // Restore the exception context.
   recursive--;
+  });
 
 free_vim_args:
   while (i > 0) {
@@ -1202,6 +1206,141 @@ Dictionary nvim_get_namespaces(void)
   })
 
   return retval;
+}
+
+/// Pastes at cursor, in any mode.
+///
+/// Invokes the `vim.paste` handler, which handles each mode appropriately.
+/// Sets redo/undo. Faster than |nvim_input()|.
+///
+/// Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
+/// but do not affect the return value (which is strictly decided by
+/// `vim.paste()`).  On error, subsequent calls are ignored ("drained") until
+/// the next paste is initiated (phase 1 or -1).
+///
+/// @param data  Multiline input. May be binary (containing NUL bytes).
+/// @param phase  -1: paste in a single call (i.e. without streaming).
+///               To "stream" a paste, call `nvim_paste` sequentially with
+///               these `phase` values:
+///                 - 1: starts the paste (exactly once)
+///                 - 2: continues the paste (zero or more times)
+///                 - 3: ends the paste (exactly once)
+/// @param[out] err Error details, if any
+/// @return
+///     - true: Client may continue pasting.
+///     - false: Client must cancel the paste.
+Boolean nvim_paste(String data, Integer phase, Error *err)
+  FUNC_API_SINCE(6)
+{
+  static bool draining = false;
+  bool cancel = false;
+
+  if (phase < -1 || phase > 3) {
+    api_set_error(err, kErrorTypeValidation, "Invalid phase: %"PRId64, phase);
+    return false;
+  }
+  Array args = ARRAY_DICT_INIT;
+  Object rv = OBJECT_INIT;
+  if (phase == -1 || phase == 1) {  // Start of paste-stream.
+    draining = false;
+  } else if (draining) {
+    // Skip remaining chunks.  Report error only once per "stream".
+    goto theend;
+  }
+  Array lines = string_to_array(data);
+  ADD(args, ARRAY_OBJ(lines));
+  ADD(args, INTEGER_OBJ(phase));
+  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
+                        err);
+  if (ERROR_SET(err)) {
+    draining = true;
+    goto theend;
+  }
+  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 1)) {
+    ResetRedobuff();
+    AppendCharToRedobuff('a');  // Dot-repeat.
+  }
+  // vim.paste() decides if client should cancel.  Errors do NOT cancel: we
+  // want to drain remaining chunks (rather than divert them to main input).
+  cancel = (rv.type == kObjectTypeBoolean && !rv.data.boolean);
+  if (!cancel && !(State & CMDLINE)) {  // Dot-repeat.
+    for (size_t i = 0; i < lines.size; i++) {
+      String s = lines.items[i].data.string;
+      assert(data.size <= INT_MAX);
+      AppendToRedobuffLit((char_u *)s.data, (int)s.size);
+      // readfile()-style: "\n" is indicated by presence of N+1 item.
+      if (i + 1 < lines.size) {
+        AppendCharToRedobuff(NL);
+      }
+    }
+  }
+  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 3)) {
+    AppendCharToRedobuff(ESC);  // Dot-repeat.
+  }
+theend:
+  api_free_object(rv);
+  api_free_array(args);
+  if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
+    draining = false;
+    // XXX: Tickle main loop to ensure cursor is updated.
+    loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
+  }
+
+  return !cancel;
+}
+
+/// Puts text at cursor, in any mode.
+///
+/// Compare |:put| and |p| which are always linewise.
+///
+/// @param lines  |readfile()|-style list of lines. |channel-lines|
+/// @param type  Edit behavior:
+///              - "b" |blockwise-visual| mode
+///              - "c" |characterwise| mode
+///              - "l" |linewise| mode
+///              - ""  guess by contents
+/// @param after  Insert after cursor (like |p|), or before (like |P|).
+/// @param follow  Place cursor at end of inserted text.
+/// @param[out] err Error details, if any
+void nvim_put(ArrayOf(String) lines, String type, Boolean after,
+              Boolean follow, Error *err)
+  FUNC_API_SINCE(6)
+{
+  yankreg_T *reg = xcalloc(sizeof(yankreg_T), 1);
+  if (!prepare_yankreg_from_object(reg, type, lines.size)) {
+    api_set_error(err, kErrorTypeValidation, "Invalid type: '%s'", type.data);
+    goto cleanup;
+  }
+  if (lines.size == 0) {
+    goto cleanup;  // Nothing to do.
+  }
+
+  for (size_t i = 0; i < lines.size; i++) {
+    if (lines.items[i].type != kObjectTypeString) {
+      api_set_error(err, kErrorTypeValidation,
+                    "Invalid lines (expected array of strings)");
+      goto cleanup;
+    }
+    String line = lines.items[i].data.string;
+    reg->y_array[i] = (char_u *)xmemdupz(line.data, line.size);
+    memchrsub(reg->y_array[i], NUL, NL, line.size);
+  }
+
+  finish_yankreg_from_object(reg, false);
+
+  TRY_WRAP({
+    try_start();
+    bool VIsual_was_active = VIsual_active;
+    msg_silent++;  // Avoid "N more lines" message.
+    do_put(0, reg, after ? FORWARD : BACKWARD, 1, follow ? PUT_CURSEND : 0);
+    msg_silent--;
+    VIsual_active = VIsual_was_active;
+    try_end(err);
+  });
+
+cleanup:
+  free_register(reg);
+  xfree(reg);
 }
 
 /// Subscribes to event broadcasts.

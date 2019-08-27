@@ -475,10 +475,6 @@ static int terminal_execute(VimState *state, int key)
   TerminalState *s = (TerminalState *)state;
 
   switch (key) {
-    // Temporary fix until paste events gets implemented
-    case K_PASTE:
-      break;
-
     case K_LEFTMOUSE:
     case K_LEFTDRAG:
     case K_LEFTRELEASE:

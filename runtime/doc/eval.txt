@@ -4214,17 +4214,6 @@ getchar([expr])						*getchar()*
 			:  endwhile
 			:endfunction
 <
-		You may also receive synthetic characters, such as
-		|<CursorHold>|. Often you will want to ignore this and get
-		another character: >
-			:function GetKey()
-			:  let c = getchar()
-			:  while c == "\<CursorHold>"
-			:    let c = getchar()
-			:  endwhile
-			:  return c
-			:endfunction
-
 getcharmod()						*getcharmod()*
 		The result is a Number which is the state of the modifiers for
 		the last obtained character with getchar() or in another way.

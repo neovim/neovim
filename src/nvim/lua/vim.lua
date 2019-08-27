@@ -8,8 +8,8 @@
 --
 -- Guideline: "If in doubt, put it in the runtime".
 --
--- Most functions should live directly on `vim.`, not sub-modules. The only
--- "forbidden" names are those claimed by legacy `if_lua`:
+-- Most functions should live directly in `vim.`, not in submodules.
+-- The only "forbidden" names are those claimed by legacy `if_lua`:
 --    $ vim
 --    :lua for k,v in pairs(vim) do print(k) end
 --    buffer
@@ -161,6 +161,69 @@ local function inspect(object, options)  -- luacheck: no unused
   error(object, options)  -- Stub for gen_vimdoc.py
 end
 
+--- Paste handler, invoked by |nvim_paste()| when a conforming UI
+--- (such as the |TUI|) pastes text into the editor.
+---
+--@see |paste|
+---
+--@param lines  |readfile()|-style list of lines to paste. |channel-lines|
+--@param phase  -1: "non-streaming" paste: the call contains all lines.
+---              If paste is "streamed", `phase` indicates the stream state:
+---                - 1: starts the paste (exactly once)
+---                - 2: continues the paste (zero or more times)
+---                - 3: ends the paste (exactly once)
+--@returns false if client should cancel the paste.
+local function paste(lines, phase) end  -- luacheck: no unused
+paste = (function()
+  local tdots, tredraw, tick, got_line1 = 0, 0, 0, false
+  return function(lines, phase)
+    local call = vim.api.nvim_call_function
+    local now = vim.loop.now()
+    local mode = call('mode', {}):sub(1,1)
+    if phase < 2 then  -- Reset flags.
+      tdots, tredraw, tick, got_line1 = now, now, 0, false
+    end
+    if mode == 'c' and not got_line1 then  -- cmdline-mode: paste only 1 line.
+      got_line1 = (#lines > 1)
+      vim.api.nvim_set_option('paste', true)  -- For nvim_input().
+      local line1, _ = string.gsub(lines[1], '[\r\n\012\027]', ' ')
+      vim.api.nvim_input(line1)  -- Scrub "\r".
+    elseif mode == 'i' or mode == 'R' then
+      vim.api.nvim_put(lines, 'c', false, true)
+    else
+      vim.api.nvim_put(lines, 'c', true, true)
+    end
+    if (now - tredraw >= 1000) or phase == -1 or phase > 2 then
+      tredraw = now
+      vim.api.nvim_command('redraw')
+      vim.api.nvim_command('redrawstatus')
+    end
+    if phase ~= -1 and (now - tdots >= 100) then
+      local dots = ('.'):rep(tick % 4)
+      tdots = now
+      tick = tick + 1
+      -- Use :echo because Lua print('') is a no-op, and we want to clear the
+      -- message when there are zero dots.
+      vim.api.nvim_command(('echo "%s"'):format(dots))
+    end
+    if phase == -1 or phase == 3 then
+      vim.api.nvim_command('echo ""')
+      vim.api.nvim_set_option('paste', false)
+    end
+    return true  -- Paste will not continue if not returning `true`.
+  end
+end)()
+
+--- Defers the wrapped callback until the Nvim API is safe to call.
+---
+--@see |vim-loop-callbacks|
+local function schedule_wrap(cb)
+  return (function (...)
+    local args = {...}
+    vim.schedule(function() cb(unpack(args)) end)
+  end)
+end
+
 local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
@@ -172,21 +235,12 @@ local function __index(t, key)
   end
 end
 
---- Defers the wrapped callback until when the nvim API is safe to call.
----
---- See |vim-loop-callbacks|
-local function schedule_wrap(cb)
-  return (function (...)
-    local args = {...}
-    vim.schedule(function() cb(unpack(args)) end)
-  end)
-end
-
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
   _os_proc_info = _os_proc_info,
   _system = _system,
+  paste = paste,
   schedule_wrap = schedule_wrap,
 }
 
