@@ -2,10 +2,6 @@
 cmake_minimum_required (VERSION 2.8.12)
 project(NVIM_DEPS C)
 
-if(USE_BUNDLED_GPERF)
-  enable_language(CXX)
-endif()
-
 # Needed for: check_c_compiler_flag()
 include(CheckCCompilerFlag)
 
@@ -99,6 +95,10 @@ if(CMAKE_C_COMPILER_ARG1)
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
 else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
+endif()
+
+if(USE_BUNDLED_GPERF)
+  enable_language(CXX)
 endif()
 
 if(CMAKE_CXX_COMPILER)
