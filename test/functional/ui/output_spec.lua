@@ -50,7 +50,7 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
-    child_session.feed_data(":!"..nvim_dir.."/shell-test REP_NODELAY 30001 foo\n")
+    child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
