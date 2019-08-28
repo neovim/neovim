@@ -241,10 +241,14 @@ describe('server -> client', function()
         \ 'rpc': v:true
         \ }
       ]])
-      meths.set_var("args", {helpers.test_lua_prg,
-                             'test/functional/api/rpc_fixture.lua'})
+      meths.set_var("args", {
+        helpers.test_lua_prg,
+        'test/functional/api/rpc_fixture.lua',
+        package.path,
+        package.cpath,
+      })
       jobid = eval("jobstart(g:args, g:job_opts)")
-      neq(0, 'jobid')
+      neq(0, jobid)
     end)
 
     after_each(function()
@@ -254,7 +258,11 @@ describe('server -> client', function()
     if helpers.pending_win32(pending) then return end
 
     it('rpc and text stderr can be combined', function()
-      eq("ok",funcs.rpcrequest(jobid, "poll"))
+      local status, rv = pcall(funcs.rpcrequest, jobid, 'poll')
+      if not status then
+        error(string.format('missing nvim Lua module? (%s)', rv))
+      end
+      eq('ok', rv)
       funcs.rpcnotify(jobid, "ping")
       eq({'notification', 'pong', {}}, next_msg())
       eq("done!",funcs.rpcrequest(jobid, "write_stderr", "fluff\n"))
