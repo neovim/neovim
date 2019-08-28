@@ -1323,6 +1323,19 @@ bool cmdline_paste_reg(int regname, bool literally, bool remcr)
   return OK;
 }
 
+// Shift the delete registers: "9 is cleared, "8 becomes "9, etc.
+static void shift_delete_registers(bool y_append)
+{
+  free_register(&y_regs[9]);  // free register "9
+  for (int n = 9; n > 1; n--) {
+    y_regs[n] = y_regs[n - 1];
+  }
+  if (!y_append) {
+    y_previous = &y_regs[1];
+  }
+  y_regs[1].y_array = NULL;  // set register "1 to empty
+}
+
 /*
  * Handle a delete operation.
  *
@@ -1417,13 +1430,7 @@ int op_delete(oparg_T *oap)
      */
     if (oap->regname != 0 || oap->motion_type == kMTLineWise
         || oap->line_count > 1 || oap->use_reg_one) {
-      free_register(&y_regs[9]); /* free register "9 */
-      for (n = 9; n > 1; n--)
-        y_regs[n] = y_regs[n - 1];
-      if (!is_append_register(oap->regname)) {
-        y_previous = &y_regs[1];
-      }
-      y_regs[1].y_array = NULL;                 // set register "1 to empty
+      shift_delete_registers(is_append_register(oap->regname));
       reg = &y_regs[1];
       op_yank_reg(oap, false, reg, false);
       did_yank = true;
