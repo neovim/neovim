@@ -3112,19 +3112,6 @@ ambw_end:
     if (check_opt_strings(*varp, p_scl_values, false) != OK) {
       errmsg = e_invarg;
     }
-  } else if (varp == &p_pt) {
-    // 'pastetoggle': translate key codes like in a mapping
-    if (*p_pt) {
-      (void)replace_termcodes(p_pt, STRLEN(p_pt), &p, true, true, true,
-                              CPO_TO_CPO_FLAGS);
-      if (p != NULL) {
-        if (new_value_alloced) {
-          free_string_option(p_pt);
-        }
-        p_pt = p;
-        new_value_alloced = true;
-      }
-    }
   } else if (varp == &p_bs) {  // 'backspace'
     if (ascii_isdigit(*p_bs)) {
       if (*p_bs >'2' || p_bs[1] != NUL) {
@@ -5368,27 +5355,12 @@ int makefoldset(FILE *fd)
 
 static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int expand)
 {
-  char_u      *s;
-  char_u      *buf;
-
   if (fprintf(fd, "%s %s=", cmd, name) < 0) {
     return FAIL;
   }
   if (*valuep != NULL) {
-    /* Output 'pastetoggle' as key names.  For other
-     * options some characters have to be escaped with
-     * CTRL-V or backslash */
-    if (valuep == &p_pt) {
-      s = *valuep;
-      while (*s != NUL) {
-        if (put_escstr(fd, (char_u *)str2special((const char **)&s, false,
-                                                 false), 2)
-            == FAIL) {
-          return FAIL;
-        }
-      }
-    } else if (expand) {
-      buf = xmalloc(MAXPATHL);
+    if (expand) {
+      char_u *buf = xmalloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, false);
       if (put_escstr(fd, buf, 2) == FAIL) {
         xfree(buf);
@@ -6461,9 +6433,6 @@ option_value2string(
       NameBuff[0] = NUL;
     } else if (opp->flags & P_EXPAND) {
       home_replace(NULL, varp, NameBuff, MAXPATHL, false);
-    // Translate 'pastetoggle' into special key names.
-    } else if ((char_u **)opp->var == &p_pt) {
-      str2specialbuf((const char *)p_pt, (char *)NameBuff, MAXPATHL);
     } else {
       STRLCPY(NameBuff, varp, MAXPATHL);
     }

@@ -4264,22 +4264,10 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'paste'* *'nopaste'*
 'paste'			boolean	(default off)
 			global
-	This option is obsolete; |bracketed-paste-mode| is built-in.
+	This option is obsolete; |paste| is handled automatically.
 
-	Put Vim in Paste mode.  This is useful if you want to cut or copy
-	some text from one window and paste it in Vim.  This will avoid
-	unexpected effects.
-	Setting this option is useful when using Vim in a terminal, where Vim
-	cannot distinguish between typed text and pasted text.  In the GUI, Vim
-	knows about pasting and will mostly do the right thing without 'paste'
-	being set.  The same is true for a terminal where Vim handles the
-	mouse clicks itself.
-	This option is reset when starting the GUI.  Thus if you set it in
-	your vimrc it will work in a terminal, but not in the GUI.  Setting
-	'paste' in the GUI has side effects: e.g., the Paste toolbar button
-	will no longer work in Insert mode, because it uses a mapping.
-	When the 'paste' option is switched on (also when it was already on):
-		- mapping in Insert mode and Command-line mode is disabled
+	Enables "paste mode":
+		- mappings in Insert mode and Command-line mode are disabled
 		- abbreviations are disabled
 		- 'autoindent' is reset
 		- 'expandtab' is reset
@@ -4296,40 +4284,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 		- 'cindent'
 		- 'indentexpr'
 		- 'lisp'
-	NOTE: When you start editing another file while the 'paste' option is
-	on, settings from the modelines or autocommands may change the
-	settings again, causing trouble when pasting text.  You might want to
-	set the 'paste' option again.
 	When the 'paste' option is reset the mentioned options are restored to
 	the value before the moment 'paste' was switched from off to on.
 	Resetting 'paste' before ever setting it does not have any effect.
-	Since mapping doesn't work while 'paste' is active, you need to use
-	the 'pastetoggle' option to toggle the 'paste' option with some key.
-
-						*'pastetoggle'* *'pt'*
-'pastetoggle' 'pt'	string	(default "")
-			global
-	When non-empty, specifies the key sequence that toggles the 'paste'
-	option.  This is like specifying a mapping: >
-	    :map {keys} :set invpaste<CR>
-<	Where {keys} is the value of 'pastetoggle'.
-	The difference is that it will work even when 'paste' is set.
-	'pastetoggle' works in Insert mode and Normal mode, but not in
-	Command-line mode.
-	Mappings are checked first, thus overrule 'pastetoggle'.  However,
-	when 'paste' is on mappings are ignored in Insert mode, thus you can do
-	this: >
-	    :map <F10> :set paste<CR>
-	    :map <F11> :set nopaste<CR>
-	    :imap <F10> <C-O>:set paste<CR>
-	    :imap <F11> <nop>
-	    :set pastetoggle=<F11>
-<	This will make <F10> start paste mode and <F11> stop paste mode.
-	Note that typing <F10> in paste mode inserts "<F10>", since in paste
-	mode everything is inserted literally, except the 'pastetoggle' key
-	sequence.
-	No timeout is used, this means that a multi-key 'pastetoggle' can not
-	be triggered manually.
 
 						*'pex'* *'patchexpr'*
 'patchexpr' 'pex'	string	(default "")
