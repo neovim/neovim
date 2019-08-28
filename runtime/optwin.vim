@@ -796,7 +796,9 @@ call append("$", "nrformats\t\"alpha\", \"octal\" and/or \"hex\"; number formats
 call append("$", "\tCTRL-A and CTRL-X commands")
 call append("$", "\t(local to buffer)")
 call <SID>OptionL("nf")
-
+call append("$", "smalldel\tminimal number of deleted characters to be pushed")
+call append("$", "\tinto the numbered registers \"1..\"9")
+call <SID>OptionG("sdel", &sdel)
 
 call <SID>Header("tabs and indenting")
 call append("$", "tabstop\tnumber of spaces a <Tab> in the text stands for")
