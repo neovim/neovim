@@ -3798,7 +3798,8 @@ static void set_option_sctx_idx(int opt_idx, int opt_flags, sctx_T script_ctx)
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
   int indir = (int)options[opt_idx].indir;
   const LastSet last_set = { .script_ctx =
-    { script_ctx.sc_sid, sourcing_lnum }, current_channel_id };
+    { script_ctx.sc_sid, script_ctx.sc_lnum + sourcing_lnum },
+    current_channel_id };
 
   // Remember where the option was set.  For local options need to do that
   // in the buffer or window structure.
