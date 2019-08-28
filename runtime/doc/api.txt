@@ -330,13 +330,14 @@ paste a block of 6 lines, emits: >
 
 User reloads the buffer with ":edit", emits: >
   nvim_buf_detach_event[{buf}]
+<
 
+LUA ~
                                                         *api-buffer-updates-lua*
-In-process lua plugins can also receive buffer updates, in the form of lua
-callbacks. These callbacks are called frequently in various contexts, buffer
-contents or window layout should not be changed inside these |textlock|.
-|vim.schedule| can be used to defer these operations to the main loop, where
-they are allowed.
+In-process Lua plugins can receive buffer updates in the form of Lua
+callbacks. These callbacks are called frequently in various contexts;
+|textlock| prevents changing buffer contents and window layout (use
+|vim.schedule| to defer such operations to the main loop instead).
 
 |nvim_buf_attach| will take keyword args for the callbacks. "on_lines" will
 receive parameters ("lines", {buf}, {changedtick}, {firstline}, {lastline},
@@ -355,6 +356,9 @@ arguments {old_utf32_size} and {old_utf16_size}.
 "on_changedtick" is invoked when |b:changedtick| was incremented but no text
 was changed. The parameters recieved are ("changedtick", {buf}, {changedtick}).
 
+                                                        *api-lua-detach*
+In-process Lua callbacks can detach by returning `true`. This will detach all
+callbacks attached with the same |nvim_buf_attach| call.
 
 
 ==============================================================================
@@ -1509,6 +1513,8 @@ nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
                 Deactivates buffer-update events on the channel.
+
+                For Lua callbacks see |api-lua-detach|.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer

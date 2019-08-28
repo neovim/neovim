@@ -183,6 +183,8 @@ error:
 
 /// Deactivates buffer-update events on the channel.
 ///
+/// For Lua callbacks see |api-lua-detach|.
+///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any
