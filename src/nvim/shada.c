@@ -2366,7 +2366,7 @@ static inline bool ignore_buf(const buf_T *const buf,
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   return (buf->b_ffname == NULL || !buf->b_p_bl || bt_quickfix(buf) \
-          || in_bufset(removable_bufs, buf));
+          || bt_terminal(buf) || in_bufset(removable_bufs, buf));
 }
 
 /// Get list of buffers to write to the shada file
