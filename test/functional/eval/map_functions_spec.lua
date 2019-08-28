@@ -21,6 +21,7 @@ describe('maparg()', function()
       nowait=0,
       mode='n',
       noremap=1,
+      lnum=0,
     }
 
   it('returns a dictionary', function()
@@ -148,6 +149,7 @@ describe('maparg()', function()
         nowait = 0,
         sid = 0,
         silent = 0,
+        lnum = 0,
       }
     end
 
