@@ -97,6 +97,7 @@ describe('python3 provider', function()
   end)
 
   it('RPC call to expand("<afile>") during BufDelete #5245 #5617', function()
+    helpers.add_builddir_to_rtp()
     source([=[
       python3 << EOF
       import vim

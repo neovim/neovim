@@ -541,6 +541,7 @@ add_subdirectory(test/includes)
 add_subdirectory(config)
 add_subdirectory(test/functional/fixtures)  # compile test programs
 add_subdirectory(runtime)
+get_directory_property(GENERATED_HELP_TAGS DIRECTORY runtime DEFINITION GENERATED_HELP_TAGS)
 if(WIN32)
   install_helper(
     FILES ${DEPS_PREFIX}/share/nvim-qt/runtime/plugin/nvim_gui_shim.vim
@@ -562,7 +563,7 @@ if(BUSTED_PRG)
   endif()
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
-  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test)
+  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test ${GENERATED_HELP_TAGS})
   if(NOT WIN32)
     list(APPEND FUNCTIONALTEST_PREREQS tty-test)
   endif()

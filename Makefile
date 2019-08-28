@@ -114,7 +114,7 @@ build/.ran-third-party-cmake::
 	touch $@
 
 # TODO: cmake 3.2+ add_custom_target() has a USES_TERMINAL flag.
-oldtest: | nvim helptags
+oldtest: | nvim build/runtime/doc/tags
 	+$(SINGLE_MAKE) -C src/nvim/testdir clean
 ifeq ($(strip $(TEST_FILE)),)
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
@@ -122,11 +122,11 @@ else
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" NEW_TESTS=$(TEST_FILE) SCRIPTS= $(MAKEOVERRIDES)
 endif
 
-helptags: | nvim
+build/runtime/doc/tags helptags: | nvim
 	+$(BUILD_CMD) -C build runtime/doc/tags
 
 # Builds help HTML _and_ checks for invalid help tags.
-helphtml: | nvim helptags
+helphtml: | nvim build/runtime/doc/tags
 	+$(BUILD_CMD) -C build doc_html
 
 functionaltest: | nvim

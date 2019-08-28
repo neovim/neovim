@@ -800,6 +800,11 @@ function module.parse_context(ctx)
   end, parsed)
 end
 
+function module.add_builddir_to_rtp()
+  -- Add runtime from build dir for doc/tags (used with :help).
+  module.command(string.format([[set rtp+=%s/runtime]], module.test_build_dir))
+end
+
 module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
