@@ -196,7 +196,9 @@ return function(options)
     local tests = (testCount == 1 and 'test' or 'tests')
     local files = (fileCount == 1 and 'file' or 'files')
     io.write(globalTeardown)
-    io.write(global_helpers.read_nvim_log())
+    if errorCount > 0 or failureCount > 0 then
+      io.write(global_helpers.read_nvim_log())
+    end
     io.write(suiteEndString:format(testCount, tests, fileCount, files, elapsedTime_ms))
     io.write(getSummaryString())
     io.flush()

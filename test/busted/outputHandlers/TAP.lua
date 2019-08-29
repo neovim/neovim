@@ -3,12 +3,16 @@
 local global_helpers = require('test.helpers')
 
 return function(options)
+  local busted = require 'busted'
   local handler = require 'busted.outputHandlers.TAP'(options)
 
-  handler.suiteEnd = function()
-    io.write(global_helpers.read_nvim_log())
-    return handler.suiteEnd()
+  local suiteEnd = function()
+    if #handler.failures > 0 or #handler.errors > 0 then
+      io.write(global_helpers.read_nvim_log())
+    end
+    return nil, true
   end
+  busted.subscribe({ 'suite', 'end' }, suiteEnd)
 
   return handler
 end
