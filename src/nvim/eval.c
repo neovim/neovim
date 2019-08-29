@@ -21984,6 +21984,13 @@ void ex_function(exarg_T *eap)
   }
   fp->uf_args = newargs;
   fp->uf_lines = newlines;
+
+  // <SNR>_lambda_... are treated as lambda functions, so they are closures
+  // (see ctx_pack_func()).
+  if (ISLAMBDA(fp->uf_name)) {
+    flags |= FC_CLOSURE;
+  }
+
   if ((flags & FC_CLOSURE) != 0) {
     register_closure(fp);
   } else {

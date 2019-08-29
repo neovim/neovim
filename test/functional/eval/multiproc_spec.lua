@@ -200,6 +200,23 @@ describe('multiproc', function()
       matches('Undefined variable', pcall_err(eval, 'v:jobs'))
     end)
 
+    it('persists l:var values across calls', function()
+      source([=[
+      let g:job1 = call_parallel(
+       \ 'eval',
+       \ repeat([['nvim_command_output("let count += 1 | echo count")']], 3), {
+       \   'context': {'vars': [['l:count', 0]]},
+       \   'count': 1})[0]
+      let g:job2 = call_parallel(
+       \ { -> nvim_command_output('let count += 1 | echo count') },
+       \ repeat([[]], 3), {
+       \   'context': {'vars': [['l:count', 0]]},
+       \   'count': 1})[0]
+      ]=])
+      eq({'1', '2', '3'}, eval('call_wait([g:job1])[0].value'))
+      eq({'1', '2', '3'}, eval('call_wait([g:job2])[0].value'))
+    end)
+
     it('reports errors from children', function()
       feed_command(
           [=[call call_wait(call_parallel('foo', [[], []], {'count':2}))]=])
@@ -405,12 +422,16 @@ describe('multiproc', function()
        \ 'context': nvim_get_context(['lvars']) })
       let g:job2 = call_parallel('eval', [['l:one'], ['l:Two'], ['THREE']], {
        \ 'context': nvim_get_context(['lvars']), 'count': 1 })[0]
+      let g:job3 = call_parallel({ v -> eval(v) }, [['l:a'], ['l:b'], ['c']], {
+       \ 'context': {'vars': [['l:a', 1], ['l:b', 2], ['l:c', 3]]},
+       \ 'count': 1 })[0]
     endfunction
     call Test()
     ]=])
 
     eq({1, 2, 3}, eval('call_wait([g:job1])[0].value'))
     eq({1, 2, 3}, eval('call_wait([g:job2])[0].value'))
+    eq({1, 2, 3}, eval('call_wait([g:job3])[0].value'))
   end)
 
   it('packs parent-scope l: vars for closures', function()

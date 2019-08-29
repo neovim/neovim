@@ -278,18 +278,22 @@ local async_invoke_called = false
 --
 -- @returns Result of function call
 local function _async_invoke(ctx, callee_ctx, fn, args)
+  -- Load context dictionaries in _lambda_INIT and declare _lambda_CALL inside
+  -- it as a wrapper for our call to capture function-local variables sent in
+  -- the context dicts and persist them across calls (for call_parallel).
+  -- Note that lambda functions are used (_lambda_INIT and _lambda_CALL) so
+  -- that they do not get packed by any nvim_get_context() or ctxpush() calls.
   if not async_invoke_called then
     vim.api.nvim_command(
-      [[function <SNR>ASYNC_INIT(ctx, callee_ctx, fn)
-          call nvim_load_context(a:ctx)
-          call nvim_load_context(a:callee_ctx)
-          function <SNR>_lambda_CALL(args) closure
-            return call(function(a:fn), args)
+      [[function <SNR>_lambda_INIT(ctx, callee_ctx, fn)
+          call nvim_load_context(ctx)
+          call nvim_load_context(callee_ctx)
+          function <SNR>_lambda_CALL(args)
+            return call(fn, args)
           endfunction
         endfunction
       ]])
-    vim.api.nvim_call_function('<SNR>ASYNC_INIT', {ctx, callee_ctx, fn})
-    vim.api.nvim_command('delfunction <SNR>ASYNC_INIT')
+    vim.api.nvim_call_function('<SNR>_lambda_INIT', {ctx, callee_ctx, fn})
     async_invoke_called = true
   end
   return vim.api.nvim_call_function('<SNR>_lambda_CALL', {args})
