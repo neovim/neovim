@@ -381,8 +381,7 @@ describe('API', function()
         line 2
         line 3
         ]])
-      -- Cursor follows the paste.
-      eq({0,4,1,0}, funcs.getpos('.'))
+      eq({0,4,1,0}, funcs.getpos('.'))  -- Cursor follows the paste.
       eq(false, nvim('get_option', 'paste'))
       command('%delete _')
       -- Without final "\n".
@@ -391,8 +390,38 @@ describe('API', function()
         line 1
         line 2
         line 3]])
-      -- Cursor follows the paste.
       eq({0,3,6,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- CRLF #10872
+      nvim('paste', 'line 1\r\nline 2\r\nline 3\r\n', -1)
+      expect([[
+        line 1
+        line 2
+        line 3
+        ]])
+      eq({0,4,1,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- CRLF without final "\n".
+      nvim('paste', 'line 1\r\nline 2\r\nline 3\r', -1)
+      expect([[
+        line 1
+        line 2
+        line 3
+        ]])
+      eq({0,4,1,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- CRLF without final "\r\n".
+      nvim('paste', 'line 1\r\nline 2\r\nline 3', -1)
+      expect([[
+        line 1
+        line 2
+        line 3]])
+      eq({0,3,6,0}, funcs.getpos('.'))
+      command('%delete _')
+      -- Various other junk.
+      nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', -1)
+      expect('line 1\n\n\nline 2\nline 3\nline 4\n')
+      eq({0,7,1,0}, funcs.getpos('.'))
       eq(false, nvim('get_option', 'paste'))
     end)
     it('vim.paste() failure', function()

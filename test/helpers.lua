@@ -455,6 +455,12 @@ local SUBTBL = {
   '\\030', '\\031',
 }
 
+-- Formats Lua value `v`.
+--
+-- TODO(justinmk): redundant with vim.inspect() ?
+--
+-- "Nice table formatting similar to screen:snapshot_util()".
+-- Commit: 520c0b91a528
 function module.format_luav(v, indent, opts)
   opts = opts or {}
   local linesep = '\n'
@@ -533,6 +539,9 @@ function module.format_luav(v, indent, opts)
   return ret
 end
 
+-- Like Python repr(), "{!r}".format(s)
+--
+-- Commit: 520c0b91a528
 function module.format_string(fmt, ...)
   local i = 0
   local args = {...}
