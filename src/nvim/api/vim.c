@@ -1211,7 +1211,7 @@ Dictionary nvim_get_namespaces(void)
 /// Pastes at cursor, in any mode.
 ///
 /// Invokes the `vim.paste` handler, which handles each mode appropriately.
-/// Sets redo/undo. Faster than |nvim_input()|.
+/// Sets redo/undo. Faster than |nvim_input()|. Lines break at LF ("\n").
 ///
 /// Errors ('nomodifiable', `vim.paste()` failure, …) are reflected in `err`
 /// but do not affect the return value (which is strictly decided by
@@ -1219,6 +1219,7 @@ Dictionary nvim_get_namespaces(void)
 /// the next paste is initiated (phase 1 or -1).
 ///
 /// @param data  Multiline input. May be binary (containing NUL bytes).
+/// @param crlf  Also break lines at CR and CRLF.
 /// @param phase  -1: paste in a single call (i.e. without streaming).
 ///               To "stream" a paste, call `nvim_paste` sequentially with
 ///               these `phase` values:
@@ -1229,7 +1230,7 @@ Dictionary nvim_get_namespaces(void)
 /// @return
 ///     - true: Client may continue pasting.
 ///     - false: Client must cancel the paste.
-Boolean nvim_paste(String data, Integer phase, Error *err)
+Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   FUNC_API_SINCE(6)
 {
   static bool draining = false;
@@ -1247,7 +1248,7 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
   }
-  Array lines = string_to_array(data, true);
+  Array lines = string_to_array(data, crlf);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
   rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,

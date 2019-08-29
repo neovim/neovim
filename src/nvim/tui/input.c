@@ -108,7 +108,7 @@ static void tinput_wait_enqueue(void **argv)
     if (input->paste) {
       Error err = ERROR_INIT;
       // Paste phase: "continue" (unless handler canceled).
-      input->paste = !nvim_paste(keys, input->paste, &err)
+      input->paste = !nvim_paste(keys, true, input->paste, &err)
         ? 0 : (1 == input->paste ? 2 : input->paste);
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
