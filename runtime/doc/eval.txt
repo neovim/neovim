@@ -9238,9 +9238,13 @@ See |:verbose-cmd| for more information.
 			deleted if there are no more references to it.
 								*E127* *E122*
 			When a function by this name already exists and [!] is
-			not used an error message is given.  When [!] is used,
-			an existing function is silently replaced.  Unless it
-			is currently being executed, that is an error.
+			not used an error message is given.  There is one
+			exception: When sourcing a script again, a function
+			that was previously defined in that script will be
+			silently replaced.
+			When [!] is used, an existing function is silently
+			replaced.  Unless it is currently being executed, that
+			is an error.
 			NOTE: Use ! wisely.  If used without care it can cause
 			an existing function to be replaced unexpectedly,
 			which is hard to debug.

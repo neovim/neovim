@@ -1067,6 +1067,33 @@ func Test_func_range_with_edit()
   bwipe!
 endfunc
 
+func Test_func_exists_on_reload()
+  call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists')
+  call assert_equal(0, exists('*ExistingFunction'))
+  source Xfuncexists
+  call assert_equal(1, exists('*ExistingFunction'))
+  " Redefining a function when reloading a script is OK.
+  source Xfuncexists
+  call assert_equal(1, exists('*ExistingFunction'))
+
+  " But redefining in another script is not OK.
+  call writefile(['func ExistingFunction()', 'echo "yes"', 'endfunc'], 'Xfuncexists2')
+  call assert_fails('source Xfuncexists2', 'E122:')
+
+  delfunc ExistingFunction
+  call assert_equal(0, exists('*ExistingFunction'))
+  call writefile([
+	\ 'func ExistingFunction()', 'echo "yes"', 'endfunc',
+	\ 'func ExistingFunction()', 'echo "no"', 'endfunc',
+	\ ], 'Xfuncexists')
+  call assert_fails('source Xfuncexists', 'E122:')
+  call assert_equal(1, exists('*ExistingFunction'))
+
+  call delete('Xfuncexists2')
+  call delete('Xfuncexists')
+  delfunc ExistingFunction
+endfunc
+
 sandbox function Fsandbox()
   normal ix
 endfunc

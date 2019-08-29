@@ -1665,6 +1665,7 @@ static void exe_commands(mparm_T *parmp)
     curwin->w_cursor.lnum = 0;
   sourcing_name = (char_u *)"command line";
   current_sctx.sc_sid = SID_CARG;
+  current_sctx.sc_seq = 0;
   for (i = 0; i < parmp->n_commands; i++) {
     do_cmdline_cmd(parmp->commands[i]);
     if (parmp->cmds_tofree[i])
@@ -1862,6 +1863,7 @@ static int execute_env(char *env)
     sourcing_lnum = 0;
     const sctx_T save_current_sctx = current_sctx;
     current_sctx.sc_sid = SID_ENV;
+    current_sctx.sc_seq = 0;
     current_sctx.sc_lnum = 0;
     do_cmdline_cmd((char *)initstr);
     sourcing_name = save_sourcing_name;

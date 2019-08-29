@@ -5155,6 +5155,7 @@ chk_modeline(
       const int secure_save = secure;
       const sctx_T save_current_sctx = current_sctx;
       current_sctx.sc_sid = SID_MODELINE;
+      current_sctx.sc_seq = 0;
       current_sctx.sc_lnum = 0;
       // Make sure no risky things are executed as a side effect.
       secure = 1;

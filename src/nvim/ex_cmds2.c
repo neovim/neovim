@@ -3034,6 +3034,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   char_u                  *firstline = NULL;
   int retval = FAIL;
   static scid_T last_current_SID = 0;
+  static int last_current_SID_seq = 0;
   void                    *save_funccalp;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
@@ -3160,7 +3161,9 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
 
   // Check if this script was sourced before to finds its SID.
   // If it's new, generate a new SID.
+  // Always use a new sequence number.
   const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_seq = ++last_current_SID_seq;
   current_sctx.sc_lnum = 0;
   FileID file_id;
   bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
