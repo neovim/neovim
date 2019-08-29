@@ -80,6 +80,8 @@ func Test_tags_too_long()
 endfunc
 
 func Test_tagfiles()
+  " Nvim: different default for 'tags'.
+  set tags=./tags,tags
   call assert_equal([], tagfiles())
 
   call writefile(["FFoo\tXfoo\t1"], 'Xtags1')
