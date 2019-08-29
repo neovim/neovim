@@ -22138,14 +22138,27 @@ void func_dump_profile(FILE *fd)
       if (fp->uf_prof_initialized) {
         sorttab[st_len++] = fp;
 
-        if (fp->uf_name[0] == K_SPECIAL)
+        if (fp->uf_name[0] == K_SPECIAL) {
           fprintf(fd, "FUNCTION  <SNR>%s()\n", fp->uf_name + 3);
-        else
+        } else {
           fprintf(fd, "FUNCTION  %s()\n", fp->uf_name);
-        if (fp->uf_tm_count == 1)
+        }
+        bool should_free;
+        const LastSet last_set = (LastSet){
+          .script_ctx = fp->uf_script_ctx,
+          .channel_id = 0,
+        };
+        char_u *p = get_scriptname(last_set, &should_free);
+        fprintf(fd, "    Defined: %s line %" PRIdLINENR "\n",
+                p, fp->uf_script_ctx.sc_lnum);
+        if (should_free) {
+          xfree(p);
+        }
+        if (fp->uf_tm_count == 1) {
           fprintf(fd, "Called 1 time\n");
-        else
+        } else {
           fprintf(fd, "Called %d times\n", fp->uf_tm_count);
+        }
         fprintf(fd, "Total time: %s\n", profile_msg(fp->uf_tm_total));
         fprintf(fd, " Self time: %s\n", profile_msg(fp->uf_tm_self));
         fprintf(fd, "\n");
