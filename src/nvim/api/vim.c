@@ -1247,7 +1247,7 @@ Boolean nvim_paste(String data, Integer phase, Error *err)
     // Skip remaining chunks.  Report error only once per "stream".
     goto theend;
   }
-  Array lines = string_to_array(data);
+  Array lines = string_to_array(data, true);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
   rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,

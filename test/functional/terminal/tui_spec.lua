@@ -227,13 +227,24 @@ describe('TUI', function()
     expect_child_buf_lines({''})
   end)
 
-  it('paste: normal-mode', function()
+  it('paste: normal-mode (+CRLF #10872)', function()
     feed_data(':set ruler')
     wait_for_mode('c')
     feed_data('\n')
     wait_for_mode('n')
-    local expected = {'line 1', '  line 2', 'ESC:\027 / CR: \013'}
+    local expected_lf   = {'line 1', 'ESC:\027 / CR: \rx'}
+    local expected_crlf = {'line 1', 'ESC:\027 / CR: ', 'x'}
+    local expected_grid1 = [[
+      line 1                                            |
+      ESC:{11:^[} / CR:                                      |
+      {1:x}                                                 |
+      {4:~                                                 }|
+      {5:[No Name] [+]                   3,1            All}|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]
     local expected_attr = {
+      [1] = {reverse = true},
       [3] = {bold = true},
       [4] = {foreground = tonumber('0x00000c')},
       [5] = {bold = true, reverse = true},
@@ -241,36 +252,30 @@ describe('TUI', function()
       [12] = {reverse = true, foreground = tonumber('0x000051')},
     }
     -- "bracketed paste"
-    feed_data('\027[200~'..table.concat(expected,'\n')..'\027[201~')
-    screen:expect{
-      grid=[[
-        line 1                                            |
-          line 2                                          |
-        ESC:{11:^[} / CR: {12:^}{11:M}                                   |
-        {4:~                                                 }|
-        {5:[No Name] [+]                   3,13-14        All}|
-                                                          |
-        {3:-- TERMINAL --}                                    |
-      ]],
-      attr_ids=expected_attr}
+    feed_data('\027[200~'..table.concat(expected_lf,'\n')..'\027[201~')
+    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
     -- Dot-repeat/redo.
     feed_data('.')
     screen:expect{
       grid=[[
-          line 2                                          |
-        ESC:{11:^[} / CR: {11:^M}line 1                             |
-          line 2                                          |
-        ESC:{11:^[} / CR: {12:^}{11:M}                                   |
-        {5:[No Name] [+]                   5,13-14        Bot}|
+        ESC:{11:^[} / CR:                                      |
+        xline 1                                           |
+        ESC:{11:^[} / CR:                                      |
+        {1:x}                                                 |
+        {5:[No Name] [+]                   5,1            Bot}|
                                                           |
         {3:-- TERMINAL --}                                    |
       ]],
       attr_ids=expected_attr}
     -- Undo.
     feed_data('u')
-    expect_child_buf_lines(expected)
+    expect_child_buf_lines(expected_crlf)
     feed_data('u')
     expect_child_buf_lines({''})
+    -- CRLF input
+    feed_data('\027[200~'..table.concat(expected_lf,'\r\n')..'\027[201~')
+    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
+    expect_child_buf_lines(expected_crlf)
   end)
 
   it('paste: cmdline-mode inserts 1 line', function()
@@ -347,7 +352,7 @@ describe('TUI', function()
     ]]}
     -- Start pasting...
     feed_data('\027[200~line 1\nline 2\n')
-    wait_for_mode('n')
+    expect_child_buf_lines({'foo',''})
     screen:expect{any='paste: Error executing lua'}
     -- Remaining chunks are discarded after vim.paste() failure.
     feed_data('line 3\nline 4\n')
@@ -411,11 +416,6 @@ describe('TUI', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]]}
-  end)
-
-  -- TODO
-  it('paste: other modes', function()
-    -- Other modes act like CTRL-C + paste.
   end)
 
   it('paste: exactly 64 bytes #10311', function()
@@ -523,10 +523,6 @@ describe('TUI', function()
     ]])
   end)
 
-  -- TODO
-  it('paste: handles missing "stop paste" code', function()
-  end)
-
   it('allows termguicolors to be set at runtime', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
@@ -580,7 +576,7 @@ describe('TUI', function()
   end)
 
   it('is included in nvim_list_uis()', function()
-    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\013')
+    feed_data(':echo map(nvim_list_uis(), {k,v -> sort(items(filter(v, {k,v -> k[:3] !=# "ext_" })))})\r')
     screen:expect([=[
                                                         |
       {4:~                                                 }|

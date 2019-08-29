@@ -239,12 +239,13 @@ GUIs can paste by calling |nvim_paste()|.
 
 PASTE BEHAVIOR ~
 
-Paste always inserts text after the cursor.  In cmdline-mode only the first
-line is pasted, to avoid accidentally executing many commands.  Use the
-|cmdline-window| if you really want to paste multiple lines to the cmdline.
-
-When pasting a huge amount of text, screen updates are throttled and the
+Paste inserts text after the cursor.  Lines break at <NL>, <CR>, and <CR><NL>.
+When pasting a huge amount of text, screen-updates are throttled and the
 message area shows a "..." pulse.
+
+In cmdline-mode only the first line is pasted, to avoid accidentally executing
+many commands.  Use the |cmdline-window| if you really want to paste multiple
+lines to the cmdline.
 
 You can implement a custom paste handler by redefining |vim.paste()|.
 Example: >
