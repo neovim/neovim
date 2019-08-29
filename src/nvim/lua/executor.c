@@ -269,7 +269,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 #endif
 
   // vim
-  if (luaL_dostring(lstate, (char *)&vim_module[0])) {
+  const char *code = (char *)&vim_module[0];
+  if (luaL_loadbuffer(lstate, code, strlen(code), "@vim.lua")
+      || lua_pcall(lstate, 0, LUA_MULTRET, 0)) {
     nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
     return 1;
   }

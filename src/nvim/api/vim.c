@@ -1283,8 +1283,6 @@ theend:
   api_free_array(args);
   if (cancel || phase == -1 || phase == 3) {  // End of paste-stream.
     draining = false;
-    // XXX: Tickle main loop to ensure cursor is updated.
-    loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
   }
 
   return !cancel;

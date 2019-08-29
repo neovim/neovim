@@ -352,15 +352,23 @@ describe('TUI', function()
     ]]}
     -- Start pasting...
     feed_data('\027[200~line 1\nline 2\n')
-    expect_child_buf_lines({'foo',''})
-    screen:expect{any='paste: Error executing lua'}
+    screen:expect{grid=[[
+      foo                                               |
+                                                        |
+      {5:                                                  }|
+      {8:paste: Error executing lua: [string "<nvim>"]:2: f}|
+      {8:ake fail}                                          |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     -- Remaining chunks are discarded after vim.paste() failure.
     feed_data('line 3\nline 4\n')
     feed_data('line 5\nline 6\n')
     feed_data('line 7\nline 8\n')
     -- Stop paste.
     feed_data('\027[201~')
-    feed_data('\n')  -- <Enter>
+    feed_data('\n')  -- <CR>
+    expect_child_buf_lines({'foo',''})
     --Dot-repeat/redo is not modified by failed paste.
     feed_data('.')
     screen:expect{grid=[[
@@ -388,7 +396,7 @@ describe('TUI', function()
       vim.paste = _G.save_paste_fn
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
-    feed_data('\n')  -- <Enter>
+    feed_data('\n')  -- <CR>
     screen:expect{grid=[[
       foo                                               |
       typed input...line A                              |
@@ -414,7 +422,15 @@ describe('TUI', function()
   it("paste: 'nomodifiable' buffer", function()
     child_session:request('nvim_command', 'set nomodifiable')
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')
-    screen:expect{any='Vim:E21'}
+    screen:expect{grid=[[
+                                                        |
+      {4:~                                                 }|
+      {5:                                                  }|
+      {8:paste: Error executing lua: vim.lua:194: Vim:E21: }|
+      {8:Cannot make changes, 'modifiable' is off}          |
+      {10:Press ENTER or type command to continue}{1: }          |
+      {3:-- TERMINAL --}                                    |
+    ]]}
     feed_data('\n')  -- <Enter>
     child_session:request('nvim_command', 'set modifiable')
     feed_data('\027[200~success 1\nsuccess 2\n\027[201~')
