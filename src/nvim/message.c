@@ -753,7 +753,7 @@ void msg_schedule_emsgf(const char *const fmt, ...)
   va_end(ap);
 
   char *s = xstrdup((char *)IObuff);
-  loop_schedule(&main_loop, event_create(msg_emsgf_event, 1, s));
+  multiqueue_put(main_loop.events, msg_emsgf_event, 1, s);
 }
 
 /*

@@ -164,7 +164,7 @@ static void tinput_flush(TermInput *input, bool wait_until_empty)
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
     uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
+    loop_schedule_fast(&main_loop, event_create(tinput_wait_enqueue, 1, input));
     input->waiting = true;
     while (input->waiting) {
       uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
@@ -522,7 +522,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
   TermInput *input = data;
 
   if (eof) {
-    loop_schedule(&main_loop, event_create(tinput_done_event, 0));
+    loop_schedule_fast(&main_loop, event_create(tinput_done_event, 0));
     return;
   }
 

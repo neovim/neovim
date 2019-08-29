@@ -228,7 +228,11 @@ static void ui_refresh_event(void **argv)
 
 void ui_schedule_refresh(void)
 {
-  loop_schedule(&main_loop, event_create(ui_refresh_event, 0));
+  // TODO(bfredl): "fast" is not optimal. UI should be refreshed only at
+  // deferred processing plus a few more blocked-on-input situtions like
+  // wait_return(), but not any os_breakcheck(). Alternatively make this
+  // defered and make wait_return() process deferred events already.
+  loop_schedule_fast(&main_loop, event_create(ui_refresh_event, 0));
 }
 
 void ui_default_colors_set(void)

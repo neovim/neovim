@@ -71,7 +71,7 @@ bool loop_poll_events(Loop *loop, int ms)
   return timeout_expired;
 }
 
-/// Schedules an event from another thread.
+/// Schedules a fast event from another thread.
 ///
 /// @note Event is queued into `fast_events`, which is processed outside of the
 ///       primary `events` queue by loop_poll_events(). For `main_loop`, that
@@ -79,7 +79,7 @@ bool loop_poll_events(Loop *loop, int ms)
 ///       (VimState.execute), so redraw and other side-effects are likely to be
 ///       skipped.
 /// @see loop_schedule_deferred
-void loop_schedule(Loop *loop, Event event)
+void loop_schedule_fast(Loop *loop, Event event)
 {
   uv_mutex_lock(&loop->mutex);
   multiqueue_put_event(loop->thread_events, event);
@@ -87,15 +87,15 @@ void loop_schedule(Loop *loop, Event event)
   uv_mutex_unlock(&loop->mutex);
 }
 
-/// Schedules an event from another thread. Unlike loop_schedule(), the event
-/// is forwarded to `Loop.events`, instead of being processed immediately.
+/// Schedules an event from another thread. Unlike loop_schedule_fast(), the
+/// event is forwarded to `Loop.events`, instead of being processed immediately.
 ///
-/// @see loop_schedule
+/// @see loop_schedule_fast
 void loop_schedule_deferred(Loop *loop, Event event)
 {
   Event *eventp = xmalloc(sizeof(*eventp));
   *eventp = event;
-  loop_schedule(loop, event_create(loop_deferred_event, 2, loop, eventp));
+  loop_schedule_fast(loop, event_create(loop_deferred_event, 2, loop, eventp));
 }
 static void loop_deferred_event(void **argv)
 {
