@@ -896,3 +896,5 @@ func s:BufUnloaded()
   endfor
 endfunc
 
+let &cpo = s:keepcpo
+unlet s:keepcpo
