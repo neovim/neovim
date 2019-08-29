@@ -11,7 +11,7 @@ typedef enum {
   kShaDaForceit = 4,        ///< Overwrite info already read
   kShaDaGetOldfiles = 8,    ///< Load v:oldfiles.
   kShaDaMissingError = 16,  ///< Error out when os_open returns -ENOENT.
-  kShadaKeepFunccall = 32,  ///< Keep current_funccal value when loading vars
+  kShaDaKeepFunccall = 32,  ///< Keep current_funccal value when loading vars
 } ShaDaReadFileFlags;
 
 /// Possible ShaDa entry types
