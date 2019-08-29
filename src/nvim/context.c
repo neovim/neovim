@@ -253,7 +253,7 @@ static inline void ctx_restore_vars(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
   shada_read_sbuf(&ctx->vars,
-                  kShaDaWantInfo | kShaDaForceit | kShadaKeepFunccall);
+                  kShaDaWantInfo | kShaDaForceit | kShaDaKeepFunccall);
 }
 
 /// Saves local variables for the given funccall_T to a context.

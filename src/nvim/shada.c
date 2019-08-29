@@ -1318,7 +1318,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         bool save_did_emsg = did_emsg;
         did_emsg = false;
         var_set(cur_entry.data.var.name,
-                cur_entry.data.var.value, flags & kShadaKeepFunccall);
+                cur_entry.data.var.value, flags & kShaDaKeepFunccall);
         if (!did_emsg) {
           cur_entry.data.var.value.v_type = VAR_UNKNOWN;
         }
@@ -4209,6 +4209,7 @@ void shada_encode_vars(const hashtab_T *ht, msgpack_sbuffer *const sbuf,
       }
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
+      try_start();
       ShaDaWriteResult r = shada_pack_entry(&packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
@@ -4220,6 +4221,9 @@ void shada_encode_vars(const hashtab_T *ht, msgpack_sbuffer *const sbuf,
           }
         }
       }, 0);
+      Error err = ERROR_INIT;
+      try_end(&err);
+      api_clear_error(&err);
       if (prefix) {
         xfree(prefixed_name);
       }
