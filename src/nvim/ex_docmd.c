@@ -1471,22 +1471,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
              || (cstack->cs_idx >= 0
                  && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)));
 
-  /* Count this line for profiling if ea.skip is FALSE. */
-  if (do_profiling == PROF_YES && !ea.skip) {
-    if (getline_equal(fgetline, cookie, get_func_line))
-      func_line_exec(getline_cookie(fgetline, cookie));
-    else if (getline_equal(fgetline, cookie, getsourceline))
-      script_line_exec();
-  }
-
-  /* May go to debug mode.  If this happens and the ">quit" debug command is
-   * used, throw an interrupt exception and skip the next command. */
-  dbg_check_breakpoint(&ea);
-  if (!ea.skip && got_int) {
-    ea.skip = TRUE;
-    (void)do_intthrow(cstack);
-  }
-
   // 3. Skip over the range to find the command. Let "p" point to after it.
   //
   // We need the command to know what kind of range it uses.
@@ -1498,22 +1482,61 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   }
   p = find_command(&ea, NULL);
 
-  /*
-   * 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
-   *
-   * where 'addr' is:
-   *
-   * %	      (entire file)
-   * $  [+-NUM]
-   * 'x [+-NUM] (where x denotes a currently defined mark)
-   * .  [+-NUM]
-   * [+-NUM]..
-   * NUM
-   *
-   * The ea.cmd pointer is updated to point to the first character following the
-   * range spec. If an initial address is found, but no second, the upper bound
-   * is equal to the lower.
-   */
+  // Count this line for profiling if skip is TRUE.
+  if (do_profiling == PROF_YES
+      && (!ea.skip || cstack->cs_idx == 0
+          || (cstack->cs_idx > 0
+              && (cstack->cs_flags[cstack->cs_idx - 1] & CSF_ACTIVE)))) {
+    int skip = did_emsg || got_int || current_exception;
+
+    if (ea.cmdidx == CMD_catch) {
+      skip = !skip && !(cstack->cs_idx >= 0
+                        && (cstack->cs_flags[cstack->cs_idx] & CSF_THROWN)
+                        && !(cstack->cs_flags[cstack->cs_idx] & CSF_CAUGHT));
+    } else if (ea.cmdidx == CMD_else || ea.cmdidx == CMD_elseif) {
+      skip = skip || !(cstack->cs_idx >= 0
+                       && !(cstack->cs_flags[cstack->cs_idx]
+                            & (CSF_ACTIVE | CSF_TRUE)));
+    } else if (ea.cmdidx == CMD_finally) {
+      skip = false;
+    } else if (ea.cmdidx != CMD_endif
+               && ea.cmdidx != CMD_endfor
+               && ea.cmdidx != CMD_endtry
+               && ea.cmdidx != CMD_endwhile) {
+      skip = ea.skip;
+    }
+
+    if (!skip) {
+      if (getline_equal(fgetline, cookie, get_func_line)) {
+        func_line_exec(getline_cookie(fgetline, cookie));
+      } else if (getline_equal(fgetline, cookie, getsourceline)) {
+        script_line_exec();
+      }
+    }
+  }
+
+  // May go to debug mode.  If this happens and the ">quit" debug command is
+  // used, throw an interrupt exception and skip the next command.
+  dbg_check_breakpoint(&ea);
+  if (!ea.skip && got_int) {
+    ea.skip = TRUE;
+    (void)do_intthrow(cstack);
+  }
+
+  // 4. Parse a range specifier of the form: addr [,addr] [;addr] ..
+  //
+  // where 'addr' is:
+  //
+  // %  (entire file)
+  // $  [+-NUM]
+  // 'x [+-NUM] (where x denotes a currently defined mark)
+  // .  [+-NUM]
+  // [+-NUM]..
+  // NUM
+  //
+  // The ea.cmd pointer is updated to point to the first character following the
+  // range spec. If an initial address is found, but no second, the upper bound
+  // is equal to the lower.
 
   // ea.addr_type for user commands is set by find_ucmd
   if (!IS_USER_CMDIDX(ea.cmdidx)) {
