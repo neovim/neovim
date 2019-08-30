@@ -53,6 +53,14 @@ func Test_vim_function()
   delfunc s:foo
 endfunc
 
+func Test_skipped_python_command_does_not_affect_pyxversion()
+  set pyxversion=0
+  if 0
+    python import vim
+  endif
+  call assert_equal(0, &pyxversion)  " This assertion would have failed with Vim 8.0.0251. (pyxversion was introduced in 8.0.0251.)
+endfunc
+
 func _SetUpHiddenBuffer()
   py import vim
   new
