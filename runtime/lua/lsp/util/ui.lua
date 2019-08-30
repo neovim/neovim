@@ -1,8 +1,6 @@
 local ui = {}
 
 ui.open_floating_preview = function(self, contents, filetype)
-  local pos = vim.api.nvim_call_function('getpos', { '.' })
-
   local width = 0
   local height = 0
 
@@ -17,7 +15,7 @@ ui.open_floating_preview = function(self, contents, filetype)
 
   local floating_bufnr = vim.api.nvim_create_buf(false, true)
 
-  local float_option = self.get_floating_window_option(pos, width, height)
+  local float_option = self.get_floating_window_option(width, height)
   local floating_winnr = vim.api.nvim_open_win(floating_bufnr, true, float_option)
 
   vim.api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
@@ -32,12 +30,11 @@ ui.open_floating_preview = function(self, contents, filetype)
   vim.api.nvim_command("autocmd CursorMoved <buffer> ++once :"..floating_win.."wincmd c")
 end
 
-ui.get_floating_window_option = function(position, width, height)
-  local bottom_line = vim.api.nvim_call_function('line', { 'w0' }) + vim.api.nvim_win_get_height(0) - 1
+ui.get_floating_window_option = function(width, height)
   local anchor = ''
   local row, col
 
-  if position[1] + height <= bottom_line then
+  if vim.api.nvim_call_function("winline", {}) <= height then
     anchor = anchor..'N'
     row = 1
   else
@@ -45,7 +42,7 @@ ui.get_floating_window_option = function(position, width, height)
     row = 0
   end
 
-  if position[2] + width <= vim.api.nvim_get_option('columns') then
+  if vim.api.nvim_call_function("wincol", {}) + width <= vim.api.nvim_get_option('columns') then
       anchor = anchor..'W'
       col = 0
   else
