@@ -793,11 +793,12 @@ nvim_get_namespaces()                                  *nvim_get_namespaces()*
                 Return: ~
                     dict that maps from names to namespace ids.
 
-nvim_paste({data}, {phase})                                     *nvim_paste()*
+nvim_paste({data}, {crlf}, {phase})                             *nvim_paste()*
                 Pastes at cursor, in any mode.
 
                 Invokes the `vim.paste` handler, which handles each mode
                 appropriately. Sets redo/undo. Faster than |nvim_input()|.
+                Lines break at LF ("\n").
 
                 Errors ('nomodifiable', `vim.paste()` failure, …) are
                 reflected in `err` but do not affect the return value (which
@@ -808,6 +809,7 @@ nvim_paste({data}, {phase})                                     *nvim_paste()*
                 Parameters: ~
                     {data}   Multiline input. May be binary (containing NUL
                              bytes).
+                    {crlf}   Also break lines at CR and CRLF.
                     {phase}  -1: paste in a single call (i.e. without
                              streaming). To "stream" a paste, call `nvim_paste` sequentially with these `phase` values:
                              • 1: starts the paste (exactly once)

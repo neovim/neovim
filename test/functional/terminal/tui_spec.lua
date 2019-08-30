@@ -400,6 +400,17 @@ describe('TUI', function()
     ]]}
   end)
 
+  it('paste: vim.paste() cancel (retval=false) #10865', function()
+    -- This test only exercises the "cancel" case.  Use-case would be "dangling
+    -- paste", but that is not implemented yet. #10865
+    child_session:request('nvim_execute_lua', [[
+      vim.paste = function(lines, phase) return false end
+    ]], {})
+    feed_data('\027[200~line A\nline B\n\027[201~')
+    feed_data('ifoo\n\027\000')
+    expect_child_buf_lines({'foo',''})
+  end)
+
   it("paste: 'nomodifiable' buffer", function()
     child_session:request('nvim_command', 'set nomodifiable')
     feed_data('\027[200~fail 1\nfail 2\n\027[201~')

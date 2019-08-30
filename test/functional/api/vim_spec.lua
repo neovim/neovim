@@ -369,13 +369,13 @@ describe('API', function()
   describe('nvim_paste', function()
     it('validates args', function()
       expect_err('Invalid phase: %-2', request,
-        'nvim_paste', 'foo', -2)
+        'nvim_paste', 'foo', true, -2)
       expect_err('Invalid phase: 4', request,
-        'nvim_paste', 'foo', 4)
+        'nvim_paste', 'foo', true, 4)
     end)
     it('non-streaming', function()
       -- With final "\n".
-      nvim('paste', 'line 1\nline 2\nline 3\n', -1)
+      nvim('paste', 'line 1\nline 2\nline 3\n', true, -1)
       expect([[
         line 1
         line 2
@@ -385,7 +385,7 @@ describe('API', function()
       eq(false, nvim('get_option', 'paste'))
       command('%delete _')
       -- Without final "\n".
-      nvim('paste', 'line 1\nline 2\nline 3', -1)
+      nvim('paste', 'line 1\nline 2\nline 3', true, -1)
       expect([[
         line 1
         line 2
@@ -393,7 +393,7 @@ describe('API', function()
       eq({0,3,6,0}, funcs.getpos('.'))
       command('%delete _')
       -- CRLF #10872
-      nvim('paste', 'line 1\r\nline 2\r\nline 3\r\n', -1)
+      nvim('paste', 'line 1\r\nline 2\r\nline 3\r\n', true, -1)
       expect([[
         line 1
         line 2
@@ -402,7 +402,7 @@ describe('API', function()
       eq({0,4,1,0}, funcs.getpos('.'))
       command('%delete _')
       -- CRLF without final "\n".
-      nvim('paste', 'line 1\r\nline 2\r\nline 3\r', -1)
+      nvim('paste', 'line 1\r\nline 2\r\nline 3\r', true, -1)
       expect([[
         line 1
         line 2
@@ -411,7 +411,7 @@ describe('API', function()
       eq({0,4,1,0}, funcs.getpos('.'))
       command('%delete _')
       -- CRLF without final "\r\n".
-      nvim('paste', 'line 1\r\nline 2\r\nline 3', -1)
+      nvim('paste', 'line 1\r\nline 2\r\nline 3', true, -1)
       expect([[
         line 1
         line 2
@@ -419,15 +419,20 @@ describe('API', function()
       eq({0,3,6,0}, funcs.getpos('.'))
       command('%delete _')
       -- Various other junk.
-      nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', -1)
+      nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', true, -1)
       expect('line 1\n\n\nline 2\nline 3\nline 4\n')
       eq({0,7,1,0}, funcs.getpos('.'))
       eq(false, nvim('get_option', 'paste'))
     end)
+    it('crlf=false does not break lines at CR, CRLF', function()
+      nvim('paste', 'line 1\r\n\r\rline 2\nline 3\rline 4\r', false, -1)
+      expect('line 1\r\n\r\rline 2\nline 3\rline 4\r')
+      eq({0,3,14,0}, funcs.getpos('.'))
+    end)
     it('vim.paste() failure', function()
       nvim('execute_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
       expect_err([[Error executing lua: %[string "%<nvim>"]:1: fake fail]],
-        request, 'nvim_paste', 'line 1\nline 2\nline 3', 1)
+        request, 'nvim_paste', 'line 1\nline 2\nline 3', false, 1)
     end)
   end)
 
