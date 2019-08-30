@@ -96,6 +96,13 @@ jobs:
         - CLANG_SANITIZER=ASAN_UBSAN
         - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
         - *common-job-env
+    - stage: second stage
+      name: "macOS: clang"
+      os: osx
+      compiler: clang
+      osx_image: xcode10.2  # macOS 10.14
+      env:
+        - *common-job-env
   fast_finish: true
 
 before_install: ci/before_install.sh
