@@ -1307,27 +1307,17 @@ int call_vim_function(
     const char_u *func,
     int argc,
     typval_T *argv,
-    typval_T *rettv,
-    bool safe                       // use the sandbox
+    typval_T *rettv
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   int doesrange;
-  void        *save_funccalp = NULL;
   int ret;
-
-  if (safe) {
-    save_funccalp = save_funccal();
-    ++sandbox;
-  }
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
   ret = call_func(func, (int)STRLEN(func), rettv, argc, argv, NULL,
                   curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                   &doesrange, true, NULL, NULL);
-  if (safe) {
-    --sandbox;
-    restore_funccal(save_funccalp);
-  }
 
   if (ret == FAIL) {
     tv_clear(rettv);
@@ -1340,16 +1330,16 @@ int call_vim_function(
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
 /// @param[in]  argv  Array with typval_T arguments.
-/// @param[in]  safe  Use with sandbox.
 ///
 /// @return -1 when calling function fails, result of function otherwise.
-varnumber_T call_func_retnr(char_u *func, int argc,
-                            typval_T *argv, int safe)
+varnumber_T call_func_retnr(const char_u *func, int argc,
+                            typval_T *argv)
+  FUNC_ATTR_NONNULL_ALL
 {
   typval_T rettv;
   varnumber_T retval;
 
-  if (call_vim_function(func, argc, argv, &rettv, safe) == FAIL) {
+  if (call_vim_function(func, argc, argv, &rettv) == FAIL) {
     return -1;
   }
   retval = tv_get_number_chk(&rettv, NULL);
@@ -1361,18 +1351,16 @@ varnumber_T call_func_retnr(char_u *func, int argc,
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
 /// @param[in]  argv  Array with typval_T arguments.
-/// @param[in]  safe  Use the sandbox.
 ///
 /// @return [allocated] NULL when calling function fails, allocated string
 ///                     otherwise.
 char *call_func_retstr(const char *const func, int argc,
-                       typval_T *argv,
-                       bool safe)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+                       typval_T *argv)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   typval_T rettv;
   // All arguments are passed as strings, no conversion to number.
-  if (call_vim_function((const char_u *)func, argc, argv, &rettv, safe)
+  if (call_vim_function((const char_u *)func, argc, argv, &rettv)
       == FAIL) {
     return NULL;
   }
@@ -1386,17 +1374,16 @@ char *call_func_retstr(const char *const func, int argc,
 /// @param[in]  func  Function name.
 /// @param[in]  argc  Number of arguments.
 /// @param[in]  argv  Array with typval_T arguments.
-/// @param[in]  safe  Use the sandbox.
 ///
 /// @return [allocated] NULL when calling function fails or return tv is not a
 ///                     List, allocated List otherwise.
-void *call_func_retlist(char_u *func, int argc, typval_T *argv,
-                        bool safe)
+void *call_func_retlist(const char_u *func, int argc, typval_T *argv)
+  FUNC_ATTR_NONNULL_ALL
 {
   typval_T rettv;
 
   // All arguments are passed as strings, no conversion to number.
-  if (call_vim_function(func, argc, argv, &rettv, safe) == FAIL) {
+  if (call_vim_function(func, argc, argv, &rettv) == FAIL) {
     return NULL;
   }
 
