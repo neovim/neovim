@@ -394,6 +394,22 @@ list_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
   declare -A tokens
   declare -A vim_commit_tags
+  declare -a git_log_args
+
+  # Massage arguments for git-log.
+  declare -A git_log_replacements=(
+    [^\(.*/\)?src/nvim/\(.*\)]="\${BASH_REMATCH[1]}src/\${BASH_REMATCH[2]}"
+    [^\(.*/\)?\.vim-src/\(.*\)]="\${BASH_REMATCH[2]}"
+  )
+  for i in "$@"; do
+    for j in "${!git_log_replacements[@]}"; do
+      if [[ "$i" =~ $j ]]; then
+        eval "git_log_args+=(${git_log_replacements[$j]})"
+        continue 2
+      fi
+    done
+    git_log_args+=("$i")
+  done
 
   # Find all "vim-patch:xxx" tokens in the Nvim git log.
   for token in $(list_vimpatch_tokens); do
@@ -414,7 +430,7 @@ list_missing_vimpatches() {
   fi
 
   # Get missing Vim commits
-  for vim_commit in $(list_vim_commits "$@"); do
+  for vim_commit in $(list_vim_commits "${git_log_args[@]}"); do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${vim_commit:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
@@ -436,6 +452,7 @@ list_missing_vimpatches() {
 }
 
 # Prints a human-formatted list of Vim commits, with instructional messages.
+# Passes "$@" onto list_missing_vimpatches (args for git-log).
 show_vimpatches() {
   get_vim_sources
   printf "\nVim patches missing from Neovim:\n"
