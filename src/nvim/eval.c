@@ -6437,6 +6437,10 @@ call_func(
   typval_T argv[MAX_FUNC_ARGS + 1];  // used when "partial" is not NULL
   int argv_clear = 0;
 
+  // Initialize rettv so that it is safe for caller to invoke clear_tv(rettv)
+  // even when call_func() returns FAIL.
+  rettv->v_type = VAR_UNKNOWN;
+
   // Make a copy of the name, if it comes from a funcref variable it could
   // be changed or deleted in the called function.
   name = vim_strnsave(funcname, len);
@@ -6465,13 +6469,7 @@ call_func(
     }
   }
 
-
-  // Execute the function if executing and no errors were detected.
-  if (!evaluate) {
-    // Not evaluating, which means the return value is unknown.  This
-    // matters for giving error messages.
-    rettv->v_type = VAR_UNKNOWN;
-  } else if (error == ERROR_NONE) {
+  if (error == ERROR_NONE && evaluate) {
     char_u *rfname = fname;
 
     /* Ignore "g:" before a function name. */
