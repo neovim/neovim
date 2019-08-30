@@ -143,10 +143,13 @@ func Test_getftype()
   endif
 
   for cdevfile in systemlist('find /dev -type c -maxdepth 2 2>/dev/null')
-    let type = getftype(cdevfile)
-    " ignore empty result, can happen if the file disappeared
-    if type != ''
-      call assert_equal('cdev', type)
+    " On Mac /def/fd/2 is found but the type is "fifo"
+    if cdevfile !~ '/dev/fd/'
+      let type = getftype(cdevfile)
+      " ignore empty result, can happen if the file disappeared
+      if type != ''
+	call assert_equal('cdev', type, 'for ' .. cdevfile)
+      endif
     endif
   endfor
 
@@ -154,7 +157,7 @@ func Test_getftype()
     let type = getftype(bdevfile)
     " ignore empty result, can happen if the file disappeared
     if type != ''
-      call assert_equal('bdev', type)
+      call assert_equal('bdev', type, 'for ' .. bdevfile)
     endif
   endfor
 
@@ -164,7 +167,7 @@ func Test_getftype()
     let type = getftype(socketfile)
     " ignore empty result, can happen if the file disappeared
     if type != ''
-      call assert_equal('socket', type)
+      call assert_equal('socket', type, 'for ' .. socketfile)
     endif
   endfor
 
