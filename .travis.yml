@@ -49,6 +49,7 @@ env:
     - CCACHE_CPP2=1
     # Add ~/.local/bin to PATH (used by pip).
     - PATH="$HOME/.local/bin:$PATH"
+    - TEST_FILE=test_python3.res
 
 anchors:
   envs: &common-job-env
