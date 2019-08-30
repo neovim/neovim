@@ -114,8 +114,8 @@ cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 .\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
 
 # Ensure Python is available.
-.\bin\nvim -u NONE -c 'exe !has(\"python\").\"cq\"' ; exitIfFailed
-.\bin\nvim -u NONE -c 'exe !has(\"python3\").\"cq\"' ; exitIfFailed
+.\bin\nvim -u NONE --headless -c 'exe !has(\"python\").\"cq\"' ; exitIfFailed
+.\bin\nvim -u NONE --headless -c 'exe !has(\"python3\").\"cq\"' ; exitIfFailed
 
 # Old tests
 # Add MSYS to path, required for e.g. `find` used in test scripts.
