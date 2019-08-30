@@ -518,6 +518,35 @@ describe('API', function()
         line 3]])
       eq({0,3,6,0}, funcs.getpos('.'))
     end)
+
+    it('allows block width', function()
+      -- behave consistently with setreg(); support "\022{NUM}" return by getregtype()
+      meths.put({'line 1','line 2','line 3'}, 'l', false, false)
+      expect([[
+        line 1
+        line 2
+        line 3
+        ]])
+
+      -- larger width create spaces
+      meths.put({'a', 'bc'}, 'b3', false, false)
+      expect([[
+        a  line 1
+        bc line 2
+        line 3
+        ]])
+      -- smaller width is ignored
+      meths.put({'xxx', 'yyy'}, '\0221', false, true)
+      expect([[
+        xxxa  line 1
+        yyybc line 2
+        line 3
+        ]])
+      eq({false, "Invalid type: 'bx'"},
+         meth_pcall(meths.put, {'xxx', 'yyy'}, 'bx', false, true))
+      eq({false, "Invalid type: 'b3x'"},
+         meth_pcall(meths.put, {'xxx', 'yyy'}, 'b3x', false, true))
+    end)
   end)
 
   describe('nvim_strwidth', function()

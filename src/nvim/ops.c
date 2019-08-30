@@ -5685,9 +5685,6 @@ end:
 /// @param[out] reg Expected to be empty
 bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
 {
-  if (regtype.size > 1) {
-    return false;
-  }
   char type = regtype.data ? regtype.data[0] : NUL;
 
   switch (type) {
@@ -5705,6 +5702,23 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
     break;
   default:
     return false;
+  }
+
+  reg->y_width = 0;
+  if (regtype.size > 1) {
+    if (reg->y_type != kMTBlockWise) {
+      return false;
+    }
+
+    // allow "b7" for a block at least 7 spaces wide
+    if (!ascii_isdigit(regtype.data[1])) {
+      return false;
+    }
+    const char *p = regtype.data+1;
+    reg->y_width = getdigits_int((char_u **)&p)-1;
+    if (regtype.size > (size_t)(p-regtype.data)) {
+      return false;
+    }
   }
 
   reg->y_array = xcalloc(lines, sizeof(uint8_t *));
@@ -5743,7 +5757,7 @@ void finish_yankreg_from_object(yankreg_T *reg, bool clipboard_adjust)
       }
     }
     assert(maxlen <= INT_MAX);
-    reg->y_width = (int)maxlen - 1;
+    reg->y_width = MAX(reg->y_width, (int)maxlen - 1);
   }
 }
 
