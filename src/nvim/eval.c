@@ -22147,16 +22147,18 @@ void func_dump_profile(FILE *fd)
         } else {
           fprintf(fd, "FUNCTION  %s()\n", fp->uf_name);
         }
-        bool should_free;
-        const LastSet last_set = (LastSet){
-          .script_ctx = fp->uf_script_ctx,
-          .channel_id = 0,
-        };
-        char_u *p = get_scriptname(last_set, &should_free);
-        fprintf(fd, "    Defined: %s line %" PRIdLINENR "\n",
-                p, fp->uf_script_ctx.sc_lnum);
-        if (should_free) {
-          xfree(p);
+        if (fp->uf_script_ctx.sc_sid != 0) {
+          bool should_free;
+          const LastSet last_set = (LastSet){
+            .script_ctx = fp->uf_script_ctx,
+              .channel_id = 0,
+          };
+          char_u *p = get_scriptname(last_set, &should_free);
+          fprintf(fd, "    Defined: %s line %" PRIdLINENR "\n",
+                  p, fp->uf_script_ctx.sc_lnum);
+          if (should_free) {
+            xfree(p);
+          }
         }
         if (fp->uf_tm_count == 1) {
           fprintf(fd, "Called 1 time\n");

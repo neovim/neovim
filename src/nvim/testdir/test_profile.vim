@@ -3,6 +3,8 @@ if !has('profile')
   finish
 endif
 
+source screendump.vim
+
 func Test_profile_func()
   let lines = [
     \ 'profile start Xprofile_func.log',
@@ -517,4 +519,32 @@ func Test_profdel_star()
 
   call delete('Xprofile_file.vim')
   call delete('Xprofile_file.log')
+endfunc
+
+" When typing the function it won't have a script ID, test that this works.
+func Test_profile_typed_func()
+  if !CanRunVimInTerminal()
+    throw 'Skipped: cannot run Vim in a terminal window'
+  endif
+
+  let lines =<< trim END
+      profile start XprofileTypedFunc
+  END
+  call writefile(lines, 'XtestProfile')
+  let buf = RunVimInTerminal('-S XtestProfile', #{})
+
+  call term_sendkeys(buf, ":func DoSomething()\<CR>"
+	\ .. "echo 'hello'\<CR>"
+	\ .. "endfunc\<CR>")
+  call term_sendkeys(buf, ":profile func DoSomething\<CR>")
+  call term_sendkeys(buf, ":call DoSomething()\<CR>")
+  call term_wait(buf, 200)
+  call StopVimInTerminal(buf)
+  let lines = readfile('XprofileTypedFunc')
+  call assert_equal("FUNCTION  DoSomething()", lines[0])
+  call assert_equal("Called 1 time", lines[1])
+
+  " clean up
+  call delete('XprofileTypedFunc')
+  call delete('XtestProfile')
 endfunc
