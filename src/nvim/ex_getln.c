@@ -198,10 +198,7 @@ static Array cmdline_block = ARRAY_DICT_INIT;
 /*
  * Type used by call_user_expand_func
  */
-typedef void *(*user_expand_func_T)(const char_u *,
-                                    int,
-                                    typval_T *,
-                                    bool);
+typedef void *(*user_expand_func_T)(const char_u *, int, typval_T *);
 
 static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL};
 static int hisidx[HIST_COUNT] = {-1, -1, -1, -1, -1};       /* lastused entry */
@@ -5059,12 +5056,12 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
 /// return the result (either a string or a List).
 static void * call_user_expand_func(user_expand_func_T user_expand_func,
                                     expand_T *xp, int *num_file, char_u ***file)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u keep = 0;
   typval_T args[4];
   char_u *pat = NULL;
   int save_current_SID = current_SID;
-  void        *ret;
   struct cmdline_info save_ccline;
 
   if (xp->xp_arg == NULL || xp->xp_arg[0] == '\0' || xp->xp_line == NULL)
@@ -5092,10 +5089,7 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
   ccline.cmdprompt = NULL;
   current_SID = xp->xp_scriptID;
 
-  ret = user_expand_func(xp->xp_arg,
-                         3,
-                         args,
-                         false);
+  void *const ret = user_expand_func(xp->xp_arg, 3, args);
 
   ccline = save_ccline;
   current_SID = save_current_SID;
