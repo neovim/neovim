@@ -124,7 +124,7 @@ end
 
 function module.check_logs()
   local log_dir = os.getenv('LOG_DIR')
-  local runtime_errors = 0
+  local runtime_errors = {}
   if log_dir and lfs.attributes(log_dir, 'mode') == 'directory' then
     for tail in lfs.dir(log_dir) do
       if tail:sub(1, 30) == 'valgrind-' or tail:find('san%.') then
@@ -148,12 +148,14 @@ function module.check_logs()
           out:write(start_msg .. '\n')
           out:write('= ' .. table.concat(lines, '\n= ') .. '\n')
           out:write(select(1, start_msg:gsub('.', '=')) .. '\n')
-          runtime_errors = runtime_errors + 1
+          table.insert(runtime_errors, file)
         end
       end
     end
   end
-  assert(0 == runtime_errors)
+  assert(0 == #runtime_errors, string.format(
+    'Found runtime errors in logfile(s): %s',
+    table.concat(runtime_errors, ', ')))
 end
 
 -- Tries to get platform name from $SYSTEM_NAME, uname; fallback is "Windows".
