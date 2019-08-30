@@ -30,12 +30,12 @@ env | sort
 command -v python
 python --version
 python -c 'print(__import__("sys").path)'
-build/bin/nvim --headless -c 'py3 import vim; print(vim, __import__("inspect").getfile(vim.__class__))' -cq
+build/bin/nvim --headless -u NONE -c 'py3 import vim; print(vim, __import__("inspect").getfile(vim.__class__))' -cq
 
-build/bin/nvim -u NONE -c 'exe !has("python")."cq"' || { echo "Python 2 is not available"; exit 1;}
-build/bin/nvim -u NONE -c 'exe !has("python3")."cq"' || { echo "Python 3 is not available"; exit 1;}
+build/bin/nvim --headless -u NONE -c 'exe !has("python")."cq"' || { echo "Python 2 is not available"; exit 1;}
+build/bin/nvim --headless -u NONE -c 'exe !has("python3")."cq"' || { echo "Python 3 is not available"; exit 1;}
 
-nvim -u NONE -c checkhealth -c 'call writefile(getline(1, "$"), "/tmp/checkhealth.txt")' -cqall | cat -vet
+nvim --headless -u NONE -c checkhealth -c 'call writefile(getline(1, "$"), "/tmp/checkhealth.txt")' -cqall | cat -vet
 cat -vet /tmp/checkhealth.txt
 set +x
 
