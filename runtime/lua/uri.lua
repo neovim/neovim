@@ -1,4 +1,4 @@
---- TODO: This is implementted only for file now.
+--- TODO: This is implemented only for files now.
 -- https://tools.ietf.org/html/rfc3986
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
@@ -96,7 +96,7 @@ URI.uri_encode = function(text, rfc)
       --- RFC 2732
       -- https://tools.ietf.org/html/rfc2732
       pattern = "^A-Za-z0-9%-_.!~*'()"
-    elseif rfc == 'rfc2732' or rfc == nil then
+    elseif rfc == 'rfc3986' or rfc == nil then
       --- RFC 3986
       -- https://tools.ietf.org/html/rfc3986#section-2.2
       pattern = "^A-Za-z0-9%-_.!~"
