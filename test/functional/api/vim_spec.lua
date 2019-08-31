@@ -373,6 +373,35 @@ describe('API', function()
       expect_err('Invalid phase: 4', request,
         'nvim_paste', 'foo', true, 4)
     end)
+    it('stream: multiple chunks form one undo-block', function()
+      nvim('paste', '1/chunk 1 (start)\n', true, 1)
+      nvim('paste', '1/chunk 2 (end)\n', true, 3)
+      local expected1 = [[
+        1/chunk 1 (start)
+        1/chunk 2 (end)
+        ]]
+      expect(expected1)
+      nvim('paste', '2/chunk 1 (start)\n', true, 1)
+      nvim('paste', '2/chunk 2\n', true, 2)
+      expect([[
+        1/chunk 1 (start)
+        1/chunk 2 (end)
+        2/chunk 1 (start)
+        2/chunk 2
+        ]])
+      nvim('paste', '2/chunk 3\n', true, 2)
+      nvim('paste', '2/chunk 4 (end)\n', true, 3)
+      expect([[
+        1/chunk 1 (start)
+        1/chunk 2 (end)
+        2/chunk 1 (start)
+        2/chunk 2
+        2/chunk 3
+        2/chunk 4 (end)
+        ]])
+      feed('u')  -- Undo.
+      expect(expected1)
+    end)
     it('non-streaming', function()
       -- With final "\n".
       nvim('paste', 'line 1\nline 2\nline 3\n', true, -1)
