@@ -134,23 +134,11 @@ static void tinput_wait_enqueue(void **argv)
 
 static void tinput_paste_event(void **argv)
 {
-  static bool canceled = false;
-
   String keys = { .data = argv[0], .size = (size_t)argv[1] };
   intptr_t phase = (intptr_t)argv[2];
 
-  if (phase == -1 || phase == 1) {
-    canceled = false;
-  }
-
   Error err = ERROR_INIT;
-  if (!canceled) {
-    if (!nvim_paste(keys, true, phase, &err)) {
-      // paste failed, ingore further segments of the same paste
-      canceled = true;
-    }
-  }
-
+  nvim_paste(keys, true, phase, &err);
   if (ERROR_SET(&err)) {
     emsgf("paste: %s", err.msg);
     api_clear_error(&err);
