@@ -304,6 +304,7 @@ Dictionary ctx_pack_func(ufunc_T *fp, Error *err)
 
   PUT(entry, "definition", def);
   PUT(entry, "sid", INTEGER_OBJ(fp->uf_script_ctx.sc_sid));
+
   if (fp->uf_flags & FC_SANDBOX) {
     PUT(entry, "sandboxed", BOOLEAN_OBJ(true));
   }
@@ -387,15 +388,15 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
   HASHTAB_ITER(&func_hashtab, hi, {
     ufunc_T *fp = HI2UF(hi);
-    bool islambda = (STRNCMP(fp->uf_name, "<lambda>", 8) == 0);
+    bool refcounted = func_name_refcount(fp->uf_name);
     bool isscript = (fp->uf_name[0] == K_SPECIAL);
 
-    if (!islambda && (!scriptonly || isscript)) {
+    if (!refcounted && (!scriptonly || isscript)) {
       Dictionary func = ctx_pack_func(fp, &err);
       if (ERROR_SET(&err)) {
-        EMSG2("Context: function: %s", err.msg);
+        EMSG3("Context: function (%s): %s", fp->uf_name, err.msg);
         api_clear_error(&err);
-        continue;
+        break;
       }
       ADD(ctx->funcs, DICTIONARY_OBJ(func));
     }

@@ -22683,7 +22683,7 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
-static bool func_name_refcount(char_u *name)
+bool func_name_refcount(char_u *name)
 {
   return isdigit(*name) || *name == '<';
 }
