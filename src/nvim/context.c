@@ -284,29 +284,46 @@ void ctx_save_lvars(Context *ctx, funccall_T *fc)
 /// lambda functions cannot be defined with ":func" or directly called, hence
 /// they will be prefixed with "<SNR>_lambda_" instead of "<lambda>".
 ///
-/// @param[in]   fp   Function pointer.
-/// @param[out]  err  Error details, if any.
+/// @param[in]   fp    Function pointer.
+/// @param[out]  name  If not NULL, function name as used in context is saved
+///                    here.
+/// @param[out]  err   Error details, if any.
 ///
 /// @return Function entry as a Dictionary.
-Dictionary ctx_pack_func(ufunc_T *fp, Error *err)
-  FUNC_ATTR_NONNULL_ALL
+Dictionary ctx_pack_func(ufunc_T *fp, String *name, Error *err)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
 {
   Dictionary entry = ARRAY_DICT_INIT;
   Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_as_string((char *)fp->uf_name)));
-  Object def = EXEC_LUA_STATIC("return vim._ctx_get_func_def(...)", args, err);
+  Object rv = EXEC_LUA_STATIC("return vim._ctx_pack_func(...)", args, err);
   xfree(args.items);
 
   if (ERROR_SET(err)) {
-    api_free_object(def);
+    api_free_object(rv);
     goto end;
   }
 
-  PUT(entry, "definition", def);
+  assert(rv.type == kObjectTypeArray);
+  Array rv_array = rv.data.array;
+  assert(rv_array.size == 2);
+  assert(rv_array.items[0].type == kObjectTypeString);
+  assert(rv_array.items[1].type == kObjectTypeString);
+
+  if (name != NULL) {
+    *name = rv_array.items[0].data.string;
+  } else {
+    api_free_object(rv_array.items[0]);
+  }
+
+  PUT(entry, "definition", rv_array.items[1]);
   PUT(entry, "sid", INTEGER_OBJ(fp->uf_script_ctx.sc_sid));
+
   if (fp->uf_flags & FC_SANDBOX) {
     PUT(entry, "sandboxed", BOOLEAN_OBJ(true));
   }
+
+  xfree(rv_array.items);
 
 end:
   return entry;
@@ -387,15 +404,15 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
 
   HASHTAB_ITER(&func_hashtab, hi, {
     ufunc_T *fp = HI2UF(hi);
-    bool islambda = ISLAMBDA(fp->uf_name);
-    bool isscript = (fp->uf_name[0] == K_SPECIAL) && !islambda;
+    bool refcounted = func_name_refcount(fp->uf_name);
+    bool isscript = (fp->uf_name[0] == K_SPECIAL);
 
-    if (!islambda && (!scriptonly || isscript)) {
-      Dictionary func = ctx_pack_func(fp, &err);
+    if (!refcounted && (!scriptonly || isscript)) {
+      Dictionary func = ctx_pack_func(fp, NULL, &err);
       if (ERROR_SET(&err)) {
-        EMSG2("Context: function: %s", err.msg);
+        EMSG3("Context: function (%s): %s", fp->uf_name, err.msg);
         api_clear_error(&err);
-        continue;
+        break;
       }
       ADD(ctx->funcs, DICTIONARY_OBJ(func));
     }

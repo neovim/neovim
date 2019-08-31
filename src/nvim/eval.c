@@ -7610,6 +7610,7 @@ static void asynccall_get_userfunc(
     Dictionary *ctx_dict, char **name, Error *err)
   FUNC_ATTR_NONNULL_ALL
 {
+  Context ctx = CONTEXT_INIT;
   char_u fname_buf[FLEN_FIXED + 1];
   char_u *tofree = NULL;
   int error;
@@ -7625,33 +7626,23 @@ static void asynccall_get_userfunc(
     return;
   }
 
-  Dictionary func = ctx_pack_func(fp, err);
+  String new_name = STRING_INIT;
+  Dictionary func = ctx_pack_func(fp, &new_name, err);
   if (ERROR_SET(err)) {
+    api_free_string(new_name);
     return;
   }
 
   // Pack function
-  Context ctx = CONTEXT_INIT;
   ADD(ctx.funcs, DICTIONARY_OBJ(func));
 
   // Pack l: vars for closure
   ctx_save_lvars(&ctx, fp->uf_scoped);
-  Dictionary ctx_tmp = ctx_to_dict(&ctx);
+
+  *ctx_dict = ctx_to_dict(&ctx);
+  *name = new_name.data;
+
   ctx_free(&ctx);
-
-  Array args = ARRAY_DICT_INIT;
-  ADD(args, STRING_OBJ(cstr_as_string(*name)));
-  Object new_name = EXEC_LUA_STATIC(
-      "return vim._ctx_get_func_name(...)", args, err);
-  xfree(args.items);
-  if (ERROR_SET(err)) {
-    api_free_dictionary(ctx_tmp);
-    api_free_object(new_name);
-    return;
-  }
-
-  *ctx_dict = ctx_tmp;
-  *name = new_name.data.string.data;
 }
 
 /// "call_async(callee, args[, opts])" function
@@ -22777,7 +22768,7 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
-static bool func_name_refcount(char_u *name)
+bool func_name_refcount(char_u *name)
 {
   return isdigit(*name) || ISLAMBDA(name);
 }

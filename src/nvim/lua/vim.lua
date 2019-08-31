@@ -299,30 +299,20 @@ local function _async_invoke(ctx, callee_ctx, fn, args)
   return vim.api.nvim_call_function('<SNR>_lambda_CALL', {args})
 end
 
--- Returns function name for use in context dictionary.
--- Used by asynccall_get_userfunc() in "nvim/eval.c".
---
--- @param name Function name
---
--- @returns Function name as used in context
-local function _ctx_get_func_name(name)
-  name = name:gsub('^<lambda>', '<SNR>_lambda_')
-  return name
-end
-
--- Returns function definiton for use in context dictionary.
+-- Returns function name and definiton for use in context dictionary.
 -- Used by ctx_pack_func() in "nvim/context.c".
 --
 -- @param name Function name
 --
--- @returns Function definition string
-local function _ctx_get_func_def(name)
-  name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
+-- @returns { name, definition }
+local function _ctx_pack_func(name)
+  local new_name = name:gsub('^<lambda>', '<SNR>_lambda_')
+  name = name:gsub('^<lambda>(%d+)', '{"<lambda>%1"}')
   local def = vim.api.nvim_command_output('func '..name)
     :gsub('^%s*function <lambda>', 'function <SNR>_lambda_')
     :gsub('^%s*function', 'function!')
-    :gsub('\n[0-9]+', '\n')
-  return def
+    :gsub('\n%d+', '\n')
+  return {new_name, def}
 end
 
 -- Maps job ids of completed async calls to their results.
@@ -528,8 +518,7 @@ local module = {
   _grep = _grep,
   _create_nvim_job = _create_nvim_job,
   _async_invoke = _async_invoke,
-  _ctx_get_func_name = _ctx_get_func_name,
-  _ctx_get_func_def = _ctx_get_func_def,
+  _ctx_pack_func = _ctx_pack_func,
   _put_result = _put_result,
   _append_result = _append_result,
   _collect_results = _collect_results,
