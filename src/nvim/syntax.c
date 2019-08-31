@@ -4683,7 +4683,7 @@ syn_cmd_region(
    */
   for (item = ITEM_START; item <= ITEM_END; ++item)
     for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp_next) {
-      if (!success) {
+      if (!success && ppp->pp_synp != NULL) {
         vim_regfree(ppp->pp_synp->sp_prog);
         xfree(ppp->pp_synp->sp_pattern);
       }
