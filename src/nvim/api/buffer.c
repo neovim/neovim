@@ -453,6 +453,11 @@ void nvim_buf_set_lines(uint64_t channel_id,
   aco_save_T aco;
   aucmd_prepbuf(&aco, (buf_T *)buf);
 
+  if (!MODIFIABLE(buf)) {
+    api_set_error(err, kErrorTypeException, "Buffer is not 'modifiable'");
+    goto end;
+  }
+
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
     api_set_error(err, kErrorTypeException, "Failed to save undo information");
     goto end;

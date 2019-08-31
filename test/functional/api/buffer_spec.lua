@@ -14,6 +14,7 @@ local meth_pcall = helpers.meth_pcall
 local command = helpers.command
 local bufmeths = helpers.bufmeths
 local feed = helpers.feed
+local expect_err = helpers.expect_err
 
 describe('api/buf', function()
   before_each(clear)
@@ -195,6 +196,12 @@ describe('api/buf', function()
       local exp_emsg = 'String cannot contain newlines'
       -- Expected {filename}:{lnum}: {exp_emsg}
       eq(': ' .. exp_emsg, emsg:sub(-#exp_emsg - 2))
+    end)
+
+    it("fails if 'nomodifiable'", function()
+      command('set nomodifiable')
+      expect_err([[Buffer is not 'modifiable']],
+        bufmeths.set_lines, 1, 1, 2, false, {'a','b'})
     end)
 
     it('has correct line_count when inserting and deleting', function()
