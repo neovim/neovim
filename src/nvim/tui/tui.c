@@ -454,7 +454,7 @@ static void tui_scheduler(Event event, void *d)
 {
   UI *ui = d;
   TUIData *data = ui->data;
-  loop_schedule(data->loop, event);  // `tui_loop` local to tui_main().
+  loop_schedule_fast(data->loop, event);  // `tui_loop` local to tui_main().
 }
 
 #ifdef UNIX

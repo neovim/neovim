@@ -106,17 +106,15 @@ static void tinput_wait_enqueue(void **argv)
   RBUFFER_UNTIL_EMPTY(input->key_buffer, buf, len) {
     const String keys = { .data = buf, .size = len };
     if (input->paste) {
-      Error err = ERROR_INIT;
-      // Paste phase: "continue" (unless handler canceled).
-      input->paste = !nvim_paste(keys, true, input->paste, &err)
-        ? 0 : (1 == input->paste ? 2 : input->paste);
+      String copy = copy_string(keys);
+      multiqueue_put(main_loop.events, tinput_paste_event, 3,
+                     copy.data, copy.size, (intptr_t)input->paste);
+      if (input->paste == 1) {
+        // Paste phase: "continue"
+        input->paste = 2;
+      }
       rbuffer_consumed(input->key_buffer, len);
       rbuffer_reset(input->key_buffer);
-      if (ERROR_SET(&err)) {
-        // TODO(justinmk): emsgf() does not display, why?
-        msg_printf_attr(HL_ATTR(HLF_E)|MSG_HIST, "paste: %s", err.msg);
-        api_clear_error(&err);
-      }
     } else {
       const size_t consumed = input_enqueue(keys);
       if (consumed) {
@@ -134,12 +132,27 @@ static void tinput_wait_enqueue(void **argv)
   uv_mutex_unlock(&input->key_buffer_mutex);
 }
 
+static void tinput_paste_event(void **argv)
+{
+  String keys = { .data = argv[0], .size = (size_t)argv[1] };
+  intptr_t phase = (intptr_t)argv[2];
+
+  Error err = ERROR_INIT;
+  nvim_paste(keys, true, phase, &err);
+  if (ERROR_SET(&err)) {
+    emsgf("paste: %s", err.msg);
+    api_clear_error(&err);
+  }
+
+  api_free_string(keys);
+}
+
 static void tinput_flush(TermInput *input, bool wait_until_empty)
 {
   size_t drain_boundary = wait_until_empty ? 0 : 0xff;
   do {
     uv_mutex_lock(&input->key_buffer_mutex);
-    loop_schedule(&main_loop, event_create(tinput_wait_enqueue, 1, input));
+    loop_schedule_fast(&main_loop, event_create(tinput_wait_enqueue, 1, input));
     input->waiting = true;
     while (input->waiting) {
       uv_cond_wait(&input->key_buffer_cond, &input->key_buffer_mutex);
@@ -497,7 +510,7 @@ static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
   TermInput *input = data;
 
   if (eof) {
-    loop_schedule(&main_loop, event_create(tinput_done_event, 0));
+    loop_schedule_fast(&main_loop, event_create(tinput_done_event, 0));
     return;
   }
 
