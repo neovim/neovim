@@ -1,3 +1,4 @@
+local URI = require('uri')
 local util = {
   ui = require('lsp.util.ui'),
 }
@@ -11,8 +12,7 @@ util.get_buffer_lines = function(bufnr)
 end
 
 util.get_filename = function(uri)
-  -- TODO: Can't remember if this is the best way
-  return string.gsub(uri, 'file://', '')
+  return URI.filepath_from_uri(uri)
 end
 
 util.get_filetype = function(bufnr)

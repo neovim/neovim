@@ -128,12 +128,8 @@ end
 
 structures.InitializeParams = function(client)
   return {
-    -- Get neovim's process ID
     processId = vim.api.nvim_call_function('getpid', {}),
-
-    -- TODO(tjdevries): Give the user a way to specify this by filetype
-    rootUri = server_config.get_callback(client.filetype, 'root_uri')(),
-
+    rootUri = server_config.get_root_uri(client.filetype),
     capabilities = {
       textDocument = {
         synchronization = {

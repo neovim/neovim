@@ -22,6 +22,7 @@
 
 --  TODO: documentLink/resolve
 
+local URI = require('uri')
 local log = require('lsp.log')
 local nvim_util = require('nvim.util')
 local util = require('lsp.util')
@@ -96,7 +97,7 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
         range.start.line + 1,
         range.start.character + 1,
         '[' .. source .. ']' .. message,
-        util.get_filename(data.uri),
+        URI.filepath_from_uri(data.uri),
         message_type
       )
     end
@@ -293,7 +294,7 @@ BuiltinCallbacks['textDocument/definition'] = {
       return
     end
 
-    local data_file = util.get_filename(data.uri)
+    local data_file = URI.filepath_from_uri(data.uri)
 
     if data_file ~= util.get_uri(current_file) then
       vim.api.nvim_command('silent edit ' .. data_file)
