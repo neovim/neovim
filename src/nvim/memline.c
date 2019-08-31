@@ -1003,7 +1003,7 @@ void ml_recover(void)
     set_option_value("fenc", 0L, (char *)b0_fenc, OPT_LOCAL);
     xfree(b0_fenc);
   }
-  unchanged(curbuf, TRUE);
+  unchanged(curbuf, true, true);
 
   bnum = 1;             /* start with block 1 */
   page_count = 1;       /* which is 1 page */

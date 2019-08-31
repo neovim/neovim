@@ -144,7 +144,7 @@ read_buffer(
     if (!readonlymode && !BUFEMPTY()) {
       changed();
     } else if (retval != FAIL) {
-      unchanged(curbuf, false);
+      unchanged(curbuf, false, true);
     }
 
     apply_autocmds_retval(EVENT_STDINREADPOST, NULL, NULL, false,
@@ -299,7 +299,7 @@ int open_buffer(
       || (aborting() && vim_strchr(p_cpo, CPO_INTMOD) != NULL)) {
     changed();
   } else if (retval != FAIL && !read_stdin && !read_fifo) {
-    unchanged(curbuf, false);
+    unchanged(curbuf, false, true);
   }
   save_file_ff(curbuf);                 // keep this fileformat
 
@@ -641,13 +641,11 @@ void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
   }
 }
 
-/*
- * Make buffer not contain a file.
- */
+/// Make buffer not contain a file.
 void buf_clear_file(buf_T *buf)
 {
   buf->b_ml.ml_line_count = 1;
-  unchanged(buf, true);
+  unchanged(buf, true, true);
   buf->b_p_eol = true;
   buf->b_start_eol = true;
   buf->b_p_bomb = false;
