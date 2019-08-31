@@ -503,6 +503,19 @@ describe('context functions', function()
       matches('Not allowed in sandbox', pcall_err(call, 'SandboxedFunction'))
     end)
 
+    it('ignores refcounted functions', function()
+      source([[
+      let g:foo = {'name': 'Neovim'}
+      function g:foo.greet()
+        return 'Hello, '.self.name.'!'
+      endfunction
+      let g:Foo = { -> 'bar' }
+      ]])
+      eq('Hello, Neovim!', eval('foo.greet()'))
+      eq('bar', eval('Foo()'))
+      eq({}, eval([[nvim_get_context({'types': ['funcs']})]]))
+    end)
+
     it('errors out when context stack is empty', function()
       local err = 'Vim:Context stack is empty'
       eq(err, pcall_err(call, 'ctxpop'))
