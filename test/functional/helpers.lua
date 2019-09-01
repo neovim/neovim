@@ -304,7 +304,7 @@ local function nvim_feed(input)
     local written = module.request('nvim_input', input)
     if written == nil then
       module.assert_alive()
-      error('nvim_input returned nil (Nvim process terminated?)')
+      error('crash? (nvim_input returned nil)')
     end
     input = input:sub(written + 1)
   end
@@ -592,7 +592,7 @@ end
 
 -- Checks that the Nvim session did not terminate.
 function module.assert_alive()
-  eq(2, module.eval('1+1'))
+  assert(2 == module.eval('1+1'), 'crash? request failed')
 end
 
 local function do_rmdir(path)
