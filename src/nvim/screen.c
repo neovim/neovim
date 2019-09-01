@@ -152,6 +152,7 @@ static bool send_grid_resize = false;
 static bool conceal_cursor_used = false;
 
 static bool redraw_popupmenu = false;
+static bool msg_grid_invalid = false;
 
 static bool resizing = false;
 
@@ -318,27 +319,37 @@ int update_screen(int type)
   // Tricky: vim code can reset msg_scrolled behind our back, so need
   // separate bookkeeping for now.
   if (msg_did_scroll) {
-    ui_call_win_scroll_over_reset();
     msg_did_scroll = false;
+    msg_scrolled_at_flush = 0;
+  }
+
+  if (type >= CLEAR || !default_grid.valid) {
+    ui_comp_set_screen_valid(false);
   }
 
   // if the screen was scrolled up when displaying a message, scroll it down
-  if (msg_scrolled) {
+  if (msg_scrolled || msg_grid_invalid) {
     clear_cmdline = true;
-    if (dy_flags & DY_MSGSEP) {
-      int valid = MAX(Rows - msg_scrollsize(), 0);
-      if (valid == 0) {
-        redraw_tabline = true;
+    int valid = MAX(Rows - msg_scrollsize(), 0);
+    if (msg_grid.chars) {
+      // non-displayed part of msg_grid is considered invalid.
+      for (int i = 0; i < MIN(msg_scrollsize(), msg_grid.Rows); i++) {
+        grid_clear_line(&msg_grid, msg_grid.line_offset[i],
+                        (int)msg_grid.Columns, false);
       }
-      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-        if (W_ENDROW(wp) > valid) {
-          wp->w_redr_type = NOT_VALID;
-          wp->w_lines_valid = 0;
-        }
-        if (W_ENDROW(wp) + wp->w_status_height > valid) {
-          wp->w_redr_status = true;
+    }
+    if (msg_use_msgsep()) {
+      msg_grid.throttled = false;
+      // CLEAR is already handled
+      if (type == NOT_VALID && !ui_has(kUIMultigrid) && msg_scrolled) {
+        ui_comp_set_screen_valid(false);
+        for (int i = valid; i < Rows-p_ch; i++) {
+          grid_clear_line(&default_grid, default_grid.line_offset[i],
+                          Columns, false);
         }
       }
+      msg_grid_set_pos(Rows-p_ch, false);
+      msg_grid_invalid = false;
     } else if (msg_scrolled > Rows - 5) {  // clearing is faster
       type = CLEAR;
     } else if (type != CLEAR) {
@@ -368,12 +379,10 @@ int update_screen(int type)
       redraw_tabline = TRUE;
     }
     msg_scrolled = 0;
-    need_wait_return = FALSE;
+    msg_scrolled_at_flush = 0;
+    need_wait_return = false;
   }
 
-  if (type >= CLEAR || !default_grid.valid) {
-    ui_comp_set_screen_valid(false);
-  }
   win_ui_flush_positions();
   msg_ext_check_clear();
 
@@ -394,6 +403,11 @@ int update_screen(int type)
     grid_invalidate(&default_grid);
     default_grid.valid = true;
   }
+
+  if (type == NOT_VALID && msg_dothrottle()) {
+    grid_fill(&default_grid, Rows-p_ch, Rows, 0, Columns, ' ', ' ', 0);
+  }
+
   ui_comp_set_screen_valid(true);
 
   if (clear_cmdline)            /* going to clear cmdline (done below) */
@@ -4310,9 +4324,13 @@ win_line (
 void screen_adjust_grid(ScreenGrid **grid, int *row_off, int *col_off)
 {
   if (!(*grid)->chars && *grid != &default_grid) {
-    *row_off += (*grid)->row_offset;
-    *col_off += (*grid)->col_offset;
-    *grid = &default_grid;
+      *row_off += (*grid)->row_offset;
+      *col_off += (*grid)->col_offset;
+    if (*grid == &msg_grid_adj && msg_grid.chars) {
+      *grid = &msg_grid;
+    } else {
+      *grid = &default_grid;
+    }
   }
 }
 
@@ -4799,7 +4817,7 @@ win_redr_status_matches (
         /* Put the wildmenu just above the command line.  If there is
          * no room, scroll the screen one line up. */
         if (cmdline_row == Rows - 1) {
-          msg_scroll_up();
+          msg_scroll_up(false);
           msg_scrolled++;
         } else {
           cmdline_row++;
@@ -4821,13 +4839,18 @@ win_redr_status_matches (
       }
     }
 
-    grid_puts(&default_grid, buf, row, 0, attr);
+    // Tricky: wildmenu can be drawn either over a status line, or at empty
+    // scrolled space in the message output
+    ScreenGrid *grid = (wild_menu_showing == WM_SCROLLED)
+                        ? &msg_grid_adj : &default_grid;
+
+    grid_puts(grid, buf, row, 0, attr);
     if (selstart != NULL && highlight) {
       *selend = NUL;
-      grid_puts(&default_grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
+      grid_puts(grid, selstart, row, selstart_col, HL_ATTR(HLF_WM));
     }
 
-    grid_fill(&default_grid, row, row + 1, clen, Columns,
+    grid_fill(grid, row, row + 1, clen, Columns,
               fillchar, fillchar, attr);
   }
 
@@ -5350,6 +5373,8 @@ static int put_dirty_last = 0;
 /// another line.
 void grid_puts_line_start(ScreenGrid *grid, int row)
 {
+  int col = 0;  // unused
+  screen_adjust_grid(&grid, &row, &col);
   assert(put_dirty_row == -1);
   put_dirty_row = row;
   put_dirty_grid = grid;
@@ -5379,7 +5404,7 @@ void grid_puts_len(ScreenGrid *grid, char_u *text, int textlen, int row,
   screen_adjust_grid(&grid, &row, &col);
 
   // Safety check. The check for negative row and column is to fix issue
-  // vim/vim#4102. TODO: find out why row/col could be negative.
+  // vim/vim#4102. TODO(neovim): find out why row/col could be negative.
   if (grid->chars == NULL
       || row >= grid->Rows || row < 0
       || col >= grid->Columns || col < 0) {
@@ -5511,8 +5536,14 @@ void grid_puts_line_flush(bool set_cursor)
       ui_grid_cursor_goto(put_dirty_grid->handle, put_dirty_row,
                           MIN(put_dirty_last, put_dirty_grid->Columns-1));
     }
-    ui_line(put_dirty_grid, put_dirty_row, put_dirty_first, put_dirty_last,
-            put_dirty_last, 0, false);
+    if (!put_dirty_grid->throttled) {
+      ui_line(put_dirty_grid, put_dirty_row, put_dirty_first, put_dirty_last,
+              put_dirty_last, 0, false);
+    } else if (put_dirty_grid->dirty_col) {
+      if (put_dirty_last > put_dirty_grid->dirty_col[put_dirty_row]) {
+        put_dirty_grid->dirty_col[put_dirty_row] = put_dirty_last;
+      }
+    }
     put_dirty_first = INT_MAX;
     put_dirty_last = 0;
   }
@@ -5886,6 +5917,18 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
       if (put_dirty_row == row) {
         put_dirty_first = MIN(put_dirty_first, dirty_first);
         put_dirty_last = MAX(put_dirty_last, dirty_last);
+      } else if (grid->throttled) {
+        // Note: assumes msg_grid is the only throttled grid
+        assert(grid == &msg_grid);
+        int dirty = 0;
+        if (attr != HL_ATTR(HLF_MSG) || c2 != ' ') {
+          dirty = dirty_last;
+        } else if (c1 != ' ') {
+          dirty = dirty_first + 1;
+        }
+        if (grid->dirty_col && dirty > grid->dirty_col[row]) {
+          grid->dirty_col[row] = dirty;
+        }
       } else {
         int last = c2 != ' ' ? dirty_last : dirty_first + (c1 != ' ');
         ui_line(grid, row, dirty_first, last, dirty_last, attr, false);
@@ -5894,19 +5937,6 @@ void grid_fill(ScreenGrid *grid, int start_row, int end_row, int start_col,
 
     if (end_col == grid->Columns) {
       grid->line_wraps[row] = false;
-    }
-
-    // TODO(bfredl): The relevant caller should do this
-    if (row == Rows - 1 && !ui_has(kUIMessages)) {
-      // overwritten the command line
-      redraw_cmdline = true;
-      if (start_col == 0 && end_col == Columns
-          && c1 == ' ' && c2 == ' ' && attr == 0) {
-        clear_cmdline = false;  // command line has been cleared
-      }
-      if (start_col == 0) {
-        mode_displayed = false;  // mode cleared or overwritten
-      }
     }
   }
 }
@@ -6039,6 +6069,9 @@ retry:
   // win_new_shellsize will recompute floats position, but tell the
   // compositor to not redraw them yet
   ui_comp_set_screen_valid(false);
+  if (msg_grid.chars) {
+    msg_grid_invalid = true;
+  }
 
   win_new_shellsize();      /* fit the windows in the new sized shell */
 
@@ -6217,12 +6250,17 @@ void screenclear(void)
   msg_scrolled = 0;  // can't scroll back
   msg_didany = false;
   msg_didout = false;
+  if (HL_ATTR(HLF_MSG) > 0 && msg_dothrottle() && msg_grid.chars) {
+    grid_invalidate(&msg_grid);
+    msg_grid_validate();
+    msg_grid_invalid = false;
+    clear_cmdline = true;
+  }
 }
 
 /// clear a line in the grid starting at "off" until "width" characters
 /// are cleared.
-static void grid_clear_line(ScreenGrid *grid, unsigned off, int width,
-                            bool valid)
+void grid_clear_line(ScreenGrid *grid, unsigned off, int width, bool valid)
 {
   for (int col = 0; col < width; col++) {
     schar_from_ascii(grid->chars[off + col], ' ');
@@ -6361,7 +6399,9 @@ void grid_ins_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
     }
   }
 
-  ui_call_grid_scroll(grid->handle, row, end, col, col+width, -line_count, 0);
+  if (!grid->throttled) {
+    ui_call_grid_scroll(grid->handle, row, end, col, col+width, -line_count, 0);
+  }
 
   return;
 }
@@ -6412,7 +6452,9 @@ void grid_del_lines(ScreenGrid *grid, int row, int line_count, int end, int col,
     }
   }
 
-  ui_call_grid_scroll(grid->handle, row, end, col, col+width, line_count, 0);
+  if (!grid->throttled) {
+    ui_call_grid_scroll(grid->handle, row, end, col, col+width, line_count, 0);
+  }
 
   return;
 }
@@ -6439,6 +6481,8 @@ int showmode(void)
 
   // don't make non-flushed message part of the showmode
   msg_ext_ui_flush();
+
+  msg_grid_validate();
 
   do_mode = ((p_smd && msg_silent == 0)
              && ((State & TERM_FOCUS)
@@ -7094,13 +7138,11 @@ static void win_redr_ruler(win_T *wp, int always)
         }
       }
 
-      grid_puts(&default_grid, buffer, row, this_ru_col + off, attr);
-      i = redraw_cmdline;
-      grid_fill(&default_grid, row, row + 1,
+      ScreenGrid *grid = part_of_status ? &default_grid : &msg_grid_adj;
+      grid_puts(grid, buffer, row, this_ru_col + off, attr);
+      grid_fill(grid, row, row + 1,
                 this_ru_col + off + (int)STRLEN(buffer), off + width, fillchar,
                 fillchar, attr);
-      // don't redraw the cmdline because of showing the ruler
-      redraw_cmdline = i;
     }
 
     wp->w_ru_cursor = wp->w_cursor;
@@ -7214,6 +7256,12 @@ void screen_resize(int width, int height)
     if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
         || exmode_active) {
       screenalloc();
+      if (msg_grid.chars) {
+        msg_grid_validate();
+      }
+      // TODO(bfredl): sometimes messes up the output. Implement clear+redraw
+      // also for the pager? (or: what if the pager was just a modal window?)
+      ui_comp_set_screen_valid(true);
       repeat_message();
     } else {
       if (curwin->w_p_scb)

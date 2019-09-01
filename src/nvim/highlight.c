@@ -7,6 +7,7 @@
 #include "nvim/highlight.h"
 #include "nvim/highlight_defs.h"
 #include "nvim/map.h"
+#include "nvim/message.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/syntax.h"
@@ -161,6 +162,8 @@ int hl_get_ui_attr(int idx, int final_id, bool optional)
     if (pum_drawn()) {
       must_redraw_pum = true;
     }
+  } else if (idx == HLF_MSG) {
+    msg_grid.blending = attrs.hl_blend > -1;
   }
 
   if (optional && !available) {

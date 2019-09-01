@@ -2654,8 +2654,7 @@ void buflist_list(exarg_T *eap)
         buf == curbuf ? (int64_t)curwin->w_cursor.lnum
                       : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
-    ui_flush();            // output one line at a time
-    os_breakcheck();
+    line_breakcheck();
   }
 }
 

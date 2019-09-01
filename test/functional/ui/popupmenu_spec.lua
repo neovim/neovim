@@ -1128,7 +1128,7 @@ describe('builtin popupmenu', function()
       prefix      |
       bef{n: word  }  |
       tex{n: }^        |
-      {2:-- }{s: text   } |
+      {2:-- INSERT -} |
     ]])
 
     -- can't draw the pum, but check we don't crash
@@ -1595,6 +1595,54 @@ describe('builtin popupmenu', function()
       {1:~         }{n: file2          }{1:                        }|
       :e compdir]]..get_pathsep()..[[file1^                                  |
     ]])
+  end)
+
+  it('works with wildoptions=pum with scrolled mesages ', function()
+    screen:try_resize(40,10)
+    command('set wildmenu')
+    command('set wildoptions=pum')
+
+    feed(':echoerr "fail"|echoerr "error"<cr>')
+    screen:expect{grid=[[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {4:                                        }|
+      {6:fail}                                    |
+      {6:error}                                   |
+      {5:Press ENTER or type command to continue}^ |
+    ]]}
+
+    feed(':sign <tab>')
+    screen:expect{grid=[[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~    }{s: define         }{1:                   }|
+      {1:~    }{n: jump           }{1:                   }|
+      {1:~    }{n: list           }{1:                   }|
+      {4:     }{n: place          }{4:                   }|
+      {6:fail} {n: undefine       }                   |
+      {6:error}{n: unplace        }                   |
+      :sign define^                            |
+    ]]}
+
+    feed('d')
+    screen:expect{grid=[[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {4:                                        }|
+      {6:fail}                                    |
+      {6:error}                                   |
+      :sign defined^                           |
+    ]]}
   end)
 
   it("'pumblend' RGB-color", function()

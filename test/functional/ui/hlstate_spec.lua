@@ -39,7 +39,7 @@ describe('ext_hlstate detailed highlights', function()
       {5:~                                       }|
       {5:~                                       }|
       {5:~                                       }|
-      {6:search hit BOTTOM, continuing at TOP}    |
+      {8:search hit BOTTOM, continuing at TOP}{7:    }|
     ]], {
     [1] = {{foreground = Screen.colors.Magenta},
            {{hi_name = "Constant", kind = "syntax"}}},
@@ -52,6 +52,8 @@ describe('ext_hlstate detailed highlights', function()
            {{hi_name = "NonText", ui_name = "EndOfBuffer", kind = "ui"}}},
     [6] = {{foreground = Screen.colors.Red},
            {{hi_name = "WarningMsg", ui_name = "WarningMsg", kind = "ui"}}},
+    [7] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
+    [8] = {{foreground = Screen.colors.Red}, {7, 6}},
     })
   end)
 
@@ -66,6 +68,7 @@ describe('ext_hlstate detailed highlights', function()
             {{hi_name = "StatusLineNC", ui_name = "StatusLineNC" , kind = "ui"}}},
       [5] = {{}, {{hi_name = "StatusLine", ui_name = "StatusLine", kind = "ui"}}},
       [6] = {{}, {{hi_name = "StatusLineNC", ui_name = "StatusLineNC", kind = "ui"}}},
+      [7] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
     command("hi clear VertSplit")
     command("vsplit")
@@ -78,7 +81,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                   }{1:│}{2:~                  }|
       {2:~                   }{1:│}{2:~                  }|
       {3:[No Name]            }{4:[No Name]          }|
-                                              |
+      {7:                                        }|
     ]])
 
     command("hi clear StatusLine | hi clear StatuslineNC")
@@ -90,7 +93,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                   }{1:│}{2:~                  }|
       {2:~                   }{1:│}{2:~                  }|
       {5:[No Name]            }{6:[No Name]          }|
-                                              |
+      {7:                                        }|
     ]])
 
     -- redrawing is done even if visible highlights didn't change
@@ -103,7 +106,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                  }{1:│}{2:~                   }|
       {2:~                  }{1:│}{2:~                   }|
       {6:[No Name]           }{5:[No Name]           }|
-                                              |
+      {7:                                        }|
     ]])
 
   end)
@@ -120,7 +123,8 @@ describe('ext_hlstate detailed highlights', function()
         [8] = {{foreground = Screen.colors.Blue1, bold = true, reverse = true}, {6, 2}},
         [9] = {{bold = true, foreground = Screen.colors.Brown}, {{hi_name = "Statement", ui_name = "NormalNC", kind = "ui"}}},
         [10] = {{bold = true, foreground = Screen.colors.Brown}, {9, 1}},
-        [11] = {{bold = true, foreground = Screen.colors.Blue1}, {9, 2}}
+        [11] = {{bold = true, foreground = Screen.colors.Blue1}, {9, 2}},
+        [12] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
 
     command("set number")
@@ -134,7 +138,7 @@ describe('ext_hlstate detailed highlights', function()
       {1:  1 }                                    |
       {2:~                                       }|
       {4:[No Name]                               }|
-                                              |
+      {12:                                        }|
     ]])
 
     command("set winhl=LineNr:ErrorMsg")
@@ -146,7 +150,7 @@ describe('ext_hlstate detailed highlights', function()
       {1:  1 }                                    |
       {2:~                                       }|
       {4:[No Name]                               }|
-                                              |
+      {12:                                        }|
     ]])
 
     command("set winhl=Normal:MsgSeparator,NormalNC:Statement")
@@ -158,7 +162,7 @@ describe('ext_hlstate detailed highlights', function()
       {1:  1 }                                    |
       {2:~                                       }|
       {4:[No Name]                               }|
-                                              |
+      {12:                                        }|
     ]])
 
     command("wincmd w")
@@ -170,7 +174,7 @@ describe('ext_hlstate detailed highlights', function()
       {1:  1 }^                                    |
       {2:~                                       }|
       {3:[No Name]                               }|
-                                              |
+      {12:                                        }|
     ]])
   end)
 
@@ -182,6 +186,7 @@ describe('ext_hlstate detailed highlights', function()
       [4] = {{foreground = 52479}, {2, 1}},
       [5] = {{foreground = 4259839}, {{kind = "term"}}},
       [6] = {{foreground = 4259839}, {5, 1}},
+      [7] = {{}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
     command('enew | call termopen(["'..nvim_dir..'/tty-test"])')
     screen:expect([[
@@ -192,7 +197,7 @@ describe('ext_hlstate detailed highlights', function()
                                               |
                                               |
                                               |
-                                              |
+      {7:                                        }|
     ]])
 
     thelpers.feed_data('x ')
@@ -210,7 +215,7 @@ describe('ext_hlstate detailed highlights', function()
                                                 |
                                                 |
                                                 |
-                                                |
+        {7:                                        }|
       ]])
     else
       screen:expect([[
@@ -221,7 +226,7 @@ describe('ext_hlstate detailed highlights', function()
                                                 |
                                                 |
                                                 |
-                                                |
+        {7:                                        }|
       ]])
     end
 
@@ -236,7 +241,7 @@ describe('ext_hlstate detailed highlights', function()
                                                 |
                                                 |
                                                 |
-                                                |
+        {7:                                        }|
       ]])
     else
       screen:expect([[
@@ -247,7 +252,7 @@ describe('ext_hlstate detailed highlights', function()
                                                 |
                                                 |
                                                 |
-                                                |
+        {7:                                        }|
       ]])
     end
   end)
@@ -259,6 +264,7 @@ describe('ext_hlstate detailed highlights', function()
     screen:set_default_attr_ids({
         [1] = {{bold = true, foreground = Screen.colors.Blue1}, {foreground = 12}, {{hi_name = "NonText", ui_name = "EndOfBuffer", kind = "ui"}}},
         [2] = {{reverse = true, foreground = Screen.colors.Red}, {foreground = 10, italic=true}, {{hi_name = "NonText", ui_name = "EndOfBuffer", kind = "ui"}}},
+        [3] = {{}, {}, {{hi_name = "MsgArea", ui_name = "MsgArea", kind = "ui"}}},
     })
     screen:expect([[
       ^                                        |
@@ -268,7 +274,7 @@ describe('ext_hlstate detailed highlights', function()
       {1:~                                       }|
       {1:~                                       }|
       {1:~                                       }|
-                                              |
+      {3:                                        }|
     ]])
 
     command("hi NonText guifg=Red gui=reverse ctermfg=Green cterm=italic")
@@ -280,7 +286,7 @@ describe('ext_hlstate detailed highlights', function()
       {2:~                                       }|
       {2:~                                       }|
       {2:~                                       }|
-                                              |
+      {3:                                        }|
     ]])
 
   end)

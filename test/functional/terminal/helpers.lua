@@ -56,6 +56,8 @@ local function screen_setup(extra_rows, command, cols, opts)
     [8] = {foreground = 15, background = 1}, -- error message
     [9] = {foreground = 4},
     [10] = {foreground = 121},  -- "Press ENTER" in embedded :terminal session.
+    [11] = {foreground = tonumber('0x00000b')},
+    [12] = {reverse = true, foreground = tonumber('0x000079')},
   })
 
   screen:attach(opts or {rgb=false})

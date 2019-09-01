@@ -310,6 +310,8 @@ static uint8_t *command_line_enter(int firstc, long count, int indent)
     cmdmsg_rl = false;
   }
 
+  msg_grid_validate();
+
   redir_off = true;             // don't redirect the typed command
   if (!cmd_silent) {
     gotocmdline(true);
@@ -908,7 +910,7 @@ static int command_line_execute(VimState *state, int key)
 
       if (!cmd_silent) {
         if (!ui_has(kUICmdline)) {
-          ui_cursor_goto(msg_row, 0);
+          cmd_cursor_goto(msg_row, 0);
         }
         ui_flush();
       }
@@ -2323,7 +2325,7 @@ redraw:
           }
         }
         msg_clr_eos();
-        ui_cursor_goto(msg_row, msg_col);
+        cmd_cursor_goto(msg_row, msg_col);
         continue;
       }
 
@@ -2391,7 +2393,7 @@ redraw:
     line_ga.ga_len += len;
     escaped = FALSE;
 
-    ui_cursor_goto(msg_row, msg_col);
+    cmd_cursor_goto(msg_row, msg_col);
     pend = (char_u *)(line_ga.ga_data) + line_ga.ga_len;
 
     /* We are done when a NL is entered, but not when it comes after an
@@ -3436,7 +3438,7 @@ void redrawcmd(void)
 
   /* when 'incsearch' is set there may be no command line while redrawing */
   if (ccline.cmdbuff == NULL) {
-    ui_cursor_goto(cmdline_row, 0);
+    cmd_cursor_goto(cmdline_row, 0);
     msg_clr_eos();
     return;
   }
@@ -3510,7 +3512,14 @@ static void cursorcmd(void)
     }
   }
 
-  ui_cursor_goto(msg_row, msg_col);
+  cmd_cursor_goto(msg_row, msg_col);
+}
+
+static void cmd_cursor_goto(int row, int col)
+{
+  ScreenGrid *grid = &msg_grid_adj;
+  screen_adjust_grid(&grid, &row, &col);
+  ui_grid_cursor_goto(grid->handle, row, col);
 }
 
 void gotocmdline(int clr)
@@ -3519,13 +3528,15 @@ void gotocmdline(int clr)
     return;
   }
   msg_start();
-  if (cmdmsg_rl)
+  if (cmdmsg_rl) {
     msg_col = Columns - 1;
-  else
-    msg_col = 0;            /* always start in column 0 */
-  if (clr)                  /* clear the bottom line(s) */
-    msg_clr_eos();          /* will reset clear_cmdline */
-  ui_cursor_goto(cmdline_row, 0);
+  } else {
+    msg_col = 0;  // always start in column 0
+  }
+  if (clr) {  // clear the bottom line(s)
+    msg_clr_eos();  // will reset clear_cmdline
+  }
+  cmd_cursor_goto(cmdline_row, 0);
 }
 
 /*

@@ -89,6 +89,85 @@ describe('TUI', function()
     eq(2, eval("1+1"))  -- Still alive?
   end)
 
+  it('accepts resize while pager is active', function()
+    child_session:request("nvim_command", [[
+    set more
+    func! ManyErr()
+      for i in range(10)
+        echoerr "FAIL ".i
+      endfor
+    endfunc
+    ]])
+    feed_data(':call ManyErr()\r')
+    screen:expect{grid=[[
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {8:FAIL 0}                                            |
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data('d')
+    screen:expect{grid=[[
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+      {8:FAIL 3}                                            |
+      {8:FAIL 4}                                            |
+      {8:FAIL 5}                                            |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    screen:try_resize(50,5)
+    screen:expect{grid=[[
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+      {8:FAIL 3}                                            |
+      {10:-- More -- SPACE/d/j: screen/page/line down, b/u/}{12:k}|
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    -- TODO(bfredl): messes up the output (just like vim does).
+    feed_data('g')
+    screen:expect{grid=[[
+      {8:FAIL 1}        )                                   |
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {10:-- More --}{1: }                                       |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    screen:try_resize(50,10)
+    screen:expect{grid=[[
+      {8:FAIL 1}        )                                   |
+      {8:Error detected while processing function ManyErr:} |
+      {11:line    2:}                                        |
+      {10:-- More --}                                        |
+      {10:                                                  }|
+      {10:                                                  }|
+      {10:                                                  }|
+      {10:                                                  }|
+      {10:-- More -- SPACE/d/j: screen/page/line down, b/u/}{12:k}|
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data('\003')
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+
   it('accepts basic utf-8 input', function()
     feed_data('iabc\ntest1\ntest2')
     screen:expect([[

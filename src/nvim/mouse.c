@@ -440,7 +440,10 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
   win_T *wp_grid = mouse_find_grid_win(gridp, rowp, colp);
   if (wp_grid) {
     return wp_grid;
+  } else if (*gridp > 1) {
+    return NULL;
   }
+
 
   frame_T     *fp;
 
@@ -475,7 +478,10 @@ win_T *mouse_find_win(int *gridp, int *rowp, int *colp)
 
 static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
 {
-  if (*gridp > 1) {
+  if (*gridp == msg_grid.handle) {
+    rowp += msg_grid_pos;
+    *gridp = DEFAULT_GRID_HANDLE;
+  } else if (*gridp > 1) {
     win_T *wp = get_win_by_grid_handle(*gridp);
     if (wp && wp->w_grid.chars
         && !(wp->w_floating && !wp->w_float_config.focusable)) {
@@ -486,7 +492,7 @@ static win_T *mouse_find_grid_win(int *gridp, int *rowp, int *colp)
   } else if (*gridp == 0) {
     ScreenGrid *grid = ui_comp_mouse_focus(*rowp, *colp);
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      if (&wp->w_grid != grid || !wp->w_float_config.focusable) {
+      if (&wp->w_grid != grid) {
         continue;
       }
       *gridp = grid->handle;

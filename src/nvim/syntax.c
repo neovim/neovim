@@ -7533,6 +7533,9 @@ void highlight_changed(void)
                                          hlf == (int)HLF_INACTIVE);
 
     if (highlight_attr[hlf] != highlight_attr_last[hlf]) {
+      if (hlf == HLF_MSG) {
+        clear_cmdline = true;
+      }
       ui_call_hl_group_set(cstr_as_string((char *)hlf_names[hlf]),
                            highlight_attr[hlf]);
       highlight_attr_last[hlf] = highlight_attr[hlf];
