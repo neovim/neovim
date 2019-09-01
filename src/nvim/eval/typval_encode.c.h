@@ -607,7 +607,7 @@ _convert_one_value_regular_dict: {}
                                              kMPConvDict);
       TYPVAL_ENCODE_CONV_DICT_START(tv, tv->vval.v_dict,
                                     tv->vval.v_dict->dv_hashtab.ht_used);
-      assert(saved_copyID != copyID && saved_copyID != copyID - 1);
+      assert(saved_copyID != copyID);
       _mp_push(*mpstack, ((MPConvStackVal) {
         .tv = tv,
         .type = kMPConvDict,

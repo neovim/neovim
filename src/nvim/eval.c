@@ -444,7 +444,8 @@ void eval_clear(void)
   // unreferenced lists and dicts
   (void)garbage_collect(false);
 
-  // functions
+  // functions need to be freed before gargabe collecting, otherwise local
+  // variables might be freed twice.
   free_all_functions();
 }
 
