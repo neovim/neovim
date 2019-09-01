@@ -18,6 +18,7 @@ local function test_embed(ext_linegrid)
       [2] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [3] = {bold = true, foreground = Screen.colors.Blue1},
       [4] = {bold = true, foreground = Screen.colors.Green},
+      [5] = {bold = true, reverse = true},
     })
   end
 
@@ -53,7 +54,7 @@ local function test_embed(ext_linegrid)
                                                                   |
                                                                   |
                                                                   |
-                                                                  |
+      {5:                                                            }|
       Error detected while processing pre-vimrc command line:     |
       foo                                                         |
       {1:bar}                                                         |

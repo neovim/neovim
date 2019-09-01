@@ -933,17 +933,29 @@ end)
 
 
 describe("MsgSeparator highlight and msgsep fillchar", function()
-  before_each(clear)
-  it("works", function()
-    local screen = Screen.new(50,5)
+  local screen
+  before_each(function()
+    clear()
+    screen = Screen.new(50,5)
     screen:set_default_attr_ids({
       [1] = {bold=true, foreground=Screen.colors.Blue},
       [2] = {bold=true, reverse=true},
       [3] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [4] = {background = Screen.colors.Cyan, bold = true, reverse = true},
-      [5] = {bold = true, background = Screen.colors.Magenta}
+      [5] = {bold = true, background = Screen.colors.Magenta},
+      [6] = {background = Screen.colors.WebGray},
+      [7] = {background = Screen.colors.WebGray, bold = true, foreground = Screen.colors.SeaGreen4},
+      [8] = {foreground = Screen.colors.Grey0, background = Screen.colors.Gray60},
+      [9] = {foreground = Screen.colors.Grey40, background = Screen.colors.Gray60},
+      [10] = {foreground = tonumber('0x000019'), background = Screen.colors.Gray60},
+      [11] = {background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x666699')},
+      [12] = {background = Screen.colors.Gray60, bold = true, foreground = tonumber('0x297d4e')},
+      [13] = {background = tonumber('0xff4cff'), bold = true, foreground = tonumber('0xb200ff')},
     })
     screen:attach()
+  end)
+
+  it("works", function()
 
     -- defaults
     feed_command("ls")
@@ -999,6 +1011,61 @@ describe("MsgSeparator highlight and msgsep fillchar", function()
         1 %a   "[No Name]"                    line 1    |
       {3:Press ENTER or type command to continue}^           |
     ]])
+  end)
+
+  it("and MsgArea", function()
+    feed_command("hi MsgArea guibg=Gray")
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {6:                                                  }|
+    ]]}
+    feed(":ls")
+    screen:expect{grid=[[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {6::ls^                                               }|
+    ]]}
+    feed(":<cr>")
+    screen:expect{grid=[[
+                                                        |
+      {2:                                                  }|
+      {6::ls:                                              }|
+      {6:  1 %a   "[No Name]"                    line 1    }|
+      {7:Press ENTER or type command to continue}{6:^           }|
+    ]]}
+
+    -- support madness^Wblending of message "overlay"
+    feed_command("hi MsgArea blend=20")
+    feed_command("hi clear MsgSeparator")
+    feed_command("hi MsgSeparator blend=30 guibg=Magenta")
+    screen:expect{grid=[[
+      ^                                                  |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8::hi}{9: }{8:MsgSeparator}{9: }{8:blend=30}{9: }{8:guibg=Magenta}{9:           }|
+    ]]}
+    feed(":ls")
+    screen:expect{grid=[[
+                                                        |
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {1:~                                                 }|
+      {8::ls}{9:^                                               }|
+    ]]}
+    feed("<cr>")
+    screen:expect{grid=[[
+                                                        |
+      {13:~                                                 }|
+      {10::ls}{11:                                               }|
+      {11:~ }{10:1}{11: }{10:%a}{11:   }{10:"[No}{11: }{10:Name]"}{11:                    }{10:line}{11: }{10:1}{11:    }|
+      {12:Press}{9: }{12:ENTER}{9: }{12:or}{9: }{12:type}{9: }{12:command}{9: }{12:to}{9: }{12:continue}{9:^           }|
+    ]]}
   end)
 end)
 

@@ -222,6 +222,7 @@ describe('timers', function()
       let g:val = 0
       func! MyHandler(timer)
         echo "evil"
+        redraw
         let g:val = 1
       endfunc
     ]])
