@@ -670,30 +670,30 @@ func Test_popup_and_window_resize()
     return
   endif
   let rows = h / 3
-  let g:buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': rows})
-  call term_sendkeys(g:buf, (h / 3 - 1) . "o\<esc>")
+  let buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': rows})
+  call term_sendkeys(buf, (h / 3 - 1) . "o\<esc>")
   " Wait for the nested Vim to exit insert mode, where it will show the ruler.
   " Need to trigger a redraw.
-  call WaitFor(printf('execute("redraw") == "" && term_getline(g:buf, %d) =~ "\\<%d,.*Bot"', rows, rows))
+  call WaitFor({-> execute("redraw") == "" && term_getline(buf, rows) =~ '\<' . rows . ',.*Bot'})
 
-  call term_sendkeys(g:buf, "Gi\<c-x>")
-  call term_sendkeys(g:buf, "\<c-v>")
-  call term_wait(g:buf, 100)
+  call term_sendkeys(buf, "Gi\<c-x>")
+  call term_sendkeys(buf, "\<c-v>")
+  call term_wait(buf, 100)
   " popup first entry "!" must be at the top
-  call WaitFor('term_getline(g:buf, 1) =~ "^!"')
-  call assert_match('^!\s*$', term_getline(g:buf, 1))
+  call WaitFor({-> term_getline(buf, 1) =~ "^!"})
+  call assert_match('^!\s*$', term_getline(buf, 1))
   exe 'resize +' . (h - 1)
-  call term_wait(g:buf, 100)
+  call term_wait(buf, 100)
   redraw!
   " popup shifted down, first line is now empty
-  call WaitFor('term_getline(g:buf, 1) == ""')
-  call assert_equal('', term_getline(g:buf, 1))
+  call WaitFor({-> term_getline(buf, 1) == ""})
+  call assert_equal('', term_getline(buf, 1))
   sleep 100m
   " popup is below cursor line and shows first match "!"
-  call WaitFor('term_getline(g:buf, term_getcursor(g:buf)[0] + 1) =~ "^!"')
-  call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0] + 1))
+  call WaitFor({-> term_getline(buf, term_getcursor(buf)[0] + 1) =~ "^!"})
+  call assert_match('^!\s*$', term_getline(buf, term_getcursor(buf)[0] + 1))
   " cursor line also shows !
-  call assert_match('^!\s*$', term_getline(g:buf, term_getcursor(g:buf)[0]))
+  call assert_match('^!\s*$', term_getline(buf, term_getcursor(buf)[0]))
   bwipe!
 endfunc
 

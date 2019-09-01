@@ -60,12 +60,8 @@ func Do_test_quotestar_for_x11()
   call assert_notmatch(name, serverlist())
 
   let cmd .= ' --servername ' . name
-  let g:job = job_start(cmd, {'stoponexit': 'kill', 'out_io': 'null'})
-  call WaitFor('job_status(g:job) == "run"')
-  if job_status(g:job) != 'run'
-    call assert_report('Cannot run the Vim server')
-    return ''
-  endif
+  let job = job_start(cmd, {'stoponexit': 'kill', 'out_io': 'null'})
+  call WaitFor({-> job_status(job) == "run"})
 
   " Takes a short while for the server to be active.
   call WaitFor('serverlist() =~ "' . name . '"')
@@ -123,11 +119,14 @@ func Do_test_quotestar_for_x11()
   endif
 
   call remote_send(name, ":qa!\<CR>")
-  call WaitFor('job_status(g:job) == "dead"')
-  if job_status(g:job) != 'dead'
-    call assert_report('Server did not exit')
-    call job_stop(g:job, 'kill')
-  endif
+  try
+    call WaitFor({-> job_status(job) == "dead"})
+  finally
+    if job_status(job) != 'dead'
+      call assert_report('Server did not exit')
+      call job_stop(job, 'kill')
+    endif
+  endtry
 
   return ''
 endfunc
