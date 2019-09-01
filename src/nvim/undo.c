@@ -2962,7 +2962,7 @@ static char_u *u_save_line(linenr_T lnum)
 ///
 /// @return true if the buffer has changed
 bool bufIsChanged(buf_T *buf)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return !bt_dontwrite(buf) && (buf->b_changed || file_ff_differs(buf, true));
 }
@@ -2979,15 +2979,12 @@ bool anyBufIsChanged(void)
   return false;
 }
 
-/// Check if the 'modified' flag is set, or 'ff' has changed (only need to
-/// check the first character, because it can only be "dos", "unix" or "mac").
-/// "nofile" and "scratch" type buffers are considered to always be unchanged.
-///
+/// @see bufIsChanged
 /// @return true if the current buffer has changed
 bool curbufIsChanged(void)
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (!bt_dontwrite(curbuf)
-          && (curbuf->b_changed || file_ff_differs(curbuf, true)));
+  return bufIsChanged(curbuf);
 }
 
 /// Append the list of undo blocks to a newly allocated list

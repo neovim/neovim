@@ -6985,6 +6985,7 @@ void save_file_ff(buf_T *buf)
 /// When "ignore_empty" is true don't consider a new, empty buffer to be
 /// changed.
 bool file_ff_differs(buf_T *buf, bool ignore_empty)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   // In a buffer that was never loaded the options are not valid.
   if (buf->b_flags & BF_NEVERLOADED) {
