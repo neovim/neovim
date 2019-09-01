@@ -669,9 +669,13 @@ func Test_popup_and_window_resize()
   if h < 15
     return
   endif
-  let g:buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': h / 3})
-  call term_sendkeys(g:buf, (h / 3 - 1)."o\<esc>")
-  call term_wait(g:buf, 500)
+  let rows = h / 3
+  let g:buf = term_start([GetVimProg(), '--clean', '-c', 'set noswapfile'], {'term_rows': rows})
+  call term_sendkeys(g:buf, (h / 3 - 1) . "o\<esc>")
+  " Wait for the nested Vim to exit insert mode, where it will show the ruler.
+  " Need to trigger a redraw.
+  call WaitFor(printf('execute("redraw") == "" && term_getline(g:buf, %d) =~ "\\<%d,.*Bot"', rows, rows))
+
   call term_sendkeys(g:buf, "Gi\<c-x>")
   call term_sendkeys(g:buf, "\<c-v>")
   call term_wait(g:buf, 100)
