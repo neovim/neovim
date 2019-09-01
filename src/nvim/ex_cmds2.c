@@ -159,6 +159,7 @@ void do_debug(char_u *cmd)
   redir_off = true;             // don't redirect debug commands
 
   State = NORMAL;
+  debug_mode = true;
 
   if (!debug_did_msg) {
     MSG(_("Entering Debug mode.  Type \"cont\" to continue."));
@@ -337,6 +338,7 @@ void do_debug(char_u *cmd)
   msg_scroll = save_msg_scroll;
   lines_left = (int)(Rows - 1);
   State = save_State;
+  debug_mode = false;
   did_emsg = save_did_emsg;
   cmd_silent = save_cmd_silent;
   msg_silent = save_msg_silent;

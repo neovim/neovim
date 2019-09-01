@@ -655,9 +655,10 @@ EXTERN char_u *fenc_default INIT(= NULL);
 ///    finish_op  :    When State is NORMAL, after typing the operator and
 ///                    before typing the motion command.
 ///    motion_force:   Last motion_force from do_pending_operator()
+///    debug_mode:     Debug mode
 EXTERN int State INIT(= NORMAL);        // This is the current state of the
                                         // command interpreter.
-
+EXTERN bool debug_mode INIT(= false);
 EXTERN bool finish_op INIT(= false);    // true while an operator is pending
 EXTERN long opcount INIT(= 0);          // count for pending operator
 EXTERN int motion_force INIT(=0);       // motion force for pending operator
