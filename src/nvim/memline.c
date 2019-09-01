@@ -3522,7 +3522,6 @@ static char *findswapname(buf_T *buf, char **dirp, char *old_fname,
             }
             xfree(name);
 
-
             // pretend screen didn't scroll, need redraw anyway
             msg_reset_scroll();
           }

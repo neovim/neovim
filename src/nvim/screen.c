@@ -320,7 +320,7 @@ int update_screen(int type)
   // separate bookkeeping for now.
   if (msg_did_scroll) {
     msg_did_scroll = false;
-    msg_scroll_at_flush = 0;
+    msg_scrolled_at_flush = 0;
   }
 
   if (type >= CLEAR || !default_grid.valid) {
@@ -379,7 +379,7 @@ int update_screen(int type)
       redraw_tabline = TRUE;
     }
     msg_scrolled = 0;
-    msg_scroll_at_flush = 0;
+    msg_scrolled_at_flush = 0;
     need_wait_return = false;
   }
 

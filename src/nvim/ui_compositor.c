@@ -353,6 +353,8 @@ static void compose_line(Integer row, Integer startcol, Integer endcol,
     size_t n = (size_t)(until-col);
 
     if (row == msg_sep_row && grid->comp_index <= msg_grid.comp_index) {
+      // TODO(bfredl): when we implement borders around floating windows, then
+      // msgsep can just be a border "around" the message grid.
       grid = &msg_grid;
       sattr_T msg_sep_attr = (sattr_T)HL_ATTR(HLF_MSGSEP);
       for (int i = col; i < until; i++) {

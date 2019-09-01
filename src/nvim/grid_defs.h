@@ -58,18 +58,30 @@ typedef struct {
   // external UI.
   bool throttled;
 
-  // offsets for the grid relative to the global screen
+  // offsets for the grid relative to the global screen. Used by screen.c
+  // for windows that don't have w_grid->chars etc allocated
   int row_offset;
   int col_offset;
 
   // whether the compositor should blend the grid with the background grid
   bool blending;
+
+  // whether the grid can be focused with mouse clicks.
   bool focusable;
 
-  // state owned by the compositor.
+  // Below is state owned by the compositor. Should generally not be set/read
+  // outside this module, except for specific compatibilty hacks
+
+  // position of the grid on the composed screen.
   int comp_row;
   int comp_col;
+
+  // z-index of the grid. Grids with higher index is draw on top.
+  // default_grid.comp_index is always zero.
   size_t comp_index;
+
+  // compositor should momentarily ignore the grid. Used internally when
+  // moving around grids etc.
   bool comp_disabled;
 } ScreenGrid;
 

@@ -170,7 +170,7 @@ void msg_grid_validate(void)
     ui_call_grid_resize(msg_grid.handle, msg_grid.Columns, msg_grid.Rows);
 
     msg_grid.throttled = false;  // don't throttle in 'cmdheight' area
-    msg_scroll_at_flush = msg_scrolled;
+    msg_scrolled_at_flush = msg_scrolled;
     msg_grid.focusable = false;
     if (!msg_scrolled) {
       msg_grid_set_pos(Rows - p_ch, false);
@@ -2197,6 +2197,21 @@ void msg_scroll_up(bool may_throttle)
             HL_ATTR(HLF_MSG));
 }
 
+/// Send throttled message output to UI clients
+///
+/// The way message.c uses the grid_xx family of functions is quite inefficient
+/// relative to the "gridline" UI protocol used by TUI and modern clients.
+/// For instance scrolling is done one line at a time. By throttling drawing
+/// on the message grid, we can coalesce scrolling to a single grid_scroll
+/// per screen update.
+///
+/// NB: The bookkeeping is quite messy, and rests on a bunch of poorly
+/// documented assumtions. For instance that the message area always grows while
+/// being throttled, messages are only being output on the last line etc.
+///
+/// Probably message scrollback storage should reimplented as a file_buffer, and
+/// message scrolling in TUI be reimplemented as a modal floating window. Then
+/// we get throttling "for free" using standard redraw_win_later code paths.
 void msg_scroll_flush(void)
 {
   if (!msg_grid.throttled) {
@@ -2205,7 +2220,7 @@ void msg_scroll_flush(void)
   msg_grid.throttled = false;
   int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
   assert(pos_delta >= 0);
-  int delta = MIN(msg_scrolled - msg_scroll_at_flush, msg_grid.Rows);
+  int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
 
   if (pos_delta > 0) {
     ui_ext_msg_set_pos(msg_grid_pos, true);
@@ -2228,7 +2243,7 @@ void msg_scroll_flush(void)
             HL_ATTR(HLF_MSG), false);
     msg_grid.dirty_col[row] = 0;
   }
-  msg_scroll_at_flush = msg_scrolled;
+  msg_scrolled_at_flush = msg_scrolled;
   msg_grid_scroll_discount = 0;
 }
 
@@ -2257,7 +2272,7 @@ void msg_reset_scroll(void)
     redraw_all_later(NOT_VALID);
   }
   msg_scrolled = 0;
-  msg_scroll_at_flush = 0;
+  msg_scrolled_at_flush = 0;
 }
 
 /*
@@ -2701,7 +2716,7 @@ static int do_more_prompt(int typed_char)
           if (msg_dothrottle() && !msg_grid.throttled) {
             // Tricky: we redraw at one line higher than usual. Therefore
             // the non-flushed area is one line larger.
-            msg_scroll_at_flush--;
+            msg_scrolled_at_flush--;
             msg_grid_scroll_discount++;
           }
           // scroll up, display line at bottom
@@ -2908,10 +2923,10 @@ int msg_end(void)
     return FALSE;
   }
 
-  // @TODO(bfredl): calling flush here inhibits substantial performance
-  // improvements. Caller should call ui_flush before waiting on user input or
-  // CPU busywork.
-  // ui_flush();  // calls msg_ext_ui_flush
+  // NOTE: ui_flush() used to be called here. This had to be removed, as it
+  // inhibited substantial performance improvements. It is assumed that relevant
+  // callers invoke ui_flush() before going into CPU busywork, or restricted
+  // event processing after displaying a message to the user.
   msg_ext_ui_flush();
   return true;
 }
