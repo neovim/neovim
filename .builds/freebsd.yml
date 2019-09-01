@@ -1,0 +1,40 @@
+image: freebsd/12.x
+
+packages:
+- cmake
+- gmake
+- ninja
+- libtool
+- sha
+- automake
+- pkgconf
+- unzip
+- wget
+- gettext
+- python
+- libffi
+
+sources:
+- https://github.com/neovim/neovim
+
+environment:
+  SOURCEHUT: 1
+  LANG: en_US.UTF-8
+  CMAKE_EXTRA_FLAGS: -DTRAVIS_CI_BUILD=ON -DMIN_LOG_LEVEL=3
+
+tasks:
+- build-deps: |
+    cd neovim
+    gmake deps
+- build: |
+    cd neovim
+    gmake CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
+- test: |
+    cd neovim
+    gmake unittest functionaltest
+
+# Unfortunately, oldtest is tanking hard on sourcehut's FreeBSD instance
+# and not producing any logs as a result. So don't do this task for now.
+# - test-oldtest: |
+#     cd neovim
+#     gmake oldtest
