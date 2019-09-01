@@ -685,10 +685,9 @@ function! s:OpenHoverPreview(lines, filetype) abort
             \   'col': col,
             \   'width': width,
             \   'height': height,
+            \   'style': 'minimal',
             \ })
-      call nvim_win_set_option(float_win_id, 'relativenumber', v:false)
-      call nvim_win_set_option(float_win_id, 'number', v:false)
-      call nvim_win_set_option(float_win_id, 'signcolumn', 'no')
+
       if a:filetype isnot v:null
         call nvim_win_set_option(float_win_id, 'filetype', a:filetype)
       endif
