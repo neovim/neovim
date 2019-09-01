@@ -16,8 +16,8 @@ local retry = helpers.retry
 local source = helpers.source
 local wait = helpers.wait
 local nvim = helpers.nvim
-local iswin = helpers.iswin
 local sleep = helpers.sleep
+local nvim_dir = helpers.nvim_dir
 
 local default_text = [[
   Inc substitution on
@@ -2555,56 +2555,18 @@ it(':substitute with inccommand during :terminal activity', function()
     clear()
 
     command("set cmdwinheight=3")
-    if iswin() then
-      feed([[:terminal for /L \%I in (1,1,5000) do @(echo xxx & echo xxx & echo xxx)<cr>]])
-    else
-      feed([[:terminal for i in $(seq 1 5000); do printf 'xxx\nxxx\nxxx\n'; done<cr>]])
-    end
+    feed([[:terminal "]]..nvim_dir..[[/shell-test" REP 5000 xxx<cr>]])
     command('file term')
+    feed('G')  -- Follow :terminal output.
     command('new')
     common_setup(screen, 'split', 'foo bar baz\nbar baz fox\nbar foo baz')
     command('wincmd =')
 
-    -- Wait for terminal output.
-    screen:expect([[
-      bar baz fox                   |
-      bar foo ba^z                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {11:[No Name] [+]                 }|
-      xxx                           |
-      xxx                           |
-      xxx                           |
-      xxx                           |
-      xxx                           |
-      xxx                           |
-      {10:term                          }|
-                                    |
-    ]])
-
     feed('gg')
     feed(':%s/foo/ZZZ')
     sleep(20)  -- Allow some terminal activity.
-    screen:expect([[
-      {12:ZZZ} bar baz                   |
-      bar baz fox                   |
-      bar {12:ZZZ} baz                   |
-      {15:~                             }|
-      {15:~                             }|
-      {15:~                             }|
-      {11:[No Name] [+]                 }|
-      xxx                           |
-      xxx                           |
-      {10:term                          }|
-      |1| {12:ZZZ} bar baz               |
-      |3| bar {12:ZZZ} baz               |
-      {15:~                             }|
-      {10:[Preview]                     }|
-      :%s/foo/ZZZ^                   |
-    ]])
-
+    helpers.wait()
+    screen:expect_unchanged()
   end)
 end)
 
