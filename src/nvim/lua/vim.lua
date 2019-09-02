@@ -204,6 +204,7 @@ paste = (function()
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
     if phase == -1 or phase == 3 then
+      vim.api.nvim_command('redraw')
       vim.api.nvim_command('echo ""')
       vim.api.nvim_set_option('paste', false)
     end
