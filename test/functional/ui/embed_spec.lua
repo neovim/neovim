@@ -49,6 +49,10 @@ local function test_embed(ext_linegrid)
   end)
 
   it("doesn't erase output when setting color scheme", function()
+    if 'openbsd' == string.lower(helpers.uname()) then
+      pending('FIXME #10804', function() end)
+      return
+    end
     startup('--cmd', 'echoerr "foo"', '--cmd', 'color default', '--cmd', 'echoerr "bar"')
     screen:expect([[
                                                                   |
