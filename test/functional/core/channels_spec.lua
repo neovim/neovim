@@ -139,7 +139,7 @@ describe('channels', function()
 
     command("call chansend(id, 'incomplet\004')")
 
-    local is_bsd = not not string.find(string.lower(uname()), 'bsd')
+    local is_bsd = not not string.find(uname(), 'bsd')
     local bsdlike = is_bsd or (os_name() == "osx")
     local extra = bsdlike and "^D\008\008" or ""
     expect_twoline(id, "stdout",

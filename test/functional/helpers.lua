@@ -48,7 +48,7 @@ if module.nvim_dir == module.nvim_prog then
 end
 
 local tmpname = global_helpers.tmpname
-local uname = global_helpers.uname
+local iswin = global_helpers.iswin
 local prepend_argv
 
 if os.getenv('VALGRIND') then
@@ -286,10 +286,6 @@ module.os_name = (function()
     return name
   end)
 end)()
-
-function module.iswin()
-  return package.config:sub(1,1) == '\\'
-end
 
 -- Executes a VimL function.
 -- Fails on VimL error, but does not update v:errmsg.
@@ -672,7 +668,7 @@ end
 -- Helper to skip tests. Returns true in Windows systems.
 -- pending_fn is pending() from busted
 function module.pending_win32(pending_fn)
-  if uname() == 'Windows' then
+  if iswin() then
     if pending_fn ~= nil then
       pending_fn('FIXME: Windows', function() end)
     end
@@ -734,12 +730,12 @@ function module.redir_exec(cmd)
 end
 
 function module.get_pathsep()
-  return module.iswin() and '\\' or '/'
+  return iswin() and '\\' or '/'
 end
 
 function module.pathroot()
   local pathsep = package.config:sub(1,1)
-  return module.iswin() and (module.nvim_dir:sub(1,2)..pathsep) or '/'
+  return iswin() and (module.nvim_dir:sub(1,2)..pathsep) or '/'
 end
 
 -- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
@@ -765,7 +761,7 @@ function module.missing_provider(provider)
 end
 
 function module.alter_slashes(obj)
-  if not module.iswin() then
+  if not iswin() then
     return obj
   end
   if type(obj) == 'string' then

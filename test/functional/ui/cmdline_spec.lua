@@ -828,7 +828,7 @@ describe('cmdline redraw', function()
   end)
 
   it('with <Cmd>', function()
-    if 'openbsd' == string.lower(helpers.uname()) then
+    if 'openbsd' == helpers.uname() then
       pending('FIXME #10804', function() end)
       return
     end
