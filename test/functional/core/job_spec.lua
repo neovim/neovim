@@ -582,13 +582,17 @@ describe('jobs', function()
 
     it('will run callbacks while waiting', function()
       source([[
-      let g:dict = {'id': 10}
-      let g:exits = 0
-      function g:dict.on_exit(id, code, event)
+      let g:dict = {}
+      let g:jobs = []
+      let g:exits = []
+      function g:dict.on_stdout(id, code, event) abort
+        call add(g:jobs, a:id)
+      endfunction
+      function g:dict.on_exit(id, code, event) abort
         if a:code != 5
           throw 'Error!'
         endif
-        let g:exits += 1
+        call add(g:exits, a:id)
       endfunction
       call jobwait(has('win32') ? [
       \  jobstart('Start-Sleep -Milliseconds 100; exit 5', g:dict),
@@ -601,9 +605,11 @@ describe('jobs', function()
       \  jobstart('sleep 0.050; exit 5', g:dict),
       \  jobstart('sleep 0.070; exit 5', g:dict)
       \  ])
-      call rpcnotify(g:channel, 'wait', g:exits)
+      call rpcnotify(g:channel, 'wait', sort(g:jobs), sort(g:exits))
       ]])
-      eq({'notification', 'wait', {4}}, next_msg())
+      assert:set_parameter('TableFormatLevel', 1000000)
+      eq({'notification', 'wait',
+        {{3,4,5,6}, {3,4,5,6}}}, next_msg())
     end)
 
     it('will return status codes in the order of passed ids', function()
