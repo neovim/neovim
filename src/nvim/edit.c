@@ -5541,13 +5541,15 @@ insertchar (
   // 'paste' is set)..
   // Don't do this when there an InsertCharPre autocommand is defined,
   // because we need to fire the event for every character.
+  // Do the check for InsertCharPre before the call to vpeekc() because the
+  // InsertCharPre autocommand could change the input buffer.
   if (!ISSPECIAL(c)
       && (!has_mbyte || (*mb_char2len)(c) == 1)
+      && !has_event(EVENT_INSERTCHARPRE)
       && vpeekc() != NUL
       && !(State & REPLACE_FLAG)
       && !cindent_on()
-      && !p_ri
-      && !has_event(EVENT_INSERTCHARPRE)) {
+      && !p_ri) {
 #define INPUT_BUFLEN 100
     char_u buf[INPUT_BUFLEN + 1];
     int i;
