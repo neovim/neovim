@@ -296,9 +296,6 @@ enum { FOLD_TEXT_LEN = 51 };  //!< buffer size for get_foldtext()
 #include "nvim/buffer_defs.h"    // buffer and windows
 #include "nvim/ex_cmds_defs.h"   // Ex command defines
 
-# define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
-    VV_HLSEARCH, !no_hlsearch && p_hls)
-
 // Used for flags in do_in_path()
 #define DIP_ALL 0x01    // all matches, not just the first one
 #define DIP_DIR 0x02    // find directories instead of files

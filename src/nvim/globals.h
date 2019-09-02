@@ -862,8 +862,8 @@ EXTERN char_u wim_flags[4];
 # define STL_IN_TITLE   2
 EXTERN int stl_syntax INIT(= 0);
 
-/* don't use 'hlsearch' temporarily */
-EXTERN int no_hlsearch INIT(= FALSE);
+// don't use 'hlsearch' temporarily
+EXTERN bool no_hlsearch INIT(= false);
 
 /* Page number used for %N in 'pageheader' and 'guitablabel'. */
 EXTERN linenr_T printer_page_num;

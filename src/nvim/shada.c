@@ -32,6 +32,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/buffer.h"
 #include "nvim/buffer_defs.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/search.h"
 #include "nvim/regexp.h"
@@ -1274,7 +1275,7 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         if (cur_entry.data.search_pattern.is_last_used) {
           set_last_used_pattern(
               cur_entry.data.search_pattern.is_substitute_pattern);
-          SET_NO_HLSEARCH(!cur_entry.data.search_pattern.highlighted);
+          set_no_hlsearch(!cur_entry.data.search_pattern.highlighted);
         }
         // Do not free shada entry: its allocated memory was saved above.
         break;

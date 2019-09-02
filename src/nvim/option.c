@@ -3959,7 +3959,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     redraw_all_later(SOME_VALID);
   } else if ((int *)varp == &p_hls) {
     // when 'hlsearch' is set or reset: reset no_hlsearch
-    SET_NO_HLSEARCH(false);
+    set_no_hlsearch(false);
   } else if ((int *)varp == &curwin->w_p_scb) {
   // when 'scrollbind' is set: snapshot the current position to avoid a jump
   // at the end of normal_cmd()
