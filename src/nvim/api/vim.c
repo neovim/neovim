@@ -1293,11 +1293,11 @@ theend:
 /// Compare |:put| and |p| which are always linewise.
 ///
 /// @param lines  |readfile()|-style list of lines. |channel-lines|
-/// @param type  Edit behavior:
-///              - "b" |blockwise-visual| mode
+/// @param type  Edit behavior: any |getregtype()| result, or:
+///              - "b" |blockwise-visual| mode (may include width, e.g. "b3")
 ///              - "c" |characterwise| mode
 ///              - "l" |linewise| mode
-///              - ""  guess by contents
+///              - ""  guess by contents, see |setreg()|
 /// @param after  Insert after cursor (like |p|), or before (like |P|).
 /// @param follow  Place cursor at end of inserted text.
 /// @param[out] err Error details, if any

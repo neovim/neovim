@@ -175,13 +175,15 @@ end
 --@returns false if client should cancel the paste.
 local function paste(lines, phase) end  -- luacheck: no unused
 paste = (function()
-  local tdots, tredraw, tick, got_line1 = 0, 0, 0, false
+  local tdots, tick, got_line1 = 0, 0, false
   return function(lines, phase)
     local call = vim.api.nvim_call_function
     local now = vim.loop.now()
     local mode = call('mode', {}):sub(1,1)
     if phase < 2 then  -- Reset flags.
-      tdots, tredraw, tick, got_line1 = now, now, 0, false
+      tdots, tick, got_line1 = now, 0, false
+    elseif mode ~= 'c' then
+      vim.api.nvim_command('undojoin')
     end
     if mode == 'c' and not got_line1 then  -- cmdline-mode: paste only 1 line.
       got_line1 = (#lines > 1)
@@ -193,11 +195,6 @@ paste = (function()
     else
       vim.api.nvim_put(lines, 'c', true, true)
     end
-    if (now - tredraw >= 1000) or phase == -1 or phase > 2 then
-      tredraw = now
-      vim.api.nvim_command('redraw')
-      vim.api.nvim_command('redrawstatus')
-    end
     if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)
       tdots = now
@@ -207,6 +204,7 @@ paste = (function()
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
     if phase == -1 or phase == 3 then
+      vim.api.nvim_command('redraw')
       vim.api.nvim_command('echo ""')
       vim.api.nvim_set_option('paste', false)
     end
