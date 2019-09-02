@@ -828,6 +828,10 @@ describe('cmdline redraw', function()
   end)
 
   it('with <Cmd>', function()
+    if 'openbsd' == helpers.uname() then
+      pending('FIXME #10804', function() end)
+      return
+    end
     command('cmap a <Cmd>call sin(0)<CR>')  -- no-op
     feed(':012345678901234567890123456789')
     screen:expect{grid=[[

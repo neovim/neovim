@@ -158,7 +158,11 @@ function module.check_logs()
     table.concat(runtime_errors, ', ')))
 end
 
--- Tries to get platform name from $SYSTEM_NAME, uname; fallback is "Windows".
+function module.iswin()
+  return package.config:sub(1,1) == '\\'
+end
+
+-- Gets (lowercase) OS name from CMake, uname, or "win" if iswin().
 module.uname = (function()
   local platform = nil
   return (function()
@@ -166,17 +170,19 @@ module.uname = (function()
       return platform
     end
 
-    platform = os.getenv("SYSTEM_NAME")
-    if platform then
+    if os.getenv("SYSTEM_NAME") then  -- From CMAKE_SYSTEM_NAME.
+      platform = string.lower(os.getenv("SYSTEM_NAME"))
       return platform
     end
 
     local status, f = pcall(module.popen_r, 'uname', '-s')
     if status then
-      platform = f:read("*l")
+      platform = string.lower(f:read("*l"))
       f:close()
+    elseif module.iswin() then
+      platform = 'windows'
     else
-      platform = 'Windows'
+      error('unknown platform')
     end
     return platform
   end)
@@ -203,11 +209,11 @@ module.tmpname = (function()
       return fname
     else
       local fname = os.tmpname()
-      if module.uname() == 'Windows' and fname:sub(1, 2) == '\\s' then
+      if module.uname() == 'windows' and fname:sub(1, 2) == '\\s' then
         -- In Windows tmpname() returns a filename starting with
         -- special sequence \s, prepend $TEMP path
         return tmpdir..fname
-      elseif fname:match('^/tmp') and module.uname() == 'Darwin' then
+      elseif fname:match('^/tmp') and module.uname() == 'darwin' then
         -- In OS X /tmp links to /private/tmp
         return '/private'..fname
       else

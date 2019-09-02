@@ -429,7 +429,7 @@ describe('jobs', function()
       if has('win32')
         let cmd = 'for /L %I in (1,1,5) do @(echo %I& ping -n 2 127.0.0.1 > nul)'
       else
-        let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
+        let cmd = ['sh', '-c', 'for i in 1 2 3 4 5; do echo $i; sleep 0.1; done']
       endif
       let g:id = jobstart(cmd, d)
       sleep 1500m
@@ -472,7 +472,7 @@ describe('jobs', function()
       if has('win32')
         let cmd = 'for /L %I in (1,1,5) do @(echo %I& ping -n 2 127.0.0.1 > nul)'
       else
-        let cmd = ['sh', '-c', 'for i in $(seq 1 5); do echo $i; sleep 0.1; done']
+        let cmd = ['sh', '-c', 'for i in 1 2 3 4 5; do echo $i; sleep 0.1; done']
       endif
       let g:id = jobstart(cmd, d)
       sleep 1500m

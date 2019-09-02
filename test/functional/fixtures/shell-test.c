@@ -13,7 +13,7 @@
 
 static void flush_wait(void)
 {
-  fflush(stdout);
+  fflush(NULL);
   usleep(10*1000);  // Wait 10 ms.
 }
 
@@ -78,10 +78,10 @@ int main(int argc, char **argv)
       }
       for (int i = 0; i < count; i++) {
         printf("%d: %s\n", i, argv[3]);
-        fflush(stdout);
         if (i % 100 == 0) {
           usleep(1000);  // Wait 1 ms (simulate typical output).
         }
+        fflush(NULL);
       }
     } else if (strcmp(argv[1], "UTF-8") == 0) {
       // test split-up UTF-8 sequence
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "Unknown first argument: %s\n", argv[1]);
       return 3;
     }
-    fflush(stdout);
+    fflush(NULL);
     return 0;
   } else if (argc == 1) {
     fprintf(stderr, "ready $ ");

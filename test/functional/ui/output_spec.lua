@@ -50,6 +50,10 @@ describe("shell command :!", function()
   end)
 
   it("throttles shell-command output greater than ~10KB", function()
+    if 'openbsd' == helpers.uname() then
+      pending('FIXME #10804', function() end)
+      return
+    end
     child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
     -- If we observe any line starting with a dot, then throttling occurred.

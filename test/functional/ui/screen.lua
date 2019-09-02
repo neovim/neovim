@@ -615,7 +615,12 @@ function Screen:_redraw(updates)
       local handler_name = '_handle_'..method
       local handler = self[handler_name]
       if handler ~= nil then
-        handler(self, unpack(update[i]))
+        local status, res = pcall(handler, self, unpack(update[i]))
+        if not status then
+          error(handler_name..' failed'
+            ..'\n  payload: '..inspect(update)
+            ..'\n  error:   '..tostring(res))
+        end
       else
         assert(self._on_event,
           "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")

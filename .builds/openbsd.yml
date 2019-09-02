@@ -28,11 +28,14 @@ tasks:
     cd ..
     mkdir build
     cd build
-    cmake -G Ninja ..
+    cmake -G Ninja -DMIN_LOG_LEVEL=3 ..
     cmake --build . --config Debug
     ./bin/nvim --version
 - test: |
     export LC_CTYPE=en_US.UTF-8
-    cd neovim
+    # functional tests
+    cd neovim/build
+    # cmake --build . --config Debug --target functionaltest
     # oldtests
-    gmake -C src/nvim/testdir NVIM_PRG=`pwd`/build/bin/nvim
+    cd ..
+    gmake oldtest

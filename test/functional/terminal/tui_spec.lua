@@ -902,7 +902,7 @@ end)
 -- does not initialize the TUI.
 describe("TUI 't_Co' (terminal colors)", function()
   local screen
-  local is_freebsd = (string.lower(uname()) == 'freebsd')
+  local is_freebsd = (uname() == 'freebsd')
 
   local function assert_term_colors(term, colorterm, maxcolors)
     helpers.clear({env={TERM=term}, args={}})
@@ -1176,8 +1176,8 @@ end)
 -- does not initialize the TUI.
 describe("TUI 'term' option", function()
   local screen
-  local is_bsd = not not string.find(string.lower(uname()), 'bsd')
-  local is_macos = not not string.find(string.lower(uname()), 'darwin')
+  local is_bsd = not not string.find(uname(), 'bsd')
+  local is_macos = not not string.find(uname(), 'darwin')
 
   local function assert_term(term_envvar, term_expected)
     clear()
@@ -1203,7 +1203,9 @@ describe("TUI 'term' option", function()
   end)
 
   it('gets system-provided term if $TERM is valid', function()
-    if is_bsd then  -- BSD lacks terminfo, builtin is always used.
+    if uname() == "openbsd" then
+      assert_term("xterm", "xterm")
+    elseif is_bsd then  -- BSD lacks terminfo, builtin is always used.
       assert_term("xterm", "builtin_xterm")
     elseif is_macos then
       local status, _ = pcall(assert_term, "xterm", "xterm")
