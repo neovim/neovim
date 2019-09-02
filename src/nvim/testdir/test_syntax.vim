@@ -520,10 +520,16 @@ func Test_syntax_c()
 	\ '  }',
 	\ '}',
 	\ ], 'Xtest.c')
+
+  " This makes the default for 'background' use "dark", check that the
+  " response to t_RB corrects it to "light".
+  let $COLORFGBG = '15;0'
+
   let buf = RunVimInTerminal('Xtest.c', {})
   call VerifyScreenDump(buf, 'Test_syntax_c_01')
   call StopVimInTerminal(buf)
 
+  let $COLORFGBG = ''
   call delete('Xtest.c')
 endfun
 
