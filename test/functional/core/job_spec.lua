@@ -607,7 +607,6 @@ describe('jobs', function()
       \  ])
       call rpcnotify(g:channel, 'wait', sort(g:jobs), sort(g:exits))
       ]])
-      assert:set_parameter('TableFormatLevel', 1000000)
       eq({'notification', 'wait',
         {{3,4,5,6}, {3,4,5,6}}}, next_msg())
     end)

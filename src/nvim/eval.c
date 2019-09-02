@@ -12487,7 +12487,7 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     }
 
     // if the job already exited, but wasn't freed yet
-    if (jobs[i] == NULL || jobs[i]->stream.proc.status >= 0) {
+    if (jobs[i] == NULL) {
       continue;
     }
 
