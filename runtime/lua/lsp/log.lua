@@ -16,12 +16,12 @@ if (vim.api.nvim_call_function('exists', {'g:language_client_log_level'}) == 1) 
 end
 
 log:set_log_level(log_level)
-log:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/full.log')
+log:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/all.log')
 
 log.client:set_log_level(log_level)
-log.client:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/language_client.log')
+log.client:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/client.log')
 
 log.server:set_log_level(log_level)
-log.server:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/language_server.log')
+log.server:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/server.log')
 
 return log
