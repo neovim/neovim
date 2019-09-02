@@ -73,10 +73,8 @@ set tags=./tags,tags
 set undodir^=.
 set wildoptions=
 
-" Disable syntax / "filetype plugin indent on" (not necessary with "-u NONE").
 if exists('syntax_on')
-  syntax off
-  filetype plugin indent off
+  call assert_report('syntax_on exists: tests should be run with -u NONE!')
 endif
 
 " Prevent Nvim log from writing to stderr.
