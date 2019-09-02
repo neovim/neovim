@@ -94,7 +94,7 @@ typedef enum
 {
   ET_USER,       // exception caused by ":throw" command
   ET_ERROR,      // error exception
-  ET_INTERRUPT   // interrupt exception triggered by Ctrl-C
+  ET_INTERRUPT,  // interrupt exception triggered by Ctrl-C
 } except_type_T;
 
 /*

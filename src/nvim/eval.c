@@ -3366,15 +3366,15 @@ static int pattern_match(char_u *pat, char_u *text, int ic)
  * types for expressions.
  */
 typedef enum {
-  TYPE_UNKNOWN = 0
-  , TYPE_EQUAL          /* == */
-  , TYPE_NEQUAL         /* != */
-  , TYPE_GREATER        /* >  */
-  , TYPE_GEQUAL         /* >= */
-  , TYPE_SMALLER        /* <  */
-  , TYPE_SEQUAL         /* <= */
-  , TYPE_MATCH          /* =~ */
-  , TYPE_NOMATCH        /* !~ */
+  TYPE_UNKNOWN = 0,
+  TYPE_EQUAL,         // ==
+  TYPE_NEQUAL,        // !=
+  TYPE_GREATER,       // >
+  TYPE_GEQUAL,        // >=
+  TYPE_SMALLER,       // <
+  TYPE_SEQUAL,        // <=
+  TYPE_MATCH,         // =~
+  TYPE_NOMATCH,       // !~
 } exptype_T;
 
 // TODO(ZyX-I): move to eval/expressions
