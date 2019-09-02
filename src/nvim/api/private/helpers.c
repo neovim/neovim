@@ -125,6 +125,7 @@ bool try_end(Error *err)
 
   // Set by emsg(), affects aborting().  See also enter_cleanup().
   did_emsg = false;
+  force_abort = false;
 
   if (got_int) {
     if (current_exception) {

@@ -1,5 +1,6 @@
 -- Test suite for testing interactions with API bindings
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local funcs = helpers.funcs
 local clear = helpers.clear
@@ -160,6 +161,37 @@ describe('lua function', function()
 
     feed("<cr>")
     eq('Error executing vim.schedule lua callback: [string "<nvim>"]:2: big failure\nvery async', eval("v:errmsg"))
+
+    local screen = Screen.new(60,5)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+    screen:attach()
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                                  |
+    ]]}
+
+    -- nvim_command causes a vimL exception, check that it is properly caught
+    -- and propagated as an error message in async contexts.. #10809
+    exec_lua([[
+      vim.schedule(function()
+        vim.api.nvim_command(":echo 'err")
+      end)
+    ]])
+    screen:expect{grid=[[
+                                                                  |
+      {2:                                                            }|
+      {3:Error executing vim.schedule lua callback: [string "<nvim>"]}|
+      {3::2: Vim(echo):E115: Missing quote: 'err}                     |
+      {4:Press ENTER or type command to continue}^                     |
+    ]]}
   end)
 
   it("vim.split", function()
