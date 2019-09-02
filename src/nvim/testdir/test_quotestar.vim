@@ -74,20 +74,20 @@ func Do_test_quotestar_for_x11()
   " by the server.
   let @* = 'no'
   call remote_foreground(name)
-  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "no"', 3000)
+  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "no"')
 
   " Set the * register on the server.
   call remote_send(name, ":let @* = 'yes'\<CR>")
-  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "yes"', 3000)
+  call WaitFor('remote_expr("' . name . '", "@*", "", 1) == "yes"')
 
   " Check that the *-register of this vim instance is changed as expected.
-  call WaitFor('@* == "yes"', 3000)
+  call WaitFor('@* == "yes"')
 
   " Handle the large selection over 262040 byte.
   let length = 262044
   let sample = 'a' . repeat('b', length - 2) . 'c'
   let @* = sample
-  call WaitFor('remote_expr("' . name . '", "len(@*) >= ' . length . '", "", 1)', 3000)
+  call WaitFor('remote_expr("' . name . '", "len(@*) >= ' . length . '", "", 1)')
   let res = remote_expr(name, "@*", "", 2)
   call assert_equal(length, len(res))
   " Check length to prevent a large amount of output at assertion failure.

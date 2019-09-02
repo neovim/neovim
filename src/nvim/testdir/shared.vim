@@ -133,7 +133,7 @@ func s:kill_server(cmd)
   endif
 endfunc
 
-" Wait for up to a second for "expr" to become true.  "expr" can be a
+" Wait for up to five seconds for "expr" to become true.  "expr" can be a
 " stringified expression to evaluate, or a funcref without arguments.
 "
 " A second argument can be used to specify a different timeout in msec.
@@ -141,7 +141,7 @@ endfunc
 " Return time slept in milliseconds.  With the +reltime feature this can be
 " more than the actual waiting time.  Without +reltime it can also be less.
 func WaitFor(expr, ...)
-  let timeout = get(a:000, 0, 1000)
+  let timeout = get(a:000, 0, 5000)
   " using reltime() is more accurate, but not always available
   if has('reltime')
     let start = reltime()
