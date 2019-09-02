@@ -5229,27 +5229,42 @@ static void frame_setwidth(frame_T *curfrp, int width)
   }
 }
 
-/*
- * Check 'winminheight' for a valid value.
- */
+// Check 'winminheight' for a valid value and reduce it if needed.
 void win_setminheight(void)
 {
-  int room;
-  int first = TRUE;
+  bool first = true;
 
-  /* loop until there is a 'winminheight' that is possible */
+  // loop until there is a 'winminheight' that is possible
   while (p_wmh > 0) {
-    /* TODO: handle vertical splits */
-    room = -p_wh;
-    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-      room += wp->w_height - p_wmh;
-    }
-    if (room >= 0)
+    const int room = Rows - p_ch;
+    const int needed = frame_minheight(topframe, NULL);
+    if (room >= needed) {
       break;
-    --p_wmh;
+    }
+    p_wmh--;
     if (first) {
       EMSG(_(e_noroom));
-      first = FALSE;
+      first = false;
+    }
+  }
+}
+
+// Check 'winminwidth' for a valid value and reduce it if needed.
+void win_setminwidth(void)
+{
+  bool first = true;
+
+  // loop until there is a 'winminheight' that is possible
+  while (p_wmw > 0) {
+    const int room = Columns;
+    const int needed = frame_minwidth(topframe, NULL);
+    if (room >= needed) {
+      break;
+    }
+    p_wmw--;
+    if (first) {
+      EMSG(_(e_noroom));
+      first = false;
     }
   }
 }
