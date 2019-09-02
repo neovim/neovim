@@ -5291,9 +5291,6 @@ void ex_cbuffer(exarg_T *eap)
       || eap->cmdidx == CMD_lgetbuffer
       || eap->cmdidx == CMD_laddbuffer) {
     qi = ll_get_or_alloc_list(curwin);
-    if (qi == NULL) {
-      return;
-    }
     wp = curwin;
   }
 
@@ -5399,9 +5396,6 @@ void ex_cexpr(exarg_T *eap)
       || eap->cmdidx == CMD_lgetexpr
       || eap->cmdidx == CMD_laddexpr) {
     qi = ll_get_or_alloc_list(curwin);
-    if (qi == NULL) {
-      return;
-    }
     wp = curwin;
   }
 
