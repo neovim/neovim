@@ -404,7 +404,7 @@ int update_screen(int type)
     default_grid.valid = true;
   }
 
-  if (type == NOT_VALID && msg_dothrottle()) {
+  if (type == NOT_VALID && (msg_dothrottle() || msg_grid.chars)) {
     grid_fill(&default_grid, Rows-p_ch, Rows, 0, Columns, ' ', ' ', 0);
   }
 
@@ -7288,9 +7288,9 @@ void screen_resize(int width, int height)
         }
       }
     }
+    ui_flush();
   }
-  ui_flush();
-  --busy;
+  busy--;
 }
 
 /// Check if the new Nvim application "shell" dimensions are valid.
