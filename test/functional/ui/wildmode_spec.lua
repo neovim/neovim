@@ -98,8 +98,8 @@ describe("'wildmenu'", function()
     ]]}
 
     -- cmdline CTRL-D display should also be preserved.
-    feed([[<C-\><C-N>]])
-    feed([[:sign <C-D>]])   -- Invoke cmdline CTRL-D.
+    feed([[<C-U>]])
+    feed([[sign <C-D>]])   -- Invoke cmdline CTRL-D.
     expect_stay_unchanged{grid=[[
       :sign                    |
       define    place          |
