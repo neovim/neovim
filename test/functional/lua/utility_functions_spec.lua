@@ -7,12 +7,12 @@ local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
-local meth_pcall = helpers.meth_pcall
+local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 
 before_each(clear)
 
-describe('lua function', function()
+describe('lua stdlib', function()
   -- İ: `tolower("İ")` is `i` which has length 1 while `İ` itself has
   --    length 2 (in bytes).
   -- Ⱥ: `tolower("Ⱥ")` is `ⱥ` which has length 2 while `Ⱥ` itself has
@@ -147,11 +147,11 @@ describe('lua function', function()
     eq({"yy","xx"}, exec_lua("return test_table"))
 
     -- type checked args
-    eq({false, 'Error executing lua: vim.schedule: expected function'},
-       meth_pcall(exec_lua, "vim.schedule('stringly')"))
+    eq('Error executing lua: vim.schedule: expected function',
+      pcall_err(exec_lua, "vim.schedule('stringly')"))
 
-    eq({false, 'Error executing lua: vim.schedule: expected function'},
-       meth_pcall(exec_lua, "vim.schedule()"))
+    eq('Error executing lua: vim.schedule: expected function',
+      pcall_err(exec_lua, "vim.schedule()"))
 
     exec_lua([[
       vim.schedule(function()
@@ -282,5 +282,10 @@ describe('lua function', function()
     ]])
 
     assert(is_dc)
+  end)
+
+  it('vim.pesc', function()
+    eq('foo%-bar', exec_lua([[return vim.pesc('foo-bar')]]))
+    eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
   end)
 end)

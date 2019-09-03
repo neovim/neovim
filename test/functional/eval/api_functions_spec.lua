@@ -4,7 +4,7 @@ local lfs = require('lfs')
 local neq, eq, command = helpers.neq, helpers.eq, helpers.command
 local clear, curbufmeths = helpers.clear, helpers.curbufmeths
 local exc_exec, expect, eval = helpers.exc_exec, helpers.expect, helpers.eval
-local insert, meth_pcall = helpers.insert, helpers.meth_pcall
+local insert, pcall_err = helpers.insert, helpers.pcall_err
 local meths = helpers.meths
 
 describe('eval-API', function()
@@ -148,8 +148,8 @@ describe('eval-API', function()
   end)
 
   it('cannot be called from sandbox', function()
-    eq({false, 'Vim(call):E48: Not allowed in sandbox'},
-       meth_pcall(command, "sandbox call nvim_input('ievil')"))
+    eq('Vim(call):E48: Not allowed in sandbox',
+       pcall_err(command, "sandbox call nvim_input('ievil')"))
     eq({''}, meths.buf_get_lines(0, 0, -1, true))
   end)
 end)

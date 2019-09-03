@@ -7,7 +7,7 @@ local eval = helpers.eval
 local feed = helpers.feed
 local clear = helpers.clear
 local meths = helpers.meths
-local meth_pcall = helpers.meth_pcall
+local pcall_err = helpers.pcall_err
 local funcs = helpers.funcs
 local expect = helpers.expect
 local command = helpers.command
@@ -219,8 +219,8 @@ describe('autocmd', function()
     eq(7, eval('g:test'))
 
     -- API calls are blocked when aucmd_win is not in scope
-    eq({false, 'Vim(call):E5555: API call: Invalid window id'},
-       meth_pcall(command, "call nvim_set_current_win(g:winid)"))
+    eq('Vim(call):E5555: API call: Invalid window id',
+      pcall_err(command, "call nvim_set_current_win(g:winid)"))
 
     -- second time aucmd_win is needed, a different code path is invoked
     -- to reuse the same window, so check again
@@ -257,8 +257,8 @@ describe('autocmd', function()
     eq(0, eval('g:had_value'))
     eq(7, eval('g:test'))
 
-    eq({false, 'Vim(call):E5555: API call: Invalid window id'},
-       meth_pcall(command, "call nvim_set_current_win(g:winid)"))
+    eq('Vim(call):E5555: API call: Invalid window id',
+      pcall_err(command, "call nvim_set_current_win(g:winid)"))
   end)
 
   it(':doautocmd does not warn "No matching autocommands" #10689', function()

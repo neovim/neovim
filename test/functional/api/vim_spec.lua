@@ -8,7 +8,6 @@ local eval = helpers.eval
 local expect = helpers.expect
 local funcs = helpers.funcs
 local iswin = helpers.iswin
-local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
@@ -17,6 +16,7 @@ local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
 
+local pcall_err = helpers.pcall_err
 local expect_err = helpers.expect_err
 local format_string = helpers.format_string
 local intchar2lua = helpers.intchar2lua
@@ -326,25 +326,20 @@ describe('API', function()
     end)
 
     it('reports errors', function()
-      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
-                 "'=' expected near '+'"},
-         meth_pcall(meths.execute_lua, 'a+*b', {}))
+      eq([[Error loading lua: [string "<nvim>"]:1: '=' expected near '+']],
+        pcall_err(meths.execute_lua, 'a+*b', {}))
 
-      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
-                 "unexpected symbol near '1'"},
-         meth_pcall(meths.execute_lua, '1+2', {}))
+      eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol near '1']],
+        pcall_err(meths.execute_lua, '1+2', {}))
 
-      eq({false, 'Error loading lua: [string "<nvim>"]:1: '..
-                 "unexpected symbol"},
-         meth_pcall(meths.execute_lua, 'aa=bb\0', {}))
+      eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol]],
+        pcall_err(meths.execute_lua, 'aa=bb\0', {}))
 
-      eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
-                 "attempt to call global 'bork' (a nil value)"},
-         meth_pcall(meths.execute_lua, 'bork()', {}))
+      eq([[Error executing lua: [string "<nvim>"]:1: attempt to call global 'bork' (a nil value)]],
+        pcall_err(meths.execute_lua, 'bork()', {}))
 
-      eq({false, 'Error executing lua: [string "<nvim>"]:1: '..
-                 "did\nthe\nfail"},
-         meth_pcall(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
+      eq('Error executing lua: [string "<nvim>"]:1: did\nthe\nfail',
+        pcall_err(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
     it('uses native float values', function()
@@ -571,10 +566,10 @@ describe('API', function()
         yyybc line 2
         line 3
         ]])
-      eq({false, "Invalid type: 'bx'"},
-         meth_pcall(meths.put, {'xxx', 'yyy'}, 'bx', false, true))
-      eq({false, "Invalid type: 'b3x'"},
-         meth_pcall(meths.put, {'xxx', 'yyy'}, 'b3x', false, true))
+      eq("Invalid type: 'bx'",
+         pcall_err(meths.put, {'xxx', 'yyy'}, 'bx', false, true))
+      eq("Invalid type: 'b3x'",
+         pcall_err(meths.put, {'xxx', 'yyy'}, 'b3x', false, true))
     end)
   end)
 
@@ -607,13 +602,13 @@ describe('API', function()
       eq(1, funcs.exists('g:lua'))
       meths.del_var('lua')
       eq(0, funcs.exists('g:lua'))
-      eq({false, "Key not found: lua"}, meth_pcall(meths.del_var, 'lua'))
+      eq("Key not found: lua", pcall_err(meths.del_var, 'lua'))
       meths.set_var('lua', 1)
 
       -- Set locked g: var.
       command('lockvar lua')
-      eq({false, 'Key is locked: lua'}, meth_pcall(meths.del_var, 'lua'))
-      eq({false, 'Key is locked: lua'}, meth_pcall(meths.set_var, 'lua', 1))
+      eq('Key is locked: lua', pcall_err(meths.del_var, 'lua'))
+      eq('Key is locked: lua', pcall_err(meths.set_var, 'lua', 1))
     end)
 
     it('nvim_get_vvar, nvim_set_vvar', function()
@@ -1195,8 +1190,8 @@ describe('API', function()
       eq({info=info}, meths.get_var("info_event"))
       eq({[1]=testinfo,[2]=stderr,[3]=info}, meths.list_chans())
 
-      eq({false, "Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1, expecting Buffer"},
-         meth_pcall(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
+      eq("Vim:Error invoking 'nvim_set_current_buf' on channel 3 (amazing-cat):\nWrong type for argument 1, expecting Buffer",
+         pcall_err(eval, 'rpcrequest(3, "nvim_set_current_buf", -1)'))
     end)
 
     it('works for :terminal channel', function()

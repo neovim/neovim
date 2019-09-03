@@ -6,7 +6,7 @@ local curtabmeths = helpers.curtabmeths
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
-local meth_pcall = helpers.meth_pcall
+local pcall_err = helpers.pcall_err
 local command = helpers.command
 
 describe('api/tabpage', function()
@@ -34,11 +34,11 @@ describe('api/tabpage', function()
       eq(1, funcs.exists('t:lua'))
       curtabmeths.del_var('lua')
       eq(0, funcs.exists('t:lua'))
-      eq({false, 'Key not found: lua'}, meth_pcall(curtabmeths.del_var, 'lua'))
+      eq('Key not found: lua', pcall_err(curtabmeths.del_var, 'lua'))
       curtabmeths.set_var('lua', 1)
       command('lockvar t:lua')
-      eq({false, 'Key is locked: lua'}, meth_pcall(curtabmeths.del_var, 'lua'))
-      eq({false, 'Key is locked: lua'}, meth_pcall(curtabmeths.set_var, 'lua', 1))
+      eq('Key is locked: lua', pcall_err(curtabmeths.del_var, 'lua'))
+      eq('Key is locked: lua', pcall_err(curtabmeths.set_var, 'lua', 1))
     end)
 
     it('tabpage_set_var returns the old value', function()

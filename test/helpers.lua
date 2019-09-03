@@ -73,12 +73,24 @@ function module.matches(pat, actual)
   end
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
--- Expect an error matching pattern `pat`.
-function module.expect_err(pat, ...)
-  local fn = select(1, ...)
+
+-- Expects an error matching Lua pattern `pat`.
+--
+function module.expect_err(pat, fn, ...)
+  assert(type(fn) == 'function')
   local fn_args = {...}
-  table.remove(fn_args, 1)
   assert.error_matches(function() return fn(unpack(fn_args)) end, pat)
+end
+
+-- Invokes `fn` and returns the error string, or raises an error if `fn` succeeds.
+function module.pcall_err(fn, ...)
+  assert(type(fn) == 'function')
+  local status, rv = pcall(fn, ...)
+  if status == true then
+    error('expected failure, but got success')
+  end
+  local errmsg = tostring(rv):gsub('^[^:]+:%d+: ', '')
+  return errmsg
 end
 
 -- initial_path:  directory to recurse into
