@@ -733,15 +733,28 @@ describe('jobs', function()
     end)
   end)
 
-  -- FIXME need to wait until jobsend succeeds before calling jobstop
-  pending('will only emit the "exit" event after "stdout" and "stderr"', function()
-    nvim('command', "let g:job_opts.on_stderr  = function('s:OnEvent')")
+  pending('exit event follows stdout, stderr', function()
+    nvim('command', "let g:job_opts.on_stderr  = function('OnEvent')")
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
-    local jobid = nvim('eval', 'j')
     nvim('eval', 'jobsend(j, "abcdef")')
     nvim('eval', 'jobstop(j)')
-    eq({'notification', 'j', {0, {jobid, 'stdout', {'abcdef'}}}}, next_msg())
-    eq({'notification', 'j', {0, {jobid, 'exit'}}}, next_msg())
+    expect_msg_seq(
+      { {'notification', 'stdout', {0, {'abcdef'}}},
+        {'notification', 'stdout', {0, {''}}},
+        {'notification', 'stderr', {0, {''}}},
+      },
+      -- Alternative sequence:
+      { {'notification', 'stderr', {0, {''}}},
+        {'notification', 'stdout', {0, {'abcdef'}}},
+        {'notification', 'stdout', {0, {''}}},
+      },
+      -- Alternative sequence:
+      { {'notification', 'stdout', {0, {'abcdef'}}},
+        {'notification', 'stderr', {0, {''}}},
+        {'notification', 'stdout', {0, {''}}},
+      }
+    )
+    eq({'notification', 'exit', {0, 143}}, next_msg())
   end)
 
   it('cannot have both rpc and pty options', function()
