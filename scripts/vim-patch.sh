@@ -430,6 +430,7 @@ list_missing_vimpatches() {
   fi
 
   # Get missing Vim commits
+  set +u  # Avoid "unbound variable" with bash < 4.4 below.
   for vim_commit in $(list_vim_commits "${git_log_args[@]}"); do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${vim_commit:0:7}"
@@ -449,6 +450,7 @@ list_missing_vimpatches() {
       echo "$vim_commit"
     fi
   done
+  set -u
 }
 
 # Prints a human-formatted list of Vim commits, with instructional messages.
