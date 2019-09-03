@@ -276,6 +276,20 @@ init.vim:
 <
 
 ================================================================================
+                                                               *lsp-signature-help*
+
+To configure signature help for a language server, add the following in your
+init.vim:
+
+>
+  call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/signatureHelp')")
+  augroup MyLanguageServer
+    au!
+    autocmd Filetype python nnoremap <silent> <Leader>sh :call lsp#text_document#signature_help()<CR>
+  augroup END
+<
+
+================================================================================
                                                                *lsp-hover*
 
 To configure hover for a language server, add the following in your

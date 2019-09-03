@@ -1,18 +1,18 @@
 -- Implements the following default callbacks:
---  textDocument/publishDiagnostics
+--  TODO: textDocument/publishDiagnostics
 
---  IN PROGRESS: textDocument/completion
+--  textDocument/completion
 --  TODO: completionItem/resolve
 
 --  textDocument/hover
---  TODO: textDocument/signatureHelp
---  textDocument/references
+--  textDocument/signatureHelp
+--  TODO: textDocument/references
 --  TODO: textDocument/documentHighlight
 --  TODO: textDocument/documentSymbol
 --  TODO: textDocument/formatting
 --  TODO: textDocument/rangeFormatting
 --  TODO: textDocument/onTypeFormatting
---  textDocument/definition
+--  TODO: textDocument/definition
 --  TODO: textDocument/codeAction
 --  TODO: textDocument/codeLens
 --  TODO: textDocument/documentLink
@@ -22,6 +22,7 @@
 
 --  TODO: documentLink/resolve
 
+local shared = require('vim.shared')
 local URI = require('uri')
 local log = require('lsp.log')
 local nvim_util = require('nvim.util')
@@ -121,8 +122,7 @@ BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
     log.debug('callback:textDocument/completion', data, self)
 
-    if data == nil then
-      print(self)
+    if data == nil or shared.tbl_isempty(data) then
       return
     end
 
@@ -142,6 +142,48 @@ BuiltinCallbacks['textDocument/completion'] = {
     vim.api.nvim_call_function('complete', { corsol - (position[2] - position[3]), matches })
   end,
   options = {}
+}
+
+-- textDocument/signatureHelp
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
+BuiltinCallbacks['textDocument/signatureHelp'] = {
+  callback = function(self, data)
+    log.debug('textDocument/signatureHelp', data, self)
+
+    if data == nil or shared.tbl_isempty(data) then
+      return
+    end
+
+    if not shared.tbl_isempty(data.signatures) then
+      local contents = {}
+      local activeSignature = 1
+
+      if data.activeSignature then
+        activeSignature = data.activeSignature + 1
+      end
+      local signature = data.signatures[activeSignature]
+
+      for _, line in pairs(vim.api.nvim_call_function('split', { signature.label, '\\n' })) do
+        table.insert(contents, line)
+      end
+
+      if not (signature.documentation == nil) then
+        if type(signature.documentation) == 'table' then
+          for _, line in pairs(vim.api.nvim_call_function('split', { signature.documentation.value, '\\n' })) do
+            table.insert(contents, line)
+          end
+        else
+          for _, line in pairs(vim.api.nvim_call_function('split', { signature.documentation, '\\n' })) do
+            table.insert(contents, line)
+          end
+        end
+        table.insert(contents, signature.documentation)
+      end
+
+      util.ui:open_floating_preview(contents)
+    end
+  end,
+  options = {},
 }
 
 -- textDocument/references
@@ -211,6 +253,10 @@ BuiltinCallbacks['textDocument/rename'] = {
 BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
     log.debug('textDocument/hover', data, self)
+
+    if data == nil or shared.tbl_isempty(data) then
+      return
+    end
 
     if data.contents ~= nil then
       local contents = {}

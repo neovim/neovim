@@ -8,6 +8,11 @@ function! lsp#text_document#completion_complete() abort
   return ''
 endfunction
 
+function! lsp#text_document#signature_help() abort
+  call luaeval("vim.lsp.request_async('textDocument/signatureHelp', vim.lsp.structures.SignatureHelpParams())")
+  return ''
+endfunction
+
 let s:last_location = -1
 
 " Omni completion with LSP

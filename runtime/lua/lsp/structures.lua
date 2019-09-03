@@ -225,16 +225,19 @@ structures.CompletionParams = function(args)
   return result
 end
 
-structures.hoverParams = function(args)
+structures.HoverParams = function(args)
   args = check_table(args)
 
   return structures.TextDocumentPositionParams(args)
 end
 
-structures.signatureHelp = function(args)
+structures.SignatureHelpParams = function(args)
   args = check_table(args)
 
-  return structures.TextDocumentPositionParams(args)
+  local params =  structures.TextDocumentPositionParams(args)
+  params.position.character = params.position.character + 1
+
+  return params
 end
 
 structures.definitionParams = function(args)
