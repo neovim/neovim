@@ -2725,6 +2725,8 @@ static int do_more_prompt(int typed_char)
           // scroll up, display line at bottom
           msg_scroll_up(true);
           inc_msg_scrolled();
+          grid_fill(&msg_grid_adj, Rows-2, Rows-1, 0, Columns, ' ', ' ',
+                    HL_ATTR(HLF_MSG));
           mp_last = disp_sb_line(Rows - 2, mp_last);
           toscroll--;
         }
@@ -2746,7 +2748,8 @@ static int do_more_prompt(int typed_char)
   }
 
   // clear the --more-- message
-  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
+  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ',
+            HL_ATTR(HLF_MSG));
   redraw_cmdline = true;
   clear_cmdline = false;
   mode_displayed = false;
@@ -2820,7 +2823,7 @@ void msg_moremsg(int full)
   int attr;
   char_u      *s = (char_u *)_("-- More --");
 
-  attr = HL_ATTR(HLF_M);
+  attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
   grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
   if (full) {
     grid_puts(&msg_grid_adj, (char_u *)
