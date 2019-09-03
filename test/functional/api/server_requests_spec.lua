@@ -180,7 +180,7 @@ describe('server -> client', function()
   end)
 
   describe('recursive (child) nvim client', function()
-    if helpers.isCI('travis') and helpers.os_name() == 'osx' then
+    if helpers.isCI('travis') and helpers.is_os('mac') then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
       pending("[Hangs on Travis macOS. #5002]", function() end)
       return
@@ -339,7 +339,7 @@ describe('server -> client', function()
 
   describe('connecting to its own pipe address', function()
     it('does not deadlock', function()
-      if not helpers.isCI('travis') and helpers.os_name() == 'osx' then
+      if not helpers.isCI('travis') and helpers.is_os('mac') then
         -- It does, in fact, deadlock on QuickBuild. #6851
         pending("deadlocks on QuickBuild", function() end)
         return

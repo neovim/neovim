@@ -11,7 +11,7 @@ local iswin = helpers.iswin
 local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
-local os_name = helpers.os_name
+local is_os = helpers.is_os
 local parse_context = helpers.parse_context
 local request = helpers.request
 local source = helpers.source
@@ -83,7 +83,7 @@ describe('API', function()
       nvim('command', 'w')
       local f = io.open(fname)
       ok(f ~= nil)
-      if os_name() == 'windows' then
+      if is_os('win') then
         eq('testing\r\napi\r\n', f:read('*a'))
       else
         eq('testing\napi\n', f:read('*a'))
