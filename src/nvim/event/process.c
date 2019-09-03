@@ -181,8 +181,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
                             got_int                   // interrupted by the user
                             || proc->refcount == 1);  // job exited
 
-  // we'll assume that a user frantically hitting interrupt doesn't like
-  // the current job. Signal that it has to be killed.
+  // Assume that a user hitting CTRL-C does not like the current job.  Kill it.
   if (got_int) {
     got_int = false;
     process_stop(proc);
