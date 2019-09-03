@@ -5411,7 +5411,8 @@ jobstop({id})						*jobstop()*
 		See |job-control|.
 
 jobwait({ids}[, {timeout}])				*jobwait()*
-		Wait for a set of jobs to complete.
+		Wait for a set of jobs and their |on_exit| handlers to
+		complete.
 
 		{ids} is a list of |job-id|s to wait for.
 		{timeout} is the maximum waiting time in milliseconds, -1
@@ -5427,10 +5428,10 @@ jobwait({ids}[, {timeout}])				*jobwait()*
 		Returns a list of len({ids}) integers, where each integer is
 		the wait-result of the corresponding job. Each wait-result is
 		one of the following:
-			* Exit-code, if the job exited
-			* -1 if the timeout was exceeded
-			* -2 if the job was interrupted
-			* -3 if the |job-id| is invalid
+			Exit-code, if the job exited
+			-1 if the timeout was exceeded
+			-2 if the job was interrupted (by |CTRL-C|)
+			-3 if the job-id is invalid
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.

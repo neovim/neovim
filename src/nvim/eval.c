@@ -12437,35 +12437,30 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (check_restricted() || check_secure()) {
     return;
   }
-
   if (argvars[0].v_type != VAR_LIST || (argvars[1].v_type != VAR_NUMBER
         && argvars[1].v_type != VAR_UNKNOWN)) {
     EMSG(_(e_invarg));
     return;
   }
 
-
+  ui_busy_start();
   list_T *args = argvars[0].vval.v_list;
   Channel **jobs = xcalloc(tv_list_len(args), sizeof(*jobs));
-
-  ui_busy_start();
   MultiQueue *waiting_jobs = multiqueue_new_parent(loop_on_put, &main_loop);
-  // For each item in the input list append an integer to the output list. -3
-  // is used to represent an invalid job id, -2 is for a interrupted job and
-  // -1 for jobs that were skipped or timed out.
 
+  // Validate, prepare jobs for waiting.
   int i = 0;
   TV_LIST_ITER_CONST(args, arg, {
     Channel *chan = NULL;
     if (TV_LIST_ITEM_TV(arg)->v_type != VAR_NUMBER
         || !(chan = find_job(TV_LIST_ITEM_TV(arg)->vval.v_number, false))) {
-      jobs[i] = NULL;
+      jobs[i] = NULL;  // Invalid job.
     } else {
       jobs[i] = chan;
       channel_incref(chan);
       if (chan->stream.proc.status < 0) {
-        // Process any pending events for the job because we'll temporarily
-        // replace the parent queue
+        // Process any pending events on the job's queue before temporarily
+        // replacing it.
         multiqueue_process_events(chan->events);
         multiqueue_replace_parent(chan->events, waiting_jobs);
       }
@@ -12482,40 +12477,36 @@ static void f_jobwait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   for (i = 0; i < tv_list_len(args); i++) {
     if (remaining == 0) {
-      // timed out
-      break;
+      break;  // Timeout.
     }
-
-    // if the job already exited, but wasn't freed yet
-    if (jobs[i] == NULL || jobs[i]->stream.proc.status >= 0) {
-      continue;
+    if (jobs[i] == NULL) {
+      continue;  // Invalid job, will assign status=-3 below.
     }
-
     int status = process_wait(&jobs[i]->stream.proc, remaining,
                               waiting_jobs);
     if (status < 0) {
-      // interrupted or timed out, skip remaining jobs.
-      break;
+      break;  // Interrupted (CTRL-C) or timeout, skip remaining jobs.
     }
     if (remaining > 0) {
       uint64_t now = os_hrtime();
-      remaining -= (int) ((now - before) / 1000000);
+      remaining = MIN(0, remaining - (int)((now - before) / 1000000));
       before = now;
-      if (remaining <= 0) {
-        break;
-      }
     }
   }
 
   list_T *const rv = tv_list_alloc(tv_list_len(args));
 
-  // restore the parent queue for any jobs still alive
+  // For each job:
+  //  * Restore its parent queue if the job is still alive.
+  //  * Append its status to the output list, or:
+  //       -3 for "invalid job id"
+  //       -2 for "interrupted" (user hit CTRL-C)
+  //       -1 for jobs that were skipped or timed out
   for (i = 0; i < tv_list_len(args); i++) {
     if (jobs[i] == NULL) {
       tv_list_append_number(rv, -3);
       continue;
     }
-    // restore the parent queue for the job
     multiqueue_process_events(jobs[i]->events);
     multiqueue_replace_parent(jobs[i]->events, main_loop.events);
 
