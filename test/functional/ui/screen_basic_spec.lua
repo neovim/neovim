@@ -951,6 +951,46 @@ local function screen_tests(linegrid)
                                                            |
     ]])
   end)
+
+  describe('more prompt', function()
+    it('can be quit', function()
+      command("set more")
+      feed(':echon join(map(range(0, &lines*2), "v:val"), "\\n")<cr>')
+      screen:expect{grid=[[
+        0                                                    |
+        1                                                    |
+        2                                                    |
+        3                                                    |
+        4                                                    |
+        5                                                    |
+        6                                                    |
+        7                                                    |
+        8                                                    |
+        9                                                    |
+        10                                                   |
+        11                                                   |
+        12                                                   |
+        {7:-- More --}^                                           |
+      ]]}
+      feed('q')
+      screen:expect{grid=[[
+        ^                                                     |
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+        {0:~                                                    }|
+                                                             |
+      ]]}
+    end)
+  end)
 end
 
 describe("Screen (char-based)", function()

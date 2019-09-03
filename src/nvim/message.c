@@ -227,7 +227,7 @@ void msg_multiline_attr(const char *s, int attr)
 {
   const char *next_spec = s;
 
-  while (next_spec != NULL) {
+  while (next_spec != NULL && !got_int) {
     next_spec = strpbrk(s, "\t\n\r");
 
     if (next_spec != NULL) {
