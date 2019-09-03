@@ -2217,37 +2217,36 @@ void msg_scroll_up(bool may_throttle)
 /// we get throttling "for free" using standard redraw_win_later code paths.
 void msg_scroll_flush(void)
 {
-  if (!msg_grid.throttled) {
-    return;
-  }
-  msg_grid.throttled = false;
-  int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
-  assert(pos_delta >= 0);
-  int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
+  if (msg_grid.throttled) {
+    msg_grid.throttled = false;
+    int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
+    assert(pos_delta >= 0);
+    int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
 
-  if (pos_delta > 0) {
-    ui_ext_msg_set_pos(msg_grid_pos, true);
-    msg_grid_pos_at_flush = msg_grid_pos;
-  }
+    if (pos_delta > 0) {
+      ui_ext_msg_set_pos(msg_grid_pos, true);
+    }
 
-  int to_scroll = delta-pos_delta-msg_grid_scroll_discount;
-  assert(to_scroll >= 0);
+    int to_scroll = delta-pos_delta-msg_grid_scroll_discount;
+    assert(to_scroll >= 0);
 
-  // TODO(bfredl): msg_grid_pos should be 0 already when starting scrolling
-  // but this sometimes fails in "headless" message printing.
-  if (to_scroll > 0 && msg_grid_pos == 0) {
-    ui_call_grid_scroll(msg_grid.handle, 0, Rows, 0, Columns, to_scroll, 0);
-  }
+    // TODO(bfredl): msg_grid_pos should be 0 already when starting scrolling
+    // but this sometimes fails in "headless" message printing.
+    if (to_scroll > 0 && msg_grid_pos == 0) {
+      ui_call_grid_scroll(msg_grid.handle, 0, Rows, 0, Columns, to_scroll, 0);
+    }
 
-  for (int i = MAX(Rows-MAX(delta, 1), 0); i < Rows; i++) {
-    int row = i-msg_grid_pos;
-    assert(row >= 0);
-    ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
-            HL_ATTR(HLF_MSG), false);
-    msg_grid.dirty_col[row] = 0;
+    for (int i = MAX(Rows-MAX(delta, 1), 0); i < Rows; i++) {
+      int row = i-msg_grid_pos;
+      assert(row >= 0);
+      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
+              HL_ATTR(HLF_MSG), false);
+      msg_grid.dirty_col[row] = 0;
+    }
   }
   msg_scrolled_at_flush = msg_scrolled;
   msg_grid_scroll_discount = 0;
+  msg_grid_pos_at_flush = msg_grid_pos;
 }
 
 void msg_reset_scroll(void)
