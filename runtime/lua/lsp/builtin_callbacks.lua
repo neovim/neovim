@@ -235,7 +235,7 @@ BuiltinCallbacks['textDocument/hover'] = {
       elseif type(data.contents) == 'table' then
         -- MarkupContent
         if data.contents.kind ~= nil then
-          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents, '\\n' })) do
+          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents.value, '\\n' })) do
             table.insert(contents, line)
           end
         -- { language: string; value: string }
