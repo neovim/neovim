@@ -451,10 +451,6 @@ local function phl2lua(pstate)
   return ret
 end
 
-child_call_once(function()
-  assert:set_parameter('TableFormatLevel', 1000000)
-end)
-
 describe('Expressions parser', function()
   local function _check_parsing(opts, str, exp_ast, exp_highlighting_fs,
                                 nz_flags_exps)

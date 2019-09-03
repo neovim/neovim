@@ -1568,7 +1568,6 @@ describe('API', function()
         return ('%s(%s)%s'):format(typ, args, rest)
       end
     end
-    assert:set_parameter('TableFormatLevel', 1000000)
     require('test.unit.viml.expressions.parser_tests')(
         it_maybe_pending, _check_parsing, hl, fmtn)
   end)

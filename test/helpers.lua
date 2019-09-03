@@ -6,6 +6,8 @@ local lfs = require('lfs')
 local relpath = require('pl.path').relpath
 local Paths = require('test.config.paths')
 
+assert:set_parameter('TableFormatLevel', 100)
+
 local quote_me = '[^.%w%+%-%@%_%/]' -- complement (needn't quote)
 local function shell_quote(str)
   if string.find(str, quote_me) or str == '' then
