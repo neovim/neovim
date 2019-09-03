@@ -1162,21 +1162,18 @@ void mark_col_adjust(
 
 // When deleting lines, this may create duplicate marks in the
 // jumplist. They will be removed here for the specified window.
-// When "loadfiles" is true first ensure entries have the "fnum" field set
-// (this may be a bit slow).
-void cleanup_jumplist(win_T *wp, bool loadfiles)
+// When "checktail" is true, removes tail jump if it matches current position.
+void cleanup_jumplist(win_T *wp, bool checktail)
 {
   int i;
 
-  if (loadfiles) {
-    // If specified, load all the files from the jump list. This is
-    // needed to properly clean up duplicate entries, but will take some
-    // time.
-    for (i = 0; i < wp->w_jumplistlen; i++) {
-      if ((wp->w_jumplist[i].fmark.fnum == 0)
-          && (wp->w_jumplist[i].fmark.mark.lnum != 0)) {
-        fname2fnum(&wp->w_jumplist[i]);
-      }
+  // Load all the files from the jump list. This is
+  // needed to properly clean up duplicate entries, but will take some
+  // time.
+  for (i = 0; i < wp->w_jumplistlen; i++) {
+    if ((wp->w_jumplist[i].fmark.fnum == 0)
+        && (wp->w_jumplist[i].fmark.mark.lnum != 0)) {
+      fname2fnum(&wp->w_jumplist[i]);
     }
   }
 
@@ -1213,8 +1210,8 @@ void cleanup_jumplist(win_T *wp, bool loadfiles)
 
   // When pointer is below last jump, remove the jump if it matches the current
   // line.  This avoids useless/phantom jumps. #9805
-  if (loadfiles  // otherwise (i.e.: Shada), last entry should be kept
-      && wp->w_jumplistlen && wp->w_jumplistidx == wp->w_jumplistlen) {
+  if (checktail && wp->w_jumplistlen
+      && wp->w_jumplistidx == wp->w_jumplistlen) {
     const xfmark_T *fm_last = &wp->w_jumplist[wp->w_jumplistlen - 1];
     if (fm_last->fmark.fnum == curbuf->b_fnum
         && fm_last->fmark.mark.lnum == wp->w_cursor.lnum) {

@@ -922,11 +922,9 @@ describe('API', function()
         },
 
         ['jumps'] = eval(([[
-        filter(map(add(
-        getjumplist()[0], { 'bufnr': bufnr('%'), 'lnum': getcurpos()[1] }),
-        'filter(
-        { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-        { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+        filter(map(getjumplist()[0], 'filter(
+          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
+          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
         ]]):gsub('\n', '')),
 
         ['buflist'] = eval([[
