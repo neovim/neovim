@@ -249,11 +249,6 @@ the file).
 Configuration
 =============
 
-busted (luassert) by default does not print the full result of deeply-nested
-tables. But sometimes it's useful while debugging a test.
-
-    assert:set_parameter('TableFormatLevel', 1000000)
-
 Test behaviour is affected by environment variables. Currently supported 
 (Functional, Unit, Benchmarks) (when Defined; when set to _1_; when defined, 
 treated as Integer; when defined, treated as String; when defined, treated as 

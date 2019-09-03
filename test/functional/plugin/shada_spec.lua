@@ -1360,8 +1360,6 @@ describe('autoload/shada.vim', function()
       nvim_command('unlet g:__actual')
     end
 
-    assert:set_parameter('TableFormatLevel', 100)
-
     it('works with multiple items', function()
       strings2sd_eq({{
         type=11, timestamp=0, data={
