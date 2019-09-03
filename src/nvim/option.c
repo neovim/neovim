@@ -3959,7 +3959,7 @@ static char *set_bool_option(const int opt_idx, char_u *const varp,
     redraw_all_later(SOME_VALID);
   } else if ((int *)varp == &p_hls) {
     // when 'hlsearch' is set or reset: reset no_hlsearch
-    SET_NO_HLSEARCH(false);
+    set_no_hlsearch(false);
   } else if ((int *)varp == &curwin->w_p_scb) {
   // when 'scrollbind' is set: snapshot the current position to avoid a jump
   // at the end of normal_cmd()
@@ -4330,19 +4330,26 @@ static char *set_num_option(int opt_idx, char_u *varp, long value,
 
   // Number options that need some action when changed
   if (pp == &p_wh) {
+    // 'winheight'
     if (!ONE_WINDOW && curwin->w_height < p_wh) {
       win_setheight((int)p_wh);
     }
   } else if (pp == &p_hh) {
+    // 'helpheight'
     if (!ONE_WINDOW && curbuf->b_help && curwin->w_height < p_hh) {
       win_setheight((int)p_hh);
     }
   } else if (pp == &p_wmh) {
+    // 'winminheight'
     win_setminheight();
   } else if (pp == &p_wiw) {
+    // 'winwidth'
     if (!ONE_WINDOW && curwin->w_width < p_wiw) {
       win_setwidth((int)p_wiw);
     }
+  } else if (pp == &p_wmw) {
+    // 'winminwidth'
+    win_setminwidth();
   } else if (pp == &p_ls) {
     last_status(false);  // (re)set last window status line.
   } else if (pp == &p_stal) {

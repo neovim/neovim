@@ -2310,7 +2310,6 @@ static int jumpto_tag(
   int retval = FAIL;
   int getfile_result = GETFILE_UNUSED;
   int search_options;
-  int save_no_hlsearch;
   win_T       *curwin_save = NULL;
   char_u      *full_fname = NULL;
   const bool old_KeyTyped = KeyTyped;       // getting the file may reset it
@@ -2453,9 +2452,9 @@ static int jumpto_tag(
     secure = 1;
     ++sandbox;
     save_magic = p_magic;
-    p_magic = FALSE;            /* always execute with 'nomagic' */
-    /* Save value of no_hlsearch, jumping to a tag is not a real search */
-    save_no_hlsearch = no_hlsearch;
+    p_magic = false;            // always execute with 'nomagic'
+    // Save value of no_hlsearch, jumping to a tag is not a real search
+    const bool save_no_hlsearch = no_hlsearch;
 
     /*
      * If 'cpoptions' contains 't', store the search pattern for the "n"
@@ -2560,7 +2559,7 @@ static int jumpto_tag(
     --sandbox;
     /* restore no_hlsearch when keeping the old search pattern */
     if (search_options) {
-      SET_NO_HLSEARCH(save_no_hlsearch);
+      set_no_hlsearch(save_no_hlsearch);
     }
 
     // Return OK if jumped to another file (at least we found the file!).

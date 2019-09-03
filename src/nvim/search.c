@@ -100,7 +100,7 @@ static struct spat saved_spats[2];
 // searching
 static struct spat  saved_last_search_spat;
 static int saved_last_idx = 0;
-static int saved_no_hlsearch = 0;
+static bool saved_no_hlsearch = false;
 
 static char_u       *mr_pattern = NULL;    // pattern used by search_regcomp()
 static int mr_pattern_alloced = false;     // mr_pattern was allocated
@@ -248,7 +248,7 @@ void save_re_pat(int idx, char_u *pat, int magic)
     /* If 'hlsearch' set and search pat changed: need redraw. */
     if (p_hls)
       redraw_all_later(SOME_VALID);
-    SET_NO_HLSEARCH(FALSE);
+    set_no_hlsearch(false);
   }
 }
 
@@ -281,7 +281,7 @@ void restore_search_patterns(void)
     free_spat(&spats[1]);
     spats[1] = saved_spats[1];
     last_idx = saved_last_idx;
-    SET_NO_HLSEARCH(saved_no_hlsearch);
+    set_no_hlsearch(saved_no_hlsearch);
   }
 }
 
@@ -330,7 +330,7 @@ void restore_last_search_pattern(void)
   spats[RE_SEARCH] = saved_last_search_spat;
   set_vv_searchforward();
   last_idx = saved_last_idx;
-  SET_NO_HLSEARCH(saved_no_hlsearch);
+  set_no_hlsearch(saved_no_hlsearch);
 }
 
 char_u *last_search_pattern(void)
@@ -1048,7 +1048,7 @@ int do_search(
    */
   if (no_hlsearch && !(options & SEARCH_KEEP)) {
     redraw_all_later(SOME_VALID);
-    SET_NO_HLSEARCH(FALSE);
+    set_no_hlsearch(false);
   }
 
   /*

@@ -9990,12 +9990,18 @@ static void ex_set(exarg_T *eap)
   (void)do_set(eap->arg, flags);
 }
 
+void set_no_hlsearch(bool flag)
+{
+  no_hlsearch = flag;
+  set_vim_var_nr(VV_HLSEARCH, !no_hlsearch && p_hls);
+}
+
 /*
  * ":nohlsearch"
  */
 static void ex_nohlsearch(exarg_T *eap)
 {
-  SET_NO_HLSEARCH(TRUE);
+  set_no_hlsearch(true);
   redraw_all_later(SOME_VALID);
 }
 

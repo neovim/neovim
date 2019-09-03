@@ -5762,7 +5762,7 @@ next_search_hl (
         if (shl == &search_hl) {
           // don't free regprog in the match list, it's a copy
           vim_regfree(shl->rm.regprog);
-          SET_NO_HLSEARCH(TRUE);
+          set_no_hlsearch(true);
         }
         shl->rm.regprog = NULL;
         shl->lnum = 0;

@@ -1830,7 +1830,7 @@ static int command_line_changed(CommandLineState *s)
     // If there is no command line, don't do anything
     if (ccline.cmdlen == 0) {
       i = 0;
-      SET_NO_HLSEARCH(true);  // turn off previous highlight
+      set_no_hlsearch(true);  // turn off previous highlight
       redraw_all_later(SOME_VALID);
     } else {
       int search_flags = SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK;
@@ -1888,7 +1888,7 @@ static int command_line_changed(CommandLineState *s)
     // Disable 'hlsearch' highlighting if the pattern matches
     // everything. Avoids a flash when typing "foo\|".
     if (empty_pattern(ccline.cmdbuff)) {
-      SET_NO_HLSEARCH(true);
+      set_no_hlsearch(true);
     }
 
     validate_cursor();

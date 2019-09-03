@@ -746,6 +746,36 @@ func Test_popup_complete_backwards()
   bwipe!
 endfunc
 
+fun! Test_complete_o_tab()
+  throw 'skipped: Nvim does not support test_override()'
+  let s:o_char_pressed = 0
+
+  fun! s:act_on_text_changed()
+    if s:o_char_pressed
+      let s:o_char_pressed = 0
+      call feedkeys("\<c-x>\<c-n>", 'i')
+    endif
+  endf
+
+  set completeopt=menu,noselect
+  new
+  imap <expr> <buffer> <tab> pumvisible() ? "\<c-p>" : "X"
+  autocmd! InsertCharPre <buffer> let s:o_char_pressed = (v:char ==# 'o')
+  autocmd! TextChangedI <buffer> call <sid>act_on_text_changed()
+  call setline(1,  ['hoard', 'hoax', 'hoarse', ''])
+  let l:expected = ['hoard', 'hoax', 'hoarse', 'hoax', 'hoax']
+  call cursor(4,1)
+  call test_override("char_avail", 1)
+  call feedkeys("Ahoa\<tab>\<tab>\<c-y>\<esc>", 'tx')
+  call feedkeys("oho\<tab>\<tab>\<c-y>\<esc>", 'tx')
+  call assert_equal(l:expected, getline(1,'$'))
+
+  call test_override("char_avail", 0)
+  bwipe!
+  set completeopt&
+  delfunc s:act_on_text_changed
+endf
+
 func Test_popup_complete_info_01()
   new
   inoremap <buffer><F5> <C-R>=complete_info().mode<CR>

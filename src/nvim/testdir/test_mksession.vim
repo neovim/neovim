@@ -106,11 +106,20 @@ endfunc
 
 func Test_mksession_winheight()
   new
-  set winheight=10 winminheight=2
+  set winheight=10
+  set winminheight=2
   mksession! Xtest_mks.out
   source Xtest_mks.out
 
   call delete('Xtest_mks.out')
+endfunc
+
+func Test_mksession_large_winheight()
+  set winheight=999
+  mksession! Xtest_mks_winheight.out
+  set winheight&
+  source Xtest_mks_winheight.out
+  call delete('Xtest_mks_winheight.out')
 endfunc
 
 " Verify that arglist is stored correctly to the session file.
