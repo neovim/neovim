@@ -150,10 +150,16 @@ void msg_grid_set_pos(int row, bool scrolled)
   }
 }
 
+bool msg_use_grid(void)
+{
+  return default_grid.chars && msg_use_msgsep()
+         && !ui_has(kUIMessages);
+}
+
 void msg_grid_validate(void)
 {
   grid_assign_handle(&msg_grid);
-  bool should_alloc = msg_dothrottle();
+  bool should_alloc = msg_use_grid();
   if (should_alloc && (msg_grid.Rows != Rows || msg_grid.Columns != Columns
                        || !msg_grid.chars)) {
     // TODO(bfredl): eventually should be set to "invalid". I e all callers
@@ -2027,7 +2033,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 
       // Tricky: if last cell will be written, delay the throttle until
       // after the first scroll. Otherwise we would need to keep track of it.
-      if (has_last_char && msg_dothrottle()) {
+      if (has_last_char && msg_do_throttle()) {
         if (!msg_grid.throttled) {
           msg_grid_scroll_discount++;
         }
@@ -2158,12 +2164,6 @@ int msg_scrollsize(void)
   return msg_scrolled + p_ch + 1;
 }
 
-bool msg_dothrottle(void)
-{
-  return default_grid.chars && msg_use_msgsep()
-         && !ui_has(kUIMessages);
-}
-
 bool msg_use_msgsep(void)
 {
   // the full-screen scroll behavior doesn't really make sense with
@@ -2171,12 +2171,15 @@ bool msg_use_msgsep(void)
   return ((dy_flags & DY_MSGSEP) || ui_has(kUIMultigrid));
 }
 
-/*
- * Scroll the screen up one line for displaying the next message line.
- */
+bool msg_do_throttle(void)
+{
+  return msg_use_grid() && !(rdb_flags & RDB_NOTHROTTLE);
+}
+
+/// Scroll the screen up one line for displaying the next message line.
 void msg_scroll_up(bool may_throttle)
 {
-  if (may_throttle && msg_dothrottle()) {
+  if (may_throttle && msg_do_throttle()) {
     msg_grid.throttled = true;
   }
   msg_did_scroll = true;
@@ -2255,7 +2258,7 @@ void msg_reset_scroll(void)
   }
   // TODO(bfredl): some duplicate logic with update_screen(). Later on
   // we should properly disentangle message clear with full screen redraw.
-  if (msg_dothrottle()) {
+  if (msg_use_grid()) {
     msg_grid.throttled = false;
     // TODO(bfredl): risk for extra flicker i e with
     // "nvim -o has_swap also_has_swap"
@@ -2713,7 +2716,7 @@ static int do_more_prompt(int typed_char)
       } else {
         /* First display any text that we scrolled back. */
         while (toscroll > 0 && mp_last != NULL) {
-          if (msg_dothrottle() && !msg_grid.throttled) {
+          if (msg_do_throttle() && !msg_grid.throttled) {
             // Tricky: we redraw at one line higher than usual. Therefore
             // the non-flushed area is one line larger.
             msg_scrolled_at_flush--;
