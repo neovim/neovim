@@ -2465,10 +2465,6 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
     mp = mp->sb_next;
   }
 
-  if (msg_col < Columns) {
-    grid_fill(&msg_grid_adj, row, row+1, msg_col, Columns, ' ', ' ',
-              HL_ATTR(HLF_MSG));
-  }
   return mp->sb_next;
 }
 
@@ -2700,12 +2696,16 @@ static int do_more_prompt(int typed_char)
 
           if (toscroll == -1) {
             grid_ins_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
+            grid_fill(&msg_grid_adj, 0, 1, 0, Columns, ' ', ' ',
+                      HL_ATTR(HLF_MSG));
             // display line at top
             (void)disp_sb_line(0, mp);
           } else {
             // redisplay all lines
             // TODO(bfredl): this case is not optimized (though only concerns
             // event fragmentization, not unnecessary scroll events).
+            grid_fill(&msg_grid_adj, 0, Rows, 0, Columns, ' ', ' ',
+                      HL_ATTR(HLF_MSG));
             for (i = 0; mp != NULL && i < Rows - 1; i++) {
               mp = disp_sb_line(i, mp);
               ++msg_scrolled;
