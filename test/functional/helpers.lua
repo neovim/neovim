@@ -15,6 +15,7 @@ local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
 local filter = global_helpers.filter
+local is_os = global_helpers.is_os
 local map = global_helpers.map
 local ok = global_helpers.ok
 local sleep = global_helpers.sleep
@@ -270,22 +271,6 @@ end
 function module.eval(expr)
   return module.request('nvim_eval', expr)
 end
-
-module.os_name = (function()
-  local name = nil
-  return (function()
-    if not name then
-      if module.eval('has("win32")') == 1 then
-        name = 'windows'
-      elseif module.eval('has("macunix")') == 1 then
-        name = 'osx'
-      else
-        name = 'unix'
-      end
-    end
-    return name
-  end)
-end)()
 
 -- Executes a VimL function.
 -- Fails on VimL error, but does not update v:errmsg.
@@ -609,7 +594,7 @@ local function do_rmdir(path)
             -- Try Nvim delete(): it handles `readonly` attribute on Windows,
             -- and avoids Lua cross-version/platform incompatibilities.
             if -1 == module.call('delete', abspath) then
-              local hint = (module.os_name() == 'windows'
+              local hint = (is_os('win')
                 and ' (hint: try :%bwipeout! before rmdir())' or '')
               error('delete() failed'..hint..': '..abspath)
             end
@@ -626,7 +611,7 @@ end
 
 function module.rmdir(path)
   local ret, _ = pcall(do_rmdir, path)
-  if not ret and module.os_name() == "windows" then
+  if not ret and is_os('win') then
     -- Maybe "Permission denied"; try again after changing the nvim
     -- process to the top-level directory.
     module.command([[exe 'cd '.fnameescape(']]..start_dir.."')")

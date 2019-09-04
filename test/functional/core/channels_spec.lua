@@ -7,7 +7,7 @@ local sleep = helpers.sleep
 local spawn, nvim_argv = helpers.spawn, helpers.nvim_argv
 local set_session = helpers.set_session
 local nvim_prog = helpers.nvim_prog
-local os_name = helpers.os_name
+local is_os = helpers.is_os
 local retry = helpers.retry
 local expect_twostreams = helpers.expect_twostreams
 
@@ -140,7 +140,7 @@ describe('channels', function()
     command("call chansend(id, 'incomplet\004')")
 
     local is_bsd = not not string.find(uname(), 'bsd')
-    local bsdlike = is_bsd or (os_name() == "osx")
+    local bsdlike = is_bsd or is_os('mac')
     local extra = bsdlike and "^D\008\008" or ""
     expect_twoline(id, "stdout",
                    "incomplet"..extra, "[1, ['incomplet'], 'stdin']", true)

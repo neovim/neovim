@@ -190,6 +190,15 @@ module.uname = (function()
   end)
 end)()
 
+function module.is_os(s)
+  if not (s == 'win' or s == 'mac' or s == 'unix') then
+    error('unknown platform: '..tostring(s))
+  end
+  return ((s == 'win' and module.iswin())
+    or (s == 'mac' and module.uname() == 'darwin')
+    or (s == 'unix'))
+end
+
 local function tmpdir_get()
   return os.getenv('TMPDIR') and os.getenv('TMPDIR') or os.getenv('TEMP')
 end
