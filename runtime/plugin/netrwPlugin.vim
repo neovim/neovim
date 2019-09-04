@@ -47,9 +47,9 @@ augroup Network
  au FileReadCmd  ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe "sil doau FileReadPre ".fnameescape(expand("<amatch>"))|call netrw#Nread(1,expand("<amatch>"))|exe "sil doau FileReadPost ".fnameescape(expand("<amatch>"))
  au BufWriteCmd  ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau BufWritePre ".fnameescape(expand("<amatch>"))|exe 'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau BufWritePost ".fnameescape(expand("<amatch>"))
  au FileWriteCmd ftp://*,rcp://*,scp://*,http://*,file://*,dav://*,davs://*,rsync://*,sftp://*			exe "sil doau FileWritePre ".fnameescape(expand("<amatch>"))|exe "'[,']".'Nwrite '.fnameescape(expand("<amatch>"))|exe "sil doau FileWritePost ".fnameescape(expand("<amatch>"))
- try                                                       
+ try
   au SourceCmd   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
- catch /^Vim\%((\a\+)\)\=:E216/                            
+ catch /^Vim\%((\a\+)\)\=:E216/
   au SourcePre   ftp://*,rcp://*,scp://*,http://*,file://*,https://*,dav://*,davs://*,rsync://*,sftp://*	exe 'Nsource '.fnameescape(expand("<amatch>"))
  endtry
 augroup END
@@ -81,7 +81,7 @@ if !exists("g:netrw_nogx")
   if !hasmapto('<Plug>NetrwBrowseX')
    nmap <unique> gx <Plug>NetrwBrowseX
   endif
-  nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(netrw#GX(),netrw#CheckIfRemote(netrw#GX()))<cr>
+  nno <silent> <Plug>NetrwBrowseX :call netrw#BrowseX(expand((exists("g:netrw_gx")? g:netrw_gx : '<cfile>')),netrw#CheckIfRemote())<cr>
  endif
  if maparg('gx','v') == ""
   if !hasmapto('<Plug>NetrwBrowseXVis')
@@ -103,7 +103,7 @@ fun! s:LocalBrowse(dirname)
   " Unfortunate interaction -- only DechoMsg debugging calls can be safely used here.
   " Otherwise, the BufEnter event gets triggered when attempts to write to
   " the DBG buffer are made.
-  
+
   if !exists("s:vimentered")
    " If s:vimentered doesn't exist, then the VimEnter event hasn't fired.  It will,
    " and so s:VimEnter() will then be calling this routine, but this time with s:vimentered defined.
