@@ -3494,14 +3494,17 @@ func Xautocmd_changelist(cchar)
   call assert_equal(4, line('.'))
   autocmd! QuickFixCmdPost
 
-  " Test for grep/lgrep
-  call g:Xsetlist([], 'f')
-  Xexpr 'Xtestfile1:2:Line2'
-  autocmd QuickFixCmdPost * Xolder
-  silent Xgrep Line5 Xtestfile2
-  call assert_equal('Xtestfile2', bufname(''))
-  call assert_equal(5, line('.'))
-  autocmd! QuickFixCmdPost
+  " The grepprg may not be set on non-Unix systems
+  if has('unix')
+    " Test for grep/lgrep
+    call g:Xsetlist([], 'f')
+    Xexpr 'Xtestfile1:2:Line2'
+    autocmd QuickFixCmdPost * Xolder
+    silent Xgrep Line5 Xtestfile2
+    call assert_equal('Xtestfile2', bufname(''))
+    call assert_equal(5, line('.'))
+    autocmd! QuickFixCmdPost
+  endif
 
   " Test for vimgrep/lvimgrep
   call g:Xsetlist([], 'f')
