@@ -48,6 +48,48 @@ describe('osc handling', function()
 
         os.remove(fname)
       end)
+
+      it('handles missing argument', function()
+        local screen = Screen.new(25, 10)
+        screen:attach()
+
+        local osc = '\x1b]51;["drop"]\a'
+        emit_osc(osc)
+
+        screen:expect([[
+          ^ $                       |
+          [Process exited 0]       |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+        ]])
+      end)
+    end)
+
+    it('handles empty list', function()
+      local screen = Screen.new(25, 10)
+      screen:attach()
+
+      local osc = '\x1b]51;[]\a'
+      emit_osc(osc)
+
+      screen:expect([[
+        ^ $                       |
+        [Process exited 0]       |
+                                 |
+                                 |
+                                 |
+                                 |
+                                 |
+                                 |
+                                 |
+        E474: Invalid argument   |
+      ]])
     end)
   end)
 end)
