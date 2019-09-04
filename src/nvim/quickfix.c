@@ -1016,7 +1016,8 @@ qf_init_end:
 
 /// Set the title of the specified quickfix list. Frees the previous title.
 /// Prepends ':' to the title.
-static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
+static void qf_store_title(qf_info_T *qi, int qf_idx, const char_u *title)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   XFREE_CLEAR(qi->qf_lists[qf_idx].qf_title);
 
@@ -1025,7 +1026,7 @@ static void qf_store_title(qf_info_T *qi, int qf_idx, char_u *title)
     char_u *p = xmallocz(len);
 
     qi->qf_lists[qf_idx].qf_title = p;
-    xstrlcpy((char *)p, (char *)title, len + 1);
+    xstrlcpy((char *)p, (const char *)title, len + 1);
   }
 }
 
@@ -4693,7 +4694,7 @@ static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
       if (di->di_tv.vval.v_number != 0) {
         qf_idx = (int)di->di_tv.vval.v_number - 1;
         if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
-          qf_idx = -1;
+          qf_idx = INVALID_QFIDX;
         }
       }
     } else if (di->di_tv.v_type == VAR_STRING
@@ -4701,7 +4702,7 @@ static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
       // Get the last quickfix list number
       qf_idx = qi->qf_listcount - 1;
     } else {
-      qf_idx = -1;
+      qf_idx = INVALID_QFIDX;
     }
   }
 
@@ -4713,7 +4714,7 @@ static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
         qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
       }
     } else {
-      qf_idx = -1;
+      qf_idx = INVALID_QFIDX;
     }
   }
 
@@ -4829,7 +4830,7 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   }
 
   // List is not present or is empty
-  if (qi == NULL || qi->qf_listcount == 0 || qf_idx == -1) {
+  if (qi == NULL || qi->qf_listcount == 0 || qf_idx == INVALID_QFIDX) {
     return qf_getprop_defaults(qi, flags, retdict);
   }
 
@@ -4978,18 +4979,17 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
   return retval;
 }
 
-static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
-                             char_u *title)
+// Get the quickfix list index from 'nr' or 'id'
+static int qf_setprop_get_qfidx(
+    const qf_info_T *qi,
+    const dict_T *what,
+    int action,
+    bool *newlist)
+  FUNC_ATTR_NONNULL_ALL
 {
   dictitem_T *di;
-  int retval = FAIL;
-  int newlist = false;
-  char_u *errorformat = p_efm;
-
-  if (action == ' ' || qi->qf_curlist == qi->qf_listcount) {
-    newlist = true;
-  }
   int qf_idx = qi->qf_curlist;  // default is the current list
+
   if ((di = tv_dict_find(what, S_LEN("nr"))) != NULL) {
     // Use the specified quickfix/location list
     if (di->di_tv.v_type == VAR_NUMBER) {
@@ -5002,37 +5002,147 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
         // When creating a new list, accept qf_idx pointing to the next
         // non-available list and add the new list at the end of the
         // stack.
-        newlist = true;
-        qf_idx = qi->qf_listcount - 1;
+        *newlist = true;
+        qf_idx = qi->qf_listcount > 0 ? qi->qf_listcount - 1 : 0;
       } else if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
-        return FAIL;
+        return INVALID_QFIDX;
       } else if (action != ' ') {
-        newlist = false;  // use the specified list
+        *newlist = false;  // use the specified list
       }
     } else if (di->di_tv.v_type == VAR_STRING
                && strequal((const char *)di->di_tv.vval.v_string, "$")) {
       if (qi->qf_listcount > 0) {
         qf_idx = qi->qf_listcount - 1;
-      } else if (newlist) {
+      } else if (*newlist) {
         qf_idx = 0;
       } else {
-        return FAIL;
+        return INVALID_QFIDX;
       }
     } else {
-      return FAIL;
+      return INVALID_QFIDX;
     }
   }
 
-  if (!newlist && (di = tv_dict_find(what, S_LEN("id"))) != NULL) {
+  if (!*newlist && (di = tv_dict_find(what, S_LEN("id"))) != NULL) {
     // Use the quickfix/location list with the specified id
-    if (di->di_tv.v_type == VAR_NUMBER) {
-      qf_idx = qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
-      if (qf_idx == -1) {
-        return FAIL;      // List not found
-      }
-    } else {
+    if (di->di_tv.v_type != VAR_NUMBER) {
+      return INVALID_QFIDX;
+    }
+    return qf_id2nr(qi, (unsigned)di->di_tv.vval.v_number);
+  }
+
+  return qf_idx;
+}
+
+// Set the quickfix list title.
+static int qf_setprop_title(qf_info_T *qi, int qf_idx, const dict_T *what,
+                            const dictitem_T *di)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (di->di_tv.v_type != VAR_STRING) {
+    return FAIL;
+  }
+
+  xfree(qi->qf_lists[qf_idx].qf_title);
+  qi->qf_lists[qf_idx].qf_title =
+    (char_u *)tv_dict_get_string(what, "title", true);
+  if (qf_idx == qi->qf_curlist) {
+    qf_update_win_titlevar(qi);
+  }
+
+  return OK;
+}
+
+// Set quickfix list items/entries.
+static int qf_setprop_items(qf_info_T *qi, int qf_idx, dictitem_T *di,
+                            int action)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (di->di_tv.v_type != VAR_LIST) {
+    return FAIL;
+  }
+
+  char_u *title_save = vim_strsave(qi->qf_lists[qf_idx].qf_title);
+  const int retval = qf_add_entries(qi, qf_idx, di->di_tv.vval.v_list,
+                                    title_save,
+                                    action == ' ' ? 'a' : action);
+  if (action == 'r') {
+    // When replacing the quickfix list entries using
+    // qf_add_entries(), the title is set with a ':' prefix.
+    // Restore the title with the saved title.
+    xfree(qi->qf_lists[qf_idx].qf_title);
+    qi->qf_lists[qf_idx].qf_title = vim_strsave(title_save);
+  }
+  xfree(title_save);
+
+  return retval;
+}
+
+// Set quickfix list items/entries from a list of lines.
+static int qf_setprop_items_from_lines(
+    qf_info_T *qi,
+    int qf_idx,
+    const dict_T *what,
+    dictitem_T *di,
+    int action)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char_u *errorformat = p_efm;
+  dictitem_T *efm_di;
+  int  retval = FAIL;
+
+  // Use the user supplied errorformat settings (if present)
+  if ((efm_di = tv_dict_find(what, S_LEN("efm"))) != NULL) {
+    if (efm_di->di_tv.v_type != VAR_STRING
+        || efm_di->di_tv.vval.v_string == NULL) {
       return FAIL;
     }
+    errorformat = efm_di->di_tv.vval.v_string;
+  }
+
+  // Only a List value is supported
+  if (di->di_tv.v_type != VAR_LIST || di->di_tv.vval.v_list == NULL) {
+    return FAIL;
+  }
+
+  if (action == 'r') {
+    qf_free_items(qi, qf_idx);
+  }
+  if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, errorformat,
+                  false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
+    retval = OK;
+  }
+
+  return retval;
+}
+
+// Set quickfix list context.
+static int qf_setprop_context(qf_info_T *qi, int qf_idx, dictitem_T *di)
+  FUNC_ATTR_NONNULL_ALL
+{
+  tv_free(qi->qf_lists[qf_idx].qf_ctx);
+  typval_T *ctx = xcalloc(1, sizeof(typval_T));
+  if (ctx != NULL) {
+    tv_copy(&di->di_tv, ctx);
+  }
+  qi->qf_lists[qf_idx].qf_ctx = ctx;
+
+  return OK;
+}
+
+// Set quickfix/location list properties (title, items, context).
+// Also used to add items from parsing a list of lines.
+// Used by the setqflist() and setloclist() VimL functions.
+static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
+                             char_u *title)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *di;
+  int  retval = FAIL;
+  bool newlist = action == ' ' || qi->qf_curlist == qi->qf_listcount;
+  int qf_idx = qf_setprop_get_qfidx(qi, what, action, &newlist);
+  if (qf_idx == INVALID_QFIDX) {  // List not found
+    return FAIL;
   }
 
   if (newlist) {
@@ -5042,63 +5152,16 @@ static int qf_set_properties(qf_info_T *qi, dict_T *what, int action,
   }
 
   if ((di = tv_dict_find(what, S_LEN("title"))) != NULL) {
-    if (di->di_tv.v_type == VAR_STRING) {
-      xfree(qi->qf_lists[qf_idx].qf_title);
-      qi->qf_lists[qf_idx].qf_title = (char_u *)tv_dict_get_string(
-          what, "title", true);
-      if (qf_idx == qi->qf_curlist) {
-        qf_update_win_titlevar(qi);
-      }
-      retval = OK;
-    }
+    retval = qf_setprop_title(qi, qf_idx, what, di);
   }
   if ((di = tv_dict_find(what, S_LEN("items"))) != NULL) {
-    if (di->di_tv.v_type == VAR_LIST) {
-      assert(qi->qf_lists[qf_idx].qf_title != NULL);
-      char_u *title_save = vim_strsave(qi->qf_lists[qf_idx].qf_title);
-
-      retval = qf_add_entries(qi, qf_idx, di->di_tv.vval.v_list,
-                              title_save, action == ' ' ? 'a' : action);
-      if (action == 'r') {
-        // When replacing the quickfix list entries using
-        // qf_add_entries(), the title is set with a ':' prefix.
-        // Restore the title with the saved title.
-        xfree(qi->qf_lists[qf_idx].qf_title);
-        qi->qf_lists[qf_idx].qf_title = vim_strsave(title_save);
-      }
-      xfree(title_save);
-    }
+    retval = qf_setprop_items(qi, qf_idx, di, action);
   }
-
-  if ((di = tv_dict_find(what, S_LEN("efm"))) != NULL) {
-    if (di->di_tv.v_type != VAR_STRING || di->di_tv.vval.v_string == NULL) {
-      return FAIL;
-    }
-    errorformat = di->di_tv.vval.v_string;
-  }
-
   if ((di = tv_dict_find(what, S_LEN("lines"))) != NULL) {
-    // Only a List value is supported
-    if (di->di_tv.v_type == VAR_LIST && di->di_tv.vval.v_list != NULL) {
-      if (action == 'r') {
-        qf_free_items(qi, qf_idx);
-      }
-      if (qf_init_ext(qi, qf_idx, NULL, NULL, &di->di_tv, errorformat,
-                      false, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
-        retval = OK;
-      }
-    } else {
-      return FAIL;
-    }
+    retval = qf_setprop_items_from_lines(qi, qf_idx, what, di, action);
   }
-
   if ((di = tv_dict_find(what, S_LEN("context"))) != NULL) {
-    tv_free(qi->qf_lists[qf_idx].qf_ctx);
-
-    typval_T *ctx = xcalloc(1, sizeof(typval_T));
-    tv_copy(&di->di_tv, ctx);
-    qi->qf_lists[qf_idx].qf_ctx = ctx;
-    retval = OK;
+    retval = qf_setprop_context(qi, qf_idx, di);
   }
 
   if (retval == OK) {

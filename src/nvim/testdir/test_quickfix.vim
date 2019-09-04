@@ -1802,6 +1802,9 @@ func Xproperty_tests(cchar)
     call assert_equal(0, s)
     let d = g:Xgetlist({"title":1})
     call assert_equal('Sample', d.title)
+    " Try setting title to a non-string value
+    call assert_equal(-1, g:Xsetlist([], 'a', {'title' : ['Test']}))
+    call assert_equal('Sample', g:Xgetlist({"title":1}).title)
 
     Xopen
     call assert_equal('Sample', w:quickfix_title)
@@ -1949,6 +1952,9 @@ func Xproperty_tests(cchar)
     call g:Xsetlist([], 'f')
     call g:Xsetlist([], 'a', {'items' : [{'filename':'F1', 'lnum':10}]})
     call assert_equal(10, g:Xgetlist({'items':1}).items[0].lnum)
+
+    " Try setting the items using a string
+    call assert_equal(-1, g:Xsetlist([], ' ', {'items' : 'Test'}))
 
     " Save and restore the quickfix stack
     call g:Xsetlist([], 'f')
