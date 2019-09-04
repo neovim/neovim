@@ -10,6 +10,7 @@ local test_build_dir = helpers.test_build_dir
 local nvim_prog = helpers.nvim_prog
 local iswin = helpers.iswin
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 
 describe('ui/ext_messages', function()
   local screen
@@ -1058,16 +1059,34 @@ describe('pager', function()
 
   before_each(function()
     clear()
-    screen = Screen.new(25, 5)
+    screen = Screen.new(35, 8)
     screen:attach()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red, special=Screen.colors.Yellow},
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+      [5] = {special = Screen.colors.Yellow},
+      [6] = {special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4},
+      [7] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey100},
+      [8] = {foreground = Screen.colors.Gray90, background = Screen.colors.Grey100},
+      [9] = {foreground = tonumber('0x00000c'), background = Screen.colors.Grey100},
+      [10] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff')},
+      [11] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber ('0x2b8452')},
     })
+    command("set more")
+
+    exec_lua('_G.x = ...', [[
+Lorem ipsum dolor sit amet, consectetur
+adipisicing elit, sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud xercitation
+ullamco laboris nisi ut
+aliquip ex ea commodo consequat.]])
   end)
 
   it('can be quit', function()
-    command("set more")
+    screen:try_resize(25,5)
     feed(':echon join(map(range(0, &lines*2), "v:val"), "\\n")<cr>')
     screen:expect{grid=[[
       0                        |
@@ -1083,6 +1102,294 @@ describe('pager', function()
       {1:~                        }|
       {1:~                        }|
                                |
+    ]]}
+  end)
+
+  it('handles wrapped lines with line scroll', function()
+    feed(':lua error(_G.x)<cr>')
+    screen:expect{grid=[[
+      {2:E5105: Error while calling lua chun}|
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {4:-- More --}^                         |
+    ]]}
+
+    feed('j')
+    screen:expect{grid=[[
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
+      {4:-- More --}^                         |
+    ]]}
+
+    feed('k')
+    screen:expect{grid=[[
+      {2:E5105: Error while calling lua chun}|
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {4:-- More --}^                         |
+    ]]}
+
+    feed('j')
+    screen:expect{grid=[[
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
+      {4:-- More --}^                         |
+    ]]}
+
+  end)
+
+  it('handles wrapped lines with page scroll', function()
+    feed(':lua error(_G.x)<cr>')
+    screen:expect{grid=[[
+      {2:E5105: Error while calling lua chun}|
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {4:-- More --}^                         |
+    ]]}
+    feed('d')
+    screen:expect{grid=[[
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
+      {2:Ut enim ad minim veniam, quis nostr}|
+      {2:ud xercitation}                     |
+      {2:ullamco laboris nisi ut}            |
+      {4:-- More --}^                         |
+    ]]}
+    feed('u')
+    screen:expect{grid=[[
+      {2:E5105: Error while calling lua chun}|
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {4:-- More --}^                         |
+    ]]}
+    feed('d')
+    screen:expect{grid=[[
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {2:a aliqua.}                          |
+      {2:Ut enim ad minim veniam, quis nostr}|
+      {2:ud xercitation}                     |
+      {2:ullamco laboris nisi ut}            |
+      {4:-- More --}^                         |
+    ]]}
+  end)
+
+  it('handles wrapped lines with line scroll and MsgArea highlight', function()
+    command("hi MsgArea guisp=Yellow")
+
+    feed(':lua error(_G.x)<cr>')
+    screen:expect{grid=[[
+      {3:E5105: Error while calling lua chun}|
+      {3:k: [string "<VimL compiled string>"}|
+      {3:]:1: Lorem ipsum dolor sit amet, co}|
+      {3:nsectetur}{5:                          }|
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {6:-- More --}{5:^                         }|
+    ]]}
+
+    feed('j')
+    screen:expect{grid=[[
+      {3:k: [string "<VimL compiled string>"}|
+      {3:]:1: Lorem ipsum dolor sit amet, co}|
+      {3:nsectetur}{5:                          }|
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
+      {6:-- More --}{5:^                         }|
+    ]]}
+
+    feed('k')
+    screen:expect{grid=[[
+      {3:E5105: Error while calling lua chun}|
+      {3:k: [string "<VimL compiled string>"}|
+      {3:]:1: Lorem ipsum dolor sit amet, co}|
+      {3:nsectetur}{5:                          }|
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {6:-- More --}{5:^                         }|
+    ]]}
+
+    feed('j')
+    screen:expect{grid=[[
+      {3:k: [string "<VimL compiled string>"}|
+      {3:]:1: Lorem ipsum dolor sit amet, co}|
+      {3:nsectetur}{5:                          }|
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
+      {6:-- More --}{5:^                         }|
+    ]]}
+  end)
+
+  it('handles wrapped lines with page scroll and MsgArea highlight', function()
+    command("hi MsgArea guisp=Yellow")
+    feed(':lua error(_G.x)<cr>')
+    screen:expect{grid=[[
+      {3:E5105: Error while calling lua chun}|
+      {3:k: [string "<VimL compiled string>"}|
+      {3:]:1: Lorem ipsum dolor sit amet, co}|
+      {3:nsectetur}{5:                          }|
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {6:-- More --}{5:^                         }|
+    ]]}
+    feed('d')
+    screen:expect{grid=[[
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
+      {3:Ut enim ad minim veniam, quis nostr}|
+      {3:ud xercitation}{5:                     }|
+      {3:ullamco laboris nisi ut}{5:            }|
+      {6:-- More --}{5:^                         }|
+    ]]}
+    feed('u')
+    screen:expect{grid=[[
+      {3:E5105: Error while calling lua chun}|
+      {3:k: [string "<VimL compiled string>"}|
+      {3:]:1: Lorem ipsum dolor sit amet, co}|
+      {3:nsectetur}{5:                          }|
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {6:-- More --}{5:^                         }|
+    ]]}
+    feed('d')
+    screen:expect{grid=[[
+      {3:adipisicing elit, sed do eiusmod te}|
+      {3:mpor}{5:                               }|
+      {3:incididunt ut labore et dolore magn}|
+      {3:a aliqua.}{5:                          }|
+      {3:Ut enim ad minim veniam, quis nostr}|
+      {3:ud xercitation}{5:                     }|
+      {3:ullamco laboris nisi ut}{5:            }|
+      {6:-- More --}{5:^                         }|
+    ]]}
+  end)
+
+  it('preserves MsgArea highlighting after more prompt', function()
+    screen:try_resize(70,6)
+    command("hi MsgArea guisp=Yellow")
+    command("map x Lorem ipsum labore et dolore magna aliqua")
+    command("map y adipisicing elit")
+    command("map z incididunt ut")
+    command("map a labore et dolore")
+    command("map b ex ea commodo")
+    command("map xx yy")
+    command("map xy yz")
+    feed(':map<cr>')
+    screen:expect{grid=[[
+      {5:   a             labore et dolore                                     }|
+      {5:   b             ex ea commodo                                        }|
+      {5:   xy            yz                                                   }|
+      {5:   xx            yy                                                   }|
+      {5:   x             Lorem ipsum labore et dolore magna aliqua            }|
+      {6:-- More --}{5:^                                                            }|
+    ]]}
+    feed('j')
+    screen:expect{grid=[[
+      {5:   b             ex ea commodo                                        }|
+      {5:   xy            yz                                                   }|
+      {5:   xx            yy                                                   }|
+      {5:   x             Lorem ipsum labore et dolore magna aliqua            }|
+      {5:   y             adipisicing elit                                     }|
+      {6:-- More --}{5:^                                                            }|
+    ]]}
+    feed('j')
+    screen:expect{grid=[[
+      {5:   xy            yz                                                   }|
+      {5:   xx            yy                                                   }|
+      {5:   x             Lorem ipsum labore et dolore magna aliqua            }|
+      {5:   y             adipisicing elit                                     }|
+      {5:   z             incididunt ut                                        }|
+      {6:Press ENTER or type command to continue}{5:^                               }|
+    ]]}
+  end)
+
+  it('clears "-- more --" message', function()
+    command("hi MsgArea guisp=Yellow blend=10")
+    feed(':echon join(range(20), "\\n")<cr>')
+    screen:expect{grid=[[
+      {7:0}{8:                                  }|
+      {9:1}{10:                                  }|
+      {9:2}{10:                                  }|
+      {9:3}{10:                                  }|
+      {9:4}{10:                                  }|
+      {9:5}{10:                                  }|
+      {9:6}{10:                                  }|
+      {11:--}{8: }{11:More}{8: }{11:--}{8:^                         }|
+    ]]}
+
+    feed('j')
+    screen:expect{grid=[[
+      {7:1}{8:                                  }|
+      {9:2}{10:                                  }|
+      {9:3}{10:                                  }|
+      {9:4}{10:                                  }|
+      {9:5}{10:                                  }|
+      {9:6}{10:                                  }|
+      {9:7}{10:                                  }|
+      {11:--}{8: }{11:More}{8: }{11:--}{8:^                         }|
+    ]]}
+
+    feed('k')
+    screen:expect{grid=[[
+      {7:0}{8:                          }{7:)}{8:       }|
+      {9:1}{10:                                  }|
+      {9:2}{10:                                  }|
+      {9:3}{10:                                  }|
+      {9:4}{10:                                  }|
+      {9:5}{10:                                  }|
+      {9:6}{10:                                  }|
+      {11:--}{8: }{11:More}{8: }{11:--}{8:^                         }|
+    ]]}
+
+    feed('j')
+    screen:expect{grid=[[
+      {7:1}{8:                                  }|
+      {9:2}{10:                                  }|
+      {9:3}{10:                                  }|
+      {9:4}{10:                                  }|
+      {9:5}{10:                                  }|
+      {9:6}{10:                                  }|
+      {9:7}{10:                                  }|
+      {11:--}{8: }{11:More}{8: }{11:--}{8:^                         }|
     ]]}
   end)
 end)
