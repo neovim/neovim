@@ -62,7 +62,7 @@ describe('ui mode_change event', function()
     ]], mode="normal"}
 
     command("set showmatch")
-    command("set matchtime=1") -- tenths of seconds
+    command("set matchtime=2") -- tenths of seconds
     feed('a(stuff')
     screen:expect{grid=[[
       word(stuff^               |
