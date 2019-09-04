@@ -222,12 +222,12 @@ int msg_attr(const char *s, const int attr)
 }
 
 /// similar to msg_outtrans_attr, but support newlines and tabs.
-void msg_multiline_attr(const char *s, int attr)
+void msg_multiline_attr(const char *s, int attr, bool check_int)
   FUNC_ATTR_NONNULL_ALL
 {
   const char *next_spec = s;
 
-  while (next_spec != NULL && !got_int) {
+  while (next_spec != NULL && (!check_int || !got_int)) {
     next_spec = strpbrk(s, "\t\n\r");
 
     if (next_spec != NULL) {
@@ -306,7 +306,7 @@ bool msg_attr_keep(char_u *s, int attr, bool keep, bool multiline)
     s = buf;
 
   if (multiline) {
-    msg_multiline_attr((char *)s, attr);
+    msg_multiline_attr((char *)s, attr, false);
   } else {
     msg_outtrans_attr(s, attr);
   }
