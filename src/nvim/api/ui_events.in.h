@@ -123,8 +123,6 @@ void win_exchange(Integer win, Integer grid, Integer count)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_resize_equal (void)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
-void win_close(Integer win, Integer grid)
-  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_rotate(Integer win, Integer grid, Integer direction, Integer count)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY;
 void win_move(Integer win, Integer grid, Integer flags)
