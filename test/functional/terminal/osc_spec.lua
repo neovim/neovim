@@ -69,6 +69,27 @@ describe('osc handling', function()
                                    |
         ]])
       end)
+
+      it('handles encoding arguments (TODO)', function()
+        local screen = Screen.new(25, 10)
+        screen:attach()
+
+        local osc = '\x1b]51;["drop"]\a' -- TODO
+        emit_osc(osc)
+
+        screen:expect([[
+          ^ $                       |
+          [Process exited 0]       |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+                                   |
+        ]])
+      end)
     end)
 
     it('handles empty list', function()
