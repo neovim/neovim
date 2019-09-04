@@ -1167,6 +1167,13 @@ func Test_efm2()
   call assert_equal(1, len(l), string(l))
   call assert_equal('|| msg2', l[0].text)
 
+  " When matching error lines, case should be ignored. Test for this.
+  set noignorecase
+  let l=getqflist({'lines' : ['Xtest:FOO10:Line 20'], 'efm':'%f:foo%l:%m'})
+  call assert_equal(10, l.items[0].lnum)
+  call assert_equal('Line 20', l.items[0].text)
+  set ignorecase&
+
   new | only
   let &efm = save_efm
 endfunc
