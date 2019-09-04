@@ -1052,3 +1052,37 @@ describe('ui/msg_puts_printf', function()
     os.execute('cmake -E remove_directory '..test_build_dir..'/share')
   end)
 end)
+
+describe('pager', function()
+  local screen
+
+  before_each(function()
+    clear()
+    screen = Screen.new(25, 5)
+    screen:attach()
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+  end)
+
+  it('can be quit', function()
+    command("set more")
+    feed(':echon join(map(range(0, &lines*2), "v:val"), "\\n")<cr>')
+    screen:expect{grid=[[
+      0                        |
+      1                        |
+      2                        |
+      3                        |
+      {4:-- More --}^               |
+    ]]}
+    feed('q')
+    screen:expect{grid=[[
+      ^                         |
+      {1:~                        }|
+      {1:~                        }|
+      {1:~                        }|
+                               |
+    ]]}
+  end)
+end)
