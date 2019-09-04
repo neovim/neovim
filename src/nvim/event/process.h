@@ -1,6 +1,7 @@
 #ifndef NVIM_EVENT_PROCESS_H
 #define NVIM_EVENT_PROCESS_H
 
+#include "nvim/eval/typval.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
@@ -22,6 +23,7 @@ struct process {
   uint8_t exit_signal;  // Signal used when killing (on Windows).
   uint64_t stopped_time;  // process_stop() timestamp
   const char *cwd;
+  dict_T *env;
   char **argv;
   Stream in, out, err;
   process_exit_cb cb;

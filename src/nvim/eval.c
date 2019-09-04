@@ -12349,6 +12349,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
   char *cwd = NULL;
+  dict_T *env = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
@@ -12372,6 +12373,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
+    env = (dict_T*)tv_dict_find(job_opts, "env", -1);
+
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
       return;
@@ -12388,8 +12391,8 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   }
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, detach, cwd, width, height, term_name,
-                                    &rettv->vval.v_number);
+                                    rpc, detach, cwd, env, width, height,
+                                    term_name, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -14679,7 +14682,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, NULL, 0, 0, NULL,
+                                    false, true, false, NULL, NULL, 0, 0, NULL,
                                     &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
@@ -18008,6 +18011,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Callback on_exit = CALLBACK_NONE;
   dict_T *job_opts = NULL;
   const char *cwd = ".";
+  dict_T *env = NULL;
   if (argvars[1].v_type == VAR_DICT) {
     job_opts = argvars[1].vval.v_dict;
 
@@ -18022,6 +18026,8 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
     }
 
+    env = (dict_T*)tv_dict_find(job_opts, "env", -1);
+
     if (!common_job_callbacks(job_opts, &on_stdout, &on_stderr, &on_exit)) {
       shell_free_argv(argv);
       return;
@@ -18030,7 +18036,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   uint16_t term_width = MAX(0, curwin->w_width_inner - win_col_off(curwin));
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
-                                    true, false, false, cwd,
+                                    true, false, false, cwd, env,
                                     term_width, curwin->w_height_inner,
                                     xstrdup("xterm-256color"),
                                     &rettv->vval.v_number);

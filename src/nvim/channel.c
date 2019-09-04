@@ -273,7 +273,7 @@ static void close_cb(Stream *stream, void *data)
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool detach, const char *cwd,
-                           uint16_t pty_width, uint16_t pty_height,
+                           dict_T *env, uint16_t pty_width, uint16_t pty_height,
                            char *term_name, varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
@@ -312,6 +312,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->events = chan->events;
   proc->detach = detach;
   proc->cwd = cwd;
+  proc->env = env;
 
   char *cmd = xstrdup(proc->argv[0]);
   bool has_out, has_err;
