@@ -257,9 +257,9 @@ int main(int argc, char **argv)
 
   init_startuptime(&params);
 
-  event_init();
-
   early_init();
+
+  event_init();
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
