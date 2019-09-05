@@ -24,8 +24,8 @@ server_config.add = function(filetype, command, config)
     if server_config.servers[cur_type] == nil then
       vim.api.nvim_command(
         string.format(
-            [[autocmd FileType %s silent :lua require('vim.lsp').start_client(nil, '%s')]],
-            cur_type, cur_type, cur_type
+            [[augroup Start%sLspHook | autocmd! | autocmd FileType %s silent :lua require('vim.lsp').start_client(nil, '%s') | augroup END]],
+            cur_type, cur_type, cur_type, cur_type
           )
       )
       vim.api.nvim_command(
