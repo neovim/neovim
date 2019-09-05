@@ -30,8 +30,6 @@ local util = require('lsp.util')
 local protocol = require('lsp.protocol')
 local errorCodes = protocol.errorCodes
 
-local QuickFix = require('nvim.quickfix_list')
-local LocationList = require('nvim.location_list')
 local handle_completion = require('lsp.handle.completion')
 local handle_workspace = require('lsp.handle.workspace')
 
@@ -68,52 +66,8 @@ BuiltinCallbacks['nvim/error_callback'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 BuiltinCallbacks['textDocument/publishDiagnostics']= {
   callback = function(self, data)
-    log.debug('callback:textDocument/publishDiagnostics', self, data)
-
-    local diagnostic_list
-    if self.options.use_quickfix then
-      diagnostic_list = QuickFix:new('Language Server Diagnostics')
-    else
-      diagnostic_list = LocationList:new('Language Server Diagnostics')
-    end
-
-    for _, diagnostic in ipairs(data.diagnostics) do
-      local range = diagnostic.range
-      local severity = diagnostic.severity or protocol.DiagnosticSeverity.Information
-
-      local message_type
-      if severity == protocol.DiagnosticSeverity.Error then
-        message_type = 'E'
-      elseif severity == protocol.DiagnosticSeverity.Warning then
-        message_type = 'W'
-      else
-        message_type = 'I'
-      end
-
-      -- local code = diagnostic.code
-      local source = diagnostic.source or 'lsp'
-      local message = diagnostic.message
-
-      diagnostic_list:add(
-        range.start.line + 1,
-        range.start.character + 1,
-        '[' .. source .. ']' .. message,
-        URI.filepath_from_uri(data.uri),
-        message_type
-      )
-    end
-
-    diagnostic_list:set()
-
-    if diagnostic_list:len() == 0 then
-      diagnostic_list:close()
-    elseif self.options.auto_list then
-      diagnostic_list:open()
-    end
-
-    return
   end,
-  options = { auto_list = false, use_quickfix = false, },
+  options = {},
 }
 
 -- textDocument/completion
@@ -201,7 +155,7 @@ BuiltinCallbacks['textDocument/references'] = {
       local line = start.line + 1
       local character = start.character + 1
 
-      local path = nvim_util.handle_uri(loc["uri"])
+      local path = URI.filepath_from_uri(loc["uri"])
       local text = util.get_line_from_path(path, line)
 
       table.insert(loclist, {

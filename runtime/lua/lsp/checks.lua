@@ -1,8 +1,6 @@
 -- add_check('textDocument/completion', false)
 -- add_check('textDocument/
 
-local util = require('nvim.util')
-
 local checks_table = {}
 
 local add_check = function(method, callback)
@@ -33,7 +31,7 @@ end
 
 -- Base checks
 add_check('textDocument/didOpen', function(client, request)
-  local uri = util.get_key(request, 'params', 'textDocument', 'uri')
+  local uri = request.params.textDocument.uri
 
   if type(uri) ~= 'string' then
     return false

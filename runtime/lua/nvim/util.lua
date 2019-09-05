@@ -17,15 +17,6 @@ util.tostring = function(obj)
   return stringified
 end
 
-util.handle_uri = function(uri)
-  local file_prefix = 'file://'
-  if string.sub(uri, 1, #file_prefix) == file_prefix then
-    return string.sub(uri, #file_prefix + 1, #uri)
-  end
-
-  return uri
-end
-
 -- Determine whether a Lua table can be treated as an array.
 -- Returns:
 --  true    A non-empty array
@@ -69,23 +60,6 @@ util.get_file_line = function(file_name, line_number)
   return ''
 end
 
-util.get_key = function(table, ...)
-  if type(table) ~= 'table' then
-    return nil
-  end
-
-  local result = table
-  for _, key in ipairs({...}) do
-    result = result[key]
-
-    if result == nil then
-      return nil
-    end
-  end
-
-  return result
-end
-
 util.is_filtetype_open_in_tab = function(filetype, checker)
   for _, buffer_id  in ipairs(vim.api.nvim_call_function('tabpagebuflist', {})) do
     if vim.api.nvim_buf_get_option(buffer_id, 'filetype') == filetype then
@@ -101,12 +75,6 @@ end
 util.is_loclist_open = function()
   return util.is_filtetype_open_in_tab('qf', function(buffer_id)
     return (#vim.api.nvim_call_function('getloclist', { buffer_id }) ~= 0)
-  end)
-end
-
-util.is_quickfix_open = function()
-  return util.is_filtetype_open_in_tab('qf', function(buffer_id)
-    return (#vim.api.nvim_call_function('getloclist', { buffer_id }) == 0)
   end)
 end
 
