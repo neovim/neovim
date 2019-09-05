@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local shallowcopy = helpers.shallowcopy
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local iswin = helpers.iswin
 local funcs = helpers.funcs
@@ -16,14 +15,6 @@ describe("'wildmenu'", function()
     screen = Screen.new(25, 5)
     screen:attach()
   end)
-
-  -- expect the screen stayed unchanged some time after first seen success
-  local function expect_stay_unchanged(args)
-    screen:expect(args)
-    args = shallowcopy(args)
-    args.unchanged = true
-    screen:expect(args)
-  end
 
   it(':sign <tab> shows wildmenu completions', function()
     command('set wildmenu wildmode=full')
@@ -89,24 +80,20 @@ describe("'wildmenu'", function()
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
     -- NB: in earlier versions terminal output was redrawn during cmdline mode.
     -- For now just assert that the screen remains unchanged.
-    expect_stay_unchanged{grid=[[
-                               |
-                               |
-                               |
-      define  jump  list  >    |
-      :sign define^             |
-    ]]}
+    screen:expect{any='define  jump  list  >    |\n:sign define^             |'}
+    screen:expect_unchanged()
 
     -- cmdline CTRL-D display should also be preserved.
     feed([[<C-U>]])
     feed([[sign <C-D>]])   -- Invoke cmdline CTRL-D.
-    expect_stay_unchanged{grid=[[
+    screen:expect{grid=[[
       :sign                    |
       define    place          |
       jump      undefine       |
       list      unplace        |
       :sign ^                   |
     ]]}
+    screen:expect_unchanged()
 
     -- Exiting cmdline should show the buffer.
     feed([[<C-\><C-N>]])
@@ -118,13 +105,14 @@ describe("'wildmenu'", function()
     command([[call timer_start(10, {->execute('redrawstatus')}, {'repeat':-1})]])
     feed([[<C-\><C-N>]])
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
-    expect_stay_unchanged{grid=[[
+    screen:expect{grid=[[
                                |
       ~                        |
       ~                        |
       define  jump  list  >    |
       :sign define^             |
     ]]}
+    screen:expect_unchanged()
   end)
 
   it('with laststatus=0, :vsplit, :term #2255', function()
@@ -152,7 +140,8 @@ describe("'wildmenu'", function()
     feed([[:<Tab>]])      -- Invoke wildmenu.
     -- Check only the last 2 lines, because the shell output is
     -- system-dependent.
-    expect_stay_unchanged{any='!  #  &  <  =  >  @  >   |\n:!^'}
+    screen:expect{any='!  #  &  <  =  >  @  >   |\n:!^'}
+    screen:expect_unchanged()
   end)
 
   it('wildmode=list,full and display+=msgsep interaction #10092', function()
