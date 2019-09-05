@@ -143,8 +143,10 @@ describe('memory usage', function()
       feed_command('so '..fname)
     end
     local last = monitor_memory_usage(pid)
+    -- The usage may be a bit less than the last value
+    local lower = before.last * 8 / 10
     check_result({before=before, after=after, last=last},
-                 pcall(ok, before.last < last.last))
+                 pcall(ok, lower < last.last))
     check_result({before=before, after=after, last=last},
                  pcall(ok, last.last < after.max + (after.last - before.last)))
   end)
