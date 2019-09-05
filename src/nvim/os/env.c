@@ -733,6 +733,9 @@ const void *vim_env_iter_rev(const char delim,
 /// @return [allocated] Expanded environment variable, or NULL
 char *vim_getenv(const char *name)
 {
+  // init_path() should have been called before now.
+  assert(get_vim_var_str(VV_PROGPATH)[0] != NUL);
+
 #ifdef WIN32
   if (strcmp(name, "HOME") == 0) {
     return xstrdup(homedir);
@@ -764,12 +767,6 @@ char *vim_getenv(const char *name)
         vim_path = xstrdup(kos_env_path);
       }
     }
-  }
-
-  // init_path() has been called typically before, but allow for logging to
-  // be used before already (not storing computed paths then).
-  if (get_vim_var_str(VV_PROGPATH)[0] == NUL) {
-    return NULL;
   }
 
   // When expanding $VIM or $VIMRUNTIME fails, try using:
