@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
-local shallowcopy = helpers.shallowcopy
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
 local iswin = helpers.iswin
 local funcs = helpers.funcs
@@ -81,13 +80,19 @@ describe("'wildmenu'", function()
     feed([[:sign <Tab>]])   -- Invoke wildmenu.
     -- NB: in earlier versions terminal output was redrawn during cmdline mode.
     -- For now just assert that the screen remains unchanged.
-    screen:expect{any='define  jump  list  >    '}
+    screen:expect{any='define  jump  list  >    |\n:sign define^             |'}
     screen:expect_unchanged()
 
     -- cmdline CTRL-D display should also be preserved.
     feed([[<C-U>]])
     feed([[sign <C-D>]])   -- Invoke cmdline CTRL-D.
-    screen:expect{any='define    place          '}
+    screen:expect{grid=[[
+      :sign                    |
+      define    place          |
+      jump      undefine       |
+      list      unplace        |
+      :sign ^                   |
+    ]]}
     screen:expect_unchanged()
 
     -- Exiting cmdline should show the buffer.
