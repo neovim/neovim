@@ -49,9 +49,9 @@ describe('maparg()', function()
     -- Assert buffer contents.
     expect([[
       is<F4>foo
-      {'silent': 0, 'noremap': 0, 'lhs': 'foo<C-V>', 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': 0, 'rhs': 'is<F4>foo', 'buffer': 0}
-      {'silent': 1, 'noremap': 1, 'lhs': 'bar', 'mode': 'v', 'nowait': 0, 'expr': 1, 'sid': 0, 'rhs': 'isbar', 'buffer': 1}
-      {'silent': 0, 'noremap': 0, 'lhs': 'foo', 'mode': ' ', 'nowait': 1, 'expr': 0, 'sid': 0, 'rhs': 'bar', 'buffer': 1}
+      {'lnum': 0, 'silent': 0, 'noremap': 0, 'lhs': 'foo<C-V>', 'mode': ' ', 'nowait': 0, 'expr': 0, 'sid': 0, 'rhs': 'is<F4>foo', 'buffer': 0}
+      {'lnum': 0, 'silent': 1, 'noremap': 1, 'lhs': 'bar', 'mode': 'v', 'nowait': 0, 'expr': 1, 'sid': 0, 'rhs': 'isbar', 'buffer': 1}
+      {'lnum': 0, 'silent': 0, 'noremap': 0, 'lhs': 'foo', 'mode': ' ', 'nowait': 1, 'expr': 0, 'sid': 0, 'rhs': 'bar', 'buffer': 1}
       xrx
       yRy
       abcd]])

@@ -2957,7 +2957,8 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
                 mp->m_silent = args->silent;
                 mp->m_mode = mode;
                 mp->m_expr = args->expr;
-                mp->m_script_ID = current_SID;
+                mp->m_script_ctx = current_sctx;
+                mp->m_script_ctx.sc_lnum += sourcing_lnum;
                 did_it = true;
               }
             }
@@ -3032,7 +3033,8 @@ int buf_do_map(int maptype, MapArguments *args, int mode, bool is_abbrev,
   mp->m_silent = args->silent;
   mp->m_mode = mode;
   mp->m_expr = args->expr;
-  mp->m_script_ID = current_SID;
+  mp->m_script_ctx = current_sctx;
+  mp->m_script_ctx.sc_lnum += sourcing_lnum;
 
   // add the new entry in front of the abbrlist or maphash[] list
   if (is_abbrev) {
@@ -3375,9 +3377,10 @@ showmap (
     msg_outtrans_special(s, FALSE);
     xfree(s);
   }
-  if (p_verbose > 0)
-    last_set_msg(mp->m_script_ID);
-  ui_flush();                          /* show one line at a time */
+  if (p_verbose > 0) {
+    last_set_msg(mp->m_script_ctx);
+  }
+  ui_flush();                          // show one line at a time
 }
 
 /// Check if a map exists that has given string in the rhs

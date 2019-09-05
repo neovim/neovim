@@ -5064,7 +5064,6 @@ chk_modeline(
   int retval = OK;
   char_u      *save_sourcing_name;
   linenr_T save_sourcing_lnum;
-  scid_T save_SID;
 
   prev = -1;
   for (s = ml_get(lnum); *s != NUL; s++) {
@@ -5152,15 +5151,17 @@ chk_modeline(
 
     if (*s != NUL) {                  // skip over an empty "::"
       const int secure_save = secure;
-      save_SID = current_SID;
-      current_SID = SID_MODELINE;
+      const sctx_T save_current_sctx = current_sctx;
+      current_sctx.sc_sid = SID_MODELINE;
+      current_sctx.sc_seq = 0;
+      current_sctx.sc_lnum = 0;
       // Make sure no risky things are executed as a side effect.
       secure = 1;
 
       retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
 
       secure = secure_save;
-      current_SID = save_SID;
+      current_sctx = save_current_sctx;
       if (retval == FAIL) {                   // stop if error found
         break;
       }

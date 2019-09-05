@@ -838,7 +838,7 @@ enum {
 
 /// Stores an identifier of a script or channel that last set an option.
 typedef struct {
-  scid_T script_id;        /// Script ID or one of SID_* special values.
+  sctx_T script_ctx;       /// script context where the option was last set
   uint64_t channel_id;     /// Only used when script_id is SID_API_CLIENT.
 } LastSet;
 

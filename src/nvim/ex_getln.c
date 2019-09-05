@@ -1909,7 +1909,7 @@ static int command_line_changed(CommandLineState *s)
     redrawcmdline();
     s->did_incsearch = true;
   } else if (s->firstc == ':'
-             && current_SID == 0    // only if interactive
+             && current_sctx.sc_sid == 0    // only if interactive
              && *p_icm != NUL       // 'inccommand' is set
              && curbuf->b_p_ma      // buffer is modifiable
              && cmdline_star == 0   // not typing a password
@@ -5072,7 +5072,7 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
   char_u keep = 0;
   typval_T args[4];
   char_u *pat = NULL;
-  int save_current_SID = current_SID;
+  const sctx_T save_current_sctx = current_sctx;
   struct cmdline_info save_ccline;
 
   if (xp->xp_arg == NULL || xp->xp_arg[0] == '\0' || xp->xp_line == NULL)
@@ -5098,14 +5098,15 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
   save_ccline = ccline;
   ccline.cmdbuff = NULL;
   ccline.cmdprompt = NULL;
-  current_SID = xp->xp_scriptID;
+  current_sctx = xp->xp_script_ctx;
 
   void *const ret = user_expand_func(xp->xp_arg, 3, args);
 
   ccline = save_ccline;
-  current_SID = save_current_SID;
-  if (ccline.cmdbuff != NULL)
+  current_sctx = save_current_sctx;
+  if (ccline.cmdbuff != NULL) {
     ccline.cmdbuff[ccline.cmdlen] = keep;
+  }
 
   xfree(pat);
   return ret;

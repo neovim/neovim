@@ -1080,8 +1080,8 @@ void script_prof_save(
 {
   scriptitem_T    *si;
 
-  if (current_SID > 0 && current_SID <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_SID);
+  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
+    si = &SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on && si->sn_pr_nest++ == 0) {
       si->sn_pr_child = profile_start();
     }
@@ -1094,8 +1094,8 @@ void script_prof_restore(proftime_T *tm)
 {
   scriptitem_T    *si;
 
-  if (current_SID > 0 && current_SID <= script_items.ga_len) {
-    si = &SCRIPT_ITEM(current_SID);
+  if (current_sctx.sc_sid > 0 && current_sctx.sc_sid <= script_items.ga_len) {
+    si = &SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on && --si->sn_pr_nest == 0) {
       si->sn_pr_child = profile_end(si->sn_pr_child);
       // don't count wait time
@@ -1192,8 +1192,8 @@ static void script_dump_profile(FILE *fd)
 /// profiled.
 bool prof_def_func(void)
 {
-  if (current_SID > 0) {
-    return SCRIPT_ITEM(current_SID).sn_pr_force;
+  if (current_sctx.sc_sid > 0) {
+    return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;
   }
   return false;
 }
@@ -3033,8 +3033,8 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   char_u                  *fname_exp;
   char_u                  *firstline = NULL;
   int retval = FAIL;
-  scid_T save_current_SID;
   static scid_T last_current_SID = 0;
+  static int last_current_SID_seq = 0;
   void                    *save_funccalp;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
@@ -3161,12 +3161,16 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
 
   // Check if this script was sourced before to finds its SID.
   // If it's new, generate a new SID.
-  save_current_SID = current_SID;
+  // Always use a new sequence number.
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_seq = ++last_current_SID_seq;
+  current_sctx.sc_lnum = 0;
   FileID file_id;
   bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
   assert(script_items.ga_len >= 0);
-  for (current_SID = script_items.ga_len; current_SID > 0; current_SID--) {
-    si = &SCRIPT_ITEM(current_SID);
+  for (current_sctx.sc_sid = script_items.ga_len; current_sctx.sc_sid > 0;
+       current_sctx.sc_sid--) {
+    si = &SCRIPT_ITEM(current_sctx.sc_sid);
     // Compare dev/ino when possible, it catches symbolic links.
     // Also compare file names, the inode may change when the file was edited.
     bool file_id_equal = file_id_ok && si->file_id_valid
@@ -3176,15 +3180,15 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
       break;
     }
   }
-  if (current_SID == 0) {
-    current_SID = ++last_current_SID;
-    ga_grow(&script_items, (int)(current_SID - script_items.ga_len));
-    while (script_items.ga_len < current_SID) {
+  if (current_sctx.sc_sid == 0) {
+    current_sctx.sc_sid = ++last_current_SID;
+    ga_grow(&script_items, (int)(current_sctx.sc_sid - script_items.ga_len));
+    while (script_items.ga_len < current_sctx.sc_sid) {
       script_items.ga_len++;
       SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
       SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
     }
-    si = &SCRIPT_ITEM(current_SID);
+    si = &SCRIPT_ITEM(current_sctx.sc_sid);
     si->sn_name = fname_exp;
     fname_exp = vim_strsave(si->sn_name);  // used for autocmd
     if (file_id_ok) {
@@ -3195,7 +3199,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
     }
 
     // Allocate the local script variables to use for this script.
-    new_script_vars(current_SID);
+    new_script_vars(current_sctx.sc_sid);
   }
 
   if (l_do_profiling == PROF_YES) {
@@ -3236,7 +3240,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
 
   if (l_do_profiling == PROF_YES) {
     // Get "si" again, "script_items" may have been reallocated.
-    si = &SCRIPT_ITEM(current_SID);
+    si = &SCRIPT_ITEM(current_sctx.sc_sid);
     if (si->sn_prof_on) {
       si->sn_pr_start = profile_end(si->sn_pr_start);
       si->sn_pr_start = profile_sub_wait(wait_start, si->sn_pr_start);
@@ -3277,7 +3281,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
     debug_break_level++;
   }
 
-  current_SID = save_current_SID;
+  current_sctx = save_current_sctx;
   restore_funccal(save_funccalp);
   if (l_do_profiling == PROF_YES) {
     prof_child_exit(&wait_start);    // leaving a child now
@@ -3338,7 +3342,7 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
 {
   *should_free = false;
 
-  switch (last_set.script_id) {
+  switch (last_set.script_ctx.sc_sid) {
     case SID_MODELINE:
       return (char_u *)_("modeline");
     case SID_CMDARG:
@@ -3358,7 +3362,8 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
       return IObuff;
     default:
       *should_free = true;
-      return home_replace_save(NULL, SCRIPT_ITEM(last_set.script_id).sn_name);
+      return home_replace_save(NULL,
+                               SCRIPT_ITEM(last_set.script_ctx.sc_sid).sn_name);
   }
 }
 
@@ -3585,10 +3590,10 @@ void script_line_start(void)
   scriptitem_T    *si;
   sn_prl_T        *pp;
 
-  if (current_SID <= 0 || current_SID > script_items.ga_len) {
+  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
     return;
   }
-  si = &SCRIPT_ITEM(current_SID);
+  si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && sourcing_lnum >= 1) {
     // Grow the array before starting the timer, so that the time spent
     // here isn't counted.
@@ -3616,10 +3621,10 @@ void script_line_exec(void)
 {
   scriptitem_T    *si;
 
-  if (current_SID <= 0 || current_SID > script_items.ga_len) {
+  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
     return;
   }
-  si = &SCRIPT_ITEM(current_SID);
+  si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && si->sn_prl_idx >= 0) {
     si->sn_prl_execed = true;
   }
@@ -3631,10 +3636,10 @@ void script_line_end(void)
   scriptitem_T    *si;
   sn_prl_T        *pp;
 
-  if (current_SID <= 0 || current_SID > script_items.ga_len) {
+  if (current_sctx.sc_sid <= 0 || current_sctx.sc_sid > script_items.ga_len) {
     return;
   }
-  si = &SCRIPT_ITEM(current_SID);
+  si = &SCRIPT_ITEM(current_sctx.sc_sid);
   if (si->sn_prof_on && si->sn_prl_idx >= 0
       && si->sn_prl_idx < si->sn_prl_ga.ga_len) {
     if (si->sn_prl_execed) {
