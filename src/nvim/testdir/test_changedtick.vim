@@ -55,3 +55,41 @@ func Test_changedtick_fixed()
   call assert_fails('unlet d["changedtick"]', 'E46:')
 
 endfunc
+
+func Test_changedtick_not_incremented_with_write()
+  new
+  let fname = "XChangeTick"
+  exe 'w ' .. fname
+
+  " :write when the buffer is not changed does not increment changedtick
+  let expected = b:changedtick
+  w
+  call assert_equal(expected, b:changedtick)
+
+  " :write when the buffer IS changed DOES increment changedtick
+  let expected = b:changedtick + 1
+  setlocal modified
+  w
+  call assert_equal(expected, b:changedtick)
+
+  " Two ticks: change + write
+  let expected = b:changedtick + 2
+  call setline(1, 'hello')
+  w
+  call assert_equal(expected, b:changedtick)
+
+  " Two ticks: start insert + write
+  let expected = b:changedtick + 2
+  normal! o
+  w
+  call assert_equal(expected, b:changedtick)
+
+  " Three ticks: start insert + change + write
+  let expected = b:changedtick + 3
+  normal! ochanged
+  w
+  call assert_equal(expected, b:changedtick)
+
+  bwipe
+  call delete(fname)
+endfunc

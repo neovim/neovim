@@ -1313,8 +1313,10 @@ One local buffer variable is predefined:
 					*b:changedtick* *changetick*
 b:changedtick	The total number of changes to the current buffer.  It is
 		incremented for each change.  An undo command is also a change
-		in this case.  This can be used to perform an action only when
-		the buffer has changed.  Example: >
+		in this case.  Resetting 'modified' when writing the buffer is
+		also counted.
+		This can be used to perform an action only when the buffer has
+		changed.  Example: >
 		    :if my_changedtick != b:changedtick
 		    :	let my_changedtick = b:changedtick
 		    :	call My_Update()

@@ -1323,7 +1323,7 @@ void dialog_changed(buf_T *buf, bool checkall)
       (void)buf_write_all(buf, false);
     }
   } else if (ret == VIM_NO) {
-    unchanged(buf, true);
+    unchanged(buf, true, false);
   } else if (ret == VIM_ALL) {
     // Write all modified files that can be written.
     // Skip readonly buffers, these need to be confirmed
@@ -1348,7 +1348,7 @@ void dialog_changed(buf_T *buf, bool checkall)
   } else if (ret == VIM_DISCARDALL) {
     // mark all buffers as unchanged
     FOR_ALL_BUFFERS(buf2) {
-      unchanged(buf2, true);
+      unchanged(buf2, true, false);
     }
   }
 }

@@ -3485,10 +3485,10 @@ restore_backup:
   if (reset_changed && whole && !append
       && !write_info.bw_conv_error
       && (overwriting || vim_strchr(p_cpo, CPO_PLUS) != NULL)) {
-    unchanged(buf, true);
+    unchanged(buf, true, false);
     const varnumber_T changedtick = buf_get_changedtick(buf);
     if (buf->b_last_changedtick + 1 == changedtick) {
-      // changedtick is always incremented in unchanged() but that
+      // b:changedtick may be incremented in unchanged() but that
       // should not trigger a TextChanged event.
       buf->b_last_changedtick = changedtick;
     }
@@ -5107,14 +5107,14 @@ void buf_reload(buf_T *buf, int orig_mode)
         }
         (void)move_lines(savebuf, buf);
       }
-    } else if (buf == curbuf) {  /* "buf" still valid */
-      /* Mark the buffer as unmodified and free undo info. */
-      unchanged(buf, TRUE);
+    } else if (buf == curbuf) {  // "buf" still valid.
+      // Mark the buffer as unmodified and free undo info.
+      unchanged(buf, true, true);
       if ((flags & READ_KEEP_UNDO) == 0) {
         u_blockfree(buf);
         u_clearall(buf);
       } else {
-        /* Mark all undo states as changed. */
+        // Mark all undo states as changed.
         u_unchanged(curbuf);
       }
     }

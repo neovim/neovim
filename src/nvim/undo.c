@@ -2294,7 +2294,7 @@ static void u_undoredo(int undo, bool do_buf_event)
   if (old_flags & UH_CHANGED) {
     changed();
   } else {
-    unchanged(curbuf, FALSE);
+    unchanged(curbuf, false, true);
   }
 
   // because the calls to changed()/unchanged() above will bump changedtick
