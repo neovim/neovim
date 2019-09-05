@@ -101,11 +101,13 @@ describe('memory usage', function()
     ]])
     local after = monitor_memory_usage(pid)
     -- Estimate the limit of max usage as 2x initial usage.
-    check_result({before=before, after=after}, pcall(ok, before.last < after.max))
-    check_result({before=before, after=after}, pcall(ok, before.last * 2 > after.max))
+    -- The lower limit can fluctuate a bit, use 98%.
+    check_result({before=before, after=after},
+                 pcall(ok, before.last * 98 / 100 < after.max))
+    check_result({before=before, after=after},
+                 pcall(ok, before.last * 2 > after.max))
     -- In this case, garbage collecting is not needed.
-    -- The value might fluctuate
-    -- a bit, allow for 3% tolerance.
+    -- The value might fluctuate a bit, allow for 3% tolerance.
     local lower = after.last * 97 / 100
     local upper = after.last * 103 / 100
     check_result({before=before, after=after}, pcall(ok, lower < after.max))
