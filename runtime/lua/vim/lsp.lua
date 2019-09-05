@@ -58,8 +58,6 @@ lsp.start_client = function(cmd, filetype, bufnr)
   -- Store the client in our map
   clients[filetype] = client
 
-  vim.api.nvim_command(string.format([[augroup Start%sLspHook | autocmd! | augroup END]], filetype))
-
   return client
 end
 
