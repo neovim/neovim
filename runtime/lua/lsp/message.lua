@@ -25,8 +25,8 @@ local check_language_server_capabilities = function(client, method)
   end
 
   -- TODO: This should be a better implementation.
-  -- Almost methods naming rule is 'subject_name/opetation_name'.
-  -- almost capability properties naming rule is 'operation_nameProvider'.
+  -- Most methods are named like 'subject_name/opetation_name'.
+  -- Most capability properties are named like 'operation_nameProvider'.
   -- And some language server has custom methods.
   -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
   if method_table[2] and client.server_capabilities[method_table[2]..'Provider'] == false then
