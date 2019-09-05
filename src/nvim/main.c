@@ -209,6 +209,8 @@ void early_init(void)
   alist_init(&global_alist);    // Init the argument list to empty.
   global_alist.id = 0;
 
+  event_init();
+
   // Set the default values for the options.
   // NOTE: Non-latin1 translated messages are working only after this,
   // because this is where "has_mbyte" will be set, which is used by
@@ -258,8 +260,6 @@ int main(int argc, char **argv)
   init_startuptime(&params);
 
   early_init();
-
-  event_init();
 
   // Check if we have an interactive window.
   check_and_set_isatty(&params);
