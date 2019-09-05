@@ -21,9 +21,7 @@ local monitor_memory_usage = {
   op = function(self)
     retry(nil, 10000, function()
       local val = self.memory_usage(self)
-      if self.min > val then
-        self.min = val
-      elseif self.max < val then
+      if self.max < val then
         self.max = val
       end
       table.insert(self.hist, val)
@@ -45,7 +43,6 @@ local monitor_memory_usage = {
   monitor_memory_usage = function(self, pid)
     local obj = {
       pid = pid,
-      min = 0,
       max = 0,
       last = 0,
       hist = {},
@@ -106,8 +103,13 @@ describe('memory usage', function()
     -- Estimate the limit of max usage as 2x initial usage.
     check_result({before=before, after=after}, pcall(ok, before.last < after.max))
     check_result({before=before, after=after}, pcall(ok, before.last * 2 > after.max))
-    -- In this case, garbase collecting is not needed.
-    check_result({before=before, after=after}, pcall(eq, after.last, after.max))
+    -- In this case, garbage collecting is not needed.
+    -- The value might fluctuate
+    -- a bit, allow for 3% tolerance.
+    local lower = after.last * 97 / 100
+    local upper = after.last * 103 / 100
+    check_result({before=before, after=after}, pcall(ok, lower < after.max))
+    check_result({before=before, after=after}, pcall(ok, after.max < upper))
   end)
 
   --[[
@@ -143,11 +145,13 @@ describe('memory usage', function()
       feed_command('so '..fname)
     end
     local last = monitor_memory_usage(pid)
-    -- The usage may be a bit less than the last value
+    -- The usage may be a bit less than the last value, use 80%.
+    -- Allow for 1% tolerance at the upper limit.
     local lower = before.last * 8 / 10
+    local upper = (after.max + (after.last - before.last)) * 101 / 100
     check_result({before=before, after=after, last=last},
                  pcall(ok, lower < last.last))
     check_result({before=before, after=after, last=last},
-                 pcall(ok, last.last < after.max + (after.last - before.last)))
+                 pcall(ok, last.last < upper))
   end)
 end)
