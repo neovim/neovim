@@ -1006,7 +1006,7 @@ typedef enum {
   kFloatRelativeCursor = 2,
 } FloatRelative;
 
-EXTERN const char *const float_relative_str[] INIT(= { "editor", "window",
+EXTERN const char *const float_relative_str[] INIT(= { "editor", "win",
                                                        "cursor" });
 
 typedef enum {
@@ -1016,6 +1016,7 @@ typedef enum {
 
 typedef struct {
   Window window;
+  lpos_T bufpos;
   int height, width;
   double row, col;
   FloatAnchor anchor;
@@ -1026,6 +1027,7 @@ typedef struct {
 } FloatConfig;
 
 #define FLOAT_CONFIG_INIT ((FloatConfig){ .height = 0, .width = 0, \
+                                          .bufpos = { -1, 0 }, \
                                           .row = 0, .col = 0, .anchor = 0, \
                                           .relative = 0, .external = false, \
                                           .focusable = true, \

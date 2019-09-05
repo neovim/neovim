@@ -64,3 +64,31 @@ func Test_curswant_with_cursorline()
   call assert_equal(6, winsaveview().curswant)
   quit!
 endfunc
+
+func Test_screenpos()
+  rightbelow new
+  rightbelow 20vsplit
+  call setline(1, ["\tsome text", "long wrapping line here", "next line"])
+  redraw
+  let winid = win_getid()
+  let [winrow, wincol] = win_screenpos(winid)
+  call assert_equal({'row': winrow,
+    \ 'col': wincol + 0,
+    \ 'curscol': wincol + 7,
+    \ 'endcol': wincol + 7}, screenpos(winid, 1, 1))
+  call assert_equal({'row': winrow,
+    \ 'col': wincol + 13,
+    \ 'curscol': wincol + 13,
+    \ 'endcol': wincol + 13}, screenpos(winid, 1, 7))
+  call assert_equal({'row': winrow + 2,
+    \ 'col': wincol + 1,
+    \ 'curscol': wincol + 1,
+    \ 'endcol': wincol + 1}, screenpos(winid, 2, 22))
+  setlocal number
+  call assert_equal({'row': winrow + 3,
+    \ 'col': wincol + 9,
+    \ 'curscol': wincol + 9,
+    \ 'endcol': wincol + 9}, screenpos(winid, 2, 22))
+  close
+  bwipe!
+endfunc

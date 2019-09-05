@@ -266,6 +266,7 @@ return {
     screenattr={args=2},
     screenchar={args=2},
     screencol={},
+    screenpos={args=3},
     screenrow={},
     search={args={1, 4}},
     searchdecl={args={1, 3}},

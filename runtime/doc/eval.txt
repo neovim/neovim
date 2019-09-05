@@ -2299,6 +2299,7 @@ rpcrequest({channel}, {method}[, {args}...])
 screenattr({row}, {col})	Number	attribute at screen position
 screenchar({row}, {col})	Number	character at screen position
 screencol()			Number	current cursor column
+screenpos({winid}, {lnum}, {col}) Dict	screen row and col of a text character
 screenrow()			Number	current cursor row
 search({pattern} [, {flags} [, {stopline} [, {timeout}]]])
 				Number	search for {pattern}
@@ -6796,7 +6797,25 @@ screencol()							*screencol()*
 		the following mappings: >
 			nnoremap <expr> GG ":echom ".screencol()."\n"
 			nnoremap <silent> GG :echom screencol()<CR>
+			noremap GG <Cmd>echom screencol()<Cr>
 <
+screenpos({winid}, {lnum}, {col})				*screenpos()*
+		The result is a Dict with the screen position of the text
+		character in window {winid} at buffer line {lnum} and column
+		{col}.  {col} is a one-based byte index.
+		The Dict has these members:
+			row	screen row
+			col	first screen column
+			endcol	last screen column
+			curscol	cursor screen column
+		If the specified position is not visible, all values are zero.
+		The "endcol" value differs from "col" when the character
+		occupies more than one screen cell.  E.g. for a Tab "col" can
+		be 1 and "endcol" can be 8.
+		The "curscol" value is where the cursor would be placed.  For
+		a Tab it would be the same as "endcol", while for a double
+		width character it would be the same as "col".
+
 screenrow()							*screenrow()*
 		The result is a Number, which is the current screen row of the
 		cursor.  The top line has number one.
