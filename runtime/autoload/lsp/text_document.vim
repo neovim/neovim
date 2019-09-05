@@ -34,7 +34,7 @@ function! lsp#text_document#completion_omni(findstart, base) abort
     let results = luaeval("vim.lsp.request('textDocument/completion',"
           \ ."vim.lsp.structures.CompletionParams({col = _A })",  col('.') + len(a:base))
 
-    if !(results is v:null)
+    if results isnot v:null
       call filter(results, {_, match -> match['word'] =~ '^' . a:base})
     endif
 
