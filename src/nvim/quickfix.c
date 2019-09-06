@@ -2485,8 +2485,8 @@ void qf_list(exarg_T *eap)
   int         qfFileAttr;
   int         qfSepAttr;
   int         qfLineAttr;
-  int all = eap->forceit;               /* if not :cl!, only show
-                                                   recognised errors */
+  int         all = eap->forceit;     // if not :cl!, only show
+                                      // recognised errors
   qf_info_T   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_llist) {

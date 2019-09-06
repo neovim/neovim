@@ -7338,7 +7338,8 @@ int syn_name2id(const char_u *name)
 
 /// Lookup a highlight group name and return its attributes.
 /// Return zero if not found.
-int syn_name2attr(char_u *name) {
+int syn_name2attr(char_u *name)
+{
   int id = syn_name2id(name);
 
   if (id != 0) {
