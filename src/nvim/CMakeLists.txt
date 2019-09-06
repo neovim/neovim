@@ -679,3 +679,6 @@ add_custom_target(generated-sources DEPENDS
 )
 
 add_subdirectory(po)
+
+include(GetCompileFlags)
+get_compile_flags(NVIM_VERSION_CFLAGS)

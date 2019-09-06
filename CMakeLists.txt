@@ -533,10 +533,7 @@ install_helper(
 #
 
 add_subdirectory(src/nvim)
-# Read compilation flags from src/nvim, used in config subdirectory below.
-include(GetCompileFlags)
-get_compile_flags(NVIM_VERSION_CFLAGS)
-
+get_directory_property(NVIM_VERSION_CFLAGS DIRECTORY src/nvim DEFINITION NVIM_VERSION_CFLAGS)
 add_subdirectory(test/includes)
 add_subdirectory(config)
 add_subdirectory(test/functional/fixtures)  # compile test programs
