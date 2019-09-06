@@ -560,7 +560,7 @@ int ask_yesno(const char *const str, const bool direct)
     // Same highlighting as for wait_return.
     smsg_attr(HL_ATTR(HLF_R), "%s (y/n)?", str);
     if (direct) {
-      r = get_keystroke();
+      r = get_keystroke(NULL);
     } else {
       r = plain_vgetc();
     }
@@ -614,7 +614,7 @@ int is_mouse_key(int c)
  * Disadvantage: typeahead is ignored.
  * Translates the interrupt character for unix to ESC.
  */
-int get_keystroke(void)
+int get_keystroke(MultiQueue *events)
 {
   char_u      *buf = NULL;
   int buflen = 150;
@@ -644,7 +644,7 @@ int get_keystroke(void)
 
     /* First time: blocking wait.  Second time: wait up to 100ms for a
      * terminal code to complete. */
-    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0);
+    n = os_inchar(buf + len, maxlen, len == 0 ? -1L : 100L, 0, events);
     if (n > 0) {
       // Replace zero and CSI by a special key code.
       n = fix_input_buffer(buf + len, n);
@@ -653,18 +653,12 @@ int get_keystroke(void)
     } else if (len > 0)
       ++waited;             /* keep track of the waiting time */
 
-    if (n == KEYLEN_REMOVED) {    /* key code removed */
-      if (must_redraw != 0 && !need_wait_return && (State & CMDLINE) == 0) {
-        /* Redrawing was postponed, do it now. */
-        update_screen(0);
-        setcursor();         /* put cursor back where it belongs */
-      }
+    if (n > 0) {  // found a termcode: adjust length
+      len = n;
+    }
+    if (len == 0) {  // nothing typed yet
       continue;
     }
-    if (n > 0)                  /* found a termcode: adjust length */
-      len = n;
-    if (len == 0)               /* nothing typed yet */
-      continue;
 
     /* Handle modifier and/or special key code. */
     n = buf[0];

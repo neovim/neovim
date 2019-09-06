@@ -144,6 +144,8 @@ void event_init(void)
 {
   log_init();
   loop_init(&main_loop, NULL);
+  resize_events = multiqueue_new_child(main_loop.events);
+
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();

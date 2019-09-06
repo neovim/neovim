@@ -57,9 +57,8 @@ struct map_arguments {
 };
 typedef struct map_arguments MapArguments;
 
-#define KEYLEN_PART_KEY -1      /* keylen value for incomplete key-code */
-#define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
-#define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */
+#define KEYLEN_PART_KEY -1  // keylen value for incomplete key-code
+#define KEYLEN_PART_MAP -2  // keylen value for incomplete mapping
 
 /// Maximum number of streams to read script from
 enum { NSCRIPT = 15 };

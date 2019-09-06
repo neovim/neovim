@@ -2587,8 +2587,10 @@ static int do_more_prompt(int typed_char)
     if (used_typed_char != NUL) {
       c = used_typed_char;              /* was typed at hit-enter prompt */
       used_typed_char = NUL;
-    } else
-      c = get_keystroke();
+    } else {
+      c = get_keystroke(resize_events);
+      multiqueue_process_events(resize_events);
+    }
 
 
     toscroll = 0;
@@ -3307,8 +3309,8 @@ do_dialog (
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   for (;; ) {
-    /* Get a typed character directly from the user. */
-    c = get_keystroke();
+    // Get a typed character directly from the user.
+    c = get_keystroke(NULL);
     switch (c) {
     case CAR:                 /* User accepts default option */
     case NL:
