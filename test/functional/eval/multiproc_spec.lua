@@ -283,6 +283,33 @@ describe('multiproc', function()
     end)
   end)
 
+  it('errors out on reserved name clash with user-defined function', function()
+    source([[
+    function GetContext(funcname)
+      return {
+       \   'funcs': [
+       \     { 'definition': join([
+       \         'function! '.a:funcname.'(...)',
+       \         '  return "HELLO, WORLD!"',
+       \         'endfunction'], "\n"),
+       \       'sid': 0 }
+       \   ]
+       \ }
+     endfunction
+     function Test(funcname)
+       return call_wait([call_async({ -> 1 }, [], {
+        \ 'context': GetContext(a:funcname) })])
+     endfunction
+    ]])
+
+    matches('Function <SNR>_lambda_1 already exists',
+            pcall_err(eval, [[Test('<SNR>_lambda_1')]]))
+    matches('Cannot redefine function <SNR>_lambda_INIT: It is in use',
+            pcall_err(eval, [[Test('<SNR>_lambda_INIT')]]))
+    matches('Function <SNR>_lambda_CALL already exists',
+            pcall_err(eval, [[Test('<SNR>_lambda_CALL')]]))
+  end)
+
   it('supports user-defined functions', function()
     nvim('set_var', 'A',  { { -1,  0,  0,  0 },
                             {  0, -1,  0,  0 },

@@ -310,8 +310,10 @@ local function _ctx_pack_func(name)
   name = name:gsub('^<lambda>(%d+)', '{"<lambda>%1"}')
   local def = vim.api.nvim_command_output('func '..name)
     :gsub('^%s*function <lambda>', 'function <SNR>_lambda_')
-    :gsub('^%s*function', 'function!')
     :gsub('\n%d+', '\n')
+  if not def:match('^function <SNR>_lambda_') then
+    def = def:gsub('^%s*function', 'function!')
+  end
   return {new_name, def}
 end
 
