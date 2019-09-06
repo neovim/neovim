@@ -577,8 +577,16 @@ function module.assert_alive()
 end
 
 local function do_rmdir(path)
-  if lfs.attributes(path, 'mode') ~= 'directory' then
-    return  -- Don't complain.
+  local mode, errmsg, errcode = lfs.attributes(path, 'mode')
+  if mode == nil then
+    if errcode == 2 then
+      -- "No such file or directory", don't complain.
+      return
+    end
+    error(string.format('rmdir: %s (%d)', errmsg, errcode))
+  end
+  if mode ~= 'directory' then
+    error(string.format('rmdir: not a directory: %s', path))
   end
   for file in lfs.dir(path) do
     if file ~= '.' and file ~= '..' then
