@@ -1,14 +1,15 @@
 option(USE_GCOV "Enable gcov support" OFF)
 
-if(NOT CLANG_TSAN)
-# GCOV and TSAN results in false data race reports
 if(USE_GCOV)
+  if(CLANG_TSAN)
+    # GCOV and TSAN results in false data race reports
+    message(FATAL_ERROR "USE_GCOV cannot be used with CLANG_TSAN")
+  endif()
   message(STATUS "Enabling gcov support")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
   add_definitions(-DUSE_GCOV)
-endif()
 endif()
 
 if(WIN32)
