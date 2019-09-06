@@ -779,7 +779,7 @@ func! tohtml#GetUserSettings() "{{{
     if user_settings.no_pre == 0
       call tohtml#GetOption(user_settings,
 	    \ 'expand_tabs',
-	    \ &expandtab || &ts != 8 || &vts != '' || user_settings.number_lines ||
+	    \ &expandtab || &ts != 8 || (exists("+vts") && &vts != '') || user_settings.number_lines ||
 	    \   (user_settings.dynamic_folds && !user_settings.no_foldcolumn))
     else
       let user_settings.expand_tabs = 1

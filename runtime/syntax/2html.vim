@@ -1570,7 +1570,7 @@ while s:lnum <= s:end
 	if s:settings.expand_tabs
 	  let s:offset = 0
 	  let s:idx = stridx(s:expandedtab, "\t")
-	  let s:tablist = split(&vts,',')
+	  let s:tablist = exists("+vts") ? split(&vts,',') : []
 	  if empty(s:tablist)
 	    let s:tablist = [ &ts ]
 	  endif
