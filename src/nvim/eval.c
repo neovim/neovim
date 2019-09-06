@@ -439,12 +439,11 @@ void eval_clear(void)
     xfree(SCRIPT_SV(i));
   ga_clear(&ga_scripts);
 
-  // functions need to be freed before gargabe collecting, otherwise local
-  // variables might be freed twice.
-  free_all_functions();
-
   // unreferenced lists and dicts
   (void)garbage_collect(false);
+
+  // functions not garbage collected
+  free_all_functions();
 }
 
 #endif
