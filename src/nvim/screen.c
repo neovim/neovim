@@ -404,7 +404,9 @@ int update_screen(int type)
     default_grid.valid = true;
   }
 
-  if (type == NOT_VALID && (msg_dothrottle() || msg_grid.chars)) {
+  // After disabling msgsep the grid might not have been deallocated yet,
+  // hence we also need to check msg_grid.chars
+  if (type == NOT_VALID && (msg_use_grid() || msg_grid.chars)) {
     grid_fill(&default_grid, Rows-p_ch, Rows, 0, Columns, ' ', ' ', 0);
   }
 
@@ -6250,7 +6252,7 @@ void screenclear(void)
   msg_scrolled = 0;  // can't scroll back
   msg_didany = false;
   msg_didout = false;
-  if (HL_ATTR(HLF_MSG) > 0 && msg_dothrottle() && msg_grid.chars) {
+  if (HL_ATTR(HLF_MSG) > 0 && msg_use_grid() && msg_grid.chars) {
     grid_invalidate(&msg_grid);
     msg_grid_validate();
     msg_grid_invalid = false;

@@ -132,7 +132,7 @@ describe('TUI', function()
     -- TODO(bfredl): messes up the output (just like vim does).
     feed_data('g')
     screen:expect{grid=[[
-      {8:FAIL 1}        )                                   |
+                    )                                   |
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
       {10:-- More --}{1: }                                       |
@@ -141,7 +141,7 @@ describe('TUI', function()
 
     screen:try_resize(50,10)
     screen:expect{grid=[[
-      {8:FAIL 1}        )                                   |
+                    )                                   |
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
       {10:-- More --}                                        |

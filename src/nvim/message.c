@@ -150,10 +150,16 @@ void msg_grid_set_pos(int row, bool scrolled)
   }
 }
 
+bool msg_use_grid(void)
+{
+  return default_grid.chars && msg_use_msgsep()
+         && !ui_has(kUIMessages);
+}
+
 void msg_grid_validate(void)
 {
   grid_assign_handle(&msg_grid);
-  bool should_alloc = msg_dothrottle();
+  bool should_alloc = msg_use_grid();
   if (should_alloc && (msg_grid.Rows != Rows || msg_grid.Columns != Columns
                        || !msg_grid.chars)) {
     // TODO(bfredl): eventually should be set to "invalid". I e all callers
@@ -2027,7 +2033,7 @@ static void msg_puts_display(const char_u *str, int maxlen, int attr,
 
       // Tricky: if last cell will be written, delay the throttle until
       // after the first scroll. Otherwise we would need to keep track of it.
-      if (has_last_char && msg_dothrottle()) {
+      if (has_last_char && msg_do_throttle()) {
         if (!msg_grid.throttled) {
           msg_grid_scroll_discount++;
         }
@@ -2158,12 +2164,6 @@ int msg_scrollsize(void)
   return msg_scrolled + p_ch + 1;
 }
 
-bool msg_dothrottle(void)
-{
-  return default_grid.chars && msg_use_msgsep()
-         && !ui_has(kUIMessages);
-}
-
 bool msg_use_msgsep(void)
 {
   // the full-screen scroll behavior doesn't really make sense with
@@ -2171,12 +2171,15 @@ bool msg_use_msgsep(void)
   return ((dy_flags & DY_MSGSEP) || ui_has(kUIMultigrid));
 }
 
-/*
- * Scroll the screen up one line for displaying the next message line.
- */
+bool msg_do_throttle(void)
+{
+  return msg_use_grid() && !(rdb_flags & RDB_NOTHROTTLE);
+}
+
+/// Scroll the screen up one line for displaying the next message line.
 void msg_scroll_up(bool may_throttle)
 {
-  if (may_throttle && msg_dothrottle()) {
+  if (may_throttle && msg_do_throttle()) {
     msg_grid.throttled = true;
   }
   msg_did_scroll = true;
@@ -2214,37 +2217,36 @@ void msg_scroll_up(bool may_throttle)
 /// we get throttling "for free" using standard redraw_win_later code paths.
 void msg_scroll_flush(void)
 {
-  if (!msg_grid.throttled) {
-    return;
-  }
-  msg_grid.throttled = false;
-  int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
-  assert(pos_delta >= 0);
-  int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
+  if (msg_grid.throttled) {
+    msg_grid.throttled = false;
+    int pos_delta = msg_grid_pos_at_flush - msg_grid_pos;
+    assert(pos_delta >= 0);
+    int delta = MIN(msg_scrolled - msg_scrolled_at_flush, msg_grid.Rows);
 
-  if (pos_delta > 0) {
-    ui_ext_msg_set_pos(msg_grid_pos, true);
-    msg_grid_pos_at_flush = msg_grid_pos;
-  }
+    if (pos_delta > 0) {
+      ui_ext_msg_set_pos(msg_grid_pos, true);
+    }
 
-  int to_scroll = delta-pos_delta-msg_grid_scroll_discount;
-  assert(to_scroll >= 0);
+    int to_scroll = delta-pos_delta-msg_grid_scroll_discount;
+    assert(to_scroll >= 0);
 
-  // TODO(bfredl): msg_grid_pos should be 0 already when starting scrolling
-  // but this sometimes fails in "headless" message printing.
-  if (to_scroll > 0 && msg_grid_pos == 0) {
-    ui_call_grid_scroll(msg_grid.handle, 0, Rows, 0, Columns, to_scroll, 0);
-  }
+    // TODO(bfredl): msg_grid_pos should be 0 already when starting scrolling
+    // but this sometimes fails in "headless" message printing.
+    if (to_scroll > 0 && msg_grid_pos == 0) {
+      ui_call_grid_scroll(msg_grid.handle, 0, Rows, 0, Columns, to_scroll, 0);
+    }
 
-  for (int i = MAX(Rows-MAX(delta, 1), 0); i < Rows; i++) {
-    int row = i-msg_grid_pos;
-    assert(row >= 0);
-    ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
-            HL_ATTR(HLF_MSG), false);
-    msg_grid.dirty_col[row] = 0;
+    for (int i = MAX(Rows-MAX(delta, 1), 0); i < Rows; i++) {
+      int row = i-msg_grid_pos;
+      assert(row >= 0);
+      ui_line(&msg_grid, row, 0, msg_grid.dirty_col[row], msg_grid.Columns,
+              HL_ATTR(HLF_MSG), false);
+      msg_grid.dirty_col[row] = 0;
+    }
   }
   msg_scrolled_at_flush = msg_scrolled;
   msg_grid_scroll_discount = 0;
+  msg_grid_pos_at_flush = msg_grid_pos;
 }
 
 void msg_reset_scroll(void)
@@ -2255,7 +2257,7 @@ void msg_reset_scroll(void)
   }
   // TODO(bfredl): some duplicate logic with update_screen(). Later on
   // we should properly disentangle message clear with full screen redraw.
-  if (msg_dothrottle()) {
+  if (msg_use_grid()) {
     msg_grid.throttled = false;
     // TODO(bfredl): risk for extra flicker i e with
     // "nvim -o has_swap also_has_swap"
@@ -2462,10 +2464,6 @@ static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp)
     mp = mp->sb_next;
   }
 
-  if (msg_col < Columns) {
-    grid_fill(&msg_grid_adj, row, row+1, msg_col, Columns, ' ', ' ',
-              HL_ATTR(HLF_MSG));
-  }
   return mp->sb_next;
 }
 
@@ -2697,12 +2695,16 @@ static int do_more_prompt(int typed_char)
 
           if (toscroll == -1) {
             grid_ins_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
+            grid_fill(&msg_grid_adj, 0, 1, 0, Columns, ' ', ' ',
+                      HL_ATTR(HLF_MSG));
             // display line at top
             (void)disp_sb_line(0, mp);
           } else {
             // redisplay all lines
             // TODO(bfredl): this case is not optimized (though only concerns
             // event fragmentization, not unnecessary scroll events).
+            grid_fill(&msg_grid_adj, 0, Rows, 0, Columns, ' ', ' ',
+                      HL_ATTR(HLF_MSG));
             for (i = 0; mp != NULL && i < Rows - 1; i++) {
               mp = disp_sb_line(i, mp);
               ++msg_scrolled;
@@ -2713,7 +2715,7 @@ static int do_more_prompt(int typed_char)
       } else {
         /* First display any text that we scrolled back. */
         while (toscroll > 0 && mp_last != NULL) {
-          if (msg_dothrottle() && !msg_grid.throttled) {
+          if (msg_do_throttle() && !msg_grid.throttled) {
             // Tricky: we redraw at one line higher than usual. Therefore
             // the non-flushed area is one line larger.
             msg_scrolled_at_flush--;
@@ -2722,6 +2724,8 @@ static int do_more_prompt(int typed_char)
           // scroll up, display line at bottom
           msg_scroll_up(true);
           inc_msg_scrolled();
+          grid_fill(&msg_grid_adj, Rows-2, Rows-1, 0, Columns, ' ', ' ',
+                    HL_ATTR(HLF_MSG));
           mp_last = disp_sb_line(Rows - 2, mp_last);
           toscroll--;
         }
@@ -2743,7 +2747,8 @@ static int do_more_prompt(int typed_char)
   }
 
   // clear the --more-- message
-  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ', 0);
+  grid_fill(&msg_grid_adj, Rows - 1, Rows, 0, Columns, ' ', ' ',
+            HL_ATTR(HLF_MSG));
   redraw_cmdline = true;
   clear_cmdline = false;
   mode_displayed = false;
@@ -2817,7 +2822,7 @@ void msg_moremsg(int full)
   int attr;
   char_u      *s = (char_u *)_("-- More --");
 
-  attr = HL_ATTR(HLF_M);
+  attr = hl_combine_attr(HL_ATTR(HLF_MSG), HL_ATTR(HLF_M));
   grid_puts(&msg_grid_adj, s, Rows - 1, 0, attr);
   if (full) {
     grid_puts(&msg_grid_adj, (char_u *)

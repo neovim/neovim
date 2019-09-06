@@ -859,7 +859,7 @@ function Screen:_handle_grid_scroll(g, top, bot, left, right, rows, cols)
 
   -- clear invalid rows
   for i = stop + step, stop + rows, step do
-    self:_clear_row_section(grid, i, left, right)
+    self:_clear_row_section(grid, i, left, right, true)
   end
 end
 
@@ -1065,10 +1065,10 @@ function Screen:_clear_block(grid, top, bot, left, right)
   end
 end
 
-function Screen:_clear_row_section(grid, rownum, startcol, stopcol)
+function Screen:_clear_row_section(grid, rownum, startcol, stopcol, invalid)
   local row = grid.rows[rownum]
   for i = startcol, stopcol do
-    row[i].text = ' '
+    row[i].text = (invalid and '�' or ' ')
     row[i].attrs = self._clear_attrs
   end
 end
