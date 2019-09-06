@@ -795,6 +795,13 @@ function module.add_builddir_to_rtp()
   module.command(string.format([[set rtp+=%s/runtime]], module.test_build_dir))
 end
 
+-- Kill process with given pid
+function module.os_kill(pid)
+  return os.execute((iswin()
+    and 'taskkill /f /t /pid '..pid..' > nul'
+    or  'kill -9 '..pid..' > /dev/null'))
+end
+
 module = global_helpers.tbl_extend('error', module, global_helpers)
 
 return function(after_each)
