@@ -40,6 +40,7 @@
 #include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
+#include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
@@ -2481,8 +2482,11 @@ void qf_list(exarg_T *eap)
   int idx1 = 1;
   int idx2 = -1;
   char_u      *arg = eap->arg;
-  int all = eap->forceit;               /* if not :cl!, only show
-                                                   recognised errors */
+  int         qfFileAttr;
+  int         qfSepAttr;
+  int         qfLineAttr;
+  int         all = eap->forceit;     // if not :cl!, only show
+                                      // recognised errors
   qf_info_T   *qi = &ql_info;
 
   if (eap->cmdidx == CMD_llist) {
@@ -2524,6 +2528,21 @@ void qf_list(exarg_T *eap)
 
   // Shorten all the file names, so that it is easy to read.
   shorten_fnames(false);
+
+  // Get the attributes for the different quickfix highlight items.  Note
+  // that this depends on syntax items defined in the qf.vim syntax file
+  qfFileAttr = syn_name2attr((char_u *)"qfFileName");
+  if (qfFileAttr == 0) {
+     qfFileAttr = HL_ATTR(HLF_D);
+  }
+  qfSepAttr = syn_name2attr((char_u *)"qfSeparator");
+  if (qfSepAttr == 0) {
+      qfSepAttr = HL_ATTR(HLF_D);
+  }
+  qfLineAttr = syn_name2attr((char_u *)"qfLineNr");
+  if (qfLineAttr == 0) {
+      qfLineAttr = HL_ATTR(HLF_N);
+  }
 
   if (qi->qf_lists[qi->qf_curlist].qf_nonevalid) {
     all = true;
@@ -2574,22 +2593,27 @@ void qf_list(exarg_T *eap)
       }
       msg_putchar('\n');
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
-                        ? HL_ATTR(HLF_QFL) : HL_ATTR(HLF_D));
+                        ? HL_ATTR(HLF_QFL) : qfFileAttr);
+
+      if (qfp->qf_lnum != 0) {
+        msg_puts_attr(":", qfSepAttr);
+      }
       if (qfp->qf_lnum == 0) {
         IObuff[0] = NUL;
       } else if (qfp->qf_col == 0) {
-        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRIdLINENR, qfp->qf_lnum);
+        vim_snprintf((char *)IObuff, IOSIZE, "%" PRIdLINENR, qfp->qf_lnum);
       } else {
-        vim_snprintf((char *)IObuff, IOSIZE, ":%" PRIdLINENR " col %d",
+        vim_snprintf((char *)IObuff, IOSIZE, "%" PRIdLINENR " col %d",
                      qfp->qf_lnum, qfp->qf_col);
       }
-      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE, "%s:",
+      vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE, "%s",
                    (char *)qf_types(qfp->qf_type, qfp->qf_nr));
-      msg_puts_attr((const char *)IObuff, HL_ATTR(HLF_N));
+      msg_puts_attr((const char *)IObuff, qfLineAttr);
+      msg_puts_attr(":", qfSepAttr);
       if (qfp->qf_pattern != NULL) {
         qf_fmt_text(qfp->qf_pattern, IObuff, IOSIZE);
-        xstrlcat((char *)IObuff, ":", IOSIZE);
         msg_puts((const char *)IObuff);
+        msg_puts_attr(":", qfSepAttr);
       }
       msg_puts(" ");
 
