@@ -563,7 +563,7 @@ if(BUSTED_PRG)
   endif()
 
   set(UNITTEST_PREREQS nvim-test unittest-headers)
-  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test ${GENERATED_HELP_TAGS})
+  set(FUNCTIONALTEST_PREREQS nvim printargs-test shell-test streams-test ${GENERATED_HELP_TAGS})
   if(NOT WIN32)
     list(APPEND FUNCTIONALTEST_PREREQS tty-test)
   endif()
