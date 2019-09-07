@@ -10,7 +10,6 @@ local request = helpers.request
 local NIL = helpers.NIL
 local meths = helpers.meths
 local command = helpers.command
-local expect_err = helpers.expect_err
 local pcall_err = helpers.pcall_err
 
 -- check if str is visible at the beginning of some line
@@ -56,8 +55,8 @@ describe('API/win', function()
     end)
 
     it('validates args', function()
-      expect_err('Invalid buffer id$', window, 'set_buf', nvim('get_current_win'), 23)
-      expect_err('Invalid window id$', window, 'set_buf', 23, nvim('get_current_buf'))
+      eq('Invalid buffer id', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
+      eq('Invalid window id', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
   end)
 
@@ -340,7 +339,8 @@ describe('API/win', function()
       eq(3, #meths.list_wins())
       eq(':', funcs.getcmdwintype())
       -- Vim: not allowed to close other windows from cmdline-window.
-      expect_err('E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$', meths.win_close, oldwin, true)
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_close, oldwin, true))
       -- Close cmdline-window.
       meths.win_close(0,true)
       eq(2, #meths.list_wins())

@@ -74,15 +74,14 @@ function module.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
--- Expects an error matching Lua pattern `pat`.
---
-function module.expect_err(pat, fn, ...)
-  assert(type(fn) == 'function')
-  local fn_args = {...}
-  assert.error_matches(function() return fn(unpack(fn_args)) end, pat)
-end
-
 -- Invokes `fn` and returns the error string, or raises an error if `fn` succeeds.
+--
+-- Usage:
+--    -- Match exact string.
+--    eq('e', pcall_err(function(a, b) error('e') end, 'arg1', 'arg2'))
+--    -- Match Lua pattern.
+--    matches('e[or]+$', pcall_err(function(a, b) error('some error') end, 'arg1', 'arg2'))
+--
 function module.pcall_err(fn, ...)
   assert(type(fn) == 'function')
   local status, rv = pcall(fn, ...)

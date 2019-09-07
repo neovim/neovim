@@ -4,12 +4,12 @@ local clear = helpers.clear
 local command = helpers.command
 local eval = helpers.eval
 local eq = helpers.eq
-local expect_err = helpers.expect_err
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local next_msg = helpers.next_msg
 local nvim = helpers.nvim
 local source = helpers.source
+local pcall_err = helpers.pcall_err
 
 before_each(function()
   clear()
@@ -66,13 +66,10 @@ describe('wait()', function()
     eq(5, nvim('get_var', 'counter'))
   end)
 
-  it('errors out on invalid timeout value', function()
-    expect_err('Invalid value for argument', call, 'wait', '', 1)
-  end)
-
-  it('errors out on invalid interval', function()
-    expect_err('Invalid value for argument', call, 'wait', 0, 1, -1)
-    expect_err('Invalid value for argument', call, 'wait', 0, 1, 0)
-    expect_err('Invalid value for argument', call, 'wait', 0, 1, '')
+  it('validates args', function()
+    eq('Vim:E475: Invalid value for argument 1', pcall_err(call, 'wait', '', 1))
+    eq('Vim:E475: Invalid value for argument 3', pcall_err(call, 'wait', 0, 1, -1))
+    eq('Vim:E475: Invalid value for argument 3', pcall_err(call, 'wait', 0, 1, 0))
+    eq('Vim:E475: Invalid value for argument 3', pcall_err(call, 'wait', 0, 1, ''))
   end)
 end)

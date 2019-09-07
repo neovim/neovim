@@ -17,7 +17,7 @@ local pathroot = helpers.pathroot
 local nvim_set = helpers.nvim_set
 local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
-local expect_err = helpers.expect_err
+local pcall_err = helpers.pcall_err
 local Screen = require('test.functional.ui.screen')
 
 -- Kill process with given pid
@@ -122,8 +122,8 @@ describe('jobs', function()
     local dir = 'Xtest_not_executable_dir'
     mkdir(dir)
     funcs.setfperm(dir, 'rw-------')
-    expect_err('E475: Invalid argument: expected valid directory$', nvim,
-               'command', "call jobstart('pwd', {'cwd': '" .. dir .. "'})")
+    eq('Vim(call):E475: Invalid argument: expected valid directory',
+      pcall_err(nvim, 'command', "call jobstart('pwd', {'cwd': '"..dir.."'})"))
     rmdir(dir)
   end)
 

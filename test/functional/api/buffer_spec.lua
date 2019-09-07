@@ -13,7 +13,6 @@ local NIL = helpers.NIL
 local command = helpers.command
 local bufmeths = helpers.bufmeths
 local feed = helpers.feed
-local expect_err = helpers.expect_err
 local pcall_err = helpers.pcall_err
 
 describe('api/buf', function()
@@ -191,14 +190,14 @@ describe('api/buf', function()
 
     it('fails correctly when input is not valid', function()
       eq(1, curbufmeths.get_number())
-      expect_err([[String cannot contain newlines]],
-        bufmeths.set_lines, 1, 1, 2, false, {'b\na'})
+      eq([[String cannot contain newlines]],
+        pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'b\na'}))
     end)
 
     it("fails if 'nomodifiable'", function()
       command('set nomodifiable')
-      expect_err([[Buffer is not 'modifiable']],
-        bufmeths.set_lines, 1, 1, 2, false, {'a','b'})
+      eq([[Buffer is not 'modifiable']],
+        pcall_err(bufmeths.set_lines, 1, 1, 2, false, {'a','b'}))
     end)
 
     it('has correct line_count when inserting and deleting', function()

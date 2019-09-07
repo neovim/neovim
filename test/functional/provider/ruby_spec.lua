@@ -6,22 +6,23 @@ local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
 local eval = helpers.eval
 local expect = helpers.expect
-local expect_err = helpers.expect_err
 local feed = helpers.feed
 local feed_command = helpers.feed_command
 local funcs = helpers.funcs
 local insert = helpers.insert
 local meths = helpers.meths
 local missing_provider = helpers.missing_provider
+local matches = helpers.matches
 local write_file = helpers.write_file
+local pcall_err = helpers.pcall_err
 
 do
   clear()
   if missing_provider('ruby') then
     it(':ruby reports E319 if provider is missing', function()
       local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
-      expect_err(expected, command, 'ruby puts "foo"')
-      expect_err(expected, command, 'rubyfile foo')
+      matches(expected, pcall_err(command, 'ruby puts "foo"'))
+      matches(expected, pcall_err(command, 'rubyfile foo'))
     end)
     pending("Missing neovim RubyGem.", function() end)
     return

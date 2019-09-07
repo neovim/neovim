@@ -2,18 +2,19 @@ local helpers = require('test.functional.helpers')(after_each)
 local eval, command, feed = helpers.eval, helpers.command, helpers.feed
 local eq, clear, insert = helpers.eq, helpers.clear, helpers.insert
 local expect, write_file = helpers.expect, helpers.write_file
-local expect_err = helpers.expect_err
 local feed_command = helpers.feed_command
 local source = helpers.source
 local missing_provider = helpers.missing_provider
+local matches = helpers.matches
+local pcall_err = helpers.pcall_err
 
 do
   clear()
   if missing_provider('python3') then
     it(':python3 reports E319 if provider is missing', function()
       local expected = [[Vim%(py3.*%):E319: No "python3" provider found.*]]
-      expect_err(expected, command, 'py3 print("foo")')
-      expect_err(expected, command, 'py3file foo')
+      matches(expected, pcall_err(command, 'py3 print("foo")'))
+      matches(expected, pcall_err(command, 'py3file foo'))
     end)
     pending('Python 3 (or the pynvim module) is broken/missing', function() end)
     return

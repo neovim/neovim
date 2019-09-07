@@ -5,7 +5,6 @@ local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
 local eval = helpers.eval
-local expect_err = helpers.expect_err
 local feed = helpers.feed
 local map = helpers.map
 local nvim = helpers.nvim
@@ -14,6 +13,7 @@ local redir_exec = helpers.redir_exec
 local source = helpers.source
 local trim = helpers.trim
 local write_file = helpers.write_file
+local pcall_err = helpers.pcall_err
 
 describe('context functions', function()
   local fname1 = 'Xtest-functional-eval-ctx1'
@@ -110,9 +110,9 @@ describe('context functions', function()
       nvim('del_var', 'one')
       nvim('del_var', 'Two')
       nvim('del_var', 'THREE')
-      expect_err('E121: Undefined variable: g:one', eval, 'g:one')
-      expect_err('E121: Undefined variable: g:Two', eval, 'g:Two')
-      expect_err('E121: Undefined variable: g:THREE', eval, 'g:THREE')
+      eq('Vim:E121: Undefined variable: g:one', pcall_err(eval, 'g:one'))
+      eq('Vim:E121: Undefined variable: g:Two', pcall_err(eval, 'g:Two'))
+      eq('Vim:E121: Undefined variable: g:THREE', pcall_err(eval, 'g:THREE'))
 
       call('ctxpop')
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
@@ -120,9 +120,9 @@ describe('context functions', function()
       nvim('del_var', 'one')
       nvim('del_var', 'Two')
       nvim('del_var', 'THREE')
-      expect_err('E121: Undefined variable: g:one', eval, 'g:one')
-      expect_err('E121: Undefined variable: g:Two', eval, 'g:Two')
-      expect_err('E121: Undefined variable: g:THREE', eval, 'g:THREE')
+      eq('Vim:E121: Undefined variable: g:one', pcall_err(eval, 'g:one'))
+      eq('Vim:E121: Undefined variable: g:Two', pcall_err(eval, 'g:Two'))
+      eq('Vim:E121: Undefined variable: g:THREE', pcall_err(eval, 'g:THREE'))
 
       call('ctxpop')
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
@@ -217,9 +217,9 @@ describe('context functions', function()
       command('delfunction Greet')
       command('delfunction GreetAll')
 
-      expect_err('Vim:E117: Unknown function: Greet', call, 'Greet', 'World')
-      expect_err('Vim:E117: Unknown function: Greet', call, 'GreetAll',
-                 'World', 'One', 'Two', 'Three')
+      eq('Vim:E117: Unknown function: Greet', pcall_err(call, 'Greet', 'World'))
+      eq('Vim:E117: Unknown function: GreetAll',
+        pcall_err(call, 'GreetAll', 'World', 'One', 'Two', 'Three'))
 
       call('ctxpop')
 
@@ -233,13 +233,13 @@ describe('context functions', function()
 
     it('errors out when context stack is empty', function()
       local err = 'Vim:Context stack is empty'
-      expect_err(err, call, 'ctxpop')
-      expect_err(err, call, 'ctxpop')
+      eq(err, pcall_err(call, 'ctxpop'))
+      eq(err, pcall_err(call, 'ctxpop'))
       call('ctxpush')
       call('ctxpush')
       call('ctxpop')
       call('ctxpop')
-      expect_err(err, call, 'ctxpop')
+      eq(err, pcall_err(call, 'ctxpop'))
     end)
   end)
 
@@ -263,11 +263,11 @@ describe('context functions', function()
 
   describe('ctxget()', function()
     it('errors out when index is out of bounds', function()
-      expect_err(outofbounds, call, 'ctxget')
+      eq(outofbounds, pcall_err(call, 'ctxget'))
       call('ctxpush')
-      expect_err(outofbounds, call, 'ctxget', 1)
+      eq(outofbounds, pcall_err(call, 'ctxget', 1))
       call('ctxpop')
-      expect_err(outofbounds, call, 'ctxget', 0)
+      eq(outofbounds, pcall_err(call, 'ctxget', 0))
     end)
 
     it('returns context dictionary at index in context stack', function()
@@ -370,11 +370,11 @@ describe('context functions', function()
 
   describe('ctxset()', function()
     it('errors out when index is out of bounds', function()
-      expect_err(outofbounds, call, 'ctxset', {dummy = 1})
+      eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}))
       call('ctxpush')
-      expect_err(outofbounds, call, 'ctxset', {dummy = 1}, 1)
+      eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 1))
       call('ctxpop')
-      expect_err(outofbounds, call, 'ctxset', {dummy = 1}, 0)
+      eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 0))
     end)
 
     it('sets context dictionary at index in context stack', function()
