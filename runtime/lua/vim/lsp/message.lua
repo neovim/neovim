@@ -1,4 +1,4 @@
-local json = require('vim.lsp.json')
+local util = require('vim.lsp.util')
 local logger = require('vim.lsp.logger')
 
 local Message = {
@@ -71,7 +71,7 @@ function RequestMessage:new(client, method, params)
 end
 
 function RequestMessage:json()
-  return json.encode({
+  return util.encode_json({
     jsonrpc = self.jsonrpc,
     id = self.id,
     method = self.method,
@@ -132,7 +132,7 @@ function NotificationMessage:new(client, method, params)
 end
 
 function NotificationMessage:json()
-  return json.encode({
+  return util.encode_json({
     jsonrpc = self.jsonrpc,
     method = self.method,
     params = self.params,

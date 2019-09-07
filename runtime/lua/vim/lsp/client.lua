@@ -1,8 +1,6 @@
 local uv = vim.loop
-local json = require('vim.lsp.json')
 
-local Enum = require('vim.lsp.util').Enum
-local DefaultMap = require('vim.lsp.util').DefaultMap
+local util = require('vim.lsp.util')
 
 local logger = require('vim.lsp.logger')
 local message = require('vim.lsp.message')
@@ -12,13 +10,13 @@ local InitializeParams = require('vim.lsp.protocol').InitializeParams
 local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
 
 
-local read_state = Enum:new({
+local read_state = util.Enum:new({
   init = 0,
   header = 1,
   body = 2,
 })
 
-local error_level = Enum:new({
+local error_level = util.Enum:new({
   critical = 0,
   reset_state = 1,
   info = 2,
@@ -40,9 +38,9 @@ client.new = function(name, filetype, cmd)
     _read_data = '',
     _current_header = {},
 
-    client_capabilities = DefaultMap:new(),
+    client_capabilities = util.DefaultMap:new(),
     -- Capabilities sent by server
-    server_capabilities = DefaultMap:new(),
+    server_capabilities = util.DefaultMap:new(),
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -113,7 +111,7 @@ client.initialize = function(self)
     self:set_server_capabilities(data)
     self:notify('initialized', {})
     self:notify('textDocument/didOpen', DidOpenTextDocumentParams(self))
-    self.capabilities =  DefaultMap:new(data.capabilities)
+    self.capabilities =  util.DefaultMap:new(data.capabilities)
     return data.capabilities
   end, nil)
 
@@ -318,7 +316,7 @@ client.on_stdout = function(self, data)
 end
 
 client.on_message = function(self, body)
-  local ok, json_message = pcall(json.decode, body)
+  local ok, json_message = pcall(util.decode_json, body)
 
   if not ok then
     logger.info('Not a valid message. Calling self:on_error')

@@ -19,6 +19,15 @@ util.get_filetype = function(bufnr)
   return vim.api.nvim_buf_get_option(bufnr, 'filetype')
 end
 
+
+util.decode_json = function(data)
+  return vim.api.nvim_call_function('json_decode', {data})
+end
+
+util.encode_json = function(data)
+  return vim.api.nvim_call_function('json_encode', {data})
+end
+
 ---
 -- Provide a "strongly typed" dictionary in Lua.
 --
