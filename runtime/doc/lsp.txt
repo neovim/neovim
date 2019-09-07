@@ -24,8 +24,8 @@ After installing a language server to your machine, you must let Neovim know
 how to start and interact with that language server. To do so, use the
 following APIs:
 
-                                                      *lsp#server_config#add()*
-lsp#server_config#add({ftype}, {cmd}, {configuration}):
+                                                      *lsp#add_server_config()*
+lsp#add_server_config({ftype}, {cmd}, {configuration}):
     Used to add a language server.
 
     This will add an autocmd that will start the server and handle any other
@@ -58,10 +58,10 @@ lsp#server_config#add({ftype}, {cmd}, {configuration}):
                 Example:~
 >
   " Python example
-  call lsp#server_config#add('python', { 'execute_path': 'pyls', 'args': [] })
+  call lsp#add_server_config('python', { 'execute_path': 'pyls', 'args': [] })
 
   " Typescript configuration
-  call lsp#server_config#add('typescript', {
+  call lsp#add_server_config('typescript', {
       \ 'name': 'ts', ....
       \ 'callbacks': {
         \ 'root_uri': { server -> RootFinderFromPlugin() }
@@ -179,8 +179,6 @@ in an idiomatic way.
 
   textDocument/definition~
   textDocument/hover~
-  textDocument/publishDiagnostics~
-  textDocument/references~
 
 vim.lsp.config.callbacks.set_all_builtin_callbacks()
   You can enable all built-in callbacks
@@ -271,7 +269,7 @@ init.vim:
   call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/completion')")
   augroup MyLanguageServer
     au!
-    autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document#completion_complete()<CR>
+    autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document_completion()<CR>
   augroup END
 <
 
@@ -285,7 +283,7 @@ init.vim:
   call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/signatureHelp')")
   augroup MyLanguageServer
     au!
-    autocmd Filetype python nnoremap <silent> <Leader>sh :call lsp#text_document#signature_help()<CR>
+    autocmd Filetype python nnoremap <silent> <Leader>sh :call lsp#text_document_signature_help()<CR>
   augroup END
 <
 
@@ -299,7 +297,7 @@ init.vim:
   call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/hover')")
   augroup MyLanguageServer
     au!
-    autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document#hover()<CR>
+    autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document_hover()<CR>
   augroup END
 <
 
