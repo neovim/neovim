@@ -5,7 +5,7 @@ local eq = helpers.eq
 local funcs = helpers.funcs
 
 
-local require_client = [[require('lsp.client').]]
+local require_client = [[require('vim.lsp.client').]]
 local lsp_client_call = function(method, ...)
   return funcs.luaeval(require_client .. method .. '(_A)', ...)
 end

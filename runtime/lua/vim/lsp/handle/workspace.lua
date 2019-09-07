@@ -1,4 +1,4 @@
-local textDocument = require('lsp.handle.textDocument')
+local textDocument = require('vim.lsp.handle.textDocument')
 
 local workspace = {}
 

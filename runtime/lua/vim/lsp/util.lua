@@ -1,5 +1,5 @@
 local util = {
-  ui = require('lsp.util.ui'),
+  ui = require('vim.lsp.util.ui'),
 }
 
 util.get_buffer_text = function(bufnr)

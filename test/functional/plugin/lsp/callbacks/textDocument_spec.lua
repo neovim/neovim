@@ -15,7 +15,7 @@ describe('callbacks for textDocument', function()
     it('should set nothing with an empty location list', function()
       source(dedent([[
         lua << EOF
-          local callbacks = require('lsp.callbacks').callbacks
+          local callbacks = require('vim.lsp.callbacks').callbacks
           callbacks.textDocument.references({})
         EOF
       ]]))
@@ -25,7 +25,7 @@ describe('callbacks for textDocument', function()
     it('should set the location list with one item', function()
       source(dedent([[
         lua << EOF
-          local callbacks = require('runtime.lua.lsp.callbacks').callbacks
+          local callbacks = require('vim.lsp.callbacks').callbacks
           callbacks.textDocument.references({
             {uri = 'test.file', range = {start = {line=1, character=1}, ["end"] = {line=1, character=2}}}
           })
@@ -39,10 +39,10 @@ end)
 
 describe('getting a default textDocument callback', function()
   it('should return the hover function', function()
-    local f = require('runtime.lua.lsp.callbacks').get_list_of_callbacks('textDocument/hover')
-    eq(require('runtime.lua.lsp.callbacks').callbacks.textDocument.hover, f)
+    local f = require('vim.lsp.callbacks').get_list_of_callbacks('textDocument/hover')
+    eq(require('vim.lsp.callbacks').callbacks.textDocument.hover, f)
 
     local f_table = require('runtime.lua.lsp.callbacks').get_list_of_callbacks({'textDocument', 'hover'})
-    eq(require('runtime.lua.lsp.callbacks').callbacks.textDocument.hover, f_table)
+    eq(require('vim.lsp.callbacks').callbacks.textDocument.hover, f_table)
   end)
 end)

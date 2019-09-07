@@ -1,4 +1,4 @@
-local CompletionItemKind = require('lsp.protocol').CompletionItemKind
+local CompletionItemKind = require('vim.lsp.protocol').CompletionItemKind
 
 local completion = {}
 

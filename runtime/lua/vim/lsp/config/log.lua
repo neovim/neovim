@@ -1,4 +1,4 @@
-local log = require('lsp.log')
+local log = require('vim.lsp.log')
 
 return {
   set_file_level = function(level)

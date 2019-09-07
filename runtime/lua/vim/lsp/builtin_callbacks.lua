@@ -22,14 +22,14 @@
 
 --  TODO: documentLink/resolve
 
-local log = require('lsp.log')
+local log = require('vim.lsp.log')
 local nvim_util = require('nvim.util')
-local util = require('lsp.util')
-local protocol = require('lsp.protocol')
+local util = require('vim.lsp.util')
+local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
 
-local handle_completion = require('lsp.handle.completion')
-local handle_workspace = require('lsp.handle.workspace')
+local handle_completion = require('vim.lsp.handle.completion')
+local handle_workspace = require('vim.lsp.handle.workspace')
 
 -- {
 --    method_name = {

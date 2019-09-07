@@ -1,5 +1,5 @@
-local callbacks = require('lsp.callbacks')
-local BuiltinCallbacks = require('lsp.builtin_callbacks').BuiltinCallbacks
+local callbacks = require('vim.lsp.callbacks')
+local BuiltinCallbacks = require('vim.lsp.builtin_callbacks').BuiltinCallbacks
 
 local configure = {}
 

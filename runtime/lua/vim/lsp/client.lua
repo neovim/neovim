@@ -1,16 +1,16 @@
 local uv = vim.loop
-local json = require('lsp.json')
+local json = require('vim.lsp.json')
 local util = require('nvim.util')
 
 local Enum = require('nvim.meta').Enum
 local EmptyDictionary = require('nvim.meta').EmptyDictionary
 
-local message = require('lsp.message')
-local call_callbacks_for_method = require('lsp.callbacks').call_callbacks_for_method
-local should_send_message = require('lsp.checks').should_send
-local structures = require('lsp.structures')
+local message = require('vim.lsp.message')
+local call_callbacks_for_method = require('vim.lsp.callbacks').call_callbacks_for_method
+local should_send_message = require('vim.lsp.checks').should_send
+local structures = require('vim.lsp.structures')
 
-local log = require('lsp.log')
+local log = require('vim.lsp.log')
 
 local read_state = Enum:new({
   init = 0,

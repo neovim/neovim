@@ -1,6 +1,6 @@
-local lsp_util = require('lsp.util')
-local protocol = require('lsp.protocol')
-local server_config = require('lsp.server_config')
+local util = require('vim.lsp.util')
+local protocol = require('vim.lsp.protocol')
+local server_config = require('vim.lsp.server_config')
 
 -- Helper functions
 local check_table = function (t)
@@ -42,7 +42,7 @@ end
 
 structures.text = function(args)
   return args
-    or lsp_util.get_buffer_text(0)
+    or util.get_buffer_text(0)
 end
 
 structures.TextDocumentIdentifier = function(args)

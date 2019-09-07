@@ -30,7 +30,7 @@ describe('structures.lua', function()
     insert(current_file)
   end)
 
-  local require_string = "require('lsp.structures')"
+  local require_string = "require('vim.lsp.structures')"
   local simple_structure_eval = function(func_name, args)
     local arg_string = ''
     if args ~= nil then

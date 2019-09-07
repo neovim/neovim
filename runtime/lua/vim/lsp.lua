@@ -1,20 +1,20 @@
 -- luacheck: globals vim
 
 local lsp = {
-  server_config = require('lsp.server_config'),
-  config = require('lsp.config'),
-  structures = require('lsp.structures'),
-  builtin_callbacks = require('lsp.builtin_callbacks'),
-  checks = require('lsp.checks'),
-  util = require('lsp.util'),
+  server_config = require('vim.lsp.server_config'),
+  config = require('vim.lsp.config'),
+  structures = require('vim.lsp.structures'),
+  builtin_callbacks = require('vim.lsp.builtin_callbacks'),
+  checks = require('vim.lsp.checks'),
+  util = require('vim.lsp.util'),
 }
 
-local Client = require('lsp.client')
-local callbacks = require('lsp.callbacks')
-local server_config = require('lsp.server_config')
+local Client = require('vim.lsp.client')
+local callbacks = require('vim.lsp.callbacks')
+local server_config = require('vim.lsp.server_config')
 
-local log = require('lsp.log')
-local util = require('lsp.util')
+local log = require('vim.lsp.log')
+local util = require('vim.lsp.util')
 
 local clients = {}
 

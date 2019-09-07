@@ -1,4 +1,3 @@
-
 local json = {}
 
 -- TODO: Use the FFI module to decode and encode items, since that should be faster

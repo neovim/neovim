@@ -10,7 +10,7 @@ before_each(clear)
 
 local __require_message = function(message_name, argument_string, conf)
   local require_string = string.format(
-    [[require('lsp.message').%s:new]],
+    [[require('vim.lsp.message').%s:new]],
     message_name
   )
 

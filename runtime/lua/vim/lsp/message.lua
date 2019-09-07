@@ -1,5 +1,5 @@
-local json = require('lsp.json')
-local log = require('lsp.log')
+local json = require('vim.lsp.json')
+local log = require('vim.lsp.log')
 
 local Message = {
   jsonrpc = "2.0"
