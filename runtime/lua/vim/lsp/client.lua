@@ -4,12 +4,13 @@ local json = require('vim.lsp.json')
 local Enum = require('vim.lsp.util').Enum
 local DefaultMap = require('vim.lsp.util').DefaultMap
 
+local logger = require('vim.lsp.logger')
 local message = require('vim.lsp.message')
 local call_callbacks_for_method = require('vim.lsp.callbacks').call_callbacks_for_method
 local should_send_message = require('vim.lsp.checks').should_send
-local structures = require('vim.lsp.structures')
+local InitializeParams = require('vim.lsp.protocol').InitializeParams
+local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
 
-local logger = require('vim.lsp.logger')
 
 local read_state = Enum:new({
   init = 0,
@@ -108,10 +109,10 @@ client.stop = function(self)
 end
 
 client.initialize = function(self)
-  local result = self:request_async('initialize', structures.InitializeParams(self), function(_, data)
+  local result = self:request_async('initialize', InitializeParams(self), function(_, data)
     self:set_server_capabilities(data)
     self:notify('initialized', {})
-    self:notify('textDocument/didOpen', structures.DidOpenTextDocumentParams(self))
+    self:notify('textDocument/didOpen', DidOpenTextDocumentParams(self))
     self.capabilities =  DefaultMap:new(data.capabilities)
     return data.capabilities
   end, nil)

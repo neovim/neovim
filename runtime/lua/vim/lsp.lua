@@ -3,7 +3,7 @@
 local lsp = {
   server_config = require('vim.lsp.server_config'),
   config = require('vim.lsp.config'),
-  structures = require('vim.lsp.structures'),
+  protocol = require('vim.lsp.protocol'),
   builtin_callbacks = require('vim.lsp.builtin_callbacks'),
   checks = require('vim.lsp.checks'),
   util = require('vim.lsp.util'),

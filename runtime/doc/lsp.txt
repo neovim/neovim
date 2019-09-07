@@ -168,7 +168,7 @@ vim.lsp.request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filet
 autocmd CursorHold *
     \ :lua vim.lsp.request_async(
     \     'textDocument/hover',
-    \     vim.lsp.structures.TextDocumentPositionParams()
+    \     vim.lsp.protocol.TextDocumentPositionParams()
     \ )
 
 ================================================================================

@@ -15,16 +15,16 @@ function! lsp#add_server_config(ftype, command, ...) abort
 endfunction
 
 function! lsp#text_document_hover() abort
-  call luaeval("vim.lsp.request_async('textDocument/hover', vim.lsp.structures.TextDocumentPositionParams())")
+  call luaeval("vim.lsp.request_async('textDocument/hover', vim.lsp.protocol.TextDocumentPositionParams())")
 endfunction
 
 " Completion with LSP
 function! lsp#text_document_completion() abort
-  call luaeval("vim.lsp.request_async('textDocument/completion', vim.lsp.structures.CompletionParams())")
+  call luaeval("vim.lsp.request_async('textDocument/completion', vim.lsp.protocol.CompletionParams())")
   return ''
 endfunction
 
 function! lsp#text_document_signature_help() abort
-  call luaeval("vim.lsp.request_async('textDocument/signatureHelp', vim.lsp.structures.SignatureHelpParams())")
+  call luaeval("vim.lsp.request_async('textDocument/signatureHelp', vim.lsp.protocol.SignatureHelpParams())")
   return ''
 endfunction
