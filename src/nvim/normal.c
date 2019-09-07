@@ -7508,6 +7508,23 @@ static void nv_esc(cmdarg_T *cap)
     restart_edit = 'a';
 }
 
+// Move the cursor for the "A" command.
+void set_cursor_for_append_to_line(void)
+{
+  curwin->w_set_curswant = true;
+  if (ve_flags == VE_ALL) {
+    const int save_State = State;
+
+    // Pretend Insert mode here to allow the cursor on the
+    // character past the end of the line
+    State = INSERT;
+    coladvance((colnr_T)MAXCOL);
+    State = save_State;
+  } else {
+    curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
+  }
+}
+
 /// Handle "A", "a", "I", "i" and <Insert> commands.
 static void nv_edit(cmdarg_T *cap)
 {
@@ -7529,18 +7546,8 @@ static void nv_edit(cmdarg_T *cap)
     clearop(cap->oap);
   } else if (!checkclearopq(cap->oap)) {
     switch (cap->cmdchar) {
-    case 'A':           /* "A"ppend after the line */
-      curwin->w_set_curswant = true;
-      if (ve_flags == VE_ALL) {
-        int save_State = State;
-
-        /* Pretend Insert mode here to allow the cursor on the
-         * character past the end of the line */
-        State = INSERT;
-        coladvance((colnr_T)MAXCOL);
-        State = save_State;
-      } else
-        curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
+    case 'A':           // "A"ppend after the line
+      set_cursor_for_append_to_line();
       break;
 
     case 'I':           /* "I"nsert before the first non-blank */
