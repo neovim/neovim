@@ -336,7 +336,7 @@ end
 protocol.SignatureHelpParams = function(args)
   args = check_table(args)
 
-  local position =  protocol.TextDocumentPositionposition(args)
+  local position =  protocol.TextDocumentPositionParams(args)
   position.position.character = position.position.character + 1
 
   return position
@@ -357,10 +357,10 @@ end
 protocol.ReferenceParams = function(args)
   args = check_table(args)
 
-  local positionParams = protocol.TextDocumentPositionParams(args)
-  positionParams.context = protocol.ReferenceContext(args.context)
+  local position = protocol.TextDocumentPositionParams(args)
+  position.context = protocol.ReferenceContext(args.context)
 
-  return positionParams
+  return position
 end
 
 protocol.RenameParams = function(args)
