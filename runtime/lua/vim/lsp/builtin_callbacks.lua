@@ -214,14 +214,16 @@ BuiltinCallbacks['textDocument/hover'] = {
         end
       -- string
       else
-        table.insert(contents, data.contents)
+        for _, line in pairs(vim.api.nvim_call_function('split', { data.contents, '\\n' })) do
+          table.insert(contents, line)
+        end
       end
 
-      if contents[1] == '' then
-        contents[1] = 'LSP: No information available'
+      if contents[1] == '' or contents[1] == nil then
+        vim.api.nvim_command("echo 'LSP [textDocument/hover]: No information available'")
+      else
+        util.ui:open_floating_preview(contents, 'markdown')
       end
-
-      util.ui:open_floating_preview(contents, 'markdown')
     end
   end,
   options = {}
