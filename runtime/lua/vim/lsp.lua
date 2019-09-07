@@ -1,5 +1,3 @@
--- luacheck: globals vim
-
 local lsp = {
   server_config = require('vim.lsp.server_config'),
   config = require('vim.lsp.config'),

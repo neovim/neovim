@@ -177,8 +177,10 @@ autocmd CursorHold *
 The following requests have built-in callbacks defined to handle the response
 in an idiomatic way.
 
-  textDocument/definition~
+  textDocument/completion~
   textDocument/hover~
+  textDocument/signatureHelp~
+  textDocument/definition~
 
 vim.lsp.config.set_all_builtin_callbacks()
   You can enable all built-in callbacks
@@ -275,6 +277,20 @@ init.vim:
 <
 
 ================================================================================
+                                                               *lsp-hover*
+
+To configure hover for a language server, add the following in your
+init.vim:
+
+>
+  call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/hover')")
+  augroup MyLanguageServer
+    au!
+    autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document_hover()<CR>
+  augroup END
+<
+
+================================================================================
                                                                *lsp-signature-help*
 
 To configure signature help for a language server, add the following in your
@@ -289,16 +305,16 @@ init.vim:
 <
 
 ================================================================================
-                                                               *lsp-hover*
+                                                               *lsp-definition*
 
-To configure hover for a language server, add the following in your
+To configure definition for a language server, add the following in your
 init.vim:
 
 >
-  call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/hover')")
+  call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/definition')")
   augroup MyLanguageServer
     au!
-    autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document_hover()<CR>
+    autocmd Filetype python nnoremap <silent> <Leader>d :call lsp#text_document_definition()<CR>
   augroup END
 <
 

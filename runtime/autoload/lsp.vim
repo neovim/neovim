@@ -28,3 +28,8 @@ function! lsp#text_document_signature_help() abort
   call luaeval("vim.lsp.request_async('textDocument/signatureHelp', vim.lsp.protocol.SignatureHelpParams())")
   return ''
 endfunction
+
+function! lsp#text_document_definition() abort
+  call luaeval("vim.lsp.request_async('textDocument/definition', vim.lsp.protocol.TextDocumentPositionParams())")
+  return ''
+endfunction
