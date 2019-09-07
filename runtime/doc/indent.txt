@@ -827,7 +827,7 @@ PHP indenting can be altered in several ways by modifying the values of some
 global variables:
 
 					*php-comment* *PHP_autoformatcomment*
-To not enable auto-formating of comments by default (if you want to use your
+To not enable auto-formatting of comments by default (if you want to use your
 own 'formatoptions'): >
     :let g:PHP_autoformatcomment = 0
 
