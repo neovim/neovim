@@ -1,9 +1,8 @@
--- Implements the following default callbacks:
+--- Implements the following default callbacks:
+--
 --  TODO: textDocument/publishDiagnostics
-
 --  textDocument/completion
 --  TODO: completionItem/resolve
-
 --  textDocument/hover
 --  textDocument/signatureHelp
 --  TODO: textDocument/references
@@ -17,9 +16,7 @@
 --  TODO: textDocument/codeLens
 --  TODO: textDocument/documentLink
 --  TODO: textDocument/rename
-
 --  TODO: codeLens/resolve
-
 --  TODO: documentLink/resolve
 
 local logger = require('vim.lsp.logger')
@@ -63,6 +60,8 @@ BuiltinCallbacks['nvim/error_callback'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 BuiltinCallbacks['textDocument/publishDiagnostics']= {
   callback = function(self, data)
+    logger.debug('callback:textDocument/publishDiagnostics', data, self)
+    logger.debug('Not implemented textDocument/publishDiagnostics callback')
   end,
   options = {},
 }
@@ -142,6 +141,7 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
 BuiltinCallbacks['textDocument/references'] = {
   callback = function(self, data)
     logger.debug('callback:textDocument/references', data, self)
+    logger.debug('Not implemented textDocument/publishDiagnostics callback')
   end,
   options = {},
 }
