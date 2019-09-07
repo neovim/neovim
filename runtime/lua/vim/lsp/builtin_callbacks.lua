@@ -22,8 +22,7 @@
 
 --  TODO: documentLink/resolve
 
-local log = require('vim.lsp.log')
-local nvim_util = require('nvim.util')
+local logger = require('vim.lsp.logger')
 local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
@@ -42,7 +41,7 @@ local BuiltinCallbacks = {}
 -- nvim/error_callback
 BuiltinCallbacks['nvim/error_callback'] = {
   callback = function(original, error_message)
-    log.debug('callback:nvim/error_callback', original, error_message)
+    logger.debug('callback:nvim/error_callback', original, error_message)
 
     local message = ''
     if error_message.message ~= nil and type(error_message.message) == 'string' then
@@ -72,7 +71,7 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
-    log.debug('callback:textDocument/completion', data, self)
+    logger.debug('callback:textDocument/completion', data, self)
 
     if data == nil or vim.tbl_isempty(data) then
       return
@@ -100,7 +99,7 @@ BuiltinCallbacks['textDocument/completion'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
 BuiltinCallbacks['textDocument/signatureHelp'] = {
   callback = function(self, data)
-    log.debug('textDocument/signatureHelp', data, self)
+    logger.debug('textDocument/signatureHelp', data, self)
 
     if data == nil or vim.tbl_isempty(data) then
       return
@@ -142,50 +141,15 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
 BuiltinCallbacks['textDocument/references'] = {
   callback = function(self, data)
-    log.debug('callback:textDocument/references', data, self)
-
-    local locations = data
-    local loclist = {}
-
-    for _, loc in ipairs(locations) do
-      -- TODO: URL parsing here?
-      local start = loc.range.start
-      local line = start.line + 1
-      local character = start.character + 1
-
-      local path = vim.uri_to_fname(loc["uri"])
-      local text = util.get_line_from_path(path, line)
-
-      table.insert(loclist, {
-          filename = path,
-          lnum = line,
-          col = character,
-          text = text,
-      })
-    end
-
-    local result = vim.api.nvim_call_function('setloclist', {0, loclist, ' ', 'Language Server textDocument/references'})
-
-    if self.options.auto_location_list then
-      if loclist ~= {} then
-        if not nvim_util.is_loclist_open() then
-          vim.api.nvim_command('lopen')
-          vim.api.nvim_command('wincmd p')
-        end
-      else
-        vim.api.nvim_command('lclose')
-      end
-    end
-
-    return result
+    logger.debug('callback:textDocument/references', data, self)
   end,
-  options = { auto_location_list = true },
+  options = {},
 }
 
 -- textDocument/rename
 BuiltinCallbacks['textDocument/rename'] = {
   callback = function(self, data)
-    log.debug('callback:textDocument/rename', data, self)
+    logger.debug('callback:textDocument/rename', data, self)
 
     if data == nil then
       print(self)
@@ -204,7 +168,7 @@ BuiltinCallbacks['textDocument/rename'] = {
 -- @params MarkedString | MarkedString[] | MarkupContent
 BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
-    log.debug('textDocument/hover', data, self)
+    logger.debug('textDocument/hover', data, self)
 
     if data == nil or vim.tbl_isempty(data) then
       return
@@ -213,7 +177,7 @@ BuiltinCallbacks['textDocument/hover'] = {
     if data.contents ~= nil then
       local contents = {}
 
-      if nvim_util.is_array(data.contents) == true then
+      if vim.tbl_islist(data.contents) == true then
         -- MarkedString[]
         for _, item in ipairs(data.contents) do
           if type(item) == 'table' then
@@ -267,10 +231,10 @@ BuiltinCallbacks['textDocument/hover'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_definition
 BuiltinCallbacks['textDocument/definition'] = {
   callback = function(self, data)
-    log.debug('callback:textDocument/definiton', data, self)
+    logger.debug('callback:textDocument/definiton', data, self)
 
     if data == nil or data == {} then
-      log.info('No definition found')
+      logger.info('No definition found')
       return nil
     end
 
@@ -314,7 +278,7 @@ BuiltinCallbacks['textDocument/definition'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
 BuiltinCallbacks['window/showMessage'] = {
   callback = function(self, data)
-    log.debug('callback:window/showMessage', data, self)
+    logger.debug('callback:window/showMessage', data, self)
 
     if data == nil or type(data) ~= 'table' then
       print(self)

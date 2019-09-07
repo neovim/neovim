@@ -1,16 +1,15 @@
 local uv = vim.loop
 local json = require('vim.lsp.json')
-local util = require('nvim.util')
 
-local Enum = require('nvim.meta').Enum
-local EmptyDictionary = require('nvim.meta').EmptyDictionary
+local Enum = require('vim.lsp.util').Enum
+local DefaultMap = require('vim.lsp.util').DefaultMap
 
 local message = require('vim.lsp.message')
 local call_callbacks_for_method = require('vim.lsp.callbacks').call_callbacks_for_method
 local should_send_message = require('vim.lsp.checks').should_send
 local structures = require('vim.lsp.structures')
 
-local log = require('vim.lsp.log')
+local logger = require('vim.lsp.logger')
 
 local read_state = Enum:new({
   init = 0,
@@ -28,7 +27,7 @@ local client = {}
 client.__index = client
 
 client.new = function(name, filetype, cmd)
-  log.info('Starting new client: ', name, cmd.execute_path, cmd.args)
+  logger.info('Starting new client: ', name, cmd.execute_path, cmd.args)
 
   local self = setmetatable({
     name = name,
@@ -40,9 +39,9 @@ client.new = function(name, filetype, cmd)
     _read_data = '',
     _current_header = {},
 
-    client_capabilities = EmptyDictionary:new(),
+    client_capabilities = DefaultMap:new(),
     -- Capabilities sent by server
-    server_capabilities = EmptyDictionary:new(),
+    server_capabilities = DefaultMap:new(),
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -69,7 +68,7 @@ client.start = function(self)
   self.stderr = uv.new_pipe(false)
 
   local function on_exit()
-    log.info('filetype: '..self.filetype..', exit: '..self.cmd.execute_path)
+    logger.info('filetype: '..self.filetype..', exit: '..self.cmd.execute_path)
   end
 
   local stdio = { self.stdin, self.stdout, self.stderr }
@@ -85,7 +84,7 @@ client.start = function(self)
 
   uv.read_start(self.stderr, function (err, chunk)
     if err and chunk then
-      log.error('stderr: '..err..', data: '..chunk)
+      logger.error('stderr: '..err..', data: '..chunk)
     end
   end)
 end
@@ -113,7 +112,7 @@ client.initialize = function(self)
     self:set_server_capabilities(data)
     self:notify('initialized', {})
     self:notify('textDocument/didOpen', structures.DidOpenTextDocumentParams(self))
-    self.capabilities =  EmptyDictionary:new(data.capabilities)
+    self.capabilities =  DefaultMap:new(data.capabilities)
     return data.capabilities
   end, nil)
 
@@ -168,7 +167,7 @@ client.request_async = function(self, method, params, cb, bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
   if self._stopped then
-    log.info('Client closed. ', self.name)
+    logger.info('Client closed. ', self.name)
     return nil
   end
 
@@ -187,10 +186,10 @@ client.request_async = function(self, method, params, cb, bufnr)
 
   if should_send_message(self, req) then
     uv.write(self.stdin, req:data())
-    log.debug("Send request --->: [["..req:data().."]]")
-    log.client.debug("Send request --->: [["..req:data().."]]")
+    logger.debug("Send request --->: [["..req:data().."]]")
+    logger.client.debug("Send request --->: [["..req:data().."]]")
   else
-    log.debug(string.format('Request "%s" was cancelled with params %s', method, util.tostring(params)))
+    logger.debug(string.format('Request "%s" was cancelled with params %s', method, vim.tbl_tostring(params)))
   end
 
   return req.id
@@ -201,7 +200,7 @@ end
 -- @param params: the parameters to send
 client.notify = function(self, method, params)
   if self._stopped then
-    log.info('Client closed. ', self.name)
+    logger.info('Client closed. ', self.name)
     return nil
   end
 
@@ -213,10 +212,10 @@ client.notify = function(self, method, params)
 
   if should_send_message(self, notification) then
     uv.write(self.stdin, notification:data())
-    log.debug("Send notification --->: [["..notification:data().."]]")
-    log.client.debug("Send notification --->: [["..notification:data().."]]")
+    logger.debug("Send notification --->: [["..notification:data().."]]")
+    logger.client.debug("Send notification --->: [["..notification:data().."]]")
   else
-    log.debug(string.format('Notification "%s" was cancelled with params %s', method, util.tostring(params)))
+    logger.debug(string.format('Notification "%s" was cancelled with params %s', method, vim.tbl_tostring(params)))
   end
 end
 
@@ -283,7 +282,7 @@ client.on_stdout = function(self, data)
           self:on_error(error_level.reset_state,
             string.format('_on_read error: bad header\n\t%s\n\t%s',
               line,
-              util.tostring(parsed))
+              vim.tbl_tostring(parsed))
             )
           return
         end
@@ -321,7 +320,7 @@ client.on_message = function(self, body)
   local ok, json_message = pcall(json.decode, body)
 
   if not ok then
-    log.info('Not a valid message. Calling self:on_error')
+    logger.info('Not a valid message. Calling self:on_error')
     -- TODO(KillTheMule): Is self.__read_data the thing to print here?
     self:on_error(
       error_level.reset_state,
@@ -331,8 +330,8 @@ client.on_message = function(self, body)
   end
   -- Handle notifications
   if json_message.method and json_message.params then
-    log.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..util.tostring(json_message.params))
-    log.server.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..util.tostring(json_message.params))
+    logger.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params))
+    logger.server.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params))
     call_callbacks_for_method(json_message.method, true, json_message.params, nil)
 
     return
@@ -349,11 +348,11 @@ client.on_message = function(self, body)
     local success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
     if success then
-      log.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..util.tostring(data))
-      log.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..util.tostring(data))
+      logger.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data))
+      logger.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data))
     else
-      log.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..util.tostring(data))
-      log.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..util.tostring(data))
+      logger.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
+      logger.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
     end
 
     -- If no callback is passed with request, use the registered callback.
@@ -383,7 +382,7 @@ client.on_error = function(self, level, err_message)
   end
 
   if level <= error_level.critical then
-    error('Critical error occured: ' .. util.tostring(err_message))
+    error('Critical error occured: ' .. vim.tbl_tostring(err_message))
   end
 
   if level <= error_level.reset_state then
@@ -391,12 +390,12 @@ client.on_error = function(self, level, err_message)
   end
 
   if level <= error_level.info then
-    log.warn(err_message)
+    logger.warn(err_message)
   end
 end
 
 client.on_exit = function(data)
-  log.info('Exiting with data:', data)
+  logger.info('Exiting with data:', data)
 end
 
 client.reset_state = function(self)

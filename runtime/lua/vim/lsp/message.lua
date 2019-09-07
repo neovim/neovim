@@ -1,5 +1,5 @@
 local json = require('vim.lsp.json')
-local log = require('vim.lsp.log')
+local logger = require('vim.lsp.logger')
 
 local Message = {
   jsonrpc = "2.0"
@@ -56,7 +56,7 @@ function RequestMessage:new(client, method, params)
   assert(self)
 
   if check_language_server_capabilities(client, method) == false then
-    log.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
+    logger.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
     return nil
   end
 
@@ -117,8 +117,8 @@ function NotificationMessage:new(client, method, params)
   assert(self)
 
   if check_language_server_capabilities(client, method) == false then
-    log.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
-    log.client.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
+    logger.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
+    logger.client.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
     return nil
   end
 

@@ -100,6 +100,21 @@ function vim.split(s,sep,plain)
   return t
 end
 
+function vim.tbl_tostring(t)
+  local stringified = ''
+  if type(t) == 'table' then
+    stringified = stringified .. '{'
+    for k, v in pairs(t) do
+      stringified = stringified .. vim.tbl_tostring(k) .. '=' .. vim.tbl_tostring(v) .. ','
+    end
+    stringified = stringified .. '}'
+  else
+    stringified = tostring(t)
+  end
+
+  return stringified
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
@@ -176,6 +191,32 @@ function vim.tbl_flatten(t)
   end
   _tbl_flatten(t)
   return result
+end
+
+-- Determine whether a Lua table can be treated as an array.
+---
+--@params Table
+--@returns true: A non-empty array, false: A non-empty table, nil: An empty table
+function vim.tbl_islist(t)
+  if type(t) ~= 'table' then
+    return false
+  end
+
+  local count = 0
+
+  for k, _ in pairs(t) do
+    if type(k) == "number" then
+      count = count + 1
+    else
+      return false
+    end
+  end
+
+  if count > 0 then
+    return true
+  else
+    return nil
+  end
 end
 
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.

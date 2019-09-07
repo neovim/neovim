@@ -1,4 +1,4 @@
-local log = require('vim.lsp.log')
+local logger = require('vim.lsp.logger')
 
 -- {
 --   method_name = CallbackObject
@@ -42,7 +42,7 @@ local call_callbacks_for_method = function(method, success, data, filetype)
   local cb = get_callback_object_by_method(method)
 
   if cb:has_no_callbacks(filetype) then
-    log.debug('Unsupported method:', method)
+    logger.debug('Unsupported method:', method)
     return
   end
 
@@ -56,7 +56,7 @@ CallbackObject.__call = function(self, success, data, filetype)
   end
 
   if not filetype and vim.tbl_isempty(self.common) then
-      log.debug('Request: "', self.method, '" had no registered callbacks')
+      logger.debug('Request: "', self.method, '" had no registered callbacks')
     return nil
   end
 
