@@ -978,7 +978,7 @@ int utf_char2len(const int c)
 ///
 /// @param c character to convert to \p buf
 /// @param[out] buf UTF-8 string generated from \p c, does not add \0
-/// @return Number of bytes (1-6). Does not include composing characters.
+/// @return Number of bytes (1-6).
 int utf_char2bytes(const int c, char_u *const buf)
 {
   if (c < 0x80) {  // 7 bits
