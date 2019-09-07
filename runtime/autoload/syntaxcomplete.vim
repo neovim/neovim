@@ -2,7 +2,7 @@
 " Language:    All languages, uses existing syntax highlighting rules
 " Maintainer:  David Fishburn <dfishburn dot vim at gmail dot com>
 " Version:     13.0
-" Last Change: 2013 May 14
+" Last Change: 2019 Aug 08
 " Usage:       For detailed help, ":help ft-syntax-omni"
 
 " History
@@ -597,7 +597,7 @@ function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
                 " Remove all non-word characters
                 " let syn_list = substitute( syn_list, '\<match /\zs.\{-}\<\W\+\>.\{-}\ze\/ ', "", 'g' )
                 " let syn_list = substitute( syn_list, '\%(\<match \/[^/]\{-}\)\@<=\W\+\ze.\{-}\/ ', ' ', 'g' )
-                " Do this by using the outer substitue() call to gather all
+                " Do this by using the outer substitute() call to gather all
                 " text between the match /.../ tags.
                 " The inner substitute() call operates on the text selected
                 " and replaces all non-word characters.

@@ -697,6 +697,9 @@ au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
 
+" Hollywood
+au BufRead,BufNewFile *.hws			setf hollywood
+
 " Tilde (must be before HTML)
 au BufNewFile,BufRead *.t.html			setf tilde
 

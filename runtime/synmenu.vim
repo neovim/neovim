@@ -247,17 +247,18 @@ an 50.50.170 &Syntax.HIJK.Hercules :cal SetSyn("hercules")<CR>
 an 50.50.180 &Syntax.HIJK.Hex\ dump.XXD :cal SetSyn("xxd")<CR>
 an 50.50.190 &Syntax.HIJK.Hex\ dump.Intel\ MCS51 :cal SetSyn("hex")<CR>
 an 50.50.200 &Syntax.HIJK.Hg\ commit :cal SetSyn("hgcommit")<CR>
-an 50.50.210 &Syntax.HIJK.HTML.HTML :cal SetSyn("html")<CR>
-an 50.50.220 &Syntax.HIJK.HTML.HTML\ with\ M4 :cal SetSyn("htmlm4")<CR>
-an 50.50.230 &Syntax.HIJK.HTML.HTML\ with\ Ruby\ (eRuby) :cal SetSyn("eruby")<CR>
-an 50.50.240 &Syntax.HIJK.HTML.Cheetah\ HTML\ template :cal SetSyn("htmlcheetah")<CR>
-an 50.50.250 &Syntax.HIJK.HTML.Django\ HTML\ template :cal SetSyn("htmldjango")<CR>
-an 50.50.260 &Syntax.HIJK.HTML.Vue.js\ HTML\ template :cal SetSyn("vuejs")<CR>
-an 50.50.270 &Syntax.HIJK.HTML.HTML/OS :cal SetSyn("htmlos")<CR>
-an 50.50.280 &Syntax.HIJK.HTML.XHTML :cal SetSyn("xhtml")<CR>
-an 50.50.290 &Syntax.HIJK.Host\.conf :cal SetSyn("hostconf")<CR>
-an 50.50.300 &Syntax.HIJK.Hosts\ access :cal SetSyn("hostsaccess")<CR>
-an 50.50.310 &Syntax.HIJK.Hyper\ Builder :cal SetSyn("hb")<CR>
+an 50.50.210 &Syntax.HIJK.Hollywood :cal SetSyn("hollywood")<CR>
+an 50.50.220 &Syntax.HIJK.HTML.HTML :cal SetSyn("html")<CR>
+an 50.50.230 &Syntax.HIJK.HTML.HTML\ with\ M4 :cal SetSyn("htmlm4")<CR>
+an 50.50.240 &Syntax.HIJK.HTML.HTML\ with\ Ruby\ (eRuby) :cal SetSyn("eruby")<CR>
+an 50.50.250 &Syntax.HIJK.HTML.Cheetah\ HTML\ template :cal SetSyn("htmlcheetah")<CR>
+an 50.50.260 &Syntax.HIJK.HTML.Django\ HTML\ template :cal SetSyn("htmldjango")<CR>
+an 50.50.270 &Syntax.HIJK.HTML.Vue.js\ HTML\ template :cal SetSyn("vuejs")<CR>
+an 50.50.280 &Syntax.HIJK.HTML.HTML/OS :cal SetSyn("htmlos")<CR>
+an 50.50.290 &Syntax.HIJK.HTML.XHTML :cal SetSyn("xhtml")<CR>
+an 50.50.300 &Syntax.HIJK.Host\.conf :cal SetSyn("hostconf")<CR>
+an 50.50.310 &Syntax.HIJK.Hosts\ access :cal SetSyn("hostsaccess")<CR>
+an 50.50.320 &Syntax.HIJK.Hyper\ Builder :cal SetSyn("hb")<CR>
 an 50.50.330 &Syntax.HIJK.Icewm\ menu :cal SetSyn("icemenu")<CR>
 an 50.50.340 &Syntax.HIJK.Icon :cal SetSyn("icon")<CR>
 an 50.50.350 &Syntax.HIJK.IDL\Generic\ IDL :cal SetSyn("idl")<CR>

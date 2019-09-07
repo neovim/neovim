@@ -1525,6 +1525,7 @@ tag		command		action ~
 |:spelldump|	:spelld[ump]	split window and fill with all correct words
 |:spellgood|	:spe[llgood]	add good word for spelling
 |:spellinfo|	:spelli[nfo]	show info about loaded spell files
+|:spellrare|	:spellra[re]	add rare word for spelling
 |:spellrepall|	:spellr[epall]	replace all bad words like last |z=|
 |:spellundo|	:spellu[ndo]	remove good or bad word
 |:spellwrong|	:spellw[rong]	add spelling mistake
