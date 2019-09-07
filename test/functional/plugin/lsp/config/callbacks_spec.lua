@@ -12,7 +12,7 @@ describe('LSP Callback Configuration', function()
     source(dedent([[
       lua << EOF
         lsp_callbacks = require('vim.lsp.callbacks')
-        lsp_config = require('vim.lsp.config.callbacks')
+        lsp_config = require('vim.lsp.config')
 
         count_callback = function()
           local callback_length = 0

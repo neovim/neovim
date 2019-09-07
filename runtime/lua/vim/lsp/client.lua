@@ -135,7 +135,6 @@ client.request = function(self, method, params, cb, bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   local request_id = self:request_async(method, params, cb, bufnr)
 
-  -- local later = os.time() + require('lsp.conf').request.timeout
   local later = os.time() + 10
 
   while (os.time() < later) and (self._results[request_id]  == nil) do

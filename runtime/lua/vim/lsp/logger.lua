@@ -84,6 +84,7 @@ Logger.new = function(self, name)
 end
 
 local logger = Logger:new('LSP')
+
 logger.client = Logger:new('LSP')
 logger.server = Logger:new('LSP')
 

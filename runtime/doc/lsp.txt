@@ -180,17 +180,17 @@ in an idiomatic way.
   textDocument/definition~
   textDocument/hover~
 
-vim.lsp.config.callbacks.set_all_builtin_callbacks()
+vim.lsp.config.set_all_builtin_callbacks()
   You can enable all built-in callbacks
 
-vim.lsp.config.callbacks.set_builtin_callback({method})
+vim.lsp.config.set_builtin_callback({method})
     You can enable a specific built-in callback.
         Parameters:~
             {method}: The name of the request, as specified by the
             language server protocol.
                 Example: 'textDocument/hover'
 
-vim.lsp.config.callbacks.set_builtin_callbacks({methods})
+vim.lsp.config.set_builtin_callbacks({methods})
     You can set specific built-in callbacks.
         Parameters:~
             {method}: The name of the request, as specified by the
@@ -254,10 +254,11 @@ require('lsp.checks').add_check({request}, {cb})
     :lua vim.lsp.config.callbacks.disable('textDocument/hover')
 <
 
+g:language_client_log_level
+    You can set the log level for language client logging.
+    debug, info, warn, error, none.
 
-TODO: This should be changed to the Lua API
-lsp#configure#file_log_level({level})
-    Configure the level of logging to a file.
+    Default: none
 
 ================================================================================
                                                                *lsp-completion*
@@ -266,7 +267,7 @@ To configure completion for a language server, add the following in your
 init.vim:
 
 >
-  call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/completion')")
+  call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/completion')")
   augroup MyLanguageServer
     au!
     autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document_completion()<CR>
@@ -280,7 +281,7 @@ To configure signature help for a language server, add the following in your
 init.vim:
 
 >
-  call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/signatureHelp')")
+  call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/signatureHelp')")
   augroup MyLanguageServer
     au!
     autocmd Filetype python nnoremap <silent> <Leader>sh :call lsp#text_document_signature_help()<CR>
@@ -294,7 +295,7 @@ To configure hover for a language server, add the following in your
 init.vim:
 
 >
-  call luaeval("require('vim.lsp').config.callbacks.set_builtin_callback('textDocument/hover')")
+  call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/hover')")
   augroup MyLanguageServer
     au!
     autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document_hover()<CR>
