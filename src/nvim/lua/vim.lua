@@ -239,6 +239,10 @@ local function __index(t, key)
     -- Expose all `vim.shared` functions on the `vim` module.
     t[key] = require('vim.shared')[key]
     return t[key]
+  elseif require('vim.uri')[key] ~= nil then
+    -- Expose all `vim.uri` functions on the `vim` module.
+    t[key] = require('vim.uri')[key]
+    return t[key]
   elseif key == 'lsp' then
     t.lsp = require('vim.lsp')
     return t.lsp

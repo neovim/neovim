@@ -1,5 +1,4 @@
 local shared = require('vim.shared')
-local URI = require('uri')
 
 local server_config = {}
 server_config.__index = server_config
@@ -80,7 +79,7 @@ server_config.get_command = function(filetype)
 end
 
 server_config.default_root_uri = function()
-  return URI.from_filepath(vim.api.nvim_call_function('getcwd', {})):tostring()
+  return vim.fname_to_uri(vim.api.nvim_call_function('getcwd', {}))
 end
 
 server_config.get_root_uri = function(filetype)

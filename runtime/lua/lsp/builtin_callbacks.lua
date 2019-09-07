@@ -23,7 +23,6 @@
 --  TODO: documentLink/resolve
 
 local shared = require('vim.shared')
-local URI = require('uri')
 local log = require('lsp.log')
 local nvim_util = require('nvim.util')
 local util = require('lsp.util')
@@ -155,7 +154,7 @@ BuiltinCallbacks['textDocument/references'] = {
       local line = start.line + 1
       local character = start.character + 1
 
-      local path = URI.filepath_from_uri(loc["uri"])
+      local path = vim.uri_to_fname(loc["uri"])
       local text = util.get_line_from_path(path, line)
 
       table.insert(loclist, {
@@ -294,7 +293,7 @@ BuiltinCallbacks['textDocument/definition'] = {
       return
     end
 
-    local data_file = URI.filepath_from_uri(data.uri)
+    local data_file = vim.uri_to_fname(data.uri)
 
     if data_file ~= util.get_uri(current_file) then
       vim.api.nvim_command('silent edit ' .. data_file)

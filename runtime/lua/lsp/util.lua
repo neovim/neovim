@@ -1,4 +1,3 @@
-local URI = require('uri')
 local util = {
   ui = require('lsp.util.ui'),
 }
@@ -12,7 +11,7 @@ util.get_buffer_lines = function(bufnr)
 end
 
 util.get_filename = function(uri)
-  return URI.filepath_from_uri(uri)
+  return vim.uri_to_fname(uri)
 end
 
 util.get_filetype = function(bufnr)
