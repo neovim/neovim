@@ -1,4 +1,3 @@
-local shared = require('vim.shared')
 local log = require('lsp.log')
 
 -- {
@@ -56,7 +55,7 @@ CallbackObject.__call = function(self, success, data, filetype)
     call_callbacks_for_method('nvim/error_callback', data, filetype)
   end
 
-  if not filetype and shared.tbl_isempty(self.common) then
+  if not filetype and vim.tbl_isempty(self.common) then
       log.debug('Request: "', self.method, '" had no registered callbacks')
     return nil
   end
@@ -98,7 +97,7 @@ CallbackObject.new = function(method, options)
 end
 
 CallbackObject.has_no_callbacks = function(self, filetype)
-  return shared.tbl_isempty(self:get_list_of_callbacks(filetype))
+  return vim.tbl_isempty(self:get_list_of_callbacks(filetype))
 end
 
 CallbackObject.add_callback = function(self, new_callback, filetype)
@@ -156,7 +155,7 @@ CallbackObject.get_list_of_callbacks = function(self, filetype)
     end
   end
 
-  if not filetype or (filetype and callback_list and shared.tbl_isempty(callback_list)) then
+  if not filetype or (filetype and callback_list and vim.tbl_isempty(callback_list)) then
     for _, value in ipairs(self.common) do
       table.insert(callback_list, value)
     end

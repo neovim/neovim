@@ -22,7 +22,6 @@
 
 --  TODO: documentLink/resolve
 
-local shared = require('vim.shared')
 local log = require('lsp.log')
 local nvim_util = require('nvim.util')
 local util = require('lsp.util')
@@ -75,7 +74,7 @@ BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
     log.debug('callback:textDocument/completion', data, self)
 
-    if data == nil or shared.tbl_isempty(data) then
+    if data == nil or vim.tbl_isempty(data) then
       return
     end
 
@@ -103,11 +102,11 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
   callback = function(self, data)
     log.debug('textDocument/signatureHelp', data, self)
 
-    if data == nil or shared.tbl_isempty(data) then
+    if data == nil or vim.tbl_isempty(data) then
       return
     end
 
-    if not shared.tbl_isempty(data.signatures) then
+    if not vim.tbl_isempty(data.signatures) then
       local contents = {}
       local activeSignature = 1
 
@@ -207,7 +206,7 @@ BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
     log.debug('textDocument/hover', data, self)
 
-    if data == nil or shared.tbl_isempty(data) then
+    if data == nil or vim.tbl_isempty(data) then
       return
     end
 

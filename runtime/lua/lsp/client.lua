@@ -1,7 +1,6 @@
 local uv = vim.loop
 local json = require('lsp.json')
 local util = require('nvim.util')
-local shared = require('vim.shared')
 
 local Enum = require('nvim.meta').Enum
 local EmptyDictionary = require('nvim.meta').EmptyDictionary
@@ -228,15 +227,15 @@ client._parse_header = function(header)
     return nil, nil
   end
 
-  local lines = shared.split(header, '\\r\\n', true)
+  local lines = vim.split(header, '\\r\\n', true)
 
   local split_lines = {}
 
   for _, line in pairs(lines) do
     if line ~= '' then
-      local temp_lines = shared.split(line, ':', true)
+      local temp_lines = vim.split(line, ':', true)
       for t_index, t_line in pairs(temp_lines) do
-        temp_lines[t_index] = shared.trim(t_line)
+        temp_lines[t_index] = vim.trim(t_line)
       end
 
       split_lines[temp_lines[1]:lower():gsub('-', '_')] = temp_lines[2]

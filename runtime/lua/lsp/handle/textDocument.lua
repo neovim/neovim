@@ -1,5 +1,3 @@
-local shared = require('vim.shared')
-
 local textDocument = {}
 
 textDocument.apply_TextEdits = function(TextDocumentEdit)
@@ -23,7 +21,7 @@ textDocument.apply_TextEdit = function(TextEdit)
     return
   end
 
-  vim.api.nvim_buf_set_lines(0, range_start.line, range_end.line, false, shared.split(new_text, "\n", true))
+  vim.api.nvim_buf_set_lines(0, range_start.line, range_end.line, false, vim.split(new_text, "\n", true))
 end
 
 return textDocument

@@ -1,5 +1,3 @@
-local shared = require('vim.shared')
-
 local server_config = {}
 server_config.__index = server_config
 
@@ -51,7 +49,7 @@ server_config.get_name = function(filetype)
 
   local ft_config = server_config.servers[filetype]
 
-  if shared.tbl_isempty(ft_config) then
+  if vim.tbl_isempty(ft_config) then
     return nil
   end
 
@@ -71,7 +69,7 @@ server_config.get_command = function(filetype)
 
   local ft_config = server_config.servers[filetype]
 
-  if ft_config == nil or shared.tbl_isempty(ft_config) then
+  if ft_config == nil or vim.tbl_isempty(ft_config) then
     error(string.format('%s filetype is not set language server config', filetype), 2)
   end
 
@@ -85,7 +83,7 @@ end
 server_config.get_root_uri = function(filetype)
   local ft_config = server_config.servers[filetype]
 
-  if (ft_config or shared.tbl_isempty(ft_config)) and ft_config.config.root_uri then
+  if (ft_config or vim.tbl_isempty(ft_config)) and ft_config.config.root_uri then
     return ft_config.config.root_uri
   else
     return server_config.default_root_uri()
@@ -95,8 +93,8 @@ end
 server_config.get_callback = function(filetype, callback_name)
   local ft_config = server_config.servers[filetype]
 
-  if (ft_config or shared.tbl_isempty(ft_config))
-      or (ft_config.config.callbacks or shared.tbl_isempty(ft_config.config.callbacks))
+  if (ft_config or vim.tbl_isempty(ft_config))
+      or (ft_config.config.callbacks or vim.tbl_isempty(ft_config.config.callbacks))
       or (ft_config.config.callback_name or ft_config.config.callback_name[callback_name] == nil) then
     return nil
   else

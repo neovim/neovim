@@ -1,5 +1,4 @@
 local json = require('lsp.json')
-local shared = require('vim.shared')
 local log = require('lsp.log')
 
 local Message = {
@@ -17,7 +16,7 @@ end
 local check_language_server_capabilities = function(client, method)
   local method_table
   if type(method) == 'string' then
-    method_table = shared.split(method, '/', true)
+    method_table = vim.split(method, '/', true)
   elseif type(method) == 'table' then
     method_table = method
   else
