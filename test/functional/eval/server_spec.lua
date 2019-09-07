@@ -5,7 +5,7 @@ local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local iswin = helpers.iswin
 local ok = helpers.ok
 local matches = helpers.matches
-local expect_err = helpers.expect_err
+local pcall_err = helpers.pcall_err
 
 local function clear_serverlist()
   for _, server in pairs(funcs.serverlist()) do
@@ -102,8 +102,8 @@ describe('server', function()
     eq(expected, funcs.serverlist())
     clear_serverlist()
 
-    expect_err('Failed to start server: invalid argument',
-               funcs.serverstart, '127.0.0.1:65536')  -- invalid port
+    eq('Vim:Failed to start server: invalid argument',
+      pcall_err(funcs.serverstart, '127.0.0.1:65536'))  -- invalid port
     eq({}, funcs.serverlist())
   end)
 

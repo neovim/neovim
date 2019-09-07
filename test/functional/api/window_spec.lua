@@ -8,10 +8,9 @@ local curwinmeths = helpers.curwinmeths
 local funcs = helpers.funcs
 local request = helpers.request
 local NIL = helpers.NIL
-local meth_pcall = helpers.meth_pcall
 local meths = helpers.meths
 local command = helpers.command
-local expect_err = helpers.expect_err
+local pcall_err = helpers.pcall_err
 
 -- check if str is visible at the beginning of some line
 local function is_visible(str)
@@ -56,8 +55,8 @@ describe('API/win', function()
     end)
 
     it('validates args', function()
-      expect_err('Invalid buffer id$', window, 'set_buf', nvim('get_current_win'), 23)
-      expect_err('Invalid window id$', window, 'set_buf', 23, nvim('get_current_buf'))
+      eq('Invalid buffer id', pcall_err(window, 'set_buf', nvim('get_current_win'), 23))
+      eq('Invalid window id', pcall_err(window, 'set_buf', 23, nvim('get_current_buf')))
     end)
   end)
 
@@ -74,8 +73,7 @@ describe('API/win', function()
 
     it('does not leak memory when using invalid window ID with invalid pos',
     function()
-      eq({false, 'Invalid window id'},
-         meth_pcall(meths.win_set_cursor, 1, {"b\na"}))
+      eq('Invalid window id', pcall_err(meths.win_set_cursor, 1, {"b\na"}))
     end)
 
     it('updates the screen, and also when the window is unfocused', function()
@@ -185,11 +183,11 @@ describe('API/win', function()
       eq(1, funcs.exists('w:lua'))
       curwinmeths.del_var('lua')
       eq(0, funcs.exists('w:lua'))
-      eq({false, 'Key not found: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
+      eq('Key not found: lua', pcall_err(curwinmeths.del_var, 'lua'))
       curwinmeths.set_var('lua', 1)
       command('lockvar w:lua')
-      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.del_var, 'lua'))
-      eq({false, 'Key is locked: lua'}, meth_pcall(curwinmeths.set_var, 'lua', 1))
+      eq('Key is locked: lua', pcall_err(curwinmeths.del_var, 'lua'))
+      eq('Key is locked: lua', pcall_err(curwinmeths.set_var, 'lua', 1))
     end)
 
     it('window_set_var returns the old value', function()
@@ -222,7 +220,8 @@ describe('API/win', function()
       eq('', nvim('get_option', 'statusline'))
       command("set modified")
       command("enew") -- global-local: not preserved in new buffer
-      eq({false, "Failed to get value for option 'statusline'"}, meth_pcall(curwin, 'get_option', 'statusline'))
+      eq("Failed to get value for option 'statusline'",
+        pcall_err(curwin, 'get_option', 'statusline'))
       eq('', eval('&l:statusline')) -- confirm local value was not copied
     end)
   end)
@@ -317,8 +316,8 @@ describe('API/win', function()
       insert('text')
       command('new')
       local newwin = meths.get_current_win()
-      eq({false,"Vim:E37: No write since last change (add ! to override)"},
-         meth_pcall(meths.win_close, oldwin,false))
+      eq("Vim:E37: No write since last change (add ! to override)",
+         pcall_err(meths.win_close, oldwin,false))
       eq({newwin,oldwin}, meths.list_wins())
     end)
 
@@ -340,7 +339,8 @@ describe('API/win', function()
       eq(3, #meths.list_wins())
       eq(':', funcs.getcmdwintype())
       -- Vim: not allowed to close other windows from cmdline-window.
-      expect_err('E11: Invalid in command%-line window; <CR> executes, CTRL%-C quits$', meths.win_close, oldwin, true)
+      eq('E11: Invalid in command-line window; <CR> executes, CTRL-C quits',
+        pcall_err(meths.win_close, oldwin, true))
       -- Close cmdline-window.
       meths.win_close(0,true)
       eq(2, #meths.list_wins())

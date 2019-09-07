@@ -5,7 +5,6 @@ local eq, eval, expect, source =
   helpers.eq, helpers.eval, helpers.expect, helpers.source
 local clear = helpers.clear
 local command = helpers.command
-local expect_err = helpers.expect_err
 local feed = helpers.feed
 local nvim_prog = helpers.nvim_prog
 local ok = helpers.ok
@@ -14,6 +13,7 @@ local set_session = helpers.set_session
 local spawn = helpers.spawn
 local nvim_async = helpers.nvim_async
 local expect_msg_seq = helpers.expect_msg_seq
+local pcall_err = helpers.pcall_err
 
 describe(':recover', function()
   before_each(clear)
@@ -21,11 +21,11 @@ describe(':recover', function()
   it('fails if given a non-existent swapfile', function()
     local swapname = 'bogus_swapfile'
     local swapname2 = 'bogus_swapfile.swp'
-    expect_err('E305: No swap file found for '..swapname,
-               command, 'recover '..swapname)  -- Should not segfault. #2117
+    eq('Vim(recover):E305: No swap file found for '..swapname,
+      pcall_err(command, 'recover '..swapname))  -- Should not segfault. #2117
     -- Also check filename ending with ".swp". #9504
-    expect_err('Vim%(recover%):E306: Cannot open '..swapname2,
-               command, 'recover '..swapname2)  -- Should not segfault. #2117
+    eq('Vim(recover):E306: Cannot open '..swapname2,
+      pcall_err(command, 'recover '..swapname2))  -- Should not segfault. #2117
     eq(2, eval('1+1'))  -- Still alive?
   end)
 

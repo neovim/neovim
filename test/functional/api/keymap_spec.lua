@@ -5,11 +5,11 @@ local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq, neq = helpers.eq, helpers.neq
-local expect_err = helpers.expect_err
 local feed = helpers.feed
 local funcs = helpers.funcs
 local meths = helpers.meths
 local source = helpers.source
+local pcall_err = helpers.pcall_err
 
 local shallowcopy = helpers.shallowcopy
 local sleep = helpers.sleep
@@ -360,12 +360,9 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('error on empty LHS', function()
     -- escape parentheses in lua string, else comparison fails erroneously
-    expect_err('Invalid %(empty%) LHS',
-               meths.set_keymap, '', '', 'rhs', {})
-    expect_err('Invalid %(empty%) LHS',
-               meths.set_keymap, '', '', '', {})
-
-    expect_err('Invalid %(empty%) LHS', meths.del_keymap, '', '')
+    eq('Invalid (empty) LHS', pcall_err(meths.set_keymap, '', '', 'rhs', {}))
+    eq('Invalid (empty) LHS', pcall_err(meths.set_keymap, '', '', '', {}))
+    eq('Invalid (empty) LHS', pcall_err(meths.del_keymap, '', ''))
   end)
 
   it('error if LHS longer than MAXMAPLEN', function()
@@ -385,10 +382,10 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
     -- 51 chars should produce an error
     lhs = lhs..'1'
-    expect_err('LHS exceeds maximum map length: '..lhs,
-               meths.set_keymap, '', lhs, 'rhs', {})
-    expect_err('LHS exceeds maximum map length: '..lhs,
-               meths.del_keymap, '', lhs)
+    eq('LHS exceeds maximum map length: '..lhs,
+      pcall_err(meths.set_keymap, '', lhs, 'rhs', {}))
+    eq('LHS exceeds maximum map length: '..lhs,
+      pcall_err(meths.del_keymap, '', lhs))
   end)
 
   it('does not throw errors when rhs is longer than MAXMAPLEN', function()
@@ -404,48 +401,48 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
   end)
 
   it('throws errors when given too-long mode shortnames', function()
-    expect_err('Shortname is too long: map',
-               meths.set_keymap, 'map', 'lhs', 'rhs', {})
+    eq('Shortname is too long: map',
+      pcall_err(meths.set_keymap, 'map', 'lhs', 'rhs', {}))
 
-    expect_err('Shortname is too long: vmap',
-               meths.set_keymap, 'vmap', 'lhs', 'rhs', {})
+    eq('Shortname is too long: vmap',
+      pcall_err(meths.set_keymap, 'vmap', 'lhs', 'rhs', {}))
 
-    expect_err('Shortname is too long: xnoremap',
-               meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {})
+    eq('Shortname is too long: xnoremap',
+      pcall_err(meths.set_keymap, 'xnoremap', 'lhs', 'rhs', {}))
 
-    expect_err('Shortname is too long: map', meths.del_keymap, 'map', 'lhs')
-    expect_err('Shortname is too long: vmap', meths.del_keymap, 'vmap', 'lhs')
-    expect_err('Shortname is too long: xnoremap', meths.del_keymap, 'xnoremap', 'lhs')
+    eq('Shortname is too long: map', pcall_err(meths.del_keymap, 'map', 'lhs'))
+    eq('Shortname is too long: vmap', pcall_err(meths.del_keymap, 'vmap', 'lhs'))
+    eq('Shortname is too long: xnoremap', pcall_err(meths.del_keymap, 'xnoremap', 'lhs'))
   end)
 
   it('error on invalid mode shortname', function()
-    expect_err('Invalid mode shortname: " "',
-               meths.set_keymap, ' ', 'lhs', 'rhs', {})
-    expect_err('Invalid mode shortname: "m"',
-               meths.set_keymap, 'm', 'lhs', 'rhs', {})
-    expect_err('Invalid mode shortname: "?"',
-               meths.set_keymap, '?', 'lhs', 'rhs', {})
-    expect_err('Invalid mode shortname: "y"',
-               meths.set_keymap, 'y', 'lhs', 'rhs', {})
-    expect_err('Invalid mode shortname: "p"',
-               meths.set_keymap, 'p', 'lhs', 'rhs', {})
-    expect_err('Invalid mode shortname: "?"', meths.del_keymap, '?', 'lhs')
-    expect_err('Invalid mode shortname: "y"', meths.del_keymap, 'y', 'lhs')
-    expect_err('Invalid mode shortname: "p"', meths.del_keymap, 'p', 'lhs')
+    eq('Invalid mode shortname: " "',
+      pcall_err(meths.set_keymap, ' ', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "m"',
+      pcall_err(meths.set_keymap, 'm', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "?"',
+      pcall_err(meths.set_keymap, '?', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "y"',
+      pcall_err(meths.set_keymap, 'y', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "p"',
+      pcall_err(meths.set_keymap, 'p', 'lhs', 'rhs', {}))
+    eq('Invalid mode shortname: "?"', pcall_err(meths.del_keymap, '?', 'lhs'))
+    eq('Invalid mode shortname: "y"', pcall_err(meths.del_keymap, 'y', 'lhs'))
+    eq('Invalid mode shortname: "p"', pcall_err(meths.del_keymap, 'p', 'lhs'))
   end)
 
   it('error on invalid optnames', function()
-    expect_err('Invalid key: silentt',
-               meths.set_keymap, 'n', 'lhs', 'rhs', {silentt = true})
-    expect_err('Invalid key: sidd',
-               meths.set_keymap, 'n', 'lhs', 'rhs', {sidd = false})
-    expect_err('Invalid key: nowaiT',
-               meths.set_keymap, 'n', 'lhs', 'rhs', {nowaiT = false})
+    eq('Invalid key: silentt',
+      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {silentt = true}))
+    eq('Invalid key: sidd',
+      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {sidd = false}))
+    eq('Invalid key: nowaiT',
+      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {nowaiT = false}))
   end)
 
   it('error on <buffer> option key', function()
-    expect_err('Invalid key: buffer',
-               meths.set_keymap, 'n', 'lhs', 'rhs', {buffer = true})
+    eq('Invalid key: buffer',
+      pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', {buffer = true}))
   end)
 
   local optnames = {'nowait', 'silent', 'script', 'expr', 'unique'}
@@ -454,8 +451,8 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
     it('throws an error when given non-boolean value for '..opt, function()
       local opts = {}
       opts[opt] = 2
-      expect_err('Gave non%-boolean value for an opt: '..opt,
-                 meths.set_keymap, 'n', 'lhs', 'rhs', opts)
+      eq('Gave non-boolean value for an opt: '..opt,
+        pcall_err(meths.set_keymap, 'n', 'lhs', 'rhs', opts))
     end)
   end
 
@@ -581,8 +578,8 @@ describe('nvim_set_keymap, nvim_del_keymap', function()
 
   it('throws appropriate error messages when setting <unique> maps', function()
     meths.set_keymap('l', 'lhs', 'rhs', {})
-    expect_err('E227: mapping already exists for lhs',
-               meths.set_keymap, 'l', 'lhs', 'rhs', {unique = true})
+    eq('E227: mapping already exists for lhs',
+      pcall_err(meths.set_keymap, 'l', 'lhs', 'rhs', {unique = true}))
     -- different mapmode, no error should be thrown
     meths.set_keymap('t', 'lhs', 'rhs', {unique = true})
   end)
@@ -750,8 +747,8 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   end
 
   it('rejects negative bufnr values', function()
-    expect_err('Wrong type for argument 1, expecting Buffer',
-               bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {})
+    eq('Wrong type for argument 1, expecting Buffer',
+      pcall_err(bufmeths.set_keymap, -1, '', 'lhs', 'rhs', {}))
   end)
 
   it('can set mappings active in the current buffer but not others', function()
@@ -800,8 +797,8 @@ describe('nvim_buf_set_keymap, nvim_buf_del_keymap', function()
   it("can't disable mappings given wrong buffer handle", function()
     local first, second = make_two_buffers(false)
     bufmeths.set_keymap(first, '', 'lhs', 'irhs<Esc>', {})
-    expect_err('E31: No such mapping',
-               bufmeths.del_keymap, second, '', 'lhs')
+    eq('E31: No such mapping',
+      pcall_err(bufmeths.del_keymap, second, '', 'lhs'))
 
     -- should still work
     switch_to_buf(first)

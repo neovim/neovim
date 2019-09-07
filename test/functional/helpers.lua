@@ -687,14 +687,6 @@ function module.skip_fragile(pending_fn, cond)
   return false
 end
 
-function module.meth_pcall(...)
-  local ret = {pcall(...)}
-  if type(ret[2]) == 'string' then
-    ret[2] = ret[2]:gsub('^[^:]+:%d+: ', '')
-  end
-  return ret
-end
-
 module.funcs = module.create_callindex(module.call)
 module.meths = module.create_callindex(module.nvim)
 module.uimeths = module.create_callindex(ui)

@@ -178,9 +178,20 @@ local function trim(s)
   return s:match('^%s*(.*%S)') or ''
 end
 
+--- Escapes magic chars in a Lua pattern string.
+---
+--@see https://github.com/rxi/lume
+--@param s  String to escape
+--@returns  %-escaped pattern string
+local function pesc(s)
+  assert(type(s) == 'string')
+  return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
+end
+
 local module = {
   deepcopy = deepcopy,
   gsplit = gsplit,
+  pesc = pesc,
   split = split,
   tbl_contains = tbl_contains,
   tbl_extend = tbl_extend,

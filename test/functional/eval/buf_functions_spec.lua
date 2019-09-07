@@ -15,7 +15,7 @@ local curwinmeths = helpers.curwinmeths
 local curtabmeths = helpers.curtabmeths
 local get_pathsep = helpers.get_pathsep
 local rmdir = helpers.rmdir
-local expect_err = helpers.expect_err
+local pcall_err = helpers.pcall_err
 
 local fname = 'Xtest-functional-eval-buf_functions'
 local fname2 = fname .. '.2'
@@ -297,8 +297,8 @@ describe('setbufvar() function', function()
     eq('Vim(call):E461: Illegal variable name: b:',
        exc_exec('call setbufvar(1, "", 0)'))
     eq(true, bufmeths.get_var(buf1, 'number'))
-    expect_err('Vim:E46: Cannot change read%-only variable "b:changedtick"',
-               funcs.setbufvar, 1, 'changedtick', true)
+    eq('Vim:E46: Cannot change read-only variable "b:changedtick"',
+      pcall_err(funcs.setbufvar, 1, 'changedtick', true))
     eq(2, funcs.getbufvar(1, 'changedtick'))
   end)
 end)

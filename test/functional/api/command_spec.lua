@@ -5,9 +5,9 @@ local clear = helpers.clear
 local command = helpers.command
 local curbufmeths = helpers.curbufmeths
 local eq = helpers.eq
-local expect_err = helpers.expect_err
 local meths = helpers.meths
 local source = helpers.source
+local pcall_err = helpers.pcall_err
 
 describe('nvim_get_commands', function()
   local cmd_dict  = { addr=NIL, bang=false, bar=false, complete=NIL, complete_arg=NIL, count=NIL, definition='echo "Hello World"', name='Hello', nargs='1', range=NIL, register=false, script_id=0, }
@@ -19,10 +19,10 @@ describe('nvim_get_commands', function()
   end)
 
   it('validates input', function()
-    expect_err('builtin=true not implemented', meths.get_commands,
-               {builtin=true})
-    expect_err('unexpected key: foo', meths.get_commands,
-               {foo='blah'})
+    eq('builtin=true not implemented', pcall_err(meths.get_commands,
+      {builtin=true}))
+    eq('unexpected key: foo', pcall_err(meths.get_commands,
+      {foo='blah'}))
   end)
 
   it('gets global user-defined commands', function()

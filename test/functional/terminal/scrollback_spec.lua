@@ -10,8 +10,8 @@ local wait = helpers.wait
 local retry = helpers.retry
 local curbufmeths = helpers.curbufmeths
 local nvim = helpers.nvim
-local expect_err = helpers.expect_err
 local feed_data = thelpers.feed_data
+local pcall_err = helpers.pcall_err
 
 describe(':terminal scrollback', function()
   local screen
@@ -455,8 +455,10 @@ describe("'scrollback' option", function()
   end)
 
   it('error if set to invalid value', function()
-    expect_err('E474:', command, 'set scrollback=-2')
-    expect_err('E474:', command, 'set scrollback=100001')
+    eq('Vim(set):E474: Invalid argument: scrollback=-2',
+      pcall_err(command, 'set scrollback=-2'))
+    eq('Vim(set):E474: Invalid argument: scrollback=100001',
+      pcall_err(command, 'set scrollback=100001'))
   end)
 
   it('defaults to -1 on normal buffers', function()

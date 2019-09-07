@@ -3,8 +3,8 @@ local clear = helpers.clear
 local eq, ok = helpers.eq, helpers.ok
 local buffer, command, eval, nvim, next_msg = helpers.buffer,
   helpers.command, helpers.eval, helpers.nvim, helpers.next_msg
-local expect_err = helpers.expect_err
 local nvim_prog = helpers.nvim_prog
+local pcall_err = helpers.pcall_err
 local sleep = helpers.sleep
 local write_file = helpers.write_file
 
@@ -760,7 +760,7 @@ describe('API: buffer events:', function()
   it('returns a proper error on nonempty options dict', function()
     clear()
     local b = editoriginal(false)
-    expect_err("unexpected key: builtin", buffer, 'attach', b, false, {builtin="asfd"})
+    eq("unexpected key: builtin", pcall_err(buffer, 'attach', b, false, {builtin="asfd"}))
   end)
 
   it('nvim_buf_attach returns response after delay #8634', function()
