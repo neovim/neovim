@@ -13,7 +13,7 @@ local Client = require('vim.lsp.client')
 local callbacks = require('vim.lsp.callbacks')
 local server_config = require('vim.lsp.server_config')
 
-local log = require('vim.lsp.log')
+local logger = require('vim.lsp.logger')
 local util = require('vim.lsp.util')
 
 local clients = {}
@@ -45,12 +45,12 @@ lsp.start_client = function(cmd, filetype, bufnr)
   local name = server_config.get_name(filetype)
 
   -- Start the client
-  log.debug('[LSP.lsp] Starting client...', name, '/', filetype, '/', cmd)
+  logger.debug('[LSP.lsp] Starting client...', name, '/', filetype, '/', cmd)
   local client = Client.new(name, filetype, cmd)
   client:start()
 
   if client == nil then
-    log.error('client was nil with arguments: ', cmd)
+    logger.error('client was nil with arguments: ', cmd)
     return nil
   end
   client:initialize()
@@ -84,7 +84,7 @@ lsp.request = function(method, arguments, cb, bufnr, filetype)
   local current_client = get_client(filetype)
 
   if current_client == nil then
-    log.warn('request() failed', 'No client available for:', filetype)
+    logger.warn('request() failed', 'No client available for:', filetype)
     return
   end
 
@@ -107,7 +107,7 @@ lsp.request_async = function(method, arguments, cb, bufnr, filetype)
   local current_client = get_client(filetype)
 
   if current_client == nil then
-    log.warn('async_request() failed', 'No client available for: ', filetype, ' with method: ', method)
+    logger.warn('async_request() failed', 'No client available for: ', filetype, ' with method: ', method)
     return
   end
 
@@ -129,7 +129,7 @@ lsp.notify = function(method, arguments, bufnr, filetype)
   local current_client = get_client(filetype)
 
   if current_client == nil then
-    log.warn('notify() failed', 'No client available for: ', filetype, ' with method: ', method)
+    logger.warn('notify() failed', 'No client available for: ', filetype, ' with method: ', method)
     return
   end
 
