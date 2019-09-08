@@ -53,6 +53,7 @@ struct ui_t {
   bool ui_ext[kUIExtCount];  ///< Externalized UI capabilities.
   int width;
   int height;
+  int pum_height;
   void *data;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -135,8 +135,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         ui_call_popupmenu_show(arr, selected, row, col, pum_anchor_grid);
       } else {
         ui_call_popupmenu_select(selected);
+        return;
       }
-      return;
     }
 
     def_width = PUM_DEF_WIDTH;
@@ -236,6 +236,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         pum_row = above_row;
         pum_height = row - above_row;
       }
+    }
+    if (pum_external) {
+      return;
     }
 
     // Compute the width of the widest match and the widest extra.
@@ -852,6 +855,12 @@ void pum_recompose(void)
 /// Only valid when pum_visible() returns TRUE!
 int pum_get_height(void)
 {
+  if (pum_external) {
+    int ui_pum_height = ui_pum_get_height();
+    if (ui_pum_height) {
+      return ui_pum_height;
+    }
+  }
   return pum_height;
 }
 
