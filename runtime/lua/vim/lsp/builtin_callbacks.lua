@@ -113,17 +113,17 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
       end
       local signature = data.signatures[activeSignature]
 
-      for _, line in pairs(vim.api.nvim_call_function('split', { signature.label, '\\n' })) do
+      for _, line in pairs(vim.split(signature.label, '\n')) do
         table.insert(contents, line)
       end
 
       if not (signature.documentation == nil) then
         if type(signature.documentation) == 'table' then
-          for _, line in pairs(vim.api.nvim_call_function('split', { signature.documentation.value, '\\n' })) do
+          for _, line in pairs(vim.split(signature.documentation.value, '\n')) do
             table.insert(contents, line)
           end
         else
-          for _, line in pairs(vim.api.nvim_call_function('split', { signature.documentation, '\\n' })) do
+          for _, line in pairs(vim.split(signature.documentation, '\n')) do
             table.insert(contents, line)
           end
         end
@@ -182,14 +182,14 @@ BuiltinCallbacks['textDocument/hover'] = {
         for _, item in ipairs(data.contents) do
           if type(item) == 'table' then
             table.insert(contents, '```'..item.language)
-            for _, line in pairs(vim.api.nvim_call_function('split', { item.value, '\\n' })) do
+            for _, line in pairs(vim.split(item.value, '\n')) do
               table.insert(contents, line)
             end
             table.insert(contents, '```')
           elseif item == nil then
             table.insert(contents, '')
           else
-            for _, line in pairs(vim.api.nvim_call_function('split', { item, '\\n' })) do
+            for _, line in pairs(vim.split(item, '\n')) do
               table.insert(contents, line)
             end
           end
@@ -197,24 +197,24 @@ BuiltinCallbacks['textDocument/hover'] = {
       elseif type(data.contents) == 'table' then
         -- MarkupContent
         if data.contents.kind ~= nil then
-          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents.value, '\\n' })) do
+          for _, line in pairs(vim.split(data.contents.value, '\n')) do
             table.insert(contents, line)
           end
         -- { language: string; value: string }
         elseif data.contents.language ~= nil then
           table.insert(contents, '```'..data.contents.language)
-          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents.value, '\\n' })) do
+          for _, line in pairs(vim.split(data.contents.value, '\n')) do
             table.insert(contents, line)
           end
           table.insert(contents, '```')
         else
-          for _, line in pairs(vim.api.nvim_call_function('split', { data.contents, '\\n' })) do
+          for _, line in pairs(vim.split(data.contents, '\n')) do
             table.insert(contents, line)
           end
         end
       -- string
       else
-        for _, line in pairs(vim.api.nvim_call_function('split', { data.contents, '\\n' })) do
+        for _, line in pairs(vim.split(data.contents, '\n')) do
           table.insert(contents, line)
         end
       end
