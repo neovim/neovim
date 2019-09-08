@@ -3347,9 +3347,13 @@ bool set_ref_in_previous_funccal(int copyID)
 {
   bool abort = false;
 
-  for (funccall_T *fc = previous_funccal; fc != NULL; fc = fc->caller) {
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1, NULL);
+  for (funccall_T *fc = previous_funccal; !abort && fc != NULL;
+       fc = fc->caller) {
+    fc->fc_copyID = copyID + 1;
+    abort = abort
+      || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID + 1, NULL)
+      || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID + 1, NULL)
+      || set_ref_in_list(&fc->l_varlist, copyID + 1, NULL);
   }
   return abort;
 }
@@ -3360,9 +3364,11 @@ static bool set_ref_in_funccal(funccall_T *fc, int copyID)
 
   if (fc->fc_copyID != copyID) {
     fc->fc_copyID = copyID;
-    abort = abort || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL);
-    abort = abort || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL);
-    abort = abort || set_ref_in_func(NULL, fc->func, copyID);
+    abort = abort
+      || set_ref_in_ht(&fc->l_vars.dv_hashtab, copyID, NULL)
+      || set_ref_in_ht(&fc->l_avars.dv_hashtab, copyID, NULL)
+      || set_ref_in_list(&fc->l_varlist, copyID, NULL)
+      || set_ref_in_func(NULL, fc->func, copyID);
   }
   return abort;
 }
