@@ -1535,6 +1535,7 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
   int i;
   bool advance = true;
   win_T       *win;
+  char *p_shm_save = NULL;
 
   /*
    * Don't execute Win/Buf Enter/Leave autocommands here
@@ -1566,6 +1567,16 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
         if (curtab->tp_next == NULL)            /* just checking */
           break;
         goto_tabpage(0);
+        // Temporarily reset 'shm' option to not print fileinfo when
+        // loading the other buffers. This would overwrite the already
+        // existing fileinfo for the first tab.
+        if (i == 1) {
+          char buf[100];
+
+          p_shm_save = xstrdup((char *)p_shm);
+          snprintf(buf, sizeof(buf), "F%s", p_shm);
+          set_option_value("shm", 0L, buf, 0);
+        }
       } else {
         if (curwin->w_next == NULL)             /* just checking */
           break;
@@ -1604,6 +1615,11 @@ static void edit_buffers(mparm_T *parmp, char_u *cwd)
       (void)vgetc();            /* only break the file loading, not the rest */
       break;
     }
+  }
+
+  if (p_shm_save != NULL) {
+    set_option_value("shm", 0L, p_shm_save, 0);
+    xfree(p_shm_save);
   }
 
   if (parmp->window_layout == WIN_TABS)
