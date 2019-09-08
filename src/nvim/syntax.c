@@ -7559,14 +7559,15 @@ void highlight_changed(void)
     }
   }
 
-  /* Setup the user highlights
-   *
-   * Temporarily  utilize 10 more hl entries.  Have to be in there
-   * simultaneously in case of table overflows in get_attr_entry()
-   */
+  //
+  // Setup the user highlights
+  //
+  // Temporarily utilize 10 more hl entries.  Must be in there
+  // simultaneously in case of table overflows in get_attr_entry()
+  //
   ga_grow(&highlight_ga, 10);
   hlcnt = highlight_ga.ga_len;
-  if (id_S == 0) {  /* Make sure id_S is always valid to simplify code below */
+  if (id_S == -1) {  // Make sure id_S is always valid to simplify code below.
     memset(&HL_TABLE()[hlcnt + 9], 0, sizeof(struct hl_group));
     id_S = hlcnt + 10;
   }
@@ -7590,7 +7591,7 @@ void highlight_changed(void)
             sizeof(struct hl_group));
       hlt[hlcnt + i].sg_link = 0;
 
-      /* Apply difference between UserX and HLF_S to HLF_SNC */
+      // Apply difference between UserX and HLF_S to HLF_SNC.
       hlt[hlcnt + i].sg_cterm ^= hlt[id - 1].sg_cterm ^ hlt[id_S - 1].sg_cterm;
 
       if (hlt[id - 1].sg_cterm_fg != hlt[id_S - 1].sg_cterm_fg) {
