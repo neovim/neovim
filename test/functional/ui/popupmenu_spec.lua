@@ -574,6 +574,22 @@ describe('ui/ext_popupmenu', function()
     ]])
     feed('<esc>')
 
+    -- #10042: make sure shift-tab also triggers the pum
+    feed(':sign <S-tab>')
+    screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplace^                   |
+    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+    feed('<esc>')
+
     -- check positioning with multibyte char in pattern
     command("e långfile1")
     command("sp långfile2")
@@ -594,6 +610,7 @@ describe('ui/ext_popupmenu', function()
       items = {{"långfile1", "", "", "" }, {"långfile2", "", "", ""}},
       pos = 0,
     }}
+
   end)
 end)
 
