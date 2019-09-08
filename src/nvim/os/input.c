@@ -38,7 +38,7 @@ static Stream read_stream = { .closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
-static int events_enabled = 0;
+static int events_enabled = 1;
 static bool blocking = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -93,9 +93,9 @@ static void create_cursorhold_event(void)
 {
   // If events are enabled and the queue has any items, this function should not
   // have been called(inbuf_poll would return kInputAvail)
-  // TODO(tarruda): Cursorhold should be implemented as a timer set during the
+  // TODO(justinmk): Cursorhold should be implemented as a timer set during the
   // `state_check` callback for the states where it can be triggered.
-  assert(!events_enabled || multiqueue_empty(main_loop.events));
+  assert(multiqueue_empty(main_loop.events));
   multiqueue_put(main_loop.events, cursorhold_event, 0);
 }
 
@@ -177,7 +177,7 @@ void input_enable_events(void)
 
 void input_disable_events(void)
 {
-  events_enabled--;
+  // events_enabled--;
 }
 
 /// Test whether a file descriptor refers to a terminal.
@@ -389,7 +389,7 @@ static bool input_poll(int ms)
     prof_inchar_enter();
   }
 
-  if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
+  if ((ms == -1 || ms > 0) && !events_enabled && !input_eof) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);

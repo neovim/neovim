@@ -547,7 +547,7 @@ void rpc_close(Channel *channel)
   channel_decref(channel);
 
   if (channel->streamtype == kChannelStreamStdio) {
-    multiqueue_put(main_loop.fast_events, exit_event, 0);
+    multiqueue_put(main_loop.events, exit_event, 0);
   }
 }
 

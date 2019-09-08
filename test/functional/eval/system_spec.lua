@@ -129,6 +129,7 @@ describe('system()', function()
     end)
 
     after_each(function()
+      -- feed('<c-c>')
       screen:detach()
     end)
 
