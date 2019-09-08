@@ -203,8 +203,7 @@ paste = (function()
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
     if phase == -1 or phase == 3 then
-      vim.api.nvim_command('redraw')
-      vim.api.nvim_command('echo ""')
+      vim.api.nvim_command('redraw'..(tick > 1 and '|echo ""' or ''))
     end
     return true  -- Paste will not continue if not returning `true`.
   end

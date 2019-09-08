@@ -319,7 +319,7 @@ describe('TUI', function()
       {1:x}                                                 |
       {4:~                                                 }|
       {5:[No Name] [+]                   3,1            All}|
-                                                        |
+      :set ruler                                        |
       {3:-- TERMINAL --}                                    |
     ]]
     local expected_attr = {
@@ -353,7 +353,11 @@ describe('TUI', function()
     expect_child_buf_lines({''})
     -- CRLF input
     feed_data('\027[200~'..table.concat(expected_lf,'\r\n')..'\027[201~')
-    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
+    screen:expect{
+      grid=expected_grid1:gsub(
+        ':set ruler *',
+        '3 fewer lines; before #1  0 seconds ago           '),
+      attr_ids=expected_attr}
     expect_child_buf_lines(expected_crlf)
   end)
 
