@@ -224,4 +224,17 @@ describe('ShaDa support code', function()
     eq('', funcs.histget('/', -1))
   end)
 
+  it('does not crash when dumping last search pattern (#10945)', function()
+    nvim_command('edit Xtest-functional-shada-history_spec')
+    -- Save jump list
+    nvim_command('wshada')
+    -- Wipe out buffer list (jump list entry gets removed)
+    nvim_command('%bwipeout')
+    -- Restore jump list
+    nvim_command('rshada')
+    nvim_command('silent! /pat/')
+    nvim_command('au BufNew * echo')
+    nvim_command('wshada')
+  end)
+
 end)

@@ -2705,6 +2705,11 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     } while (var_iter != NULL);
   }
 
+  // Initialize jump list
+  setpcmark();
+  cleanup_jumplist(curwin, false);
+  wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
+
   const bool search_highlighted = !(no_hlsearch
                                     || find_shada_parameter('h') != NULL);
   const bool search_last_used = search_was_last_used();
@@ -2735,11 +2740,6 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
       }
     };
   }
-
-  // Initialize jump list
-  setpcmark();
-  cleanup_jumplist(curwin, false);
-  wms->jumps_size = shada_init_jumps(wms->jumps, &removable_bufs);
 
   // Initialize global marks
   if (dump_global_marks) {
