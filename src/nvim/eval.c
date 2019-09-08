@@ -5152,6 +5152,10 @@ bool garbage_collect(bool testing)
     }
     // buffer ShaDa additional data
     ABORTING(set_ref_dict)(buf->additional_data, copyID);
+
+    // buffer callback functions
+    set_ref_in_callback(&buf->b_prompt_callback, copyID, NULL, NULL);
+    set_ref_in_callback(&buf->b_prompt_interrupt, copyID, NULL, NULL);
   }
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
