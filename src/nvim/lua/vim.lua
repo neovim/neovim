@@ -192,7 +192,7 @@ paste = (function()
       vim.api.nvim_input(line1)
       vim.api.nvim_set_option('paste', false)
     elseif mode ~= 'c' then
-      vim.api.nvim_put(lines, 'c', (mode ~= 'i' and mode ~= 'R'), true)
+      vim.api.nvim_put(lines, 'c', false, true)
     end
     if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)

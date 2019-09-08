@@ -485,9 +485,9 @@ describe('TUI', function()
     feed_data('\n')  -- <CR>
     screen:expect{grid=[[
       foo                                               |
-      typed input...line A                              |
+      typed input..line A                               |
       line B                                            |
-      {1: }                                                 |
+      {1:.}                                                 |
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
