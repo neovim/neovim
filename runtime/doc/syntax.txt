@@ -5025,11 +5025,6 @@ StatusLine	status line of current window
 StatusLineNC	status lines of not-current windows
 		Note: if this is equal to "StatusLine" Vim will use "^^^" in
 		the status line of the current window.
-							*hl-StatusLineTerm*
-StatusLineTerm	status line of current window, if it is a |terminal| window.
-							*hl-StatusLineTermNC*
-StatusLineTermNC   status lines of not-current windows that is a |terminal|
-		window.
 							*hl-TabLine*
 TabLine		tab pages line, not active tab page label
 							*hl-TabLineFill*

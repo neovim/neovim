@@ -437,6 +437,17 @@ Compile-time features:
   Emacs tags support
   X11 integration (see |x11-selection|)
 
+Highlight groups:
+  *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim
+    supports 'winhighlight' window-local highlights.
+    For example, to mimic Vim's StatusLineTerm:  >
+      hi StatusLineTerm ctermfg=black ctermbg=green
+      hi StatusLineTermNC ctermfg=green
+      autocmd TermOpen,WinEnter * if &buftype=='terminal'
+        \|setlocal winhighlight=StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC
+        \|else|setlocal winhighlight=|endif
+<
+
 Options:
   'antialias'
   'bioskey' (MS-DOS)
