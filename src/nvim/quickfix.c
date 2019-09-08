@@ -5139,9 +5139,7 @@ static int qf_setprop_context(qf_info_T *qi, int qf_idx, dictitem_T *di)
 {
   tv_free(qi->qf_lists[qf_idx].qf_ctx);
   typval_T *ctx = xcalloc(1, sizeof(typval_T));
-  if (ctx != NULL) {
-    tv_copy(&di->di_tv, ctx);
-  }
+  tv_copy(&di->di_tv, ctx);
   qi->qf_lists[qf_idx].qf_ctx = ctx;
 
   return OK;
