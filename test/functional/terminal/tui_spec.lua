@@ -122,10 +122,10 @@ describe('TUI', function()
 
     screen:try_resize(50,5)
     screen:expect{grid=[[
-      {8:FAIL 1}                                            |
-      {8:FAIL 2}                                            |
       {8:FAIL 3}                                            |
-      {10:-- More -- SPACE/d/j: screen/page/line down, b/u/}{12:k}|
+      {8:FAIL 4}                                            |
+      {8:FAIL 5}                                            |
+      {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
     ]]}
 
@@ -144,12 +144,12 @@ describe('TUI', function()
                     )                                   |
       {8:Error detected while processing function ManyErr:} |
       {11:line    2:}                                        |
-      {10:-- More --}                                        |
-      {10:                                                  }|
-      {10:                                                  }|
-      {10:                                                  }|
-      {10:                                                  }|
-      {10:-- More -- SPACE/d/j: screen/page/line down, b/u/}{12:k}|
+      {8:FAIL 0}                                            |
+      {8:FAIL 1}                                            |
+      {8:FAIL 2}                                            |
+      {8:FAIL 3}                                            |
+      {8:FAIL 4}                                            |
+      {10:-- More --}{1: }                                       |
       {3:-- TERMINAL --}                                    |
     ]]}
 

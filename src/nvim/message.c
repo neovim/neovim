@@ -2556,6 +2556,7 @@ static int do_more_prompt(int typed_char)
   int c;
   int retval = FALSE;
   int toscroll;
+  bool to_redraw = false;
   msgchunk_T  *mp_last = NULL;
   msgchunk_T  *mp;
   int i;
@@ -2587,8 +2588,9 @@ static int do_more_prompt(int typed_char)
     if (used_typed_char != NUL) {
       c = used_typed_char;              /* was typed at hit-enter prompt */
       used_typed_char = NUL;
-    } else
-      c = get_keystroke();
+    } else {
+      c = get_keystroke(resize_events);
+    }
 
 
     toscroll = 0;
@@ -2661,31 +2663,44 @@ static int do_more_prompt(int typed_char)
       lines_left = Rows - 1;
       break;
 
+    case K_EVENT:
+      // only resize_events are processed here
+      // Attempt to redraw the screen. sb_text doesn't support reflow
+      // so this only really works for vertical resize.
+      multiqueue_process_events(resize_events);
+      to_redraw = true;
+      break;
+
     default:                    /* no valid response */
       msg_moremsg(TRUE);
       continue;
     }
 
-    if (toscroll != 0) {
-      if (toscroll < 0) {
-        /* go to start of last line */
-        if (mp_last == NULL)
+    // code assumes we only do one at a time
+    assert((toscroll == 0) || !to_redraw);
+
+    if (toscroll != 0 || to_redraw) {
+      if (toscroll < 0 || to_redraw) {
+        // go to start of last line
+        if (mp_last == NULL) {
           mp = msg_sb_start(last_msgchunk);
-        else if (mp_last->sb_prev != NULL)
+        } else if (mp_last->sb_prev != NULL) {
           mp = msg_sb_start(mp_last->sb_prev);
-        else
+        } else {
           mp = NULL;
+        }
 
         /* go to start of line at top of the screen */
         for (i = 0; i < Rows - 2 && mp != NULL && mp->sb_prev != NULL;
              ++i)
           mp = msg_sb_start(mp->sb_prev);
 
-        if (mp != NULL && mp->sb_prev != NULL) {
-          /* Find line to be displayed at top. */
-          for (i = 0; i > toscroll; --i) {
-            if (mp == NULL || mp->sb_prev == NULL)
+        if (mp != NULL && (mp->sb_prev != NULL || to_redraw)) {
+          // Find line to be displayed at top
+          for (i = 0; i > toscroll; i--) {
+            if (mp == NULL || mp->sb_prev == NULL) {
               break;
+            }
             mp = msg_sb_start(mp->sb_prev);
             if (mp_last == NULL)
               mp_last = msg_sb_start(last_msgchunk);
@@ -2693,7 +2708,7 @@ static int do_more_prompt(int typed_char)
               mp_last = msg_sb_start(mp_last->sb_prev);
           }
 
-          if (toscroll == -1) {
+          if (toscroll == -1 && !to_redraw) {
             grid_ins_lines(&msg_grid_adj, 0, 1, Rows, 0, Columns);
             grid_fill(&msg_grid_adj, 0, 1, 0, Columns, ' ', ' ',
                       HL_ATTR(HLF_MSG));
@@ -2709,6 +2724,7 @@ static int do_more_prompt(int typed_char)
               mp = disp_sb_line(i, mp);
               ++msg_scrolled;
             }
+            to_redraw = false;
           }
           toscroll = 0;
         }
@@ -3307,8 +3323,8 @@ do_dialog (
   hotkeys = msg_show_console_dialog(message, buttons, dfltbutton);
 
   for (;; ) {
-    /* Get a typed character directly from the user. */
-    c = get_keystroke();
+    // Get a typed character directly from the user.
+    c = get_keystroke(NULL);
     switch (c) {
     case CAR:                 /* User accepts default option */
     case NL:

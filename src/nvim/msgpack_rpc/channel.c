@@ -31,6 +31,7 @@
 #include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/os/input.h"
+#include "nvim/ui.h"
 
 #if MIN_LOG_LEVEL > DEBUG_LOG_LEVEL
 #define log_client_msg(...)
@@ -355,10 +356,18 @@ static void handle_request(Channel *channel, msgpack_object *request)
       request_event((void **)&evdata);
     }
   } else {
-    multiqueue_put(channel->events, request_event, 1, evdata);
-    DLOG("RPC: scheduled %.*s", method->via.bin.size, method->via.bin.ptr);
+    bool is_resize = handler.fn == handle_nvim_ui_try_resize;
+    if (is_resize) {
+      Event ev = event_split(event_create(request_event, 1, evdata), 2);
+      multiqueue_put_event(channel->events, ev);
+      multiqueue_put_event(resize_events, ev);
+    } else {
+      multiqueue_put(channel->events, request_event, 1, evdata);
+      DLOG("RPC: scheduled %.*s", method->via.bin.size, method->via.bin.ptr);
+    }
   }
 }
+
 
 /// Handles a message, depending on the type:
 ///   - Request: invokes method and writes the response (or error).

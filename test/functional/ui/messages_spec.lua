@@ -6,6 +6,7 @@ local eq = helpers.eq
 local command = helpers.command
 local set_method_error = helpers.set_method_error
 local meths = helpers.meths
+local async_meths = helpers.async_meths
 local test_build_dir = helpers.test_build_dir
 local nvim_prog = helpers.nvim_prog
 local iswin = helpers.iswin
@@ -1073,6 +1074,7 @@ describe('pager', function()
       [9] = {foreground = tonumber('0x00000c'), background = Screen.colors.Grey100},
       [10] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff')},
       [11] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber ('0x2b8452')},
+      [12] = {bold = true, reverse = true},
     })
     command("set more")
 
@@ -1390,6 +1392,121 @@ aliquip ex ea commodo consequat.]])
       {9:6}{10:                                  }|
       {9:7}{10:                                  }|
       {11:--}{8: }{11:More}{8: }{11:--}{8:^                         }|
+    ]]}
+  end)
+
+  it('with :!cmd does not crash on resize', function()
+    feed(':!sleep 1<cr>')
+    screen:expect{grid=[[
+                                         |
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+      {12:                                   }|
+      :!sleep 1                          |
+                                         |
+    ]]}
+
+    -- not processed while command is executing
+    async_meths.ui_try_resize(35, 5)
+
+    -- TODO(bfredl): ideally it should be processed just
+    -- before the "press ENTER" prompt though
+    screen:expect{grid=[[
+                                         |
+      {1:~                                  }|
+      {1:~                                  }|
+      {12:                                   }|
+      :!sleep 1                          |
+                                         |
+      {4:Press ENTER or type command to cont}|
+      {4:inue}^                               |
+    ]]}
+
+    feed('<cr>')
+    screen:expect{grid=[[
+      ^                                   |
+      {1:~                                  }|
+      {1:~                                  }|
+      {1:~                                  }|
+                                         |
+    ]]}
+  end)
+
+  it('can be resized', function()
+    feed(':lua error(_G.x)<cr>')
+    screen:expect{grid=[[
+      {2:E5105: Error while calling lua chun}|
+      {2:k: [string "<VimL compiled string>"}|
+      {2:]:1: Lorem ipsum dolor sit amet, co}|
+      {2:nsectetur}                          |
+      {2:adipisicing elit, sed do eiusmod te}|
+      {2:mpor}                               |
+      {2:incididunt ut labore et dolore magn}|
+      {4:-- More --}^                         |
+    ]]}
+
+    -- responds to resize, but text is not reflown
+    screen:try_resize(45, 5)
+    screen:expect{grid=[[
+      {2:nsectetur}                                    |
+      {2:adipisicing elit, sed do eiusmod te}          |
+      {2:mpor}                                         |
+      {2:incididunt ut labore et dolore magn}          |
+      {4:-- More --}^                                   |
+    ]]}
+
+    -- can create empty space, as the command hasn't output the text below yet.
+    -- text is not reflown; existing lines get cut
+    screen:try_resize(30, 12)
+    screen:expect{grid=[[
+      {2:E5105: Error while calling lua}|
+      {2:k: [string "<VimL compiled str}|
+      {2:]:1: Lorem ipsum dolor sit ame}|
+      {2:nsectetur}                     |
+      {2:adipisicing elit, sed do eiusm}|
+      {2:mpore}                         |
+      {2:incididunt ut labore et dolore}|
+      {2: magn}                         |
+                                    |
+                                    |
+                                    |
+      {4:-- More --}^                    |
+    ]]}
+
+    -- continues in a mostly consistent state, but only new lines are
+    -- wrapped at the new screen size.
+    feed('<cr>')
+    screen:expect{grid=[[
+      {2:k: [string "<VimL compiled str}|
+      {2:]:1: Lorem ipsum dolor sit ame}|
+      {2:nsectetur}                     |
+      {2:adipisicing elit, sed do eiusm}|
+      {2:mpore}                         |
+      {2:incididunt ut labore et dolore}|
+      {2: magna aliqua.}                |
+      {2:Ut enim ad minim veniam, quis }|
+      {2:nostrud xercitation}           |
+      {2:ullamco laboris nisi ut}       |
+      {2:aliquip ex ea commodo consequa}|
+      {4:-- More --}^                    |
+    ]]}
+
+    feed('q')
+    screen:expect{grid=[[
+      ^                              |
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+      {1:~                             }|
+                                    |
     ]]}
   end)
 end)

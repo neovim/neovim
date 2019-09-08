@@ -38,7 +38,6 @@ static Stream read_stream = { .closed = true };  // Input before UI starts.
 static RBuffer *input_buffer = NULL;
 static bool input_eof = false;
 static int global_fd = -1;
-static int events_enabled = 0;
 static bool blocking = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -89,7 +88,7 @@ static void cursorhold_event(void **argv)
   did_cursorhold = true;
 }
 
-static void create_cursorhold_event(void)
+static void create_cursorhold_event(bool events_enabled)
 {
   // If events are enabled and the queue has any items, this function should not
   // have been called(inbuf_poll would return kInputAvail)
@@ -99,8 +98,12 @@ static void create_cursorhold_event(void)
   multiqueue_put(main_loop.events, cursorhold_event, 0);
 }
 
-// Low level input function
-int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
+/// Low level input function
+///
+/// wait until either the input buffer is non-empty or , if `events` is not NULL
+/// until `events` is non-empty.
+int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt,
+              MultiQueue *events)
 {
   if (maxlen && rbuffer_size(input_buffer)) {
     return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
@@ -108,21 +111,21 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 
   InbufPollResult result;
   if (ms >= 0) {
-    if ((result = inbuf_poll(ms)) == kInputNone) {
+    if ((result = inbuf_poll(ms, events)) == kInputNone) {
       return 0;
     }
   } else {
-    if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
+    if ((result = inbuf_poll((int)p_ut, events)) == kInputNone) {
       if (read_stream.closed && silent_mode) {
         // Drained eventloop & initial input; exit silent/batch-mode (-es/-Es).
         read_error_exit();
       }
 
       if (trigger_cursorhold() && !typebuf_changed(tb_change_cnt)) {
-        create_cursorhold_event();
+        create_cursorhold_event(events == main_loop.events);
       } else {
         before_blocking();
-        result = inbuf_poll(-1);
+        result = inbuf_poll(-1, events);
       }
     }
   }
@@ -139,7 +142,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
   }
 
   // If there are events, return the keys directly
-  if (maxlen && pending_events()) {
+  if (maxlen && pending_events(events)) {
     return push_event_key(buf, maxlen);
   }
 
@@ -153,7 +156,7 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 // Check if a character is available for reading
 bool os_char_avail(void)
 {
-  return inbuf_poll(0) == kInputAvail;
+  return inbuf_poll(0, NULL) == kInputAvail;
 }
 
 // Check for CTRL-C typed by reading all available characters.
@@ -170,15 +173,6 @@ void os_breakcheck(void)
   updating_screen = save_us;
 }
 
-void input_enable_events(void)
-{
-  events_enabled++;
-}
-
-void input_disable_events(void)
-{
-  events_enabled--;
-}
 
 /// Test whether a file descriptor refers to a terminal.
 ///
@@ -383,27 +377,37 @@ bool input_blocking(void)
   return blocking;
 }
 
-static bool input_poll(int ms)
+// This is a replacement for the old `WaitForChar` function in os_unix.c
+static InbufPollResult inbuf_poll(int ms, MultiQueue *events)
 {
+  if (input_ready(events)) {
+    return kInputAvail;
+  }
+
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_enter();
   }
 
-  if ((ms == - 1 || ms > 0) && !events_enabled && !input_eof) {
+  if ((ms == - 1 || ms > 0) && events == NULL && !input_eof) {
     // The pending input provoked a blocking wait. Do special events now. #6247
     blocking = true;
     multiqueue_process_events(ch_before_blocking_events);
   }
-  DLOG("blocking... events_enabled=%d events_pending=%d", events_enabled,
-       !multiqueue_empty(main_loop.events));
-  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms, input_ready() || input_eof);
+  DLOG("blocking... events_enabled=%d events_pending=%d", events != NULL,
+       events && !multiqueue_empty(events));
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, NULL, ms,
+                            input_ready(events) || input_eof);
   blocking = false;
 
   if (do_profiling == PROF_YES && ms) {
     prof_inchar_exit();
   }
 
-  return input_ready();
+  if (input_ready(events)) {
+    return kInputAvail;
+  } else {
+    return input_eof ? kInputEof : kInputNone;
+  }
 }
 
 void input_done(void)
@@ -414,16 +418,6 @@ void input_done(void)
 bool input_available(void)
 {
   return rbuffer_size(input_buffer) != 0;
-}
-
-// This is a replacement for the old `WaitForChar` function in os_unix.c
-static InbufPollResult inbuf_poll(int ms)
-{
-  if (input_ready() || input_poll(ms)) {
-    return kInputAvail;
-  }
-
-  return input_eof ? kInputEof : kInputNone;
 }
 
 static void input_read_cb(Stream *stream, RBuffer *buf, size_t c, void *data,
@@ -478,11 +472,11 @@ static int push_event_key(uint8_t *buf, int maxlen)
 }
 
 // Check if there's pending input
-static bool input_ready(void)
+static bool input_ready(MultiQueue *events)
 {
   return (typebuf_was_filled             // API call filled typeahead
           || rbuffer_size(input_buffer)  // Input buffer filled
-          || pending_events());          // Events must be processed
+          || pending_events(events));          // Events must be processed
 }
 
 // Exit because of an input read error.
@@ -495,7 +489,7 @@ static void read_error_exit(void)
   preserve_exit();
 }
 
-static bool pending_events(void)
+static bool pending_events(MultiQueue *events)
 {
-  return events_enabled && !multiqueue_empty(main_loop.events);
+  return events && !multiqueue_empty(events);
 }
