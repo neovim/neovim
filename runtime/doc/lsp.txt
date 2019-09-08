@@ -46,7 +46,7 @@ lsp#add_server_config({ftype}, {cmd}, {configuration}):
             `name`      (string):
               The name of the server
 
-            `callbacks` (dict):
+            `config` (dict):
               A dictionary of callbacks to configure the server.
 
               Available callbacks are:
@@ -60,12 +60,15 @@ lsp#add_server_config({ftype}, {cmd}, {configuration}):
   " Python example
   call lsp#add_server_config('python', { 'execute_path': 'pyls', 'args': [] })
 
-  " Typescript configuration
-  call lsp#add_server_config('typescript', {
-      \ 'name': 'ts', ....
-      \ 'callbacks': {
-        \ 'root_uri': { server -> RootFinderFromPlugin() }
-      \ }})
+  " Rust example
+  call lsp#add_server_config('rust',
+      \ { 'execute_path': 'rustup', 'args': ['run', 'stable', 'rls'] },
+      \ {
+      \   'clippy_preference': 'on',
+      \   'all_targets': v:false,
+      \   'build_on_save': v:true,
+      \   'wait_to_build': 0
+      \ })
 
 ================================================================================
                                                                   *lsp-request*

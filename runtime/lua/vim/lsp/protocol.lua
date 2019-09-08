@@ -229,7 +229,7 @@ end
 --
 
 protocol.InitializeParams = function(client)
-  return {
+  local config = {
     processId = vim.api.nvim_call_function('getpid', {}),
     rootUri = server_config.get_root_uri(client.filetype),
     capabilities = {
@@ -311,6 +311,10 @@ protocol.InitializeParams = function(client)
       },
     },
   }
+
+  config = vim.tbl_extend('force', config, server_config.get_server_config(client.filetype))
+  client:set_client_capabilities(config)
+  return config
 end
 
 protocol.initializedParams = function(_args)

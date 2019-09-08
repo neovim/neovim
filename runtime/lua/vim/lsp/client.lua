@@ -111,15 +111,19 @@ client.initialize = function(self)
     self:set_server_capabilities(data)
     self:notify('initialized', {})
     self:notify('textDocument/didOpen', DidOpenTextDocumentParams(self))
-    self.capabilities =  util.DefaultMap:new(data.capabilities)
+    self:set_server_capabilities(data.capabilities)
     return data.capabilities
   end, nil)
 
   return result
 end
 
-client.set_server_capabilities = function(self, data)
-  self.server_capabilities = data.capabilities
+client.set_client_capabilities = function(self, capabilities)
+  self.client_capabilities = util.DefaultMap:new(capabilities)
+end
+
+client.set_server_capabilities = function(self, capabilities)
+  self.server_capabilities = util.DefaultMap:new(capabilities)
 end
 
 --- Make a request to the server
