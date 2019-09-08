@@ -1484,3 +1484,18 @@ func Test_edit_special_chars()
 
   close!
 endfunc
+
+func Test_edit_startinsert()
+  new
+  set backspace+=start
+  call setline(1, 'foobar')
+  call feedkeys("A\<C-U>\<Esc>", 'xt')
+  call assert_equal('', getline(1))
+
+  call setline(1, 'foobar')
+  call feedkeys(":startinsert!\<CR>\<C-U>\<Esc>", 'xt')
+  call assert_equal('', getline(1))
+
+  set backspace&
+  bwipe!
+endfunc

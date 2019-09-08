@@ -7,7 +7,7 @@
 
 // option_defs.h: definition of global variables for settable options
 
-// Return value from get_option_value_strict */
+// Return value from get_option_value_strict
 #define SOPT_BOOL 0x01     // Boolean option
 #define SOPT_NUM 0x02      // Number option
 #define SOPT_STRING 0x04   // String option
@@ -32,7 +32,7 @@
 
 #define DFLT_GREPFORMAT "%f:%l:%m,%f:%l%m,%f  %l%m"
 
-/* default values for b_p_ff 'fileformat' and p_ffs 'fileformats' */
+// default values for b_p_ff 'fileformat' and p_ffs 'fileformats'
 #define FF_DOS          "dos"
 #define FF_MAC          "mac"
 #define FF_UNIX         "unix"
@@ -40,7 +40,7 @@
 #ifdef USE_CRNL
 # define DFLT_FF        "dos"
 # define DFLT_FFS_VIM   "dos,unix"
-# define DFLT_FFS_VI    "dos,unix"      /* also autodetect in compatible mode */
+# define DFLT_FFS_VI    "dos,unix"      // also autodetect in compatible mode
 #else
 #  define DFLT_FF       "unix"
 #  define DFLT_FFS_VIM  "unix,dos"
@@ -48,19 +48,19 @@
 #endif
 
 
-/* Possible values for 'encoding' */
-# define ENC_UCSBOM     "ucs-bom"       /* check for BOM at start of file */
+// Possible values for 'encoding'
+# define ENC_UCSBOM     "ucs-bom"       // check for BOM at start of file
 
-/* default value for 'encoding' */
+// default value for 'encoding'
 # define ENC_DFLT       "utf-8"
 
-/* end-of-line style */
-#define EOL_UNKNOWN     -1      /* not defined yet */
-#define EOL_UNIX        0       /* NL */
-#define EOL_DOS         1       /* CR NL */
-#define EOL_MAC         2       /* CR */
+// end-of-line style
+#define EOL_UNKNOWN     -1      // not defined yet
+#define EOL_UNIX        0       // NL
+#define EOL_DOS         1       // CR NL
+#define EOL_MAC         2       // CR
 
-/* Formatting options for p_fo 'formatoptions' */
+// Formatting options for p_fo 'formatoptions'
 #define FO_WRAP         't'
 #define FO_WRAP_COMS    'c'
 #define FO_RET_COMS     'r'
@@ -71,9 +71,9 @@
 #define FO_INS_VI       'v'
 #define FO_INS_LONG     'l'
 #define FO_INS_BLANK    'b'
-#define FO_MBYTE_BREAK  'm'     /* break before/after multi-byte char */
-#define FO_MBYTE_JOIN   'M'     /* no space before/after multi-byte char */
-#define FO_MBYTE_JOIN2  'B'     /* no space between multi-byte chars */
+#define FO_MBYTE_BREAK  'm'     // break before/after multi-byte char
+#define FO_MBYTE_JOIN   'M'     // no space before/after multi-byte char
+#define FO_MBYTE_JOIN2  'B'     // no space between multi-byte chars
 #define FO_ONE_LETTER   '1'
 #define FO_WHITE_PAR    'w'     // trailing white space continues paragr.
 #define FO_AUTO         'a'     // automatic formatting
@@ -135,22 +135,22 @@
 #define CPO_VIM         "aABceFs_"
 #define CPO_VI          "aAbBcCdDeEfFiIJKlLmMnoOpPqrRsStuvWxXyZ$!%+>;_"
 
-/* characters for p_ww option: */
+// characters for p_ww option:
 #define WW_ALL          "bshl<>[],~"
 
-/* characters for p_mouse option: */
-#define MOUSE_NORMAL    'n'             /* use mouse in Normal mode */
-#define MOUSE_VISUAL    'v'             /* use mouse in Visual/Select mode */
-#define MOUSE_INSERT    'i'             /* use mouse in Insert mode */
-#define MOUSE_COMMAND   'c'             /* use mouse in Command-line mode */
-#define MOUSE_HELP      'h'             /* use mouse in help buffers */
-#define MOUSE_RETURN    'r'             /* use mouse for hit-return message */
-#define MOUSE_A         "nvich"         /* used for 'a' flag */
-#define MOUSE_ALL       "anvichr"       /* all possible characters */
-#define MOUSE_NONE      ' '             /* don't use Visual selection */
-#define MOUSE_NONEF     'x'             /* forced modeless selection */
+// characters for p_mouse option:
+#define MOUSE_NORMAL    'n'             // use mouse in Normal mode
+#define MOUSE_VISUAL    'v'             // use mouse in Visual/Select mode
+#define MOUSE_INSERT    'i'             // use mouse in Insert mode
+#define MOUSE_COMMAND   'c'             // use mouse in Command-line mode
+#define MOUSE_HELP      'h'             // use mouse in help buffers
+#define MOUSE_RETURN    'r'             // use mouse for hit-return message
+#define MOUSE_A         "nvich"         // used for 'a' flag
+#define MOUSE_ALL       "anvichr"       // all possible characters
+#define MOUSE_NONE      ' '             // don't use Visual selection
+#define MOUSE_NONEF     'x'             // forced modeless selection
 
-#define COCU_ALL        "nvic"          /* flags for 'concealcursor' */
+#define COCU_ALL        "nvic"          // flags for 'concealcursor'
 
 /// characters for p_shm option:
 enum {
@@ -206,19 +206,19 @@ enum {
 #define GO_KEEPWINSIZE  'k'             // keep GUI window size
 #define GO_ALL          "aAbcefFghilmMprTvk"  // all possible flags for 'go'
 
-/* flags for 'comments' option */
-#define COM_NEST        'n'             /* comments strings nest */
-#define COM_BLANK       'b'             /* needs blank after string */
-#define COM_START       's'             /* start of comment */
-#define COM_MIDDLE      'm'             /* middle of comment */
-#define COM_END         'e'             /* end of comment */
-#define COM_AUTO_END    'x'             /* last char of end closes comment */
-#define COM_FIRST       'f'             /* first line comment only */
-#define COM_LEFT        'l'             /* left adjusted */
-#define COM_RIGHT       'r'             /* right adjusted */
-#define COM_NOBACK      'O'             /* don't use for "O" command */
-#define COM_ALL         "nbsmexflrO"    /* all flags for 'comments' option */
-#define COM_MAX_LEN     50              /* maximum length of a part */
+// flags for 'comments' option
+#define COM_NEST        'n'             // comments strings nest
+#define COM_BLANK       'b'             // needs blank after string
+#define COM_START       's'             // start of comment
+#define COM_MIDDLE      'm'             // middle of comment
+#define COM_END         'e'             // end of comment
+#define COM_AUTO_END    'x'             // last char of end closes comment
+#define COM_FIRST       'f'             // first line comment only
+#define COM_LEFT        'l'             // left adjusted
+#define COM_RIGHT       'r'             // right adjusted
+#define COM_NOBACK      'O'             // don't use for "O" command
+#define COM_ALL         "nbsmexflrO"    // all flags for 'comments' option
+#define COM_MAX_LEN     50              // maximum length of a part
 
 /// 'statusline' option flags
 enum {
@@ -273,15 +273,15 @@ enum {
   0, \
 })
 
-/* flags used for parsed 'wildmode' */
+// flags used for parsed 'wildmode'
 #define WIM_FULL        1
 #define WIM_LONGEST     2
 #define WIM_LIST        4
 
-/* arguments for can_bs() */
-#define BS_INDENT       'i'     /* "Indent" */
-#define BS_EOL          'o'     /* "eOl" */
-#define BS_START        's'     /* "Start" */
+// arguments for can_bs()
+#define BS_INDENT       'i'     // "Indent"
+#define BS_EOL          'o'     // "eOl"
+#define BS_START        's'     // "Start"
 
 #define LISPWORD_VALUE \
   "defun,define,defmacro,set!,lambda,if,case,let,flet,let*,letrec,do,do*,define-syntax,let-syntax,letrec-syntax,destructuring-bind,defpackage,defparameter,defstruct,deftype,defvar,do-all-symbols,do-external-symbols,do-symbols,dolist,dotimes,ecase,etypecase,eval-when,labels,macrolet,multiple-value-bind,multiple-value-call,multiple-value-prog1,multiple-value-setq,prog1,progv,typecase,unless,unwind-protect,when,with-input-from-string,with-open-file,with-open-stream,with-output-to-string,with-package-iterator,define-condition,handler-bind,handler-case,restart-bind,restart-case,with-simple-restart,store-value,use-value,muffle-warning,abort,continue,with-slots,with-slots*,with-accessors,with-accessors*,defclass,defmethod,print-unreadable-object"
@@ -344,20 +344,20 @@ static char *(p_bo_values[]) = {"all", "backspace", "cursor", "complete",
 #define BO_SPELL  0x20000
 #define BO_WILD   0x40000
 
-EXTERN char_u   *p_bsk;         /* 'backupskip' */
-EXTERN char_u   *p_breakat;     /* 'breakat' */
-EXTERN char_u   *p_cmp;         /* 'casemap' */
+EXTERN char_u   *p_bsk;         // 'backupskip'
+EXTERN char_u   *p_breakat;     // 'breakat'
+EXTERN char_u   *p_cmp;         // 'casemap'
 EXTERN unsigned cmp_flags;
 # ifdef IN_OPTION_C
 static char *(p_cmp_values[]) = {"internal", "keepascii", NULL};
 # endif
 # define CMP_INTERNAL           0x001
 # define CMP_KEEPASCII          0x002
-EXTERN char_u   *p_enc;         /* 'encoding' */
-EXTERN int p_deco;              /* 'delcombine' */
-EXTERN char_u   *p_ccv;         /* 'charconvert' */
-EXTERN char_u   *p_cedit;       /* 'cedit' */
-EXTERN char_u   *p_cb;          /* 'clipboard' */
+EXTERN char_u   *p_enc;         // 'encoding'
+EXTERN int p_deco;              // 'delcombine'
+EXTERN char_u   *p_ccv;         // 'charconvert'
+EXTERN char_u   *p_cedit;       // 'cedit'
+EXTERN char_u   *p_cb;          // 'clipboard'
 EXTERN unsigned cb_flags;
 #ifdef IN_OPTION_C
 static char *(p_cb_values[]) = {"unnamed", "unnamedplus", NULL};
@@ -379,19 +379,19 @@ EXTERN int p_csre;              // 'cscoperelative'
 EXTERN char_u   *p_csqf;        // 'cscopequickfix'
 #  define       CSQF_CMDS   "sgdctefia"
 #  define       CSQF_FLAGS  "+-0"
-EXTERN int p_cst;               /* 'cscopetag' */
-EXTERN long p_csto;             /* 'cscopetagorder' */
-EXTERN long p_cspc;             /* 'cscopepathcomp' */
-EXTERN int p_csverbose;         /* 'cscopeverbose' */
-EXTERN char_u   *p_debug;       /* 'debug' */
-EXTERN char_u   *p_def;         /* 'define' */
+EXTERN int p_cst;               // 'cscopetag'
+EXTERN long p_csto;             // 'cscopetagorder'
+EXTERN long p_cspc;             // 'cscopepathcomp'
+EXTERN int p_csverbose;         // 'cscopeverbose'
+EXTERN char_u   *p_debug;       // 'debug'
+EXTERN char_u   *p_def;         // 'define'
 EXTERN char_u   *p_inc;
-EXTERN char_u   *p_dip;         /* 'diffopt' */
-EXTERN char_u   *p_dex;         /* 'diffexpr' */
-EXTERN char_u   *p_dict;        /* 'dictionary' */
-EXTERN int p_dg;                /* 'digraph' */
-EXTERN char_u   *p_dir;         /* 'directory' */
-EXTERN char_u   *p_dy;          /* 'display' */
+EXTERN char_u   *p_dip;         // 'diffopt'
+EXTERN char_u   *p_dex;         // 'diffexpr'
+EXTERN char_u   *p_dict;        // 'dictionary'
+EXTERN int p_dg;                // 'digraph'
+EXTERN char_u   *p_dir;         // 'directory'
+EXTERN char_u   *p_dy;          // 'display'
 EXTERN unsigned dy_flags;
 #ifdef IN_OPTION_C
 static char *(p_dy_values[]) = { "lastline", "truncate", "uhex", "msgsep",
@@ -545,12 +545,12 @@ EXTERN char_u   *p_slm;         // 'selectmode'
 EXTERN char_u   *p_ssop;        // 'sessionoptions'
 EXTERN unsigned ssop_flags;
 # ifdef IN_OPTION_C
-/* Also used for 'viewoptions'! */
-static char *(p_ssop_values[]) = {"buffers", "winpos", "resize", "winsize",
-                                  "localoptions", "options", "help", "blank",
-                                  "globals", "slash", "unix",
-                                  "sesdir", "curdir", "folds", "cursor",
-                                  "tabpages", NULL };
+// Also used for 'viewoptions'!
+static char *(p_ssop_values[]) = {
+  "buffers", "winpos", "resize", "winsize",
+  "localoptions", "options", "help", "blank", "globals", "slash", "unix",
+  "sesdir", "curdir", "folds", "cursor", "tabpages", NULL
+};
 # endif
 # define SSOP_BUFFERS           0x001
 # define SSOP_WINPOS            0x002
@@ -655,15 +655,15 @@ EXTERN unsigned ve_flags;
 # ifdef IN_OPTION_C
 static char *(p_ve_values[]) = {"block", "insert", "all", "onemore", NULL};
 # endif
-# define VE_BLOCK       5       /* includes "all" */
-# define VE_INSERT      6       /* includes "all" */
+# define VE_BLOCK       5       // includes "all"
+# define VE_INSERT      6       // includes "all"
 # define VE_ALL         4
 # define VE_ONEMORE     8
-EXTERN long p_verbose;          /* 'verbose' */
+EXTERN long p_verbose;          // 'verbose'
 #ifdef IN_OPTION_C
-char_u  *p_vfile = (char_u *)""; /* used before options are initialized */
+char_u *p_vfile = (char_u *)"";   // used before options are initialized
 #else
-extern char_u   *p_vfile;       /* 'verbosefile' */
+extern char_u   *p_vfile;       // 'verbosefile'
 #endif
 EXTERN int p_warn;              // 'warn'
 EXTERN char_u   *p_wop;         // 'wildoptions'
@@ -780,7 +780,7 @@ enum {
   , BV_UDF
   , BV_UL
   , BV_WM
-  , BV_COUNT        /* must be the last one */
+  , BV_COUNT        // must be the last one
 };
 
 /*
@@ -832,7 +832,7 @@ enum {
   , WV_COUNT        // must be the last one
 };
 
-/* Value for b_p_ul indicating the global value must be used. */
+// Value for b_p_ul indicating the global value must be used.
 #define NO_LOCAL_UNDOLEVEL -123456
 
 #define SB_MAX 100000  // Maximum 'scrollback' value.
