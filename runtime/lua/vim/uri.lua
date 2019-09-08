@@ -54,7 +54,7 @@ local function _uri_encode(text, rfc)
     )
 end
 
-local function fname_to_uri(path)
+local function uri_from_fname(path)
   if _is_windows_fname(path) then
     local volume_path = vim.api.nvim_call_function('substitute', { path, '\\(^\\c[A-Z]:\\)\\(.*\\)', '\\1', '' })
     local fname = vim.api.nvim_call_function('substitute', { path, '\\(^\\c[A-Z]:\\)\\(.*\\)', '\\2', '' })
@@ -75,8 +75,8 @@ local function fname_to_uri(path)
   return uri..path
 end
 
-local function bufnr_to_uri(bufnr)
-  return fname_to_uri(vim.api.nvim_buf_get_name(bufnr))
+local function uri_from_bufnr(bufnr)
+  return uri_from_fname(vim.api.nvim_buf_get_name(bufnr))
 end
 
 local function uri_to_fname (uri)
@@ -91,8 +91,8 @@ local function uri_to_fname (uri)
 end
 
 local module = {
-  fname_to_uri = fname_to_uri,
-  bufnr_to_uri = bufnr_to_uri,
+  uri_from_fname = uri_from_fname,
+  uri_from_bufnr = uri_from_bufnr,
   uri_to_fname = uri_to_fname,
 }
 

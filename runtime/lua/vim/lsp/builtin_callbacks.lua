@@ -260,7 +260,7 @@ BuiltinCallbacks['textDocument/definition'] = {
 
     local data_file = vim.uri_to_fname(data.uri)
 
-    if data_file ~= vim.fname_to_uri(current_file) then
+    if data_file ~= vim.uri_from_fname(current_file) then
       vim.api.nvim_command('silent edit ' .. data_file)
     end
 

@@ -80,7 +80,7 @@ server_config.get_name = function(filetype)
 end
 
 server_config.default_root_uri = function()
-  return vim.fname_to_uri(vim.api.nvim_call_function('getcwd', {}))
+  return vim.uri_from_fname(vim.api.nvim_call_function('getcwd', {}))
 end
 
 server_config.get_root_uri = function(filetype)
