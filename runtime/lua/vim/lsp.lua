@@ -142,4 +142,13 @@ lsp.client_has_started = function(filetype)
   return get_client(filetype) ~= nil
 end
 
+lsp.client_info = function(filetype)
+  local client =  get_client(filetype)
+  if client then
+    return vim.tbl_tostring(client)
+  else
+    return 'No client is available for '..filetype
+  end
+end
+
 return lsp
