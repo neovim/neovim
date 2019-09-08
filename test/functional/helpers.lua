@@ -689,6 +689,7 @@ end
 
 module.funcs = module.create_callindex(module.call)
 module.meths = module.create_callindex(module.nvim)
+module.async_meths = module.create_callindex(module.nvim_async)
 module.uimeths = module.create_callindex(ui)
 module.bufmeths = module.create_callindex(module.buffer)
 module.winmeths = module.create_callindex(module.window)
