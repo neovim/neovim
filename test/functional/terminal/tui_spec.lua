@@ -850,34 +850,31 @@ describe('TUI FocusGained/FocusLost', function()
     feed_data(':set shell='..nvim_dir..'/shell-test\n')
     feed_data(':set noshowmode laststatus=0\n')
 
-    retry(2, 3 * screen.timeout, function()
-      feed_data(':terminal\n')
-      screen:sleep(1)
-      feed_data('\027[I')
-      screen:expect([[
-        {1:r}eady $                                           |
-        [Process exited 0]                                |
-                                                          |
-                                                          |
-                                                          |
-        gained                                            |
-        {3:-- TERMINAL --}                                    |
-      ]])
-      feed_data('\027[O')
-      screen:expect([[
-        {1:r}eady $                                           |
-        [Process exited 0]                                |
-                                                          |
-                                                          |
-                                                          |
-        lost                                              |
-        {3:-- TERMINAL --}                                    |
-      ]])
+    feed_data(':terminal\n')
+    -- Wait for terminal to be ready.
+    screen:expect{any='-- TERMINAL --'}
 
-      -- If retry is needed...
-      feed_data("\034\016")  -- CTRL-\ CTRL-N
-      feed_data(':bwipeout!\n')
-    end)
+    feed_data('\027[I')
+    screen:expect{grid=[[
+      {1:r}eady $                                           |
+      [Process exited 0]                                |
+                                                        |
+                                                        |
+                                                        |
+      gained                                            |
+      {3:-- TERMINAL --}                                    |
+    ]], timeout=(3 * screen.timeout)}
+
+    feed_data('\027[O')
+    screen:expect([[
+      {1:r}eady $                                           |
+      [Process exited 0]                                |
+                                                        |
+                                                        |
+                                                        |
+      lost                                              |
+      {3:-- TERMINAL --}                                    |
+    ]])
   end)
 
   it('in press-enter prompt', function()
