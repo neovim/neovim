@@ -1215,6 +1215,9 @@ replaced with SOH (0x01).
 Note: By default the difference between upper and lowercase is ignored.  If
 you want to match case, add "\C" to the pattern |/\C|.
 
+Vim will read lines of any length, but only the first 4095 bytes are used, the
+rest is ignored.  Items can only be 1023 bytes long.
+
 
 Basic items
 

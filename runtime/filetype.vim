@@ -1,7 +1,7 @@
 " Vim support file to detect file types
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2019 Jul 27
+" Last Change:	2019 Aug 26
 
 " Listen very carefully, I will say this only once
 if exists("did_load_filetypes")
@@ -696,6 +696,9 @@ au BufNewFile,BufRead *.vc,*.ev,*.sum,*.errsum	setf hercules
 
 " HEX (Intel)
 au BufNewFile,BufRead *.hex,*.h32		setf hex
+
+" Hollywood
+au BufRead,BufNewFile *.hws			setf hollywood
 
 " Tilde (must be before HTML)
 au BufNewFile,BufRead *.t.html			setf tilde

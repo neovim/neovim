@@ -780,6 +780,7 @@ To reduce the number of hit-enter prompts:
 - Set 'cmdheight' to 2 or higher.
 - Add flags to 'shortmess'.
 - Reset 'showcmd' and/or 'ruler'.
+- Make sure `:echo` text is within |v:echospace| screen cells.
 
 If your script causes the hit-enter prompt and you don't know why, you may
 find the |v:scrollstart| variable useful.

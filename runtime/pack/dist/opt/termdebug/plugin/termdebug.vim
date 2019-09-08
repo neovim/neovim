@@ -239,6 +239,10 @@ func s:StartDebug_term(dict)
           " Success!
           break
         endif
+        if response =~ 'Reading symbols from' && response !~ 'new-ui'
+          " Reading symbols might take a while
+	  let try_count -= 1
+        endif
       endif
     endfor
     if response =~ 'New UI allocated'
