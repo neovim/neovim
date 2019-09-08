@@ -188,8 +188,9 @@ paste = (function()
     if mode == 'c' and not got_line1 then  -- cmdline-mode: paste only 1 line.
       got_line1 = (#lines > 1)
       vim.api.nvim_set_option('paste', true)  -- For nvim_input().
-      local line1, _ = string.gsub(lines[1], '[\r\n\012\027]', ' ')
-      vim.api.nvim_input(line1)  -- Scrub "\r".
+      local line1, _ = string.gsub(lines[1], '[\r\n\012\027]', ' ')  -- Scrub.
+      vim.api.nvim_input(line1)
+      vim.api.nvim_set_option('paste', false)
     elseif mode == 'i' or mode == 'R' then
       vim.api.nvim_put(lines, 'c', false, true)
     else
@@ -206,7 +207,6 @@ paste = (function()
     if phase == -1 or phase == 3 then
       vim.api.nvim_command('redraw')
       vim.api.nvim_command('echo ""')
-      vim.api.nvim_set_option('paste', false)
     end
     return true  -- Paste will not continue if not returning `true`.
   end
