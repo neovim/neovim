@@ -412,6 +412,32 @@ describe('highlight', function()
     ]])
   end)
 
+  it('strikethrough', function()
+    screen:detach()
+    screen = Screen.new(25,6)
+    screen:attach()
+    feed_command('syntax on')
+    feed_command('syn keyword TmpKeyword foo')
+    feed_command('hi! Awesome cterm=strikethrough gui=strikethrough')
+    feed_command('hi link TmpKeyword Awesome')
+    insert([[
+      foo
+      foo bar
+      foobarfoobar
+      ]])
+    screen:expect([[
+      {1:foo}                      |
+      {1:foo} bar                  |
+      foobarfoobar             |
+      ^                         |
+      {2:~                        }|
+                               |
+    ]],{
+      [1] = {strikethrough = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue1},
+    })
+  end)
+
   it('guisp (special/undercurl)', function()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')

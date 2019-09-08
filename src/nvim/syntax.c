@@ -115,11 +115,11 @@ static int include_link = 0;    /* when 2 include "nvim/link" and "clear" */
 /// The "term", "cterm" and "gui" arguments can be any combination of the
 /// following names, separated by commas (but no spaces!).
 static char *(hl_name_table[]) =
-{"bold", "standout", "underline", "undercurl",
- "italic", "reverse", "inverse", "NONE"};
+{ "bold", "standout", "underline", "undercurl",
+  "italic", "reverse", "inverse", "strikethrough", "NONE" };
 static int hl_attr_table[] =
-{HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
- HL_INVERSE, 0};
+{ HL_BOLD, HL_STANDOUT, HL_UNDERLINE, HL_UNDERCURL, HL_ITALIC, HL_INVERSE,
+  HL_INVERSE, HL_STRIKETHROUGH, 0 };
 
 // The patterns that are being searched for are stored in a syn_pattern.
 // A match item consists of one pattern.

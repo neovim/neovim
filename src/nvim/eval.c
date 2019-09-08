@@ -17593,6 +17593,9 @@ static void f_synIDattr(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     case 's': {
       if (TOLOWER_ASC(what[1]) == 'p') {  // sp[#]
         p = highlight_color(id, what, modec);
+      } else if (TOLOWER_ASC(what[1]) == 't'
+                 && TOLOWER_ASC(what[2]) == 'r') {  // strikethrough
+        p = highlight_has_attr(id, HL_STRIKETHROUGH, modec);
       } else {  // standout
         p = highlight_has_attr(id, HL_STANDOUT, modec);
       }

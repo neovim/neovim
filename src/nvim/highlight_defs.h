@@ -11,12 +11,13 @@ typedef int32_t RgbValue;
 ///
 /// sign bit should not be used here, as it identifies invalid highlight
 typedef enum {
-  HL_INVERSE     = 0x01,
-  HL_BOLD        = 0x02,
-  HL_ITALIC      = 0x04,
-  HL_UNDERLINE   = 0x08,
-  HL_UNDERCURL   = 0x10,
-  HL_STANDOUT    = 0x20,
+  HL_INVERSE         = 0x01,
+  HL_BOLD            = 0x02,
+  HL_ITALIC          = 0x04,
+  HL_UNDERLINE       = 0x08,
+  HL_UNDERCURL       = 0x10,
+  HL_STANDOUT        = 0x20,
+  HL_STRIKETHROUGH   = 0x40,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes
