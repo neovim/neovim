@@ -363,7 +363,10 @@ describe('TUI', function()
     feed_data('\027[D')   -- <Left> to place cursor between quotes.
     wait_for_mode('c')
     -- "bracketed paste"
-    feed_data('\027[200~line 1\nline 2\n\027[201~')
+    feed_data('\027[200~line 1\nline 2\n')
+    wait_for_mode('c')
+    feed_data('line 3\nline 4\n\027[201~')
+    wait_for_mode('c')
     screen:expect{grid=[[
       foo                                               |
                                                         |
@@ -505,7 +508,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:197: Vim:E21: }|
+      {8:paste: Error executing lua: vim.lua:195: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
