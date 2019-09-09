@@ -1,6 +1,7 @@
 " Tests for startup.
 
 source shared.vim
+source screendump.vim
 
 " Check that loading startup.vim works.
 func Test_startup_script()
@@ -558,4 +559,16 @@ func Test_zzz_startinsert()
     call assert_equal(['123456foobar'], lines)
   endif
   call delete('Xtestout')
+endfunc
+
+func Test_start_with_tabs()
+  if !CanRunVimInTerminal()
+    return
+  endif
+
+  let buf = RunVimInTerminal('-p a b c', {})
+  call VerifyScreenDump(buf, 'Test_start_with_tabs', {})
+
+  " clean up
+  call StopVimInTerminal(buf)
 endfunc

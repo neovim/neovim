@@ -251,6 +251,24 @@ describe('startup', function()
                                                                   |
     ]])
   end)
+
+  it("sets 'shortmess' when loading other tabs", function()
+    clear({args={'-p', 'a', 'b', 'c'}})
+    local screen = Screen.new(25, 4)
+    screen:attach()
+    screen:expect({grid=[[
+        {1: a }{2: b  c }{3:               }{2:X}|
+        ^                         |
+        {4:~                        }|
+                                 |
+          ]],
+      attr_ids={
+        [1] = {bold = true},
+        [2] = {background = Screen.colors.LightGrey, underline = true},
+        [3] = {reverse = true},
+        [4] = {bold = true, foreground = Screen.colors.Blue1},
+    }})
+  end)
 end)
 
 describe('sysinit', function()
