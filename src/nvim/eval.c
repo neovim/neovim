@@ -24133,24 +24133,30 @@ typval_T eval_call_provider(char *provider, char *method, list_T *arguments)
   return rettv;
 }
 
-/// Checks if a named provider is enabled.
-bool eval_has_provider(const char *name)
+/// Checks if provider for feature `feat` is enabled.
+bool eval_has_provider(const char *feat)
 {
-  if (!strequal(name, "clipboard")
-      && !strequal(name, "python")
-      && !strequal(name, "python3")
-      && !strequal(name, "ruby")
-      && !strequal(name, "node")) {
+  if (!strequal(feat, "clipboard")
+      && !strequal(feat, "python")
+      && !strequal(feat, "python3")
+      && !strequal(feat, "python_compiled")
+      && !strequal(feat, "python_dynamic")
+      && !strequal(feat, "python3_compiled")
+      && !strequal(feat, "python3_dynamic")
+      && !strequal(feat, "ruby")
+      && !strequal(feat, "node")) {
     // Avoid autoload for non-provider has() features.
     return false;
   }
 
-  char buf[256];
-  int len;
-  typval_T tv;
+  char name[32];  // Normalized: "python_compiled" => "python".
+  snprintf(name, sizeof(name), "%s", feat);
+  strchrsub(name, '_', '\0');  // Chop any "_xx" suffix.
 
+  char buf[256];
+  typval_T tv;
   // Get the g:loaded_xx_provider variable.
-  len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
+  int len = snprintf(buf, sizeof(buf), "g:loaded_%s_provider", name);
   if (get_var_tv(buf, len, &tv, NULL, false, true) == FAIL) {
     // Trigger autoload once.
     len = snprintf(buf, sizeof(buf), "provider#%s#bogus", name);
