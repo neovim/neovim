@@ -239,7 +239,7 @@ GUIs can paste by calling |nvim_paste()|.
 
 PASTE BEHAVIOR ~
 
-Paste inserts text before the cursor.  Lines break at <NL>, <CR> and <CR><NL>.
+Paste inserts text after the cursor.  Lines break at <NL>, <CR>, and <CR><NL>.
 When pasting a huge amount of text, screen-updates are throttled and the
 message area shows a "..." pulse.
 

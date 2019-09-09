@@ -191,8 +191,14 @@ paste = (function()
       local line1, _ = string.gsub(lines[1], '[\r\n\012\027]', ' ')  -- Scrub.
       vim.api.nvim_input(line1)
       vim.api.nvim_set_option('paste', false)
-    elseif mode ~= 'c' then
-      vim.api.nvim_put(lines, 'c', false, true)
+    elseif mode ~= 'c' then  -- Else: discard remaining cmdline-mode chunks.
+      if phase < 2 and mode ~= 'i' and mode ~= 'R' then
+        vim.api.nvim_put(lines, 'c', true, true)
+        -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
+        vim.api.nvim_command('normal! a')
+      else
+        vim.api.nvim_put(lines, 'c', false, true)
+      end
     end
     if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)
