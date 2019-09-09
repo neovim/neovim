@@ -441,18 +441,17 @@ Boolean nvim_win_is_valid(Window window)
 }
 
 
-/// Configure window position. Currently this is only used to configure
-/// floating and external windows (including changing a split window to these
-/// types).
-///
-/// See documentation at |nvim_open_win()|, for the meaning of parameters.
+/// Configures window layout. Currently only for floating and external windows
+/// (including changing a split window to those layouts).
 ///
 /// When reconfiguring a floating window, absent option keys will not be
-/// changed. The following restriction apply: `row`, `col` and `relative`
-/// must be reconfigured together. Only changing a subset of these is an error.
+/// changed.  `row`/`col` and `relative` must be reconfigured together.
+///
+/// @see |nvim_open_win()|
 ///
 /// @param      window  Window handle, or 0 for current window
-/// @param      config  Dictionary of window configuration
+/// @param      config  Map defining the window configuration,
+///                     see |nvim_open_win()|
 /// @param[out] err     Error details, if any
 void nvim_win_set_config(Window window, Dictionary config, Error *err)
   FUNC_API_SINCE(6)
@@ -483,16 +482,15 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
   }
 }
 
-/// Return window configuration.
+/// Gets window configuration.
 ///
-/// Return a dictionary containing the same config that can be given to
-/// |nvim_open_win()|.
+/// The returned value may be given to |nvim_open_win()|.
 ///
-/// `relative` will be an empty string for normal windows.
+/// `relative` is empty for normal windows.
 ///
 /// @param      window Window handle, or 0 for current window
 /// @param[out] err Error details, if any
-/// @return     Window configuration
+/// @return     Map defining the window configuration, see |nvim_open_win()|
 Dictionary nvim_win_get_config(Window window, Error *err)
   FUNC_API_SINCE(6)
 {

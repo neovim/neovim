@@ -2952,9 +2952,9 @@ char2nr({expr} [, {utf8}])					*char2nr()*
 			char2nr("ABC")		returns 65
 			char2nr("á")		returns 225
 			char2nr("á"[0])		returns 195
+			char2nr("\<M-x>")	returns 128
 <		Non-ASCII characters are always treated as UTF-8 characters.
-		{utf8} has no effect, and exists only for
-		backwards-compatibility.
+		{utf8} is ignored, it exists only for backwards-compatibility.
 		A combining character is a separate character.
 		|nr2char()| does the opposite.
 

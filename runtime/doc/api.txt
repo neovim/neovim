@@ -408,34 +408,26 @@ Example using the API from Vimscript: >
 ==============================================================================
 Floating windows						 *api-floatwin*
 
-Nvim supports floating windows, windows that are displayed on top of ordinary
-windows.  This is useful to implement simple widgets, such as tooltips
-displaying information next to cursor text. Floating windows are fully
-functional buffer windows and support user editing. They support the standard
-|api-window| calls and almost all window options (with some exceptions such as
-'statusline' is not supported currently).
+Floating windows ("floats") are displayed on top of normal windows.  This is
+useful to implement simple widgets, such as tooltips displayed next to the
+cursor. Floats are fully functional windows supporting user editing, common
+|api-window| calls, and most window options (except 'statusline').
 
-Floating windows are created either by |nvim_open_win()| to open a new window,
-or |nvim_win_set_config()| to reconfigure a normal window into a float.
-Currently the position can either be grid coordinates relative to the top-left
-of some window, or a position relative to the current window cursor.  The
-parameters for positioning are described in detail at |nvim_open_win()|.
+Two ways to create a floating window:
+- |nvim_open_win()| creates a new window (needs a buffer, see |nvim_create_buf()|)
+- |nvim_win_set_config()| reconfigures a normal window into a float
 
-|nvim_open_win()| assumes an existing buffer to display in the window. To create
-a scratch buffer for the float, |nvim_create_buf()| can be used. The text in
-the buffer can be highlighted using standard functionality, such as syntax
-highlighting, or |api-highlights|.
+To close it use |nvim_win_close()| or a command such as |:close|.
 
-By default, floats will use |hl-NormalFloat| as normal highlight, which
-links to |hl-Pmenu| in the builtin color scheme. The 'winhighlight' option can
-be used to override it. Currently, floating windows don't support any visual
-decorations like a border or additional widgets like scrollbar. By default,
-floats will inherit options from the current window. This is not always
-useful for some options, like 'number'. Use `style='minimal'` flag to
-|nvim_open_win()| to disable many UI features that are unwanted for a simple
-float, like end-of-buffer region or special columns.
+Buffer text can be highlighted by typical mechanisms (syntax highlighting,
+|api-highlights|). The |hl-NormalFloat| group highlights normal text;
+'winhighlight' can be used as usual to override groups locally. Floats inherit
+options from the current window; specify `style=minimal` in |nvim_open_win()|
+to disable various visual features such as the 'number' column.
 
-Here is an example for creating a float with scratch buffer: >
+Currently, floating windows don't support widgets like border or scrollbar.
+
+Example: create a float with scratch buffer: >
 
     let buf = nvim_create_buf(v:false, v:true)
     call nvim_buf_set_lines(buf, 0, -1, v:true, ["test", "text"])
@@ -445,7 +437,6 @@ Here is an example for creating a float with scratch buffer: >
     " optional: change highlight, otherwise Pmenu is used
     call nvim_win_set_option(win, 'winhl', 'Normal:MyHighlight')
 >
-To close the float, |nvim_win_close()| can be used.
 
 ==============================================================================
 Global Functions                                                  *api-global*
@@ -604,18 +595,18 @@ nvim_eval({expr})                                                *nvim_eval()*
                     Evaluation result or expanded object
 
 nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
-                Execute lua code. Parameters (if any) are available as `...`
+                Execute Lua code. Parameters (if any) are available as `...`
                 inside the chunk. The chunk can return a value.
 
                 Only statements are executed. To evaluate an expression,
                 prefix it with `return` : return my_function(...)
 
                 Parameters: ~
-                    {code}  lua code to execute
+                    {code}  Lua code to execute
                     {args}  Arguments to the code
 
                 Return: ~
-                    Return value of lua code if present or NIL.
+                    Return value of Lua code if present or NIL.
 
 nvim_call_function({fn}, {args})                        *nvim_call_function()*
                 Calls a VimL function with the given arguments.
@@ -830,74 +821,77 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                 Exactly one of `external` and `relative` must be specified.
                 The `width` and `height` of the new window must be specified.
 
-                With editor positioning row=0, col=0 refers to the top-left
-                corner of the screen-grid and row=Lines-1, Columns-1 refers to
-                the bottom-right corner. Floating point values are allowed,
-                but the builtin implementation (used by TUI and GUIs without
-                multigrid support) will always round down to nearest integer.
+                With relative=editor (row=0,col=0) refers to the top-left
+                corner of the screen-grid and (row=Lines-1,col=Columns-1)
+                refers to the bottom-right corner. Fractional values are
+                allowed, but the builtin implementation (used by non-multigrid
+                UIs) will always round down to nearest integer.
 
                 Out-of-bounds values, and configurations that make the float
                 not fit inside the main editor, are allowed. The builtin
-                implementation will truncate values so floats are completely
-                within the main screen grid. External GUIs could let floats
-                hover outside of the main window like a tooltip, but this
-                should not be used to specify arbitrary WM screen positions.
+                implementation truncates values so floats are fully within the
+                main screen grid. External GUIs could let floats hover outside
+                of the main window like a tooltip, but this should not be used
+                to specify arbitrary WM screen positions.
+
+                Example (Lua): window-relative float >
+                    vim.api.nvim_open_win(0, false,
+                      {relative='win', row=3, col=3, width=12, height=3})
+<
+
+                Example (Lua): buffer-relative float (travels as buffer is
+                scrolled) >
+                    vim.api.nvim_open_win(0, false,
+                      {relative='win', width=12, height=3, bufpos={100,10}})
+<
 
                 Parameters: ~
-                    {buffer}  handle of buffer to be displayed in the window
-                    {enter}   whether the window should be entered (made the
-                              current window)
-                    {config}  Dictionary for the window configuration accepts
-                              these keys:
-                              •  `relative` : If set, the window becomes a floating
-                                window. The window will be placed with row,col
-                                coordinates relative to one of the following:
-                                • "editor" the global editor grid
-                                • "win" a window. Use `win` to specify a
-                                  window id, or the current window will be
-                                  used by default.
-                                • "cursor" the cursor position in current
-                                  window.
+                    {buffer}  Buffer to display, or 0 for current buffer
+                    {enter}   Enter the window (make it the current window)
+                    {config}  Map defining the window configuration. Keys:
+                              •  `relative` : Sets the window layout to "floating", placed
+                                at (row,col) coordinates relative to one of:
+                                • "editor" The global editor grid
+                                • "win" Window given by the `win` field, or
+                                  current window by default.
+                                • "cursor" Cursor position in current window.
 
-                              • `win` : When using relative='win', window id
-                                of the window where the position is defined.
-                              •  `anchor` : The corner of the float that the row,col
-                                position defines:
-                                • "NW" north-west (default)
-                                • "NE" north-east
-                                • "SW" south-west
-                                • "SE" south-east
+                              • `win` : |window-ID| for relative="win".
+                              •  `anchor` : Decides which corner of the float to place
+                                at (row,col):
+                                • "NW" northwest (default)
+                                • "NE" northeast
+                                • "SW" southwest
+                                • "SE" southeast
 
-                              • `height` : window height (in character cells).
+                              • `width` : Window width (in character cells).
                                 Minimum of 1.
-                              • `width` : window width (in character cells).
+                              • `height` : Window height (in character cells).
                                 Minimum of 1.
-                              • 'bufpos': position float relative text inside
-                                window `win` (only when relative="win"). Takes
-                                a tuple of zero-indexed [line, column]. Note:
-                                `row` and `col` if present, still applies
-                                relative this position. By default `row=1` and
-                                `col=0` are used (with default NW anchor), to
-                                make the float behave like a tooltip under the
-                                buffer text.
-                              • `row` : row position. Screen cell height are
-                                used as unit. Can be floating point.
-                              • `col` : column position. Screen cell width is
-                                used as unit. Can be floating point.
-                              • `focusable` : Whether window can be focused by
-                                wincmds and mouse events. Defaults to true.
-                                Even if set to false, the window can still be
-                                entered using |nvim_set_current_win()| API
-                                call.
+                              • `bufpos` : Places float relative to buffer
+                                text (only when relative="win"). Takes a tuple
+                                of zero-indexed [line, column]. `row` and
+                                `col` if given are applied relative to this
+                                position, else they default to `row=1` and
+                                `col=0` (thus like a tooltip near the buffer
+                                text).
+                              • `row` : Row position in units of "screen cell
+                                height", may be fractional.
+                              • `col` : Column position in units of "screen
+                                cell width", may be fractional.
+                              • `focusable` : Enable focus by user actions
+                                (wincmds, mouse events). Defaults to true.
+                                Non-focusable windows can be entered by
+                                |nvim_set_current_win()|.
                               • `external` : GUI should display the window as
                                 an external top-level window. Currently
                                 accepts no other positioning configuration
                                 together with this.
-                              •  `style` : Configure the apparance of the window.
+                              •  `style` : Configure the appearance of the window.
                                 Currently only takes one non-empty value:
                                 • "minimal" Nvim will display the window with
                                   many UI options disabled. This is useful
-                                  when displaing a temporary float where the
+                                  when displaying a temporary float where the
                                   text should not be edited. Disables
                                   'number', 'relativenumber', 'cursorline',
                                   'cursorcolumn', 'foldcolumn', 'spell' and
@@ -906,8 +900,6 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                                   by setting `eob` flag of 'fillchars' to a
                                   space char, and clearing the |EndOfBuffer|
                                   region in 'winhighlight'.
-                              • top-level window. Currently accepts no other
-                                positioning configuration together with this.
 
                 Return: ~
                     Window handle, or 0 on error
@@ -1985,35 +1977,35 @@ nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                     true if the window is valid, false otherwise
 
 nvim_win_set_config({window}, {config})                *nvim_win_set_config()*
-                Configure window position. Currently this is only used to
-                configure floating and external windows (including changing a
-                split window to these types).
-
-                See documentation at |nvim_open_win()|, for the meaning of
-                parameters.
+                Configures window layout. Currently only for floating and
+                external windows (including changing a split window to those
+                layouts).
 
                 When reconfiguring a floating window, absent option keys will
-                not be changed. The following restriction apply: `row` , `col`
-                and `relative` must be reconfigured together. Only changing a
-                subset of these is an error.
+                not be changed. `row` / `col` and `relative` must be
+                reconfigured together.
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
-                    {config}  Dictionary of window configuration
+                    {config}  Map defining the window configuration, see
+                              |nvim_open_win()|
+
+                See also: ~
+                    |nvim_open_win()|
 
 nvim_win_get_config({window})                          *nvim_win_get_config()*
-                Return window configuration.
+                Gets window configuration.
 
-                Return a dictionary containing the same config that can be
-                given to |nvim_open_win()|.
+                The returned value may be given to |nvim_open_win()|.
 
-                `relative` will be an empty string for normal windows.
+                `relative` is empty for normal windows.
 
                 Parameters: ~
                     {window}  Window handle, or 0 for current window
 
                 Return: ~
-                    Window configuration
+                    Map defining the window configuration, see
+                    |nvim_open_win()|
 
 nvim_win_close({window}, {force})                           *nvim_win_close()*
                 Closes the window (like |:close| with a |window-ID|).

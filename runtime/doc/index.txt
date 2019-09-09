@@ -847,6 +847,10 @@ tag		char	      note action in Normal mode	~
 				   position the cursor at the start (left
 				   side) of the screen
 |zt|		zt		   redraw, cursor line at top of window
+|zuw|		zuw		   undo |zw|
+|zug|		zug		   undo |zg|
+|zuW|		zuW		   undo |zW|
+|zuG|		zuG		   undo |zG|
 |zv|		zv		   open enough folds to view the cursor line
 |zw|		zw		   mark word as wrong (bad) spelled word
 |zx|		zx		   re-apply 'foldlevel' and do "zv"
@@ -1078,10 +1082,17 @@ tag		command		action in Command-line editing mode	~
 |c_<Insert>|	<Insert>	toggle insert/overstrike mode
 |c_<LeftMouse>|	<LeftMouse>	cursor at mouse click
 
+==============================================================================
+5. Terminal mode				*terminal-mode-index*
+
+In a |terminal| buffer all keys except |CTRL-\_CTRL-N| are forwarded to the
+terminal job.  Use CTRL-\_CTRL-N to go to Normal mode.
+
+
 You found it, Arthur!				*holy-grail*
 
 ==============================================================================
-5. EX commands					*ex-cmd-index* *:index*
+6. EX commands					*ex-cmd-index* *:index*
 
 This is a brief but complete listing of all the ":" commands, without
 mentioning any arguments.  The optional part of the command name is inside [].
@@ -1089,10 +1100,13 @@ The commands are sorted on the non-optional part of their name.
 
 tag		command		action ~
 ------------------------------------------------------------------------------
+|:|		:		nothing
+|:range|	:{range}	go to last line in {range}
 |:!|		:!		filter lines or execute an external command
 |:!!|		:!!		repeat last ":!" command
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
+|:star|		:*		execute contents of a register
 |:<|		:<		shift lines one 'shiftwidth' left
 |:=|		:=		print the cursor line number
 |:>|		:>		shift lines one 'shiftwidth' right
@@ -1160,7 +1174,7 @@ tag		command		action ~
 |:cclose|	:ccl[ose]	close quickfix window
 |:cd|		:cd		change directory
 |:cdo|		:cdo		execute command in each valid error list entry
-|:cfdo|		:cfdo		execute command in each file in error list
+|:cfdo|		:cfd[o]		execute command in each file in error list
 |:center|	:ce[nter]	format lines at the center
 |:cexpr|	:cex[pr]	read errors from expr and jump to first
 |:cfile|	:cf[ile]	read file with error messages and jump to first
@@ -1361,9 +1375,9 @@ tag		command		action ~
 |:ltag|		:lt[ag]		jump to tag and add matching tags to the
 				location list
 |:lunmap|	:lu[nmap]	like ":unmap!" but includes Lang-Arg mode
-|:lua|		:lua		execute Lua command
+|:lua|		:lua		execute |Lua| command
 |:luado|	:luad[o]	execute Lua command for each line
-|:luafile|	:luaf[ile]	execute Lua script file
+|:luafile|	:luaf[ile]	execute |Lua| script file
 |:lvimgrep|	:lv[imgrep]	search for pattern in files
 |:lvimgrepadd|	:lvimgrepa[dd]	like :vimgrep, but append to current list
 |:lwindow|	:lw[indow]	open or close location window
@@ -1402,7 +1416,7 @@ tag		command		action ~
 |:number|	:nu[mber]	print lines with line number
 |:nunmap|	:nun[map]	like ":unmap" but for Normal mode
 |:nunmenu|	:nunme[nu]	remove menu for Normal mode
-|:oldfiles|	:o[ldfiles]	list files that have marks in the ShaDa file
+|:oldfiles|	:ol[dfiles]	list files that have marks in the |shada| file
 |:omap|		:om[ap]		like ":map" but for Operator-pending mode
 |:omapclear|	:omapc[lear]	remove all mappings for Operator-pending mode
 |:omenu|	:ome[nu]	add menu for Operator-pending mode
@@ -1467,7 +1481,10 @@ tag		command		action ~
 |:rewind|	:rew[ind]	go to the first file in the argument list
 |:right|	:ri[ght]	right align text
 |:rightbelow|	:rightb[elow]	make split window appear right or below
-|:rshada|	:rsh[ada]	read from ShaDa file
+|:rshada|	:rsh[ada]	read from |shada| file
+|:ruby|		:rub[y]		execute Ruby command
+|:rubydo|	:rubyd[o]	execute Ruby command for each line
+|:rubyfile|	:rubyf[ile]	execute Ruby script file
 |:rundo|	:rund[o]	read undo information from a file
 |:runtime|	:ru[ntime]	source vim scripts in 'runtimepath'
 |:substitute|	:s[ubstitute]	find and replace text
@@ -1570,6 +1587,8 @@ tag		command		action ~
 |:tab|		:tab		create new tab when opening new window
 |:tag|		:ta[g]		jump to tag
 |:tags|		:tags		show the contents of the tag stack
+|:tcd|		:tcd		change directory for tab page
+|:tchdir|	:tch[dir]	change directory for tab page
 |:terminal|	:te[rminal]	open a terminal buffer
 |:tfirst|	:tf[irst]	jump to first matching tag
 |:throw|	:th[row]	throw an exception
