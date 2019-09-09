@@ -314,14 +314,11 @@ void nvim_ui_try_resize_grid(uint64_t channel_id, Integer grid, Integer width,
   ui_grid_resize((handle_T)grid, (int)width, (int)height, err);
 }
 
-/// Tell Nvim the number of element displayed in popumenu. The amount of
-/// movement by <PageUp> or <PageDown> is determined by the value set by this.
-///
-/// If the ext_popupmenu option is false or the height is 0 or less, fails
-/// with error.
+/// Tells Nvim the number of elements displaying in the popumenu, to decide
+/// <PageUp> and <PageDown> movement.
 ///
 /// @param channel_id
-/// @param height  The popupmenu height.
+/// @param height  Popupmenu height, must be greater than zero.
 /// @param[out] err Error details, if any
 void nvim_ui_pum_set_height(uint64_t channel_id, Integer height, Error *err)
   FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY

@@ -2136,4 +2136,11 @@ nvim_ui_try_resize_grid({grid}, {width}, {height})
                     {width}   The new requested width.
                     {height}  The new requested height.
 
+nvim_ui_pum_set_height({height})                    *nvim_ui_pum_set_height()*
+                Tells Nvim the number of elements displaying in the popumenu,
+                to decide <PageUp> and <PageDown> movement.
+
+                Parameters: ~
+                    {height}  Popupmenu height, must be greater than zero.
+
  vim:tw=78:ts=8:ft=help:norl:
