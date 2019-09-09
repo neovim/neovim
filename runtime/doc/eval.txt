@@ -2062,6 +2062,13 @@ count({list}, {expr} [, {ic} [, {start}]])
 				Number	 count how many {expr} are in {list}
 cscope_connection([{num}, {dbpath} [, {prepend}]])
 				Number	checks existence of cscope connection
+ctxget([{index}])		Dict	return the |context| dict at {index}
+ctxpop()			none	pop and restore |context| from the
+					|context-stack|
+ctxpush([{types}])		none	push the current |context| to the
+					|context-stack|
+ctxset({context}[, {index}])	none	set |context| at {index}
+ctxsize()			Number	return |context-stack| size
 cursor({lnum}, {col} [, {off}])
 				Number	move cursor to {lnum}, {col}, {off}
 cursor({list})			Number	move cursor to position in {list}
@@ -3232,6 +3239,32 @@ cscope_connection([{num} , {dbpath} [, {prepend}]])
 		cscope_connection(4, "out", "local")			0
 		cscope_connection(4, "cscope.out", "/usr/local")	1
 <
+
+ctxget([{index}])					*ctxget()*
+		Returns a |Dictionary| representing the |context| at {index}
+		from the top of the |context-stack| (see |context-dict|).
+		If {index} is not given, it is assumed to be 0 (i.e.: top).
+
+ctxpop()						*ctxpop()*
+		Pops and restores the |context| at the top of the
+		|context-stack|.
+
+ctxpush([{types}])					*ctxpush()*
+		Pushes the current editor state (|context|) on the
+		|context-stack|.
+		If {types} is given and is a |List| of |String|s, it specifies
+		which |context-types| to include in the pushed context.
+		Otherwise, all context types are included.
+
+ctxset({context}[, {index}])				*ctxset()*
+		Sets the |context| at {index} from the top of the
+		|context-stack| to that represented by {context}.
+		{context} is a Dictionary with context data (|context-dict|).
+		If {index} is not given, it is assumed to be 0 (i.e.: top).
+
+ctxsize()						*ctxsize()*
+		Returns the size of the |context-stack|.
+
 cursor({lnum}, {col} [, {off}])				*cursor()*
 cursor({list})
 		Positions the cursor at the column (byte count) {col} in the
@@ -5416,24 +5449,22 @@ jobstop({id})						*jobstop()*
 		(if any) will be invoked.
 		See |job-control|.
 
-jobwait({ids}[, {timeout}])				*jobwait()*
-		Wait for a set of jobs and their |on_exit| handlers to
-		complete.
+jobwait({jobs}[, {timeout}])				*jobwait()*
+		Waits for jobs and their |on_exit| handlers to complete.
 
-		{ids} is a list of |job-id|s to wait for.
+		{jobs} is a List of |job-id|s to wait for.
 		{timeout} is the maximum waiting time in milliseconds, -1
 		means forever.
 
 		Timeout of 0 can be used to check the status of a job: >
 			let running = jobwait([{job-id}], 0)[0] == -1
 <
-		During jobwait() callbacks for jobs not in the {ids} list may
+		During jobwait() callbacks for jobs not in the {jobs} list may
 		be invoked. The screen will not redraw unless |:redraw| is
 		invoked by a callback.
 
-		Returns a list of len({ids}) integers, where each integer is
-		the wait-result of the corresponding job. Each wait-result is
-		one of the following:
+		Returns a list of len({jobs}) integers, where each integer is
+		the status of the corresponding job:
 			Exit-code, if the job exited
 			-1 if the timeout was exceeded
 			-2 if the job was interrupted (by |CTRL-C|)

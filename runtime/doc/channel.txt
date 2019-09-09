@@ -30,7 +30,7 @@ There are several ways to open a channel:
 
 Channels support multiple modes or protocols. In the most basic
 mode of operation, raw bytes are read and written to the channel.
-The |rpc| protocol, based on the msgpack-rpc standard, enables nvim and the
+The |RPC| protocol, based on the msgpack-rpc standard, enables nvim and the
 process at the other end to send remote calls and events to each other.
 The builtin |terminal-emulator| is also implemented on top of PTY channels.
 

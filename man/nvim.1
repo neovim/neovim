@@ -89,10 +89,14 @@ Ex mode, reading stdin as Ex commands.
 Ex mode, reading stdin as text.
 .Ic :help Ex-mode
 .It Fl es
-Silent/batch mode, reading stdin as Ex commands.
+Silent (non-interactive) Ex mode, reading stdin as Ex commands.
+Useful for scripting because it does NOT start a UI, unlike
+.Fl e .
 .Ic :help silent-mode
 .It Fl \&Es
-Silent/batch mode, reading stdin as text.
+Silent (non-interactive) Ex mode, reading stdin as text.
+Useful for scripting because it does NOT start a UI, unlike
+.Fl E .
 .Ic :help silent-mode
 .It Fl d
 Diff mode.

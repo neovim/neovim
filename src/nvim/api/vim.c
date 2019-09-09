@@ -1019,7 +1019,7 @@ fail:
 ///
 /// Currently this is used to open floating and external windows.
 /// Floats are windows that are drawn above the split layout, at some anchor
-/// position in some other window. Floats can be draw internally or by external
+/// position in some other window. Floats can be drawn internally or by external
 /// GUI with the |ui-multigrid| extension. External windows are only supported
 /// with multigrid GUIs, and are displayed as separate top-level windows.
 ///
@@ -1059,11 +1059,11 @@ fail:
 ///      - "SE" south-east
 ///   - `height`: window height (in character cells). Minimum of 1.
 ///   - `width`: window width (in character cells). Minimum of 1.
-///   - 'bufpos': position float relative text inside the window `win` (only
-///               when relative="win"). Takes a tuple of [line, column] where
-///               both are zero-index. Note: `row` and `col` if present, still
-///               applies relative this positio. By default `row=1` and `col=0`
-///               is used (with default NW anchor), to make the float
+///   - 'bufpos': position float relative text inside window `win` (only
+///               when relative="win"). Takes a tuple of zero-indexed
+///               [line, column]. Note: `row` and `col` if present, still
+///               applies relative this position. By default `row=1` and `col=0`
+///               are used (with default NW anchor), to make the float
 ///               behave like a tooltip under the buffer text.
 ///   - `row`: row position. Screen cell height are used as unit. Can be
 ///       floating point.
@@ -1416,9 +1416,9 @@ Dictionary nvim_get_color_map(void)
 /// Gets a map of the current editor state.
 ///
 /// @param  types  Context types ("regs", "jumps", "buflist", "gvars", ...)
-///                to gather, or NIL for all.
+///                to gather, or NIL for all (see |context-types|).
 ///
-/// @return map of global context
+/// @return map of global |context|.
 Dictionary nvim_get_context(Array types)
   FUNC_API_SINCE(6)
 {
@@ -1453,9 +1453,9 @@ Dictionary nvim_get_context(Array types)
   return dict;
 }
 
-/// Sets the current editor state to that in given context dictionary.
+/// Sets the current editor state from the given |context| map.
 ///
-/// @param ctx_dict  Context dictionary.
+/// @param  dict  |Context| map.
 Object nvim_load_context(Dictionary dict)
   FUNC_API_SINCE(6)
 {

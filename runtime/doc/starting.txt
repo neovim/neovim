@@ -199,9 +199,8 @@ argument.
 		  -E reads stdin as text (into buffer 1).
 
 -es						*-es* *-Es* *-s-ex* *silent-mode*
--Es		Silent or batch mode.  Special case of |-s| (which takes an
-		argument while "-es" doesn't).  Disables most prompts,
-		messages, warnings and errors.
+-Es		Silent mode (no UI), for scripting.  Unrelated to |-s|.
+		Disables most prompts, messages, warnings and errors.
 
 		-es reads/executes stdin as Ex commands. >
 			printf "put ='foo'\n%%print\n" | nvim -es
@@ -351,7 +350,7 @@ argument.
 
 							*--embed*
 --embed		Use stdin/stdout as a msgpack-RPC channel, so applications can
-		embed and control Nvim via the |rpc-api|.
+		embed and control Nvim via the RPC |API|.
 
 		Waits for the client ("embedder") to call |nvim_ui_attach()|
 		before sourcing startup files and reading buffers, so that UIs

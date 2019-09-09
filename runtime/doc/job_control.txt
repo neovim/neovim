@@ -4,7 +4,7 @@
 		 NVIM REFERENCE MANUAL    by Thiago de Arruda
 
 
-Nvim job control					*job-control*
+Nvim job control					*job* *job-control*
 
 Job control is a way to perform multitasking in Nvim, so scripts can spawn and
 control multiple processes without blocking the current Nvim instance.

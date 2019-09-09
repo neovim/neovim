@@ -137,7 +137,6 @@ Special issues ~
 Programming language support ~
 |indent.txt|	automatic indenting for C and other languages
 |syntax.txt|	syntax highlighting
-|textprop.txt|	Attaching properties to text for highlighting or other
 |filetype.txt|	settings done specifically for a type of file
 |quickfix.txt|	commands for a quick edit-compile-fix cycle
 |ft_ada.txt|	Ada (the programming language) support

@@ -169,6 +169,7 @@ Highlight groups:
   |expr-highlight| highlight groups (prefixed with "Nvim")
   |hl-NormalFloat| highlights floating window
   |hl-NormalNC| highlights non-current windows
+  |hl-MsgArea| highlights messages/cmdline area
   |hl-MsgSeparator| highlights separator for scrolled messages
   |hl-QuickFixLine|
   |hl-Substitute|
@@ -435,6 +436,17 @@ Compile-time features:
   EBCDIC
   Emacs tags support
   X11 integration (see |x11-selection|)
+
+Highlight groups:
+  *hl-StatusLineTerm* *hl-StatusLineTermNC* are unnecessary because Nvim
+    supports 'winhighlight' window-local highlights.
+    For example, to mimic Vim's StatusLineTerm:  >
+      hi StatusLineTerm ctermfg=black ctermbg=green
+      hi StatusLineTermNC ctermfg=green
+      autocmd TermOpen,WinEnter * if &buftype=='terminal'
+        \|setlocal winhighlight=StatusLine:StatusLineTerm,StatusLineNC:StatusLineTermNC
+        \|else|setlocal winhighlight=|endif
+<
 
 Options:
   'antialias'

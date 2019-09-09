@@ -373,36 +373,30 @@ Example: to use the "nvim_get_current_line()" API function, call
 ------------------------------------------------------------------------------
 VIM.LOOP						*lua-loop*
 
-`vim.loop` exposes all features of the Nvim event-loop.  This is a lower-level
+`vim.loop` exposes all features of the Nvim event-loop.  This is a low-level
 API that provides functionality for networking, filesystem, and process
 management.  Try this command to see available functions: >
 
     :lua print(vim.inspect(vim.loop))
 
-See http://docs.libuv.org for complete documentation.
-See https://github.com/luvit/luv/tree/master/examples for examples.
+Reference: http://docs.libuv.org
+Examples:  https://github.com/luvit/luv/tree/master/examples
 
 						*E5560* *lua-loop-callbacks*
-Note: it is not allowed to directly invoke most of the Nvim API from `vim.loop`
-callbacks.  This will result in an error: >
+It is an error to directly invoke `vim.api` functions (except |api-fast|) in
+`vim.loop` callbacks.  For example, this is an error: >
 
     local timer = vim.loop.new_timer()
     timer:start(1000, 0, function()
       vim.api.nvim_command('echomsg "test"')
     end)
 
-The `vim.schedule_wrap` helper can be used to defer the callback until it
-is safe to execute API methods. >
+To avoid the error use |vim.schedule_wrap()| to defer the callback: >
 
     local timer = vim.loop.new_timer()
     timer:start(1000, 0, vim.schedule_wrap(function()
       vim.api.nvim_command('echomsg "test"')
     end))
-
-A subset of the API is available in direct luv callbacks ("fast" callbacks),
-most notably |nvim_get_mode()| and |nvim_input()|.  It is possible to
-check whether code is running in this context using |vim.in_fast_event()|.
-
 
 Example: repeating timer
     1. Save this code to a file.
@@ -454,6 +448,13 @@ Example: TCP echo-server				*tcp-server*
 ------------------------------------------------------------------------------
 VIM							*lua-util*
 
+vim.in_fast_event()					*vim.in_fast_event()*
+        Returns true if the code is executing as part of a "fast" event
+        handler, where most of the API is disabled. These are low-level events
+        (e.g. |lua-loop-callbacks|) which can be invoked whenever Nvim polls
+        for input.  When this is `false` most API functions are callable (but
+        may be subject to other restrictions such as |textlock|).
+
 vim.stricmp({a}, {b})					*vim.stricmp()*
         Compares strings case-insensitively.  Returns 0, 1 or -1 if strings
         are equal, {a} is greater than {b} or {a} is lesser than {b},
@@ -480,14 +481,6 @@ vim.str_byteindex({str}, {index}[, {use_utf16}])	*vim.str_byteindex()*
 vim.schedule({callback})				*vim.schedule()*
         Schedules {callback} to be invoked soon by the main event-loop. Useful
         to avoid |textlock| or other temporary restrictions.
-
-vim.in_fast_event()					*vim.in_fast_event()*
-        Returns true if the code is executing as part of a "fast" event
-        handler, where most of the API is disabled. These are low-level event
-        such as luv callbacks |lua-loop-callbacks|, which can be invoked at
-        any time nvim polls for input. When this returns `false` most API
-        functions are callable, but can be subjected to other restrictions,
-        such as |textlock|.
 
 vim.type_idx						*vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
@@ -551,6 +544,14 @@ paste({lines}, {phase})                                          *vim.paste()*
 
                 See also: ~
                     |paste|
+
+schedule_wrap({cb})                                      *vim.schedule_wrap()*
+                Defers callback `cb` until the Nvim API is safe to call.
+
+                See also: ~
+                    |lua-loop-callbacks|
+                    |vim.schedule()|
+                    |vim.in_fast_event()|
 
 
 
@@ -650,5 +651,17 @@ trim({s})                                                         *vim.trim()*
 
                 See also: ~
                     https://www.lua.org/pil/20.2.html
+
+pesc({s})                                                         *vim.pesc()*
+                Escapes magic chars in a Lua pattern string.
+
+                Parameters: ~
+                    {s}  String to escape
+
+                Return: ~
+                    %-escaped pattern string
+
+                See also: ~
+                    https://github.com/rxi/lume
 
  vim:tw=78:ts=8:ft=help:norl:

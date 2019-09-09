@@ -62,6 +62,8 @@ Configure the sanitizer(s) via these environment variables:
 
     # Change to detect_leaks=1 to detect memory leaks (slower).
     export ASAN_OPTIONS="detect_leaks=0:log_path=$HOME/logs/asan"
+    # Show backtraces in the logs.
+    export UBSAN_OPTIONS=print_stacktrace=1
     export MSAN_OPTIONS="log_path=${HOME}/logs/tsan"
     export TSAN_OPTIONS="log_path=${HOME}/logs/tsan"
 

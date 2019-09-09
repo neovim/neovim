@@ -3,8 +3,6 @@ Maintaining the Neovim project
 
 Notes on maintaining the Neovim project.
 
-See also: https://github.com/git/git/blob/master/Documentation/howto/maintain-git.txt
-
 General guidelines
 ------------------
 
@@ -14,7 +12,7 @@ General guidelines
 * Use automation to solve problems
 * Never break the API
 
-Ticket Triage
+Ticket triage
 -------------
 
 In practice we haven't found a meaningful way to forecast more precisely than
@@ -38,14 +36,14 @@ just not something you care very much about, by construction. Post-release you
 can review open issues, but chances are your next milestone is already getting
 full :)
 
-Release Policy
+Release policy
 --------------
 
 Release "often", but not "early".
 
 The (unreleased) `master` branch is the "early" channel; it should not be
 released if it's not stable. High-risk changes may be merged to `master` if
-the next feature-release is not imminent.
+the next release is not imminent.
 
 For maintenance releases, create a `release-x.y` branch. If the current release
 has a major bug:
@@ -55,5 +53,11 @@ has a major bug:
 3. Cut a release from `release-x.y`.
     - Run `./scripts/release.sh`
     - Update (force-push) the remote `stable` tag.
+    - The [nightly job](https://github.com/neovim/bot-ci/blob/master/ci/nightly.sh)
+      will update the release assets based on the `stable` tag.
 
-See also: https://github.com/neovim/neovim/issues/862
+See also
+--------
+
+- https://github.com/neovim/neovim/issues/862
+- https://github.com/git/git/blob/master/Documentation/howto/maintain-git.txt

@@ -43,9 +43,8 @@ There are many books on Vi and Vim.  We recommend these books:
 	"Modern Vim" by Drew Neil
 	https://vimcasts.org/publications/
 
-"Practical Vim" is a popular because of its focus on quickly learning common
-editing tasks with Vim.  "Modern Vim" explores new features introduced by Nvim
-and Vim 8.
+"Practical Vim" is acclaimed for its focus on quickly learning common editing
+tasks with Vim.  "Modern Vim" explores new features in Nvim and Vim 8.
 
 	"Vim - Vi Improved" by Steve Oualline
 
