@@ -191,10 +191,8 @@ paste = (function()
       local line1, _ = string.gsub(lines[1], '[\r\n\012\027]', ' ')  -- Scrub.
       vim.api.nvim_input(line1)
       vim.api.nvim_set_option('paste', false)
-    elseif mode == 'i' or mode == 'R' then
+    elseif mode ~= 'c' then
       vim.api.nvim_put(lines, 'c', false, true)
-    else
-      vim.api.nvim_put(lines, 'c', true, true)
     end
     if phase ~= -1 and (now - tdots >= 100) then
       local dots = ('.'):rep(tick % 4)
@@ -205,8 +203,7 @@ paste = (function()
       vim.api.nvim_command(('echo "%s"'):format(dots))
     end
     if phase == -1 or phase == 3 then
-      vim.api.nvim_command('redraw')
-      vim.api.nvim_command('echo ""')
+      vim.api.nvim_command('redraw'..(tick > 1 and '|echo ""' or ''))
     end
     return true  -- Paste will not continue if not returning `true`.
   end

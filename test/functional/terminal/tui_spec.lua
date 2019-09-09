@@ -319,7 +319,7 @@ describe('TUI', function()
       {1:x}                                                 |
       {4:~                                                 }|
       {5:[No Name] [+]                   3,1            All}|
-                                                        |
+      :set ruler                                        |
       {3:-- TERMINAL --}                                    |
     ]]
     local expected_attr = {
@@ -353,7 +353,11 @@ describe('TUI', function()
     expect_child_buf_lines({''})
     -- CRLF input
     feed_data('\027[200~'..table.concat(expected_lf,'\r\n')..'\027[201~')
-    screen:expect{grid=expected_grid1, attr_ids=expected_attr}
+    screen:expect{
+      grid=expected_grid1:gsub(
+        ':set ruler *',
+        '3 fewer lines; before #1  0 seconds ago           '),
+      attr_ids=expected_attr}
     expect_child_buf_lines(expected_crlf)
   end)
 
@@ -363,7 +367,10 @@ describe('TUI', function()
     feed_data('\027[D')   -- <Left> to place cursor between quotes.
     wait_for_mode('c')
     -- "bracketed paste"
-    feed_data('\027[200~line 1\nline 2\n\027[201~')
+    feed_data('\027[200~line 1\nline 2\n')
+    wait_for_mode('c')
+    feed_data('line 3\nline 4\n\027[201~')
+    wait_for_mode('c')
     screen:expect{grid=[[
       foo                                               |
                                                         |
@@ -478,9 +485,9 @@ describe('TUI', function()
     feed_data('\n')  -- <CR>
     screen:expect{grid=[[
       foo                                               |
-      typed input...line A                              |
+      typed input..line A                               |
       line B                                            |
-      {1: }                                                 |
+      {1:.}                                                 |
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -505,7 +512,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:197: Vim:E21: }|
+      {8:paste: Error executing lua: vim.lua:195: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
