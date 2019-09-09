@@ -319,7 +319,7 @@ describe('TUI', function()
       {1:x}                                                 |
       {4:~                                                 }|
       {5:[No Name] [+]                   3,1            All}|
-      :set ruler                                        |
+                                                        |
       {3:-- TERMINAL --}                                    |
     ]]
     local expected_attr = {
@@ -485,9 +485,9 @@ describe('TUI', function()
     feed_data('\n')  -- <CR>
     screen:expect{grid=[[
       foo                                               |
-      typed input..line A                               |
+      typed input...line A                              |
       line B                                            |
-      {1:.}                                                 |
+      {1: }                                                 |
       {5:[No Name] [+]                                     }|
                                                         |
       {3:-- TERMINAL --}                                    |
@@ -512,7 +512,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:195: Vim:E21: }|
+      {8:paste: Error executing lua: vim.lua:196: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
