@@ -29,6 +29,10 @@ describe('python3 provider', function()
 
   it('feature test', function()
     eq(1, eval('has("python3")'))
+    eq(1, eval('has("python3_compiled")'))
+    eq(1, eval('has("python3_dynamic")'))
+    eq(0, eval('has("python3_dynamic_")'))
+    eq(0, eval('has("python3_")'))
   end)
 
   it('python3_execute', function()
