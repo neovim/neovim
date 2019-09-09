@@ -152,8 +152,6 @@ static VTermScreenCallbacks vterm_screen_callbacks = {
 };
 
 static PMap(ptr_t) *invalidated_terminals;
-static int default_vt_fg, default_vt_bg;
-static VTermColor default_vt_bg_rgb;
 
 void terminal_init(void)
 {
@@ -161,16 +159,6 @@ void terminal_init(void)
   time_watcher_init(&main_loop, &refresh_timer, NULL);
   // refresh_timer_cb will redraw the screen which can call vimscript
   refresh_timer.events = multiqueue_new_child(main_loop.events);
-
-  VTerm *vt = vterm_new(24, 80);
-  VTermState *state = vterm_obtain_state(vt);
-
-  VTermColor fg, bg;
-  vterm_state_get_default_colors(state, &fg, &bg);
-  default_vt_fg = RGB_(fg.rgb.red, fg.rgb.green, fg.rgb.blue);
-  default_vt_bg = RGB_(bg.rgb.red, bg.rgb.green, bg.rgb.blue);
-  default_vt_bg_rgb = bg;
-  vterm_free(vt);
 }
 
 void terminal_teardown(void)
@@ -185,7 +173,6 @@ void terminal_teardown(void)
 
 Terminal *terminal_open(TerminalOptions opts)
 {
-  bool true_color = ui_rgb_attached();
   // Create a new terminal instance and configure it
   Terminal *rv = xcalloc(1, sizeof(Terminal));
   rv->opts = opts;
@@ -232,10 +219,6 @@ Terminal *terminal_open(TerminalOptions opts)
   // Configure the scrollback buffer.
   rv->sb_size = (size_t)curbuf->b_p_scbk;
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
-
-  if (!true_color) {
-    return rv;
-  }
 
   vterm_state_set_bold_highbright(state, true);
 
@@ -583,11 +566,19 @@ void terminal_receive(Terminal *term, char *data, size_t len)
   vterm_screen_flush_damage(term->vts);
 }
 
+static int get_rgb(VTermState *state, VTermColor color)
+{
+  vterm_state_convert_color_to_rgb(state, &color);
+  return RGB_(color.rgb.red, color.rgb.green, color.rgb.blue);
+}
+
+
 void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
                                   int *term_attrs)
 {
   int height, width;
   vterm_get_size(term->vt, &height, &width);
+  VTermState *state = vterm_obtain_state(term->vt);
   assert(linenr);
   int row = linenr_to_row(term, linenr);
   if (row >= height) {
@@ -598,18 +589,18 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
   for (int col = 0; col < width; col++) {
     VTermScreenCell cell;
-    fetch_cell(term, row, col, &cell);
+    bool color_valid = fetch_cell(term, row, col, &cell);
+    bool fg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_FG(&cell.fg);
+    bool bg_default = !color_valid || VTERM_COLOR_IS_DEFAULT_BG(&cell.bg);
+
     // Get the rgb value set by libvterm.
-    int vt_fg = RGB_(cell.fg.rgb.red, cell.fg.rgb.green, cell.fg.rgb.blue);
-    int vt_bg = RGB_(cell.bg.rgb.red, cell.bg.rgb.green, cell.bg.rgb.blue);
-    vt_fg = vt_fg != default_vt_fg ? vt_fg : - 1;
-    vt_bg = vt_bg != default_vt_bg ? vt_bg : - 1;
-    int vt_fg_idx = VTERM_COLOR_IS_DEFAULT_FG(&cell.fg)
-        ? 0 : VTERM_COLOR_IS_INDEXED(&cell.fg)
-            ? cell.fg.indexed.idx + 1 : 0;
-    int vt_bg_idx = VTERM_COLOR_IS_DEFAULT_BG(&cell.bg)
-        ? 0 : VTERM_COLOR_IS_INDEXED(&cell.bg)
-            ? cell.bg.indexed.idx + 1 : 0;
+    int vt_fg = fg_default ? -1 : get_rgb(state, cell.fg);
+    int vt_bg = bg_default ? -1 : get_rgb(state, cell.bg);
+
+    int vt_fg_idx = ((!fg_default && VTERM_COLOR_IS_INDEXED(&cell.fg))
+                     ? cell.fg.indexed.idx + 1 : 0);
+    int vt_bg_idx = ((!bg_default && VTERM_COLOR_IS_INDEXED(&cell.bg))
+                     ? cell.bg.indexed.idx + 1 : 0);
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
@@ -618,7 +609,7 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
 
     int attr_id = 0;
 
-    if (hl_attrs || vt_fg != -1 || vt_bg != -1) {
+    if (hl_attrs ||!fg_default || !bg_default) {
       attr_id = hl_get_term_attr(&(HlAttrs) {
         .cterm_ae_attr = (int16_t)hl_attrs,
         .cterm_fg_color = vt_fg_idx,
@@ -1082,8 +1073,8 @@ static void fetch_row(Terminal *term, int row, int end_col)
   term->textbuf[line_len] = 0;
 }
 
-static void fetch_cell(Terminal *term, int row, int col,
-    VTermScreenCell *cell)
+static bool fetch_cell(Terminal *term, int row, int col,
+                       VTermScreenCell *cell)
 {
   if (row < 0) {
     ScrollbackLine *sbrow = term->sb_buffer[-row - 1];
@@ -1094,13 +1085,14 @@ static void fetch_cell(Terminal *term, int row, int col,
       *cell = (VTermScreenCell) {
         .chars = { 0 },
         .width = 1,
-        .bg = default_vt_bg_rgb
       };
+      return false;
     }
   } else {
     vterm_screen_get_cell(term->vts, (VTermPos){.row = row, .col = col},
         cell);
   }
+  return true;
 }
 
 // queue a terminal instance for refresh
