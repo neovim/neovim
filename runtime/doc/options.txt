@@ -2966,7 +2966,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 		toolbar, tabline, etc.  Instead, the behavior is similar to
 		when the window is maximized and will adjust 'lines' and
 		'columns' to fit to the window.  Without the 'k' flag Vim will
-		try to keep 'lines' and 'columns the same when adding and
+		try to keep 'lines' and 'columns' the same when adding and
 		removing GUI components.
 
 						*'guitablabel'* *'gtl'*
