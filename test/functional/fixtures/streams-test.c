@@ -7,7 +7,7 @@ uv_loop_t *loop;
 uv_process_t child_req;
 uv_process_options_t options;
 
-int main()
+int main(int argc, char **argv)
 {
   loop = uv_default_loop();
 
