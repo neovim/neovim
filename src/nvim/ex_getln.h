@@ -16,6 +16,11 @@
 #define WILD_ALL                6
 #define WILD_LONGEST            7
 #define WILD_ALL_KEEP           8
+#define WILD_DOWN               9
+#define WILD_UP                 10
+#define WILD_PAGEDOWN           11
+#define WILD_PAGEUP             12
+#define WILD_CANCEL             13
 
 #define WILD_LIST_NOTFOUND      0x01
 #define WILD_HOME_REPLACE       0x02
