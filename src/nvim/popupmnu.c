@@ -82,13 +82,6 @@ static void pum_compute_size(void)
   }
 }
 
-// Return the minimum width of the popup menu.
-static int pum_get_width(void)
-  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
-{
-  return p_pw == 0 ? PUM_DEF_WIDTH : (int)p_pw;
-}
-
 /// Show the popup menu with items "array[size]".
 /// "array" must remain valid until pum_undisplay() is called!
 /// When possible the leftmost character is aligned with screen column "col".
@@ -104,7 +97,6 @@ static int pum_get_width(void)
 void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
                  int cmd_startcol)
 {
-  int def_width;
   int context_lines;
   int above_row;
   int below_row;
@@ -168,7 +160,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       }
     }
 
-    def_width = pum_get_width();
+    int def_width = (int)p_pw;
 
     win_T *pvwin = NULL;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -284,9 +276,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       def_width = max_width;
     }
 
-    if ((((col < Columns - pum_get_width()) || (col < Columns - max_width))
+    if ((((col < Columns - p_pw) || (col < Columns - max_width))
          && !curwin->w_p_rl)
-        || (curwin->w_p_rl && ((col > pum_get_width()) || (col > max_width)))) {
+        || (curwin->w_p_rl && ((col > p_pw) || (col > max_width)))) {
       // align pum column with "col"
       pum_col = col;
 
@@ -300,18 +292,18 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       }
 
       if ((pum_width > max_width + pum_kind_width + pum_extra_width + 1)
-          && (pum_width > pum_get_width())) {
+          && (pum_width > p_pw)) {
         // the width is too much, make it narrower
         pum_width = max_width + pum_kind_width + pum_extra_width + 1;
 
-        if (pum_width < pum_get_width()) {
-          pum_width = pum_get_width();
+        if (pum_width < p_pw) {
+          pum_width = (int)p_pw;
         }
       }
-    } else if (((col > pum_get_width() || col > max_width)
+    } else if (((col > p_pw || col > max_width)
                 && !curwin->w_p_rl)
                || (curwin->w_p_rl
-                   && (col < Columns - pum_get_width()
+                   && (col < Columns - p_pw
                        || col < Columns - max_width))) {
       // align right pum edge with "col"
       if (curwin->w_p_rl) {
@@ -332,8 +324,8 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         pum_width = pum_col - pum_scrollbar;
       }
 
-      if (pum_width < pum_get_width()) {
-        pum_width = pum_get_width();
+      if (pum_width < p_pw) {
+        pum_width = (int)p_pw;
         if (curwin->w_p_rl) {
           if (pum_width > pum_col) {
             pum_width = pum_col;
@@ -344,10 +336,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
           }
         }
       } else if (pum_width > max_width + pum_kind_width + pum_extra_width + 1
-                 && pum_width > pum_get_width()) {
+                 && pum_width > p_pw) {
         pum_width = max_width + pum_kind_width + pum_extra_width + 1;
-        if (pum_width < pum_get_width()) {
-          pum_width = pum_get_width();
+        if (pum_width < p_pw) {
+          pum_width = (int)p_pw;
         }
       }
     } else if (Columns < def_width) {
@@ -361,9 +353,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       assert(Columns - 1 >= INT_MIN);
       pum_width = (int)(Columns - 1);
     } else {
-      if (max_width > pum_get_width()) {
+      if (max_width > p_pw) {
         // truncate
-        max_width = pum_get_width();
+        max_width = (int)p_pw;
       }
 
       if (curwin->w_p_rl) {

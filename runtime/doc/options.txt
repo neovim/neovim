@@ -4524,20 +4524,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			global
 	When on a ":" prompt is used in Ex mode.
 
-						*'pumheight'* *'ph'*
-'pumheight' 'ph'	number	(default 0)
-			global
-	Determines the maximum number of items to show in the popup menu for
-	Insert mode completion.  When zero as much space as available is used.
-	|ins-completion-menu|.
-
-						*'pumwidth'* *'pw'*
-'pumwidth' 'pw'		number	(default 0)
-			global
-	Determines the minium width to use for the popup menu for Insert mode
-	completion.  When zero the default of 15 screen cells is used.
-	|ins-completion-menu|.
-
 						*'pumblend'* *'pb'*
 'pumblend' 'pb'		number	(default 0)
 			global
@@ -4553,6 +4539,19 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:hi PmenuSel blend=0
 <
 	UI-dependent. Works best with RGB colors. 'termguicolors'
+
+						*'pumheight'* *'ph'*
+'pumheight' 'ph'	number	(default 0)
+			global
+	Determines the maximum number of items to show in the popup menu for
+	Insert mode completion.  When zero as much space as available is used.
+	|ins-completion-menu|.
+
+						*'pumwidth'* *'pw'*
+'pumwidth' 'pw'		number	(default 15)
+			global
+	Determines the minium width to use for the popup menu for Insert mode
+	completion.  |ins-completion-menu|.
 
 						*'pyxversion'* *'pyx'*
 'pyxversion' 'pyx'	number	(default depends on the build)
