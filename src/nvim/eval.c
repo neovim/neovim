@@ -12393,8 +12393,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 }
 
 // "jobstop()" function
-// Returns 0, or -1 on error
-static int f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
@@ -12402,31 +12401,27 @@ static int f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   int status = 0;  // zero or negative error code
 
   if (check_restricted() || check_secure()) {
-    return status;
+    return;
   }
 
   if (argvars[0].v_type != VAR_NUMBER) {
     // Only argument is the job id
     EMSG(_(e_invarg));
-    return status;
+    return;
   }
 
   Channel *data = find_job(argvars[0].vval.v_number, true);
   if (!data) {
-    return status;
+    return;
   }
 
   const char *error = NULL;
   if (data->is_rpc) {
     // Ignore return code, but show error later.
-    if (channel_close(data->id, kChannelPartRpc, NULL) == false)) {
-      status = -1;
-    }
+    (void)channel_close(data->id, kChannelPartRpc, &error);
   }
   process_stop((Process *)&data->stream.proc);
-  rettv->vval.v_number = 1;
-
-  return status;
+  rettv->vval.v_number = error ? -1 : 1;
 }
 
 // "jobwait(ids[, timeout])" function
