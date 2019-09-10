@@ -371,12 +371,13 @@ describe('system()', function()
     end)
   end)
 
-  describe("with a program that doesn't close stdout", function()
-    it('will exit properly after passing input', function()
-      local out = eval(string.format("system('%s', 'clip-data')", nvim_dir..'/streams-test'))
-      assert(out:sub(0, 5) == 'pid: ', out)
-      os_kill(out:match("%d+"))
-    end)
+  it("with a program that doesn't close stdout will exit properly after passing input", function()
+    if iswin() then
+      pending("no fork()")
+    end
+    local out = eval(string.format("system('%s', 'clip-data')", nvim_dir..'/streams-test'))
+    assert(out:sub(0, 5) == 'pid: ', out)
+    os_kill(out:match("%d+"))
   end)
 end)
 
@@ -552,11 +553,12 @@ describe('systemlist()', function()
     end)
   end)
 
-  describe("with a program that doesn't close stdout", function()
-    it('will exit properly after passing input', function()
-      local out = eval(string.format("systemlist('%s', 'clip-data')", nvim_dir..'/streams-test'))
-      assert(out[1]:sub(0, 5) == 'pid: ', out)
-      os_kill(out[1]:match("%d+"))
-    end)
+  it("with a program that doesn't close stdout will exit properly after passing input", function()
+    if iswin() then
+      pending("no fork()")
+    end
+    local out = eval(string.format("systemlist('%s', 'clip-data')", nvim_dir..'/streams-test'))
+    assert(out[1]:sub(0, 5) == 'pid: ', out)
+    os_kill(out[1]:match("%d+"))
   end)
 end)
