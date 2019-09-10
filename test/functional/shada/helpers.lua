@@ -59,7 +59,7 @@ end
 local mpack_keys = {'type', 'timestamp', 'length', 'value'}
 
 local read_shada_file = function(fname)
-  local fd = io.open(fname, 'r')
+  local fd = io.open(fname, 'rb')
   local mstring = fd:read('*a')
   fd:close()
   local unpack = mpack.Unpacker()
