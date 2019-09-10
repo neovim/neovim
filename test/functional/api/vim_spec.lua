@@ -11,7 +11,6 @@ local iswin = helpers.iswin
 local meths = helpers.meths
 local matches = helpers.matches
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
-local is_os = helpers.is_os
 local parse_context = helpers.parse_context
 local request = helpers.request
 local source = helpers.source
