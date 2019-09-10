@@ -5980,6 +5980,7 @@ static const char *highlight_init_both[] = {
   NULL
 };
 
+// Default colors only used with a light background.
 static const char *highlight_init_light[] = {
   "ColorColumn  ctermbg=LightRed guibg=LightRed",
   "CursorColumn ctermbg=LightGrey guibg=Grey90",
@@ -6013,6 +6014,7 @@ static const char *highlight_init_light[] = {
   NULL
 };
 
+// Default colors only used with a dark background.
 static const char *highlight_init_dark[] = {
   "ColorColumn  ctermbg=DarkRed guibg=DarkRed",
   "CursorColumn ctermbg=DarkGrey guibg=Grey40",
