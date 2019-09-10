@@ -54,7 +54,6 @@ static bool pum_invalid = false;  // the screen was just cleared
 # include "popupmnu.c.generated.h"
 #endif
 #define PUM_DEF_HEIGHT 10
-#define PUM_DEF_WIDTH  15
 
 static void pum_compute_size(void)
 {
