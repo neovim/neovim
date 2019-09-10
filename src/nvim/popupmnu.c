@@ -37,6 +37,7 @@ static int pum_height;              // nr of displayed pum items
 static int pum_width;               // width of displayed pum items
 static int pum_base_width;          // width of pum items base
 static int pum_kind_width;          // width of pum items kind column
+static int pum_extra_width;         // width of extra stuff
 static int pum_scrollbar;           // TRUE when scrollbar present
 
 static int pum_anchor_grid;         // grid where position is defined
@@ -55,6 +56,32 @@ static bool pum_invalid = false;  // the screen was just cleared
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
 
+static void pum_compute_size(void)
+{
+  // Compute the width of the widest match and the widest extra.
+  pum_base_width = 0;
+  pum_kind_width = 0;
+  pum_extra_width = 0;
+  for (int i = 0; i < pum_size; i++) {
+    int w = vim_strsize(pum_array[i].pum_text);
+    if (pum_base_width < w) {
+      pum_base_width = w;
+    }
+    if (pum_array[i].pum_kind != NULL) {
+      w = vim_strsize(pum_array[i].pum_kind) + 1;
+      if (pum_kind_width < w) {
+        pum_kind_width = w;
+      }
+    }
+    if (pum_array[i].pum_extra != NULL) {
+      w = vim_strsize(pum_array[i].pum_extra) + 1;
+      if (pum_extra_width < w) {
+        pum_extra_width = w;
+      }
+    }
+  }
+}
+
 /// Show the popup menu with items "array[size]".
 /// "array" must remain valid until pum_undisplay() is called!
 /// When possible the leftmost character is aligned with screen column "col".
@@ -70,12 +97,7 @@ static bool pum_invalid = false;  // the screen was just cleared
 void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
                  int cmd_startcol)
 {
-  int w;
   int def_width;
-  int max_width;
-  int kind_width;
-  int extra_width;
-  int i;
   int context_lines;
   int above_row;
   int below_row;
@@ -124,7 +146,7 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
     if (pum_external) {
       if (array_changed) {
         Array arr = ARRAY_DICT_INIT;
-        for (i = 0; i < size; i++) {
+        for (int i = 0; i < size; i++) {
           Array item = ARRAY_DICT_INIT;
           ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_text)));
           ADD(item, STRING_OBJ(cstr_to_string((char *)array[i].pum_kind)));
@@ -140,9 +162,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
     }
 
     def_width = PUM_DEF_WIDTH;
-    max_width = 0;
-    kind_width = 0;
-    extra_width = 0;
 
     win_T *pvwin = NULL;
     FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -241,32 +260,10 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       return;
     }
 
-    // Compute the width of the widest match and the widest extra.
-    for (i = 0; i < size; i++) {
-      w = vim_strsize(array[i].pum_text);
-
-      if (max_width < w) {
-        max_width = w;
-      }
-
-      if (array[i].pum_kind != NULL) {
-        w = vim_strsize(array[i].pum_kind) + 1;
-
-        if (kind_width < w) {
-          kind_width = w;
-        }
-      }
-
-      if (array[i].pum_extra != NULL) {
-        w = vim_strsize(array[i].pum_extra) + 1;
-
-        if (extra_width < w) {
-          extra_width = w;
-        }
-      }
-    }
-    pum_base_width = max_width;
-    pum_kind_width = kind_width;
+    pum_array = array;
+    pum_size = size;
+    pum_compute_size();
+    int max_width = pum_base_width;
 
     // if there are more items than room we need a scrollbar
     if (pum_height < size) {
@@ -293,9 +290,9 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
         pum_width = (int)(Columns - pum_col - pum_scrollbar);
       }
 
-      if ((pum_width > max_width + kind_width + extra_width + 1)
+      if ((pum_width > max_width + pum_kind_width + pum_extra_width + 1)
           && (pum_width > PUM_DEF_WIDTH)) {
-        pum_width = max_width + kind_width + extra_width + 1;
+        pum_width = max_width + pum_kind_width + pum_extra_width + 1;
 
         if (pum_width < PUM_DEF_WIDTH) {
           pum_width = PUM_DEF_WIDTH;
@@ -326,9 +323,6 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
       }
       pum_width = max_width - pum_scrollbar;
     }
-
-    pum_array = array;
-    pum_size = size;
 
     // Set selected item and redraw.  If the window size changed need to redo
     // the positioning.  Limit this to two times, when there is not much
