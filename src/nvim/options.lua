@@ -1823,6 +1823,13 @@ return {
       defaults={if_true={vi=0}}
     },
     {
+      full_name='pumwidth', abbreviation='pw',
+      type='number', scope={'global'},
+      vi_def=true,
+      varname='p_pw',
+      defaults={if_true={vi=0}}
+    },
+    {
       full_name='pumblend', abbreviation='pb',
       type='number', scope={'global'},
       vi_def=true,
