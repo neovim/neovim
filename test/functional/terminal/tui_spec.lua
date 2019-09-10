@@ -640,11 +640,11 @@ describe('TUI', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
       [1] = {reverse = true},
-      [2] = {foreground = 13},
+      [2] = {foreground = tonumber('0x4040ff')},
       [3] = {bold = true, reverse = true},
       [4] = {bold = true},
-      [5] = {reverse = true, foreground = 4},
-      [6] = {foreground = 4},
+      [5] = {reverse = true, foreground = tonumber('0xe0e000')},
+      [6] = {foreground = tonumber('0xe0e000')},
       [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
       [8] = {foreground = Screen.colors.SeaGreen4},
       [9] = {bold = true, foreground = Screen.colors.Blue1},
