@@ -56,6 +56,8 @@ extern StlClickDefinition *tab_page_click_defs;
 /// Size of the tab_page_click_defs array
 extern long tab_page_click_defs_size;
 
+#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "screen.h.generated.h"
 #endif
