@@ -1817,7 +1817,7 @@ return {
       type='number', scope={'global'},
       vi_def=true,
       varname='p_pw',
-      defaults={if_true={vi=0}}
+      defaults={if_true={vi=15}}
     },
     {
       full_name='pumblend', abbreviation='pb',
