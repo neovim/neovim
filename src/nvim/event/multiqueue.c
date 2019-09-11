@@ -82,7 +82,7 @@ typedef struct {
   Event event;
   bool fired;
   int refcount;
-} SplitEvent;
+} MulticastEvent;  ///< Event present on multiple queues.
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -253,25 +253,25 @@ static MultiQueueItem *multiqueue_node_data(QUEUE *q)
   return QUEUE_DATA(q, MultiQueueItem, node);
 }
 
-/// Allow an event to be processed by multiple child queues to the main queue
+/// Multicasts a one-shot event to multiple queues.
 ///
-/// The handler will be fired once by the _first_ queue that processes the
+/// The handler will be invoked once by the _first_ queue that consumes the
 /// event. Later processing will do nothing (just memory cleanup).
 ///
-/// @param ev the event
-/// @param num number of queues that the split event will be put on
-/// @return an Event that is safe to put onto `num` queues
-Event event_split(Event ev, int num)
+/// @param ev  Event
+/// @param num  Number of queues that the event will be put on
+/// @return Event that is safe to put onto `num` queues
+Event event_create_oneshot(Event ev, int num)
 {
-  SplitEvent *data = xmalloc(sizeof(*data));
+  MulticastEvent *data = xmalloc(sizeof(*data));
   data->event = ev;
   data->fired = false;
   data->refcount = num;
-  return event_create(split_event, 1, data);
+  return event_create(multiqueue_oneshot_event, 1, data);
 }
-static void split_event(void ** argv)
+static void multiqueue_oneshot_event(void **argv)
 {
-  SplitEvent *data = argv[0];
+  MulticastEvent *data = argv[0];
   if (!data->fired) {
     data->fired = true;
     if (data->event.handler) {

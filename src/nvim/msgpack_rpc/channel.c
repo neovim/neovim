@@ -358,7 +358,8 @@ static void handle_request(Channel *channel, msgpack_object *request)
   } else {
     bool is_resize = handler.fn == handle_nvim_ui_try_resize;
     if (is_resize) {
-      Event ev = event_split(event_create(request_event, 1, evdata), 2);
+      Event ev = event_create_oneshot(event_create(request_event, 1, evdata),
+                                      2);
       multiqueue_put_event(channel->events, ev);
       multiqueue_put_event(resize_events, ev);
     } else {
