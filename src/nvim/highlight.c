@@ -611,6 +611,14 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   }
 
   if (use_rgb) {
+    if (mask & HL_FG_INDEXED) {
+      PUT(hl, "fg_indexed", BOOLEAN_OBJ(true));
+    }
+
+    if (mask & HL_BG_INDEXED) {
+      PUT(hl, "bg_indexed", BOOLEAN_OBJ(true));
+    }
+
     if (ae.rgb_fg_color != -1) {
       PUT(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));
     }

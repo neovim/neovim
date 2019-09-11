@@ -598,16 +598,19 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int vt_fg = fg_default ? -1 : get_rgb(state, cell.fg);
     int vt_bg = bg_default ? -1 : get_rgb(state, cell.bg);
 
-    int vt_fg_idx = ((!fg_default && VTERM_COLOR_IS_INDEXED(&cell.fg))
-                     ? cell.fg.indexed.idx + 1 : 0);
-    int vt_bg_idx = ((!bg_default && VTERM_COLOR_IS_INDEXED(&cell.bg))
-                     ? cell.bg.indexed.idx + 1 : 0);
+    bool fg_indexed = VTERM_COLOR_IS_INDEXED(&cell.fg);
+    bool bg_indexed = VTERM_COLOR_IS_INDEXED(&cell.bg);
+
+    int vt_fg_idx = ((!fg_default && fg_indexed) ? cell.fg.indexed.idx + 1 : 0);
+    int vt_bg_idx = ((!bg_default && bg_indexed) ? cell.bg.indexed.idx + 1 : 0);
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
                  | (cell.attrs.reverse ? HL_INVERSE : 0)
                  | (cell.attrs.underline ? HL_UNDERLINE : 0)
                  | (cell.attrs.strike ? HL_STRIKETHROUGH: 0);
+                 | (fg_indexed ? HL_FG_INDEXED : 0)
+                 | (bg_indexed ? HL_BG_INDEXED : 0);
 
     int attr_id = 0;
 

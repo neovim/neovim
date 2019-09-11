@@ -586,16 +586,27 @@ static void update_attrs(UI *ui, int attr_id)
   }
 
   int fg, bg;
-  if (ui->rgb) {
-    fg = (attrs.rgb_fg_color != -1) ? attrs.rgb_fg_color : data->clear_attrs.rgb_fg_color;
+  if (ui->rgb && !(attr & HL_FG_INDEXED)) {
+    fg = ((attrs.rgb_fg_color != -1)
+          ? attrs.rgb_fg_color : data->clear_attrs.rgb_fg_color);
     if (fg != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], (fg >> 16) & 0xff);  // red
       UNIBI_SET_NUM_VAR(data->params[1], (fg >> 8) & 0xff);   // green
       UNIBI_SET_NUM_VAR(data->params[2], fg & 0xff);          // blue
       unibi_out_ext(ui, data->unibi_ext.set_rgb_foreground);
     }
+  } else {
+    fg = (attrs.cterm_fg_color
+          ? attrs.cterm_fg_color - 1 : (data->clear_attrs.cterm_fg_color - 1));
+    if (fg != -1) {
+      UNIBI_SET_NUM_VAR(data->params[0], fg);
+      unibi_out(ui, unibi_set_a_foreground);
+    }
+  }
 
-    bg = (attrs.rgb_bg_color != -1) ? attrs.rgb_bg_color : data->clear_attrs.rgb_bg_color;
+  if (ui->rgb && !(attr & HL_BG_INDEXED)) {
+    bg = ((attrs.rgb_bg_color != -1)
+          ? attrs.rgb_bg_color : data->clear_attrs.rgb_bg_color);
     if (bg != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], (bg >> 16) & 0xff);  // red
       UNIBI_SET_NUM_VAR(data->params[1], (bg >> 8) & 0xff);   // green
@@ -603,18 +614,14 @@ static void update_attrs(UI *ui, int attr_id)
       unibi_out_ext(ui, data->unibi_ext.set_rgb_background);
     }
   } else {
-    fg = attrs.cterm_fg_color ? attrs.cterm_fg_color - 1 : (data->clear_attrs.cterm_fg_color - 1);
-    if (fg != -1) {
-      UNIBI_SET_NUM_VAR(data->params[0], fg);
-      unibi_out(ui, unibi_set_a_foreground);
-    }
-
-    bg = attrs.cterm_bg_color ? attrs.cterm_bg_color - 1 : (data->clear_attrs.cterm_bg_color - 1);
+    bg = (attrs.cterm_bg_color
+          ? attrs.cterm_bg_color - 1 : (data->clear_attrs.cterm_bg_color - 1));
     if (bg != -1) {
       UNIBI_SET_NUM_VAR(data->params[0], bg);
       unibi_out(ui, unibi_set_a_background);
     }
   }
+
 
   data->default_attr = fg == -1 && bg == -1
     && !bold && !italic && !underline && !undercurl && !reverse && !standout
