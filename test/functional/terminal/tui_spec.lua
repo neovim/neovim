@@ -306,6 +306,33 @@ describe('TUI', function()
     expect_child_buf_lines({''})
   end)
 
+  it('paste: terminal mode', function()
+    feed_data(':set statusline=^^^^^^^\n')
+    feed_data(':terminal '..nvim_dir..'/tty-test\n')
+    feed_data('i')
+    screen:expect{grid=[[
+      tty ready                                         |
+      {1: }                                                 |
+                                                        |
+                                                        |
+      {5:^^^^^^^                                           }|
+      {3:-- TERMINAL --}                                    |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data('\027[200~')
+    feed_data('hallo')
+    feed_data('\027[201~')
+    screen:expect{grid=[[
+      tty ready                                         |
+      hallo{1: }                                            |
+                                                        |
+                                                        |
+      {5:^^^^^^^                                           }|
+      {3:-- TERMINAL --}                                    |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+
   it('paste: normal-mode (+CRLF #10872)', function()
     feed_data(':set ruler')
     wait_for_mode('c')
@@ -512,7 +539,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:196: Vim:E21: }|
+      {8:paste: Error executing lua: vim.lua:197: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |
