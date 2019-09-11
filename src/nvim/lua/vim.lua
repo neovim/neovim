@@ -157,6 +157,7 @@ end
 --- Return a human-readable representation of the given object.
 ---
 --@see https://github.com/kikito/inspect.lua
+--@see https://github.com/mpeterv/vinspect
 local function inspect(object, options)  -- luacheck: no unused
   error(object, options)  -- Stub for gen_vimdoc.py
 end

@@ -646,7 +646,7 @@ describe('floating windows', function()
          pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='shell',row=0,col=0}))
       eq("Invalid value of 'anchor' key",
          pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor',row=0,col=0,anchor='bottom'}))
-      eq("All of 'relative', 'row', and 'col' has to be specified at once",
+      eq("'relative' requires 'row'/'col' or 'bufpos'",
          pcall_err(meths.open_win,buf, false, {width=20,height=2,relative='editor'}))
       eq("'width' key must be a positive Integer",
          pcall_err(meths.open_win,buf, false, {width=-1,height=2,relative='editor'}))

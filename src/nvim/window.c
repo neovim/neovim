@@ -969,8 +969,8 @@ bool parse_float_config(Dictionary config, FloatConfig *fconfig, bool reconf,
   }
 
   if (has_relative != has_row || has_row != has_col) {
-    api_set_error(err, kErrorTypeValidation, "All of 'relative', 'row', and "
-                  "'col' has to be specified at once");
+    api_set_error(err, kErrorTypeValidation,
+                  "'relative' requires 'row'/'col' or 'bufpos'");
     return false;
   }
   return true;

@@ -525,6 +525,7 @@ inspect({object}, {options})                                   *vim.inspect()*
 
                 See also: ~
                     https://github.com/kikito/inspect.lua
+                    https://github.com/mpeterv/vinspect
 
 paste({lines}, {phase})                                          *vim.paste()*
                 Paste handler, invoked by |nvim_paste()| when a conforming UI
