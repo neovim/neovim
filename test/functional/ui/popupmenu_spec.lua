@@ -1156,10 +1156,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                    }{n: word      }|
-      {1:~                    }{n: choice    }|
-      {1:~                    }{n: text      }|
-      {1:~                    }{n: thing     }|
+      {n:word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {n:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1204,10 +1204,10 @@ describe('builtin popupmenu', function()
     feed('<c-p>')
     screen:expect([[
       some long prefix before the text|
-      {1:^~                    }{n: word      }|
-      {1:~                    }{n: choice    }|
-      {1:~                    }{s: text      }|
-      {1:~                    }{n: thing     }|
+      {n:^word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {s:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
@@ -1301,10 +1301,10 @@ describe('builtin popupmenu', function()
     funcs.complete(29, {'word', 'choice', 'text', 'thing'})
     screen:expect([[
       some long prefix before the ^    |
-      {1:~                    }{n: word      }|
-      {1:~                    }{n: choice    }|
-      {1:~                    }{n: text      }|
-      {1:~                    }{n: thing     }|
+      {n:word           }{1:                 }|
+      {n:choice         }{1:                 }|
+      {n:text           }{1:                 }|
+      {n:thing          }{1:                 }|
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
