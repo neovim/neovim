@@ -306,13 +306,13 @@ void pum_display(pumitem_T *array, int size, int selected, bool array_changed,
                        || col < Columns - max_width))) {
       // align right pum edge with "col"
       if (curwin->w_p_rl
-          && col < max_width + pum_scrollbar + 1) {
+          && W_ENDCOL(curwin) < max_width + pum_scrollbar + 1) {
         pum_col = col + max_width + pum_scrollbar + 1;
         if (pum_col >= Columns) {
           pum_col = Columns - 1;
         }
       } else if (!curwin->w_p_rl) {
-        if (col > Columns - max_width - pum_scrollbar) {
+        if (curwin->w_wincol > Columns - max_width - pum_scrollbar) {
           pum_col = col - max_width - pum_scrollbar;
           if (pum_col < 0) {
             pum_col = 0;
