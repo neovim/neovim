@@ -10,6 +10,7 @@ describe('environment variables', function()
     eq("", environ()['EMPTY_VAR'])
     eq(nil, environ()['DOES_NOT_EXIST'])
   end)
+
   it('exists() handles empty env variable', function()
     clear({env={EMPTY_VAR=""}})
     eq(1, exists('$EMPTY_VAR'))
