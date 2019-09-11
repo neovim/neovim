@@ -196,7 +196,9 @@ paste = (function()
       if phase < 2 and mode ~= 'i' and mode ~= 'R' then
         vim.api.nvim_put(lines, 'c', true, true)
         -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
-        vim.api.nvim_command('normal! a')
+        if mode ~= 't' then
+          vim.api.nvim_command('normal! a')
+        end
       else
         vim.api.nvim_put(lines, 'c', false, true)
       end
