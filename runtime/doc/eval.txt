@@ -8920,23 +8920,20 @@ visualmode([expr])						*visualmode()*
 		the old value is returned.  See |non-zero-arg|.
 
 wait({timeout}, {condition}[, {interval}])			*wait()*
-		Wait until {condition} is satisfied, where {condition} is a
-		|Funcref| or a |string| containing an expression.
+		Waits until {condition} evaluates to |TRUE|, where {condition}
+		is a |Funcref| or |string| containing an expression.
 
-		{timeout} is the maximum number of milliseconds to wait,
-        -1 means forever.
+		{timeout} is the maximum waiting time in milliseconds, -1
+		means forever.
 
-		By default, the condition is evaluated on user and internal
-		events. If {interval} is given, the condition is evaluated
-		every {interval} milliseconds in addition. This can be useful
-		to guarantee that the function returns when the condition is
-		satisfied even if the editor is idle.
+		Condition is evaluated on user events, internal events, and
+		every {interval} milliseconds (default: 200).
 
-		Returns one of the following:
-			*  0 if the condition was satisfied before the timeout
-			* -1 if the timeout was exceeded
-			* -2 if the function was interrupted
-			* -3 if an error occurred
+		Returns a status integer:
+			0 if the condition was satisfied before timeout
+			-1 if the timeout was exceeded
+			-2 if the function was interrupted (by |CTRL-C|)
+			-3 if an error occurred
 
 wildmenumode()					*wildmenumode()*
 		Returns |TRUE| when the wildmenu is active and |FALSE|
