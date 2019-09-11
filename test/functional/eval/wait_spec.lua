@@ -59,10 +59,10 @@ describe('wait()', function()
     ]])
 
     nvim('set_var', 'counter', 0)
-    eq(-1, call('wait', 20, 'Count() >= 5'))
+    eq(-1, call('wait', 20, 'Count() >= 5', 99999))
 
     nvim('set_var', 'counter', 0)
-    eq(0, call('wait', 1000, 'Count() >= 5', 5))
+    eq(0, call('wait', 10000, 'Count() >= 5', 5))
     eq(5, nvim('get_var', 'counter'))
   end)
 
