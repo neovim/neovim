@@ -2305,6 +2305,7 @@ static int find_region(char_u *rp, char_u *region)
 ///
 /// @returns  Case type of word
 int captype(char_u *word, char_u *end)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   char_u      *p;
   int c;
@@ -2355,6 +2356,7 @@ int captype(char_u *word, char_u *end)
 // capital.  So that make_case_word() can turn WOrd into Word.
 // Add ALLCAP for "WOrD".
 static int badword_captype(char_u *word, char_u *end)
+  FUNC_ATTR_NONNULL_ALL
 {
   int flags = captype(word, end);
   int c;

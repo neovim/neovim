@@ -5522,6 +5522,7 @@ do_class:
  * there is an error.
  */
 static char_u *regnext(char_u *p)
+  FUNC_ATTR_NONNULL_ALL
 {
   int offset;
 

@@ -118,7 +118,6 @@ char_u *parse_shape_opt(int what)
       // Repeat for all modes before the colon.
       // For the 'a' mode, we loop to handle all the modes.
       all_idx = -1;
-      assert(modep < colonp);
       while (modep < colonp || all_idx >= 0) {
         if (all_idx < 0) {
           // Find the mode
@@ -230,8 +229,9 @@ char_u *parse_shape_opt(int what)
         }
       }
       modep = p;
-      if (*modep == ',')
-        ++modep;
+      if (modep != NULL && *modep == ',') {
+        modep++;
+      }
     }
   }
 
