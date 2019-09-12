@@ -767,11 +767,36 @@ describe('TUI', function()
   end)
 end)
 
+describe('TUI UIEnter/UILeave', function()
+  it('fires exactly once, after VimEnter', function()
+    clear()
+    local screen = thelpers.screen_setup(0,
+      '["'..nvim_prog..'", "-u", "NONE", "-i", "NONE"'
+      ..[[, "--cmd", "set noswapfile noshowcmd noruler"]]
+      ..[[, "--cmd", "let g:evs = []"]]
+      ..[[, "--cmd", "autocmd UIEnter  * :call add(g:evs, 'UIEnter')"]]
+      ..[[, "--cmd", "autocmd UILeave  * :call add(g:evs, 'UILeave')"]]
+      ..[[, "--cmd", "autocmd VimEnter * :call add(g:evs, 'VimEnter')"]]
+      ..']'
+    )
+    feed_data(":echo g:evs\n")
+    screen:expect{grid=[[
+      {1: }                                                 |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name]                                         }|
+      ['VimEnter', 'UIEnter']                           |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+  end)
+end)
+
 describe('TUI FocusGained/FocusLost', function()
   local screen
 
   before_each(function()
-    helpers.clear()
+    clear()
     screen = thelpers.screen_setup(0, '["'..nvim_prog
       ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile noshowcmd noruler"]')
     feed_data(":autocmd FocusGained * echo 'gained'\n")
