@@ -391,14 +391,17 @@ function Screen:expect(expected, attr_ids, ...)
         .. ' differs from actual height ' .. #actual_rows .. '.'
       end
       for i = 1, #expected_rows do
-         msg_expected_rows[i] = expected_rows[i]
+        msg_expected_rows[i] = expected_rows[i]
         if expected_rows[i] ~= actual_rows[i] and expected_rows[i] ~= "{IGNORE}|" then
-          msg_expected_rows[i] = '*' .. msg_expected_rows[i]
-          if i <= #actual_rows then
-            actual_rows[i] = '*' .. actual_rows[i]
-          end
-          if err_msg == nil then
-            err_msg = 'Row ' .. tostring(i) .. ' did not match.'
+          local m = expected_rows[i]:match('{MATCH:(.*)}')
+          if not m or not actual_rows[i]:match(m) then
+            msg_expected_rows[i] = '*' .. msg_expected_rows[i]
+            if i <= #actual_rows then
+              actual_rows[i] = '*' .. actual_rows[i]
+            end
+            if err_msg == nil then
+              err_msg = 'Row ' .. tostring(i) .. ' did not match.'
+            end
           end
         end
       end
