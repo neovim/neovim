@@ -875,6 +875,13 @@ describe('jobs', function()
     end)
   end)
 
+  it('jobstop fails silently and returns exit status', function()
+    nvim('command', "let j = jobstart(['cat'], {'rpc': v:true})")
+    neq(0, eval('j'))
+    nvim('command', "let h = jobstop(j)")
+    eq(0, eval('h'))
+  end)
+
   describe('running tty-test program', function()
     if helpers.pending_win32(pending) then return end
     local function next_chunk()

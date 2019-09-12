@@ -12398,8 +12398,6 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
-  int status = 0;  // zero or negative error code
-
   if (check_restricted() || check_secure()) {
     return;
   }
@@ -12421,7 +12419,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     (void)channel_close(data->id, kChannelPartRpc, &error);
   }
   process_stop((Process *)&data->stream.proc);
-  rettv->vval.v_number = error ? -1 : 1;
+  rettv->vval.v_number = error == NULL ? 0 : 1;
 }
 
 // "jobwait(ids[, timeout])" function
