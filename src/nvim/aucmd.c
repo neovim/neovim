@@ -13,7 +13,7 @@
 # include "aucmd.c.generated.h"
 #endif
 
-void do_autocmd_uiattach(uint64_t chanid, bool attached)
+void do_autocmd_uienter(uint64_t chanid, bool attached)
 {
   static bool recursive = false;
 
@@ -26,7 +26,7 @@ void do_autocmd_uiattach(uint64_t chanid, bool attached)
   assert(chanid < VARNUMBER_MAX);
   tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
   tv_dict_set_keys_readonly(dict);
-  apply_autocmds(attached ? EVENT_UIATTACH : EVENT_UIDETACH,
+  apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE,
                  NULL, NULL, false, curbuf);
   tv_dict_clear(dict);
 

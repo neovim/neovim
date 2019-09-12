@@ -280,8 +280,8 @@ Name			triggered by ~
 
 	Startup and exit
 |VimEnter|		after doing all the startup stuff
-|UIAttach|		after a UI attaches
-|UIDetach|		after a UI detaches
+|UIEnter|		after a UI attaches
+|UILeave|		after a UI detaches
 |TermResponse|		after the terminal response to t_RV is received
 |QuitPre|		when using `:quit`, before deciding whether to exit
 |ExitPre|		when using a command that may make Vim exit
@@ -805,14 +805,14 @@ FuncUndefined			When a user function is used but it isn't
 				NOTE: When writing Vim scripts a better
 				alternative is to use an autoloaded function.
 				See |autoload-functions|.
-							*UIAttach*
-UIAttach			After a UI connects via |nvim_ui_attach()|,
+							*UIEnter*
+UIEnter				After a UI connects via |nvim_ui_attach()|,
 				after VimEnter.  Can be used for GUI-specific
 				configuration.
 				Sets these |v:event| keys:
 				    chan
-							*UIDetach*
-UIDetach			After a UI detaches from Nvim.
+							*UILeave*
+UILeave				After a UI disconnects from Nvim.
 				Sets these |v:event| keys:
 				    chan
 							*InsertChange*

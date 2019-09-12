@@ -96,8 +96,8 @@ return {
     'TextChangedI',           -- text was modified in Insert mode(no popup)
     'TextChangedP',           -- text was modified in Insert mode(popup)
     'TextYankPost',           -- after a yank or delete was done (y, d, c)
-    'UIAttach',               -- after a UI attached
-    'UIDetach',               -- after a UI detaches
+    'UIEnter',                -- after UI attaches
+    'UILeave',                -- after UI detaches
     'User',                   -- user defined autocommand
     'VimEnter',               -- after starting Vim
     'VimLeave',               -- before exiting Vim
@@ -125,7 +125,7 @@ return {
     TabNewEntered=true,
     TermClose=true,
     TermOpen=true,
-    UIAttach=true,
-    UIDetach=true,
+    UIEnter=true,
+    UILeave=true,
   },
 }

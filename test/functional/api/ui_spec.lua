@@ -36,21 +36,21 @@ describe('nvim_ui_attach()', function()
   end)
 end)
 
-it('autocmds UIAttach/UIDetach', function()
+it('autocmds UIEnter/UILeave', function()
   clear{args={
     '--cmd', 'let g:evs = []',
-    '--cmd', 'autocmd UIAttach * :call add(g:evs, "UIAttach") | let g:ui_attach_ev = deepcopy(v:event)',
-    '--cmd', 'autocmd UIDetach * :call add(g:evs, "UIDetach") | let g:ui_detach_ev = deepcopy(v:event)',
+    '--cmd', 'autocmd UIEnter * :call add(g:evs, "UIEnter") | let g:uienter_ev = deepcopy(v:event)',
+    '--cmd', 'autocmd UILeave * :call add(g:evs, "UILeave") | let g:uileave_ev = deepcopy(v:event)',
     '--cmd', 'autocmd VimEnter * :call add(g:evs, "VimEnter")',
   }}
   local screen = Screen.new()
   screen:attach()
-  eq({chan=1}, eval('g:ui_attach_ev'))
+  eq({chan=1}, eval('g:uienter_ev'))
   screen:detach()
-  eq({chan=1}, eval('g:ui_detach_ev'))
+  eq({chan=1}, eval('g:uileave_ev'))
   eq({
     'VimEnter',
-    'UIAttach',
-    'UIDetach',
+    'UIEnter',
+    'UILeave',
   }, eval('g:evs'))
 end)

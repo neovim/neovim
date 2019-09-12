@@ -296,7 +296,7 @@ void ui_attach_impl(UI *ui, uint64_t chanid)
 
   bool is_compositor = (ui == uis[0]);
   if (!is_compositor) {
-    do_autocmd_uiattach(chanid, true);
+    do_autocmd_uienter(chanid, true);
   }
 }
 
@@ -333,7 +333,7 @@ void ui_detach_impl(UI *ui, uint64_t chanid)
     ui_comp_detach(ui);
   }
 
-  do_autocmd_uiattach(chanid, false);
+  do_autocmd_uienter(chanid, false);
 }
 
 void ui_set_ext_option(UI *ui, UIExtension ext, bool active)

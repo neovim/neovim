@@ -12,11 +12,11 @@ Nvim Graphical User Interface				*gui* *GUI*
 Starting the GUI				*gui-start* *E229* *E233*
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
-For GUI-specific configuration Nvim provides the |UIAttach| event.  This
+For GUI-specific configuration Nvim provides the |UIEnter| event.  This
 happens after other |initialization|s, like reading your vimrc file.
 
 Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
-	:autocmd UIAttach * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
+	:autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
 
 						*:winp* *:winpos* *E188*
