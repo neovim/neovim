@@ -5,7 +5,6 @@ local helpers = require('test.functional.helpers')(nil)
 local Screen = require('test.functional.ui.screen')
 local nvim_dir = helpers.nvim_dir
 local feed_command, nvim = helpers.feed_command, helpers.nvim
-local iswin = helpers.iswin
 
 local function feed_data(data)
   nvim('set_var', 'term_data', data)
@@ -79,27 +78,14 @@ local function screen_setup(extra_rows, command, cols, opts)
     -- Wait for "tty ready" to be printed before each test or the terminal may
     -- still be in canonical mode (will echo characters for example).
     local empty_line = (' '):rep(cols)
-    local expected
-    if iswin() then
-      expected = {
-        'tty ready'..(' '):rep(cols - 9),
-        -- Windows receives SIGWINCH event via libuv 1.32.
-        '{MATCH:rows: %d+, cols: %d+}',
-        '{1: }'    ..(' '):rep(cols - 1),
-        empty_line,
-        empty_line,
-        empty_line,
-      }
-    else
-      expected = {
-        'tty ready'..(' '):rep(cols - 9),
-        '{1: }'    ..(' '):rep(cols - 1),
-        empty_line,
-        empty_line,
-        empty_line,
-        empty_line,
-      }
-    end
+    local expected = {
+      'tty ready'..(' '):rep(cols - 9),
+      '{1: }'    ..(' '):rep(cols - 1),
+      empty_line,
+      empty_line,
+      empty_line,
+      empty_line,
+    }
     for _ = 1, extra_rows do
       table.insert(expected, empty_line)
     end
