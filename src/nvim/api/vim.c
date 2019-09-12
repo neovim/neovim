@@ -2,7 +2,6 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include <assert.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>

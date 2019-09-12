@@ -104,7 +104,7 @@ char_u *parse_shape_opt(int what)
     if (*p_guicursor == NUL) {
       modep = (char_u *)"a:block-blinkon0";
     }
-    while (*modep != NUL) {
+    while (modep != NULL && *modep != NUL) {
       colonp = vim_strchr(modep, ':');
       commap = vim_strchr(modep, ',');
 

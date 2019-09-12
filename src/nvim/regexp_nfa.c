@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <limits.h>
 
 #include "nvim/ascii.h"

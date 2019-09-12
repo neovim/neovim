@@ -3,11 +3,9 @@
 
 #include <inttypes.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
-#include <limits.h>
 
 #include "nvim/types.h"
 #include "nvim/hashtab.h"

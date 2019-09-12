@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <inttypes.h>
 
 #include "nvim/msgpack_rpc/channel.h"
