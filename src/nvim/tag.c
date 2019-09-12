@@ -2770,10 +2770,11 @@ expand_tags (
 static int 
 add_tag_field (
     dict_T *dict,
-    char *field_name,
-    char_u *start,                 /* start of the value */
-    char_u *end                   /* after the value; can be NULL */
+    const char *field_name,
+    const char_u *start,          // start of the value
+    const char_u *end             // after the value; can be NULL
 )
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   int len = 0;
   int retval;
@@ -2811,7 +2812,7 @@ add_tag_field (
 int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
 {
   int num_matches, i, ret;
-  char_u      **matches, *p;
+  char_u      **matches;
   char_u      *full_fname;
   dict_T      *dict;
   tagptrs_T tp;
@@ -2849,16 +2850,16 @@ int get_tags(list_T *list, char_u *pat, char_u *buf_fname)
       xfree(full_fname);
 
       if (tp.command_end != NULL) {
-        for (p = tp.command_end + 3;
-             *p != NUL && *p != '\n' && *p != '\r'; ++p) {
-          if (p == tp.tagkind || (p + 5 == tp.tagkind
-                                  && STRNCMP(p, "kind:", 5) == 0))
-            /* skip "kind:<kind>" and "<kind>" */
+        for (char_u *p = tp.command_end + 3;
+             *p != NUL && *p != '\n' && *p != '\r'; p++) {
+          if (p == tp.tagkind
+              || (p + 5 == tp.tagkind && STRNCMP(p, "kind:", 5) == 0)) {
+            // skip "kind:<kind>" and "<kind>"
             p = tp.tagkind_end - 1;
-          else if (STRNCMP(p, "file:", 5) == 0)
-            /* skip "file:" (static tag) */
+          } else if (STRNCMP(p, "file:", 5) == 0) {
+            // skip "file:" (static tag)
             p += 4;
-          else if (!ascii_iswhite(*p)) {
+          } else if (!ascii_iswhite(*p)) {
             char_u  *s, *n;
             int len;
 
