@@ -134,11 +134,12 @@ include(ExternalProject)
 
 if(WIN32)
   # "nvim" branch of https://github.com/neovim/libuv
-  set(LIBUV_URL https://github.com/neovim/libuv/archive/228d48003a8037b572b11ba05ccbc014d626f98e.tar.gz)
-  set(LIBUV_SHA256 87556818e0b522e75e164d964510b4c02df116e485506cd93ac06c11e4899739)
+  set(LIBUV_URL https://github.com/erw7/libuv/archive/libuv-v1.32.0.tar.gz)
+  set(LIBUV_SHA256 SKIP)
 else()
-  set(LIBUV_URL https://github.com/devnexen/libuv/archive/obsd_build_fix.tar.gz)
-  set(LIBUV_SHA256 d1230c8208003e5e1149818fb1c354fc9eb53fce9913f6ebd30aa5ccec151f44)
+  # blueyed/nvim-fixes (for *BSD build fixes).
+  set(LIBUV_URL https://github.com/blueyed/libuv/archive/2af4cf2.tar.gz)
+  set(LIBUV_SHA256 SKIP)
 endif()
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-3.0.0/msgpack-3.0.0.tar.gz)
