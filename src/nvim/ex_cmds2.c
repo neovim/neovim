@@ -3111,8 +3111,6 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   }
   if (is_vimrc == DOSO_VIMRC) {
     vimrc_found(fname_exp, (char_u *)"MYVIMRC");
-  } else if (is_vimrc == DOSO_GVIMRC) {
-    vimrc_found(fname_exp, (char_u *)"MYGVIMRC");
   }
 
 #ifdef USE_CRNL

@@ -1567,6 +1567,7 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 			abort		Whether the event triggered during
 					an aborting condition (e.g. |c_Esc| or
 					|c_CTRL-C| for |CmdlineLeave|).
+			chan		|channel-id| or 0 for "internal".
 			cmdlevel	Level of cmdline.
 			cmdtype		Type of cmdline, |cmdline-char|.
 			cwd		Current working directory.

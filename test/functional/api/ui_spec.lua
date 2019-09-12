@@ -6,7 +6,6 @@ local eval = helpers.eval
 local meths = helpers.meths
 local request = helpers.request
 local pcall_err = helpers.pcall_err
-local command = helpers.command
 
 describe('nvim_ui_attach()', function()
   before_each(function()
@@ -35,13 +34,23 @@ describe('nvim_ui_attach()', function()
     eq('UI already attached to channel: 1',
       pcall_err(request, 'nvim_ui_attach', 40, 10, { rgb=false }))
   end)
-  it('autocmds UIAttach/Detach set v:event', function()
-    local screen = Screen.new()
-    command('autocmd UIAttach * :let g:ui_attach_v_event = deepcopy(v:event)')
-    command('autocmd UIDetach * :let g:ui_detach_v_event = deepcopy(v:event)')
-    screen:attach()
-    assert.same({chan=1}, eval('g:ui_attach_v_event'))
-    screen:detach()
-    assert.same({chan=1}, eval('g:ui_detach_v_event'))
-  end)
+end)
+
+it('autocmds UIAttach/UIDetach', function()
+  clear{args={
+    '--cmd', 'let g:evs = []',
+    '--cmd', 'autocmd UIAttach * :call add(g:evs, "UIAttach") | let g:ui_attach_ev = deepcopy(v:event)',
+    '--cmd', 'autocmd UIDetach * :call add(g:evs, "UIDetach") | let g:ui_detach_ev = deepcopy(v:event)',
+    '--cmd', 'autocmd VimEnter * :call add(g:evs, "VimEnter")',
+  }}
+  local screen = Screen.new()
+  screen:attach()
+  eq({chan=1}, eval('g:ui_attach_ev'))
+  screen:detach()
+  eq({chan=1}, eval('g:ui_detach_ev'))
+  eq({
+    'VimEnter',
+    'UIAttach',
+    'UIDetach',
+  }, eval('g:evs'))
 end)
