@@ -82,7 +82,11 @@ describe('API', function()
       nvim('command', 'w')
       local f = io.open(fname)
       ok(f ~= nil)
-      eq('testing\napi\n', f:read('*a'))
+      if is_os('win') then
+        eq('testing\r\napi\r\n', f:read('*a'))
+      else
+        eq('testing\napi\n', f:read('*a'))
+      end
       f:close()
       os.remove(fname)
     end)
