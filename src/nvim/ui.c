@@ -484,9 +484,7 @@ Array ui_array(void)
         PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
       }
     }
-    if (ui->inspect) {
-      ui->inspect(ui, &info);
-    }
+    ui->inspect(ui, &info);
     ADD(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;

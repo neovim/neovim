@@ -63,6 +63,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.set_icon = ui_bridge_set_icon;
   rv->bridge.option_set = ui_bridge_option_set;
   rv->bridge.raw_line = ui_bridge_raw_line;
+  rv->bridge.inspect = ui_bridge_inspect;
   rv->scheduler = scheduler;
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
@@ -214,4 +215,9 @@ static void ui_bridge_option_set_event(void **argv)
   api_free_string(name);
   api_free_object(value);
   xfree(argv[3]);
+}
+
+static void ui_bridge_inspect(UI *ui, Dictionary *info)
+{
+  PUT(*info, "chan", INTEGER_OBJ(0));
 }
