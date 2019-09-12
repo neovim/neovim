@@ -7,6 +7,7 @@ local clear, eq, eval, exc_exec, feed_command, feed, insert, neq, next_msg, nvim
   helpers.write_file, helpers.mkdir, helpers.rmdir
 local command = helpers.command
 local funcs = helpers.funcs
+local os_kill = helpers.os_kill
 local retry = helpers.retry
 local meths = helpers.meths
 local NIL = helpers.NIL
@@ -19,13 +20,6 @@ local expect_twostreams = helpers.expect_twostreams
 local expect_msg_seq = helpers.expect_msg_seq
 local pcall_err = helpers.pcall_err
 local Screen = require('test.functional.ui.screen')
-
--- Kill process with given pid
-local function os_kill(pid)
-  return os.execute((iswin()
-    and 'taskkill /f /t /pid '..pid..' > nul'
-    or  'kill -9 '..pid..' > /dev/null'))
-end
 
 describe('jobs', function()
   local channel
