@@ -878,8 +878,17 @@ describe('jobs', function()
   it('jobstop fails silently and returns exit status', function()
     nvim('command', "let j = jobstart(['cat'], {'rpc': v:true})")
     neq(0, eval('j'))
-    nvim('command', "let h = jobstop(j)")
-    eq(0, eval('h'))
+    
+    nvim('command', "call jobstop(j)")
+    --Jobstop called twice on same job
+    local errH = exc_exec('let h = jobstop(j)')
+    eq(0, errH)
+    neq(0, eval('h'))
+
+    --Jobstop called on invalid id
+    local errI = exc_exec('let i = jobstop(j)')
+    eq(0, errI)
+    neq(0, eval('i'))
   end)
 
   describe('running tty-test program', function()
