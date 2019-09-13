@@ -175,9 +175,9 @@ BuiltinCallbacks['textDocument/hover'] = {
 
     if data.contents ~= nil then
       local contents = {}
+      local contents_type = util.get_hover_contents_type(data.contents)
 
-      if vim.tbl_islist(data.contents) == true then
-        -- MarkedString[]
+      if contents_type == 'MarkedString[]' and not vim.tbl_isempty(data.contents) then
         for _, item in ipairs(data.contents) do
           if type(item) == 'table' then
             table.insert(contents, '```'..item.language)
@@ -193,7 +193,7 @@ BuiltinCallbacks['textDocument/hover'] = {
             end
           end
         end
-      elseif type(data.contents) == 'table' then
+      elseif contents_type == 'MarkupContent' and not vim.tbl_isempty(data.contents) then
         -- MarkupContent
         if data.contents.kind ~= nil then
           for _, line in pairs(vim.split(data.contents.value, '\n')) do
@@ -211,18 +211,17 @@ BuiltinCallbacks['textDocument/hover'] = {
             table.insert(contents, line)
           end
         end
-      -- string
-      else
+      elseif contents_type == 'string' and data.contents ~= '' then
         for _, line in pairs(vim.split(data.contents, '\n')) do
           table.insert(contents, line)
         end
       end
 
       if contents[1] == '' or contents[1] == nil then
-        vim.api.nvim_command("echo 'LSP [textDocument/hover]: No information available'")
-      else
-        util.ui:open_floating_preview(contents, 'markdown')
+        table.insert(contents, 'LSP [textDocument/hover]: No information available')
       end
+
+      util.ui:open_floating_preview(contents, 'markdown')
     end
   end,
   options = {}

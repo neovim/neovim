@@ -28,6 +28,18 @@ util.encode_json = function(data)
   return vim.api.nvim_call_function('json_encode', {data})
 end
 
+util.get_hover_contents_type = function(contents)
+  if vim.tbl_islist(contents) == true then
+    return 'MarkedString[]'
+  elseif type(contents) == 'table' then
+    return 'MarkupContent'
+  elseif type(contents) == 'string' then
+    return 'string'
+  else
+    return nil
+  end
+end
+
 ---
 -- Provide a "strongly typed" dictionary in Lua.
 --
@@ -74,6 +86,5 @@ util.DefaultMap = {
     return setmetatable({}, self)
   end,
 }
-
 
 return util

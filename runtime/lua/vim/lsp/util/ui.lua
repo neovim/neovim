@@ -27,6 +27,7 @@ ui.open_floating_preview = function(self, contents, filetype)
   local floating_win = vim.api.nvim_call_function("win_id2win", { floating_winnr })
 
   vim.api.nvim_command("wincmd p")
+  vim.api.nvim_command("echo '"..floating_win.."'")
   vim.api.nvim_command("autocmd CursorMoved <buffer> ++once :"..floating_win.."wincmd c")
 end
 
