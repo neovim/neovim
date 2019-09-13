@@ -126,7 +126,7 @@ end
 
 protocol.DocumentUri = function(args)
   return args
-    or 'file://' .. vim.api.nvim_buf_get_name(0)
+    or vim.uri_from_bufnr()
 end
 
 protocol.languageId = function(args)
