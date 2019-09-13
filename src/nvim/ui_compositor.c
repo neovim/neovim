@@ -83,7 +83,7 @@ void ui_comp_init(void)
   kv_push(layers, &default_grid);
   curgrid = &default_grid;
 
-  ui_attach_impl(compositor);
+  ui_attach_impl(compositor, 0);
 }
 
 void ui_comp_syn_init(void)

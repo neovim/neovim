@@ -28,6 +28,8 @@ Environment Variables ~
 Events ~
 *EncodingChanged*	Never fired; 'encoding' is always "utf-8".
 *FileEncoding*		Never fired; equivalent to |EncodingChanged|.
+*GUIEnter*		Never fired; use |UIEnter| instead.
+*GUIFailed*		Never fired.
 
 Keycodes ~
 *<MouseDown>*		Use <ScrollWheelUp> instead.

@@ -63,6 +63,7 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   rv->bridge.set_icon = ui_bridge_set_icon;
   rv->bridge.option_set = ui_bridge_option_set;
   rv->bridge.raw_line = ui_bridge_raw_line;
+  rv->bridge.inspect = ui_bridge_inspect;
   rv->scheduler = scheduler;
 
   for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
@@ -85,7 +86,8 @@ UI *ui_bridge_attach(UI *ui, ui_main_fn ui_main, event_scheduler scheduler)
   }
   uv_mutex_unlock(&rv->mutex);
 
-  ui_attach_impl(&rv->bridge);
+  ui_attach_impl(&rv->bridge, 0);
+
   return &rv->bridge;
 }
 
@@ -106,7 +108,8 @@ static void ui_bridge_stop(UI *b)
 {
   // Detach bridge first, so that "stop" is the last event the TUI loop
   // receives from the main thread. #8041
-  ui_detach_impl(b);
+  ui_detach_impl(b, 0);
+
   UIBridgeData *bridge = (UIBridgeData *)b;
   bool stopped = bridge->stopped = false;
   UI_BRIDGE_CALL(b, stop, 1, b);
@@ -212,4 +215,9 @@ static void ui_bridge_option_set_event(void **argv)
   api_free_string(name);
   api_free_object(value);
   xfree(argv[3]);
+}
+
+static void ui_bridge_inspect(UI *ui, Dictionary *info)
+{
+  PUT(*info, "chan", INTEGER_OBJ(0));
 }

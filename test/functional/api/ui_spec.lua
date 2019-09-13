@@ -35,3 +35,24 @@ describe('nvim_ui_attach()', function()
       pcall_err(request, 'nvim_ui_attach', 40, 10, { rgb=false }))
   end)
 end)
+
+it('autocmds UIEnter/UILeave', function()
+  clear{
+    args_rm={'--headless'},
+    args={
+      '--cmd', 'let g:evs = []',
+      '--cmd', 'autocmd UIEnter * :call add(g:evs, "UIEnter") | let g:uienter_ev = deepcopy(v:event)',
+      '--cmd', 'autocmd UILeave * :call add(g:evs, "UILeave") | let g:uileave_ev = deepcopy(v:event)',
+      '--cmd', 'autocmd VimEnter * :call add(g:evs, "VimEnter")',
+    }}
+  local screen = Screen.new()
+  screen:attach()
+  eq({chan=1}, eval('g:uienter_ev'))
+  screen:detach()
+  eq({chan=1}, eval('g:uileave_ev'))
+  eq({
+    'VimEnter',
+    'UIEnter',
+    'UILeave',
+  }, eval('g:evs'))
+end)

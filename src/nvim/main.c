@@ -12,6 +12,7 @@
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
+#include "nvim/aucmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/diff.h"
@@ -351,7 +352,7 @@ int main(int argc, char **argv)
   bool use_remote_ui = (embedded_mode && !headless_mode);
   bool use_builtin_ui = (!headless_mode && !embedded_mode && !silent_mode);
   if (use_remote_ui || use_builtin_ui) {
-    TIME_MSG("waiting for UI to make request");
+    TIME_MSG("waiting for UI");
     if (use_remote_ui) {
       remote_ui_wait_for_attach();
     } else {
@@ -537,6 +538,10 @@ int main(int argc, char **argv)
   set_vim_var_nr(VV_VIM_DID_ENTER, 1L);
   apply_autocmds(EVENT_VIMENTER, NULL, NULL, false, curbuf);
   TIME_MSG("VimEnter autocommands");
+  if (use_remote_ui || use_builtin_ui) {
+    do_autocmd_uienter(use_remote_ui ? CHAN_STDIO : 0, true);
+    TIME_MSG("UIEnter autocommands");
+  }
 
   // Adjust default register name for "unnamed" in 'clipboard'. Can only be
   // done after the clipboard is available and all initial commands that may

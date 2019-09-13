@@ -57,7 +57,7 @@ void remote_ui_disconnect(uint64_t channel_id)
   pmap_del(uint64_t)(connected_uis, channel_id);
   xfree(ui->data);
   ui->data = NULL;  // Flag UI as "stopped".
-  ui_detach_impl(ui);
+  ui_detach_impl(ui, channel_id);
   xfree(ui);
 }
 
@@ -168,7 +168,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->data = data;
 
   pmap_put(uint64_t)(connected_uis, channel_id, ui);
-  ui_attach_impl(ui);
+  ui_attach_impl(ui, channel_id);
 }
 
 /// @deprecated

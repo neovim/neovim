@@ -4,7 +4,7 @@
 		  VIM REFERENCE MANUAL    by Bram Moolenaar
 
 
-Vim's Graphical User Interface				*gui* *GUI*
+Nvim Graphical User Interface				*gui* *GUI*
 
                                       Type |gO| to see the table of contents.
 
@@ -12,30 +12,11 @@ Vim's Graphical User Interface				*gui* *GUI*
 Starting the GUI				*gui-start* *E229* *E233*
 
 				*ginit.vim* *gui-init* *gvimrc* *$MYGVIMRC*
-The gvimrc file is where GUI-specific startup commands should be placed.  It
-is always sourced after the |init.vim| file.  If you have one then the 
-$MYGVIMRC environment variable has its name.
+For GUI-specific configuration Nvim provides the |UIEnter| event.  This
+happens after other |initialization|s, like reading your vimrc file.
 
-When the GUI starts up initializations are carried out, in this order:
-- If the system menu file exists, it is sourced.  The name of this file is
-  normally "$VIMRUNTIME/menu.vim".  You can check this with ":version".  Also
-  see |$VIMRUNTIME|.  To skip loading the system menu include 'M' in
-  'guioptions'.				*buffers-menu* *no_buffers_menu*
-  The system menu file includes a "Buffers" menu.  If you don't want this, set
-  the "no_buffers_menu" variable in your init.vim (not ginit.vim!): >
-	:let no_buffers_menu = 1
-< NOTE: Switching on syntax highlighting also loads the menu file, thus
-  disabling the Buffers menu must be done before ":syntax on".
-  The path names are truncated to 35 characters.  You can truncate them at a
-  different length, for example 50, like this: >
-	:let bmenu_max_pathlen = 50
-
-All this happens AFTER the normal Vim initializations, like reading your
-vimrc file.  See |initialization|.
-But the GUI window is only opened after all the initializations have been
-carried out.  If you want some commands to be executed just after opening the
-GUI window, use the |GUIEnter| autocommand event.  Example: >
-	:autocmd GUIEnter * winpos 100 50
+Example: this sets "g:gui" to the value of the UI's "rgb" field:    >
+	:autocmd UIEnter * let g:gui = filter(nvim_list_uis(),{k,v-> v.chan==v:event.chan})[0].rgb
 <
 
 						*:winp* *:winpos* *E188*

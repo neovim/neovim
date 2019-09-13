@@ -9,6 +9,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/log.h"
+#include "nvim/aucmd.h"
 #include "nvim/ui.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -268,7 +269,7 @@ void ui_busy_stop(void)
   }
 }
 
-void ui_attach_impl(UI *ui)
+void ui_attach_impl(UI *ui, uint64_t chanid)
 {
   if (ui_count == MAX_UI_COUNT) {
     abort();
@@ -292,9 +293,14 @@ void ui_attach_impl(UI *ui)
     ui_send_all_hls(ui);
   }
   ui_refresh();
+
+  bool is_compositor = (ui == uis[0]);
+  if (!is_compositor) {
+    do_autocmd_uienter(chanid, true);
+  }
 }
 
-void ui_detach_impl(UI *ui)
+void ui_detach_impl(UI *ui, uint64_t chanid)
 {
   size_t shift_index = MAX_UI_COUNT;
 
@@ -326,6 +332,8 @@ void ui_detach_impl(UI *ui)
   if (!ui->ui_ext[kUIMultigrid] && !ui->ui_ext[kUIFloatDebug]) {
     ui_comp_detach(ui);
   }
+
+  do_autocmd_uienter(chanid, false);
 }
 
 void ui_set_ext_option(UI *ui, UIExtension ext, bool active)
@@ -476,9 +484,7 @@ Array ui_array(void)
         PUT(info, ui_ext_names[j], BOOLEAN_OBJ(ui->ui_ext[j]));
       }
     }
-    if (ui->inspect) {
-      ui->inspect(ui, &info);
-    }
+    ui->inspect(ui, &info);
     ADD(all_uis, DICTIONARY_OBJ(info));
   }
   return all_uis;

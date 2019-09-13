@@ -236,35 +236,6 @@ using the terminal for something else.  The "-f" argument is used here to run
 the GUI in the foreground.  You can also use ":gui -f".
 
 
-THE GVIM STARTUP FILE
-
-When gvim starts, it reads the gvimrc file.  That's similar to the vimrc file
-used when starting Vim.  The gvimrc file can be used for settings and commands
-that are only to be used when the GUI is going to be started.  For example,
-you can set the 'lines' option to set a different window size: >
-
-	:set lines=55
-
-You don't want to do this in a terminal, since its size is fixed (except for
-an xterm that supports resizing).
-   The gvimrc file is searched for in the same locations as the vimrc file.
-Normally its name is "~/.config/nvim/ginit.vim".
-The $MYGVIMRC environment variable is set to it, thus you can use this command
-to edit the file, if you have one: >
-
-	:edit $MYGVIMRC
-<
-   If for some reason you don't want to use the normal gvimrc file, you can
-specify another one with the "-U" argument: >
-
-	gvim -U thisrc ...
-
-That allows starting gvim for different kinds of editing.  You could set
-another font size, for example.
-   To completely skip reading a gvimrc file: >
-
-	gvim -U NONE ...
-
 ==============================================================================
 
 Next chapter: |usr_32.txt|  The undo tree
