@@ -3448,6 +3448,19 @@ static int qf_id2nr(const qf_info_T *const qi, const unsigned qfid)
   return INVALID_QFIDX;
 }
 
+// Jump to the first entry if there is one.
+static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // If autocommands changed the current list, then restore it
+  if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
+    qi->qf_curlist = qf_id2nr(qi, save_qfid);
+  }
+  if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+    qf_jump(qi, 0, 0, forceit);
+  }
+}
+
 /*
  * Return TRUE when using ":vimgrep" for ":grep".
  */
@@ -3549,11 +3562,8 @@ void ex_make(exarg_T *eap)
                    curbuf);
   }
   if (res > 0 && !eap->forceit && qflist_valid(wp, save_qfid)) {
-    // If autocommands changed the current list, then restore it.
-    if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
-      qi->qf_curlist = qf_id2nr(qi, save_qfid);
-    }
-    qf_jump(qi, 0, 0, false);  // display first error
+    // display the first error
+    qf_jump_first(qi, save_qfid, false);
   }
 
 cleanup:
@@ -3919,11 +3929,8 @@ void ex_cfile(exarg_T *eap)
   // list.
   if (res > 0 && (eap->cmdidx == CMD_cfile || eap->cmdidx == CMD_lfile)
       && qflist_valid(wp, save_qfid)) {
-    // If autocommands changed the current list, then restore it
-    if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
-      qi->qf_curlist = qf_id2nr(qi, save_qfid);
-    }
-    qf_jump(qi, 0, 0, eap->forceit);  // display first error
+    // display the first error
+    qf_jump_first(qi, save_qfid, eap->forceit);
   }
 }
 
@@ -5421,11 +5428,8 @@ void ex_cbuffer(exarg_T *eap)
       // free the list.
       if (res > 0 && (eap->cmdidx == CMD_cbuffer || eap->cmdidx == CMD_lbuffer)
           && qflist_valid(wp, save_qfid)) {
-        // If autocommands changed the current list, then restore it.
-        if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
-          qi->qf_curlist = qf_id2nr(qi, save_qfid);
-        }
-        qf_jump(qi, 0, 0, eap->forceit);  // display first error
+        // display the first error
+        qf_jump_first(qi, save_qfid, eap->forceit);
       }
     }
   }
@@ -5503,11 +5507,8 @@ void ex_cexpr(exarg_T *eap)
       if (res > 0
           && (eap->cmdidx == CMD_cexpr || eap->cmdidx == CMD_lexpr)
           && qflist_valid(wp, save_qfid)) {
-        // If autocommands changed the current list, then restore it.
-        if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
-          qi->qf_curlist = qf_id2nr(qi, save_qfid);
-        }
-        qf_jump(qi, 0, 0, eap->forceit);
+        // display the first error
+        qf_jump_first(qi, save_qfid, eap->forceit);
       }
     } else {
       EMSG(_("E777: String or List expected"));
