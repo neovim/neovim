@@ -4,6 +4,7 @@ local Screen = require('test.functional.ui.screen')
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local matches = helpers.matches
 local eval = helpers.eval
 local feed = helpers.feed
 local funcs = helpers.funcs
@@ -218,9 +219,9 @@ describe('startup', function()
   end)
 
   it('fails on --embed with -es/-Es', function()
-    eq('nvim: --embed conflicts with -es/-Es\nMore info with "nvim -h"\n',
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
       funcs.system({nvim_prog, '--embed', '-es' }))
-    eq('nvim: --embed conflicts with -es/-Es\nMore info with "nvim -h"\n',
+    matches('nvim[.exe]*: %-%-embed conflicts with %-es/%-Es',
       funcs.system({nvim_prog, '--embed', '-Es' }))
   end)
 
