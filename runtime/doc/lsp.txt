@@ -110,22 +110,6 @@ vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype}]]
                             'position': { 'line': 13, 'character': 17 }
                         }
 <
-                Example (with 'textDocument/rename'):
-                    Passed in:
->
-                        {
-                            'newName': 'exampleRename'
-                        }
-<
-                    Sent:
->
-                        {
-                            'textDocument': '/home/user/test/rename.lua',
-                            'position': { 'line': 16, 'character': 8 }
-                            'newName': 'exampleRename'
-                        }
-<
-
             [callback]: An optional callback that will be executed
             once the response has been received. If this is passed and not
             |v:null|, then the |lsp-built-in-callback| will not be executed for
@@ -168,11 +152,7 @@ vim.lsp.request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filet
 
     Example:
 >
-        autocmd CursorHold *
-            \ :lua vim.lsp.request_async(
-            \     'textDocument/hover',
-            \     vim.lsp.protocol.TextDocumentPositionParams()
-            \ )
+            :lua vim.lsp.request_async('textDocument/hover', vim.lsp.protocol.TextDocumentPositionParams())
 <
 ================================================================================
                                                          *lsp-built-in-callback*
@@ -214,7 +194,11 @@ your daily workflow.
     This is essentially "go-to definition". Since this is generally done
     through tags, the following mapping might be considered idiomatic.
 
-    nnoremap <buffer> <C-]> :lua vim.lsp.request_async('textDocument/definition')
+    nnoremap <silent> <Leader>d :lua vim.lsp.request_async('textDocument/definition', vim.lsp.protocol.TextDocumentPositionParams())<CR>
+
+    or
+
+    nnoremap <buffer> <Leader>d :call lsp#text_document_definition()<CR>
 
 ================================================================================
                                                             *lsp-configuration*
