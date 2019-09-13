@@ -2534,3 +2534,80 @@ Array nvim_grep(String pattern, String path, Boolean global, Error *err)
   }
   return result_array;
 }
+
+void nvim__async_invoke(uint64_t channel_id, String callee,
+                        String context, Array args, Error *err)
+{
+  // Only allow parent (embedding process)
+  if (channel_id != CHAN_STDIO) {
+    api_set_error(err, kErrorTypeValidation,
+                  "only parent can issue 'nvim__async_invoke'");
+    return;
+  }
+
+  // TODO(abdelhakeem): load context data
+
+  Array result = ARRAY_DICT_INIT;
+  ADD(result, _call_function(callee, args, NULL, err));
+  if (!ERROR_SET(err)) {
+    rpc_send_event(channel_id, "nvim__async_done_event", result);
+  }
+}
+
+void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
+{
+  Channel *channel = find_channel(channel_id);
+  // Only allow async call jobs
+  if (!channel || !channel->async_call) {
+    api_set_error(err, kErrorTypeValidation,
+                  "only async call jobs can issue 'nvim__async_done_event'");
+    return;
+  }
+
+  AsyncCall *async_call = channel->async_call;
+  list_T *work_queue = async_call->work_queue;
+  if (work_queue) {  // parallel call
+    append_result(channel_id, result, err);
+    ADD(async_call->results, copy_object(result));
+    result = ARRAY_OBJ(async_call->results);
+    if (async_call->next < tv_list_len(work_queue)) {
+      Array rpc_args = ARRAY_DICT_INIT;
+      ADD(rpc_args, vim_to_object(&channel->async_call->callee));
+      ADD(rpc_args, STRING_OBJ(cstr_to_string("")));
+      listitem_T *args = tv_list_find(work_queue, async_call->next++);
+      ADD(rpc_args, vim_to_object(TV_LIST_ITEM_TV(args)));
+      rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
+      return;
+    } else {
+      release_asynccall_channel(channel);
+      async_call->count -= 1;
+      if (async_call->count) {
+        channel->async_call = NULL;
+        return;
+      }
+    }
+  } else {  // normal async call
+    release_asynccall_channel(channel);
+    put_result(channel_id, result, err);
+  }
+
+  typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
+  if (object_to_vim(result, &argv[0], err)) {
+    typval_T rettv = TV_INITIAL_VALUE;  // dummy
+    callback_call(&channel->async_call->callback, 1, argv, &rettv);
+    tv_clear(&argv[0]);
+  }
+
+  asynccall_clear(&channel->async_call);
+}
+
+void nvim_error_event(uint64_t channel_id, Integer type, String message,
+                      Error *err)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  Channel *channel = find_channel(channel_id);
+  if (channel && channel->async_call) {
+    EMSG3(_("multiproc: job %" PRIu64 ": %s"), channel_id, message.data);
+    release_asynccall_channel(channel);
+  }
+}
