@@ -26,9 +26,11 @@ local client = {}
 client.__index = client
 
 client.new = function(name, filetype, cmd)
-  logger.info('Starting new client: ', name, cmd.execute_path, cmd.args)
+  if type(cmd.execute_path) ~= 'string' and cmd.execute_path == '' then
+    error('execute_path must be "string" and must no be empty string')
+  end
 
-  local self = setmetatable({
+  local obj = setmetatable({
     name = name,
     filetype = filetype,
     cmd = cmd,
@@ -58,7 +60,9 @@ client.new = function(name, filetype, cmd)
     handle = nil,
   }, client)
 
-  return self
+  logger.info('Starting new client: ', name, cmd.execute_path, cmd.args)
+
+  return obj
 end
 
 client.start = function(self)
@@ -104,6 +108,18 @@ client.stop = function(self)
   end)
 
   self._stopped = true
+end
+
+client.cmd_tostring = function(self)
+  local cmd = self.cmd
+  local cmd_str = cmd.execute_path
+  if cmd.args ~= nil then
+    for _, arg in pairs(cmd.args) do
+      cmd_str = cmd_str..' '..arg
+    end
+  end
+
+  return cmd_str
 end
 
 client.initialize = function(self)

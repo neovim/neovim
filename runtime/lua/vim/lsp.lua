@@ -151,4 +151,13 @@ lsp.client_info = function(filetype)
   end
 end
 
+lsp.status = function()
+  local status = ''
+  for _, client in pairs(clients) do
+    status = status..'filetype: '..client.filetype..', command: '..client:cmd_tostring()..'\n'
+  end
+
+  return status
+end
+
 return lsp
