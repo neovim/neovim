@@ -3459,25 +3459,30 @@ static int qf_id2nr(const qf_info_T *const qi, const unsigned qfid)
 // If the current list is not "save_qfid" and we can find the list with that ID
 // then make it the current list.
 // This is used when autocommands may have changed the current list.
-static void qf_restore_list(qf_info_T *qi, unsigned save_qfid)
-  FUNC_ATTR_NONNULL_ALL
+// Returns OK if successfully restored the list. Returns FAIL if the list with
+// the specified identifier (save_qfid) is not found in the stack.
+static int qf_restore_list(qf_info_T *qi, unsigned save_qfid)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
     const int curlist = qf_id2nr(qi, save_qfid);
-    if (curlist >= 0) {
-      qi->qf_curlist = curlist;
+    if (curlist < 0) {
+      // list is not present
+      return FAIL;
     }
-    // else: what if the list can't be found?
+    qi->qf_curlist = curlist;
   }
+  return OK;
 }
 
 // Jump to the first entry if there is one.
 static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   FUNC_ATTR_NONNULL_ALL
 {
-  qf_restore_list(qi, save_qfid);
-
-  // Autocommands might have cleared the list, check for it
+  if (qf_restore_list(qi, save_qfid) == FAIL) {
+    return;
+  }
+  // Autocommands might have cleared the list, check for that
   if (!qf_list_empty(qi, qi->qf_curlist)) {
     qf_jump(qi, 0, 0, forceit);
   }
@@ -4051,7 +4056,9 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid,
       return true;
     }
   }
-  qf_restore_list(qi, qfid);
+  if (qf_restore_list(qi, qfid) == FAIL) {
+    return false;
+  }
 
   return true;
 }
@@ -4347,7 +4354,9 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  qf_restore_list(qi, save_qfid);
+  if (qf_restore_list(qi, save_qfid) == FAIL) {
+    goto theend;
+  }
 
   /* Jump to first match. */
   if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
