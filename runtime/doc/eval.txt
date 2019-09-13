@@ -2138,9 +2138,19 @@ v:scrollstart	String describing the script or function that caused the
 					*v:servername* *servername-variable*
 v:servername	Primary listen-address of the current Nvim instance, the first
 		item returned by |serverlist()|.  Can be set by |--listen| or
-		|$NVIM_LISTEN_ADDRESS| at startup. |serverstart()| |serverstop()|
+		|$NVIM_LISTEN_ADDRESS| (deprecated) at startup.
+		See also |serverstart()| |serverstop()|.
 		Read-only.
 
+								       *$NVIM*
+		$NVIM is set by |terminal| and |jobstart()|, and is thus
+		a hint that the current environment is a subprocess of Nvim.
+		Example: >
+		    if $NVIM
+		      echo nvim_get_chan_info(v:parent)
+		    endif
+
+<		Note the contents of $NVIM may change in the future.
 
 v:searchforward			*v:searchforward* *searchforward-variable*
 		Search direction:  1 after a forward search, 0 after a

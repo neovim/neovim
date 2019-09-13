@@ -179,6 +179,13 @@ static void term_output_callback(const char *s, size_t len, void *user_data)
 
 // public API {{{
 
+/// Initializes terminal properties, and triggers TermOpen.
+///
+/// The PTY process (TerminalOptions.data) was already started by termopen(),
+/// via ex_terminal() or the term:// BufReadCmd.
+///
+/// @param buf Buffer used for presentation of the terminal.
+/// @param opts PTY process channel, various terminal properties and callbacks.
 Terminal *terminal_open(buf_T *buf, TerminalOptions opts)
 {
   // Create a new terminal instance and configure it
@@ -374,6 +381,7 @@ void terminal_check_size(Terminal *term)
   invalidate_terminal(term, -1, -1);
 }
 
+/// Implements TERM_FOCUS mode. :help Terminal-mode
 void terminal_enter(void)
 {
   buf_T *buf = curbuf;
@@ -502,6 +510,7 @@ static int terminal_check(VimState *state)
   return 1;
 }
 
+/// Processes one char of terminal-mode input.
 static int terminal_execute(VimState *state, int key)
 {
   TerminalState *s = (TerminalState *)state;
@@ -1448,7 +1457,8 @@ static void refresh_terminal(Terminal *term)
   long ml_added = buf->b_ml.ml_line_count - ml_before;
   adjust_topline(term, buf, ml_added);
 }
-// Calls refresh_terminal() on all invalidated_terminals.
+
+/// Calls refresh_terminal() on all invalidated_terminals.
 static void refresh_timer_cb(TimeWatcher *watcher, void *data)
 {
   refresh_pending = false;
