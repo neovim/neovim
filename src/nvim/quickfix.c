@@ -728,6 +728,15 @@ static int qf_get_nextline(qfstate_T *state)
   return QF_OK;
 }
 
+// Returns true if the specified quickfix/location list is empty.
+static bool qf_list_empty(const qf_info_T *qi, int qf_idx)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (qi == NULL || qf_idx < 0 || qf_idx >= LISTCOUNT) {
+    return true;
+  }
+  return qi->qf_lists[qf_idx].qf_count <= 0;
+}
 
 /// Parse a line and get the quickfix fields.
 /// Return the QF_ status.
@@ -2906,8 +2915,7 @@ void qf_view_result(bool split)
   if (IS_LL_WINDOW(curwin)) {
     qi = GET_LOC_LIST(curwin);
   }
-  if (qi == NULL
-      || qi->qf_lists[qi->qf_curlist].qf_count == 0) {
+  if (qf_list_empty(qi, qi->qf_curlist)) {
     EMSG(_(e_quickfix));
     return;
   }
@@ -3456,7 +3464,8 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
     qi->qf_curlist = qf_id2nr(qi, save_qfid);
   }
-  if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
+  // Autocommands might have cleared the list, check for it
+  if (!qf_list_empty(qi, qi->qf_curlist)) {
     qf_jump(qi, 0, 0, forceit);
   }
 }
