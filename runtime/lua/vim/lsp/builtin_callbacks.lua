@@ -152,11 +152,10 @@ BuiltinCallbacks['textDocument/rename'] = {
     logger.debug('callback:textDocument/rename', data, self)
 
     if data == nil then
-      print(self)
       return nil
     end
 
-    vim.api.nvim_set_var('textDocument_rename', data)
+    vim.api.nvim_set_var('text_document_rename', data)
 
     handle_workspace.apply_WorkspaceEdit(data)
   end,

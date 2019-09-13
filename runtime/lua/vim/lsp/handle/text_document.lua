@@ -1,14 +1,19 @@
-local textDocument = {}
+local TextDocument = {}
 
-textDocument.apply_TextEdits = function(TextDocumentEdit)
+
+--- Apply the TextDocumentEdit response.
+-- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
+TextDocument.apply_TextDocumentEdit = function(TextDocumentEdit)
   local text_document = TextDocumentEdit.textDocument
 
   for _, TextEdit in ipairs(TextDocumentEdit.edits) do
-    textDocument.apply_TextEdit(text_document, TextEdit)
+    TextDocument.apply_TextEdit(text_document, TextEdit)
   end
 end
 
-textDocument.apply_TextEdit = function(TextEdit)
+--- Apply the TextEdit response.
+-- @params TextEdit [table] see https://microsoft.github.io/language-server-protocol/specification
+TextDocument.apply_TextEdit = function(TextEdit)
   local range = TextEdit.range
 
   local range_start = range['start']
@@ -24,4 +29,4 @@ textDocument.apply_TextEdit = function(TextEdit)
   vim.api.nvim_buf_set_lines(0, range_start.line, range_end.line, false, vim.split(new_text, "\n", true))
 end
 
-return textDocument
+return TextDocument

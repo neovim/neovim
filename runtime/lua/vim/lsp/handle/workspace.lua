@@ -1,11 +1,12 @@
-local textDocument = require('vim.lsp.handle.textDocument')
+local TextDocument = require('vim.lsp.handle.text_document')
 
-local workspace = {}
+local Workspace = {}
 
-workspace.apply_WorkspaceEdit = function(WorkspaceEdit)
+-- @params WorkspaceEdit [table] see https://microsoft.github.io/language-server-protocol/specification
+Workspace.apply_WorkspaceEdit = function(WorkspaceEdit)
   if WorkspaceEdit.documentChanges ~= nil then
     for _, textDocumentEdit in ipairs(WorkspaceEdit.documentChanges) do
-      textDocument.apply_TextEdits(textDocumentEdit)
+      TextDocument.apply_TextDocumentEdit(textDocumentEdit)
     end
 
     return
@@ -20,4 +21,4 @@ workspace.apply_WorkspaceEdit = function(WorkspaceEdit)
 
 end
 
-return workspace
+return Workspace
