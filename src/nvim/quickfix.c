@@ -3456,14 +3456,27 @@ static int qf_id2nr(const qf_info_T *const qi, const unsigned qfid)
   return INVALID_QFIDX;
 }
 
+// If the current list is not "save_qfid" and we can find the list with that ID
+// then make it the current list.
+// This is used when autocommands may have changed the current list.
+static void qf_restore_list(qf_info_T *qi, unsigned save_qfid)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
+    const int curlist = qf_id2nr(qi, save_qfid);
+    if (curlist >= 0) {
+      qi->qf_curlist = curlist;
+    }
+    // else: what if the list can't be found?
+  }
+}
+
 // Jump to the first entry if there is one.
 static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   FUNC_ATTR_NONNULL_ALL
 {
-  // If autocommands changed the current list, then restore it
-  if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
-    qi->qf_curlist = qf_id2nr(qi, save_qfid);
-  }
+  qf_restore_list(qi, save_qfid);
+
   // Autocommands might have cleared the list, check for it
   if (!qf_list_empty(qi, qi->qf_curlist)) {
     qf_jump(qi, 0, 0, forceit);
@@ -4038,11 +4051,7 @@ static bool vgr_qflist_valid(win_T *wp, qf_info_T *qi, unsigned qfid,
       return true;
     }
   }
-  if (qi->qf_lists[qi->qf_curlist].qf_id != qfid) {
-    // Autocommands changed the quickfix list. Find the one we were using
-    // and restore it.
-    qi->qf_curlist = qf_id2nr(qi, qfid);
-  }
+  qf_restore_list(qi, qfid);
 
   return true;
 }
@@ -4338,10 +4347,7 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  // If autocommands changed the current list, then restore it.
-  if (qi->qf_lists[qi->qf_curlist].qf_id != save_qfid) {
-    qi->qf_curlist = qf_id2nr(qi, save_qfid);
-  }
+  qf_restore_list(qi, save_qfid);
 
   /* Jump to first match. */
   if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
@@ -4641,9 +4647,7 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
     }
 
     list_T *l = tv_list_alloc(kListLenMayKnow);
-    qf_info_T *qi = xmalloc(sizeof(*qi));
-    memset(qi, 0, sizeof(*qi));
-    qi->qf_refcount++;
+    qf_info_T *const qi = ll_new_list();
 
     if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, errorformat,
                     true, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
