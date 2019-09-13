@@ -933,7 +933,8 @@ void curs_columns(
     extra = ((int)prev_skipcol - (int)curwin->w_skipcol) / width;
     win_scroll_lines(curwin, 0, extra);
   } else {
-    curwin->w_skipcol = 0;
+    // XXX what to do here? this should at least be flag-gated
+    // curwin->w_skipcol = 0;
   }
   if (prev_skipcol != curwin->w_skipcol)
     redraw_later(NOT_VALID);
@@ -1284,6 +1285,119 @@ scrollup (
     curwin->w_valid &=
       ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
     coladvance(curwin->w_curswant);
+  }
+}
+
+// Scroll the given window down "rows" rows
+void scroll_rows_down(win_T *wp, long rows, int byfold)
+{
+  // Make sure line wrapping is on
+  assert(wp->w_p_wrap);
+
+  // XXX deal with folds
+
+  // Calculate how many columns worth of each line to jump through
+  int width = wp->w_width_inner - win_col_off(wp);
+
+  linenr_T lnum = wp->w_topline;
+  char_u *line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+
+  colnr_T skipcol = wp->w_skipcol;
+
+  while (rows > 0) {
+    rows--;
+    skipcol -= width;
+
+    // Did we reach the beginning of the line?
+    if (skipcol < 0) {
+      if (wp->w_topline <= 1) {
+        wp->w_skipcol = 0;
+        break;
+      }
+
+      lnum--;
+      wp->w_topline--;
+      wp->w_botline--;
+
+      line = ml_get_buf(wp->w_buffer, lnum, false);
+      colnr_T line_width = win_linetabsize(wp, line, MAXCOL);
+      skipcol = line_width - (line_width % width);
+    }
+    wp->w_wrow++;
+    wp->w_cline_row++;
+    wp->w_skipcol = skipcol;
+  }
+
+  if (wp->w_wrow >= wp->w_height_inner)
+    wp->w_wrow = wp->w_height_inner;
+  if (wp->w_cline_row >= wp->w_height_inner)
+    wp->w_cline_row = wp->w_height_inner;
+
+  // XXX is the below logic correct?
+
+  check_topfill(wp, false);
+
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL|VALID_TOPLINE);
+}
+
+// Scroll the given window up "rows" rows
+void scroll_rows_up(win_T *wp, long rows, int byfold)
+{
+  // Make sure line wrapping is on
+  assert(wp->w_p_wrap);
+
+  // XXX deal with folds
+
+  // Calculate how many columns worth of each line to jump through
+  int width = wp->w_width_inner - win_col_off(wp);
+
+  linenr_T lnum = wp->w_topline;
+  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+
+  // Get the character/column on this line corresponding to w_skipcol
+  colnr_T vcol = 0;
+  char_u *ptr = advance_line_ptr_by_width(wp, line, line, &vcol, wp->w_skipcol);
+
+  while (rows > 0) {
+    // Skip over one row's worth of characters.
+    colnr_T last_vcol = vcol;
+    ptr = advance_line_ptr_by_width(wp, line, ptr, &vcol, width);
+
+    // Did we reach the end of the line?
+    if ((vcol - last_vcol) < width) {
+      if (wp->w_topline >= wp->w_buffer->b_ml.ml_line_count)
+        break;
+
+      lnum++;
+      wp->w_topline++;
+      wp->w_botline++;
+      ptr = line = ml_get_buf(wp->w_buffer, lnum, false);
+      vcol = 0;
+    }
+    wp->w_skipcol = vcol;
+    wp->w_wrow--;
+    wp->w_cline_row--;
+    rows--;
+  }
+
+  if (wp->w_wrow < 0)
+    wp->w_wrow = 0;
+  if (wp->w_cline_row < 0)
+    wp->w_cline_row = 0;
+
+  if (wp->w_topline > curbuf->b_ml.ml_line_count)
+    wp->w_topline = curbuf->b_ml.ml_line_count;
+  if (wp->w_botline > curbuf->b_ml.ml_line_count + 1)
+    wp->w_botline = curbuf->b_ml.ml_line_count + 1;
+
+  // XXX is the below logic correct?
+
+  check_topfill(wp, false);
+
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL|VALID_TOPLINE);
+  if (wp->w_cursor.lnum < wp->w_topline) {
+    wp->w_cursor.lnum = wp->w_topline;
+    coladvance(wp->w_curswant);
   }
 }
 

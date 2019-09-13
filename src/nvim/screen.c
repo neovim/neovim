@@ -2622,9 +2622,12 @@ win_line (
    * 'nowrap' or 'wrap' and a single line that doesn't fit: Advance to the
    * first character to be displayed.
    */
-  if (wp->w_p_wrap)
-    v = wp->w_skipcol;
-  else
+  if (wp->w_p_wrap) {
+    if (startrow == 0)
+      v = wp->w_skipcol;
+    else
+      v = 0;
+  } else
     v = wp->w_leftcol;
   if (v > 0 && !number_only) {
     char_u  *prev_ptr = ptr;
@@ -2904,7 +2907,7 @@ win_line (
 
               snprintf((char *)extra, sizeof(extra),
                        fmt, number_width(wp), num);
-              if (wp->w_skipcol > 0) {
+              if (wp->w_skipcol > 0 && row == 0) {
                 for (p_extra = extra; *p_extra == ' '; p_extra++) {
                   *p_extra = '-';
                 }

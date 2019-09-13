@@ -420,6 +420,10 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
     col += 1;
   }
 
+  if (wp->w_skipcol > 0 && lnum == wp->w_topline) {
+    col -= wp->w_skipcol;
+  }
+
   /*
    * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
    */

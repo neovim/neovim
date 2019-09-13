@@ -3977,10 +3977,20 @@ void scroll_redraw(int up, long count)
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  if (up)
-    scrollup(count, true);
-  else
-    scrolldown(count, true);
+  if (curwin->w_p_wrap) {
+    if (up)
+      scroll_rows_up(curwin, count, true);
+    else
+      scroll_rows_down(curwin, count, true);
+    // HACK: nvim doesn't understand screen invalidation for row-wise scrolling yet
+    redraw_later(NOT_VALID);
+  } else {
+    if (up)
+      scrollup(count, true);
+    else
+      scrolldown(count, true);
+  }
+
   if (get_scrolloff_value()) {
     // Adjust the cursor position for 'scrolloff'.  Mark w_topline as
     // valid, otherwise the screen jumps back at the end of the file.
