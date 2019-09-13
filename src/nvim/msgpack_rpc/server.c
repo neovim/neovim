@@ -22,7 +22,8 @@
 #include "nvim/vim.h"
 
 #define MAX_CONNECTIONS 32
-#define LISTEN_ADDRESS_ENV_VAR "NVIM_LISTEN_ADDRESS"
+#define ENV_LISTEN "NVIM_LISTEN_ADDRESS"  // deprecated
+#define ENV_NVIM "NVIM"
 
 static garray_T watchers = GA_EMPTY_INIT_VALUE;
 
@@ -35,20 +36,24 @@ bool server_init(const char *listen_addr)
 {
   ga_init(&watchers, sizeof(SocketWatcher *), 1);
 
-  // $NVIM_LISTEN_ADDRESS
-  const char *env_addr = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  int rv = listen_addr == NULL ? 1 : server_start(listen_addr);
+  // $NVIM_LISTEN_ADDRESS (deprecated)
+  if (!listen_addr && os_env_exists(ENV_LISTEN)) {
+    listen_addr = os_getenv(ENV_LISTEN);
+  }
 
+  int rv = listen_addr ? server_start(listen_addr) : 1;
   if (0 != rv) {
-    rv = env_addr == NULL ? 1 : server_start(env_addr);
-    if (0 != rv) {
-      listen_addr = server_address_new();
-      if (listen_addr == NULL) {
-        return false;
-      }
-      rv = server_start(listen_addr);
-      xfree((char *)listen_addr);
+    listen_addr = server_address_new();
+    if (!listen_addr) {
+      return false;
     }
+    rv = server_start(listen_addr);
+    xfree((char *)listen_addr);
+  }
+
+  if (os_env_exists(ENV_LISTEN)) {
+    // Unset $NVIM_LISTEN_ADDRESS, it's a liability hereafter.
+    os_unsetenv(ENV_LISTEN);
   }
 
   return rv == 0;
@@ -60,8 +65,8 @@ static void close_socket_watcher(SocketWatcher **watcher)
   socket_watcher_close(*watcher, free_server);
 }
 
-/// Set v:servername to the first server in the server list, or unset it if no
-/// servers are known.
+/// Sets the "primary address" (v:servername and $NVIM) to the first server in
+/// the server list, or unsets if no servers are known.
 static void set_vservername(garray_T *srvs)
 {
   char *default_server = (srvs->ga_len > 0)
@@ -156,12 +161,6 @@ int server_start(const char *endpoint)
     return result;
   }
 
-  // Update $NVIM_LISTEN_ADDRESS, if not set.
-  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address == NULL) {
-    os_setenv(LISTEN_ADDRESS_ENV_VAR, watcher->addr, 1);
-  }
-
   // Add the watcher to the list.
   ga_grow(&watchers, 1);
   ((SocketWatcher **)watchers.ga_data)[watchers.ga_len++] = watcher;
@@ -200,12 +199,6 @@ bool server_stop(char *endpoint)
     return false;
   }
 
-  // Unset $NVIM_LISTEN_ADDRESS if it is the stopped address.
-  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
-  if (listen_address && STRCMP(addr, listen_address) == 0) {
-    os_unsetenv(LISTEN_ADDRESS_ENV_VAR);
-  }
-
   socket_watcher_close(watcher, free_server);
 
   // Remove this server from the list by swapping it with the last item.
@@ -215,8 +208,8 @@ bool server_stop(char *endpoint)
   }
   watchers.ga_len--;
 
-  // If v:servername is the stopped address, re-initialize it.
-  if (STRCMP(addr, get_vim_var_str(VV_SEND_SERVER)) == 0) {
+  // Bump v:servername to the next available server, if any.
+  if (strequal(addr, (char *)get_vim_var_str(VV_SEND_SERVER))) {
     set_vservername(&watchers);
   }
 

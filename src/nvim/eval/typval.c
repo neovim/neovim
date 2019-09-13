@@ -1588,8 +1588,6 @@ varnumber_T tv_dict_get_number(const dict_T *const d, const char *const key)
 }
 
 /// Converts a dict to an environment
-///
-///
 char **tv_dict_to_env(dict_T *denv)
 {
   size_t env_size = (size_t)tv_dict_len(denv);

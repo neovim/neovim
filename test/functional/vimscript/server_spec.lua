@@ -1,6 +1,5 @@
 local helpers = require('test.functional.helpers')(after_each)
 local eq, neq, eval = helpers.eq, helpers.neq, helpers.eval
-local command = helpers.command
 local clear, funcs, meths = helpers.clear, helpers.funcs, helpers.meths
 local iswin = helpers.iswin
 local ok = helpers.ok
@@ -16,27 +15,25 @@ end
 describe('server', function()
   before_each(clear)
 
-  it('serverstart() sets $NVIM_LISTEN_ADDRESS on first invocation', function()
-    -- Unset $NVIM_LISTEN_ADDRESS
-    command('let $NVIM_LISTEN_ADDRESS = ""')
-
+  it('serverstart(), serverstop() does not set $NVIM', function()
     local s = eval('serverstart()')
     assert(s ~= nil and s:len() > 0, "serverstart() returned empty")
-    eq(s, eval('$NVIM_LISTEN_ADDRESS'))
+    eq('', eval('$NVIM'))
+    eq('', eval('$NVIM_LISTEN_ADDRESS'))
     eq(1, eval("serverstop('"..s.."')"))
     eq('', eval('$NVIM_LISTEN_ADDRESS'))
   end)
 
   it('sets new v:servername if $NVIM_LISTEN_ADDRESS is invalid', function()
     clear({env={NVIM_LISTEN_ADDRESS='.'}})
-    eq('.', eval('$NVIM_LISTEN_ADDRESS'))
+    -- Cleared on startup.
+    eq('', eval('$NVIM_LISTEN_ADDRESS'))
     local servers = funcs.serverlist()
     eq(1, #servers)
     ok(string.len(servers[1]) > 4)  -- Like /tmp/nvim…/… or \\.\pipe\…
   end)
 
-  it('sets v:servername at startup or if all servers were stopped',
-  function()
+  it('sets v:servername at startup or if all servers were stopped', function()
     local initial_server = meths.get_vvar('servername')
     assert(initial_server ~= nil and initial_server:len() > 0,
            'v:servername was not initialized')
@@ -55,11 +52,13 @@ describe('server', function()
     eq(1, funcs.serverstop(funcs.serverlist()[1]))
     eq('', meths.get_vvar('servername'))
 
-    -- v:servername will take the next available server.
+    -- v:servername and $NVIM take the next available server.
     local servername = (iswin() and [[\\.\pipe\Xtest-functional-server-pipe]]
                                 or 'Xtest-functional-server-socket')
     funcs.serverstart(servername)
     eq(servername, meths.get_vvar('servername'))
+    -- Not set in the current process, only in children.
+    eq('', eval('$NVIM'))
   end)
 
   it('serverstop() returns false for invalid input', function()
@@ -136,7 +135,6 @@ end)
 describe('startup --listen', function()
   it('validates', function()
     clear()
-
     local cmd = { unpack(helpers.nvim_argv) }
     table.insert(cmd, '--listen')
     matches('nvim.*: Argument missing after: "%-%-listen"', funcs.system(cmd))

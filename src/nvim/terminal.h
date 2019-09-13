@@ -13,7 +13,7 @@ typedef void (*terminal_close_cb)(void *data);
 #include "nvim/buffer_defs.h"
 
 typedef struct {
-  void *data;
+  void *data;  // PTY process channel
   uint16_t width, height;
   terminal_write_cb write_cb;
   terminal_resize_cb resize_cb;
