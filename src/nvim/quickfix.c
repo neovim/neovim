@@ -2209,7 +2209,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
     // set b_p_ro flag).
     if (!can_abandon(curbuf, forceit)) {
       no_write_message();
-      retval = false;
+      retval = FAIL;
     } else {
       retval = do_ecmd(qf_ptr->qf_fnum, NULL, NULL, NULL, (linenr_T)1,
                        ECMD_HIDE + ECMD_SET_HELP,
@@ -2242,7 +2242,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
     }
 
     if (*abort) {
-      retval = false;
+      retval = FAIL;
     }
   }
 
@@ -4532,7 +4532,7 @@ int get_errorlist(const qf_info_T *qi_arg, win_T *wp, int qf_idx, list_T *list)
     }
   }
 
-  if (qf_idx == -1) {
+  if (qf_idx == INVALID_QFIDX) {
     qf_idx = qi->qf_curlist;
   }
 
