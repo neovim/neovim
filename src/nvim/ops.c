@@ -5577,11 +5577,12 @@ void cursor_pos_info(dict_T *dict)
     }
 
     bom_count = bomb_size();
-    if (bom_count > 0) {
+    if (dict == NULL && bom_count > 0) {
       vim_snprintf((char *)IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
                    _("(+%" PRId64 " for BOM)"), (int64_t)bom_count);
     }
     if (dict == NULL) {
+      // Don't shorten this message, the user asked for it.
       p = p_shm;
       p_shm = (char_u *)"";
       msg(IObuff);
