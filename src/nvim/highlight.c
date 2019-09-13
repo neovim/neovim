@@ -598,6 +598,10 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
     PUT(hl, "reverse", BOOLEAN_OBJ(true));
   }
 
+  if (mask & HL_STRIKETHROUGH) {
+    PUT(hl, "strikethrough", BOOLEAN_OBJ(true));
+  }
+
   if (use_rgb) {
     if (ae.rgb_fg_color != -1) {
       PUT(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));

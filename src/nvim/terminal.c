@@ -605,7 +605,8 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
                  | (cell.attrs.reverse ? HL_INVERSE : 0)
-                 | (cell.attrs.underline ? HL_UNDERLINE : 0);
+                 | (cell.attrs.underline ? HL_UNDERLINE : 0)
+                 | (cell.attrs.strike ? HL_STRIKETHROUGH: 0);
 
     int attr_id = 0;
 

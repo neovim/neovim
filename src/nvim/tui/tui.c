@@ -115,6 +115,7 @@ typedef struct {
     int enable_mouse, disable_mouse;
     int enable_bracketed_paste, disable_bracketed_paste;
     int enable_lr_margin, disable_lr_margin;
+    int enter_strikethrough_mode;
     int set_rgb_foreground, set_rgb_background;
     int set_cursor_color;
     int reset_cursor_color;
@@ -208,6 +209,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_color = -1;
   data->unibi_ext.enable_bracketed_paste = -1;
   data->unibi_ext.disable_bracketed_paste = -1;
+  data->unibi_ext.enter_strikethrough_mode = -1;
   data->unibi_ext.enable_lr_margin = -1;
   data->unibi_ext.disable_lr_margin = -1;
   data->unibi_ext.enable_focus_reporting = -1;
@@ -529,6 +531,7 @@ static void update_attrs(UI *ui, int attr_id)
   bool italic = attr & HL_ITALIC;
   bool reverse = attr & HL_INVERSE;
   bool standout = attr & HL_STANDOUT;
+  bool strikethrough = attr & HL_STRIKETHROUGH;
 
   bool underline;
   bool undercurl;
@@ -575,6 +578,9 @@ static void update_attrs(UI *ui, int attr_id)
   if (italic) {
     unibi_out(ui, unibi_enter_italics_mode);
   }
+  if (strikethrough && data->unibi_ext.enter_strikethrough_mode != -1) {
+    unibi_out_ext(ui, data->unibi_ext.enter_strikethrough_mode);
+  }
   if (undercurl && data->unibi_ext.set_underline_style != -1) {
     UNIBI_SET_NUM_VAR(data->params[0], 3);
     unibi_out_ext(ui, data->unibi_ext.set_underline_style);
@@ -615,13 +621,14 @@ static void update_attrs(UI *ui, int attr_id)
   }
 
   data->default_attr = fg == -1 && bg == -1
-    && !bold && !italic && !underline && !undercurl && !reverse && !standout;
+    && !bold && !italic && !underline && !undercurl && !reverse && !standout
+    && !strikethrough;
 
   // Non-BCE terminals can't clear with non-default background color. Some BCE
   // terminals don't support attributes either, so don't rely on it. But assume
   // italic and bold has no effect if there is no text.
   data->can_clear_attr = !reverse && !standout && !underline && !undercurl
-    && (data->bce || bg == -1);
+    && !strikethrough && (data->bce || bg == -1);
 }
 
 static void final_column_wrap(UI *ui)
@@ -1825,6 +1832,11 @@ static void augment_terminfo(TUIData *data, const char *term,
       "ext.reset_scroll_region",
       "\x1b[r");
   }
+
+  // terminfo describes strikethrough modes as rmxx/smxx with respect
+  // to the ECMA-48 strikeout/crossed-out attributes.
+  data->unibi_ext.enter_strikethrough_mode = (int)unibi_find_ext_str(
+      ut, "smxx");
 
   // Dickey ncurses terminfo does not include the setrgbf and setrgbb
   // capabilities, proposed by Rüdiger Sonderfeld on 2013-10-15.  Adding

@@ -1509,7 +1509,8 @@ function Screen:_equal_attrs(a, b)
        a.underline == b.underline and a.undercurl == b.undercurl and
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and a.background == b.background and
-       a.special == b.special and a.blend == b.blend
+       a.special == b.special and a.blend == b.blend and
+       a.strikethrough == b.strikethrough
 end
 
 function Screen:_equal_info(a, b)

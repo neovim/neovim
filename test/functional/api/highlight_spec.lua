@@ -25,6 +25,7 @@ describe('API: highlight',function()
     reverse = true,
     undercurl = true,
     underline = true,
+    strikethrough = true,
   }
 
   before_each(function()
@@ -46,7 +47,7 @@ describe('API: highlight',function()
     eq('Invalid highlight id: 30000', string.match(emsg, 'Invalid.*'))
 
     -- Test all highlight properties.
-    command('hi NewHighlight gui=underline,bold,undercurl,italic,reverse')
+    command('hi NewHighlight gui=underline,bold,undercurl,italic,reverse,strikethrough')
     eq(expected_rgb2, nvim("get_hl_by_id", hl_id, true))
 
     -- Test nil argument.

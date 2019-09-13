@@ -290,6 +290,7 @@ numerical highlight ids to the actual attributes.
 			switched.
 	`italic`:	italic text.
 	`bold`:		bold text.
+	`strikethrough`:  struckthrough text.
 	`underline`:	underlined text. The line has `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
 	`blend`:	Blend level (0-100). Could be used by UIs to support
@@ -447,6 +448,7 @@ is not active. New UIs should implement |ui-linegrid| instead.
 			switched.
 	`italic`:	italic text.
 	`bold`:		bold text.
+	`strikethrough`:  struckthrough text.
 	`underline`:	underlined text. The line has `special` color.
 	`undercurl`:	undercurled text. The curl has `special` color.
 

@@ -29,6 +29,7 @@ local function set_bg(num) feed_termcode('[48;5;'..num..'m') end
 local function set_bold() feed_termcode('[1m') end
 local function set_italic() feed_termcode('[3m') end
 local function set_underline() feed_termcode('[4m') end
+local function set_strikethrough() feed_termcode('[9m') end
 local function clear_attrs() feed_termcode('[0;10m') end
 -- mouse
 local function enable_mouse() feed_termcode('[?1002h') end
@@ -113,6 +114,7 @@ return {
   set_bold = set_bold,
   set_italic = set_italic,
   set_underline = set_underline,
+  set_strikethrough = set_strikethrough,
   clear_attrs = clear_attrs,
   enable_mouse = enable_mouse,
   disable_mouse = disable_mouse,

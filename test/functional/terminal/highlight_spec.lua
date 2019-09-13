@@ -18,7 +18,7 @@ describe(':terminal highlight', function()
       [1] = {foreground = 45},
       [2] = {background = 46},
       [3] = {foreground = 45, background = 46},
-      [4] = {bold = true, italic = true, underline = true},
+      [4] = {bold = true, italic = true, underline = true, strikethrough = true},
       [5] = {bold = true},
       [6] = {foreground = 12},
       [7] = {bold = true, reverse = true},
@@ -108,10 +108,11 @@ describe(':terminal highlight', function()
     thelpers.set_fg(45)
     thelpers.set_bg(46)
   end)
-  descr('bold, italics and underline', 4, function()
+  descr('bold, italics, underline and strikethrough', 4, function()
     thelpers.set_bold()
     thelpers.set_italic()
     thelpers.set_underline()
+    thelpers.set_strikethrough()
   end)
 end)
 
@@ -215,7 +216,7 @@ describe('synIDattr()', function()
     screen = Screen.new(50, 7)
     command('highlight Normal ctermfg=252 guifg=#ff0000 guibg=Black')
     -- Salmon #fa8072 Maroon #800000
-    command('highlight Keyword ctermfg=79 guifg=Salmon guisp=Maroon')
+    command('highlight Keyword ctermfg=79 guifg=Salmon guisp=Maroon cterm=strikethrough gui=strikethrough')
   end)
 
   it('returns cterm-color if RGB-capable UI is _not_ attached', function()
@@ -254,6 +255,12 @@ describe('synIDattr()', function()
     screen:attach({rgb=false})
     eq('252', eval('synIDattr(hlID("Normal"), "fg")'))
     eq('79', eval('synIDattr(hlID("Keyword"), "fg")'))
+  end)
+
+  it('returns "1" if group has "strikethrough" attribute', function()
+    eq('', eval('synIDattr(hlID("Normal"), "strikethrough")'))
+    eq('1', eval('synIDattr(hlID("Keyword"), "strikethrough")'))
+    eq('1', eval('synIDattr(hlID("Keyword"), "strikethrough", "gui")'))
   end)
 end)
 
