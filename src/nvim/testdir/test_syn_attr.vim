@@ -9,11 +9,14 @@ func Test_missing_attr()
   hi Mine cterm=standout gui=undercurl
   call assert_equal('1', synIDattr(hlID("Mine"), "standout", 'cterm'))
   call assert_equal('1', synIDattr(hlID("Mine"), "undercurl", 'gui'))
+  hi Mine gui=strikethrough
+  call assert_equal('1', synIDattr(hlID("Mine"), "strikethrough", 'gui'))
   hi Mine cterm=NONE gui=NONE
   call assert_equal('', synIDattr(hlID("Mine"), "italic", 'cterm'))
   call assert_equal('', synIDattr(hlID("Mine"), "inverse", 'cterm'))
   call assert_equal('', synIDattr(hlID("Mine"), "standout", 'cterm'))
   call assert_equal('', synIDattr(hlID("Mine"), "undercurl", 'gui'))
+  call assert_equal('', synIDattr(hlID("Mine"), "strikethrough", 'gui'))
 
   if has('gui')
     let fontname = getfontname()
