@@ -3566,3 +3566,12 @@ func Test_view_result_split()
   call Xview_result_split_tests('c')
   call Xview_result_split_tests('l')
 endfunc
+
+" Test that :cc sets curswant
+func Test_curswant()
+  helpgrep quickfix
+  normal! llll
+  1cc
+  call assert_equal(getcurpos()[4], virtcol('.'))
+  cclose | helpclose
+endfunc

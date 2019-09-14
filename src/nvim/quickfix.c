@@ -2299,6 +2299,7 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char_u qf_viscol,
           }
         }
       }
+      curwin->w_set_curswant = true;
       check_cursor();
     } else {
       beginline(BL_WHITE | BL_FIX);
