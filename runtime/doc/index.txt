@@ -1107,6 +1107,10 @@ tag		command		action ~
 |:#|		:#		same as ":number"
 |:&|		:&		repeat last ":substitute"
 |:star|		:*		execute contents of a register
+|:&:|		:&:		asynchronously execute a command (|multiproc|)
+|:&:vimgrep|	:&:[l]vimgrep[add][!]
+				asynchronously search for pattern in files
+				using |v:cores| parallel processes
 |:<|		:<		shift lines one 'shiftwidth' left
 |:=|		:=		print the cursor line number
 |:>|		:>		shift lines one 'shiftwidth' right

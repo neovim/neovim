@@ -13,6 +13,7 @@
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
 #include "nvim/ascii.h"
+#include "nvim/api/vim.h"
 
 static bool did_stdio = false;
 PMap(uint64_t) *channels = NULL;
@@ -234,11 +235,98 @@ void callback_reader_start(CallbackReader *reader, const char *type)
   reader->type = type;
 }
 
+Channel *asynccall_channel_acquire(void)
+{
+  Channel *channel = NULL;
+  Error err = ERROR_INIT;
+  Integer jobid = EXEC_LUA_STATIC(
+      "return vim._create_nvim_job()",
+      (Array)ARRAY_DICT_INIT, &err).data.integer;
+  if (!ERROR_SET(&err)) {
+    channel = find_channel((uint64_t)jobid);
+  }
+  api_clear_error(&err);
+  return channel;
+}
+
+void asynccall_channel_release(Channel *channel)
+{
+  process_stop((Process *)&channel->stream.proc);
+}
+
+void asynccall_callback_call(
+    Channel *ch, Callback *cb, Object *result, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(ch->async_call != NULL);
+
+  typval_T argv[2] = { TV_INITIAL_VALUE, TV_INITIAL_VALUE };
+  if (object_to_vim(*result, &argv[0], err)) {
+    typval_T rettv = TV_INITIAL_VALUE;
+
+    if (cb == &ch->async_call->item_callback) {
+      Array jobs = ARRAY_DICT_INIT;
+      ADD(jobs, INTEGER_OBJ((long)ch->id));
+      asynccall_set_jobs(jobs);
+      api_free_array(jobs);
+    } else {
+      asynccall_set_jobs(ch->async_call->jobs);
+    }
+
+    callback_call(cb, 1, argv, &rettv);
+    asynccall_unset_jobs();
+    tv_clear(&rettv);
+    tv_clear(&argv[0]);
+  }
+}
+
+void asynccall_put_result(
+    uint64_t job, Object result, Error *err)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ((long)job));
+  ADD(args, result);
+  EXEC_LUA_STATIC("vim._put_result(...)", args, err);
+  xfree(args.items);
+}
+
+void asynccall_append_result(
+    uint64_t job, Object result, Error *err)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ((long)job));
+  ADD(args, result);
+  EXEC_LUA_STATIC("vim._append_result(...)", args, err);
+  xfree(args.items);
+}
+
+void asynccall_decref(AsyncCall *asynccall)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (--asynccall->refcount) {
+    return;
+  }
+
+  callback_free(&asynccall->callback);
+  api_free_array(asynccall->jobs);
+  if (asynccall->is_parallel) {
+    callback_free(&asynccall->item_callback);
+    api_free_array(asynccall->work_queue);
+    api_free_array(asynccall->results);
+  }
+
+  xfree(asynccall);
+}
+
 static void free_channel_event(void **argv)
 {
   Channel *chan = argv[0];
   if (chan->is_rpc) {
     rpc_free(chan);
+  }
+
+  if (chan->async_call) {
+    asynccall_decref(chan->async_call);
   }
 
   callback_reader_free(&chan->on_data);

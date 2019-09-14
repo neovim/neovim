@@ -15,6 +15,19 @@
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
 
+//
+// Array to hold the hashtab with variables local to each sourced script.
+// Each item holds a variable (nameless) that points to the dict_T.
+//
+typedef struct {
+  ScopeDictDictItem sv_var;
+  dict_T sv_dict;
+} scriptvar_T;
+
+extern garray_T ga_scripts;
+#define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
+#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+
 // All user-defined functions are found in this hashtable.
 extern hashtab_T func_hashtab;
 
@@ -24,12 +37,20 @@ EXTERN ufunc_T dumuf;
 #define HIKEY2UF(p)  ((ufunc_T *)(p - offsetof(ufunc_T, uf_name)))
 #define HI2UF(hi)    HIKEY2UF((hi)->hi_key)
 
+// <lambda>{N} or <SNR>_lambda_{N} (see ctx_pack_func).
+#define ISLAMBDA(fn) \
+    ((STRNCMP((fn), "<lambda>", 8) == 0) \
+     || (((fn)[0] == K_SPECIAL) \
+         && (STRNCMP((fn) + 3, "_lambda_", 8) == 0)))
+
 /// enum used by var_flavour()
 typedef enum {
   VAR_FLAVOUR_DEFAULT = 1,   // doesn't start with uppercase
   VAR_FLAVOUR_SESSION = 2,   // starts with uppercase, some lower
   VAR_FLAVOUR_SHADA   = 4    // all uppercase
 } var_flavour_T;
+
+extern var_flavour_T VAR_FLAVOUR_ALL;
 
 /// Defines for Vim variables
 typedef enum {
@@ -117,6 +138,8 @@ typedef enum {
     VV_TYPE_BOOL,
     VV_ECHOSPACE,
     VV_EXITING,
+    VV_CORES,
+    VV_JOBS,
 } VimVarIndex;
 
 /// All recognized msgpack types

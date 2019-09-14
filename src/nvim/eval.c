@@ -191,9 +191,6 @@ static char_u * const namespace_char = (char_u *)"abglstvw";
 /// Variable used for g:
 static ScopeDictDictItem globvars_var;
 
-/// g: value
-#define globvarht globvardict.dv_hashtab
-
 /*
  * Old Vim variables such as "v:version" are also available without the "v:".
  * Also in functions.  We need a special hashtable for them.
@@ -202,21 +199,13 @@ static hashtab_T compat_hashtab;
 
 hashtab_T func_hashtab;
 
+var_flavour_T VAR_FLAVOUR_ALL =
+  VAR_FLAVOUR_DEFAULT | VAR_FLAVOUR_SESSION | VAR_FLAVOUR_SHADA;
+
 // Used for checking if local variables or arguments used in a lambda.
 static int *eval_lavars_used = NULL;
 
-/*
- * Array to hold the hashtab with variables local to each sourced script.
- * Each item holds a variable (nameless) that points to the dict_T.
- */
-typedef struct {
-  ScopeDictDictItem sv_var;
-  dict_T sv_dict;
-} scriptvar_T;
-
-static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
-#define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
-#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+garray_T ga_scripts = { 0, 0, sizeof(scriptvar_T *), 4, NULL };
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
@@ -245,15 +234,6 @@ typedef enum {
   GLV_READ_ONLY = TFN_READ_ONLY,  ///< Indicates that caller will not change
                                   ///< the value (prevents error message).
 } GetLvalFlags;
-
-// flags used in uf_flags
-#define FC_ABORT    0x01          // abort function on error
-#define FC_RANGE    0x02          // function accepts range
-#define FC_DICT     0x04          // Dict function, uses "self"
-#define FC_CLOSURE  0x08          // closure, uses outer scope variables
-#define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
-#define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
-#define FC_SANDBOX  0x40          // function defined in the sandbox
 
 // The names of packages that once were loaded are remembered.
 static garray_T ga_loaded = { 0, 0, sizeof(char_u *), 4, NULL };
@@ -422,6 +402,8 @@ static struct vimvar {
   VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
   VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
+  VV(VV_CORES,          "cores",            VAR_NUMBER, VV_RO),
+  VV(VV_JOBS,           "jobs",             VAR_UNKNOWN, VV_RO),
 };
 #undef VV
 
@@ -640,6 +622,11 @@ void eval_init(void)
   set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
+  uv_cpu_info_t *cpuinfo;
+  int cpucount;
+  uv_cpu_info(&cpuinfo, &cpucount);
+  uv_free_cpu_info(cpuinfo, cpucount);
+  set_vim_var_nr(VV_CORES, cpucount);
 }
 
 #if defined(EXITFREE)
@@ -7558,6 +7545,367 @@ static void f_call(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   func_call(func, &argvars[1], partial, selfdict, rettv);
 }
 
+void asynccall_set_jobs(Array jobs)
+  FUNC_ATTR_NONNULL_ALL
+{
+  typval_T tv_jobs = TV_INITIAL_VALUE;
+  typval_T tv_tmp = TV_INITIAL_VALUE;
+  Error err = ERROR_INIT;
+  if (object_to_vim(ARRAY_OBJ(jobs), &tv_jobs, &err)) {
+    prepare_vimvar(VV_JOBS, &tv_tmp);
+    vimvars[VV_JOBS].vv_tv = tv_jobs;
+  }
+  api_clear_error(&err);
+}
+
+void asynccall_unset_jobs(void)
+{
+  typval_T tv_tmp = TV_INITIAL_VALUE;
+  restore_vimvar(VV_JOBS, &tv_tmp);
+  tv_clear(&tv_tmp);
+}
+
+/// Extract callback and context from async call options dictionary.
+///
+/// @param[in]   opts  Options dictionary.
+/// @param[out]  cb    Callback object.
+/// @param[out]  ctx   Context Dictionary.
+///
+/// @return true on success, false otherwise.
+static inline bool asynccall_get_opts(
+    dict_T *opts, Callback *cb, Dictionary *ctx)
+  FUNC_ATTR_NONNULL_ALL
+{
+  dictitem_T *di_callback = tv_dict_find(opts, S_LEN("done"));
+  dictitem_T *di_context = tv_dict_find(opts, S_LEN("context"));
+
+  if (di_callback != NULL && !callback_from_typval(cb, &di_callback->di_tv)) {
+    EMSG3(_(e_invargNval), "opts", "value of 'done' should be a function");
+    return false;
+  }
+
+  if (di_context != NULL) {
+    if (di_context->di_tv.v_type != VAR_DICT) {
+      EMSG3(_(e_invargNval), "opts",
+            "value of 'context' should be a dictionary");
+      callback_free(cb);
+      return false;
+    }
+    *ctx = vim_to_object(&di_context->di_tv).data.dictionary;
+  }
+
+  return true;
+}
+
+/// Get a context dictionary with user function definition and parent scope
+/// l: variables for closures.
+///
+/// On success, an allocated string with the (possibly modified) function
+/// name is saved in "name" (@see ctx_pack_func()).
+///
+/// @param[out]     ctx_dict  Context dictionary to add function entry to.
+/// @param[in/out]  name      Function name.
+/// @param[out]     err       Error details, if any.
+static void asynccall_get_userfunc(
+    Dictionary *ctx_dict, char **name, Error *err)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Context ctx = CONTEXT_INIT;
+  char_u fname_buf[FLEN_FIXED + 1];
+  char_u *tofree = NULL;
+  int error;
+
+  char_u *fname = fname_trans_sid((char_u *)(*name), fname_buf, &tofree,
+                                  &error);
+  ufunc_T *fp = find_func(fname);
+  xfree(tofree);
+
+  if (fp == NULL) {
+    api_set_error(err, kErrorTypeValidation, "E123: Undefined function: %s",
+                  *name);
+    return;
+  }
+
+  String new_name = STRING_INIT;
+  Dictionary func = ctx_pack_func(fp, &new_name, err);
+  if (ERROR_SET(err)) {
+    api_free_string(new_name);
+    return;
+  }
+
+  // Pack function
+  ADD(ctx.funcs, DICTIONARY_OBJ(func));
+
+  // Pack l: vars for closure
+  ctx_save_lvars(&ctx, fp->uf_scoped);
+
+  *ctx_dict = ctx_to_dict(&ctx);
+  *name = new_name.data;
+
+  ctx_free(&ctx);
+}
+
+/// "call_async(callee, args[, opts])" function
+static void f_call_async(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = -1;
+
+  char_u *callee = NULL;
+  bool free_callee = false;
+  typval_T *args = NULL;
+  typval_T *opts = NULL;
+  Callback callback = CALLBACK_NONE;
+  Dictionary context = ARRAY_DICT_INIT;
+  Dictionary callee_context = ARRAY_DICT_INIT;
+
+  if (argvars[0].v_type == VAR_FUNC) {
+    callee = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL) {
+    callee = partial_name(argvars[0].vval.v_partial);
+  } else {
+    callee = (char_u *)tv_get_string(&argvars[0]);
+  }
+
+  if (*callee == NUL) {
+    EMSG2(_(e_invarg2), "callee");
+    return;
+  }
+
+  args = &argvars[1];
+  if (args->v_type != VAR_LIST) {
+    EMSG2(_(e_invarg2), "args");
+    return;
+  }
+
+  opts = &argvars[2];
+  if (opts->v_type == VAR_DICT) {
+    if (!asynccall_get_opts(opts->vval.v_dict, &callback, &context)) {
+      return;
+    }
+  } else if (opts->v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "opts");
+    return;
+  }
+
+  bool isscript = !!eval_fname_script((char *)callee);
+  if (!builtin_function((char *)callee, -1) || isscript) {
+    Error err = ERROR_INIT;
+    asynccall_get_userfunc(&callee_context, (char **)&callee, &err);
+    if (ERROR_SET(&err)) {
+      EMSG2("Failed to prepare function for async call: %s", err.msg);
+      api_clear_error(&err);
+      goto fail;
+    } else {
+      free_callee = true;
+    }
+  }
+
+  Channel *chan = asynccall_channel_acquire();
+  if (!chan) {
+    EMSG(_("Failed to spawn job for async call"));
+    goto fail;
+  }
+
+  chan->async_call = (AsyncCall *)xcalloc(1, sizeof(AsyncCall));
+  chan->async_call->refcount = 1;
+  chan->async_call->callback = callback;
+
+  Array call_async_args = ARRAY_DICT_INIT;
+  ADD(call_async_args, STRING_OBJ(cstr_to_string((char *)callee)));
+  ADD(call_async_args, INTEGER_OBJ(current_sctx.sc_sid));
+  ADD(call_async_args, DICTIONARY_OBJ(context));
+  ADD(call_async_args, DICTIONARY_OBJ(callee_context));
+  ADD(call_async_args, vim_to_object(args));
+
+  if (!rpc_send_event(chan->id, "nvim__async_invoke", call_async_args)) {
+    EMSG(_("Failed to send RPC request to async call job"));
+    asynccall_channel_release(chan);
+    goto fail;
+  }
+
+  if (free_callee) {
+    xfree(callee);
+  }
+  rettv->vval.v_number = chan->id;
+  ADD(chan->async_call->jobs, INTEGER_OBJ(chan->id));
+  return;
+
+fail:
+  if (free_callee) {
+    xfree(callee);
+  }
+  callback_free(&callback);
+  api_free_dictionary(context);
+  api_free_dictionary(callee_context);
+}
+
+/// "call_parallel(callee, arglists[, opts])" function
+static void f_call_parallel(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  char_u *callee = NULL;
+  bool free_callee = false;
+  typval_T *arglists = NULL;
+  typval_T *opts = NULL;
+  int count = vimvars[VV_CORES].vv_nr;
+  Callback callback = CALLBACK_NONE;
+  Callback item_callback = CALLBACK_NONE;
+  Dictionary context = ARRAY_DICT_INIT;
+  Dictionary callee_context = ARRAY_DICT_INIT;
+  AsyncCall *async_call = NULL;
+
+  if (argvars[0].v_type == VAR_FUNC) {
+    callee = argvars[0].vval.v_string;
+  } else if (argvars[0].v_type == VAR_PARTIAL) {
+    callee = partial_name(argvars[0].vval.v_partial);
+  } else {
+    callee = (char_u *)tv_get_string(&argvars[0]);
+  }
+
+  if (*callee == NUL) {
+    EMSG2(_(e_invarg2), "callee");
+    return;
+  }
+
+  arglists = &argvars[1];
+  if (arglists->v_type != VAR_LIST) {
+    EMSG2(_(e_invarg2), "arglists");
+    return;
+  }
+
+  opts = &argvars[2];
+  if (opts->v_type == VAR_DICT) {
+    dict_T *dict_opts = opts->vval.v_dict;
+    if (!asynccall_get_opts(dict_opts, &callback, &context)) {
+      return;
+    }
+
+    dictitem_T *di_count = tv_dict_find(dict_opts, S_LEN("count"));
+    if (di_count != NULL) {
+      typval_T *tv_count = &di_count->di_tv;
+      if (tv_count->v_type != VAR_NUMBER || tv_count->vval.v_number <= 0) {
+        EMSG3(_(e_invargNval), "opts",
+              "value of 'count' should be a positive number");
+        goto fail;
+      }
+      count = tv_count->vval.v_number;
+    }
+
+    dictitem_T *di_itemdone = tv_dict_find(dict_opts, S_LEN("itemdone"));
+    if (di_itemdone != NULL
+        && !callback_from_typval(&item_callback, &di_itemdone->di_tv)) {
+      EMSG3(_(e_invargNval), "opts",
+            "value of 'itemdone' should be a function");
+      goto fail;
+    }
+  } else if (opts->v_type != VAR_UNKNOWN) {
+    EMSG2(_(e_invarg2), "opts");
+    return;
+  }
+
+  count = MIN(count, tv_list_len(arglists->vval.v_list));
+  tv_list_alloc_ret(rettv, count);
+  if (count == 0) {
+    callback_free(&callback);
+    callback_free(&item_callback);
+    goto free;
+  }
+
+  bool isscript = !!eval_fname_script((char *)callee);
+  if (!builtin_function((char *)callee, -1) || isscript) {
+    Error err = ERROR_INIT;
+    asynccall_get_userfunc(&callee_context, (char **)&callee, &err);
+    if (ERROR_SET(&err)) {
+      EMSG2("Failed to prepare function for async call: %s", err.msg);
+      api_clear_error(&err);
+      goto fail;
+    } else {
+      free_callee = true;
+    }
+  }
+
+  async_call = (AsyncCall *)xcalloc(1, sizeof(AsyncCall));
+  async_call->refcount = 1;
+  async_call->is_parallel = true;
+  async_call->callback = callback;
+  async_call->item_callback = item_callback;
+  async_call->count = count;
+  async_call->work_queue = vim_to_object(arglists).data.array;
+  async_call->sid = current_sctx.sc_sid;
+
+  for (size_t i = 0; i < async_call->count; i++) {
+    Channel *chan = asynccall_channel_acquire();
+    if (!chan) {
+      EMSG(_("Failed to spawn job for async call"));
+      goto fail;
+    }
+    tv_list_append_number(rettv->vval.v_list, chan->id);
+    ADD(async_call->jobs, INTEGER_OBJ(chan->id));
+    chan->async_call = async_call;
+    async_call->refcount += 1;
+    Array call_parallel_args = ARRAY_DICT_INIT;
+    ADD(call_parallel_args, STRING_OBJ(cstr_to_string((char *)callee)));
+    ADD(call_parallel_args, INTEGER_OBJ(current_sctx.sc_sid));
+    ADD(call_parallel_args, DICTIONARY_OBJ(copy_dictionary(context)));
+    ADD(call_parallel_args, DICTIONARY_OBJ(copy_dictionary(callee_context)));
+    ADD(call_parallel_args,
+        copy_object(async_call->work_queue.items[async_call->next++]));
+    if (!rpc_send_event(chan->id, "nvim__async_invoke", call_parallel_args)) {
+      EMSG(_("Failed to send RPC request to async call job"));
+      goto fail;
+    }
+  }
+
+free:
+  if (async_call) {
+    asynccall_decref(async_call);
+  }
+  if (free_callee) {
+    xfree(callee);
+  }
+  api_free_dictionary(context);
+  api_free_dictionary(callee_context);
+  return;
+
+fail:
+  TV_LIST_ITER(rettv->vval.v_list, li, {
+    uint64_t channel_id = TV_LIST_ITEM_TV(li)->vval.v_number;
+    Channel *chan = find_channel(channel_id);
+    asynccall_channel_release(chan);
+  });
+  tv_clear(rettv);
+  callback_free(&callback);
+  goto free;
+}
+
+/// "call_wait(ids[, timeout])" function
+static void f_call_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  f_jobwait(argvars, rettv, fptr);
+  if (rettv->v_type == VAR_NUMBER) {  // f_jobwait checks failed
+    return;
+  }
+
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, vim_to_object(&argvars[0]));  // jobs
+  ADD(args, vim_to_object(rettv));  // status
+  Error err = ERROR_INIT;
+  Object results = nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("return vim._collect_results(select(1, ...))"),
+      args, &err);
+  api_free_array(args);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+  }
+  object_to_vim(results, rettv, &err);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+  }
+  api_free_object(results);
+}
+
 /*
  * "changenr()" function
  */
@@ -7964,7 +8312,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_NUMBER) {
     index = argvars[0].vval.v_number;
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as an argument");
+    EMSG2(_(e_invarg2), "index");
     return;
   }
 
@@ -7984,8 +8332,11 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (!ctx_restore(NULL, kCtxAll)) {
-    EMSG(_("Context stack is empty"));
+  Error err = ERROR_INIT;
+  ctx_restore(NULL, &err);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
   }
 }
 
@@ -7998,23 +8349,11 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     TV_LIST_ITER(argvars[0].vval.v_list, li, {
       typval_T *tv_li = TV_LIST_ITEM_TV(li);
       if (tv_li->v_type == VAR_STRING) {
-        if (strequal((char *)tv_li->vval.v_string, "regs")) {
-          types |= kCtxRegs;
-        } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
-          types |= kCtxJumps;
-        } else if (strequal((char *)tv_li->vval.v_string, "buflist")) {
-          types |= kCtxBuflist;
-        } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
-          types |= kCtxGVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
-          types |= kCtxSFuncs;
-        } else if (strequal((char *)tv_li->vval.v_string, "funcs")) {
-          types |= kCtxFuncs;
-        }
+        CONTEXT_TYPE_FROM_STR(types, (char *)tv_li->vval.v_string);
       }
     });
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a List as an argument");
+    EMSG2(_(e_invarg2), "types");
     return;
   }
   ctx_save(NULL, types);
@@ -8024,7 +8363,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG2(_(e_invarg2), "expected dictionary as first argument");
+    EMSG2(_(e_invarg2), "context");
     return;
   }
 
@@ -8032,7 +8371,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[1].v_type == VAR_NUMBER) {
     index = argvars[1].vval.v_number;
   } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as second argument");
+    EMSG2(_(e_invarg2), "index");
     return;
   }
 
@@ -8042,22 +8381,10 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
-
   Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
-  Context tmp = CONTEXT_INIT;
-  ctx_from_dict(dict, &tmp);
-
-  if (did_emsg) {
-    ctx_free(&tmp);
-  } else {
-    ctx_free(ctx);
-    *ctx = tmp;
-  }
-
+  ctx_free(ctx);
+  ctx_from_dict(dict, ctx);
   api_free_dictionary(dict);
-  did_emsg = save_did_emsg;
 }
 
 /// "ctxsize()" function
@@ -19930,7 +20257,8 @@ static void check_vars(const char *name, size_t len)
   const char *varname;
   hashtab_T *ht = find_var_ht(name, len, &varname);
 
-  if (ht == get_funccal_local_ht() || ht == get_funccal_args_ht()) {
+  if (ht == get_funccal_local_ht(current_funccal)
+      || ht == get_funccal_args_ht()) {
     if (find_var(name, len, NULL, true) != NULL) {
       *eval_lavars_used = true;
     }
@@ -20173,7 +20501,7 @@ static dictitem_T *find_var_in_ht(hashtab_T *const ht,
 }
 
 // Get function call environment based on backtrace debug level
-static funccall_T *get_funccal(void)
+funccall_T *get_funccal(void)
 {
   funccall_T *funccal = current_funccal;
   if (debug_backtrace_level > 0) {
@@ -20191,6 +20519,17 @@ static funccall_T *get_funccal(void)
   return funccal;
 }
 
+/// Get parent scope funccall_T for the given funccall_T (closure).
+///
+/// @param[in]  fc  Pointer to funccall_T to get parent scope of.
+///
+/// @return Pointer to parent scope funccall_T of "fc" or NULL.
+funccall_T *get_funccal_parent_scope(funccall_T *fc)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return fc->func->uf_scoped;
+}
+
 /// Return the hashtable used for argument in the current funccal.
 /// Return NULL if there is no current funccal.
 static hashtab_T *get_funccal_args_ht(void)
@@ -20201,14 +20540,15 @@ static hashtab_T *get_funccal_args_ht(void)
   return &get_funccal()->l_avars.dv_hashtab;
 }
 
-/// Return the hashtable used for local variables in the current funccal.
-/// Return NULL if there is no current funccal.
-static hashtab_T *get_funccal_local_ht(void)
+/// Return the hashtable used for local variables in the given funccal.
+///
+/// @param[in]  fc  Pointer to funccall_T.
+///
+/// @return Hashtable used for local variables in "fc".
+///         NULL if "fc" is NULL.
+hashtab_T *get_funccal_local_ht(funccall_T *fc)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->l_vars.dv_hashtab;
+  return fc ? &fc->l_vars.dv_hashtab : NULL;
 }
 
 /// Find the dict and hashtable used for a variable
@@ -21102,7 +21442,7 @@ void ex_function(exarg_T *eap)
             continue;
           }
           if (!func_name_refcount(fp->uf_name)) {
-            list_func_head(fp, false, false);
+            list_func_head(fp, false);
           }
         }
       }
@@ -21133,7 +21473,7 @@ void ex_function(exarg_T *eap)
             fp = HI2UF(hi);
             if (!isdigit(*fp->uf_name)
                 && vim_regexec(&regmatch, fp->uf_name, 0))
-              list_func_head(fp, false, false);
+              list_func_head(fp, false);
           }
         }
         vim_regfree(regmatch.regprog);
@@ -21200,20 +21540,18 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !got_int) {
       fp = find_func(name);
       if (fp != NULL) {
-        list_func_head(fp, !eap->forceit, eap->forceit);
+        list_func_head(fp, true);
         for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
           if (FUNCLINE(fp, j) == NULL) {
             continue;
           }
           msg_putchar('\n');
-          if (!eap->forceit) {
-            msg_outnum((long)j + 1);
-            if (j < 9) {
-              msg_putchar(' ');
-            }
-            if (j < 99) {
-              msg_putchar(' ');
-            }
+          msg_outnum((long)j + 1);
+          if (j < 9) {
+            msg_putchar(' ');
+          }
+          if (j < 99) {
+            msg_putchar(' ');
           }
           msg_prt_line(FUNCLINE(fp, j), false);
           ui_flush();                  // show a line at a time
@@ -21221,7 +21559,7 @@ void ex_function(exarg_T *eap)
         }
         if (!got_int) {
           msg_putchar('\n');
-          msg_puts(eap->forceit ? "endfunction" : "   endfunction");
+          msg_puts("   endfunction");
         }
       } else
         emsg_funcname(N_("E123: Undefined function: %s"), name);
@@ -21637,6 +21975,13 @@ void ex_function(exarg_T *eap)
   }
   fp->uf_args = newargs;
   fp->uf_lines = newlines;
+
+  // <SNR>_lambda_... are treated as lambda functions, so they are closures
+  // (see ctx_pack_func()).
+  if (ISLAMBDA(fp->uf_name)) {
+    flags |= FC_CLOSURE;
+  }
+
   if ((flags & FC_CLOSURE) != 0) {
     register_closure(fp);
   } else {
@@ -21892,7 +22237,8 @@ static int eval_fname_script(const char *const p)
   // the standard library function.
   if (p[0] == '<'
       && (mb_strnicmp((char_u *)p + 1, (char_u *)"SID>", 4) == 0
-          || mb_strnicmp((char_u *)p + 1, (char_u *)"SNR>", 4) == 0)) {
+          || ((mb_strnicmp((char_u *)p + 1, (char_u *)"SNR>", 4) == 0)
+              && !ISLAMBDA((char_u *)p)))) {
     return 5;
   }
   if (p[0] == 's' && p[1] == ':') {
@@ -21920,13 +22266,12 @@ static inline bool eval_fname_sid(const char *const name)
 ///
 /// @param[in]  fp      Function pointer.
 /// @param[in]  indent  Indent line.
-/// @param[in]  force   Include bang "!" (i.e.: "function!").
-static void list_func_head(ufunc_T *fp, int indent, bool force)
+static void list_func_head(ufunc_T *fp, int indent)
 {
   msg_start();
   if (indent)
     MSG_PUTS("   ");
-  MSG_PUTS(force ? "function! " : "function ");
+  MSG_PUTS("function ");
   if (fp->uf_name[0] == K_SPECIAL) {
     MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
@@ -22383,7 +22728,7 @@ char_u *get_user_func_name(expand_T *xp, int idx)
     fp = HI2UF(hi);
 
     if ((fp->uf_flags & FC_DICT)
-        || STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
+        || ISLAMBDA(fp->uf_name)) {
       return (char_u *)"";       // don't show dict and lambda functions
     }
 
@@ -22423,9 +22768,9 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
-static bool func_name_refcount(char_u *name)
+bool func_name_refcount(char_u *name)
 {
-  return isdigit(*name) || *name == '<';
+  return isdigit(*name) || ISLAMBDA(name);
 }
 
 /// ":delfunction {name}"
@@ -22721,9 +23066,7 @@ void call_user_func(ufunc_T *fp, int argcount, typval_T *argvars,
   ga_init(&fc->fc_funcs, sizeof(ufunc_T *), 1);
   func_ptr_ref(fp);
 
-  if (STRNCMP(fp->uf_name, "<lambda>", 8) == 0) {
-    islambda = true;
-  }
+  islambda = ISLAMBDA(fp->uf_name);
 
   // Note about using fc->fixvar[]: This is an array of FIXVAR_CNT variables
   // with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free
@@ -23514,30 +23857,34 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen,
   return v;
 }
 
-/// Iterate over global variables
+/// Iterate over variables in hashtable.
 ///
-/// @warning No modifications to global variable dictionary must be performed
-///          while iteration is in progress.
+/// @warning No modifications to the given variable dictionary must be
+///          performed while iteration is in progress.
 ///
+/// @param[in]   ht     Hashtable to iterate over.
 /// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[in]   flav   Variable name "flavour" to consider. See var_flavour_T.
 /// @param[out]  name   Variable name.
 /// @param[out]  rettv  Variable value.
 ///
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
-const void *var_shada_iter(const void *const iter, const char **const name,
-                           typval_T *rettv, var_flavour_T flavour)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+const void *var_shada_iter(const hashtab_T *ht, const void *const iter,
+                           var_flavour_T flav, const char **const name,
+                           typval_T *rettv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 4, 5)
 {
   const hashitem_T *hi;
-  const hashitem_T *hifirst = globvarht.ht_array;
-  const size_t hinum = (size_t) globvarht.ht_mask + 1;
+  const hashitem_T *hifirst = ht->ht_array;
+  const size_t hinum = (size_t)ht->ht_mask + 1;
   *name = NULL;
   if (iter == NULL) {
-    hi = globvarht.ht_array;
-    while ((size_t) (hi - hifirst) < hinum
+    hi = ht->ht_array;
+    while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || !(var_flavour(hi->hi_key) & flavour))) {
+               || !(var_flavour(hi->hi_key) & flav)
+               || (TV_DICT_HI2DI(hi)->di_flags & DI_FLAGS_RO))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -23549,17 +23896,20 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flav)
+        && !(TV_DICT_HI2DI(hi)->di_flags & DI_FLAGS_RO)) {
       return hi;
     }
   }
   return NULL;
 }
 
-void var_set_global(const char *const name, typval_T vartv)
+void var_set(const char *const name, typval_T vartv, bool keep_funccal)
 {
   funccall_T *const saved_current_funccal = current_funccal;
-  current_funccal = NULL;
+  if (!keep_funccal) {
+    current_funccal = NULL;
+  }
   set_var(name, strlen(name), &vartv, false);
   current_funccal = saved_current_funccal;
 }

@@ -12,10 +12,10 @@ local meths = helpers.meths
 local matches = helpers.matches
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
-local parse_context = helpers.parse_context
 local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
+local write_file = helpers.write_file
 
 local pcall_err = helpers.pcall_err
 local format_string = helpers.format_string
@@ -896,11 +896,11 @@ describe('API', function()
   describe('nvim_get_context', function()
     it('returns context dictionary of current editor state', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, parse_context(nvim('get_context', ctx_items)))
+      eq({}, nvim('get_context', ctx_items))
 
-      feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
+      feed('i1<cr>22<cr>333<c-[>ddddddqahjklquuu')
       feed('gg')
-      feed('G')
+      feed('Gll')
       command('edit! BUF1')
       command('edit BUF2')
       nvim('set_var', 'one', 1)
@@ -909,33 +909,40 @@ describe('API', function()
 
       local expected_ctx = {
         ['regs'] = {
-          {['rt'] = 1, ['rc'] = {'1'}, ['n'] = 49, ['ru'] = true},
-          {['rt'] = 1, ['rc'] = {'2'}, ['n'] = 50},
-          {['rt'] = 1, ['rc'] = {'3'}, ['n'] = 51},
-          {['rc'] = {'hjkl'}, ['n'] = 97},
+          {['type'] = 1, ['content'] = {'1'},
+           ['name'] = '1', ['unnamed'] = true},
+          {['type'] = 1, ['content'] = {'22'}, ['name'] = '2'},
+          {['type'] = 1, ['content'] = {'333'}, ['name'] = '3'},
+          {['content'] = {'hjkl'}, ['name'] = 'a'},
         },
 
         ['jumps'] = eval(([[
         filter(map(getjumplist()[0], 'filter(
-          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+          { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum },
+          { k, v -> k != "line" || v != 1 })'), '!empty(v:val.file)')
         ]]):gsub('\n', '')),
 
-        ['buflist'] = eval([[
-        filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
-        ]]),
+        ['buflist'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
 
-        ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
+        ['vars'] = {{'g:one', 1}, {'g:Two', 2}, {'g:THREE', 3}},
       }
 
-      eq(expected_ctx, parse_context(nvim('get_context', ctx_items)))
+      eq(expected_ctx, nvim('get_context', ctx_items))
+    end)
+
+    it('handles large context properly', function()
+      command([[let g:huge = range(4096)]])
+      eq(eval('g:huge'), nvim('get_context', {'gvars'}).vars[1][2])
     end)
   end)
 
   describe('nvim_load_context', function()
     it('sets current editor state to given context dictionary', function()
       local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, parse_context(nvim('get_context', ctx_items)))
+      eq({}, nvim('get_context', ctx_items))
 
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
@@ -947,6 +954,39 @@ describe('API', function()
       eq({'a', 'b' ,'c'}, eval('[g:one, g:Two, g:THREE]'))
       nvim('load_context', ctx)
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
+    end)
+
+    it('errors out on malformed context dictionary', function()
+      local err = 'API call: malformed context dictionary'
+      matches(err, pcall_err(eval, [[nvim_load_context({'regs': [1]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'regs': [{'name': '0'}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'regs': [{'name': '0', 'content': 1}]})]]))
+      matches(err, pcall_err(
+        eval, [=[nvim_load_context({'vars': [['1', '2']]})]=]))
+      matches(err, pcall_err(
+        eval, [=[nvim_load_context({'funcs': [['1', '2']]})]=]))
+      matches(err, pcall_err(eval, [=[nvim_load_context({'funcs': [1]})]=]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'definition': ''}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'definition': 0}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'sid': 0}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'sid': ''}]})]]))
+      local cmd = ([=[
+      call nvim_load_context({'funcs': [{
+        'sid': 0,
+        'definition': "
+          function! s:script_func() \n
+            return '' \n
+          endfunction \n
+        "
+      }]})
+      ]=]):gsub('\n', '')
+      matches('Using <SID> not in a script context', pcall_err(command, cmd))
     end)
   end)
 
@@ -1718,6 +1758,74 @@ describe('API', function()
     it('does not cause heap-use-after-free on exit while setting options', function()
       command('au OptionSet * q')
       command('silent! call nvim_create_buf(0, 1)')
+    end)
+  end)
+
+  describe('nvim_grep', function()
+    local files = {
+      ['nvim_grep_spec_file1'] = [[ Lorem ipsum dolor sit amet,
+                                    consectetur adipiscing elit... ]],
+      ['nvim_grep_spec_file2'] = [[ Lorem ipsum dolor sit amet,
+                                    consectetur adipiscing elit... ]],
+      ['nvim_grep_spec_file3'] = [[ Lorem ipsum dolor sit amet,
+                                    consectetur adipiscing elit... ]],
+    }
+
+    before_each(function()
+      for fname, content in pairs(files) do
+        write_file(fname, content:gsub('^%s+', ''):gsub('([\n\r]+)%s+', '%1'))
+      end
+    end)
+
+    after_each(function()
+      for fname, _ in pairs(files) do
+        os.remove(fname)
+      end
+    end)
+
+    it('works', function()
+      local results = nvim('grep', 'ipsum', 'nvim_grep_spec_file*', true)
+      results = funcs.map(results, table.pack(([[
+       { 'fname': fnamemodify(v:val.fname, ':t'),
+         'lnum': v:val.lnum, 'col': v:val.col, 'text': v:val.text }
+      ]]):gsub('\n', ''))[1])
+      table.sort(results, function(r1, r2)
+        return r1.fname < r2.fname
+      end)
+      local expected = {
+        { fname = 'nvim_grep_spec_file1',
+          lnum = 1,
+          col = 7,
+          text = 'Lorem ipsum dolor sit amet,', },
+        { fname = 'nvim_grep_spec_file2',
+          lnum = 1,
+          col = 7,
+          text = 'Lorem ipsum dolor sit amet,', },
+        { fname = 'nvim_grep_spec_file3',
+          lnum = 1,
+          col = 7,
+          text = 'Lorem ipsum dolor sit amet,', },
+      }
+      eq(expected, results)
+    end)
+
+    it('reports pattern errors', function()
+      matches([[Unmatched \%(]],
+              pcall_err(eval, [[nvim_grep('\(badpat', 'whatever', 1)]]))
+    end)
+  end)
+
+  describe('nvim__async_invoke', function()
+    it('only accepts request from parent', function()
+      matches([[only parent can issue 'nvim__async_invoke']],
+              pcall_err(eval, [[nvim__async_invoke('', 0, {}, {}, [])]]))
+    end)
+  end)
+
+  describe('nvim__async_done_event', function()
+    it('only accepts request from async call job', function()
+      matches([[only async call jobs can issue 'nvim__async_done_event']],
+              pcall_err(eval, [[nvim__async_done_event('')]]))
     end)
   end)
 end)

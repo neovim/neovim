@@ -239,6 +239,277 @@ local function __index(t, key)
   end
 end
 
+-- Used by nvim_grep().
+local function _grep(pattern, path, global)
+  local g = global and 'g' or ''
+  local vimgrep_cmd = ([[
+    try
+      silent vimgrep /${pattern}/j${g} ${path}
+    catch /E480:/
+    endtry
+  ]]):gsub('${pattern}', pattern, 1)
+     :gsub('${g}', g, 1)
+     :gsub('${path}', path, 1)
+  vim.api.nvim_command(vimgrep_cmd)
+  return vim.api.nvim_eval(
+      [[map(getqflist(), 'extend(v:val, {"fname": bufname(v:val.bufnr)})')]])
+end
+
+-- Creates a new nvim job (for async calls) and returns its id.
+-- Used by asynccall_channel_acquire().
+local function _create_nvim_job()
+  local progpath = vim.api.nvim_get_vvar('progpath')
+  return vim.api.nvim_call_function('jobstart', {
+    { progpath, '--embed', '--headless', '-u', 'NONE', '-i', 'NONE', '-n' },
+    { rpc = true }
+  })
+end
+
+local async_invoke_called = false
+
+-- Load the given context dictionary and call the given function within
+-- a function-call context.
+-- Used by nvim__async_invoke() in "nvim/api/vim.c".
+--
+-- @param ctx Context dictionary
+-- @param callee_ctx Context dictionary of callee and closure scope
+-- @param fn Name of function to call
+-- @param args Table of function call arguments
+--
+-- @returns Result of function call
+local function _async_invoke(ctx, callee_ctx, fn, args)
+  -- Load context dictionaries in _lambda_INIT and declare _lambda_CALL inside
+  -- it as a wrapper for our call to capture function-local variables sent in
+  -- the context dicts and persist them across calls (for call_parallel).
+  -- Note that lambda functions are used (_lambda_INIT and _lambda_CALL) so
+  -- that they do not get packed by any nvim_get_context() or ctxpush() calls.
+  if not async_invoke_called then
+    vim.api.nvim_command(
+      [[function <SNR>_lambda_INIT(ctx, callee_ctx, fn)
+          call nvim_load_context(ctx)
+          call nvim_load_context(callee_ctx)
+          function <SNR>_lambda_CALL(args)
+            return call(fn, args)
+          endfunction
+        endfunction
+      ]])
+    vim.api.nvim_call_function('<SNR>_lambda_INIT', {ctx, callee_ctx, fn})
+    async_invoke_called = true
+  end
+  return vim.api.nvim_call_function('<SNR>_lambda_CALL', {args})
+end
+
+-- Returns function name and definiton for use in context dictionary.
+-- Used by ctx_pack_func() in "nvim/context.c".
+--
+-- @param name Function name
+--
+-- @returns { name, definition }
+local function _ctx_pack_func(name)
+  local new_name = name:gsub('^<lambda>', '<SNR>_lambda_')
+  name = name:gsub('^<lambda>(%d+)', '{"<lambda>%1"}')
+  local def = vim.api.nvim_command_output('func '..name)
+    :gsub('^%s*function <lambda>', 'function <SNR>_lambda_')
+    :gsub('\n%d+', '\n')
+  if not def:match('^function <SNR>_lambda_') then
+    def = def:gsub('^%s*function', 'function!')
+  end
+  return {new_name, def}
+end
+
+-- Maps job ids of completed async calls to their results.
+-- Entries should get removed when collected by call_wait().
+local async_call_results = {}
+
+-- Puts async call result in "async_call_results".
+-- Used by asynccall_put_result().
+local function _put_result(job, result)
+  async_call_results[job] = result
+end
+
+-- Appends async call result to a channel in "async_call_results".
+-- Used for parallel calls by asynccall_append_result().
+local function _append_result(job, result)
+  if async_call_results[job] == nil then
+    async_call_results[job] = { result }
+  else
+    table.insert(async_call_results[job], result)
+  end
+end
+
+-- Removes the async call results of the given job ids from "async_call_results"
+-- and returns them in an array of maps with "status" and "value" keys.
+local function _collect_results(jobs, status)
+  local results = {}
+  for i, v in ipairs(jobs) do
+    table.insert(results, {
+      status = status[i],
+      value = async_call_results[v]
+    })
+    async_call_results[v] = nil
+  end
+  return results
+end
+
+
+local async_vimgrep_info = {
+  in_progress = false,
+  jobs = {},
+  paths = {},
+  count = 0,
+}
+
+local function _async_vimgrep_paths()
+  return async_vimgrep_info.paths
+end
+
+-- Per-item callback for _async_vimgrep().
+local function _async_vimgrep_itemdone(results)
+  async_vimgrep_info.count = async_vimgrep_info.count + #results
+  results = vim.api.nvim_call_function('map', {
+    results, [[extend(v:val, { 'bufnr': bufnr(v:val.fname, 1) })]]
+  })
+  async_vimgrep_info.itemdone(results)
+end
+
+-- Done callback for _async_vimgrep().
+local function _async_vimgrep_done()
+  vim.api.nvim_call_function('call_wait', {async_vimgrep_info.jobs})
+  print('Found '..async_vimgrep_info.count..' matches')
+  async_vimgrep_info.in_progress = false
+  async_vimgrep_info.jobs = {}
+  async_vimgrep_info.paths = {}
+  async_vimgrep_info.count = 0
+end
+
+-- Used by async handlers for vimgrep family of commands.
+--
+-- @param bang "!" included in command; override command in progress
+-- @param qf use quickfix list if true, otherwise use current
+--           window location list
+-- @param append append results to existing (quickfix/location) list
+-- @param args command arguments
+local function _async_vimgrep(bang, qf, append, args)
+  if async_vimgrep_info.in_progress then
+    if bang then
+      vim.api.nvim_call_function(
+        'map', {async_vimgrep_info.jobs, 'jobstop(v:val)'})
+      _async_vimgrep_done()
+    else
+      error('Another &:[l]vimgrep[add] command is in progress. '..
+            'Use &:[l]vimgrep[add]! to override.')
+    end
+  end
+
+  -- Parse arguments
+  -- &:vimgrep /{pattern}/[g][j] {file} ...
+  local pattern, global, path = args:match('^/(.*)/([jg]*)%s+(.+)%s*$')
+  if path == nil or pattern == nil then
+    if vim.api.nvim_call_function('match', { args, [[^\i]] }) ~= -1 then
+      -- &:vimgrep {pattern} {file} ...
+      pattern, path = args:match('^([^%s]+)%s+(.+)%s*$')
+    end
+  elseif pattern == '' then
+    pattern = vim.api.nvim_eval('@/')  -- Last used pattern
+    if pattern == '' then
+      error('E35: No previous regular expression')
+    end
+  end
+
+  if path == nil or pattern == nil then
+    error('Path missing or invalid pattern')
+  end
+
+  global = global and global:find('g') and true or false
+
+  local paths = vim.api.nvim_call_function('substitute', {
+    path,
+    [=[\(\%(`[^`]*`\|\\.\|[^[:space:]]\)\+\)]=],
+    [[\=glob(submatch(1))."\n"]],
+    'g'
+  })
+  paths = vim.api.nvim_call_function('trim', { paths })
+  paths = vim.api.nvim_call_function('split', { paths, '\n' })
+
+  -- Prepare call_parallel arguments
+  for i, v in ipairs(paths) do
+    paths[i] = { pattern, v, global }
+  end
+
+  if qf then
+    async_vimgrep_info.itemdone = function(results)
+      vim.api.nvim_call_function('setqflist', {results, 'a'})
+    end
+  else
+    async_vimgrep_info.itemdone = function(results)
+      vim.api.nvim_call_function('setloclist', {0, results, 'a'})
+    end
+  end
+
+  -- Clear list (if append is false) and spawn jobs
+  if not append then
+    if qf then
+      vim.api.nvim_call_function('setqflist', {{}})
+    else
+      vim.api.nvim_call_function('setloclist', {0, {}})
+    end
+  end
+
+  async_vimgrep_info.in_progress = true
+  async_vimgrep_info.paths = paths
+  local cmd = ([[
+  echo call_parallel('nvim_grep', luaeval('vim._async_vimgrep_paths()'), {
+    'itemdone': { results ->
+       luaeval('vim._async_vimgrep_itemdone(_A)', results) },
+    'done': { ->
+       luaeval('vim._async_vimgrep_done()') },
+  })
+  ]]):gsub('\n', '')
+  async_vimgrep_info.jobs = vim.api.nvim_eval(vim.api.nvim_command_output(cmd))
+end
+
+-- Async handlers for commands
+local async_handlers_tbl = {
+  ['vimgrep'] = function(bang, args)
+    _async_vimgrep(bang, true, false, args)
+  end,
+  ['vimgrepadd'] = function(bang, args)
+    _async_vimgrep(bang, true, true, args)
+  end,
+  ['lvimgrep'] = function(bang, args)
+    _async_vimgrep(bang, false, false, args)
+  end,
+  ['lvimgrepadd'] = function(bang, args)
+    _async_vimgrep(bang, false, true, args)
+  end,
+}
+
+-- Default command async handler.
+local function _async_handler_default(cmd)
+  cmd = '"'..cmd:gsub("'", "''"):gsub('\\', '\\\\'):gsub('"', '\\"')..'"'
+  local handler_cmd = ([=[
+    call call_async(
+      'eval',
+      ['[nvim_command_output(cmd), nvim_get_context([])]'],
+      { 'context': nvim_get_context([]),
+        'done': { rv -> [call_wait(v:jobs), nvim_command('echo rv[0]'),
+                        nvim_load_context(rv[1])] } })
+  ]=]):gsub('\n', ''):gsub('cmd', cmd, 1)
+  vim.api.nvim_command(handler_cmd)
+end
+
+-- Invokes the async handler of "cmd".
+-- Used by ex_async_handler().
+local function _async_handler(cmd)
+  local handler, bang, args = cmd:match('^([^%s!]+)%s*(!?)%s*(.*)$')
+  local handler_fn = async_handlers_tbl[handler]
+  if handler_fn == nil then
+    _async_handler_default(cmd)
+  else
+    handler_fn(#bang > 0, args)
+  end
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -246,6 +517,17 @@ local module = {
   _system = _system,
   paste = paste,
   schedule_wrap = schedule_wrap,
+  _grep = _grep,
+  _create_nvim_job = _create_nvim_job,
+  _async_invoke = _async_invoke,
+  _ctx_pack_func = _ctx_pack_func,
+  _put_result = _put_result,
+  _append_result = _append_result,
+  _collect_results = _collect_results,
+  _async_vimgrep_paths = _async_vimgrep_paths,
+  _async_vimgrep_itemdone = _async_vimgrep_itemdone,
+  _async_vimgrep_done = _async_vimgrep_done,
+  _async_handler = _async_handler,
 }
 
 setmetatable(module, {

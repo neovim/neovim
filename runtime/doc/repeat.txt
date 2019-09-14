@@ -994,31 +994,100 @@ mind there are various things that may clobber the results:
 - The "self" time is wrong when a function is used recursively.
 
 ==============================================================================
-Context							*Context* *context*
+Editor Context						*context*
 
-The editor state is represented by the Context concept. This includes things
-like the current |jumplist|, values of |registers|, and more, described below.
+The editor context is the current state of the editor, including values of
+|registers|, |jumplist| entries, and |variables|, among other things.
 
-							*context-types*
-The following Context items are supported:
-	"jumps"		|jumplist|
-	"regs"		|registers|
-	"buflist"	|buffer-list|
-	"gvars"		|global-variable|s
-	"sfuncs"	|script-local| functions
-	"funcs"		global and |script-local| functions
+In addition to the built-in |context-functions|, the |API| provides two useful
+methods for managing context: |nvim_get_context()| and |nvim_load_context()|.
 
-							*context-dict*
-Context objects are dictionaries with the following key-value pairs:
-- "jumps", "regs", "buflist", "gvars":
-      |readfile()|-style |List| representation of corresponding msgpack
-      objects (see |msgpackdump()| and |msgpackparse()|).
-- "funcs" (includes |script-local| functions as well):
-      |List| of |:function| definitions.
+CONTEXT DICTIONARY					*context-dict*
 
-							*context-stack*
-An initially-empty internal Context stack is maintained by the ctx-family
-functions (see |ctx-functions|).
+The context dictionary is a map representing a subset of the editor context at
+some instant. There are several |context-types|, each encoded in a different
+way.  Example: >
+	{ 'vars': [['g:name', 'Neovim'], ['l:count', 5]] }
+<
+CONTEXT TYPES						*context-types*
 
+The following are the context types supported by context-related functions and
+their formats as obtained by |ctxget()| and |nvim_get_context()|:
 
+1. Registers ('regs')					*context-type-regs*
+
+|List| of |shada-format| Register entries with different key names:
+
+	ShaDa Name	Context Name
+	'rt'		'type'
+	'rw'		'width'
+	'rc'		'content'
+	'ru'		'unnamed'
+	'n'		'name'
+
+Unlike in |shada-format|, the 'name' field is a one-character string.
+
+2. Jumps ('jumps')					*context-type-jumps*
+
+|List| of |shada-format| Jump entries with different key names:
+
+	ShaDa Name	Context Name
+	'l'		'line'
+	'c'		'col'
+	'f'		'file'
+
+3. Buffer list ('buflist')				*context-type-buflist*
+
+Like |shada-format| BufferList but with the same keys as |context-type-jumps|.
+
+4. Variables ('vars')					*context-type-vars*
+
+|List| of |shada-format| Variable entries with fully-qualified names (i.e.:
+name spaces always prepended, see |internal-variables|).
+
+|ctxpush()| and |nvim_get_context()| additionally accept the following
+subtypes to only include variables from specific scopes in the returned
+context map:
+
+	Type		Description
+	'svars'		Script-local variables (|s:var|)
+	'gvars'		Global variables (|g:var|)
+	'bvars'		Buffer-local variables (|b:var|)
+	'wvars'		Window-local variables (|w:var|)
+	'tvars'		Tabpage-local variables (|t:var|)
+	'lvars'		Function-local variables (|l:var|)
+			Includes outer-scope variables for closures
+
+5. Functions ('funcs')					*context-type-funcs*
+
+|List| of maps with the following keys:
+
+	Key		Description
+	'definition'	Complete function definition string, always with a
+			bang (i.e.: 'function! ...')
+	'sid'   	Script ID where the function was defined
+	'sandboxed'	Whether the function was defined in a |sandbox|
+			(Optional)
+
+|ctxpush()| and |nvim_get_context()| additionally accept 'sfuncs' (for
+|script-local| functions).
+
+CONTEXT LOAD ORDER					*context-load-order*
+
+Context items are loaded in the same order in which they are presented in the
+previous section (|context-types|).
+
+CONTEXT STACK						*context-stack*
+
+The |context-functions| provide access to an internal initially-empty context
+stack. This can be useful to preserve the current context when executing
+commands with side effects.  Example: >
+	" Save global variables
+	call ctxpush(['gvars'])
+	" Call a function that can potentially change global variables
+	call Foo()
+	" Restore saved context
+	call ctxpop()
+<
+==============================================================================
  vim:tw=78:ts=8:noet:ft=help:norl:

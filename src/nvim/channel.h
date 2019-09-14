@@ -57,6 +57,21 @@ static inline bool callback_reader_set(CallbackReader reader)
   return reader.cb.type != kCallbackNone || reader.self;
 }
 
+typedef struct {
+  size_t refcount;
+  Callback callback;
+  bool is_parallel;
+  Array jobs;
+
+  // parallel call
+  size_t count;              ///< number of workers
+  size_t next;               ///< next item to consume
+  Callback item_callback;    ///< per-item callback
+  Array work_queue;          ///< argument lists to consume
+  Array results;             ///< accumulated results (for callback)
+  scid_T sid;                ///< Current SID value
+} AsyncCall;
+
 struct Channel {
   uint64_t id;
   size_t refcount;
@@ -75,6 +90,7 @@ struct Channel {
   bool is_rpc;
   RpcState rpc;
   Terminal *term;
+  AsyncCall *async_call;
 
   CallbackReader on_data;
   CallbackReader on_stderr;

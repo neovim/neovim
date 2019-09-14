@@ -75,6 +75,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/globals.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -2453,9 +2454,14 @@ static char_u *find_command(exarg_T *eap, int *full)
       while (ASCII_ISALNUM(*p))
         ++p;
 
-    /* check for non-alpha command */
-    if (p == eap->cmd && vim_strchr((char_u *)"@!=><&~#", *p) != NULL)
-      ++p;
+    // check for non-alpha command
+    if (p == eap->cmd) {
+      if (p[0] == '&' && p[1] == ':') {
+        p = p + 2;
+      } else if (vim_strchr((char_u *)"@!=><&~#", *p) != NULL) {
+        p++;
+      }
+    }
     len = (int)(p - eap->cmd);
     if (*eap->cmd == 'd' && (p[-1] == 'l' || p[-1] == 'p')) {
       /* Check for ":dl", ":dell", etc. to ":deletel": that's
@@ -2798,8 +2804,12 @@ const char * set_one_cmd_context(
       }
     }
     // check for non-alpha command
-    if (p == cmd && vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
-      p++;
+    if (p == cmd) {
+      if (p[0] == '&' && p[1] == ':') {
+        p = p + 2;
+      } else if (vim_strchr((const char_u *)"@*!=><&~#", *p) != NULL) {
+        p++;
+      }
     }
     len = (size_t)(p - cmd);
 
@@ -3075,6 +3085,7 @@ const char * set_one_cmd_context(
   /* Command modifiers: return the argument.
    * Also for commands with an argument that is a command. */
   case CMD_aboveleft:
+  case CMD_andcolon:
   case CMD_argdo:
   case CMD_belowright:
   case CMD_botright:
@@ -10165,6 +10176,34 @@ static void ex_terminal(exarg_T *eap)
   }
 
   do_cmdline_cmd(ex_cmd);
+}
+
+/// ":&:{cmd}" command
+///
+/// Invokes the async handler of "{cmd}" (i.e.: a function that invokes
+/// "{cmd}" in separate process(es) and handles the results
+/// in a pre-defined way specific to each command.)
+///
+/// If "{cmd}" does not have an async handler, a default handler that does
+/// the following is invoked:
+///
+///   1. Asynchronously run the command in a separate process with a
+///      snapshot of the current context (via nvim_get_context([v:null])).
+///   2. Re-emit command output in the parent (i.e.: calling) process.
+///   3. Load the (possibly modified) context returned by the child.
+static void ex_async_handler(exarg_T *eap)
+{
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_to_string((const char *)eap->arg)));
+  Error err = ERROR_INIT;
+  nvim_execute_lua(
+      STATIC_CSTR_AS_STRING("vim._async_handler(select(1, ...))"),
+      args, &err);
+  api_free_array(args);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+  }
 }
 
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').

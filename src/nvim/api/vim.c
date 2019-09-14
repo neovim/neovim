@@ -26,6 +26,7 @@
 #include "nvim/window.h"
 #include "nvim/types.h"
 #include "nvim/ex_docmd.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
 #include "nvim/mark.h"
@@ -1416,35 +1417,21 @@ Dictionary nvim_get_color_map(void)
   return colors;
 }
 
-/// Gets a map of the current editor state.
+/// Gets a map of the current editor state (see |context|).
 ///
-/// @param  types  Context types ("regs", "jumps", "buflist", "gvars", ...)
-///                to gather, or NIL for all (see |context-types|).
+/// @param  types  |context-types| to gather, or empty array for all.
 ///
-/// @return map of global |context|.
+/// @return Context map (see |context-dict|) with the specified context types.
 Dictionary nvim_get_context(Array types)
   FUNC_API_SINCE(6)
 {
   int int_types = 0;
-  if (types.size == 1 && types.items[0].type == kObjectTypeNil) {
+  if (types.size == 0) {
     int_types = kCtxAll;
   } else {
     for (size_t i = 0; i < types.size; i++) {
       if (types.items[i].type == kObjectTypeString) {
-        const char *const current = types.items[i].data.string.data;
-        if (strequal(current, "regs")) {
-          int_types |= kCtxRegs;
-        } else if (strequal(current, "jumps")) {
-          int_types |= kCtxJumps;
-        } else if (strequal(current, "buflist")) {
-          int_types |= kCtxBuflist;
-        } else if (strequal(current, "gvars")) {
-          int_types |= kCtxGVars;
-        } else if (strequal(current, "sfuncs")) {
-          int_types |= kCtxSFuncs;
-        } else if (strequal(current, "funcs")) {
-          int_types |= kCtxFuncs;
-        }
+        CONTEXT_TYPE_FROM_STR(int_types, types.items[i].data.string.data);
       }
     }
   }
@@ -1458,23 +1445,23 @@ Dictionary nvim_get_context(Array types)
 
 /// Sets the current editor state from the given |context| map.
 ///
-/// @param  dict  |Context| map.
-Object nvim_load_context(Dictionary dict)
+/// @param[in]    dict  Context dictionary (see |context-dict|).
+/// @param[out]   err   Error details, if any.
+Object nvim_load_context(Dictionary dict, Error *err)
   FUNC_API_SINCE(6)
 {
   Context ctx = CONTEXT_INIT;
-
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
-
   ctx_from_dict(dict, &ctx);
-  if (!did_emsg) {
-    ctx_restore(&ctx, kCtxAll);
+
+  Error _err = ERROR_INIT;
+  ctx_restore(&ctx, &_err);
+  if (ERROR_SET(&_err)) {
+    api_set_error(err, kErrorTypeException,
+                  "malformed context dictionary: %s", _err.msg);
+    api_clear_error(&_err);
   }
 
   ctx_free(&ctx);
-
-  did_emsg = save_did_emsg;
   return (Object)OBJECT_INIT;
 }
 
@@ -2500,4 +2487,142 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
     ADD(ret, ARRAY_OBJ(hl_inspect(attr)));
   }
   return ret;
+}
+
+/// Search {path} for {pattern}.
+///
+/// @note This function sets the |quickfix| list as a side-effect.
+///
+/// @param[in]  pattern |regexp| for pattern to search for.
+/// @param[in]  path    File(s) to search.
+/// @param[in]  global  Report multiple matches occurring on the same line.
+/// @param[out] err     Error details, if any.
+///
+/// @see |:vimgrep|
+///
+/// @return  List of search results in |getqflist()|-style format with an
+///          additional "fname" field for the filename.
+Array nvim_grep(String pattern, String path, Boolean global, Error *err)
+  FUNC_API_SINCE(6)
+{
+  Array result_array = ARRAY_DICT_INIT;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(pattern));
+  ADD(args, STRING_OBJ(path));
+  ADD(args, BOOLEAN_OBJ(global));
+  Object results = EXEC_LUA_STATIC("return vim._grep(...)", args, err);
+  xfree(args.items);
+  if (results.type == kObjectTypeArray) {
+    result_array = results.data.array;
+  } else if (!ERROR_SET(err)) {
+    api_set_error(err, kErrorTypeException,
+                  "Failed to grep %s for %s",
+                  path.data, pattern.data);
+  }
+  return result_array;
+}
+
+/// Invokes a function and sends back its return value to the parent in
+/// an asynchronous RPC notification.
+///
+/// @param[in]   channel_id      Parent channel ID.
+/// @param[in]   callee          Function to call.
+/// @param[in]   sid             Script ID to call function with.
+/// @param[in]   context         Context Dictionary to load before the call.
+/// @param[in]   callee_context  Context Dictionary to load before the call.
+/// @param[in]   args            Function arguments.
+/// @param[out]  err             Error details, if any.
+void nvim__async_invoke(uint64_t channel_id, String callee, Integer sid,
+                        Dictionary context, Dictionary callee_context,
+                        Array args, Error *err)
+{
+  // Only allow parent (embedding process)
+  if (channel_id != CHAN_STDIO) {
+    api_set_error(err, kErrorTypeValidation,
+                  "only parent can issue 'nvim__async_invoke'");
+    return;
+  }
+
+  Array result = ARRAY_DICT_INIT;
+
+  scid_T save_current_SID = current_sctx.sc_sid;
+  ctx_set_current_SID((int)sid);
+
+  Array lua_args = ARRAY_DICT_INIT;
+  ADD(lua_args, DICTIONARY_OBJ(context));
+  ADD(lua_args, DICTIONARY_OBJ(callee_context));
+  ADD(lua_args, STRING_OBJ(callee));
+  ADD(lua_args, ARRAY_OBJ(args));
+  Object rv = EXEC_LUA_STATIC("return vim._async_invoke(...)", lua_args, err);
+  ADD(result, rv);
+  xfree(lua_args.items);
+
+  current_sctx.sc_sid = save_current_SID;
+
+  if (ERROR_SET(err)) {
+    api_free_array(result);
+  } else {
+    rpc_send_event(channel_id, "nvim__async_done_event", result);
+  }
+}
+
+/// Sent to the parent channel in an async call to notify it of the result.
+///
+/// @param[in]   channel_id  Child channel ID.
+/// @param[in]   result      Asynchronous call return value.
+/// @param[out]  err         Error details, if any.
+void nvim__async_done_event(uint64_t channel_id, Object result, Error *err)
+{
+  Channel *channel = find_channel(channel_id);
+  // Only allow async call jobs
+  if (!channel || channel->async_call == NULL) {
+    api_set_error(err, kErrorTypeValidation,
+                  "only async call jobs can issue 'nvim__async_done_event'");
+    return;
+  }
+
+  AsyncCall *async_call = channel->async_call;
+
+  if (async_call->is_parallel) {
+    Array work_queue = async_call->work_queue;
+    asynccall_append_result(channel_id, result, err);
+    ADD(async_call->results, copy_object(result));
+    asynccall_callback_call(channel, &channel->async_call->item_callback,
+                            &result, err);
+    result = ARRAY_OBJ(async_call->results);
+    if (async_call->next < work_queue.size) {
+      Array rpc_args = ARRAY_DICT_INIT;
+      ADD(rpc_args, STRING_OBJ(STATIC_CSTR_TO_STRING("")));
+      ADD(rpc_args, INTEGER_OBJ(channel->async_call->sid));
+      ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
+      ADD(rpc_args, DICTIONARY_OBJ(ARRAY_DICT_INIT));
+      ADD(rpc_args, copy_object(work_queue.items[async_call->next++]));
+      rpc_send_event(channel_id, "nvim__async_invoke", rpc_args);
+      return;
+    } else {
+      async_call->count -= 1;
+      asynccall_channel_release(channel);
+      if (async_call->count) {
+        // Do not invoke callback yet
+        return;
+      }
+    }
+  } else {
+    asynccall_channel_release(channel);
+    asynccall_put_result(channel_id, result, err);
+  }
+
+  asynccall_callback_call(channel, &channel->async_call->callback,
+                          &result, err);
+}
+
+void nvim_error_event(uint64_t channel_id, Integer type, String message,
+                      Error *err)
+  FUNC_API_SINCE(6) FUNC_API_REMOTE_ONLY
+{
+  Channel *channel = find_channel(channel_id);
+  if (channel && channel->async_call) {
+    EMSG3(_("multiproc: job %" PRIu64 ": %s"), channel_id, message.data);
+    asynccall_channel_release(channel);
+  }
 }

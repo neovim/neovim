@@ -616,6 +616,35 @@ Directory for temporary files is created in the first suitable directory of:
 			'i', 'I' and 'r' flags isn't required, but in scripts
 			it's a good idea to keep it to avoid confusion.
 
+:&:{cmd}							*:&:*
+			Execute {cmd} in a child process (see |multiproc|).
+			The current |context| is sent and loaded in the child
+			process before executing {cmd}.
+			Command output is captured and displayed in the parent
+			process with |:echo|.
+			The final context in the child process is sent back
+			and loaded in the parent process.
+			This is equivalent to: >
+				call_async(
+				  \ 'eval',
+				  \ ['[nvim_command_output({cmd}),
+				  \    nvim_get_context([])]'],
+				  \ { 'context': nvim_get_context([]),
+				  \   'done': { rv ->
+				  \     [call_wait(v:jobs),
+				  \	 nvim_command('echo rv[0]'),
+				  \	 nvim_load_context(rv[1])] } })
+<
+:&:[l]vimgrep[add][!] /{pattern}/[g][j] {file} ...		*:&:vimgrep*
+:&:[l]vimgrep[add][!] {pattern} {file} ...
+			Like |:vimgrep| but is asynchronous and parallel (see
+			|multiproc| and |call_parallel()|).
+			Uses |v:cores| worker processes.
+			Only one instance of this command can be running at a
+			time, use ! to end any running instance and proceed.
+			NOTE: unlike |:vimgrep|, this command does not jump to
+			the first match when done.
+
 :[range]~[&][flags] [count]					*:~*
 			Repeat last substitute with same substitute string
 			but with last used search pattern.  This is like

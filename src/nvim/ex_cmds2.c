@@ -115,6 +115,16 @@ struct source_cookie {
 # include "ex_cmds2.c.generated.h"
 #endif
 
+void script_items_grow(void)
+{
+  ga_grow(&script_items, (int)(current_sctx.sc_sid - script_items.ga_len));
+  while (script_items.ga_len < current_sctx.sc_sid) {
+    script_items.ga_len++;
+    SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
+    SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
+  }
+}
+
 /// batch mode debugging: don't save and restore typeahead.
 static bool debug_greedy = false;
 
@@ -3180,12 +3190,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   }
   if (current_sctx.sc_sid == 0) {
     current_sctx.sc_sid = ++last_current_SID;
-    ga_grow(&script_items, (int)(current_sctx.sc_sid - script_items.ga_len));
-    while (script_items.ga_len < current_sctx.sc_sid) {
-      script_items.ga_len++;
-      SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
-      SCRIPT_ITEM(script_items.ga_len).sn_prof_on = false;
-    }
+    script_items_grow();
     si = &SCRIPT_ITEM(current_sctx.sc_sid);
     si->sn_name = fname_exp;
     fname_exp = vim_strsave(si->sn_name);  // used for autocmd
