@@ -264,10 +264,8 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     --curbuf->b_op_end.col;
 }
 
-/*
- * shift the current line one shiftwidth left (if left != 0) or right
- * leaves cursor on first blank in the line
- */
+// Shift the current line one shiftwidth left (if left != 0) or right
+// leaves cursor on first blank in the line.
 void shift_line(
     int left,
     int round,
