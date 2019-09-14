@@ -10136,7 +10136,7 @@ static void ex_folddo(exarg_T *eap)
 bool is_loclist_cmd(int cmdidx)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  if (cmdidx < 0 || cmdidx > CMD_SIZE) {
+  if (cmdidx < 0 || cmdidx >= CMD_SIZE) {
     return false;
   }
   return cmdnames[cmdidx].cmd_name[0] == 'l';
