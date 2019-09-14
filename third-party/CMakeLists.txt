@@ -134,7 +134,8 @@ include(ExternalProject)
 
 if(WIN32)
   # "nvim" branch of https://github.com/neovim/libuv
-  set(LIBUV_URL https://github.com/erw7/libuv/archive/libuv-v1.32.0.tar.gz)
+  # https://github.com/neovim/libuv/pull/10#discussion_r324414258
+  set(LIBUV_URL https://github.com/erw7/libuv/archive/libuv-v1.32.0-test.tar.gz)
   set(LIBUV_SHA256 SKIP)
 else()
   # blueyed/nvim-fixes (for *BSD build fixes).
