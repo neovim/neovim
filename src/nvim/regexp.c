@@ -3105,23 +3105,26 @@ static int read_limits(long *minval, long *maxval)
   long tmp;
 
   if (*regparse == '-') {
-    /* Starts with '-', so reverse the range later */
+    // Starts with '-', so reverse the range later.
     regparse++;
     reverse = TRUE;
   }
   first_char = regparse;
   *minval = getdigits_long(&regparse, false, 0);
-  if (*regparse == ',') {           /* There is a comma */
-    if (ascii_isdigit(*++regparse))
+  if (*regparse == ',') {           // There is a comma.
+    if (ascii_isdigit(*++regparse)) {
       *maxval = getdigits_long(&regparse, false, MAX_LIMIT);
-    else
+    } else {
       *maxval = MAX_LIMIT;
-  } else if (ascii_isdigit(*first_char))
-    *maxval = *minval;              /* It was \{n} or \{-n} */
-  else
-    *maxval = MAX_LIMIT;            /* It was \{} or \{-} */
-  if (*regparse == '\\')
-    regparse++;         /* Allow either \{...} or \{...\} */
+    }
+  } else if (ascii_isdigit(*first_char)) {
+    *maxval = *minval;              // It was \{n} or \{-n}
+  } else {
+    *maxval = MAX_LIMIT;            // It was \{} or \{-}
+  }
+  if (*regparse == '\\') {
+    regparse++;         // Allow either \{...} or \{...\}
+  }
   if (*regparse != '}') {
     sprintf((char *)IObuff, _("E554: Syntax error in %s{...}"),
         reg_magic == MAGIC_ALL ? "" : "\\");

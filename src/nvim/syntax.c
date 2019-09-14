@@ -5048,10 +5048,10 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
         } else {                          /* yy=x+99 */
           end += 4;
           if (*end == '+') {
-            ++end;
+            end++;
             *p = getdigits_int(&end, true, 0);    // positive offset
           } else if (*end == '-')   {
-            ++end;
+            end++;
             *p = -getdigits_int(&end, true, 0);   // negative offset
           }
         }

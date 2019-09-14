@@ -1016,8 +1016,9 @@ do_bufdel(
             break;
           }
           arg = p;
-        } else
+        } else {
           bnr = getdigits_int(&arg, false, 0);
+        }
       }
     }
     if (!got_int && do_current

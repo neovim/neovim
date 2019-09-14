@@ -2707,17 +2707,19 @@ int spell_check_sps(void)
     if (ascii_isdigit(*buf)) {
       s = buf;
       sps_limit = getdigits_int(&s, true, 0);
-      if (*s != NUL && !ascii_isdigit(*s))
+      if (*s != NUL && !ascii_isdigit(*s)) {
         f = -1;
-    } else if (STRCMP(buf, "best") == 0)
+      }
+    } else if (STRCMP(buf, "best") == 0) {
       f = SPS_BEST;
-    else if (STRCMP(buf, "fast") == 0)
+    } else if (STRCMP(buf, "fast") == 0) {
       f = SPS_FAST;
-    else if (STRCMP(buf, "double") == 0)
+    } else if (STRCMP(buf, "double") == 0) {
       f = SPS_DOUBLE;
-    else if (STRNCMP(buf, "expr:", 5) != 0
-             && STRNCMP(buf, "file:", 5) != 0)
+    } else if (STRNCMP(buf, "expr:", 5) != 0
+               && STRNCMP(buf, "file:", 5) != 0) {
       f = -1;
+    }
 
     if (f == -1 || (sps_flags != 0 && f != 0)) {
       sps_flags = SPS_BEST;

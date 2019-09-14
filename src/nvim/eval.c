@@ -2936,9 +2936,9 @@ void ex_lockvar(exarg_T *eap)
   char_u      *arg = eap->arg;
   int deep = 2;
 
-  if (eap->forceit)
+  if (eap->forceit) {
     deep = -1;
-  else if (ascii_isdigit(*arg)) {
+  } else if (ascii_isdigit(*arg)) {
     deep = getdigits_int(&arg, false, -1);
     arg = skipwhite(arg);
   }

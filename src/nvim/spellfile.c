@@ -1834,23 +1834,29 @@ int spell_check_msm(void)
     return FAIL;
   // block count = (value * 1024) / SBLOCKSIZE (but avoid overflow)
   start = (getdigits_long(&p, true, 0) * 10) / (SBLOCKSIZE / 102);
-  if (*p != ',')
+  if (*p != ',') {
     return FAIL;
-  ++p;
-  if (!ascii_isdigit(*p))
+  }
+  p++;
+  if (!ascii_isdigit(*p)) {
     return FAIL;
+  }
   incr = (getdigits_long(&p, true, 0) * 102) / (SBLOCKSIZE / 10);
-  if (*p != ',')
+  if (*p != ',') {
     return FAIL;
-  ++p;
-  if (!ascii_isdigit(*p))
+  }
+  p++;
+  if (!ascii_isdigit(*p)) {
     return FAIL;
+  }
   added = getdigits_long(&p, true, 0) * 1024;
-  if (*p != NUL)
+  if (*p != NUL) {
     return FAIL;
+  }
 
-  if (start == 0 || incr == 0 || added == 0 || incr > start)
+  if (start == 0 || incr == 0 || added == 0 || incr > start) {
     return FAIL;
+  }
 
   compress_start = start;
   compress_inc = incr;
