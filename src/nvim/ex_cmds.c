@@ -707,7 +707,7 @@ void ex_retab(exarg_T *eap)
   save_list = curwin->w_p_list;
   curwin->w_p_list = 0;             /* don't want list mode here */
 
-  new_ts = getdigits_int(&(eap->arg));
+  new_ts = getdigits_int(&(eap->arg), false, -1);
   if (new_ts < 0) {
     EMSG(_(e_positive));
     return;
@@ -3357,7 +3357,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   // check for a trailing count
   cmd = skipwhite(cmd);
   if (ascii_isdigit(*cmd)) {
-    i = getdigits_long(&cmd);
+    i = getdigits_long(&cmd, true, 0);
     if (i <= 0 && !eap->skip && subflags.do_error) {
       EMSG(_(e_zerocount));
       return NULL;

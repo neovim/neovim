@@ -325,7 +325,7 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table,
         break;
       }
 
-      table[idx].number = getdigits_int(&p);
+      table[idx].number = getdigits_int(&p, false, 0);
     }
 
     table[idx].string = p;

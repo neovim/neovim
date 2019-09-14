@@ -570,7 +570,7 @@ static int dbg_parsearg(char_u *arg, garray_T *gap)
   if (here) {
     bp->dbg_lnum = curwin->w_cursor.lnum;
   } else if (gap != &prof_ga && ascii_isdigit(*p)) {
-    bp->dbg_lnum = getdigits_long(&p);
+    bp->dbg_lnum = getdigits_long(&p, true, 0);
     p = skipwhite(p);
   } else {
     bp->dbg_lnum = 0;

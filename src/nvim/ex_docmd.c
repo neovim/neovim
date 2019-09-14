@@ -2064,14 +2064,14 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
   }
 
-  /*
-   * Check for a count.  When accepting a BUFNAME, don't use "123foo" as a
-   * count, it's a buffer name.
-   */
+  //
+  // Check for a count.  When accepting a BUFNAME, don't use "123foo" as a
+  // count, it's a buffer name.
+  ///
   if ((ea.argt & COUNT) && ascii_isdigit(*ea.arg)
       && (!(ea.argt & BUFNAME) || *(p = skipdigits(ea.arg)) == NUL
           || ascii_iswhite(*p))) {
-    n = getdigits_long(&ea.arg);
+    n = getdigits_long(&ea.arg, false, -1);
     ea.arg = skipwhite(ea.arg);
     if (n <= 0 && !ni && (ea.argt & ZEROR) == 0) {
       errormsg = (char_u *)_(e_zerocount);
@@ -3796,14 +3796,16 @@ static linenr_T get_address(exarg_T *eap,
       break;
 
     default:
-      if (ascii_isdigit(*cmd))                    /* absolute line number */
-        lnum = getdigits_long(&cmd);
+      if (ascii_isdigit(*cmd)) {  // absolute line number
+        lnum = getdigits_long(&cmd, false, 0);
+      }
     }
 
     for (;; ) {
       cmd = skipwhite(cmd);
-      if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd))
+      if (*cmd != '-' && *cmd != '+' && !ascii_isdigit(*cmd)) {
         break;
+      }
 
       if (lnum == MAXLNUM) {
         switch (addr_type) {
@@ -3832,14 +3834,16 @@ static linenr_T get_address(exarg_T *eap,
         }
       }
 
-      if (ascii_isdigit(*cmd))
-        i = '+';                        /* "number" is same as "+number" */
-      else
+      if (ascii_isdigit(*cmd)) {
+        i = '+';                        // "number" is same as "+number"
+      } else {
         i = *cmd++;
-      if (!ascii_isdigit(*cmd))           /* '+' is '+1', but '+0' is not '+1' */
+      }
+      if (!ascii_isdigit(*cmd)) {       // '+' is '+1', but '+0' is not '+1'
         n = 1;
-      else
-        n = getdigits(&cmd);
+      } else {
+        n = getdigits(&cmd, true, 0);
+      }
 
       if (addr_type == ADDR_TABS_RELATIVE) {
         EMSG(_(e_invrange));
@@ -4504,7 +4508,7 @@ static int get_tabpage_arg(exarg_T *eap)
     }
 
     p_save = p;
-    tab_number = getdigits(&p);
+    tab_number = getdigits(&p, false, tab_number);
 
     if (relative == 0) {
       if (STRCMP(p, "$") == 0) {
@@ -5179,7 +5183,7 @@ two_count:
           return FAIL;
         }
 
-        *def = getdigits_long(&p);
+        *def = getdigits_long(&p, true, 0);
         *argt |= (ZEROR | NOTADR);
 
         if (p != val + vallen || vallen == 0) {
@@ -5196,7 +5200,7 @@ invalid_count:
         if (*def >= 0)
           goto two_count;
 
-        *def = getdigits_long(&p);
+        *def = getdigits_long(&p, true, 0);
 
         if (p != val + vallen)
           goto invalid_count;
@@ -6832,8 +6836,7 @@ static void ex_tabnext(exarg_T *eap)
     if (eap->arg && *eap->arg != NUL) {
       char_u *p = eap->arg;
       char_u *p_save = p;
-
-      tab_number = getdigits(&p);
+      tab_number = getdigits(&p, false, 0);
       if (p == p_save || *p_save == '-' || *p_save == '+' || *p != NUL
           || tab_number == 0) {
         // No numbers as argument.
@@ -7472,18 +7475,16 @@ static void do_exmap(exarg_T *eap, int isabbrev)
  */
 static void ex_winsize(exarg_T *eap)
 {
-  int w, h;
-  char_u      *arg = eap->arg;
-  char_u      *p;
-
-  w = getdigits_int(&arg);
+  char_u *arg = eap->arg;
+  int w = getdigits_int(&arg, false, 10);
   arg = skipwhite(arg);
-  p = arg;
-  h = getdigits_int(&arg);
-  if (*p != NUL && *arg == NUL)
+  char_u *p = arg;
+  int h = getdigits_int(&arg, false, 10);
+  if (*p != NUL && *arg == NUL) {
     screen_resize(w, h);
-  else
+  } else {
     EMSG(_("E465: :winsize requires two number arguments"));
+  }
 }
 
 static void ex_wincmd(exarg_T *eap)
@@ -7724,17 +7725,13 @@ static void ex_rundo(exarg_T *eap)
   u_read_undo((char *) eap->arg, hash, NULL);
 }
 
-/*
- * ":redo".
- */
+/// ":redo".
 static void ex_redo(exarg_T *eap)
 {
   u_redo(1);
 }
 
-/*
- * ":earlier" and ":later".
- */
+/// ":earlier" and ":later".
 static void ex_later(exarg_T *eap)
 {
   long count = 0;
@@ -7742,10 +7739,10 @@ static void ex_later(exarg_T *eap)
   bool file = false;
   char_u      *p = eap->arg;
 
-  if (*p == NUL)
+  if (*p == NUL) {
     count = 1;
-  else if (isdigit(*p)) {
-    count = getdigits_long(&p);
+  } else if (isdigit(*p)) {
+    count = getdigits_long(&p, false, 0);
     switch (*p) {
     case 's': ++p; sec = true; break;
     case 'm': ++p; sec = true; count *= 60; break;
@@ -7755,11 +7752,12 @@ static void ex_later(exarg_T *eap)
     }
   }
 
-  if (*p != NUL)
+  if (*p != NUL) {
     EMSG2(_(e_invarg2), eap->arg);
-  else
+  } else {
     undo_time(eap->cmdidx == CMD_earlier ? -count : count,
               sec, file, false);
+  }
 }
 
 /*
@@ -8413,23 +8411,24 @@ static void ex_findpat(exarg_T *eap)
   }
 
   n = 1;
-  if (ascii_isdigit(*eap->arg)) { /* get count */
-    n = getdigits_long(&eap->arg);
+  if (ascii_isdigit(*eap->arg)) {  // get count
+    n = getdigits_long(&eap->arg, false, 0);
     eap->arg = skipwhite(eap->arg);
   }
-  if (*eap->arg == '/') {   /* Match regexp, not just whole words */
-    whole = FALSE;
-    ++eap->arg;
+  if (*eap->arg == '/') {   // Match regexp, not just whole words
+    whole = false;
+    eap->arg++;
     p = skip_regexp(eap->arg, '/', p_magic, NULL);
     if (*p) {
       *p++ = NUL;
       p = skipwhite(p);
 
-      /* Check for trailing illegal characters */
-      if (!ends_excmd(*p))
+      // Check for trailing illegal characters.
+      if (!ends_excmd(*p)) {
         eap->errmsg = e_trailing;
-      else
+      } else {
         eap->nextcmd = check_nextcmd(p);
+      }
     }
   }
   if (!eap->skip)
@@ -8659,17 +8658,16 @@ eval_vars (
       *errormsg = (char_u *)"";
       return NULL;
     }
-  }
-  /*
-   * '#': Alternate file name
-   * '%': Current file name
-   *	    File name under the cursor
-   *	    File name for autocommand
-   *	and following modifiers
-   */
-  else {
+  //
+  // '#': Alternate file name
+  // '%': Current file name
+  //        File name under the cursor
+  //        File name for autocommand
+  //    and following modifiers
+  //
+  } else {
     switch (spec_idx) {
-    case SPEC_PERC:             /* '%': current file */
+    case SPEC_PERC:             // '%': current file
       if (curbuf->b_fname == NULL) {
         result = (char_u *)"";
         valid = 0;                  // Must have ":p:h" to be valid
@@ -8690,9 +8688,10 @@ eval_vars (
         break;
       }
       s = src + 1;
-      if (*s == '<')                    /* "#<99" uses v:oldfiles */
-        ++s;
-      i = getdigits_int(&s);
+      if (*s == '<') {                  // "#<99" uses v:oldfiles.
+        s++;
+      }
+      i = getdigits_int(&s, false, 0);
       if (s == src + 2 && src[1] == '-') {
         // just a minus sign, don't skip over it
         s--;

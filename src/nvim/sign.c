@@ -1130,7 +1130,7 @@ static int parse_sign_cmd_args(
   // first arg could be placed sign id
   arg1 = arg;
   if (ascii_isdigit(*arg)) {
-    *signid = getdigits_int(&arg);
+    *signid = getdigits_int(&arg, true, 0);
     if (!ascii_iswhite(*arg) && *arg != NUL) {
       *signid = -1;
       arg = arg1;
@@ -1182,7 +1182,7 @@ static int parse_sign_cmd_args(
     } else if (STRNCMP(arg, "buffer=", 7) == 0) {
       arg += 7;
       filename = arg;
-      *buf = buflist_findnr(getdigits_int(&arg));
+      *buf = buflist_findnr(getdigits_int(&arg, true, 0));
       if (*skipwhite(arg) != NUL) {
         EMSG(_(e_trailing));
       }

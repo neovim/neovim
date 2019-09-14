@@ -5038,7 +5038,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
         ci->sp_off_flags |= (1 << idx);
         if (idx == SPO_LC_OFF) {            /* lc=99 */
           end += 3;
-          *p = getdigits_int(&end);
+          *p = getdigits_int(&end, true, 0);
 
           /* "lc=" offset automatically sets "ms=" offset */
           if (!(ci->sp_off_flags & (1 << SPO_MS_OFF))) {
@@ -5048,11 +5048,11 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
         } else {                          /* yy=x+99 */
           end += 4;
           if (*end == '+') {
-            ++end;
-            *p = getdigits_int(&end);                       /* positive offset */
+            end++;
+            *p = getdigits_int(&end, true, 0);    // positive offset
           } else if (*end == '-')   {
-            ++end;
-            *p = -getdigits_int(&end);                      /* negative offset */
+            end++;
+            *p = -getdigits_int(&end, true, 0);   // negative offset
           }
         }
         if (*end != ',')
@@ -5118,7 +5118,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         illegal = TRUE;
         break;
       }
-      n = getdigits_long(&arg_end);
+      n = getdigits_long(&arg_end, false, 0);
       if (!eap->skip) {
         if (key[4] == 'B')
           curwin->w_s->b_syn_sync_linebreaks = n;

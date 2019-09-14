@@ -5714,7 +5714,7 @@ bool prepare_yankreg_from_object(yankreg_T *reg, String regtype, size_t lines)
       return false;
     }
     const char *p = regtype.data+1;
-    reg->y_width = getdigits_int((char_u **)&p)-1;
+    reg->y_width = getdigits_int((char_u **)&p, false, 1) - 1;
     if (regtype.size > (size_t)(p-regtype.data)) {
       return false;
     }

@@ -1585,7 +1585,7 @@ int do_set(
                */
               else if (varp == (char_u *)&p_bs
                        && ascii_isdigit(**(char_u **)varp)) {
-                i = getdigits_int((char_u **)varp);
+                i = getdigits_int((char_u **)varp, true, 0);
                 switch (i) {
                 case 0:
                   *(char_u **)varp = empty_option;
@@ -1613,7 +1613,7 @@ int do_set(
               else if (varp == (char_u *)&p_ww
                        && ascii_isdigit(*arg)) {
                 *errbuf = NUL;
-                i = getdigits_int(&arg);
+                i = getdigits_int(&arg, true, 0);
                 if (i & 1) {
                   STRCAT(errbuf, "b,");
                 }
@@ -3053,7 +3053,7 @@ ambw_end:
       if (*++s == '-') {        // ignore a '-'
         s++;
       }
-      wid = getdigits_int(&s);
+      wid = getdigits_int(&s, true, 0);
       if (wid && *s == '(' && (errmsg = check_stl_option(p_ruf)) == NULL) {
         ru_wid = wid;
       } else {
@@ -3440,7 +3440,7 @@ char_u *check_colorcolumn(win_T *wp)
       if (!ascii_isdigit(*s)) {
         return e_invarg;
       }
-      col = col * getdigits_int(&s);
+      col = col * getdigits_int(&s, true, 0);
       if (wp->w_buffer->b_p_tw == 0) {
         goto skip;          // 'textwidth' not set, skip this item
       }
@@ -3455,7 +3455,7 @@ char_u *check_colorcolumn(win_T *wp)
         goto skip;
       }
     } else if (ascii_isdigit(*s)) {
-      col = getdigits_int(&s);
+      col = getdigits_int(&s, true, 0);
     } else {
       return e_invarg;
     }
@@ -7109,12 +7109,12 @@ static bool briopt_check(win_T *wp)
         && ((p[6] == '-' && ascii_isdigit(p[7])) || ascii_isdigit(p[6])))
     {
       p += 6;
-      bri_shift = getdigits_int(&p);
+      bri_shift = getdigits_int(&p, true, 0);
     }
     else if (STRNCMP(p, "min:", 4) == 0 && ascii_isdigit(p[4]))
     {
       p += 4;
-      bri_min = getdigits_int(&p);
+      bri_min = getdigits_int(&p, true, 0);
     }
     else if (STRNCMP(p, "sbr", 3) == 0)
     {

@@ -1323,7 +1323,7 @@ int open_line(
           if (*p == COM_RIGHT || *p == COM_LEFT) {
               c = *p++;
           } else if (ascii_isdigit(*p) || *p == '-') {
-              off = getdigits_int(&p);
+              off = getdigits_int(&p, true, 0);
           } else {
               p++;
           }

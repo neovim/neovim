@@ -112,12 +112,14 @@ ex_menu(exarg_T *eap)
     }
   }
   if (ascii_iswhite(*p)) {
-    for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); ++i) {
-      pri_tab[i] = getdigits_long(&arg);
-      if (pri_tab[i] == 0)
+    for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); i++) {
+      pri_tab[i] = getdigits_long(&arg, false, 0);
+      if (pri_tab[i] == 0) {
         pri_tab[i] = 500;
-      if (*arg == '.')
-        ++arg;
+      }
+      if (*arg == '.') {
+        arg++;
+      }
     }
     arg = skipwhite(arg);
   } else if (eap->addr_count && eap->line2 != 0) {

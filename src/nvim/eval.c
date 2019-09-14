@@ -2936,10 +2936,10 @@ void ex_lockvar(exarg_T *eap)
   char_u      *arg = eap->arg;
   int deep = 2;
 
-  if (eap->forceit)
+  if (eap->forceit) {
     deep = -1;
-  else if (ascii_isdigit(*arg)) {
-    deep = getdigits_int(&arg);
+  } else if (ascii_isdigit(*arg)) {
+    deep = getdigits_int(&arg, false, -1);
     arg = skipwhite(arg);
   }
 
@@ -15775,7 +15775,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           yank_type = kMTBlockWise;
           if (ascii_isdigit(stropt[1])) {
             stropt++;
-            block_len = getdigits_long((char_u **)&stropt) - 1;
+            block_len = getdigits_long((char_u **)&stropt, true, 0) - 1;
             stropt--;
           }
           break;

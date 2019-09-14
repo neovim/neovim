@@ -166,7 +166,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
 
       if (ascii_isdigit(*p)) {
-        c = getdigits_int((char_u **)&p);
+        c = getdigits_int((char_u **)&p, true, 0);
       } else {
         c = mb_ptr2char_adv(&p);
       }
@@ -176,7 +176,7 @@ int buf_init_chartab(buf_T *buf, int global)
         ++p;
 
         if (ascii_isdigit(*p)) {
-          c2 = getdigits_int((char_u **)&p);
+          c2 = getdigits_int((char_u **)&p, true, 0);
         } else {
           c2 = mb_ptr2char_adv(&p);
         }
@@ -1595,59 +1595,69 @@ char_u* skiptowhite_esc(char_u *p) {
   return p;
 }
 
-/// Get a number from a string and skip over it, signalling overflows
+/// Gets a number from a string and skips over it, signalling overflow.
 ///
 /// @param[out]  pp  A pointer to a pointer to char_u.
 ///                  It will be advanced past the read number.
 /// @param[out]  nr  Number read from the string.
 ///
-/// @return OK on success, FAIL on error/overflow
-int getdigits_safe(char_u **pp, intmax_t *nr)
+/// @return true on success, false on error/overflow
+bool try_getdigits(char_u **pp, intmax_t *nr)
 {
   errno = 0;
   *nr = strtoimax((char *)(*pp), (char **)pp, 10);
-
-  if ((*nr == INTMAX_MIN || *nr == INTMAX_MAX)
-      && errno == ERANGE) {
-    return FAIL;
+  if (errno == ERANGE && (*nr == INTMAX_MIN || *nr == INTMAX_MAX)) {
+    return false;
   }
-
-  return OK;
+  return true;
 }
 
-/// Get a number from a string and skip over it.
+/// Gets a number from a string and skips over it.
 ///
-/// @param[out]  pp  A pointer to a pointer to char_u.
+/// @param[out]  pp  Pointer to a pointer to char_u.
 ///                  It will be advanced past the read number.
+/// @param strict    Abort on overflow.
+/// @param def       Default value, if parsing fails or overflow occurs.
 ///
-/// @return Number read from the string.
-intmax_t getdigits(char_u **pp)
+/// @return Number read from the string, or `def` on parse failure or overflow.
+intmax_t getdigits(char_u **pp, bool strict, intmax_t def)
 {
   intmax_t number;
-  int ret = getdigits_safe(pp, &number);
-
-  (void)ret;  // Avoid "unused variable" warning in Release build
-  assert(ret == OK);
-
-  return number;
+  int ok = try_getdigits(pp, &number);
+  if (strict && !ok) {
+    abort();
+  }
+  return ok ? number : def;
 }
 
-/// Get an int number from a string. Like getdigits(), but restricted to `int`.
-int getdigits_int(char_u **pp)
+/// Gets an int number from a string.
+///
+/// @see getdigits
+int getdigits_int(char_u **pp, bool strict, int def)
 {
-  intmax_t number = getdigits(pp);
+  intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_INT
-  assert(number >= INT_MIN && number <= INT_MAX);
+  if (strict) {
+    assert(number >= INT_MIN && number <= INT_MAX);
+  } else if (!(number >= INT_MIN && number <= INT_MAX)) {
+    return def;
+  }
 #endif
   return (int)number;
 }
 
-/// Get a long number from a string. Like getdigits(), but restricted to `long`.
-long getdigits_long(char_u **pp)
+/// Gets a long number from a string.
+///
+/// @see getdigits
+long getdigits_long(char_u **pp, bool strict, long def)
 {
-  intmax_t number = getdigits(pp);
+  intmax_t number = getdigits(pp, strict, def);
 #if SIZEOF_INTMAX_T > SIZEOF_LONG
-  assert(number >= LONG_MIN && number <= LONG_MAX);
+  if (strict) {
+    assert(number >= LONG_MIN && number <= LONG_MAX);
+  } else if (!(number >= LONG_MIN && number <= LONG_MAX)) {
+    return def;
+  }
 #endif
   return (long)number;
 }

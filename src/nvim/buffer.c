@@ -1016,8 +1016,9 @@ do_bufdel(
             break;
           }
           arg = p;
-        } else
-          bnr = getdigits_int(&arg);
+        } else {
+          bnr = getdigits_int(&arg, false, 0);
+        }
       }
     }
     if (!got_int && do_current
@@ -3626,10 +3627,7 @@ int build_stl_str_hl(
 
     // The first digit group is the item's min width
     if (ascii_isdigit(*fmt_p)) {
-      minwid = getdigits_int(&fmt_p);
-      if (minwid < 0) {         // overflow
-        minwid = 0;
-      }
+      minwid = getdigits_int(&fmt_p, false, 0);
     }
 
     // User highlight groups override the min width field
@@ -3712,10 +3710,7 @@ int build_stl_str_hl(
     if (*fmt_p == '.') {
       fmt_p++;
       if (ascii_isdigit(*fmt_p)) {
-        maxwid = getdigits_int(&fmt_p);
-        if (maxwid <= 0) {              // overflow
-          maxwid = 50;
-        }
+        maxwid = getdigits_int(&fmt_p, false, 50);
       }
     }
 
@@ -5078,7 +5073,7 @@ chk_modeline(
         } else {
           e = s + 3;
         }
-        if (getdigits_safe(&e, &vers) != OK) {
+        if (!try_getdigits(&e, &vers)) {
           continue;
         }
 

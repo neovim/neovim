@@ -2113,7 +2113,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_FILLER;
     } else if ((STRNCMP(p, "context:", 8) == 0) && ascii_isdigit(p[8])) {
       p += 8;
-      diff_context_new = getdigits_int(&p);
+      diff_context_new = getdigits_int(&p, false, diff_context_new);
     } else if (STRNCMP(p, "iblank", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_IBLANK;
@@ -2137,7 +2137,7 @@ int diffopt_changed(void)
       diff_flags_new |= DIFF_VERTICAL;
     } else if ((STRNCMP(p, "foldcolumn:", 11) == 0) && ascii_isdigit(p[11])) {
       p += 11;
-      diff_foldcolumn_new = getdigits_int(&p);
+      diff_foldcolumn_new = getdigits_int(&p, false, diff_foldcolumn_new);
     } else if (STRNCMP(p, "hiddenoff", 9) == 0) {
       p += 9;
       diff_flags_new |= DIFF_HIDDEN_OFF;
@@ -3000,10 +3000,10 @@ static int parse_diff_ed(char_u     *line,
   // append: {first}a{first}[,{last}]
   // delete: {first}[,{last}]d{first}
   p = line;
-  f1 = getdigits(&p);
+  f1 = getdigits(&p, true, 0);
   if (*p == ',') {
     p++;
-    l1 = getdigits(&p);
+    l1 = getdigits(&p, true, 0);
   } else {
     l1 = f1;
   }
@@ -3011,10 +3011,10 @@ static int parse_diff_ed(char_u     *line,
     return FAIL;        // invalid diff format
   }
   difftype = *p++;
-  f2 = getdigits(&p);
+  f2 = getdigits(&p, true, 0);
   if (*p == ',') {
     p++;
-    l2 = getdigits(&p);
+    l2 = getdigits(&p, true, 0);
   } else {
     l2 = f2;
   }
@@ -3056,18 +3056,18 @@ static int parse_diff_unified(char_u        *line,
   // @@ -oldline,oldcount +newline,newcount @@
   p = line;
   if (*p++ == '@' && *p++ == '@' && *p++ == ' ' && *p++ == '-') {
-    oldline = getdigits(&p);
+    oldline = getdigits(&p, true, 0);
     if (*p == ',') {
       p++;
-      oldcount = getdigits(&p);
+      oldcount = getdigits(&p, true, 0);
     } else {
       oldcount = 1;
     }
     if (*p++ == ' ' && *p++ == '+') {
-      newline = getdigits(&p);
+      newline = getdigits(&p, true, 0);
       if (*p == ',') {
         p++;
-        newcount = getdigits(&p);
+        newcount = getdigits(&p, true, 0);
       } else {
         newcount = 1;
       }
