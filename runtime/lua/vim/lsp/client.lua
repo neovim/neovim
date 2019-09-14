@@ -79,7 +79,6 @@ client.start = function(self)
   self.handle, self.pid = uv.spawn(self.cmd.execute_path, opts, on_exit)
 
   uv.read_start(self.stdout, function (err, chunk)
-    --self.d("stdout",chunk, err)
     if not err then
       self:on_stdout(chunk)
     end
@@ -97,7 +96,9 @@ client.stop = function(self)
     return
   end
 
+  vim.api.nvim_command("echo 'shutting down "..self.filetype.." language server'")
   self:request('shutdown', nil, function()end)
+  vim.api.nvim_command("echo 'exit "..self.filetype.." language server'")
   self:notify('exit', nil)
 
   uv.shutdown(self.stdin, function()
@@ -324,7 +325,6 @@ client.on_stdout = function(self, data)
       end
 
       -- Parse the message
-      -- TODO: Figure out why he uses a null value here
       local body = self._read_data:sub(1, self._read_length)
       self._read_data = self._read_data:sub(self._read_length + 1)
 
@@ -338,8 +338,7 @@ client.on_message = function(self, body)
   local ok, json_message = pcall(util.decode_json, body)
 
   if not ok then
-    logger.info('Not a valid message. Calling self:on_error')
-    -- TODO(KillTheMule): Is self.__read_data the thing to print here?
+    logger.error('Not a valid message. Calling self:on_error')
     self:on_error(
       error_level.reset_state,
       string.format('_on_read error: bad json_message (%s)', body)--self._read_data)
