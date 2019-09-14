@@ -34,7 +34,7 @@ describe('LSP Callback Configuration', function()
   describe("'textDocument/hover' builtin callback is set", function()
     it("should have a 'textDocument/hover' builtin callback", function()
       exec_lua("lsp_config.set_builtin_callback('textDocument/hover')")
-      exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+      exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover')")
 
       eq(true, exec_lua("return lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ~= nil"))
       eq(1, exec_lua("return count_callback()"))
@@ -44,7 +44,7 @@ describe('LSP Callback Configuration', function()
   describe("all builtin callbacks are set", function()
     it('should have some builtin callbacks', function()
       exec_lua("lsp_config:set_all_builtin_callbacks()")
-      exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+      exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover')")
       exec_lua("hover = lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ")
 
       eq(true, exec_lua("return callback_list[1] == hover"))
@@ -60,7 +60,7 @@ describe('LSP Callback Configuration', function()
 
     describe("get callback of a method", function()
       it('should have two common callbacks', function()
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover')")
 
         eq(true, exec_lua("return #callback_list == 2"))
         eq(true, exec_lua("return callback_list[2] == test_func"))
@@ -69,7 +69,7 @@ describe('LSP Callback Configuration', function()
 
     describe("get callback of a method for specific filetypes", function()
       it('should have two common callbacks', function()
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', 'python')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover', 'python')")
 
         eq(true, exec_lua("return #callback_list == 2"))
         eq(true, exec_lua("return callback_list[2] == test_func"))
@@ -86,7 +86,7 @@ describe('LSP Callback Configuration', function()
 
     describe("get callback of a method", function()
       it('should have a common callback', function()
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover')")
         exec_lua("hover_callback = lsp_callbacks._callback_mapping['textDocument/hover'].common[1] ")
 
         eq(true, exec_lua("return #callback_list == 1"))
@@ -96,7 +96,7 @@ describe('LSP Callback Configuration', function()
 
     describe("get callback of a method for specific filetypes", function()
       it('should have a specific filetype callback', function()
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', 'python')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover', 'python')")
 
         eq(true, exec_lua("return #callback_list == 1"))
         eq(true, exec_lua("return callback_list[1] == filetype_func"))
@@ -110,7 +110,7 @@ describe('LSP Callback Configuration', function()
         exec_lua("override_func = function(a, b) return a - b end")
 
         exec_lua("lsp_config.set_callback('textDocument/hover', override_func)")
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover')")
 
         eq(true, exec_lua("return callback_list[1] == override_func"))
         eq(true, exec_lua("return #callback_list == 1"))
@@ -123,12 +123,12 @@ describe('LSP Callback Configuration', function()
         exec_lua("override_func = function(a, b) return a - b end")
 
         exec_lua("lsp_config.set_callback('textDocument/hover', override_func, 'python')")
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover')")
 
         eq(true, exec_lua("return callback_list[1] ~= override_func"))
         eq(true, exec_lua("return #callback_list == 1"))
 
-        exec_lua("callback_list = lsp_callbacks._get_list_of_callbacks('textDocument/hover', 'python')")
+        exec_lua("callback_list = lsp_callbacks._get_callbacks('textDocument/hover', 'python')")
 
         eq(true, exec_lua("return callback_list[1] == override_func"))
         eq(true, exec_lua("return #callback_list == 1"))

@@ -1,13 +1,14 @@
 local logger = require('vim.lsp.logger')
 
 -- {
---   method_name = CallbackObject
+--   lsp_method_name = CallbackObject
 -- }
 local CallbackMapping = setmetatable({}, {})
 
+--- CallbackObject has callback functions.
 -- {
---   common = { CallbackObject },
---   filetype = { CallbackObject }.
+--   common = { function },
+--   filetype = { function }.
 -- }
 local CallbackObject = {}
 
@@ -20,7 +21,7 @@ CallbackObject.__index = function(self, key)
 end
 
 -- Operation function for CallbackMapping and CallbackObject section
-local get_callback_object_by_method = function(method)
+local get_callback_object = function(method)
   if type(method) ~= 'string' then
     return nil
   end
@@ -38,8 +39,8 @@ end
 -- @params filetype
 
 -- @return callback result
-local call_callbacks_for_method = function(method, success, data, filetype)
-  local cb = get_callback_object_by_method(method)
+local call_callback = function(method, success, data, filetype)
+  local cb = get_callback_object(method)
 
   if cb:has_no_callbacks(filetype) then
     logger.debug('Unsupported method:', method)
@@ -52,7 +53,7 @@ end
 -- CallbackObject section
 CallbackObject.__call = function(self, success, data, filetype)
   if self.name ~= 'nvim/error_callback' and not success then
-    call_callbacks_for_method('nvim/error_callback', data, filetype)
+    call_callback('nvim/error_callback', data, filetype)
   end
 
   if not filetype and vim.tbl_isempty(self.common) then
@@ -60,7 +61,7 @@ CallbackObject.__call = function(self, success, data, filetype)
     return nil
   end
 
-  local callback_list = self:get_list_of_callbacks(filetype)
+  local callback_list = self:get_callbacks(filetype)
   local results = { }
 
   for _, cb in ipairs(callback_list) do
@@ -97,7 +98,7 @@ CallbackObject.new = function(method, options)
 end
 
 CallbackObject.has_no_callbacks = function(self, filetype)
-  return vim.tbl_isempty(self:get_list_of_callbacks(filetype))
+  return vim.tbl_isempty(self:get_callbacks(filetype))
 end
 
 CallbackObject.add_callback = function(self, new_callback, filetype)
@@ -142,7 +143,7 @@ end
 --- If filetype argument is present and there are specific filetype callbacks, it returns only specific filetype callbacks.
 --- But if filetype argument is present and there aren't any specific filetype callbacks, it returns common callbacks.
 -- @params (optional) filetype string
-CallbackObject.get_list_of_callbacks = function(self, filetype)
+CallbackObject.get_callbacks = function(self, filetype)
   local callback_list = {}
 
   if filetype then
@@ -175,31 +176,31 @@ local call_callbacks = function(callback_list, success, params)
 end
 
 local add_callback = function(method, new_callback, filetype)
-  get_callback_object_by_method(method):add_callback(new_callback, filetype)
+  get_callback_object(method):add_callback(new_callback, filetype)
 end
 
 local set_callback = function(method, new_callback, filetype)
-  get_callback_object_by_method(method):set_callback(new_callback, filetype)
+  get_callback_object(method):set_callback(new_callback, filetype)
 end
 
 local set_option = function(method, option, value)
-  get_callback_object_by_method(method).options[option] = value
+  get_callback_object(method).options[option] = value
 end
 
 --- Get a list of callbacks for a particular circumstance
 -- @param method                (required) The name of the method to get the callbacks for
 -- @param filetype              (optional) If passed, will execute filetype specific callbacks as well
-local get_list_of_callbacks = function(method, filetype)
-  local cb = get_callback_object_by_method(method)
+local get_callbacks = function(method, filetype)
+  local cb = get_callback_object(method)
 
   if cb == nil then return {} end
 
-  return cb:get_list_of_callbacks(filetype)
+  return cb:get_callbacks(filetype)
 end
 
 return {
   -- Calling configured callback objects
-  call_callbacks_for_method = call_callbacks_for_method,
+  call_callback = call_callback,
 
   -- Configuring callback objects
   add_callback = add_callback,
@@ -209,6 +210,6 @@ return {
   -- Generally private functions
   _callback_mapping = CallbackMapping,
   _callback_object = CallbackObject,
-  _get_list_of_callbacks = get_list_of_callbacks,
+  _get_callbacks = get_callbacks,
   _call_callbacks = call_callbacks,
 }

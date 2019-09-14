@@ -135,7 +135,7 @@ lsp.notify = function(method, arguments, bufnr, filetype)
 end
 
 lsp.handle = function(filetype, method, data, default_only)
-  return callbacks.call_callbacks_for_method(method, true, data, default_only, filetype)
+  return callbacks.call_callback(method, true, data, default_only, filetype)
 end
 
 lsp.client_has_started = function(filetype)

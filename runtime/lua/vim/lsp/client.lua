@@ -4,7 +4,7 @@ local util = require('vim.lsp.util')
 
 local logger = require('vim.lsp.logger')
 local message = require('vim.lsp.message')
-local call_callbacks_for_method = require('vim.lsp.callbacks').call_callbacks_for_method
+local call_callback = require('vim.lsp.callbacks').call_callback
 local should_send_message = require('vim.lsp.checks').should_send
 local InitializeParams = require('vim.lsp.protocol').InitializeParams
 local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
@@ -350,7 +350,7 @@ client.on_message = function(self, body)
   if json_message.method and json_message.params then
     logger.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params))
     logger.server.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params))
-    call_callbacks_for_method(json_message.method, true, json_message.params, nil)
+    call_callback(json_message.method, true, json_message.params, nil)
 
     return
   -- Handle responses
@@ -378,7 +378,7 @@ client.on_message = function(self, body)
     if cb then
       result = { cb(success, data) }
     else
-      result = { call_callbacks_for_method(method, success, data, self.filetype) }
+      result = { call_callback(method, success, data, self.filetype) }
     end
 
     -- Clear the old callback

@@ -39,10 +39,10 @@ end)
 
 describe('getting a default textDocument callback', function()
   it('should return the hover function', function()
-    local f = require('vim.lsp.callbacks').get_list_of_callbacks('textDocument/hover')
+    local f = require('vim.lsp.callbacks').get_callbacks('textDocument/hover')
     eq(require('vim.lsp.callbacks').callbacks.textDocument.hover, f)
 
-    local f_table = require('runtime.lua.lsp.callbacks').get_list_of_callbacks({'textDocument', 'hover'})
+    local f_table = require('runtime.lua.lsp.callbacks').get_callbacks({'textDocument', 'hover'})
     eq(require('vim.lsp.callbacks').callbacks.textDocument.hover, f_table)
   end)
 end)
