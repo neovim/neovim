@@ -232,6 +232,12 @@ typedef struct {
 //
 #define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
 
+#define FOR_ALL_QFL_ITEMS(qfl, qfp, i) \
+  for (i = 0, qfp = qfl->qf_start; /* NOLINT(readability/braces) */ \
+       !got_int && i < qfl->qf_count && qfp != NULL; \
+       i++, qfp = qfp->qf_next)
+
+
 // Looking up a buffer can be slow if there are many.  Remember the last one
 // to make this a lot faster if there are multiple matches in the same file.
 static char_u *qf_last_bufname = NULL;
@@ -1885,9 +1891,7 @@ static int copy_loclist_entries(const qf_list_T *from_qfl,
   qfline_T *from_qfp;
 
   // copy all the location entries in this list
-  for (i = 0, from_qfp = from_qfl->qf_start;
-       i < from_qfl->qf_count && from_qfp != NULL;
-       i++, from_qfp = from_qfp->qf_next) {
+  FOR_ALL_QFL_ITEMS(from_qfl, from_qfp, i) {
     if (qf_add_entry(to_qfl,
                      NULL,
                      NULL,
@@ -2245,8 +2249,8 @@ static bool is_qf_entry_present(qf_list_T *qfl, qfline_T *qf_ptr)
   int i;
 
   // Search for the entry in the current list
-  for (i = 0, qfp = qfl->qf_start; i < qfl->qf_count; i++, qfp = qfp->qf_next) {
-    if (qfp == NULL || qfp == qf_ptr) {
+  FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
+    if (qfp == qf_ptr) {
       break;
     }
   }
@@ -3262,11 +3266,8 @@ bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount,
 
   for (idx = 0; idx < qi->qf_listcount; idx++) {
     qf_list_T *qfl = qf_get_list(qi, idx);
-
     if (!qf_list_empty(qfl)) {
-      for (i = 0, qfp = qfl->qf_start;
-           i < qfl->qf_count && qfp != NULL;
-           i++, qfp = qfp->qf_next) {
+      FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
         if (qfp->qf_fnum == curbuf->b_fnum) {
           found_one = true;
           if (qfp->qf_lnum >= line1 && qfp->qf_lnum <= line2) {
@@ -4171,8 +4172,7 @@ size_t qf_get_size(exarg_T *eap)
   size_t i;
   assert(qf_get_curlist(qi)->qf_count >= 0);
   qfl = qf_get_curlist(qi);
-  for (i = 0, qfp = qfl->qf_start; i < (size_t)qfl->qf_count && qfp != NULL;
-       i++, qfp = qfp->qf_next) {
+  FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
     if (!qfp->qf_valid) {
       continue;
     }
@@ -4417,6 +4417,21 @@ void ex_cnext(exarg_T *eap)
   qf_jump(qi, dir, errornr, eap->forceit);
 }
 
+// Return the autocmd name for the :cfile Ex commands
+static char_u * cfile_get_auname(cmdidx_T cmdidx)
+{
+  switch (cmdidx) {
+    case CMD_cfile:    return (char_u *)"cfile";
+    case CMD_cgetfile: return (char_u *)"cgetfile";
+    case CMD_caddfile: return (char_u *)"caddfile";
+    case CMD_lfile:    return (char_u *)"lfile";
+    case CMD_lgetfile: return (char_u *)"lgetfile";
+    case CMD_laddfile: return (char_u *)"laddfile";
+    default:           return NULL;
+  }
+}
+
+
 /*
  * ":cfile"/":cgetfile"/":caddfile" commands.
  * ":lfile"/":lgetfile"/":laddfile" commands.
@@ -4427,15 +4442,7 @@ void ex_cfile(exarg_T *eap)
   qf_info_T   *qi = &ql_info;
   char_u      *au_name = NULL;
 
-  switch (eap->cmdidx) {
-  case CMD_cfile:     au_name = (char_u *)"cfile"; break;
-  case CMD_cgetfile:  au_name = (char_u *)"cgetfile"; break;
-  case CMD_caddfile:  au_name = (char_u *)"caddfile"; break;
-  case CMD_lfile:     au_name = (char_u *)"lfile"; break;
-  case CMD_lgetfile:  au_name = (char_u *)"lgetfile"; break;
-  case CMD_laddfile:  au_name = (char_u *)"laddfile"; break;
-  default: break;
-  }
+  au_name = cfile_get_auname(eap->cmdidx);
   if (au_name != NULL
       && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name, NULL, false, curbuf)) {
     if (aborting()) {
@@ -5073,16 +5080,62 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
   }
 }
 
+// Copy the specified quickfix entry items into a new dict and appened the dict
+// to 'list'.  Returns OK on success.
+static int get_qfline_items(qfline_T *qfp, list_T *list)
+{
+  char_u buf[2];
+  int bufnum;
+
+  // Handle entries with a non-existing buffer number.
+  bufnum = qfp->qf_fnum;
+  if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
+    bufnum = 0;
+  }
+
+  dict_T *const dict = tv_dict_alloc();
+  tv_list_append_dict(list, dict);
+
+  buf[0] = qfp->qf_type;
+  buf[1] = NUL;
+  if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
+      || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
+          == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col) == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
+          == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
+      || (tv_dict_add_str(
+          dict, S_LEN("module"),
+          (qfp->qf_module == NULL ? "" : (const char *)qfp->qf_module))
+          == FAIL)
+      || (tv_dict_add_str(
+          dict, S_LEN("pattern"),
+          (qfp->qf_pattern == NULL ? "" : (const char *)qfp->qf_pattern))
+          == FAIL)
+      || (tv_dict_add_str(
+          dict, S_LEN("text"),
+          (qfp->qf_text == NULL ? "" : (const char *)qfp->qf_text))
+          == FAIL)
+      || (tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL)
+      || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
+          == FAIL)) {
+    // tv_dict_add* fail only if key already exist, but this is a newly
+    // allocated dictionary which is thus guaranteed to have no existing keys.
+    assert(false);
+  }
+
+  return OK;
+}
+
 /// Add each quickfix error to list "list" as a dictionary.
 /// If qf_idx is -1, use the current list. Otherwise, use the specified list.
 int get_errorlist(const qf_info_T *qi_arg, win_T *wp, int qf_idx, list_T *list)
 {
   const qf_info_T *qi = qi_arg;
   qf_list_T *qfl;
-  char_u buf[2];
   qfline_T    *qfp;
   int i;
-  int bufnum;
 
   if (qi == NULL) {
     qi = &ql_info;
@@ -5107,51 +5160,10 @@ int get_errorlist(const qf_info_T *qi_arg, win_T *wp, int qf_idx, list_T *list)
     return FAIL;
   }
 
-  qfp = qfl->qf_start;
-  for (i = 1; !got_int && i <= qfl->qf_count; i++) {
-    // Handle entries with a non-existing buffer number.
-    bufnum = qfp->qf_fnum;
-    if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
-      bufnum = 0;
-
-    dict_T *const dict = tv_dict_alloc();
-    tv_list_append_dict(list, dict);
-
-    buf[0] = qfp->qf_type;
-    buf[1] = NUL;
-    if (tv_dict_add_nr(dict, S_LEN("bufnr"), (varnumber_T)bufnum) == FAIL
-        || (tv_dict_add_nr(dict, S_LEN("lnum"), (varnumber_T)qfp->qf_lnum)
-            == FAIL)
-        || (tv_dict_add_nr(dict, S_LEN("col"), (varnumber_T)qfp->qf_col)
-            == FAIL)
-        || (tv_dict_add_nr(dict, S_LEN("vcol"), (varnumber_T)qfp->qf_viscol)
-            == FAIL)
-        || (tv_dict_add_nr(dict, S_LEN("nr"), (varnumber_T)qfp->qf_nr) == FAIL)
-        || tv_dict_add_str(dict, S_LEN("module"),
-                           (qfp->qf_module == NULL
-                            ? ""
-                            : (const char *)qfp->qf_module)) == FAIL
-        || tv_dict_add_str(dict, S_LEN("pattern"),
-                           (qfp->qf_pattern == NULL
-                            ? ""
-                            : (const char *)qfp->qf_pattern)) == FAIL
-        || tv_dict_add_str(dict, S_LEN("text"),
-                           (qfp->qf_text == NULL
-                            ? ""
-                            : (const char *)qfp->qf_text)) == FAIL
-        || tv_dict_add_str(dict, S_LEN("type"), (const char *)buf) == FAIL
-        || (tv_dict_add_nr(dict, S_LEN("valid"), (varnumber_T)qfp->qf_valid)
-            == FAIL)) {
-      // tv_dict_add* fail only if key already exist, but this is a newly
-      // allocated dictionary which is thus guaranteed to have no existing keys.
-      assert(false);
-    }
-
-    qfp = qfp->qf_next;
-    if (qfp == NULL) {
-      break;
-    }
+  FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
+    get_qfline_items(qfp, list);
   }
+
   return OK;
 }
 
@@ -5948,6 +5960,62 @@ bool set_ref_in_quickfix(int copyID)
   return abort;
 }
 
+// Return the autocmd name for the :cbuffer Ex commands
+static const char_u * cbuffer_get_auname(cmdidx_T cmdidx)
+{
+  switch (cmdidx) {
+    case CMD_cbuffer:    return "cbuffer";
+    case CMD_cgetbuffer: return "cgetbuffer";
+    case CMD_caddbuffer: return "caddbuffer";
+    case CMD_lbuffer:    return "lbuffer";
+    case CMD_lgetbuffer: return "lgetbuffer";
+    case CMD_laddbuffer: return "laddbuffer";
+    default:             return NULL;
+  }
+}
+
+// Process and validate the arguments passed to the :cbuffer, :caddbuffer,
+// :cgetbuffer, :lbuffer, :laddbuffer, :lgetbuffer Ex commands.
+static int cbuffer_process_args(exarg_T *eap,
+                                buf_T **bufp,
+                                linenr_T *line1,
+                                linenr_T *line2)
+{
+  buf_T *buf = NULL;
+
+  if (*eap->arg == NUL)
+    buf = curbuf;
+  else if (*skipwhite(skipdigits(eap->arg)) == NUL)
+    buf = buflist_findnr(atoi((char *)eap->arg));
+
+  if (buf == NULL) {
+    emsg(_(e_invarg));
+    return FAIL;
+  }
+
+  if (buf->b_ml.ml_mfp == NULL) {
+    emsg(_("E681: Buffer is not loaded"));
+    return FAIL;
+  }
+
+  if (eap->addr_count == 0) {
+    eap->line1 = 1;
+    eap->line2 = buf->b_ml.ml_line_count;
+  }
+
+  if (eap->line1 < 1 || eap->line1 > buf->b_ml.ml_line_count
+      || eap->line2 < 1 || eap->line2 > buf->b_ml.ml_line_count) {
+    emsg(_(e_invrange));
+    return FAIL;
+  }
+
+  *line1 = eap->line1;
+  *line2 = eap->line2;
+  *bufp = buf;
+
+  return OK;
+}
+
 /*
  * ":[range]cbuffer [bufnr]" command.
  * ":[range]caddbuffer [bufnr]" command.
@@ -5962,30 +6030,11 @@ void ex_cbuffer(exarg_T *eap)
   qf_info_T *qi = &ql_info;
   const char *au_name = NULL;
   win_T *wp = NULL;
+  char_u *qf_title;
+  linenr_T line1;
+  linenr_T line2;
 
-  switch (eap->cmdidx) {
-    case CMD_cbuffer:
-      au_name = "cbuffer";
-      break;
-    case CMD_cgetbuffer:
-      au_name = "cgetbuffer";
-      break;
-    case CMD_caddbuffer:
-      au_name = "caddbuffer";
-      break;
-    case CMD_lbuffer:
-      au_name = "lbuffer";
-      break;
-    case CMD_lgetbuffer:
-      au_name = "lgetbuffer";
-      break;
-    case CMD_laddbuffer:
-      au_name = "laddbuffer";
-      break;
-    default:
-      break;
-  }
-
+  au_name = cbuffer_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
                                         curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
@@ -5999,66 +6048,66 @@ void ex_cbuffer(exarg_T *eap)
     wp = curwin;
   }
 
-  if (*eap->arg == NUL)
-    buf = curbuf;
-  else if (*skipwhite(skipdigits(eap->arg)) == NUL)
-    buf = buflist_findnr(atoi((char *)eap->arg));
-  if (buf == NULL)
-    EMSG(_(e_invarg));
-  else if (buf->b_ml.ml_mfp == NULL)
-    EMSG(_("E681: Buffer is not loaded"));
-  else {
-    if (eap->addr_count == 0) {
-      eap->line1 = 1;
-      eap->line2 = buf->b_ml.ml_line_count;
+  if (cbuffer_process_args(eap, &buf, &line1, &line2) == FAIL) {
+    return;
+  }
+
+  qf_title = qf_cmdtitle(*eap->cmdlinep);
+
+  if (buf->b_sfname) {
+    vim_snprintf((char *)IObuff, IOSIZE, "%s (%s)",
+                 (char *)qf_title, (char *)buf->b_sfname);
+    qf_title = IObuff;
+  }
+
+  incr_quickfix_busy();
+
+  int res = qf_init_ext(qi, qi->qf_curlist, NULL, buf, NULL, p_efm,
+                        (eap->cmdidx != CMD_caddbuffer
+                         && eap->cmdidx != CMD_laddbuffer),
+                        eap->line1, eap->line2, qf_title, NULL);
+  if (qf_stack_empty(qi)) {
+    decr_quickfix_busy();
+    return;
+  }
+  if (res >= 0) {
+    qf_list_changed(qf_get_curlist(qi));
+  }
+  // Remember the current quickfix list identifier, so that we can
+  // check for autocommands changing the current quickfix list.
+  unsigned save_qfid = qf_get_curlist(qi)->qf_id;
+  if (au_name != NULL) {
+    const buf_T *const curbuf_old = curbuf;
+    apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
+                   curbuf->b_fname, true, curbuf);
+    if (curbuf != curbuf_old) {
+      // Autocommands changed buffer, don't jump now, "qi" may
+      // be invalid.
+      res = 0;
     }
-    if (eap->line1 < 1 || eap->line1 > buf->b_ml.ml_line_count
-        || eap->line2 < 1 || eap->line2 > buf->b_ml.ml_line_count) {
-      EMSG(_(e_invrange));
-    } else {
-      char_u *qf_title = qf_cmdtitle(*eap->cmdlinep);
+  }
+  // Jump to the first error for new list and if autocmds didn't
+  // free the list.
+  if (res > 0 && (eap->cmdidx == CMD_cbuffer || eap->cmdidx == CMD_lbuffer)
+      && qflist_valid(wp, save_qfid)) {
+    // display the first error
+    qf_jump_first(qi, save_qfid, eap->forceit);
+  }
 
-      if (buf->b_sfname) {
-        vim_snprintf((char *)IObuff, IOSIZE, "%s (%s)",
-            (char *)qf_title, (char *)buf->b_sfname);
-        qf_title = IObuff;
-      }
+  decr_quickfix_busy();
+}
 
-      incr_quickfix_busy();
-
-      int res = qf_init_ext(qi, qi->qf_curlist, NULL, buf, NULL, p_efm,
-                            (eap->cmdidx != CMD_caddbuffer
-                             && eap->cmdidx != CMD_laddbuffer),
-                            eap->line1, eap->line2, qf_title, NULL);
-      if (qf_stack_empty(qi)) {
-        decr_quickfix_busy();
-        return;
-      }
-      if (res >= 0) {
-        qf_list_changed(qf_get_curlist(qi));
-      }
-      // Remember the current quickfix list identifier, so that we can
-      // check for autocommands changing the current quickfix list.
-      unsigned save_qfid = qf_get_curlist(qi)->qf_id;
-      if (au_name != NULL) {
-        const buf_T *const curbuf_old = curbuf;
-        apply_autocmds(EVENT_QUICKFIXCMDPOST, (char_u *)au_name,
-                       curbuf->b_fname, true, curbuf);
-        if (curbuf != curbuf_old) {
-          // Autocommands changed buffer, don't jump now, "qi" may
-          // be invalid.
-          res = 0;
-        }
-      }
-      // Jump to the first error for new list and if autocmds didn't
-      // free the list.
-      if (res > 0 && (eap->cmdidx == CMD_cbuffer || eap->cmdidx == CMD_lbuffer)
-          && qflist_valid(wp, save_qfid)) {
-        // display the first error
-        qf_jump_first(qi, save_qfid, eap->forceit);
-      }
-      decr_quickfix_busy();
-    }
+// Return the autocmd name for the :cexpr Ex commands.
+static const char_u * cexpr_get_auname(cmdidx_T cmdidx)
+{
+  switch (cmdidx) {
+    case CMD_cexpr:    return "cexpr";
+    case CMD_cgetexpr: return "cgetexpr";
+    case CMD_caddexpr: return "caddexpr";
+    case CMD_lexpr:    return "lexpr";
+    case CMD_lgetexpr: return "lgetexpr";
+    case CMD_laddexpr: return "laddexpr";
+    default:           return NULL;
   }
 }
 
@@ -6072,28 +6121,7 @@ void ex_cexpr(exarg_T *eap)
   const char *au_name = NULL;
   win_T *wp = NULL;
 
-  switch (eap->cmdidx) {
-    case CMD_cexpr:
-      au_name = "cexpr";
-      break;
-    case CMD_cgetexpr:
-      au_name = "cgetexpr";
-      break;
-    case CMD_caddexpr:
-      au_name = "caddexpr";
-      break;
-    case CMD_lexpr:
-      au_name = "lexpr";
-      break;
-    case CMD_lgetexpr:
-      au_name = "lgetexpr";
-      break;
-    case CMD_laddexpr:
-      au_name = "laddexpr";
-      break;
-    default:
-      break;
-  }
+  au_name = cexpr_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)au_name,
                                         curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
