@@ -323,6 +323,12 @@ return {
     func='ex_abclear',
   },
   {
+    command='cabove',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
+  },
+  {
     command='caddbuffer',
     flags=bit.bor(RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
@@ -357,6 +363,12 @@ return {
     flags=bit.bor(BANG, RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_cbuffer',
+  },
+  {
+    command='cbelow',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
   },
   {
     command='cbottom',
@@ -1273,6 +1285,12 @@ return {
     func='ex_last',
   },
   {
+    command='labove',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
+  },
+  {
     command='language',
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
@@ -1307,6 +1325,12 @@ return {
     flags=bit.bor(BANG, RANGE, NOTADR, WORD1, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_cbuffer',
+  },
+  {
+    command='lbelow',
+    flags=bit.bor(RANGE, TRLBAR),
+    addr_type=ADDR_OTHER ,
+    func='ex_cbelow',
   },
   {
     command='lbottom',
