@@ -5078,7 +5078,7 @@ chk_modeline(
         } else {
           e = s + 3;
         }
-        if (getdigits_safe(&e, &vers) != OK) {
+        if (!try_getdigits(&e, &vers)) {
           continue;
         }
 

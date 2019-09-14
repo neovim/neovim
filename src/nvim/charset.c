@@ -1601,18 +1601,18 @@ char_u* skiptowhite_esc(char_u *p) {
 ///                  It will be advanced past the read number.
 /// @param[out]  nr  Number read from the string.
 ///
-/// @return OK on success, FAIL on error/overflow
-int getdigits_safe(char_u **pp, intmax_t *nr)
+/// @return true on success, false on error/overflow
+bool try_getdigits(char_u **pp, intmax_t *nr)
 {
   errno = 0;
   *nr = strtoimax((char *)(*pp), (char **)pp, 10);
 
   if ((*nr == INTMAX_MIN || *nr == INTMAX_MAX)
       && errno == ERANGE) {
-    return FAIL;
+    return false;
   }
 
-  return OK;
+  return true;
 }
 
 /// Get a number from a string and skip over it.
@@ -1624,10 +1624,10 @@ int getdigits_safe(char_u **pp, intmax_t *nr)
 intmax_t getdigits(char_u **pp)
 {
   intmax_t number;
-  int ret = getdigits_safe(pp, &number);
+  int ok = try_getdigits(pp, &number);
 
-  (void)ret;  // Avoid "unused variable" warning in Release build
-  assert(ret == OK);
+  (void)ok;  // Avoid "unused variable" warning in Release build
+  assert(ok);
 
   return number;
 }

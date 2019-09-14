@@ -40,8 +40,8 @@ int socket_watcher_init(Loop *loop, SocketWatcher *watcher,
     char *port = host_end + 1;
     intmax_t iport;
 
-    int ret = getdigits_safe(&(char_u *){ (char_u *)port }, &iport);
-    if (ret == FAIL || iport < 0 || iport > UINT16_MAX) {
+    int ok = try_getdigits(&(char_u *){ (char_u *)port }, &iport);
+    if (!ok || iport < 0 || iport > UINT16_MAX) {
       ELOG("Invalid port: %s", port);
       return UV_EINVAL;
     }
