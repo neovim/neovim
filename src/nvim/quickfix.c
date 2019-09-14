@@ -2498,7 +2498,7 @@ void qf_list(exarg_T *eap)
                                       // recognised errors
   qf_info_T   *qi = &ql_info;
 
-  if (eap->cmdidx == CMD_llist) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       EMSG(_(e_loclist));
@@ -2705,7 +2705,7 @@ void qf_age(exarg_T *eap)
   qf_info_T   *qi = &ql_info;
   int count;
 
-  if (eap->cmdidx == CMD_lolder || eap->cmdidx == CMD_lnewer) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       EMSG(_(e_loclist));
@@ -2744,7 +2744,7 @@ void qf_history(exarg_T *eap)
   qf_info_T *qi = &ql_info;
   int i;
 
-  if (eap->cmdidx == CMD_lhistory) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
   }
   if (qi == NULL || (qi->qf_listcount == 0
@@ -2946,7 +2946,7 @@ void ex_cwindow(exarg_T *eap)
   qf_info_T   *qi = &ql_info;
   win_T       *win;
 
-  if (eap->cmdidx == CMD_lwindow) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL)
       return;
@@ -2978,7 +2978,7 @@ void ex_cclose(exarg_T *eap)
   win_T       *win = NULL;
   qf_info_T   *qi = &ql_info;
 
-  if (eap->cmdidx == CMD_lclose || eap->cmdidx == CMD_lwindow) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL)
       return;
@@ -3004,7 +3004,7 @@ void ex_copen(exarg_T *eap)
   buf_T       *qf_buf;
   win_T       *oldwin = curwin;
 
-  if (eap->cmdidx == CMD_lopen || eap->cmdidx == CMD_lwindow) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       EMSG(_(e_loclist));
@@ -3133,7 +3133,7 @@ void ex_cbottom(exarg_T *eap)
 {
   qf_info_T *qi = &ql_info;
 
-  if (eap->cmdidx == CMD_lbottom) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       EMSG(_(e_loclist));
@@ -3535,9 +3535,9 @@ void ex_make(exarg_T *eap)
     }
   }
 
-  if (eap->cmdidx == CMD_lmake || eap->cmdidx == CMD_lgrep
-      || eap->cmdidx == CMD_lgrepadd)
+  if (is_loclist_cmd(eap->cmdidx)) {
     wp = curwin;
+  }
 
   autowrite_all();
   fname = get_mef_name();
@@ -3652,7 +3652,7 @@ size_t qf_get_size(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
   qf_info_T *qi = &ql_info;
-  if (eap->cmdidx == CMD_ldo || eap->cmdidx == CMD_lfdo) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     // Location list.
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
@@ -3692,7 +3692,7 @@ size_t qf_get_cur_idx(exarg_T *eap)
 {
   qf_info_T *qi = &ql_info;
 
-  if (eap->cmdidx == CMD_ldo || eap->cmdidx == CMD_lfdo) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     // Location list.
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
@@ -3712,7 +3712,7 @@ int qf_get_cur_valid_idx(exarg_T *eap)
 {
   qf_info_T *qi = &ql_info;
 
-  if (eap->cmdidx == CMD_ldo || eap->cmdidx == CMD_lfdo) {
+  if (is_loclist_cmd(eap->cmdidx == CMD_ldo)) {
     // Location list.
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
@@ -3805,12 +3805,7 @@ void ex_cc(exarg_T *eap)
 {
   qf_info_T   *qi = &ql_info;
 
-  if (eap->cmdidx == CMD_ll
-      || eap->cmdidx == CMD_lrewind
-      || eap->cmdidx == CMD_lfirst
-      || eap->cmdidx == CMD_llast
-      || eap->cmdidx == CMD_ldo
-      || eap->cmdidx == CMD_lfdo) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       EMSG(_(e_loclist));
@@ -3821,13 +3816,22 @@ void ex_cc(exarg_T *eap)
   int errornr;
   if (eap->addr_count > 0) {
     errornr = (int)eap->line2;
-  } else if (eap->cmdidx == CMD_cc || eap->cmdidx == CMD_ll) {
-    errornr = 0;
-  } else if (eap->cmdidx == CMD_crewind || eap->cmdidx == CMD_lrewind
-           || eap->cmdidx == CMD_cfirst || eap->cmdidx == CMD_lfirst) {
-    errornr = 1;
   } else {
-    errornr = 32767;
+    switch (eap->cmdidx) {
+      case CMD_cc:
+      case CMD_ll:
+        errornr = 0;
+        break;
+      case CMD_crewind:
+      case CMD_lrewind:
+      case CMD_cfirst:
+      case CMD_lfirst:
+        errornr = 1;
+        break;
+      default:
+        errornr = 32767;
+        break;
+    }
   }
 
   // For cdo and ldo commands, jump to the nth valid error.
@@ -3858,15 +3862,9 @@ void ex_cc(exarg_T *eap)
 void ex_cnext(exarg_T *eap)
 {
   qf_info_T   *qi = &ql_info;
+  int dir;
 
-  if (eap->cmdidx == CMD_lnext
-      || eap->cmdidx == CMD_lNext
-      || eap->cmdidx == CMD_lprevious
-      || eap->cmdidx == CMD_lnfile
-      || eap->cmdidx == CMD_lNfile
-      || eap->cmdidx == CMD_lpfile
-      || eap->cmdidx == CMD_ldo
-      || eap->cmdidx == CMD_lfdo) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
     if (qi == NULL) {
       EMSG(_(e_loclist));
@@ -3883,17 +3881,36 @@ void ex_cnext(exarg_T *eap)
     errornr = 1;
   }
 
-  qf_jump(qi, (eap->cmdidx == CMD_cnext || eap->cmdidx == CMD_lnext
-               || eap->cmdidx == CMD_cdo || eap->cmdidx == CMD_ldo)
-      ? FORWARD
-      : (eap->cmdidx == CMD_cnfile || eap->cmdidx == CMD_lnfile
-        || eap->cmdidx == CMD_cfdo || eap->cmdidx == CMD_lfdo)
-      ? FORWARD_FILE
-      : (eap->cmdidx == CMD_cpfile || eap->cmdidx == CMD_lpfile
-         || eap->cmdidx == CMD_cNfile || eap->cmdidx == CMD_lNfile)
-      ? BACKWARD_FILE
-      : BACKWARD,
-      errornr, eap->forceit);
+  // Depending on the command jump to either next or previous entry/file.
+  switch (eap->cmdidx) {
+    case CMD_cprevious:
+    case CMD_lprevious:
+    case CMD_cNext:
+    case CMD_lNext:
+      dir = BACKWARD;
+      break;
+    case CMD_cnfile:
+    case CMD_lnfile:
+    case CMD_cfdo:
+    case CMD_lfdo:
+      dir = FORWARD_FILE;
+      break;
+    case CMD_cpfile:
+    case CMD_lpfile:
+    case CMD_cNfile:
+    case CMD_lNfile:
+      dir = BACKWARD_FILE;
+      break;
+    case CMD_cnext:
+    case CMD_lnext:
+    case CMD_cdo:
+    case CMD_ldo:
+    default:
+      dir = FORWARD;
+      break;
+  }
+
+  qf_jump(qi, dir, errornr, eap->forceit);
 }
 
 /*
@@ -3922,9 +3939,7 @@ void ex_cfile(exarg_T *eap)
 
   char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
 
-  if (eap->cmdidx == CMD_lfile
-      || eap->cmdidx == CMD_lgetfile
-      || eap->cmdidx == CMD_laddfile) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     wp = curwin;
   }
 
@@ -4181,10 +4196,7 @@ void ex_vimgrep(exarg_T *eap)
     }
   }
 
-  if (eap->cmdidx == CMD_lgrep
-      || eap->cmdidx == CMD_lvimgrep
-      || eap->cmdidx == CMD_lgrepadd
-      || eap->cmdidx == CMD_lvimgrepadd) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = ll_get_or_alloc_list(curwin);
     wp = curwin;
   }
@@ -5394,9 +5406,7 @@ void ex_cbuffer(exarg_T *eap)
   }
 
   // Must come after autocommands.
-  if (eap->cmdidx == CMD_lbuffer
-      || eap->cmdidx == CMD_lgetbuffer
-      || eap->cmdidx == CMD_laddbuffer) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = ll_get_or_alloc_list(curwin);
     wp = curwin;
   }
@@ -5496,9 +5506,7 @@ void ex_cexpr(exarg_T *eap)
     }
   }
 
-  if (eap->cmdidx == CMD_lexpr
-      || eap->cmdidx == CMD_lgetexpr
-      || eap->cmdidx == CMD_laddexpr) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     qi = ll_get_or_alloc_list(curwin);
     wp = curwin;
   }
@@ -5576,7 +5584,7 @@ void ex_helpgrep(exarg_T *eap)
   save_cpo = p_cpo;
   p_cpo = empty_option;
 
-  if (eap->cmdidx == CMD_lhelpgrep) {
+  if (is_loclist_cmd(eap->cmdidx)) {
     win_T *wp = NULL;
 
     // If the current window is a help window, then use it

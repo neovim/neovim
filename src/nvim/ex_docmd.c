@@ -10131,6 +10131,17 @@ static void ex_folddo(exarg_T *eap)
   ml_clearmarked();      // clear rest of the marks
 }
 
+// Returns true if the supplied Ex cmdidx is for a location list command
+// instead of a quickfix command.
+bool is_loclist_cmd(int cmdidx)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  if (cmdidx < 0 || cmdidx > CMD_SIZE) {
+    return false;
+  }
+  return cmdnames[cmdidx].cmd_name[0] == 'l';
+}
+
 static void ex_terminal(exarg_T *eap)
 {
   char ex_cmd[1024];
