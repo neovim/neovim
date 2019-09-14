@@ -3110,10 +3110,10 @@ static int read_limits(long *minval, long *maxval)
     reverse = TRUE;
   }
   first_char = regparse;
-  *minval = getdigits_long(&regparse);
+  *minval = getdigits_long(&regparse, false, 0);
   if (*regparse == ',') {           /* There is a comma */
     if (ascii_isdigit(*++regparse))
-      *maxval = getdigits_long(&regparse);
+      *maxval = getdigits_long(&regparse, false, MAX_LIMIT);
     else
       *maxval = MAX_LIMIT;
   } else if (ascii_isdigit(*first_char))

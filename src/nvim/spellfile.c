@@ -1833,19 +1833,19 @@ int spell_check_msm(void)
   if (!ascii_isdigit(*p))
     return FAIL;
   // block count = (value * 1024) / SBLOCKSIZE (but avoid overflow)
-  start = (getdigits_long(&p) * 10) / (SBLOCKSIZE / 102);
+  start = (getdigits_long(&p, true, 0) * 10) / (SBLOCKSIZE / 102);
   if (*p != ',')
     return FAIL;
   ++p;
   if (!ascii_isdigit(*p))
     return FAIL;
-  incr = (getdigits_long(&p) * 102) / (SBLOCKSIZE / 10);
+  incr = (getdigits_long(&p, true, 0) * 102) / (SBLOCKSIZE / 10);
   if (*p != ',')
     return FAIL;
   ++p;
   if (!ascii_isdigit(*p))
     return FAIL;
-  added = getdigits_long(&p) * 1024;
+  added = getdigits_long(&p, true, 0) * 1024;
   if (*p != NUL)
     return FAIL;
 
@@ -2787,7 +2787,7 @@ static unsigned get_affitem(int flagtype, char_u **pp)
       ++*pp;            // always advance, avoid getting stuck
       return 0;
     }
-    res = getdigits_int(pp);
+    res = getdigits_int(pp, true, 0);
   } else {
     res = mb_ptr2char_adv((const char_u **)pp);
     if (flagtype == AFT_LONG || (flagtype == AFT_CAPLONG
@@ -2906,7 +2906,7 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
 
   case AFT_NUM:
     for (p = afflist; *p != NUL; ) {
-      int digits = getdigits_int(&p);
+      int digits = getdigits_int(&p, true, 0);
       assert(digits >= 0);
       n = (unsigned int)digits;
       if (n == flag)

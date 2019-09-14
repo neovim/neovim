@@ -5982,7 +5982,7 @@ file_name_in_line (
         ++p;                        /* skip the separator */
       p = skipwhite(p);
       if (isdigit(*p))
-        *file_lnum = getdigits_long(&p);
+        *file_lnum = getdigits_long(&p, false, 0);
     }
   }
 

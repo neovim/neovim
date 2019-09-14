@@ -113,7 +113,7 @@ ex_menu(exarg_T *eap)
   }
   if (ascii_iswhite(*p)) {
     for (i = 0; i < MENUDEPTH && !ascii_iswhite(*arg); ++i) {
-      pri_tab[i] = getdigits_long(&arg);
+      pri_tab[i] = getdigits_long(&arg, false, 0);
       if (pri_tab[i] == 0)
         pri_tab[i] = 500;
       if (*arg == '.')

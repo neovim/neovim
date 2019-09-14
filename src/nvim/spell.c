@@ -2706,7 +2706,7 @@ int spell_check_sps(void)
     f = 0;
     if (ascii_isdigit(*buf)) {
       s = buf;
-      sps_limit = getdigits_int(&s);
+      sps_limit = getdigits_int(&s, true, 0);
       if (*s != NUL && !ascii_isdigit(*s))
         f = -1;
     } else if (STRCMP(buf, "best") == 0)
