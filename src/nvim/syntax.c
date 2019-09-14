@@ -7327,6 +7327,7 @@ static void set_hl_attr(int idx)
 /// @param highlight name e.g. 'Cursor', 'Normal'
 /// @return the highlight id, else 0 if \p name does not exist
 int syn_name2id(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int i;
   char_u name_u[200];
@@ -7345,12 +7346,13 @@ int syn_name2id(const char_u *name)
 
 /// Lookup a highlight group name and return its attributes.
 /// Return zero if not found.
-int syn_name2attr(char_u *name)
+int syn_name2attr(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int id = syn_name2id(name);
 
   if (id != 0) {
-    return syn_id2attr(syn_get_final_id(id));
+    return syn_id2attr(id);
   }
   return 0;
 }
