@@ -355,6 +355,7 @@ void terminal_enter(void)
   showmode();
   curwin->w_redr_status = true;  // For mode() in statusline. #8323
   ui_busy_start();
+  apply_autocmds(EVENT_TERMENTER, NULL, NULL, false, curbuf);
 
   s->state.execute = terminal_execute;
   s->state.check = terminal_check;
@@ -363,6 +364,8 @@ void terminal_enter(void)
   restart_edit = 0;
   State = save_state;
   RedrawingDisabled = s->save_rd;
+  apply_autocmds(EVENT_TERMLEAVE, NULL, NULL, false, curbuf);
+
   if (save_curwin == curwin) {  // save_curwin may be invalid (window closed)!
     curwin->w_p_cul = save_w_p_cul;
     curwin->w_p_cuc = save_w_p_cuc;

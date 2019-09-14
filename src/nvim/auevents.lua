@@ -90,6 +90,8 @@ return {
     'TabNewEntered',          -- after entering a new tab
     'TermChanged',            -- after changing 'term'
     'TermClose',              -- after the process exits
+    'TermEnter',              -- after entering Terminal mode
+    'TermLeave',              -- after leaving Terminal mode
     'TermOpen',               -- after opening a terminal buffer
     'TermResponse',           -- after setting "v:termresponse"
     'TextChanged',            -- text was modified
