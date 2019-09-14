@@ -116,6 +116,8 @@ RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
 RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
 
+# Delete files that may interfere with running tests.  This includes some files
+# that may result from working on the tests, not only from running them.
 CLEAN_FILES := *.out \
   *.failed          \
   *.res             \
