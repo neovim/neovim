@@ -34,6 +34,14 @@ func Test_ruby_evaluate_dict()
   call assert_equal(['{"a"=>"foo", "b"=>123}'], split(l:out, "\n"))
 endfunc
 
+func Test_ruby_evaluate_special_var()
+  let l = [v:true, v:false, v:null]
+  redir => l:out
+  ruby d = Vim.evaluate("l"); print d
+  redir END
+  call assert_equal(['[true, false, nil]'], split(l:out, "\n"))
+endfunc
+
 func Test_rubydo()
   throw 'skipped: TODO: '
   " Check deleting lines does not trigger ml_get error.
