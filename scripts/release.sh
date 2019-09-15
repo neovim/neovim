@@ -26,6 +26,7 @@ __sed=$( [ "$(uname)" = Darwin ] && echo 'sed -E' || echo 'sed -r' )
 
 cd "$(git rev-parse --show-toplevel)"
 
+__DATE=$(date +'%Y-%m-%d')
 __LAST_TAG=$(git describe --abbrev=0)
 [ -z "$__LAST_TAG" ] && { echo 'ERROR: no tag found'; exit 1; }
 __VERSION_MAJOR=$(grep 'set(NVIM_VERSION_MAJOR' CMakeLists.txt\
@@ -75,13 +76,15 @@ _do_release_commit() {
 _do_bump_commit() {
   $__sed -i.bk 's/(NVIM_VERSION_PRERELEASE) ""/\1 "-dev"/' CMakeLists.txt
   $__sed -i.bk 's/set\((NVIM_VERSION_PATCH) [[:digit:]]/set(\1 ?/' CMakeLists.txt
-  nvim +'/NVIM_VERSION' +10new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
-    +'norm! 10.' CMakeLists.txt
+  $__sed -i.bk 's,(<releases>),\1\
+    <release date="'"${__DATE}"'" version="xxx"/>,' runtime/nvim.appdata.xml
+  rm CMakeLists.txt.bk
+  rm runtime/nvim.appdata.xml.bk
+  nvim +'/NVIM_VERSION' +1new +'exe "norm! iUpdate version numbers!!!\<CR>"' \
+    -O CMakeLists.txt runtime/nvim.appdata.xml
 
-  git add CMakeLists.txt
+  git add CMakeLists.txt runtime/nvim.appdata.xml
   git commit -m "$__BUMP_MSG"
-
-  rm CMakeLists.txt.bk || true
 }
 
 if ! test "$ARG1" = '--only-bump' ; then
@@ -91,6 +94,7 @@ _do_bump_commit
 echo "
 Next steps:
     - Double-check NVIM_VERSION_* in CMakeLists.txt
+    - Double-check runtime/nvim.appdata.xml
     - Push the tag:
         git push --follow-tags
     - Update the 'stable' tag:
