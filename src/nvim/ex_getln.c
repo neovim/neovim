@@ -602,7 +602,7 @@ static int command_line_execute(VimState *state, int key)
   }
 
   // Special translations for 'wildmenu'
-  if (s->did_wild_list && p_wmnu) {
+  if (!compl_match_array && s->did_wild_list && p_wmnu) {
     if (s->c == K_LEFT) {
       s->c = Ctrl_P;
     } else if (s->c == K_RIGHT) {
@@ -636,6 +636,10 @@ static int command_line_execute(VimState *state, int key)
               && s->c != K_S_DOWN && s->c != K_S_UP
               && s->c != K_PAGEUP && s->c != K_PAGEDOWN
               && s->c!= K_KPAGEUP  && s->c != K_KPAGEDOWN))) {
+    if (!p_wmnu || (compl_match_array && s->c != K_LEFT && s->c != K_RIGHT)
+        || (!compl_match_array && s->c != K_UP && s->c != K_DOWN)) {
+      s->xpc.xp_context = EXPAND_NOTHING;
+    }
     if (compl_match_array) {
       pum_undisplay(true);
       XFREE_CLEAR(compl_match_array);
@@ -644,9 +648,6 @@ static int command_line_execute(VimState *state, int key)
       (void)ExpandOne(&s->xpc, NULL, NULL, 0, WILD_FREE);
     }
     s->did_wild_list = false;
-    if (!p_wmnu || (s->c != K_UP && s->c != K_DOWN)) {
-      s->xpc.xp_context = EXPAND_NOTHING;
-    }
     s->wim_index = 0;
     if (p_wmnu && wild_menu_showing != 0) {
       const bool skt = KeyTyped;
@@ -687,13 +688,14 @@ static int command_line_execute(VimState *state, int key)
 
   // Special translations for 'wildmenu'
   if (s->xpc.xp_context == EXPAND_MENUNAMES && p_wmnu) {
-    // Hitting <Down> after "emenu Name.": complete submenu
-    if (s->c == K_DOWN && ccline.cmdpos > 0
-        && ccline.cmdbuff[ccline.cmdpos - 1] == '.') {
+    // Hitting <Dwon>(<Right> when pum displayed) after
+    // "emenu Name.": complete submenu
+    if (((!compl_match_array && s->c == K_DOWN) || s->c == K_RIGHT)
+        && ccline.cmdpos > 0 && ccline.cmdbuff[ccline.cmdpos - 1] == '.') {
       s->c = (int)p_wc;
-    } else if (!compl_match_array && s->c == K_UP) {
-      // Hitting <Up>: Remove one submenu name in front of the
-      // cursor
+    } else if ((!compl_match_array && s->c == K_UP) || s->c == K_LEFT) {
+      // Hitting <Up>(<Left> when pum diplayed): Remove one submenu name in
+      // front of the cursor
       int found = false;
 
       int j = (int)(s->xpc.xp_pattern - ccline.cmdbuff);
@@ -735,7 +737,7 @@ static int command_line_execute(VimState *state, int key)
     upseg[3] = PATHSEP;
     upseg[4] = NUL;
 
-    if (s->c == K_DOWN
+    if (((!compl_match_array && s->c == K_DOWN) || s->c == K_RIGHT)
         && ccline.cmdpos > 0
         && ccline.cmdbuff[ccline.cmdpos - 1] == PATHSEP
         && (ccline.cmdpos < 3
@@ -744,7 +746,7 @@ static int command_line_execute(VimState *state, int key)
       // go down a directory
       s->c = (int)p_wc;
     } else if (STRNCMP(s->xpc.xp_pattern, upseg + 1, 3) == 0
-        && s->c == K_DOWN) {
+               && ((!compl_match_array && s->c == K_DOWN) || s->c == K_RIGHT)) {
       // If in a direct ancestor, strip off one ../ to go down
       int found = false;
 
@@ -764,7 +766,7 @@ static int command_line_execute(VimState *state, int key)
         cmdline_del(j - 2);
         s->c = (int)p_wc;
       }
-    } else if (!compl_match_array && s->c == K_UP) {
+    } else if ((!compl_match_array && s->c == K_UP) || s->c == K_LEFT) {
       // go up a directory
       int found = false;
 
