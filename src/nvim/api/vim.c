@@ -1418,32 +1418,52 @@ Dictionary nvim_get_color_map(void)
 
 /// Gets a map of the current editor state.
 ///
-/// @param  types  Context types ("regs", "jumps", "buflist", "gvars", ...)
-///                to gather, or NIL for all (see |context-types|).
+/// @param opts  Optional parameters.
+///               - types:  List of |context-types| ("regs", "jumps", "bufs",
+///                 "gvars", …) to gather, or empty for "all".
+/// @param[out]  err  Error details, if any
 ///
 /// @return map of global |context|.
-Dictionary nvim_get_context(Array types)
+Dictionary nvim_get_context(Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
-  int int_types = 0;
-  if (types.size == 1 && types.items[0].type == kObjectTypeNil) {
-    int_types = kCtxAll;
-  } else {
+  Array types = ARRAY_DICT_INIT;
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object v = opts.items[i].value;
+    if (strequal("types", k.data)) {
+      if (v.type != kObjectTypeArray) {
+        api_set_error(err, kErrorTypeValidation, "invalid value for key: %s",
+                      k.data);
+        return (Dictionary)ARRAY_DICT_INIT;
+      }
+      types = v.data.array;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      return (Dictionary)ARRAY_DICT_INIT;
+    }
+  }
+
+  int int_types = types.size > 0 ? 0 : kCtxAll;
+  if (types.size > 0) {
     for (size_t i = 0; i < types.size; i++) {
       if (types.items[i].type == kObjectTypeString) {
-        const char *const current = types.items[i].data.string.data;
-        if (strequal(current, "regs")) {
+        const char *const s = types.items[i].data.string.data;
+        if (strequal(s, "regs")) {
           int_types |= kCtxRegs;
-        } else if (strequal(current, "jumps")) {
+        } else if (strequal(s, "jumps")) {
           int_types |= kCtxJumps;
-        } else if (strequal(current, "buflist")) {
-          int_types |= kCtxBuflist;
-        } else if (strequal(current, "gvars")) {
+        } else if (strequal(s, "bufs")) {
+          int_types |= kCtxBufs;
+        } else if (strequal(s, "gvars")) {
           int_types |= kCtxGVars;
-        } else if (strequal(current, "sfuncs")) {
+        } else if (strequal(s, "sfuncs")) {
           int_types |= kCtxSFuncs;
-        } else if (strequal(current, "funcs")) {
+        } else if (strequal(s, "funcs")) {
           int_types |= kCtxFuncs;
+        } else {
+          api_set_error(err, kErrorTypeValidation, "unexpected type: %s", s);
+          return (Dictionary)ARRAY_DICT_INIT;
         }
       }
     }

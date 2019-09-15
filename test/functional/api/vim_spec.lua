@@ -894,9 +894,17 @@ describe('API', function()
   end)
 
   describe('nvim_get_context', function()
-    it('returns context dictionary of current editor state', function()
-      local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, parse_context(nvim('get_context', ctx_items)))
+    it('validates args', function()
+      eq('unexpected key: blah',
+        pcall_err(nvim, 'get_context', {blah={}}))
+      eq('invalid value for key: types',
+        pcall_err(nvim, 'get_context', {types=42}))
+      eq('unexpected type: zub',
+        pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
+    end)
+    it('returns map of current editor state', function()
+      local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
+      eq({}, parse_context(nvim('get_context', {})))
 
       feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
       feed('gg')
@@ -921,26 +929,28 @@ describe('API', function()
           { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
         ]]):gsub('\n', '')),
 
-        ['buflist'] = eval([[
+        ['bufs'] = eval([[
         filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
         ]]),
 
         ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
       }
 
-      eq(expected_ctx, parse_context(nvim('get_context', ctx_items)))
+      eq(expected_ctx, parse_context(nvim('get_context', opts)))
+      eq(expected_ctx, parse_context(nvim('get_context', {})))
+      eq(expected_ctx, parse_context(nvim('get_context', {types={}})))
     end)
   end)
 
   describe('nvim_load_context', function()
     it('sets current editor state to given context dictionary', function()
-      local ctx_items = {'regs', 'jumps', 'buflist', 'gvars'}
-      eq({}, parse_context(nvim('get_context', ctx_items)))
+      local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
+      eq({}, parse_context(nvim('get_context', opts)))
 
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
       nvim('set_var', 'THREE', 3)
-      local ctx = nvim('get_context', ctx_items)
+      local ctx = nvim('get_context', opts)
       nvim('set_var', 'one', 'a')
       nvim('set_var', 'Two', 'b')
       nvim('set_var', 'THREE', 'c')
