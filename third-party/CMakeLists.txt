@@ -139,7 +139,7 @@ if(WIN32)
   set(LIBUV_SHA256 SKIP)
 else()
   # erw7/update-libuv.
-  set(LIBUV_URL https://github.com/erw7/libuv/archive/2af4cf2.tar.gz)
+  set(LIBUV_URL https://github.com/erw7/libuv/archive/e7529ee.tar.gz)
   set(LIBUV_SHA256 SKIP)
 endif()
 
