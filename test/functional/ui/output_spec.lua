@@ -56,6 +56,8 @@ describe("shell command :!", function()
     end
     child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
+    screen:redraw_debug()
+
     -- If we observe any line starting with a dot, then throttling occurred.
     -- Avoid false failure on slow systems.
     screen:expect{any="\n%.", timeout=20000}
