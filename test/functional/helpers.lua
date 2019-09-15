@@ -777,12 +777,12 @@ end
 
 function module.parse_context(ctx)
   local parsed = {}
-  for _, item in ipairs({'regs', 'jumps', 'buflist', 'gvars'}) do
+  for _, item in ipairs({'regs', 'jumps', 'bufs', 'gvars'}) do
     parsed[item] = filter(function(v)
       return type(v) == 'table'
     end, module.call('msgpackparse', ctx[item]))
   end
-  parsed['buflist'] = parsed['buflist'][1]
+  parsed['bufs'] = parsed['bufs'][1]
   return map(function(v)
     if #v == 0 then
       return nil

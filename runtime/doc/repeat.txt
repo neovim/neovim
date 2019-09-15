@@ -1003,14 +1003,14 @@ like the current |jumplist|, values of |registers|, and more, described below.
 The following Context items are supported:
 	"jumps"		|jumplist|
 	"regs"		|registers|
-	"buflist"	|buffer-list|
+	"bufs"		|buffer-list|
 	"gvars"		|global-variable|s
 	"sfuncs"	|script-local| functions
 	"funcs"		global and |script-local| functions
 
 							*context-dict*
 Context objects are dictionaries with the following key-value pairs:
-- "jumps", "regs", "buflist", "gvars":
+- "jumps", "regs", "bufs", "gvars":
       |readfile()|-style |List| representation of corresponding msgpack
       objects (see |msgpackdump()| and |msgpackparse()|).
 - "funcs" (includes |script-local| functions as well):

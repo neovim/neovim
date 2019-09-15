@@ -1419,7 +1419,7 @@ Dictionary nvim_get_color_map(void)
 /// Gets a map of the current editor state.
 ///
 /// @param opts  Optional parameters.
-///               - types:  List of |context-types| ("regs", "jumps", "buflist",
+///               - types:  List of |context-types| ("regs", "jumps", "bufs",
 ///                 "gvars", …) to gather, or empty for "all".
 /// @param[out]  err  Error details, if any
 ///
@@ -1453,8 +1453,8 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
           int_types |= kCtxRegs;
         } else if (strequal(s, "jumps")) {
           int_types |= kCtxJumps;
-        } else if (strequal(s, "buflist")) {
-          int_types |= kCtxBuflist;
+        } else if (strequal(s, "bufs")) {
+          int_types |= kCtxBufs;
         } else if (strequal(s, "gvars")) {
           int_types |= kCtxGVars;
         } else if (strequal(s, "sfuncs")) {

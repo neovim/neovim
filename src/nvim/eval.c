@@ -8002,8 +8002,8 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
           types |= kCtxRegs;
         } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
           types |= kCtxJumps;
-        } else if (strequal((char *)tv_li->vval.v_string, "buflist")) {
-          types |= kCtxBuflist;
+        } else if (strequal((char *)tv_li->vval.v_string, "bufs")) {
+          types |= kCtxBufs;
         } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
           types |= kCtxGVars;
         } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {

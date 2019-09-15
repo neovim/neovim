@@ -15,7 +15,7 @@
 # include "context.c.generated.h"
 #endif
 
-int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBuflist | kCtxGVars | kCtxSFuncs
+int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxGVars | kCtxSFuncs
                | kCtxFuncs);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
@@ -57,8 +57,8 @@ void ctx_free(Context *ctx)
   if (ctx->jumps.data) {
     msgpack_sbuffer_destroy(&ctx->jumps);
   }
-  if (ctx->buflist.data) {
-    msgpack_sbuffer_destroy(&ctx->buflist);
+  if (ctx->bufs.data) {
+    msgpack_sbuffer_destroy(&ctx->bufs);
   }
   if (ctx->gvars.data) {
     msgpack_sbuffer_destroy(&ctx->gvars);
@@ -90,8 +90,8 @@ void ctx_save(Context *ctx, const int flags)
     ctx_save_jumps(ctx);
   }
 
-  if (flags & kCtxBuflist) {
-    ctx_save_buflist(ctx);
+  if (flags & kCtxBufs) {
+    ctx_save_bufs(ctx);
   }
 
   if (flags & kCtxGVars) {
@@ -137,8 +137,8 @@ bool ctx_restore(Context *ctx, const int flags)
     ctx_restore_jumps(ctx);
   }
 
-  if (flags & kCtxBuflist) {
-    ctx_restore_buflist(ctx);
+  if (flags & kCtxBufs) {
+    ctx_restore_bufs(ctx);
   }
 
   if (flags & kCtxGVars) {
@@ -200,20 +200,20 @@ static inline void ctx_restore_jumps(Context *ctx)
 /// Saves the buffer list to a context.
 ///
 /// @param  ctx  Save to this context.
-static inline void ctx_save_buflist(Context *ctx)
+static inline void ctx_save_bufs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
-  msgpack_sbuffer_init(&ctx->buflist);
-  shada_encode_buflist(&ctx->buflist);
+  msgpack_sbuffer_init(&ctx->bufs);
+  shada_encode_buflist(&ctx->bufs);
 }
 
 /// Restores the buffer list from a context.
 ///
 /// @param  ctx  Restore from this context.
-static inline void ctx_restore_buflist(Context *ctx)
+static inline void ctx_restore_bufs(Context *ctx)
   FUNC_ATTR_NONNULL_ALL
 {
-  shada_read_sbuf(&ctx->buflist, kShaDaWantInfo | kShaDaForceit);
+  shada_read_sbuf(&ctx->bufs, kShaDaWantInfo | kShaDaForceit);
 }
 
 /// Saves global variables to a context.
@@ -337,7 +337,7 @@ Dictionary ctx_to_dict(Context *ctx)
 
   PUT(rv, "regs", ARRAY_OBJ(sbuf_to_array(ctx->regs)));
   PUT(rv, "jumps", ARRAY_OBJ(sbuf_to_array(ctx->jumps)));
-  PUT(rv, "buflist", ARRAY_OBJ(sbuf_to_array(ctx->buflist)));
+  PUT(rv, "bufs", ARRAY_OBJ(sbuf_to_array(ctx->bufs)));
   PUT(rv, "gvars", ARRAY_OBJ(sbuf_to_array(ctx->gvars)));
   PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
 
@@ -367,9 +367,9 @@ int ctx_from_dict(Dictionary dict, Context *ctx)
     } else if (strequal(item.key.data, "jumps")) {
       types |= kCtxJumps;
       ctx->jumps = array_to_sbuf(item.value.data.array);
-    } else if (strequal(item.key.data, "buflist")) {
-      types |= kCtxBuflist;
-      ctx->buflist = array_to_sbuf(item.value.data.array);
+    } else if (strequal(item.key.data, "bufs")) {
+      types |= kCtxBufs;
+      ctx->bufs = array_to_sbuf(item.value.data.array);
     } else if (strequal(item.key.data, "gvars")) {
       types |= kCtxGVars;
       ctx->gvars = array_to_sbuf(item.value.data.array);

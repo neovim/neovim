@@ -82,21 +82,21 @@ describe('context functions', function()
       command('edit '..fname1)
       command('edit '..fname2)
       command('edit TEST')
-      local buflist = call('map', call('getbufinfo'), 'v:val.name')
+      local bufs = call('map', call('getbufinfo'), 'v:val.name')
       call('ctxpush')
-      call('ctxpush', {'buflist'})
+      call('ctxpush', {'bufs'})
 
       command('%bwipeout')
       eq({''}, call('map', call('getbufinfo'), 'v:val.name'))
 
       call('ctxpop')
-      eq({'', unpack(buflist)}, call('map', call('getbufinfo'), 'v:val.name'))
+      eq({'', unpack(bufs)}, call('map', call('getbufinfo'), 'v:val.name'))
 
       command('%bwipeout')
       eq({''}, call('map', call('getbufinfo'), 'v:val.name'))
 
       call('ctxpop')
-      eq({'', unpack(buflist)}, call('map', call('getbufinfo'), 'v:val.name'))
+      eq({'', unpack(bufs)}, call('map', call('getbufinfo'), 'v:val.name'))
     end)
 
     it('saves and restores global variables properly', function()
@@ -297,8 +297,8 @@ describe('context functions', function()
         ]]):gsub('\n', ''))
       }
 
-      local with_buflist = {
-        ['buflist'] = eval([[
+      local with_bufs = {
+        ['bufs'] = eval([[
         filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
         ]])
       }
@@ -310,7 +310,7 @@ describe('context functions', function()
       local with_all = {
         ['regs'] = with_regs['regs'],
         ['jumps'] = with_jumps['jumps'],
-        ['buflist'] = with_buflist['buflist'],
+        ['bufs'] = with_bufs['bufs'],
         ['gvars'] = with_gvars['gvars'],
       }
 
@@ -323,16 +323,16 @@ describe('context functions', function()
       eq(with_gvars, parse_context(call('ctxget', 0)))
       eq(with_all, parse_context(call('ctxget', 1)))
 
-      call('ctxpush', {'buflist'})
-      eq(with_buflist, parse_context(call('ctxget')))
-      eq(with_buflist, parse_context(call('ctxget', 0)))
+      call('ctxpush', {'bufs'})
+      eq(with_bufs, parse_context(call('ctxget')))
+      eq(with_bufs, parse_context(call('ctxget', 0)))
       eq(with_gvars, parse_context(call('ctxget', 1)))
       eq(with_all, parse_context(call('ctxget', 2)))
 
       call('ctxpush', {'jumps'})
       eq(with_jumps, parse_context(call('ctxget')))
       eq(with_jumps, parse_context(call('ctxget', 0)))
-      eq(with_buflist, parse_context(call('ctxget', 1)))
+      eq(with_bufs, parse_context(call('ctxget', 1)))
       eq(with_gvars, parse_context(call('ctxget', 2)))
       eq(with_all, parse_context(call('ctxget', 3)))
 
@@ -340,20 +340,20 @@ describe('context functions', function()
       eq(with_regs, parse_context(call('ctxget')))
       eq(with_regs, parse_context(call('ctxget', 0)))
       eq(with_jumps, parse_context(call('ctxget', 1)))
-      eq(with_buflist, parse_context(call('ctxget', 2)))
+      eq(with_bufs, parse_context(call('ctxget', 2)))
       eq(with_gvars, parse_context(call('ctxget', 3)))
       eq(with_all, parse_context(call('ctxget', 4)))
 
       call('ctxpop')
       eq(with_jumps, parse_context(call('ctxget')))
       eq(with_jumps, parse_context(call('ctxget', 0)))
-      eq(with_buflist, parse_context(call('ctxget', 1)))
+      eq(with_bufs, parse_context(call('ctxget', 1)))
       eq(with_gvars, parse_context(call('ctxget', 2)))
       eq(with_all, parse_context(call('ctxget', 3)))
 
       call('ctxpop')
-      eq(with_buflist, parse_context(call('ctxget')))
-      eq(with_buflist, parse_context(call('ctxget', 0)))
+      eq(with_bufs, parse_context(call('ctxget')))
+      eq(with_bufs, parse_context(call('ctxget', 0)))
       eq(with_gvars, parse_context(call('ctxget', 1)))
       eq(with_all, parse_context(call('ctxget', 2)))
 

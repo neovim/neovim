@@ -903,7 +903,7 @@ describe('API', function()
         pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
     end)
     it('returns map of current editor state', function()
-      local opts = {types={'regs', 'jumps', 'buflist', 'gvars'}}
+      local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
       eq({}, parse_context(nvim('get_context', {})))
 
       feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
@@ -929,7 +929,7 @@ describe('API', function()
           { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
         ]]):gsub('\n', '')),
 
-        ['buflist'] = eval([[
+        ['bufs'] = eval([[
         filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
         ]]),
 
@@ -944,7 +944,7 @@ describe('API', function()
 
   describe('nvim_load_context', function()
     it('sets current editor state to given context dictionary', function()
-      local opts = {types={'regs', 'jumps', 'buflist', 'gvars'}}
+      local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
       eq({}, parse_context(nvim('get_context', opts)))
 
       nvim('set_var', 'one', 1)
