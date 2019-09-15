@@ -526,9 +526,7 @@ static void ui_comp_raw_line(UI *ui, Integer grid, Integer row,
     endcol = MIN(endcol, clearcol);
   }
 
-  bool above_msg = (kv_A(layers, kv_size(layers)-1) == &msg_grid
-                    && row < msg_current_row-(msg_was_scrolled?1:0));
-  bool covered = kv_size(layers)-(above_msg?1:0) > curgrid->comp_index+1;
+  bool covered = curgrid_covered_above((int)row);
   // TODO(bfredl): eventually should just fix compose_line to respect clearing
   // and optimize it for uncovered lines.
   if (flags & kLineFlagInvalid || covered || curgrid->blending) {
@@ -588,6 +586,16 @@ static void ui_comp_msg_set_pos(UI *ui, Integer grid, Integer row,
   msg_was_scrolled = scrolled;
 }
 
+/// check if curgrid is covered on row or above
+///
+/// TODO(bfredl): currently this only handles message row
+static bool curgrid_covered_above(int row)
+{
+  bool above_msg = (kv_A(layers, kv_size(layers)-1) == &msg_grid
+                    && row < msg_current_row-(msg_was_scrolled?1:0));
+  return kv_size(layers)-(above_msg?1:0) > curgrid->comp_index+1;
+}
+
 static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top,
                                 Integer bot, Integer left, Integer right,
                                 Integer rows, Integer cols)
@@ -599,18 +607,23 @@ static void ui_comp_grid_scroll(UI *ui, Integer grid, Integer top,
   bot += curgrid->comp_row;
   left += curgrid->comp_col;
   right += curgrid->comp_col;
-  bool covered = kv_size(layers) > curgrid->comp_index+1 || curgrid->blending;
+  bool covered = curgrid_covered_above((int)(bot - MAX(rows, 0)));
 
-  if (covered) {
+  if (covered || curgrid->blending) {
     // TODO(bfredl):
     // 1. check if rectangles actually overlap
     // 2. calulate subareas that can scroll.
-    if (rows > 0) {
-      bot -= rows;
-    } else {
-      top += (-rows);
+    compose_debug(top, bot, left, right, dbghl_recompose, true);
+    for (int r = (int)(top + MAX(-rows, 0)); r < bot - MAX(rows, 0); r++) {
+      // TODO(bfredl): workaround for win_update() performing two scrolls in a
+      // row, where the latter might scroll invalid space created by the first.
+      // ideally win_update() should keep track of this itself and not scroll
+      // the invalid space.
+      if (curgrid->attrs[curgrid->line_offset[r-curgrid->comp_row]
+                         +left-curgrid->comp_col] >= 0) {
+        compose_line(r, left, right, 0);
+      }
     }
-    compose_area(top, bot, left, right);
   } else {
     ui_composed_call_grid_scroll(1, top, bot, left, right, rows, cols);
     if (rdb_flags & RDB_COMPOSITOR) {
