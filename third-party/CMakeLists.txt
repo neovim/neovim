@@ -138,8 +138,8 @@ if(WIN32)
   set(LIBUV_URL https://github.com/erw7/libuv/archive/libuv-v1.32.0-test.tar.gz)
   set(LIBUV_SHA256 SKIP)
 else()
-  # blueyed/nvim-fixes (for *BSD build fixes).
-  set(LIBUV_URL https://github.com/blueyed/libuv/archive/2af4cf2.tar.gz)
+  # erw7/update-libuv.
+  set(LIBUV_URL https://github.com/erw7/libuv/archive/2af4cf2.tar.gz)
   set(LIBUV_SHA256 SKIP)
 endif()
 
