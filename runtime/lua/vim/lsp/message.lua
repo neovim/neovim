@@ -8,6 +8,7 @@ local Message = {
 local message_id = {}
 
 local get_id = function(name)
+  assert(name)
   local temp_id = message_id[name] or 0
   message_id[name] = temp_id + 1
   return temp_id
@@ -28,8 +29,13 @@ local check_language_server_capabilities = function(client, method)
   -- Most capability properties are named like 'operation_nameProvider'.
   -- And some language server has custom methods.
   -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
-  if method_table[2] and client.server_capabilities[method_table[2]..'Provider'] == false then
-    return false
+  if method_table[2] then
+    local provider_capabilities = client.server_capabilities[method_table[2]..'Provider']
+    if provider_capabilities ~= nil and provider_capabilities == false then
+      return false
+    end
+
+    return true
   else
     return true
   end
@@ -57,11 +63,11 @@ function RequestMessage:new(client, method, params)
 
   if check_language_server_capabilities(client, method) == false then
     logger.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
-    return nil
+    error("[LSP:Request] Method "..method.." is not supported by server "..client.name, 2)
   end
 
   local object = {
-    id = get_id(client),
+    id = get_id(client.name),
     method = method,
     params = params
   }

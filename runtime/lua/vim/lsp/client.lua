@@ -27,7 +27,7 @@ client.__index = client
 
 client.new = function(name, filetype, cmd)
   if type(cmd.execute_path) ~= 'string' and cmd.execute_path == '' then
-    error('execute_path must be "string" and must no be empty string')
+    error('execute_path must be "string" and must no be empty string', 2)
   end
 
   local obj = setmetatable({
