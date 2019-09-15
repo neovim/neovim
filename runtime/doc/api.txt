@@ -1027,13 +1027,14 @@ nvim_get_color_map()                                    *nvim_get_color_map()*
                 Return: ~
                     Map of color names and RGB values.
 
-nvim_get_context({types})                                 *nvim_get_context()*
+nvim_get_context({opts})                                  *nvim_get_context()*
                 Gets a map of the current editor state.
 
                 Parameters: ~
-                    {types}  Context types ("regs", "jumps", "buflist",
-                             "gvars", ...) to gather, or NIL for all (see
-                             |context-types|).
+                    {opts}  Optional parameters.
+                            • types: List of |context-types| ("regs", "jumps",
+                              "bufs", "gvars", …) to gather, or empty for
+                              "all".
 
                 Return: ~
                     map of global |context|.
