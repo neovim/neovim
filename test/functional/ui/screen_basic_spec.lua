@@ -961,6 +961,78 @@ describe("Screen (line-based)", function()
   screen_tests(true)
 end)
 
+it('win_update redraws lines properly', function()
+  local screen
+  clear()
+  screen = Screen.new(30, 10)
+  screen:attach()
+  screen:set_default_attr_ids({
+    [1] = {bold = true, foreground = Screen.colors.Blue1},
+    [2] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+    [3] = {background = Screen.colors.Red, foreground = Screen.colors.Grey100, special = Screen.colors.Yellow},
+    [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    [5] = {special = Screen.colors.Yellow},
+    [6] = {special = Screen.colors.Yellow, bold = true, foreground = Screen.colors.SeaGreen4},
+    [7] = {foreground = Screen.colors.Grey0, background = Screen.colors.Grey100},
+    [8] = {foreground = Screen.colors.Gray90, background = Screen.colors.Grey100},
+    [9] = {foreground = tonumber('0x00000c'), background = Screen.colors.Grey100},
+    [10] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0xe5e5ff')},
+    [11] = {background = Screen.colors.Grey100, bold = true, foreground = tonumber('0x2b8452')},
+    [12] = {bold = true, reverse = true},
+    [13] = {foreground = Screen.colors.DarkBlue, background = Screen.colors.WebGray},
+    [14] = {reverse = true},
+    [15] = {background = Screen.colors.LightBlue},
+    [16] = {background = Screen.colors.LightCyan1, bold = true, foreground = Screen.colors.Blue1},
+    [17] = {bold = true, background = Screen.colors.Red},
+    [18] = {background = Screen.colors.LightMagenta},
+  })
+
+  insert([[
+  1
+
+
+  2
+  1a
+  ]])
+  command("vnew")
+  insert([[
+  2
+  2a
+  2b
+  ]])
+  command("windo diffthis")
+  command("windo 1")
+  screen:expect{grid=[[
+    {13:  }{16:-------}{14:│}{13:  }{15:^1                 }|
+    {13:  }{16:-------}{14:│}{13:  }{15:                  }|
+    {13:  }{16:-------}{14:│}{13:  }{15:                  }|
+    {13:  }2      {14:│}{13:  }2                 |
+    {13:  }{17:2}{18:a     }{14:│}{13:  }{17:1}{18:a                }|
+    {13:  }{15:2b     }{14:│}{13:  }{16:------------------}|
+    {13:  }       {14:│}{13:  }                  |
+    {1:~        }{14:│}{1:~                   }|
+    {14:<me] [+]  }{12:[No Name] [+]       }|
+                                  |
+  ]]}
+  feed('<C-e>')
+  feed('<C-e>')
+  feed('<C-y>')
+  feed('<C-y>')
+  feed('<C-y>')
+  screen:expect{grid=[[
+    {13:  }{16:-------}{14:│}{13:  }{15:1                 }|
+    {13:  }{16:-------}{14:│}{13:  }{15:                  }|
+    {13:  }{16:-------}{14:│}{13:  }{15:^                  }|
+    {13:  }2      {14:│}{13:  }2                 |
+    {13:  }{17:2}{18:a     }{14:│}{13:  }{17:1}{18:a                }|
+    {13:  }{15:2b     }{14:│}{13:  }{16:------------------}|
+    {13:  }       {14:│}{13:  }                  |
+    {1:~        }{14:│}{1:~                   }|
+    {14:<me] [+]  }{12:[No Name] [+]       }|
+                                  |
+  ]]}
+end)
+
 describe('Screen default colors', function()
   local screen
   local function startup(light, termcolors)
