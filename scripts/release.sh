@@ -93,8 +93,7 @@ fi
 _do_bump_commit
 echo "
 Next steps:
-    - Double-check NVIM_VERSION_* in CMakeLists.txt
-    - Double-check runtime/nvim.appdata.xml
+    - Run tests/CI (version_spec.lua)!
     - Push the tag:
         git push --follow-tags
     - Update the 'stable' tag:
