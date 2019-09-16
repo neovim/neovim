@@ -21,7 +21,6 @@ local clients = {}
 --
 -- @returns: Client Object or nil
 local get_client = function(filetype)
-  -- TODO: Throw error if no client started?
   return clients[filetype]
 end
 
@@ -31,14 +30,14 @@ end
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: A client object that has been initialized
-lsp.start_client = function(cmd, filetype, bufnr)
+lsp.start_client = function(filetype, bufnr)
   filetype = filetype or util.get_filetype(bufnr)
 
   if get_client(filetype) then
-    error(string.format('%s for %s has already started', cmd, filetype))
+    error(string.format('%s for %s has already started', filetype))
   end
 
-  cmd = cmd or server_config.get_server_command(filetype)
+  local cmd = server_config.get_server_command(filetype)
 
   local name = server_config.get_name(filetype)
 
