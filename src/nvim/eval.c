@@ -8080,8 +8080,10 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (!ctx_restore(NULL, kCtxAll)) {
-    EMSG(_("Context stack is empty"));
+  Error err = ctx_restore(NULL, kCtxAll);
+  if (ERROR_SET(&err)) {
+    EMSG2("Context: %s", err.msg);
+    api_clear_error(&err);
   }
 }
 
@@ -8138,22 +8140,18 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
-
   Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
   Context tmp = CONTEXT_INIT;
-  ctx_from_dict(dict, &tmp);
-
-  if (did_emsg) {
-    ctx_free(&tmp);
-  } else {
-    ctx_free(ctx);
-    *ctx = tmp;
-  }
-
+  Error err = ERROR_INIT;
+  ctx_from_dict(dict, &tmp, &err);
   api_free_dictionary(dict);
-  did_emsg = save_did_emsg;
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+    return;
+  }
+  ctx_free(ctx);
+  *ctx = tmp;
 }
 
 /// "ctxsize()" function

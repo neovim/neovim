@@ -151,30 +151,6 @@ KHASH_SET_INIT_STR(strset)
 /// Callback function for add_search_pattern
 typedef void (*SearchPatternGetter)(SearchPattern *);
 
-/// Possible ShaDa entry types
-///
-/// @warning Enum values are part of the API and must not be altered.
-///
-/// All values that are not in enum are ignored.
-typedef enum {
-  kSDItemUnknown = -1,       ///< Unknown item.
-  kSDItemMissing = 0,        ///< Missing value. Should never appear in a file.
-  kSDItemHeader = 1,         ///< Header. Present for debugging purposes.
-  kSDItemSearchPattern = 2,  ///< Last search pattern (*not* history item).
-                             ///< Comes from user searches (e.g. when typing
-                             ///< "/pat") or :substitute command calls.
-  kSDItemSubString = 3,      ///< Last substitute replacement string.
-  kSDItemHistoryEntry = 4,   ///< History item.
-  kSDItemRegister = 5,       ///< Register.
-  kSDItemVariable = 6,       ///< Global variable.
-  kSDItemGlobalMark = 7,     ///< Global mark definition.
-  kSDItemJump = 8,           ///< Item from jump list.
-  kSDItemBufferList = 9,     ///< Buffer list.
-  kSDItemLocalMark = 10,     ///< Buffer-local mark.
-  kSDItemChange = 11,        ///< Item from buffer change list.
-#define SHADA_LAST_ENTRY ((uint64_t) kSDItemChange)
-} ShadaEntryType;
-
 /// Possible results when reading ShaDa file
 typedef enum {
   kSDReadStatusSuccess,    ///< Reading was successfull.
@@ -1339,10 +1315,15 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemVariable: {
+        bool save_did_emsg = did_emsg;
+        did_emsg = false;
         var_set_global(cur_entry.data.global_var.name,
                        cur_entry.data.global_var.value);
-        cur_entry.data.global_var.value.v_type = VAR_UNKNOWN;
+        if (!did_emsg) {
+          cur_entry.data.global_var.value.v_type = VAR_UNKNOWN;
+        }
         shada_free_shada_entry(&cur_entry);
+        did_emsg = save_did_emsg;
         break;
       }
       case kSDItemJump:
