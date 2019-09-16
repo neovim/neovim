@@ -614,6 +614,7 @@ static int command_line_execute(VimState *state, int key)
     if (s->c == Ctrl_E) {
       nextwild(&s->xpc, WILD_CANCEL, 0, s->firstc != '@');
     } else if (s->c == Ctrl_Y) {
+      nextwild(&s->xpc, WILD_APPLY, 0, s->firstc != '@');
       s->c = Ctrl_E;
     }
   }
@@ -3822,6 +3823,10 @@ ExpandOne (
 
   if (mode == WILD_CANCEL) {
     return vim_strsave(orig_save);
+  }
+
+  if (mode == WILD_APPLY) {
+    return vim_strsave(xp->xp_files[findex]);
   }
 
   /* free old names */
