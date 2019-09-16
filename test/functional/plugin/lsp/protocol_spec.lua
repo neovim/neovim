@@ -8,6 +8,7 @@ local command = helpers.command
 local funcs = helpers.funcs
 local eq = helpers.eq
 local dedent = helpers.dedent
+local exec_lua = helpers.exec_lua
 
 describe('protocol.lua', function()
   local old_file = dedent([[
@@ -54,9 +55,9 @@ describe('protocol.lua', function()
     end)
 
     it('should provide default information', function()
-      local test_name = 'hello_world.txt'
-      funcs.nvim_buf_set_name(0, test_name)
-      eq('file://' .. funcs.nvim_buf_get_name(0),
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      eq(exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))"),
          simple_protocol_eval('DocumentUri'))
     end)
   end)
@@ -82,10 +83,10 @@ describe('protocol.lua', function()
     end)
 
     it('should return a proper uri', function()
-      local test_name = 'hello_world.txt'
-      funcs.nvim_buf_set_name(0, test_name)
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
 
-      eq({uri='file://' .. funcs.nvim_buf_get_name(0)},
+      eq({uri=exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))")},
          simple_protocol_eval('TextDocumentIdentifier'))
     end)
   end)
