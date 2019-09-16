@@ -18,7 +18,7 @@ describe('Setup and Configuration', function()
         { name = 'rls' }
       )
     ]])
-    local result_name = luaeval("require('vim.lsp.server_config').get_name('rust')")
+    local result_name = luaeval("require('vim.lsp.server_config').get_server_name('rust')")
     eq('rls', result_name)
   end)
 
