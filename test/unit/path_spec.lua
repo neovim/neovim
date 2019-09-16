@@ -456,7 +456,7 @@ describe('path.c', function()
     end)
 
     itp('fails and uses filename when the path is relative to HOME', function()
-      eq(false, cimp.os_isdir('~')) -- sanity check: no literal "~" directory.
+      eq(false, cimp.os_isdir('~'), 'sanity check: no literal "~" directory')
       local absolute_path = '~/home.file'
       local buflen = string.len(absolute_path) + 1
       local do_expand = 1
