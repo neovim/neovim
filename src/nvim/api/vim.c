@@ -1478,23 +1478,26 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
 
 /// Sets the current editor state from the given |context| map.
 ///
-/// @param  dict  |Context| map.
-Object nvim_load_context(Dictionary dict)
+/// @param[in]    ctx_dict  Context dictionary.
+/// @param[out]   err       Error details, if any.
+Object nvim_load_context(Dictionary dict, Error *err)
   FUNC_API_SINCE(6)
 {
   Context ctx = CONTEXT_INIT;
+  Error _err = ERROR_INIT;
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
+  ctx_from_dict(dict, &ctx, &_err);
+  if (!ERROR_SET(&_err)) {
+    _err = ctx_restore(&ctx, kCtxAll);
+  }
 
-  ctx_from_dict(dict, &ctx);
-  if (!did_emsg) {
-    ctx_restore(&ctx, kCtxAll);
+  if (ERROR_SET(&_err)) {
+    api_set_error(err, kErrorTypeException,
+                  "malformed context dictionary: %s", _err.msg);
+    api_clear_error(&_err);
   }
 
   ctx_free(&ctx);
-
-  did_emsg = save_did_emsg;
   return (Object)OBJECT_INIT;
 }
 

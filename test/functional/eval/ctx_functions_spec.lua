@@ -7,8 +7,8 @@ local eq = helpers.eq
 local eval = helpers.eval
 local feed = helpers.feed
 local map = helpers.map
+local matches = helpers.matches
 local nvim = helpers.nvim
-local parse_context = helpers.parse_context
 local redir_exec = helpers.redir_exec
 local source = helpers.source
 local trim = helpers.trim
@@ -232,7 +232,7 @@ describe('context functions', function()
     end)
 
     it('errors out when context stack is empty', function()
-      local err = 'Vim:Context stack is empty'
+      local err = 'Vim:Context: Context stack is empty'
       eq(err, pcall_err(call, 'ctxpop'))
       eq(err, pcall_err(call, 'ctxpop'))
       call('ctxpush')
@@ -240,6 +240,13 @@ describe('context functions', function()
       call('ctxpop')
       call('ctxpop')
       eq(err, pcall_err(call, 'ctxpop'))
+    end)
+
+    it('errors out on malformed context dictionary', function()
+      call('ctxpush')
+      call('ctxset', {gvars = {{'1', '2'}}})
+      matches('Context: Vim:E461: Illegal variable name: 1',
+         pcall_err(call, 'ctxpop'))
     end)
   end)
 
@@ -282,25 +289,27 @@ describe('context functions', function()
 
       local with_regs = {
         ['regs'] = {
-          {['rt'] = 1, ['rc'] = {'1'}, ['n'] = 49, ['ru'] = true},
-          {['rt'] = 1, ['rc'] = {'2'}, ['n'] = 50},
-          {['rt'] = 1, ['rc'] = {'3'}, ['n'] = 51},
-          {['rc'] = {'hjkl'}, ['n'] = 97},
+          {['type'] = 1, ['content'] = {'1'},
+           ['name'] = '1', ['unnamed'] = true},
+          {['type'] = 1, ['content'] = {'2'}, ['name'] = '2'},
+          {['type'] = 1, ['content'] = {'3'}, ['name'] = '3'},
+          {['content'] = {'hjkl'}, ['name'] = 'a'},
         }
       }
 
       local with_jumps = {
         ['jumps'] = eval(([[
         filter(map(getjumplist()[0], 'filter(
-          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+          { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum },
+          { k, v -> k != "line" || v != 1 })'), '!empty(v:val.file)')
         ]]):gsub('\n', ''))
       }
 
       local with_bufs = {
-        ['bufs'] = eval([[
-        filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
-        ]])
+        ['bufs'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
       }
 
       local with_gvars = {
@@ -315,56 +324,56 @@ describe('context functions', function()
       }
 
       call('ctxpush')
-      eq(with_all, parse_context(call('ctxget')))
-      eq(with_all, parse_context(call('ctxget', 0)))
+      eq(with_all, call('ctxget'))
+      eq(with_all, call('ctxget', 0))
 
       call('ctxpush', {'gvars'})
-      eq(with_gvars, parse_context(call('ctxget')))
-      eq(with_gvars, parse_context(call('ctxget', 0)))
-      eq(with_all, parse_context(call('ctxget', 1)))
+      eq(with_gvars, call('ctxget'))
+      eq(with_gvars, call('ctxget', 0))
+      eq(with_all, call('ctxget', 1))
 
       call('ctxpush', {'bufs'})
-      eq(with_bufs, parse_context(call('ctxget')))
-      eq(with_bufs, parse_context(call('ctxget', 0)))
-      eq(with_gvars, parse_context(call('ctxget', 1)))
-      eq(with_all, parse_context(call('ctxget', 2)))
+      eq(with_bufs, call('ctxget'))
+      eq(with_bufs, call('ctxget', 0))
+      eq(with_gvars, call('ctxget', 1))
+      eq(with_all, call('ctxget', 2))
 
       call('ctxpush', {'jumps'})
-      eq(with_jumps, parse_context(call('ctxget')))
-      eq(with_jumps, parse_context(call('ctxget', 0)))
-      eq(with_bufs, parse_context(call('ctxget', 1)))
-      eq(with_gvars, parse_context(call('ctxget', 2)))
-      eq(with_all, parse_context(call('ctxget', 3)))
+      eq(with_jumps, call('ctxget'))
+      eq(with_jumps, call('ctxget', 0))
+      eq(with_bufs, call('ctxget', 1))
+      eq(with_gvars, call('ctxget', 2))
+      eq(with_all, call('ctxget', 3))
 
       call('ctxpush', {'regs'})
-      eq(with_regs, parse_context(call('ctxget')))
-      eq(with_regs, parse_context(call('ctxget', 0)))
-      eq(with_jumps, parse_context(call('ctxget', 1)))
-      eq(with_bufs, parse_context(call('ctxget', 2)))
-      eq(with_gvars, parse_context(call('ctxget', 3)))
-      eq(with_all, parse_context(call('ctxget', 4)))
+      eq(with_regs, call('ctxget'))
+      eq(with_regs, call('ctxget', 0))
+      eq(with_jumps, call('ctxget', 1))
+      eq(with_bufs, call('ctxget', 2))
+      eq(with_gvars, call('ctxget', 3))
+      eq(with_all, call('ctxget', 4))
 
       call('ctxpop')
-      eq(with_jumps, parse_context(call('ctxget')))
-      eq(with_jumps, parse_context(call('ctxget', 0)))
-      eq(with_bufs, parse_context(call('ctxget', 1)))
-      eq(with_gvars, parse_context(call('ctxget', 2)))
-      eq(with_all, parse_context(call('ctxget', 3)))
+      eq(with_jumps, call('ctxget'))
+      eq(with_jumps, call('ctxget', 0))
+      eq(with_bufs, call('ctxget', 1))
+      eq(with_gvars, call('ctxget', 2))
+      eq(with_all, call('ctxget', 3))
 
       call('ctxpop')
-      eq(with_bufs, parse_context(call('ctxget')))
-      eq(with_bufs, parse_context(call('ctxget', 0)))
-      eq(with_gvars, parse_context(call('ctxget', 1)))
-      eq(with_all, parse_context(call('ctxget', 2)))
+      eq(with_bufs, call('ctxget'))
+      eq(with_bufs, call('ctxget', 0))
+      eq(with_gvars, call('ctxget', 1))
+      eq(with_all, call('ctxget', 2))
 
       call('ctxpop')
-      eq(with_gvars, parse_context(call('ctxget')))
-      eq(with_gvars, parse_context(call('ctxget', 0)))
-      eq(with_all, parse_context(call('ctxget', 1)))
+      eq(with_gvars, call('ctxget'))
+      eq(with_gvars, call('ctxget', 0))
+      eq(with_all, call('ctxget', 1))
 
       call('ctxpop')
-      eq(with_all, parse_context(call('ctxget')))
-      eq(with_all, parse_context(call('ctxget', 0)))
+      eq(with_all, call('ctxget'))
+      eq(with_all, call('ctxget', 0))
     end)
   end)
 
@@ -375,6 +384,14 @@ describe('context functions', function()
       eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 1))
       call('ctxpop')
       eq(outofbounds, pcall_err(call, 'ctxset', {dummy = 1}, 0))
+    end)
+
+    it('errors out on malformed context dictionary', function()
+      call('ctxpush')
+      matches("Invalid context dictionary value for 'regs'",
+              pcall_err(call, 'ctxset', {regs = 1}))
+      matches('Invalid context dictionary key: foo',
+              pcall_err(call, 'ctxset', {foo = {}}))
     end)
 
     it('sets context dictionary at index in context stack', function()
@@ -402,5 +419,9 @@ describe('context functions', function()
       call('ctxpop')
       eq({'a', 'b' ,'c'}, eval('[g:one, g:Two, g:THREE]'))
     end)
+  end)
+
+  it('frees context stack on exit', function()
+    call('ctxpush')
   end)
 end)
