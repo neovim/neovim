@@ -97,7 +97,7 @@ function ResponseMessage:new(client, result, err)
   err = err or {}
 
   local object = {
-    id = get_id(client),
+    id = get_id(client.name),
     result = result,
     ['error'] = err
   }

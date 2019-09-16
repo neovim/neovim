@@ -13,26 +13,20 @@ server_config.add = function(filetype, command, config)
     error('filetype must be a string or a list of strings', 2)
   end
 
-  if type(command) ~= 'table' and type(command) ~= 'string' then
-    error('Command must be a string or a list', 2)
+  if type(command) ~= 'table' then
+    error('Command must be a table', 2)
   end
 
-  for _, cur_type in pairs(filetype_list) do
-    if server_config.servers[cur_type] == nil then
+  for _, ft in pairs(filetype_list) do
+    if server_config.servers[ft] == nil then
       vim.api.nvim_command(
-        string.format(
-            [[autocmd FileType %s ++once silent :lua require('vim.lsp').start_client('%s')]],
-            cur_type, cur_type, cur_type
-          )
+        string.format("autocmd FileType %s ++once silent :lua require('vim.lsp').start_client('%s')", ft, ft, ft)
       )
       vim.api.nvim_command(
-        string.format(
-          [[autocmd VimLeavePre * :lua require('vim.lsp').stop_client('%s')]],
-          cur_type
-        )
+        string.format("autocmd VimLeavePre * :lua require('vim.lsp').stop_client('%s')", ft)
       )
       -- Add the config to our current servers
-      server_config.servers[cur_type] = {
+      server_config.servers[ft] = {
         command = command,
         config = config or {},
       }
@@ -63,11 +57,11 @@ server_config.get_server_config = function(filetype)
   return server_config.get_server(filetype).config
 end
 
-server_config.get_name = function(filetype)
+server_config.get_server_name = function(filetype)
   local config = server_config.get_server_config(filetype)
 
   if vim.tbl_isempty(config) then
-    return nil
+    return filetype
   end
 
   local name = config.name
@@ -95,7 +89,7 @@ end
 
 return {
   add = server_config.add,
-  get_name = server_config.get_name,
+  get_server_name = server_config.get_server_name,
   get_server_command = server_config.get_server_command,
   get_server_config = server_config.get_server_config,
   get_root_uri = server_config.get_root_uri,

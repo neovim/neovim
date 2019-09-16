@@ -39,7 +39,7 @@ lsp.start_client = function(filetype, bufnr)
 
   local cmd = server_config.get_server_command(filetype)
 
-  local name = server_config.get_name(filetype)
+  local name = server_config.get_server_name(filetype)
 
   -- Start the client
   logger.debug('[LSP.lsp] Starting client...', name, '/', filetype, '/', cmd)
