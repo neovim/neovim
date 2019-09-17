@@ -286,7 +286,7 @@ function! s:check_python(version) abort
     let python_exe = pyname
   endif
 
-  " No Python executable could `import neovim`.
+  " No Python executable could `import neovim`, or host_prog_var was used.
   if !empty(pythonx_errors)
     call health#report_error('Python provider error:', pythonx_errors)
 
