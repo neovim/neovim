@@ -28,6 +28,7 @@ return {
     asin={args=1, func="float_op_wrapper", data="&asin"},  -- WJMc
     assert_beeps={args={1, 2}},
     assert_equal={args={2, 3}},
+    assert_equalfile={args=2},
     assert_exception={args={1, 2}},
     assert_fails={args={1, 2}},
     assert_false={args={1, 2}},

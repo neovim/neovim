@@ -2007,6 +2007,8 @@ argv([-1, {winid}])		List	the argument list
 assert_beeps({cmd})		none	assert {cmd} causes a beep
 assert_equal({exp}, {act} [, {msg}])
 				none	assert {exp} is equal to {act}
+assert_equalfile({fname-one}, {fname-two})
+				none	assert file contents is equal
 assert_exception({error} [, {msg}])
 				none	assert {error} is in v:exception
 assert_fails({cmd} [, {error}])	none	assert {cmd} fails
@@ -2596,6 +2598,13 @@ assert_equal({expected}, {actual}, [, {msg}])
 	assert_equal('foo', 'bar')
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
+
+							*assert_equalfile()*
+assert_equalfile({fname-one}, {fname-two})
+		When the files {fname-one} and {fname-two} do not contain
+		exactly the same text an error message is added to |v:errors|.
+		When {fname-one} or {fname-two} does not exist the error will
+		mention that.
 
 assert_exception({error} [, {msg}])			*assert_exception()*
 		When v:exception does not contain the string {error} an error
@@ -4479,8 +4488,7 @@ getftype({fname})					*getftype()*
 		systems that support it.  On some systems only "dir" and
 		"file" are returned.
 
-							*getjumplist()*
-getjumplist([{winnr} [, {tabnr}]])
+getjumplist([{winnr} [, {tabnr}]])			*getjumplist()*
 		Returns the |jumplist| for the specified window.
 
 		Without arguments use the current window.

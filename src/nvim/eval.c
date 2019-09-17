@@ -6961,6 +6961,56 @@ static void assert_equal_common(typval_T *argvars, assert_type_T atype)
   }
 }
 
+static void assert_equalfile(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
+{
+  char buf1[NUMBUFLEN];
+  char buf2[NUMBUFLEN];
+  const char *const fname1 = tv_get_string_buf_chk(&argvars[0], buf1);
+  const char *const fname2 = tv_get_string_buf_chk(&argvars[1], buf2);
+  garray_T ga;
+
+  if (fname1 == NULL || fname2 == NULL) {
+    return;
+  }
+
+  IObuff[0] = NUL;
+  FILE *const fd1 = os_fopen(fname1, READBIN);
+  if (fd1 == NULL) {
+    snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname1);
+  } else {
+    FILE *const fd2 = os_fopen(fname2, READBIN);
+    if (fd2 == NULL) {
+      fclose(fd1);
+      snprintf((char *)IObuff, IOSIZE, (char *)e_notread, fname2);
+    } else {
+      for (int64_t count = 0; ; count++) {
+        const int c1 = fgetc(fd1);
+        const int c2 = fgetc(fd2);
+        if (c1 == EOF) {
+          if (c2 != EOF) {
+            STRCPY(IObuff, "first file is shorter");
+          }
+          break;
+        } else if (c2 == EOF) {
+          STRCPY(IObuff, "second file is shorter");
+          break;
+        } else if (c1 != c2) {
+          snprintf((char *)IObuff, IOSIZE,
+                   "difference at byte %" PRId64, count);
+          break;
+        }
+      }
+    }
+  }
+  if (IObuff[0] != NUL) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, IObuff);
+    assert_error(&ga);
+    ga_clear(&ga);
+  }
+}
+
 static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
@@ -6986,6 +7036,12 @@ static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_assert_equal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   assert_equal_common(argvars, ASSERT_EQUAL);
+}
+
+// "assert_equalfile(fname-one, fname-two)" function
+static void f_assert_equalfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
+{
+  assert_equalfile(argvars);
 }
 
 // "assert_notequal(expected, actual[, msg])" function
