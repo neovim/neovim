@@ -3810,11 +3810,12 @@ ExpandOne (
         win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
                                 findex, cmd_showtail);
       }
+      if (mode == WILD_PAGEUP || mode == WILD_PAGEDOWN
+          || mode == WILD_UP || mode == WILD_DOWN) {
+        return NULL;
+      }
       if (findex == -1) {
         return vim_strsave(orig_save);
-      }
-      if (mode == WILD_UP || mode == WILD_DOWN) {
-        return NULL;
       }
       return vim_strsave(xp->xp_files[findex]);
     } else
