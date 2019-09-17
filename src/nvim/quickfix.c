@@ -1797,6 +1797,54 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 }
 
 /*
+ * Get the quickfix/location list stack to use for the specified Ex command.
+ * For a location list command, returns the stack for the current window.  If
+ * the location list is not found, then returns NULL and prints an error
+ * message if 'print_emsg' is TRUE.
+ */
+  static qf_info_T *
+qf_cmd_get_stack(exarg_T *eap, int print_emsg)
+{
+  qf_info_T	*qi = &ql_info;
+
+  if (is_loclist_cmd(eap->cmdidx))
+  {
+    qi = GET_LOC_LIST(curwin);
+    if (qi == NULL)
+    {
+      if (print_emsg)
+        emsg(_(e_loclist));
+      return NULL;
+    }
+  }
+
+  return qi;
+}
+
+/*
+ * Get the quickfix/location list stack to use for the specified Ex command.
+ * For a location list command, returns the stack for the current window.
+ * If the location list is not present, then allocates a new one.
+ * Returns NULL if the allocation fails.  For a location list command, sets
+ * 'pwinp' to curwin.
+ */
+  static qf_info_T *
+qf_cmd_get_or_alloc_stack(exarg_T *eap, win_T **pwinp)
+{
+  qf_info_T	*qi = &ql_info;
+
+  if (is_loclist_cmd(eap->cmdidx))
+  {
+    qi = ll_get_or_alloc_list(curwin);
+    if (qi == NULL)
+      return NULL;
+    *pwinp = curwin;
+  }
+
+  return qi;
+}
+
+/*
  * Copy location list entries from 'from_qfl' to 'to_qfl'.
  */
 static int copy_loclist_entries(qf_list_T *from_qfl, qf_list_T *to_qfl) {
@@ -2915,15 +2963,10 @@ void qf_list(exarg_T *eap)
   char_u      *arg = eap->arg;
   int         all = eap->forceit;     // if not :cl!, only show
                                       // recognised errors
-  qf_info_T   *qi = &ql_info;
+  qf_info_T	*qi;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      EMSG(_(e_loclist));
-      return;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   if (qi->qf_curlist >= qi->qf_listcount
       || qf_list_empty(qf_get_curlist(qi))) {
@@ -3040,16 +3083,11 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
  */
 void qf_age(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  qf_info_T *qi;
   int count;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      EMSG(_(e_loclist));
-      return;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   if (eap->addr_count != 0) {
     assert(eap->line2 <= INT_MAX);
@@ -3079,12 +3117,9 @@ void qf_age(exarg_T *eap)
 /// Display the information about all the quickfix/location lists in the stack.
 void qf_history(exarg_T *eap)
 {
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi = qf_cmd_get_stack(eap, FALSE);
   int i;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-  }
   if (qi == NULL || (qi->qf_listcount == 0
                      && qf_list_empty(qf_get_curlist(qi)))) {
     MSG(_("No entries"));
@@ -3280,15 +3315,12 @@ void qf_view_result(bool split)
  */
 void ex_cwindow(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  qf_info_T   *qi;
   qf_list_T   *qfl;
   win_T       *win;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL)
-      return;
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   qfl = qf_get_curlist(qi);
 
@@ -3316,13 +3348,10 @@ void ex_cwindow(exarg_T *eap)
 void ex_cclose(exarg_T *eap)
 {
   win_T       *win = NULL;
-  qf_info_T   *qi = &ql_info;
+  qf_info_T	*qi;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL)
-      return;
-  }
+  if ((qi = qf_cmd_get_stack(eap, FALSE)) == NULL)
+    return;
 
   /* Find existing quickfix window and close it. */
   win = qf_find_win(qi);
@@ -3345,7 +3374,7 @@ static void qf_set_title_var(qf_list_T *qfl) {
  */
 void ex_copen(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  qf_info_T   *qi;
   qf_list_T   *qfl;
   int height;
   win_T       *win;
@@ -3353,13 +3382,8 @@ void ex_copen(exarg_T *eap)
   buf_T       *qf_buf;
   win_T       *oldwin = curwin;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      EMSG(_(e_loclist));
-      return;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   if (eap->addr_count != 0) {
     assert(eap->line2 <= INT_MAX);
@@ -3481,15 +3505,10 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
 // :cbottom/:lbottom command.
 void ex_cbottom(exarg_T *eap)
 {
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      EMSG(_(e_loclist));
-      return;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   win_T *win = qf_find_win(qi);
 
@@ -3991,15 +4010,11 @@ static char_u *get_mef_name(void)
 size_t qf_get_size(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi;
   qf_list_T *qfl;
-  if (is_loclist_cmd(eap->cmdidx)) {
-    // Location list.
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      return 0;
-    }
-  }
+
+  if ((qi = qf_cmd_get_stack(eap, FALSE)) == NULL)
+    return 0;
 
   int prev_fnum = 0;
   size_t sz = 0;
@@ -4030,15 +4045,10 @@ size_t qf_get_size(exarg_T *eap)
 size_t qf_get_cur_idx(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    // Location list.
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      return 0;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, FALSE)) == NULL)
+    return 0;
 
   assert(qf_get_curlist(qi)->qf_index >= 0);
   return (size_t)qf_get_curlist(qi)->qf_index;
@@ -4050,15 +4060,10 @@ size_t qf_get_cur_idx(exarg_T *eap)
 int qf_get_cur_valid_idx(exarg_T *eap)
   FUNC_ATTR_NONNULL_ALL
 {
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    // Location list.
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      return 1;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, FALSE)) == NULL)
+    return 1;
 
   qf_list_T *qfl = qf_get_curlist(qi);
 
@@ -4139,15 +4144,10 @@ static size_t qf_get_nth_valid_entry(qf_list_T *qfl, size_t n, int fdo)
  */
 void ex_cc(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  qf_info_T   *qi;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      EMSG(_(e_loclist));
-      return;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   int errornr;
   if (eap->addr_count > 0) {
@@ -4193,16 +4193,11 @@ void ex_cc(exarg_T *eap)
  */
 void ex_cnext(exarg_T *eap)
 {
-  qf_info_T   *qi = &ql_info;
+  qf_info_T   *qi;
   int dir;
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = GET_LOC_LIST(curwin);
-    if (qi == NULL) {
-      EMSG(_(e_loclist));
-      return;
-    }
-  }
+  if ((qi = qf_cmd_get_stack(eap, TRUE)) == NULL)
+    return;
 
   int errornr;
   if (eap->addr_count > 0
@@ -4505,7 +4500,7 @@ void ex_vimgrep(exarg_T *eap)
   char_u      *s;
   char_u      *p;
   int fi;
-  qf_info_T   *qi = &ql_info;
+  qf_info_T   *qi;
   qf_list_T   *qfl;
   win_T *wp = NULL;
   buf_T       *buf;
@@ -4531,10 +4526,9 @@ void ex_vimgrep(exarg_T *eap)
     }
   }
 
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = ll_get_or_alloc_list(curwin);
-    wp = curwin;
-  }
+  qi = qf_cmd_get_or_alloc_stack(eap, &wp);
+  if (qi == NULL)
+    return;
 
   if (eap->addr_count > 0)
     tomatch = eap->line2;
@@ -5837,7 +5831,7 @@ static int cbuffer_process_args(
 void ex_cbuffer(exarg_T *eap)
 {
   buf_T *buf = NULL;
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi;
   const char *au_name = NULL;
   win_T *wp = NULL;
   char_u* qf_title;
@@ -5853,10 +5847,9 @@ void ex_cbuffer(exarg_T *eap)
   }
 
   // Must come after autocommands.
-  if (is_loclist_cmd(eap->cmdidx)) {
-    qi = ll_get_or_alloc_list(curwin);
-    wp = curwin;
-  }
+  qi = qf_cmd_get_or_alloc_stack(eap, &wp);
+  if (qi == NULL)
+    return;
 
   if (cbuffer_process_args(eap, &buf, &line1, &line2) == FAIL)
     return;
@@ -5921,7 +5914,7 @@ static const char_u * cexpr_get_auname(cmdidx_T cmdidx)
  */
 void ex_cexpr(exarg_T *eap)
 {
-  qf_info_T *qi = &ql_info;
+  qf_info_T *qi;
   const char *au_name = NULL;
   win_T *wp = NULL;
 
@@ -5933,10 +5926,9 @@ void ex_cexpr(exarg_T *eap)
     }
   }
 
-   if (is_loclist_cmd(eap->cmdidx)) {
-    qi = ll_get_or_alloc_list(curwin);
-    wp = curwin;
-  }
+  qi = qf_cmd_get_or_alloc_stack(eap, &wp);
+  if (qi == NULL)
+    return;
 
   /* Evaluate the expression.  When the result is a string or a list we can
    * use it to fill the errorlist. */

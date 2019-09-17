@@ -163,6 +163,12 @@ endfunc
 func XageTests(cchar)
   call s:setup_commands(a:cchar)
 
+  if a:cchar == 'l'
+    " No location list for the current window
+    call assert_fails('lolder', 'E776:')
+    call assert_fails('lnewer', 'E776:')
+  endif
+
   let list = [{'bufnr': bufnr('%'), 'lnum': 1}]
   call g:Xsetlist(list)
 
