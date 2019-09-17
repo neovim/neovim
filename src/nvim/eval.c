@@ -6947,7 +6947,8 @@ static void assert_error(garray_T *gap)
                         (const char *)gap->ga_data, (ptrdiff_t)gap->ga_len);
 }
 
-static void assert_equal_common(typval_T *argvars, assert_type_T atype)
+static int assert_equal_common(typval_T *argvars, assert_type_T atype)
+  FUNC_ATTR_NONNULL_ALL
 {
   garray_T ga;
 
@@ -6958,10 +6959,12 @@ static void assert_equal_common(typval_T *argvars, assert_type_T atype)
                       &argvars[0], &argvars[1], atype);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
 }
 
-static void assert_equalfile(typval_T *argvars)
+static int assert_equalfile(typval_T *argvars)
   FUNC_ATTR_NONNULL_ALL
 {
   char buf1[NUMBUFLEN];
@@ -6971,7 +6974,7 @@ static void assert_equalfile(typval_T *argvars)
   garray_T ga;
 
   if (fname1 == NULL || fname2 == NULL) {
-    return;
+    return 0;
   }
 
   IObuff[0] = NUL;
@@ -7008,13 +7011,16 @@ static void assert_equalfile(typval_T *argvars)
     ga_concat(&ga, IObuff);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
 }
 
 static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
   garray_T ga;
+  int ret = 0;
 
   called_vim_beep = false;
   suppress_errthrow = true;
@@ -7026,28 +7032,30 @@ static void f_assert_beeps(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ga_concat(&ga, (const char_u *)cmd);
     assert_error(&ga);
     ga_clear(&ga);
+    ret = 1;
   }
 
   suppress_errthrow = false;
   emsg_on_display = false;
+  rettv->vval.v_number = ret;
 }
 
 // "assert_equal(expected, actual[, msg])" function
 static void f_assert_equal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_equal_common(argvars, ASSERT_EQUAL);
+  rettv->vval.v_number = assert_equal_common(argvars, ASSERT_EQUAL);
 }
 
 // "assert_equalfile(fname-one, fname-two)" function
 static void f_assert_equalfile(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_equalfile(argvars);
+  rettv->vval.v_number = assert_equalfile(argvars);
 }
 
 // "assert_notequal(expected, actual[, msg])" function
 static void f_assert_notequal(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_equal_common(argvars, ASSERT_NOTEQUAL);
+  rettv->vval.v_number = assert_equal_common(argvars, ASSERT_NOTEQUAL);
 }
 
 /// "assert_report(msg)
@@ -7059,27 +7067,13 @@ static void f_assert_report(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ga_concat(&ga, (const char_u *)tv_get_string(&argvars[0]));
     assert_error(&ga);
     ga_clear(&ga);
+    rettv->vval.v_number = 1;
 }
 
 /// "assert_exception(string[, msg])" function
 static void f_assert_exception(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  garray_T ga;
-
-  const char *const error = tv_get_string_chk(&argvars[0]);
-  if (vimvars[VV_EXCEPTION].vv_str == NULL) {
-    prepare_assert_error(&ga);
-    ga_concat(&ga, (char_u *)"v:exception is not set");
-    assert_error(&ga);
-    ga_clear(&ga);
-  } else if (error != NULL
-             && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
-    prepare_assert_error(&ga);
-    fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
-                      &vimvars[VV_EXCEPTION].vv_tv, ASSERT_OTHER);
-    assert_error(&ga);
-    ga_clear(&ga);
-  }
+  rettv->vval.v_number = assert_exception(argvars);
 }
 
 /// "assert_fails(cmd [, error])" function
@@ -7087,6 +7081,7 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
   garray_T    ga;
+  int ret = 0;
   int         save_trylevel = trylevel;
 
   // trylevel must be zero for a ":throw" command to be considered failed
@@ -7102,6 +7097,7 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     ga_concat(&ga, (const char_u *)cmd);
     assert_error(&ga);
     ga_clear(&ga);
+    ret = 1;
   } else if (argvars[1].v_type != VAR_UNKNOWN) {
     char buf[NUMBUFLEN];
     const char *const error = tv_get_string_buf_chk(&argvars[1], buf);
@@ -7113,6 +7109,7 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
                         &vimvars[VV_ERRMSG].vv_tv, ASSERT_OTHER);
       assert_error(&ga);
       ga_clear(&ga);
+      ret = 1;
     }
   }
 
@@ -7122,9 +7119,11 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   emsg_silent = false;
   emsg_on_display = false;
   set_vim_var_string(VV_ERRMSG, NULL, 0);
+  rettv->vval.v_number = ret;
 }
 
-void assert_inrange(typval_T *argvars)
+static int assert_inrange(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
   const varnumber_T lower = tv_get_number_chk(&argvars[0], &error);
@@ -7132,7 +7131,7 @@ void assert_inrange(typval_T *argvars)
   const varnumber_T actual = tv_get_number_chk(&argvars[2], &error);
 
   if (error) {
-    return;
+    return 0;
   }
   if (actual < lower || actual > upper) {
     garray_T ga;
@@ -7146,11 +7145,14 @@ void assert_inrange(typval_T *argvars)
                       ASSERT_INRANGE);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
 }
 
 // Common for assert_true() and assert_false().
-static void assert_bool(typval_T *argvars, bool is_true)
+static int assert_bool(typval_T *argvars, bool is_true)
+  FUNC_ATTR_NONNULL_ALL
 {
   bool error = false;
   garray_T ga;
@@ -7169,16 +7171,43 @@ static void assert_bool(typval_T *argvars, bool is_true)
                       NULL, &argvars[0], ASSERT_OTHER);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
+}
+
+static int assert_exception(typval_T *argvars)
+  FUNC_ATTR_NONNULL_ALL
+{
+  garray_T ga;
+
+  const char *const error = tv_get_string_chk(&argvars[0]);
+  if (vimvars[VV_EXCEPTION].vv_str == NULL) {
+    prepare_assert_error(&ga);
+    ga_concat(&ga, (char_u *)"v:exception is not set");
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
+  } else if (error != NULL
+             && strstr((char *)vimvars[VV_EXCEPTION].vv_str, error) == NULL) {
+    prepare_assert_error(&ga);
+    fill_assert_error(&ga, &argvars[1], NULL, &argvars[0],
+                      &vimvars[VV_EXCEPTION].vv_tv, ASSERT_OTHER);
+    assert_error(&ga);
+    ga_clear(&ga);
+    return 1;
+  }
+  return 0;
 }
 
 // "assert_false(actual[, msg])" function
 static void f_assert_false(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_bool(argvars, false);
+  rettv->vval.v_number = assert_bool(argvars, false);
 }
 
-static void assert_match_common(typval_T *argvars, assert_type_T atype)
+static int assert_match_common(typval_T *argvars, assert_type_T atype)
+  FUNC_ATTR_NONNULL_ALL
 {
   char buf1[NUMBUFLEN];
   char buf2[NUMBUFLEN];
@@ -7194,31 +7223,33 @@ static void assert_match_common(typval_T *argvars, assert_type_T atype)
     fill_assert_error(&ga, &argvars[2], NULL, &argvars[0], &argvars[1], atype);
     assert_error(&ga);
     ga_clear(&ga);
+    return 1;
   }
+  return 0;
 }
 
 /// "assert_inrange(lower, upper[, msg])" function
 static void f_assert_inrange(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-    assert_inrange(argvars);
+  rettv->vval.v_number = assert_inrange(argvars);
 }
 
 /// "assert_match(pattern, actual[, msg])" function
 static void f_assert_match(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_match_common(argvars, ASSERT_MATCH);
+  rettv->vval.v_number = assert_match_common(argvars, ASSERT_MATCH);
 }
 
 /// "assert_notmatch(pattern, actual[, msg])" function
 static void f_assert_notmatch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_match_common(argvars, ASSERT_NOTMATCH);
+  rettv->vval.v_number = assert_match_common(argvars, ASSERT_NOTMATCH);
 }
 
 // "assert_true(actual[, msg])" function
 static void f_assert_true(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  assert_bool(argvars, true);
+  rettv->vval.v_number = assert_bool(argvars, true);
 }
 
 /*
