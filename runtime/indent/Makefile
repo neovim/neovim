@@ -11,4 +11,4 @@ test:
 
 
 clean:
-	VIMRUNTIME=$(VIMRUNTIME) $(VIM) --clean --not-a-term -u testdir/cleantest.vim
+	rm -f testdir/*.fail testdir/*.out
