@@ -6,8 +6,8 @@ VIM = vim
 # If a test succeeds a testdir/*.out file will be written.
 # If a test fails a testdir/*.fail file will be written.
 test:
-	$(VIM) --not-a-term -u testdir/runtest.vim
+	$(VIM) --clean --not-a-term -u testdir/runtest.vim
 
 
 clean:
-	$(VIM) --not-a-term -u testdir/cleantest.vim
+	$(VIM) --clean --not-a-term -u testdir/cleantest.vim

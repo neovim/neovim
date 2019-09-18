@@ -1,4 +1,6 @@
-" Runs all the indent tests for which there is no .out file
+" Runs all the indent tests for which there is no .out file.
+"
+" Current directory must be runtime/indent.
 
 set nocp
 filetype indent on
