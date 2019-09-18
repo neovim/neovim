@@ -158,6 +158,7 @@ clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
 	$(MAKE) -C src/nvim/testdir clean
 	$(MAKE) -C runtime/doc clean
+	$(MAKE) -C runtime/indent clean
 
 distclean:
 	rm -rf $(DEPS_BUILD_DIR) build
