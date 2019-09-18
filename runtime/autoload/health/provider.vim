@@ -90,15 +90,15 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    let error = printf("Command error (job=%d, exit code %d): `%s` (in %s)",
+    let emsg = printf("Command error (job=%d, exit code %d): `%s` (in %s)",
           \ jobid, s:shell_error, s:shellify(a:cmd), string(getcwd()))
     if !empty(opts.output)
-      let error .= "\nOutput: " . opts.output
+      let emsg .= "\noutput: " . opts.output
     end
     if !empty(opts.stderr)
-      let error .= "\nStderr: " . opts.stderr
+      let emsg .= "\nstderr: " . opts.stderr
     end
-    call health#report_error(error)
+    call health#report_error(emsg)
   endif
 
   return opts.output
