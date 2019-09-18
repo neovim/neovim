@@ -22,8 +22,12 @@ First of all, create a FILETYPE.in file.  It should contain:
 	endfunc
 	" END_INDENT
 
-- Optionally, a line with INDENT_EXE, followed by a Vim command.  This will be
-  executed before indenting the lines.  Example:
+  If you just want to test normal indenting with default options, you can make
+  this a large number of lines.  Just add all kinds of language constructs,
+  nested statements, etc. with valid syntax.
+
+- Optionally, add lines with INDENT_EXE after START_INDENT, followed by a Vim
+  command.  This will be executed before indenting the lines.  Example:
 
 	" START_INDENT
 	" INDENT_EXE let g:vim_indent_cont = 6
@@ -36,8 +40,8 @@ First of all, create a FILETYPE.in file.  It should contain:
   the next block of lines.
 
 - Alternatively to indenting all the lines between START_INDENT and
-  END_INDENT, use a INDENT_AT line, which specifies a pattern to find the line
-  to indent.  Example:
+  END_INDENT, use an INDENT_AT line, which specifies a pattern to find the
+  line to indent.  Example:
 
 	" START_INDENT
 	" INDENT_AT  this-line
@@ -47,7 +51,8 @@ First of all, create a FILETYPE.in file.  It should contain:
 	" END_INDENT
 
   Alternatively you can use INDENT_NEXT to indent the line below the matching
-  pattern:
+  pattern.  Keep in mind that quite often it will indent relative to the
+  matching line:
 
 	" START_INDENT
 	" INDENT_NEXT  next-line
@@ -77,14 +82,14 @@ RUNNING THE TEST
 Before running the test, create a FILETYPE.ok file.  You can leave it empty at
 first.
 
-Now run "make test".  After Vim has done the indenting you will see a
-FILETYPE.fail file.  This contains the actual result of indenting, and it's
-different from the FILETYPE.ok file.
+Now run "make test" from the parent directory.  After Vim has done the
+indenting you will see a FILETYPE.fail file.  This contains the actual result
+of indenting, and it's different from the FILETYPE.ok file.
 
 Check the contents of the FILETYPE.fail file.  If it is perfectly OK, then
 rename it to overwrite the FILETYPE.ok file. If you now run "make test" again,
 the test will pass and create a FILETYPE.out file, which is identical to the
-FILETYPE.ok file.
+FILETYPE.ok file.  The FILETYPE.fail file will be deleted.
 
 If you try to run "make test" again you will notice that nothing happens,
 because the FILETYPE.out file already exists.  Delete it, or do "make clean",

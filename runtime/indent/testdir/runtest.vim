@@ -7,7 +7,9 @@ if 1
 
 set nocp
 filetype indent on
+syn on
 set nowrapscan
+set report=9999
 
 au! SwapExists * call HandleSwapExists()
 func HandleSwapExists()
@@ -110,7 +112,6 @@ for fname in glob('testdir/*.in', 1, 1)
     if failed
       exe 'write ' . root . '.fail'
       echoerr 'Test ' . fname . ' FAILED!'
-      sleep 2
     else
       exe 'write ' . root . '.out'
     endif
