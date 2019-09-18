@@ -427,6 +427,23 @@ Integer nvim_win_get_number(Window window, Error *err)
   return rv;
 }
 
+/// Gets the window ID
+///
+/// @param window   Window handle, or 0 for current window
+/// @param[out] err Error details, if any
+/// @return Window ID
+Integer nvim_win_get_id(Window window, Error *err)
+  FUNC_API_SINCE(1)
+{
+  int rv = 0;
+  win_T *win = find_window_by_handle(window, err);
+
+  if (!win) {
+    return rv;
+  }
+  return win->handle;
+}
+
 /// Checks if a window is valid
 ///
 /// @param window Window handle, or 0 for current window

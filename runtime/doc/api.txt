@@ -1968,6 +1968,15 @@ nvim_win_get_number({window})                          *nvim_win_get_number()*
                 Return: ~
                     Window number
 
+nvim_win_get_id({window})                                  *nvim_win_get_id()*
+                Gets the window ID
+
+                Parameters: ~
+                    {window}  Window handle, or 0 for current window
+
+                Return: ~
+                    Window ID
+
 nvim_win_is_valid({window})                              *nvim_win_is_valid()*
                 Checks if a window is valid
 
