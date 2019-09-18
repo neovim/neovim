@@ -7076,7 +7076,7 @@ static void f_assert_exception(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->vval.v_number = assert_exception(argvars);
 }
 
-/// "assert_fails(cmd [, error])" function
+/// "assert_fails(cmd [, error [, msg]])" function
 static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   const char *const cmd = tv_get_string_chk(&argvars[0]);
@@ -7094,7 +7094,14 @@ static void f_assert_fails(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (!called_emsg) {
     prepare_assert_error(&ga);
     ga_concat(&ga, (const char_u *)"command did not fail: ");
-    ga_concat(&ga, (const char_u *)cmd);
+    if (argvars[1].v_type != VAR_UNKNOWN
+        && argvars[2].v_type != VAR_UNKNOWN) {
+      char *const tofree = encode_tv2echo(&argvars[2], NULL);
+      ga_concat(&ga, (char_u *)tofree);
+      xfree(tofree);
+    } else {
+      ga_concat(&ga, (const char_u *)cmd);
+    }
     assert_error(&ga);
     ga_clear(&ga);
     ret = 1;

@@ -3,6 +3,7 @@ local nvim, call = helpers.meths, helpers.call
 local clear, eq = helpers.clear, helpers.eq
 local source, command = helpers.source, helpers.command
 local exc_exec = helpers.exc_exec
+local eval = helpers.eval
 
 local function expected_errors(errors)
   eq(errors, nvim.get_vvar('errors'))
@@ -233,19 +234,30 @@ describe('assert function:', function()
   -- assert_fails({cmd}, [, {error}])
   describe('assert_fails', function()
     it('should change v:errors when error does not match v:errmsg', function()
-      command([[call assert_fails('xxx', {})]])
+      eq(1, eval([[assert_fails('xxx', {})]]))
       command([[call assert_match("Expected {} but got 'E731:", v:errors[0])]])
       expected_errors({"Expected {} but got 'E731: using Dictionary as a String'"})
     end)
 
     it('should not change v:errors when cmd errors', function()
-      call('assert_fails', 'NonexistentCmd')
+      eq(0, eval([[assert_fails('NonexistentCmd')]]))
       expected_empty()
     end)
 
     it('should change v:errors when cmd succeeds', function()
-      call('assert_fails', 'call empty("")')
+      eq(1, eval([[assert_fails('call empty("")', '')]]))
       expected_errors({'command did not fail: call empty("")'})
+    end)
+
+    it('can specify and get a message about what failed', function()
+      eq(1, eval([[assert_fails('xxx', {}, 'stupid')]]))
+      command([[call assert_match("stupid: Expected {} but got 'E731:", v:errors[0])]])
+      expected_errors({"stupid: Expected {} but got 'E731: using Dictionary as a String'"})
+    end)
+
+    it('can specify and get a message even when cmd succeeds', function()
+      eq(1, eval([[assert_fails('echo', '', 'echo command')]]))
+      expected_errors({'command did not fail: echo command'})
     end)
   end)
 
