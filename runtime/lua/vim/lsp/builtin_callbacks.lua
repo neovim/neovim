@@ -37,19 +37,19 @@ local BuiltinCallbacks = {}
 
 -- nvim/error_callback
 BuiltinCallbacks['nvim/error_callback'] = {
-  callback = function(original, error_message)
-    logger.debug('callback:nvim/error_callback', original, error_message)
+  callback = function(self, data, method_name)
+    logger.debug('callback:nvim/error_callback', data, self)
 
     local message = ''
-    if error_message.message ~= nil and type(error_message.message) == 'string' then
-      message = error_message.message
-    elseif rawget(errorCodes, error_message.code) ~= nil then
+    if data.message ~= nil and type(data.message) == 'string' then
+      message = data.message
+    elseif rawget(errorCodes, data.code) ~= nil then
       message = string.format('[%s] %s',
-        error_message.code, errorCodes[error_message.code]
+        data.code, errorCodes[data.code]
       )
     end
 
-    vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', original.method, message))
+    vim.api.nvim_err_writeln(string.format('[LSP:%s] Error: %s', method_name, message))
 
     return
   end,

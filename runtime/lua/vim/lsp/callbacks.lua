@@ -34,12 +34,12 @@ local get_callback_object = function(method)
 end
 
 -- @params method
--- @params success
+-- @params is_success
 -- @params data
 -- @params filetype
 
 -- @return callback result
-local call_callback = function(method, success, data, filetype)
+local call_callback = function(method, is_success, data, filetype)
   local cb = get_callback_object(method)
 
   if cb:has_no_callbacks(filetype) then
@@ -47,13 +47,13 @@ local call_callback = function(method, success, data, filetype)
     return
   end
 
-  return cb(success, data, filetype)
+  return cb(is_success, data, filetype)
 end
 
 -- CallbackObject section
-CallbackObject.__call = function(self, success, data, filetype)
-  if self.name ~= 'nvim/error_callback' and not success then
-    call_callback('nvim/error_callback', data, filetype)
+CallbackObject.__call = function(self, is_success, data, filetype)
+  if self.method ~= 'nvim/error_callback' and not is_success then
+    call_callback('nvim/error_callback', data, self.method)
   end
 
   if not filetype and vim.tbl_isempty(self.common) then
@@ -165,16 +165,6 @@ CallbackObject.get_callbacks = function(self, filetype)
   return callback_list
 end
 
-local call_callbacks = function(callback_list, success, params)
-  local results = {}
-
-  for key, callback in ipairs(callback_list) do
-    results[key] = callback(success, params)
-  end
-
-  return unpack(results)
-end
-
 local add_callback = function(method, new_callback, filetype)
   get_callback_object(method):add_callback(new_callback, filetype)
 end
@@ -211,5 +201,4 @@ return {
   _callback_mapping = CallbackMapping,
   _callback_object = CallbackObject,
   _get_callbacks = get_callbacks,
-  _call_callbacks = call_callbacks,
 }

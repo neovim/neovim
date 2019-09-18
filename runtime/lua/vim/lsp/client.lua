@@ -362,22 +362,22 @@ client.on_message = function(self, body)
 
     local id = json_message.id
     local method = self._callbacks[json_message.id].method
-    local success = not json_message['error']
+    local is_success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
-    if success then
+    if is_success then
       logger.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data))
       logger.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data))
     else
-      logger.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
-      logger.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
+      logger.error("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
+      logger.server.error("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
     end
 
     -- If no callback is passed with request, use the registered callback.
     local result
     if cb then
-      result = { cb(success, data) }
+      result = { cb(is_success, data) }
     else
-      result = { call_callback(method, success, data, self.filetype) }
+      result = { call_callback(method, is_success, data, self.filetype) }
     end
 
     -- Clear the old callback
