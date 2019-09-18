@@ -135,7 +135,20 @@ int os_setenv(const char *name, const char *value, int overwrite)
   }
 #endif
   uv_mutex_lock(&mutex);
-  int r = uv_os_setenv(name, value);
+  int r;
+#ifdef WIN32
+  // LC_ALL, LANG, LANGUAGE and LC_MESSAGES must be obtained using getenv()
+  // in libintl, so we must use _putenv_s().
+  if (strcmp(name, "LC_ALL") == 0 || strcmp(name, "LANG") == 0
+      || strcmp(name, "LANGUAGE") == 0 || strcmp(name, "LC_MESSAGES") == 0) {
+    r = _putenv_s(name, value);  // NOLINT
+    assert(r == 0);
+  } else {
+#endif
+  r = uv_os_setenv(name, value);
+#ifdef WIN32
+  }
+#endif
   assert(r != UV_EINVAL);
   // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
   // could be a previous os_getenv() result.
