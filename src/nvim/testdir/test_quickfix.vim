@@ -540,6 +540,8 @@ func s:test_xhelpgrep(cchar)
 
   " Search for non existing help string
   call assert_fails('Xhelpgrep a1b2c3', 'E480:')
+  " Invalid regular expression
+  call assert_fails('Xhelpgrep \@<!', 'E480:')
 endfunc
 
 func Test_helpgrep()
