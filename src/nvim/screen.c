@@ -871,7 +871,7 @@ static void win_update(win_T *wp)
         if (wp->w_lines[0].wl_lnum != wp->w_topline)
           i += diff_check_fill(wp, wp->w_lines[0].wl_lnum)
                - wp->w_old_topfill;
-        if (i < wp->w_grid.Rows - 2) {  // less than a screen off
+        if (i != 0 && i < wp->w_grid.Rows - 2) {  // less than a screen off
           // Try to insert the correct number of lines.
           // If not the last window, delete the lines at the bottom.
           // win_ins_lines may fail when the terminal can't do it.
