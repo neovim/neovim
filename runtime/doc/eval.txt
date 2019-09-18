@@ -1547,10 +1547,12 @@ v:errmsg	Last given error message.
 	:if v:errmsg != ""
 	:  ... handle error
 <
-					*v:errors* *errors-variable*
+				*v:errors* *errors-variable* *assert-return*
 v:errors	Errors found by assert functions, such as |assert_true()|.
 		This is a list of strings.
 		The assert functions append an item when an assert fails.
+		The return value indicates this: a one is returned if an item
+		was added to v:errors, otherwise zero is returned.
 		To remove old results make it empty: >
 	:let v:errors = []
 <		If v:errors is set to anything but a list it is made an empty
@@ -2004,24 +2006,26 @@ argidx()			Number	current index in the argument list
 arglistid([{winnr} [, {tabnr}]]) Number	argument list id
 argv({nr} [, {winid}])		String	{nr} entry of the argument list
 argv([-1, {winid}])		List	the argument list
-assert_beeps({cmd})		none	assert {cmd} causes a beep
+assert_beeps({cmd})		Number	assert {cmd} causes a beep
 assert_equal({exp}, {act} [, {msg}])
-				none	assert {exp} is equal to {act}
+				Number	assert {exp} is equal to {act}
+assert_equalfile({fname-one}, {fname-two})
+				Number	assert file contents is equal
 assert_exception({error} [, {msg}])
-				none	assert {error} is in v:exception
-assert_fails({cmd} [, {error}])	none	assert {cmd} fails
+				Number	assert {error} is in v:exception
+assert_fails({cmd} [, {error}])	Number	assert {cmd} fails
 assert_false({actual} [, {msg}])
-				none	assert {actual} is false
+				Number	assert {actual} is false
 assert_inrange({lower}, {upper}, {actual} [, {msg}])
-				none	assert {actual} is inside the range
+				Number	assert {actual} is inside the range
 assert_match({pat}, {text} [, {msg}])
-				none	assert {pat} matches {text}
+				Number	assert {pat} matches {text}
 assert_notequal({exp}, {act} [, {msg}])
-				none	assert {exp} is not equal {act}
+				Number	assert {exp} is not equal {act}
 assert_notmatch({pat}, {text} [, {msg}])
-				none	assert {pat} not matches {text}
-assert_report({msg})		none	report a test failure
-assert_true({actual} [, {msg}])	none	assert {actual} is true
+				Number	assert {pat} not matches {text}
+assert_report({msg})		Number	report a test failure
+assert_true({actual} [, {msg}])	Number	assert {actual} is true
 asin({expr})			Float	arc sine of {expr}
 atan({expr})			Float	arc tangent of {expr}
 atan2({expr}, {expr})		Float   arc tangent of {expr1} / {expr2}
@@ -2580,12 +2584,13 @@ argv([{nr} [, {winid}])
 assert_beeps({cmd})					*assert_beeps()*
 		Run {cmd} and add an error message to |v:errors| if it does
 		NOT produce a beep or visual bell.
-		Also see |assert_fails()|.
+		Also see |assert_fails()| and |assert-return|.
 
 							*assert_equal()*
 assert_equal({expected}, {actual}, [, {msg}])
 		When {expected} and {actual} are not equal an error message is
-		added to |v:errors|.
+		added to |v:errors| and 1 is returned.  Otherwise zero is
+		returned |assert-return|.
 		There is no automatic conversion, the String "4" is different
 		from the Number 4.  And the number 4 is different from the
 		Float 4.0.  The value of 'ignorecase' is not used here, case
@@ -2597,9 +2602,17 @@ assert_equal({expected}, {actual}, [, {msg}])
 <		Will result in a string to be added to |v:errors|:
 	test.vim line 12: Expected 'foo' but got 'bar' ~
 
+							*assert_equalfile()*
+assert_equalfile({fname-one}, {fname-two})
+		When the files {fname-one} and {fname-two} do not contain
+		exactly the same text an error message is added to |v:errors|.
+		Also see |assert-return|.
+		When {fname-one} or {fname-two} does not exist the error will
+		mention that.
+
 assert_exception({error} [, {msg}])			*assert_exception()*
 		When v:exception does not contain the string {error} an error
-		message is added to |v:errors|.
+		message is added to |v:errors|.  Also see |assert-return|.
 		This can be used to assert that a command throws an exception.
 		Using the error number, followed by a colon, avoids problems
 		with translations: >
@@ -2612,7 +2625,7 @@ assert_exception({error} [, {msg}])			*assert_exception()*
 
 assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 		Run {cmd} and add an error message to |v:errors| if it does
-		NOT produce an error.
+		NOT produce an error.  Also see |assert-return|.
 		When {error} is given it must match in |v:errmsg|.
 		Note that beeping is not considered an error, and some failing
 		commands only beep.  Use |assert_beeps()| for those.
@@ -2620,6 +2633,7 @@ assert_fails({cmd} [, {error} [, {msg}]])			*assert_fails()*
 assert_false({actual} [, {msg}])				*assert_false()*
 		When {actual} is not false an error message is added to
 		|v:errors|, like with |assert_equal()|.
+		Also see |assert-return|.
 		A value is false when it is zero or |v:false|. When "{actual}"
 		is not a number or |v:false| the assert fails.
 		When {msg} is omitted an error in the form
@@ -2636,7 +2650,7 @@ assert_inrange({lower}, {upper}, {actual} [, {msg}])	 *assert_inrange()*
 								*assert_match()*
 assert_match({pattern}, {actual} [, {msg}])
 		When {pattern} does not match {actual} an error message is
-		added to |v:errors|.
+		added to |v:errors|.  Also see |assert-return|.
 
 		{pattern} is used as with |=~|: The matching is always done
 		like 'magic' was set and 'cpoptions' is empty, no matter what
@@ -2657,18 +2671,22 @@ assert_match({pattern}, {actual} [, {msg}])
 assert_notequal({expected}, {actual} [, {msg}])
 		The opposite of `assert_equal()`: add an error message to
 		|v:errors| when {expected} and {actual} are equal.
+		Also see |assert-return|.
 
 							*assert_notmatch()*
 assert_notmatch({pattern}, {actual} [, {msg}])
 		The opposite of `assert_match()`: add an error message to
 		|v:errors| when {pattern} matches {actual}.
+		Also see |assert-return|.
 
 assert_report({msg})					*assert_report()*
 		Report a test failure directly, using {msg}.
+		Always returns one.
 
 assert_true({actual} [, {msg}])					*assert_true()*
 		When {actual} is not true an error message is added to
 		|v:errors|, like with |assert_equal()|.
+		Also see |assert-return|.
 		A value is |TRUE| when it is a non-zero number or |v:true|.
 		When {actual} is not a number or |v:true| the assert fails.
 		When {msg} is omitted an error in the form "Expected True but
@@ -4479,8 +4497,7 @@ getftype({fname})					*getftype()*
 		systems that support it.  On some systems only "dir" and
 		"file" are returned.
 
-							*getjumplist()*
-getjumplist([{winnr} [, {tabnr}]])
+getjumplist([{winnr} [, {tabnr}]])			*getjumplist()*
 		Returns the |jumplist| for the specified window.
 
 		Without arguments use the current window.
