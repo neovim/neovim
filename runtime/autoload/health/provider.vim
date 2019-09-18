@@ -38,9 +38,10 @@ endfunction
 " Handler for s:system() function.
 function! s:system_handler(jobid, data, event) dict abort
   if a:event ==# 'stderr'
-    let self.stderr .= join(a:data, '')
-    if !self.ignore_stderr
+    if self.add_stderr_to_output
       let self.output .= join(a:data, '')
+    else
+      let self.stderr .= join(a:data, '')
     endif
   elseif a:event ==# 'stdout'
     let self.output .= join(a:data, '')
@@ -64,7 +65,7 @@ function! s:system(cmd, ...) abort
   let stdin = a:0 ? a:1 : ''
   let ignore_error = a:0 > 2 ? a:3 : 0
   let opts = {
-        \ 'ignore_stderr': a:0 > 1 ? a:2 : 0,
+        \ 'add_stderr_to_output': a:0 > 1 ? a:2 : 0,
         \ 'output': '',
         \ 'stderr': '',
         \ 'on_stdout': function('s:system_handler'),
@@ -89,8 +90,15 @@ function! s:system(cmd, ...) abort
     call health#report_error(printf('Command timed out: %s', s:shellify(a:cmd)))
     call jobstop(jobid)
   elseif s:shell_error != 0 && !ignore_error
-    call health#report_error(printf("Command error (job=%d, exit code %d): `%s` (in %s)\nOutput: %s\nStderr: %s",
-          \ jobid, s:shell_error, s:shellify(a:cmd), string(getcwd()), opts.output, opts.stderr))
+    let emsg = printf("Command error (job=%d, exit code %d): `%s` (in %s)",
+          \ jobid, s:shell_error, s:shellify(a:cmd), string(getcwd()))
+    if !empty(opts.output)
+      let emsg .= "\noutput: " . opts.output
+    end
+    if !empty(opts.stderr)
+      let emsg .= "\nstderr: " . opts.stderr
+    end
+    call health#report_error(emsg)
   endif
 
   return opts.output
