@@ -54,7 +54,7 @@ func Test_profile_func()
   call assert_equal(30, len(lines))
 
   call assert_equal('FUNCTION  Foo1()',                            lines[0])
-  call assert_match('Defined:.*Xprofile_func.vim',                 lines[1])
+  call assert_match('Defined:.*Xprofile_func.vim:3',               lines[1])
   call assert_equal('Called 2 times',                              lines[2])
   call assert_match('^Total time:\s\+\d\+\.\d\+$',                 lines[3])
   call assert_match('^ Self time:\s\+\d\+\.\d\+$',                 lines[4])
