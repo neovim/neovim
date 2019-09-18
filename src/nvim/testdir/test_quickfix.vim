@@ -1045,8 +1045,8 @@ func Test_efm2()
   set efm=%f:%s
   cexpr 'Xtestfile:Line search text'
   let l = getqflist()
-  call assert_equal(l[0].pattern, '^\VLine search text\$')
-  call assert_equal(l[0].lnum, 0)
+  call assert_equal('^\VLine search text\$', l[0].pattern)
+  call assert_equal(0, l[0].lnum)
 
   let l = split(execute('clist', ''), "\n")
   call assert_equal([' 1 Xtestfile:^\VLine search text\$:  '], l)
