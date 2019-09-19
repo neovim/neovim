@@ -1416,14 +1416,14 @@ Dictionary nvim_get_color_map(void)
   return colors;
 }
 
-/// Gets a map of the current editor state.
+/// Returns a map of the current editor state (see |context|).
 ///
 /// @param opts  Optional parameters.
-///               - types:  List of |context-types| ("regs", "jumps", "bufs",
-///                 "gvars", …) to gather, or empty for "all".
+///               - types:  Array of |context-types| ("regs", "jumps", "bufs",
+///                 "gvars", …) to gather, or empty for all.
 /// @param[out]  err  Error details, if any
 ///
-/// @return map of global |context|.
+/// @return Map of global |context| (see |context-map|).
 Dictionary nvim_get_context(Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
@@ -1463,10 +1463,10 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
   return dict;
 }
 
-/// Sets the current editor state from the given |context| map.
+/// Sets the current editor state from the given |context-map|.
 ///
-/// @param[in]    ctx_dict  Context dictionary.
-/// @param[out]   err       Error details, if any.
+/// @param[in]    dict  Context map.
+/// @param[out]   err   Error details, if any.
 Object nvim_load_context(Dictionary dict, Error *err)
   FUNC_API_SINCE(6)
 {
