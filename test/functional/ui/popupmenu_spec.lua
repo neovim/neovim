@@ -9,6 +9,8 @@ local funcs = helpers.funcs
 local get_pathsep = helpers.get_pathsep
 local eq = helpers.eq
 local matches = helpers.matches
+local eval = helpers.eval
+local iswin = helpers.iswin
 
 describe('ui/ext_popupmenu', function()
   local screen
@@ -489,22 +491,25 @@ describe('ui/ext_popupmenu', function()
     }}
   end)
 
-  it('works with wildoptions=pum', function()
-    screen:try_resize(32,10)
-    command('set wildmenu')
-    command('set wildoptions=pum')
+  describe('with wildoptions=pum', function()
+    before_each(function()
+      screen:try_resize(32,10)
+      command('set wildmenu')
+      command('set wildoptions=pum')
+    end)
 
     local wild_expected = {
-        {'define', '', '', ''},
-        {'jump', '', '', ''},
-        {'list', '', '', ''},
-        {'place', '', '', ''},
-        {'undefine', '', '', ''},
-        {'unplace', '', '', ''},
+      {'define', '', '', ''},
+      {'jump', '', '', ''},
+      {'list', '', '', ''},
+      {'place', '', '', ''},
+      {'undefine', '', '', ''},
+      {'unplace', '', '', ''},
     }
 
-    feed(':sign ')
-    screen:expect([[
+    local function display_sign_pum()
+      feed(':sign ')
+      screen:expect([[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -515,10 +520,10 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       :sign ^                          |
-    ]])
+      ]])
 
-    feed('<tab>')
-    screen:expect{grid=[[
+      feed('<tab>')
+      screen:expect{grid=[[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -529,10 +534,13 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       :sign define^                    |
-    ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+      ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+    end
 
-    feed('<left>')
-    screen:expect{grid=[[
+    it('works', function()
+      display_sign_pum()
+      feed('x')
+      screen:expect([[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -542,253 +550,15 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {1:~                               }|
       {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      :sign definex^                   |
+      ]])
+      feed('<Esc>')
 
-    feed('<left>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign unplace^                   |
-    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
-
-    feed('x')
-    screen:expect([[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign unplacex^                  |
-    ]])
-    feed('<esc>')
-
-    -- #10042: make sure shift-tab also triggers the pum
-    feed(':sign <S-tab>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign unplace^                   |
-    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
-    feed('<esc>')
-
-    -- #10693: Confirm that Ctrl-E, Ctrl-Y, PageUP, PageDown, Up, Down works
-    feed(':sign <tab>')
-    -- Move only the position without selecting an item in the popup menu
-    feed('<Down><Down>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign define^                    |
-    ]], popupmenu={items=wild_expected, pos=2, anchor={1, 9, 6}}}
-    -- Move only the position without selecting an item in the popup menu
-    feed('<Up>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign define^                    |
-    ]], popupmenu={items=wild_expected, pos=1, anchor={1, 9, 6}}}
-    feed('<Up><Up>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
-    -- wrap to last item
-    feed('<Up>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
-    feed('<PageUp>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign jump^                      |
-    ]], popupmenu={items=wild_expected, pos=1, anchor={1, 9, 6}}}
-    feed('<PageUp>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
-    -- Wrap last item and select item
-    feed('<PageUp>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign list^                      |
-    ]], popupmenu={items=wild_expected, pos=2, anchor={1, 9, 6}}}
-    -- wrap to first item
-    feed('<PageDown>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
-    feed('<PageDown>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign place^                     |
-    ]], popupmenu={items=wild_expected, pos=3, anchor={1, 9, 6}}}
-    -- wrap to first item
-    feed('<Down><Down><Down>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
-    feed('<Down>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-    ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
-    feed('<PageDown>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign undefine^                  |
-    ]], popupmenu={items=wild_expected, pos=4, anchor={1, 9, 6}}}
-    -- Stop completion and restore the original input text
-    feed('<C-e>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign ^                          |
-      ]]}
-    -- Stop completion and accept the currently selected entry
-    feed('<tab><C-y>')
-    screen:expect{grid=[[
-                                      |
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      {1:~                               }|
-      :sign define^                    |
-      ]]}
-    feed('<esc>')
-
-    -- check positioning with multibyte char in pattern
-    command("e långfile1")
-    command("sp långfile2")
-    feed(':b lå<tab>')
-    screen:expect{grid=[[
+      -- check positioning with multibyte char in pattern
+      command("e långfile1")
+      command("sp långfile2")
+      feed(':b lå<tab>')
+      screen:expect{grid=[[
                                       |
       {1:~                               }|
       {1:~                               }|
@@ -799,12 +569,443 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       {3:långfile1                       }|
       :b långfile1^                    |
-    ]], popupmenu={
-      anchor = {1, 9, 3},
-      items = {{"långfile1", "", "", "" }, {"långfile2", "", "", ""}},
-      pos = 0,
-    }}
+      ]], popupmenu={
+        anchor = {1, 9, 3},
+        items = {{"långfile1", "", "", "" }, {"långfile2", "", "", ""}},
+        pos = 0,
+      }}
+    end)
 
+    -- #10042: make sure shift-tab also triggers the pum
+    it('<S-tab> triggers the pum and selects the last match', function()
+      feed(':sign <S-tab>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplace^                   |
+      ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+    end)
+
+    it('<C-n> selects the next match', function()
+      display_sign_pum()
+      feed('<C-n>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign jump^                      |
+      ]], popupmenu={items=wild_expected, pos=1, anchor={1, 9, 6}}}
+      feed('<C-n><C-n><C-n><C-n>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplace^                   |
+      ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+      -- wrap to original typed text
+      feed('<C-n>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      feed("<C-n>")
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+    end)
+
+    it('<C-p> selects the previous match', function()
+      display_sign_pum()
+      -- wrap to original typed text
+      feed('<C-p>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      feed('<C-p>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign unplace^                   |
+      ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+      feed('<C-p>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign undefine^                  |
+      ]], popupmenu={items=wild_expected, pos=4, anchor={1, 9, 6}}}
+    end)
+
+    it('<Down> selects the next match, but don\'t insert it', function()
+      display_sign_pum()
+      feed('<Down>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=1, anchor={1, 9, 6}}}
+      feed('<Down><Down><Down><Down>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+      -- wrap to original typed text
+      feed('<Down>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      feed("<Down>")
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+    end)
+
+    it('<Up> selects the previous match, but don\'t insert it', function()
+      display_sign_pum()
+      -- wrap to original typed text
+      feed('<Up>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      feed('<Up>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
+      feed('<Up>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=4, anchor={1, 9, 6}}}
+    end)
+
+    it('<PageDown> selects a match several entries further, but don\' insert it', function()
+      display_sign_pum()
+      feed('<PageDown>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=4, anchor={1, 9, 6}}}
+      -- wrap to original typed text
+      feed('<PageDown>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      feed('<PageDown>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=3, anchor={1, 9, 6}}}
+    end)
+
+    it('<PageUp> selects a match several entries back, but don\'t insert it', function()
+      display_sign_pum()
+      -- wrap to original typed text
+      feed('<PageUp>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+      feed('<PageUp>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=2, anchor={1, 9, 6}}}
+      feed('<PageUp>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign define^                    |
+      ]], popupmenu={items=wild_expected, pos=-1, anchor={1, 9, 6}}}
+    end)
+
+    it('<C-y> accept the currently selected and stop completion', function()
+      display_sign_pum()
+      feed('<C-n><C-y>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign jump^                      |
+      ]]}
+    end)
+
+    it('<C-e> end completion, and go back to original typed text', function()
+      display_sign_pum()
+      feed('<C-n><C-e>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+      ]]}
+    end)
+
+    it('<Left> go up a direcotry', function()
+      local sep = iswin() and '\\' or '/'
+      local wild_root_expected =
+        eval([[map(split(glob('*'), '\n'), {_, val -> isdirectory(val) ? [val..']]..sep..[[', '', '', ''] : [val, '', '', '']})]])
+      command('cd src')
+      local wild_src_expected =
+        eval([[map(split(glob('*'), '\n'), {_, val -> isdirectory(val) ? [val..']]..sep..[[', '', '', ''] : [val, '', '', '']})]])
+      feed(':e <tab>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :e ]]..string.format('%-30s|', wild_src_expected[1][1]..'^')
+      , popupmenu={items=wild_src_expected, pos=0, anchor={1, 9, 3}}}
+      feed('<Left>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :e ..]]..string.format('%s%-27s|', sep, wild_root_expected[1][1]..'^')
+      , popupmenu={items=wild_root_expected, pos=0, anchor={1, 9, 6}}}
+    end)
+
+    it('<Right> go down a direcotry', function()
+      local sep = iswin() and '\\' or '/'
+      command('cd src')
+      local wild_src_expected =
+        eval([[map(split(glob('*'), '\n'), {_, val -> isdirectory(val) ? [val..']]..sep..[[', '', '', ''] : [val, '', '', '']})]])
+      local wild_nvim_expected =
+        eval([[map(split(glob('nvim/*'), '\n'), {_, val -> isdirectory(val) ? [fnamemodify(val, ':t')..']]..sep..[[', '', '', ''] : [fnamemodify(val, ':t'), '', '', '']})]])
+      local nvim_pos = 1
+      for _, val in ipairs(wild_src_expected) do
+        if string.match(val[1], '^nvim'..sep..'$') then
+          break
+        end
+        nvim_pos = nvim_pos + 1
+      end
+      feed(':e <tab>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :e ]]..string.format('%-30s|', wild_src_expected[1][1]..'^')
+      , popupmenu={items=wild_src_expected, pos=0, anchor={1, 9, 3}}}
+      feed(string.rep('<C-n>', nvim_pos - 1))
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :e ]]..string.format('%-30s|', wild_src_expected[nvim_pos][1]..'^')
+      , popupmenu={items=wild_src_expected, pos=nvim_pos - 1, anchor={1, 9, 3}}}
+      feed('<Right>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :e nvim]]..string.format('%s%-25s|', sep, wild_nvim_expected[1][1]..'^')
+      , popupmenu={items=wild_nvim_expected, pos=0, anchor={1, 9, 8}}}
+    end)
   end)
 end)
 
@@ -1790,7 +1991,7 @@ describe('builtin popupmenu', function()
       :sign define^                    |
     ]])
 
-    feed('<left>')
+    feed('<C-p>')
     screen:expect([[
                                       |
       {1:~                               }|
@@ -1804,7 +2005,7 @@ describe('builtin popupmenu', function()
       :sign ^                          |
     ]])
 
-    feed('<left>')
+    feed('<C-p>')
     screen:expect([[
                                       |
       {1:~                               }|
