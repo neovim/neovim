@@ -3644,7 +3644,7 @@ nextwild (
   xp->xp_pattern_len = (size_t)ccline.cmdpos - (size_t)i;
 
   if (type == WILD_NEXT || type == WILD_PREV || type == WILD_CANCEL
-      || type == WILD_UP || type == WILD_DOWN
+      || type == WILD_APPLY || type == WILD_UP || type == WILD_DOWN
       || type == WILD_PAGEUP || type == WILD_PAGEDOWN) {
     // Get next/previous match for a previous expanded pattern.
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
