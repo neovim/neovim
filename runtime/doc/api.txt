@@ -1028,22 +1028,22 @@ nvim_get_color_map()                                    *nvim_get_color_map()*
                     Map of color names and RGB values.
 
 nvim_get_context({opts})                                  *nvim_get_context()*
-                Gets a map of the current editor state.
+                Returns a map of the current editor state (see |context|).
 
                 Parameters: ~
                     {opts}  Optional parameters.
-                            • types: List of |context-types| ("regs", "jumps",
-                              "bufs", "gvars", …) to gather, or empty for
-                              "all".
+                            • types: Array of |context-types| ("regs",
+                              "jumps", "bufs", "gvars", …) to gather,
+                              or empty for all.
 
                 Return: ~
-                    map of global |context|.
+                    Map of global |context| (see |context-map|).
 
 nvim_load_context({dict})                                *nvim_load_context()*
-                Sets the current editor state from the given |context| map.
+                Sets the current editor state from the given |context-map|.
 
                 Parameters: ~
-                    {dict}  |Context| map.
+                    {dict}  Context map.
 
 nvim_get_mode()                                              *nvim_get_mode()*
                 Gets the current mode. |mode()| "blocking" is true if Nvim is
