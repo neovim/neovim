@@ -6634,8 +6634,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	as needed.
 	The "wildmenu" mode is abandoned when a key is hit that is not used
 	for selecting a completion.
-	While the "wildmenu" is active the following keys have special
-	meanings:
+	If the "wildmenu" is active and "wildoptions" does not contain pum,
+	the following keys have special meanings:
 
 	<Left> <Right>	- select previous/next match (like CTRL-P/CTRL-N)
 	<Down>		- in filename/menu name completion: move into a
@@ -6652,6 +6652,24 @@ A jump table for the options with a short description can be found at |Q_op|.
 		:cnoremap <Left> <Space><BS><Left>
 		:cnoremap <Right> <Space><BS><Right>
 <
+	If the "wildmenu" is active and "wildoptions" contain pum, the
+	following keys have special meanings:
+
+	CTRL-Y		- Accept the currently selected match and stop
+			  completion.
+	CTRL-E		- End completion, go back to original typed text.
+	<PageUp>	- Select a match several entries back, but don't
+			  insert it.
+	<PageDown>	- Select a match several entries further, but
+			  don't insert it.
+	<Up>		- Select the previous match, as if CTRL-P was used,
+			  but don't insert it.
+	<Down>		- Select the next match, as if CTRL-N was used, but
+			  don't insert it.
+	<Reight>	- in filename completion: move into a subdirectory.
+	<Left>		- in filename completion: move up into parent
+			  directory.
+
 	The "WildMenu" highlighting is used for displaying the current match
 	|hl-WildMenu|.
 
