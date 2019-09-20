@@ -1,6 +1,7 @@
 " Test for completion menu
 
 source shared.vim
+source screendump.vim
 
 let g:months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 let g:setting = ''
@@ -735,6 +736,38 @@ func Test_popup_and_preview_autocommand()
   bw!
 endfunc
 
+func Test_popup_position()
+  if !CanRunVimInTerminal()
+    return
+  endif
+  call writefile([
+	\ '123456789_123456789_123456789_a',
+	\ '123456789_123456789_123456789_b',
+	\ '            123',
+	\ ], 'Xtest')
+  let buf = RunVimInTerminal('Xtest', {})
+  call term_sendkeys(buf, ":vsplit\<CR>")
+
+  " default pumwidth in left window: overlap in right window
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_popup_position_01', {'rows': 8})
+  call term_sendkeys(buf, "\<Esc>u")
+
+  " default pumwidth: fill until right of window
+  call term_sendkeys(buf, "\<C-W>l")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_popup_position_02', {'rows': 8})
+
+  " larger pumwidth: used as minimum width
+  call term_sendkeys(buf, "\<Esc>u")
+  call term_sendkeys(buf, ":set pumwidth=30\<CR>")
+  call term_sendkeys(buf, "GA\<C-N>")
+  call VerifyScreenDump(buf, 'Test_popup_position_03', {'rows': 8})
+
+  call term_sendkeys(buf, "\<Esc>u")
+  call StopVimInTerminal(buf)
+  call delete('Xtest')
+endfunc
 
 func Test_popup_complete_backwards()
   new
