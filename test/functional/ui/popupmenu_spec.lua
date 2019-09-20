@@ -885,7 +885,39 @@ describe('ui/ext_popupmenu', function()
 
     it('<C-y> accept the currently selected and stop completion', function()
       display_sign_pum()
+      -- Unselected state
+      feed('<C-p><C-y>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign ^                          |
+      ]]}
+      feed("<Esc>")
+      display_sign_pum()
       feed('<C-n><C-y>')
+      screen:expect{grid=[[
+                                      |
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      {1:~                               }|
+      :sign jump^                      |
+      ]]}
+      feed("<Esc>")
+      display_sign_pum()
+      -- Selected state, but not insert
+      feed('<Down><C-y>')
       screen:expect{grid=[[
                                       |
       {1:~                               }|
