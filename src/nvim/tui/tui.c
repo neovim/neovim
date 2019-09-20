@@ -376,6 +376,14 @@ static void tui_terminal_stop(UI *ui)
     ui->data = NULL;  // Flag UI as "stopped".
     return;
   }
+
+  // Wait for terminal response for background.
+  int maxwait = 20;  // 1s.
+  while (data->input.waiting_for_bg_response && maxwait > 0) {
+    maxwait -= 1;
+    loop_poll_events(data->loop, 50);
+  }
+
   tinput_stop(&data->input);
   signal_watcher_stop(&data->winch_handle);
   terminfo_stop(ui);
