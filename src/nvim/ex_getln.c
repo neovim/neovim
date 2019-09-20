@@ -3827,7 +3827,7 @@ ExpandOne (
   }
 
   if (mode == WILD_APPLY) {
-    return vim_strsave(xp->xp_files[findex]);
+    return vim_strsave(findex == -1 ? orig_save : xp->xp_files[findex]);
   }
 
   /* free old names */
