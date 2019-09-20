@@ -34,7 +34,7 @@ lsp.start_client = function(filetype, bufnr)
   filetype = filetype or util.get_filetype(bufnr)
 
   if get_client(filetype) then
-    error(string.format('%s for %s has already started', filetype))
+    error(string.format('Language server for %s has already started', filetype))
   end
 
   local cmd = server_config.get_server_command(filetype)

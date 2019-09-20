@@ -22,6 +22,7 @@ end
 -- responses will have their 'jsonrpc' and 'id' fields set automatically
 -- will be returned by 'onEvent' in order, and nil after that
 local function setResponses(new)
+  assert(new)
   responses = new.params
 
   return { jsonrpc = '2.0',  id = new.id, result = responses }
