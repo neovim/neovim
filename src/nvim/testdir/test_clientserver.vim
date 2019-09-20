@@ -28,12 +28,11 @@ func Test_client_server()
   let name = 'XVIMTEST'
   let cmd .= ' --servername ' . name
   let job = job_start(cmd, {'stoponexit': 'kill', 'out_io': 'null'})
-  call WaitFor({-> job_status(job) == "run"})
+  call WaitForAssert({-> assert_equal("run", job_status(job))})
 
   " Takes a short while for the server to be active.
   " When using valgrind it takes much longer.
-  call WaitFor('serverlist() =~ "' . name . '"')
-  call assert_match(name, serverlist())
+  call WaitForAssert({-> assert_match(name, serverlist())})
 
   call remote_foreground(name)
 
@@ -54,12 +53,10 @@ func Test_client_server()
     endif
     " Wait for the server to be up and answering requests.
     sleep 100m
-    call WaitFor('remote_expr("' . name . '", "v:version", "", 1) != ""')
-    call assert_true(remote_expr(name, "v:version", "", 1) != "")
+    call WaitForAssert({-> assert_true(remote_expr(name, "v:version", "", 1) != "")})
 
     call remote_send(name, ":let testvar = 'maybe'\<CR>")
-    call WaitFor('remote_expr("' . name . '", "testvar", "", 1) == "maybe"')
-    call assert_equal('maybe', remote_expr(name, "testvar", "", 2))
+    call WaitForAssert({-> assert_equal('maybe', remote_expr(name, "testvar", "", 2))})
   endif
 
   call assert_fails('call remote_send("XXX", ":let testvar = ''yes''\<CR>")', 'E241')
@@ -94,7 +91,7 @@ func Test_client_server()
 
   call remote_send(name, ":qa!\<CR>")
   try
-    call WaitFor({-> job_status(job) == "dead"})
+    call WaitForAssert({-> assert_equal("dead", job_status(job))})
   finally
     if job_status(job) != 'dead'
       call assert_report('Server did not exit')
