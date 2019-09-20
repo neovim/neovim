@@ -41,27 +41,6 @@ util.get_hover_contents_type = function(contents)
 end
 
 ---
--- Provide a "strongly typed" dictionary in Lua.
---
--- Does not allow insertion or deletion after creation.
--- Only allows retrieval of created keys are allowed.
-util.Enum = {
-  new = function(self, map)
-    return setmetatable(map, self)
-  end,
-
-  __index = function(t, k)
-    error("attempt to get unknown enum " .. k .. "from " .. tostring(t), 2)
-  end,
-
-  __newindex = function(t, k, v)
-    error(
-      string.format("attempt to update enum table with %s, %s, %s", t, k, v),
-      2)
-  end
-}
-
----
 -- Provide a map that will continue providing empty map upon access.
 --
 -- This allows you to do something like:

@@ -10,17 +10,17 @@ local InitializeParams = require('vim.lsp.protocol').InitializeParams
 local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
 
 
-local read_state = util.Enum:new({
+local read_state = {
   init = 0,
   header = 1,
   body = 2,
-})
+}
 
-local error_level = util.Enum:new({
+local error_level = {
   critical = 0,
   reset_state = 1,
   info = 2,
-})
+}
 
 local client = {}
 client.__index = client

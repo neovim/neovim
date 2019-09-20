@@ -3,18 +3,16 @@
 -- let g:language_client_log_level = 'debug'
 -- Default value is 'none'.
 
-local Enum = require('vim.lsp.util').Enum
-
 local Logger = {}
 Logger.__index = Logger
 
-Logger.levels = Enum:new({
+Logger.levels = {
   debug = 0,
   info  = 1,
   warn  = 2,
   error = 3,
   none = 4,
-})
+}
 
 Logger.set_outfile = function(logger, dir_name, file_name)
   if vim.api.nvim_call_function('isdirectory', {dir_name}) == 0 then

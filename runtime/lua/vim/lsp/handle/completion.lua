@@ -48,8 +48,8 @@ completion.getItems = function(data)
 end
 
 completion.map_CompletionItemKind_to_vim = function(item_kind)
-  if CompletionItemKind[item_kind - 1] then
-    return CompletionItemKind[item_kind - 1]
+  if CompletionItemKind[item_kind] then
+    return CompletionItemKind[item_kind]
   else
     return ''
   end

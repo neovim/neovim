@@ -1,92 +1,92 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
-local Enum = require('vim.lsp.util').Enum
 local util = require('vim.lsp.util')
 local server_config = require('vim.lsp.server_config')
 local protocol = {}
 
 
-protocol.DiagnosticSeverity = Enum:new({
-  Error = 1,
-  Warning = 2,
-  Information = 3,
-  Hint = 4
-})
-
-protocol.MessageType = Enum:new({
-  Error = 1,
-  Warning = 2,
-  Info = 3,
-  Log = 4
-})
-
-protocol.FileChangeType = Enum:new({
-    Created = 1,
-    Changed = 2,
-    Deleted = 3
-})
-
-protocol.CompletionItemKind = {
-    'Text',
-    'Method',
-    'Function',
-    'Constructor',
-    'Field',
-    'Variable',
-    'Class',
-    'Interface',
-    'Module',
-    'Property',
-    'Unit',
-    'Value',
-    'Enum',
-    'Keyword',
-    'Snippet',
-    'Color',
-    'File',
-    'Reference',
-    'Folder',
-    'EnumMember',
-    'Constant',
-    'Struct',
-    'Event',
-    'Operator',
-    'TypeParameter',
+protocol.DiagnosticSeverity = {
+  [1] = 'Error',
+  [2] = 'Warning',
+  [3] = 'Information',
+  [4] = 'Hint',
 }
 
-protocol.CompletionTriggerKind = Enum:new({
-  Invoked = 1,
-  TriggerCharacter = 2,
-})
+protocol.MessageType = {
+  [1] = 'Error',
+  [2] = 'Warning',
+  [3] = 'Info',
+  [4] = 'Log',
+}
 
-protocol.DocumentHighlightKind = Enum:new({
-    Text = 1,
-    Read = 2,
-    Write = 3
-})
+protocol.FileChangeType = {
+  [1] = 'Created',
+  [2] = 'Changed',
+  [3] = 'Deleted',
+}
 
-protocol.SymbolKind = Enum:new({
-    File = 1,
-    Module = 2,
-    Namespace = 3,
-    Package = 4,
-    Class = 5,
-    Method = 6,
-    Property = 7,
-    Field = 8,
-    Constructor = 9,
-    Enum = 10,
-    Interface = 11,
-    Function = 12,
-    Variable = 13,
-    Constant = 14,
-    String = 15,
-    Number = 16,
-    Boolean = 17,
-    Array = 18,
-})
+protocol.CompletionItemKind = {
+  [1] = 'Text',
+  [2] = 'Method',
+  [3] = 'Function',
+  [4] = 'Constructor',
+  [5] = 'Field',
+  [6] = 'Variable',
+  [7] = 'Class',
+  [8] = 'Interface',
+  [9] = 'Module',
+  [10] = 'Property',
+  [11] = 'Unit',
+  [12] = 'Value',
+  [13] = 'Enum',
+  [14] = 'Keyword',
+  [15] = 'Snippet',
+  [16] = 'Color',
+  [17] = 'File',
+  [18] = 'Reference',
+  [19] = 'Folder',
+  [20] = 'EnumMember',
+  [21] = 'Constant',
+  [22] = 'Struct',
+  [23] = 'Event',
+  [24] = 'Operator',
+  [25] = 'TypeParameter',
+}
+
+protocol.CompletionTriggerKind = {
+  [1] = 'Invoked',
+  [2] = 'TriggerCharacter',
+}
+
+protocol.DocumentHighlightKind = {
+  [1] = 'Text',
+  [2] = 'Read',
+  [3] = 'Write',
+}
+
+protocol.SymbolKind = {
+  [1] = 'File',
+  [2] = 'Module',
+  [3] = 'Namespace',
+  [4] = 'Package',
+  [5] = 'Class',
+  [6] = 'Method',
+  [7] = 'Property',
+  [8] = 'Field',
+  [9] = 'Constructor',
+  [10] = 'Enum',
+  [11] = 'Interface',
+  [12] = 'Function',
+  [13] = 'Variable',
+  [14] = 'Constant',
+  [15] = 'String',
+  [16] = 'Number',
+  [17] = 'Boolean',
+  [18] = 'Array',
+}
 
 protocol.errorCodes = {
+  -- Defined by JSON RPC
   [-32700] = 'Parse error',
   [-32600] = 'Invalid Request',
   [-32601] = 'Method not found',
@@ -101,11 +101,11 @@ protocol.errorCodes = {
 }
 
 
-protocol.TextDocumentSaveReason = Enum:new({
-  Manual = 1,
-  AfterDelay = 2,
-  FocusOut = 3,
-})
+protocol.TextDocumentSaveReason = {
+  [1] = 'Manual',
+  [2] = 'AfterDelay',
+  [3] = 'FocusOut',
+}
 
 -- Helper functions
 local check_table = function (t)
@@ -225,91 +225,96 @@ protocol.CompletionContext = function(args)
   }
 end
 
+-- TODO: Not implement workspace features now.
+protocol.WorkspaceClientCapabilities = {}
+-- {
+--   applyEdit = boolean,
+--   workspaceEdit = {
+--     documentChanges = boolean,
+--     resourceOperations = ResourceOperationKind[],
+--     failureHandling = FailureHandlingKind,
+--   },
+--   didChangeConfiguration = {
+--     dynamicRegistration = boolean,
+--   },
+--   didChangeWatchedFiles = {
+--     dynamicRegistration = boolean,
+--   },
+--     symbol = {
+--     dynamicRegistration = boolean,
+--     symbolKind = {
+--       valueSet = SymbolKind[],
+--     },
+--   },
+--   executeCommand = {
+--     dynamicRegistration = boolean;
+--   },
+--   workspaceFolders = boolean,
+--   configuration = boolean,
+-- }
+
+protocol.TextDocumentClientCapabilities = {
+  synchronization = {
+    dynamicRegistration = false,
+
+    -- Send textDocument/willSave before saving (BufWritePre)
+    willSave = true,
+
+    -- TODO(tjdevries): Implement textDocument/willSaveWaitUntil
+    willSaveWaitUntil = false,
+
+    -- Send textDocument/didSave after saving (BufWritePost)
+    didSave = true,
+  },
+  completion = {
+    dynamicRegistration = false,
+    completionItem = {
+
+      -- TODO(tjdevries): Is it possible to implement this in plain lua?
+      snippetSupport = false,
+      commitCharactersSupport = false,
+      documentationFormat = {'plaintext'},
+    },
+    completionItemKind = {
+      valueSet = vim.tbl_keys(protocol.CompletionItemKind),
+    },
+
+    -- TODO(tjdevries): Implement this
+    contextSupport = false,
+  },
+  hover = {
+    dynamicRegistration = false,
+
+    -- Currently only support plaintext
+    --    In the future, if we have floating windows or display in a preview window,
+    --    we could say markdown
+    contentFormat = {'plaintext'},
+  },
+  signatureHelp = {
+    dynamicRegistration = false,
+    signatureInformation = {
+      documentationFormat = {'plaintext'}
+    },
+  },
+  references = {
+    dynamicRegistration = false,
+  },
+  documentHighlight = {
+    dynamicRegistration = false
+  },
+}
+
+protocol.ClientCapabilities = {
+  textDocument = protocol.TextDocumentClientCapabilities,
+}
+
 --- Parameter builder for request method
 --
-
 protocol.InitializeParams = function(client)
   local config = {
     processId = vim.api.nvim_call_function('getpid', {}),
     rootUri = server_config.get_root_uri(client.filetype),
-    capabilities = {
-      textDocument = {
-        synchronization = {
-          -- TODO(tjdevries): What is this?
-          -- dynamicRegistration = false,
-
-          -- Send textDocument/willSave before saving (BufWritePre)
-          willSave = true,
-
-          -- TODO(tjdevries): Implement textDocument/willSaveWaitUntil
-          willSaveWaitUntil = false,
-
-          -- Send textDocument/didSave after saving (BufWritePost)
-          didSave = true,
-        },
-
-        -- Capabilities relating to textDocument/completion
-        completion = {
-          -- TODO(tjdevries): What is this?
-          -- dynamicRegistration = false,
-
-          -- base/completionItem
-          completionItem = {
-            -- TODO(tjdevries): Is it possible to implement this in plain lua?
-            snippetSupport = false,
-
-            -- TODO(tjdevries): What is this?
-            -- commitCharactersSupport = false,
-
-            -- TODO(tjdevries): What is this?
-            documentationFormat = {'plaintext'},
-          },
-
-          -- TODO(tjdevries): Handle different completion item kinds differently
-          -- completionItemKind = {
-          --   valueSet = nil
-          -- },
-
-          -- TODO(tjdevries): Implement this
-          contextSupport = false,
-        },
-
-        -- textDocument/hover
-        hover = {
-          -- TODO(tjdevries): What is this?
-          -- dynamicRegistration = false,
-
-          -- Currently only support plaintext
-          --    In the future, if we have floating windows or display in a preview window,
-          --    we could say markdown
-          contentFormat = {'plaintext'},
-        },
-
-        -- textDocument/signatureHelp
-        signatureHelp = {
-          -- dynamicRegistration = false,
-
-          signatureInformation = {
-            documentationFormat = {'plaintext'}
-          },
-        },
-
-        -- textDocument/references
-        -- references = {
-        --   dynamicRegistration = nil,
-        -- },
-
-        -- textDocument/highlight
-        -- documentHighlight = {
-        --   dynamicRegistration = nil,
-        -- },
-
-        -- textDocument/symbol
-        -- TODO(tjdevries): Implement
-
-        -- TODO(tjdevries): Finish these...
-      },
-    },
+    capabilities = protocol.ClientCapabilities,
   }
 
   config = vim.tbl_extend('force', config, server_config.get_server_config(client.filetype))
@@ -387,7 +392,6 @@ end
 
 --- Parameter builder for notification method
 --
-
 protocol.DidOpenTextDocumentParams = function(args)
   args = check_table(args)
 
