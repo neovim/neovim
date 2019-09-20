@@ -22,6 +22,7 @@ typedef struct term_input {
   RBuffer *key_buffer;
   uv_mutex_t key_buffer_mutex;
   uv_cond_t key_buffer_cond;
+  bool waiting_for_bg_response;
 } TermInput;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

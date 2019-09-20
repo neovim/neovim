@@ -297,6 +297,7 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_clear_screen);
   // Ask the terminal to send us the background color.
   unibi_out_ext(ui, data->unibi_ext.get_bg);
+  data->input.waiting_for_bg_response = true;
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
 
