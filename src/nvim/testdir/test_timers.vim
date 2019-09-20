@@ -252,4 +252,15 @@ func Test_peek_and_get_char()
   call timer_stop(intr)
 endfunc
 
+func Test_ex_mode()
+  " Function with an empty line.
+  func Foo(...)
+
+  endfunc
+  let timer =  timer_start(40, function('g:Foo'), {'repeat':-1})
+  " This used to throw error E749.
+  exe "normal Qsleep 100m\rvi\r"
+  call timer_stop(timer)
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab
