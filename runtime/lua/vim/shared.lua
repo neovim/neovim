@@ -115,6 +115,32 @@ function vim.tbl_tostring(t)
   return stringified
 end
 
+--- Return a list of all keys used in a table.
+---
+--@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---
+--@param t Table
+--@returns list of keys
+function vim.tbl_keys(t)
+  local keys = {}
+  for k, _ in pairs(t) do
+    table.insert(keys, k)
+  end
+  return keys
+end
+
+--- Return a list of all values used in a table.
+---
+--@param t Table
+--@returns list of values
+function vim.tbl_values(t)
+  local values = {}
+  for _, v in pairs(t) do
+    table.insert(values, v)
+  end
+  return values
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
@@ -133,9 +159,10 @@ end
 
 -- Returns true if the table is empty, and contains no indexed or keyed values.
 --
+--@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+--
 --@param t Table to check
 function vim.tbl_isempty(t)
-  -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
   return next(t) == nil
 end
 
@@ -173,10 +200,11 @@ end
 --- Creates a copy of a list-like table such that any nested tables are
 --- "unrolled" and appended to the result.
 ---
+--@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---
 --@param t List-like table
 --@returns Flattened copy of the given list-like table.
 function vim.tbl_flatten(t)
-  -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
   local result = {}
   local function _tbl_flatten(_t)
     local n = #_t
