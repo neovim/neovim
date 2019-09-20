@@ -1632,7 +1632,7 @@ return {
     command='marks',
     flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
-    func='do_marks',
+    func='ex_marks',
   },
   {
     command='match',

@@ -616,7 +616,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
 /*
  * print the marks
  */
-void do_marks(exarg_T *eap)
+void ex_marks(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   int i;
