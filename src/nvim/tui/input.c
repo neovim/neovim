@@ -443,6 +443,11 @@ static void set_bg_deferred(void **argv)
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
 static bool handle_background_color(TermInput *input)
 {
+  static bool handled_background_color = false;
+  if (handled_background_color) {
+    return false;
+  }
+
   size_t count = 0;
   size_t component = 0;
   size_t header_size = 0;
@@ -463,6 +468,7 @@ static bool handle_background_color(TermInput *input)
   } else {
     return false;
   }
+  handled_background_color = true;
   rbuffer_consumed(input->read_stream.buffer, header_size);
   RBUFFER_EACH(input->read_stream.buffer, c, i) {
     count = i + 1;
