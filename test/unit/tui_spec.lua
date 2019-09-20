@@ -109,6 +109,32 @@ itp('handle_background_color', function()
   eq(false, term_input.waiting_for_bg_response)
 
   eq(0, multiqueue.multiqueue_size(events))
-  -- Buffer has been consumed.
   eq(0, rbuf.size)
+
+
+  -- Does nothing when not at start of buffer.
+  term_response = '123\027]11;rgba:f/f/f/f\007456'
+  rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
+
+  term_input.waiting_for_bg_response = true
+  eq(true, term_input.waiting_for_bg_response)
+  eq(false, handle_background_color(term_input))
+  eq(true, term_input.waiting_for_bg_response)
+
+  eq(0, multiqueue.multiqueue_size(events))
+  eq(#term_response, rbuf.size)
+  rbuffer.rbuffer_consumed(rbuf, #term_response)
+
+
+  -- Keeps trailing buffer.
+  term_response = '\027]11;rgba:f/f/f/f\007456'
+  rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
+
+  term_input.waiting_for_bg_response = true
+  eq(true, term_input.waiting_for_bg_response)
+  eq(true, handle_background_color(term_input))
+  eq(false, term_input.waiting_for_bg_response)
+
+  eq(1, multiqueue.multiqueue_size(events))
+  eq(3, rbuf.size)
 end)
