@@ -115,36 +115,36 @@ cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 
 # Functional tests
 # The $LastExitCode from MSBuild can't be trusted
-$failed = $false
+# $failed = $false
 # Temporarily turn off tracing to reduce log file output
-Set-PSDebug -Off
-cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
-  foreach { $failed = $failed -or
-    $_ -match 'functional tests failed with error'; $_ }
-if ($failed) {
-  if ($uploadToCodecov) {
-    bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-  }
-  exit $LastExitCode
-}
-Set-PSDebug -Strict -Trace 1
-
-
-if ($uploadToCodecov) {
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-}
+# Set-PSDebug -Off
+# cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
+#   foreach { $failed = $failed -or
+#     $_ -match 'functional tests failed with error'; $_ }
+# if ($failed) {
+#   if ($uploadToCodecov) {
+#     bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+#   }
+#   exit $LastExitCode
+# }
+# Set-PSDebug -Strict -Trace 1
+#
+#
+# if ($uploadToCodecov) {
+#   bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+# }
 
 # Old tests
 # Add MSYS to path, required for e.g. `find` used in test scripts.
 # But would break functionaltests, where its `more` would be used then.
-$OldPath = $env:PATH
-$env:PATH = "C:\msys64\usr\bin;$env:PATH"
-& "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
-$env:PATH = $OldPath
-
-if ($uploadToCodecov) {
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
-}
+# $OldPath = $env:PATH
+# $env:PATH = "C:\msys64\usr\bin;$env:PATH"
+# & "C:\msys64\mingw$bits\bin\mingw32-make.exe" -C $(Convert-Path ..\src\nvim\testdir) VERBOSE=1 ; exitIfFailed
+# $env:PATH = $OldPath
+#
+# if ($uploadToCodecov) {
+#   bash -l /c/projects/neovim/ci/common/submit_coverage.sh oldtest
+# }
 
 # Build artifacts
 cpack -G ZIP -C RelWithDebInfo

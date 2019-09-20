@@ -133,9 +133,9 @@ endif()
 include(ExternalProject)
 
 if(WIN32)
-  # "nvim" branch of https://github.com/neovim/libuv
-  set(LIBUV_URL https://github.com/neovim/libuv/archive/d5ff3004d26b9bb863b76247399a9c72a0ff184c.tar.gz)
-  set(LIBUV_SHA256 0f5dfd92269713ed275273966ed73578fc68db669c509b01210cd58c1cf6361d)
+  # erw7/fix-fr-keyboard (for test on french keyboard)
+  set(LIBUV_URL https://github.com/erw7/libuv/archive/fix-fr-keyboard.tar.gz)
+  set(LIBUV_SHA256 SKIP)
 else()
   # blueyed/nvim-fixes (for *BSD build fixes).
   set(LIBUV_URL https://github.com/blueyed/libuv/archive/2af4cf2.tar.gz)
