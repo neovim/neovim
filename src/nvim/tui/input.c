@@ -442,7 +442,7 @@ static void set_bg_deferred(void **argv)
 // ignored in the calculations.
 //
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-static bool handle_background_color(TermInput *input)
+bool handle_background_color(TermInput *input)
 {
   if (!input->waiting_for_bg_response) {
     return false;
