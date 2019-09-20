@@ -779,6 +779,16 @@ func Test_popup_complete_backwards()
   bwipe!
 endfunc
 
+func Test_popup_complete_backwards_ctrl_p()
+  new
+  call setline(1, ['Post', 'Port', 'Po'])
+  let expected=['Post', 'Port', 'Port']
+  call cursor(3,2)
+  call feedkeys("A\<C-P>\<C-N>rt\<cr>", 'tx')
+  call assert_equal(expected, getline(1,'$'))
+  bwipe!
+endfunc
+
 fun! Test_complete_o_tab()
   throw 'skipped: Nvim does not support test_override()'
   let s:o_char_pressed = 0
