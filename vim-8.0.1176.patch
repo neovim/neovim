@@ -1,0 +1,105 @@
+commit d78f03f86045184dfd191f00359baa61e2e79d1f
+Author: Bram Moolenaar <Bram@vim.org>
+Date:   Fri Oct 6 01:07:41 2017 +0200
+
+    patch 8.0.1176: job_start() does not handle quote and backslash correctly
+    
+    Problem:    Job_start() does not handle quote and backslash correctly.
+    Solution:   Remove quotes, recognize and remove backslashes.
+
+diff --git a/src/nvim/os_unix.c b/src/nvim/os_unix.c
+index 2a8e6ee43..59e5745de 100644
+--- a/src/nvim/os_unix.c
++++ b/src/nvim/os_unix.c
+@@ -4072,11 +4072,11 @@ wait4pid(pid_t child, waitstatus *status)
+  */
+     int
+ mch_parse_cmd(char_u *cmd, int use_shcf, char ***argv, int *argc)
+ {
+     int		i;
+-    char_u	*p;
++    char_u	*p, *d;
+     int		inquote;
+ 
+     /*
+      * Do this loop twice:
+      * 1: find number of arguments
+@@ -4090,30 +4090,38 @@ mch_parse_cmd(char_u *cmd, int use_shcf, char ***argv, int *argc)
+ 	for (;;)
+ 	{
+ 	    if (i == 1)
+ 		(*argv)[*argc] = (char *)p;
+ 	    ++*argc;
++	    d = p;
+ 	    while (*p != NUL && (inquote || (*p != ' ' && *p != TAB)))
+ 	    {
+ 		if (p[0] == '"')
++		    /* quotes surrounding an argument and are dropped */
+ 		    inquote = !inquote;
+-		else if (p[0] == '\\' && p[1] != NUL)
++		else
+ 		{
+-		    /* First pass: skip over "\ " and "\"".
+-		     * Second pass: Remove the backslash. */
+-		    if (i == 1)
+-			mch_memmove(p, p + 1, STRLEN(p));
+-		    else
++		    if (p[0] == '\\' && p[1] != NUL)
++		    {
++			/* First pass: skip over "\ " and "\"".
++			 * Second pass: Remove the backslash. */
+ 			++p;
++		    }
++		    if (i == 1)
++			*d++ = *p;
+ 		}
+ 		++p;
+ 	    }
+ 	    if (*p == NUL)
++	    {
++		if (i == 1)
++		    *d++ = NUL;
+ 		break;
++	    }
+ 	    if (i == 1)
+-		*p++ = NUL;
+-	    p = skipwhite(p);
++		*d++ = NUL;
++	    p = skipwhite(p + 1);
+ 	}
+ 	if (*argv == NULL)
+ 	{
+ 	    if (use_shcf)
+ 	    {
+diff --git a/src/nvim/testdir/test_channel.vim b/src/nvim/testdir/test_channel.vim
+index 951f9a3ba..9dba0c4b7 100644
+--- a/src/nvim/testdir/test_channel.vim
++++ b/src/nvim/testdir/test_channel.vim
+@@ -1588,10 +1588,26 @@ func Test_collapse_buffers()
+   call WaitFor('line("$") > g:linecount')
+   call assert_inrange(g:linecount, g:linecount + 1, line('$'))
+   bwipe!
+ endfunc
+ 
++func Test_cmd_parsing()
++  if !has('unix')
++    return
++  endif
++  call assert_false(filereadable("file with space"))
++  let job = job_start('touch "file with space"')
++  call WaitFor('filereadable("file with space")')
++  call assert_true(filereadable("file with space"))
++  call delete("file with space")
++
++  let job = job_start('touch file\ with\ space')
++  call WaitFor('filereadable("file with space")')
++  call assert_true(filereadable("file with space"))
++  call delete("file with space")
++endfunc
++
+ func Test_raw_passes_nul()
+   if !executable('cat') || !has('job')
+     return
+   endif
+ 
+/
