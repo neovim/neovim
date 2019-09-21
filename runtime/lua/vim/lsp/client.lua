@@ -5,7 +5,6 @@ local util = require('vim.lsp.util')
 local logger = require('vim.lsp.logger')
 local message = require('vim.lsp.message')
 local call_callback = require('vim.lsp.callbacks').call_callback
-local should_send_message = require('vim.lsp.checks').should_send
 local InitializeParams = require('vim.lsp.protocol').InitializeParams
 local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
 
@@ -203,13 +202,9 @@ client.request_async = function(self, method, params, cb, bufnr)
     bufnr = bufnr,
   }
 
-  if should_send_message(self, req) then
-    uv.write(self.stdin, req:data())
-    logger.debug("Send request --->: [["..req:data().."]]")
-    logger.client.debug("Send request --->: [["..req:data().."]]")
-  else
-    logger.debug(string.format('Request "%s" was cancelled with params %s', method, vim.tbl_tostring(params)))
-  end
+  uv.write(self.stdin, req:data())
+  logger.debug("Send request --->: [["..req:data().."]]")
+  logger.client.debug("Send request --->: [["..req:data().."]]")
 
   return req.id
 end
@@ -229,13 +224,9 @@ client.notify = function(self, method, params)
     return nil
   end
 
-  if should_send_message(self, notification) then
-    uv.write(self.stdin, notification:data())
-    logger.debug("Send notification --->: [["..notification:data().."]]")
-    logger.client.debug("Send notification --->: [["..notification:data().."]]")
-  else
-    logger.debug(string.format('Notification "%s" was cancelled with params %s', method, vim.tbl_tostring(params)))
-  end
+  uv.write(self.stdin, notification:data())
+  logger.debug("Send notification --->: [["..notification:data().."]]")
+  logger.client.debug("Send notification --->: [["..notification:data().."]]")
 end
 
 --- Parse an LSP Message's header
