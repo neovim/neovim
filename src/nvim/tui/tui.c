@@ -377,11 +377,13 @@ static void tui_terminal_stop(UI *ui)
     return;
   }
 
-  // Wait for terminal response for background.
-  int maxwait = 20;  // 1s.
+  // Handle any pending terminal response for background.
+  int maxwait = 5;  // 50ms
   while (data->input.waiting_for_bg_response && maxwait > 0) {
+    if (loop_poll_events(data->loop, 10)) {
+      break;
+    }
     maxwait -= 1;
-    loop_poll_events(data->loop, 50);
   }
 
   tinput_stop(&data->input);
