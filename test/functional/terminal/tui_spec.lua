@@ -1384,12 +1384,3 @@ describe('TUI background color', function()
     wait_for_bg('light')
   end)
 end)
-
-it("waits for background terminal response (hitting timeout)", function()
-  command = nvim_prog .. ' -u NONE --cmd q'
-  local start = os.time()
-  io.popen(command, 'r'):read('*a')
-  local duration = os.difftime(os.time() - start)
-  ok(duration >= 1, "duration: "..duration)
-  ok(duration <= 2, "duration: "..duration)
-end)
