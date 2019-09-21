@@ -77,7 +77,7 @@
 #include "nvim/api/private/helpers.h"
 
 static int quitmore = 0;
-static int ex_pressedreturn = FALSE;
+static bool ex_pressedreturn = false;
 
 /// Whether ":lcd" or ":tcd" was produced for a session.
 static int did_lcd;
@@ -1278,14 +1278,14 @@ static char_u * do_one_cmd(char_u **cmdlinep,
             || getline_equal(fgetline, cookie, getexline))
         && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
       ea.cmd = (char_u *)"+";
-      ex_pressedreturn = TRUE;
+      ex_pressedreturn = true;
     }
 
     /* ignore comment and empty lines */
     if (*ea.cmd == '"')
       goto doend;
     if (*ea.cmd == NUL) {
-      ex_pressedreturn = TRUE;
+      ex_pressedreturn = true;
       goto doend;
     }
 
@@ -10129,6 +10129,17 @@ static void ex_folddo(exarg_T *eap)
 
   global_exe(eap->arg);  // Execute the command on the marked lines.
   ml_clearmarked();      // clear rest of the marks
+}
+
+bool get_pressedreturn(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return ex_pressedreturn;
+}
+
+void set_pressedreturn(bool val)
+{
+  ex_pressedreturn = val;
 }
 
 static void ex_terminal(exarg_T *eap)

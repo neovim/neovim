@@ -1,6 +1,7 @@
 " Test for syntax and syntax iskeyword option
 
 source view_util.vim
+source screendump.vim
 
 func GetSyntaxItem(pat)
   let c = ''
@@ -526,7 +527,7 @@ func Test_syntax_c()
   let $COLORFGBG = '15;0'
 
   let buf = RunVimInTerminal('Xtest.c', {})
-  call VerifyScreenDump(buf, 'Test_syntax_c_01')
+  call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
   call StopVimInTerminal(buf)
 
   let $COLORFGBG = ''

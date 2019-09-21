@@ -7569,8 +7569,8 @@ void highlight_changed(void)
 {
   int id;
   char_u userhl[30];  // use 30 to avoid compiler warning
-  int id_SNC = -1;
   int id_S = -1;
+  int id_SNC = 0;
   int hlcnt;
 
   need_highlight_changed = FALSE;
