@@ -31,6 +31,9 @@ describe('Buffer highlighting', function()
       [14] = {background = Screen.colors.Gray90},
       [15] = {background = Screen.colors.Gray90, bold = true, foreground = Screen.colors.Brown},
       [16] = {foreground = Screen.colors.Magenta, background = Screen.colors.Gray90},
+      [17] = {foreground = Screen.colors.Magenta, background = Screen.colors.LightRed},
+      [18] = {background = Screen.colors.LightRed},
+      [19] = {foreground = Screen.colors.Blue1, background = Screen.colors.LightRed},
     })
   end)
 
@@ -515,6 +518,32 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
                                                 |
       ]])
+    end)
+
+    it('works with color column', function()
+      eq(-1, set_virtual_text(-1, 3, {{"暗x事", "Comment"}}, {}))
+      screen:expect{grid=[[
+        ^1 + 2 {3:=}{2: 3}                               |
+        3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4 {12:暗x事}                             |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      command("set colorcolumn=9")
+      screen:expect{grid=[[
+        ^1 + 2 {3:=}{2: }{17:3}                               |
+        3 + {11:ERROR:} invalid syntax               |
+        5, 5, 5,{18: }5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5|
+        , 5, 5, 5, 5, 5, 5,  Lorem ipsum dolor s|
+        x = 4 {12:暗}{19:x}{12:事}                             |
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
     end)
   end)
 
