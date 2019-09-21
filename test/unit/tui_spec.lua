@@ -30,8 +30,9 @@ itp('handle_background_color', function()
     eq(#term_response, rbuf.size)
 
     term_input.waiting_for_bg_response = true
-    eq(true, handle_background_color(term_input))
+    local ret = handle_background_color(term_input)
     eq(false, term_input.waiting_for_bg_response)
+    eq(true, ret)
 
     eq(1, multiqueue.multiqueue_size(events))
 
