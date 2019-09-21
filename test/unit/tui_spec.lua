@@ -137,4 +137,5 @@ itp('handle_background_color', function()
 
   eq(1, multiqueue.multiqueue_size(events))
   eq(3, rbuf.size)
+  rbuffer.rbuffer_consumed(rbuf, rbuf.size)
 end)
