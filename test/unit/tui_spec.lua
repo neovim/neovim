@@ -26,8 +26,10 @@ itp('handle_background_color', function()
   local function assert_bg(colorspace, color, bg)
     local term_response = '\027]11;'..colorspace..':'..color..'\007'
 
-    rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
+    local buf = to_cstr(term_response)
+    rbuffer.rbuffer_write(rbuf, buf, #term_response)
     eq(#term_response, rbuf.size)
+    eq(#term_response, rbuffer.rbuffer_size(term_input.read_stream.buffer))
 
     term_input.waiting_for_bg_response = true
     local ret = handle_background_color(term_input)
