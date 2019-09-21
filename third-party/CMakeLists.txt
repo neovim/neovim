@@ -133,8 +133,8 @@ endif()
 include(ExternalProject)
 
 if(WIN32)
-  # erw7/fix-fr-keyboard (for test on french keyboard)
-  set(LIBUV_URL https://github.com/erw7/libuv/archive/fix-fr-keyboard.tar.gz)
+  # erw7/fix-fr-keyboard2 (for test on french keyboard)
+  set(LIBUV_URL https://github.com/erw7/libuv/archive/fix-fr-keyboard2.tar.gz)
   set(LIBUV_SHA256 SKIP)
 else()
   # blueyed/nvim-fixes (for *BSD build fixes).
