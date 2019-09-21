@@ -4007,7 +4007,7 @@ win_line (
             break;
           }
 
-          ++vcol;
+          vcol += cells;
         }
       }
 
