@@ -22270,7 +22270,7 @@ void func_dump_profile(FILE *fd)
               .channel_id = 0,
           };
           char_u *p = get_scriptname(last_set, &should_free);
-          fprintf(fd, "    Defined: %s line %" PRIdLINENR "\n",
+          fprintf(fd, "    Defined: %s:%" PRIdLINENR "\n",
                   p, fp->uf_script_ctx.sc_lnum);
           if (should_free) {
             xfree(p);
