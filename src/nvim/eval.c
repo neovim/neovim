@@ -7004,6 +7004,8 @@ static int assert_equalfile(typval_T *argvars)
           break;
         }
       }
+      fclose(fd1);
+      fclose(fd2);
     }
   }
   if (IObuff[0] != NUL) {
