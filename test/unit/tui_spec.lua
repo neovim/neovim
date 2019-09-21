@@ -32,9 +32,8 @@ itp('handle_background_color', function()
     eq(#term_response, rbuffer.rbuffer_size(term_input.read_stream.buffer))
 
     term_input.waiting_for_bg_response = true
-    local ret = handle_background_color(term_input)
+    eq(true, handle_background_color(term_input))
     eq(false, term_input.waiting_for_bg_response)
-    eq(true, ret)
 
     eq(1, multiqueue.multiqueue_size(events))
 
