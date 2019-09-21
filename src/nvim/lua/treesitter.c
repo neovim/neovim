@@ -62,8 +62,8 @@ static struct luaL_Reg node_meta[] = {
   { "named_child_count", node_named_child_count },
   { "child", node_child },
   { "named_child", node_named_child },
-  { "descendant_for_point_range", node_descendant_for_point_range },
-  { "named_descendant_for_point_range", node_named_descendant_for_point_range },
+  { "descendant_for_range", node_descendant_for_range },
+  { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
   { NULL, NULL }
 };
@@ -587,7 +587,7 @@ static int node_named_child(lua_State *L)
   return 1;
 }
 
-static int node_descendant_for_point_range(lua_State *L)
+static int node_descendant_for_range(lua_State *L)
 {
   TSNode node;
   if (!node_check(L, &node)) {
@@ -604,7 +604,7 @@ static int node_descendant_for_point_range(lua_State *L)
   return 1;
 }
 
-static int node_named_descendant_for_point_range(lua_State *L)
+static int node_named_descendant_for_range(lua_State *L)
 {
   TSNode node;
   if (!node_check(L, &node)) {
