@@ -309,7 +309,7 @@ function module.check_cores(app, force)
     random_skip = true
   end
   -- Finding cores takes too much time on linux
-  if false and not force and random_skip and math.random() < 0.9 then
+  if not force and random_skip and math.random() < 0.9 then
     tests_skipped = tests_skipped + 1
     return
   end
