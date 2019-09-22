@@ -756,3 +756,15 @@ func Test_fold_delete_with_marker()
   bwipe!
   bwipe!
 endfunc
+
+func Test_fold_delete_with_marker_and_whichwrap()
+  new
+  let content1 = ['']
+  let content2 = ['folded line 1 "{{{1', '  test', '  test2', '  test3', '', 'folded line 2 "{{{1', '  test', '  test2', '  test3']
+  call setline(1, content1 + content2)
+  set fdm=marker ww+=l
+  normal! x
+  call assert_equal(content2, getline(1, '$'))
+  set fdm& ww&
+  bwipe!
+endfunc

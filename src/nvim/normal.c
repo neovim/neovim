@@ -6248,7 +6248,14 @@ static void nv_optrans(cmdarg_T *cap)
     if (cap->count0) {
       stuffnumReadbuff(cap->count0);
     }
-    stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
+    // If on an empty line and using 'x' and "l" is included in the
+    // whichwrap option, do not delete the next line.
+    if (cap->cmdchar == 'x' && vim_strchr(p_ww, 'l') != NULL
+        && gchar_cursor() == NUL) {
+        stuffReadbuff((char *)"dd");
+    } else {
+        stuffReadbuff(ar[strchr(str, (char)cap->cmdchar) - str]);
+    }
   }
   cap->opcount = 0;
 }
