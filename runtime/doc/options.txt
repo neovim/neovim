@@ -3698,9 +3698,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 			off and the line continues beyond the right of the
 			screen.
 							*lcs-precedes*
-	  precedes:c	Character to show in the first column, when 'wrap'
-			is off and there is text preceding the character
-			visible in the first column.
+	  precedes:c	Character to show in the first visible column of the
+			physical line, when there is text preceding the
+			character visible in the first column.
 							*lcs-conceal*
 	  conceal:c	Character to show in place of concealed text, when
 			'conceallevel' is set to 1.  A space when omitted.

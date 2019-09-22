@@ -69,3 +69,58 @@ func! Test_display_foldtext_mbyte()
   set foldtext& fillchars& foldmethod& fdc&
   bw!
 endfunc
+
+func Test_display_listchars_precedes()
+  call NewWindow(10, 10)
+  " Need a physical line that wraps over the complete
+  " window size
+  call append(0, repeat('aaa aaa aa ', 10))
+  call append(1, repeat(['bbb bbb bbb bbb'], 2))
+  " remove blank trailing line
+  $d
+  set list nowrap
+  call cursor(1, 1)
+  " move to end of line and scroll 2 characters back
+  norm! $2zh
+  let lines=ScreenLines([1,4], winwidth(0)+1)
+  let expect = [
+        \ " aaa aa $ |",
+        \ "$         |",
+        \ "$         |",
+        \ "~         |",
+        \ ]
+  call assert_equal(expect, lines)
+  set list listchars+=precedes:< nowrap
+  call cursor(1, 1)
+  " move to end of line and scroll 2 characters back
+  norm! $2zh
+  let lines = ScreenLines([1,4], winwidth(0)+1)
+  let expect = [
+        \ "<aaa aa $ |",
+        \ "<         |",
+        \ "<         |",
+        \ "~         |",
+        \ ]
+  call assert_equal(expect, lines)
+  set wrap
+  call cursor(1, 1)
+  " the complete line should be displayed in the window
+  norm! $
+
+  let lines = ScreenLines([1,10], winwidth(0)+1)
+  let expect = [
+        \ "<aaa aaa a|",
+        \ "a aaa aaa |",
+        \ "aa aaa aaa|",
+        \ " aa aaa aa|",
+        \ "a aa aaa a|",
+        \ "aa aa aaa |",
+        \ "aaa aa aaa|",
+        \ " aaa aa aa|",
+        \ "a aaa aa a|",
+        \ "aa aaa aa |",
+        \ ]
+  call assert_equal(expect, lines)
+  set list& listchars& wrap&
+  bw!
+endfunc

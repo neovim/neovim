@@ -657,6 +657,30 @@ describe("'listchars' highlight", function()
     ]])
   end)
 
+  it("'listchar' with wrap", function()
+    screen:set_default_attr_ids({
+      [0] = {bold=true, foreground=Screen.colors.Blue},
+    })
+    feed_command('set wrap')
+    feed_command('set listchars=eol:¬,precedes:< list')
+    feed('90ia<esc>')
+    screen:expect([[
+      {0:<}aaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaa^a{0:¬}         |
+                          |
+    ]])
+    feed('0')
+    screen:expect([[
+      ^aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+      aaaaaaaaaaaaaaaaaaaa|
+                          |
+    ]])
+  end)
+
   it("'listchar' in visual mode", function()
     screen:set_default_attr_ids({
       [1] = {background=Screen.colors.Grey90},
