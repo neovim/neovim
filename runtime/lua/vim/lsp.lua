@@ -8,19 +8,32 @@ local lsp = {
 
 local Client = require('vim.lsp.client')
 local callbacks = require('vim.lsp.callbacks')
-local server_config = require('vim.lsp.server_config')
 
 local logger = require('vim.lsp.logger')
 local util = require('vim.lsp.util')
 
 local clients = {}
 
---- Get the client associated with a filetype
--- @param filetype [string]: The filetype associated with the server
+--- Get the client list associated with a filetype
+-- @param filetype    [string]
+--
+-- @returns: list of Client Object
+local get_clients = function(filetype)
+  return clients[filetype]
+end
+
+--- Get the client
+-- @param filetype    [string]
+-- @param server_name [string]
 --
 -- @returns: Client Object or nil
-local get_client = function(filetype)
-  return clients[filetype]
+local get_client = function(filetype, server_name)
+  local filetype_clients = get_clients(filetype)
+  if not filetype_clients then
+    return nil
+  else
+    return filetype_clients[server_name]
+  end
 end
 
 --- Start a server and create a client
@@ -29,37 +42,33 @@ end
 -- @param filetype [string]: The filetype associated with the server
 --
 -- @returns: A client object that has been initialized
-lsp.start_client = function(filetype, bufnr)
+lsp.start_client = function(filetype, server_name, bufnr)
   filetype = filetype or util.get_filetype(bufnr)
+  if not server_name then server_name = filetype end
 
-  if get_client(filetype) then
-    error(string.format('Language server for %s has already started', filetype))
-  end
+  assert(not get_client(filetype, server_name), string.format('Language server for filetype: %s, server_name: %s has already started', filetype, server_name))
 
-  local cmd = server_config.get_server_command(filetype)
-
-  local name = server_config.get_server_name(filetype)
+  local cmd = lsp.server_config.get_server_cmd(filetype, server_name)
 
   -- Start the client
-  logger.debug('[LSP.lsp] Starting client...', name, '/', filetype, '/', cmd)
-  local client = Client.new(name, filetype, cmd)
-  client:start()
+  logger.debug('[LSP.lsp] Starting client...', server_name, '/', filetype, '/', cmd)
 
-  if client == nil then
-    logger.error('client was nil with arguments: ', cmd)
-    return nil
-  end
+  local client = Client.new(server_name, filetype, cmd)
+  client:start()
   client:initialize()
 
-  -- Store the client in our map
-  clients[filetype] = client
+  if not clients[filetype] then clients[filetype] = {} end
+  clients[filetype][server_name] = client
 
   return client
 end
 
-lsp.stop_client = function(filetype)
-  local client = get_client(filetype)
-  if not (client == nil) then
+lsp.stop_client = function(filetype, server_name)
+  assert(filetype, 'filetype is required.')
+  if not server_name then server_name = filetype end
+
+  local client = get_client(filetype, server_name)
+  if client then
     client:stop()
   end
 end
@@ -70,21 +79,34 @@ end
 -- @param cb [function|string] (optional): Either a function to call or a string to call in vim
 -- @param bufnr [number] (optional): The number of the buffer
 -- @param filetype [string] (optional): The filetype associated with the server
+-- @param server_name [string] (optional)
+--
 -- @returns: The result of the request
-lsp.request = function(method, arguments, cb, bufnr, filetype)
+lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
   filetype = filetype or util.get_filetype(bufnr)
-  if filetype == nil or filetype == '' then
+  if not filetype or filetype == '' then
     return
   end
 
-  local current_client = get_client(filetype)
+  if server_name then
+    local client = get_client(filetype, server_name)
 
-  if current_client == nil then
-    logger.warn('request() failed', 'No client is available for ', filetype)
-    return
+    if client == nil then
+      logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
+      return
+    end
+
+    return client:request(method, arguments, cb, bufnr)
+  else
+    local filetype_clients = get_clients(filetype)
+    local results = {}
+
+    for _, client in pairs(filetype_clients) do
+      table.insert(results, client:request(method, arguments, cb, bufnr))
+    end
+
+    return results
   end
-
-  return current_client:request(method, arguments, cb, bufnr)
 end
 
 --- Send a request to a server, but don't wait for the response
@@ -93,21 +115,34 @@ end
 -- @param cb [function|string] (optional): Either a function to call or a string to call in vim
 -- @param bufnr [number] (optional): The number of the buffer
 -- @param filetype [string] (optional): The filetype associated with the server
+-- @param server_name [string] (optional)
+--
 -- @returns: The result of the request
-lsp.request_async = function(method, arguments, cb, bufnr, filetype)
+lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name)
   filetype = filetype or util.get_filetype(bufnr)
-  if filetype == nil or filetype == '' then
+  if not filetype or filetype == '' then
     return
   end
 
-  local current_client = get_client(filetype)
+  if server_name then
+    local client = get_client(filetype, server_name)
 
-  if current_client == nil then
-    logger.warn('async_request() failed', 'No client is available for ', filetype, ' with method: ', method)
-    return
+    if client == nil then
+      logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
+      return
+    end
+
+    return client:request_async(method, arguments, cb, bufnr)
+  else
+    local filetype_clients = get_clients(filetype)
+    local results = {}
+
+    for _, client in pairs(filetype_clients) do
+      table.insert(results, client:request_async(method, arguments, cb, bufnr))
+    end
+
+    return results
   end
-
-  current_client:request_async(method, arguments, cb, bufnr)
 end
 
 --- Send a notification to a server
@@ -115,21 +150,31 @@ end
 -- @param arguments [string]: Arguments to send to the server
 -- @param bufnr [number] (optional): The number of the buffer
 -- @param filetype [string] (optional): The filetype associated with the server
+-- @param server_name [string] (optional)
+--
 -- @returns: The result of the request
-lsp.notify = function(method, arguments, bufnr, filetype)
+lsp.notify = function(method, arguments, bufnr, filetype, server_name)
   filetype = filetype or util.get_filetype(bufnr)
-  if filetype == nil or filetype == '' then
+  if not filetype or filetype == '' then
     return
   end
 
-  local current_client = get_client(filetype)
+  if server_name then
+    local client = get_client(filetype, server_name)
 
-  if current_client == nil then
-    logger.warn('notify() failed', 'No client is available for ', filetype, ' with method: ', method)
-    return
+    if client == nil then
+      logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
+      return
+    end
+
+    client:notify(method, arguments)
+  else
+    local filetype_clients = get_clients(filetype)
+
+    for _, client in pairs(filetype_clients) do
+      client:notify(method, arguments)
+    end
   end
-
-  current_client:notify(method, arguments)
 end
 
 lsp.handle = function(filetype, method, data, default_only)
@@ -140,19 +185,29 @@ lsp.client_has_started = function(filetype)
   return get_client(filetype) ~= nil
 end
 
-lsp.client_info = function(filetype)
-  local client =  get_client(filetype)
+lsp.client_info = function(filetype, server_name)
+  if not filetype or filetype == '' then
+    return
+  end
+
+  if not server_name then
+    server_name = filetype
+  end
+
+  local client =  get_client(filetype, server_name)
   if client then
     return vim.tbl_tostring(client)
   else
-    return 'No client is available for '..filetype
+    return 'No client is available for filetype: '..filetype..', server_name: '..server_name
   end
 end
 
 lsp.status = function()
   local status = ''
-  for _, client in pairs(clients) do
-    status = status..'filetype: '..client.filetype..', command: '..client:cmd_tostring()..'\n'
+  for _, filetype_clients in pairs(clients) do
+    for _, client in pairs(filetype_clients) do
+      status = status..'filetype: '..client.filetype..', server_name: '..client.server_name..', command: '..client:cmd_tostring()..'\n'
+    end
   end
 
   return status

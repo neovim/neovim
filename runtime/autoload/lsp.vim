@@ -1,17 +1,20 @@
-""
-" Add a server option for a filetype
-"
-" @param ftype (string|list): A string or list of strings of filetypes to associate with this server
-"
-" @returns (bool): True if successful, else false
-function! lsp#add_server_config(ftype, command, ...) abort
-  let config = get(a:, 1, {})
+function! lsp#add_server_config(config) abort
+  if !has_key(a:config, 'filetype')
+    echoerr 'config must have filetype key'
+    return
+  endif
 
-  call luaeval('vim.lsp.server_config.add(_A.ftype, _A.command, _A.config)', {
-        \ 'ftype': a:ftype,
-        \ 'command': a:command,
-        \ 'config': config,
-        \ })
+  if !has_key(a:config, 'cmd')
+    echoerr 'config must have cmd key'
+    return
+  else
+    if !has_key(a:config.cmd, 'execute_path')
+      echoerr 'config.cmd must have execute_path key'
+      return
+    endif
+  endif
+
+  call luaeval('vim.lsp.server_config.add(_A.config)', { 'config': a:config })
 endfunction
 
 function! lsp#text_document_hover() abort

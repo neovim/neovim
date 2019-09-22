@@ -24,13 +24,13 @@ local error_level = {
 local client = {}
 client.__index = client
 
-client.new = function(name, filetype, cmd)
+client.new = function(server_name, filetype, cmd)
   if type(cmd.execute_path) ~= 'string' and cmd.execute_path == '' then
     error('execute_path must be "string" and must no be empty string', 2)
   end
 
   local obj = setmetatable({
-    name = name,
+    server_name = server_name,
     filetype = filetype,
     cmd = cmd,
 
@@ -59,7 +59,7 @@ client.new = function(name, filetype, cmd)
     handle = nil,
   }, client)
 
-  logger.info('Starting new client: ', name, cmd.execute_path, cmd.args)
+  logger.info('Starting new client: ', server_name, cmd.execute_path, cmd.args)
 
   return obj
 end
@@ -95,9 +95,9 @@ client.stop = function(self)
     return
   end
 
-  vim.api.nvim_command("echo 'shutting down "..self.filetype.." language server'")
+  vim.api.nvim_command("echo 'shutting down filetype: "..self.filetype.."server_name: "..self.server_name.."'")
   self:request('shutdown', nil, function()end)
-  vim.api.nvim_command("echo 'exit "..self.filetype.." language server'")
+  vim.api.nvim_command("echo 'exit filetype: "..self.filetype.."server_name: "..self.server_name.."'")
   self:notify('exit', nil)
 
   uv.shutdown(self.stdin, function()
@@ -185,7 +185,7 @@ client.request_async = function(self, method, params, cb, bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
   if self._stopped then
-    logger.info('Client closed. ', self.name)
+    logger.info('Client closed. ', self.server_name)
     return nil
   end
 
@@ -214,7 +214,7 @@ end
 -- @param params: the parameters to send
 client.notify = function(self, method, params)
   if self._stopped then
-    logger.info('Client closed. ', self.name)
+    logger.info('Client closed. ', self.server_name)
     return nil
   end
 

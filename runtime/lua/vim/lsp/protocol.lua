@@ -313,11 +313,11 @@ protocol.ClientCapabilities = {
 protocol.InitializeParams = function(client)
   local config = {
     processId = vim.api.nvim_call_function('getpid', {}),
-    rootUri = server_config.get_root_uri(client.filetype),
+    rootUri = server_config.get_root_uri(client.filetype, client.server_name),
     capabilities = protocol.ClientCapabilities,
   }
 
-  config = vim.tbl_extend('force', config, server_config.get_server_config(client.filetype))
+  config = vim.tbl_extend('force', config, server_config.get_server_config(client.filetype, client.server_name))
   client:set_client_capabilities(config)
   return config
 end

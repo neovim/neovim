@@ -7,10 +7,10 @@ local Message = {
 
 local message_id = {}
 
-local get_id = function(name)
-  assert(name)
-  local temp_id = message_id[name] or 0
-  message_id[name] = temp_id + 1
+local get_id = function(server_name)
+  assert(server_name, 'server_name is required')
+  local temp_id = message_id[server_name] or 0
+  message_id[server_name] = temp_id + 1
   return temp_id
 end
 
@@ -67,7 +67,7 @@ function RequestMessage:new(client, method, params)
   end
 
   local object = {
-    id = get_id(client.name),
+    id = get_id(client.server_name),
     method = method,
     params = params
   }
@@ -97,7 +97,7 @@ function ResponseMessage:new(client, result, err)
   err = err or {}
 
   local object = {
-    id = get_id(client.name),
+    id = get_id(client.server_name),
     result = result,
     ['error'] = err
   }
