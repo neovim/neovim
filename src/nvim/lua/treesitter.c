@@ -48,6 +48,7 @@ static struct luaL_Reg tree_meta[] = {
 
 static struct luaL_Reg node_meta[] = {
   { "__tostring", node_tostring },
+  { "__eq", node_eq },
   { "__len", node_child_count },
   { "range", node_range },
   { "start", node_start },
@@ -428,6 +429,23 @@ static int node_tostring(lua_State *L)
   lua_pushstring(L, ts_node_type(node));
   lua_pushstring(L, ">");
   lua_concat(L, 3);
+  return 1;
+}
+
+static int node_eq(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  // This should only be called if both x and y in "x == y" has the
+  // treesitter_node metatable. So it is ok to error out otherwise.
+  TSNode *ud = luaL_checkudata(L, 2, "treesitter_node");
+  if (!ud) {
+    return 0;
+  }
+  TSNode node2 = *ud;
+  lua_pushboolean(L, ts_node_eq(node, node2));
   return 1;
 }
 
