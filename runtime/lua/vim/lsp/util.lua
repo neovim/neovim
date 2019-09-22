@@ -19,13 +19,42 @@ util.get_filetype = function(bufnr)
   return vim.api.nvim_buf_get_option(bufnr, 'filetype')
 end
 
-
 util.decode_json = function(data)
   return vim.api.nvim_call_function('json_decode', {data})
 end
 
 util.encode_json = function(data)
   return vim.api.nvim_call_function('json_encode', {data})
+end
+
+util.update_tagstack = function()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local line = vim.api.nvim_call_function('line', {'.'})
+  local col = vim.api.nvim_call_function('col', {'.'})
+  local tagname = vim.api.nvim_call_function('expand', { '<cWORD>' })
+  local item = { bufnr = bufnr, from = { bufnr, line, col, 0 }, tagname = tagname }
+  local winid = vim.api.nvim_call_function('win_getid', {})
+  local tagstack = vim.api.nvim_call_function('gettagstack', { winid })
+
+  local action
+
+  if tagstack.length == tagstack.curidx then
+    action = 'r'
+    tagstack.items[tagstack.curidx] = item
+  elseif tagstack.length > tagstack.curidx then
+    action = 'r'
+    if tagstack.curidx > 1 then
+      tagstack.items = table.insert(tagstack.items[tagstack.curidx - 1], item)
+    else
+      tagstack.items = { item }
+    end
+  else
+    action = 'a'
+    tagstack.items = { item }
+  end
+
+  tagstack.curidx = tagstack.curidx + 1
+  vim.api.nvim_call_function('settagstack', { winid, tagstack, action })
 end
 
 util.get_hover_contents_type = function(contents)
