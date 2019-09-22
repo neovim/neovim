@@ -1504,6 +1504,87 @@ void ex_const(exarg_T *eap)
   ex_let_const(eap, true);
 }
 
+// Get a list of lines from a HERE document. The here document is a list of
+// lines surrounded by a marker.
+//     cmd << {marker}
+//       {line1}
+//       {line2}
+//       ....
+//     {marker}
+//
+// The {marker} is a string. If the optional 'trim' word is supplied before the
+// marker, then the leading indentation before the lines (matching the
+// indentation in the 'cmd' line) is stripped.
+// Returns a List with {lines} or NULL.
+static list_T *
+heredoc_get(exarg_T *eap, char_u *cmd)
+{
+  char_u *marker;
+  char_u *p;
+  int indent_len = 0;
+
+  if (eap->getline == NULL) {
+    EMSG(_("E991: cannot use =<< here"));
+    return NULL;
+  }
+
+  // Check for the optional 'trim' word before the marker
+  cmd = skipwhite(cmd);
+  if (STRNCMP(cmd, "trim", 4) == 0
+      && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+    cmd = skipwhite(cmd + 4);
+
+    // Trim the indentation from all the lines in the here document
+    // The amount of indentation trimmed is the same as the indentation of
+    // the :let command line.
+    p = *eap->cmdlinep;
+    while (ascii_iswhite(*p)) {
+      p++;
+      indent_len++;
+    }
+  }
+
+  // The marker is the next word.  Default marker is "."
+  if (*cmd != NUL && *cmd != '"') {
+    marker = skipwhite(cmd);
+    p = skiptowhite(marker);
+    if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
+      EMSG(_(e_trailing));
+      return NULL;
+    }
+    *p = NUL;
+  } else {
+    marker = (char_u *)".";
+  }
+
+  list_T *l = tv_list_alloc(0);
+  for (;;) {
+    int i = 0;
+
+    char_u *theline = eap->getline(NUL, eap->cookie, 0);
+    if (theline != NULL && indent_len > 0) {
+      // trim the indent matching the first line
+      if (STRNCMP(theline, *eap->cmdlinep, indent_len) == 0) {
+        i = indent_len;
+      }
+    }
+
+    if (theline == NULL) {
+      EMSG2(_("E990: Missing end marker '%s'"), marker);
+      break;
+    }
+    if (STRCMP(marker, theline + i) == 0) {
+      xfree(theline);
+      break;
+    }
+
+    tv_list_append_string(l, (char *)(theline + i), -1);
+    xfree(theline);
+  }
+
+  return l;
+}
+
 // ":let" list all variable values
 // ":let var1 var2" list variable values
 // ":let var = expr" assignment command.
@@ -1560,6 +1641,17 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       list_vim_vars(&first);
     }
     eap->nextcmd = check_nextcmd(arg);
+  } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
+    // HERE document
+    list_T *l = heredoc_get(eap, expr + 3);
+    if (l != NULL) {
+      tv_list_set_ret(&rettv, l);
+      op[0] = '=';
+      op[1] = NUL;
+      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
+                        is_const, op);
+      tv_clear(&rettv);
+    }
   } else {
     op[0] = '=';
     op[1] = NUL;
