@@ -312,6 +312,7 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
+  flush_buf(ui);
 }
 
 static void terminfo_stop(UI *ui)
