@@ -5101,6 +5101,8 @@ win_redr_custom (
   win_T       *ewp;
   int p_crb_save;
 
+  ScreenGrid *grid = &default_grid;
+
   /* There is a tiny chance that this gets called recursively: When
    * redrawing a status line triggers redrawing the ruler or tabline.
    * Avoid trouble by not allowing recursion. */
@@ -5140,10 +5142,11 @@ win_redr_custom (
       }
       maxwidth = wp->w_width - col;
       if (!wp->w_status_height) {
+        grid = &msg_grid_adj;
         row = Rows - 1;
         maxwidth--;  // writing in last column may cause scrolling
         fillchar = ' ';
-        attr = 0;
+        attr = HL_ATTR(HLF_MSG);
       }
 
       use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
@@ -5193,13 +5196,13 @@ win_redr_custom (
   /*
    * Draw each snippet with the specified highlighting.
    */
-  grid_puts_line_start(&default_grid, row);
+  grid_puts_line_start(grid, row);
 
   curattr = attr;
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
     int textlen = (int)(hltab[n].start - p);
-    grid_puts_len(&default_grid, p, textlen, row, col, curattr);
+    grid_puts_len(grid, p, textlen, row, col, curattr);
     col += vim_strnsize(p, textlen);
     p = hltab[n].start;
 
@@ -5213,7 +5216,7 @@ win_redr_custom (
       curattr = highlight_user[hltab[n].userhl - 1];
   }
   // Make sure to use an empty string instead of p, if p is beyond buf + len.
-  grid_puts(&default_grid, p >= buf + len ? (char_u *)"" : p, row, col,
+  grid_puts(grid, p >= buf + len ? (char_u *)"" : p, row, col,
             curattr);
 
   grid_puts_line_flush(false);
@@ -7058,7 +7061,7 @@ static void win_redr_ruler(win_T *wp, int always)
     } else {
       row = Rows - 1;
       fillchar = ' ';
-      attr = 0;
+      attr = HL_ATTR(HLF_MSG);
       width = Columns;
       off = 0;
     }

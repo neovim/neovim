@@ -810,6 +810,7 @@ describe('ui/builtin messages', function()
       [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
       [5] = {foreground = Screen.colors.Blue1},
       [6] = {bold = true, foreground = Screen.colors.Magenta},
+      [7] = {background = Screen.colors.Grey20},
     })
   end)
 
@@ -901,6 +902,41 @@ vimComment     xxx match /\s"[^\-:.%#=*].*$/ms=s+1,lc=1  excludenl contains=@vim
                    links to Comment]],
        meths.command_output('syntax list vimComment'))
     -- luacheck: pop
+  end)
+
+  it('supports ruler with laststatus=0', function()
+    command("set ruler laststatus=0")
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+                                                0,0-1         All |
+    ]]}
+
+    command("hi MsgArea guibg=#333333")
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {7:                                          0,0-1         All }|
+    ]]}
+
+    command("set rulerformat=%15(%c%V\\ %p%%%)")
+    screen:expect{grid=[[
+      ^                                                            |
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {7:                                          0,0-1 100%        }|
+    ]]}
   end)
 end)
 
