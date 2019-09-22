@@ -42,6 +42,7 @@ endfunction
 function! NewWindow(height, width) abort
   exe a:height . 'new'
   exe a:width . 'vsp'
+  set winfixwidth winfixheight
   redraw!
 endfunction
 
