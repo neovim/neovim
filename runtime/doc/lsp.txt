@@ -181,7 +181,10 @@ in an idiomatic way.
 	textDocument/completion
 	textDocument/hover
 	textDocument/signatureHelp
+	textDocument/declaration
 	textDocument/definition
+	textDocument/typeDefinition
+	textDocument/implementation
 
 vim.lsp.config.set_all_builtin_callbacks()
 	You can enable all built-in callbacks
@@ -271,6 +274,18 @@ init.vim:
 	augroup END
 <
 ================================================================================
+                                                              *lsp-declaration*
+
+To configure declaration for a language server, add the following in your
+init.vim:
+>
+	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/declaration')")
+	augroup MyLanguageServer
+		au!
+		autocmd Filetype python nnoremap <silent> <Leader>dc :call lsp#text_document_declaration()<CR>
+	augroup END
+<
+================================================================================
                                                                *lsp-definition*
 
 To configure definition for a language server, add the following in your
@@ -279,7 +294,31 @@ init.vim:
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/definition')")
 	augroup MyLanguageServer
 		au!
-		autocmd Filetype python nnoremap <silent> <Leader>d :call lsp#text_document_definition()<CR>
+		autocmd Filetype python nnoremap <silent> <Leader>df :call lsp#text_document_definition()<CR>
+	augroup END
+<
+================================================================================
+                                                          *lsp-type-definition*
+
+To configure definition for a language server, add the following in your
+init.vim:
+>
+	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/typeDefinition')")
+	augroup MyLanguageServer
+		au!
+		autocmd Filetype python nnoremap <silent> <Leader>td :call lsp#text_document_type_definition()<CR>
+	augroup END
+<
+================================================================================
+                                                           *lsp-implementation*
+
+To configure definition for a language server, add the following in your
+init.vim:
+>
+	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/implementation')")
+	augroup MyLanguageServer
+		au!
+		autocmd Filetype python nnoremap <silent> <Leader>i :call lsp#text_document_implementation()<CR>
 	augroup END
 <
 ================================================================================

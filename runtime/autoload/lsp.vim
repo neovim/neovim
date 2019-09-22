@@ -32,7 +32,22 @@ function! lsp#text_document_signature_help() abort
   return ''
 endfunction
 
+function! lsp#text_document_declaration() abort
+  call luaeval("vim.lsp.request_async('textDocument/declaration', vim.lsp.protocol.TextDocumentPositionParams())")
+  return ''
+endfunction
+
 function! lsp#text_document_definition() abort
   call luaeval("vim.lsp.request_async('textDocument/definition', vim.lsp.protocol.TextDocumentPositionParams())")
+  return ''
+endfunction
+
+function! lsp#text_document_type_definition() abort
+  call luaeval("vim.lsp.request_async('textDocument/typeDefinition', vim.lsp.protocol.TextDocumentPositionParams())")
+  return ''
+endfunction
+
+function! lsp#text_document_implementation() abort
+  call luaeval("vim.lsp.request_async('textDocument/implementation', vim.lsp.protocol.TextDocumentPositionParams())")
   return ''
 endfunction

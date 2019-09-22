@@ -1,23 +1,27 @@
 --- Implements the following default callbacks:
 --
---  TODO: textDocument/publishDiagnostics
---  textDocument/completion
---  TODO: completionItem/resolve
---  textDocument/hover
---  textDocument/signatureHelp
---  TODO: textDocument/references
---  TODO: textDocument/documentHighlight
---  TODO: textDocument/documentSymbol
---  TODO: textDocument/formatting
---  TODO: textDocument/rangeFormatting
---  TODO: textDocument/onTypeFormatting
---  textDocument/definition
---  TODO: textDocument/codeAction
---  TODO: textDocument/codeLens
---  TODO: textDocument/documentLink
---  TODO: textDocument/rename
---  TODO: codeLens/resolve
---  TODO: documentLink/resolve
+-- TODO: textDocument/publishDiagnostics
+-- textDocument/completion
+-- TODO: completionItem/resolve
+-- textDocument/hover
+-- textDocument/signatureHelp
+-- textDocument/declaration
+-- textDocument/definition
+-- textDocument/typeDefinition
+-- textDocument/implementation
+-- TODO: textDocument/references
+-- TODO: textDocument/documentHighlight
+-- TODO: textDocument/documentSymbol
+-- TODO: textDocument/formatting
+-- TODO: textDocument/rangeFormatting
+-- TODO: textDocument/onTypeFormatting
+-- textDocument/definition
+-- TODO: textDocument/codeAction
+-- TODO: textDocument/codeLens
+-- TODO: textDocument/documentLink
+-- TODO: textDocument/rename
+-- TODO: codeLens/resolve
+-- TODO: documentLink/resolve
 
 local logger = require('vim.lsp.logger')
 local util = require('vim.lsp.util')
@@ -72,7 +76,7 @@ BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
     logger.debug('callback:textDocument/completion', data, self)
 
-    if data == nil or vim.tbl_isempty(data) then
+    if not data or vim.tbl_isempty(data) then
       return
     end
 
@@ -151,7 +155,7 @@ BuiltinCallbacks['textDocument/rename'] = {
   callback = function(self, data)
     logger.debug('callback:textDocument/rename', data, self)
 
-    if data == nil then
+    if not data then
       return nil
     end
 
@@ -169,7 +173,7 @@ BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
     logger.debug('textDocument/hover', data, self)
 
-    if data == nil or vim.tbl_isempty(data) then
+    if not data or vim.tbl_isempty(data) then
       return
     end
 
@@ -227,48 +231,72 @@ BuiltinCallbacks['textDocument/hover'] = {
   options = {}
 }
 
+-- textDocument/declaration
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_declaration
+BuiltinCallbacks['textDocument/declaration'] = {
+  callback = function(self, data)
+    logger.debug('callback:textDocument/definiton', data, self)
+
+    if not data or data == {} then
+      logger.info('No declaration found')
+      return nil
+    end
+
+    util.handle_location(data)
+
+    return true
+  end,
+  options = {}
+}
+
 -- textDocument/definition
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_definition
 BuiltinCallbacks['textDocument/definition'] = {
   callback = function(self, data)
     logger.debug('callback:textDocument/definiton', data, self)
 
-    if data == nil or data == {} then
+    if not data or data == {} then
       logger.info('No definition found')
       return nil
     end
 
-    local current_file = vim.api.nvim_call_function('expand', {'%'})
+    util.handle_location(data)
 
-    -- We can sometimes get a list of locations,
-    -- so set the first value as the only value we want to handle
-    if data[1] ~= nil then
-      data = data[1]
+    return true
+  end,
+  options = {}
+}
+
+-- textDocument/typeDefinition
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_typeDefinition
+BuiltinCallbacks['textDocument/typeDefinition'] = {
+  callback = function(self, data)
+    logger.debug('callback:textDocument/typeDefiniton', data, self)
+
+    if not data or data == {} then
+      logger.info('No type definition found')
+      return nil
     end
 
-    if data.uri == nil then
-      vim.api.nvim_err_writeln('[LSP] Could not find a valid definition')
-      return
+    util.handle_location(data)
+
+    return true
+  end,
+  options = {}
+}
+
+-- textDocument/implementation
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_implementation
+BuiltinCallbacks['textDocument/implementation'] = {
+  callback = function(self, data)
+    logger.debug('callback:textDocument/implementation', data, self)
+
+    if not data or data == {} then
+      logger.info('No implementation found')
+      return nil
     end
 
-    if type(data.uri) ~= 'string' then
-      vim.api.nvim_err_writeln('Invalid uri')
-      return
-    end
-
-    local data_file = vim.uri_to_fname(data.uri)
-
-    util.push_tagstack()
-    if data_file ~= vim.uri_from_fname(current_file) then
-      vim.api.nvim_command('silent edit ' .. data_file)
-    end
-
-    vim.api.nvim_command(
-      string.format('normal! %sG%s|'
-        , data.range.start.line + 1
-        , data.range.start.character + 1
-      )
-    )
+    util.handle_location(data)
 
     return true
   end,
@@ -281,7 +309,7 @@ BuiltinCallbacks['window/showMessage'] = {
   callback = function(self, data)
     logger.debug('callback:window/showMessage', data, self)
 
-    if data == nil or type(data) ~= 'table' then
+    if not data or type(data) ~= 'table' then
       print(self)
       return nil
     end

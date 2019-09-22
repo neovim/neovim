@@ -57,6 +57,40 @@ util.update_tagstack = function()
   vim.api.nvim_call_function('settagstack', { winid, tagstack, action })
 end
 
+util.handle_location = function(data)
+  local current_file = vim.api.nvim_call_function('expand', {'%'})
+
+  -- We can sometimes get a list of locations,
+  -- so set the first value as the only value we want to handle
+  if data[1] ~= nil then
+    data = data[1]
+  end
+
+  if data.uri == nil then
+    vim.api.nvim_err_writeln('[LSP] Could not find a valid location')
+    return
+  end
+
+  if type(data.uri) ~= 'string' then
+    vim.api.nvim_err_writeln('Invalid uri')
+    return
+  end
+
+  local data_file = vim.uri_to_fname(data.uri)
+
+  util.update_tagstack()
+  if data_file ~= vim.uri_from_fname(current_file) then
+    vim.api.nvim_command('silent edit ' .. data_file)
+  end
+
+  vim.api.nvim_command(
+    string.format('normal! %sG%s|'
+      , data.range.start.line + 1
+      , data.range.start.character + 1
+    )
+  )
+end
+
 util.get_hover_contents_type = function(contents)
   if vim.tbl_islist(contents) == true then
     return 'MarkedString[]'
