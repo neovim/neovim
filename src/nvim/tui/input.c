@@ -447,7 +447,6 @@ bool handle_background_color(TermInput *input)
   if (!input->waiting_for_bg_response) {
     return false;
   }
-
   size_t count = 0;
   size_t component = 0;
   size_t header_size = 0;

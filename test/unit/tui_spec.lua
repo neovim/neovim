@@ -25,16 +25,11 @@ itp('handle_background_color', function()
 
   local function assert_bg(colorspace, color, bg)
     local term_response = '\027]11;'..colorspace..':'..color..'\007'
-
-    local buf = to_cstr(term_response)
-    rbuffer.rbuffer_write(rbuf, buf, #term_response)
-    eq(#term_response, rbuf.size)
-    eq(#term_response, rbuffer.rbuffer_size(term_input.read_stream.buffer))
+    rbuffer.rbuffer_write(rbuf, to_cstr(term_response), #term_response)
 
     term_input.waiting_for_bg_response = true
     eq(true, handle_background_color(term_input))
     eq(false, term_input.waiting_for_bg_response)
-
     eq(1, multiqueue.multiqueue_size(events))
 
     local event = multiqueue.multiqueue_get(events)
