@@ -1553,9 +1553,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (!VIsual_active) {
         if (hasFolding(oap->start.lnum, &oap->start.lnum, NULL))
           oap->start.col = 0;
-        if (hasFolding(curwin->w_cursor.lnum, NULL,
-                &curwin->w_cursor.lnum))
+        if ((curwin->w_cursor.col > 0 || oap->inclusive)
+            && hasFolding(curwin->w_cursor.lnum, NULL,
+                          &curwin->w_cursor.lnum)) {
           curwin->w_cursor.col = (colnr_T)STRLEN(get_cursor_line_ptr());
+        }
       }
       oap->end = curwin->w_cursor;
       curwin->w_cursor = oap->start;
@@ -5125,14 +5127,10 @@ static void nv_right(cmdarg_T *cap)
       break;
     } else if (PAST_LINE) {
       curwin->w_set_curswant = true;
-      if (virtual_active())
+      if (virtual_active()) {
         oneright();
-      else {
-        if (has_mbyte)
-          curwin->w_cursor.col +=
-            (*mb_ptr2len)(get_cursor_pos_ptr());
-        else
-          ++curwin->w_cursor.col;
+      } else {
+        curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
       }
     }
   }
