@@ -229,6 +229,11 @@ g:language_client_log_level
 
 	Default: none
 
+g:language_client_enable_shutdown_request
+	If you set none 0 value, language client request shutdown to the language server.
+
+	Default: not set
+
 ================================================================================
                                                                *lsp-completion*
 

@@ -95,8 +95,13 @@ client.stop = function(self)
     return
   end
 
-  vim.api.nvim_command("echo 'shutting down filetype: "..self.filetype.."server_name: "..self.server_name.."'")
-  self:request('shutdown', nil, function()end)
+  if (vim.api.nvim_call_function('exists', {'g:language_client_enable_shutdown_request'}) == 1) and
+    vim.api.nvim_get_var('language_client_log_level') ~= 0 then
+
+    vim.api.nvim_command("echo 'shutting down filetype: "..self.filetype.."server_name: "..self.server_name.."'")
+    self:request('shutdown', nil, function()end)
+  end
+
   vim.api.nvim_command("echo 'exit filetype: "..self.filetype.."server_name: "..self.server_name.."'")
   self:notify('exit', nil)
 
