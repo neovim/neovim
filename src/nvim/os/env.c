@@ -137,10 +137,10 @@ int os_setenv(const char *name, const char *value, int overwrite)
   uv_mutex_lock(&mutex);
   int r;
 #ifdef WIN32
-  // LC_ALL, LANG, LANGUAGE and LC_MESSAGES must be obtained using getenv()
+  // LC_ALL, LANGUAGE, LANG and LC_MESSAGES must be obtained using getenv()
   // in libintl, so we must use _putenv_s().
-  if (strcmp(name, "LC_ALL") == 0 || strcmp(name, "LANG") == 0
-      || strcmp(name, "LANGUAGE") == 0 || strcmp(name, "LC_MESSAGES") == 0) {
+  if (striequal(name, "LC_ALL") || striequal(name, "LANGUAGE")
+      || striequal(name, "LANG") || striequal(name, "LC_MESSAGES")) {
     r = _putenv_s(name, value);  // NOLINT
     assert(r == 0);
   } else {
