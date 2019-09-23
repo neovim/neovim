@@ -66,10 +66,10 @@ describe('path.c', function()
   end)
 
   describe('path_full_compare', function()
-    local function path_full_compare(s1, s2, cn)
+    local function path_full_compare(s1, s2, cn, ee)
       s1 = to_cstr(s1)
       s2 = to_cstr(s2)
-      return cimp.path_full_compare(s1, s2, cn or 0)
+      return cimp.path_full_compare(s1, s2, cn or 0, ee or 1)
     end
 
     local f1 = 'f1.o'

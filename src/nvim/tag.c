@@ -2666,7 +2666,8 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
       *fname_end = NUL;
     }
     fullname = expand_tag_fname(fname, tag_fname, true);
-    retval = (path_full_compare(fullname, buf_ffname, true) & kEqualFiles);
+    retval = (path_full_compare(fullname, buf_ffname, true, true)
+              & kEqualFiles);
     xfree(fullname);
     *fname_end = c;
   }

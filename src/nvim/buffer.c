@@ -929,7 +929,7 @@ void handle_swap_exists(bufref_T *old_curbuf)
 
     // User selected Recover at ATTENTION prompt.
     msg_scroll = true;
-    ml_recover();
+    ml_recover(false);
     MSG_PUTS("\n");     // don't overwrite the last message
     cmdline_row = msg_row;
     do_modelines(0);
@@ -4629,7 +4629,8 @@ do_arg_all(
           if (i < alist->al_ga.ga_len
               && (AARGLIST(alist)[i].ae_fnum == buf->b_fnum
                   || path_full_compare(alist_name(&AARGLIST(alist)[i]),
-                                       buf->b_ffname, true) & kEqualFiles)) {
+                                       buf->b_ffname,
+                                       true, true) & kEqualFiles)) {
             int weight = 1;
 
             if (old_curtab == curtab) {

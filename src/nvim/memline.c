@@ -738,10 +738,10 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
 }
 
 
-/*
- * Try to recover curbuf from the .swp file.
- */
-void ml_recover(void)
+/// Try to recover curbuf from the .swp file.
+/// @param checkext If true, check the extension and detect whether it is a
+/// swap file.
+void ml_recover(bool checkext)
 {
   buf_T       *buf = NULL;
   memfile_T   *mfp = NULL;
@@ -785,7 +785,7 @@ void ml_recover(void)
   if (fname == NULL)                /* When there is no file name */
     fname = (char_u *)"";
   len = (int)STRLEN(fname);
-  if (len >= 4
+  if (checkext && len >= 4
       && STRNICMP(fname + len - 4, ".s", 2) == 0
       && vim_strchr((char_u *)"abcdefghijklmnopqrstuvw",
                     TOLOWER_ASC(fname[len - 2])) != NULL
@@ -1375,7 +1375,9 @@ recover_names (
     if (curbuf->b_ml.ml_mfp != NULL
         && (p = curbuf->b_ml.ml_mfp->mf_fname) != NULL) {
       for (int i = 0; i < num_files; i++) {
-        if (path_full_compare(p, files[i], true) & kEqualFiles) {
+        // Do not expand wildcards, on Windows would try to expand
+        // "%tmp%" in "%tmp%file"
+        if (path_full_compare(p, files[i], true, false) & kEqualFiles) {
           // Remove the name from files[i].  Move further entries
           // down.  When the array becomes empty free it here, since
           // FreeWild() won't be called below.

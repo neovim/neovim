@@ -4458,7 +4458,8 @@ find_pattern_in_path(
           if (i == max_path_depth) {
             break;
           }
-          if (path_full_compare(new_fname, files[i].name, true) & kEqualFiles) {
+          if (path_full_compare(new_fname, files[i].name,
+                                true, true) & kEqualFiles) {
             if (type != CHECK_PATH
                 && action == ACTION_SHOW_ALL && files[i].matched) {
               msg_putchar('\n');  // cursor below last one */
