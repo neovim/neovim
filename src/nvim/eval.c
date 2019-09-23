@@ -12418,7 +12418,7 @@ static void f_jobstop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     (void)channel_close(data->id, kChannelPartRpc, &error);
   }
   process_stop((Process *)&data->stream.proc);
-  rettv->vval.v_number = error == NULL ? 0 : 1;
+  rettv->vval.v_number = error == NULL ? 1 : 0;
 }
 
 // "jobwait(ids[, timeout])" function
