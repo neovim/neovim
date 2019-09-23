@@ -57,7 +57,7 @@ local get_request = function(conf)
   return __require_message('RequestMessage', '_A.client, _A.method, _A.params', conf)
 end
 
-local mock_client = { name = 'test', server_capabilities = {} }
+local mock_client = { server_name = 'test', server_capabilities = {} }
 
 describe('RequestMessage', function()
   it('should return attributes: jsonrpc', function()
