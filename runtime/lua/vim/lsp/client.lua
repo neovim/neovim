@@ -111,6 +111,7 @@ client.stop = function(self)
     uv.close(self.stdin)
     uv.close(self.handle)
   end)
+  uv.kill(self.pid, 'sigterm')
 
   self._stopped = true
 end
