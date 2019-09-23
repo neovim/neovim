@@ -15,7 +15,7 @@ describe('Language Client API ', function()
         lsp.server_config.add({
           filetype = 'txt',
           cmd = {
-            execute_path = 'nvim',
+            execute_path = './build/bin/nvim',
             args = { '--headless', '--cmd', 'source test/functional/fixtures/nvim_fake_lsp.vim' }
           }
         })
