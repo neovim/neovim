@@ -53,28 +53,28 @@ lsp#add_server_config({config}):
 	Example: ~
 >
 		" C, C++ example
-		call lsp#add_server_config(
+		call lsp#add_server_config({
 		      \ 'filetype': ['c', 'cpp'],
 		      \ 'server_name': 'cland',
-		      \ 'cmd': { 'execute_path': 'cland', 'args': ['-background-index'] })
+		      \ 'cmd': { 'execute_path': 'cland', 'args': ['-background-index'] }})
 <
 >
 		" Go example
-		call lsp#add_server_config(
+		call lsp#add_server_config({
 		      \ 'filetype': 'go',
 		      \ 'server_name': 'gopls',
-		      \ 'cmd': { 'execute_path': 'gopls', 'args': [] })
+		      \ 'cmd': { 'execute_path': 'gopls', 'args': [] }})
 <
 >
 		" Python example
-		call lsp#add_server_config(
+		call lsp#add_server_config({
 		      \ 'filetype': 'python',
 		      \ 'server_name': 'pyls',
-		      \ 'cmd': { 'execute_path': 'pyls', 'args': [] })
+		      \ 'cmd': { 'execute_path': 'pyls', 'args': [] }})
 <
 >
 		" Rust example
-		call lsp#add_server_config(
+		call lsp#add_server_config({
 		      \ 'filetype': 'rust',
 		      \ 'server_name': 'rls',
 		      \ 'cmd': { 'execute_path': 'rustup', 'args': ['run', 'stable', 'rls'] },
@@ -83,7 +83,7 @@ lsp#add_server_config({config}):
 		      \   'all_targets': v:false,
 		      \   'build_on_save': v:true,
 		      \   'wait_to_build': 0
-		      \ })
+		      \ }})
 <
 
 ================================================================================
