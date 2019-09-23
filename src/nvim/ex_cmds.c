@@ -2767,7 +2767,7 @@ void ex_append(exarg_T *eap)
       State = CMDLINE;
       theline = eap->getline(
           eap->cstack->cs_looplevel > 0 ? -1 :
-          NUL, eap->cookie, indent);
+          NUL, eap->cookie, indent, true);
       State = save_State;
     }
     lines_left = Rows - 1;
@@ -3630,7 +3630,7 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
               for (; i <= (long)ec; ++i)
                 msg_putchar('^');
 
-              resp = getexmodeline('?', NULL, 0);
+              resp = getexmodeline('?', NULL, 0, true);
               if (resp != NULL) {
                 typed = *resp;
                 xfree(resp);

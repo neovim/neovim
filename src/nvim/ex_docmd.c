@@ -117,11 +117,11 @@ typedef struct {
  * reads more lines that may come from the while/for loop.
  */
 struct loop_cookie {
-  garray_T    *lines_gap;               /* growarray with line info */
-  int current_line;                     /* last read line from growarray */
-  int repeating;                        /* TRUE when looping a second time */
-  /* When "repeating" is FALSE use "getline" and "cookie" to get lines */
-  char_u      *(*getline)(int, void *, int);
+  garray_T    *lines_gap;               // growarray with line info
+  int current_line;                     // last read line from growarray
+  int repeating;                        // TRUE when looping a second time
+  // When "repeating" is FALSE use "getline" and "cookie" to get lines
+  char_u      *(*getline)(int, void *, int, bool);
   void        *cookie;
 };
 
@@ -313,8 +313,8 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   struct msglist      **saved_msg_list = NULL;
   struct msglist      *private_msg_list;
 
-  /* "fgetline" and "cookie" passed to do_one_cmd() */
-  char_u      *(*cmd_getline)(int, void *, int);
+  // "fgetline" and "cookie" passed to do_one_cmd()
+  char_u      *(*cmd_getline)(int, void *, int, bool);
   void        *cmd_cookie;
   struct loop_cookie cmd_loop_cookie;
   void        *real_cookie;
@@ -507,17 +507,20 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
        * Need to set msg_didout for the first line after an ":if",
        * otherwise the ":if" will be overwritten.
        */
-      if (count == 1 && getline_equal(fgetline, cookie, getexline))
-        msg_didout = TRUE;
-      if (fgetline == NULL || (next_cmdline = fgetline(':', cookie,
-                                   cstack.cs_idx <
-                                   0 ? 0 : (cstack.cs_idx + 1) * 2
-                                   )) == NULL) {
-        /* Don't call wait_return for aborted command line.  The NULL
-         * returned for the end of a sourced file or executed function
-         * doesn't do this. */
-        if (KeyTyped && !(flags & DOCMD_REPEAT))
-          need_wait_return = FALSE;
+      if (count == 1 && getline_equal(fgetline, cookie, getexline)) {
+        msg_didout = true;
+      }
+      if (fgetline == NULL
+          || (next_cmdline = fgetline(':', cookie,
+                                      cstack.cs_idx <
+                                      0 ? 0 : (cstack.cs_idx + 1) * 2,
+                                      true)) == NULL) {
+        // Don't call wait_return for aborted command line.  The NULL
+        // returned for the end of a sourced file or executed function
+        // doesn't do this.
+        if (KeyTyped && !(flags & DOCMD_REPEAT)) {
+          need_wait_return = false;
+        }
         retval = FAIL;
         break;
       }
@@ -951,7 +954,7 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
 /*
  * Obtain a line when inside a ":while" or ":for" loop.
  */
-static char_u *get_loop_line(int c, void *cookie, int indent)
+static char_u *get_loop_line(int c, void *cookie, int indent, bool do_concat)
 {
   struct loop_cookie  *cp = (struct loop_cookie *)cookie;
   wcmd_T              *wp;
@@ -961,11 +964,12 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
     if (cp->repeating)
       return NULL;              /* trying to read past ":endwhile"/":endfor" */
 
-    /* First time inside the ":while"/":for": get line normally. */
-    if (cp->getline == NULL)
-      line = getcmdline(c, 0L, indent);
-    else
-      line = cp->getline(c, cp->cookie, indent);
+    // First time inside the ":while"/":for": get line normally.
+    if (cp->getline == NULL) {
+      line = getcmdline(c, 0L, indent, do_concat);
+    } else {
+      line = cp->getline(c, cp->cookie, indent, do_concat);
+    }
     if (line != NULL) {
       store_loop_line(cp->lines_gap, line);
       ++cp->current_line;

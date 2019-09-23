@@ -1887,7 +1887,7 @@ void ex_loadkeymap(exarg_T *eap)
 
   // Get each line of the sourced file, break at the end.
   for (;;) {
-    line = eap->getline(0, eap->cookie, 0);
+    line = eap->getline(0, eap->cookie, 0, true);
 
     if (line == NULL) {
       break;

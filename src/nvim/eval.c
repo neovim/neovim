@@ -1561,7 +1561,7 @@ heredoc_get(exarg_T *eap, char_u *cmd)
   for (;;) {
     int i = 0;
 
-    char_u *theline = eap->getline(NUL, eap->cookie, 0);
+    char_u *theline = eap->getline(NUL, eap->cookie, 0, false);
     if (theline != NULL && indent_len > 0) {
       // trim the indent matching the first line
       if (STRNCMP(theline, *eap->cmdlinep, indent_len) == 0) {
@@ -8734,7 +8734,7 @@ typedef struct {
   const listitem_T *li;
 } GetListLineCookie;
 
-static char_u *get_list_line(int c, void *cookie, int indent)
+static char_u *get_list_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetListLineCookie *const p = (GetListLineCookie *)cookie;
 
@@ -21279,6 +21279,7 @@ void ex_function(exarg_T *eap)
   hashitem_T  *hi;
   int sourcing_lnum_off;
   bool show_block = false;
+  bool do_concat = true;
 
   /*
    * ":function" without argument: list functions.
@@ -21548,9 +21549,9 @@ void ex_function(exarg_T *eap)
     } else {
       xfree(line_to_free);
       if (eap->getline == NULL) {
-        theline = getcmdline(':', 0L, indent);
+        theline = getcmdline(':', 0L, indent, do_concat);
       } else {
-        theline = eap->getline(':', eap->cookie, indent);
+        theline = eap->getline(':', eap->cookie, indent, do_concat);
       }
       line_to_free = theline;
     }
@@ -21580,6 +21581,7 @@ void ex_function(exarg_T *eap)
         if (STRCMP(p, skip_until) == 0) {
           XFREE_CLEAR(skip_until);
           XFREE_CLEAR(trimmed);
+          do_concat = true;
         }
       }
     } else {
@@ -21699,6 +21701,7 @@ void ex_function(exarg_T *eap)
         } else {
           skip_until = vim_strnsave(p, (int)(skiptowhite(p) - p));
         }
+        do_concat = false;
       }
     }
 
@@ -23522,7 +23525,7 @@ char_u *get_return_cmd(void *rettv)
  * Called by do_cmdline() to get the next line.
  * Returns allocated string, or NULL for end of function.
  */
-char_u *get_func_line(int c, void *cookie, int indent)
+char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
 {
   funccall_T  *fcp = (funccall_T *)cookie;
   ufunc_T     *fp = fcp->func;

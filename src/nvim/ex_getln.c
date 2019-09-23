@@ -1991,7 +1991,8 @@ char_u *
 getcmdline (
     int firstc,
     long count,              // only used for incremental search
-    int indent               // indent for inside conditionals
+    int indent,              // indent for inside conditionals
+    bool do_concat           // unused
 )
 {
   // Be prepared for situations where cmdline can be invoked recursively.
@@ -2167,17 +2168,18 @@ static void correct_screencol(int idx, int cells, int *col)
  * Get an Ex command line for the ":" command.
  */
 char_u *
-getexline (
-    int c,                          /* normally ':', NUL for ":append" */
+getexline(
+    int c,                   // normally ':', NUL for ":append"
     void *cookie,
-    int indent                     /* indent for inside conditionals */
+    int indent,              // indent for inside conditionals
+    bool do_concat
 )
 {
   /* When executing a register, remove ':' that's in front of each line. */
   if (exec_from_reg && vpeekc() == ':')
     (void)vgetc();
 
-  return getcmdline(c, 1L, indent);
+  return getcmdline(c, 1L, indent, do_concat);
 }
 
 /*
@@ -2187,11 +2189,12 @@ getexline (
  * Returns a string in allocated memory or NULL.
  */
 char_u *
-getexmodeline (
-    int promptc,                    /* normally ':', NUL for ":append" and '?' for
-                                   :s prompt */
+getexmodeline(
+    int promptc,                    // normally ':', NUL for ":append" and '?'
+                                    // for :s prompt
     void *cookie,
-    int indent                     /* indent for inside conditionals */
+    int indent,                    // indent for inside conditionals
+    bool do_concat
 )
 {
   garray_T line_ga;
@@ -6308,7 +6311,7 @@ char *script_get(exarg_T *const eap, size_t *const lenp)
   for (;;) {
     char *const theline = (char *)eap->getline(
         eap->cstack->cs_looplevel > 0 ? -1 :
-        NUL, eap->cookie, 0);
+        NUL, eap->cookie, 0, true);
 
     if (theline == NULL || strcmp(end_pattern, theline) == 0) {
       xfree(theline);
