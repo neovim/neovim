@@ -5593,26 +5593,149 @@ void ex_cexpr(exarg_T *eap)
   }
 }
 
-/*
- * ":helpgrep {pattern}"
- */
+// Get the location list for ":lhelpgrep"
+static qf_info_T *hgr_get_ll(bool *new_ll)
+  FUNC_ATTR_NONNULL_ALL
+{
+  win_T *wp;
+  qf_info_T *qi;
+
+  // If the current window is a help window, then use it
+  if (bt_help(curwin->w_buffer)) {
+    wp = curwin;
+  } else {
+    // Find an existing help window
+    wp = qf_find_help_win();
+  }
+
+  if (wp == NULL) {   // Help window not found
+    qi = NULL;
+  } else {
+    qi = wp->w_llist;
+  }
+  if (qi == NULL) {
+    // Allocate a new location list for help text matches
+    if ((qi = ll_new_list()) == NULL) {
+      return NULL;
+    }
+    *new_ll = true;
+  }
+
+  return qi;
+}
+
+// Search for a pattern in a help file.
+static void hgr_search_file(
+    qf_info_T *qi,
+    char_u *fname,
+    regmatch_T *p_regmatch)
+  FUNC_ATTR_NONNULL_ARG(1, 3)
+{
+  FILE *const fd = os_fopen((char *)fname, "r");
+  if (fd == NULL) {
+    return;
+  }
+
+  long lnum = 1;
+  while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
+    char_u *line = IObuff;
+
+    if (vim_regexec(p_regmatch, line, (colnr_T)0)) {
+      int l = (int)STRLEN(line);
+
+      // remove trailing CR, LF, spaces, etc.
+      while (l > 0 && line[l - 1] <= ' ') {
+        line[--l] = NUL;
+      }
+
+      if (qf_add_entry(qi,
+                       qi->qf_curlist,
+                       NULL,   // dir
+                       fname,
+                       NULL,
+                       0,
+                       line,
+                       lnum,
+                       (int)(p_regmatch->startp[0] - line) + 1,  // col
+                       false,  // vis_col
+                       NULL,   // search pattern
+                       0,      // nr
+                       1,      // type
+                       true    // valid
+                       ) == FAIL) {
+        got_int = true;
+        if (line != IObuff) {
+          xfree(line);
+        }
+        break;
+      }
+    }
+    if (line != IObuff) {
+      xfree(line);
+    }
+    lnum++;
+    line_breakcheck();
+  }
+  fclose(fd);
+}
+
+// Search for a pattern in all the help files in the doc directory under
+// the given directory.
+static void hgr_search_files_in_dir(
+    qf_info_T *qi,
+    char_u *dirname,
+    regmatch_T *p_regmatch,
+    const char_u *lang)
+  FUNC_ATTR_NONNULL_ARG(1, 2, 3)
+{
+  int fcount;
+  char_u **fnames;
+
+  // Find all "*.txt" and "*.??x" files in the "doc" directory.
+  add_pathsep((char *)dirname);
+  STRCAT(dirname, "doc/*.\\(txt\\|??x\\)");  // NOLINT
+  if (gen_expand_wildcards(1, &dirname, &fcount,
+                           &fnames, EW_FILE|EW_SILENT) == OK
+      && fcount > 0) {
+    for (int fi = 0; fi < fcount && !got_int; fi++) {
+      // Skip files for a different language.
+      if (lang != NULL
+          && STRNICMP(lang, fnames[fi] + STRLEN(fnames[fi]) - 3, 2) != 0
+          && !(STRNICMP(lang, "en", 2) == 0
+               && STRNICMP("txt", fnames[fi] + STRLEN(fnames[fi]) - 3, 3)
+               == 0)) {
+        continue;
+      }
+
+      hgr_search_file(qi, fnames[fi], p_regmatch);
+    }
+    FreeWild(fcount, fnames);
+  }
+}
+
+// Search for a pattern in all the help files in the 'runtimepath'.
+static void hgr_search_in_rtp(qf_info_T *qi, regmatch_T *p_regmatch,
+                              char_u *arg)
+  FUNC_ATTR_NONNULL_ALL
+{
+  // Check for a specified language
+  char_u *const lang = check_help_lang(arg);
+
+  // Go through all directories in 'runtimepath'
+  char_u *p = p_rtp;
+  while (*p != NUL && !got_int) {
+    copy_option_part(&p, NameBuff, MAXPATHL, ",");
+
+    hgr_search_files_in_dir(qi, NameBuff, p_regmatch, lang);
+  }
+}
+
+// ":helpgrep {pattern}"
 void ex_helpgrep(exarg_T *eap)
 {
-  regmatch_T regmatch;
-  char_u      *save_cpo;
-  char_u      *p;
-  int fcount;
-  char_u      **fnames;
-  FILE        *fd;
-  int fi;
-  long lnum;
-  char_u      *lang;
-  qf_info_T   *qi = &ql_info;
-  int new_qi = FALSE;
-  char_u      *au_name =  NULL;
-
-  /* Check for a specified language */
-  lang = check_help_lang(eap->arg);
+  qf_info_T *qi = &ql_info;
+  bool new_qi = false;
+  char_u *au_name =  NULL;
 
   switch (eap->cmdidx) {
   case CMD_helpgrep:  au_name = (char_u *)"helpgrep"; break;
@@ -5626,109 +5749,26 @@ void ex_helpgrep(exarg_T *eap)
     }
   }
 
-  /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
-  save_cpo = p_cpo;
+  // Make 'cpoptions' empty, the 'l' flag should not be used here.
+  char_u *const save_cpo = p_cpo;
   p_cpo = empty_option;
 
   if (eap->cmdidx == CMD_lhelpgrep) {
-    win_T *wp = NULL;
-
-    // If the current window is a help window, then use it
-    if (bt_help(curwin->w_buffer)) {
-      wp = curwin;
-    } else {
-      // Find an existing help window
-      wp = qf_find_help_win();
-    }
-
-    if (wp == NULL) {   // Help window not found
-      qi = NULL;
-    } else {
-      qi = wp->w_llist;
-    }
+    qi = hgr_get_ll(&new_qi);
     if (qi == NULL) {
-      /* Allocate a new location list for help text matches */
-      qi = ll_new_list();
-      new_qi = TRUE;
+      return;
     }
   }
 
-  regmatch.regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING);
-  regmatch.rm_ic = FALSE;
+  regmatch_T regmatch = {
+    .regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING),
+    .rm_ic = false,
+  };
   if (regmatch.regprog != NULL) {
     // Create a new quickfix list.
     qf_new_list(qi, qf_cmdtitle(*eap->cmdlinep));
 
-    // Go through all the directories in 'runtimepath'
-    p = p_rtp;
-    while (*p != NUL && !got_int) {
-      copy_option_part(&p, NameBuff, MAXPATHL, ",");
-
-      /* Find all "*.txt" and "*.??x" files in the "doc" directory. */
-      add_pathsep((char *)NameBuff);
-      STRCAT(NameBuff, "doc/*.\\(txt\\|??x\\)");
-
-      // Note: We cannot just do `&NameBuff` because it is a statically sized array
-      //       so `NameBuff == &NameBuff` according to C semantics.
-      char_u *buff_list[1] = {NameBuff};
-      if (gen_expand_wildcards(1, buff_list, &fcount,
-              &fnames, EW_FILE|EW_SILENT) == OK
-          && fcount > 0) {
-        for (fi = 0; fi < fcount && !got_int; fi++) {
-          // Skip files for a different language.
-          if (lang != NULL
-              && STRNICMP(lang, fnames[fi] + STRLEN(fnames[fi]) - 3, 2) != 0
-              && !(STRNICMP(lang, "en", 2) == 0
-                   && STRNICMP("txt", fnames[fi]
-                               + STRLEN(fnames[fi]) - 3, 3) == 0)) {
-            continue;
-          }
-          fd = os_fopen((char *)fnames[fi], "r");
-          if (fd != NULL) {
-            lnum = 1;
-            while (!vim_fgets(IObuff, IOSIZE, fd) && !got_int) {
-              char_u    *line = IObuff;
-              if (vim_regexec(&regmatch, line, (colnr_T)0)) {
-                int l = (int)STRLEN(line);
-
-                /* remove trailing CR, LF, spaces, etc. */
-                while (l > 0 && line[l - 1] <= ' ')
-                  line[--l] = NUL;
-
-                if (qf_add_entry(qi,
-                                 qi->qf_curlist,
-                                 NULL,                  // dir
-                                 fnames[fi],
-                                 NULL,
-                                 0,
-                                 line,
-                                 lnum,
-                                 (int)(regmatch.startp[0] - line)
-                                 + 1,                   // col
-                                 false,                 // vis_col
-                                 NULL,                  // search pattern
-                                 0,                     // nr
-                                 1,                     // type
-                                 true)                  // valid
-                    == FAIL) {
-                  got_int = true;
-                  if (line != IObuff) {
-                    xfree(line);
-                  }
-                  break;
-                }
-              }
-              if (line != IObuff)
-                xfree(line);
-              ++lnum;
-              line_breakcheck();
-            }
-            fclose(fd);
-          }
-        }
-        FreeWild(fcount, fnames);
-      }
-    }
+    hgr_search_in_rtp(qi, &regmatch, eap->arg);
 
     vim_regfree(regmatch.regprog);
 
