@@ -4912,7 +4912,8 @@ enum {
   QF_GETLIST_IDX = 0x40,
   QF_GETLIST_SIZE = 0x80,
   QF_GETLIST_TICK = 0x100,
-  QF_GETLIST_ALL = 0x1FF
+  QF_GETLIST_FILEWINID = 0x200,
+  QF_GETLIST_ALL = 0x3FF,
 };
 
 /// Parse text from 'di' and return the quickfix list items.
@@ -4968,12 +4969,16 @@ static int qf_winid(qf_info_T *qi)
 }
 
 /// Convert the keys in 'what' to quickfix list property flags.
-static int qf_getprop_keys2flags(dict_T *what)
+static int qf_getprop_keys2flags(dict_T *what, int loclist)
 {
   int flags = QF_GETLIST_NONE;
 
   if (tv_dict_find(what, S_LEN("all")) != NULL) {
     flags |= QF_GETLIST_ALL;
+    if (!loclist) {
+      // File window ID is applicable only to location list windows
+      flags &= ~ QF_GETLIST_FILEWINID;
+    }
   }
   if (tv_dict_find(what, S_LEN("title")) != NULL) {
     flags |= QF_GETLIST_TITLE;
@@ -5001,6 +5006,9 @@ static int qf_getprop_keys2flags(dict_T *what)
   }
   if (tv_dict_find(what, S_LEN("changedtick")) != NULL) {
     flags |= QF_GETLIST_TICK;
+  }
+  if (loclist && tv_dict_find(what, S_LEN("filewinid")) != NULL) {
+    flags |= QF_GETLIST_FILEWINID;
   }
 
   return flags;
@@ -5087,6 +5095,9 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_TICK)) {
     status = tv_dict_add_nr(retdict, S_LEN("changedtick"), 0);
   }
+  if ((status == OK) && (qi != &ql_info) && (flags & QF_GETLIST_FILEWINID)) {
+    status = tv_dict_add_nr(retdict, S_LEN("filewinid"), 0);
+  }
 
   return status;
 }
@@ -5096,6 +5107,24 @@ static int qf_getprop_title(qf_info_T *qi, int qf_idx, dict_T *retdict)
 {
     return tv_dict_add_str(retdict, S_LEN("title"),
                            (const char *)qi->qf_lists[qf_idx].qf_title);
+}
+
+/*
+ * Returns the identifier of the window used to display files from a location
+ * list.  If there is no associated window, then returns 0. Useful only when
+ * called from a location list window.
+ */
+static int qf_getprop_filewinid(win_T *wp, qf_info_T *qi, dict_T *retdict) {
+  int winid = 0;
+
+  if (wp != NULL && IS_LL_WINDOW(wp))
+  {
+    win_T *ll_wp = qf_find_win_with_loclist(qi);
+    if (ll_wp != NULL)
+      winid = ll_wp->handle;
+  }
+
+  return tv_dict_add_nr(retdict, S_LEN("filewinid"), winid);
 }
 
 /// Return the quickfix list items/entries as 'items' in retdict
@@ -5156,7 +5185,7 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
     qi = GET_LOC_LIST(wp);
   }
 
-  int flags = qf_getprop_keys2flags(what);
+  int flags = qf_getprop_keys2flags(what, (wp != NULL));
 
   if (qi != NULL && qi->qf_listcount != 0) {
     qf_idx = qf_getprop_qfidx(qi, what);
@@ -5195,6 +5224,9 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_TICK)) {
     status = tv_dict_add_nr(retdict, S_LEN("changedtick"),
                             qi->qf_lists[qf_idx].qf_changedtick);
+  }
+  if ((status == OK) && (wp != NULL) && (flags & QF_GETLIST_FILEWINID)) {
+    status = qf_getprop_filewinid(wp, qi, retdict);
   }
 
   return status;
