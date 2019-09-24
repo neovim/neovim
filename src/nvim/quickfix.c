@@ -5200,6 +5200,81 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   return status;
 }
 
+
+/*
+ * Add a new quickfix entry to list at 'qf_idx' in the stack 'qi' from the
+ * items in the dict 'd'.
+ */
+static int qf_add_entry_from_dict(
+    qf_info_T *qi,
+    int qf_idx,
+    dict_T *d,
+    int first_entry)
+{
+  bool did_bufnr_emsg;
+
+  if (first_entry)
+    did_bufnr_emsg = false;
+
+  char *const filename = tv_dict_get_string(d, "filename", true);
+  char *const module = tv_dict_get_string(d, "module", true);
+  int bufnum = (int)tv_dict_get_number(d, "bufnr");
+  long lnum = (long)tv_dict_get_number(d, "lnum");
+  int col = (int)tv_dict_get_number(d, "col");
+  char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
+  int nr = (int)tv_dict_get_number(d, "nr");
+  const char *type_str = tv_dict_get_string(d, "type", false);
+  const char_u type = (char_u)(uint8_t)(type_str == NULL ? NUL : *type_str);
+  char *const pattern = tv_dict_get_string(d, "pattern", true);
+  char *text = tv_dict_get_string(d, "text", true);
+  if (text == NULL) {
+    text = xcalloc(1, 1);
+  }
+
+  bool valid = true;
+  if ((filename == NULL && bufnum == 0) || (lnum == 0 && pattern == NULL)) {
+    valid = false;
+  }
+
+  /* Mark entries with non-existing buffer number as not valid. Give the
+   * error message only once. */
+  if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
+    if (!did_bufnr_emsg) {
+      did_bufnr_emsg = true;
+      EMSGN(_("E92: Buffer %" PRId64 " not found"), bufnum);
+    }
+    valid = false;
+    bufnum = 0;
+  }
+
+  // If the 'valid' field is present it overrules the detected value.
+  if (tv_dict_find(d, "valid", -1) != NULL) {
+    valid = (int)tv_dict_get_number(d, "valid");
+  }
+
+  int status = qf_add_entry(qi,
+      qf_idx,
+      NULL,      // dir
+      (char_u *)filename,
+      (char_u *)module,
+      bufnum,
+      (char_u *)text,
+      lnum,
+      col,
+      vcol,      // vis_col
+      (char_u *)pattern,   // search pattern
+      nr,
+      type,
+      valid);
+
+  xfree(filename);
+  xfree(module);
+  xfree(pattern);
+  xfree(text);
+
+  return status;
+}
+
 /// Add list of entries to quickfix/location list. Each list entry is
 /// a dictionary with item information.
 static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
@@ -5208,7 +5283,6 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
   dict_T *d;
   qfline_T *old_last = NULL;
   int retval = OK;
-  bool did_bufnr_emsg = false;
 
   if (action == ' ' || qf_idx == qi->qf_listcount) {
     // make place for a new list
@@ -5232,63 +5306,8 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
       continue;
     }
 
-    char *const filename = tv_dict_get_string(d, "filename", true);
-    char *const module = tv_dict_get_string(d, "module", true);
-    int bufnum = (int)tv_dict_get_number(d, "bufnr");
-    long lnum = (long)tv_dict_get_number(d, "lnum");
-    int col = (int)tv_dict_get_number(d, "col");
-    char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
-    int nr = (int)tv_dict_get_number(d, "nr");
-    const char *type_str = tv_dict_get_string(d, "type", false);
-    const char_u type = (char_u)(uint8_t)(type_str == NULL ? NUL : *type_str);
-    char *const pattern = tv_dict_get_string(d, "pattern", true);
-    char *text = tv_dict_get_string(d, "text", true);
-    if (text == NULL) {
-      text = xcalloc(1, 1);
-    }
-    bool valid = true;
-    if ((filename == NULL && bufnum == 0) || (lnum == 0 && pattern == NULL)) {
-      valid = false;
-    }
-
-    /* Mark entries with non-existing buffer number as not valid. Give the
-     * error message only once. */
-    if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
-      if (!did_bufnr_emsg) {
-        did_bufnr_emsg = TRUE;
-        EMSGN(_("E92: Buffer %" PRId64 " not found"), bufnum);
-      }
-      valid = false;
-      bufnum = 0;
-    }
-
-    // If the 'valid' field is present it overrules the detected value.
-    if (tv_dict_find(d, "valid", -1) != NULL) {
-      valid = (int)tv_dict_get_number(d, "valid");
-    }
-
-    int status = qf_add_entry(qi,
-                              qf_idx,
-                              NULL,      // dir
-                              (char_u *)filename,
-                              (char_u *)module,
-                              bufnum,
-                              (char_u *)text,
-                              lnum,
-                              col,
-                              vcol,      // vis_col
-                              (char_u *)pattern,   // search pattern
-                              nr,
-                              type,
-                              valid);
-
-    xfree(filename);
-    xfree(module);
-    xfree(pattern);
-    xfree(text);
-
-    if (status == FAIL) {
-      retval = FAIL;
+    retval = qf_add_entry_from_dict(qi, qf_idx, d, li == list->lv_first); 
+    if (retval == FAIL) {
       break;
     }
   });
