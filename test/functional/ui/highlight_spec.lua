@@ -438,6 +438,46 @@ describe('highlight', function()
     })
   end)
 
+  it('nocombine', function()
+    screen:detach()
+    screen = Screen.new(25,6)
+    screen:attach()
+    feed_command('syntax on')
+    feed_command('hi! Underlined cterm=underline gui=underline')
+    feed_command('syn keyword Underlined foobar')
+    feed_command('hi Search cterm=inverse,nocombine gui=inverse,nocombine')
+    insert([[
+      foobar
+      foobar
+      ]])
+    screen:expect{grid=[[
+      {1:foobar}                   |
+      {1:foobar}                   |
+      ^                         |
+      {2:~                        }|
+      {2:~                        }|
+                               |
+    ]], attr_ids={
+      [1] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue1},
+    }}
+
+    feed('/foo')
+    screen:expect{grid=[[
+      {1:foo}{2:bar}                   |
+      {3:foo}{2:bar}                   |
+                               |
+      {4:~                        }|
+      {4:~                        }|
+      /foo^                     |
+    ]], attr_ids={
+      [1] = {underline = true, reverse = true, foreground = Screen.colors.SlateBlue},
+      [2] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [3] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
+      [4] = {bold = true, foreground = Screen.colors.Blue1},
+    }}
+  end)
+
   it('guisp (special/undercurl)', function()
     feed_command('syntax on')
     feed_command('syn keyword TmpKeyword neovim')
