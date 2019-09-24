@@ -1748,111 +1748,121 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 }
 
 /*
- * Copy the location list from window "from" to window "to".
+ * Copy location list entries from 'from_qfl' to 'to_qfl'.
  */
-void copy_loclist(win_T *from, win_T *to)
-{
+static int copy_loclist_entries(qf_list_T *from_qfl, qf_list_T *to_qfl, qf_info_T *to_qi) {
+  int		i;
+  qfline_T    *from_qfp;
+  qfline_T    *prevp;
+
+  // copy all the location entries in this list
+  for (i = 0, from_qfp = from_qfl->qf_start;
+      i < from_qfl->qf_count && from_qfp != NULL;
+      ++i, from_qfp = from_qfp->qf_next)
+  {
+    if (qf_add_entry(to_qi,
+          to_qi->qf_curlist,
+          NULL,
+          NULL,
+          from_qfp->qf_module,
+          0,
+          from_qfp->qf_text,
+          from_qfp->qf_lnum,
+          from_qfp->qf_col,
+          from_qfp->qf_viscol,
+          from_qfp->qf_pattern,
+          from_qfp->qf_nr,
+          0,
+          from_qfp->qf_valid) == FAIL)
+      return FAIL;
+
+    // qf_add_entry() will not set the qf_num field, as the
+    // directory and file names are not supplied. So the qf_fnum
+    // field is copied here.
+    prevp = to_qfl->qf_last;
+    prevp->qf_fnum = from_qfp->qf_fnum;	// file number
+    prevp->qf_type = from_qfp->qf_type;	// error type
+    if (from_qfl->qf_ptr == from_qfp)
+      to_qfl->qf_ptr = prevp;		// current location
+  }
+
+  return OK;
+}
+
+/*
+ * Copy the specified location list 'from_qfl' to 'to_qfl'.
+ */
+static int copy_loclist(qf_list_T *from_qfl, qf_list_T *to_qfl, qf_info_T *to_qi) {
+  // Some of the fields are populated by qf_add_entry()
+  to_qfl->qf_nonevalid = from_qfl->qf_nonevalid;
+  to_qfl->qf_count = 0;
+  to_qfl->qf_index = 0;
+  to_qfl->qf_start = NULL;
+  to_qfl->qf_last = NULL;
+  to_qfl->qf_ptr = NULL;
+  if (from_qfl->qf_title != NULL)
+    to_qfl->qf_title = vim_strsave(from_qfl->qf_title);
+  else
+    to_qfl->qf_title = NULL;
+  if (from_qfl->qf_ctx != NULL) {
+      to_qfl->qf_ctx = xcalloc(1, sizeof(typval_T));
+      tv_copy(from_qfl->qf_ctx, to_qfl->qf_ctx);
+  } else {
+    to_qfl->qf_ctx = NULL;
+  }
+
+  if (from_qfl->qf_count)
+    if (copy_loclist_entries(from_qfl, to_qfl, to_qi) == FAIL)
+      return FAIL;
+
+  to_qfl->qf_index = from_qfl->qf_index;	// current index in the list
+
+  // Assign a new ID for the location list
+  to_qfl->qf_id = ++last_qf_id;
+  to_qfl->qf_changedtick = 0L;
+
+  // When no valid entries are present in the list, qf_ptr points to
+  // the first item in the list
+  if (to_qfl->qf_nonevalid)
+  {
+    to_qfl->qf_ptr = to_qfl->qf_start;
+    to_qfl->qf_index = 1;
+  }
+
+  return OK;
+}
+
+/*
+ * Copy the location list stack 'from' window to 'to' window.  
+ */
+void copy_loclist_stack(win_T *from, win_T *to) {
   qf_info_T   *qi;
   int idx;
-  int i;
 
-  /*
-   * When copying from a location list window, copy the referenced
-   * location list. For other windows, copy the location list for
-   * that window.
-   */
+  // When copying from a location list window, copy the referenced
+  // location list. For other windows, copy the location list for
+  // that window.
   if (IS_LL_WINDOW(from))
     qi = from->w_llist_ref;
   else
     qi = from->w_llist;
 
-  if (qi == NULL)                   /* no location list to copy */
+  if (qi == NULL)                   // no location list to copy
     return;
 
-  /* allocate a new location list */
+  // allocate a new location list
   to->w_llist = ll_new_list();
 
   to->w_llist->qf_listcount = qi->qf_listcount;
 
-  /* Copy the location lists one at a time */
+  // Copy the location lists one at a time
   for (idx = 0; idx < qi->qf_listcount; idx++) {
-    qf_list_T   *from_qfl;
-    qf_list_T   *to_qfl;
-
     to->w_llist->qf_curlist = idx;
 
-    from_qfl = &qi->qf_lists[idx];
-    to_qfl = &to->w_llist->qf_lists[idx];
-
-    /* Some of the fields are populated by qf_add_entry() */
-    to_qfl->qf_nonevalid = from_qfl->qf_nonevalid;
-    to_qfl->qf_count = 0;
-    to_qfl->qf_index = 0;
-    to_qfl->qf_start = NULL;
-    to_qfl->qf_last = NULL;
-    to_qfl->qf_ptr = NULL;
-    if (from_qfl->qf_title != NULL)
-      to_qfl->qf_title = vim_strsave(from_qfl->qf_title);
-    else
-      to_qfl->qf_title = NULL;
-
-    if (from_qfl->qf_ctx != NULL) {
-      to_qfl->qf_ctx = xcalloc(1, sizeof(typval_T));
-      tv_copy(from_qfl->qf_ctx, to_qfl->qf_ctx);
-    } else {
-      to_qfl->qf_ctx = NULL;
-    }
-
-    if (from_qfl->qf_count) {
-      qfline_T    *from_qfp;
-      qfline_T    *prevp;
-
-      // copy all the location entries in this list
-      for (i = 0, from_qfp = from_qfl->qf_start;
-           i < from_qfl->qf_count && from_qfp != NULL;
-           i++, from_qfp = from_qfp->qf_next) {
-        if (qf_add_entry(to->w_llist,
-                         to->w_llist->qf_curlist,
-                         NULL,
-                         NULL,
-                         from_qfp->qf_module,
-                         0,
-                         from_qfp->qf_text,
-                         from_qfp->qf_lnum,
-                         from_qfp->qf_col,
-                         from_qfp->qf_viscol,
-                         from_qfp->qf_pattern,
-                         from_qfp->qf_nr,
-                         0,
-                         from_qfp->qf_valid) == FAIL) {
-          qf_free_all(to);
-          return;
-        }
-        /*
-         * qf_add_entry() will not set the qf_num field, as the
-         * directory and file names are not supplied. So the qf_fnum
-         * field is copied here.
-         */
-        prevp = to->w_llist->qf_lists[to->w_llist->qf_curlist].qf_last;
-        prevp->qf_fnum = from_qfp->qf_fnum;         // file number
-        prevp->qf_type = from_qfp->qf_type;         // error type
-        if (from_qfl->qf_ptr == from_qfp) {
-          to_qfl->qf_ptr = prevp;                   // current location
-        }
-      }
-    }
-
-    to_qfl->qf_index = from_qfl->qf_index;      /* current index in the list */
-
-    // Assign a new ID for the location list
-    to_qfl->qf_id = ++last_qf_id;
-    to_qfl->qf_changedtick = 0L;
-
-    /* When no valid entries are present in the list, qf_ptr points to
-     * the first item in the list */
-    if (to_qfl->qf_nonevalid) {
-      to_qfl->qf_ptr = to_qfl->qf_start;
-      to_qfl->qf_index = 1;
+    if (copy_loclist(&qi->qf_lists[idx],
+          &to->w_llist->qf_lists[idx], to->w_llist) == FAIL) {
+      qf_free_all(to);
+      return;
     }
   }
 
