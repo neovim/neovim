@@ -5373,6 +5373,9 @@ static void nv_next(cmdarg_T *cap)
     (void)normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
     cap->count1 -= 1;
   }
+
+  //redraw_buf_line_later(buf, curwin->w_cursor.lnum);
+  redraw_later(NOT_VALID);
 }
 
 /*
