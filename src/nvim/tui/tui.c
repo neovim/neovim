@@ -312,7 +312,6 @@ static void terminfo_start(UI *ui)
     uv_pipe_init(&data->write_loop, &data->output_handle.pipe, 0);
     uv_pipe_open(&data->output_handle.pipe, data->out_fd);
   }
-  flush_buf(ui);
 }
 
 static void terminfo_stop(UI *ui)
@@ -364,6 +363,7 @@ static void tui_terminal_after_startup(UI *ui)
   // Emit this after Nvim startup, not during.  This works around a tmux
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
+  flush_buf(ui);
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -431,9 +431,6 @@ static void tui_main(UIBridgeData *bridge, UI *ui)
   }
   if (!tui_is_stopped(ui)) {
     tui_terminal_after_startup(ui);
-    // Tickle `main_loop` with a dummy event, else the initial "focus-gained"
-    // terminal response may not get processed until user hits a key.
-    loop_schedule_deferred(&main_loop, event_create(loop_dummy_event, 0));
   }
   // "Passive" (I/O-driven) loop: TUI thread "main loop".
   while (!tui_is_stopped(ui)) {
