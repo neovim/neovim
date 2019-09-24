@@ -264,15 +264,152 @@ static struct fmtpattern
   { 'o', ".\\+" }
 };
 
+// Convert an errorformat pattern to a regular expression pattern.
+// See fmt_pat definition above for the list of supported patterns.
+static char_u *fmtpat_to_regpat(
+    const char_u *efmp,
+    efm_T *fmt_ptr,
+    int idx,
+    int round,
+    char_u *ptr,
+    char_u *errmsg,
+    size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (fmt_ptr->addr[idx]) {
+    // Each errorformat pattern can occur only once
+    snprintf((char *)errmsg, errmsglen,
+             _("E372: Too many %%%c in format string"), *efmp);
+    EMSG(errmsg);
+    return NULL;
+  }
+  if ((idx && idx < 6
+       && vim_strchr((char_u *)"DXOPQ", fmt_ptr->prefix) != NULL)
+      || (idx == 6
+          && vim_strchr((char_u *)"OPQ", fmt_ptr->prefix) == NULL)) {
+    snprintf((char *)errmsg, errmsglen,
+             _("E373: Unexpected %%%c in format string"), *efmp);
+    EMSG(errmsg);
+    return NULL;
+  }
+  fmt_ptr->addr[idx] = (char_u)++round;
+  *ptr++ = '\\';
+  *ptr++ = '(';
+#ifdef BACKSLASH_IN_FILENAME
+  if (*efmp == 'f') {
+    // Also match "c:" in the file name, even when
+    // checking for a colon next: "%f:".
+    // "\%(\a:\)\="
+    STRCPY(ptr, "\\%(\\a:\\)\\=");
+    ptr += 10;
+  }
+#endif
+  if (*efmp == 'f' && efmp[1] != NUL) {
+    if (efmp[1] != '\\' && efmp[1] != '%') {
+      // A file name may contain spaces, but this isn't
+      // in "\f".  For "%f:%l:%m" there may be a ":" in
+      // the file name.  Use ".\{-1,}x" instead (x is
+      // the next character), the requirement that :999:
+      // follows should work.
+      STRCPY(ptr, ".\\{-1,}");
+      ptr += 7;
+    } else {
+      // File name followed by '\\' or '%': include as
+      // many file name chars as possible.
+      STRCPY(ptr, "\\f\\+");
+      ptr += 4;
+    }
+  } else {
+    char_u *srcptr = (char_u *)fmt_pat[idx].pattern;
+    while ((*ptr = *srcptr++) != NUL) {
+      ptr++;
+    }
+  }
+  *ptr++ = '\\';
+  *ptr++ = ')';
+
+  return ptr;
+}
+
+// Convert a scanf like format in 'errorformat' to a regular expression.
+static char_u *scanf_fmt_to_regpat(
+    const char_u *efm,
+    int len,
+    const char_u **pefmp,
+    char_u *ptr,
+    char_u *errmsg,
+    size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *efmp = *pefmp;
+
+  if (*++efmp == '[' || *efmp == '\\') {
+    if ((*ptr++ = *efmp) == '[') {  // %*[^a-z0-9] etc.
+      if (efmp[1] == '^') {
+        *ptr++ = *++efmp;
+      }
+      if (efmp < efm + len) {
+        *ptr++ = *++efmp;  // could be ']'
+        while (efmp < efm + len && (*ptr++ = *++efmp) != ']') {
+        }
+        if (efmp == efm + len) {
+          EMSG(_("E374: Missing ] in format string"));
+          return NULL;
+        }
+      }
+    } else if (efmp < efm + len) {  // %*\D, %*\s etc.
+      *ptr++ = *++efmp;
+    }
+    *ptr++ = '\\';
+    *ptr++ = '+';
+  } else {
+    // TODO(vim): scanf()-like: %*ud, %*3c, %*f, ... ?
+    snprintf((char *)errmsg, errmsglen,
+             _("E375: Unsupported %%%c in format string"), *efmp);
+    EMSG(errmsg);
+    return NULL;
+  }
+
+  *pefmp = efmp;
+
+  return ptr;
+}
+
+// Analyze/parse an errorformat prefix.
+static int efm_analyze_prefix(const char_u **pefmp, efm_T *fmt_ptr,
+                              char_u *errmsg, size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *efmp = *pefmp;
+
+  if (vim_strchr((char_u *)"+-", *efmp) != NULL) {
+    fmt_ptr->flags = *efmp++;
+  }
+  if (vim_strchr((char_u *)"DXAEWICZGOPQ", *efmp) != NULL) {
+    fmt_ptr->prefix = *efmp;
+  } else {
+    snprintf((char *)errmsg, errmsglen,
+             _("E376: Invalid %%%c in format string prefix"), *efmp);
+    EMSG(errmsg);
+    return FAIL;
+  }
+
+  *pefmp = efmp;
+
+  return OK;
+}
+
+
 // Converts a 'errorformat' string to regular expression pattern
-static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
-                         char_u *regpat, char_u *errmsg)
+static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr,
+                         char_u *regpat, char_u *errmsg, size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Build regexp pattern from current 'errorformat' option
   char_u *ptr = regpat;
   *ptr++ = '^';
   int round = 0;
-  for (char_u *efmp = efm; efmp < efm + len; efmp++) {
+  for (const char_u *efmp = efm; efmp < efm + len; efmp++) {
     if (*efmp == '%') {
       efmp++;
       int idx;
@@ -282,89 +419,15 @@ static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
         }
       }
       if (idx < FMT_PATTERNS) {
-        if (fmt_ptr->addr[idx]) {
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E372: Too many %%%c in format string"), *efmp);
-          EMSG(errmsg);
-          return -1;
-        }
-        if ((idx
-             && idx < 6
-             && vim_strchr((char_u *)"DXOPQ", fmt_ptr->prefix) != NULL)
-            || (idx == 6
-                && vim_strchr((char_u *)"OPQ", fmt_ptr->prefix) == NULL)) {
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E373: Unexpected %%%c in format string"), *efmp);
-          EMSG(errmsg);
+        ptr = fmtpat_to_regpat(efmp, fmt_ptr, idx, round, ptr,
+                               errmsg, errmsglen);
+        if (ptr == NULL) {
           return -1;
         }
         round++;
-        fmt_ptr->addr[idx] = (char_u)round;
-        *ptr++ = '\\';
-        *ptr++ = '(';
-#ifdef BACKSLASH_IN_FILENAME
-        if (*efmp == 'f') {
-          // Also match "c:" in the file name, even when
-          // checking for a colon next: "%f:".
-          // "\%(\a:\)\="
-          STRCPY(ptr, "\\%(\\a:\\)\\=");
-          ptr += 10;
-        }
-#endif
-        if (*efmp == 'f' && efmp[1] != NUL) {
-          if (efmp[1] != '\\' && efmp[1] != '%') {
-            // A file name may contain spaces, but this isn't
-            // in "\f".  For "%f:%l:%m" there may be a ":" in
-            // the file name.  Use ".\{-1,}x" instead (x is
-            // the next character), the requirement that :999:
-            // follows should work.
-            STRCPY(ptr, ".\\{-1,}");
-            ptr += 7;
-          } else {
-            // File name followed by '\\' or '%': include as
-            // many file name chars as possible.
-            STRCPY(ptr, "\\f\\+");
-            ptr += 4;
-          }
-        } else {
-          char_u *srcptr = (char_u *)fmt_pat[idx].pattern;
-          while ((*ptr = *srcptr++) != NUL) {
-            ptr++;
-          }
-        }
-        *ptr++ = '\\';
-        *ptr++ = ')';
       } else if (*efmp == '*') {
-        if (*++efmp == '[' || *efmp == '\\') {
-          if ((*ptr++ = *efmp) == '[') {  // %*[^a-z0-9] etc.
-            if (efmp[1] == '^') {
-              *ptr++ = *++efmp;
-            }
-            if (efmp < efm + len) {
-              efmp++;
-              *ptr++ = *efmp;    // could be ']'
-              while (efmp < efm + len) {
-                efmp++;
-                if ((*ptr++ = *efmp) == ']') {
-                  break;
-                }
-              }
-              if (efmp == efm + len) {
-                EMSG(_("E374: Missing ] in format string"));
-                return -1;
-              }
-            }
-          } else if (efmp < efm + len) {  // %*\D, %*\s etc.
-            efmp++;
-            *ptr++ = *efmp;
-          }
-          *ptr++ = '\\';
-          *ptr++ = '+';
-        } else {
-          // TODO(vim): scanf()-like: %*ud, %*3c, %*f, ... ?
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E375: Unsupported %%%c in format string"), *efmp);
-          EMSG(errmsg);
+        ptr = scanf_fmt_to_regpat(efm, len, &efmp, ptr, errmsg, errmsglen);
+        if (ptr == NULL) {
           return -1;
         }
       } else if (vim_strchr((char_u *)"%\\.^$~[", *efmp) != NULL) {
@@ -374,15 +437,7 @@ static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
       } else if (*efmp == '>') {
         fmt_ptr->conthere = true;
       } else if (efmp == efm + 1) {             // analyse prefix
-        if (vim_strchr((char_u *)"+-", *efmp) != NULL) {
-          fmt_ptr->flags = *efmp++;
-        }
-        if (vim_strchr((char_u *)"DXAEWICZGOPQ", *efmp) != NULL) {
-          fmt_ptr->prefix = *efmp;
-        } else {
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E376: Invalid %%%c in format string prefix"), *efmp);
-          EMSG(errmsg);
+        if (efm_analyze_prefix(&efmp, fmt_ptr, errmsg, errmsglen) == FAIL) {
           return -1;
         }
       } else {
@@ -461,7 +516,7 @@ static efm_T * parse_efm_option(char_u *efm)
       }
     }
 
-    if (efm_to_regpat(efm, len, fmt_ptr, fmtstr, errmsg) == -1) {
+    if (efm_to_regpat(efm, len, fmt_ptr, fmtstr, errmsg, errmsglen) == -1) {
       goto parse_efm_error;
     }
     if ((fmt_ptr->prog = vim_regcomp(fmtstr, RE_MAGIC + RE_STRING)) == NULL) {
