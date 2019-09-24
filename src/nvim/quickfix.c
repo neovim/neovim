@@ -80,6 +80,14 @@ struct qfline_S {
 #define LISTCOUNT   10
 #define INVALID_QFIDX (-1)
 
+// Quickfix list type.
+typedef enum
+{
+  QFLT_QUICKFIX,  // Quickfix list - global list
+  QFLT_LOCATION,  // Location list - per window list
+  QFLT_INTERNAL   // Internal - Temporary list used by getqflist()/getloclist()
+} qfltype_T;
+
 /// Quickfix/Location list definition
 ///
 /// Usually the list contains one or more entries. But an empty list can be
@@ -87,6 +95,7 @@ struct qfline_S {
 /// information and entries can be added later using setqflist()/setloclist().
 typedef struct qf_list_S {
   unsigned qf_id;               ///< Unique identifier for this list
+  qfltype_T   qfl_type;
   qfline_T    *qf_start;        ///< pointer to the first error
   qfline_T    *qf_last;         ///< pointer to the last error
   qfline_T    *qf_ptr;          ///< pointer to the current error
@@ -120,6 +129,7 @@ struct qf_info_S {
   int qf_listcount;                 /* current number of lists */
   int qf_curlist;                   /* current error list */
   qf_list_T qf_lists[LISTCOUNT];
+  qfltype_T qfl_type;  // type of list
 };
 
 static qf_info_T ql_info;         // global quickfix list
@@ -211,8 +221,10 @@ typedef struct {
 #define IS_LL_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL)
 
 // Quickfix and location list stack check helper macros
-#define IS_QF_STACK(qi)         (qi == &ql_info)
-#define IS_LL_STACK(qi)         (qi != &ql_info)
+#define IS_QF_STACK(qi)       (qi->qfl_type == QFLT_QUICKFIX)
+#define IS_LL_STACK(qi)       (qi->qfl_type == QFLT_LOCATION)
+#define IS_QF_LIST(qfl)       (qfl->qfl_type == QFLT_QUICKFIX)
+#define IS_LL_LIST(qfl)       (qfl->qfl_type == QFLT_LOCATION)
 
 //
 // Return location list for window 'wp'
@@ -1225,6 +1237,7 @@ static void qf_new_list(qf_info_T *qi, const char_u *qf_title)
   qfl = &qi->qf_lists[qi->qf_curlist];
   memset(qfl, 0, (size_t)(sizeof(qf_list_T)));
   qf_store_title(qfl, qf_title);
+  qfl->qfl_type = qi->qfl_type;
   qfl->qf_id = ++last_qf_id;
 }
 
@@ -1777,7 +1790,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
     qfp->qf_fnum = bufnum;
     if (buf != NULL) {
       buf->b_has_qf_entry |=
-        IS_QF_STACK(qi) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
+        IS_QF_LIST(qfl) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
     }
   } else {
     qfp->qf_fnum = qf_get_fnum(qi, qf_idx, dir, fname);
@@ -1828,12 +1841,13 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
   return OK;
 }
 
-// Allocate a new location list stack
-static qf_info_T *ll_new_list(void)
+// Allocate a new quickfix/location list stack
+static qf_info_T *qf_alloc_stack(qfltype_T qfltype)
   FUNC_ATTR_NONNULL_RET
 {
   qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
   qi->qf_refcount++;
+  qi->qfl_type = qfltype;
 
   return qi;
 }
@@ -1852,8 +1866,9 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
    */
   ll_free_all(&wp->w_llist_ref);
 
-  if (wp->w_llist == NULL)
-    wp->w_llist = ll_new_list();            /* new location list */
+  if (wp->w_llist == NULL) {
+    wp->w_llist = qf_alloc_stack(QFLT_LOCATION);  // new location list
+  }
   return wp->w_llist;
 }
 
@@ -1908,6 +1923,7 @@ static int copy_loclist(const qf_list_T *from_qfl,
   FUNC_ATTR_NONNULL_ALL
 {
   // Some of the fields are populated by qf_add_entry()
+  to_qfl->qfl_type = from_qfl->qfl_type;
   to_qfl->qf_nonevalid = from_qfl->qf_nonevalid;
   to_qfl->qf_count = 0;
   to_qfl->qf_index = 0;
@@ -1969,7 +1985,7 @@ void copy_loclist_stack(win_T *from, win_T *to)
   }
 
   // allocate a new location list
-  to->w_llist = ll_new_list();
+  to->w_llist = qf_alloc_stack(QFLT_LOCATION);
 
   to->w_llist->qf_listcount = qi->qf_listcount;
 
@@ -2042,7 +2058,7 @@ static int qf_get_fnum(qf_info_T *qi, int qf_idx, char_u *directory,
     return 0;
   }
   buf->b_has_qf_entry =
-    IS_QF_STACK(qi) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
+    IS_QF_LIST(qfl) ? BUF_HAS_QF_ENTRY : BUF_HAS_LL_ENTRY;
   return buf->b_fnum;
 }
 
@@ -2609,6 +2625,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
                                win_T *oldwin, int *opened_window, int *abort)
 {
   qf_list_T *qfl = &qi->qf_lists[qi->qf_curlist];
+  qfltype_T qfl_type = qfl->qfl_type;
   int retval = OK;
 
   if (qf_ptr->qf_type == 1) {
@@ -2628,7 +2645,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
     retval = buflist_getfile(qf_ptr->qf_fnum, (linenr_T)1,
                              GETF_SETMARK | GETF_SWITCH, forceit);
 
-    if (IS_LL_STACK(qi)) {
+    if (qfl_type == QFLT_LOCATION) {
       // Location list. Check whether the associated window is still
       // present and the list is still valid.
       if (!win_valid_any_tab(oldwin)) {
@@ -2640,7 +2657,7 @@ static int qf_jump_edit_buffer(qf_info_T *qi, qfline_T *qf_ptr, int forceit,
         *abort = true;
       }
     } else if (!is_qf_entry_present(qfl, qf_ptr)) {
-      if (IS_QF_STACK(qi)) {
+      if (qfl_type == QFLT_QUICKFIX) {
         EMSG(_("E925: Current quickfix was changed"));
       } else {
         EMSG(_(e_loc_list_changed));
@@ -5165,7 +5182,7 @@ static int qf_get_list_from_lines(dict_T *what, dictitem_T *di, dict_T *retdict)
     }
 
     list_T *l = tv_list_alloc(kListLenMayKnow);
-    qf_info_T *const qi = ll_new_list();
+    qf_info_T *const qi = qf_alloc_stack(QFLT_INTERNAL);
 
     if (qf_init_ext(qi, 0, NULL, NULL, &di->di_tv, errorformat,
                     true, (linenr_T)0, (linenr_T)0, NULL, NULL) > 0) {
@@ -5292,7 +5309,10 @@ static int qf_getprop_qfidx(qf_info_T *qi, dict_T *what)
 }
 
 /// Return default values for quickfix list properties in retdict.
-static int qf_getprop_defaults(qf_info_T *qi, int flags, dict_T *retdict)
+static int qf_getprop_defaults(qf_info_T *qi,
+                               int flags,
+                               int locstack,
+                               dict_T *retdict)
 {
   int status = OK;
 
@@ -5324,7 +5344,7 @@ static int qf_getprop_defaults(qf_info_T *qi, int flags, dict_T *retdict)
   if ((status == OK) && (flags & QF_GETLIST_TICK)) {
     status = tv_dict_add_nr(retdict, S_LEN("changedtick"), 0);
   }
-  if ((status == OK) && (qi != &ql_info) && (flags & QF_GETLIST_FILEWINID)) {
+  if ((status == OK) && locstack && (flags & QF_GETLIST_FILEWINID)) {
     status = tv_dict_add_nr(retdict, S_LEN("filewinid"), 0);
   }
 
@@ -5424,7 +5444,7 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
 
   // List is not present or is empty
   if (qf_stack_empty(qi) || qf_idx == INVALID_QFIDX) {
-    return qf_getprop_defaults(qi, flags, retdict);
+    return qf_getprop_defaults(qi, flags, wp != NULL, retdict);
   }
 
   qfl = &qi->qf_lists[qf_idx];
@@ -5826,7 +5846,7 @@ static void qf_free_stack(win_T *wp, qf_info_T *qi)
   } else if (IS_LL_WINDOW(orig_wp)) {
     // If the location list window is open, then create a new empty location
     // list
-    qf_info_T *new_ll = ll_new_list();
+    qf_info_T *new_ll = qf_alloc_stack(QFLT_LOCATION);
 
     // first free the list reference in the location list window
     ll_free_all(&orig_wp->w_llist_ref);
@@ -6144,7 +6164,7 @@ static qf_info_T *hgr_get_ll(bool *new_ll)
   }
   if (qi == NULL) {
     // Allocate a new location list for help text matches
-    qi = ll_new_list();
+    qi = qf_alloc_stack(QFLT_LOCATION);
     *new_ll = true;
   }
 
