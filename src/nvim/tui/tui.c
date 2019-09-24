@@ -365,6 +365,11 @@ static void tui_terminal_after_startup(UI *ui)
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   flush_buf(ui);
+
+  if (data->input.waiting_for_bg_response) {
+    DLOG("did not get a response for terminal background query");
+    data->input.waiting_for_bg_response = false;
+  }
 }
 
 static void tui_terminal_stop(UI *ui)
@@ -380,7 +385,6 @@ static void tui_terminal_stop(UI *ui)
   signal_watcher_stop(&data->winch_handle);
   terminfo_stop(ui);
   ugrid_free(&data->grid);
-  assert(!data->input.waiting_for_bg_response);
 }
 
 static void tui_stop(UI *ui)
