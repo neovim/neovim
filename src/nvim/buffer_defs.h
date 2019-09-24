@@ -940,7 +940,6 @@ typedef struct {
   buf_T       *buf;     // the buffer to search for a match
   linenr_T lnum;        // the line to search for a match
   int attr;             // attributes to be used for a match
-  int attr_cur2;        // attributes to be used for a current match
   int attr_cur;         // attributes currently active in win_line()
   linenr_T first_lnum;  // first lnum to search for multi-line pat
   colnr_T startcol;     // in win_line() points to char where HL starts

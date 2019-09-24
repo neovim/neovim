@@ -3001,7 +3001,7 @@ win_line (
               if (wp->w_cursor.lnum == lnum
                   && wp->w_cursor.col >= (long)shl->startcol
                   && wp->w_cursor.col < (long)shl->endcol) {
-                shl->attr_cur = shl->attr_cur2;
+                shl->attr_cur = win_hl_attr(wp, HLF_I);
               } else {
                 shl->attr_cur = shl->attr;
               }
@@ -5613,7 +5613,6 @@ static void init_search_hl(win_T *wp)
   search_hl.lnum = 0;
   search_hl.first_lnum = 0;
   search_hl.attr = win_hl_attr(wp, HLF_L);
-  search_hl.attr_cur2 = win_hl_attr(wp, HLF_I);
 
   // time limit is set at the toplevel, for all windows
 }
