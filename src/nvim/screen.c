@@ -5613,7 +5613,7 @@ static void init_search_hl(win_T *wp)
   search_hl.lnum = 0;
   search_hl.first_lnum = 0;
   search_hl.attr = win_hl_attr(wp, HLF_L);
-  search_hl.attr_cur2 = win_hl_attr(wp, HLF_CS);
+  search_hl.attr_cur2 = win_hl_attr(wp, HLF_I);
 
   // time limit is set at the toplevel, for all windows
 }
