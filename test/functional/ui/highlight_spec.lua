@@ -476,6 +476,20 @@ describe('highlight', function()
       [3] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
       [4] = {bold = true, foreground = Screen.colors.Blue1},
     }}
+    feed('\n')
+    screen:expect{grid=[[
+      {1:^foo}{2:bar}                   |
+      {1:foo}{2:bar}                   |
+                               |
+      {3:~                        }|
+      {3:~                        }|
+      {4:search hit...uing at TOP} |
+    ]], attr_ids={
+      [1] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
+      [2] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [3] = {bold = true, foreground = Screen.colors.Blue1},
+      [4] = {foreground = Screen.colors.Red},
+    }}
   end)
 
   it('guisp (special/undercurl)', function()
