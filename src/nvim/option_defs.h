@@ -555,6 +555,7 @@ EXTERN long p_scbk;             // 'scrollback'
 EXTERN long p_sj;               // 'scrolljump'
 EXTERN long p_so;               // 'scrolloff'
 EXTERN char_u   *p_sbo;         // 'scrollopt'
+EXTERN int p_scrw;              // 'scrollrowwise'
 EXTERN char_u   *p_sections;    // 'sections'
 EXTERN int p_secure;            // 'secure'
 EXTERN char_u   *p_sel;         // 'selection'
@@ -781,6 +782,7 @@ enum {
   , BV_QE
   , BV_RO
   , BV_SCBK
+  , BV_SCRW
   , BV_SI
   , BV_SMC
   , BV_SYN

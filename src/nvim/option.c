@@ -5885,6 +5885,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_QE:     return (char_u *)&(curbuf->b_p_qe);
   case PV_RO:     return (char_u *)&(curbuf->b_p_ro);
   case PV_SCBK:   return (char_u *)&(curbuf->b_p_scbk);
+  case PV_SCRW:   return (char_u *)&(curbuf->b_p_scrw);
   case PV_SI:     return (char_u *)&(curbuf->b_p_si);
   case PV_STS:    return (char_u *)&(curbuf->b_p_sts);
   case PV_SUA:    return (char_u *)&(curbuf->b_p_sua);
@@ -6126,6 +6127,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ai_nopaste = p_ai_nopaste;
       buf->b_p_sw = p_sw;
       buf->b_p_scbk = p_scbk;
+      buf->b_p_scrw = p_scrw;
       buf->b_p_tw = p_tw;
       buf->b_p_tw_nopaste = p_tw_nopaste;
       buf->b_p_tw_nobin = p_tw_nobin;
