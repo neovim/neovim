@@ -103,7 +103,6 @@ elseif(MSVC OR MINGW)
   endif()
 
   # Ignore USE_BUNDLED_LUAJIT - always ON for native Win32
-  # TODO: /CONFIG not necessary anymore with https://github.com/luarocks/luarocks/commit/526664e6e54da0f129621ea6df355767259a103a (after v3.1.3).
   BuildLuarocks(INSTALL_COMMAND install.bat /FORCECONFIG /NOREG /NOADMIN /Q /F
     /LUA ${DEPS_INSTALL_DIR}
     /LIB ${DEPS_LIB_DIR}
