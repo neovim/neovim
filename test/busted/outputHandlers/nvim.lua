@@ -228,14 +228,7 @@ return function(options)
   end
 
   local function write_status(element, string)
-    local elapsedTime_ms = getElapsedTime(element)
-
-    -- XXX: not clear what that check is for.  Done in accc7a0b6.
-    -- Might be for "nan" - but `tonumber('nan') == tonumber('nan')`.
-    if elapsedTime_ms == elapsedTime_ms then
-      string = timeString:format(elapsedTime_ms) .. ' ' .. string
-    end
-    io.write(string)
+    io.write(timeString:format(getElapsedTime(element)) .. ' ' .. string)
     io.flush()
   end
 
