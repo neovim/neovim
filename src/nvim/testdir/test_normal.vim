@@ -2488,6 +2488,15 @@ func Test_normal_large_count()
   bwipe!
 endfunc
 
+func Test_delete_until_paragraph()
+  new
+  normal grádv}
+  call assert_equal('á', getline(1))
+  normal grád}
+  call assert_equal('', getline(1))
+  bwipe!
+endfunc
+
 " Test for the gr (virtual replace) command
 " Test for the bug fixed by 7.4.387
 func Test_gr_command()
@@ -2551,15 +2560,6 @@ func Test_nv_hat_count()
   call assert_equal('Xbar', fnamemodify(bufname('%'), ':t'))
 
   %bwipeout!
-endfunc
-
-func Test_delete_until_paragraph()
-  new
-  normal grádv}
-  call assert_equal('á', getline(1))
-  normal grád}
-  call assert_equal('', getline(1))
-  bwipe!
 endfunc
 
 func Test_message_when_using_ctrl_c()
