@@ -2617,3 +2617,25 @@ Piece of Java
 
   close!
 endfunc
+
+func Test_normal_gk()
+  " needs 80 column new window
+  new
+  vert 80new
+  put =[repeat('x',90)..' {{{1', 'x {{{1']
+  norm! gk
+  " In a 80 column wide terminal the window will be only 78 char
+  " (because Vim will leave space for the other window),
+  " but if the terminal is larger, it will be 80 chars, so verify the
+  " cursor column correctly.
+  call assert_equal(winwidth(0)+1, col('.'))
+  call assert_equal(winwidth(0)+1, virtcol('.'))
+  norm! j
+  call assert_equal(6, col('.'))
+  call assert_equal(6, virtcol('.'))
+  norm! gk
+  call assert_equal(95, col('.'))
+  call assert_equal(95, virtcol('.'))
+  bw!
+  bw!
+endfunc
