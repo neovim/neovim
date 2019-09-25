@@ -37,10 +37,6 @@ after_build:
     } else {
       write-host "no GCOV_ERROR_FILE"
     }
-# DEBUG: should have SYSTEM=windows
-- ps: |
-    Get-Content C:/projects/nvim-deps/usr/luarocks/lua/luarocks/core/hardcoded.lua
-    Get-Content C:/projects/nvim-deps/usr/luarocks/config-5.1.lua
 cache:
 - C:\projects\nvim-deps -> third-party\**
 artifacts:
