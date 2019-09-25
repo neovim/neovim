@@ -23,6 +23,10 @@ describe('Language Client API ', function()
     ]]))
   end)
 
+  after_each(function()
+    exec_lua("lsp.stop_client('txt')")
+  end)
+
   describe('start_client and stop_client', function()
     it('should return true', function()
       exec_lua("client = lsp.start_client('txt')")
@@ -32,7 +36,6 @@ describe('Language Client API ', function()
       exec_lua("lsp.stop_client('txt')")
       helpers.sleep(100)
       eq(true, exec_lua("return client._stopped"))
-
     end)
   end)
 end)
