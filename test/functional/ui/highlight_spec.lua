@@ -441,6 +441,13 @@ describe('highlight', function()
   it('nocombine', function()
     screen:detach()
     screen = Screen.new(25,6)
+    screen:set_default_attr_ids{
+      [1] = {foreground = Screen.colors.SlateBlue, underline = true},
+      [2] = {bold = true, foreground = Screen.colors.Blue1},
+      [3] = {underline = true, reverse = true, foreground = Screen.colors.SlateBlue},
+      [4] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
+      [5] = {foreground = Screen.colors.Red},
+    }
     screen:attach()
     feed_command('syntax on')
     feed_command('hi! Underlined cterm=underline gui=underline')
@@ -457,39 +464,26 @@ describe('highlight', function()
       {2:~                        }|
       {2:~                        }|
                                |
-    ]], attr_ids={
-      [1] = {foreground = Screen.colors.SlateBlue, underline = true},
-      [2] = {bold = true, foreground = Screen.colors.Blue1},
-    }}
+    ]]}
 
     feed('/foo')
     screen:expect{grid=[[
-      {1:foo}{2:bar}                   |
-      {3:foo}{2:bar}                   |
+      {3:foo}{1:bar}                   |
+      {4:foo}{1:bar}                   |
                                |
-      {4:~                        }|
-      {4:~                        }|
+      {2:~                        }|
+      {2:~                        }|
       /foo^                     |
-    ]], attr_ids={
-      [1] = {underline = true, reverse = true, foreground = Screen.colors.SlateBlue},
-      [2] = {foreground = Screen.colors.SlateBlue, underline = true},
-      [3] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
-      [4] = {bold = true, foreground = Screen.colors.Blue1},
-    }}
+    ]]}
     feed('\n')
     screen:expect{grid=[[
-      {1:^foo}{2:bar}                   |
-      {1:foo}{2:bar}                   |
+      {4:^foo}{1:bar}                   |
+      {4:foo}{1:bar}                   |
                                |
-      {3:~                        }|
-      {3:~                        }|
-      {4:search hit...uing at TOP} |
-    ]], attr_ids={
-      [1] = {background = Screen.colors.Yellow, reverse = true, foreground = Screen.colors.SlateBlue},
-      [2] = {foreground = Screen.colors.SlateBlue, underline = true},
-      [3] = {bold = true, foreground = Screen.colors.Blue1},
-      [4] = {foreground = Screen.colors.Red},
-    }}
+      {2:~                        }|
+      {2:~                        }|
+      {5:search hit...uing at TOP} |
+    ]]}
   end)
 
   it('guisp (special/undercurl)', function()
