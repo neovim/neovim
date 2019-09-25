@@ -201,9 +201,11 @@ CTRL-W CTRL_N						*CTRL-W_CTRL-N*
 		|:find|.  Doesn't split if {file} is not found.
 
 CTRL-W CTRL-^					*CTRL-W_CTRL-^* *CTRL-W_^*
-CTRL-W ^	Does ":split #", split window in two and edit alternate file.
-		When a count is given, it becomes ":split #N", split window
-		and edit buffer N.
+CTRL-W ^	Split the current window in two and edit the alternate file.
+		When a count N is given, split the current window and edit
+		buffer N.  Similar to ":sp #" and ":sp #N", but it allows the
+		other buffer to be unnamed.  This command matches the behavior
+		of |CTRL-^|, except that it splits a window first.
 
 CTRL-W ge						*CTRL-W_ge*
 		Detach the current window as an external window.

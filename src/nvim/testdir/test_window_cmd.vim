@@ -117,15 +117,65 @@ func Test_window_vertical_split()
   bw
 endfunc
 
+" Test the ":wincmd ^" and "<C-W>^" commands.
 func Test_window_split_edit_alternate()
-  e Xa
-  e Xb
 
+  " Test for failure when the alternate buffer/file no longer exists.
+  edit Xfoo | %bw
+  call assert_fails(':wincmd ^', 'E23')
+
+  " Test for the expected behavior when we have two named buffers.
+  edit Xfoo | edit Xbar
   wincmd ^
-  call assert_equal('Xa', bufname(winbufnr(1)))
-  call assert_equal('Xb', bufname(winbufnr(2)))
+  call assert_equal('Xfoo', bufname(winbufnr(1)))
+  call assert_equal('Xbar', bufname(winbufnr(2)))
+  only
 
-  bw Xa Xb
+  " Test for the expected behavior when the alternate buffer is not named.
+  enew | let l:nr1 = bufnr('%')
+  edit Xfoo | let l:nr2 = bufnr('%')
+  wincmd ^
+  call assert_equal(l:nr1, winbufnr(1))
+  call assert_equal(l:nr2, winbufnr(2))
+  only
+
+  " Test the Normal mode command.
+  call feedkeys("\<C-W>\<C-^>", 'tx')
+  call assert_equal(l:nr2, winbufnr(1))
+  call assert_equal(l:nr1, winbufnr(2))
+
+  %bw!
+endfunc
+
+" Test the ":[count]wincmd ^" and "[count]<C-W>^" commands.
+func Test_window_split_edit_bufnr()
+
+  %bwipeout
+  let l:nr = bufnr('%') + 1
+  call assert_fails(':execute "normal! ' . l:nr . '\<C-W>\<C-^>"', 'E92')
+  call assert_fails(':' . l:nr . 'wincmd ^', 'E16')
+  call assert_fails(':0wincmd ^', 'E16')
+
+  edit Xfoo | edit Xbar | edit Xbaz
+  let l:foo_nr = bufnr('Xfoo')
+  let l:bar_nr = bufnr('Xbar')
+  let l:baz_nr = bufnr('Xbaz')
+
+  call feedkeys(l:foo_nr . "\<C-W>\<C-^>", 'tx')
+  call assert_equal('Xfoo', bufname(winbufnr(1)))
+  call assert_equal('Xbaz', bufname(winbufnr(2)))
+  only
+
+  call feedkeys(l:bar_nr . "\<C-W>\<C-^>", 'tx')
+  call assert_equal('Xbar', bufname(winbufnr(1)))
+  call assert_equal('Xfoo', bufname(winbufnr(2)))
+  only
+
+  execute l:baz_nr . 'wincmd ^'
+  call assert_equal('Xbaz', bufname(winbufnr(1)))
+  call assert_equal('Xbar', bufname(winbufnr(2)))
+
+  %bw!
 endfunc
 
 func Test_window_preview()

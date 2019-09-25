@@ -4680,9 +4680,8 @@ static void nv_ctrlo(cmdarg_T *cap)
   }
 }
 
-/*
- * CTRL-^ command, short for ":e #"
- */
+// CTRL-^ command, short for ":e #".  Works even when the alternate buffer is
+// not named.
 static void nv_hat(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap))
