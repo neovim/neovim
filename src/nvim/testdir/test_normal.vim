@@ -2618,6 +2618,61 @@ Piece of Java
   close!
 endfunc
 
+fun! Test_normal_gdollar_cmd()
+  if !has("jumplist")
+    return
+  endif
+  " Tests for g cmds
+  call Setup_NewWindow()
+  " Make long lines that will wrap
+  %s/$/\=repeat(' foobar', 10)/
+  20vsp
+  set wrap
+  " Test for g$ with count
+  norm! gg
+  norm! 0vg$y
+  call assert_equal(20, col("'>"))
+  call assert_equal('1 foobar foobar foob', getreg(0))
+  norm! gg
+  norm! 0v4g$y
+  call assert_equal(72, col("'>"))
+  call assert_equal('1 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.."\n", getreg(0))
+  norm! gg
+  norm! 0v6g$y
+  call assert_equal(40, col("'>"))
+  call assert_equal('1 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+		  \ '2 foobar foobar foobar foobar foobar foo', getreg(0))
+  set nowrap
+  " clean up
+  norm! gg
+  norm! 0vg$y
+  call assert_equal(20, col("'>"))
+  call assert_equal('1 foobar foobar foob', getreg(0))
+  norm! gg
+  norm! 0v4g$y
+  call assert_equal(20, col("'>"))
+  call assert_equal('1 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '2 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '3 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '4 foobar foobar foob', getreg(0))
+  norm! gg
+  norm! 0v6g$y
+  call assert_equal(20, col("'>"))
+  call assert_equal('1 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '2 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '3 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '4 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '5 foobar foobar foobar foobar foobar foobar foobar foobar foobar foobar'.. "\n"..
+                 \  '6 foobar foobar foob', getreg(0))
+  " Move to last line, also down movement is not possible, should still move
+  " the cursor to the last visible char
+  norm! G
+  norm! 0v6g$y
+  call assert_equal(20, col("'>"))
+  call assert_equal('100 foobar foobar fo', getreg(0))
+  bw!
+endfunc
+
 func Test_normal_gk()
   " needs 80 column new window
   new
