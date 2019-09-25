@@ -2038,7 +2038,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     while (j > -1) {
       txtcol += j;
       if (wp->w_p_wrap) {
-        txtcol -= wp->w_skipcol;
+        if (row == 0)
+          txtcol -= wp->w_skipcol;
       } else {
         txtcol -= wp->w_leftcol;
       }
@@ -2054,9 +2055,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   /* Show 'cursorcolumn' in the fold line. */
   if (wp->w_p_cuc) {
     txtcol += wp->w_virtcol;
-    if (wp->w_p_wrap)
-      txtcol -= wp->w_skipcol;
-    else
+    if (wp->w_p_wrap) {
+      if (row == 0)
+        txtcol -= wp->w_skipcol;
+    } else
       txtcol -= wp->w_leftcol;
     if (txtcol >= 0 && txtcol < wp->w_grid.Columns) {
       linebuf_attr[off + txtcol] = hl_combine_attr(
@@ -2623,10 +2625,7 @@ win_line (
    * first character to be displayed.
    */
   if (wp->w_p_wrap) {
-    if (startrow == 0)
-      v = wp->w_skipcol;
-    else
-      v = 0;
+    v = (row == 0 ? wp->w_skipcol : 0);
   } else
     v = wp->w_leftcol;
   if (v > 0 && !number_only) {
@@ -3925,7 +3924,8 @@ win_line (
       long prevcol = (long)(ptr - line) - 1;
 
       // we're not really at that column when skipping some text
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol) {
+      if (wp->w_p_wrap ? (row == 0 && wp->w_skipcol > prevcol)
+          : (wp->w_leftcol > prevcol)) {
         prevcol++;
       }
 
@@ -4014,7 +4014,7 @@ win_line (
       }
       // Highlight 'cursorcolumn' & 'colorcolumn' past end of the line.
       if (wp->w_p_wrap) {
-        v = wp->w_skipcol;
+        v = (row == 0 ? wp->w_skipcol : 0);
       } else {
         v = wp->w_leftcol;
       }
