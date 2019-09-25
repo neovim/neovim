@@ -1337,7 +1337,12 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
 
   check_topfill(wp, false);
 
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL|VALID_TOPLINE);
+  comp_botline(wp);
+
+  if (wp->w_cursor.lnum >= wp->w_botline)
+    wp->w_cursor.lnum = wp->w_botline - 1;
+
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
 }
 
 // Scroll the given window up "rows" rows
@@ -1358,6 +1363,14 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
   colnr_T vcol = 0;
   char_u *ptr = advance_line_ptr_by_width(wp, line, line, &vcol, wp->w_skipcol);
 
+  // Keep track of where the cursor is on the line, relative to the first
+  // visible character. Annoyingly, these use different units, with no
+  // documentation of that fact in sight. w_cursor.col is a byte offset
+  // into the raw string of the line, while w_curswant is a number of
+  // screen columns.
+  colnr_T old_col = wp->w_cursor.col - (colnr_T)(ptr - line);
+  colnr_T old_col_want = wp->w_curswant - vcol;
+
   while (rows > 0) {
     // Skip over one row's worth of characters.
     colnr_T last_vcol = vcol;
@@ -1377,6 +1390,14 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
     wp->w_skipcol = vcol;
     wp->w_wrow--;
     wp->w_cline_row--;
+    // If the cursor would go off-screen from this movement, jump it forward
+    // one row's worth of characters.
+    // XXX deal with scrolloff
+    if (wp->w_wrow < 0) {
+      wp->w_wrow = 0;
+      wp->w_cursor.col = old_col + (colnr_T)(ptr - line);
+      wp->w_curswant = old_col_want + vcol;
+    }
     rows--;
   }
 
