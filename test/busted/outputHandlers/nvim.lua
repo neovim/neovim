@@ -227,8 +227,12 @@ return function(options)
     return nil, true
   end
 
+  local function write_status(element, string)
+    io.write(timeString:format(getElapsedTime(element)) .. ' ' .. string)
+    io.flush()
+  end
+
   handler.testEnd = function(element, _parent, status, _debug)
-    local elapsedTime_ms = getElapsedTime(element)
     local string
 
     fileTestCount = fileTestCount + 1
@@ -241,45 +245,21 @@ return function(options)
       string = skippedString
     elseif status == 'failure' then
       failureCount = failureCount + 1
-      string = nil
+      string = failureString .. failureDescription(handler.failures[#handler.failures])
     elseif status == 'error' then
       errorCount = errorCount + 1
-      string = nil
+      string = errorString .. failureDescription(handler.errors[#handler.errors])
+    else
+      string = "unexpected test status! ("..status..")"
     end
+    write_status(element, string)
 
-    if string ~= nil then
-      if elapsedTime_ms == elapsedTime_ms then
-        string = timeString:format(elapsedTime_ms) .. ' ' .. string
-      end
-      io.write(string)
-      io.flush()
-    end
-
-    return nil, true
-  end
-
-  handler.testFailure = function(_element, _parent, _message, _debug)
-    io.write(failureString)
-    io.flush()
-
-    io.write(failureDescription(handler.failures[#handler.failures]))
-    io.flush()
-    return nil, true
-  end
-
-  handler.testError = function(_element, _parent, _message, _debug)
-    io.write(errorString)
-    io.flush()
-
-    io.write(failureDescription(handler.errors[#handler.errors]))
-    io.flush()
     return nil, true
   end
 
   handler.error = function(element, _parent, _message, _debug)
     if element.descriptor ~= 'it' then
-      io.write(failureDescription(handler.errors[#handler.errors]))
-      io.flush()
+      write_status(element, failureDescription(handler.errors[#handler.errors]))
       errorCount = errorCount + 1
     end
 
@@ -293,8 +273,6 @@ return function(options)
   busted.subscribe({ 'file', 'end' }, handler.fileEnd)
   busted.subscribe({ 'test', 'start' }, handler.testStart, { predicate = handler.cancelOnPending })
   busted.subscribe({ 'test', 'end' }, handler.testEnd, { predicate = handler.cancelOnPending })
-  busted.subscribe({ 'failure', 'it' }, handler.testFailure)
-  busted.subscribe({ 'error', 'it' }, handler.testError)
   busted.subscribe({ 'failure' }, handler.error)
   busted.subscribe({ 'error' }, handler.error)
 
