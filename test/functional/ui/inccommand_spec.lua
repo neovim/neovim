@@ -736,9 +736,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
+      Inc substitution on           |
+      {12:tw}o lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {11:[No Name]                     }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
@@ -793,9 +793,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       Inc substitution on           |
       {12:tw}o lines                     |
+      Inc substitution on           |
+      {12:tw}o lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
@@ -814,9 +814,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       Inc substitution on           |
       o lines                       |
+      Inc substitution on           |
+      o lines                       |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| o lines                   |
       |4| o lines                   |
@@ -833,9 +833,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       Inc substitution on           |
       {12:x}o lines                      |
+      Inc substitution on           |
+      {12:x}o lines                      |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:x}o lines                  |
       |4| {12:x}o lines                  |
@@ -852,9 +852,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       Inc substitution on           |
       o lines                       |
+      Inc substitution on           |
+      o lines                       |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| o lines                   |
       |4| o lines                   |
@@ -874,9 +874,9 @@ describe(":substitute, inccommand=split", function()
     screen:expect([[
       Inc substitution on           |
       {12:XX}o lines                     |
+      Inc substitution on           |
+      {12:XX}o lines                     |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:XX}o lines                 |
       |4| {12:XX}o lines                 |
@@ -938,11 +938,11 @@ describe(":substitute, inccommand=split", function()
     feed(":%s/tw")
     -- 'cursorline' is NOT active during preview.
     screen:expect([[
+      Inc substitution on           |
       {12:tw}o lines                     |
       Inc substitution on           |
       {12:tw}o lines                     |
                                     |
-      {15:~                             }|
       {11:[No Name] [+]                 }|
       |2| {12:tw}o lines                 |
       |4| {12:tw}o lines                 |
@@ -2205,10 +2205,10 @@ describe(":substitute", function()
 
     feed("/KKK")
     screen:expect([[
+      T T123 T T123 T2T TT T23423424|
+      x                             |
       afa {12:KKK}adf la;lkd {12:KKK}alx      |
                                     |
-      {15:~                             }|
-      {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
       |3| afa {12:KKK}adf la;lkd {12:KKK}alx  |
@@ -2485,9 +2485,9 @@ describe(":substitute", function()
     wait()
     feed([[:%s/\(some\)\@<lt>!thing/one/]])
     screen:expect([[
+      something                     |
       every{12:one}                      |
       someone                       |
-      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|
@@ -2527,9 +2527,9 @@ describe(":substitute", function()
     wait()
     feed([[:%s/some\(thing\)\@!/every/]])
     screen:expect([[
+      something                     |
+      everything                    |
       {12:every}one                      |
-      {15:~                             }|
-      {15:~                             }|
       {15:~                             }|
       {15:~                             }|
       {11:[No Name] [+]                 }|

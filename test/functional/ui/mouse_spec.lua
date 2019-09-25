@@ -419,9 +419,9 @@ describe('ui/mouse/input', function()
         meths.set_option('showtabline', 2)
         screen:expect([[
           {fill:test-test2               }|
+          testing                  |
           mouse                    |
           support and selectio^n    |
-          {0:~                        }|
                                    |
         ]])
         meths.set_var('reply', {})
@@ -539,9 +539,9 @@ describe('ui/mouse/input', function()
     feed_command('tabprevious')  -- go to first tab
     screen:expect([[
       {sel: + foo }{tab: + bar }{fill:          }{tab:X}|
+      testing                  |
       mouse                    |
       support and selectio^n    |
-      {0:~                        }|
       :tabprevious             |
     ]])
     feed('<LeftMouse><10,0><LeftRelease>')  -- go to second tab
