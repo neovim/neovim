@@ -715,11 +715,14 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'appveyor' or name == 'quickbuild' or name == 'travis')
+  assert(any or name == 'appveyor' or name == 'quickbuild' or name == 'travis'
+    or name == 'sourcehut')
   local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
   local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
   local qb = ((any or name == 'quickbuild') and nil ~= lfs.attributes('/usr/home/quickbuild'))
-  return tr or av or qb
+  local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
+  return tr or av or qb or sh
+
 end
 
 -- Gets the contents of $NVIM_LOG_FILE for printing to the build log.
