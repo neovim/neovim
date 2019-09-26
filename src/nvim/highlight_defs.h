@@ -54,6 +54,7 @@ typedef enum {
   , HLF_E           // error messages
   , HLF_I           // incremental search
   , HLF_L           // last search string
+  , HLF_LFM         // last found match
   , HLF_M           // "--More--" message
   , HLF_CM          // Mode (e.g., "-- INSERT --")
   , HLF_N           // line number for ":number" and ":#" commands
@@ -109,6 +110,7 @@ EXTERN const char *hlf_names[] INIT(= {
   [HLF_I] = "IncSearch",
   [HLF_L] = "Search",
   [HLF_M] = "MoreMsg",
+  [HLF_LFM] = "SearchLastFoundMatch",
   [HLF_CM] = "ModeMsg",
   [HLF_N] = "LineNr",
   [HLF_CLN] = "CursorLineNr",

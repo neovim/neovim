@@ -3001,7 +3001,7 @@ win_line (
               if (wp->w_cursor.lnum == lnum
                   && wp->w_cursor.col >= (long)shl->startcol
                   && wp->w_cursor.col < (long)shl->endcol) {
-                shl->attr_cur = win_hl_attr(wp, HLF_I);
+                shl->attr_cur = win_hl_attr(wp, HLF_LFM);
               } else {
                 shl->attr_cur = shl->attr;
               }
