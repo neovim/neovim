@@ -5374,7 +5374,8 @@ static void nv_next(cmdarg_T *cap)
     cap->count1 -= 1;
   }
 
-  //redraw_buf_line_later(buf, curwin->w_cursor.lnum);
+  // Redraw the buffer to ensure the highlighting of the current match under
+  // the cursor as well as the old match both get properly updated
   redraw_later(NOT_VALID);
 }
 
