@@ -1554,6 +1554,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
  * Allocate a new location list
  */
 static qf_info_T *ll_new_list(void)
+  FUNC_ATTR_NONNULL_RET
 {
   qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
   qi->qf_refcount++;
@@ -5650,7 +5651,7 @@ void ex_cexpr(exarg_T *eap)
 
 // Get the location list for ":lhelpgrep"
 static qf_info_T *hgr_get_ll(bool *new_ll)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   win_T *wp;
   qf_info_T *qi;
@@ -5670,9 +5671,7 @@ static qf_info_T *hgr_get_ll(bool *new_ll)
   }
   if (qi == NULL) {
     // Allocate a new location list for help text matches
-    if ((qi = ll_new_list()) == NULL) {
-      return NULL;
-    }
+    qi = ll_new_list();
     *new_ll = true;
   }
 
@@ -5810,9 +5809,6 @@ void ex_helpgrep(exarg_T *eap)
 
   if (eap->cmdidx == CMD_lhelpgrep) {
     qi = hgr_get_ll(&new_qi);
-    if (qi == NULL) {
-      return;
-    }
   }
 
   regmatch_T regmatch = {
