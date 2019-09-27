@@ -279,6 +279,9 @@ function Test_printf_misc()
   call assert_equal('abc ', printf('%-4s', 'abc'))
   call assert_equal('abc ', printf('%-4S', 'abc'))
 
+  call assert_equal('🐍', printf('%.2S', '🐍🐍'))
+  call assert_equal('', printf('%.1S', '🐍🐍'))
+
   call assert_equal('1%', printf('%d%%', 1))
 endfunc
 
