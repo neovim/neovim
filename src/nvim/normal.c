@@ -3978,17 +3978,20 @@ void scroll_redraw(int up, long count)
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
   if (curbuf->b_p_scrw && curwin->w_p_wrap) {
-    if (up)
+    if (up) {
       scroll_rows_up(curwin, count, true);
-    else
+    } else {
       scroll_rows_down(curwin, count, true);
-    // HACK: nvim doesn't understand screen invalidation for row-wise scrolling yet
+    }
+    // HACK: nvim doesn't understand screen invalidation for row-wise
+    // scrolling yet
     redraw_later(NOT_VALID);
   } else {
-    if (up)
+    if (up) {
       scrollup(count, true);
-    else
+    } else {
       scrolldown(count, true);
+    }
   }
 
   if (get_scrolloff_value()) {

@@ -2038,8 +2038,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     while (j > -1) {
       txtcol += j;
       if (wp->w_p_wrap) {
-        if (row == 0)
+        if (row == 0) {
           txtcol -= wp->w_skipcol;
+        }
       } else {
         txtcol -= wp->w_leftcol;
       }
@@ -2056,10 +2057,12 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   if (wp->w_p_cuc) {
     txtcol += wp->w_virtcol;
     if (wp->w_p_wrap) {
-      if (row == 0)
+      if (row == 0) {
         txtcol -= wp->w_skipcol;
-    } else
+      }
+    } else {
       txtcol -= wp->w_leftcol;
+    }
     if (txtcol >= 0 && txtcol < wp->w_grid.Columns) {
       linebuf_attr[off + txtcol] = hl_combine_attr(
           linebuf_attr[off + txtcol], win_hl_attr(wp, HLF_CUC));
@@ -2626,8 +2629,9 @@ win_line (
    */
   if (wp->w_p_wrap) {
     v = (row == 0 ? wp->w_skipcol : 0);
-  } else
+  } else {
     v = wp->w_leftcol;
+  }
   if (v > 0 && !number_only) {
     char_u  *prev_ptr = ptr;
     while (vcol < v && *ptr != NUL) {

@@ -934,8 +934,9 @@ void curs_columns(
     win_scroll_lines(curwin, 0, extra);
   } else {
     // XXX what to do here? this should at least be flag-gated
-    if (!curbuf->b_p_scrw)
+    if (!curbuf->b_p_scrw) {
       curwin->w_skipcol = 0;
+    }
   }
   if (prev_skipcol != curwin->w_skipcol)
     redraw_later(NOT_VALID);
@@ -1301,7 +1302,7 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
   int width = wp->w_width_inner - win_col_off(wp);
 
   linenr_T lnum = wp->w_topline;
-  char_u *line = ml_get_buf(wp->w_buffer, lnum, FALSE);
+  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
 
   colnr_T skipcol = wp->w_skipcol;
 
@@ -1329,10 +1330,12 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
     wp->w_skipcol = skipcol;
   }
 
-  if (wp->w_wrow >= wp->w_height_inner)
+  if (wp->w_wrow >= wp->w_height_inner) {
     wp->w_wrow = wp->w_height_inner;
-  if (wp->w_cline_row >= wp->w_height_inner)
+  }
+  if (wp->w_cline_row >= wp->w_height_inner) {
     wp->w_cline_row = wp->w_height_inner;
+  }
 
   // XXX is the below logic correct?
 
@@ -1340,10 +1343,12 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
 
   comp_botline(wp);
 
-  if (wp->w_cursor.lnum >= wp->w_botline)
+  if (wp->w_cursor.lnum >= wp->w_botline) {
     wp->w_cursor.lnum = wp->w_botline - 1;
+  }
 
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|
+                   VALID_VIRTCOL);
 }
 
 // Scroll the given window up "rows" rows
@@ -1379,8 +1384,9 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
 
     // Did we reach the end of the line?
     if ((vcol - last_vcol) < width) {
-      if (wp->w_topline >= wp->w_buffer->b_ml.ml_line_count)
+      if (wp->w_topline >= wp->w_buffer->b_ml.ml_line_count) {
         break;
+      }
 
       lnum++;
       wp->w_topline++;
@@ -1402,21 +1408,26 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
     rows--;
   }
 
-  if (wp->w_wrow < 0)
+  if (wp->w_wrow < 0) {
     wp->w_wrow = 0;
-  if (wp->w_cline_row < 0)
+  }
+  if (wp->w_cline_row < 0) {
     wp->w_cline_row = 0;
+  }
 
-  if (wp->w_topline > curbuf->b_ml.ml_line_count)
+  if (wp->w_topline > curbuf->b_ml.ml_line_count) {
     wp->w_topline = curbuf->b_ml.ml_line_count;
-  if (wp->w_botline > curbuf->b_ml.ml_line_count + 1)
+  }
+  if (wp->w_botline > curbuf->b_ml.ml_line_count + 1) {
     wp->w_botline = curbuf->b_ml.ml_line_count + 1;
+  }
 
   // XXX is the below logic correct?
 
   check_topfill(wp, false);
 
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|
+                   VALID_VIRTCOL);
   if (wp->w_cursor.lnum < wp->w_topline) {
     wp->w_cursor.lnum = wp->w_topline;
     coladvance(wp->w_curswant);
