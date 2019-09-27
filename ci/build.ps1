@@ -15,6 +15,7 @@ $nvimCmakeVars = @{
   CMAKE_BUILD_TYPE = $cmakeBuildType;
   BUSTED_OUTPUT_TYPE = 'nvim';
   DEPS_PREFIX=$(if ($env:DEPS_PREFIX -ne $null) {$env:DEPS_PREFIX} else {".deps/usr"});
+  BUILD_CPACK = 'ON';
 }
 if ($env:DEPS_BUILD_DIR -eq $null) {
   $env:DEPS_BUILD_DIR = ".deps";
