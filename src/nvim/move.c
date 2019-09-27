@@ -851,8 +851,8 @@ void curs_columns(
 
   int plines = 0;
   if ((curwin->w_wrow >= curwin->w_height_inner
-       || ((prev_skipcol > 0
-            || curwin->w_wrow + so >= curwin->w_height_inner)
+       || prev_skipcol > 0
+       || (curwin->w_wrow + so >= curwin->w_height_inner
            && (plines =
                plines_win_nofill(curwin, curwin->w_cursor.lnum, false)) - 1
            >= curwin->w_height_inner))
@@ -934,7 +934,8 @@ void curs_columns(
     win_scroll_lines(curwin, 0, extra);
   } else {
     // XXX what to do here? this should at least be flag-gated
-    // curwin->w_skipcol = 0;
+    if (!curbuf->b_p_scrw)
+      curwin->w_skipcol = 0;
   }
   if (prev_skipcol != curwin->w_skipcol)
     redraw_later(NOT_VALID);
