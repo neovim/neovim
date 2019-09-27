@@ -122,19 +122,6 @@ set(NVIM_API_LEVEL 6)         # Bump this after any API change.
 set(NVIM_API_LEVEL_COMPAT 0)  # Adjust this after a _breaking_ API change.
 set(NVIM_API_PRERELEASE false)
 
-file(TO_CMAKE_PATH ${CMAKE_CURRENT_LIST_DIR}/.git FORCED_GIT_DIR)
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-if(NVIM_VERSION_COMMIT) # is a git repo
-  git_describe(NVIM_VERSION_MEDIUM)
-  # `git describe` annotates the most recent tagged release; for pre-release
-  # builds we must replace that with the unreleased version.
-  string(REGEX REPLACE "^v[0-9]+\\.[0-9]+\\.[0-9]+"
-         "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
-         NVIM_VERSION_MEDIUM
-         ${NVIM_VERSION_MEDIUM})
-endif()
-
 set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 # NVIM_VERSION_CFLAGS set further below.
 
