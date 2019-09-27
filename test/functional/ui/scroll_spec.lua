@@ -129,6 +129,10 @@ describe('scrolling', function()
     before_each(function()
       feed_command('set scrollrowwise')
       feed_lines(20, 20, false)
+      -- Needed for nondeterminism? For some reason, we get the "Screen
+      -- changes were received after the expected state" error here, and
+      -- this redraw seems to help...
+      feed('<C-L>')
       screen:expect([[
         88888888888888888888|
         99999999999999999999|
