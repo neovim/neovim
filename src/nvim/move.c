@@ -1416,7 +1416,7 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
 
   check_topfill(wp, false);
 
-  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL|VALID_TOPLINE);
+  wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|VALID_VIRTCOL);
   if (wp->w_cursor.lnum < wp->w_topline) {
     wp->w_cursor.lnum = wp->w_topline;
     coladvance(wp->w_curswant);
