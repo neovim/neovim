@@ -125,6 +125,29 @@ describe('scrolling', function()
     end)
   end)
 
+  describe('with lines that completely fill multiple rows', function()
+    it('rowwise scrolling works', function()
+      feed_command('set scrollrowwise')
+      feed_lines(2, 40, true)
+      screen:expect([[
+        22222222222222222222|
+        22222222222222222222|
+        ^                    |
+        {0:~                   }|
+                            |
+      ]])
+
+      feed('<C-Y>')
+      screen:expect([[
+        11111111111111111111|
+        22222222222222222222|
+        22222222222222222222|
+        ^                    |
+                            |
+      ]])
+    end)
+  end)
+
   describe('with a very long line in rowwise mode', function()
     before_each(function()
       feed_command('set scrollrowwise')

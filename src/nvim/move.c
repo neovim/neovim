@@ -1323,7 +1323,12 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
 
       line = ml_get_buf(wp->w_buffer, lnum, false);
       colnr_T line_width = win_linetabsize(wp, line, MAXCOL);
-      skipcol = line_width - (line_width % width);
+      // Compute number of columns that this line has on its last row.
+      // We subtract/add one before modulo so that a line length that
+      // is divisible by the width doesn't end up with a blank line
+      // afterwards
+      int offset = ((line_width - 1) % width) + 1;
+      skipcol = line_width - offset;
     }
     wp->w_wrow++;
     wp->w_cline_row++;
