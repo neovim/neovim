@@ -126,6 +126,13 @@ typedef off_t off_T;
  */
 EXTERN int mod_mask INIT(= 0x0);                /* current key modifiers */
 
+
+// TODO(bfredl): for the final interface this should find a more suitable
+// location.
+EXTERN sattr_T *lua_attr_buf INIT(= NULL);
+EXTERN size_t lua_attr_bufsize INIT(= 0);
+EXTERN bool lua_attr_active INIT(= false);
+
 /*
  * Cmdline_row is the row where the command line starts, just below the
  * last window.

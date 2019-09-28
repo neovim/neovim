@@ -835,7 +835,7 @@ Object executor_exec_lua_api(const String str, const Array args, Error *err)
 }
 
 Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
-                            bool retval)
+                            bool retval, Error *err)
 {
   lua_State *const lstate = nlua_enter();
   nlua_pushref(lstate, ref);
@@ -845,16 +845,24 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
   }
 
   if (lua_pcall(lstate, (int)args.size+1, retval ? 1 : 0, 0)) {
-    // TODO(bfredl): callbacks:s might not always be msg-safe, for instance
-    // lua callbacks for redraw events. Later on let the caller deal with the
-    // error instead.
-    nlua_error(lstate, _("Error executing lua callback: %.*s"));
+    // if err is passed, the caller will deal with the error.
+    if (err) {
+      size_t len;
+      const char *errstr = lua_tolstring(lstate, -1, &len);
+      api_set_error(err, kErrorTypeException,
+                    "Error executing lua: %.*s", (int)len, errstr);
+    } else {
+      nlua_error(lstate, _("Error executing lua callback: %.*s"));
+    }
     return NIL;
   }
-  Error err = ERROR_INIT;
 
   if (retval) {
-    return nlua_pop_Object(lstate, false, &err);
+    Error dummy = ERROR_INIT;
+    if (err == NULL) {
+      err = &dummy;
+    }
+    return nlua_pop_Object(lstate, false, err);
   } else {
     return NIL;
   }
@@ -1007,4 +1015,7 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   lua_pushcfunction(lstate, tslua_inspect_lang);
   lua_setfield(lstate, -2, "_ts_inspect_language");
+
+  lua_pushcfunction(lstate, ts_lua_parse_query);
+  lua_setfield(lstate, -2, "_ts_parse_query");
 }

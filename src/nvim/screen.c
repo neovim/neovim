@@ -116,6 +116,8 @@
 #include "nvim/window.h"
 #include "nvim/os/time.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
+#include "nvim/lua/executor.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -228,6 +230,22 @@ void redraw_buf_line_later(buf_T *buf,  linenr_T line)
     if (wp->w_buffer == buf
         && line >= wp->w_topline && line < wp->w_botline) {
       redrawWinline(wp, line);
+    }
+  }
+}
+
+void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf
+        && lastline >= wp->w_topline && firstline < wp->w_botline) {
+      if (wp->w_redraw_top == 0 || wp->w_redraw_top > firstline) {
+          wp->w_redraw_top = firstline;
+      }
+      if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
+          wp->w_redraw_bot = lastline;
+      }
+      redraw_win_later(wp, VALID);
     }
   }
 }
@@ -476,6 +494,19 @@ int update_screen(int type)
       }
       if (wwp == wp && syntax_present(wp)) {
         syn_stack_apply_changes(wp->w_buffer);
+      }
+
+      buf_T *buf = wp->w_buffer;
+      if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+        Error err = ERROR_INIT;
+        FIXED_TEMP_ARRAY(args, 2);
+        args.items[0] = BUFFER_OBJ(buf->handle);
+        args.items[1] = INTEGER_OBJ(display_tick);
+        executor_exec_lua_cb(buf->b_luahl_start, "start", args, false, &err);
+        if (ERROR_SET(&err)) {
+          ELOG("error in luahl start: %s", err.msg);
+          api_clear_error(&err);
+        }
       }
     }
   }
@@ -1181,7 +1212,27 @@ static void win_update(win_T *wp)
   idx = 0;              /* first entry in w_lines[].wl_size */
   row = 0;
   srow = 0;
-  lnum = wp->w_topline;         /* first line shown in window */
+  lnum = wp->w_topline;  // first line shown in window
+
+  if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+    Error err = ERROR_INIT;
+    FIXED_TEMP_ARRAY(args, 4);
+    linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
+                         ? wp->w_botline
+                         : (wp->w_topline + wp->w_height_inner));
+    args.items[0] = WINDOW_OBJ(wp->handle);
+    args.items[1] = BUFFER_OBJ(buf->handle);
+    args.items[2] = INTEGER_OBJ(wp->w_topline-1);
+    args.items[3] = INTEGER_OBJ(knownmax);
+    // TODO(bfredl): we could allow this callback to change mod_top, mod_bot.
+    // For now the "start" callback is expected to use nvim__buf_redraw_range.
+    executor_exec_lua_cb(buf->b_luahl_window, "window", args, false, &err);
+    if (ERROR_SET(&err)) {
+      ELOG("error in luahl window: %s", err.msg);
+      api_clear_error(&err);
+    }
+  }
+
   for (;; ) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
@@ -2229,6 +2280,8 @@ win_line (
 
   row = startrow;
 
+  char *luatext = NULL;
+
   if (!number_only) {
     // To speed up the loop below, set extra_check when there is linebreak,
     // trailing white space and/or syntax processing to be done.
@@ -2453,6 +2506,41 @@ win_line (
 
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
   ptr = line;
+
+  buf_T *buf = wp->w_buffer;
+  if (buf->b_luahl && buf->b_luahl_line != LUA_NOREF) {
+    size_t size = STRLEN(line);
+    if (lua_attr_bufsize < size) {
+      xfree(lua_attr_buf);
+      lua_attr_buf = xcalloc(size, sizeof(*lua_attr_buf));
+      lua_attr_bufsize = size;
+    } else if (lua_attr_buf) {
+      memset(lua_attr_buf, 0, size * sizeof(*lua_attr_buf));
+    }
+    Error err = ERROR_INIT;
+    // TODO(bfredl): build a macro for the "static array" pattern
+    // in buf_updates_send_changes?
+    FIXED_TEMP_ARRAY(args, 3);
+    args.items[0] = WINDOW_OBJ(wp->handle);
+    args.items[1] = BUFFER_OBJ(buf->handle);
+    args.items[2] = INTEGER_OBJ(lnum-1);
+    lua_attr_active = true;
+    extra_check = true;
+    Object o = executor_exec_lua_cb(buf->b_luahl_line, "line",
+                                    args, true, &err);
+    lua_attr_active = false;
+    if (o.type == kObjectTypeString) {
+      // TODO(bfredl): this is a bit of a hack. A final API should use an
+      // "unified" interface where luahl can add both bufhl and virttext
+      luatext = o.data.string.data;
+      do_virttext = true;
+    } else if (ERROR_SET(&err)) {
+      ELOG("error in luahl line: %s", err.msg);
+      luatext = err.msg;
+      do_virttext = true;
+      api_clear_error(&err);
+    }
+  }
 
   if (has_spell && !number_only) {
     // For checking first word with a capital skip white space.
@@ -3429,6 +3517,10 @@ win_line (
           }
         }
 
+        if (buf->b_luahl && v > 0 && v < (long)lua_attr_bufsize+1) {
+          char_attr = hl_combine_attr(char_attr, lua_attr_buf[v-1]);
+        }
+
         if (wp->w_buffer->terminal) {
           char_attr = hl_combine_attr(term_attrs[vcol], char_attr);
         }
@@ -3917,8 +4009,14 @@ win_line (
         int rightmost_vcol = 0;
         int i;
 
-        VirtText virt_text = do_virttext ? bufhl_info.line->virt_text
-                                        : (VirtText)KV_INITIAL_VALUE;
+        VirtText virt_text;
+        if (luatext) {
+          virt_text = (VirtText)KV_INITIAL_VALUE;
+          kv_push(virt_text, ((VirtTextChunk){ .text = luatext, .hl_id = 0 }));
+        } else {
+          virt_text = do_virttext ? bufhl_info.line->virt_text
+                                  : (VirtText)KV_INITIAL_VALUE;
+        }
         size_t virt_pos = 0;
         LineState s = LINE_STATE((char_u *)"");
         int virt_attr = 0;
@@ -4319,6 +4417,7 @@ win_line (
   }
 
   xfree(p_extra_free);
+  xfree(luatext);
   return row;
 }
 

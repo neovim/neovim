@@ -832,6 +832,12 @@ struct file_buffer {
   // The number for times the current line has been flushed in the memline.
   int flush_count;
 
+  bool b_luahl;
+  LuaRef b_luahl_start;
+  LuaRef b_luahl_window;
+  LuaRef b_luahl_line;
+  LuaRef b_luahl_end;
+
   int b_diff_failed;    // internal diff failed for this buffer
 };
 
