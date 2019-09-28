@@ -415,13 +415,15 @@ TSPoint ts_node_end_point(TSNode self) {
 }
 
 TSSymbol ts_node_symbol(TSNode self) {
-  return ts_node__alias(&self)
-    ? ts_node__alias(&self)
-    : ts_subtree_symbol(ts_node__subtree(self));
+  TSSymbol symbol = ts_node__alias(&self);
+  if (!symbol) symbol = ts_subtree_symbol(ts_node__subtree(self));
+  return ts_language_public_symbol(self.tree->language, symbol);
 }
 
 const char *ts_node_type(TSNode self) {
-  return ts_language_symbol_name(self.tree->language, ts_node_symbol(self));
+  TSSymbol symbol = ts_node__alias(&self);
+  if (!symbol) symbol = ts_subtree_symbol(ts_node__subtree(self));
+  return ts_language_symbol_name(self.tree->language, symbol);
 }
 
 char *ts_node_string(TSNode self) {

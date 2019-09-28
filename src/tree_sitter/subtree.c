@@ -18,17 +18,8 @@ typedef struct {
   Length new_end;
 } Edit;
 
-#ifdef TREE_SITTER_TEST
-
-#define TS_MAX_INLINE_TREE_LENGTH 2
-#define TS_MAX_TREE_POOL_SIZE 0
-
-#else
-
 #define TS_MAX_INLINE_TREE_LENGTH UINT8_MAX
 #define TS_MAX_TREE_POOL_SIZE 32
-
-#endif
 
 static const ExternalScannerState empty_state = {.length = 0, .short_data = {0}};
 
@@ -775,10 +766,10 @@ Subtree ts_subtree_last_external_token(Subtree tree) {
 }
 
 static size_t ts_subtree__write_char_to_string(char *s, size_t n, int32_t c) {
-  if (c == 0)
-    return snprintf(s, n, "EOF");
   if (c == -1)
     return snprintf(s, n, "INVALID");
+  else if (c == '\0')
+    return snprintf(s, n, "'\\0'");
   else if (c == '\n')
     return snprintf(s, n, "'\\n'");
   else if (c == '\t')

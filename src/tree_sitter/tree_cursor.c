@@ -244,6 +244,72 @@ TSNode ts_tree_cursor_current_node(const TSTreeCursor *_self) {
   );
 }
 
+TSFieldId ts_tree_cursor_current_status(
+  const TSTreeCursor *_self,
+  bool *can_have_later_siblings,
+  bool *can_have_later_siblings_with_this_field
+) {
+  const TreeCursor *self = (const TreeCursor *)_self;
+  TSFieldId result = 0;
+  *can_have_later_siblings = false;
+  *can_have_later_siblings_with_this_field = false;
+
+  // Walk up the tree, visiting the current node and its invisible ancestors,
+  // because fields can refer to nodes through invisible *wrapper* nodes,
+  for (unsigned i = self->stack.size - 1; i > 0; i--) {
+    TreeCursorEntry *entry = &self->stack.contents[i];
+    TreeCursorEntry *parent_entry = &self->stack.contents[i - 1];
+
+    // Stop walking up when a visible ancestor is found.
+    if (i != self->stack.size - 1) {
+      if (ts_subtree_visible(*entry->subtree)) break;
+      const TSSymbol *alias_sequence = ts_language_alias_sequence(
+        self->tree->language,
+        parent_entry->subtree->ptr->production_id
+      );
+      if (alias_sequence && alias_sequence[entry->structural_child_index]) {
+        break;
+      }
+    }
+
+    if (ts_subtree_child_count(*parent_entry->subtree) > entry->child_index + 1) {
+      *can_have_later_siblings = true;
+    }
+
+    if (ts_subtree_extra(*entry->subtree)) break;
+
+    const TSFieldMapEntry *field_map, *field_map_end;
+    ts_language_field_map(
+      self->tree->language,
+      parent_entry->subtree->ptr->production_id,
+      &field_map, &field_map_end
+    );
+
+    // Look for a field name associated with the current node.
+    if (!result) {
+      for (const TSFieldMapEntry *i = field_map; i < field_map_end; i++) {
+        if (!i->inherited && i->child_index == entry->structural_child_index) {
+          result = i->field_id;
+          *can_have_later_siblings_with_this_field = false;
+          break;
+        }
+      }
+    }
+
+    // Determine if there other later siblings with the same field name.
+    if (result) {
+      for (const TSFieldMapEntry *i = field_map; i < field_map_end; i++) {
+        if (i->field_id == result && i->child_index > entry->structural_child_index) {
+          *can_have_later_siblings_with_this_field = true;
+          break;
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
 TSFieldId ts_tree_cursor_current_field_id(const TSTreeCursor *_self) {
   const TreeCursor *self = (const TreeCursor *)_self;
 
@@ -264,19 +330,18 @@ TSFieldId ts_tree_cursor_current_field_id(const TSTreeCursor *_self) {
       }
     }
 
+    if (ts_subtree_extra(*entry->subtree)) break;
+
     const TSFieldMapEntry *field_map, *field_map_end;
     ts_language_field_map(
       self->tree->language,
       parent_entry->subtree->ptr->production_id,
       &field_map, &field_map_end
     );
-
-    while (field_map < field_map_end) {
-      if (
-        !field_map->inherited &&
-        field_map->child_index == entry->structural_child_index
-      ) return field_map->field_id;
-      field_map++;
+    for (const TSFieldMapEntry *i = field_map; i < field_map_end; i++) {
+      if (!i->inherited && i->child_index == entry->structural_child_index) {
+        return i->field_id;
+      }
     }
   }
   return 0;
