@@ -18845,8 +18845,9 @@ static void f_visualmode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
  */
 static void f_wildmenumode(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (wild_menu_showing)
+  if (wild_menu_showing || ((State & CMDLINE) && pum_visible())) {
     rettv->vval.v_number = 1;
+  }
 }
 
 /// "win_findbuf()" function

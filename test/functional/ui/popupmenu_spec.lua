@@ -516,6 +516,7 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       :sign ^                          |
     ]])
+    eq(0, funcs.wildmenumode())
 
     feed('<tab>')
     screen:expect{grid=[[
@@ -530,6 +531,7 @@ describe('ui/ext_popupmenu', function()
       {1:~                               }|
       :sign define^                    |
     ]], popupmenu={items=wild_expected, pos=0, anchor={1, 9, 6}}}
+    eq(1, funcs.wildmenumode())
 
     feed('<left>')
     screen:expect{grid=[[
@@ -589,6 +591,7 @@ describe('ui/ext_popupmenu', function()
       :sign unplace^                   |
     ]], popupmenu={items=wild_expected, pos=5, anchor={1, 9, 6}}}
     feed('<esc>')
+    eq(0, funcs.wildmenumode())
 
     -- check positioning with multibyte char in pattern
     command("e långfile1")
