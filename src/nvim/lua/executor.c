@@ -31,6 +31,7 @@
 
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
+#include "nvim/lua/treesitter.h"
 
 #include "luv/luv.h"
 
@@ -310,7 +311,11 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_setfield(lstate, -2, "luv");
   lua_pop(lstate, 3);
 
+  // internal vim._treesitter... API
+  nlua_add_treesitter(lstate);
+
   lua_setglobal(lstate, "vim");
+
   return 0;
 }
 
@@ -815,4 +820,28 @@ void ex_luafile(exarg_T *const eap)
     nlua_error(lstate, _("E5113: Error while calling lua chunk: %.*s"));
     return;
   }
+}
+
+static int create_tslua_parser(lua_State *L)
+{
+  if (lua_gettop(L) < 1 || !lua_isstring(L, 1)) {
+    return luaL_error(L, "string expected");
+  }
+
+  const char *lang_name = lua_tostring(L, 1);
+  return tslua_push_parser(L, lang_name);
+}
+
+static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  tslua_init(lstate);
+
+  lua_pushcfunction(lstate, create_tslua_parser);
+  lua_setfield(lstate, -2, "_create_ts_parser");
+
+  lua_pushcfunction(lstate, tslua_register_lang);
+  lua_setfield(lstate, -2, "_ts_add_language");
+
+  lua_pushcfunction(lstate, tslua_inspect_lang);
+  lua_setfield(lstate, -2, "_ts_inspect_language");
 }

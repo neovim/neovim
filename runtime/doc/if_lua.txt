@@ -446,6 +446,112 @@ Example: TCP echo-server				*tcp-server*
     print('TCP echo-server listening on port: '..server:getsockname().port)
 
 ------------------------------------------------------------------------------
+VIM.TREESITTER						*lua-treesitter*
+
+Nvim integrates the tree-sitter library for incremental parsing of buffers.
+
+Currently Nvim does not provide the tree-sitter parsers, instead these must
+be built separately, for instance using the tree-sitter utility.
+The parser is loaded into nvim using >
+
+    vim.treesitter.add_language("/path/to/c_parser.so", "c")
+
+<Create a parser for a buffer and a given language (if another plugin uses the
+same buffer/language combination, it will be safely reused). Use >
+
+    parser = vim.treesitter.get_parser(bufnr, lang)
+
+<`bufnr=0` can be used for current buffer. `lang` will default to 'filetype'  (this
+doesn't work yet for some filetypes like "cpp") Currently, the parser will be
+retained for the lifetime of a buffer but this is subject to change. A plugin
+should keep a reference to the parser object as long as it wants incremental
+updates.
+
+Whenever you need to access the current syntax tree, parse the buffer: >
+
+    tstree = parser:parse()
+
+<This will return an immutable tree that represents the current state of the
+buffer. When the plugin wants to access the state after a (possible) edit
+it should call `parse()` again. If the buffer wasn't edited, the same tree will
+be returned again without extra work. If the buffer was parsed before,
+incremental parsing will be done of the changed parts.
+
+NB: to use the parser directly inside a |nvim_buf_attach| lua callback, you must
+call `get_parser()` before you register your callback. But preferably parsing
+shouldn't be done directly in the change callback anyway as they will be very
+frequent. Rather a plugin that does any kind of analysis on a tree should use
+a timer to throttle too frequent updates.
+
+Tree methods						*lua-treesitter-tree*
+
+tstree:root()						*tstree:root()*
+	Return the root node of this tree.
+
+
+Node methods						*lua-treesitter-node*
+
+tsnode:parent()						*tsnode:parent()*
+	Get the node's immediate parent.
+
+tsnode:child_count()					*tsnode:child_count()*
+	Get the node's number of children.
+
+tsnode:child(N)						*tsnode:child()*
+	Get the node's child at the given index, where zero represents the
+	first child.
+
+tsnode:named_child_count()			*tsnode:named_child_count()*
+	Get the node's number of named children.
+
+tsnode:named_child(N)					*tsnode:named_child()*
+	Get the node's named child at the given index, where zero represents
+	the first named child.
+
+tsnode:start()						*tsnode:start()*
+	Get the node's start position. Return three values: the row, column
+	and total byte count (all zero-based).
+
+tsnode:end_()						*tsnode:end_()*
+	Get the node's end position. Return three values: the row, column
+	and total byte count (all zero-based).
+
+tsnode:range()						*tsnode:range()*
+	Get the range of the node. Return four values: the row, column
+	of the start position, then the row, column of the end position.
+
+tsnode:type()						*tsnode:type()*
+	Get the node's type as a string.
+
+tsnode:symbol()						*tsnode:symbol()*
+	Get the node's type as a numerical id.
+
+tsnode:named()						*tsnode:named()*
+	Check if the node is named. Named nodes correspond to named rules in
+	the  grammar, whereas anonymous nodes correspond to string literals
+	in the grammar.
+
+tsnode:missing()					*tsnode:missing()*
+	Check if the node is missing. Missing nodes are inserted by the
+	parser in order to recover from certain kinds of syntax errors.
+
+tsnode:has_error()					*tsnode:has_error()*
+	Check if the node is a syntax error or contains any syntax errors.
+
+tsnode:sexpr()						*tsnode:sexpr()*
+	Get an S-expression representing the node as a string.
+
+tsnode:descendant_for_range(start_row, start_col, end_row, end_col)
+						*tsnode:descendant_for_range()*
+	Get the smallest node within this node that spans the given range of
+	(row, column) positions
+
+tsnode:named_descendant_for_range(start_row, start_col, end_row, end_col)
+					*tsnode:named_descendant_for_range()*
+	Get the smallest named node within this node that spans the given
+	range of (row, column) positions
+
+------------------------------------------------------------------------------
 VIM							*lua-util*
 
 vim.in_fast_event()					*vim.in_fast_event()*
