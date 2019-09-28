@@ -104,7 +104,6 @@ void tslua_init(lua_State *L)
   build_meta(L, "treesitter_tree", tree_meta);
   build_meta(L, "treesitter_node", node_meta);
   build_meta(L, "treesitter_query", query_meta);
-  build_meta(L, "treesitter_query", query_meta);
 }
 
 int tslua_register_lang(lua_State *L)
@@ -659,6 +658,29 @@ static int node_parent(lua_State *L)
   return 1;
 }
 
+static int query_next_capture(lua_State *L)
+{
+  TSQueryCursor **ud = lua_touserdata(L, lua_upvalueindex(1));
+  TSQueryCursor *cursor = *ud;
+  TSQuery *query = query_check(L, lua_upvalueindex(3));
+
+  TSQueryMatch match;
+  uint32_t capture_index;
+  if (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
+    TSQueryCapture capture = match.captures[capture_index];
+    uint32_t len;
+    const char *name = ts_query_capture_name_for_id(query, capture.index, &len);
+
+    lua_pushlstring(L, name, len);
+    lua_pushvalue(L, lua_upvalueindex(2));  // [name, startnode]
+    push_node(L, capture.node);  // [name, startnode, node]
+    lua_remove(L, -2);  // [name, node]
+    return 2;
+  } else {
+    return 0;
+  }
+}
+
 static int node_query(lua_State *L)
 {
   TSNode node;
@@ -669,25 +691,17 @@ static int node_query(lua_State *L)
   // TODO: these are expensive, use a reuse list?
   TSQueryCursor *cursor = ts_query_cursor_new();
   ts_query_cursor_exec(cursor, query, node);
-  lua_createtable(L, 0, 0);  // [retval]
-  TSQueryMatch match;
-  uint32_t capture_index;
-  int n = 1;
-  while (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
-    TSQueryCapture capture = match.captures[capture_index];
-    uint32_t len;
-    const char *name = ts_query_capture_name_for_id(query, capture.index, &len);
 
-    lua_createtable(L, 2, 0);  // [retval, elem]
-    lua_pushlstring(L, name, len);
-    lua_rawseti(L, -2, 1); // [retval, elem]
-    lua_pushvalue(L, 1); // [retval, elem, startnode]
-    push_node(L, capture.node); // [retval, elem, startnode, node]
-    lua_rawseti(L, -3, 2); // [retval, elem, startnode]
-    lua_pop(L, 1); // [retval, elem]
-    lua_rawseti(L, -2, n++); // [retval]
-  }
+  TSQueryCursor **ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
+  *ud = cursor;
 
+  // TODO: for gc!
+  // lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_querycursor");
+  // lua_setmetatable(L, -2);  // [udata]
+  lua_pushvalue(L, 1);  // [udata, node]
+  lua_pushvalue(L, 2);  // [udata, node, query]
+
+  lua_pushcclosure(L, query_next_capture, 3);  // [closure]
   return 1;
 }
 
