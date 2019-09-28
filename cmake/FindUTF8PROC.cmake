@@ -6,11 +6,9 @@
 
 include(LibFindMacros)
 
-# TODO: required?
-# list(APPEND UTF8PROC_NAMES utf8proc)
-# if(MSVC)
-#   list(APPEND UTF8PROC_NAMES utf8proc_static)
-# endif()
-
-libfind_pkg_detect(UTF8PROC utf8proc FIND_PATH utf8proc.h FIND_LIBRARY utf8proc)
+set(UTF8PROC_NAMES utf8proc)
+if(MSVC)
+  list(APPEND UTF8PROC_NAMES utf8proc_static)
+endif()
+libfind_pkg_detect(UTF8PROC utf8proc FIND_PATH utf8proc.h FIND_LIBRARY ${UTF8PROC_NAMES})
 libfind_process(UTF8PROC REQUIRED)
