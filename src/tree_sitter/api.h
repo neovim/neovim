@@ -26,6 +26,8 @@ typedef uint16_t TSFieldId;
 typedef struct TSLanguage TSLanguage;
 typedef struct TSParser TSParser;
 typedef struct TSTree TSTree;
+typedef struct TSQuery TSQuery;
+typedef struct TSQueryCursor TSQueryCursor;
 
 typedef enum {
   TSInputEncodingUTF8,
@@ -86,6 +88,37 @@ typedef struct {
   const void *id;
   uint32_t context[2];
 } TSTreeCursor;
+
+typedef struct {
+  TSNode node;
+  uint32_t index;
+} TSQueryCapture;
+
+typedef struct {
+  uint32_t id;
+  uint16_t pattern_index;
+  uint16_t capture_count;
+  const TSQueryCapture *captures;
+} TSQueryMatch;
+
+typedef enum {
+  TSQueryPredicateStepTypeDone,
+  TSQueryPredicateStepTypeCapture,
+  TSQueryPredicateStepTypeString,
+} TSQueryPredicateStepType;
+
+typedef struct {
+  TSQueryPredicateStepType type;
+  uint32_t value_id;
+} TSQueryPredicateStep;
+
+typedef enum {
+  TSQueryErrorNone = 0,
+  TSQueryErrorSyntax,
+  TSQueryErrorNodeType,
+  TSQueryErrorField,
+  TSQueryErrorCapture,
+} TSQueryError;
 
 /********************/
 /* Section - Parser */
@@ -322,22 +355,22 @@ const TSLanguage *ts_tree_language(const TSTree *);
 void ts_tree_edit(TSTree *self, const TSInputEdit *edit);
 
 /**
- * Compare a new syntax tree to a previous syntax tree representing the same
+ * Compare an old edited syntax tree to a new syntax tree representing the same
  * document, returning an array of ranges whose syntactic structure has changed.
  *
  * For this to work correctly, the old syntax tree must have been edited such
  * that its ranges match up to the new tree. Generally, you'll want to call
- * this function right after calling one of the `ts_parser_parse` functions,
- * passing in the new tree that was returned from `ts_parser_parse` and the old
- * tree that was passed as a parameter.
+ * this function right after calling one of the `ts_parser_parse` functions.
+ * You need to pass the old tree that was passed to parse, as well as the new
+ * tree that was returned from that function.
  *
  * The returned array is allocated using `malloc` and the caller is responsible
  * for freeing it using `free`. The length of the array will be written to the
  * given `length` pointer.
  */
 TSRange *ts_tree_get_changed_ranges(
-  const TSTree *self,
   const TSTree *old_tree,
+  const TSTree *new_tree,
   uint32_t *length
 );
 
@@ -409,8 +442,8 @@ bool ts_node_is_named(TSNode);
 bool ts_node_is_missing(TSNode);
 
 /**
- * Check if the node is *missing*. Missing nodes are inserted by the parser in
- * order to recover from certain kinds of syntax errors.
+ * Check if the node is *extra*. Extra nodes represent things like comments,
+ * which are not required the grammar, but can appear anywhere.
  */
 bool ts_node_is_extra(TSNode);
 
@@ -601,6 +634,156 @@ bool ts_tree_cursor_goto_first_child(TSTreeCursor *);
 int64_t ts_tree_cursor_goto_first_child_for_byte(TSTreeCursor *, uint32_t);
 
 TSTreeCursor ts_tree_cursor_copy(const TSTreeCursor *);
+
+/*******************/
+/* Section - Query */
+/*******************/
+
+/**
+ * Create a new query from a string containing one or more S-expression
+ * patterns. The query is associated with a particular language, and can
+ * only be run on syntax nodes parsed with that language.
+ *
+ * If all of the given patterns are valid, this returns a `TSQuery`.
+ * If a pattern is invalid, this returns `NULL`, and provides two pieces
+ * of information about the problem:
+ * 1. The byte offset of the error is written to the `error_offset` parameter.
+ * 2. The type of error is written to the `error_type` parameter.
+ */
+TSQuery *ts_query_new(
+  const TSLanguage *language,
+  const char *source,
+  uint32_t source_len,
+  uint32_t *error_offset,
+  TSQueryError *error_type
+);
+
+/**
+ * Delete a query, freeing all of the memory that it used.
+ */
+void ts_query_delete(TSQuery *);
+
+/**
+ * Get the number of patterns, captures, or string literals in the query.
+ */
+uint32_t ts_query_pattern_count(const TSQuery *);
+uint32_t ts_query_capture_count(const TSQuery *);
+uint32_t ts_query_string_count(const TSQuery *);
+
+/**
+ * Get the byte offset where the given pattern starts in the query's source.
+ *
+ * This can be useful when combining queries by concatenating their source
+ * code strings.
+ */
+uint32_t ts_query_start_byte_for_pattern(const TSQuery *, uint32_t);
+
+/**
+ * Get all of the predicates for the given pattern in the query.
+ *
+ * The predicates are represented as a single array of steps. There are three
+ * types of steps in this array, which correspond to the three legal values for
+ * the `type` field:
+ * - `TSQueryPredicateStepTypeCapture` - Steps with this type represent names
+ *    of captures. Their `value_id` can be used with the
+ *   `ts_query_capture_name_for_id` function to obtain the name of the capture.
+ * - `TSQueryPredicateStepTypeString` - Steps with this type represent literal
+ *    strings. Their `value_id` can be used with the
+ *    `ts_query_string_value_for_id` function to obtain their string value.
+ * - `TSQueryPredicateStepTypeDone` - Steps with this type are *sentinels*
+ *    that represent the end of an individual predicate. If a pattern has two
+ *    predicates, then there will be two steps with this `type` in the array.
+ */
+const TSQueryPredicateStep *ts_query_predicates_for_pattern(
+  const TSQuery *self,
+  uint32_t pattern_index,
+  uint32_t *length
+);
+
+/**
+ * Get the name and length of one of the query's captures, or one of the
+ * query's string literals. Each capture and string is associated with a
+ * numeric id based on the order that it appeared in the query's source.
+ */
+const char *ts_query_capture_name_for_id(
+  const TSQuery *,
+  uint32_t id,
+  uint32_t *length
+);
+const char *ts_query_string_value_for_id(
+  const TSQuery *,
+  uint32_t id,
+  uint32_t *length
+);
+
+/**
+ * Disable a certain capture within a query. This prevents the capture
+ * from being returned in matches, and also avoids any resource usage
+ * associated with recording the capture.
+ */
+void ts_query_disable_capture(TSQuery *, const char *, uint32_t);
+
+/**
+ * Create a new cursor for executing a given query.
+ *
+ * The cursor stores the state that is needed to iteratively search
+ * for matches. To use the query cursor, first call `ts_query_cursor_exec`
+ * to start running a given query on a given syntax node. Then, there are
+ * two options for consuming the results of the query:
+ * 1. Repeatedly call `ts_query_cursor_next_match` to iterate over all of the
+ *    the *matches* in the order that they were found. Each match contains the
+ *    index of the pattern that matched, and an array of captures. Because
+ *    multiple patterns can match the same set of nodes, one match may contain
+ *    captures that appear *before* some of the captures from a previous match.
+ * 2. Repeatedly call `ts_query_cursor_next_capture` to iterate over all of the
+ *    individual *captures* in the order that they appear. This is useful if
+ *    don't care about which pattern matched, and just want a single ordered
+ *    sequence of captures.
+ *
+ * If you don't care about consuming all of the results, you can stop calling
+ * `ts_query_cursor_next_match` or `ts_query_cursor_next_capture` at any point.
+ *  You can then start executing another query on another node by calling
+ *  `ts_query_cursor_exec` again.
+ */
+TSQueryCursor *ts_query_cursor_new(void);
+
+/**
+ * Delete a query cursor, freeing all of the memory that it used.
+ */
+void ts_query_cursor_delete(TSQueryCursor *);
+
+/**
+ * Start running a given query on a given node.
+ */
+void ts_query_cursor_exec(TSQueryCursor *, const TSQuery *, TSNode);
+
+/**
+ * Set the range of bytes or (row, column) positions in which the query
+ * will be executed.
+ */
+void ts_query_cursor_set_byte_range(TSQueryCursor *, uint32_t, uint32_t);
+void ts_query_cursor_set_point_range(TSQueryCursor *, TSPoint, TSPoint);
+
+/**
+ * Advance to the next match of the currently running query.
+ *
+ * If there is a match, write it to `*match` and return `true`.
+ * Otherwise, return `false`.
+ */
+bool ts_query_cursor_next_match(TSQueryCursor *, TSQueryMatch *match);
+void ts_query_cursor_remove_match(TSQueryCursor *, uint32_t id);
+
+/**
+ * Advance to the next capture of the currently running query.
+ *
+ * If there is a capture, write its match to `*match` and its index within
+ * the matche's capture list to `*capture_index`. Otherwise, return `false`.
+ */
+bool ts_query_cursor_next_capture(
+  TSQueryCursor *,
+  TSQueryMatch *match,
+  uint32_t *capture_index
+);
 
 /**********************/
 /* Section - Language */

@@ -3,6 +3,7 @@
 
 #include "tree_sitter/api.h"
 
+#define POINT_ZERO ((TSPoint) {0, 0})
 #define POINT_MAX ((TSPoint) {UINT32_MAX, UINT32_MAX})
 
 static inline TSPoint point__new(unsigned row, unsigned column) {
