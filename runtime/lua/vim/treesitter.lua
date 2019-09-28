@@ -1,12 +1,12 @@
 local a = vim.api
 
-local Parser = {}
-Parser.__index = Parser
-
 -- TODO(bfredl): currently we retain parsers for the lifetime of the buffer.
 -- Consider use weak references to release parser if all plugins are done with
 -- it.
 local parsers = {}
+
+local Parser = {}
+Parser.__index = Parser
 
 function Parser:parse()
   if self.valid then
@@ -17,7 +17,7 @@ function Parser:parse()
   return self.tree
 end
 
-local function on_lines(self, bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
+function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
   local start_byte = a.nvim_buf_get_offset(bufnr,start_row)
   local stop_byte = a.nvim_buf_get_offset(bufnr,stop_row)
   local old_stop_byte = start_byte + old_byte_size
@@ -26,17 +26,22 @@ local function on_lines(self, bufnr, _, start_row, old_stop_row, stop_row, old_b
   self.valid = false
 end
 
-local function create_parser(bufnr, ft, id)
+local module = {
+  add_language=vim._ts_add_language,
+  inspect_language=vim._ts_inspect_language,
+}
+
+function module.create_parser(bufnr, ft, id)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
   local self = setmetatable({bufnr=bufnr, valid=false}, Parser)
   self._parser = vim._create_ts_parser(ft)
   self:parse()
-    -- TODO: use weakref to self, so that the parser is free'd is no plugin is
+    -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
     -- using it.
   local function lines_cb(_, ...)
-    return on_lines(self, ...)
+    return self:_on_lines(...)
   end
   local detach_cb = nil
   if id ~= nil then
@@ -50,7 +55,7 @@ local function create_parser(bufnr, ft, id)
   return self
 end
 
-local function get_parser(bufnr, ft)
+function module.get_parser(bufnr, ft)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
@@ -60,14 +65,9 @@ local function get_parser(bufnr, ft)
   local id = tostring(bufnr)..'_'..ft
 
   if parsers[id] == nil then
-    parsers[id] = create_parser(bufnr, ft, id)
+    parsers[id] = module.create_parser(bufnr, ft, id)
   end
   return parsers[id]
 end
 
-return {
-  get_parser=get_parser,
-  create_parser=create_parser,
-  add_language=vim._ts_add_language,
-  inspect_language=vim._ts_inspect_language,
-}
+return module
