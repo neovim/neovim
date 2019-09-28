@@ -375,7 +375,7 @@ include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 find_package(LibLUV 1.30.0 REQUIRED)
 include_directories(SYSTEM ${LIBLUV_INCLUDE_DIRS})
 
-find_package(Utf8proc REQUIRED)
+find_package(UTF8PROC REQUIRED)
 include_directories(SYSTEM ${UTF8PROC_INCLUDE_DIRS})
 if(WIN32)
   add_definitions(-DUTF8PROC_STATIC)
