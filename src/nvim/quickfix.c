@@ -229,9 +229,11 @@ typedef struct {
 //
 #define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
 
+// Macro to loop through all the items in a quickfix list
+// Quickfix item index starts from 1, so i below starts at 1
 #define FOR_ALL_QFL_ITEMS(qfl, qfp, i) \
-  for (i = 0, qfp = qfl->qf_start; \
-      !got_int && i < qfl->qf_count && qfp != NULL; \
+  for (i = 1, qfp = qfl->qf_start; \
+      !got_int && i <= qfl->qf_count && qfp != NULL; \
       ++i, qfp = qfp->qf_next)
 
 
@@ -241,6 +243,47 @@ static char_u *qf_last_bufname = NULL;
 static bufref_T  qf_last_bufref = { NULL, 0, 0 };
 
 static char *e_loc_list_changed = N_("E926: Current location list was changed");
+
+/*
+ * Process the next line from a file/buffer/list/string and add it
+ * to the quickfix list 'qfl'.
+ */
+static int qf_init_process_nextline(
+    qf_list_T	*qfl,
+    efm_T		*fmt_first,
+    qfstate_T	*state,
+    qffields_T	*fields)
+{
+  int status;
+
+  // Get the next line from a file/buffer/list/string
+  status = qf_get_nextline(state);
+  if (status != QF_OK)
+    return status;
+
+  status = qf_parse_line(qfl, state->linebuf, state->linelen,
+      fmt_first, fields);
+  if (status != QF_OK)
+    return status;
+
+  return qf_add_entry(qfl,
+      qfl->qf_directory,
+      (*fields->namebuf || qfl->qf_directory != NULL)
+      ? fields->namebuf
+      : ((qfl->qf_currfile != NULL && fields->valid)
+        ? qfl->qf_currfile : (char_u *)NULL),
+      fields->module,
+      0,
+      fields->errmsg,
+      fields->lnum,
+      fields->col,
+      fields->use_viscol,
+      fields->pattern,
+      fields->enr,
+      fields->type,
+      fields->valid);
+}
+
 
 /// Read the errorfile "efile" into memory, line by line, building the error
 /// list. Set the error list's title to qf_title.
@@ -1066,38 +1109,14 @@ qf_init_ext(
    * Try to recognize one of the error formats in each line.
    */
   while (!got_int) {
-    // Get the next line from a file/buffer/list/string
-    status = qf_get_nextline(&state);
+    status = qf_init_process_nextline(qfl, fmt_first, &state, &fields);
     if (status == QF_END_OF_INPUT) {  // end of input
       break;
     }
-
-    status = qf_parse_line(qfl, state.linebuf, state.linelen,
-                           fmt_first, &fields);
     if (status == QF_FAIL) {
       goto error2;
     }
-    if (status == QF_IGNORE_LINE) {
-      continue;
-    }
 
-    if (qf_add_entry(qfl,
-                     qfl->qf_directory,
-                     (*fields.namebuf || qfl->qf_directory)
-                     ? fields.namebuf : ((qfl->qf_currfile && fields.valid)
-                                         ? qfl->qf_currfile : (char_u *)NULL),
-                     fields.module,
-                     0,
-                     fields.errmsg,
-                     fields.lnum,
-                     fields.col,
-                     fields.use_viscol,
-                     fields.pattern,
-                     fields.enr,
-                     fields.type,
-                     fields.valid) == FAIL) {
-      goto error2;
-    }
     line_breakcheck();
   }
   if (state.fd == NULL || !ferror(state.fd)) {
@@ -1678,7 +1697,7 @@ void qf_free_all(win_T *wp)
 /// @param  type     type character
 /// @param  valid    valid entry
 ///
-/// @returns OK or FAIL.
+/// @returns QF_OK or QF_FAIL.
 static int qf_add_entry(qf_list_T *qfl, char_u *dir, char_u *fname,
                         char_u *module, int bufnum, char_u *mesg, long lnum,
                         int col, char_u vis_col, char_u *pattern, int nr,
@@ -1741,7 +1760,7 @@ static int qf_add_entry(qf_list_T *qfl, char_u *dir, char_u *fname,
     qfl->qf_ptr = qfp;
   }
 
-  return OK;
+  return QF_OK;
 }
 
 /*
@@ -1800,7 +1819,7 @@ static int copy_loclist_entries(qf_list_T *from_qfl, qf_list_T *to_qfl) {
           from_qfp->qf_pattern,
           from_qfp->qf_nr,
           0,
-          from_qfp->qf_valid) == FAIL)
+          from_qfp->qf_valid) == QF_FAIL)
       return FAIL;
 
     // qf_add_entry() will not set the qf_num field, as the
@@ -2144,7 +2163,7 @@ static bool is_qf_entry_present(qf_list_T *qfl, qfline_T *qf_ptr)
     }
   }
 
-  if (i == qfl->qf_count) {  // Entry is not found
+  if (i > qfl->qf_count) {  // Entry is not found
     return false;
   }
 
@@ -2957,21 +2976,10 @@ void qf_list(exarg_T *eap)
   if (qfl->qf_nonevalid) {
     all = true;
   }
-  qfp = qfl->qf_start;
-  for (i = 1; !got_int && i <= qfl->qf_count; ) {
+  FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
     if ((qfp->qf_valid || all) && idx1 <= i && i <= idx2) {
-      if (got_int) {
-        break;
-      }
-
       qf_list_entry(qfp, i, i == qfl->qf_index);
     }
-
-    qfp = qfp->qf_next;
-    if (qfp == NULL) {
-      break;
-    }
-    i++;
     os_breakcheck();
   }
 }
@@ -4103,9 +4111,7 @@ static size_t qf_get_nth_valid_entry(qf_list_T *qfl, size_t n, int fdo)
   size_t i;
   qfline_T *qfp;
   assert(qfl->qf_count >= 0);
-  for (i = 1, qfp = qfl->qf_start;
-       i <= (size_t)qfl->qf_count && qfp != NULL;
-       i++, qfp = qfp->qf_next) {
+  FOR_ALL_QFL_ITEMS(qfl, qfp, i) {
     if (qfp->qf_valid) {
       if (fdo) {
         if (qfp->qf_fnum > 0 && qfp->qf_fnum != prev_fnum) {
@@ -4437,7 +4443,7 @@ static bool vgr_match_buflines(qf_info_T *qi, char_u *fname, buf_T *buf,
                        0,      // nr
                        0,      // type
                        true    // valid
-                       ) == FAIL) {
+                       ) == QF_FAIL) {
         got_int = true;
         break;
       }
@@ -5411,7 +5417,7 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
     }
 
     retval = qf_add_entry_from_dict(qfl, d, li == list->lv_first); 
-    if (retval == FAIL) {
+    if (retval == QF_FAIL) {
       break;
     }
   });
@@ -6034,7 +6040,7 @@ static void hgr_search_file(
                        0,      // nr
                        1,      // type
                        true    // valid
-                       ) == FAIL) {
+                       ) == QF_FAIL) {
         got_int = true;
         if (line != IObuff) {
           xfree(line);
