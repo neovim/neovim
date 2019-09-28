@@ -66,6 +66,13 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
+  { "query", node_query },
+  { NULL, NULL }
+};
+
+static struct luaL_Reg query_meta[] = {
+  { "__gc", query_gc },
+  { "__tostring", query_tostring },
   { NULL, NULL }
 };
 
@@ -96,6 +103,8 @@ void tslua_init(lua_State *L)
   build_meta(L, "treesitter_parser", parser_meta);
   build_meta(L, "treesitter_tree", tree_meta);
   build_meta(L, "treesitter_node", node_meta);
+  build_meta(L, "treesitter_query", query_meta);
+  build_meta(L, "treesitter_query", query_meta);
 }
 
 int tslua_register_lang(lua_State *L)
@@ -650,3 +659,105 @@ static int node_parent(lua_State *L)
   return 1;
 }
 
+static int node_query(lua_State *L)
+{
+  TSNode node;
+  if (!node_check(L, &node)) {
+    return 0;
+  }
+  TSQuery *query = query_check(L, 2);
+  // TODO: these are expensive, use a reuse list?
+  TSQueryCursor *cursor = ts_query_cursor_new();
+  ts_query_cursor_exec(cursor, query, node);
+  lua_createtable(L, 0, 0);  // [retval]
+  TSQueryMatch match;
+  uint32_t capture_index;
+  int n = 1;
+  while (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
+    TSQueryCapture capture = match.captures[capture_index];
+    uint32_t len;
+    const char *name = ts_query_capture_name_for_id(query, capture.index, &len);
+
+    lua_createtable(L, 2, 0);  // [retval, elem]
+    lua_pushlstring(L, name, len);
+    lua_rawseti(L, -2, 1); // [retval, elem]
+    lua_pushvalue(L, 1); // [retval, elem, startnode]
+    push_node(L, capture.node); // [retval, elem, startnode, node]
+    lua_rawseti(L, -3, 2); // [retval, elem, startnode]
+    lua_pop(L, 1); // [retval, elem]
+    lua_rawseti(L, -2, n++); // [retval]
+  }
+
+  return 1;
+}
+
+// Query methods
+
+/// push node interface on lua stack
+///
+/// top of stack must either be the tree this node belongs to or another node
+/// of the same tree! This value is not popped. Can only be called inside a
+/// cfunction with the tslua environment.
+int ts_lua_parse_query(lua_State *L)
+{
+  if (lua_gettop(L) < 2 || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+    return luaL_error(L, "string expected");
+  }
+
+  const char *lang_name = lua_tostring(L, 1);
+  TSLanguage *lang = pmap_get(cstr_t)(langs, lang_name);
+  if (!lang) {
+    return luaL_error(L, "no such language: %s", lang_name);
+  }
+
+  size_t len;
+  const char *src = lua_tolstring(L, 2, &len);
+
+  uint32_t error_offset;
+  TSQueryError error_type;
+  TSQuery *query = ts_query_new(lang, src, len, &error_offset, &error_type);
+
+  if (!query) {
+    return luaL_error(L, "query: %s at position %d",
+                      query_err_string(error_type), (int)error_offset);
+  }
+
+  TSQuery **ud = lua_newuserdata(L, sizeof(TSQuery *));  // [udata]
+  *ud = query;
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_query");  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
+  return 1;
+}
+
+static const char *query_err_string(TSQueryError err) {
+  switch (err) {
+    case TSQueryErrorSyntax: return "invalid syntax";
+    case TSQueryErrorNodeType: return "invalid node type";
+    case TSQueryErrorField: return "invalid field";
+    case TSQueryErrorCapture: return "invalid capture";
+    default: return "error";
+  }
+}
+
+static TSQuery *query_check(lua_State *L, int index)
+{
+  TSQuery **ud = luaL_checkudata(L, index, "treesitter_query");
+  return *ud;
+}
+
+static int query_gc(lua_State *L)
+{
+  TSQuery *query = query_check(L, 1);
+  if (!query) {
+    return 0;
+  }
+
+  ts_query_delete(query);
+  return 0;
+}
+
+static int query_tostring(lua_State *L)
+{
+  lua_pushstring(L, "<query>");
+  return 1;
+}

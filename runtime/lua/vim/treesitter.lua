@@ -29,6 +29,7 @@ end
 local module = {
   add_language=vim._ts_add_language,
   inspect_language=vim._ts_inspect_language,
+  parse_query = vim._ts_parse_query,
 }
 
 function module.create_parser(bufnr, ft, id)
