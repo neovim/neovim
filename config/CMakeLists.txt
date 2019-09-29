@@ -146,7 +146,7 @@ elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
       BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef.h)
     add_dependencies(nvim update_version_stamp)
   else()
-    message(STATUS "Detected development build, but could not find git program")
+  message(STATUS "Skipping version-string generation (cannot find git)")
   endif()
 endif()
 
