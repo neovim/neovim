@@ -581,7 +581,8 @@ void conceal_check_cursor_line(void)
 bool win_cursorline_standout(const win_T *wp)
   FUNC_ATTR_NONNULL_ALL
 {
-  return wp->w_p_cul || (wp->w_p_cole > 0 && !conceal_cursor_line(wp));
+  return wp->w_p_cul
+    || (wp->w_p_cole > 0 && (VIsual_active || !conceal_cursor_line(wp)));
 }
 
 /*
