@@ -52,7 +52,7 @@ nvm use --lts
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"
-  curl --retry 5 --silent --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
+  curl --retry 5 --silent --show-error --fail -o /tmp/cmake-installer.sh "$CMAKE_URL"
   mkdir -p "$HOME/.local/bin" /opt/cmake-custom
   bash /tmp/cmake-installer.sh --prefix=/opt/cmake-custom --skip-license
   ln -sfn /opt/cmake-custom/bin/cmake "$HOME/.local/bin/cmake"
