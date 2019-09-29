@@ -124,7 +124,7 @@ configure_file (
 if(NVIM_VERSION_MEDIUM)
   message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
 elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
-  message(STATUS "Skipping development version handling with CMake < 3.2.0")
+  message(STATUS "Skipping version-string generation (requires CMake 3.2.0+)")
 elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
   find_program(GIT_EXECUTABLE git)
   if(GIT_EXECUTABLE)
