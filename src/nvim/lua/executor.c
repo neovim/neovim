@@ -860,6 +860,10 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
   }
 
   if (retval) {
+    Error dummy = ERROR_INIT;
+    if (err == NULL) {
+      err = &dummy;
+    }
     return nlua_pop_Object(lstate, false, err);
   } else {
     return NIL;
