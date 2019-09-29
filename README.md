@@ -67,7 +67,7 @@ To skip bundled (`third-party/*`) dependencies:
 
 1. Install the dependencies using a package manager.
    ```
-   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev
+   sudo apt install gperf luajit luarocks libuv1-dev libluajit-5.1-dev libunibilium-dev libmsgpack-dev libtermkey-dev libvterm-dev libutf8proc-dev
    sudo luarocks build mpack
    sudo luarocks build lpeg
    sudo luarocks build inspect
