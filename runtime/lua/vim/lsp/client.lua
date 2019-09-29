@@ -100,7 +100,6 @@ client.start = function(self)
   end
 
   autocmd.register_text_document_autocmd(self.filetype, self.server_name)
-  -- autocmd.register_attach_buf_autocmd(self)
 end
 
 client.stop = function(self)
@@ -108,10 +107,7 @@ client.stop = function(self)
     return
   end
 
-  -- for bufnr, flag in pairs(self.attached_buf_list) do
-  --   if flag then vim.api.nvim_buf_detach(bufnr) end
-  --   self.attached_buf_list[bufnr] = false
-  -- end
+  autocmd.unregister_autocmd(self.filetype, self.server_name)
 
   if (vim.api.nvim_call_function('exists', {'g:language_client_enable_shutdown_request'}) == 1) and
     vim.api.nvim_get_var('language_client_log_level') ~= 0 then
@@ -177,6 +173,7 @@ client.set_buf_change_handler = function(self, bufnr)
 end
 
 client.handle_text_document_did_change = function(self, _, bufnr, changedtick, firstline, lastline, new_lastline, old_bytes, _, units)
+  if self._stopped then return true end
   local uri = vim.uri_from_bufnr(bufnr)
   local version = changedtick
   local textDocument = { uri = uri, version = version }

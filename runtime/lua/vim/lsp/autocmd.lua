@@ -1,20 +1,19 @@
 local autocmd = {}
 
-autocmd.register_text_document_did_open_autocmd = function(filetype)
+autocmd.register_text_document_did_open_autocmd = function(filetype, server_name)
   vim.api.nvim_command(
-    string.format("autocmd BufReadPost * :lua vim.lsp.notify('textDocument/didOpen', vim.lsp.protocol.DidOpenTextDocumentParams(), nil, nil, '%s')", filetype)
-  )
+    string.format("autocmd BufReadPost * :lua vim.lsp.notify('textDocument/didOpen', vim.lsp.protocol.DidOpenTextDocumentParams(), nil, '%s', '%s')", filetype, server_name))
   end
 
-autocmd.register_text_document_did_save_autocmd = function(filetype)
+autocmd.register_text_document_did_save_autocmd = function(filetype, server_name)
   vim.api.nvim_command(
-    string.format("autocmd BufWritePost * :lua vim.lsp.notify('textDocument/didSave', vim.lsp.protocol.DidSaveTextDocumentParams(), nil, nil, '%s')", filetype)
+    string.format("autocmd BufWritePost * :lua vim.lsp.notify('textDocument/didSave', vim.lsp.protocol.DidSaveTextDocumentParams(), nil, '%s', '%s')", filetype, server_name)
   )
 end
 
-autocmd.register_text_document_did_close_autocmd = function(filetype)
+autocmd.register_text_document_did_close_autocmd = function(filetype, server_name)
   vim.api.nvim_command(
-    string.format("autocmd BufWinLeave * :lua vim.lsp.notify('textDocument/didClose', vim.lsp.protocol.DidCloseTextDocumentParams(), nil, nil, '%s')", filetype)
+    string.format("autocmd BufWinLeave * :lua vim.lsp.notify('textDocument/didClose', vim.lsp.protocol.DidCloseTextDocumentParams(), nil, '%s', '%s')", filetype, server_name)
   )
 end
 
@@ -24,21 +23,22 @@ autocmd.register_attach_buf_autocmd = function(filetype, server_name)
   )
 end
 
-autocmd.register_text_document_autocmd = function(filetype)
-  assert(type(filetype) == 'string', '')
+autocmd.register_text_document_autocmd = function(filetype, server_name)
+  assert(type(filetype) == 'string', "'filetype' argument is required.")
 
-  vim.api.nvim_command('augroup Lsp-'..filetype)
+  vim.api.nvim_command('augroup LSP-'..filetype..'-'..server_name..'-textDocument')
   vim.api.nvim_command('autocmd!')
-  autocmd.register_text_document_did_open_autocmd(filetype)
-  autocmd.register_text_document_did_save_autocmd(filetype)
-  autocmd.register_text_document_did_close_autocmd(filetype)
+  autocmd.register_text_document_did_open_autocmd(filetype, server_name)
+  autocmd.register_text_document_did_save_autocmd(filetype, server_name)
+  autocmd.register_text_document_did_close_autocmd(filetype, server_name)
+  autocmd.register_attach_buf_autocmd(filetype, server_name)
   vim.api.nvim_command('augroup END')
 end
 
-autocmd.unregister_autocmd = function(filetype)
+autocmd.unregister_autocmd = function(filetype, server_name)
   assert(type(filetype) == 'string', '')
 
-  vim.api.nvim_command('augroup Lsp-'..filetype)
+  vim.api.nvim_command('augroup LSP-'..filetype..'-'..server_name..'-textDocument')
   vim.api.nvim_command('autocmd!')
   vim.api.nvim_command('augroup END')
 end
