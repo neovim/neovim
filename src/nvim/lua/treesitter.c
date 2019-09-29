@@ -692,6 +692,13 @@ static int node_query(lua_State *L)
   TSQueryCursor *cursor = ts_query_cursor_new();
   ts_query_cursor_exec(cursor, query, node);
 
+  if (lua_gettop(L) >= 3) {
+    int start = luaL_checkinteger(L,3);
+    int end = luaL_checkinteger(L,4);
+    ts_query_cursor_set_point_range(cursor,
+                                    (TSPoint){ start, 0}, (TSPoint){ end, 0});
+  }
+
   TSQueryCursor **ud = lua_newuserdata(L, sizeof(*ud));  // [udata]
   *ud = cursor;
 
