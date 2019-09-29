@@ -2140,7 +2140,7 @@ static win_T *qf_find_win_with_normal_buf(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer->b_p_bt[0] == NUL) {
+    if (bt_normal(wp->w_buffer)) {
       return wp;
     }
   }
@@ -2204,7 +2204,7 @@ static void qf_goto_win_with_ll_file(win_T *use_win, int qf_fnum,
       // Find a previous usable window
       win = curwin;
       do {
-        if (win->w_buffer->b_p_bt[0] == NUL) {
+        if (bt_normal(win->w_buffer)) {
           break;
         }
         if (win->w_prev == NULL) {
@@ -2258,7 +2258,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
     // Remember a usable window.
     if (altwin == NULL
         && !win->w_p_pvw
-        && win->w_buffer->b_p_bt[0] == NUL) {
+        && bt_normal(win->w_buffer)) {
       altwin = win;
     }
   }
