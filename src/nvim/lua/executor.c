@@ -835,7 +835,7 @@ Object executor_exec_lua_api(const String str, const Array args, Error *err)
 }
 
 Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
-                            bool retval)
+                            bool retval, Error *err)
 {
   lua_State *const lstate = nlua_enter();
   nlua_pushref(lstate, ref);
@@ -848,13 +848,19 @@ Object executor_exec_lua_cb(LuaRef ref, const char *name, Array args,
     // TODO(bfredl): callbacks:s might not always be msg-safe, for instance
     // lua callbacks for redraw events. Later on let the caller deal with the
     // error instead.
-    nlua_error(lstate, _("Error executing lua callback: %.*s"));
+    if (err) {
+      size_t len;
+      const char *errstr = lua_tolstring(lstate, -1, &len);
+      api_set_error(err, kErrorTypeException,
+                    "Error executing lua: %.*s", (int)len, errstr);
+    } else {
+      nlua_error(lstate, _("Error executing lua callback: %.*s"));
+    }
     return NIL;
   }
-  Error err = ERROR_INIT;
 
   if (retval) {
-    return nlua_pop_Object(lstate, false, &err);
+    return nlua_pop_Object(lstate, false, err);
   } else {
     return NIL;
   }

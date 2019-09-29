@@ -833,7 +833,10 @@ struct file_buffer {
   int flush_count;
 
   // TODO(bfredl): this should be luaref!
-  char *b_luahl;
+  bool b_luahl;
+  LuaRef b_luahl_start;
+  LuaRef b_luahl_line;
+  LuaRef b_luahl_end;
 
   int b_diff_failed;    // internal diff failed for this buffer
 };

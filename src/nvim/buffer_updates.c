@@ -157,7 +157,7 @@ void buf_updates_unregister_all(buf_T *buf)
       args.items[0] = BUFFER_OBJ(buf->handle);
 
       textlock++;
-      executor_exec_lua_cb(cb.on_detach, "detach", args, false);
+      executor_exec_lua_cb(cb.on_detach, "detach", args, false, NULL);
       textlock--;
     }
     free_update_callbacks(cb);
@@ -265,7 +265,7 @@ void buf_updates_send_changes(buf_T *buf,
         args.items[7] = INTEGER_OBJ((Integer)deleted_codeunits);
       }
       textlock++;
-      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true);
+      Object res = executor_exec_lua_cb(cb.on_lines, "lines", args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {
@@ -306,7 +306,7 @@ void buf_updates_changedtick(buf_T *buf)
 
       textlock++;
       Object res = executor_exec_lua_cb(cb.on_changedtick, "changedtick",
-                                        args, true);
+                                        args, true, NULL);
       textlock--;
 
       if (res.type == kObjectTypeBoolean && res.data.boolean == true) {

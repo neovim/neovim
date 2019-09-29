@@ -169,21 +169,21 @@ Boolean nvim_buf_attach(uint64_t channel_id,
         goto error;
       }
       cb.on_lines = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_changedtick", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       cb.on_changedtick = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("on_detach", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       cb.on_detach = v->data.luaref;
-      v->data.integer = LUA_NOREF;
+      v->data.luaref = LUA_NOREF;
     } else if (is_lua && strequal("utf_sizes", k.data)) {
       if (v->type != kObjectTypeBoolean) {
         api_set_error(err, kErrorTypeValidation, "utf_sizes must be boolean");
@@ -232,7 +232,7 @@ Boolean nvim_buf_detach(uint64_t channel_id,
 }
 
 /// TODO: use ref
-void nvim_buf_set_luahl(Buffer buffer, String cb, Error *err)
+void nvim_buf_set_luahl(uint64_t channel_id, Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   FUNC_API_SINCE(5)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -240,12 +240,45 @@ void nvim_buf_set_luahl(Buffer buffer, String cb, Error *err)
   if (!buf) {
     return;
   }
-  xfree(buf->b_luahl);
-  if (cb.size > 0) {
-    buf->b_luahl = xstrdup(cb.data);
-  } else {
-    buf->b_luahl = NULL;
+  if (channel_id != LUA_INTERNAL_CALL) {
+    // TODO: function should be invisible from vimL/remote
+    return;
   }
+
+  if (buf->b_luahl) {
+    executor_free_luaref(buf->b_luahl_start);
+    executor_free_luaref(buf->b_luahl_line);
+    executor_free_luaref(buf->b_luahl_end);
+  }
+  buf->b_luahl_start = LUA_NOREF;
+  buf->b_luahl_line = LUA_NOREF;
+  buf->b_luahl_end = LUA_NOREF;
+
+  for (size_t i = 0; i < opts.size; i++) {
+    String k = opts.items[i].key;
+    Object *v = &opts.items[i].value;
+    if (strequal("on_line", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_line = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_start", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_start = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    }
+    // TODO: is "end" useful?
+  }
+  buf->b_luahl = true;
+  return;
+error:
+  buf->b_luahl = false;
+  // TODO: free stuff!
 }
 
 /// Sets a buffer line

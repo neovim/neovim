@@ -117,6 +117,7 @@
 #include "nvim/os/time.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
+#include "nvim/lua/executor.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -1183,6 +1184,24 @@ static void win_update(win_T *wp)
   row = 0;
   srow = 0;
   lnum = wp->w_topline;         /* first line shown in window */
+
+
+  if (buf->b_luahl && buf->b_luahl_start != LUA_NOREF) {
+    Error err = ERROR_INIT;
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, WINDOW_OBJ(wp->handle));
+    ADD(args, BUFFER_OBJ(wp->w_buffer->handle));
+    ADD(args, INTEGER_OBJ(lnum-1));
+    lua_attr_active = true;
+    Object o = executor_exec_lua_cb(buf->b_luahl_start, "start", args, true, &err);
+    lua_attr_active = false;
+    if (o.type == kObjectTypeString) {
+      // TODO
+    } else if (ERROR_SET(&err)) {
+      // TODO
+    }
+  }
+
   for (;; ) {
     /* stop updating when reached the end of the window (check for _past_
      * the end of the window is at the end of the loop) */
@@ -2457,7 +2476,8 @@ win_line (
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
   ptr = line;
 
-  if (wp->w_buffer->b_luahl) {
+  buf_T *buf = wp->w_buffer;
+  if (buf->b_luahl && buf->b_luahl_line != LUA_NOREF) {
     size_t size = STRLEN(line);
     if (lua_attr_bufsize < size) {
       xfree(lua_attr_buf);
@@ -2471,9 +2491,8 @@ win_line (
     ADD(args, WINDOW_OBJ(wp->handle));
     ADD(args, BUFFER_OBJ(wp->w_buffer->handle));
     ADD(args, INTEGER_OBJ(lnum-1));
-    String s = cstr_to_string(wp->w_buffer->b_luahl);
     lua_attr_active = true;
-    Object o = nvim_execute_lua(s, args, &err);
+    Object o = executor_exec_lua_cb(buf->b_luahl_line, "line", args, true, &err);
     lua_attr_active = false;
     if (o.type == kObjectTypeString) {
       luatext = o.data.string.data;
