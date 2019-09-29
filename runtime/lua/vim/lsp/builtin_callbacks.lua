@@ -42,7 +42,7 @@ local BuiltinCallbacks = {}
 -- nvim/error_callback
 BuiltinCallbacks['nvim/error_callback'] = {
   callback = function(self, data, method_name)
-    logger.debug('callback:nvim/error_callback', data, self)
+    logger.debug('callback:nvim/error_callback ', method_name, ' ', data, ' ', self)
 
     local message = ''
     if data.message ~= nil and type(data.message) == 'string' then
@@ -64,7 +64,7 @@ BuiltinCallbacks['nvim/error_callback'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 BuiltinCallbacks['textDocument/publishDiagnostics']= {
   callback = function(self, data)
-    logger.debug('callback:textDocument/publishDiagnostics', data, self)
+    logger.debug('callback:textDocument/publishDiagnostics ', data, ' ', self)
     logger.debug('Not implemented textDocument/publishDiagnostics callback')
   end,
   options = {},
@@ -74,7 +74,7 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 BuiltinCallbacks['textDocument/completion'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/completion', data, self)
+    logger.debug('callback:textDocument/completion ', data, ' ', self)
 
     if not data or vim.tbl_isempty(data) then
       return
@@ -102,7 +102,7 @@ BuiltinCallbacks['textDocument/completion'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
 BuiltinCallbacks['textDocument/signatureHelp'] = {
   callback = function(self, data)
-    logger.debug('textDocument/signatureHelp', data, self)
+    logger.debug('textDocument/signatureHelp ', data, ' ', self)
 
     if data == nil or vim.tbl_isempty(data) then
       return
@@ -144,7 +144,7 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
 BuiltinCallbacks['textDocument/references'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/references', data, self)
+    logger.debug('callback:textDocument/references ', data, ' ', self)
     logger.debug('Not implemented textDocument/publishDiagnostics callback')
   end,
   options = {},
@@ -153,7 +153,7 @@ BuiltinCallbacks['textDocument/references'] = {
 -- textDocument/rename
 BuiltinCallbacks['textDocument/rename'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/rename', data, self)
+    logger.debug('callback:textDocument/rename ', data, ' ', self)
 
     if not data then
       return nil
@@ -171,7 +171,7 @@ BuiltinCallbacks['textDocument/rename'] = {
 -- @params MarkedString | MarkedString[] | MarkupContent
 BuiltinCallbacks['textDocument/hover'] = {
   callback = function(self, data)
-    logger.debug('textDocument/hover', data, self)
+    logger.debug('textDocument/hover ', data, ' ', self)
 
     if not data or vim.tbl_isempty(data) then
       return
@@ -235,7 +235,7 @@ BuiltinCallbacks['textDocument/hover'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_declaration
 BuiltinCallbacks['textDocument/declaration'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/definiton', data, self)
+    logger.debug('callback:textDocument/definiton ', data, ' ', self)
 
     if not data or data == {} then
       logger.info('No declaration found')
@@ -253,7 +253,7 @@ BuiltinCallbacks['textDocument/declaration'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_definition
 BuiltinCallbacks['textDocument/definition'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/definiton', data, self)
+    logger.debug('callback:textDocument/definiton ', data, ' ', self)
 
     if not data or data == {} then
       logger.info('No definition found')
@@ -271,7 +271,7 @@ BuiltinCallbacks['textDocument/definition'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_typeDefinition
 BuiltinCallbacks['textDocument/typeDefinition'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/typeDefiniton', data, self)
+    logger.debug('callback:textDocument/typeDefiniton ', data, ' ', self)
 
     if not data or data == {} then
       logger.info('No type definition found')
@@ -289,7 +289,7 @@ BuiltinCallbacks['textDocument/typeDefinition'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_implementation
 BuiltinCallbacks['textDocument/implementation'] = {
   callback = function(self, data)
-    logger.debug('callback:textDocument/implementation', data, self)
+    logger.debug('callback:textDocument/implementation ', data, ' ', self)
 
     if not data or data == {} then
       logger.info('No implementation found')
@@ -307,7 +307,7 @@ BuiltinCallbacks['textDocument/implementation'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
 BuiltinCallbacks['window/showMessage'] = {
   callback = function(self, data)
-    logger.debug('callback:window/showMessage', data, self)
+    logger.debug('callback:window/showMessage ', data, ' ', self)
 
     if not data or type(data) ~= 'table' then
       print(self)

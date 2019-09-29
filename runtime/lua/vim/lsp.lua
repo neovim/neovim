@@ -3,6 +3,7 @@ local lsp = {
   config = require('vim.lsp.config'),
   protocol = require('vim.lsp.protocol'),
   builtin_callbacks = require('vim.lsp.builtin_callbacks'),
+  autocmd = require('vim.lsp.autocmd'),
   util = require('vim.lsp.util'),
 }
 

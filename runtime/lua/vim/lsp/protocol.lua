@@ -431,4 +431,12 @@ protocol.DidSaveTextDocumentParams = function(args)
   }
 end
 
+protocol.DidCloseTextDocumentParams = function(args)
+  args = check_table(args)
+
+  return {
+    textDocument = protocol.TextDocumentItem(args.textDocument),
+  }
+end
+
 return protocol

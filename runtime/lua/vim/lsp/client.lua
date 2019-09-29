@@ -1,3 +1,4 @@
+local autocmd = require('vim.lsp.autocmd')
 local uv = vim.loop
 
 local util = require('vim.lsp.util')
@@ -53,6 +54,8 @@ client.new = function(server_name, filetype, cmd)
 
     -- Data fields, to be used internally
     __data__ = {},
+    attached_buf_list = {},
+    offset_encoding = 'utf16',
     stdin = nil,
     stdout = nil,
     stderr = nil,
@@ -88,12 +91,27 @@ client.start = function(self)
       logger.error('stderr: '..err..', data: '..chunk)
     end
   end)
+
+  local bufs = vim.api.nvim_list_bufs()
+  for _, buf in ipairs(bufs) do
+    if vim.api.nvim_buf_get_option(buf, "ft") == self.filetype then
+      self:set_buf_change_handler(buf)
+    end
+  end
+
+  autocmd.register_text_document_autocmd(self.filetype)
+  -- autocmd.register_attach_buf_autocmd(self)
 end
 
 client.stop = function(self)
   if self._stopped then
     return
   end
+
+  -- for bufnr, flag in pairs(self.attached_buf_list) do
+  --   if flag then vim.api.nvim_buf_detach(bufnr) end
+  --   self.attached_buf_list[bufnr] = false
+  -- end
 
   if (vim.api.nvim_call_function('exists', {'g:language_client_enable_shutdown_request'}) == 1) and
     vim.api.nvim_get_var('language_client_log_level') ~= 0 then
@@ -148,6 +166,37 @@ client.set_server_capabilities = function(self, capabilities)
   self.server_capabilities = util.DefaultMap:new(capabilities)
 end
 
+client.set_buf_change_handler = function(self, bufnr)
+  if not self.attached_buf_list[bufnr] then
+    self.attached_buf_list[bufnr] = true
+    vim.api.nvim_buf_attach(bufnr, false, {
+      on_lines = function(...) self:handle_text_document_did_change(...) end,
+      utf_sizes = (client.offset_encoding == 'utf16' or (client.offset_encoding == 'utf32'))
+    })
+  end
+end
+
+client.handle_text_document_did_change = function(self, _, bufnr, changedtick, firstline, lastline, new_lastline, old_bytes, _, units)
+  local uri = vim.uri_from_bufnr(bufnr)
+  local version = changedtick
+  local textDocument = { uri = uri, version = version }
+  local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+  local text = table.concat(lines, "\n") .. ((new_lastline > firstline) and "\n" or "")
+  local range = {
+    start = {
+      line = firstline,
+      character = 0
+    },
+    ["end"] = {
+      line = lastline,
+      character = 0
+    }
+  }
+  local length = (self.offset_encoding == 'utf8' and old_bytes) or units
+  local edit = { range = range, text = text, rangeLength = length }
+  self:notify("textDocument/didChange", { textDocument = textDocument, contentChanges = { edit } })
+end
+
 --- Make a request to the server
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
@@ -163,7 +212,7 @@ client.request = function(self, method, params, cb, bufnr)
 
   local later = os.time() + 10
 
-  while (os.time() < later) and (self._results[request_id]  == nil) do
+  while (os.time() < later) and (self._results[request_id] == nil) do
     vim.api.nvim_command('sleep 100m')
   end
 
@@ -209,8 +258,9 @@ client.request_async = function(self, method, params, cb, bufnr)
   }
 
   uv.write(self.stdin, req:data())
-  logger.debug("Send request --->: [["..req:data().."]]")
-  logger.client.debug("Send request --->: [["..req:data().."]]")
+  local log_msg = "Send request --- "..self.filetype..", "..self.server_name.." --->: [["..req:data().."]]"
+  logger.debug(log_msg)
+  logger.client.debug(log_msg)
 
   return req.id
 end
@@ -220,7 +270,7 @@ end
 -- @param params: the parameters to send
 client.notify = function(self, method, params)
   if self._stopped then
-    logger.info('Client closed. ', self.server_name)
+    logger.info('Client closed. '..self.filetype..', '..self.server_name)
     return nil
   end
 
@@ -231,8 +281,9 @@ client.notify = function(self, method, params)
   end
 
   uv.write(self.stdin, notification:data())
-  logger.debug("Send notification --->: [["..notification:data().."]]")
-  logger.client.debug("Send notification --->: [["..notification:data().."]]")
+  local log_msg = "Send request --- "..self.filetype..", "..self.server_name.." --->: [["..notification:data().."]]"
+  logger.debug(log_msg)
+  logger.client.debug(log_msg)
 end
 
 --- Parse an LSP Message's header
@@ -362,11 +413,13 @@ client.on_message = function(self, body)
     local is_success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
     if is_success then
-      logger.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data))
-      logger.server.debug("Receive response <---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data))
+      local log_msg = "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data)
+      logger.debug(log_msg)
+      logger.server.debug(log_msg)
     else
-      logger.error("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
-      logger.server.error("Receive response <---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data))
+      local log_msg = "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data)
+      logger.error(log_msg)
+      logger.server.error(log_msg)
     end
 
     -- If no callback is passed with request, use the registered callback.
@@ -390,7 +443,7 @@ end
 
 client.on_error = function(self, level, err_message)
   if type(level) ~= 'number' then
-    print('we seem to have a not number', level)
+    print('It seems to have a not number', level)
     self:reset_state()
     return
   end

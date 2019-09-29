@@ -40,15 +40,8 @@ server_config.add = function(config)
     end
 
     if not server_config.servers[ft][server_name] then
-      vim.api.nvim_command(
-        string.format(
-          "autocmd FileType %s ++once silent :lua require('vim.lsp').start_client('%s', '%s')", ft, ft, server_name
-        )
-      )
-
-      vim.api.nvim_command(
-        string.format("autocmd VimLeavePre * :lua require('vim.lsp').stop_client('%s', '%s')", ft, server_name)
-      )
+      vim.api.nvim_command(string.format("autocmd FileType %s ++once silent :lua vim.lsp.start_client('%s', '%s')", ft, ft, server_name))
+      vim.api.nvim_command(string.format("autocmd VimLeavePre * :lua vim.lsp.stop_client('%s', '%s')", ft, server_name))
 
       server_config.servers[ft][server_name] = {
         server_name = server_name,
