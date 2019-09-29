@@ -622,13 +622,11 @@ static int command_line_execute(VimState *state, int key)
     }
   }
 
-  if (compl_match_array) {
-    if (s->c == Ctrl_E) {
-      nextwild(&s->xpc, WILD_CANCEL, 0, s->firstc != '@');
-    } else if (s->c == Ctrl_Y) {
-      nextwild(&s->xpc, WILD_APPLY, 0, s->firstc != '@');
-      s->c = Ctrl_E;
-    }
+  if (s->c == Ctrl_E) {
+    nextwild(&s->xpc, WILD_CANCEL, 0, s->firstc != '@');
+  } else if (s->c == Ctrl_Y) {
+    nextwild(&s->xpc, WILD_APPLY, 0, s->firstc != '@');
+    s->c = Ctrl_E;
   }
 
   // Hitting CR after "emenu Name.": complete submenu
