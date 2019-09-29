@@ -2736,6 +2736,13 @@ return {
       defaults={if_true={vi=false, vim=true}}
     },
     {
+      full_name='wildpumkey', abbreviation='wpk',
+      type='bool', scope={'global'},
+      vim=true,
+      varname='p_wpk',
+      defaults={if_true={vi=false, vim=true}}
+    },
+    {
       full_name='wildmode', abbreviation='wim',
       type='string', list='onecomma', scope={'global'},
       deny_duplicates=true,

@@ -591,7 +591,7 @@ local function test_cmdline(linegrid)
       pos = 9,
     }}, wildmenu_items=expected, wildmenu_pos=1}
 
-    feed('<left><left>')
+    feed('<C-p><C-p>')
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -604,7 +604,7 @@ local function test_cmdline(linegrid)
       pos = 5,
     }}, wildmenu_items=expected, wildmenu_pos=-1}
 
-    feed('<right>')
+    feed('<C-n>')
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -671,7 +671,7 @@ local function test_cmdline(linegrid)
       pos = 9,
     }}, popupmenu={items=expected, pos=1, anchor={-1, 0, 5}}}
 
-    feed('<left><left>')
+    feed('<C-p><C-p>')
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|
@@ -684,7 +684,7 @@ local function test_cmdline(linegrid)
       pos = 5,
     }}, popupmenu={items=expected, pos=-1, anchor={-1, 0, 5}}}
 
-    feed('<right>')
+    feed('<C-n>')
     screen:expect{grid=[[
       ^                         |
       {1:~                        }|

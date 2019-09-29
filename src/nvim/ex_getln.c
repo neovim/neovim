@@ -602,12 +602,31 @@ static int command_line_execute(VimState *state, int key)
   }
 
   // Special translations for 'wildmenu'
-  if (s->did_wild_list && p_wmnu) {
+  if (!compl_match_array && s->did_wild_list && p_wmnu) {
     if (s->c == K_LEFT) {
       s->c = Ctrl_P;
     } else if (s->c == K_RIGHT) {
       s->c = Ctrl_N;
     }
+  }
+
+  if (compl_match_array && p_wpk) {
+    if (s->c == K_UP) {
+      s->c = K_LEFT;
+    } else if (s->c == K_DOWN) {
+      s->c = K_RIGHT;
+    } else if (s->c == K_LEFT) {
+      s->c = K_UP;
+    } else if (s->c == K_RIGHT) {
+      s->c = K_DOWN;
+    }
+  }
+
+  if (s->c == Ctrl_E) {
+    nextwild(&s->xpc, WILD_CANCEL, 0, s->firstc != '@');
+  } else if (s->c == Ctrl_Y) {
+    nextwild(&s->xpc, WILD_APPLY, 0, s->firstc != '@');
+    s->c = Ctrl_E;
   }
 
   // Hitting CR after "emenu Name.": complete submenu
@@ -622,7 +641,11 @@ static int command_line_execute(VimState *state, int key)
   // free expanded names when finished walking through matches
   if (!(s->c == p_wc && KeyTyped) && s->c != p_wcm
       && s->c != Ctrl_N && s->c != Ctrl_P && s->c != Ctrl_A
-      && s->c != Ctrl_L) {
+      && s->c != Ctrl_L
+      && (!compl_match_array
+          || (s->c != K_LEFT && s->c != K_RIGHT
+              && s->c != K_PAGEUP && s->c != K_PAGEDOWN
+              && s->c!= K_KPAGEUP  && s->c != K_KPAGEDOWN))) {
     if (compl_match_array) {
       pum_undisplay(true);
       XFREE_CLEAR(compl_match_array);
@@ -731,7 +754,7 @@ static int command_line_execute(VimState *state, int key)
       // go down a directory
       s->c = (int)p_wc;
     } else if (STRNCMP(s->xpc.xp_pattern, upseg + 1, 3) == 0
-        && s->c == K_DOWN) {
+               && s->c == K_DOWN) {
       // If in a direct ancestor, strip off one ../ to go down
       int found = false;
 
@@ -1396,6 +1419,12 @@ static int command_line_handle_key(CommandLineState *s)
   case K_RIGHT:
   case K_S_RIGHT:
   case K_C_RIGHT:
+    if (s->xpc.xp_numfiles > 0) {
+      if (nextwild(&s->xpc, WILD_DOWN, 0, s->firstc != '@') == FAIL) {
+        break;
+      }
+      return command_line_not_changed(s);
+    }
     do {
       if (ccline.cmdpos >= ccline.cmdlen) {
         break;
@@ -1417,6 +1446,12 @@ static int command_line_handle_key(CommandLineState *s)
   case K_LEFT:
   case K_S_LEFT:
   case K_C_LEFT:
+    if (s->xpc.xp_numfiles > 0) {
+      if (nextwild(&s->xpc, WILD_UP, 0, s->firstc != '@') == FAIL) {
+        break;
+      }
+      return command_line_not_changed(s);
+    }
     if (ccline.cmdpos == 0) {
       return command_line_not_changed(s);
     }
@@ -1573,9 +1608,15 @@ static int command_line_handle_key(CommandLineState *s)
 
   case Ctrl_N:            // next match
   case Ctrl_P:            // previous match
+  case K_PAGEUP:
+  case K_KPAGEUP:
+  case K_PAGEDOWN:
+  case K_KPAGEDOWN:
     if (s->xpc.xp_numfiles > 0) {
-      if (nextwild(&s->xpc, (s->c == Ctrl_P) ? WILD_PREV : WILD_NEXT,
-              0, s->firstc != '@') == FAIL) {
+      if (nextwild(&s->xpc, (s->c == Ctrl_P) ? WILD_PREV :
+                   (s->c == Ctrl_N) ? WILD_NEXT :
+                   (s->c == K_PAGEUP || s->c == K_KPAGEUP) ? WILD_PAGEUP :
+                   WILD_PAGEDOWN, 0, s->firstc != '@') == FAIL) {
         break;
       }
       return command_line_not_changed(s);
@@ -1586,10 +1627,6 @@ static int command_line_handle_key(CommandLineState *s)
   case K_DOWN:
   case K_S_UP:
   case K_S_DOWN:
-  case K_PAGEUP:
-  case K_KPAGEUP:
-  case K_PAGEDOWN:
-  case K_KPAGEDOWN:
     if (s->histype == HIST_INVALID || hislen == 0 || s->firstc == NUL) {
       // no history
       return command_line_not_changed(s);
@@ -3625,7 +3662,9 @@ nextwild (
   assert(ccline.cmdpos >= i);
   xp->xp_pattern_len = (size_t)ccline.cmdpos - (size_t)i;
 
-  if (type == WILD_NEXT || type == WILD_PREV) {
+  if (type == WILD_NEXT || type == WILD_PREV || type == WILD_CANCEL
+      || type == WILD_APPLY || type == WILD_UP || type == WILD_DOWN
+      || type == WILD_PAGEUP || type == WILD_PAGEDOWN) {
     // Get next/previous match for a previous expanded pattern.
     p2 = ExpandOne(xp, NULL, NULL, 0, type);
   } else {
@@ -3741,14 +3780,31 @@ ExpandOne (
   /*
    * first handle the case of using an old match
    */
-  if (mode == WILD_NEXT || mode == WILD_PREV) {
+  if (mode == WILD_NEXT || mode == WILD_PREV
+      || mode == WILD_UP || mode == WILD_DOWN
+      || mode == WILD_PAGEUP || mode == WILD_PAGEDOWN) {
     if (xp->xp_numfiles > 0) {
-      if (mode == WILD_PREV) {
-        if (findex == -1)
+      if (mode == WILD_PREV || mode == WILD_UP) {
+        if (findex == -1) {
           findex = xp->xp_numfiles;
-        --findex;
-      } else        /* mode == WILD_NEXT */
-        ++findex;
+        }
+        findex--;
+      } else if (mode == WILD_NEXT || mode == WILD_DOWN) {
+        findex++;
+      } else {
+        int h = pum_get_height();
+        if (h > 3) {
+          h -= 2;
+        }
+        if (mode == WILD_PAGEUP) {
+          if (findex ==  -1) {
+            findex = xp->xp_numfiles;
+          }
+          findex -= h;
+        } else {
+          findex += h;
+        }
+      }
 
       /*
        * When wrapping around, return the original string, set findex to
@@ -3773,12 +3829,24 @@ ExpandOne (
         win_redr_status_matches(xp, xp->xp_numfiles, xp->xp_files,
                                 findex, cmd_showtail);
       }
+      if (mode == WILD_PAGEUP || mode == WILD_PAGEDOWN
+          || mode == WILD_UP || mode == WILD_DOWN) {
+        return NULL;
+      }
       if (findex == -1) {
         return vim_strsave(orig_save);
       }
       return vim_strsave(xp->xp_files[findex]);
     } else
       return NULL;
+  }
+
+  if (mode == WILD_CANCEL) {
+    return vim_strsave(orig_save);
+  }
+
+  if (mode == WILD_APPLY) {
+    return vim_strsave(findex == -1 ? orig_save : xp->xp_files[findex]);
   }
 
   /* free old names */
