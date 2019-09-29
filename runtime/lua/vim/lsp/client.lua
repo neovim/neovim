@@ -99,7 +99,7 @@ client.start = function(self)
     end
   end
 
-  autocmd.register_text_document_autocmd(self.filetype)
+  autocmd.register_text_document_autocmd(self.filetype, self.server_name)
   -- autocmd.register_attach_buf_autocmd(self)
 end
 

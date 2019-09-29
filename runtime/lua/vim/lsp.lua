@@ -19,7 +19,7 @@ local clients = {}
 -- @param filetype    [string]
 --
 -- @returns: list of Client Object
-local get_clients = function(filetype)
+lsp.get_clients = function(filetype)
   return clients[filetype]
 end
 
@@ -28,8 +28,8 @@ end
 -- @param server_name [string]
 --
 -- @returns: Client Object or nil
-local get_client = function(filetype, server_name)
-  local filetype_clients = get_clients(filetype)
+lsp.get_client = function(filetype, server_name)
+  local filetype_clients = lsp.get_clients(filetype)
   if not filetype_clients then
     return nil
   else
@@ -47,7 +47,7 @@ lsp.start_client = function(filetype, server_name, bufnr)
   filetype = filetype or util.get_filetype(bufnr)
   if not server_name then server_name = filetype end
 
-  assert(not get_client(filetype, server_name), string.format('Language server for filetype: %s, server_name: %s has already started', filetype, server_name))
+  assert(not lsp.get_client(filetype, server_name), string.format('Language server for filetype: %s, server_name: %s has already started', filetype, server_name))
 
   local cmd = lsp.server_config.get_server_cmd(filetype, server_name)
 
@@ -68,7 +68,7 @@ lsp.stop_client = function(filetype, server_name)
   assert(filetype, 'filetype is required.')
   if not server_name then server_name = filetype end
 
-  local client = get_client(filetype, server_name)
+  local client = lsp.get_client(filetype, server_name)
   if client then
     client:stop()
   end
@@ -90,7 +90,7 @@ lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
   end
 
   if server_name then
-    local client = get_client(filetype, server_name)
+    local client = lsp.get_client(filetype, server_name)
 
     if client == nil then
       logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
@@ -99,7 +99,7 @@ lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
 
     return client:request(method, arguments, cb, bufnr)
   else
-    local filetype_clients = get_clients(filetype)
+    local filetype_clients = lsp.get_clients(filetype)
     local results = {}
 
     for _, client in pairs(filetype_clients) do
@@ -126,7 +126,7 @@ lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name
   end
 
   if server_name then
-    local client = get_client(filetype, server_name)
+    local client = lsp.get_client(filetype, server_name)
 
     if client == nil then
       logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
@@ -135,7 +135,7 @@ lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name
 
     return client:request_async(method, arguments, cb, bufnr)
   else
-    local filetype_clients = get_clients(filetype)
+    local filetype_clients = lsp.get_clients(filetype)
     local results = {}
 
     for _, client in pairs(filetype_clients) do
@@ -161,7 +161,7 @@ lsp.notify = function(method, arguments, bufnr, filetype, server_name)
   end
 
   if server_name then
-    local client = get_client(filetype, server_name)
+    local client = lsp.get_client(filetype, server_name)
 
     if client == nil then
       logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
@@ -170,7 +170,7 @@ lsp.notify = function(method, arguments, bufnr, filetype, server_name)
 
     client:notify(method, arguments)
   else
-    local filetype_clients = get_clients(filetype)
+    local filetype_clients = lsp.get_clients(filetype)
 
     for _, client in pairs(filetype_clients) do
       client:notify(method, arguments)
@@ -183,7 +183,7 @@ lsp.handle = function(filetype, method, data, default_only)
 end
 
 lsp.client_has_started = function(filetype)
-  return get_client(filetype) ~= nil
+  return lsp.get_client(filetype) ~= nil
 end
 
 lsp.client_info = function(filetype, server_name)
@@ -195,7 +195,7 @@ lsp.client_info = function(filetype, server_name)
     server_name = filetype
   end
 
-  local client =  get_client(filetype, server_name)
+  local client =  lsp.get_client(filetype, server_name)
   if client then
     return vim.tbl_tostring(client)
   else
