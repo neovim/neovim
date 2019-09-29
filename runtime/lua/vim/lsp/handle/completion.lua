@@ -18,7 +18,9 @@ completion.getMatches = function(data)
     table.insert(result.matches, {
       word = completion_item.label,
       kind = completion.map_CompletionItemKind_to_vim(completion_item.kind),
-      info = completion_item.detail,
+      menue = completion_item.detail,
+      info = completion_item.documentation,
+      icase = 1,
       dup = 0,
     })
   end
