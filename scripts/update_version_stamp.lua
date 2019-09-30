@@ -4,9 +4,8 @@
 -- This is called via the custom update_version_stamp target in
 -- src/nvim/CMakeLists.txt.
 --
--- arg[1]: file containing the last git-describe output
--- arg[2]: file in which to update the version string
--- arg[3]: prefix to use always ("vX.Y.Z")
+-- arg[1]: file in which to update the version string
+-- arg[2]: prefix to use always ("vX.Y.Z")
 
 local function die(msg)
   print(string.format('%s: %s', arg[0], msg))
@@ -14,12 +13,12 @@ local function die(msg)
   os.exit(0)
 end
 
-if #arg ~= 3 then
-  die(string.format("Expected three args, got %d", #arg))
+if #arg ~= 2 then
+  die(string.format("Expected two args, got %d", #arg))
 end
 
-local stampfile = arg[1]
-local stamp = io.open(stampfile, 'r')
+local versiondeffile = arg[1]
+local stamp = io.open(versiondeffile, 'r')
 if stamp then
   stamp = stamp:read('*l')
 end
@@ -31,20 +30,9 @@ end
 
 -- `git describe` annotates the most recent tagged release; for pre-release
 -- builds we must replace that with the unreleased version.
-current = current:gsub("^v%d+%.%d+%.%d+", arg[3])
+current = current:gsub("^v%d+%.%d+%.%d+", arg[2])
 
-if stamp ~= current then
-  if stamp then
-    print(string.format('git version changed: %s -> %s', stamp, current))
-  end
-  local new_lines = {}
-  local versiondeffile = arg[2]
-  for line in io.lines(versiondeffile) do
-    if line:match("NVIM_VERSION_MEDIUM") then
-      line = '#define NVIM_VERSION_MEDIUM "'..current..'"'
-    end
-    new_lines[#new_lines + 1] = line
-  end
-  io.open(versiondeffile, 'w'):write(table.concat(new_lines, '\n') .. '\n')
-  io.open(stampfile, 'w'):write(current)
+local new_content = '#define NVIM_VERSION_MEDIUM "'..current..'"'
+if stamp ~= new_content then
+  io.open(versiondeffile, 'w'):write(new_content .. '\n')
 end

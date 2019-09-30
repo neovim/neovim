@@ -245,12 +245,16 @@ foreach(sfile ${NVIM_SOURCES}
 
   get_preproc_output(PREPROC_OUTPUT ${gf_i})
 
+  set(depends "${HEADER_GENERATOR}" "${sfile}")
+  if("${f}" STREQUAL "version.c")
+    # Ensure auto/versiondef_git.h exists after "make clean".
+    list(APPEND depends update_version_stamp)
+  endif()
   add_custom_command(
     OUTPUT "${gf_c_h}" "${gf_h_h}"
     COMMAND ${CMAKE_C_COMPILER} ${sfile} ${PREPROC_OUTPUT} ${gen_cflags} ${C_FLAGS_ARRAY}
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}" "${sfile}" "${gf_c_h}" "${gf_h_h}" "${gf_i}"
-    DEPENDS "${HEADER_GENERATOR}" "${sfile}"
-    )
+    DEPENDS ${depends})
   list(APPEND NVIM_GENERATED_FOR_SOURCES "${gf_c_h}")
   list(APPEND NVIM_GENERATED_FOR_HEADERS "${gf_h_h}")
   if(${d} MATCHES "^api$" AND NOT ${f} MATCHES "^api/helpers.c$")

@@ -121,6 +121,7 @@ configure_file (
   )
 
 # generate version definitions
+set(use_git_version 0)
 if(NVIM_VERSION_MEDIUM)
   message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
 elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
@@ -128,27 +129,26 @@ elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
 elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
   find_program(GIT_EXECUTABLE git)
   if(GIT_EXECUTABLE)
-    # Get current version.
-    execute_process(
-      COMMAND ${GIT_EXECUTABLE} describe --dirty
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-      OUTPUT_VARIABLE NVIM_VERSION_MEDIUM
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message(STATUS "NVIM_VERSION_MEDIUM (from git): ${NVIM_VERSION_MEDIUM}")
-
-    # Create a update_version_stamp target to update the version during build.
-    file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
-    add_custom_target(update_version_stamp ALL
-      COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
-        ${relbuild}/.version_stamp
-        ${relbuild}/config/auto/versiondef.h
-        "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-      BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef.h)
-    add_dependencies(nvim update_version_stamp)
+    message(STATUS "Using NVIM_VERSION_MEDIUM from Git")
+    set(use_git_version 1)
   else()
-  message(STATUS "Skipping version-string generation (cannot find git)")
+    message(STATUS "Skipping version-string generation (cannot find git)")
   endif()
+endif()
+file(WRITE ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h "")
+
+if(use_git_version)
+  # Create a update_version_stamp target to update the version during build.
+  file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
+  add_custom_target(update_version_stamp ALL
+    COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
+      ${relbuild}/config/auto/versiondef_git.h
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
+  add_dependencies(nvim update_version_stamp)
+else()
+  add_custom_target(update_version_stamp)
 endif()
 
 configure_file (
