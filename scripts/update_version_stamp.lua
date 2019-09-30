@@ -8,7 +8,7 @@
 -- arg[2]: prefix to use always ("vX.Y.Z")
 
 local function die(msg)
-  print(string.format('%s: %s', arg[0], msg))
+  io.stderr:write(string.format('%s: %s\n', arg[0], msg))
   -- No error, fall back to using generated "-dev" version.
   os.exit(0)
 end
@@ -23,18 +23,13 @@ if stamp then
   stamp = stamp:read('*l')
 end
 
-local current = io.popen('git describee --dirty'):read('*l')
+local current = io.popen('git describe --dirty'):read('*l')
 if not current then
-  print('git-describe failed')
-  print('debug: --always', io.popen('git describe --always --dirty'):read('*l'))
-  print('debug: --tags', io.popen('git describe --tags --dirty'):read('*l'))
-  print('debug: --tags --always', io.popen('git describe --tags --always --dirty'):read('*l'))
-
-  current = io.popen('git describe --always --dirty'):read('*l')
-  if not current then
-    -- TODO: still write/touch an empty file to not fail the build due to missing include?!
-    die('git-describe failed')
-  end
+  current = io.popen('git describe --tags --always --dirty'):read('*l')
+end
+if not current then
+  io.open(versiondeffile, 'w'):write('\n')
+  die('git-describe failed, using empty include file.')
 end
 
 -- `git describe` annotates the most recent tagged release; for pre-release
