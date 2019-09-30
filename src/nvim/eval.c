@@ -23944,7 +23944,7 @@ repeat:
       } else if (*fnamep <= tail)
         *fnamelen = 0;
     } else {                          /* :r */
-      if (s > tail)             /* remove one extension */
+      if (s > MAX(tail, *fnamep)) /* remove one extension */
         *fnamelen = (size_t)(s - *fnamep);
     }
     *usedlen += 2;
