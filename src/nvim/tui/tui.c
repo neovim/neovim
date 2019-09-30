@@ -296,6 +296,7 @@ static void terminfo_start(UI *ui)
   unibi_out(ui, unibi_keypad_xmit);
   unibi_out(ui, unibi_clear_screen);
   // Ask the terminal to send us the background color.
+  data->input.waiting_for_bg_response = true;
   unibi_out_ext(ui, data->unibi_ext.get_bg);
   // Enable bracketed paste
   unibi_out_ext(ui, data->unibi_ext.enable_bracketed_paste);
@@ -365,6 +366,11 @@ static void tui_terminal_after_startup(UI *ui)
   // 2.3 bug(?) which caused slow drawing during startup.  #7649
   unibi_out_ext(ui, data->unibi_ext.enable_focus_reporting);
   flush_buf(ui);
+
+  if (data->input.waiting_for_bg_response) {
+    DLOG("did not get a response for terminal background query");
+    data->input.waiting_for_bg_response = false;
+  }
 }
 
 static void tui_terminal_stop(UI *ui)

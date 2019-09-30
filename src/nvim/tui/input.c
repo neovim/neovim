@@ -27,6 +27,7 @@ void tinput_init(TermInput *input, Loop *loop)
   input->loop = loop;
   input->paste = 0;
   input->in_fd = 0;
+  input->waiting_for_bg_response = false;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
@@ -443,6 +444,9 @@ static void set_bg_deferred(void **argv)
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
 static bool handle_background_color(TermInput *input)
 {
+  if (!input->waiting_for_bg_response) {
+    return false;
+  }
   size_t count = 0;
   size_t component = 0;
   size_t header_size = 0;
@@ -463,6 +467,7 @@ static bool handle_background_color(TermInput *input)
   } else {
     return false;
   }
+  input->waiting_for_bg_response = false;
   rbuffer_consumed(input->read_stream.buffer, header_size);
   RBUFFER_EACH(input->read_stream.buffer, c, i) {
     count = i + 1;
@@ -503,6 +508,12 @@ static bool handle_background_color(TermInput *input)
   }
   return true;
 }
+#ifdef UNIT_TESTING
+bool ut_handle_background_color(TermInput *input)
+{
+  return handle_background_color(input);
+}
+#endif
 
 static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
                            void *data, bool eof)
