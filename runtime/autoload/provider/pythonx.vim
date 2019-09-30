@@ -43,7 +43,7 @@ function! provider#pythonx#DetectByModule(module, major_version) abort
   let python_exe = s:get_python_executable_from_host_var(a:major_version)
 
   if !empty(python_exe)
-    return [python_exe, '']
+    return [exepath(expand(python_exe)), '']
   endif
 
   let candidates = s:get_python_candidates(a:major_version)
