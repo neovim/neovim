@@ -23,9 +23,18 @@ if stamp then
   stamp = stamp:read('*l')
 end
 
-local current = io.popen('git describe --dirty'):read('*l')
+local current = io.popen('git describee --dirty'):read('*l')
 if not current then
-  die('git-describe failed')
+  print('git-describe failed')
+  print('debug: --always', io.popen('git describe --always --dirty'):read('*l'))
+  print('debug: --tags', io.popen('git describe --tags --dirty'):read('*l'))
+  print('debug: --tags --always', io.popen('git describe --tags --always --dirty'):read('*l'))
+
+  current = io.popen('git describe --always --dirty'):read('*l')
+  if not current then
+    -- TODO: still write/touch an empty file to not fail the build due to missing include?!
+    die('git-describe failed')
+  end
 end
 
 -- `git describe` annotates the most recent tagged release; for pre-release
