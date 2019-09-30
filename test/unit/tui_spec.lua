@@ -11,7 +11,7 @@ local globals = cimport("./src/nvim/globals.h")
 local multiqueue = cimport("./test/unit/fixtures/multiqueue.h")
 
 itp('handle_background_color', function()
-  local handle_background_color = cinput.handle_background_color
+  local handle_background_color = cinput.ut_handle_background_color
   local term_input = ffi.new('TermInput', {})
   local events = globals.main_loop.thread_events
 

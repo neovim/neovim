@@ -29,4 +29,8 @@ typedef struct term_input {
 # include "tui/input.h.generated.h"
 #endif
 
+#ifdef UNIT_TESTING
+bool ut_handle_background_color(TermInput *input);
+#endif
+
 #endif  // NVIM_TUI_INPUT_H

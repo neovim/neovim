@@ -442,7 +442,7 @@ static void set_bg_deferred(void **argv)
 // ignored in the calculations.
 //
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
-bool handle_background_color(TermInput *input)
+static bool handle_background_color(TermInput *input)
 {
   if (!input->waiting_for_bg_response) {
     return false;
@@ -508,6 +508,12 @@ bool handle_background_color(TermInput *input)
   }
   return true;
 }
+#ifdef UNIT_TESTING
+bool ut_handle_background_color(TermInput *input)
+{
+  return handle_background_color(input);
+}
+#endif
 
 static void tinput_read_cb(Stream *stream, RBuffer *buf, size_t count_,
                            void *data, bool eof)
