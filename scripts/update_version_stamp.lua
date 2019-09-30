@@ -18,10 +18,7 @@ if #arg ~= 2 then
 end
 
 local versiondeffile = arg[1]
-local stamp = io.open(versiondeffile, 'r')
-if stamp then
-  stamp = stamp:read('*l')
-end
+local prefix = arg[2]
 
 local current = io.popen('git describe --dirty'):read('*l')
 if not current then
@@ -34,9 +31,18 @@ end
 
 -- `git describe` annotates the most recent tagged release; for pre-release
 -- builds we must replace that with the unreleased version.
-current = current:gsub("^v%d+%.%d+%.%d+", arg[2])
+local with_prefix = current:gsub("^v%d+%.%d+%.%d+", prefix)
+if current == with_prefix then
+  -- We might get e.g. "nightly-12208-g4041b62b9" (on Sourcehut also), so
+  -- prepend the prefix always.
+  with_prefix = prefix .. "-" .. current
+end
+local new_content = '#define NVIM_VERSION_MEDIUM "'..with_prefix..'"'
 
-local new_content = '#define NVIM_VERSION_MEDIUM "'..current..'"'
+local stamp = io.open(versiondeffile, 'r')
+if stamp then
+  stamp = stamp:read('*l')
+end
 if stamp ~= new_content then
   io.open(versiondeffile, 'w'):write(new_content .. '\n')
 end
