@@ -1345,59 +1345,26 @@ describe("TUI", function()
 
 end)
 
-describe('TUI background color', function()
-  local screen
+it('TUI bg color triggers OptionSet event on terminal-response', function()
+  -- Only single integration test.
+  -- See test/unit/tui_spec.lua for unit tests.
+  clear()
+  local screen = thelpers.screen_setup(0, '["'..nvim_prog
+    ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile", '
+    ..'"-c", "autocmd OptionSet background echo \\"did OptionSet, yay!\\""]')
 
-  before_each(function()
-    clear()
-    screen = thelpers.screen_setup(0, '["'..nvim_prog
-      ..'", "-u", "NONE", "-i", "NONE", "--cmd", "set noswapfile"]')
-  end)
+  screen:expect([[
+    {1: }                                                 |
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {4:~                                                 }|
+    {5:[No Name]                       0,0-1          All}|
+                                                      |
+    {3:-- TERMINAL --}                                    |
+  ]])
+  feed_data('\027]11;rgb:ffff/ffff/ffff\007')
+  screen:expect{any='did OptionSet, yay!'}
 
-  it("triggers OptionSet event on terminal-response", function()
-    feed_data('\027:autocmd OptionSet background echo "did OptionSet, yay!"\n')
-
-    -- Wait for the child Nvim to register the OptionSet handler.
-    feed_data('\027:autocmd OptionSet\n')
-    screen:expect({any='--- Autocommands ---'})
-
-    feed_data('\012')  -- CTRL-L: clear the screen
-    screen:expect([[
-      {1: }                                                 |
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {4:~                                                 }|
-      {5:[No Name]                       0,0-1          All}|
-                                                        |
-      {3:-- TERMINAL --}                                    |
-    ]])
-    feed_data('\027]11;rgb:ffff/ffff/ffff\007')
-    screen:expect{any='did OptionSet, yay!'}
-  end)
-
-  it("handles deferred background color", function()
-    local function wait_for_bg(bg)
-      -- Retry until the terminal response is handled.
-      retry(100, nil, function()
-        feed_data(':echo &background\n')
-        screen:expect({
-          timeout=40,
-          grid=string.format([[
-            {1: }                                                 |
-            {4:~                                                 }|
-            {4:~                                                 }|
-            {4:~                                                 }|
-            {5:[No Name]                       0,0-1          All}|
-            %-5s                                             |
-            {3:-- TERMINAL --}                                    |
-          ]], bg)
-        })
-      end)
-    end
-
-    -- Only single integration test.
-    -- See test/unit/tui_spec.lua for unit tests.
-    feed_data('\027]11;rgb:ffff/ffff/ffff\007')
-    wait_for_bg('light')
-  end)
+  feed_data(':echo "new_bg=".&background\n')
+  screen:expect{any='new_bg=light'}
 end)
