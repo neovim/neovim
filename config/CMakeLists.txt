@@ -142,6 +142,7 @@ elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
       COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
         ${relbuild}/.version_stamp
         ${relbuild}/config/auto/versiondef.h
+        "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
       WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
       BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef.h)
     add_dependencies(nvim update_version_stamp)

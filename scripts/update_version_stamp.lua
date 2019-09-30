@@ -6,6 +6,7 @@
 --
 -- arg[1]: file containing the last git-describe output
 -- arg[2]: file in which to update the version string
+-- arg[3]: prefix to use always ("vX.Y.Z")
 
 local function die(msg)
   print(string.format('%s: %s', arg[0], msg))
@@ -13,8 +14,8 @@ local function die(msg)
   os.exit(0)
 end
 
-if #arg ~= 2 then
-  die(string.format("Expected two args, got %d", #arg))
+if #arg ~= 3 then
+  die(string.format("Expected three args, got %d", #arg))
 end
 
 local stampfile = arg[1]
@@ -27,6 +28,10 @@ local current = io.popen('git describe --dirty'):read('*l')
 if not current then
   die('git-describe failed')
 end
+
+-- `git describe` annotates the most recent tagged release; for pre-release
+-- builds we must replace that with the unreleased version.
+current = current:gsub("^v%d+%.%d+%.%d+", arg[3])
 
 if stamp ~= current then
   if stamp then
