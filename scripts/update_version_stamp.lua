@@ -20,29 +20,31 @@ end
 local versiondeffile = arg[1]
 local prefix = arg[2]
 
-local current = io.popen('git describe --dirty'):read('*l')
-if not current then
-  current = io.popen('git describe --tags --always --dirty'):read('*l')
+local described = io.popen('git describe --dirty'):read('*l')
+if not described then
+  described = io.popen('git describe --tags --always --dirty'):read('*l')
 end
-if not current then
+if not described then
   io.open(versiondeffile, 'w'):write('\n')
   die('git-describe failed, using empty include file.')
 end
 
 -- `git describe` annotates the most recent tagged release; for pre-release
 -- builds we must replace that with the unreleased version.
-local with_prefix = current:gsub("^v%d+%.%d+%.%d+", prefix)
-if current == with_prefix then
-  -- We might get e.g. "nightly-12208-g4041b62b9" (on Sourcehut also), so
-  -- prepend the prefix always.
-  with_prefix = prefix .. "-" .. current
+local with_prefix = described:gsub("^v%d+%.%d+%.%d+", prefix)
+if described == with_prefix then
+  -- Prepend the prefix always, e.g. with "nightly-12208-g4041b62b9".
+  with_prefix = prefix .. "-" .. described
 end
-local new_content = '#define NVIM_VERSION_MEDIUM "'..with_prefix..'"'
 
-local stamp = io.open(versiondeffile, 'r')
-if stamp then
-  stamp = stamp:read('*l')
+-- Read existing include file.
+local current = io.open(versiondeffile, 'r')
+if current then
+  current = current:read('*l')
 end
-if stamp ~= new_content then
-  io.open(versiondeffile, 'w'):write(new_content .. '\n')
+
+-- Write new include file, if different.
+local new = '#define NVIM_VERSION_MEDIUM "'..with_prefix..'"'
+if current ~= new then
+  io.open(versiondeffile, 'w'):write(new .. '\n')
 end
