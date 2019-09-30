@@ -217,6 +217,34 @@ function(get_preproc_output varname iname)
   endif()
 endfunction()
 
+# Handle generating version from Git.
+set(use_git_version 0)
+if(NVIM_VERSION_MEDIUM)
+  message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
+elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
+  message(STATUS "Skipping version-string generation (requires CMake 3.2.0+)")
+elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
+  find_program(GIT_EXECUTABLE git)
+  if(GIT_EXECUTABLE)
+    message(STATUS "Using NVIM_VERSION_MEDIUM from Git")
+    set(use_git_version 1)
+  else()
+    message(STATUS "Skipping version-string generation (cannot find git)")
+  endif()
+endif()
+if(use_git_version)
+  # Create a update_version_stamp target to update the version during build.
+  file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
+  add_custom_target(update_version_stamp ALL
+    COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
+      ${relbuild}/config/auto/versiondef_git.h
+      "v${NVIM_VERSION_MAJOR}.${NVIM_VERSION_MINOR}.${NVIM_VERSION_PATCH}"
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h)
+else()
+  file(WRITE ${CMAKE_BINARY_DIR}/config/auto/versiondef_git.h "")
+endif()
+
 # NVIM_GENERATED_FOR_HEADERS: generated headers to be included in headers
 # NVIM_GENERATED_FOR_SOURCES: generated headers to be included in sources
 # NVIM_GENERATED_SOURCES: generated source files
@@ -246,7 +274,7 @@ foreach(sfile ${NVIM_SOURCES}
   get_preproc_output(PREPROC_OUTPUT ${gf_i})
 
   set(depends "${HEADER_GENERATOR}" "${sfile}")
-  if("${f}" STREQUAL "version.c")
+  if(use_git_version AND "${f}" STREQUAL "version.c")
     # Ensure auto/versiondef_git.h exists after "make clean".
     list(APPEND depends update_version_stamp)
   endif()
