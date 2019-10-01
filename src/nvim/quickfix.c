@@ -4468,7 +4468,7 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  /* Jump to first match. */
+  // Jump to first match.
   if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
     if ((flags & VGR_NOJUMP) == 0) {
       vgr_jump_to_match(qi, eap->forceit, &redraw_for_dummy, first_match_buf,
@@ -5767,14 +5767,14 @@ static void hgr_search_files_in_dir(
   }
 }
 
-// Search for a pattern in all the help files in the 'runtimepath'.
+// Search for a pattern in all the help files in the 'runtimepath'
+// and add the matches to a quickfix list.
+// 'lang' is the language specifier.  If supplied, then only matches in the
+// specified language are found.
 static void hgr_search_in_rtp(qf_info_T *qi, regmatch_T *p_regmatch,
-                              char_u *arg)
-  FUNC_ATTR_NONNULL_ALL
+                              const char_u *lang)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  // Check for a specified language
-  char_u *const lang = check_help_lang(arg);
-
   // Go through all directories in 'runtimepath'
   char_u *p = p_rtp;
   while (*p != NUL && !got_int) {
@@ -5811,6 +5811,8 @@ void ex_helpgrep(exarg_T *eap)
     qi = hgr_get_ll(&new_qi);
   }
 
+  // Check for a specified language
+  char_u *const lang = check_help_lang(eap->arg);
   regmatch_T regmatch = {
     .regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING),
     .rm_ic = false,
@@ -5819,7 +5821,7 @@ void ex_helpgrep(exarg_T *eap)
     // Create a new quickfix list.
     qf_new_list(qi, qf_cmdtitle(*eap->cmdlinep));
 
-    hgr_search_in_rtp(qi, &regmatch, eap->arg);
+    hgr_search_in_rtp(qi, &regmatch, lang);
 
     vim_regfree(regmatch.regprog);
 
@@ -5829,11 +5831,12 @@ void ex_helpgrep(exarg_T *eap)
     qi->qf_lists[qi->qf_curlist].qf_index = 1;
   }
 
-  if (p_cpo == empty_option)
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
-  else
-    /* Darn, some plugin changed the value. */
+  } else {
+    // Darn, some plugin changed the value.
     free_string_option(save_cpo);
+  }
 
   qf_list_changed(qi, qi->qf_curlist);
   qf_update_buffer(qi, NULL);
@@ -5854,8 +5857,8 @@ void ex_helpgrep(exarg_T *eap)
     EMSG2(_(e_nomatch2), eap->arg);
 
   if (eap->cmdidx == CMD_lhelpgrep) {
-    /* If the help window is not opened or if it already points to the
-     * correct location list, then free the new location list. */
+    // If the help window is not opened or if it already points to the
+    // correct location list, then free the new location list.
     if (!bt_help(curwin->w_buffer) || curwin->w_llist == qi) {
       if (new_qi) {
         ll_free_all(&qi);

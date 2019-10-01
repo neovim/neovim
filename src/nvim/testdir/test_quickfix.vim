@@ -3315,6 +3315,20 @@ func Test_qfjump()
   call Xqfjump_tests('l')
 endfunc
 
+" Test helpgrep with lang specifier
+func Xtest_helpgrep_with_lang_specifier(cchar)
+  call s:setup_commands(a:cchar)
+  Xhelpgrep Vim@en
+  call assert_equal('help', &filetype)
+  call assert_notequal(0, g:Xgetlist({'nr' : '$'}).nr)
+  new | only
+endfunc
+
+func Test_helpgrep_with_lang_specifier()
+  call Xtest_helpgrep_with_lang_specifier('c')
+  call Xtest_helpgrep_with_lang_specifier('l')
+endfunc
+
 " The following test used to crash Vim.
 " Open the location list window and close the regular window associated with
 " the location list. When the garbage collection runs now, it incorrectly
