@@ -25,6 +25,9 @@ class CodeView( object ):
   def __init__( self, window ):
     self._window = window
 
+    self._terminal_window = None
+    self._terminal_buffer_number = None
+
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
 
@@ -194,10 +197,20 @@ class CodeView( object ):
       'env': env,
     }
 
+    window_for_start = self._window
+    if self._terminal_window is not None:
+      assert self._terminal_buffer_number
+      if ( self._terminal_window.buffer.number == self._terminal_buffer_number
+           and 'finished' in vim.eval( 'term_getstatus( {} )'.format(
+             self._terminal_buffer_number ) ) ):
+        window_for_start = self._terminal_window
+        options[ 'curwin' ] = 1
+
     buffer_number = None
+    terminal_window = None
     with utils.TemporaryVimOptions( { 'splitright': True,
                                       'equalalways': False } ):
-      with utils.LetCurrentWindow( self._window ):
+      with utils.LetCurrentWindow( window_for_start ):
         # TODO/FIXME: Do something about closing this when we reset ?
         vim_cmd =  'term_start( {}, {} )'.format( json.dumps( args ),
                                                   json.dumps( options ) )
@@ -205,9 +218,13 @@ class CodeView( object ):
         self._logger.debug( 'Start terminal: {}'.format( vim_cmd ) )
 
         buffer_number = int( vim.eval( vim_cmd ) )
+        terminal_window = vim.current.window
 
     if buffer_number is None or buffer_number <= 0:
       # TODO: Do something better like reject the request?
       raise ValueError( "Unable to start terminal" )
+    else:
+      self._terminal_window = terminal_window
+      self._terminal_buffer_number = buffer_number
 
     return buffer_number
