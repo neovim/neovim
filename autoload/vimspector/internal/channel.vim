@@ -30,15 +30,11 @@ function! s:_OnServerError( channel, data ) abort
   redraw
 endfunction
 
-function! s:_OnExit( channel, status ) abort
-  echom 'Channel exit with status ' . a:status
-  redraw
-endfunction
-
 function! s:_OnClose( channel ) abort
   echom 'Channel closed'
   redraw
-  " py3 _vimspector_session.OnChannelClosed()
+  unlet s:ch
+  py3 _vimspector_session.OnServerExit( 0 )
 endfunction
 
 function! s:_Send( msg ) abort
@@ -84,10 +80,13 @@ function! vimspector#internal#channel#StopDebugSession() abort
   endif
 
   if ch_status( s:ch ) ==# 'open'
+    " channel is open, close it and trigger the callback. The callback is _not_
+    " triggered when manually calling ch_close. if we get here and the channel
+    " is not open, then we there is a _OnClose callback waiting for us, so do
+    " nothing.
     call ch_close( s:ch )
+    call s:_OnClose( s:ch )
   endif
-
-  unlet s:ch
 endfunction
 
 function! vimspector#internal#channel#Reset() abort
