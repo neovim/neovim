@@ -1607,7 +1607,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // Fix things advertised via TERM=xterm, for non-xterm.
       if (unibi_get_str(ut, unibi_set_lr_margin)) {
         ILOG("Disabling smglr with TERM=xterm for non-xterm.");
-        unibi_set_str(ut, unibi_set_lr_margin, '\0');
+        unibi_set_str(ut, unibi_set_lr_margin, (const char *)'\0');
       }
     }
 
