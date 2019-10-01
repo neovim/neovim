@@ -14,7 +14,17 @@ root = parser:parse():root()
 
 -- these are conventions defined by tree-sitter, eventually there will be a "standard query" for
 -- c highlighting we can import.
-hl_map = {keyword="Keyword", string="String", type="Type", comment="Comment"}
+hl_map = {
+    keyword="Keyword",
+    string="String",
+    type="Type",
+    ["type.user"]="Identifier",
+    comment="Comment",
+    ["keyword.preproc"]="PreProc",
+    ["keyword.storagecls"]="StorageClass",
+    number="Number",
+    --["function"]="Function"
+}
 
 id_map = {}
 for k,v in pairs(hl_map) do
@@ -22,48 +32,75 @@ for k,v in pairs(hl_map) do
 end
 
 cquery_src = [[
-"const" @keyword
+"break" @keyword
+"case" @keyword
+"continue" @keyword
+"do" @keyword
 "else" @keyword
 "for" @keyword
 "if" @keyword
 "return" @keyword
-"static" @keyword
+"sizeof" @keyword
+"switch" @keyword
 "while" @keyword
+
+"const" @keyword.storagecls
+"static" @keyword.storagecls
+"struct" @keyword.storagecls
+"inline" @keyword.storagecls
+"enum" @keyword.storagecls
+"extern" @keyword.storagecls
+"typedef" @keyword.storagecls
+"union" @keyword.storagecls
+
+"#define" @keyword.preproc
+"#else" @keyword.preproc
+"#endif" @keyword.preproc
+"#if" @keyword.preproc
+"#ifdef" @keyword.preproc
+"#ifndef" @keyword.preproc
+"#include" @keyword.preproc
+(preproc_directive) @keyword.preproc
+
 (string_literal) @string
+(system_lib_string) @string
+
+(number_literal) @number
+(char_literal) @string
+
+(field_identifier) @property
+
+(type_identifier) @type.user
 (primitive_type) @type
+(sized_type_specifier) @type
+
 (comment) @comment
+
+(call_expression
+  function: (identifier) @function)
+(function_declarator
+  declarator: (identifier) @function)
+(preproc_function_def
+  name: (identifier) @function)
 ]]
 cquery = vim.treesitter.parse_query("c", cquery_src)
 
 
-line,endl,drawing = 134, 135, false
+line,endl = 134, 135
 
-function ts_line(line,endl,drawing)
+function oldline(line,endl)
   if endl == nil then endl = line+1 end
-  if not drawing then
     a.nvim_buf_clear_highlight(parser.bufnr, my_syn_ns, line, endl)
-  end
   local root = parser:parse():root()
   local continue = true
   local i = 800
   for capture,node in root:query(cquery,line,endl) do
     --print(inspect_node(node))
-    local map = (drawing and id_map) or hl_map
-    hl = map[capture]
+    hl = hl_map[capture]
     local start_row, start_col, end_row, end_col = node:range()
     if hl then
-      if not drawing then
-        --print(inspect_node(node))
-        print(hl)
-      end
       if start_row == end_row then
-        if drawing then
-          if start_row == line then
-            a.nvim__put_attr(hl, start_col, end_col)
-          end
-        else
-          a.nvim_buf_add_highlight(parser.bufnr, my_syn_ns, hl, start_row, start_col, end_col)
-        end
+        a.nvim_buf_add_highlight(parser.bufnr, my_syn_ns, hl, start_row, start_col, end_col)
       end
     end
     if start_row >= endl then
@@ -76,7 +113,7 @@ function ts_line(line,endl,drawing)
   end
 end
 if false then
-  ts_line(132,140)
+  oldline(132,140)
 end
 
 hlstate = {}
@@ -125,7 +162,7 @@ function on_line(_, win, buf, line)
       hlstate.active_nodes[node] = nil
     end
   end
-  return (hlstate.first_line+1) .." ".. tostring(count)
+  --return (hlstate.first_line+1) .." ".. tostring(count)
 end
 
 function ts_syntax()
