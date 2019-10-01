@@ -939,7 +939,7 @@ describe('TUI FocusGained/FocusLost', function()
                                                         |
       gained                                            |
       {3:-- TERMINAL --}                                    |
-    ]], timeout=(3 * screen.timeout)}
+    ]], timeout=(4 * screen.timeout)}
 
     feed_data('\027[O')
     screen:expect([[
