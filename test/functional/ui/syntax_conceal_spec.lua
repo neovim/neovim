@@ -17,6 +17,7 @@ describe('Screen', function()
       [3] = {reverse = true},
       [4] = {bold = true},
       [5] = {background = Screen.colors.Yellow},
+      [6] = {background = Screen.colors.LightGrey},
     } )
   end)
 
@@ -822,6 +823,51 @@ describe('Screen', function()
                                                                |
         ]])
       end)
+    end)
+
+    it('redraws properly with concealcursor in visual mode', function()
+      command('set concealcursor=v conceallevel=2')
+
+      feed('10Ofoo barf bar barf eggs<esc>')
+      feed(':3<cr>o    a<Esc>ggV')
+      screen:expect{grid=[[
+        ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+            a                                                |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        {4:-- VISUAL LINE --}                                    |
+      ]]}
+      feed(string.rep('j', 15))
+      screen:expect{grid=[[
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {6:foo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        {4:-- VISUAL LINE --}                                    |
+      ]]}
+      feed(string.rep('k', 15))
+      screen:expect{grid=[[
+        ^f{6:oo }{1:b}{6: bar }{1:b}{6: eggs}                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+            a                                                |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        foo {1:b} bar {1:b} eggs                                     |
+        {4:-- VISUAL LINE --}                                    |
+      ]]}
     end)
   end)
 end)
