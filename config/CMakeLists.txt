@@ -121,35 +121,6 @@ configure_file (
   )
 
 # generate version definitions
-if(NVIM_VERSION_MEDIUM)
-  message(STATUS "NVIM_VERSION_MEDIUM: ${NVIM_VERSION_MEDIUM}")
-elseif(${CMAKE_VERSION} VERSION_LESS "3.2.0")
-  message(STATUS "Skipping version-string generation (requires CMake 3.2.0+)")
-elseif(EXISTS ${PROJECT_SOURCE_DIR}/.git)
-  find_program(GIT_EXECUTABLE git)
-  if(GIT_EXECUTABLE)
-    # Get current version.
-    execute_process(
-      COMMAND ${GIT_EXECUTABLE} describe --dirty
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-      OUTPUT_VARIABLE NVIM_VERSION_MEDIUM
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message(STATUS "NVIM_VERSION_MEDIUM (from git): ${NVIM_VERSION_MEDIUM}")
-
-    # Create a update_version_stamp target to update the version during build.
-    file(RELATIVE_PATH relbuild "${PROJECT_SOURCE_DIR}" "${CMAKE_BINARY_DIR}")
-    add_custom_target(update_version_stamp ALL
-      COMMAND ${LUA_PRG} scripts/update_version_stamp.lua
-        ${relbuild}/.version_stamp
-        ${relbuild}/config/auto/versiondef.h
-      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-      BYPRODUCTS ${CMAKE_BINARY_DIR}/config/auto/versiondef.h)
-    add_dependencies(nvim update_version_stamp)
-  else()
-  message(STATUS "Skipping version-string generation (cannot find git)")
-  endif()
-endif()
-
 configure_file (
   "${PROJECT_SOURCE_DIR}/config/versiondef.h.in"
   "${PROJECT_BINARY_DIR}/config/auto/versiondef.h"
