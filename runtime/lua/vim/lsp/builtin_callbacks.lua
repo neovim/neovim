@@ -330,6 +330,4 @@ BuiltinCallbacks['window/showMessage'] = {
   options = {}
 }
 
-return {
-  BuiltinCallbacks = BuiltinCallbacks
-}
+return BuiltinCallbacks
