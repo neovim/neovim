@@ -116,7 +116,7 @@ client.stop = function(self)
     self:request('shutdown', nil, function()end)
   end
 
-  vim.api.nvim_command("echo 'exit filetype: "..self.filetype.."server_name: "..self.server_name.."'")
+  vim.api.nvim_command("echo 'exit filetype: "..self.filetype..", server_name: "..self.server_name.."'")
   self:notify('exit', nil)
 
   uv.shutdown(self.stdin, function()

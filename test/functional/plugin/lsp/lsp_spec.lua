@@ -16,7 +16,7 @@ describe('Language Client API ', function()
           filetype = 'txt',
           cmd = {
             execute_path = './build/bin/nvim',
-            args = { '--headless', '--cmd', 'source test/functional/fixtures/nvim_fake_lsp.vim' }
+            args = { '--headless' }
           }
         })
       EOF
