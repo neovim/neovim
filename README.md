@@ -3,7 +3,7 @@
 For a tutorial and usage overview, take a look at the
 [Vimspector website][website]
 
-[![Build Status](https://dev.azure.com/puremouron/Vimspector/_apis/build/status/puremourning.vimspector?branchName=master)](https://dev.azure.com/puremouron/Vimspector/_build/latest?definitionId=1&branchName=master)
+[![Build Status](https://dev.azure.com/puremouron/Vimspector/_apis/build/status/puremourning.vimspector?branchName=master)](https://dev.azure.com/puremouron/Vimspector/_build/latest?definitionId=1&branchName=master) [![Gitter](https://badges.gitter.im/vimspector/Lobby.svg)](https://gitter.im/vimspector/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 <!--ts-->
    * [Features and Usage](#features-and-usage)
