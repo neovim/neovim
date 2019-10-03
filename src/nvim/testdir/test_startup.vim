@@ -581,6 +581,27 @@ func Test_read_stdin()
   call delete('Xtestout')
 endfunc
 
+func Test_set_shell()
+  let after =<< trim [CODE]
+    call writefile([&shell], "Xtestout")
+    quit!
+  [CODE]
+
+  if has('win32')
+    let $SHELL = 'C:\with space\cmd.exe'
+    let expected = '"C:\with space\cmd.exe"'
+  else
+    let $SHELL = '/bin/with space/sh'
+    let expected = '"/bin/with space/sh"'
+  endif
+
+  if RunVimPiped([], after, '', '')
+    let lines = readfile('Xtestout')
+    call assert_equal(expected, lines[0])
+  endif
+  call delete('Xtestout')
+endfunc
+
 func Test_progpath()
   " Tests normally run with "./vim" or "../vim", these must have been expanded
   " to a full path.
