@@ -4591,7 +4591,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 			of the internal screen state. This is mostly
 			useful when running nvim inside a debugger (and
 			the test suite).
-	    nodelta	Trigger a delay with all redrawn characters, even if
+	    nodelta	Send all internally redrawn cells to the UI, even if
+	                they are unchanged from the previously displayed state
 			already displayed by the UI.
 
 						*'redrawtime'* *'rdt'*
