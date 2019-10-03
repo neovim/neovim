@@ -29,7 +29,6 @@ function(BuildLibvterm)
     PATCH_COMMAND "${_libvterm_PATCH_COMMAND}"
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_BYPRODUCTS "${DEPS_INSTALL_DIR}/lib/libvterm.a"
     CONFIGURE_COMMAND "${_libvterm_CONFIGURE_COMMAND}"
     BUILD_COMMAND "${_libvterm_BUILD_COMMAND}"
     INSTALL_COMMAND "${_libvterm_INSTALL_COMMAND}")
