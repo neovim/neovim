@@ -315,11 +315,12 @@ Number; !must be defined to function properly):
 - `NVIM_TEST_RUN_TESTTEST` (U) (1): allows running
   `test/unit/testtest_spec.lua` used to check how testing infrastructure works.
 
-- `NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level: `0`
-  disables tracing (the fastest, but you get no data if tests crash and there
-  was no core dump generated), `1` or empty/undefined leaves only C function
-  cals and returns in the trace (faster then recording everything), `2` records
-  all function calls, returns and lua source lines exuecuted.
+- `NVIM_TEST_TRACE_LEVEL` (U) (N): specifies unit tests tracing level:
+  - `0` disables tracing (the fastest, but you get no data if tests crash and
+    there no core dump was generated),
+  - `1` leaves only C function calls and returns in the trace (faster than
+    recording everything),
+  - `2` records all function calls, returns and executed Lua source lines.
 
 - `NVIM_TEST_TRACE_ON_ERROR` (U) (1): makes unit tests yield trace on error in
   addition to regular error message.
