@@ -23930,22 +23930,47 @@ repeat:
      * - for second :e: before the current fname
      * - otherwise: The last '.'
      */
-    if (src[*usedlen + 1] == 'e' && *fnamep > tail)
+    const bool is_second_e = *fnamep > tail;
+    if (src[*usedlen + 1] == 'e' && is_second_e) {
       s = *fnamep - 2;
-    else
+    } else {
       s = *fnamep + *fnamelen - 1;
-    for (; s > tail; --s)
-      if (s[0] == '.')
+    }
+
+    for (; s > tail; s--) {
+      if (s[0] == '.') {
         break;
-    if (src[*usedlen + 1] == 'e') {             /* :e */
-      if (s > tail) {
-        *fnamelen += (size_t)(*fnamep - (s + 1));
-        *fnamep = s + 1;
-      } else if (*fnamep <= tail)
+      }
+    }
+    if (src[*usedlen + 1] == 'e') {
+      if (s > tail || (0 && is_second_e && s == tail)) {
+        // we stopped at a '.' (so anchor to &'.' + 1)
+        char_u *newstart = s + 1;
+        size_t distance_stepped_back = *fnamep - newstart;
+        *fnamelen += distance_stepped_back;
+        *fnamep = newstart;
+      } else if (*fnamep <= tail) {
         *fnamelen = 0;
-    } else {                          /* :r */
-      if (s > MAX(tail, *fnamep)) /* remove one extension */
+      }
+    } else {
+      // :r - Remove one extension
+      //
+      // Ensure that `s` doesn't go before `*fnamep`,
+      // since then we're taking too many roots:
+      //
+      // "path/to/this.file.ext" :e:e:r:r
+      //          ^    ^-------- *fnamep
+      //          +------------- tail
+      //
+      // Also ensure `s` doesn't go before `tail`,
+      // since then we're taking too many roots again:
+      //
+      // "path/to/this.file.ext" :r:r:r
+      //  ^       ^------------- tail
+      //  +--------------------- *fnamep
+      if (s > MAX(tail, *fnamep)) {
         *fnamelen = (size_t)(s - *fnamep);
+      }
     }
     *usedlen += 2;
   }
