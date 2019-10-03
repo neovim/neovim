@@ -874,17 +874,17 @@ describe('Screen', function()
 
   it('redraws not too much with conceallevel=1', function()
     command('set conceallevel=1')
-    command('set redrawdebug=nodelta')
+    command('set redrawdebug+=nodelta')
 
     insert([[
-    1
-    2
-    3
+    aaa
+    bbb
+    ccc
     ]])
     screen:expect{grid=[[
-      1                                                    |
-      2                                                    |
-      3                                                    |
+      aaa                                                  |
+      bbb                                                  |
+      ccc                                                  |
       ^                                                     |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -894,15 +894,19 @@ describe('Screen', function()
                                                            |
     ]]}
 
+    -- XXX: hack to get notifications, and check only a single line is
+    --      updated.  Could use next_msg() also.
+    local orig_handle_grid_line = screen._handle_grid_line
     local grid_lines = {}
-    function screen._handle_grid_line(_self, _grid, row, col, items)
+    function screen._handle_grid_line(self, grid, row, col, items)
       table.insert(grid_lines, {row, col, items})
+      orig_handle_grid_line(self, grid, row, col, items)
     end
     feed('k')
     screen:expect{grid=[[
-      1                                                    |
-      2                                                    |
-      ^3                                                    |
+      aaa                                                  |
+      bbb                                                  |
+      ^ccc                                                  |
                                                            |
       {0:~                                                    }|
       {0:~                                                    }|
@@ -911,6 +915,6 @@ describe('Screen', function()
       {0:~                                                    }|
                                                            |
     ]]}
-    eq(grid_lines, {{2, 0, {{'3', 0}}}})
+    eq(grid_lines, {{2, 0, {{'c', 0, 3}}}})
   end)
 end)
