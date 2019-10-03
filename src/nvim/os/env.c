@@ -324,7 +324,8 @@ void init_homedir(void)
   if (guessed_homedir != NULL && *guessed_homedir == '%') {
     const char *p = strchr(guessed_homedir + 1, '%');
     if (p != NULL) {
-      vim_snprintf(os_buf, (size_t)(p - guessed_homedir), "%s", guessed_homedir + 1);
+      vim_snprintf(os_buf, (size_t)(p - guessed_homedir), "%s",
+                   guessed_homedir + 1);
       const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
@@ -349,15 +350,13 @@ void init_homedir(void)
 #endif
 
   if (guessed_homedir == NULL) {
-    uv_mutex_lock(&mutex);
-    size_t size = 0;
-    uv_os_homedir((char *)os_buf, &size);
-    if (size == 0 || size > sizeof(os_buf)) {
-        ELOG("uv_os_homedir failed: required size %zu", size);
+    size_t homedir_size = (size_t)sizeof(os_buf);
+    int ret = uv_os_homedir((char *)os_buf, &homedir_size);
+    if (ret == UV_ENOBUFS) {
+        EMSG2(_(e_uv_os_homedir), homedir_size);
     } else {
-        guessed_homedir = xstrdup(os_buf);
+        guessed_homedir = xstrndup((char *)os_buf, homedir_size);
     }
-    uv_mutex_unlock(&mutex);
   }
 
   if (guessed_homedir != NULL) {

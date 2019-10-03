@@ -1049,6 +1049,10 @@ EXTERN char_u e_floatonly[] INIT(=N_(
 EXTERN char_u e_floatexchange[] INIT(=N_(
     "E5602: Cannot exchange or rotate float"));
 
+EXTERN char_u e_uv_os_homedir[] INIT(=N_(
+    "E5603: uv_os_homedir returned UV_ENOBUFS, required buffer size = %zu"));
+
+
 
 EXTERN char top_bot_msg[] INIT(= N_("search hit TOP, continuing at BOTTOM"));
 EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
