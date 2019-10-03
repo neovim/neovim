@@ -65,17 +65,10 @@ static void comp_botline(win_T *wp)
     done = 0;
   }
 
-  for (; lnum <= wp->w_buffer->b_ml.ml_line_count; ++lnum) {
-    int n;
+  for (; lnum <= wp->w_buffer->b_ml.ml_line_count; lnum++) {
     linenr_T last = lnum;
-    bool folded = hasFoldingWin(wp, lnum, NULL, &last, true, NULL);
-    if (folded) {
-      n = 1;
-    } else if (lnum == wp->w_topline) {
-      n = plines_win_nofill(wp, lnum, true) + wp->w_topfill;
-    } else {
-      n = plines_win(wp, lnum, true);
-    }
+    bool folded;
+    int n = plines_win_full(wp, lnum, &last, &folded, true);
     if (lnum <= wp->w_cursor.lnum && last >= wp->w_cursor.lnum) {
       wp->w_cline_row = done;
       wp->w_cline_height = n;
@@ -571,18 +564,14 @@ static void curs_rows(win_T *wp)
         break;
       wp->w_cline_row += wp->w_lines[i].wl_size;
     } else {
-      long fold_count = foldedCount(wp, lnum, NULL);
-      if (fold_count) {
-        lnum += fold_count;
-        if (lnum > wp->w_cursor.lnum)
-          break;
-        ++wp->w_cline_row;
-      } else if (lnum == wp->w_topline) {
-        wp->w_cline_row += plines_win_nofill(wp, lnum++, true)
-                           + wp->w_topfill;
-      } else {
-        wp->w_cline_row += plines_win(wp, lnum++, true);
+      linenr_T last = lnum;
+      bool folded;
+      int n = plines_win_full(wp, lnum, &last, &folded, false);
+      lnum = last + 1;
+      if (folded && lnum > wp->w_cursor.lnum) {
+        break;
       }
+      wp->w_cline_row += n;
     }
   }
 
@@ -593,18 +582,13 @@ static void curs_rows(win_T *wp)
         || (i < wp->w_lines_valid
             && (!wp->w_lines[i].wl_valid
                 || wp->w_lines[i].wl_lnum != wp->w_cursor.lnum))) {
-      if (wp->w_cursor.lnum == wp->w_topline)
-        wp->w_cline_height = plines_win_nofill(wp, wp->w_cursor.lnum,
-            true) + wp->w_topfill;
-      else
-        wp->w_cline_height = plines_win(wp, wp->w_cursor.lnum, true);
-      wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
-          NULL, NULL, true, NULL);
+      wp->w_cline_height = plines_win_full(wp, wp->w_cursor.lnum, NULL,
+                                           &wp->w_cline_folded, true);
     } else if (i > wp->w_lines_valid) {
       /* a line that is too long to fit on the last screen line */
       wp->w_cline_height = 0;
-      wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
-          NULL, NULL, true, NULL);
+      wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum, NULL,
+                                         NULL, true, NULL);
     } else {
       wp->w_cline_height = wp->w_lines[i].wl_size;
       wp->w_cline_folded = wp->w_lines[i].wl_folded;
@@ -646,12 +630,9 @@ static void validate_cheight(void)
 {
   check_cursor_moved(curwin);
   if (!(curwin->w_valid & VALID_CHEIGHT)) {
-    if (curwin->w_cursor.lnum == curwin->w_topline)
-      curwin->w_cline_height = plines_nofill(curwin->w_cursor.lnum)
-                               + curwin->w_topfill;
-    else
-      curwin->w_cline_height = plines(curwin->w_cursor.lnum);
-    curwin->w_cline_folded = hasFolding(curwin->w_cursor.lnum, NULL, NULL);
+    curwin->w_cline_height = plines_win_full(curwin, curwin->w_cursor.lnum,
+                                             NULL, &curwin->w_cline_folded,
+                                             true);
     curwin->w_valid |= VALID_CHEIGHT;
   }
 }
