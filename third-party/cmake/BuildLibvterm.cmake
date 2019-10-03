@@ -68,4 +68,8 @@ BuildLibvterm(PATCH_COMMAND ${LIBVTERM_PATCH_COMMAND}
   BUILD_COMMAND ${LIBVTERM_BUILD_COMMAND}
   INSTALL_COMMAND ${LIBVTERM_INSTALL_COMMAND})
 
-list(APPEND THIRD_PARTY_DEPS "${DEPS_INSTALL_DIR}/lib/libvterm.a")
+ExternalProject_Add_Step(libvterm verify
+  COMMAND test -f "${DEPS_INSTALL_DIR}/lib/libvterm.a"
+  DEPENDEES install)
+
+list(APPEND THIRD_PARTY_DEPS libvterm)
