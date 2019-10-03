@@ -69,18 +69,6 @@ function Test_window_cmd_wincmd_gf()
   augroup! test_window_cmd_wincmd_gf
 endfunc
 
-func Test_next_split_all()
-  " This was causing an illegal memory access.
-  n x
-  norm axxx
-  split
-  split
-  s/x
-  s/x
-  all
-  bwipe!
-endfunc
-
 func Test_window_quit()
   e Xa
   split Xb
@@ -502,6 +490,17 @@ func Test_window_newtab()
   %bw!
 endfunc
 
+func Test_next_split_all()
+  " This was causing an illegal memory access.
+  n x
+  norm axxx
+  split
+  split
+  s/x
+  s/x
+  all
+  bwipe!
+endfunc
 
 " Tests for adjusting window and contents
 func GetScreenStr(row)
@@ -539,6 +538,11 @@ func Test_window_contents()
 
   bwipeout!
   call test_garbagecollect_now()
+endfunc
+
+func Test_window_colon_command()
+  " This was reading invalid memory.
+  exe "norm! v\<C-W>:\<C-U>echo v:version"
 endfunc
 
 func Test_access_freed_mem()
@@ -835,11 +839,6 @@ func Test_winnr()
   call assert_equal(6, tabpagewinnr(1, 'l'))
 
   only | tabonly
-endfunc
-
-func Test_window_colon_command()
-  " This was reading invalid memory.
-  exe "norm! v\<C-W>:\<C-U>echo v:version"
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab
