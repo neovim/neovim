@@ -4834,7 +4834,7 @@ buf_check_timestamp(
   if (buf->terminal
       || buf->b_ffname == NULL
       || buf->b_ml.ml_mfp == NULL
-      || *buf->b_p_bt != NUL
+      || !bt_normal(buf)
       || buf->b_saving
       || busy
       )

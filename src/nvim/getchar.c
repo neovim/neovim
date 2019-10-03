@@ -1165,12 +1165,12 @@ void free_typebuf(void)
   if (typebuf.tb_buf == typebuf_init) {
     internal_error("Free typebuf 1");
   } else {
-    xfree(typebuf.tb_buf);
+    XFREE_CLEAR(typebuf.tb_buf);
   }
   if (typebuf.tb_noremap == noremapbuf_init) {
     internal_error("Free typebuf 2");
   } else {
-    xfree(typebuf.tb_noremap);
+    XFREE_CLEAR(typebuf.tb_noremap);
   }
 }
 

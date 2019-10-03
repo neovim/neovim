@@ -264,15 +264,152 @@ static struct fmtpattern
   { 'o', ".\\+" }
 };
 
+// Convert an errorformat pattern to a regular expression pattern.
+// See fmt_pat definition above for the list of supported patterns.
+static char_u *fmtpat_to_regpat(
+    const char_u *efmp,
+    efm_T *fmt_ptr,
+    int idx,
+    int round,
+    char_u *ptr,
+    char_u *errmsg,
+    size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (fmt_ptr->addr[idx]) {
+    // Each errorformat pattern can occur only once
+    snprintf((char *)errmsg, errmsglen,
+             _("E372: Too many %%%c in format string"), *efmp);
+    EMSG(errmsg);
+    return NULL;
+  }
+  if ((idx && idx < 6
+       && vim_strchr((char_u *)"DXOPQ", fmt_ptr->prefix) != NULL)
+      || (idx == 6
+          && vim_strchr((char_u *)"OPQ", fmt_ptr->prefix) == NULL)) {
+    snprintf((char *)errmsg, errmsglen,
+             _("E373: Unexpected %%%c in format string"), *efmp);
+    EMSG(errmsg);
+    return NULL;
+  }
+  fmt_ptr->addr[idx] = (char_u)++round;
+  *ptr++ = '\\';
+  *ptr++ = '(';
+#ifdef BACKSLASH_IN_FILENAME
+  if (*efmp == 'f') {
+    // Also match "c:" in the file name, even when
+    // checking for a colon next: "%f:".
+    // "\%(\a:\)\="
+    STRCPY(ptr, "\\%(\\a:\\)\\=");
+    ptr += 10;
+  }
+#endif
+  if (*efmp == 'f' && efmp[1] != NUL) {
+    if (efmp[1] != '\\' && efmp[1] != '%') {
+      // A file name may contain spaces, but this isn't
+      // in "\f".  For "%f:%l:%m" there may be a ":" in
+      // the file name.  Use ".\{-1,}x" instead (x is
+      // the next character), the requirement that :999:
+      // follows should work.
+      STRCPY(ptr, ".\\{-1,}");
+      ptr += 7;
+    } else {
+      // File name followed by '\\' or '%': include as
+      // many file name chars as possible.
+      STRCPY(ptr, "\\f\\+");
+      ptr += 4;
+    }
+  } else {
+    char_u *srcptr = (char_u *)fmt_pat[idx].pattern;
+    while ((*ptr = *srcptr++) != NUL) {
+      ptr++;
+    }
+  }
+  *ptr++ = '\\';
+  *ptr++ = ')';
+
+  return ptr;
+}
+
+// Convert a scanf like format in 'errorformat' to a regular expression.
+static char_u *scanf_fmt_to_regpat(
+    const char_u *efm,
+    int len,
+    const char_u **pefmp,
+    char_u *ptr,
+    char_u *errmsg,
+    size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *efmp = *pefmp;
+
+  if (*++efmp == '[' || *efmp == '\\') {
+    if ((*ptr++ = *efmp) == '[') {  // %*[^a-z0-9] etc.
+      if (efmp[1] == '^') {
+        *ptr++ = *++efmp;
+      }
+      if (efmp < efm + len) {
+        *ptr++ = *++efmp;  // could be ']'
+        while (efmp < efm + len && (*ptr++ = *++efmp) != ']') {
+        }
+        if (efmp == efm + len) {
+          EMSG(_("E374: Missing ] in format string"));
+          return NULL;
+        }
+      }
+    } else if (efmp < efm + len) {  // %*\D, %*\s etc.
+      *ptr++ = *++efmp;
+    }
+    *ptr++ = '\\';
+    *ptr++ = '+';
+  } else {
+    // TODO(vim): scanf()-like: %*ud, %*3c, %*f, ... ?
+    snprintf((char *)errmsg, errmsglen,
+             _("E375: Unsupported %%%c in format string"), *efmp);
+    EMSG(errmsg);
+    return NULL;
+  }
+
+  *pefmp = efmp;
+
+  return ptr;
+}
+
+// Analyze/parse an errorformat prefix.
+static int efm_analyze_prefix(const char_u **pefmp, efm_T *fmt_ptr,
+                              char_u *errmsg, size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
+{
+  const char_u *efmp = *pefmp;
+
+  if (vim_strchr((char_u *)"+-", *efmp) != NULL) {
+    fmt_ptr->flags = *efmp++;
+  }
+  if (vim_strchr((char_u *)"DXAEWICZGOPQ", *efmp) != NULL) {
+    fmt_ptr->prefix = *efmp;
+  } else {
+    snprintf((char *)errmsg, errmsglen,
+             _("E376: Invalid %%%c in format string prefix"), *efmp);
+    EMSG(errmsg);
+    return FAIL;
+  }
+
+  *pefmp = efmp;
+
+  return OK;
+}
+
+
 // Converts a 'errorformat' string to regular expression pattern
-static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
-                         char_u *regpat, char_u *errmsg)
+static int efm_to_regpat(const char_u *efm, int len, efm_T *fmt_ptr,
+                         char_u *regpat, char_u *errmsg, size_t errmsglen)
+  FUNC_ATTR_NONNULL_ALL
 {
   // Build regexp pattern from current 'errorformat' option
   char_u *ptr = regpat;
   *ptr++ = '^';
   int round = 0;
-  for (char_u *efmp = efm; efmp < efm + len; efmp++) {
+  for (const char_u *efmp = efm; efmp < efm + len; efmp++) {
     if (*efmp == '%') {
       efmp++;
       int idx;
@@ -282,89 +419,15 @@ static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
         }
       }
       if (idx < FMT_PATTERNS) {
-        if (fmt_ptr->addr[idx]) {
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E372: Too many %%%c in format string"), *efmp);
-          EMSG(errmsg);
-          return -1;
-        }
-        if ((idx
-             && idx < 6
-             && vim_strchr((char_u *)"DXOPQ", fmt_ptr->prefix) != NULL)
-            || (idx == 6
-                && vim_strchr((char_u *)"OPQ", fmt_ptr->prefix) == NULL)) {
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E373: Unexpected %%%c in format string"), *efmp);
-          EMSG(errmsg);
+        ptr = fmtpat_to_regpat(efmp, fmt_ptr, idx, round, ptr,
+                               errmsg, errmsglen);
+        if (ptr == NULL) {
           return -1;
         }
         round++;
-        fmt_ptr->addr[idx] = (char_u)round;
-        *ptr++ = '\\';
-        *ptr++ = '(';
-#ifdef BACKSLASH_IN_FILENAME
-        if (*efmp == 'f') {
-          // Also match "c:" in the file name, even when
-          // checking for a colon next: "%f:".
-          // "\%(\a:\)\="
-          STRCPY(ptr, "\\%(\\a:\\)\\=");
-          ptr += 10;
-        }
-#endif
-        if (*efmp == 'f' && efmp[1] != NUL) {
-          if (efmp[1] != '\\' && efmp[1] != '%') {
-            // A file name may contain spaces, but this isn't
-            // in "\f".  For "%f:%l:%m" there may be a ":" in
-            // the file name.  Use ".\{-1,}x" instead (x is
-            // the next character), the requirement that :999:
-            // follows should work.
-            STRCPY(ptr, ".\\{-1,}");
-            ptr += 7;
-          } else {
-            // File name followed by '\\' or '%': include as
-            // many file name chars as possible.
-            STRCPY(ptr, "\\f\\+");
-            ptr += 4;
-          }
-        } else {
-          char_u *srcptr = (char_u *)fmt_pat[idx].pattern;
-          while ((*ptr = *srcptr++) != NUL) {
-            ptr++;
-          }
-        }
-        *ptr++ = '\\';
-        *ptr++ = ')';
       } else if (*efmp == '*') {
-        if (*++efmp == '[' || *efmp == '\\') {
-          if ((*ptr++ = *efmp) == '[') {  // %*[^a-z0-9] etc.
-            if (efmp[1] == '^') {
-              *ptr++ = *++efmp;
-            }
-            if (efmp < efm + len) {
-              efmp++;
-              *ptr++ = *efmp;    // could be ']'
-              while (efmp < efm + len) {
-                efmp++;
-                if ((*ptr++ = *efmp) == ']') {
-                  break;
-                }
-              }
-              if (efmp == efm + len) {
-                EMSG(_("E374: Missing ] in format string"));
-                return -1;
-              }
-            }
-          } else if (efmp < efm + len) {  // %*\D, %*\s etc.
-            efmp++;
-            *ptr++ = *efmp;
-          }
-          *ptr++ = '\\';
-          *ptr++ = '+';
-        } else {
-          // TODO(vim): scanf()-like: %*ud, %*3c, %*f, ... ?
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E375: Unsupported %%%c in format string"), *efmp);
-          EMSG(errmsg);
+        ptr = scanf_fmt_to_regpat(efm, len, &efmp, ptr, errmsg, errmsglen);
+        if (ptr == NULL) {
           return -1;
         }
       } else if (vim_strchr((char_u *)"%\\.^$~[", *efmp) != NULL) {
@@ -374,15 +437,7 @@ static int efm_to_regpat(char_u *efm, int len, efm_T *fmt_ptr,
       } else if (*efmp == '>') {
         fmt_ptr->conthere = true;
       } else if (efmp == efm + 1) {             // analyse prefix
-        if (vim_strchr((char_u *)"+-", *efmp) != NULL) {
-          fmt_ptr->flags = *efmp++;
-        }
-        if (vim_strchr((char_u *)"DXAEWICZGOPQ", *efmp) != NULL) {
-          fmt_ptr->prefix = *efmp;
-        } else {
-          snprintf((char *)errmsg, CMDBUFFSIZE + 1,
-                   _("E376: Invalid %%%c in format string prefix"), *efmp);
-          EMSG(errmsg);
+        if (efm_analyze_prefix(&efmp, fmt_ptr, errmsg, errmsglen) == FAIL) {
           return -1;
         }
       } else {
@@ -461,7 +516,7 @@ static efm_T * parse_efm_option(char_u *efm)
       }
     }
 
-    if (efm_to_regpat(efm, len, fmt_ptr, fmtstr, errmsg) == -1) {
+    if (efm_to_regpat(efm, len, fmt_ptr, fmtstr, errmsg, errmsglen) == -1) {
       goto parse_efm_error;
     }
     if ((fmt_ptr->prog = vim_regcomp(fmtstr, RE_MAGIC + RE_STRING)) == NULL) {
@@ -1499,6 +1554,7 @@ static int qf_add_entry(qf_info_T *qi, int qf_idx, char_u *dir, char_u *fname,
  * Allocate a new location list
  */
 static qf_info_T *ll_new_list(void)
+  FUNC_ATTR_NONNULL_RET
 {
   qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
   qi->qf_refcount++;
@@ -2084,7 +2140,7 @@ static win_T *qf_find_win_with_normal_buf(void)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
-    if (wp->w_buffer->b_p_bt[0] == NUL) {
+    if (bt_normal(wp->w_buffer)) {
       return wp;
     }
   }
@@ -2148,7 +2204,7 @@ static void qf_goto_win_with_ll_file(win_T *use_win, int qf_fnum,
       // Find a previous usable window
       win = curwin;
       do {
-        if (win->w_buffer->b_p_bt[0] == NUL) {
+        if (bt_normal(win->w_buffer)) {
           break;
         }
         if (win->w_prev == NULL) {
@@ -2202,7 +2258,7 @@ static void qf_goto_win_with_qfl_file(int qf_fnum)
     // Remember a usable window.
     if (altwin == NULL
         && !win->w_p_pvw
-        && win->w_buffer->b_p_bt[0] == NUL) {
+        && bt_normal(win->w_buffer)) {
       altwin = win;
     }
   }
@@ -4412,7 +4468,7 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  /* Jump to first match. */
+  // Jump to first match.
   if (qi->qf_lists[qi->qf_curlist].qf_count > 0) {
     if ((flags & VGR_NOJUMP) == 0) {
       vgr_jump_to_match(qi, eap->forceit, &redraw_for_dummy, first_match_buf,
@@ -4974,15 +5030,86 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   return status;
 }
 
+// Add a new quickfix entry to list at 'qf_idx' in the stack 'qi' from the
+// items in the dict 'd'.
+static int qf_add_entry_from_dict(
+    qf_info_T *qi,
+    int qf_idx,
+    const dict_T *d,
+    bool first_entry)
+  FUNC_ATTR_NONNULL_ALL
+{
+  static bool did_bufnr_emsg;
+
+  if (first_entry) {
+    did_bufnr_emsg = false;
+  }
+
+  char *const filename = tv_dict_get_string(d, "filename", true);
+  char *const module = tv_dict_get_string(d, "module", true);
+  int bufnum = (int)tv_dict_get_number(d, "bufnr");
+  const long lnum = (long)tv_dict_get_number(d, "lnum");
+  const int col = (int)tv_dict_get_number(d, "col");
+  const char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
+  const int nr = (int)tv_dict_get_number(d, "nr");
+  const char *const type = tv_dict_get_string(d, "type", false);
+  char *const pattern = tv_dict_get_string(d, "pattern", true);
+  char *text = tv_dict_get_string(d, "text", true);
+  if (text == NULL) {
+    text = xcalloc(1, 1);
+  }
+  bool valid = true;
+  if ((filename == NULL && bufnum == 0)
+      || (lnum == 0 && pattern == NULL)) {
+    valid = false;
+  }
+
+  // Mark entries with non-existing buffer number as not valid. Give the
+  // error message only once.
+  if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
+    if (!did_bufnr_emsg) {
+      did_bufnr_emsg = true;
+      EMSGN(_("E92: Buffer %" PRId64 " not found"), bufnum);
+    }
+    valid = false;
+    bufnum = 0;
+  }
+
+  // If the 'valid' field is present it overrules the detected value.
+  if (tv_dict_find(d, "valid", -1) != NULL) {
+    valid = tv_dict_get_number(d, "valid");
+  }
+
+  const int status = qf_add_entry(qi,
+                                  qf_idx,
+                                  NULL,  // dir
+                                  (char_u *)filename,
+                                  (char_u *)module,
+                                  bufnum,
+                                  (char_u *)text,
+                                  lnum,
+                                  col,
+                                  vcol,  // vis_col
+                                  (char_u *)pattern,  // search pattern
+                                  nr,
+                                  (char_u)(type == NULL ? NUL : *type),
+                                  valid);
+
+  xfree(filename);
+  xfree(module);
+  xfree(pattern);
+  xfree(text);
+
+  return status;
+}
+
 /// Add list of entries to quickfix/location list. Each list entry is
 /// a dictionary with item information.
 static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
                           char_u *title, int action)
 {
-  dict_T *d;
   qfline_T *old_last = NULL;
   int retval = OK;
-  bool did_bufnr_emsg = false;
 
   if (action == ' ' || qf_idx == qi->qf_listcount) {
     // make place for a new list
@@ -5001,68 +5128,13 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
       continue;  // Skip non-dict items.
     }
 
-    d = TV_LIST_ITEM_TV(li)->vval.v_dict;
+    const dict_T *const d = TV_LIST_ITEM_TV(li)->vval.v_dict;
     if (d == NULL) {
       continue;
     }
 
-    char *const filename = tv_dict_get_string(d, "filename", true);
-    char *const module = tv_dict_get_string(d, "module", true);
-    int bufnum = (int)tv_dict_get_number(d, "bufnr");
-    long lnum = (long)tv_dict_get_number(d, "lnum");
-    int col = (int)tv_dict_get_number(d, "col");
-    char_u vcol = (char_u)tv_dict_get_number(d, "vcol");
-    int nr = (int)tv_dict_get_number(d, "nr");
-    const char *type_str = tv_dict_get_string(d, "type", false);
-    const char_u type = (char_u)(uint8_t)(type_str == NULL ? NUL : *type_str);
-    char *const pattern = tv_dict_get_string(d, "pattern", true);
-    char *text = tv_dict_get_string(d, "text", true);
-    if (text == NULL) {
-      text = xcalloc(1, 1);
-    }
-    bool valid = true;
-    if ((filename == NULL && bufnum == 0) || (lnum == 0 && pattern == NULL)) {
-      valid = false;
-    }
-
-    /* Mark entries with non-existing buffer number as not valid. Give the
-     * error message only once. */
-    if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
-      if (!did_bufnr_emsg) {
-        did_bufnr_emsg = TRUE;
-        EMSGN(_("E92: Buffer %" PRId64 " not found"), bufnum);
-      }
-      valid = false;
-      bufnum = 0;
-    }
-
-    // If the 'valid' field is present it overrules the detected value.
-    if (tv_dict_find(d, "valid", -1) != NULL) {
-      valid = (int)tv_dict_get_number(d, "valid");
-    }
-
-    int status = qf_add_entry(qi,
-                              qf_idx,
-                              NULL,      // dir
-                              (char_u *)filename,
-                              (char_u *)module,
-                              bufnum,
-                              (char_u *)text,
-                              lnum,
-                              col,
-                              vcol,      // vis_col
-                              (char_u *)pattern,   // search pattern
-                              nr,
-                              type,
-                              valid);
-
-    xfree(filename);
-    xfree(module);
-    xfree(pattern);
-    xfree(text);
-
-    if (status == FAIL) {
-      retval = FAIL;
+    retval = qf_add_entry_from_dict(qi, qf_idx, d, li == tv_list_first(list));
+    if (retval == FAIL) {
       break;
     }
   });
@@ -5595,7 +5667,7 @@ void ex_cexpr(exarg_T *eap)
 
 // Get the location list for ":lhelpgrep"
 static qf_info_T *hgr_get_ll(bool *new_ll)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   win_T *wp;
   qf_info_T *qi;
@@ -5615,9 +5687,7 @@ static qf_info_T *hgr_get_ll(bool *new_ll)
   }
   if (qi == NULL) {
     // Allocate a new location list for help text matches
-    if ((qi = ll_new_list()) == NULL) {
-      return NULL;
-    }
+    qi = ll_new_list();
     *new_ll = true;
   }
 
@@ -5713,14 +5783,14 @@ static void hgr_search_files_in_dir(
   }
 }
 
-// Search for a pattern in all the help files in the 'runtimepath'.
+// Search for a pattern in all the help files in the 'runtimepath'
+// and add the matches to a quickfix list.
+// 'lang' is the language specifier.  If supplied, then only matches in the
+// specified language are found.
 static void hgr_search_in_rtp(qf_info_T *qi, regmatch_T *p_regmatch,
-                              char_u *arg)
-  FUNC_ATTR_NONNULL_ALL
+                              const char_u *lang)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
-  // Check for a specified language
-  char_u *const lang = check_help_lang(arg);
-
   // Go through all directories in 'runtimepath'
   char_u *p = p_rtp;
   while (*p != NUL && !got_int) {
@@ -5755,11 +5825,10 @@ void ex_helpgrep(exarg_T *eap)
 
   if (eap->cmdidx == CMD_lhelpgrep) {
     qi = hgr_get_ll(&new_qi);
-    if (qi == NULL) {
-      return;
-    }
   }
 
+  // Check for a specified language
+  char_u *const lang = check_help_lang(eap->arg);
   regmatch_T regmatch = {
     .regprog = vim_regcomp(eap->arg, RE_MAGIC + RE_STRING),
     .rm_ic = false,
@@ -5768,7 +5837,7 @@ void ex_helpgrep(exarg_T *eap)
     // Create a new quickfix list.
     qf_new_list(qi, qf_cmdtitle(*eap->cmdlinep));
 
-    hgr_search_in_rtp(qi, &regmatch, eap->arg);
+    hgr_search_in_rtp(qi, &regmatch, lang);
 
     vim_regfree(regmatch.regprog);
 
@@ -5778,11 +5847,12 @@ void ex_helpgrep(exarg_T *eap)
     qi->qf_lists[qi->qf_curlist].qf_index = 1;
   }
 
-  if (p_cpo == empty_option)
+  if (p_cpo == empty_option) {
     p_cpo = save_cpo;
-  else
-    /* Darn, some plugin changed the value. */
+  } else {
+    // Darn, some plugin changed the value.
     free_string_option(save_cpo);
+  }
 
   qf_list_changed(qi, qi->qf_curlist);
   qf_update_buffer(qi, NULL);
@@ -5803,8 +5873,8 @@ void ex_helpgrep(exarg_T *eap)
     EMSG2(_(e_nomatch2), eap->arg);
 
   if (eap->cmdidx == CMD_lhelpgrep) {
-    /* If the help window is not opened or if it already points to the
-     * correct location list, then free the new location list. */
+    // If the help window is not opened or if it already points to the
+    // correct location list, then free the new location list.
     if (!bt_help(curwin->w_buffer) || curwin->w_llist == qi) {
       if (new_qi) {
         ll_free_all(&qi);
