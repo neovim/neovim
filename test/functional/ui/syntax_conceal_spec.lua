@@ -895,7 +895,7 @@ describe('Screen', function()
     ]]}
 
     local grid_lines = {}
-    function screen._handle_grid_line(self, grid, row, col, items)
+    function screen._handle_grid_line(_self, _grid, row, col, items)
       table.insert(grid_lines, {row, col, items})
     end
     feed('k')
