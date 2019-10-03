@@ -1,6 +1,7 @@
 local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local clear, feed, command = helpers.clear, helpers.feed, helpers.command
+local eq = helpers.eq
 local insert = helpers.insert
 
 describe('Screen', function()
@@ -869,5 +870,47 @@ describe('Screen', function()
         {4:-- VISUAL LINE --}                                    |
       ]]}
     end)
+  end)
+
+  it('redraws not too much with conceallevel=1', function()
+    command('set conceallevel=1')
+    command('set writedelay=-100')
+
+    insert([[
+    1
+    2
+    3
+    ]])
+    screen:expect{grid=[[
+      1                                                    |
+      2                                                    |
+      3                                                    |
+      ^                                                     |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+
+    local grid_lines = {}
+    function screen._handle_grid_line(self, grid, row, col, items)
+      table.insert(grid_lines, {row, col, items})
+    end
+    feed('k')
+    screen:expect{grid=[[
+      1                                                    |
+      2                                                    |
+      ^3                                                    |
+                                                           |
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+      {0:~                                                    }|
+                                                           |
+    ]]}
+    eq(grid_lines, {{2, 0, {{'3', 0}}}})
   end)
 end)
