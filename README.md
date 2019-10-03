@@ -19,7 +19,7 @@
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
 - Simplify maintenance and encourage [contributions](CONTRIBUTING.md)
-- Split the work between multiple developers
+- Split the work between more than two developers
 - Enable [advanced UIs] without modifications to the core
 - Maximize [extensibility](https://github.com/neovim/neovim/wiki/Plugin-UI-architecture)
 
