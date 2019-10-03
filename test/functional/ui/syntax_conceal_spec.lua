@@ -874,7 +874,7 @@ describe('Screen', function()
 
   it('redraws not too much with conceallevel=1', function()
     command('set conceallevel=1')
-    command('set writedelay=-100')
+    command('set redrawdebug=nodelta')
 
     insert([[
     1
