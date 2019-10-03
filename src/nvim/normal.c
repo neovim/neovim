@@ -3932,11 +3932,11 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if ((long)curwin->w_curswant >= width2)
-          /* move back within line */
+        if (curwin->w_curswant > width2) {
+          // move back within line
           curwin->w_curswant -= width2;
-        else {
-          /* to previous line */
+        } else {
+          // to previous line
           if (curwin->w_cursor.lnum == 1) {
             retval = false;
             break;
@@ -4680,9 +4680,8 @@ static void nv_ctrlo(cmdarg_T *cap)
   }
 }
 
-/*
- * CTRL-^ command, short for ":e #"
- */
+// CTRL-^ command, short for ":e #".  Works even when the alternate buffer is
+// not named.
 static void nv_hat(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap))
@@ -6795,10 +6794,14 @@ static void nv_g_cmd(cmdarg_T *cap)
       } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false)
         clearopbeep(oap);
     } else {
+      if (cap->count1 > 1) {
+        // if it fails, let the cursor still move to the last char
+        cursor_down(cap->count1 - 1, false);
+      }
       i = curwin->w_leftcol + curwin->w_width_inner - col_off - 1;
       coladvance((colnr_T)i);
 
-      /* Make sure we stick in this column. */
+      // Make sure we stick in this column.
       validate_virtcol();
       curwin->w_curswant = curwin->w_virtcol;
       curwin->w_set_curswant = false;

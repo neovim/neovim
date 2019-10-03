@@ -131,8 +131,20 @@ do_window (
   case '^':
     CHECK_CMDWIN;
     reset_VIsual_and_resel();  // stop Visual mode
-    cmd_with_count("split #", (char_u *)cbuf, sizeof(cbuf), Prenum);
-    do_cmdline_cmd(cbuf);
+
+    if (buflist_findnr(Prenum == 0 ? curwin->w_alt_fnum : Prenum) == NULL) {
+      if (Prenum == 0) {
+        EMSG(_(e_noalt));
+      } else {
+        EMSGN(_("E92: Buffer %" PRId64 " not found"), Prenum);
+      }
+      break;
+    }
+
+    if (!curbuf_locked() && win_split(0, 0) == OK) {
+      (void)buflist_getfile(Prenum == 0 ? curwin->w_alt_fnum : Prenum,
+                            (linenr_T)0, GETF_ALT, false);
+    }
     break;
 
   /* open new window */
@@ -5598,10 +5610,14 @@ void scroll_to_fraction(win_T *wp, int prev_height)
     int sline, line_size;
     int height = wp->w_height_inner;
 
-    // Don't change w_topline when height is zero.  Don't set w_topline when
-    // 'scrollbind' is set and this isn't the current window.
+  // Don't change w_topline in any of these cases:
+  // - window height is 0
+  // - 'scrollbind' is set and this isn't the current window
+  // - window height is sufficient to display the whole buffer and first line
+  //   is visible.
   if (height > 0
       && (!wp->w_p_scb || wp == curwin)
+      && (height < wp->w_buffer->b_ml.ml_line_count || wp->w_topline > 1)
       ) {
     /*
      * Find a value for w_topline that shows the cursor at the same

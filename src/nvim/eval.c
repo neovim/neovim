@@ -5746,13 +5746,13 @@ static int dict_get_tv(char_u **arg, typval_T *rettv, int evaluate)
         goto failret;
       }
       item = tv_dict_item_alloc((const char *)key);
-      tv_clear(&tvkey);
       item->di_tv = tv;
       item->di_tv.v_lock = 0;
       if (tv_dict_add(d, item) == FAIL) {
         tv_dict_item_free(item);
       }
     }
+    tv_clear(&tvkey);
 
     if (**arg == '}')
       break;

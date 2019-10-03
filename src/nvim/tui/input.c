@@ -27,7 +27,7 @@ void tinput_init(TermInput *input, Loop *loop)
   input->loop = loop;
   input->paste = 0;
   input->in_fd = 0;
-  input->waiting_for_bg_response = false;
+  input->waiting_for_bg_response = 0;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
   uv_cond_init(&input->key_buffer_cond);
@@ -444,7 +444,7 @@ static void set_bg_deferred(void **argv)
 // [1] https://en.wikipedia.org/wiki/Luma_%28video%29
 static bool handle_background_color(TermInput *input)
 {
-  if (!input->waiting_for_bg_response) {
+  if (input->waiting_for_bg_response <= 0) {
     return false;
   }
   size_t count = 0;
@@ -465,9 +465,13 @@ static bool handle_background_color(TermInput *input)
     header_size = 10;
     num_components = 4;
   } else {
+    input->waiting_for_bg_response--;
+    if (input->waiting_for_bg_response == 0) {
+      DLOG("did not get a response for terminal background query");
+    }
     return false;
   }
-  input->waiting_for_bg_response = false;
+  input->waiting_for_bg_response = 0;
   rbuffer_consumed(input->read_stream.buffer, header_size);
   RBUFFER_EACH(input->read_stream.buffer, c, i) {
     count = i + 1;

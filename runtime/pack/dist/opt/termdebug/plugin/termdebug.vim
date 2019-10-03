@@ -67,8 +67,8 @@ command -nargs=* -complete=file -bang Termdebug call s:StartDebug(<bang>0, <f-ar
 command -nargs=+ -complete=file -bang TermdebugCommand call s:StartDebugCommand(<bang>0, <f-args>)
 
 " Name of the gdb command, defaults to "gdb".
-if !exists('termdebugger')
-  let termdebugger = 'gdb'
+if !exists('g:termdebugger')
+  let g:termdebugger = 'gdb'
 endif
 
 let s:pc_id = 12
@@ -106,9 +106,14 @@ endfunc
 
 func s:StartDebug_internal(dict)
   if exists('s:gdbwin')
-    echoerr 'Terminal debugger already running'
+    echoerr 'Terminal debugger already running, cannot run two'
     return
   endif
+  if !executable(g:termdebugger)
+    echoerr 'Cannot execute debugger program "' .. g:termdebugger .. '"'
+    return
+  endif
+
   let s:ptywin = 0
   let s:pid = 0
 

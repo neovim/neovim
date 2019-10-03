@@ -24,10 +24,6 @@ env:
                    -DDEPS_PREFIX=$DEPS_BUILD_DIR/usr
                    -DMIN_LOG_LEVEL=3"
     - DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_GPERF=OFF"
-    # Additional CMake flags for 32-bit builds.
-    - CMAKE_FLAGS_32BIT="-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32
-                         -DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib
-                         -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
     # Environment variables for Clang sanitizers.
     - ASAN_OPTIONS="detect_leaks=1:check_initialization_order=1:log_path=$LOG_DIR/asan"
     - TSAN_OPTIONS="log_path=$LOG_DIR/tsan"
@@ -136,6 +132,8 @@ jobs:
       compiler: gcc
       env:
         - BUILD_32BIT=ON
+        - CMAKE_FLAGS="$CMAKE_FLAGS -m32 -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
+        - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -m32 -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
         # Minimum required CMake.
         - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
         - *common-job-env

@@ -18,9 +18,6 @@ build_make() {
 }
 
 build_deps() {
-  if test "${BUILD_32BIT}" = ON ; then
-    DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
-  fi
   if test "${FUNCTIONALTEST}" = "functionaltest-lua" \
      || test "${CLANG_SANITIZER}" = "ASAN_UBSAN" ; then
     DEPS_CMAKE_FLAGS="${DEPS_CMAKE_FLAGS} -DUSE_BUNDLED_LUA=ON"
@@ -52,9 +49,6 @@ build_deps() {
 prepare_build() {
   if test -n "${CLANG_SANITIZER}" ; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCLANG_${CLANG_SANITIZER}=ON"
-  fi
-  if test "${BUILD_32BIT}" = ON ; then
-    CMAKE_FLAGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_32BIT}"
   fi
 
   mkdir -p "${BUILD_DIR}"
