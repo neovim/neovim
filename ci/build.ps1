@@ -104,10 +104,10 @@ $client = new-object System.Net.WebClient
 cd c:\treesitter
 
 if ($bits -eq 32) {
-  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.5/tree-sitter-windows-x86.gz","c:\treesitter\tree-sitter-cli.gz")
+  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x86.gz","c:\treesitter\tree-sitter-cli.gz")
 }
 elseif ($bits -eq 64) {
-  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.5/tree-sitter-windows-x64.gz","c:\treesitter\tree-sitter-cli.gz")
+  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x64.gz","c:\treesitter\tree-sitter-cli.gz")
 }
 python -c "import gzip, shutil; f1,f2 = gzip.open('tree-sitter-cli.gz', 'rb'),  open('tree-sitter.exe', 'wb'); shutil.copyfileobj(f1, f2); f2.close()"
 
