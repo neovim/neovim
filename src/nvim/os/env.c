@@ -352,9 +352,7 @@ void init_homedir(void)
   if (guessed_homedir == NULL) {
     size_t homedir_size = (size_t)sizeof(os_buf);
     int ret = uv_os_homedir((char *)os_buf, &homedir_size);
-    if (ret == UV_ENOBUFS) {
-        EMSG2(_(e_uv_os_homedir), homedir_size);
-    } else {
+    if (ret == 0 && homedir_size > 0) {
         guessed_homedir = xstrndup((char *)os_buf, homedir_size);
     }
   }
