@@ -74,16 +74,16 @@ const char *os_getenv(const char *name)
   }
   if (r != 0 || size == 0 || e[0] == '\0') {
     xfree(e);
-    e = NULL;
+    uv_mutex_unlock(&mutex);
     if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
       ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
     }
-    goto end;
+    return NULL;
   }
   pmap_put(cstr_t)(envmap, xstrdup(name), e);
 end:
   uv_mutex_unlock(&mutex);
-  return (e == NULL || size == 0 || e[0] == '\0') ? NULL : e;
+  return e;
 }
 
 /// Returns true if environment variable `name` is defined (even if empty).
@@ -147,10 +147,12 @@ int os_setenv(const char *name, const char *value, int overwrite)
   // could be a previous os_getenv() result.
   pmap_del2(envmap, name);
   if (r != 0) {
+    uv_mutex_unlock(&mutex);
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
+    return -1;
   }
   uv_mutex_unlock(&mutex);
-  return r == 0 ? 0 : -1;
+  return 0;
 }
 
 /// Unset environment variable
@@ -164,10 +166,12 @@ int os_unsetenv(const char *name)
   pmap_del2(envmap, name);
   int r = uv_os_unsetenv(name);
   if (r != 0) {
+    uv_mutex_unlock(&mutex);
     ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
+    return -1;
   }
   uv_mutex_unlock(&mutex);
-  return r == 0 ? 0 : -1;
+  return 0;
 }
 
 char *os_getenvname_at_index(size_t index)
