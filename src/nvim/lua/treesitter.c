@@ -73,6 +73,7 @@ static struct luaL_Reg node_meta[] = {
 static struct luaL_Reg query_meta[] = {
   { "__gc", query_gc },
   { "__tostring", query_tostring },
+  { "inspect", query_inspect },
   { NULL, NULL }
 };
 
@@ -750,6 +751,7 @@ int ts_lua_parse_query(lua_State *L)
   return 1;
 }
 
+
 static const char *query_err_string(TSQueryError err) {
   switch (err) {
     case TSQueryErrorSyntax: return "invalid syntax";
@@ -780,5 +782,65 @@ static int query_gc(lua_State *L)
 static int query_tostring(lua_State *L)
 {
   lua_pushstring(L, "<query>");
+  return 1;
+}
+
+static int query_inspect(lua_State *L)
+{
+  TSQuery *query = query_check(L, 1);
+  if (!query) {
+    return 0;
+  }
+
+  uint32_t n_pat = ts_query_pattern_count(query);
+  lua_createtable(L, 0, 2);  // [retval]
+  lua_createtable(L, n_pat, 1);  // [retval, patterns]
+  for (size_t i = 0; i < n_pat; i++) {
+    uint32_t len;
+    const TSQueryPredicateStep *step = ts_query_predicates_for_pattern(query,
+                                                                       i, &len);
+    if (len == 0) {
+      continue;
+    }
+    lua_createtable(L, len/4, 1);  // [retval, patterns, pat]
+    lua_createtable(L, 3, 0);  // [retval, patterns, pat, pred]
+    int nextpred = 1;
+    int nextitem = 1;
+    for (size_t k = 0; k < len; k++) {
+      if (step[k].type == TSQueryPredicateStepTypeDone) {
+        lua_rawseti(L, -2, nextpred++);  // [retval, patterns, pat]
+        lua_createtable(L, 3, 0);  // [retval, patterns, pat, pred]
+        nextitem = 1;
+        continue;
+      }
+
+      if (step[k].type == TSQueryPredicateStepTypeString) {
+        uint32_t strlen;
+        const char *str = ts_query_string_value_for_id(query, step[k].value_id,
+                                                       &strlen);
+        lua_pushlstring(L, str, strlen);  // [retval, patterns, pat, pred, item]
+      } else if (step[k].type == TSQueryPredicateStepTypeCapture) {
+        lua_pushnumber(L, step[k].value_id+1);  // [..., pat, pred, item]
+      } else {
+        abort();
+      }
+      lua_rawseti(L, -2, nextitem++);  // [retval, patterns, pat, pred]
+    }
+    // last predicate should have ended with TypeDone
+    lua_pop(L, 1);  // [retval, patters, pat]
+    lua_rawseti(L, -2, i+1);  // [retval, patterns]
+  }
+  lua_setfield(L, -2, "patterns");  // [retval]
+
+  uint32_t n_captures = ts_query_capture_count(query);
+  lua_createtable(L, n_captures, 0);  // [retval, patterns]
+  for (size_t i = 0; i < n_captures; i++) {
+    uint32_t strlen;
+    const char *str = ts_query_capture_name_for_id(query, i, &strlen);
+    lua_pushlstring(L, str, strlen);  // [retval, patterns, pat, pred, item]
+    lua_rawseti(L, -2, i+1);
+  }
+  lua_setfield(L, -2, "captures");  // [retval]
+
   return 1;
 }
