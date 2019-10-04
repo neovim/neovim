@@ -104,12 +104,12 @@ $client = new-object System.Net.WebClient
 cd c:\treesitter
 
 if ($bits -eq 32) {
-  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x86.gz","c:\treesitter\tree-sitter-cli.gz")
+  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x86.gz", "c:\treesitter\tree-sitter-cli.gz")
 }
 elseif ($bits -eq 64) {
-  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x64.gz","c:\treesitter\tree-sitter-cli.gz")
+  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x64.gz", "c:\treesitter\tree-sitter-cli.gz")
 }
-python -c "import gzip, shutil; f1,f2 = gzip.open('tree-sitter-cli.gz', 'rb'),  open('tree-sitter.exe', 'wb'); shutil.copyfileobj(f1, f2); f2.close()"
+python -c "import gzip, shutil; f1,f2 = gzip.open('tree-sitter-cli.gz', 'rb'), open('tree-sitter.exe', 'wb'); shutil.copyfileobj(f1, f2); f2.close()"
 
 $client.DownloadFile("https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2","c:\treesitter\tree_sitter_c.zip")
 Expand-Archive c:\treesitter\tree_sitter_c.zip -DestinationPath c:\treesitter\
