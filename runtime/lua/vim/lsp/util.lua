@@ -103,30 +103,4 @@ util.get_hover_contents_type = function(contents)
   end
 end
 
----
--- Provide a map that will continue providing empty map upon access.
---
--- This allows you to do something like:
---  local map =- DefaultMap({a = 'b'})
---  if map.b.a.c.d.e.f.g.i == nil then
---      // Do some error stuff here
---  end
-util.DefaultMap = {
-  new = function(self, dictionary)
-    if dictionary == nil then
-      dictionary = {}
-    end
-
-    return setmetatable(dictionary, self)
-  end,
-
-  __index = function(self, key)
-    if rawget(self, key) ~= nil then
-      return rawget(self, key)
-    end
-
-    return setmetatable({}, self)
-  end,
-}
-
 return util

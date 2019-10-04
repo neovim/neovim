@@ -41,9 +41,9 @@ client.new = function(server_name, filetype, cmd)
     _read_data = '',
     _current_header = {},
 
-    client_capabilities = util.DefaultMap:new(),
+    client_capabilities = {},
     -- Capabilities sent by server
-    server_capabilities = util.DefaultMap:new(),
+    server_capabilities = {},
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -156,11 +156,11 @@ client.initialize = function(self)
 end
 
 client.set_client_capabilities = function(self, capabilities)
-  self.client_capabilities = util.DefaultMap:new(capabilities)
+  self.client_capabilities = capabilities
 end
 
 client.set_server_capabilities = function(self, capabilities)
-  self.server_capabilities = util.DefaultMap:new(capabilities)
+  self.server_capabilities = capabilities
 end
 
 client.set_buf_change_handler = function(self, bufnr)
