@@ -8,6 +8,7 @@ local message = require('vim.lsp.message')
 local call_callback = require('vim.lsp.callbacks').call_callback
 local InitializeParams = require('vim.lsp.protocol').InitializeParams
 local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
+local update_document_version = require('vim.lsp.protocol').update_document_version
 
 
 local read_state = {
@@ -176,6 +177,8 @@ client.handle_text_document_did_change = function(self, _, bufnr, changedtick, f
   if self._stopped then return true end
   local uri = vim.uri_from_bufnr(bufnr)
   local version = changedtick
+
+  update_document_version(version, uri)
   local textDocument = { uri = uri, version = version }
   local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
   local text = table.concat(lines, "\n") .. ((new_lastline > firstline) and "\n" or "")

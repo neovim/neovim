@@ -134,12 +134,20 @@ protocol.languageId = function(args)
      or vim.api.nvim_buf_get_option(0, 'filetype')
 end
 
--- TODO: Increment somehow
-local __version = 0
+local __document_version = {}
 protocol.version = function(args)
-  __version = __version + 1
-  return args
-    or __version
+  args = check_table(args)
+
+  local uri = args.uri or protocol.DocumentUri()
+  if not __document_version[uri] then __document_version[uri] = 0 end
+
+  return args.version
+    or __document_version[uri]
+end
+
+protocol.update_document_version = function(version, uri)
+  uri = uri or protocol.DocumentUri()
+  __document_version[uri] = version
 end
 
 protocol.text = function(args)
@@ -397,19 +405,6 @@ protocol.DidOpenTextDocumentParams = function(args)
 
   return {
     textDocument = protocol.TextDocumentItem(args.textDocument)
-  }
-end
-
--- TODO: Incremental changes.
---  Maybe use the PR that externalizes that once its merged
-protocol.DidChangeTextDocumentParams = function(args)
-  args = check_table(args)
-
-  return {
-    textDocument = protocol.VersionedTextDocumentIdentifier(args.textDocument),
-    contentChanges = {
-      { text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n") .. protocol.EOL() },
-    },
   }
 end
 
