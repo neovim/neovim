@@ -55,6 +55,7 @@ const char *os_getenv(const char *name)
     return NULL;
   }
   uv_mutex_lock(&mutex);
+  int r = 0;
   if (pmap_has(cstr_t)(envmap, name)
       && !!(e = (char *)pmap_get(cstr_t)(envmap, name))) {
     if (e[0] != '\0') {
@@ -67,7 +68,7 @@ const char *os_getenv(const char *name)
     pmap_del2(envmap, name);
   }
   e = xmalloc(size);
-  int r = uv_os_getenv(name, e, &size);
+  r = uv_os_getenv(name, e, &size);
   if (r == UV_ENOBUFS) {
     e = xrealloc(e, size);
     r = uv_os_getenv(name, e, &size);
@@ -75,14 +76,15 @@ const char *os_getenv(const char *name)
   if (r != 0 || size == 0 || e[0] == '\0') {
     xfree(e);
     e = NULL;
-    if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
-      ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
-    }
     goto end;
   }
   pmap_put(cstr_t)(envmap, xstrdup(name), e);
 end:
+  // Must do this before ELOG, log.c may call os_setenv.
   uv_mutex_unlock(&mutex);
+  if (r != 0 && r != UV_ENOENT && r != UV_UNKNOWN) {
+    ELOG("uv_os_getenv(%s) failed: %d %s", name, r, uv_err_name(r));
+  }
   return (e == NULL || size == 0 || e[0] == '\0') ? NULL : e;
 }
 
@@ -146,10 +148,11 @@ int os_setenv(const char *name, const char *value, int overwrite)
   // Destroy the old map item. Do this AFTER uv_os_setenv(), because `value`
   // could be a previous os_getenv() result.
   pmap_del2(envmap, name);
+  // Must do this before ELOG, log.c may call os_setenv.
+  uv_mutex_unlock(&mutex);
   if (r != 0) {
     ELOG("uv_os_setenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
-  uv_mutex_unlock(&mutex);
   return r == 0 ? 0 : -1;
 }
 
@@ -163,10 +166,11 @@ int os_unsetenv(const char *name)
   uv_mutex_lock(&mutex);
   pmap_del2(envmap, name);
   int r = uv_os_unsetenv(name);
+  // Must do this before ELOG, log.c may call os_setenv.
+  uv_mutex_unlock(&mutex);
   if (r != 0) {
     ELOG("uv_os_unsetenv(%s) failed: %d %s", name, r, uv_err_name(r));
   }
-  uv_mutex_unlock(&mutex);
   return r == 0 ? 0 : -1;
 }
 
