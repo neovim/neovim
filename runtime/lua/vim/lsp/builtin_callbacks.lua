@@ -28,8 +28,8 @@ local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
 
-local handle_text_document = require('vim.lsp.handle.text_document')
-local handle_workspace = require('vim.lsp.handle.workspace')
+local text_document_handler = require('vim.lsp.handler.text_document')
+local workspace_handler = require('vim.lsp.handler.workspace')
 
 -- {
 --    method_name = {
@@ -80,7 +80,7 @@ BuiltinCallbacks['textDocument/completion'] = {
       return
     end
 
-    local matches = handle_text_document.completion_list_to_matches(data)
+    local matches = text_document_handler.completion_list_to_matches(data)
     local corsol = vim.api.nvim_call_function('col', { '.' })
     local line_to_cursor = vim.api.nvim_call_function(
       'strpart', {
@@ -161,7 +161,7 @@ BuiltinCallbacks['textDocument/rename'] = {
 
     vim.api.nvim_set_var('text_document_rename', data)
 
-    handle_workspace.apply_WorkspaceEdit(data)
+    workspace_handler.apply_WorkspaceEdit(data)
   end,
   options = {}
 }
