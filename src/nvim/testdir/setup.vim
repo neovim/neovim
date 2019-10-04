@@ -73,11 +73,6 @@ set tags=./tags,tags
 set undodir^=.
 set wildoptions=
 
-" Use safer defaults for various directories (below $TMPDIR).
-for d in ['backupdir', 'directory', 'undodir', 'viewdir']
-  exe printf('set %s^=%s', d, $TMPDIR.'/'.d)
-endfor
-
 if exists('syntax_on')
   call assert_report('syntax_on exists: tests should be run with -u NONE!')
 endif
