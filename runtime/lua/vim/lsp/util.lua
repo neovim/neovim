@@ -99,4 +99,13 @@ util.get_hover_contents_type = function(contents)
   end
 end
 
+util.is_completion_list = function(data)
+  if type(data) == 'table' then
+    if data.items then
+      return true
+    end
+  end
+  return false
+end
+
 return util

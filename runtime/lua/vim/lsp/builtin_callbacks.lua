@@ -28,7 +28,7 @@ local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
 
-local handle_completion = require('vim.lsp.handle.completion')
+local handle_text_document = require('vim.lsp.handle.text_document')
 local handle_workspace = require('vim.lsp.handle.workspace')
 
 -- {
@@ -80,7 +80,7 @@ BuiltinCallbacks['textDocument/completion'] = {
       return
     end
 
-    local matches = handle_completion.getMatches(data).matches
+    local matches = handle_text_document.completion_list_to_matches(data)
     local corsol = vim.api.nvim_call_function('col', { '.' })
     local line_to_cursor = vim.api.nvim_call_function(
       'strpart', {
