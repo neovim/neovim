@@ -11,7 +11,7 @@ ROOT := ../../..
 
 export SHELL := sh
 export NVIM_PRG := $(NVIM_PRG)
-export TMPDIR := $(abspath ../../../Xtest-tmpdir)
+export TMPDIR := $(abspath Xtest-tmpdir)
 
 SCRIPTS_DEFAULT = \
 	test42.out             \
