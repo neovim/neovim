@@ -80,13 +80,11 @@ BuiltinCallbacks['textDocument/completion'] = {
       return
     end
 
-    local matches = text_document_handler.completion_list_to_matches(data)
+    local matches = text_document_handler.CompletionList_to_matches(data)
     local corsol = vim.api.nvim_call_function('col', { '.' })
     local line_to_cursor = vim.api.nvim_call_function(
       'strpart', {
-        vim.api.nvim_call_function(
-          'getline', { '.' }
-        ),
+        vim.api.nvim_call_function('getline', { '.' }),
         0,
         corsol - 1,
       }
@@ -109,32 +107,7 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
     end
 
     if not vim.tbl_isempty(data.signatures) then
-      local contents = {}
-      local activeSignature = 1
-
-      if data.activeSignature then
-        activeSignature = data.activeSignature + 1
-      end
-      local signature = data.signatures[activeSignature]
-
-      for _, line in pairs(vim.split(signature.label, '\n')) do
-        table.insert(contents, line)
-      end
-
-      if not (signature.documentation == nil) then
-        if type(signature.documentation) == 'table' then
-          for _, line in pairs(vim.split(signature.documentation.value, '\n')) do
-            table.insert(contents, line)
-          end
-        else
-          for _, line in pairs(vim.split(signature.documentation, '\n')) do
-            table.insert(contents, line)
-          end
-        end
-        table.insert(contents, signature.documentation)
-      end
-
-      util.ui:open_floating_preview(contents)
+      util.ui:open_floating_preview(text_document_handler.SignatureHelp_to_preview_contents(data))
     end
   end,
   options = {},
@@ -178,54 +151,7 @@ BuiltinCallbacks['textDocument/hover'] = {
     end
 
     if data.contents ~= nil then
-      local contents = {}
-      local contents_type = util.get_hover_contents_type(data.contents)
-
-      if contents_type == 'MarkedString[]' and not vim.tbl_isempty(data.contents) then
-        for _, item in ipairs(data.contents) do
-          if type(item) == 'table' then
-            table.insert(contents, '```'..item.language)
-            for _, line in pairs(vim.split(item.value, '\n')) do
-              table.insert(contents, line)
-            end
-            table.insert(contents, '```')
-          elseif item == nil then
-            table.insert(contents, '')
-          else
-            for _, line in pairs(vim.split(item, '\n')) do
-              table.insert(contents, line)
-            end
-          end
-        end
-      elseif contents_type == 'MarkupContent' and not vim.tbl_isempty(data.contents) then
-        -- MarkupContent
-        if data.contents.kind ~= nil then
-          for _, line in pairs(vim.split(data.contents.value, '\n')) do
-            table.insert(contents, line)
-          end
-        -- { language: string; value: string }
-        elseif data.contents.language ~= nil then
-          table.insert(contents, '```'..data.contents.language)
-          for _, line in pairs(vim.split(data.contents.value, '\n')) do
-            table.insert(contents, line)
-          end
-          table.insert(contents, '```')
-        else
-          for _, line in pairs(vim.split(data.contents, '\n')) do
-            table.insert(contents, line)
-          end
-        end
-      elseif contents_type == 'string' and data.contents ~= '' then
-        for _, line in pairs(vim.split(data.contents, '\n')) do
-          table.insert(contents, line)
-        end
-      end
-
-      if contents[1] == '' or contents[1] == nil then
-        table.insert(contents, 'LSP [textDocument/hover]: No information available')
-      end
-
-      util.ui:open_floating_preview(contents, 'markdown')
+      util.ui:open_floating_preview(text_document_handler.HoverContents_to_preview_contents(data), 'markdown')
     end
   end,
   options = {}
