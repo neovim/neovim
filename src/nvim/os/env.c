@@ -294,7 +294,7 @@ void init_homedir(void)
   homedir = NULL;
 
   const char *guessed_homedir = os_getenv("HOME");
-  
+
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
   // specifically defined it for Vim's sake. However, on Windows NT
