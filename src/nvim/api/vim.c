@@ -74,12 +74,11 @@ void api_vim_free_all_mem(void)
 }
 
 void nvim_source(String command, Error *err)
-  FUNC_API_SINCE(5)
+  FUNC_API_SINCE(7)
 {
-    try_start();
-    do_source_str((char_u *)command.data);
-    update_screen(VALID);
-    try_end(err);
+  try_start();
+  do_source_str((char_u *)command.data);
+  try_end(err);
 }
 
 /// Executes an ex-command.

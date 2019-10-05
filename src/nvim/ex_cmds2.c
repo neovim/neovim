@@ -1193,7 +1193,7 @@ static void script_dump_profile(FILE *fd)
 /// profiled.
 bool prof_def_func(void)
 {
-  if (current_sctx.sc_sid > 0 && current_SID < 999999) {
+  if (current_sctx.sc_sid > 0) {
     return SCRIPT_ITEM(current_sctx.sc_sid).sn_pr_force;
   }
   return false;
@@ -3048,9 +3048,13 @@ int do_source_str(char_u *cmd)
     .buf = cmd,
     .offset = 0,
   };
-  current_SID = 999999;
+  const sctx_T save_current_sctx = current_sctx;
+  current_sctx.sc_sid = SID_STR;
+  current_sctx.sc_seq = 0;
+  current_sctx.sc_lnum = 0;
   retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
                       DOCMD_NOWAIT);
+  current_sctx = save_current_sctx;
   return retval;
 }
 
