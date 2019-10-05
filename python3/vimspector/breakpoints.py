@@ -43,7 +43,7 @@ class ProjectBreakpoints( object ):
     # These are the user-entered breakpoints.
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
-    self._exceptionBreakpoints = None
+    self._exception_breakpoints = None
 
     # FIXME: Remove this. Remove breakpoints nonesense from code.py
     self._breakpoints_handler = None
@@ -66,13 +66,12 @@ class ProjectBreakpoints( object ):
 
   def ConnectionClosed( self ):
     self._breakpoints_handler = None
-    self._exceptionBreakpoints = None
     self._server_capabilities = {}
     self._connection = None
     self.UpdateUI()
 
-    # for each breakpoint:
-    # clear its resolved status
+    # NOTE: we don't reset self._exception_breakpoints because we don't want to
+    # re-ask the user every time for the sane info.
 
 
   def ListBreakpoints( self ):
@@ -117,7 +116,6 @@ class ProjectBreakpoints( object ):
 
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
-    self._exceptionBreakpoints = None
 
     self.UpdateUI()
 
@@ -250,16 +248,16 @@ class ProjectBreakpoints( object ):
         }
       )
 
-    if self._exceptionBreakpoints is None:
+    if self._exception_breakpoints is None:
       self._SetUpExceptionBreakpoints()
 
-    if self._exceptionBreakpoints:
+    if self._exception_breakpoints:
       awaiting = awaiting + 1
       self._connection.DoRequest(
         lambda msg: response_handler( None, None ),
         {
           'command': 'setExceptionBreakpoints',
-          'arguments': self._exceptionBreakpoints
+          'arguments': self._exception_breakpoints
         }
       )
 
@@ -268,44 +266,36 @@ class ProjectBreakpoints( object ):
 
 
   def _SetUpExceptionBreakpoints( self ):
-    exceptionBreakpointFilters = self._server_capabilities.get(
+    exception_breakpoint_filters = self._server_capabilities.get(
         'exceptionBreakpointFilters',
         [] )
 
-    if exceptionBreakpointFilters or not self._server_capabilities.get(
+    if exception_breakpoint_filters or not self._server_capabilities.get(
       'supportsConfigurationDoneRequest' ):
-      exceptionFilters = []
-      if exceptionBreakpointFilters:
-        for f in exceptionBreakpointFilters:
-          response = utils.AskForInput(
-            "Enable exception filter '{}'? (Y/N)".format( f[ 'label' ] ) )
+      exception_filters = []
+      if exception_breakpoint_filters:
+        for f in exception_breakpoint_filters:
+          default_value = 'Y' if f.get( 'default' ) else 'N'
 
-          if response == 'Y':
-            exceptionFilters.append( f[ 'filter' ] )
-          elif not response and f.get( 'default' ):
-            exceptionFilters.append( f[ 'filter' ] )
+          result = utils.AskForInput(
+            "Break on {} (Y/N/default: {})? ".format( f[ 'label' ],
+                                                      default_value ),
+            default_value )
 
-      self._exceptionBreakpoints = {
-        'filters': exceptionFilters
+          if result == 'Y':
+            exception_filters.append( f[ 'filter' ] )
+          elif not result and f.get( 'default' ):
+            exception_filters.append( f[ 'filter' ] )
+
+      self._exception_breakpoints = {
+        'filters': exception_filters
       }
 
       if self._server_capabilities.get( 'supportsExceptionOptions' ):
-        # FIXME Sigh. The python debug adapter requires this
-        #       key to exist. Even though it is optional.
-        break_mode = utils.SelectFromList( 'When to break on exception?',
-                                           [ 'never',
-                                             'always',
-                                             'unhandled',
-                                             'userHandled' ] )
-
-        if not break_mode:
-          break_mode = 'unhandled'
-
-        path = [ { 'nagate': True, 'names': [ 'DO_NOT_MATCH' ] } ]
-        self._exceptionBreakpoints[ 'exceptionOptions' ] = [ {
-          'path': path,
-          'breakMode': break_mode
-        } ]
+        # TODO: There are more elaborate exception breakpoint options here, but
+        # we don't support them. It doesn't seem like any of the servers really
+        # pay any attention to them anyway.
+        self._exception_breakpoints[ 'exceptionOptions' ] = []
 
   def _ShowBreakpoints( self ):
     for file_name, line_breakpoints in self._line_breakpoints.items():
