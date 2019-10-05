@@ -392,7 +392,7 @@ static int tree_root(lua_State *L)
     return 0;
   }
   TSNode root = ts_tree_root_node(tree);
-  push_node(L, root);
+  push_node(L, root, 1);
   return 1;
 }
 
@@ -403,18 +403,19 @@ static int tree_root(lua_State *L)
 /// top of stack must either be the tree this node belongs to or another node
 /// of the same tree! This value is not popped. Can only be called inside a
 /// cfunction with the tslua environment.
-static void push_node(lua_State *L, TSNode node)
+static void push_node(lua_State *L, TSNode node, int uindex)
 {
+  assert(uindex > 0 || uindex < -LUA_MINSTACK);
   if (ts_node_is_null(node)) {
-    lua_pushnil(L);  // [src, nil]
+    lua_pushnil(L);  // [nil]
     return;
   }
-  TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
+  TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [udata]
   *ud = node;
-  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_node");  // [src, udata, meta]
-  lua_setmetatable(L, -2);  // [src, udata]
-  lua_getfenv(L, -2);  // [src, udata, reftable]
-  lua_setfenv(L, -2);  // [src, udata]
+  lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_node");  // [udata, meta]
+  lua_setmetatable(L, -2);  // [udata]
+  lua_getfenv(L, uindex);  // [udata, reftable]
+  lua_setfenv(L, -2);  // [udata]
 }
 
 static bool node_check(lua_State *L, TSNode *res)
@@ -595,8 +596,7 @@ static int node_child(lua_State *L)
   long num = lua_tointeger(L, 2);
   TSNode child = ts_node_child(node, (uint32_t)num);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -609,8 +609,7 @@ static int node_named_child(lua_State *L)
   long num = lua_tointeger(L, 2);
   TSNode child = ts_node_named_child(node, (uint32_t)num);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -626,8 +625,7 @@ static int node_descendant_for_range(lua_State *L)
                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_descendant_for_point_range(node, start, end);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -643,8 +641,7 @@ static int node_named_descendant_for_range(lua_State *L)
                  (uint32_t)lua_tointeger(L, 5) };
   TSNode child = ts_node_named_descendant_for_point_range(node, start, end);
 
-  lua_pushvalue(L, 1);
-  push_node(L, child);
+  push_node(L, child, 1);
   return 1;
 }
 
@@ -655,7 +652,7 @@ static int node_parent(lua_State *L)
     return 0;
   }
   TSNode parent = ts_node_parent(node);
-  push_node(L, parent);
+  push_node(L, parent, 1);
   return 1;
 }
 
@@ -673,9 +670,20 @@ static int query_next_capture(lua_State *L)
     const char *name = ts_query_capture_name_for_id(query, capture.index, &len);
 
     lua_pushlstring(L, name, len);
-    lua_pushvalue(L, lua_upvalueindex(2));  // [name, startnode]
-    push_node(L, capture.node);  // [name, startnode, node]
-    lua_remove(L, -2);  // [name, node]
+    push_node(L, capture.node, lua_upvalueindex(2));  // [name, node]
+
+    if (capture_index == 0) {
+      uint32_t n_pred;
+      ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
+      if (n_pred > 0) {
+        lua_createtable(L, 0, 0); // [name, node, match]
+        for (int i = 0; i < match.capture_count; i++) {
+          push_node(L, match.captures[i].node, lua_upvalueindex(2));
+          lua_rawseti(L, -2, match.captures[i].index+1); // [name, node, match]
+        }
+        return 3;
+      }
+    }
     return 2;
   } else {
     return 0;
