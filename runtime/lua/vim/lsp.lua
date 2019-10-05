@@ -10,7 +10,6 @@ local Client = require('vim.lsp.client')
 local callbacks = require('vim.lsp.callbacks')
 
 local logger = require('vim.lsp.logger')
-local util = require('vim.lsp.util')
 
 local clients = {}
 
@@ -43,7 +42,7 @@ end
 --
 -- @returns: A client object that has been initialized
 lsp.start_client = function(filetype, server_name, bufnr)
-  filetype = filetype or util.get_filetype(bufnr)
+  filetype = filetype or lsp.util.get_filetype(bufnr)
   if not server_name then server_name = filetype end
 
   assert(not lsp.get_client(filetype, server_name), string.format('Language server for filetype: %s, server_name: %s has already started', filetype, server_name))
@@ -83,7 +82,7 @@ end
 --
 -- @returns: The result of the request
 lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
-  filetype = filetype or util.get_filetype(bufnr)
+  filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
   end
@@ -119,7 +118,7 @@ end
 --
 -- @returns: The result of the request
 lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name)
-  filetype = filetype or util.get_filetype(bufnr)
+  filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
   end
@@ -154,7 +153,7 @@ end
 --
 -- @returns: The result of the request
 lsp.notify = function(method, arguments, bufnr, filetype, server_name)
-  filetype = filetype or util.get_filetype(bufnr)
+  filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
   end

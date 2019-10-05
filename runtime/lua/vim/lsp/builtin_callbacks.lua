@@ -28,8 +28,8 @@ local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
 
-local text_document_handler = require('vim.lsp.handler.text_document')
-local workspace_handler = require('vim.lsp.handler.workspace')
+local text_document_handler = require('vim.lsp.handler').text_document
+local workspace_handler = require('vim.lsp.handler').workspace
 
 -- {
 --    method_name = {

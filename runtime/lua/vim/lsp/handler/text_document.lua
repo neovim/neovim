@@ -34,7 +34,7 @@ end
 -- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 local get_CompletionItems = function(data)
-  if util.is_completion_list(data) then
+  if util.is_CompletionList(data) then
     return data.items
   elseif data ~= nil then
     return data
@@ -107,7 +107,7 @@ end
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_hover
 TextDocument.HoverContents_to_preview_contents = function(data)
   local contents = {}
-  local contents_type = util.get_hover_contents_type(data.contents)
+  local contents_type = util.get_HoverContents_type(data.contents)
 
   if contents_type == 'MarkedString[]' and not vim.tbl_isempty(data.contents) then
     for _, item in ipairs(data.contents) do
@@ -143,9 +143,17 @@ TextDocument.HoverContents_to_preview_contents = function(data)
         table.insert(contents, line)
       end
     end
-  elseif contents_type == 'string' and data.contents ~= '' then
-    for _, line in pairs(vim.split(data.contents, '\n')) do
-      table.insert(contents, line)
+  elseif contents_type == 'MarkedString' then
+    if data.contents.language then
+      table.insert(contents, '```'..data.contents.language)
+      for _, line in pairs(vim.split(data.contents.value, '\n')) do
+        table.insert(contents, line)
+      end
+      table.insert(contents, '```')
+    elseif data.contents ~= '' then
+      for _, line in pairs(vim.split(data.contents, '\n')) do
+        table.insert(contents, line)
+      end
     end
   end
 

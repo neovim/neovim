@@ -87,19 +87,23 @@ util.handle_location = function(data)
   )
 end
 
-util.get_hover_contents_type = function(contents)
+util.get_HoverContents_type = function(contents)
   if vim.tbl_islist(contents) == true then
     return 'MarkedString[]'
   elseif type(contents) == 'table' then
-    return 'MarkupContent'
+    if contents.kind then
+      return 'MarkupContent'
+    elseif contents.language then
+      return 'MarkedString'
+    end
   elseif type(contents) == 'string' then
-    return 'string'
+    return 'MarkedString'
   else
     return nil
   end
 end
 
-util.is_completion_list = function(data)
+util.is_CompletionList = function(data)
   if type(data) == 'table' then
     if data.items then
       return true
