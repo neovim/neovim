@@ -261,10 +261,16 @@ def SelectFromList( prompt, options ):
       return None
 
 
-def AskForInput( prompt ):
+def AskForInput( prompt, default_value = None ):
+  if default_value is None:
+    default_option = ''
+  else:
+    default_option = ", '{}'".format( Escape( default_value ) )
+
   with InputSave():
     try:
-      return vim.eval( "input( '{0}' )".format( Escape( prompt ) ) )
+      return vim.eval( "input( '{}' {} )".format( Escape( prompt ),
+                                                  default_option ) )
     except KeyboardInterrupt:
       return ''
 
@@ -306,7 +312,7 @@ def IsCurrent( window, buf ):
 
 # TODO: Should we just run the substitution on the whole JSON string instead?
 # That woul dallow expansion in bool and number values, such as ports etc. ?
-def ExpandReferencesInDict( obj, mapping, **kwargs ):
+def ExpandReferencesInDict( obj, mapping, user_choices ):
   def expand_refs_in_string( orig_s ):
     s = os.path.expanduser( orig_s )
     s = os.path.expandvars( s )
@@ -318,13 +324,16 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
       ++bug_catcher
 
       try:
-        s = string.Template( s ).substitute( mapping, **kwargs )
+        s = string.Template( s ).substitute( mapping )
         break
       except KeyError as e:
         # HACK: This is seemingly the only way to get the key. str( e ) returns
         # the key surrounded by '' for unknowable reasons.
         key = e.args[ 0 ]
-        mapping[ key ] = AskForInput( 'Enter value for {}: '.format( key ) )
+        default_value = user_choices.get( key, None )
+        mapping[ key ] = AskForInput( 'Enter value for {}: '.format( key ),
+                                      default_value )
+        user_choices[ key ] = mapping[ key ]
         _logger.debug( "Value for %s not set in %s (from %s): set to %s",
                        key,
                        s,
@@ -339,7 +348,7 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
 
   def expand_refs_in_object( obj ):
     if isinstance( obj, dict ):
-      ExpandReferencesInDict( obj, mapping, **kwargs )
+      ExpandReferencesInDict( obj, mapping, user_choices )
     elif isinstance( obj, list ):
       for i, _ in enumerate( obj ):
         # FIXME: We are assuming that it is a list of string, but could be a
@@ -354,7 +363,7 @@ def ExpandReferencesInDict( obj, mapping, **kwargs ):
     obj[ k ] = expand_refs_in_object( obj[ k ] )
 
 
-def ParseVariables( variables_list, mapping, **kwargs ):
+def ParseVariables( variables_list, mapping, user_choices ):
   new_variables = {}
   new_mapping = mapping.copy()
 
@@ -371,7 +380,7 @@ def ParseVariables( variables_list, mapping, **kwargs ):
 
           new_v = v.copy()
           # Bit of a hack. Allows environment variables to be used.
-          ExpandReferencesInDict( new_v, new_mapping, **kwargs )
+          ExpandReferencesInDict( new_v, new_mapping, user_choices )
 
           env = os.environ.copy()
           env.update( new_v.get( 'env' ) or {} )

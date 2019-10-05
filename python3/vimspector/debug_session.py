@@ -34,6 +34,9 @@ VIMSPECTOR_HOME = os.path.abspath( os.path.join( os.path.dirname( __file__ ),
                                                  '..',
                                                  '..' ) )
 
+# cache of what the user entered for any option we ask them
+USER_CHOICES = {}
+
 
 class DebugSession( object ):
   def __init__( self ):
@@ -148,14 +151,26 @@ class DebugSession( object ):
     }
     self._variables.update(
       utils.ParseVariables( adapter.get( 'variables', {} ),
-                            self._variables ) )
+                            self._variables,
+                            USER_CHOICES ) )
     self._variables.update(
       utils.ParseVariables( configuration.get( 'variables', {} ),
-                            self._variables ) )
+                            self._variables,
+                            USER_CHOICES ) )
+
+    # Pretend that vars passed to the launch command were typed in by the user
+    # (they may have been in theory)
+    # TODO: Is it right that we do this _after_ ParseVariables, rather than
+    # before ?
+    USER_CHOICES.update( launch_variables )
     self._variables.update( launch_variables )
 
-    utils.ExpandReferencesInDict( configuration, self._variables )
-    utils.ExpandReferencesInDict( adapter, self._variables )
+    utils.ExpandReferencesInDict( configuration,
+                                  self._variables,
+                                  USER_CHOICES )
+    utils.ExpandReferencesInDict( adapter,
+                                  self._variables,
+                                  USER_CHOICES )
 
     if not adapter:
       utils.UserMessage( 'No adapter configured for {}'.format(
