@@ -12,6 +12,12 @@ vim.treesitter.add_language("/home/bjorn/dev/tree-sitter-c/bin/c.so", "c")
 parser = vim.treesitter.get_parser(1)
 root = parser:parse():root()
 
+if false then
+  node = root:descendant_for_range(246,0,246,10)
+  node:sexpr()
+
+end
+
 -- these are conventions defined by tree-sitter, eventually there will be a "standard query" for
 -- c highlighting we can import.
 hl_map = {
@@ -24,6 +30,7 @@ hl_map = {
     ["keyword.storagecls"]="StorageClass",
     number="Number",
     --["function"]="Function"
+    ["function.static"]="Identifier"
 }
 
 id_map = {}
@@ -74,6 +81,8 @@ cquery_src = [[
 (primitive_type) @type
 (sized_type_specifier) @type
 
+((function_definition (storage_class_specifier) @funcclass declarator: (function_declarator (identifier) @function.static))  (eq? @funcclass "static"))
+
 (comment) @comment
 
 (call_expression
@@ -84,6 +93,7 @@ cquery_src = [[
   name: (identifier) @function)
 ]]
 cquery = vim.treesitter.parse_query("c", cquery_src)
+iquery = cquery:inspect()
 
 
 line,endl = 134, 135
@@ -126,17 +136,51 @@ function on_start(_, win, buf, line)
   hlstate.first_line = line
 end
 
+
+do local s, l = pcall(require,'luadev') if s then _G.luadev = l end end
+if luadev then
+    d = vim.schedule_wrap(luadev.print)
+else
+    function d() end
+end
+
+function run_pred(match,buf)
+  local preds = iquery.patterns[match.pattern]
+  for _, pred in pairs(preds) do
+    if pred[1] == "eq?" then
+      local node = match[pred[2]]
+      -- TODO: support (eq? @aa @bb)
+      local str = pred[3]
+      local start_row, start_col, end_row, end_col = node:range()
+      if start_row ~= end_row then
+        return false
+      end
+      local line = a.nvim_buf_get_lines(buf, start_row, start_row+1, true)[1]
+      local text = string.sub(line, start_col+1, end_col)
+      if str ~= text then
+          return false
+      end
+    end
+  end
+  return true
+end
+
 function on_line(_, win, buf, line)
   count = 0
   while line >= hlstate.nextrow do
-    local capture, node = hlstate.iter()
+    local capture, node, match = hlstate.iter()
+    local active = true
     if capture == nil then
       break
+    end
+    if match ~= nil then
+      active = run_pred(match, buf)
+      match.active = active
     end
     count = count + 1
     local start_row, start_col, end_row, end_col = node:range()
     local hl = id_map[capture]
-    if hl then
+    if hl and active then
       if start_row == line and end_row == line then
         a.nvim__put_attr(hl, start_col, end_col)
       elseif end_row >= line then
