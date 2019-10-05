@@ -294,7 +294,7 @@ void init_homedir(void)
   homedir = NULL;
 
   const char *guessed_homedir = os_getenv("HOME");
-
+  
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
   // specifically defined it for Vim's sake. However, on Windows NT
@@ -342,13 +342,9 @@ void init_homedir(void)
       || *guessed_homedir == NUL) {
     guessed_homedir = "C:/";
   }
-
-  // Seems like most of windows cases are sorted out, might as well
-  // just cleanup here and return
-  homedir = xstrdup(guessed_homedir);
-  return;
 #endif
 
+  // Does a best attempt at capturing homedir using uv_os_homedir
   if (guessed_homedir == NULL) {
     size_t homedir_size = (size_t)sizeof(os_buf);
     int ret = uv_os_homedir((char *)os_buf, &homedir_size);
