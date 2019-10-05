@@ -13,8 +13,10 @@ parser = vim.treesitter.get_parser(1)
 root = parser:parse():root()
 
 if false then
-  node = root:descendant_for_range(246,0,246,10)
+  node = root:descendant_for_range(370,5,371,12)
   node:sexpr()
+  q = node:child(1):child(1)
+  q:child(0):sexpr()
 
 end
 
@@ -30,7 +32,8 @@ hl_map = {
     ["keyword.storagecls"]="StorageClass",
     number="Number",
     --["function"]="Function"
-    ["function.static"]="Identifier"
+    ["function.static"]="Identifier",
+    ["dup"]="WarningMsg",
 }
 
 id_map = {}
@@ -82,6 +85,8 @@ cquery_src = [[
 (sized_type_specifier) @type
 
 ((function_definition (storage_class_specifier) @funcclass declarator: (function_declarator (identifier) @function.static))  (eq? @funcclass "static"))
+
+((binary_expression left: (identifier) @dup.left right: (identifier) @dup.right) @dup (eq? @dup.left @dup.right))
 
 (comment) @comment
 
@@ -144,21 +149,33 @@ else
     function d() end
 end
 
+function get_node_text(node, buf)
+  local start_row, start_col, end_row, end_col = node:range()
+  if start_row ~= end_row then
+    return nil
+  end
+  local line = a.nvim_buf_get_lines(buf, start_row, start_row+1, true)[1]
+  return string.sub(line, start_col+1, end_col)
+end
+
 function run_pred(match,buf)
   local preds = iquery.patterns[match.pattern]
   for _, pred in pairs(preds) do
     if pred[1] == "eq?" then
       local node = match[pred[2]]
-      -- TODO: support (eq? @aa @bb)
-      local str = pred[3]
-      local start_row, start_col, end_row, end_col = node:range()
-      if start_row ~= end_row then
-        return false
+      local node_text = get_node_text(node, buf)
+
+      local str
+      if type(pred[3]) == "string" then
+        -- (eq? @aa "foo")
+        str = pred[3]
+      else
+        -- (eq? @aa @bb)
+        str = get_node_text(match[pred[3]], buf)
       end
-      local line = a.nvim_buf_get_lines(buf, start_row, start_row+1, true)[1]
-      local text = string.sub(line, start_col+1, end_col)
-      if str ~= text then
-          return false
+
+      if node_text ~= str or str == nil then
+        return false
       end
     end
   end
