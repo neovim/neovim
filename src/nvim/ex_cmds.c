@@ -4739,11 +4739,19 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
 
   if (STRNICMP(arg, "expr-", 5) == 0) {
     // When the string starting with "expr-" and containing '?' and matches
-    // the table, it is taken literally.  Otherwise '?' is recognized as a
-    // wildcard.
+    // the table, it is taken literally (but ~ is escaped).  Otherwise '?'
+    // is recognized as a wildcard.
     for (i = (int)ARRAY_SIZE(expr_table); --i >= 0; ) {
       if (STRCMP(arg + 5, expr_table[i]) == 0) {
-        STRCPY(d, arg);
+        for (int si = 0, di = 0; ; si++) {
+          if (arg[si] == '~') {
+            d[di++] = '\\';
+          }
+          d[di++] = arg[si];
+          if (arg[si] == NUL) {
+            break;
+          }
+        }
         break;
       }
     }
