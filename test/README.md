@@ -126,7 +126,7 @@ end)
 
 To run only test with filter name:
 
-    TEST_TAG='foo.*api' make functionaltest
+    TEST_FILTER='foo.*api' make functionaltest
 
 ### Filter by file
 
