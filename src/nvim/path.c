@@ -51,9 +51,10 @@
 ///   expanded.
 /// @param s2 Second file name.
 /// @param checkname When both files don't exist, only compare their names.
+/// @param expandenv Whether to expand environment variables in file names.
 /// @return Enum of type FileComparison. @see FileComparison.
 FileComparison path_full_compare(char_u *const s1, char_u *const s2,
-                                 const bool checkname)
+                                 const bool checkname, const bool expandenv)
 {
   assert(s1 && s2);
   char_u exp1[MAXPATHL];
@@ -61,7 +62,11 @@ FileComparison path_full_compare(char_u *const s1, char_u *const s2,
   char_u full2[MAXPATHL];
   FileID file_id_1, file_id_2;
 
-  expand_env(s1, exp1, MAXPATHL);
+  if (expandenv) {
+      expand_env(s1, exp1, MAXPATHL);
+  } else {
+      xstrlcpy((char *)exp1, (const char *)s1, MAXPATHL - 1);
+  }
   bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
   bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
   if (!id_ok_1 && !id_ok_2) {
@@ -1203,7 +1208,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       }
     } else {
       // First expand environment variables, "~/" and "~user/".
-      if (has_env_var(p) || *p == '~') {
+      if ((has_env_var(p) && !(flags & EW_NOTENV)) || *p == '~') {
         p = expand_env_save_opt(p, true);
         if (p == NULL)
           p = pat[i];

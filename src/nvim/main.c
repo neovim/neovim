@@ -1460,12 +1460,13 @@ static void create_windows(mparm_T *parmp)
   } else
     parmp->window_count = 1;
 
-  if (recoverymode) {                   /* do recover */
-    msg_scroll = TRUE;                  /* scroll message up */
-    ml_recover();
-    if (curbuf->b_ml.ml_mfp == NULL)     /* failed */
+  if (recoverymode) {                   // do recover
+    msg_scroll = true;                  // scroll message up
+    ml_recover(true);
+    if (curbuf->b_ml.ml_mfp == NULL) {   // failed
       getout(1);
-    do_modelines(0);                    /* do modelines */
+    }
+    do_modelines(0);                    // do modelines
   } else {
     // Open a buffer for windows that don't have one yet.
     // Commands in the vimrc might have loaded a file or split the window.
@@ -1778,7 +1779,8 @@ static bool do_user_initialization(void)
   if (do_source(user_vimrc, true, DOSO_VIMRC) != FAIL) {
     do_exrc = p_exrc;
     if (do_exrc) {
-      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc, false)
+      do_exrc = (path_full_compare((char_u *)VIMRC_FILE, user_vimrc,
+                                   false, true)
                  != kEqualFiles);
     }
     xfree(user_vimrc);
@@ -1805,7 +1807,7 @@ static bool do_user_initialization(void)
         do_exrc = p_exrc;
         if (do_exrc) {
           do_exrc = (path_full_compare((char_u *)VIMRC_FILE, (char_u *)vimrc,
-                                      false) != kEqualFiles);
+                                       false, true) != kEqualFiles);
         }
         xfree(vimrc);
         xfree(config_dirs);

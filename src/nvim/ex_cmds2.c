@@ -1743,7 +1743,7 @@ static bool editing_arg_idx(win_T *win)
                && (win->w_buffer->b_ffname == NULL
                    || !(path_full_compare(
                        alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                       win->w_buffer->b_ffname, true) & kEqualFiles))));
+                       win->w_buffer->b_ffname, true, true) & kEqualFiles))));
 }
 
 /// Check if window "win" is editing the w_arg_idx file in its argument list.
@@ -1761,7 +1761,7 @@ void check_arg_idx(win_T *win)
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
                 && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                                      win->w_buffer->b_ffname, true)
+                                      win->w_buffer->b_ffname, true, true)
                     & kEqualFiles)))) {
       arg_had_last = true;
     }
