@@ -298,14 +298,14 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
-  const char *guessed_homedir = os_getenv("HOME");
+  const char *var = os_getenv("HOME");
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
   // specifically defined it for Vim's sake. However, on Windows NT
   // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
   // each user. Try constructing $HOME from these.
-  if (guessed_homedir == NULL) {
+  if (var == NULL) {
     const char *homedrive = os_getenv("HOMEDRIVE");
     const char *homepath = os_getenv("HOMEPATH");
     if (homepath == NULL) {
@@ -315,58 +315,58 @@ void init_homedir(void)
         && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
       snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
       if (os_buf[0] != NUL) {
-        guessed_homedir = os_buf;
+        var = os_buf;
       }
     }
   }
-  if (guessed_homedir == NULL) {
-    guessed_homedir = os_getenv("USERPROFILE");
+  if (var == NULL) {
+    var = os_getenv("USERPROFILE");
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
   // variable, esp. "%USERPROFILE%".  Happens when $USERPROFILE isn't set
   // when $HOME is being set.
-  if (guessed_homedir != NULL && *guessed_homedir == '%') {
-    const char *p = strchr(guessed_homedir + 1, '%');
+  if (var != NULL && *var == '%') {
+    const char *p = strchr(var + 1, '%');
     if (p != NULL) {
-      vim_snprintf(os_buf, (size_t)(p - guessed_homedir), "%s",
-                   guessed_homedir + 1);
+      vim_snprintf(os_buf, (size_t)(p - var), "%s",
+                   var + 1);
       const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
         vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
-        guessed_homedir = os_buf;
+        var = os_buf;
       }
     }
   }
 
   // Default home dir is C:/
   // Best assumption we can make in such a situation.
-  if (guessed_homedir == NULL
+  if (var == NULL
       // Empty means "undefined"
-      || *guessed_homedir == NUL) {
-    guessed_homedir = "C:/";
+      || *var == NUL) {
+    var = "C:/";
   }
 #endif
 
   // Does a best attempt at capturing homedir using uv_os_homedir
   // The reason for doing this before the unix block is for the unix
   // block to resolve links
-  if (guessed_homedir == NULL) {
+  if (var == NULL) {
     size_t homedir_size = (size_t)MAXPATHL;
     int ret = uv_os_homedir((char *)os_buf, &homedir_size);
     if (ret == 0 && homedir_size > 0) {
-        guessed_homedir = xstrndup((char *)os_buf, homedir_size);
+        var = xstrndup((char *)os_buf, homedir_size);
     }
   }
 
-  if (guessed_homedir != NULL) {
+  if (var != NULL) {
 #ifdef UNIX
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(guessed_homedir) && os_dirname(IObuff, IOSIZE) == OK) {
-        guessed_homedir = (char *)IObuff;
+      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+        var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {
         EMSG(_(e_prev_dir));
@@ -376,11 +376,11 @@ void init_homedir(void)
   }
 
   // As a last resort, return the current working directory
-  if (guessed_homedir == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
-    guessed_homedir = (char *)os_buf;
+  if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+    var = (char *)os_buf;
   }
 
-  set_homedir(guessed_homedir, MAXPATHL);
+  set_homedir(var, MAXPATHL);
 }
 
 const char *get_homedir(void)
