@@ -33,7 +33,7 @@ describe('protocol.lua', function()
 
   local require_string = "require('vim.lsp.protocol')"
   local protocol_eval = function(func_name, args)
-    local arg_string = ''
+    local arg_string = 'nil'
     if args ~= nil then
       if type(args) == 'string' then
         arg_string = '"' .. args .. '"'
@@ -97,6 +97,10 @@ describe('protocol.lua', function()
         uri = 'test_item.txt',
         languageId = 'test',
         version = 0,
+        text = dedent([[
+          Line of text 1
+          Line of text 2
+          Line of text 3]])
       }
 
       local result_table = {
@@ -105,8 +109,7 @@ describe('protocol.lua', function()
         version = test_table.version,
         text = protocol_eval('text'),
       }
-      eq(result_table,
-          funcs.luaeval(require_string .. ".TextDocumentItem(_A)", test_table))
+      eq(funcs.luaeval(require_string .. ".TextDocumentItem(_A)", test_table), result_table)
     end)
 
     it('should return a proper default protocol', function()
