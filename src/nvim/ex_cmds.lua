@@ -758,7 +758,7 @@ return {
   },
   {
     command='digraphs',
-    flags=bit.bor(EXTRA, TRLBAR, CMDWIN),
+    flags=bit.bor(BANG, EXTRA, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_digraphs',
   },
