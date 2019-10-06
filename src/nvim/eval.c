@@ -9926,7 +9926,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (*varname == '&') {  // buffer-local-option
       if (varname[1] == NUL) {
         // get all buffer-local options in a dict
-        dict_T *opts = get_winbuf_options(true);
+        dict_T *opts = get_options(SREQ_BUF, true, false);
 
         if (opts != NULL) {
           tv_dict_set_ret(rettv, opts);
@@ -11165,7 +11165,7 @@ getwinvar(
       if (*varname == '&') {
         if (varname[1] == NUL) {
           // get all window-local options in a dict
-          dict_T *opts = get_winbuf_options(false);
+          dict_T *opts = get_options(SREQ_WIN, true, false);
 
           if (opts != NULL) {
             tv_dict_set_ret(rettv, opts);

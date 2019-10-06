@@ -516,6 +516,65 @@ describe('context functions', function()
       eq({}, eval([[nvim_get_context({'types': ['funcs']})]]))
     end)
 
+    it('saves and restores options properly', function()
+      local opts = {
+        '&g:autochdir', '&g:statusline', '&g:equalprg', -- global
+        '&l:arabic', '&l:statusline', -- win
+        '&l:autoindent', '&l:equalprg', -- buf
+      }
+
+      local defaults = { 0, '', '', 0, '', 1, '' }
+      local custom = { 1, 'foo', 'fizz', 1, 'bar', 0, 'buzz' }
+
+      local get_opts = function()
+        return map(function(opt) return eval(opt) end, opts)
+      end
+
+      local set_opts = function(vals)
+        for i, v in pairs(opts) do
+          command('let '..v..' = "'..vals[i]..'"')
+        end
+      end
+
+      command('set all&')
+      eq(defaults, get_opts())
+
+      call('ctxpush')
+      set_opts(custom)
+      eq(custom, get_opts())
+
+      call('ctxpop')
+      eq(defaults, get_opts())
+
+      set_opts(custom)
+      eq(custom, get_opts())
+
+      call('ctxpush', {'bopts'})
+      call('ctxpush', {'wopts'})
+      call('ctxpush', {'gopts'})
+      call('ctxpush', {'opts'})
+
+      command('set all&')
+      eq(defaults, get_opts())
+      call('ctxpop')
+      eq(custom, get_opts())
+
+      command('set all&')
+      eq(defaults, get_opts())
+      call('ctxpop')
+      eq({ 1, 'foo', 'fizz', 0, '', 1, '' }, get_opts())
+
+      command('set all&')
+      eq(defaults, get_opts())
+      call('ctxpop')
+      eq({ 0, '', '', 1, 'bar', 1, '' }, get_opts())
+
+      command('set all&')
+      eq(defaults, get_opts())
+      call('ctxpop')
+      eq({ 0, '', '', 0, '', 0, 'buzz' }, get_opts())
+    end)
+
     it('errors out when context stack is empty', function()
       local err = 'Vim:Context stack is empty'
       eq(err, pcall_err(call, 'ctxpop'))

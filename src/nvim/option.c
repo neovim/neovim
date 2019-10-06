@@ -7322,8 +7322,14 @@ int win_signcol_count(win_T *wp)
   return MIN(maximum, needed_signcols);
 }
 
-/// Get window or buffer local options
-dict_T *get_winbuf_options(const int bufopt)
+/// Get options.
+///
+/// @param[in]  type     One of `SREQ_GLOBAL`, `SREQ_WIN`, or `SREQ_BUF`.
+/// @param[in]  with_ro  Include read-only options as well.
+/// @param[in]  special  Use SpecialVarValue for boolean options.
+///
+/// @returns dict_T of options.
+dict_T *get_options(int type, bool with_ro, bool special)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   dict_T *const d = tv_dict_alloc();
@@ -7331,17 +7337,28 @@ dict_T *get_winbuf_options(const int bufopt)
   for (int opt_idx = 0; options[opt_idx].fullname; opt_idx++) {
     struct vimoption *opt = &options[opt_idx];
 
-    if ((bufopt && (opt->indir & PV_BUF))
-        || (!bufopt && (opt->indir & PV_WIN))) {
-      char_u *varp = get_varp(opt);
+    if (((type == SREQ_GLOBAL)
+         && ((opt->indir & PV_BOTH) || (opt->indir == PV_NONE)))
+        || ((type == SREQ_BUF) && (opt->indir & PV_BUF))
+        || ((type == SREQ_WIN) && (opt->indir & PV_WIN))) {
+      int scope = type == SREQ_GLOBAL ? OPT_GLOBAL : OPT_LOCAL;
+      char_u *varp = get_varp_scope(opt, scope);
 
       if (varp != NULL) {
+        long *pp = (long *)varp;
+        if (!with_ro && (pp == &curbuf->b_p_channel || pp == &p_channel)) {
+          continue;
+        }
         if (opt->flags & P_STRING) {
           tv_dict_add_str(d, opt->fullname, strlen(opt->fullname),
                           *(const char **)varp);
         } else if (opt->flags & P_NUM) {
           tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname),
                          *(long *)varp);
+        } else if (special) {
+          tv_dict_add_special(
+              d, opt->fullname, strlen(opt->fullname),
+              *(bool *)varp ? kSpecialVarTrue : kSpecialVarFalse);
         } else {
           tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *(int *)varp);
         }

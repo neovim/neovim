@@ -12,6 +12,7 @@ typedef struct {
   msgpack_sbuffer bufs;     ///< Buffer list.
   msgpack_sbuffer vars;     ///< Variables.
   Array funcs;              ///< Functions.
+  Dictionary opts;          ///< Options.
 } Context;
 typedef kvec_t(Context) ContextVec;
 
@@ -27,6 +28,7 @@ typedef kvec_t(Context) ContextVec;
   .bufs = MSGPACK_SBUFFER_INIT, \
   .vars = MSGPACK_SBUFFER_INIT, \
   .funcs = ARRAY_DICT_INIT, \
+  .opts = ARRAY_DICT_INIT, \
 }
 
 typedef enum {
@@ -41,8 +43,12 @@ typedef enum {
   kCtxLVars   =   (1 <<  8),  ///< Function-local variables
   kCtxSFuncs  =   (1 <<  9),  ///< Script functions
   kCtxFuncs   =   (1 << 10),  ///< All functions
+  kCtxGOpts   =   (1 << 11),  ///< Global options
+  kCtxWOpts   =   (1 << 12),  ///< Window options
+  kCtxBOpts   =   (1 << 13),  ///< Buffer options
 } ContextTypeFlags;
 
+extern int kCtxOpts;
 extern int kCtxVars;
 extern int kCtxAll;
 
@@ -71,6 +77,14 @@ extern int kCtxAll;
     (types) |= kCtxSFuncs; \
   } else if (strequal((str), "funcs")) { \
     (types) |= kCtxFuncs; \
+  } else if (strequal((str), "gopts")) { \
+    (types) |= kCtxGOpts; \
+  } else if (strequal((str), "wopts")) { \
+    (types) |= kCtxWOpts; \
+  } else if (strequal((str), "bopts")) { \
+    (types) |= kCtxBOpts; \
+  } else if (strequal((str), "opts")) { \
+    (types) |= kCtxOpts; \
   } else { \
     api_set_error((err), kErrorTypeValidation, "unexpected type: %s", (str)); \
   }
