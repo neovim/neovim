@@ -1,3 +1,4 @@
+// This is Readme file , it will help you understand this project quickly!
 [![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo-300x87.png)](https://neovim.io)
 
 [Wiki](https://github.com/neovim/neovim/wiki) |
