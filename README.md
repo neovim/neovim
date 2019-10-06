@@ -88,6 +88,7 @@ on a best-efforts basis:
 - C# (c-sharp) using dotnet core
 - Go (requires separate installation of [Delve][])
 - Node.js (requires node <12 for installation)
+- Anything running in chrome (i.e. javascript).
 
 ## Languages known not to work
 
@@ -162,6 +163,7 @@ The debug adapters themselves have certain runtime dependencies:
 | C# (mono)        | Experimental | `--force-enable-csharp`      | vscode-mono-debug | Mono                   |
 | Go               | Experimental | `--enable-go`                | vscode-go         | Go, [Delve][]          |
 | Node.js          | Experimental | `--force-enable-node`        | vscode-node-debug2 | 6 < Node < 12, Npm    |
+| Javascript       | Experimental | `--force-enable-chrome`      | debugger-for-chrome | Chrome |
 
 For other languages, you'll need some other way to install the gadget.
 
@@ -615,9 +617,9 @@ Requires:
 * For installation, a Node.js environemt that is < node 12. I believe this is an
   incompatibility with gulp. Advice, use [nvm][] with `nvm install --lts 10; nvm
   use --lts 10; ./install_gadget.py --force-enable-node ...`
-
 * Options described here:
   https://code.visualstudio.com/docs/nodejs/nodejs-debugging
+* Example: `support/test/node/simple`
 
 ```json
 {
@@ -631,6 +633,31 @@ Requires:
         "console": "integratedTerminal",
         "program": "${workspaceRoot}/simple.js",
         "cwd": "${workspaceRoot}"
+      }
+    }
+  }
+}
+```
+
+* Chrome
+
+This uses the chrome debugger, see
+https://marketplace.visualstudio.com/items?itemName=msjsdiag.debugger-for-chrome.
+
+It allows you to debug scripts running inside chrome from within Vim.
+
+* `./install_gadget.py --force-enable-chrome`
+* Example: `support/test/chrome`
+
+```json
+{
+  "configurations": {
+    "launch": {
+      "adapter": "chrome",
+      "configuration": {
+        "request": "launch",
+        "url": "http://localhost:1234/",
+        "webRoot": "${workspaceRoot}/www"
       }
     }
   }
