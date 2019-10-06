@@ -14,9 +14,9 @@ Server Protocol specification. The documentation can be found here:
 ================================================================================
                                                             *lsp-server-config*
 
-Neovim only exposes a powerful API for the language server protocol. To get
-the real benefits of this API, a language server must be installed. Many
-examples can be found here:
+Neovim exposes a API for the language server protocol. To get the real benefits
+of this API, a language server must be installed.
+Many examples can be found here:
 
 	https://microsoft.github.io/language-server-protocol/implementors/servers/
 
@@ -29,10 +29,10 @@ lsp#add_server_config({config}):
 	Used to add a language server.
 
 	This will add an autocmd that will start the server and handle any other
-	startup activities whenever the |FileType| event is triggered for {ftype}.
+	startup activities whenever the |FileType| event is triggered for specified filetypes.
 
 	Parameters: ~
-		{config} (dictionary): 
+		{config} (dictionary):
 			`filetype` (string|array):
 				A string or list of strings of filetypes to
 				associate with this server.
@@ -55,8 +55,8 @@ lsp#add_server_config({config}):
 		" C, C++ example
 		call lsp#add_server_config({
 		      \ 'filetype': ['c', 'cpp'],
-		      \ 'server_name': 'cland',
-		      \ 'cmd': { 'execute_path': 'cland', 'args': ['-background-index'] }})
+		      \ 'server_name': 'clangd',
+		      \ 'cmd': { 'execute_path': 'clangd', 'args': ['-background-index'] }})
 <
 >
 		" Go example
@@ -77,7 +77,7 @@ lsp#add_server_config({config}):
 		call lsp#add_server_config({
 		      \ 'filetype': 'rust',
 		      \ 'server_name': 'rls',
-		      \ 'cmd': { 'execute_path': 'rustup', 'args': ['run', 'stable', 'rls'] },
+		      \ 'cmd': { 'execute_path': 'rls', 'args': [] },
 		      \ 'server_config': {
 		      \   'clippy_preference': 'on',
 		      \   'all_targets': v:false,
@@ -99,10 +99,10 @@ API is defined:
 
                                                             *vim.lsp.request()*
 vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype} [, {server_name}]]]]]):
-	Creates and sends a request to the server for [filetype]. Will fill in any
+	Creates and sends a request to the server for {filetype}. Will fill in any
 	missing required arguments as defined by the language server protocol. Will
 	call the built-in callback for the request (if you set that and it exists), unless an
-	[callback] is specified, in which case that will be called upon completion
+	{callback} is specified, in which case that will be called upon completion
 	of the request.
 
 	Returns the request's response data.
@@ -127,15 +127,10 @@ vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype} [
 					}
 
 		{callback}: An optional callback that will be executed
-			once the response has been received. If this is passed and not
-			|v:null|, then the |lsp-built-in-callback| will not be executed for
+			once the response has been received. If this is passed,
+			then the |lsp-built-in-callback| will not be executed for
 			this request. If you do not set |built-in-callbacks| or this request does not have a
 			specific filetype callback, then no callback will be executed upon receiving the request.
-
-			The callback must be a string with the name of the vimscript
-			function to call. The signature must be:
-
-				`func_name({success}, {data})`
 
 			where {success} is a boolean where true means successful request
 			and false means the request failed.
@@ -157,12 +152,12 @@ vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype} [
 		{server_name}: The server name associated with the server.
 			This will default to the same value of |filetype|.
 
-		Configuration for the default server can be found at |lsp-configuration|.
+		The configuration for the default server can be found at |lsp-configuration|.
 
                                                       *vim.lsp.request_async()*
 vim.lsp.request_async({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype} [, {server_name}]]]]]):
-	Creates and sends a request to the server for [filetype].
-	This request will not block and will call the desired [callback] upon completion.
+	Creates and sends a request to the server for {filetype}.
+	This request will not block and will call the desired {callback} upon completion.
 
 	Returns the request ID.
 
