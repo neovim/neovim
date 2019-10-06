@@ -312,9 +312,11 @@ protocol.TextDocumentClientCapabilities = {
   },
 }
 
-protocol.ClientCapabilities = {
-  textDocument = protocol.TextDocumentClientCapabilities,
-}
+protocol.ClientCapabilities = function()
+  return {
+    textDocument = protocol.TextDocumentClientCapabilities,
+  }
+end
 
 --- Parameter builder for request method
 --
@@ -322,7 +324,7 @@ protocol.InitializeParams = function(client)
   local config = {
     processId = vim.api.nvim_call_function('getpid', {}),
     rootUri = server_config.get_root_uri(client.filetype, client.server_name),
-    capabilities = protocol.ClientCapabilities,
+    capabilities = protocol.ClientCapabilities(),
   }
 
   config = vim.tbl_extend('force', config, server_config.get_server_config(client.filetype, client.server_name))

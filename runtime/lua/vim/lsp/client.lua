@@ -151,6 +151,10 @@ client.initialize = function(self)
     return data.capabilities
   end, nil)
 
+  logger.info(
+    "filetype: "..self.filetype..", server_name: "..self.server_name..", offset_encoding: "..self.offset_encoding..", client_capabilities: "..vim.tbl_tostring(self.client_capabilities)..", server_capabilities: "..vim.tbl_tostring(self.server_capabilities)
+  )
+
   return result
 end
 
@@ -159,18 +163,26 @@ client.set_client_capabilities = function(self, capabilities)
 end
 
 client.set_server_capabilities = function(self, capabilities)
+  if type(capabilities.offsetEncoding) == 'string' and
+    vim.tbl_contains({'utf-8', 'utf-16', 'utf-32'}, capabilities.offsetEncoding) then
+    self.offset_encoding = capabilities.offsetEncoding
+  end
+
   self.server_capabilities = capabilities
 end
+
 
 client.set_buf_change_handler = function(self, bufnr)
   if not self.attached_buf_list[bufnr] then
     self.attached_buf_list[bufnr] = true
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = function(...) self:handle_text_document_did_change(...) end,
-      utf_sizes = (client.offset_encoding == 'utf16' or (client.offset_encoding == 'utf32'))
+      utf_sizes = (client.offset_encoding == 'utf-16' or (client.offset_encoding == 'utf-32'))
     })
   end
 end
+
+
 
 client.handle_text_document_did_change = function(self, _, bufnr, changedtick, firstline, lastline, new_lastline, old_bytes, _, units)
   if self._stopped then return true end
@@ -191,7 +203,7 @@ client.handle_text_document_did_change = function(self, _, bufnr, changedtick, f
       character = 0
     }
   }
-  local length = (self.offset_encoding == 'utf8' and old_bytes) or units
+  local length = (self.offset_encoding == 'utf-8' and old_bytes) or units
   local edit = { range = range, text = text, rangeLength = length }
   self:notify("textDocument/didChange", { textDocument = textDocument, contentChanges = { edit } })
 end

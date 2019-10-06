@@ -25,8 +25,8 @@ server_config.add = function(config)
   if config.offset_encoding then
     assert(type(config.offset_encoding == 'table', 'config.offset_encoding must be a string'))
     assert(
-      vim.tbl_contains({'utf8', 'utf16', 'utf332'}, config.offset_encoding),
-      "config.offset_encoding must be one of 'utf8', 'utf16', or 'utf32'"
+      vim.tbl_contains({'utf-8', 'utf-16', 'utf-32'}, config.offset_encoding),
+      "config.offset_encoding must be one of 'utf-8', 'utf-16', or 'utf32'"
     )
   end
 
@@ -50,7 +50,7 @@ server_config.add = function(config)
       server_config.servers[ft][server_name] = {
         server_name = server_name,
         cmd = config.cmd,
-        offset_encoding = config.offset_encoding or 'utf16',
+        offset_encoding = config.offset_encoding or 'utf-16',
         server_config = config.server_config or {},
       }
     end

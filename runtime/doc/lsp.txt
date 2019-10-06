@@ -48,9 +48,9 @@ lsp#add_server_config({config}):
 				Language Server Protocol defines "character" indexes are in UTF-16,
 				however there are language servers that use
 				UTF-8 or UTF-32 as "character" indexes.
-				So you can set "utf8", "utf16", or "utf32" to
+				So you can set "utf-8", "utf-16", or "utf-32" to
 				{offset_encoding}.
-				Default: "utf16".
+				Default: "utf-16".
 
 			`server_config` (dictionary): Optional configuration for a server.
 
@@ -61,7 +61,9 @@ lsp#add_server_config({config}):
 		      \ 'filetype': ['c', 'cpp'],
 		      \ 'server_name': 'clangd',
 		      \ 'cmd': ['clangd', '-background-index']
-		      \ })
+		      \ 'server_config': {
+		      \   'offsetEncoding': ['utf-8', 'utf-16']
+		      \ }})
 <
 	or
 >
@@ -69,7 +71,9 @@ lsp#add_server_config({config}):
 		      \ 'filetype': ['c', 'cpp'],
 		      \ 'server_name': 'clangd',
 		      \ 'cmd': 'clangd -background-index'
-		      \ })
+		      \ 'server_config': {
+		      \   'offsetEncoding': ['utf-8', 'utf-16']
+		      \ }})
 <
 >
 		" Go example
