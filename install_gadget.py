@@ -206,6 +206,25 @@ GADGETS = {
       },
     },
   },
+  'vscode-node-debug2': {
+    'language': 'node',
+    'enabled': False,
+    'repo': {
+      'url': 'https://github.com/microsoft/vscode-node-debug2',
+      'ref': 'v1.39.1',
+    },
+    'do': lambda name, root: InstallNodeDebug( name, root ),
+    'adapters': {
+      'vscode-node': {
+        'name': 'node2',
+        'type': 'node2',
+        'command': [
+          'node',
+          '${gadgetDir}/vscode-node-debug2/out/src/nodeDebug.js'
+        ]
+      },
+    },
+  },
 }
 
 
@@ -276,6 +295,26 @@ def InstallTclProDebug( name, root ):
     subprocess.check_call( configure )
     subprocess.check_call( [ 'make' ] )
 
+  MakeSymlink( gadget_dir, name, root )
+
+
+def InstallNodeDebug( name, root ):
+  node_version = subprocess.check_output( [ 'node', '--version' ] ).strip()
+  print( "Node.js version: {}".format( node_version ) )
+  if map( int, node_version[ 1: ].split( '.' ) ) >= [ 12, 0, 0 ]:
+    print( "Can't install vscode-debug-node2:" )
+    print( "Sorry, you appear to be running node 12 or later. That's not "
+           "compatible with the build system for this extension, and as far as "
+           "we know, there isn't a pre-built independent package." )
+    print( "My advice is to install nvm, then do:" )
+    print( "  $ nvm install --lts 10" )
+    print( "  $ nvm use --lts 10" )
+    print( "  $ ./install_gadget.py --enable-node ..." )
+    raise RuntimeError( 'Invalid node environent for node debugger' )
+
+  with CurrentWorkingDir( root ):
+    subprocess.check_call( [ 'npm', 'install' ] )
+    subprocess.check_call( [ 'npm', 'run', 'build' ] )
   MakeSymlink( gadget_dir, name, root )
 
 
@@ -396,6 +435,12 @@ def CloneRepoTo( url, ref, destination ):
   RemoveIfExists( destination )
   subprocess.check_call( [ 'git', 'clone', url, destination ] )
   subprocess.check_call( [ 'git', '-C', destination, 'checkout', ref ] )
+  subprocess.check_call( [ 'git', 'submodule', 'sync', '--recursive' ] )
+  subprocess.check_call( [ 'git',
+                           'submodule',
+                           'update',
+                           '--init',
+                           '--recursive' ] )
 
 
 OS = install.GetOS()

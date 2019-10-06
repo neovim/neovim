@@ -87,6 +87,7 @@ on a best-efforts basis:
 - Java (see caveats)
 - C# (c-sharp) using dotnet core
 - Go (requires separate installation of [Delve][])
+- Node.js (requires node <12 for installation)
 
 ## Languages known not to work
 
@@ -160,6 +161,7 @@ The debug adapters themselves have certain runtime dependencies:
 | C# (dotnet core) | Experimental | `--force-enable-csharp`      | netcoredbg        | DotNet core            |
 | C# (mono)        | Experimental | `--force-enable-csharp`      | vscode-mono-debug | Mono                   |
 | Go               | Experimental | `--enable-go`                | vscode-go         | Go, [Delve][]          |
+| Node.js          | Experimental | `--force-enable-node`        | vscode-node-debug2 | 6 < Node < 12, Npm    |
 
 For other languages, you'll need some other way to install the gadget.
 
@@ -599,6 +601,36 @@ Requires:
         "program": "${fileDirname}",
         "mode": "debug",
         "dlvToolPath": "$HOME/go/bin/dlv"
+      }
+    }
+  }
+}
+```
+
+* Node.js
+
+Requires:
+
+* `install_gadget.py --force-enable-node`
+* For installation, a Node.js environemt that is < node 12. I believe this is an
+  incompatibility with gulp. Advice, use [nvm][] with `nvm install --lts 10; nvm
+  use --lts 10; ./install_gadget.py --force-enable-node ...`
+
+* Options described here:
+  https://code.visualstudio.com/docs/nodejs/nodejs-debugging
+
+```json
+{
+  "configurations": {
+    "run": {
+      "adapter": "vscode-node",
+      "configuration": {
+        "request": "launch",
+        "protocol": "auto",
+        "stopOnEntry": true,
+        "console": "integratedTerminal",
+        "program": "${workspaceRoot}/simple.js",
+        "cwd": "${workspaceRoot}"
       }
     }
   }
