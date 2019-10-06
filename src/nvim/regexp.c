@@ -3787,10 +3787,8 @@ static bool reg_match_visual(void)
       end = end2;
     if (top.col == MAXCOL || bot.col == MAXCOL)
       end = MAXCOL;
-    unsigned int cols_u = win_linetabsize(wp, rex.line,
-                                          (colnr_T)(rex.input - rex.line));
-    assert(cols_u <= MAXCOL);
-    colnr_T cols = (colnr_T)cols_u;
+    colnr_T cols = win_linetabsize(wp, rex.line,
+                                   (colnr_T)(rex.input - rex.line));
     if (cols < start || cols > end - (*p_sel == 'e')) {
       return false;
     }

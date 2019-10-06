@@ -406,7 +406,7 @@ int plines_win_nofill(
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
-  unsigned int col;
+  colnr_T col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
@@ -431,13 +431,13 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   if (width <= 0 || col > 32000) {
     return 32000;  // bigger than the number of screen columns
   }
-  if (col <= (unsigned int)width) {
+  if (col <= width) {
     return 1;
   }
-  col -= (unsigned int)width;
+  col -= width;
   width += win_col_off2(wp);
-  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
-  return ((int)col + (width - 1)) / width + 1;
+  assert(col >= 0 && col < INT_MAX - (width -1));
+  return (col + (width - 1)) / width + 1;
 }
 
 /*
