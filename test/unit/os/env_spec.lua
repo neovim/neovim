@@ -36,6 +36,18 @@ describe('env.c', function()
     end
   end
 
+  local function home_replace(buf, src, dst, dstlen, one)
+    cimp.home_replace(buf, src, dst, dstlen, one)
+  end
+
+  local function get_homedir()
+      return ffi.string(cimp.get_homedir())
+  end
+
+  local function set_homedir(c_buffer, size)
+      cimp.set_homedir(c_buffer, size)
+  end
+
   itp('os_env_exists', function()
     eq(false, os_env_exists(''))
     eq(false, os_env_exists('      '))
@@ -303,6 +315,35 @@ describe('env.c', function()
         eq(output[i], input[i])
       end
       eq(output[4], 0)
+    end)
+  end)
+
+  describe('init_homedir', function()
+    itp('homedir set to $HOME if $HOME exists', function()
+      os_setenv('HOME', '/home/username', 1)
+      cimp.init_homedir()
+      eq(get_homedir(), '/home/username')
+    end)
+
+    itp('able to get homedir with empty home', function()
+      os_unsetenv('HOME')
+      cimp.init_homedir()
+      neq(get_homedir(), '')
+      neq(get_homedir(), nil)
+    end)
+  end)
+
+  describe('home_replace', function()
+    itp('empty $HOME and NULL homedir should make dst equal to src', function()
+      os_unsetenv('HOME')
+      os_setenv('HOME', '', 1)
+      local src_text = '/a/b/c'
+      local dst_text = ''
+      local src = ffi.new('char[?]', #src_text)
+      local dst = ffi.new('char[1024]', #dst_text)
+      set_homedir(NULL, 1024)
+      home_replace(NULL, src, dst, 1024, true)
+      eq(ffi.string(src), ffi.string(dst))
     end)
   end)
 end)

@@ -366,8 +366,27 @@ void init_homedir(void)
       }
     }
 #endif
-    homedir = xstrdup(guessed_homedir);
+    set_homedir(guessed_homedir, MAXPATHL);
   }
+}
+
+const char *get_homedir(void)
+{
+    return homedir;
+}
+
+const char *get_singleton_homedir(void)
+{
+  if (homedir == NULL) {
+    init_homedir();
+  }
+  return homedir;
+}
+
+void set_homedir(const char *str, size_t size)
+{
+  xfree(homedir);
+  homedir = xstrndup(str, size);
 }
 
 #if defined(EXITFREE)
