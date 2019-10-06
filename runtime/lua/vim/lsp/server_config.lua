@@ -8,8 +8,8 @@ server_config.add = function(config)
   assert(config.filetype, "config must have 'filetype' key")
   assert(config.cmd, "config must have 'cmd' key")
 
-  if config.server_config and type(config.server_config) ~= 'table' then
-    error("config.server_config must be a table", 2)
+  if config.capabilities and type(config.capabilities) ~= 'table' then
+    error("config.capabilities must be a table", 2)
   end
 
   local filetypes
@@ -51,7 +51,7 @@ server_config.add = function(config)
         server_name = server_name,
         cmd = config.cmd,
         offset_encoding = config.offset_encoding or 'utf-16',
-        server_config = config.server_config or {},
+        capabilities = config.capabilities or {},
       }
     end
   end
@@ -78,9 +78,9 @@ server_config.get_server_offset_encoding = function(filetype, server_name)
   return server_config.get_server(filetype, server_name).offset_encoding
 end
 
-server_config.get_server_config = function(filetype, server_name)
+server_config.get_capabilities = function(filetype, server_name)
   if not server_name then server_name = filetype end
-  return server_config.get_server(filetype, server_name).server_config
+  return server_config.get_server(filetype, server_name).capabilities
 end
 
 server_config.default_root_uri = function()
@@ -88,10 +88,10 @@ server_config.default_root_uri = function()
 end
 
 server_config.get_root_uri = function(filetype, server_name)
-  local config = server_config.get_server_config(filetype, server_name)
+  local capabilities = server_config.get_capabilities(filetype, server_name)
 
-  if (config or vim.tbl_isempty(config)) and config.rootUri then
-    return config.rootUri
+  if (capabilities or vim.tbl_isempty(capabilities)) and capabilities.rootUri then
+    return capabilities.rootUri
   else
     return server_config.default_root_uri()
   end
@@ -102,6 +102,6 @@ return {
   get_server = server_config.get_server,
   get_server_cmd = server_config.get_server_cmd,
   get_server_offset_encoding = server_config.get_server_offset_encoding,
-  get_server_config = server_config.get_server_config,
+  get_capabilities = server_config.get_capabilities,
   get_root_uri = server_config.get_root_uri,
 }

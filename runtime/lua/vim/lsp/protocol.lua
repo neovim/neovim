@@ -327,7 +327,7 @@ protocol.InitializeParams = function(client)
     capabilities = protocol.ClientCapabilities(),
   }
 
-  config = vim.tbl_extend('force', config, server_config.get_server_config(client.filetype, client.server_name))
+  config = vim.tbl_extend('force', config, server_config.get_capabilities(client.filetype, client.server_name))
   client:set_client_capabilities(config)
   return config
 end

@@ -52,7 +52,7 @@ lsp#add_server_config({config}):
 				{offset_encoding}.
 				Default: "utf-16".
 
-			`server_config` (dictionary): Optional configuration for a server.
+			`capabilities` (dictionary): Optional configuration for a server.
 
 	Example: ~
 >
@@ -61,7 +61,7 @@ lsp#add_server_config({config}):
 		      \ 'filetype': ['c', 'cpp'],
 		      \ 'server_name': 'clangd',
 		      \ 'cmd': ['clangd', '-background-index']
-		      \ 'server_config': {
+		      \ 'capabilities': {
 		      \   'offsetEncoding': ['utf-8', 'utf-16']
 		      \ }})
 <
@@ -71,7 +71,7 @@ lsp#add_server_config({config}):
 		      \ 'filetype': ['c', 'cpp'],
 		      \ 'server_name': 'clangd',
 		      \ 'cmd': 'clangd -background-index'
-		      \ 'server_config': {
+		      \ 'capabilities': {
 		      \   'offsetEncoding': ['utf-8', 'utf-16']
 		      \ }})
 <
@@ -97,7 +97,7 @@ lsp#add_server_config({config}):
 		      \ 'filetype': 'rust',
 		      \ 'server_name': 'rls',
 		      \ 'cmd': 'rls',
-		      \ 'server_config': {
+		      \ 'capabilities': {
 		      \   'clippy_preference': 'on',
 		      \   'all_targets': v:false,
 		      \   'build_on_save': v:true,
