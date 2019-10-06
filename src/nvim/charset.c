@@ -964,12 +964,6 @@ bool vim_isprintc_strict(int c)
 /// @return The number of characters taken up on the screen.
 int lbr_chartabsize(char_u *line, unsigned char *s, colnr_T col)
 {
-  if (!curwin->w_p_lbr && (*p_sbr == NUL) && !curwin->w_p_bri) {
-    if (curwin->w_p_wrap) {
-      return win_nolbr_chartabsize(curwin, s, col, NULL);
-    }
-    RET_WIN_BUF_CHARTABSIZE(curwin, curbuf, s, col)
-  }
   return win_lbr_chartabsize(curwin, line == NULL ? s: line, s, col, NULL);
 }
 
