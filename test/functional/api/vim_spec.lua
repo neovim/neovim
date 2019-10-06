@@ -74,6 +74,84 @@ describe('API', function()
     eq({mode='i', blocking=false}, nvim("get_mode"))
   end)
 
+  describe('nvim_source', function()
+    it('works with a one-liner', function()
+      nvim('source', "let x1 = 'a'")
+      eq(nvim('get_var', 'x1'), 'a')
+    end)
+
+    it('works with stray newline character', function()
+      nvim('source', "let x2 = 'a'\n")
+      eq(nvim('get_var', 'x2'),'a')
+    end)
+
+    it('works with multiline command', function()
+      nvim('source', 'lua <<EOF\ny=3\nEOF')
+      eq(nvim('command_output', "echo luaeval('y')"),'3')
+    end)
+
+    it('works with multiple stray newline character', function()
+      nvim('source','lua <<EOF\n\n\n\ny=3\n\n\nEOF')
+      eq(nvim('command_output', "echo luaeval('y')"), '3')
+    end)
+
+    it('works with utf-8', function()
+      nvim('command', 'new')
+      nvim('command', 'normal i ax \n Ax ')
+      nvim('source', ":%s/ax/--a1234--/g | :%s/Ax/--A1234--/g")
+      nvim('command','1')
+      eq(' --a1234-- ',nvim('get_current_line'))
+      nvim('command','2')
+      eq(' --A1234-- ',nvim('get_current_line'))
+    end)
+
+    it('works with latin characters', function()
+      nvim('command', 'new')
+      nvim('command', "call setline(1,['xxx'])")
+      nvim('source', "call feedkeys('r')|call feedkeys('ñ', 'xt')")
+      eq('ñxx',nvim('get_current_line'))
+    end)
+
+    it('nvim_source validation error:fails with specific error', function()
+      local status, rv = pcall(nvim, "source", "bogus_command")
+      eq(false, status)                       -- nvim_command() failed.
+      eq("E492:", string.match(rv, "E%d*:"))  -- VimL error was returned.
+      eq('', nvim('eval', 'v:errmsg'))        -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
+    end)
+
+    it('nvim_source execution error: fails with specific error', function()
+      local status, rv = pcall(nvim, "source", "buffer 23487")
+      eq(false, status)                 -- nvim_command() failed.
+      eq("E86: Buffer 23487 does not exist", string.match(rv, "E%d*:.*"))
+      eq('', eval('v:errmsg'))  -- v:errmsg was not updated.
+      eq('', eval('v:exception'))
+    end)
+
+    it('nvim_source autocommands work', function()
+      nvim('source','autocmd BufCreate * :let x1 = "Hello"')
+      local fname = helpers.tmpname()
+      nvim('command', 'new '..fname)
+      eq(nvim('command_output','echo x1'),"Hello")
+    end)
+
+    it('nvim_source: recursive source works', function()
+      local fname = helpers.tmpname()
+      nvim('command', 'new')
+      nvim('command','edit '..fname)
+      nvim('command','normal ilet x1 = "a"')
+      nvim('command','w')
+      nvim('source','call nvim_source("source '..fname..'")')
+      eq(nvim('get_var','x1'),'a')
+    end)
+
+    it('nvim_source: functions work', function()
+      nvim('source','function Foo()\ncall setline(1,["xxx"])\nendfunction')
+      nvim('source','call Foo()')
+      eq(nvim('get_current_line'),'xxx')
+    end)
+  end)
+
   describe('nvim_command', function()
     it('works', function()
       local fname = helpers.tmpname()

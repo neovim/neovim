@@ -25,6 +25,7 @@
 #include "nvim/highlight.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
@@ -70,6 +71,15 @@ void api_vim_free_all_mem(void)
     xfree(name.data);
   })
   map_free(String, handle_T)(namespace_ids);
+}
+
+void nvim_source(String command, Error *err)
+  FUNC_API_SINCE(5)
+{
+    try_start();
+    do_source_str((char_u *)command.data);
+    update_screen(VALID);
+    try_end(err);
 }
 
 /// Executes an ex-command.
