@@ -1420,11 +1420,11 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
     wp->w_cline_row = 0;
   }
 
-  if (wp->w_topline > curbuf->b_ml.ml_line_count) {
-    wp->w_topline = curbuf->b_ml.ml_line_count;
+  if (wp->w_topline > wp->w_buffer->b_ml.ml_line_count) {
+    wp->w_topline = wp->w_buffer->b_ml.ml_line_count;
   }
-  if (wp->w_botline > curbuf->b_ml.ml_line_count + 1) {
-    wp->w_botline = curbuf->b_ml.ml_line_count + 1;
+  if (wp->w_botline > wp->w_buffer->b_ml.ml_line_count + 1) {
+    wp->w_botline = wp->w_buffer->b_ml.ml_line_count + 1;
   }
 
   // XXX is the below logic correct?
