@@ -108,8 +108,10 @@ protocol.TextDocumentSaveReason = {
 }
 
 -- Helper functions
-local nil_argument_check = function (t)
-  if type(t) == 'nil' then t = {} end
+local check_table = function (t)
+  if t == nil then
+    t = {}
+  end
 
   return t
 end
@@ -134,8 +136,8 @@ end
 
 local __document_version = {}
 protocol.version = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
+  if type(args) == 'number' then return args end
 
   local uri = args.uri or protocol.DocumentUri()
   if not __document_version[uri] then __document_version[uri] = 0 end
@@ -155,8 +157,7 @@ protocol.text = function(args)
 end
 
 protocol.TextDocumentIdentifier = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     uri = protocol.DocumentUri(args.uri),
@@ -164,8 +165,7 @@ protocol.TextDocumentIdentifier = function(args)
 end
 
 protocol.VersionedTextDocumentIdentifier = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   local identifier = protocol.TextDocumentIdentifier(args)
   identifier.version = protocol.version(args.version)
@@ -174,8 +174,7 @@ protocol.VersionedTextDocumentIdentifier = function(args)
 end
 
 protocol.TextDocumentItem = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     uri = protocol.DocumentUri(args.uri),
@@ -187,7 +186,6 @@ end
 
 protocol.line = function(args)
   return args
-    -- TODO: Check the conversion of some of these functions from nvim <-> lua
     or (vim.api.nvim_call_function('line', {'.'}) - 1)
 end
 
@@ -197,8 +195,7 @@ protocol.character = function(args)
 end
 
 protocol.Position = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     line = protocol.line(args.line),
@@ -207,8 +204,7 @@ protocol.Position = function(args)
 end
 
 protocol.TextDocumentPositionParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     textDocument = protocol.TextDocumentIdentifier(args.textDocument),
@@ -217,8 +213,7 @@ protocol.TextDocumentPositionParams = function(args)
 end
 
 protocol.ReferenceContext = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     includeDeclaration = args.includeDeclaration or true,
@@ -226,8 +221,7 @@ protocol.ReferenceContext = function(args)
 end
 
 protocol.CompletionContext = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   if args.triggerKind == nil and args.triggerCharacter == nil then
     return nil
@@ -341,8 +335,7 @@ protocol.initializedParams = function(_args)
 end
 
 protocol.CompletionParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   -- CompletionParams extends TextDocumentPositionParams with an optional context
   local result = protocol.TextDocumentPositionParams(args)
@@ -352,15 +345,13 @@ protocol.CompletionParams = function(args)
 end
 
 protocol.HoverParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return protocol.TextDocumentPositionParams(args)
 end
 
 protocol.SignatureHelpParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   local position =  protocol.TextDocumentPositionParams(args)
   position.position.character = position.position.character + 1
@@ -369,21 +360,19 @@ protocol.SignatureHelpParams = function(args)
 end
 
 protocol.definitionParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return protocol.TextDocumentPositionParams(args)
 end
 
 protocol.documentHighlightParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return protocol.TextDocumentPositionParams(args)
 end
 
 protocol.ReferenceParams = function(args)
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   local position = protocol.TextDocumentPositionParams(args)
   position.context = protocol.ReferenceContext(args.context)
@@ -392,8 +381,7 @@ protocol.ReferenceParams = function(args)
 end
 
 protocol.RenameParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     textDocument = protocol.TextDocumentIdentifier(args.textDocument),
@@ -403,8 +391,7 @@ protocol.RenameParams = function(args)
 end
 
 protocol.WorkspaceSymbolParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     query = args.query or vim.api.nvim_call_function('expand', { '<cWORD>' })
@@ -414,8 +401,7 @@ end
 --- Parameter builder for notification method
 --
 protocol.DidOpenTextDocumentParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     textDocument = protocol.TextDocumentItem(args.textDocument)
@@ -423,8 +409,7 @@ protocol.DidOpenTextDocumentParams = function(args)
 end
 
 protocol.WillSaveTextDocumentParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     textDocument = protocol.TextDocumentItem(args.textDocument),
@@ -433,8 +418,7 @@ protocol.WillSaveTextDocumentParams = function(args)
 end
 
 protocol.DidSaveTextDocumentParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     textDocument = protocol.TextDocumentItem(args.textDocument),
@@ -443,8 +427,7 @@ protocol.DidSaveTextDocumentParams = function(args)
 end
 
 protocol.DidCloseTextDocumentParams = function(args)
-  if args ~= nil then return args end
-  args = nil_argument_check(args)
+  args = check_table(args)
 
   return {
     textDocument = protocol.TextDocumentItem(args.textDocument),
