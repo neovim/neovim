@@ -14,10 +14,7 @@ describe('Language Client API ', function()
         lsp = require('vim.lsp')
         lsp.server_config.add({
           filetype = 'txt',
-          cmd = {
-            execute_path = './build/bin/nvim',
-            args = { '--headless' }
-          }
+          cmd = { './build/bin/nvim', '--headless' }
         })
       EOF
     ]]))

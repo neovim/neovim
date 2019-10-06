@@ -4,13 +4,9 @@ server_config.__index = server_config
 server_config.servers = {}
 
 server_config.add = function(config)
-  if type(config) ~= 'table' then
-    error('argument must be a table', 2)
-  end
-
+  assert(type(config) == 'table', 'argument must be a table')
   assert(config.filetype, "config must have 'filetype' key")
   assert(config.cmd, "config must have 'cmd' key")
-  assert(config.cmd.execute_path, "config.cmd must have 'execute_path' key", 2)
 
   if config.server_config and type(config.server_config) ~= 'table' then
     error("config.server_config must be a table", 2)
@@ -24,6 +20,14 @@ server_config.add = function(config)
     filetypes = config.filetype
   else
     error('config.filetype must be a string or a list of strings', 2)
+  end
+
+  if config.offset_encoding then
+    assert(type(config.offset_encoding == 'table', 'config.offset_encoding must be a string'))
+    assert(
+      vim.tbl_contains({'utf8', 'utf16', 'utf332'}, config.offset_encoding),
+      "config.offset_encoding must be one of 'utf8', 'utf16', or 'utf32'"
+    )
   end
 
   for _, ft in pairs(filetypes) do
@@ -46,6 +50,7 @@ server_config.add = function(config)
       server_config.servers[ft][server_name] = {
         server_name = server_name,
         cmd = config.cmd,
+        offset_encoding = config.offset_encoding or 'utf16',
         server_config = config.server_config or {},
       }
     end
@@ -66,6 +71,11 @@ end
 server_config.get_server_cmd = function(filetype, server_name)
   if not server_name then server_name = filetype end
   return server_config.get_server(filetype, server_name).cmd
+end
+
+server_config.get_server_offset_encoding = function(filetype, server_name)
+  if not server_name then server_name = filetype end
+  return server_config.get_server(filetype, server_name).offset_encoding
 end
 
 server_config.get_server_config = function(filetype, server_name)
@@ -91,6 +101,7 @@ return {
   add = server_config.add,
   get_server = server_config.get_server,
   get_server_cmd = server_config.get_server_cmd,
+  get_server_offset_encoding = server_config.get_server_offset_encoding,
   get_server_config = server_config.get_server_config,
   get_root_uri = server_config.get_root_uri,
 }

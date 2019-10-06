@@ -48,11 +48,12 @@ lsp.start_client = function(filetype, server_name, bufnr)
   assert(not lsp.get_client(filetype, server_name), string.format('Language server for filetype: %s, server_name: %s has already started', filetype, server_name))
 
   local cmd = lsp.server_config.get_server_cmd(filetype, server_name)
+  local offset_encoding = lsp.server_config.get_server_offset_encoding(filetype, server_name)
 
   -- Start the client
   logger.debug('[LSP.lsp] Starting client...', server_name, '/', filetype, '/', cmd)
 
-  local client = Client.new(server_name, filetype, cmd)
+  local client = Client.new(server_name, filetype, cmd, offset_encoding)
   client:start()
   client:initialize()
 

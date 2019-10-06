@@ -12,7 +12,7 @@ describe('Setup and Configuration', function()
       require('vim.lsp').server_config.add({
         filetype = 'rust',
         server_name = 'rls',
-        cmd = { execute_path = 'rustup', args = { 'run', 'stable', 'rls' }},
+        cmd = 'rls'
       })
     ]])
     local server = luaeval("require('vim.lsp').server_config.get_server('rust', 'rls')")
@@ -23,7 +23,7 @@ describe('Setup and Configuration', function()
     luaeval([[
         require('vim.lsp').server_config.add({
         filetype = 'rust',
-        cmd = { execute_path = 'rustup', args = { 'run', 'stable', 'rls' }}
+        cmd = 'run'
       })
     ]])
     local execute_path = luaeval("require('vim.lsp').server_config.get_server_cmd('rust')").execute_path

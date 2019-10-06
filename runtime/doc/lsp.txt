@@ -42,11 +42,15 @@ lsp#add_server_config({config}):
 				If you want to use multiple language servers
 				for one filetype, be sure to add server_name.
 
-			`cmd` (dictionary): Executing language server command.
-				`execute_path` (string):
-					Executing language server command path.
-				`args` (array):
-					Command arguments.
+			`cmd` (string|array): Executing language server command.
+
+			`offset_encoding` (string) (optional):
+				Language Server Protocol defines "character" indexes are in UTF-16,
+				however there are language servers that use
+				UTF-8 or UTF-32 as "character" indexes.
+				So you can set "utf8", "utf16", or "utf32" to
+				{offset_encoding}.
+				Default: "utf16".
 
 			`server_config` (dictionary): Optional configuration for a server.
 
@@ -56,28 +60,39 @@ lsp#add_server_config({config}):
 		call lsp#add_server_config({
 		      \ 'filetype': ['c', 'cpp'],
 		      \ 'server_name': 'clangd',
-		      \ 'cmd': { 'execute_path': 'clangd', 'args': ['-background-index'] }})
+		      \ 'cmd': ['clangd', '-background-index']
+		      \ })
+<
+	or
+>
+		call lsp#add_server_config({
+		      \ 'filetype': ['c', 'cpp'],
+		      \ 'server_name': 'clangd',
+		      \ 'cmd': 'clangd -background-index'
+		      \ })
 <
 >
 		" Go example
 		call lsp#add_server_config({
 		      \ 'filetype': 'go',
 		      \ 'server_name': 'gopls',
-		      \ 'cmd': { 'execute_path': 'gopls', 'args': [] }})
+		      \ 'cmd': 'gopls'
+		      \ })
 <
 >
 		" Python example
 		call lsp#add_server_config({
 		      \ 'filetype': 'python',
 		      \ 'server_name': 'pyls',
-		      \ 'cmd': { 'execute_path': 'pyls', 'args': [] }})
+		      \ 'cmd': 'pyls'
+		      \ })
 <
 >
 		" Rust example
 		call lsp#add_server_config({
 		      \ 'filetype': 'rust',
 		      \ 'server_name': 'rls',
-		      \ 'cmd': { 'execute_path': 'rls', 'args': [] },
+		      \ 'cmd': 'rls',
 		      \ 'server_config': {
 		      \   'clippy_preference': 'on',
 		      \   'all_targets': v:false,

@@ -26,11 +26,7 @@ local error_level = {
 local client = {}
 client.__index = client
 
-client.new = function(server_name, filetype, cmd)
-  if type(cmd.execute_path) ~= 'string' and cmd.execute_path == '' then
-    error('execute_path must be "string" and must no be empty string', 2)
-  end
-
+client.new = function(server_name, filetype, cmd, offset_encoding)
   local obj = setmetatable({
     server_name = server_name,
     filetype = filetype,
@@ -56,14 +52,14 @@ client.new = function(server_name, filetype, cmd)
     -- Data fields, to be used internally
     __data__ = {},
     attached_buf_list = {},
-    offset_encoding = 'utf16',
+    offset_encoding = offset_encoding,
     stdin = nil,
     stdout = nil,
     stderr = nil,
     handle = nil,
   }, client)
 
-  logger.info('Starting new client: ', server_name, cmd.execute_path, cmd.args)
+  logger.info('Starting new client. server_name: '..server_name..', cmd: '..vim.tbl_tostring(cmd)..', offset_encoding: '..offset_encoding)
 
   return obj
 end
@@ -74,12 +70,24 @@ client.start = function(self)
   self.stderr = uv.new_pipe(false)
 
   local function on_exit()
-    logger.info('filetype: '..self.filetype..', exit: '..self.cmd.execute_path)
+    logger.info('filetype: '..self.filetype..', exit: '..self.cmd_tostring)
   end
 
   local stdio = { self.stdin, self.stdout, self.stderr }
-  local opts = { args = self.cmd.args, stdio = stdio }
-  self.handle, self.pid = uv.spawn(self.cmd.execute_path, opts, on_exit)
+
+  if type(self.cmd) == 'string' then
+    local cmd_with_opts = vim.split(self.cmd, ' ', true)
+    local execute_path = table.remove(cmd_with_opts, 1)
+    local opts = { args = cmd_with_opts, stdio = stdio }
+    self.handle, self.pid = uv.spawn(execute_path, opts, on_exit)
+  elseif vim.tbl_islist(self.cmd) then
+    local cmd_with_opts = self.cmd
+    local execute_path = table.remove(cmd_with_opts, 1)
+    local opts = { args = cmd_with_opts, stdio = stdio }
+    self.handle, self.pid = uv.spawn(execute_path, opts, on_exit)
+  else
+    error("cmd type must be string or table.", 2)
+  end
 
   uv.read_start(self.stdout, function (err, chunk)
     if not err then
@@ -129,15 +137,10 @@ client.stop = function(self)
 end
 
 client.cmd_tostring = function(self)
-  local cmd = self.cmd
-  local cmd_str = cmd.execute_path
-  if cmd.args ~= nil then
-    for _, arg in pairs(cmd.args) do
-      cmd_str = cmd_str..' '..arg
-    end
+  if type(self.cmd) == 'table' then
+    return table.concat(self.cmd)
   end
-
-  return cmd_str
+  return self.cmd
 end
 
 client.initialize = function(self)
