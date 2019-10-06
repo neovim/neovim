@@ -1,28 +1,21 @@
 _G.a = vim.api
 local a = vim.api
-if __treesitter_rt_ns == nil then
-    __treesitter_rt_ns = a.nvim_buf_add_highlight(0, 0, "", 0, 0, 0)
-    __treesitter_rt_syn_ns = a.nvim_buf_add_highlight(0, 0, "", 0, 0, 0)
-end
-local my_ns = __treesitter_rt_ns
-local my_syn_ns = __treesitter_rt_syn_ns
 
-
-vim.treesitter.add_language("/home/bjorn/dev/tree-sitter-c/bin/c.so", "c")
-parser = vim.treesitter.get_parser(1)
-root = parser:parse():root()
-
-if false then
-  node = root:descendant_for_range(370,5,371,12)
-  node:sexpr()
-  q = node:child(1):child(1)
-  q:child(0):sexpr()
-
+do local s, l = pcall(require,'luadev') if s then _G.luadev = l end end
+if luadev then
+    d = vim.schedule_wrap(luadev.print)
+else
+    function d() end
 end
 
--- these are conventions defined by tree-sitter, eventually there will be a "standard query" for
--- c highlighting we can import.
-hl_map = {
+-- TSHighlighter = {}
+-- what is autoreload? 
+TSHighlighter = _G.TSHighlighter or {}
+TSHighlighter.__index = TSHighlighter
+
+-- these are conventions defined by tree-sitter, though it
+-- needs to be user extensible also
+TSHighlighter.hl_map = {
     keyword="Keyword",
     string="String",
     type="Type",
@@ -36,120 +29,39 @@ hl_map = {
     ["dup"]="WarningMsg",
 }
 
-id_map = {}
-for k,v in pairs(hl_map) do
-  id_map[k] = a.nvim__syn_attr(v)
+-- TODO: redo on ColorScheme! (or on any :hi really)
+TSHighlighter.id_map = {}
+for k,v in pairs(TSHighlighter.hl_map) do
+  TSHighlighter.id_map[k] = a.nvim__syn_attr(v)
 end
 
-cquery_src = [[
-"break" @keyword
-"case" @keyword
-"continue" @keyword
-"do" @keyword
-"else" @keyword
-"for" @keyword
-"if" @keyword
-"return" @keyword
-"sizeof" @keyword
-"switch" @keyword
-"while" @keyword
-
-"const" @keyword.storagecls
-"static" @keyword.storagecls
-"struct" @keyword.storagecls
-"inline" @keyword.storagecls
-"enum" @keyword.storagecls
-"extern" @keyword.storagecls
-"typedef" @keyword.storagecls
-"union" @keyword.storagecls
-
-"#define" @keyword.preproc
-"#else" @keyword.preproc
-"#endif" @keyword.preproc
-"#if" @keyword.preproc
-"#ifdef" @keyword.preproc
-"#ifndef" @keyword.preproc
-"#include" @keyword.preproc
-(preproc_directive) @keyword.preproc
-
-(string_literal) @string
-(system_lib_string) @string
-
-(number_literal) @number
-(char_literal) @string
-
-(field_identifier) @property
-
-(type_identifier) @type.user
-(primitive_type) @type
-(sized_type_specifier) @type
-
-((function_definition (storage_class_specifier) @funcclass declarator: (function_declarator (identifier) @function.static))  (eq? @funcclass "static"))
-
-((binary_expression left: (identifier) @dup.left right: (identifier) @dup.right) @dup (eq? @dup.left @dup.right))
-
-(comment) @comment
-
-(call_expression
-  function: (identifier) @function)
-(function_declarator
-  declarator: (identifier) @function)
-(preproc_function_def
-  name: (identifier) @function)
-]]
-cquery = vim.treesitter.parse_query("c", cquery_src)
-iquery = cquery:inspect()
-
-
-line,endl = 134, 135
-
-function oldline(line,endl)
-  if endl == nil then endl = line+1 end
-    a.nvim_buf_clear_highlight(parser.bufnr, my_syn_ns, line, endl)
-  local root = parser:parse():root()
-  local continue = true
-  local i = 800
-  for capture,node in root:query(cquery,line,endl) do
-    --print(inspect_node(node))
-    hl = hl_map[capture]
-    local start_row, start_col, end_row, end_col = node:range()
-    if hl then
-      if start_row == end_row then
-        a.nvim_buf_add_highlight(parser.bufnr, my_syn_ns, hl, start_row, start_col, end_col)
-      end
-    end
-    if start_row >= endl then
-      break
-    end
-    i = i - 1
-    if i == 0 then
-      break
-    end
+function TSHighlighter.new(query, bufnr, ft)
+  local self = setmetatable({}, TSHighlighter)
+  self.parser = vim.treesitter.get_parser(bufnr, ft)
+  self.buf = self.parser.bufnr
+  if type(query) == "string" then
+    query = vim.treesitter.parse_query(self.parser.lang, query)
   end
-end
-if false then
-  oldline(132,140)
+  self.query = query
+  self.iquery = query:inspect()
+  a.nvim_buf_set_option(self.buf, "syntax", "")
+  a.nvim_buf_set_luahl(self.buf, {
+    on_start=function(...) self:on_start(...) end,
+    on_line=function(...) self:on_line(...) end,
+  })
 end
 
-hlstate = {}
-function on_start(_, win, buf, line)
-  local root = parser:parse():root()
+function TSHighlighter:on_start(_, win, buf, line)
+  local root = self.parser:parse():root()
   -- TODO: win_update should give the max height (in buflines)
-  hlstate.iter = root:query(cquery,line,a.nvim_buf_line_count(buf))
-  hlstate.active_nodes = {}
-  hlstate.nextrow = 0
-  hlstate.first_line = line
+  self.iter = root:query(self.query,line,a.nvim_buf_line_count(buf))
+  self.active_nodes = {}
+  self.nextrow = 0
+  self.first_line = line
 end
 
 
-do local s, l = pcall(require,'luadev') if s then _G.luadev = l end end
-if luadev then
-    d = vim.schedule_wrap(luadev.print)
-else
-    function d() end
-end
-
-function get_node_text(node, buf)
+local function get_node_text(node, buf)
   local start_row, start_col, end_row, end_col = node:range()
   if start_row ~= end_row then
     return nil
@@ -158,12 +70,12 @@ function get_node_text(node, buf)
   return string.sub(line, start_col+1, end_col)
 end
 
-function run_pred(match,buf)
-  local preds = iquery.patterns[match.pattern]
+function TSHighlighter:run_pred(match)
+  local preds = self.iquery.patterns[match.pattern]
   for _, pred in pairs(preds) do
     if pred[1] == "eq?" then
       local node = match[pred[2]]
-      local node_text = get_node_text(node, buf)
+      local node_text = get_node_text(node, self.buf)
 
       local str
       if type(pred[3]) == "string" then
@@ -171,7 +83,7 @@ function run_pred(match,buf)
         str = pred[3]
       else
         -- (eq? @aa @bb)
-        str = get_node_text(match[pred[3]], buf)
+        str = get_node_text(match[pred[3]], self.buf)
       end
 
       if node_text ~= str or str == nil then
@@ -182,33 +94,33 @@ function run_pred(match,buf)
   return true
 end
 
-function on_line(_, win, buf, line)
+function TSHighlighter:on_line(_, win, buf, line)
   count = 0
-  while line >= hlstate.nextrow do
-    local capture, node, match = hlstate.iter()
+  while line >= self.nextrow do
+    local capture, node, match = self.iter()
     local active = true
     if capture == nil then
       break
     end
     if match ~= nil then
-      active = run_pred(match, buf)
+      active = self:run_pred(match)
       match.active = active
     end
     count = count + 1
     local start_row, start_col, end_row, end_col = node:range()
-    local hl = id_map[capture]
+    local hl = self.id_map[capture]
     if hl and active then
       if start_row == line and end_row == line then
         a.nvim__put_attr(hl, start_col, end_col)
       elseif end_row >= line then
-        hlstate.active_nodes[{hl=hl, start_row=start_row, start_col=start_col, end_row=end_row, end_col=end_col}] = true
+        self.active_nodes[{hl=hl, start_row=start_row, start_col=start_col, end_row=end_row, end_col=end_col}] = true
       end
     end
     if start_row > line then
-      hlstate.nextrow = start_row
+      self.nextrow = start_row
     end
   end
-  for node,_ in pairs(hlstate.active_nodes) do
+  for node,_ in pairs(self.active_nodes) do
     if node.start_row <= line and node.end_row >= line then
       local start_col, end_col = node.start_col, node.end_col
       if node.start_row < line then
@@ -220,15 +132,10 @@ function on_line(_, win, buf, line)
       a.nvim__put_attr(node.hl, start_col, end_col)
     end
     if node.end_row <= line then
-      hlstate.active_nodes[node] = nil
+      self.active_nodes[node] = nil
     end
   end
-  --return (hlstate.first_line+1) .." ".. tostring(count)
+  --return (self.first_line+1) .." ".. tostring(count)
 end
 
-function ts_syntax()
-  a.nvim_buf_set_option(parser.bufnr, "syntax", "")
-  a.nvim_buf_set_luahl(parser.bufnr, {on_start=on_start, on_line=on_line})
-end
-ts_syntax()
-
+return TSHighlighter

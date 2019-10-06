@@ -36,7 +36,7 @@ function module.create_parser(bufnr, ft, id)
   if bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
-  local self = setmetatable({bufnr=bufnr, valid=false}, Parser)
+  local self = setmetatable({bufnr=bufnr, lang=ft, valid=false}, Parser)
   self._parser = vim._create_ts_parser(ft)
   self:parse()
     -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
