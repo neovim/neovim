@@ -91,6 +91,51 @@ int coladvance(colnr_T wcol)
   return rc;
 }
 
+// Like coladvance(), but for an arbitrary window. This does not support
+// virtual edit mode or modifying the buffer.
+int coladvance_win(win_T *wp, pos_T *pos, colnr_T wcol)
+{
+  int idx;
+  char_u *ptr;
+  char_u *line;
+  colnr_T col = 0;
+  int rc = OK;
+
+  line = ml_get_buf(wp->w_buffer, pos->lnum, false);
+
+  if (wcol >= MAXCOL) {
+    idx = (int)STRLEN(line);
+    if (idx > 0) {
+      idx -= 1;
+    }
+    ptr = line + idx;
+    col = wcol;
+  } else {
+    ptr = advance_line_ptr_by_width(wp, line, line, &col, wcol);
+    idx = (int)(ptr - line);
+  }
+
+  if (wcol < 0 || col < wcol) {
+    rc = FAIL;
+  }
+
+  pos->col = idx;
+  pos->coladd = 0;
+
+  // Prevent from moving onto a trail byte.
+  mark_mb_adjustpos(wp->w_buffer, pos);
+
+  if (wcol == MAXCOL || rc == FAIL) {
+    wp->w_valid &= ~VALID_VIRTCOL;
+  } else if (*ptr != TAB) {
+    // Virtcol is valid when not on a TAB
+    wp->w_valid |= VALID_VIRTCOL;
+    wp->w_virtcol = wcol;
+  }
+
+  return rc;
+}
+
 static int coladvance2(
     pos_T *pos,
     bool addspaces,               // change the text to achieve our goal?
