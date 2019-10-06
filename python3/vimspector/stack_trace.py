@@ -162,8 +162,9 @@ class StackTraceView( object ):
         self._LoadStackTrace( thread, False )
 
   def _JumpToFrame( self, frame ):
-    self._currentFrame = frame
-    return self._session.SetCurrentFrame( self._currentFrame )
+    if 'line' in frame and frame[ 'line' ]:
+      self._currentFrame = frame
+      return self._session.SetCurrentFrame( self._currentFrame )
 
   def OnStopped( self, event ):
     if 'threadId' in event:
@@ -226,10 +227,19 @@ class StackTraceView( object ):
       if 'name' not in source:
         source[ 'name' ] = os.path.basename( source[ 'path' ] )
 
-      line = utils.AppendToBuffer(
-        self._buf,
-        '  {0}: {1}@{2}:{3}'.format( frame[ 'id' ],
-                                     frame[ 'name' ],
-                                     source[ 'name' ],
-                                     frame[ 'line' ] ) )
+      if frame.get( 'presentationHint' ) == 'label':
+        # Sigh. FOr some reason, it's OK for debug adapters to completely ignore
+        # the protocol; it seems that the chrome adapter sets 'label' and
+        # doesn't set 'line'
+        line = utils.AppendToBuffer(
+          self._buf,
+          '  {0}: {1}'.format( frame[ 'id' ], frame[ 'name' ] ) )
+      else:
+        line = utils.AppendToBuffer(
+          self._buf,
+          '  {0}: {1}@{2}:{3}'.format( frame[ 'id' ],
+                                       frame[ 'name' ],
+                                       source[ 'name' ],
+                                       frame[ 'line' ] ) )
+
       self._line_to_frame[ line ] = frame

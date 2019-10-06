@@ -225,6 +225,32 @@ GADGETS = {
       },
     },
   },
+  'debugger-for-chrome': {
+    'language': 'typescript',
+    'enabled': False,
+    'download': {
+      'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
+             'publishers/msjsdiag/vsextensions/'
+             'debugger-for-chrome/${version}/vspackage',
+      'target': 'msjsdiag.debugger-for-chrome-4.12.0.tar.gz',
+      'format': 'tar',
+    },
+    'all': {
+      'version': '4.12.0',
+      'file_name': 'msjsdiag.debugger-for-chrome-4.12.0.vsix',
+      'checksum': ''
+    },
+    'adapters': {
+      'chrome': {
+        'name': 'debugger-for-chrome',
+        'type': 'chrome',
+        'command': [
+          'node',
+          '${gadgetDir}/debugger-for-chrome/out/src/chromeDebug.js'
+        ],
+      },
+    },
+  },
 }
 
 
