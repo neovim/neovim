@@ -142,7 +142,6 @@ end
 
 client.initialize = function(self)
   local result = self:request_async('initialize', InitializeParams(self), function(_, data)
-    self:set_server_capabilities(data)
     self:notify('initialized', {})
     self:notify('textDocument/didOpen', DidOpenTextDocumentParams(self))
     self:set_server_capabilities(data.capabilities)
