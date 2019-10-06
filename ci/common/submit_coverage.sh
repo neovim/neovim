@@ -46,6 +46,9 @@ rm -f coverage.xml
 
 # Upload Lua coverage  (generated manually on AppVeyor/Windows).
 if [ "$USE_LUACOV" = 1 ] && [ "$1" != "oldtest" ]; then
+  if [ -x "${DEPS_BUILD_DIR}/usr/bin/luacov" ]; then
+    "${DEPS_BUILD_DIR}/usr/bin/luacov"
+  fi
   if ! "$codecov_sh" -f luacov.report.out -X gcov -X fix -Z -F "lua,${codecov_flags}"; then
     echo "codecov upload failed."
   fi
