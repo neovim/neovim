@@ -2031,7 +2031,8 @@ char_u *did_set_spelllang(win_T *wp)
 
       // Check if we loaded this language before.
       for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-        if (path_full_compare(lang, slang->sl_fname, false) == kEqualFiles) {
+        if (path_full_compare(lang, slang->sl_fname, false, true)
+            == kEqualFiles) {
           break;
         }
       }
@@ -2076,7 +2077,7 @@ char_u *did_set_spelllang(win_T *wp)
     // Loop over the languages, there can be several files for "lang".
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
       if (filename
-          ? path_full_compare(lang, slang->sl_fname, false) == kEqualFiles
+          ? path_full_compare(lang, slang->sl_fname, false, true) == kEqualFiles
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -2129,7 +2130,7 @@ char_u *did_set_spelllang(win_T *wp)
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
         if (p != NULL
-            && path_full_compare(spf_name, p, false) == kEqualFiles) {
+            && path_full_compare(spf_name, p, false, true) == kEqualFiles) {
           break;
         }
       }
@@ -2139,7 +2140,8 @@ char_u *did_set_spelllang(win_T *wp)
 
     // Check if it was loaded already.
     for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-      if (path_full_compare(spf_name, slang->sl_fname, false) == kEqualFiles) {
+      if (path_full_compare(spf_name, slang->sl_fname, false, true)
+          == kEqualFiles) {
         break;
       }
     }
