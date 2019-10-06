@@ -1099,7 +1099,7 @@ static void command_line_scan(mparm_T *parmp)
             break;
           }
 
-          case 'i': {  // "-i {shada}" use for shada
+          case 'i': {  // "-i {shada}" use for ShaDa
             set_option_value("shadafile", 0L, argv[0], 0);
             break;
           }
@@ -1976,7 +1976,7 @@ static void usage(void)
   mch_msg(_("  -e, -E                Ex mode\n"));
   mch_msg(_("  -es, -Es              Silent (batch) mode\n"));
   mch_msg(_("  -h, --help            Print this help message\n"));
-  mch_msg(_("  -i <shada>            Use this shada file\n"));
+  mch_msg(_("  -i <shada>            Use this ShaDa file\n"));
   mch_msg(_("  -m                    Modifications (writing files) not allowed\n"));
   mch_msg(_("  -M                    Modifications in text not allowed\n"));
   mch_msg(_("  -n                    No swap file, use memory only\n"));

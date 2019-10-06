@@ -45,7 +45,7 @@
  * If a named file mark's fnum is non-zero, it is for an existing buffer,
  * otherwise it is from .shada and namedfm[n].fname is the file name.
  * There are marks 'A - 'Z (set by user) and '0 to '9 (set when writing
- * shada).
+ * ShaDa).
  */
 
 /// Global marks (marks with file number or name)

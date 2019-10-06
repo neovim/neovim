@@ -44,7 +44,7 @@ function! s:check_config() abort
   let shadafile = (empty(&shadafile) || &shadafile ==# 'NONE') ? stdpath('data').'/shada/main.shada' : &shadafile
   if !empty(shadafile) && (!filereadable(shadafile) || !filewritable(shadafile))
     let ok = v:false
-    call health#report_error('shada file is not '.(filereadable(shadafile) ? 'writeable' : 'readable').":\n".shadafile)
+    call health#report_error('ShaDa file is not '.(filereadable(shadafile) ? 'writeable' : 'readable').":\n".shadafile)
   endif
 
   if ok

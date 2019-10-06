@@ -49,7 +49,7 @@ describe('ShaDa support code', function()
     eq(2, nvim_current_line())
   end)
 
-  it('does not dump global mark with `f0` in shada', function()
+  it('does not dump global mark with `f0` in ShaDa', function()
     nvim_command('set shada+=f0')
     nvim_command('edit ' .. testfilename)
     nvim_command('mark A')
@@ -61,7 +61,7 @@ describe('ShaDa support code', function()
     eq('Vim(normal):E20: Mark not set', exc_exec('normal! `A'))
   end)
 
-  it('does read back global mark even with `\'0` and `f0` in shada', function()
+  it('does read back global mark even with `\'0` and `f0` in ShaDa', function()
     nvim_command('edit ' .. testfilename)
     nvim_command('mark A')
     nvim_command('2')
@@ -224,7 +224,7 @@ describe('ShaDa support code', function()
         '--embed',  -- no --embed
       },
       args={
-        '-i', meths.get_var('tmpname'),  -- Use same shada file as parent.
+        '-i', meths.get_var('tmpname'),  -- Use same ShaDa file as parent.
         '--cmd', 'silent edit '..non_existent_testfilename,
         '-c', 'qall'},
     }
@@ -240,7 +240,7 @@ describe('ShaDa support code', function()
         '--embed',  -- no --embed
       },
       args={
-        '-i', meths.get_var('tmpname'),  -- Use same shada file as parent.
+        '-i', meths.get_var('tmpname'),  -- Use same ShaDa file as parent.
         '-c', 'silent edit '..non_existent_testfilename,
         '-c', 'autocmd VimEnter * qall'},
     }

@@ -3185,8 +3185,8 @@ msgstr "  -es, -Es              Мовчазний (пакетний) режим
 msgid "  -h, --help            Print this help message\n"
 msgstr "  -h, --help            Надрукувати це повідомлення\n"
 
-msgid "  -i <shada>            Use this shada file\n"
-msgstr "  -i <shada>            Вжити цей файл shada\n"
+msgid "  -i <shada>            Use this ShaDa file\n"
+msgstr "  -i <shada>            Вжити цей файл ShaDa\n"
 
 msgid "  -m                    Modifications (writing files) not allowed\n"
 msgstr "  -m                    Зміни (запис файлів) не дозволено\n"

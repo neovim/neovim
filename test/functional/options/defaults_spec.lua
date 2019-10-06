@@ -168,7 +168,7 @@ describe('startup defaults', function()
     -- This means use the default location. :help shada-file-name
     eq('', meths.get_option('shadafile'))
     eq('', meths.get_option('viminfofile'))
-    -- Check that shada data (such as v:oldfiles) is saved/restored.
+    -- Check that ShaDa data (such as v:oldfiles) is saved/restored.
     command('edit Xtest-foo')
     command('write')
     local f = eval('fnamemodify(@%,":p")')

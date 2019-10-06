@@ -287,8 +287,8 @@ Name			triggered by ~
 |TermResponse|		after the terminal response to t_RV is received
 |QuitPre|		when using `:quit`, before deciding whether to exit
 |ExitPre|		when using a command that may make Vim exit
-|VimLeavePre|		before exiting Nvim, before writing the shada file
-|VimLeave|		before exiting Nvim, after writing the shada file
+|VimLeavePre|		before exiting Nvim, before writing the ShaDa file
+|VimLeave|		before exiting Nvim, after writing the ShaDa file
 |VimResume|		after Nvim is resumed
 |VimSuspend|		before Nvim is suspended
 

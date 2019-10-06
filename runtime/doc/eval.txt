@@ -588,7 +588,7 @@ function.
 
 When the '!' flag is included in the 'shada' option, global variables that
 start with an uppercase letter, and don't contain a lowercase letter, are
-stored in the shada file |shada-file|.
+stored in the ShaDa file |shada-file|.
 
 When the 'sessionoptions' option contains "global", global variables that
 start with an uppercase letter and contain at least one lowercase letter are

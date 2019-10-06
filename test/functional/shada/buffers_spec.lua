@@ -1,4 +1,4 @@
--- shada buffer list saving/reading support
+-- ShaDa buffer list saving/reading support
 local helpers = require('test.functional.helpers')(after_each)
 local nvim_command, funcs, eq, curbufmeths =
   helpers.command, helpers.funcs, helpers.eq, helpers.curbufmeths
@@ -6,7 +6,7 @@ local nvim_command, funcs, eq, curbufmeths =
 local shada_helpers = require('test.functional.shada.helpers')
 local reset, clear = shada_helpers.reset, shada_helpers.clear
 
-describe('shada support code', function()
+describe('ShaDa support code', function()
   local testfilename = 'Xtestfile-functional-shada-buffers'
   local testfilename_2 = 'Xtestfile-functional-shada-buffers-2'
   after_each(clear)

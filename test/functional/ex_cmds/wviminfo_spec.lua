@@ -19,7 +19,7 @@ describe(':wshada', function()
     os.remove(shada_file)
   end)
 
-  it('creates a shada file', function()
+  it('creates a ShaDa file', function()
     -- file should _not_ exist
     eq(nil, lfs.attributes(shada_file))
     command('wsh! '..shada_file)
@@ -39,12 +39,12 @@ describe(':wshada', function()
 
     command('wsh! '..shada_file)
 
-    -- File should have been overwritten with a shada file.
+    -- File should have been overwritten with a ShaDa file.
     local fp = io.open(shada_file, 'r')
     local char1 = fp:read(1)
     fp:close()
     -- ShaDa file starts with a “header” entry
     assert(char1:byte() == 0x01,
-      shada_file..' should be a shada file')
+      shada_file..' should be a ShaDa file')
   end)
 end)

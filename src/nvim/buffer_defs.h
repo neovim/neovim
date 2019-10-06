@@ -795,7 +795,7 @@ struct file_buffer {
 
   Terminal *terminal;           // Terminal instance associated with the buffer
 
-  dict_T *additional_data;      // Additional data from shada file if any.
+  dict_T *additional_data;      // Additional data from ShaDa file if any.
 
   int b_mapped_ctrl_c;          // modes where CTRL-C is mapped
 

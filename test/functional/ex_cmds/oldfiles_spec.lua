@@ -10,7 +10,7 @@ local eval = helpers.eval
 local shada_file = 'Xtest.shada'
 
 local function _clear()
-  clear{args={'-i', shada_file, -- Need shada for these tests.
+  clear{args={'-i', shada_file, -- Need ShaDa for these tests.
               '--cmd', 'set noswapfile undodir=. directory=. viewdir=. backupdir=. belloff= noshowcmd noruler'},
         args_rm={'-i', '--cmd'}}
 end
