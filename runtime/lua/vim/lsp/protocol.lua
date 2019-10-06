@@ -109,8 +109,10 @@ protocol.TextDocumentSaveReason = {
 
 -- Helper functions
 local check_table = function (t)
-  if type(t) ~= 'table' then
+  if type(t) == 'nil' then
     t = {}
+  elseif type(t) ~= 'table' then
+    error("The argument type must be table.", 2)
   end
 
   return t
