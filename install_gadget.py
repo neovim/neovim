@@ -478,7 +478,7 @@ print( 'gadget_dir = ' + gadget_dir )
 parser = argparse.ArgumentParser()
 parser.add_argument( '--all',
                      action = 'store_true',
-                     help = 'Enable all completers' )
+                     help = 'Enable all supported completers' )
 
 done_languages = set()
 for name, gadget in GADGETS.items():
@@ -506,7 +506,7 @@ for name, gadget in GADGETS.items():
   parser.add_argument(
     '--disable-' + lang,
     action = 'store_true',
-    help = 'Don\t install the {} debug adapter for {} support '
+    help = "Don't install the {} debug adapter for {} support "
            '(when supplying --all)'.format( name, lang ) )
 
 args = parser.parse_args()
