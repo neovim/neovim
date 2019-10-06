@@ -43,3 +43,11 @@ fi
 # Cleanup always, especially collected data.
 find . \( -name '*.gcov' -o -name '*.gcda' \) -ls -delete | wc -l
 rm -f coverage.xml
+
+# Upload Lua coverage  (generated manually on AppVeyor/Windows).
+if [ "$USE_LUACOV" = 1 ] && [ "$1" != "oldtest" ]; then
+  if ! "$codecov_sh" -f luacov.report.out -X gcov -X fix -Z -F "lua,${codecov_flags}"; then
+    echo "codecov upload failed."
+  fi
+  rm luacov.stats.out
+fi

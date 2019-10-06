@@ -577,7 +577,7 @@ void conceal_check_cursor_line(void)
 /// Whether cursorline is drawn in a special way
 ///
 /// If true, both old and new cursorline will need
-/// need to be redrawn when moving cursor within windows.
+/// to be redrawn when moving cursor within windows.
 /// TODO(bfredl): VIsual_active shouldn't be needed, but is used to fix a glitch
 ///               caused by scrolling.
 bool win_cursorline_standout(const win_T *wp)
@@ -2406,10 +2406,10 @@ win_line (
   filler_todo = filler_lines;
 
   // Cursor line highlighting for 'cursorline' in the current window.
-  if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+  if (lnum == wp->w_cursor.lnum) {
     // Do not show the cursor line when Visual mode is active, because it's
     // not clear what is selected then.
-    if (!(wp == curwin && VIsual_active)) {
+    if (wp->w_p_cul && !(wp == curwin && VIsual_active)) {
       int cul_attr = win_hl_attr(wp, HLF_CUL);
       HlAttrs ae = syn_attr2entry(cul_attr);
 
@@ -4354,7 +4354,7 @@ static int grid_char_needs_redraw(ScreenGrid *grid, int off_from, int off_to,
                || (line_off2cells(linebuf_char, off_from, off_from + cols) > 1
                    && schar_cmp(linebuf_char[off_from + 1],
                                 grid->chars[off_to + 1])))
-              || p_wd < 0));
+              || rdb_flags & RDB_NODELTA));
 }
 
 /// Move one buffered line to the window grid, but only the characters that
