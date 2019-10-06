@@ -531,7 +531,7 @@ void expand_env_esc(char_u *restrict srcp,
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
-        var = (char_u *)homedir;
+        var = (char_u *)get_homedir();
         tail = src + 1;
       } else {  // user directory
 #if defined(UNIX)
@@ -782,7 +782,7 @@ char *vim_getenv(const char *name)
 
 #ifdef WIN32
   if (strcmp(name, "HOME") == 0) {
-    return xstrdup(homedir);
+    return xstrdup(get_homedir());
   }
 #endif
 
@@ -937,9 +937,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
 
   // We check both the value of the $HOME environment variable and the
   // "real" home directory.
-  if (homedir != NULL) {
-    dirlen = strlen(homedir);
-  }
+  dirlen = strlen(get_homedir());
 
   const char *homedir_env = os_getenv("HOME");
 #ifdef WIN32
