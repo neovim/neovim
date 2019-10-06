@@ -345,8 +345,10 @@ void init_homedir(void)
 #endif
 
   // Does a best attempt at capturing homedir using uv_os_homedir
+  // The reason for doing this before the unix block is for the unix
+  // block to resolve links
   if (guessed_homedir == NULL) {
-    size_t homedir_size = (size_t)sizeof(os_buf);
+    size_t homedir_size = (size_t)MAXPATHL;
     int ret = uv_os_homedir((char *)os_buf, &homedir_size);
     if (ret == 0 && homedir_size > 0) {
         guessed_homedir = xstrndup((char *)os_buf, homedir_size);
@@ -366,16 +368,17 @@ void init_homedir(void)
       }
     }
 #endif
-    set_homedir(guessed_homedir, MAXPATHL);
   }
+
+  // As a last resort, return the current working directory
+  if (guessed_homedir == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+    guessed_homedir = (char *)os_buf;
+  }
+
+  set_homedir(guessed_homedir, MAXPATHL);
 }
 
 const char *get_homedir(void)
-{
-    return homedir;
-}
-
-const char *get_singleton_homedir(void)
 {
   if (homedir == NULL) {
     init_homedir();
