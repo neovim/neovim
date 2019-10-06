@@ -23,10 +23,10 @@ describe('Setup and Configuration', function()
     luaeval([[
         require('vim.lsp').server_config.add({
         filetype = 'rust',
-        cmd = 'run'
+        cmd = 'rls'
       })
     ]])
-    local execute_path = luaeval("require('vim.lsp').server_config.get_server_cmd('rust')").execute_path
-    eq('rustup', execute_path)
+    local execute_path = luaeval("require('vim.lsp').server_config.get_server_cmd('rust')")
+    eq('rls', execute_path)
   end)
 end)
