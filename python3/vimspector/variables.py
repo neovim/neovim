@@ -116,6 +116,8 @@ class VariablesView( object ):
         elif not scope.get( 'expensive' ):
           # Expand any non-expensive scope unless manually collapsed
           scope[ '_expanded' ] = True
+        else:
+          scope[ '_expanded' ] = False
 
         self._scopes.append( scope )
         if scope[ '_expanded' ]:

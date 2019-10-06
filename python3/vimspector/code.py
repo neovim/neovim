@@ -73,7 +73,15 @@ class CodeView( object ):
       return False
 
     # SIC: column is 0-based, line is 1-based in vim. Why? Nobody knows.
-    self._window.cursor = ( frame[ 'line' ], frame[ 'column' ]  - 1 )
+    try:
+      self._window.cursor = ( frame[ 'line' ], frame[ 'column' ]  - 1 )
+    except vim.error:
+      self._logger.exception( "Unable to jump to %s:%s in %s, maybe the file "
+                              "doesn't exist",
+                              frame[ 'line' ],
+                              frame[ 'column' ],
+                              frame[ 'source' ][ 'path' ] )
+      return False
 
     self._signs[ 'vimspectorPC' ] = self._next_sign_id
     self._next_sign_id += 1
