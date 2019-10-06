@@ -17,11 +17,12 @@
 # include "context.c.generated.h"
 #endif
 
+int kCtxOpts = kCtxGOpts | kCtxWOpts | kCtxBOpts;
 int kCtxVars = kCtxSVars | kCtxGVars | kCtxBVars | kCtxWVars | kCtxTVars
                | kCtxLVars;
 int kCtxAll = (kCtxRegs | kCtxJumps | kCtxBufs | kCtxSVars | kCtxGVars
                | kCtxBVars | kCtxWVars | kCtxTVars | kCtxLVars | kCtxSFuncs
-               | kCtxFuncs);
+               | kCtxFuncs | kCtxGOpts | kCtxWOpts | kCtxBOpts);
 
 static ContextVec ctx_stack = KV_INITIAL_VALUE;
 
@@ -62,14 +63,17 @@ void ctx_free(Context *ctx)
   if (ctx->jumps.size) {
     msgpack_sbuffer_destroy(&ctx->jumps);
   }
-  if (ctx->bufs.data) {
+  if (ctx->bufs.size) {
     msgpack_sbuffer_destroy(&ctx->bufs);
   }
   if (ctx->vars.size) {
     msgpack_sbuffer_destroy(&ctx->vars);
   }
-  if (ctx->funcs.items) {
+  if (ctx->funcs.size) {
     api_free_array(ctx->funcs);
+  }
+  if (ctx->opts.size) {
+    api_free_dictionary(ctx->opts);
   }
   *ctx = CONTEXT_INIT;
 }
@@ -130,6 +134,18 @@ void ctx_save(Context *ctx, const int flags)
   } else if (flags & kCtxSFuncs) {
     ctx_save_funcs(ctx, true);
   }
+
+  if (flags & kCtxGOpts) {
+    ctx_save_opts(ctx, SREQ_GLOBAL);
+  }
+
+  if (flags & kCtxWOpts) {
+    ctx_save_opts(ctx, SREQ_WIN);
+  }
+
+  if (flags & kCtxBOpts) {
+    ctx_save_opts(ctx, SREQ_BUF);
+  }
 }
 
 /// Restores the editor state from a context.
@@ -163,6 +179,7 @@ void ctx_restore(Context *ctx, Error *err)
   ctx_restore_bufs(ctx);
   ctx_restore_vars(ctx);
   ctx_restore_funcs(ctx);
+  ctx_restore_opts(ctx);
 
   if (free_ctx) {
     ctx_free(ctx);
@@ -420,6 +437,45 @@ static inline void ctx_restore_funcs(Context *ctx)
       EMSG2("Context: function: %s", err.msg);
       api_clear_error(&err);
     }
+  }
+}
+
+/// Saves options to a context.
+///
+/// @param[in]  ctx   Save to this context.
+/// @param[in]  type  One of `SREQ_GLOBAL`, `SREQ_WIN`, or `SREQ_BUF`.
+static inline void ctx_save_opts(Context *ctx, const int type)
+  FUNC_ATTR_NONNULL_ALL
+{
+  assert(type >= 0 && type <= 2);
+
+  typval_T tv_opts = {
+    .v_type = VAR_DICT,
+    .v_lock = VAR_UNLOCKED,
+    .vval.v_dict = get_options(type, false, true),
+  };
+
+  char *key = ((char *[]){ "global", "win", "buf" })[type];
+  PUT(ctx->opts, key, vim_to_object(&tv_opts));
+
+  tv_clear(&tv_opts);
+}
+
+/// Restores options from a context.
+///
+/// @param[in]  ctx  Restore from this context.
+static inline void ctx_restore_opts(Context *ctx)
+  FUNC_ATTR_NONNULL_ALL
+{
+  Error err = ERROR_INIT;
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, DICTIONARY_OBJ(ctx->opts));
+  EXEC_LUA_STATIC("vim._ctx_restore_opts(...)", args, &err);
+  xfree(args.items);
+
+  if (ERROR_SET(&err)) {
+    EMSG2("Context: options: %s", err.msg);
+    api_clear_error(&err);
   }
 }
 
@@ -693,6 +749,10 @@ Dictionary ctx_to_dict(Context *ctx)
     PUT(rv, "funcs", ARRAY_OBJ(copy_array(ctx->funcs)));
   }
 
+  if (ctx->opts.size) {
+    PUT(rv, "opts", DICTIONARY_OBJ(copy_dictionary(ctx->opts)));
+  }
+
   return rv;
 }
 
@@ -710,9 +770,9 @@ void ctx_from_dict(Dictionary dict, Context *ctx, Error *err)
 
   for (size_t i = 0; i < dict.size; i++) {
     KeyValuePair item = dict.items[i];
-    if (item.value.type != kObjectTypeArray) {
-      api_set_error(err, kErrorTypeValidation,
-                    "Invalid context dictionary value for '%s'",
+    if (!strequal(item.key.data, "opts")
+        && item.value.type != kObjectTypeArray) {
+      api_set_error(err, kErrorTypeValidation, "Invalid type for '%s'",
                     item.key.data);
       break;
     }
@@ -735,9 +795,15 @@ void ctx_from_dict(Dictionary dict, Context *ctx, Error *err)
       tmp.vars = array_to_sbuf(item.value.data.array, kSDItemVariable);
     } else if (strequal(item.key.data, "funcs")) {
       tmp.funcs = copy_object(item.value).data.array;
+    } else if (strequal(item.key.data, "opts")) {
+      if (item.value.type != kObjectTypeDictionary) {
+        api_set_error(err, kErrorTypeValidation, "Invalid type for 'opts'");
+        break;
+      }
+      tmp.opts = copy_object(item.value).data.dictionary;
     } else {
-      api_set_error(err, kErrorTypeValidation,
-                    "Invalid context dictionary key: %s", item.key.data);
+      api_set_error(err, kErrorTypeValidation, "Invalid key: %s",
+                    item.key.data);
       break;
     }
   }

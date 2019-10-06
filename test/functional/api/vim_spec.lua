@@ -1021,6 +1021,11 @@ describe('API', function()
       matches('Using <SID> not in a script context', pcall_err(command, cmd))
       matches(err, pcall_err(eval, [[nvim_load_context({'regs': 1})]]))
       matches(err, pcall_err(eval, [[nvim_load_context({'foo': []})]]))
+      matches(err, pcall_err(eval, [[nvim_load_context({'opts': []})]]))
+      matches('invalid key: foo',
+              pcall_err(eval, [[nvim_load_context({'opts': {'foo': {}}})]]))
+      matches('invalid type for: buf',
+              pcall_err(eval, [[nvim_load_context({'opts': {'buf': 1}})]]))
     end)
   end)
 
