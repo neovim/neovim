@@ -10988,11 +10988,13 @@ static void f_getwininfo(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 // Dummy timer callback. Used by f_wait().
 static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
 {
+  *(bool *)tw->data = true;
 }
 
 // Dummy timer close callback. Used by f_wait().
 static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
 {
+  xfree(tw->data);
   xfree(tw);
 }
 
@@ -11023,17 +11025,19 @@ static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   time_watcher_init(&main_loop, tw, NULL);
   tw->events = main_loop.events;
   tw->blockable = true;
+  tw->data = xmalloc(sizeof(bool));
+  *(bool *)tw->data = false;
   time_watcher_start(tw, dummy_timer_due_cb, interval, interval);
 
-  typval_T argv = TV_INITIAL_VALUE;
   typval_T exprval = TV_INITIAL_VALUE;
   bool error = false;
+  bool is_checked = false;
   int save_called_emsg = called_emsg;
   called_emsg = false;
 
   LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, timeout,
-                            eval_expr_typval(&expr, &argv, 0, &exprval) != OK
-                            || tv_get_number_chk(&exprval, &error)
+                            check_wait_condition(tw, &expr, &exprval, &error,
+                                                 &is_checked)
                             || called_emsg || error || got_int);
 
   if (called_emsg || error) {
@@ -11042,7 +11046,7 @@ static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     got_int = false;
     vgetc();
     rettv->vval.v_number = -2;
-  } else if (tv_get_number_chk(&exprval, &error)) {
+  } else if (is_checked && tv_get_number_chk(&exprval, &error)) {
     rettv->vval.v_number = 0;
   }
 
@@ -11051,6 +11055,20 @@ static void f_wait(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   // Stop dummy timer
   time_watcher_stop(tw);
   time_watcher_close(tw, dummy_timer_close_cb);
+}
+
+static bool check_wait_condition(TimeWatcher *tw, typval_T *expr,
+                                 typval_T *exprval, bool *error,
+                                 bool *is_checked)
+{
+  if (*(bool *)tw->data) {
+    *(bool *)tw->data = false;
+    *is_checked = true;
+    typval_T argv = TV_INITIAL_VALUE;
+    return eval_expr_typval(expr, &argv, 0, exprval) != OK
+      || tv_get_number_chk(exprval, error);
+  }
+  return false;
 }
 
 // "win_screenpos()" function
