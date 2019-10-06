@@ -802,6 +802,30 @@ unsigned int win_linetabsize(win_T *wp, char_u *line, colnr_T len)
   return (unsigned int)col;
 }
 
+/// Jump through characters of the given line, starting at ptr and column
+/// *vcolp, up until we've reached the end of the line or moved through
+/// width columns.
+///
+/// @param[in,out] vcolp   The column position that corresponds to ptr. The
+///                        final column position is also returned through this
+///                        parameter.
+/// @param[in]     width   The maximum number of screen columns to advance by
+/// @returns  a pointer to the advanced line position
+char_u *advance_line_ptr_by_width(win_T *wp, char_u *line, char_u *ptr,
+                                  colnr_T *vcolp, int width)
+{
+  int col = 0;
+  colnr_T vcol = *vcolp;
+  while (col < width && *ptr != NUL) {
+    int c = win_lbr_chartabsize(wp, line, ptr, vcol, NULL);
+    vcol += c;
+    col += c;
+    MB_PTR_ADV(ptr);
+  }
+  *vcolp = vcol;
+  return ptr;
+}
+
 /// Check that "c" is a normal identifier character:
 /// Letters and characters from the 'isident' option.
 ///
