@@ -383,11 +383,9 @@ void init_homedir(void)
   set_homedir(var, MAXPATHL);
 }
 
+// Helper function to get homedir more easily in unit test
 const char *get_homedir(void)
 {
-  if (homedir == NULL) {
-    init_homedir();
-  }
   return homedir;
 }
 
@@ -531,7 +529,7 @@ void expand_env_esc(char_u *restrict srcp,
       } else if (src[1] == NUL  // home directory
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
-        var = (char_u *)get_homedir();
+        var = (char_u *)homedir;
         tail = src + 1;
       } else {  // user directory
 #if defined(UNIX)
@@ -782,7 +780,7 @@ char *vim_getenv(const char *name)
 
 #ifdef WIN32
   if (strcmp(name, "HOME") == 0) {
-    return xstrdup(get_homedir());
+    return xstrdup(homedir);
   }
 #endif
 
@@ -937,7 +935,9 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
 
   // We check both the value of the $HOME environment variable and the
   // "real" home directory.
-  dirlen = strlen(get_homedir());
+  if (homedir != NULL) {
+    dirlen = strlen(homedir);
+  }
 
   const char *homedir_env = os_getenv("HOME");
 #ifdef WIN32
