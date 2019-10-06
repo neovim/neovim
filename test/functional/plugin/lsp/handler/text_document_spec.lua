@@ -19,7 +19,8 @@ describe('LSP handler/text_document', function()
             items = {
               { label = 'label1', kind = 1, detail = 'detail1', documentation = 'documentation1' },
               { label = 'label2', kind = 2, detail = 'detail2', documentation = 'documentation2' },
-              { label = 'label3'}
+              { label = 'label3', kind = 3, detail = 'detail3', documentation = { language = 'txt', value = 'documentation3' } },
+              { label = 'label4'}
             }
           }
         EOF
@@ -28,7 +29,8 @@ describe('LSP handler/text_document', function()
       local expected = {
         { word = 'label1', kind = 'Text', menue = 'detail1', info = 'documentation1', icase = 1, dup = 0 },
         { word = 'label2', kind = 'Method', menue = 'detail2', info = 'documentation2', icase = 1, dup = 0 },
-        { word = 'label3', kind = '', menue = '', info = '', icase = 1, dup = 0 }
+        { word = 'label3', kind = 'Function', menue = 'detail3', info = 'documentation3', icase = 1, dup = 0 },
+        { word = 'label4', kind = '', menue = '', info = '', icase = 1, dup = 0 }
       }
 
       eq(expected, exec_lua("return require('vim.lsp.handler').text_document.CompletionList_to_matches(result)"))

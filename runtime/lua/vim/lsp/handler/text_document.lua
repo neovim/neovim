@@ -60,11 +60,21 @@ TextDocument.CompletionList_to_matches = function(data)
   local matches = {}
 
   for _, completion_item in ipairs(items) do
+    local info = ''
+    local documentation = completion_item.documentation
+    if documentation then
+      if type(documentation) == 'string' then
+        info = documentation
+      elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
+        info = documentation.value
+      end
+    end
+
     table.insert(matches, {
       word = completion_item.label,
       kind = map_CompletionItemKind_to_vim_complete_kind(completion_item.kind) or '',
       menue = completion_item.detail or '',
-      info = completion_item.documentation or '',
+      info = info,
       icase = 1,
       dup = 0,
     })
