@@ -1450,8 +1450,9 @@ int do_digraph(int c)
 
 /// Find a digraph for "val".  If found return the string to display it.
 /// If not found return NULL.
-char_u *get_digraph_for_char(int val)
+char_u *get_digraph_for_char(int val_arg)
 {
+  const int val = val_arg;
   digr_T *dp;
   static char_u r[3];
 
