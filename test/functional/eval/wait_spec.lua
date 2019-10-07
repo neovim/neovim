@@ -58,11 +58,8 @@ describe('wait()', function()
     endfunction
     ]])
 
-    -- XXX: flaky (#11137)
-    helpers.retry(nil, nil, function()
-      nvim('set_var', 'counter', 0)
-      eq(-1, call('wait', 20, 'Count() >= 5', 99999))
-    end)
+    nvim('set_var', 'counter', 0)
+    eq(-1, call('wait', 20, 'Count() >= 5', 99999))
 
     nvim('set_var', 'counter', 0)
     eq(0, call('wait', 10000, 'Count() >= 5', 5))
