@@ -4641,7 +4641,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   if (visual) {
     while (ptr[col] != NUL && length > 0 && !ascii_isdigit(ptr[col])
            && !(doalp && ASCII_ISALPHA(ptr[col]))) {
-      int mb_len = MB_PTR2LEN(ptr + col);
+      int mb_len = utfc_ptr2len(ptr + col);
 
       col += mb_len;
       length -= mb_len;
