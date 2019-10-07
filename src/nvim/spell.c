@@ -2570,36 +2570,33 @@ void init_spell_chartab(void)
 /// Thus this only works properly when past the first character of the word.
 ///
 /// @param wp Buffer used.
-static bool spell_iswordp(char_u *p, win_T *wp)
+static bool spell_iswordp(const char_u *p, const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u *s;
-  int l;
   int c;
 
-  if (has_mbyte) {
-    l = utfc_ptr2len(p);
-    s = p;
-    if (l == 1) {
-      // be quick for ASCII
-      if (wp->w_s->b_spell_ismw[*p])
-        s = p + 1;                      // skip a mid-word character
-    } else {
-      c = utf_ptr2char(p);
-      if (c < 256 ? wp->w_s->b_spell_ismw[c]
-          : (wp->w_s->b_spell_ismw_mb != NULL
-             && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
-        s = p + l;
-      }
+  const int l = utfc_ptr2len(p);
+  const char_u *s = p;
+  if (l == 1) {
+    // be quick for ASCII
+    if (wp->w_s->b_spell_ismw[*p]) {
+      s = p + 1;                      // skip a mid-word character
     }
-
-    c = utf_ptr2char(s);
-    if (c > 255) {
-      return spell_mb_isword_class(mb_get_class(s), wp);
+  } else {
+    c = utf_ptr2char(p);
+    if (c < 256
+        ? wp->w_s->b_spell_ismw[c]
+        : (wp->w_s->b_spell_ismw_mb != NULL
+           && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
+      s = p + l;
     }
-    return spelltab.st_isw[c];
   }
 
-  return spelltab.st_isw[wp->w_s->b_spell_ismw[*p] ? p[1] : p[0]];
+  c = utf_ptr2char(s);
+  if (c > 255) {
+    return spell_mb_isword_class(mb_get_class(s), wp);
+  }
+  return spelltab.st_isw[c];
 }
 
 // Returns true if "p" points to a word character.
@@ -2617,7 +2614,8 @@ bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 // Only for characters above 255.
 // Unicode subscript and superscript are not considered word characters.
 // See also utf_class() in mbyte.c.
-static bool spell_mb_isword_class(int cl, win_T *wp)
+static bool spell_mb_isword_class(int cl, const win_T *wp)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (wp->w_s->b_cjk)
     // East Asian characters are not considered word characters.
