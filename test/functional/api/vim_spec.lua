@@ -904,7 +904,14 @@ describe('API', function()
 
     it('returns map of current editor state', function()
       local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
-      eq({}, nvim('get_context', {}))
+
+      local nvim_get_context = function(...)
+        local ctx = nvim('get_context', ...)
+        ctx['opts'] = nil
+        return ctx
+      end
+
+      eq({}, nvim_get_context({}))
 
       feed('i1<cr>22<cr>333<c-[>ddddddqahjklquuu')
       feed('gg')
@@ -938,9 +945,9 @@ describe('API', function()
         ['vars'] = {{'g:one', 1}, {'g:Two', 2}, {'g:THREE', 3}},
       }
 
-      eq(expected_ctx, nvim('get_context', opts))
-      eq(expected_ctx, nvim('get_context', {}))
-      eq(expected_ctx, nvim('get_context', {types={}}))
+      eq(expected_ctx, nvim_get_context(opts))
+      eq(expected_ctx, nvim_get_context({}))
+      eq(expected_ctx, nvim_get_context({types={}}))
     end)
 
     it('handles large context properly', function()
