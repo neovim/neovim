@@ -58,8 +58,13 @@ describe('wait()', function()
     endfunction
     ]])
 
+    -- Run a timer to make sure that the wait() function is not affected by
+    -- mail_loop.events.
+    command('let g:timer = timer_start(20, { t -> 0 }, {"repeat" : -1})')
     nvim('set_var', 'counter', 0)
-    eq(-1, call('wait', 20, 'Count() >= 5', 99999))
+    eq(-1, call('wait', 120, 'Count() >= 5', 99999))
+    eq(0, eval('g:counter'))
+    feed_command('call timer_stop(g:timer)')
 
     nvim('set_var', 'counter', 0)
     eq(0, call('wait', 10000, 'Count() >= 5', 5))
