@@ -562,3 +562,11 @@ char_u *get_cursor_pos_ptr(void)
   return ml_get_buf(curbuf, curwin->w_cursor.lnum, false) +
          curwin->w_cursor.col;
 }
+
+/*
+ * Return pointer to cursor line.
+ */
+char_u *get_cursor_line_ptr_win(win_T *wp)
+{
+  return ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, false);
+}
