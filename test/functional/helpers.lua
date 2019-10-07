@@ -724,10 +724,6 @@ function module.pathroot()
   return iswin() and (module.nvim_dir:sub(1,2)..pathsep) or '/'
 end
 
-function module.getcwd()
-  return os.getenv("PWD")
-end
-
 -- Returns a valid, platform-independent $NVIM_LISTEN_ADDRESS.
 -- Useful for communicating with child instances.
 function module.new_pipename()

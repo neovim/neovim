@@ -3,6 +3,7 @@ local clear = helpers.clear
 local eq = helpers.eq
 local iswin = helpers.iswin
 local fnamemodify = helpers.funcs.fnamemodify
+local getcwd = helpers.funcs.getcwd
 local command = helpers.command
 local write_file = helpers.write_file
 
@@ -39,7 +40,7 @@ describe('fnamemodify()', function()
 
   describe('examples from ":help filename-modifiers"', function()
     local filename = "src/version.c"
-    local cwd = helpers.getcwd()
+    local cwd = getcwd()
 
     it(':p', function()
       eq(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
