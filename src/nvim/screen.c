@@ -2994,7 +2994,7 @@ win_line (
             if (shl->startcol != MAXCOL
                 && v >= (long)shl->startcol
                 && v < (long)shl->endcol) {
-              int tmp_col = v + MB_PTR2LEN(ptr);
+              int tmp_col = v + utfc_ptr2len(ptr);
 
               if (shl->endcol < tmp_col) {
                 shl->endcol = tmp_col;

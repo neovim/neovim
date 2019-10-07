@@ -2320,7 +2320,7 @@ redraw:
             } while (++vcol % 8);
             p++;
           } else {
-            len = MB_PTR2LEN(p);
+            len = utfc_ptr2len(p);
             msg_outtrans_len(p, len);
             vcol += ptr2cells(p);
             p += len;

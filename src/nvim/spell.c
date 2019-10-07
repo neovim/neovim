@@ -2570,36 +2570,33 @@ void init_spell_chartab(void)
 /// Thus this only works properly when past the first character of the word.
 ///
 /// @param wp Buffer used.
-static bool spell_iswordp(char_u *p, win_T *wp)
+static bool spell_iswordp(const char_u *p, const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  char_u *s;
-  int l;
   int c;
 
-  if (has_mbyte) {
-    l = MB_PTR2LEN(p);
-    s = p;
-    if (l == 1) {
-      // be quick for ASCII
-      if (wp->w_s->b_spell_ismw[*p])
-        s = p + 1;                      // skip a mid-word character
-    } else {
-      c = utf_ptr2char(p);
-      if (c < 256 ? wp->w_s->b_spell_ismw[c]
-          : (wp->w_s->b_spell_ismw_mb != NULL
-             && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
-        s = p + l;
-      }
+  const int l = utfc_ptr2len(p);
+  const char_u *s = p;
+  if (l == 1) {
+    // be quick for ASCII
+    if (wp->w_s->b_spell_ismw[*p]) {
+      s = p + 1;                      // skip a mid-word character
     }
-
-    c = utf_ptr2char(s);
-    if (c > 255) {
-      return spell_mb_isword_class(mb_get_class(s), wp);
+  } else {
+    c = utf_ptr2char(p);
+    if (c < 256
+        ? wp->w_s->b_spell_ismw[c]
+        : (wp->w_s->b_spell_ismw_mb != NULL
+           && vim_strchr(wp->w_s->b_spell_ismw_mb, c) != NULL)) {
+      s = p + l;
     }
-    return spelltab.st_isw[c];
   }
 
-  return spelltab.st_isw[wp->w_s->b_spell_ismw[*p] ? p[1] : p[0]];
+  c = utf_ptr2char(s);
+  if (c > 255) {
+    return spell_mb_isword_class(mb_get_class(s), wp);
+  }
+  return spelltab.st_isw[c];
 }
 
 // Returns true if "p" points to a word character.
@@ -2617,7 +2614,8 @@ bool spell_iswordp_nmw(const char_u *p, win_T *wp)
 // Only for characters above 255.
 // Unicode subscript and superscript are not considered word characters.
 // See also utf_class() in mbyte.c.
-static bool spell_mb_isword_class(int cl, win_T *wp)
+static bool spell_mb_isword_class(int cl, const win_T *wp)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (wp->w_s->b_cjk)
     // East Asian characters are not considered word characters.
@@ -4118,7 +4116,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 && goodword_ends) {
               int l;
 
-              l = MB_PTR2LEN(fword + sp->ts_fidx);
+              l = utfc_ptr2len(fword + sp->ts_fidx);
               if (fword_ends) {
                 // Copy the skipped character to preword.
                 memmove(preword + sp->ts_prewordlen,
@@ -4264,7 +4262,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
                 // Correct ts_fidx for the byte length of the
                 // character (we didn't check that before).
                 sp->ts_fidx = sp->ts_fcharstart
-                              + MB_PTR2LEN(fword + sp->ts_fcharstart);
+                              + utfc_ptr2len(fword + sp->ts_fcharstart);
 
                 // For changing a composing character adjust
                 // the score from SCORE_SUBST to
@@ -4363,7 +4361,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
         // a bit illogical for soundfold tree but it does give better
         // results.
         c = utf_ptr2char(fword + sp->ts_fidx);
-        stack[depth].ts_fidx += MB_PTR2LEN(fword + sp->ts_fidx);
+        stack[depth].ts_fidx += utfc_ptr2len(fword + sp->ts_fidx);
         if (utf_iscomposing(c)) {
           stack[depth].ts_score -= SCORE_DEL - SCORE_DELCOMP;
         } else if (c == utf_ptr2char(fword + stack[depth].ts_fidx)) {
@@ -4533,9 +4531,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNSWAP:
       // Undo the STATE_SWAP swap: "21" -> "12".
       p = fword + sp->ts_fidx;
-      n = MB_PTR2LEN(p);
+      n = utfc_ptr2len(p);
       c = utf_ptr2char(p + n);
-      memmove(p + MB_PTR2LEN(p + n), p, n);
+      memmove(p + utfc_ptr2len(p + n), p, n);
       utf_char2bytes(c, p);
 
       FALLTHROUGH;
@@ -4589,11 +4587,11 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNSWAP3:
       // Undo STATE_SWAP3: "321" -> "123"
       p = fword + sp->ts_fidx;
-      n = MB_PTR2LEN(p);
+      n = utfc_ptr2len(p);
       c2 = utf_ptr2char(p + n);
-      fl = MB_PTR2LEN(p + n);
+      fl = utfc_ptr2len(p + n);
       c = utf_ptr2char(p + n + fl);
-      tl = MB_PTR2LEN(p + n + fl);
+      tl = utfc_ptr2len(p + n + fl);
       memmove(p + fl + tl, p, n);
       utf_char2bytes(c, p);
       utf_char2bytes(c2, p + tl);
@@ -4637,10 +4635,10 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
     case STATE_UNROT3L:
       // Undo ROT3L: "231" -> "123"
       p = fword + sp->ts_fidx;
-      n = MB_PTR2LEN(p);
-      n += MB_PTR2LEN(p + n);
+      n = utfc_ptr2len(p);
+      n += utfc_ptr2len(p + n);
       c = utf_ptr2char(p + n);
-      tl = MB_PTR2LEN(p + n);
+      tl = utfc_ptr2len(p + n);
       memmove(p + tl, p, n);
       utf_char2bytes(c, p);
 
@@ -4675,9 +4673,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, bool so
       // Undo ROT3R: "312" -> "123"
       p = fword + sp->ts_fidx;
       c = utf_ptr2char(p);
-      tl = MB_PTR2LEN(p);
-      n = MB_PTR2LEN(p + tl);
-      n += MB_PTR2LEN(p + tl + n);
+      tl = utfc_ptr2len(p);
+      n = utfc_ptr2len(p + tl);
+      n += utfc_ptr2len(p + tl + n);
       memmove(p, p + tl, n);
       utf_char2bytes(c, p + n);
 

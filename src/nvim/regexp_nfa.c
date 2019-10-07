@@ -4943,7 +4943,7 @@ static int skip_to_start(int c, colnr_T *colp)
  */
 static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 {
-#define PTR2LEN(x) enc_utf8 ? utf_ptr2len(x) : MB_PTR2LEN(x)
+#define PTR2LEN(x) utf_ptr2len(x)
 
   colnr_T col = startcol;
   int regstart_len = PTR2LEN(regline + startcol);
