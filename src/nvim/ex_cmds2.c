@@ -3020,6 +3020,11 @@ typedef struct {
   size_t offset;
 } GetStrLineCookie;
 
+/// Get one full line from a sourced string (in-memory, no file).
+/// Called by do_cmdline() when it's called from do_source_str().
+///
+/// @return pointer to allocated line, or NULL for end-of-file or
+///         some error.
 static char_u *get_str_line(int c, void *cookie, int ident)
 {
   GetStrLineCookie *p = cookie;
@@ -3034,18 +3039,19 @@ static char_u *get_str_line(int c, void *cookie, int ident)
   char *dst;
   dst = xstpncpy(buf, (char *)p->buf+p->offset, i - p->offset);
   if ((uint32_t)(dst - buf) != i - p->offset) {
-    smsg(_("nvim_source error parsing command %s"), p->buf);
+    smsg(_(":source error parsing command %s"), p->buf);
+    return NULL;
   }
   buf[i-p->offset]='\0';
   p->offset = i + 1;
   return (char_u *)xstrdup(buf);
 }
 
-int do_source_str(char_u *cmd)
+int do_source_str(const char *cmd)
 {
   int retval;
   GetStrLineCookie cookie = {
-    .buf = cmd,
+    .buf = (char_u *)cmd,
     .offset = 0,
   };
   const sctx_T save_current_sctx = current_sctx;
@@ -3053,7 +3059,7 @@ int do_source_str(char_u *cmd)
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = 0;
   retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
-                      DOCMD_NOWAIT);
+                      DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
   current_sctx = save_current_sctx;
   return retval;
 }
@@ -3402,6 +3408,8 @@ char_u *get_scriptname(LastSet last_set, bool *should_free)
                    _("API client (channel id %" PRIu64 ")"),
                    last_set.channel_id);
       return IObuff;
+    case SID_STR:
+      return (char_u *)_(":source (no file)");
     default:
       *should_free = true;
       return home_replace_save(NULL,
