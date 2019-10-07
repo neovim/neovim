@@ -20,7 +20,9 @@ An alternative is using the 'keymap' option.
 1. Defining digraphs					*digraphs-define*
 
 						*:dig* *:digraphs*
-:dig[raphs]		show currently defined digraphs.
+:dig[raphs][!]		Show currently defined digraphs.
+			With [!] headers are used to make it a bit easier to
+			find a specific character.
 							*E104* *E39*
 :dig[raphs] {char1}{char2} {number} ...
 			Add digraph {char1}{char2} to the list.  {number} is

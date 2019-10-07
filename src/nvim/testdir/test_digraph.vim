@@ -465,4 +465,17 @@ func Test_show_digraph()
   bwipe!
 endfunc
 
+func Test_show_digraph_cp1251()
+  throw 'skipped: Nvim supports ''utf8'' encoding only'
+  if !has('multi_byte')
+    return
+  endif
+  new
+  set encoding=cp1251
+  call Put_Dig("='")
+  call assert_equal("\n<\xfa>  <|z>  <M-z>  250,  Hex fa,  Oct 372, Digr ='", execute('ascii'))
+  set encoding=utf-8
+  bwipe!
+endfunc
+
 " vim: shiftwidth=2 sts=2 expandtab

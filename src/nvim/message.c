@@ -238,7 +238,7 @@ void msg_multiline_attr(const char *s, int attr, bool check_int)
 
     if (next_spec != NULL) {
       // Printing all char that are before the char found by strpbrk
-      msg_outtrans_len_attr((char_u *)s, next_spec - s, attr);
+      msg_outtrans_len_attr((const char_u *)s, next_spec - s, attr);
 
       if (*next_spec != TAB) {
         msg_clr_eos();
@@ -1384,12 +1384,12 @@ int msg_outtrans(char_u *str)
   return msg_outtrans_attr(str, 0);
 }
 
-int msg_outtrans_attr(char_u *str, int attr)
+int msg_outtrans_attr(const char_u *str, int attr)
 {
   return msg_outtrans_len_attr(str, (int)STRLEN(str), attr);
 }
 
-int msg_outtrans_len(char_u *str, int len)
+int msg_outtrans_len(const char_u *str, int len)
 {
   return msg_outtrans_len_attr(str, len, 0);
 }
@@ -1402,7 +1402,7 @@ char_u *msg_outtrans_one(char_u *p, int attr)
 {
   int l;
 
-  if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
+  if ((l = utfc_ptr2len(p)) > 1) {
     msg_outtrans_len_attr(p, l, attr);
     return p + l;
   }
@@ -1410,7 +1410,7 @@ char_u *msg_outtrans_one(char_u *p, int attr)
   return p + 1;
 }
 
-int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
+int msg_outtrans_len_attr(const char_u *msgstr, int len, int attr)
 {
   int retval = 0;
   const char *str = (const char *)msgstr;

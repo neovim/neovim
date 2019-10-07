@@ -21,6 +21,12 @@ func Test_help_errors()
   bwipe!
 endfunc
 
+func Test_help_expr()
+  help expr-!~?
+  call assert_equal('eval.txt', expand('%:t'))
+  close
+endfunc
+
 func Test_help_keyword()
   new
   set keywordprg=:help
