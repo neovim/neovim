@@ -723,8 +723,8 @@ static int diff_write_buffer(buf_T *buf, diffin_T *din)
         char_u  cbuf[MB_MAXBYTES + 1];
 
         c = PTR2CHAR(s);
-        c = enc_utf8 ? utf_fold(c) : TOLOWER_LOC(c);
-        orig_len = MB_PTR2LEN(s);
+        c = utf_fold(c);
+        orig_len = utfc_ptr2len(s);
         if (utf_char2bytes(c, cbuf) != orig_len) {
           // TODO(Bram): handle byte length difference
           memmove(ptr + len, s, orig_len);

@@ -15502,7 +15502,7 @@ static void f_setcharsearch(typval_T *argvars, typval_T *rettv, FunPtr fptr)
       }
       else
         set_last_csearch(PTR2CHAR(csearch),
-                         csearch, MB_PTR2LEN(csearch));
+                         csearch, utfc_ptr2len(csearch));
     }
 
     di = tv_dict_find(d, S_LEN("forward"));
@@ -24051,8 +24051,8 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
       /* Skip empty match except for first match. */
       if (regmatch.startp[0] == regmatch.endp[0]) {
         if (zero_width == regmatch.startp[0]) {
-          /* avoid getting stuck on a match with an empty string */
-          int i = MB_PTR2LEN(tail);
+          // avoid getting stuck on a match with an empty string
+          int i = utfc_ptr2len(tail);
           memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
           ga.ga_len += i;
           tail += i;

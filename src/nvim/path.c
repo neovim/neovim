@@ -338,9 +338,9 @@ int path_fnamencmp(const char *const fname1, const char *const fname2,
         && (p_fic ? (c1 != c2 && CH_FOLD(c1) != CH_FOLD(c2)) : c1 != c2)) {
       break;
     }
-    len -= (size_t)MB_PTR2LEN((const char_u *)p1);
-    p1 += MB_PTR2LEN((const char_u *)p1);
-    p2 += MB_PTR2LEN((const char_u *)p2);
+    len -= (size_t)utfc_ptr2len((const char_u *)p1);
+    p1 += utfc_ptr2len((const char_u *)p1);
+    p2 += utfc_ptr2len((const char_u *)p2);
   }
   return c1 - c2;
 #else
@@ -1910,16 +1910,16 @@ int pathcmp(const char *p, const char *q, int maxlen)
                    : c1 - c2;  // no match
     }
 
-    i += MB_PTR2LEN((char_u *)p + i);
-    j += MB_PTR2LEN((char_u *)q + j);
+    i += utfc_ptr2len((char_u *)p + i);
+    j += utfc_ptr2len((char_u *)q + j);
   }
   if (s == NULL) {  // "i" or "j" ran into "maxlen"
     return 0;
   }
 
   c1 = PTR2CHAR((char_u *)s + i);
-  c2 = PTR2CHAR((char_u *)s + i + MB_PTR2LEN((char_u *)s + i));
-  /* ignore a trailing slash, but not "//" or ":/" */
+  c2 = PTR2CHAR((char_u *)s + i + utfc_ptr2len((char_u *)s + i));
+  // ignore a trailing slash, but not "//" or ":/"
   if (c2 == NUL
       && i > 0
       && !after_pathsep((char *)s, (char *)s + i)
@@ -1928,10 +1928,12 @@ int pathcmp(const char *p, const char *q, int maxlen)
 #else
       && c1 == '/'
 #endif
-      )
-    return 0;       /* match with trailing slash */
-  if (s == q)
-    return -1;              /* no match */
+      ) {
+    return 0;       // match with trailing slash
+  }
+  if (s == q) {
+    return -1;      // no match
+  }
   return 1;
 }
 
