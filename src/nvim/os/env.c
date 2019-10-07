@@ -383,7 +383,7 @@ void init_homedir(void)
   set_homedir(var, MAXPATHL);
 }
 
-// Helper function to get homedir more easily in unit test
+// Accessor function to expose homedir to unittests
 const char *get_homedir(void)
 {
   return homedir;
@@ -391,7 +391,9 @@ const char *get_homedir(void)
 
 void set_homedir(const char *str, size_t size)
 {
-  xfree(homedir);
+  if (get_homedir() != NULL) {
+      xfree(homedir);
+  }
   homedir = xstrndup(str, size);
 }
 
