@@ -1331,7 +1331,6 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
       skipcol = line_width - offset;
     }
     wp->w_wrow++;
-    wp->w_cline_row++;
     wp->w_skipcol = skipcol;
   }
 
@@ -1342,22 +1341,13 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
     move_cursor_rowwise(wp, BACKWARD, wp->w_wrow - wp->w_height_inner + 1);
     wp->w_wrow = wp->w_height_inner;
   }
-  if (wp->w_cline_row >= wp->w_height_inner) {
-    wp->w_cline_row = wp->w_height_inner;
-  }
 
   // XXX is the below logic correct?
 
   check_topfill(wp, false);
 
   wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|
-                   VALID_VIRTCOL);
-
-  comp_botline(wp);
-
-  if (wp->w_cursor.lnum >= wp->w_botline) {
-    wp->w_cursor.lnum = wp->w_botline - 1;
-  }
+                   VALID_VIRTCOL|VALID_BOTLINE);
 }
 
 // Scroll the given window up "rows" rows
@@ -1397,7 +1387,6 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
     }
     wp->w_skipcol = vcol;
     wp->w_wrow--;
-    wp->w_cline_row--;
     rows--;
   }
 
@@ -1408,27 +1397,13 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
     move_cursor_rowwise(wp, FORWARD, -wp->w_wrow);
     wp->w_wrow = 0;
   }
-  if (wp->w_cline_row < 0) {
-    wp->w_cline_row = 0;
-  }
-
-  if (wp->w_topline > wp->w_buffer->b_ml.ml_line_count) {
-    wp->w_topline = wp->w_buffer->b_ml.ml_line_count;
-  }
-  if (wp->w_botline > wp->w_buffer->b_ml.ml_line_count + 1) {
-    wp->w_botline = wp->w_buffer->b_ml.ml_line_count + 1;
-  }
 
   // XXX is the below logic correct?
 
   check_topfill(wp, false);
 
   wp->w_valid &= ~(VALID_WROW|VALID_WCOL|VALID_CHEIGHT|VALID_CROW|
-                   VALID_VIRTCOL);
-  if (wp->w_cursor.lnum < wp->w_topline) {
-    wp->w_cursor.lnum = wp->w_topline;
-    coladvance(wp->w_curswant);
-  }
+                   VALID_VIRTCOL|VALID_BOTLINE);
 }
 
 /*
