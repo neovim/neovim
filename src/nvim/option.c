@@ -7358,7 +7358,7 @@ dict_T *get_options(int type, bool with_ro, bool special)
         } else if (special) {
           tv_dict_add_special(
               d, opt->fullname, strlen(opt->fullname),
-              *(bool *)varp ? kSpecialVarTrue : kSpecialVarFalse);
+              *(int *)varp ? kSpecialVarTrue : kSpecialVarFalse);
         } else {
           tv_dict_add_nr(d, opt->fullname, strlen(opt->fullname), *(int *)varp);
         }

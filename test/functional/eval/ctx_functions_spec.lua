@@ -669,57 +669,63 @@ describe('context functions', function()
         ['vars'] = with_vars['vars'],
       }
 
+      local ctxget = function(...)
+        local ctx = call('ctxget', ...)
+        ctx['opts'] = nil
+        return ctx
+      end
+
       call('ctxpush')
-      eq(with_all, call('ctxget'))
-      eq(with_all, call('ctxget', 0))
+      eq(with_all, ctxget())
+      eq(with_all, ctxget(0))
 
       call('ctxpush', {'gvars'})
-      eq(with_vars, call('ctxget'))
-      eq(with_vars, call('ctxget', 0))
-      eq(with_all, call('ctxget', 1))
+      eq(with_vars, ctxget())
+      eq(with_vars, ctxget(0))
+      eq(with_all, ctxget(1))
 
       call('ctxpush', {'bufs'})
-      eq(with_bufs, call('ctxget'))
-      eq(with_bufs, call('ctxget', 0))
-      eq(with_vars, call('ctxget', 1))
-      eq(with_all, call('ctxget', 2))
+      eq(with_bufs, ctxget())
+      eq(with_bufs, ctxget(0))
+      eq(with_vars, ctxget(1))
+      eq(with_all, ctxget(2))
 
       call('ctxpush', {'jumps'})
-      eq(with_jumps, call('ctxget'))
-      eq(with_jumps, call('ctxget', 0))
-      eq(with_bufs, call('ctxget', 1))
-      eq(with_vars, call('ctxget', 2))
-      eq(with_all, call('ctxget', 3))
+      eq(with_jumps, ctxget())
+      eq(with_jumps, ctxget(0))
+      eq(with_bufs, ctxget(1))
+      eq(with_vars, ctxget(2))
+      eq(with_all, ctxget(3))
 
       call('ctxpush', {'regs'})
-      eq(with_regs, call('ctxget'))
-      eq(with_regs, call('ctxget', 0))
-      eq(with_jumps, call('ctxget', 1))
-      eq(with_bufs, call('ctxget', 2))
-      eq(with_vars, call('ctxget', 3))
-      eq(with_all, call('ctxget', 4))
+      eq(with_regs, ctxget())
+      eq(with_regs, ctxget(0))
+      eq(with_jumps, ctxget(1))
+      eq(with_bufs, ctxget(2))
+      eq(with_vars, ctxget(3))
+      eq(with_all, ctxget(4))
 
       call('ctxpop')
-      eq(with_jumps, call('ctxget'))
-      eq(with_jumps, call('ctxget', 0))
-      eq(with_bufs, call('ctxget', 1))
-      eq(with_vars, call('ctxget', 2))
-      eq(with_all, call('ctxget', 3))
+      eq(with_jumps, ctxget())
+      eq(with_jumps, ctxget(0))
+      eq(with_bufs, ctxget(1))
+      eq(with_vars, ctxget(2))
+      eq(with_all, ctxget(3))
 
       call('ctxpop')
-      eq(with_bufs, call('ctxget'))
-      eq(with_bufs, call('ctxget', 0))
-      eq(with_vars, call('ctxget', 1))
-      eq(with_all, call('ctxget', 2))
+      eq(with_bufs, ctxget())
+      eq(with_bufs, ctxget(0))
+      eq(with_vars, ctxget(1))
+      eq(with_all, ctxget(2))
 
       call('ctxpop')
-      eq(with_vars, call('ctxget'))
-      eq(with_vars, call('ctxget', 0))
-      eq(with_all, call('ctxget', 1))
+      eq(with_vars, ctxget())
+      eq(with_vars, ctxget(0))
+      eq(with_all, ctxget(1))
 
       call('ctxpop')
-      eq(with_all, call('ctxget'))
-      eq(with_all, call('ctxget', 0))
+      eq(with_all, ctxget())
+      eq(with_all, ctxget(0))
     end)
   end)
 
@@ -736,9 +742,9 @@ describe('context functions', function()
 
     it('errors out on malformed context dictionary', function()
       call('ctxpush')
-      matches("Invalid context dictionary value for 'regs'",
+      matches("Invalid type for 'regs'",
               pcall_err(call, 'ctxset', {regs = 1}))
-      matches('Invalid context dictionary key: foo',
+      matches('Invalid key: foo',
               pcall_err(call, 'ctxset', {foo = {}}))
     end)
 
