@@ -7,6 +7,7 @@ local logger = require('vim.lsp.logger')
 local message = require('vim.lsp.message')
 local call_callback = require('vim.lsp.callbacks').call_callback
 local InitializeParams = require('vim.lsp.protocol').InitializeParams
+local InitializedParams = require('vim.lsp.protocol').InitializedParams
 local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
 local update_document_version = require('vim.lsp.protocol').update_document_version
 
@@ -145,7 +146,7 @@ end
 
 client.initialize = function(self)
   local result = self:request_async('initialize', InitializeParams(self), function(_, data)
-    self:notify('initialized', {})
+    self:notify('initialized', InitializedParams())
     self:notify('textDocument/didOpen', DidOpenTextDocumentParams())
     self:set_server_capabilities(data.capabilities)
     return data.capabilities

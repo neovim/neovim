@@ -1,3 +1,4 @@
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 local setpos = helpers.funcs.setpos
 local getpos = helpers.funcs.getpos
@@ -25,7 +26,6 @@ describe('protocol.lua', function()
 
   before_each(function()
     clear()
-    command('let g:protocol_test = v:null')
     insert(old_file)
     command('new')
     insert(current_file)
@@ -44,25 +44,38 @@ describe('protocol.lua', function()
       end
     end
 
-    return funcs.luaeval(require_string .. '.' .. func_name .. '(' .. arg_string .. ')')
+    return funcs.luaeval(require_string..'.'..func_name..'('..arg_string..')')
   end
 
   describe('DocumentUri()', function()
     it('should respect arguments', function()
       local test_name = 'hello_world.txt'
-      eq(test_name,
-         protocol_eval('DocumentUri', test_name))
+
+      eq(test_name, protocol_eval('DocumentUri', test_name))
     end)
 
     it('should provide default information', function()
       exec_lua("test_name = 'hello_world.txt'")
       exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
-      eq(exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))"),
-         protocol_eval('DocumentUri'))
+
+      eq(exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))"), protocol_eval('DocumentUri'))
     end)
   end)
 
   describe('languageId()', function()
+    it('should respect arguments', function()
+      local test_languageId = 'txt'
+      command("set filetype="..test_languageId)
+
+      eq(test_languageId, protocol_eval('languageId', test_languageId))
+    end)
+
+    it('should provide default information', function()
+      local test_languageId = 'txt'
+      command("set filetype="..test_languageId)
+
+      eq(test_languageId, protocol_eval('languageId'))
+    end)
   end)
 
   describe('text()', function()
@@ -71,23 +84,20 @@ describe('protocol.lua', function()
     end)
 
     it('should return all the lines', function()
-      eq(current_file,
-         protocol_eval('text'))
+      eq(current_file, protocol_eval('text'))
     end)
   end)
 
   describe('TextDocumentIdentifier()', function()
     it('should respect arguments', function()
-      eq({uri='foobar'},
-         funcs.luaeval(require_string .. ".TextDocumentIdentifier(_A)", {uri='foobar'}))
+      eq({uri='foobar'}, funcs.luaeval(require_string .. ".TextDocumentIdentifier(_A)", {uri='foobar'}))
     end)
 
     it('should return a proper uri', function()
       exec_lua("test_name = 'hello_world.txt'")
       exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
 
-      eq({uri=exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))")},
-         protocol_eval('TextDocumentIdentifier'))
+      eq({uri=exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))")}, protocol_eval('TextDocumentIdentifier'))
     end)
   end)
 
@@ -102,25 +112,28 @@ describe('protocol.lua', function()
           Line of text 2
           Line of text 3]])
       }
-
       local result_table = {
         uri = test_table.uri,
         languageId = test_table.languageId,
         version = test_table.version,
         text = protocol_eval('text'),
       }
-      eq(funcs.luaeval(require_string .. ".TextDocumentItem(_A)", test_table), result_table)
+
+      eq(result_table, funcs.luaeval(require_string .. ".TextDocumentItem(_A)", test_table))
     end)
 
     it('should return a proper default protocol', function()
       funcs.nvim_buf_set_option(0, 'filetype', 'text')
 
-      eq({
+      eq(
+        {
           uri = protocol_eval('DocumentUri'),
           languageId = protocol_eval('languageId'),
           version = 0,
           text = protocol_eval('text'),
-        }, protocol_eval('TextDocumentItem'))
+        },
+        protocol_eval('TextDocumentItem')
+      )
     end)
   end)
 
@@ -174,4 +187,183 @@ describe('protocol.lua', function()
     end)
   end)
 
+  describe('TextDocumentPositionParams()', function()
+    it('returns the correct position and textDocument', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+
+      local expected = {
+        textDocument={uri=exec_lua("return vim.uri_from_fname(vim.api.nvim_buf_get_name(0))")},
+        position={line=1, character=0},
+      }
+
+      eq(expected, protocol_eval('TextDocumentPositionParams'))
+    end)
+  end)
+
+  describe('InitializedParams()', function()
+    it('returns a blank table', function()
+      local expected = {}
+      eq(expected, protocol_eval('InitializedParams'))
+    end)
+  end)
+
+  describe('CompletionParams()', function()
+    it('returns the correct context and TextDocumentPositionParams', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+      local context = {triggerKind=1, triggerCharacter='.'}
+      local expected = global_helpers.tbl_extend('force', {context=context}, protocol_eval('TextDocumentPositionParams'))
+
+      eq(expected, funcs.luaeval(require_string .. ".CompletionParams(_A)", {context=context}))
+    end)
+  end)
+
+  describe('HoverParams()', function()
+    it('returns the same as TextDocumentPositionParams()', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+      local expected = protocol_eval('TextDocumentPositionParams')
+
+      eq(expected, protocol_eval('HoverParams'))
+    end)
+  end)
+
+  describe('SignatureHelpParams()', function()
+    it('returns expected params', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+      local expected = protocol_eval('TextDocumentPositionParams')
+      expected.position.character = expected.position.character + 1
+
+      eq(expected, protocol_eval('SignatureHelpParams'))
+    end)
+  end)
+
+  describe('DefinitionParams()', function()
+    it('returns the same as TextDocumentPositionParams()', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+      local expected = protocol_eval('TextDocumentPositionParams')
+
+      eq(expected, protocol_eval('DefinitionParams'))
+    end)
+  end)
+
+  describe('DocumentHighlightParams()', function()
+    it('returns the same as TextDocumentPositionParams()', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+      local expected = protocol_eval('TextDocumentPositionParams')
+
+      eq(expected, protocol_eval('DocumentHighlightParams'))
+    end)
+  end)
+
+  describe('ReferenceParams()', function()
+    it('returns expected params', function()
+      exec_lua("test_name = 'hello_world.txt'")
+      exec_lua("vim.api.nvim_buf_set_name(0, test_name)")
+      setpos(".", {0, 2, 1, 0})
+      local context = {includeDeclaration=true}
+      local expected = global_helpers.tbl_extend('force', {context=context}, protocol_eval('TextDocumentPositionParams'))
+
+      eq(expected, protocol_eval('ReferenceParams'))
+    end)
+  end)
+
+  describe('DidOpenTextDocumentParams()', function()
+    it('returns expected params', function()
+      local TextDocumentItemParamsArgs = {
+        uri = 'test_item.txt',
+        languageId = 'test',
+        version = 0,
+        text = dedent([[
+          Line of text 1
+          Line of text 2
+          Line of text 3]])
+      }
+
+      local DidOpenTextDocumentParamsArgs = {textDocument=TextDocumentItemParamsArgs}
+
+      eq(
+        {textDocument=funcs.luaeval(require_string .. ".TextDocumentItem(_A)", TextDocumentItemParamsArgs)},
+        funcs.luaeval(require_string .. ".DidOpenTextDocumentParams(_A)", DidOpenTextDocumentParamsArgs)
+      )
+    end)
+  end)
+
+  describe('WillSaveTextDocumentParams()', function()
+    it('returns expected params', function()
+      local TextDocumentItemParamsArgs = {
+        uri = 'test_item.txt',
+        languageId = 'test',
+        version = 0,
+        text = dedent([[
+          Line of text 1
+          Line of text 2
+          Line of text 3]])
+      }
+
+      local WillSaveTextDocumentParamsArgs = {textDocument=TextDocumentItemParamsArgs}
+
+      eq(
+        {textDocument=funcs.luaeval(require_string .. ".TextDocumentItem(_A)", TextDocumentItemParamsArgs), reason=1},
+        funcs.luaeval(require_string .. ".WillSaveTextDocumentParams(_A)", WillSaveTextDocumentParamsArgs)
+      )
+    end)
+  end)
+
+  describe('DidSaveTextDocumentParams()', function()
+    it('returns expected params', function()
+      local TextDocumentItemParamsArgs = {
+        uri = 'test_item.txt',
+        languageId = 'test',
+        version = 0,
+        text = dedent([[
+          Line of text 1
+          Line of text 2
+          Line of text 3]])
+      }
+
+      local text = dedent([[
+        Line of text 1
+        Line of text 2
+        Line of text 3]])..protocol_eval('EOL')
+
+      local DidSaveTextDocumentParamsArgs = {textDocument=TextDocumentItemParamsArgs}
+
+      eq(
+        {textDocument=funcs.luaeval(require_string .. ".TextDocumentItem(_A)", TextDocumentItemParamsArgs), text=text},
+        funcs.luaeval(require_string .. ".DidSaveTextDocumentParams(_A)", DidSaveTextDocumentParamsArgs)
+      )
+    end)
+  end)
+
+  describe('DidCloseTextDocumentParams()', function()
+    it('returns expected params', function()
+      local TextDocumentItemParamsArgs = {
+        uri = 'test_item.txt',
+        languageId = 'test',
+        version = 0,
+        text = dedent([[
+          Line of text 1
+          Line of text 2
+          Line of text 3]])
+      }
+
+      local DidCloseTextDocumentParamsArgs = {textDocument=TextDocumentItemParamsArgs}
+
+      eq(
+        {textDocument=funcs.luaeval(require_string .. ".TextDocumentItem(_A)", TextDocumentItemParamsArgs)},
+        funcs.luaeval(require_string .. ".DidCloseTextDocumentParams(_A)", DidCloseTextDocumentParamsArgs)
+      )
+    end)
+  end)
 end)

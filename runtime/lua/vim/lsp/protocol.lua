@@ -102,9 +102,9 @@ protocol.errorCodes = {
 
 
 protocol.TextDocumentSaveReason = {
-  [1] = 'Manual',
-  [2] = 'AfterDelay',
-  [3] = 'FocusOut',
+  Manual=1,
+  AfterDelay=2,
+  FocusOut=3,
 }
 
 -- Helper functions
@@ -332,7 +332,7 @@ protocol.InitializeParams = function(client)
   return config
 end
 
-protocol.initializedParams = function(_args)
+protocol.InitializedParams = function(_args)
   return {}
 end
 
@@ -340,10 +340,10 @@ protocol.CompletionParams = function(args)
   args = check_table(args)
 
   -- CompletionParams extends TextDocumentPositionParams with an optional context
-  local result = protocol.TextDocumentPositionParams(args)
-  result.context = protocol.CompletionContext(args.context)
+  local params = protocol.TextDocumentPositionParams(args)
+  params.context = protocol.CompletionContext(args.context)
 
-  return result
+  return params
 end
 
 protocol.HoverParams = function(args)
@@ -355,19 +355,19 @@ end
 protocol.SignatureHelpParams = function(args)
   args = check_table(args)
 
-  local position =  protocol.TextDocumentPositionParams(args)
-  position.position.character = position.position.character + 1
+  local params =  protocol.TextDocumentPositionParams(args)
+  params.position.character = params.position.character + 1
 
-  return position
+  return params
 end
 
-protocol.definitionParams = function(args)
+protocol.DefinitionParams = function(args)
   args = check_table(args)
 
   return protocol.TextDocumentPositionParams(args)
 end
 
-protocol.documentHighlightParams = function(args)
+protocol.DocumentHighlightParams = function(args)
   args = check_table(args)
 
   return protocol.TextDocumentPositionParams(args)
