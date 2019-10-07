@@ -504,6 +504,7 @@ else()
 endif()
 
 if(NOT LUA_PRG_WORKS)
+  unset(LUA_PRG CACHE)
   message(FATAL_ERROR "Failed to find a Lua 5.1-compatible interpreter")
 endif()
 
