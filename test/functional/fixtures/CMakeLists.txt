@@ -10,3 +10,6 @@ endif()
 
 add_executable(streams-test streams-test.c)
 target_link_libraries(streams-test ${LIBUV_LIBRARIES})
+
+add_executable(sigtrap-test sigtrap-test.c)
+target_link_libraries(sigtrap-test ${LIBUV_LIBRARIES})
