@@ -9,6 +9,7 @@ local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 
 local describe = describe
+clear()
 if missing_provider('python3') then
   it(':python3 reports E319 if provider is missing', function()
     local expected = [[Vim%(py3.*%):E319: No "python3" provider found.*]]
