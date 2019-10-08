@@ -194,7 +194,7 @@ lsp.client_info = function(filetype, server_name)
 
   local client =  lsp.get_client(filetype, server_name)
   if client then
-    return vim.tbl_tostring(client)
+    return vim.inspect(client)
   else
     return 'No client is available for filetype: '..filetype..', server_name: '..server_name
   end

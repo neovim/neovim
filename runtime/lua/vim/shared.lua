@@ -100,21 +100,6 @@ function vim.split(s,sep,plain)
   return t
 end
 
-function vim.tbl_tostring(t)
-  local stringified = ''
-  if type(t) == 'table' then
-    stringified = stringified .. '{'
-    for k, v in pairs(t) do
-      stringified = stringified .. vim.tbl_tostring(k) .. '=' .. vim.tbl_tostring(v) .. ','
-    end
-    stringified = stringified .. '}'
-  else
-    stringified = tostring(t)
-  end
-
-  return stringified
-end
-
 --- Return a list of all keys used in a table.
 ---
 --@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua

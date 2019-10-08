@@ -50,7 +50,7 @@ Client.new = function(server_name, filetype, cmd, offset_encoding)
     _handle = nil,
   }, Client)
 
-  logger.info('Starting new client. server_name: '..server_name..', cmd: '..vim.tbl_tostring(cmd)..', offset_encoding: '..offset_encoding)
+  logger.info('Starting new client. server_name: '..server_name..', cmd: '..vim.inspect(cmd, {newline=''})..', offset_encoding: '..offset_encoding)
 
   return obj
 end
@@ -144,7 +144,7 @@ Client.initialize = function(self)
   end, nil)
 
   logger.info(
-    "filetype: "..self.filetype..", server_name: "..self.server_name..", offset_encoding: "..self.offset_encoding..", client_capabilities: "..vim.tbl_tostring(self.client_capabilities)..", server_capabilities: "..vim.tbl_tostring(self.server_capabilities)
+    "filetype: "..self.filetype..", server_name: "..self.server_name..", offset_encoding: "..self.offset_encoding..", client_capabilities: "..vim.inspect(self.client_capabilities, {newline=''})..", server_capabilities: "..vim.inspect(self.server_capabilities, {newline=''})
   )
 
   return result
@@ -349,7 +349,7 @@ Client._on_stdout = function(self, data)
           self:_on_error(error_level.reset_state,
             string.format('_on_read error: bad header\n\t%s\n\t%s',
               line,
-              vim.tbl_tostring(parsed))
+              vim.inspect(parsed, {newline=''}))
             )
           return
         end
@@ -395,7 +395,7 @@ Client._on_message = function(self, body)
   end
   -- Handle notifications
   if json_message.method and json_message.params then
-    logger.write('debug', "Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params).." ]]", 'server')
+    logger.write('debug', "Receive notification <---: [[ method: "..json_message.method..", params: "..vim.inspect(json_message.params, {newline=''}).." ]]", 'server')
     call_callback(json_message.method, true, json_message.params, nil)
 
     return
@@ -412,9 +412,9 @@ Client._on_message = function(self, body)
     local is_success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
     if is_success then
-      logger.write('debug', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data).." ]]", 'server')
+      logger.write('debug', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.inspect(data, {newline=''}).." ]]", 'server')
     else
-      logger.write('error', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data).." ]]", 'server')
+      logger.write('error', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.inspect(data, {newline=''}).." ]]", 'server')
     end
 
     -- If no callback is passed with request, use the registered callback.
@@ -444,7 +444,7 @@ Client._on_error = function(self, level, err_message)
   end
 
   if level <= error_level.critical then
-    error('Critical error occured: ' .. vim.tbl_tostring(err_message))
+    error('Critical error occured: ' .. vim.inspect(err_message, {newline=''}))
   end
 
   if level <= error_level.reset_state then

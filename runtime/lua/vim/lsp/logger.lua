@@ -46,7 +46,7 @@ Logger.create_functions = function(new_log, new_logger)
 
         local message = ''
         for _, arg in ipairs({...}) do
-          message = message .. vim.tbl_tostring(arg)
+          message = message .. vim.inspect(arg, {newline=''})
         end
 
         local info = debug.getinfo(2, "Sl")
