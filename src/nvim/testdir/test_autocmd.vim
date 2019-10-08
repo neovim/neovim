@@ -425,18 +425,20 @@ func Test_autocmd_bufwipe_in_SessLoadPost()
   set noswapfile
   mksession!
 
-  let content = ['set nocp noswapfile',
-        \ 'let v:swapchoice="e"',
-        \ 'augroup test_autocmd_sessionload',
-        \ 'autocmd!',
-        \ 'autocmd SessionLoadPost * exe bufnr("Xsomething") . "bw!"',
-        \ 'augroup END',
-	\ '',
-	\ 'func WriteErrors()',
-	\ '  call writefile([execute("messages")], "Xerrors")',
-	\ 'endfunc',
-	\ 'au VimLeave * call WriteErrors()',
-        \ ]
+  let content =<< trim [CODE]
+    set nocp noswapfile
+    let v:swapchoice="e"
+    augroup test_autocmd_sessionload
+    autocmd!
+    autocmd SessionLoadPost * exe bufnr("Xsomething") . "bw!"
+    augroup END
+
+    func WriteErrors()
+      call writefile([execute("messages")], "Xerrors")
+    endfunc
+    au VimLeave * call WriteErrors()
+  [CODE]
+
   call writefile(content, 'Xvimrc')
   call system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim -c cq')
   let errors = join(readfile('Xerrors'))
@@ -454,27 +456,29 @@ func Test_autocmd_bufwipe_in_SessLoadPost2()
   set noswapfile
   mksession!
 
-  let content = ['set nocp noswapfile',
-      \ 'function! DeleteInactiveBufs()',
-      \ '  tabfirst',
-      \ '  let tabblist = []',
-      \ '  for i in range(1, tabpagenr(''$''))',
-      \ '    call extend(tabblist, tabpagebuflist(i))',
-      \ '  endfor',
-      \ '  for b in range(1, bufnr(''$''))',
-      \ '    if bufexists(b) && buflisted(b) && (index(tabblist, b) == -1 || bufname(b) =~# ''^$'')',
-      \ '      exec ''bwipeout '' . b',
-      \ '    endif',
-      \ '  endfor',
-      \ '  echomsg "SessionLoadPost DONE"',
-      \ 'endfunction',
-      \ 'au SessionLoadPost * call DeleteInactiveBufs()',
-      \ '',
-      \ 'func WriteErrors()',
-      \ '  call writefile([execute("messages")], "Xerrors")',
-      \ 'endfunc',
-      \ 'au VimLeave * call WriteErrors()',
-      \ ]
+  let content =<< trim [CODE]
+    set nocp noswapfile
+    function! DeleteInactiveBufs()
+      tabfirst
+      let tabblist = []
+      for i in range(1, tabpagenr(''$''))
+        call extend(tabblist, tabpagebuflist(i))
+      endfor
+      for b in range(1, bufnr(''$''))
+        if bufexists(b) && buflisted(b) && (index(tabblist, b) == -1 || bufname(b) =~# ''^$'')
+          exec ''bwipeout '' . b
+        endif
+      endfor
+      echomsg "SessionLoadPost DONE"
+    endfunction
+    au SessionLoadPost * call DeleteInactiveBufs()
+
+    func WriteErrors()
+      call writefile([execute("messages")], "Xerrors")
+    endfunc
+    au VimLeave * call WriteErrors()
+  [CODE]
+
   call writefile(content, 'Xvimrc')
   call system(v:progpath. ' --headless -i NONE -u Xvimrc --noplugins -S Session.vim -c cq')
   let errors = join(readfile('Xerrors'))
@@ -936,21 +940,23 @@ func Test_bufunload_all()
   call writefile(['Test file Xxx1'], 'Xxx1')"
   call writefile(['Test file Xxx2'], 'Xxx2')"
 
-  let content = [
-	      \ "func UnloadAllBufs()",
-	      \ "  let i = 1",
-	      \ "  while i <= bufnr('$')",
-	      \ "    if i != bufnr('%') && bufloaded(i)",
-	      \ "      exe  i . 'bunload'",
-	      \ "    endif",
-	      \ "    let i += 1",
-	      \ "  endwhile",
-	      \ "endfunc",
-	      \ "au BufUnload * call UnloadAllBufs()",
-	      \ "au VimLeave * call writefile(['Test Finished'], 'Xout')",
-	      \ "edit Xxx1",
-	      \ "split Xxx2",
-	      \ "q"]
+  let content =<< trim [CODE]
+    func UnloadAllBufs()
+      let i = 1
+      while i <= bufnr('$')
+        if i != bufnr('%') && bufloaded(i)
+          exe  i . 'bunload'
+        endif
+        let i += 1
+      endwhile
+    endfunc
+    au BufUnload * call UnloadAllBufs()
+    au VimLeave * call writefile(['Test Finished'], 'Xout')
+    edit Xxx1
+    split Xxx2
+    q
+  [CODE]
+
   call writefile(content, 'Xtest')
 
   call delete('Xout')

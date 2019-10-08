@@ -4419,7 +4419,7 @@ mapblock_T *get_maphash(int index, buf_T *buf)
 }
 
 /// Get command argument for <Cmd> key
-char_u * getcmdkeycmd(int promptc, void *cookie, int indent)
+char_u * getcmdkeycmd(int promptc, void *cookie, int indent, bool do_concat)
 {
   garray_T line_ga;
   int c1 = -1, c2;

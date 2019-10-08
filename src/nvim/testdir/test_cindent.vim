@@ -18,25 +18,25 @@ endfunc
 func Test_cino_extern_c()
   " Test for cino-E
 
-  let without_ind = [
-        \ '#ifdef __cplusplus',
-        \ 'extern "C" {',
-        \ '#endif',
-        \ 'int func_a(void);',
-        \ '#ifdef __cplusplus',
-        \ '}',
-        \ '#endif'
-        \ ]
+  let without_ind =<< trim [CODE]
+  #ifdef __cplusplus
+  extern "C" {
+  #endif
+  int func_a(void);
+  #ifdef __cplusplus
+  }
+  #endif
+  [CODE]
 
-  let with_ind = [
-        \ '#ifdef __cplusplus',
-        \ 'extern "C" {',
-        \ '#endif',
-        \ "\tint func_a(void);",
-        \ '#ifdef __cplusplus',
-        \ '}',
-        \ '#endif'
-        \ ]
+  let with_ind =<< trim [CODE]
+  #ifdef __cplusplus
+  extern "C" {
+  #endif
+  	int func_a(void);
+  #ifdef __cplusplus
+  }
+  #endif
+  [CODE]
   new
   setlocal cindent cinoptions=E0
   call setline(1, without_ind)
@@ -89,16 +89,32 @@ func Test_cindent_expr()
     return v:lnum == 1 ? shiftwidth() : 0
   endfunc
   setl expandtab sw=8 indentkeys+=; indentexpr=MyIndentFunction()
-  call setline(1, ['var_a = something()', 'b = something()'])
+  let testinput =<< trim [CODE]
+  var_a = something()
+  b = something()
+  [CODE]
+  call setline(1, testinput)
   call cursor(1, 1)
   call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
-  call assert_equal(['        var_a = something();', 'b = something();'], getline(1, '$'))
+  let expected =<< trim [CODE]
+          var_a = something();
+  b = something();
+  [CODE]
+  call assert_equal(expected, getline(1, '$'))
 
   %d
-  call setline(1, ['                var_a = something()', '                b = something()'])
+  let testinput =<< trim [CODE]
+                  var_a = something()
+                  b = something()
+  [CODE]
+  call setline(1, testinput)
   call cursor(1, 1)
   call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
-  call assert_equal(['        var_a = something();', '                b = something()'], getline(1, '$'))
+  let expected =<< trim [CODE]
+          var_a = something();
+                  b = something()
+  [CODE]
+  call assert_equal(expected, getline(1, '$'))
   bw!
 endfunc
 

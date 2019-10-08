@@ -3218,7 +3218,7 @@ int do_source(char_u *fname, int check_other, int is_vimrc)
   cookie.conv.vc_type = CONV_NONE;              // no conversion
 
   // Read the first line so we can check for a UTF-8 BOM.
-  firstline = getsourceline(0, (void *)&cookie, 0);
+  firstline = getsourceline(0, (void *)&cookie, 0, true);
   if (firstline != NULL && STRLEN(firstline) >= 3 && firstline[0] == 0xef
       && firstline[1] == 0xbb && firstline[2] == 0xbf) {
     // Found BOM; setup conversion, skip over BOM and recode the line.
@@ -3381,7 +3381,7 @@ void free_scriptnames(void)
 ///
 /// @return pointer to the line in allocated memory, or NULL for end-of-file or
 ///         some error.
-char_u *getsourceline(int c, void *cookie, int indent)
+char_u *getsourceline(int c, void *cookie, int indent, bool do_concat)
 {
   struct source_cookie *sp = (struct source_cookie *)cookie;
   char_u *line;
@@ -3412,7 +3412,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
 
   // Only concatenate lines starting with a \ when 'cpoptions' doesn't
   // contain the 'C' flag.
-  if (line != NULL && (vim_strchr(p_cpo, CPO_CONCAT) == NULL)) {
+  if (line != NULL && do_concat && (vim_strchr(p_cpo, CPO_CONCAT) == NULL)) {
     // compensate for the one line read-ahead
     sourcing_lnum--;
 

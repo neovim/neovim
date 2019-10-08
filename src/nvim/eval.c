@@ -1504,6 +1504,87 @@ void ex_const(exarg_T *eap)
   ex_let_const(eap, true);
 }
 
+// Get a list of lines from a HERE document. The here document is a list of
+// lines surrounded by a marker.
+//     cmd << {marker}
+//       {line1}
+//       {line2}
+//       ....
+//     {marker}
+//
+// The {marker} is a string. If the optional 'trim' word is supplied before the
+// marker, then the leading indentation before the lines (matching the
+// indentation in the 'cmd' line) is stripped.
+// Returns a List with {lines} or NULL.
+static list_T *
+heredoc_get(exarg_T *eap, char_u *cmd)
+{
+  char_u *marker;
+  char_u *p;
+  int indent_len = 0;
+
+  if (eap->getline == NULL) {
+    EMSG(_("E991: cannot use =<< here"));
+    return NULL;
+  }
+
+  // Check for the optional 'trim' word before the marker
+  cmd = skipwhite(cmd);
+  if (STRNCMP(cmd, "trim", 4) == 0
+      && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
+    cmd = skipwhite(cmd + 4);
+
+    // Trim the indentation from all the lines in the here document
+    // The amount of indentation trimmed is the same as the indentation of
+    // the :let command line.
+    p = *eap->cmdlinep;
+    while (ascii_iswhite(*p)) {
+      p++;
+      indent_len++;
+    }
+  }
+
+  // The marker is the next word.  Default marker is "."
+  if (*cmd != NUL && *cmd != '"') {
+    marker = skipwhite(cmd);
+    p = skiptowhite(marker);
+    if (*skipwhite(p) != NUL && *skipwhite(p) != '"') {
+      EMSG(_(e_trailing));
+      return NULL;
+    }
+    *p = NUL;
+  } else {
+    marker = (char_u *)".";
+  }
+
+  list_T *l = tv_list_alloc(0);
+  for (;;) {
+    int i = 0;
+
+    char_u *theline = eap->getline(NUL, eap->cookie, 0, false);
+    if (theline != NULL && indent_len > 0) {
+      // trim the indent matching the first line
+      if (STRNCMP(theline, *eap->cmdlinep, indent_len) == 0) {
+        i = indent_len;
+      }
+    }
+
+    if (theline == NULL) {
+      EMSG2(_("E990: Missing end marker '%s'"), marker);
+      break;
+    }
+    if (STRCMP(marker, theline + i) == 0) {
+      xfree(theline);
+      break;
+    }
+
+    tv_list_append_string(l, (char *)(theline + i), -1);
+    xfree(theline);
+  }
+
+  return l;
+}
+
 // ":let" list all variable values
 // ":let var1 var2" list variable values
 // ":let var = expr" assignment command.
@@ -1560,6 +1641,17 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
       list_vim_vars(&first);
     }
     eap->nextcmd = check_nextcmd(arg);
+  } else if (expr[0] == '=' && expr[1] == '<' && expr[2] == '<') {
+    // HERE document
+    list_T *l = heredoc_get(eap, expr + 3);
+    if (l != NULL) {
+      tv_list_set_ret(&rettv, l);
+      op[0] = '=';
+      op[1] = NUL;
+      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
+                        is_const, op);
+      tv_clear(&rettv);
+    }
   } else {
     op[0] = '=';
     op[1] = NUL;
@@ -8642,7 +8734,7 @@ typedef struct {
   const listitem_T *li;
 } GetListLineCookie;
 
-static char_u *get_list_line(int c, void *cookie, int indent)
+static char_u *get_list_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetListLineCookie *const p = (GetListLineCookie *)cookie;
 
@@ -21177,6 +21269,7 @@ void ex_function(exarg_T *eap)
   int indent;
   int nesting;
   char_u      *skip_until = NULL;
+  char_u *trimmed = NULL;
   dictitem_T  *v;
   funcdict_T fudi;
   static int func_nr = 0;           /* number for nameless function */
@@ -21186,6 +21279,7 @@ void ex_function(exarg_T *eap)
   hashitem_T  *hi;
   int sourcing_lnum_off;
   bool show_block = false;
+  bool do_concat = true;
 
   /*
    * ":function" without argument: list functions.
@@ -21455,9 +21549,9 @@ void ex_function(exarg_T *eap)
     } else {
       xfree(line_to_free);
       if (eap->getline == NULL) {
-        theline = getcmdline(':', 0L, indent);
+        theline = getcmdline(':', 0L, indent, do_concat);
       } else {
-        theline = eap->getline(':', eap->cookie, indent);
+        theline = eap->getline(':', eap->cookie, indent, do_concat);
       }
       line_to_free = theline;
     }
@@ -21480,10 +21574,15 @@ void ex_function(exarg_T *eap)
       sourcing_lnum_off = 0;
 
     if (skip_until != NULL) {
-      /* between ":append" and "." and between ":python <<EOF" and "EOF"
-       * don't check for ":endfunc". */
-      if (STRCMP(theline, skip_until) == 0) {
-        XFREE_CLEAR(skip_until);
+      // Between ":append" and "." and between ":python <<EOF" and "EOF"
+      // don't check for ":endfunc".
+      if (trimmed == NULL || STRNCMP(theline, trimmed, STRLEN(trimmed)) == 0) {
+        p = trimmed == NULL ? theline : theline + STRLEN(trimmed);
+        if (STRCMP(p, skip_until) == 0) {
+          XFREE_CLEAR(skip_until);
+          XFREE_CLEAR(trimmed);
+          do_concat = true;
+        }
       }
     } else {
       /* skip ':' and blanks*/
@@ -21581,6 +21680,28 @@ void ex_function(exarg_T *eap)
           skip_until = vim_strsave((char_u *)".");
         else
           skip_until = vim_strsave(p);
+      }
+
+      // Check for ":let v =<< [trim] EOF"
+      arg = skipwhite(skiptowhite(p));
+      arg = skipwhite(skiptowhite(arg));
+      if (arg[0] == '=' && arg[1] == '<' && arg[2] =='<'
+          && ((p[0] == 'l' && p[1] == 'e'
+               && (!ASCII_ISALNUM(p[2])
+                   || (p[2] == 't' && !ASCII_ISALNUM(p[3])))))) {
+        // ":let v =<<" continues until a dot
+        p = skipwhite(arg + 3);
+        if (STRNCMP(p, "trim", 4) == 0) {
+          // Ignore leading white space.
+          p = skipwhite(p + 4);
+          trimmed = vim_strnsave(theline, (int)(skipwhite(theline) - theline));
+        }
+        if (*p == NUL) {
+          skip_until = vim_strsave((char_u *)".");
+        } else {
+          skip_until = vim_strnsave(p, (int)(skiptowhite(p) - p));
+        }
+        do_concat = false;
       }
     }
 
@@ -21768,7 +21889,7 @@ ret_free:
   if (show_block) {
     ui_ext_cmdline_block_leave();
   }
-}
+}  // NOLINT(readability/fn_size)
 
 /// Get a function name, translating "<SID>" and "<SNR>".
 /// Also handles a Funcref in a List or Dictionary.
@@ -23404,7 +23525,7 @@ char_u *get_return_cmd(void *rettv)
  * Called by do_cmdline() to get the next line.
  * Returns allocated string, or NULL for end of function.
  */
-char_u *get_func_line(int c, void *cookie, int indent)
+char_u *get_func_line(int c, void *cookie, int indent, bool do_concat)
 {
   funccall_T  *fcp = (funccall_T *)cookie;
   ufunc_T     *fp = fcp->func;
