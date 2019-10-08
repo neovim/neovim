@@ -364,9 +364,9 @@ submit_pr() {
   done
 }
 
-# Gets all Vim commits since the "start" commit.
+# Gets all Vim commits with subject since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H' v8.0.0000..HEAD "$@"
+  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H %s' v8.0.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
@@ -431,12 +431,15 @@ list_missing_vimpatches() {
 
   # Get missing Vim commits
   set +u  # Avoid "unbound variable" with bash < 4.4 below.
-  for vim_commit in $(list_vim_commits "${git_log_args[@]}"); do
+  while IFS=' ' read -r vim_commit subject; do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${vim_commit:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
       continue
     fi
+
+    # Remove "patch 8.0.0902: " prefixes.
+    subject="${subject#patch*: }"
 
     vim_tag="${vim_commit_tags[$vim_commit]-}"
     if [[ -n "$vim_tag" ]]; then
@@ -445,11 +448,11 @@ list_missing_vimpatches() {
       if [[ "${tokens[$patch_number]-}" ]]; then
         continue
       fi
-      echo "$vim_tag"
+      echo "$vim_tag: $subject"
     else
-      echo "$vim_commit"
+      echo "$vim_commit: $subject"
     fi
-  done
+  done < <(list_vim_commits "${git_log_args[@]}")
   set -u
 }
 
