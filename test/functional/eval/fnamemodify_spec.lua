@@ -6,6 +6,11 @@ local fnamemodify = helpers.funcs.fnamemodify
 local getcwd = helpers.funcs.getcwd
 local command = helpers.command
 local write_file = helpers.write_file
+local alter_slashes = helpers.alter_slashes
+
+local function eq_slashconvert(expected, got)
+  eq(alter_slashes(expected), alter_slashes(got))
+end
 
 describe('fnamemodify()', function()
   setup(function()
@@ -42,25 +47,26 @@ describe('fnamemodify()', function()
     local filename = "src/version.c"
     local cwd = getcwd()
 
-    eq(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
-    eq('src/version.c', fnamemodify(filename, ':p:.'))
-    eq(cwd .. '/src', fnamemodify(filename, ':p:h'))
-    eq(cwd .. '', fnamemodify(filename, ':p:h:h'))
-    eq('version.c', fnamemodify(filename, ':p:t'))
-    eq(cwd .. '/src/version', fnamemodify(filename, ':p:r'))
+    eq_slashconvert(cwd .. '/src/version.c', fnamemodify(filename, ':p'))
 
-    eq(cwd .. '/src/main.c', fnamemodify(filename, ':s?version?main?:p'))
+    eq_slashconvert('src/version.c', fnamemodify(filename, ':p:.'))
+    eq_slashconvert(cwd .. '/src', fnamemodify(filename, ':p:h'))
+    eq_slashconvert(cwd .. '', fnamemodify(filename, ':p:h:h'))
+    eq('version.c', fnamemodify(filename, ':p:t'))
+    eq_slashconvert(cwd .. '/src/version', fnamemodify(filename, ':p:r'))
+
+    eq_slashconvert(cwd .. '/src/main.c', fnamemodify(filename, ':s?version?main?:p'))
 
     local converted_cwd = cwd:gsub('/', '\\')
     eq(converted_cwd .. '\\src\\version.c', fnamemodify(filename, ':p:gs?/?\\\\?'))
 
     eq('src', fnamemodify(filename, ':h'))
     eq('version.c', fnamemodify(filename, ':t'))
-    eq('src/version', fnamemodify(filename, ':r'))
+    eq_slashconvert('src/version', fnamemodify(filename, ':r'))
     eq('version', fnamemodify(filename, ':t:r'))
     eq('c', fnamemodify(filename, ':e'))
 
-    eq('src/main.c', fnamemodify(filename, ':s?version?main?'))
+    eq_slashconvert('src/main.c', fnamemodify(filename, ':s?version?main?'))
   end)
 
   it('handles advanced examples from ":help filename-modifiers"', function()
@@ -72,32 +78,32 @@ describe('fnamemodify()', function()
 
     eq('c', fnamemodify(filename, ':e:e:r'))
 
-    eq('src/version.c', fnamemodify(filename, ':r'))
+    eq_slashconvert('src/version.c', fnamemodify(filename, ':r'))
     eq('c', fnamemodify(filename, ':r:e'))
 
-    eq('src/version', fnamemodify(filename, ':r:r'))
-    eq('src/version', fnamemodify(filename, ':r:r:r'))
+    eq_slashconvert('src/version', fnamemodify(filename, ':r:r'))
+    eq_slashconvert('src/version', fnamemodify(filename, ':r:r:r'))
   end)
 
   it('handles :h', function()
     eq('.', fnamemodify('hello.txt', ':h'))
 
-    eq('path/to', fnamemodify('path/to/hello.txt', ':h'))
+    eq_slashconvert('path/to', fnamemodify('path/to/hello.txt', ':h'))
   end)
 
   it('handles :t', function()
     eq('hello.txt', fnamemodify('hello.txt', ':t'))
-    eq('hello.txt', fnamemodify('path/to/hello.txt', ':t'))
+    eq_slashconvert('hello.txt', fnamemodify('path/to/hello.txt', ':t'))
   end)
 
   it('handles :r', function()
     eq('hello', fnamemodify('hello.txt', ':r'))
-    eq('path/to/hello', fnamemodify('path/to/hello.txt', ':r'))
+    eq_slashconvert('path/to/hello', fnamemodify('path/to/hello.txt', ':r'))
   end)
 
   it('handles :e', function()
     eq('txt', fnamemodify('hello.txt', ':e'))
-    eq('txt', fnamemodify('path/to/hello.txt', ':e'))
+    eq_slashconvert('txt', fnamemodify('path/to/hello.txt', ':e'))
   end)
 
   it('handles regex replacements', function()
