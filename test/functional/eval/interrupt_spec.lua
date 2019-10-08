@@ -12,8 +12,8 @@ local dur
 local min_dur = 8
 local len = 131072
 
-describe('List support code', function()
-  if not pending('does not actually allows interrupting with just got_int', function() end) then return end
+pending('List support code', function()
+  -- NOTE: does not actually allows interrupting with just got_int
   -- The following tests are confirmed to work with os_breakcheck() just before
   -- `if (got_int) {break;}` in tv_list_copy and list_join_inner() and not to
   -- work without.

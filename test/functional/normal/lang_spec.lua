@@ -21,7 +21,7 @@ describe('gu and gU', function()
 
     local err = exc_exec('lang ctype tr_TR.UTF-8')
     if err ~= 0 then
-      pending("Locale tr_TR.UTF-8 not supported", function() end)
+      pending("Locale tr_TR.UTF-8 not supported")
       return
     end
 

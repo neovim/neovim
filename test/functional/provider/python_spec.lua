@@ -16,6 +16,7 @@ local missing_provider = helpers.missing_provider
 local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 
+local describe = describe
 do
   clear()
   if missing_provider('python') then
@@ -24,8 +25,7 @@ do
       matches(expected, pcall_err(command, 'py print("foo")'))
       matches(expected, pcall_err(command, 'pyfile foo'))
     end)
-    pending('Python 2 (or the pynvim module) is broken/missing', function() end)
-    return
+    describe = function(desc, ...) pending(desc..' (Python 2 (or the pynvim module) is broken/missing)', ...) end
   end
 end
 

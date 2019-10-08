@@ -8,7 +8,6 @@ describe('viml', function()
   it('parses `<SID>` with turkish locale', function()
     if exc_exec('lang ctype tr_TR.UTF-8') ~= 0 then
       pending("Locale tr_TR.UTF-8 not supported")
-      return
     end
     source([[
       func! <sid>_dummy_function()
@@ -22,7 +21,6 @@ describe('viml', function()
   it('str2float is not affected by locale', function()
     if exc_exec('lang ctype sv_SE.UTF-8') ~= 0 then
       pending("Locale sv_SE.UTF-8 not supported")
-      return
     end
     clear{env={LANG="", LC_NUMERIC="sv_SE.UTF-8"}}
     eq(2.2, eval('str2float("2.2")'))

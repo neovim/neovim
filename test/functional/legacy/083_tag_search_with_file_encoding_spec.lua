@@ -48,7 +48,7 @@ describe('tag search with !_TAG_FILE_ENCODING', function()
   end)
 
   if not has_iconv() then
-    pending('skipped (missing iconv)', function() end)
+    pending('skipped (missing iconv)')
   else
     it('is working', function()
 

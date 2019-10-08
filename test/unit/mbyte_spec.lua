@@ -9,8 +9,7 @@ local charset = helpers.cimport('./src/nvim/charset.h')
 
 describe('mbyte', function()
   if helpers.isCI('quickbuild') then
-    pending("crashes on quickbuild", function() end)
-    return
+    pending("crashes on quickbuild")
   end
 
   -- Array for composing characters

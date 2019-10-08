@@ -62,7 +62,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
   end)
 
   if not has_gzip() then
-    pending('skipped (missing `gzip` utility)', function() end)
+    pending('skipped (missing `gzip` utility)')
   else
 
     it('FileReadPost (using gzip)', function()

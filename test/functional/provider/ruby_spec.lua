@@ -16,6 +16,7 @@ local matches = helpers.matches
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 
+local describe = describe
 do
   clear()
   if missing_provider('ruby') then
@@ -24,8 +25,7 @@ do
       matches(expected, pcall_err(command, 'ruby puts "foo"'))
       matches(expected, pcall_err(command, 'rubyfile foo'))
     end)
-    pending("Missing neovim RubyGem.", function() end)
-    return
+    describe = function(desc, ...) pending(desc..' (Missing neovim RubyGem)', ...) end
   end
 end
 

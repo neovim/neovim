@@ -20,7 +20,7 @@ describe('mf_hash_grow()', function()
   -- Check to see if cksum exists, otherwise skip the test
   local null = helpers.iswin() and 'nul' or '/dev/null'
   if os.execute('cksum --help >' .. null .. ' 2>&1') ~= 0 then
-    pending('was not tested because cksum was not found', function() end)
+    pending('was not tested because cksum was not found')
   else
     it('is working', function()
       command('set fileformat=unix undolevels=-1')

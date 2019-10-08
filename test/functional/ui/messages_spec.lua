@@ -1058,15 +1058,14 @@ describe('ui/msg_puts_printf', function()
 
     if iswin() then
       if os.execute('chcp 932 > NUL 2>&1') ~= 0 then
-        pending('missing japanese language features', function() end)
-        return
+        pending('missing japanese language features')
       else
         cmd = 'chcp 932 > NULL & '
       end
     else
-      if (exc_exec('lang ja_JP.UTF-8') ~= 0) then
-        pending('Locale ja_JP.UTF-8 not supported', function() end)
-        return
+      local exe_lang = exc_exec('lang ja_JP.UTF-88')
+      if exe_lang ~= 0 then
+        pending('Locale ja_JP.UTF-8 not supported: '..exe_lang)
       elseif helpers.isCI() then
         -- Fails non--Windows CI. Message catalog direcotry issue?
         pending('fails on unix CI', function() end)

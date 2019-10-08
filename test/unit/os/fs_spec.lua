@@ -287,7 +287,7 @@ describe('fs.c', function()
 
       -- Some systems may not have `id` utility.
       if (os.execute('id -G > /dev/null 2>&1') ~= 0) then
-        pending('skipped (missing `id` utility)', function() end)
+        pending('skipped (missing `id` utility)')
       else
         itp('owner of a file may change the group of the file to any group of which that owner is a member', function()
           local file_gid = lfs.attributes(filename, 'gid')
@@ -311,7 +311,7 @@ describe('fs.c', function()
       end
 
       if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
-        pending('skipped (uv_fs_chown is no-op on Windows)', function() end)
+        pending('skipped (uv_fs_chown is no-op on Windows)')
       else
         itp('returns nonzero if process has not enough permissions', function()
           -- chown to root

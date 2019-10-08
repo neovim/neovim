@@ -51,8 +51,7 @@ describe("shell command :!", function()
 
   it("throttles shell-command output greater than ~10KB", function()
     if 'openbsd' == helpers.uname() then
-      pending('FIXME #10804', function() end)
-      return
+      pending('FIXME #10804')
     end
     child_session.feed_data(":!"..nvim_dir.."/shell-test REP 30001 foo\n")
 
@@ -96,8 +95,7 @@ describe("shell command :!", function()
 
   it('handles control codes', function()
     if iswin() then
-      pending('missing printf', function() end)
-      return
+      pending('missing printf')
     end
     local screen = Screen.new(50, 4)
     screen:attach()

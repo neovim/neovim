@@ -182,7 +182,7 @@ describe('server -> client', function()
   describe('recursive (child) nvim client', function()
     if helpers.isCI('travis') and helpers.is_os('mac') then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]", function() end)
+      pending("[Hangs on Travis macOS. #5002]")
       return
     end
 
@@ -317,7 +317,7 @@ describe('server -> client', function()
       set_session(server)
       local status, address = pcall(funcs.serverstart, "127.0.0.1:")
       if not status then
-        pending('no ipv4 stack', function() end)
+        pending('no ipv4 stack')
         return
       end
       eq('127.0.0.1:', string.sub(address,1,10))
@@ -329,7 +329,7 @@ describe('server -> client', function()
       set_session(server)
       local status, address = pcall(funcs.serverstart, '::1:')
       if not status then
-        pending('no ipv6 stack', function() end)
+        pending('no ipv6 stack')
         return
       end
       eq('::1:', string.sub(address,1,4))
@@ -349,7 +349,7 @@ describe('server -> client', function()
     it('does not deadlock', function()
       if not helpers.isCI('travis') and helpers.is_os('mac') then
         -- It does, in fact, deadlock on QuickBuild. #6851
-        pending("deadlocks on QuickBuild", function() end)
+        pending("deadlocks on QuickBuild")
         return
       end
       local address = funcs.serverlist()[1]
