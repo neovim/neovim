@@ -2,13 +2,11 @@ local lsp = {
   server_config = require('vim.lsp.server_config'),
   config = require('vim.lsp.config'),
   protocol = require('vim.lsp.protocol'),
-  autocmd = require('vim.lsp.autocmd'),
   util = require('vim.lsp.util'),
 }
 
 local Client = require('vim.lsp.client')
 local callbacks = require('vim.lsp.callbacks')
-
 local logger = require('vim.lsp.logger')
 
 local clients = {}

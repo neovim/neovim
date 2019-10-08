@@ -1,16 +1,10 @@
-local autocmd = require('vim.lsp.autocmd')
 local uv = vim.loop
-
 local util = require('vim.lsp.util')
-
 local logger = require('vim.lsp.logger')
+local autocmd = require('vim.lsp.autocmd')
 local message = require('vim.lsp.message')
 local call_callback = require('vim.lsp.callbacks').call_callback
-local InitializeParams = require('vim.lsp.protocol').InitializeParams
-local InitializedParams = require('vim.lsp.protocol').InitializedParams
-local DidOpenTextDocumentParams = require('vim.lsp.protocol').DidOpenTextDocumentParams
-local update_document_version = require('vim.lsp.protocol').update_document_version
-
+local protocol = require('vim.lsp.protocol')
 
 local read_state = {
   init = 0,
@@ -24,23 +18,23 @@ local error_level = {
   info = 2,
 }
 
-local client = {}
-client.__index = client
+local Client = {}
+Client.__index = Client
 
-client.new = function(server_name, filetype, cmd, offset_encoding)
+Client.new = function(server_name, filetype, cmd, offset_encoding)
   local obj = setmetatable({
     server_name = server_name,
     filetype = filetype,
     cmd = cmd,
+    client_capabilities = {},
+    server_capabilities = {},
+    offset_encoding = offset_encoding,
+    attached_buf_list = {},
 
     -- State for handling messages
     _read_state = read_state.init,
     _read_data = '',
-    _current_header = {},
-
-    client_capabilities = {},
-    -- Capabilities sent by server
-    server_capabilities = {},
+    _read_length = 0,
 
     -- Results & Callback handling
     --  Callbacks must take two arguments:
@@ -50,53 +44,50 @@ client.new = function(server_name, filetype, cmd, offset_encoding)
     _results = {},
     _stopped = false,
 
-    -- Data fields, to be used internally
-    __data__ = {},
-    attached_buf_list = {},
-    offset_encoding = offset_encoding,
-    stdin = nil,
-    stdout = nil,
-    stderr = nil,
-    handle = nil,
-  }, client)
+    _stdin = nil,
+    _stdout = nil,
+    _stderr = nil,
+    _handle = nil,
+  }, Client)
 
   logger.info('Starting new client. server_name: '..server_name..', cmd: '..vim.tbl_tostring(cmd)..', offset_encoding: '..offset_encoding)
 
   return obj
 end
 
-client.start = function(self)
-  self.stdin = uv.new_pipe(false)
-  self.stdout = uv.new_pipe(false)
-  self.stderr = uv.new_pipe(false)
+Client.start = function(self)
+  self._stdin = uv.new_pipe(false)
+  self._stdout = uv.new_pipe(false)
+  self._stderr = uv.new_pipe(false)
 
   local function on_exit()
     logger.info('filetype: '..self.filetype..', exit: '..self.cmd_tostring)
   end
 
-  local stdio = { self.stdin, self.stdout, self.stderr }
+  local stdio = { self._stdin, self._stdout, self._stderr }
+  local cmd_with_opts, execute_path, opts
 
   if type(self.cmd) == 'string' then
-    local cmd_with_opts = vim.split(self.cmd, ' ', true)
-    local execute_path = table.remove(cmd_with_opts, 1)
-    local opts = { args = cmd_with_opts, stdio = stdio }
-    self.handle, self.pid = uv.spawn(execute_path, opts, on_exit)
+    cmd_with_opts = vim.split(self.cmd, ' ', true)
+    execute_path = table.remove(cmd_with_opts, 1)
+    opts = { args = cmd_with_opts, stdio = stdio }
   elseif vim.tbl_islist(self.cmd) then
-    local cmd_with_opts = self.cmd
-    local execute_path = table.remove(cmd_with_opts, 1)
-    local opts = { args = cmd_with_opts, stdio = stdio }
-    self.handle, self.pid = uv.spawn(execute_path, opts, on_exit)
+    cmd_with_opts = self.cmd
+    execute_path = table.remove(cmd_with_opts, 1)
+    opts = { args = cmd_with_opts, stdio = stdio }
   else
     error("cmd type must be string or table.", 2)
   end
 
-  uv.read_start(self.stdout, function (err, chunk)
+  self._handle, self.pid = uv.spawn(execute_path, opts, on_exit)
+
+  uv.read_start(self._stdout, function (err, chunk)
     if not err then
-      self:on_stdout(chunk)
+      self:_on_stdout(chunk)
     end
   end)
 
-  uv.read_start(self.stderr, function (err, chunk)
+  uv.read_start(self._stderr, function (err, chunk)
     if err and chunk then
       logger.error('stderr: '..err..', data: '..chunk)
     end
@@ -112,7 +103,7 @@ client.start = function(self)
   autocmd.register_text_document_autocmd(self.filetype, self.server_name)
 end
 
-client.stop = function(self)
+Client.stop = function(self)
   if self._stopped then
     return
   end
@@ -126,28 +117,28 @@ client.stop = function(self)
   vim.api.nvim_command("echo 'exit filetype: "..self.filetype..", server_name: "..self.server_name.."'")
   self:notify('exit', nil)
 
-  uv.shutdown(self.stdin, function()
-    uv.close(self.stdout)
-    uv.close(self.stderr)
-    uv.close(self.stdin)
-    uv.close(self.handle)
+  uv.shutdown(self._stdin, function()
+    uv.close(self._stdout)
+    uv.close(self._stderr)
+    uv.close(self._stdin)
+    uv.close(self._handle)
   end)
   uv.kill(self.pid, 'sigterm')
 
   self._stopped = true
 end
 
-client.cmd_tostring = function(self)
+Client.cmd_tostring = function(self)
   if type(self.cmd) == 'table' then
     return table.concat(self.cmd)
   end
   return self.cmd
 end
 
-client.initialize = function(self)
-  local result = self:request_async('initialize', InitializeParams(self), function(_, data)
-    self:notify('initialized', InitializedParams())
-    self:notify('textDocument/didOpen', DidOpenTextDocumentParams())
+Client.initialize = function(self)
+  local result = self:request_async('initialize', protocol.InitializeParams(self), function(_, data)
+    self:notify('initialized', protocol.InitializedParams())
+    self:notify('textDocument/didOpen', protocol.DidOpenTextDocumentParams())
     self:set_server_capabilities(data.capabilities)
     return data.capabilities
   end, nil)
@@ -159,11 +150,11 @@ client.initialize = function(self)
   return result
 end
 
-client.set_client_capabilities = function(self, capabilities)
+Client.set_client_capabilities = function(self, capabilities)
   self.client_capabilities = capabilities
 end
 
-client.set_server_capabilities = function(self, capabilities)
+Client.set_server_capabilities = function(self, capabilities)
   if type(capabilities.offsetEncoding) == 'string' and
     vim.tbl_contains({'utf-8', 'utf-16', 'utf-32'}, capabilities.offsetEncoding) then
     self.offset_encoding = capabilities.offsetEncoding
@@ -173,24 +164,24 @@ client.set_server_capabilities = function(self, capabilities)
 end
 
 
-client.set_buf_change_handler = function(self, bufnr)
+Client.set_buf_change_handler = function(self, bufnr)
   if not self.attached_buf_list[bufnr] then
     self.attached_buf_list[bufnr] = true
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = function(...) self:handle_text_document_did_change(...) end,
-      utf_sizes = (client.offset_encoding == 'utf-16' or (client.offset_encoding == 'utf-32'))
+      utf_sizes = (Client.offset_encoding == 'utf-16' or (Client.offset_encoding == 'utf-32'))
     })
   end
 end
 
 
 
-client.handle_text_document_did_change = function(self, _, bufnr, changedtick, firstline, lastline, new_lastline, old_bytes, _, units)
+Client.handle_text_document_did_change = function(self, _, bufnr, changedtick, firstline, lastline, new_lastline, old_bytes, _, units)
   if self._stopped then return true end
   local uri = vim.uri_from_bufnr(bufnr)
   local version = changedtick
 
-  update_document_version(version, uri)
+  protocol.update_document_version(version, uri)
   local textDocument = { uri = uri, version = version }
   local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
   local text = table.concat(lines, "\n") .. ((new_lastline > firstline) and "\n" or "")
@@ -214,7 +205,7 @@ end
 -- @param params: the parameters to send
 -- @param cb (optional): If sent, will call this when it's done
 --                          otherwise it'll wait til the client is done
-client.request = function(self, method, params, cb, bufnr)
+Client.request = function(self, method, params, cb, bufnr)
   if not method then
     error("No request method supplied", 2)
   end
@@ -244,7 +235,7 @@ end
 -- @param cb     (function)     : An optional function pointer to call once the request has been completed
 --                                  If a string is passed, it will execute a VimL funciton of that name
 --                                  To disable handling the request, pass "false"
-client.request_async = function(self, method, params, cb, bufnr)
+Client.request_async = function(self, method, params, cb, bufnr)
   if not method then
     error("No request method supplied", 2)
   end
@@ -269,7 +260,7 @@ client.request_async = function(self, method, params, cb, bufnr)
     bufnr = bufnr,
   }
 
-  uv.write(self.stdin, req:data())
+  uv.write(self._stdin, req:data())
   local log_msg = "Send request --- "..self.filetype..", "..self.server_name.." --->: [["..req:data().."]]"
   logger.debug(log_msg)
   logger.client.debug(log_msg)
@@ -280,7 +271,7 @@ end
 --- Send a notification to the server
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
-client.notify = function(self, method, params)
+Client.notify = function(self, method, params)
   if self._stopped then
     logger.info('Client closed. '..self.filetype..', '..self.server_name)
     return nil
@@ -292,7 +283,7 @@ client.notify = function(self, method, params)
     return nil
   end
 
-  uv.write(self.stdin, notification:data())
+  uv.write(self._stdin, notification:data())
   local log_msg = "Send request --- "..self.filetype..", "..self.server_name.." --->: [["..notification:data().."]]"
   logger.debug(log_msg)
   logger.client.debug(log_msg)
@@ -300,7 +291,7 @@ end
 
 --- Parse an LSP Message's header
 -- @param header: The header to parse.
-client._parse_header = function(header)
+Client._parse_header = function(header)
   if type(header) ~= 'string' then
     return nil, nil
   end
@@ -327,9 +318,9 @@ client._parse_header = function(header)
   return split_lines, nil
 end
 
-client.on_stdout = function(self, data)
+Client._on_stdout = function(self, data)
   if not data then
-    self:on_error(error_level.info, '_on_read error: no chunk')
+    self:_on_error(error_level.info, '_on_read error: no chunk')
     return
   end
 
@@ -340,7 +331,6 @@ client.on_stdout = function(self, data)
     if self._read_state == read_state.init then
       self._read_length = 0
       self._read_state = read_state.header
-      self._current_header = {}
     elseif self._read_state == read_state.header then
       local eol = self._read_data:find('\r\n')
 
@@ -358,7 +348,7 @@ client.on_stdout = function(self, data)
         local parsed = self._parse_header(line)
 
         if (not parsed.content_length) and (not self._read_length) then
-          self:on_error(error_level.reset_state,
+          self:_on_error(error_level.reset_state,
             string.format('_on_read error: bad header\n\t%s\n\t%s',
               line,
               vim.tbl_tostring(parsed))
@@ -370,7 +360,7 @@ client.on_stdout = function(self, data)
           self._read_length = parsed.content_length
 
           if type(self._read_length) ~= 'number' then
-            self:on_error(error_level.reset_state,
+            self:_on_error(error_level.reset_state,
               string.format('_on_read error: bad content length (%s)',
                 self._read_length)
               )
@@ -388,18 +378,18 @@ client.on_stdout = function(self, data)
       local body = self._read_data:sub(1, self._read_length)
       self._read_data = self._read_data:sub(self._read_length + 1)
 
-      vim.schedule(function() self:on_message(body) end)
+      vim.schedule(function() self:_on_message(body) end)
       self._read_state = read_state.init
     end
   end
 end
 
-client.on_message = function(self, body)
+Client._on_message = function(self, body)
   local ok, json_message = pcall(util.decode_json, body)
 
   if not ok then
-    logger.error('Not a valid message. Calling self:on_error')
-    self:on_error(
+    logger.error('Not a valid message. Calling self:_on_error')
+    self:_on_error(
       error_level.reset_state,
       string.format('_on_read error: bad json_message (%s)', body)--self._read_data)
     )
@@ -453,10 +443,10 @@ client.on_message = function(self, body)
   end
 end
 
-client.on_error = function(self, level, err_message)
+Client._on_error = function(self, level, err_message)
   if type(level) ~= 'number' then
     print('It seems to have a not number', level)
-    self:reset_state()
+    self:_reset_state()
     return
   end
 
@@ -465,7 +455,7 @@ client.on_error = function(self, level, err_message)
   end
 
   if level <= error_level.reset_state then
-    self:reset_state()
+    self:_reset_state()
   end
 
   if level <= error_level.info then
@@ -473,13 +463,9 @@ client.on_error = function(self, level, err_message)
   end
 end
 
-client.on_exit = function(data)
-  logger.info('Exiting with data:', data)
-end
-
-client.reset_state = function(self)
+Client._reset_state = function(self)
   self._read_state = read_state.init
   self._read_data = ''
 end
 
-return client
+return Client
