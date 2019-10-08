@@ -1052,6 +1052,9 @@ describe('ui/msg_puts_printf', function()
     local cmd = ''
     local locale_dir = test_build_dir..'/share/locale/ja/LC_MESSAGES'
 
+    os.execute('cmake -E make_directory '..locale_dir)
+    os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
+
     clear({env={LANG='ja_JP.UTF-8'}})
     screen = Screen.new(80, 5)
     screen:attach()
@@ -1069,9 +1072,6 @@ describe('ui/msg_puts_printf', function()
         return
       end
     end
-
-    os.execute('cmake -E make_directory '..locale_dir)
-    os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
 
     eq('ja_JP.UTF-8', eval('$LANG'))
     local lang = eval('execute("lang messages")')
