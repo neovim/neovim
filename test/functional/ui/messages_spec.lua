@@ -1067,10 +1067,6 @@ describe('ui/msg_puts_printf', function()
       if (exc_exec('lang ja_JP.UTF-8') ~= 0) then
         pending('Locale ja_JP.UTF-8 not supported', function() end)
         return
-      elseif helpers.isCI() then
-        -- Fails non--Windows CI. Message catalog direcotry issue?
-        pending('fails on unix CI', function() end)
-        return
       end
     end
 
