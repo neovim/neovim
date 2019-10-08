@@ -106,7 +106,16 @@ describe('fnamemodify()', function()
   end)
 
   it('handles shell escape', function()
-    eq("'hello there! quote '\\'' newline\n'", fnamemodify("hello there! quote ' newline\n", ':S'))
+    local expected
+
+    if iswin() then
+      -- we expand with double-quotes on Windows
+      expected = [["hello there! quote ' newline]] .. '\n' .. [["]]
+    else
+      expected = [['hello there! quote '\'' newline]] .. '\n' .. [[']]
+    end
+
+    eq(expected, fnamemodify("hello there! quote ' newline\n", ':S'))
   end)
 
   it('can combine :e and :r', function()
