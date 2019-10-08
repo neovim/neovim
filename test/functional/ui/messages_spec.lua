@@ -1073,8 +1073,9 @@ describe('ui/msg_puts_printf', function()
     os.execute('cmake -E make_directory '..locale_dir)
     os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
 
+    eq('ja_JP.UTF-8', eval('$LANG'))
     local lang = eval('execute("lang messages")')
-    eq(lang, '\n現在の messages 言語: "ja_JP.UTF-8"')
+    eq('\n現在の messages 言語: "ja_JP.UTF-8"', lang)
 
     cmd = cmd..'"'..nvim_prog..'" -u NONE -i NONE -Es -V1'
     command([[call termopen(']]..cmd..[[')]])
