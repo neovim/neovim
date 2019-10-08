@@ -1053,7 +1053,7 @@ describe('ui/msg_puts_printf', function()
     local locale_dir = test_build_dir..'/share/locale/ja/LC_MESSAGES'
 
     clear({env={LANG='ja_JP.UTF-8'}})
-    screen = Screen.new(25, 5)
+    screen = Screen.new(80, 5)
     screen:attach()
 
     if iswin() then
@@ -1073,15 +1073,18 @@ describe('ui/msg_puts_printf', function()
     os.execute('cmake -E make_directory '..locale_dir)
     os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
 
+    local lang = eval('execute("lang messages")')
+    eq(lang, '\n現在の messages 言語: "ja_JP.UTF-8"')
+
     cmd = cmd..'"'..nvim_prog..'" -u NONE -i NONE -Es -V1'
     command([[call termopen(']]..cmd..[[')]])
-    screen:expect([[
-    ^Exモードに入ります. ノー |
-    マルモードに戻るには"visu|
-    al"と入力してください.   |
-    :                        |
-                             |
-    ]])
+    screen:expect{grid=[[
+      ^Exモードに入ります. ノーマルモードに戻るには"visual"と入力してください.         |
+      :                                                                               |
+      [Process exited 0]                                                              |
+                                                                                      |
+                                                                                      |
+    ]]}
 
     os.execute('cmake -E remove_directory '..test_build_dir..'/share')
   end)
