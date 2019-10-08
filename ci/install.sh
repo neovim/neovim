@@ -34,7 +34,7 @@ curl "https://codeload.github.com/tree-sitter/tree-sitter-c/tar.gz/v0.15.2" -o t
 tar xf tree_sitter_c.tar.gz
 cd tree-sitter-c-0.15.2
 export TREE_SITTER_DIR=$HOME/tree-sitter-build/
-mkdir -p $TREE_SITTER_DIR/bin
+mkdir -p "$TREE_SITTER_DIR/bin"
 
 if [[ "$BUILD_32BIT" != "ON" ]]; then
   # builds c parser in $HOME/tree-sitter-build/bin/c.(so|dylib)
@@ -42,5 +42,5 @@ if [[ "$BUILD_32BIT" != "ON" ]]; then
 else
   # no tree-sitter binary for 32bit linux, so fake it (no tree-sitter unit tests)
   cd src/
-  gcc -m32 -o $TREE_SITTER_DIR/bin/c.so -shared parser.c -I.
+  gcc -m32 -o "$TREE_SITTER_DIR/bin/c.so" -shared parser.c -I.
 fi
