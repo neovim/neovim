@@ -17,21 +17,18 @@ local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 
 local describe = describe
-do
-  clear()
-  if missing_provider('ruby') then
-    it(':ruby reports E319 if provider is missing', function()
-      local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
-      matches(expected, pcall_err(command, 'ruby puts "foo"'))
-      matches(expected, pcall_err(command, 'rubyfile foo'))
-    end)
-    describe = function(desc, ...) pending(desc..' (Missing neovim RubyGem)', ...) end
-  end
+if missing_provider('ruby') then
+  it(':ruby reports E319 if provider is missing', function()
+    local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
+    matches(expected, pcall_err(command, 'ruby puts "foo"'))
+    matches(expected, pcall_err(command, 'rubyfile foo'))
+  end)
+  describe = function(desc, ...) pending(desc..' (Missing neovim RubyGem)', ...) end
+else
+  before_each(function()
+    clear()
+  end)
 end
-
-before_each(function()
-  clear()
-end)
 
 describe('ruby feature test', function()
   it('works', function()

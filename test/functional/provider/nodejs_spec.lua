@@ -7,11 +7,8 @@ local eval = helpers.eval
 local retry = helpers.retry
 
 local describe = describe
-do
-  clear()
-  if missing_provider('node') then
-    describe = function(desc, ...) pending(desc.." (Missing nodejs host, or nodejs version is too old)", ...) end
-  end
+if missing_provider('node') then
+  describe = function(desc, ...) pending(desc.." (Missing nodejs host, or nodejs version is too old)", ...) end
 end
 
 before_each(function()

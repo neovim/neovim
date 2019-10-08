@@ -17,22 +17,19 @@ local matches = helpers.matches
 local pcall_err = helpers.pcall_err
 
 local describe = describe
-do
-  clear()
-  if missing_provider('python') then
-    it(':python reports E319 if provider is missing', function()
-      local expected = [[Vim%(py.*%):E319: No "python" provider found.*]]
-      matches(expected, pcall_err(command, 'py print("foo")'))
-      matches(expected, pcall_err(command, 'pyfile foo'))
-    end)
-    describe = function(desc, ...) pending(desc..' (Python 2 (or the pynvim module) is broken/missing)', ...) end
-  end
+if missing_provider('python') then
+  it(':python reports E319 if provider is missing', function()
+    local expected = [[Vim%(py.*%):E319: No "python" provider found.*]]
+    matches(expected, pcall_err(command, 'py print("foo")'))
+    matches(expected, pcall_err(command, 'pyfile foo'))
+  end)
+  describe = function(desc, ...) pending(desc..' (Python 2 (or the pynvim module) is broken/missing)', ...) end
+else
+  before_each(function()
+    clear()
+    command('python import vim')
+  end)
 end
-
-before_each(function()
-  clear()
-  command('python import vim')
-end)
 
 describe('python feature test', function()
   it('works', function()

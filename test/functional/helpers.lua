@@ -735,6 +735,9 @@ function module.new_pipename()
 end
 
 function module.missing_provider(provider)
+  if not module.get_session() then
+    module.clear()
+  end
   if provider == 'ruby' or provider == 'node' then
     local prog = module.funcs['provider#' .. provider .. '#Detect']()
     return prog == '' and (provider .. ' not detected') or false
