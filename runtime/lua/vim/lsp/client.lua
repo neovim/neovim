@@ -243,7 +243,7 @@ Client.request_async = function(self, method, params, cb, bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
   if self._stopped then
-    logger.info('Client closed. ', self.server_name)
+    logger.info('Client closed. '..self.server_name)
     return nil
   end
 
@@ -261,9 +261,8 @@ Client.request_async = function(self, method, params, cb, bufnr)
   }
 
   uv.write(self._stdin, req:data())
-  local log_msg = "Send request --- "..self.filetype..", "..self.server_name.." --->: [["..req:data().."]]"
-  logger.debug(log_msg)
-  logger.client.debug(log_msg)
+
+  logger.write('debug', "Send request --- "..self.filetype..", "..self.server_name.." --->: [[ "..req:data().." ]]", 'client')
 
   return req.id
 end
@@ -284,9 +283,8 @@ Client.notify = function(self, method, params)
   end
 
   uv.write(self._stdin, notification:data())
-  local log_msg = "Send request --- "..self.filetype..", "..self.server_name.." --->: [["..notification:data().."]]"
-  logger.debug(log_msg)
-  logger.client.debug(log_msg)
+
+  logger.write('debug', "Send request --- "..self.filetype..", "..self.server_name.." --->: [[ "..notification:data().." ]]", 'client')
 end
 
 --- Parse an LSP Message's header
@@ -397,8 +395,7 @@ Client._on_message = function(self, body)
   end
   -- Handle notifications
   if json_message.method and json_message.params then
-    logger.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params))
-    logger.server.debug("Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params))
+    logger.write('debug', "Receive notification <---: [[ method: "..json_message.method..", params: "..vim.tbl_tostring(json_message.params).." ]]", 'server')
     call_callback(json_message.method, true, json_message.params, nil)
 
     return
@@ -415,13 +412,9 @@ Client._on_message = function(self, body)
     local is_success = not json_message['error']
     local data = json_message['error'] or json_message.result or {}
     if is_success then
-      local log_msg = "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data)
-      logger.debug(log_msg)
-      logger.server.debug(log_msg)
+      logger.write('debug', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.tbl_tostring(data).." ]]", 'server')
     else
-      local log_msg = "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data)
-      logger.error(log_msg)
-      logger.server.error(log_msg)
+      logger.write('error', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.tbl_tostring(data).." ]]", 'server')
     end
 
     -- If no callback is passed with request, use the registered callback.

@@ -86,19 +86,29 @@ local logger = Logger:new('LSP')
 logger.client = Logger:new('LSP')
 logger.server = Logger:new('LSP')
 
-local log_level = 'none'
+local default_log_level = 'none'
 
 if (vim.api.nvim_call_function('exists', {'g:language_client_log_level'}) == 1) then
-  log_level = vim.api.nvim_get_var('language_client_log_level')
+  default_log_level = vim.api.nvim_get_var('language_client_log_level')
 end
 
-logger:set_log_level(log_level)
-logger:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/all.log')
+logger:set_log_level(default_log_level)
+logger:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/full.log')
 
-logger.client:set_log_level(log_level)
+logger.client:set_log_level(default_log_level)
 logger.client:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/client.log')
 
-logger.server:set_log_level(log_level)
+logger.server:set_log_level(default_log_level)
 logger.server:set_outfile(vim.api.nvim_call_function('stdpath', {'data'})..'/language_client',  '/server.log')
+
+logger.write = function(log_level, msg, target)
+  logger[log_level](msg)
+
+  if target == 'client' then
+    logger.client[log_level](msg)
+  elseif target == 'server' then
+    logger.server[log_level](msg)
+  end
+end
 
 return logger
