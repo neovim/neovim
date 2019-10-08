@@ -9,6 +9,7 @@ local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 local OK = 0
+local iswin = helpers.iswin
 
 require('lfs')
 
@@ -322,6 +323,14 @@ describe('env.c', function()
       cimp.init_homedir()
       neq(get_homedir(), '')
       neq(get_homedir(), nil)
+
+      if iswin() then
+          -- Worst case is 'C:/'
+          assert.True(#get_homedir() > 2)
+      else
+          -- Should get at least '/home' or '/root' in test environment
+          assert.True(#get_homedir() > 4)
+      end
     end)
   end)
 end)

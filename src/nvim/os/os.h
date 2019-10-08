@@ -16,4 +16,8 @@
 # include "os/stdpaths.h.generated.h"
 #endif
 
+#ifdef UNIT_TESTING
+const char *get_homedir(void);
+#endif
+
 #endif  // NVIM_OS_OS_H

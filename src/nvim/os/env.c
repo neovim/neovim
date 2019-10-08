@@ -292,6 +292,19 @@ void os_get_hostname(char *hostname, size_t size)
 /// Don't do this for Windows, it will change the "current dir" for a drive.
 static char *homedir = NULL;
 
+static uv_mutex_t homedir_lock;
+const char *os_homedir(void)
+{
+    size_t homedir_size = (size_t)MAXPATHL;
+    uv_mutex_lock(&homedir_lock);
+    int ret = uv_os_homedir((char *)os_buf, &homedir_size);
+    uv_mutex_unlock(&homedir_lock);
+    if (ret == 0 && homedir_size > 0) {
+        return xstrndup((char *)os_buf, homedir_size);
+    }
+    return NULL;
+}
+
 void init_homedir(void)
 {
   // In case we are called a second time.
@@ -329,8 +342,7 @@ void init_homedir(void)
   if (var != NULL && *var == '%') {
     const char *p = strchr(var + 1, '%');
     if (p != NULL) {
-      vim_snprintf(os_buf, (size_t)(p - var), "%s",
-                   var + 1);
+      vim_snprintf(os_buf, (size_t)(p - var), "%s", var + 1);
       const char *exp = os_getenv(os_buf);
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
@@ -338,6 +350,10 @@ void init_homedir(void)
         var = os_buf;
       }
     }
+  }
+
+  if (var == NULL) {
+     var = os_homedir();
   }
 
   // Default home dir is C:/
@@ -353,11 +369,7 @@ void init_homedir(void)
   // The reason for doing this before the unix block is for the unix
   // block to resolve links
   if (var == NULL) {
-    size_t homedir_size = (size_t)MAXPATHL;
-    int ret = uv_os_homedir((char *)os_buf, &homedir_size);
-    if (ret == 0 && homedir_size > 0) {
-        var = xstrndup((char *)os_buf, homedir_size);
-    }
+    var = os_homedir();
   }
 
   if (var != NULL) {
@@ -383,17 +395,16 @@ void init_homedir(void)
   set_homedir(var, MAXPATHL);
 }
 
-// Accessor function to expose homedir to unittests
+#ifdef UNIT_TESTING
 const char *get_homedir(void)
 {
   return homedir;
 }
+#endif
 
 void set_homedir(const char *str, size_t size)
 {
-  if (get_homedir() != NULL) {
-      xfree(homedir);
-  }
+  xfree(homedir);
   homedir = xstrndup(str, size);
 }
 
