@@ -60,10 +60,10 @@ TextDocument.CompletionList_to_matches = function(data)
   local matches = {}
 
   for _, completion_item in ipairs(items) do
-    local info = ''
+    local info = ' '
     local documentation = completion_item.documentation
     if documentation then
-      if type(documentation) == 'string' then
+      if type(documentation) == 'string' and documentation ~= '' then
         info = documentation
       elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
         info = documentation.value
