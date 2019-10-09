@@ -1299,7 +1299,8 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
   // XXX deal with folds
 
   // Calculate how many columns worth of each line to jump through
-  int width = wp->w_width_inner - win_col_off(wp);
+  int width1 = wp->w_width_inner - win_col_off(wp);
+  int width2 = width1 + win_col_off2(wp);
 
   linenr_T lnum = wp->w_topline;
   char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
@@ -1308,10 +1309,14 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
 
   while (rows > 0) {
     rows--;
-    skipcol -= width;
-
+    if (skipcol >= width1 + width2) {
+      skipcol -= width2;
+    }
+    else if (skipcol >= width1) {
+      skipcol -= width1;
+    }
     // Did we reach the beginning of the line?
-    if (skipcol < 0) {
+    else {
       if (wp->w_topline <= 1) {
         wp->w_skipcol = 0;
         break;
@@ -1327,8 +1332,13 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
       // We subtract/add one before modulo so that a line length that
       // is divisible by the width doesn't end up with a blank line
       // afterwards
-      int offset = ((line_width - 1) % width) + 1;
-      skipcol = line_width - offset;
+      skipcol = line_width;
+      if (skipcol < width1)
+        skipcol = 0;
+      else {
+        int offset = ((line_width - width1 - 1) % width2) + 1;
+        skipcol -= offset;
+      }
     }
     wp->w_wrow++;
     wp->w_skipcol = skipcol;
@@ -1359,7 +1369,8 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
   // XXX deal with folds
 
   // Calculate how many columns worth of each line to jump through
-  int width = wp->w_width_inner - win_col_off(wp);
+  int width1 = wp->w_width_inner - win_col_off(wp);
+  int width2 = width1 + win_col_off2(wp);
 
   linenr_T lnum = wp->w_topline;
   char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
@@ -1371,6 +1382,7 @@ void scroll_rows_up(win_T *wp, long rows, int byfold)
   while (rows > 0) {
     // Skip over one row's worth of characters.
     colnr_T last_vcol = vcol;
+    int width = vcol ? width2 : width1;
     ptr = advance_line_ptr_by_width(wp, line, ptr, &vcol, width);
 
     // Did we reach the end of the line?
