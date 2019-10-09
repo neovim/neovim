@@ -31,6 +31,7 @@ func Test_wnext()
   call assert_equal('X2', bufname('%'))
   call assert_fails('wnext X4', 'E13:')
   call assert_equal(['1'], readfile('X4'))
+  call assert_match('\V\^'.$TMPDIR.'/backupdir,', &backupdir)
   wnext! X4
   call assert_equal(['2'], readfile('X4'))
   call assert_equal('X3', bufname('%'))
