@@ -947,6 +947,17 @@ void curs_columns(
   curwin->w_valid |= VALID_WCOL|VALID_WROW|VALID_VIRTCOL;
 }
 
+// Round a line length up to a number of cells that would entirely fill the
+// screen rows it occupies, with the first row taking width1 cells, and rows
+// afterwards taking width2 cells.
+static colnr_T round_line_len(colnr_T linelen, colnr_T width1, colnr_T width2)
+{
+  if (linelen <= width1) {
+    return width1;
+  }
+  return ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
+}
+
 // Move 'dist' lines in direction 'dir', counting lines by *screen*
 // lines rather than lines in the file.
 // 'dist' must be positive.
@@ -981,17 +992,10 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
       if (width1 <= 0) {
         wp->w_curswant = 0;
       } else {
-        wp->w_curswant = width1 - 1;
-        if (wp->w_virtcol > wp->w_curswant)
-          wp->w_curswant += ((wp->w_virtcol
-                             - wp->w_curswant -
-                             1) / width2 + 1) * width2;
+        wp->w_curswant = round_line_len(wp->w_virtcol + 1, width1, width2) - 1;
       }
     } else {
-      if (linelen > width1)
-        n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
-      else
-        n = width1;
+      n = round_line_len(linelen, width1, width2);
       wp->w_curswant = MIN(wp->w_curswant, n - 1);
     }
 
@@ -1016,17 +1020,10 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
                                 NULL, true, NULL);
           }
           linelen = win_linetabsize(wp, get_cursor_line_ptr_win(wp), MAXCOL);
-          if (linelen > width1) {
-            int w = (((linelen - width1 - 1) / width2) + 1) * width2;
-            assert(wp->w_curswant <= INT_MAX - w);
-            wp->w_curswant += w;
-          }
+          wp->w_curswant += round_line_len(linelen, width1, width2) - width1;
         }
       } else { // dir == FORWARD
-        if (linelen > width1)
-          n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
-        else
-          n = width1;
+        n = round_line_len(linelen, width1, width2);
         if (wp->w_curswant + width2 < (colnr_T)n) {
           // move forward within line
           wp->w_curswant += width2;
