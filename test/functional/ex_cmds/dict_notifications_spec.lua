@@ -371,4 +371,24 @@ describe('VimL dictionary notifications', function()
     eq(1, eval('g:called'))
   end)
 
+  it('does not crash when using dictwatcherdel in callback', function()
+    source([[
+      let g:d = {}
+
+      function! W(...)
+        call dictwatcherdel(g:d, '*', function('W'))
+        try
+          call dictwatcherdel({}, 'meh', function('tr'))
+        catch
+          let g:exc = v:exception
+        endtry
+      endfunction
+
+      call dictwatcheradd(g:d, '*', function('W'))
+      let g:d.foo = 23
+    ]])
+    eq(23, eval('g:d.foo'))
+    eq("Vim(call):Couldn't find a watcher matching key and callback", eval('g:exc'))
+  end)
+
 end)

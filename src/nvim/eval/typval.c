@@ -1051,6 +1051,7 @@ void tv_dict_watcher_add(dict_T *const dict, const char *const key_pattern,
   watcher->key_pattern_len = key_pattern_len;
   watcher->callback = callback;
   watcher->busy = false;
+  watcher->needs_free = false;
   QUEUE_INSERT_TAIL(&dict->watchers, &watcher->node);
 }
 
@@ -1139,7 +1140,11 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   }
 
   QUEUE_REMOVE(w);
-  tv_dict_watcher_free(watcher);
+  if (watcher->busy) {
+    watcher->needs_free = true;
+  } else {
+    tv_dict_watcher_free(watcher);
+  }
   return true;
 }
 
@@ -1210,6 +1215,9 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
       tv_clear(&rettv);
+      if (watcher->needs_free) {
+        tv_dict_watcher_free(watcher);
+      }
     }
   }
   tv_dict_unref(dict);
