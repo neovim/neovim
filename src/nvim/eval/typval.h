@@ -89,6 +89,7 @@ typedef struct dict_watcher {
   size_t key_pattern_len;
   QUEUE node;
   bool busy;  // prevent recursion if the dict is changed in the callback
+  bool needs_free;
 } DictWatcher;
 
 /// Bool variable values
