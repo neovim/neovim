@@ -46,6 +46,10 @@ if ($compiler -eq 'MINGW') {
     $nvimCmakeVars['USE_GCOV'] = 'ON'
     $uploadToCodecov = $true
     $env:GCOV = "C:\msys64\mingw$bits\bin\gcov"
+
+    # Setup/build Lua coverage.
+    $env:USE_LUACOV = 1
+    $env:BUSTED_ARGS = "--coverage"
   }
   # These are native MinGW builds, but they use the toolchain inside
   # MSYS2, this allows using all the dependencies and tools available
@@ -135,6 +139,10 @@ cmake --build . --config $cmakeBuildType -- $cmakeGeneratorArgs ; exitIfFailed
 # Ensure that the "win32" feature is set.
 .\bin\nvim -u NONE --headless -c 'exe !has(\"win32\").\"cq\"' ; exitIfFailed
 
+if ($env:USE_LUACOV -eq 1) {
+  & $env:DEPS_PREFIX\luarocks\luarocks.bat install cluacov
+}
+
 # Functional tests
 # The $LastExitCode from MSBuild can't be trusted
 $failed = $false
@@ -143,18 +151,17 @@ Set-PSDebug -Off
 cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
     $_ -match 'functional tests failed with error'; $_ }
-if ($failed) {
-  if ($uploadToCodecov) {
-    bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+
+if ($uploadToCodecov) {
+  if ($env:USE_LUACOV -eq 1) {
+    & $env:DEPS_PREFIX\bin\luacov.bat
   }
+  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
+}
+if ($failed) {
   exit $LastExitCode
 }
 Set-PSDebug -Strict -Trace 1
-
-
-if ($uploadToCodecov) {
-  bash -l /c/projects/neovim/ci/common/submit_coverage.sh functionaltest
-}
 
 # Old tests
 # Add MSYS to path, required for e.g. `find` used in test scripts.
