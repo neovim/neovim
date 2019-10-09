@@ -3025,7 +3025,7 @@ typedef struct {
 ///
 /// @return pointer to allocated line, or NULL for end-of-file or
 ///         some error.
-static char_u *get_str_line(int c, void *cookie, int ident)
+static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
 {
   GetStrLineCookie *p = cookie;
   size_t i = p->offset;
@@ -3037,19 +3037,31 @@ static char_u *get_str_line(int c, void *cookie, int ident)
   }
   char buf[2046];
   char *dst;
-  dst = xstpncpy(buf, (char *)p->buf+p->offset, i - p->offset);
+  dst = xstpncpy(buf, (char *)p->buf + p->offset, i - p->offset);
   if ((uint32_t)(dst - buf) != i - p->offset) {
     smsg(_(":source error parsing command %s"), p->buf);
     return NULL;
   }
-  buf[i-p->offset]='\0';
+  buf[i - p->offset] = '\0';
   p->offset = i + 1;
   return (char_u *)xstrdup(buf);
 }
 
-int do_source_str(const char *cmd)
+int do_source_str(const char *cmd, const char *traceback_name)
 {
-  int retval;
+  char_u *save_sourcing_name = sourcing_name;
+  linenr_T save_sourcing_lnum = sourcing_lnum;
+  char_u sourcing_name_buf[256];
+  if (save_sourcing_name == NULL) {
+    sourcing_name = (char_u *)traceback_name;
+  } else {
+    snprintf((char *)sourcing_name_buf, sizeof sourcing_name_buf,
+             "%s called at %s:%"PRIdLINENR, traceback_name, save_sourcing_name,
+             save_sourcing_lnum);
+    sourcing_name = sourcing_name_buf;
+  }
+  sourcing_lnum = 0;
+
   GetStrLineCookie cookie = {
     .buf = (char_u *)cmd,
     .offset = 0,
@@ -3057,10 +3069,18 @@ int do_source_str(const char *cmd)
   const sctx_T save_current_sctx = current_sctx;
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
-  current_sctx.sc_lnum = 0;
-  retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
-                      DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_REPEAT);
+  current_sctx.sc_lnum = save_sourcing_lnum;
+  int retval = FAIL;
+  do_cmdline(NULL, get_str_line, (void *)&cookie,
+             DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
+  retval = OK;
+  if (got_int) {
+    EMSG(_(e_interr));
+  }
+
   current_sctx = save_current_sctx;
+  sourcing_lnum = save_sourcing_lnum;
+  sourcing_name = save_sourcing_name;
   return retval;
 }
 

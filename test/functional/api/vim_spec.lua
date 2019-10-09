@@ -84,7 +84,7 @@ describe('API', function()
     it(':verbose set {option}?', function()
       nvim('source', 'set nowrap')
       eq('nowrap\n\tLast set from :source (no file)',
-        nvim('command_output', 'verbose set wrap?'))
+        nvim('source_output', 'verbose set wrap?'))
     end)
 
     it('multiline input', function()
@@ -164,6 +164,36 @@ describe('API', function()
       eq('overwritten', request('nvim_get_var', 'x4'))
       eq('overwritten', request('nvim_get_var', 'x5'))
       os.remove(fname)
+    end)
+
+    it('traceback', function()
+      local fname = helpers.tmpname()
+      write_file(fname, 'echo "hello"\n')
+      local sourcing_fname = helpers.tmpname()
+      write_file(sourcing_fname, 'call nvim_source("source '..fname..'")\n')
+      meths.source('set verbose=2')
+      print()
+      local traceback_output = 'line 0: sourcing "'..sourcing_fname..'"\n'..
+        'line 0: sourcing "'..fname..'"\n'..
+        'hello\n'..
+        'finished sourcing '..fname..'\n'..
+        'continuing in nvim_source(..) called at '..sourcing_fname..':1\n'..
+        'finished sourcing '..sourcing_fname..'\n'..
+        'continuing in nvim_source(..) called at nvim_source_output(..):0'
+      eq(traceback_output, meths.source_output('call nvim_source("source '..sourcing_fname..'")'))
+      os.remove(fname)
+      os.remove(sourcing_fname)
+    end)
+  end)
+
+  describe('nvim_source_output', function()
+    it('multiline input', function()
+      eq('this is spinal tap',
+         nvim('source_output', 'lua <<EOF\n\n\nprint("this is spinal tap")\n\n\nEOF'))
+    end)
+
+    it('empty output', function()
+      eq('', nvim('source_output', 'echo'))
     end)
   end)
 

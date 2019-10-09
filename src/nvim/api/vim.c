@@ -73,12 +73,61 @@ void api_vim_free_all_mem(void)
   map_free(String, handle_T)(namespace_ids);
 }
 
-void nvim_source(String command, Error *err)
-  FUNC_API_SINCE(7)
+/// Executes a multiline block of ex-commands from a string.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @param src      String containing the ex-commands
+/// @param[out] err Error details (Vim error), if any
+void nvim_source(String src, Error *err) FUNC_API_SINCE(7)
 {
   try_start();
-  do_source_str(command.data);
+  do_source_str(src.data, "nvim_source(..)");
   try_end(err);
+}
+
+/// Executes a multiline block of ex-commands from a string and returns its
+/// (non-error) output. Shell |:!| output is not captured.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @param src      String containing the ex-commands
+/// @param[out] err Error details (Vim error), if any
+String nvim_source_output(String src, Error *err) FUNC_API_SINCE(7)
+{
+  const int save_msg_silent = msg_silent;
+  garray_T *const save_capture_ga = capture_ga;
+  garray_T capture_local;
+  ga_init(&capture_local, 1, 80);
+
+  try_start();
+  msg_silent++;
+  capture_ga = &capture_local;
+  do_source_str(src.data, "nvim_source_output(..)");
+  capture_ga = save_capture_ga;
+  msg_silent = save_msg_silent;
+  try_end(err);
+
+  if (ERROR_SET(err)) {
+    goto theend;
+  }
+
+  if (capture_local.ga_len > 1) {
+    String s = (String){
+        .data = capture_local.ga_data,
+        .size = (size_t)capture_local.ga_len,
+    };
+    // redir usually (except :echon) prepends a newline.
+    if (s.data[0] == '\n') {
+      memmove(s.data, s.data + 1, s.size - 1);
+      s.data[s.size - 1] = '\0';
+      s.size = s.size - 1;
+    }
+    return s;  // Caller will free the memory.
+  }
+theend:
+  ga_clear(&capture_local);
+  return (String)STRING_INIT;
 }
 
 /// Executes an ex-command.
