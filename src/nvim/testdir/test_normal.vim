@@ -1563,52 +1563,94 @@ endfunc
 
 fun! Test_normal29_brace()
   " basic test for { and } movements
-  let text= ['A paragraph begins after each empty line, and also at each of a set of',
-  \ 'paragraph macros, specified by the pairs of characters in the ''paragraphs''',
-  \ 'option.  The default is "IPLPPPQPP TPHPLIPpLpItpplpipbp", which corresponds to',
-  \ 'the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in',
-  \ 'the first column).  A section boundary is also a paragraph boundary.',
-  \ 'Note that a blank line (only containing white space) is NOT a paragraph',
-  \ 'boundary.',
-  \ '',
-  \ '',
-  \ 'Also note that this does not include a ''{'' or ''}'' in the first column.  When',
-  \ 'the ''{'' flag is in ''cpoptions'' then ''{'' in the first column is used as a',
-  \ 'paragraph boundary |posix|.',
-  \ '{',
-  \ 'This is no paragraph',
-  \ 'unless the ''{'' is set',
-  \ 'in ''cpoptions''',
-  \ '}',
-  \ '.IP',
-  \ 'The nroff macros IP separates a paragraph',
-  \ 'That means, it must be a ''.''',
-  \ 'followed by IP',
-  \ '.LPIt does not matter, if afterwards some',
-  \ 'more characters follow.',
-  \ '.SHAlso section boundaries from the nroff',
-  \ 'macros terminate a paragraph. That means',
-  \ 'a character like this:',
-  \ '.NH',
-  \ 'End of text here']
+  let text =<< trim [DATA]
+  A paragraph begins after each empty line, and also at each of a set of
+  paragraph macros, specified by the pairs of characters in the 'paragraphs'
+  option.  The default is "IPLPPPQPP TPHPLIPpLpItpplpipbp", which corresponds to
+  the macros ".IP", ".LP", etc.  (These are nroff macros, so the dot must be in
+  the first column).  A section boundary is also a paragraph boundary.
+  Note that a blank line (only containing white space) is NOT a paragraph
+  boundary.
+
+
+  Also note that this does not include a '{' or '}' in the first column.  When
+  the '{' flag is in 'cpoptions' then '{' in the first column is used as a
+  paragraph boundary |posix|.
+  {
+  This is no paragraph
+  unless the '{' is set
+  in 'cpoptions'
+  }
+  .IP
+  The nroff macros IP separates a paragraph
+  That means, it must be a '.'
+  followed by IP
+  .LPIt does not matter, if afterwards some
+  more characters follow.
+  .SHAlso section boundaries from the nroff
+  macros terminate a paragraph. That means
+  a character like this:
+  .NH
+  End of text here
+  [DATA]
+
   new
   call append(0, text)
   1
   norm! 0d2}
-  call assert_equal(['.IP',
-    \  'The nroff macros IP separates a paragraph', 'That means, it must be a ''.''', 'followed by IP',
-    \ '.LPIt does not matter, if afterwards some', 'more characters follow.', '.SHAlso section boundaries from the nroff',
-    \  'macros terminate a paragraph. That means', 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
+
+  let expected =<< trim [DATA]
+  .IP
+  The nroff macros IP separates a paragraph
+  That means, it must be a '.'
+  followed by IP
+  .LPIt does not matter, if afterwards some
+  more characters follow.
+  .SHAlso section boundaries from the nroff
+  macros terminate a paragraph. That means
+  a character like this:
+  .NH
+  End of text here
+
+  [DATA]
+  call assert_equal(expected, getline(1, '$'))
+
   norm! 0d}
-  call assert_equal(['.LPIt does not matter, if afterwards some', 'more characters follow.',
-    \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
-    \ 'a character like this:', '.NH', 'End of text here', ''], getline(1, '$'))
+
+  let expected =<< trim [DATA]
+  .LPIt does not matter, if afterwards some
+  more characters follow.
+  .SHAlso section boundaries from the nroff
+  macros terminate a paragraph. That means
+  a character like this:
+  .NH
+  End of text here
+
+  [DATA]
+  call assert_equal(expected, getline(1, '$'))
+
   $
   norm! d{
-  call assert_equal(['.LPIt does not matter, if afterwards some', 'more characters follow.',
-	\ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means', 'a character like this:', ''], getline(1, '$'))
+
+  let expected =<< trim [DATA]
+  .LPIt does not matter, if afterwards some
+  more characters follow.
+  .SHAlso section boundaries from the nroff
+  macros terminate a paragraph. That means
+  a character like this:
+
+  [DATA]
+  call assert_equal(expected, getline(1, '$'))
+
   norm! d{
-  call assert_equal(['.LPIt does not matter, if afterwards some', 'more characters follow.', ''], getline(1,'$'))
+
+  let expected =<< trim [DATA]
+  .LPIt does not matter, if afterwards some
+  more characters follow.
+
+  [DATA]
+  call assert_equal(expected, getline(1, '$'))
+
   " Test with { in cpooptions
   %d
   call append(0, text)
@@ -1616,21 +1658,62 @@ fun! Test_normal29_brace()
   " set cpo+={
   " 1
   " norm! 0d2}
-  " call assert_equal(['{', 'This is no paragraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}',
-  "   \ '.IP', 'The nroff macros IP separates a paragraph', 'That means, it must be a ''.''',
-  "   \ 'followed by IP', '.LPIt does not matter, if afterwards some', 'more characters follow.',
-  "   \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
-  "   \ 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
+  " let expected =<< trim [DATA]
+  " {
+  " This is no paragraph
+  " unless the '{' is set
+  " in 'cpoptions'
+  " }
+  " .IP
+  " The nroff macros IP separates a paragraph
+  " That means, it must be a '.'
+  " followed by IP
+  " .LPIt does not matter, if afterwards some
+  " more characters follow.
+  " .SHAlso section boundaries from the nroff
+  " macros terminate a paragraph. That means
+  " a character like this:
+  " .NH
+  " End of text here
+  "
+  " [DATA]
+  " call assert_equal(expected, getline(1, '$'))
+  "
   " $
   " norm! d}
-  " call assert_equal(['{', 'This is no paragraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}',
-  "   \ '.IP', 'The nroff macros IP separates a paragraph', 'That means, it must be a ''.''',
-  "   \ 'followed by IP', '.LPIt does not matter, if afterwards some', 'more characters follow.',
-  "   \ '.SHAlso section boundaries from the nroff', 'macros terminate a paragraph. That means',
-  "   \ 'a character like this:', '.NH', 'End of text here', ''], getline(1,'$'))
+  " let expected =<< trim [DATA]
+  " {
+  " This is no paragraph
+  " unless the '{' is set
+  " in 'cpoptions'
+  " }
+  " .IP
+  " The nroff macros IP separates a paragraph
+  " That means, it must be a '.'
+  " followed by IP
+  " .LPIt does not matter, if afterwards some
+  " more characters follow.
+  " .SHAlso section boundaries from the nroff
+  " macros terminate a paragraph. That means
+  " a character like this:
+  " .NH
+  " End of text here
+  "
+  " [DATA]
+  " call assert_equal(expected, getline(1, '$'))
+  "
   " norm! gg}
   " norm! d5}
-  " call assert_equal(['{', 'This is no paragraph', 'unless the ''{'' is set', 'in ''cpoptions''', '}', ''], getline(1,'$'))
+  "
+  " let expected =<< trim [DATA]
+  " {
+  " This is no paragraph
+  " unless the '{' is set
+  " in 'cpoptions'
+  " }
+
+  " [DATA]
+  " call assert_equal(expected, getline(1, '$'))
 
   " clean up
   set cpo-={

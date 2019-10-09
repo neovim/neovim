@@ -7100,12 +7100,10 @@ auto_next_pat(
   }
 }
 
-/*
- * Get next autocommand command.
- * Called by do_cmdline() to get the next line for ":if".
- * Returns allocated string, or NULL for end of autocommands.
- */
-char_u *getnextac(int c, void *cookie, int indent)
+/// Get next autocommand command.
+/// Called by do_cmdline() to get the next line for ":if".
+/// @return allocated string, or NULL for end of autocommands.
+char_u *getnextac(int c, void *cookie, int indent, bool do_concat)
 {
   AutoPatCmd      *acp = (AutoPatCmd *)cookie;
   char_u          *retval;

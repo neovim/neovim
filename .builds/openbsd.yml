@@ -35,7 +35,7 @@ tasks:
     export LC_CTYPE=en_US.UTF-8
     # functional tests
     cd neovim/build
-    # cmake --build . --config Debug --target functionaltest
+    cmake --build . --config Debug --target functionaltest
     # oldtests
     cd ..
     gmake oldtest

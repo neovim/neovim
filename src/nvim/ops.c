@@ -671,13 +671,15 @@ int get_expr_register(void)
 {
   char_u      *new_line;
 
-  new_line = getcmdline('=', 0L, 0);
-  if (new_line == NULL)
+  new_line = getcmdline('=', 0L, 0, true);
+  if (new_line == NULL) {
     return NUL;
-  if (*new_line == NUL)         /* use previous line */
+  }
+  if (*new_line == NUL) {  // use previous line
     xfree(new_line);
-  else
+  } else {
     set_expr_line(new_line);
+  }
   return '=';
 }
 

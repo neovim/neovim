@@ -88,7 +88,7 @@ typedef struct exarg exarg_T;
 
 typedef void (*ex_func_T)(exarg_T *eap);
 
-typedef char_u *(*LineGetter)(int, void *, int);
+typedef char_u *(*LineGetter)(int, void *, int, bool);
 
 /// Structure for command definition.
 typedef struct cmdname {

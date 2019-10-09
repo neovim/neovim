@@ -65,34 +65,35 @@ func Test_mksession_utf8()
   call wincol()
   mksession! test_mks.out
   let li = filter(readfile('test_mks.out'), 'v:val =~# "\\(^ *normal! 0\\|^ *exe ''normal!\\)"')
-  let expected = [
-    \   'normal! 016|',
-    \   'normal! 016|',
-    \   'normal! 016|',
-    \   'normal! 08|',
-    \   'normal! 08|',
-    \   'normal! 016|',
-    \   'normal! 016|',
-    \   'normal! 016|',
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 8 . '|'",
-    \   "  normal! 08|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 8 . '|'",
-    \   "  normal! 08|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|",
-    \   "  exe 'normal! ' . s:c . '|zs' . 16 . '|'",
-    \   "  normal! 016|"
-    \ ]
+  let expected =<< trim [DATA]
+  normal! 016|
+  normal! 016|
+  normal! 016|
+  normal! 08|
+  normal! 08|
+  normal! 016|
+  normal! 016|
+  normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 8 . '|'
+    normal! 08|
+    exe 'normal! ' . s:c . '|zs' . 8 . '|'
+    normal! 08|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+    exe 'normal! ' . s:c . '|zs' . 16 . '|'
+    normal! 016|
+  [DATA]
+
   call assert_equal(expected, li)
   tabclose!
 
