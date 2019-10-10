@@ -37,11 +37,13 @@
 // the behavior of `os_getenv`.
 static PMap(cstr_t) *envmap;
 static uv_mutex_t mutex;
+static uv_mutex_t homdir_mutex;
 
 void env_init(void)
 {
   envmap = pmap_new(cstr_t)();
   uv_mutex_init(&mutex);
+  uv_mutex_init(&homdir_mutex);
 }
 
 /// Like getenv(), but returns NULL if the variable is empty.
@@ -290,15 +292,22 @@ void os_get_hostname(char *hostname, size_t size)
 ///   - as a last resort, get the pwd of the current directory.
 /// This also works with mounts and links.
 /// Don't do this for Windows, it will change the "current dir" for a drive.
+
 static char *homedir = NULL;
 
 void init_homedir(void)
 {
+  uv_mutex_lock(&homdir_mutex);
   // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
 
   const char *var = os_getenv("HOME");
+  // Have a boolean flag keeping track of whether var
+  // is pointing at an item in envmap, the reason for doing this
+  // is we don't want to free items in envmap at the end, but we
+  // do want to free some memory pointed by var
+  bool var_in_envmap = (var && *var) ? true : false;
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -315,12 +324,15 @@ void init_homedir(void)
         && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
       snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
       if (os_buf[0] != NUL) {
-        var = os_buf;
+        var =  xstrndup((char *)os_buf, MAXPATHL);
+        var_in_envmap = false;
       }
     }
   }
+
   if (var == NULL) {
     var = os_getenv("USERPROFILE");
+    var_in_envmap = (var && *var) ? true : false;
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -334,13 +346,18 @@ void init_homedir(void)
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
         vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
-        var = os_buf;
+        if (!var_in_envmap) {
+          xfree((char *)var);
+        }
+        var = xstrndup((char *)os_buf, MAXPATHL);
+        var_in_envmap = false;
       }
     }
   }
 
   if (var == NULL) {
-     var = os_homedir();
+    var = os_homedir();
+    var_in_envmap = false;
   }
 
   // Default home dir is C:/
@@ -348,7 +365,8 @@ void init_homedir(void)
   if (var == NULL
       // Empty means "undefined"
       || *var == NUL) {
-    var = "C:/";
+    var = xstrdup("C:/");
+    var_in_envmap = false;
   }
 #endif
 
@@ -357,6 +375,7 @@ void init_homedir(void)
   // block to resolve links
   if (var == NULL) {
     var = os_homedir();
+    var_in_envmap = false;
   }
 
   if (var != NULL) {
@@ -365,7 +384,11 @@ void init_homedir(void)
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
       if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        var = (char *)IObuff;
+        if (!var_in_envmap) {
+          xfree((char *)var);
+        }
+        var = xstrndup((char *)IObuff, MAXPATHL);
+        var_in_envmap = false;
       }
       if (os_chdir(os_buf) != 0) {
         EMSG(_(e_prev_dir));
@@ -376,18 +399,23 @@ void init_homedir(void)
 
   // As a last resort, return the current working directory
   if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
-    var = (char *)os_buf;
+    var = xstrndup(os_buf, MAXPATHL);
+    var_in_envmap = false;
   }
 
-  set_homedir(var, MAXPATHL);
+  homedir = xstrndup(var, MAXPATHL);
+  if (!var_in_envmap) {
+      xfree((char *)var);
+  }
+  uv_mutex_unlock(&homdir_mutex);
 }
 
-const char *os_homedir(void)
+char *os_homedir(void)
 {
-    size_t homedir_size = (size_t)MAXPATHL;
+    size_t homedir_size = MAXPATHL;
     int ret = uv_os_homedir((char *)os_buf, &homedir_size);
     if (ret == 0 && homedir_size > 0) {
-        return xstrndup((char *)os_buf, homedir_size);
+      return xstrndup((char *)os_buf, MAXPATHL);
     }
     return NULL;
 }
@@ -398,12 +426,6 @@ const char *get_homedir(void)
   return homedir;
 }
 #endif
-
-void set_homedir(const char *str, size_t size)
-{
-  xfree(homedir);
-  homedir = xstrndup(str, size);
-}
 
 #if defined(EXITFREE)
 
@@ -945,7 +967,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
 
   // We check both the value of the $HOME environment variable and the
   // "real" home directory.
-  if (homedir != NULL) {
+  if (homedir) {
     dirlen = strlen(homedir);
   }
 

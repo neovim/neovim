@@ -325,8 +325,8 @@ describe('env.c', function()
       neq(get_homedir(), nil)
 
       if iswin() then
-          -- Worst case is 'C:/'
-          assert.True(#get_homedir() > 2)
+          -- Worst case is '\\'
+          assert.True(#get_homedir() > 1)
       else
           -- Should get at least '/home' or '/root' in test environment
           assert.True(#get_homedir() > 4)
