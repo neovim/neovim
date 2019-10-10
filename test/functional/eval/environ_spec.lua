@@ -8,7 +8,6 @@ local nvim_prog = helpers.nvim_prog
 local setenv = helpers.funcs.setenv
 local system = helpers.funcs.system
 local eval = helpers.eval
-local iswin = helpers.iswin
 
 describe('environment variables', function()
   it('environ() handles empty env variable', function()
@@ -34,9 +33,7 @@ describe('empty $HOME', function()
 
   -- recover $HOME after each test
   after_each(function()
-    if iswin() then
-      setenv('HOME', original_home, true)
-    else
+    if original_home ~= nil then
       setenv('HOME', original_home)
     end
     os.remove('test_empty_home')
