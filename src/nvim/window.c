@@ -4642,8 +4642,10 @@ win_free (
 
   xfree(wp->w_lines);
 
-  for (i = 0; i < wp->w_tagstacklen; ++i)
+  for (i = 0; i < wp->w_tagstacklen; i++) {
     xfree(wp->w_tagstack[i].tagname);
+    xfree(wp->w_tagstack[i].user_data);
+  }
 
   xfree(wp->w_localdir);
 
