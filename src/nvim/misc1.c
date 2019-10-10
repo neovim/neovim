@@ -444,17 +444,13 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
  * Like plines_win(), but only reports the number of physical screen lines
  * used from the start of the line to the given column number.
  */
-int plines_win_col(win_T *wp, linenr_T lnum, long column)
+int plines_win_col_nofill(win_T *wp, linenr_T lnum, long column)
 {
-  // Check for filler lines above this buffer line.  When folded the result
-  // is one line anyway.
-  int lines = diff_check_fill(wp, lnum);
-
   if (!wp->w_p_wrap)
-    return lines + 1;
+    return 1;
 
   if (wp->w_width_inner == 0) {
-    return lines + 1;
+    return 1;
   }
 
   char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
@@ -482,10 +478,15 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     return 9999;
   }
 
-  lines += 1;
+  int lines = 1;
   if (col > width)
     lines += (col - width) / (width + win_col_off2(wp)) + 1;
   return lines;
+}
+
+int plines_win_col(win_T *wp, linenr_T lnum, long column)
+{
+  return plines_win_col_nofill(wp, lnum, column) + diff_check_fill(wp, lnum);
 }
 
 /// Get the number of screen lines lnum takes up. This takes care of
