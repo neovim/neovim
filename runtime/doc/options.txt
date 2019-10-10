@@ -6159,6 +6159,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   match	Match case
 	   smart	Ignore case unless an upper case letter is used
 
+ 							*'tagfunc'* *'tfu'*
+ 'tagfunc' 'tfu'		string	(default: empty)
+ 			local to buffer
+ 	This option specifies a function to be used to perform tag searches.
+ 	The function gets the tag pattern and should return a List of matching
+ 	tags.  See |tag-function| for an explanation of how to write the
+ 	function and an example.
+ 
 						*'taglength'* *'tl'*
 'taglength' 'tl'	number	(default 0)
 			global

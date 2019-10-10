@@ -119,10 +119,11 @@ typedef uint16_t disptick_T;  // display tick type
  * The taggy struct is used to store the information about a :tag command.
  */
 typedef struct taggy {
-  char_u      *tagname;         /* tag name */
-  fmark_T fmark;                /* cursor position BEFORE ":tag" */
-  int cur_match;                /* match number */
-  int cur_fnum;                 /* buffer number used for cur_match */
+  char_u      *tagname;         // tag name
+  fmark_T fmark;                // cursor position BEFORE ":tag"
+  int cur_match;                // match number
+  int cur_fnum;                 // buffer number used for cur_match
+  char_u *user_data;            // used with tagfunc
 } taggy_T;
 
 typedef struct buffblock buffblock_T;
@@ -647,6 +648,7 @@ struct file_buffer {
   char_u *b_p_cpt;              ///< 'complete'
   char_u *b_p_cfu;              ///< 'completefunc'
   char_u *b_p_ofu;              ///< 'omnifunc'
+  char_u *b_p_tfu;              ///< 'tagfunc'
   int b_p_eol;                  ///< 'endofline'
   int b_p_fixeol;               ///< 'fixendofline'
   int b_p_et;                   ///< 'expandtab'

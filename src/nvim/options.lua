@@ -2389,6 +2389,14 @@ return {
       defaults={if_true={vi=""}}
     },
     {
+      full_name='tagfunc', abbreviation='tfu',
+      type='string', scope={'buffer'},
+      vim=true,
+      vi_def=true,
+      varname='p_tfu',
+      defaults={if_true={vi=""}}
+    },
+    {
       full_name='tabline', abbreviation='tal',
       type='string', scope={'global'},
       vi_def=true,

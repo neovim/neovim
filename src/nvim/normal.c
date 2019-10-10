@@ -4929,7 +4929,9 @@ static void nv_ident(cmdarg_T *cap)
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
     (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0);
   } else {
+    g_tag_at_cursor = true;
     do_cmdline_cmd(buf);
+    g_tag_at_cursor = false;
   }
 
   xfree(buf);
