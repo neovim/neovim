@@ -52,7 +52,9 @@ function TSHighlighter.new(query, bufnr, ft)
 end
 
 function TSHighlighter:on_start(_, win, buf, line)
-  local root = self.parser:parse():root()
+  local tree, changes = self.parser:parse()
+  local root = tree:root()
+  --d(vim.inspect(changes))
   -- TODO: win_update should give the max height (in buflines)
   self.iter = root:query(self.query,line,a.nvim_buf_line_count(buf))
   self.active_nodes = {}

@@ -291,13 +291,36 @@ static int parser_parse_buf(lua_State *L)
   }
   TSInput input = { payload, input_cb, TSInputEncodingUTF8 };
   TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
+
+  uint32_t n_ranges = 0;
+  TSRange *changed = p->tree ? ts_tree_get_changed_ranges(new_tree, p->tree,
+                                                          &n_ranges) : NULL;
   if (p->tree) {
     ts_tree_delete(p->tree);
   }
   p->tree = new_tree;
 
   tslua_push_tree(L, p->tree);
-  return 1;
+  lua_pushinteger(L, n_ranges);
+  return 2;
+
+
+  lua_createtable(L, n_ranges, 0);
+  for (size_t i = 0; i < n_ranges; i++) {
+    lua_createtable(L, 4, 0);
+    lua_pushinteger(L, changed[i].start_point.row);
+    lua_rawseti(L, -2, 1);
+    lua_pushinteger(L, changed[i].start_point.column);
+    lua_rawseti(L, -2, 2);
+    lua_pushinteger(L, changed[i].end_point.row);
+    lua_rawseti(L, -2, 3);
+    lua_pushinteger(L, changed[i].end_point.column);
+    lua_rawseti(L, -2, 4);
+
+    lua_rawseti(L, -2, i+1);
+  }
+  xfree(changed);
+  return 2;
 }
 
 static int parser_tree(lua_State *L)

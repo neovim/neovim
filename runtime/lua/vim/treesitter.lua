@@ -12,9 +12,10 @@ function Parser:parse()
   if self.valid then
     return self.tree
   end
-  self.tree = self._parser:parse_buf(self.bufnr)
+  local changes
+  self.tree, changes = self._parser:parse_buf(self.bufnr)
   self.valid = true
-  return self.tree
+  return self.tree, changes
 end
 
 function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_size)
