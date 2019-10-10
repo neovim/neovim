@@ -66,7 +66,11 @@ execute_process(
 file(GLOB RM_FILES ${BUILD_DIR}/Xtest_*)
 file(REMOVE_RECURSE ${RM_FILES})
 
-if(NOT res EQUAL 0)
+if(res EQUAL 0)
+  if(NOT "${err}" STREQUAL "")
+    message(FATAL_ERROR "Tests passed, but there is output on stderr:\n${err}")
+  endif()
+else()
   message(STATUS "Tests exited non-zero: ${res}")
   if("${err}" STREQUAL "")
     message(STATUS "No output to stderr.")
