@@ -10,6 +10,7 @@ local iswin = helpers.iswin
 local clear = helpers.clear
 local command = helpers.command
 local nvim_dir = helpers.nvim_dir
+local set_shell_powershell = helpers.set_shell_powershell
 
 describe("shell command :!", function()
   local screen
@@ -230,4 +231,19 @@ describe("shell command :!", function()
       ]])
     end)
   end)
+  if iswin() or eval('executable("pwsh")') == 1 then
+    it('powershell supports literal strings', function()
+      set_shell_powershell()
+      local screen = Screen.new(30, 4)
+      screen:attach()
+      feed_command([[!'echo $a']])
+      screen:expect{any='\necho %$a', timeout=10000}
+      feed_command([[!$a = 1; echo '$a']])
+      screen:expect{any='\n%$a', timeout=10000}
+      feed_command([[!"echo $a"]])
+      screen:expect{any='\necho', timeout=10000}
+      feed_command([[!$a = 1; echo "$a"]])
+      screen:expect{any='\n1', timeout=10000}
+    end)
+  end
 end)
