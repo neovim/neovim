@@ -20,9 +20,9 @@ end
 local versiondeffile = arg[1]
 local prefix = arg[2]
 
-local described = io.popen('git describe --dirty'):read('*l')
+local described = io.popen('git describe --first-parent --dirty 2>/dev/null'):read('*l')
 if not described then
-  described = io.popen('git describe --tags --always --dirty'):read('*l')
+  described = io.popen('git describe --first-parent --tags --always --dirty'):read('*l')
 end
 if not described then
   io.open(versiondeffile, 'w'):write('\n')
