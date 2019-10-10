@@ -39,9 +39,7 @@ server_config.add = function(config)
       server_name = ft
     end
 
-    if not server_config[ft] then
-      server_config.servers[ft] = {}
-    end
+    if not server_config.servers[ft] then server_config.servers[ft] = {} end
 
     if not server_config.servers[ft][server_name] then
       vim.api.nvim_command(string.format("autocmd FileType %s ++once silent :lua vim.lsp.start_client('%s', '%s')", ft, ft, server_name))
@@ -61,11 +59,11 @@ end
 
 server_config.get_server = function(filetype, server_name)
   assert(filetype, 'filetype is required')
-  assert(server_name, 'server_name is required')
+  if not server_name then server_name = filetype end
 
   local server = server_config.servers[filetype][server_name]
 
-  return assert(server, 'filetype: '..filetype..' , server_name:'..server_name..' is not set')
+  return assert(server, 'filetype: '..filetype..' , server_name: '..server_name..' is not set. ')
 end
 
 server_config.get_server_cmd = function(filetype, server_name)

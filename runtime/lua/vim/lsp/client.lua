@@ -104,7 +104,7 @@ Client.start = function(self)
 end
 
 Client.stop = function(self)
-  if self._stopped then
+  if self:is_stopped() then
     return
   end
 
@@ -126,6 +126,14 @@ Client.stop = function(self)
   uv.kill(self.pid, 'sigterm')
 
   self._stopped = true
+end
+
+Client.is_running = function(self)
+  return not self._stopped
+end
+
+Client.is_stopped = function(self)
+  return self._stopped
 end
 
 Client.cmd_tostring = function(self)
@@ -177,7 +185,7 @@ end
 
 
 Client.handle_text_document_did_change = function(self, _, bufnr, changedtick, firstline, lastline, new_lastline, old_bytes, _, units)
-  if self._stopped then return true end
+  if self:is_stopped() then return true end
   local uri = vim.uri_from_bufnr(bufnr)
   local version = changedtick
 
@@ -242,7 +250,7 @@ Client.request_async = function(self, method, params, cb, bufnr)
 
   bufnr = bufnr or vim.api.nvim_get_current_buf()
 
-  if self._stopped then
+  if self:is_stopped() then
     logger.info('Client closed. '..self.server_name)
     return nil
   end
@@ -271,7 +279,7 @@ end
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
 Client.notify = function(self, method, params)
-  if self._stopped then
+  if self:is_stopped() then
     logger.info('Client closed. '..self.filetype..', '..self.server_name)
     return nil
   end

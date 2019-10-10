@@ -34,9 +34,9 @@ lsp.get_client = function(filetype, server_name)
 end
 
 --- Start a server and create a client
--- @param cmd [string]: Command to start the server
--- @param arguments [string]: Arguments to send to the server
--- @param filetype [string]: The filetype associated with the server
+-- @param filetype [string](optional): A filetype associated with the server
+-- @param server_name [string](optional): A language server name associated with the server
+-- @param bufnr [number]: A bufnr
 --
 -- @returns: A client object that has been initialized
 lsp.start_client = function(filetype, server_name, bufnr)
@@ -63,6 +63,7 @@ end
 
 lsp.stop_client = function(filetype, server_name)
   assert(filetype, 'filetype is required.')
+
   if not server_name then server_name = filetype end
 
   local client = lsp.get_client(filetype, server_name)
@@ -179,8 +180,26 @@ lsp.handle = function(filetype, method, data, default_only)
   return callbacks.call_callback(method, true, data, default_only, filetype)
 end
 
-lsp.client_has_started = function(filetype)
-  return lsp.get_client(filetype) ~= nil
+lsp.client_has_started = function(filetype, server_name)
+  assert(filetype, 'filetype is required.')
+
+  if server_name then
+    local client = lsp.get_client(filetype, server_name)
+    if client and client:is_running() then
+      return true
+    else
+      return false
+    end
+  else
+    local filetype_clients = lsp.get_clients(filetype)
+    if filetype_clients ~= nil then
+      for _, client in pairs(filetype_clients) do
+        if client:is_running() then return true end
+      end
+    end
+
+    return false
+  end
 end
 
 lsp.client_info = function(filetype, server_name)
