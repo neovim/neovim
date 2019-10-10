@@ -22,6 +22,7 @@ describe('scrolling', function()
     screen:attach()
     screen:set_default_attr_ids({
       [0] = {bold=true, foreground=Screen.colors.Blue},
+      [1] = {foreground=Screen.colors.Brown},
     })
     feed_command('set wrap')
   end)
@@ -100,13 +101,13 @@ describe('scrolling', function()
       feed('<C-Y><C-Y>')
       screen:expect([[
         {0:<}000000000          |
-        ^11111111111111111111|
+        11111111111111111111|
         1111111111          |
-        22222222222222222{0:@@@}|
+        ^22222222222222222{0:@@@}|
                             |
       ]])
 
-      feed('<C-E>')
+      feed('k<C-E>')
       screen:expect([[
         ^11111111111111111111|
         1111111111          |
@@ -120,6 +121,22 @@ describe('scrolling', function()
         22222222222222222222|
         2222222222          |
                             |
+                            |
+      ]])
+      feed('lrx')
+      screen:expect([[
+        {0:<}^x11111111          |
+        22222222222222222222|
+        2222222222          |
+                            |
+                            |
+      ]])
+      feed('<C-Y>')
+      screen:expect([[
+        11111111111111111111|
+        1^x11111111          |
+        22222222222222222222|
+        2222222222          |
                             |
       ]])
     end)
@@ -165,6 +182,26 @@ describe('scrolling', function()
       ]])
     end)
 
+    it('rowwise scrolling works', function()
+      feed('<C-Y>')
+      screen:expect([[
+        77777777777777777777|
+        88888888888888888888|
+        99999999999999999999|
+        0000000000000000000^0|
+                            |
+      ]])
+
+      feed('<C-Y>')
+      screen:expect([[
+        66666666666666666666|
+        77777777777777777777|
+        88888888888888888888|
+        9999999999999999999^9|
+                            |
+      ]])
+    end)
+
     it('cursor works', function()
       feed('gg')
       screen:expect([[
@@ -176,6 +213,8 @@ describe('scrolling', function()
       ]])
 
       -- Cursor should move one row forward in the line
+      -- We make modifications to the line to verify the cursor is
+      -- being updated properly.
       feed('<C-E>rx')
       screen:expect([[
         ^x1111111111111111111|
@@ -191,6 +230,43 @@ describe('scrolling', function()
         33333333333333333333|
         44444444444444444444|
         55555555555555555555|
+                            |
+      ]])
+
+      -- This should work for scrolling several lines too
+      feed('6<C-E>ry')
+      screen:expect([[
+        ^y8888888888888888888|
+        99999999999999999999|
+        00000000000000000000|
+        11111111111111111111|
+                            |
+      ]])
+
+      -- And for scrolling back up
+      feed('6<C-Y>rz')
+      screen:expect([[
+        22222222222222222222|
+        33333333333333333333|
+        44444444444444444444|
+        ^z5555555555555555555|
+                            |
+      ]])
+      feed('8<C-E>')
+      feed('4<C-Y>')
+      screen:expect([[
+        66666666666666666666|
+        77777777777777777777|
+        y8888888888888888888|
+        ^99999999999999999999|
+                            |
+      ]])
+      feed('2<C-Y>')
+      screen:expect([[
+        44444444444444444444|
+        z5555555555555555555|
+        66666666666666666666|
+        ^77777777777777777777|
                             |
       ]])
     end)
@@ -229,6 +305,96 @@ describe('scrolling', function()
         77777777777777777777|
         88888888888888888888|
         99999999999999999999|
+                            |
+      ]])
+    end)
+  end)
+
+  -- This test suite is the same as the last one, but with :set number.
+  -- The digit runs 0000... etc are shortened to accomodate the change.
+  describe('with a very long line in rowwise mode and number on', function()
+    before_each(function()
+      feed_command('set scrollrowwise')
+      feed_command('set number')
+      feed_lines(20, 16, false)
+      -- Needed for nondeterminism? For some reason, we get the "Screen
+      -- changes were received after the expected state" error here, and
+      -- this redraw seems to help...
+      feed('<C-L>')
+      screen:expect([[
+        {1:--1 }8888888888888888|
+        {1:    }9999999999999999|
+        {1:    }000000000000000^0|
+        {0:~                   }|
+                            |
+      ]])
+    end)
+
+    it('cursor works', function()
+      feed('gg')
+      screen:expect([[
+        {1:  1 }^0000000000000000|
+        {1:    }1111111111111111|
+        {1:    }2222222222222222|
+        {1:    }3333333333333333|
+                            |
+      ]])
+
+      -- Cursor should move one row forward in the line
+      -- We make modifications to the line to verify the cursor is
+      -- being updated properly.
+      feed('<C-E>rx')
+      screen:expect([[
+        {1:--1 }^x111111111111111|
+        {1:    }2222222222222222|
+        {1:    }3333333333333333|
+        {1:    }4444444444444444|
+                            |
+      ]])
+
+      feed('<C-E>')
+      screen:expect([[
+        {1:--1 }^2222222222222222|
+        {1:    }3333333333333333|
+        {1:    }4444444444444444|
+        {1:    }5555555555555555|
+                            |
+      ]])
+
+      -- This should work for scrolling several lines too
+      feed('6<C-E>ry')
+      screen:expect([[
+        {1:--1 }^y888888888888888|
+        {1:    }9999999999999999|
+        {1:    }0000000000000000|
+        {1:    }1111111111111111|
+                            |
+      ]])
+
+      -- And for scrolling back up
+      feed('6<C-Y>rz')
+      screen:expect([[
+        {1:--1 }2222222222222222|
+        {1:    }3333333333333333|
+        {1:    }4444444444444444|
+        {1:    }^z555555555555555|
+                            |
+      ]])
+      feed('8<C-E>')
+      feed('4<C-Y>')
+      screen:expect([[
+        {1:--1 }6666666666666666|
+        {1:    }7777777777777777|
+        {1:    }y888888888888888|
+        {1:    }^9999999999999999|
+                            |
+      ]])
+      feed('2<C-Y>')
+      screen:expect([[
+        {1:--1 }4444444444444444|
+        {1:    }z555555555555555|
+        {1:    }6666666666666666|
+        {1:    }^7777777777777777|
                             |
       ]])
     end)
