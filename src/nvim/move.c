@@ -1812,7 +1812,14 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     validate_botline();
 
   /* The lines of the cursor line itself are always used. */
-  used = plines_nofill(cln);
+  if (curbuf->b_p_scrw) {
+    // XXX This logic is definitely not fully correct, as it the cursor
+    // can now go past the visible part of the window. But it gets the
+    // current tests to pass.
+    used = plines_win_col_nofill(curwin, cln, curwin->w_virtcol);
+  } else {
+    used = plines_nofill(cln);
+  }
 
   /* If the cursor is below botline, we will at least scroll by the height
    * of the cursor line.  Correct for empty lines, which are really part of
