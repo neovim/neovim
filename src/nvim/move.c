@@ -969,15 +969,10 @@ bool move_cursor_rowwise(win_T *wp, int dir, long dist)
   bool retval = true;
   bool atend = false;
   int n;
-  int col_off1;                 /* margin offset for first screen line */
-  int col_off2;                 /* margin offset for wrapped screen line */
-  int width1;                   /* text width for first screen line */
-  int width2;                   /* test width for wrapped screen line */
-
-  col_off1 = win_col_off(wp);
-  col_off2 = col_off1 - win_col_off2(wp);
-  width1 = wp->w_width_inner - col_off1;
-  width2 = wp->w_width_inner - col_off2;
+  // text width for the first screen line
+  int width1 = wp->w_width_inner - win_col_off(wp);
+  // text width for wrapped screen lines
+  int width2 = width1 + win_col_off2(wp);
 
   if (width2 == 0) {
     width2 = 1;  // Avoid divide by zero.
