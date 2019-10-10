@@ -220,7 +220,7 @@ Terminal *terminal_open(TerminalOptions opts)
   rv->sb_size = (size_t)curbuf->b_p_scbk;
   rv->sb_buffer = xmalloc(sizeof(ScrollbackLine *) * rv->sb_size);
 
-  vterm_state_set_bold_highbright(state, true);
+  vterm_state_set_bold_highbright(state, false);
 
   // Configure the color palette. Try to get the color from:
   //
