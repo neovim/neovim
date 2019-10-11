@@ -380,31 +380,31 @@ void init_homedir(void)
   // Change to the directory and get the actual path.  This resolves
   // links.  Don't do it when we can't return.
   if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      // Attempts to jump into var (guessed homedir)
-      if (var != NULL && !os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-          if (!var_in_envmap) {
-              xfree((char *)var);
-          }
-          var = xstrndup((char *)IObuff, MAXPATHL);
-          var_in_envmap = false;
-      } else {
-          // Either var is NULL or var's path doesn't exist, so make guess
-          // current working directory
-          if (!var_in_envmap) {
-              xfree((char *)var);
-          }
-          var = xstrndup(os_buf, MAXPATHL);
-          var_in_envmap = false;
+    // Attempts to jump into var (guessed homedir)
+    if (var != NULL && !os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+      if (!var_in_envmap) {
+        xfree((char *)var);
       }
-      // Jump back to current directory and error check
-      if (os_chdir(os_buf) != 0) {
-          EMSG(_(e_prev_dir));
+      var = xstrndup((char *)IObuff, MAXPATHL);
+      var_in_envmap = false;
+    } else {
+      // Either var is NULL or var's path doesn't exist, so make guess
+      // current working directory
+      if (!var_in_envmap) {
+        xfree((char *)var);
       }
+      var = xstrndup(os_buf, MAXPATHL);
+      var_in_envmap = false;
+    }
+    // Jump back to current directory and error check
+    if (os_chdir(os_buf) != 0) {
+      EMSG(_(e_prev_dir));
+    }
   }
 
   homedir = xstrndup(var, MAXPATHL);
   if (!var_in_envmap) {
-      xfree((char *)var);
+    xfree((char *)var);
   }
   uv_mutex_unlock(&homdir_mutex);
 }
