@@ -172,9 +172,9 @@ function Screen.new(width, height)
     _default_attr_ignore = nil,
     _mouse_enabled = true,
     _attrs = {},
-    _hl_info = {},
+    _hl_info = {[0]={}},
     _attr_table = {[0]={{},{}}},
-    _clear_attrs = {},
+    _clear_attrs = nil,
     _new_attrs = false,
     _width = width,
     _height = height,
@@ -206,8 +206,8 @@ function Screen:set_default_attr_ignore(attr_ignore)
   self._default_attr_ignore = attr_ignore
 end
 
-function Screen:set_hlstate_cterm(val)
-  self._hlstate_cterm = val
+function Screen:set_rgb_cterm(val)
+  self._rgb_cterm = val
 end
 
 function Screen:attach(options, session)
@@ -223,7 +223,7 @@ function Screen:attach(options, session)
 
   self._session = session
   self._options = options
-  self._clear_attrs = (options.ext_linegrid and {{},{}}) or {}
+  self._clear_attrs = (not options.ext_linegrid) and {} or nil
   self:_handle_resize(self._width, self._height)
   self.uimeths.attach(self._width, self._height, options)
   if self._options.rgb == nil then
@@ -363,8 +363,8 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
       ids = attr_ids or self._default_attr_ids,
       ignore = attr_ignore or self._default_attr_ignore,
   }
-  if self._options.ext_hlstate then
-    attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
+  if self._options.ext_linegrid then
+    attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
   end
   self._new_attrs = false
   self:_wait(function()
@@ -375,8 +375,8 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
       end
     end
 
-    if self._options.ext_hlstate and self._new_attrs then
-      attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids or {})
+    if self._options.ext_linegrid and self._new_attrs then
+      attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
     end
 
     local actual_rows = self:render(not expected.any, attr_state)
@@ -898,19 +898,16 @@ function Screen:_handle_grid_line(grid, row, col, items)
   assert(self._options.ext_linegrid)
   local line = self._grids[grid].rows[row+1]
   local colpos = col+1
-  local hl = self._clear_attrs
   local hl_id = 0
   for _,item in ipairs(items) do
     local text, hl_id_cell, count = unpack(item)
     if hl_id_cell ~= nil then
       hl_id = hl_id_cell
-      hl = self._attr_table[hl_id]
     end
     for _ = 1, (count or 1) do
       local cell = line[colpos]
       cell.text = text
       cell.hl_id = hl_id
-      cell.attrs = hl
       colpos = colpos+1
     end
   end
@@ -1070,6 +1067,7 @@ function Screen:_clear_row_section(grid, rownum, startcol, stopcol, invalid)
   for i = startcol, stopcol do
     row[i].text = (invalid and '�' or ' ')
     row[i].attrs = self._clear_attrs
+    row[i].hl_id = 0
   end
 end
 
@@ -1100,11 +1098,7 @@ function Screen:_row_repr(gridnr, rownr, attr_state, cursor)
     end
 
     if not did_window then
-      local attrs = row[i].attrs
-      if self._options.ext_linegrid then
-        attrs = attrs[(self._options.rgb and 1) or 2]
-      end
-      local attr_id = self:_get_attr_id(attr_state, attrs, row[i].hl_id)
+      local attr_id = self:_get_attr_id(attr_state, row[i].attrs, row[i].hl_id)
       if current_attr_id and attr_id ~= current_attr_id then
         -- close current attribute bracket
         table.insert(rv, '}')
@@ -1261,8 +1255,8 @@ function Screen:get_snapshot(attrs, ignore)
       attr_state.ids[i] = a
     end
   end
-  if self._options.ext_hlstate then
-    attr_state.id_to_index = self:hlstate_check_attrs(attr_state.ids)
+  if self._options.ext_linegrid then
+    attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids)
   end
 
   local lines = self:render(true, attr_state, true)
@@ -1299,8 +1293,8 @@ function Screen:print_snapshot(attrs, ignore)
     local attrstrs = {}
     for i, a in pairs(attr_state.ids) do
       local dict
-      if self._options.ext_hlstate then
-        dict = self:_pprint_hlstate(a)
+      if self._options.ext_linegrid then
+        dict = self:_pprint_hlitem(a)
       else
         dict = "{"..self:_pprint_attrs(a).."}"
       end
@@ -1328,37 +1322,41 @@ function Screen:_insert_hl_id(attr_state, hl_id)
     return attr_state.id_to_index[hl_id]
   end
   local raw_info = self._hl_info[hl_id]
-  local info = {}
-  if #raw_info > 1 then
-    for i, item in ipairs(raw_info) do
-      info[i] = self:_insert_hl_id(attr_state, item.id)
-    end
-  else
-    info[1] = {}
-    for k, v in pairs(raw_info[1]) do
-      if k ~= "id" then
-        info[1][k] = v
+  local info = nil
+  if self._options.ext_hlstate then
+    info = {}
+    if #raw_info > 1 then
+      for i, item in ipairs(raw_info) do
+        info[i] = self:_insert_hl_id(attr_state, item.id)
+      end
+    else
+      info[1] = {}
+      for k, v in pairs(raw_info[1]) do
+        if k ~= "id" then
+          info[1][k] = v
+        end
       end
     end
   end
 
   local entry = self._attr_table[hl_id]
   local attrval
-  if self._hlstate_cterm then
+  if self._rgb_cterm then
     attrval = {entry[1], entry[2], info} -- unpack() doesn't work
-  else
+  elseif self._options.ext_hlstate then
     attrval = {entry[1], info}
+  else
+    attrval = self._options.rgb and entry[1] or entry[2]
   end
-
 
   table.insert(attr_state.ids, attrval)
   attr_state.id_to_index[hl_id] = #attr_state.ids
   return #attr_state.ids
 end
 
-function Screen:hlstate_check_attrs(attrs)
+function Screen:linegrid_check_attrs(attrs)
   local id_to_index = {}
-  for i = 1,#self._attr_table do
+  for i, def_attr in pairs(self._attr_table) do
     local iinfo = self._hl_info[i]
     local matchinfo = {}
     if #iinfo > 1 then
@@ -1370,13 +1368,16 @@ function Screen:hlstate_check_attrs(attrs)
     end
     for k,v in pairs(attrs) do
       local attr, info, attr_rgb, attr_cterm
-      if self._hlstate_cterm then
+      if self._rgb_cterm then
         attr_rgb, attr_cterm, info = unpack(v)
         attr = {attr_rgb, attr_cterm}
-      else
+      elseif self._options.ext_hlstate then
         attr, info = unpack(v)
+      else
+        attr = v
+        info = {}
       end
-      if self:_equal_attr_def(attr, self._attr_table[i]) then
+      if self:_equal_attr_def(attr, def_attr) then
         if #info == #matchinfo then
           local match = false
           if #info == 1 then
@@ -1397,24 +1398,31 @@ function Screen:hlstate_check_attrs(attrs)
         end
       end
     end
+    if self:_equal_attr_def(self._rgb_cterm and {{}, {}} or {}, def_attr) and #self._hl_info[i] == 0 then
+      id_to_index[i] = ""
+    end
   end
   return id_to_index
 end
 
 
-function Screen:_pprint_hlstate(item)
+function Screen:_pprint_hlitem(item)
     -- print(inspect(item))
-    local attrdict = "{"..self:_pprint_attrs(item[1]).."}, "
+    local multi = self._rgb_cterm or self._options.ext_hlstate
+    local attrdict = "{"..self:_pprint_attrs(multi and item[1] or item).."}"
     local attrdict2, hlinfo
-    if self._hlstate_cterm then
-      attrdict2 = "{"..self:_pprint_attrs(item[2]).."}, "
+    local descdict = ""
+    if self._rgb_cterm then
+      attrdict2 = ", {"..self:_pprint_attrs(item[2]).."}"
       hlinfo = item[3]
     else
       attrdict2 = ""
       hlinfo = item[2]
     end
-    local descdict = "{"..self:_pprint_hlinfo(hlinfo).."}"
-    return "{"..attrdict..attrdict2..descdict.."}"
+    if self._options.ext_hlstate then
+      descdict = ", {"..self:_pprint_hlinfo(hlinfo).."}"
+    end
+    return (multi and "{" or "")..attrdict..attrdict2..descdict..(multi and "}" or "")
 end
 
 function Screen:_pprint_hlinfo(states)
@@ -1464,9 +1472,11 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     return
   end
 
-  if self._options.ext_hlstate then
+  if self._options.ext_linegrid then
     local id = attr_state.id_to_index[hl_id]
-    if id ~= nil or hl_id == 0 then
+    if id == "" then -- sentinel for empty it
+      return nil
+    elseif id ~= nil then
       return id
     end
     if attr_state.mutable then
@@ -1497,10 +1507,12 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
 end
 
 function Screen:_equal_attr_def(a, b)
-  if self._hlstate_cterm then
+  if self._rgb_cterm then
     return self:_equal_attrs(a[1],b[1]) and self:_equal_attrs(a[2],b[2])
-  else
+  elseif self._options.rgb then
     return self:_equal_attrs(a,b[1])
+  else
+    return self:_equal_attrs(a,b[2])
   end
 end
 
