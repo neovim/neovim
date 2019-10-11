@@ -482,16 +482,12 @@ show_vimpatches() {
   done
 
   printf "\nInstructions:
-  To port one of the above patches to Neovim, execute this script with the patch revision as argument and follow the instructions.
-
-  Examples: '%s -p 7.4.487'
-            '%s -p 1e8ebf870720e7b671f98f22d653009826304c4f'
-            (There is also '-P' for more automation.)
+  To port one of the above patches to Neovim, execute this script with the patch revision as argument and follow the instructions, e.g.
+  '%s -p v8.0.1234', or '%s -P v8.0.1234'
 
   NOTE: Please port the _oldest_ patch if you possibly can.
-        Out-of-order patches increase the possibility of bugs.
         You can use '%s -l path/to/file' to see what patches are missing for a file.
-" "${BASENAME}" "${BASENAME}" "${BASENAME}"
+" "${BASENAME}" "${BASENAME}"
 }
 
 review_commit() {
