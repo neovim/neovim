@@ -366,7 +366,7 @@ submit_pr() {
 
 # Gets all Vim commits with subject since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse "$@" v8.0.0000..HEAD
+  cd "${VIM_SOURCE_DIR}" && git log --reverse v8.0.0000..HEAD "$@"
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
