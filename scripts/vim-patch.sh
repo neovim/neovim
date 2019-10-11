@@ -366,7 +366,7 @@ submit_pr() {
 
 # Gets all Vim commits with subject since the "start" commit.
 list_vim_commits() { (
-  cd "${VIM_SOURCE_DIR}" && git log --reverse --format='%H %s' v8.0.0000..HEAD "$@"
+  cd "${VIM_SOURCE_DIR}" && git log --reverse "$@" v8.0.0000..HEAD
 ) }
 
 # Prints all (sorted) "vim-patch:xxx" tokens found in the Nvim git log.
@@ -389,12 +389,20 @@ list_vimpatch_numbers() {
 }
 
 # Prints a newline-delimited list of Vim commits, for use by scripts.
+# "$1": use extended format?
 # "$@" is passed to list_vim_commits, as extra arguments to git-log.
 list_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
   declare -A tokens
   declare -A vim_commit_tags
   declare -a git_log_args
+
+  local extended_format=$1; shift
+  if [[ "$extended_format" == 1 ]]; then
+    git_log_args=("--format=%H %s")
+  else
+    git_log_args=("--format=%H")
+  fi
 
   # Massage arguments for git-log.
   declare -A git_log_replacements=(
@@ -431,15 +439,22 @@ list_missing_vimpatches() {
 
   # Get missing Vim commits
   set +u  # Avoid "unbound variable" with bash < 4.4 below.
-  while IFS=' ' read -r vim_commit subject; do
+  local vim_commit subject
+  while IFS=' ' read -r line; do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
-    token="vim-patch:${vim_commit:0:7}"
+    token="vim-patch:${line:0:7}"
     if [[ "${tokens[$token]-}" ]]; then
       continue
     fi
 
-    # Remove "patch 8.0.0902: " prefixes.
-    subject="${subject#patch*: }"
+    if [[ "$extended_format" == 1 ]]; then
+      vim_commit=${line%% *}
+      subject=${line#* }
+      # Remove "patch 8.0.0902: " prefixes.
+      subject="${subject#patch*: }"
+    else
+      vim_commit=$line
+    fi
 
     vim_tag="${vim_commit_tags[$vim_commit]-}"
     if [[ -n "$vim_tag" ]]; then
@@ -448,9 +463,17 @@ list_missing_vimpatches() {
       if [[ "${tokens[$patch_number]-}" ]]; then
         continue
       fi
-      echo "$vim_tag: $subject"
+      if [[ "$extended_format" == 1 ]]; then
+        printf '%s: %s\n' "$vim_tag" "$subject"
+      else
+        printf '%s\n' "$vim_tag"
+      fi
     else
-      echo "$vim_commit: $subject"
+      if [[ "$extended_format" == 1 ]]; then
+        printf '%s: %s\n' "$vim_commit" "$subject"
+      else
+        printf '%s\n' "$vim_commit"
+      fi
     fi
   done < <(list_vim_commits "${git_log_args[@]}")
   set -u
@@ -467,7 +490,7 @@ show_vimpatches() {
     runtime_commits[$commit]=1
   done
 
-  list_missing_vimpatches "$@" | while read -r vim_commit; do
+  list_missing_vimpatches 1 "$@" | while read -r vim_commit; do
     if [[ "${runtime_commits[$vim_commit]-}" ]]; then
       printf '  • %s (+runtime)\n' "${vim_commit}"
     else
@@ -599,7 +622,7 @@ while getopts "hlLMVp:P:g:r:s" opt; do
       ;;
     L)
       shift  # remove opt
-      list_missing_vimpatches "$@"
+      list_missing_vimpatches 0 "$@"
       exit 0
       ;;
     M)
