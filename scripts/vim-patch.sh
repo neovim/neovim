@@ -439,7 +439,7 @@ list_missing_vimpatches() {
 
   # Get missing Vim commits
   set +u  # Avoid "unbound variable" with bash < 4.4 below.
-  local vim_commit subject
+  local vim_commit info
   while IFS=' ' read -r line; do
     # Check for vim-patch:<commit_hash> (usually runtime updates).
     token="vim-patch:${line:0:7}"
@@ -447,13 +447,13 @@ list_missing_vimpatches() {
       continue
     fi
 
-    if [[ "$extended_format" == 1 ]]; then
-      vim_commit=${line%% *}
-      subject=${line#* }
-      # Remove "patch 8.0.0902: " prefixes.
-      subject="${subject#patch*: }"
-    else
-      vim_commit=$line
+    # Get commit hash, and optional info from line.  This is used in
+    # extended mode, and wheh using e.g. '--format' manually.
+    vim_commit=${line%% *}
+    info=${line#* }
+    if [[ -n $info ]]; then
+      # Remove any "patch 8.0.0902: " prefixes, and prefix with ": ".
+      info=": ${info#patch*: }"
     fi
 
     vim_tag="${vim_commit_tags[$vim_commit]-}"
@@ -463,17 +463,9 @@ list_missing_vimpatches() {
       if [[ "${tokens[$patch_number]-}" ]]; then
         continue
       fi
-      if [[ "$extended_format" == 1 ]]; then
-        printf '%s: %s\n' "$vim_tag" "$subject"
-      else
-        printf '%s\n' "$vim_tag"
-      fi
+      printf '%s%s\n' "$vim_tag" "$info"
     else
-      if [[ "$extended_format" == 1 ]]; then
-        printf '%s: %s\n' "$vim_commit" "$subject"
-      else
-        printf '%s\n' "$vim_commit"
-      fi
+      printf '%s%s\n' "$vim_commit" "$info"
     fi
   done < <(list_vim_commits "${git_log_args[@]}")
   set -u
