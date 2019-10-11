@@ -292,7 +292,6 @@ void os_get_hostname(char *hostname, size_t size)
 ///   - as a last resort, get the pwd of the current directory.
 /// This also works with mounts and links.
 /// Don't do this for Windows, it will change the "current dir" for a drive.
-
 static char *homedir = NULL;
 
 void init_homedir(void)
@@ -378,29 +377,29 @@ void init_homedir(void)
     var_in_envmap = false;
   }
 
-  if (var != NULL) {
-#ifdef UNIX
-    // Change to the directory and get the actual path.  This resolves
-    // links.  Don't do it when we can't return.
-    if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-        if (!var_in_envmap) {
-          xfree((char *)var);
-        }
-        var = xstrndup((char *)IObuff, MAXPATHL);
-        var_in_envmap = false;
+  // Change to the directory and get the actual path.  This resolves
+  // links.  Don't do it when we can't return.
+  if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
+      // Attempts to jump into var (guessed homedir)
+      if (var != NULL && !os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+          if (!var_in_envmap) {
+              xfree((char *)var);
+          }
+          var = xstrndup((char *)IObuff, MAXPATHL);
+          var_in_envmap = false;
+      } else {
+          // Either var is NULL or var's path doesn't exist, so make guess
+          // current working directory
+          if (!var_in_envmap) {
+              xfree((char *)var);
+          }
+          var = xstrndup(os_buf, MAXPATHL);
+          var_in_envmap = false;
       }
+      // Jump back to current directory and error check
       if (os_chdir(os_buf) != 0) {
-        EMSG(_(e_prev_dir));
+          EMSG(_(e_prev_dir));
       }
-    }
-#endif
-  }
-
-  // As a last resort, return the current working directory
-  if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
-    var = xstrndup(os_buf, MAXPATHL);
-    var_in_envmap = false;
   }
 
   homedir = xstrndup(var, MAXPATHL);

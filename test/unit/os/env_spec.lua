@@ -11,7 +11,7 @@ local NULL = helpers.NULL
 local OK = 0
 local iswin = helpers.iswin
 
-require('lfs')
+local lfs = require('lfs')
 
 local cimp = cimport('./src/nvim/os/os.h')
 
@@ -38,7 +38,11 @@ describe('env.c', function()
   end
 
   local function get_homedir()
-      return ffi.string(cimp.get_homedir())
+    return ffi.string(cimp.get_homedir())
+  end
+
+  local function init_homedir()
+    cimp.init_homedir()
   end
 
   itp('os_env_exists', function()
@@ -313,16 +317,18 @@ describe('env.c', function()
 
   describe('init_homedir', function()
     itp('homedir set to $HOME if $HOME exists', function()
-      os_setenv('HOME', '/home/username', 1)
-      cimp.init_homedir()
-      eq(get_homedir(), '/home/username')
+      -- assume test environment has a default HOME set
+      -- if not, we can remove this test
+      init_homedir()
+      -- lua HOME and homedir should be the same
+      eq(os.getenv('HOME'), get_homedir())
     end)
 
     itp('able to get an non-empty homedir with empty $HOME', function()
       os_unsetenv('HOME')
-      cimp.init_homedir()
-      neq(get_homedir(), '')
-      neq(get_homedir(), nil)
+      init_homedir()
+      neq('', get_homedir())
+      neq(nil, get_homedir())
 
       if iswin() then
           -- Worst case is '\\'
@@ -330,6 +336,14 @@ describe('env.c', function()
       else
           -- Should get at least '/home' or '/root' in test environment
           assert.True(#get_homedir() > 4)
+      end
+    end)
+
+    itp('setting $HOME with a non-existing path in unix should set homedir to pwd', function()
+      if not iswin() then
+        os_setenv('HOME', '/this/path/does/not/exist/', 1)
+        init_homedir()
+        eq(lfs.currentdir(), get_homedir())
       end
     end)
   end)
