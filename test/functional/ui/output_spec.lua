@@ -236,14 +236,18 @@ describe("shell command :!", function()
       set_shell_powershell()
       local screen = Screen.new(30, 4)
       screen:attach()
-      feed_command([[!'echo $a']])
-      screen:expect{any='\necho %$a', timeout=10000}
-      feed_command([[!$a = 1; echo '$a']])
+      feed_command([[!'Write-Output $a']])
+      screen:expect{any='\nWrite%-Output %$a', timeout=10000}
+      feed_command([[!$a = 1; Write-Output '$a']])
       screen:expect{any='\n%$a', timeout=10000}
-      feed_command([[!"echo $a"]])
-      screen:expect{any='\necho', timeout=10000}
-      feed_command([[!$a = 1; echo "$a"]])
+      feed_command([[!"Write-Output $a"]])
+      screen:expect{any='\nWrite%-Output', timeout=10000}
+      feed_command([[!$a = 1; Write-Output "$a"]])
       screen:expect{any='\n1', timeout=10000}
+      feed_command(iswin()
+        and [[!& 'C:\\Windows\\system32\\cmd.exe' /c 'echo $a']]
+        or  [[!& '/bin/sh' -c 'echo ''$a''']])
+      screen:expect{any='\n%$a', timeout=10000}
     end)
   end
 end)
