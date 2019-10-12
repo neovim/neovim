@@ -16,10 +16,13 @@ function! lsp#text_document_hover() abort
   call luaeval("vim.lsp.request_async('textDocument/hover', vim.lsp.protocol.TextDocumentPositionParams())")
 endfunction
 
-" Completion with LSP
 function! lsp#text_document_completion() abort
   call luaeval("vim.lsp.request_async('textDocument/completion', vim.lsp.protocol.CompletionParams())")
   return ''
+endfunction
+
+function! lsp#omnifunc(findstart, base) abort
+  return luaeval("vim.lsp.omnifunc(_A.findstart, _A.base)", { 'findstart': a:findstart, 'base': a:base })
 endfunction
 
 function! lsp#text_document_signature_help() abort

@@ -252,6 +252,17 @@ g:language_client_enable_shutdown_request
 	Default: not set
 
 ================================================================================
+                                                               *lsp-omnifunc*
+
+To configure omnifunc, add the following in your
+init.vim:
+>
+	augroup MyLanguageServer
+		au!
+		autocmd Filetype python setlocal omnifunc=lsp#omnifunc
+	augroup END
+<
+================================================================================
                                                                *lsp-completion*
 
 To configure completion for a language server, add the following in your

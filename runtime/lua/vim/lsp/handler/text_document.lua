@@ -51,6 +51,27 @@ local map_CompletionItemKind_to_vim_complete_kind = function(item_kind)
   end
 end
 
+local remove_prefix = function(word)
+  local current_line = vim.api.nvim_call_function(
+    'strpart',
+    { vim.api.nvim_call_function('getline', { '.' }), 0, vim.api.nvim_call_function('col', { '.' })  - 1 }
+  )
+
+  local prefix_length = 0
+  local max_prefix_length = vim.api.nvim_call_function('min', { { string.len(word), string.len(current_line) } })
+  local word_prefix
+  local i = 1
+
+  while i <= max_prefix_length do
+    local current_line_suffix = vim.api.nvim_call_function('strpart', { current_line, string.len(current_line) - i, i })
+    word_prefix = vim.api.nvim_call_function('strpart', { word, 0, i })
+    if current_line_suffix == word_prefix then prefix_length = i end
+    i = i + 1
+  end
+
+  return vim.api.nvim_call_function('strpart', { word, prefix_length })
+end
+
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
@@ -70,13 +91,22 @@ TextDocument.CompletionList_to_matches = function(data)
       end
     end
 
+    local word
+    if completion_item.insertText ~= nil then
+      word = completion_item.insertText
+    else
+      word = completion_item.label
+    end
+
     table.insert(matches, {
-      word = completion_item.label,
+      word = remove_prefix(word),
+      abbr = completion_item.label,
       kind = map_CompletionItemKind_to_vim_complete_kind(completion_item.kind) or '',
       menue = completion_item.detail or '',
       info = info,
       icase = 1,
       dup = 0,
+      empty = 1,
     })
   end
 

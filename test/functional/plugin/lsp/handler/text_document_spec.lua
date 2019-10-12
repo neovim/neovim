@@ -28,11 +28,11 @@ describe('LSP handler/text_document', function()
       ]]))
 
       local expected = {
-        { word = 'label1', kind = 'Text', menue = 'detail1', info = 'documentation1', icase = 1, dup = 0 },
-        { word = 'label2', kind = 'Method', menue = 'detail2', info = 'documentation2', icase = 1, dup = 0 },
-        { word = 'label3', kind = 'Function', menue = 'detail3', info = 'documentation3', icase = 1, dup = 0 },
-        { word = 'label4', kind = '', menue = '', info = ' ', icase = 1, dup = 0 },
-        { word = 'label5', kind = '', menue = '', info = ' ', icase = 1, dup = 0 }
+        { word = 'label1', abbr = 'label1', kind = 'Text', menue = 'detail1', info = 'documentation1', icase = 1, dup = 0, empty = 1 },
+        { word = 'label2', abbr = 'label2', kind = 'Method', menue = 'detail2', info = 'documentation2', icase = 1, dup = 0, empty = 1 },
+        { word = 'label3', abbr = 'label3', kind = 'Function', menue = 'detail3', info = 'documentation3', icase = 1, dup = 0, empty = 1 },
+        { word = 'label4', abbr = 'label4', kind = '', menue = '', info = ' ', icase = 1, dup = 0, empty = 1 },
+        { word = 'label5', abbr = 'label5', kind = '', menue = '', info = ' ', icase = 1, dup = 0, empty = 1 }
       }
 
       eq(expected, exec_lua("return require('vim.lsp.handler').text_document.CompletionList_to_matches(result)"))

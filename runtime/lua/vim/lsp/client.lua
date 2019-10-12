@@ -231,7 +231,7 @@ Client.request = function(self, method, params, cb, bufnr)
     return nil
   end
 
-  return self._results[request_id].result[1]
+  return self._results[request_id].results
 end
 
 --- Sends an async request to the client.
@@ -426,11 +426,11 @@ Client._on_message = function(self, body)
     end
 
     -- If no callback is passed with request, use the registered callback.
-    local result
+    local results
     if cb then
-      result = { cb(is_success, data) }
+      results = { cb(is_success, data) }
     else
-      result = { call_callback(method, is_success, data, self.filetype) }
+      results = { call_callback(method, is_success, data, self.filetype) }
     end
 
     -- Clear the old callback
@@ -439,7 +439,7 @@ Client._on_message = function(self, body)
     self._results[json_message.id] = {
       complete = true,
       was_error = json_message['error'],
-      result = result,
+      results = results,
     }
   end
 end
