@@ -1313,12 +1313,10 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
     rows--;
     if (skipcol >= width1 + width2) {
       skipcol -= width2;
-    }
-    else if (skipcol >= width1) {
+    } else if (skipcol >= width1) {
       skipcol -= width1;
-    }
-    // Did we reach the beginning of the line?
-    else {
+    } else {
+      // We reached the beginning of the line, grab a new line
       if (wp->w_topline <= 1) {
         wp->w_skipcol = 0;
         break;
@@ -1335,9 +1333,9 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
       // is divisible by the width doesn't end up with a blank line
       // afterwards
       skipcol = line_width;
-      if (skipcol < width1)
+      if (skipcol < width1) {
         skipcol = 0;
-      else {
+      } else {
         int offset = ((line_width - width1 - 1) % width2) + 1;
         skipcol -= offset;
       }
@@ -1811,7 +1809,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
   } else
     validate_botline();
 
-  /* The lines of the cursor line itself are always used. */
+  // The lines of the cursor line itself are always used.
   if (curbuf->b_p_scrw) {
     // XXX This logic is definitely not fully correct, as it the cursor
     // can now go past the visible part of the window. But it gets the

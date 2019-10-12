@@ -1225,18 +1225,15 @@ struct window_S {
   int w_height_request;
   int w_width_request;
 
-  /*
-   * === start of cached values ====
-   */
-  /*
-   * Recomputing is minimized by storing the result of computations.
-   * Use functions in screen.c to check if they are valid and to update.
-   * w_valid is a bitfield of flags, which indicate if specific values are
-   * valid or need to be recomputed.
-   */
+  // === start of cached values ====
+
+  // Recomputing is minimized by storing the result of computations.
+  // Use functions in screen.c to check if they are valid and to update.
+  // w_valid is a bitfield of flags, which indicate if specific values are
+  // valid or need to be recomputed.
   int w_valid;
-  pos_T w_valid_cursor;             /* last known position of w_cursor, used
-                                       to adjust w_valid */
+  pos_T w_valid_cursor;             // last known position of w_cursor, used
+                                    //   to adjust w_valid
   colnr_T w_valid_leftcol;          // last known w_leftcol
   colnr_T w_valid_skipcol;          // last known w_skipcol
 

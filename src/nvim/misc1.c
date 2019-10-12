@@ -446,8 +446,9 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
  */
 int plines_win_col_nofill(win_T *wp, linenr_T lnum, long column)
 {
-  if (!wp->w_p_wrap)
+  if (!wp->w_p_wrap) {
     return 1;
+  }
 
   if (wp->w_width_inner == 0) {
     return 1;
@@ -479,8 +480,9 @@ int plines_win_col_nofill(win_T *wp, linenr_T lnum, long column)
   }
 
   int lines = 1;
-  if (col > width)
+  if (col > width) {
     lines += (col - width) / (width + win_col_off2(wp)) + 1;
+  }
   return lines;
 }
 
