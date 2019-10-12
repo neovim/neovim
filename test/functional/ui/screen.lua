@@ -66,7 +66,6 @@
 --      [1] = {reverse = true, bold = true},
 --      [2] = {reverse = true}
 --    })
---    screen:set_default_attr_ignore( {{}, {bold=true, foreground=NonText}} )
 --
 -- To help write screen tests, see Screen:snapshot_util().
 -- To debug screen tests, see Screen:redraw_debug().
@@ -169,7 +168,6 @@ function Screen.new(width, height)
     ruler = {},
     hl_groups = {},
     _default_attr_ids = nil,
-    _default_attr_ignore = nil,
     _mouse_enabled = true,
     _attrs = {},
     _hl_info = {[0]={}},
@@ -200,10 +198,6 @@ end
 
 function Screen:get_default_attr_ids()
   return deepcopy(self._default_attr_ids)
-end
-
-function Screen:set_default_attr_ignore(attr_ignore)
-  self._default_attr_ignore = attr_ignore
 end
 
 function Screen:set_rgb_cterm(val)
@@ -361,7 +355,7 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
   end
   local attr_state = {
       ids = attr_ids or self._default_attr_ids,
-      ignore = attr_ignore or self._default_attr_ignore,
+      ignore = attr_ignore
   }
   if self._options.ext_linegrid then
     attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
@@ -1478,6 +1472,8 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
       return nil
     elseif id ~= nil then
       return id
+    elseif attr_state.ignore == true then
+      return nil
     end
     if attr_state.mutable then
       id = self:_insert_hl_id(attr_state, hl_id)

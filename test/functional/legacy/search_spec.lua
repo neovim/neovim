@@ -408,10 +408,7 @@ describe('search cmdline', function()
     screen = Screen.new(20, 6)
     screen:attach()
     screen:set_default_attr_ids({
-      inc = {reverse = true}
-    })
-    screen:set_default_attr_ignore({
-      {bold=true, reverse=true}, {bold=true, foreground=Screen.colors.Blue1}
+      inc = {reverse = true},
     })
     tenlines()
 

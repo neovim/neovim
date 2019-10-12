@@ -14,6 +14,10 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
   it('is working', function()
     local screen = Screen.new(40, 5)
     screen:attach()
+    screen:set_default_attr_ids({
+      [0] = {bold = true, foreground = Screen.colors.Blue},
+      [1] = {background = Screen.colors.Red},
+    })
 
     -- Check that "matcharg()" returns the correct group and pattern if a match
     -- is defined.
@@ -126,22 +130,22 @@ describe('063: Test for ":match", "matchadd()" and related functions', function(
     command("call matchaddpos('MyGroup1', [[1, 5], [1, 8, 3]], 10, 3)")
     screen:expect([[
       abcd{1:e}fg{1:hij}klmnop^q                       |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
                                               |
-    ]], {[1] = {background = Screen.colors.Red}}, {{bold = true, foreground = Screen.colors.Blue}})
+    ]])
 
     command("call clearmatches()")
     command("call setline(1, 'abcdΣabcdef')")
     command("call matchaddpos('MyGroup1', [[1, 4, 2], [1, 9, 2]])")
     screen:expect([[
       abc{1:dΣ}ab{1:cd}e^f                             |
-      ~                                       |
-      ~                                       |
-      ~                                       |
+      {0:~                                       }|
+      {0:~                                       }|
+      {0:~                                       }|
                                               |
-    ]],{[1] = {background = Screen.colors.Red}}, {{bold = true, foreground = Screen.colors.Blue}})
+    ]])
   end)
 end)
 

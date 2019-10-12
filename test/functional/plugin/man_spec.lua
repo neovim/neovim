@@ -19,10 +19,8 @@ describe(':Man', function()
         u = { underline = true },
         bi = { bold = true, italic = true },
         biu = { bold = true, italic = true, underline = true },
-      })
-      screen:set_default_attr_ignore({
-        { foreground = Screen.colors.Blue }, -- control chars
-        { bold = true, foreground = Screen.colors.Blue } -- empty line '~'s
+        c = { foreground = Screen.colors.Blue }, -- control chars
+        eob = { bold = true, foreground = Screen.colors.Blue } -- empty line '~'s
       })
       screen:attach()
     end)
@@ -36,21 +34,21 @@ describe(':Man', function()
         ithis i<C-v><C-h>is<C-v><C-h>s a<C-v><C-h>a test
         with _<C-v><C-h>o_<C-v><C-h>v_<C-v><C-h>e_<C-v><C-h>r_<C-v><C-h>s_<C-v><C-h>t_<C-v><C-h>r_<C-v><C-h>u_<C-v><C-h>c_<C-v><C-h>k text<ESC>]])
 
-      screen:expect([[
-      this i^His^Hs a^Ha test                             |
-      with _^Ho_^Hv_^He_^Hr_^Hs_^Ht_^Hr_^Hu_^Hc_^Hk tex^t  |
-      ~                                                   |
-      ~                                                   |
-                                                          |
-      ]])
+      screen:expect{grid=[[
+        this i{c:^H}is{c:^H}s a{c:^H}a test                             |
+        with _{c:^H}o_{c:^H}v_{c:^H}e_{c:^H}r_{c:^H}s_{c:^H}t_{c:^H}r_{c:^H}u_{c:^H}c_{c:^H}k tex^t  |
+        {eob:~                                                   }|
+        {eob:~                                                   }|
+                                                            |
+      ]]}
 
       eval('man#init_pager()')
 
       screen:expect([[
       ^this {b:is} {b:a} test                                      |
       with {u:overstruck} text                                |
-      ~                                                   |
-      ~                                                   |
+      {eob:~                                                   }|
+      {eob:~                                                   }|
                                                           |
       ]])
     end)
@@ -60,21 +58,21 @@ describe(':Man', function()
         ithis <C-v><ESC>[1mis <C-v><ESC>[3ma <C-v><ESC>[4mtest<C-v><ESC>[0m
         <C-v><ESC>[4mwith<C-v><ESC>[24m <C-v><ESC>[4mescaped<C-v><ESC>[24m <C-v><ESC>[4mtext<C-v><ESC>[24m<ESC>]])
 
-      screen:expect([=[
-      this ^[[1mis ^[[3ma ^[[4mtest^[[0m                  |
-      ^[[4mwith^[[24m ^[[4mescaped^[[24m ^[[4mtext^[[24^m  |
-      ~                                                   |
-      ~                                                   |
-                                                          |
-      ]=])
+      screen:expect{grid=[=[
+        this {c:^[}[1mis {c:^[}[3ma {c:^[}[4mtest{c:^[}[0m                  |
+        {c:^[}[4mwith{c:^[}[24m {c:^[}[4mescaped{c:^[}[24m {c:^[}[4mtext{c:^[}[24^m  |
+        {eob:~                                                   }|
+        {eob:~                                                   }|
+                                                            |
+      ]=]}
 
       eval('man#init_pager()')
 
       screen:expect([[
       ^this {b:is }{bi:a }{biu:test}                                      |
       {u:with} {u:escaped} {u:text}                                   |
-      ~                                                   |
-      ~                                                   |
+      {eob:~                                                   }|
+      {eob:~                                                   }|
                                                           |
       ]])
     end)
@@ -88,8 +86,8 @@ describe(':Man', function()
       screen:expect([[
       ^this {b:is} {b:あ} test                                     |
       with {u:överstrũck} te{i:xt¶}                               |
-      ~                                                   |
-      ~                                                   |
+      {eob:~                                                   }|
+      {eob:~                                                   }|
                                                           |
       ]])
     end)
@@ -105,7 +103,7 @@ describe(':Man', function()
       {b:^_begins}                                             |
       {b:mid_dle}                                             |
       {u:mid_dle}                                             |
-      ~                                                   |
+      {eob:~                                                   }|
                                                           |
       ]])
     end)
@@ -121,7 +119,7 @@ describe(':Man', function()
       ^· {b:·}                                                 |
       {b:·}                                                   |
       {b:·} double                                            |
-      ~                                                   |
+      {eob:~                                                   }|
                                                           |
       ]])
     end)
