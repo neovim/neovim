@@ -177,6 +177,15 @@ func Test_let_heredoc_fails()
   call delete('XheredocBadMarker')
 endfunc
 
+func Test_let_heredoc_trim_no_indent_marker()
+  let text =<< trim END
+  Text
+  with
+  indent
+END
+  call assert_equal(['Text', 'with', 'indent'], text)
+endfunc
+
 " Test for the setting a variable using the heredoc syntax
 func Test_let_heredoc()
   let var1 =<< END
