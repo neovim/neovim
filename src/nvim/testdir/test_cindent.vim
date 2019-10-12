@@ -19,23 +19,23 @@ func Test_cino_extern_c()
   " Test for cino-E
 
   let without_ind =<< trim [CODE]
-  #ifdef __cplusplus
-  extern "C" {
-  #endif
-  int func_a(void);
-  #ifdef __cplusplus
-  }
-  #endif
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
+    int func_a(void);
+    #ifdef __cplusplus
+    }
+    #endif
   [CODE]
 
   let with_ind =<< trim [CODE]
-  #ifdef __cplusplus
-  extern "C" {
-  #endif
-  	int func_a(void);
-  #ifdef __cplusplus
-  }
-  #endif
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
+    	int func_a(void);
+    #ifdef __cplusplus
+    }
+    #endif
   [CODE]
   new
   setlocal cindent cinoptions=E0
@@ -90,30 +90,30 @@ func Test_cindent_expr()
   endfunc
   setl expandtab sw=8 indentkeys+=; indentexpr=MyIndentFunction()
   let testinput =<< trim [CODE]
-  var_a = something()
-  b = something()
+    var_a = something()
+    b = something()
   [CODE]
   call setline(1, testinput)
   call cursor(1, 1)
   call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
-  let expected =<< trim [CODE]
-          var_a = something();
-  b = something();
-  [CODE]
+  let expected =<< [CODE]
+        var_a = something();
+b = something();
+[CODE]
   call assert_equal(expected, getline(1, '$'))
 
   %d
-  let testinput =<< trim [CODE]
-                  var_a = something()
-                  b = something()
-  [CODE]
+  let testinput =<< [CODE]
+                var_a = something()
+                b = something()
+[CODE]
   call setline(1, testinput)
   call cursor(1, 1)
   call feedkeys("^\<c-v>j$A;\<esc>", 'tnix')
-  let expected =<< trim [CODE]
-          var_a = something();
-                  b = something()
-  [CODE]
+  let expected =<< [CODE]
+        var_a = something();
+                b = something()
+[CODE]
   call assert_equal(expected, getline(1, '$'))
   bw!
 endfunc

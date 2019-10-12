@@ -199,10 +199,18 @@ END
   END
   call assert_equal(['Line1', '  Line2', "\tLine3", ' END'], var1)
 
+  let var1 =<< trim !!!
+	Line1
+	 line2
+		Line3
+	!!!
+  !!!
+  call assert_equal(['Line1', ' line2', "\tLine3", '!!!',], var1)
+
   let var1 =<< trim
     Line1
   .
-  call assert_equal(['  Line1'], var1)
+  call assert_equal(['Line1'], var1)
 
   " ignore "endfunc"
   let var1 =<< END

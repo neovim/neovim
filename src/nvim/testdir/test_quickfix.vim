@@ -776,67 +776,67 @@ func Test_efm1()
     endif
 
     let l =<< trim [DATA]
-    "Xtestfile", line 4.12: 1506-045 (S) Undeclared identifier fd_set.
-    ﻿"Xtestfile", line 6 col 19; this is an error
-    gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
-    Xtestfile:9: parse error before `asd'
-    make: *** [vim] Error 1
-    in file "Xtestfile" linenr 10: there is an error
-
-    2 returned
-    "Xtestfile", line 11 col 1; this is an error
-    "Xtestfile", line 12 col 2; this is another error
-    "Xtestfile", line 14:10; this is an error in column 10
-    =Xtestfile=, line 15:10; this is another error, but in vcol 10 this time
-    "Xtestfile", linenr 16: yet another problem
-    Error in "Xtestfile" at line 17:
-    x should be a dot
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
-                ^
-    Error in "Xtestfile" at line 18:
-    x should be a dot
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
-    .............^
-    Error in "Xtestfile" at line 19:
-    x should be a dot
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
-    --------------^
-    Error in "Xtestfile" at line 20:
-    x should be a dot
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
-    	       ^
-
-    Does anyone know what is the problem and how to correction it?
-    "Xtestfile", line 21 col 9: What is the title of the quickfix window?
-    "Xtestfile", line 22 col 9: What is the title of the quickfix window?
+      "Xtestfile", line 4.12: 1506-045 (S) Undeclared identifier fd_set.
+      ﻿"Xtestfile", line 6 col 19; this is an error
+      gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
+      Xtestfile:9: parse error before `asd'
+      make: *** [vim] Error 1
+      in file "Xtestfile" linenr 10: there is an error
+  
+      2 returned
+      "Xtestfile", line 11 col 1; this is an error
+      "Xtestfile", line 12 col 2; this is another error
+      "Xtestfile", line 14:10; this is an error in column 10
+      =Xtestfile=, line 15:10; this is another error, but in vcol 10 this time
+      "Xtestfile", linenr 16: yet another problem
+      Error in "Xtestfile" at line 17:
+      x should be a dot
+      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
+                  ^
+      Error in "Xtestfile" at line 18:
+      x should be a dot
+      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
+      .............^
+      Error in "Xtestfile" at line 19:
+      x should be a dot
+      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
+      --------------^
+      Error in "Xtestfile" at line 20:
+      x should be a dot
+      	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
+      	       ^
+  
+      Does anyone know what is the problem and how to correction it?
+      "Xtestfile", line 21 col 9: What is the title of the quickfix window?
+      "Xtestfile", line 22 col 9: What is the title of the quickfix window?
     [DATA]
 
     call writefile(l, 'Xerrorfile1')
     call writefile(l[:-2], 'Xerrorfile2')
 
-    let m =<< trim [DATA]
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  2
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  3
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  4
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  5
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  6
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  7
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  8
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  9
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 10
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 11
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 12
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 13
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 14
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 15
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 16
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 21
-    	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 22
-    [DATA]
+    let m =<< [DATA]
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  2
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  3
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  4
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  5
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  6
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  7
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  8
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  9
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 10
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 11
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 12
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 13
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 14
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 15
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 16
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 21
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 22
+[DATA]
     call writefile(m, 'Xtestfile')
 
     let save_efm = &efm
@@ -1053,20 +1053,20 @@ func Test_efm2()
 
   " Test for %P, %Q and %t format specifiers
   let lines =<< trim [DATA]
-  [Xtestfile1]
-  (1,17)  error: ';' missing
-  (21,2)  warning: variable 'z' not defined
-  (67,3)  error: end of file found before string ended
-  --
-  
-  [Xtestfile2]
-  --
-  
-  [Xtestfile3]
-  NEW compiler v1.1
-  (2,2)   warning: variable 'x' not defined
-  (67,3)  warning: 's' already defined
-  -
+    [Xtestfile1]
+    (1,17)  error: ';' missing
+    (21,2)  warning: variable 'z' not defined
+    (67,3)  error: end of file found before string ended
+    --
+
+    [Xtestfile2]
+    --
+
+    [Xtestfile3]
+    NEW compiler v1.1
+    (2,2)   warning: variable 'x' not defined
+    (67,3)  warning: 's' already defined
+    --
   [DATA]
   set efm=%+P[%f]%r,(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%+Q--%r
   " To exercise the push/pop file functionality in quickfix, the test files
@@ -1090,10 +1090,10 @@ func Test_efm2()
 
   " Tests for %E, %C and %Z format specifiers
   let lines =<< trim [DATA]
-  Error 275
-  line 42
-  column 3
-  ' ' expected after '--'
+    Error 275
+    line 42
+    column 3
+    ' ' expected after '--'
   [DATA]
 
   set efm=%EError\ %n,%Cline\ %l,%Ccolumn\ %c,%Z%m
@@ -1107,8 +1107,8 @@ func Test_efm2()
 
   " Test for %>
   let lines =<< trim [DATA]
-  Error in line 147 of foo.c:
-  unknown variable 'i'
+    Error in line 147 of foo.c:
+    unknown variable 'i'
   [DATA]
 
   set efm=unknown\ variable\ %m,%E%>Error\ in\ line\ %l\ of\ %f:,%Z%m
