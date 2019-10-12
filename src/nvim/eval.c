@@ -1548,7 +1548,7 @@ heredoc_get(exarg_T *eap, char_u *cmd)
     text_indent_len = -1;
   }
 
-  // The marker is the next word.  Default marker is "."
+  // The marker is the next word.
   if (*cmd != NUL && *cmd != '"') {
     marker = skipwhite(cmd);
     p = skiptowhite(marker);
@@ -1557,8 +1557,13 @@ heredoc_get(exarg_T *eap, char_u *cmd)
       return NULL;
     }
     *p = NUL;
+    if (islower(*marker)) {
+      EMSG(_("E221: Marker cannot start with lower case letter"));
+      return NULL;
+    }
   } else {
-    marker = (char_u *)".";
+    EMSG(_("E172: Missing marker"));
+    return NULL;
   }
 
   list_T *l = tv_list_alloc(0);
