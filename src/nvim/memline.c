@@ -1929,6 +1929,7 @@ int ml_append_buf(
     colnr_T len,                    // length of new line, including NUL, or 0
     bool newfile                    // flag, see above
 )
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   if (buf->b_ml.ml_mfp == NULL)
     return FAIL;
