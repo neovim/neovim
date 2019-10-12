@@ -21301,7 +21301,8 @@ void ex_function(exarg_T *eap)
   hashtab_T   *ht;
   int todo;
   hashitem_T  *hi;
-  int sourcing_lnum_off;
+  linenr_T sourcing_lnum_off;
+  linenr_T sourcing_lnum_top;
   bool show_block = false;
   bool do_concat = true;
 
@@ -21550,15 +21551,17 @@ void ex_function(exarg_T *eap)
     cmdline_row = msg_row;
   }
 
+  // Save the starting line number.
+  sourcing_lnum_top = sourcing_lnum;
+
   indent = 2;
   nesting = 0;
   for (;; ) {
     if (KeyTyped) {
-      msg_scroll = TRUE;
-      saved_wait_return = FALSE;
+      msg_scroll = true;
+      saved_wait_return = false;
     }
-    need_wait_return = FALSE;
-    sourcing_lnum_off = sourcing_lnum;
+    need_wait_return = false;
 
     if (line_arg != NULL) {
       /* Use eap->arg, split up in parts by line breaks. */
@@ -21591,11 +21594,13 @@ void ex_function(exarg_T *eap)
       ui_ext_cmdline_block_append((size_t)indent, (const char *)theline);
     }
 
-    /* Detect line continuation: sourcing_lnum increased more than one. */
-    if (sourcing_lnum > sourcing_lnum_off + 1)
-      sourcing_lnum_off = sourcing_lnum - sourcing_lnum_off - 1;
-    else
+    // Detect line continuation: sourcing_lnum increased more than one.
+    sourcing_lnum_off = get_sourced_lnum(eap->getline, eap->cookie);
+    if (sourcing_lnum < sourcing_lnum_off) {
+        sourcing_lnum_off -= sourcing_lnum;
+    } else {
       sourcing_lnum_off = 0;
+    }
 
     if (skip_until != NULL) {
       // Between ":append" and "." and between ":python <<EOF" and "EOF"
@@ -21896,7 +21901,8 @@ void ex_function(exarg_T *eap)
   fp->uf_flags = flags;
   fp->uf_calls = 0;
   fp->uf_script_ctx = current_sctx;
-  fp->uf_script_ctx.sc_lnum += sourcing_lnum - newlines.ga_len - 1;
+  fp->uf_script_ctx.sc_lnum += sourcing_lnum_top;
+
   goto ret_free;
 
 erret:
