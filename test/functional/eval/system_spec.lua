@@ -84,7 +84,7 @@ describe('system()', function()
 
     it('does NOT run in shell', function()
       if iswin() then
-        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'echo', '%PATH%'])"))
+        eq("%PATH%\n", eval("system(['powershell', '-NoProfile', '-NoLogo', '-ExecutionPolicy', 'RemoteSigned', '-Command', 'Write-Output', '%PATH%'])"))
       else
         eq("* $PATH %PATH%\n", eval("system(['echo', '*', '$PATH', '%PATH%'])"))
       end
@@ -133,7 +133,7 @@ describe('system()', function()
         eval([[system('"ping" "-n" "1" "127.0.0.1"')]])
         eq(0, eval('v:shell_error'))
         eq('"a b"\n', eval([[system('cmd /s/c "cmd /s/c "cmd /s/c "echo "a b""""')]]))
-        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command echo ''\^"a b\^"''')]]))
+        eq('"a b"\n', eval([[system('powershell -NoProfile -NoLogo -ExecutionPolicy RemoteSigned -Command Write-Output ''\^"a b\^"''')]]))
       end
 
       it('with shell=cmd.exe', function()
@@ -169,9 +169,9 @@ describe('system()', function()
 
       it('works with powershell', function()
         helpers.set_shell_powershell()
-        eq('a\nb\n', eval([[system('echo a b')]]))
+        eq('a\nb\n', eval([[system('Write-Output a b')]]))
         eq('C:\\\n', eval([[system('cd c:\; (Get-Location).Path')]]))
-        eq('a b\n', eval([[system('echo "a b"')]]))
+        eq('a b\n', eval([[system('Write-Output "a b"')]]))
       end)
     end
 

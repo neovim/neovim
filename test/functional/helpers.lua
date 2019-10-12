@@ -502,14 +502,10 @@ end
 
 function module.set_shell_powershell()
   local shell = iswin() and 'powershell' or 'pwsh'
-  if not module.eval('executable("'..shell..'")') then
-    error(shell..' is not executable')
-  end
-  local aliases = iswin() and {'cat', 'sleep'} or {}
-  local cmd = ''
-  for _, alias in ipairs(aliases) do
-    cmd = cmd .. 'Remove-Item -Force alias:' .. alias .. ';'
-  end
+  assert(module.eval('executable("'..shell..'")'))
+  local cmd = 'Remove-Item -Force '..table.concat(iswin()
+    and {'alias:cat', 'alias:echo', 'alias:sleep'}
+    or  {'alias:echo'}, ',')..';'
   module.source([[
     let &shell = ']]..shell..[['
     set shellquote= shellpipe=\| shellxquote=
