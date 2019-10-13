@@ -374,8 +374,6 @@ void init_homedir(void)
       // Attempts to jump into var (guessed homedir)
       if (!os_chdir(var) && os_dirname((char_u *)IObuff, MAXPATHL) == OK) {
         var = (char *)IObuff;
-      } else {
-        var = os_buf;
       }
       if (os_chdir(os_buf) != 0) {
         EMSG(_(e_prev_dir));
