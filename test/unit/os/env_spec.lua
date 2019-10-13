@@ -338,13 +338,5 @@ describe('env.c', function()
           assert.True(#get_homedir() > 4)
       end
     end)
-
-    itp('setting $HOME with a non-existing path in unix should set homedir to pwd', function()
-      if not iswin() then
-        os_setenv('HOME', '/this/path/does/not/exist/', 1)
-        init_homedir()
-        eq(lfs.currentdir(), get_homedir())
-      end
-    end)
   end)
 end)
