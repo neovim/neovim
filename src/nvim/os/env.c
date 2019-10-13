@@ -284,13 +284,13 @@ void os_get_hostname(char *hostname, size_t size)
 }
 
 /// To get the "real" home directory:
-///   - get value of $HOME
+///   - os_homedir is a wrapper over uv_os_homedir
 /// For Windows:
-///   - assemble home out of HOMEDRIVE and HOMEPATH
-///   - if that fails, try $USERPROFILE
-///   - try os_homedir() before finally guessing C drive
+///   - assemble homedir using HOMEDRIVE and HOMEPATH
+///   - resolve references
+///   - guess C drive
 /// For Unix:
-///   - call uv_os_homedir()
+///   - uv_os_homedir takes care of most of the logic
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
 ///   - as a last resort, get the pwd of the current directory.
@@ -304,7 +304,7 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
-  const char *var = os_getenv("HOME");
+  const char *var = os_homedir();
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -326,10 +326,6 @@ void init_homedir(void)
     }
   }
 
-  if (var == NULL) {
-    var = os_getenv("USERPROFILE");
-  }
-
   // Weird but true: $HOME may contain an indirect reference to another
   // variable, esp. "%USERPROFILE%".  Happens when $USERPROFILE isn't set
   // when $HOME is being set.
@@ -346,10 +342,6 @@ void init_homedir(void)
     }
   }
 
-  if (var == NULL) {
-    var = os_homedir();
-  }
-
   // Default home dir is C:/
   // Best assumption we can make in such a situation.
   if (var == NULL
@@ -358,13 +350,6 @@ void init_homedir(void)
     var = "C:/";
   }
 #endif
-
-  // Does a best attempt at capturing homedir using uv_os_homedir
-  // The reason for doing this before the unix block is for the unix
-  // block to resolve links
-  if (var == NULL) {
-    var = os_homedir();
-  }
 
   if (var != NULL) {
 #ifdef UNIX
@@ -382,7 +367,8 @@ void init_homedir(void)
 #endif
   }
 
-  if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+  if ((var == NULL || *var == NUL)
+      && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
     var = os_buf;
   }
 
