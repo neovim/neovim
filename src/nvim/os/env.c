@@ -285,6 +285,10 @@ void os_get_hostname(char *hostname, size_t size)
 
 /// To get the "real" home directory:
 ///   - get value of $HOME
+/// For Windows:
+///   - assemble home out of HOMEDRIVE and HOMEPATH
+///   - if that fails, try $USERPROFILE
+///   - try os_homedir() before finally guessing C drive
 /// For Unix:
 ///   - call uv_os_homedir()
 ///   - go to that directory
@@ -294,15 +298,11 @@ void os_get_hostname(char *hostname, size_t size)
 /// Don't do this for Windows, it will change the "current dir" for a drive.
 static char *homedir = NULL;
 
-static char homedir_buf[MAXPATHL];
-
 void init_homedir(void)
 {
-  uv_mutex_lock(&homdir_mutex);
   // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
-  homedir_buf[0] = NUL;
 
   const char *var = os_getenv("HOME");
 
@@ -392,15 +392,20 @@ void init_homedir(void)
   uv_mutex_unlock(&homdir_mutex);
 }
 
+static char homedir_buf[MAXPATHL];
+
 char *os_homedir(void)
 {
-    size_t homedir_size = MAXPATHL;
-    int ret = uv_os_homedir(os_buf, &homedir_size);
-    if (ret == 0 && homedir_size > 0) {
-      xstrlcpy(homedir_buf, os_buf, strlen(os_buf) + 1);
-      return homedir_buf;
-    }
-    return NULL;
+  uv_mutex_lock(&homdir_mutex);
+  size_t homedir_size = MAXPATHL;
+  int ret = uv_os_homedir(os_buf, &homedir_size);
+  if (ret == 0 && homedir_size > 0) {
+    xstrlcpy(homedir_buf, os_buf, strlen(os_buf) + 1);
+    uv_mutex_unlock(&homdir_mutex);
+    return homedir_buf;
+  }
+  uv_mutex_unlock(&homdir_mutex);
+  return NULL;
 }
 
 #ifdef UNIT_TESTING
