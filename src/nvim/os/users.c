@@ -13,6 +13,9 @@
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif
+#ifdef WIN32
+# include <lm.h>
+#endif
 
 // Initialize users garray and fill it with os usernames.
 // Return Ok for success, FAIL for failure.
@@ -34,6 +37,26 @@ int os_get_usernames(garray_T *users)
     }
   }
   endpwent();
+# elif defined(WIN32)
+  {
+    DWORD nusers = 0, ntotal = 0, i;
+    PUSER_INFO_0 uinfo;
+
+    if (NetUserEnum(NULL, 0, 0, (LPBYTE *)&uinfo, MAX_PREFERRED_LENGTH,
+                    &nusers, &ntotal, NULL) == NERR_Success) {
+      for (i = 0; i < nusers; i++) {
+        char *user;
+        int conversion_result = utf16_to_utf8(uinfo[i].usri0_name, -1, &user);
+        if (conversion_result != 0) {
+          EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+          break;
+        }
+        GA_APPEND(char *, users, user);
+      }
+
+      NetApiBufferFree(uinfo);
+    }
+  }
 # endif
 
   return OK;
