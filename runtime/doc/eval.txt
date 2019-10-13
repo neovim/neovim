@@ -4553,6 +4553,10 @@ getloclist({nr},[, {what}])				*getloclist()*
 		If the optional {what} dictionary argument is supplied, then
 		returns the items listed in {what} as a dictionary. Refer to
 		|getqflist()| for the supported items in {what}.
+		If {what} contains 'filewinid', then returns the id of the
+		window used to display files from the location list. This
+		field is applicable only when called from a location list
+		window.
 
 getmatches()						*getmatches()*
 		Returns a |List| with all matches previously defined for the
