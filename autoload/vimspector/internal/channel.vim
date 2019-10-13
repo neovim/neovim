@@ -57,11 +57,13 @@ function! vimspector#internal#channel#StartDebugSession( config ) abort
 
   let l:addr = 'localhost:' . a:config[ 'port' ]
 
+  echo 'Connecting to ' . l:addr . '... (waiting fo up to 10 seconds)'
   let s:ch = ch_open( l:addr,
         \             {
         \                 'mode': 'raw',
         \                 'callback': funcref( 's:_OnServerData' ),
         \                 'close_cb': funcref( 's:_OnClose' ),
+        \                 'waittime': 10000,
         \             }
         \           )
 

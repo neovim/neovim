@@ -599,6 +599,21 @@ class DebugSession( object ):
     return [ command ]
 
   def _Initialise( self ):
+    # For a good explaination as to why this sequence is the way it is, see
+    # https://github.com/microsoft/vscode/issues/4902#issuecomment-368583522
+    #
+    # In short, we do what VSCode does:
+    # 1. Send the initialize request and wait for the reply
+    # 2a. When we recieve the initialize reply, send the launch/attach request
+    # 2b. When we receive the initialized notification, send the breakpoints
+    #    - if supportsConfigurationDoneRequest, send it
+    #    - else, send the empty exception breakpoints request
+    # 3. When we have recieved both the receive the launch/attach reply *and*
+    #    the connfiguration done reply (or, if we didn't send one, a response to
+    #    the empty exception breakpoints request), we request threads
+    # 4. The threads response triggers things like scopes and triggers setting
+    #    the current frame.
+    #
     def handle_initialize_response( msg ):
       self._server_capabilities = msg.get( 'body' ) or {}
       self._breakpoints.SetServerCapabilities( self._server_capabilities )

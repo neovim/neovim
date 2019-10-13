@@ -272,6 +272,11 @@ class ProjectBreakpoints( object ):
 
     if exception_breakpoint_filters or not self._server_capabilities.get(
       'supportsConfigurationDoneRequest' ):
+      # Note the supportsConfigurationDoneRequest part: prior to there being a
+      # configuration done request, the "exception breakpoints" request was the
+      # indication that configuraiton was done (and its response is used to
+      # trigger requesting threads etc.). See the note in
+      # debug_session.py:_Initialise for more detials
       exception_filters = []
       if exception_breakpoint_filters:
         for f in exception_breakpoint_filters:
