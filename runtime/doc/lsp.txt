@@ -260,6 +260,7 @@ init.vim:
 	augroup MyLanguageServer
 		au!
 		autocmd Filetype python setlocal omnifunc=lsp#omnifunc
+		autocmd CompleteDone * pclose
 	augroup END
 <
 ================================================================================
@@ -272,6 +273,7 @@ init.vim:
 	augroup MyLanguageServer
 		au!
 		autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document_completion()<CR>
+		autocmd CompleteDone * pclose
 	augroup END
 <
 ================================================================================
