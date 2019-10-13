@@ -1508,11 +1508,11 @@ line_read_in:
            * compute the first offset.
            */
           if (state == TS_BINARY) {
-            // Get the tag file size.
-            if ((filesize = vim_lseek(fileno(fp), (off_T)0L, SEEK_END)) <= 0) {
+            if (vim_fseek(fp, 0, SEEK_END) != 0) {
               state = TS_LINEAR;
             } else {
-              vim_lseek(fileno(fp), (off_T)0L, SEEK_SET);
+              filesize = vim_ftell(fp);
+              vim_fseek(fp, 0, SEEK_SET);
 
               /* Calculate the first read offset in the file.  Start
                * the search in the middle of the file. */
