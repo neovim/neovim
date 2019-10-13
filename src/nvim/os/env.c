@@ -294,19 +294,17 @@ void os_get_hostname(char *hostname, size_t size)
 /// Don't do this for Windows, it will change the "current dir" for a drive.
 static char *homedir = NULL;
 
+static char homedir_buf[MAXPATHL];
+
 void init_homedir(void)
 {
   uv_mutex_lock(&homdir_mutex);
   // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
+  homedir_buf[0] = NUL;
 
   const char *var = os_getenv("HOME");
-  // Have a boolean flag keeping track of whether var
-  // is pointing at an item in envmap, the reason for doing this
-  // is we don't want to free items in envmap at the end, but we
-  // do want to free some memory pointed by var
-  bool var_in_envmap = (var && *var) ? true : false;
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -323,15 +321,13 @@ void init_homedir(void)
         && strlen(homedrive) + strlen(homepath) < MAXPATHL) {
       snprintf(os_buf, MAXPATHL, "%s%s", homedrive, homepath);
       if (os_buf[0] != NUL) {
-        var =  xstrndup((char *)os_buf, MAXPATHL);
-        var_in_envmap = false;
+        var = os_buf;
       }
     }
   }
 
   if (var == NULL) {
     var = os_getenv("USERPROFILE");
-    var_in_envmap = (var && *var) ? true : false;
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -345,18 +341,13 @@ void init_homedir(void)
       if (exp != NULL && *exp != NUL
           && STRLEN(exp) + STRLEN(p) < MAXPATHL) {
         vim_snprintf(os_buf, MAXPATHL, "%s%s", exp, p + 1);
-        if (!var_in_envmap) {
-          xfree((char *)var);
-        }
-        var = xstrndup((char *)os_buf, MAXPATHL);
-        var_in_envmap = false;
+        var = os_buf;
       }
     }
   }
 
   if (var == NULL) {
     var = os_homedir();
-    var_in_envmap = false;
   }
 
   // Default home dir is C:/
@@ -364,8 +355,7 @@ void init_homedir(void)
   if (var == NULL
       // Empty means "undefined"
       || *var == NUL) {
-    var = xstrdup("C:/");
-    var_in_envmap = false;
+    var = "C:/";
   }
 #endif
 
@@ -374,47 +364,41 @@ void init_homedir(void)
   // block to resolve links
   if (var == NULL) {
     var = os_homedir();
-    var_in_envmap = false;
   }
 
-  // Change to the directory and get the actual path.  This resolves
-  // links.  Don't do it when we can't return.
-  if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-    // Attempts to jump into var (guessed homedir)
-    if (var != NULL && !os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
-      if (!var_in_envmap) {
-        xfree((char *)var);
+  if (var != NULL) {
+#ifdef UNIX
+    // Change to the directory and get the actual path.  This resolves
+    // links.  Don't do it when we can't return.
+    if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
+      // Attempts to jump into var (guessed homedir)
+      if (!os_chdir(var) && os_dirname((char_u *)IObuff, MAXPATHL) == OK) {
+        var = (char *)IObuff;
+      } else {
+        var = os_buf;
       }
-      var = xstrndup((char *)IObuff, MAXPATHL);
-      var_in_envmap = false;
-    } else {
-      // Either var is NULL or var's path doesn't exist, so make guess
-      // current working directory
-      if (!var_in_envmap) {
-        xfree((char *)var);
+      if (os_chdir(os_buf) != 0) {
+        EMSG(_(e_prev_dir));
       }
-      var = xstrndup(os_buf, MAXPATHL);
-      var_in_envmap = false;
     }
-    // Jump back to current directory and error check
-    if (os_chdir(os_buf) != 0) {
-      EMSG(_(e_prev_dir));
-    }
+#endif
+  }
+
+  if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+    var = os_buf;
   }
 
   homedir = xstrndup(var, MAXPATHL);
-  if (!var_in_envmap) {
-    xfree((char *)var);
-  }
   uv_mutex_unlock(&homdir_mutex);
 }
 
 char *os_homedir(void)
 {
     size_t homedir_size = MAXPATHL;
-    int ret = uv_os_homedir((char *)os_buf, &homedir_size);
+    int ret = uv_os_homedir(os_buf, &homedir_size);
     if (ret == 0 && homedir_size > 0) {
-      return xstrndup((char *)os_buf, MAXPATHL);
+      xstrlcpy(homedir_buf, os_buf, strlen(os_buf) + 1);
+      return homedir_buf;
     }
     return NULL;
 }
