@@ -6,40 +6,7 @@ local Message = {
 }
 
 local message_id = {}
-
-local get_id = function(server_name)
-  assert(server_name, 'server_name is required')
-  local temp_id = message_id[server_name] or 0
-  message_id[server_name] = temp_id + 1
-  return temp_id
-end
-
-local check_language_server_capabilities = function(client, method)
-  local method_table
-  if type(method) == 'string' then
-    method_table = vim.split(method, '/', true)
-  elseif type(method) == 'table' then
-    method_table = method
-  else
-    return true
-  end
-
-  -- TODO: This should be a better implementation.
-  -- Most methods are named like 'subject_name/opetation_name'.
-  -- Most capability properties are named like 'operation_nameProvider'.
-  -- And some language server has custom methods.
-  -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
-  if method_table[2] then
-    local provider_capabilities = client.server_capabilities[method_table[2]..'Provider']
-    if provider_capabilities ~= nil and provider_capabilities == false then
-      return false
-    end
-
-    return true
-  else
-    return true
-  end
-end
+local local_fn = {}
 
 function Message:new(o)
   o = o or {}
@@ -61,13 +28,13 @@ setmetatable(RequestMessage, { __index = Message })
 function RequestMessage:new(client, method, params)
   assert(self)
 
-  if check_language_server_capabilities(client, method) == false then
+  if local_fn.check_language_server_capabilities(client, method) == false then
     logger.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
     error("[LSP:Request] Method "..method.." is not supported by server "..client.name, 2)
   end
 
   local object = {
-    id = get_id(client.server_name),
+    id = local_fn.get_id(client.server_name),
     method = method,
     params = params
   }
@@ -97,7 +64,7 @@ function ResponseMessage:new(client, result, err)
   err = err or {}
 
   local object = {
-    id = get_id(client.server_name),
+    id = local_fn.get_id(client.server_name),
     result = result,
     ['error'] = err
   }
@@ -122,7 +89,7 @@ setmetatable(NotificationMessage, { __index = Message })
 function NotificationMessage:new(client, method, params)
   assert(self)
 
-  if check_language_server_capabilities(client, method) == false then
+  if local_fn.check_language_server_capabilities(client, method) == false then
     logger.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
     logger.client.debug(string.format('Notification Method "%s" is not supported by server %s', method, client.name))
     return nil
@@ -145,10 +112,46 @@ function NotificationMessage:json()
   })
 end
 
-return {
+local_fn.get_id = function(server_name)
+  assert(server_name, 'server_name is required')
+  local temp_id = message_id[server_name] or 0
+  message_id[server_name] = temp_id + 1
+  return temp_id
+end
+
+local_fn.check_language_server_capabilities = function(client, method)
+  local method_table
+  if type(method) == 'string' then
+    method_table = vim.split(method, '/', true)
+  elseif type(method) == 'table' then
+    method_table = method
+  else
+    return true
+  end
+
+  -- TODO: This should be a better implementation.
+  -- Most methods are named like 'subject_name/opetation_name'.
+  -- Most capability properties are named like 'operation_nameProvider'.
+  -- And some language server has custom methods.
+  -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
+  if method_table[2] then
+    local provider_capabilities = client.server_capabilities[method_table[2]..'Provider']
+    if provider_capabilities ~= nil and provider_capabilities == false then
+      return false
+    end
+
+    return true
+  else
+    return true
+  end
+end
+
+local module =  {
   Message = Message,
   RequestMessage = RequestMessage,
   ResponseMessage = ResponseMessage,
   ResponseError = ResponseError,
   NotificationMessage = NotificationMessage,
 }
+
+return module

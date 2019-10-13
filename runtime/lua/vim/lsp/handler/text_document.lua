@@ -2,6 +2,7 @@ local util = require('vim.lsp.util')
 local CompletionItemKind = require('vim.lsp.protocol').CompletionItemKind
 
 local TextDocument = {}
+local local_fn = {}
 
 --- Apply the TextDocumentEdit response.
 -- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
@@ -31,52 +32,11 @@ TextDocument.apply_TextEdit = function(TextEdit)
   vim.api.nvim_buf_set_lines(0, range_start.line, range_end.line, false, vim.split(new_text, "\n", true))
 end
 
--- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
--- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-local get_CompletionItems = function(data)
-  if util.is_CompletionList(data) then
-    return data.items
-  elseif data ~= nil then
-    return data
-  else
-    return {}
-  end
-end
-
-local map_CompletionItemKind_to_vim_complete_kind = function(item_kind)
-  if CompletionItemKind[item_kind] then
-    return CompletionItemKind[item_kind]
-  else
-    return ''
-  end
-end
-
-local remove_prefix = function(word)
-  local current_line = vim.api.nvim_call_function(
-    'strpart',
-    { vim.api.nvim_call_function('getline', { '.' }), 0, vim.api.nvim_call_function('col', { '.' })  - 1 }
-  )
-
-  local prefix_length = 0
-  local max_prefix_length = vim.api.nvim_call_function('min', { { string.len(word), string.len(current_line) } })
-  local word_prefix
-  local i = 1
-
-  while i <= max_prefix_length do
-    local current_line_suffix = vim.api.nvim_call_function('strpart', { current_line, string.len(current_line) - i, i })
-    word_prefix = vim.api.nvim_call_function('strpart', { word, 0, i })
-    if current_line_suffix == word_prefix then prefix_length = i end
-    i = i + 1
-  end
-
-  return vim.api.nvim_call_function('strpart', { word, prefix_length })
-end
-
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
 TextDocument.CompletionList_to_matches = function(data)
-  local items = get_CompletionItems(data)
+  local items = local_fn.get_CompletionItems(data)
 
   local matches = {}
 
@@ -99,9 +59,9 @@ TextDocument.CompletionList_to_matches = function(data)
     end
 
     table.insert(matches, {
-      word = remove_prefix(word),
+      word = local_fn.remove_prefix(word),
       abbr = completion_item.label,
-      kind = map_CompletionItemKind_to_vim_complete_kind(completion_item.kind) or '',
+      kind = local_fn.map_CompletionItemKind_to_vim_complete_kind(completion_item.kind) or '',
       menue = completion_item.detail or '',
       info = info,
       icase = 1,
@@ -203,5 +163,47 @@ TextDocument.HoverContents_to_preview_contents = function(data)
 
   return contents
 end
+
+-- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
+-- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
+local_fn.get_CompletionItems = function(data)
+  if util.is_CompletionList(data) then
+    return data.items
+  elseif data ~= nil then
+    return data
+  else
+    return {}
+  end
+end
+
+local_fn.map_CompletionItemKind_to_vim_complete_kind = function(item_kind)
+  if CompletionItemKind[item_kind] then
+    return CompletionItemKind[item_kind]
+  else
+    return ''
+  end
+end
+
+local_fn.remove_prefix = function(word)
+  local current_line = vim.api.nvim_call_function(
+    'strpart',
+    { vim.api.nvim_call_function('getline', { '.' }), 0, vim.api.nvim_call_function('col', { '.' })  - 1 }
+  )
+
+  local prefix_length = 0
+  local max_prefix_length = vim.api.nvim_call_function('min', { { string.len(word), string.len(current_line) } })
+  local word_prefix
+  local i = 1
+
+  while i <= max_prefix_length do
+    local current_line_suffix = vim.api.nvim_call_function('strpart', { current_line, string.len(current_line) - i, i })
+    word_prefix = vim.api.nvim_call_function('strpart', { word, 0, i })
+    if current_line_suffix == word_prefix then prefix_length = i end
+    i = i + 1
+  end
+
+  return vim.api.nvim_call_function('strpart', { word, prefix_length })
+end
+
 
 return TextDocument

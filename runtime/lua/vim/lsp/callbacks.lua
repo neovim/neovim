@@ -188,7 +188,7 @@ local get_callbacks = function(method, filetype)
   return cb:get_callbacks(filetype)
 end
 
-return {
+local module = {
   -- Calling configured callback objects
   call_callback = call_callback,
 
@@ -202,3 +202,5 @@ return {
   _callback_object = CallbackObject,
   _get_callbacks = get_callbacks,
 }
+
+return module

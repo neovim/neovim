@@ -11,6 +11,7 @@ local logger = require('vim.lsp.logger')
 local text_document_handler = require('vim.lsp.handler').text_document
 
 local clients = {}
+local local_fn = {}
 
 --- Get the client list associated with a filetype
 -- @param filetype    [string]
@@ -231,15 +232,6 @@ lsp.status = function()
   return status
 end
 
-local build_completion_items = function(self, data)
-  logger.debug('callback:textDocument/completion(omnifunc)', data, ' ', self)
-
-  if not data or vim.tbl_isempty(data) then
-    return {}
-  end
-  return text_document_handler.CompletionList_to_matches(data)
-end
-
 lsp.omnifunc = function(findstart, base)
   logger.debug('omnifunc findstart: '..findstart..', base: '..base)
 
@@ -251,13 +243,22 @@ lsp.omnifunc = function(findstart, base)
     return vim.api.nvim_call_function('col', {'.'})
   elseif findstart == 0 then
     local params = lsp.protocol.CompletionParams()
-    local results = vim.lsp.request('textDocument/completion', params, build_completion_items)[1]
+    local results = vim.lsp.request('textDocument/completion', params, local_fn.build_completion_items)[1]
     local matches = {}
     for _, result in pairs(results) do
       matches = vim.tbl_extend('force', matches, result)
     end
     return matches
   end
+end
+
+local_fn.build_completion_items = function(self, data)
+  logger.debug('callback:textDocument/completion(omnifunc)', data, ' ', self)
+
+  if not data or vim.tbl_isempty(data) then
+    return {}
+  end
+  return text_document_handler.CompletionList_to_matches(data)
 end
 
 return lsp
