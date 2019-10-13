@@ -387,7 +387,6 @@ void init_homedir(void)
   }
 
   homedir = xstrndup(var, MAXPATHL);
-  uv_mutex_unlock(&homdir_mutex);
 }
 
 static char homedir_buf[MAXPATHL];
@@ -953,7 +952,7 @@ size_t home_replace(const buf_T *const buf, const char_u *src,
 
   // We check both the value of the $HOME environment variable and the
   // "real" home directory.
-  if (homedir) {
+  if (homedir != NULL) {
     dirlen = strlen(homedir);
   }
 
