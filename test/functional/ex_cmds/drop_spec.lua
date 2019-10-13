@@ -19,10 +19,6 @@ describe(":drop", function()
     command("set laststatus=2 shortmess-=F")
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it("works like :e when called with only one window open", function()
     feed_command("drop tmp1.vim")
     screen:expect([[

@@ -556,7 +556,6 @@ describe(":substitute, 'inccommand' preserves undo", function()
         ]])
       end
     end
-    screen:detach()
   end)
 
   it('with undolevels=2', function()
@@ -647,7 +646,6 @@ describe(":substitute, 'inccommand' preserves undo", function()
           Already ...t change |
         ]])
       end
-      screen:detach()
     end
   end)
 
@@ -713,7 +711,6 @@ describe(":substitute, 'inccommand' preserves undo", function()
         Already ...t change |
       ]])
     end
-    screen:detach()
   end)
 
 end)
@@ -724,10 +721,6 @@ describe(":substitute, inccommand=split", function()
   before_each(function()
     clear()
     common_setup(screen, "split", default_text .. default_text)
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it("preserves 'modified' buffer flag", function()
@@ -1241,10 +1234,6 @@ describe("inccommand=nosplit", function()
     common_setup(screen, "nosplit", default_text .. default_text)
   end)
 
-  after_each(function()
-    if screen then screen:detach() end
-  end)
-
   it("works with :smagic, :snomagic", function()
     feed_command("set hlsearch")
     insert("Line *.3.* here")
@@ -1718,10 +1707,6 @@ describe("'inccommand' split windows", function()
     screen = Screen.new(40,30)
     common_setup(screen, "split", default_text)
   end
-
-  after_each(function()
-    screen:detach()
-  end)
 
   it('work after more splits', function()
     refresh()

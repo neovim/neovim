@@ -13,10 +13,6 @@ describe('ui/cursor', function()
     screen:attach()
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it("'guicursor' is published as a UI event", function()
     local expected_mode_info = {
       [1] = {

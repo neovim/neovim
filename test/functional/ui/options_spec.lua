@@ -40,10 +40,6 @@ describe('ui receives option updates', function()
     return defaults
   end
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it("for defaults", function()
     local expected = reset()
     screen:expect(function()

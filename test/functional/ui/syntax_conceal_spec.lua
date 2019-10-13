@@ -22,10 +22,6 @@ describe('Screen', function()
     } )
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   describe("match and conceal", function()
 
     before_each(function()

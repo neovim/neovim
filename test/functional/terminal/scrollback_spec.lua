@@ -21,10 +21,6 @@ describe(':terminal scrollback', function()
     screen = thelpers.screen_setup(nil, nil, 30)
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   describe('when the limit is exceeded', function()
     before_each(function()
       local lines = {}
@@ -406,8 +402,6 @@ describe("'scrollback' option", function()
     feed_data(nvim_dir..'/shell-test REP 31 line'..(iswin() and '\r' or '\n'))
     screen:expect{any='30: line                      '}
     retry(nil, nil, function() expect_lines(7) end)
-
-    screen:detach()
   end)
 
   it('deletes lines (only) if necessary', function()
@@ -464,8 +458,6 @@ describe("'scrollback' option", function()
     -- Verify off-screen state
     eq((iswin() and '36: line' or '35: line'), eval("getline(line('w0') - 1)"))
     eq((iswin() and '27: line' or '26: line'), eval("getline(line('w0') - 10)"))
-
-    screen:detach()
   end)
 
   it('defaults to 10000 in :terminal buffers', function()

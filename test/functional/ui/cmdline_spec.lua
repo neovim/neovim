@@ -25,10 +25,6 @@ local function test_cmdline(linegrid)
     screen = new_screen({rgb=true, ext_cmdline=true, ext_linegrid=linegrid})
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('works', function()
     feed(':')
     screen:expect{grid=[[
@@ -802,10 +798,6 @@ describe('cmdline redraw', function()
   before_each(function()
     clear()
     screen = new_screen({rgb=true})
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it('with timer', function()

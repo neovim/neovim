@@ -25,10 +25,6 @@ describe(':Man', function()
       screen:attach()
     end)
 
-    after_each(function()
-      screen:detach()
-    end)
-
     it('clears backspaces from text and adds highlights', function()
       rawfeed([[
         ithis i<C-v><C-h>is<C-v><C-h>s a<C-v><C-h>a test

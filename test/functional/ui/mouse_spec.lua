@@ -40,10 +40,6 @@ describe('ui/mouse/input', function()
     ]])
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('single left click moves cursor', function()
     feed('<LeftMouse><2,1>')
     screen:expect([[

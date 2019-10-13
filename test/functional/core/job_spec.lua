@@ -963,9 +963,6 @@ describe("pty process teardown", function()
                                     |
     ]])
   end)
-  after_each(function()
-    screen:detach()
-  end)
 
   it("does not prevent/delay exit. #4798 #4900", function()
     if helpers.pending_win32(pending) then return end
