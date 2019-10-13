@@ -773,6 +773,17 @@ int os_setperm(const char *const name, int perm)
   return (r == kLibuvSuccess ? OK : FAIL);
 }
 
+/// Set the permission of a file referred to by the open file
+/// descriptor, like fchmod(2).
+///
+/// @return 0 on success, or libuv error code on failure.
+int os_fsetperm(int fd, int perm)
+{
+  int r;
+  RUN_UV_FS_FUNC(r, uv_fs_fchmod, fd, perm, NULL);
+  return r;
+}
+
 /// Changes the owner and group of a file, like chown(2).
 ///
 /// @return 0 on success, or libuv error code on failure.
