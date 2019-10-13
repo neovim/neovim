@@ -11,8 +11,6 @@ local NULL = helpers.NULL
 local OK = 0
 local iswin = helpers.iswin
 
-local lfs = require('lfs')
-
 local cimp = cimport('./src/nvim/os/os.h')
 
 describe('env.c', function()
