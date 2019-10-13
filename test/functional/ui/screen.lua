@@ -259,7 +259,7 @@ local ext_keys = {
 -- Asserts that the screen state eventually matches an expected state.
 --
 -- Can be called with positional args:
---    screen:expect(grid, [attr_ids, attr_ignore])
+--    screen:expect(grid, [attr_ids])
 --    screen:expect(condition)
 -- or keyword args (supports more options):
 --    screen:expect{grid=[[...]], cmdline={...}, condition=function() ... end}
@@ -276,8 +276,6 @@ local ext_keys = {
 --              attributes in the final state are an error.
 --              Use screen:set_default_attr_ids() to define attributes for many
 --              expect() calls.
--- attr_ignore: Ignored text attributes, or `true` to ignore all. By default
---              nothing is ignored.
 -- condition:   Function asserting some arbitrary condition. Return value is
 --              ignored, throw an error (use eq() or similar) to signal failure.
 -- any:         Lua pattern string expected to match a screen line. NB: the
@@ -312,13 +310,13 @@ local ext_keys = {
 -- cmdline_block:  Expected ext_cmdline block (for function definitions)
 -- wildmenu_items: Expected items for ext_wildmenu
 -- wildmenu_pos:   Expected position for ext_wildmenu
-function Screen:expect(expected, attr_ids, attr_ignore, ...)
+function Screen:expect(expected, attr_ids, ...)
   local grid, condition = nil, nil
   local expected_rows = {}
   assert(next({...}) == nil, "invalid args to expect()")
   if type(expected) == "table" then
-    assert(not (attr_ids ~= nil or attr_ignore ~= nil))
-    local is_key = {grid=true, attr_ids=true, attr_ignore=true, condition=true,
+    assert(not (attr_ids ~= nil))
+    local is_key = {grid=true, attr_ids=true, condition=true,
                     any=true, mode=true, unchanged=true, intermediate=true,
                     reset=true, timeout=true, request_cb=true, hl_groups=true}
     for _, v in ipairs(ext_keys) do
@@ -331,14 +329,13 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
     end
     grid = expected.grid
     attr_ids = expected.attr_ids
-    attr_ignore = expected.attr_ignore
     condition = expected.condition
     assert(not (expected.any ~= nil and grid ~= nil))
   elseif type(expected) == "string" then
     grid = expected
     expected = {}
   elseif type(expected) == "function" then
-    assert(not (attr_ids ~= nil or attr_ignore ~= nil))
+    assert(not (attr_ids ~= nil))
     condition = expected
     expected = {}
   else
@@ -355,7 +352,6 @@ function Screen:expect(expected, attr_ids, attr_ignore, ...)
   end
   local attr_state = {
       ids = attr_ids or self._default_attr_ids,
-      ignore = attr_ignore
   }
   if self._options.ext_linegrid then
     attr_state.id_to_index = self:linegrid_check_attrs(attr_state.ids or {})
@@ -1472,8 +1468,6 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
       return nil
     elseif id ~= nil then
       return id
-    elseif attr_state.ignore == true then
-      return nil
     end
     if attr_state.mutable then
       id = self:_insert_hl_id(attr_state, hl_id)
@@ -1482,9 +1476,7 @@ function Screen:_get_attr_id(attr_state, attrs, hl_id)
     end
     return "UNEXPECTED "..self:_pprint_attrs(self._attr_table[hl_id][1])
   else
-    if self:_equal_attrs(attrs, {}) or
-        attr_state.ignore == true or
-        self:_attr_index(attr_state.ignore, attrs) ~= nil then
+    if self:_equal_attrs(attrs, {}) then
       -- ignore this attrs
       return nil
     end
