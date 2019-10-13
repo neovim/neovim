@@ -480,6 +480,10 @@ parser.add_argument( '--all',
                      action = 'store_true',
                      help = 'Enable all supported completers' )
 
+parser.add_argument( '--force-all',
+                     action = 'store_true',
+                     help = 'Enable all unsupported completers' )
+
 done_languages = set()
 for name, gadget in GADGETS.items():
   lang = gadget[ 'language' ]
@@ -511,11 +515,15 @@ for name, gadget in GADGETS.items():
 
 args = parser.parse_args()
 
+if args.force_all and not args.all:
+  args.all = True
+
 failed = []
 all_adapters = {}
 for name, gadget in GADGETS.items():
   if not gadget.get( 'enabled', True ):
-    if not getattr( args, 'force_enable_' + gadget[ 'language' ] ):
+    if ( not args.force_all
+         and not getattr( args, 'force_enable_' + gadget[ 'language' ] ) ):
       continue
   else:
     if not args.all and not getattr( args, 'enable_' + gadget[ 'language' ] ):
