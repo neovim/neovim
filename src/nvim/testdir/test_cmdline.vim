@@ -1,6 +1,5 @@
 " Tests for editing the command line.
 
-
 func Test_complete_tab()
   call writefile(['testfile'], 'Xtestfile')
   call feedkeys(":e Xtestf\t\r", "tx")
@@ -475,6 +474,50 @@ func Test_cmdline_complete_user_cmd()
   call feedkeys(":Foo b\<Tab>\<Home>\"\<cr>", 'tx')
   call assert_equal('"Foo blue', @:)
   delcommand Foo
+endfunc
+
+func Test_cmdline_complete_user_names()
+  if has('unix') && executable('whoami')
+    let whoami = systemlist('whoami')[0]
+    let first_letter = whoami[0]
+    if len(first_letter) > 0
+      " Trying completion of  :e ~x  where x is the first letter of
+      " the user name should complete to at least the user name.
+      call feedkeys(':e ~' . first_letter . "\<c-a>\<c-B>\"\<cr>", 'tx')
+      call assert_match('^"e \~.*\<' . whoami . '\>', @:)
+    endif
+  endif
+  if has('win32')
+    " Just in case: check that the system has an Administrator account.
+    let names = system('net user')
+    if names =~ 'Administrator'
+      " Trying completion of  :e ~A  should complete to Administrator.
+      call feedkeys(':e ~A' . "\<c-a>\<c-B>\"\<cr>", 'tx')
+      call assert_match('^"e \~Administrator', @:)
+    endif
+  endif
+endfunc
+
+funct Test_cmdline_complete_languages()
+  let lang = substitute(execute('language messages'), '.*"\(.*\)"$', '\1', '')
+
+  call feedkeys(":language \<c-a>\<c-b>\"\<cr>", 'tx')
+  call assert_match('^"language .*\<ctype\>.*\<messages\>.*\<time\>', @:)
+
+  if has('unix')
+    " TODO: these tests don't work on Windows. lang appears to be 'C'
+    " but C does not appear in the completion. Why?
+    call assert_match('^"language .*\<' . lang . '\>', @:)
+
+    call feedkeys(":language messages \<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_match('^"language .*\<' . lang . '\>', @:)
+
+    call feedkeys(":language ctype \<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_match('^"language .*\<' . lang . '\>', @:)
+
+    call feedkeys(":language time \<c-a>\<c-b>\"\<cr>", 'tx')
+    call assert_match('^"language .*\<' . lang . '\>', @:)
+  endif
 endfunc
 
 func Test_cmdline_write_alternatefile()
