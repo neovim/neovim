@@ -1,4 +1,5 @@
 require('coxpcall')
+local busted = require('busted')
 local luv = require('luv')
 local lfs = require('lfs')
 local mpack = require('mpack')
@@ -14,7 +15,6 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
-local fail = global_helpers.fail
 local filter = global_helpers.filter
 local is_os = global_helpers.is_os
 local map = global_helpers.map
@@ -386,7 +386,7 @@ function module.retry(max, max_ms, fn)
     end
     luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      fail(string.format("stopping after %d retry() attempts.\n%s", tries, tostring(result)), 2)
+      busted.fail(string.format("stopping after %d retry() attempts.\n%s", tries, tostring(result)), 2)
     end
     tries = tries + 1
     luv.sleep(20)  -- Avoid hot loop...

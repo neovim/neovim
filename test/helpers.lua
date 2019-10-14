@@ -5,7 +5,6 @@ local luv = require('luv')
 local lfs = require('lfs')
 local relpath = require('pl.path').relpath
 local Paths = require('test.config.paths')
-local busted = require('busted')
 
 assert:set_parameter('TableFormatLevel', 100)
 
@@ -20,7 +19,6 @@ end
 
 local module = {
   REMOVE_THIS = {},
-  fail = busted.fail,
 }
 
 function module.argss_to_cmd(...)

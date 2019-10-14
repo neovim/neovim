@@ -72,12 +72,12 @@
 -- To debug screen tests, see Screen:redraw_debug().
 
 local helpers = require('test.functional.helpers')(nil)
+local busted = require('busted')
 local deepcopy = helpers.deepcopy
 local shallowcopy = helpers.shallowcopy
 local concat_tables = helpers.concat_tables
 local request, run_session = helpers.request, helpers.run_session
 local eq = helpers.eq
-local fail = helpers.fail
 local dedent = helpers.dedent
 local get_session = helpers.get_session
 local create_callindex = helpers.create_callindex
@@ -585,7 +585,7 @@ asynchronous (feed(), nvim_input()) and synchronous API calls.
 
 
   if err then
-    fail(err, 3)
+    busted.fail(err, 3)
   elseif did_warn then
     local tb = debug.traceback()
     local index = string.find(tb, '\n%s*%[C]')
