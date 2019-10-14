@@ -1293,60 +1293,62 @@ scrollup (
 }
 
 // Scroll the given window down "rows" rows
-void scroll_rows_down(win_T *wp, long rows, int byfold)
+void scroll_rows_down(win_T *wp, long rows, int by_fold)
 {
   // Make sure line wrapping is on
   assert(wp->w_p_wrap);
-
-  // XXX deal with folds
 
   // Calculate how many columns worth of each line to jump through
   int width1 = wp->w_width_inner - win_col_off(wp);
   int width2 = width1 + win_col_off2(wp);
 
   linenr_T lnum = wp->w_topline;
-  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
 
-  colnr_T skipcol = wp->w_skipcol;
-
-  while (rows > 0) {
-    rows--;
-    if (skipcol >= width1 + width2) {
-      skipcol -= width2;
-    } else if (skipcol >= width1) {
-      skipcol -= width1;
+  for (long i = 0; i < rows; ) {
+    colnr_T skipcol;
+    // Either start with a partially-shown top line, or grab a new line
+    if (i == 0 && wp->w_skipcol >= width1) {
+      skipcol = wp->w_skipcol;
     } else {
-      // We reached the beginning of the line, grab a new line
-      if (wp->w_topline <= 1) {
+      if (lnum <= 1) {
         wp->w_skipcol = 0;
         break;
       }
-
       lnum--;
-      wp->w_topline--;
-      wp->w_botline--;
+      // If this is a fold, jump to the first line of the fold and continue
+      if (by_fold && hasFoldingWin(wp, lnum, &lnum, NULL, false, NULL)) {
+        i++;
+        wp->w_skipcol = 0;
+        continue;
+      }
 
-      line = ml_get_buf(wp->w_buffer, lnum, false);
-      colnr_T line_width = win_linetabsize(wp, line, MAXCOL);
-      // Compute number of columns that this line has on its last row.
-      // We subtract/add one before modulo so that a line length that
-      // is divisible by the width doesn't end up with a blank line
-      // afterwards
-      skipcol = line_width;
-      if (skipcol < width1) {
-        skipcol = 0;
+      char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+      colnr_T line_len = win_linetabsize(wp, line, MAXCOL);
+      // Get the column corresponding to the first cell after
+      // this line, i.e. column 0 on the first row after
+      skipcol = round_line_len(line_len, width1, width2);
+    }
+
+    while (skipcol > 0 && i++ < rows) {
+      // Subtract width1 or width2 if we are past the end of the
+      // first or second row respectively
+      if (skipcol >= width1 + width2) {
+        skipcol -= width2;
       } else {
-        int offset = ((line_width - width1 - 1) % width2) + 1;
-        skipcol -= offset;
+        skipcol = MAX(0, skipcol - width1);
       }
     }
-    wp->w_wrow++;
+
     wp->w_skipcol = skipcol;
   }
+  // Update topline/botline
+  wp->w_botline -= wp->w_topline - lnum;
+  wp->w_topline = lnum;
 
   // If the cursor would go off-screen from this movement, jump it backwards
   // until it is visible.
   // XXX deal with scrolloff
+  wp->w_wrow += rows;
   if (wp->w_wrow >= wp->w_height_inner) {
     move_cursor_rowwise(wp, BACKWARD, wp->w_wrow - wp->w_height_inner + 1);
     wp->w_wrow = wp->w_height_inner;
@@ -1361,50 +1363,58 @@ void scroll_rows_down(win_T *wp, long rows, int byfold)
 }
 
 // Scroll the given window up "rows" rows
-void scroll_rows_up(win_T *wp, long rows, int byfold)
+void scroll_rows_up(win_T *wp, long rows, int by_fold)
 {
   // Make sure line wrapping is on
   assert(wp->w_p_wrap);
-
-  // XXX deal with folds
 
   // Calculate how many columns worth of each line to jump through
   int width1 = wp->w_width_inner - win_col_off(wp);
   int width2 = width1 + win_col_off2(wp);
 
   linenr_T lnum = wp->w_topline;
-  char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
 
-  // Get the character/column on this line corresponding to w_skipcol
-  colnr_T vcol = 0;
-  char_u *ptr = advance_line_ptr_by_width(wp, line, line, &vcol, wp->w_skipcol);
+  for (long i = 0; i < rows && lnum <= wp->w_buffer->b_ml.ml_line_count; ) {
+    // If this is a fold, jump past the last line of the fold and continue
+    if (by_fold && hasFoldingWin(wp, lnum, NULL, &lnum, false, NULL)) {
+      lnum++;
+      i++;
+      wp->w_skipcol = 0;
+      continue;
+    }
 
-  while (rows > 0) {
-    // Skip over one row's worth of characters.
-    colnr_T last_vcol = vcol;
-    int width = vcol ? width2 : width1;
-    ptr = advance_line_ptr_by_width(wp, line, ptr, &vcol, width);
+    char_u *line = ml_get_buf(wp->w_buffer, lnum, false);
+    char_u *ptr = line;
+    colnr_T vcol = 0;
+    // On the first line of the screen, jump forward by w_skipcol
+    if (lnum == wp->w_topline) {
+      ptr = advance_line_ptr_by_width(wp, line, ptr, &vcol, wp->w_skipcol);
+    }
 
-    // Did we reach the end of the line?
-    if ((vcol - last_vcol) < width) {
-      if (wp->w_topline >= wp->w_buffer->b_ml.ml_line_count) {
+    // Jump through rows until we hit the end of the line or run out of rows
+    while (i++ < rows) {
+      // Skip over one row's worth of characters
+      colnr_T last_vcol = vcol;
+      int width = vcol ? width2 : width1;
+      ptr = advance_line_ptr_by_width(wp, line, ptr, &vcol, width);
+      // If we didn't jump through enough characters, we reached the end of the line
+      if (vcol - last_vcol < width) {
+        lnum++;
+        vcol = 0;
         break;
       }
-
-      lnum++;
-      wp->w_topline++;
-      wp->w_botline++;
-      ptr = line = ml_get_buf(wp->w_buffer, lnum, false);
-      vcol = 0;
     }
+
     wp->w_skipcol = vcol;
-    wp->w_wrow--;
-    rows--;
   }
+  // Update topline/botline
+  wp->w_botline += lnum - wp->w_topline;
+  wp->w_topline = lnum;
 
   // If the cursor would go off-screen from this movement, jump it forward
-  // one row's worth of characters.
+  // by however many rows needed
   // XXX deal with scrolloff
+  wp->w_wrow -= rows;
   if (wp->w_wrow < 0) {
     move_cursor_rowwise(wp, FORWARD, -wp->w_wrow);
     wp->w_wrow = 0;
