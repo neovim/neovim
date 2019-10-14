@@ -17,6 +17,22 @@
 # include <lm.h>
 #endif
 
+// Add a user name to the list of users in garray_T *users.
+// Do nothing if user name is NULL or empty.
+static void add_user(garray_T *users, char *user, bool need_copy)
+{
+  char *user_copy = (user != NULL && need_copy)
+    ? xstrdup(user) : user;
+
+  if (user_copy == NULL || *user_copy == NUL) {
+    if (need_copy) {
+      xfree(user);
+    }
+    return;
+  }
+  GA_APPEND(char *, users, user_copy);
+}
+
 // Initialize users garray and fill it with os usernames.
 // Return Ok for success, FAIL for failure.
 int os_get_usernames(garray_T *users)
@@ -27,16 +43,15 @@ int os_get_usernames(garray_T *users)
   ga_init(users, sizeof(char *), 20);
 
 # if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
-  struct passwd *pw;
+  {
+    struct passwd *pw;
 
-  setpwent();
-  while ((pw = getpwent()) != NULL) {
-    // pw->pw_name shouldn't be NULL but just in case...
-    if (pw->pw_name != NULL) {
-      GA_APPEND(char *, users, xstrdup(pw->pw_name));
+    setpwent();
+    while ((pw = getpwent()) != NULL) {
+      add_user(users, pw->pw_name, true);
     }
+    endpwent();
   }
-  endpwent();
 # elif defined(WIN32)
   {
     DWORD nusers = 0, ntotal = 0, i;
@@ -51,10 +66,41 @@ int os_get_usernames(garray_T *users)
           EMSG2("utf16_to_utf8 failed: %d", conversion_result);
           break;
         }
-        GA_APPEND(char *, users, user);
+        add_user(users, user, false);
       }
 
       NetApiBufferFree(uinfo);
+    }
+  }
+# endif
+# if defined(HAVE_GETPWNAM)
+  {
+    const char *user_env = os_getenv("USER");
+
+    // The $USER environment variable may be a valid remote user name (NIS,
+    // LDAP) not already listed by getpwent(), as getpwent() only lists
+    // local user names.  If $USER is not already listed, check whether it
+    // is a valid remote user name using getpwnam() and if it is, add it to
+    // the list of user names.
+
+    if (user_env != NULL && *user_env != NUL) {
+      int i;
+
+      for (i = 0; i < users->ga_len; i++) {
+        char *local_user = ((char **)users->ga_data)[i];
+
+        if (STRCMP(local_user, user_env) == 0) {
+          break;
+        }
+      }
+
+      if (i == users->ga_len) {
+        struct passwd *pw = getpwnam(user_env);  // NOLINT
+
+        if (pw != NULL) {
+          add_user(users, pw->pw_name, true);
+        }
+      }
     }
   }
 # endif
