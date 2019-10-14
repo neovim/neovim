@@ -1125,7 +1125,7 @@ aliquip ex ea commodo consequat.]])
 
   it('can be quit', function()
     screen:try_resize(25,5)
-    feed(':echon join(map(range(0, &lines*2), "v:val"), "\\n")<cr>')
+    feed(':echon join(map(range(0, &lines*10), "v:val"), "\\n")<cr>')
     screen:expect{grid=[[
       0                        |
       1                        |
