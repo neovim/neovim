@@ -295,6 +295,7 @@ let s:flaky_tests = [
       \ 'Test_reltime()',
       \ 'Test_repeat_many()',
       \ 'Test_repeat_three()',
+      \ 'Test_state()',
       \ 'Test_stop_all_in_callback()',
       \ 'Test_terminal_composing_unicode()',
       \ 'Test_terminal_redir_file()',
