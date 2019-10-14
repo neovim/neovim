@@ -792,8 +792,6 @@ int prompt_for_number(int *mouse_used)
       cmdline_row = msg_row - 1;
     }
     need_wait_return = false;
-    msg_didany = false;
-    msg_didout = false;
   } else {
     cmdline_row = save_cmdline_row;
   }
