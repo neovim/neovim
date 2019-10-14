@@ -85,13 +85,11 @@ clean_files() {
 get_vim_sources() {
   require_executable git
 
-  local update=$1
-
   if [[ ! -d ${VIM_SOURCE_DIR} ]]; then
     echo "Cloning Vim into: ${VIM_SOURCE_DIR}"
     git clone https://github.com/vim/vim.git "${VIM_SOURCE_DIR}"
     cd "${VIM_SOURCE_DIR}"
-  elif [[ "$update" == 1 ]]; then
+  elif [[ "${1-}" == update ]]; then
     cd "${VIM_SOURCE_DIR}"
     if ! [ -d ".git" ] \
         && ! [ "$(git rev-parse --show-toplevel)" = "${VIM_SOURCE_DIR}" ]; then
@@ -153,7 +151,7 @@ assign_commit_details() {
   local get_vim_commit_cmd="git -C ${VIM_SOURCE_DIR} log -1 --format=%H ${vim_commit_ref} --"
   vim_commit=$($get_vim_commit_cmd 2>&1) || {
     # Update Vim sources.
-    get_vim_sources 1
+    get_vim_sources update
     vim_commit=$($get_vim_commit_cmd 2>&1) || {
       >&2 msg_err "Couldn't find Vim revision '${vim_commit_ref}': git error: ${vim_commit}."
       exit 3
@@ -216,7 +214,7 @@ preprocess_patch() {
 }
 
 get_vimpatch() {
-  get_vim_sources 0
+  get_vim_sources
 
   assign_commit_details "${1}"
 
@@ -465,7 +463,7 @@ list_missing_vimpatches() {
 # Prints a human-formatted list of Vim commits, with instructional messages.
 # Passes "$@" onto list_missing_vimpatches (args for git-log).
 show_vimpatches() {
-  get_vim_sources 1
+  get_vim_sources update
   printf "Vim patches missing from Neovim:\n"
 
   local -A runtime_commits
@@ -559,7 +557,7 @@ review_pr() {
   require_executable nvim
   require_executable jq
 
-  get_vim_sources 0
+  get_vim_sources
 
   local pr="${1}"
   echo
@@ -628,7 +626,7 @@ while getopts "hlLMVp:P:g:r:s" opt; do
       exit 0
       ;;
     V)
-      get_vim_sources 1
+      get_vim_sources update
       exit 0
       ;;
     *)
