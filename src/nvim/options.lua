@@ -2011,7 +2011,7 @@ return {
     },
     {
       full_name='scrollrowwise', abbreviation='scrw',
-      type='bool', scope={'buffer'},
+      type='bool', scope={'window'},
       vi_def=true,
       varname='p_scrw',
       defaults={if_true={vi=false}}

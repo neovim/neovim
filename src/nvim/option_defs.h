@@ -782,7 +782,6 @@ enum {
   , BV_QE
   , BV_RO
   , BV_SCBK
-  , BV_SCRW
   , BV_SI
   , BV_SMC
   , BV_SYN
@@ -838,6 +837,7 @@ enum {
   , WV_RLC
   , WV_SCBIND
   , WV_SCROLL
+  , WV_SCRW
   , WV_SISO
   , WV_SO
   , WV_SPELL

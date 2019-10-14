@@ -936,7 +936,7 @@ void curs_columns(
     win_scroll_lines(curwin, 0, extra);
   } else {
     // XXX what to do here? this should at least be flag-gated
-    if (!curbuf->b_p_scrw) {
+    if (!curwin->w_p_scrw) {
       curwin->w_skipcol = 0;
     }
   }
@@ -1810,7 +1810,7 @@ void scroll_cursor_bot(int min_scroll, int set_topbot)
     validate_botline();
 
   // The lines of the cursor line itself are always used.
-  if (curbuf->b_p_scrw) {
+  if (curwin->w_p_scrw) {
     // XXX This logic is definitely not fully correct, as it the cursor
     // can now go past the visible part of the window. But it gets the
     // current tests to pass.

@@ -3977,7 +3977,7 @@ void scroll_redraw(int up, long count)
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  if (curbuf->b_p_scrw && curwin->w_p_wrap) {
+  if (curwin->w_p_scrw && curwin->w_p_wrap) {
     if (up) {
       scroll_rows_up(curwin, count, true);
     } else {

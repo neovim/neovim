@@ -219,6 +219,8 @@ typedef struct {
 # define w_p_rlc w_onebuf_opt.wo_rlc    // 'rightleftcmd'
   long wo_scr;
 #define w_p_scr w_onebuf_opt.wo_scr     // 'scroll'
+  int wo_scrw;
+#define w_p_scrw w_onebuf_opt.wo_scrw     // 'scrollrowwise'
   int wo_spell;
 # define w_p_spell w_onebuf_opt.wo_spell  // 'spell'
   int wo_cuc;
@@ -694,7 +696,6 @@ struct file_buffer {
   int b_p_ro;                   ///< 'readonly'
   long b_p_sw;                  ///< 'shiftwidth'
   long b_p_scbk;                ///< 'scrollback'
-  int b_p_scrw;                 ///< 'scrollrowwise'
   int b_p_si;                   ///< 'smartindent'
   long b_p_sts;                 ///< 'softtabstop'
   long b_p_sts_nopaste;         ///< b_p_sts saved for paste mode
