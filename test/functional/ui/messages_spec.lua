@@ -1485,7 +1485,7 @@ ullamco laboris nisi ut
 aliquip ex ea commodo consequat.]])
   end)
 
-  it('can be quit', function()
+  it('can be quit with echon', function()
     screen:try_resize(25,5)
     feed(':echon join(map(range(0, &lines*10), "v:val"), "\\n")<cr>')
     screen:expect{grid=[[
@@ -1503,6 +1503,45 @@ aliquip ex ea commodo consequat.]])
       {1:~                        }|
                                |
     ]]}
+  end)
+
+  it('can be quit with Lua #11224 #16537', function()
+    -- NOTE: adds "4" to message history, although not displayed initially
+    --       (triggered the more prompt).
+    screen:try_resize(40,5)
+    feed(':lua for i=0,10 do print(i) end<cr>')
+    screen:expect{grid=[[
+      0                                       |
+      1                                       |
+      2                                       |
+      3                                       |
+      {4:-- More --}^                              |
+    ]]}
+    feed('q')
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+    feed(':mess<cr>')
+    screen:expect{grid=[[
+      0                                       |
+      1                                       |
+      2                                       |
+      3                                       |
+      {4:-- More --}^                              |
+    ]]}
+    feed('j')
+    screen:expect{grid=[[
+      1                                       |
+      2                                       |
+      3                                       |
+      4                                       |
+      {4:Press ENTER or type command to continue}^ |
+    ]]}
+    feed('<cr>')
   end)
 
   it('handles wrapped lines with line scroll', function()
