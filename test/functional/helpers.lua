@@ -828,9 +828,6 @@ return function(after_each)
           end
         end
 
-        if not session.child_exit then
-          session:close()
-        end
         if session.child_exit then  -- requires newer neovim-lua-client (WIP).
           if session.child_exit ~= 0 or session.child_signal ~= 0 then
             busted.fail(string.format("child exited non-zero (exitcode=%d, signal=%d)",
