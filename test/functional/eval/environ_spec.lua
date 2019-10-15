@@ -6,7 +6,6 @@ local exists = helpers.funcs.exists
 local command = helpers.command
 local nvim_prog = helpers.nvim_prog
 local setenv = helpers.funcs.setenv
-local unsetenv = helpers.funcs.unsetenv
 local system = helpers.funcs.system
 local eval = helpers.eval
 
