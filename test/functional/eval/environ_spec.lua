@@ -3,11 +3,6 @@ local clear = helpers.clear
 local eq = helpers.eq
 local environ = helpers.funcs.environ
 local exists = helpers.funcs.exists
-local command = helpers.command
-local nvim_prog = helpers.nvim_prog
-local setenv = helpers.funcs.setenv
-local system = helpers.funcs.system
-local eval = helpers.eval
 
 describe('environment variables', function()
   it('environ() handles empty env variable', function()
