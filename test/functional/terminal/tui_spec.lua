@@ -924,7 +924,15 @@ describe('TUI FocusGained/FocusLost', function()
 
     feed_data(':terminal\n')
     -- Wait for terminal to be ready.
-    screen:expect{any='-- TERMINAL --'}
+    screen:expect{grid=[[
+      {1:r}eady $                                           |
+      [Process exited 0]                                |
+                                                        |
+                                                        |
+                                                        |
+      :terminal                                         |
+      {3:-- TERMINAL --}                                    |
+    ]]}
 
     feed_data('\027[I')
     screen:expect{grid=[[
