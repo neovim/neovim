@@ -31,7 +31,6 @@ describe("shell command :!", function()
 
   after_each(function()
     child_session.feed_data("\3") -- Ctrl-C
-    screen:detach()
   end)
 
   it("displays output without LF/EOF. #4646 #4569 #3772", function()

@@ -208,18 +208,18 @@ describe(':terminal buffer', function()
       feed_command('terminal')
       feed('<c-\\><c-n>')
       feed_command('confirm bdelete')
-      screen:expect{any='Close "term://', attr_ignore=true}
+      screen:expect{any='Close "term://'}
     end)
 
     it('with &confirm', function()
       feed_command('terminal')
       feed('<c-\\><c-n>')
       feed_command('bdelete')
-      screen:expect{any='E89', attr_ignore=true}
+      screen:expect{any='E89'}
       feed('<cr>')
       eq('terminal', eval('&buftype'))
       feed_command('set confirm | bdelete')
-      screen:expect{any='Close "term://', attr_ignore=true}
+      screen:expect{any='Close "term://'}
       feed('y')
       neq('terminal', eval('&buftype'))
     end)

@@ -259,7 +259,7 @@ describe('ext_hlstate detailed highlights', function()
 
   it("can use independent cterm and rgb colors", function()
     -- tell test module to save all attributes (doesn't change nvim options)
-    screen:set_hlstate_cterm(true)
+    screen:set_rgb_cterm(true)
 
     screen:set_default_attr_ids({
         [1] = {{bold = true, foreground = Screen.colors.Blue1}, {foreground = 12}, {{hi_name = "NonText", ui_name = "EndOfBuffer", kind = "ui"}}},

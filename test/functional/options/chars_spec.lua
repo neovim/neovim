@@ -16,10 +16,6 @@ describe("'fillchars'", function()
     screen:attach()
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   local function shouldfail(val,errval)
     errval = errval or val
     eq('Vim(set):E474: Invalid argument: fillchars='..errval,
@@ -98,10 +94,6 @@ describe("'listchars'", function()
     clear()
     screen = Screen.new(50, 5)
     screen:attach()
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it('is local to window', function()

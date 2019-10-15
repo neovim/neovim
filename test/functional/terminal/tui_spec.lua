@@ -45,10 +45,6 @@ describe('TUI', function()
     child_session = helpers.connect(child_server)
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   -- Wait for mode in the child Nvim (avoid "typeahead race" #10826).
   local function wait_for_mode(mode)
     retry(nil, nil, function()

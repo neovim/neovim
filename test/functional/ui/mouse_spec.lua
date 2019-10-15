@@ -26,6 +26,8 @@ describe('ui/mouse/input', function()
       },
       [4] = {reverse = true},
       [5] = {bold = true, reverse = true},
+      [6] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [7] = {bold = true, foreground = Screen.colors.SeaGreen4},
     })
     command("set display-=msgsep")
     feed('itesting<cr>mouse<cr>support and selection<esc>')
@@ -36,10 +38,6 @@ describe('ui/mouse/input', function()
       {0:~                        }|
                                |
     ]])
-  end)
-
-  after_each(function()
-    screen:detach()
   end)
 
   it('single left click moves cursor', function()
@@ -620,12 +618,12 @@ describe('ui/mouse/input', function()
     meths.set_option('tags', './non-existent-tags-file')
     feed('<C-LeftMouse><0,0>')
     screen:expect([[
-      E433: No tags file       |
-      E426: tag not found: test|
-      ing                      |
-      Press ENTER or type comma|
-      nd to continue^           |
-    ]],nil,true)
+      {6:E433: No tags file}       |
+      {6:E426: tag not found: test}|
+      {6:ing}                      |
+      {7:Press ENTER or type comma}|
+      {7:nd to continue}^           |
+    ]])
     feed('<cr>')
   end)
 

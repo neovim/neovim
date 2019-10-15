@@ -17,10 +17,6 @@ describe('ui/ext_tabline', function()
     end)
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   it('publishes UI events', function()
     command("tabedit another-tab")
 

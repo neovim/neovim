@@ -37,10 +37,6 @@ describe('Buffer highlighting', function()
     })
   end)
 
-  after_each(function()
-    screen:detach()
-  end)
-
   local add_highlight = curbufmeths.add_highlight
   local clear_namespace = curbufmeths.clear_namespace
 

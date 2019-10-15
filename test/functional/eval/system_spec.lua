@@ -121,10 +121,6 @@ describe('system()', function()
       screen:attach()
     end)
 
-    after_each(function()
-      screen:detach()
-    end)
-
     if iswin() then
       local function test_more()
         eq('root = true', eval([[get(split(system('"more" ".editorconfig"'), "\n"), 0, '')]]))
