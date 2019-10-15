@@ -4,6 +4,7 @@
 codecov:
   notify:
     require_ci_to_pass: no
+    after_n_builds: 2
   ci:
     - appveyor
     - travis
