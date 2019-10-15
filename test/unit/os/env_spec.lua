@@ -327,14 +327,7 @@ describe('env.c', function()
       init_homedir()
       neq('', get_homedir())
       neq(nil, get_homedir())
-
-      if iswin() then
-          -- Worst case is '\\'
-          assert.True(#get_homedir() > 1)
-      else
-          -- Should get at least '/home' or '/root' in test environment
-          assert.True(#get_homedir() > 4)
-      end
+      assert.True(#get_homedir() > 0)
     end)
   end)
 end)
