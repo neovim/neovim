@@ -6,6 +6,7 @@ local exists = helpers.funcs.exists
 local command = helpers.command
 local nvim_prog = helpers.nvim_prog
 local setenv = helpers.funcs.setenv
+local unsetenv = helpers.funcs.unsetenv
 local system = helpers.funcs.system
 local eval = helpers.eval
 
@@ -51,4 +52,18 @@ describe('empty $HOME', function()
     -- expect './~' not found
     eq(-1, eval('test_empty_home_tilde_index'))
   end)
+
+  it("'~' folder not created in pwd if writing a file with invalid $HOME", function()
+    setenv('HOME', '/path/does/not/exist')
+    system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+                                          '-c', 'write test_empty_home', '+q'})
+    -- get files in pwd
+    command("let test_empty_home_pwd_files = split(globpath('.', '*'), '\n')")
+    -- get the index of the file named '~'
+    command('let test_empty_home_tilde_index = index(test_empty_home_pwd_files, "./~")')
+
+    -- expect './~' not found
+    eq(-1, eval('test_empty_home_tilde_index'))
+  end)
+
 end)
