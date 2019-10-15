@@ -9,7 +9,6 @@ local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 local OK = 0
-local iswin = helpers.iswin
 
 local cimp = cimport('./src/nvim/os/os.h')
 
