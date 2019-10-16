@@ -1,15 +1,10 @@
 #include "./language.h"
-
+#include "./subtree.h"
+#include "./error_costs.h"
 #include <string.h>
 
-#include "./error_costs.h"
-#include "./subtree.h"
-
-void ts_language_table_entry(const TSLanguage *self,
-                             TSStateId state,
-                             TSSymbol symbol,
-                             TableEntry *result)
-{
+void ts_language_table_entry(const TSLanguage *self, TSStateId state,
+                             TSSymbol symbol, TableEntry *result) {
   if (symbol == ts_builtin_sym_error || symbol == ts_builtin_sym_error_repeat) {
     result->action_count = 0;
     result->is_reusable = false;
@@ -24,20 +19,16 @@ void ts_language_table_entry(const TSLanguage *self,
   }
 }
 
-uint32_t ts_language_symbol_count(const TSLanguage *language)
-{
+uint32_t ts_language_symbol_count(const TSLanguage *language) {
   return language->symbol_count + language->alias_count;
 }
 
-uint32_t ts_language_version(const TSLanguage *language)
-{
+uint32_t ts_language_version(const TSLanguage *language) {
   return language->version;
 }
 
-TSSymbolMetadata ts_language_symbol_metadata(const TSLanguage *language,
-                                             TSSymbol symbol)
-{
-  if (symbol == ts_builtin_sym_error) {
+TSSymbolMetadata ts_language_symbol_metadata(const TSLanguage *language, TSSymbol symbol) {
+  if (symbol == ts_builtin_sym_error)  {
     return (TSSymbolMetadata){.visible = true, .named = true};
   } else if (symbol == ts_builtin_sym_error_repeat) {
     return (TSSymbolMetadata){.visible = false, .named = false};
@@ -46,8 +37,7 @@ TSSymbolMetadata ts_language_symbol_metadata(const TSLanguage *language,
   }
 }
 
-const char *ts_language_symbol_name(const TSLanguage *language, TSSymbol symbol)
-{
+const char *ts_language_symbol_name(const TSLanguage *language, TSSymbol symbol) {
   if (symbol == ts_builtin_sym_error) {
     return "ERROR";
   } else if (symbol == ts_builtin_sym_error_repeat) {
@@ -57,10 +47,8 @@ const char *ts_language_symbol_name(const TSLanguage *language, TSSymbol symbol)
   }
 }
 
-TSSymbol ts_language_symbol_for_name(const TSLanguage *self, const char *name)
-{
-  if (!strcmp(name, "ERROR"))
-    return ts_builtin_sym_error;
+TSSymbol ts_language_symbol_for_name(const TSLanguage *self, const char *name) {
+  if (!strcmp(name, "ERROR")) return ts_builtin_sym_error;
 
   uint32_t count = ts_language_symbol_count(self);
   for (TSSymbol i = 0; i < count; i++) {
@@ -71,9 +59,7 @@ TSSymbol ts_language_symbol_for_name(const TSLanguage *self, const char *name)
   return 0;
 }
 
-TSSymbolType ts_language_symbol_type(const TSLanguage *language,
-                                     TSSymbol symbol)
-{
+TSSymbolType ts_language_symbol_type(const TSLanguage *language, TSSymbol symbol) {
   TSSymbolMetadata metadata = ts_language_symbol_metadata(language, symbol);
   if (metadata.named) {
     return TSSymbolTypeRegular;
@@ -84,8 +70,7 @@ TSSymbolType ts_language_symbol_type(const TSLanguage *language,
   }
 }
 
-uint32_t ts_language_field_count(const TSLanguage *self)
-{
+uint32_t ts_language_field_count(const TSLanguage *self) {
   if (self->version >= TREE_SITTER_LANGUAGE_VERSION_WITH_FIELDS) {
     return self->field_count;
   } else {
@@ -93,8 +78,7 @@ uint32_t ts_language_field_count(const TSLanguage *self)
   }
 }
 
-const char *ts_language_field_name_for_id(const TSLanguage *self, TSFieldId id)
-{
+const char *ts_language_field_name_for_id(const TSLanguage *self, TSFieldId id) {
   uint32_t count = ts_language_field_count(self);
   if (count) {
     return self->field_names[id];
@@ -103,10 +87,11 @@ const char *ts_language_field_name_for_id(const TSLanguage *self, TSFieldId id)
   }
 }
 
-TSFieldId ts_language_field_id_for_name(const TSLanguage *self,
-                                        const char *name,
-                                        uint32_t name_length)
-{
+TSFieldId ts_language_field_id_for_name(
+  const TSLanguage *self,
+  const char *name,
+  uint32_t name_length
+) {
   uint32_t count = ts_language_field_count(self);
   for (TSSymbol i = 1; i < count + 1; i++) {
     switch (strncmp(name, self->field_names[i], name_length)) {

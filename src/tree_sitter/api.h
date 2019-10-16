@@ -5,10 +5,10 @@
 extern "C" {
 #endif
 
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 /****************************/
 /* Section - ABI Versioning */
@@ -52,10 +52,7 @@ typedef struct {
 
 typedef struct {
   void *payload;
-  const char *(*read)(void *payload,
-                      uint32_t byte_index,
-                      TSPoint position,
-                      uint32_t *bytes_read);
+  const char *(*read)(void *payload, uint32_t byte_index, TSPoint position, uint32_t *bytes_read);
   TSInputEncoding encoding;
 } TSInput;
 
@@ -133,9 +130,11 @@ const TSLanguage *ts_parser_language(const TSParser *self);
  * of ranges. The parser does *not* take ownership of these ranges; it copies
  * the data, so it doesn't matter how these ranges are allocated.
  */
-void ts_parser_set_included_ranges(TSParser *self,
-                                   const TSRange *ranges,
-                                   uint32_t length);
+void ts_parser_set_included_ranges(
+  TSParser *self,
+  const TSRange *ranges,
+  uint32_t length
+);
 
 /**
  * Get the ranges of text that the parser will include when parsing.
@@ -144,8 +143,10 @@ void ts_parser_set_included_ranges(TSParser *self,
  * or write to it. The length of the array will be written to the given
  * `length` pointer.
  */
-const TSRange *ts_parser_included_ranges(const TSParser *self,
-                                         uint32_t *length);
+const TSRange *ts_parser_included_ranges(
+  const TSParser *self,
+  uint32_t *length
+);
 
 /**
  * Use the parser to parse some source code and create a syntax tree.
@@ -185,7 +186,11 @@ const TSRange *ts_parser_included_ranges(const TSParser *self,
  *    from where the parser left out by calling `ts_parser_parse` again with
  *    the same arguments.
  */
-TSTree *ts_parser_parse(TSParser *self, const TSTree *old_tree, TSInput input);
+TSTree *ts_parser_parse(
+  TSParser *self,
+  const TSTree *old_tree,
+  TSInput input
+);
 
 /**
  * Use the parser to parse some source code stored in one contiguous buffer.
@@ -193,10 +198,12 @@ TSTree *ts_parser_parse(TSParser *self, const TSTree *old_tree, TSInput input);
  * above. The second two parameters indicate the location of the buffer and its
  * length in bytes.
  */
-TSTree *ts_parser_parse_string(TSParser *self,
-                               const TSTree *old_tree,
-                               const char *string,
-                               uint32_t length);
+TSTree *ts_parser_parse_string(
+  TSParser *self,
+  const TSTree *old_tree,
+  const char *string,
+  uint32_t length
+);
 
 /**
  * Use the parser to parse some source code stored in one contiguous buffer with
@@ -204,11 +211,13 @@ TSTree *ts_parser_parse_string(TSParser *self,
  * `ts_parser_parse_string` method above. The final parameter indicates whether
  * the text is encoded as UTF8 or UTF16.
  */
-TSTree *ts_parser_parse_string_encoding(TSParser *self,
-                                        const TSTree *old_tree,
-                                        const char *string,
-                                        uint32_t length,
-                                        TSInputEncoding encoding);
+TSTree *ts_parser_parse_string_encoding(
+  TSParser *self,
+  const TSTree *old_tree,
+  const char *string,
+  uint32_t length,
+  TSInputEncoding encoding
+);
 
 /**
  * Instruct the parser to start the next parse from the beginning.
@@ -326,9 +335,11 @@ void ts_tree_edit(TSTree *self, const TSInputEdit *edit);
  * for freeing it using `free`. The length of the array will be written to the
  * given `length` pointer.
  */
-TSRange *ts_tree_get_changed_ranges(const TSTree *self,
-                                    const TSTree *old_tree,
-                                    uint32_t *length);
+TSRange *ts_tree_get_changed_ranges(
+  const TSTree *self,
+  const TSTree *old_tree,
+  uint32_t *length
+);
 
 /**
  * Write a DOT graph describing the syntax tree to the given file.
@@ -446,9 +457,11 @@ uint32_t ts_node_named_child_count(TSNode);
 /**
  * Get the node's child with the given field name.
  */
-TSNode ts_node_child_by_field_name(TSNode self,
-                                   const char *field_name,
-                                   uint32_t field_name_length);
+TSNode ts_node_child_by_field_name(
+  TSNode self,
+  const char *field_name,
+  uint32_t field_name_length
+);
 
 /**
  * Get the node's child with the given numerical field id.
@@ -621,9 +634,7 @@ const char *ts_language_field_name_for_id(const TSLanguage *, TSFieldId);
 /**
  * Get the numerical id for the given field name string.
  */
-TSFieldId ts_language_field_id_for_name(const TSLanguage *,
-                                        const char *,
-                                        uint32_t);
+TSFieldId ts_language_field_id_for_name(const TSLanguage *, const char *, uint32_t);
 
 /**
  * Check whether the given node type id belongs to named nodes, anonymous nodes,

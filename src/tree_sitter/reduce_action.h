@@ -18,8 +18,7 @@ typedef struct {
 typedef Array(ReduceAction) ReduceActionSet;
 
 static inline void ts_reduce_action_set_add(ReduceActionSet *self,
-                                            ReduceAction new_action)
-{
+                                            ReduceAction new_action) {
   for (uint32_t i = 0; i < self->size; i++) {
     ReduceAction action = self->contents[i];
     if (action.symbol == new_action.symbol && action.count == new_action.count)

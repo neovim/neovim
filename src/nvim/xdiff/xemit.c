@@ -22,78 +22,78 @@
 
 #include "xinclude.h"
 
-static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec)
-{
-  *rec = xdf->recs[ri]->ptr;
+static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec) {
 
-  return xdf->recs[ri]->size;
+	*rec = xdf->recs[ri]->ptr;
+
+	return xdf->recs[ri]->size;
 }
 
-static int xdl_emit_record(xdfile_t *xdf,
-                           long ri,
-                           char const *pre,
-                           xdemitcb_t *ecb)
-{
-  long size, psize = (long)strlen(pre);
-  char const *rec;
 
-  size = xdl_get_rec(xdf, ri, &rec);
-  if (xdl_emit_diffrec(rec, size, pre, psize, ecb) < 0) {
-    return -1;
-  }
+static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *ecb) {
+	long size, psize = (long)strlen(pre);
+	char const *rec;
 
-  return 0;
+	size = xdl_get_rec(xdf, ri, &rec);
+	if (xdl_emit_diffrec(rec, size, pre, psize, ecb) < 0) {
+
+		return -1;
+	}
+
+	return 0;
 }
+
 
 /*
- * Starting at the passed change atom, find the latest change atom to be
- * included inside the differential hunk according to the specified
- * configuration. Also advance xscr if the first changes must be discarded.
+ * Starting at the passed change atom, find the latest change atom to be included
+ * inside the differential hunk according to the specified configuration.
+ * Also advance xscr if the first changes must be discarded.
  */
 xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
 {
-  xdchange_t *xch, *xchp, *lxch;
-  long max_common = 2 * xecfg->ctxlen + xecfg->interhunkctxlen;
-  long max_ignorable = xecfg->ctxlen;
-  unsigned long ignored = 0; /* number of ignored blank lines */
+	xdchange_t *xch, *xchp, *lxch;
+	long max_common = 2 * xecfg->ctxlen + xecfg->interhunkctxlen;
+	long max_ignorable = xecfg->ctxlen;
+	unsigned long ignored = 0; /* number of ignored blank lines */
 
-  /* remove ignorable changes that are too far before other changes */
-  for (xchp = *xscr; xchp && xchp->ignore; xchp = xchp->next) {
-    xch = xchp->next;
+	/* remove ignorable changes that are too far before other changes */
+	for (xchp = *xscr; xchp && xchp->ignore; xchp = xchp->next) {
+		xch = xchp->next;
 
-    if (xch == NULL || xch->i1 - (xchp->i1 + xchp->chg1) >= max_ignorable)
-      *xscr = xch;
-  }
+		if (xch == NULL ||
+		    xch->i1 - (xchp->i1 + xchp->chg1) >= max_ignorable)
+			*xscr = xch;
+	}
 
-  if (*xscr == NULL)
-    return NULL;
+	if (*xscr == NULL)
+		return NULL;
 
-  lxch = *xscr;
+	lxch = *xscr;
 
-  for (xchp = *xscr, xch = xchp->next; xch; xchp = xch, xch = xch->next) {
-    long distance = xch->i1 - (xchp->i1 + xchp->chg1);
-    if (distance > max_common)
-      break;
+	for (xchp = *xscr, xch = xchp->next; xch; xchp = xch, xch = xch->next) {
+		long distance = xch->i1 - (xchp->i1 + xchp->chg1);
+		if (distance > max_common)
+			break;
 
-    if (distance < max_ignorable && (!xch->ignore || lxch == xchp)) {
-      lxch = xch;
-      ignored = 0;
-    } else if (distance < max_ignorable && xch->ignore) {
-      ignored += xch->chg2;
-    } else if (lxch != xchp
-               && xch->i1 + (long)ignored - (lxch->i1 + lxch->chg1)
-                      > max_common) {
-      break;
-    } else if (!xch->ignore) {
-      lxch = xch;
-      ignored = 0;
-    } else {
-      ignored += xch->chg2;
-    }
-  }
+		if (distance < max_ignorable && (!xch->ignore || lxch == xchp)) {
+			lxch = xch;
+			ignored = 0;
+		} else if (distance < max_ignorable && xch->ignore) {
+			ignored += xch->chg2;
+		} else if (lxch != xchp &&
+			   xch->i1 + (long)ignored - (lxch->i1 + lxch->chg1) > max_common) {
+			break;
+		} else if (!xch->ignore) {
+			lxch = xch;
+			ignored = 0;
+		} else {
+			ignored += xch->chg2;
+		}
+	}
 
-  return lxch;
+	return lxch;
 }
+
 
 #if 0
 static long def_ff(const char *rec, long len, char *buf, long sz, void *priv UNUSED)
@@ -134,8 +134,8 @@ static int is_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri)
 #endif
 
 struct func_line {
-  long len;
-  char buf[80];
+	long len;
+	char buf[80];
 };
 
 #if 0
@@ -174,27 +174,24 @@ static int is_empty_rec(xdfile_t *xdf, long ri)
 }
 #endif
 
-int xdl_emit_diff(xdfenv_t *xe,
-                  xdchange_t *xscr,
-                  xdemitcb_t *ecb,
-                  xdemitconf_t const *xecfg)
-{
-  long s1, s2, e1, e2, lctx;
-  xdchange_t *xch, *xche;
+int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
+		  xdemitconf_t const *xecfg) {
+	long s1, s2, e1, e2, lctx;
+	xdchange_t *xch, *xche;
 #if 0
 	long funclineprev = -1;
 #endif
-  struct func_line func_line;
+	struct func_line func_line;
 
-  func_line.len = 0;
+	func_line.len = 0;
 
-  for (xch = xscr; xch; xch = xche->next) {
-    xche = xdl_get_hunk(&xch, xecfg);
-    if (!xch)
-      break;
+	for (xch = xscr; xch; xch = xche->next) {
+		xche = xdl_get_hunk(&xch, xecfg);
+		if (!xch)
+			break;
 
-    s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
-    s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
+		s1 = XDL_MAX(xch->i1 - xecfg->ctxlen, 0);
+		s2 = XDL_MAX(xch->i2 - xecfg->ctxlen, 0);
 
 #if 0
 		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
@@ -235,12 +232,12 @@ int xdl_emit_diff(xdfenv_t *xe,
 
  post_context_calculation:
 #endif
-    lctx = xecfg->ctxlen;
-    lctx = XDL_MIN(lctx, xe->xdf1.nrec - (xche->i1 + xche->chg1));
-    lctx = XDL_MIN(lctx, xe->xdf2.nrec - (xche->i2 + xche->chg2));
+		lctx = xecfg->ctxlen;
+		lctx = XDL_MIN(lctx, xe->xdf1.nrec - (xche->i1 + xche->chg1));
+		lctx = XDL_MIN(lctx, xe->xdf2.nrec - (xche->i2 + xche->chg2));
 
-    e1 = xche->i1 + xche->chg1 + lctx;
-    e2 = xche->i2 + xche->chg2 + lctx;
+		e1 = xche->i1 + xche->chg1 + lctx;
+		e2 = xche->i2 + xche->chg2 + lctx;
 
 #if 0
 		if (xecfg->flags & XDL_EMIT_FUNCCONTEXT) {
@@ -273,9 +270,9 @@ int xdl_emit_diff(xdfenv_t *xe,
 		}
 #endif
 
-    /*
-     * Emit current hunk header.
-     */
+		/*
+		 * Emit current hunk header.
+		 */
 
 #if 0
 		if (xecfg->flags & XDL_EMIT_FUNCNAMES) {
@@ -284,53 +281,52 @@ int xdl_emit_diff(xdfenv_t *xe,
 			funclineprev = s1 - 1;
 		}
 #endif
-    if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2, func_line.buf,
-                          func_line.len, ecb)
-        < 0)
-      return -1;
+		if (xdl_emit_hunk_hdr(s1 + 1, e1 - s1, s2 + 1, e2 - s2,
+				      func_line.buf, func_line.len, ecb) < 0)
+			return -1;
 
-    /*
-     * Emit pre-context.
-     */
-    for (; s2 < xch->i2; s2++)
-      if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
-        return -1;
+		/*
+		 * Emit pre-context.
+		 */
+		for (; s2 < xch->i2; s2++)
+			if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
+				return -1;
 
-    for (s1 = xch->i1, s2 = xch->i2;; xch = xch->next) {
-      /*
-       * Merge previous with current change atom.
-       */
-      for (; s1 < xch->i1 && s2 < xch->i2; s1++, s2++)
-        if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
-          return -1;
+		for (s1 = xch->i1, s2 = xch->i2;; xch = xch->next) {
+			/*
+			 * Merge previous with current change atom.
+			 */
+			for (; s1 < xch->i1 && s2 < xch->i2; s1++, s2++)
+				if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
+					return -1;
 
-      /*
-       * Removes lines from the first file.
-       */
-      for (s1 = xch->i1; s1 < xch->i1 + xch->chg1; s1++)
-        if (xdl_emit_record(&xe->xdf1, s1, "-", ecb) < 0)
-          return -1;
+			/*
+			 * Removes lines from the first file.
+			 */
+			for (s1 = xch->i1; s1 < xch->i1 + xch->chg1; s1++)
+				if (xdl_emit_record(&xe->xdf1, s1, "-", ecb) < 0)
+					return -1;
 
-      /*
-       * Adds lines from the second file.
-       */
-      for (s2 = xch->i2; s2 < xch->i2 + xch->chg2; s2++)
-        if (xdl_emit_record(&xe->xdf2, s2, "+", ecb) < 0)
-          return -1;
+			/*
+			 * Adds lines from the second file.
+			 */
+			for (s2 = xch->i2; s2 < xch->i2 + xch->chg2; s2++)
+				if (xdl_emit_record(&xe->xdf2, s2, "+", ecb) < 0)
+					return -1;
 
-      if (xch == xche)
-        break;
-      s1 = xch->i1 + xch->chg1;
-      s2 = xch->i2 + xch->chg2;
-    }
+			if (xch == xche)
+				break;
+			s1 = xch->i1 + xch->chg1;
+			s2 = xch->i2 + xch->chg2;
+		}
 
-    /*
-     * Emit post-context.
-     */
-    for (s2 = xche->i2 + xche->chg2; s2 < e2; s2++)
-      if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
-        return -1;
-  }
+		/*
+		 * Emit post-context.
+		 */
+		for (s2 = xche->i2 + xche->chg2; s2 < e2; s2++)
+			if (xdl_emit_record(&xe->xdf2, s2, " ", ecb) < 0)
+				return -1;
+	}
 
-  return 0;
+	return 0;
 }

@@ -7,25 +7,21 @@
 
 #include <windows.h>
 
-static inline size_t atomic_load(const volatile size_t *p)
-{
+static inline size_t atomic_load(const volatile size_t *p) {
   return *p;
 }
 
-static inline uint32_t atomic_inc(volatile uint32_t *p)
-{
+static inline uint32_t atomic_inc(volatile uint32_t *p) {
   return InterlockedIncrement(p);
 }
 
-static inline uint32_t atomic_dec(volatile uint32_t *p)
-{
+static inline uint32_t atomic_dec(volatile uint32_t *p) {
   return InterlockedDecrement(p);
 }
 
 #else
 
-static inline size_t atomic_load(const volatile size_t *p)
-{
+static inline size_t atomic_load(const volatile size_t *p) {
 #ifdef __ATOMIC_RELAXED
   return __atomic_load_n(p, __ATOMIC_RELAXED);
 #else
@@ -33,13 +29,11 @@ static inline size_t atomic_load(const volatile size_t *p)
 #endif
 }
 
-static inline uint32_t atomic_inc(volatile uint32_t *p)
-{
+static inline uint32_t atomic_inc(volatile uint32_t *p) {
   return __sync_add_and_fetch(p, 1u);
 }
 
-static inline uint32_t atomic_dec(volatile uint32_t *p)
-{
+static inline uint32_t atomic_dec(volatile uint32_t *p) {
   return __sync_sub_and_fetch(p, 1u);
 }
 

@@ -14,7 +14,7 @@
 #include "./parser.c"
 #include "./stack.c"
 #include "./subtree.c"
-#include "./tree.c"
 #include "./tree_cursor.c"
+#include "./tree.c"
 #include "./utf16.c"
 #include "utf8proc.c"

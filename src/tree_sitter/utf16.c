@@ -1,9 +1,10 @@
 #include "./utf16.h"
 
-utf8proc_ssize_t utf16_iterate(const utf8proc_uint8_t *string,
-                               utf8proc_ssize_t length,
-                               utf8proc_int32_t *code_point)
-{
+utf8proc_ssize_t utf16_iterate(
+  const utf8proc_uint8_t *string,
+  utf8proc_ssize_t length,
+  utf8proc_int32_t *code_point
+) {
   if (length < 2) {
     *code_point = -1;
     return 0;
