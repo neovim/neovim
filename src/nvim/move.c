@@ -1347,11 +1347,13 @@ void scroll_rows_down(win_T *wp, long rows, int by_fold)
 
   // If the cursor would go off-screen from this movement, jump it backwards
   // until it is visible.
-  // XXX deal with scrolloff
+  int old_wrow = wp->w_wrow;
   wp->w_wrow += rows;
-  if (wp->w_wrow >= wp->w_height_inner) {
-    move_cursor_rowwise(wp, BACKWARD, wp->w_wrow - wp->w_height_inner + 1);
-    wp->w_wrow = wp->w_height_inner;
+  if (wp->w_wrow >= wp->w_height_inner - p_so) {
+    // Don't jump below where the cursor was before
+    int new_wrow = MAX(old_wrow, wp->w_height_inner - (int)p_so - 1);
+    move_cursor_rowwise(wp, BACKWARD, wp->w_wrow - new_wrow);
+    wp->w_wrow = new_wrow;
   }
 
   // XXX is the below logic correct?
@@ -1413,11 +1415,13 @@ void scroll_rows_up(win_T *wp, long rows, int by_fold)
 
   // If the cursor would go off-screen from this movement, jump it forward
   // by however many rows needed
-  // XXX deal with scrolloff
+  int old_wrow = wp->w_wrow;
   wp->w_wrow -= rows;
-  if (wp->w_wrow < 0) {
-    move_cursor_rowwise(wp, FORWARD, -wp->w_wrow);
-    wp->w_wrow = 0;
+  if (wp->w_wrow < p_so) {
+    // Don't jump above where the cursor was before
+    int new_wrow = MIN(old_wrow, (int)p_so);
+    move_cursor_rowwise(wp, FORWARD, new_wrow - wp->w_wrow);
+    wp->w_wrow = new_wrow;
   }
 
   // XXX is the below logic correct?
