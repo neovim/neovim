@@ -119,8 +119,8 @@ static MultiQueue *multiqueue_new(MultiQueue *parent, put_callback put_cb,
 void multiqueue_free(MultiQueue *this)
 {
   assert(this);
-  while (!QUEUE_EMPTY(&this->headtail)) {
-    QUEUE *q = QUEUE_HEAD(&this->headtail);
+  QUEUE *q;
+  QUEUE_FOREACH(q, &this->headtail, {
     MultiQueueItem *item = multiqueue_node_data(q);
     if (this->parent) {
       QUEUE_REMOVE(&item->data.item.parent_item->node);
@@ -128,7 +128,7 @@ void multiqueue_free(MultiQueue *this)
     }
     QUEUE_REMOVE(q);
     xfree(item);
-  }
+  })
 
   xfree(this);
 }

@@ -5686,10 +5686,10 @@ bool set_ref_in_item(typval_T *tv, int copyID, ht_stack_T **ht_stack,
 
         QUEUE *w = NULL;
         DictWatcher *watcher = NULL;
-        QUEUE_FOREACH(w, &dd->watchers) {
+        QUEUE_FOREACH(w, &dd->watchers, {
           watcher = tv_dict_watcher_node_data(w);
           set_ref_in_callback(&watcher->callback, copyID, ht_stack, list_stack);
-        }
+        })
       }
       break;
     }
