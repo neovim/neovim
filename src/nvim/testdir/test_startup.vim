@@ -509,6 +509,20 @@ func Test_read_stdin()
   call delete('Xtestout')
 endfunc
 
+func Test_set_shell()
+  let after = [
+	\ 'call writefile([&shell], "Xtestout")',
+	\ 'quit!',
+	\ ]
+  let $SHELL = '/bin/with space/sh'
+  if RunVimPiped([], after, '', '')
+    let lines = readfile('Xtestout')
+    " MS-Windows adds a space after the word
+    call assert_equal('/bin/with\ space/sh', lines[0])
+  endif
+  call delete('Xtestout')
+endfunc
+
 func Test_progpath()
   " Tests normally run with "./vim" or "../vim", these must have been expanded
   " to a full path.

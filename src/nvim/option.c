@@ -603,7 +603,7 @@ void set_init_1(void)
   {
     const char *shell = os_getenv("SHELL");
     if (shell != NULL) {
-      set_string_default("sh", (char *) shell, false);
+      set_string_default_esc("sh", (char *) shell, false, true);
     }
   }
 
@@ -925,7 +925,8 @@ set_options_default(
 /// @param name The name of the option
 /// @param val The value of the option
 /// @param allocated If true, do not copy default as it was already allocated.
-static void set_string_default(const char *name, char *val, bool allocated)
+/// @param escape If true, escape spaces with a backslash
+static void set_string_default_esc(const char *name, char *val, bool allocated, bool escape)
   FUNC_ATTR_NONNULL_ALL
 {
   int opt_idx = findoption(name);
@@ -934,12 +935,23 @@ static void set_string_default(const char *name, char *val, bool allocated)
       xfree(options[opt_idx].def_val[VI_DEFAULT]);
     }
 
+    char_u *sanitised_val = (
+        escape && vim_strchr(val, ' ') != NULL
+        ? vim_strsave_escaped(val, (char_u *)" ")
+        : vim_strsave(val)
+    );
+
     options[opt_idx].def_val[VI_DEFAULT] = (char_u *) (
         allocated
         ? (char_u *) val
         : (char_u *) xstrdup(val));
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
+}
+
+void set_string_default(char *name, char *val, bool allocated)
+{
+  set_string_default_esc(name, val, allocated, false);
 }
 
 /*

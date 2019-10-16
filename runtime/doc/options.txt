@@ -5140,14 +5140,20 @@ A jump table for the options with a short description can be found at |Q_op|.
 	See |option-backslash| about including spaces and backslashes.
 	Environment variables are expanded |:set_env|.
 	If the name of the shell contains a space, you might need to enclose
-	it in quotes.  Example: >
+	it in quotes or escape the space. Example with quotes: >
 		:set shell=\"c:\program\ files\unix\sh.exe\"\ -f
 <	Note the backslash before each quote (to avoid starting a comment) and 
 	each space (to avoid ending the option value), so better use |:let-&| 
 	like this: >
 		:let &shell='"C:\Program Files\unix\sh.exe" -f'
 <	Also note that the "-f" is not inside the quotes, because it is not 
-	part of the command name.
+	part of the command name. Neovim automagically recognizes the
+	backslashes that are path separators.
+	Example with escaped space (Neovim will do this when initializing the
+	option from $SHELL): >
+		:set shell=/bin/with\\\ space/sh
+<	The resulting value of 'shell' is "/bin/with\ space/sh", two
+	backslashes are consumed by `:set`.
 							*shell-unquoting*
 	Rules regarding quotes:
 	1. Option is split on space and tab characters that are not inside 
