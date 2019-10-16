@@ -1183,7 +1183,7 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   QUEUE *w = NULL;
   DictWatcher *watcher = NULL;
   bool matched = false;
-  QUEUE_FOREACH(w, &dict->watchers) {
+  QUEUE_FOREACH(w, &dict->watchers, {
     watcher = tv_dict_watcher_node_data(w);
     if (tv_callback_equal(&watcher->callback, &callback)
         && watcher->key_pattern_len == key_pattern_len
@@ -1191,7 +1191,7 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
       matched = true;
       break;
     }
-  }
+  })
 
   if (!matched) {
     return false;
@@ -1265,7 +1265,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
   dict->dv_refcount++;
   QUEUE *w;
-  QUEUE_FOREACH(w, &dict->watchers) {
+  QUEUE_FOREACH(w, &dict->watchers, {
     DictWatcher *watcher = tv_dict_watcher_node_data(w);
     if (!watcher->busy && tv_dict_watcher_matches(watcher, key)) {
       rettv = TV_INITIAL_VALUE;
@@ -1277,7 +1277,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
         tv_dict_watcher_free(watcher);
       }
     }
-  }
+  })
   tv_dict_unref(dict);
 
   for (size_t i = 1; i < ARRAY_SIZE(argv); i++) {
