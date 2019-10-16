@@ -380,8 +380,7 @@ static char homedir_buf[MAXPATHL];
 char *os_homedir(void)
 {
   size_t homedir_size = MAXPATHL;
-  int ret = uv_os_homedir(os_buf, &homedir_size);
-  if (ret == 0 && homedir_size > 0) {
+  if (uv_os_homedir(os_buf, &homedir_size) == 0) {
     xstrlcpy(homedir_buf, os_buf, strlen(os_buf) + 1);
     return homedir_buf;
   }
