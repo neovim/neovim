@@ -37,13 +37,13 @@
 // the behavior of `os_getenv`.
 static PMap(cstr_t) *envmap;
 static uv_mutex_t mutex;
-static uv_mutex_t homdir_mutex;
+static uv_mutex_t homedir_mutex;
 
 void env_init(void)
 {
   envmap = pmap_new(cstr_t)();
   uv_mutex_init(&mutex);
-  uv_mutex_init(&homdir_mutex);
+  uv_mutex_init(&homedir_mutex);
 }
 
 /// Like getenv(), but returns NULL if the variable is empty.
@@ -304,7 +304,9 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
+  uv_mutex_lock(&homedir_mutex);
   const char *var = os_homedir();
+  uv_mutex_unlock(&homedir_mutex);
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -357,7 +359,7 @@ void init_homedir(void)
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
       // Attempts to jump into var (guessed homedir)
-      if (!os_chdir(var) && os_dirname((char_u *)IObuff, MAXPATHL) == OK) {
+      if (!os_chdir(var) && os_dirname((char_u *)IObuff, IOSIZE) == OK) {
         var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {
@@ -367,27 +369,22 @@ void init_homedir(void)
 #endif
   }
 
-  if ((var == NULL || *var == NUL)
-      && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+  if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
     var = os_buf;
   }
-
-  homedir = xstrndup(var, MAXPATHL);
+  homedir = xstrdup(var);
 }
 
 static char homedir_buf[MAXPATHL];
 
 char *os_homedir(void)
 {
-  uv_mutex_lock(&homdir_mutex);
   size_t homedir_size = MAXPATHL;
   int ret = uv_os_homedir(os_buf, &homedir_size);
   if (ret == 0 && homedir_size > 0) {
     xstrlcpy(homedir_buf, os_buf, strlen(os_buf) + 1);
-    uv_mutex_unlock(&homdir_mutex);
     return homedir_buf;
   }
-  uv_mutex_unlock(&homdir_mutex);
   return NULL;
 }
 
