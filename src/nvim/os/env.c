@@ -284,13 +284,11 @@ void os_get_hostname(char *hostname, size_t size)
 }
 
 /// To get the "real" home directory:
-///   - os_homedir is a wrapper over uv_os_homedir
 /// For Windows:
 ///   - assemble homedir using HOMEDRIVE and HOMEPATH
 ///   - resolve references
 ///   - guess C drive
 /// For Unix:
-///   - uv_os_homedir takes care of most of the logic
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
 ///   - as a last resort, get the pwd of the current directory.
@@ -300,13 +298,12 @@ static char *homedir = NULL;
 
 void init_homedir(void)
 {
+  uv_mutex_lock(&homedir_mutex);
   // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
 
-  uv_mutex_lock(&homedir_mutex);
-  const char *var = os_homedir();
-  uv_mutex_unlock(&homedir_mutex);
+  const char *var = os_getenv("HOME");
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -326,6 +323,14 @@ void init_homedir(void)
         var = os_buf;
       }
     }
+  }
+
+  if (var == NULL) {
+    var = os_getenv("USERPROFILE");
+  }
+
+  if (var == NULL) {
+    var = os_homedir();
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -353,6 +358,10 @@ void init_homedir(void)
   }
 #endif
 
+  if (var == NULL) {
+    var = os_homedir();
+  }
+
   if (var != NULL) {
 #ifdef UNIX
     // Change to the directory and get the actual path.  This resolves
@@ -372,7 +381,9 @@ void init_homedir(void)
   if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
     var = os_buf;
   }
-  homedir = xstrdup(var);
+
+  homedir = xstrndup(var, MAXPATHL);
+  uv_mutex_unlock(&homedir_mutex);
 }
 
 static char homedir_buf[MAXPATHL];

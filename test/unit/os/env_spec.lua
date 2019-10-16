@@ -313,15 +313,7 @@ describe('env.c', function()
   end)
 
   describe('init_homedir', function()
-    itp('homedir set to $HOME if $HOME exists', function()
-      -- assume test environment has a default HOME set
-      -- if not, we can remove this test
-      init_homedir()
-      -- lua HOME and homedir should be the same
-      eq(os.getenv('HOME'), get_homedir())
-    end)
-
-    itp('able to get an non-empty homedir with empty $HOME', function()
+    itp('able to get an non-empty homedir with unset $HOME environment variable', function()
       os_unsetenv('HOME')
       init_homedir()
       neq('', get_homedir())
