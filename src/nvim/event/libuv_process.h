@@ -14,13 +14,11 @@ typedef struct libuv_process {
 
 static inline LibuvProcess libuv_process_init(Loop *loop, void *data)
 {
-  LibuvProcess rv = {
-    .process = process_init(loop, kProcessTypeUv, data)
-  };
+  LibuvProcess rv = {.process = process_init(loop, kProcessTypeUv, data)};
   return rv;
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/libuv_process.h.generated.h"
+#include "event/libuv_process.h.generated.h"
 #endif
 #endif  // NVIM_EVENT_LIBUV_PROCESS_H

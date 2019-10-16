@@ -8,18 +8,18 @@
 #include <sys/types.h>
 
 #ifdef WIN32
-# include "nvim/os/win_defs.h"
+#include "nvim/os/win_defs.h"
 #else
-# include "nvim/os/unix_defs.h"
+#include "nvim/os/unix_defs.h"
 #endif
 
 #define BASENAMELEN (NAME_MAX - 5)
 
 // Use the system path length if it makes sense.
 #if defined(PATH_MAX) && (PATH_MAX > 1024)
-# define MAXPATHL PATH_MAX
+#define MAXPATHL PATH_MAX
 #else
-# define MAXPATHL 1024
+#define MAXPATHL 1024
 #endif
 
 // Command-processing buffer. Use large buffers for all platforms.
@@ -29,7 +29,7 @@
 // some systems can't handle both, only use string.h in that case.
 #include <string.h>
 #if defined(HAVE_STRINGS_H) && !defined(NO_STRINGS_WITH_STRING_H)
-# include <strings.h>
+#include <strings.h>
 #endif
 
 /// Converts libuv error (negative int) to error description string.
@@ -39,9 +39,9 @@
 #define os_translate_sys_error uv_translate_sys_error
 
 #ifdef WIN32
-# define os_strtok strtok_s
+#define os_strtok strtok_s
 #else
-# define os_strtok strtok_r
+#define os_strtok strtok_r
 #endif
 
 #endif  // NVIM_OS_OS_DEFS_H

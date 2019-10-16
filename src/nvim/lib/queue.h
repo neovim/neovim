@@ -30,18 +30,18 @@ typedef struct _queue {
 } QUEUE;
 
 // Public macros.
-#define QUEUE_DATA(ptr, type, field) \
-  ((type *)((char *)(ptr) - offsetof(type, field)))
+#define QUEUE_DATA(ptr, type, field)                                           \
+  ((type *)((char *)(ptr)-offsetof(type, field)))
 
 // Important note: mutating the list while QUEUE_FOREACH is
 // iterating over its elements results in undefined behavior.
-#define QUEUE_FOREACH(q, h) \
-  for (  /* NOLINT(readability/braces) */ \
-      (q) = (h)->next; (q) != (h); (q) = (q)->next)
+#define QUEUE_FOREACH(q, h)                                                    \
+  for (/* NOLINT(readability/braces) */                                        \
+       (q) = (h)->next; (q) != (h); (q) = (q)->next)
 
 // ffi.cdef is unable to swallow `bool` in place of `int` here.
 static inline int QUEUE_EMPTY(const QUEUE *const q)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return q == q->next;
 }
@@ -54,8 +54,8 @@ static inline void QUEUE_INIT(QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
   q->prev = q;
 }
 
-static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
-  FUNC_ATTR_ALWAYS_INLINE
+static inline void QUEUE_ADD(QUEUE *const h,
+                             QUEUE *const n) FUNC_ATTR_ALWAYS_INLINE
 {
   h->prev->next = n->next;
   n->next->prev = h->prev;
@@ -63,8 +63,8 @@ static inline void QUEUE_ADD(QUEUE *const h, QUEUE *const n)
   h->prev->next = h;
 }
 
-static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
-  FUNC_ATTR_ALWAYS_INLINE
+static inline void QUEUE_INSERT_HEAD(QUEUE *const h,
+                                     QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
 {
   q->next = h->next;
   q->prev = h;
@@ -72,8 +72,8 @@ static inline void QUEUE_INSERT_HEAD(QUEUE *const h, QUEUE *const q)
   h->next = q;
 }
 
-static inline void QUEUE_INSERT_TAIL(QUEUE *const h, QUEUE *const q)
-  FUNC_ATTR_ALWAYS_INLINE
+static inline void QUEUE_INSERT_TAIL(QUEUE *const h,
+                                     QUEUE *const q) FUNC_ATTR_ALWAYS_INLINE
 {
   q->next = h;
   q->prev = h->prev;

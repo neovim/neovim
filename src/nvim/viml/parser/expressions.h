@@ -1,13 +1,13 @@
 #ifndef NVIM_VIML_PARSER_EXPRESSIONS_H
 #define NVIM_VIML_PARSER_EXPRESSIONS_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
+#include "nvim/eval/typval.h"
 #include "nvim/types.h"
 #include "nvim/viml/parser/parser.h"
-#include "nvim/eval/typval.h"
 
 // Defines whether to ignore case:
 //    ==   kCCStrategyUseOption
@@ -22,46 +22,46 @@ typedef enum {
 /// Lexer token type
 typedef enum {
   kExprLexInvalid = 0,  ///< Invalid token, indicaten an error.
-  kExprLexMissing,  ///< Missing token, for use in parser.
-  kExprLexSpacing,  ///< Spaces, tabs, newlines, etc.
+  kExprLexMissing,      ///< Missing token, for use in parser.
+  kExprLexSpacing,      ///< Spaces, tabs, newlines, etc.
   kExprLexEOC,  ///< End of command character: NL, |, just end of stream.
 
-  kExprLexQuestion,  ///< Question mark, for use in ternary.
-  kExprLexColon,  ///< Colon, for use in ternary.
-  kExprLexOr,  ///< Logical or operator.
-  kExprLexAnd,  ///< Logical and operator.
+  kExprLexQuestion,    ///< Question mark, for use in ternary.
+  kExprLexColon,       ///< Colon, for use in ternary.
+  kExprLexOr,          ///< Logical or operator.
+  kExprLexAnd,         ///< Logical and operator.
   kExprLexComparison,  ///< One of the comparison operators.
-  kExprLexPlus,  ///< Plus sign.
-  kExprLexMinus,  ///< Minus sign.
+  kExprLexPlus,        ///< Plus sign.
+  kExprLexMinus,       ///< Minus sign.
   kExprLexDot,  ///< Dot: either concat or subscript, also part of the float.
   kExprLexMultiplication,  ///< Multiplication, division or modulo operator.
 
   kExprLexNot,  ///< Not: !.
 
-  kExprLexNumber,  ///< Integer number literal, or part of a float.
+  kExprLexNumber,              ///< Integer number literal, or part of a float.
   kExprLexSingleQuotedString,  ///< Single quoted string literal.
   kExprLexDoubleQuotedString,  ///< Double quoted string literal.
-  kExprLexOption,  ///< &optionname option value.
-  kExprLexRegister,  ///< @r register value.
-  kExprLexEnv,  ///< Environment $variable value.
-  kExprLexPlainIdentifier,  ///< Identifier without scope: `abc`, `foo#bar`.
+  kExprLexOption,              ///< &optionname option value.
+  kExprLexRegister,            ///< @r register value.
+  kExprLexEnv,                 ///< Environment $variable value.
+  kExprLexPlainIdentifier,     ///< Identifier without scope: `abc`, `foo#bar`.
 
-  kExprLexBracket,  ///< Bracket, either opening or closing.
+  kExprLexBracket,      ///< Bracket, either opening or closing.
   kExprLexFigureBrace,  ///< Figure brace, either opening or closing.
   kExprLexParenthesis,  ///< Parenthesis, either opening or closing.
-  kExprLexComma,  ///< Comma.
-  kExprLexArrow,  ///< Arrow, like from lambda expressions.
-  kExprLexAssignment,  ///< Assignment: `=` or `{op}=`.
+  kExprLexComma,        ///< Comma.
+  kExprLexArrow,        ///< Arrow, like from lambda expressions.
+  kExprLexAssignment,   ///< Assignment: `=` or `{op}=`.
   // XXX When modifying this enum you need to also modify eltkn_type_tab in
   //     expressions.c and tests and, possibly, viml_pexpr_repr_token.
 } LexExprTokenType;
 
 typedef enum {
-  kExprCmpEqual,  ///< Equality, unequality.
-  kExprCmpMatches,  ///< Matches regex, not matches regex.
-  kExprCmpGreater,  ///< `>` or `<=`
+  kExprCmpEqual,           ///< Equality, unequality.
+  kExprCmpMatches,         ///< Matches regex, not matches regex.
+  kExprCmpGreater,         ///< `>` or `<=`
   kExprCmpGreaterOrEqual,  ///< `>=` or `<`.
-  kExprCmpIdentical,  ///< `is` or `isnot`
+  kExprCmpIdentical,       ///< `is` or `isnot`
 } ExprComparisonType;
 
 /// All possible option scopes
@@ -74,13 +74,12 @@ typedef enum {
 /// All possible assignment types: `=` and `{op}=`.
 typedef enum {
   kExprAsgnPlain = 0,  ///< Plain assignment: `=`.
-  kExprAsgnAdd,  ///< Assignment augmented with addition: `+=`.
-  kExprAsgnSubtract,  ///< Assignment augmented with subtraction: `-=`.
-  kExprAsgnConcat,  ///< Assignment augmented with concatenation: `.=`.
+  kExprAsgnAdd,        ///< Assignment augmented with addition: `+=`.
+  kExprAsgnSubtract,   ///< Assignment augmented with subtraction: `-=`.
+  kExprAsgnConcat,     ///< Assignment augmented with concatenation: `.=`.
 } ExprAssignmentType;
 
-#define EXPR_OPT_SCOPE_LIST \
-    ((char[]){ kExprOptScopeGlobal, kExprOptScopeLocal })
+#define EXPR_OPT_SCOPE_LIST ((char[]){kExprOptScopeGlobal, kExprOptScopeLocal})
 
 /// All possible variable scopes
 typedef enum {
@@ -95,12 +94,18 @@ typedef enum {
   kExprVarScopeArguments = 'a',
 } ExprVarScope;
 
-#define EXPR_VAR_SCOPE_LIST \
-    ((char[]) { \
-        kExprVarScopeScript, kExprVarScopeGlobal, kExprVarScopeVim, \
-        kExprVarScopeBuffer, kExprVarScopeWindow, kExprVarScopeTabpage, \
-        kExprVarScopeLocal, kExprVarScopeBuffer, kExprVarScopeArguments, \
-    })
+#define EXPR_VAR_SCOPE_LIST                                                    \
+  ((char[]){                                                                   \
+      kExprVarScopeScript,                                                     \
+      kExprVarScopeGlobal,                                                     \
+      kExprVarScopeVim,                                                        \
+      kExprVarScopeBuffer,                                                     \
+      kExprVarScopeWindow,                                                     \
+      kExprVarScopeTabpage,                                                    \
+      kExprVarScopeLocal,                                                      \
+      kExprVarScopeBuffer,                                                     \
+      kExprVarScopeArguments,                                                  \
+  })
 
 /// Lexer token
 typedef struct {
@@ -109,60 +114,60 @@ typedef struct {
   LexExprTokenType type;
   union {
     struct {
-      ExprComparisonType type;  ///< Comparison type.
+      ExprComparisonType type;      ///< Comparison type.
       ExprCaseCompareStrategy ccs;  ///< Case comparison strategy.
-      bool inv;  ///< True if comparison is to be inverted.
-    } cmp;  ///< For kExprLexComparison.
+      bool inv;                     ///< True if comparison is to be inverted.
+    } cmp;                          ///< For kExprLexComparison.
 
     struct {
       enum {
         kExprLexMulMul,  ///< Real multiplication.
         kExprLexMulDiv,  ///< Division.
         kExprLexMulMod,  ///< Modulo.
-      } type;  ///< Multiplication type.
-    } mul;  ///< For kExprLexMultiplication.
+      } type;            ///< Multiplication type.
+    } mul;               ///< For kExprLexMultiplication.
 
     struct {
       bool closing;  ///< True if bracket/etc is a closing one.
-    } brc;  ///< For brackets/braces/parenthesis.
+    } brc;           ///< For brackets/braces/parenthesis.
 
     struct {
       int name;  ///< Register name, may be -1 if name not present.
-    } reg;  ///< For kExprLexRegister.
+    } reg;       ///< For kExprLexRegister.
 
     struct {
       bool closed;  ///< True if quote was closed.
     } str;  ///< For kExprLexSingleQuotedString and kExprLexDoubleQuotedString.
 
     struct {
-      const char *name;  ///< Option name start.
-      size_t len;  ///< Option name length.
+      const char *name;    ///< Option name start.
+      size_t len;          ///< Option name length.
       ExprOptScope scope;  ///< Option scope: &l:, &g: or not specified.
-    } opt;  ///< Option properties.
+    } opt;                 ///< Option properties.
 
     struct {
       ExprVarScope scope;  ///< Scope character or 0 if not present.
-      bool autoload;  ///< Has autoload characters.
-    } var;  ///< For kExprLexPlainIdentifier
+      bool autoload;       ///< Has autoload characters.
+    } var;                 ///< For kExprLexPlainIdentifier
 
     struct {
       LexExprTokenType type;  ///< Suggested type for parsing incorrect code.
-      const char *msg;  ///< Error message.
-    } err;  ///< For kExprLexInvalid
+      const char *msg;        ///< Error message.
+    } err;                    ///< For kExprLexInvalid
 
     struct {
       union {
         float_T floating;
         uvarnumber_T integer;
-      } val;  ///< Number value.
-      uint8_t base;  ///< Base: 2, 8, 10 or 16.
+      } val;          ///< Number value.
+      uint8_t base;   ///< Base: 2, 8, 10 or 16.
       bool is_float;  ///< True if number is a floating-point.
-    } num;  ///< For kExprLexNumber
+    } num;            ///< For kExprLexNumber
 
     struct {
       ExprAssignmentType type;
     } ass;  ///< For kExprLexAssignment
-  } data;  ///< Additional data, if needed.
+  } data;   ///< Additional data, if needed.
 } LexExprToken;
 
 typedef enum {
@@ -193,15 +198,15 @@ typedef enum {
 typedef enum {
   kExprNodeMissing = 0,
   kExprNodeOpMissing,
-  kExprNodeTernary,  ///< Ternary operator.
+  kExprNodeTernary,       ///< Ternary operator.
   kExprNodeTernaryValue,  ///< Ternary operator, colon.
-  kExprNodeRegister,  ///< Register.
-  kExprNodeSubscript,  ///< Subscript.
-  kExprNodeListLiteral,  ///< List literal.
+  kExprNodeRegister,      ///< Register.
+  kExprNodeSubscript,     ///< Subscript.
+  kExprNodeListLiteral,   ///< List literal.
   kExprNodeUnaryPlus,
   kExprNodeBinaryPlus,
   kExprNodeNested,  ///< Nested parenthesised expression.
-  kExprNodeCall,  ///< Function call.
+  kExprNodeCall,    ///< Function call.
   /// Plain identifier: simple variable/function name
   ///
   /// Looks like "string", "g:Foo", etc: consists from a single
@@ -216,13 +221,13 @@ typedef enum {
   /// May resolve to any of kExprNodeDictLiteral, kExprNodeLambda or
   /// kExprNodeCurlyBracesIdentifier.
   kExprNodeUnknownFigure,
-  kExprNodeLambda,  ///< Lambda.
-  kExprNodeDictLiteral,  ///< Dictionary literal.
+  kExprNodeLambda,                 ///< Lambda.
+  kExprNodeDictLiteral,            ///< Dictionary literal.
   kExprNodeCurlyBracesIdentifier,  ///< Part of the curly braces name.
-  kExprNodeComma,  ///< Comma “operator”.
-  kExprNodeColon,  ///< Colon “operator”.
-  kExprNodeArrow,  ///< Arrow “operator”.
-  kExprNodeComparison,  ///< Various comparison operators.
+  kExprNodeComma,                  ///< Comma “operator”.
+  kExprNodeColon,                  ///< Colon “operator”.
+  kExprNodeArrow,                  ///< Arrow “operator”.
+  kExprNodeComparison,             ///< Various comparison operators.
   /// Concat operator
   ///
   /// To be only used in cases when it is known for sure it is not a subscript.
@@ -235,7 +240,7 @@ typedef enum {
   /// kExprNodePlainIdentifier node kExprNodePlainKey is used.
   kExprNodeConcatOrSubscript,
   kExprNodeInteger,  ///< Integral number.
-  kExprNodeFloat,  ///< Floating-point number.
+  kExprNodeFloat,    ///< Floating-point number.
   kExprNodeSingleQuotedString,
   kExprNodeDoubleQuotedString,
   kExprNodeOr,
@@ -270,7 +275,7 @@ struct expr_ast_node {
   union {
     struct {
       int name;  ///< Register name, may be -1 if name not present.
-    } reg;  ///< For kExprNodeRegister.
+    } reg;       ///< For kExprNodeRegister.
     struct {
       /// Which nodes UnknownFigure can’t possibly represent.
       struct {
@@ -294,12 +299,12 @@ struct expr_ast_node {
     } var;  ///< For kExprNodePlainIdentifier and kExprNodePlainKey.
     struct {
       bool got_colon;  ///< True if colon was seen.
-    } ter;  ///< For kExprNodeTernaryValue.
+    } ter;             ///< For kExprNodeTernaryValue.
     struct {
-      ExprComparisonType type;  ///< Comparison type.
+      ExprComparisonType type;      ///< Comparison type.
       ExprCaseCompareStrategy ccs;  ///< Case comparison strategy.
-      bool inv;  ///< True if comparison is to be inverted.
-    } cmp;  ///< For kExprNodeComparison.
+      bool inv;                     ///< True if comparison is to be inverted.
+    } cmp;                          ///< For kExprNodeComparison.
     struct {
       uvarnumber_T value;
     } num;  ///< For kExprNodeInteger.
@@ -312,14 +317,14 @@ struct expr_ast_node {
     } str;  ///< For kExprNodeSingleQuotedString and
             ///< kExprNodeDoubleQuotedString.
     struct {
-      const char *ident;  ///< Option name start.
-      size_t ident_len;  ///< Option name length.
+      const char *ident;   ///< Option name start.
+      size_t ident_len;    ///< Option name length.
       ExprOptScope scope;  ///< Option scope: &l:, &g: or not specified.
-    } opt;  ///< For kExprNodeOption.
+    } opt;                 ///< For kExprNodeOption.
     struct {
       const char *ident;  ///< Environment variable name start.
-      size_t ident_len;  ///< Environment variable name length.
-    } env;  ///< For kExprNodeEnvironment.
+      size_t ident_len;   ///< Environment variable name length.
+    } env;                ///< For kExprNodeEnvironment.
     struct {
       ExprAssignmentType type;
     } ass;  ///< For kExprNodeAssignment
@@ -383,7 +388,7 @@ extern const char *const ccs_tab[];
 extern const char *const expr_asgn_type_tab[];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/parser/expressions.h.generated.h"
+#include "viml/parser/expressions.h.generated.h"
 #endif
 
 #endif  // NVIM_VIML_PARSER_EXPRESSIONS_H

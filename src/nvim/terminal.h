@@ -1,8 +1,8 @@
 #ifndef NVIM_TERMINAL_H
 #define NVIM_TERMINAL_H
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 typedef struct terminal Terminal;
@@ -21,6 +21,6 @@ typedef struct {
 } TerminalOptions;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "terminal.h.generated.h"
+#include "terminal.h.generated.h"
 #endif
 #endif  // NVIM_TERMINAL_H

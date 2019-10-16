@@ -18,8 +18,8 @@ typedef struct {
 } MsgpackRpcRequestHandler;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/private/dispatch.h.generated.h"
-# include "api/private/dispatch_wrappers.h.generated.h"
+#include "api/private/dispatch.h.generated.h"
+#include "api/private/dispatch_wrappers.h.generated.h"
 #endif
 
 #endif  // NVIM_API_PRIVATE_DISPATCH_H

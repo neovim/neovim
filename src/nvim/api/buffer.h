@@ -6,6 +6,6 @@
 #include "nvim/api/private/defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "api/buffer.h.generated.h"
+#include "api/buffer.h.generated.h"
 #endif
 #endif  // NVIM_API_BUFFER_H

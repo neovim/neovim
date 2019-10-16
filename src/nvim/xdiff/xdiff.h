@@ -34,17 +34,16 @@ extern "C" {
 #define XDF_IGNORE_WHITESPACE_CHANGE (1 << 2)
 #define XDF_IGNORE_WHITESPACE_AT_EOL (1 << 3)
 #define XDF_IGNORE_CR_AT_EOL (1 << 4)
-#define XDF_WHITESPACE_FLAGS (XDF_IGNORE_WHITESPACE | \
-			      XDF_IGNORE_WHITESPACE_CHANGE | \
-			      XDF_IGNORE_WHITESPACE_AT_EOL | \
-			      XDF_IGNORE_CR_AT_EOL)
+#define XDF_WHITESPACE_FLAGS                                                   \
+  (XDF_IGNORE_WHITESPACE | XDF_IGNORE_WHITESPACE_CHANGE                        \
+   | XDF_IGNORE_WHITESPACE_AT_EOL | XDF_IGNORE_CR_AT_EOL)
 
 #define XDF_IGNORE_BLANK_LINES (1 << 7)
 
 #define XDF_PATIENCE_DIFF (1 << 14)
 #define XDF_HISTOGRAM_DIFF (1 << 15)
 #define XDF_DIFF_ALGORITHM_MASK (XDF_PATIENCE_DIFF | XDF_HISTOGRAM_DIFF)
-#define XDF_DIFF_ALG(x) ((x) & XDF_DIFF_ALGORITHM_MASK)
+#define XDF_DIFF_ALG(x) ((x)&XDF_DIFF_ALGORITHM_MASK)
 
 #define XDF_INDENT_HEURISTIC (1 << 23)
 
@@ -67,74 +66,86 @@ extern "C" {
 #define XDL_MERGE_DIFF3 1
 
 typedef struct s_mmfile {
-	char *ptr;
-	long size;
+  char *ptr;
+  long size;
 } mmfile_t;
 
 typedef struct s_mmbuffer {
-	char *ptr;
-	long size;
+  char *ptr;
+  long size;
 } mmbuffer_t;
 
 typedef struct s_xpparam {
-	unsigned long flags;
+  unsigned long flags;
 
-	/* See Documentation/diff-options.txt. */
-	char **anchors;
-	size_t anchors_nr;
+  /* See Documentation/diff-options.txt. */
+  char **anchors;
+  size_t anchors_nr;
 } xpparam_t;
 
 typedef struct s_xdemitcb {
-	void *priv;
-	int (*outf)(void *, mmbuffer_t *, int);
+  void *priv;
+  int (*outf)(void *, mmbuffer_t *, int);
 } xdemitcb_t;
 
-typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long buffer_size, void *priv);
+typedef long (*find_func_t)(const char *line,
+                            long line_len,
+                            char *buffer,
+                            long buffer_size,
+                            void *priv);
 
-typedef int (*xdl_emit_hunk_consume_func_t)(long start_a, long count_a,
-					    long start_b, long count_b,
-					    void *cb_data);
+typedef int (*xdl_emit_hunk_consume_func_t)(long start_a,
+                                            long count_a,
+                                            long start_b,
+                                            long count_b,
+                                            void *cb_data);
 
 typedef struct s_xdemitconf {
-	long ctxlen;
-	long interhunkctxlen;
-	unsigned long flags;
-	find_func_t find_func;
-	void *find_func_priv;
-	xdl_emit_hunk_consume_func_t hunk_func;
+  long ctxlen;
+  long interhunkctxlen;
+  unsigned long flags;
+  find_func_t find_func;
+  void *find_func_priv;
+  xdl_emit_hunk_consume_func_t hunk_func;
 } xdemitconf_t;
 
 typedef struct s_bdiffparam {
-	long bsize;
+  long bsize;
 } bdiffparam_t;
 
 #include "../memory.h"
 
 #define xdl_malloc(x) xmalloc((x))
 #define xdl_free(ptr) xfree(ptr)
-#define xdl_realloc(ptr,x) xrealloc((ptr),(x))
+#define xdl_realloc(ptr, x) xrealloc((ptr), (x))
 
 void *xdl_mmfile_first(mmfile_t *mmf, long *size);
 long xdl_mmfile_size(mmfile_t *mmf);
 
-int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
-	     xdemitconf_t const *xecfg, xdemitcb_t *ecb);
+int xdl_diff(mmfile_t *mf1,
+             mmfile_t *mf2,
+             xpparam_t const *xpp,
+             xdemitconf_t const *xecfg,
+             xdemitcb_t *ecb);
 
 typedef struct s_xmparam {
-	xpparam_t xpp;
-	int marker_size;
-	int level;
-	int favor;
-	int style;
-	const char *ancestor;	/* label for orig */
-	const char *file1;	/* label for mf1 */
-	const char *file2;	/* label for mf2 */
+  xpparam_t xpp;
+  int marker_size;
+  int level;
+  int favor;
+  int style;
+  const char *ancestor; /* label for orig */
+  const char *file1;    /* label for mf1 */
+  const char *file2;    /* label for mf2 */
 } xmparam_t;
 
 #define DEFAULT_CONFLICT_MARKER_SIZE 7
 
-int xdl_merge(mmfile_t *orig, mmfile_t *mf1, mmfile_t *mf2,
-		xmparam_t const *xmp, mmbuffer_t *result);
+int xdl_merge(mmfile_t *orig,
+              mmfile_t *mf1,
+              mmfile_t *mf2,
+              xmparam_t const *xmp,
+              mmbuffer_t *result);
 
 #ifdef __cplusplus
 }
