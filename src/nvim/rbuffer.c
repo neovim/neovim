@@ -1,21 +1,22 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/rbuffer.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
 
 #include "nvim/memory.h"
 #include "nvim/vim.h"
-#include "nvim/rbuffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "rbuffer.c.generated.h"
+#include "rbuffer.c.generated.h"
 #endif
 
 /// Creates a new `RBuffer` instance.
 RBuffer *rbuffer_new(size_t capacity)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
+    FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   if (!capacity) {
     capacity = 0x10000;
@@ -137,14 +138,13 @@ char *rbuffer_read_ptr(RBuffer *buf, size_t *read_count) FUNC_ATTR_NONNULL_ALL
 /// automatically by `rbuffer_read`, but when using `rbuffer_read_ptr`
 /// directly, this needs to called after the data was copied from the internal
 /// buffer. The read pointer will be wrapped if required.
-void rbuffer_consumed(RBuffer *buf, size_t count)
-  FUNC_ATTR_NONNULL_ALL
+void rbuffer_consumed(RBuffer *buf, size_t count) FUNC_ATTR_NONNULL_ALL
 {
   assert(count && count <= buf->size);
 
   buf->read_ptr += count;
   if (buf->read_ptr >= buf->end_ptr) {
-      buf->read_ptr -= rbuffer_capacity(buf);
+    buf->read_ptr -= rbuffer_capacity(buf);
   }
 
   bool was_full = buf->size == rbuffer_capacity(buf);
@@ -156,12 +156,14 @@ void rbuffer_consumed(RBuffer *buf, size_t count)
 
 // Higher level functions for copying from/to RBuffer instances and data
 // pointers
-size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
-  FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_write(RBuffer *buf,
+                     const char *src,
+                     size_t src_size) FUNC_ATTR_NONNULL_ALL
 {
   size_t size = src_size;
 
-  RBUFFER_UNTIL_FULL(buf, wptr, wcnt) {
+  RBUFFER_UNTIL_FULL(buf, wptr, wcnt)
+  {
     size_t copy_count = MIN(src_size, wcnt);
     memcpy(wptr, src, copy_count);
     rbuffer_produced(buf, copy_count);
@@ -176,12 +178,14 @@ size_t rbuffer_write(RBuffer *buf, const char *src, size_t src_size)
   return size - src_size;
 }
 
-size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
-  FUNC_ATTR_NONNULL_ALL
+size_t rbuffer_read(RBuffer *buf,
+                    char *dst,
+                    size_t dst_size) FUNC_ATTR_NONNULL_ALL
 {
   size_t size = dst_size;
 
-  RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt) {
+  RBUFFER_UNTIL_EMPTY(buf, rptr, rcnt)
+  {
     size_t copy_count = MIN(dst_size, rcnt);
     memcpy(dst, rptr, copy_count);
     rbuffer_consumed(buf, copy_count);
@@ -196,8 +200,8 @@ size_t rbuffer_read(RBuffer *buf, char *dst, size_t dst_size)
   return size - dst_size;
 }
 
-char *rbuffer_get(RBuffer *buf, size_t index)
-    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+char *rbuffer_get(RBuffer *buf,
+                  size_t index) FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   assert(index < buf->size);
   char *rptr = buf->read_ptr + index;
@@ -207,8 +211,9 @@ char *rbuffer_get(RBuffer *buf, size_t index)
   return rptr;
 }
 
-int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
-  FUNC_ATTR_NONNULL_ALL
+int rbuffer_cmp(RBuffer *buf,
+                const char *str,
+                size_t count) FUNC_ATTR_NONNULL_ALL
 {
   assert(count <= buf->size);
   size_t rcnt;
@@ -224,4 +229,3 @@ int rbuffer_cmp(RBuffer *buf, const char *str, size_t count)
 
   return memcmp(str + n, buf->start_ptr, count);
 }
-

@@ -1,9 +1,8 @@
 #ifndef NVIM_EVENT_WSTREAM_H
 #define NVIM_EVENT_WSTREAM_H
 
-#include <stdint.h>
 #include <stdbool.h>
-
+#include <stdint.h>
 #include <uv.h>
 
 #include "nvim/event/loop.h"
@@ -19,6 +18,6 @@ struct wbuffer {
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/wstream.h.generated.h"
+#include "event/wstream.h.generated.h"
 #endif
 #endif  // NVIM_EVENT_WSTREAM_H

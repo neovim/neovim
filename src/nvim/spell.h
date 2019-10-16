@@ -3,11 +3,11 @@
 
 #include <stdbool.h>
 
-#include "nvim/spell_defs.h"
 #include "nvim/ex_cmds_defs.h"
 #include "nvim/globals.h"
+#include "nvim/spell_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "spell.h.generated.h"
+#include "spell.h.generated.h"
 #endif
 #endif  // NVIM_SPELL_H

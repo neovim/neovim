@@ -50,21 +50,21 @@
 // 7. 'isident' no longer applies to environment variables, they always include
 //    ASCII alphanumeric characters and underscore and nothing except this.
 
+#include "nvim/viml/parser/expressions.h"
+
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <assert.h>
 #include <string.h>
 
-#include "nvim/vim.h"
-#include "nvim/memory.h"
-#include "nvim/types.h"
-#include "nvim/charset.h"
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
-#include "nvim/lib/kvec.h"
+#include "nvim/charset.h"
 #include "nvim/eval/typval.h"
-
-#include "nvim/viml/parser/expressions.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/memory.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 #include "nvim/viml/parser/parser.h"
 
 #define vim_str2nr(s, ...) vim_str2nr((const char_u *)(s), __VA_ARGS__)
@@ -115,22 +115,22 @@ typedef enum {
   kEOpLvlOr,
   kEOpLvlAnd,
   kEOpLvlComparison,
-  kEOpLvlAddition,  ///< Addition, subtraction and concatenation.
+  kEOpLvlAddition,        ///< Addition, subtraction and concatenation.
   kEOpLvlMultiplication,  ///< Multiplication, division and modulo.
-  kEOpLvlUnary,  ///< Unary operations: not, minus, plus.
-  kEOpLvlSubscript,  ///< Subscripts.
+  kEOpLvlUnary,           ///< Unary operations: not, minus, plus.
+  kEOpLvlSubscript,       ///< Subscripts.
   kEOpLvlValue,  ///< Values: literals, variables, nested expressions, …
 } ExprOpLvl;
 
 /// Operator associativity
 typedef enum {
-  kEOpAssNo= 'n',  ///< Not associative / not applicable.
-  kEOpAssLeft = 'l',  ///< Left associativity.
+  kEOpAssNo = 'n',     ///< Not associative / not applicable.
+  kEOpAssLeft = 'l',   ///< Left associativity.
   kEOpAssRight = 'r',  ///< Right associativity.
 } ExprOpAssociativity;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "viml/parser/expressions.c.generated.h"
+#include "viml/parser/expressions.c.generated.h"
 #endif
 
 /// Character used as a separator in autoload function/variable names.
@@ -150,7 +150,7 @@ static inline float_T scale_number(const float_T num,
                                    const uint8_t base,
                                    const uvarnumber_T exponent,
                                    const bool exponent_negative)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_CONST
 {
   if (num == 0 || exponent == 0) {
     return num;
@@ -180,11 +180,11 @@ static inline float_T scale_number(const float_T num,
 ///
 /// @return Next token.
 LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   LexExprToken ret = {
-    .type = kExprLexInvalid,
-    .start = pstate->pos,
+      .type = kExprLexInvalid,
+      .start = pstate->pos,
   };
   ParserLine pline;
   if (!viml_parser_get_remaining_line(pstate, &pline)) {
@@ -198,62 +198,58 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
   }
   ret.len = 1;
   const uint8_t schar = (uint8_t)pline.data[0];
-#define GET_CCS(ret, pline) \
-  do { \
-    if (ret.len < pline.size \
-        && strchr("?#", pline.data[ret.len]) != NULL) { \
-      ret.data.cmp.ccs = \
-          (ExprCaseCompareStrategy)pline.data[ret.len]; \
-      ret.len++; \
-    } else { \
-      ret.data.cmp.ccs = kCCStrategyUseOption; \
-    } \
+#define GET_CCS(ret, pline)                                                    \
+  do {                                                                         \
+    if (ret.len < pline.size && strchr("?#", pline.data[ret.len]) != NULL) {   \
+      ret.data.cmp.ccs = (ExprCaseCompareStrategy)pline.data[ret.len];         \
+      ret.len++;                                                               \
+    } else {                                                                   \
+      ret.data.cmp.ccs = kCCStrategyUseOption;                                 \
+    }                                                                          \
   } while (0)
   switch (schar) {
     // Paired brackets.
-#define BRACKET(typ, opning, clsing) \
-    case opning: \
-    case clsing: { \
-      ret.type = typ; \
-      ret.data.brc.closing = (schar == clsing); \
-      break; \
-    }
+#define BRACKET(typ, opning, clsing)                                           \
+  case opning:                                                                 \
+  case clsing: {                                                               \
+    ret.type = typ;                                                            \
+    ret.data.brc.closing = (schar == clsing);                                  \
+    break;                                                                     \
+  }
     BRACKET(kExprLexParenthesis, '(', ')')
     BRACKET(kExprLexBracket, '[', ']')
     BRACKET(kExprLexFigureBrace, '{', '}')
 #undef BRACKET
 
     // Single character tokens without data.
-#define CHAR(typ, ch) \
-    case ch: { \
-      ret.type = typ; \
-      break; \
-    }
+#define CHAR(typ, ch)                                                          \
+  case ch: {                                                                   \
+    ret.type = typ;                                                            \
+    break;                                                                     \
+  }
     CHAR(kExprLexQuestion, '?')
     CHAR(kExprLexColon, ':')
     CHAR(kExprLexComma, ',')
 #undef CHAR
 
     // Multiplication/division/modulo.
-#define MUL(mul_type, ch) \
-    case ch: { \
-      ret.type = kExprLexMultiplication; \
-      ret.data.mul.type = mul_type; \
-      break; \
-    }
+#define MUL(mul_type, ch)                                                      \
+  case ch: {                                                                   \
+    ret.type = kExprLexMultiplication;                                         \
+    ret.data.mul.type = mul_type;                                              \
+    break;                                                                     \
+  }
     MUL(kExprLexMulMul, '*')
     MUL(kExprLexMulDiv, '/')
     MUL(kExprLexMulMod, '%')
 #undef MUL
 
-#define CHARREG(typ, cond) \
-    do { \
-      ret.type = typ; \
-      for (; (ret.len < pline.size \
-              && cond(pline.data[ret.len])) \
-           ; ret.len++) { \
-      } \
-    } while (0)
+#define CHARREG(typ, cond)                                                     \
+  do {                                                                         \
+    ret.type = typ;                                                            \
+    for (; (ret.len < pline.size && cond(pline.data[ret.len])); ret.len++) {   \
+    }                                                                          \
+  } while (0)
 
     // Whitespace.
     case ' ':
@@ -263,25 +259,51 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     }
 
     // Control character, except for NUL, NL and TAB.
-    case Ctrl_A: case Ctrl_B: case Ctrl_C: case Ctrl_D: case Ctrl_E:
-    case Ctrl_F: case Ctrl_G: case Ctrl_H:
+    case Ctrl_A:
+    case Ctrl_B:
+    case Ctrl_C:
+    case Ctrl_D:
+    case Ctrl_E:
+    case Ctrl_F:
+    case Ctrl_G:
+    case Ctrl_H:
 
-    case Ctrl_K: case Ctrl_L: case Ctrl_M: case Ctrl_N: case Ctrl_O:
-    case Ctrl_P: case Ctrl_Q: case Ctrl_R: case Ctrl_S: case Ctrl_T:
-    case Ctrl_U: case Ctrl_V: case Ctrl_W: case Ctrl_X: case Ctrl_Y:
+    case Ctrl_K:
+    case Ctrl_L:
+    case Ctrl_M:
+    case Ctrl_N:
+    case Ctrl_O:
+    case Ctrl_P:
+    case Ctrl_Q:
+    case Ctrl_R:
+    case Ctrl_S:
+    case Ctrl_T:
+    case Ctrl_U:
+    case Ctrl_V:
+    case Ctrl_W:
+    case Ctrl_X:
+    case Ctrl_Y:
     case Ctrl_Z: {
 #define ISCTRL(schar) (schar < ' ')
       CHARREG(kExprLexInvalid, ISCTRL);
       ret.data.err.type = kExprLexSpacing;
-      ret.data.err.msg =
-          _("E15: Invalid control character present in input: %.*s");
+      ret.data.err.msg
+          = _("E15: Invalid control character present in input: %.*s");
       break;
 #undef ISCTRL
     }
 
     // Number.
-    case '0': case '1': case '2': case '3': case '4': case '5': case '6':
-    case '7': case '8': case '9': {
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9': {
       ret.data.num.is_float = false;
       ret.data.num.base = 10;
       size_t frac_start = 0;
@@ -291,15 +313,14 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       CHARREG(kExprLexNumber, ascii_isdigit);
       if (flags & kELFlagAllowFloat) {
         const LexExprToken non_float_ret = ret;
-        if (pline.size > ret.len + 1
-            && pline.data[ret.len] == '.'
+        if (pline.size > ret.len + 1 && pline.data[ret.len] == '.'
             && ascii_isdigit(pline.data[ret.len + 1])) {
           ret.len++;
           frac_start = ret.len;
           frac_end = ret.len;
           ret.data.num.is_float = true;
-          for (; ret.len < pline.size && ascii_isdigit(pline.data[ret.len])
-               ; ret.len++) {
+          for (; ret.len < pline.size && ascii_isdigit(pline.data[ret.len]);
+               ret.len++) {
             // A small optimization: trailing zeroes in fractional part do not
             // add anything to significand, so it is useless to include them in
             // frac_end.
@@ -308,8 +329,7 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
             }
           }
           if (pline.size > ret.len + 1
-              && (pline.data[ret.len] == 'e'
-                  || pline.data[ret.len] == 'E')
+              && (pline.data[ret.len] == 'e' || pline.data[ret.len] == 'E')
               && ((pline.size > ret.len + 2
                    && (pline.data[ret.len + 1] == '+'
                        || pline.data[ret.len + 1] == '-')
@@ -366,8 +386,8 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
             exp_part -= frac_size;
           }
         }
-        ret.data.num.val.floating = scale_number(significand_part, 10, exp_part,
-                                                 exp_negative);
+        ret.data.num.val.floating
+            = scale_number(significand_part, 10, exp_part, exp_negative);
       } else {
         int len;
         int prep;
@@ -375,18 +395,14 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
                    &ret.data.num.val.integer, (int)pline.size);
         ret.len = (size_t)len;
         const uint8_t bases[] = {
-          [0] = 10,
-          ['0'] = 8,
-          ['x'] = 16, ['X'] = 16,
-          ['b'] = 2, ['B'] = 2,
+            [0] = 10, ['0'] = 8, ['x'] = 16, ['X'] = 16, ['b'] = 2, ['B'] = 2,
         };
         ret.data.num.base = bases[prep];
       }
       break;
     }
 
-#define ISWORD_OR_AUTOLOAD(x) \
-      (ascii_isident(x) || (x) == AUTOLOAD_CHAR)
+#define ISWORD_OR_AUTOLOAD(x) (ascii_isident(x) || (x) == AUTOLOAD_CHAR)
 
     // Environment variable.
     case '$': {
@@ -395,14 +411,58 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     }
 
     // Normal variable/function name.
-    case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
-    case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
-    case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
-    case 'v': case 'w': case 'x': case 'y': case 'z':
-    case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
-    case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
-    case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
-    case 'V': case 'W': case 'X': case 'Y': case 'Z':
+    case 'a':
+    case 'b':
+    case 'c':
+    case 'd':
+    case 'e':
+    case 'f':
+    case 'g':
+    case 'h':
+    case 'i':
+    case 'j':
+    case 'k':
+    case 'l':
+    case 'm':
+    case 'n':
+    case 'o':
+    case 'p':
+    case 'q':
+    case 'r':
+    case 's':
+    case 't':
+    case 'u':
+    case 'v':
+    case 'w':
+    case 'x':
+    case 'y':
+    case 'z':
+    case 'A':
+    case 'B':
+    case 'C':
+    case 'D':
+    case 'E':
+    case 'F':
+    case 'G':
+    case 'H':
+    case 'I':
+    case 'J':
+    case 'K':
+    case 'L':
+    case 'M':
+    case 'N':
+    case 'O':
+    case 'P':
+    case 'Q':
+    case 'R':
+    case 'S':
+    case 'T':
+    case 'U':
+    case 'V':
+    case 'W':
+    case 'X':
+    case 'Y':
+    case 'Z':
     case '_': {
       ret.data.var.scope = 0;
       ret.data.var.autoload = false;
@@ -415,28 +475,27 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         ret.data.cmp.type = kExprCmpIdentical;
         ret.data.cmp.inv = (ret.len == 5);
         GET_CCS(ret, pline);
-      // Scope: `s:`, etc.
-      } else if (ret.len == 1
-                 && pline.size > 1
+        // Scope: `s:`, etc.
+      } else if (ret.len == 1 && pline.size > 1
                  && memchr(EXPR_VAR_SCOPE_LIST, schar,
-                           sizeof(EXPR_VAR_SCOPE_LIST)) != NULL
+                           sizeof(EXPR_VAR_SCOPE_LIST))
+                        != NULL
                  && pline.data[ret.len] == ':'
                  && !(flags & kELFlagForbidScope)) {
         ret.len++;
         ret.data.var.scope = (ExprVarScope)schar;
         CHARREG(kExprLexPlainIdentifier, ISWORD_OR_AUTOLOAD);
-        ret.data.var.autoload = (
-            memchr(pline.data + 2, AUTOLOAD_CHAR, ret.len - 2)
-            != NULL);
-      // Previous CHARREG stopped at autoload character in order to make it
-      // possible to detect `is#`. Continue now with autoload characters
-      // included.
-      //
-      // Warning: there is ambiguity for the lexer: `is#Foo(1)` is a call of
-      // function `is#Foo()`, `1is#Foo(1)` is a comparison `1 is# Foo(1)`. This
-      // needs to be resolved on the higher level where context is available.
-      } else if (pline.size > ret.len
-                 && pline.data[ret.len] == AUTOLOAD_CHAR) {
+        ret.data.var.autoload
+            = (memchr(pline.data + 2, AUTOLOAD_CHAR, ret.len - 2) != NULL);
+        // Previous CHARREG stopped at autoload character in order to make it
+        // possible to detect `is#`. Continue now with autoload characters
+        // included.
+        //
+        // Warning: there is ambiguity for the lexer: `is#Foo(1)` is a call of
+        // function `is#Foo()`, `1is#Foo(1)` is a comparison `1 is# Foo(1)`.
+        // This needs to be resolved on the higher level where context is
+        // available.
+      } else if (pline.size > ret.len && pline.data[ret.len] == AUTOLOAD_CHAR) {
         ret.data.var.autoload = true;
         CHARREG(kExprLexPlainIdentifier, ISWORD_OR_AUTOLOAD);
       }
@@ -448,12 +507,12 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
 
     // Option.
     case '&': {
-#define OPTNAMEMISS(ret) \
-        do { \
-          ret.type = kExprLexInvalid; \
-          ret.data.err.type = kExprLexOption; \
-          ret.data.err.msg = _("E112: Option name missing: %.*s"); \
-        } while (0)
+#define OPTNAMEMISS(ret)                                                       \
+  do {                                                                         \
+    ret.type = kExprLexInvalid;                                                \
+    ret.data.err.type = kExprLexOption;                                        \
+    ret.data.err.msg = _("E112: Option name missing: %.*s");                   \
+  } while (0)
       if (pline.size > 1 && pline.data[1] == '&') {
         ret.type = kExprLexAnd;
         ret.len++;
@@ -464,10 +523,10 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
         break;
       }
       ret.type = kExprLexOption;
-      if (pline.size > 2
-          && pline.data[2] == ':'
+      if (pline.size > 2 && pline.data[2] == ':'
           && memchr(EXPR_OPT_SCOPE_LIST, pline.data[1],
-                    sizeof(EXPR_OPT_SCOPE_LIST)) != NULL) {
+                    sizeof(EXPR_OPT_SCOPE_LIST))
+                 != NULL) {
         ret.len += 2;
         ret.data.opt.scope = (ExprOptScope)pline.data[1];
         ret.data.opt.name = pline.data + 3;
@@ -574,9 +633,9 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
       }
       GET_CCS(ret, pline);
       ret.data.cmp.inv = (schar == '<');
-      ret.data.cmp.type = ((ret.data.cmp.inv ^ haseqsign)
-                           ? kExprCmpGreaterOrEqual
-                           : kExprCmpGreater);
+      ret.data.cmp.type
+          = ((ret.data.cmp.inv ^ haseqsign) ? kExprCmpGreaterOrEqual
+                                            : kExprCmpGreater);
       break;
     }
 
@@ -596,19 +655,19 @@ LexExprToken viml_pexpr_next_token(ParserState *const pstate, const int flags)
     }
 
     // Sign or augmented assignment.
-#define CHAR_OR_ASSIGN(ch, ch_type, ass_type) \
-    case ch: { \
-      if (pline.size > 1 && pline.data[1] == '=') { \
-        ret.len++; \
-        ret.type = kExprLexAssignment; \
-        ret.data.ass.type = ass_type; \
-      } else { \
-        ret.type = ch_type; \
-      } \
-      break; \
-    }
-    CHAR_OR_ASSIGN('+', kExprLexPlus, kExprAsgnAdd)
-    CHAR_OR_ASSIGN('.', kExprLexDot, kExprAsgnConcat)
+#define CHAR_OR_ASSIGN(ch, ch_type, ass_type)                                  \
+  case ch: {                                                                   \
+    if (pline.size > 1 && pline.data[1] == '=') {                              \
+      ret.len++;                                                               \
+      ret.type = kExprLexAssignment;                                           \
+      ret.data.ass.type = ass_type;                                            \
+    } else {                                                                   \
+      ret.type = ch_type;                                                      \
+    }                                                                          \
+    break;                                                                     \
+  }
+      CHAR_OR_ASSIGN('+', kExprLexPlus, kExprAsgnAdd)
+      CHAR_OR_ASSIGN('.', kExprLexDot, kExprAsgnConcat)
 #undef CHAR_OR_ASSIGN
 
     // Expression end because Ex command ended.
@@ -660,70 +719,70 @@ viml_pexpr_next_token_adv_return:
 }
 
 static const char *const eltkn_type_tab[] = {
-  [kExprLexInvalid] = "Invalid",
-  [kExprLexMissing] = "Missing",
-  [kExprLexSpacing] = "Spacing",
-  [kExprLexEOC] = "EOC",
+    [kExprLexInvalid] = "Invalid",
+    [kExprLexMissing] = "Missing",
+    [kExprLexSpacing] = "Spacing",
+    [kExprLexEOC] = "EOC",
 
-  [kExprLexQuestion] = "Question",
-  [kExprLexColon] = "Colon",
-  [kExprLexOr] = "Or",
-  [kExprLexAnd] = "And",
-  [kExprLexComparison] = "Comparison",
-  [kExprLexPlus] = "Plus",
-  [kExprLexMinus] = "Minus",
-  [kExprLexDot] = "Dot",
-  [kExprLexMultiplication] = "Multiplication",
+    [kExprLexQuestion] = "Question",
+    [kExprLexColon] = "Colon",
+    [kExprLexOr] = "Or",
+    [kExprLexAnd] = "And",
+    [kExprLexComparison] = "Comparison",
+    [kExprLexPlus] = "Plus",
+    [kExprLexMinus] = "Minus",
+    [kExprLexDot] = "Dot",
+    [kExprLexMultiplication] = "Multiplication",
 
-  [kExprLexNot] = "Not",
+    [kExprLexNot] = "Not",
 
-  [kExprLexNumber] = "Number",
-  [kExprLexSingleQuotedString] = "SingleQuotedString",
-  [kExprLexDoubleQuotedString] = "DoubleQuotedString",
-  [kExprLexOption] = "Option",
-  [kExprLexRegister] = "Register",
-  [kExprLexEnv] = "Env",
-  [kExprLexPlainIdentifier] = "PlainIdentifier",
+    [kExprLexNumber] = "Number",
+    [kExprLexSingleQuotedString] = "SingleQuotedString",
+    [kExprLexDoubleQuotedString] = "DoubleQuotedString",
+    [kExprLexOption] = "Option",
+    [kExprLexRegister] = "Register",
+    [kExprLexEnv] = "Env",
+    [kExprLexPlainIdentifier] = "PlainIdentifier",
 
-  [kExprLexBracket] = "Bracket",
-  [kExprLexFigureBrace] = "FigureBrace",
-  [kExprLexParenthesis] = "Parenthesis",
-  [kExprLexComma] = "Comma",
-  [kExprLexArrow] = "Arrow",
-  [kExprLexAssignment] = "Assignment",
+    [kExprLexBracket] = "Bracket",
+    [kExprLexFigureBrace] = "FigureBrace",
+    [kExprLexParenthesis] = "Parenthesis",
+    [kExprLexComma] = "Comma",
+    [kExprLexArrow] = "Arrow",
+    [kExprLexAssignment] = "Assignment",
 };
 
 const char *const eltkn_cmp_type_tab[] = {
-  [kExprCmpEqual] = "Equal",
-  [kExprCmpMatches] = "Matches",
-  [kExprCmpGreater] = "Greater",
-  [kExprCmpGreaterOrEqual] = "GreaterOrEqual",
-  [kExprCmpIdentical] = "Identical",
+    [kExprCmpEqual] = "Equal",
+    [kExprCmpMatches] = "Matches",
+    [kExprCmpGreater] = "Greater",
+    [kExprCmpGreaterOrEqual] = "GreaterOrEqual",
+    [kExprCmpIdentical] = "Identical",
 };
 
 const char *const expr_asgn_type_tab[] = {
-  [kExprAsgnPlain] = "Plain",
-  [kExprAsgnAdd] = "Add",
-  [kExprAsgnSubtract] = "Subtract",
-  [kExprAsgnConcat] = "Concat",
+    [kExprAsgnPlain] = "Plain",
+    [kExprAsgnAdd] = "Add",
+    [kExprAsgnSubtract] = "Subtract",
+    [kExprAsgnConcat] = "Concat",
 };
 
 const char *const ccs_tab[] = {
-  [kCCStrategyUseOption] = "UseOption",
-  [kCCStrategyMatchCase] = "MatchCase",
-  [kCCStrategyIgnoreCase] = "IgnoreCase",
+    [kCCStrategyUseOption] = "UseOption",
+    [kCCStrategyMatchCase] = "MatchCase",
+    [kCCStrategyIgnoreCase] = "IgnoreCase",
 };
 
 static const char *const eltkn_mul_type_tab[] = {
-  [kExprLexMulMul] = "Mul",
-  [kExprLexMulDiv] = "Div",
-  [kExprLexMulMod] = "Mod",
+    [kExprLexMulMul] = "Mul",
+    [kExprLexMulDiv] = "Div",
+    [kExprLexMulMod] = "Mod",
 };
 
 static const char *const eltkn_opt_scope_tab[] = {
-  [kExprOptScopeUnspecified] = "Unspecified",
-  [kExprOptScopeGlobal] = "Global",
-  [kExprOptScopeLocal] = "Local",
+    [kExprOptScopeUnspecified] = "Unspecified",
+    [kExprOptScopeGlobal] = "Global",
+    [kExprOptScopeLocal] = "Local",
 };
 
 /// Represent token as a string
@@ -743,51 +802,49 @@ static const char *const eltkn_opt_scope_tab[] = {
 const char *viml_pexpr_repr_token(const ParserState *const pstate,
                                   const LexExprToken token,
                                   size_t *const ret_size)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char ret[1024];
   char *p = ret;
   const char *const e = &ret[1024] - 1;
-#define ADDSTR(...) \
-  do { \
-    p += snprintf(p, (size_t)(sizeof(ret) - (size_t)(p - ret)), __VA_ARGS__); \
-    if (p >= e) { \
-      goto viml_pexpr_repr_token_end; \
-    } \
+#define ADDSTR(...)                                                            \
+  do {                                                                         \
+    p += snprintf(p, (size_t)(sizeof(ret) - (size_t)(p - ret)), __VA_ARGS__);  \
+    if (p >= e) {                                                              \
+      goto viml_pexpr_repr_token_end;                                          \
+    }                                                                          \
   } while (0)
   ADDSTR("%zu:%zu:%s", token.start.line, token.start.col,
          eltkn_type_tab[token.type]);
   switch (token.type) {
-#define TKNARGS(tkn_type, ...) \
-    case tkn_type: { \
-      ADDSTR(__VA_ARGS__); \
-      break; \
-    }
+#define TKNARGS(tkn_type, ...)                                                 \
+  case tkn_type: {                                                             \
+    ADDSTR(__VA_ARGS__);                                                       \
+    break;                                                                     \
+  }
     TKNARGS(kExprLexComparison, "(type=%s,ccs=%s,inv=%i)",
             eltkn_cmp_type_tab[token.data.cmp.type],
-            ccs_tab[token.data.cmp.ccs],
-            (int)token.data.cmp.inv)
+            ccs_tab[token.data.cmp.ccs], (int)token.data.cmp.inv)
     TKNARGS(kExprLexMultiplication, "(type=%s)",
             eltkn_mul_type_tab[token.data.mul.type])
     TKNARGS(kExprLexAssignment, "(type=%s)",
             expr_asgn_type_tab[token.data.ass.type])
     TKNARGS(kExprLexRegister, "(name=%s)", intchar2str(token.data.reg.name))
     case kExprLexDoubleQuotedString:
-    TKNARGS(kExprLexSingleQuotedString, "(closed=%i)",
-            (int)token.data.str.closed)
-    TKNARGS(kExprLexOption, "(scope=%s,name=%.*s)",
-            eltkn_opt_scope_tab[token.data.opt.scope],
-            (int)token.data.opt.len, token.data.opt.name)
-    TKNARGS(kExprLexPlainIdentifier, "(scope=%s,autoload=%i)",
-            intchar2str((int)token.data.var.scope),
-            (int)token.data.var.autoload)
-    TKNARGS(kExprLexNumber, "(is_float=%i,base=%i,val=%lg)",
-            (int)token.data.num.is_float,
-            (int)token.data.num.base,
-            (double)(token.data.num.is_float
-                     ? (double)token.data.num.val.floating
-                     : (double)token.data.num.val.integer))
-    TKNARGS(kExprLexInvalid, "(msg=%s)", token.data.err.msg)
+      TKNARGS(kExprLexSingleQuotedString, "(closed=%i)",
+              (int)token.data.str.closed)
+      TKNARGS(kExprLexOption, "(scope=%s,name=%.*s)",
+              eltkn_opt_scope_tab[token.data.opt.scope],
+              (int)token.data.opt.len, token.data.opt.name)
+      TKNARGS(kExprLexPlainIdentifier, "(scope=%s,autoload=%i)",
+              intchar2str((int)token.data.var.scope),
+              (int)token.data.var.autoload)
+      TKNARGS(kExprLexNumber, "(is_float=%i,base=%i,val=%lg)",
+              (int)token.data.num.is_float, (int)token.data.num.base,
+              (double)(token.data.num.is_float
+                           ? (double)token.data.num.val.floating
+                           : (double)token.data.num.val.integer))
+      TKNARGS(kExprLexInvalid, "(msg=%s)", token.data.err.msg)
     default: {
       // No additional arguments.
       break;
@@ -798,9 +855,9 @@ const char *viml_pexpr_repr_token(const ParserState *const pstate,
     ADDSTR("::%zu", token.len);
   } else {
     *p++ = ':';
-    memmove(
-        p, &pstate->reader.lines.items[token.start.line].data[token.start.col],
-        token.len);
+    memmove(p,
+            &pstate->reader.lines.items[token.start.line].data[token.start.col],
+            token.len);
     p += token.len;
     *p = NUL;
   }
@@ -813,45 +870,45 @@ viml_pexpr_repr_token_end:
 }
 
 const char *const east_node_type_tab[] = {
-  [kExprNodeMissing] = "Missing",
-  [kExprNodeOpMissing] = "OpMissing",
-  [kExprNodeTernary] = "Ternary",
-  [kExprNodeTernaryValue] = "TernaryValue",
-  [kExprNodeRegister] = "Register",
-  [kExprNodeSubscript] = "Subscript",
-  [kExprNodeListLiteral] = "ListLiteral",
-  [kExprNodeUnaryPlus] = "UnaryPlus",
-  [kExprNodeBinaryPlus] = "BinaryPlus",
-  [kExprNodeNested] = "Nested",
-  [kExprNodeCall] = "Call",
-  [kExprNodePlainIdentifier] = "PlainIdentifier",
-  [kExprNodePlainKey] = "PlainKey",
-  [kExprNodeComplexIdentifier] = "ComplexIdentifier",
-  [kExprNodeUnknownFigure] = "UnknownFigure",
-  [kExprNodeLambda] = "Lambda",
-  [kExprNodeDictLiteral] = "DictLiteral",
-  [kExprNodeCurlyBracesIdentifier] = "CurlyBracesIdentifier",
-  [kExprNodeComma] = "Comma",
-  [kExprNodeColon] = "Colon",
-  [kExprNodeArrow] = "Arrow",
-  [kExprNodeComparison] = "Comparison",
-  [kExprNodeConcat] = "Concat",
-  [kExprNodeConcatOrSubscript] = "ConcatOrSubscript",
-  [kExprNodeInteger] = "Integer",
-  [kExprNodeFloat] = "Float",
-  [kExprNodeSingleQuotedString] = "SingleQuotedString",
-  [kExprNodeDoubleQuotedString] = "DoubleQuotedString",
-  [kExprNodeOr] = "Or",
-  [kExprNodeAnd] = "And",
-  [kExprNodeUnaryMinus] = "UnaryMinus",
-  [kExprNodeBinaryMinus] = "BinaryMinus",
-  [kExprNodeNot] = "Not",
-  [kExprNodeMultiplication] = "Multiplication",
-  [kExprNodeDivision] = "Division",
-  [kExprNodeMod] = "Mod",
-  [kExprNodeOption] = "Option",
-  [kExprNodeEnvironment] = "Environment",
-  [kExprNodeAssignment] = "Assignment",
+    [kExprNodeMissing] = "Missing",
+    [kExprNodeOpMissing] = "OpMissing",
+    [kExprNodeTernary] = "Ternary",
+    [kExprNodeTernaryValue] = "TernaryValue",
+    [kExprNodeRegister] = "Register",
+    [kExprNodeSubscript] = "Subscript",
+    [kExprNodeListLiteral] = "ListLiteral",
+    [kExprNodeUnaryPlus] = "UnaryPlus",
+    [kExprNodeBinaryPlus] = "BinaryPlus",
+    [kExprNodeNested] = "Nested",
+    [kExprNodeCall] = "Call",
+    [kExprNodePlainIdentifier] = "PlainIdentifier",
+    [kExprNodePlainKey] = "PlainKey",
+    [kExprNodeComplexIdentifier] = "ComplexIdentifier",
+    [kExprNodeUnknownFigure] = "UnknownFigure",
+    [kExprNodeLambda] = "Lambda",
+    [kExprNodeDictLiteral] = "DictLiteral",
+    [kExprNodeCurlyBracesIdentifier] = "CurlyBracesIdentifier",
+    [kExprNodeComma] = "Comma",
+    [kExprNodeColon] = "Colon",
+    [kExprNodeArrow] = "Arrow",
+    [kExprNodeComparison] = "Comparison",
+    [kExprNodeConcat] = "Concat",
+    [kExprNodeConcatOrSubscript] = "ConcatOrSubscript",
+    [kExprNodeInteger] = "Integer",
+    [kExprNodeFloat] = "Float",
+    [kExprNodeSingleQuotedString] = "SingleQuotedString",
+    [kExprNodeDoubleQuotedString] = "DoubleQuotedString",
+    [kExprNodeOr] = "Or",
+    [kExprNodeAnd] = "And",
+    [kExprNodeUnaryMinus] = "UnaryMinus",
+    [kExprNodeBinaryMinus] = "BinaryMinus",
+    [kExprNodeNot] = "Not",
+    [kExprNodeMultiplication] = "Multiplication",
+    [kExprNodeDivision] = "Division",
+    [kExprNodeMod] = "Mod",
+    [kExprNodeOption] = "Option",
+    [kExprNodeEnvironment] = "Environment",
+    [kExprNodeAssignment] = "Assignment",
 };
 
 /// Represent `int` character as a string
@@ -865,8 +922,7 @@ const char *const east_node_type_tab[] = {
 ///
 /// @return Converted string, stored in a static buffer (overriden after each
 ///         call).
-static const char *intchar2str(const int ch)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+static const char *intchar2str(const int ch) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   static char buf[sizeof(int) * 3 + 1];
   if (' ' <= ch && ch < 0x7f) {
@@ -896,8 +952,8 @@ static inline void viml_pexpr_debug_print_ast_node(
   if (*eastnode_p == NULL) {
     fprintf(stderr, "%s %p : NULL\n", prefix, (void *)eastnode_p);
   } else {
-    fprintf(stderr, "%s %p : %p : %s : %zu:%zu:%zu\n",
-            prefix, (void *)eastnode_p, (void *)(*eastnode_p),
+    fprintf(stderr, "%s %p : %p : %s : %zu:%zu:%zu\n", prefix,
+            (void *)eastnode_p, (void *)(*eastnode_p),
             east_node_type_tab[(*eastnode_p)->type], (*eastnode_p)->start.line,
             (*eastnode_p)->start.col, (*eastnode_p)->len);
   }
@@ -906,75 +962,70 @@ static inline void viml_pexpr_debug_print_ast_node(
 REAL_FATTR_UNUSED
 static inline void viml_pexpr_debug_print_ast_stack(
     const ExprASTStack *const ast_stack,
-    const char *const msg)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+    const char *const msg) FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   fprintf(stderr, "\n%sstack: %zu:\n", msg, kv_size(*ast_stack));
   for (size_t i = 0; i < kv_size(*ast_stack); i++) {
     viml_pexpr_debug_print_ast_node(
-        (const ExprASTNode *const *)kv_A(*ast_stack, i),
-        "-");
+        (const ExprASTNode *const *)kv_A(*ast_stack, i), "-");
   }
 }
 
 REAL_FATTR_UNUSED
-static inline void viml_pexpr_debug_print_token(
-    const ParserState *const pstate, const LexExprToken token)
-  FUNC_ATTR_ALWAYS_INLINE
+static inline void viml_pexpr_debug_print_token(const ParserState *const pstate,
+                                                const LexExprToken token)
+    FUNC_ATTR_ALWAYS_INLINE
 {
   fprintf(stderr, "\ntkn: %s\n", viml_pexpr_repr_token(pstate, token, NULL));
 }
-#define PSTACK(msg) \
-    viml_pexpr_debug_print_ast_stack(&ast_stack, #msg)
-#define PSTACK_P(msg) \
-    viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
-#define PNODE_P(eastnode_p, msg) \
-    viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)eastnode_p, \
-                                    (#msg))
-#define PTOKEN(tkn) \
-    viml_pexpr_debug_print_token(pstate, tkn)
+#define PSTACK(msg) viml_pexpr_debug_print_ast_stack(&ast_stack, #msg)
+#define PSTACK_P(msg) viml_pexpr_debug_print_ast_stack(ast_stack, #msg)
+#define PNODE_P(eastnode_p, msg)                                               \
+  viml_pexpr_debug_print_ast_node((const ExprASTNode *const *)eastnode_p,      \
+                                  (#msg))
+#define PTOKEN(tkn) viml_pexpr_debug_print_token(pstate, tkn)
 #endif
 
 const uint8_t node_maxchildren[] = {
-  [kExprNodeMissing] = 0,
-  [kExprNodeOpMissing] = 2,
-  [kExprNodeTernary] = 2,
-  [kExprNodeTernaryValue] = 2,
-  [kExprNodeRegister] = 0,
-  [kExprNodeSubscript] = 2,
-  [kExprNodeListLiteral] = 1,
-  [kExprNodeUnaryPlus] = 1,
-  [kExprNodeBinaryPlus] = 2,
-  [kExprNodeNested] = 1,
-  [kExprNodeCall] = 2,
-  [kExprNodePlainIdentifier] = 0,
-  [kExprNodePlainKey] = 0,
-  [kExprNodeComplexIdentifier] = 2,
-  [kExprNodeUnknownFigure] = 1,
-  [kExprNodeLambda] = 2,
-  [kExprNodeDictLiteral] = 1,
-  [kExprNodeCurlyBracesIdentifier] = 1,
-  [kExprNodeComma] = 2,
-  [kExprNodeColon] = 2,
-  [kExprNodeArrow] = 2,
-  [kExprNodeComparison] = 2,
-  [kExprNodeConcat] = 2,
-  [kExprNodeConcatOrSubscript] = 2,
-  [kExprNodeInteger] = 0,
-  [kExprNodeFloat] = 0,
-  [kExprNodeSingleQuotedString] = 0,
-  [kExprNodeDoubleQuotedString] = 0,
-  [kExprNodeOr] = 2,
-  [kExprNodeAnd] = 2,
-  [kExprNodeUnaryMinus] = 1,
-  [kExprNodeBinaryMinus] = 2,
-  [kExprNodeNot] = 1,
-  [kExprNodeMultiplication] = 2,
-  [kExprNodeDivision] = 2,
-  [kExprNodeMod] = 2,
-  [kExprNodeOption] = 0,
-  [kExprNodeEnvironment] = 0,
-  [kExprNodeAssignment] = 2,
+    [kExprNodeMissing] = 0,
+    [kExprNodeOpMissing] = 2,
+    [kExprNodeTernary] = 2,
+    [kExprNodeTernaryValue] = 2,
+    [kExprNodeRegister] = 0,
+    [kExprNodeSubscript] = 2,
+    [kExprNodeListLiteral] = 1,
+    [kExprNodeUnaryPlus] = 1,
+    [kExprNodeBinaryPlus] = 2,
+    [kExprNodeNested] = 1,
+    [kExprNodeCall] = 2,
+    [kExprNodePlainIdentifier] = 0,
+    [kExprNodePlainKey] = 0,
+    [kExprNodeComplexIdentifier] = 2,
+    [kExprNodeUnknownFigure] = 1,
+    [kExprNodeLambda] = 2,
+    [kExprNodeDictLiteral] = 1,
+    [kExprNodeCurlyBracesIdentifier] = 1,
+    [kExprNodeComma] = 2,
+    [kExprNodeColon] = 2,
+    [kExprNodeArrow] = 2,
+    [kExprNodeComparison] = 2,
+    [kExprNodeConcat] = 2,
+    [kExprNodeConcatOrSubscript] = 2,
+    [kExprNodeInteger] = 0,
+    [kExprNodeFloat] = 0,
+    [kExprNodeSingleQuotedString] = 0,
+    [kExprNodeDoubleQuotedString] = 0,
+    [kExprNodeOr] = 2,
+    [kExprNodeAnd] = 2,
+    [kExprNodeUnaryMinus] = 1,
+    [kExprNodeBinaryMinus] = 2,
+    [kExprNodeNot] = 1,
+    [kExprNodeMultiplication] = 2,
+    [kExprNodeDivision] = 2,
+    [kExprNodeMod] = 2,
+    [kExprNodeOption] = 0,
+    [kExprNodeEnvironment] = 0,
+    [kExprNodeAssignment] = 2,
 };
 
 /// Free memory occupied by AST
@@ -989,7 +1040,7 @@ void viml_pexpr_free_ast(ExprAST ast)
     ExprASTNode **const cur_node = kv_last(ast_stack);
 #ifndef NDEBUG
     // Explicitly check for AST recursiveness.
-    for (size_t i = 0 ; i < kv_size(ast_stack) - 1 ; i++) {
+    for (size_t i = 0; i < kv_size(ast_stack) - 1; i++) {
       assert(*kv_A(ast_stack, i) != *cur_node);
     }
 #endif
@@ -1001,10 +1052,9 @@ void viml_pexpr_free_ast(ExprAST ast)
       const uint8_t maxchildren = node_maxchildren[(*cur_node)->type];
       assert(maxchildren > 0);
       assert(maxchildren <= 2);
-      assert(maxchildren == 1
-             ? (*cur_node)->children->next == NULL
-             : ((*cur_node)->children->next == NULL
-                || (*cur_node)->children->next->next == NULL));
+      assert(maxchildren == 1 ? (*cur_node)->children->next == NULL
+                              : ((*cur_node)->children->next == NULL
+                                 || (*cur_node)->children->next->next == NULL));
 #endif
       kvi_push(ast_stack, &(*cur_node)->children);
     } else if ((*cur_node)->next != NULL) {
@@ -1087,7 +1137,7 @@ void viml_pexpr_free_ast(ExprAST ast)
 /// @param[in]  type  Node type to allocate.
 /// @param[in]  level  Node level to allocate
 static inline ExprASTNode *viml_pexpr_new_node(const ExprASTNodeType type)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
+    FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_MALLOC
 {
   ExprASTNode *ret = xmalloc(sizeof(*ret));
   ret->type = type;
@@ -1177,7 +1227,7 @@ static struct {
 ///
 /// @return Node priority level.
 static inline ExprOpLvl node_lvl(const ExprASTNode node)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return node_type_to_node_props[node.type].lvl;
 }
@@ -1190,7 +1240,7 @@ static inline ExprOpLvl node_lvl(const ExprASTNode node)
 ///
 /// @return Node associativity.
 static inline ExprOpAssociativity node_ass(const ExprASTNode node)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return node_type_to_node_props[node.type].ass;
 }
@@ -1212,7 +1262,7 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate,
                                   ExprASTNode *const bop_node,
                                   ExprASTWantedNode *const want_node_p,
                                   ExprASTError *const ast_err)
-  FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_NONNULL_ALL
 {
   bool ret = true;
   ExprASTNode **top_node_p = NULL;
@@ -1222,14 +1272,14 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate,
   assert(kv_size(*ast_stack));
   const ExprOpLvl bop_node_lvl = ((bop_node->type == kExprNodeCall
                                    || bop_node->type == kExprNodeSubscript)
-                                  ? kEOpLvlSubscript
-                                  : node_lvl(*bop_node));
+                                      ? kEOpLvlSubscript
+                                      : node_lvl(*bop_node));
 #ifndef NDEBUG
-  const ExprOpAssociativity bop_node_ass = (
-      (bop_node->type == kExprNodeCall
-       || bop_node->type == kExprNodeSubscript)
-      ? kEOpAssLeft
-      : node_ass(*bop_node));
+  const ExprOpAssociativity bop_node_ass
+      = ((bop_node->type == kExprNodeCall
+          || bop_node->type == kExprNodeSubscript)
+             ? kEOpAssLeft
+             : node_ass(*bop_node));
 #endif
   do {
     ExprASTNode **new_top_node_p = kv_last(*ast_stack);
@@ -1306,9 +1356,9 @@ static bool viml_pexpr_handle_bop(const ParserState *const pstate,
 /// @return Shifted position.
 static inline ParserPosition shifted_pos(const ParserPosition pos,
                                          const size_t shift)
-  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (ParserPosition) { .line = pos.line, .col = pos.col + shift };
+  return (ParserPosition){.line = pos.line, .col = pos.col + shift};
 }
 
 /// ParserPosition literal based on ParserPosition pos with specified column
@@ -1321,32 +1371,30 @@ static inline ParserPosition shifted_pos(const ParserPosition pos,
 /// @return Shifted position.
 static inline ParserPosition recol_pos(const ParserPosition pos,
                                        const size_t new_col)
-  FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_CONST FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (ParserPosition) { .line = pos.line, .col = new_col };
+  return (ParserPosition){.line = pos.line, .col = new_col};
 }
 
 /// Get highlight group name
 #define HL(g) (is_invalid ? "NvimInvalid" #g : "Nvim" #g)
 
 /// Highlight current token with the given group
-#define HL_CUR_TOKEN(g) \
-        viml_parser_highlight(pstate, cur_token.start, cur_token.len, \
-                              HL(g))
+#define HL_CUR_TOKEN(g)                                                        \
+  viml_parser_highlight(pstate, cur_token.start, cur_token.len, HL(g))
 
 /// Allocate new node, saving some values
-#define NEW_NODE(type) \
-    viml_pexpr_new_node(type)
+#define NEW_NODE(type) viml_pexpr_new_node(type)
 
 /// Set position of the given node to position from the given token
 ///
 /// @param  cur_node  Node to modify.
 /// @param  cur_token  Token to set position from.
-#define POS_FROM_TOKEN(cur_node, cur_token) \
-    do { \
-      (cur_node)->start = cur_token.start; \
-      (cur_node)->len = cur_token.len; \
-    } while (0)
+#define POS_FROM_TOKEN(cur_node, cur_token)                                    \
+  do {                                                                         \
+    (cur_node)->start = cur_token.start;                                       \
+    (cur_node)->len = cur_token.len;                                           \
+  } while (0)
 
 /// Allocate new node and set its position from the current token
 ///
@@ -1354,28 +1402,27 @@ static inline ParserPosition recol_pos(const ParserPosition pos,
 ///
 /// @param  cur_node  Variable to save allocated node to.
 /// @param  typ  Node type.
-#define NEW_NODE_WITH_CUR_POS(cur_node, typ) \
-    do { \
-      (cur_node) = NEW_NODE(typ); \
-      POS_FROM_TOKEN((cur_node), cur_token); \
-      if (prev_token.type == kExprLexSpacing) { \
-        (cur_node)->start = prev_token.start; \
-        (cur_node)->len += prev_token.len; \
-      } \
-    } while (0)
+#define NEW_NODE_WITH_CUR_POS(cur_node, typ)                                   \
+  do {                                                                         \
+    (cur_node) = NEW_NODE(typ);                                                \
+    POS_FROM_TOKEN((cur_node), cur_token);                                     \
+    if (prev_token.type == kExprLexSpacing) {                                  \
+      (cur_node)->start = prev_token.start;                                    \
+      (cur_node)->len += prev_token.len;                                       \
+    }                                                                          \
+  } while (0)
 
 /// Check whether it is possible to have next expression after current
 ///
 /// For :echo: `:echo @a @a` is a valid expression. `:echo (@a @a)` is not.
-#define MAY_HAVE_NEXT_EXPR \
-    (kv_size(ast_stack) == 1)
+#define MAY_HAVE_NEXT_EXPR (kv_size(ast_stack) == 1)
 
 /// Add operator node
 ///
 /// @param[in]  cur_node  Node to add.
-#define ADD_OP_NODE(cur_node) \
-    is_invalid |= !viml_pexpr_handle_bop(pstate, &ast_stack, cur_node, \
-                                         &want_node, &ast.err)
+#define ADD_OP_NODE(cur_node)                                                  \
+  is_invalid |= !viml_pexpr_handle_bop(pstate, &ast_stack, cur_node,           \
+                                       &want_node, &ast.err)
 
 /// Record missing operator: for things like
 ///
@@ -1386,34 +1433,34 @@ static inline ParserPosition recol_pos(const ParserPosition pos,
 ///     :echo (@a @a)
 ///
 /// (parsed as OpMissing(@a, @a)).
-#define OP_MISSING \
-    do { \
-      if (flags & kExprFlagsMulti && MAY_HAVE_NEXT_EXPR) { \
-        /* Multiple expressions allowed, return without calling */ \
-        /* viml_parser_advance(). */ \
-        goto viml_pexpr_parse_end; \
-      } else { \
-        assert(*top_node_p != NULL); \
-        ERROR_FROM_TOKEN_AND_MSG(cur_token, _("E15: Missing operator: %.*s")); \
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeOpMissing); \
-        cur_node->len = 0; \
-        ADD_OP_NODE(cur_node); \
-        goto viml_pexpr_parse_process_token; \
-      } \
-    } while (0)
+#define OP_MISSING                                                             \
+  do {                                                                         \
+    if (flags & kExprFlagsMulti && MAY_HAVE_NEXT_EXPR) {                       \
+      /* Multiple expressions allowed, return without calling */               \
+      /* viml_parser_advance(). */                                             \
+      goto viml_pexpr_parse_end;                                               \
+    } else {                                                                   \
+      assert(*top_node_p != NULL);                                             \
+      ERROR_FROM_TOKEN_AND_MSG(cur_token, _("E15: Missing operator: %.*s"));   \
+      NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeOpMissing);                     \
+      cur_node->len = 0;                                                       \
+      ADD_OP_NODE(cur_node);                                                   \
+      goto viml_pexpr_parse_process_token;                                     \
+    }                                                                          \
+  } while (0)
 
 /// Record missing value: for things like "* 5"
 ///
 /// @param[in]  msg  Error message.
-#define ADD_VALUE_IF_MISSING(msg) \
-        do { \
-          if (want_node == kENodeValue) { \
-            ERROR_FROM_TOKEN_AND_MSG(cur_token, (msg)); \
-            NEW_NODE_WITH_CUR_POS((*top_node_p), kExprNodeMissing); \
-            (*top_node_p)->len = 0; \
-            want_node = kENodeOperator; \
-          } \
-        } while (0)
+#define ADD_VALUE_IF_MISSING(msg)                                              \
+  do {                                                                         \
+    if (want_node == kENodeValue) {                                            \
+      ERROR_FROM_TOKEN_AND_MSG(cur_token, (msg));                              \
+      NEW_NODE_WITH_CUR_POS((*top_node_p), kExprNodeMissing);                  \
+      (*top_node_p)->len = 0;                                                  \
+      want_node = kENodeOperator;                                              \
+    }                                                                          \
+  } while (0)
 
 /// Set AST error, unless AST already is not correct
 ///
@@ -1426,7 +1473,7 @@ static inline void east_set_error(const ParserState *const pstate,
                                   ExprASTError *const ret_ast_err,
                                   const char *const msg,
                                   const ParserPosition start)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_ALWAYS_INLINE
 {
   if (ret_ast_err->msg != NULL) {
     return;
@@ -1438,22 +1485,22 @@ static inline void east_set_error(const ParserState *const pstate,
 }
 
 /// Set error from the given token and given message
-#define ERROR_FROM_TOKEN_AND_MSG(cur_token, msg) \
-    do { \
-      is_invalid = true; \
-      east_set_error(pstate, &ast.err, msg, cur_token.start); \
-    } while (0)
+#define ERROR_FROM_TOKEN_AND_MSG(cur_token, msg)                               \
+  do {                                                                         \
+    is_invalid = true;                                                         \
+    east_set_error(pstate, &ast.err, msg, cur_token.start);                    \
+  } while (0)
 
 /// Like #ERROR_FROM_TOKEN_AND_MSG, but gets position from a node
-#define ERROR_FROM_NODE_AND_MSG(node, msg) \
-    do { \
-      is_invalid = true; \
-      east_set_error(pstate, &ast.err, msg, node->start); \
-    } while (0)
+#define ERROR_FROM_NODE_AND_MSG(node, msg)                                     \
+  do {                                                                         \
+    is_invalid = true;                                                         \
+    east_set_error(pstate, &ast.err, msg, node->start);                        \
+  } while (0)
 
 /// Set error from the given kExprLexInvalid token
-#define ERROR_FROM_TOKEN(cur_token) \
-    ERROR_FROM_TOKEN_AND_MSG(cur_token, cur_token.data.err.msg)
+#define ERROR_FROM_TOKEN(cur_token)                                            \
+  ERROR_FROM_TOKEN_AND_MSG(cur_token, cur_token.data.err.msg)
 
 /// Select figure brace type, altering highlighting as well if needed
 ///
@@ -1461,17 +1508,16 @@ static inline void east_set_error(const ParserState *const pstate,
 /// @param[in]  new_type  New type, one of ExprASTNodeType values without
 ///                       kExprNode prefix.
 /// @param[in]  hl  Corresponding highlighting, passed as an argument to #HL.
-#define SELECT_FIGURE_BRACE_TYPE(node, new_type, hl) \
-    do { \
-      ExprASTNode *const node_ = (node); \
-      assert(node_->type == kExprNodeUnknownFigure \
-             || node_->type == kExprNode##new_type); \
-      node_->type = kExprNode##new_type; \
-      if (pstate->colors) { \
-        kv_A(*pstate->colors, node_->data.fig.opening_hl_idx).group = \
-             HL(hl); \
-      } \
-    } while (0)
+#define SELECT_FIGURE_BRACE_TYPE(node, new_type, hl)                           \
+  do {                                                                         \
+    ExprASTNode *const node_ = (node);                                         \
+    assert(node_->type == kExprNodeUnknownFigure                               \
+           || node_->type == kExprNode##new_type);                             \
+    node_->type = kExprNode##new_type;                                         \
+    if (pstate->colors) {                                                      \
+      kv_A(*pstate->colors, node_->data.fig.opening_hl_idx).group = HL(hl);    \
+    }                                                                          \
+  } while (0)
 
 /// Add identifier which should constitute complex identifier node
 ///
@@ -1481,46 +1527,46 @@ static inline void east_set_error(const ParserState *const pstate,
 ///                              update want_node and ast_stack, without
 ///                              a trailing semicolon.
 /// @param  hl  Highlighting name to use, passed as an argument to #HL.
-#define ADD_IDENT(new_ident_node_code, hl) \
-    do { \
-      assert(want_node == kENodeOperator); \
-      /* Operator: may only be curly braces name, but only under certain */ \
-      /* conditions. */ \
-\
-      /* First condition is that there is no space before a part of complex */ \
-      /* identifier. */ \
-      if (prev_token.type == kExprLexSpacing) { \
-        OP_MISSING; \
-      } \
-      switch ((*top_node_p)->type) { \
-        /* Second is that previous node is one of the identifiers: */ \
-        /* complex, plain, curly braces. */ \
-\
-        /* TODO(ZyX-I): Extend syntax to allow ${expr}. This is needed to */ \
-        /* handle environment variables like those bash uses for */ \
-        /* `export -f`: their names consist not only of alphanumeric */ \
-        /* characetrs. */ \
-        case kExprNodeComplexIdentifier: \
-        case kExprNodePlainIdentifier: \
-        case kExprNodeCurlyBracesIdentifier: { \
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComplexIdentifier); \
-          cur_node->len = 0; \
-          cur_node->children = *top_node_p; \
-          *top_node_p = cur_node; \
-          kvi_push(ast_stack, &cur_node->children->next); \
-          ExprASTNode **const new_top_node_p = kv_last(ast_stack); \
-          assert(*new_top_node_p == NULL); \
-          new_ident_node_code; \
-          *new_top_node_p = cur_node; \
-          HL_CUR_TOKEN(hl); \
-          break; \
-        } \
-        default: { \
-          OP_MISSING; \
-          break; \
-        } \
-      } \
-    } while (0)
+#define ADD_IDENT(new_ident_node_code, hl)                                     \
+  do {                                                                         \
+    assert(want_node == kENodeOperator);                                       \
+    /* Operator: may only be curly braces name, but only under certain */      \
+    /* conditions. */                                                          \
+                                                                               \
+    /* First condition is that there is no space before a part of complex */   \
+    /* identifier. */                                                          \
+    if (prev_token.type == kExprLexSpacing) {                                  \
+      OP_MISSING;                                                              \
+    }                                                                          \
+    switch ((*top_node_p)->type) {                                             \
+      /* Second is that previous node is one of the identifiers: */            \
+      /* complex, plain, curly braces. */                                      \
+                                                                               \
+      /* TODO(ZyX-I): Extend syntax to allow ${expr}. This is needed to */     \
+      /* handle environment variables like those bash uses for */              \
+      /* `export -f`: their names consist not only of alphanumeric */          \
+      /* characetrs. */                                                        \
+      case kExprNodeComplexIdentifier:                                         \
+      case kExprNodePlainIdentifier:                                           \
+      case kExprNodeCurlyBracesIdentifier: {                                   \
+        NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeComplexIdentifier);           \
+        cur_node->len = 0;                                                     \
+        cur_node->children = *top_node_p;                                      \
+        *top_node_p = cur_node;                                                \
+        kvi_push(ast_stack, &cur_node->children->next);                        \
+        ExprASTNode **const new_top_node_p = kv_last(ast_stack);               \
+        assert(*new_top_node_p == NULL);                                       \
+        new_ident_node_code;                                                   \
+        *new_top_node_p = cur_node;                                            \
+        HL_CUR_TOKEN(hl);                                                      \
+        break;                                                                 \
+      }                                                                        \
+      default: {                                                               \
+        OP_MISSING;                                                            \
+        break;                                                                 \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
 
 /// Determine whether given parse type is an assignment
 ///
@@ -1528,7 +1574,7 @@ static inline void east_set_error(const ParserState *const pstate,
 ///
 /// @return true if parsing an assignment, false otherwise.
 static inline bool pt_is_assignment(const ExprASTParseType pt)
-  FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_ALWAYS_INLINE FUNC_ATTR_CONST FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return (pt == kEPTAssignment || pt == kEPTSingleAssignment);
 }
@@ -1536,9 +1582,9 @@ static inline bool pt_is_assignment(const ExprASTParseType pt)
 /// Structure used to define “string shifts” necessary to map string
 /// highlighting to actual strings.
 typedef struct {
-  size_t start;  ///< Where special character starts in original string.
+  size_t start;     ///< Where special character starts in original string.
   size_t orig_len;  ///< Length of orininal string (e.g. 4 for "\x80").
-  size_t act_len;  ///< Length of resulting character(s) (e.g. 1 for "\x80").
+  size_t act_len;   ///< Length of resulting character(s) (e.g. 1 for "\x80").
   bool escape_not_known;  ///< True if escape sequence in original is not known.
 } StringShift;
 
@@ -1558,8 +1604,7 @@ static void parse_quoted_string(ParserState *const pstate,
                                 ExprASTNode *const node,
                                 const LexExprToken token,
                                 const ExprASTStack ast_stack,
-                                const bool is_invalid)
-  FUNC_ATTR_NONNULL_ALL
+                                const bool is_invalid) FUNC_ATTR_NONNULL_ALL
 {
   const ParserLine pline = pstate->reader.lines.items[token.start.line];
   const char *const s = pline.data + token.start.col;
@@ -1579,12 +1624,12 @@ static void parse_quoted_string(ParserState *const pstate,
       size--;
       p = chunk_e + 2;
       if (pstate->colors) {
-        kvi_push(shifts, ((StringShift) {
-            .start = token.start.col + (size_t)(chunk_e - s),
-            .orig_len = 2,
-            .act_len = 1,
-            .escape_not_known = false,
-        }));
+        kvi_push(shifts, ((StringShift){
+                             .start = token.start.col + (size_t)(chunk_e - s),
+                             .orig_len = 2,
+                             .act_len = 1,
+                             .escape_not_known = false,
+                         }));
       }
     }
     node->data.str.size = size;
@@ -1624,7 +1669,8 @@ static void parse_quoted_string(ParserState *const pstate,
             break;
           }
           // Hexadecimal, always single byte, but at least three bytes each.
-          case 'x': case 'X': {
+          case 'x':
+          case 'X': {
             size--;
             if (ascii_isxdigit(p[1])) {
               size--;
@@ -1644,7 +1690,8 @@ static void parse_quoted_string(ParserState *const pstate,
           // \UFFFFFF: 5 bytes, 3 bytes less.
           // \UFFFFFFF: 6 bytes, 3 bytes less.
           // \U7FFFFFFF: 6 bytes, 4 bytes less.
-          case 'u': case 'U': {
+          case 'u':
+          case 'U': {
             const char *const esc_start = p;
             size_t n = (*p == 'u' ? 4 : 8);
             int nr = 0;
@@ -1662,7 +1709,13 @@ static void parse_quoted_string(ParserState *const pstate,
             break;
           }
           // Octal, always single byte, but at least two bytes each.
-          case '0': case '1': case '2': case '3': case '4': case '5': case '6':
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
           case '7': {
             size--;
             p++;
@@ -1707,12 +1760,12 @@ static void parse_quoted_string(ParserState *const pstate,
         bool is_unknown = false;
         const char *const v_p_start = v_p;
         switch (*p) {
-#define SINGLE_CHAR_ESC(ch, real_ch) \
-          case ch: { \
-            *v_p++ = real_ch; \
-            p++; \
-            break; \
-          }
+#define SINGLE_CHAR_ESC(ch, real_ch)                                           \
+  case ch: {                                                                   \
+    *v_p++ = real_ch;                                                          \
+    p++;                                                                       \
+    break;                                                                     \
+  }
           SINGLE_CHAR_ESC('b', BS)
           SINGLE_CHAR_ESC('e', ESC)
           SINGLE_CHAR_ESC('f', FF)
@@ -1724,7 +1777,10 @@ static void parse_quoted_string(ParserState *const pstate,
 #undef SINGLE_CHAR_ESC
 
           // Hexadecimal or unicode.
-          case 'X': case 'x': case 'u': case 'U': {
+          case 'X':
+          case 'x':
+          case 'u':
+          case 'U': {
             if (p + 1 < e && ascii_isxdigit(p[1])) {
               size_t n;
               int nr;
@@ -1756,7 +1812,13 @@ static void parse_quoted_string(ParserState *const pstate,
             break;
           }
           // Octal: "\1", "\12", "\123".
-          case '0': case '1': case '2': case '3': case '4': case '5': case '6':
+          case '0':
+          case '1':
+          case '2':
+          case '3':
+          case '4':
+          case '5':
+          case '6':
           case '7': {
             uint8_t ch = (uint8_t)(*p++ - '0');
             if (p < e && *p >= '0' && *p <= '7') {
@@ -1770,9 +1832,9 @@ static void parse_quoted_string(ParserState *const pstate,
           }
           // Special key, e.g.: "\<C-W>"
           case '<': {
-            const size_t special_len = (
-                trans_special((const char_u **)&p, (size_t)(e - p),
-                              (char_u *)v_p, true, true));
+            const size_t special_len
+                = (trans_special((const char_u **)&p, (size_t)(e - p),
+                                 (char_u *)v_p, true, true));
             if (special_len != 0) {
               v_p += special_len;
             } else {
@@ -1788,12 +1850,12 @@ static void parse_quoted_string(ParserState *const pstate,
           }
         }
         if (pstate->colors) {
-          kvi_push(shifts, ((StringShift) {
-              .start = token.start.col + (size_t)(chunk_e - s),
-              .orig_len = (size_t)(p - chunk_e),
-              .act_len = (size_t)(v_p - (char *)v_p_start),
-              .escape_not_known = is_unknown,
-          }));
+          kvi_push(shifts, ((StringShift){
+                               .start = token.start.col + (size_t)(chunk_e - s),
+                               .orig_len = (size_t)(p - chunk_e),
+                               .act_len = (size_t)(v_p - (char *)v_p_start),
+                               .escape_not_known = is_unknown,
+                           }));
         }
       }
       node->data.str.size = (size_t)(v_p - node->data.str.value);
@@ -1804,45 +1866,37 @@ static void parse_quoted_string(ParserState *const pstate,
     // TODO(ZyX-I): use ast_stack to determine and highlight printf format str
     // TODO(ZyX-I): use ast_stack to determine and highlight expression strings
     size_t next_col = token.start.col + 1;
-    const char *const body_str = (is_double
-                                  ? HL(DoubleQuotedBody)
-                                  : HL(SingleQuotedBody));
-    const char *const esc_str = (is_double
-                                 ? HL(DoubleQuotedEscape)
-                                 : HL(SingleQuotedQuote));
-    const char *const ukn_esc_str = (is_double
-                                     ? HL(DoubleQuotedUnknownEscape)
-                                     : HL(SingleQuotedUnknownEscape));
+    const char *const body_str
+        = (is_double ? HL(DoubleQuotedBody) : HL(SingleQuotedBody));
+    const char *const esc_str
+        = (is_double ? HL(DoubleQuotedEscape) : HL(SingleQuotedQuote));
+    const char *const ukn_esc_str = (is_double ? HL(DoubleQuotedUnknownEscape)
+                                               : HL(SingleQuotedUnknownEscape));
     for (size_t i = 0; i < kv_size(shifts); i++) {
       const StringShift cur_shift = kv_A(shifts, i);
       if (cur_shift.start > next_col) {
         viml_parser_highlight(pstate, recol_pos(token.start, next_col),
-                              cur_shift.start - next_col,
-                              body_str);
+                              cur_shift.start - next_col, body_str);
       }
-      viml_parser_highlight(pstate, recol_pos(token.start, cur_shift.start),
-                            cur_shift.orig_len,
-                            (cur_shift.escape_not_known
-                             ? ukn_esc_str
-                             : esc_str));
+      viml_parser_highlight(
+          pstate, recol_pos(token.start, cur_shift.start), cur_shift.orig_len,
+          (cur_shift.escape_not_known ? ukn_esc_str : esc_str));
       next_col = cur_shift.start + cur_shift.orig_len;
     }
     if (next_col - token.start.col < token.len - token.data.str.closed) {
-      viml_parser_highlight(pstate, recol_pos(token.start, next_col),
-                            (token.start.col
-                             + token.len
-                             - token.data.str.closed
-                             - next_col),
-                            body_str);
+      viml_parser_highlight(
+          pstate, recol_pos(token.start, next_col),
+          (token.start.col + token.len - token.data.str.closed - next_col),
+          body_str);
     }
   }
   if (token.data.str.closed) {
     if (is_double) {
-      viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1),
-                            1, HL(DoubleQuote));
+      viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1), 1,
+                            HL(DoubleQuote));
     } else {
-      viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1),
-                            1, HL(SingleQuote));
+      viml_parser_highlight(pstate, shifted_pos(token.start, token.len - 1), 1,
+                            HL(SingleQuote));
     }
   }
   kvi_destroy(shifts);
@@ -1850,16 +1904,16 @@ static void parse_quoted_string(ParserState *const pstate,
 
 /// Additional flags to pass to lexer depending on want_node
 static const int want_node_to_lexer_flags[] = {
-  [kENodeValue] = kELFlagIsNotCmp,
-  [kENodeOperator] = kELFlagForbidScope,
+    [kENodeValue] = kELFlagIsNotCmp,
+    [kENodeOperator] = kELFlagForbidScope,
 };
 
 /// Number of characters to highlight as NumberPrefix depending on the base
 static const uint8_t base_to_prefix_length[] = {
-  [2] = 2,
-  [8] = 1,
-  [10] = 0,
-  [16] = 2,
+    [2] = 2,
+    [8] = 1,
+    [10] = 0,
+    [16] = 2,
 };
 
 /// Parse one VimL expression
@@ -1869,7 +1923,7 @@ static const uint8_t base_to_prefix_length[] = {
 ///
 /// @return Parsed AST.
 ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
   ExprAST ast = {
     .err = {
@@ -1897,26 +1951,25 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
   if (flags & kExprFlagsParseLet) {
     kvi_push(pt_stack, kEPTAssignment);
   }
-  LexExprToken prev_token = { .type = kExprLexMissing };
+  LexExprToken prev_token = {.type = kExprLexMissing};
   bool highlighted_prev_spacing = false;
   // Lambda node, valid when parsing lambda arguments only.
   ExprASTNode *lambda_node = NULL;
   size_t asgn_level = 0;
   do {
-    const bool is_concat_or_subscript = (
-        want_node == kENodeValue
-        && kv_size(ast_stack) > 1
-        && (*kv_Z(ast_stack, 1))->type == kExprNodeConcatOrSubscript);
-    const int lexer_additional_flags = (
-        kELFlagPeek
-        | ((flags & kExprFlagsDisallowEOC) ? kELFlagForbidEOC : 0)
-        | ((want_node == kENodeValue
-            && (kv_size(ast_stack) == 1
-                || ((*kv_Z(ast_stack, 1))->type != kExprNodeConcat
-                    && ((*kv_Z(ast_stack, 1))->type
-                        != kExprNodeConcatOrSubscript))))
-           ? kELFlagAllowFloat
-           : 0));
+    const bool is_concat_or_subscript
+        = (want_node == kENodeValue && kv_size(ast_stack) > 1
+           && (*kv_Z(ast_stack, 1))->type == kExprNodeConcatOrSubscript);
+    const int lexer_additional_flags
+        = (kELFlagPeek
+           | ((flags & kExprFlagsDisallowEOC) ? kELFlagForbidEOC : 0)
+           | ((want_node == kENodeValue
+               && (kv_size(ast_stack) == 1
+                   || ((*kv_Z(ast_stack, 1))->type != kExprNodeConcat
+                       && ((*kv_Z(ast_stack, 1))->type
+                           != kExprNodeConcatOrSubscript))))
+                  ? kELFlagAllowFloat
+                  : 0));
     LexExprToken cur_token = viml_pexpr_next_token(
         pstate, want_node_to_lexer_flags[want_node] | lexer_additional_flags);
     if (cur_token.type == kExprLexEOC) {
@@ -1925,7 +1978,7 @@ ExprAST viml_pexpr_parse(ParserState *const pstate, const int flags)
     LexExprTokenType tok_type = cur_token.type;
     const bool token_invalid = (tok_type == kExprLexInvalid);
     bool is_invalid = token_invalid;
-viml_pexpr_parse_process_token:
+  viml_pexpr_parse_process_token:
     // May use different flags this time.
     cur_token = viml_pexpr_next_token(
         pstate, want_node_to_lexer_flags[want_node] | lexer_additional_flags);
@@ -1955,15 +2008,14 @@ viml_pexpr_parse_process_token:
     // Check that stack item i + 1 points to stack items’ i *last* child.
     for (size_t i = 0; i + 1 < kv_size(ast_stack); i++) {
       const bool item_null = (want_value && i + 2 == kv_size(ast_stack));
-      assert((&(*kv_A(ast_stack, i))->children == kv_A(ast_stack, i + 1)
+      assert(
+          (&(*kv_A(ast_stack, i))->children == kv_A(ast_stack, i + 1)
+           && (item_null ? (*kv_A(ast_stack, i))->children == NULL
+                         : (*kv_A(ast_stack, i))->children->next == NULL))
+          || ((&(*kv_A(ast_stack, i))->children->next == kv_A(ast_stack, i + 1))
               && (item_null
-                  ? (*kv_A(ast_stack, i))->children == NULL
-                  : (*kv_A(ast_stack, i))->children->next == NULL))
-             || ((&(*kv_A(ast_stack, i))->children->next
-                  == kv_A(ast_stack, i + 1))
-                 && (item_null
-                     ? (*kv_A(ast_stack, i))->children->next == NULL
-                     : (*kv_A(ast_stack, i))->children->next->next == NULL)));
+                      ? (*kv_A(ast_stack, i))->children->next == NULL
+                      : (*kv_A(ast_stack, i))->children->next->next == NULL)));
     }
 #endif
     // Note: in Vim whether expression "cond?d.a:2" is valid depends both on
@@ -1979,13 +2031,13 @@ viml_pexpr_parse_process_token:
     // making expression invalid both because there is no longer a spare colon
     // for ternary and because concatenating dictionary with anything is not
     // valid. There are more cases when this will make a difference though.
-    const bool node_is_key = (
-        is_concat_or_subscript
-        && (cur_token.type == kExprLexPlainIdentifier
-            ? (!cur_token.data.var.autoload
-               && cur_token.data.var.scope == kExprVarScopeMissing)
-            : (cur_token.type == kExprLexNumber))
-        && prev_token.type != kExprLexSpacing);
+    const bool node_is_key
+        = (is_concat_or_subscript
+           && (cur_token.type == kExprLexPlainIdentifier
+                   ? (!cur_token.data.var.autoload
+                      && cur_token.data.var.scope == kExprVarScopeMissing)
+                   : (cur_token.type == kExprLexNumber))
+           && prev_token.type != kExprLexSpacing);
     if (is_concat_or_subscript && !node_is_key) {
       // Note: in Vim "d. a" (this is the reason behind `prev_token.type !=
       // kExprLexSpacing` part of the condition) as well as any other "d.{expr}"
@@ -2004,8 +2056,7 @@ viml_pexpr_parse_process_token:
         break;
       }
       case kEPTLambdaArguments: {
-        if ((want_node == kENodeOperator
-             && tok_type != kExprLexComma
+        if ((want_node == kENodeOperator && tok_type != kExprLexComma
              && tok_type != kExprLexArrow)
             || (want_node == kENodeValue
                 && !(cur_token.type == kExprLexPlainIdentifier
@@ -2037,20 +2088,17 @@ viml_pexpr_parse_process_token:
       }
       case kEPTSingleAssignment:
       case kEPTAssignment: {
-        if (want_node == kENodeValue
-            && tok_type != kExprLexBracket
+        if (want_node == kENodeValue && tok_type != kExprLexBracket
             && tok_type != kExprLexPlainIdentifier
             && (tok_type != kExprLexFigureBrace || cur_token.data.brc.closing)
             && !(node_is_key && tok_type == kExprLexNumber)
-            && tok_type != kExprLexEnv
-            && tok_type != kExprLexOption
+            && tok_type != kExprLexEnv && tok_type != kExprLexOption
             && tok_type != kExprLexRegister) {
           ERROR_FROM_TOKEN_AND_MSG(
               cur_token,
               _("E15: Expected value part of assignment lvalue: %.*s"));
           kv_drop(pt_stack, 1);
-        } else if (want_node == kENodeOperator
-                   && tok_type != kExprLexBracket
+        } else if (want_node == kENodeOperator && tok_type != kExprLexBracket
                    && (tok_type != kExprLexFigureBrace
                        || cur_token.data.brc.closing)
                    && tok_type != kExprLexDot
@@ -2100,46 +2148,46 @@ viml_pexpr_parse_process_token:
         HL_CUR_TOKEN(Register);
         break;
       }
-#define SIMPLE_UB_OP(op) \
-      case kExprLex##op: { \
-        if (want_node == kENodeValue) { \
-          /* Value level: assume unary operator. */ \
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op); \
-          *top_node_p = cur_node; \
-          kvi_push(ast_stack, &cur_node->children); \
-          HL_CUR_TOKEN(Unary##op); \
-        } else { \
-          NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op); \
-          ADD_OP_NODE(cur_node); \
-          HL_CUR_TOKEN(Binary##op); \
-        } \
-        want_node = kENodeValue; \
-        break; \
-      }
-      SIMPLE_UB_OP(Plus)
-      SIMPLE_UB_OP(Minus)
+#define SIMPLE_UB_OP(op)                                                       \
+  case kExprLex##op: {                                                         \
+    if (want_node == kENodeValue) {                                            \
+      /* Value level: assume unary operator. */                                \
+      NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeUnary##op);                     \
+      *top_node_p = cur_node;                                                  \
+      kvi_push(ast_stack, &cur_node->children);                                \
+      HL_CUR_TOKEN(Unary##op);                                                 \
+    } else {                                                                   \
+      NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeBinary##op);                    \
+      ADD_OP_NODE(cur_node);                                                   \
+      HL_CUR_TOKEN(Binary##op);                                                \
+    }                                                                          \
+    want_node = kENodeValue;                                                   \
+    break;                                                                     \
+  }
+        SIMPLE_UB_OP(Plus)
+        SIMPLE_UB_OP(Minus)
 #undef SIMPLE_UB_OP
-#define SIMPLE_B_OP(op, msg) \
-      case kExprLex##op: { \
-        ADD_VALUE_IF_MISSING(_("E15: Unexpected " msg ": %.*s")); \
-        NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##op); \
-        HL_CUR_TOKEN(op); \
-        ADD_OP_NODE(cur_node); \
-        break; \
-      }
-      SIMPLE_B_OP(Or, "or operator")
-      SIMPLE_B_OP(And, "and operator")
+#define SIMPLE_B_OP(op, msg)                                                   \
+  case kExprLex##op: {                                                         \
+    ADD_VALUE_IF_MISSING(_("E15: Unexpected " msg ": %.*s"));                  \
+    NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##op);                            \
+    HL_CUR_TOKEN(op);                                                          \
+    ADD_OP_NODE(cur_node);                                                     \
+    break;                                                                     \
+  }
+        SIMPLE_B_OP(Or, "or operator")
+        SIMPLE_B_OP(And, "and operator")
 #undef SIMPLE_B_OP
       case kExprLexMultiplication: {
         ADD_VALUE_IF_MISSING(
             _("E15: Unexpected multiplication-like operator: %.*s"));
         switch (cur_token.data.mul.type) {
-#define MUL_OP(lex_op_tail, node_op_tail) \
-          case kExprLexMul##lex_op_tail: { \
-            NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##node_op_tail); \
-            HL_CUR_TOKEN(node_op_tail); \
-            break; \
-          }
+#define MUL_OP(lex_op_tail, node_op_tail)                                      \
+  case kExprLexMul##lex_op_tail: {                                             \
+    NEW_NODE_WITH_CUR_POS(cur_node, kExprNode##node_op_tail);                  \
+    HL_CUR_TOKEN(node_op_tail);                                                \
+    break;                                                                     \
+  }
           MUL_OP(Mul, Multiplication)
           MUL_OP(Div, Division)
           MUL_OP(Mod, Mod)
@@ -2157,13 +2205,13 @@ viml_pexpr_parse_process_token:
           assert(cur_token.len == 1
                  || (cur_token.len == 3
                      && pline.data[cur_token.start.col + 2] == ':'));
-          cur_node->data.opt.ident = (
-              pline.data + cur_token.start.col + cur_token.len);
+          cur_node->data.opt.ident
+              = (pline.data + cur_token.start.col + cur_token.len);
           cur_node->data.opt.ident_len = 0;
-          cur_node->data.opt.scope = (
-              cur_token.len == 3
-              ? (ExprOptScope)pline.data[cur_token.start.col + 1]
-              : kExprOptScopeUnspecified);
+          cur_node->data.opt.scope
+              = (cur_token.len == 3
+                     ? (ExprOptScope)pline.data[cur_token.start.col + 1]
+                     : kExprOptScopeUnspecified);
         } else {
           cur_node->data.opt.ident = cur_token.data.opt.name;
           cur_node->data.opt.ident_len = cur_token.data.opt.len;
@@ -2172,8 +2220,8 @@ viml_pexpr_parse_process_token:
         *top_node_p = cur_node;
         want_node = kENodeOperator;
         viml_parser_highlight(pstate, cur_token.start, 1, HL(OptionSigil));
-        const size_t scope_shift = (
-            cur_token.data.opt.scope == kExprOptScopeUnspecified ? 0 : 2);
+        const size_t scope_shift
+            = (cur_token.data.opt.scope == kExprOptScopeUnspecified ? 0 : 2);
         if (scope_shift) {
           viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1), 1,
                                 HL(OptionScope));
@@ -2230,9 +2278,9 @@ viml_pexpr_parse_process_token:
         if (cur_token.data.cmp.ccs != kCCStrategyUseOption) {
           viml_parser_highlight(pstate, cur_token.start, cur_token.len - 1,
                                 HL(Comparison));
-          viml_parser_highlight(
-              pstate, shifted_pos(cur_token.start, cur_token.len - 1), 1,
-              HL(ComparisonModifier));
+          viml_parser_highlight(pstate,
+                                shifted_pos(cur_token.start, cur_token.len - 1),
+                                1, HL(ComparisonModifier));
         } else {
           HL_CUR_TOKEN(Comparison);
         }
@@ -2244,8 +2292,8 @@ viml_pexpr_parse_process_token:
         if (want_node == kENodeValue) {
           // Value level: comma appearing here is not valid.
           // Note: in Vim string(,x) will give E116, this is not the case here.
-          ERROR_FROM_TOKEN_AND_MSG(
-              cur_token, _("E15: Expected value, got comma: %.*s"));
+          ERROR_FROM_TOKEN_AND_MSG(cur_token,
+                                   _("E15: Expected value, got comma: %.*s"));
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeMissing);
           cur_node->len = 0;
           *top_node_p = cur_node;
@@ -2260,8 +2308,8 @@ viml_pexpr_parse_process_token:
           goto viml_pexpr_parse_invalid_comma;
         }
         for (size_t i = 1; i < kv_size(ast_stack); i++) {
-          ExprASTNode *const *const eastnode_p =
-              (ExprASTNode *const *)kv_Z(ast_stack, i);
+          ExprASTNode *const *const eastnode_p
+              = (ExprASTNode *const *)kv_Z(ast_stack, i);
           const ExprASTNodeType eastnode_type = (*eastnode_p)->type;
           const ExprOpLvl eastnode_lvl = node_lvl(**eastnode_p);
           if (eastnode_type == kExprNodeLambda) {
@@ -2277,7 +2325,7 @@ viml_pexpr_parse_process_token:
                      || eastnode_lvl > kEOpLvlComma) {
             // Do nothing
           } else {
-viml_pexpr_parse_invalid_comma:
+          viml_pexpr_parse_invalid_comma:
             ERROR_FROM_TOKEN_AND_MSG(
                 cur_token,
                 _("E15: Comma outside of call, lambda or literal: %.*s"));
@@ -2301,8 +2349,8 @@ viml_pexpr_parse_invalid_comma:
         bool can_be_ternary = true;
         bool is_subscript = false;
         for (size_t i = 1; i < kv_size(ast_stack); i++) {
-          ExprASTNode *const *const eastnode_p =
-              (ExprASTNode *const *)kv_Z(ast_stack, i);
+          ExprASTNode *const *const eastnode_p
+              = (ExprASTNode *const *)kv_Z(ast_stack, i);
           const ExprASTNodeType eastnode_type = (*eastnode_p)->type;
           const ExprOpLvl eastnode_lvl = node_lvl(**eastnode_p);
           STATIC_ASSERT(kEOpLvlTernary > kEOpLvlComma,
@@ -2363,11 +2411,11 @@ viml_pexpr_parse_invalid_comma:
           HL_CUR_TOKEN(SubscriptColon);
         } else {
           goto viml_pexpr_parse_valid_colon;
-viml_pexpr_parse_invalid_colon:
+        viml_pexpr_parse_invalid_colon:
           ERROR_FROM_TOKEN_AND_MSG(
               cur_token,
               _("E15: Colon outside of dictionary or ternary operator: %.*s"));
-viml_pexpr_parse_valid_colon:
+        viml_pexpr_parse_valid_colon:
           ADD_VALUE_IF_MISSING(_(EXP_VAL_COLON));
           if (is_ternary) {
             HL_CUR_TOKEN(TernaryColon);
@@ -2438,7 +2486,7 @@ viml_pexpr_parse_valid_colon:
               break;
             }
             default: {
-viml_pexpr_parse_bracket_closing_error:
+            viml_pexpr_parse_bracket_closing_error:
               assert(!kv_size(ast_stack));
               ERROR_FROM_TOKEN_AND_MSG(
                   cur_token, _("E15: Unexpected closing figure brace: %.*s"));
@@ -2453,8 +2501,7 @@ viml_pexpr_parse_bracket_closing_error:
             asgn_level = 0;
             if (cur_pt == kEPTAssignment) {
               assert(ast.err.msg);
-            } else if (cur_pt == kEPTExpr
-                       && kv_size(pt_stack) > 1
+            } else if (cur_pt == kEPTExpr && kv_size(pt_stack) > 1
                        && pt_is_assignment(kv_Z(pt_stack, 1))) {
               kv_drop(pt_stack, 1);
             }
@@ -2562,9 +2609,9 @@ viml_pexpr_parse_bracket_closing_error:
                     _("E15: Don't know what figure brace means: %.*s"));
                 if (pstate->colors) {
                   // Will reset to NvimInvalidFigureBrace.
-                  kv_A(*pstate->colors,
-                       new_top_node->data.fig.opening_hl_idx).group = (
-                           HL(FigureBrace));
+                  kv_A(*pstate->colors, new_top_node->data.fig.opening_hl_idx)
+                      .group
+                      = (HL(FigureBrace));
                 }
                 HL_CUR_TOKEN(FigureBrace);
               }
@@ -2583,7 +2630,7 @@ viml_pexpr_parse_bracket_closing_error:
               break;
             }
             default: {
-viml_pexpr_parse_figure_brace_closing_error:
+            viml_pexpr_parse_figure_brace_closing_error:
               assert(!kv_size(ast_stack));
               ERROR_FROM_TOKEN_AND_MSG(
                   cur_token, _("E15: Unexpected closing figure brace: %.*s"));
@@ -2595,8 +2642,7 @@ viml_pexpr_parse_figure_brace_closing_error:
           want_node = kENodeOperator;
           if (kv_size(ast_stack) <= asgn_level) {
             assert(kv_size(ast_stack) == asgn_level);
-            if (cur_pt == kEPTExpr
-                && kv_size(pt_stack) > 1
+            if (cur_pt == kEPTExpr && kv_size(pt_stack) > 1
                 && pt_is_assignment(kv_Z(pt_stack, 1))) {
               kv_drop(pt_stack, 1);
               asgn_level = 0;
@@ -2685,8 +2731,8 @@ viml_pexpr_parse_figure_brace_closing_error:
         } else {
           // Only first branch is valid.
           ADD_VALUE_IF_MISSING(_("E15: Unexpected arrow: %.*s"));
-          ERROR_FROM_TOKEN_AND_MSG(
-              cur_token, _("E15: Arrow outside of lambda: %.*s"));
+          ERROR_FROM_TOKEN_AND_MSG(cur_token,
+                                   _("E15: Arrow outside of lambda: %.*s"));
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeArrow);
           ADD_OP_NODE(cur_node);
         }
@@ -2695,19 +2741,18 @@ viml_pexpr_parse_figure_brace_closing_error:
         break;
       }
       case kExprLexPlainIdentifier: {
-        const ExprVarScope scope = (cur_token.type == kExprLexInvalid
-                                    ? kExprVarScopeMissing
-                                    : cur_token.data.var.scope);
+        const ExprVarScope scope
+            = (cur_token.type == kExprLexInvalid ? kExprVarScopeMissing
+                                                 : cur_token.data.var.scope);
         if (want_node == kENodeValue) {
           want_node = kENodeOperator;
-          NEW_NODE_WITH_CUR_POS(cur_node,
-                                (node_is_key
-                                 ? kExprNodePlainKey
-                                 : kExprNodePlainIdentifier));
+          NEW_NODE_WITH_CUR_POS(
+              cur_node,
+              (node_is_key ? kExprNodePlainKey : kExprNodePlainIdentifier));
           cur_node->data.var.scope = scope;
           const size_t scope_shift = (scope == kExprVarScopeMissing ? 0 : 2);
-          cur_node->data.var.ident = (pline.data + cur_token.start.col
-                                      + scope_shift);
+          cur_node->data.var.ident
+              = (pline.data + cur_token.start.col + scope_shift);
           cur_node->data.var.ident_len = cur_token.len - scope_shift;
           *top_node_p = cur_node;
           if (scope_shift) {
@@ -2717,12 +2762,10 @@ viml_pexpr_parse_figure_brace_closing_error:
             viml_parser_highlight(pstate, shifted_pos(cur_token.start, 1), 1,
                                   HL(IdentifierScopeDelimiter));
           }
-          viml_parser_highlight(pstate, shifted_pos(cur_token.start,
-                                                    scope_shift),
-                                cur_token.len - scope_shift,
-                                (node_is_key
-                                 ? HL(IdentifierKey)
-                                 : HL(IdentifierName)));
+          viml_parser_highlight(
+              pstate, shifted_pos(cur_token.start, scope_shift),
+              cur_token.len - scope_shift,
+              (node_is_key ? HL(IdentifierKey) : HL(IdentifierName)));
         } else {
           if (scope == kExprVarScopeMissing) {
             ADD_IDENT(
@@ -2756,13 +2799,13 @@ viml_pexpr_parse_figure_brace_closing_error:
         } else {
           NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeInteger);
           cur_node->data.num.value = cur_token.data.num.val.integer;
-          const uint8_t prefix_length = base_to_prefix_length[
-              cur_token.data.num.base];
+          const uint8_t prefix_length
+              = base_to_prefix_length[cur_token.data.num.base];
           viml_parser_highlight(pstate, cur_token.start, prefix_length,
                                 HL(NumberPrefix));
-          viml_parser_highlight(
-              pstate, shifted_pos(cur_token.start, prefix_length),
-              cur_token.len - prefix_length, HL(Number));
+          viml_parser_highlight(pstate,
+                                shifted_pos(cur_token.start, prefix_length),
+                                cur_token.len - prefix_length, HL(Number));
         }
         want_node = kENodeOperator;
         *top_node_p = cur_node;
@@ -2807,7 +2850,8 @@ viml_pexpr_parse_figure_brace_closing_error:
             // well be "(@a)" which needs not be finished again.
             kv_drop(ast_stack, 1);
           }
-viml_pexpr_parse_no_paren_closing_error: {}
+        viml_pexpr_parse_no_paren_closing_error : {
+        }
           ExprASTNode **new_top_node_p = NULL;
           while (kv_size(ast_stack)
                  && (new_top_node_p == NULL
@@ -2899,17 +2943,15 @@ viml_pexpr_parse_no_paren_closing_error: {}
           // different error numbers: "E114: Missing quote" and
           // "E115: Missing quote".
           ERROR_FROM_TOKEN_AND_MSG(
-              cur_token, (is_double
-                          ? _("E114: Missing double quote: %.*s")
-                          : _("E115: Missing single quote: %.*s")));
+              cur_token, (is_double ? _("E114: Missing double quote: %.*s")
+                                    : _("E115: Missing single quote: %.*s")));
         }
         if (want_node == kENodeOperator) {
           OP_MISSING;
         }
-        NEW_NODE_WITH_CUR_POS(
-            cur_node, (is_double
-                       ? kExprNodeDoubleQuotedString
-                       : kExprNodeSingleQuotedString));
+        NEW_NODE_WITH_CUR_POS(cur_node,
+                              (is_double ? kExprNodeDoubleQuotedString
+                                         : kExprNodeSingleQuotedString));
         *top_node_p = cur_node;
         parse_quoted_string(pstate, cur_node, cur_token, ast_stack, is_invalid);
         want_node = kENodeOperator;
@@ -2925,8 +2967,8 @@ viml_pexpr_parse_no_paren_closing_error: {}
               _("E475: Expected closing bracket to end list assignment "
                 "lvalue: %.*s"));
         } else {
-          ERROR_FROM_TOKEN_AND_MSG(
-              cur_token, _("E15: Misplaced assignment: %.*s"));
+          ERROR_FROM_TOKEN_AND_MSG(cur_token,
+                                   _("E15: Misplaced assignment: %.*s"));
         }
         assert(kv_size(pt_stack));
         assert(kv_last(pt_stack) == kEPTExpr);
@@ -2934,8 +2976,11 @@ viml_pexpr_parse_no_paren_closing_error: {}
         NEW_NODE_WITH_CUR_POS(cur_node, kExprNodeAssignment);
         cur_node->data.ass.type = cur_token.data.ass.type;
         switch (cur_token.data.ass.type) {
-#define HL_ASGN(asgn, hl) \
-          case kExprAsgn##asgn: { HL_CUR_TOKEN(hl); break; }
+#define HL_ASGN(asgn, hl)                                                      \
+  case kExprAsgn##asgn: {                                                      \
+    HL_CUR_TOKEN(hl);                                                          \
+    break;                                                                     \
+  }
           HL_ASGN(Plain, PlainAssignment)
           HL_ASGN(Add, AssignmentWithAddition)
           HL_ASGN(Subtract, AssignmentWithSubtraction)
@@ -2946,7 +2991,7 @@ viml_pexpr_parse_no_paren_closing_error: {}
         break;
       }
     }
-viml_pexpr_parse_cycle_end:
+  viml_pexpr_parse_cycle_end:
     prev_token = cur_token;
     highlighted_prev_spacing = false;
     viml_parser_advance(pstate, cur_token.len);
@@ -2998,26 +3043,23 @@ viml_pexpr_parse_end:
         case kExprNodeListLiteral: {
           // For whatever reason "[1" yields "E696: Missing comma in list" error
           // in Vim while "[1," yields E697.
-          east_set_error(
-              pstate, &ast.err,
-              _("E697: Missing end of List ']': %.*s"),
-              cur_node->start);
+          east_set_error(pstate, &ast.err,
+                         _("E697: Missing end of List ']': %.*s"),
+                         cur_node->start);
           break;
         }
         case kExprNodeDictLiteral: {
           // Same problem like with list literal with E722 (missing comma) vs
           // E723, but additionally just "{" yields only E15.
-          east_set_error(
-              pstate, &ast.err,
-              _("E723: Missing end of Dictionary '}': %.*s"),
-              cur_node->start);
+          east_set_error(pstate, &ast.err,
+                         _("E723: Missing end of Dictionary '}': %.*s"),
+                         cur_node->start);
           break;
         }
         case kExprNodeUnknownFigure: {
-          east_set_error(
-              pstate, &ast.err,
-              _("E15: Missing closing figure brace: %.*s"),
-              cur_node->start);
+          east_set_error(pstate, &ast.err,
+                         _("E15: Missing closing figure brace: %.*s"),
+                         cur_node->start);
           break;
         }
         case kExprNodeLambda: {
@@ -3078,9 +3120,9 @@ viml_pexpr_parse_end:
         case kExprNodeTernaryValue: {
           if (!cur_node->data.ter.got_colon) {
             // Actually Vim throws E109 in more cases.
-            east_set_error(
-                pstate, &ast.err, _("E109: Missing ':' after '?': %.*s"),
-                cur_node->start);
+            east_set_error(pstate, &ast.err,
+                           _("E109: Missing ':' after '?': %.*s"),
+                           cur_node->start);
           }
           break;
         }

@@ -1,20 +1,20 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <stdio.h>
-#include <math.h>
+#include "nvim/profile.h"
+
 #include <assert.h>
+#include <math.h>
+#include <stdio.h>
 
 #include "nvim/assert.h"
-#include "nvim/profile.h"
-#include "nvim/os/time.h"
 #include "nvim/func_attr.h"
-#include "nvim/os/os_defs.h"
-
 #include "nvim/globals.h"  // for the global `time_fd` (startuptime)
+#include "nvim/os/os_defs.h"
+#include "nvim/os/time.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "profile.c.generated.h"
+#include "profile.c.generated.h"
 #endif
 
 static proftime_T prof_wait_time;
@@ -97,7 +97,7 @@ proftime_T profile_divide(proftime_T tm, int count) FUNC_ATTR_CONST
     return profile_zero();
   }
 
-  return (proftime_T) round((double) tm / (double) count);
+  return (proftime_T)round((double)tm / (double)count);
 }
 
 /// Adds time `tm2` to `tm1`.
@@ -125,8 +125,9 @@ proftime_T profile_sub(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 ///
 /// @return if `total` <= `children`, then self, otherwise `self` + `total` -
 ///         `children`
-proftime_T profile_self(proftime_T self, proftime_T total, proftime_T children)
-  FUNC_ATTR_CONST
+proftime_T profile_self(proftime_T self,
+                        proftime_T total,
+                        proftime_T children) FUNC_ATTR_CONST
 {
   // check that the result won't be negative, which can happen with
   // recursive calls.
@@ -172,8 +173,7 @@ bool profile_equal(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 /// Converts time duration `tm` (`profile_sub` result) to a signed integer.
 ///
 /// @return signed representation of the given time value
-int64_t profile_signed(proftime_T tm)
-  FUNC_ATTR_CONST
+int64_t profile_signed(proftime_T tm) FUNC_ATTR_CONST
 {
   // (tm > INT64_MAX) is >=150 years, so we can assume it was produced by
   // arithmetic of two proftime_T values.  For human-readable representation

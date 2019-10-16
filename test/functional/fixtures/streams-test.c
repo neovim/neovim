@@ -1,6 +1,5 @@
 /// Helper program to exit and keep stdout open (like "xclip -i -loops 1").
 #include <stdio.h>
-
 #include <uv.h>
 
 uv_loop_t *loop;
@@ -11,7 +10,7 @@ int main(int argc, char **argv)
 {
   loop = uv_default_loop();
 
-  char * args[3];
+  char *args[3];
   args[0] = "sleep";
   args[1] = "10";
   args[2] = NULL;

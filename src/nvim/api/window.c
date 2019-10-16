@@ -1,32 +1,32 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/api/window.h"
+
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 
-#include "nvim/ascii.h"
-#include "nvim/globals.h"
-#include "nvim/api/window.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/ex_docmd.h"
-#include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"
-#include "nvim/option.h"
-#include "nvim/window.h"
-#include "nvim/screen.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/globals.h"
 #include "nvim/move.h"
+#include "nvim/option.h"
+#include "nvim/screen.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
 
 /// Gets the current buffer in a window
 ///
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Buffer handle
-Buffer nvim_win_get_buf(Window window, Error *err)
-  FUNC_API_SINCE(1)
+Buffer nvim_win_get_buf(Window window, Error *err) FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -43,7 +43,7 @@ Buffer nvim_win_get_buf(Window window, Error *err)
 /// @param buffer   Buffer handle
 /// @param[out] err Error details, if any
 void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
-  FUNC_API_SINCE(5)
+    FUNC_API_SINCE(5)
 {
   win_T *win = find_window_by_handle(window, err), *save_curwin = curwin;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -54,19 +54,14 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
   }
 
   if (switch_win(&save_curwin, &save_curtab, win, tab, false) == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to switch to window %d",
+    api_set_error(err, kErrorTypeException, "Failed to switch to window %d",
                   window);
   }
 
   try_start();
   int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
   if (!try_end(err) && result == FAIL) {
-    api_set_error(err,
-                  kErrorTypeException,
-                  "Failed to set buffer %d",
-                  buffer);
+    api_set_error(err, kErrorTypeException, "Failed to set buffer %d", buffer);
   }
 
   // If window is not current, state logic will not validate its cursor.
@@ -82,7 +77,7 @@ void nvim_win_set_buf(Window window, Buffer buffer, Error *err)
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple
 ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
@@ -101,7 +96,7 @@ ArrayOf(Integer, 2) nvim_win_get_cursor(Window window, Error *err)
 /// @param pos      (row, col) tuple representing the new position
 /// @param[out] err Error details, if any
 void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -111,8 +106,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 
   if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger
       || pos.items[1].type != kObjectTypeInteger) {
-    api_set_error(err,
-                  kErrorTypeValidation,
+    api_set_error(err, kErrorTypeValidation,
                   "Argument \"pos\" must be a [row, col] array");
     return;
   }
@@ -150,8 +144,7 @@ void nvim_win_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Height as a count of rows
-Integer nvim_win_get_height(Window window, Error *err)
-  FUNC_API_SINCE(1)
+Integer nvim_win_get_height(Window window, Error *err) FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -169,7 +162,7 @@ Integer nvim_win_get_height(Window window, Error *err)
 /// @param height   Height as a count of rows
 /// @param[out] err Error details, if any
 void nvim_win_set_height(Window window, Integer height, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -195,8 +188,7 @@ void nvim_win_set_height(Window window, Integer height, Error *err)
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Width as a count of columns
-Integer nvim_win_get_width(Window window, Error *err)
-  FUNC_API_SINCE(1)
+Integer nvim_win_get_width(Window window, Error *err) FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -214,7 +206,7 @@ Integer nvim_win_get_width(Window window, Error *err)
 /// @param width    Width as a count of columns
 /// @param[out] err Error details, if any
 void nvim_win_set_width(Window window, Integer width, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -242,12 +234,12 @@ void nvim_win_set_width(Window window, Integer width, Error *err)
 /// @param[out] err Error details, if any
 /// @return Variable value
 Object nvim_win_get_var(Window window, String name, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_get_value(win->w_vars, name, err);
@@ -260,7 +252,7 @@ Object nvim_win_get_var(Window window, String name, Error *err)
 /// @param value    Variable value
 /// @param[out] err Error details, if any
 void nvim_win_set_var(Window window, String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -276,8 +268,7 @@ void nvim_win_set_var(Window window, String name, Object value, Error *err)
 /// @param window   Window handle, or 0 for current window
 /// @param name     Variable name
 /// @param[out] err Error details, if any
-void nvim_win_del_var(Window window, String name, Error *err)
-  FUNC_API_SINCE(1)
+void nvim_win_del_var(Window window, String name, Error *err) FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -305,7 +296,7 @@ Object window_set_var(Window window, String name, Object value, Error *err)
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_set_var(win->w_vars, name, value, false, true, err);
@@ -324,7 +315,7 @@ Object window_del_var(Window window, String name, Error *err)
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return dict_set_var(win->w_vars, name, NIL, true, true, err);
@@ -337,12 +328,12 @@ Object window_del_var(Window window, String name, Error *err)
 /// @param[out] err Error details, if any
 /// @return Option value
 Object nvim_win_get_option(Window window, String name, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
   if (!win) {
-    return (Object) OBJECT_INIT;
+    return (Object)OBJECT_INIT;
   }
 
   return get_option_from(win, SREQ_WIN, name, err);
@@ -356,9 +347,11 @@ Object nvim_win_get_option(Window window, String name, Error *err)
 /// @param name     Option name
 /// @param value    Option value
 /// @param[out] err Error details, if any
-void nvim_win_set_option(uint64_t channel_id, Window window,
-                         String name, Object value, Error *err)
-  FUNC_API_SINCE(1)
+void nvim_win_set_option(uint64_t channel_id,
+                         Window window,
+                         String name,
+                         Object value,
+                         Error *err) FUNC_API_SINCE(1)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -375,7 +368,7 @@ void nvim_win_set_option(uint64_t channel_id, Window window,
 /// @param[out] err Error details, if any
 /// @return (row, col) tuple with the window position
 ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
-  FUNC_API_SINCE(1)
+    FUNC_API_SINCE(1)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
@@ -393,8 +386,7 @@ ArrayOf(Integer, 2) nvim_win_get_position(Window window, Error *err)
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Tabpage that contains the window
-Tabpage nvim_win_get_tabpage(Window window, Error *err)
-  FUNC_API_SINCE(1)
+Tabpage nvim_win_get_tabpage(Window window, Error *err) FUNC_API_SINCE(1)
 {
   Tabpage rv = 0;
   win_T *win = find_window_by_handle(window, err);
@@ -411,8 +403,7 @@ Tabpage nvim_win_get_tabpage(Window window, Error *err)
 /// @param window   Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return Window number
-Integer nvim_win_get_number(Window window, Error *err)
-  FUNC_API_SINCE(1)
+Integer nvim_win_get_number(Window window, Error *err) FUNC_API_SINCE(1)
 {
   int rv = 0;
   win_T *win = find_window_by_handle(window, err);
@@ -431,15 +422,13 @@ Integer nvim_win_get_number(Window window, Error *err)
 ///
 /// @param window Window handle, or 0 for current window
 /// @return true if the window is valid, false otherwise
-Boolean nvim_win_is_valid(Window window)
-  FUNC_API_SINCE(1)
+Boolean nvim_win_is_valid(Window window) FUNC_API_SINCE(1)
 {
   Error stub = ERROR_INIT;
   Boolean ret = find_window_by_handle(window, &stub) != NULL;
   api_clear_error(&stub);
   return ret;
 }
-
 
 /// Configures window layout. Currently only for floating and external windows
 /// (including changing a split window to those layouts).
@@ -454,7 +443,7 @@ Boolean nvim_win_is_valid(Window window)
 ///                     see |nvim_open_win()|
 /// @param[out] err     Error details, if any
 void nvim_win_set_config(Window window, Dictionary config, Error *err)
-  FUNC_API_SINCE(6)
+    FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {
@@ -491,8 +480,7 @@ void nvim_win_set_config(Window window, Dictionary config, Error *err)
 /// @param      window Window handle, or 0 for current window
 /// @param[out] err Error details, if any
 /// @return     Map defining the window configuration, see |nvim_open_win()|
-Dictionary nvim_win_get_config(Window window, Error *err)
-  FUNC_API_SINCE(6)
+Dictionary nvim_win_get_config(Window window, Error *err) FUNC_API_SINCE(6)
 {
   Dictionary rv = ARRAY_DICT_INIT;
 
@@ -519,15 +507,16 @@ Dictionary nvim_win_get_config(Window window, Error *err)
           PUT(rv, "bufpos", ARRAY_OBJ(pos));
         }
       }
-      PUT(rv, "anchor", STRING_OBJ(cstr_to_string(
-          float_anchor_str[config->anchor])));
+      PUT(rv, "anchor",
+          STRING_OBJ(cstr_to_string(float_anchor_str[config->anchor])));
       PUT(rv, "row", FLOAT_OBJ(config->row));
       PUT(rv, "col", FLOAT_OBJ(config->col));
     }
   }
 
   const char *rel = (wp->w_floating && !config->external
-                     ? float_relative_str[config->relative] : "");
+                         ? float_relative_str[config->relative]
+                         : "");
   PUT(rv, "relative", STRING_OBJ(cstr_to_string(rel)));
 
   return rv;
@@ -540,8 +529,7 @@ Dictionary nvim_win_get_config(Window window, Error *err)
 ///                 unwritten changes can be closed. The buffer will become
 ///                 hidden, even if 'hidden' is not set.
 /// @param[out] err Error details, if any
-void nvim_win_close(Window window, Boolean force, Error *err)
-  FUNC_API_SINCE(6)
+void nvim_win_close(Window window, Boolean force, Error *err) FUNC_API_SINCE(6)
 {
   win_T *win = find_window_by_handle(window, err);
   if (!win) {

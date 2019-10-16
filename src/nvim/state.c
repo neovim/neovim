@@ -1,26 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/state.h"
+
 #include <assert.h>
 
-#include "nvim/lib/kvec.h"
-
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/state.h"
-#include "nvim/vim.h"
-#include "nvim/main.h"
-#include "nvim/getchar.h"
-#include "nvim/option_defs.h"
-#include "nvim/ui.h"
-#include "nvim/os/input.h"
-#include "nvim/ex_docmd.h"
 #include "nvim/edit.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/getchar.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/main.h"
+#include "nvim/option_defs.h"
+#include "nvim/os/input.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "state.c.generated.h"
+#include "state.c.generated.h"
 #endif
-
 
 void state_enter(VimState *s)
 {
@@ -28,7 +27,7 @@ void state_enter(VimState *s)
     int check_result = s->check ? s->check(s) : 1;
 
     if (!check_result) {
-      break;     // Terminate this state.
+      break;  // Terminate this state.
     } else if (check_result == -1) {
       continue;  // check() again.
     }
@@ -36,7 +35,7 @@ void state_enter(VimState *s)
 
     int key;
 
-getkey:
+  getkey:
     if (char_avail() || using_script() || input_available()) {
       // Don't block for events if there's a character already available for
       // processing. Characters can come from mappings, scripts and other
@@ -53,9 +52,7 @@ getkey:
       // mapping engine.
       (void)os_inchar(NULL, 0, -1, 0, main_loop.events);
       // If an event was put into the queue, we send K_EVENT directly.
-      key = !multiqueue_empty(main_loop.events)
-            ? K_EVENT
-            : safe_vgetc();
+      key = !multiqueue_empty(main_loop.events) ? K_EVENT : safe_vgetc();
     }
 
     if (key == K_EVENT) {

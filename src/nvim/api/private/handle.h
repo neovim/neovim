@@ -1,13 +1,13 @@
 #ifndef NVIM_API_PRIVATE_HANDLE_H
 #define NVIM_API_PRIVATE_HANDLE_H
 
-#include "nvim/vim.h"
-#include "nvim/buffer_defs.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/vim.h"
 
-#define HANDLE_DECLS(type, name) \
-  type *handle_get_##name(handle_T handle); \
-  void handle_register_##name(type *name); \
+#define HANDLE_DECLS(type, name)                                               \
+  type *handle_get_##name(handle_T handle);                                    \
+  void handle_register_##name(type *name);                                     \
   void handle_unregister_##name(type *name);
 
 // handle_get_buffer handle_register_buffer, handle_unregister_buffer
@@ -19,6 +19,4 @@ HANDLE_DECLS(tabpage_T, tabpage)
 
 void handle_init(void);
 
-
 #endif  // NVIM_API_PRIVATE_HANDLE_H
-

@@ -1,20 +1,20 @@
 #ifndef NVIM_GETCHAR_H
 #define NVIM_GETCHAR_H
 
-#include "nvim/os/fileio.h"
-#include "nvim/types.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/ex_cmds_defs.h"
+#include "nvim/os/fileio.h"
+#include "nvim/types.h"
 #include "nvim/vim.h"
 
 /// Values for "noremap" argument of ins_typebuf()
 ///
 /// Also used for map->m_noremap and menu->noremap[].
 enum {
-  REMAP_YES = 0,  ///< Allow remapping.
-  REMAP_NONE = -1,  ///< No remapping.
+  REMAP_YES = 0,      ///< Allow remapping.
+  REMAP_NONE = -1,    ///< No remapping.
   REMAP_SCRIPT = -2,  ///< Remap script-local mappings only.
-  REMAP_SKIP = -3,  ///< No remapping for first char.
+  REMAP_SKIP = -3,    ///< No remapping for first char.
 } RemapValues;
 
 // Argument for flush_buffers().
@@ -67,6 +67,6 @@ enum { NSCRIPT = 15 };
 extern FileDescriptor *scriptin[NSCRIPT];
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "getchar.h.generated.h"
+#include "getchar.h.generated.h"
 #endif
 #endif  // NVIM_GETCHAR_H

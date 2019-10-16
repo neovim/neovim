@@ -8,6 +8,8 @@
  * changed beyond recognition.
  */
 
+#include "nvim/os_unix.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -15,14 +17,13 @@
 #include <string.h>
 
 #include "nvim/api/private/handle.h"
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/os_unix.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/fileio.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
@@ -31,32 +32,31 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/mouse.h"
-#include "nvim/garray.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
+#include "nvim/os/shell.h"
+#include "nvim/os/signal.h"
+#include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
-#include "nvim/ui.h"
 #include "nvim/types.h"
-#include "nvim/os/os.h"
-#include "nvim/os/time.h"
-#include "nvim/os/input.h"
-#include "nvim/os/shell.h"
-#include "nvim/os/signal.h"
-#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os_unix.c.generated.h"
+#include "os_unix.c.generated.h"
 #endif
 
 #if defined(HAVE_ACL)
-# ifdef HAVE_SYS_ACL_H
-#  include <sys/acl.h>
-# endif
-# ifdef HAVE_SYS_ACCESS_H
-#  include <sys/access.h>
-# endif
-
+#ifdef HAVE_SYS_ACL_H
+#include <sys/acl.h>
+#endif
+#ifdef HAVE_SYS_ACCESS_H
+#include <sys/access.h>
+#endif
 
 // Return a pointer to the ACL of file "fname" in allocated memory.
 // Return NULL if the ACL is not available for whatever reason.
@@ -80,14 +80,13 @@ void mch_free_acl(vim_acl_T aclent)
 }
 #endif
 
-void mch_exit(int r)
-  FUNC_ATTR_NORETURN
+void mch_exit(int r) FUNC_ATTR_NORETURN
 {
   exiting = true;
 
   ui_flush();
   ui_call_stop();
-  ml_close_all(true);           // remove all memfiles
+  ml_close_all(true);  // remove all memfiles
 
   if (!event_teardown() && r == 0) {
     r = 1;  // Exit with error if main_loop did not teardown gracefully.
@@ -125,43 +124,48 @@ void mch_exit(int r)
 ///                      copied into *file.
 ///
 /// @returns             OK for success or FAIL for error.
-int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
-                         char_u ***file, int flags) FUNC_ATTR_NONNULL_ARG(3)
-  FUNC_ATTR_NONNULL_ARG(4)
+int mch_expand_wildcards(int num_pat,
+                         char_u **pat,
+                         int *num_file,
+                         char_u ***file,
+                         int flags) FUNC_ATTR_NONNULL_ARG(3)
+    FUNC_ATTR_NONNULL_ARG(4)
 {
   int i;
   size_t len;
-  char_u      *p;
+  char_u *p;
   bool dir;
   char_u *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   int j;
-  char_u      *tempname;
-  char_u      *command;
-  FILE        *fd;
-  char_u      *buffer;
-#define STYLE_ECHO      0       /* use "echo", the default */
-#define STYLE_GLOB      1       /* use "glob", for csh */
-#define STYLE_VIMGLOB   2       /* use "vimglob", for Posix sh */
-#define STYLE_PRINT     3       /* use "print -N", for zsh */
-#define STYLE_BT        4       /* `cmd` expansion, execute the pattern
-                                 * directly */
+  char_u *tempname;
+  char_u *command;
+  FILE *fd;
+  char_u *buffer;
+#define STYLE_ECHO 0    /* use "echo", the default */
+#define STYLE_GLOB 1    /* use "glob", for csh */
+#define STYLE_VIMGLOB 2 /* use "vimglob", for Posix sh */
+#define STYLE_PRINT 3   /* use "print -N", for zsh */
+#define STYLE_BT                                                               \
+  4 /* `cmd` expansion, execute the pattern                                    \
+     * directly */
   int shell_style = STYLE_ECHO;
   int check_spaces;
   static bool did_find_nul = false;
   bool ampersent = false;
   // vimglob() function to define for Posix shell
-  static char *sh_vimglob_func =
-    "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
+  static char *sh_vimglob_func
+      = "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; "
+        "vimglob >";
 
   bool is_fish_shell =
 #if defined(UNIX)
-    STRNCMP(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
+      STRNCMP(invocation_path_tail(p_sh, NULL), "fish", 4) == 0;
 #else
-    false;
+      false;
 #endif
 
-  *num_file = 0;        // default: no files found
+  *num_file = 0;  // default: no files found
   *file = NULL;
 
   // If there are no wildcards, just copy the names to allocated memory.
@@ -204,8 +208,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   //       If we use *sh*, we define "vimglob()".
   // STYLE_ECHO:       space separated.
   //       A shell we don't know, stay safe and use "echo".
-  if (num_pat == 1 && *pat[0] == '`'
-      && (len = STRLEN(pat[0])) > 2
+  if (num_pat == 1 && *pat[0] == '`' && (len = STRLEN(pat[0])) > 2
       && *(pat[0] + len - 1) == '`') {
     shell_style = STYLE_BT;
   } else if ((len = STRLEN(p_sh)) >= 3) {
@@ -215,8 +218,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       shell_style = STYLE_PRINT;
     }
   }
-  if (shell_style == STYLE_ECHO && strstr((char *)path_tail(p_sh),
-          "sh") != NULL)
+  if (shell_style == STYLE_ECHO
+      && strstr((char *)path_tail(p_sh), "sh") != NULL)
     shell_style = STYLE_VIMGLOB;
 
   // Compute the length of the command.  We need 2 extra bytes: for the
@@ -229,17 +232,20 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   for (i = 0; i < num_pat; i++) {
     // Count the length of the patterns in the same way as they are put in
     // "command" below.
-    len++;                              // add space
+    len++;  // add space
     for (j = 0; pat[i][j] != NUL; j++) {
       if (vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL) {
-        len++;                  // may add a backslash
+        len++;  // may add a backslash
       }
       len++;
     }
   }
 
   if (is_fish_shell) {
-    len += sizeof("egin;"" end") - 1;
+    len += sizeof(
+               "egin;"
+               " end")
+           - 1;
   }
 
   command = xmalloc(len);
@@ -257,18 +263,18 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     } else {
       STRCPY(command, "(");
     }
-    STRCAT(command, pat[0] + 1);                // exclude first backtick
+    STRCAT(command, pat[0] + 1);  // exclude first backtick
     p = command + STRLEN(command) - 1;
     if (is_fish_shell) {
       *p-- = ';';
       STRCAT(command, " end");
     } else {
-      *p-- = ')';                                 // remove last backtick
+      *p-- = ')';  // remove last backtick
     }
     while (p > command && ascii_iswhite(*p)) {
       p--;
     }
-    if (*p == '&') {                            // remove trailing '&'
+    if (*p == '&') {  // remove trailing '&'
       ampersent = true;
       *p = ' ';
     }
@@ -305,14 +311,12 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
           // Remove a backslash, take char literally.  But keep
           // backslash inside backticks, before a special character
           // and before a backtick.
-          if (intick
-              || vim_strchr(SHELL_SPECIAL, pat[i][j + 1]) != NULL
+          if (intick || vim_strchr(SHELL_SPECIAL, pat[i][j + 1]) != NULL
               || pat[i][j + 1] == '`') {
             *p++ = '\\';
           }
           j++;
-        } else if (!intick
-                   && ((flags & EW_KEEPDOLLAR) == 0 || pat[i][j] != '$')
+        } else if (!intick && ((flags & EW_KEEPDOLLAR) == 0 || pat[i][j] != '$')
                    && vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL) {
           // Put a backslash before a special character, but not
           // when inside ``. And not for $var when EW_KEEPDOLLAR is
@@ -332,28 +336,24 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   }
 
   if (ampersent) {
-    STRCAT(command, "&");               // put the '&' after the redirection
+    STRCAT(command, "&");  // put the '&' after the redirection
   }
 
   // Using zsh -G: If a pattern has no matches, it is just deleted from
   // the argument list, otherwise zsh gives an error message and doesn't
   // expand any other pattern.
   if (shell_style == STYLE_PRINT) {
-    extra_shell_arg = (char_u *)"-G";       // Use zsh NULL_GLOB option
+    extra_shell_arg = (char_u *)"-G";  // Use zsh NULL_GLOB option
 
-  // If we use -f then shell variables set in .cshrc won't get expanded.
-  // vi can do it, so we will too, but it is only necessary if there is a "$"
-  // in one of the patterns, otherwise we can still use the fast option.
+    // If we use -f then shell variables set in .cshrc won't get expanded.
+    // vi can do it, so we will too, but it is only necessary if there is a "$"
+    // in one of the patterns, otherwise we can still use the fast option.
   } else if (shell_style == STYLE_GLOB && !have_dollars(num_pat, pat)) {
-    extra_shell_arg = (char_u *)"-f";           // Use csh fast option
+    extra_shell_arg = (char_u *)"-f";  // Use csh fast option
   }
 
   // execute the shell command
-  i = call_shell(
-      command,
-      shellopts,
-      extra_shell_arg
-      );
+  i = call_shell(command, shellopts, extra_shell_arg);
 
   // When running in the background, give it some time to create the temp
   // file, but don't wait for it to finish.
@@ -363,15 +363,15 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   xfree(command);
 
-  if (i) {                         // os_call_shell() failed
+  if (i) {  // os_call_shell() failed
     os_remove((char *)tempname);
     xfree(tempname);
     // With interactive completion, the error message is not printed.
     if (!(flags & EW_SILENT)) {
-      msg_putchar('\n');                // clear bottom line quickly
-      cmdline_row = Rows - 1;           // continue on last line
+      msg_putchar('\n');       // clear bottom line quickly
+      cmdline_row = Rows - 1;  // continue on last line
       MSG(_(e_wildexpand));
-      msg_start();                    // don't overwrite this message
+      msg_start();  // don't overwrite this message
     }
 
     // If a `cmd` expansion failed, don't list `cmd` as a match, even when
@@ -388,7 +388,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     // Something went wrong, perhaps a file name with a special char.
     if (!(flags & EW_SILENT)) {
       MSG(_(e_wildexpand));
-      msg_start();                      // don't overwrite this message
+      msg_start();  // don't overwrite this message
     }
     xfree(tempname);
     goto notfound;
@@ -399,7 +399,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     fclose(fd);
     return FAIL;
   }
-  int64_t templen = ftell(fd);        // get size of temp file
+  int64_t templen = ftell(fd);  // get size of temp file
   if (templen < 0) {
     xfree(tempname);
     fclose(fd);
@@ -427,28 +427,28 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
 
   // file names are separated with Space
   if (shell_style == STYLE_ECHO) {
-    buffer[len] = '\n';                 // make sure the buffer ends in NL
+    buffer[len] = '\n';  // make sure the buffer ends in NL
     p = buffer;
-    for (i = 0; *p != '\n'; i++) {      // count number of entries
+    for (i = 0; *p != '\n'; i++) {  // count number of entries
       while (*p != ' ' && *p != '\n') {
         p++;
       }
-      p = skipwhite(p);                 // skip to next entry
+      p = skipwhite(p);  // skip to next entry
     }
-  // file names are separated with NL
+    // file names are separated with NL
   } else if (shell_style == STYLE_BT || shell_style == STYLE_VIMGLOB) {
-    buffer[len] = NUL;                  // make sure the buffer ends in NUL
+    buffer[len] = NUL;  // make sure the buffer ends in NUL
     p = buffer;
-    for (i = 0; *p != NUL; i++) {       // count number of entries
+    for (i = 0; *p != NUL; i++) {  // count number of entries
       while (*p != '\n' && *p != NUL) {
         p++;
       }
       if (*p != NUL) {
         p++;
       }
-      p = skipwhite(p);                 // skip leading white space
+      p = skipwhite(p);  // skip leading white space
     }
-  // file names are separated with NUL
+    // file names are separated with NUL
   } else {
     // Some versions of zsh use spaces instead of NULs to separate
     // results.  Only do this when there is no NUL before the end of the
@@ -475,13 +475,13 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     }
     i = 0;
     for (p = buffer; p < buffer + len; p++) {
-      if (*p == NUL || (*p == ' ' && check_spaces)) {       // count entry
+      if (*p == NUL || (*p == ' ' && check_spaces)) {  // count entry
         i++;
         *p = NUL;
       }
     }
     if (len) {
-      i++;                              // count last entry
+      i++;  // count last entry
     }
   }
   assert(buffer[len] == NUL || buffer[len] == '\n');
@@ -503,21 +503,21 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     // Space or NL separates
     if (shell_style == STYLE_ECHO || shell_style == STYLE_BT
         || shell_style == STYLE_VIMGLOB) {
-      while (!(shell_style == STYLE_ECHO && *p == ' ')
-             && *p != '\n' && *p != NUL) {
+      while (!(shell_style == STYLE_ECHO && *p == ' ') && *p != '\n'
+             && *p != NUL) {
         p++;
       }
-      if (p == buffer + len) {                  // last entry
+      if (p == buffer + len) {  // last entry
         *p = NUL;
       } else {
         *p++ = NUL;
-        p = skipwhite(p);                       // skip to next entry
+        p = skipwhite(p);  // skip to next entry
       }
-    } else {          // NUL separates
-      while (*p && p < buffer + len) {          // skip entry
+    } else {                            // NUL separates
+      while (*p && p < buffer + len) {  // skip entry
         p++;
       }
-      p++;                                      // skip NUL
+      p++;  // skip NUL
     }
   }
 
@@ -542,14 +542,14 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     p = xmalloc(STRLEN((*file)[i]) + 1 + dir);
     STRCPY(p, (*file)[i]);
     if (dir) {
-      add_pathsep((char *)p);             // add '/' to a directory name
+      add_pathsep((char *)p);  // add '/' to a directory name
     }
     (*file)[j++] = p;
   }
   xfree(buffer);
   *num_file = j;
 
-  if (*num_file == 0) {     // rejected all entries
+  if (*num_file == 0) {  // rejected all entries
     XFREE_CLEAR(*file);
     goto notfound;
   }
@@ -562,15 +562,15 @@ notfound:
     return OK;
   }
   return FAIL;
-
 }
 
-
-static void save_patterns(int num_pat, char_u **pat, int *num_file,
+static void save_patterns(int num_pat,
+                          char_u **pat,
+                          int *num_file,
                           char_u ***file)
 {
   int i;
-  char_u      *s;
+  char_u *s;
 
   *file = xmalloc((size_t)num_pat * sizeof(char_u *));
 

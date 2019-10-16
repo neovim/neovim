@@ -1,17 +1,19 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/indent.h"
+
 #include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
 #include "nvim/ascii.h"
 #include "nvim/assert.h"
+#include "nvim/buffer.h"
 #include "nvim/change.h"
-#include "nvim/indent.h"
-#include "nvim/eval.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
+#include "nvim/eval.h"
 #include "nvim/mark.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -23,11 +25,9 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
-#include "nvim/buffer.h"
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "indent.c.generated.h"
+#include "indent.c.generated.h"
 #endif
 
 // Count the size (in window cells) of the indent in the current line.
@@ -36,13 +36,11 @@ int get_indent(void)
   return get_indent_str(get_cursor_line_ptr(), (int)curbuf->b_p_ts, false);
 }
 
-
 // Count the size (in window cells) of the indent in line "lnum".
 int get_indent_lnum(linenr_T lnum)
 {
   return get_indent_str(ml_get(lnum), (int)curbuf->b_p_ts, false);
 }
-
 
 // Count the size (in window cells) of the indent in line "lnum" of buffer
 // "buf".
@@ -50,7 +48,6 @@ int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
   return get_indent_str(ml_get_buf(buf, lnum, false), (int)buf->b_p_ts, false);
 }
-
 
 // Count the size (in window cells) of the indent in line "ptr", with
 // 'tabstop' at "ts".
@@ -79,7 +76,6 @@ int get_indent_str(char_u *ptr, int ts, int list)
   }
   return count;
 }
-
 
 // Set the indent of the current line.
 // Leaves the cursor on the first non-blank in the line.
@@ -316,7 +312,6 @@ int set_indent(int size, int flags)
   return retval;
 }
 
-
 // Return the indent of the current line after a number.  Return -1 if no
 // number was found.  Used for 'n' in 'formatoptions': numbered list.
 // Since a pattern is used it can actually handle more than numbers.
@@ -363,19 +358,19 @@ int get_number_indent(linenr_T lnum)
  * parameters into account. Window must be specified, since it is not
  * necessarily always the current one.
  */
-int get_breakindent_win(win_T *wp, char_u *line)
-  FUNC_ATTR_NONNULL_ARG(1)
+int get_breakindent_win(win_T *wp, char_u *line) FUNC_ATTR_NONNULL_ARG(1)
 {
-  static int prev_indent = 0;  // Cached indent value.
-  static long prev_ts = 0;  // Cached tabstop value.
-  static char_u *prev_line = NULL;  // cached pointer to line.
+  static int prev_indent = 0;        // Cached indent value.
+  static long prev_ts = 0;           // Cached tabstop value.
+  static char_u *prev_line = NULL;   // cached pointer to line.
   static varnumber_T prev_tick = 0;  // Changedtick of cached value.
   int bri = 0;
   // window width minus window margin space, i.e. what rests for text
   const int eff_wwidth = wp->w_width_inner
-    - ((wp->w_p_nu || wp->w_p_rnu)
-        && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
-        ? number_width(wp) + 1 : 0);
+                         - ((wp->w_p_nu || wp->w_p_rnu)
+                                    && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
+                                ? number_width(wp) + 1
+                                : 0);
 
   /* used cached indent, unless pointer or 'tabstop' changed */
   if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
@@ -400,8 +395,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
   /* always leave at least bri_min characters on the left,
    * if text width is sufficient */
   else if (bri > eff_wwidth - wp->w_p_brimin)
-    bri = (eff_wwidth - wp->w_p_brimin < 0)
-      ? 0 : eff_wwidth - wp->w_p_brimin;
+    bri = (eff_wwidth - wp->w_p_brimin < 0) ? 0 : eff_wwidth - wp->w_p_brimin;
 
   return bri;
 }
@@ -412,7 +406,7 @@ int get_breakindent_win(win_T *wp, char_u *line)
 // the line.
 int inindent(int extra)
 {
-  char_u      *ptr;
+  char_u *ptr;
   colnr_T col;
 
   for (col = 0, ptr = get_cursor_line_ptr(); ascii_iswhite(*ptr); ++col) {
@@ -425,7 +419,6 @@ int inindent(int extra)
     return false;
   }
 }
-
 
 // Get indent level from 'indentexpr'.
 int get_expr_indent(void)
@@ -442,7 +435,7 @@ int get_expr_indent(void)
   save_pos = curwin->w_cursor;
   save_curswant = curwin->w_curswant;
   save_set_curswant = curwin->w_set_curswant;
-  set_vim_var_nr(VV_LNUM, (varnumber_T) curwin->w_cursor.lnum);
+  set_vim_var_nr(VV_LNUM, (varnumber_T)curwin->w_cursor.lnum);
 
   if (use_sandbox) {
     sandbox++;
@@ -478,7 +471,6 @@ int get_expr_indent(void)
 
   return indent;
 }
-
 
 // When 'p' is present in 'cpoptions, a Vi compatible method is used.
 // The incompatible newer method is quite a bit better at indenting
@@ -622,12 +614,13 @@ int get_lisp_indent(void)
             parencount = 0;
             quotecount = 0;
 
-            if (vi_lisp || ((*that != '"') && (*that != '\'')
-                && (*that != '#') && ((*that < '0') || (*that > '9')))) {
+            if (vi_lisp
+                || ((*that != '"') && (*that != '\'') && (*that != '#')
+                    && ((*that < '0') || (*that > '9')))) {
               while (*that
                      && (!ascii_iswhite(*that) || quotecount || parencount)
-                     && (!((*that == '(' || *that == '[')
-                     && !quotecount && !parencount && vi_lisp))) {
+                     && (!((*that == '(' || *that == '[') && !quotecount
+                           && !parencount && vi_lisp))) {
                 if (*that == '"') {
                   quotecount = !quotecount;
                 }
@@ -664,7 +657,6 @@ int get_lisp_indent(void)
 
   return amount;
 }
-
 
 static int lisp_match(char_u *p)
 {

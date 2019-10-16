@@ -21,6 +21,7 @@ func CscopeSetupOrClean(setup)
 endfunc
 
 func Test_cscopeWithCscopeConnections()
+    throw 'skipped: TODO'
     call CscopeSetupOrClean(1)
     " Test 0: E568: duplicate cscope database not added
     try

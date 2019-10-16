@@ -1,24 +1,24 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include <assert.h>
-#include <msgpack.h>
-
-#include "nvim/map.h"
-#include "nvim/log.h"
-#include "nvim/vim.h"
-#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/api/private/dispatch.h"
-#include "nvim/api/private/helpers.h"
-#include "nvim/api/private/defs.h"
+
+#include <assert.h>
+#include <inttypes.h>
+#include <msgpack.h>
+#include <stdbool.h>
 
 #include "nvim/api/buffer.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/api/tabpage.h"
 #include "nvim/api/ui.h"
 #include "nvim/api/vim.h"
 #include "nvim/api/window.h"
+#include "nvim/log.h"
+#include "nvim/map.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/vim.h"
 
 static Map(String, MsgpackRpcRequestHandler) *methods = NULL;
 
@@ -34,9 +34,9 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
                                                      size_t name_len,
                                                      Error *error)
 {
-  String m = { .data = (char *)name, .size = name_len };
-  MsgpackRpcRequestHandler rv =
-    map_get(String, MsgpackRpcRequestHandler)(methods, m);
+  String m = {.data = (char *)name, .size = name_len};
+  MsgpackRpcRequestHandler rv
+      = map_get(String, MsgpackRpcRequestHandler)(methods, m);
 
   if (!rv.fn) {
     api_set_error(error, kErrorTypeException, "Invalid method: %.*s",

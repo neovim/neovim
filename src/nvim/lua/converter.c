@@ -1,62 +1,60 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <assert.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>
-#include <lauxlib.h>
-#include <assert.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/assert.h"
 #include "nvim/func_attr.h"
 #include "nvim/memory.h"
-#include "nvim/assert.h"
 // FIXME: vim.h is not actually needed, but otherwise it states MAXPATHL is
 //        redefined
-#include "nvim/vim.h"
-#include "nvim/globals.h"
-#include "nvim/message.h"
-#include "nvim/eval/typval.h"
 #include "nvim/ascii.h"
-#include "nvim/macros.h"
-
-#include "nvim/lib/kvec.h"
 #include "nvim/eval/decode.h"
-
+#include "nvim/eval/typval.h"
+#include "nvim/globals.h"
+#include "nvim/lib/kvec.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/executor.h"
+#include "nvim/macros.h"
+#include "nvim/message.h"
+#include "nvim/vim.h"
 
 /// Determine, which keys lua table contains
 typedef struct {
-  size_t maxidx;  ///< Maximum positive integral value found.
-  size_t string_keys_num;  ///< Number of string keys.
+  size_t maxidx;             ///< Maximum positive integral value found.
+  size_t string_keys_num;    ///< Number of string keys.
   bool has_string_with_nul;  ///< True if there is string key with NUL byte.
   ObjectType type;  ///< If has_type_key is true then attached value. Otherwise
                     ///< either kObjectTypeNil, kObjectTypeDictionary or
                     ///< kObjectTypeArray, depending on other properties.
-  lua_Number val;  ///< If has_val_key and val_type == LUA_TNUMBER: value.
+  lua_Number val;   ///< If has_val_key and val_type == LUA_TNUMBER: value.
   bool has_type_key;  ///< True if type key is present.
 } LuaTableProps;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/converter.c.generated.h"
+#include "lua/converter.c.generated.h"
 #endif
 
 #define TYPE_IDX_VALUE true
 #define VAL_IDX_VALUE false
 
-#define LUA_PUSH_STATIC_STRING(lstate, s) \
-    lua_pushlstring(lstate, s, sizeof(s) - 1)
+#define LUA_PUSH_STATIC_STRING(lstate, s)                                      \
+  lua_pushlstring(lstate, s, sizeof(s) - 1)
 
 static LuaTableProps nlua_traverse_table(lua_State *const lstate)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  size_t tsize = 0;  // Total number of keys.
-  int val_type = 0;  // If has_val_key: lua type of the value.
-  bool has_val_key = false;  // True if val key was found,
-                             // @see nlua_push_val_idx().
+  size_t tsize = 0;           // Total number of keys.
+  int val_type = 0;           // If has_val_key: lua type of the value.
+  bool has_val_key = false;   // True if val key was found,
+                              // @see nlua_push_val_idx().
   size_t other_keys_num = 0;  // Number of keys that are not string, integral
                               // or type keys.
   LuaTableProps ret;
@@ -135,11 +133,9 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
       // be SIZE_MAX, with this condition it should be zero and [SIZE_MAX] key
       // should be ignored.
       if (ret.maxidx != 0
-          && ret.maxidx != (tsize
-                            - ret.has_type_key
-                            - other_keys_num
-                            - has_val_key
-                            - ret.string_keys_num)) {
+          && ret.maxidx
+                 != (tsize - ret.has_type_key - other_keys_num - has_val_key
+                     - ret.string_keys_num)) {
         for (ret.maxidx = 0;; ret.maxidx++) {
           lua_rawgeti(lstate, -1, (int)ret.maxidx + 1);
           if (lua_isnil(lstate, -1)) {
@@ -152,8 +148,7 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
     }
   } else {
     if (tsize == 0
-        || (tsize == ret.maxidx
-            && other_keys_num == 0
+        || (tsize == ret.maxidx && other_keys_num == 0
             && ret.string_keys_num == 0)) {
       ret.type = kObjectTypeArray;
     } else if (ret.string_keys_num == tsize) {
@@ -167,10 +162,10 @@ static LuaTableProps nlua_traverse_table(lua_State *const lstate)
 
 /// Helper structure for nlua_pop_typval
 typedef struct {
-  typval_T *tv;  ///< Location where conversion result is saved.
+  typval_T *tv;    ///< Location where conversion result is saved.
   bool container;  ///< True if tv is a container.
-  bool special;  ///< If true then tv is a _VAL part of special dictionary
-                 ///< that represents mapping.
+  bool special;    ///< If true then tv is a _VAL part of special dictionary
+                   ///< that represents mapping.
   int idx;  ///< Container index (used to detect self-referencing structures).
 } TVPopStackItem;
 
@@ -188,7 +183,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
   bool ret = true;
   const int initial_size = lua_gettop(lstate);
   kvec_t(TVPopStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((TVPopStackItem) { ret_tv, false, false, 0 }));
+  kv_push(stack, ((TVPopStackItem){ret_tv, false, false, 0}));
   while (ret && kv_size(stack)) {
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
       emsgf(_("E1502: Lua failed to grow stack to %i"), lua_gettop(lstate) + 3);
@@ -222,16 +217,16 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             tv_list_append_owned_tv(kv_pair, s_tv);
 
             // Value: not populated yet, need to create list item to push.
-            tv_list_append_owned_tv(kv_pair, (typval_T) {
-              .v_type = VAR_UNKNOWN,
-            });
+            tv_list_append_owned_tv(kv_pair, (typval_T){
+                                                 .v_type = VAR_UNKNOWN,
+                                             });
             kv_push(stack, cur);
             tv_list_append_list(cur.tv->vval.v_list, kv_pair);
-            cur = (TVPopStackItem) {
-              .tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair)),
-              .container = false,
-              .special = false,
-              .idx = 0,
+            cur = (TVPopStackItem){
+                .tv = TV_LIST_ITEM_TV(tv_list_last(kv_pair)),
+                .container = false,
+                .special = false,
+                .idx = 0,
             };
           } else {
             dictitem_T *const di = tv_dict_item_alloc_len(s, len);
@@ -239,7 +234,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
               assert(false);
             }
             kv_push(stack, cur);
-            cur = (TVPopStackItem) { &di->di_tv, false, false, 0 };
+            cur = (TVPopStackItem){&di->di_tv, false, false, 0};
           }
         } else {
           lua_pop(lstate, 1);
@@ -253,24 +248,24 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
           continue;
         }
         // Not populated yet, need to create list item to push.
-        tv_list_append_owned_tv(cur.tv->vval.v_list, (typval_T) {
-          .v_type = VAR_UNKNOWN,
-        });
+        tv_list_append_owned_tv(cur.tv->vval.v_list, (typval_T){
+                                                         .v_type = VAR_UNKNOWN,
+                                                     });
         kv_push(stack, cur);
         // TODO(ZyX-I): Use indexes, here list item *will* be reallocated.
-        cur = (TVPopStackItem) {
-          .tv = TV_LIST_ITEM_TV(tv_list_last(cur.tv->vval.v_list)),
-          .container = false,
-          .special = false,
-          .idx = 0,
+        cur = (TVPopStackItem){
+            .tv = TV_LIST_ITEM_TV(tv_list_last(cur.tv->vval.v_list)),
+            .container = false,
+            .special = false,
+            .idx = 0,
         };
       }
     }
     assert(!cur.container);
-    *cur.tv = (typval_T) {
-      .v_type = VAR_NUMBER,
-      .v_lock = VAR_UNLOCKED,
-      .vval = { .v_number = 0 },
+    *cur.tv = (typval_T){
+        .v_type = VAR_NUMBER,
+        .v_lock = VAR_UNLOCKED,
+        .vval = {.v_number = 0},
     };
     switch (lua_type(lstate, -1)) {
       case LUA_TNIL: {
@@ -280,9 +275,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
       }
       case LUA_TBOOLEAN: {
         cur.tv->v_type = VAR_SPECIAL;
-        cur.tv->vval.v_special = (lua_toboolean(lstate, -1)
-                                  ? kSpecialVarTrue
-                                  : kSpecialVarFalse);
+        cur.tv->vval.v_special
+            = (lua_toboolean(lstate, -1) ? kSpecialVarTrue : kSpecialVarFalse);
         break;
       }
       case LUA_TSTRING: {
@@ -341,8 +335,8 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
                 decode_create_map_special_dict(
                     cur.tv, (ptrdiff_t)table_props.string_keys_num);
                 assert(cur.tv->v_type == VAR_DICT);
-                dictitem_T *const val_di = tv_dict_find(cur.tv->vval.v_dict,
-                                                        S_LEN("_VAL"));
+                dictitem_T *const val_di
+                    = tv_dict_find(cur.tv->vval.v_dict, S_LEN("_VAL"));
                 assert(val_di != NULL);
                 cur.tv = &val_di->di_tv;
                 assert(cur.tv->v_type == VAR_LIST);
@@ -364,9 +358,10 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             break;
           }
           case kObjectTypeNil: {
-            EMSG(_("E5100: Cannot convert given lua table: table "
-                   "should either have a sequence of positive integer keys "
-                   "or contain only string keys"));
+            EMSG(
+                _("E5100: Cannot convert given lua table: table "
+                  "should either have a sequence of positive integer keys "
+                  "or contain only string keys"));
             ret = false;
             break;
           }
@@ -374,7 +369,7 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
             assert(false);
           }
         }
-nlua_pop_typval_table_processing_end:
+      nlua_pop_typval_table_processing_end:
         break;
       }
       default: {
@@ -390,10 +385,10 @@ nlua_pop_typval_table_processing_end:
   kv_destroy(stack);
   if (!ret) {
     tv_clear(ret_tv);
-    *ret_tv = (typval_T) {
-      .v_type = VAR_NUMBER,
-      .v_lock = VAR_UNLOCKED,
-      .vval = { .v_number = 0 },
+    *ret_tv = (typval_T){
+        .v_type = VAR_NUMBER,
+        .v_lock = VAR_UNLOCKED,
+        .vval = {.v_number = 0},
     };
     lua_pop(lstate, lua_gettop(lstate) - initial_size + 1);
   }
@@ -403,76 +398,71 @@ nlua_pop_typval_table_processing_end:
 
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
-#define TYPVAL_ENCODE_CONV_NIL(tv) \
-    lua_pushnil(lstate)
+#define TYPVAL_ENCODE_CONV_NIL(tv) lua_pushnil(lstate)
 
-#define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
-    lua_pushboolean(lstate, (bool)(num))
+#define TYPVAL_ENCODE_CONV_BOOL(tv, num) lua_pushboolean(lstate, (bool)(num))
 
-#define TYPVAL_ENCODE_CONV_NUMBER(tv, num) \
-    lua_pushnumber(lstate, (lua_Number)(num))
+#define TYPVAL_ENCODE_CONV_NUMBER(tv, num)                                     \
+  lua_pushnumber(lstate, (lua_Number)(num))
 
 #define TYPVAL_ENCODE_CONV_UNSIGNED_NUMBER TYPVAL_ENCODE_CONV_NUMBER
 
-#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) \
-    TYPVAL_ENCODE_CONV_NUMBER(tv, flt)
+#define TYPVAL_ENCODE_CONV_FLOAT(tv, flt) TYPVAL_ENCODE_CONV_NUMBER(tv, flt)
 
-#define TYPVAL_ENCODE_CONV_STRING(tv, str, len) \
-    lua_pushlstring(lstate, (const char *)(str), (len))
+#define TYPVAL_ENCODE_CONV_STRING(tv, str, len)                                \
+  lua_pushlstring(lstate, (const char *)(str), (len))
 
 #define TYPVAL_ENCODE_CONV_STR_STRING TYPVAL_ENCODE_CONV_STRING
 
-#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type) \
-    TYPVAL_ENCODE_CONV_NIL(tv)
+#define TYPVAL_ENCODE_CONV_EXT_STRING(tv, str, len, type)                      \
+  TYPVAL_ENCODE_CONV_NIL(tv)
 
-#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun) \
-    do { \
-      TYPVAL_ENCODE_CONV_NIL(tv); \
-      goto typval_encode_stop_converting_one_item; \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_FUNC_START(tv, fun)                                 \
+  do {                                                                         \
+    TYPVAL_ENCODE_CONV_NIL(tv);                                                \
+    goto typval_encode_stop_converting_one_item;                               \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_ARGS(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_BEFORE_SELF(tv, len)
 #define TYPVAL_ENCODE_CONV_FUNC_END(tv)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) \
-    lua_createtable(lstate, 0, 0)
+#define TYPVAL_ENCODE_CONV_EMPTY_LIST(tv) lua_createtable(lstate, 0, 0)
 
-#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict) \
-    nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary)
+#define TYPVAL_ENCODE_CONV_EMPTY_DICT(tv, dict)                                \
+  nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary)
 
-#define TYPVAL_ENCODE_CONV_LIST_START(tv, len) \
-    do { \
-      if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
-        emsgf(_("E5102: Lua failed to grow stack to %i"), \
-              lua_gettop(lstate) + 3); \
-        return false; \
-      } \
-      lua_createtable(lstate, (int)(len), 0); \
-      lua_pushnumber(lstate, 1); \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_LIST_START(tv, len)                                 \
+  do {                                                                         \
+    if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {                     \
+      emsgf(_("E5102: Lua failed to grow stack to %i"),                        \
+            lua_gettop(lstate) + 3);                                           \
+      return false;                                                            \
+    }                                                                          \
+    lua_createtable(lstate, (int)(len), 0);                                    \
+    lua_pushnumber(lstate, 1);                                                 \
+  } while (0)
 
 #define TYPVAL_ENCODE_CONV_REAL_LIST_AFTER_START(tv, mpsv)
 
-#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv) \
-    do { \
-      lua_Number idx = lua_tonumber(lstate, -2); \
-      lua_rawset(lstate, -3); \
-      lua_pushnumber(lstate, idx + 1); \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_LIST_BETWEEN_ITEMS(tv)                              \
+  do {                                                                         \
+    lua_Number idx = lua_tonumber(lstate, -2);                                 \
+    lua_rawset(lstate, -3);                                                    \
+    lua_pushnumber(lstate, idx + 1);                                           \
+  } while (0)
 
-#define TYPVAL_ENCODE_CONV_LIST_END(tv) \
-    lua_rawset(lstate, -3)
+#define TYPVAL_ENCODE_CONV_LIST_END(tv) lua_rawset(lstate, -3)
 
-#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len) \
-    do { \
-      if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) { \
-        emsgf(_("E5102: Lua failed to grow stack to %i"), \
-              lua_gettop(lstate) + 3); \
-        return false; \
-      } \
-      lua_createtable(lstate, 0, (int)(len)); \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_DICT_START(tv, dict, len)                           \
+  do {                                                                         \
+    if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {                     \
+      emsgf(_("E5102: Lua failed to grow stack to %i"),                        \
+            lua_gettop(lstate) + 3);                                           \
+      return false;                                                            \
+    }                                                                          \
+    lua_createtable(lstate, 0, (int)(len));                                    \
+  } while (0)
 
 #define TYPVAL_ENCODE_SPECIAL_DICT_KEY_CHECK(label, kv_pair)
 
@@ -480,27 +470,26 @@ nlua_pop_typval_table_processing_end:
 
 #define TYPVAL_ENCODE_CONV_DICT_AFTER_KEY(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) \
-    lua_rawset(lstate, -3)
+#define TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict) lua_rawset(lstate, -3)
 
-#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict) \
-    TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
+#define TYPVAL_ENCODE_CONV_DICT_END(tv, dict)                                  \
+  TYPVAL_ENCODE_CONV_DICT_BETWEEN_ITEMS(tv, dict)
 
-#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type) \
-    do { \
-      for (size_t backref = kv_size(*mpstack); backref; backref--) { \
-        const MPConvStackVal mpval = kv_A(*mpstack, backref - 1); \
-        if (mpval.type == conv_type) { \
-          if (conv_type == kMPConvDict \
-              ? (void *)mpval.data.d.dict == (void *)(val) \
-              : (void *)mpval.data.l.list == (void *)(val)) { \
-            lua_pushvalue(lstate, \
-                          -((int)((kv_size(*mpstack) - backref + 1) * 2))); \
-            break; \
-          } \
-        } \
-      } \
-    } while (0)
+#define TYPVAL_ENCODE_CONV_RECURSE(val, conv_type)                             \
+  do {                                                                         \
+    for (size_t backref = kv_size(*mpstack); backref; backref--) {             \
+      const MPConvStackVal mpval = kv_A(*mpstack, backref - 1);                \
+      if (mpval.type == conv_type) {                                           \
+        if (conv_type == kMPConvDict                                           \
+                ? (void *)mpval.data.d.dict == (void *)(val)                   \
+                : (void *)mpval.data.l.list == (void *)(val)) {                \
+          lua_pushvalue(lstate,                                                \
+                        -((int)((kv_size(*mpstack) - backref + 1) * 2)));      \
+          break;                                                               \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+  } while (0)
 
 #define TYPVAL_ENCODE_SCOPE static
 #define TYPVAL_ENCODE_NAME lua
@@ -566,8 +555,7 @@ bool nlua_push_typval(lua_State *lstate, typval_T *const tv)
 ///
 /// Used for all “typed” tables: i.e. for all tables which represent VimL
 /// values.
-static inline void nlua_push_type_idx(lua_State *lstate)
-  FUNC_ATTR_NONNULL_ALL
+static inline void nlua_push_type_idx(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, TYPE_IDX_VALUE);
 }
@@ -575,8 +563,7 @@ static inline void nlua_push_type_idx(lua_State *lstate)
 /// Push value which is a value index
 ///
 /// Used for tables which represent scalar values, like float value.
-static inline void nlua_push_val_idx(lua_State *lstate)
-  FUNC_ATTR_NONNULL_ALL
+static inline void nlua_push_val_idx(lua_State *lstate) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, VAL_IDX_VALUE);
 }
@@ -587,8 +574,8 @@ static inline void nlua_push_val_idx(lua_State *lstate)
 ///
 /// @param[out]  lstate  Lua state.
 /// @param[in]   type    Type to push.
-static inline void nlua_push_type(lua_State *lstate, ObjectType type)
-  FUNC_ATTR_NONNULL_ALL
+static inline void nlua_push_type(lua_State *lstate,
+                                  ObjectType type) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushnumber(lstate, (lua_Number)type);
 }
@@ -603,7 +590,7 @@ static inline void nlua_create_typed_table(lua_State *lstate,
                                            const size_t narr,
                                            const size_t nrec,
                                            const ObjectType type)
-  FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_NONNULL_ALL
 {
   lua_createtable(lstate, (int)narr, (int)(1 + nrec));
   nlua_push_type_idx(lstate);
@@ -611,12 +598,12 @@ static inline void nlua_create_typed_table(lua_State *lstate,
   lua_rawset(lstate, -3);
 }
 
-
 /// Convert given String to lua string
 ///
 /// Leaves converted string on top of the stack.
-void nlua_push_String(lua_State *lstate, const String s, bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_String(lua_State *lstate,
+                      const String s,
+                      bool special) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushlstring(lstate, s.data, s.size);
 }
@@ -624,8 +611,9 @@ void nlua_push_String(lua_State *lstate, const String s, bool special)
 /// Convert given Integer to lua number
 ///
 /// Leaves converted number on top of the stack.
-void nlua_push_Integer(lua_State *lstate, const Integer n, bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_Integer(lua_State *lstate,
+                       const Integer n,
+                       bool special) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushnumber(lstate, (lua_Number)n);
 }
@@ -633,8 +621,9 @@ void nlua_push_Integer(lua_State *lstate, const Integer n, bool special)
 /// Convert given Float to lua table
 ///
 /// Leaves converted table on top of the stack.
-void nlua_push_Float(lua_State *lstate, const Float f, bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_Float(lua_State *lstate,
+                     const Float f,
+                     bool special) FUNC_ATTR_NONNULL_ALL
 {
   if (special) {
     nlua_create_typed_table(lstate, 0, 1, kObjectTypeFloat);
@@ -649,8 +638,9 @@ void nlua_push_Float(lua_State *lstate, const Float f, bool special)
 /// Convert given Float to lua boolean
 ///
 /// Leaves converted value on top of the stack.
-void nlua_push_Boolean(lua_State *lstate, const Boolean b, bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_Boolean(lua_State *lstate,
+                       const Boolean b,
+                       bool special) FUNC_ATTR_NONNULL_ALL
 {
   lua_pushboolean(lstate, b);
 }
@@ -658,9 +648,9 @@ void nlua_push_Boolean(lua_State *lstate, const Boolean b, bool special)
 /// Convert given Dictionary to lua table
 ///
 /// Leaves converted table on top of the stack.
-void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict,
-                          bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_Dictionary(lua_State *lstate,
+                          const Dictionary dict,
+                          bool special) FUNC_ATTR_NONNULL_ALL
 {
   if (dict.size == 0 && special) {
     nlua_create_typed_table(lstate, 0, 0, kObjectTypeDictionary);
@@ -677,8 +667,9 @@ void nlua_push_Dictionary(lua_State *lstate, const Dictionary dict,
 /// Convert given Array to lua table
 ///
 /// Leaves converted table on top of the stack.
-void nlua_push_Array(lua_State *lstate, const Array array, bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_Array(lua_State *lstate,
+                     const Array array,
+                     bool special) FUNC_ATTR_NONNULL_ALL
 {
   lua_createtable(lstate, (int)array.size, 0);
   for (size_t i = 0; i < array.size; i++) {
@@ -687,12 +678,12 @@ void nlua_push_Array(lua_State *lstate, const Array array, bool special)
   }
 }
 
-#define GENERATE_INDEX_FUNCTION(type) \
-void nlua_push_##type(lua_State *lstate, const type item, bool special) \
-  FUNC_ATTR_NONNULL_ALL \
-{ \
-  lua_pushnumber(lstate, (lua_Number)(item)); \
-}
+#define GENERATE_INDEX_FUNCTION(type)                                          \
+  void nlua_push_##type(lua_State *lstate, const type item, bool special)      \
+      FUNC_ATTR_NONNULL_ALL                                                    \
+  {                                                                            \
+    lua_pushnumber(lstate, (lua_Number)(item));                                \
+  }
 
 GENERATE_INDEX_FUNCTION(Buffer)
 GENERATE_INDEX_FUNCTION(Window)
@@ -703,8 +694,9 @@ GENERATE_INDEX_FUNCTION(Tabpage)
 /// Convert given Object to lua value
 ///
 /// Leaves converted value on top of the stack.
-void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
-  FUNC_ATTR_NONNULL_ALL
+void nlua_push_Object(lua_State *lstate,
+                      const Object obj,
+                      bool special) FUNC_ATTR_NONNULL_ALL
 {
   switch (obj.type) {
     case kObjectTypeNil: {
@@ -715,41 +707,40 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
       nlua_pushref(lstate, obj.data.luaref);
       break;
     }
-#define ADD_TYPE(type, data_key) \
-    case kObjectType##type: { \
-      nlua_push_##type(lstate, obj.data.data_key, special); \
-      break; \
-    }
-    ADD_TYPE(Boolean,      boolean)
-    ADD_TYPE(Integer,      integer)
-    ADD_TYPE(Float,        floating)
-    ADD_TYPE(String,       string)
-    ADD_TYPE(Array,        array)
-    ADD_TYPE(Dictionary,   dictionary)
+#define ADD_TYPE(type, data_key)                                               \
+  case kObjectType##type: {                                                    \
+    nlua_push_##type(lstate, obj.data.data_key, special);                      \
+    break;                                                                     \
+  }
+      ADD_TYPE(Boolean, boolean)
+      ADD_TYPE(Integer, integer)
+      ADD_TYPE(Float, floating)
+      ADD_TYPE(String, string)
+      ADD_TYPE(Array, array)
+      ADD_TYPE(Dictionary, dictionary)
 #undef ADD_TYPE
-#define ADD_REMOTE_TYPE(type) \
-    case kObjectType##type: { \
-      nlua_push_##type(lstate, (type)obj.data.integer, special); \
-      break; \
-    }
-    ADD_REMOTE_TYPE(Buffer)
-    ADD_REMOTE_TYPE(Window)
-    ADD_REMOTE_TYPE(Tabpage)
+#define ADD_REMOTE_TYPE(type)                                                  \
+  case kObjectType##type: {                                                    \
+    nlua_push_##type(lstate, (type)obj.data.integer, special);                 \
+    break;                                                                     \
+  }
+      ADD_REMOTE_TYPE(Buffer)
+      ADD_REMOTE_TYPE(Window)
+      ADD_REMOTE_TYPE(Tabpage)
 #undef ADD_REMOTE_TYPE
   }
 }
-
 
 /// Convert lua value to string
 ///
 /// Always pops one value from the stack.
 String nlua_pop_String(lua_State *lstate, Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) != LUA_TSTRING) {
     lua_pop(lstate, 1);
     api_set_error(err, kErrorTypeValidation, "Expected lua string");
-    return (String) { .size = 0, .data = NULL };
+    return (String){.size = 0, .data = NULL};
   }
   String ret;
 
@@ -765,7 +756,7 @@ String nlua_pop_String(lua_State *lstate, Error *err)
 ///
 /// Always pops one value from the stack.
 Integer nlua_pop_Integer(lua_State *lstate, Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) != LUA_TNUMBER) {
     lua_pop(lstate, 1);
@@ -786,7 +777,7 @@ Integer nlua_pop_Integer(lua_State *lstate, Error *err)
 ///
 /// Always pops one value from the stack.
 Boolean nlua_pop_Boolean(lua_State *lstate, Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   const Boolean ret = lua_toboolean(lstate, -1);
   lua_pop(lstate, 1);
@@ -803,13 +794,13 @@ Boolean nlua_pop_Boolean(lua_State *lstate, Error *err)
 static inline LuaTableProps nlua_check_type(lua_State *const lstate,
                                             Error *const err,
                                             const ObjectType type)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) != LUA_TTABLE) {
     if (err) {
       api_set_error(err, kErrorTypeValidation, "Expected lua table");
     }
-    return (LuaTableProps) { .type = kObjectTypeNil };
+    return (LuaTableProps){.type = kObjectTypeNil};
   }
   LuaTableProps table_props = nlua_traverse_table(lstate);
 
@@ -831,7 +822,7 @@ static inline LuaTableProps nlua_check_type(lua_State *const lstate,
 ///
 /// Always pops one value from the stack.
 Float nlua_pop_Float(lua_State *lstate, Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (lua_type(lstate, -1) == LUA_TNUMBER) {
     const Float ret = (Float)lua_tonumber(lstate, -1);
@@ -839,8 +830,8 @@ Float nlua_pop_Float(lua_State *lstate, Error *err)
     return ret;
   }
 
-  const LuaTableProps table_props = nlua_check_type(lstate, err,
-                                                    kObjectTypeFloat);
+  const LuaTableProps table_props
+      = nlua_check_type(lstate, err, kObjectTypeFloat);
   lua_pop(lstate, 1);
   if (table_props.type != kObjectTypeFloat) {
     return 0;
@@ -858,7 +849,7 @@ static Array nlua_pop_Array_unchecked(lua_State *const lstate,
                                       const LuaTableProps table_props,
                                       Error *const err)
 {
-  Array ret = { .size = table_props.maxidx, .items = NULL };
+  Array ret = {.size = table_props.maxidx, .items = NULL};
 
   if (ret.size == 0) {
     lua_pop(lstate, 1);
@@ -876,7 +867,7 @@ static Array nlua_pop_Array_unchecked(lua_State *const lstate,
       ret.size = i - 1;
       lua_pop(lstate, 1);
       api_free_array(ret);
-      return (Array) { .size = 0, .items = NULL };
+      return (Array){.size = 0, .items = NULL};
     }
     ret.items[i - 1] = val;
   }
@@ -889,12 +880,12 @@ static Array nlua_pop_Array_unchecked(lua_State *const lstate,
 ///
 /// Always pops one value from the stack.
 Array nlua_pop_Array(lua_State *lstate, Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const LuaTableProps table_props = nlua_check_type(lstate, err,
-                                                    kObjectTypeArray);
+  const LuaTableProps table_props
+      = nlua_check_type(lstate, err, kObjectTypeArray);
   if (table_props.type != kObjectTypeArray) {
-    return (Array) { .size = 0, .items = NULL };
+    return (Array){.size = 0, .items = NULL};
   }
   return nlua_pop_Array_unchecked(lstate, table_props, err);
 }
@@ -911,9 +902,9 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
                                                 const LuaTableProps table_props,
                                                 bool ref,
                                                 Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  Dictionary ret = { .size = table_props.string_keys_num, .items = NULL };
+  Dictionary ret = {.size = table_props.string_keys_num, .items = NULL};
 
   if (ret.size == 0) {
     lua_pop(lstate, 1);
@@ -945,7 +936,7 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
         api_free_dictionary(ret);
         lua_pop(lstate, 2);
         // stack:
-        return (Dictionary) { .size = 0, .items = NULL };
+        return (Dictionary){.size = 0, .items = NULL};
       }
       i++;
     } else {
@@ -962,13 +953,13 @@ static Dictionary nlua_pop_Dictionary_unchecked(lua_State *lstate,
 ///
 /// Always pops one value from the stack.
 Dictionary nlua_pop_Dictionary(lua_State *lstate, bool ref, Error *err)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  const LuaTableProps table_props = nlua_check_type(lstate, err,
-                                                    kObjectTypeDictionary);
+  const LuaTableProps table_props
+      = nlua_check_type(lstate, err, kObjectTypeDictionary);
   if (table_props.type != kObjectTypeDictionary) {
     lua_pop(lstate, 1);
-    return (Dictionary) { .size = 0, .items = NULL };
+    return (Dictionary){.size = 0, .items = NULL};
   }
 
   return nlua_pop_Dictionary_unchecked(lstate, table_props, ref, err);
@@ -976,7 +967,7 @@ Dictionary nlua_pop_Dictionary(lua_State *lstate, bool ref, Error *err)
 
 /// Helper structure for nlua_pop_Object
 typedef struct {
-  Object *obj;  ///< Location where conversion result is saved.
+  Object *obj;     ///< Location where conversion result is saved.
   bool container;  ///< True if tv is a container.
 } ObjPopStackItem;
 
@@ -988,7 +979,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
   Object ret = NIL;
   const int initial_size = lua_gettop(lstate);
   kvec_t(ObjPopStackItem) stack = KV_INITIAL_VALUE;
-  kv_push(stack, ((ObjPopStackItem) { &ret, false }));
+  kv_push(stack, ((ObjPopStackItem){&ret, false}));
   while (!ERROR_SET(err) && kv_size(stack)) {
     if (!lua_checkstack(lstate, lua_gettop(lstate) + 3)) {
       api_set_error(err, kErrorTypeException, "Lua failed to grow stack");
@@ -1018,14 +1009,14 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
           size_t len;
           const char *s = lua_tolstring(lstate, -2, &len);
           const size_t idx = cur.obj->data.dictionary.size++;
-          cur.obj->data.dictionary.items[idx].key = (String) {
-            .data = xmemdupz(s, len),
-            .size = len,
+          cur.obj->data.dictionary.items[idx].key = (String){
+              .data = xmemdupz(s, len),
+              .size = len,
           };
           kv_push(stack, cur);
-          cur = (ObjPopStackItem) {
-            .obj = &cur.obj->data.dictionary.items[idx].value,
-            .container = false,
+          cur = (ObjPopStackItem){
+              .obj = &cur.obj->data.dictionary.items[idx].value,
+              .container = false,
           };
         } else {
           // stack: …, dict
@@ -1045,9 +1036,9 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
           continue;
         }
         kv_push(stack, cur);
-        cur = (ObjPopStackItem) {
-          .obj = &cur.obj->data.array.items[idx],
-          .container = false,
+        cur = (ObjPopStackItem){
+            .obj = &cur.obj->data.array.items[idx],
+            .container = false,
         };
       }
     }
@@ -1064,9 +1055,9 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
       case LUA_TSTRING: {
         size_t len;
         const char *s = lua_tolstring(lstate, -1, &len);
-        *cur.obj = STRING_OBJ(((String) {
-          .data = xmemdupz(s, len),
-          .size = len,
+        *cur.obj = STRING_OBJ(((String){
+            .data = xmemdupz(s, len),
+            .size = len,
         }));
         break;
       }
@@ -1085,15 +1076,14 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
 
         switch (table_props.type) {
           case kObjectTypeArray: {
-            *cur.obj = ARRAY_OBJ(((Array) {
-              .items = NULL,
-              .size = 0,
-              .capacity = 0,
+            *cur.obj = ARRAY_OBJ(((Array){
+                .items = NULL,
+                .size = 0,
+                .capacity = 0,
             }));
             if (table_props.maxidx != 0) {
-              cur.obj->data.array.items =
-                  xcalloc(table_props.maxidx,
-                          sizeof(cur.obj->data.array.items[0]));
+              cur.obj->data.array.items = xcalloc(
+                  table_props.maxidx, sizeof(cur.obj->data.array.items[0]));
               cur.obj->data.array.capacity = table_props.maxidx;
               cur.container = true;
               kv_push(stack, cur);
@@ -1101,15 +1091,15 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
             break;
           }
           case kObjectTypeDictionary: {
-            *cur.obj = DICTIONARY_OBJ(((Dictionary) {
-              .items = NULL,
-              .size = 0,
-              .capacity = 0,
+            *cur.obj = DICTIONARY_OBJ(((Dictionary){
+                .items = NULL,
+                .size = 0,
+                .capacity = 0,
             }));
             if (table_props.string_keys_num != 0) {
-              cur.obj->data.dictionary.items =
-                  xcalloc(table_props.string_keys_num,
-                          sizeof(cur.obj->data.dictionary.items[0]));
+              cur.obj->data.dictionary.items
+                  = xcalloc(table_props.string_keys_num,
+                            sizeof(cur.obj->data.dictionary.items[0]));
               cur.obj->data.dictionary.capacity = table_props.string_keys_num;
               cur.container = true;
               kv_push(stack, cur);
@@ -1143,7 +1133,7 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
       }
 
       default: {
-type_error:
+      type_error:
         api_set_error(err, kErrorTypeValidation,
                       "Cannot convert given lua type");
         break;
@@ -1163,15 +1153,15 @@ type_error:
   return ret;
 }
 
-#define GENERATE_INDEX_FUNCTION(type) \
-type nlua_pop_##type(lua_State *lstate, Error *err) \
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT \
-{ \
-  type ret; \
-  ret = (type)lua_tonumber(lstate, -1); \
-  lua_pop(lstate, 1); \
-  return ret; \
-}
+#define GENERATE_INDEX_FUNCTION(type)                                          \
+  type nlua_pop_##type(lua_State *lstate, Error *err)                          \
+      FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT                       \
+  {                                                                            \
+    type ret;                                                                  \
+    ret = (type)lua_tonumber(lstate, -1);                                      \
+    lua_pop(lstate, 1);                                                        \
+    return ret;                                                                \
+  }
 
 GENERATE_INDEX_FUNCTION(Buffer)
 GENERATE_INDEX_FUNCTION(Window)

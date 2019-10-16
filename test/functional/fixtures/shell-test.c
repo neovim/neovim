@@ -1,12 +1,12 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #ifdef _MSC_VER
 #include <Windows.h>
-#define usleep(usecs) Sleep(usecs/1000)
+#define usleep(usecs) Sleep(usecs / 1000)
 #else
 #include <unistd.h>
 #endif
@@ -14,7 +14,7 @@
 static void flush_wait(void)
 {
   fflush(NULL);
-  usleep(10*1000);  // Wait 10 ms.
+  usleep(10 * 1000);  // Wait 10 ms.
 }
 
 static void help(void)
@@ -34,7 +34,9 @@ static void help(void)
   puts("  shell-test -t {prompt text} EXE \"prog args...\"");
   puts("    Prints \"{prompt text} $ progs args...\" to stderr.");
   puts("  shell-test REP N {text}");
-  puts("    Prints \"{lnr}: {text}\\n\" to stdout N times, taking N milliseconds.");
+  puts(
+      "    Prints \"{lnr}: {text}\\n\" to stdout N times, taking N "
+      "milliseconds.");
   puts("    Example:");
   puts("      shell-test REP 97 \"foo bar\"");
   puts("      0: foo bar");
@@ -53,7 +55,7 @@ int main(int argc, char **argv)
   if (argc >= 2) {
     if (strcmp(argv[1], "-t") == 0) {
       if (argc < 3) {
-        fprintf(stderr,"Missing prompt text for -t option\n");
+        fprintf(stderr, "Missing prompt text for -t option\n");
         return 5;
       } else {
         fprintf(stderr, "%s $ ", argv[2]);
@@ -85,20 +87,29 @@ int main(int argc, char **argv)
       }
     } else if (strcmp(argv[1], "UTF-8") == 0) {
       // test split-up UTF-8 sequence
-      printf("\xc3"); flush_wait();
-      printf("\xa5\n"); flush_wait();
+      printf("\xc3");
+      flush_wait();
+      printf("\xa5\n");
+      flush_wait();
 
       // split up a 2+2 grapheme clusters all possible ways
-      printf("ref: \xc3\xa5\xcc\xb2\n"); flush_wait();
+      printf("ref: \xc3\xa5\xcc\xb2\n");
+      flush_wait();
 
-      printf("1: \xc3"); flush_wait();
-      printf("\xa5\xcc\xb2\n"); flush_wait();
+      printf("1: \xc3");
+      flush_wait();
+      printf("\xa5\xcc\xb2\n");
+      flush_wait();
 
-      printf("2: \xc3\xa5"); flush_wait();
-      printf("\xcc\xb2\n"); flush_wait();
+      printf("2: \xc3\xa5");
+      flush_wait();
+      printf("\xcc\xb2\n");
+      flush_wait();
 
-      printf("3: \xc3\xa5\xcc"); flush_wait();
-      printf("\xb2\n"); flush_wait();
+      printf("3: \xc3\xa5\xcc");
+      flush_wait();
+      printf("\xb2\n");
+      flush_wait();
     } else if (strcmp(argv[1], "INTERACT") == 0) {
       char input[256];
       char cmd[100];
@@ -113,11 +124,11 @@ int main(int argc, char **argv)
         }
 
         input_argc = sscanf(input, "%99s %d", cmd, &arg);
-        if(1 == input_argc) {
+        if (1 == input_argc) {
           arg = 0;
         }
         if (strcmp(cmd, "exit") == 0) {
-            return arg;
+          return arg;
         } else {
           fprintf(stderr, "command not found: %s\n", cmd);
         }

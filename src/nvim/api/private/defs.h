@@ -1,24 +1,36 @@
 #ifndef NVIM_API_PRIVATE_DEFS_H
 #define NVIM_API_PRIVATE_DEFS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "nvim/func_attr.h"
 #include "nvim/types.h"
 
-#define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
-#define STRING_INIT {.data = NULL, .size = 0}
-#define OBJECT_INIT { .type = kObjectTypeNil }
-#define ERROR_INIT { .type = kErrorTypeNone, .msg = NULL }
+#define ARRAY_DICT_INIT                                                        \
+  {                                                                            \
+    .size = 0, .capacity = 0, .items = NULL                                    \
+  }
+#define STRING_INIT                                                            \
+  {                                                                            \
+    .data = NULL, .size = 0                                                    \
+  }
+#define OBJECT_INIT                                                            \
+  {                                                                            \
+    .type = kObjectTypeNil                                                     \
+  }
+#define ERROR_INIT                                                             \
+  {                                                                            \
+    .type = kErrorTypeNone, .msg = NULL                                        \
+  }
 #define REMOTE_TYPE(type) typedef handle_T type
 
 #define ERROR_SET(e) ((e)->type != kErrorTypeNone)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# define ArrayOf(...) Array
-# define DictionaryOf(...) Dictionary
+#define ArrayOf(...) Array
+#define DictionaryOf(...) Dictionary
 #endif
 
 // Basic types
@@ -46,7 +58,7 @@ typedef enum {
 #define LUA_INTERNAL_CALL (VIML_INTERNAL_CALL + 1)
 
 static inline bool is_internal_call(const uint64_t channel_id)
-  REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
+    REAL_FATTR_ALWAYS_INLINE REAL_FATTR_CONST;
 
 /// Check whether call is internal
 ///
@@ -128,6 +140,5 @@ struct key_value_pair {
   String key;
   Object value;
 };
-
 
 #endif  // NVIM_API_PRIVATE_DEFS_H

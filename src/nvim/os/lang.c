@@ -2,14 +2,14 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #ifdef __APPLE__
-# define Boolean CFBoolean  // Avoid conflict with API's Boolean
-# include <CoreFoundation/CFLocale.h>
-# include <CoreFoundation/CFString.h>
-# undef Boolean
+#define Boolean CFBoolean  // Avoid conflict with API's Boolean
+#include <CoreFoundation/CFLocale.h>
+#include <CoreFoundation/CFString.h>
+#undef Boolean
 #endif
 
 #ifdef HAVE_LOCALE_H
-# include <locale.h>
+#include <locale.h>
 #endif
 #include "nvim/os/lang.h"
 #include "nvim/os/os.h"
@@ -25,8 +25,8 @@ void lang_init(void)
     if (cf_locale) {
       cf_lang_region = CFLocaleGetValue(cf_locale, kCFLocaleIdentifier);
       CFRetain(cf_lang_region);
-      lang_region = CFStringGetCStringPtr(cf_lang_region,
-                                          kCFStringEncodingUTF8);
+      lang_region
+          = CFStringGetCStringPtr(cf_lang_region, kCFStringEncodingUTF8);
       CFRelease(cf_locale);
     } else {
       // Use the primary language defined in Preferences -> Language & Region
@@ -35,8 +35,8 @@ void lang_init(void)
         cf_lang_region = CFArrayGetValueAtIndex(cf_langs, 0);
         CFRetain(cf_lang_region);
         CFRelease(cf_langs);
-        lang_region = CFStringGetCStringPtr(cf_lang_region,
-                                            kCFStringEncodingUTF8);
+        lang_region
+            = CFStringGetCStringPtr(cf_lang_region, kCFStringEncodingUTF8);
       } else {
         ELOG("$LANG is empty and your primary language cannot be inferred.");
         return;
@@ -46,21 +46,20 @@ void lang_init(void)
     if (lang_region) {
       os_setenv("LANG", lang_region, true);
     } else {
-      char buf[20] = { 0 };
-      if (CFStringGetCString(cf_lang_region, buf, 20,
-                             kCFStringEncodingUTF8)) {
+      char buf[20] = {0};
+      if (CFStringGetCString(cf_lang_region, buf, 20, kCFStringEncodingUTF8)) {
         os_setenv("LANG", buf, true);
       }
     }
     CFRelease(cf_lang_region);
-# ifdef HAVE_LOCALE_H
+#ifdef HAVE_LOCALE_H
     setlocale(LC_ALL, "");
 
-#  ifdef LC_NUMERIC
+#ifdef LC_NUMERIC
     // Make sure strtod() uses a decimal point, not a comma.
     setlocale(LC_NUMERIC, "C");
-#  endif
-# endif
+#endif
+#endif
   }
 #endif
 }

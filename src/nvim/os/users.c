@@ -6,12 +6,12 @@
 #include <uv.h>
 
 #include "nvim/ascii.h"
-#include "nvim/os/os.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
+#include "nvim/os/os.h"
 #include "nvim/strings.h"
 #ifdef HAVE_PWD_H
-# include <pwd.h>
+#include <pwd.h>
 #endif
 
 // Initialize users garray and fill it with os usernames.
@@ -23,7 +23,7 @@ int os_get_usernames(garray_T *users)
   }
   ga_init(users, sizeof(char *), 20);
 
-# if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
+#if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
   struct passwd *pw;
 
   setpwent();
@@ -34,7 +34,7 @@ int os_get_usernames(garray_T *users)
     }
   }
   endpwent();
-# endif
+#endif
 
   return OK;
 }
@@ -86,4 +86,3 @@ char *os_get_user_directory(const char *name)
 #endif
   return NULL;
 }
-

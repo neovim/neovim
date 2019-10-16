@@ -1,9 +1,11 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/channel.h"
+
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/ui.h"
-#include "nvim/channel.h"
+#include "nvim/ascii.h"
 #include "nvim/eval.h"
 #include "nvim/eval/encode.h"
 #include "nvim/event/socket.h"
@@ -12,7 +14,6 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
 #include "nvim/path.h"
-#include "nvim/ascii.h"
 
 static bool did_stdio = false;
 PMap(uint64_t) *channels = NULL;
@@ -20,10 +21,10 @@ PMap(uint64_t) *channels = NULL;
 /// next free id for a job or rpc channel
 /// 1 is reserved for stdio channel
 /// 2 is reserved for stderr channel
-static uint64_t next_chan_id = CHAN_STDERR+1;
+static uint64_t next_chan_id = CHAN_STDERR + 1;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "channel.c.generated.h"
+#include "channel.c.generated.h"
 #endif
 
 /// Teardown the module
@@ -35,9 +36,8 @@ void channel_teardown(void)
 
   Channel *channel;
 
-  map_foreach_value(channels, channel, {
-    channel_close(channel->id, kChannelPartAll, NULL);
-  });
+  map_foreach_value(channels, channel,
+                    { channel_close(channel->id, kChannelPartAll, NULL); });
 }
 
 /// Closes a channel
@@ -67,7 +67,7 @@ bool channel_close(uint64_t id, ChannelPart part, const char **error)
   if (part == kChannelPartRpc || part == kChannelPartAll) {
     close_main = true;
     if (chan->is_rpc) {
-       rpc_close(chan);
+      rpc_close(chan);
     } else if (part == kChannelPartRpc) {
       *error = (const char *)e_invstream;
       return false;
@@ -266,17 +266,23 @@ static void channel_destroy_early(Channel *chan)
   multiqueue_put(main_loop.events, free_channel_event, 1, chan);
 }
 
-
 static void close_cb(Stream *stream, void *data)
 {
   channel_decref(data);
 }
 
-Channel *channel_job_start(char **argv, CallbackReader on_stdout,
-                           CallbackReader on_stderr, Callback on_exit,
-                           bool pty, bool rpc, bool detach, const char *cwd,
-                           uint16_t pty_width, uint16_t pty_height,
-                           char *term_name, varnumber_T *status_out)
+Channel *channel_job_start(char **argv,
+                           CallbackReader on_stdout,
+                           CallbackReader on_stderr,
+                           Callback on_exit,
+                           bool pty,
+                           bool rpc,
+                           bool detach,
+                           const char *cwd,
+                           uint16_t pty_width,
+                           uint16_t pty_height,
+                           char *term_name,
+                           varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
 
@@ -362,10 +368,12 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   return chan;
 }
 
-
-uint64_t channel_connect(bool tcp, const char *address,
-                         bool rpc, CallbackReader on_output,
-                         int timeout, const char **error)
+uint64_t channel_connect(bool tcp,
+                         const char *address,
+                         bool rpc,
+                         CallbackReader on_output,
+                         int timeout,
+                         const char **error)
 {
   Channel *channel;
 
@@ -383,8 +391,8 @@ uint64_t channel_connect(bool tcp, const char *address,
   }
 
   channel = channel_alloc(kChannelStreamSocket);
-  if (!socket_connect(&main_loop, &channel->stream.socket,
-                      tcp, address, timeout, error)) {
+  if (!socket_connect(&main_loop, &channel->stream.socket, tcp, address,
+                      timeout, error)) {
     channel_destroy_early(channel);
     return 0;
   }
@@ -424,9 +432,9 @@ void channel_from_connection(SocketWatcher *watcher)
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
 /// Neovim
-uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
-                            const char **error)
-  FUNC_ATTR_NONNULL_ALL
+uint64_t channel_from_stdio(bool rpc,
+                            CallbackReader on_output,
+                            const char **error) FUNC_ATTR_NONNULL_ALL
 {
   if (!headless_mode && !embedded_mode) {
     *error = _("can only be opened in headless mode");
@@ -475,7 +483,6 @@ size_t channel_send(uint64_t id, char *data, size_t len, const char **error)
     return len * written;
   }
 
-
   Stream *in = channel_instream(chan);
   if (in->closed) {
     *error = _("Can't send data to closed stream");
@@ -502,7 +509,7 @@ err:
 ///
 /// @return [allocated] Converted list.
 static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
+    FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALWAYS_INLINE
 {
   list_T *const l = tv_list_alloc(kListLenMayKnow);
   // Empty buffer should be represented by [''], encode_list_write() thinks
@@ -514,22 +521,32 @@ static inline list_T *buffer_to_tv_list(const char *const buf, const size_t len)
   return l;
 }
 
-void on_channel_data(Stream *stream, RBuffer *buf, size_t count,
-                     void *data, bool eof)
+void on_channel_data(Stream *stream,
+                     RBuffer *buf,
+                     size_t count,
+                     void *data,
+                     bool eof)
 {
   Channel *chan = data;
   on_channel_output(stream, chan, buf, count, eof, &chan->on_data);
 }
 
-void on_job_stderr(Stream *stream, RBuffer *buf, size_t count,
-                   void *data, bool eof)
+void on_job_stderr(Stream *stream,
+                   RBuffer *buf,
+                   size_t count,
+                   void *data,
+                   bool eof)
 {
   Channel *chan = data;
   on_channel_output(stream, chan, buf, count, eof, &chan->on_stderr);
 }
 
-static void on_channel_output(Stream *stream, Channel *chan, RBuffer *buf,
-                              size_t count, bool eof, CallbackReader *reader)
+static void on_channel_output(Stream *stream,
+                              Channel *chan,
+                              RBuffer *buf,
+                              size_t count,
+                              bool eof,
+                              CallbackReader *reader)
 {
   // stub variable, to keep reading consistent with the order of events, only
   // consider the count parameter.
@@ -677,7 +694,6 @@ static void channel_callback_call(Channel *chan, CallbackReader *reader)
   tv_clear(&rettv);
 }
 
-
 /// Open terminal for channel
 ///
 /// Channel `chan` is assumed to be an open pty channel,
@@ -741,8 +757,7 @@ void channel_info_changed(Channel *chan, bool new)
   event_T event = new ? EVENT_CHANOPEN : EVENT_CHANINFO;
   if (has_event(event)) {
     channel_incref(chan);
-    multiqueue_put(main_loop.events, set_info_event,
-                   2, chan, event);
+    multiqueue_put(main_loop.events, set_info_event, 2, chan, event);
   }
 }
 
@@ -767,8 +782,7 @@ static void set_info_event(void **argv)
 bool channel_job_running(uint64_t id)
 {
   Channel *chan = find_channel(id);
-  return (chan
-          && chan->streamtype == kChannelStreamProc
+  return (chan && chan->streamtype == kChannelStreamProc
           && !process_is_stopped(&chan->stream.proc));
 }
 
@@ -793,15 +807,15 @@ Dictionary channel_info(uint64_t id)
       break;
 
     case kChannelStreamStdio:
-       stream_desc = "stdio";
-       break;
+      stream_desc = "stdio";
+      break;
 
     case kChannelStreamStderr:
-       stream_desc = "stderr";
-       break;
+      stream_desc = "stderr";
+      break;
 
     case kChannelStreamInternal:
-       PUT(info, "internal", BOOLEAN_OBJ(true));
+      PUT(info, "internal", BOOLEAN_OBJ(true));
       FALLTHROUGH;
 
     case kChannelStreamSocket:
@@ -831,8 +845,7 @@ Array channel_all_info(void)
 {
   Channel *channel;
   Array ret = ARRAY_DICT_INIT;
-  map_foreach_value(channels, channel, {
-    ADD(ret, DICTIONARY_OBJ(channel_info(channel->id)));
-  });
+  map_foreach_value(channels, channel,
+                    { ADD(ret, DICTIONARY_OBJ(channel_info(channel->id))); });
   return ret;
 }

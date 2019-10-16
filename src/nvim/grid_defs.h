@@ -7,10 +7,10 @@
 
 #include "nvim/types.h"
 
-#define MAX_MCO  6  // maximum value for 'maxcombine'
+#define MAX_MCO 6  // maximum value for 'maxcombine'
 
 // The characters and attributes drawn on grids.
-typedef char_u schar_T[(MAX_MCO+1) * 4 + 1];
+typedef char_u schar_T[(MAX_MCO + 1) * 4 + 1];
 typedef int16_t sattr_T;
 
 /// ScreenGrid represents a resizable rectuangular grid displayed by UI clients.
@@ -38,10 +38,10 @@ typedef int16_t sattr_T;
 typedef struct {
   handle_T handle;
 
-  schar_T  *chars;
-  sattr_T  *attrs;
+  schar_T *chars;
+  sattr_T *attrs;
   unsigned *line_offset;
-  char_u   *line_wraps;
+  char_u *line_wraps;
 
   // last column that was drawn (not cleared with the default background).
   // only used when "throttled" is set. Not allocated by grid_alloc!
@@ -85,7 +85,10 @@ typedef struct {
   bool comp_disabled;
 } ScreenGrid;
 
-#define SCREEN_GRID_INIT { 0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, \
-                           false, 0, 0, false, true, 0, 0, 0,  false }
+#define SCREEN_GRID_INIT                                                       \
+  {                                                                            \
+    0, NULL, NULL, NULL, NULL, NULL, 0, 0, false, false, 0, 0, false, true, 0, \
+        0, 0, false                                                            \
+  }
 
 #endif  // NVIM_GRID_DEFS_H

@@ -4,9 +4,9 @@
 #include <stdio.h>
 
 #ifdef WIN32
-# include <windows.h>
+#include <windows.h>
 #else
-# include <stdlib.h>
+#include <stdlib.h>
 #endif
 
 #ifdef WIN32
@@ -24,26 +24,14 @@ int main(int argc, char **argv)
   if (value == NULL) {
     return 1;
   }
-  int utf8_len = WideCharToMultiByte(CP_UTF8,
-                                     0,
-                                     value,
-                                     -1,
-                                     NULL,
-                                     0,
-                                     NULL,
-                                     NULL);
+  int utf8_len
+      = WideCharToMultiByte(CP_UTF8, 0, value, -1, NULL, 0, NULL, NULL);
   if (utf8_len == 0) {
     return (int)GetLastError();
   }
   char *utf8_value = (char *)calloc((size_t)utf8_len, sizeof(char));
-  utf8_len = WideCharToMultiByte(CP_UTF8,
-                                 0,
-                                 value,
-                                 -1,
-                                 utf8_value,
-                                 utf8_len,
-                                 NULL,
-                                 NULL);
+  utf8_len = WideCharToMultiByte(CP_UTF8, 0, value, -1, utf8_value, utf8_len,
+                                 NULL, NULL);
   fprintf(stderr, "%s", utf8_value);
   free(utf8_value);
 #else

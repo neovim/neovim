@@ -1,18 +1,18 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/event/signal.h"
+
 #include <uv.h>
 
 #include "nvim/event/loop.h"
-#include "nvim/event/signal.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/signal.c.generated.h"
+#include "event/signal.c.generated.h"
 #endif
 
-
 void signal_watcher_init(Loop *loop, SignalWatcher *watcher, void *data)
-  FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
+    FUNC_ATTR_NONNULL_ARG(1) FUNC_ATTR_NONNULL_ARG(2)
 {
   uv_signal_init(&loop->uv, &watcher->uv);
   watcher->uv.data = watcher;
@@ -21,21 +21,21 @@ void signal_watcher_init(Loop *loop, SignalWatcher *watcher, void *data)
   watcher->events = loop->fast_events;
 }
 
-void signal_watcher_start(SignalWatcher *watcher, signal_cb cb, int signum)
-  FUNC_ATTR_NONNULL_ALL
+void signal_watcher_start(SignalWatcher *watcher,
+                          signal_cb cb,
+                          int signum) FUNC_ATTR_NONNULL_ALL
 {
   watcher->cb = cb;
   uv_signal_start(&watcher->uv, signal_watcher_cb, signum);
 }
 
-void signal_watcher_stop(SignalWatcher *watcher)
-  FUNC_ATTR_NONNULL_ALL
+void signal_watcher_stop(SignalWatcher *watcher) FUNC_ATTR_NONNULL_ALL
 {
   uv_signal_stop(&watcher->uv);
 }
 
 void signal_watcher_close(SignalWatcher *watcher, signal_close_cb cb)
-  FUNC_ATTR_NONNULL_ARG(1)
+    FUNC_ATTR_NONNULL_ARG(1)
 {
   watcher->close_cb = cb;
   uv_close((uv_handle_t *)&watcher->uv, close_cb);

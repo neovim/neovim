@@ -1,36 +1,39 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <string.h>
+#include "nvim/os/shell.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include <uv.h>
 
 #include "nvim/ascii.h"
+#include "nvim/charset.h"
+#include "nvim/event/libuv_process.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/rstream.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
-#include "nvim/event/loop.h"
-#include "nvim/event/libuv_process.h"
-#include "nvim/event/rstream.h"
-#include "nvim/os/shell.h"
-#include "nvim/os/signal.h"
-#include "nvim/types.h"
 #include "nvim/main.h"
-#include "nvim/vim.h"
-#include "nvim/message.h"
-#include "nvim/memory.h"
-#include "nvim/ui.h"
-#include "nvim/screen.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
 #include "nvim/option_defs.h"
-#include "nvim/charset.h"
+#include "nvim/os/signal.h"
+#include "nvim/screen.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
+#include "nvim/ui.h"
+#include "nvim/vim.h"
 
-#define DYNAMIC_BUFFER_INIT { NULL, 0, 0 }
-#define NS_1_SECOND         1000000000U     // 1 second, in nanoseconds
-#define OUT_DATA_THRESHOLD  1024 * 10U      // 10KB, "a few screenfuls" of data.
+#define DYNAMIC_BUFFER_INIT                                                    \
+  {                                                                            \
+    NULL, 0, 0                                                                 \
+  }
+#define NS_1_SECOND 1000000000U        // 1 second, in nanoseconds
+#define OUT_DATA_THRESHOLD 1024 * 10U  // 10KB, "a few screenfuls" of data.
 
 typedef struct {
   char *data;
@@ -38,7 +41,7 @@ typedef struct {
 } DynamicBuffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/shell.c.generated.h"
+#include "os/shell.c.generated.h"
 #endif
 
 /// Builds the argument vector for running the user-configured 'shell' (p_sh)
@@ -49,8 +52,8 @@ typedef struct {
 /// @param cmd Command string, or NULL to run an interactive shell.
 /// @param extra_args Extra arguments to the shell, or NULL.
 /// @return Newly allocated argument vector. Must be freed with shell_free_argv.
-char **shell_build_argv(const char *cmd, const char *extra_args)
-  FUNC_ATTR_NONNULL_RET
+char **shell_build_argv(const char *cmd,
+                        const char *extra_args) FUNC_ATTR_NONNULL_RET
 {
   size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
@@ -59,7 +62,7 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
   size_t i = tokenize(p_sh, rv);
 
   if (extra_args) {
-    rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
+    rv[i++] = xstrdup(extra_args);  // Push a copy of `extra_args`
   }
 
   if (cmd) {
@@ -96,8 +99,7 @@ void shell_free_argv(char **argv)
 /// If the result is too long it is truncated with ellipsis ("...").
 ///
 /// @returns[allocated] `argv` joined to a string.
-char *shell_argv_to_str(char **const argv)
-  FUNC_ATTR_NONNULL_ALL
+char *shell_argv_to_str(char **const argv) FUNC_ATTR_NONNULL_ALL
 {
   size_t n = 0;
   char **p = argv;
@@ -109,7 +111,7 @@ char *shell_argv_to_str(char **const argv)
   while (*p != NULL) {
     xstrlcat(rv, "'", maxsize);
     xstrlcat(rv, *p, maxsize);
-    n = xstrlcat(rv,  "' ", maxsize);
+    n = xstrlcat(rv, "' ", maxsize);
     if (n >= maxsize) {
       break;
     }
@@ -353,8 +355,11 @@ static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
   buf->data = xrealloc(buf->data, buf->cap);
 }
 
-static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
-    void *data, bool eof)
+static void system_data_cb(Stream *stream,
+                           RBuffer *buf,
+                           size_t count,
+                           void *data,
+                           bool eof)
 {
   DynamicBuffer *dbuf = data;
 
@@ -387,10 +392,10 @@ static void system_data_cb(Stream *stream, RBuffer *buf, size_t count,
 ///          Returns the previous decision if size=0.
 static bool out_data_decide_throttle(size_t size)
 {
-  static uint64_t   started     = 0;  // Start time of the current throttle.
-  static size_t     received    = 0;  // Bytes observed since last throttle.
-  static size_t     visit       = 0;  // "Pulse" count of the current throttle.
-  static char       pulse_msg[] = { ' ', ' ', ' ', '\0' };
+  static uint64_t started = 0;  // Start time of the current throttle.
+  static size_t received = 0;   // Bytes observed since last throttle.
+  static size_t visit = 0;      // "Pulse" count of the current throttle.
+  static char pulse_msg[] = {' ', ' ', ' ', '\0'};
 
   if (!size) {
     bool previous_decision = (visit > 0);
@@ -447,29 +452,29 @@ static bool out_data_decide_throttle(size_t size)
 static void out_data_ring(char *output, size_t size)
 {
 #define MAX_CHUNK_SIZE (OUT_DATA_THRESHOLD / 2)
-  static char    last_skipped[MAX_CHUNK_SIZE];  // Saved output.
-  static size_t  last_skipped_len = 0;
+  static char last_skipped[MAX_CHUNK_SIZE];  // Saved output.
+  static size_t last_skipped_len = 0;
 
   assert(output != NULL || (size == 0 || size == SIZE_MAX));
 
-  if (output == NULL && size == 0) {          // Init mode
+  if (output == NULL && size == 0) {  // Init mode
     last_skipped_len = 0;
     return;
   }
 
-  if (output == NULL && size == SIZE_MAX) {   // Print mode
+  if (output == NULL && size == SIZE_MAX) {  // Print mode
     out_data_append_to_screen(last_skipped, &last_skipped_len, true);
     return;
   }
 
   // This is basically a ring-buffer...
-  if (size >= MAX_CHUNK_SIZE) {               // Save mode
+  if (size >= MAX_CHUNK_SIZE) {  // Save mode
     size_t start = size - MAX_CHUNK_SIZE;
     memcpy(last_skipped, output + start, MAX_CHUNK_SIZE);
     last_skipped_len = MAX_CHUNK_SIZE;
   } else if (size > 0) {
     // Length of the old data that can be kept.
-    size_t keep_len   = MIN(last_skipped_len, MAX_CHUNK_SIZE - size);
+    size_t keep_len = MIN(last_skipped_len, MAX_CHUNK_SIZE - size);
     size_t keep_start = last_skipped_len - keep_len;
     // Shift the kept part of the old data to the start.
     if (keep_start) {
@@ -486,8 +491,9 @@ static void out_data_ring(char *output, size_t size)
 /// @param output       Data to append to screen lines.
 /// @param remaining    Size of data.
 /// @param new_line     If true, next data output will be on a new line.
-static void out_data_append_to_screen(char *output, size_t *count, bool eof)
-  FUNC_ATTR_NONNULL_ALL
+static void out_data_append_to_screen(char *output,
+                                      size_t *count,
+                                      bool eof) FUNC_ATTR_NONNULL_ALL
 {
   char *p = output, *end = output + *count;
   while (p < end) {
@@ -502,8 +508,8 @@ static void out_data_append_to_screen(char *output, size_t *count, bool eof)
       //    incomplete UTF-8 sequence that could be composing with the last
       //    complete sequence.
       // This will be corrected when we switch to vterm based implementation
-      int i = *p ? utfc_ptr2len_len((char_u *)p, (int)(end-p)) : 1;
-      if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end-p)) {
+      int i = *p ? utfc_ptr2len_len((char_u *)p, (int)(end - p)) : 1;
+      if (!eof && i == 1 && utf8len_tab_zero[*(uint8_t *)p] > (end - p)) {
         *count = (size_t)(p - output);
         goto end;
       }
@@ -517,8 +523,11 @@ end:
   ui_flush();
 }
 
-static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
-    bool eof)
+static void out_data_cb(Stream *stream,
+                        RBuffer *buf,
+                        size_t count,
+                        void *data,
+                        bool eof)
 {
   size_t cnt;
   char *ptr = rbuffer_read_ptr(buf, &cnt);
@@ -548,13 +557,13 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
 ///        words. It can be NULL if the caller only needs to count words.
 /// @return The number of words parsed.
 static size_t tokenize(const char_u *const str, char **const argv)
-  FUNC_ATTR_NONNULL_ARG(1)
+    FUNC_ATTR_NONNULL_ARG(1)
 {
   size_t argc = 0;
-  const char *p = (const char *) str;
+  const char *p = (const char *)str;
 
   while (*p != NUL) {
-    const size_t len = word_length((const char_u *) p);
+    const size_t len = word_length((const char_u *)p);
 
     if (argv != NULL) {
       // Fill the slot
@@ -562,7 +571,7 @@ static size_t tokenize(const char_u *const str, char **const argv)
     }
 
     argc++;
-    p = (const char *) skipwhite((char_u *) (p + len));
+    p = (const char *)skipwhite((char_u *)(p + len));
   }
 
   return argc;
@@ -617,7 +626,7 @@ static void read_input(DynamicBuffer *buf)
       dynamic_buffer_ensure(buf, buf->len + len);
       buf->data[buf->len++] = NUL;
     } else {
-      char_u  *s = vim_strchr(lp + written, NL);
+      char_u *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : (size_t)(s - (lp + written));
       dynamic_buffer_ensure(buf, buf->len + len);
       memcpy(buf->data + buf->len, lp + written, len);
@@ -657,8 +666,7 @@ static size_t write_output(char *output, size_t remaining, bool eof)
     if (output[off] == NL) {
       // Insert the line
       output[off] = NUL;
-      ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1,
-                false);
+      ml_append(curwin->w_cursor.lnum++, (char_u *)output, (int)off + 1, false);
       size_t skip = off + 1;
       output += skip;
       remaining -= skip;
@@ -706,7 +714,7 @@ static void shell_write_cb(Stream *stream, void *data, int status)
 /// @param cmd Command string
 /// @return    Escaped/quoted command string (allocated).
 static char *shell_xescape_xquote(const char *cmd)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   if (*p_sxq == NUL) {
     return xstrdup(cmd);
@@ -735,4 +743,3 @@ static char *shell_xescape_xquote(const char *cmd)
 
   return ncmd;
 }
-

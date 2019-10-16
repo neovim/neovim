@@ -2,9 +2,9 @@
 #define NVIM_MEMORY_H
 
 #include <stdbool.h>  // for bool
-#include <stdint.h>  // for uint8_t
-#include <stddef.h>  // for size_t
-#include <time.h>  // for time_t
+#include <stddef.h>   // for size_t
+#include <stdint.h>   // for uint8_t
+#include <time.h>     // for time_t
 
 /// `malloc()` function signature
 typedef void *(*MemMalloc)(size_t);
@@ -38,17 +38,17 @@ extern bool entered_free_all_mem;
 #endif
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "memory.h.generated.h"
+#include "memory.h.generated.h"
 #endif
 
-#define XFREE_CLEAR(ptr) \
-  do { \
-    /* Take the address to avoid double evaluation. #1375 */ \
-    void **ptr_ = (void **)&(ptr); \
-    xfree(*ptr_); \
-    /* coverity[dead-store] */ \
-    *ptr_ = NULL; \
-    (void)(*ptr_); \
+#define XFREE_CLEAR(ptr)                                                       \
+  do {                                                                         \
+    /* Take the address to avoid double evaluation. #1375 */                   \
+    void **ptr_ = (void **)&(ptr);                                             \
+    xfree(*ptr_);                                                              \
+    /* coverity[dead-store] */                                                 \
+    *ptr_ = NULL;                                                              \
+    (void)(*ptr_);                                                             \
   } while (0)
 
 #endif  // NVIM_MEMORY_H
