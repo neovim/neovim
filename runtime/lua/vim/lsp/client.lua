@@ -2,7 +2,7 @@ local uv = vim.loop
 local util = require('vim.lsp.util')
 local logger = require('vim.lsp.logger')
 local autocmd = require('vim.lsp.autocmd')
-local message = require('vim.lsp.message')
+local create_message = require('vim.lsp.message').create_message
 local call_callback = require('vim.lsp.callbacks').call_callback
 local protocol = require('vim.lsp.protocol')
 
@@ -152,7 +152,9 @@ Client.initialize = function(self)
   end, nil)
 
   logger.info(
-    "filetype: "..self.filetype..", server_name: "..self.server_name..", offset_encoding: "..self.offset_encoding..", client_capabilities: "..vim.inspect(self.client_capabilities, {newline=''})..", server_capabilities: "..vim.inspect(self.server_capabilities, {newline=''})
+    "filetype: "..self.filetype..", server_name: "..self.server_name..", offset_encoding: "..self.offset_encoding..
+    ", client_capabilities: "..vim.inspect(self.client_capabilities, {newline=''})..
+    ", server_capabilities: "..vim.inspect(self.server_capabilities, {newline=''})
   )
 
   return result
@@ -213,25 +215,27 @@ end
 -- @param params: the parameters to send
 -- @param cb (optional): If sent, will call this when it's done
 --                          otherwise it'll wait til the client is done
+
+-- @return result (table)
 Client.request = function(self, method, params, cb, bufnr)
-  if not method then
-    error("No request method supplied", 2)
-  end
+  local request_id =  self:_request('request', method, params, cb, bufnr)
 
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
-  local request_id = self:request_async(method, params, cb, bufnr)
+  local timeout = os.time() + 10
 
-  local later = os.time() + 10
-
-  while (os.time() < later) and (self._results[request_id] == nil) do
-    vim.api.nvim_command('sleep 100m')
+  while (os.time() < timeout) and (self._results[request_id] == nil) do
+    vim.api.nvim_command('sleep 10m')
   end
 
   if self._results[request_id] == nil then
     return nil
   end
 
-  return self._results[request_id].results
+  local result = self._results[request_id]
+
+  -- Clear results
+  self._results[request_id] = nil
+
+  return result
 end
 
 --- Sends an async request to the client.
@@ -243,56 +247,50 @@ end
 -- @param cb     (function)     : An optional function pointer to call once the request has been completed
 --                                  If a string is passed, it will execute a VimL funciton of that name
 --                                  To disable handling the request, pass "false"
+
+-- @return message id (number)
 Client.request_async = function(self, method, params, cb, bufnr)
+  return self:_request('request_async', method, params, cb, bufnr)
+end
+
+--- Send a notification to the server
+-- @param method (string): Name of the LSP method
+-- @param params (table): the parameters to send
+
+-- @return message id (number)
+Client.notify = function(self, method, params)
+  return self:_request('notification', method, params)
+end
+
+Client._request = function(self, message_type, method, params, cb, bufnr)
+  if self:is_stopped() then
+    local msg = 'Language server client is not running. '..self.server_name
+    logger.info(msg)
+    error(msg, 2)
+  end
+
   if not method then
     error("No request method supplied", 2)
   end
 
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  local message = create_message(self, message_type, method, params)
+  if message == nil then return nil end
 
-  if self:is_stopped() then
-    logger.info('Client closed. '..self.server_name)
-    return nil
+  if message_type == 'request' or message_type == 'request_async' then
+    bufnr = bufnr or vim.api.nvim_get_current_buf()
+    -- After handling callback semantics, store it to call on reply.
+    self._callbacks[message.id] = {
+      cb = cb,
+      method = message.method,
+      bufnr = bufnr,
+      message_type = message_type,
+    }
   end
 
-  local req = message.RequestMessage:new(self, method, params)
+  uv.write(self._stdin, message:data())
+  logger.write('debug', "Send "..message_type.." --- "..self.filetype..", "..self.server_name.." --->: [[ "..message:data().." ]]", 'client')
 
-  if req == nil then
-    return nil
-  end
-
-  -- After handling callback semantics, store it to call on reply.
-  self._callbacks[req.id] = {
-    cb = cb,
-    method = req.method,
-    bufnr = bufnr,
-  }
-
-  uv.write(self._stdin, req:data())
-
-  logger.write('debug', "Send request --- "..self.filetype..", "..self.server_name.." --->: [[ "..req:data().." ]]", 'client')
-
-  return req.id
-end
-
---- Send a notification to the server
--- @param method: Name of the LSP method
--- @param params: the parameters to send
-Client.notify = function(self, method, params)
-  if self:is_stopped() then
-    logger.info('Client closed. '..self.filetype..', '..self.server_name)
-    return nil
-  end
-
-  local notification = message.NotificationMessage:new(self, method, params)
-
-  if notification == nil then
-    return nil
-  end
-
-  uv.write(self._stdin, notification:data())
-
-  logger.write('debug', "Send request --- "..self.filetype..", "..self.server_name.." --->: [[ "..notification:data().." ]]", 'client')
+  return message.id
 end
 
 --- Parse an LSP Message's header
@@ -409,10 +407,11 @@ Client._on_message = function(self, body)
     return
   -- Handle responses
   elseif not json_message.method and json_message.id then
-    local cb
+    local cb, message_type
 
     if self._callbacks[json_message.id] and self._callbacks[json_message.id].cb then
       cb = self._callbacks[json_message.id].cb
+      message_type = self._callbacks[json_message.id].message_type
     end
 
     local id = json_message.id
@@ -426,21 +425,23 @@ Client._on_message = function(self, body)
     end
 
     -- If no callback is passed with request, use the registered callback.
-    local results
+    local callback_results
     if cb then
-      results = { cb(is_success, data) }
+      callback_results = cb(is_success, data)
     else
-      results = { call_callback(method, is_success, data, self.filetype) }
+      callback_results = call_callback(method, is_success, data, self.filetype)
     end
 
-    -- Clear the old callback
+    -- Clear called callback
     self._callbacks[json_message.id] = nil
 
-    self._results[json_message.id] = {
-      complete = true,
-      was_error = json_message['error'],
-      results = results,
-    }
+    -- Cache the response temporary for request.
+    if message_type == 'request' then
+      self._results[json_message.id] = {
+        response = json_message,
+        callback_results = callback_results,
+      }
+    end
   end
 end
 

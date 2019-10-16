@@ -82,7 +82,7 @@ end
 -- @param filetype [string] (optional): The filetype associated with the server
 -- @param server_name [string] (optional)
 --
--- @returns: The result of the request
+-- @returns: The table of results of the request
 lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
@@ -243,10 +243,13 @@ lsp.omnifunc = function(findstart, base)
     return vim.api.nvim_call_function('col', {'.'})
   elseif findstart == 0 then
     local params = lsp.protocol.CompletionParams()
-    local results = vim.lsp.request('textDocument/completion', params, local_fn.build_completion_items)[1]
+    local results = vim.lsp.request('textDocument/completion', params, local_fn.build_completion_items)
     local matches = {}
+    if not vim.tbl_islist(results) then
+      results = { results }
+    end
     for _, result in pairs(results) do
-      matches = vim.tbl_extend('force', matches, result)
+      matches = vim.tbl_extend('force', matches, result.callback_results)
     end
     return matches
   end

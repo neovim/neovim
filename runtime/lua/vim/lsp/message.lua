@@ -112,6 +112,16 @@ function NotificationMessage:json()
   })
 end
 
+local function create_message(client, message_type, method, params)
+  if message_type == 'request' or message_type == 'request_async' then
+    return RequestMessage:new(client, method, params)
+  elseif message_type == 'notification' then
+    return NotificationMessage:new(client, method, params)
+  else
+    error('Message type should be "request" or "notification"', 2)
+  end
+end
+
 local_fn.get_id = function(server_name)
   assert(server_name, 'server_name is required')
   local temp_id = message_id[server_name] or 0
@@ -147,6 +157,7 @@ local_fn.check_language_server_capabilities = function(client, method)
 end
 
 local module =  {
+  create_message = create_message,
   Message = Message,
   RequestMessage = RequestMessage,
   ResponseMessage = ResponseMessage,
