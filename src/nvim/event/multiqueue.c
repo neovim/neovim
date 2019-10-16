@@ -45,15 +45,14 @@
 // calling `rpcrequest` we want to temporarily stop processing events from
 // other sources and focus on a specific channel.
 
+#include "nvim/event/multiqueue.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
-
-
 #include <uv.h>
 
-#include "nvim/event/multiqueue.h"
 #include "nvim/memory.h"
 #include "nvim/os/time.h"
 
@@ -84,27 +83,26 @@ typedef struct {
   int refcount;
 } MulticastEvent;  ///< Event present on multiple queues.
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/multiqueue.c.generated.h"
+#include "event/multiqueue.c.generated.h"
 #endif
 
-static Event NILEVENT = { .handler = NULL, .argv = {NULL} };
+static Event NILEVENT = {.handler = NULL, .argv = {NULL}};
 
 MultiQueue *multiqueue_new_parent(put_callback put_cb, void *data)
 {
   return multiqueue_new(NULL, put_cb, data);
 }
 
-MultiQueue *multiqueue_new_child(MultiQueue *parent)
-  FUNC_ATTR_NONNULL_ALL
+MultiQueue *multiqueue_new_child(MultiQueue *parent) FUNC_ATTR_NONNULL_ALL
 {
   assert(!parent->parent);  // parent cannot have a parent, more like a "root"
   parent->size++;
   return multiqueue_new(parent, NULL, NULL);
 }
 
-static MultiQueue *multiqueue_new(MultiQueue *parent, put_callback put_cb,
+static MultiQueue *multiqueue_new(MultiQueue *parent,
+                                  put_callback put_cb,
                                   void *data)
 {
   MultiQueue *rv = xmalloc(sizeof(MultiQueue));
@@ -197,8 +195,7 @@ static Event multiqueueitem_get_event(MultiQueueItem *item, bool remove)
     // get the next node in the linked queue
     MultiQueue *linked = item->data.queue;
     assert(!multiqueue_empty(linked));
-    MultiQueueItem *child =
-      multiqueue_node_data(QUEUE_HEAD(&linked->headtail));
+    MultiQueueItem *child = multiqueue_node_data(QUEUE_HEAD(&linked->headtail));
     ev = child->data.item.event;
     // remove the child node
     if (remove) {

@@ -1,41 +1,40 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
+#include "nvim/event/rstream.h"
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <uv.h>
 
-#include "nvim/event/rstream.h"
 #include "nvim/ascii.h"
-#include "nvim/vim.h"
-#include "nvim/memory.h"
-#include "nvim/log.h"
-#include "nvim/misc1.h"
 #include "nvim/event/loop.h"
+#include "nvim/log.h"
+#include "nvim/memory.h"
+#include "nvim/misc1.h"
+#include "nvim/vim.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/rstream.c.generated.h"
+#include "event/rstream.c.generated.h"
 #endif
 
 void rstream_init_fd(Loop *loop, Stream *stream, int fd, size_t bufsize)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+    FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream_init(loop, stream, fd, NULL);
   rstream_init(stream, bufsize);
 }
 
 void rstream_init_stream(Stream *stream, uv_stream_t *uvstream, size_t bufsize)
-  FUNC_ATTR_NONNULL_ARG(1, 2)
+    FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   stream_init(NULL, stream, -1, uvstream);
   rstream_init(stream, bufsize);
 }
 
-void rstream_init(Stream *stream, size_t bufsize)
-  FUNC_ATTR_NONNULL_ARG(1)
+void rstream_init(Stream *stream, size_t bufsize) FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->buffer = rbuffer_new(bufsize);
   stream->buffer->data = stream;
@@ -43,12 +42,11 @@ void rstream_init(Stream *stream, size_t bufsize)
   stream->buffer->nonfull_cb = on_rbuffer_nonfull;
 }
 
-
 /// Starts watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
 void rstream_start(Stream *stream, stream_read_cb cb, void *data)
-  FUNC_ATTR_NONNULL_ARG(1)
+    FUNC_ATTR_NONNULL_ARG(1)
 {
   stream->read_cb = cb;
   stream->cb_data = data;
@@ -62,8 +60,7 @@ void rstream_start(Stream *stream, stream_read_cb cb, void *data)
 /// Stops watching for events from a `Stream` instance.
 ///
 /// @param stream The `Stream` instance
-void rstream_stop(Stream *stream)
-  FUNC_ATTR_NONNULL_ALL
+void rstream_stop(Stream *stream) FUNC_ATTR_NONNULL_ALL
 {
   if (stream->uvstream) {
     uv_read_stop(stream->uvstream);
@@ -160,14 +157,8 @@ static void fread_idle_cb(uv_idle_t *handle)
   }
 
   // Synchronous read
-  uv_fs_read(
-      handle->loop,
-      &req,
-      stream->fd,
-      &stream->uvbuf,
-      1,
-      (int64_t) stream->fpos,
-      NULL);
+  uv_fs_read(handle->loop, &req, stream->fd, &stream->uvbuf, 1,
+             (int64_t)stream->fpos, NULL);
 
   uv_fs_req_cleanup(&req);
 
@@ -178,7 +169,7 @@ static void fread_idle_cb(uv_idle_t *handle)
   }
 
   // no errors (req.result (ssize_t) is positive), it's safe to cast.
-  size_t nread = (size_t) req.result;
+  size_t nread = (size_t)req.result;
   rbuffer_produced(stream->buffer, nread);
   stream->fpos += nread;
   invoke_read_cb(stream, nread, false);
@@ -204,10 +195,6 @@ static void invoke_read_cb(Stream *stream, size_t count, bool eof)
   // Don't let the stream be closed before the event is processed.
   stream->pending_reqs++;
 
-  CREATE_EVENT(stream->events,
-               read_event,
-               3,
-               stream,
-               (void *)(uintptr_t *)count,
-               (void *)(uintptr_t)eof);
+  CREATE_EVENT(stream->events, read_event, 3, stream,
+               (void *)(uintptr_t *)count, (void *)(uintptr_t)eof);
 }

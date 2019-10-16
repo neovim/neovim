@@ -31,116 +31,102 @@
 /*
  * Test mf_hash_*() functions.
  */
-    static void
-test_mf_hash(void)
+static void test_mf_hash(void)
 {
-    mf_hashtab_T   ht;
-    mf_hashitem_T  *item;
-    blocknr_T      key;
-    long_u	   i;
-    long_u	   num_buckets;
+  mf_hashtab_T ht;
+  mf_hashitem_T *item;
+  blocknr_T key;
+  long_u i;
+  long_u num_buckets;
 
-    mf_hash_init(&ht);
+  mf_hash_init(&ht);
 
-    /* insert some items and check invariants */
-    for (i = 0; i < TEST_COUNT; i++)
-    {
-	assert(ht.mht_count == i);
+  /* insert some items and check invariants */
+  for (i = 0; i < TEST_COUNT; i++) {
+    assert(ht.mht_count == i);
 
-	/* check that number of buckets is a power of 2 */
-	num_buckets = ht.mht_mask + 1;
-	assert(num_buckets > 0 && (num_buckets & (num_buckets - 1)) == 0);
+    /* check that number of buckets is a power of 2 */
+    num_buckets = ht.mht_mask + 1;
+    assert(num_buckets > 0 && (num_buckets & (num_buckets - 1)) == 0);
 
-	/* check load factor */
-	assert(ht.mht_count <= (num_buckets << MHT_LOG_LOAD_FACTOR));
+    /* check load factor */
+    assert(ht.mht_count <= (num_buckets << MHT_LOG_LOAD_FACTOR));
 
-	if (i < (MHT_INIT_SIZE << MHT_LOG_LOAD_FACTOR))
-	{
-	    /* first expansion shouldn't have occurred yet */
-	    assert(num_buckets == MHT_INIT_SIZE);
-	    assert(ht.mht_buckets == ht.mht_small_buckets);
-	}
-	else
-	{
-	    assert(num_buckets > MHT_INIT_SIZE);
-	    assert(ht.mht_buckets != ht.mht_small_buckets);
-	}
-
-	key = index_to_key(i);
-	assert(mf_hash_find(&ht, key) == NULL);
-
-	/* allocate and add new item */
-	item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);
-	assert(item != NULL);
-	item->mhi_key = key;
-	mf_hash_add_item(&ht, item);
-
-	assert(mf_hash_find(&ht, key) == item);
-
-	if (ht.mht_mask + 1 != num_buckets)
-	{
-	    /* hash table was expanded */
-	    assert(ht.mht_mask + 1 == num_buckets * MHT_GROWTH_FACTOR);
-	    assert(i + 1 == (num_buckets << MHT_LOG_LOAD_FACTOR));
-	}
+    if (i < (MHT_INIT_SIZE << MHT_LOG_LOAD_FACTOR)) {
+      /* first expansion shouldn't have occurred yet */
+      assert(num_buckets == MHT_INIT_SIZE);
+      assert(ht.mht_buckets == ht.mht_small_buckets);
+    } else {
+      assert(num_buckets > MHT_INIT_SIZE);
+      assert(ht.mht_buckets != ht.mht_small_buckets);
     }
 
-    /* check presence of inserted items */
-    for (i = 0; i < TEST_COUNT; i++)
-    {
-	key = index_to_key(i);
-	item = mf_hash_find(&ht, key);
-	assert(item != NULL);
-	assert(item->mhi_key == key);
+    key = index_to_key(i);
+    assert(mf_hash_find(&ht, key) == NULL);
+
+    /* allocate and add new item */
+    item = (mf_hashitem_T *)lalloc_clear(sizeof(*item), FALSE);
+    assert(item != NULL);
+    item->mhi_key = key;
+    mf_hash_add_item(&ht, item);
+
+    assert(mf_hash_find(&ht, key) == item);
+
+    if (ht.mht_mask + 1 != num_buckets) {
+      /* hash table was expanded */
+      assert(ht.mht_mask + 1 == num_buckets * MHT_GROWTH_FACTOR);
+      assert(i + 1 == (num_buckets << MHT_LOG_LOAD_FACTOR));
     }
+  }
 
-    /* delete some items */
-    for (i = 0; i < TEST_COUNT; i++)
-    {
-	if (i % 100 < 70)
-	{
-	    key = index_to_key(i);
-	    item = mf_hash_find(&ht, key);
-	    assert(item != NULL);
-	    assert(item->mhi_key == key);
+  /* check presence of inserted items */
+  for (i = 0; i < TEST_COUNT; i++) {
+    key = index_to_key(i);
+    item = mf_hash_find(&ht, key);
+    assert(item != NULL);
+    assert(item->mhi_key == key);
+  }
 
-	    mf_hash_rem_item(&ht, item);
-	    assert(mf_hash_find(&ht, key) == NULL);
+  /* delete some items */
+  for (i = 0; i < TEST_COUNT; i++) {
+    if (i % 100 < 70) {
+      key = index_to_key(i);
+      item = mf_hash_find(&ht, key);
+      assert(item != NULL);
+      assert(item->mhi_key == key);
 
-	    mf_hash_add_item(&ht, item);
-	    assert(mf_hash_find(&ht, key) == item);
+      mf_hash_rem_item(&ht, item);
+      assert(mf_hash_find(&ht, key) == NULL);
 
-	    mf_hash_rem_item(&ht, item);
-	    assert(mf_hash_find(&ht, key) == NULL);
+      mf_hash_add_item(&ht, item);
+      assert(mf_hash_find(&ht, key) == item);
 
-	    vim_free(item);
-	}
+      mf_hash_rem_item(&ht, item);
+      assert(mf_hash_find(&ht, key) == NULL);
+
+      vim_free(item);
     }
+  }
 
-    /* check again */
-    for (i = 0; i < TEST_COUNT; i++)
-    {
-	key = index_to_key(i);
-	item = mf_hash_find(&ht, key);
+  /* check again */
+  for (i = 0; i < TEST_COUNT; i++) {
+    key = index_to_key(i);
+    item = mf_hash_find(&ht, key);
 
-	if (i % 100 < 70)
-	{
-	    assert(item == NULL);
-	}
-	else
-	{
-	    assert(item != NULL);
-	    assert(item->mhi_key == key);
-	}
+    if (i % 100 < 70) {
+      assert(item == NULL);
+    } else {
+      assert(item != NULL);
+      assert(item->mhi_key == key);
     }
+  }
 
-    /* free hash table and all remaining items */
-    mf_hash_free_all(&ht);
+  /* free hash table and all remaining items */
+  mf_hash_free_all(&ht);
 }
 
-    int
-main(void)
+int main(void)
 {
-    test_mf_hash();
-    return 0;
+  test_mf_hash();
+  return 0;
 }

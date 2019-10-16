@@ -1,24 +1,24 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/os/pty_process_win.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
 #include <winpty_constants.h>
 
-#include "nvim/os/os.h"
 #include "nvim/ascii.h"
-#include "nvim/memory.h"
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
-#include "nvim/os/pty_process_win.h"
+#include "nvim/memory.h"
+#include "nvim/os/os.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/pty_process_win.c.generated.h"
+#include "os/pty_process_win.c.generated.h"
 #endif
 
-static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
-  FUNC_ATTR_NONNULL_ALL
+static void CALLBACK pty_process_finish1(void *context,
+                                         BOOLEAN unused) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = (PtyProcess *)context;
   Process *proc = (Process *)ptyproc;
@@ -29,8 +29,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
 }
 
 /// @returns zero on success, or negative error code.
-int pty_process_spawn(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+int pty_process_spawn(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
   int status = 0;
@@ -76,20 +75,13 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   if (!proc->in.closed) {
     in_req = xmalloc(sizeof(uv_connect_t));
-    uv_pipe_connect(
-        in_req,
-        &proc->in.uv.pipe,
-        in_name,
-        pty_process_connect_cb);
+    uv_pipe_connect(in_req, &proc->in.uv.pipe, in_name, pty_process_connect_cb);
   }
 
   if (!proc->out.closed) {
     out_req = xmalloc(sizeof(uv_connect_t));
-    uv_pipe_connect(
-        out_req,
-        &proc->out.uv.pipe,
-        out_name,
-        pty_process_connect_cb);
+    uv_pipe_connect(out_req, &proc->out.uv.pipe, out_name,
+                    pty_process_connect_cb);
   }
 
   if (proc->cwd != NULL) {
@@ -107,25 +99,20 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto cleanup;
   }
 
-  spawncfg = winpty_spawn_config_new(
-      WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,
-      NULL,  // Optional application name
-      cmd_line,
-      cwd,
-      NULL,  // Optional environment variables
-      &err);
+  spawncfg = winpty_spawn_config_new(WINPTY_SPAWN_FLAG_AUTO_SHUTDOWN,
+                                     NULL,  // Optional application name
+                                     cmd_line, cwd,
+                                     NULL,  // Optional environment variables
+                                     &err);
   if (spawncfg == NULL) {
     emsg = "winpty_spawn_config_new failed";
     goto cleanup;
   }
 
   DWORD win_err = 0;
-  if (!winpty_spawn(winpty_object,
-                    spawncfg,
-                    &process_handle,
+  if (!winpty_spawn(winpty_object, spawncfg, &process_handle,
                     NULL,  // Optional thread handle
-                    &win_err,
-                    &err)) {
+                    &win_err, &err)) {
     if (win_err) {
       status = (int)win_err;
       emsg = "failed to spawn process";
@@ -136,13 +123,9 @@ int pty_process_spawn(PtyProcess *ptyproc)
   }
   proc->pid = (int)GetProcessId(process_handle);
 
-  if (!RegisterWaitForSingleObject(
-      &ptyproc->finish_wait,
-      process_handle,
-      pty_process_finish1,
-      ptyproc,
-      INFINITE,
-      WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
+  if (!RegisterWaitForSingleObject(&ptyproc->finish_wait, process_handle,
+                                   pty_process_finish1, ptyproc, INFINITE,
+                                   WT_EXECUTEDEFAULT | WT_EXECUTEONLYONCE)) {
     abort();
   }
 
@@ -188,17 +171,16 @@ const char *pty_process_tty_name(PtyProcess *ptyproc)
   return "?";
 }
 
-void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
-                        uint16_t height)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_resize(PtyProcess *ptyproc,
+                        uint16_t width,
+                        uint16_t height) FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->winpty_object != NULL) {
     winpty_set_size(ptyproc->winpty_object, width, height, NULL);
   }
 }
 
-void pty_process_close(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_close(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
 
@@ -209,8 +191,7 @@ void pty_process_close(PtyProcess *ptyproc)
   }
 }
 
-void pty_process_close_master(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_close_master(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->winpty_object != NULL) {
     winpty_free(ptyproc->winpty_object);
@@ -218,20 +199,18 @@ void pty_process_close_master(PtyProcess *ptyproc)
   }
 }
 
-void pty_process_teardown(Loop *loop)
-  FUNC_ATTR_NONNULL_ALL
+void pty_process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 {
 }
 
-static void pty_process_connect_cb(uv_connect_t *req, int status)
-  FUNC_ATTR_NONNULL_ALL
+static void pty_process_connect_cb(uv_connect_t *req,
+                                   int status) FUNC_ATTR_NONNULL_ALL
 {
   assert(status == 0);
   req->handle = NULL;
 }
 
-static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
-  FUNC_ATTR_NONNULL_ALL
+static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer) FUNC_ATTR_NONNULL_ALL
 {
   PtyProcess *ptyproc = wait_eof_timer->data;
   Process *proc = (Process *)ptyproc;
@@ -242,8 +221,7 @@ static void wait_eof_timer_cb(uv_timer_t *wait_eof_timer)
   }
 }
 
-static void pty_process_finish2(PtyProcess *ptyproc)
-  FUNC_ATTR_NONNULL_ALL
+static void pty_process_finish2(PtyProcess *ptyproc) FUNC_ATTR_NONNULL_ALL
 {
   Process *proc = (Process *)ptyproc;
 
@@ -267,8 +245,9 @@ static void pty_process_finish2(PtyProcess *ptyproc)
 ///
 /// @returns zero on success, or error code of MultiByteToWideChar function.
 ///
-static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
-  FUNC_ATTR_NONNULL_ALL
+static int build_cmd_line(char **argv,
+                          wchar_t **cmd_line,
+                          bool is_cmdexe) FUNC_ATTR_NONNULL_ALL
 {
   size_t utf8_cmd_line_len = 0;
   size_t argc = 0;
@@ -320,8 +299,9 @@ static int build_cmd_line(char **argv, wchar_t **cmd_line, bool is_cmdexe)
 /// @param  dest_remaining  Destination buffer size.
 /// @param[in]  src Pointer to argument.
 ///
-static void quote_cmd_arg(char *dest, size_t dest_remaining, const char *src)
-  FUNC_ATTR_NONNULL_ALL
+static void quote_cmd_arg(char *dest,
+                          size_t dest_remaining,
+                          const char *src) FUNC_ATTR_NONNULL_ALL
 {
   size_t src_len = strlen(src);
   bool quote_hit = true;
@@ -405,14 +385,23 @@ int translate_winpty_error(int winpty_errno)
   }
 
   switch (winpty_errno) {
-    case WINPTY_ERROR_OUT_OF_MEMORY:                return UV_ENOMEM;
-    case WINPTY_ERROR_SPAWN_CREATE_PROCESS_FAILED:  return UV_EAI_FAIL;
-    case WINPTY_ERROR_LOST_CONNECTION:              return UV_ENOTCONN;
-    case WINPTY_ERROR_AGENT_EXE_MISSING:            return UV_ENOENT;
-    case WINPTY_ERROR_UNSPECIFIED:                   return UV_UNKNOWN;
-    case WINPTY_ERROR_AGENT_DIED:                   return UV_ESRCH;
-    case WINPTY_ERROR_AGENT_TIMEOUT:                return UV_ETIMEDOUT;
-    case WINPTY_ERROR_AGENT_CREATION_FAILED:        return UV_EAI_FAIL;
-    default:                                        return UV_UNKNOWN;
+    case WINPTY_ERROR_OUT_OF_MEMORY:
+      return UV_ENOMEM;
+    case WINPTY_ERROR_SPAWN_CREATE_PROCESS_FAILED:
+      return UV_EAI_FAIL;
+    case WINPTY_ERROR_LOST_CONNECTION:
+      return UV_ENOTCONN;
+    case WINPTY_ERROR_AGENT_EXE_MISSING:
+      return UV_ENOENT;
+    case WINPTY_ERROR_UNSPECIFIED:
+      return UV_UNKNOWN;
+    case WINPTY_ERROR_AGENT_DIED:
+      return UV_ESRCH;
+    case WINPTY_ERROR_AGENT_TIMEOUT:
+      return UV_ETIMEDOUT;
+    case WINPTY_ERROR_AGENT_CREATION_FAILED:
+      return UV_EAI_FAIL;
+    default:
+      return UV_UNKNOWN;
   }
 }

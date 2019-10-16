@@ -1,24 +1,23 @@
 #ifdef USE_KLEE
-# include <klee/klee.h>
+#include <klee/klee.h>
 #else
-# include <string.h>
-# include <stdio.h>
+#include <stdio.h>
+#include <string.h>
 #endif
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <assert.h>
 
-#include "nvim/viml/parser/expressions.h"
-#include "nvim/viml/parser/parser.h"
-#include "nvim/mbyte.h"
-
-#include "nvim/memory.c"
-#include "nvim/mbyte.c"
 #include "nvim/charset.c"
 #include "nvim/garray.c"
 #include "nvim/gettext.c"
 #include "nvim/keymap.c"
+#include "nvim/mbyte.c"
+#include "nvim/mbyte.h"
+#include "nvim/memory.c"
 #include "nvim/viml/parser/expressions.c"
+#include "nvim/viml/parser/expressions.h"
+#include "nvim/viml/parser/parser.h"
 
 #define INPUT_SIZE 7
 
@@ -31,7 +30,8 @@ void simple_get_line(void *cookie, ParserLine *ret_pline)
   (*plines_p)++;
 }
 
-int main(const int argc, const char *const *const argv,
+int main(const int argc,
+         const char *const *const argv,
          const char *const *const environ)
 {
   char input[INPUT_SIZE];
@@ -48,26 +48,26 @@ int main(const int argc, const char *const *const argv,
   klee_make_symbolic(&shift, sizeof(shift), "shift");
   klee_make_symbolic(&flags, sizeof(flags), "flags");
   klee_assume(shift < INPUT_SIZE);
-  klee_assume(flags <= (kELFlagPeek|kELFlagAllowFloat|kELFlagForbidEOC
-                        |kELFlagForbidScope|kELFlagIsNotCmp));
+  klee_assume(flags <= (kELFlagPeek | kELFlagAllowFloat | kELFlagForbidEOC
+                        | kELFlagForbidScope | kELFlagIsNotCmp));
 #endif
 
   ParserLine plines[] = {
-    {
+      {
 #ifdef USE_KLEE
-      .data = &input[shift],
-      .size = sizeof(input) - shift,
+          .data = &input[shift],
+          .size = sizeof(input) - shift,
 #else
-      .data = (const char *)argv[1],
-      .size = strlen(argv[1]),
+          .data = (const char *)argv[1],
+          .size = strlen(argv[1]),
 #endif
-      .allocated = false,
-    },
-    {
-      .data = NULL,
-      .size = 0,
-      .allocated = false,
-    },
+          .allocated = false,
+      },
+      {
+          .data = NULL,
+          .size = 0,
+          .allocated = false,
+      },
   };
 #ifdef USE_KLEE
   assert(plines[0].size <= INPUT_SIZE);
@@ -94,8 +94,8 @@ int main(const int argc, const char *const *const argv,
     assert(pstate.pos.line == 0 && pstate.pos.col == 0);
   } else {
     assert((pstate.pos.line == 0)
-           ? (pstate.pos.col > 0)
-           : (pstate.pos.line == 1 && pstate.pos.col == 0));
+               ? (pstate.pos.col > 0)
+               : (pstate.pos.line == 1 && pstate.pos.col == 0));
   }
   assert(allocated_memory == 0);
   assert(ever_allocated_memory == 0);

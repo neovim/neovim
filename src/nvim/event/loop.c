@@ -1,19 +1,18 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/event/loop.h"
+
 #include <stdarg.h>
 #include <stdint.h>
-
 #include <uv.h>
 
-#include "nvim/event/loop.h"
 #include "nvim/event/process.h"
 #include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/loop.c.generated.h"
+#include "event/loop.c.generated.h"
 #endif
-
 
 void loop_init(Loop *loop, void *data)
 {

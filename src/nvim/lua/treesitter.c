@@ -5,21 +5,20 @@
 // NB: this file mostly contains a generic lua interface for tree-sitter
 // trees and nodes, and could be broken out as a reusable lua package
 
+#include "nvim/lua/treesitter.h"
+
+#include <assert.h>
+#include <inttypes.h>
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-#include <inttypes.h>
-#include <assert.h>
 
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
-
-#include "tree_sitter/api.h"
-
-#include "nvim/lua/treesitter.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/memline.h"
+#include "tree_sitter/api.h"
 
 typedef struct {
   TSParser *parser;
@@ -27,59 +26,54 @@ typedef struct {
 } TSLua_parser;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "lua/treesitter.c.generated.h"
+#include "lua/treesitter.c.generated.h"
 #endif
 
-static struct luaL_Reg parser_meta[] = {
-  { "__gc", parser_gc },
-  { "__tostring", parser_tostring },
-  { "parse_buf", parser_parse_buf },
-  { "edit", parser_edit },
-  { "tree", parser_tree },
-  { NULL, NULL }
-};
+static struct luaL_Reg parser_meta[] = {{"__gc", parser_gc},
+                                        {"__tostring", parser_tostring},
+                                        {"parse_buf", parser_parse_buf},
+                                        {"edit", parser_edit},
+                                        {"tree", parser_tree},
+                                        {NULL, NULL}};
 
-static struct luaL_Reg tree_meta[] = {
-  { "__gc", tree_gc },
-  { "__tostring", tree_tostring },
-  { "root", tree_root },
-  { NULL, NULL }
-};
+static struct luaL_Reg tree_meta[] = {{"__gc", tree_gc},
+                                      {"__tostring", tree_tostring},
+                                      {"root", tree_root},
+                                      {NULL, NULL}};
 
-static struct luaL_Reg node_meta[] = {
-  { "__tostring", node_tostring },
-  { "__eq", node_eq },
-  { "__len", node_child_count },
-  { "range", node_range },
-  { "start", node_start },
-  { "end_", node_end },
-  { "type", node_type },
-  { "symbol", node_symbol },
-  { "named", node_named },
-  { "missing", node_missing },
-  { "has_error", node_has_error },
-  { "sexpr", node_sexpr },
-  { "child_count", node_child_count },
-  { "named_child_count", node_named_child_count },
-  { "child", node_child },
-  { "named_child", node_named_child },
-  { "descendant_for_range", node_descendant_for_range },
-  { "named_descendant_for_range", node_named_descendant_for_range },
-  { "parent", node_parent },
-  { NULL, NULL }
-};
+static struct luaL_Reg node_meta[]
+    = {{"__tostring", node_tostring},
+       {"__eq", node_eq},
+       {"__len", node_child_count},
+       {"range", node_range},
+       {"start", node_start},
+       {"end_", node_end},
+       {"type", node_type},
+       {"symbol", node_symbol},
+       {"named", node_named},
+       {"missing", node_missing},
+       {"has_error", node_has_error},
+       {"sexpr", node_sexpr},
+       {"child_count", node_child_count},
+       {"named_child_count", node_named_child_count},
+       {"child", node_child},
+       {"named_child", node_named_child},
+       {"descendant_for_range", node_descendant_for_range},
+       {"named_descendant_for_range", node_named_descendant_for_range},
+       {"parent", node_parent},
+       {NULL, NULL}};
 
-static PMap(cstr_t) *langs;
+static PMap(cstr_t) * langs;
 
 static void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
 {
   if (luaL_newmetatable(L, tname)) {  // [meta]
     for (size_t i = 0; meta[i].name != NULL; i++) {
       lua_pushcfunction(L, meta[i].func);  // [meta, func]
-      lua_setfield(L, -2, meta[i].name);  // [meta]
+      lua_setfield(L, -2, meta[i].name);   // [meta]
     }
 
-    lua_pushvalue(L, -1);  // [meta, meta]
+    lua_pushvalue(L, -1);            // [meta, meta]
     lua_setfield(L, -2, "__index");  // [meta]
   }
   lua_pop(L, 1);  // [] (don't use it now)
@@ -161,7 +155,7 @@ int tslua_inspect_lang(lua_State *L)
 
   size_t nsymbols = (size_t)ts_language_symbol_count(lang);
 
-  lua_createtable(L, nsymbols-1, 1);  // [retval, symbols]
+  lua_createtable(L, nsymbols - 1, 1);  // [retval, symbols]
   for (size_t i = 0; i < nsymbols; i++) {
     TSSymbolType t = ts_language_symbol_type(lang, i);
     if (t == TSSymbolTypeAuxiliary) {
@@ -179,7 +173,7 @@ int tslua_inspect_lang(lua_State *L)
   lua_setfield(L, -2, "symbols");  // [retval]
 
   size_t nfields = (size_t)ts_language_field_count(lang);
-  lua_createtable(L, nfields-1, 1);  // [retval, fields]
+  lua_createtable(L, nfields - 1, 1);  // [retval, fields]
   for (size_t i = 0; i < nfields; i++) {
     lua_pushstring(L, ts_language_field_name_for_id(lang, i));
     lua_rawseti(L, -2, i);  // [retval, fields]
@@ -203,7 +197,7 @@ int tslua_push_parser(lua_State *L, const char *lang_name)
   p->tree = NULL;
 
   lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_parser");  // [udata, meta]
-  lua_setmetatable(L, -2);  // [udata]
+  lua_setmetatable(L, -2);                                  // [udata]
   return 1;
 }
 
@@ -233,10 +227,12 @@ static int parser_tostring(lua_State *L)
   return 1;
 }
 
-static const char *input_cb(void *payload, uint32_t byte_index,
-                            TSPoint position, uint32_t *bytes_read)
+static const char *input_cb(void *payload,
+                            uint32_t byte_index,
+                            TSPoint position,
+                            uint32_t *bytes_read)
 {
-  buf_T *bp  = payload;
+  buf_T *bp = payload;
 #define BUFSIZE 256
   static char buf[BUFSIZE];
 
@@ -244,11 +240,11 @@ static const char *input_cb(void *payload, uint32_t byte_index,
     *bytes_read = 0;
     return "";
   }
-  char_u *line = ml_get_buf(bp, position.row+1, false);
+  char_u *line = ml_get_buf(bp, position.row + 1, false);
   size_t len = STRLEN(line);
-  size_t tocopy = MIN(len-position.column, BUFSIZE);
+  size_t tocopy = MIN(len - position.column, BUFSIZE);
 
-  memcpy(buf, line+position.column, tocopy);
+  memcpy(buf, line + position.column, tocopy);
   // Translate embedded \n to NUL
   memchrsub(buf, '\n', '\0', tocopy);
   *bytes_read = (uint32_t)tocopy;
@@ -274,7 +270,7 @@ static int parser_parse_buf(lua_State *L)
   if (!payload) {
     return luaL_error(L, "invalid buffer handle: %d", bufnr);
   }
-  TSInput input = { payload, input_cb, TSInputEncodingUTF8 };
+  TSInput input = {payload, input_cb, TSInputEncodingUTF8};
   TSTree *new_tree = ts_parser_parse(p->parser, p->tree, input);
   if (p->tree) {
     ts_tree_delete(p->tree);
@@ -315,18 +311,17 @@ static int parser_edit(lua_State *L)
   long start_byte = lua_tointeger(L, 2);
   long old_end_byte = lua_tointeger(L, 3);
   long new_end_byte = lua_tointeger(L, 4);
-  TSPoint start_point = { lua_tointeger(L, 5), lua_tointeger(L, 6) };
-  TSPoint old_end_point = { lua_tointeger(L, 7), lua_tointeger(L, 8) };
-  TSPoint new_end_point = { lua_tointeger(L, 9), lua_tointeger(L, 10) };
+  TSPoint start_point = {lua_tointeger(L, 5), lua_tointeger(L, 6)};
+  TSPoint old_end_point = {lua_tointeger(L, 7), lua_tointeger(L, 8)};
+  TSPoint new_end_point = {lua_tointeger(L, 9), lua_tointeger(L, 10)};
 
-  TSInputEdit edit = { start_byte, old_end_byte, new_end_byte,
-                       start_point, old_end_point, new_end_point };
+  TSInputEdit edit = {start_byte,  old_end_byte,  new_end_byte,
+                      start_point, old_end_point, new_end_point};
 
   ts_tree_edit(p->tree, &edit);
 
   return 0;
 }
-
 
 // Tree methods
 
@@ -342,15 +337,15 @@ void tslua_push_tree(lua_State *L, TSTree *tree)
   TSTree **ud = lua_newuserdata(L, sizeof(TSTree *));  // [udata]
   *ud = ts_tree_copy(tree);
   lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_tree");  // [udata, meta]
-  lua_setmetatable(L, -2);  // [udata]
+  lua_setmetatable(L, -2);                                // [udata]
 
   // table used for node wrappers to keep a reference to tree wrapper
   // NB: in lua 5.3 the uservalue for the node could just be the tree, but
   // in lua 5.1 the uservalue (fenv) must be a table.
   lua_createtable(L, 1, 0);  // [udata, reftable]
-  lua_pushvalue(L, -2);  // [udata, reftable, udata]
-  lua_rawseti(L, -2, 1);  // [udata, reftable]
-  lua_setfenv(L, -2);  // [udata]
+  lua_pushvalue(L, -2);      // [udata, reftable, udata]
+  lua_rawseti(L, -2, 1);     // [udata, reftable]
+  lua_setfenv(L, -2);        // [udata]
 }
 
 static TSTree *tree_check(lua_State *L)
@@ -403,7 +398,7 @@ static void push_node(lua_State *L, TSNode node)
   TSNode *ud = lua_newuserdata(L, sizeof(TSNode));  // [src, udata]
   *ud = node;
   lua_getfield(L, LUA_REGISTRYINDEX, "treesitter_node");  // [src, udata, meta]
-  lua_setmetatable(L, -2);  // [src, udata]
+  lua_setmetatable(L, -2);                                // [src, udata]
   lua_getfenv(L, -2);  // [src, udata, reftable]
   lua_setfenv(L, -2);  // [src, udata]
 }
@@ -417,7 +412,6 @@ static bool node_check(lua_State *L, TSNode *res)
   }
   return false;
 }
-
 
 static int node_tostring(lua_State *L)
 {
@@ -611,10 +605,9 @@ static int node_descendant_for_range(lua_State *L)
   if (!node_check(L, &node)) {
     return 0;
   }
-  TSPoint start = { (uint32_t)lua_tointeger(L, 2),
-                   (uint32_t)lua_tointeger(L, 3) };
-  TSPoint end = { (uint32_t)lua_tointeger(L, 4),
-                 (uint32_t)lua_tointeger(L, 5) };
+  TSPoint start
+      = {(uint32_t)lua_tointeger(L, 2), (uint32_t)lua_tointeger(L, 3)};
+  TSPoint end = {(uint32_t)lua_tointeger(L, 4), (uint32_t)lua_tointeger(L, 5)};
   TSNode child = ts_node_descendant_for_point_range(node, start, end);
 
   lua_pushvalue(L, 1);
@@ -628,10 +621,9 @@ static int node_named_descendant_for_range(lua_State *L)
   if (!node_check(L, &node)) {
     return 0;
   }
-  TSPoint start = { (uint32_t)lua_tointeger(L, 2),
-                   (uint32_t)lua_tointeger(L, 3) };
-  TSPoint end = { (uint32_t)lua_tointeger(L, 4),
-                 (uint32_t)lua_tointeger(L, 5) };
+  TSPoint start
+      = {(uint32_t)lua_tointeger(L, 2), (uint32_t)lua_tointeger(L, 3)};
+  TSPoint end = {(uint32_t)lua_tointeger(L, 4), (uint32_t)lua_tointeger(L, 5)};
   TSNode child = ts_node_named_descendant_for_point_range(node, start, end);
 
   lua_pushvalue(L, 1);
@@ -649,4 +641,3 @@ static int node_parent(lua_State *L)
   push_node(L, parent);
   return 1;
 }
-

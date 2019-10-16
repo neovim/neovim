@@ -1,25 +1,25 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
+#include "nvim/event/process.h"
+
 #include <assert.h>
 #include <stdlib.h>
-
 #include <uv.h>
 
-#include "nvim/os/shell.h"
+#include "nvim/event/libuv_process.h"
 #include "nvim/event/loop.h"
 #include "nvim/event/rstream.h"
 #include "nvim/event/wstream.h"
-#include "nvim/event/process.h"
-#include "nvim/event/libuv_process.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
+#include "nvim/macros.h"
 #include "nvim/os/process.h"
 #include "nvim/os/pty_process.h"
-#include "nvim/globals.h"
-#include "nvim/macros.h"
-#include "nvim/log.h"
+#include "nvim/os/shell.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "event/process.c.generated.h"
+#include "event/process.c.generated.h"
 #endif
 
 // Time for a process to exit cleanly before we send KILL.
@@ -35,7 +35,7 @@ static bool process_is_tearing_down = false;
 
 /// @returns zero on success, or negative error code
 int process_spawn(Process *proc, bool in, bool out, bool err)
-  FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_NONNULL_ALL
 {
   if (in) {
     uv_pipe_init(&proc->loop->uv, &proc->in.uv.pipe, 0);
@@ -128,7 +128,8 @@ int process_spawn(Process *proc, bool in, bool out, bool err)
 void process_teardown(Loop *loop) FUNC_ATTR_NONNULL_ALL
 {
   process_is_tearing_down = true;
-  kl_iter(WatcherPtr, loop->children, current) {
+  kl_iter(WatcherPtr, loop->children, current)
+  {
     Process *proc = (*current)->data;
     if (proc->detach || proc->type == kProcessTypePty) {
       // Close handles to process without killing it.
@@ -161,7 +162,7 @@ void process_close_streams(Process *proc) FUNC_ATTR_NONNULL_ALL
 ///         -1 if the timeout expired while the process is still running.
 ///         -2 if the user interrupted the wait.
 int process_wait(Process *proc, int ms, MultiQueue *events)
-  FUNC_ATTR_NONNULL_ARG(1)
+    FUNC_ATTR_NONNULL_ARG(1)
 {
   if (!proc->refcount) {
     int status = proc->status;
@@ -178,8 +179,8 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
   proc->refcount++;
   LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, ms,
                             // Until...
-                            got_int                   // interrupted by the user
-                            || proc->refcount == 1);  // job exited
+                            got_int  // interrupted by the user
+                                || proc->refcount == 1);  // job exited
 
   // Assume that a user hitting CTRL-C does not like the current job.  Kill it.
   if (got_int) {
@@ -188,8 +189,7 @@ int process_wait(Process *proc, int ms, MultiQueue *events)
     if (ms == -1) {
       // We can only return if all streams/handles are closed and the job
       // exited.
-      LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, -1,
-          proc->refcount == 1);
+      LOOP_PROCESS_EVENTS_UNTIL(proc->loop, events, -1, proc->refcount == 1);
     } else {
       LOOP_PROCESS_EVENTS(proc->loop, events, 0);
     }
@@ -245,7 +245,8 @@ static void children_kill_cb(uv_timer_t *handle)
 {
   Loop *loop = handle->loop->data;
 
-  kl_iter(WatcherPtr, loop->children, current) {
+  kl_iter(WatcherPtr, loop->children, current)
+  {
     Process *proc = (*current)->data;
     bool exited = (proc->status >= 0);
     if (exited || !proc->stopped_time) {
@@ -286,7 +287,8 @@ static void decref(Process *proc)
 
   Loop *loop = proc->loop;
   kliter_t(WatcherPtr) **node = NULL;
-  kl_iter(WatcherPtr, loop->children, current) {
+  kl_iter(WatcherPtr, loop->children, current)
+  {
     if ((*current)->data == proc) {
       node = current;
       break;
@@ -297,8 +299,7 @@ static void decref(Process *proc)
   CREATE_EVENT(proc->events, process_close_event, 1, proc);
 }
 
-static void process_close(Process *proc)
-  FUNC_ATTR_NONNULL_ARG(1)
+static void process_close(Process *proc) FUNC_ATTR_NONNULL_ARG(1)
 {
   if (process_is_tearing_down && (proc->detach || proc->type == kProcessTypePty)
       && proc->closed) {
@@ -331,8 +332,7 @@ static void process_close(Process *proc)
 ///
 /// @param proc     Process, for which an output stream should be flushed.
 /// @param stream   Stream to flush.
-static void flush_stream(Process *proc, Stream *stream)
-  FUNC_ATTR_NONNULL_ARG(1)
+static void flush_stream(Process *proc, Stream *stream) FUNC_ATTR_NONNULL_ARG(1)
 {
   if (!stream || stream->closed) {
     return;
@@ -360,7 +360,7 @@ static void flush_stream(Process *proc, Stream *stream)
     // Poll for data and process the generated events.
     loop_poll_events(proc->loop, 0);
     if (stream->events) {
-        multiqueue_process_events(stream->events);
+      multiqueue_process_events(stream->events);
     }
 
     // Stream can be closed if it is empty.

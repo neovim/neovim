@@ -6,9 +6,9 @@
 #include <stdlib.h>
 #include <uv.h>
 #ifdef _WIN32
-# include <windows.h>
+#include <windows.h>
 #else
-# include <unistd.h>
+#include <unistd.h>
 #endif
 
 // -V:STRUCT_CAST:641
@@ -49,17 +49,17 @@ static void walk_cb(uv_handle_t *handle, void *arg)
 static void sig_handler(int signum)
 {
   switch (signum) {
-  case SIGWINCH: {
-    int width, height;
-    uv_tty_get_winsize(&tty, &width, &height);
-    fprintf(stderr, "rows: %d, cols: %d\n", height, width);
-    return;
-  }
-  case SIGHUP:
-    exit(42);  // arbitrary exit code to test against
-    return;
-  default:
-    return;
+    case SIGWINCH: {
+      int width, height;
+      uv_tty_get_winsize(&tty, &width, &height);
+      fprintf(stderr, "rows: %d, cols: %d\n", height, width);
+      return;
+    }
+    case SIGHUP:
+      exit(42);  // arbitrary exit code to test against
+      return;
+    default:
+      return;
   }
 }
 #endif
@@ -100,12 +100,11 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   uv_tty_init(&write_loop, &out, fileno(stdout), 0);
 
   uv_write_t req;
-  uv_buf_t b = {
-    .base = buf->base,
+  uv_buf_t b = {.base = buf->base,
 #ifdef WIN32
-    .len = (ULONG)cnt
+                .len = (ULONG)cnt
 #else
-    .len = (size_t)cnt
+                .len = (size_t)cnt
 #endif
   };
   uv_write(&req, STRUCT_CAST(uv_stream_t, &out), &b, 1, NULL);

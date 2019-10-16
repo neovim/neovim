@@ -1,27 +1,26 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-#include <assert.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <time.h>
-#include <limits.h>
+#include "nvim/os/time.h"
 
+#include <assert.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <time.h>
 #include <uv.h>
 
 #include "nvim/assert.h"
-#include "nvim/os/time.h"
-#include "nvim/os/input.h"
 #include "nvim/event/loop.h"
-#include "nvim/vim.h"
 #include "nvim/main.h"
+#include "nvim/os/input.h"
+#include "nvim/vim.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/time.c.generated.h"
+#include "os/time.c.generated.h"
 #endif
 
 /// Initializes the time module
@@ -37,8 +36,7 @@ void time_init(void)
 /// Not related to the time of day and therefore not subject to clock drift.
 ///
 /// @return Relative time value with nanosecond precision.
-uint64_t os_hrtime(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+uint64_t os_hrtime(void) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return uv_hrtime();
 }
@@ -51,8 +49,7 @@ uint64_t os_hrtime(void)
 /// loop-tick (unless uv_update_time is called).
 ///
 /// @return Relative time value with millisecond precision.
-uint64_t os_now(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+uint64_t os_now(void) FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return uv_now(&main_loop.uv);
 }
@@ -90,9 +87,8 @@ void os_microdelay(uint64_t us, bool ignoreinput)
   while (elapsed < ns) {
     // If ignoring input, we simply wait the full delay.
     // Else we check for input in ~100ms intervals.
-    const uint64_t ns_delta = ignoreinput
-                              ? ns - elapsed
-                              : MIN(ns - elapsed, 100000000u);  // 100ms
+    const uint64_t ns_delta
+        = ignoreinput ? ns - elapsed : MIN(ns - elapsed, 100000000u);  // 100ms
 
     const int rv = uv_cond_timedwait(&delay_cond, &delay_mutex, ns_delta);
     if (0 != rv && UV_ETIMEDOUT != rv) {
@@ -147,8 +143,7 @@ struct tm *os_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 /// Obtains the current Unix timestamp.
 ///
 /// @return Seconds since epoch.
-Timestamp os_time(void)
-  FUNC_ATTR_WARN_UNUSED_RESULT
+Timestamp os_time(void) FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  return (Timestamp) time(NULL);
+  return (Timestamp)time(NULL);
 }

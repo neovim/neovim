@@ -8,28 +8,28 @@
 /// replacement.
 
 #include <assert.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <fcntl.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include "auto/config.h"
 
 #ifdef HAVE_SYS_UIO_H
-# include <sys/uio.h>
+#include <sys/uio.h>
 #endif
 
 #include <uv.h>
 
-#include "nvim/os/fileio.h"
-#include "nvim/memory.h"
-#include "nvim/os/os.h"
 #include "nvim/globals.h"
-#include "nvim/rbuffer.h"
 #include "nvim/macros.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
+#include "nvim/os/fileio.h"
+#include "nvim/os/os.h"
+#include "nvim/rbuffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/fileio.c.generated.h"
+#include "os/fileio.c.generated.h"
 #endif
 
 /// Open file
@@ -44,29 +44,31 @@
 ///                   does not have kFileCreate\*).
 ///
 /// @return Error code, or 0 on success. @see os_strerror()
-int file_open(FileDescriptor *const ret_fp, const char *const fname,
-              const int flags, const int mode)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+int file_open(FileDescriptor *const ret_fp,
+              const char *const fname,
+              const int flags,
+              const int mode) FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int os_open_flags = 0;
   TriState wr = kNone;
   // -V:FLAG:501
-#define FLAG(flags, flag, fcntl_flags, wrval, cond) \
-  do { \
-    if (flags & flag) { \
-      os_open_flags |= fcntl_flags; \
-      assert(cond); \
-      if (wrval != kNone) { \
-        wr = wrval; \
-      } \
-    } \
+#define FLAG(flags, flag, fcntl_flags, wrval, cond)                            \
+  do {                                                                         \
+    if (flags & flag) {                                                        \
+      os_open_flags |= fcntl_flags;                                            \
+      assert(cond);                                                            \
+      if (wrval != kNone) {                                                    \
+        wr = wrval;                                                            \
+      }                                                                        \
+    }                                                                          \
   } while (0)
   FLAG(flags, kFileWriteOnly, O_WRONLY, kTrue, true);
-  FLAG(flags, kFileCreateOnly, O_CREAT|O_EXCL|O_WRONLY, kTrue, true);
-  FLAG(flags, kFileCreate, O_CREAT|O_WRONLY, kTrue, !(flags & kFileCreateOnly));
-  FLAG(flags, kFileTruncate, O_TRUNC|O_WRONLY, kTrue,
+  FLAG(flags, kFileCreateOnly, O_CREAT | O_EXCL | O_WRONLY, kTrue, true);
+  FLAG(flags, kFileCreate, O_CREAT | O_WRONLY, kTrue,
        !(flags & kFileCreateOnly));
-  FLAG(flags, kFileAppend, O_APPEND|O_WRONLY, kTrue,
+  FLAG(flags, kFileTruncate, O_TRUNC | O_WRONLY, kTrue,
+       !(flags & kFileCreateOnly));
+  FLAG(flags, kFileAppend, O_APPEND | O_WRONLY, kTrue,
        !(flags & kFileCreateOnly));
   FLAG(flags, kFileReadOnly, O_RDONLY, kFalse, wr != kTrue);
 #ifdef O_NOFOLLOW
@@ -99,15 +101,12 @@ int file_open(FileDescriptor *const ret_fp, const char *const fname,
 ///                    FILE_WRITE_ONLY or FILE_READ_ONLY is required.
 ///
 /// @return Error code (@see os_strerror()) or 0. Currently always returns 0.
-int file_open_fd(FileDescriptor *const ret_fp, const int fd,
-                 const int flags)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+int file_open_fd(FileDescriptor *const ret_fp, const int fd, const int flags)
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  ret_fp->wr = !!(flags & (kFileCreate
-                           |kFileCreateOnly
-                           |kFileTruncate
-                           |kFileAppend
-                           |kFileWriteOnly));
+  ret_fp->wr = !!(flags
+                  & (kFileCreate | kFileCreateOnly | kFileTruncate | kFileAppend
+                     | kFileWriteOnly));
   ret_fp->non_blocking = !!(flags & kFileNonBlocking);
   // Non-blocking writes not supported currently.
   assert(!ret_fp->wr || !ret_fp->non_blocking);
@@ -131,9 +130,11 @@ int file_open_fd(FileDescriptor *const ret_fp, const int fd,
 ///                   does not have kFileCreate\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_new(int *const error, const char *const fname,
-                              const int flags, const int mode)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+FileDescriptor *file_open_new(int *const error,
+                              const char *const fname,
+                              const int flags,
+                              const int mode)
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open(fp, fname, flags, mode)) != 0) {
@@ -152,9 +153,10 @@ FileDescriptor *file_open_new(int *const error, const char *const fname,
 ///                   does not have FILE_CREATE\*).
 ///
 /// @return [allocated] Opened file or NULL in case of error.
-FileDescriptor *file_open_fd_new(int *const error, const int fd,
+FileDescriptor *file_open_fd_new(int *const error,
+                                 const int fd,
                                  const int flags)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
 {
   FileDescriptor *const fp = xmalloc(sizeof(*fp));
   if ((*error = file_open_fd(fp, fd, flags)) != 0) {
@@ -170,8 +172,8 @@ FileDescriptor *file_open_fd_new(int *const error, const int fd,
 /// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
 ///
 /// @return 0 or error code.
-int file_close(FileDescriptor *const fp, const bool do_fsync)
-  FUNC_ATTR_NONNULL_ALL
+int file_close(FileDescriptor *const fp,
+               const bool do_fsync) FUNC_ATTR_NONNULL_ALL
 {
   const int flush_error = (do_fsync ? file_fsync(fp) : file_flush(fp));
   const int close_error = os_close(fp->fd);
@@ -188,8 +190,8 @@ int file_close(FileDescriptor *const fp, const bool do_fsync)
 /// @param[in]  do_fsync  If true, use fsync() to write changes to disk.
 ///
 /// @return 0 or error code.
-int file_free(FileDescriptor *const fp, const bool do_fsync)
-  FUNC_ATTR_NONNULL_ALL
+int file_free(FileDescriptor *const fp,
+              const bool do_fsync) FUNC_ATTR_NONNULL_ALL
 {
   const int ret = file_close(fp, do_fsync);
   xfree(fp);
@@ -201,8 +203,7 @@ int file_free(FileDescriptor *const fp, const bool do_fsync)
 /// @param[in,out]  fp  File to work with.
 ///
 /// @return 0 or error code.
-int file_flush(FileDescriptor *const fp)
-  FUNC_ATTR_NONNULL_ALL
+int file_flush(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
 {
   if (!fp->wr) {
     return 0;
@@ -218,8 +219,7 @@ int file_flush(FileDescriptor *const fp)
 /// @param[in,out]  fp  File to work with.
 ///
 /// @return 0 or error code.
-int file_fsync(FileDescriptor *const fp)
-  FUNC_ATTR_NONNULL_ALL
+int file_fsync(FileDescriptor *const fp) FUNC_ATTR_NONNULL_ALL
 {
   if (!fp->wr) {
     return 0;
@@ -250,7 +250,7 @@ static char writebuf[kRWBufferSize];
 /// @param[in,out]  rv  RBuffer instance used.
 /// @param[in,out]  fp  File to work with.
 static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
-  FUNC_ATTR_NONNULL_ALL
+    FUNC_ATTR_NONNULL_ALL
 {
   assert(fp->wr);
   assert(rv->data == (void *)fp);
@@ -258,8 +258,8 @@ static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
     return;
   }
   const size_t read_bytes = rbuffer_read(rv, writebuf, kRWBufferSize);
-  const ptrdiff_t wres = os_write(fp->fd, writebuf, read_bytes,
-                                  fp->non_blocking);
+  const ptrdiff_t wres
+      = os_write(fp->fd, writebuf, read_bytes, fp->non_blocking);
   if (wres != (ptrdiff_t)read_bytes) {
     if (wres >= 0) {
       fp->_error = UV_EIO;
@@ -277,9 +277,10 @@ static void file_rb_write_full_cb(RBuffer *const rv, FileDescriptor *const fp)
 ///                   bytes.
 ///
 /// @return error_code (< 0) or number of bytes read.
-ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
+ptrdiff_t file_read(FileDescriptor *const fp,
+                    char *const ret_buf,
                     const size_t size)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(!fp->wr);
   char *buf = ret_buf;
@@ -306,13 +307,13 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
       // both target buffer and RBuffer at once, …
       size_t write_count;
       struct iovec iov[] = {
-        { .iov_base = buf, .iov_len = read_remaining },
-        { .iov_base = rbuffer_write_ptr(rv, &write_count),
-          .iov_len = kRWBufferSize },
+          {.iov_base = buf, .iov_len = read_remaining},
+          {.iov_base = rbuffer_write_ptr(rv, &write_count),
+           .iov_len = kRWBufferSize},
       };
       assert(write_count == kRWBufferSize);
-      const ptrdiff_t r_ret = os_readv(fp->fd, &fp->eof, iov,
-                                       ARRAY_SIZE(iov), fp->non_blocking);
+      const ptrdiff_t r_ret
+          = os_readv(fp->fd, &fp->eof, iov, ARRAY_SIZE(iov), fp->non_blocking);
       if (r_ret > 0) {
         if (r_ret > (ptrdiff_t)read_remaining) {
           rbuffer_produced(rv, (size_t)(r_ret - (ptrdiff_t)read_remaining));
@@ -328,8 +329,8 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
       if (read_remaining >= kRWBufferSize) {
         // …otherwise leave RBuffer empty and populate only target buffer,
         // because filtering information through rbuffer will be more syscalls.
-        const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof, buf, read_remaining,
-                                        fp->non_blocking);
+        const ptrdiff_t r_ret
+            = os_read(fp->fd, &fp->eof, buf, read_remaining, fp->non_blocking);
         if (r_ret >= 0) {
           read_remaining -= (size_t)r_ret;
           return (ptrdiff_t)(size - read_remaining);
@@ -338,9 +339,9 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
         }
       } else {
         size_t write_count;
-        const ptrdiff_t r_ret = os_read(fp->fd, &fp->eof,
-                                        rbuffer_write_ptr(rv, &write_count),
-                                        kRWBufferSize, fp->non_blocking);
+        const ptrdiff_t r_ret
+            = os_read(fp->fd, &fp->eof, rbuffer_write_ptr(rv, &write_count),
+                      kRWBufferSize, fp->non_blocking);
         assert(write_count == kRWBufferSize);
         if (r_ret > 0) {
           rbuffer_produced(rv, (size_t)r_ret);
@@ -362,9 +363,10 @@ ptrdiff_t file_read(FileDescriptor *const fp, char *const ret_buf,
 /// @param[in]  size  Amount of bytes to write.
 ///
 /// @return Number of bytes written or libuv error code (< 0).
-ptrdiff_t file_write(FileDescriptor *const fp, const char *const buf,
-                     const size_t size)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1)
+ptrdiff_t file_write(FileDescriptor *const fp,
+                     const char *const buf,
+                     const size_t size) FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ARG(1)
 {
   assert(fp->wr);
   const size_t written = rbuffer_write(fp->rv, buf, size);
@@ -386,14 +388,14 @@ static char skipbuf[kRWBufferSize];
 ///
 /// This is like `fseek(fp, size, SEEK_CUR)`, but actual implementation simply
 /// reads to a buffer and discards the result.
-ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
-  FUNC_ATTR_NONNULL_ALL
+ptrdiff_t file_skip(FileDescriptor *const fp,
+                    const size_t size) FUNC_ATTR_NONNULL_ALL
 {
   assert(!fp->wr);
   size_t read_bytes = 0;
   do {
-    const ptrdiff_t new_read_bytes = file_read(
-        fp, skipbuf, MIN(size - read_bytes, sizeof(skipbuf)));
+    const ptrdiff_t new_read_bytes
+        = file_read(fp, skipbuf, MIN(size - read_bytes, sizeof(skipbuf)));
     if (new_read_bytes < 0) {
       return new_read_bytes;
     } else if (new_read_bytes == 0) {
@@ -413,7 +415,7 @@ ptrdiff_t file_skip(FileDescriptor *const fp, const size_t size)
 ///
 /// @return 0 in case of success, -1 in case of error.
 int msgpack_file_write(void *data, const char *buf, size_t len)
-  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
+    FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   assert(len < PTRDIFF_MAX);
   const ptrdiff_t written_bytes = file_write((FileDescriptor *)data, buf, len);

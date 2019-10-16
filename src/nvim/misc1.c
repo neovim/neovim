@@ -5,40 +5,47 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include "nvim/misc1.h"
+
 #include <assert.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <string.h>
-#include <limits.h>
 
-#include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/misc1.h"
+#include "nvim/buffer.h"
+#include "nvim/buffer_updates.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
+#include "nvim/event/stream.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
-#include "nvim/func_attr.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
+#include "nvim/garray.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
-#include "nvim/buffer_updates.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/garray.h"
-#include "nvim/move.h"
 #include "nvim/mouse.h"
+#include "nvim/move.h"
 #include "nvim/option.h"
+#include "nvim/os/input.h"
+#include "nvim/os/os.h"
+#include "nvim/os/shell.h"
+#include "nvim/os/signal.h"
+#include "nvim/os/time.h"
 #include "nvim/os_unix.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
@@ -49,17 +56,11 @@
 #include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/vim.h"
 #include "nvim/window.h"
-#include "nvim/os/os.h"
-#include "nvim/os/shell.h"
-#include "nvim/os/signal.h"
-#include "nvim/os/input.h"
-#include "nvim/os/time.h"
-#include "nvim/event/stream.h"
-#include "nvim/buffer.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "misc1.c.generated.h"
+#include "misc1.c.generated.h"
 #endif
 // All user names (for ~user completion as done by shell).
 static garray_T ga_users = GA_EMPTY_INIT_VALUE;
@@ -74,21 +75,24 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
  * If "include_space" is set, include trailing whitespace while calculating the
  * length.
  */
-int get_leader_len(char_u *line, char_u **flags, int backward, int include_space)
+int get_leader_len(char_u *line,
+                   char_u **flags,
+                   int backward,
+                   int include_space)
 {
   int i, j;
   int result;
   int got_com = FALSE;
   int found_one;
-  char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
-  char_u      *string;                  /* pointer to comment string */
-  char_u      *list;
+  char_u part_buf[COM_MAX_LEN]; /* buffer for one option part */
+  char_u *string;               /* pointer to comment string */
+  char_u *list;
   int middle_match_len = 0;
-  char_u      *prev_list;
-  char_u      *saved_flags = NULL;
+  char_u *prev_list;
+  char_u *saved_flags = NULL;
 
   result = i = 0;
-  while (ascii_iswhite(line[i]))      /* leading white space is ignored */
+  while (ascii_iswhite(line[i])) /* leading white space is ignored */
     ++i;
 
   /*
@@ -99,22 +103,21 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
      * scan through the 'comments' option for a match
      */
     found_one = FALSE;
-    for (list = curbuf->b_p_com; *list; ) {
+    for (list = curbuf->b_p_com; *list;) {
       /* Get one option part into part_buf[].  Advance "list" to next
        * one.  Put "string" at start of string.  */
       if (!got_com && flags != NULL)
-        *flags = list;              /* remember where flags started */
+        *flags = list; /* remember where flags started */
       prev_list = list;
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
-      if (string == NULL)           /* missing ':', ignore this part */
+      if (string == NULL) /* missing ':', ignore this part */
         continue;
-      *string++ = NUL;              /* isolate flags from string */
+      *string++ = NUL; /* isolate flags from string */
 
       /* If we found a middle match previously, use that match when this
        * is not a middle or end. */
-      if (middle_match_len != 0
-          && vim_strchr(part_buf, COM_MIDDLE) == NULL
+      if (middle_match_len != 0 && vim_strchr(part_buf, COM_MIDDLE) == NULL
           && vim_strchr(part_buf, COM_END) == NULL)
         break;
 
@@ -133,19 +136,19 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
        * TABs and spaces). */
       if (ascii_iswhite(string[0])) {
         if (i == 0 || !ascii_iswhite(line[i - 1]))
-          continue;            /* missing white space */
+          continue; /* missing white space */
         while (ascii_iswhite(string[0]))
           ++string;
       }
       for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
         ;
       if (string[j] != NUL)
-        continue;          /* string doesn't match */
+        continue; /* string doesn't match */
 
       /* When 'b' flag used, there must be white space or an
        * end-of-line after the string in the line. */
-      if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL)
+      if (vim_strchr(part_buf, COM_BLANK) != NULL && !ascii_iswhite(line[i + j])
+          && line[i + j] != NUL)
         continue;
 
       /* We have found a match, stop searching unless this is a middle
@@ -213,12 +216,12 @@ int get_last_leader_offset(char_u *line, char_u **flags)
   int result = -1;
   int i, j;
   int lower_check_bound = 0;
-  char_u      *string;
-  char_u      *com_leader;
-  char_u      *com_flags;
-  char_u      *list;
+  char_u *string;
+  char_u *com_leader;
+  char_u *com_flags;
+  char_u *list;
   int found_one;
-  char_u part_buf[COM_MAX_LEN];         /* buffer for one option part */
+  char_u part_buf[COM_MAX_LEN]; /* buffer for one option part */
 
   /*
    * Repeat to match several nested comment strings.
@@ -229,7 +232,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
      * scan through the 'comments' option for a match
      */
     found_one = FALSE;
-    for (list = curbuf->b_p_com; *list; ) {
+    for (list = curbuf->b_p_com; *list;) {
       char_u *flags_save = list;
 
       /*
@@ -238,11 +241,11 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        */
       (void)copy_option_part(&list, part_buf, COM_MAX_LEN, ",");
       string = vim_strchr(part_buf, ':');
-      if (string == NULL) {     /* If everything is fine, this cannot actually
-                                 * happen. */
+      if (string == NULL) { /* If everything is fine, this cannot actually
+                             * happen. */
         continue;
       }
-      *string++ = NUL;          /* Isolate flags from string. */
+      *string++ = NUL; /* Isolate flags from string. */
       com_leader = string;
 
       /*
@@ -267,8 +270,8 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * When 'b' flag used, there must be white space or an
        * end-of-line after the string in the line.
        */
-      if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !ascii_iswhite(line[i + j]) && line[i + j] != NUL) {
+      if (vim_strchr(part_buf, COM_BLANK) != NULL && !ascii_iswhite(line[i + j])
+          && line[i + j] != NUL) {
         continue;
       }
 
@@ -298,7 +301,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
     }
 
     if (found_one) {
-      char_u part_buf2[COM_MAX_LEN];            /* buffer for one option part */
+      char_u part_buf2[COM_MAX_LEN]; /* buffer for one option part */
       int len1, len2, off;
 
       result = i;
@@ -320,7 +323,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
         ++com_leader;
       len1 = (int)STRLEN(com_leader);
 
-      for (list = curbuf->b_p_com; *list; ) {
+      for (list = curbuf->b_p_com; *list;) {
         char_u *flags_save = list;
 
         (void)copy_option_part(&list, part_buf2, COM_MAX_LEN, ",");
@@ -336,7 +339,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
 
         /* Now we have to verify whether string ends with a substring
          * beginning the com_leader. */
-        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2; ) {
+        for (off = (len2 > i ? i : len2); off > 0 && off + len1 > len2;) {
           --off;
           if (!STRNCMP(string + off, com_leader, len2 - off)) {
             if (i - off < lower_check_bound)
@@ -357,10 +360,9 @@ int plines(const linenr_T lnum)
   return plines_win(curwin, lnum, true);
 }
 
-int plines_win(
-    win_T *const wp,
-    const linenr_T lnum,
-    const bool winheight          // when true limit to window height
+int plines_win(win_T *const wp,
+               const linenr_T lnum,
+               const bool winheight  // when true limit to window height
 )
 {
   /* Check for filler lines above this buffer line.  When folded the result
@@ -373,10 +375,9 @@ int plines_nofill(const linenr_T lnum)
   return plines_win_nofill(curwin, lnum, true);
 }
 
-int plines_win_nofill(
-    win_T *const wp,
-    const linenr_T lnum,
-    const bool winheight          // when true limit to window height
+int plines_win_nofill(win_T *const wp,
+                      const linenr_T lnum,
+                      const bool winheight  // when true limit to window height
 )
 {
   if (!wp->w_p_wrap) {
@@ -405,12 +406,12 @@ int plines_win_nofill(
  */
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
-  char_u      *s;
+  char_u *s;
   unsigned int col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
-  if (*s == NUL)                /* empty line */
+  if (*s == NUL) /* empty line */
     return 1;
   col = win_linetabsize(wp, s, (colnr_T)MAXCOL);
 
@@ -432,7 +433,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   }
   col -= (unsigned int)width;
   width += win_col_off2(wp);
-  assert(col <= INT_MAX && (int)col < INT_MAX - (width -1));
+  assert(col <= INT_MAX && (int)col < INT_MAX - (width - 1));
   return ((int)col + (width - 1)) / width + 1;
 }
 
@@ -494,8 +495,11 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
 /// @param[in]  cache    whether to use the window's cache for folds
 ///
 /// @return the total number of screen lines
-int plines_win_full(win_T *wp, linenr_T lnum, linenr_T *const nextp,
-                    bool *const foldedp, const bool cache)
+int plines_win_full(win_T *wp,
+                    linenr_T lnum,
+                    linenr_T *const nextp,
+                    bool *const foldedp,
+                    const bool cache)
 {
   bool folded = hasFoldingWin(wp, lnum, NULL, nextp, cache, NULL);
   if (foldedp) {
@@ -521,8 +525,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   return count;
 }
 
-int gchar_pos(pos_T *pos)
-  FUNC_ATTR_NONNULL_ARG(1)
+int gchar_pos(pos_T *pos) FUNC_ATTR_NONNULL_ARG(1)
 {
   // When searching columns is sometimes put at the end of a line.
   if (pos->col == MAXCOL) {
@@ -537,7 +540,8 @@ int gchar_pos(pos_T *pos)
  */
 void check_status(buf_T *buf)
 {
-  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab)
+  {
     if (wp->w_buffer == buf && wp->w_status_height) {
       wp->w_redr_status = TRUE;
       if (must_redraw < VALID) {
@@ -566,7 +570,7 @@ int ask_yesno(const char *const str, const bool direct)
 
   no_wait_return++;
   State = CONFIRM;  // Mouse behaves like with :confirm.
-  setmouse();  // Disable mouse in xterm.
+  setmouse();       // Disable mouse in xterm.
   no_mapping++;
 
   int r = ' ';
@@ -597,27 +601,13 @@ int ask_yesno(const char *const str, const bool direct)
  */
 int is_mouse_key(int c)
 {
-  return c == K_LEFTMOUSE
-         || c == K_LEFTMOUSE_NM
-         || c == K_LEFTDRAG
-         || c == K_LEFTRELEASE
-         || c == K_LEFTRELEASE_NM
-         || c == K_MIDDLEMOUSE
-         || c == K_MIDDLEDRAG
-         || c == K_MIDDLERELEASE
-         || c == K_RIGHTMOUSE
-         || c == K_RIGHTDRAG
-         || c == K_RIGHTRELEASE
-         || c == K_MOUSEDOWN
-         || c == K_MOUSEUP
-         || c == K_MOUSELEFT
-         || c == K_MOUSERIGHT
-         || c == K_X1MOUSE
-         || c == K_X1DRAG
-         || c == K_X1RELEASE
-         || c == K_X2MOUSE
-         || c == K_X2DRAG
-         || c == K_X2RELEASE;
+  return c == K_LEFTMOUSE || c == K_LEFTMOUSE_NM || c == K_LEFTDRAG
+         || c == K_LEFTRELEASE || c == K_LEFTRELEASE_NM || c == K_MIDDLEMOUSE
+         || c == K_MIDDLEDRAG || c == K_MIDDLERELEASE || c == K_RIGHTMOUSE
+         || c == K_RIGHTDRAG || c == K_RIGHTRELEASE || c == K_MOUSEDOWN
+         || c == K_MOUSEUP || c == K_MOUSELEFT || c == K_MOUSERIGHT
+         || c == K_X1MOUSE || c == K_X1DRAG || c == K_X1RELEASE
+         || c == K_X2MOUSE || c == K_X2DRAG || c == K_X2RELEASE;
 }
 
 /*
@@ -630,7 +620,7 @@ int is_mouse_key(int c)
  */
 int get_keystroke(MultiQueue *events)
 {
-  char_u      *buf = NULL;
+  char_u *buf = NULL;
   int buflen = 150;
   int maxlen;
   int len = 0;
@@ -638,8 +628,8 @@ int get_keystroke(MultiQueue *events)
   int save_mapped_ctrl_c = mapped_ctrl_c;
   int waited = 0;
 
-  mapped_ctrl_c = 0;        // mappings are not used here
-  for (;; ) {
+  mapped_ctrl_c = 0;  // mappings are not used here
+  for (;;) {
     // flush output before waiting
     ui_flush();
     /* Leave some room for check_termcode() to insert a key code into (max
@@ -665,7 +655,7 @@ int get_keystroke(MultiQueue *events)
       len += n;
       waited = 0;
     } else if (len > 0)
-      ++waited;             /* keep track of the waiting time */
+      ++waited; /* keep track of the waiting time */
 
     if (n > 0) {  // found a termcode: adjust length
       len = n;
@@ -678,10 +668,8 @@ int get_keystroke(MultiQueue *events)
     n = buf[0];
     if (n == K_SPECIAL) {
       n = TO_SPECIAL(buf[1], buf[2]);
-      if (buf[1] == KS_MODIFIER
-          || n == K_IGNORE
-          || (is_mouse_key(n) && n != K_LEFTMOUSE)
-          ) {
+      if (buf[1] == KS_MODIFIER || n == K_IGNORE
+          || (is_mouse_key(n) && n != K_LEFTMOUSE)) {
         if (buf[1] == KS_MODIFIER)
           mod_mask = buf[2];
         len -= 3;
@@ -709,11 +697,8 @@ int get_keystroke(MultiQueue *events)
  * Get a number from the user.
  * When "mouse_used" is not NULL allow using the mouse.
  */
-int 
-get_number (
-    int colon,                              /* allow colon to abort */
-    int *mouse_used
-)
+int get_number(int colon, /* allow colon to abort */
+               int *mouse_used)
 {
   int n = 0;
   int c;
@@ -728,7 +713,7 @@ get_number (
     return 0;
 
   no_mapping++;
-  for (;; ) {
+  for (;;) {
     ui_cursor_goto(msg_row, msg_col);
     c = safe_vgetc();
     if (ascii_isdigit(c)) {
@@ -749,7 +734,7 @@ get_number (
       stuffcharReadbuff(':');
       if (!exmode_active)
         cmdline_row = msg_row;
-      skip_redraw = TRUE;           /* skip redraw once */
+      skip_redraw = TRUE; /* skip redraw once */
       do_redraw = FALSE;
       break;
     } else if (c == CAR || c == NL || c == Ctrl_C || c == ESC)
@@ -772,7 +757,8 @@ int prompt_for_number(int *mouse_used)
 
   /* When using ":silent" assume that <CR> was entered. */
   if (mouse_used != NULL)
-    MSG_PUTS(_("Type number and <Enter> or click with mouse (empty cancels): "));
+    MSG_PUTS(
+        _("Type number and <Enter> or click with mouse (empty cancels): "));
   else
     MSG_PUTS(_("Type number and <Enter> (empty cancels): "));
 
@@ -808,8 +794,8 @@ void msgmore(long n)
 {
   long pn;
 
-  if (global_busy           /* no messages now, wait until global is finished */
-      || !messaging())        /* 'lazyredraw' set, don't do messages now */
+  if (global_busy      /* no messages now, wait until global is finished */
+      || !messaging()) /* 'lazyredraw' set, don't do messages now */
     return;
 
   /* We don't want to overwrite another important message, but do overwrite
@@ -831,11 +817,11 @@ void msgmore(long n)
         STRLCPY(msg_buf, _("1 line less"), MSG_BUF_LEN);
     } else {
       if (n > 0)
-        vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-            _("%" PRId64 " more lines"), (int64_t)pn);
+        vim_snprintf((char *)msg_buf, MSG_BUF_LEN, _("%" PRId64 " more lines"),
+                     (int64_t)pn);
       else
-        vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-            _("%" PRId64 " fewer lines"), (int64_t)pn);
+        vim_snprintf((char *)msg_buf, MSG_BUF_LEN, _("%" PRId64 " fewer lines"),
+                     (int64_t)pn);
     }
     if (got_int) {
       xstrlcat((char *)msg_buf, _(" (Interrupted)"), MSG_BUF_LEN);
@@ -917,7 +903,7 @@ static void init_users(void)
   }
 
   lazy_init_done = TRUE;
-  
+
   os_get_usernames(&ga_users);
 }
 
@@ -946,9 +932,9 @@ int match_user(char_u *name)
   init_users();
   for (int i = 0; i < ga_users.ga_len; i++) {
     if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0)
-      return 2;       /* full match */
+      return 2; /* full match */
     if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0)
-      result = 1;       /* partial match */
+      result = 1; /* partial match */
   }
   return result;
 }
@@ -957,8 +943,7 @@ int match_user(char_u *name)
 /// @note IObuff must contain a message.
 /// @note This may be called from deadly_signal() in a signal handler, avoid
 ///       unsafe functions, such as allocating memory.
-void preserve_exit(void)
-  FUNC_ATTR_NORETURN
+void preserve_exit(void) FUNC_ATTR_NORETURN
 {
   // 'true' when we are sure to exit, e.g., after a deadly signal
   static bool really_exiting = false;
@@ -979,9 +964,10 @@ void preserve_exit(void)
   mch_errmsg("\n");
   ui_flush();
 
-  ml_close_notmod();                // close all not-modified buffers
+  ml_close_notmod();  // close all not-modified buffers
 
-  FOR_ALL_BUFFERS(buf) {
+  FOR_ALL_BUFFERS(buf)
+  {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       mch_errmsg((uint8_t *)"Vim: preserving files...\n");
       ui_flush();
@@ -990,7 +976,7 @@ void preserve_exit(void)
     }
   }
 
-  ml_close_all(false);              // close all memfiles, without deleting
+  ml_close_all(false);  // close all memfiles, without deleting
 
   mch_errmsg("Vim: Finished.\n");
 
@@ -1005,7 +991,7 @@ void preserve_exit(void)
  */
 
 #ifndef BREAKCHECK_SKIP
-#  define BREAKCHECK_SKIP 1000
+#define BREAKCHECK_SKIP 1000
 #endif
 
 static int breakcheck_count = 0;
@@ -1077,7 +1063,9 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 /// @param  ret_len  length of the stdout
 ///
 /// @return an allocated string, or NULL for error.
-char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
+char_u *get_cmd_output(char_u *cmd,
+                       char_u *infile,
+                       ShellOpts flags,
                        size_t *ret_len)
 {
   char_u *buffer = NULL;
@@ -1130,7 +1118,7 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, ShellOpts flags,
       if (buffer[i] == NUL)
         buffer[i] = 1;
 
-    buffer[len] = NUL;          /* make sure the buffer is terminated */
+    buffer[len] = NUL; /* make sure the buffer is terminated */
   } else {
     *ret_len = len;
   }

@@ -3,25 +3,24 @@
 
 #include <assert.h>
 #include <stdbool.h>
-
 #include <uv.h>
 #ifndef WIN32
-# include <signal.h>  // for sigset_t
+#include <signal.h>  // for sigset_t
 #endif
 
 #include "nvim/ascii.h"
-#include "nvim/log.h"
-#include "nvim/vim.h"
-#include "nvim/globals.h"
-#include "nvim/memline.h"
 #include "nvim/eval.h"
+#include "nvim/event/loop.h"
+#include "nvim/event/signal.h"
 #include "nvim/fileio.h"
+#include "nvim/globals.h"
+#include "nvim/log.h"
 #include "nvim/main.h"
+#include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
-#include "nvim/event/signal.h"
 #include "nvim/os/signal.h"
-#include "nvim/event/loop.h"
+#include "nvim/vim.h"
 
 static SignalWatcher spipe, shup, squit, sterm, susr1;
 #ifdef SIGPWR
@@ -31,7 +30,7 @@ static SignalWatcher spwr;
 static bool rejecting_deadly;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/signal.c.generated.h"
+#include "os/signal.c.generated.h"
 #endif
 
 void signal_init(void)
@@ -107,7 +106,7 @@ void signal_accept_deadly(void)
   rejecting_deadly = false;
 }
 
-static char * signal_name(int signum)
+static char *signal_name(int signum)
 {
   switch (signum) {
 #ifdef SIGPWR
@@ -148,7 +147,7 @@ static void deadly_signal(int signum)
   WLOG("got signal %d (%s)", signum, signal_name(signum));
 
   snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\n",
-      signal_name(signum));
+           signal_name(signum));
 
   // Preserve files and exit.
   preserve_exit();

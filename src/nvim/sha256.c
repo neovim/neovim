@@ -13,28 +13,29 @@
 /// Vim specific notes:
 /// sha256_self_test() is implicitly called once.
 
-#include <stddef.h>        // for size_t
-#include <stdio.h>         // for snprintf().
+#include "nvim/sha256.h"  // for context_sha256_T
 
-#include "nvim/sha256.h"   // for context_sha256_T
-#include "nvim/vim.h"      // for STRCPY()/STRLEN().
+#include <stddef.h>  // for size_t
+#include <stdio.h>   // for snprintf().
+
+#include "nvim/vim.h"  // for STRCPY()/STRLEN().
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "sha256.c.generated.h"
+#include "sha256.c.generated.h"
 #endif
-#define GET_UINT32(n, b, i) { \
-  (n) = ((uint32_t)(b)[(i)] << 24) \
-        | ((uint32_t)(b)[(i) + 1] << 16) \
-        | ((uint32_t)(b)[(i) + 2] <<  8) \
-        | ((uint32_t)(b)[(i) + 3]); \
-}
+#define GET_UINT32(n, b, i)                                                    \
+  {                                                                            \
+    (n) = ((uint32_t)(b)[(i)] << 24) | ((uint32_t)(b)[(i) + 1] << 16)          \
+          | ((uint32_t)(b)[(i) + 2] << 8) | ((uint32_t)(b)[(i) + 3]);          \
+  }
 
-#define PUT_UINT32(n, b, i) { \
-  (b)[(i)] = (char_u)((n) >> 24); \
-  (b)[(i) + 1] = (char_u)((n) >> 16); \
-  (b)[(i) + 2] = (char_u)((n) >>  8); \
-  (b)[(i) + 3] = (char_u)((n)); \
-}
+#define PUT_UINT32(n, b, i)                                                    \
+  {                                                                            \
+    (b)[(i)] = (char_u)((n) >> 24);                                            \
+    (b)[(i) + 1] = (char_u)((n) >> 16);                                        \
+    (b)[(i) + 2] = (char_u)((n) >> 8);                                         \
+    (b)[(i) + 3] = (char_u)((n));                                              \
+  }
 
 void sha256_start(context_sha256_T *ctx)
 {
@@ -57,16 +58,16 @@ static void sha256_process(context_sha256_T *ctx,
   uint32_t temp1, temp2, W[SHA256_BUFFER_SIZE];
   uint32_t A, B, C, D, E, F, G, H;
 
-  GET_UINT32(W[0],  data,  0);
-  GET_UINT32(W[1],  data,  4);
-  GET_UINT32(W[2],  data,  8);
-  GET_UINT32(W[3],  data, 12);
-  GET_UINT32(W[4],  data, 16);
-  GET_UINT32(W[5],  data, 20);
-  GET_UINT32(W[6],  data, 24);
-  GET_UINT32(W[7],  data, 28);
-  GET_UINT32(W[8],  data, 32);
-  GET_UINT32(W[9],  data, 36);
+  GET_UINT32(W[0], data, 0);
+  GET_UINT32(W[1], data, 4);
+  GET_UINT32(W[2], data, 8);
+  GET_UINT32(W[3], data, 12);
+  GET_UINT32(W[4], data, 16);
+  GET_UINT32(W[5], data, 20);
+  GET_UINT32(W[6], data, 24);
+  GET_UINT32(W[7], data, 28);
+  GET_UINT32(W[8], data, 32);
+  GET_UINT32(W[9], data, 36);
   GET_UINT32(W[10], data, 40);
   GET_UINT32(W[11], data, 44);
   GET_UINT32(W[12], data, 48);
@@ -74,11 +75,11 @@ static void sha256_process(context_sha256_T *ctx,
   GET_UINT32(W[14], data, 56);
   GET_UINT32(W[15], data, 60);
 
-#define  SHR(x, n) ((x & 0xFFFFFFFF) >> n)
+#define SHR(x, n) ((x & 0xFFFFFFFF) >> n)
 #define ROTR(x, n) (SHR(x, n) | (x << (32 - n)))
 
-#define S0(x) (ROTR(x, 7) ^ ROTR(x, 18) ^  SHR(x, 3))
-#define S1(x) (ROTR(x, 17) ^ ROTR(x, 19) ^  SHR(x, 10))
+#define S0(x) (ROTR(x, 7) ^ ROTR(x, 18) ^ SHR(x, 3))
+#define S1(x) (ROTR(x, 17) ^ ROTR(x, 19) ^ SHR(x, 10))
 
 #define S2(x) (ROTR(x, 2) ^ ROTR(x, 13) ^ ROTR(x, 22))
 #define S3(x) (ROTR(x, 6) ^ ROTR(x, 11) ^ ROTR(x, 25))
@@ -86,15 +87,15 @@ static void sha256_process(context_sha256_T *ctx,
 #define F0(x, y, z) ((x & y) | (z & (x | y)))
 #define F1(x, y, z) (z ^ (x & (y ^ z)))
 
-#define R(t) \
-  (W[t] = S1(W[t -  2]) + W[t -  7] + \
-           S0(W[t - 15]) + W[t - 16])
+#define R(t) (W[t] = S1(W[t - 2]) + W[t - 7] + S0(W[t - 15]) + W[t - 16])
 
-#define P(a, b, c, d, e, f, g, h, x, K) { \
-  temp1 = h + S3(e) + F1(e, f, g) + K + x; \
-  temp2 = S2(a) + F0(a, b, c); \
-  d += temp1; h = temp1 + temp2; \
-}
+#define P(a, b, c, d, e, f, g, h, x, K)                                        \
+  {                                                                            \
+    temp1 = h + S3(e) + F1(e, f, g) + K + x;                                   \
+    temp2 = S2(a) + F0(a, b, c);                                               \
+    d += temp1;                                                                \
+    h = temp1 + temp2;                                                         \
+  }
 
   A = ctx->state[0];
   B = ctx->state[1];
@@ -105,16 +106,16 @@ static void sha256_process(context_sha256_T *ctx,
   G = ctx->state[6];
   H = ctx->state[7];
 
-  P(A, B, C, D, E, F, G, H, W[0],  0x428A2F98);
-  P(H, A, B, C, D, E, F, G, W[1],  0x71374491);
-  P(G, H, A, B, C, D, E, F, W[2],  0xB5C0FBCF);
-  P(F, G, H, A, B, C, D, E, W[3],  0xE9B5DBA5);
-  P(E, F, G, H, A, B, C, D, W[4],  0x3956C25B);
-  P(D, E, F, G, H, A, B, C, W[5],  0x59F111F1);
-  P(C, D, E, F, G, H, A, B, W[6],  0x923F82A4);
-  P(B, C, D, E, F, G, H, A, W[7],  0xAB1C5ED5);
-  P(A, B, C, D, E, F, G, H, W[8],  0xD807AA98);
-  P(H, A, B, C, D, E, F, G, W[9],  0x12835B01);
+  P(A, B, C, D, E, F, G, H, W[0], 0x428A2F98);
+  P(H, A, B, C, D, E, F, G, W[1], 0x71374491);
+  P(G, H, A, B, C, D, E, F, W[2], 0xB5C0FBCF);
+  P(F, G, H, A, B, C, D, E, W[3], 0xE9B5DBA5);
+  P(E, F, G, H, A, B, C, D, W[4], 0x3956C25B);
+  P(D, E, F, G, H, A, B, C, W[5], 0x59F111F1);
+  P(C, D, E, F, G, H, A, B, W[6], 0x923F82A4);
+  P(B, C, D, E, F, G, H, A, W[7], 0xAB1C5ED5);
+  P(A, B, C, D, E, F, G, H, W[8], 0xD807AA98);
+  P(H, A, B, C, D, E, F, G, W[9], 0x12835B01);
   P(G, H, A, B, C, D, E, F, W[10], 0x243185BE);
   P(F, G, H, A, B, C, D, E, W[11], 0x550C7DC3);
   P(E, F, G, H, A, B, C, D, W[12], 0x72BE5D74);
@@ -186,9 +187,9 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
     return;
   }
 
-  uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE-1);  // left < buf size
+  uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE - 1);  // left < buf size
 
-  ctx->total[0] += (uint32_t) length;
+  ctx->total[0] += (uint32_t)length;
   ctx->total[0] &= 0xFFFFFFFF;
 
   if (ctx->total[0] < length) {
@@ -201,14 +202,14 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
     memcpy((void *)(ctx->buffer + left), (void *)input, fill);
     sha256_process(ctx, ctx->buffer);
     length -= fill;
-    input  += fill;
+    input += fill;
     left = 0;
   }
 
   while (length >= SHA256_BUFFER_SIZE) {
     sha256_process(ctx, input);
     length -= SHA256_BUFFER_SIZE;
-    input  += SHA256_BUFFER_SIZE;
+    input += SHA256_BUFFER_SIZE;
   }
 
   if (length) {
@@ -216,12 +217,10 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
   }
 }
 
-static char_u sha256_padding[SHA256_BUFFER_SIZE] = {
-  0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+static char_u sha256_padding[SHA256_BUFFER_SIZE]
+    = {0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+       0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 {
@@ -229,21 +228,21 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
   uint32_t high, low;
   char_u msglen[8];
 
-  high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);
-  low  = (ctx->total[0] <<  3);
+  high = (ctx->total[0] >> 29) | (ctx->total[1] << 3);
+  low = (ctx->total[0] << 3);
 
   PUT_UINT32(high, msglen, 0);
-  PUT_UINT32(low,  msglen, 4);
+  PUT_UINT32(low, msglen, 4);
 
   last = ctx->total[0] & 0x3F;
   padn = (last < 56) ? (56 - last) : (120 - last);
 
   sha256_update(ctx, sha256_padding, padn);
-  sha256_update(ctx, msglen,            8);
+  sha256_update(ctx, msglen, 8);
 
-  PUT_UINT32(ctx->state[0], digest,  0);
-  PUT_UINT32(ctx->state[1], digest,  4);
-  PUT_UINT32(ctx->state[2], digest,  8);
+  PUT_UINT32(ctx->state[0], digest, 0);
+  PUT_UINT32(ctx->state[1], digest, 4);
+  PUT_UINT32(ctx->state[2], digest, 8);
   PUT_UINT32(ctx->state[3], digest, 12);
   PUT_UINT32(ctx->state[4], digest, 16);
   PUT_UINT32(ctx->state[5], digest, 20);
@@ -262,8 +261,10 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 ///
 /// @returns hex digest of "buf[buf_len]" in a static array.
 ///          if "salt" is not NULL also do "salt[salt_len]".
-const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len,
-                         const uint8_t *restrict salt, size_t salt_len)
+const char *sha256_bytes(const uint8_t *restrict buf,
+                         size_t buf_len,
+                         const uint8_t *restrict salt,
+                         size_t salt_len)
 {
   char_u sha256sum[SHA256_SUM_SIZE];
   static char hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
@@ -287,20 +288,16 @@ const char *sha256_bytes(const uint8_t *restrict buf,  size_t buf_len,
 }
 
 // These are the standard FIPS-180-2 test vectors
-static char *sha_self_test_msg[] = {
-  "abc",
-  "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq",
-  NULL
-};
+static char *sha_self_test_msg[]
+    = {"abc", "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq", NULL};
 
-static char *sha_self_test_vector[] = {
-  "ba7816bf8f01cfea414140de5dae2223" \
-  "b00361a396177a9cb410ff61f20015ad",
-  "248d6a61d20638b8e5c026930c3e6039" \
-  "a33ce45964ff2167f6ecedd419db06c1",
-  "cdc76e5c9914fb9281a1c7e284d73e67" \
-  "f1809a48a497200e046d39ccc7112cd0"
-};
+static char *sha_self_test_vector[]
+    = {"ba7816bf8f01cfea414140de5dae2223"
+       "b00361a396177a9cb410ff61f20015ad",
+       "248d6a61d20638b8e5c026930c3e6039"
+       "a33ce45964ff2167f6ecedd419db06c1",
+       "cdc76e5c9914fb9281a1c7e284d73e67"
+       "f1809a48a497200e046d39ccc7112cd0"};
 
 /// Perform a test on the SHA256 algorithm.
 ///
@@ -324,8 +321,7 @@ bool sha256_self_test(void)
   for (size_t i = 0; i < 3; i++) {
     if (i < 2) {
       hexit = sha256_bytes((uint8_t *)sha_self_test_msg[i],
-                           strlen(sha_self_test_msg[i]),
-                           NULL, 0);
+                           strlen(sha_self_test_msg[i]), NULL, 0);
       STRCPY(output, hexit);
     } else {
       sha256_start(&ctx);
@@ -337,7 +333,7 @@ bool sha256_self_test(void)
       sha256_finish(&ctx, sha256sum);
 
       for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
-        snprintf(output + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
+        snprintf(output + j * SHA_STEP, SHA_STEP + 1, "%02x", sha256sum[j]);
       }
     }
 
