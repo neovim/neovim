@@ -37,13 +37,11 @@
 // the behavior of `os_getenv`.
 static PMap(cstr_t) *envmap;
 static uv_mutex_t mutex;
-static uv_mutex_t homedir_mutex;
 
 void env_init(void)
 {
   envmap = pmap_new(cstr_t)();
   uv_mutex_init(&mutex);
-  uv_mutex_init(&homedir_mutex);
 }
 
 /// Like getenv(), but returns NULL if the variable is empty.
@@ -298,7 +296,6 @@ static char *homedir = NULL;
 
 void init_homedir(void)
 {
-  uv_mutex_lock(&homedir_mutex);
   // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
@@ -383,7 +380,6 @@ void init_homedir(void)
   }
 
   homedir = xstrndup(var, MAXPATHL);
-  uv_mutex_unlock(&homedir_mutex);
 }
 
 static char homedir_buf[MAXPATHL];
