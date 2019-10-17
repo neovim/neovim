@@ -318,7 +318,6 @@ describe('server -> client', function()
       local status, address = pcall(funcs.serverstart, "127.0.0.1:")
       if not status then
         pending('no ipv4 stack')
-        return
       end
       eq('127.0.0.1:', string.sub(address,1,10))
       connect_test(server, 'tcp', address)
@@ -330,7 +329,6 @@ describe('server -> client', function()
       local status, address = pcall(funcs.serverstart, '::1:')
       if not status then
         pending('no ipv6 stack')
-        return
       end
       eq('::1:', string.sub(address,1,4))
       connect_test(server, 'tcp', address)
@@ -350,7 +348,6 @@ describe('server -> client', function()
       if not helpers.isCI('travis') and helpers.is_os('mac') then
         -- It does, in fact, deadlock on QuickBuild. #6851
         pending("deadlocks on QuickBuild")
-        return
       end
       local address = funcs.serverlist()[1]
       local first = string.sub(address,1,1)
