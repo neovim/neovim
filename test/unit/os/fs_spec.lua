@@ -286,38 +286,36 @@ describe('fs.c', function()
       end)
 
       -- Some systems may not have `id` utility.
-      if (os.execute('id -G > /dev/null 2>&1') ~= 0) then
-        pending('skipped (missing `id` utility)')
-      else
-        itp('owner of a file may change the group of the file to any group of which that owner is a member', function()
-          local file_gid = lfs.attributes(filename, 'gid')
+      itp('owner of a file may change the group of the file to any group of which that owner is a member', function()
+        if (os.execute('id -G > /dev/null 2>&1') ~= 0) then
+          pending('skipped (missing `id` utility)')
+        end
+        local file_gid = lfs.attributes(filename, 'gid')
 
-          -- Gets ID of any group of which current user is a member except the
-          -- group that owns the file.
-          local id_fd = io.popen('id -G')
-          local new_gid = id_fd:read('*n')
-          if (new_gid == file_gid) then
-            new_gid = id_fd:read('*n')
-          end
-          id_fd:close()
+        -- Gets ID of any group of which current user is a member except the
+        -- group that owns the file.
+        local id_fd = io.popen('id -G')
+        local new_gid = id_fd:read('*n')
+        if (new_gid == file_gid) then
+          new_gid = id_fd:read('*n')
+        end
+        id_fd:close()
 
-          -- User can be a member of only one group.
-          -- In that case we can not perform this test.
-          if new_gid then
-            eq(0, (os_fchown(filename, -1, new_gid)))
-            eq(new_gid, (lfs.attributes(filename, 'gid')))
-          end
-        end)
-      end
+        -- User can be a member of only one group.
+        -- In that case we can not perform this test.
+        if new_gid then
+          eq(0, (os_fchown(filename, -1, new_gid)))
+          eq(new_gid, (lfs.attributes(filename, 'gid')))
+        end
+      end)
 
-      if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
-        pending('skipped (uv_fs_chown is no-op on Windows)')
-      else
-        itp('returns nonzero if process has not enough permissions', function()
-          -- chown to root
-          neq(0, os_fchown(filename, 0, 0))
-        end)
-      end
+      itp('returns nonzero if process has not enough permissions', function()
+        if (ffi.os == 'Windows' or ffi.C.geteuid() == 0) then
+          pending('skipped (uv_fs_chown is no-op on Windows)')
+        end
+        -- chown to root
+        neq(0, os_fchown(filename, 0, 0))
+      end)
     end)
 
 
