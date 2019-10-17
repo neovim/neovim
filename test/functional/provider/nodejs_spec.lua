@@ -6,15 +6,15 @@ local write_file = helpers.write_file
 local eval = helpers.eval
 local retry = helpers.retry
 
-local describe = describe
+local it
 clear()
 if missing_provider('node') then
-  describe = function(desc, ...) pending(desc.." (Missing nodejs host, or nodejs version is too old)", ...) end
+  it = helpers.pending_it('missing nodejs host, or nodejs version is too old', pending)
+else
+  before_each(function()
+    clear()
+  end)
 end
-
-before_each(function()
-  clear()
-end)
 
 describe('nodejs host', function()
   teardown(function ()

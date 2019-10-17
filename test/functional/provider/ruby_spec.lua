@@ -16,15 +16,16 @@ local matches = helpers.matches
 local write_file = helpers.write_file
 local pcall_err = helpers.pcall_err
 
-local describe = describe
+
+local it = it
 clear()
-if missing_provider('ruby') then
+if missing_provider('node') then
   it(':ruby reports E319 if provider is missing', function()
     local expected = [[Vim%(ruby.*%):E319: No "ruby" provider found.*]]
     matches(expected, pcall_err(command, 'ruby puts "foo"'))
     matches(expected, pcall_err(command, 'rubyfile foo'))
   end)
-  describe = function(desc, ...) pending(desc..' (Missing neovim RubyGem)', ...) end
+  it = helpers.pending_it('missing neovim RubyGem')
 else
   before_each(function()
     clear()
