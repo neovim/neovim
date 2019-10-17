@@ -37,11 +37,13 @@
 // the behavior of `os_getenv`.
 static PMap(cstr_t) *envmap;
 static uv_mutex_t mutex;
+static uv_mutex_t homedir_mutex;
 
 void env_init(void)
 {
   envmap = pmap_new(cstr_t)();
   uv_mutex_init(&mutex);
+  uv_mutex_init(&homedir_mutex);
 }
 
 /// Like getenv(), but returns NULL if the variable is empty.
@@ -327,7 +329,9 @@ void init_homedir(void)
   }
 
   if (var == NULL) {
+    uv_mutex_lock(&homedir_mutex);
     var = os_homedir();
+    uv_mutex_unlock(&homedir_mutex);
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -356,7 +360,9 @@ void init_homedir(void)
 #endif
 
   if (var == NULL) {
+    uv_mutex_lock(&homedir_mutex);
     var = os_homedir();
+    uv_mutex_unlock(&homedir_mutex);
   }
 
   if (var != NULL) {
