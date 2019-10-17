@@ -2417,7 +2417,8 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char_u qf_viscol,
     // Move the cursor to the first line in the buffer
     pos_T save_cursor = curwin->w_cursor;
     curwin->w_cursor.lnum = 0;
-    if (!do_search(NULL, '/', qf_pattern, (long)1, SEARCH_KEEP, NULL, NULL, NULL)) {
+    if (!do_search(NULL, '/', qf_pattern, (long)1, SEARCH_KEEP, NULL, NULL,
+                   NULL)) {
       curwin->w_cursor = save_cursor;
     }
   }

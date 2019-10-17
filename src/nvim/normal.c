@@ -5396,7 +5396,8 @@ static int normal_search(
   curwin->w_set_curswant = true;
 
   i = do_search(cap->oap, dir, pat, cap->count1,
-                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL, NULL, wrapped);
+                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL, NULL,
+                wrapped);
   if (i == 0) {
     clearop(cap->oap);
   } else {
