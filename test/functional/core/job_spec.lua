@@ -203,7 +203,6 @@ describe('jobs', function()
       and helpers.is_os('mac') then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
       pending("[Hangs on Travis macOS. #5002]")
-      return
     end
 
     nvim('command', "let j = jobstart(['cat', '-'], g:job_opts)")
