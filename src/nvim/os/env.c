@@ -307,7 +307,9 @@ void init_homedir(void)
   xfree(homedir);
   homedir = NULL;
 
+  uv_mutex_unlock(&homedir_mutex);
   const char *var = os_getenv("HOME");
+  uv_mutex_lock(&homedir_mutex);
 
 #ifdef WIN32
   // Typically, $HOME is not defined on Windows, unless the user has
@@ -315,8 +317,10 @@ void init_homedir(void)
   // platforms, $HOMEDRIVE and $HOMEPATH are automatically defined for
   // each user. Try constructing $HOME from these.
   if (var == NULL) {
+    uv_mutex_unlock(&homedir_mutex);
     const char *homedrive = os_getenv("HOMEDRIVE");
     const char *homepath = os_getenv("HOMEPATH");
+    uv_mutex_lock(&homedir_mutex);
     if (homepath == NULL) {
       homepath = "\\";
     }
@@ -330,7 +334,9 @@ void init_homedir(void)
   }
 
   if (var == NULL) {
+    uv_mutex_unlock(&homedir_mutex);
     var = os_getenv("USERPROFILE");
+    uv_mutex_lock(&homedir_mutex);
   }
 
   if (var == NULL) {
