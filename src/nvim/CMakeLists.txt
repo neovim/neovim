@@ -419,6 +419,7 @@ if(Iconv_LIBRARIES)
 endif()
 
 if(WIN32)
+  list(APPEND NVIM_LINK_LIBRARIES netapi32)
   list(APPEND NVIM_LINK_LIBRARIES ${WINPTY_LIBRARIES})
 endif()
 
