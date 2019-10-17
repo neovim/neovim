@@ -109,7 +109,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       -- Discard all prompts and messages.
       feed('<C-L>')
       expect([[
-	
+
 	start of testfiLe
 	Line 2	Abcdefghijklmnopqrstuvwxyz
 	Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -137,7 +137,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     -- Expect the decompressed file in the buffer.
     feed_command('e test.out')
     expect([[
-      
+
       /*
        * Here is a NEW .c file
        */]])
@@ -148,16 +148,16 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     write_file('test.out', dedent([[
       startstart
       ]]) .. text1 .. dedent([[
-      
-      
+
+
       start of test.c
       /*
        * Here is a new .c file
        */
       end of test.c
       ]]) .. text1 .. dedent([[
-      
-      
+
+
       /*
        * Here is a NEW .c file
        */
@@ -165,7 +165,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
        * Here is a new .c file
        */
       ]]) .. text1 .. dedent([[
-      
+
       /*
        * Here is a new .c file
        */]]))
@@ -195,7 +195,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       line 10 Abcdefghijklmnopqrstuvwxyz
       end of testfile
-      
+
       start of test.c
       /*
        * Here is a new .c file
@@ -212,7 +212,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
       linE 9	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
       linE 10 AbcdefghijklmnopqrstuvwXyz
       End of testfile
-      
+
       /*
        * HEre is a NEW .c file
        */
