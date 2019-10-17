@@ -8,6 +8,7 @@ local nvim_prog = helpers.nvim_prog
 local command = helpers.command
 local eval = helpers.eval
 local setenv = helpers.funcs.setenv
+local iswin = helpers.iswin
 
 describe('environment variables', function()
   it('environ() handles empty env variable', function()
@@ -47,18 +48,35 @@ describe('empty $HOME', function()
     return eval('test_empty_home_tilde_index') ~= -1
   end
 
-  it("'~' folder not created in pwd if writing a file with systems without $HOME", function()
-    if exists('$HOME') == 0 then
-      system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
+  local function write_and_test_tilde()
+    system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
                                           '-c', 'write test_empty_home', '+q'})
-      eq(false, tilde_in_pwd())
+    eq(false, tilde_in_pwd())
+  end
+
+  it("'~' folder not created in pwd if $HOME and related env not defined", function()
+    command("unlet $HOME")
+    write_and_test_tilde()
+
+    if iswin() then
+      command("let $HOMEDRIVE='C:'")
+      command("let $USERPROFILE='C:\\'")
+      write_and_test_tilde()
+
+      command("unlet $HOMEDRIVE")
+      write_and_test_tilde()
+
+      command("unlet $USERPROFILE")
+      write_and_test_tilde()
+
+      command("let $HOME='%USERPROFILE%'")
+      command("let $USERPROFILE='C:\\'")
+      write_and_test_tilde()
     end
   end)
 
   it("'~' folder not created in pwd if writing a file with invalid $HOME", function()
     setenv('HOME', '/path/does/not/exist')
-    system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
-                                          '-c', 'write test_empty_home', '+q'})
-    eq(false, tilde_in_pwd())
+    write_and_test_tilde()
   end)
 end)
