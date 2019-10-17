@@ -528,7 +528,8 @@ int searchit(
     int pat_use,              // which pattern to use when "pat" is empty
     linenr_T stop_lnum,       // stop after this line number when != 0
     proftime_T  *tm,          // timeout limit or NULL
-    int *timed_out            // set when timed out or NULL
+    int *timed_out,           // set when timed out or NULL
+    int *wrapped
 )
 {
   int found;
@@ -889,6 +890,9 @@ int searchit(
         give_warning((char_u *)_(dir == BACKWARD
                                  ? top_bot_msg : bot_top_msg), true);
       }
+      if (wrapped != NULL) {
+        *wrapped = 1;
+      }
     }
     if (got_int || called_emsg
         || (timed_out != NULL && *timed_out)
@@ -984,7 +988,8 @@ int do_search(
     long count,
     int options,
     proftime_T      *tm,            // timeout limit or NULL
-    int             *timed_out      // flag set on timeout or NULL
+    int             *timed_out,     // flag set on timeout or NULL
+    int             *wrapped
 )
 {
   pos_T pos;                    /* position of the last match */
@@ -1271,7 +1276,7 @@ int do_search(
                      & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
                         + SEARCH_START
                         + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
-                 RE_LAST, (linenr_T)0, tm, timed_out);
+                 RE_LAST, (linenr_T)0, tm, timed_out, wrapped);
 
     if (dircp != NULL) {
       *dircp = dirc;  // restore second '/' or '?' for normal_cmd()
@@ -4078,7 +4083,7 @@ current_search(
     result = searchit(curwin, curbuf, &pos, &end_pos,
                       (dir ? FORWARD : BACKWARD),
                       spats[last_idx].pat, i ? count : 1,
-                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL, NULL);
+                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL, NULL, NULL);
 
     // First search may fail, but then start searching from the
     // beginning of the file (cursor might be on the search match)
@@ -4175,7 +4180,7 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
     flag = SEARCH_START;
   }
   if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, 1,
-               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL, NULL) != FAIL) {
+               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL, NULL, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
     called_emsg = false;
@@ -4262,7 +4267,7 @@ static void search_stat(int dirc, pos_T *pos,
       start = profile_setlimit(20L);
       while (!got_int && searchit(curwin, curbuf, &lastpos, NULL,
                                   FORWARD, NULL, 1, SEARCH_KEEP, RE_LAST,
-                                  (linenr_T)0, NULL, NULL) != FAIL) {
+                                  (linenr_T)0, NULL, NULL, NULL) != FAIL) {
         // Stop after passing the time limit.
         if (profile_passed_limit(start)) {
           cnt = OUT_OF_TIME;

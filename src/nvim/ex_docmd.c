@@ -3751,7 +3751,7 @@ static linenr_T get_address(exarg_T *eap,
         }
         searchcmdlen = 0;
         if (!do_search(NULL, c, cmd, 1L,
-                       SEARCH_HIS | SEARCH_MSG, NULL, NULL)) {
+                       SEARCH_HIS | SEARCH_MSG, NULL, NULL, NULL)) {
           curwin->w_cursor = pos;
           cmd = NULL;
           goto error;
@@ -3789,7 +3789,7 @@ static linenr_T get_address(exarg_T *eap,
         if (searchit(curwin, curbuf, &pos, NULL,
                      *cmd == '?' ? BACKWARD : FORWARD,
                      (char_u *)"", 1L, SEARCH_MSG,
-                     i, (linenr_T)0, NULL, NULL) != FAIL) {
+                     i, (linenr_T)0, NULL, NULL, NULL) != FAIL) {
           lnum = pos.lnum;
         } else {
           cmd = NULL;

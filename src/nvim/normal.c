@@ -3794,7 +3794,7 @@ find_decl (
     valid = false;
     (void)valid;  // Avoid "dead assignment" warning.
     t = searchit(curwin, curbuf, &curwin->w_cursor, NULL, FORWARD,
-                 pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL, NULL);
+                 pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL, NULL, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum) {
       t = false;         // match after start is failure too
     }
@@ -4927,7 +4927,7 @@ static void nv_ident(cmdarg_T *cap)
     /* put pattern in search history */
     init_history();
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
-    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0);
+    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0, NULL);
   } else {
     do_cmdline_cmd(buf);
   }
@@ -5352,7 +5352,7 @@ static void nv_search(cmdarg_T *cap)
 
   (void)normal_search(cap, cap->cmdchar, cap->searchbuf,
                       (cap->arg || !equalpos(save_cursor, curwin->w_cursor))
-                      ? 0 : SEARCH_MARK);
+                      ? 0 : SEARCH_MARK, NULL);
 }
 
 /*
@@ -5362,14 +5362,15 @@ static void nv_search(cmdarg_T *cap)
 static void nv_next(cmdarg_T *cap)
 {
   pos_T old = curwin->w_cursor;
-  int i = normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
+  int wrapped = 0;
+  int i = normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg, &wrapped);
 
-  if (i == 1 && equalpos(old, curwin->w_cursor)) {
+  if (i == 1 && !wrapped && equalpos(old, curwin->w_cursor)) {
     // Avoid getting stuck on the current cursor position, which can happen when
     // an offset is given and the cursor is on the last char in the buffer:
     // Repeat with count + 1.
     cap->count1 += 1;
-    (void)normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg);
+    (void)normal_search(cap, 0, NULL, SEARCH_MARK | cap->arg, NULL);
     cap->count1 -= 1;
   }
 }
@@ -5383,7 +5384,8 @@ static int normal_search(
     cmdarg_T *cap,
     int dir,
     char_u *pat,
-    int opt                        /* extra flags for do_search() */
+    int opt,                        /* extra flags for do_search() */
+    int *wrapped
 )
 {
   int i;
@@ -5394,7 +5396,7 @@ static int normal_search(
   curwin->w_set_curswant = true;
 
   i = do_search(cap->oap, dir, pat, cap->count1,
-                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL, NULL);
+                opt | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG, NULL, NULL, wrapped);
   if (i == 0) {
     clearop(cap->oap);
   } else {
