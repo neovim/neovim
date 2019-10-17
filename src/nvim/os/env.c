@@ -302,6 +302,7 @@ static char *homedir = NULL;
 
 void init_homedir(void)
 {
+  uv_mutex_lock(&homedir_mutex);
   // In case we are called a second time.
   xfree(homedir);
   homedir = NULL;
@@ -333,9 +334,7 @@ void init_homedir(void)
   }
 
   if (var == NULL) {
-    uv_mutex_lock(&homedir_mutex);
     var = os_homedir();
-    uv_mutex_unlock(&homedir_mutex);
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -364,9 +363,7 @@ void init_homedir(void)
 #endif
 
   if (var == NULL) {
-    uv_mutex_lock(&homedir_mutex);
     var = os_homedir();
-    uv_mutex_unlock(&homedir_mutex);
   }
 
   if (var != NULL) {
@@ -374,7 +371,7 @@ void init_homedir(void)
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
+      if (!os_chdir(var) && os_dirname((char_u *)IObuff, IOSIZE) == OK) {
         var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {
@@ -388,7 +385,8 @@ void init_homedir(void)
     var = os_buf;
   }
 
-  homedir = xstrndup(var, MAXPATHL);
+  homedir = xstrdup(var);
+  uv_mutex_unlock(&homedir_mutex);
 }
 
 static char homedir_buf[MAXPATHL];
