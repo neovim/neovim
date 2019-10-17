@@ -284,11 +284,15 @@ void os_get_hostname(char *hostname, size_t size)
 }
 
 /// To get the "real" home directory:
+/// Try getting HOME env variable
 /// For Windows:
 ///   - assemble homedir using HOMEDRIVE and HOMEPATH
+///   - try USERPROFILE
+///   - try uv_os_homedir()
 ///   - resolve references
 ///   - guess C drive
 /// For Unix:
+///   - try uv_os_homedir()
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
 ///   - as a last resort, get the pwd of the current directory.
@@ -370,8 +374,7 @@ void init_homedir(void)
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      // Attempts to jump into var (guessed homedir)
-      if (!os_chdir(var) && os_dirname((char_u *)IObuff, IOSIZE) == OK) {
+      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
         var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {

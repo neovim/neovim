@@ -8,7 +8,6 @@ local nvim_prog = helpers.nvim_prog
 local command = helpers.command
 local eval = helpers.eval
 local setenv = helpers.funcs.setenv
-local iswin = helpers.iswin
 
 describe('environment variables', function()
   it('environ() handles empty env variable', function()
@@ -58,21 +57,19 @@ describe('empty $HOME', function()
     command("unlet $HOME")
     write_and_test_tilde()
 
-    if iswin() then
-      command("let $HOMEDRIVE='C:'")
-      command("let $USERPROFILE='C:\\'")
-      write_and_test_tilde()
+    command("let $HOMEDRIVE='C:'")
+    command("let $USERPROFILE='C:\\'")
+    write_and_test_tilde()
 
-      command("unlet $HOMEDRIVE")
-      write_and_test_tilde()
+    command("unlet $HOMEDRIVE")
+    write_and_test_tilde()
 
-      command("unlet $USERPROFILE")
-      write_and_test_tilde()
+    command("unlet $USERPROFILE")
+    write_and_test_tilde()
 
-      command("let $HOME='%USERPROFILE%'")
-      command("let $USERPROFILE='C:\\'")
-      write_and_test_tilde()
-    end
+    command("let $HOME='%USERPROFILE%'")
+    command("let $USERPROFILE='C:\\'")
+    write_and_test_tilde()
   end)
 
   it("'~' folder not created in pwd if writing a file with invalid $HOME", function()
