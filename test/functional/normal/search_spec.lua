@@ -48,13 +48,11 @@ it('nv_next does not unnecessarily re-search (n/N)', function()
     {2:~                                       }|
     {2:~                                       }|
     {2:~                                       }|
-    /bar                           [1/1] W  |
+    {3:search hit BOTTOM, continuing at TOP}    |
   ]]}
 
   -- Check that normal_search was not called again in nv_next by checking for a
   -- single bot_top_msg (would be 3 otherwise).
-  eq(helpers.dedent([[
-    search hit BOTTOM, continuing at TOP
-    /bar                           [1/1] W]]),
+  eq('search hit BOTTOM, continuing at TOP',
     eval('trim(execute(":messages"))'))
 end)

@@ -1332,6 +1332,7 @@ int do_search(
         && !(cmd_silent + msg_silent)
         && c != FAIL
         && !shortmess(SHM_SEARCHCOUNT)
+        && (!wrapped || shortmess(SHM_SEARCH))
         && msgbuf != NULL) {
       search_stat(dirc, &pos, wrapped, msgbuf, (count != 1 || has_offset));
     }
