@@ -61,9 +61,11 @@ describe('file reading, writing and bufnew and filter autocommands', function()
     os.remove('test.out')
   end)
 
-  if not has_gzip() then
-    pending('skipped (missing `gzip` utility)')
-  else
+  describe('using gzip', function()
+    local it = it
+    if has_gzip() then
+      it = helpers.pending_it('missing `gzip` utility', pending)
+    end
 
     it('FileReadPost (using gzip)', function()
       prepare_gz_file('Xtestfile', text1)
@@ -120,8 +122,7 @@ describe('file reading, writing and bufnew and filter autocommands', function()
 	Line 10 Abcdefghijklmnopqrstuvwxyz
 	end of testfiLe]])
     end)
-
-  end
+  end)
 
   it('FileAppendPre, FileAppendPost', function()
     feed_command('au BufNewFile      *.c    read Xtest.c')
