@@ -180,10 +180,10 @@ describe('server -> client', function()
   end)
 
   describe('recursive (child) nvim client', function()
+    local it = it
     if helpers.isCI('travis') and helpers.is_os('mac') then
       -- XXX: Hangs Travis macOS since e9061117a5b8f195c3f26a5cb94e18ddd7752d86.
-      pending("[Hangs on Travis macOS. #5002]")
-      return
+      it = helpers.pending_it('Hangs on Travis macOS. #5002', pending)
     end
 
     before_each(function()

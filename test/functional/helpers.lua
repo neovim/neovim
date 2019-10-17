@@ -672,6 +672,12 @@ function module.pending_win32(pending_fn)
   end
 end
 
+function module.pending_it(reason, pending_fn)
+  return function(desc)
+    pending_fn(desc..' ('..reason..')', function() end)
+  end
+end
+
 -- Calls pending() and returns `true` if the system is too slow to
 -- run fragile or expensive tests. Else returns `false`.
 function module.skip_fragile(pending_fn, cond)
