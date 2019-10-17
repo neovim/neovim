@@ -3974,10 +3974,13 @@ static void nv_scroll_line(cmdarg_T *cap)
 void scroll_redraw(int up, long count)
 {
   linenr_T prev_topline = curwin->w_topline;
+  colnr_T prev_skipcol = curwin->w_skipcol;
   int prev_topfill = curwin->w_topfill;
   linenr_T prev_lnum = curwin->w_cursor.lnum;
 
-  if (curwin->w_p_scrw && curwin->w_p_wrap) {
+  bool row_wise = (curwin->w_p_scrw && curwin->w_p_wrap);
+
+  if (row_wise) {
     if (up) {
       scroll_rows_up(curwin, count, true);
     } else {
@@ -4006,6 +4009,7 @@ void scroll_redraw(int up, long count)
      * first line of the buffer is already on the screen */
     while (curwin->w_topline == prev_topline
            && curwin->w_topfill == prev_topfill
+           && (!row_wise || prev_skipcol == curwin->w_skipcol)
            ) {
       if (up) {
         if (curwin->w_cursor.lnum > prev_lnum
