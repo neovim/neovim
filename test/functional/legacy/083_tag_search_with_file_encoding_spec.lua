@@ -47,64 +47,63 @@ describe('tag search with !_TAG_FILE_ENCODING', function()
     os.remove('test83-tags3')
   end)
 
-  if not has_iconv() then
-    pending('skipped (missing iconv)')
-  else
-    it('is working', function()
+  it('is working', function()
+    if not has_iconv() then
+      pending('skipped (missing iconv)')
+    end
 
-      insert('Results of test83')
+    insert('Results of test83')
 
-      -- Case1:
-      source([[
-	new
-	set tags=Xtags1
-	let v:errmsg = ''
-	tag abcdefghijklmnopqrs
-	if v:errmsg =~ 'E426:' || getline('.') != 'abcdefghijklmnopqrs'
-	  close
-	  put ='case1: failed'
-	else
-	  close
-	  put ='case1: ok'
-	endif
-      ]])
+    -- Case1:
+    source([[
+      new
+      set tags=Xtags1
+      let v:errmsg = ''
+      tag abcdefghijklmnopqrs
+      if v:errmsg =~ 'E426:' || getline('.') != 'abcdefghijklmnopqrs'
+        close
+        put ='case1: failed'
+      else
+        close
+        put ='case1: ok'
+      endif
+    ]])
 
-      -- Case2:
-      source([[
-	new
-	set tags=test83-tags2
-	let v:errmsg = ''
-	tag /.ＢＣ
-	if v:errmsg =~ 'E426:' || getline('.') != 'ＡＢＣ'
-	  close
-	  put ='case2: failed'
-	else
-	  close
-	  put ='case2: ok'
-	endif
-      ]])
+    -- Case2:
+    source([[
+      new
+      set tags=test83-tags2
+      let v:errmsg = ''
+      tag /.ＢＣ
+      if v:errmsg =~ 'E426:' || getline('.') != 'ＡＢＣ'
+        close
+        put ='case2: failed'
+      else
+        close
+        put ='case2: ok'
+      endif
+    ]])
 
-      -- Case3:
-      source([[
-	new
-	set tags=test83-tags3
-	let v:errmsg = ''
-	tag abc50
-	if v:errmsg =~ 'E426:' || getline('.') != 'ＡＢＣ'
-	  close
-	  put ='case3: failed'
-	else
-	  close
-	  put ='case3: ok'
-	endif
-      ]])
+    -- Case3:
+    source([[
+      new
+      set tags=test83-tags3
+      let v:errmsg = ''
+      tag abc50
+      if v:errmsg =~ 'E426:' || getline('.') != 'ＡＢＣ'
+        close
+        put ='case3: failed'
+      else
+        close
+        put ='case3: ok'
+      endif
+    ]])
 
-      -- Assert buffer contents.
-      expect([[
-	Results of test83
-	case1: ok
-	case2: ok
-	case3: ok]])
-    end)
-  end
+    -- Assert buffer contents.
+    expect([[
+      Results of test83
+      case1: ok
+      case2: ok
+      case3: ok]])
+  end)
 end)
