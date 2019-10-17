@@ -29,12 +29,13 @@ describe('treesitter API', function()
   end)
 
   local ts_path = os.getenv("TREE_SITTER_DIR")
-  local describe = describe
-  if ts_path == nil then
-    describe = function(desc, ...) pending(desc..' (missing $TREE_SITTER_DIR)', ...) end
-  end
 
   describe('with C parser', function()
+    local it = it
+    if ts_path == nil then
+      it = helpers.pending_it("TREE_SITTER_PATH not set", pending)
+    end
+
     before_each(function()
       local path = ts_path .. '/bin/c'..(iswin() and '.dll' or '.so')
       exec_lua([[
