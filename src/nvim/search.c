@@ -1060,8 +1060,6 @@ int do_search(
    * Repeat the search when pattern followed by ';', e.g. "/foo/;?bar".
    */
   for (;; ) {
-    bool show_top_bot_msg = false;
-
     searchstr = pat;
     dircp = NULL;
     /* use previous pattern */
@@ -1282,12 +1280,6 @@ int do_search(
       *dircp = dirc;  // restore second '/' or '?' for normal_cmd()
     }
 
-    if (!shortmess(SHM_SEARCH)
-        && ((dirc == '/' && lt(pos, curwin->w_cursor))
-            || (dirc == '?' && lt(curwin->w_cursor, pos)))) {
-      show_top_bot_msg = true;
-    }
-
     if (c == FAIL) {
       retval = 0;
       goto end_do_search;
@@ -1341,8 +1333,7 @@ int do_search(
         && c != FAIL
         && !shortmess(SHM_SEARCHCOUNT)
         && msgbuf != NULL) {
-      search_stat(dirc, &pos, show_top_bot_msg, msgbuf,
-                  (count != 1 || has_offset));
+      search_stat(dirc, &pos, wrapped, msgbuf, (count != 1 || has_offset));
     }
 
     // The search command can be followed by a ';' to do another search.

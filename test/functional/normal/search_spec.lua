@@ -1,4 +1,6 @@
+local Screen = require('test.functional.ui.screen')
 local helpers = require('test.functional.helpers')(after_each)
+
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
@@ -19,12 +21,40 @@ end)
 
 it('nv_next does not unnecessarily re-search (n/N)', function()
   clear()
-
   helpers.insert('foobar')
+  local screen = Screen.new(40, 5)
+  screen:set_default_attr_ids({
+    [1] = {background = Screen.colors.Yellow},
+    [2] = {bold = true, foreground = Screen.colors.Blue1},
+    [3] = {foreground = Screen.colors.Red},
+  })
+  screen:attach()
+  command('set shm= wrapscan')
+
   feed('gg0/bar<cr>')
-  eq('', eval('trim(execute(":messages"))'))
+  screen:expect{grid=[[
+    foo{1:^bar}                                  |
+    {2:~                                       }|
+    {2:~                                       }|
+    {2:~                                       }|
+    /bar                             [1/1]  |
+  ]]}
+  eq('/bar                             [1/1]', eval('trim(execute(":messages"))'))
+
+  command(':messages clear')
   feed('n')
-  -- Check that normal_search was not called again by checking for a single
-  -- message (would be 3 otherwise).
-  eq('search hit BOTTOM, continuing at TOP', eval('trim(execute(":messages"))'))
+  screen:expect{grid=[[
+    foo{1:^bar}                                  |
+    {2:~                                       }|
+    {2:~                                       }|
+    {2:~                                       }|
+    /bar                           [1/1] W  |
+  ]]}
+
+  -- Check that normal_search was not called again in nv_next by checking for a
+  -- single bot_top_msg (would be 3 otherwise).
+  eq(helpers.dedent([[
+    search hit BOTTOM, continuing at TOP
+    /bar                           [1/1] W]]),
+    eval('trim(execute(":messages"))'))
 end)
