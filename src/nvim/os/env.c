@@ -381,7 +381,8 @@ void init_homedir(void)
 #endif
   }
 
-  if (var == NULL && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
+  if ((var == NULL || *var == NUL)
+      && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
     var = os_buf;
   }
 
