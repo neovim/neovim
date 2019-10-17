@@ -2813,4 +2813,29 @@ func Test_normal_gk()
   call assert_equal(95, virtcol('.'))
   bw!
   bw!
+
+  " needs 80 column new window
+  new
+  vert 80new
+  set number
+  set numberwidth=10
+  set cpoptions+=n
+  put =[repeat('0',90), repeat('1',90)]
+  norm! 075l
+  call assert_equal(76, col('.'))
+  norm! gk
+  call assert_equal(1, col('.'))
+  norm! gk
+  call assert_equal(76, col('.'))
+  norm! gk
+  call assert_equal(1, col('.'))
+  norm! gj
+  call assert_equal(76, col('.'))
+  norm! gj
+  call assert_equal(1, col('.'))
+  norm! gj
+  call assert_equal(76, col('.'))
+  bw!
+  bw!
+  set cpoptions& number& numberwidth&
 endfunc

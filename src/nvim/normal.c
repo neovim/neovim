@@ -3925,15 +3925,17 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
         n = ((linelen - width1 - 1) / width2 + 1) * width2 + width1;
       else
         n = width1;
-      if (curwin->w_curswant > (colnr_T)n + 1)
-        curwin->w_curswant -= ((curwin->w_curswant - n) / width2 + 1)
-                              * width2;
+      if (curwin->w_curswant >= n) {
+        curwin->w_curswant = n - 1;
+      }
     }
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if (curwin->w_curswant > width2) {
-          // move back within line
+        if (curwin->w_curswant >= width1) {
+          // Move back within the line. This can give a negative value
+          // for w_curswant if width1 < width2 (with cpoptions+=n),
+          // which will get clipped to column 0.
           curwin->w_curswant -= width2;
         } else {
           // to previous line
@@ -3973,6 +3975,13 @@ static bool nv_screengo(oparg_T *oap, int dir, long dist)
           }
           curwin->w_cursor.lnum++;
           curwin->w_curswant %= width2;
+          // Check if the cursor has moved below the number display
+          // when width1 < width2 (with cpoptions+=n). Subtract width2
+          // to get a negative value for w_curswant, which will get
+          // clipped to column 0.
+          if (curwin->w_curswant >= width1) {
+            curwin->w_curswant -= width2;
+          }
           linelen = linetabsize(get_cursor_line_ptr());
         }
       }
