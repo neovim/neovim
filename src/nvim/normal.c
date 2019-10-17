@@ -4927,7 +4927,8 @@ static void nv_ident(cmdarg_T *cap)
     /* put pattern in search history */
     init_history();
     add_to_history(HIST_SEARCH, (char_u *)buf, true, NUL);
-    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0, NULL);
+    (void)normal_search(cap, cmdchar == '*' ? '/' : '?', (char_u *)buf, 0,
+                        NULL);
   } else {
     do_cmdline_cmd(buf);
   }
@@ -5384,7 +5385,7 @@ static int normal_search(
     cmdarg_T *cap,
     int dir,
     char_u *pat,
-    int opt,                        /* extra flags for do_search() */
+    int opt,  // extra flags for do_search()
     int *wrapped
 )
 {

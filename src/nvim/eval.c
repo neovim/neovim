@@ -14634,7 +14634,8 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
 
   pos = save_cursor = curwin->w_cursor;
   subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1,
-                       options, RE_SEARCH, (linenr_T)lnum_stop, &tm, NULL, NULL);
+                       options, RE_SEARCH, (linenr_T)lnum_stop, &tm, NULL,
+                       NULL);
   if (subpatnum != FAIL) {
     if (flags & SP_SUBPAT)
       retval = subpatnum;
