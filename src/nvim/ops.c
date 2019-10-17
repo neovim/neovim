@@ -270,20 +270,21 @@ void shift_line(
     int left,
     int round,
     int amount,
-    int call_changed_bytes         /* call changed_bytes() */
+    int call_changed_bytes  // call changed_bytes()
 )
 {
   int count;
   int i, j;
   int p_sw = get_sw_value(curbuf);
 
-  count = get_indent();         /* get current indent */
+  count = get_indent();  // get current indent
 
-  if (round) {                  /* round off indent */
-    i = count / p_sw;           /* number of p_sw rounded down */
-    j = count % p_sw;           /* extra spaces */
-    if (j && left)              /* first remove extra spaces */
-      --amount;
+  if (round) {  // round off indent
+    i = count / p_sw;  // number of p_sw rounded down
+    j = count % p_sw;  // extra spaces
+    if (j && left) {  // first remove extra spaces
+      amount--;
+    }
     if (left) {
       i -= amount;
       if (i < 0)
@@ -291,7 +292,7 @@ void shift_line(
     } else
       i += amount;
     count = i * p_sw;
-  } else {            /* original vi indent */
+  } else {  // original vi indent
     if (left) {
       count -= p_sw * amount;
       if (count < 0)
@@ -300,11 +301,12 @@ void shift_line(
       count += p_sw * amount;
   }
 
-  /* Set new indent */
-  if (State & VREPLACE_FLAG)
-    change_indent(INDENT_SET, count, FALSE, NUL, call_changed_bytes);
-  else
+  // Set new indent
+  if (State & VREPLACE_FLAG) {
+    change_indent(INDENT_SET, count, false, NUL, call_changed_bytes);
+  } else {
     (void)set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
+  }
 }
 
 /*
@@ -4281,15 +4283,13 @@ int paragraph_start(linenr_T lnum)
     return TRUE;                /* after empty line */
 
   do_comments = has_format_option(FO_Q_COMS);
-  if (fmt_check_par(lnum - 1
-          , &leader_len, &leader_flags, do_comments
-          ))
-    return TRUE;                /* after non-paragraph line */
+  if (fmt_check_par(lnum - 1, &leader_len, &leader_flags, do_comments)) {
+    return true;  // after non-paragraph line
+  }
 
-  if (fmt_check_par(lnum
-          , &next_leader_len, &next_leader_flags, do_comments
-          ))
-    return TRUE;                /* "lnum" is not a paragraph line */
+  if (fmt_check_par(lnum, &next_leader_len, &next_leader_flags, do_comments)) {
+    return true;  // "lnum" is not a paragraph line
+  }
 
   if (has_format_option(FO_WHITE_PAR) && !ends_in_white(lnum - 1))
     return TRUE;                /* missing trailing space in previous line. */

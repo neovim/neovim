@@ -5479,10 +5479,10 @@ insertchar (
   if (c == NUL)             /* only formatting was wanted */
     return;
 
-  /* Check whether this character should end a comment. */
+  // Check whether this character should end a comment.
   if (did_ai && c == end_comment_pending) {
     char_u  *line;
-    char_u lead_end[COM_MAX_LEN];           /* end-comment string */
+    char_u lead_end[COM_MAX_LEN];  // end-comment string
     int middle_len, end_len;
     int i;
 
@@ -5490,39 +5490,40 @@ insertchar (
      * Need to remove existing (middle) comment leader and insert end
      * comment leader.  First, check what comment leader we can find.
      */
-    i = get_leader_len(line = get_cursor_line_ptr(), &p, FALSE, TRUE);
-    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {   /* Just checking */
-      /* Skip middle-comment string */
-      while (*p && p[-1] != ':')        /* find end of middle flags */
-        ++p;
+    i = get_leader_len(line = get_cursor_line_ptr(), &p, false, true);
+    if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {  // Just checking
+      // Skip middle-comment string
+      while (*p && p[-1] != ':') {  // find end of middle flags
+        p++;
+      }
       middle_len = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
-      /* Don't count trailing white space for middle_len */
-      while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1]))
-        --middle_len;
+      // Don't count trailing white space for middle_len
+      while (middle_len > 0 && ascii_iswhite(lead_end[middle_len - 1])) {
+        middle_len--;
+      }
 
-      /* Find the end-comment string */
-      while (*p && p[-1] != ':')        /* find end of end flags */
-        ++p;
+      // Find the end-comment string
+      while (*p && p[-1] != ':') {  // find end of end flags
+        p++;
+      }
       end_len = copy_option_part(&p, lead_end, COM_MAX_LEN, ",");
 
-      /* Skip white space before the cursor */
+      // Skip white space before the cursor
       i = curwin->w_cursor.col;
       while (--i >= 0 && ascii_iswhite(line[i]))
         ;
       i++;
 
-      /* Skip to before the middle leader */
+      // Skip to before the middle leader
       i -= middle_len;
 
-      /* Check some expected things before we go on */
+      // Check some expected things before we go on
       if (i >= 0 && lead_end[end_len - 1] == end_comment_pending) {
-        /* Backspace over all the stuff we want to replace */
+        // Backspace over all the stuff we want to replace
         backspace_until_column(i);
 
-        /*
-         * Insert the end-comment string, except for the last
-         * character, which will get inserted as normal later.
-         */
+        // Insert the end-comment string, except for the last
+        // character, which will get inserted as normal later.
         ins_bytes_len(lead_end, end_len - 1);
       }
     }
