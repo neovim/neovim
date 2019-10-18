@@ -3708,6 +3708,58 @@ int grep_internal(cmdidx_T cmdidx)
       *curbuf->b_p_gp == NUL ? p_gp : curbuf->b_p_gp) == 0;
 }
 
+// Return the make/grep autocmd name.
+static char_u *make_get_auname(cmdidx_T cmdidx)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  switch (cmdidx) {
+    case CMD_make:
+      return (char_u *)"make";
+    case CMD_lmake:
+      return (char_u *)"lmake";
+    case CMD_grep:
+      return (char_u *)"grep";
+    case CMD_lgrep:
+      return (char_u *)"lgrep";
+    case CMD_grepadd:
+      return (char_u *)"grepadd";
+    case CMD_lgrepadd:
+      return (char_u *)"lgrepadd";
+    default:
+      return NULL;
+  }
+}
+
+// Form the complete command line to invoke 'make'/'grep'. Quote the command
+// using 'shellquote' and append 'shellpipe'. Echo the fully formed command.
+static char *make_get_fullcmd(const char_u *makecmd, const char_u *fname)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  size_t len = STRLEN(p_shq) * 2 + STRLEN(makecmd) + 1;
+  if (*p_sp != NUL) {
+    len += STRLEN(p_sp) + STRLEN(fname) + 3;
+  }
+  char *const cmd = xmalloc(len);
+  snprintf(cmd, len, "%s%s%s", (char *)p_shq, (char *)makecmd, (char *)p_shq);
+
+  // If 'shellpipe' empty: don't redirect to 'errorfile'.
+  if (*p_sp != NUL) {
+    append_redir(cmd, len, (char *)p_sp, (char *)fname);
+  }
+
+  // Display the fully formed command.  Output a newline if there's something
+  // else than the :make command that was typed (in which case the cursor is
+  // in column 0).
+  if (msg_col == 0) {
+    msg_didout = false;
+  }
+  msg_start();
+  MSG_PUTS(":!");
+  msg_outtrans((char_u *)cmd);  // show what we are doing
+
+  return cmd;
+}
+
 /*
  * Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
  */
@@ -3717,24 +3769,15 @@ void ex_make(exarg_T *eap)
   win_T       *wp = NULL;
   qf_info_T   *qi = &ql_info;
   int res;
-  char_u      *au_name = NULL;
   char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
 
-  /* Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal". */
+  // Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal".
   if (grep_internal(eap->cmdidx)) {
     ex_vimgrep(eap);
     return;
   }
 
-  switch (eap->cmdidx) {
-  case CMD_make:      au_name = (char_u *)"make"; break;
-  case CMD_lmake:     au_name = (char_u *)"lmake"; break;
-  case CMD_grep:      au_name = (char_u *)"grep"; break;
-  case CMD_lgrep:     au_name = (char_u *)"lgrep"; break;
-  case CMD_grepadd:   au_name = (char_u *)"grepadd"; break;
-  case CMD_lgrepadd:  au_name = (char_u *)"lgrepadd"; break;
-  default: break;
-  }
+  char_u *const au_name = make_get_auname(eap->cmdidx);
   if (au_name != NULL && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name,
                                         curbuf->b_fname, true, curbuf)) {
     if (aborting()) {
@@ -3752,25 +3795,7 @@ void ex_make(exarg_T *eap)
     return;
   os_remove((char *)fname);  // in case it's not unique
 
-  // If 'shellpipe' empty: don't redirect to 'errorfile'.
-  const size_t len = (STRLEN(p_shq) * 2 + STRLEN(eap->arg) + 1
-                      + (*p_sp == NUL
-                         ? 0
-                         : STRLEN(p_sp) + STRLEN(fname) + 3));
-  char *const cmd = xmalloc(len);
-  snprintf(cmd, len, "%s%s%s", (char *)p_shq, (char *)eap->arg,
-           (char *)p_shq);
-  if (*p_sp != NUL) {
-    append_redir(cmd, len, (char *) p_sp, (char *) fname);
-  }
-  // Output a newline if there's something else than the :make command that
-  // was typed (in which case the cursor is in column 0).
-  if (msg_col == 0) {
-    msg_didout = false;
-  }
-  msg_start();
-  MSG_PUTS(":!");
-  msg_outtrans((char_u *)cmd);  // show what we are doing
+  char *const cmd = make_get_fullcmd(eap->arg, fname);
 
   do_shell((char_u *)cmd, 0);
 
