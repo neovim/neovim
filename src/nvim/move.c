@@ -69,7 +69,7 @@ static void comp_botline(win_T *wp)
   for (; lnum <= wp->w_buffer->b_ml.ml_line_count; lnum++) {
     linenr_T last = lnum;
     bool folded;
-    int n = plines_win_full(wp, lnum, &last, &folded, true);
+    int n = plines_win_full(wp, lnum, NULL, &last, &folded, true);
     if (lnum <= wp->w_cursor.lnum && last >= wp->w_cursor.lnum) {
       wp->w_cline_row = done;
       wp->w_cline_height = n;
@@ -584,7 +584,7 @@ static void curs_rows(win_T *wp)
     } else {
       linenr_T last = lnum;
       bool folded;
-      int n = plines_win_full(wp, lnum, &last, &folded, false);
+      int n = plines_win_full(wp, lnum, NULL, &last, &folded, false);
       lnum = last + 1;
       if (folded && lnum > wp->w_cursor.lnum) {
         break;
@@ -600,7 +600,7 @@ static void curs_rows(win_T *wp)
         || (i < wp->w_lines_valid
             && (!wp->w_lines[i].wl_valid
                 || wp->w_lines[i].wl_lnum != wp->w_cursor.lnum))) {
-      wp->w_cline_height = plines_win_full(wp, wp->w_cursor.lnum, NULL,
+      wp->w_cline_height = plines_win_full(wp, wp->w_cursor.lnum, NULL, NULL,
                                            &wp->w_cline_folded, true);
     } else if (i > wp->w_lines_valid) {
       /* a line that is too long to fit on the last screen line */
@@ -649,8 +649,8 @@ static void validate_cheight(void)
   check_cursor_moved(curwin);
   if (!(curwin->w_valid & VALID_CHEIGHT)) {
     curwin->w_cline_height = plines_win_full(curwin, curwin->w_cursor.lnum,
-                                             NULL, &curwin->w_cline_folded,
-                                             true);
+                                             NULL, NULL,
+                                             &curwin->w_cline_folded, true);
     curwin->w_valid |= VALID_CHEIGHT;
   }
 }
