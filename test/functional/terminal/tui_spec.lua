@@ -1287,7 +1287,7 @@ describe("TUI 'term' option", function()
     elseif is_macos then
       local status, _ = pcall(assert_term, "xterm", "xterm")
       if not status then
-        pending("macOS: unibilium could not find terminfo", function() end)
+        pending("macOS: unibilium could not find terminfo")
       end
     else
       assert_term("xterm", "xterm")

@@ -56,7 +56,7 @@ describe('Test for delete()', function()
       endif
     ]])
     if eval('v:shell_error') ~= 0 then
-      pending('Cannot create symlink', function()end)
+      pending('Cannot create symlink')
     end
     -- Delete the link, not the file
     eq(0, eval("delete('Xlink')"))
