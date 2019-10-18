@@ -34,7 +34,7 @@ with patch( 'vimspector.utils.SelectFromList',
             return_value=None ) as p:
   with patch( 'vimspector.utils.AskForInput',
               return_value=None ) as p:
-    vim.eval( 'feedkeys( "\<F5>", "xt" )' )
+    vim.eval( 'vimspector#LaunchWithSettings( { "configuration": "run" } )' )
     vim.eval( 'vimspector#test#signs#AssertCursorIsAtLineInBuffer( fn, 6, 1 )' )
     p.assert_called()
 EOF
