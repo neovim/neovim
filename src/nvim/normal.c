@@ -6564,11 +6564,8 @@ static void nv_g_cmd(cmdarg_T *cap)
    */
   case 'j':
   case K_DOWN:
-    /* with 'nowrap' it works just like the normal "j" command; also when
-     * in a closed fold */
-    if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
-        ) {
+    // with 'nowrap' it works just like the normal "j" command
+    if (!curwin->w_p_wrap) {
       oap->motion_type = kMTLineWise;
       i = cursor_down(cap->count1, oap->op_type == OP_NOP);
     } else
@@ -6579,11 +6576,8 @@ static void nv_g_cmd(cmdarg_T *cap)
 
   case 'k':
   case K_UP:
-    /* with 'nowrap' it works just like the normal "k" command; also when
-     * in a closed fold */
-    if (!curwin->w_p_wrap
-        || hasFolding(curwin->w_cursor.lnum, NULL, NULL)
-        ) {
+    // with 'nowrap' it works just like the normal "k" command
+    if (!curwin->w_p_wrap) {
       oap->motion_type = kMTLineWise;
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
     } else
