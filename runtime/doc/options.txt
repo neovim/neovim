@@ -1978,7 +1978,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  possible.  If it is not possible in any directory, but last 
 	  directory listed in the option does not exist, it is created.
 	- Empty means that no swap file will be used (recovery is
-	  impossible!).
+	  impossible!) and no |E303| error will be given.
 	- A directory "." means to put the swap file in the same directory as
 	  the edited file.  On Unix, a dot is prepended to the file name, so
 	  it doesn't show in a directory listing.  On MS-Windows the "hidden"

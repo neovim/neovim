@@ -556,7 +556,8 @@ allowed for the command that was used.
 Vim was not able to create a swap file.  You can still edit the file, but if
 Vim unexpectedly exits the changes will be lost.  And Vim may consume a lot of
 memory when editing a big file.  You may want to change the 'directory' option
-to avoid this error.  See |swap-file|.
+to avoid this error.  This error is not given when 'directory' is empty.  See
+|swap-file|.
 
 							*E140*  >
   Use ! to write partial buffer
