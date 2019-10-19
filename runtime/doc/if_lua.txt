@@ -361,7 +361,7 @@ Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
 
 ------------------------------------------------------------------------------
-VIM.API							*lua-api*
+VIM.API							*lua-api* *vim.api*
 
 `vim.api` exposes the full Nvim |API| as a table of Lua functions.
 
@@ -371,7 +371,7 @@ Example: to use the "nvim_get_current_line()" API function, call
     print(tostring(vim.api.nvim_get_current_line()))
 
 ------------------------------------------------------------------------------
-VIM.LOOP						*lua-loop*
+VIM.LOOP						*lua-loop* *vim.loop*
 
 `vim.loop` exposes all features of the Nvim event-loop.  This is a low-level
 API that provides functionality for networking, filesystem, and process

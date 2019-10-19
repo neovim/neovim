@@ -378,11 +378,11 @@ notation	meaning		    equivalent	decimal value(s)	~
 <kEqual>	keypad =			*keypad-equal*
 <kEnter>	keypad Enter			*keypad-enter*
 <k0> - <k9>	keypad 0 to 9			*keypad-0* *keypad-9*
-<S-...>		shift-key			*shift* *<S-*
-<C-...>		control-key			*control* *ctrl* *<C-*
-<M-...>		alt-key or meta-key		*META* *ALT* *<M-*
-<A-...>		same as <M-...>			*<A-*
-<D-...>		command-key or "super" key	*<D-*
+<S-…>		shift-key			*shift* *<S-*
+<C-…>		control-key			*control* *ctrl* *<C-*
+<M-…>		alt-key or meta-key		*META* *ALT* *<M-*
+<A-…>		same as <M-…>			*<A-*
+<D-…>		command-key or "super" key	*<D-*
 -----------------------------------------------------------------------
 
 Note: The shifted cursor keys, the help key, and the undo key are only
