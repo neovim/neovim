@@ -421,6 +421,9 @@ au BufNewFile,BufRead *.csp,*.fdr		setf csp
 au BufNewFile,BufRead *.pld			setf cupl
 au BufNewFile,BufRead *.si			setf cuplsim
 
+" Dart
+au BufRead,BufNewfile *.dart,*.drt		setf dart
+
 " Debian Control
 au BufNewFile,BufRead */debian/control		setf debcontrol
 au BufNewFile,BufRead control

@@ -122,6 +122,7 @@ let s:filename_checks = {
     \ 'cvs': ['cvs123'],
     \ 'cvsrc': ['.cvsrc'],
     \ 'cynpp': ['file.cyn'],
+    \ 'dart': ['file.dart', 'file.drt'],
     \ 'datascript': ['file.ds'],
     \ 'dcd': ['file.dcd'],
     \ 'debcontrol': ['/debian/control'],
