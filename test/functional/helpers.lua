@@ -1,4 +1,5 @@
 require('coxpcall')
+local busted = require('busted')
 local luv = require('luv')
 local lfs = require('lfs')
 local mpack = require('mpack')
@@ -385,7 +386,7 @@ function module.retry(max, max_ms, fn)
     end
     luv.update_time()  -- Update cached value of luv.now() (libuv: uv_now()).
     if (max and tries >= max) or (luv.now() - start_time > timeout) then
-      error("\nretry() attempts: "..tostring(tries).."\n"..tostring(result))
+      busted.fail(string.format("retry() attempts: %d\n%s", tries, tostring(result)), 2)
     end
     tries = tries + 1
     luv.sleep(20)  -- Avoid hot loop...
