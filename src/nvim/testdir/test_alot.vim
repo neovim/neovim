@@ -27,7 +27,6 @@ source test_jumps.vim
 source test_fileformat.vim
 source test_filetype.vim
 source test_lambda.vim
-source test_mapping.vim
 source test_menu.vim
 source test_messages.vim
 source test_modeline.vim

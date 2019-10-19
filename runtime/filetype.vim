@@ -421,6 +421,9 @@ au BufNewFile,BufRead *.csp,*.fdr		setf csp
 au BufNewFile,BufRead *.pld			setf cupl
 au BufNewFile,BufRead *.si			setf cuplsim
 
+" Dart
+au BufRead,BufNewfile *.dart,*.drt		setf dart
+
 " Debian Control
 au BufNewFile,BufRead */debian/control		setf debcontrol
 au BufNewFile,BufRead control
@@ -974,6 +977,9 @@ au BufNewFile,BufRead hg-editor-*.txt		setf hgcommit
 
 " Mercurial config (looks like generic config file)
 au BufNewFile,BufRead *.hgrc,*hgrc		setf cfg
+
+" Meson Build system config
+au BufNewFile,BufRead meson.build,meson_options.txt setf meson
 
 " Messages (logs mostly)
 au BufNewFile,BufRead */log/{auth,cron,daemon,debug,kern,lpr,mail,messages,news/news,syslog,user}{,.log,.err,.info,.warn,.crit,.notice}{,.[0-9]*,-[0-9]*} setf messages

@@ -1094,7 +1094,6 @@ find_tags (
     int low_char;               // first char at low_offset
     int high_char;              // first char at high_offset
   } search_info;
-  off_T filesize;
   int tagcmp;
   off_T offset;
   int round;
@@ -1503,19 +1502,21 @@ line_read_in:
             state = TS_LINEAR;
           }
 
-          /*
-           * When starting a binary search, get the size of the file and
-           * compute the first offset.
-           */
+          // When starting a binary search, get the size of the file and
+          // compute the first offset.
           if (state == TS_BINARY) {
             if (vim_fseek(fp, 0, SEEK_END) != 0) {
+              // can't seek, don't use binary search
               state = TS_LINEAR;
             } else {
-              filesize = vim_ftell(fp);
+              // Get the tag file size.
+              // Don't use lseek(), it doesn't work
+              // properly on MacOS Catalina.
+              const off_T filesize = vim_ftell(fp);
               vim_fseek(fp, 0, SEEK_SET);
 
-              /* Calculate the first read offset in the file.  Start
-               * the search in the middle of the file. */
+              // Calculate the first read offset in the file.  Start
+              // the search in the middle of the file.
               search_info.low_offset = 0;
               search_info.low_char = 0;
               search_info.high_offset = filesize;
