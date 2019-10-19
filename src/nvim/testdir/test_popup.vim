@@ -737,11 +737,12 @@ func Test_popup_position()
   if !CanRunVimInTerminal()
     return
   endif
-  call writefile([
-	\ '123456789_123456789_123456789_a',
-	\ '123456789_123456789_123456789_b',
-	\ '            123',
-	\ ], 'Xtest')
+  let lines =<< trim END
+    123456789_123456789_123456789_a
+    123456789_123456789_123456789_b
+                123
+  END
+  call writefile(lines, 'Xtest')
   let buf = RunVimInTerminal('Xtest', {})
   call term_sendkeys(buf, ":vsplit\<CR>")
 

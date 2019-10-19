@@ -9779,27 +9779,37 @@ This does NOT work: >
 			Like above, but append/add/subtract the value for each
 			|List| item.
 
-					*:let=<<* *:let-heredoc* *E990* *E991*
+						*:let=<<* *:let-heredoc*
+						*E990* *E991* *E172* *E221*
 :let {var-name} =<< [trim] {marker}
 text...
 text...
 {marker}
 			Set internal variable {var-name} to a List containing
 			the lines of text bounded by the string {marker}.
-			{marker} must not contain white space.
+			{marker} cannot start with a lower case character.
 			The last line should end only with the {marker} string
 			without any other character.  Watch out for white
 			space after {marker}!
-			If {marker} is not supplied, then "." is used as the
-			default marker.
 
-			Any white space characters in the lines of text are
-			preserved.  If "trim" is specified before {marker},
-			then all the leading indentation exactly matching the
-			leading indentation before `let` is stripped from the
-			input lines and the line containing {marker}.  Note
-			that the difference between space and tab matters
-			here.
+			Without "trim" any white space characters in the lines
+			of text are preserved.  If "trim" is specified before
+			{marker}, then indentation is stripped so you can do: >
+				let text =<< trim END
+				   if ok
+				     echo 'done'
+				   endif
+				END
+<			Results in: ["if ok", "  echo 'done'", "endif"]
+			The marker must line up with "let" and the indentation
+			of the first line is removed from all the text lines.
+			Specifically: all the leading indentation exactly
+			matching the leading indentation of the first
+			non-empty text line is stripped from the input lines.
+			All leading indentation exactly matching the leading
+			indentation before `let` is stripped from the line
+			containing {marker}.  Note that the difference between
+			space and tab matters here.
 
 			If {var-name} didn't exist yet, it is created.
 			Cannot be followed by another command, but can be

@@ -1521,7 +1521,9 @@ heredoc_get(exarg_T *eap, char_u *cmd)
 {
   char_u *marker;
   char_u *p;
-  int indent_len = 0;
+  int marker_indent_len = 0;
+  int text_indent_len = 0;
+  char_u *text_indent = NULL;
 
   if (eap->getline == NULL) {
     EMSG(_("E991: cannot use =<< here"));
@@ -1534,17 +1536,19 @@ heredoc_get(exarg_T *eap, char_u *cmd)
       && (cmd[4] == NUL || ascii_iswhite(cmd[4]))) {
     cmd = skipwhite(cmd + 4);
 
-    // Trim the indentation from all the lines in the here document
+    // Trim the indentation from all the lines in the here document.
     // The amount of indentation trimmed is the same as the indentation of
-    // the :let command line.
+    // the first line after the :let command line.  To find the end marker
+    // the indent of the :let command line is trimmed.
     p = *eap->cmdlinep;
     while (ascii_iswhite(*p)) {
       p++;
-      indent_len++;
+      marker_indent_len++;
     }
+    text_indent_len = -1;
   }
 
-  // The marker is the next word.  Default marker is "."
+  // The marker is the next word.
   if (*cmd != NUL && *cmd != '"') {
     marker = skipwhite(cmd);
     p = skiptowhite(marker);
@@ -1553,34 +1557,59 @@ heredoc_get(exarg_T *eap, char_u *cmd)
       return NULL;
     }
     *p = NUL;
+    if (islower(*marker)) {
+      EMSG(_("E221: Marker cannot start with lower case letter"));
+      return NULL;
+    }
   } else {
-    marker = (char_u *)".";
+    EMSG(_("E172: Missing marker"));
+    return NULL;
   }
 
   list_T *l = tv_list_alloc(0);
   for (;;) {
-    int i = 0;
+    int mi = 0;
+    int ti = 0;
 
     char_u *theline = eap->getline(NUL, eap->cookie, 0, false);
-    if (theline != NULL && indent_len > 0) {
-      // trim the indent matching the first line
-      if (STRNCMP(theline, *eap->cmdlinep, indent_len) == 0) {
-        i = indent_len;
-      }
-    }
-
     if (theline == NULL) {
       EMSG2(_("E990: Missing end marker '%s'"), marker);
       break;
     }
-    if (STRCMP(marker, theline + i) == 0) {
+
+    // with "trim": skip the indent matching the :let line to find the
+    // marker
+    if (marker_indent_len > 0
+        && STRNCMP(theline, *eap->cmdlinep, marker_indent_len) == 0) {
+        mi = marker_indent_len;
+    }
+    if (STRCMP(marker, theline + mi) == 0) {
       xfree(theline);
       break;
     }
+    if (text_indent_len == -1 && *theline != NUL) {
+        // set the text indent from the first line.
+        p = theline;
+        text_indent_len = 0;
+        while (ascii_iswhite(*p)) {
+            p++;
+            text_indent_len++;
+        }
+        text_indent = vim_strnsave(theline, text_indent_len);
+    }
+    // with "trim": skip the indent matching the first line
+    if (text_indent != NULL) {
+        for (ti = 0; ti < text_indent_len; ti++) {
+            if (theline[ti] != text_indent[ti]) {
+                break;
+            }
+        }
+    }
 
-    tv_list_append_string(l, (char *)(theline + i), -1);
+    tv_list_append_string(l, (char *)(theline + ti), -1);
     xfree(theline);
   }
+  xfree(text_indent);
 
   return l;
 }
@@ -21268,8 +21297,6 @@ void ex_function(exarg_T *eap)
   bool overwrite = false;
   int indent;
   int nesting;
-  char_u      *skip_until = NULL;
-  char_u *trimmed = NULL;
   dictitem_T  *v;
   funcdict_T fudi;
   static int func_nr = 0;           /* number for nameless function */
@@ -21277,7 +21304,11 @@ void ex_function(exarg_T *eap)
   hashtab_T   *ht;
   int todo;
   hashitem_T  *hi;
-  int sourcing_lnum_off;
+  linenr_T sourcing_lnum_off;
+  linenr_T sourcing_lnum_top;
+  bool is_heredoc = false;
+  char_u *skip_until = NULL;
+  char_u *heredoc_trimmed = NULL;
   bool show_block = false;
   bool do_concat = true;
 
@@ -21526,15 +21557,17 @@ void ex_function(exarg_T *eap)
     cmdline_row = msg_row;
   }
 
+  // Save the starting line number.
+  sourcing_lnum_top = sourcing_lnum;
+
   indent = 2;
   nesting = 0;
   for (;; ) {
     if (KeyTyped) {
-      msg_scroll = TRUE;
-      saved_wait_return = FALSE;
+      msg_scroll = true;
+      saved_wait_return = false;
     }
-    need_wait_return = FALSE;
-    sourcing_lnum_off = sourcing_lnum;
+    need_wait_return = false;
 
     if (line_arg != NULL) {
       /* Use eap->arg, split up in parts by line breaks. */
@@ -21567,21 +21600,36 @@ void ex_function(exarg_T *eap)
       ui_ext_cmdline_block_append((size_t)indent, (const char *)theline);
     }
 
-    /* Detect line continuation: sourcing_lnum increased more than one. */
-    if (sourcing_lnum > sourcing_lnum_off + 1)
-      sourcing_lnum_off = sourcing_lnum - sourcing_lnum_off - 1;
-    else
+    // Detect line continuation: sourcing_lnum increased more than one.
+    sourcing_lnum_off = get_sourced_lnum(eap->getline, eap->cookie);
+    if (sourcing_lnum < sourcing_lnum_off) {
+        sourcing_lnum_off -= sourcing_lnum;
+    } else {
       sourcing_lnum_off = 0;
+    }
 
     if (skip_until != NULL) {
-      // Between ":append" and "." and between ":python <<EOF" and "EOF"
-      // don't check for ":endfunc".
-      if (trimmed == NULL || STRNCMP(theline, trimmed, STRLEN(trimmed)) == 0) {
-        p = trimmed == NULL ? theline : theline + STRLEN(trimmed);
+      // Don't check for ":endfunc" between
+      // * ":append" and "."
+      // * ":python <<EOF" and "EOF"
+      // * ":let {var-name} =<< [trim] {marker}" and "{marker}"
+      if (heredoc_trimmed == NULL
+          || (is_heredoc && skipwhite(theline) == theline)
+          || STRNCMP(theline, heredoc_trimmed,
+                     STRLEN(heredoc_trimmed)) == 0) {
+        if (heredoc_trimmed == NULL) {
+          p = theline;
+        } else if (is_heredoc) {
+          p = skipwhite(theline) == theline
+            ? theline : theline + STRLEN(heredoc_trimmed);
+        } else {
+          p = theline + STRLEN(heredoc_trimmed);
+        }
         if (STRCMP(p, skip_until) == 0) {
           XFREE_CLEAR(skip_until);
-          XFREE_CLEAR(trimmed);
+          XFREE_CLEAR(heredoc_trimmed);
           do_concat = true;
+          is_heredoc = false;
         }
       }
     } else {
@@ -21689,19 +21737,16 @@ void ex_function(exarg_T *eap)
           && ((p[0] == 'l' && p[1] == 'e'
                && (!ASCII_ISALNUM(p[2])
                    || (p[2] == 't' && !ASCII_ISALNUM(p[3])))))) {
-        // ":let v =<<" continues until a dot
         p = skipwhite(arg + 3);
         if (STRNCMP(p, "trim", 4) == 0) {
           // Ignore leading white space.
           p = skipwhite(p + 4);
-          trimmed = vim_strnsave(theline, (int)(skipwhite(theline) - theline));
+          heredoc_trimmed = vim_strnsave(theline,
+                                         (int)(skipwhite(theline) - theline));
         }
-        if (*p == NUL) {
-          skip_until = vim_strsave((char_u *)".");
-        } else {
-          skip_until = vim_strnsave(p, (int)(skiptowhite(p) - p));
-        }
+        skip_until = vim_strnsave(p, (int)(skiptowhite(p) - p));
         do_concat = false;
+        is_heredoc = true;
       }
     }
 
@@ -21872,7 +21917,8 @@ void ex_function(exarg_T *eap)
   fp->uf_flags = flags;
   fp->uf_calls = 0;
   fp->uf_script_ctx = current_sctx;
-  fp->uf_script_ctx.sc_lnum += sourcing_lnum - newlines.ga_len - 1;
+  fp->uf_script_ctx.sc_lnum += sourcing_lnum_top;
+
   goto ret_free;
 
 erret:
