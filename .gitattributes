@@ -1,1 +1,2 @@
 *.h linguist-language=C
+src/nvim/testdir/test42.in diff
