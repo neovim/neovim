@@ -41,15 +41,15 @@ local BuiltinCallbacks = {}
 
 -- nvim/error_callback
 BuiltinCallbacks['nvim/error_callback'] = {
-  callback = function(self, data, method_name)
-    logger.debug('callback:nvim/error_callback ', method_name, ' ', data, ' ', self)
+  callback = function(self, result, method_name)
+    logger.debug('callback:nvim/error_callback ', method_name, ' ', result, ' ', self)
 
     local message = ''
-    if data.message ~= nil and type(data.message) == 'string' then
-      message = data.message
-    elseif rawget(errorCodes, data.code) ~= nil then
+    if result.message ~= nil and type(result.message) == 'string' then
+      message = result.message
+    elseif rawget(errorCodes, result.code) ~= nil then
       message = string.format('[%s] %s',
-        data.code, errorCodes[data.code]
+        result.code, errorCodes[result.code]
       )
     end
 
@@ -63,8 +63,8 @@ BuiltinCallbacks['nvim/error_callback'] = {
 -- textDocument/publishDiagnostics
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 BuiltinCallbacks['textDocument/publishDiagnostics']= {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/publishDiagnostics ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/publishDiagnostics ', result, ' ', self)
     logger.debug('Not implemented textDocument/publishDiagnostics callback')
   end,
   options = {},
@@ -73,14 +73,14 @@ BuiltinCallbacks['textDocument/publishDiagnostics']= {
 -- textDocument/completion
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 BuiltinCallbacks['textDocument/completion'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/completion ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/completion ', result, ' ', self)
 
-    if not data or vim.tbl_isempty(data) then
+    if not result or vim.tbl_isempty(result) then
       return
     end
 
-    local matches = text_document_handler.CompletionList_to_matches(data)
+    local matches = text_document_handler.CompletionList_to_matches(result)
     local corsol = vim.api.nvim_call_function('col', { '.' })
     local line_to_cursor = vim.api.nvim_call_function(
       'strpart', {
@@ -99,15 +99,15 @@ BuiltinCallbacks['textDocument/completion'] = {
 -- textDocument/signatureHelp
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
 BuiltinCallbacks['textDocument/signatureHelp'] = {
-  callback = function(self, data)
-    logger.debug('textDocument/signatureHelp ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('textDocument/signatureHelp ', result, ' ', self)
 
-    if data == nil or vim.tbl_isempty(data) then
+    if result == nil or vim.tbl_isempty(result) then
       return
     end
 
-    if not vim.tbl_isempty(data.signatures) then
-      util.ui:open_floating_preview(text_document_handler.SignatureHelp_to_preview_contents(data))
+    if not vim.tbl_isempty(result.signatures) then
+      util.ui:open_floating_preview(text_document_handler.SignatureHelp_to_preview_contents(result))
     end
   end,
   options = {},
@@ -116,8 +116,8 @@ BuiltinCallbacks['textDocument/signatureHelp'] = {
 -- textDocument/references
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
 BuiltinCallbacks['textDocument/references'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/references ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/references ', result, ' ', self)
     logger.debug('Not implemented textDocument/publishDiagnostics callback')
   end,
   options = {},
@@ -125,16 +125,16 @@ BuiltinCallbacks['textDocument/references'] = {
 
 -- textDocument/rename
 BuiltinCallbacks['textDocument/rename'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/rename ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/rename ', result, ' ', self)
 
-    if not data then
+    if not result then
       return nil
     end
 
-    vim.api.nvim_set_var('text_document_rename', data)
+    vim.api.nvim_set_var('text_document_rename', result)
 
-    workspace_handler.apply_WorkspaceEdit(data)
+    workspace_handler.apply_WorkspaceEdit(result)
   end,
   options = {}
 }
@@ -143,15 +143,15 @@ BuiltinCallbacks['textDocument/rename'] = {
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 -- @params MarkedString | MarkedString[] | MarkupContent
 BuiltinCallbacks['textDocument/hover'] = {
-  callback = function(self, data)
-    logger.debug('textDocument/hover ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('textDocument/hover ', result, ' ', self)
 
-    if not data or vim.tbl_isempty(data) then
+    if not result or vim.tbl_isempty(result) then
       return
     end
 
-    if data.contents ~= nil then
-      util.ui:open_floating_preview(text_document_handler.HoverContents_to_preview_contents(data), 'markdown')
+    if result.contents ~= nil then
+      util.ui:open_floating_preview(text_document_handler.HoverContents_to_preview_contents(result), 'markdown')
     end
   end,
   options = {}
@@ -160,15 +160,15 @@ BuiltinCallbacks['textDocument/hover'] = {
 -- textDocument/declaration
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_declaration
 BuiltinCallbacks['textDocument/declaration'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/definiton ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/definiton ', result, ' ', self)
 
-    if not data or data == {} then
+    if not result or result == {} then
       logger.info('No declaration found')
       return nil
     end
 
-    util.handle_location(data)
+    util.handle_location(result)
 
     return true
   end,
@@ -178,15 +178,15 @@ BuiltinCallbacks['textDocument/declaration'] = {
 -- textDocument/definition
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_definition
 BuiltinCallbacks['textDocument/definition'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/definiton ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/definiton ', result, ' ', self)
 
-    if not data or data == {} then
+    if not result or result == {} then
       logger.info('No definition found')
       return nil
     end
 
-    util.handle_location(data)
+    util.handle_location(result)
 
     return true
   end,
@@ -196,15 +196,15 @@ BuiltinCallbacks['textDocument/definition'] = {
 -- textDocument/typeDefinition
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_typeDefinition
 BuiltinCallbacks['textDocument/typeDefinition'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/typeDefiniton ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/typeDefiniton ', result, ' ', self)
 
-    if not data or data == {} then
+    if not result or result == {} then
       logger.info('No type definition found')
       return nil
     end
 
-    util.handle_location(data)
+    util.handle_location(result)
 
     return true
   end,
@@ -214,15 +214,15 @@ BuiltinCallbacks['textDocument/typeDefinition'] = {
 -- textDocument/implementation
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_implementation
 BuiltinCallbacks['textDocument/implementation'] = {
-  callback = function(self, data)
-    logger.debug('callback:textDocument/implementation ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:textDocument/implementation ', result, ' ', self)
 
-    if not data or data == {} then
+    if not result or result == {} then
       logger.info('No implementation found')
       return nil
     end
 
-    util.handle_location(data)
+    util.handle_location(result)
 
     return true
   end,
@@ -232,16 +232,16 @@ BuiltinCallbacks['textDocument/implementation'] = {
 -- window/showMessage
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
 BuiltinCallbacks['window/showMessage'] = {
-  callback = function(self, data)
-    logger.debug('callback:window/showMessage ', data, ' ', self)
+  callback = function(self, result)
+    logger.debug('callback:window/showMessage ', result, ' ', self)
 
-    if not data or type(data) ~= 'table' then
+    if not result or type(result) ~= 'table' then
       print(self)
       return nil
     end
 
-    local message_type = data['type']
-    local message = data['message']
+    local message_type = result['type']
+    local message = result['message']
 
     if message_type == protocol.MessageType.Error then
       -- Might want to not use err_writeln,
@@ -251,7 +251,7 @@ BuiltinCallbacks['window/showMessage'] = {
       vim.api.nvim_out_write(message .. "\n")
     end
 
-    return data
+    return result
   end,
   options = {}
 }

@@ -41,7 +41,7 @@ Client.new = function(server_name, filetype, cmd, offset_encoding)
     --      1 - success: true if successful, false if error
     --      2 - data: corresponding data for the message
     _callbacks = {},
-    _results = {},
+    _responses = {},
     _stopped = false,
 
     _stdin = nil,
@@ -110,7 +110,6 @@ Client.stop = function(self)
 
   autocmd.unregister_autocmd(self.filetype, self.server_name)
 
-
   vim.api.nvim_command("echo 'shutting down filetype: "..self.filetype..", server_name: "..self.server_name.."'")
   self:request('shutdown', nil, function()end)
 
@@ -144,11 +143,11 @@ Client.cmd_tostring = function(self)
 end
 
 Client.initialize = function(self)
-  local result = self:request_async('initialize', protocol.InitializeParams(self), function(_, data)
+  local request_id = self:request_async('initialize', protocol.InitializeParams(self), function(_, result)
     self:notify('initialized', protocol.InitializedParams())
     self:notify('textDocument/didOpen', protocol.DidOpenTextDocumentParams())
-    self:set_server_capabilities(data.capabilities)
-    return data.capabilities
+    self:set_server_capabilities(result.capabilities)
+    return result.capabilities
   end, nil)
 
   logger.info(
@@ -157,7 +156,7 @@ Client.initialize = function(self)
     ", server_capabilities: "..vim.inspect(self.server_capabilities, {newline=''})
   )
 
-  return result
+  return request_id
 end
 
 Client.set_client_capabilities = function(self, capabilities)
@@ -213,29 +212,27 @@ end
 --- Make a request to the server
 -- @param method: Name of the LSP method
 -- @param params: the parameters to send
--- @param cb (optional): If sent, will call this when it's done
---                          otherwise it'll wait til the client is done
 
--- @return result (table)
-Client.request = function(self, method, params, cb, bufnr)
-  local request_id =  self:_request('request', method, params, cb, bufnr)
+-- @return response (table): The language server response
+Client.request = function(self, method, params, bufnr)
+  local request_id =  self:_request('request', method, params, 'skip', bufnr)
 
   local timeout = os.time() + 10
 
-  while (os.time() < timeout) and (self._results[request_id] == nil) do
+  while (os.time() < timeout) and (self._responses[request_id] == nil) do
     vim.api.nvim_command('sleep 10m')
   end
 
-  if self._results[request_id] == nil then
+  if self._responses[request_id] == nil then
     return nil
   end
 
-  local result = self._results[request_id]
+  local response = self._responses[request_id]
 
   -- Clear results
-  self._results[request_id] = nil
+  self._responses[request_id] = nil
 
-  return result
+  return response
 end
 
 --- Sends an async request to the client.
@@ -417,19 +414,20 @@ Client._on_message = function(self, body)
     local id = json_message.id
     local method = self._callbacks[json_message.id].method
     local is_success = not json_message['error']
-    local data = json_message['error'] or json_message.result or {}
+    local result = json_message.result or {}
     if is_success then
-      logger.write('debug', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.inspect(data, {newline=''}).." ]]", 'server')
+      logger.write('debug', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.inspect(result, {newline=''}).." ]]", 'server')
     else
-      logger.write('error', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.inspect(data, {newline=''}).." ]]", 'server')
+      logger.write('error', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.inspect(result, {newline=''}).." ]]", 'server')
     end
 
-    -- If no callback is passed with request, use the registered callback.
-    local callback_results
-    if cb then
-      callback_results = cb(is_success, data)
-    else
-      callback_results = call_callback(method, is_success, data, self.filetype)
+    if cb ~= 'skip' then
+      -- If no callback is passed with request, use the registered callback.
+      if cb then
+        cb(is_success, result)
+      else
+        call_callback(method, is_success, result, self.filetype)
+      end
     end
 
     -- Clear called callback
@@ -437,10 +435,7 @@ Client._on_message = function(self, body)
 
     -- Cache the response temporary for request.
     if message_type == 'request' then
-      self._results[json_message.id] = {
-        response = json_message,
-        callback_results = callback_results,
-      }
+      self._responses[json_message.id] = json_message
     end
   end
 end

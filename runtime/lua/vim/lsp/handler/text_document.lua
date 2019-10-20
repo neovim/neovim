@@ -35,8 +35,8 @@ end
 --- Getting vim complete-items with incomplete flag.
 -- @params CompletionItem[], CompletionList or nil (https://microsoft.github.io/language-server-protocol/specification#textDocument_completion)
 -- @return { matches = complete-items table, incomplete = boolean  }
-TextDocument.CompletionList_to_matches = function(data)
-  local items = local_fn.get_CompletionItems(data)
+TextDocument.CompletionList_to_matches = function(result)
+  local items = local_fn.get_CompletionItems(result)
 
   local matches = {}
 
@@ -75,12 +75,12 @@ end
 
 --- Convert SignatureHelp response to preview contents.
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_signatureHelp
-TextDocument.SignatureHelp_to_preview_contents = function(data)
+TextDocument.SignatureHelp_to_preview_contents = function(result)
   local contents = {}
   local activeSignature = 1
 
-  if data.activeSignature then activeSignature = data.activeSignature + 1 end
-  local signature = data.signatures[activeSignature]
+  if result.activeSignature then activeSignature = result.activeSignature + 1 end
+  local signature = result.signatures[activeSignature]
 
   for _, line in pairs(vim.split(signature.label, '\n')) do
     table.insert(contents, line)
@@ -105,12 +105,12 @@ end
 
 --- Convert Hover response to preview contents.
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_hover
-TextDocument.HoverContents_to_preview_contents = function(data)
+TextDocument.HoverContents_to_preview_contents = function(result)
   local contents = {}
-  local contents_type = util.get_HoverContents_type(data.contents)
+  local contents_type = util.get_HoverContents_type(result.contents)
 
-  if contents_type == 'MarkedString[]' and not vim.tbl_isempty(data.contents) then
-    for _, item in ipairs(data.contents) do
+  if contents_type == 'MarkedString[]' and not vim.tbl_isempty(result.contents) then
+    for _, item in ipairs(result.contents) do
       if type(item) == 'table' then
         table.insert(contents, '```'..item.language)
         for _, line in pairs(vim.split(item.value, '\n')) do
@@ -125,33 +125,33 @@ TextDocument.HoverContents_to_preview_contents = function(data)
         end
       end
     end
-  elseif contents_type == 'MarkupContent' and not vim.tbl_isempty(data.contents) then
+  elseif contents_type == 'MarkupContent' and not vim.tbl_isempty(result.contents) then
     -- MarkupContent
-    if data.contents.kind ~= nil then
-      for _, line in pairs(vim.split(data.contents.value, '\n')) do
+    if result.contents.kind ~= nil then
+      for _, line in pairs(vim.split(result.contents.value, '\n')) do
         table.insert(contents, line)
       end
     -- { language: string; value: string }
-    elseif data.contents.language ~= nil then
-      table.insert(contents, '```'..data.contents.language)
-      for _, line in pairs(vim.split(data.contents.value, '\n')) do
+    elseif result.contents.language ~= nil then
+      table.insert(contents, '```'..result.contents.language)
+      for _, line in pairs(vim.split(result.contents.value, '\n')) do
         table.insert(contents, line)
       end
       table.insert(contents, '```')
     else
-      for _, line in pairs(vim.split(data.contents, '\n')) do
+      for _, line in pairs(vim.split(result.contents, '\n')) do
         table.insert(contents, line)
       end
     end
   elseif contents_type == 'MarkedString' then
-    if data.contents.language then
-      table.insert(contents, '```'..data.contents.language)
-      for _, line in pairs(vim.split(data.contents.value, '\n')) do
+    if result.contents.language then
+      table.insert(contents, '```'..result.contents.language)
+      for _, line in pairs(vim.split(result.contents.value, '\n')) do
         table.insert(contents, line)
       end
       table.insert(contents, '```')
-    elseif data.contents ~= '' then
-      for _, line in pairs(vim.split(data.contents, '\n')) do
+    elseif result.contents ~= '' then
+      for _, line in pairs(vim.split(result.contents, '\n')) do
         table.insert(contents, line)
       end
     end
@@ -166,11 +166,11 @@ end
 
 -- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-local_fn.get_CompletionItems = function(data)
-  if util.is_CompletionList(data) then
-    return data.items
-  elseif data ~= nil then
-    return data
+local_fn.get_CompletionItems = function(result)
+  if util.is_CompletionList(result) then
+    return result.items
+  elseif result ~= nil then
+    return result
   else
     return {}
   end

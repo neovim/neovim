@@ -117,7 +117,7 @@ API is defined:
 <
 
                                                             *vim.lsp.request()*
-vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype} [, {server_name}]]]]]):
+vim.lsp.request({method} [, {arguments} [, {bufnr} [, {filetype} [, {server_name}]]]]):
 	Creates and sends a request to the server for {filetype}. Will fill in any
 	missing required arguments as defined by the language server protocol. Will
 	call the built-in callback for the request (if you set that and it exists), unless an
@@ -144,23 +144,6 @@ vim.lsp.request({method} [, {arguments} [, {callback} [, {bufnr} [, {filetype} [
 					    'textDocument': '/home/user/test/example.lua',
 					    'position': { 'line': 13, 'character': 17 }
 					}
-
-		{callback}: An optional callback that will be executed
-			once the response has been received. If this is passed,
-			then the |lsp-built-in-callback| will not be executed for
-			this request. If you do not set |built-in-callbacks| or this request does not have a
-			specific filetype callback, then no callback will be executed upon receiving the request.
-
-			where {success} is a boolean where true means successful request
-			and false means the request failed.
-
-			The parameter {data} is a dictionary containing the possible
-			response data (or error) as specified by the language
-			server protocol.
-
-			The callback will be executed from Lua running:
-
-				`vim.api.nvim_call_function('func_name', { success, data })`
 
 		{bufnr}: The number of the buffer.
 			This is used for used as an application destination for processing.

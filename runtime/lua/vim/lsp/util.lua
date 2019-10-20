@@ -53,36 +53,36 @@ util.update_tagstack = function()
   vim.api.nvim_call_function('settagstack', { winid, tagstack, action })
 end
 
-util.handle_location = function(data)
+util.handle_location = function(result)
   local current_file = vim.api.nvim_call_function('expand', {'%'})
 
   -- We can sometimes get a list of locations,
   -- so set the first value as the only value we want to handle
-  if data[1] ~= nil then
-    data = data[1]
+  if result[1] ~= nil then
+    result = result[1]
   end
 
-  if data.uri == nil then
+  if result.uri == nil then
     vim.api.nvim_err_writeln('[LSP] Could not find a valid location')
     return
   end
 
-  if type(data.uri) ~= 'string' then
+  if type(result.uri) ~= 'string' then
     vim.api.nvim_err_writeln('Invalid uri')
     return
   end
 
-  local data_file = vim.uri_to_fname(data.uri)
+  local result_file = vim.uri_to_fname(result.uri)
 
   util.update_tagstack()
-  if data_file ~= vim.uri_from_fname(current_file) then
-    vim.api.nvim_command('silent edit ' .. data_file)
+  if result_file ~= vim.uri_from_fname(current_file) then
+    vim.api.nvim_command('silent edit ' .. result_file)
   end
 
   vim.api.nvim_command(
     string.format('normal! %sG%s|'
-      , data.range.start.line + 1
-      , data.range.start.character + 1
+      , result.range.start.line + 1
+      , result.range.start.character + 1
     )
   )
 end
@@ -103,9 +103,9 @@ util.get_HoverContents_type = function(contents)
   end
 end
 
-util.is_CompletionList = function(data)
-  if type(data) == 'table' then
-    if data.items then
+util.is_CompletionList = function(result)
+  if type(result) == 'table' then
+    if result.items then
       return true
     end
   end

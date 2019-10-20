@@ -77,13 +77,12 @@ end
 --- Send a request to a server and return the response
 -- @param method [string]: Name of the request method
 -- @param arguments [string]: Arguments to send to the server
--- @param cb [function|string] (optional): Either a function to call or a string to call in vim
 -- @param bufnr [number] (optional): The number of the buffer
 -- @param filetype [string] (optional): The filetype associated with the server
 -- @param server_name [string] (optional)
 --
--- @returns: The table of results of the request
-lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
+-- @returns: The table of responses of the request
+lsp.request = function(method, arguments, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
@@ -97,16 +96,16 @@ lsp.request = function(method, arguments, cb, bufnr, filetype, server_name)
       return
     end
 
-    return client:request(method, arguments, cb, bufnr)
+    return client:request(method, arguments, bufnr)
   else
     local filetype_clients = lsp.get_clients(filetype)
-    local results = {}
+    local responses = {}
 
     for _, client in pairs(filetype_clients) do
-      table.insert(results, client:request(method, arguments, cb, bufnr))
+      table.insert(responses, client:request(method, arguments, bufnr))
     end
 
-    return results
+    return responses
   end
 end
 
@@ -118,7 +117,7 @@ end
 -- @param filetype [string] (optional): The filetype associated with the server
 -- @param server_name [string] (optional)
 --
--- @returns: The result of the request
+-- @returns: The table of request id
 lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
@@ -133,16 +132,16 @@ lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name
       return
     end
 
-    return client:request_async(method, arguments, cb, bufnr)
+    return { client:request_async(method, arguments, cb, bufnr) }
   else
     local filetype_clients = lsp.get_clients(filetype)
-    local results = {}
+    local request_ids = {}
 
     for _, client in pairs(filetype_clients) do
-      table.insert(results, client:request_async(method, arguments, cb, bufnr))
+      table.insert(request_ids, client:request_async(method, arguments, cb, bufnr))
     end
 
-    return results
+    return request_ids
   end
 end
 
@@ -153,7 +152,7 @@ end
 -- @param filetype [string] (optional): The filetype associated with the server
 -- @param server_name [string] (optional)
 --
--- @returns: The result of the request
+-- @returns: The notification message id
 lsp.notify = function(method, arguments, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
@@ -168,18 +167,21 @@ lsp.notify = function(method, arguments, bufnr, filetype, server_name)
       return
     end
 
-    client:notify(method, arguments)
+    return { client:notify(method, arguments) }
   else
     local filetype_clients = lsp.get_clients(filetype)
+    local notification_ids = {}
 
     for _, client in pairs(filetype_clients) do
-      client:notify(method, arguments)
+      table.insert(notification_ids, client:notify(method, arguments))
     end
+
+    return notification_ids
   end
 end
 
-lsp.handle = function(filetype, method, data, default_only)
-  return callbacks.call_callback(method, true, data, default_only, filetype)
+lsp.handle = function(filetype, method, result, default_only)
+  return callbacks.call_callback(method, true, result, default_only, filetype)
 end
 
 lsp.client_has_started = function(filetype, server_name)
@@ -243,14 +245,14 @@ lsp.omnifunc = function(findstart, base)
     return vim.api.nvim_call_function('col', {'.'})
   elseif findstart == 0 then
     local params = lsp.protocol.CompletionParams()
-    local results = vim.lsp.request('textDocument/completion', params, local_fn.build_completion_items)
+    local responses = vim.lsp.request('textDocument/completion', params)
     local matches = {}
-    if not vim.tbl_islist(results) then
-      results = { results }
+    for _, response in pairs(responses) do
+      if not response.error then
+        matches = vim.tbl_extend('force', matches, local_fn:build_completion_items(response.result))
+      end
     end
-    for _, result in pairs(results) do
-      matches = vim.tbl_extend('force', matches, result.callback_results)
-    end
+
     return matches
   end
 end
@@ -261,6 +263,7 @@ local_fn.build_completion_items = function(self, data)
   if not data or vim.tbl_isempty(data) then
     return {}
   end
+
   return text_document_handler.CompletionList_to_matches(data)
 end
 

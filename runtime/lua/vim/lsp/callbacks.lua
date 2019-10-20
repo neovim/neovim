@@ -35,11 +35,11 @@ end
 
 -- @params method
 -- @params is_success
--- @params data
+-- @params result
 -- @params filetype
 
 -- @return callback result
-local call_callback = function(method, is_success, data, filetype)
+local call_callback = function(method, is_success, result, filetype)
   local cb = get_callback_object(method)
 
   if cb:has_no_callbacks(filetype) then
@@ -47,13 +47,13 @@ local call_callback = function(method, is_success, data, filetype)
     return
   end
 
-  return cb(is_success, data, filetype)
+  return cb(is_success, result, filetype)
 end
 
 -- CallbackObject section
-CallbackObject.__call = function(self, is_success, data, filetype)
+CallbackObject.__call = function(self, is_success, result, filetype)
   if self.method ~= 'nvim/error_callback' and not is_success then
-    call_callback('nvim/error_callback', data, self.method)
+    call_callback('nvim/error_callback', result, self.method)
   end
 
   if not filetype and vim.tbl_isempty(self.common) then
@@ -65,7 +65,7 @@ CallbackObject.__call = function(self, is_success, data, filetype)
   local results = { }
 
   for _, cb in ipairs(callback_list) do
-    local current_result = cb(self, data)
+    local current_result = cb(self, result)
 
     if current_result ~= nil then
       table.insert(results, current_result)
