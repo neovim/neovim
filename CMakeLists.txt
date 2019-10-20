@@ -317,10 +317,10 @@ if(HAS_DIAG_COLOR_FLAG)
   endif()
 endif()
 
-option(TRAVIS_CI_BUILD "Travis/QuickBuild CI, extra flags will be set" OFF)
+option(TRAVIS_CI_BUILD "Travis/sourcehut CI, extra flags will be set" OFF)
 
 if(TRAVIS_CI_BUILD)
-  message(STATUS "Travis/QuickBuild CI build enabled")
+  message(STATUS "Travis/sourcehut CI build enabled")
   add_compile_options(-Werror)
   if(DEFINED ENV{BUILD_32BIT})
     # Get some test coverage for unsigned char

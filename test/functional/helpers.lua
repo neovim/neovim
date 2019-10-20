@@ -29,10 +29,8 @@ local module = {
 }
 
 local start_dir = lfs.currentdir()
--- XXX: NVIM_PROG takes precedence, QuickBuild sets it.
 module.nvim_prog = (
-  os.getenv('NVIM_PROG')
-  or os.getenv('NVIM_PRG')
+  os.getenv('NVIM_PRG')
   or global_helpers.test_build_dir .. '/bin/nvim'
 )
 -- Default settings for the test session.

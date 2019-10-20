@@ -715,13 +715,11 @@ end
 
 function module.isCI(name)
   local any = (name == nil)
-  assert(any or name == 'appveyor' or name == 'quickbuild' or name == 'travis'
-    or name == 'sourcehut')
+  assert(any or name == 'appveyor' or name == 'travis' or name == 'sourcehut')
   local av = ((any or name == 'appveyor') and nil ~= os.getenv('APPVEYOR'))
   local tr = ((any or name == 'travis') and nil ~= os.getenv('TRAVIS'))
-  local qb = ((any or name == 'quickbuild') and nil ~= lfs.attributes('/usr/home/quickbuild'))
   local sh = ((any or name == 'sourcehut') and nil ~= os.getenv('SOURCEHUT'))
-  return tr or av or qb or sh
+  return tr or av or sh
 
 end
 
