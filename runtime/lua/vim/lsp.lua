@@ -51,7 +51,7 @@ lsp.start_client = function(filetype, server_name, bufnr)
   local offset_encoding = lsp.server_config.get_server_offset_encoding(filetype, server_name)
 
   -- Start the client
-  logger.debug('Starting client...', server_name, '/', filetype, '/', cmd)
+  logger.debug("Starting client..."..server_name.."/"..filetype.."/"..vim.inspect(cmd))
 
   local client = Client.new(server_name, filetype, cmd, offset_encoding)
   client:start()

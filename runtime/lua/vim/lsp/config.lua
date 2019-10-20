@@ -64,5 +64,4 @@ config.set_all_builtin_callbacks = function()
   end
 end
 
-
 return config

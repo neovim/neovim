@@ -223,16 +223,11 @@ textDocument/definition~
 ================================================================================
                                                             *lsp-configuration*
 
-g:language_client_log_level
-	You can set the log level for language client logging.
+g:language_server_client_log_level
+	You can set the log level for language server client logging.
 	debug, info, warn, error, none.
 
 	Default: none
-
-g:language_client_enable_shutdown_request
-	If you set none 0 value, language client request shutdown to the language server.
-
-	Default: not set
 
 ================================================================================
                                                                *lsp-omnifunc*
@@ -240,7 +235,7 @@ g:language_client_enable_shutdown_request
 To configure omnifunc, add the following in your
 init.vim:
 >
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python setlocal omnifunc=lsp#omnifunc
 		autocmd CompleteDone * pclose
@@ -253,7 +248,7 @@ To configure completion for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/completion')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document_completion()<CR>
 		autocmd CompleteDone * pclose
@@ -266,7 +261,7 @@ To configure hover for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/hover')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document_hover()<CR>
 	augroup END
@@ -278,7 +273,7 @@ To configure signature help for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/signatureHelp')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>sh :call lsp#text_document_signature_help()<CR>
 	augroup END
@@ -290,7 +285,7 @@ To configure declaration for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/declaration')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>dc :call lsp#text_document_declaration()<CR>
 	augroup END
@@ -302,7 +297,7 @@ To configure definition for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/definition')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>df :call lsp#text_document_definition()<CR>
 	augroup END
@@ -314,7 +309,7 @@ To configure definition for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/typeDefinition')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>td :call lsp#text_document_type_definition()<CR>
 	augroup END
@@ -326,7 +321,7 @@ To configure definition for a language server, add the following in your
 init.vim:
 >
 	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/implementation')")
-	augroup MyLanguageServer
+	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>i :call lsp#text_document_implementation()<CR>
 	augroup END

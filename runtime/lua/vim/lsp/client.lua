@@ -274,7 +274,7 @@ Client._request = function(self, message_type, method, params, cb, bufnr)
   end
 
   uv.write(self._stdin, message:data())
-  logger.write('debug', "Send "..message_type.." --- "..self.filetype..", "..self.server_name.." --->: [[ "..message:data().." ]]", 'client')
+  logger.debug("Send "..message_type.." --- "..self.filetype..", "..self.server_name.." --->: { "..message:data().." }")
 
   return message.id
 end
@@ -387,7 +387,7 @@ Client._on_message = function(self, body)
   end
   -- Handle notifications
   if json_message.method and json_message.params then
-    logger.write('debug', "Receive notification <---: [[ method: "..json_message.method..", params: "..vim.inspect(json_message.params, {newline=''}).." ]]", 'server')
+    logger.debug("Receive notification <---: { method: "..json_message.method..", params: "..vim.inspect(json_message.params, {newline=''}).." }")
     call_callback(json_message.method, true, json_message.params, nil)
 
     return
@@ -400,14 +400,13 @@ Client._on_message = function(self, body)
       message_type = self._callbacks[json_message.id].message_type
     end
 
-    local id = json_message.id
     local method = self._callbacks[json_message.id].method
     local is_success = not json_message['error']
     local result = json_message.result or {}
     if is_success then
-      logger.write('debug', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", result: "..vim.inspect(result, {newline=''}).." ]]", 'server')
+      logger.debug("Receive response <--- "..self.filetype..", "..self.server_name.." ---: "..vim.inspect(json_message, {newline=''}))
     else
-      logger.write('error', "Receive response <--- "..self.filetype..", "..self.server_name.." ---: [[ id: "..id..", method: "..method..", error: "..vim.inspect(result, {newline=''}).." ]]", 'server')
+      logger.error("Receive response <--- "..self.filetype..", "..self.server_name.." ---: "..vim.inspect(json_message, {newline=''}))
     end
 
     if cb ~= 'skip' then
