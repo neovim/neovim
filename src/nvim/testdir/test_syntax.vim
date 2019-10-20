@@ -519,6 +519,7 @@ func Test_syntax_c()
 	\ '  for (int i = 0; i < count; ++i) {',
 	\ '    break;',
 	\ '  }',
+	\ "  Note: asdf",
 	\ '}',
 	\ ], 'Xtest.c')
 
@@ -526,7 +527,8 @@ func Test_syntax_c()
   " response to t_RB corrects it to "light".
   let $COLORFGBG = '15;0'
 
-  let buf = RunVimInTerminal('Xtest.c', {})
+  let buf = RunVimInTerminal('Xtest.c', #{rows: 22})
+  call term_sendkeys(buf, ":syn keyword Search Note\r")
   call VerifyScreenDump(buf, 'Test_syntax_c_01', {})
   call StopVimInTerminal(buf)
 
