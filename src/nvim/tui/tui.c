@@ -234,7 +234,9 @@ static void terminfo_start(UI *ui)
   // Set up unibilium/terminfo.
   char *termname = NULL;
   if (term) {
+    os_env_var_lock();
     data->ut = unibi_from_term(term);
+    os_env_var_unlock();
     if (data->ut) {
       termname = xstrdup(term);
     }
