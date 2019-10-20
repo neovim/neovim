@@ -44,6 +44,16 @@ void env_init(void)
   uv_mutex_init(&mutex);
 }
 
+void os_env_var_lock(void)
+{
+  uv_mutex_lock(&mutex);
+}
+
+void os_env_var_unlock(void)
+{
+  uv_mutex_unlock(&mutex);
+}
+
 /// Like getenv(), but returns NULL if the variable is empty.
 /// @see os_env_exists
 const char *os_getenv(const char *name)
