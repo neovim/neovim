@@ -45,9 +45,25 @@ server_config.add = function(config)
       vim.api.nvim_command(string.format("autocmd FileType %s ++once silent :lua vim.lsp.start_client('%s', '%s')", ft, ft, server_name))
       vim.api.nvim_command(string.format("autocmd VimLeavePre * :lua vim.lsp.stop_client('%s', '%s')", ft, server_name))
 
+      local cmd_with_opts, execute_path, execute_opts
+      if type(config.cmd) == 'string' then
+        cmd_with_opts = vim.split(config.cmd, ' ', true)
+        execute_path = table.remove(cmd_with_opts, 1)
+        execute_opts = cmd_with_opts
+      elseif vim.tbl_islist(config.cmd) then
+        cmd_with_opts = config.cmd
+        execute_path = table.remove(cmd_with_opts, 1)
+        execute_opts = cmd_with_opts
+      else
+        error("cmd type must be string or table.")
+      end
+
       server_config.servers[ft][server_name] = {
         server_name = server_name,
-        cmd = config.cmd,
+        cmd = {
+          execute_path = execute_path,
+          execute_opts = execute_opts,
+        },
         offset_encoding = config.offset_encoding or 'utf-16',
         capabilities = config.capabilities or {},
       }

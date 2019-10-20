@@ -45,13 +45,13 @@ lsp.start_client = function(filetype, server_name, bufnr)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not server_name then server_name = filetype end
 
-  assert(not lsp.get_client(filetype, server_name), string.format('Language server for filetype: %s, server_name: %s has already started', filetype, server_name))
+  assert(not lsp.get_client(filetype, server_name), "Language server for filetype: "..filetype..", server_name: "..server_name.." has already started.")
 
   local cmd = lsp.server_config.get_server_cmd(filetype, server_name)
   local offset_encoding = lsp.server_config.get_server_offset_encoding(filetype, server_name)
 
   -- Start the client
-  logger.debug('[LSP.lsp] Starting client...', server_name, '/', filetype, '/', cmd)
+  logger.debug('Starting client...', server_name, '/', filetype, '/', cmd)
 
   local client = Client.new(server_name, filetype, cmd, offset_encoding)
   client:start()
@@ -207,9 +207,7 @@ lsp.client_has_started = function(filetype, server_name)
 end
 
 lsp.client_info = function(filetype, server_name)
-  if not filetype or filetype == '' then
-    return
-  end
+  assert(filetype and filetype ~= '', 'The filetype argument must be non empty string', 2)
 
   if not server_name then
     server_name = filetype
@@ -219,7 +217,7 @@ lsp.client_info = function(filetype, server_name)
   if client then
     return vim.inspect(client)
   else
-    return 'No client is available for filetype: '..filetype..', server_name: '..server_name
+    return 'No client is available for filetype: '..filetype..', server_name: '..server_name..'.'
   end
 end
 
@@ -227,7 +225,7 @@ lsp.status = function()
   local status = ''
   for _, filetype_clients in pairs(clients) do
     for _, client in pairs(filetype_clients) do
-      status = status..'filetype: '..client.filetype..', server_name: '..client.server_name..', command: '..client:cmd_tostring()..'\n'
+      status = status..'filetype: '..client.filetype..', server_name: '..client.server_name..', command: '..client.cmd.execute_path..'\n'
     end
   end
 

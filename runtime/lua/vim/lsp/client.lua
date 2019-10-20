@@ -56,30 +56,26 @@ Client.new = function(server_name, filetype, cmd, offset_encoding)
 end
 
 Client.start = function(self)
+  assert(
+    (vim.api.nvim_call_function('executable', { self.cmd.execute_path }) == 1),
+    "Language server config error: The given command '"..self.cmd.execute_path.."' is not executable."
+  )
+
   self._stdin = uv.new_pipe(false)
   self._stdout = uv.new_pipe(false)
   self._stderr = uv.new_pipe(false)
 
   local function on_exit()
-    logger.info('filetype: '..self.filetype..', exit: '..self.cmd_tostring)
+    logger.info('filetype: '..self.filetype..', exit: '..self.cmd.execute_path)
   end
 
   local stdio = { self._stdin, self._stdout, self._stderr }
-  local cmd_with_opts, execute_path, opts
 
-  if type(self.cmd) == 'string' then
-    cmd_with_opts = vim.split(self.cmd, ' ', true)
-    execute_path = table.remove(cmd_with_opts, 1)
-    opts = { args = cmd_with_opts, stdio = stdio }
-  elseif vim.tbl_islist(self.cmd) then
-    cmd_with_opts = self.cmd
-    execute_path = table.remove(cmd_with_opts, 1)
-    opts = { args = cmd_with_opts, stdio = stdio }
-  else
-    error("cmd type must be string or table.", 2)
-  end
-
-  self._handle, self.pid = uv.spawn(execute_path, opts, on_exit)
+  self._handle, self.pid = uv.spawn(
+    self.cmd.execute_path,
+    { args = self.cmd.execute_opts, stdio = stdio },
+    on_exit
+  )
 
   uv.read_start(self._stdout, function (err, chunk)
     if not err then
@@ -133,13 +129,6 @@ end
 
 Client.is_stopped = function(self)
   return self._stopped
-end
-
-Client.cmd_tostring = function(self)
-  if type(self.cmd) == 'table' then
-    return table.concat(self.cmd)
-  end
-  return self.cmd
 end
 
 Client.initialize = function(self)
