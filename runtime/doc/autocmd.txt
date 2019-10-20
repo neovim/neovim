@@ -512,15 +512,11 @@ BufWritePost			After writing the whole buffer to a file
 ChanInfo			State of channel changed, for instance the
 				client of a RPC channel described itself.
 				Sets these |v:event| keys:
-				    info
-				See |nvim_get_chan_info()| for the format of
-				the info Dictionary.
+				    info    (fields described at |nvim_get_chan_info()|)
 							*ChanOpen*
 ChanOpen			Just after a channel was opened.
 				Sets these |v:event| keys:
-				    info
-				See |nvim_get_chan_info()| for the format of
-				the info Dictionary.
+				    info    (fields described at |nvim_get_chan_info()|)
 							*CmdUndefined*
 CmdUndefined			When a user command is used but it isn't
 				defined.  Useful for defining a command only
@@ -809,14 +805,21 @@ FuncUndefined			When a user function is used but it isn't
 				See |autoload-functions|.
 							*UIEnter*
 UIEnter				After a UI connects via |nvim_ui_attach()|,
-				after VimEnter.  Can be used for GUI-specific
-				configuration.
+				after VimEnter.  Useful for GUI setup.
 				Sets these |v:event| keys:
 				    chan
+				    name    (client name per |nvim_set_client_info()|)
+				<afile> (|autocmd-pattern|) is the
+				|nvim_set_client_info()| name provided by
+				conforming clients, or "unknown".
 							*UILeave*
 UILeave				After a UI disconnects from Nvim.
 				Sets these |v:event| keys:
 				    chan
+				    name    (client name per |nvim_set_client_info()|)
+				<afile> (|autocmd-pattern|) is the
+				|nvim_set_client_info()| name provided by
+				conforming clients, or "unknown".
 							*InsertChange*
 InsertChange			When typing <Insert> while in Insert or
 				Replace mode.  The |v:insertmode| variable

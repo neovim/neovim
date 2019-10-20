@@ -8,6 +8,8 @@
 #include "nvim/ui.h"
 #include "nvim/aucmd.h"
 #include "nvim/eval.h"
+#include "nvim/channel.h"
+#include "nvim/msgpack_rpc/channel.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "aucmd.c.generated.h"
@@ -22,12 +24,19 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   }
   recursive = true;
 
+  Channel *chan = find_channel(chanid);
+  const char *client_name = (chan && chanid > 0)
+    ? rpc_client_name(chan)
+    : (chanid > 0 ? "unknown" : "nvim-tui");
+
   dict_T *dict = get_vim_var_dict(VV_EVENT);
   assert(chanid < VARNUMBER_MAX);
+  tv_dict_add_str(dict, S_LEN("name"),
+                  client_name ? client_name : "unknown");
   tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
   tv_dict_set_keys_readonly(dict);
   apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE,
-                 NULL, NULL, false, curbuf);
+                 (char_u *)client_name, NULL, false, curbuf);
   tv_dict_clear(dict);
 
   recursive = false;

@@ -1572,9 +1572,16 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 			chan		|channel-id| or 0 for "internal".
 			cmdlevel	Level of cmdline.
 			cmdtype		Type of cmdline, |cmdline-char|.
+			col  	 	Col count of popup menu on |CompleteChanged|,
+					relative to screen.
+			completed_item	Dictionary of selected item info on
+					|CompleteChanged|, or empty dict if
+					not selected.
 			cwd		Current working directory.
+			height 		Height of popup menu on |CompleteChanged|
 			inclusive	Motion is |inclusive|, else exclusive.
-			scope		Event-specific scope name.
+			info		Dictionary of context-specific info.
+			name		Name string.
 			operator	Current |operator|.  Also set for Ex
 					commands (unlike |v:operator|). For
 					example if |TextYankPost| is triggered
@@ -1587,19 +1594,14 @@ v:event		Dictionary of event data for the current |autocommand|.  Valid
 					operation.
 			regtype		Type of register as returned by
 					|getregtype()|.
-			completed_item    Current selected complete item on
-					|CompleteChanged|, Is `{}` when no complete
-					item selected.
-			height 		Height of popup menu on |CompleteChanged|
-			width   	width of popup menu on |CompleteChanged|
 			row  	 	Row count of popup menu on |CompleteChanged|,
 					relative to screen.
-			col  	 	Col count of popup menu on |CompleteChanged|,
-					relative to screen.
-			size 		Total number of completion items on
-					|CompleteChanged|.
+			scope		Event-specific scope name.
 			scrollbar 	Is |v:true| if popup menu have scrollbar, or
 					|v:false| if not.
+			size 		Total number of completion items on
+					|CompleteChanged|.
+			width   	width of popup menu on |CompleteChanged|
 
 					*v:exception* *exception-variable*
 v:exception	The value of the exception most recently caught and not

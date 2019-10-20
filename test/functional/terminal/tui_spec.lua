@@ -787,8 +787,8 @@ describe('TUI UIEnter/UILeave', function()
       '["'..nvim_prog..'", "-u", "NONE", "-i", "NONE"'
       ..[[, "--cmd", "set noswapfile noshowcmd noruler"]]
       ..[[, "--cmd", "let g:evs = []"]]
-      ..[[, "--cmd", "autocmd UIEnter  * :call add(g:evs, 'UIEnter')"]]
-      ..[[, "--cmd", "autocmd UILeave  * :call add(g:evs, 'UILeave')"]]
+      ..[[, "--cmd", "autocmd UIEnter  * :call add(g:evs, 'UIEnter-'.expand('<afile>'))"]]
+      ..[[, "--cmd", "autocmd UILeave  * :call add(g:evs, 'UILeave-'.expand('<afile>'))"]]
       ..[[, "--cmd", "autocmd VimEnter * :call add(g:evs, 'VimEnter')"]]
       ..']'
     )
@@ -799,7 +799,7 @@ describe('TUI UIEnter/UILeave', function()
       {4:~                                                 }|
       {4:~                                                 }|
       {5:[No Name]                                         }|
-      ['VimEnter', 'UIEnter']                           |
+      ['VimEnter', 'UIEnter-nvim-tui']                  |
       {3:-- TERMINAL --}                                    |
     ]]}
   end)
