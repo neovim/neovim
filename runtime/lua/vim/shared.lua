@@ -44,9 +44,9 @@ end
 --@param plain If `true` use `sep` literally (passed to String.find)
 --@returns Iterator over the split components
 local function gsplit(s, sep, plain)
-  assert(type(s) == "string")
-  assert(type(sep) == "string")
-  assert(type(plain) == "boolean" or type(plain) == "nil")
+  assert(type(s) == "string", string.format("Expected string, got %s", type(s)))
+  assert(type(sep) == "string", string.format("Expected string, got %s", type(sep)))
+  assert(type(plain) == "boolean" or type(plain) == "nil", string.format("Expected boolean or nil, got %s", type(plain)))
 
   local start = 1
   local done = false
@@ -103,9 +103,8 @@ end
 --@param value Value to compare
 --@returns true if `t` contains `value`
 local function tbl_contains(t, value)
-  if type(t) ~= 'table' then
-    error('t must be a table')
-  end
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+
   for _,v in ipairs(t) do
     if v == value then
       return true
@@ -174,7 +173,7 @@ end
 --@param s String to trim
 --@returns String with whitespace removed from its beginning and end
 local function trim(s)
-  assert(type(s) == 'string', 'Only strings can be trimmed')
+  assert(type(s) == 'string', string.format("Expected string, got %s", type(s)))
   return s:match('^%s*(.*%S)') or ''
 end
 
@@ -184,7 +183,7 @@ end
 --@param s  String to escape
 --@returns  %-escaped pattern string
 local function pesc(s)
-  assert(type(s) == 'string')
+  assert(type(s) == 'string', string.format("Expected string, got %s", type(s)))
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
 end
 
