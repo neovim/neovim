@@ -1119,7 +1119,7 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_list_chans and nvim_get_chan_info', function()
+  describe('nvim_list_chans, nvim_get_chan_info', function()
     before_each(function()
       command('autocmd ChanOpen * let g:opened_event = copy(v:event)')
       command('autocmd ChanInfo * let g:info_event = copy(v:event)')
@@ -1141,6 +1141,11 @@ describe('API', function()
       eq({}, meths.get_chan_info(-1))
       -- more preallocated numbers might be added, try something high
       eq({}, meths.get_chan_info(10))
+    end)
+
+    it('validates args', function()
+      eq('Invalid (empty) name',
+        pcall_err(meths.set_client_info, '', {}, 'ui', {}, {}))
     end)
 
     it('works for stdio channel', function()

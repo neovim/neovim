@@ -811,7 +811,7 @@ UIEnter				After a UI connects via |nvim_ui_attach()|,
 				    name    (client name per |nvim_set_client_info()|)
 				<afile> (|autocmd-pattern|) is the
 				|nvim_set_client_info()| name provided by
-				conforming clients, or "unknown".
+				conforming clients, or "?".
 							*UILeave*
 UILeave				After a UI disconnects from Nvim.
 				Sets these |v:event| keys:
@@ -819,7 +819,7 @@ UILeave				After a UI disconnects from Nvim.
 				    name    (client name per |nvim_set_client_info()|)
 				<afile> (|autocmd-pattern|) is the
 				|nvim_set_client_info()| name provided by
-				conforming clients, or "unknown".
+				conforming clients, or "?".
 							*InsertChange*
 InsertChange			When typing <Insert> while in Insert or
 				Replace mode.  The |v:insertmode| variable

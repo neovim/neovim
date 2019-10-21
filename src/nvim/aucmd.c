@@ -27,12 +27,12 @@ void do_autocmd_uienter(uint64_t chanid, bool attached)
   Channel *chan = find_channel(chanid);
   const char *client_name = (chan && chanid > 0)
     ? rpc_client_name(chan)
-    : (chanid > 0 ? "unknown" : "nvim-tui");
+    : (chanid > 0 ? "?" : "nvim-tui");
 
   dict_T *dict = get_vim_var_dict(VV_EVENT);
   assert(chanid < VARNUMBER_MAX);
   tv_dict_add_str(dict, S_LEN("name"),
-                  client_name ? client_name : "unknown");
+                  client_name ? client_name : "?");
   tv_dict_add_nr(dict, S_LEN("chan"), (varnumber_T)chanid);
   tv_dict_set_keys_readonly(dict);
   apply_autocmds(attached ? EVENT_UIENTER : EVENT_UILEAVE,

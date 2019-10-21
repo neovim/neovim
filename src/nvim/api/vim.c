@@ -1655,6 +1655,11 @@ void nvim_set_client_info(uint64_t channel_id, String name,
                           Error *err)
   FUNC_API_SINCE(4) FUNC_API_REMOTE_ONLY
 {
+  if (name.size == 0) {
+    api_set_error(err, kErrorTypeValidation, "Invalid (empty) name");
+    return;
+  }
+
   Dictionary info = ARRAY_DICT_INIT;
   PUT(info, "name", copy_object(STRING_OBJ(name)));
 
