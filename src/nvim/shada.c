@@ -151,30 +151,6 @@ KHASH_SET_INIT_STR(strset)
 /// Callback function for add_search_pattern
 typedef void (*SearchPatternGetter)(SearchPattern *);
 
-/// Possible ShaDa entry types
-///
-/// @warning Enum values are part of the API and must not be altered.
-///
-/// All values that are not in enum are ignored.
-typedef enum {
-  kSDItemUnknown = -1,       ///< Unknown item.
-  kSDItemMissing = 0,        ///< Missing value. Should never appear in a file.
-  kSDItemHeader = 1,         ///< Header. Present for debugging purposes.
-  kSDItemSearchPattern = 2,  ///< Last search pattern (*not* history item).
-                             ///< Comes from user searches (e.g. when typing
-                             ///< "/pat") or :substitute command calls.
-  kSDItemSubString = 3,      ///< Last substitute replacement string.
-  kSDItemHistoryEntry = 4,   ///< History item.
-  kSDItemRegister = 5,       ///< Register.
-  kSDItemVariable = 6,       ///< Global variable.
-  kSDItemGlobalMark = 7,     ///< Global mark definition.
-  kSDItemJump = 8,           ///< Item from jump list.
-  kSDItemBufferList = 9,     ///< Buffer list.
-  kSDItemLocalMark = 10,     ///< Buffer-local mark.
-  kSDItemChange = 11,        ///< Item from buffer change list.
-#define SHADA_LAST_ENTRY ((uint64_t) kSDItemChange)
-} ShadaEntryType;
-
 /// Possible results when reading ShaDa file
 typedef enum {
   kSDReadStatusSuccess,    ///< Reading was successfull.
@@ -283,11 +259,11 @@ typedef struct {
       size_t width;
       dict_T *additional_data;
     } reg;
-    struct global_var {
+    struct var {
       char *name;
       typval_T value;
       list_T *additional_elements;
-    } global_var;
+    } var;
     struct {
       uint64_t type;
       char *contents;
@@ -472,7 +448,7 @@ static const ShadaEntry sd_default_values[] = {
           .is_unnamed = false,
           .width = 0,
           .additional_data = NULL),
-  DEF_SDE(Variable, global_var,
+  DEF_SDE(Variable, var,
           .name = NULL,
           .value = {
             .v_type = VAR_UNKNOWN,
@@ -1339,10 +1315,15 @@ static void shada_read(ShaDaReadDef *const sd_reader, const int flags)
         break;
       }
       case kSDItemVariable: {
-        var_set_global(cur_entry.data.global_var.name,
-                       cur_entry.data.global_var.value);
-        cur_entry.data.global_var.value.v_type = VAR_UNKNOWN;
+        bool save_did_emsg = did_emsg;
+        did_emsg = false;
+        var_set(cur_entry.data.var.name,
+                cur_entry.data.var.value, flags & kShaDaKeepFunccall);
+        if (!did_emsg) {
+          cur_entry.data.var.value.v_type = VAR_UNKNOWN;
+        }
         shada_free_shada_entry(&cur_entry);
+        did_emsg = save_did_emsg;
         break;
       }
       case kSDItemJump:
@@ -1654,21 +1635,21 @@ static ShaDaWriteResult shada_pack_entry(msgpack_packer *const packer,
     }
     case kSDItemVariable: {
       const size_t arr_size = 2 + (size_t)(
-          tv_list_len(entry.data.global_var.additional_elements));
+          tv_list_len(entry.data.var.additional_elements));
       msgpack_pack_array(spacker, arr_size);
-      const String varname = cstr_as_string(entry.data.global_var.name);
+      const String varname = cstr_as_string(entry.data.var.name);
       PACK_BIN(varname);
       char vardesc[256] = "variable g:";
       memcpy(&vardesc[sizeof("variable g:") - 1], varname.data,
              varname.size + 1);
-      if (encode_vim_to_msgpack(spacker, &entry.data.global_var.value, vardesc)
+      if (encode_vim_to_msgpack(spacker, &entry.data.var.value, vardesc)
           == FAIL) {
         ret = kSDWriteIgnError;
         EMSG2(_(WERR "Failed to write variable %s"),
-              entry.data.global_var.name);
+              entry.data.var.name);
         goto shada_pack_entry_error;
       }
-      DUMP_ADDITIONAL_ELEMENTS(entry.data.global_var.additional_elements,
+      DUMP_ADDITIONAL_ELEMENTS(entry.data.var.additional_elements,
                                "variable item");
       break;
     }
@@ -2222,7 +2203,7 @@ static inline ShaDaWriteResult shada_read_when_writing(
         break;
       }
       case kSDItemVariable: {
-        if (!in_strset(&wms->dumped_variables, entry.data.global_var.name)) {
+        if (!in_strset(&wms->dumped_variables, entry.data.var.name)) {
           ret = shada_pack_entry(packer, entry, 0);
         }
         shada_free_shada_entry(&entry);
@@ -2672,7 +2653,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
     do {
       typval_T vartv;
       const char *name = NULL;
-      var_iter = var_shada_iter(var_iter, &name, &vartv, VAR_FLAVOUR_SHADA);
+      var_iter = var_shada_iter(&globvarht, var_iter, VAR_FLAVOUR_SHADA,
+                                &name, &vartv);
       if (name == NULL) {
         break;
       }
@@ -2683,8 +2665,8 @@ static ShaDaWriteResult shada_write(ShaDaWriteDef *const sd_writer,
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
         .data = {
-          .global_var = {
-            .name = (char *) name,
+          .var = {
+            .name = (char *)name,
             .value = tgttv,
             .additional_elements = NULL,
           }
@@ -3256,9 +3238,9 @@ static void shada_free_shada_entry(ShadaEntry *const entry)
       break;
     }
     case kSDItemVariable: {
-      tv_list_unref(entry->data.global_var.additional_elements);
-      xfree(entry->data.global_var.name);
-      tv_clear(&entry->data.global_var.value);
+      tv_list_unref(entry->data.var.additional_elements);
+      xfree(entry->data.var.name);
+      tv_clear(&entry->data.var.value);
       break;
     }
     case kSDItemSubString: {
@@ -3900,17 +3882,17 @@ shada_read_next_item_start:
               initial_fpos);
         goto shada_read_next_item_error;
       }
-      entry->data.global_var.name =
+      entry->data.var.name =
           xmemdupz(unpacked.data.via.array.ptr[0].via.bin.ptr,
                    unpacked.data.via.array.ptr[0].via.bin.size);
       if (msgpack_to_vim(unpacked.data.via.array.ptr[1],
-                         &(entry->data.global_var.value)) == FAIL) {
+                         &(entry->data.var.value)) == FAIL) {
         emsgf(_(READERR("variable", "has value that cannot "
                         "be converted to the VimL value")), initial_fpos);
         goto shada_read_next_item_error;
       }
       SET_ADDITIONAL_ELEMENTS(unpacked.data.via.array, 2,
-                              entry->data.global_var.additional_elements,
+                              entry->data.var.additional_elements,
                               "variable");
       break;
     }
@@ -4137,7 +4119,7 @@ static inline size_t shada_init_jumps(
   return jumps_size;
 }
 
-/// Write registers ShaDa entries in given msgpack_sbuffer.
+/// Write registers ShaDa entries into given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf  target msgpack_sbuffer to write to.
 void shada_encode_regs(msgpack_sbuffer *const sbuf)
@@ -4158,7 +4140,7 @@ void shada_encode_regs(msgpack_sbuffer *const sbuf)
   xfree(wms);
 }
 
-/// Write jumplist ShaDa entries in given msgpack_sbuffer.
+/// Write jumplist ShaDa entries into given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
 void shada_encode_jumps(msgpack_sbuffer *const sbuf)
@@ -4178,7 +4160,7 @@ void shada_encode_jumps(msgpack_sbuffer *const sbuf)
   }
 }
 
-/// Write buffer list ShaDa entry in given msgpack_sbuffer.
+/// Write buffer list ShaDa entry into given msgpack_sbuffer.
 ///
 /// @param[in]  sbuf            target msgpack_sbuffer to write to.
 void shada_encode_buflist(msgpack_sbuffer *const sbuf)
@@ -4195,12 +4177,17 @@ void shada_encode_buflist(msgpack_sbuffer *const sbuf)
   xfree(buflist_entry.data.buffer_list.buffers);
 }
 
-/// Write global variables ShaDa entries in given msgpack_sbuffer.
+/// Write variable ShaDa entries from hashtable into given msgpack_sbuffer.
 ///
-/// @param[in]  sbuf            target msgpack_sbuffer to write to.
-void shada_encode_gvars(msgpack_sbuffer *const sbuf)
-  FUNC_ATTR_NONNULL_ALL
+/// @param[in]  ht      Hashtable to read variables from.
+/// @param[in]  sbuf    Target msgpack_sbuffer to write to.
+/// @param[in]  prefix  String to be prefixed to variable names or NULL.
+void shada_encode_vars(const hashtab_T *ht, msgpack_sbuffer *const sbuf,
+                       const char *prefix)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
+  prefix = prefix && strlen(prefix) ? prefix : NULL;
+  size_t prefix_len = prefix ? strlen(prefix) : 0;
   msgpack_packer packer;
   msgpack_packer_init(&packer, sbuf, msgpack_sbuffer_write);
   const void *var_iter = NULL;
@@ -4208,26 +4195,38 @@ void shada_encode_gvars(msgpack_sbuffer *const sbuf)
   do {
     typval_T vartv;
     const char *name = NULL;
-    var_iter = var_shada_iter(
-        var_iter, &name, &vartv,
-        VAR_FLAVOUR_DEFAULT | VAR_FLAVOUR_SESSION | VAR_FLAVOUR_SHADA);
+    var_iter = var_shada_iter(ht, var_iter, VAR_FLAVOUR_ALL,
+                              &name, &vartv);
     if (name == NULL) {
       break;
     }
     if (vartv.v_type != VAR_FUNC && vartv.v_type != VAR_PARTIAL) {
+      char *prefixed_name = (char *)name;
+      if (prefix) {
+        size_t prefixed_name_len = prefix_len + strlen(name);
+        prefixed_name = xmallocz(prefixed_name_len);
+        snprintf(prefixed_name, prefixed_name_len + 1, "%s%s", prefix, name);
+      }
       typval_T tgttv;
       tv_copy(&vartv, &tgttv);
+      try_start();
       ShaDaWriteResult r = shada_pack_entry(&packer, (ShadaEntry) {
         .type = kSDItemVariable,
         .timestamp = cur_timestamp,
         .data = {
-          .global_var = {
-            .name = (char *)name,
+          .var = {
+            .name = prefixed_name,
             .value = tgttv,
             .additional_elements = NULL,
           }
         }
       }, 0);
+      Error err = ERROR_INIT;
+      try_end(&err);
+      api_clear_error(&err);
+      if (prefix) {
+        xfree(prefixed_name);
+      }
       if (kSDWriteFailed == r) {
         abort();
       }

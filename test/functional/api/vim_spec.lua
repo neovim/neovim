@@ -12,7 +12,6 @@ local meths = helpers.meths
 local matches = helpers.matches
 local ok, nvim_async, feed = helpers.ok, helpers.nvim_async, helpers.feed
 local is_os = helpers.is_os
-local parse_context = helpers.parse_context
 local request = helpers.request
 local source = helpers.source
 local next_msg = helpers.next_msg
@@ -902,13 +901,21 @@ describe('API', function()
       eq('unexpected type: zub',
         pcall_err(nvim, 'get_context', {types={'jumps', 'zub', 'zam',}}))
     end)
+
     it('returns map of current editor state', function()
       local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
-      eq({}, parse_context(nvim('get_context', {})))
 
-      feed('i1<cr>2<cr>3<c-[>ddddddqahjklquuu')
+      local nvim_get_context = function(...)
+        local ctx = nvim('get_context', ...)
+        ctx['opts'] = nil
+        return ctx
+      end
+
+      eq({}, nvim_get_context({}))
+
+      feed('i1<cr>22<cr>333<c-[>ddddddqahjklquuu')
       feed('gg')
-      feed('G')
+      feed('Gll')
       command('edit! BUF1')
       command('edit BUF2')
       nvim('set_var', 'one', 1)
@@ -917,35 +924,42 @@ describe('API', function()
 
       local expected_ctx = {
         ['regs'] = {
-          {['rt'] = 1, ['rc'] = {'1'}, ['n'] = 49, ['ru'] = true},
-          {['rt'] = 1, ['rc'] = {'2'}, ['n'] = 50},
-          {['rt'] = 1, ['rc'] = {'3'}, ['n'] = 51},
-          {['rc'] = {'hjkl'}, ['n'] = 97},
+          {['type'] = 1, ['content'] = {'1'},
+           ['name'] = '1', ['unnamed'] = true},
+          {['type'] = 1, ['content'] = {'22'}, ['name'] = '2'},
+          {['type'] = 1, ['content'] = {'333'}, ['name'] = '3'},
+          {['content'] = {'hjkl'}, ['name'] = 'a'},
         },
 
         ['jumps'] = eval(([[
         filter(map(getjumplist()[0], 'filter(
-          { "f": expand("#".v:val.bufnr.":p"), "l": v:val.lnum },
-          { k, v -> k != "l" || v != 1 })'), '!empty(v:val.f)')
+          { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum },
+          { k, v -> k != "line" || v != 1 })'), '!empty(v:val.file)')
         ]]):gsub('\n', '')),
 
-        ['bufs'] = eval([[
-        filter(map(getbufinfo(), '{ "f": v:val.name }'), '!empty(v:val.f)')
-        ]]),
+        ['bufs'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
 
-        ['gvars'] = {{'one', 1}, {'Two', 2}, {'THREE', 3}},
+        ['vars'] = {{'g:one', 1}, {'g:Two', 2}, {'g:THREE', 3}},
       }
 
-      eq(expected_ctx, parse_context(nvim('get_context', opts)))
-      eq(expected_ctx, parse_context(nvim('get_context', {})))
-      eq(expected_ctx, parse_context(nvim('get_context', {types={}})))
+      eq(expected_ctx, nvim_get_context(opts))
+      eq(expected_ctx, nvim_get_context({}))
+      eq(expected_ctx, nvim_get_context({types={}}))
+    end)
+
+    it('handles large context properly', function()
+      command([[let g:huge = range(4096)]])
+      eq(eval('g:huge'), nvim('get_context', {types = {'gvars'}}).vars[1][2])
     end)
   end)
 
   describe('nvim_load_context', function()
     it('sets current editor state to given context dictionary', function()
       local opts = {types={'regs', 'jumps', 'bufs', 'gvars'}}
-      eq({}, parse_context(nvim('get_context', opts)))
+      eq({}, nvim('get_context', opts))
 
       nvim('set_var', 'one', 1)
       nvim('set_var', 'Two', 2)
@@ -957,6 +971,68 @@ describe('API', function()
       eq({'a', 'b' ,'c'}, eval('[g:one, g:Two, g:THREE]'))
       nvim('load_context', ctx)
       eq({1, 2 ,3}, eval('[g:one, g:Two, g:THREE]'))
+
+      eq({}, nvim('get_context', {types={'jumps', 'bufs'}}))
+      command('edit BUF1')
+      command('edit BUF2')
+      ctx = {
+        ['jumps'] = eval(([[
+        filter(map(getjumplist()[0], 'filter(
+          { "file": expand("#".v:val.bufnr.":p"), "line": v:val.lnum },
+          { k, v -> k != "line" || v != 1 })'), '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
+
+        ['bufs'] = eval(([[
+        filter(map(getbufinfo(), '{ "file": v:val.name }'),
+               '!empty(v:val.file)')
+        ]]):gsub('\n', '')),
+      }
+      eq(ctx, nvim('get_context', {types={'jumps', 'bufs'}}))
+      command('%bwipeout')
+      command('clearjumps')
+      eq({}, nvim('get_context', {types={'jumps', 'bufs'}}))
+      nvim('load_context', ctx)
+      eq(ctx, nvim('get_context', {types={'jumps', 'bufs'}}))
+    end)
+
+    it('errors out on malformed context dictionary', function()
+      local err = 'API call: malformed context dictionary'
+      matches(err, pcall_err(eval, [[nvim_load_context({'regs': [1]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'regs': [{'name': '0'}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'regs': [{'name': '0', 'content': 1}]})]]))
+      matches(err, pcall_err(
+        eval, [=[nvim_load_context({'vars': [['1', '2']]})]=]))
+      matches(err, pcall_err(
+        eval, [=[nvim_load_context({'funcs': [['1', '2']]})]=]))
+      matches(err, pcall_err(eval, [=[nvim_load_context({'funcs': [1]})]=]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'definition': ''}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'definition': 0}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'sid': 0}]})]]))
+      matches(err, pcall_err(
+        eval, [[nvim_load_context({'funcs': [{'sid': ''}]})]]))
+      local cmd = ([=[
+      call nvim_load_context({'funcs': [{
+        'sid': 0,
+        'definition': "
+          function! s:script_func() \n
+            return '' \n
+          endfunction \n
+        "
+      }]})
+      ]=]):gsub('\n', '')
+      matches('Using <SID> not in a script context', pcall_err(command, cmd))
+      matches(err, pcall_err(eval, [[nvim_load_context({'regs': 1})]]))
+      matches(err, pcall_err(eval, [[nvim_load_context({'foo': []})]]))
+      matches(err, pcall_err(eval, [[nvim_load_context({'opts': []})]]))
+      matches('invalid key: foo',
+              pcall_err(eval, [[nvim_load_context({'opts': {'foo': {}}})]]))
+      matches('invalid type for: buf',
+              pcall_err(eval, [[nvim_load_context({'opts': {'buf': 1}})]]))
     end)
   end)
 

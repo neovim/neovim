@@ -228,6 +228,47 @@ local function schedule_wrap(cb)
   end)
 end
 
+-- Returns function definiton for use in context dictionary.
+-- Used by ctx_pack_func() in "nvim/context.c".
+--
+-- @param name Function name
+--
+-- @returns Function definition string
+local function _ctx_get_func_def(name)
+  name = name:gsub('^<lambda>([0-9]+)', '{"<lambda>%1"}')
+  local def = vim.api.nvim_command_output('func '..name)
+    :gsub('^%s*function <lambda>', 'function <SNR>_lambda_')
+    :gsub('^%s*function', 'function!')
+    :gsub('\n[0-9]+', '\n')
+  return def
+end
+
+-- Restore options from context.
+-- Used by ctx_restore_opts() in "nvim/context.c".
+--
+-- @param opts_dict Option dictionary from context
+local function _ctx_restore_opts(opts_dict)
+  for scope, opts in pairs(opts_dict) do
+    local set = ({
+      global = function(k, v) vim.api.nvim_set_option(k, v)  end,
+      buf = function(k, v) vim.api.nvim_buf_set_option(0, k, v)  end,
+      win = function(k, v) vim.api.nvim_win_set_option(0, k, v)  end,
+    })[scope]
+
+    if set == nil then
+      vim.api.nvim_err_writeln('invalid key: '..scope)
+    end
+
+    if type(opts) ~= 'table' then
+      vim.api.nvim_err_writeln('invalid type for: '..scope)
+    end
+
+    for name, value in pairs(opts) do
+      set(name, value)
+    end
+  end
+end
+
 local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
@@ -249,6 +290,8 @@ local module = {
   _system = _system,
   paste = paste,
   schedule_wrap = schedule_wrap,
+  _ctx_get_func_def = _ctx_get_func_def,
+  _ctx_restore_opts = _ctx_restore_opts,
 }
 
 setmetatable(module, {
