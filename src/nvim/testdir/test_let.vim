@@ -276,4 +276,12 @@ E
   app
   END
   call assert_equal(['something', 'app'], var1)
+
+  let check = []
+  if 0
+     let check =<< trim END
+       from heredoc
+     END
+  endif
+  call assert_equal([], check)
 endfunc

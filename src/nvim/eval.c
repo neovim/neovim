@@ -1675,10 +1675,12 @@ static void ex_let_const(exarg_T *eap, const bool is_const)
     list_T *l = heredoc_get(eap, expr + 3);
     if (l != NULL) {
       tv_list_set_ret(&rettv, l);
-      op[0] = '=';
-      op[1] = NUL;
-      (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
-                        is_const, op);
+      if (!eap->skip) {
+        op[0] = '=';
+        op[1] = NUL;
+        (void)ex_let_vars(eap->arg, &rettv, false, semicolon, var_count,
+                          is_const, op);
+      }
       tv_clear(&rettv);
     }
   } else {
