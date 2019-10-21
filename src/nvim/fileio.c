@@ -2777,9 +2777,9 @@ buf_write(
 
         FileInfo file_info_new;
         {
-          /*
-           * Make the backup file name.
-           */
+          //
+          // Make the backup file name.
+          //
           if (backup == NULL) {
             backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
                                        no_prepend_dot);

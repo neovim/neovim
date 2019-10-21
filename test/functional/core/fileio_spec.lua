@@ -105,7 +105,8 @@ describe('fileio', function()
     -- The backup filename is the full path of the file with the path
     -- separators replaced with %s
     local sep = helpers.get_pathsep()
-    local backup_file_name = string.gsub(currentdir() .. sep .. 'Xtest_startup_file1', sep, '%%') .. '~'
+    local sepPattern = helpers.iswin() and '[/\\]' or '/'
+    local backup_file_name = string.gsub(currentdir() .. sep .. 'Xtest_startup_file1', sepPattern, '%%') .. '~'
     local foo_contents = trim(read_file('Xtest_backupdir' .. sep .. backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
 
