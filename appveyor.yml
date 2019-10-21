@@ -24,7 +24,7 @@ matrix:
   fast_finish: true
 install: []
 before_build:
-- ps: Install-Product node 8
+- ps: Install-Product node 10
 build_script:
 - powershell ci\build.ps1
 after_build:

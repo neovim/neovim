@@ -47,8 +47,8 @@ if [[ "${TRAVIS_OS_NAME}" == osx ]] || [ ! -f ~/.nvm/nvm.sh ]; then
 fi
 
 source ~/.nvm/nvm.sh
-nvm install --lts
-nvm use --lts
+nvm install 10
+nvm use 10
 
 if [[ -n "$CMAKE_URL" ]]; then
   echo "Installing custom CMake: $CMAKE_URL"
