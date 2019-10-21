@@ -784,6 +784,13 @@ static int qf_get_nextline(qfstate_T *state)
   return QF_OK;
 }
 
+// Returns true if the specified quickfix/location stack is empty
+static bool qf_stack_empty(const qf_info_T *qi)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return qi == NULL || qi->qf_listcount <= 0;
+}
+
 // Returns true if the specified quickfix/location list is empty.
 static bool qf_list_empty(const qf_info_T *qi, int qf_idx)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
@@ -2537,8 +2544,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   if (qi == NULL)
     qi = &ql_info;
 
-  if (qi->qf_curlist >= qi->qf_listcount
-      || qi->qf_lists[qi->qf_curlist].qf_count == 0) {
+  if (qf_stack_empty(qi) || qf_list_empty(qi, qi->qf_curlist)) {
     EMSG(_(e_quickfix));
     return;
   }
@@ -2673,8 +2679,7 @@ void qf_list(exarg_T *eap)
     }
   }
 
-  if (qi->qf_curlist >= qi->qf_listcount
-      || qi->qf_lists[qi->qf_curlist].qf_count == 0) {
+  if (qf_stack_empty(qi) || qf_list_empty(qi, qi->qf_curlist)) {
     EMSG(_(e_quickfix));
     return;
   }
@@ -2916,8 +2921,7 @@ void qf_history(exarg_T *eap)
   if (is_loclist_cmd(eap->cmdidx)) {
     qi = GET_LOC_LIST(curwin);
   }
-  if (qi == NULL || (qi->qf_listcount == 0
-                     && qi->qf_lists[qi->qf_curlist].qf_count == 0)) {
+  if (qf_stack_empty(qi) || qf_list_empty(qi, qi->qf_curlist)) {
     MSG(_("No entries"));
   } else {
     for (i = 0; i < qi->qf_listcount; i++) {
@@ -3129,13 +3133,15 @@ void ex_cwindow(exarg_T *eap)
    * close the window.  If a quickfix window is not open, then open
    * it if we have errors; otherwise, leave it closed.
    */
-  if (qi->qf_lists[qi->qf_curlist].qf_nonevalid
-      || qi->qf_lists[qi->qf_curlist].qf_count == 0
-      || qi->qf_curlist >= qi->qf_listcount) {
-    if (win != NULL)
+  if (qf_stack_empty(qi)
+      || qi->qf_lists[qi->qf_curlist].qf_nonevalid
+      || qf_list_empty(qi, qi->qf_curlist)) {
+    if (win != NULL) {
       ex_cclose(eap);
-  } else if (win == NULL)
+    }
+  } else if (win == NULL) {
     ex_copen(eap);
+  }
 }
 
 /*
@@ -3588,8 +3594,8 @@ static void qf_fill_buffer(qf_info_T *qi, buf_T *buf, qfline_T *old_last)
     }
   }
 
-  /* Check if there is anything to display */
-  if (qi->qf_curlist < qi->qf_listcount) {
+  // Check if there is anything to display
+  if (!qf_stack_empty(qi)) {
      char_u dirname[MAXPATHL];
 
      *dirname = NUL;
@@ -4460,7 +4466,7 @@ void ex_vimgrep(exarg_T *eap)
 
   if ((eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd
        && eap->cmdidx != CMD_vimgrepadd && eap->cmdidx != CMD_lvimgrepadd)
-      || qi->qf_curlist == qi->qf_listcount) {
+      || qf_stack_empty(qi)) {
     // make place for a new list
     qf_new_list(qi, title);
   }
@@ -5153,12 +5159,12 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
 
   const int flags = qf_getprop_keys2flags(what, wp != NULL);
 
-  if (qi != NULL && qi->qf_listcount != 0) {
+  if (!qf_stack_empty(qi)) {
     qf_idx = qf_getprop_qfidx(qi, what);
   }
 
   // List is not present or is empty
-  if (qi == NULL || qi->qf_listcount == 0 || qf_idx == INVALID_QFIDX) {
+  if (qf_stack_empty(qi) || qf_idx == INVALID_QFIDX) {
     return qf_getprop_defaults(qi, flags, retdict);
   }
 
@@ -5350,7 +5356,7 @@ static int qf_setprop_get_qfidx(
         // non-available list and add the new list at the end of the
         // stack.
         *newlist = true;
-        qf_idx = qi->qf_listcount > 0 ? qi->qf_listcount - 1 : 0;
+        qf_idx = qf_stack_empty(qi) ? 0 : qi->qf_listcount - 1;
       } else if (qf_idx < 0 || qf_idx >= qi->qf_listcount) {
         return INVALID_QFIDX;
       } else if (action != ' ') {
@@ -5358,7 +5364,7 @@ static int qf_setprop_get_qfidx(
       }
     } else if (di->di_tv.v_type == VAR_STRING
                && strequal((const char *)di->di_tv.vval.v_string, "$")) {
-      if (qi->qf_listcount > 0) {
+      if (!qf_stack_empty(qi)) {
         qf_idx = qi->qf_listcount - 1;
       } else if (*newlist) {
         qf_idx = 0;
@@ -5477,7 +5483,7 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
 {
   dictitem_T *di;
   int  retval = FAIL;
-  bool newlist = action == ' ' || qi->qf_curlist == qi->qf_listcount;
+  bool newlist = action == ' ' || qf_stack_empty(qi);
   int qf_idx = qf_setprop_get_qfidx(qi, what, action, &newlist);
   if (qf_idx == INVALID_QFIDX) {  // List not found
     return FAIL;
