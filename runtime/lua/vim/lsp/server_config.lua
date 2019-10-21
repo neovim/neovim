@@ -9,7 +9,7 @@ server_config.add = function(config)
   assert(config.cmd, "config must have 'cmd' key")
 
   if config.capabilities and type(config.capabilities) ~= 'table' then
-    error("config.capabilities must be a table", 2)
+    error("config.capabilities must be a table")
   end
 
   local filetypes
@@ -19,11 +19,11 @@ server_config.add = function(config)
   elseif type(config.filetype) == 'table' then
     filetypes = config.filetype
   else
-    error('config.filetype must be a string or a list of strings', 2)
+    error("config.filetype must be a string or a list of strings")
   end
 
   if config.offset_encoding then
-    assert(type(config.offset_encoding == 'table', 'config.offset_encoding must be a string'))
+    assert(type(config.offset_encoding == 'table', "config.offset_encoding must be a string"))
     assert(
       vim.tbl_contains({'utf-8', 'utf-16', 'utf-32'}, config.offset_encoding),
       "config.offset_encoding must be one of 'utf-8', 'utf-16', or 'utf32'"

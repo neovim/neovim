@@ -45,13 +45,13 @@ lsp.start_client = function(filetype, server_name, bufnr)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not server_name then server_name = filetype end
 
-  assert(not lsp.get_client(filetype, server_name), "Language server for filetype: "..filetype..", server_name: "..server_name.." has already started.")
+  assert(not lsp.get_client(filetype, server_name), string.format("Language server for filetype: %s, server_name: %s has already started.", filetype, server_name))
 
   local cmd = lsp.server_config.get_server_cmd(filetype, server_name)
   local offset_encoding = lsp.server_config.get_server_offset_encoding(filetype, server_name)
 
   -- Start the client
-  logger.debug("Starting client..."..server_name.."/"..filetype.."/"..vim.inspect(cmd))
+  logger.debug(string.format("Starting client... %s/%s/%s", server_name, filetype, vim.inspect(cmd)))
 
   local client = Client.new(server_name, filetype, cmd, offset_encoding)
   client:start()
@@ -92,8 +92,9 @@ lsp.request = function(method, arguments, bufnr, filetype, server_name)
     local client = lsp.get_client(filetype, server_name)
 
     if client == nil then
-      logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
-      return
+      local msg = string.format("request() failed. No client is available for filetype: %s, server_name: %s", filetype, server_name)
+      logger.warn(msg)
+      error(msg)
     end
 
     return client:request(method, arguments, bufnr)
@@ -128,8 +129,9 @@ lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name
     local client = lsp.get_client(filetype, server_name)
 
     if client == nil then
-      logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
-      return
+      local msg = string.format("request_async() failed. No client is available for filetype: %s, server_name: %s", filetype, server_name)
+      logger.warn(msg)
+      error(msg)
     end
 
     return { client:request_async(method, arguments, cb, bufnr) }
@@ -163,8 +165,9 @@ lsp.notify = function(method, arguments, bufnr, filetype, server_name)
     local client = lsp.get_client(filetype, server_name)
 
     if client == nil then
-      logger.warn('request() failed', 'No client is available for filetype: '..filetype..', server_name: '..server_name)
-      return
+      local msg = string.format("notify() failed. No client is available for filetype: %s, server_name: %s", filetype, server_name)
+      logger.warn(msg)
+      error(msg)
     end
 
     return { client:notify(method, arguments) }
@@ -185,7 +188,7 @@ lsp.handle = function(filetype, method, result, default_only)
 end
 
 lsp.client_has_started = function(filetype, server_name)
-  assert(filetype, 'filetype is required.')
+  assert(filetype, "filetype is required.")
 
   if server_name then
     local client = lsp.get_client(filetype, server_name)
@@ -207,7 +210,7 @@ lsp.client_has_started = function(filetype, server_name)
 end
 
 lsp.client_info = function(filetype, server_name)
-  assert(filetype and filetype ~= '', 'The filetype argument must be non empty string', 2)
+  assert(filetype and filetype ~= '', "The filetype argument must be non empty string")
 
   if not server_name then
     server_name = filetype
@@ -233,7 +236,7 @@ lsp.status = function()
 end
 
 lsp.omnifunc = function(findstart, base)
-  logger.debug('omnifunc findstart: '..findstart..', base: '..base)
+  logger.debug(string.format("omnifunc findstart: %s, base: %s", findstart, base))
 
   if not lsp.client_has_started(lsp.util.get_filetype()) then
     return findstart and -1 or {}

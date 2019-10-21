@@ -57,7 +57,7 @@ CallbackObject.__call = function(self, is_success, result, filetype)
   end
 
   if not filetype and vim.tbl_isempty(self.common) then
-      logger.debug('Request: "', self.method, '" had no registered callbacks')
+      logger.debug(string.format("Request: '%s' had no registered callbacks", self.method))
     return nil
   end
 

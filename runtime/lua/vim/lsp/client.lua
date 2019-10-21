@@ -22,7 +22,7 @@ local Client = {}
 Client.__index = Client
 
 Client.new = function(server_name, filetype, cmd, offset_encoding)
-  local obj = setmetatable({
+  local client = setmetatable({
     server_name = server_name,
     filetype = filetype,
     cmd = cmd,
@@ -50,15 +50,15 @@ Client.new = function(server_name, filetype, cmd, offset_encoding)
     _handle = nil,
   }, Client)
 
-  logger.info('Starting new client. server_name: '..server_name..', cmd: '..vim.inspect(cmd, {newline=''})..', offset_encoding: '..offset_encoding)
+  logger.info(string.format("Starting new client. server_name: %s, cmd: %s, offset_encoding: %s", server_name, vim.inspect(cmd, {newline=''}), offset_encoding))
 
-  return obj
+  return client
 end
 
 Client.start = function(self)
   assert(
     (vim.api.nvim_call_function('executable', { self.cmd.execute_path }) == 1),
-    "Language server config error: The given command '"..self.cmd.execute_path.."' is not executable."
+    string.format("Language server config error: The given command '%s' is not executable.", self.cmd.execute_path)
   )
 
   self._stdin = uv.new_pipe(false)
@@ -66,7 +66,7 @@ Client.start = function(self)
   self._stderr = uv.new_pipe(false)
 
   local function on_exit()
-    logger.info('filetype: '..self.filetype..', exit: '..self.cmd.execute_path)
+    logger.info(string.format("filetype: %s, exit: ", self.filetype, self.cmd.execute_path))
   end
 
   local stdio = { self._stdin, self._stdout, self._stderr }
@@ -106,10 +106,10 @@ Client.stop = function(self)
 
   autocmd.unregister_autocmd(self.filetype, self.server_name)
 
-  vim.api.nvim_command("echo 'shutting down filetype: "..self.filetype..", server_name: "..self.server_name.."'")
+  print(string.format("shutting down filetype: %s, server_name: %s", self.filetype, self.server_name))
   self:request('shutdown', nil, function()end)
 
-  vim.api.nvim_command("echo 'exit filetype: "..self.filetype..", server_name: "..self.server_name.."'")
+  print(string.format("exit filetype: %s, server_name: %s", self.filetype, self.server_name))
   self:notify('exit', nil)
 
   uv.shutdown(self._stdin, function()
@@ -139,11 +139,10 @@ Client.initialize = function(self)
     return result.capabilities
   end, nil)
 
-  logger.info(
-    "filetype: "..self.filetype..", server_name: "..self.server_name..", offset_encoding: "..self.offset_encoding..
-    ", client_capabilities: "..vim.inspect(self.client_capabilities, {newline=''})..
-    ", server_capabilities: "..vim.inspect(self.server_capabilities, {newline=''})
-  )
+  logger.info(string.format(
+    "filetype: %s, server_name: %s, offset_encoding: %s, client_capabilities: %s, server_capabilities: %s",
+    self.filetype, self.server_name, self.offset_encoding, vim.inspect(self.client_capabilities, {newline=''}), vim.inspect(self.server_capabilities, {newline=''})
+  ))
 
   return request_id
 end
@@ -252,11 +251,11 @@ Client._request = function(self, message_type, method, params, cb, bufnr)
   if self:is_stopped() then
     local msg = 'Language server client is not running. '..self.server_name
     logger.info(msg)
-    error(msg, 2)
+    error(msg)
   end
 
   if not method then
-    error("No request method supplied", 2)
+    error("No request method supplied")
   end
 
   local message = create_message(self, message_type, method, params)
@@ -274,7 +273,7 @@ Client._request = function(self, message_type, method, params, cb, bufnr)
   end
 
   uv.write(self._stdin, message:data())
-  logger.debug("Send "..message_type.." --- "..self.filetype..", "..self.server_name.." --->: { "..message:data().." }")
+  logger.debug(string.format("Send %s --- %s, %s --->: { %s }", message_type, self.filetype, self.server_name, message:data()))
 
   return message.id
 end
@@ -350,10 +349,10 @@ Client._on_stdout = function(self, data)
           self._read_length = parsed.content_length
 
           if type(self._read_length) ~= 'number' then
-            self:_on_error(error_level.reset_state,
-              string.format('_on_read error: bad content length (%s)',
-                self._read_length)
-              )
+            self:_on_error(
+              error_level.reset_state,
+              string.format('_on_read error: bad content length (%s)', self._read_length)
+            )
             return
           end
         end
@@ -380,14 +379,13 @@ Client._on_message = function(self, body)
   if not ok then
     logger.error('Not a valid message. Calling self:_on_error')
     self:_on_error(
-      error_level.reset_state,
-      string.format('_on_read error: bad json_message (%s)', body)--self._read_data)
+      error_level.reset_state, string.format('_on_read error: bad json_message (%s)', body)
     )
     return
   end
   -- Handle notifications
   if json_message.method and json_message.params then
-    logger.debug("Receive notification <---: { method: "..json_message.method..", params: "..vim.inspect(json_message.params, {newline=''}).." }")
+    logger.debug(string.format("Receive notification <---: { method: %s, params: %s }", json_message.method, vim.inspect(json_message.params, {newline=''})))
     call_callback(json_message.method, true, json_message.params, nil)
 
     return
@@ -404,9 +402,9 @@ Client._on_message = function(self, body)
     local is_success = not json_message['error']
     local result = json_message.result or {}
     if is_success then
-      logger.debug("Receive response <--- "..self.filetype..", "..self.server_name.." ---: "..vim.inspect(json_message, {newline=''}))
+      logger.debug(string.format("Receive response <--- %s, %s ---: %s", self.filetype, self.server_name, vim.inspect(json_message, {newline=''})))
     else
-      logger.error("Receive response <--- "..self.filetype..", "..self.server_name.." ---: "..vim.inspect(json_message, {newline=''}))
+      logger.error(string.format("Receive response <--- %s, %s ---: %s", self.filetype, self.server_name, vim.inspect(json_message, {newline=''})))
     end
 
     if cb ~= 'skip' then

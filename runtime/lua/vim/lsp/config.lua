@@ -37,7 +37,7 @@ end
 config.set_builtin_callback = function(method)
   local builtin_callback = BuiltinCallbacks[method]
   if builtin_callback == nil then
-    error(string.format('the method "%s" is not implemented' , method), 2)
+    error(string.format('the method "%s" is not implemented' , method))
   end
   local callback_object = callbacks._callback_object.new(method, builtin_callback['options'])
   callback_object:set_callback(builtin_callback['callback'])

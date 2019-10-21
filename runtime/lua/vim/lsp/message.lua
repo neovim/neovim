@@ -30,7 +30,7 @@ function RequestMessage:new(client, method, params)
 
   if local_fn.check_language_server_capabilities(client, method) == false then
     logger.debug(string.format('[LSP:Request] Method "%s" is not supported by server %s', method, client.name))
-    error("[LSP:Request] Method "..method.." is not supported by server "..client.name, 2)
+    error("[LSP:Request] Method "..method.." is not supported by server "..client.name)
   end
 
   local object = {
@@ -118,7 +118,7 @@ local function create_message(client, message_type, method, params)
   elseif message_type == 'notification' then
     return NotificationMessage:new(client, method, params)
   else
-    error('Message type should be "request" or "notification"', 2)
+    error('Message type should be "request" or "notification"')
   end
 end
 
