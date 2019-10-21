@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
-$ErrorActionPreference = 'stop'
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 $isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
@@ -97,27 +98,21 @@ npm.cmd install -g neovim
 Get-Command -CommandType Application neovim-node-host.cmd
 npm.cmd link neovim
 
-#npm.cmd install -g tree-sitter-cli
-#npm.cmd link tree-sitter-cli
 
-mkdir c:\treesitter
-$env:TREE_SITTER_DIR = "c:\treesitter"
-#$env:PATH = "c:\treesitter;$env:PATH"
-$client = new-object System.Net.WebClient
-cd c:\treesitter
+$env:TREE_SITTER_DIR = $env:USERPROFILE + "\tree-sitter-build"
+mkdir "$env:TREE_SITTER_DIR\bin"
 
-if ($bits -eq 32) {
-  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x86.gz", "c:\treesitter\tree-sitter-cli.gz")
+$xbits = if ($bits -eq '32') {'x86'} else {'x64'}
+Invoke-WebRequest -UseBasicParsing -Uri "https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-$xbits.gz" -OutFile tree-sitter.exe.gz
+C:\msys64\usr\bin\gzip -d tree-sitter.exe.gz
+
+Invoke-WebRequest -UseBasicParsing -Uri "https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2" -OutFile tree_sitter_c.zip
+Expand-Archive .\tree_sitter_c.zip -DestinationPath .
+cd tree-sitter-c-0.15.2
+..\tree-sitter.exe test
+if (-Not (Test-Path -PathType Leaf "$env:TREE_SITTER_DIR\bin\c.dll")) {
+  exit 1
 }
-elseif ($bits -eq 64) {
-  $client.DownloadFile("https://github.com/tree-sitter/tree-sitter/releases/download/0.15.9/tree-sitter-windows-x64.gz", "c:\treesitter\tree-sitter-cli.gz")
-}
-python -c "import gzip, shutil; f1,f2 = gzip.open('tree-sitter-cli.gz', 'rb'), open('tree-sitter.exe', 'wb'); shutil.copyfileobj(f1, f2); f2.close()"
-
-$client.DownloadFile("https://codeload.github.com/tree-sitter/tree-sitter-c/zip/v0.15.2","c:\treesitter\tree_sitter_c.zip")
-Expand-Archive c:\treesitter\tree_sitter_c.zip -DestinationPath c:\treesitter\
-cd c:\treesitter\tree-sitter-c-0.15.2
-c:\treesitter\tree-sitter.exe test
 
 function convertToCmakeArgs($vars) {
   return $vars.GetEnumerator() | foreach { "-D$($_.Key)=$($_.Value)" }
