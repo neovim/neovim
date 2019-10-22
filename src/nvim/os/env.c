@@ -292,7 +292,7 @@ void os_get_hostname(char *hostname, size_t size)
 ///   - try uv_os_homedir()
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
-///   - as a last resort, get the the current directory.
+///   - as a last resort, get the current directory.
 /// This also works with mounts and links.
 /// Don't do this for Windows, it will change the "current dir" for a drive.
 static char *homedir = NULL;
@@ -387,8 +387,9 @@ static char homedir_buf[MAXPATHL];
 char *os_homedir(void)
 {
   uv_mutex_lock(&mutex);
-  size_t homedir_size = sizeof(homedir_buf);
-  if (uv_os_homedir(homedir_buf, &homedir_size) == 0) {
+  size_t homedir_size = sizeof(os_buf);
+  if (uv_os_homedir(os_buf, &homedir_size) == 0) {
+    xstrlcpy(homedir_buf, os_buf, homedir_size);
     uv_mutex_unlock(&mutex);
     return homedir_buf;
   }
