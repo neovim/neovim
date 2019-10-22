@@ -32,6 +32,7 @@ describe('empty $HOME', function()
       setenv('HOME', original_home)
     end
     os.remove('test_empty_home')
+    os.remove('./~')
   end)
 
   local function tild_in_cwd()
