@@ -292,7 +292,7 @@ void os_get_hostname(char *hostname, size_t size)
 ///   - try uv_os_homedir()
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
-///   - as a last resort, get the pwd of the current directory.
+///   - as a last resort, get the the current directory.
 /// This also works with mounts and links.
 /// Don't do this for Windows, it will change the "current dir" for a drive.
 static char *homedir = NULL;
