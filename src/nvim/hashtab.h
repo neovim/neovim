@@ -81,10 +81,10 @@ typedef struct hashtable_S {
       size_t hi##todo_ = hi##ht_->ht_used; \
       for (hashitem_T *hi = hi##ht_->ht_array; hi##todo_; hi++) { \
         if (!HASHITEM_EMPTY(hi)) { \
+          hi##todo_--; \
           { \
             code \
           } \
-          hi##todo_--; \
         } \
       } \
     } while (0)
