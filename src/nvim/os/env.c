@@ -282,10 +282,9 @@ void os_get_hostname(char *hostname, size_t size)
 }
 
 /// To get the "real" home directory:
-/// Try getting HOME env variable
+///   - get value of $HOME
 /// For Windows:
 ///   - assemble homedir using HOMEDRIVE and HOMEPATH
-///   - try USERPROFILE
 ///   - try uv_os_homedir()
 ///   - resolve references
 ///   - guess C drive
@@ -327,13 +326,7 @@ void init_homedir(void)
   }
 
   if (var == NULL) {
-    var = os_getenv("USERPROFILE");
-  }
-
-  if (var == NULL) {
-    uv_mutex_lock(&mutex);
     var = os_homedir();
-    uv_mutex_unlock(&mutex);
   }
 
   // Weird but true: $HOME may contain an indirect reference to another
@@ -362,9 +355,7 @@ void init_homedir(void)
 #endif
 
   if (var == NULL) {
-    uv_mutex_lock(&mutex);
     var = os_homedir();
-    uv_mutex_unlock(&mutex);
   }
 
   if (var != NULL) {
@@ -372,7 +363,7 @@ void init_homedir(void)
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
-      if (!os_chdir(var) && os_dirname((char_u *)IObuff, IOSIZE) == OK) {
+      if (!os_chdir(var) && os_dirname(IObuff, IOSIZE) == OK) {
         var = (char *)IObuff;
       }
       if (os_chdir(os_buf) != 0) {
@@ -394,11 +385,13 @@ static char homedir_buf[MAXPATHL];
 
 char *os_homedir(void)
 {
-  size_t homedir_size = MAXPATHL;
-  if (uv_os_homedir(os_buf, &homedir_size) == 0) {
-    xstrlcpy(homedir_buf, os_buf, strlen(os_buf) + 1);
+  uv_mutex_lock(&mutex);
+  size_t homedir_size = sizeof(homedir_buf);
+  if (uv_os_homedir(homedir_buf, &homedir_size) == 0) {
+    uv_mutex_unlock(&mutex);
     return homedir_buf;
   }
+  uv_mutex_unlock(&mutex);
   return NULL;
 }
 

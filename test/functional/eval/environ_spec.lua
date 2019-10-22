@@ -24,12 +24,7 @@ describe('environment variables', function()
 end)
 
 describe('empty $HOME', function()
-  local original_home = ''
-
-  -- save $HOME before each test
-  before_each(function()
-    original_home = os.getenv('HOME')
-  end)
+  local original_home = os.getenv('HOME')
 
   -- recover $HOME after each test
   after_each(function()
@@ -39,18 +34,18 @@ describe('empty $HOME', function()
     os.remove('test_empty_home')
   end)
 
-  local function tilde_in_pwd()
+  local function tild_in_cwd()
     -- get files in pwd
-    command("let test_empty_home_pwd_files = split(globpath('.', '*'), '\n')")
+    command("let test_empty_home_cwd_files = split(globpath('.', '*'), '\n')")
     -- get the index of the file named '~'
-    command('let test_empty_home_tilde_index = index(test_empty_home_pwd_files, "./~")')
+    command('let test_empty_home_tilde_index = index(test_empty_home_cwd_files, "./~")')
     return eval('test_empty_home_tilde_index') ~= -1
   end
 
   local function write_and_test_tilde()
     system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
                                           '-c', 'write test_empty_home', '+q'})
-    eq(false, tilde_in_pwd())
+    eq(false, tild_in_cwd())
   end
 
   it("'~' folder not created in pwd if $HOME and related env not defined", function()
@@ -72,12 +67,12 @@ describe('empty $HOME', function()
     write_and_test_tilde()
   end)
 
-  it("'~' folder not created in pwd if writing a file with invalid $HOME", function()
+  it("'~' folder not created in cwd if writing a file with invalid $HOME", function()
     setenv('HOME', '/path/does/not/exist')
     write_and_test_tilde()
   end)
 
-  it("'~' folder not created in pwd if writing a file with $HOME=''", function()
+  it("'~' folder not created in cwd if writing a file with $HOME=''", function()
     command("let $HOME=''")
     write_and_test_tilde()
   end)
