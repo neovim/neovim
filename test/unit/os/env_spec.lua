@@ -34,14 +34,6 @@ describe('env.c', function()
     end
   end
 
-  local function get_homedir()
-    return ffi.string(cimp.get_homedir())
-  end
-
-  local function init_homedir()
-    cimp.init_homedir()
-  end
-
   itp('os_env_exists', function()
     eq(false, os_env_exists(''))
     eq(false, os_env_exists('      '))
