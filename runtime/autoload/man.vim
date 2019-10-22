@@ -264,14 +264,6 @@ function! s:push_tag() abort
         \ }]
 endfunction
 
-function! man#pop_tag() abort
-  if !empty(s:tag_stack)
-    let tag = remove(s:tag_stack, -1)
-    execute 'silent' tag['buf'].'buffer'
-    call cursor(tag['lnum'], tag['col'])
-  endif
-endfunction
-
 " extracts the name and sect out of 'path/name.sect'
 function! s:extract_sect_and_name_path(path) abort
   let tail = fnamemodify(a:path, ':t')
@@ -408,6 +400,21 @@ function! man#init_pager() abort
   if -1 == match(bufname('%'), 'man:\/\/')  " Avoid duplicate buffers, E95.
     execute 'silent file man://'.tolower(fnameescape(ref))
   endif
+endfunction
+
+function! man#goto_tag(pattern, flags, info) abort
+  " currently no support for section completion
+  let sect = ""
+
+  let candidates = s:get_paths(sect, a:pattern)
+
+  return map(candidates, {
+  \  _, path -> {
+  \      'name': s:extract_sect_and_name_path(path)[1],
+  \      'filename': 'man://' . path,
+  \      'cmd': '1'
+  \    }
+  \  })
 endfunction
 
 call s:init()
