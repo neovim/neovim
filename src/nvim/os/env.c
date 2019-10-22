@@ -354,12 +354,12 @@ void init_homedir(void)
   }
 #endif
 
+#ifdef UNIX
   if (var == NULL) {
     var = os_homedir();
   }
 
   if (var != NULL) {
-#ifdef UNIX
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
     if (os_dirname((char_u *)os_buf, MAXPATHL) == OK && os_chdir(os_buf) == 0) {
@@ -370,8 +370,8 @@ void init_homedir(void)
         EMSG(_(e_prev_dir));
       }
     }
-#endif
   }
+#endif
 
   if ((var == NULL || *var == NUL)
       && os_dirname((char_u *)os_buf, MAXPATHL) == OK) {
