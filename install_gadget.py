@@ -33,6 +33,8 @@ import tarfile
 import hashlib
 import sys
 import json
+import functools
+import time
 
 try:
   from io import BytesIO ## for Python 3
@@ -352,6 +354,30 @@ def InstallNodeDebug( name, root ):
   MakeSymlink( gadget_dir, name, root )
 
 
+def WithRetry( f ):
+  retries = 5
+  timeout = 1 # seconds
+
+  @functools.wraps( f )
+  def wrapper( *args, **kwargs ):
+    thrown = None
+    for _ in range( retries ):
+      try:
+        return f( *args, **kwargs )
+      except Exception as e:
+        thrown = e
+        print( "Failed - {}, will retry in {} seconds".format( e, timeout ) )
+        time.sleep( timeout )
+    raise thrown
+
+  return wrapper
+
+
+@WithRetry
+def UrlOpen( *args, **kwargs ):
+  return urllib2.urlopen( *args, **kwargs )
+
+
 def DownloadFileTo( url, destination, file_name = None, checksum = None ):
   if not file_name:
     file_name = url.split( '/' )[ -1 ]
@@ -377,7 +403,7 @@ def DownloadFileTo( url, destination, file_name = None, checksum = None ):
 
   print( "Downloading {} to {}/{}".format( url, destination, file_name ) )
 
-  with contextlib.closing( urllib2.urlopen( r ) ) as u:
+  with contextlib.closing( UrlOpen( r ) ) as u:
     with open( file_path, 'wb' ) as f:
       f.write( u.read() )
 
