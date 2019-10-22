@@ -402,13 +402,6 @@ char *os_homedir(void)
   return NULL;
 }
 
-#ifdef UNIT_TESTING
-const char *get_homedir(void)
-{
-  return homedir;
-}
-#endif
-
 #if defined(EXITFREE)
 
 void free_homedir(void)
