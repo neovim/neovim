@@ -362,7 +362,8 @@ void init_homedir(void)
   if (var != NULL) {
     // Change to the directory and get the actual path.  This resolves
     // links.  Don't do it when we can't return.
-    if (os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK && os_chdir(os_buf) == 0) {
+    if (os_dirname((char_u *)os_buf, sizeof(os_buf)) == OK
+        && os_chdir(os_buf) == 0) {
       if (!os_chdir(var) && os_dirname(IObuff, sizeof(IObuff)) == OK) {
         var = (char *)IObuff;
       }
