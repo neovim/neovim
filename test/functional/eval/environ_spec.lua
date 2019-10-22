@@ -35,7 +35,7 @@ describe('empty $HOME', function()
     os.remove('./~')
   end)
 
-  local function tild_in_cwd()
+  local function tilde_in_cwd()
     -- get files in cwd
     command("let test_empty_home_cwd_files = split(globpath('.', '*'), '\n')")
     -- get the index of the file named '~'
@@ -46,7 +46,7 @@ describe('empty $HOME', function()
   local function write_and_test_tilde()
     system({nvim_prog, '-u', 'NONE', '-i', 'NONE', '--headless',
                                           '-c', 'write test_empty_home', '+q'})
-    eq(false, tild_in_cwd())
+    eq(false, tilde_in_cwd())
   end
 
   it("'~' folder not created in cwd if $HOME and related env not defined", function()
