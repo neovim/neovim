@@ -387,11 +387,14 @@ static char homedir_buf[MAXPATHL];
 char *os_homedir(void)
 {
   uv_mutex_lock(&mutex);
-  size_t homedir_size = sizeof(os_buf);
-  if (uv_os_homedir(os_buf, &homedir_size) == 0) {
-    xstrlcpy(homedir_buf, os_buf, homedir_size);
+  size_t homedir_size = sizeof(homedir_buf);
+  int ret_value = uv_os_homedir(os_buf, &homedir_size);
+  if (ret_value == 0) {
+    xstrlcpy(homedir_buf, os_buf, homedir_size + 1);
     uv_mutex_unlock(&mutex);
     return homedir_buf;
+  } else {
+    ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
   }
   uv_mutex_unlock(&mutex);
   return NULL;
