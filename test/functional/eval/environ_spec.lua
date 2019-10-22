@@ -35,7 +35,7 @@ describe('empty $HOME', function()
   end)
 
   local function tild_in_cwd()
-    -- get files in pwd
+    -- get files in cwd
     command("let test_empty_home_cwd_files = split(globpath('.', '*'), '\n')")
     -- get the index of the file named '~'
     command('let test_empty_home_tilde_index = index(test_empty_home_cwd_files, "./~")')
@@ -48,7 +48,7 @@ describe('empty $HOME', function()
     eq(false, tild_in_cwd())
   end
 
-  it("'~' folder not created in pwd if $HOME and related env not defined", function()
+  it("'~' folder not created in cwd if $HOME and related env not defined", function()
     command("unlet $HOME")
     write_and_test_tilde()
 
