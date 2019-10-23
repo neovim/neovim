@@ -1,10 +1,10 @@
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'stop'
-Set-PSDebug -Strict -Trace 1
 
 $isPullRequest = ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT -ne $null)
 $env:CONFIGURATION -match '^(?<compiler>\w+)_(?<bits>32|64)(?:-(?<option>\w+))?$'
 $compiler = $Matches.compiler
-$compileOption = $Matches.option
+$compileOption = if ($Matches -contains 'option') {$Matches.option} else {''}
 $bits = $Matches.bits
 $cmakeBuildType = $(if ($env:CMAKE_BUILD_TYPE -ne $null) {$env:CMAKE_BUILD_TYPE} else {'RelWithDebInfo'});
 $buildDir = [System.IO.Path]::GetFullPath("$(pwd)")
@@ -23,7 +23,6 @@ $uploadToCodeCov = $false
 
 function exitIfFailed() {
   if ($LastExitCode -ne 0) {
-    Set-PSDebug -Off
     exit $LastExitCode
   }
 }
@@ -146,8 +145,6 @@ if ($env:USE_LUACOV -eq 1) {
 # Functional tests
 # The $LastExitCode from MSBuild can't be trusted
 $failed = $false
-# Temporarily turn off tracing to reduce log file output
-Set-PSDebug -Off
 cmake --build . --config $cmakeBuildType --target functionaltest -- $cmakeGeneratorArgs 2>&1 |
   foreach { $failed = $failed -or
     $_ -match 'functional tests failed with error'; $_ }
@@ -161,7 +158,6 @@ if ($uploadToCodecov) {
 if ($failed) {
   exit $LastExitCode
 }
-Set-PSDebug -Strict -Trace 1
 
 # Old tests
 # Add MSYS to path, required for e.g. `find` used in test scripts.
