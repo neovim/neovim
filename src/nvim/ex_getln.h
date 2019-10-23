@@ -27,6 +27,8 @@
 #define WILD_ESCAPE             0x80
 #define WILD_ICASE              0x100
 #define WILD_ALLLINKS           0x200
+#define WILD_IGNORE_COMPLETESLASH   0x400
+#define WILD_NOERROR            0x800  // sets EW_NOERROR
 
 /// Present history tables
 typedef enum {
