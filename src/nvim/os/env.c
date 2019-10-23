@@ -386,7 +386,7 @@ static char homedir_buf[MAXPATHL];
 
 char *os_homedir(void)
 {
-  homedir_buf[0] = NIL;
+  homedir_buf[0] = NUL;
   size_t homedir_size = sizeof(homedir_buf);
   uv_mutex_lock(&mutex);
   int ret_value = uv_os_homedir(homedir_buf, &homedir_size);
@@ -396,7 +396,7 @@ char *os_homedir(void)
   } else {
     ELOG("uv_os_homedir() failed %d: %s", ret_value, os_strerror(ret_value));
   }
-  homedir_buf[0] = NIL;
+  homedir_buf[0] = NUL;
   return NULL;
 }
 
