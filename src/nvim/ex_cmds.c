@@ -4905,7 +4905,7 @@ int find_help_tags(const char_u *arg, int *num_matches, char_u ***matches,
 
   *matches = NULL;
   *num_matches = 0;
-  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE;
+  int flags = TAG_HELP | TAG_REGEXP | TAG_NAMES | TAG_VERBOSE | TAG_NO_TAGFUNC;
   if (keep_lang) {
     flags |= TAG_KEEP_LANG;
   }

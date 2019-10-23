@@ -44,6 +44,7 @@ source test_syn_attr.vim
 source test_tabline.vim
 source test_tabpage.vim
 source test_tagcase.vim
+source test_tagfunc.vim
 source test_tagjump.vim
 source test_taglist.vim
 source test_true_false.vim

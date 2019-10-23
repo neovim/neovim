@@ -70,8 +70,8 @@ static char *m_onlyone = N_("Already only one window");
 /*
  * all CTRL-W window commands are handled here, called from normal_cmd().
  */
-void 
-do_window (
+void
+do_window(
     int nchar,
     long Prenum,
     int xchar                  /* extra char from ":wincmd gx" or NUL */
@@ -1537,10 +1537,14 @@ static void win_init(win_T *newp, win_T *oldp, int flags)
 
   /* copy tagstack and folds */
   for (i = 0; i < oldp->w_tagstacklen; i++) {
-    newp->w_tagstack[i] = oldp->w_tagstack[i];
-    if (newp->w_tagstack[i].tagname != NULL)
-      newp->w_tagstack[i].tagname =
-        vim_strsave(newp->w_tagstack[i].tagname);
+    taggy_T *tag = &newp->w_tagstack[i];
+    *tag = oldp->w_tagstack[i];
+    if (tag->tagname != NULL) {
+      tag->tagname = vim_strsave(tag->tagname);
+    }
+    if (tag->user_data != NULL) {
+      tag->user_data = vim_strsave(tag->user_data);
+    }
   }
   newp->w_tagstackidx = oldp->w_tagstackidx;
   newp->w_tagstacklen = oldp->w_tagstacklen;
@@ -4638,8 +4642,10 @@ win_free (
 
   xfree(wp->w_lines);
 
-  for (i = 0; i < wp->w_tagstacklen; ++i)
+  for (i = 0; i < wp->w_tagstacklen; i++) {
     xfree(wp->w_tagstack[i].tagname);
+    xfree(wp->w_tagstack[i].user_data);
+  }
 
   xfree(wp->w_localdir);
 

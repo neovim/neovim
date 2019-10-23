@@ -133,6 +133,7 @@ static char_u   *p_cms;
 static char_u   *p_cpt;
 static char_u   *p_cfu;
 static char_u   *p_ofu;
+static char_u   *p_tfu;
 static int p_eol;
 static int p_fixeol;
 static int p_et;
@@ -2273,6 +2274,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_ep);
   check_string_option(&buf->b_p_path);
   check_string_option(&buf->b_p_tags);
+  check_string_option(&buf->b_p_tfu);
   check_string_option(&buf->b_p_tc);
   check_string_option(&buf->b_p_dict);
   check_string_option(&buf->b_p_tsr);
@@ -5590,6 +5592,7 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
     case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
     case PV_TSR:  return (char_u *)&(curbuf->b_p_tsr);
+    case PV_TFU:  return (char_u *)&(curbuf->b_p_tfu);
     case PV_STL:  return (char_u *)&(curwin->w_p_stl);
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
     case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
@@ -5742,6 +5745,7 @@ static char_u *get_varp(vimoption_T *p)
   case PV_SPF:    return (char_u *)&(curwin->w_s->b_p_spf);
   case PV_SPL:    return (char_u *)&(curwin->w_s->b_p_spl);
   case PV_SW:     return (char_u *)&(curbuf->b_p_sw);
+  case PV_TFU:    return (char_u *)&(curbuf->b_p_tfu);
   case PV_TS:     return (char_u *)&(curbuf->b_p_ts);
   case PV_TW:     return (char_u *)&(curbuf->b_p_tw);
   case PV_UDF:    return (char_u *)&(curbuf->b_p_udf);
@@ -6004,6 +6008,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_cpt = vim_strsave(p_cpt);
       buf->b_p_cfu = vim_strsave(p_cfu);
       buf->b_p_ofu = vim_strsave(p_ofu);
+      buf->b_p_tfu = vim_strsave(p_tfu);
       buf->b_p_sts = p_sts;
       buf->b_p_sts_nopaste = p_sts_nopaste;
       buf->b_p_com = vim_strsave(p_com);
