@@ -55,8 +55,17 @@ char **shell_build_argv(const char *cmd, const char *extra_args)
   size_t argc = tokenize(p_sh, NULL) + (cmd ? tokenize(p_shcf, NULL) : 0);
   char **rv = xmalloc((argc + 4) * sizeof(*rv));
 
-  // Split 'shell'
-  size_t i = tokenize(p_sh, rv);
+  // Escape 'shell' path
+  rv[0] = shell_escape_path(p_sh);
+
+  size_t i;
+  if (rv[0]) {
+    // valid shell path returned, split rest of the tokens
+    i = tokenize(skipwhite(p_sh + strlen(rv[0])), rv+1) + 1;
+  } else {
+    // no valid path, split whole 'p_sh'
+    i = tokenize(p_sh, rv);
+  }
 
   if (extra_args) {
     rv[i++] = xstrdup(extra_args);        // Push a copy of `extra_args`
@@ -538,6 +547,34 @@ static void out_data_cb(Stream *stream, RBuffer *buf, size_t count, void *data,
   // Move remaining data to start of buffer, so the buffer can never
   // wrap around.
   rbuffer_reset(buf);
+}
+
+/// Returns a substring which corresponds to path of the shell
+/// executable
+///
+/// @param str The full shell string
+/// @return str Substring containing valid shell path or NUL
+static char *shell_escape_path(const char_u *const str)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  const char *p = (const char *)str;
+  char *t_sh = xmalloc(STRLEN(str) * sizeof(*t_sh));
+  size_t full_len = 0;
+
+  while (*p != NUL) {
+    const size_t len = word_length((const char_u *)p);
+    full_len = (size_t)(p + len - (const char *)str);
+    STRLCPY(t_sh, str, full_len);
+    t_sh[full_len] = 0;
+
+    if (access(t_sh, X_OK) != -1) {
+      return t_sh;
+    }
+
+    p = (const char *)skipwhite((char_u *)(p + len));
+  }
+
+  return NULL;
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
