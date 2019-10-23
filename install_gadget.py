@@ -25,6 +25,7 @@ import contextlib
 import os
 import string
 import zipfile
+import gzip
 import shutil
 import subprocess
 import traceback
@@ -32,6 +33,13 @@ import tarfile
 import hashlib
 import sys
 import json
+import functools
+import time
+
+try:
+  from io import BytesIO ## for Python 3
+except ImportError:
+  from BytesIO import BytesIO
 
 # Include vimspector source, for utils
 sys.path.insert( 1, os.path.join( os.path.dirname( __file__ ),
@@ -150,8 +158,8 @@ GADGETS = {
       'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
              'publishers/ms-vscode/vsextensions/mono-debug/${version}/'
              'vspackage',
-      'target': 'vscode-mono-debug.tar.gz',
-      'format': 'tar',
+      'target': 'vscode-mono-debug.vsix.gz',
+      'format': 'zip.gz',
     },
     'all': {
       'file_name': 'vscode-mono-debug.vsix',
@@ -226,19 +234,20 @@ GADGETS = {
     },
   },
   'debugger-for-chrome': {
-    'language': 'typescript',
+    'language': 'chrome',
     'enabled': False,
     'download': {
       'url': 'https://marketplace.visualstudio.com/_apis/public/gallery/'
              'publishers/msjsdiag/vsextensions/'
              'debugger-for-chrome/${version}/vspackage',
-      'target': 'msjsdiag.debugger-for-chrome-4.12.0.tar.gz',
-      'format': 'tar',
+      'target': 'msjsdiag.debugger-for-chrome-4.12.0.vsix.gz',
+      'format': 'zip.gz',
     },
     'all': {
       'version': '4.12.0',
       'file_name': 'msjsdiag.debugger-for-chrome-4.12.0.vsix',
-      'checksum': ''
+      'checksum':
+        '0df2fe96d059a002ebb0936b0003e6569e5a5c35260dc3791e1657d27d82ccf5'
     },
     'adapters': {
       'chrome': {
@@ -275,7 +284,7 @@ def InstallCppTools( name, root ):
 
   # It's hilarious, but the execute bits aren't set in the vsix. So they
   # actually have javascript code which does this. It's just a horrible horrible
-  # hoke that really is not funny.
+  # hack that really is not funny.
   MakeExecutable( os.path.join( extension, 'debugAdapters', 'OpenDebugAD7' ) )
   with open( os.path.join( extension, 'package.json' ) ) as f:
     package = json.load( f )
@@ -325,9 +334,10 @@ def InstallTclProDebug( name, root ):
 
 
 def InstallNodeDebug( name, root ):
-  node_version = subprocess.check_output( [ 'node', '--version' ] ).strip()
+  node_version = subprocess.check_output( [ 'node', '--version' ],
+                                          universal_newlines=True ).strip()
   print( "Node.js version: {}".format( node_version ) )
-  if map( int, node_version[ 1: ].split( '.' ) ) >= [ 12, 0, 0 ]:
+  if list( map( int, node_version[ 1: ].split( '.' ) ) ) >= [ 12, 0, 0 ]:
     print( "Can't install vscode-debug-node2:" )
     print( "Sorry, you appear to be running node 12 or later. That's not "
            "compatible with the build system for this extension, and as far as "
@@ -342,6 +352,30 @@ def InstallNodeDebug( name, root ):
     subprocess.check_call( [ 'npm', 'install' ] )
     subprocess.check_call( [ 'npm', 'run', 'build' ] )
   MakeSymlink( gadget_dir, name, root )
+
+
+def WithRetry( f ):
+  retries = 5
+  timeout = 1 # seconds
+
+  @functools.wraps( f )
+  def wrapper( *args, **kwargs ):
+    thrown = None
+    for _ in range( retries ):
+      try:
+        return f( *args, **kwargs )
+      except Exception as e:
+        thrown = e
+        print( "Failed - {}, will retry in {} seconds".format( e, timeout ) )
+        time.sleep( timeout )
+    raise thrown
+
+  return wrapper
+
+
+@WithRetry
+def UrlOpen( *args, **kwargs ):
+  return urllib2.urlopen( *args, **kwargs )
 
 
 def DownloadFileTo( url, destination, file_name = None, checksum = None ):
@@ -365,12 +399,11 @@ def DownloadFileTo( url, destination, file_name = None, checksum = None ):
     print( "Removing existing {}".format( file_path ) )
     os.remove( file_path )
 
-
   r = urllib2.Request( url, headers = { 'User-Agent': 'Vimspector' } )
 
   print( "Downloading {} to {}/{}".format( url, destination, file_name ) )
 
-  with contextlib.closing( urllib2.urlopen( r ) ) as u:
+  with contextlib.closing( UrlOpen( r ) ) as u:
     with open( file_path, 'wb' ) as f:
       f.write( u.read() )
 
@@ -431,7 +464,13 @@ def ExtractZipTo( file_path, destination, format ):
   if format == 'zip':
     with ModePreservingZipFile( file_path ) as f:
       f.extractall( path = destination )
-    return
+  elif format == 'zip.gz':
+    with gzip.open( file_path, 'rb' ) as f:
+      file_contents = f.read()
+
+    with ModePreservingZipFile( BytesIO( file_contents ) ) as f:
+      f.extractall( path = destination )
+
   elif format == 'tar':
     try:
       with tarfile.open( file_path ) as f:

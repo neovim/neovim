@@ -17,7 +17,8 @@ RUN apt-get update && \
                      gdb \
                      lldb \
                      curl \
-                     nodejs && \
+                     nodejs \
+                     npm && \
   apt-get -y autoremove
 
 RUN ln -fs /usr/share/zoneinfo/Europe/London /etc/localtime && \

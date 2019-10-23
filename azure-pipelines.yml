@@ -42,8 +42,9 @@ stages:
         go get -u github.com/go-delve/delve/cmd/dlv
       displayName: 'Install Delve for Go'
 
-    - bash: python3 install_gadget.py --all
-      displayName: 'Install gadgets'
+    # TODO: Use cache to store the download directory
+    - bash: python3 install_gadget.py --all --force-all
+      displayName: 'Install gadgets - python3'
 
     - bash: vim --version
       displayName: 'Print vim version information'
@@ -68,14 +69,17 @@ stages:
     pool:
       vmImage: 'macOS-10.13'
     steps:
-    - bash: brew unlink node@6 && brew install macvim node
+    - bash: |
+        brew unlink node@6
+        brew install macvim node@10
+        brew link --force --overwrite node@10
       displayName: 'Install vim and node'
 
     - bash: go get -u github.com/go-delve/delve/cmd/dlv
       displayName: 'Install Delve for Go'
 
-    - bash: python3 install_gadget.py --all
-      displayName: 'Install gadgets'
+    - bash: python3 install_gadget.py --all --force-all
+      displayName: 'Install gadgets - python3'
 
     - bash: vim --version
       displayName: 'Print vim version information'
