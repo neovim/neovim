@@ -64,8 +64,9 @@ function! man#open_page(count, count1, mods, ...) abort
     return
   endtry
 
-  call s:push_tag()
-  let bufname = 'man://'.name.(empty(sect)?'':'('.sect.')')
+  let fullname = name.(empty(sect)?'':'('.sect.')')
+  call s:push_tag(fullname)
+  let bufname = 'man://'.fullname
 
   try
     set eventignore+=BufReadCmd
@@ -254,14 +255,30 @@ function! s:verify_exists(sect, name) abort
   return s:extract_sect_and_name_path(path) + [path]
 endfunction
 
-let s:tag_stack = []
+function! s:push_tag(name) abort
+  " emulate vim's tag pushing for cases where we don't use 'tagfunc'
+  if !&tagstack
+    return
+  endif
 
-function! s:push_tag() abort
-  let s:tag_stack += [{
-        \ 'buf':  bufnr('%'),
-        \ 'lnum': line('.'),
-        \ 'col':  col('.'),
-        \ }]
+  let winnr = winnr()
+  let stack = gettagstack(winnr)
+
+  let curidx = stack.curidx
+  let items = stack.items
+
+  let newstack = items[0 : curidx - 1]
+  let newstack += [{
+  \   'bufnr': bufnr('%'),
+  \   'from': getpos('.'),
+  \   'matchnr': 0,
+  \   'tagname': a:name,
+  \ }]
+
+  call settagstack(winnr, {
+  \   'length': len(newstack),
+  \   'items': newstack,
+  \ })
 endfunction
 
 " extracts the name and sect out of 'path/name.sect'
