@@ -360,14 +360,18 @@ function! man#complete(arg_lead, cmd_line, cursor_pos) abort
   return s:complete(sect, sect, name)
 endfunction
 
-function! s:complete(sect, psect, name) abort
+function! s:get_paths(sect, name) abort
   try
     let mandirs = join(split(s:system(['man', s:find_arg]), ':\|\n'), ',')
   catch
     call s:error(v:exception)
     return
   endtry
-  let pages = globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+  return globpath(mandirs,'man?/'.a:name.'*.'.a:sect.'*', 0, 1)
+endfunction
+
+function! s:complete(sect, psect, name) abort
+  let pages = s:get_paths(a:sect, a:name)
   " We remove duplicates in case the same manpage in different languages was found.
   return uniq(sort(map(pages, 's:format_candidate(v:val, a:psect)'), 'i'))
 endfunction
