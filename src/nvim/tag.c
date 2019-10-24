@@ -988,9 +988,7 @@ add_llist_tags(
             cmd[len] = NUL;
         }
 
-        if ((dict = tv_dict_alloc()) == NULL) {
-            continue;
-        }
+        dict = tv_dict_alloc();
         tv_list_append_dict(list, dict);
 
         tv_dict_add_str(dict, S_LEN("text"), (const char *)tag_name);
