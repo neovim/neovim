@@ -420,10 +420,9 @@ function! man#init_pager() abort
 endfunction
 
 function! man#goto_tag(pattern, flags, info) abort
-  " currently no support for section completion
-  let sect = ""
+  let [sect, name] = man#extract_sect_and_name_ref(a:pattern)
 
-  let candidates = s:get_paths(sect, a:pattern)
+  let candidates = s:get_paths(sect, name)
 
   return map(candidates, {
   \  _, path -> {
