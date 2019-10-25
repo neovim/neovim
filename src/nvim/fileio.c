@@ -5292,7 +5292,8 @@ void vim_deltempdir(void)
 /// call to this function.
 char_u *vim_gettempdir(void)
 {
-  if (vim_tempdir == NULL) {
+  if (vim_tempdir == NULL || !os_isdir(vim_tempdir)) {
+    XFREE_CLEAR(vim_tempdir);
     vim_maketempdir();
   }
 
