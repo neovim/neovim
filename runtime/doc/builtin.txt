@@ -8688,13 +8688,11 @@ taglist({expr} [, {filename}])				*taglist()*
 			GetTagpattern()->taglist()
 
 tempname()					*tempname()* *temp-file-name*
-		The result is a String, which is the name of a file that
-		doesn't exist.  It can be used for a temporary file.  Example: >
+		Generates a (non-existent) filename located in the Nvim root
+		|tempdir|. Scripts can use the filename as a temporary file.
+		Example: >
 			:let tmpfile = tempname()
 			:exe "redir > " .. tmpfile
-<		For Unix, the file will be in a private directory |tempfile|.
-		For MS-Windows forward slashes are used when the 'shellslash'
-		option is set or when 'shellcmdflag' starts with '-'.
 
 termopen({cmd} [, {opts}])			*termopen()*
 		Spawns {cmd} in a new pseudo-terminal session connected

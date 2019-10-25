@@ -1397,7 +1397,7 @@ Note: Similarly to the $XDG environment variables, when
 `$XDG_CONFIG_HOME/nvim` is mentionned, it should be understood as
 `$XDG_CONFIG_HOME/$NVIM_APPNAME`.
 
-LOG FILE					*$NVIM_LOG_FILE* *E5430*
+LOG FILE					*log* *$NVIM_LOG_FILE* *E5430*
 Besides 'debug' and 'verbose', Nvim keeps a general log file for internal
 debugging, plugins and RPC clients. >
 	:echo $NVIM_LOG_FILE

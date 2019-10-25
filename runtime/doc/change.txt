@@ -576,18 +576,29 @@ with ".".  Vim does not recognize a comment (starting with '"') after the
 {Visual}=		Filter the highlighted lines like with ={motion}.
 
 
-						*tempfile* *setuid*
-Vim uses temporary files for filtering, generating diffs and also for
-tempname().  For Unix, the file will be in a private directory (only
-accessible by the current user) to avoid security problems (e.g., a symlink
-attack or other people reading your file).  When Vim exits the directory and
-all files in it are deleted.  When Vim has the setuid bit set this may cause
-problems, the temp file is owned by the setuid user but the filter command
-probably runs as the original user.
-Directory for temporary files is created in the first possible directory of:
+						*tempdir* *tempfile* *setuid*
+Nvim uses temporary files for filtering and generating diffs. Plugins also
+commonly use |tempname()| for their own purposes. On the first request for
+a temporary file, Nvim creates a common directory (the "Nvim tempdir"), to
+serve as storage for all temporary files (including `stdpath("run")` files
+|$XDG_RUNTIME_DIR|) in the current session.
+
+The Nvim tempdir is created in the first available system tempdir:
 	Unix:    $TMPDIR, /tmp, current-dir, $HOME.
 	Windows: $TMPDIR, $TMP, $TEMP, $USERPROFILE, current-dir.
 
+On unix the tempdir is created with permissions 0700 (only accessible by the
+current user) to avoid security problems (e.g. symlink attacks).  On exit,
+Nvim deletes the tempdir and its contents.
+							*E5431*
+If you see an error or |log| message like: >
+	E5431: tempdir disappeared (2 times)
+this means an external process on your system deleted the Nvim tempdir.
+Typically this is caused by "antivirus" or a misconfigured cleanup service.
+
+If Nvim has the setuid bit set this may cause problems: the temp file
+is owned by the setuid user but the filter command probably runs as the
+original user.
 
 
 4.2 Substitute						*:substitute*
