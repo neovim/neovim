@@ -284,20 +284,16 @@ function! s:extract_sect_and_name_path(path) abort
 endfunction
 
 function! s:find_man() abort
-  if &filetype ==# 'man'
-    return 1
-  elseif winnr('$') ==# 1
-    return 0
-  endif
-  let thiswin = winnr()
-  while 1
-    wincmd w
-    if &filetype ==# 'man'
+  let l:win = 1
+  while l:win <= winnr('$')
+    let l:buf = winbufnr(l:win)
+    if getbufvar(l:buf, '&filetype', '') ==# 'man'
+      execute l:win.'wincmd w'
       return 1
-    elseif thiswin ==# winnr()
-      return 0
     endif
+    let l:win += 1
   endwhile
+  return 0
 endfunction
 
 function! s:error(msg) abort
