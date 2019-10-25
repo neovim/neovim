@@ -321,7 +321,7 @@ function vim.trim(s)
   return s:match('^%s*(.*%S)') or ''
 end
 
---- Escapes magic chars in a Lua pattern string.
+--- Escapes magic chars in a Lua pattern.
 ---
 --@see https://github.com/rxi/lume
 --@param s  String to escape

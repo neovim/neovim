@@ -234,7 +234,8 @@ get_vimpatch() {
   msg_ok "Saved patch to '${NVIM_SOURCE_DIR}/${patch_file}'."
 }
 
-# shellcheck disable=SC2015  # "Note that A && B || C is not if-then-else."
+# shellcheck disable=SC2015
+# ^ "Note that A && B || C is not if-then-else."
 stage_patch() {
   get_vimpatch "$1"
   local try_apply="${2:-}"
@@ -305,7 +306,8 @@ git_hub_pr() {
   git hub pull new -m "$1"
 }
 
-# shellcheck disable=SC2015  # "Note that A && B || C is not if-then-else."
+# shellcheck disable=SC2015
+# ^ "Note that A && B || C is not if-then-else."
 submit_pr() {
   require_executable git
   local push_first
