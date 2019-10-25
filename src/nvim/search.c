@@ -4049,23 +4049,20 @@ current_search(
   pos_T pos;                    // position after the pattern
   int result;                   // result of various function calls
 
+  orig_pos = pos = curwin->w_cursor;
   if (VIsual_active) {
-    orig_pos = pos = curwin->w_cursor;
-
     // Searching further will extend the match.
     if (forward) {
       incl(&pos);
     } else {
       decl(&pos);
     }
-  } else {
-    orig_pos = pos = curwin->w_cursor;
   }
 
   // Is the pattern is zero-width?, this time, don't care about the direction
-  int one_char = is_one_char(spats[last_idx].pat, true, &curwin->w_cursor,
-                             FORWARD);
-  if (one_char == -1) {
+  int zero_width = is_zero_width(spats[last_idx].pat, true, &curwin->w_cursor,
+                                 FORWARD);
+  if (zero_width == -1) {
     p_ws = old_p_ws;
     return FAIL;      /* pattern not found */
   }
@@ -4079,7 +4076,7 @@ current_search(
     int dir = forward ? i : !i;
     int flags = 0;
 
-    if (!dir && !one_char) {
+    if (!dir && !zero_width) {
       flags = SEARCH_END;
     }
     end_pos = pos;
@@ -4109,7 +4106,6 @@ current_search(
             ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
-    p_ws = old_p_ws;
   }
 
   pos_T start_pos = pos;
@@ -4124,11 +4120,12 @@ current_search(
   curwin->w_cursor = end_pos;
   if (lt(VIsual, end_pos)) {
     dec_cursor();
+  } else if (VIsual_active && lt(curwin->w_cursor, VIsual)) {
+    curwin->w_cursor = pos;   // put the cursor on the start of the match
   }
   VIsual_active = true;
   VIsual_mode = 'v';
 
-  redraw_curbuf_later(INVERTED);  // Update the inversion.
   if (*p_sel == 'e') {
     // Correction for exclusive selection depends on the direction.
     if (forward && ltoreq(VIsual, curwin->w_cursor)) {
@@ -4155,8 +4152,8 @@ current_search(
 /// else from position "cur".
 /// "direction" is FORWARD or BACKWARD.
 /// Returns TRUE, FALSE or -1 for failure.
-static int is_one_char(char_u *pattern, bool move, pos_T *cur,
-                       Direction direction)
+static int
+is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direction)
 {
   regmmatch_T regmatch;
   int nmatched = 0;
@@ -4204,13 +4201,6 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
       result = (nmatched != 0
                 && regmatch.startpos[0].lnum == regmatch.endpos[0].lnum
                 && regmatch.startpos[0].col == regmatch.endpos[0].col);
-      // one char width
-      if (!result
-          && nmatched != 0
-          && inc(&pos) >= 0
-          && pos.col == regmatch.endpos[0].col) {
-        result = true;
-      }
     }
   }
 
