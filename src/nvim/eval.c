@@ -14617,6 +14617,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   long time_limit = 0;
   int options = SEARCH_KEEP;
   int subpatnum;
+  searchit_arg_T sia;
 
   const char *const pat = tv_get_string(&argvars[0]);
   dir = get_search_arg(&argvars[1], flagsp);  // May set p_ws.
@@ -14664,8 +14665,11 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   }
 
   pos = save_cursor = curwin->w_cursor;
+  memset(&sia, 0, sizeof(sia));
+  sia.sa_stop_lnum = (linenr_T)lnum_stop;
+  sia.sa_tm = &tm;
   subpatnum = searchit(curwin, curbuf, &pos, NULL, dir, (char_u *)pat, 1,
-                       options, RE_SEARCH, (linenr_T)lnum_stop, &tm, NULL);
+                       options, RE_SEARCH, &sia);
   if (subpatnum != FAIL) {
     if (flags & SP_SUBPAT)
       retval = subpatnum;
@@ -15237,8 +15241,13 @@ do_searchpair(
   clearpos(&foundpos);
   pat = pat3;
   for (;; ) {
+    searchit_arg_T sia;
+    memset(&sia, 0, sizeof(sia));
+    sia.sa_stop_lnum = lnum_stop;
+    sia.sa_tm = &tm;
+
     n = searchit(curwin, curbuf, &pos, NULL, dir, pat, 1L,
-                 options, RE_SEARCH, lnum_stop, &tm, NULL);
+                 options, RE_SEARCH, &sia);
     if (n == FAIL || (firstpos.lnum != 0 && equalpos(pos, firstpos))) {
       // didn't find it or found the first match again: FAIL
       break;

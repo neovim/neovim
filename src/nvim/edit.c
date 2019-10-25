@@ -4118,7 +4118,7 @@ static int ins_compl_get_exp(pos_T *ini)
                                      compl_direction,
                                      compl_pattern, 1L,
                                      SEARCH_KEEP + SEARCH_NFMSG,
-                                     RE_LAST, (linenr_T)0, NULL, NULL);
+                                     RE_LAST, NULL);
         }
         msg_silent--;
         if (!compl_started || set_match_pos) {

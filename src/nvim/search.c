@@ -516,19 +516,17 @@ void last_pat_prog(regmmatch_T *regmatch)
 ///          the index of the first matching
 ///          subpattern plus one; one if there was none.
 int searchit(
-    win_T       *win,               /* window to search in, can be NULL for a
-                                       buffer without a window! */
+    win_T       *win,          // window to search in; can be NULL for a
+                               // buffer without a window!
     buf_T       *buf,
     pos_T       *pos,
-    pos_T       *end_pos,  // set to end of the match, unless NULL
+    pos_T       *end_pos,      // set to end of the match, unless NULL
     Direction dir,
     char_u      *pat,
     long count,
     int options,
-    int pat_use,              // which pattern to use when "pat" is empty
-    linenr_T stop_lnum,       // stop after this line number when != 0
-    proftime_T  *tm,          // timeout limit or NULL
-    int *timed_out            // set when timed out or NULL
+    int pat_use,               // which pattern to use when "pat" is empty
+    searchit_arg_T *extra_arg  // optional extra arguments, can be NULL
 )
 {
   int found;
@@ -548,7 +546,16 @@ int searchit(
   int submatch = 0;
   bool first_match = true;
   int save_called_emsg = called_emsg;
-  int break_loop = FALSE;
+  int break_loop = false;
+  linenr_T stop_lnum = 0;  // stop after this line number when != 0
+  proftime_T *tm = NULL;   // timeout limit or NULL
+  int *timed_out = NULL;   // set when timed out or NULL
+
+  if (extra_arg != NULL) {
+      stop_lnum = extra_arg->sa_stop_lnum;
+      tm = extra_arg->sa_tm;
+      timed_out = &extra_arg->sa_timed_out;
+  }
 
   if (search_regcomp(pat, RE_SEARCH, pat_use,
           (options & (SEARCH_HIS + SEARCH_KEEP)), &regmatch) == FAIL) {
@@ -889,6 +896,9 @@ int searchit(
         give_warning((char_u *)_(dir == BACKWARD
                                  ? top_bot_msg : bot_top_msg), true);
       }
+      if (extra_arg != NULL) {
+        extra_arg->sa_wrapped = true;
+      }
     }
     if (got_int || called_emsg
         || (timed_out != NULL && *timed_out)
@@ -983,8 +993,7 @@ int do_search(
     char_u          *pat,
     long count,
     int options,
-    proftime_T      *tm,            // timeout limit or NULL
-    int             *timed_out      // flag set on timeout or NULL
+    searchit_arg_T  *sia        // optional arguments or NULL
 )
 {
   pos_T pos;                    /* position of the last match */
@@ -1271,7 +1280,7 @@ int do_search(
                      & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
                         + SEARCH_START
                         + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
-                 RE_LAST, (linenr_T)0, tm, timed_out);
+                 RE_LAST, sia);
 
     if (dircp != NULL) {
       *dircp = dirc;  // restore second '/' or '?' for normal_cmd()
@@ -4078,7 +4087,7 @@ current_search(
     result = searchit(curwin, curbuf, &pos, &end_pos,
                       (dir ? FORWARD : BACKWARD),
                       spats[last_idx].pat, i ? count : 1,
-                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL, NULL);
+                      SEARCH_KEEP | flags, RE_SEARCH, NULL);
 
     // First search may fail, but then start searching from the
     // beginning of the file (cursor might be on the search match)
@@ -4175,7 +4184,7 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
     flag = SEARCH_START;
   }
   if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, 1,
-               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL, NULL) != FAIL) {
+               SEARCH_KEEP + flag, RE_SEARCH, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
     called_emsg = false;
@@ -4265,7 +4274,7 @@ static void search_stat(int dirc, pos_T *pos,
       start = profile_setlimit(20L);
       while (!got_int && searchit(curwin, curbuf, &lastpos, NULL,
                                   FORWARD, NULL, 1, SEARCH_KEEP, RE_LAST,
-                                  (linenr_T)0, NULL, NULL) != FAIL) {
+                                  NULL) != FAIL) {
         // Stop after passing the time limit.
         if (profile_passed_limit(start)) {
           cnt = OUT_OF_TIME;
