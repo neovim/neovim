@@ -9,6 +9,7 @@ local eval = helpers.eval
 local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
+local matches = helpers.matches
 
 before_each(clear)
 
@@ -146,10 +147,9 @@ describe('lua stdlib', function()
     ]])
     eq({"yy","xx"}, exec_lua("return test_table"))
 
-    -- type checked args
+    -- Validates args.
     eq('Error executing lua: vim.schedule: expected function',
       pcall_err(exec_lua, "vim.schedule('stringly')"))
-
     eq('Error executing lua: vim.schedule: expected function',
       pcall_err(exec_lua, "vim.schedule()"))
 
@@ -195,8 +195,8 @@ describe('lua stdlib', function()
   end)
 
   it("vim.split", function()
-    local split = function(str, sep)
-      return exec_lua('return vim.split(...)', str, sep)
+    local split = function(str, sep, plain)
+      return exec_lua('return vim.split(...)', str, sep, plain)
     end
 
     local tests = {
@@ -221,10 +221,17 @@ describe('lua stdlib', function()
     }
 
     for _, t in ipairs(loops) do
-      local status, err = pcall(split, t[1], t[2])
-      eq(false, status)
-      assert(string.match(err, "Infinite loop detected"))
+      matches(".*Infinite loop detected", pcall_err(split, t[1], t[2]))
     end
+
+    -- Validates args.
+    eq(true, pcall(split, 'string', 'string', nil))
+    eq('Error executing lua: .../shared.lua: Expected string, got number',
+      pcall_err(split, 1, 'string', nil))
+    eq('Error executing lua: .../shared.lua: Expected string, got number',
+      pcall_err(split, 'string', 1, nil))
+    eq('Error executing lua: .../shared.lua: Expected boolean or nil, got number',
+      pcall_err(split, 'string', 'string', 1))
   end)
 
   it('vim.trim', function()
@@ -243,9 +250,9 @@ describe('lua stdlib', function()
       assert(t[2], trim(t[1]))
     end
 
-    local status, err = pcall(trim, 2)
-    eq(false, status)
-    assert(string.match(err, "Only strings can be trimmed"))
+    -- Validates args.
+    eq('Error executing lua: .../shared.lua: Expected string, got number',
+      pcall_err(trim, 2))
   end)
 
   it('vim.inspect', function()
@@ -287,5 +294,9 @@ describe('lua stdlib', function()
   it('vim.pesc', function()
     eq('foo%-bar', exec_lua([[return vim.pesc('foo-bar')]]))
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
+
+    -- Validates args.
+    eq("Error executing lua: .../shared.lua: Expected string, got number",
+      pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 end)
