@@ -31,7 +31,6 @@ echo "Install tree-sitter npm package"
 # https://github.com/tree-sitter/tree-sitter/commit/e14e285a1087264a8c74a7c62fcaecc49db9d904
 # If queries added to tree-sitter-c, we can use latest tree-sitter-cli
 npm install -g tree-sitter-cli@v0.15.9
-npm link tree-sitter-cli
 
 echo "Install tree-sitter c parser"
 curl "https://codeload.github.com/tree-sitter/tree-sitter-c/tar.gz/v0.15.2" -o tree_sitter_c.tar.gz
@@ -48,3 +47,4 @@ else
   cd src/
   gcc -m32 -o "$TREE_SITTER_DIR/bin/c.so" -shared parser.c -I.
 fi
+test -f "$TREE_SITTER_DIR/bin/c.so"
