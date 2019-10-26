@@ -235,6 +235,25 @@ void redraw_buf_line_later(buf_T *buf,  linenr_T line)
 }
 
 /*
+void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, line_T lastline)
+{
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
+    if (wp->w_buffer == buf
+        && lastline >= wp->w_topline && firstline < wp->w_botline) {
+    if (wp->w_redraw_top == 0 || wp->w_redraw_top > firstline) {
+        wp->w_redraw_top = firstline;
+    }
+    if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
+        wp->w_redraw_bot = lastline;
+    }
+    redraw_win_later(wp, VALID);
+      redrawWinline(wp, line);
+    }
+  }
+}
+*/
+
+/*
  * Changed something in the current window, at buffer line "lnum", that
  * requires that line and possibly other lines to be redrawn.
  * Used when entering/leaving Insert mode with the cursor on a folded line.
