@@ -37,7 +37,7 @@ end
 
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
-  self.parser = vim.treesitter.get_parser(bufnr, ft)
+  self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
   self.buf = self.parser.bufnr
   if type(query) == "string" then
     query = vim.treesitter.parse_query(self.parser.lang, query)
@@ -46,20 +46,35 @@ function TSHighlighter.new(query, bufnr, ft)
   self.iquery = query:inspect()
   a.nvim_buf_set_option(self.buf, "syntax", "")
   a.nvim_buf_set_luahl(self.buf, {
-    on_start=function(...) self:on_start(...) end,
-    on_line=function(...) self:on_line(...) end,
+    on_start=function(...) return self:on_start(...) end,
+    on_line=function(...) return self:on_line(...) end,
   })
 end
 
-function TSHighlighter:on_start(_, win, buf, line)
+function TSHighlighter:on_change(changes)
+  --a.nvim_buf_hl_change(...)
+end
+
+function TSHighlighter:on_start(_, win, buf, topline, botline)
   local tree, changes = self.parser:parse()
-  local root = tree:root()
-  --d(vim.inspect(changes))
-  -- TODO: win_update should give the max height (in buflines)
-  self.iter = root:query(self.query,line,a.nvim_buf_line_count(buf))
+  local first, last = botline, topline
+  for _, ch in ipairs(changes or {}) do
+    if ch[1] < first then
+      first = ch[1]
+    end
+    if ch[3] > last then
+      last = ch[3]
+    end
+  end
+  self.root = tree:root()
+  self.iter = nil
   self.active_nodes = {}
   self.nextrow = 0
   self.first_line = line
+  self.botline = botline
+  if first < botline and last > topline then
+    return {first, last}
+  end
 end
 
 
@@ -98,6 +113,9 @@ end
 
 function TSHighlighter:on_line(_, win, buf, line)
   count = 0
+  if self.iter == nil then
+    self.iter = self.root:query(self.query,line,self.botline)
+  end
   while line >= self.nextrow do
     local capture, node, match = self.iter()
     local active = true

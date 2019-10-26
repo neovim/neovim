@@ -15,6 +15,9 @@ function Parser:parse()
   local changes
   self.tree, changes = self._parser:parse_buf(self.bufnr)
   self.valid = true
+  for i, cb in ipairs(self.change_cbs) do
+    cb(changes)
+  end
   return self.tree, changes
 end
 
@@ -39,6 +42,7 @@ function module.create_parser(bufnr, ft, id)
   end
   local self = setmetatable({bufnr=bufnr, lang=ft, valid=false}, Parser)
   self._parser = vim._create_ts_parser(ft)
+  self.change_cbs = {}
   self:parse()
     -- TODO(bfredl): use weakref to self, so that the parser is free'd is no plugin is
     -- using it.
@@ -57,7 +61,7 @@ function module.create_parser(bufnr, ft, id)
   return self
 end
 
-function module.get_parser(bufnr, ft)
+function module.get_parser(bufnr, ft, cb)
   if bufnr == nil or bufnr == 0 then
     bufnr = a.nvim_get_current_buf()
   end
@@ -68,6 +72,9 @@ function module.get_parser(bufnr, ft)
 
   if parsers[id] == nil then
     parsers[id] = module.create_parser(bufnr, ft, id)
+  end
+  if cb ~= nil then
+    table.insert(parsers[id].change_cbs, cb)
   end
   return parsers[id]
 end

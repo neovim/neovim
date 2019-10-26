@@ -1191,11 +1191,24 @@ static void win_update(win_T *wp)
     Array args = ARRAY_DICT_INIT;
     ADD(args, WINDOW_OBJ(wp->handle));
     ADD(args, BUFFER_OBJ(wp->w_buffer->handle));
-    ADD(args, INTEGER_OBJ(lnum-1));
-    lua_attr_active = true;
+    ADD(args, INTEGER_OBJ(wp->w_topline-1));
+    ADD(args, INTEGER_OBJ(wp->w_botline));
     Object o = executor_exec_lua_cb(buf->b_luahl_start, "start", args, true, &err);
-    lua_attr_active = false;
-    if (o.type == kObjectTypeString) {
+    if (o.type == kObjectTypeArray) {
+      // TODO: allow a bare "return start, end"
+      Array arr = o.data.array;
+      if (arr.size == 2 && arr.items[0].type == kObjectTypeInteger
+          && arr.items[1].type == kObjectTypeInteger) {
+        int start = (int)arr.items[0].data.integer+1
+        int end = (int)arr.items[1].data.integer;
+        // TODO: kolla kolla
+        if (start < wp->w_botline && end >= wp->w_topline) {
+          start = MAX(start, wp->w_topline);
+          mod_top = mod_top != 0 ? MIN(mod_top, start) : start;
+          mod_bot = MAX(mod_bot, MIN(end, wp->w_botline));
+        }
+      }
+    } else if (o.type == kObjectTypeString) {
       // TODO
     } else if (ERROR_SET(&err)) {
       // TODO
