@@ -1537,4 +1537,7 @@ function Screen:_attr_index(attrs, attr)
   return nil
 end
 
+function Screen:_handle_term_unhandled(command)
+end
+
 return Screen

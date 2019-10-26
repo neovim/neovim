@@ -50,10 +50,12 @@
 #define TOO_MANY_EVENTS 1000000
 #define STARTS_WITH(str, prefix) (strlen(str) >= (sizeof(prefix) - 1) \
     && 0 == memcmp((str), (prefix), sizeof(prefix) - 1))
-#define TMUX_WRAP(is_tmux, seq) ((is_tmux) \
-    ? "\x1bPtmux;\x1b" seq "\x1b\\" : seq)
 #define LINUXSET0C "\x1b[?0c"
 #define LINUXSET1C "\x1b[?1c"
+
+#define TMUX_START "\x1bPtmux;\x1b"
+#define TMUX_END   "\x1b\\"
+#define TMUX_WRAP(is_tmux, seq) ((is_tmux) ? TMUX_START seq TMUX_END : seq)
 
 #ifdef NVIM_UNIBI_HAS_VAR_FROM
 #define UNIBI_SET_NUM_VAR(var, num) \
@@ -104,6 +106,7 @@ typedef struct {
   bool cork, overflow;
   bool cursor_color_changed;
   bool is_starting;
+  bool tmux;
   cursorentry_T cursor_shapes[SHAPE_IDX_COUNT];
   HlAttrs clear_attrs;
   kvec_t(HlAttrs) attrs;
@@ -165,6 +168,7 @@ UI *tui_start(void)
   ui->set_icon = tui_set_icon;
   ui->option_set= tui_option_set;
   ui->raw_line = tui_raw_line;
+  ui->term_unhandled = tui_term_unhandled;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
   ui->ui_ext[kUILinegrid] = true;
@@ -230,6 +234,8 @@ static void terminfo_start(UI *ui)
   // Old os_getenv() pointer is invalid after os_setenv(), fetch it again.
   term = os_getenv("TERM");
 #endif
+
+  data->tmux = terminfo_is_term_family(term, "tmux") || !os_getenv("TMUX");
 
   // Set up unibilium/terminfo.
   char *termname = NULL;
@@ -1289,6 +1295,20 @@ static void tui_option_set(UI *ui, String name, Object value)
   }
 }
 
+static void tui_term_unhandled(UI *ui, String cmd)
+{
+  TUIData *data = ui->data;
+  if (data->tmux) {
+    out(ui, TMUX_START, strlen(TMUX_START));
+  }
+  /* ELOG("DATA: %s", cmd.data); */
+  /* ELOG("SIZE: %zu", cmd.size); */
+  out(ui, cmd.data, cmd.size);
+  if (data->tmux) {
+    out(ui, TMUX_END, strlen(TMUX_END));
+  }
+}
+
 static void tui_raw_line(UI *ui, Integer g, Integer linerow, Integer startcol,
                          Integer endcol, Integer clearcol, Integer clearattr,
                          LineFlags flags, const schar_T *chunk,
@@ -1525,7 +1545,6 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool st = terminfo_is_term_family(term, "st");
   bool gnome = terminfo_is_term_family(term, "gnome")
     || terminfo_is_term_family(term, "vte");
@@ -1576,7 +1595,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     }
   }
 
-  if (tmux || screen || kitty) {
+  if (data->tmux || screen || kitty) {
     // Disable BCE in some cases we know it is not working. #8806
     unibi_set_bool(ut, unibi_back_color_erase, false);
   }
@@ -1626,7 +1645,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     // per the screen manual; 2017-04 terminfo.src lacks these.
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
-  } else if (tmux) {
+  } else if (data->tmux) {
     unibi_set_if_empty(ut, unibi_to_status_line, "\x1b_");
     unibi_set_if_empty(ut, unibi_from_status_line, "\x1b\\");
     unibi_set_if_empty(ut, unibi_enter_italics_mode, "\x1b[3m");
@@ -1691,7 +1710,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
     } else if (konsolev || xterm || gnome || rxvt || st || putty
                || linuxvt  // Linux 4.8+ supports 256-colour SGR.
                || mate_pretending_xterm || gnome_pretending_xterm
-               || tmux
+               || data->tmux
                || (colorterm && strstr(colorterm, "256"))
                || (term && strstr(term, "256"))) {
       unibi_set_num(ut, unibi_max_colors, 256);
@@ -1727,7 +1746,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
             // per https://bugzilla.gnome.org/show_bug.cgi?id=720821
             || (vte_version >= 3900)
             || (konsolev >= 180770)  // #9364
-            || tmux       // per tmux manual page
+            || data->tmux       // per tmux manual page
             // https://lists.gnu.org/archive/html/screen-devel/2013-03/msg00000.html
             || screen
             || st         // #7641
@@ -1780,7 +1799,7 @@ static void patch_terminfo_bugs(TUIData *data, const char *term,
       // Konsole before version 18.07.70: set up a nonce profile. This has
       // side-effects on temporary font resizing. #6798
       data->unibi_ext.set_cursor_style = (int)unibi_add_ext_str(ut, "Ss",
-          TMUX_WRAP(tmux, "\x1b]50;CursorShape=%?"
+          TMUX_WRAP(data->tmux, "\x1b]50;CursorShape=%?"
           "%p1%{3}%<" "%t%{0}"    // block
           "%e%p1%{5}%<" "%t%{2}"  // underline
           "%e%{1}"                // everything else is bar
@@ -1814,7 +1833,6 @@ static void augment_terminfo(TUIData *data, const char *term,
   bool teraterm = terminfo_is_term_family(term, "teraterm");
   bool putty = terminfo_is_term_family(term, "putty");
   bool screen = terminfo_is_term_family(term, "screen");
-  bool tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
   bool iterm = terminfo_is_term_family(term, "iterm")
     || terminfo_is_term_family(term, "iterm2")
     || terminfo_is_term_family(term, "iTerm.app")
@@ -1859,7 +1877,7 @@ static void augment_terminfo(TUIData *data, const char *term,
   // specific ones.
 
   // can use colons like ISO 8613-6:1994/ITU T.416:1993 says.
-  bool has_colon_rgb = !tmux && !screen
+  bool has_colon_rgb = !data->tmux && !screen
     && !vte_version  // VTE colon-support has a big memory leak. #7573
     && (iterm || iterm_pretending_xterm  // per VT100Terminal.m
         // per http://invisible-island.net/xterm/xterm.log.html#xterm_282
@@ -1891,7 +1909,7 @@ static void augment_terminfo(TUIData *data, const char *term,
     // all panes, which is not particularly desirable.  A better approach
     // would use a tmux control sequence and an extra if(screen) test.
     data->unibi_ext.set_cursor_color = (int)unibi_add_ext_str(
-        ut, NULL, TMUX_WRAP(tmux, "\033]Pl%p1%06x\033\\"));
+        ut, NULL, TMUX_WRAP(data->tmux, "\033]Pl%p1%06x\033\\"));
   } else if ((xterm || rxvt || alacritty)
              && (vte_version == 0 || vte_version >= 3900)) {
     // Supported in urxvt, newer VTE.

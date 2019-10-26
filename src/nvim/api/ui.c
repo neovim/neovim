@@ -137,6 +137,7 @@ void nvim_ui_attach(uint64_t channel_id, Integer width, Integer height,
   ui->msg_set_pos = remote_ui_msg_set_pos;
   ui->event = remote_ui_event;
   ui->inspect = remote_ui_inspect;
+  ui->term_unhandled = remote_ui_term_unhandled;
 
   memset(ui->ui_ext, 0, sizeof(ui->ui_ext));
 

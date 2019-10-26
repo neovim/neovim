@@ -831,6 +831,26 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]=])
   end)
+
+  it('forwards unknown DCS/OSC sequences to outer terminal', function()
+    local received
+
+    function screen:_handle_term_unhandled(command)
+      received = command
+    end
+
+    local unknown_dcs_seq = '\033Pblah\033\\'
+    feed_data(unknown_dcs_seq)
+    screen:expect{condition=function()
+      eq(unknown_dcs_seq, received)
+    end}
+
+    local unknown_osc_seq = '\033]9000;foo;bar\007'
+    feed_data(unknown_osc_seq)
+    screen:expect{condition=function()
+      eq(unknown_osc_seq, received)
+    end}
+  end)
 end)
 
 describe('TUI', function()
