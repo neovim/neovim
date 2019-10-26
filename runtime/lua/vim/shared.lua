@@ -101,12 +101,15 @@ function vim.split(s,sep,plain)
 end
 
 --- Return a list of all keys used in a table.
+--- However, the order of the return table of keys is not guaranteed.
 ---
 --@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
 --@param t Table
 --@returns list of keys
 function vim.tbl_keys(t)
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+
   local keys = {}
   for k, _ in pairs(t) do
     table.insert(keys, k)
@@ -115,10 +118,13 @@ function vim.tbl_keys(t)
 end
 
 --- Return a list of all values used in a table.
+--- However, the order of the return table of values is not guaranteed.
 ---
 --@param t Table
 --@returns list of values
 function vim.tbl_values(t)
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+
   local values = {}
   for _, v in pairs(t) do
     table.insert(values, v)
@@ -148,6 +154,7 @@ end
 --
 --@param t Table to check
 function vim.tbl_isempty(t)
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
   return next(t) == nil
 end
 

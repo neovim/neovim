@@ -11,6 +11,7 @@ local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local source = helpers.source
+local NIL = helpers.NIL
 
 before_each(clear)
 
@@ -299,6 +300,41 @@ describe('lua stdlib', function()
     -- Validates args.
     eq("Error executing lua: .../shared.lua: Expected string, got number",
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
+  end)
+
+  it('vim.tbl_keys', function()
+    eq({}, exec_lua("return vim.tbl_keys({})"))
+    for _, v in pairs(exec_lua("return vim.tbl_keys({'a', 'b', 'c'})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 1, 2, 3 }, ...)", v))
+    end
+    for _, v in pairs(exec_lua("return vim.tbl_keys({a=1, b=2, c=3})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 'a', 'b', 'c' }, ...)", v))
+    end
+  end)
+
+  it('vim.tbl_values', function()
+    eq({}, exec_lua("return vim.tbl_values({})"))
+    for _, v in pairs(exec_lua("return vim.tbl_values({'a', 'b', 'c'})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 'a', 'b', 'c' }, ...)", v))
+    end
+    for _, v in pairs(exec_lua("return vim.tbl_values({a=1, b=2, c=3})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 1, 2, 3 }, ...)", v))
+    end
+  end)
+
+  it('vim.tbl_islist', function()
+    eq(NIL, exec_lua("return vim.tbl_islist({})"))
+    eq(true, exec_lua("return vim.tbl_islist({'a', 'b', 'c'})"))
+    eq(false, exec_lua("return vim.tbl_islist({'a', '32', a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.tbl_islist({1, a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.tbl_islist({a='hello', b='baz', 1})"))
+    eq(false, exec_lua("return vim.tbl_islist({1, 2, nil, a='hello'})"))
+  end)
+
+  it('vim.tbl_isempty', function()
+    eq(true, exec_lua("return vim.tbl_isempty({})"))
+    eq(false, exec_lua("return vim.tbl_isempty({ 1, 2, 3 })"))
+    eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
   end)
 
   it('vim.call and vim.fn', function()
