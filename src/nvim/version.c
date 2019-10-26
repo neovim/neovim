@@ -68,6 +68,9 @@ NULL
 
 // clang-format off
 static const int included_patches[] = {
+  2218,
+  2207,
+  2173,
   1850,
   1849,
   1848,

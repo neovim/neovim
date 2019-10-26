@@ -516,19 +516,17 @@ void last_pat_prog(regmmatch_T *regmatch)
 ///          the index of the first matching
 ///          subpattern plus one; one if there was none.
 int searchit(
-    win_T       *win,               /* window to search in, can be NULL for a
-                                       buffer without a window! */
+    win_T       *win,          // window to search in; can be NULL for a
+                               // buffer without a window!
     buf_T       *buf,
     pos_T       *pos,
-    pos_T       *end_pos,  // set to end of the match, unless NULL
+    pos_T       *end_pos,      // set to end of the match, unless NULL
     Direction dir,
     char_u      *pat,
     long count,
     int options,
-    int pat_use,              // which pattern to use when "pat" is empty
-    linenr_T stop_lnum,       // stop after this line number when != 0
-    proftime_T  *tm,          // timeout limit or NULL
-    int *timed_out            // set when timed out or NULL
+    int pat_use,               // which pattern to use when "pat" is empty
+    searchit_arg_T *extra_arg  // optional extra arguments, can be NULL
 )
 {
   int found;
@@ -548,7 +546,16 @@ int searchit(
   int submatch = 0;
   bool first_match = true;
   int save_called_emsg = called_emsg;
-  int break_loop = FALSE;
+  int break_loop = false;
+  linenr_T stop_lnum = 0;  // stop after this line number when != 0
+  proftime_T *tm = NULL;   // timeout limit or NULL
+  int *timed_out = NULL;   // set when timed out or NULL
+
+  if (extra_arg != NULL) {
+      stop_lnum = extra_arg->sa_stop_lnum;
+      tm = extra_arg->sa_tm;
+      timed_out = &extra_arg->sa_timed_out;
+  }
 
   if (search_regcomp(pat, RE_SEARCH, pat_use,
           (options & (SEARCH_HIS + SEARCH_KEEP)), &regmatch) == FAIL) {
@@ -889,6 +896,9 @@ int searchit(
         give_warning((char_u *)_(dir == BACKWARD
                                  ? top_bot_msg : bot_top_msg), true);
       }
+      if (extra_arg != NULL) {
+        extra_arg->sa_wrapped = true;
+      }
     }
     if (got_int || called_emsg
         || (timed_out != NULL && *timed_out)
@@ -983,8 +993,7 @@ int do_search(
     char_u          *pat,
     long count,
     int options,
-    proftime_T      *tm,            // timeout limit or NULL
-    int             *timed_out      // flag set on timeout or NULL
+    searchit_arg_T  *sia        // optional arguments or NULL
 )
 {
   pos_T pos;                    /* position of the last match */
@@ -1271,7 +1280,7 @@ int do_search(
                      & (SEARCH_KEEP + SEARCH_PEEK + SEARCH_HIS + SEARCH_MSG
                         + SEARCH_START
                         + ((pat != NULL && *pat == ';') ? 0 : SEARCH_NOOF)))),
-                 RE_LAST, (linenr_T)0, tm, timed_out);
+                 RE_LAST, sia);
 
     if (dircp != NULL) {
       *dircp = dirc;  // restore second '/' or '?' for normal_cmd()
@@ -4040,23 +4049,20 @@ current_search(
   pos_T pos;                    // position after the pattern
   int result;                   // result of various function calls
 
+  orig_pos = pos = curwin->w_cursor;
   if (VIsual_active) {
-    orig_pos = pos = curwin->w_cursor;
-
     // Searching further will extend the match.
     if (forward) {
       incl(&pos);
     } else {
       decl(&pos);
     }
-  } else {
-    orig_pos = pos = curwin->w_cursor;
   }
 
   // Is the pattern is zero-width?, this time, don't care about the direction
-  int one_char = is_one_char(spats[last_idx].pat, true, &curwin->w_cursor,
-                             FORWARD);
-  if (one_char == -1) {
+  int zero_width = is_zero_width(spats[last_idx].pat, true, &curwin->w_cursor,
+                                 FORWARD);
+  if (zero_width == -1) {
     p_ws = old_p_ws;
     return FAIL;      /* pattern not found */
   }
@@ -4070,7 +4076,7 @@ current_search(
     int dir = forward ? i : !i;
     int flags = 0;
 
-    if (!dir && !one_char) {
+    if (!dir && !zero_width) {
       flags = SEARCH_END;
     }
     end_pos = pos;
@@ -4078,7 +4084,7 @@ current_search(
     result = searchit(curwin, curbuf, &pos, &end_pos,
                       (dir ? FORWARD : BACKWARD),
                       spats[last_idx].pat, i ? count : 1,
-                      SEARCH_KEEP | flags, RE_SEARCH, 0, NULL, NULL);
+                      SEARCH_KEEP | flags, RE_SEARCH, NULL);
 
     // First search may fail, but then start searching from the
     // beginning of the file (cursor might be on the search match)
@@ -4100,7 +4106,6 @@ current_search(
             ml_get(curwin->w_buffer->b_ml.ml_line_count));
       }
     }
-    p_ws = old_p_ws;
   }
 
   pos_T start_pos = pos;
@@ -4113,13 +4118,14 @@ current_search(
 
   // put cursor on last character of match
   curwin->w_cursor = end_pos;
-  if (lt(VIsual, end_pos)) {
+  if (lt(VIsual, end_pos) && forward) {
     dec_cursor();
+  } else if (VIsual_active && lt(curwin->w_cursor, VIsual)) {
+    curwin->w_cursor = pos;   // put the cursor on the start of the match
   }
   VIsual_active = true;
   VIsual_mode = 'v';
 
-  redraw_curbuf_later(INVERTED);  // Update the inversion.
   if (*p_sel == 'e') {
     // Correction for exclusive selection depends on the direction.
     if (forward && ltoreq(VIsual, curwin->w_cursor)) {
@@ -4141,13 +4147,13 @@ current_search(
   return OK;
 }
 
-/// Check if the pattern is one character long or zero-width.
+/// Check if the pattern is zero-width.
 /// If move is true, check from the beginning of the buffer,
 /// else from position "cur".
 /// "direction" is FORWARD or BACKWARD.
 /// Returns TRUE, FALSE or -1 for failure.
-static int is_one_char(char_u *pattern, bool move, pos_T *cur,
-                       Direction direction)
+static int
+is_zero_width(char_u *pattern, int move, pos_T *cur, Direction direction)
 {
   regmmatch_T regmatch;
   int nmatched = 0;
@@ -4175,7 +4181,7 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
     flag = SEARCH_START;
   }
   if (searchit(curwin, curbuf, &pos, NULL, direction, pattern, 1,
-               SEARCH_KEEP + flag, RE_SEARCH, 0, NULL, NULL) != FAIL) {
+               SEARCH_KEEP + flag, RE_SEARCH, NULL) != FAIL) {
     // Zero-width pattern should match somewhere, then we can check if
     // start and end are in the same position.
     called_emsg = false;
@@ -4195,13 +4201,6 @@ static int is_one_char(char_u *pattern, bool move, pos_T *cur,
       result = (nmatched != 0
                 && regmatch.startpos[0].lnum == regmatch.endpos[0].lnum
                 && regmatch.startpos[0].col == regmatch.endpos[0].col);
-      // one char width
-      if (!result
-          && nmatched != 0
-          && inc(&pos) >= 0
-          && pos.col == regmatch.endpos[0].col) {
-        result = true;
-      }
     }
   }
 
@@ -4265,7 +4264,7 @@ static void search_stat(int dirc, pos_T *pos,
       start = profile_setlimit(20L);
       while (!got_int && searchit(curwin, curbuf, &lastpos, NULL,
                                   FORWARD, NULL, 1, SEARCH_KEEP, RE_LAST,
-                                  (linenr_T)0, NULL, NULL) != FAIL) {
+                                  NULL) != FAIL) {
         // Stop after passing the time limit.
         if (profile_passed_limit(start)) {
           cnt = OUT_OF_TIME;

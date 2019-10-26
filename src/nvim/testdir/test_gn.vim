@@ -129,6 +129,32 @@ func Test_gn_command()
   call assert_equal([' nnoremap', '', 'match'], getline(1,'$'))
   sil! %d_
 
+  " make sure it works correctly for one-char wide search items
+  call setline('.', ['abcdefghi'])
+  let @/ = 'a'
+  exe "norm! 0fhvhhgNgU"
+  call assert_equal(['ABCDEFGHi'], getline(1,'$'))
+  call setline('.', ['abcdefghi'])
+  let @/ = 'b'
+  exe "norm! 0fhvhhgngU"
+  call assert_equal(['abcdefghi'], getline(1,'$'))
+  sil! %d _
+  call setline('.', ['abcdefghi'])
+  let @/ = 'f'
+  exe "norm! 0vllgngU"
+  call assert_equal(['ABCDEFghi'], getline(1,'$'))
+  sil! %d _
+  call setline('.', ['12345678'])
+  let @/ = '5'
+  norm! gg0f7vhhhhgnd
+  call assert_equal(['12348'], getline(1,'$'))
+  sil! %d _
+  call setline('.', ['12345678'])
+  let @/ = '5'
+  norm! gg0f2vf7gNd
+  call assert_equal(['1678'], getline(1,'$'))
+  sil! %d _
+
   set wrapscan&vim
   set belloff&vim
 endfu
