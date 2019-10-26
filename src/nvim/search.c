@@ -4118,7 +4118,7 @@ current_search(
 
   // put cursor on last character of match
   curwin->w_cursor = end_pos;
-  if (lt(VIsual, end_pos)) {
+  if (lt(VIsual, end_pos) && forward) {
     dec_cursor();
   } else if (VIsual_active && lt(curwin->w_cursor, VIsual)) {
     curwin->w_cursor = pos;   // put the cursor on the start of the match
@@ -4147,7 +4147,7 @@ current_search(
   return OK;
 }
 
-/// Check if the pattern is one character long or zero-width.
+/// Check if the pattern is zero-width.
 /// If move is true, check from the beginning of the buffer,
 /// else from position "cur".
 /// "direction" is FORWARD or BACKWARD.

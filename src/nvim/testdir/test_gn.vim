@@ -149,6 +149,11 @@ func Test_gn_command()
   norm! gg0f7vhhhhgnd
   call assert_equal(['12348'], getline(1,'$'))
   sil! %d _
+  call setline('.', ['12345678'])
+  let @/ = '5'
+  norm! gg0f2vf7gNd
+  call assert_equal(['1678'], getline(1,'$'))
+  sil! %d _
 
   set wrapscan&vim
   set belloff&vim
