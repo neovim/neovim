@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+PYTHON=python3
+
+if [ -n "$1" ]; then
+  PYTHON=$1
+fi
+
+pushd $(dirname $0)
+  if [ ! -d env ]; then
+    virtualenv -p $PYTHON env
+  fi
+
+  . env/bin/activate
+  pip install -r requirements.txt
+
+  python -m ptvsd --wait --host localhost --port 5678 main.py
+popd
+
