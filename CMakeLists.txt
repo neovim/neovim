@@ -303,8 +303,10 @@ if(UNIX)
 
   if(HAS_FSTACK_PROTECTOR_STRONG_FLAG)
     add_compile_options(-fstack-protector-strong)
+    link_libraries(-fstack-protector-strong)
   elseif(HAS_FSTACK_PROTECTOR_FLAG)
     add_compile_options(-fstack-protector --param ssp-buffer-size=4)
+    link_libraries(-fstack-protector --param ssp-buffer-size=4)
   endif()
 endif()
 
