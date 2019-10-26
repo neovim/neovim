@@ -74,7 +74,8 @@ function module.matches(pat, actual)
   error(string.format('Pattern does not match.\nPattern:\n%s\nActual:\n%s', pat, actual))
 end
 
--- Invokes `fn` and returns the error string, or raises an error if `fn` succeeds.
+-- Invokes `fn` and returns the error string (may truncate full paths), or
+-- raises an error if `fn` succeeds.
 --
 -- Usage:
 --    -- Match exact string.
@@ -88,7 +89,17 @@ function module.pcall_err(fn, ...)
   if status == true then
     error('expected failure, but got success')
   end
+  -- From this:
+  --    /home/foo/neovim/runtime/lua/vim/shared.lua:186: Expected string, got number
+  -- to this:
+  --     Expected string, got number
   local errmsg = tostring(rv):gsub('^[^:]+:%d+: ', '')
+  -- From this:
+  --    Error executing lua: /very/long/foo.lua:186: Expected string, got number
+  -- to this:
+  --    Error executing lua: .../foo.lua:186: Expected string, got number
+  errmsg = errmsg:gsub([[lua: [a-zA-Z]?:?[^:]-[/\]([^:/\]+):%d+: ]], 'lua: .../%1: ')
+  --                          ^ Windows drive-letter (C:)
   return errmsg
 end
 

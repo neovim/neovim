@@ -15,9 +15,7 @@ before_each(clear)
 describe('treesitter API', function()
   -- error tests not requiring a parser library
   it('handles missing language', function()
-      local path_pat = 'Error executing lua: '..(iswin() and '.+\\vim\\' or '.+/vim/')
-
-    matches(path_pat..'treesitter.lua:39: no such language: borklang',
+    eq('Error executing lua: .../treesitter.lua: no such language: borklang',
        pcall_err(exec_lua, "parser = vim.treesitter.create_parser(0, 'borklang')"))
 
     -- actual message depends on platform
