@@ -36,6 +36,7 @@ import shutil
 import textwrap
 import subprocess
 import collections
+import msgpack
 
 from xml.dom import minidom
 
@@ -453,6 +454,9 @@ def parse_source_xml(filename, mode):
     """
     global xrefs
     xrefs = set()
+
+    functions_dict = {}
+
     functions = []
     deprecated_functions = []
 
@@ -577,11 +581,12 @@ def parse_source_xml(filename, mode):
         if 'Deprecated' in xrefs:
             deprecated_functions.append(func_doc)
         elif name.startswith(CONFIG[mode]['func_name_prefix']):
+            functions_dict[name] = func_doc
             functions.append(func_doc)
 
         xrefs.clear()
 
-    return '\n\n'.join(functions), '\n\n'.join(deprecated_functions)
+    return '\n\n'.join(functions), '\n\n'.join(deprecated_functions), functions_dict
 
 
 def delete_lines_below(filename, tokenstr):
@@ -645,7 +650,7 @@ def gen_docs(config):
 
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
-                functions, deprecated = parse_source_xml(
+                functions, deprecated, functions_dict = parse_source_xml(
                     os.path.join(base, '%s.xml' %
                                  compound.getAttribute('refid')), mode)
 
@@ -710,9 +715,16 @@ def gen_docs(config):
         doc_file = os.path.join(base_dir, 'runtime', 'doc',
                                 CONFIG[mode]['filename'])
 
+        mpack_file = os.path.join(base_dir, 'runtime', 'doc',
+                                  CONFIG[mode]['filename'].replace('.txt',
+                                                                   '.mpack'))
+
         delete_lines_below(doc_file, CONFIG[mode]['section_start_token'])
         with open(doc_file, 'ab') as fp:
             fp.write(docs.encode('utf8'))
+
+        with open(mpack_file, 'wb') as fp:
+            fp.write(msgpack.packb(functions_dict, use_bin_type=True))
 
         shutil.rmtree(output_dir)
 
