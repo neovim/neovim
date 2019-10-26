@@ -582,7 +582,9 @@ def parse_source_xml(filename, mode):
 
         xrefs.clear()
 
-    return '\n\n'.join(list(functions.values())), '\n\n'.join(deprecated_functions), functions
+    return ('\n\n'.join(list(functions.values())),
+            '\n\n'.join(deprecated_functions),
+            functions)
 
 
 def delete_lines_below(filename, tokenstr):
@@ -606,7 +608,8 @@ def gen_docs(config):
     """
     for mode in CONFIG:
         functions = {}  # Map of func_name:docstring.
-        mpack_file = os.path.join(base_dir, 'runtime', 'doc',
+        mpack_file = os.path.join(
+                base_dir, 'runtime', 'doc',
                 CONFIG[mode]['filename'].replace('.txt', '.mpack'))
         if os.path.exists(mpack_file):
             os.remove(mpack_file)
@@ -653,8 +656,8 @@ def gen_docs(config):
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
                 functions_text, deprecated_text, fns = parse_source_xml(
-                    os.path.join(base, '%s.xml' %
-                                 compound.getAttribute('refid')), mode)
+                    os.path.join(base, '{}.xml'.format(
+                                 compound.getAttribute('refid'))), mode)
                 # Collect functions from all modules (for the current `mode`).
                 functions = {**functions, **fns}
 
