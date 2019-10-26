@@ -2437,9 +2437,6 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char_u qf_viscol,
                               char_u *qf_pattern)
 {
   linenr_T i;
-  char_u *line;
-  colnr_T screen_col;
-  colnr_T char_col;
 
   if (qf_pattern == NULL) {
     // Go to line with error, unless qf_lnum is 0.
@@ -2451,26 +2448,11 @@ static void qf_jump_goto_line(linenr_T qf_lnum, int qf_col, char_u qf_viscol,
       curwin->w_cursor.lnum = i;
     }
     if (qf_col > 0) {
-      curwin->w_cursor.col = qf_col - 1;
       curwin->w_cursor.coladd = 0;
       if (qf_viscol == true) {
-        // Check each character from the beginning of the error
-        // line up to the error column.  For each tab character
-        // found, reduce the error column value by the length of
-        // a tab character.
-        line = get_cursor_line_ptr();
-        screen_col = 0;
-        for (char_col = 0; char_col < curwin->w_cursor.col; char_col++) {
-          if (*line == NUL) {
-            break;
-          }
-          if (*line++ == '\t') {
-            curwin->w_cursor.col -= 7 - (screen_col % 8);
-            screen_col += 8 - (screen_col % 8);
-          } else {
-            screen_col++;
-          }
-        }
+        coladvance(qf_col - 1);
+      } else {
+        curwin->w_cursor.col = qf_col - 1;
       }
       curwin->w_set_curswant = true;
       check_cursor();
