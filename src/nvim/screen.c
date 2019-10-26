@@ -1218,7 +1218,7 @@ static void win_update(win_T *wp)
       Array arr = o.data.array;
       if (arr.size == 2 && arr.items[0].type == kObjectTypeInteger
           && arr.items[1].type == kObjectTypeInteger) {
-        int start = (int)arr.items[0].data.integer+1
+        int start = (int)arr.items[0].data.integer+1;
         int end = (int)arr.items[1].data.integer;
         // TODO: kolla kolla
         if (start < wp->w_botline && end >= wp->w_topline) {

@@ -39,16 +39,20 @@ function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
   self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
   self.buf = self.parser.bufnr
-  if type(query) == "string" then
-    query = vim.treesitter.parse_query(self.parser.lang, query)
-  end
-  self.query = query
-  self.iquery = query:inspect()
+  self:set_query(query)
   a.nvim_buf_set_option(self.buf, "syntax", "")
   a.nvim_buf_set_luahl(self.buf, {
     on_start=function(...) return self:on_start(...) end,
     on_line=function(...) return self:on_line(...) end,
   })
+end
+
+function TSHighlighter:set_query(query)
+  if type(query) == "string" then
+    query = vim.treesitter.parse_query(self.parser.lang, query)
+  end
+  self.query = query
+  self.iquery = query:inspect()
 end
 
 function TSHighlighter:on_change(changes)
