@@ -56,5 +56,25 @@ cquery = [[
   name: (identifier) @function)
 ]]
 
-TSHighlighter = require'vim.ts_highlight'
-TSHighlighter.new(cquery)
+c_highlight_bufs = c_highlight_bufs or {}
+
+for _, highlighter in pairs(c_highlight_bufs) do
+  highlighter:set_query(cquery)
+end
+
+local TSHighlighter = require'vim.ts_highlight'
+
+function chl_check_buf()
+  local bufnr = vim.api.nvim_get_current_buf()
+  if c_highlight_bufs[bufnr] == nil then
+    c_highlight_bufs[bufnr] = TSHighlighter.new(cquery)
+  end
+end
+
+vim.api.nvim_command([[augroup TSCHL]])
+vim.api.nvim_command([[au! FileType c lua chl_check_buf() ]])
+vim.api.nvim_command([[augroup END ]])
+
+if vim.api.nvim_buf_get_option(0,"ft") == "c" then
+  chl_check_buf()
+end

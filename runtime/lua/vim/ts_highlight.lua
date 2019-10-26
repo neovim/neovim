@@ -45,6 +45,7 @@ function TSHighlighter.new(query, bufnr, ft)
     on_start=function(...) return self:on_start(...) end,
     on_line=function(...) return self:on_line(...) end,
   })
+  return self
 end
 
 function TSHighlighter:set_query(query)
