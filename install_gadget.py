@@ -111,7 +111,7 @@ GADGETS = {
     'language': 'tcl',
     'repo': {
       'url': 'https://github.com/puremourning/TclProDebug',
-      'ref': 'master',
+      'ref': 'f5c56b7067661ce84e205765060224076569ae0e', # master 26/10/2019
     },
     'do': lambda name, root: InstallTclProDebug( name, root )
   },

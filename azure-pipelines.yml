@@ -42,8 +42,13 @@ stages:
         go get -u github.com/go-delve/delve/cmd/dlv
       displayName: 'Install Delve for Go'
 
-    # TODO: Use cache to store the download directory
-    - bash: python3 install_gadget.py --all --force-all
+    - task: CacheBeta@0
+      inputs:
+        key: v1 | gadgets | $(Agent.OS) | install_gadget.py
+        path: gadgets/linux/download
+      displayName: Cache gadgets
+
+    - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets - python3'
 
     - bash: vim --version
@@ -78,7 +83,13 @@ stages:
     - bash: go get -u github.com/go-delve/delve/cmd/dlv
       displayName: 'Install Delve for Go'
 
-    - bash: python3 install_gadget.py --all --force-all
+    - task: CacheBeta@0
+      inputs:
+        key: v1 | gadgets | $(Agent.OS) | install_gadget.py
+        path: gadgets/macos/download
+      displayName: Cache gadgets
+
+    - bash: python3 install_gadget.py --all
       displayName: 'Install gadgets - python3'
 
     - bash: vim --version
