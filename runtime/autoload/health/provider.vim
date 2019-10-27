@@ -202,7 +202,8 @@ function! s:version_info(python) abort
 
   let nvim_path = s:trim(s:system([
         \ a:python, '-c',
-        \ 'import sys; sys.path.remove(""); ' .
+        \ 'import sys; ' .
+        \ 'sys.path = list(filter(lambda x: x != "", sys.path)); ' .
         \ 'import neovim; print(neovim.__file__)']))
   if s:shell_error || empty(nvim_path)
     return [python_version, 'unable to load neovim Python module', pypi_version,
