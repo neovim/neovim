@@ -136,19 +136,28 @@ class DebugSession( object ):
 
     current_file = utils.GetBufferFilepath( vim.current.buffer )
 
+    def relpath( p, relative_to ):
+      if not p:
+        return ''
+      return os.path.relpath( p, relative_to )
+
+    def splitext( p ):
+      if not p:
+        return [ '', '' ]
+      return os.path.splitext( p )
+
     self._variables = {
       'dollar': '$', # HACK. Hote '$$' also works.
       'workspaceRoot': self._workspace_root,
       'workspaceFolder': self._workspace_root,
       'gadgetDir': install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() ),
       'file': current_file,
-      'relativeFile': os.path.relpath( current_file, self._workspace_root ),
+      'relativeFile': relpath( current_file, self._workspace_root ),
       'fileBasename': os.path.basename( current_file ),
       'fileBasenameNoExtension':
-        os.path.splitext( os.path.basename( current_file ) )[ 0 ],
+        splitext( os.path.basename( current_file ) )[ 0 ],
       'fileDirname': os.path.dirname( current_file ),
-      'fileExtname':
-        os.path.splitext( os.path.basename( current_file ) )[ 1 ],
+      'fileExtname': splitext( os.path.basename( current_file ) )[ 1 ],
       'cwd': os.getcwd(),
     }
     self._variables.update(
