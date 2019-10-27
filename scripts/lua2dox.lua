@@ -543,7 +543,6 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
           local fn = TString_removeCommentFromLine(string_trim(string.sub(line,pos_fn+8)))
           if fn_magic then
             fn = fn_magic
-            fn_magic = nil
           end
 
           if string.sub(fn,1,1)=='(' then
@@ -554,49 +553,20 @@ function TLua2DoX_filter.readfile(this,AppStamp,Filename)
 
             -- want to fix for iffy declarations
             local open_paren = string.find(fn,'[%({]')
-            local fn0 = fn
             if open_paren then
-              fn0 = string.sub(fn,1,open_paren-1)
               -- we might have a missing close paren
               if not string.find(fn,'%)') then
                 fn = fn .. ' ___MissingCloseParenHere___)'
               end
             end
 
-            local dot = string.find(fn0,'[%.:]')
-            if dot then -- it's a method
-              local klass = string.sub(fn,1,dot-1)
-              local method = string.sub(fn,dot+1)
-              --TCore_IO_writeln('function ' .. klass .. '::' .. method .. ftail .. '{}')
-              --TCore_IO_writeln(klass .. '::' .. method .. ftail .. '{}')
-              outStream:writeln(
-              '/*! \\memberof ' .. klass .. ' */ '
-              .. method .. '{}'
-              )
-            else
-              -- add vanilla function
-
-              outStream:writeln(fn_type .. 'function ' .. fn .. '{}')
-            end
+            -- add vanilla function
+            outStream:writeln(fn_type .. 'function ' .. fn .. '{}')
           end
         else
           this:warning(inStream:getLineNo(),'something weird here')
         end
         fn_magic = nil -- mustn't indavertently use it again
-      elseif string.find(line,'=%s*class%(') then
-        state = 'in_class'  -- it's a class declaration
-        local tailComment
-        line,tailComment = TString_removeCommentFromLine(line)
-        local equals = string.find(line,'=')
-        local klass = string_trim(string.sub(line,1,equals-1))
-        local tail =  string_trim(string.sub(line,equals+1))
-        -- class(wibble wibble)
-        -- ....v.
-        local parent = string.sub(tail,7,-2)
-        if #parent>0 then
-          parent = ' :public ' .. parent
-        end
-        outStream:writeln('class ' .. klass .. parent .. '{};')
       else
         state = ''  -- unknown
         if #line>0 then  -- we don't know what this line means, so just comment it out
