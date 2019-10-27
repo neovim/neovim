@@ -563,11 +563,8 @@ int nlua_call(lua_State *lstate)
     }
   }
 
+  TRY_WRAP({
   // TODO(bfredl): this should be simplified in error handling refactor
-  struct msglist **saved_msg_list = msg_list;
-  struct msglist *private_msg_list = NULL;
-  msg_list = &private_msg_list;
-
   force_abort = false;
   suppress_errthrow = false;
   current_exception = NULL;
@@ -577,7 +574,7 @@ int nlua_call(lua_State *lstate)
   typval_T rettv;
   int dummy;
   // call_func() retval is deceptive, ignore it.  Instead we set `msg_list`
-  // (see above) to capture abort-causing non-exception errors.
+  // (TRY_WRAP) to capture abort-causing non-exception errors.
   (void)call_func(name, (int)name_len, &rettv, nargs,
                   vim_args, NULL, curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                   &dummy, true, NULL, NULL);
@@ -585,8 +582,7 @@ int nlua_call(lua_State *lstate)
     nlua_push_typval(lstate, &rettv, false);
   }
   tv_clear(&rettv);
-
-  msg_list = saved_msg_list;
+  });
 
 free_vim_args:
   while (i > 0) {
