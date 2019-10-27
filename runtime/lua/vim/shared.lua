@@ -4,34 +4,37 @@
 -- test-suite. If, in the future, Nvim itself is used to run the test-suite
 -- instead of "vanilla Lua", these functions could move to src/nvim/lua/vim.lua
 
+local vim = {}
 
 --- Returns a deep copy of the given object. Non-table objects are copied as
 --- in a typical Lua assignment, whereas table objects are copied recursively.
 ---
 --@param orig Table to copy
 --@returns New table of copied keys and (nested) values.
-local function deepcopy(orig)
-  error(orig)
-end
-local function _id(v)
-  return v
-end
-local deepcopy_funcs = {
-  table = function(orig)
-    local copy = {}
-    for k, v in pairs(orig) do
-      copy[deepcopy(k)] = deepcopy(v)
-    end
-    return copy
-  end,
-  number = _id,
-  string = _id,
-  ['nil'] = _id,
-  boolean = _id,
-}
-deepcopy = function(orig)
-  return deepcopy_funcs[type(orig)](orig)
-end
+function vim.deepcopy(orig) end  -- luacheck: no unused
+vim.deepcopy = (function()
+  local function _id(v)
+    return v
+  end
+
+  local deepcopy_funcs = {
+    table = function(orig)
+      local copy = {}
+      for k, v in pairs(orig) do
+        copy[vim.deepcopy(k)] = vim.deepcopy(v)
+      end
+      return copy
+    end,
+    number = _id,
+    string = _id,
+    ['nil'] = _id,
+    boolean = _id,
+  }
+
+  return function(orig)
+    return deepcopy_funcs[type(orig)](orig)
+  end
+end)()
 
 --- Splits a string at each instance of a separator.
 ---
@@ -43,7 +46,7 @@ end
 --@param sep Separator string or pattern
 --@param plain If `true` use `sep` literally (passed to String.find)
 --@returns Iterator over the split components
-local function gsplit(s, sep, plain)
+function vim.gsplit(s, sep, plain)
   assert(type(s) == "string", string.format("Expected string, got %s", type(s)))
   assert(type(sep) == "string", string.format("Expected string, got %s", type(sep)))
   assert(type(plain) == "boolean" or type(plain) == "nil", string.format("Expected boolean or nil, got %s", type(plain)))
@@ -92,8 +95,8 @@ end
 --@param sep Separator string or pattern
 --@param plain If `true` use `sep` literally (passed to String.find)
 --@returns List-like table of the split components.
-local function split(s,sep,plain)
-  local t={} for c in gsplit(s, sep, plain) do table.insert(t,c) end
+function vim.split(s,sep,plain)
+  local t={} for c in vim.gsplit(s, sep, plain) do table.insert(t,c) end
   return t
 end
 
@@ -102,7 +105,7 @@ end
 --@param t Table to check
 --@param value Value to compare
 --@returns true if `t` contains `value`
-local function tbl_contains(t, value)
+function vim.tbl_contains(t, value)
   assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
 
   for _,v in ipairs(t) do
@@ -122,7 +125,7 @@ end
 ---      - "keep":  use value from the leftmost map
 ---      - "force": use value from the rightmost map
 --@param ... Two or more map-like tables.
-local function tbl_extend(behavior, ...)
+function vim.tbl_extend(behavior, ...)
   if (behavior ~= 'error' and behavior ~= 'keep' and behavior ~= 'force') then
     error('invalid "behavior": '..tostring(behavior))
   end
@@ -149,7 +152,7 @@ end
 ---
 --@param t List-like table
 --@returns Flattened copy of the given list-like table.
-local function tbl_flatten(t)
+function vim.tbl_flatten(t)
   -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
   local result = {}
   local function _tbl_flatten(_t)
@@ -172,7 +175,7 @@ end
 --@see https://www.lua.org/pil/20.2.html
 --@param s String to trim
 --@returns String with whitespace removed from its beginning and end
-local function trim(s)
+function vim.trim(s)
   assert(type(s) == 'string', string.format("Expected string, got %s", type(s)))
   return s:match('^%s*(.*%S)') or ''
 end
@@ -182,19 +185,9 @@ end
 --@see https://github.com/rxi/lume
 --@param s  String to escape
 --@returns  %-escaped pattern string
-local function pesc(s)
+function vim.pesc(s)
   assert(type(s) == 'string', string.format("Expected string, got %s", type(s)))
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
 end
 
-local module = {
-  deepcopy = deepcopy,
-  gsplit = gsplit,
-  pesc = pesc,
-  split = split,
-  tbl_contains = tbl_contains,
-  tbl_extend = tbl_extend,
-  tbl_flatten = tbl_flatten,
-  trim = trim,
-}
-return module
+return vim
