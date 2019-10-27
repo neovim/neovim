@@ -3,10 +3,6 @@
 set -e
 set -o pipefail
 
-if [[ "${CI_TARGET}" == lint ]]; then
-  exit
-fi
-
 echo 'Python info:'
 (
   set -x

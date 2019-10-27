@@ -4152,10 +4152,15 @@ void ex_cfile(exarg_T *eap)
   case CMD_laddfile:  au_name = (char_u *)"laddfile"; break;
   default: break;
   }
-  if (au_name != NULL)
-    apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name, NULL, FALSE, curbuf);
-  if (*eap->arg != NUL)
+  if (au_name != NULL
+      && apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name, NULL, false, curbuf)) {
+    if (aborting()) {
+      return;
+    }
+  }
+  if (*eap->arg != NUL) {
     set_string_option_direct((char_u *)"ef", -1, eap->arg, OPT_FREE, 0);
+  }
 
   char_u *enc = (*curbuf->b_p_menc != NUL) ? curbuf->b_p_menc : p_menc;
 
