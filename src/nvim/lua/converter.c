@@ -377,6 +377,19 @@ bool nlua_pop_typval(lua_State *lstate, typval_T *ret_tv)
 nlua_pop_typval_table_processing_end:
         break;
       }
+      case LUA_TUSERDATA: {
+        nlua_pushref(lstate, nlua_nil_ref);
+        bool is_nil = lua_rawequal(lstate, -2, -1);
+        lua_pop(lstate, 1);
+        if (is_nil) {
+          cur.tv->v_type = VAR_SPECIAL;
+          cur.tv->vval.v_special = kSpecialVarNull;
+        } else {
+          EMSG(_("E5101: Cannot convert given lua type"));
+          ret = false;
+        }
+        break;
+      }
       default: {
         EMSG(_("E5101: Cannot convert given lua type"));
         ret = false;
@@ -406,7 +419,13 @@ static bool typval_conv_special = false;
 #define TYPVAL_ENCODE_ALLOW_SPECIALS true
 
 #define TYPVAL_ENCODE_CONV_NIL(tv) \
-    lua_pushnil(lstate)
+    do { \
+      if (typval_conv_special) { \
+        lua_pushnil(lstate); \
+      } else { \
+        nlua_pushref(lstate, nlua_nil_ref); \
+      } \
+    } while (0)
 
 #define TYPVAL_ENCODE_CONV_BOOL(tv, num) \
     lua_pushboolean(lstate, (bool)(num))
@@ -718,7 +737,11 @@ void nlua_push_Object(lua_State *lstate, const Object obj, bool special)
 {
   switch (obj.type) {
     case kObjectTypeNil: {
-      lua_pushnil(lstate);
+      if (special) {
+        lua_pushnil(lstate);
+      } else {
+        nlua_pushref(lstate, nlua_nil_ref);
+      }
       break;
     }
     case kObjectTypeLuaRef: {
@@ -1148,6 +1171,19 @@ Object nlua_pop_Object(lua_State *const lstate, bool ref, Error *const err)
           *cur.obj = LUAREF_OBJ(nlua_ref(lstate, -1));
         } else {
           goto type_error;
+        }
+        break;
+      }
+
+      case LUA_TUSERDATA: {
+        nlua_pushref(lstate, nlua_nil_ref);
+        bool is_nil = lua_rawequal(lstate, -2, -1);
+        lua_pop(lstate, 1);
+        if (is_nil) {
+          *cur.obj = NIL;
+        } else {
+          api_set_error(err, kErrorTypeValidation,
+                        "Cannot convert userdata");
         }
         break;
       }

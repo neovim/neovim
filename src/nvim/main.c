@@ -27,6 +27,7 @@
 #include "nvim/highlight.h"
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
+#include "nvim/lua/executor.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
