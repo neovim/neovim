@@ -306,6 +306,16 @@ def ClearBuffer( buf ):
   buf[ : ] = None
 
 
+def SetBufferContents( buf, lines, modified=False ):
+  try:
+    if not isinstance( lines, list ):
+      lines = lines.splitlines()
+
+    buf[:] = lines
+  finally:
+    buf.options[ 'modified' ] = modified
+
+
 def IsCurrent( window, buf ):
   return vim.current.window == window and vim.current.window.buffer == buf
 

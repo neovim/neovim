@@ -15,12 +15,16 @@
 
 import vim
 import os
+import logging
 
 from vimspector import utils
 
 
 class StackTraceView( object ):
   def __init__( self, session, connection, buf ):
+    self._logger = logging.getLogger( __name__ )
+    utils.SetUpLogging( self._logger )
+
     self._buf = buf
     self._session = session
     self._connection = connection
@@ -29,6 +33,7 @@ class StackTraceView( object ):
     self._currentFrame = None
 
     self._threads = []
+    self._sources = {}
 
     utils.SetUpScratchBuffer( self._buf, 'vimspector.StackTrace' )
     vim.current.buffer = self._buf
@@ -57,6 +62,7 @@ class StackTraceView( object ):
     self._currentFrame = None
     self._currentThread = None
     self._threads = []
+    self._sources = {}
     with utils.ModifiableScratchBuffer( self._buf ):
       utils.ClearBuffer( self._buf )
 
@@ -162,9 +168,22 @@ class StackTraceView( object ):
         self._LoadStackTrace( thread, False )
 
   def _JumpToFrame( self, frame ):
-    if 'line' in frame and frame[ 'line' ]:
-      self._currentFrame = frame
-      return self._session.SetCurrentFrame( self._currentFrame )
+    def do_jump():
+      if 'line' in frame and frame[ 'line' ]:
+        self._currentFrame = frame
+        return self._session.SetCurrentFrame( self._currentFrame )
+
+    source = frame[ 'source' ]
+    if source.get( 'sourceReference', 0 ) > 0:
+      def handle_resolved_source( resolved_source ):
+        frame[ 'source' ] = resolved_source
+        do_jump()
+      self._ResolveSource( source, handle_resolved_source )
+      # The assumption here is that we _will_ eventually find something to jump
+      # to
+      return True
+    else:
+      return do_jump()
 
   def OnStopped( self, event ):
     if 'threadId' in event:
@@ -225,7 +244,7 @@ class StackTraceView( object ):
         source = { 'name': '<unknown>' }
 
       if 'name' not in source:
-        source[ 'name' ] = os.path.basename( source[ 'path' ] )
+        source[ 'name' ] = os.path.basename( source.get( 'path', 'unknwon' ) )
 
       if frame.get( 'presentationHint' ) == 'label':
         # Sigh. FOr some reason, it's OK for debug adapters to completely ignore
@@ -243,3 +262,34 @@ class StackTraceView( object ):
                                        frame[ 'line' ] ) )
 
       self._line_to_frame[ line ] = frame
+
+  def _ResolveSource( self, source, and_then ):
+    source_reference = int( source[ 'sourceReference' ] )
+    try:
+      and_then( self._sources[ source_reference ] )
+    except KeyError:
+      # We must retrieve the source contents from the server
+      self._logger.debug( "Requesting source: %s", source )
+
+      def consume_source( msg ):
+        self._sources[ source_reference ] = source
+
+        buf_name = os.path.join( '_vimspector_tmp', source[ 'name' ] )
+
+        self._logger.debug( "Received source %s: %s", buf_name, msg )
+
+        buf = utils.BufferForFile( buf_name )
+        utils.SetUpScratchBuffer( buf, buf_name )
+        source[ 'path' ] = buf_name
+        with utils.ModifiableScratchBuffer( buf ):
+          utils.SetBufferContents( buf, msg[ 'body' ][ 'content' ] )
+
+        and_then( self._sources[ source_reference ] )
+
+      self._session._connection.DoRequest( consume_source, {
+        'command': 'source',
+        'arguments': {
+          'sourceReference': source[ 'sourceReference' ],
+          'source': source
+        }
+      } )
