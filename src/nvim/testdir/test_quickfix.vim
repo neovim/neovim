@@ -3339,7 +3339,28 @@ func Test_lexpr_crash()
   augroup QF_Test
     au!
   augroup END
+
   enew | only
+  augroup QF_Test
+    au!
+    au BufNew * call setloclist(0, [], 'f')
+  augroup END
+  lexpr 'x:1:x'
+  augroup QF_Test
+    au!
+  augroup END
+
+  enew | only
+  lexpr ''
+  lopen
+  augroup QF_Test
+    au!
+    au FileType * call setloclist(0, [], 'f')
+  augroup END
+  lexpr ''
+  augroup QF_Test
+    au!
+  augroup END
 endfunc
 
 " The following test used to crash Vim
