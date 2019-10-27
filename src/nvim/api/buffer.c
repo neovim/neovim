@@ -101,25 +101,39 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
-/// Activates buffer-update events on a channel, or as lua callbacks.
+/// Activates buffer-update events on a channel, or as Lua callbacks.
+///
+/// @see |nvim_buf_detach()|
+/// @see |api-buffer-updates-lua|
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
-/// @param send_buffer Set to true if the initial notification should contain
-///        the whole buffer. If so, the first notification will be a
-///        `nvim_buf_lines_event`. Otherwise, the first notification will be
-///        a `nvim_buf_changedtick_event`. Not used for lua callbacks.
+/// @param send_buffer True if the initial notification should contain the
+///        whole buffer: first notification will be `nvim_buf_lines_event`.
+///        Else the first notification will be `nvim_buf_changedtick_event`.
+///        Not for Lua callbacks.
 /// @param  opts  Optional parameters.
-///             - `on_lines`:       lua callback received on change.
-///             - `on_changedtick`: lua callback received on changedtick
-///                                 increment without text change.
-///             - `utf_sizes`:      include UTF-32 and UTF-16 size of
-///                                 the replaced region.
-///               See |api-buffer-updates-lua| for more information
+///             - on_lines: Lua callback invoked on change.
+///               Return `true` to detach. Args:
+///               - buffer handle
+///               - b:changedtick
+///               - first line that changed (zero-indexed)
+///               - last line that was changed
+///               - last line in the updated range
+///               - byte count of previous contents
+///               - deleted_codepoints (if `utf_sizes` is true)
+///               - deleted_codeunits (if `utf_sizes` is true)
+///             - on_changedtick: Lua callback invoked on changedtick
+///               increment without text change. Args:
+///               - buffer handle
+///               - b:changedtick
+///             - on_detach: Lua callback invoked on detach. Args:
+///               - buffer handle
+///             - utf_sizes: include UTF-32 and UTF-16 size of the replaced
+///               region, as args to `on_lines`.
 /// @param[out] err Error details, if any
-/// @return False when updates couldn't be enabled because the buffer isn't
-///         loaded or `opts` contained an invalid key; otherwise True.
-///         TODO: LUA_API_NO_EVAL
+/// @return False if attach failed (invalid parameter, or buffer isn't loaded);
+///         otherwise True. TODO: LUA_API_NO_EVAL
 Boolean nvim_buf_attach(uint64_t channel_id,
                         Buffer buffer,
                         Boolean send_buffer,
@@ -183,13 +197,14 @@ error:
 
 /// Deactivates buffer-update events on the channel.
 ///
-/// For Lua callbacks see |api-lua-detach|.
+/// @see |nvim_buf_attach()|
+/// @see |api-lua-detach| for detaching Lua callbacks
 ///
 /// @param channel_id
 /// @param buffer Buffer handle, or 0 for current buffer
 /// @param[out] err Error details, if any
-/// @return False when updates couldn't be disabled because the buffer
-///         isn't loaded; otherwise True.
+/// @return False if detach failed (because the buffer isn't loaded);
+///         otherwise True.
 Boolean nvim_buf_detach(uint64_t channel_id,
                         Buffer buffer,
                         Error *err)
