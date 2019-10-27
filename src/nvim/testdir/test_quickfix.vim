@@ -273,6 +273,15 @@ func Test_cwindow()
   call XwindowTests('l')
 endfunc
 
+func Test_copenHeight()
+  copen
+  wincmd H
+  let height = winheight(0)
+  copen 10
+  call assert_equal(height, winheight(0))
+  quit
+endfunc
+
 " Tests for the :cfile, :lfile, :caddfile, :laddfile, :cgetfile and :lgetfile
 " commands.
 func XfileTests(cchar)
