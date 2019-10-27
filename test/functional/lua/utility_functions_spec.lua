@@ -10,6 +10,7 @@ local feed = helpers.feed
 local pcall_err = helpers.pcall_err
 local exec_lua = helpers.exec_lua
 local matches = helpers.matches
+local source = helpers.source
 
 before_each(clear)
 
@@ -298,5 +299,32 @@ describe('lua stdlib', function()
     -- Validates args.
     eq("Error executing lua: .../shared.lua: Expected string, got number",
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
+  end)
+
+  it('vim.call and vim.fn', function()
+    eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
+    eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))
+    -- compat: nvim_call_function uses "special" value for vimL float
+    eq(false, exec_lua([[return vim.api.nvim_call_function('sin', {0.0}) == 0.0 ]]))
+
+    source([[
+      func! FooFunc(test)
+        let g:test = a:test
+        return {}
+      endfunc
+      func! VarArg(...)
+        return a:000
+      endfunc
+    ]])
+    eq(true, exec_lua([[return next(vim.fn.FooFunc(3)) == nil ]]))
+    eq(3, eval("g:test"))
+    -- compat: nvim_call_function uses "special" value for empty dict
+    eq(true, exec_lua([[return next(vim.api.nvim_call_function("FooFunc", {5})) == true ]]))
+    eq(5, eval("g:test"))
+
+    eq({2, "foo", true}, exec_lua([[return vim.fn.VarArg(2, "foo", true)]]))
+
+    -- error handling
+    eq({false, 'Vim:E714: List required'}, exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]]))
   end)
 end)
