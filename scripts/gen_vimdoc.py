@@ -659,7 +659,7 @@ def gen_docs(config):
                     os.path.join(base, '{}.xml'.format(
                                  compound.getAttribute('refid'))), mode)
                 # Collect functions from all modules (for the current `mode`).
-                functions = {**functions, **fns}
+                functions = dict(functions, **fns)
 
                 if not functions_text and not deprecated_text:
                     continue
