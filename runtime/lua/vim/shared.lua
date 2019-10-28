@@ -190,4 +190,78 @@ function vim.pesc(s)
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
 end
 
+--- Type checking validation function
+---
+--- Examples:
+--- <pre>
+---  validate({ arg={ { 'foo' }, 'table' }})                                     --> Nop
+---  validate({ arg={ 1, 'table' } })                                            --> error("arg: expected table, got number")
+---  validate({ arg1={ { 'foo' }, 'table' }, arg2={ 1, 'string' } })             --> error("arg2: expected string, got number")
+---  validate({ arg={ 3, function(a) return (a % 2) == 0  end, 'even number' }}) --> error("arg: expected even number, got 3")
+--- </pre>
+---
+---@param ... Table or list of table. That table is "argument_name = { validation_target, type_name (, whether nil is allowed) }"
+--- or "argument_name = { validation_target, validation function, expected_description }".
+--- The following can be used as type_names:
+---     - table or t
+---     - string or s
+---     - number or n
+---     - boolean or b
+---     - function or f
+---     - nil
+---     - thread
+---     - userdata
+function vim.validate(opt)
+  local function _type_name(t)
+    if t == 't' or t == 'table' then return 'table'  end
+    if t == 's' or t == 'string' then return 'string'  end
+    if t == 'n' or t == 'number' then return 'number'  end
+    if t == 'b' or t == 'boolean' then return 'boolean'  end
+    if t == 'f' or t == 'function' then return 'function' end
+    if t == 'c' then return 'callable' end
+    if t == 'nil' then return 'nil' end
+    if t == 'thread' or t == 'thread' then return 'thread'  end
+    if t == 'userdata' then return 'userdata' end
+    if vim.is_callable(t) then return end
+
+    error(string.format("Invalid type name '%s'. See \":help validate\" for more info.", t))
+  end
+  local function _check_type(target, expected_type)
+    if expected_type == 'callable' then
+      return vim.is_callable(target)
+    else
+      return type(target) == expected_type
+    end
+  end
+
+  for arg, v in pairs(opt) do
+    assert(type(arg) == 'string',string.format('Expected string, got %s', type(arg)))
+    assert(type(v) == 'table', string.format('Expected table, got %s', type(v)))
+
+    local actual_arg_type = type(v[1])
+    local expected_type = _type_name(v[2])
+
+    if expected_type then
+      if v[3] == true then
+        assert(_check_type(v[1], expected_type) or actual_arg_type == 'nil', string.format("%s: expected %s, got %s", arg, expected_type, actual_arg_type))
+      else
+        assert(_check_type(v[1], expected_type), string.format("%s: expected %s, got %s", arg, expected_type, actual_arg_type))
+      end
+    else
+      assert(v[2](v[1]), string.format("%s: expected %s, got %s", arg, v[3], v[1]))
+    end
+  end
+end
+
+--- Return whether an object can call be used as a function.
+---
+--@param f Any type of variable
+--@return Boolean
+function vim.is_callable(f)
+  if type(f) == 'function' then return true end
+  local m = getmetatable(f)
+  if m == nil then return false end
+  return type(m.__call) == 'function'
+end
+
 return vim
