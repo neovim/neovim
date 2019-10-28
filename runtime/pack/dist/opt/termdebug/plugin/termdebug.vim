@@ -583,6 +583,7 @@ func s:HandleEvaluate(msg)
     endif
     let s:evalFromBalloonExprResult = split(s:evalFromBalloonExprResult, '\\n')
     call s:OpenHoverPreview(s:evalFromBalloonExprResult, v:null)
+    let s:evalFromBalloonExprResult = ''
   else
     echomsg '"' . s:evalexpr . '": ' . value
   endif
