@@ -60,7 +60,7 @@ The build is CMake-based, but a Makefile is provided as a convenience.
 
 To install to a non-default location:
 
-    make CMAKE_INSTALL_PREFIX=/full/path/
+    make CMAKE_BUILD_TYPE=RelWithDebInfo CMAKE_INSTALL_PREFIX=/full/path/
     make install
 
 To skip bundled (`third-party/*`) dependencies:
