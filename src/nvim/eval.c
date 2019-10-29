@@ -23946,6 +23946,9 @@ modify_fname(
   char_u dirname[MAXPATHL];
   int c;
   int has_fullname = 0;
+#ifdef WIN32
+  char_u *fname_start = *fnamep;
+#endif
 
 repeat:
   /* ":p" - full path/file_name */
@@ -24018,13 +24021,19 @@ repeat:
     }
   }
 
-  /* ":." - path relative to the current directory */
-  /* ":~" - path relative to the home directory */
-  /* ":8" - shortname path - postponed till after */
+  // ":." - path relative to the current directory
+  // ":~" - path relative to the home directory
+  // ":8" - shortname path - postponed till after
+#ifdef WIN32
+  bool has_shortname = false;
+#endif
   while (src[*usedlen] == ':'
          && ((c = src[*usedlen + 1]) == '.' || c == '~' || c == '8')) {
     *usedlen += 2;
     if (c == '8') {
+#ifdef WIN32
+      has_shortname = true;  // Postpone this.
+#endif
       continue;
     }
     pbuf = NULL;
@@ -24093,8 +24102,49 @@ repeat:
   /* ":8" - shortname  */
   if (src[*usedlen] == ':' && src[*usedlen + 1] == '8') {
     *usedlen += 2;
+#ifdef WIN32
+    has_shortname = true;
+#endif
   }
 
+#ifdef WIN32
+  //  Handle ":8" after we have done 'heads' and before we do 'tails'.
+  if (has_shortname) {
+    // Copy the string if it is shortened by :h and when it wasn't copied
+    // yet, because we are going to change it in place.  Avoids changing
+    // the buffer name for "%:8".
+    if (*fnamelen < STRLEN(*fnamep) || *fnamep == fname_start) {
+      p = vim_strnsave(*fnamep, *fnamelen);
+      xfree(*bufp);
+      *bufp = *fnamep = p;
+    }
+
+    // Split into two implementations - makes it easier.  First is where
+    // there isn't a full name already, second is where there is.
+    if (!has_fullname && !path_is_absolute(*fnamep)) {
+      if (!path_short_for_partial((char **)fnamep, (char **)bufp, *fnamelen)) {
+        return -1;
+      }
+    } else {
+      if (os_path_exists(*fnamep)) {
+        // Simple case, already have the full-name.
+        char_u *sfname = (char_u *)path_to_short_save((char *)(*fnamep));
+        if (sfname == NULL) {
+          return -1;
+        }
+        xfree(*bufp);
+        *fnamep = *bufp = sfname;
+      } else {
+        // Couldn't find the filename, search the paths.
+        if (!path_short_for_invalid_fname((char **)fnamep,
+                                          (char **)bufp, *fnamelen)) {
+          return -1;
+        }
+      }
+    }
+    *fnamelen = STRLEN(*bufp);
+  }
+#endif  // WIN32
 
   /* ":t" - tail, just the basename */
   if (src[*usedlen] == ':' && src[*usedlen + 1] == 't') {
