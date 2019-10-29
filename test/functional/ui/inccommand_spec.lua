@@ -95,7 +95,7 @@ local function common_setup(screen, inccommand, text)
   end
 end
 
-describe(":substitute, inccommand=split", function()
+describe(":substitute, inccommand=split interactivity", function()
   before_each(function()
     clear()
     common_setup(nil, "split", default_text)
@@ -784,6 +784,52 @@ describe(":substitute, inccommand=split", function()
     -- leading colons
     feed(':::%s/tw/to')
     screen:expect{any=[[{12:to}o lines]]}
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
+  end)
+
+  it("ignores new-window modifiers when splitting the preview window", function()
+    -- one modifier
+    feed(':topleft %s/tw/to')
+    screen:expect([[
+      Inc substitution on           |
+      {12:to}o lines                     |
+      Inc substitution on           |
+      {12:to}o lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |2| {12:to}o lines                 |
+      |4| {12:to}o lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :topleft %s/tw/to^             |
+    ]])
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
+
+    -- multiple modifiers
+    feed(':topleft vert %s/tw/to')
+    screen:expect([[
+      Inc substitution on           |
+      {12:to}o lines                     |
+      Inc substitution on           |
+      {12:to}o lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |2| {12:to}o lines                 |
+      |4| {12:to}o lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :topleft vert %s/tw/to^        |
+    ]])
     feed('<Esc>')
     screen:expect{any=[[two lines]]}
   end)
