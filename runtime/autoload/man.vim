@@ -64,34 +64,22 @@ function! man#open_page(count, count1, mods, ...) abort
     return
   endtry
 
-  let fullname = name.(empty(sect)?'':'('.sect.')')
-  call s:push_tag(fullname)
-  let bufname = 'man://'.fullname
-
+  let [l:buf, l:save_tfu] = [bufnr(), &tagfunc]
   try
     set eventignore+=BufReadCmd
+    set tagfunc=man#goto_tag
+    let l:target = l:name . '(' . l:sect . ')'
     if a:mods !~# 'tab' && s:find_man()
-      execute 'silent keepalt edit' fnameescape(bufname)
+      execute 'silent keepalt tag' l:target
     else
-      execute 'silent keepalt' a:mods 'split' fnameescape(bufname)
+      execute 'silent keepalt' a:mods 'stag' l:target
     endif
   finally
+    call setbufvar(l:buf, '&tagfunc', l:save_tfu)
     set eventignore-=BufReadCmd
   endtry
 
-  try
-    let page = s:get_page(path)
-  catch
-    if a:mods =~# 'tab' || !s:find_man()
-      " a new window was opened
-      close
-    endif
-    call s:error(v:exception)
-    return
-  endtry
-
   let b:man_sect = sect
-  call s:put_page(page)
 endfunction
 
 function! man#read_page(ref) abort
@@ -253,32 +241,6 @@ function! s:verify_exists(sect, name) abort
   " Also on linux, name seems to be case-insensitive. So for `:Man PRIntf`, we
   " still want the name of the buffer to be 'printf'.
   return s:extract_sect_and_name_path(path) + [path]
-endfunction
-
-function! s:push_tag(name) abort
-  " emulate vim's tag pushing for cases where we don't use 'tagfunc'
-  if !&tagstack
-    return
-  endif
-
-  let winnr = winnr()
-  let stack = gettagstack(winnr)
-
-  let curidx = stack.curidx
-  let items = stack.items
-
-  let newstack = items[0 : curidx - 1]
-  let newstack += [{
-  \   'bufnr': bufnr('%'),
-  \   'from': getpos('.'),
-  \   'matchnr': 0,
-  \   'tagname': a:name,
-  \ }]
-
-  call settagstack(winnr, {
-  \   'length': len(newstack),
-  \   'items': newstack,
-  \ })
 endfunction
 
 " extracts the name and sect out of 'path/name.sect'
