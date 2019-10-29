@@ -494,6 +494,112 @@ bool path_has_wildcard(const char_u *p)
   return false;
 }
 
+#ifdef WIN32
+/// Save the long filename.
+/// @param fname An long or short filename.
+/// @return The long filename of `fname`.
+char *path_to_long_save(const char *fname)
+{
+  char *result = NULL;
+  wchar_t *fname_utf16;
+  int conversion_result = utf8_to_utf16(fname, -1, &fname_utf16);
+  if (conversion_result == 0) {
+    wchar_t *lfname_utf16 = xmalloc(MAXPATHL * sizeof(*lfname_utf16));
+    DWORD ret = GetLongPathNameW(fname_utf16, lfname_utf16, MAXPATHL);
+    if (ret > MAXPATHL - 1) {
+      lfname_utf16 = xrealloc(lfname_utf16, (ret + 1) * sizeof(*lfname_utf16));
+      ret = GetLongPathNameW(fname_utf16, lfname_utf16, ret + 1);
+    }
+    if (ret != 0) {
+      char *lfname_utf8;
+      conversion_result = utf16_to_utf8(lfname_utf16, -1, &lfname_utf8);
+      if (conversion_result == 0) {
+        result = lfname_utf8;
+      } else {
+        EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+      }
+    }
+    xfree(fname_utf16);
+    xfree(lfname_utf16);
+  } else {
+    EMSG2("utf8_to_utf16 failed: %d", conversion_result);
+  }
+  return result;
+}
+
+/// Save long filename to "buf[len]".
+///
+/// @param      fname filename to evaluate
+/// @param[out] buf   contains `fname` long filename, or:
+///                   - truncated `fname` if longer than `len`
+///                   - unmodified `fname` if long filename fails
+/// @param      len   length of `buf`
+///
+/// @return           false for failure, true otherwise
+bool path_to_long(char *fname, char *buf, size_t len)
+{
+  char *lfname = path_to_long_save(fname);
+  if (lfname != NULL) {
+    xstrlcpy(buf, lfname, len);
+    xfree(lfname);
+    return true;
+  }
+  return false;
+}
+
+/// Save the short filename.
+/// @param fname An long or short filename.
+/// @return The short filename of `fname`.
+char *path_to_short_save(char *fname)
+{
+  char *result = NULL;
+  wchar_t *fname_utf16;
+  int conversion_result = utf8_to_utf16(fname, -1, &fname_utf16);
+  if (conversion_result == 0) {
+    wchar_t *sfname_utf16 = xmalloc(MAXPATHL * sizeof(*sfname_utf16));
+    DWORD ret = GetShortPathNameW(fname_utf16, sfname_utf16, MAXPATHL);
+    if (ret > MAXPATHL - 1) {
+      sfname_utf16 = xrealloc(sfname_utf16, (ret + 1) * sizeof(*sfname_utf16));
+      ret = GetShortPathNameW(fname_utf16, sfname_utf16, ret + 1);
+    }
+    if (ret != 0) {
+      char *sfname_utf8;
+      conversion_result = utf16_to_utf8(sfname_utf16, -1, &sfname_utf8);
+      if (conversion_result == 0) {
+        result = sfname_utf8;
+      } else {
+        EMSG2("utf16_to_utf8 failed: %d", conversion_result);
+      }
+    }
+    xfree(fname_utf16);
+    xfree(sfname_utf16);
+  } else {
+    EMSG2("utf8_to_utf16 failed: %d", conversion_result);
+  }
+  return result;
+}
+
+/// Save short filename to "buf[len]".
+///
+/// @param      fname filename to evaluate
+/// @param[out] buf   contains `fname` short filename, or:
+///                   - truncated `fname` if longer than `len`
+///                   - unmodified `fname` if short filename fails
+/// @param      len   length of `buf`
+///
+/// @return           false for failure, true otherwise
+bool path_to_short(char *fname, char *buf, size_t len)
+{
+  char *sfname = path_to_short_save(fname);
+  if (sfname != NULL) {
+    xstrlcpy(buf, sfname, len);
+    xfree(sfname);
+    return true;
+  }
+  return false;
+}
+#endif  // WIN32
+
 /*
  * Unix style wildcard expansion code.
  */
