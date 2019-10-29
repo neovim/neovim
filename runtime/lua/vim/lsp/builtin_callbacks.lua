@@ -76,15 +76,28 @@ local function get_floating_window_option(width, height)
 end
 
 local function open_floating_preview(contents, filetype)
+	assert(type(contents) == 'table', 'open_floating_preview(): contents must be a table')
+
+	-- Trim empty lines from the end.
+	for i = #contents, 1, -1 do
+		if #contents[i] == 0 then
+			table.remove(contents)
+		else
+			break
+		end
+	end
+
   local width = 0
   local height = #contents
-
-  for _, line in ipairs(contents) do
+  for i, line in ipairs(contents) do
+		-- Clean up the input and add left pad.
+		line = " "..line:gsub("\r", "")
 		-- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
     local line_width = vim.fn.strdisplaywidth(line)
 		width = math.max(line_width, width)
+		contents[i] = line
   end
-  -- Add right margin
+	-- Add right padding of 1 each.
   width = width + 1
 
   local floating_bufnr = vim.api.nvim_create_buf(false, true)
@@ -92,7 +105,7 @@ local function open_floating_preview(contents, filetype)
 		if not (type(filetype) == 'string') then
 			error(("Invalid filetype for open_floating_preview: %q"):format(filetype))
 		end
-    vim.api.nvim_buf_set_var(floating_bufnr, 'filetype', filetype)
+    vim.api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
   end
 
   local float_option = get_floating_window_option(width, height)
@@ -128,11 +141,9 @@ local function hover_contents_to_markdown_lines(input, contents)
 		-- MarkupString variation 2
 		elseif input.language then
 			assert(type(input.value) == 'string')
-			list_extend(contents, vim.tbl_flatten {
-				"```"..input.language;
-				split_lines(input.value);
-				"```";
-			})
+			table.insert(contents, "```"..input.language)
+			list_extend(contents, split_lines(input.value))
+			table.insert(contents, "```")
 		-- By deduction, this must be MarkedString[]
 		else
 			-- Use our existing logic to handle MarkedString
