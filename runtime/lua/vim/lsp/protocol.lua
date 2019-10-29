@@ -321,13 +321,15 @@ end
 --- Parameter builder for request method
 --
 protocol.InitializeParams = function(client)
-  local config = {
-    processId = vim.api.nvim_call_function('getpid', {}),
-    rootUri = server_config.get_root_uri(client.filetype, client.server_name),
-    capabilities = protocol.ClientCapabilities(),
-  }
+	local client_config = server_config.get_server(client.filetype, client.server_name)
+	local capabilities = vim.tbl_extend('force', protocol.ClientCapabilities(), client_config.capabilities)
 
-  config = vim.tbl_extend('force', config, server_config.get_capabilities(client.filetype, client.server_name))
+  local config = {
+    processId = vim.fn.getpid(),
+    rootUri = server_config.get_root_uri(client.filetype, client.server_name),
+    capabilities = capabilities,
+--    capabilities = protocol.ClientCapabilities(),
+  }
   client:set_client_capabilities(config)
   return config
 end

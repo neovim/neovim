@@ -57,8 +57,8 @@ end
 
 Client.start = function(self)
   assert(
-    (vim.api.nvim_call_function('executable', { self.cmd.execute_path }) == 1),
-    string.format("Language server config error: The given command '%s' is not executable.", self.cmd.execute_path)
+    vim.fn.executable(self.cmd.execute_path) == 1,
+    string.format("Language server config error: The given command %q is not executable.", self.cmd.execute_path)
   )
 
   self._stdin = uv.new_pipe(false)
@@ -280,31 +280,25 @@ end
 
 --- Parse an LSP Message's header
 -- @param header: The header to parse.
-Client._parse_header = function(header)
+local function parse_header(header)
   if type(header) ~= 'string' then
-    return nil, nil
+    return nil
   end
-
-  local lines = vim.split(header, '\\r\\n', true)
-
-  local split_lines = {}
-
-  for _, line in pairs(lines) do
-    if line ~= '' then
-      local temp_lines = vim.split(line, ':', true)
-      for t_index, t_line in pairs(temp_lines) do
-        temp_lines[t_index] = vim.trim(t_line)
-      end
-
-      split_lines[temp_lines[1]:lower():gsub('-', '_')] = temp_lines[2]
-    end
+  local headers = {}
+  for line in vim.gsplit(header, '\\r\\n', true) do
+    if line == '' then
+			break
+		end
+		local key, value = line:match("^%s*(%S+)%s*:%s*(%S+)%s*$")
+		if key then
+			key = key:lower():gsub('%-', '_')
+			headers[key] = value
+		else
+			logger.warn("invalid header line %q", line)
+		end
   end
-
-  if split_lines.content_length then
-    split_lines.content_length = tonumber(split_lines.content_length)
-  end
-
-  return split_lines, nil
+	headers.content_length = tonumber(headers.content_length)
+  return headers
 end
 
 Client._on_stdout = function(self, data)
@@ -321,7 +315,7 @@ Client._on_stdout = function(self, data)
       self._read_length = 0
       self._read_state = read_state.header
     elseif self._read_state == read_state.header then
-      local eol = self._read_data:find('\r\n')
+      local eol = self._read_data:find('\r\n', 1, true)
 
       -- If we haven't seen the end of the line, then we haven't reached the entire messag yet.
       if not eol then
@@ -334,7 +328,7 @@ Client._on_stdout = function(self, data)
       if #line == 0 then
         self._read_state = read_state.body
       else
-        local parsed = self._parse_header(line)
+        local parsed = parse_header(line)
 
         if (not parsed.content_length) and (not self._read_length) then
           self:_on_error(error_level.reset_state,

@@ -1,6 +1,4 @@
-local util = {
-  ui = require('vim.lsp.util.ui'),
-}
+local util = {}
 
 local get_buffer_lines = function(bufnr)
   return vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
@@ -16,21 +14,21 @@ util.get_filetype = function(bufnr)
 end
 
 util.decode_json = function(data)
-  return vim.api.nvim_call_function('json_decode', {data})
+  return vim.fn.json_decode(data)
 end
 
 util.encode_json = function(data)
-  return vim.api.nvim_call_function('json_encode', {data})
+  return vim.fn.json_encode(data)
 end
 
 util.update_tagstack = function()
   local bufnr = vim.api.nvim_get_current_buf()
-  local line = vim.api.nvim_call_function('line', {'.'})
-  local col = vim.api.nvim_call_function('col', {'.'})
-  local tagname = vim.api.nvim_call_function('expand', { '<cWORD>' })
+  local line = vim.fn.line('.')
+  local col = vim.fn.col('.')
+  local tagname = vim.fn.expand('<cWORD>')
   local item = { bufnr = bufnr, from = { bufnr, line, col, 0 }, tagname = tagname }
-  local winid = vim.api.nvim_call_function('win_getid', {})
-  local tagstack = vim.api.nvim_call_function('gettagstack', { winid })
+  local winid = vim.fn.win_getid()
+  local tagstack = vim.fn.gettagstack(winid)
 
   local action
 
@@ -54,7 +52,7 @@ util.update_tagstack = function()
 end
 
 util.handle_location = function(result)
-  local current_file = vim.api.nvim_call_function('expand', {'%'})
+  local current_file = vim.fn.expand('%')
 
   -- We can sometimes get a list of locations,
   -- so set the first value as the only value we want to handle
@@ -85,31 +83,6 @@ util.handle_location = function(result)
       , result.range.start.character + 1
     )
   )
-end
-
-util.get_HoverContents_type = function(contents)
-  if vim.tbl_islist(contents) == true then
-    return 'MarkedString[]'
-  elseif type(contents) == 'table' then
-    if contents.kind then
-      return 'MarkupContent'
-    elseif contents.language then
-      return 'MarkedString'
-    end
-  elseif type(contents) == 'string' then
-    return 'MarkedString'
-  else
-    return nil
-  end
-end
-
-util.is_CompletionList = function(result)
-  if type(result) == 'table' then
-    if result.items then
-      return true
-    end
-  end
-  return false
 end
 
 return util

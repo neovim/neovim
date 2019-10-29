@@ -10,15 +10,16 @@ local callbacks = require('vim.lsp.callbacks')
 local logger = require('vim.lsp.logger')
 local text_document_handler = require('vim.lsp.handler').text_document
 
-local clients = {}
-local local_fn = {}
+--- Dictionary of [filetype][server_name]
+local CLIENTS = {}
+LSP_CLIENTS = CLIENTS
 
 --- Get the client list associated with a filetype
 -- @param filetype    [string]
 --
 -- @returns: list of Client Object
-lsp.get_clients = function(filetype)
-  return clients[filetype]
+function lsp.get_clients(filetype)
+  return CLIENTS[filetype]
 end
 
 --- Get the client
@@ -26,7 +27,7 @@ end
 -- @param server_name [string]
 --
 -- @returns: Client Object or nil
-lsp.get_client = function(filetype, server_name)
+function lsp.get_client(filetype, server_name)
   local filetype_clients = lsp.get_clients(filetype)
   if not filetype_clients then
     return nil
@@ -41,14 +42,15 @@ end
 -- @param bufnr [number]: A bufnr
 --
 -- @returns: A client object that has been initialized
-lsp.start_client = function(filetype, server_name, bufnr)
+function lsp.start_client(filetype, server_name, bufnr)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not server_name then server_name = filetype end
 
   assert(not lsp.get_client(filetype, server_name), string.format("Language server for filetype: %s, server_name: %s has already started.", filetype, server_name))
 
-  local cmd = lsp.server_config.get_server_cmd(filetype, server_name)
-  local offset_encoding = lsp.server_config.get_server_offset_encoding(filetype, server_name)
+  local config = lsp.server_config.get_server(filetype, server_name)
+  local cmd = config.cmd
+  local offset_encoding = config.offset_encoding
 
   -- Start the client
   logger.debug(string.format("Starting client... %s/%s/%s", server_name, filetype, vim.inspect(cmd)))
@@ -57,13 +59,13 @@ lsp.start_client = function(filetype, server_name, bufnr)
   client:start()
   client:initialize()
 
-  if not clients[filetype] then clients[filetype] = {} end
-  clients[filetype][server_name] = client
+  if not CLIENTS[filetype] then CLIENTS[filetype] = {} end
+  CLIENTS[filetype][server_name] = client
 
   return client
 end
 
-lsp.stop_client = function(filetype, server_name)
+function lsp.stop_client(filetype, server_name)
   assert(filetype, 'filetype is required.')
 
   if not server_name then server_name = filetype end
@@ -82,7 +84,7 @@ end
 -- @param server_name [string] (optional)
 --
 -- @returns: The table of responses of the request
-lsp.request = function(method, arguments, bufnr, filetype, server_name)
+function lsp.request(method, arguments, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
@@ -119,7 +121,7 @@ end
 -- @param server_name [string] (optional)
 --
 -- @returns: The table of request id
-lsp.request_async = function(method, arguments, cb, bufnr, filetype, server_name)
+function lsp.request_async(method, arguments, cb, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
@@ -155,7 +157,7 @@ end
 -- @param server_name [string] (optional)
 --
 -- @returns: The notification message id
-lsp.notify = function(method, arguments, bufnr, filetype, server_name)
+function lsp.notify(method, arguments, bufnr, filetype, server_name)
   filetype = filetype or lsp.util.get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
@@ -183,11 +185,11 @@ lsp.notify = function(method, arguments, bufnr, filetype, server_name)
   end
 end
 
-lsp.handle = function(filetype, method, result, default_only)
+function lsp.handle(filetype, method, result, default_only)
   return callbacks.call_callback(method, true, result, default_only, filetype)
 end
 
-lsp.client_has_started = function(filetype, server_name)
+function lsp.client_has_started(filetype, server_name)
   assert(filetype, "filetype is required.")
 
   if server_name then
@@ -200,8 +202,10 @@ lsp.client_has_started = function(filetype, server_name)
   else
     local filetype_clients = lsp.get_clients(filetype)
     if filetype_clients ~= nil then
-      for _, client in pairs(filetype_clients) do
-        if client:is_running() then return true end
+      for _, client in ipairs(filetype_clients) do
+				if client:is_running() then
+					return true
+				end
       end
     end
 
@@ -209,7 +213,7 @@ lsp.client_has_started = function(filetype, server_name)
   end
 end
 
-lsp.client_info = function(filetype, server_name)
+function lsp.client_info(filetype, server_name)
   assert(filetype and filetype ~= '', "The filetype argument must be non empty string")
 
   if not server_name then
@@ -224,9 +228,9 @@ lsp.client_info = function(filetype, server_name)
   end
 end
 
-lsp.status = function()
+function lsp.status()
   local status = ''
-  for _, filetype_clients in pairs(clients) do
+  for _, filetype_clients in pairs(CLIENTS) do
     for _, client in pairs(filetype_clients) do
       status = status..'filetype: '..client.filetype..', server_name: '..client.server_name..', command: '..client.cmd.execute_path..'\n'
     end
@@ -235,7 +239,13 @@ lsp.status = function()
   return status
 end
 
-lsp.omnifunc = function(findstart, base)
+local function get_current_line_to_cursor()
+	local pos = vim.api.nvim_win_get_cursor(0)
+	local line = assert(vim.api.nvim_buf_get_lines(0, pos[1]-1, pos[1], false)[1])
+	return line:sub(pos[2]+1)
+end
+
+function lsp.omnifunc(findstart, base)
   logger.debug(string.format("omnifunc findstart: %s, base: %s", findstart, base))
 
   if not lsp.client_has_started(lsp.util.get_filetype()) then
@@ -243,29 +253,26 @@ lsp.omnifunc = function(findstart, base)
   end
 
   if findstart == 1 then
-    return vim.api.nvim_call_function('col', {'.'})
+    return vim.fn.col('.')
   elseif findstart == 0 then
+		local line_to_cursor = get_current_line_to_cursor()
     local params = lsp.protocol.CompletionParams()
     local responses = vim.lsp.request('textDocument/completion', params)
     local matches = {}
-    for _, response in pairs(responses) do
+    for _, response in ipairs(responses) do
+			-- TODO handle errors?
       if not response.error then
-        matches = vim.tbl_extend('force', matches, local_fn:build_completion_items(response.result))
+				local data = response.result
+				local completion_items = text_document_handler.completion_list_to_complete_items(data or {}, line_to_cursor)
+				for _, match in ipairs(completion_items) do
+					table.insert(matches, match)
+				end
+				-- logger.debug('callback:textDocument/completion(omnifunc)', data, ' ', self)
       end
     end
 
     return matches
   end
-end
-
-local_fn.build_completion_items = function(self, data)
-  logger.debug('callback:textDocument/completion(omnifunc)', data, ' ', self)
-
-  if not data or vim.tbl_isempty(data) then
-    return {}
-  end
-
-  return text_document_handler.CompletionList_to_matches(data)
 end
 
 return lsp

@@ -37,22 +37,29 @@ lsp#add_server_config({config}):
 				A string or list of strings of filetypes to
 				associate with this server.
 
-			`server_name` (string) (optional):
-				You can pass any name as server_name.
-				If you want to use multiple language servers
-				for one filetype, be sure to add server_name.
+			`cmd` (string|array):
+				Language server command to execute.
+				If the argument is a string, it will use
+				$SHELL or "sh" if that isn't defined.
 
-			`cmd` (string|array): Executing language server command.
+			`server_name` (string) (optional):
+				Create a name to identify this server in the
+				logs and messages. This will be especially
+				useful if you use multiple language servers
+				for a single filetype.
+				Default: the name of the filetype.
 
 			`offset_encoding` (string) (optional):
-				Language Server Protocol defines "character" indexes are in UTF-16,
-				however there are language servers that use
-				UTF-8 or UTF-32 as "character" indexes.
-				So you can set "utf-8", "utf-16", or "utf-32" to
-				{offset_encoding}.
+				The default encoding for Language Server
+				Protocol is UTF-16, but there are language
+				servers which may use other encodings.
+				Valid values:
+					"utf-8", "utf-16", or "utf-32"
 				Default: "utf-16".
 
-			`capabilities` (dictionary): Optional configuration for a server.
+			`capabilities` (dictionary) (optional):
+				Setup configuration to forward to the language
+				server.
 
 	Example: ~
 >
@@ -225,15 +232,14 @@ textDocument/definition~
 
 g:language_server_client_log_level
 	You can set the log level for language server client logging.
-	debug, info, warn, error, none.
+	Possible values: "debug", "info", "warn", "error", "none".
 
-	Default: none
+	Default: "none"
 
 ================================================================================
                                                                *lsp-omnifunc*
 
-To configure omnifunc, add the following in your
-init.vim:
+To configure omnifunc, add the following in your init.vim:
 >
 	augroup MyLanguageServerSetting
 		au!
@@ -242,12 +248,18 @@ init.vim:
 	augroup END
 <
 ================================================================================
+                                                                  *lsp-methods*
+
+To configure a particular feature, you must first enable the builtin callback
+for it and then you can use the function as a callback.
+
+================================================================================
                                                                *lsp-completion*
 
 To configure completion for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/completion')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/completion')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python inoremap <buffer> <c-n> <c-r>=lsp#text_document_completion()<CR>
@@ -260,7 +272,7 @@ init.vim:
 To configure hover for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/hover')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/hover')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>h :call lsp#text_document_hover()<CR>
@@ -272,7 +284,7 @@ init.vim:
 To configure signature help for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/signatureHelp')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/signatureHelp')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>sh :call lsp#text_document_signature_help()<CR>
@@ -284,7 +296,7 @@ init.vim:
 To configure declaration for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/declaration')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/declaration')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>dc :call lsp#text_document_declaration()<CR>
@@ -296,7 +308,7 @@ init.vim:
 To configure definition for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/definition')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/definition')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>df :call lsp#text_document_definition()<CR>
@@ -308,7 +320,7 @@ init.vim:
 To configure definition for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/typeDefinition')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/typeDefinition')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>td :call lsp#text_document_type_definition()<CR>
@@ -320,7 +332,7 @@ init.vim:
 To configure definition for a language server, add the following in your
 init.vim:
 >
-	call luaeval("require('vim.lsp.config').set_builtin_callback('textDocument/implementation')")
+	lua vim.lsp.config.set_builtin_callback('textDocument/implementation')
 	augroup MyLanguageServerSetting
 		au!
 		autocmd Filetype python nnoremap <silent> <Leader>i :call lsp#text_document_implementation()<CR>
@@ -340,9 +352,9 @@ the Neovim's built-in LSP callbacks to perform the hovering action.
 
 To do so, the following APIs are provided:
 
-	In Vim script, use:
+	From Lua, use:
 >
-		call luaeval("vim.lsp.handle({request}, {data})")
+		vim.lsp.handle({request}, {data})
 <
 
                                                              *vim.lsp.handle()*
@@ -353,12 +365,12 @@ vim.lsp.handle({request}, {data})
 	Parameters: ~
 		{request}: The name of the request, i.e. 'textDocument/hover'
 
-		{data}: A dictionary containing the data that would normally be in the
-		response section for the particular {request}.
+		{data}: A dictionary containing the data that would normally
+		be in the response section for the particular {request}.
 	
 	Example: ~
 >
 		" Display "Hello", "World" on two lines
-		call luaeval("vim.lsp.handle('textDocument/hover', {'content': ['Hello', 'World']})")
+		vim.lsp.handle('textDocument/hover', {'content': ['Hello', 'World']})
 
 vim:tw=78:ts=8:ft=help:norl:
