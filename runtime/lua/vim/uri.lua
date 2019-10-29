@@ -3,91 +3,84 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
-local function _is_windows_fname(path)
-  if not (path:find('^[A-Z]:') == nil) then
-    return true
-  end
-  return false
+local uri_decode
+do
+	local schar = string.char
+	local function hex_to_char(hex)
+		return schar(tonumber(hex, 16))
+	end
+	uri_decode = function(str)
+		return str:gsub("%%([a-fA-F0-9][a-fA-F0-9])", hex_to_char)
+	end
 end
 
-local function _is_windows_file_uri(uri)
-  if uri:gsub('^file://', ''):find('^/[A-Z]:') then
-    return true
-  end
-  return false
+local uri_encode
+do
+	local PATTERNS = {
+		--- RFC 2396
+		-- https://tools.ietf.org/html/rfc2396#section-2.2
+		rfc2396 = "^A-Za-z0-9%-_.!~*'()";
+		--- RFC 2732
+		-- https://tools.ietf.org/html/rfc2732
+		rfc2732 = "^A-Za-z0-9%-_.!~*'()[]";
+		--- RFC 3986
+		-- https://tools.ietf.org/html/rfc3986#section-2.2
+		rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/";
+	}
+	local tohex, sbyte = bit.tohex, string.byte
+	local function percent_encode_char(char)
+		return "%"..tohex(sbyte(char), 2)
+	end
+	uri_encode = function(text, rfc)
+		if not text then return end
+		local pattern = PATTERNS[rfc] or PATTERNS.rfc3986
+		return text:gsub("(["..pattern.."])", percent_encode_char)
+	end
 end
 
-local function _uri_decode(str)
-  return vim.api.nvim_call_function(
-    "substitute",
-    { str, "%\\([a-fA-F0-9]\\{2}\\)", "\\=printf('%c', str2nr(submatch(1), 16))", "g" }
-  )
+
+local function is_windows_file_uri(uri)
+	return uri:match('^file:///[a-zA-Z]:') ~= nil
+  -- if uri:gsub('^file://', ''):find('^/[A-Z]:') then
+  --   return true
+  -- end
+  -- return false
 end
 
-local function _percent_encode_char(char)
-  local nr = vim.api.nvim_call_function('char2nr', { char })
-  return vim.api.nvim_call_function('printf', { '%%%02X', nr })
-end
-
-local function _uri_encode(text, rfc)
-    if not text then return end
-
-    local pattern
-
-    if rfc == 'rfc2396' then
-      --- RFC 2396
-      -- https://tools.ietf.org/html/rfc2396#section-2.2
-      pattern = "^A-Za-z0-9%-_.!~*'()"
-    elseif rfc == 'rfc2732' then
-      --- RFC 2732
-      -- https://tools.ietf.org/html/rfc2732
-      pattern = "^A-Za-z0-9%-_.!~*'()[]"
-    elseif rfc == 'rfc3986' or rfc == nil then
-      --- RFC 3986
-      -- https://tools.ietf.org/html/rfc3986#section-2.2
-      pattern = "^A-Za-z0-9%-._~!$&'()*+,;=:@/"
-    end
-
-    return text:gsub(
-      "([" .. pattern .. "])",
-      function (char) return _percent_encode_char(char) end
-    )
-end
+-- local ffi = require 'ffi'
+-- ffi.os == 'Windows'
+-- local is_windows = vim.loop.os_uname().sysname == 'Windows'
 
 local function uri_from_fname(path)
-  if _is_windows_fname(path) then
-    local volume_path = vim.api.nvim_call_function('substitute', { path, '\\(^\\c[A-Z]:\\)\\(.*\\)', '\\1', '' })
-    local fname = vim.api.nvim_call_function('substitute', { path, '\\(^\\c[A-Z]:\\)\\(.*\\)', '\\2', '' })
-
-    path = volume_path.._uri_encode(vim.api.nvim_call_function('substitute', { fname, '\\', '/', 'g'}))
+	local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")
+	local is_windows = volume_path ~= nil
+  if is_windows then
+    path = volume_path..uri_encode(fname:gsub("\\", "/"))
   else
-    path = _uri_encode(path)
+    path = uri_encode(path)
   end
-
-  local uri = 'file:'
-
-  if _is_windows_fname(path) then
-    uri = uri..'///'
-  else
-    uri = uri..'//'
+	local uri_parts = {"file://"}
+  if is_windows then
+		table.insert(uri_parts, "/")
   end
-
-  return uri..path
+	table.insert(uri_parts, path)
+  return table.concat(uri_parts)
 end
 
 local function uri_from_bufnr(bufnr)
   return uri_from_fname(vim.api.nvim_buf_get_name(bufnr))
 end
 
-local function uri_to_fname (uri)
-  if _is_windows_file_uri(uri) then
+local function uri_to_fname(uri)
+	-- TODO improve this.
+  if is_windows_file_uri(uri) then
     uri = uri:gsub('^file:///', '')
     uri = uri:gsub('/', '\\')
   else
     uri = uri:gsub('^file://', '')
   end
 
-  return _uri_decode(uri)
+  return uri_decode(uri)
 end
 
 local module = {

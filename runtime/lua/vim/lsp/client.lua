@@ -294,10 +294,12 @@ local function parse_header(header)
 			key = key:lower():gsub('%-', '_')
 			headers[key] = value
 		else
-			logger.warn("invalid header line %q", line)
+			logger.error("invalid header line %q", line)
+			error(string.format("invalid header line %q", line))
 		end
   end
 	headers.content_length = tonumber(headers.content_length)
+	assert(headers.content_length, "Content-Length not found in headers.")
   return headers
 end
 
