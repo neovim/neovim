@@ -2534,7 +2534,15 @@ static int path_to_absolute(const char_u *fname, char_u *buf, size_t len,
     }
   }
   xfree(relative_directory);
+#ifndef WIN32
   return append_path((char *)buf, end_of_path, len);
+#else
+  if (append_path((char *)buf, end_of_path, len) == OK
+      && path_to_long((char *)buf, (char *)buf, len)) {
+    return OK;
+  }
+  return FAIL;
+#endif
 }
 
 /// Check if file `fname` is a full (absolute) path.
