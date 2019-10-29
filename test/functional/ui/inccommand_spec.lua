@@ -2582,6 +2582,49 @@ describe(":substitute", function()
       :%s/some\(thing\)\@!/every/^   |
     ]])
   end)
+
+  it("doesn't prompt to swap cmd range", function()
+    screen = Screen.new(50, 8) -- wide to avoid hit-enter prompt
+    common_setup(screen, "split", default_text)
+    feed(':2,1s/tw/MO/g')
+
+    -- substitution preview should have been made, without prompting
+    screen:expect([[
+      {12:MO}o lines                                         |
+      {11:[No Name] [+]                                     }|
+      |2| {12:MO}o lines                                     |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {10:[Preview]                                         }|
+      :2,1s/tw/MO/g^                                     |
+    ]])
+
+    -- but should be prompted on hitting enter
+    feed('<CR>')
+    screen:expect([[
+      {12:MO}o lines                                         |
+      {11:[No Name] [+]                                     }|
+      |2| {12:MO}o lines                                     |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {10:[Preview]                                         }|
+      {13:Backwards range given, OK to swap (y/n)?}^          |
+    ]])
+
+    feed('y')
+    screen:expect([[
+      Inc substitution on                               |
+      ^MOo lines                                         |
+                                                        |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {13:Backwards range given, OK to swap (y/n)?}y         |
+    ]])
+  end)
 end)
 
 it(':substitute with inccommand during :terminal activity', function()
