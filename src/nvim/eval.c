@@ -23994,6 +23994,18 @@ repeat:
         return -1;
     }
 
+#ifdef WIN32
+    if (vim_strchr(*fnamep, '~') != NULL) {
+      // Expand 8.3 filename to full path.  Needed to make sure the same
+      // file does not have two different names.
+      char_u *lfname = (char_u *)path_to_long_save((char *)(*fnamep));
+      if (lfname != NULL) {
+          xfree(*bufp);  // free any allocated file name
+          *bufp = *fnamep = lfname;
+      }
+    }
+#endif
+
     /* Append a path separator to a directory. */
     if (os_isdir(*fnamep)) {
       /* Make room for one or two extra characters. */
