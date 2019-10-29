@@ -5563,7 +5563,12 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   linenr_T highest_num_line = 0;
   int col_width = 0;
 
+  // if we fail to split the window, we don't want to modify orig_buf
+  bool split_success = false;
+
   if (split && win_split((int)p_cwh, WSP_BOT) != FAIL) {
+    split_success = true;
+
     buf_open_scratch(preview_buf ? bufnr : 0, "[Preview]");
     buf_clear();
     preview_buf = curbuf;
@@ -5593,7 +5598,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   for (size_t matchidx = 0; matchidx < lines.subresults.size; matchidx++) {
     SubResult match = lines.subresults.items[matchidx];
 
-    if (split && preview_buf) {
+    if (split_success && preview_buf) {
       lpos_T p_start = { 0, match.start.col };  // match starts here in preview
       lpos_T p_end   = { 0, match.end.col };    // ... and ends here
 
