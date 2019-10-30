@@ -16,7 +16,6 @@ end
 
 --- Dictionary of [filetype][server_name]
 local CLIENTS = {}
-LSP_CLIENTS = CLIENTS
 
 --- Get the client list associated with a filetype
 -- @param filetype    [string]
@@ -259,8 +258,25 @@ function lsp.omnifunc(findstart, base)
   if findstart == 1 then
     return vim.fn.col('.')
   elseif findstart == 0 then
-		local line_to_cursor = get_current_line_to_cursor()
-    local params = lsp.protocol.CompletionParams()
+		local pos = vim.api.nvim_win_get_cursor(0)
+		local line = assert(vim.api.nvim_buf_get_lines(0, pos[1]-1, pos[1], false)[1])
+		local line_to_cursor = line:sub(pos[2]+1)
+		local params = {
+			textDocument = {
+				uri = vim.uri_from_bufnr(0);
+			};
+			position = {
+				-- 0-indexed for both line and character
+				line = pos[1] - 1,
+				character = pos[2],
+			};
+			-- The completion context. This is only available if the client specifies
+			-- to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
+			-- context = nil or {
+			-- 	triggerKind = protocol.CompletionTriggerKind.Invoked;
+			-- 	triggerCharacter = nil or "";
+			-- };
+		}
     local responses = vim.lsp.request('textDocument/completion', params)
     local matches = {}
     for _, response in ipairs(responses) do
