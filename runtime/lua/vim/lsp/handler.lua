@@ -31,7 +31,7 @@ end
 
 --- Apply the TextDocumentEdit response.
 -- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-TextDocument.apply_TextDocumentEdit = function(text_document_edit)
+function TextDocument.apply_TextDocumentEdit(text_document_edit)
   local text_document = text_document_edit.textDocument
 	local text_document_version = text_document.version
 	-- TODO use text_document_version
@@ -131,7 +131,6 @@ function Workspace.apply_WorkspaceEdit(WorkspaceEdit)
     for _, textDocumentEdit in ipairs(WorkspaceEdit.documentChanges) do
       TextDocument.apply_TextDocumentEdit(textDocumentEdit)
     end
-
     return
   end
 

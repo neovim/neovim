@@ -41,15 +41,7 @@ end
 
 local function is_windows_file_uri(uri)
 	return uri:match('^file:///[a-zA-Z]:') ~= nil
-  -- if uri:gsub('^file://', ''):find('^/[A-Z]:') then
-  --   return true
-  -- end
-  -- return false
 end
-
--- local ffi = require 'ffi'
--- ffi.os == 'Windows'
--- local is_windows = vim.loop.os_uname().sysname == 'Windows'
 
 local function uri_from_fname(path)
 	local volume_path, fname = path:match("^([a-zA-Z]:)(.*)")

@@ -1,8 +1,7 @@
 local uv = vim.loop
-local util = require('vim.lsp.util')
 local logger = require('vim.lsp.logger')
 local autocmd = require('vim.lsp.autocmd')
-local create_message = require('vim.lsp.message').create_message
+-- local create_message = require('vim.lsp.message').create_message
 local call_callback = require('vim.lsp.callbacks').call_callback
 local protocol = require('vim.lsp.protocol')
 
@@ -247,6 +246,47 @@ Client.notify = function(self, method, params)
   return self:_request('notification', method, params)
 end
 
+-- TODO replace with local version for each client.
+local MESSAGE_IDS = {}
+local function get_next_message_id(client)
+	MESSAGE_IDS[client] = (MESSAGE_IDS[client] or 0) + 1
+	return MESSAGE_IDS[client]
+end
+
+local function format_message_with_content_length(encoded_message)
+	return table.concat {
+		'Content-Length: '; tostring(#encoded_message); '\r\n\r\n';
+		encoded_message;
+	}
+end
+
+local json_encode = vim.fn.json_encode
+
+local function check_language_server_capabilities(client, method)
+  local method_table
+  if type(method) == 'string' then
+    method_table = vim.split(method, '/', true)
+  elseif type(method) == 'table' then
+    method_table = method
+  else
+    return true
+  end
+  -- TODO: This should be a better implementation.
+  -- Most methods are named like 'subject_name/operation_name'.
+  -- Most capability properties are named like 'operation_nameProvider'.
+  -- And some language server has custom methods.
+  -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
+  if method_table[2] then
+    local provider_capabilities = client.server_capabilities[method_table[2]..'Provider']
+    if provider_capabilities ~= nil and provider_capabilities == false then
+      return false
+    end
+    return true
+  else
+    return true
+  end
+end
+
 Client._request = function(self, message_type, method, params, cb, bufnr)
   if self:is_stopped() then
     local msg = 'Language server client is not running. '..self.server_name
@@ -258,24 +298,55 @@ Client._request = function(self, message_type, method, params, cb, bufnr)
     error("No request method supplied")
   end
 
-  local message = create_message(self, message_type, method, params)
-  if message == nil then return nil end
+	-- TODO improve check capabilities
+	if not check_language_server_capabilities(self, method) then
+		if message_type == 'notification' then
+			logger.debug(string.format('Notification Method %q is not supported by server %s', method, self.name))
+			logger.client.debug(string.format('Notification Method %q is not supported by server %s', method, self.name))
+			return nil
+		else
+			logger.debug(string.format('[LSP:Request] Method %q is not supported by server %s', method, self.name))
+			error("[LSP:Request] Method "..method.." is not supported by server "..self.name)
+		end
+	end
 
-  if message_type == 'request' or message_type == 'request_async' then
-    bufnr = bufnr or vim.api.nvim_get_current_buf()
-    -- After handling callback semantics, store it to call on reply.
-    self._callbacks[message.id] = {
-      cb = cb,
-      method = message.method,
-      bufnr = bufnr,
-      message_type = message_type,
-    }
-  end
+	params = params or {}
+	assert(type(method) == 'string', "method must be a string")
+	assert(type(params) == 'table', "params must be a table")
 
-  uv.write(self._stdin, message:data())
-  logger.debug(string.format("Send %s --- %s, %s --->: { %s }", message_type, self.filetype, self.server_name, message:data()))
+	local encoded_message, message_id
+	if message_type == 'notification' then
+		-- TODO use something faster than vim.fn?
+		encoded_message = json_encode {
+			jsonrpc = "2.0";
+			method = method;
+			params = params;
+		}
+	else
+		message_id = get_next_message_id(self)
+		-- TODO use something faster than vim.fn?
+		encoded_message = json_encode {
+			id = message_id;
+			jsonrpc = "2.0";
+			method = method;
+			params = params;
+		}
+		assert(encoded_message, "Failed to encode request message")
+		bufnr = bufnr or vim.api.nvim_get_current_buf()
+		-- After handling callback semantics, store it to call on reply.
+		self._callbacks[message_id] = {
+			cb = cb,
+			method = method,
+			bufnr = bufnr,
+			message_type = message_type,
+		}
+	end
+	encoded_message = format_message_with_content_length(encoded_message)
 
-  return message.id
+  uv.write(self._stdin, encoded_message)
+  logger.debug(string.format("Send %s --- %s, %s --->: [[%s]]", message_type, self.filetype, self.server_name, encoded_message))
+
+  return message_id
 end
 
 --- Parse an LSP Message's header
@@ -369,8 +440,10 @@ Client._on_stdout = function(self, data)
   end
 end
 
+local json_decode = vim.fn.json_decode
+
 Client._on_message = function(self, body)
-  local ok, json_message = pcall(util.decode_json, body)
+  local ok, json_message = pcall(json_decode, body)
 
   if not ok then
     logger.error('Not a valid message. Calling self:_on_error')

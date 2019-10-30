@@ -24,7 +24,6 @@
 -- TODO: documentLink/resolve
 
 local logger = require('vim.lsp.logger')
-local util = require('vim.lsp.util')
 local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
 
@@ -306,6 +305,70 @@ BUILTIN_CALLBACKS['textDocument/signatureHelp'] = {
   options = {},
 }
 
+local function update_tagstack()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local line = vim.fn.line('.')
+  local col = vim.fn.col('.')
+  local tagname = vim.fn.expand('<cWORD>')
+  local item = { bufnr = bufnr, from = { bufnr, line, col, 0 }, tagname = tagname }
+  local winid = vim.fn.win_getid()
+  local tagstack = vim.fn.gettagstack(winid)
+
+  local action
+
+  if tagstack.length == tagstack.curidx then
+    action = 'r'
+    tagstack.items[tagstack.curidx] = item
+  elseif tagstack.length > tagstack.curidx then
+    action = 'r'
+    if tagstack.curidx > 1 then
+      tagstack.items = table.insert(tagstack.items[tagstack.curidx - 1], item)
+    else
+      tagstack.items = { item }
+    end
+  else
+    action = 'a'
+    tagstack.items = { item }
+  end
+
+  tagstack.curidx = tagstack.curidx + 1
+  vim.fn.settagstack(winid, tagstack, action)
+end
+
+local function handle_location(result)
+  local current_file = vim.fn.expand('%')
+
+  -- We can sometimes get a list of locations,
+  -- so set the first value as the only value we want to handle
+  if result[1] ~= nil then
+    result = result[1]
+  end
+
+  if result.uri == nil then
+    vim.api.nvim_err_writeln('[LSP] Could not find a valid location')
+    return
+  end
+
+  if type(result.uri) ~= 'string' then
+    vim.api.nvim_err_writeln('Invalid uri')
+    return
+  end
+
+  local result_file = vim.uri_to_fname(result.uri)
+
+  update_tagstack()
+  if result_file ~= vim.uri_from_fname(current_file) then
+    vim.api.nvim_command('silent edit ' .. result_file)
+  end
+
+  vim.api.nvim_command(
+    string.format('normal! %sG%s|'
+      , result.range.start.line + 1
+      , result.range.start.character + 1
+    )
+  )
+end
+
 local location_callback_object = {
   callback = function(self, result)
     -- logger.debug('callback:textDocument/definiton ', result, ' ', self)
@@ -313,7 +376,7 @@ local location_callback_object = {
       logger.info('No declaration found')
       return nil
     end
-    util.handle_location(result)
+    handle_location(result)
     return true
   end,
   options = {}

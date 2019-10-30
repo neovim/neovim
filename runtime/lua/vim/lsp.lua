@@ -2,13 +2,17 @@ local lsp = {
   server_config = require('vim.lsp.server_config'),
   config = require('vim.lsp.config'),
   protocol = require('vim.lsp.protocol'),
-  util = require('vim.lsp.util'),
 }
 
 local Client = require('vim.lsp.client')
 local callbacks = require('vim.lsp.callbacks')
 local logger = require('vim.lsp.logger')
 local text_document_handler = require('vim.lsp.handler').text_document
+
+local function get_filetype(bufnr)
+  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  return vim.api.nvim_buf_get_option(bufnr, 'filetype')
+end
 
 --- Dictionary of [filetype][server_name]
 local CLIENTS = {}
@@ -43,7 +47,7 @@ end
 --
 -- @returns: A client object that has been initialized
 function lsp.start_client(filetype, server_name, bufnr)
-  filetype = filetype or lsp.util.get_filetype(bufnr)
+  filetype = filetype or get_filetype(bufnr)
   if not server_name then server_name = filetype end
 
   assert(not lsp.get_client(filetype, server_name), string.format("Language server for filetype: %s, server_name: %s has already started.", filetype, server_name))
@@ -85,7 +89,7 @@ end
 --
 -- @returns: The table of responses of the request
 function lsp.request(method, arguments, bufnr, filetype, server_name)
-  filetype = filetype or lsp.util.get_filetype(bufnr)
+  filetype = filetype or get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
   end
@@ -122,7 +126,7 @@ end
 --
 -- @returns: The table of request id
 function lsp.request_async(method, arguments, cb, bufnr, filetype, server_name)
-  filetype = filetype or lsp.util.get_filetype(bufnr)
+  filetype = filetype or get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
   end
@@ -158,7 +162,7 @@ end
 --
 -- @returns: The notification message id
 function lsp.notify(method, arguments, bufnr, filetype, server_name)
-  filetype = filetype or lsp.util.get_filetype(bufnr)
+  filetype = filetype or get_filetype(bufnr)
   if not filetype or filetype == '' then
     return
   end
@@ -248,7 +252,7 @@ end
 function lsp.omnifunc(findstart, base)
   logger.debug(string.format("omnifunc findstart: %s, base: %s", findstart, base))
 
-  if not lsp.client_has_started(lsp.util.get_filetype()) then
+  if not lsp.client_has_started(get_filetype()) then
     return findstart and -1 or {}
   end
 

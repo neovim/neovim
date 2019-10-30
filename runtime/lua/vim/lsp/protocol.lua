@@ -1,6 +1,5 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
-local util = require('vim.lsp.util')
 local server_config = require('vim.lsp.server_config')
 local protocol = {}
 
@@ -151,9 +150,12 @@ protocol.update_document_version = function(version, uri)
   __document_version[uri] = version
 end
 
+local function get_buffer_text(bufnr)
+  return table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+end
+
 protocol.text = function(args)
-  return args
-    or util.get_buffer_text(0)
+  return args or get_buffer_text(0)
 end
 
 protocol.TextDocumentIdentifier = function(args)
