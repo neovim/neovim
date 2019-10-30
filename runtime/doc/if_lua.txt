@@ -327,6 +327,38 @@ Return value is also always converted. When converting,
 |msgpack-special-dict|s are treated specially.
 
 ==============================================================================
+v:lua function calls						*v:lua-call*
+
+The special prefix `v:lua` can be used in vimL expressions to call lua
+functions which are global or nested inside global tables. The expression
+`v:lua.func(arg1, arg2)` is equivalent to executing the lua code
+`return func(...)` where the args have been converted to lua values. In addition
+`v:lua.somemod.func(args)` will work like `return somemod.func(...)` .
+
+`v:lua` can also be used in function options like 'omnifunc'. As an
+example, consider the following lua implementation of an omnifunc: >
+
+    function mymod.omnifunc(findstart, base)
+      if findstart == 1 then
+        return 0
+      else
+        return {'stuff', 'steam', 'strange things'}
+      end
+    end
+    vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omnifunc')
+
+A limitation is that the plugin module ("mymod" in this case) must
+be made available as a global.
+
+Note: `v:lua` without a call is not allowed in a vimL expression. Funcrefs
+to lua functions cannot be created. The following are errors: >
+
+    let g:Myvar = v:lua.myfunc
+    call SomeFunc(v:lua.mycallback)
+    let g:foo = v:lua
+    let g:foo = v:['lua']
+
+==============================================================================
 Lua standard modules					*lua-stdlib*
 
 The Nvim Lua "standard library" (stdlib) is the `vim` module, which exposes

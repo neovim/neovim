@@ -155,41 +155,41 @@ describe('luaeval(vim.api.…)', function()
 
   it('errors out correctly when working with API', function()
     -- Conversion errors
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Cannot convert given lua type',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua type',
        exc_exec([[call luaeval("vim.api.nvim__id(vim.api.nvim__id)")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Cannot convert given lua table',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua table',
        exc_exec([[call luaeval("vim.api.nvim__id({1, foo=42})")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Cannot convert given lua type',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Cannot convert given lua type',
        exc_exec([[call luaeval("vim.api.nvim__id({42, vim.api.nvim__id})")]]))
     -- Errors in number of arguments
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected 1 argument',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 1 argument',
        exc_exec([[call luaeval("vim.api.nvim__id()")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected 1 argument',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 1 argument',
        exc_exec([[call luaeval("vim.api.nvim__id(1, 2)")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected 2 arguments',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected 2 arguments',
        exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2, 3)")]]))
     -- Error in argument types
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua string',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua string',
        exc_exec([[call luaeval("vim.api.nvim_set_var(1, 2)")]]))
 
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua number',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua number',
        exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 'test', 1, false)")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Number is not integral',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Number is not integral',
        exc_exec([[call luaeval("vim.api.nvim_buf_get_lines(0, 1.5, 1, false)")]]))
 
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua table',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
        exc_exec([[call luaeval("vim.api.nvim__id_float('test')")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Unexpected type',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
        exc_exec([[call luaeval("vim.api.nvim__id_float({[vim.type_idx]=vim.types.dictionary})")]]))
 
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua table',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
        exc_exec([[call luaeval("vim.api.nvim__id_array(1)")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Unexpected type',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
        exc_exec([[call luaeval("vim.api.nvim__id_array({[vim.type_idx]=vim.types.dictionary})")]]))
 
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Expected lua table',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Expected lua table',
        exc_exec([[call luaeval("vim.api.nvim__id_dictionary(1)")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: Unexpected type',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: Unexpected type',
        exc_exec([[call luaeval("vim.api.nvim__id_dictionary({[vim.type_idx]=vim.types.array})")]]))
     -- TODO: check for errors with Tabpage argument
     -- TODO: check for errors with Window argument

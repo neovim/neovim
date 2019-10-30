@@ -48,9 +48,6 @@ typedef struct {
 # include "lua/executor.c.generated.h"
 #endif
 
-/// Name of the run code for use in messages
-#define NLUA_EVAL_NAME "<VimL compiled string>"
-
 /// Convert lua error into a Vim error message
 ///
 /// @param  lstate  Lua interpreter state.
@@ -397,29 +394,6 @@ static lua_State *nlua_enter(void)
   return lstate;
 }
 
-/// Execute lua string
-///
-/// @param[in]  str  String to execute.
-/// @param[out]  ret_tv  Location where result will be saved.
-///
-/// @return Result of the execution.
-void executor_exec_lua(const String str, typval_T *const ret_tv)
-  FUNC_ATTR_NONNULL_ALL
-{
-  lua_State *const lstate = nlua_enter();
-
-  if (luaL_loadbuffer(lstate, str.data, str.size, NLUA_EVAL_NAME)) {
-    nlua_error(lstate, _("E5104: Error while creating lua chunk: %.*s"));
-    return;
-  }
-  if (lua_pcall(lstate, 0, 1, 0)) {
-    nlua_error(lstate, _("E5105: Error while calling lua chunk: %.*s"));
-    return;
-  }
-
-  nlua_pop_typval(lstate, ret_tv);
-}
-
 static void nlua_print_event(void **argv)
 {
   char *str = argv[0];
@@ -732,10 +706,6 @@ void executor_eval_lua(const String str, typval_T *const arg,
                        typval_T *const ret_tv)
   FUNC_ATTR_NONNULL_ALL
 {
-  lua_State *const lstate = nlua_enter();
-
-  garray_T str_ga;
-  ga_init(&str_ga, 1, 80);
 #define EVALHEADER "local _A=select(1,...) return ("
   const size_t lcmd_len = sizeof(EVALHEADER) - 1 + str.size + 1;
   char *lcmd;
@@ -748,30 +718,71 @@ void executor_eval_lua(const String str, typval_T *const arg,
   memcpy(lcmd + sizeof(EVALHEADER) - 1, str.data, str.size);
   lcmd[lcmd_len - 1] = ')';
 #undef EVALHEADER
-  if (luaL_loadbuffer(lstate, lcmd, lcmd_len, NLUA_EVAL_NAME)) {
-    nlua_error(lstate,
-               _("E5107: Error while creating lua chunk for luaeval(): %.*s"));
-    if (lcmd != (char *)IObuff) {
-      xfree(lcmd);
-    }
-    return;
-  }
+  typval_exec_lua(lcmd, lcmd_len, "luaeval()", arg, 1, true, ret_tv);
+
   if (lcmd != (char *)IObuff) {
     xfree(lcmd);
   }
+}
 
-  if (arg->v_type == VAR_UNKNOWN) {
-    lua_pushnil(lstate);
+void executor_call_lua(const char *str, size_t len, typval_T *const args,
+                       int argcount, typval_T *ret_tv)
+  FUNC_ATTR_NONNULL_ALL
+{
+#define CALLHEADER "return "
+#define CALLSUFFIX "(...)"
+  const size_t lcmd_len = sizeof(CALLHEADER) - 1 + len + sizeof(CALLSUFFIX) - 1;
+  char *lcmd;
+  if (lcmd_len < IOSIZE) {
+    lcmd = (char *)IObuff;
   } else {
-    nlua_push_typval(lstate, arg, true);
+    lcmd = xmalloc(lcmd_len);
   }
-  if (lua_pcall(lstate, 1, 1, 0)) {
-    nlua_error(lstate,
-               _("E5108: Error while calling lua chunk for luaeval(): %.*s"));
+  memcpy(lcmd, CALLHEADER, sizeof(CALLHEADER) - 1);
+  memcpy(lcmd + sizeof(CALLHEADER) - 1, str, len);
+  memcpy(lcmd + sizeof(CALLHEADER) - 1 + len, CALLSUFFIX,
+         sizeof(CALLSUFFIX) - 1);
+#undef CALLHEADER
+#undef CALLSUFFIX
+
+  typval_exec_lua(lcmd, lcmd_len, "v:lua", args, argcount, false, ret_tv);
+
+  if (lcmd != (char *)IObuff) {
+    xfree(lcmd);
+  }
+}
+
+static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
+                            typval_T *const args, int argcount, bool special,
+                            typval_T *ret_tv)
+{
+  if (check_restricted() || check_secure()) {
+    ret_tv->v_type = VAR_NUMBER;
+    ret_tv->vval.v_number = 0;
     return;
   }
 
-  nlua_pop_typval(lstate, ret_tv);
+  lua_State *const lstate = nlua_enter();
+  if (luaL_loadbuffer(lstate, lcmd, lcmd_len, name)) {
+    nlua_error(lstate, _("E5107: Error loading lua %.*s"));
+    return;
+  }
+
+  for (int i = 0; i < argcount; i++) {
+    if (args[i].v_type == VAR_UNKNOWN) {
+      lua_pushnil(lstate);
+    } else {
+      nlua_push_typval(lstate, &args[i], special);
+    }
+  }
+  if (lua_pcall(lstate, argcount, ret_tv ? 1 : 0, 0)) {
+    nlua_error(lstate, _("E5108: Error executing lua %.*s"));
+    return;
+  }
+
+  if (ret_tv) {
+    nlua_pop_typval(lstate, ret_tv);
+  }
 }
 
 /// Execute lua string
@@ -857,9 +868,8 @@ void ex_lua(exarg_T *const eap)
     xfree(code);
     return;
   }
-  typval_T tv = { .v_type = VAR_UNKNOWN };
-  executor_exec_lua((String) { .data = code, .size = len }, &tv);
-  tv_clear(&tv);
+  typval_exec_lua(code, len, ":lua", NULL, 0, false, NULL);
+
   xfree(code);
 }
 
@@ -897,8 +907,8 @@ void ex_luado(exarg_T *const eap)
 #undef DOSTART
 #undef DOEND
 
-  if (luaL_loadbuffer(lstate, lcmd, lcmd_len, NLUA_EVAL_NAME)) {
-    nlua_error(lstate, _("E5109: Error while creating lua chunk: %.*s"));
+  if (luaL_loadbuffer(lstate, lcmd, lcmd_len, ":luado")) {
+    nlua_error(lstate, _("E5109: Error loading lua: %.*s"));
     if (lcmd_len >= IOSIZE) {
       xfree(lcmd);
     }
@@ -908,7 +918,7 @@ void ex_luado(exarg_T *const eap)
     xfree(lcmd);
   }
   if (lua_pcall(lstate, 0, 1, 0)) {
-    nlua_error(lstate, _("E5110: Error while creating lua function: %.*s"));
+    nlua_error(lstate, _("E5110: Error executing lua: %.*s"));
     return;
   }
   for (linenr_T l = eap->line1; l <= eap->line2; l++) {
@@ -919,7 +929,7 @@ void ex_luado(exarg_T *const eap)
     lua_pushstring(lstate, (const char *)ml_get_buf(curbuf, l, false));
     lua_pushnumber(lstate, (lua_Number)l);
     if (lua_pcall(lstate, 2, 1, 0)) {
-      nlua_error(lstate, _("E5111: Error while calling lua function: %.*s"));
+      nlua_error(lstate, _("E5111: Error calling lua: %.*s"));
       break;
     }
     if (lua_isstring(lstate, -1)) {

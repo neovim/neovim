@@ -422,6 +422,7 @@ static struct vimvar {
   VV(VV_TYPE_BOOL,      "t_bool",           VAR_NUMBER, VV_RO),
   VV(VV_ECHOSPACE,      "echospace",        VAR_NUMBER, VV_RO),
   VV(VV_EXITING,        "exiting",          VAR_NUMBER, VV_RO),
+  VV(VV_LUA,            "lua",              VAR_PARTIAL, VV_RO),
 };
 #undef VV
 
@@ -433,10 +434,13 @@ static struct vimvar {
 #define vv_str          vv_di.di_tv.vval.v_string
 #define vv_list         vv_di.di_tv.vval.v_list
 #define vv_dict         vv_di.di_tv.vval.v_dict
+#define vv_partial      vv_di.di_tv.vval.v_partial
 #define vv_tv           vv_di.di_tv
 
 /// Variable used for v:
 static ScopeDictDictItem vimvars_var;
+
+static partial_T *vvlua_partial;
 
 /// v: hashtab
 #define vimvarht  vimvardict.dv_hashtab
@@ -638,6 +642,13 @@ void eval_init(void)
   set_vim_var_special(VV_EXITING, kSpecialVarNull);
 
   set_vim_var_nr(VV_ECHOSPACE,    sc_col - 1);
+
+  vimvars[VV_LUA].vv_type = VAR_PARTIAL;
+  vvlua_partial = xcalloc(1, sizeof(partial_T));
+  vimvars[VV_LUA].vv_partial = vvlua_partial;
+  // this value shouldn't be printed, but if it is, do not crash
+  vvlua_partial->pt_name = xmallocz(0);
+  vvlua_partial->pt_refcount++;
 
   set_reg_var(0);  // default for v:register is not 0 but '"'
 }
@@ -1313,12 +1324,25 @@ int call_vim_function(
 {
   int doesrange;
   int ret;
+  int len = (int)STRLEN(func);
+  partial_T *pt = NULL;
+
+  if (len >= 6 && !memcmp(func, "v:lua.", 6)) {
+    func += 6;
+    len = check_luafunc_name((const char *)func, false);
+    if (len == 0) {
+      ret = FAIL;
+      goto fail;
+    }
+    pt = vvlua_partial;
+  }
 
   rettv->v_type = VAR_UNKNOWN;  // tv_clear() uses this.
-  ret = call_func(func, (int)STRLEN(func), rettv, argc, argv, NULL,
+  ret = call_func(func, len, rettv, argc, argv, NULL,
                   curwin->w_cursor.lnum, curwin->w_cursor.lnum,
-                  &doesrange, true, NULL, NULL);
+                  &doesrange, true, pt, NULL);
 
+fail:
   if (ret == FAIL) {
     tv_clear(rettv);
   }
@@ -2460,6 +2484,13 @@ static char_u *get_lval(char_u *const name, typval_T *const rettv,
         if (wrong) {
           return NULL;
         }
+      }
+
+      if (lp->ll_di != NULL && tv_is_luafunc(&lp->ll_di->di_tv)
+          && len == -1 && rettv == NULL) {
+        tv_clear(&var1);
+        EMSG2(e_illvar, "v:['lua']");
+        return NULL;
       }
 
       if (lp->ll_di == NULL) {
@@ -4699,7 +4730,7 @@ eval_index(
 
   if (evaluate) {
     n1 = 0;
-    if (!empty1 && rettv->v_type != VAR_DICT) {
+    if (!empty1 && rettv->v_type != VAR_DICT && !tv_is_luafunc(rettv)) {
       n1 = tv_get_number(&var1);
       tv_clear(&var1);
     }
@@ -4823,7 +4854,7 @@ eval_index(
         if (len == -1) {
           tv_clear(&var1);
         }
-        if (item == NULL) {
+        if (item == NULL || tv_is_luafunc(&item->di_tv)) {
           return FAIL;
         }
 
@@ -6334,7 +6365,7 @@ static char_u *deref_func_name(const char *name, int *lenp,
  */
 static int
 get_func_tv(
-    char_u *name,           // name of the function
+    const char_u *name,     // name of the function
     int len,                // length of "name"
     typval_T *rettv,
     char_u **arg,           // argument, pointing to the '('
@@ -6590,7 +6621,15 @@ call_func(
     rettv->vval.v_number = 0;
     error = ERROR_UNKNOWN;
 
-    if (!builtin_function((const char *)rfname, -1)) {
+    if (partial == vvlua_partial) {
+      if (len > 0) {
+        error = ERROR_NONE;
+        executor_call_lua((const char *)funcname, len,
+                          argvars, argcount, rettv);
+      } else {
+        error = ERROR_UNKNOWN;
+      }
+    } else if (!builtin_function((const char *)rfname, -1)) {
       // User defined function.
       if (partial != NULL && partial->pt_func != NULL) {
         fp = partial->pt_func;
@@ -6707,14 +6746,14 @@ call_func(
 ///
 /// @param ermsg must be passed without translation (use N_() instead of _()).
 /// @param name function name
-static void emsg_funcname(char *ermsg, char_u *name)
+static void emsg_funcname(char *ermsg, const char_u *name)
 {
   char_u *p;
 
   if (*name == K_SPECIAL) {
     p = concat_str((char_u *)"<SNR>", name + 3);
   } else {
-    p = name;
+    p = (char_u *)name;
   }
 
   EMSG2(_(ermsg), p);
@@ -20168,6 +20207,26 @@ static void check_vars(const char *name, size_t len)
   }
 }
 
+/// check if special v:lua value for calling lua functions
+static bool tv_is_luafunc(typval_T *tv)
+{
+  return tv->v_type == VAR_PARTIAL && tv->vval.v_partial == vvlua_partial;
+}
+
+/// check the function name after "v:lua."
+static int check_luafunc_name(const char *str, bool paren)
+{
+  const char *p = str;
+  while (ASCII_ISALNUM(*p) || *p == '_' || *p == '.') {
+    p++;
+  }
+  if (*p != (paren ? '(' : NUL)) {
+    return 0;
+  } else {
+    return (int)(p-str);
+  }
+}
+
 /// Handle expr[expr], expr[expr:expr] subscript and .name lookup.
 /// Also handle function call with Funcref variable: func(expr)
 /// Can all be combined: dict.func(expr)[idx]['func'](expr)
@@ -20181,9 +20240,30 @@ handle_subscript(
 {
   int ret = OK;
   dict_T      *selfdict = NULL;
-  char_u      *s;
+  const char_u *s;
   int len;
   typval_T functv;
+  int slen = 0;
+  bool lua = false;
+
+  if (tv_is_luafunc(rettv)) {
+    if (**arg != '.') {
+      tv_clear(rettv);
+      ret = FAIL;
+    } else {
+      (*arg)++;
+
+      lua = true;
+      s = (char_u *)(*arg);
+      slen = check_luafunc_name(*arg, true);
+      if (slen == 0) {
+        tv_clear(rettv);
+        ret = FAIL;
+      }
+      (*arg) += slen;
+    }
+  }
+
 
   while (ret == OK
          && (**arg == '['
@@ -20200,14 +20280,16 @@ handle_subscript(
         // Invoke the function.  Recursive!
         if (functv.v_type == VAR_PARTIAL) {
           pt = functv.vval.v_partial;
-          s = partial_name(pt);
+          if (!lua) {
+            s = partial_name(pt);
+          }
         } else {
           s = functv.vval.v_string;
         }
       } else {
         s = (char_u *)"";
       }
-      ret = get_func_tv(s, (int)STRLEN(s), rettv, (char_u **)arg,
+      ret = get_func_tv(s, lua ? slen : (int)STRLEN(s), rettv, (char_u **)arg,
                         curwin->w_cursor.lnum, curwin->w_cursor.lnum,
                         &len, evaluate, pt, selfdict);
 
@@ -22039,8 +22121,19 @@ trans_function_name(
       *pp = (char_u *)end;
     } else if (lv.ll_tv->v_type == VAR_PARTIAL
                && lv.ll_tv->vval.v_partial != NULL) {
-      name = vim_strsave(partial_name(lv.ll_tv->vval.v_partial));
-      *pp = (char_u *)end;
+      if (lv.ll_tv->vval.v_partial == vvlua_partial && *end == '.') {
+        len = check_luafunc_name((const char *)end+1, true);
+        if (len == 0) {
+          EMSG2(e_invexpr2, "v:lua");
+          goto theend;
+        }
+        name = xmallocz(len);
+        memcpy(name, end+1, len);
+        *pp = (char_u *)end+1+len;
+      } else {
+        name = vim_strsave(partial_name(lv.ll_tv->vval.v_partial));
+        *pp = (char_u *)end;
+      }
       if (partial != NULL) {
         *partial = lv.ll_tv->vval.v_partial;
       }

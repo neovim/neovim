@@ -13,6 +13,7 @@ local source = helpers.source
 local dedent = helpers.dedent
 local command = helpers.command
 local exc_exec = helpers.exc_exec
+local pcall_err = helpers.pcall_err
 local write_file = helpers.write_file
 local redir_exec = helpers.redir_exec
 local curbufmeths = helpers.curbufmeths
@@ -42,16 +43,16 @@ describe(':lua command', function()
     eq({'', 'ETTS', 'TTSE', 'STTE'}, curbufmeths.get_lines(0, 100, false))
   end)
   it('throws catchable errors', function()
-    eq([[Vim(lua):E5104: Error while creating lua chunk: [string "<VimL compiled string>"]:1: unexpected symbol near ')']],
-       exc_exec('lua ()'))
-    eq([[Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: TEST]],
+    eq([[Vim(lua):E5107: Error loading lua [string ":lua"]:1: unexpected symbol near ')']],
+       pcall_err(command, 'lua ()'))
+    eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: TEST]],
        exc_exec('lua error("TEST")'))
-    eq([[Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: Invalid buffer id]],
+    eq([[Vim(lua):E5108: Error executing lua [string ":lua"]:1: Invalid buffer id]],
        exc_exec('lua vim.api.nvim_buf_set_lines(-10, 1, 1, false, {"TEST"})'))
     eq({''}, curbufmeths.get_lines(0, 100, false))
   end)
   it('works with NULL errors', function()
-    eq([=[Vim(lua):E5105: Error while calling lua chunk: [NULL]]=],
+    eq([=[Vim(lua):E5108: Error executing lua [NULL]]=],
        exc_exec('lua error(nil)'))
   end)
   it('accepts embedded NLs without heredoc', function()
@@ -74,7 +75,7 @@ describe(':lua command', function()
   it('works with long strings', function()
     local s = ('x'):rep(100500)
 
-    eq('\nE5104: Error while creating lua chunk: [string "<VimL compiled string>"]:1: unfinished string near \'<eof>\'', redir_exec(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s})'):format(s)))
+    eq('\nE5107: Error loading lua [string ":lua"]:1: unfinished string near \'<eof>\'', redir_exec(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s})'):format(s)))
     eq({''}, curbufmeths.get_lines(0, -1, false))
 
     eq('', redir_exec(('lua vim.api.nvim_buf_set_lines(1, 1, 2, false, {"%s"})'):format(s)))
@@ -82,7 +83,7 @@ describe(':lua command', function()
   end)
 
   it('can show multiline error messages', function()
-    local screen = Screen.new(50,10)
+    local screen = Screen.new(40,10)
     screen:attach()
     screen:set_default_attr_ids({
       [1] = {bold = true, foreground = Screen.colors.Blue1},
@@ -92,51 +93,51 @@ describe(':lua command', function()
     })
 
     feed(':lua error("fail\\nmuch error\\nsuch details")<cr>')
-    screen:expect([[
-                                                        |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {2:                                                  }|
-      {3:E5105: Error while calling lua chunk: [string "<Vi}|
-      {3:mL compiled string>"]:1: fail}                     |
-      {3:much error}                                        |
-      {3:such details}                                      |
-      {4:Press ENTER or type command to continue}^           |
-    ]])
+    screen:expect{grid=[[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:                                        }|
+      {3:E5108: Error executing lua [string ":lua}|
+      {3:"]:1: fail}                              |
+      {3:much error}                              |
+      {3:such details}                            |
+      {4:Press ENTER or type command to continue}^ |
+    ]]}
     feed('<cr>')
-    screen:expect([[
-      ^                                                  |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-                                                        |
-    ]])
-    eq('E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: fail\nmuch error\nsuch details', eval('v:errmsg'))
+    screen:expect{grid=[[
+      ^                                        |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+                                              |
+    ]]}
+    eq('E5108: Error executing lua [string ":lua"]:1: fail\nmuch error\nsuch details', eval('v:errmsg'))
 
     local status, err = pcall(command,'lua error("some error\\nin a\\nAPI command")')
-    local expected = 'Vim(lua):E5105: Error while calling lua chunk: [string "<VimL compiled string>"]:1: some error\nin a\nAPI command'
+    local expected = 'Vim(lua):E5108: Error executing lua [string ":lua"]:1: some error\nin a\nAPI command'
     eq(false, status)
     eq(expected, string.sub(err, -string.len(expected)))
 
     feed(':messages<cr>')
-    screen:expect([[
-                                                        |
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {1:~                                                 }|
-      {2:                                                  }|
-      {3:E5105: Error while calling lua chunk: [string "<Vi}|
-      {3:mL compiled string>"]:1: fail}                     |
-      {3:much error}                                        |
-      {3:such details}                                      |
-      {4:Press ENTER or type command to continue}^           |
-    ]])
+    screen:expect{grid=[[
+                                              |
+      {1:~                                       }|
+      {1:~                                       }|
+      {1:~                                       }|
+      {2:                                        }|
+      {3:E5108: Error executing lua [string ":lua}|
+      {3:"]:1: fail}                              |
+      {3:much error}                              |
+      {3:such details}                            |
+      {4:Press ENTER or type command to continue}^ |
+    ]]}
   end)
 end)
 
@@ -167,13 +168,13 @@ describe(':luado command', function()
     eq({''}, curbufmeths.get_lines(0, -1, false))
   end)
   it('fails on errors', function()
-    eq([[Vim(luado):E5109: Error while creating lua chunk: [string "<VimL compiled string>"]:1: unexpected symbol near ')']],
+    eq([[Vim(luado):E5109: Error loading lua: [string ":luado"]:1: unexpected symbol near ')']],
        exc_exec('luado ()'))
-    eq([[Vim(luado):E5111: Error while calling lua function: [string "<VimL compiled string>"]:1: attempt to perform arithmetic on global 'liness' (a nil value)]],
+    eq([[Vim(luado):E5111: Error calling lua: [string ":luado"]:1: attempt to perform arithmetic on global 'liness' (a nil value)]],
        exc_exec('luado return liness + 1'))
   end)
   it('works with NULL errors', function()
-    eq([=[Vim(luado):E5111: Error while calling lua function: [NULL]]=],
+    eq([=[Vim(luado):E5111: Error calling lua: [NULL]]=],
        exc_exec('luado error(nil)'))
   end)
   it('fails in sandbox when needed', function()
@@ -185,7 +186,7 @@ describe(':luado command', function()
   it('works with long strings', function()
     local s = ('x'):rep(100500)
 
-    eq('\nE5109: Error while creating lua chunk: [string "<VimL compiled string>"]:1: unfinished string near \'<eof>\'', redir_exec(('luado return "%s'):format(s)))
+    eq('\nE5109: Error loading lua: [string ":luado"]:1: unfinished string near \'<eof>\'', redir_exec(('luado return "%s'):format(s)))
     eq({''}, curbufmeths.get_lines(0, -1, false))
 
     eq('', redir_exec(('luado return "%s"'):format(s)))
