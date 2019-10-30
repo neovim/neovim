@@ -88,7 +88,7 @@ local function common_setup(screen, inccommand, text)
     })
   end
 
-  command("set inccommand=" .. (inccommand and inccommand or ""))
+  command("set inccommand=" .. (inccommand or ""))
 
   if text then
     insert(text)
