@@ -49,6 +49,7 @@
 #endif
 
 #cmakedefine FEAT_TUI
+#cmakedefine FEAT_WIN_SHORTNAME
 
 #ifndef UNIT_TESTING
 #cmakedefine LOG_LIST_ACTIONS

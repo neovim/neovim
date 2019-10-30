@@ -19,6 +19,9 @@
 
 #include "nvim/os/os.h"
 #include "nvim/os/os_defs.h"
+#ifdef FEAT_WIN_SHORTNAME
+# include "nvim/os/path_win.h"
+#endif
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -85,15 +88,13 @@ int os_dirname(char_u *buf, size_t len)
   FUNC_ATTR_NONNULL_ALL
 {
   int error_number;
-#ifdef WIN32
-  size_t buf_len = len;
-#endif
-  if ((error_number = uv_cwd((char *)buf, &len)) != kLibuvSuccess) {
-    STRLCPY(buf, uv_strerror(error_number), len);
+  size_t cwd_len = len;
+  if ((error_number = uv_cwd((char *)buf, &cwd_len)) != kLibuvSuccess) {
+    STRLCPY(buf, uv_strerror(error_number), cwd_len);
     return FAIL;
   }
-#ifdef WIN32
-  path_to_long((char *)buf, (char *)buf, buf_len);
+#ifdef FEAT_WIN_SHORTNAME
+  path_to_long((char *)buf, (char *)buf, len);
 #endif
   return OK;
 }
