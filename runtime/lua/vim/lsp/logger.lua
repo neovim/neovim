@@ -6,6 +6,22 @@
 local Logger = {}
 Logger.__index = Logger
 
+local function add_reverse_lookup(o)
+	local keys = {}
+	for k in pairs(o) do table.insert(keys, k) end
+	for _, k in ipairs(keys) do o[o[k]] = k end
+	return o
+end
+
+local LOG_LEVELS = {
+	TRACE = 0;
+	DEBUG = 1;
+	INFO  = 2;
+	WARN  = 3;
+	ERROR = 4;
+	-- FATAL = 4;
+}
+
 Logger.levels = {
   debug = 0,
   info  = 1,

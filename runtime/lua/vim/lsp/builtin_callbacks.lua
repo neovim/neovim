@@ -272,7 +272,7 @@ BUILTIN_CALLBACKS['textDocument/rename'] = {
 -- @params MarkedString | MarkedString[] | MarkupContent
 BUILTIN_CALLBACKS['textDocument/hover'] = {
   callback = function(self, result)
-    logger.debug('textDocument/hover ', result, ' ', self)
+    logger.debug('textDocument/hover ', result, self)
 
     if result == nil or vim.tbl_isempty(result) then
       return
@@ -336,7 +336,7 @@ local function update_tagstack()
 end
 
 local function handle_location(result)
-  local current_file = vim.fn.expand('%')
+  local current_file = vim.fn.expand('%:p')
 
   -- We can sometimes get a list of locations,
   -- so set the first value as the only value we want to handle
@@ -355,23 +355,23 @@ local function handle_location(result)
   end
 
   local result_file = vim.uri_to_fname(result.uri)
+	-- logger.info('uris', result_file, vim.uri_from_fname(current_file))
 
   update_tagstack()
   if result_file ~= vim.uri_from_fname(current_file) then
-    vim.api.nvim_command('silent edit ' .. result_file)
+    vim.api.nvim_command('silent drop ' .. result_file)
   end
 
-  vim.api.nvim_command(
-    string.format('normal! %sG%s|'
-      , result.range.start.line + 1
-      , result.range.start.character + 1
-    )
-  )
+	local start = result.range.start
+	vim.api.nvim_win_set_cursor(0, {start.line + 1, start.character})
+  -- vim.api.nvim_command(
+  --   string.format('normal! %dG%d|', start.line + 1, start.character + 1)
+  -- )
 end
 
 local location_callback_object = {
-  callback = function(self, result)
-    -- logger.debug('callback:textDocument/definiton ', result, ' ', self)
+  callback = function(err, result)
+    logger.debug('location callback ', {result, ' ', err})
     if result == nil or vim.tbl_isempty(result) then
       logger.info('No declaration found')
       return nil
@@ -424,5 +424,10 @@ BUILTIN_CALLBACKS['window/showMessage'] = {
   end,
   options = {}
 }
+
+for k, v in pairs(BUILTIN_CALLBACKS) do
+	BUILTIN_CALLBACKS[k] = vim.schedule_wrap(v.callback)
+--	BUILTIN_CALLBACKS[k] = v.callback
+end
 
 return BUILTIN_CALLBACKS

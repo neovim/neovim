@@ -189,6 +189,19 @@ function vim.tbl_extend(behavior, ...)
   return ret
 end
 
+--- Extends a list-like table with the values of another list-like table.
+---
+--@see |extend()|
+---
+--@param dst The list which will be modified and appended to.
+--@param src The list from which values will be inserted.
+function vim.list_extend(dst, src)
+	for _, v in ipairs(src) do
+		table.insert(dst, v)
+	end
+	return dst
+end
+
 --- Creates a copy of a list-like table such that any nested tables are
 --- "unrolled" and appended to the result.
 ---
