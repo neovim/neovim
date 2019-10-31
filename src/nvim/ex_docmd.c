@@ -2400,6 +2400,7 @@ int parse_cmd_address(exarg_T *eap, char_u **errormsg, bool silent)
             }
             break;
           case ADDR_TABS_RELATIVE:
+          case ADDR_OTHER:
             *errormsg = (char_u *)_(e_invrange);
             return FAIL;
           case ADDR_ARGUMENTS:
@@ -5066,6 +5067,7 @@ static struct {
   { ADDR_BUFFERS, "buffers" },
   { ADDR_WINDOWS, "windows" },
   { ADDR_QUICKFIX, "quickfix" },
+  { ADDR_OTHER, "other" },
   { -1, NULL }
 };
 
