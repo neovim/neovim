@@ -167,6 +167,12 @@ function lsp.start_client(conf)
 		offset_encoding = VALID_ENCODINGS.UTF8
 	end
 	assert(type(conf.request_callbacks or {}) == 'table', "conf.request_callbacks must be a table")
+	-- TODO this isn't correct. It should probably be something else.
+	-- TODO this isn't correct. It should probably be something else.
+	-- TODO this isn't correct. It should probably be something else.
+	-- TODO this isn't correct. It should probably be something else.
+	-- TODO this isn't correct. It should probably be something else.
+	-- TODO this isn't correct. It should probably be something else.
 	local request_callbacks = vim.tbl_extend("keep", conf.request_callbacks or {}, default_request_callbacks)
 	-- local request_callbacks = conf.request_callbacks or default_request_callbacks
 	-- assert(type(request_callbacks) == 'table', "request_callbacks must be a table")
@@ -497,6 +503,7 @@ function lsp._start_client_by_name(name)
 		return
 	end
 	config.client_id = lsp.start_client(config)
+	vim.lsp.attach_to_buffer(0, config.client_id)
 
 	vim.api.nvim_command(string.format(
 		"autocmd FileType %s silent lua vim.lsp.attach_to_buffer(0, %d)",
@@ -571,23 +578,36 @@ end
 -- @param server_name [string] (optional)
 --
 -- @returns: The table of request id
-function lsp.buf_request_sync(bufnr, method, params)
-	local request_results
+function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
+	local request_results = {}
 	local result_count = 0
 	local function callback(err, result, client_id)
 		request_results[client_id] = { error = err, result = result }
 		result_count = result_count + 1
 	end
-	local client_request_ids = lsp.request(bufnr, method, params, callback)
+	local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, callback)
+	logger.info("client_request_ids", client_request_ids)
 
 	local expected_result_count = 0
 	for _ in pairs(client_request_ids) do
 		expected_result_count = expected_result_count + 1
 	end
+	logger.info("expected_result_count", expected_result_count)
+	local timeout = (timeout_ms or 100) + vim.loop.now()
 	-- TODO is there a better way to sync this?
 	while result_count < expected_result_count do
-		vim.loop.sleep(10)
+		logger.info("results", result_count, request_results)
+		if vim.loop.now() >= timeout then
+			cancel()
+			return nil, "TIMEOUT"
+		end
+		-- TODO this really needs to be further looked at.
+		vim.api.nvim_command "sleep 10m"
+		-- vim.loop.sleep(10)
+		vim.loop.update_time()
 	end
+	vim.loop.update_time()
+	logger.info("results", result_count, request_results)
 	return request_results
 end
 
@@ -639,7 +659,8 @@ function lsp.omnifunc(findstart, base)
 	else
 		local pos = vim.api.nvim_win_get_cursor(0)
 		local line = assert(vim.api.nvim_buf_get_lines(bufnr, pos[1]-1, pos[1], false)[1])
-		local line_to_cursor = line:sub(pos[2]+1)
+		logger.debug("line", pos, line)
+		local line_to_cursor = line:sub(1, pos[2]+1)
 		local params = {
 			textDocument = {
 				uri = vim.uri_from_bufnr(bufnr);
@@ -656,7 +677,8 @@ function lsp.omnifunc(findstart, base)
 			-- 	triggerCharacter = nil or "";
 			-- };
 		}
-    local client_responses = lsp.buf_request_sync('textDocument/completion', params)
+		-- TODO handle timeout error differently?
+    local client_responses = lsp.buf_request_sync(bufnr, 'textDocument/completion', params) or {}
     local matches = {}
     for client_id, response in pairs(client_responses) do
 			-- TODO how to handle errors?

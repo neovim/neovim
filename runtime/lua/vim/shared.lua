@@ -189,6 +189,16 @@ function vim.tbl_extend(behavior, ...)
   return ret
 end
 
+--- Add the reverse lookup values to an existing table.
+--- For example:
+--- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
+--@param o table The table to add the reverse to.
+function vim.tbl_add_reverse_lookup(o)
+	local keys = vim.tbl_keys(o)
+	for _, k in ipairs(keys) do o[o[k]] = k end
+	return o
+end
+
 --- Extends a list-like table with the values of another list-like table.
 ---
 --@see |extend()|

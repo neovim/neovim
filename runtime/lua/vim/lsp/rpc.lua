@@ -78,14 +78,7 @@ local function request_parser_loop()
 	end
 end
 
-local function add_reverse_lookup(o)
-	local keys = {}
-	for k in pairs(o) do table.insert(keys, k) end
-	for _, k in ipairs(keys) do o[o[k]] = k end
-	return o
-end
-
-local CLIENT_ERRORS = add_reverse_lookup {
+local CLIENT_ERRORS = vim.tbl_add_reverse_lookup {
 	INVALID_SERVER_MESSAGE = 1;
 	INVALID_SERVER_JSON = 2;
 	NO_RESULT_CALLBACK_FOUND = 3;
@@ -155,6 +148,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 	local message_callbacks = {}
 
 	local function encode_and_send(payload)
+		logger.debug("payload", payload)
 		if handle:is_closing() then return false end
 		local encoded = assert(json_encode(payload))
 		stdin:write(format_message_with_content_length(encoded))
@@ -190,10 +184,82 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 			params = params;
 		}
 		if result then
-			message_callbacks[message_id] = callback
+			-- TODO vim.schedule here?
+			-- TODO vim.schedule here?
+			-- TODO vim.schedule here?
+			-- TODO vim.schedule here?
+			message_callbacks[message_id] = vim.schedule_wrap(callback)
+--			message_callbacks[message_id] = callback
 			return result, message_id
 		else
 			return false
+		end
+	end
+
+	-- TODO delete
+	-- TODO delete
+	-- TODO delete
+	local stderroutput = io.open("/home/ashkan/lsp.log", "w")
+	stderroutput:setvbuf("no")
+	stderr:read_start(function(err, chunk)
+		if chunk then
+			stderroutput:write(chunk)
+		end
+	end)
+
+	local function handle_body(body)
+		-- TODO handle invalid decoding.
+		local decoded, err = json_decode(body)
+		if not decoded then
+			pcall(handlers.on_error, CLIENT_ERRORS.INVALID_SERVER_JSON, err)
+		end
+		logger.debug("decoded", decoded)
+
+		if type(decoded.method) == 'string' and decoded.id then
+			-- Server Request
+			local status, result
+			status, result, err = pcall(handlers.server_request, decoded.method, decoded.params)
+			if status then
+				-- TODO what to do here? Fatal error?
+				assert(result or err, "either a result or an error must be sent to the server in response")
+				if err then
+					assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")
+					local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes")
+					err.message = err.message or code_name
+				end
+			else
+				-- On an exception, result will contain the error message.
+				err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
+				result = nil
+			end
+			-- TODO make sure that these won't block anything.
+			send_response(decoded.id, err, result)
+		elseif decoded.id then
+			-- Server Result
+
+			-- TODO this condition (result or error) will fail if result is null in
+			-- the success case. such as for textDocument/completion.
+			--			elseif decoded.id and (decoded.result or decoded.error) then
+
+			-- TODO verify decoded.id is a string or number?
+			local result_id = tonumber(decoded.id)
+			local callback = message_callbacks[result_id]
+			if callback then
+				message_callbacks[result_id] = nil
+				assert(type(callback) == 'function', "callback must be a function")
+				-- TODO log errors from user.
+				pcall(callback, decoded.error, decoded.result)
+			else
+				-- TODO handle us not having a callback
+				pcall(handlers.on_error, CLIENT_ERRORS.NO_RESULT_CALLBACK_FOUND, decoded)
+				logger.error("No callback found for server response id "..result_id)
+			end
+		elseif type(decoded.method) == 'string' then
+			-- Notification
+			pcall(handlers.notification, decoded.method, decoded.params)
+		else
+			-- Invalid server message
+			pcall(handlers.on_error, CLIENT_ERRORS.INVALID_SERVER_MESSAGE, decoded)
 		end
 	end
 
@@ -207,61 +273,18 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 		end
 		-- This should signal that we are done reading from the client.
 		if not chunk then return end
-		local headers, body = request_parser(chunk)
-		-- If we successfully parsed, then handle the response.
-		if headers then
-			-- TODO handle invalid decoding.
-			local decoded
-			decoded, err = json_decode(body)
-			if not decoded then
-				pcall(handlers.on_error, CLIENT_ERRORS.INVALID_SERVER_JSON, err)
-			end
-
-			if type(decoded.method) == 'string' and decoded.id then
-				-- Server Request
-				local status, result
-				status, result, err = pcall(handlers.server_request, decoded.method, decoded.params)
-				if status then
-					-- TODO what to do here? Fatal error?
-					assert(result or err, "either a result or an error must be sent to the server in response")
-					if err then
-						assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")
-						local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes")
-						err.message = err.message or code_name
-					end
-				else
-					-- On an exception, result will contain the error message.
-					err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
-					result = nil
-				end
-				-- TODO make sure that these won't block anything.
-				send_response(decoded.id, err, result)
-			elseif decoded.id and (decoded.result or decoded.error) then
-				-- Server Result
-
-				-- TODO this condition (result or error) will fail if result is null in
-				-- the success case. such as for shutdown.  But the client will never
-				-- receive shutdown, so it's fine.
-
-				-- TODO verify decoded.id is a string or number?
-				local result_id = tonumber(decoded.id)
-				local callback = message_callbacks[result_id]
-				if callback then
-					message_callbacks[result_id] = nil
-					assert(type(callback) == 'function', "callback must be a function")
-					-- TODO log errors from user.
-					pcall(callback, decoded.error, decoded.result)
-				else
-					-- TODO handle us not having a callback
-					pcall(handlers.on_error, CLIENT_ERRORS.NO_RESULT_CALLBACK_FOUND, decoded)
-					logger.error("No callback found for server response id "..result_id)
-				end
-			elseif type(decoded.method) == 'string' then
-				-- Notification
-				pcall(handlers.notification, decoded.method, decoded.params)
+		-- Flush anything in the parser by looping until we don't get a result
+		-- anymore.
+		while true do
+			local headers, body = request_parser(chunk)
+			-- If we successfully parsed, then handle the response.
+			if headers then
+				handle_body(body)
+				-- Set chunk to empty so that we can call request_parser to get
+				-- anything existing in the parser to flush.
+				chunk = ''
 			else
-				-- Invalid server message
-				pcall(handlers.on_error, CLIENT_ERRORS.INVALID_SERVER_MESSAGE, decoded)
+				break
 			end
 		end
 	end)

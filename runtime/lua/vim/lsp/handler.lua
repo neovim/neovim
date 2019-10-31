@@ -109,7 +109,7 @@ function TextDocument.completion_list_to_complete_items(result, line_prefix)
 
 		-- Ref: `:h complete-items`
     table.insert(matches, {
-      word = remove_prefix(word, line_prefix),
+      word = remove_prefix(line_prefix, word),
       abbr = completion_item.label,
       kind = COMPLETION_ITEM_KIND[completion_item.kind] or '',
       menu = completion_item.detail or '',

@@ -6,14 +6,7 @@
 local Logger = {}
 Logger.__index = Logger
 
-local function add_reverse_lookup(o)
-	local keys = {}
-	for k in pairs(o) do table.insert(keys, k) end
-	for _, k in ipairs(keys) do o[o[k]] = k end
-	return o
-end
-
-local LOG_LEVELS = {
+local LOG_LEVELS = vim.tbl_add_reverse_lookup {
 	TRACE = 0;
 	DEBUG = 1;
 	INFO  = 2;
@@ -60,10 +53,14 @@ Logger.create_functions = function(new_log, new_logger)
           return
         end
 
-        local message = ''
-        for _, arg in ipairs({...}) do
-          message = message .. vim.inspect(arg, {newline=''})
+				local argc = select("#", ...)
+				local message = {}
+				for i = 1, argc do
+					local arg = select(i, ...)
+          table.insert(message, vim.inspect(arg, {newline=''}))
         end
+
+				message = table.concat(message, ' ')
 
         local info = debug.getinfo(2, "Sl")
         local log_message = string.format(

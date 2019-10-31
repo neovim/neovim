@@ -19,13 +19,6 @@ function transform_schema_to_table()
 end
 --]=]
 
-local function add_reverse_lookup(o)
-	local keys = {}
-	for k in pairs(o) do table.insert(keys, k) end
-	for _, k in ipairs(keys) do o[o[k]] = k end
-	return o
-end
-
 local constants = {
 	DiagnosticSeverity = {
 		-- Reports an error.
@@ -296,7 +289,7 @@ local constants = {
 }
 
 for k, v in pairs(constants) do
-	add_reverse_lookup(v)
+	vim.tbl_add_reverse_lookup(v)
 	protocol[k] = v
 end
 
