@@ -143,10 +143,12 @@ class VariablesView( object ):
 
   def AddWatch( self, frame, expression ):
     watch = {
-        'expression': expression,
-        'frameId': frame[ 'id' ],
-        'context': 'watch',
+      'expression': expression,
+      'context': 'watch',
     }
+    if frame:
+      watch[ 'frameId' ] = frame[ 'id' ]
+
     self._watches.append( watch )
     self.EvaluateWatches()
 
@@ -395,3 +397,5 @@ class VariablesView( object ):
 
     with utils.LetCurrentWindow( self._watch.win ):
       vim.command( 'set syntax={}'.format( utils.Escape( syntax ) ) )
+
+# vim: sw=2
