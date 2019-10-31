@@ -5026,8 +5026,13 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
     }
 
     if (cmp == 0) {
-      if (!force) {
-        EMSG(_("E174: Command already exists: add ! to replace it"));
+      // Command can be replaced with "command!" and when sourcing the
+      // same script again, but only once.
+      if (!force
+          && (cmd->uc_script_ctx.sc_sid != current_sctx.sc_sid
+              || cmd->uc_script_ctx.sc_seq == current_sctx.sc_seq)) {
+        EMSG2(_("E174: Command already exists: add ! to replace it: %s"),
+              name);
         goto fail;
       }
 
