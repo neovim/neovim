@@ -1201,6 +1201,10 @@ static void get_wincmd_addr_type(char_u *arg, exarg_T *eap)
   }
 }
 
+/// Skip colons and trailing whitespace, returning a pointer to the first
+/// non-colon, non-whitespace character.
+//
+/// @param skipleadingwhite Skip leading whitespace too
 static char_u *skip_colon_white(const char_u *p, bool skipleadingwhite)
 {
   if (skipleadingwhite) {
