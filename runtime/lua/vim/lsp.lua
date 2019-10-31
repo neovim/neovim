@@ -276,6 +276,7 @@ function lsp.start_client(conf)
 
 	--- Checks capabilities before rpc.request-ing.
 	function client.request(method, params, callback)
+		logger.info("client.request", client_id, method, params, callback)
 		-- TODO check server capabilities before doing the request.
 		-- TODO check server capabilities before doing the request.
 		-- TODO check server capabilities before doing the request.
@@ -339,15 +340,17 @@ end
 
 local ENCODING_INDEX = { ["utf-8"] = 1; ["utf-16"] = 2; ["utf-32"] = 3; }
 local function text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
+	logger.debug("on_lines", bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 	-- Don't do anything if there are no clients attached.
 	if vim.tbl_isempty(BUFFER_CLIENT_IDS[bufnr] or {}) then
 		return
 	end
-	local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+--	local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
 	-- Add an extra line. TODO why?
-	if new_lastline > firstline then
-		table.insert(lines, '')
-	end
+	-- if new_lastline > firstline then
+	-- 	table.insert(lines, '')
+	-- end
 	local content_text = table.concat(lines, "\n")
 	local uri = vim.uri_from_bufnr(bufnr)
 	for_each_buffer_client(bufnr, function(client, client_id)
@@ -361,12 +364,12 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
 			contentChanges = {
 				-- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
 				{
-					range = {
-						start = { line = firstline, character = 0 };
-						["end"] = { line = lastline, character = 0 };
-					};
+					-- range = {
+					-- 	start = { line = firstline, character = 0 };
+					-- 	["end"] = { line = lastline, character = 0 };
+					-- };
+					-- rangeLength = select(size_index, old_byte_size, old_utf16_size, old_utf32_size);
 					text = content_text;
-					rangeLength = select(size_index, old_byte_size, old_utf16_size, old_utf32_size);
 				};
 			}
 		})
@@ -452,7 +455,8 @@ function lsp.add_config(config)
     error("config.filetype must be a string or a list of strings")
   end
 
-	local offset_encoding = VALID_ENCODINGS.UTF16
+	local offset_encoding = VALID_ENCODINGS.UTF8
+--	local offset_encoding = VALID_ENCODINGS.UTF16
   if config.offset_encoding then
     assert(type(config.offset_encoding) == 'string', "config.offset_encoding must be a string")
 		-- Ignore case here.
@@ -582,6 +586,7 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
 	local request_results = {}
 	local result_count = 0
 	local function callback(err, result, client_id)
+		logger.info("callback", err, result, client_id)
 		request_results[client_id] = { error = err, result = result }
 		result_count = result_count + 1
 	end
@@ -685,6 +690,8 @@ function lsp.omnifunc(findstart, base)
       if not response.error then
 				local data = response.result
 				local completion_items = text_document_handler.completion_list_to_complete_items(data or {}, line_to_cursor)
+				logger.debug("line_to_cursor", line_to_cursor)
+				logger.debug("completion_items", completion_items)
 				-- TODO use this.
 				-- vim.list_extend(matches, completion_items)
 				for _, match in ipairs(completion_items) do
