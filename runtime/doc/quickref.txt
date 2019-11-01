@@ -47,6 +47,7 @@ N is used to indicate an optional count that can be given before the command.
 |g$|	N  g$		to last character in screen line (differs from "$"
 			   when lines wrap)
 |gm|	   gm		to middle of the screen line
+|gM|	   gM		to middle of the line
 |bar|	N  |		to column N (default: 1)
 |f|	N  f{char}	to the Nth occurrence of {char} to the right
 |F|	N  F{char}	to the Nth occurrence of {char} to the left
