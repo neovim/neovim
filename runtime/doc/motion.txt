@@ -219,6 +219,12 @@ g^			When lines wrap ('wrap' on): To the first non-blank
 gm			Like "g0", but half a screenwidth to the right (or as
 			much as possible).
 
+							*gM*
+gM			Like "g0", but to halfway the text of the line.
+			With a count: to this percentage of text in the line.
+			Thus "10gM" is near the start of the text and "90gM"
+			is near the end of the text.
+
 							*g$* *g<End>*
 g$ or g<End>		When lines wrap ('wrap' on): To the last character of
 			the screen line and [count - 1] screen lines downward

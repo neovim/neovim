@@ -767,6 +767,7 @@ tag		char	      note action in Normal mode	~
 |gn|		gn	      1,2  find the next match with the last used
 				   search pattern and Visually select it
 |gm|		gm		1  go to character at middle of the screenline
+|gM|		gM		1  go to character at middle of the text line
 |go|		go		1  cursor to byte N in the buffer
 |gp|		["x]gp		2  put the text [from register x] after the
 				   cursor N times, leave the cursor after it
