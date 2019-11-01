@@ -80,12 +80,13 @@ struct qfline_S {
 #define LISTCOUNT   10
 #define INVALID_QFIDX (-1)
 
-// Quickfix list type.
+/// Quickfix list type.
 typedef enum
 {
-  QFLT_QUICKFIX,  // Quickfix list - global list
-  QFLT_LOCATION,  // Location list - per window list
-  QFLT_INTERNAL   // Internal - Temporary list used by getqflist()/getloclist()
+  QFLT_QUICKFIX,  ///< Quickfix list - global list
+  QFLT_LOCATION,  ///< Location list - per window list
+  QFLT_INTERNAL   ///< Internal - Temporary list used by
+                  //   getqflist()/getloclist()
 } qfltype_T;
 
 /// Quickfix/Location list definition
@@ -164,8 +165,8 @@ struct efm_S {
   int conthere;                 /* %> used */
 };
 
-// List of location lists to be deleted.
-// Used to delay the deletion of locations lists by autocmds.
+/// List of location lists to be deleted.
+/// Used to delay the deletion of locations lists by autocmds.
 typedef struct qf_delq_S {
   struct qf_delq_S *next;
   qf_info_T *qi;
@@ -180,8 +181,8 @@ enum {
   QF_MULTISCAN = 5,
 };
 
-// State information used to parse lines and add entries to a quickfix/location
-// list.
+/// State information used to parse lines and add entries to a quickfix/location
+/// list.
 typedef struct {
   char_u *linebuf;
   size_t linelen;
@@ -255,8 +256,8 @@ static char *e_loc_list_changed = N_("E926: Current location list was changed");
 static int quickfix_busy = 0;
 static qf_delq_T *qf_delq_head = NULL;
 
-// Process the next line from a file/buffer/list/string and add it
-// to the quickfix list 'qfl'.
+/// Process the next line from a file/buffer/list/string and add it
+/// to the quickfix list 'qfl'.
 static int qf_init_process_nextline(qf_list_T *qfl,
                                     efm_T *fmt_first,
                                     qfstate_T *state,
@@ -341,10 +342,10 @@ static struct fmtpattern
   { 'o', ".\\+" }
 };
 
-// Convert an errorformat pattern to a regular expression pattern.
-// See fmt_pat definition above for the list of supported patterns.  The
-// pattern specifier is supplied in "efmpat".  The converted pattern is stored
-// in "regpat".  Returns a pointer to the location after the pattern.
+/// Convert an errorformat pattern to a regular expression pattern.
+/// See fmt_pat definition above for the list of supported patterns.  The
+/// pattern specifier is supplied in "efmpat".  The converted pattern is stored
+/// in "regpat".  Returns a pointer to the location after the pattern.
 static char_u * efmpat_to_regpat(
     const char_u *efmpat,
     char_u *regpat,
@@ -410,8 +411,8 @@ static char_u * efmpat_to_regpat(
   return regpat;
 }
 
-// Convert a scanf like format in 'errorformat' to a regular expression.
-// Returns a pointer to the location after the pattern.
+/// Convert a scanf like format in 'errorformat' to a regular expression.
+/// Returns a pointer to the location after the pattern.
 static char_u * scanf_fmt_to_regpat(
     const char_u **pefmp,
     const char_u *efm,
@@ -455,7 +456,7 @@ static char_u * scanf_fmt_to_regpat(
   return regpat;
 }
 
-// Analyze/parse an errorformat prefix.
+/// Analyze/parse an errorformat prefix.
 static const char_u *efm_analyze_prefix(const char_u *efmp, efm_T *efminfo,
                                         char_u *errmsg, size_t errmsglen)
   FUNC_ATTR_NONNULL_ALL
@@ -556,8 +557,8 @@ static void free_efm_list(efm_T **efm_first)
   fmt_start = NULL;
 }
 
-// Compute the size of the buffer used to convert a 'errorformat' pattern into
-// a regular expression pattern.
+/// Compute the size of the buffer used to convert a 'errorformat' pattern into
+/// a regular expression pattern.
 static size_t efm_regpat_bufsz(char_u *efm)
 {
   size_t sz;
@@ -575,7 +576,7 @@ static size_t efm_regpat_bufsz(char_u *efm)
   return sz;
 }
 
-// Return the length of a 'errorformat' option part (separated by ",").
+/// Return the length of a 'errorformat' option part (separated by ",").
 static int efm_option_part_len(char_u *efm)
 {
   int len;
@@ -589,9 +590,9 @@ static int efm_option_part_len(char_u *efm)
   return len;
 }
 
-// Parse the 'errorformat' option. Multiple parts in the 'errorformat' option
-// are parsed and converted to regular expressions. Returns information about
-// the parsed 'errorformat' option.
+/// Parse the 'errorformat' option. Multiple parts in the 'errorformat' option
+/// are parsed and converted to regular expressions. Returns information about
+/// the parsed 'errorformat' option.
 static efm_T * parse_efm_option(char_u *efm)
 {
   efm_T *fmt_ptr = NULL;
@@ -645,7 +646,7 @@ parse_efm_end:
   return fmt_first;
 }
 
-// Allocate more memory for the line buffer used for parsing lines.
+/// Allocate more memory for the line buffer used for parsing lines.
 static char_u *qf_grow_linebuf(qfstate_T *state, size_t newsz)
 {
   // If the line exceeds LINE_MAXLEN exclude the last
@@ -887,28 +888,28 @@ static int qf_get_nextline(qfstate_T *state)
   return QF_OK;
 }
 
-// Returns true if the specified quickfix/location stack is empty
+/// Returns true if the specified quickfix/location stack is empty
 static bool qf_stack_empty(const qf_info_T *qi)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return qi == NULL || qi->qf_listcount <= 0;
 }
 
-// Returns true if the specified quickfix/location list is empty.
+/// Returns true if the specified quickfix/location list is empty.
 static bool qf_list_empty(qf_list_T *qfl)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
   return qfl == NULL || qfl->qf_count <= 0;
 }
 
-// Returns TRUE if the specified quickfix/location list is not empty and
-// has valid entries.
-static int qf_list_has_valid_entries(qf_list_T *qfl)
+/// Returns true if the specified quickfix/location list is not empty and
+/// has valid entries.
+static bool qf_list_has_valid_entries(qf_list_T *qfl)
 {
   return !qf_list_empty(qfl) && !qfl->qf_nonevalid;
 }
 
-// Return a pointer to a list in the specified quickfix stack
+/// Return a pointer to a list in the specified quickfix stack
 static qf_list_T * qf_get_list(qf_info_T *qi, int idx)
 {
   return &qi->qf_lists[idx];
@@ -1241,15 +1242,15 @@ static char_u * qf_cmdtitle(char_u *cmd)
   return qftitle_str;
 }
 
-// Return a pointer to the current list in the specified quickfix stack
+/// Return a pointer to the current list in the specified quickfix stack
 static qf_list_T * qf_get_curlist(qf_info_T *qi)
 {
   return qf_get_list(qi, qi->qf_curlist);
 }
 
-// Prepare for adding a new quickfix list. If the current list is in the
-// middle of the stack, then all the following lists are freed and then
-// the new list is added.
+/// Prepare for adding a new quickfix list. If the current list is in the
+/// middle of the stack, then all the following lists are freed and then
+/// the new list is added.
 static void qf_new_list(qf_info_T *qi, const char_u *qf_title)
 {
   int i;
@@ -1275,14 +1276,14 @@ static void qf_new_list(qf_info_T *qi, const char_u *qf_title)
   } else
     qi->qf_curlist = qi->qf_listcount++;
   qfl = qf_get_curlist(qi);
-  memset(qfl, 0, (size_t)(sizeof(qf_list_T)));
+  memset(qfl, 0, sizeof(qf_list_T));
   qf_store_title(qfl, qf_title);
   qfl->qfl_type = qi->qfl_type;
   qfl->qf_id = ++last_qf_id;
 }
 
-// Parse the match for filename ('%f') pattern in regmatch.
-// Return the matched value in "fields->namebuf".
+/// Parse the match for filename ('%f') pattern in regmatch.
+/// Return the matched value in "fields->namebuf".
 static int qf_parse_fmt_f(regmatch_T *rmp,
                           int midx,
                           qffields_T *fields,
@@ -1310,8 +1311,8 @@ static int qf_parse_fmt_f(regmatch_T *rmp,
   return QF_OK;
 }
 
-// Parse the match for error number ('%n') pattern in regmatch.
-// Return the matched value in "fields->enr".
+/// Parse the match for error number ('%n') pattern in regmatch.
+/// Return the matched value in "fields->enr".
 static int qf_parse_fmt_n(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   if (rmp->startp[midx] == NULL) {
@@ -1321,8 +1322,8 @@ static int qf_parse_fmt_n(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// Parse the match for line number (%l') pattern in regmatch.
-// Return the matched value in "fields->lnum".
+/// Parse the match for line number (%l') pattern in regmatch.
+/// Return the matched value in "fields->lnum".
 static int qf_parse_fmt_l(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   if (rmp->startp[midx] == NULL) {
@@ -1332,8 +1333,8 @@ static int qf_parse_fmt_l(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// Parse the match for column number ('%c') pattern in regmatch.
-// Return the matched value in "fields->col".
+/// Parse the match for column number ('%c') pattern in regmatch.
+/// Return the matched value in "fields->col".
 static int qf_parse_fmt_c(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   if (rmp->startp[midx] == NULL) {
@@ -1343,8 +1344,8 @@ static int qf_parse_fmt_c(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// Parse the match for error type ('%t') pattern in regmatch.
-// Return the matched value in "fields->type".
+/// Parse the match for error type ('%t') pattern in regmatch.
+/// Return the matched value in "fields->type".
 static int qf_parse_fmt_t(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   if (rmp->startp[midx] == NULL) {
@@ -1354,8 +1355,8 @@ static int qf_parse_fmt_t(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// Parse the match for '%+' format pattern. The whole matching line is included
-// in the error string.  Return the matched line in "fields->errmsg".
+/// Parse the match for '%+' format pattern. The whole matching line is included
+/// in the error string.  Return the matched line in "fields->errmsg".
 static int qf_parse_fmt_plus(char_u *linebuf,
                              size_t linelen,
                              qffields_T *fields)
@@ -1369,8 +1370,8 @@ static int qf_parse_fmt_plus(char_u *linebuf,
   return QF_OK;
 }
 
-// Parse the match for error message ('%m') pattern in regmatch.
-// Return the matched value in "fields->errmsg".
+/// Parse the match for error message ('%m') pattern in regmatch.
+/// Return the matched value in "fields->errmsg".
 static int qf_parse_fmt_m(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   size_t len;
@@ -1388,8 +1389,8 @@ static int qf_parse_fmt_m(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// Parse the match for rest of a single-line file message ('%r') pattern.
-// Return the matched value in "tail".
+/// Parse the match for rest of a single-line file message ('%r') pattern.
+/// Return the matched value in "tail".
 static int qf_parse_fmt_r(regmatch_T *rmp, int midx, char_u **tail)
 {
   if (rmp->startp[midx] == NULL) {
@@ -1399,9 +1400,8 @@ static int qf_parse_fmt_r(regmatch_T *rmp, int midx, char_u **tail)
   return QF_OK;
 }
 
-
-// Parse the match for the pointer line ('%p') pattern in regmatch.
-// Return the matched value in "fields->col".
+/// Parse the match for the pointer line ('%p') pattern in regmatch.
+/// Return the matched value in "fields->col".
 static int qf_parse_fmt_p(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   char_u *match_ptr;
@@ -1423,9 +1423,8 @@ static int qf_parse_fmt_p(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-
-// Parse the match for the virtual column number ('%v') pattern in regmatch.
-// Return the matched value in "fields->col".
+/// Parse the match for the virtual column number ('%v') pattern in regmatch.
+/// Return the matched value in "fields->col".
 static int qf_parse_fmt_v(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   if (rmp->startp[midx] == NULL) {
@@ -1436,9 +1435,8 @@ static int qf_parse_fmt_v(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-
-// Parse the match for the search text ('%s') pattern in regmatch.
-// Return the matched value in "fields->pattern".
+/// Parse the match for the search text ('%s') pattern in regmatch.
+/// Return the matched value in "fields->pattern".
 static int qf_parse_fmt_s(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   size_t len;
@@ -1458,8 +1456,8 @@ static int qf_parse_fmt_s(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// Parse the match for the module ('%o') pattern in regmatch.
-// Return the matched value in "fields->module".
+/// Parse the match for the module ('%o') pattern in regmatch.
+/// Return the matched value in "fields->module".
 static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
 {
   size_t len;
@@ -1477,9 +1475,9 @@ static int qf_parse_fmt_o(regmatch_T *rmp, int midx, qffields_T *fields)
   return QF_OK;
 }
 
-// 'errorformat' format pattern parser functions.
-// The '%f' and '%r' formats are parsed differently from other formats.
-// See qf_parse_match() for details.
+/// 'errorformat' format pattern parser functions.
+/// The '%f' and '%r' formats are parsed differently from other formats.
+/// See qf_parse_match() for details.
 static int (*qf_parse_fmt[FMT_PATTERNS])(regmatch_T *, int, qffields_T *) = {
   NULL,
   qf_parse_fmt_n,
@@ -1696,7 +1694,7 @@ static int qf_parse_multiline_pfx(int idx, qf_list_T *qfl, qffields_T *fields)
   return QF_IGNORE_LINE;
 }
 
-// Queue location list stack delete request.
+/// Queue location list stack delete request.
 static void locstack_queue_delreq(qf_info_T *qi)
 {
   qf_delq_T *q;
@@ -1752,16 +1750,16 @@ void qf_free_all(win_T *wp)
   }
 }
 
-// Delay freeing of location list stacks when the quickfix code is running.
-// Used to avoid problems with autocmds freeing location list stacks when the
-// quickfix code is still referencing the stack.
-// Must always call decr_quickfix_busy() exactly once after this.
+/// Delay freeing of location list stacks when the quickfix code is running.
+/// Used to avoid problems with autocmds freeing location list stacks when the
+/// quickfix code is still referencing the stack.
+/// Must always call decr_quickfix_busy() exactly once after this.
 static void incr_quickfix_busy(void)
 {
     quickfix_busy++;
 }
 
-// Safe to free location list stacks. Process any delayed delete requests.
+/// Safe to free location list stacks. Process any delayed delete requests.
 static void decr_quickfix_busy(void)
 {
   quickfix_busy--;
@@ -1878,7 +1876,7 @@ static int qf_add_entry(qf_list_T *qfl, char_u *dir, char_u *fname,
   return QF_OK;
 }
 
-// Allocate a new quickfix/location list stack
+/// Allocate a new quickfix/location list stack
 static qf_info_T *qf_alloc_stack(qfltype_T qfltype)
   FUNC_ATTR_NONNULL_RET
 {
@@ -1889,8 +1887,8 @@ static qf_info_T *qf_alloc_stack(qfltype_T qfltype)
   return qi;
 }
 
-// Return the location list stack for window 'wp'.
-// If not present, allocate a location list stack
+/// Return the location list stack for window 'wp'.
+/// If not present, allocate a location list stack
 static qf_info_T *ll_get_or_alloc_list(win_T *wp)
 {
   if (IS_LL_WINDOW(wp))
@@ -1909,10 +1907,10 @@ static qf_info_T *ll_get_or_alloc_list(win_T *wp)
   return wp->w_llist;
 }
 
-// Get the quickfix/location list stack to use for the specified Ex command.
-// For a location list command, returns the stack for the current window.  If
-// the location list is not found, then returns NULL and prints an error
-// message if 'print_emsg' is TRUE.
+/// Get the quickfix/location list stack to use for the specified Ex command.
+/// For a location list command, returns the stack for the current window.  If
+/// the location list is not found, then returns NULL and prints an error
+/// message if 'print_emsg' is TRUE.
 static qf_info_T * qf_cmd_get_stack(exarg_T *eap, int print_emsg)
 {
   qf_info_T *qi = &ql_info;
@@ -1930,11 +1928,11 @@ static qf_info_T * qf_cmd_get_stack(exarg_T *eap, int print_emsg)
   return qi;
 }
 
-// Get the quickfix/location list stack to use for the specified Ex command.
-// For a location list command, returns the stack for the current window.
-// If the location list is not present, then allocates a new one.
-// Returns NULL if the allocation fails.  For a location list command, sets
-// 'pwinp' to curwin.
+/// Get the quickfix/location list stack to use for the specified Ex command.
+/// For a location list command, returns the stack for the current window.
+/// If the location list is not present, then allocates a new one.
+/// Returns NULL if the allocation fails.  For a location list command, sets
+/// 'pwinp' to curwin.
 static qf_info_T * qf_cmd_get_or_alloc_stack(exarg_T *eap, win_T **pwinp)
 {
   qf_info_T *qi = &ql_info;
@@ -1950,7 +1948,7 @@ static qf_info_T * qf_cmd_get_or_alloc_stack(exarg_T *eap, win_T **pwinp)
   return qi;
 }
 
-// Copy location list entries from 'from_qfl' to 'to_qfl'.
+/// Copy location list entries from 'from_qfl' to 'to_qfl'.
 static int copy_loclist_entries(const qf_list_T *from_qfl, qf_list_T *to_qfl)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -1989,7 +1987,7 @@ static int copy_loclist_entries(const qf_list_T *from_qfl, qf_list_T *to_qfl)
   return OK;
 }
 
-// Copy the specified location list 'from_qfl' to 'to_qfl'.
+/// Copy the specified location list 'from_qfl' to 'to_qfl'.
 static int copy_loclist(const qf_list_T *from_qfl, qf_list_T *to_qfl)
   FUNC_ATTR_NONNULL_ALL
 {
@@ -2075,8 +2073,8 @@ void copy_loclist_stack(win_T *from, win_T *to)
   to->w_llist->qf_curlist = qi->qf_curlist;  // current list
 }
 
-// Get buffer number for file "directory/fname".
-// Also sets the b_has_qf_entry flag.
+/// Get buffer number for file "directory/fname".
+/// Also sets the b_has_qf_entry flag.
 static int qf_get_fnum(qf_list_T *qfl, char_u *directory, char_u *fname )
 {
   char_u *ptr = NULL;
@@ -2230,24 +2228,24 @@ static void qf_clean_dir_stack(struct dir_stack_T **stackptr)
   }
 }
 
-// Check in which directory of the directory stack the given file can be
-// found.
-// Returns a pointer to the directory name or NULL if not found.
-// Cleans up intermediate directory entries.
-//
-// TODO(vim): How to solve the following problem?
-// If we have this directory tree:
-//     ./
-//     ./aa
-//     ./aa/bb
-//     ./bb
-//     ./bb/x.c
-// and make says:
-//     making all in aa
-//     making all in bb
-//     x.c:9: Error
-// Then qf_push_dir thinks we are in ./aa/bb, but we are in ./bb.
-// qf_guess_filepath will return NULL.
+/// Check in which directory of the directory stack the given file can be
+/// found.
+/// Returns a pointer to the directory name or NULL if not found.
+/// Cleans up intermediate directory entries.
+///
+/// TODO(vim): How to solve the following problem?
+/// If we have this directory tree:
+///     ./
+///     ./aa
+///     ./aa/bb
+///     ./bb
+///     ./bb/x.c
+/// and make says:
+///     making all in aa
+///     making all in bb
+///     x.c:9: Error
+/// Then qf_push_dir thinks we are in ./aa/bb, but we are in ./bb.
+/// qf_guess_filepath will return NULL.
 static char_u *qf_guess_filepath(qf_list_T *qfl, char_u *filename)
 {
   struct dir_stack_T     *ds_ptr;
@@ -2444,7 +2442,7 @@ static win_T *qf_find_help_win(void)
   return NULL;
 }
 
-// Set the location list for the specified window to 'qi'.
+/// Set the location list for the specified window to 'qi'.
 static void win_set_loclist(win_T *wp, qf_info_T *qi)
 {
   wp->w_llist = qi;
@@ -2526,7 +2524,7 @@ static win_T *qf_find_win_with_normal_buf(void)
   return NULL;
 }
 
-// Go to a window in any tabpage containing the specified file.  Returns TRUE
+// Go to a window in any tabpage containing the specified file.  Returns true
 // if successfully jumped to the window. Otherwise returns FALSE.
 static bool qf_goto_tabwin_with_file(int fnum)
 {
@@ -2960,11 +2958,11 @@ static int qfFileAttr;
 static int qfSepAttr;
 static int qfLineAttr;
 
-// Display information about a single entry from the quickfix/location list.
-// Used by ":clist/:llist" commands.
-// 'cursel' will be set to TRUE for the currently selected entry in the
-// quickfix list.
-static void qf_list_entry(qfline_T *qfp, int qf_idx, int cursel)
+/// Display information about a single entry from the quickfix/location list.
+/// Used by ":clist/:llist" commands.
+/// 'cursel' will be set to true for the currently selected entry in the
+/// quickfix list.
+static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
 {
   char_u *fname;
   buf_T *buf;
@@ -3172,12 +3170,10 @@ static void qf_msg(qf_info_T *qi, int which, char *lead)
   msg(buf);
 }
 
-/*
- * ":colder [count]": Up in the quickfix stack.
- * ":cnewer [count]": Down in the quickfix stack.
- * ":lolder [count]": Up in the location list stack.
- * ":lnewer [count]": Down in the location list stack.
- */
+/// ":colder [count]": Up in the quickfix stack.
+/// ":cnewer [count]": Down in the quickfix stack.
+/// ":lolder [count]": Up in the location list stack.
+/// ":lnewer [count]": Down in the location list stack.
 void qf_age(exarg_T *eap)
 {
   qf_info_T *qi;
@@ -3553,7 +3549,7 @@ static int qf_open_new_cwindow(const qf_info_T *qi, int height)
   return OK;
 }
 
-// Set "w:quickfix_title" if "qi" has a title.
+/// Set "w:quickfix_title" if "qi" has a title.
 static void qf_set_title_var(qf_list_T *qfl)
 {
   if (qfl->qf_title != NULL) {
@@ -3561,10 +3557,8 @@ static void qf_set_title_var(qf_list_T *qfl)
   }
 }
 
-/*
- * ":copen": open a window that shows the list of errors.
- * ":lopen": open a window that shows the location list.
- */
+/// ":copen": open a window that shows the list of errors.
+/// ":lopen": open a window that shows the location list.
 void ex_copen(exarg_T *eap)
 {
   qf_info_T   *qi;
@@ -3634,7 +3628,7 @@ static void qf_win_goto(win_T *win, linenr_T lnum)
   curbuf = curwin->w_buffer;
 }
 
-// :cbottom/:lbottom command.
+/// :cbottom/:lbottom command.
 void ex_cbottom(exarg_T *eap)
 {
   qf_info_T *qi;
@@ -3867,11 +3861,11 @@ static int qf_buf_add_line(buf_T *buf, linenr_T lnum, const qfline_T *qfp,
   return OK;
 }
 
-// Fill current buffer with quickfix errors, replacing any previous contents.
-// curbuf must be the quickfix buffer!
-// If "old_last" is not NULL append the items after this one.
-// When "old_last" is NULL then "buf" must equal "curbuf"!  Because ml_delete()
-// is used and autocommands will be triggered.
+/// Fill current buffer with quickfix errors, replacing any previous contents.
+/// curbuf must be the quickfix buffer!
+/// If "old_last" is not NULL append the items after this one.
+/// When "old_last" is NULL then "buf" must equal "curbuf"!  Because ml_delete()
+/// is used and autocommands will be triggered.
 static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
   FUNC_ATTR_NONNULL_ARG(2)
 {
@@ -3966,11 +3960,11 @@ static int qf_id2nr(const qf_info_T *const qi, const unsigned qfid)
   return INVALID_QFIDX;
 }
 
-// If the current list is not "save_qfid" and we can find the list with that ID
-// then make it the current list.
-// This is used when autocommands may have changed the current list.
-// Returns OK if successfully restored the list. Returns FAIL if the list with
-// the specified identifier (save_qfid) is not found in the stack.
+/// If the current list is not "save_qfid" and we can find the list with that ID
+/// then make it the current list.
+/// This is used when autocommands may have changed the current list.
+/// Returns OK if successfully restored the list. Returns FAIL if the list with
+/// the specified identifier (save_qfid) is not found in the stack.
 static int qf_restore_list(qf_info_T *qi, unsigned save_qfid)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -4318,11 +4312,9 @@ static size_t qf_get_nth_valid_entry(qf_list_T *qfl, size_t n, int fdo)
   return i <= qfl->qf_count ? (size_t)i : 1;
 }
 
-/*
- * ":cc", ":crewind", ":cfirst" and ":clast".
- * ":ll", ":lrewind", ":lfirst" and ":llast".
- * ":cdo", ":ldo", ":cfdo" and ":lfdo".
- */
+/// ":cc", ":crewind", ":cfirst" and ":clast".
+/// ":ll", ":lrewind", ":lfirst" and ":llast".
+/// ":cdo", ":ldo", ":cfdo" and ":lfdo".
 void ex_cc(exarg_T *eap)
 {
   qf_info_T   *qi;
@@ -4373,11 +4365,9 @@ void ex_cc(exarg_T *eap)
   qf_jump(qi, 0, errornr, eap->forceit);
 }
 
-/*
- * ":cnext", ":cnfile", ":cNext" and ":cprevious".
- * ":lnext", ":lNext", ":lprevious", ":lnfile", ":lNfile" and ":lpfile".
- * ":cdo", ":ldo", ":cfdo" and ":lfdo".
- */
+/// ":cnext", ":cnfile", ":cNext" and ":cprevious".
+/// ":lnext", ":lNext", ":lprevious", ":lnfile", ":lNfile" and ":lpfile".
+/// ":cdo", ":ldo", ":cfdo" and ":lfdo".
 void ex_cnext(exarg_T *eap)
 {
   qf_info_T   *qi;
@@ -4428,9 +4418,9 @@ void ex_cnext(exarg_T *eap)
   qf_jump(qi, dir, errornr, eap->forceit);
 }
 
-// Find the first entry in the quickfix list 'qfl' from buffer 'bnr'.
-// The index of the entry is stored in 'errornr'.
-// Returns NULL if an entry is not found.
+/// Find the first entry in the quickfix list 'qfl' from buffer 'bnr'.
+/// The index of the entry is stored in 'errornr'.
+/// Returns NULL if an entry is not found.
 static qfline_T *qf_find_first_entry_in_buf(qf_list_T *qfl,
                                             int bnr,
                                             int *errornr)
@@ -4449,9 +4439,9 @@ static qfline_T *qf_find_first_entry_in_buf(qf_list_T *qfl,
   return qfp;
 }
 
-// Find the first quickfix entry on the same line as 'entry'. Updates 'errornr'
-// with the error number for the first entry. Assumes the entries are sorted in
-// the quickfix list by line number.
+/// Find the first quickfix entry on the same line as 'entry'. Updates 'errornr'
+/// with the error number for the first entry. Assumes the entries are sorted in
+/// the quickfix list by line number.
 static qfline_T * qf_find_first_entry_on_line(qfline_T *entry, int *errornr)
 {
   while (!got_int
@@ -4465,9 +4455,9 @@ static qfline_T * qf_find_first_entry_on_line(qfline_T *entry, int *errornr)
   return entry;
 }
 
-// Find the last quickfix entry on the same line as 'entry'. Updates 'errornr'
-// with the error number for the last entry. Assumes the entries are sorted in
-// the quickfix list by line number.
+/// Find the last quickfix entry on the same line as 'entry'. Updates 'errornr'
+/// with the error number for the last entry. Assumes the entries are sorted in
+/// the quickfix list by line number.
 static qfline_T * qf_find_last_entry_on_line(qfline_T *entry, int *errornr)
 {
   while (!got_int
@@ -4481,10 +4471,10 @@ static qfline_T * qf_find_last_entry_on_line(qfline_T *entry, int *errornr)
   return entry;
 }
 
-// Find the first quickfix entry below line 'lnum' in buffer 'bnr'.
-// 'qfp' points to the very first entry in the buffer and 'errornr' is the
-// index of the very first entry in the quickfix list.
-// Returns NULL if an entry is not found after 'lnum'.
+/// Find the first quickfix entry below line 'lnum' in buffer 'bnr'.
+/// 'qfp' points to the very first entry in the buffer and 'errornr' is the
+/// index of the very first entry in the quickfix list.
+/// Returns NULL if an entry is not found after 'lnum'.
 static qfline_T *qf_find_entry_on_next_line(int bnr,
                                             linenr_T lnum,
                                             qfline_T *qfp,
@@ -4515,10 +4505,10 @@ static qfline_T *qf_find_entry_on_next_line(int bnr,
   return qfp;
 }
 
-// Find the first quickfix entry before line 'lnum' in buffer 'bnr'.
-// 'qfp' points to the very first entry in the buffer and 'errornr' is the
-// index of the very first entry in the quickfix list.
-// Returns NULL if an entry is not found before 'lnum'.
+/// Find the first quickfix entry before line 'lnum' in buffer 'bnr'.
+/// 'qfp' points to the very first entry in the buffer and 'errornr' is the
+/// index of the very first entry in the quickfix list.
+/// Returns NULL if an entry is not found before 'lnum'.
 static qfline_T *qf_find_entry_on_prev_line(int bnr,
                                             linenr_T lnum,
                                             qfline_T *qfp,
@@ -4542,8 +4532,8 @@ static qfline_T *qf_find_entry_on_prev_line(int bnr,
   return qfp;
 }
 
-// Find a quickfix entry in 'qfl' closest to line 'lnum' in buffer 'bnr' in
-// the direction 'dir'.
+/// Find a quickfix entry in 'qfl' closest to line 'lnum' in buffer 'bnr' in
+/// the direction 'dir'.
 static qfline_T *qf_find_closest_entry(qf_list_T *qfl,
                                        int bnr,
                                        linenr_T lnum,
@@ -4569,8 +4559,8 @@ static qfline_T *qf_find_closest_entry(qf_list_T *qfl,
   return qfp;
 }
 
-// Get the nth quickfix entry below the specified entry treating multiple
-// entries on a single line as one. Searches forward in the list.
+/// Get the nth quickfix entry below the specified entry treating multiple
+/// entries on a single line as one. Searches forward in the list.
 static qfline_T *qf_get_nth_below_entry(qfline_T *entry,
                                         int *errornr,
                                         linenr_T n)
@@ -4598,8 +4588,8 @@ static qfline_T *qf_get_nth_below_entry(qfline_T *entry,
   return entry;
 }
 
-// Get the nth quickfix entry above the specified entry treating multiple
-// entries on a single line as one. Searches backwards in the list.
+/// Get the nth quickfix entry above the specified entry treating multiple
+/// entries on a single line as one. Searches backwards in the list.
 static qfline_T *qf_get_nth_above_entry(qfline_T *entry,
                                         int *errornr,
                                         linenr_T n)
@@ -4620,9 +4610,9 @@ static qfline_T *qf_get_nth_above_entry(qfline_T *entry,
   return entry;
 }
 
-// Find the n'th quickfix entry adjacent to line 'lnum' in buffer 'bnr' in the
-// specified direction.
-// Returns the error number in the quickfix list or 0 if an entry is not found.
+/// Find the n'th quickfix entry adjacent to line 'lnum' in buffer 'bnr' in the
+/// specified direction.
+/// Returns the error number in the quickfix list or 0 if an entry is not found.
 static int qf_find_nth_adj_entry(qf_list_T *qfl,
                                  int bnr,
                                  linenr_T lnum,
@@ -4650,8 +4640,8 @@ static int qf_find_nth_adj_entry(qf_list_T *qfl,
   return errornr;
 }
 
-// Jump to a quickfix entry in the current file nearest to the current line.
-// ":cabove", ":cbelow", ":labove" and ":lbelow" commands
+/// Jump to a quickfix entry in the current file nearest to the current line.
+/// ":cabove", ":cbelow", ":labove" and ":lbelow" commands
 void ex_cbelow(exarg_T *eap)
 {
   qf_info_T *qi;
@@ -4704,7 +4694,7 @@ void ex_cbelow(exarg_T *eap)
 }
 
 
-// Return the autocmd name for the :cfile Ex commands
+/// Return the autocmd name for the :cfile Ex commands
 static char_u * cfile_get_auname(cmdidx_T cmdidx)
 {
   switch (cmdidx) {
@@ -5367,8 +5357,8 @@ static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
   }
 }
 
-// Copy the specified quickfix entry items into a new dict and appened the dict
-// to 'list'.  Returns OK on success.
+/// Copy the specified quickfix entry items into a new dict and appened the dict
+/// to 'list'.  Returns OK on success.
 static int get_qfline_items(qfline_T *qfp, list_T *list)
 {
   char_u buf[2];
@@ -5794,8 +5784,8 @@ int qf_get_properties(win_T *wp, dict_T *what, dict_T *retdict)
   return status;
 }
 
-// Add a new quickfix entry to list at 'qf_idx' in the stack 'qi' from the
-// items in the dict 'd'.
+/// Add a new quickfix entry to list at 'qf_idx' in the stack 'qi' from the
+/// items in the dict 'd'.
 static int qf_add_entry_from_dict(
     qf_list_T *qfl,
     const dict_T *d,
@@ -5922,7 +5912,7 @@ static int qf_add_entries(qf_info_T *qi, int qf_idx, list_T *list,
   return retval;
 }
 
-// Get the quickfix list index from 'nr' or 'id'
+/// Get the quickfix list index from 'nr' or 'id'
 static int qf_setprop_get_qfidx(
     const qf_info_T *qi,
     const dict_T *what,
@@ -6064,9 +6054,9 @@ static int qf_setprop_context(qf_list_T *qfl, dictitem_T *di)
   return OK;
 }
 
-// Set quickfix/location list properties (title, items, context).
-// Also used to add items from parsing a list of lines.
-// Used by the setqflist() and setloclist() Vim script functions.
+/// Set quickfix/location list properties (title, items, context).
+/// Also used to add items from parsing a list of lines.
+/// Used by the setqflist() and setloclist() Vim script functions.
 static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
                              char_u *title)
   FUNC_ATTR_NONNULL_ALL
@@ -6107,8 +6097,8 @@ static int qf_set_properties(qf_info_T *qi, const dict_T *what, int action,
   return retval;
 }
 
-// Find the non-location list window with the specified location list stack in
-// the current tabpage.
+/// Find the non-location list window with the specified location list stack in
+/// the current tabpage.
 static win_T * find_win_with_ll(qf_info_T *qi)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
@@ -6247,7 +6237,7 @@ bool set_ref_in_quickfix(int copyID)
   return abort;
 }
 
-// Return the autocmd name for the :cbuffer Ex commands
+/// Return the autocmd name for the :cbuffer Ex commands
 static char_u * cbuffer_get_auname(cmdidx_T cmdidx)
 {
   switch (cmdidx) {
@@ -6261,8 +6251,8 @@ static char_u * cbuffer_get_auname(cmdidx_T cmdidx)
   }
 }
 
-// Process and validate the arguments passed to the :cbuffer, :caddbuffer,
-// :cgetbuffer, :lbuffer, :laddbuffer, :lgetbuffer Ex commands.
+/// Process and validate the arguments passed to the :cbuffer, :caddbuffer,
+/// :cgetbuffer, :lbuffer, :laddbuffer, :lgetbuffer Ex commands.
 static int cbuffer_process_args(exarg_T *eap,
                                 buf_T **bufp,
                                 linenr_T *line1,
@@ -6384,7 +6374,7 @@ void ex_cbuffer(exarg_T *eap)
   decr_quickfix_busy();
 }
 
-// Return the autocmd name for the :cexpr Ex commands.
+/// Return the autocmd name for the :cexpr Ex commands.
 static char_u * cexpr_get_auname(cmdidx_T cmdidx)
 {
   switch (cmdidx) {
@@ -6398,10 +6388,8 @@ static char_u * cexpr_get_auname(cmdidx_T cmdidx)
   }
 }
 
-/*
- * ":cexpr {expr}", ":cgetexpr {expr}", ":caddexpr {expr}" command.
- * ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
- */
+/// ":cexpr {expr}", ":cgetexpr {expr}", ":caddexpr {expr}" command.
+/// ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
 void ex_cexpr(exarg_T *eap)
 {
   qf_info_T *qi;
