@@ -2460,11 +2460,8 @@ update_si_end(
     int force                  /* when TRUE overrule a previous end */
 )
 {
-  lpos_T startpos;
-  lpos_T endpos;
   lpos_T hl_endpos;
   lpos_T end_endpos;
-  int end_idx;
 
   /* return quickly for a keyword */
   if (sip->si_idx < 0)
@@ -2480,9 +2477,12 @@ update_si_end(
    * We need to find the end of the region.  It may continue in the next
    * line.
    */
-  end_idx = 0;
-  startpos.lnum = current_lnum;
-  startpos.col = startcol;
+  int end_idx = 0;
+  lpos_T startpos = {
+    .lnum = current_lnum,
+    .col = startcol,
+  };
+  lpos_T endpos = { 0 };
   find_endpos(sip->si_idx, &startpos, &endpos, &hl_endpos,
       &(sip->si_flags), &end_endpos, &end_idx, sip->si_extmatch);
 
