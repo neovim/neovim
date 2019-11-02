@@ -79,10 +79,13 @@ local function request_parser_loop()
 end
 
 local CLIENT_ERRORS = vim.tbl_add_reverse_lookup {
-	INVALID_SERVER_MESSAGE = 1;
-	INVALID_SERVER_JSON = 2;
-	NO_RESULT_CALLBACK_FOUND = 3;
-	READ_ERROR = 4;
+	INVALID_SERVER_MESSAGE       = 1;
+	INVALID_SERVER_JSON          = 2;
+	NO_RESULT_CALLBACK_FOUND     = 3;
+	READ_ERROR                   = 4;
+	NOTIFICATION_HANDLER_ERROR   = 5;
+	SERVER_REQUEST_HANDLER_ERROR = 6;
+	SERVER_RESULT_CALLBACK_ERROR = 7;
 }
 
 local function rpc_response_error(code, message, data)
@@ -207,24 +210,42 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 		end
 	end)
 
+	local function on_error(errkind, ...)
+		assert(CLIENT_ERRORS[errkind])
+		-- TODO what to do if this fails?
+		pcall(handlers.on_error, errkind, ...)
+	end
+	local function pcall_handler(errkind, status, head, ...)
+		if not status then
+			on_error(errkind, ...)
+			return status, head
+		end
+		return status, head, ...
+	end
+	local function try_call(errkind, fn, ...)
+		return pcall_handler(errkind, pcall(fn, ...))
+	end
+
 	local function handle_body(body)
 		-- TODO handle invalid decoding.
 		local decoded, err = json_decode(body)
 		if not decoded then
-			pcall(handlers.on_error, CLIENT_ERRORS.INVALID_SERVER_JSON, err)
+			on_error(CLIENT_ERRORS.INVALID_SERVER_JSON, err)
 		end
 		logger.debug("decoded", decoded)
 
 		if type(decoded.method) == 'string' and decoded.id then
 			-- Server Request
 			local status, result
-			status, result, err = pcall(handlers.server_request, decoded.method, decoded.params)
+			-- TODO make sure that these won't block anything. use vim.loop.send_async or schedule_wrap?
+			status, result, err = try_call(CLIENT_ERRORS.SERVER_REQUEST_HANDLER_ERROR,
+					handlers.server_request, decoded.method, decoded.params)
 			if status then
 				-- TODO what to do here? Fatal error?
 				assert(result or err, "either a result or an error must be sent to the server in response")
 				if err then
 					assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")
-					local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes")
+					local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.")
 					err.message = err.message or code_name
 				end
 			else
@@ -232,7 +253,6 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 				err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
 				result = nil
 			end
-			-- TODO make sure that these won't block anything.
 			send_response(decoded.id, err, result)
 		elseif decoded.id then
 			-- Server Result
@@ -247,19 +267,19 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 			if callback then
 				message_callbacks[result_id] = nil
 				assert(type(callback) == 'function', "callback must be a function")
-				-- TODO log errors from user.
-				pcall(callback, decoded.error, decoded.result)
+				try_call(CLIENT_ERRORS.SERVER_RESULT_CALLBACK_ERROR,
+						callback, decoded.error, decoded.result)
 			else
-				-- TODO handle us not having a callback
-				pcall(handlers.on_error, CLIENT_ERRORS.NO_RESULT_CALLBACK_FOUND, decoded)
+				on_error(CLIENT_ERRORS.NO_RESULT_CALLBACK_FOUND, decoded)
 				logger.error("No callback found for server response id "..result_id)
 			end
 		elseif type(decoded.method) == 'string' then
 			-- Notification
-			pcall(handlers.notification, decoded.method, decoded.params)
+			try_call(CLIENT_ERRORS.NOTIFICATION_HANDLER_ERROR,
+					handlers.notification, decoded.method, decoded.params)
 		else
 			-- Invalid server message
-			pcall(handlers.on_error, CLIENT_ERRORS.INVALID_SERVER_MESSAGE, decoded)
+			on_error(CLIENT_ERRORS.INVALID_SERVER_MESSAGE, decoded)
 		end
 	end
 
@@ -268,7 +288,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 	stdout:read_start(function(err, chunk)
 		if err then
 			-- TODO better handling. Can these be intermittent errors?
-			pcall(handlers.on_error, CLIENT_ERRORS.READ_ERROR, err)
+			on_error(CLIENT_ERRORS.READ_ERROR, err)
 			return
 		end
 		-- This should signal that we are done reading from the client.

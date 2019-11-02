@@ -23,11 +23,16 @@ Logger.levels = {
   none = 4,
 }
 
+local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+local function path_join(...)
+	return table.concat(vim.tbl_flatten{...}, path_sep)
+end
+
 Logger.set_outfile = function(logger, dir_name, file_name)
   if vim.api.nvim_call_function('isdirectory', {dir_name}) == 0 then
     vim.api.nvim_call_function('mkdir', {dir_name, 'p'})
   end
-  logger.outfile = dir_name .. file_name
+  logger.outfile = path_join(dir_name, file_name)
 end
 
 Logger.set_log_level = function(logger, level)
@@ -102,6 +107,6 @@ if (vim.api.nvim_call_function('exists', {'g:language_server_client_log_level'})
 end
 
 logger:set_log_level(default_log_level)
-logger:set_outfile(vim.api.nvim_call_function('stdpath', {'data'}),  '/language_server_client.log')
+logger:set_outfile(vim.fn.stdpath('data'), 'language_server_client.log')
 
 return logger

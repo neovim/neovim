@@ -30,13 +30,13 @@ local errorCodes = protocol.errorCodes
 local text_document_handler = require('vim.lsp.handler').text_document
 local workspace_handler = require('vim.lsp.handler').workspace
 
-local split = vim.split
 local function split_lines(value)
-	return split(value, '\n', true)
+	return vim.split(value, '\n', true)
 end
 
 -- Append all the items from `b` to `a`
-local function list_extend(a, b)
+-- TODO if vim.list_extend is fine then erase this condition.
+local list_extend = vim.list_extend or function(a, b)
 	for _, v in ipairs(b) do
 		table.insert(a, v)
 	end
@@ -183,10 +183,10 @@ end
 --      options = table
 --    }
 -- }
-local BUILTIN_CALLBACKS = {}
+local builtin_callbacks = {}
 
 -- nvim/error_callback
-BUILTIN_CALLBACKS['nvim/error_callback'] = {
+builtin_callbacks['nvim/error_callback'] = {
   callback = function(self, result, method_name)
     logger.debug('callback:nvim/error_callback ', method_name, ' ', result, ' ', self)
 
@@ -208,102 +208,90 @@ BUILTIN_CALLBACKS['nvim/error_callback'] = {
 
 -- textDocument/publishDiagnostics
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
-BUILTIN_CALLBACKS['textDocument/publishDiagnostics'] = {
-  callback = function(self, result)
-    logger.debug('callback:textDocument/publishDiagnostics ', result, ' ', self)
-    logger.debug('Not implemented textDocument/publishDiagnostics callback')
-  end,
-  options = {},
-}
+builtin_callbacks['textDocument/publishDiagnostics'] = function(err, result)
+	assert(not err, err)
+	logger.debug('callback:textDocument/publishDiagnostics ', result, ' ', err)
+	logger.debug('Not implemented textDocument/publishDiagnostics callback')
+end
 
 -- textDocument/completion
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-BUILTIN_CALLBACKS['textDocument/completion'] = {
-  callback = function(self, result)
-    logger.debug('callback:textDocument/completion ', result, ' ', self)
+builtin_callbacks['textDocument/completion'] = function(err, result)
+	assert(not err, err)
+	logger.debug('callback:textDocument/completion ', result, ' ', err)
 
-    if not result or vim.tbl_isempty(result) then
-      return
-    end
+	if not result or vim.tbl_isempty(result) then
+		return
+	end
 
-		local pos = vim.api.nvim_win_get_cursor(0)
-		local row, col = pos[1], pos[2]
-		local line = assert(vim.api.nvim_buf_get_lines(0, row-1, row, false)[1])
-    local line_to_cursor = line:sub(col+1)
+	local pos = vim.api.nvim_win_get_cursor(0)
+	local row, col = pos[1], pos[2]
+	local line = assert(vim.api.nvim_buf_get_lines(0, row-1, row, false)[1])
+	local line_to_cursor = line:sub(col+1)
 
-    local matches = text_document_handler.completion_list_to_complete_items(result, line_to_cursor)
-    local match_result = vim.fn.matchstrpos(line_to_cursor, '\\k\\+$')
-		local match_start, match_finish = match_result[2], match_result[3]
+	local matches = text_document_handler.completion_list_to_complete_items(result, line_to_cursor)
+	local match_result = vim.fn.matchstrpos(line_to_cursor, '\\k\\+$')
+	local match_start, match_finish = match_result[2], match_result[3]
 
-		vim.fn.complete(pos[2] + 1 - (match_finish - match_start), matches)
-  end,
-  options = {}
-}
+	vim.fn.complete(pos[2] + 1 - (match_finish - match_start), matches)
+end
 
 -- textDocument/references
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
-BUILTIN_CALLBACKS['textDocument/references'] = {
-  callback = function(self, result)
-    logger.debug('callback:textDocument/references ', result, ' ', self)
-    logger.debug('Not implemented textDocument/publishDiagnostics callback')
-  end,
-  options = {},
-}
+builtin_callbacks['textDocument/references'] = function(err, result)
+	assert(not err, err)
+	logger.debug('callback:textDocument/references ', result, ' ', err)
+	logger.debug('Not implemented textDocument/publishDiagnostics callback')
+end
 
 -- textDocument/rename
-BUILTIN_CALLBACKS['textDocument/rename'] = {
-  callback = function(self, result)
-    logger.debug('callback:textDocument/rename ', result, ' ', self)
+builtin_callbacks['textDocument/rename'] = function(err, result)
+	assert(not err, err)
+	logger.debug('callback:textDocument/rename ', result, ' ', err)
 
-    if not result then
-      return nil
-    end
+	if not result then
+		return nil
+	end
 
-    vim.api.nvim_set_var('text_document_rename', result)
+	vim.api.nvim_set_var('text_document_rename', result)
 
-    workspace_handler.apply_WorkspaceEdit(result)
-  end,
-  options = {}
-}
+	workspace_handler.apply_WorkspaceEdit(result)
+end
 
 
 -- textDocument/hover
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 -- @params MarkedString | MarkedString[] | MarkupContent
-BUILTIN_CALLBACKS['textDocument/hover'] = {
-  callback = function(self, result)
-    logger.debug('textDocument/hover ', result, self)
+builtin_callbacks['textDocument/hover'] = function(err, result)
+	assert(not err, err)
+	logger.debug('textDocument/hover ', result, err)
 
-    if result == nil or vim.tbl_isempty(result) then
-      return
-    end
+	if result == nil or vim.tbl_isempty(result) then
+		return
+	end
 
-    if result.contents ~= nil then
-			local markdown_lines = hover_contents_to_markdown_lines(result.contents)
-      open_floating_preview(markdown_lines, 'markdown')
-    end
-  end,
-  options = {}
-}
+	if result.contents ~= nil then
+		local markdown_lines = hover_contents_to_markdown_lines(result.contents)
+		open_floating_preview(markdown_lines, 'markdown')
+	end
+end
 
 -- textDocument/signatureHelp
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
-BUILTIN_CALLBACKS['textDocument/signatureHelp'] = {
-  callback = function(self, result)
-    logger.debug('textDocument/signatureHelp ', result, ' ', self)
+builtin_callbacks['textDocument/signatureHelp'] = function(err, result)
+	assert(not err, err)
+	logger.debug('textDocument/signatureHelp ', result, ' ', err)
 
-    if result == nil or vim.tbl_isempty(result) then
-      return
-    end
+	if result == nil or vim.tbl_isempty(result) then
+		return
+	end
 
-		-- TODO show empty popup when signatures is empty?
-    if #result.signatures > 0 then
-			local markdown_lines = signature_help_to_preview_contents(result)
-			open_floating_preview(markdown_lines, 'markdown')
-    end
-  end,
-  options = {},
-}
+	-- TODO show empty popup when signatures is empty?
+	if #result.signatures > 0 then
+		local markdown_lines = signature_help_to_preview_contents(result)
+		open_floating_preview(markdown_lines, 'markdown')
+	end
+end
 
 local function update_tagstack()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -369,18 +357,16 @@ local function handle_location(result)
   -- )
 end
 
-local location_callback_object = {
-  callback = function(err, result)
-    logger.debug('location callback ', {result, ' ', err})
-    if result == nil or vim.tbl_isempty(result) then
-      logger.info('No declaration found')
-      return nil
-    end
-    handle_location(result)
-    return true
-  end,
-  options = {}
-}
+local location_callback_object = function(err, result)
+	assert(not err, err)
+	logger.debug('location callback ', {result, ' ', err})
+	if result == nil or vim.tbl_isempty(result) then
+		logger.info('No declaration found')
+		return nil
+	end
+	handle_location(result)
+	return true
+end
 
 local location_callbacks = {
 	-- https://microsoft.github.io/language-server-protocol/specification#textDocument_declaration
@@ -394,40 +380,38 @@ local location_callbacks = {
 }
 
 for _, location_callback in ipairs(location_callbacks) do
-	BUILTIN_CALLBACKS[location_callback] = location_callback_object
+	builtin_callbacks[location_callback] = location_callback_object
 end
 
 -- window/showMessage
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
-BUILTIN_CALLBACKS['window/showMessage'] = {
-  callback = function(self, result)
-    logger.debug('callback:window/showMessage ', result, ' ', self)
+builtin_callbacks['window/showMessage'] = function(err, result)
+	assert(not err, err)
+	logger.debug('callback:window/showMessage ', result, ' ', err)
 
-    if not result or type(result) ~= 'table' then
-			-- TODO eh?
-      print(self)
-      return nil
-    end
+	if not result or type(result) ~= 'table' then
+		-- TODO eh?
+		print(err)
+		return nil
+	end
 
-    local message_type = result['type']
-    local message = result['message']
+	local message_type = result['type']
+	local message = result['message']
 
-    if message_type == protocol.MessageType.Error then
-      -- Might want to not use err_writeln,
-      -- but displaying a message with red highlights or something
-      vim.api.nvim_err_writeln(message)
-    else
-      vim.api.nvim_out_write(message .. "\n")
-    end
+	if message_type == protocol.MessageType.Error then
+		-- Might want to not use err_writeln,
+		-- but displaying a message with red highlights or something
+		vim.api.nvim_err_writeln(message)
+	else
+		vim.api.nvim_out_write(message .. "\n")
+	end
 
-    return result
-  end,
-  options = {}
-}
-
-for k, v in pairs(BUILTIN_CALLBACKS) do
-	BUILTIN_CALLBACKS[k] = vim.schedule_wrap(v.callback)
---	BUILTIN_CALLBACKS[k] = v.callback
+	return result
 end
 
-return BUILTIN_CALLBACKS
+-- TODO auto schedule_wrap?
+for k, v in pairs(builtin_callbacks) do
+	builtin_callbacks[k] = vim.schedule_wrap(v)
+end
+
+return builtin_callbacks

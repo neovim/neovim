@@ -195,7 +195,13 @@ end
 --@param o table The table to add the reverse to.
 function vim.tbl_add_reverse_lookup(o)
 	local keys = vim.tbl_keys(o)
-	for _, k in ipairs(keys) do o[o[k]] = k end
+	for _, k in ipairs(keys) do
+		local v = o[k]
+		if o[v] then
+			error(string.format("The reverse lookup found an existing value for %q while processing key %q", tostring(v), tostring(k)))
+		end
+		o[v] = k
+	end
 	return o
 end
 

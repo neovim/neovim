@@ -7,7 +7,7 @@ local protocol = require('vim.lsp.protocol')
 lsp.protocol = protocol
 local lsp_rpc = require('vim.lsp.rpc')
 -- local callbacks = require('vim.lsp.callbacks')
-local default_request_callbacks = require('vim.lsp.builtin_callbacks')
+local builtin_default_server_callbacks = require('vim.lsp.builtin_callbacks')
 local logger = require('vim.lsp.logger')
 local text_document_handler = require('vim.lsp.handler').text_document
 
@@ -156,22 +156,32 @@ local function validate_encoding(encoding)
 	return VALID_ENCODINGS[encoding:lower()] or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
+local maxerrn = table.maxn(lsp_rpc.ERRORS)
+local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_lookup {
+	ON_INIT_CALLBACK_ERROR = maxerrn + 1;
+})
+
 function lsp.start_client(conf)
 	assert(type(conf.cmd) == 'string', "conf.cmd must be a string")
 	assert(type(conf.cmd_args) == 'table', "conf.cmd_args must be a table")
 	local offset_encoding = validate_encoding(conf.offset_encoding)
-	-- TODO do I need name here for logs or something??
-	-- assert(type(conf.name) == 'string', "conf.name must be a string")
-	assert(type(conf.request_callbacks or {}) == 'table', "conf.request_callbacks must be a table")
-	-- TODO this isn't correct. It should probably be something else.
-	-- TODO this isn't correct. It should probably be something else.
-	-- TODO this isn't correct. It should probably be something else.
-	-- TODO this isn't correct. It should probably be something else.
-	-- TODO this isn't correct. It should probably be something else.
-	-- TODO this isn't correct. It should probably be something else.
-	local request_callbacks = vim.tbl_extend("keep", conf.request_callbacks or {}, default_request_callbacks)
-	-- local request_callbacks = conf.request_callbacks or default_request_callbacks
-	-- assert(type(request_callbacks) == 'table', "request_callbacks must be a table")
+	-- TODO should I be using this for both notifications and request callbacks
+	-- or separate those?
+	local default_server_callbacks
+	if conf.default_server_callbacks then
+		assert(type(conf.default_server_callbacks) == 'table', "conf.default_server_callbacks must be a table")
+		default_server_callbacks = vim.tbl_extend("keep", conf.default_server_callbacks, builtin_default_server_callbacks)
+	else
+		default_server_callbacks = builtin_default_server_callbacks
+	end
+
+	-- There are things sent by the server in the initialize response which
+	-- contains capabilities that would be useful for completion engines, such as
+	-- the character code triggers for completion and code action, so I'll expose this
+	-- for now.
+	if conf.on_init then
+		assert(type(conf.on_init) == 'function', "conf.cmd_args must be a table")
+	end
 
 	local client_id = next_client_id()
 
@@ -179,22 +189,33 @@ function lsp.start_client(conf)
 
 	function handlers.notification(method, params)
 		logger.info('notification', method, params)
+		local callback = default_server_callbacks[method]
+		if callback then
+			-- Method name is provided here for convenience.
+			callback(params, method)
+		end
 	end
 
 	function handlers.server_request(method, params)
 		logger.info('server_request', method, params)
-		local request_callback = request_callbacks[method]
+		local request_callback = default_server_callbacks[method]
 		if request_callback then
-			return request_callback(params)
+			return request_callback(params, method)
 		end
 		return nil, lsp_rpc.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 	end
 
-	-- TODO use protocol.ErrorCodes instead?
+	local name = conf.name or tostring(client_id)
+	assert(type(name) == 'string', "conf.name must be a string")
+
 	function handlers.on_error(code, err)
-		logger.info('client_error:', lsp_rpc.ERRORS[code], err)
+		local msg = string.format('LSP[%q]: Error %s: %q', name, error_codes[code], vim.inspect(err))
+		logger.error(msg)
+		vim.api.nvim_err_writeln(msg)
 	end
 
+	-- This is used because if there are outstanding timers (like for stop())
+	-- they will block neovim exiting.
 	local timers = {}
 	function handlers.on_exit()
 		for _, h in ipairs(timers) do
@@ -213,7 +234,25 @@ function lsp.start_client(conf)
 		id = client_id;
 		rpc = rpc;
 		offset_encoding = offset_encoding;
+		default_server_callbacks = default_server_callbacks;
 	}
+
+	local function on_error(errkind, ...)
+		assert(error_codes[errkind])
+		-- TODO what to do if this fails?
+		pcall(handlers.on_error, errkind, ...)
+	end
+	local function pcall_handler(errkind, status, head, ...)
+		if not status then
+			on_error(errkind, ...)
+			return status, head
+		end
+		return status, head, ...
+	end
+	local function try_call(errkind, fn, ...)
+		return pcall_handler(errkind, pcall(fn, ...))
+	end
+
 
 	local function initialize()
 		local initialize_params = {
@@ -256,7 +295,14 @@ function lsp.start_client(conf)
 			assert(not err, err)
 			rpc.notify('initialized', {})
 			client.initialized = true
-			client.server_capabilities = assert(result.capabilities, "initialize result doesn't capabilities")
+			client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
+			if conf.on_init then
+				local status, err = pcall(conf.on_init, client)
+				if not status then
+					on_error(error_codes.ON_INIT_CALLBACK_ERROR, err)
+				end
+			end
+
 			-- Only assign after initialized?
 			LSP_CLIENTS[client_id] = client
 			-- If we had been registered before we start, then send didOpen This can
@@ -532,17 +578,19 @@ end
 --
 -- @returns: success?, request_id, cancel_fn
 function lsp.buf_request(bufnr, method, params, callback)
-	if not callback then
-		-- TODO
-		callback = default_request_callbacks[method]
---		callback = LSP_CONFIGS[
+	if callback then
+		assert(type(callback) == 'function', "buf_request callback must be a function")
 	end
-	assert(type(callback) == 'function', "callback must be a function")
-
 	local client_request_ids = {}
 	for_each_buffer_client(bufnr, function(client, client_id)
+		local request_callback = callback
+		if not request_callback then
+			request_callback = client.default_server_callbacks[method]
+				or error(string.format("buf_request callback is empty and no default client was found for client %s", client.name))
+		end
 		local request_success, request_id = client.request(method, params, function(err, result)
-			callback(err, result, client_id)
+			-- TODO pass client here?
+			request_callback(err, result, client_id)
 		end)
 
 		-- This could only fail if the client shut down in the time since we looked
