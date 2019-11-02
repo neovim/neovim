@@ -1693,9 +1693,7 @@ static int copy_loclist(const qf_list_T *from_qfl,
   }
   if (from_qfl->qf_ctx != NULL) {
     to_qfl->qf_ctx = xcalloc(1, sizeof(*to_qfl->qf_ctx));
-    if (to_qfl->qf_ctx != NULL) {
-      tv_copy(from_qfl->qf_ctx, to_qfl->qf_ctx);
-    }
+    tv_copy(from_qfl->qf_ctx, to_qfl->qf_ctx);
   } else {
     to_qfl->qf_ctx = NULL;
   }
