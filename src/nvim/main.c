@@ -762,7 +762,7 @@ static uint64_t server_connect(char *server_addr)
   CallbackReader on_data = CALLBACK_READER_INIT;
   const char *error = NULL;
   bool is_tcp = strrchr(server_addr, ':') ? true : false;
-  // connected to channel
+
   uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &error);
   if (error) {
     EMSG2(e_noserver, error);
@@ -798,12 +798,12 @@ static bool remote_request(uint64_t chan, mparm_T *params, int remote_args,
   api_free_array(a);
 
 
-  if (o.type != kObjectTypeDictionary) {
-    EMSG("vim._cs_remote must return a dictionary");
-    goto free_return;
-  } else if (ERROR_SET(&err)) {
+  if (ERROR_SET(&err)) {
     EMSG2("vim._cs_remote: %s", err.msg);
     api_clear_error(&err);
+    goto free_return;
+  } else if (o.type != kObjectTypeDictionary) {
+    EMSG("vim._cs_remote must return a dictionary");
     goto free_return;
   }
 

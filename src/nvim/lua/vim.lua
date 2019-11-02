@@ -257,6 +257,25 @@ local function __rpcrequest(...)
   return vim.api.nvim_call_function("rpcrequest", {...})
 end
 
+local function _cs_remote_lua(code)
+  local expr = true
+  local chunk, err = loadstring("return \n"..code, "remote")
+  if chunk == nil then
+    expr = false
+    chunk, err = loadstring(code, "remote")
+  end
+  if err then
+    return err
+  end
+  local _, res = pcall(chunk)
+  if type(res) == "table" then
+    res = vim.inspect(res)
+  elseif res == nil and not expr then
+    res = ""
+  end
+  return res
+end
+
 local function _cs_remote(rcid, args)
 
   local f_silent = false
@@ -293,11 +312,16 @@ local function _cs_remote(rcid, args)
     return { should_exit = should_exit, tabbed = f_tab, files = 0 }
     -- should we show warning if --server doesn't exist in --send and --expr?
   elseif subcmd == 'expr' then
-    local res = __rpcrequest(rcid, 'vim_eval', args[2])
+    local res = __rpcrequest(rcid, 'nvim_eval', args[2])
     print(res)
-    return { should_exit = should_exit, tabbed = f_tab, files = 0 }
+    return {should_exit = true}
+  elseif subcmd == 'lua' then
+    local res = __rpcrequest( rcid, 'nvim_execute_lua', 'return vim._cs_remote_lua(...)', {args[2]})
+    print(res)
+    return {should_exit = true}
   else
     print('--remote subcommand not found')
+    return {should_exit=true}
   end
 
   table.remove(args,1)
@@ -335,6 +359,7 @@ local module = {
   schedule_wrap = schedule_wrap,
   fn=fn,
   _cs_remote = _cs_remote,
+  _cs_remote_lua = _cs_remote_lua,
 }
 
 setmetatable(module, {
