@@ -283,8 +283,15 @@ int main(int argc, char **argv)
 
   server_init(params.listen_addr);
   if (params.remote) {
-    handle_remote_client(&params, params.remote,
-                         params.server_addr, argc, argv);
+    uint64_t chan = server_connect(params.server_addr);
+    if (!chan) {
+      mch_exit(0);
+    }
+
+    bool exit = remote_request(chan, &params, params.remote, argc, argv);
+    if (exit) {
+      mch_exit(0);
+    }
   }
 
   if (GARGCOUNT > 0) {
@@ -745,65 +752,90 @@ static bool edit_stdin(bool explicit, mparm_T *parmp)
   return explicit || implicit;
 }
 
-/// Handle remote subcommands
-static void handle_remote_client(mparm_T *params, int remote_args,
-                                 char *server_addr, int argc, char **argv)
+static uint64_t server_connect(char *server_addr)
 {
-    Object rvobj = OBJECT_INIT;
-    rvobj.data.dictionary = (Dictionary)ARRAY_DICT_INIT;
-    rvobj.type = kObjectTypeDictionary;
-    CallbackReader on_data = CALLBACK_READER_INIT;
-    const char *error = NULL;
-    uint64_t rc_id = server_addr == NULL ? 0 : channel_connect(false,
-                     server_addr, true, on_data, 50, &error);
+  if (server_addr == NULL) {
+    EMSG2(e_noserver, "no address specified");
+    msg_putchar('\n');
+    return 0;
+  }
+  CallbackReader on_data = CALLBACK_READER_INIT;
+  const char *error = NULL;
+  bool is_tcp = strrchr(server_addr, ':') ? true : false;
+  // connected to channel
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &error);
+  if (error) {
+    EMSG2(e_noserver, error);
+    msg_putchar('\n');
 
-    Boolean should_exit = true;
-    Boolean tabbed;
-    int files;
+    return 0;
+  }
+  return chan;
+}
 
-    int t_argc = remote_args;
-    Array args = ARRAY_DICT_INIT;
-    String arg_s;
-    for (; t_argc < argc; t_argc++) {
-      arg_s = cstr_to_string(argv[t_argc]);
-      ADD(args, STRING_OBJ(arg_s));
+/// Handle remote subcommands
+static bool remote_request(uint64_t chan, mparm_T *params, int remote_args,
+                           int argc, char **argv)
+{
+  Boolean should_exit = true;
+  Boolean tabbed;
+  int files;
+
+  int t_argc = remote_args;
+  Array args = ARRAY_DICT_INIT;
+  String arg_s;
+  for (; t_argc < argc; t_argc++) {
+    arg_s = cstr_to_string(argv[t_argc]);
+    ADD(args, STRING_OBJ(arg_s));
+  }
+
+  Error err = ERROR_INIT;
+  Array a = ARRAY_DICT_INIT;
+  ADD(a, INTEGER_OBJ((Integer)chan));
+  ADD(a, ARRAY_OBJ(args));
+  String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
+  Object o = nvim_execute_lua(s, a, &err);
+  api_free_array(a);
+
+
+  if (o.type != kObjectTypeDictionary) {
+    EMSG("vim._cs_remote must return a dictionary");
+    goto free_return;
+  } else if (ERROR_SET(&err)) {
+    EMSG2("vim._cs_remote: %s", err.msg);
+    api_clear_error(&err);
+    goto free_return;
+  }
+
+  Dictionary dict = o.data.dictionary;
+  for (size_t i = 0; i < dict.size ; i++) {
+    if (strcmp(dict.items[i].key.data, "tabbed") == 0) {
+      // should we check items[i].value.type here?
+      tabbed = dict.items[i].value.data.boolean;
+    } else if (strcmp(dict.items[i].key.data, "should_exit") == 0) {
+      should_exit = dict.items[i].value.data.boolean;
+    } else if (strcmp(dict.items[i].key.data, "files") == 0) {
+      files = (int)dict.items[i].value.data.integer;
     }
+  }
 
-    Error err = ERROR_INIT;
-    Array a = ARRAY_DICT_INIT;
-    ADD(a, INTEGER_OBJ((int)rc_id));
-    ADD(a, ARRAY_OBJ(args));
-    String s = cstr_to_string("return vim._cs_remote(...)");
-    Object o = executor_exec_lua_api(s, a, &err);
-    api_free_string(s);
-    api_free_array(a);
+free_return:
+  // TODO: should be done automagically by mch_exit?
+  if (msg_col > 0) {
+    msg_putchar('\n');
+  }
 
-    if (o.type == kObjectTypeDictionary) {
-      rvobj.data.dictionary = o.data.dictionary;
-    } else if (!ERROR_SET(&err)) {
-      api_set_error(&err, kErrorTypeException,
-                    "Function returned unexpected value");
-    }
+  api_free_object(o);
 
-    for (size_t i = 0; i < rvobj.data.dictionary.size ; i++) {
-      if (strcmp(rvobj.data.dictionary.items[i].key.data, "tabbed") == 0) {
-        // should we check items[i].value.type here?
-        tabbed = rvobj.data.dictionary.items[i].value.data.boolean;
-      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "should_exit") == 0) {
-        should_exit = rvobj.data.dictionary.items[i].value.data.boolean;
-      } else if (strcmp(rvobj.data.dictionary.items[i].key.data, "files") == 0) {
-        files = (int)rvobj.data.dictionary.items[i].value.data.integer;
-      }
-    }
+  if (should_exit) {
+    return true;
+  }
 
-    if (should_exit) {
-      mch_exit(0);
-    } else {
-      if (tabbed) {
-        params->window_count = files;
-        params->window_layout = WIN_TABS;
-      }
-    }
+  if (tabbed) {
+    params->window_count = files;
+    params->window_layout = WIN_TABS;
+  }
+  return false;
 }
 
 /// Scan the command line arguments.
