@@ -73,3 +73,12 @@ func Test_edit_CTRL_G()
   bwipe!
   set virtualedit=
 endfunc
+
+func Test_edit_change()
+  new
+  set virtualedit=all
+  call setline(1, "\t⒌")
+  normal Cx
+  call assert_equal('x', getline(1))
+  bwipe!
+endfunc
