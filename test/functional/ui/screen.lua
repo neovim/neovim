@@ -1515,7 +1515,8 @@ function Screen:_equal_attrs(a, b)
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and a.background == b.background and
        a.special == b.special and a.blend == b.blend and
-       a.strikethrough == b.strikethrough
+       a.strikethrough == b.strikethrough and
+       a.fg_indexed == b.fg_indexed and a.bg_indexed == b.bg_indexed
 end
 
 function Screen:_equal_info(a, b)

@@ -680,11 +680,11 @@ describe('TUI', function()
     screen:set_option('rgb', true)
     screen:set_default_attr_ids({
       [1] = {reverse = true},
-      [2] = {foreground = tonumber('0x4040ff')},
+      [2] = {foreground = tonumber('0x4040ff'), fg_indexed=true},
       [3] = {bold = true, reverse = true},
       [4] = {bold = true},
-      [5] = {reverse = true, foreground = tonumber('0xe0e000')},
-      [6] = {foreground = tonumber('0xe0e000')},
+      [5] = {reverse = true, foreground = tonumber('0xe0e000'), fg_indexed=true},
+      [6] = {foreground = tonumber('0xe0e000'), fg_indexed=true},
       [7] = {reverse = true, foreground = Screen.colors.SeaGreen4},
       [8] = {foreground = Screen.colors.SeaGreen4},
       [9] = {bold = true, foreground = Screen.colors.Blue1},
@@ -726,6 +726,54 @@ describe('TUI', function()
       :set notermguicolors                              |
       {4:-- TERMINAL --}                                    |
     ]])
+  end)
+
+  it('forwards :term palette colors with termguicolors', function()
+    screen:set_rgb_cterm(true)
+    screen:set_default_attr_ids({
+      [1] = {{reverse = true}, {reverse = true}},
+      [2] = {{bold = true, reverse = true}, {bold = true, reverse = true}},
+      [3] = {{bold = true}, {bold = true}},
+      [4] = {{fg_indexed = true, foreground = tonumber('0xe0e000')}, {foreground = 3}},
+      [5] = {{foreground = tonumber('0xff8000')}, {}},
+    })
+
+    feed_data(':set statusline=^^^^^^^\n')
+    feed_data(':set termguicolors\n')
+    feed_data(':terminal '..nvim_dir..'/tty-test\n')
+    -- Depending on platform the above might or might not fit in the cmdline
+    -- so clear it for consistent behavior.
+    feed_data(':\027')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+                                                        |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    feed_data(':call chansend(&channel, "\\033[38;5;3mtext\\033[38:2:255:128:0mcolor\\033[0;10mtext")\n')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+      {4:text}{5:color}text                                     |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+
+    feed_data(':set notermguicolors\n')
+    screen:expect{grid=[[
+      {1:t}ty ready                                         |
+      {4:text}colortext                                     |
+                                                        |
+                                                        |
+      {2:^^^^^^^                                           }|
+      :set notermguicolors                              |
+      {3:-- TERMINAL --}                                    |
+    ]]}
   end)
 
   it('is included in nvim_list_uis()', function()
