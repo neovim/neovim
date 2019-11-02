@@ -3524,6 +3524,11 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
         // Note: If not first match on a line, column can't be known here
         current_match.start.lnum = sub_firstlnum;
 
+        // Match might be after the last line for "\n\zs" matching at
+        // the end of the last line.
+        if (lnum > curbuf->b_ml.ml_line_count) {
+          break;
+        }
         if (sub_firstline == NULL) {
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
         }
