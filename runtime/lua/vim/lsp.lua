@@ -151,21 +151,17 @@ local function check_language_server_capabilities(client, method)
   end
 end
 
+local function validate_encoding(encoding)
+	assert(type(encoding) == 'string', "encoding must be a string")
+	return VALID_ENCODINGS[encoding:lower()] or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
+end
+
 function lsp.start_client(conf)
 	assert(type(conf.cmd) == 'string', "conf.cmd must be a string")
 	assert(type(conf.cmd_args) == 'table', "conf.cmd_args must be a table")
+	local offset_encoding = validate_encoding(conf.offset_encoding)
 	-- TODO do I need name here for logs or something??
 	-- assert(type(conf.name) == 'string', "conf.name must be a string")
-	local offset_encoding
-	if conf.offset_encoding then
-		offset_encoding = VALID_ENCODINGS[conf.offset_encoding]
-		if not offset_encoding then
-			error(string.format("Invalid offset_encoding: %q", conf.offset_encoding))
-		end
-	else
-		-- TODO UTF8 or UTF16?
-		offset_encoding = VALID_ENCODINGS.UTF8
-	end
 	assert(type(conf.request_callbacks or {}) == 'table', "conf.request_callbacks must be a table")
 	-- TODO this isn't correct. It should probably be something else.
 	-- TODO this isn't correct. It should probably be something else.
@@ -455,14 +451,7 @@ function lsp.add_config(config)
     error("config.filetype must be a string or a list of strings")
   end
 
-	local offset_encoding = VALID_ENCODINGS.UTF8
---	local offset_encoding = VALID_ENCODINGS.UTF16
-  if config.offset_encoding then
-    assert(type(config.offset_encoding) == 'string', "config.offset_encoding must be a string")
-		-- Ignore case here.
-		offset_encoding = VALID_ENCODINGS[config.offset_encoding:lower()]
-    assert(offset_encoding, "config.offset_encoding must be one of 'utf-8', 'utf-16', or 'utf32'")
-  end
+	local offset_encoding = config.offset_encoding and validate_encoding(config.offset_encoding) or VALID_ENCODINGS.UTF16
 
 	local cmd, cmd_args
 	if type(config.cmd) == 'string' then
