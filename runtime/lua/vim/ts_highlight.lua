@@ -35,6 +35,18 @@ for k,v in pairs(TSHighlighter.hl_map) do
   TSHighlighter.id_map[k] = a.nvim__syn_attr(v)
 end
 
+local function hl_index(table, key)
+  local firstc = string.sub(key, 1, 1)
+  if firstc ~= string.lower(firstc) then
+    val = a.nvim__syn_attr(key)
+    if val > 0 then
+      table[key] = val
+      return val
+    end
+  end
+end
+setmetatable(TSHighlighter.id_map, {__index=hl_index})
+
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
   self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
@@ -122,6 +134,7 @@ function TSHighlighter:on_line(_, win, buf, line)
     self.iter = self.root:query(self.query,line,self.botline)
   end
   while line >= self.nextrow do
+    -- TODO: capture should be numeric index!
     local capture, node, match = self.iter()
     local active = true
     if capture == nil then
