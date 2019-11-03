@@ -29,24 +29,6 @@ TSHighlighter.hl_map = {
     ["dup"]="WarningMsg",
 }
 
--- TODO: redo on ColorScheme! (or on any :hi really)
-TSHighlighter.id_map = {}
-for k,v in pairs(TSHighlighter.hl_map) do
-  TSHighlighter.id_map[k] = a.nvim__syn_attr(v)
-end
-
-local function hl_index(table, key)
-  local firstc = string.sub(key, 1, 1)
-  if firstc ~= string.lower(firstc) then
-    val = a.nvim__syn_attr(key)
-    if val > 0 then
-      table[key] = val
-      return val
-    end
-  end
-end
-setmetatable(TSHighlighter.id_map, {__index=hl_index})
-
 function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
   self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
@@ -66,6 +48,25 @@ function TSHighlighter:set_query(query)
   end
   self.query = query
   self.iquery = query:inspect()
+  self:update_hl_defs()
+end
+
+-- TODO: redo on ColorScheme! (or on any :hi really)
+function TSHighlighter:update_hl_defs()
+  local id_map = {}
+  for i, capture in ipairs(self.iquery.captures) do
+    local hl = 0
+    local firstc = string.sub(capture, 1, 1)
+    local hl_group = self.hl_map[capture]
+    if firstc ~= string.lower(firstc) then
+      hl_group = vim.split(capture, '.', true)[1]
+    end
+    if hl_group then
+      hl = a.nvim__syn_attr(hl_group)
+    end
+    id_map[i] = hl
+  end
+  self.id_map = id_map
 end
 
 function TSHighlighter:on_change(changes)
@@ -147,7 +148,7 @@ function TSHighlighter:on_line(_, win, buf, line)
     count = count + 1
     local start_row, start_col, end_row, end_col = node:range()
     local hl = self.id_map[capture]
-    if hl and active then
+    if hl > 0 and active then
       if start_row == line and end_row == line then
         a.nvim__put_attr(hl, start_col, end_col)
       elseif end_row >= line then

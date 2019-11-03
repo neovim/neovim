@@ -703,10 +703,8 @@ static int query_next_capture(lua_State *L)
   uint32_t capture_index;
   while (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
     TSQueryCapture capture = match.captures[capture_index];
-    uint32_t len;
-    const char *name = ts_query_capture_name_for_id(query, capture.index, &len);
 
-    lua_pushlstring(L, name, len);
+    lua_pushinteger(L, capture.index+1);
     push_node(L, capture.node, lua_upvalueindex(2));  // [name, node]
 
     uint32_t n_pred;
