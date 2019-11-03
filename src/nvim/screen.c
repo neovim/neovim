@@ -1208,10 +1208,12 @@ static void win_update(win_T *wp)
   if (buf->b_luahl && buf->b_luahl_start != LUA_NOREF) {
     Error err = ERROR_INIT;
     Array args = ARRAY_DICT_INIT;
+    linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
+                       ? wp->w_botline : (wp->w_topline + wp->w_height_inner));
     ADD(args, WINDOW_OBJ(wp->handle));
     ADD(args, BUFFER_OBJ(wp->w_buffer->handle));
     ADD(args, INTEGER_OBJ(wp->w_topline-1));
-    ADD(args, INTEGER_OBJ(wp->w_botline));
+    ADD(args, INTEGER_OBJ(knownmax));
     Object o = executor_exec_lua_cb(buf->b_luahl_start, "start", args, true, &err);
     if (o.type == kObjectTypeArray) {
       // TODO: allow a bare "return start, end"
@@ -1221,10 +1223,10 @@ static void win_update(win_T *wp)
         int start = (int)arr.items[0].data.integer+1;
         int end = (int)arr.items[1].data.integer;
         // TODO: kolla kolla
-        if (start < wp->w_botline && end >= wp->w_topline) {
+        if (start < knownmax && end >= wp->w_topline) {
           start = MAX(start, wp->w_topline);
           mod_top = mod_top != 0 ? MIN(mod_top, start) : start;
-          mod_bot = MAX(mod_bot, MIN(end, wp->w_botline));
+          mod_bot = MAX(mod_bot, MIN(end, knownmax));
         }
       }
     } else if (o.type == kObjectTypeString) {
@@ -2515,7 +2517,7 @@ win_line (
       xfree(lua_attr_buf);
       lua_attr_buf = xcalloc(size, sizeof(*lua_attr_buf));
       lua_attr_bufsize = size;
-    } else {
+    } else if (lua_attr_buf) {
       memset(lua_attr_buf, 0, size * sizeof(*lua_attr_buf));
     }
     Error err = ERROR_INIT;
