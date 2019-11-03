@@ -1305,9 +1305,11 @@ normalchar:
 static void insert_do_complete(InsertState *s)
 {
   compl_busy = true;
+  disable_fold_update++;  // don't redraw folds here
   if (ins_complete(s->c, true) == FAIL) {
     compl_cont_status = 0;
   }
+  disable_fold_update--;
   compl_busy = false;
 }
 

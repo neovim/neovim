@@ -839,6 +839,8 @@ extern char_u *compiled_sys;
  * directory is not a local directory, globaldir is NULL. */
 EXTERN char_u   *globaldir INIT(= NULL);
 
+EXTERN int disable_fold_update INIT(= 0);
+
 /* Whether 'keymodel' contains "stopsel" and "startsel". */
 EXTERN int km_stopsel INIT(= FALSE);
 EXTERN int km_startsel INIT(= FALSE);
