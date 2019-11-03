@@ -138,6 +138,8 @@ struct terminal {
   int pressed_button;               // which mouse button is pressed
   bool pending_resize;              // pending width/height
 
+  bool color_set[16];
+
   size_t refcount;                  // reference count
 };
 
@@ -241,6 +243,7 @@ Terminal *terminal_open(TerminalOptions opts)
                         (uint8_t)((color_val >> 8) & 0xFF),
                         (uint8_t)((color_val >> 0) & 0xFF));
         vterm_state_set_palette_color(state, i, &color);
+        rv->color_set[i] = true;
       }
     }
   }
@@ -598,16 +601,22 @@ void terminal_get_line_attributes(Terminal *term, win_T *wp, int linenr,
     int vt_fg = fg_default ? -1 : get_rgb(state, cell.fg);
     int vt_bg = bg_default ? -1 : get_rgb(state, cell.bg);
 
-    int vt_fg_idx = ((!fg_default && VTERM_COLOR_IS_INDEXED(&cell.fg))
-                     ? cell.fg.indexed.idx + 1 : 0);
-    int vt_bg_idx = ((!bg_default && VTERM_COLOR_IS_INDEXED(&cell.bg))
-                     ? cell.bg.indexed.idx + 1 : 0);
+    bool fg_indexed = VTERM_COLOR_IS_INDEXED(&cell.fg);
+    bool bg_indexed = VTERM_COLOR_IS_INDEXED(&cell.bg);
+
+    int vt_fg_idx = ((!fg_default && fg_indexed) ? cell.fg.indexed.idx + 1 : 0);
+    int vt_bg_idx = ((!bg_default && bg_indexed) ? cell.bg.indexed.idx + 1 : 0);
+
+    bool fg_set = vt_fg_idx && vt_fg_idx <= 16 && term->color_set[vt_fg_idx-1];
+    bool bg_set = vt_bg_idx && vt_bg_idx <= 16 && term->color_set[vt_bg_idx-1];
 
     int hl_attrs = (cell.attrs.bold ? HL_BOLD : 0)
                  | (cell.attrs.italic ? HL_ITALIC : 0)
                  | (cell.attrs.reverse ? HL_INVERSE : 0)
                  | (cell.attrs.underline ? HL_UNDERLINE : 0)
-                 | (cell.attrs.strike ? HL_STRIKETHROUGH: 0);
+                 | (cell.attrs.strike ? HL_STRIKETHROUGH: 0)
+                 | ((fg_indexed && !fg_set) ? HL_FG_INDEXED : 0)
+                 | ((bg_indexed && !bg_set) ? HL_BG_INDEXED : 0);
 
     int attr_id = 0;
 

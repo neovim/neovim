@@ -321,18 +321,26 @@ int hl_combine_attr(int char_attr, int prim_attr)
 
   if (spell_aep.cterm_fg_color > 0) {
     new_en.cterm_fg_color = spell_aep.cterm_fg_color;
+    new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
+                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
   if (spell_aep.cterm_bg_color > 0) {
     new_en.cterm_bg_color = spell_aep.cterm_bg_color;
+    new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
+                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
   if (spell_aep.rgb_fg_color >= 0) {
     new_en.rgb_fg_color = spell_aep.rgb_fg_color;
+    new_en.rgb_ae_attr &= ((~HL_FG_INDEXED)
+                           | (spell_aep.rgb_ae_attr & HL_FG_INDEXED));
   }
 
   if (spell_aep.rgb_bg_color >= 0) {
     new_en.rgb_bg_color = spell_aep.rgb_bg_color;
+    new_en.rgb_ae_attr &= ((~HL_BG_INDEXED)
+                           | (spell_aep.rgb_ae_attr & HL_BG_INDEXED));
   }
 
   if (spell_aep.rgb_sp_color >= 0) {
@@ -422,6 +430,7 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     cattrs.cterm_bg_color = fattrs.cterm_bg_color;
     cattrs.cterm_fg_color = cterm_blend(ratio, battrs.cterm_fg_color,
                                         fattrs.cterm_bg_color);
+    cattrs.rgb_ae_attr &= ~(HL_FG_INDEXED | HL_BG_INDEXED);
   } else {
     cattrs = fattrs;
     if (ratio >= 50) {
@@ -435,6 +444,8 @@ int hl_blend_attrs(int back_attr, int front_attr, bool *through)
     } else {
       cattrs.rgb_sp_color = -1;
     }
+
+    cattrs.rgb_ae_attr &= ~HL_BG_INDEXED;
   }
   cattrs.rgb_bg_color = rgb_blend(ratio, battrs.rgb_bg_color,
                                   fattrs.rgb_bg_color);
@@ -611,6 +622,14 @@ Dictionary hlattrs2dict(HlAttrs ae, bool use_rgb)
   }
 
   if (use_rgb) {
+    if (mask & HL_FG_INDEXED) {
+      PUT(hl, "fg_indexed", BOOLEAN_OBJ(true));
+    }
+
+    if (mask & HL_BG_INDEXED) {
+      PUT(hl, "bg_indexed", BOOLEAN_OBJ(true));
+    }
+
     if (ae.rgb_fg_color != -1) {
       PUT(hl, "foreground", INTEGER_OBJ(ae.rgb_fg_color));
     }
