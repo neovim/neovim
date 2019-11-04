@@ -245,6 +245,11 @@ static int nlua_schedule(lua_State *const lstate)
 (primitive_type) @type
 (sized_type_specifier) @type
 
+; defaults to very magic syntax, for best compatibility
+((identifier) @Identifier (match? @Identifier "^l(u)a_"))
+; still support \M etc prefixes
+((identifier) @Constant (match? @Constant "\M^\[A-Z_]\+$"))
+
 ((binary_expression left: (identifier) @WarningMsg.left right: (identifier) @WarningMsg.right) (eq? @WarningMsg.left @WarningMsg.right))
 
 (comment) @comment
@@ -263,7 +268,7 @@ static int nlua_schedule(lua_State *const lstate)
       [8] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
       [9] = {foreground = Screen.colors.Magenta, background = Screen.colors.Red},
       [10] = {foreground = Screen.colors.Red, background = Screen.colors.Red},
-
+      [11] = {foreground = Screen.colors.Cyan4},
     })
 
     insert(hl_text)
@@ -297,10 +302,10 @@ static int nlua_schedule(lua_State *const lstate)
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} nlua_schedule(lua_State *{3:const} lstate)                |
       {                                                                |
-        {4:if} (lua_type(lstate, {5:1}) != LUA_TFUNCTION                       |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
             || {6:lstate} != {6:lstate}) {                                     |
-          lua_pushliteral(lstate, {5:"vim.schedule: expected function"});  |
-          {4:return} lua_error(lstate);                                    |
+          {11:lua_pushliteral}(lstate, {5:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
         }                                                              |
                                                                        |
         {7:LuaRef} cb = nlua_ref(lstate, {5:1});                               |
@@ -319,10 +324,10 @@ static int nlua_schedule(lua_State *const lstate)
       {2:/// Schedule Lua callback on main loop's event queue}             |
       {3:static} {3:int} nlua_schedule(lua_State *{3:const} lstate)                |
       {                                                                |
-        {4:if} (lua_type(lstate, {5:1}) != LUA_TFUNCTION                       |
+        {4:if} ({11:lua_type}(lstate, {5:1}) != {5:LUA_TFUNCTION}                       |
             || {6:lstate} != {6:lstate}) {                                     |
-          lua_pushliteral(lstate, {5:"vim.schedule: expected function"});  |
-          {4:return} lua_error(lstate);                                    |
+          {11:lua_pushliteral}(lstate, {5:"vim.schedule: expected function"});  |
+          {4:return} {11:lua_error}(lstate);                                    |
       {8:*^/}                                                               |
         }                                                              |
                                                                        |

@@ -693,6 +693,35 @@ identical identifiers, highlighting both as |hl-WarningMsg|: >
      (eq? @WarningMsg.left @WarningMsg.right))
 
 ------------------------------------------------------------------------------
+VIM.REGEX							*lua-regex*
+
+Vim regexes can be used directly from lua. Currently they only allow
+matching within a single line.
+
+vim.regex({re})						*vim.regex()*
+
+        Parse the regex {re} and return a regex object. 'magic' and
+        'ignorecase' options are ignored, lua regexes always defaults to magic
+        and ignoring case.  The behavior can be changed with flags in
+        the beginning of the string |/magic|.
+
+Regex objects support the following methods:
+
+regex:match_str({str})					*regex:match_str()*
+        Match the string against the regex. If the string should match the
+        regex precisely, surround the regex with `^` and `$`.
+        If the was a match, the byte indices for the beginning and end of
+        the match is returned. When there is no match, `nil` is returned.
+        As any integer is truth-y, `regex:match()` can be directly used
+        as a condition in an if-statement.
+
+regex:match_line({bufnr}, {line_idx}[, {start}, {end}])	*regex:match_line()*
+        Match line {line_idx} (zero-based) in buffer {bufnr}. If {start} and
+        {end} are supplied, match only this byte index range. Otherwise see
+        |regex:match_str()|. If {start} is used, then the returned byte
+        indices will be relative {start}.
+
+------------------------------------------------------------------------------
 VIM							*lua-builtin*
 
 vim.api.{func}({...})					*vim.api*

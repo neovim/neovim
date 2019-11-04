@@ -93,10 +93,7 @@ static PMap(cstr_t) *langs;
 static void build_meta(lua_State *L, const char *tname, const luaL_Reg *meta)
 {
   if (luaL_newmetatable(L, tname)) {  // [meta]
-    for (size_t i = 0; meta[i].name != NULL; i++) {
-      lua_pushcfunction(L, meta[i].func);  // [meta, func]
-      lua_setfield(L, -2, meta[i].name);  // [meta]
-    }
+    luaL_register(L, NULL, meta);
 
     lua_pushvalue(L, -1);  // [meta, meta]
     lua_setfield(L, -2, "__index");  // [meta]

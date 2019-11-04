@@ -844,4 +844,22 @@ describe('lua stdlib', function()
     eq('2', funcs.luaeval "BUF")
     eq(2, funcs.luaeval "#vim.api.nvim_list_bufs()")
   end)
+
+  it('vim.regex', function()
+    exec_lua [[
+      re1 = vim.regex"ab\\+c"
+      vim.cmd "set nomagic ignorecase"
+      re2 = vim.regex"xYz"
+    ]]
+    eq({}, exec_lua[[return {re1:match_str("x ac")}]])
+    eq({3,7}, exec_lua[[return {re1:match_str("ac abbc")}]])
+
+    meths.buf_set_lines(0, 0, -1, true, {"yy", "abc abbc"})
+    eq({}, exec_lua[[return {re1:match_line(0, 0)}]])
+    eq({0,3}, exec_lua[[return {re1:match_line(0, 1)}]])
+    eq({3,7}, exec_lua[[return {re1:match_line(0, 1, 1)}]])
+    eq({3,7}, exec_lua[[return {re1:match_line(0, 1, 1, 8)}]])
+    eq({}, exec_lua[[return {re1:match_line(0, 1, 1, 7)}]])
+    eq({0,3}, exec_lua[[return {re1:match_line(0, 1, 0, 7)}]])
+  end)
 end)
