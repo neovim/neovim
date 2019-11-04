@@ -47,14 +47,13 @@ function TSHighlighter:set_query(query)
     query = vim.treesitter.parse_query(self.parser.lang, query)
   end
   self.query = query
-  self.iquery = query:inspect()
   self:update_hl_defs()
 end
 
 -- TODO: redo on ColorScheme! (or on any :hi really)
 function TSHighlighter:update_hl_defs()
   local id_map = {}
-  for i, capture in ipairs(self.iquery.captures) do
+  for i, capture in ipairs(self.query.captures) do
     local hl = 0
     local firstc = string.sub(capture, 1, 1)
     local hl_group = self.hl_map[capture]
@@ -62,6 +61,7 @@ function TSHighlighter:update_hl_defs()
       hl_group = vim.split(capture, '.', true)[1]
     end
     if hl_group then
+      -- TODO`maybe hl ids are enough, hl->attr lookup should be pretty fast
       hl = a.nvim__syn_attr(hl_group)
     end
     id_map[i] = hl
@@ -95,44 +95,10 @@ function TSHighlighter:on_start(_, win, buf, topline, botline)
   end
 end
 
-
-local function get_node_text(node, buf)
-  local start_row, start_col, end_row, end_col = node:range()
-  if start_row ~= end_row then
-    return nil
-  end
-  local line = a.nvim_buf_get_lines(buf, start_row, start_row+1, true)[1]
-  return string.sub(line, start_col+1, end_col)
-end
-
-function TSHighlighter:run_pred(match)
-  local preds = self.iquery.patterns[match.pattern]
-  for _, pred in pairs(preds) do
-    if pred[1] == "eq?" then
-      local node = match[pred[2]]
-      local node_text = get_node_text(node, self.buf)
-
-      local str
-      if type(pred[3]) == "string" then
-        -- (eq? @aa "foo")
-        str = pred[3]
-      else
-        -- (eq? @aa @bb)
-        str = get_node_text(match[pred[3]], self.buf)
-      end
-
-      if node_text ~= str or str == nil then
-        return false
-      end
-    end
-  end
-  return true
-end
-
 function TSHighlighter:on_line(_, win, buf, line)
   count = 0
   if self.iter == nil then
-    self.iter = self.root:query(self.query,line,self.botline)
+    self.iter = self.query:match(self.root,buf,line,self.botline)
   end
   while line >= self.nextrow do
     -- TODO: capture should be numeric index!

@@ -79,4 +79,67 @@ function module.get_parser(bufnr, ft, cb)
   return parsers[id]
 end
 
+-- query: pattern matching on trees
+-- predicate matching is implemented in lua
+local Query = {}
+Query.__index = Query
+
+function module.parse_query(lang, query)
+  local self = setmetatable({}, Query)
+  self.query = vim._ts_parse_query(lang, query)
+  self.info = self.query:inspect()
+  self.captures = self.info.captures
+  return self
+end
+
+local function get_node_text(node, bufnr)
+  local start_row, start_col, end_row, end_col = node:range()
+  if start_row ~= end_row then
+    return nil
+  end
+  local line = a.nvim_buf_get_lines(bufnr, start_row, start_row+1, true)[1]
+  return string.sub(line, start_col+1, end_col)
+end
+
+local function match_preds(match, preds, bufnr)
+  for _, pred in pairs(preds) do
+    if pred[1] == "eq?" then
+      local node = match[pred[2]]
+      local node_text = get_node_text(node, bufnr)
+
+      local str
+      if type(pred[3]) == "string" then
+        -- (eq? @aa "foo")
+        str = pred[3]
+      else
+        -- (eq? @aa @bb)
+        str = get_node_text(match[pred[3]], bufnr)
+      end
+
+      if node_text ~= str or str == nil then
+        return false
+      end
+    end
+  end
+  return true
+
+end
+
+function Query:match(node, bufnr, start, stop)
+  local raw_iter = node:rawquery(self.query,start,stop)
+  local function iter()
+    local capture, node, match = raw_iter()
+    if match ~= nil then
+      local preds = self.info.patterns[match.pattern]
+      local active = match_preds(match, preds, bufnr)
+      match.active = active
+      if not active then
+        return iter() -- tail call: try next match
+      end
+    end
+    return capture, node
+  end
+  return iter
+end
+
 return module

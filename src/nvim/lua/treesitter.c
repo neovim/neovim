@@ -72,7 +72,7 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
-  { "query", node_query },
+  { "rawquery", node_rawquery },
   { NULL, NULL }
 };
 
@@ -731,7 +731,7 @@ static int query_next_capture(lua_State *L)
   return 0;
 }
 
-static int node_query(lua_State *L)
+static int node_rawquery(lua_State *L)
 {
   TSNode node;
   if (!node_check(L, &node)) {
