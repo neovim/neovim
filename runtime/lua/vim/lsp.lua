@@ -102,55 +102,6 @@ local function for_each_buffer_client(bufnr, callback)
 	end
 end
 
--------------- TODO TODO TODO ---------------------------
--- -- TODO improve check capabilities
--- if not check_language_server_capabilities(self, method) then
--- 	if message_type == 'notification' then
--- 		logger.debug(string.format('Notification Method %q is not supported by server %s', method, self.name))
--- 		logger.client.debug(string.format('Notification Method %q is not supported by server %s', method, self.name))
--- 		return nil
--- 	else
--- 		logger.debug(string.format('[LSP:Request] Method %q is not supported by server %s', method, self.name))
--- 		error("[LSP:Request] Method "..method.." is not supported by server "..self.name)
--- 	end
--- end
-
-local function attach_to_buffers_by_filetype(client, filetypes)
-	assert(type(filetypes) == 'table', "filetypes must be a table")
-  local bufs = vim.api.nvim_list_bufs()
-  for _, buf in ipairs(bufs) do
-		local buf_filetype = vim.api.nvim_buf_get_option(buf, "ft")
-		if vim.tbl_contains(filetypes, buf_filetype) then
-			client.attach_to_buffer(buf)
-		end
-  end
-end
-
-local function check_language_server_capabilities(client, method)
-  local method_table
-  if type(method) == 'string' then
-    method_table = vim.split(method, '/', true)
-  elseif type(method) == 'table' then
-    method_table = method
-  else
-    return true
-  end
-  -- TODO: This should be a better implementation.
-  -- Most methods are named like 'subject_name/operation_name'.
-  -- Most capability properties are named like 'operation_nameProvider'.
-  -- And some language server has custom methods.
-  -- So if client.server_capabilities[method_table[2]..'Provider'] is nil, return true for now.
-  if method_table[2] then
-    local provider_capabilities = client.server_capabilities[method_table[2]..'Provider']
-    if provider_capabilities ~= nil and provider_capabilities == false then
-      return false
-    end
-    return true
-  else
-    return true
-  end
-end
-
 local function validate_encoding(encoding)
 	assert(type(encoding) == 'string', "encoding must be a string")
 	return VALID_ENCODINGS[encoding:lower()] or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
@@ -296,6 +247,7 @@ function lsp.start_client(conf)
 			rpc.notify('initialized', {})
 			client.initialized = true
 			client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
+			client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
 			if conf.on_init then
 				local status, err = pcall(conf.on_init, client)
 				if not status then

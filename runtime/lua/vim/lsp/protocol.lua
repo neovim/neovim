@@ -906,4 +906,58 @@ protocol.DidCloseTextDocumentParams = function(args)
   }
 end
 
+local function ifnil(a, b)
+	if a == nil then return b end
+	return a
+end
+
+function protocol.resolve_capabilities(server_capabilities)
+	local general_properties = {}
+	local text_document_sync_properties
+	do
+		local TextDocumentSyncKind = protocol.TextDocumentSyncKind
+		local textDocumentSync = server_capabilities.textDocumentSync
+		if textDocumentSync == nil then
+			-- Defaults if omitted.
+			text_document_sync_properties = {
+				text_document_open_close = false;
+				text_document_did_change = TextDocumentSyncKind.None;
+--				text_document_did_change = false;
+				text_document_will_save = false;
+				text_document_will_save_wait_until = false;
+				text_document_save = false;
+				text_document_save_include_text = false;
+			}
+		elseif type(textDocumentSync) == 'number' then
+			-- Backwards compatibility
+			if not TextDocumentSyncKind[textDocumentSync] then
+				return nil, "Invalid server TextDocumentSyncKind for textDocumentSync"
+			end
+			text_document_sync_properties = {
+				text_document_open_close = true;
+				text_document_did_change = textDocumentSync;
+				text_document_will_save = false;
+				text_document_will_save_wait_until = false;
+				text_document_save = false;
+				text_document_save_include_text = false;
+			}
+		elseif type(textDocumentSync) == 'table' then
+			text_document_sync_properties = {
+				text_document_open_close = ifnil(textDocumentSync.openClose, false);
+				text_document_did_change = ifnil(textDocumentSync.change, TextDocumentSyncKind.None);
+				text_document_will_save = ifnil(textDocumentSync.willSave, false);
+				text_document_will_save_wait_until = ifnil(textDocumentSync.willSaveWaitUntil, false);
+				text_document_save = ifnil(textDocumentSync.save, false);
+				text_document_save_include_text = ifnil(textDocumentSync.save and textDocumentSync.save.includeText, false);
+			}
+		else
+			return nil, string.format("Invalid type for textDocumentSync: %q", type(textDocumentSync))
+		end
+	end
+	general_properties.hover = server_capabilities.hoverProvider or false
+	return vim.tbl_deep_merge({}
+			, text_document_sync_properties
+			)
+end
+
 return protocol
