@@ -6,41 +6,41 @@ function! lsp#set_log_level(level) abort
   call luaeval('vim.lsp.set_log_level(_A)', a:level)
 endfunction
 
-function! lsp#text_document_hover() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/hover', vim.lsp.protocol.TextDocumentPositionParams())
-  return ''
-endfunction
-
-function! lsp#text_document_completion() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/completion', vim.lsp.protocol.CompletionParams())
-  return ''
-endfunction
-
 function! lsp#omnifunc(findstart, base) abort
   return luaeval("vim.lsp.omnifunc(_A[1], _A[2])", [a:findstart, a:base])
 endfunction
 
-function! lsp#text_document_signature_help() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/signatureHelp', vim.lsp.protocol.SignatureHelpParams())
+function! lsp#text_document_hover() abort
+  lua vim.lsp.buf_request(nil, 'textDocument/hover', vim.lsp.protocol.make_text_document_position_params())
   return ''
 endfunction
 
+" function! lsp#text_document_completion() abort
+"   lua vim.lsp.buf_request(nil, 'textDocument/completion', vim.lsp.protocol.CompletionParams())
+"   return ''
+" endfunction
+
 function! lsp#text_document_declaration() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/declaration', vim.lsp.protocol.TextDocumentPositionParams())
+  lua vim.lsp.buf_request(nil, 'textDocument/declaration', vim.lsp.protocol.make_text_document_position_params())
   return ''
 endfunction
 
 function! lsp#text_document_definition() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/definition', vim.lsp.protocol.TextDocumentPositionParams())
+  lua vim.lsp.buf_request(nil, 'textDocument/definition', vim.lsp.protocol.make_text_document_position_params())
   return ''
 endfunction
 
+" function! lsp#text_document_signature_help() abort
+"   lua vim.lsp.buf_request(nil, 'textDocument/signatureHelp', vim.lsp.protocol.SignatureHelpParams())
+"   return ''
+" endfunction
+
 function! lsp#text_document_type_definition() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/typeDefinition', vim.lsp.protocol.TextDocumentPositionParams())
+  lua vim.lsp.buf_request(nil, 'textDocument/typeDefinition', vim.lsp.protocol.make_text_document_position_params())
   return ''
 endfunction
 
 function! lsp#text_document_implementation() abort
-  lua vim.lsp.buf_request(nil, 'textDocument/implementation', vim.lsp.protocol.TextDocumentPositionParams())
+  lua vim.lsp.buf_request(nil, 'textDocument/implementation', vim.lsp.protocol.make_text_document_position_params())
   return ''
 endfunction

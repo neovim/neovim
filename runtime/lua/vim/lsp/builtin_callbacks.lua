@@ -108,6 +108,9 @@ local function open_floating_preview(contents, filetype)
 
   local float_option = get_floating_window_option(width, height)
   local floating_winnr = vim.api.nvim_open_win(floating_bufnr, true, float_option)
+  if filetype == 'markdown' then
+    vim.api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
+  end
 
   vim.api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
 
@@ -181,14 +184,14 @@ local builtin_callbacks = {}
 -- textDocument/publishDiagnostics
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
 builtin_callbacks['textDocument/publishDiagnostics'] = function(params)
-  _ = log.debug() and log.debug('callback:textDocument/publishDiagnostics ', params)
+  _ = log.debug() and log.debug('callback:textDocument/publishDiagnostics', { params = params })
   _ = log.error() and log.error('Not implemented textDocument/publishDiagnostics callback')
 end
 
 -- textDocument/completion
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 builtin_callbacks['textDocument/completion'] = function(err, result)
-  assert(not err, err)
+  assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:textDocument/completion ', result, ' ', err)
 
   if not result or vim.tbl_isempty(result) then
@@ -210,14 +213,14 @@ end
 -- textDocument/references
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
 builtin_callbacks['textDocument/references'] = function(err, result)
-  assert(not err, err)
+  assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:textDocument/references ', result, ' ', err)
   _ = log.debug() and log.debug('Not implemented textDocument/publishDiagnostics callback')
 end
 
 -- textDocument/rename
 builtin_callbacks['textDocument/rename'] = function(err, result)
-  assert(not err, err)
+  assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:textDocument/rename ', result, ' ', err)
 
   if not result then
@@ -234,7 +237,7 @@ end
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 -- @params MarkedString | MarkedString[] | MarkupContent
 builtin_callbacks['textDocument/hover'] = function(err, result)
-  assert(not err, err)
+  assert(not err, tostring(err))
   _ = log.debug() and log.debug('textDocument/hover ', result, err)
 
   if result == nil or vim.tbl_isempty(result) then
@@ -250,7 +253,7 @@ end
 -- textDocument/signatureHelp
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
 builtin_callbacks['textDocument/signatureHelp'] = function(err, result)
-  assert(not err, err)
+  assert(not err, tostring(err))
   _ = log.debug() and log.debug('textDocument/signatureHelp ', result, ' ', err)
 
   if result == nil or vim.tbl_isempty(result) then
@@ -297,8 +300,9 @@ end
 local function handle_location(result)
   local current_file = vim.fn.expand('%:p')
 
-  -- We can sometimes get a list of locations,
-  -- so set the first value as the only value we want to handle
+  -- We can sometimes get a list of locations, so set the first value as the
+  -- only value we want to handle
+  -- TODO(ashkan) was this correct^? We could use location lists.
   if result[1] ~= nil then
     result = result[1]
   end
@@ -314,7 +318,6 @@ local function handle_location(result)
   end
 
   local result_file = vim.uri_to_fname(result.uri)
-  -- _ = log.info() and log.info('uris', result_file, vim.uri_from_fname(current_file))
 
   update_tagstack()
   if result_file ~= vim.uri_from_fname(current_file) then
@@ -323,14 +326,12 @@ local function handle_location(result)
 
   local start = result.range.start
   vim.api.nvim_win_set_cursor(0, {start.line + 1, start.character})
-  -- vim.api.nvim_command(
-  --   string.format('normal! %dG%d|', start.line + 1, start.character + 1)
-  -- )
 end
 
 local location_callback_object = function(err, result)
-  assert(not err, err)
-  _ = log.debug() and log.debug('location callback ', {result, ' ', err})
+  _ = log.debug() and log.debug('location callback ', {result = result, err = err})
+  assert(not err, tostring(err))
+--  assert(not err, protocol.ErrorCodes[err.code])
   if result == nil or vim.tbl_isempty(result) then
     _ = log.info() and log.info('No declaration found')
     return nil
@@ -357,14 +358,8 @@ end
 -- window/showMessage
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
 builtin_callbacks['window/showMessage'] = function(err, result)
-  assert(not err, err)
-  _ = log.debug() and log.debug('callback:window/showMessage ', result, ' ', err)
-
-  if not result or type(result) ~= 'table' then
-    -- TODO eh?
-    print(err)
-    return nil
-  end
+  assert(not err, tostring(err))
+  _ = log.debug() and log.debug('callback:window/showMessage', { result = result, err = err})
 
   local message_type = result['type']
   local message = result['message']

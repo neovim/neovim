@@ -2,6 +2,12 @@
 
 local protocol = {}
 
+local function ifnil(a, b)
+  if a == nil then return b end
+  return a
+end
+
+
 --[=[
 -- Useful for interfacing with:
 -- https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/specification-3-14.md
@@ -293,158 +299,6 @@ for k, v in pairs(constants) do
   protocol[k] = v
 end
 
-protocol.errorCodes = {
-  -- Defined by JSON RPC
-  [-32700] = 'Parse error',
-  [-32600] = 'Invalid Request',
-  [-32601] = 'Method not found',
-  [-32602] = 'Invalid params',
-  [-32603] = 'Internal error',
-  [-32099] = 'Server Error Start',
-  [-32000] = 'Server Error End',
-  [-32002] = 'Server Not Initialized',
-  [-32001] = 'Unknown Error Code',
-  -- Defined by the protocol
-  [-32800] = 'Request Cancelled',
-}
-
-protocol.EOL = function()
-  if vim.api.nvim_buf_get_option(0, 'eol') then
-    return "\n"
-  else
-    return ''
-  end
-end
-
-protocol.DocumentUri = function(args)
-  return args or vim.uri_from_bufnr()
-end
-
-protocol.languageId = function(args)
-  return args or vim.api.nvim_buf_get_option(0, 'filetype')
-end
-
-local __document_version = {}
-protocol.version = function(args)
-  args = args or {}
-  if type(args) == 'number' then return args end
-
-  local uri = args.uri or protocol.DocumentUri()
-  if not __document_version[uri] then __document_version[uri] = 0 end
-
-  return args.version
-    or __document_version[uri]
-end
-
-protocol.update_document_version = function(version, uri)
-  uri = uri or protocol.DocumentUri()
-  __document_version[uri] = version
-end
-
-local function get_buffer_text(bufnr)
-  return table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
-end
-
-protocol.text = function(args)
-  return args or get_buffer_text(0)
-end
-
-protocol.TextDocumentIdentifier = function(args)
-  args = args or {}
-  return {
-    uri = protocol.DocumentUri(args.uri),
-  }
-end
-
-protocol.VersionedTextDocumentIdentifier = function(args)
-  args = args or {}
-  local identifier = protocol.TextDocumentIdentifier(args)
-  identifier.version = protocol.version(args.version)
-
-  return identifier
-end
-
-protocol.TextDocumentItem = function(args)
-  args = args or {}
-  return {
-    uri = protocol.DocumentUri(args.uri),
-    languageId = protocol.languageId(args.languageId),
-    version = protocol.version(args.version),
-    text = protocol.text(args.text),
-  }
-end
-
-protocol.line = function(args)
-  return args or (vim.fn.line('.') - 1)
-end
-
-protocol.character = function(args)
-  return args or (vim.fn.col('.') - 1)
-end
-
-protocol.Position = function(args)
-  args = args or {}
-  return {
-    line = protocol.line(args.line),
-    character = protocol.character(args.character),
-  }
-end
-
-protocol.TextDocumentPositionParams = function(args)
-  args = args or {}
-  return {
-    textDocument = protocol.TextDocumentIdentifier(args.textDocument),
-    position = protocol.Position(args.position),
-  }
-end
-
-protocol.ReferenceContext = function(args)
-  args = args or {}
-  return {
-    includeDeclaration = args.includeDeclaration or true,
-  }
-end
-
-protocol.CompletionContext = function(args)
-  args = args or {}
-  if args.triggerKind == nil and args.triggerCharacter == nil then
-    return nil
-  end
-
-  return {
-    triggerKind = args.triggerKind or nil,
-    triggerCharacter = args.triggerCharacter or nil,
-  }
-end
-
--- TODO: Not implement workspace features now.
-protocol.WorkspaceClientCapabilities = {}
--- {
---   applyEdit = boolean,
---   workspaceEdit = {
---     documentChanges = boolean,
---     resourceOperations = ResourceOperationKind[],
---     failureHandling = FailureHandlingKind,
---   },
---   didChangeConfiguration = {
---     dynamicRegistration = boolean,
---   },
---   didChangeWatchedFiles = {
---     dynamicRegistration = boolean,
---   },
---     symbol = {
---     dynamicRegistration = boolean,
---     symbolKind = {
---       valueSet = SymbolKind[],
---     },
---   },
---   executeCommand = {
---     dynamicRegistration = boolean;
---   },
---   workspaceFolders = boolean,
---   configuration = boolean,
--- }
-
 --[=[
 --Text document specific client capabilities.
 export interface TextDocumentClientCapabilities {
@@ -688,226 +542,242 @@ export interface TextDocumentClientCapabilities {
 }
 --]=]
 
-protocol.TextDocumentClientCapabilities = {
-  synchronization = {
-    dynamicRegistration = false;
-
-    -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
-    willSave = false;
-
-    -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
-    willSaveWaitUntil = false;
-
-    -- Send textDocument/didSave after saving (BufWritePost)
-    didSave = true;
+--[=[
+--Workspace specific client capabilities.
+export interface WorkspaceClientCapabilities {
+  --The client supports applying batch edits to the workspace by supporting
+  --the request 'workspace/applyEdit'
+  applyEdit?: boolean;
+  --Capabilities specific to `WorkspaceEdit`s
+  workspaceEdit?: {
+    --The client supports versioned document changes in `WorkspaceEdit`s
+    documentChanges?: boolean;
+    --The resource operations the client supports. Clients should at least
+    --support 'create', 'rename' and 'delete' files and folders.
+    resourceOperations?: ResourceOperationKind[];
+    --The failure handling strategy of a client if applying the workspace edit
+    --fails.
+    failureHandling?: FailureHandlingKind;
   };
-  completion = {
-    dynamicRegistration = false;
-    completionItem = {
-
-      -- TODO(tjdevries): Is it possible to implement this in plain lua?
-      snippetSupport = false;
-      commitCharactersSupport = false;
-      preselectSupport = false;
-      deprecatedSupport = false;
-      documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-    };
-    completionItemKind = {
-      valueSet = (function()
-        local res = {}
-        for k in pairs(protocol.CompletionItemKind) do
-          if type(k) == 'string' then table.insert(res, k) end
-        end
-        return res
-      end)();
-    };
-
-    -- TODO(tjdevries): Implement this
-    contextSupport = false;
+  --Capabilities specific to the `workspace/didChangeConfiguration` notification.
+  didChangeConfiguration?: {
+    --Did change configuration notification supports dynamic registration.
+    dynamicRegistration?: boolean;
   };
-  hover = {
-    dynamicRegistration = false;
-
-    -- Currently only support plaintext
-    --    In the future; if we have floating windows or display in a preview window,
-    --    we could say markdown
-    contentFormat = { protocol.MarkupKind.Markdown };
+  --Capabilities specific to the `workspace/didChangeWatchedFiles` notification.
+  didChangeWatchedFiles?: {
+    --Did change watched files notification supports dynamic registration. Please note
+    --that the current protocol doesn't support static configuration for file changes
+    --from the server side.
+    dynamicRegistration?: boolean;
   };
-  signatureHelp = {
-    dynamicRegistration = false;
-    signatureInformation = {
-      documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
-      -- parameterInformation = {
-      --   labelOffsetSupport = false;
+  --Capabilities specific to the `workspace/symbol` request.
+  symbol?: {
+    --Symbol request supports dynamic registration.
+    dynamicRegistration?: boolean;
+    --Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.
+    symbolKind?: {
+      --The symbol kind values the client supports. When this
+      --property exists the client also guarantees that it will
+      --handle values outside its set gracefully and falls back
+      --to a default value when unknown.
+      --
+      --If this property is not present the client only supports
+      --the symbol kinds from `File` to `Array` as defined in
+      --the initial version of the protocol.
+      valueSet?: SymbolKind[];
+    }
+  };
+  --Capabilities specific to the `workspace/executeCommand` request.
+  executeCommand?: {
+    --Execute command supports dynamic registration.
+    dynamicRegistration?: boolean;
+  };
+  --The client has support for workspace folders.
+  --
+  --Since 3.6.0
+  workspaceFolders?: boolean;
+  --The client supports `workspace/configuration` requests.
+  --
+  --Since 3.6.0
+  configuration?: boolean;
+}
+--]=]
+
+function protocol.make_client_capabilities()
+  return {
+    textDocument = {
+      synchronization = {
+        dynamicRegistration = false;
+
+        -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
+        willSave = false;
+
+        -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
+        willSaveWaitUntil = false;
+
+        -- Send textDocument/didSave after saving (BufWritePost)
+        didSave = true;
+      };
+      completion = {
+        dynamicRegistration = false;
+        completionItem = {
+
+          -- TODO(tjdevries): Is it possible to implement this in plain lua?
+          snippetSupport = false;
+          commitCharactersSupport = false;
+          preselectSupport = false;
+          deprecatedSupport = false;
+          documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
+        };
+        completionItemKind = {
+          valueSet = (function()
+            local res = {}
+            for k in pairs(protocol.CompletionItemKind) do
+              if type(k) == 'string' then table.insert(res, k) end
+            end
+            return res
+          end)();
+        };
+
+        -- TODO(tjdevries): Implement this
+        contextSupport = false;
+      };
+      hover = {
+        dynamicRegistration = false;
+        contentFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
+      };
+      signatureHelp = {
+        dynamicRegistration = false;
+        signatureInformation = {
+          documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
+          -- parameterInformation = {
+          --   labelOffsetSupport = false;
+          -- };
+        };
+      };
+      references = {
+        dynamicRegistration = false;
+      };
+      documentHighlight = {
+        dynamicRegistration = false
+      };
+      -- documentSymbol = {
+      --   dynamicRegistration = false;
+      --   symbolKind = {
+      --     valueSet = (function()
+      --       local res = {}
+      --       for k in pairs(protocol.SymbolKind) do
+      --         if type(k) == 'string' then table.insert(res, k) end
+      --       end
+      --       return res
+      --     end)();
+      --   };
+      --   hierarchicalDocumentSymbolSupport = false;
       -- };
     };
-  };
-  references = {
-    dynamicRegistration = false;
-  };
-  documentHighlight = {
-    dynamicRegistration = false
-  };
-}
-
-function protocol.ClientCapabilities()
-  return {
-    textDocument = protocol.TextDocumentClientCapabilities,
+    workspace = nil;
+    experimental = nil;
   }
 end
+
+function protocol.make_text_document_position_params()
+  local position = vim.api.nvim_win_get_cursor()
+  return {
+    textDocument = {
+      uri = vim.uri_from_bufnr()
+    };
+    position = {
+      line = position[1] - 1;
+      character = position[2];
+    }
+  }
+end
+
 
 --[[
-interface InitializeParams {
-  /**
-   * The process Id of the parent process that started
-   * the server. Is null if the process has not been started by another process.
-   * If the parent process is not alive then the server should exit (see exit notification) its process.
-   */
-  processId: number | null;
-
-  /**
-   * The rootPath of the workspace. Is null
-   * if no folder is open.
-   *
-   * @deprecated in favour of rootUri.
-   */
-  rootPath?: string | null;
-
-  /**
-   * The rootUri of the workspace. Is null if no
-   * folder is open. If both `rootPath` and `rootUri` are set
-   * `rootUri` wins.
-   */
-  rootUri: DocumentUri | null;
-
-  /**
-   * User provided initialization options.
-   */
-  initializationOptions?: any;
-
-  /**
-   * The capabilities provided by the client (editor or tool)
-   */
-  capabilities: ClientCapabilities;
-
-  /**
-   * The initial trace setting. If omitted trace is disabled ('off').
-   */
-  trace?: 'off' | 'messages' | 'verbose';
-
-  /**
-   * The workspace folders configured in the client when the server starts.
-   * This property is only available if the client supports workspace folders.
-   * It can be `null` if the client supports workspace folders but none are
-   * configured.
-   *
-   * Since 3.6.0
-   */
-  workspaceFolders?: WorkspaceFolder[] | null;
+interface ServerCapabilities {
+  --Defines how text documents are synced. Is either a detailed structure defining each notification or
+  --for backwards compatibility the TextDocumentSyncKind number. If omitted it defaults to `TextDocumentSyncKind.None`.
+  textDocumentSync?: TextDocumentSyncOptions | number;
+  --The server provides hover support.
+  hoverProvider?: boolean;
+  --The server provides completion support.
+  completionProvider?: CompletionOptions;
+  --The server provides signature help support.
+  signatureHelpProvider?: SignatureHelpOptions;
+  --The server provides goto definition support.
+  definitionProvider?: boolean;
+  --The server provides Goto Type Definition support.
+  --
+  --Since 3.6.0
+  typeDefinitionProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+  --The server provides Goto Implementation support.
+  --
+  --Since 3.6.0
+  implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+  --The server provides find references support.
+  referencesProvider?: boolean;
+  --The server provides document highlight support.
+  documentHighlightProvider?: boolean;
+  --The server provides document symbol support.
+  documentSymbolProvider?: boolean;
+  --The server provides workspace symbol support.
+  workspaceSymbolProvider?: boolean;
+  --The server provides code actions. The `CodeActionOptions` return type is only
+  --valid if the client signals code action literal support via the property
+  --`textDocument.codeAction.codeActionLiteralSupport`.
+  codeActionProvider?: boolean | CodeActionOptions;
+  --The server provides code lens.
+  codeLensProvider?: CodeLensOptions;
+  --The server provides document formatting.
+  documentFormattingProvider?: boolean;
+  --The server provides document range formatting.
+  documentRangeFormattingProvider?: boolean;
+  --The server provides document formatting on typing.
+  documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
+  --The server provides rename support. RenameOptions may only be
+  --specified if the client states that it supports
+  --`prepareSupport` in its initial `initialize` request.
+  renameProvider?: boolean | RenameOptions;
+  --The server provides document link support.
+  documentLinkProvider?: DocumentLinkOptions;
+  --The server provides color provider support.
+  --
+  --Since 3.6.0
+  colorProvider?: boolean | ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+  --The server provides folding provider support.
+  --
+  --Since 3.10.0
+  foldingRangeProvider?: boolean | FoldingRangeProviderOptions | (FoldingRangeProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+  --The server provides go to declaration support.
+  --
+  --Since 3.14.0
+  declarationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+  --The server provides execute command support.
+  executeCommandProvider?: ExecuteCommandOptions;
+  --Workspace specific server capabilities
+  workspace?: {
+    --The server supports workspace folder.
+    --
+    --Since 3.6.0
+    workspaceFolders?: {
+      * The server has support for workspace folders
+      supported?: boolean;
+      * Whether the server wants to receive workspace folder
+      * change notifications.
+      *
+      * If a strings is provided the string is treated as a ID
+      * under which the notification is registered on the client
+      * side. The ID can be used to unregister for these events
+      * using the `client/unregisterCapability` request.
+      changeNotifications?: string | boolean;
+    }
+  }
+  --Experimental server capabilities.
+  experimental?: any;
 }
-]]
-
-
---- Parameter builder for request method
---
-
-function protocol.InitializedParams(_)
-  return {}
-end
-
-function protocol.CompletionParams(args)
-  args = args or {}
-  -- CompletionParams extends TextDocumentPositionParams with an optional context
-  local params = protocol.TextDocumentPositionParams(args)
-  params.context = protocol.CompletionContext(args.context)
-
-  return params
-end
-
-function protocol.HoverParams(args)
-  args = args or {}
-  return protocol.TextDocumentPositionParams(args)
-end
-
-function protocol.SignatureHelpParams(args)
-  args = args or {}
-  local params =  protocol.TextDocumentPositionParams(args)
-  params.position.character = params.position.character + 1
-
-  return params
-end
-
-protocol.DefinitionParams = function(args)
-  args = args or {}
-  return protocol.TextDocumentPositionParams(args)
-end
-
-protocol.DocumentHighlightParams = function(args)
-  args = args or {}
-  return protocol.TextDocumentPositionParams(args)
-end
-
-protocol.ReferenceParams = function(args)
-  args = args or {}
-  local position = protocol.TextDocumentPositionParams(args)
-  position.context = protocol.ReferenceContext(args.context)
-
-  return position
-end
-
-protocol.RenameParams = function(args)
-  args = args or {}
-  return {
-    textDocument = protocol.TextDocumentIdentifier(args.textDocument),
-    position = protocol.Position(args.position),
-    newName = args.newName or vim.fn.inputdialog('New Name: ');
-  }
-end
-
-protocol.WorkspaceSymbolParams = function(args)
-  args = args or {}
-  return {
-    query = args.query or vim.fn.expand('<cWORD>')
-  }
-end
-
---- Parameter builder for notification method
---
-protocol.DidOpenTextDocumentParams = function(args)
-  args = args or {}
-  return {
-    textDocument = protocol.TextDocumentItem(args.textDocument)
-  }
-end
-
-protocol.WillSaveTextDocumentParams = function(args)
-  args = args or {}
-  return {
-    textDocument = protocol.TextDocumentItem(args.textDocument),
-    reason = args.reason or protocol.TextDocumentSaveReason.Manual,
-  }
-end
-
-protocol.DidSaveTextDocumentParams = function(args)
-  args = args or {}
-  return {
-    textDocument = protocol.TextDocumentItem(args.textDocument),
-    text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n") .. protocol.EOL(),
-  }
-end
-
-protocol.DidCloseTextDocumentParams = function(args)
-  args = args or {}
-  return {
-    textDocument = protocol.TextDocumentItem(args.textDocument),
-  }
-end
-
-local function ifnil(a, b)
-  if a == nil then return b end
-  return a
-end
-
+--]]
 function protocol.resolve_capabilities(server_capabilities)
   local general_properties = {}
   local text_document_sync_properties

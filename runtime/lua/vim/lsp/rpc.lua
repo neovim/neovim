@@ -118,6 +118,15 @@ local function rpc_response_error(code, message, data)
   }
 end
 
+local function format_rpc_error(err)
+  assert(type(err) == 'table', "err must be a table")
+  local code_name = assert(protocol.ErrorCodes[err.code], "err.code is invalid")
+  if err.message then
+    return string.format("RPC.%s: %q", code_name, err.message)
+  end
+  return string.format("RPC.%s", code_name)
+end
+
 local default_handlers = {}
 function default_handlers.notification(method, params)
   _ = log.debug() and log.debug('notification', method, params)
@@ -279,7 +288,8 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       -- Server Result
 
       -- TODO this condition (result or error) will fail if result is null in
-      -- the success case. such as for textDocument/completion.
+      -- the success case. such as for textDocument/completion. But it is more
+      -- correct. When vim.NIL is available, then we can fix this.
       --      elseif decoded.id and (decoded.result or decoded.error) then
 
       -- TODO verify decoded.id is a string or number?
@@ -288,6 +298,11 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       if callback then
         message_callbacks[result_id] = nil
         assert(type(callback) == 'function', "callback must be a function")
+        if decoded.error then
+          decoded.error = setmetatable(decoded.error, {
+            __tostring = format_rpc_error;
+          })
+        end
         try_call(CLIENT_ERRORS.SERVER_RESULT_CALLBACK_ERROR,
             callback, decoded.error, decoded.result)
       else
@@ -341,6 +356,7 @@ end
 return {
   start = create_and_start_client;
   rpc_response_error = rpc_response_error;
+  format_rpc_error = format_rpc_error;
   ERRORS = CLIENT_ERRORS;
 }
 -- vim:sw=2 ts=2 et

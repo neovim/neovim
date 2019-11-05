@@ -1,6 +1,8 @@
 -- local server_config = require('vim.lsp.server_config')
 -- local config = require('vim.lsp.config')
 
+-- TODO consider whether 'eol' or 'fixeol' should change the nvim_buf_get_lines that send.
+
 local lsp = {}
 
 local protocol = require('vim.lsp.protocol')
@@ -179,7 +181,6 @@ function lsp.start_client(conf)
     _ = log.error() and log.error(log_prefix, "on_error", { code = error_codes[code], err = err })
     nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, error_codes[code], vim.inspect(err)))
     if conf.on_error then
-      -- TODO log errors?
       local status, usererr = pcall(conf.on_error, code, err)
       if not status then
         _ = log.error() and log.error(log_prefix, "user on_error failed", { err = usererr })
@@ -200,6 +201,7 @@ function lsp.start_client(conf)
     for bufnr, client_ids in pairs(BUFFER_CLIENT_IDS) do
       client_ids[client_id] = nil
     end
+    if conf.on_exit then pcall(conf.on_exit, client_id) end
   end
 
   local rpc = lsp_rpc.start(conf.cmd, conf.cmd_args, handlers, {
@@ -209,27 +211,12 @@ function lsp.start_client(conf)
 
   local client = {
     id = client_id;
+    name = name;
     rpc = rpc;
     offset_encoding = offset_encoding;
     default_server_callbacks = default_server_callbacks;
+    config = conf;
   }
-
-  local function on_error(errkind, ...)
-    assert(error_codes[errkind])
-    -- TODO what to do if this fails?
-    pcall(handlers.on_error, errkind, ...)
-  end
-  local function pcall_handler(errkind, status, head, ...)
-    if not status then
-      on_error(errkind, ...)
-      return status, head
-    end
-    return status, head, ...
-  end
-  local function try_call(errkind, fn, ...)
-    return pcall_handler(errkind, pcall(fn, ...))
-  end
-
 
   local function initialize()
     local valid_traces = {
@@ -252,7 +239,7 @@ function lsp.start_client(conf)
       -- User provided initialization options.
       initializationOptions = conf.init_options;
       -- The capabilities provided by the client (editor or tool)
-      capabilities = vim.tbl_deep_merge(protocol.ClientCapabilities(), capabilities);
+      capabilities = vim.tbl_deep_merge(protocol.make_client_capabilities(), capabilities);
       -- The initial trace setting. If omitted trace is disabled ('off').
       -- trace = 'off' | 'messages' | 'verbose';
       trace = valid_traces[conf.trace] or 'off';
@@ -272,6 +259,7 @@ function lsp.start_client(conf)
       -- }
       workspaceFolders = nil;
     }
+    _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(err, result)
       assert(not err, err)
       rpc.notify('initialized', {})
@@ -279,9 +267,9 @@ function lsp.start_client(conf)
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
       if conf.on_init then
-        local status, err = pcall(conf.on_init, client)
+        local status, err = pcall(conf.on_init, client, result)
         if not status then
-          on_error(error_codes.ON_INIT_CALLBACK_ERROR, err)
+          pcall(handlers.on_error, error_codes.ON_INIT_CALLBACK_ERROR, err)
         end
       end
       _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
@@ -319,12 +307,11 @@ function lsp.start_client(conf)
     return rpc.request(method, params, callback)
   end
 
-  -- TODO keep this?
   function client.notify(...)
     return rpc.notify(...)
   end
 
-  -- TODO hmmm.
+  -- TODO Make sure these timeouts are ok or make configurable?
   function client.stop(force)
     local handle = rpc.handle
     if handle:is_closing() then
@@ -359,7 +346,7 @@ function lsp.start_client(conf)
       textDocument = {
         version = 0;
         uri = vim.uri_from_bufnr(bufnr);
-        -- TODO make sure this is correct.
+        -- TODO make sure our filetypes are compatible with languageId names.
         languageId = nvim_buf_get_option(bufnr, 'filetype');
         text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n');
       }
@@ -405,9 +392,8 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
     };
   end)
   local full_changes = once(function()
-    local lines = nvim_buf_get_lines(bufnr, 0, -1, false)
     return {
-      text = table.concat(lines, "\n");
+      text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), "\n");
     };
   end)
   local uri = vim.uri_from_bufnr(bufnr)
@@ -775,65 +761,27 @@ function lsp.omnifunc(findstart, base)
   end
 end
 
--- -- TODO keep?
--- function lsp.get_buffer_clients(bufnr)
---  local result = {}
---  for_each_buffer_client(bufnr, function(client, client_id)
---    result[client_id] = client
---  end)
---  return result
--- end
+-- TODO keep?
+function lsp.get_buffer_clients(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+ local result = {}
+ for_each_buffer_client(bufnr, function(client, client_id)
+   result[client_id] = client
+ end)
+ return result
+end
 
--- function lsp.handle(filetype, method, result, default_only)
---   return callbacks.call_callback(method, true, result, default_only, filetype)
--- end
+-- TODO keep?
+function lsp.buf_print_debug_info(bufnr)
+  vim.api.nvim_out_write(vim.inspect(lsp.get_buffer_clients(bufnr)))
+  vim.api.nvim_out_write("\n")
+end
 
--- function lsp.client_has_started(filetype, server_name)
---   assert(filetype, "filetype is required.")
---   if server_name then
---     local client = lsp.get_client(filetype, server_name)
---     if client and client:is_running() then
---       return true
---     else
---       return false
---     end
---   else
---     local filetype_clients = lsp.get_clients(filetype)
---     if filetype_clients ~= nil then
---       for _, client in ipairs(filetype_clients) do
---        if client:is_running() then
---          return true
---        end
---       end
---     end
---     return false
---   end
--- end
-
--- function lsp.client_info(bufnr)
---  bufnr = resolve_bufnr(bufnr)
---  return BUFFER_CLIENT_IDS[bufnr]
---   assert(filetype and filetype ~= '', "The filetype argument must be non empty string")
---   if not server_name then
---     server_name = filetype
---   end
---   local client =  lsp.get_client(filetype, server_name)
---   if client then
---     return vim.inspect(client)
---   else
---     return 'No client is available for filetype: '..filetype..', server_name: '..server_name..'.'
---   end
--- end
-
--- function lsp.status()
---   local status = ''
---   for _, filetype_clients in pairs(LSP_CLIENTS) do
---     for _, client in pairs(filetype_clients) do
---       status = status..'filetype: '..client.filetype..', server_name: '..client.server_name..', command: '..client.cmd.execute_path..'\n'
---     end
---   end
---   return status
--- end
+-- TODO keep?
+function lsp.print_debug_info()
+  vim.api.nvim_out_write(vim.inspect(LSP_CLIENTS))
+  vim.api.nvim_out_write("\n")
+end
 
 function lsp.set_log_level(level)
   if type(level) == 'string' or type(level) == 'number' then
