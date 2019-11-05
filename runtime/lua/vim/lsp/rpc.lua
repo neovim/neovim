@@ -20,6 +20,26 @@ local function json_decode(data)
   end
 end
 
+-- If a dictionary is passed in, turn it into a list of string of "k=v"
+local function force_env_list(final_env)
+	if final_env then
+		local env = final_env
+		final_env = {}
+		for k,v in pairs(env) do
+			-- If it's passed in as a dict, then convert to list of "k=v"
+			if type(k) == "string" then
+				table.insert(final_env, k..'='..v)
+			elseif type(v) == 'string' then
+				table.insert(final_env, v)
+			else
+				-- TODO is this right?
+				table.insert(final_env, tostring(v))
+			end
+		end
+		return final_env
+	end
+end
+
 local function format_message_with_content_length(encoded_message)
   return table.concat {
     'Content-Length: '; tostring(#encoded_message); '\r\n\r\n';
@@ -100,21 +120,21 @@ end
 
 local default_handlers = {}
 function default_handlers.notification(method, params)
-  _ = log.info() and log.info('notification', method, params)
+  _ = log.debug() and log.debug('notification', method, params)
 end
 function default_handlers.server_request(method, params)
-  _ = log.info() and log.info('server_request', method, params)
+  _ = log.debug() and log.debug('server_request', method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
 function default_handlers.on_exit() end
 -- TODO use protocol.ErrorCodes instead?
 function default_handlers.on_error(code, err)
-  _ = log.info() and log.info('client_error:', CLIENT_ERRORS[code], err)
+  _ = log.error() and log.error('client_error:', CLIENT_ERRORS[code], err)
 end
 
 --- Create and start an RPC client.
 local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_params)
-  _ = log.info() and log.info("starting client", {cmd, cmd_args})
+  _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
   assert(type(cmd) == 'string', "cmd must be a string")
   assert(type(cmd_args) == 'table', "cmd_args must be a table")
 
@@ -141,9 +161,14 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       args = cmd_args;
       stdio = {stdin, stdout, stderr};
     }
-    -- TODO add stuff like cwd and env.
-    -- if extra_spawn_params then
-    -- end
+    if extra_spawn_params then
+      spawn_params.cwd = extra_spawn_params.cwd
+      if spawn_params.cwd then
+        local stat = vim.loop.fs_stat(spawn_params.cwd)
+        assert(stat and stat.type == 'directory', "cwd must be a directory")
+      end
+      spawn_params.env = force_env_list(extra_spawn_params.env)
+    end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
   end
 
@@ -151,7 +176,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   local message_callbacks = {}
 
   local function encode_and_send(payload)
-    _ = log.debug() and log.debug("payload", payload)
+    _ = log.debug() and log.debug("rpc.send.payload", payload)
     if handle:is_closing() then return false end
     local encoded = assert(json_encode(payload))
     stdin:write(format_message_with_content_length(encoded))
@@ -159,7 +184,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   end
 
   local function send_notification(method, params)
-    _ = log.info() and log.info('notify', method, params)
+    _ = log.debug() and log.debug("rpc.notify", method, params)
     return encode_and_send {
       jsonrpc = "2.0";
       method = method;
@@ -199,14 +224,10 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     end
   end
 
-  -- TODO delete
-  -- TODO delete
-  -- TODO delete
-  local stderroutput = io.open("/home/ashkan/lsp.log", "w")
-  stderroutput:setvbuf("no")
+  -- TODO delete?
   stderr:read_start(function(err, chunk)
     if chunk then
-      stderroutput:write(chunk)
+      _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
     end
   end)
 

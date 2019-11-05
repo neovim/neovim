@@ -11,6 +11,9 @@ local builtin_default_server_callbacks = require('vim.lsp.builtin_callbacks')
 local log = require('vim.lsp.log')
 local text_document_handler = require('vim.lsp.handler').text_document
 
+local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
+  = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
+
 local function resolve_bufnr(bufnr)
   if bufnr == nil or bufnr == 0 then
     return vim.api.nvim_get_current_buf()
@@ -47,11 +50,11 @@ local function for_each_buffer_client(bufnr, callback)
   assert(type(bufnr) == 'number', "bufnr must be a number")
   local client_ids = BUFFER_CLIENT_IDS[bufnr]
   -- TODO error here?
-  if not client_ids or vim.tbl_isempty(client_ids) then
-    local msg = string.format("No clients available for buffer %d", bufnr)
-    _ = log.warn() and log.warn(msg)
-    error(msg)
-  end
+  -- if not client_ids or vim.tbl_isempty(client_ids) then
+  --   local msg = string.format("No clients available for buffer %d", bufnr)
+  --   _ = log.warn() and log.warn(msg)
+  --   error(msg)
+  -- end
   for client_id in pairs(client_ids) do
     local client = LSP_CLIENTS[client_id]
     -- This is unlikely to happen. Could only potentially happen in a race
@@ -74,6 +77,40 @@ local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_
   ON_INIT_CALLBACK_ERROR = maxerrn + 1;
 })
 
+--- Start a client and initialize it.
+-- conf = {
+--   cmd = string;
+--   cmd_args = table;
+--   cmd_cwd = string | nil;
+--   cmd_end = table | nil;
+--   offset_encoding = 'utf-8' | 'utf-16' | 'utf-32' | string;
+--   name = string | nil;
+--   trace = 'off' | 'messages' | 'verbose' | nil
+--   default_server_callbacks = table | nil;
+--   on_init = function | nil;
+--   init_options = table | nil;
+-- }
+--
+-- - `name` here is only used for logging/debugging.
+-- - `trace` will be forwarded to the client.
+-- - `default_server_callbacks` should be a table of functions which
+-- defines:
+--   - The handlers for notifications. These should be `function(params)`
+--   - A default callback to use for `vim.lsp.buf_request` if one is not
+--   provided at the time of calling `vim.lsp.buf_request`. These should be
+--   `function(err, result)`
+--   - By default, the functions from the module `vim.lsp.builtin_callbacks`
+--   will be used. This parameter can override or extend it those builtin
+--   callbacks.
+--
+-- You can use |vim.lsp.get_client_by_id()| to get the actual client.
+--
+-- NOTE: The client is only available *after* it has been initialized, which
+-- may happen after a small delay (or never if there is an error).
+-- For this reason, you may want to use `on_init` to do any actions once the
+-- client has been initialized.
+--
+-- @return client_id
 function lsp.start_client(conf)
   assert(type(conf.cmd) == 'string', "conf.cmd must be a string")
   assert(type(conf.cmd_args) == 'table', "conf.cmd_args must be a table")
@@ -87,13 +124,29 @@ function lsp.start_client(conf)
   else
     default_server_callbacks = builtin_default_server_callbacks
   end
+  local capabilities = conf.capabilities or {}
+  assert(type(capabilities) == 'table', "conf.capabilities must be a table")
 
   -- There are things sent by the server in the initialize response which
   -- contains capabilities that would be useful for completion engines, such as
   -- the character code triggers for completion and code action, so I'll expose this
   -- for now.
   if conf.on_init then
-    assert(type(conf.on_init) == 'function', "conf.cmd_args must be a table")
+    assert(type(conf.on_init) == 'function', "conf.on_init must be a function")
+  end
+  if conf.on_exit then
+    assert(type(conf.on_exit) == 'function', "conf.on_exit must be a function")
+  end
+  if conf.on_error then
+    assert(type(conf.on_error) == 'function', "conf.on_error must be a function")
+  end
+  if conf.cmd_env then
+    assert(type(conf.cmd_env) == 'table', "conf.cmd_env must be a table")
+  end
+  if conf.cmd_cwd then
+    assert(type(conf.cmd_cwd) == 'string', "conf.cmd_cwd must be a string")
+    local stat = vim.loop.fs_stat(conf.cmd_cwd)
+    assert(stat and stat.type == 'directory', "conf.cmd_cwd must be a directory")
   end
 
   local client_id = next_client_id()
@@ -101,7 +154,7 @@ function lsp.start_client(conf)
   local handlers = {}
 
   function handlers.notification(method, params)
-    _ = log.info() and log.info('notification', method, params)
+    _ = log.debug() and log.debug('notification', method, params)
     local callback = default_server_callbacks[method]
     if callback then
       -- Method name is provided here for convenience.
@@ -110,7 +163,7 @@ function lsp.start_client(conf)
   end
 
   function handlers.server_request(method, params)
-    _ = log.info() and log.info('server_request', method, params)
+    _ = log.debug() and log.debug('server_request', method, params)
     local request_callback = default_server_callbacks[method]
     if request_callback then
       return request_callback(params, method)
@@ -120,11 +173,19 @@ function lsp.start_client(conf)
 
   local name = conf.name or tostring(client_id)
   assert(type(name) == 'string', "conf.name must be a string")
+  local log_prefix = string.format("LSP[%s]", name)
 
   function handlers.on_error(code, err)
-    local msg = string.format('LSP[%q]: Error %s: %q', name, error_codes[code], vim.inspect(err))
-    _ = log.error() and log.error(msg)
-    vim.api.nvim_err_writeln(msg)
+    _ = log.error() and log.error(log_prefix, "on_error", { code = error_codes[code], err = err })
+    nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, error_codes[code], vim.inspect(err)))
+    if conf.on_error then
+      -- TODO log errors?
+      local status, usererr = pcall(conf.on_error, code, err)
+      if not status then
+        _ = log.error() and log.error(log_prefix, "user on_error failed", { err = usererr })
+        nvim_err_writeln(log_prefix.." user on_error failed: "..tostring(usererr))
+      end
+    end
   end
 
   -- This is used because if there are outstanding timers (like for stop())
@@ -141,7 +202,10 @@ function lsp.start_client(conf)
     end
   end
 
-  local rpc = lsp_rpc.start(conf.cmd, conf.cmd_args, handlers)
+  local rpc = lsp_rpc.start(conf.cmd, conf.cmd_args, handlers, {
+    cwd = conf.cmd_cwd;
+    env = conf.cmd_env;
+  })
 
   local client = {
     id = client_id;
@@ -168,6 +232,9 @@ function lsp.start_client(conf)
 
 
   local function initialize()
+    local valid_traces = {
+      off = 'off'; messages = 'messages'; verbose = 'verbose';
+    }
     local initialize_params = {
       -- The process Id of the parent process that started the server. Is null if
       -- the process has not been started by another process.  If the parent
@@ -180,14 +247,15 @@ function lsp.start_client(conf)
       rootPath = nil;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = vim.uri_from_fname(vim.fn.expand("%:p:h"));
+      rootUri = vim.uri_from_fname(vim.loop.cwd()); -- TODO which path to use?
+--      rootUri = vim.uri_from_fname(vim.fn.expand("%:p:h"));
       -- User provided initialization options.
       initializationOptions = conf.init_options;
       -- The capabilities provided by the client (editor or tool)
-      capabilities = protocol.ClientCapabilities();
+      capabilities = vim.tbl_deep_merge(protocol.ClientCapabilities(), capabilities);
       -- The initial trace setting. If omitted trace is disabled ('off').
       -- trace = 'off' | 'messages' | 'verbose';
-      trace = conf.trace or 'off';
+      trace = valid_traces[conf.trace] or 'off';
       -- The workspace folders configured in the client when the server starts.
       -- This property is only available if the client supports workspace folders.
       -- It can be `null` if the client supports workspace folders but none are
@@ -216,8 +284,8 @@ function lsp.start_client(conf)
           on_error(error_codes.ON_INIT_CALLBACK_ERROR, err)
         end
       end
-      _ = log.debug() and log.debug("server_capabilities", client.server_capabilities)
-      _ = log.info() and log.info("resolved_capabilities", client.resolved_capabilities)
+      _ = log.debug() and log.debug(log_prefix, "server_capabilities", client.server_capabilities)
+      _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
 
       -- Only assign after initialized?
       LSP_CLIENTS[client_id] = client
@@ -234,7 +302,7 @@ function lsp.start_client(conf)
 
   --- Checks capabilities before rpc.request-ing.
   function client.request(method, params, callback)
-    _ = log.info() and log.info("client.request", client_id, method, params, callback)
+    _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
     -- TODO keep these checks or just let it go anyway?
     if not client.resolved_capabilities.hover and method == 'textDocument/hover' then
       _ = log.warn() and log.warn("server doesn't support textDocument/hover")
@@ -292,8 +360,8 @@ function lsp.start_client(conf)
         version = 0;
         uri = vim.uri_from_bufnr(bufnr);
         -- TODO make sure this is correct.
-        languageId = vim.api.nvim_buf_get_option(bufnr, 'filetype');
-        text = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n');
+        languageId = nvim_buf_get_option(bufnr, 'filetype');
+        text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n');
       }
     }
     rpc.notify('textDocument/didOpen', params)
@@ -322,7 +390,7 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
   local incremental_changes = once(function(client)
     -- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
     local size_index = ENCODING_INDEX[client.offset_encoding]
-    local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+    local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
     -- Add an extra line. TODO why?
     -- if new_lastline > firstline then
     --  table.insert(lines, '')
@@ -337,7 +405,7 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
     };
   end)
   local full_changes = once(function()
-    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local lines = nvim_buf_get_lines(bufnr, 0, -1, false)
     return {
       text = table.concat(lines, "\n");
     };
@@ -370,6 +438,7 @@ end
 -- it stands out alone as the only function which contains protocol
 -- implementation details, but it's definitely easier to implement here.
 function lsp.attach_to_buffer(bufnr, client_id)
+  assert(type(client_id) == 'number', "client_id must be a number")
   bufnr = resolve_bufnr(bufnr)
   local buffer_client_ids = BUFFER_CLIENT_IDS[bufnr]
   -- This is our first time attaching to this buffer.
@@ -377,7 +446,7 @@ function lsp.attach_to_buffer(bufnr, client_id)
     buffer_client_ids = {}
     BUFFER_CLIENT_IDS[bufnr] = buffer_client_ids
 
-    vim.api.nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(%d)", bufnr, bufnr))
+    nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(%d)", bufnr, bufnr))
     local uri = vim.uri_from_bufnr(bufnr)
 
     -- First time, so attach and set up stuff.
@@ -472,10 +541,14 @@ function lsp.add_config(config)
     filetypes = filetypes;
     cmd = cmd;
     cmd_args = cmd_args;
-    capabilities = {};
+    cmd_env = config.cmd_env;
+    cmd_cwd = config.cmd_cwd;
+    capabilities = capabilities;
+    init_options = config.init_options;
+    on_init = config.on_init;
   }
 
-  vim.api.nvim_command(string.format(
+  nvim_command(string.format(
     "autocmd FileType %s ++once silent lua vim.lsp._start_client_by_name(%q)",
     table.concat(filetypes, ','),
     config.name))
@@ -491,16 +564,24 @@ function lsp._start_client_by_name(name)
   config.client_id = lsp.start_client(config)
   vim.lsp.attach_to_buffer(0, config.client_id)
 
-  vim.api.nvim_command(string.format(
+  nvim_command(string.format(
     "autocmd FileType %s silent lua vim.lsp.attach_to_buffer(0, %d)",
     table.concat(config.filetypes, ','),
     config.client_id))
+  return config.client_id
 end
 
-vim.api.nvim_command("autocmd VimLeavePre * lua vim.lsp.stop_all_clients()")
+nvim_command("autocmd VimLeavePre * lua vim.lsp.stop_all_clients()")
 
-function lsp.get_client(client_id)
+function lsp.get_client_by_id(client_id)
   return LSP_CLIENTS[client_id]
+end
+
+function lsp.get_client_by_name(name)
+  local config = LSP_CONFIGS[name]
+  if config.client_id then
+    return LSP_CLIENTS[config.client_id]
+  end
 end
 
 function lsp.stop_client(client_id, force)
@@ -570,33 +651,33 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
   local function callback(err, result, client_id)
-    _ = log.info() and log.info("callback", err, result, client_id)
+    _ = log.trace() and log.trace("callback", err, result, client_id)
     request_results[client_id] = { error = err, result = result }
     result_count = result_count + 1
   end
   local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, callback)
-  _ = log.info() and log.info("client_request_ids", client_request_ids)
+  _ = log.trace() and log.trace("client_request_ids", client_request_ids)
 
   local expected_result_count = 0
   for _ in pairs(client_request_ids) do
     expected_result_count = expected_result_count + 1
   end
-  _ = log.info() and log.info("expected_result_count", expected_result_count)
+  _ = log.trace() and log.trace("expected_result_count", expected_result_count)
   local timeout = (timeout_ms or 100) + vim.loop.now()
   -- TODO is there a better way to sync this?
   while result_count < expected_result_count do
-    _ = log.info() and log.info("results", result_count, request_results)
+    _ = log.trace() and log.trace("results", result_count, request_results)
     if vim.loop.now() >= timeout then
       cancel()
       return nil, "TIMEOUT"
     end
     -- TODO this really needs to be further looked at.
-    vim.api.nvim_command "sleep 10m"
+    nvim_command "sleep 10m"
     -- vim.loop.sleep(10)
     vim.loop.update_time()
   end
   vim.loop.update_time()
-  _ = log.info() and log.info("results", result_count, request_results)
+  _ = log.trace() and log.trace("results", result_count, request_results)
   return request_results
 end
 
@@ -618,7 +699,7 @@ function lsp._text_document_did_save_handler(bufnr)
   bufnr = resolve_bufnr(bufnr)
   local uri = vim.uri_from_bufnr(bufnr)
   local text = once(function()
-    return table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+    return table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
   end)
   for_each_buffer_client(bufnr, function(client, client_id)
     if client.resolved_capabilities.text_document_save then
@@ -637,7 +718,7 @@ function lsp._text_document_did_save_handler(bufnr)
 end
 
 function lsp.omnifunc(findstart, base)
-  _ = log.debug() and log.debug(string.format("omnifunc findstart: %s, base: %s", findstart, base))
+  _ = log.debug() and log.debug("omnifunc.findstart", { findstart = findstart, base = base })
 
   local bufnr = resolve_bufnr()
   local has_buffer_clients = not vim.tbl_isempty(BUFFER_CLIENT_IDS[bufnr] or {})
@@ -653,8 +734,8 @@ function lsp.omnifunc(findstart, base)
     return vim.fn.col('.')
   else
     local pos = vim.api.nvim_win_get_cursor(0)
-    local line = assert(vim.api.nvim_buf_get_lines(bufnr, pos[1]-1, pos[1], false)[1])
-    _ = log.debug() and log.debug("line", pos, line)
+    local line = assert(nvim_buf_get_lines(bufnr, pos[1]-1, pos[1], false)[1])
+    _ = log.trace() and log.trace("omnifunc.line", pos, line)
     local line_to_cursor = line:sub(1, pos[2]+1)
     local params = {
       textDocument = {
@@ -680,8 +761,8 @@ function lsp.omnifunc(findstart, base)
       if not response.error then
         local data = response.result
         local completion_items = text_document_handler.completion_list_to_complete_items(data or {}, line_to_cursor)
-        _ = log.debug() and log.debug("line_to_cursor", line_to_cursor)
-        _ = log.debug() and log.debug("completion_items", completion_items)
+        _ = log.trace() and log.trace("omnifunc.line_to_cursor", line_to_cursor)
+        _ = log.trace() and log.trace("omnifunc.completion_items", completion_items)
         -- TODO use this.
         -- vim.list_extend(matches, completion_items)
         for _, match in ipairs(completion_items) do
@@ -755,9 +836,7 @@ end
 -- end
 
 function lsp.set_log_level(level)
-  if type(level) == 'string' then
-    log.set_level(log.levels[level])
-  elseif type(level) == 'number' then
+  if type(level) == 'string' or type(level) == 'number' then
     log.set_level(level)
   else
     error(string.format("Invalid log level: %q", level))

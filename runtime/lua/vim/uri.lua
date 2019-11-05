@@ -75,11 +75,9 @@ local function uri_to_fname(uri)
   return uri_decode(uri)
 end
 
-local module = {
+return {
   uri_from_fname = uri_from_fname,
   uri_from_bufnr = uri_from_bufnr,
   uri_to_fname = uri_to_fname,
 }
-
-return module
 -- vim:sw=2 ts=2 et

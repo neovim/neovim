@@ -690,26 +690,28 @@ export interface TextDocumentClientCapabilities {
 
 protocol.TextDocumentClientCapabilities = {
   synchronization = {
-    dynamicRegistration = false,
+    dynamicRegistration = false;
 
     -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
-    willSave = false,
+    willSave = false;
 
     -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
-    willSaveWaitUntil = false,
+    willSaveWaitUntil = false;
 
     -- Send textDocument/didSave after saving (BufWritePost)
-    didSave = true,
-  },
+    didSave = true;
+  };
   completion = {
-    dynamicRegistration = false,
+    dynamicRegistration = false;
     completionItem = {
 
       -- TODO(tjdevries): Is it possible to implement this in plain lua?
-      snippetSupport = false,
-      commitCharactersSupport = false,
-      documentationFormat = { protocol.MarkupKind.Markdown },
-    },
+      snippetSupport = false;
+      commitCharactersSupport = false;
+      preselectSupport = false;
+      deprecatedSupport = false;
+      documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
+    };
     completionItemKind = {
       valueSet = (function()
         local res = {}
@@ -718,31 +720,34 @@ protocol.TextDocumentClientCapabilities = {
         end
         return res
       end)();
-    },
+    };
 
     -- TODO(tjdevries): Implement this
-    contextSupport = false,
-  },
+    contextSupport = false;
+  };
   hover = {
-    dynamicRegistration = false,
+    dynamicRegistration = false;
 
     -- Currently only support plaintext
-    --    In the future, if we have floating windows or display in a preview window,
+    --    In the future; if we have floating windows or display in a preview window,
     --    we could say markdown
-    contentFormat = { protocol.MarkupKind.Markdown },
-  },
+    contentFormat = { protocol.MarkupKind.Markdown };
+  };
   signatureHelp = {
-    dynamicRegistration = false,
+    dynamicRegistration = false;
     signatureInformation = {
-      documentationFormat = { protocol.MarkupKind.Markdown }
-    },
-  },
+      documentationFormat = { protocol.MarkupKind.Markdown; protocol.MarkupKind.PlainText };
+      -- parameterInformation = {
+      --   labelOffsetSupport = false;
+      -- };
+    };
+  };
   references = {
-    dynamicRegistration = false,
-  },
+    dynamicRegistration = false;
+  };
   documentHighlight = {
     dynamicRegistration = false
-  },
+  };
 }
 
 function protocol.ClientCapabilities()

@@ -2,6 +2,10 @@ function! lsp#add_server_config(config) abort
   call luaeval('vim.lsp.add_config(_A)', a:config)
 endfunction
 
+function! lsp#set_log_level(level) abort
+  call luaeval('vim.lsp.set_log_level(_A)', a:level)
+endfunction
+
 function! lsp#text_document_hover() abort
   lua vim.lsp.buf_request(nil, 'textDocument/hover', vim.lsp.protocol.TextDocumentPositionParams())
   return ''

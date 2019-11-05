@@ -25,7 +25,6 @@
 
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
-local errorCodes = protocol.errorCodes
 
 local text_document_handler = require('vim.lsp.handler').text_document
 local workspace_handler = require('vim.lsp.handler').workspace
