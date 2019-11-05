@@ -53,6 +53,7 @@ do
 end
 
 log.levels = LOG_LEVELS
+vim.tbl_add_reverse_lookup(log.levels)
 
 function log.set_level(level)
 	if type(level) == 'string' then

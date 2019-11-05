@@ -255,14 +255,19 @@ function lsp.start_client(conf)
 	--- Checks capabilities before rpc.request-ing.
 	function client.request(method, params, callback)
 		_ = log.info() and log.info("client.request", client_id, method, params, callback)
-		-- TODO check server capabilities before doing the request.
-		-- TODO check server capabilities before doing the request.
-		-- TODO check server capabilities before doing the request.
-		-- TODO check server capabilities before doing the request.
-		-- TODO check server capabilities before doing the request.
-		-- TODO check server capabilities before doing the request.
-		-- TODO check server capabilities before doing the request.
-		-- error('unimplemented')
+		-- TODO keep these checks or just let it go anyway?
+		if not client.resolved_capabilities.hover and method == 'textDocument/hover' then
+			_ = log.warn() and log.warn("server doesn't support textDocument/hover")
+			return
+		end
+		if not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp' then
+			_ = log.warn() and log.warn("server doesn't support textDocument/signatureHelp")
+			return
+		end
+		if not client.resolved_capabilities.goto_definition and method == 'textDocument/definition' then
+			_ = log.warn() and log.warn("server doesn't support textDocument/definition")
+			return
+		end
 		return rpc.request(method, params, callback)
 	end
 
@@ -631,17 +636,23 @@ end
 
 function lsp._text_document_did_save_handler(bufnr)
 	bufnr = resolve_bufnr(bufnr)
-	local params = {
-		textDocument = {
-			uri = vim.uri_from_bufnr(bufnr);
-			-- TODO make sure I'm handling this correctly.
-			-- Optional the content when saved. Depends on the includeText value
-			-- when the save notification was requested.
-			text = nil;
-		}
-	}
+	local uri = vim.uri_from_bufnr(bufnr)
+	local text = once(function()
+		return table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+	end)
 	for_each_buffer_client(bufnr, function(client, client_id)
-		client.notify('textDocument/didSave', params)
+		if client.resolved_capabilities.text_document_save then
+			local included_text
+			if client.resolved_capabilities.text_document_save_include_text then
+				included_text = text()
+			end
+			client.notify('textDocument/didSave', {
+				textDocument = {
+					uri = uri;
+					text = included_text;
+				}
+			})
+		end
 	end)
 end
 
@@ -762,5 +773,15 @@ end
 --   end
 --   return status
 -- end
+
+function lsp.set_log_level(level)
+	if type(level) == 'string' then
+		log.set_level(log.levels[level])
+	elseif type(level) == 'number' then
+		log.set_level(level)
+	else
+		error(string.format("Invalid log level: %q", level))
+	end
+end
 
 return lsp

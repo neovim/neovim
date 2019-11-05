@@ -692,10 +692,10 @@ protocol.TextDocumentClientCapabilities = {
   synchronization = {
     dynamicRegistration = false,
 
-    -- Send textDocument/willSave before saving (BufWritePre)
-    willSave = true,
+    -- TODO(ashkan) Send textDocument/willSave before saving (BufWritePre)
+    willSave = false,
 
-    -- TODO(tjdevries): Implement textDocument/willSaveWaitUntil
+    -- TODO(ashkan) Implement textDocument/willSaveWaitUntil
     willSaveWaitUntil = false,
 
     -- Send textDocument/didSave after saving (BufWritePost)
@@ -708,10 +708,16 @@ protocol.TextDocumentClientCapabilities = {
       -- TODO(tjdevries): Is it possible to implement this in plain lua?
       snippetSupport = false,
       commitCharactersSupport = false,
-      documentationFormat = {protocol.MarkupKind.Markdown},
+      documentationFormat = { protocol.MarkupKind.Markdown },
     },
     completionItemKind = {
-      valueSet = vim.tbl_keys(protocol.CompletionItemKind),
+      valueSet = (function()
+				local res = {}
+				for k in pairs(protocol.CompletionItemKind) do
+					if type(k) == 'string' then table.insert(res, k) end
+				end
+				return res
+			end)();
     },
 
     -- TODO(tjdevries): Implement this
@@ -728,7 +734,7 @@ protocol.TextDocumentClientCapabilities = {
   signatureHelp = {
     dynamicRegistration = false,
     signatureInformation = {
-      documentationFormat = {protocol.MarkupKind.Markdown}
+      documentationFormat = { protocol.MarkupKind.Markdown }
     },
   },
   references = {
@@ -941,8 +947,44 @@ function protocol.resolve_capabilities(server_capabilities)
 		end
 	end
 	general_properties.hover = server_capabilities.hoverProvider or false
+	general_properties.goto_definition = server_capabilities.definitionProvider or false
+	general_properties.find_references = server_capabilities.referencesProvider or false
+	general_properties.document_highlight = server_capabilities.documentHighlightProvider or false
+	general_properties.document_symbol = server_capabilities.documentSymbolProvider or false
+	general_properties.workspace_symbol = server_capabilities.workspaceSymbolProvider or false
+	general_properties.document_formatting = server_capabilities.documentFormattingProvider or false
+	general_properties.document_range_formatting = server_capabilities.documentRangeFormattingProvider or false
+
+	if server_capabilities.codeActionProvider == nil then
+		general_properties.code_action = false
+	elseif type(server_capabilities.codeActionProvider) == 'boolean' then
+		general_properties.code_action = server_capabilities.codeActionProvider
+	elseif type(server_capabilities.codeActionProvider) == 'table' then
+		general_properties.code_action = false
+	else
+		error("The server sent invalid codeActionProvider")
+	end
+
+	local signature_help_properties
+	if server_capabilities.signatureHelpProvider == nil then
+		signature_help_properties = {
+			signature_help = false;
+			signature_help_trigger_characters = {};
+		}
+	elseif type(server_capabilities.signatureHelpProvider) == 'table' then
+		signature_help_properties = {
+			signature_help = true;
+			-- The characters that trigger signature help automatically.
+			signature_help_trigger_characters = server_capabilities.signatureHelpProvider.triggerCharacters or {};
+		}
+	else
+		error("The server sent invalid signatureHelpProvider")
+	end
+
 	return vim.tbl_deep_merge({}
 			, text_document_sync_properties
+			, signature_help_properties
+			, general_properties
 			)
 end
 

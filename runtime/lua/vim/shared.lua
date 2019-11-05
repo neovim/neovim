@@ -230,7 +230,7 @@ function vim.tbl_deep_merge(dst, ...)
 		local t = select(i, ...)
 		assert(type(t) == 'table', 'tbl_deep_merge sources must be tables')
 		for k, v in pairs(t) do
-			if type(v) == 'table' then
+			if type(v) == 'table' and not vim.tbl_islist(v) then
 				dst[k] = vim.tbl_deep_merge(dst[k] or {}, v)
 			else
 				dst[k] = v
