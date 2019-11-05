@@ -23,160 +23,12 @@
 -- TODO: codeLens/resolve
 -- TODO: documentLink/resolve
 
-local log = require('vim.lsp.log')
-local protocol = require('vim.lsp.protocol')
-
-local text_document_handler = require('vim.lsp.handler').text_document
-local workspace_handler = require('vim.lsp.handler').workspace
+local log = require 'vim.lsp.log'
+local protocol = require 'vim.lsp.protocol'
+local util = require 'vim.lsp.util'
 
 local function split_lines(value)
   return vim.split(value, '\n', true)
-end
-
--- Append all the items from `b` to `a`
--- TODO if vim.list_extend is fine then erase this condition.
-local list_extend = vim.list_extend or function(a, b)
-  for _, v in ipairs(b) do
-    table.insert(a, v)
-  end
-  return a
-end
-
-local function get_floating_window_option(width, height)
-  local anchor = ''
-  local row, col
-
-  if vim.fn.winline() <= height then
-    anchor = anchor..'N'
-    row = 1
-  else
-    anchor = anchor..'S'
-    row = 0
-  end
-
-  if vim.fn.wincol() + width <= vim.api.nvim_get_option('columns') then
-    anchor = anchor..'W'
-    col = 0
-  else
-    anchor = anchor..'E'
-    col = 1
-  end
-
-  return {
-    anchor = anchor,
-    col = col,
-    height = height,
-    relative = 'cursor',
-    row = row,
-    style = 'minimal',
-    width = width,
-  }
-end
-
-local function open_floating_preview(contents, filetype)
-  assert(type(contents) == 'table', 'open_floating_preview(): contents must be a table')
-
-  -- Trim empty lines from the end.
-  for i = #contents, 1, -1 do
-    if #contents[i] == 0 then
-      table.remove(contents)
-    else
-      break
-    end
-  end
-
-  local width = 0
-  local height = #contents
-  for i, line in ipairs(contents) do
-    -- Clean up the input and add left pad.
-    line = " "..line:gsub("\r", "")
-    -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-    local line_width = vim.fn.strdisplaywidth(line)
-    width = math.max(line_width, width)
-    contents[i] = line
-  end
-  -- Add right padding of 1 each.
-  width = width + 1
-
-  local floating_bufnr = vim.api.nvim_create_buf(false, true)
-  if filetype then
-    if not (type(filetype) == 'string') then
-      error(("Invalid filetype for open_floating_preview: %q"):format(filetype))
-    end
-    vim.api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
-  end
-
-  local float_option = get_floating_window_option(width, height)
-  local floating_winnr = vim.api.nvim_open_win(floating_bufnr, true, float_option)
-  if filetype == 'markdown' then
-    vim.api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
-  end
-
-  vim.api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
-
-  -- TODO is this necessary?
-  local floating_win = vim.fn.win_id2win(floating_winnr)
-
-  vim.api.nvim_command("wincmd p")
-  -- TODO should this have a <buffer> target?
-  vim.api.nvim_command("autocmd CursorMoved <buffer> ++once :"..floating_win.."wincmd c")
-end
-
---- Convert Hover response to preview contents.
--- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_hover
-local function hover_contents_to_markdown_lines(input, contents)
-  contents = contents or {}
-  -- MarkedString variation 1
-  if type(input) == 'string' then
-    list_extend(contents, split_lines(input))
-  else
-    assert(type(input) == 'table', "Expected a table for Hover.contents. Please file an issue on neovim/neovim")
-    -- MarkupContent
-    if input.kind then
-      -- The kind can be either plaintext or markdown. However, either way we
-      -- will just be rendering markdown, so we handle them both the same way.
-      -- TODO these can have escaped/sanitized html codes in markdown. We
-      -- should make sure we handle this correctly.
-      assert(type(input.value) == 'string')
-      list_extend(contents, split_lines(input.value))
-    -- MarkupString variation 2
-    elseif input.language then
-      assert(type(input.value) == 'string')
-      table.insert(contents, "```"..input.language)
-      list_extend(contents, split_lines(input.value))
-      table.insert(contents, "```")
-    -- By deduction, this must be MarkedString[]
-    else
-      -- Use our existing logic to handle MarkedString
-      for _, marked_string in ipairs(input) do
-        hover_contents_to_markdown_lines(marked_string, contents)
-      end
-    end
-  end
-  -- TODO are we sure about this?
-  if contents[1] == '' or contents[1] == nil then
-    return {'LSP [textDocument/hover]: No information available'}
-  end
-  return contents
-end
-
---- Convert SignatureHelp response to preview contents.
--- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_signatureHelp
-local function signature_help_to_preview_contents(input)
-  local contents = {}
-  local signature
-  -- If the activeSignature is inside the valid range, then use it.
-  if input.activeSignature and input.activeSignature < #input.signatures then
-    signature = input.signatures[input.activeSignature + 1]
-  else
-    -- Otherwise, default to the first element
-    signature = input.signatures[1]
-  end
-  list_extend(contents, split_lines(signature.label))
-  if signature.documentation then
-    hover_contents_to_markdown_lines(signature.documentation, contents)
-  end
-  return contents
 end
 
 local builtin_callbacks = {}
@@ -203,7 +55,7 @@ builtin_callbacks['textDocument/completion'] = function(err, result)
   local line = assert(vim.api.nvim_buf_get_lines(0, row-1, row, false)[1])
   local line_to_cursor = line:sub(col+1)
 
-  local matches = text_document_handler.completion_list_to_complete_items(result, line_to_cursor)
+  local matches = util.text_document_completion_list_to_complete_items(result, line_to_cursor)
   local match_result = vim.fn.matchstrpos(line_to_cursor, '\\k\\+$')
   local match_start, match_finish = match_result[2], match_result[3]
 
@@ -229,7 +81,7 @@ builtin_callbacks['textDocument/rename'] = function(err, result)
 
   vim.api.nvim_set_var('text_document_rename', result)
 
-  workspace_handler.apply_WorkspaceEdit(result)
+  util.workspace_apply_workspace_edit(result)
 end
 
 
@@ -245,9 +97,71 @@ builtin_callbacks['textDocument/hover'] = function(err, result)
   end
 
   if result.contents ~= nil then
-    local markdown_lines = hover_contents_to_markdown_lines(result.contents)
-    open_floating_preview(markdown_lines, 'markdown')
+    local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
+    if vim.tbl_isempty(markdown_lines) then
+      markdown_lines = { 'No information available' }
+    end
+    util.open_floating_preview(markdown_lines, 'markdown')
   end
+end
+
+--- Convert SignatureHelp response to preview contents.
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_signatureHelp
+local function signature_help_to_preview_contents(input)
+  if not input.signatures then
+    return
+  end
+  --The active signature. If omitted or the value lies outside the range of
+  --`signatures` the value defaults to zero or is ignored if `signatures.length
+  --=== 0`. Whenever possible implementors should make an active decision about
+  --the active signature and shouldn't rely on a default value.
+  local contents = {}
+  local active_signature = input.activeSignature or 0
+  -- If the activeSignature is not inside the valid range, then clip it.
+  if active_signature >= #input.signatures then
+    active_signature = 0
+  end
+  local signature = input.signatures[active_signature + 1]
+  if not signature then
+    return
+  end
+  vim.list_extend(contents, split_lines(signature.label))
+  if signature.documentation then
+    util.convert_input_to_markdown_lines(signature.documentation, contents)
+  end
+  if input.parameters then
+    local active_parameter = input.activeParameter or 0
+    -- If the activeParameter is not inside the valid range, then clip it.
+    if active_parameter >= #input.parameters then
+      active_parameter = 0
+    end
+    local parameter = signature.parameters and signature.parameters[active_parameter]
+    if parameter then
+      --[=[
+      --Represents a parameter of a callable-signature. A parameter can
+      --have a label and a doc-comment.
+      interface ParameterInformation {
+        --The label of this parameter information.
+        --
+        --Either a string or an inclusive start and exclusive end offsets within its containing
+        --signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
+        --string representation as `Position` and `Range` does.
+        --
+        --*Note*: a label of type string should be a substring of its containing signature label.
+        --Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
+        label: string | [number, number];
+        --The human-readable doc-comment of this parameter. Will be shown
+        --in the UI but can be omitted.
+        documentation?: string | MarkupContent;
+      }
+      --]=]
+      -- TODO highlight parameter
+      if parameter.documentation then
+        util.convert_input_to_markdown_lines(parameter.documentation, contents)
+      end
+    end
+  end
+  return contents
 end
 
 -- textDocument/signatureHelp
@@ -263,7 +177,10 @@ builtin_callbacks['textDocument/signatureHelp'] = function(err, result)
   -- TODO show empty popup when signatures is empty?
   if #result.signatures > 0 then
     local markdown_lines = signature_help_to_preview_contents(result)
-    open_floating_preview(markdown_lines, 'markdown')
+    if vim.tbl_isempty(markdown_lines) then
+      markdown_lines = { 'No signature available' }
+    end
+    util.open_floating_preview(markdown_lines, 'markdown')
   end
 end
 

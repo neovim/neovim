@@ -1,20 +1,17 @@
--- local server_config = require('vim.lsp.server_config')
--- local config = require('vim.lsp.config')
-
--- TODO consider whether 'eol' or 'fixeol' should change the nvim_buf_get_lines that send.
-
-local lsp = {}
-
-local protocol = require('vim.lsp.protocol')
-lsp.protocol = protocol
-local lsp_rpc = require('vim.lsp.rpc')
--- local callbacks = require('vim.lsp.callbacks')
-local builtin_default_server_callbacks = require('vim.lsp.builtin_callbacks')
-local log = require('vim.lsp.log')
-local text_document_handler = require('vim.lsp.handler').text_document
+local builtin_default_server_callbacks = require 'vim.lsp.builtin_callbacks'
+local log = require 'vim.lsp.log'
+local lsp_rpc = require 'vim.lsp.rpc'
+local protocol = require 'vim.lsp.protocol'
+local util = require 'vim.lsp.util'
 
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
   = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
+
+local lsp = {
+  protocol = protocol;
+}
+
+-- TODO consider whether 'eol' or 'fixeol' should change the nvim_buf_get_lines that send.
 
 local function resolve_bufnr(bufnr)
   if bufnr == nil or bufnr == 0 then
@@ -749,7 +746,7 @@ function lsp.omnifunc(findstart, base)
       -- TODO how to handle errors?
       if not response.error then
         local data = response.result
-        local completion_items = text_document_handler.completion_list_to_complete_items(data or {}, line_to_cursor)
+        local completion_items = util.text_document_completion_list_to_complete_items(data or {}, line_to_cursor)
         _ = log.trace() and log.trace("omnifunc.line_to_cursor", line_to_cursor)
         _ = log.trace() and log.trace("omnifunc.completion_items", completion_items)
         -- TODO use this.
