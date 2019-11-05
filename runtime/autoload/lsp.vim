@@ -30,10 +30,10 @@ function! lsp#text_document_definition() abort
   return ''
 endfunction
 
-" function! lsp#text_document_signature_help() abort
-"   lua vim.lsp.buf_request(nil, 'textDocument/signatureHelp', vim.lsp.protocol.SignatureHelpParams())
-"   return ''
-" endfunction
+function! lsp#text_document_signature_help() abort
+  lua vim.lsp.buf_request(nil, 'textDocument/signatureHelp', vim.lsp.protocol.make_text_document_position_params())
+  return ''
+endfunction
 
 function! lsp#text_document_type_definition() abort
   lua vim.lsp.buf_request(nil, 'textDocument/typeDefinition', vim.lsp.protocol.make_text_document_position_params())
