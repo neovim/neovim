@@ -33,3 +33,8 @@ def GetGadgetDir( vimspector_base, OS ):
 def GetGadgetConfigFile( vimspector_base ):
   return os.path.join( GetGadgetDir( vimspector_base, GetOS() ),
                        '.gadgets.json' )
+
+
+def GetGadgetConfigDir( vimspector_base ):
+  return os.path.join( GetGadgetDir( vimspector_base, GetOS() ),
+                       '.gadgets.d' )

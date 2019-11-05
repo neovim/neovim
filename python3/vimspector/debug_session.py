@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-import vim
+import glob
 import json
+import logging
 import os
-import subprocess
 import shlex
+import subprocess
 import traceback
+import vim
 
 from vimspector import ( breakpoints,
                          code,
@@ -90,8 +91,10 @@ class DebugSession( object ):
     configurations = database.get( 'configurations' )
     adapters = {}
 
-    for gadget_config_file in [ install.GetGadgetConfigFile( VIMSPECTOR_HOME ),
-                                utils.PathToConfigFile( '.gadgets.json' ) ]:
+    glob.glob( install.GetGadgetDir( VIMSPECTOR_HOME, install.GetOS() ) )
+    for gadget_config_file in PathsToAllGadgetConfigs( VIMSPECTOR_HOME,
+                                                       current_file ):
+      self._logger.debug( f'Reading gadget config: {gadget_config_file}' )
       if gadget_config_file and os.path.exists( gadget_config_file ):
         with open( gadget_config_file, 'r' ) as f:
           adapters.update( json.load( f ).get( 'adapters' ) or {} )
@@ -196,9 +199,6 @@ class DebugSession( object ):
 
   def _StartWithConfiguration( self, configuration, adapter ):
     def start():
-      self._logger.debug( "Starting debugger from stack context: %s",
-                          traceback.format_stack() )
-
       self._configuration = configuration
       self._adapter = adapter
 
@@ -860,3 +860,14 @@ class DebugSession( object ):
 
   def AddFunctionBreakpoint( self, function ):
     return self._breakpoints.AddFunctionBreakpoint( function )
+
+
+def PathsToAllGadgetConfigs( vimspector_base, current_file ):
+  yield install.GetGadgetConfigFile( vimspector_base )
+  for p in sorted( glob.glob(
+    os.path.join( install.GetGadgetConfigDir( vimspector_base ),
+                  '*.json' ) ) ):
+    yield p
+
+  yield utils.PathToConfigFile( '.gadgets.json',
+                                os.path.dirname( current_file ) )
