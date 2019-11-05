@@ -1,5 +1,5 @@
 local uv = vim.loop
-local logger = require('vim.lsp.logger')
+local log = require('vim.lsp.logger')
 local protocol = require('vim.lsp.protocol')
 
 -- TODO use something faster than vim.fn?
@@ -43,7 +43,7 @@ local function parse_headers(header)
 			key = key:lower():gsub('%-', '_')
 			headers[key] = value
 		else
-			logger.error("invalid header line %q", line)
+			_ = log.error() and log.error("invalid header line %q", line)
 			error(string.format("invalid header line %q", line))
 		end
   end
@@ -100,21 +100,21 @@ end
 
 local default_handlers = {}
 function default_handlers.notification(method, params)
-	logger.info('notification', method, params)
+	_ = log.info() and log.info('notification', method, params)
 end
 function default_handlers.server_request(method, params)
-	logger.info('server_request', method, params)
+	_ = log.info() and log.info('server_request', method, params)
 	return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
 function default_handlers.on_exit() end
 -- TODO use protocol.ErrorCodes instead?
 function default_handlers.on_error(code, err)
-	logger.info('client_error:', CLIENT_ERRORS[code], err)
+	_ = log.info() and log.info('client_error:', CLIENT_ERRORS[code], err)
 end
 
 --- Create and start an RPC client.
 local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_params)
-	logger.info("starting client", {cmd, cmd_args})
+	_ = log.info() and log.info("starting client", {cmd, cmd_args})
 	assert(type(cmd) == 'string', "cmd must be a string")
 	assert(type(cmd_args) == 'table', "cmd_args must be a table")
 
@@ -151,7 +151,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 	local message_callbacks = {}
 
 	local function encode_and_send(payload)
-		logger.debug("payload", payload)
+		_ = log.debug() and log.debug("payload", payload)
 		if handle:is_closing() then return false end
 		local encoded = assert(json_encode(payload))
 		stdin:write(format_message_with_content_length(encoded))
@@ -159,7 +159,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 	end
 
 	local function send_notification(method, params)
-		logger.info('notify', method, params)
+		_ = log.info() and log.info('notify', method, params)
 		return encode_and_send {
 			jsonrpc = "2.0";
 			method = method;
@@ -232,7 +232,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 		if not decoded then
 			on_error(CLIENT_ERRORS.INVALID_SERVER_JSON, err)
 		end
-		logger.debug("decoded", decoded)
+		_ = log.debug() and log.debug("decoded", decoded)
 
 		if type(decoded.method) == 'string' and decoded.id then
 			-- Server Request
@@ -271,7 +271,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 						callback, decoded.error, decoded.result)
 			else
 				on_error(CLIENT_ERRORS.NO_RESULT_CALLBACK_FOUND, decoded)
-				logger.error("No callback found for server response id "..result_id)
+				_ = log.error() and log.error("No callback found for server response id "..result_id)
 			end
 		elseif type(decoded.method) == 'string' then
 			-- Notification

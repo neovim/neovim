@@ -3,10 +3,7 @@
 -- let g:language_server_client_log_level = 'debug'
 -- Default value is 'none'.
 
-local Logger = {}
-Logger.__index = Logger
-
-local LOG_LEVELS = vim.tbl_add_reverse_lookup {
+local LOG_LEVELS = {
 	TRACE = 0;
 	DEBUG = 1;
 	INFO  = 2;
@@ -14,99 +11,60 @@ local LOG_LEVELS = vim.tbl_add_reverse_lookup {
 	ERROR = 4;
 	-- FATAL = 4;
 }
+local LOG_LEVEL = LOG_LEVELS.INFO
+local DATE_FORMAT = "%FT%H:%M:%SZ%z"
 
-Logger.levels = {
-  debug = 0,
-  info  = 1,
-  warn  = 2,
-  error = 3,
-  none = 4,
-}
+local _, prefixlen = debug.getinfo(1, "Sl").short_src:find("runtime")
 
-local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
-local function path_join(...)
-	return table.concat(vim.tbl_flatten{...}, path_sep)
+local log = {}
+do
+	local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
+	local function path_join(...)
+		return table.concat(vim.tbl_flatten{...}, path_sep)
+	end
+	local logfilename = path_join(vim.fn.stdpath('data'), 'language_server_client.log')
+	local logfile = assert(io.open(logfilename, "a+"))
+	for level, levelnr in pairs(LOG_LEVELS) do
+		-- log[level] = levelnr
+		-- log["should_"..level:lower()] = function() return levelnr >= LOG_LEVEL end
+		-- log[level:sub(1,1)] = function() return levelnr >= LOG_LEVEL end
+		log[level:lower()] = function(...)
+			local argc = select("#", ...)
+			if levelnr < LOG_LEVEL then return false end
+			if argc == 0 then return true end
+			local info = debug.getinfo(2, "Sl")
+			local fileinfo = string.format("%s:%s", info.short_src:sub(prefixlen+3), info.currentline)
+--			local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
+			local parts = { table.concat({"[", level, "]", os.date(DATE_FORMAT), "]", fileinfo, "]"}, " ") }
+--			local parts = {level, os.date(DATE_FORMAT), fileinfo}
+			for i = 1, argc do
+				local arg = select(i, ...)
+				if arg == nil then
+					table.insert(parts, "nil")
+				else
+					table.insert(parts, vim.inspect(arg, {newline=''}))
+				end
+			end
+			logfile:write(table.concat(parts, '\t'), "\n")
+			logfile:flush() -- TODO?
+		end
+	end
+	logfile:write(string.rep("\n", 30)) -- TODO delete
 end
 
-Logger.set_outfile = function(logger, dir_name, file_name)
-  if vim.api.nvim_call_function('isdirectory', {dir_name}) == 0 then
-    vim.api.nvim_call_function('mkdir', {dir_name, 'p'})
-  end
-  logger.outfile = path_join(dir_name, file_name)
+log.levels = LOG_LEVELS
+
+function log.set_level(level)
+	if type(level) == 'string' then
+		LOG_LEVEL = assert(LOG_LEVEL[level:upper()], string.format("Invalid log level: %q", level))
+	else
+		assert(type(level) == 'number', "level must be a number")
+		LOG_LEVEL = assert(LOG_LEVEL[level], string.format("Invalid log level: %d", level))
+	end
 end
 
-Logger.set_log_level = function(logger, level)
-  logger.log_level = Logger.levels[level]
+function log.should_log(level)
+	return level >= LOG_LEVEL
 end
 
-Logger.write_file = function(self, level, message)
-  local file_pointer = assert(io.open(self.outfile, 'a+'))
-
-  if file_pointer ~= nil then
-    local log_message = level .. "\t" .. os.date("%Y-%m-%d %H:%M:%S") .. "\t" .. message .. "\n"
-    file_pointer:write(log_message)
-    file_pointer:close()
-  end
-
-end
-
-Logger.create_functions = function(new_log, new_logger)
-  for name in pairs(Logger.levels) do
-    if Logger[name] == nil then
-      Logger[name] = function(self, logger, ...)
-        if logger.log_level == self.levels['none'] or self.levels[name] < logger.log_level then
-          return
-        end
-
-				local argc = select("#", ...)
-				local message = {}
-				for i = 1, argc do
-					local arg = select(i, ...)
-          table.insert(message, vim.inspect(arg, {newline=''}))
-        end
-
-				message = table.concat(message, ' ')
-
-        local info = debug.getinfo(2, "Sl")
-        local log_message = string.format(
-          "%s:%s\t%s",
-          info.short_src,
-          info.currentline,
-          message
-        )
-
-        if self.levels[name] >= logger.log_level then
-          Logger.write_file(logger, name, log_message)
-        end
-      end
-    end
-  end
-
-  for key, _ in pairs(Logger.levels) do
-    new_logger[key] = function(...)
-      return new_log[key](new_log, new_logger, ...)
-    end
-  end
-end
-
-Logger.new = function(self, name)
-  local new_logger = setmetatable({
-    prefix = '[' .. name .. ']'
-  }, self)
-
-  self:create_functions(new_logger)
-
-  return new_logger
-end
-
-local logger = Logger:new('LSP')
-local default_log_level = 'none'
-
-if (vim.api.nvim_call_function('exists', {'g:language_server_client_log_level'}) == 1) then
-  default_log_level = vim.api.nvim_get_var('language_server_client_log_level')
-end
-
-logger:set_log_level(default_log_level)
-logger:set_outfile(vim.fn.stdpath('data'), 'language_server_client.log')
-
-return logger
+return log

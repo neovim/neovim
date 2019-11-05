@@ -1,6 +1,5 @@
 -- Protocol for the Microsoft Language Server Protocol (mslsp)
 
-local server_config = require('vim.lsp.server_config')
 local protocol = {}
 
 --[=[
@@ -800,19 +799,6 @@ interface InitializeParams {
 
 --- Parameter builder for request method
 --
-function protocol.InitializeParams(client)
-	local client_config = server_config.get_server(client.filetype, client.server_name)
-	local capabilities = vim.tbl_extend('force', protocol.ClientCapabilities(), client_config.capabilities)
-
-  local config = {
-    processId = vim.fn.getpid(),
-    rootUri = server_config.get_root_uri(client.filetype, client.server_name),
-    capabilities = capabilities,
---    capabilities = protocol.ClientCapabilities(),
-  }
-  client:set_client_capabilities(config)
-  return config
-end
 
 function protocol.InitializedParams(_)
   return {}
