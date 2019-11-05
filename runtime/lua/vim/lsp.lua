@@ -288,20 +288,23 @@ function lsp.start_client(conf)
     end)
   end
 
+  local function unsupported_method(method)
+    local msg = "server doesn't support "..method
+    _ = log.warn() and log.warn(msg)
+    vim.api.nvim_err_writeln(msg)
+    return lsp_rpc.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
+  end
+
   --- Checks capabilities before rpc.request-ing.
   function client.request(method, params, callback)
     _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
     -- TODO keep these checks or just let it go anyway?
-    if not client.resolved_capabilities.hover and method == 'textDocument/hover' then
-      _ = log.warn() and log.warn("server doesn't support textDocument/hover")
-      return
-    end
-    if not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp' then
-      _ = log.warn() and log.warn("server doesn't support textDocument/signatureHelp")
-      return
-    end
-    if not client.resolved_capabilities.goto_definition and method == 'textDocument/definition' then
-      _ = log.warn() and log.warn("server doesn't support textDocument/definition")
+    if (not client.resolved_capabilities.hover and method == 'textDocument/hover')
+      or (not client.resolved_capabilities.signature_help and method == 'textDocument/signatureHelp')
+      or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
+      or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
+    then
+      callback(unsupported_method(method))
       return
     end
     return rpc.request(method, params, callback)

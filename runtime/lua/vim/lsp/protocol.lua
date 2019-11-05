@@ -425,7 +425,7 @@ export interface TextDocumentClientCapabilities {
     --Whether on type formatting supports dynamic registration.
     dynamicRegistration?: boolean;
   };
-    * Capabilities specific to the `textDocument/declaration`
+  --Capabilities specific to the `textDocument/declaration`
   declaration?: {
     --Whether declaration supports dynamic registration. If this is set to `true`
     --the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
@@ -694,8 +694,65 @@ function protocol.make_text_document_position_params()
   }
 end
 
+--[=[
+export interface DocumentFilter {
+	--A language id, like `typescript`.
+	language?: string;
+	--A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+	scheme?: string;
+	--A glob pattern, like `*.{ts,js}`.
+	--
+	--Glob patterns can have the following syntax:
+	--- `*` to match one or more characters in a path segment
+	--- `?` to match on one character in a path segment
+	--- `**` to match any number of path segments, including none
+	--- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+	--- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+	--- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+	pattern?: string;
+}
+--]=]
 
 --[[
+--Static registration options to be returned in the initialize request.
+interface StaticRegistrationOptions {
+	--The id used to register the request. The id can be used to deregister
+	--the request again. See also Registration#id.
+	id?: string;
+}
+
+export interface DocumentFilter {
+	--A language id, like `typescript`.
+	language?: string;
+	--A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+	scheme?: string;
+	--A glob pattern, like `*.{ts,js}`.
+	--
+	--Glob patterns can have the following syntax:
+	--- `*` to match one or more characters in a path segment
+	--- `?` to match on one character in a path segment
+	--- `**` to match any number of path segments, including none
+	--- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+	--- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+	--- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+	pattern?: string;
+}
+export type DocumentSelector = DocumentFilter[];
+export interface TextDocumentRegistrationOptions {
+	--A document selector to identify the scope of the registration. If set to null
+	--the document selector provided on the client side will be used.
+	documentSelector: DocumentSelector | null;
+}
+
+--Code Action options.
+export interface CodeActionOptions {
+	--CodeActionKinds that this server may return.
+	--
+	--The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
+	--may list out every specific kind they provide.
+	codeActionKinds?: CodeActionKind[];
+}
+
 interface ServerCapabilities {
   --Defines how text documents are synced. Is either a detailed structure defining each notification or
   --for backwards compatibility the TextDocumentSyncKind number. If omitted it defaults to `TextDocumentSyncKind.None`.
@@ -835,9 +892,21 @@ function protocol.resolve_capabilities(server_capabilities)
   elseif type(server_capabilities.codeActionProvider) == 'boolean' then
     general_properties.code_action = server_capabilities.codeActionProvider
   elseif type(server_capabilities.codeActionProvider) == 'table' then
+    -- TODO(ashkan) support CodeActionKind
     general_properties.code_action = false
   else
     error("The server sent invalid codeActionProvider")
+  end
+
+  if server_capabilities.implementationProvider == nil then
+    general_properties.implementation = false
+  elseif type(server_capabilities.implementationProvider) == 'boolean' then
+    general_properties.implementation = server_capabilities.implementationProvider
+  elseif type(server_capabilities.implementationProvider) == 'table' then
+    -- TODO(ashkan) support more detailed implementation options.
+    general_properties.implementation = false
+  else
+    error("The server sent invalid implementationProvider")
   end
 
   local signature_help_properties

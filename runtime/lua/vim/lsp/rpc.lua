@@ -108,16 +108,6 @@ local CLIENT_ERRORS = vim.tbl_add_reverse_lookup {
   SERVER_RESULT_CALLBACK_ERROR = 7;
 }
 
-local function rpc_response_error(code, message, data)
-  -- TODO should this error or just pick a sane error?
-  local code_name = assert(protocol.ErrorCodes[code], 'Invalid rpc error code')
-  return {
-    code = code;
-    message = message or code_name;
-    data = data;
-  }
-end
-
 local function format_rpc_error(err)
   assert(type(err) == 'table', "err must be a table")
   local code_name = assert(protocol.ErrorCodes[err.code], "err.code is invalid")
@@ -125,6 +115,18 @@ local function format_rpc_error(err)
     return string.format("RPC.%s: %q", code_name, err.message)
   end
   return string.format("RPC.%s", code_name)
+end
+
+local function rpc_response_error(code, message, data)
+  -- TODO should this error or just pick a sane error?
+  local code_name = assert(protocol.ErrorCodes[code], 'Invalid rpc error code')
+  return setmetatable({
+    code = code;
+    message = message or code_name;
+    data = data;
+  }, {
+    __tostring = format_rpc_error;
+  })
 end
 
 local default_handlers = {}
@@ -136,7 +138,6 @@ function default_handlers.server_request(method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
 function default_handlers.on_exit() end
--- TODO use protocol.ErrorCodes instead?
 function default_handlers.on_error(code, err)
   _ = log.error() and log.error('client_error:', CLIENT_ERRORS[code], err)
 end
