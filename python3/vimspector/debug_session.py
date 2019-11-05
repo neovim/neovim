@@ -659,7 +659,9 @@ class DebugSession( object ):
   def _Launch( self ):
     self._logger.debug( "LAUNCH!" )
     adapter_config = self._adapter
-    launch_config = self._configuration[ 'configuration' ]
+    launch_config = {}
+    launch_config.update( self._adapter.get( 'configuration', {} ) )
+    launch_config.update( self._configuration[ 'configuration' ] )
 
     request = self._configuration.get(
       'remote-request',
