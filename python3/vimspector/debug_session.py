@@ -73,11 +73,15 @@ class DebugSession( object ):
     self._configuration = None
     self._adapter = None
 
-    launch_config_file = utils.PathToConfigFile( '.vimspector.json' )
+    current_file = utils.GetBufferFilepath( vim.current.buffer )
+
+    launch_config_file = utils.PathToConfigFile(
+      '.vimspector.json',
+      os.path.dirname( current_file ) )
 
     if not launch_config_file:
       utils.UserMessage( 'Unable to find .vimspector.json. You need to tell '
-                         'vimspector how to launch your application' )
+                         'vimspector how to launch your application.' )
       return
 
     with open( launch_config_file, 'r' ) as f:
@@ -134,8 +138,6 @@ class DebugSession( object ):
     # ${selectedText} - the current selected text in the active file
     # ${execPath} - the path to the running VS Code executable
 
-    current_file = utils.GetBufferFilepath( vim.current.buffer )
-
     def relpath( p, relative_to ):
       if not p:
         return ''
@@ -158,6 +160,8 @@ class DebugSession( object ):
         splitext( os.path.basename( current_file ) )[ 0 ],
       'fileDirname': os.path.dirname( current_file ),
       'fileExtname': splitext( os.path.basename( current_file ) )[ 1 ],
+      # NOTE: this is the window-local cwd for the current window, *not* Vim's
+      # working directory.
       'cwd': os.getcwd(),
     }
     self._variables.update(
