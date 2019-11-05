@@ -9,13 +9,15 @@ end
 
 local list_extend = vim.list_extend
 
--- TODO see if we can improve this algorithm.
+--- Find the longest shared prefix between prefix and word.
+-- e.g. remove_prefix("123tes", "testing") == "ting"
 local function remove_prefix(prefix, word)
   local max_prefix_length = math.min(#prefix, #word)
   local prefix_length = 0
   for i = 1, max_prefix_length do
     local current_line_suffix = prefix:sub(-i)
     local word_prefix = word:sub(1, i)
+		print(i, current_line_suffix, word_prefix)
     if current_line_suffix == word_prefix then
       prefix_length = i
     end
@@ -161,7 +163,9 @@ function M.workspace_apply_workspace_edit(workspace_edit)
 
 	for uri, changes in pairs(workspace_edit.changes) do
 		local fname = vim.uri_to_fname(uri)
-		-- TODO improve this.
+		-- TODO improve this approach. Try to edit open buffers without switching.
+		-- Not sure how to handle files which aren't open. This is deprecated
+		-- anyway, so I guess it could be left as is.
 		vim.api.nvim_command('edit '..fname)
 		for _, change in ipairs(changes) do
 			M.text_document_apply_text_edit(change)
@@ -286,7 +290,6 @@ function M.open_floating_preview(contents, filetype)
   local floating_win = vim.fn.win_id2win(floating_winnr)
 
   vim.api.nvim_command("wincmd p")
-  -- TODO should this have a <buffer> target?
   vim.api.nvim_command("autocmd CursorMoved <buffer> ++once :"..floating_win.."wincmd c")
 end
 

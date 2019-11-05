@@ -48,12 +48,9 @@ local function for_each_buffer_client(bufnr, callback)
   bufnr = resolve_bufnr(bufnr)
   assert(type(bufnr) == 'number', "bufnr must be a number")
   local client_ids = BUFFER_CLIENT_IDS[bufnr]
-  -- TODO error here?
-  -- if not client_ids or vim.tbl_isempty(client_ids) then
-  --   local msg = string.format("No clients available for buffer %d", bufnr)
-  --   _ = log.warn() and log.warn(msg)
-  --   error(msg)
-  -- end
+  if not client_ids or vim.tbl_isempty(client_ids) then
+    return
+  end
   for client_id in pairs(client_ids) do
     local client = LSP_CLIENTS[client_id]
     -- This is unlikely to happen. Could only potentially happen in a race
@@ -122,6 +119,10 @@ function lsp.start_client(conf)
     default_server_callbacks = vim.tbl_extend("keep", conf.default_server_callbacks, builtin_default_server_callbacks)
   else
     default_server_callbacks = builtin_default_server_callbacks
+  end
+  -- TODO keep vim.schedule here?
+  for k, v in pairs(default_server_callbacks) do
+    default_server_callbacks[k] = vim.schedule_wrap(v)
   end
   local capabilities = conf.capabilities or {}
   assert(type(capabilities) == 'table', "conf.capabilities must be a table")
@@ -378,7 +379,7 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
     -- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
     local size_index = ENCODING_INDEX[client.offset_encoding]
     local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
-    -- Add an extra line. TODO why?
+    -- TODO The old implementation did this but didn't explain why.
     -- if new_lastline > firstline then
     --  table.insert(lines, '')
     -- end
@@ -482,7 +483,7 @@ function lsp.add_config(config)
     -- If the client exists, then it is likely that they are doing some kind of
     -- reload flow, so let's not throw an error here.
     if LSP_CONFIGS[config.name].client_id then
-      -- TODO log?
+      -- TODO log here? It might be unnecessarily annoying.
       return
     end
     error(string.format('A configuration with the name %q already exists. They must be unique', config.name))
@@ -544,7 +545,7 @@ function lsp._start_client_by_name(name)
   local config = LSP_CONFIGS[name]
   -- If it exists and is running, don't make it again.
   if config.client_id and LSP_CLIENTS[config.client_id] then
-    -- TODO log?
+    -- TODO log here?
     return
   end
   config.client_id = lsp.start_client(config)
@@ -723,6 +724,7 @@ function lsp.omnifunc(findstart, base)
     local line = assert(nvim_buf_get_lines(bufnr, pos[1]-1, pos[1], false)[1])
     _ = log.trace() and log.trace("omnifunc.line", pos, line)
     local line_to_cursor = line:sub(1, pos[2]+1)
+    _ = log.trace() and log.trace("omnifunc.line_to_cursor", line_to_cursor)
     local params = {
       textDocument = {
         uri = vim.uri_from_bufnr(bufnr);
@@ -747,14 +749,8 @@ function lsp.omnifunc(findstart, base)
       if not response.error then
         local data = response.result
         local completion_items = util.text_document_completion_list_to_complete_items(data or {}, line_to_cursor)
-        _ = log.trace() and log.trace("omnifunc.line_to_cursor", line_to_cursor)
         _ = log.trace() and log.trace("omnifunc.completion_items", completion_items)
-        -- TODO use this.
-        -- vim.list_extend(matches, completion_items)
-        for _, match in ipairs(completion_items) do
-          table.insert(matches, match)
-        end
-        -- _ = log.debug() and log.debug('callback:textDocument/completion(omnifunc)', data, ' ', self)
+        vim.list_extend(matches, completion_items)
       end
     end
     return matches

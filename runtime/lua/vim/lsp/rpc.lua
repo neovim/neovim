@@ -2,7 +2,7 @@ local uv = vim.loop
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 
--- TODO use something faster than vim.fn?
+-- TODO replace with a better implementation.
 local function json_encode(data)
   local status, result = pcall(vim.fn.json_encode, data)
   if status then
@@ -118,7 +118,7 @@ local function format_rpc_error(err)
 end
 
 local function rpc_response_error(code, message, data)
-  -- TODO should this error or just pick a sane error?
+  -- TODO should this error or just pick a sane error (like InternalError)?
   local code_name = assert(protocol.ErrorCodes[code], 'Invalid rpc error code')
   return setmetatable({
     code = code;
@@ -214,7 +214,6 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   local function send_request(method, params, callback)
     message_index = message_index + 1
     local message_id = message_index
-    -- TODO check the result here and assert it went correctly.
     local result = encode_and_send {
       id = message_id;
       jsonrpc = "2.0";
@@ -222,19 +221,15 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       params = params;
     }
     if result then
-      -- TODO vim.schedule here?
-      -- TODO vim.schedule here?
-      -- TODO vim.schedule here?
-      -- TODO vim.schedule here?
-      message_callbacks[message_id] = vim.schedule_wrap(callback)
---      message_callbacks[message_id] = callback
+      -- TODO keep vim.schedule here?
+      -- message_callbacks[message_id] = vim.schedule_wrap(callback)
+      message_callbacks[message_id] = callback
       return result, message_id
     else
       return false
     end
   end
 
-  -- TODO delete?
   stderr:read_start(function(err, chunk)
     if chunk then
       _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
@@ -258,7 +253,6 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   end
 
   local function handle_body(body)
-    -- TODO handle invalid decoding.
     local decoded, err = json_decode(body)
     if not decoded then
       on_error(CLIENT_ERRORS.INVALID_SERVER_JSON, err)
@@ -272,7 +266,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       status, result, err = try_call(CLIENT_ERRORS.SERVER_REQUEST_HANDLER_ERROR,
           handlers.server_request, decoded.method, decoded.params)
       if status then
-        -- TODO what to do here? Fatal error?
+        -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
         assert(result or err, "either a result or an error must be sent to the server in response")
         if err then
           assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")

@@ -43,10 +43,11 @@ do
         end
       end
       logfile:write(table.concat(parts, '\t'), "\n")
-      logfile:flush() -- TODO?
+      logfile:flush()
     end
   end
-  logfile:write(string.rep("\n", 30)) -- TODO delete
+  -- Add some space to make it easier to distinguish different neovim runs.
+  logfile:write("\n")
 end
 
 log.levels = LOG_LEVELS
