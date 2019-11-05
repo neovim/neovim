@@ -739,6 +739,8 @@ class DebugSession( object ):
         self._OnInitializeComplete()
 
     self._codeView.ClearBreakpoints()
+    self._breakpoints.SetConfiguredBreakpoints(
+      self._configuration.get( 'breakpoints', {} ) )
     self._breakpoints.SendBreakpoints( onBreakpointsDone )
 
   def OnEvent_thread( self, message ):
