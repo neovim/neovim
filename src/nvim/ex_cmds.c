@@ -5535,9 +5535,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   // We keep a special-purpose buffer around, but don't assume it exists.
   buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
-  // disable :leftabove/botright modifiers
-  // (especially ones that conflict with our win_split() call below)
-  cmdmod.split = 0;
+  cmdmod.split = 0;               // disable :leftabove/botright modifiers
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
