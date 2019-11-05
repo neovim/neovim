@@ -299,6 +299,9 @@ function lsp.start_client(conf)
 	end
 
 	function client.text_document_did_open(bufnr)
+		if not client.resolved_capabilities.text_document_open_close then
+			return
+		end
 		local params = {
 			textDocument = {
 				version = 0;
@@ -316,6 +319,14 @@ function lsp.start_client(conf)
 	return client_id
 end
 
+local function once(fn)
+	local value
+	return function(...)
+		if not value then value = fn(...) end
+		return value
+	end
+end
+
 local ENCODING_INDEX = { ["utf-8"] = 1; ["utf-16"] = 2; ["utf-32"] = 3; }
 local function text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
 	_ = log.debug() and log.debug("on_lines", bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
@@ -323,33 +334,46 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
 	if vim.tbl_isempty(BUFFER_CLIENT_IDS[bufnr] or {}) then
 		return
 	end
-	local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
---	local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
-	-- Add an extra line. TODO why?
-	-- if new_lastline > firstline then
-	-- 	table.insert(lines, '')
-	-- end
-	local content_text = table.concat(lines, "\n")
+	local incremental_changes = once(function(client)
+		-- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
+		local size_index = ENCODING_INDEX[client.offset_encoding]
+		local lines = vim.api.nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
+		-- Add an extra line. TODO why?
+		-- if new_lastline > firstline then
+		-- 	table.insert(lines, '')
+		-- end
+		return {
+			range = {
+				start = { line = firstline, character = 0 };
+				["end"] = { line = lastline, character = 0 };
+			};
+			rangeLength = select(size_index, old_byte_size, old_utf16_size, old_utf32_size);
+			text = table.concat(lines, '\n');
+		};
+	end)
+	local full_changes = once(function()
+		local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+		return {
+			text = table.concat(lines, "\n");
+		};
+	end)
 	local uri = vim.uri_from_bufnr(bufnr)
 	for_each_buffer_client(bufnr, function(client, client_id)
-		local size_index = ENCODING_INDEX[client.offset_encoding]
-		-- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
+		local text_document_did_change = client.resolved_capabilities.text_document_did_change
+		local changes
+		if text_document_did_change == protocol.TextDocumentSyncKind.None then
+			return
+		elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
+			changes = incremental_changes(client)
+		elseif text_document_did_change == protocol.TextDocumentSyncKind.Full then
+			changes = full_changes(client)
+		end
 		client.notify("textDocument/didChange", {
 			textDocument = {
 				uri = uri;
 				version = changedtick;
 			};
-			contentChanges = {
-				-- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
-				{
-					-- range = {
-					-- 	start = { line = firstline, character = 0 };
-					-- 	["end"] = { line = lastline, character = 0 };
-					-- };
-					-- rangeLength = select(size_index, old_byte_size, old_utf16_size, old_utf32_size);
-					text = content_text;
-				};
-			}
+			contentChanges = { changes; }
 		})
 	end)
 end
@@ -383,7 +407,9 @@ function lsp.attach_to_buffer(bufnr, client_id)
 					}
 				}
 				for_each_buffer_client(bufnr, function(client, client_id)
-					client.notify('textDocument/didClose', params)
+					if client.resolved_capabilities.text_document_open_close then
+						client.notify('textDocument/didClose', params)
+					end
 				end)
 				BUFFER_CLIENT_IDS[bufnr] = nil
 			end;
