@@ -195,25 +195,25 @@ end
 --
 -- ```lua
 -- local capabilities = {
--- 	textDocument = {
--- 		synchronization = {
--- 			didOpen = false;
--- 		}
--- 	}
+--  textDocument = {
+--    synchronization = {
+--      didOpen = false;
+--    }
+--  }
 -- }
 -- vim.tbl_deep_merge(capabilities, {
--- 	textDocument = {
--- 		synchronization = {
--- 			didClose = true;
--- 		}
--- 	}
+--  textDocument = {
+--    synchronization = {
+--      didClose = true;
+--    }
+--  }
 -- }) == {
--- 	textDocument = {
--- 		synchronization = {
--- 			didOpen = false;
--- 			didClose = true;
--- 		}
--- 	}
+--  textDocument = {
+--    synchronization = {
+--      didOpen = false;
+--      didClose = true;
+--    }
+--  }
 -- }
 -- ```
 --
@@ -225,19 +225,19 @@ end
 -- vim.tbl_deep_merge({a={b=1}}, {a=2}) == {a=2}
 -- ```
 function vim.tbl_deep_merge(dst, ...)
-	assert(type(dst) == 'table', 'tbl_deep_merge destination must be a table')
-	for i = 1, select("#", ...) do
-		local t = select(i, ...)
-		assert(type(t) == 'table', 'tbl_deep_merge sources must be tables')
-		for k, v in pairs(t) do
-			if type(v) == 'table' and not vim.tbl_islist(v) then
-				dst[k] = vim.tbl_deep_merge(dst[k] or {}, v)
-			else
-				dst[k] = v
-			end
-		end
-	end
-	return dst
+  assert(type(dst) == 'table', 'tbl_deep_merge destination must be a table')
+  for i = 1, select("#", ...) do
+    local t = select(i, ...)
+    assert(type(t) == 'table', 'tbl_deep_merge sources must be tables')
+    for k, v in pairs(t) do
+      if type(v) == 'table' and not vim.tbl_islist(v) then
+        dst[k] = vim.tbl_deep_merge(dst[k] or {}, v)
+      else
+        dst[k] = v
+      end
+    end
+  end
+  return dst
 end
 
 --- Add the reverse lookup values to an existing table.
@@ -245,15 +245,15 @@ end
 --- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
 --@param o table The table to add the reverse to.
 function vim.tbl_add_reverse_lookup(o)
-	local keys = vim.tbl_keys(o)
-	for _, k in ipairs(keys) do
-		local v = o[k]
-		if o[v] then
-			error(string.format("The reverse lookup found an existing value for %q while processing key %q", tostring(v), tostring(k)))
-		end
-		o[v] = k
-	end
-	return o
+  local keys = vim.tbl_keys(o)
+  for _, k in ipairs(keys) do
+    local v = o[k]
+    if o[v] then
+      error(string.format("The reverse lookup found an existing value for %q while processing key %q", tostring(v), tostring(k)))
+    end
+    o[v] = k
+  end
+  return o
 end
 
 --- Extends a list-like table with the values of another list-like table.
@@ -263,10 +263,10 @@ end
 --@param dst The list which will be modified and appended to.
 --@param src The list from which values will be inserted.
 function vim.list_extend(dst, src)
-	for _, v in ipairs(src) do
-		table.insert(dst, v)
-	end
-	return dst
+  for _, v in ipairs(src) do
+    table.insert(dst, v)
+  end
+  return dst
 end
 
 --- Creates a copy of a list-like table such that any nested tables are
@@ -340,3 +340,4 @@ function vim.pesc(s)
 end
 
 return vim
+-- vim:sw=2 ts=2 et
