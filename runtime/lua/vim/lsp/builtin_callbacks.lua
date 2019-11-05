@@ -23,7 +23,7 @@
 -- TODO: codeLens/resolve
 -- TODO: documentLink/resolve
 
-local log = require('vim.lsp.logger')
+local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 local errorCodes = protocol.errorCodes
 

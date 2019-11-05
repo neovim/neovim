@@ -8,27 +8,8 @@ lsp.protocol = protocol
 local lsp_rpc = require('vim.lsp.rpc')
 -- local callbacks = require('vim.lsp.callbacks')
 local builtin_default_server_callbacks = require('vim.lsp.builtin_callbacks')
-local log = require('vim.lsp.logger')
+local log = require('vim.lsp.log')
 local text_document_handler = require('vim.lsp.handler').text_document
-
--- Usage:
--- ```
--- coroutine.wrap(function()
---   local resumer = maker_resumer()
---   client.request(method, params, resumer)
---   local request_result = coroutine.yield()
--- end)
--- ```
-local function make_resumer()
-	local co = coroutine.running()
-	return function(...) coroutine.resume(co, ...) end
-end
-
-local function get_current_line_to_cursor()
-	local pos = vim.api.nvim_win_get_cursor(0)
-	local line = assert(vim.api.nvim_buf_get_lines(0, pos[1]-1, pos[1], false)[1])
-	return line:sub(pos[2]+1)
-end
 
 local function resolve_bufnr(bufnr)
 	if bufnr == nil or bufnr == 0 then
@@ -46,7 +27,6 @@ local function set_timeout(ms, fn)
 	return timer
 end
 
--- TODO deduplicate
 local VALID_ENCODINGS = {
 	["utf-8"] = 'utf-8'; ["utf-16"] = 'utf-16'; ["utf-32"] = 'utf-32';
 	["utf8"]  = 'utf-8'; ["utf16"]  = 'utf-16'; ["utf32"]  = 'utf-32';

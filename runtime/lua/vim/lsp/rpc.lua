@@ -1,5 +1,5 @@
 local uv = vim.loop
-local log = require('vim.lsp.logger')
+local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
 
 -- TODO use something faster than vim.fn?
