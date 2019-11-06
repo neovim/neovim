@@ -178,7 +178,7 @@ definition.
 
 In all cases, the required format is:
 
-```json
+```
 {
   "$schema": "https://puremourning.github.io/vimspector/schema/gadgets.schema.json#",
   "adapters": {
@@ -265,7 +265,7 @@ Internet:
     "schemas": [
       { 
         "fileMatch": [ ".vimspector.json" ],
-        'url': "https://puremourning.github.io/vimspector/schema/vimspector.schema.json"
+        "url": "https://puremourning.github.io/vimspector/schema/vimspector.schema.json"
       },
       {
         "fileMatch": [ ".gadgets.json", ".gadgets.d/*.json" ],
