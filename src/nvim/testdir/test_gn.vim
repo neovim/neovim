@@ -136,8 +136,9 @@ func Test_gn_command()
   call assert_equal(['ABCDEFGHi'], getline(1,'$'))
   call setline('.', ['abcdefghi'])
   let @/ = 'b'
+  " this gn wraps around the end of the file
   exe "norm! 0fhvhhgngU"
-  call assert_equal(['abcdefghi'], getline(1,'$'))
+  call assert_equal(['aBCDEFGHi'], getline(1,'$'))
   sil! %d _
   call setline('.', ['abcdefghi'])
   let @/ = 'f'
