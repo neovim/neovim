@@ -44,6 +44,7 @@ class ProjectBreakpoints( object ):
     self._line_breakpoints = defaultdict( list )
     self._func_breakpoints = []
     self._exception_breakpoints = None
+    self._configured_breakpoints = {}
 
     # FIXME: Remove this. Remove breakpoints nonesense from code.py
     self._breakpoints_handler = None
@@ -72,6 +73,8 @@ class ProjectBreakpoints( object ):
 
     # NOTE: we don't reset self._exception_breakpoints because we don't want to
     # re-ask the user every time for the sane info.
+
+    # FIXME: If the adapter type changes, we should probably forget this ?
 
 
   def ListBreakpoints( self ):
@@ -185,6 +188,10 @@ class ProjectBreakpoints( object ):
     self._breakpoints_handler = handler
 
 
+  def SetConfiguredBreakpoints( self, configured_breakpoints ):
+    self._configured_breakpoints = configured_breakpoints
+
+
   def SendBreakpoints( self, doneHandler = None ):
     assert self._breakpoints_handler is not None
 
@@ -201,6 +208,9 @@ class ProjectBreakpoints( object ):
       if awaiting == 0 and doneHandler:
         doneHandler()
 
+
+    # TODO: add the _configured_breakpoints to line_breakpoints
+    # TODO: the line numbers might have changed since pressing the F9 key!
 
     for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
@@ -233,6 +243,8 @@ class ProjectBreakpoints( object ):
         }
       )
 
+    # TODO: Add the _configured_breakpoints to function breakpoints
+
     if self._server_capabilities.get( 'supportsFunctionBreakpoints' ):
       awaiting = awaiting + 1
       self._connection.DoRequest(
@@ -249,7 +261,7 @@ class ProjectBreakpoints( object ):
       )
 
     if self._exception_breakpoints is None:
-      self._SetUpExceptionBreakpoints()
+      self._SetUpExceptionBreakpoints( self._configured_breakpoints )
 
     if self._exception_breakpoints:
       awaiting = awaiting + 1
@@ -265,7 +277,7 @@ class ProjectBreakpoints( object ):
       doneHandler()
 
 
-  def _SetUpExceptionBreakpoints( self ):
+  def _SetUpExceptionBreakpoints( self, configured_breakpoints ):
     exception_breakpoint_filters = self._server_capabilities.get(
         'exceptionBreakpointFilters',
         [] )
@@ -278,14 +290,27 @@ class ProjectBreakpoints( object ):
       # trigger requesting threads etc.). See the note in
       # debug_session.py:_Initialise for more detials
       exception_filters = []
+      configured_filter_options = configured_breakpoints.get( 'exception', {} )
       if exception_breakpoint_filters:
         for f in exception_breakpoint_filters:
           default_value = 'Y' if f.get( 'default' ) else 'N'
 
-          result = utils.AskForInput(
-            "Break on {} (Y/N/default: {})? ".format( f[ 'label' ],
-                                                      default_value ),
-            default_value )
+          if f[ 'filter' ] in configured_filter_options:
+            result = configured_filter_options[ f[ 'filter' ] ]
+
+            if isinstance( result, bool ):
+              result = 'Y' if result else 'N'
+
+            if not isinstance( result, str) or result not in ( 'Y', 'N', '' ):
+              raise ValueError(
+                f"Invalid value for exception breakpoint filter '{f}': "
+                f"'{result}'. Must be boolean, 'Y', 'N' or '' (default)" )
+          else:
+            result = utils.AskForInput(
+              "{}: Break on {} (Y/N/default: {})? ".format( f[ 'filter' ],
+                                                            f[ 'label' ],
+                                                            default_value ),
+              default_value )
 
           if result == 'Y':
             exception_filters.append( f[ 'filter' ] )

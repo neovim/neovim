@@ -207,8 +207,12 @@ def TemporaryVimOption( opt, value ):
     vim.options[ opt ] = old_value
 
 
-def PathToConfigFile( file_name ):
-  p = os.getcwd()
+def PathToConfigFile( file_name, from_directory = None ):
+  if not from_directory:
+    p = os.getcwd()
+  else:
+    p = os.path.abspath( os.path.realpath( from_directory ) )
+
   while True:
     candidate = os.path.join( p, file_name )
     if os.path.exists( candidate ):
