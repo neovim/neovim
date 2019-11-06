@@ -1,4 +1,4 @@
-local builtin_default_server_callbacks = require 'vim.lsp.builtin_callbacks'
+local builtin_callbacks = require 'vim.lsp.builtin_callbacks'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
@@ -9,6 +9,7 @@ local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
 
 local lsp = {
   protocol = protocol;
+  rpc_response_error = lsp_rpc.rpc_response_error;
 }
 
 -- TODO consider whether 'eol' or 'fixeol' should change the nvim_buf_get_lines that send.
@@ -40,6 +41,7 @@ local function next_client_id()
   CLIENT_INDEX = CLIENT_INDEX + 1
   return CLIENT_INDEX
 end
+-- Tracks all clients created via lsp.start_client
 local LSP_CLIENTS = {}
 local BUFFER_CLIENT_IDS = {}
 
@@ -57,7 +59,7 @@ local function for_each_buffer_client(bufnr, callback)
     -- condition between literally a single statement.
     -- We could skip this error, but let's error for now.
     if not client then
-      error(string.format(" Client %d has already shut down.", client_id))
+      error(string.format("Client %d has already shut down.", client_id))
     end
     callback(client, client_id)
   end
@@ -73,56 +75,116 @@ local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_
   ON_INIT_CALLBACK_ERROR = maxerrn + 1;
 })
 
+lsp.ERRORS = error_codes
+
+local function is_dir(filename)
+  local stat = vim.loop.fs_stat(filename)
+  return stat and stat.type == 'directory' or false
+end
+
 --- Start a client and initialize it.
--- conf = {
---   cmd = string;
---   cmd_args = table;
---   cmd_cwd = string | nil;
---   cmd_env = table | nil; -- @see |force_env_list|
---   offset_encoding = 'utf-8' | 'utf-16' | 'utf-32' | string;
---   name = string | nil;
---   trace = 'off' | 'messages' | 'verbose' | nil
---   default_server_callbacks = table | nil;
---   on_init = function | nil;
---   init_options = table | nil;
--- }
+-- Its arguments are passed via a configuration object.
 --
--- - `name` here is only used for logging/debugging.
--- - `trace` will be forwarded to the client.
--- - `default_server_callbacks` should be a table of functions which
--- defines:
---   - The handlers for notifications. These should be `function(params)`
---   - A default callback to use for `vim.lsp.buf_request` if one is not
---   provided at the time of calling `vim.lsp.buf_request`. These should be
---   `function(err, result)`
---   - By default, the functions from the module `vim.lsp.builtin_callbacks`
---   will be used. This parameter can override or extend it those builtin
---   callbacks.
+-- Mandatory parameters:
 --
--- You can use |vim.lsp.get_client_by_id()| to get the actual client.
+-- root_dir: {string} specifying the directory where the LSP server will base
+-- as its rootUri on initialization.
+--
+-- cmd: {string} or {list} which is the base command to execute for the LSP. A
+-- string will be run using |'shell'| and a list will be interpreted as a bare
+-- command with arguments passed. This is the same as |jobstart()|.
+--
+-- Optional parameters:
+
+-- cmd_cwd: {string} specifying the directory to launch the `cmd` process. This
+-- is not related to `root_dir`. By default, |getcwd()| is used.
+--
+-- cmd_env: {table} specifying the environment flags to pass to the LSP on
+-- spawn.  This can be specified using keys like a map or as a list with `k=v`
+-- pairs or both. Non-string values are coerced to a string.
+-- For example: `{ "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }`.
+--
+-- capabilities: A {table} which will be merged using |vim.deep_merge| with
+-- neovim's default capabilities and passed to the language server on
+-- initialization.
+--
+-- callbacks: A {table} of whose keys are language server method names and the
+-- values are `function(err, method, params, client_id)`.
+-- This will be called for:
+-- - notifications from the server, where `err` will always be `nil`
+-- - requests initiated by the server. For these, you can respond by returning
+-- two values: `result, err`. The err must be in the format of an RPC error,
+-- which is `{ code, message, data? }`. You can use |vim.lsp.rpc_response_error()|
+-- to help with this.
+-- - as a callback for requests initiated by the client if the request doesn't
+-- explicitly specify a callback.
+--
+-- init_options: A {table} of values to pass in the initialization request
+-- as `initializationOptions`. See the `initialize` in the LSP spec.
+--
+-- name: A {string} used in log messages. Defaults to {client_id}
+--
+-- offset_encoding: One of 'utf-8', 'utf-16', or 'utf-32' which is the
+-- encoding that the LSP server expects. By default, it is 'utf-16' as
+-- specified in the LSP specification. The client does not verify this
+-- is correct.
+--
+-- on_error: A `function(code, ...)` for handling errors thrown by client
+-- operation. {code} is a number describing the error. Other arguments
+-- may be passed depending on the error kind.  @see |vim.lsp.ERRORS| for
+-- possible errors. `vim.lsp.ERRORS[code]` can be used to retrieve a human
+-- understandable string.
+--
+-- on_init: A `function(client, initialize_result)` which is called after the
+-- request `initialize` is completed. `initialize_result` contains
+-- `capabilities` and anything else the server may send. For example, `clangd`
+-- sends `result.offsetEncoding` if `capabilities.offsetEncoding` was sent to
+-- it.
+--
+-- trace:  'off' | 'messages' | 'verbose' | nil passed directly to the language
+-- server in the initialize request. Invalid/empty values will default to 'off'
+--
+-- @returns client_id You can use |vim.lsp.get_client_by_id()| to get the
+-- actual client.
 --
 -- NOTE: The client is only available *after* it has been initialized, which
 -- may happen after a small delay (or never if there is an error).
 -- For this reason, you may want to use `on_init` to do any actions once the
 -- client has been initialized.
---
--- @return client_id
 function lsp.start_client(conf)
-  assert(type(conf.cmd) == 'string', "conf.cmd must be a string")
-  assert(type(conf.cmd_args) == 'table', "conf.cmd_args must be a table")
+  local cmd, cmd_args
+  if type(conf.cmd) == 'string' then
+    -- Use a shell to execute the command if it is a string.
+    cmd = vim.api.nvim_get_option('shell')
+    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), conf.cmd}
+  elseif vim.tbl_islist(conf.cmd) then
+    cmd = conf.cmd[1]
+    cmd_args = {}
+    -- Don't mutate our input.
+    for i, v in ipairs(conf.cmd) do
+      assert(type(v) == 'string', "conf.cmd arguments must be strings")
+      if i > 1 then
+        table.insert(cmd_args, v)
+      end
+    end
+  else
+    error("cmd type must be string or list.")
+  end
+  assert(type(conf.root_dir) == 'string', "conf.root_dir must be a string")
+  assert(is_dir(conf.root_dir), "conf.root_dir must be a directory")
   local offset_encoding = validate_encoding(conf.offset_encoding)
   -- TODO should I be using this for both notifications and request callbacks
   -- or separate those?
-  local default_server_callbacks
-  if conf.default_server_callbacks then
-    assert(type(conf.default_server_callbacks) == 'table', "conf.default_server_callbacks must be a table")
-    default_server_callbacks = vim.tbl_extend("keep", conf.default_server_callbacks, builtin_default_server_callbacks)
+  local callbacks
+  if conf.callbacks then
+    assert(type(conf.callbacks) == 'table', "conf.callbacks must be a table")
+    callbacks = vim.tbl_extend("keep", conf.callbacks, builtin_callbacks)
   else
-    default_server_callbacks = builtin_default_server_callbacks
+    callbacks = builtin_callbacks
   end
-  -- TODO keep vim.schedule here?
-  for k, v in pairs(default_server_callbacks) do
-    default_server_callbacks[k] = vim.schedule_wrap(v)
+  -- Schedule wrap all callbacks by default.
+  for k, v in pairs(callbacks) do
+    callbacks[k] = vim.schedule_wrap(v)
   end
   local capabilities = conf.capabilities or {}
   assert(type(capabilities) == 'table', "conf.capabilities must be a table")
@@ -145,9 +207,9 @@ function lsp.start_client(conf)
   end
   if conf.cmd_cwd then
     assert(type(conf.cmd_cwd) == 'string', "conf.cmd_cwd must be a string")
-    local stat = vim.loop.fs_stat(conf.cmd_cwd)
-    assert(stat and stat.type == 'directory', "conf.cmd_cwd must be a directory")
+    assert(is_dir(conf.cmd_cwd), "conf.cmd_cwd must be a directory")
   end
+
 
   local client_id = next_client_id()
 
@@ -155,18 +217,18 @@ function lsp.start_client(conf)
 
   function handlers.notification(method, params)
     _ = log.debug() and log.debug('notification', method, params)
-    local callback = default_server_callbacks[method]
+    local callback = callbacks[method]
     if callback then
       -- Method name is provided here for convenience.
-      callback(params, method)
+      callback(nil, params, method, client_id)
     end
   end
 
   function handlers.server_request(method, params)
     _ = log.debug() and log.debug('server_request', method, params)
-    local request_callback = default_server_callbacks[method]
-    if request_callback then
-      return request_callback(params, method)
+    local callback = callbacks[method]
+    if callback then
+      return callback(nil, params, method, client_id)
     end
     return nil, lsp_rpc.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
@@ -202,7 +264,7 @@ function lsp.start_client(conf)
     if conf.on_exit then pcall(conf.on_exit, client_id) end
   end
 
-  local rpc = lsp_rpc.start(conf.cmd, conf.cmd_args, handlers, {
+  local rpc = lsp_rpc.start(cmd, cmd_args, handlers, {
     cwd = conf.cmd_cwd;
     env = conf.cmd_env;
   })
@@ -212,7 +274,7 @@ function lsp.start_client(conf)
     name = name;
     rpc = rpc;
     offset_encoding = offset_encoding;
-    default_server_callbacks = default_server_callbacks;
+    callbacks = callbacks;
     config = conf;
   }
 
@@ -232,7 +294,7 @@ function lsp.start_client(conf)
       rootPath = nil;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = vim.uri_from_fname(vim.loop.cwd()); -- TODO which path to use?
+      rootUri = vim.uri_from_fname(conf.root_dir);
 --      rootUri = vim.uri_from_fname(vim.fn.expand("%:p:h"));
       -- User provided initialization options.
       initializationOptions = conf.init_options;
@@ -290,11 +352,17 @@ function lsp.start_client(conf)
     local msg = "server doesn't support "..method
     _ = log.warn() and log.warn(msg)
     vim.api.nvim_err_writeln(msg)
-    return lsp_rpc.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
+    return lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
   end
 
   --- Checks capabilities before rpc.request-ing.
   function client.request(method, params, callback)
+    if not callback then
+      callback = client.callbacks[method]
+        or error(string.format("request callback is empty and no default was found for client %s", client.name))
+    else
+      callback = vim.schedule_wrap(callback)
+    end
     _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
     -- TODO keep these checks or just let it go anyway?
     if (not client.resolved_capabilities.hover and method == 'textDocument/hover')
@@ -502,37 +570,24 @@ function lsp.add_config(config)
 
   local offset_encoding = config.offset_encoding and validate_encoding(config.offset_encoding) or VALID_ENCODINGS.UTF16
 
-  local cmd, cmd_args
-  if type(config.cmd) == 'string' then
-    -- Use a shell to execute the command if it is a string.
-    cmd = vim.api.nvim_get_option('shell')
-    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), config.cmd}
-  elseif vim.tbl_islist(config.cmd) then
-    cmd = config.cmd[1]
-    cmd_args = {}
-    -- Don't mutate our input.
-    for i, v in ipairs(config.cmd) do
-      assert(type(v) == 'string', "config.cmd arguments must be strings")
-      if i > 1 then
-        table.insert(cmd_args, v)
-      end
-    end
-  else
-    error("cmd type must be string or list.")
+  if config.root_dir then
+    assert(type(config.root_dir) == 'string', "config.root_dir must be a string")
+    assert(is_dir(config.root_dir), "config.root_dir must be a directory")
   end
 
   LSP_CONFIGS[config.name] = {
     user_config = config;
     name = config.name;
+    root_dir = config.root_dir or vim.loop.cwd();
     offset_encoding = offset_encoding;
     filetypes = filetypes;
-    cmd = cmd;
-    cmd_args = cmd_args;
+    cmd = config.cmd;
     cmd_env = config.cmd_env;
     cmd_cwd = config.cmd_cwd;
     capabilities = capabilities;
     init_options = config.init_options;
     on_init = config.on_init;
+    client_id = nil;
   }
 
   nvim_command(string.format(
@@ -600,7 +655,7 @@ function lsp.buf_request(bufnr, method, params, callback)
   for_each_buffer_client(bufnr, function(client, client_id)
     local request_callback = callback
     if not request_callback then
-      request_callback = client.default_server_callbacks[method]
+      request_callback = client.callbacks[method]
         or error(string.format("buf_request callback is empty and no default client was found for client %s", client.name))
     end
     local request_success, request_id = client.request(method, params, function(err, result)
@@ -772,7 +827,7 @@ end
 
 -- TODO keep?
 function lsp.print_debug_info()
-  vim.api.nvim_out_write(vim.inspect(LSP_CLIENTS))
+  vim.api.nvim_out_write(vim.inspect({ clients = LSP_CLIENTS, configs = LSP_CONFIGS }))
   vim.api.nvim_out_write("\n")
 end
 

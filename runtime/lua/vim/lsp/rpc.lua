@@ -68,11 +68,11 @@ local function parse_headers(header)
     return nil
   end
   local headers = {}
-  for line in vim.gsplit(header, '\\r\\n', true) do
+  for line in vim.gsplit(header, '\r\n', true) do
     if line == '' then
       break
     end
-    local key, value = line:match("^%s*(%S+)%s*:%s*(%S+)%s*$")
+    local key, value = line:match("^%s*(%S+)%s*:%s*(.+)%s*$")
     if key then
       key = key:lower():gsub('%-', '_')
       headers[key] = value
@@ -258,7 +258,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   end
   local function pcall_handler(errkind, status, head, ...)
     if not status then
-      on_error(errkind, ...)
+      on_error(errkind, head, ...)
       return status, head
     end
     return status, head, ...
