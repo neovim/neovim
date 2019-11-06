@@ -246,6 +246,78 @@ static int nlua_schedule(lua_State *const lstate)
   return 0;
 }
 
+// Dummy timer callback. Used by f_wait().
+static void dummy_timer_due_cb(TimeWatcher *tw, void *data)
+{
+}
+
+// Dummy timer close callback. Used by f_wait().
+static void dummy_timer_close_cb(TimeWatcher *tw, void *data)
+{
+  xfree(tw);
+}
+
+/// "wait(timeout, condition[, interval])" function
+static void nlua_wait(lua_State *L) FUNC_ATTR_NONNULL_ALL
+{
+  intptr_t timeout = luaL_checkinteger(L, 1);
+  if (timeout < 0) {
+    luaL_error(L, "timeout must be > 0");
+    return;
+  }
+  if (lua_type(L, 2) != LUA_TFUNCTION) {
+    lua_pushliteral(L, "vim.wait: condition must be a function");
+    lua_error(L);
+    return;
+  }
+
+  /* LuaRef cb = nlua_ref(L, 2); */
+  intptr_t interval = 200;
+  if (lua_gettop(L) >= 3) {
+    interval = luaL_checkinteger(L, 3);
+    if (interval < 0) {
+      luaL_error(L, "interval must be > 0");
+      return;
+    }
+  }
+
+  TimeWatcher *tw = xmalloc(sizeof(TimeWatcher));
+
+  // Start dummy timer.
+  time_watcher_init(&main_loop, tw, NULL);
+  tw->events = main_loop.events;
+  tw->blockable = true;
+  time_watcher_start(tw, dummy_timer_due_cb, (uint64_t)interval, (uint64_t)interval);
+
+  int save_called_emsg = called_emsg;
+  called_emsg = false;
+  int pcall_status = 0;
+  int callback_result = 0;
+
+  lua_pushvalue(L, 1);
+  LOOP_PROCESS_EVENTS_UNTIL(&main_loop, main_loop.events, (int)timeout,
+                            (lua_pop(L, 1), lua_pushvalue(L, 1), (pcall_status = lua_pcall(L, 0, 1, 0)) == 0 && (callback_result = lua_toboolean(L, 1)))
+                            || called_emsg || got_int);
+
+  if (called_emsg || pcall_status == 1) {
+    lua_pushinteger(L, -3);
+    /* lua_error(L); */
+  } else if (got_int) {
+    got_int = false;
+    vgetc();
+    lua_pushinteger(L, -2);
+  } else if (callback_result) {
+    lua_pushinteger(L, 0);
+  } else {
+    lua_pushinteger(L, -1);
+  }
+
+  called_emsg = save_called_emsg;
+
+  // Stop dummy timer
+  time_watcher_stop(tw);
+  time_watcher_close(tw, dummy_timer_close_cb);
+}
 /// Initialize lua interpreter state
 ///
 /// Called by lua interpreter itself to initialize state.
