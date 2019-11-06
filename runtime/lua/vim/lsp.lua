@@ -75,11 +75,82 @@ local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_
   ON_INIT_CALLBACK_ERROR = maxerrn + 1;
 })
 
+-- Error codes to be used with `on_error` from |vim.lsp.start_client|.
+-- Can be used to look up the string from a the number or the number
+-- from the string.
 lsp.ERRORS = error_codes
 
 local function is_dir(filename)
   local stat = vim.loop.fs_stat(filename)
   return stat and stat.type == 'directory' or false
+end
+
+local function validate_command(input)
+  local cmd, cmd_args
+  if type(input) == 'string' then
+    -- Use a shell to execute the command if it is a string.
+    cmd = vim.api.nvim_get_option('shell')
+    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), input}
+  elseif vim.tbl_islist(input) then
+    cmd = input[1]
+    cmd_args = {}
+    -- Don't mutate our input.
+    for i, v in ipairs(input) do
+      assert(type(v) == 'string', "input arguments must be strings")
+      if i > 1 then
+        table.insert(cmd_args, v)
+      end
+    end
+  else
+    error("cmd type must be string or list.")
+  end
+  return cmd, cmd_args
+end
+
+local function validate_client_config(config)
+  assert(type(config) == 'table', 'argument must be a table')
+  assert(config.cmd, "config must have 'cmd' key")
+  local cmd, cmd_args = validate_command(config.cmd)
+  assert(type(config.root_dir) == 'string', "config.root_dir must be a string")
+  assert(is_dir(config.root_dir), "config.root_dir must be a directory")
+  local offset_encoding = VALID_ENCODINGS.UTF16
+  if config.offset_encoding then
+    offset_encoding = validate_encoding(config.offset_encoding)
+  end
+  if config.callbacks then
+    assert(type(config.callbacks) == 'table', "config.callbacks must be a table")
+  end
+  if config.capabilities then
+    assert(type(config.capabilities) == 'table', "config.capabilities must be a table")
+  end
+
+  -- There are things sent by the server in the initialize response which
+  -- contains capabilities that would be useful for completion engines, such as
+  -- the character code triggers for completion and code action, so I'll expose this
+  -- for now.
+  if config.on_init then
+    assert(type(config.on_init) == 'function', "config.on_init must be a function")
+  end
+  if config.on_exit then
+    assert(type(config.on_exit) == 'function', "config.on_exit must be a function")
+  end
+  if config.on_error then
+    assert(type(config.on_error) == 'function', "config.on_error must be a function")
+  end
+  if config.cmd_env then
+    assert(type(config.cmd_env) == 'table', "config.cmd_env must be a table")
+  end
+  if config.cmd_cwd then
+    assert(type(config.cmd_cwd) == 'string', "config.cmd_cwd must be a string")
+    assert(is_dir(config.cmd_cwd), "config.cmd_cwd must be a directory")
+  end
+  if config.name then
+    assert(type(config.name) == 'string', "config.name must be a string")
+  end
+  return {
+    cmd = cmd; cmd_args = cmd_args;
+    offset_encoding = offset_encoding;
+  }
 end
 
 --- Start a client and initialize it.
@@ -151,67 +222,16 @@ end
 -- may happen after a small delay (or never if there is an error).
 -- For this reason, you may want to use `on_init` to do any actions once the
 -- client has been initialized.
-function lsp.start_client(conf)
-  local cmd, cmd_args
-  if type(conf.cmd) == 'string' then
-    -- Use a shell to execute the command if it is a string.
-    cmd = vim.api.nvim_get_option('shell')
-    cmd_args = {vim.api.nvim_get_option('shellcmdflag'), conf.cmd}
-  elseif vim.tbl_islist(conf.cmd) then
-    cmd = conf.cmd[1]
-    cmd_args = {}
-    -- Don't mutate our input.
-    for i, v in ipairs(conf.cmd) do
-      assert(type(v) == 'string', "conf.cmd arguments must be strings")
-      if i > 1 then
-        table.insert(cmd_args, v)
-      end
-    end
-  else
-    error("cmd type must be string or list.")
-  end
-  assert(type(conf.root_dir) == 'string', "conf.root_dir must be a string")
-  assert(is_dir(conf.root_dir), "conf.root_dir must be a directory")
-  local offset_encoding = validate_encoding(conf.offset_encoding)
-  -- TODO should I be using this for both notifications and request callbacks
-  -- or separate those?
-  local callbacks
-  if conf.callbacks then
-    assert(type(conf.callbacks) == 'table', "conf.callbacks must be a table")
-    callbacks = vim.tbl_extend("keep", conf.callbacks, builtin_callbacks)
-  else
-    callbacks = builtin_callbacks
-  end
-  -- Schedule wrap all callbacks by default.
-  for k, v in pairs(callbacks) do
-    callbacks[k] = vim.schedule_wrap(v)
-  end
-  local capabilities = conf.capabilities or {}
-  assert(type(capabilities) == 'table', "conf.capabilities must be a table")
-
-  -- There are things sent by the server in the initialize response which
-  -- contains capabilities that would be useful for completion engines, such as
-  -- the character code triggers for completion and code action, so I'll expose this
-  -- for now.
-  if conf.on_init then
-    assert(type(conf.on_init) == 'function', "conf.on_init must be a function")
-  end
-  if conf.on_exit then
-    assert(type(conf.on_exit) == 'function', "conf.on_exit must be a function")
-  end
-  if conf.on_error then
-    assert(type(conf.on_error) == 'function', "conf.on_error must be a function")
-  end
-  if conf.cmd_env then
-    assert(type(conf.cmd_env) == 'table', "conf.cmd_env must be a table")
-  end
-  if conf.cmd_cwd then
-    assert(type(conf.cmd_cwd) == 'string', "conf.cmd_cwd must be a string")
-    assert(is_dir(conf.cmd_cwd), "conf.cmd_cwd must be a directory")
-  end
-
+function lsp.start_client(config)
+  local cleaned_config = validate_client_config(config)
+  local cmd, cmd_args, offset_encoding = cleaned_config.cmd, cleaned_config.cmd_args, cleaned_config.offset_encoding
 
   local client_id = next_client_id()
+
+  local callbacks = vim.tbl_extend("keep", config.callbacks or {}, builtin_callbacks)
+  local capabilities = config.capabilities or {}
+  local name = config.name or tostring(client_id)
+  local log_prefix = string.format("LSP[%s]", name)
 
   local handlers = {}
 
@@ -220,7 +240,7 @@ function lsp.start_client(conf)
     local callback = callbacks[method]
     if callback then
       -- Method name is provided here for convenience.
-      callback(nil, params, method, client_id)
+      callback(nil, method, params, client_id)
     end
   end
 
@@ -228,20 +248,18 @@ function lsp.start_client(conf)
     _ = log.debug() and log.debug('server_request', method, params)
     local callback = callbacks[method]
     if callback then
-      return callback(nil, params, method, client_id)
+      _ = log.debug() and log.debug("server_request: found callback for", method)
+      return callback(nil, method, params, client_id)
     end
-    return nil, lsp_rpc.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
+    _ = log.debug() and log.debug("server_request: no callback found for", method)
+    return nil, lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound)
   end
-
-  local name = conf.name or tostring(client_id)
-  assert(type(name) == 'string', "conf.name must be a string")
-  local log_prefix = string.format("LSP[%s]", name)
 
   function handlers.on_error(code, err)
     _ = log.error() and log.error(log_prefix, "on_error", { code = error_codes[code], err = err })
     nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, error_codes[code], vim.inspect(err)))
-    if conf.on_error then
-      local status, usererr = pcall(conf.on_error, code, err)
+    if config.on_error then
+      local status, usererr = pcall(config.on_error, code, err)
       if not status then
         _ = log.error() and log.error(log_prefix, "user on_error failed", { err = usererr })
         nvim_err_writeln(log_prefix.." user on_error failed: "..tostring(usererr))
@@ -261,12 +279,14 @@ function lsp.start_client(conf)
     for bufnr, client_ids in pairs(BUFFER_CLIENT_IDS) do
       client_ids[client_id] = nil
     end
-    if conf.on_exit then pcall(conf.on_exit, client_id) end
+    if config.on_exit then
+      pcall(config.on_exit, client_id)
+    end
   end
 
   local rpc = lsp_rpc.start(cmd, cmd_args, handlers, {
-    cwd = conf.cmd_cwd;
-    env = conf.cmd_env;
+    cwd = config.cmd_cwd;
+    env = config.cmd_env;
   })
 
   local client = {
@@ -275,7 +295,7 @@ function lsp.start_client(conf)
     rpc = rpc;
     offset_encoding = offset_encoding;
     callbacks = callbacks;
-    config = conf;
+    config = config;
   }
 
   local function initialize()
@@ -294,15 +314,15 @@ function lsp.start_client(conf)
       rootPath = nil;
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
-      rootUri = vim.uri_from_fname(conf.root_dir);
+      rootUri = vim.uri_from_fname(config.root_dir);
 --      rootUri = vim.uri_from_fname(vim.fn.expand("%:p:h"));
       -- User provided initialization options.
-      initializationOptions = conf.init_options;
+      initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
       capabilities = vim.tbl_deep_merge(protocol.make_client_capabilities(), capabilities);
       -- The initial trace setting. If omitted trace is disabled ('off').
       -- trace = 'off' | 'messages' | 'verbose';
-      trace = valid_traces[conf.trace] or 'off';
+      trace = valid_traces[config.trace] or 'off';
       -- The workspace folders configured in the client when the server starts.
       -- This property is only available if the client supports workspace folders.
       -- It can be `null` if the client supports workspace folders but none are
@@ -326,8 +346,8 @@ function lsp.start_client(conf)
       client.initialized = true
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
-      if conf.on_init then
-        local status, err = pcall(conf.on_init, client, result)
+      if config.on_init then
+        local status, err = pcall(config.on_init, client, result)
         if not status then
           pcall(handlers.on_error, error_codes.ON_INIT_CALLBACK_ERROR, err)
         end
@@ -360,8 +380,6 @@ function lsp.start_client(conf)
     if not callback then
       callback = client.callbacks[method]
         or error(string.format("request callback is empty and no default was found for client %s", client.name))
-    else
-      callback = vim.schedule_wrap(callback)
     end
     _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
     -- TODO keep these checks or just let it go anyway?
@@ -370,10 +388,12 @@ function lsp.start_client(conf)
       or (not client.resolved_capabilities.goto_definition and method == 'textDocument/definition')
       or (not client.resolved_capabilities.implementation and method == 'textDocument/implementation')
     then
-      callback(unsupported_method(method))
+      callback(unsupported_method(method), method, nil, client_id)
       return
     end
-    return rpc.request(method, params, callback)
+    return rpc.request(method, params, function(err, result)
+      callback(err, method, result, client_id)
+    end)
   end
 
   function client.notify(...)
@@ -543,21 +563,15 @@ end
 local LSP_CONFIGS = {}
 
 function lsp.add_config(config)
-  assert(type(config) == 'table', 'argument must be a table')
+  -- Additional defaults.
+  -- Keep a copy of the user's input for debugging reasons.
+  local user_config = config
+  config = vim.tbl_extend("force", {}, user_config)
+  config.root_dir = config.root_dir or vim.loop.cwd()
+  -- Validate config.
+  validate_client_config(config)
   assert(config.filetype, "config must have 'filetype' key")
-  assert(config.cmd, "config must have 'cmd' key")
   assert(type(config.name) == 'string', "config.name must be a string")
-  if LSP_CONFIGS[config.name] then
-    -- If the client exists, then it is likely that they are doing some kind of
-    -- reload flow, so let's not throw an error here.
-    if LSP_CONFIGS[config.name].client_id then
-      -- TODO log here? It might be unnecessarily annoying.
-      return
-    end
-    error(string.format('A configuration with the name %q already exists. They must be unique', config.name))
-  end
-  local capabilities = config.capabilities or {}
-  assert(type(capabilities) == 'table', "config.capabilities must be a table")
 
   local filetypes
   if type(config.filetype) == 'string' then
@@ -568,27 +582,21 @@ function lsp.add_config(config)
     error("config.filetype must be a string or a list of strings")
   end
 
-  local offset_encoding = config.offset_encoding and validate_encoding(config.offset_encoding) or VALID_ENCODINGS.UTF16
-
-  if config.root_dir then
-    assert(type(config.root_dir) == 'string', "config.root_dir must be a string")
-    assert(is_dir(config.root_dir), "config.root_dir must be a directory")
+  if LSP_CONFIGS[config.name] then
+    -- If the client exists, then it is likely that they are doing some kind of
+    -- reload flow, so let's not throw an error here.
+    if LSP_CONFIGS[config.name].client_id then
+      -- TODO log here? It might be unnecessarily annoying.
+      return
+    end
+    error(string.format('A configuration with the name %q already exists. They must be unique', config.name))
   end
 
-  LSP_CONFIGS[config.name] = {
-    user_config = config;
-    name = config.name;
-    root_dir = config.root_dir or vim.loop.cwd();
-    offset_encoding = offset_encoding;
-    filetypes = filetypes;
-    cmd = config.cmd;
-    cmd_env = config.cmd_env;
-    cmd_cwd = config.cmd_cwd;
-    capabilities = capabilities;
-    init_options = config.init_options;
-    on_init = config.on_init;
+  LSP_CONFIGS[config.name] = vim.tbl_extend("keep", config, {
     client_id = nil;
-  }
+    filetypes = filetypes;
+    user_config = user_config;
+  })
 
   nvim_command(string.format(
     "autocmd FileType %s ++once silent lua vim.lsp._start_client_by_name(%q)",
@@ -653,15 +661,7 @@ function lsp.buf_request(bufnr, method, params, callback)
   end
   local client_request_ids = {}
   for_each_buffer_client(bufnr, function(client, client_id)
-    local request_callback = callback
-    if not request_callback then
-      request_callback = client.callbacks[method]
-        or error(string.format("buf_request callback is empty and no default client was found for client %s", client.name))
-    end
-    local request_success, request_id = client.request(method, params, function(err, result)
-      -- TODO pass client here?
-      request_callback(err, result, client_id)
-    end)
+    local request_success, request_id = client.request(method, params, callback)
 
     -- This could only fail if the client shut down in the time since we looked
     -- it up and we did the request, which should be rare.
@@ -690,7 +690,7 @@ end
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
-  local function callback(err, result, client_id)
+  local function callback(err, method, result, client_id)
     _ = log.trace() and log.trace("callback", err, result, client_id)
     request_results[client_id] = { error = err, result = result }
     result_count = result_count + 1

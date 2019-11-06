@@ -163,11 +163,33 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   assert(type(cmd) == 'string', "cmd must be a string")
   assert(type(cmd_args) == 'table', "cmd_args must be a table")
 
-  -- TODO make sure this is always correct.
   if not (vim.fn.executable(cmd) == 1) then
     error(string.format("The given command %q is not executable.", cmd))
   end
-  handlers = vim.tbl_extend("keep", handlers or {}, default_handlers)
+  if handlers then
+    assert(type(handlers) == 'table', "handlers must be a table")
+    local user_handlers = handlers
+    handlers = {}
+    for handle_name, default_handler in pairs(default_handlers) do
+      local user_handler = user_handlers[handle_name]
+      if user_handler then
+        if type(user_handler) ~= 'function' then
+          error(string.format("handler.%s must be a function", handle_name))
+        end
+        -- server_request is wrapped elsewhere.
+        if not (handle_name == 'server_request'
+          or handle_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
+        then
+          user_handler = vim.schedule_wrap(user_handler)
+        end
+        handlers[handle_name] = user_handler
+      else
+        handlers[handle_name] = default_handler
+      end
+    end
+  else
+    handlers = default_handlers
+  end
 
   local stdin = uv.new_pipe(false)
   local stdout = uv.new_pipe(false)
@@ -236,9 +258,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       params = params;
     }
     if result then
-      -- TODO keep vim.schedule here?
-      -- message_callbacks[message_id] = vim.schedule_wrap(callback)
-      message_callbacks[message_id] = callback
+      message_callbacks[message_id] = vim.schedule_wrap(callback)
       return result, message_id
     else
       return false
@@ -267,6 +287,10 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     return pcall_handler(errkind, pcall(fn, ...))
   end
 
+  -- TODO periodically check message_callbacks for old requests past a certain
+  -- time and log them. This would require storing the timestamp. I could call
+  -- them with an error then, perhaps.
+
   local function handle_body(body)
     local decoded, err = json_decode(body)
     if not decoded then
@@ -276,24 +300,30 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 
     if type(decoded.method) == 'string' and decoded.id then
       -- Server Request
-      local status, result
-      -- TODO make sure that these won't block anything. use vim.loop.send_async or schedule_wrap?
-      status, result, err = try_call(CLIENT_ERRORS.SERVER_REQUEST_HANDLER_ERROR,
-          handlers.server_request, decoded.method, decoded.params)
-      if status then
-        -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
-        assert(result or err, "either a result or an error must be sent to the server in response")
-        if err then
-          assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")
-          local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.")
-          err.message = err.message or code_name
+      -- Schedule here so that the users functions don't trigger an error and
+      -- we can still use the result.
+      vim.schedule(function()
+        local status, result
+        status, result, err = try_call(CLIENT_ERRORS.SERVER_REQUEST_HANDLER_ERROR,
+            handlers.server_request, decoded.method, decoded.params)
+        _ = log.debug() and log.debug("server_request: callback result", { status = status, result = result, err = err })
+        if status then
+          if not (result or err) then
+            -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
+            error(string.format("method %q: either a result or an error must be sent to the server in response", decoded.method))
+          end
+          if err then
+            assert(type(err) == 'table', "err must be a table. Use rpc_response_error to help format errors.")
+            local code_name = assert(protocol.ErrorCodes[err.code], "Errors must use protocol.ErrorCodes. Use rpc_response_error to help format errors.")
+            err.message = err.message or code_name
+          end
+        else
+          -- On an exception, result will contain the error message.
+          err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
+          result = nil
         end
-      else
-        -- On an exception, result will contain the error message.
-        err = rpc_response_error(protocol.ErrorCodes.InternalError, result)
-        result = nil
-      end
-      send_response(decoded.id, err, result)
+        send_response(decoded.id, err, result)
+      end)
     elseif decoded.id then
       -- Server Result
 
@@ -302,7 +332,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       -- correct. When vim.NIL is available, then we can fix this.
       --      elseif decoded.id and (decoded.result or decoded.error) then
 
-      -- TODO verify decoded.id is a string or number?
+      -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
       local callback = message_callbacks[result_id]
       if callback then

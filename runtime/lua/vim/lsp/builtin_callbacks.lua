@@ -35,14 +35,14 @@ local builtin_callbacks = {}
 
 -- textDocument/publishDiagnostics
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
-builtin_callbacks['textDocument/publishDiagnostics'] = function(params)
+builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, params)
   _ = log.debug() and log.debug('callback:textDocument/publishDiagnostics', { params = params })
   _ = log.error() and log.error('Not implemented textDocument/publishDiagnostics callback')
 end
 
 -- textDocument/completion
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-builtin_callbacks['textDocument/completion'] = function(err, result)
+builtin_callbacks['textDocument/completion'] = function(err, _, result)
   assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:textDocument/completion ', result, ' ', err)
 
@@ -64,14 +64,14 @@ end
 
 -- textDocument/references
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
-builtin_callbacks['textDocument/references'] = function(err, result)
+builtin_callbacks['textDocument/references'] = function(err, _, result)
   assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:textDocument/references ', result, ' ', err)
   _ = log.debug() and log.debug('Not implemented textDocument/publishDiagnostics callback')
 end
 
 -- textDocument/rename
-builtin_callbacks['textDocument/rename'] = function(err, result)
+builtin_callbacks['textDocument/rename'] = function(err, _, result)
   assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:textDocument/rename ', result, ' ', err)
 
@@ -88,9 +88,9 @@ end
 -- textDocument/hover
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 -- @params MarkedString | MarkedString[] | MarkupContent
-builtin_callbacks['textDocument/hover'] = function(err, result)
+builtin_callbacks['textDocument/hover'] = function(err, method, result)
   assert(not err, tostring(err))
-  _ = log.debug() and log.debug('textDocument/hover ', result, err)
+  _ = log.debug() and log.debug('textDocument/hover', { err = err; result = result; method = method; })
 
   if result == nil or vim.tbl_isempty(result) then
     return
@@ -166,7 +166,7 @@ end
 
 -- textDocument/signatureHelp
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
-builtin_callbacks['textDocument/signatureHelp'] = function(err, result)
+builtin_callbacks['textDocument/signatureHelp'] = function(err, _, result)
   assert(not err, tostring(err))
   _ = log.debug() and log.debug('textDocument/signatureHelp ', result, ' ', err)
 
@@ -245,8 +245,8 @@ local function handle_location(result)
   vim.api.nvim_win_set_cursor(0, {start.line + 1, start.character})
 end
 
-local location_callback_object = function(err, result)
-  _ = log.debug() and log.debug('location callback ', {result = result, err = err})
+local location_callback_object = function(err, method, result)
+  _ = log.debug() and log.debug('location callback', method, {result = result, err = err})
   assert(not err, tostring(err))
 --  assert(not err, protocol.ErrorCodes[err.code])
   if result == nil or vim.tbl_isempty(result) then
@@ -274,7 +274,7 @@ end
 
 -- window/showMessage
 -- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
-builtin_callbacks['window/showMessage'] = function(err, result)
+builtin_callbacks['window/showMessage'] = function(err, _, result)
   assert(not err, tostring(err))
   _ = log.debug() and log.debug('callback:window/showMessage', { result = result, err = err})
 
@@ -290,11 +290,6 @@ builtin_callbacks['window/showMessage'] = function(err, result)
   end
 
   return result
-end
-
--- TODO auto schedule_wrap?
-for k, v in pairs(builtin_callbacks) do
-  builtin_callbacks[k] = vim.schedule_wrap(v)
 end
 
 return builtin_callbacks
