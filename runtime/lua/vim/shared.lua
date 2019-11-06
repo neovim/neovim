@@ -240,9 +240,32 @@ function vim.tbl_deep_merge(dst, ...)
   return dst
 end
 
+--- Deep compare values for equality
+function vim.deep_equal(a, b)
+  if a == b then return true end
+  if type(a) ~= type(b) then return false end
+  if type(a) == 'table' then
+    -- TODO improve this algorithm's performance.
+    for k, v in pairs(a) do
+      if not vim.deep_equal(v, b[k]) then
+        return false
+      end
+    end
+    for k, v in pairs(b) do
+      if not vim.deep_equal(v, a[k]) then
+        return false
+      end
+    end
+    return true
+  end
+  return false
+end
+
 --- Add the reverse lookup values to an existing table.
 --- For example:
 --- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
+--
+--Do note that it *modifies* the input.
 --@param o table The table to add the reverse to.
 function vim.tbl_add_reverse_lookup(o)
   local keys = vim.tbl_keys(o)
@@ -258,11 +281,14 @@ end
 
 --- Extends a list-like table with the values of another list-like table.
 ---
+--NOTE: This *mutates* dst!
 --@see |extend()|
 ---
 --@param dst The list which will be modified and appended to.
 --@param src The list from which values will be inserted.
 function vim.list_extend(dst, src)
+  assert(type(dst) == 'table', "dst must be a table")
+  assert(type(src) == 'table', "src must be a table")
   for _, v in ipairs(src) do
     table.insert(dst, v)
   end

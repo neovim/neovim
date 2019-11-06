@@ -337,6 +337,42 @@ describe('lua stdlib', function()
     eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
   end)
 
+  it('vim.deep_equal', function()
+    eq(true, exec_lua [[ return vim.deep_equal({a=1}, {a=1}) ]])
+    eq(true, exec_lua [[ return vim.deep_equal({a={b=1}}, {a={b=1}}) ]])
+    eq(true, exec_lua [[ return vim.deep_equal({a={b={nil}}}, {a={b={}}}) ]])
+    eq(true, exec_lua [[ return vim.deep_equal({a=1, [5]=5}, {nil,nil,nil,nil,5,a=1}) ]])
+    eq(false, exec_lua [[ return vim.deep_equal(1, {nil,nil,nil,nil,5,a=1}) ]])
+    eq(false, exec_lua [[ return vim.deep_equal(1, 3) ]])
+    eq(false, exec_lua [[ return vim.deep_equal(nil, 3) ]])
+    eq(false, exec_lua [[ return vim.deep_equal({a=1}, {a=2}) ]])
+  end)
+
+  it('vim.list_extend', function()
+    eq({1,2,3}, exec_lua [[ return vim.list_extend({1}, {2,3}) ]])
+    eq('Error executing lua: .../shared.lua: src must be a table',
+      pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
+    eq({1,2}, exec_lua [[ return vim.list_extend({1}, {2;a=1}) ]])
+    eq(true, exec_lua [[ local a = {1} return vim.list_extend(a, {2;a=1}) == a ]])
+  end)
+
+  it('vim.tbl_add_reverse_lookup', function()
+    eq(true, exec_lua [[
+    local a = { A = 1 }
+    vim.tbl_add_reverse_lookup(a)
+    return vim.deep_equal(a, { A = 1; [1] = 'A'; })
+    ]])
+    -- Throw an error for trying to do it twice (run into an existing key)
+    local code = [[
+    local res = {}
+    local a = { A = 1 }
+    vim.tbl_add_reverse_lookup(a)
+    assert(vim.deep_equal(a, { A = 1; [1] = 'A'; }))
+    return {pcall(vim.tbl_add_reverse_lookup, a)}
+    ]]
+    eq({false, '/home/ashkan/works/3rd/neovim/runtime/lua/vim/shared.lua:275: The reverse lookup found an existing value for "1" while processing key "A"'}, exec_lua(code))
+  end)
+
   it('vim.call and vim.fn', function()
     eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
     eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))

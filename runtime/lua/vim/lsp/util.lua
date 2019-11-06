@@ -17,7 +17,6 @@ local function remove_prefix(prefix, word)
   for i = 1, max_prefix_length do
     local current_line_suffix = prefix:sub(-i)
     local word_prefix = word:sub(1, i)
-		print(i, current_line_suffix, word_prefix)
     if current_line_suffix == word_prefix then
       prefix_length = i
     end
@@ -42,7 +41,7 @@ end
 --- Apply the TextEdit response.
 -- @params TextEdit [table] see https://microsoft.github.io/language-server-protocol/specification
 function M.text_document_apply_text_edit(text_edit, bufnr)
-	bufnr = resolve_bufnr(bufnr)
+  bufnr = resolve_bufnr(bufnr)
   local range = text_edit.range
   local start = range.start
   local finish = range['end']
@@ -51,8 +50,8 @@ function M.text_document_apply_text_edit(text_edit, bufnr)
     vim.api.nvim_buf_set_lines(bufnr, start.line, finish.line, false, new_lines)
     return
   end
-	vim.api.nvim_err_writeln('apply_text_edit currently only supports character ranges starting at 0')
-	error('apply_text_edit currently only supports character ranges starting at 0')
+  vim.api.nvim_err_writeln('apply_text_edit currently only supports character ranges starting at 0')
+  error('apply_text_edit currently only supports character ranges starting at 0')
   return
   --  TODO test and finish this support for character ranges.
 --  local lines = vim.api.nvim_buf_get_lines(0, start.line, finish.line + 1, false)
@@ -147,12 +146,12 @@ end
 function M.workspace_apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
     for _, change in ipairs(workspace_edit.documentChanges) do
-			if change.kind then
-				-- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
-				error(string.format("Unsupported change: %q", vim.inspect(change)))
-			else
-				M.text_document_apply_text_document_edit(change)
-			end
+      if change.kind then
+        -- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
+        error(string.format("Unsupported change: %q", vim.inspect(change)))
+      else
+        M.text_document_apply_text_document_edit(change)
+      end
     end
     return
   end
@@ -161,16 +160,16 @@ function M.workspace_apply_workspace_edit(workspace_edit)
     return
   end
 
-	for uri, changes in pairs(workspace_edit.changes) do
-		local fname = vim.uri_to_fname(uri)
-		-- TODO improve this approach. Try to edit open buffers without switching.
-		-- Not sure how to handle files which aren't open. This is deprecated
-		-- anyway, so I guess it could be left as is.
-		vim.api.nvim_command('edit '..fname)
-		for _, change in ipairs(changes) do
-			M.text_document_apply_text_edit(change)
-		end
-	end
+  for uri, changes in pairs(workspace_edit.changes) do
+    local fname = vim.uri_to_fname(uri)
+    -- TODO improve this approach. Try to edit open buffers without switching.
+    -- Not sure how to handle files which aren't open. This is deprecated
+    -- anyway, so I guess it could be left as is.
+    vim.api.nvim_command('edit '..fname)
+    for _, change in ipairs(changes) do
+      M.text_document_apply_text_edit(change)
+    end
+  end
 end
 
 --- Convert any of MarkedString | MarkedString[] | MarkupContent into markdown text lines
@@ -190,12 +189,12 @@ function M.convert_input_to_markdown_lines(input, contents)
       -- TODO these can have escaped/sanitized html codes in markdown. We
       -- should make sure we handle this correctly.
 
-			-- Some servers send input.value as empty, so let's ignore this :(
+      -- Some servers send input.value as empty, so let's ignore this :(
       -- assert(type(input.value) == 'string')
       list_extend(contents, split_lines(input.value or ''))
     -- MarkupString variation 2
     elseif input.language then
-			-- Some servers send input.value as empty, so let's ignore this :(
+      -- Some servers send input.value as empty, so let's ignore this :(
       -- assert(type(input.value) == 'string')
       table.insert(contents, "```"..input.language)
       list_extend(contents, split_lines(input.value or ''))
@@ -294,3 +293,4 @@ function M.open_floating_preview(contents, filetype)
 end
 
 return M
+-- vim:sw=2 ts=2 et

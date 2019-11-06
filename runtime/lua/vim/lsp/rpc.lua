@@ -21,23 +21,37 @@ local function json_decode(data)
 end
 
 -- If a dictionary is passed in, turn it into a list of string of "k=v"
+-- Accepts a table which can be composed of k=v strings or map-like
+-- specification, such as:
+--
+-- ```
+-- {
+--   "PRODUCTION=false";
+--   "PATH=/usr/bin/";
+--   PORT = 123;
+--   HOST = "0.0.0.0";
+-- }
+-- ```
+--
+-- Non-string values will be cast with `tostring`
 local function force_env_list(final_env)
-	if final_env then
-		local env = final_env
-		final_env = {}
-		for k,v in pairs(env) do
-			-- If it's passed in as a dict, then convert to list of "k=v"
-			if type(k) == "string" then
-				table.insert(final_env, k..'='..v)
-			elseif type(v) == 'string' then
-				table.insert(final_env, v)
-			else
-				-- TODO is this right?
-				table.insert(final_env, tostring(v))
-			end
-		end
-		return final_env
-	end
+  if final_env then
+    local env = final_env
+    final_env = {}
+    for k,v in pairs(env) do
+      -- If it's passed in as a dict, then convert to list of "k=v"
+      if type(k) == "string" then
+        table.insert(final_env, k..'='..tostring(v))
+      elseif type(v) == 'string' then
+        table.insert(final_env, v)
+      else
+        -- TODO is this right or should I exception here?
+        -- Try to coerce other values to string.
+        table.insert(final_env, tostring(v))
+      end
+    end
+    return final_env
+  end
 end
 
 local function format_message_with_content_length(encoded_message)
@@ -143,6 +157,7 @@ function default_handlers.on_error(code, err)
 end
 
 --- Create and start an RPC client.
+-- @param cmd [
 local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_params)
   _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
   assert(type(cmd) == 'string', "cmd must be a string")

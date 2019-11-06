@@ -696,61 +696,61 @@ end
 
 --[=[
 export interface DocumentFilter {
-	--A language id, like `typescript`.
-	language?: string;
-	--A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	scheme?: string;
-	--A glob pattern, like `*.{ts,js}`.
-	--
-	--Glob patterns can have the following syntax:
-	--- `*` to match one or more characters in a path segment
-	--- `?` to match on one character in a path segment
-	--- `**` to match any number of path segments, including none
-	--- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-	--- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-	--- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
-	pattern?: string;
+  --A language id, like `typescript`.
+  language?: string;
+  --A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+  scheme?: string;
+  --A glob pattern, like `*.{ts,js}`.
+  --
+  --Glob patterns can have the following syntax:
+  --- `*` to match one or more characters in a path segment
+  --- `?` to match on one character in a path segment
+  --- `**` to match any number of path segments, including none
+  --- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+  --- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+  --- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+  pattern?: string;
 }
 --]=]
 
 --[[
 --Static registration options to be returned in the initialize request.
 interface StaticRegistrationOptions {
-	--The id used to register the request. The id can be used to deregister
-	--the request again. See also Registration#id.
-	id?: string;
+  --The id used to register the request. The id can be used to deregister
+  --the request again. See also Registration#id.
+  id?: string;
 }
 
 export interface DocumentFilter {
-	--A language id, like `typescript`.
-	language?: string;
-	--A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
-	scheme?: string;
-	--A glob pattern, like `*.{ts,js}`.
-	--
-	--Glob patterns can have the following syntax:
-	--- `*` to match one or more characters in a path segment
-	--- `?` to match on one character in a path segment
-	--- `**` to match any number of path segments, including none
-	--- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-	--- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-	--- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
-	pattern?: string;
+  --A language id, like `typescript`.
+  language?: string;
+  --A Uri [scheme](#Uri.scheme), like `file` or `untitled`.
+  scheme?: string;
+  --A glob pattern, like `*.{ts,js}`.
+  --
+  --Glob patterns can have the following syntax:
+  --- `*` to match one or more characters in a path segment
+  --- `?` to match on one character in a path segment
+  --- `**` to match any number of path segments, including none
+  --- `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+  --- `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+  --- `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)
+  pattern?: string;
 }
 export type DocumentSelector = DocumentFilter[];
 export interface TextDocumentRegistrationOptions {
-	--A document selector to identify the scope of the registration. If set to null
-	--the document selector provided on the client side will be used.
-	documentSelector: DocumentSelector | null;
+  --A document selector to identify the scope of the registration. If set to null
+  --the document selector provided on the client side will be used.
+  documentSelector: DocumentSelector | null;
 }
 
 --Code Action options.
 export interface CodeActionOptions {
-	--CodeActionKinds that this server may return.
-	--
-	--The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
-	--may list out every specific kind they provide.
-	codeActionKinds?: CodeActionKind[];
+  --CodeActionKinds that this server may return.
+  --
+  --The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
+  --may list out every specific kind they provide.
+  codeActionKinds?: CodeActionKind[];
 }
 
 interface ServerCapabilities {

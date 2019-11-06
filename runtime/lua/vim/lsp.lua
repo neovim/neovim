@@ -78,7 +78,7 @@ local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_
 --   cmd = string;
 --   cmd_args = table;
 --   cmd_cwd = string | nil;
---   cmd_end = table | nil;
+--   cmd_env = table | nil; -- @see |force_env_list|
 --   offset_encoding = 'utf-8' | 'utf-16' | 'utf-32' | string;
 --   name = string | nil;
 --   trace = 'off' | 'messages' | 'verbose' | nil
@@ -625,15 +625,13 @@ function lsp.buf_request(bufnr, method, params, callback)
   return client_request_ids, cancel_request
 end
 
---- Send a request to a server, but don't wait for the response
+--- Send a request to a server and wait for the response.
+-- @param bufnr [number] (optional): The number of the buffer
 -- @param method [string]: Name of the request method
 -- @param params [string]: Arguments to send to the server
--- @param cb [function|string] (optional): Either a function to call or a string to call in vim
--- @param bufnr [number] (optional): The number of the buffer
--- @param filetype [string] (optional): The filetype associated with the server
--- @param server_name [string] (optional)
+-- @param timeout_ms=100 [number] (optional): maximum ms to wait for a result.
 --
--- @returns: The table of request id
+-- @returns: The table of {[client_id] = request_result}
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
@@ -669,13 +667,11 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
 end
 
 --- Send a notification to a server
+-- @param bufnr [number] (optional): The number of the buffer
 -- @param method [string]: Name of the request method
 -- @param params [string]: Arguments to send to the server
--- @param bufnr [number] (optional): The number of the buffer
--- @param filetype [string] (optional): The filetype associated with the server
--- @param server_name [string] (optional)
 --
--- @returns: The notification message id
+-- @returns nil
 function lsp.buf_notify(bufnr, method, params)
   for_each_buffer_client(bufnr, function(client, client_id)
     client.rpc.notify(method, params)
@@ -704,6 +700,7 @@ function lsp._text_document_did_save_handler(bufnr)
   end)
 end
 
+--- Function which can be called to generate omnifunc compatible completion.
 function lsp.omnifunc(findstart, base)
   _ = log.debug() and log.debug("omnifunc.findstart", { findstart = findstart, base = base })
 
