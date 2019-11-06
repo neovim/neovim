@@ -20,6 +20,11 @@ local function json_decode(data)
   end
 end
 
+local function is_dir(filename)
+  local stat = vim.loop.fs_stat(filename)
+  return stat and stat.type == 'directory' or false
+end
+
 -- If a dictionary is passed in, turn it into a list of string of "k=v"
 -- Accepts a table which can be composed of k=v strings or map-like
 -- specification, such as:
@@ -211,8 +216,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     if extra_spawn_params then
       spawn_params.cwd = extra_spawn_params.cwd
       if spawn_params.cwd then
-        local stat = vim.loop.fs_stat(spawn_params.cwd)
-        assert(stat and stat.type == 'directory', "cwd must be a directory")
+        assert(is_dir(spawn_params.cwd), "cwd must be a directory")
       end
       spawn_params.env = force_env_list(extra_spawn_params.env)
     end
