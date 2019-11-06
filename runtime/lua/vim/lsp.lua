@@ -32,6 +32,11 @@ local function set_timeout(ms, fn)
   return timer
 end
 
+local function is_dir(filename)
+  local stat = uv.fs_stat(filename)
+  return stat and stat.type == 'directory' or false
+end
+
 local VALID_ENCODINGS = {
   ["utf-8"] = 'utf-8'; ["utf-16"] = 'utf-16'; ["utf-32"] = 'utf-32';
   ["utf8"]  = 'utf-8'; ["utf16"]  = 'utf-16'; ["utf32"]  = 'utf-32';
@@ -55,20 +60,13 @@ local function for_each_buffer_client(bufnr, callback)
     return
   end
   for client_id in pairs(client_ids) do
-    local client = LSP_CLIENTS[client_id]
     -- This is unlikely to happen. Could only potentially happen in a race
     -- condition between literally a single statement.
     -- We could skip this error, but let's error for now.
-    if not client then
-      error(string.format("Client %d has already shut down.", client_id))
-    end
+    local client = LSP_CLIENTS[client_id]
+        or error(string.format("Client %d has already shut down.", client_id))
     callback(client, client_id)
   end
-end
-
-local function validate_encoding(encoding)
-  assert(type(encoding) == 'string', "encoding must be a string")
-  return VALID_ENCODINGS[encoding:lower()] or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
 local maxerrn = table.maxn(lsp_rpc.ERRORS)
@@ -81,9 +79,9 @@ local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_
 -- from the string.
 lsp.ERRORS = error_codes
 
-local function is_dir(filename)
-  local stat = uv.fs_stat(filename)
-  return stat and stat.type == 'directory' or false
+local function validate_encoding(encoding)
+  assert(type(encoding) == 'string', "encoding must be a string")
+  return VALID_ENCODINGS[encoding:lower()] or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
 local function validate_command(input)
@@ -510,6 +508,28 @@ local function text_document_did_change_handler(_, bufnr, changedtick,
   end)
 end
 
+function lsp._text_document_did_save_handler(bufnr)
+  bufnr = resolve_bufnr(bufnr)
+  local uri = vim.uri_from_bufnr(bufnr)
+  local text = once(function()
+    return table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
+  end)
+  for_each_buffer_client(bufnr, function(client, client_id)
+    if client.resolved_capabilities.text_document_save then
+      local included_text
+      if client.resolved_capabilities.text_document_save_include_text then
+        included_text = text()
+      end
+      client.notify('textDocument/didSave', {
+        textDocument = {
+          uri = uri;
+          text = included_text;
+        }
+      })
+    end
+  end)
+end
+
 -- Implements the textDocument/did* notifications required to track a buffer
 -- for any language server.
 --
@@ -771,28 +791,6 @@ end
 function lsp.buf_notify(bufnr, method, params)
   for_each_buffer_client(bufnr, function(client, client_id)
     client.rpc.notify(method, params)
-  end)
-end
-
-function lsp._text_document_did_save_handler(bufnr)
-  bufnr = resolve_bufnr(bufnr)
-  local uri = vim.uri_from_bufnr(bufnr)
-  local text = once(function()
-    return table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n')
-  end)
-  for_each_buffer_client(bufnr, function(client, client_id)
-    if client.resolved_capabilities.text_document_save then
-      local included_text
-      if client.resolved_capabilities.text_document_save_include_text then
-        included_text = text()
-      end
-      client.notify('textDocument/didSave', {
-        textDocument = {
-          uri = uri;
-          text = included_text;
-        }
-      })
-    end
   end)
 end
 
