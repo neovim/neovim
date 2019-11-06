@@ -1,16 +1,19 @@
-# Vimspector project configuration
+---
+title: Configuration
+---
+
 
 This document defines the supported format for project and adapter configuration
 for Vimspector.
 
-# Concepts
+## Concepts
 
 As Vimspector supports debugging arbitrary projects, you need to tell it a few
 deatils about what you want to debug, and how to go about doing that.
 
 In order to debug things, Vimspector requires a Debug Adapter which bridges
 between Vimspector and the actual debugger tool. Vimspector can be used with any
-debug adapter that implemnents the [Debug Adapter Protocol][dap].
+debug adapter that implements the [Debug Adapter Protocol][dap].
 
 For each debugging session, you provide a _debug configuration_ which includes
 things like:
@@ -24,7 +27,7 @@ Along with optional additional configuration for things like:
 - Function breakpoints
 - Exception breakpoints
 
-## Debug adapter configuration
+### Debug adapter configuration
 
 The adapter to use for a particular debug session can be specified inline within
 the _debug configuration_, but more usually the debug adapter is defined
@@ -32,12 +35,12 @@ separately and just referenced from the _debug configuration_.
 
 The adapter configuration includes things like:
 
-* How to launch or connect to the debeg adapter
+* How to launch or connect to the debug adapter
 * How to configure it for PID attachment
 * How to set up remote debugging, such as how to launch the process remotely
   (for example, under `gdbserver`, `ptvsd`, etc.)
 
-## Debug profile configuration
+### Debug profile configuration
 
 Projects can have many different debug profiles. For example you might have all
 of the following, for a given source tree:
@@ -45,7 +48,7 @@ of the following, for a given source tree:
 * Remotely launch c++ the process, and break on `main`
 * Locally Python test and break exception
 * Remotely attach to a c++ process
-* Locally launchg a bash script
+* Locally launch a bash script
 * Attach to a JVM listening on a port 
 
 Each of these represents a different use case and a different _debug
@@ -57,10 +60,10 @@ configuration_. As mentioned above, a _debug configuration_ is essentially:
   process.
 
 The bulk of the configuration is the last of these, which comprises
-adapter-specific opions, as the Debug Adapter Protocol does not specify any
+adapter-specific options, as the Debug Adapter Protocol does not specify any
 standard for launch or attach configuration.
 
-## Replacements and variables
+### Replacements and variables
 
 Vimspector _debug configuration_ is intended to be as general as possible, and
 to be committed to source control so that debugging your applications becomes a
@@ -69,9 +72,9 @@ if..." with "just hit F5 and step through!").
 
 Therefore it's important to abstract certain details, like runtime and
 build-time paths, and to parameterise the _debug configuration_. Vimspector
-provides a simple mechanism to do this with `${replacement}` style replacments.
+provides a simple mechanism to do this with `${replacement}` style replacements.
 
-The values avaiable within the `${...}` are defined below, but in summary the
+The values available within the `${...}` are defined below, but in summary the
 following are supported:
 
 * Environment variables, such as `${PATH}`
@@ -112,8 +115,8 @@ But for now, consider the following example snippet:
 }
 ```
 
-In this (ficticious) example the `program` launch configuration item contains
-the following variable substiutions:
+In this (fictitious) example the `program` launch configuration item contains
+the following variable substitutions:
 
 * `${fileBasenameNoExtension}` - this is a [Predefined
   Variable](#predefined-variables), set by Vimspector to the base name of the
@@ -121,18 +124,18 @@ the following variable substiutions:
   `xyz`).
 * `${USER}` - this refers to the Environment Variable `USER`.
 * `${TestIdentifier}` - this variable is not defined, so the user is asked to
-  provide a value interractively when starting debugging. Vimspector remembers
+  provide a value interactively when starting debugging. Vimspector remembers
   what they said and provides it as the default should they debug again.
 * `${SecretToken}` - this variable is provided by the configuration's
   `variables` block. Its value is taken from the `strip`ped result of running
   the shell command. Note these variables can be supplied by both the debug and
   adapter configurations and can be either static strings or shell commands.
 
-# Configuration Format
+## Configuration Format
 
 All Vimspector configuration is defined in a JSON object. The complete
 specification of this object is available in the [JSON Schema][schema], but
-the basic format for the configuation object is:
+the basic format for the configuration object is:
 
 ```
 {
@@ -144,13 +147,13 @@ the basic format for the configuation object is:
 The `adapters` key is actually optional, as `<adapter configuration>` can be
 embedded within `<debug configuration>`, though this is not recommended usage.
 
-# Files and locations
+## Files and locations
 
 The above configuration object is constructed from a number of configuration
 files, by merging objects i specified order.
 
 In a minimal sense, the only file required is a `.vimspector.json` file in the
-root of your project which deinfes the [full configuration object][schema], but
+root of your project which defines the [full configuration object][schema], but
 it is usually useful to split the `adapters` configuration into a separate file
 (or indeed one file per debug adapter).
 
@@ -161,10 +164,10 @@ abbreviations:
   `$HOME/.vim/pack/vimspector/start/vimspector`)
 * `<OS>` is either `macos` or `linux` depending on the host operating system.
 
-# Adapter configurations
+## Adapter configurations
 
 Vimspector reads a series of files to build the `adapters` object. The
-`adapters` objects are merged in such a way that a defintion for an adapter
+`adapters` objects are merged in such a way that a definition for an adapter
 named `example-adapter` in a later file _completely replaces_ a previous
 definition.
 
@@ -198,12 +201,12 @@ Adapter configurations are re-read at the start of each debug session.
 
 The specification for the gadget object is defined in the [gadget schema][].
 
-# Debug configurations
+## Debug configurations
 
-The debug conifgurations are read from `.vimspector.json`. The file is found
+The debug configurations are read from `.vimspector.json`. The file is found
 (like `.gadgets.json` above) by recursively searching up the directory hierarchy
 from the directory of the file open in Vim. The first file found is read and no
-futher searching is done.
+further searching is done.
 
 Only a single `.vimspector.json` is read.
 
@@ -227,7 +230,7 @@ typical example looks like this:
 }
 ```
 
-# Predefined Variables
+## Predefined Variables
 
 The following variables are provided:
 
@@ -248,7 +251,7 @@ The following variables are provided:
 * `${fileExtname}` - the current opened file's extension
 * `${cwd}` - the current working directory of the active window on launch
 
-# Appendix: Editor configuration
+## Appendix: Editor configuration
 
 If you would like some assistance with writing the JSON files, and your editor
 of choice has a way to use a language server, you can use the

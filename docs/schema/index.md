@@ -1,4 +1,6 @@
-# Vimsepctor JSON Schema
+---
+title: Configuration Schema
+---
 
 This area contains the [JSON Schema][json-schema] representation of the
 configuration objects used for configuring Vimspector. For more information on
@@ -8,7 +10,7 @@ Schema](http://json-schema.org/understanding-json-schema)
 Vimsepctor specification  is based on [Draft 7][draft-7] of JSON Schema
 standard.
 
-# The schemas
+## The schemas
 
 * [`vimspector.schema.json`](vimspector.schema.json) - contains the full
   configuration defnition (`.vimspector.json`).
