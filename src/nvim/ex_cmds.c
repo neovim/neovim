@@ -5540,6 +5540,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
 
   // We keep a special-purpose buffer around, but don't assume it exists.
   buf_T *preview_buf = bufnr ? buflist_findnr(bufnr) : 0;
+  cmdmod.split = 0;               // disable :leftabove/botright modifiers
   cmdmod.tab = 0;                 // disable :tab modifier
   cmdmod.noswapfile = true;       // disable swap for preview buffer
   // disable file info message
@@ -5586,6 +5587,9 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
       highest_num_line = kv_last(lines.subresults).end.lnum;
       col_width = log10(highest_num_line) + 1 + 3;
     }
+  } else {
+    // Failed to split the window, don't show 'inccommand' preview.
+    preview_buf = NULL;
   }
 
   char *str = NULL;  // construct the line to show in here
@@ -5598,7 +5602,7 @@ static buf_T *show_sub(exarg_T *eap, pos_T old_cusr,
   for (size_t matchidx = 0; matchidx < lines.subresults.size; matchidx++) {
     SubResult match = lines.subresults.items[matchidx];
 
-    if (split && preview_buf) {
+    if (preview_buf) {
       lpos_T p_start = { 0, match.start.col };  // match starts here in preview
       lpos_T p_end   = { 0, match.end.col };    // ... and ends here
 

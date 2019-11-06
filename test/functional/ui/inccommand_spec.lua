@@ -88,14 +88,14 @@ local function common_setup(screen, inccommand, text)
     })
   end
 
-  command("set inccommand=" .. (inccommand and inccommand or ""))
+  command("set inccommand=" .. (inccommand or ""))
 
   if text then
     insert(text)
   end
 end
 
-describe(":substitute, inccommand=split", function()
+describe(":substitute, inccommand=split interactivity", function()
   before_each(function()
     clear()
     common_setup(nil, "split", default_text)
@@ -779,6 +779,59 @@ describe(":substitute, inccommand=split", function()
       {15:~                             }|
       :silent tabedit %s/tw/to^      |
     ]])
+    feed('<Esc>')
+
+    -- leading colons
+    feed(':::%s/tw/to')
+    screen:expect{any=[[{12:to}o lines]]}
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
+  end)
+
+  it("ignores new-window modifiers when splitting the preview window", function()
+    -- one modifier
+    feed(':topleft %s/tw/to')
+    screen:expect([[
+      Inc substitution on           |
+      {12:to}o lines                     |
+      Inc substitution on           |
+      {12:to}o lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |2| {12:to}o lines                 |
+      |4| {12:to}o lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :topleft %s/tw/to^             |
+    ]])
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
+
+    -- multiple modifiers
+    feed(':topleft vert %s/tw/to')
+    screen:expect([[
+      Inc substitution on           |
+      {12:to}o lines                     |
+      Inc substitution on           |
+      {12:to}o lines                     |
+                                    |
+      {11:[No Name] [+]                 }|
+      |2| {12:to}o lines                 |
+      |4| {12:to}o lines                 |
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {15:~                             }|
+      {10:[Preview]                     }|
+      :topleft vert %s/tw/to^        |
+    ]])
+    feed('<Esc>')
+    screen:expect{any=[[two lines]]}
   end)
 
   it('shows split window when typing the pattern', function()
@@ -2527,6 +2580,49 @@ describe(":substitute", function()
       {15:~                             }|
       {10:[Preview]                     }|
       :%s/some\(thing\)\@!/every/^   |
+    ]])
+  end)
+
+  it("doesn't prompt to swap cmd range", function()
+    screen = Screen.new(50, 8) -- wide to avoid hit-enter prompt
+    common_setup(screen, "split", default_text)
+    feed(':2,1s/tw/MO/g')
+
+    -- substitution preview should have been made, without prompting
+    screen:expect([[
+      {12:MO}o lines                                         |
+      {11:[No Name] [+]                                     }|
+      |2| {12:MO}o lines                                     |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {10:[Preview]                                         }|
+      :2,1s/tw/MO/g^                                     |
+    ]])
+
+    -- but should be prompted on hitting enter
+    feed('<CR>')
+    screen:expect([[
+      {12:MO}o lines                                         |
+      {11:[No Name] [+]                                     }|
+      |2| {12:MO}o lines                                     |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {10:[Preview]                                         }|
+      {13:Backwards range given, OK to swap (y/n)?}^          |
+    ]])
+
+    feed('y')
+    screen:expect([[
+      Inc substitution on                               |
+      ^MOo lines                                         |
+                                                        |
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {15:~                                                 }|
+      {13:Backwards range given, OK to swap (y/n)?}y         |
     ]])
   end)
 end)
