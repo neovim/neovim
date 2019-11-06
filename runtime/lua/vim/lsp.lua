@@ -19,6 +19,7 @@ local function resolve_bufnr(bufnr)
   if bufnr == nil or bufnr == 0 then
     return vim.api.nvim_get_current_buf()
   end
+  assert(type(bufnr) == 'number', "bufnr must be a number")
   return bufnr
 end
 
@@ -49,7 +50,6 @@ local BUFFER_CLIENT_IDS = {}
 local function for_each_buffer_client(bufnr, callback)
   assert(type(callback) == 'function', "callback must be a function")
   bufnr = resolve_bufnr(bufnr)
-  assert(type(bufnr) == 'number', "bufnr must be a number")
   local client_ids = BUFFER_CLIENT_IDS[bufnr]
   if not client_ids or vim.tbl_isempty(client_ids) then
     return
@@ -458,8 +458,11 @@ local function once(fn)
 end
 
 local ENCODING_INDEX = { ["utf-8"] = 1; ["utf-16"] = 2; ["utf-32"] = 3; }
-local function text_document_did_change_handler(_, bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
-  _ = log.debug() and log.debug("on_lines", bufnr, changedtick, firstline, lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
+local function text_document_did_change_handler(_, bufnr, changedtick,
+    firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
+    old_utf16_size)
+  _ = log.debug() and log.debug("on_lines", bufnr, changedtick, firstline,
+  lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
   -- Don't do anything if there are no clients attached.
   if vim.tbl_isempty(BUFFER_CLIENT_IDS[bufnr] or {}) then
     return
@@ -522,20 +525,13 @@ function lsp.attach_to_buffer(bufnr, client_id)
     buffer_client_ids = {}
     BUFFER_CLIENT_IDS[bufnr] = buffer_client_ids
 
-    nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(%d)", bufnr, bufnr))
     local uri = vim.uri_from_bufnr(bufnr)
-
+    nvim_command(string.format("autocmd BufWritePost <buffer=%d> lua vim.lsp._text_document_did_save_handler(0)", bufnr))
     -- First time, so attach and set up stuff.
     vim.api.nvim_buf_attach(bufnr, false, {
       on_lines = text_document_did_change_handler;
-      -- TODO this could be abstracted if on_detach passes the bufnr, but since
-      -- there's no documentation, I have no idea if that happens.
       on_detach = function()
-        local params = {
-          textDocument = {
-            uri = uri;
-          }
-        }
+        local params = { textDocument = { uri = uri; } }
         for_each_buffer_client(bufnr, function(client, client_id)
           if client.resolved_capabilities.text_document_open_close then
             client.notify('textDocument/didClose', params)
