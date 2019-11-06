@@ -465,12 +465,10 @@ local function text_document_did_change_handler(_, bufnr, changedtick, firstline
     return
   end
   local incremental_changes = once(function(client)
-    -- TODO make sure this is correct. Sometimes this sends firstline = lastline and text = ""
     local size_index = ENCODING_INDEX[client.offset_encoding]
     local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
-    -- This is necessary for some reason (from testing with clangd). This seems
-    -- to imply that the protocol requires that all lines be terminated with a
-    -- newline.
+    -- This is necessary because we are specifying the full line including the
+    -- newline in range. Therefore, we must replace the newline as well.
     if new_lastline > firstline then
      table.insert(lines, '')
     end
