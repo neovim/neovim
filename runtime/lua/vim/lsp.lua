@@ -6,6 +6,7 @@ local util = require 'vim.lsp.util'
 
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
   = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
+local uv = vim.loop
 
 local lsp = {
   protocol = protocol;
@@ -22,7 +23,7 @@ local function resolve_bufnr(bufnr)
 end
 
 local function set_timeout(ms, fn)
-  local timer = vim.loop.new_timer()
+  local timer = uv.new_timer()
   timer:start(ms, 0, function()
     pcall(fn)
     timer:close()
@@ -81,7 +82,7 @@ local error_codes = vim.tbl_extend("error", lsp_rpc.ERRORS, vim.tbl_add_reverse_
 lsp.ERRORS = error_codes
 
 local function is_dir(filename)
-  local stat = vim.loop.fs_stat(filename)
+  local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
 end
 
@@ -307,7 +308,7 @@ function lsp.start_client(config)
       -- the process has not been started by another process.  If the parent
       -- process is not alive then the server should exit (see exit notification)
       -- its process.
-      processId = vim.loop.getpid();
+      processId = uv.getpid();
       -- The rootPath of the workspace. Is null if no folder is open.
       --
       -- @deprecated in favour of rootUri.
@@ -371,7 +372,7 @@ function lsp.start_client(config)
   local function unsupported_method(method)
     local msg = "server doesn't support "..method
     _ = log.warn() and log.warn(msg)
-    vim.api.nvim_err_writeln(msg)
+    nvim_err_writeln(msg)
     return lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
   end
 
@@ -564,12 +565,27 @@ end
 
 local LSP_CONFIGS = {}
 
+-- Easy configuration option for common LSP use-cases.
+-- This will lazy initialize the client when the filetypes specified are
+-- encountered and attach to those buffers.
+--
+-- The configuration options are the same as |vim.lsp.start_client()|, but
+-- with a few additions and distinctions:
+--
+-- Additional parameters:
+-- - filetype: {string} or {list} of filetypes to attach to.
+-- - name: A unique string among all other functions configured with
+-- |vim.lsp.add_config|.
+--
+-- Differences:
+-- - root_dir: will default to |getcwd()|
+--
 function lsp.add_config(config)
   -- Additional defaults.
   -- Keep a copy of the user's input for debugging reasons.
   local user_config = config
   config = vim.tbl_extend("force", {}, user_config)
-  config.root_dir = config.root_dir or vim.loop.cwd()
+  config.root_dir = config.root_dir or uv.cwd()
   -- Validate config.
   validate_client_config(config)
   assert(config.filetype, "config must have 'filetype' key")
@@ -606,6 +622,35 @@ function lsp.add_config(config)
     config.name))
 end
 
+-- Create a copy of an existing configuration, and override config with values
+-- from new_config.
+-- This is useful if you wish you create multiple LSPs with different root_dirs
+-- or other use cases.
+--
+-- You can specify a new unique name, but if you do not, a unique name will be
+-- created like `name-dup_count`.
+--
+-- existing_name: the name of the existing config to copy.
+-- new_config: the new configuration options. @see |vim.lsp.start_client()|.
+function lsp.copy_config(existing_name, new_config)
+  local config = LSP_CONFIGS[existing_name] or error(string.format("Configuration with name %q doesn't exist", existing_name))
+  config = vim.tbl_extend("force", config, new_config or {})
+  config.client_id = nil
+  config.original_config_name = existing_name
+
+  if config.name == existing_name then
+    -- Create a new, unique name.
+    local duplicate_count = 0
+    for _, conf in pairs(LSP_CONFIGS) do
+      if conf.original_config_name == existing_name then
+        duplicate_count = duplicate_count + 1
+      end
+    end
+    config.name = string.format("%s-%d", existing_name, duplicate_count + 1)
+  end
+  lsp.add_config(config)
+end
+
 function lsp._start_client_by_name(name)
   local config = LSP_CONFIGS[name]
   -- If it exists and is running, don't make it again.
@@ -614,7 +659,7 @@ function lsp._start_client_by_name(name)
     return
   end
   config.client_id = lsp.start_client(config)
-  vim.lsp.attach_to_buffer(0, config.client_id)
+  lsp.attach_to_buffer(0, config.client_id)
 
   nvim_command(string.format(
     "autocmd FileType %s silent lua vim.lsp.attach_to_buffer(0, %d)",
@@ -705,20 +750,20 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
     expected_result_count = expected_result_count + 1
   end
   _ = log.trace() and log.trace("expected_result_count", expected_result_count)
-  local timeout = (timeout_ms or 100) + vim.loop.now()
+  local timeout = (timeout_ms or 100) + uv.now()
   -- TODO is there a better way to sync this?
   while result_count < expected_result_count do
     _ = log.trace() and log.trace("results", result_count, request_results)
-    if vim.loop.now() >= timeout then
+    if uv.now() >= timeout then
       cancel()
       return nil, "TIMEOUT"
     end
     -- TODO this really needs to be further looked at.
     nvim_command "sleep 10m"
     -- vim.loop.sleep(10)
-    vim.loop.update_time()
+    uv.update_time()
   end
-  vim.loop.update_time()
+  uv.update_time()
   _ = log.trace() and log.trace("results", result_count, request_results)
   return request_results
 end
@@ -823,14 +868,12 @@ end
 
 -- TODO keep?
 function lsp.buf_print_debug_info(bufnr)
-  vim.api.nvim_out_write(vim.inspect(lsp.get_buffer_clients(bufnr)))
-  vim.api.nvim_out_write("\n")
+  print(vim.inspect(lsp.get_buffer_clients(bufnr)))
 end
 
 -- TODO keep?
 function lsp.print_debug_info()
-  vim.api.nvim_out_write(vim.inspect({ clients = LSP_CLIENTS, configs = LSP_CONFIGS }))
-  vim.api.nvim_out_write("\n")
+  print(vim.inspect({ clients = LSP_CLIENTS, configs = LSP_CONFIGS }))
 end
 
 function lsp.set_log_level(level)
