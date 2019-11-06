@@ -285,7 +285,7 @@ Example: >
 
 Lua tables are used as both dictionaries and lists, so it is impossible to
 determine whether empty table is meant to be empty list or empty dictionary.
-Additionally lua does not have integer numbers. To distinguish between these
+Additionally Lua does not have integer numbers. To distinguish between these
 cases there is the following agreement:
 
 0. Empty table is empty list.
@@ -300,7 +300,7 @@ cases there is the following agreement:
 4. Table with `vim.type_idx` key may be a dictionary, a list or floating-point 
    value:
    - `{[vim.type_idx]=vim.types.float, [vim.val_idx]=1}` is converted to 
-     a floating-point 1.0. Note that by default integral lua numbers are 
+     a floating-point 1.0. Note that by default integral Lua numbers are 
      converted to |Number|s, non-integral are converted to |Float|s. This 
      variant allows integral |Float|s.
    - `{[vim.type_idx]=vim.types.dictionary}` is converted to an empty 
@@ -321,10 +321,10 @@ Examples: >
     :  endfunction
     :echo Rand(1,10)
 
-Note that currently second argument to `luaeval` undergoes VimL to lua 
-conversion, so changing containers in lua do not affect values in VimL. Return 
-value is also always converted. When converting, |msgpack-special-dict|s are 
-treated specially.
+Note: second argument to `luaeval` undergoes VimL to Lua conversion
+("marshalled"), so changes to Lua containers do not affect values in VimL.
+Return value is also always converted. When converting,
+|msgpack-special-dict|s are treated specially.
 
 ==============================================================================
 Lua standard modules					*lua-stdlib*
@@ -355,20 +355,10 @@ Result is something like this: >
 
 To find documentation on e.g. the "deepcopy" function: >
 
-    :help vim.deepcopy
+    :help vim.deepcopy()
 
 Note that underscore-prefixed functions (e.g. "_os_proc_children") are
 internal/private and must not be used by plugins.
-
-------------------------------------------------------------------------------
-VIM.API							*lua-api* *vim.api*
-
-`vim.api` exposes the full Nvim |API| as a table of Lua functions.
-
-Example: to use the "nvim_get_current_line()" API function, call
-"vim.api.nvim_get_current_line()": >
-
-    print(tostring(vim.api.nvim_get_current_line()))
 
 ------------------------------------------------------------------------------
 VIM.LOOP						*lua-loop* *vim.loop*
@@ -416,20 +406,46 @@ Example: repeating timer
     print('sleeping');
 
 
+Example: File-change detection				*file-change-detect*
+    1. Save this code to a file.
+    2. Execute it with ":luafile %".
+    3. Use ":Watch %" to watch any file.
+    4. Try editing the file from another text editor.
+    5. Observe that the file reloads in Nvim (because on_change() calls
+       |:checktime|). >
+
+    local w = vim.loop.new_fs_event()
+    local function on_change(err, fname, status)
+      -- Do work...
+      vim.api.nvim_command('checktime')
+      -- Debounce: stop/start.
+      w:stop()
+      watch_file(fname)
+    end
+    function watch_file(fname)
+      local fullpath = vim.api.nvim_call_function(
+        'fnamemodify', {fname, ':p'})
+      w:start(fullpath, {}, vim.schedule_wrap(function(...)
+        on_change(...) end))
+    end
+    vim.api.nvim_command(
+      "command! -nargs=1 Watch call luaeval('watch_file(_A)', expand('<args>'))")
+
+
 Example: TCP echo-server				*tcp-server*
     1. Save this code to a file.
     2. Execute it with ":luafile %".
     3. Note the port number.
     4. Connect from any TCP client (e.g. "nc 0.0.0.0 36795"): >
 
-    local function create_server(host, port, on_connection)
+    local function create_server(host, port, on_connect)
       local server = vim.loop.new_tcp()
       server:bind(host, port)
       server:listen(128, function(err)
         assert(not err, err)  -- Check for errors.
         local sock = vim.loop.new_tcp()
         server:accept(sock)  -- Accept client connection.
-        on_connection(sock)  -- Start reading messages.
+        on_connect(sock)  -- Start reading messages.
       end)
       return server
     end
@@ -477,7 +493,7 @@ it should call `parse()` again. If the buffer wasn't edited, the same tree will
 be returned again without extra work. If the buffer was parsed before,
 incremental parsing will be done of the changed parts.
 
-NB: to use the parser directly inside a |nvim_buf_attach| lua callback, you must
+NB: to use the parser directly inside a |nvim_buf_attach| Lua callback, you must
 call `get_parser()` before you register your callback. But preferably parsing
 shouldn't be done directly in the change callback anyway as they will be very
 frequent. Rather a plugin that does any kind of analysis on a tree should use
@@ -552,7 +568,17 @@ tsnode:named_descendant_for_range(start_row, start_col, end_row, end_col)
 	range of (row, column) positions
 
 ------------------------------------------------------------------------------
-VIM							*lua-util*
+VIM							*lua-builtin*
+
+vim.api.{func}({...})					*vim.api*
+        Invokes Nvim |API| function {func} with arguments {...}.
+        Example: call the "nvim_get_current_line()" API function: >
+            print(tostring(vim.api.nvim_get_current_line()))
+
+vim.call({func}, {...})					*vim.call()*
+        Invokes |vim-function| or |user-function| {func} with arguments {...}.
+        See also |vim.fn|. Equivalent to: >
+            vim.fn[func]({...})
 
 vim.in_fast_event()					*vim.in_fast_event()*
         Returns true if the code is executing as part of a "fast" event
@@ -588,26 +614,23 @@ vim.schedule({callback})				*vim.schedule()*
         Schedules {callback} to be invoked soon by the main event-loop. Useful
         to avoid |textlock| or other temporary restrictions.
 
-vim.fn.{func}({...})
-        Call vimL function {func} with arguments. {func} can be both builtin
-        functions and user functions. To call autoload functions, use the
-        syntax `vim.fn['some#function']({...})`
+vim.fn.{func}({...})					*vim.fn*
+        Invokes |vim-function| or |user-function| {func} with arguments {...}.
+        To call autoload functions, use the syntax: >
+            vim.fn['some#function']({...})
+<
+        Unlike vim.api.|nvim_call_function| this converts directly between Vim
+        objects and Lua objects. If the Vim function returns a float, it will
+        be represented directly as a Lua number. Empty lists and dictionaries
+        both are represented by an empty table.
 
-        Note: unlike vim.api.|nvim_call_function| this converts values directly
-        between vimL values and lua values. If the vimL function returns a
-        float, it will be representeted directly as a lua number. Both empty
-        lists and dictonaries will be represented by an empty table.
-
-        Note: vim.fn keys are generated on demand. So `pairs(vim.fn)`
-        does NOT work to enumerate all functions.
-
-vim.call({func}, {...})
-        Call vim script function {func}. Equivalent to `vim.fn[func]({...})`
+        Note: vim.fn keys are generated lazily, thus `pairs(vim.fn)` only
+        enumerates functions that were called at least once.
 
 vim.type_idx						*vim.type_idx*
 	Type index for use in |lua-special-tbl|.  Specifying one of the 
 	values from |vim.types| allows typing the empty table (it is 
-	unclear whether empty lua table represents empty list or empty array) 
+	unclear whether empty Lua table represents empty list or empty array) 
 	and forcing integral numbers to be |Float|.  See |lua-special-tbl| for 
 	more details.
 
@@ -631,7 +654,7 @@ vim.types						*vim.types*
 	`vim.types.array` and `vim.types.dictionary` fall under only two 
 	following assumptions:
 	1. Value may serve both as a key and as a value in a table.  Given the 
-	   properties of lua tables this basically means “value is not `nil`”.
+	   properties of Lua tables this basically means “value is not `nil`”.
 	2. For each value in `vim.types` table `vim.types[vim.types[value]]` 
 	   is the same as `value`.
 	No other restrictions are put on types, and it is not guaranteed that 
@@ -652,6 +675,20 @@ inspect({object}, {options})                                   *vim.inspect()*
 paste({lines}, {phase})                                          *vim.paste()*
                 Paste handler, invoked by |nvim_paste()| when a conforming UI
                 (such as the |TUI|) pastes text into the editor.
+
+                Example: To remove ANSI color codes when pasting: >
+
+                 vim.paste = (function()
+                   local overridden = vim.paste
+                   return function(lines, phase)
+                     for i,line in ipairs(lines) do
+                       -- Scrub ANSI color codes from paste input.
+                       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
+                     end
+                     overridden(lines, phase)
+                   end
+                 end)()
+<
 
                 Parameters: ~
                     {lines}  |readfile()|-style list of lines to paste.

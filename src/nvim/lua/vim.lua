@@ -165,6 +165,20 @@ end
 --- Paste handler, invoked by |nvim_paste()| when a conforming UI
 --- (such as the |TUI|) pastes text into the editor.
 ---
+--- Example: To remove ANSI color codes when pasting:
+--- <pre>
+--- vim.paste = (function()
+---   local overridden = vim.paste
+---   return function(lines, phase)
+---     for i,line in ipairs(lines) do
+---       -- Scrub ANSI color codes from paste input.
+---       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
+---     end
+---     overridden(lines, phase)
+---   end
+--- end)()
+--- </pre>
+---
 --@see |paste|
 ---
 --@param lines  |readfile()|-style list of lines to paste. |channel-lines|

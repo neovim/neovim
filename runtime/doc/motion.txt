@@ -418,35 +418,35 @@ between Vi and Vim.
 5. Text object motions					*object-motions*
 
 							*(*
-(			[count] sentences backward.  |exclusive| motion.
+(			[count] |sentence|s backward.  |exclusive| motion.
 
 							*)*
-)			[count] sentences forward.  |exclusive| motion.
+)			[count] |sentence|s forward.  |exclusive| motion.
 
 							*{*
-{			[count] paragraphs backward.  |exclusive| motion.
+{			[count] |paragraph|s backward.  |exclusive| motion.
 
 							*}*
-}			[count] paragraphs forward.  |exclusive| motion.
+}			[count] |paragraph|s forward.  |exclusive| motion.
 
 							*]]*
-]]			[count] sections forward or to the next '{' in the
+]]			[count] |section|s forward or to the next '{' in the
 			first column.  When used after an operator, then also
 			stops below a '}' in the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*][*
-][			[count] sections forward or to the next '}' in the
+][			[count] |section|s forward or to the next '}' in the
 			first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*[[*
-[[			[count] sections backward or to the previous '{' in
+[[			[count] |section|s backward or to the previous '{' in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*[]*
-[]			[count] sections backward or to the previous '}' in
+[]			[count] |section|s backward or to the previous '}' in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
