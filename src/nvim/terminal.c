@@ -663,7 +663,11 @@ void terminal_paste(long count, char_u **y_array, size_t y_size)
     for (size_t j = 0; j < y_size; j++) {
       if (j) {
         // terminate the previous line
+#ifdef UNIX
         terminal_send(curbuf->terminal, "\n", 1);
+#else
+        terminal_send(curbuf->terminal, "\r\n", 2);
+#endif
       }
       size_t len = STRLEN(y_array[j]);
       if (len > buff_len) {
