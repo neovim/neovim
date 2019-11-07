@@ -141,6 +141,11 @@ func Test_let_varg_fail()
   call s:set_varg8([0])
 endfunction
 
+func Test_let_utf8_environment()
+  let $a = 'ĀĒĪŌŪあいうえお'
+  call assert_equal('ĀĒĪŌŪあいうえお', $a)
+endfunc
+
 func Test_let_heredoc_fails()
   call assert_fails('let v =<< marker', 'E991:')
 
