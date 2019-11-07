@@ -102,6 +102,20 @@ typedef struct {
   int did_emsg;
 } TryState;
 
+// `msg_list` controls the collection of abort-causing non-exception errors,
+// which would otherwise be ignored.  This pattern is from do_cmdline().
+//
+// TODO(bfredl): prepare error-handling at "top level" (nv_event).
+#define TRY_WRAP(code) \
+  do { \
+    struct msglist **saved_msg_list = msg_list; \
+    struct msglist *private_msg_list; \
+    msg_list = &private_msg_list; \
+    private_msg_list = NULL; \
+    code \
+    msg_list = saved_msg_list;  /* Restore the exception context. */ \
+  } while (0)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
 #endif

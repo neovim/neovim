@@ -850,10 +850,10 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                     {enter}   Enter the window (make it the current window)
                     {config}  Map defining the window configuration. Keys:
                               •  `relative` : Sets the window layout to "floating", placed
-                                at (row,col) coordinates relative to one of:
+                                at (row,col) coordinates relative to:
                                 • "editor" The global editor grid
                                 • "win" Window given by the `win` field, or
-                                  current window by default.
+                                  current window.
                                 • "cursor" Cursor position in current window.
 
                               • `win` : |window-ID| for relative="win".
@@ -1476,45 +1476,66 @@ nvim_buf_line_count({buffer})                          *nvim_buf_line_count()*
                     Line count, or 0 for unloaded buffer. |api-buffer|
 
 nvim_buf_attach({buffer}, {send_buffer}, {opts})           *nvim_buf_attach()*
-                Activates buffer-update events on a channel, or as lua
+                Activates buffer-update events on a channel, or as Lua
                 callbacks.
 
                 Parameters: ~
                     {buffer}       Buffer handle, or 0 for current buffer
-                    {send_buffer}  Set to true if the initial notification
-                                   should contain the whole buffer. If so, the
-                                   first notification will be a
-                                   `nvim_buf_lines_event` . Otherwise, the
-                                   first notification will be a
-                                   `nvim_buf_changedtick_event` . Not used for
-                                   lua callbacks.
+                    {send_buffer}  True if the initial notification should
+                                   contain the whole buffer: first
+                                   notification will be `nvim_buf_lines_event`
+                                   . Else the first notification will be
+                                   `nvim_buf_changedtick_event` . Not for Lua
+                                   callbacks.
                     {opts}         Optional parameters.
-                                   • `on_lines` : lua callback received on
-                                     change.
-                                   • `on_changedtick` : lua callback received
-                                     on changedtick increment without text
-                                     change.
-                                   • `utf_sizes` : include UTF-32 and UTF-16
-                                     size of the replaced region. See
-                                     |api-buffer-updates-lua| for more
-                                     information
+                                   • on_lines: Lua callback invoked on change.
+                                     Return `true` to detach. Args:
+                                     • buffer handle
+                                     • b:changedtick
+                                     • first line that changed (zero-indexed)
+                                     • last line that was changed
+                                     • last line in the updated range
+                                     • byte count of previous contents
+                                     • deleted_codepoints (if `utf_sizes` is
+                                       true)
+                                     • deleted_codeunits (if `utf_sizes` is
+                                       true)
+
+                                   • on_changedtick: Lua callback invoked on
+                                     changedtick increment without text
+                                     change. Args:
+                                     • buffer handle
+                                     • b:changedtick
+
+                                   • on_detach: Lua callback invoked on
+                                     detach. Args:
+                                     • buffer handle
+
+                                   • utf_sizes: include UTF-32 and UTF-16 size
+                                     of the replaced region, as args to
+                                     `on_lines` .
 
                 Return: ~
-                    False when updates couldn't be enabled because the buffer
-                    isn't loaded or `opts` contained an invalid key; otherwise
-                    True. TODO: LUA_API_NO_EVAL
+                    False if attach failed (invalid parameter, or buffer isn't
+                    loaded); otherwise True. TODO: LUA_API_NO_EVAL
+
+                See also: ~
+                    |nvim_buf_detach()|
+                    |api-buffer-updates-lua|
 
 nvim_buf_detach({buffer})                                  *nvim_buf_detach()*
                 Deactivates buffer-update events on the channel.
-
-                For Lua callbacks see |api-lua-detach|.
 
                 Parameters: ~
                     {buffer}  Buffer handle, or 0 for current buffer
 
                 Return: ~
-                    False when updates couldn't be disabled because the buffer
-                    isn't loaded; otherwise True.
+                    False if detach failed (because the buffer isn't loaded);
+                    otherwise True.
+
+                See also: ~
+                    |nvim_buf_attach()|
+                    |api-lua-detach| for detaching Lua callbacks
 
                                                         *nvim_buf_get_lines()*
 nvim_buf_get_lines({buffer}, {start}, {end}, {strict_indexing})

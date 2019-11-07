@@ -1562,6 +1562,7 @@ int op_delete(oparg_T *oap)
         oap->end = curwin->w_cursor;
         curwin->w_cursor = oap->start;
       }
+      mb_adjust_opend(oap);
     }
 
     if (oap->line_count == 1) {         /* delete characters within one line */

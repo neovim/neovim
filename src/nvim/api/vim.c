@@ -53,20 +53,6 @@
 # include "api/vim.c.generated.h"
 #endif
 
-// `msg_list` controls the collection of abort-causing non-exception errors,
-// which would otherwise be ignored.  This pattern is from do_cmdline().
-//
-// TODO(bfredl): prepare error-handling at "top level" (nv_event).
-#define TRY_WRAP(code) \
-  do { \
-    struct msglist **saved_msg_list = msg_list; \
-    struct msglist *private_msg_list; \
-    msg_list = &private_msg_list; \
-    private_msg_list = NULL; \
-    code \
-    msg_list = saved_msg_list;  /* Restore the exception context. */ \
-  } while (0)
-
 void api_vim_init(void)
   FUNC_API_NOEXPORT
 {
@@ -1054,10 +1040,9 @@ fail:
 /// @param enter  Enter the window (make it the current window)
 /// @param config Map defining the window configuration. Keys:
 ///   - `relative`: Sets the window layout to "floating", placed at (row,col)
-///                 coordinates relative to one of:
+///                 coordinates relative to:
 ///      - "editor" The global editor grid
-///      - "win"    Window given by the `win` field, or current window by
-///                 default.
+///      - "win"    Window given by the `win` field, or current window.
 ///      - "cursor" Cursor position in current window.
 ///   - `win`: |window-ID| for relative="win".
 ///   - `anchor`: Decides which corner of the float to place at (row,col):

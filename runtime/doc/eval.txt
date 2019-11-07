@@ -1217,7 +1217,7 @@ lambda expression				*expr-lambda* *lambda*
 {args -> expr1}		lambda expression
 
 A lambda expression creates a new unnamed function which returns the result of
-evaluating |expr1|.  Lambda expressions differ from |user-functions| in
+evaluating |expr1|.  Lambda expressions differ from |user-function|s in
 the following ways:
 
 1. The body of the lambda expression is an |expr1| and not a sequence of |Ex|
@@ -1986,9 +1986,12 @@ v:windowid	Application-specific window "handle" which may be set by any
 		|window-ID|.
 
 ==============================================================================
-4. Builtin Functions					*functions*
+4. Builtin Functions				*vim-function* *functions*
 
-See |function-list| for a list grouped by what the function is used for.
+The Vimscript subsystem (referred to as "eval" internally) provides the
+following builtin functions.  Scripts can also define |user-function|s.
+
+See |function-list| to browse functions by topic.
 
 (Use CTRL-] on the function name to jump to the full explanation.)
 
@@ -3543,7 +3546,7 @@ exists({expr})	The result is a Number, which is |TRUE| if {expr} is
 					string)
 			*funcname	built-in function (see |functions|)
 					or user defined function (see
-					|user-functions|). Also works for a
+					|user-function|). Also works for a
 					variable that is a Funcref.
 			varname		internal variable (see
 					|internal-variables|).  Also works
@@ -9243,7 +9246,7 @@ Don't forget that "^" will only match at the first character of the String and
 "\n".
 
 ==============================================================================
-5. Defining functions					*user-functions*
+5. Defining functions					*user-function*
 
 New functions can be defined.  These can be called just like builtin
 functions.  The function executes a sequence of Ex commands.  Normal mode

@@ -219,6 +219,12 @@ g^			When lines wrap ('wrap' on): To the first non-blank
 gm			Like "g0", but half a screenwidth to the right (or as
 			much as possible).
 
+							*gM*
+gM			Like "g0", but to halfway the text of the line.
+			With a count: to this percentage of text in the line.
+			Thus "10gM" is near the start of the text and "90gM"
+			is near the end of the text.
+
 							*g$* *g<End>*
 g$ or g<End>		When lines wrap ('wrap' on): To the last character of
 			the screen line and [count - 1] screen lines downward
@@ -412,35 +418,35 @@ between Vi and Vim.
 5. Text object motions					*object-motions*
 
 							*(*
-(			[count] sentences backward.  |exclusive| motion.
+(			[count] |sentence|s backward.  |exclusive| motion.
 
 							*)*
-)			[count] sentences forward.  |exclusive| motion.
+)			[count] |sentence|s forward.  |exclusive| motion.
 
 							*{*
-{			[count] paragraphs backward.  |exclusive| motion.
+{			[count] |paragraph|s backward.  |exclusive| motion.
 
 							*}*
-}			[count] paragraphs forward.  |exclusive| motion.
+}			[count] |paragraph|s forward.  |exclusive| motion.
 
 							*]]*
-]]			[count] sections forward or to the next '{' in the
+]]			[count] |section|s forward or to the next '{' in the
 			first column.  When used after an operator, then also
 			stops below a '}' in the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*][*
-][			[count] sections forward or to the next '}' in the
+][			[count] |section|s forward or to the next '}' in the
 			first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*[[*
-[[			[count] sections backward or to the previous '{' in
+[[			[count] |section|s backward or to the previous '{' in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 
 							*[]*
-[]			[count] sections backward or to the previous '}' in
+[]			[count] |section|s backward or to the previous '}' in
 			the first column.  |exclusive|
 			Note that |exclusive-linewise| often applies.
 

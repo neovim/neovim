@@ -1362,6 +1362,7 @@ function Screen:linegrid_check_attrs(attrs)
       if self._rgb_cterm then
         attr_rgb, attr_cterm, info = unpack(v)
         attr = {attr_rgb, attr_cterm}
+        info = info or {}
       elseif self._options.ext_hlstate then
         attr, info = unpack(v)
       else
@@ -1400,11 +1401,12 @@ end
 function Screen:_pprint_hlitem(item)
     -- print(inspect(item))
     local multi = self._rgb_cterm or self._options.ext_hlstate
-    local attrdict = "{"..self:_pprint_attrs(multi and item[1] or item).."}"
+    local cterm = (not self._rgb_cterm and not self._options.rgb)
+    local attrdict = "{"..self:_pprint_attrs(multi and item[1] or item, cterm).."}"
     local attrdict2, hlinfo
     local descdict = ""
     if self._rgb_cterm then
-      attrdict2 = ", {"..self:_pprint_attrs(item[2]).."}"
+      attrdict2 = ", {"..self:_pprint_attrs(item[2], true).."}"
       hlinfo = item[3]
     else
       attrdict2 = ""
@@ -1433,13 +1435,15 @@ function Screen:_pprint_hlinfo(states)
 end
 
 
-function Screen:_pprint_attrs(attrs)
+function Screen:_pprint_attrs(attrs, cterm)
     local items = {}
     for f, v in pairs(attrs) do
       local desc = tostring(v)
       if f == "foreground" or f == "background" or f == "special" then
         if Screen.colornames[v] ~= nil then
           desc = "Screen.colors."..Screen.colornames[v]
+        elseif cterm then
+          desc = tostring(v)
         else
           desc = string.format("tonumber('0x%06x')",v)
         end
@@ -1511,7 +1515,8 @@ function Screen:_equal_attrs(a, b)
        a.italic == b.italic and a.reverse == b.reverse and
        a.foreground == b.foreground and a.background == b.background and
        a.special == b.special and a.blend == b.blend and
-       a.strikethrough == b.strikethrough
+       a.strikethrough == b.strikethrough and
+       a.fg_indexed == b.fg_indexed and a.bg_indexed == b.bg_indexed
 end
 
 function Screen:_equal_info(a, b)

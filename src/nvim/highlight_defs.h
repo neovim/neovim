@@ -19,6 +19,8 @@ typedef enum {
   HL_STANDOUT        = 0x20,
   HL_STRIKETHROUGH   = 0x40,
   HL_NOCOMBINE       = 0x80,
+  HL_BG_INDEXED    = 0x0100,
+  HL_FG_INDEXED    = 0x0200,
 } HlAttrFlags;
 
 /// Stores a complete highlighting entry, including colors and attributes

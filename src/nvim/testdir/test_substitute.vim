@@ -149,6 +149,7 @@ func Run_SubCmd_Tests(tests)
   for t in a:tests
     let start = line('.') + 1
     let end = start + len(t[2]) - 1
+    " TODO: why is there a one second delay the first time we get here?
     exe "normal o" . t[0]
     call cursor(start, 1)
     exe t[1]
@@ -716,4 +717,13 @@ one two
   call assert_equal('xyz', getline('.'))
 
   close!
+endfunc
+
+func Test_sub_beyond_end()
+  new
+  call setline(1, '#')
+  let @/ = '^#\n\zs'
+  s///e
+  call assert_equal('#', getline(1))
+  bwipe!
 endfunc
