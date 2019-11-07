@@ -24,19 +24,35 @@ local function resolve_bufnr(bufnr)
   return bufnr
 end
 
-local function set_timeout(ms, fn)
-  local timer = uv.new_timer()
-  timer:start(ms, 0, function()
-    pcall(fn)
-    timer:close()
-  end)
-  return timer
-end
-
 local function is_dir(filename)
   local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
 end
+
+-- TODO Use vim.wait when that is available, but provide an alternative for now.
+local wait = vim.wait or function(timeout_ms, condition, interval)
+  assert(type(timeout_ms) == 'number', "timeout_ms must be a number")
+  assert(timeout_ms > 0, "timeout_ms must be > 0")
+  _ = log.debug() and log.debug("wait.fallback", timeout_ms)
+  interval = interval or 200
+  local interval_cmd = "sleep "..interval.."m"
+  local timeout = timeout_ms + uv.now()
+  -- TODO is there a better way to sync this?
+  while true do
+    if condition() then
+      return 0
+    end
+    if uv.now() >= timeout then
+      return -1
+    end
+    nvim_command(interval_cmd)
+    -- vim.loop.sleep(10)
+    uv.update_time()
+  end
+  uv.update_time()
+  return
+end
+local wait_result_reason = { [-1] = "timeout"; [-2] = "interrupted"; [-3] = "error" }
 
 local VALID_ENCODINGS = {
   ["utf-8"] = 'utf-8'; ["utf-16"] = 'utf-16'; ["utf-32"] = 'utf-32';
@@ -50,8 +66,9 @@ local function next_client_id()
   return CLIENT_INDEX
 end
 -- Tracks all clients created via lsp.start_client
-local LSP_CLIENTS = {}
+local ACTIVE_CLIENTS = {}
 local BUFFER_CLIENT_IDS = {}
+local UNINITIALIZED_CLIENTS = {}
 
 local function for_each_buffer_client(bufnr, callback)
   assert(type(callback) == 'function', "callback must be a function")
@@ -64,7 +81,7 @@ local function for_each_buffer_client(bufnr, callback)
     -- This is unlikely to happen. Could only potentially happen in a race
     -- condition between literally a single statement.
     -- We could skip this error, but let's error for now.
-    local client = LSP_CLIENTS[client_id]
+    local client = ACTIVE_CLIENTS[client_id]
         or error(string.format("Client %d has already shut down.", client_id))
     callback(client, client_id)
   end
@@ -267,16 +284,9 @@ function lsp.start_client(config)
     end
   end
 
-  -- This is used because if there are outstanding timers (like for stop())
-  -- they will block neovim exiting.
-  local timers = {}
   function handlers.on_exit()
-    for _, h in ipairs(timers) do
-      h:stop()
-      h:close()
-    end
-    LSP_CLIENTS[client_id] = nil
-    for bufnr, client_ids in pairs(BUFFER_CLIENT_IDS) do
+    ACTIVE_CLIENTS[client_id] = nil
+    for _, client_ids in pairs(BUFFER_CLIENT_IDS) do
       client_ids[client_id] = nil
     end
     if config.on_exit then
@@ -297,6 +307,8 @@ function lsp.start_client(config)
     callbacks = callbacks;
     config = config;
   }
+
+  UNINITIALIZED_CLIENTS[client_id] = client;
 
   local function initialize()
     local valid_traces = {
@@ -344,6 +356,7 @@ function lsp.start_client(config)
       assert(not err, err)
       rpc.notify('initialized', {})
       client.initialized = true
+      UNINITIALIZED_CLIENTS[client_id] = nil
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
       client.resolved_capabilities = protocol.resolve_capabilities(client.server_capabilities)
       if config.on_init then
@@ -356,7 +369,7 @@ function lsp.start_client(config)
       _ = log.info() and log.info(log_prefix, "initialized", { resolved_capabilities = client.resolved_capabilities })
 
       -- Only assign after initialized?
-      LSP_CLIENTS[client_id] = client
+      ACTIVE_CLIENTS[client_id] = client
       -- If we had been registered before we start, then send didOpen This can
       -- happen if we attach to buffers before initialize finishes or if
       -- someone restarts a client.
@@ -400,24 +413,21 @@ function lsp.start_client(config)
     return rpc.notify(...)
   end
 
-  -- TODO Make sure these timeouts are ok or make configurable?
+  -- Track this so that we can escalate automatically if we've alredy tried a
+  -- graceful shutdown
+  local tried_graceful_shutdown = false
   function client.stop(force)
     local handle = rpc.handle
     if handle:is_closing() then
       return
     end
-    if force then
-      -- kill after 1s as a last resort.
-      table.insert(timers, set_timeout(1e3, function() handle:kill(9) end))
+    if tried_graceful_shutdown or force then
       handle:kill(15)
       return
     end
-    -- term after 100ms as a fallback
-    table.insert(timers, set_timeout(1e2, function() handle:kill(15) end))
-    -- kill after 1s as a last resort.
-    table.insert(timers, set_timeout(1e3, function() handle:kill(9) end))
+    tried_graceful_shutdown = true
     -- Sending a signal after a process has exited is acceptable.
-    rpc.request('shutdown', nil, function(err, result)
+    rpc.request('shutdown', nil, function(err, _)
       if err == nil then
         rpc.notify('exit')
       else
@@ -570,7 +580,7 @@ function lsp.attach_to_buffer(bufnr, client_id)
   -- This is our first time attaching this client to this buffer.
   buffer_client_ids[client_id] = true
 
-  local client = LSP_CLIENTS[client_id]
+  local client = ACTIVE_CLIENTS[client_id]
   -- Send didOpen for the client if it is initialized. If it isn't initialized
   -- then it will send didOpen on initialize.
   if client then
@@ -578,24 +588,44 @@ function lsp.attach_to_buffer(bufnr, client_id)
   end
 end
 
-nvim_command("autocmd VimLeavePre * lua vim.lsp.stop_all_clients()")
-
 function lsp.get_client_by_id(client_id)
-  return LSP_CLIENTS[client_id]
+  return ACTIVE_CLIENTS[client_id]
 end
 
 function lsp.stop_client(client_id, force)
-  local client = LSP_CLIENTS[client_id]
+  local client = ACTIVE_CLIENTS[client_id]
   if client then
     client.stop(force)
   end
 end
 
 function lsp.stop_all_clients(force)
-  for client_id, client in pairs(LSP_CLIENTS) do
+  for _, client in pairs(ACTIVE_CLIENTS) do
     client.stop(force)
   end
 end
+
+function lsp._vim_exit_handler()
+  log.info("exit_handler", ACTIVE_CLIENTS)
+  for _, client in pairs(UNINITIALIZED_CLIENTS) do
+    client.stop(true)
+  end
+  -- TODO handle v:dying differently?
+  if vim.tbl_isempty(ACTIVE_CLIENTS) then
+    return
+  end
+  for _, client in pairs(ACTIVE_CLIENTS) do
+    client.stop()
+  end
+  local wait_result = wait(500, function() return vim.tbl_isempty(ACTIVE_CLIENTS) end, 50)
+  if wait_result ~= 0 then
+    for _, client in pairs(ACTIVE_CLIENTS) do
+      client.stop(true)
+    end
+  end
+end
+
+nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 
 ---
 --- Buffer level client functions.
@@ -626,38 +656,13 @@ function lsp.buf_request(bufnr, method, params, callback)
 
   local function cancel_request()
     for client_id, request_id in pairs(client_request_ids) do
-      local client = LSP_CLIENTS[client_id]
+      local client = ACTIVE_CLIENTS[client_id]
       client.rpc.notify('$/cancelRequest', { id = request_id })
     end
   end
 
   return client_request_ids, cancel_request
 end
-
--- Use vim.wait when that is available, but provide an alternative for now.
-local wait = vim.wait or function(timeout_ms, condition, interval)
-  assert(type(timeout_ms) == 'number', "timeout_ms must be a number")
-  assert(timeout_ms > 0, "timeout_ms must be > 0")
-  _ = log.debug() and log.debug("wait.fallback", timeout_ms)
-  interval = interval or 200
-  local interval_cmd = "sleep "..interval.."m"
-  local timeout = timeout_ms + uv.now()
-  -- TODO is there a better way to sync this?
-  while true do
-    if condition() then
-      return 0
-    end
-    if uv.now() >= timeout then
-      return -1
-    end
-    nvim_command(interval_cmd)
-    -- vim.loop.sleep(10)
-    uv.update_time()
-  end
-  uv.update_time()
-  return
-end
-local wait_result_reason = { [-1] = "timeout"; [-2] = "interrupted"; [-3] = "error" }
 
 --- Send a request to a server and wait for the response.
 -- @param bufnr [number] (optional): The number of the buffer
@@ -763,7 +768,7 @@ local LSP_CONFIGS = {}
 function lsp.get_client_by_name(name)
   local config = LSP_CONFIGS[name]
   if config.client_id then
-    return LSP_CLIENTS[config.client_id]
+    return ACTIVE_CLIENTS[config.client_id]
   end
 end
 
@@ -856,7 +861,7 @@ end
 function lsp._start_client_by_name(name)
   local config = LSP_CONFIGS[name]
   -- If it exists and is running, don't make it again.
-  if config.client_id and LSP_CLIENTS[config.client_id] then
+  if config.client_id and ACTIVE_CLIENTS[config.client_id] then
     -- TODO log here?
     return
   end
@@ -891,7 +896,7 @@ end
 
 -- TODO keep?
 function lsp.print_debug_info()
-  print(vim.inspect({ clients = LSP_CLIENTS, configs = LSP_CONFIGS }))
+  print(vim.inspect({ clients = ACTIVE_CLIENTS, configs = LSP_CONFIGS }))
 end
 
 function lsp.set_log_level(level)
