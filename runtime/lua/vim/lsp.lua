@@ -634,6 +634,31 @@ function lsp.buf_request(bufnr, method, params, callback)
   return client_request_ids, cancel_request
 end
 
+-- Use vim.wait when that is available, but provide an alternative for now.
+local wait = vim.wait or function(timeout_ms, condition, interval)
+  assert(type(timeout_ms) == 'number', "timeout_ms must be a number")
+  assert(timeout_ms > 0, "timeout_ms must be > 0")
+  _ = log.debug() and log.debug("wait.fallback", timeout_ms)
+  interval = interval or 200
+  local interval_cmd = "sleep "..interval.."m"
+  local timeout = timeout_ms + uv.now()
+  -- TODO is there a better way to sync this?
+  while true do
+    if condition() then
+      return 0
+    end
+    if uv.now() >= timeout then
+      return -1
+    end
+    nvim_command(interval_cmd)
+    -- vim.loop.sleep(10)
+    uv.update_time()
+  end
+  uv.update_time()
+  return
+end
+local wait_result_reason = { [-1] = "timeout"; [-2] = "interrupted"; [-3] = "error" }
+
 --- Send a request to a server and wait for the response.
 -- @param bufnr [number] (optional): The number of the buffer
 -- @param method [string]: Name of the request method
@@ -645,33 +670,21 @@ function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
   local request_results = {}
   local result_count = 0
   local function callback(err, method, result, client_id)
-    _ = log.trace() and log.trace("callback", err, result, client_id)
     request_results[client_id] = { error = err, result = result }
     result_count = result_count + 1
   end
   local client_request_ids, cancel = lsp.buf_request(bufnr, method, params, callback)
-  _ = log.trace() and log.trace("client_request_ids", client_request_ids)
-
   local expected_result_count = 0
   for _ in pairs(client_request_ids) do
     expected_result_count = expected_result_count + 1
   end
-  _ = log.trace() and log.trace("expected_result_count", expected_result_count)
-  local timeout = (timeout_ms or 100) + uv.now()
-  -- TODO is there a better way to sync this?
-  while result_count < expected_result_count do
-    _ = log.trace() and log.trace("results", result_count, request_results)
-    if uv.now() >= timeout then
-      cancel()
-      return nil, "TIMEOUT"
-    end
-    -- TODO this really needs to be further looked at.
-    nvim_command "sleep 10m"
-    -- vim.loop.sleep(10)
-    uv.update_time()
+  local wait_result = wait(timeout_ms or 100, function()
+    return result_count >= expected_result_count
+  end, 10)
+  if wait_result ~= 0 then
+    cancel()
+    return nil, wait_result_reason[wait_result]
   end
-  uv.update_time()
-  _ = log.trace() and log.trace("results", result_count, request_results)
   return request_results
 end
 
