@@ -302,7 +302,6 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
-<<<<<<< HEAD
   it('vim.tbl_keys', function()
     eq({}, exec_lua("return vim.tbl_keys({})"))
     for _, v in pairs(exec_lua("return vim.tbl_keys({'a', 'b', 'c'})")) do
