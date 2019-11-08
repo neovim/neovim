@@ -82,7 +82,7 @@ local function parse_headers(header)
       key = key:lower():gsub('%-', '_')
       headers[key] = value
     else
-      _ = log.error() and log.error("invalid header line %q", line)
+      local _ = log.error() and log.error("invalid header line %q", line)
       error(string.format("invalid header line %q", line))
     end
   end
@@ -156,21 +156,21 @@ end
 
 local default_handlers = {}
 function default_handlers.notification(method, params)
-  _ = log.debug() and log.debug('notification', method, params)
+  local _ = log.debug() and log.debug('notification', method, params)
 end
 function default_handlers.server_request(method, params)
-  _ = log.debug() and log.debug('server_request', method, params)
+  local _ = log.debug() and log.debug('server_request', method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
 function default_handlers.on_exit() end
 function default_handlers.on_error(code, err)
-  _ = log.error() and log.error('client_error:', client_errors[code], err)
+  local _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
 
 --- Create and start an RPC client.
 -- @param cmd [
 local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_params)
-  _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
+  local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
   assert(type(cmd) == 'string', "cmd must be a string")
   assert(type(cmd_args) == 'table', "cmd_args must be a table")
 
@@ -208,7 +208,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 
   local handle, pid
   do
-    local function onexit(code, signal)
+    local function onexit(_code, _signal)
       stdin:close()
       stdout:close()
       stderr:close()
@@ -233,7 +233,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   local message_callbacks = {}
 
   local function encode_and_send(payload)
-    _ = log.debug() and log.debug("rpc.send.payload", payload)
+    local _ = log.debug() and log.debug("rpc.send.payload", payload)
     if handle:is_closing() then return false end
     local encoded = assert(json_encode(payload))
     stdin:write(format_message_with_content_length(encoded))
@@ -241,7 +241,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   end
 
   local function send_notification(method, params)
-    _ = log.debug() and log.debug("rpc.notify", method, params)
+    local _ = log.debug() and log.debug("rpc.notify", method, params)
     return encode_and_send {
       jsonrpc = "2.0";
       method = method;
@@ -275,9 +275,9 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     end
   end
 
-  stderr:read_start(function(err, chunk)
+  stderr:read_start(function(_err, chunk)
     if chunk then
-      _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
+      local _ = log.error() and log.error("rpc", cmd, "stderr", chunk)
     end
   end)
 
@@ -306,7 +306,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     if not decoded then
       on_error(client_errors.INVALID_SERVER_JSON, err)
     end
-    _ = log.debug() and log.debug("decoded", decoded)
+    local _ = log.debug() and log.debug("decoded", decoded)
 
     if type(decoded.method) == 'string' and decoded.id then
       -- Server Request
@@ -316,7 +316,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
         local status, result
         status, result, err = try_call(client_errors.SERVER_REQUEST_HANDLER_ERROR,
             handlers.server_request, decoded.method, decoded.params)
-        _ = log.debug() and log.debug("server_request: callback result", { status = status, result = result, err = err })
+        local _ = log.debug() and log.debug("server_request: callback result", { status = status, result = result, err = err })
         if status then
           if not (result or err) then
             -- TODO this can be a problem if `null` is sent for result. needs vim.NIL
@@ -357,7 +357,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
             callback, decoded.error, decoded.result)
       else
         on_error(client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
-        _ = log.error() and log.error("No callback found for server response id "..result_id)
+        local _ = log.error() and log.error("No callback found for server response id "..result_id)
       end
     elseif type(decoded.method) == 'string' then
       -- Notification

@@ -38,7 +38,7 @@ local builtin_callbacks = {}
 
 -- textDocument/completion
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
-builtin_callbacks['textDocument/completion'] = function(err, _, result)
+builtin_callbacks['textDocument/completion'] = function(_, _, result)
   if not result or vim.tbl_isempty(result) then
     return
   end
@@ -217,7 +217,7 @@ end
 
 local function location_callback(_, method, result)
   if result == nil or vim.tbl_isempty(result) then
-    _ = log.info() and log.info(method, 'No location found')
+    local _ = log.info() and log.info(method, 'No location found')
     return nil
   end
   handle_location(result)
@@ -260,7 +260,7 @@ builtin_callbacks['window/logMessage'] = log_message
 -- Add boilerplate error validation and logging for all of these.
 for k, fn in pairs(builtin_callbacks) do
   builtin_callbacks[k] = function(err, method, params, client_id)
-    _ = log.debug() and log.debug('builtin_callback', method, { params = params, client_id = client_id, err = err })
+    local _ = log.debug() and log.debug('builtin_callback', method, { params = params, client_id = client_id, err = err })
     if err then
       error(tostring(err))
     end

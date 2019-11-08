@@ -77,9 +77,9 @@ end
 --- Apply the TextDocumentEdit response.
 -- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
 function M.text_document_apply_text_document_edit(text_document_edit, bufnr)
-  local text_document = text_document_edit.textDocument
-  local text_document_version = text_document.version
+  -- local text_document = text_document_edit.textDocument
   -- TODO use text_document_version?
+  -- local text_document_version = text_document.version
 
   -- TODO technically, you could do this without doing multiple buf_get/set
   -- by getting the full region (smallest line and largest line) and doing
@@ -119,7 +119,7 @@ function M.text_document_completion_list_to_complete_items(result, line_prefix)
         info = documentation
       elseif type(documentation) == 'table' and type(documentation.value) == 'string' then
         info = documentation.value
-      else
+      -- else
         -- TODO(ashkan) Validation handling here?
       end
     end

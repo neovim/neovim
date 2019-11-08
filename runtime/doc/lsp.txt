@@ -309,8 +309,8 @@ vim.lsp.stop_client({client_id}, [{force}])
 
   You can also use `client.stop()` if you have access to the client.
 
-                                                     *vim.lsp.stop_all_client()*
-vim.lsp.stop_all_client([{force}])
+                                                    *vim.lsp.stop_all_clients()*
+vim.lsp.stop_all_clients([{force}])
 
   |vim.lsp.stop_client()|, but for all active clients.
 
@@ -574,7 +574,7 @@ The example will:
   -- is_root_path is a function which returns bool
   local function buffer_find_root_dir(bufnr, is_root_path)
     local bufname = vim.api.nvim_buf_get_name(bufnr)
-    if not vim.fn.filereadable(bufname) then
+    if vim.fn.filereadable(bufname) == 0 then
       return nil
     end
     local dir = bufname
@@ -621,7 +621,7 @@ The example will:
     -- node_modules. Another choice would be to check for `package.json`, or for `.git`.
     local root_dir = buffer_find_root_dir(bufnr, function(dir)
       return is_dir(path_join(dir, 'node_modules'))
-      -- return vim.fn.filereadable(path_join(dir, 'package.json'))
+      -- return vim.fn.filereadable(path_join(dir, 'package.json')) == 1
       -- return is_dir(path_join(dir, '.git'))
     end)
     -- We couldn't find a root directory, so ignore this file.

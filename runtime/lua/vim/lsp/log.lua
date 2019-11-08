@@ -40,7 +40,7 @@ do
     --
     -- Recommended usage:
     -- ```
-    -- _ = log.warn() and log.warn("123")
+    -- local _ = log.warn() and log.warn("123")
     -- ```
     --
     -- This way you can avoid string allocations if the log level isn't high enough.
