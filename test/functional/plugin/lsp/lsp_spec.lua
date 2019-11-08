@@ -117,13 +117,23 @@ describe('Language Client API', function()
 
     describe('start_client and stop_client', function()
       it('should return true', function()
-        helpers.sleep(10)
+        for _ = 1, 20 do
+          helpers.sleep(10)
+          if exec_lua("return #lsp.get_active_clients()") > 0 then
+            break
+          end
+        end
         eq(1, exec_lua("return #lsp.get_active_clients()"))
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).is_stopped()"))
         exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).stop()")
         eq(false, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID).is_stopped()"))
-        helpers.sleep(10)
+        for _ = 1, 20 do
+          helpers.sleep(10)
+          if exec_lua("return #lsp.get_active_clients()") == 0 then
+            break
+          end
+        end
         eq(true, exec_lua("return lsp.get_client_by_id(TEST_RPC_CLIENT_ID) == nil"))
       end)
     end)
