@@ -17,7 +17,6 @@ end
 
 local uri_encode
 do
-  local bit = require 'bit'
   local PATTERNS = {
     --- RFC 2396
     -- https://tools.ietf.org/html/rfc2396#section-2.2
@@ -29,7 +28,12 @@ do
     -- https://tools.ietf.org/html/rfc3986#section-2.2
     rfc3986 = "^A-Za-z0-9%-._~!$&'()*+,;=:@/";
   }
-  local tohex, sbyte = bit.tohex, string.byte
+  local sbyte, tohex = string.byte
+  if jit then
+    tohex = require'bit'.tohex
+  else
+    tohex = function(b) return string.format("%02x", b) end
+  end
   local function percent_encode_char(char)
     return "%"..tohex(sbyte(char), 2)
   end
