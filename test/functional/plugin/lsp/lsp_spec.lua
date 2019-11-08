@@ -19,7 +19,7 @@ local function test_rpc_server_setup(test_name)
       cmd = {
         vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
         "-c", string.format("lua TEST_NAME = %q", ...),
-        "-c", "luafile test/functional/fixtures/test-rpc-server.lua"
+        "-c", "luafile test/functional/fixtures/lsp-test-rpc-server.lua"
       };
       callbacks = setmetatable({}, {
         __index = function(t, method)
@@ -30,6 +30,7 @@ local function test_rpc_server_setup(test_name)
       });
       root_dir = vim.loop.cwd();
       on_init = function(client, result)
+        TEST_RPC_CLIENT = client
         local commands = vim.fn.rpcrequest(1, "init", result)
         for _, v in ipairs(commands) do
           client[v[1]](unpack(v[2]))
@@ -50,17 +51,31 @@ local function test_rpc_server(config)
   local init_commands = {}
   local client = setmetatable({}, {
     __index = function(_, name)
-      if name == 'id' then
-        return exec_lua("return TEST_RPC_CLIENT_ID")
+      local argtype = exec_lua("return type(TEST_RPC_CLIENT[...])", name)
+      if argtype == 'function' then
+        return function(...)
+          return exec_lua([=[
+          local args = {...}
+          return TEST_RPC_CLIENT[table.remove(args, 1)](unpack(args))
+          ]=], name, ...)
+        end
+      else
+        return exec_lua("return TEST_RPC_CLIENT[...]", name)
       end
-      return function(...)
-        table.insert(init_commands, {name, {...}})
-      end
+      -- if name == 'id' then
+      --   return exec_lua("return TEST_RPC_CLIENT_ID")
+      -- end
+      -- return function(...)
+      --   table.insert(init_commands, {name, {...}})
+      -- end
     end;
   })
   local code, signal
   local function on_request(method, args)
     if method == "init" then
+      if config.on_init then
+        config.on_init(client, unpack(args))
+      end
       return init_commands
     end
     if method == 'callback' then
@@ -78,7 +93,6 @@ local function test_rpc_server(config)
     end
   end
   local function on_setup()
-    if config.on_init then config.on_init(client) end
   end
   run(on_request, on_notify, on_setup, 1000)
   if config.on_exit then
@@ -103,7 +117,7 @@ describe('Language Client API', function()
           cmd = {
             vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
             "-c", string.format("lua TEST_NAME = %q", ...),
-            "-c", "luafile test/functional/fixtures/test-rpc-server.lua"
+            "-c", "luafile test/functional/fixtures/lsp-test-rpc-server.lua"
           };
           root_dir = vim.loop.cwd();
         }
@@ -136,7 +150,7 @@ describe('Language Client API', function()
       }
       test_rpc_server {
         test_name = "basic_init";
-        on_init = function(client)
+        on_init = function(client, _init_result)
           -- client is a dummy object which will queue up commands to be run
           -- once the server initializes. It can't accept lua callbacks or
           -- other types that may be unserializable for now.
@@ -172,6 +186,25 @@ describe('Language Client API', function()
         end;
       }
     end)
-  end)
 
+    it('should succeed with manual shutdown', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "test", {}, 1};
+      }
+      test_rpc_server {
+        test_name = "basic_init";
+        on_init = function(client)
+          client.request('shutdown')
+          client.notify('exit')
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(...)
+          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        end;
+      }
+    end)
+  end)
 end)
