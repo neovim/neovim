@@ -4,6 +4,7 @@
 #include "./bits.h"
 #include "./point.h"
 #include "./tree_cursor.h"
+#include "./unicode.h"
 #include <wctype.h>
 
 /*
