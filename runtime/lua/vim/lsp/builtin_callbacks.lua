@@ -1,27 +1,30 @@
 --- Implements the following default callbacks:
 --
--- TODO: textDocument/publishDiagnostics
+-- vim.api.nvim_buf_set_lines(0, 0, 0, false, vim.tbl_keys(vim.lsp.builtin_callbacks))
+--
 -- textDocument/completion
--- TODO: completionItem/resolve
--- textDocument/hover
--- textDocument/signatureHelp
 -- textDocument/declaration
 -- textDocument/definition
--- textDocument/typeDefinition
+-- textDocument/hover
 -- textDocument/implementation
--- TODO: textDocument/references
--- TODO: textDocument/documentHighlight
--- TODO: textDocument/documentSymbol
--- TODO: textDocument/formatting
--- TODO: textDocument/rangeFormatting
--- TODO: textDocument/onTypeFormatting
--- textDocument/definition
--- TODO: textDocument/codeAction
--- TODO: textDocument/codeLens
--- TODO: textDocument/documentLink
--- TODO: textDocument/rename
--- TODO: codeLens/resolve
--- TODO: documentLink/resolve
+-- textDocument/rename
+-- textDocument/signatureHelp
+-- textDocument/typeDefinition
+-- window/logMessage
+-- window/showMessage
+-- TODO codeLens/resolve
+-- TODO completionItem/resolve
+-- TODO documentLink/resolve
+-- TODO textDocument/codeAction
+-- TODO textDocument/codeLens
+-- TODO textDocument/documentHighlight
+-- TODO textDocument/documentLink
+-- TODO textDocument/documentSymbol
+-- TODO textDocument/formatting
+-- TODO textDocument/onTypeFormatting
+-- TODO textDocument/publishDiagnostics
+-- TODO textDocument/rangeFormatting
+-- TODO textDocument/references
 
 local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
@@ -33,23 +36,12 @@ end
 
 local builtin_callbacks = {}
 
--- textDocument/publishDiagnostics
--- https://microsoft.github.io/language-server-protocol/specification#textDocument_publishDiagnostics
-builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, params)
-  _ = log.debug() and log.debug('callback:textDocument/publishDiagnostics', { params = params })
-  _ = log.error() and log.error('Not implemented textDocument/publishDiagnostics callback')
-end
-
 -- textDocument/completion
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
 builtin_callbacks['textDocument/completion'] = function(err, _, result)
-  assert(not err, tostring(err))
-  _ = log.debug() and log.debug('callback:textDocument/completion ', result, ' ', err)
-
   if not result or vim.tbl_isempty(result) then
     return
   end
-
   local pos = vim.api.nvim_win_get_cursor(0)
   local row, col = pos[1], pos[2]
   local line = assert(vim.api.nvim_buf_get_lines(0, row-1, row, false)[1])
@@ -59,28 +51,12 @@ builtin_callbacks['textDocument/completion'] = function(err, _, result)
   local match_result = vim.fn.matchstrpos(line_to_cursor, '\\k\\+$')
   local match_start, match_finish = match_result[2], match_result[3]
 
-  vim.fn.complete(pos[2] + 1 - (match_finish - match_start), matches)
-end
-
--- textDocument/references
--- https://microsoft.github.io/language-server-protocol/specification#textDocument_references
-builtin_callbacks['textDocument/references'] = function(err, _, result)
-  assert(not err, tostring(err))
-  _ = log.debug() and log.debug('callback:textDocument/references ', result, ' ', err)
-  _ = log.debug() and log.debug('Not implemented textDocument/publishDiagnostics callback')
+  vim.fn.complete(col + 1 - (match_finish - match_start), matches)
 end
 
 -- textDocument/rename
-builtin_callbacks['textDocument/rename'] = function(err, _, result)
-  assert(not err, tostring(err))
-  _ = log.debug() and log.debug('callback:textDocument/rename ', result, ' ', err)
-
-  if not result then
-    return nil
-  end
-
-  vim.api.nvim_set_var('text_document_rename', result)
-
+builtin_callbacks['textDocument/rename'] = function(_, _, result)
+  if not result then return end
   util.workspace_apply_workspace_edit(result)
 end
 
@@ -88,10 +64,7 @@ end
 -- textDocument/hover
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 -- @params MarkedString | MarkedString[] | MarkupContent
-builtin_callbacks['textDocument/hover'] = function(err, method, result)
-  assert(not err, tostring(err))
-  _ = log.debug() and log.debug('textDocument/hover', { err = err; result = result; method = method; })
-
+builtin_callbacks['textDocument/hover'] = function(_, _, result)
   if result == nil or vim.tbl_isempty(result) then
     return
   end
@@ -166,10 +139,7 @@ end
 
 -- textDocument/signatureHelp
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_signatureHelp
-builtin_callbacks['textDocument/signatureHelp'] = function(err, _, result)
-  assert(not err, tostring(err))
-  _ = log.debug() and log.debug('textDocument/signatureHelp ', result, ' ', err)
-
+builtin_callbacks['textDocument/signatureHelp'] = function(_, _, result)
   if result == nil or vim.tbl_isempty(result) then
     return
   end
@@ -245,12 +215,9 @@ local function handle_location(result)
   vim.api.nvim_win_set_cursor(0, {start.line + 1, start.character})
 end
 
-local location_callback_object = function(err, method, result)
-  _ = log.debug() and log.debug('location callback', method, {result = result, err = err})
-  assert(not err, tostring(err))
---  assert(not err, protocol.ErrorCodes[err.code])
+local function location_callback(_, method, result)
   if result == nil or vim.tbl_isempty(result) then
-    _ = log.info() and log.info('No declaration found')
+    _ = log.info() and log.info(method, 'No location found')
     return nil
   end
   handle_location(result)
@@ -268,28 +235,37 @@ local location_callbacks = {
   'textDocument/typeDefinition';
 }
 
-for _, location_callback in ipairs(location_callbacks) do
-  builtin_callbacks[location_callback] = location_callback_object
+for _, location_method in ipairs(location_callbacks) do
+  builtin_callbacks[location_method] = location_callback
 end
 
--- window/showMessage
--- https://microsoft.github.io/language-server-protocol/specification#window_showMessage
-builtin_callbacks['window/showMessage'] = function(err, _, result)
-  assert(not err, tostring(err))
-  _ = log.debug() and log.debug('callback:window/showMessage', { result = result, err = err})
-
-  local message_type = result['type']
-  local message = result['message']
-
+local function log_message(_, _, result, client_id)
+  local message_type = result.type
+  local message = result.message
+  local client_name = vim.lsp.get_client_by_id(client_id).name
   if message_type == protocol.MessageType.Error then
     -- Might want to not use err_writeln,
     -- but displaying a message with red highlights or something
-    vim.api.nvim_err_writeln(message)
+    vim.api.nvim_err_writeln(string.format("LSP[%s] %s", client_name, message))
   else
-    vim.api.nvim_out_write(message .. "\n")
+    local message_type_name = protocol.MessageType[message_type]
+    vim.api.nvim_out_write(string.format("LSP[%s][%s] %s\n", client_name, message_type_name, message))
   end
-
   return result
+end
+
+builtin_callbacks['window/showMessage'] = log_message
+builtin_callbacks['window/logMessage'] = log_message
+
+-- Add boilerplate error validation and logging for all of these.
+for k, fn in pairs(builtin_callbacks) do
+  builtin_callbacks[k] = function(err, method, params, client_id)
+    _ = log.debug() and log.debug('builtin_callback', method, { params = params, client_id = client_id, err = err })
+    if err then
+      error(tostring(err))
+    end
+    fn(err, method, params, client_id)
+  end
 end
 
 return builtin_callbacks

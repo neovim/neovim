@@ -117,7 +117,7 @@ local function request_parser_loop()
   end
 end
 
-local CLIENT_ERRORS = vim.tbl_add_reverse_lookup {
+local client_errors = vim.tbl_add_reverse_lookup {
   INVALID_SERVER_MESSAGE       = 1;
   INVALID_SERVER_JSON          = 2;
   NO_RESULT_CALLBACK_FOUND     = 3;
@@ -130,10 +130,16 @@ local CLIENT_ERRORS = vim.tbl_add_reverse_lookup {
 local function format_rpc_error(err)
   assert(type(err) == 'table', "err must be a table")
   local code_name = assert(protocol.ErrorCodes[err.code], "err.code is invalid")
+  local message_parts = {"RPC", code_name}
   if err.message then
-    return string.format("RPC.%s: %q", code_name, err.message)
+    table.insert(message_parts, "message = ")
+    table.insert(message_parts, string.format("%q", err.message))
   end
-  return string.format("RPC.%s", code_name)
+  if err.data then
+    table.insert(message_parts, "data = ")
+    table.insert(message_parts, vim.inspect(err.data))
+  end
+  return table.concat(message_parts, ' ')
 end
 
 local function rpc_response_error(code, message, data)
@@ -158,7 +164,7 @@ function default_handlers.server_request(method, params)
 end
 function default_handlers.on_exit() end
 function default_handlers.on_error(code, err)
-  _ = log.error() and log.error('client_error:', CLIENT_ERRORS[code], err)
+  _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
 
 --- Create and start an RPC client.
@@ -276,7 +282,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   end)
 
   local function on_error(errkind, ...)
-    assert(CLIENT_ERRORS[errkind])
+    assert(client_errors[errkind])
     -- TODO what to do if this fails?
     pcall(handlers.on_error, errkind, ...)
   end
@@ -298,7 +304,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   local function handle_body(body)
     local decoded, err = json_decode(body)
     if not decoded then
-      on_error(CLIENT_ERRORS.INVALID_SERVER_JSON, err)
+      on_error(client_errors.INVALID_SERVER_JSON, err)
     end
     _ = log.debug() and log.debug("decoded", decoded)
 
@@ -308,7 +314,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       -- we can still use the result.
       vim.schedule(function()
         local status, result
-        status, result, err = try_call(CLIENT_ERRORS.SERVER_REQUEST_HANDLER_ERROR,
+        status, result, err = try_call(client_errors.SERVER_REQUEST_HANDLER_ERROR,
             handlers.server_request, decoded.method, decoded.params)
         _ = log.debug() and log.debug("server_request: callback result", { status = status, result = result, err = err })
         if status then
@@ -347,19 +353,19 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
             __tostring = format_rpc_error;
           })
         end
-        try_call(CLIENT_ERRORS.SERVER_RESULT_CALLBACK_ERROR,
+        try_call(client_errors.SERVER_RESULT_CALLBACK_ERROR,
             callback, decoded.error, decoded.result)
       else
-        on_error(CLIENT_ERRORS.NO_RESULT_CALLBACK_FOUND, decoded)
+        on_error(client_errors.NO_RESULT_CALLBACK_FOUND, decoded)
         _ = log.error() and log.error("No callback found for server response id "..result_id)
       end
     elseif type(decoded.method) == 'string' then
       -- Notification
-      try_call(CLIENT_ERRORS.NOTIFICATION_HANDLER_ERROR,
+      try_call(client_errors.NOTIFICATION_HANDLER_ERROR,
           handlers.notification, decoded.method, decoded.params)
     else
       -- Invalid server message
-      on_error(CLIENT_ERRORS.INVALID_SERVER_MESSAGE, decoded)
+      on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
     end
   end
 
@@ -368,7 +374,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   stdout:read_start(function(err, chunk)
     if err then
       -- TODO better handling. Can these be intermittent errors?
-      on_error(CLIENT_ERRORS.READ_ERROR, err)
+      on_error(client_errors.READ_ERROR, err)
       return
     end
     -- This should signal that we are done reading from the client.
@@ -401,6 +407,6 @@ return {
   start = create_and_start_client;
   rpc_response_error = rpc_response_error;
   format_rpc_error = format_rpc_error;
-  ERRORS = CLIENT_ERRORS;
+  client_errors = client_errors;
 }
 -- vim:sw=2 ts=2 et
