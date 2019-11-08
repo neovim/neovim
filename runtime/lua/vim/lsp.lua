@@ -453,6 +453,10 @@ function lsp.start_client(config)
     end)
   end
 
+  function client.is_stopped()
+    return rpc.handle:is_closing()
+  end
+
   function client._text_document_did_open(bufnr)
     if not client.resolved_capabilities.text_document_open_close then
       return

@@ -254,6 +254,9 @@ The client object has some methods and members related to using the client.
       If you request to stop a client which has previously been requested to
       shutdown, it will automatically escalate and force shutdown.
 
+    `is_stopped()`
+      Returns true if the client is fully stopped.
+
   Members: ~
     `id` (number)
       The id allocated to the client.
