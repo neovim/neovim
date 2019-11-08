@@ -1842,6 +1842,27 @@ nvim_buf_set_virtual_text({buffer}, {ns_id}, {line}, {chunks}, {opts})
                 Return: ~
                     The ns_id that was used
 
+nvim_buf_get_virtual_text({buffer}, {lnum})      *nvim_buf_get_virtual_text()*
+                Get the virtual text (annotation) for a buffer line.
+
+                The virtual text is returned as list of lists, whereas the
+                inner lists have either one or two elements. The first element
+                is the actual text, the optional second element is the
+                highlight group.
+
+                The format is exactly the same as given to
+                nvim_buf_set_virtual_text().
+
+                If there is no virtual text associated with the given line, an
+                empty list is returned.
+
+                Parameters: ~
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {line}    Line to get the virtual text from (zero-indexed)
+
+                Return: ~
+                    List of virtual text chunks
+
 nvim__buf_stats({buffer})                                  *nvim__buf_stats()*
                 TODO: Documentation
 

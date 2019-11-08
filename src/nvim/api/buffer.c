@@ -1207,7 +1207,57 @@ free_exit:
   return 0;
 }
 
-Dictionary nvim__buf_stats(Buffer buffer, Error *err)
+/// Get the virtual text (annotation) for a buffer line.
+///
+/// The virtual text is returned as list of lists, whereas the inner lists have
+/// either one or two elements. The first element is the actual text, the
+/// optional second element is the highlight group.
+///
+/// The format is exactly the same as given to nvim_buf_set_virtual_text().
+///
+/// If there is no virtual text associated with the given line, an empty list
+/// is returned.
+///
+/// @param buffer   Buffer handle, or 0 for current buffer
+/// @param line     Line to get the virtual text from (zero-indexed)
+/// @param[out] err Error details, if any
+/// @return         List of virtual text chunks
+Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
+  FUNC_API_SINCE(6)
+{
+  Array chunks = ARRAY_DICT_INIT;
+
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return chunks;
+  }
+
+  if (lnum < 0 || lnum >= MAXLNUM) {
+    api_set_error(err, kErrorTypeValidation, "Line number outside range");
+    return chunks;
+  }
+
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, (linenr_T)(lnum + 1),
+                                       false);
+  if (!lineinfo) {
+    return chunks;
+  }
+
+  for (size_t i = 0; i < lineinfo->virt_text.size; i++) {
+    Array chunk = ARRAY_DICT_INIT;
+    VirtTextChunk *vtc = &lineinfo->virt_text.items[i];
+    ADD(chunk, STRING_OBJ(cstr_to_string(vtc->text)));
+    if (vtc->hl_id > 0) {
+      ADD(chunk, STRING_OBJ(cstr_to_string(
+          (const char *)syn_id2name(vtc->hl_id))));
+    }
+    ADD(chunks, ARRAY_OBJ(chunk));
+  }
+
+  return chunks;
+}
+
+Dictionary nvim__uf_stats(Buffer buffer, Error *err)
 {
   Dictionary rv = ARRAY_DICT_INIT;
 
