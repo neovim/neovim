@@ -250,6 +250,10 @@ function lsp.start_client(config)
   local client_id = next_client_id()
 
   local callbacks = tbl_extend("keep", config.callbacks or {}, builtin_callbacks)
+  -- Copy metatable if it has one.
+  if config.callbacks and config.callbacks.__metatable then
+    setmetatable(callbacks, getmetatable(config.callbacks))
+  end
   local capabilities = config.capabilities or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
@@ -288,13 +292,14 @@ function lsp.start_client(config)
     end
   end
 
-  function handlers.on_exit()
+  function handlers.on_exit(code, signal)
     active_clients[client_id] = nil
+    uninitialized_clients[client_id] = nil
     for _, client_ids in pairs(all_buffer_active_clients) do
       client_ids[client_id] = nil
     end
     if config.on_exit then
-      pcall(config.on_exit, client_id)
+      pcall(config.on_exit, code, signal, client_id)
     end
   end
 
@@ -361,6 +366,7 @@ function lsp.start_client(config)
     local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
+      assert(result, "server sent empty result")
       rpc.notify('initialized', {})
       client.initialized = true
       uninitialized_clients[client_id] = nil
@@ -435,7 +441,7 @@ function lsp.start_client(config)
     if handle:is_closing() then
       return
     end
-    if tried_graceful_shutdown or force then
+    if force or (not client.initialized) or tried_graceful_shutdown then
       handle:kill(15)
       return
     end
@@ -625,9 +631,15 @@ end
 -- @param client_id number the client id.
 -- @param force boolean (optional) whether to use force or request shutdown
 function lsp.stop_client(client_id, force)
-  local client = active_clients[client_id]
+  local client
+  client = active_clients[client_id]
   if client then
     client.stop(force)
+    return
+  end
+  client = uninitialized_clients[client_id]
+  if client then
+    client.stop(true)
   end
 end
 
@@ -644,6 +656,9 @@ end
 -- it will automatically force shutdown.
 -- @param force boolean (optional) whether to use force or request shutdown
 function lsp.stop_all_clients(force)
+  for _, client in pairs(uninitialized_clients) do
+    client.stop(true)
+  end
   for _, client in pairs(active_clients) do
     client.stop(force)
   end

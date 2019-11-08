@@ -203,6 +203,11 @@ vim.lsp.start_client({config})
     if `capabilities.offsetEncoding` was sent to it. You can *only* modify the
     `client.offset_encoding` here before any notifications are sent.
  
+  `on_exit(code, signal, client_id)`
+    A function which is called after the client has exited. code is the exit
+    code of the process, and signal is a number describing the signal used to
+    terminate (if any).
+ 
   `trace`
      "off" | "messages" | "verbose" | nil passed directly to the language
      server in the initialize request.

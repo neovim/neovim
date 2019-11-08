@@ -162,7 +162,9 @@ function default_handlers.server_request(method, params)
   local _ = log.debug() and log.debug('server_request', method, params)
   return nil, rpc_response_error(protocol.ErrorCodes.MethodNotFound)
 end
-function default_handlers.on_exit() end
+function default_handlers.on_exit(code, signal)
+  local _ = log.info() and log.info("client exit", { code = code, signal = signal })
+end
 function default_handlers.on_error(code, err)
   local _ = log.error() and log.error('client_error:', client_errors[code], err)
 end
@@ -206,14 +208,19 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   local stdout = uv.new_pipe(false)
   local stderr = uv.new_pipe(false)
 
+  local message_index = 0
+  local message_callbacks = {}
+
   local handle, pid
   do
-    local function onexit(_code, _signal)
+    local function onexit(code, signal)
       stdin:close()
       stdout:close()
       stderr:close()
       handle:close()
-      handlers.on_exit()
+      -- Make sure that message_callbacks can be gc'd.
+      message_callbacks = nil
+      handlers.on_exit(code, signal)
     end
     local spawn_params = {
       args = cmd_args;
@@ -228,9 +235,6 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     end
     handle, pid = uv.spawn(cmd, spawn_params, onexit)
   end
-
-  local message_index = 0
-  local message_callbacks = {}
 
   local function encode_and_send(payload)
     local _ = log.debug() and log.debug("rpc.send.payload", payload)

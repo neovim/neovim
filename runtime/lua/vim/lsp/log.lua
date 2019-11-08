@@ -32,6 +32,7 @@ do
     return logfilename
   end
 
+  vim.fn.mkdir(vim.fn.stdpath('data'), "p")
   local logfile = assert(io.open(logfilename, "a+"))
   for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
