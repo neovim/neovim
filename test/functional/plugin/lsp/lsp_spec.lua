@@ -1,11 +1,8 @@
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
-local source = helpers.source
-local dedent = helpers.dedent
 local exec_lua = helpers.exec_lua
 local eq = helpers.eq
-local neq = helpers.neq
 local NIL = helpers.NIL
 
 -- Use these to get access to a coroutine so that I can run async tests and use
@@ -31,10 +28,7 @@ local function test_rpc_server_setup(test_name)
       root_dir = vim.loop.cwd();
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
-        local commands = vim.fn.rpcrequest(1, "init", result)
-        for _, v in ipairs(commands) do
-          client[v[1]](unpack(v[2]))
-        end
+        vim.fn.rpcrequest(1, "init", result)
       end;
       on_exit = function(...)
         vim.fn.rpcnotify(1, "exit", ...)
@@ -48,7 +42,6 @@ local function test_rpc_server(config)
     clear()
     test_rpc_server_setup(config.test_name)
   end
-  local init_commands = {}
   local client = setmetatable({}, {
     __index = function(_, name)
       local argtype = exec_lua("return type(TEST_RPC_CLIENT[...])", name)
@@ -62,12 +55,6 @@ local function test_rpc_server(config)
       else
         return exec_lua("return TEST_RPC_CLIENT[...]", name)
       end
-      -- if name == 'id' then
-      --   return exec_lua("return TEST_RPC_CLIENT_ID")
-      -- end
-      -- return function(...)
-      --   table.insert(init_commands, {name, {...}})
-      -- end
     end;
   })
   local code, signal
@@ -76,20 +63,19 @@ local function test_rpc_server(config)
       if config.on_init then
         config.on_init(client, unpack(args))
       end
-      return init_commands
+      return NIL
     end
     if method == 'callback' then
       if config.on_callback then
         config.on_callback(unpack(args))
       end
     end
-    return {}
+    return NIL
   end
   local function on_notify(method, args)
     if method == 'exit' then
       code, signal = unpack(args)
-      stop()
-      return
+      return stop()
     end
   end
   local function on_setup()
@@ -207,4 +193,109 @@ describe('Language Client API', function()
       }
     end)
   end)
+
+  -- describe('server_name is not specified', function()
+  --   before_each(function()
+  --     clear()
+  --     source(dedent([[
+  --       lua << EOF
+  --         lsp = require('vim.lsp')
+  --         lsp.server_config.add({
+  --           filetype = 'txt',
+  --           cmd = { './build/bin/nvim', '--headless' }
+  --         })
+  --       EOF
+  --     ]]))
+  --   end)
+
+  --   after_each(function()
+  --     exec_lua("lsp.stop_client('txt')")
+  --   end)
+
+  --   describe('start_client and stop_client', function()
+  --     it('should return true', function()
+  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'txt')"))
+
+  --       exec_lua("client = lsp.start_client('txt')")
+  --       helpers.sleep(10)
+
+  --       eq(false, exec_lua("return client:is_stopped()"))
+  --       eq(true, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(true, exec_lua("return lsp.client_has_started('txt', 'txt')"))
+
+  --       exec_lua("lsp.stop_client('txt', 'txt')")
+  --       helpers.sleep(10)
+
+  --       eq(true, exec_lua("return client:is_stopped()"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'txt')"))
+  --     end)
+  --   end)
+  -- end)
+
+  -- describe('running two language server for one filetype', function()
+  --   before_each(function()
+  --     clear()
+  --     source(dedent([[
+  --       lua << EOF
+  --         lsp = require('vim.lsp')
+  --         lsp.server_config.add({
+  --           filetype = 'txt',
+  --           server_name = 'server1',
+  --           cmd = { './build/bin/nvim', '--headless' }
+  --         })
+  --         lsp.server_config.add({
+  --           filetype = 'txt',
+  --           server_name = 'server2',
+  --           cmd = { './build/bin/nvim', '--headless' }
+  --         })
+  --       EOF
+  --     ]]))
+  --   end)
+
+  --   after_each(function()
+  --     exec_lua("lsp.stop_client('txt')")
+  --   end)
+
+  --   describe('start_client and stop_client', function()
+  --     it('should return true', function()
+  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
+
+  --       exec_lua("client = lsp.start_client('txt', 'server1')")
+  --       helpers.sleep(10)
+
+  --       eq(false, exec_lua("return client:is_stopped()"))
+  --       eq(true, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(true, exec_lua("return lsp.client_has_started('txt', 'server1')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
+
+  --       exec_lua("lsp.stop_client('txt', 'server1')")
+  --       helpers.sleep(10)
+
+  --       eq(true, exec_lua("return client:is_stopped()"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
+
+  --       exec_lua("client = lsp.start_client('txt', 'server2')")
+  --       helpers.sleep(10)
+
+  --       eq(false, exec_lua("return client:is_stopped()"))
+  --       eq(true, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
+  --       eq(true, exec_lua("return lsp.client_has_started('txt', 'server2')"))
+
+  --       exec_lua("lsp.stop_client('txt', 'server2')")
+  --       helpers.sleep(10)
+
+  --       eq(true, exec_lua("return client:is_stopped()"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
+  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
+  --     end)
+  --   end)
+  -- end)
 end)

@@ -59,6 +59,7 @@ function tests.basic_init()
 	assert(read_message().method == 'exit')
 end
 
-assert(type(TEST_NAME) == 'string', 'TEST_NAME must be specified.')
-assert(tests[TEST_NAME], "Test not found")()
+local test_name = _G.TEST_NAME
+assert(type(test_name) == 'string', 'TEST_NAME must be specified.')
+assert(tests[test_name], "Test not found")()
 os.exit(0)

@@ -3,6 +3,7 @@
 -- https://tools.ietf.org/html/rfc2732
 -- https://tools.ietf.org/html/rfc2396
 
+
 local uri_decode
 do
   local schar = string.char
@@ -16,6 +17,7 @@ end
 
 local uri_encode
 do
+  local bit = require 'bit'
   local PATTERNS = {
     --- RFC 2396
     -- https://tools.ietf.org/html/rfc2396#section-2.2
