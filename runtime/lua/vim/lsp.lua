@@ -12,6 +12,7 @@ local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
 local lsp = {
   protocol = protocol;
   builtin_callbacks = builtin_callbacks;
+  util = util;
   -- Allow raw RPC access.
   rpc = lsp_rpc;
   -- Export these directly from rpc.
@@ -385,7 +386,7 @@ function lsp.start_client(config)
       -- someone restarts a client.
       for bufnr, client_ids in pairs(BUFFER_CLIENT_IDS) do
         if client_ids[client_id] then
-          client.text_document_did_open(bufnr)
+          client._text_document_did_open(bufnr)
         end
       end
     end)
@@ -423,6 +424,11 @@ function lsp.start_client(config)
     return rpc.notify(...)
   end
 
+  function client.cancel_request(id)
+    assert(type(id) == 'number', "id must be a number")
+    return rpc.notify("$/cancelRequest", { id = id })
+  end
+
   -- Track this so that we can escalate automatically if we've alredy tried a
   -- graceful shutdown
   local tried_graceful_shutdown = false
@@ -447,7 +453,7 @@ function lsp.start_client(config)
     end)
   end
 
-  function client.text_document_did_open(bufnr)
+  function client._text_document_did_open(bufnr)
     if not client.resolved_capabilities.text_document_open_close then
       return
     end
@@ -555,10 +561,8 @@ end
 
 -- Implements the textDocument/did* notifications required to track a buffer
 -- for any language server.
---
--- This function could be implemented outside of the client function, since
--- it stands out alone as the only function which contains protocol
--- implementation details, but it's definitely easier to implement here.
+-- @param bufnr [number] buffer handle or 0 for current
+-- @param client_id [number] the client id
 function lsp.attach_to_buffer(bufnr, client_id)
   assert(type(client_id) == 'number', "client_id must be a number")
   bufnr = resolve_bufnr(bufnr)
@@ -596,13 +600,8 @@ function lsp.attach_to_buffer(bufnr, client_id)
   -- Send didOpen for the client if it is initialized. If it isn't initialized
   -- then it will send didOpen on initialize.
   if client then
-    client.text_document_did_open(bufnr)
+    client._text_document_did_open(bufnr)
   end
-end
-
--- Returns a list of all the active clients.
-function lsp.get_active_clients()
-  return vim.tbl_values(ACTIVE_CLIENTS)
 end
 
 -- Look up an active client by its id, returns nil if it is not yet initialized
@@ -625,6 +624,11 @@ function lsp.stop_client(client_id, force)
   if client then
     client.stop(force)
   end
+end
+
+-- Returns a list of all the active clients.
+function lsp.get_active_clients()
+  return vim.tbl_values(ACTIVE_CLIENTS)
 end
 
 -- Stop all the clients, optionally with force.
@@ -689,14 +693,14 @@ function lsp.buf_request(bufnr, method, params, callback)
     end
   end)
 
-  local function cancel_request()
+  local function cancel_all_requests()
     for client_id, request_id in pairs(client_request_ids) do
       local client = ACTIVE_CLIENTS[client_id]
-      client.rpc.notify('$/cancelRequest', { id = request_id })
+      client.cancel_request(request_id)
     end
   end
 
-  return client_request_ids, cancel_request
+  return client_request_ids, cancel_all_requests
 end
 
 --- Send a request to a server and wait for the response.
@@ -817,7 +821,7 @@ end
 --
 -- Additional parameters:
 -- - filetype: {string} or {list} of filetypes to attach to.
--- - name: A unique string among all other functions configured with
+-- - name: A unique string among all other servers configured with
 -- |vim.lsp.add_filetype_config|.
 --
 -- Differences:
@@ -831,7 +835,7 @@ function lsp.add_filetype_config(config)
   config.root_dir = config.root_dir or uv.cwd()
   -- Validate config.
   validate_client_config(config)
-  -- assert(config.filetype, "config must have 'filetype' key")
+  assert(config.filetype, "config must have 'filetype' key")
   assert(type(config.name) == 'string', "config.name must be a string")
 
   local filetypes
@@ -839,8 +843,7 @@ function lsp.add_filetype_config(config)
     filetypes = { config.filetype }
   elseif type(config.filetype) == 'table' then
     filetypes = config.filetype
-  elseif config.filetype == nil then
-    filetypes = {}
+    assert(not tbl_isempty(filetypes), "config.filetype must not be an empty table")
   else
     error("config.filetype must be a string or a list of strings")
   end
@@ -861,12 +864,10 @@ function lsp.add_filetype_config(config)
     user_config = user_config;
   })
 
-  if not tbl_isempty(filetypes) then
-    nvim_command(string.format(
-      "autocmd FileType %s ++once silent lua vim.lsp._start_filetype_config_client(%q)",
-      table.concat(filetypes, ','),
-      config.name))
-  end
+  nvim_command(string.format(
+    "autocmd FileType %s ++once silent lua vim.lsp._start_filetype_config_client(%q)",
+    table.concat(filetypes, ','),
+    config.name))
 end
 
 -- Create a copy of an existing configuration, and override config with values
@@ -879,6 +880,7 @@ end
 --
 -- existing_name: the name of the existing config to copy.
 -- new_config: the new configuration options. @see |vim.lsp.start_client()|.
+-- @returns string the new name.
 function lsp.copy_filetype_config(existing_name, new_config)
   local config = LSP_FILETYPE_CONFIGS[existing_name] or error(string.format("Configuration with name %q doesn't exist", existing_name))
   config = tbl_extend("force", config, new_config or {})

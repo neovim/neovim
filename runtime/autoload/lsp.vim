@@ -6,6 +6,10 @@ function! lsp#set_log_level(level) abort
   call luaeval('vim.lsp.set_log_level(_A)', a:level)
 endfunction
 
+function! lsp#get_log_path() abort
+  return luaeval('vim.lsp.get_log_path()')
+endfunction
+
 function! lsp#omnifunc(findstart, base) abort
   return luaeval("vim.lsp.omnifunc(_A[1], _A[2])", [a:findstart, a:base])
 endfunction
