@@ -1,9 +1,13 @@
 -- Logger for language client plugin.
--- You can set log levels, debug, info, warn, error and none, like this.
--- let g:language_server_client_log_level = 'debug'
--- Default value is 'none'.
 
-local LOG_LEVELS = {
+local log = {}
+
+-- Log level dictionary with reverse lookup as well.
+--
+-- Can be used to lookup the number from the name or the name from the number.
+-- Levels by name: 'trace', 'debug', 'info', 'warn', 'error'
+-- Level numbers begin with 'trace' at 0
+log.levels = {
   TRACE = 0;
   DEBUG = 1;
   INFO  = 2;
@@ -13,10 +17,9 @@ local LOG_LEVELS = {
 }
 
 -- Default log level is warn.
-local LOG_LEVEL = LOG_LEVELS.WARN
-local DATE_FORMAT = "%FT%H:%M:%SZ%z"
+local current_log_level = log.levels.WARN
+local log_date_format = "%FT%H:%M:%SZ%z"
 
-local log = {}
 do
   local path_sep = vim.loop.os_uname().sysname == "Windows" and "\\" or "/"
   local function path_join(...)
@@ -30,7 +33,7 @@ do
   end
 
   local logfile = assert(io.open(logfilename, "a+"))
-  for level, levelnr in pairs(LOG_LEVELS) do
+  for level, levelnr in pairs(log.levels) do
     -- Also export the log level on the root object.
     log[level] = levelnr
     -- Set the lowercase name as the main use function.
@@ -46,12 +49,11 @@ do
     -- This way you can avoid string allocations if the log level isn't high enough.
     log[level:lower()] = function(...)
       local argc = select("#", ...)
-      if levelnr < LOG_LEVEL then return false end
+      if levelnr < current_log_level then return false end
       if argc == 0 then return true end
       local info = debug.getinfo(2, "Sl")
-     local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
-      local parts = { table.concat({"[", level, "]", os.date(DATE_FORMAT), "]", fileinfo, "]"}, " ") }
---      local parts = {level, os.date(DATE_FORMAT), fileinfo}
+      local fileinfo = string.format("%s:%s", info.short_src, info.currentline)
+      local parts = { table.concat({"[", level, "]", os.date(log_date_format), "]", fileinfo, "]"}, " ") }
       for i = 1, argc do
         local arg = select(i, ...)
         if arg == nil then
@@ -68,29 +70,24 @@ do
   logfile:write("\n")
 end
 
--- Log level dictionary with reverse lookup as well.
---
--- Can be used to lookup the number from the name or the
--- name from the number.
--- Levels by name: 'trace', 'debug', 'info', 'warn', 'error'
--- Level numbers begin with 'trace' at 0
-log.levels = LOG_LEVELS
+-- This is put here on purpose after the loop above so that it doesn't
+-- interfere with iterating the levels
 vim.tbl_add_reverse_lookup(log.levels)
 
 function log.set_level(level)
   if type(level) == 'string' then
-    LOG_LEVEL = assert(LOG_LEVELS[level:upper()], string.format("Invalid log level: %q", level))
+    current_log_level = assert(log.levels[level:upper()], string.format("Invalid log level: %q", level))
   else
     assert(type(level) == 'number', "level must be a number or string")
-    assert(LOG_LEVELS[level], string.format("Invalid log level: %d", level))
-    LOG_LEVEL = level
+    assert(log.levels[level], string.format("Invalid log level: %d", level))
+    current_log_level = level
   end
 end
 
 -- Return whether the level is sufficient for logging.
 -- @param level number log level
 function log.should_log(level)
-  return level >= LOG_LEVEL
+  return level >= current_log_level
 end
 
 return log
