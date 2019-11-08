@@ -507,7 +507,7 @@ show_vimpatches() {
 
   NOTE: Please port the _oldest_ patch if you possibly can.
         You can use '%s -l path/to/file' to see what patches are missing for a file.
-" "${BASENAME}" "${BASENAME}"
+" "${BASENAME}" "${BASENAME}" "${BASENAME}"
 }
 
 review_commit() {
