@@ -214,7 +214,7 @@ if !exists("python_no_builtin_highlight")
   syn keyword pythonBuiltin	long raw_input reduce reload unichr
   syn keyword pythonBuiltin	unicode xrange
   " Python 3 only
-  syn keyword pythonBuiltin	ascii bytes exec
+  syn keyword pythonBuiltin	ascii bytes breakpoint exec
   " non-essential built-in functions; Python 2 only
   syn keyword pythonBuiltin	apply buffer coerce intern
   " avoid highlighting attributes as builtins
