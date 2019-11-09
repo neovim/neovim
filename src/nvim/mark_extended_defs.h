@@ -43,8 +43,8 @@ typedef struct ExtMarkLine
   kbtree_t(markitems) items;
 } ExtMarkLine;
 
-#define extline_cmp(a, b) (kb_generic_cmp((a)->lnum, (b)->lnum))
-KBTREE_INIT(extlines, ExtMarkLine *, extline_cmp, 10)
+#define EXTMARKLINE_CMP(a, b) (kb_generic_cmp((a)->lnum, (b)->lnum))
+KBTREE_INIT(extmarklines, ExtMarkLine *, EXTMARKLINE_CMP, 10)
 
 
 typedef struct undo_object ExtmarkUndoObject;

@@ -817,6 +817,7 @@ describe('ui/mouse/input', function()
       feed_command('syntax match NonText "cats" conceal cchar=X')
       feed_command('syntax match NonText "x" conceal cchar=>')
 
+      -- First column is there to retain the tabs.
       insert([[
       |Section				*t1*
       |			  *t2* *t3* *t4*

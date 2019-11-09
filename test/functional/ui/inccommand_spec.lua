@@ -131,7 +131,7 @@ describe(":substitute, inccommand=split interactivity", function()
   end)
 end)
 
-describe(":substitute, 'inccommand' preserves #inc", function()
+describe(":substitute, 'inccommand' preserves", function()
   before_each(clear)
 
   it('listed buffers (:ls)', function()
@@ -293,7 +293,7 @@ describe(":substitute, 'inccommand' preserves #inc", function()
 
 end)
 
-describe(":substitute, 'inccommand' preserves undo #inc", function()
+describe(":substitute, 'inccommand' preserves undo", function()
   local cases = { "", "split", "nosplit" }
 
   local substrings = {
@@ -1962,7 +1962,7 @@ describe(":substitute", function()
     clear()
   end)
 
-  it("inccommand=split, highlights multiline substitutions #inc2", function()
+  it("inccommand=split, highlights multiline substitutions", function()
     common_setup(screen, "split", multiline_text)
     feed("gg")
 
@@ -2024,7 +2024,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, highlights multiline substitutions #inc2", function()
+  it("inccommand=nosplit, highlights multiline substitutions", function()
     common_setup(screen, "nosplit", multiline_text)
     feed("gg")
 
@@ -2117,7 +2117,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, with \\zs #inc", function()
+  it("inccommand=split, with \\zs", function()
     common_setup(screen, "split", multiline_text)
     feed("gg")
 
@@ -2141,7 +2141,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, with \\zs #inc", function()
+  it("inccommand=nosplit, with \\zs", function()
     common_setup(screen, "nosplit", multiline_text)
     feed("gg")
 
@@ -2212,7 +2212,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=split, contraction of lines #inc2", function()
+  it("inccommand=split, contraction of lines", function()
     local text = [[
       T T123 T T123 T2T TT T23423424
       x
@@ -2261,7 +2261,7 @@ describe(":substitute", function()
     ]])
   end)
 
-  it("inccommand=nosplit, contraction of lines #inc2", function()
+  it("inccommand=nosplit, contraction of lines", function()
     local text = [[
       T T123 T T123 T2T TT T23423424
       x

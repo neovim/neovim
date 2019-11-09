@@ -148,14 +148,3 @@ See `LICENSE` for details.
 [Gentoo]: https://packages.gentoo.org/packages/app-editors/neovim
 
 <!-- vim: set tw=80: -->
-
-
-CC=clang make functionaltest CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON" TEST_FILE=test/functional/api TEST_TAG=extmarks
-
-CC=clang make functionaltest CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON" TEST_FILE=test/functional/ui/mouse_spec.lua TEST_TAG=blah
-CC=clang make functionaltest CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=ON"
-
-CC=clang make functionaltest CMAKE_EXTRA_FLAGS="-DCLANG_ASAN_UBSAN=OFF" TEST_FILE=test/functional/api/mark_extended_spec.lua TEST_TAG=broken
-
-# TODO debug in container with clion...
-https://github.com/shuhaoliu/docker-clion-dev

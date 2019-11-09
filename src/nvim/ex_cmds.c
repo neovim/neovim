@@ -106,8 +106,6 @@ typedef struct {
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.c.generated.h"
-#include "mark_extended.h"
-
 #endif
 
 /// ":ascii" and "ga" implementation

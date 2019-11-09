@@ -1575,12 +1575,14 @@ bool ns_initialized(uint64_t ns)
   return ns < (uint64_t)next_namespace_id;
 }
 
-// Extmarks may be queried from position or name or even special names
-// in the future such as "cursor". This macro sets the line and col
-// to make the extmark functions recognize what's required
-//
-// *lnum: linenr_T, lnum to be set
-// *col: colnr_T, col to be set
+/// Get line and column from extmark object
+///
+/// Extmarks may be queried from position or name or even special names
+/// in the future such as "cursor". This function sets the line and col
+/// to make the extmark functions recognize what's required
+///
+/// @param[out] lnum lnum to be set
+/// @param[out] colnr col to be set
 bool set_extmark_index_from_obj(buf_T *buf, Integer namespace,
                                 Object obj, linenr_T *lnum, colnr_T *colnr,
                                 Error *err)

@@ -2849,7 +2849,6 @@ u_freeentries(
     u_freeentry(uep, uep->ue_size);
   }
 
-  // TODO(timeyyy): is this the correct place? ...
   kv_destroy(uhp->uh_extmark);
 
 #ifdef U_DEBUG
@@ -3049,7 +3048,7 @@ list_T *u_eval_tree(const u_header_T *const first_uhp)
 
 // Given the buffer, Return the undo header. If none is set, set one first.
 // NULL will be returned if e.g undolevels = -1 (undo disabled)
-u_header_T *force_get_undo_header(buf_T *buf)
+u_header_T *u_force_get_undo_header(buf_T *buf)
 {
   u_header_T *uhp = NULL;
   if (buf->b_u_curhead != NULL) {
@@ -3064,8 +3063,8 @@ u_header_T *force_get_undo_header(buf_T *buf)
     uhp = buf->b_u_curhead;
     if (!uhp) {
       uhp = buf->b_u_newhead;
-      if (get_undolevel() > 0) {
-        assert(uhp);
+      if (get_undolevel() > 0 && !uhp) {
+        abort();
       }
     }
   }

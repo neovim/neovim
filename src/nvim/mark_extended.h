@@ -14,16 +14,17 @@
 
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKLINES(buf, l_lnum, u_lnum, code)\
-  kbitr_t(extlines) itr;\
+  kbitr_t(extmarklines) itr;\
   ExtMarkLine t;\
   t.lnum = l_lnum;\
-  if (!kb_itr_get(extlines, &buf->b_extlines, &t, &itr)) { \
-    kb_itr_next(extlines, &buf->b_extlines, &itr);\
+  if (!kb_itr_get(extmarklines, &buf->b_extlines, &t, &itr)) { \
+    kb_itr_next(extmarklines, &buf->b_extlines, &itr);\
   }\
-  ExtMarkLine *extline;\
-  for (; kb_itr_valid(&itr); kb_itr_next(extlines, &buf->b_extlines, &itr)) { \
-    extline = kb_itr_key(&itr);\
-    if (extline->lnum > u_lnum) { \
+  ExtMarkLine *extmarkline;\
+  for (; kb_itr_valid(&itr); kb_itr_next(extmarklines, \
+                                         &buf->b_extlines, &itr)) { \
+    extmarkline = kb_itr_key(&itr);\
+    if (extmarkline->lnum > u_lnum) { \
       break;\
     }\
       code;\
@@ -31,16 +32,17 @@
 
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKLINES_PREV(buf, l_lnum, u_lnum, code)\
-  kbitr_t(extlines) itr;\
+  kbitr_t(extmarklines) itr;\
   ExtMarkLine t;\
   t.lnum = u_lnum;\
-  if (!kb_itr_get(extlines, &buf->b_extlines, &t, &itr)) { \
-    kb_itr_prev(extlines, &buf->b_extlines, &itr);\
+  if (!kb_itr_get(extmarklines, &buf->b_extlines, &t, &itr)) { \
+    kb_itr_prev(extmarklines, &buf->b_extlines, &itr);\
   }\
-  ExtMarkLine *extline;\
-  for (; kb_itr_valid(&itr); kb_itr_prev(extlines, &buf->b_extlines, &itr)) { \
-    extline = kb_itr_key(&itr);\
-    if (extline->lnum < l_lnum) { \
+  ExtMarkLine *extmarkline;\
+  for (; kb_itr_valid(&itr); kb_itr_prev(extmarklines, \
+                                         &buf->b_extlines, &itr)) { \
+    extmarkline = kb_itr_key(&itr);\
+    if (extmarkline->lnum < l_lnum) { \
       break;\
     }\
     code;\
@@ -54,14 +56,14 @@
   mt.mark_id = 0;\
   mt.line = NULL;\
   FOR_ALL_EXTMARKLINES(buf, l_lnum, u_lnum, { \
-    mt.col = (extline->lnum != l_lnum) ? MINCOL : l_col;\
-    if (!kb_itr_get(markitems, &extline->items, mt, &mitr)) { \
-        kb_itr_next(markitems, &extline->items, &mitr);\
+    mt.col = (extmarkline->lnum != l_lnum) ? MINCOL : l_col;\
+    if (!kb_itr_get(markitems, &extmarkline->items, mt, &mitr)) { \
+        kb_itr_next(markitems, &extmarkline->items, &mitr);\
     } \
     ExtendedMark *extmark;\
     for (; \
          kb_itr_valid(&mitr); \
-         kb_itr_next(markitems, &extline->items, &mitr)) { \
+         kb_itr_next(markitems, &extmarkline->items, &mitr)) { \
       extmark = &kb_itr_key(&mitr);\
       if (extmark->line->lnum == u_lnum \
           && extmark->col > u_col) { \
@@ -79,14 +81,14 @@
   mt.mark_id = sizeof(uint64_t);\
   mt.ns_id = ns;\
   FOR_ALL_EXTMARKLINES_PREV(buf, l_lnum, u_lnum, { \
-    mt.col = (extline->lnum != u_lnum) ? MAXCOL : u_col;\
-    if (!kb_itr_get(markitems, &extline->items, mt, &mitr)) { \
-        kb_itr_prev(markitems, &extline->items, &mitr);\
+    mt.col = (extmarkline->lnum != u_lnum) ? MAXCOL : u_col;\
+    if (!kb_itr_get(markitems, &extmarkline->items, mt, &mitr)) { \
+        kb_itr_prev(markitems, &extmarkline->items, &mitr);\
     } \
     ExtendedMark *extmark;\
     for (; \
          kb_itr_valid(&mitr); \
-         kb_itr_prev(markitems, &extline->items, &mitr)) { \
+         kb_itr_prev(markitems, &extmarkline->items, &mitr)) { \
       extmark = &kb_itr_key(&mitr);\
       if (extmark->line->lnum == l_lnum \
           && extmark->col < l_col) { \
@@ -104,14 +106,14 @@
   mt.mark_id = 0;\
   mt.line = NULL;\
   mt.col = l_col;\
-  colnr_T extline_u_col = u_col;\
+  colnr_T extmarkline_u_col = u_col;\
   if (!kb_itr_get(markitems, &items, mt, &mitr)) { \
     kb_itr_next(markitems, &items, &mitr);\
   } \
   ExtendedMark *extmark;\
   for (; kb_itr_valid(&mitr); kb_itr_next(markitems, &items, &mitr)) { \
     extmark = &kb_itr_key(&mitr);\
-    if (extmark->col > extline_u_col) { \
+    if (extmark->col > extmarkline_u_col) { \
       break;\
     }\
     code;\
@@ -125,7 +127,6 @@ typedef struct ExtmarkNs {  // For namespacing extmarks
 
 
 typedef kvec_t(ExtendedMark *) ExtmarkArray;
-typedef kvec_t(ExtMarkLine *) ExtlineArray;
 
 
 // Undo/redo extmarks
@@ -138,6 +139,7 @@ typedef enum {
 } ExtmarkOp;
 
 
+// adjust line numbers only, corresponding to mark_adjust call
 typedef struct {
   linenr_T line1;
   linenr_T line2;
@@ -145,6 +147,7 @@ typedef struct {
   long amount_after;
 } Adjust;
 
+// adjust columns after split/join line, like mark_col_adjust
 typedef struct {
   linenr_T lnum;
   colnr_T mincol;
@@ -152,6 +155,7 @@ typedef struct {
   long lnum_amount;
 } ColAdjust;
 
+// delete the columns between mincol and endcol
 typedef struct {
     linenr_T lnum;
     colnr_T mincol;
@@ -159,6 +163,7 @@ typedef struct {
     int eol;
 } ColAdjustDelete;
 
+// adjust linenumbers after :move operation
 typedef struct {
   linenr_T line1;
   linenr_T line2;
@@ -168,6 +173,9 @@ typedef struct {
   linenr_T extra;
 } AdjustMove;
 
+// TODO(bfredl): reconsider if we really should track mark creation/updating
+// itself, these are not really "edit" operation.
+// extmark was created
 typedef struct {
   uint64_t ns_id;
   uint64_t mark_id;
@@ -175,6 +183,7 @@ typedef struct {
   colnr_T col;
 } ExtmarkSet;
 
+// extmark was updated
 typedef struct {
   uint64_t ns_id;
   uint64_t mark_id;
@@ -184,6 +193,7 @@ typedef struct {
   colnr_T col;
 } ExtmarkUpdate;
 
+// copied mark before deletion (as operation is destructive)
 typedef struct {
   uint64_t ns_id;
   uint64_t mark_id;
@@ -191,6 +201,8 @@ typedef struct {
   colnr_T col;
 } ExtmarkCopy;
 
+// also used as part of :move operation? probably can be simplified to one
+// event.
 typedef struct {
   linenr_T l_lnum;
   colnr_T l_col;
@@ -200,6 +212,8 @@ typedef struct {
   colnr_T p_col;
 } ExtmarkCopyPlace;
 
+// extmark was cleared.
+// TODO(bfredl): same reconsideration as for ExtmarkSet/ExtmarkUpdate
 typedef struct {
   uint64_t ns_id;
   linenr_T l_lnum;
@@ -220,6 +234,7 @@ typedef enum {
   kExtmarkClear,
 } UndoObjectType;
 
+// TODO(bfredl): reduce the number of undo action types
 struct undo_object {
   UndoObjectType type;
   union {

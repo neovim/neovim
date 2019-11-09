@@ -127,30 +127,6 @@ static char opchars[][3] =
   { Ctrl_X, NUL, false },    // OP_NR_SUB
 };
 
-char *nvim_lltoa(int64_t val, int base)
-{
-  static char buf[64] = { 0 };
-
-  int i = 62;
-  int sign = (val < 0);
-  if (sign) {
-    val = -val;
-  }
-
-  if (val == 0) {
-    return "0";
-  }
-
-  for (; val && i ; i--, val /= base) {
-    buf[i] = "0123456789abcdef"[val % base];
-  }
-
-  if (sign) {
-    buf[i--] = '-';
-  }
-  return &buf[i+1];
-}
-
 /*
  * Translate a command name into an operator type.
  * Must only be called with a valid operator name!
@@ -332,13 +308,8 @@ void shift_line(
   } else {
     (void)set_indent(count, call_changed_bytes ? SIN_CHANGED : 0);
 
-    colnr_T col_amount;
     colnr_T mincol = (curwin->w_cursor.col + 1) -p_sw;
-    if (left) {
-      col_amount = -p_sw;
-    } else {
-      col_amount = p_sw;
-    }
+    colnr_T col_amount = left ? -p_sw : p_sw;
     extmark_col_adjust(curbuf,
                        curwin->w_cursor.lnum,
                        mincol,
@@ -519,10 +490,7 @@ static void shift_block(oparg_T *oap, int amount)
   curwin->w_cursor.col = oldcol;
   p_ri = old_p_ri;
 
-  colnr_T col_amount = p_sw;
-  if (left) {
-    col_amount = -col_amount;
-  }
+  colnr_T col_amount = left ? -p_sw : p_sw;
   extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
                      curwin->w_cursor.col, 0, col_amount, kExtmarkUndo);
 }
@@ -1669,7 +1637,7 @@ int op_delete(oparg_T *oap)
 
       curpos = curwin->w_cursor;  // remember curwin->w_cursor
       curwin->w_cursor.lnum++;
-      del_lines(oap->line_count - 2, true);
+      del_lines(oap->line_count - 2, false);
 
       // delete from start of line until op_end
       n = (oap->end.col + 1 - !oap->inclusive);
@@ -1715,12 +1683,7 @@ setmarks:
 
     lnum = curwin->w_cursor.lnum;
     if (oap->is_VIsual == false) {
-      // for some reason we required this :/
-      endcol = endcol - 1;
-      // for some reason we required this :/
-      if (endcol < mincol) {
-        endcol = mincol;
-      }
+      endcol = MAX(endcol - 1, mincol);
     }
     extmark_col_adjust_delete(curbuf, lnum, mincol, endcol, kExtmarkUndo, 0);
   }
@@ -2787,8 +2750,6 @@ static void do_autocmd_textyankpost(oparg_T *oap, yankreg_T *reg)
 }
 
 
-
-// Function length couldn't be over 500 lines..
 static void extmarks_do_put(int dir,
                             size_t totlen,
                             MotionType y_type,
@@ -2796,12 +2757,7 @@ static void extmarks_do_put(int dir,
                             colnr_T col)
 {
   // adjust extmarks
-  colnr_T col_amount;
-  if (dir == FORWARD) {
-    col_amount = (colnr_T)(totlen-1);
-  } else {
-    col_amount = (colnr_T)totlen;
-  }
+  colnr_T col_amount = (colnr_T)(dir == FORWARD ? totlen-1 : totlen);
   // Move extmark with char put
   if (y_type == kMTCharWise) {
     extmark_col_adjust(curbuf, lnum, col, 0, col_amount, kExtmarkUndo);
@@ -3869,11 +3825,6 @@ int do_join(size_t count,
    * should not really be a problem.
    */
 
-  linenr_T lnum;
-  colnr_T mincol;
-  long lnum_amount;
-  long col_amount;
-
   for (t = (linenr_T)count - 1;; t--) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
@@ -3885,10 +3836,10 @@ int do_join(size_t count,
     // If deleting more spaces than adding, the cursor moves no more than
     // what is added if it is inside these spaces.
     const int spaces_removed = (int)((curr - curr_start) - spaces[t]);
-    lnum = curwin->w_cursor.lnum + t;
-    mincol = (colnr_T)0;
-    lnum_amount = (linenr_T)-t;
-    col_amount = (long)(cend - newp - spaces_removed);
+    linenr_T lnum = curwin->w_cursor.lnum + t;
+    colnr_T mincol = (colnr_T)0;
+    long lnum_amount = (linenr_T)-t;
+    long col_amount = (long)(cend - newp - spaces_removed);
 
     mark_col_adjust(lnum, mincol, lnum_amount, col_amount, spaces_removed,
                     kExtmarkUndo);
@@ -4675,7 +4626,7 @@ void op_addsub(oparg_T *oap, linenr_T Prenum1, bool g_cmd)
 int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
 {
   int col;
-  char_u      *buf1;
+  char_u      *buf1 = NULL;
   char_u buf2[NUMBUFLEN];
   int pre;  // 'X' or 'x': hex; '0': octal; 'B' or 'b': bin
   static bool hexupper = false;  // 0xABC
@@ -4984,7 +4935,6 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     *ptr = NUL;
     STRCAT(buf1, buf2);
     ins_str(buf1);              // insert the new number
-    xfree(buf1);
     endpos = curwin->w_cursor;
     if (curwin->w_cursor.col) {
       curwin->w_cursor.col--;
@@ -4998,15 +4948,15 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     curbuf->b_op_end.col--;
   }
 
-  if (did_change) {
+  // if buf1 wasn't allocated, only a singe ASCII char was changed in-place.
+  if (did_change && buf1 != NULL) {
     extmark_col_adjust_delete(curbuf,
                               pos->lnum,
                               startpos.col + 2,
                               endpos.col + 1 + length,
                               kExtmarkUndo,
                               0);
-    long col_amount = (long)strlen(nvim_lltoa((int64_t)n, 10));
-    col_amount = negative ? col_amount + 1 : col_amount;
+    long col_amount = (long)STRLEN(buf1);
     extmark_col_adjust(curbuf,
                        pos->lnum,
                        startpos.col + 1,
@@ -5016,6 +4966,7 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
   }
 
 theend:
+  xfree(buf1);
   if (visual) {
     curwin->w_cursor = save_cursor;
   } else if (did_change) {
