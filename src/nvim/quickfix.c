@@ -1890,6 +1890,7 @@ static qf_info_T *qf_alloc_stack(qfltype_T qfltype)
 /// Return the location list stack for window 'wp'.
 /// If not present, allocate a location list stack
 static qf_info_T *ll_get_or_alloc_list(win_T *wp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   if (IS_LL_WINDOW(wp))
     /* For a location list window, use the referenced location list */
@@ -1931,17 +1932,14 @@ static qf_info_T * qf_cmd_get_stack(exarg_T *eap, int print_emsg)
 /// Get the quickfix/location list stack to use for the specified Ex command.
 /// For a location list command, returns the stack for the current window.
 /// If the location list is not present, then allocates a new one.
-/// Returns NULL if the allocation fails.  For a location list command, sets
-/// 'pwinp' to curwin.
-static qf_info_T * qf_cmd_get_or_alloc_stack(exarg_T *eap, win_T **pwinp)
+/// For a location list command, sets 'pwinp' to curwin.
+static qf_info_T *qf_cmd_get_or_alloc_stack(const exarg_T *eap, win_T **pwinp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   qf_info_T *qi = &ql_info;
 
   if (is_loclist_cmd(eap->cmdidx)) {
     qi = ll_get_or_alloc_list(curwin);
-    if (qi == NULL) {
-      return NULL;
-    }
     *pwinp = curwin;
   }
 
@@ -4968,7 +4966,6 @@ void ex_vimgrep(exarg_T *eap)
   char_u      *s;
   char_u      *p;
   int fi;
-  qf_info_T   *qi;
   qf_list_T   *qfl;
   win_T *wp = NULL;
   buf_T       *buf;
@@ -4994,10 +4991,7 @@ void ex_vimgrep(exarg_T *eap)
     }
   }
 
-  qi = qf_cmd_get_or_alloc_stack(eap, &wp);
-  if (qi == NULL) {
-    return;
-  }
+  qf_info_T *qi = qf_cmd_get_or_alloc_stack(eap, &wp);
 
   if (eap->addr_count > 0)
     tomatch = eap->line2;
@@ -6304,7 +6298,6 @@ static int cbuffer_process_args(exarg_T *eap,
 void ex_cbuffer(exarg_T *eap)
 {
   buf_T *buf = NULL;
-  qf_info_T *qi;
   char_u *au_name = NULL;
   win_T *wp = NULL;
   char_u *qf_title;
@@ -6320,10 +6313,7 @@ void ex_cbuffer(exarg_T *eap)
   }
 
   // Must come after autocommands.
-  qi = qf_cmd_get_or_alloc_stack(eap, &wp);
-  if (qi == NULL) {
-    return;
-  }
+  qf_info_T *qi = qf_cmd_get_or_alloc_stack(eap, &wp);
 
   if (cbuffer_process_args(eap, &buf, &line1, &line2) == FAIL) {
     return;
@@ -6392,7 +6382,6 @@ static char_u * cexpr_get_auname(cmdidx_T cmdidx)
 /// ":lexpr {expr}", ":lgetexpr {expr}", ":laddexpr {expr}" command.
 void ex_cexpr(exarg_T *eap)
 {
-  qf_info_T *qi;
   char_u *au_name = NULL;
   win_T *wp = NULL;
 
@@ -6404,10 +6393,7 @@ void ex_cexpr(exarg_T *eap)
     }
   }
 
-  qi = qf_cmd_get_or_alloc_stack(eap, &wp);
-  if (qi == NULL) {
-    return;
-  }
+  qf_info_T *qi = qf_cmd_get_or_alloc_stack(eap, &wp);
 
   /* Evaluate the expression.  When the result is a string or a list we can
    * use it to fill the errorlist. */
