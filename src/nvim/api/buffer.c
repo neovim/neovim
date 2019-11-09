@@ -1223,7 +1223,7 @@ free_exit:
 /// @param[out] err Error details, if any
 /// @return         List of virtual text chunks
 Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
-  FUNC_API_SINCE(6)
+  FUNC_API_SINCE(7)
 {
   Array chunks = ARRAY_DICT_INIT;
 
