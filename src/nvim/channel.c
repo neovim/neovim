@@ -11,6 +11,9 @@
 #include "nvim/msgpack_rpc/channel.h"
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
+#ifdef WIN32
+# include "nvim/os/os_win_conpty.h"
+#endif
 #include "nvim/path.h"
 #include "nvim/ascii.h"
 
@@ -469,8 +472,34 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
 
   Channel *channel = channel_alloc(kChannelStreamStdio);
 
-  rstream_init_fd(&main_loop, &channel->stream.stdio.in, 0, 0);
-  wstream_init_fd(&main_loop, &channel->stream.stdio.out, 1, 0);
+  int stdin_dup_fd = STDIN_FILENO;
+  int stdout_dup_fd = STDOUT_FILENO;
+#ifdef WIN32
+  // Strangely, ConPTY doesn't work if stdin and stdout are pipes. So replace
+  // stdin and stdout with CONIN$ and CONOUT$, respectively.
+  if (embedded_mode && os_has_conpty_working()) {
+    stdin_dup_fd = os_dup(STDIN_FILENO);
+    close(STDIN_FILENO);
+    const HANDLE conin_handle =
+      CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
+                 FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                 OPEN_EXISTING, 0, (HANDLE)NULL);
+    assert(conin_handle != INVALID_HANDLE_VALUE);
+    const int conin_fd = _open_osfhandle((intptr_t)conin_handle, _O_RDONLY);
+    assert(conin_fd == STDIN_FILENO);
+    stdout_dup_fd = os_dup(STDOUT_FILENO);
+    close(STDOUT_FILENO);
+    const HANDLE conout_handle =
+      CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE,
+                 FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
+                 OPEN_EXISTING, 0, (HANDLE)NULL);
+    assert(conout_handle != INVALID_HANDLE_VALUE);
+    const int conout_fd = _open_osfhandle((intptr_t)conout_handle, 0);
+    assert(conout_fd == STDOUT_FILENO);
+  }
+#endif
+  rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
+  wstream_init_fd(&main_loop, &channel->stream.stdio.out, stdout_dup_fd, 0);
 
   if (rpc) {
     rpc_start(channel);

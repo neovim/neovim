@@ -76,6 +76,9 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#ifdef WIN32
+# include "nvim/os/os_win_conpty.h"
+#endif
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"
 #include "nvim/os/lang.h"
@@ -310,6 +313,9 @@ static char *(p_scl_values[]) =       { "yes", "no", "auto", "auto:1", "auto:2",
   "auto:3", "auto:4", "auto:5", "auto:6", "auto:7", "auto:8", "auto:9",
   "yes:1", "yes:2", "yes:3", "yes:4", "yes:5", "yes:6", "yes:7", "yes:8",
   "yes:9", NULL };
+#ifdef WIN32
+static char *(p_twt_values[]) =       { "conpty", "winpty", "", NULL };
+#endif
 
 /// All possible flags for 'shm'.
 static char_u SHM_ALL[] = {
@@ -3282,6 +3288,13 @@ ambw_end:
     if (!parse_winhl_opt(curwin)) {
       errmsg = e_invarg;
     }
+#ifdef WIN32
+  } else if (varp == &p_twt) {
+    if (check_opt_strings(*varp, p_twt_values, false) != OK
+        || (!os_has_conpty_working() && STRCMP(*varp, "conpty") == 0)) {
+      errmsg = e_invarg;
+    }
+#endif
   } else {
     // Options that are a list of flags.
     p = NULL;
