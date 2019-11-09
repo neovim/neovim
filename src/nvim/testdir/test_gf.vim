@@ -99,3 +99,28 @@ func Test_gf()
   call delete('Xtest1')
   call delete('Xtestgf')
 endfunc
+
+func Test_gf_visual()
+  call writefile([], "Xtest_gf_visual")
+  new
+  call setline(1, 'XXXtest_gf_visualXXX')
+  set hidden
+
+  " Visually select Xtest_gf_visual and use gf to go to that file
+  norm! ttvtXgf
+  call assert_equal('Xtest_gf_visual', bufname('%'))
+
+  bwipe!
+  call delete('Xtest_gf_visual')
+  set hidden&
+endfunc
+
+func Test_gf_error()
+  new
+  call assert_fails('normal gf', 'E446:')
+  call assert_fails('normal gF', 'E446:')
+  call setline(1, '/doesnotexist')
+  call assert_fails('normal gf', 'E447:')
+  call assert_fails('normal gF', 'E447:')
+  bwipe!
+endfunc
