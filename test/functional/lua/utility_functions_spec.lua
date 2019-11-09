@@ -370,7 +370,7 @@ describe('lua stdlib', function()
     assert(vim.deep_equal(a, { A = 1; [1] = 'A'; }))
     vim.tbl_add_reverse_lookup(a)
     ]]
-    eq('Error executing lua: .../shared.lua: The reverse lookup found an existing value for "1" while processing key "A"',
+    matches('Error executing lua: .../shared.lua: The reverse lookup found an existing value for "[1A]" while processing key "[1A]"',
       pcall_err(exec_lua, code))
   end)
 
