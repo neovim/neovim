@@ -138,6 +138,14 @@ functionaltest-lua: | nvim
 lualint: | build/.ran-cmake deps
 	$(BUILD_CMD) -C build lualint
 
+shlint:
+	@shellcheck --version | head -n 2
+	shellcheck scripts/vim-patch.sh
+
+_opt_shlint:
+	@command -v shellcheck && { $(MAKE) shlint; exit $$?; } \
+		|| echo "SKIP: shlint (shellcheck not found)"
+
 pylint:
 	flake8 contrib/ scripts/ src/ test/
 
@@ -188,7 +196,7 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes clint lualint _opt_pylint
+lint: check-single-includes clint lualint _opt_pylint _opt_shlint
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".
@@ -200,4 +208,4 @@ $(DEPS_BUILD_DIR)/%:
 	$(BUILD_CMD) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lualint pylint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
+.PHONY: test lualint pylint shlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
