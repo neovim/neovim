@@ -139,6 +139,7 @@ lualint: | build/.ran-cmake deps
 	$(BUILD_CMD) -C build lualint
 
 shlint:
+	@shellcheck --version | head -n 2
 	shellcheck scripts/vim-patch.sh
 
 _opt_shlint:
