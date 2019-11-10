@@ -192,8 +192,11 @@ paste = (function()
       local line1 = lines[1]:gsub('<', '<lt>'):gsub('[\r\n\012\027]', ' ')  -- Scrub.
       vim.api.nvim_input(line1)
       vim.api.nvim_set_option('paste', false)
-    elseif mode ~= 'c' then  -- Else: discard remaining cmdline-mode chunks.
-      if phase < 2 and mode ~= 'i' and mode ~= 'R' and mode ~= 't' then
+    elseif mode ~= 'c' then
+      if phase < 2 and mode:find('^[vV\22sS\19]') then
+        vim.api.nvim_command([[exe "normal! \<Del>"]])
+        vim.api.nvim_put(lines, 'c', false, true)
+      elseif phase < 2 and not mode:find('^[iRt]') then
         vim.api.nvim_put(lines, 'c', true, true)
         -- XXX: Normal-mode: workaround bad cursor-placement after first chunk.
         vim.api.nvim_command('normal! a')
