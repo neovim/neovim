@@ -14,6 +14,7 @@ local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local source = helpers.source
 local NIL = helpers.NIL
+local retry = helpers.retry
 
 before_each(clear)
 
@@ -368,7 +369,9 @@ describe('lua stdlib', function()
       vim.rpcnotify(chan, 'nvim_set_current_line', 'foo')
       return vim.api.nvim_get_current_line()
     ]]))
-    eq('foo', meths.get_current_line())
+    retry(10, nil, function()
+      eq('foo', meths.get_current_line())
+    end)
 
     local screen = Screen.new(50,7)
     screen:set_default_attr_ids({
