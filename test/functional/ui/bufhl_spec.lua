@@ -386,6 +386,22 @@ describe('Buffer highlighting', function()
       ]])
     end)
 
+    it('can be retrieved', function()
+      local get_virtual_text = curbufmeths.get_virtual_text
+      local line_count = curbufmeths.line_count
+
+      local s1 = {{'Köttbullar', 'Comment'}, {'Kräuterbutter'}}
+      local s2 = {{'こんにちは', 'Comment'}}
+
+      set_virtual_text(-1, 0, s1, {})
+      eq(s1, get_virtual_text(0))
+
+      set_virtual_text(-1, line_count(), s2, {})
+      eq(s2, get_virtual_text(line_count()))
+
+      eq({}, get_virtual_text(line_count() + 9000))
+    end)
+
     it('is not highlighted by visual selection', function()
       feed("ggVG")
       screen:expect([[
