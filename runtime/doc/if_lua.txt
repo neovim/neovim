@@ -587,6 +587,26 @@ vim.in_fast_event()					*vim.in_fast_event()*
         for input.  When this is `false` most API functions are callable (but
         may be subject to other restrictions such as |textlock|).
 
+vim.NIL								    *vim.NIL*
+	Special value used to represent NIL in msgpack-rpc and |v:null| in
+	vimL interaction, and similar cases. Lua `nil` cannot be used as
+	part of a lua table representing a Dictionary or Array, as it
+	is equivalent to a missing value: `{"foo", nil}` is the same as 
+	`{"foo"}`
+
+vim.rpcnotify({channel}, {method}[, {args}...])		    *vim.rpcnotify()*
+	Sends {event} to {channel} via |RPC| and returns immediately.
+	If {channel} is 0, the event is broadcast to all channels.
+
+	This function also works in a fast callback |lua-loop-callbacks|.
+
+vim.rpcrequest({channel}, {method}[, {args}...])	    *vim.rpcrequest()*
+	Sends a request to {channel} to invoke {method} via
+	|RPC| and blocks until a response is received.
+
+	Note: NIL values as part of the return value is represented as
+	|vim.NIL| special value
+
 vim.stricmp({a}, {b})					*vim.stricmp()*
         Compares strings case-insensitively.  Returns 0, 1 or -1 if strings
         are equal, {a} is greater than {b} or {a} is lesser than {b},
@@ -623,6 +643,9 @@ vim.fn.{func}({...})					*vim.fn*
         objects and Lua objects. If the Vim function returns a float, it will
         be represented directly as a Lua number. Empty lists and dictionaries
         both are represented by an empty table.
+
+        Note: |v:null| values as part of the return value is represented as
+        |vim.NIL| special value
 
         Note: vim.fn keys are generated lazily, thus `pairs(vim.fn)` only
         enumerates functions that were called at least once.
