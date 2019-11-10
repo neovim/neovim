@@ -6196,17 +6196,7 @@ static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 }
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-
-#ifdef _MSC_VER
-// This prevents MSVC from replacing the functions with intrinsics,
-// and causing errors when trying to get their addresses in funcs.generated.h
-#pragma function (ceil)
-#pragma function (floor)
-#endif
-
-PRAGMA_DIAG_PUSH_IGNORE_MISSING_PROTOTYPES
 # include "funcs.generated.h"
-PRAGMA_DIAG_POP
 #endif
 
 /*
@@ -6225,11 +6215,8 @@ char_u *get_function_name(expand_T *xp, int idx)
     if (name != NULL)
       return name;
   }
-  while ( (size_t)++intidx < ARRAY_SIZE(functions)
-         && functions[intidx].name[0] == '\0') {
-  }
 
-  if ((size_t)intidx >= ARRAY_SIZE(functions)) {
+  if ((size_t)++intidx >= ARRAY_SIZE(functions)) {
     return NULL;
   }
 
@@ -6265,7 +6252,17 @@ char_u *get_expr_name(expand_T *xp, int idx)
   return get_user_var_name(xp, ++intidx);
 }
 
-/// Find internal function in hash functions
+
+// Compare two functions' names for find_internal_func
+static int func_name_cmp(const void *lhs, const void *rhs)
+{
+  const VimLFuncDef *const l = lhs;
+  const VimLFuncDef *const r = rhs;
+
+  return strcmp(l->name, r->name);
+}
+
+/// Find internal function in functions array
 ///
 /// @param[in]  name  Name of the function.
 ///
@@ -6273,8 +6270,8 @@ char_u *get_expr_name(expand_T *xp, int idx)
 static const VimLFuncDef *find_internal_func(const char *const name)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  size_t len = strlen(name);
-  return find_internal_func_gperf(name, len);
+  return bsearch(&name, functions, ARRAY_SIZE(functions), sizeof functions[0],
+                 func_name_cmp);
 }
 
 /// Return name of the function corresponding to `name`

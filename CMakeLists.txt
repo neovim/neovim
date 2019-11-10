@@ -521,7 +521,6 @@ endif()
 
 find_program(LUACHECK_PRG luacheck)
 find_program(FLAKE8_PRG flake8)
-find_program(GPERF_PRG gperf)
 
 include(InstallHelpers)
 

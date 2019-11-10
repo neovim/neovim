@@ -29,7 +29,6 @@ set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads" CACHE PATH "Dependencies dow
 
 option(USE_BUNDLED "Use bundled dependencies." ON)
 
-option(USE_BUNDLED_GPERF "Use the bundled version of gperf." ${USE_BUNDLED})
 option(USE_BUNDLED_UNIBILIUM "Use the bundled unibilium." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBTERMKEY "Use the bundled libtermkey." ${USE_BUNDLED})
 option(USE_BUNDLED_LIBVTERM "Use the bundled libvterm." ${USE_BUNDLED})
@@ -96,10 +95,6 @@ if(CMAKE_C_COMPILER_ARG1)
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
 else()
   set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
-endif()
-
-if(USE_BUNDLED_GPERF)
-  enable_language(CXX)
 endif()
 
 if(CMAKE_CXX_COMPILER)
@@ -172,9 +167,6 @@ set(LUV_SHA256 2b17921e2e18094df6221e3cd291c82d4569e50d8c081518d3e775dceae267cf)
 set(LUA_COMPAT53_URL https://github.com/keplerproject/lua-compat-5.3/archive/v0.7.tar.gz)
 set(LUA_COMPAT53_SHA256 bec3a23114a3d9b3218038309657f0f506ad10dfbc03bb54e91da7e5ffdba0a2)
 
-set(GPERF_URL https://github.com/neovim/deps/raw/ff5b4b18a87397a8564016071ae64f64bcd8c635/opt/gperf-3.1.tar.gz)
-set(GPERF_SHA256 588546b945bba4b70b6a3a616e80b4ab466e3f33024a352fc2198112cdbb3ae2)
-
 # 7za.exe cat.exe curl.exe ca-bundle.crt diff.exe tee.exe tidy.exe xxd.exe
 set(WINTOOLS_URL https://github.com/neovim/deps/raw/2f9acbecf06365c10baa3c0087f34a54c9c6f949/opt/win32tools.zip)
 set(WINTOOLS_SHA256 8bfce7e3a365721a027ce842f2ec1cf878f1726233c215c05964aac07300798c)
@@ -236,10 +228,6 @@ endif()
 
 if(USE_BUNDLED_LUV)
   include(BuildLuv)
-endif()
-
-if(USE_BUNDLED_GPERF)
-  include(BuildGperf)
 endif()
 
 if(USE_BUNDLED_GETTEXT)
