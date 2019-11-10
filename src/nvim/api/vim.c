@@ -1251,7 +1251,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
     draining = true;
     goto theend;
   }
-  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 1)) {
+  if (!(State & (CMDLINE | INSERT)) && (phase == -1 || phase == 1)) {
     ResetRedobuff();
     AppendCharToRedobuff('a');  // Dot-repeat.
   }
@@ -1269,7 +1269,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
       }
     }
   }
-  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 3)) {
+  if (!(State & (CMDLINE | INSERT)) && (phase == -1 || phase == 3)) {
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
