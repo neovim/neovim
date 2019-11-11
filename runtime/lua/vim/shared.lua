@@ -190,68 +190,81 @@ function vim.pesc(s)
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
 end
 
---- Type checking validation function
+--- Validates a parameter specification (types and values).
 ---
 --- Examples:
 --- <pre>
----  validate({ arg={ { 'foo' }, 'table' }})                                     --> Nop
----  validate({ arg={ 1, 'table' } })                                            --> error("arg: expected table, got number")
----  validate({ arg1={ { 'foo' }, 'table' }, arg2={ 1, 'string' } })             --> error("arg2: expected string, got number")
----  validate({ arg={ 3, function(a) return (a % 2) == 0  end, 'even number' }}) --> error("arg: expected even number, got 3")
+---  function user.new(name, age, hobbies)
+---    vim.validate{
+---      name={name, 'string'},
+---      age={age, 'number'},
+---      hobbies={hobbies, 'table'},
+---    }
+---    ...
+---  end
+--
+---  vim.validate{ arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+---     => NOP (success)
+---  vim.validate{arg1={1, 'table'}}
+---     => error("arg1: expected table, got number")
+---  vim.validate{arg1={{'foo'}, 'table'}, arg2={1, 'string'}}
+---     => error("arg2: expected string, got number")
+---  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+---     => error("arg1: expected even number, got 3")
 --- </pre>
 ---
----@param ... Table or list of table. That table is "argument_name = { validation_target, type_name (, whether nil is allowed) }"
---- or "argument_name = { validation_target, validation function, expected_description }".
---- The following can be used as type_names:
----     - table or t
----     - string or s
----     - number or n
----     - boolean or b
----     - function or f
----     - nil
----     - thread
----     - userdata
-function vim.validate(opt)
-  local function _type_name(t)
-    if t == 't' or t == 'table' then return 'table'  end
-    if t == 's' or t == 'string' then return 'string'  end
-    if t == 'n' or t == 'number' then return 'number'  end
-    if t == 'b' or t == 'boolean' then return 'boolean'  end
-    if t == 'f' or t == 'function' then return 'function' end
-    if t == 'c' then return 'callable' end
-    if t == 'nil' then return 'nil' end
-    if t == 'thread' or t == 'thread' then return 'thread'  end
-    if t == 'userdata' then return 'userdata' end
-    if vim.is_callable(t) then return end
-
-    error(string.format("Invalid type name '%s'. See \":help validate\" for more info.", t))
-  end
-  local function _check_type(target, expected_type)
-    if expected_type == 'callable' then
-      return vim.is_callable(target)
-    else
-      return type(target) == expected_type
+--@param opt Map of parameter names to validations. Each key is a parameter
+---          name; each value is a tuple in one of these forms:
+---          1. {arg_value, type_name, optional}
+---             - arg_value: argument value
+---             - type_name: string type name, one of: ("table", "t", "string",
+---               "s", "number", "n", "boolean", "b", "function", "f", "nil",
+---               "thread", "userdata")
+---             - optional: (optional) boolean, if true, `nil` is valid
+---          2. {arg_value, fn, msg}
+---             - arg_value: argument value
+---             - fn: any function accepting one argument, returns true if and
+---               only if the argument is valid
+---             - msg: (optional) error string if validation fails
+function vim.validate(opt) end  -- luacheck: no unused
+vim.validate = (function()
+  local type_names = {
+    t='table', s='string', n='number', b='boolean', f='function', c='callable',
+    ['table']='table', ['string']='string', ['number']='number',
+    ['boolean']='boolean', ['function']='function', ['callable']='callable',
+    ['nil']='nil', ['thread']='thread', ['userdata']='userdata',
+  }
+  local function type_name(t)
+    local tname = type_names[t]
+    if tname == nil then
+      error(string.format('invalid type name: %s', tostring(t)))
     end
+    return tname
+  end
+  local function is_type(val, t)
+    return t == 'callable' and vim.is_callable(val) or type(val) == t
   end
 
-  for arg, v in pairs(opt) do
-    assert(type(arg) == 'string',string.format('Expected string, got %s', type(arg)))
-    assert(type(v) == 'table', string.format('Expected table, got %s', type(v)))
+  return function(opt)
+    assert(type(opt) == 'table', string.format('opt: expected table, got %s', type(opt)))
+    for param_name, spec in pairs(opt) do
+      assert(type(spec) == 'table', string.format('%s: expected table, got %s', param_name, type(spec)))
 
-    local actual_arg_type = type(v[1])
-    local expected_type = _type_name(v[2])
+      local val = spec[1]   -- Argument value.
+      local t = spec[2]     -- Type name, or callable.
+      local optional = (true == spec[3])
 
-    if expected_type then
-      if v[3] == true then
-        assert(_check_type(v[1], expected_type) or actual_arg_type == 'nil', string.format("%s: expected %s, got %s", arg, expected_type, actual_arg_type))
-      else
-        assert(_check_type(v[1], expected_type), string.format("%s: expected %s, got %s", arg, expected_type, actual_arg_type))
+      if not vim.is_callable(t) then  -- Check type name.
+        if not (optional or type(val) == 'nil') and not is_type(val, type_name(t)) then
+          error(string.format("%s: expected %s, got %s", param_name, type_name(t), type(val)))
+        end
+      elseif not t(val) then  -- Check user-provided validation function.
+        error(string.format("%s: expected %s, got %s", param_name, spec[3], val))
       end
-    else
-      assert(v[2](v[1]), string.format("%s: expected %s, got %s", arg, v[3], v[1]))
     end
+    return true
   end
-end
+end)()
 
 --- Return whether an object can call be used as a function.
 ---
