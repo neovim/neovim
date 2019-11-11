@@ -25,6 +25,16 @@ local function is_dir(filename)
   return stat and stat.type == 'directory' or false
 end
 
+local function isnull(v)
+  return v == nil or v == vim.NIL
+end
+
+local NIL = vim.NIL
+local function convert_NIL(v)
+  if v == NIL then return nil end
+  return v
+end
+
 -- If a dictionary is passed in, turn it into a list of string of "k=v"
 -- Accepts a table which can be composed of k=v strings or map-like
 -- specification, such as:
@@ -239,8 +249,11 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   local function encode_and_send(payload)
     local _ = log.debug() and log.debug("rpc.send.payload", payload)
     if handle:is_closing() then return false end
-    local encoded = assert(json_encode(payload))
-    stdin:write(format_message_with_content_length(encoded))
+    -- TODO(ashkan) remove this once we have a Lua json_encode
+    vim.schedule(function()
+      local encoded = assert(json_encode(payload))
+      stdin:write(format_message_with_content_length(encoded))
+    end)
     return true
   end
 
@@ -314,6 +327,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
 
     if type(decoded.method) == 'string' and decoded.id then
       -- Server Request
+      decoded.params = convert_NIL(decoded.params)
       -- Schedule here so that the users functions don't trigger an error and
       -- we can still use the result.
       vim.schedule(function()
@@ -338,13 +352,11 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
         end
         send_response(decoded.id, err, result)
       end)
-    elseif decoded.id then
+    -- This works because we are expecting vim.NIL here
+    elseif decoded.id and (decoded.result or decoded.error) then
       -- Server Result
-
-      -- TODO this condition (result or error) will fail if result is null in
-      -- the success case. such as for textDocument/completion. But it is more
-      -- correct. When vim.NIL is available, then we can fix this.
-      --      elseif decoded.id and (decoded.result or decoded.error) then
+      decoded.error = convert_NIL(decoded.error)
+      decoded.result = convert_NIL(decoded.result)
 
       -- We sent a number, so we expect a number.
       local result_id = tonumber(decoded.id)
@@ -365,6 +377,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       end
     elseif type(decoded.method) == 'string' then
       -- Notification
+      decoded.params = convert_NIL(decoded.params)
       try_call(client_errors.NOTIFICATION_HANDLER_ERROR,
           handlers.notification, decoded.method, decoded.params)
     else
@@ -372,6 +385,8 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       on_error(client_errors.INVALID_SERVER_MESSAGE, decoded)
     end
   end
+  -- TODO(ashkan) remove this once we have a Lua json_decode
+  handle_body = vim.schedule_wrap(handle_body)
 
   local request_parser = coroutine.wrap(request_parser_loop)
   request_parser()
