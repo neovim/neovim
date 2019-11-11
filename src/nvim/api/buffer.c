@@ -1058,7 +1058,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// @param opts additional options. Supports the keys:
 ///          - amount:  Maximum number of marks to return
 /// @param[out] err Details of an error that may have occurred
-/// @return [[nsmark_id, row, col], ...]
+/// @return [[extmark_id, row, col], ...]
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
                             Object start, Object end, Dictionary opts,
                             Error *err)

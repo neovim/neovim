@@ -3457,9 +3457,9 @@ static buf_T *do_sub(exarg_T *eap, proftime_T timeout,
   linenr_T newline_in_pat = 0;
   linenr_T newline_in_sub = 0;
 
-  // inccomand tests fail without this check
+  // inccommand tests fail without this check
   if (!preview) {
-    // Requried for Undo to work for nsmarks,
+    // Required for Undo to work for extmarks.
     u_save_cursor();
   }
 
