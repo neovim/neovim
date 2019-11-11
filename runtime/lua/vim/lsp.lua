@@ -583,7 +583,7 @@ end
 -- for any language server.
 -- @param bufnr [number] buffer handle or 0 for current
 -- @param client_id [number] the client id
-function lsp.attach_to_buffer(bufnr, client_id)
+function lsp.buf_attach_client(bufnr, client_id)
   assert(type(client_id) == 'number', "client_id must be a number")
   bufnr = resolve_bufnr(bufnr)
   local buffer_client_ids = all_buffer_active_clients[bufnr]
@@ -625,6 +625,9 @@ function lsp.attach_to_buffer(bufnr, client_id)
   return true
 end
 
+-- Check if a buffer is attached for a particular client.
+-- @param bufnr [number] buffer handle or 0 for current
+-- @param client_id [number] the client id
 function lsp.buf_is_attached(bufnr, client_id)
   return (all_buffer_active_clients[bufnr] or {})[client_id] == true
 end
@@ -947,10 +950,10 @@ function lsp._start_filetype_config_client(name)
     return
   end
   config.client_id = lsp.start_client(config)
-  lsp.attach_to_buffer(0, config.client_id)
+  lsp.buf_attach_client(0, config.client_id)
 
   nvim_command(string.format(
-    "autocmd FileType %s silent lua vim.lsp.attach_to_buffer(0, %d)",
+    "autocmd FileType %s silent lua vim.lsp.buf_attach_client(0, %d)",
     table.concat(config.filetypes, ','),
     config.client_id))
   return config.client_id

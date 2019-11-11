@@ -246,7 +246,7 @@ describe('Language Client API', function()
             })
           ]]
           eq(1, exec_lua("return TEST_RPC_CLIENT_ID"))
-          eq(true, exec_lua("return lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID)"))
+          eq(true, exec_lua("return lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID)"))
           eq(true, exec_lua("return lsp.buf_is_attached(BUFFER, TEST_RPC_CLIENT_ID)"))
           exec_lua [[
             vim.api.nvim_command(BUFFER.."bwipeout")
@@ -288,7 +288,7 @@ describe('Language Client API', function()
             })
           ]]
           exec_lua [[
-            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
         on_init = function(c)
@@ -297,7 +297,7 @@ describe('Language Client API', function()
           eq(full_kind, client.resolved_capabilities.text_document_did_change)
           eq(true, client.resolved_capabilities.text_document_open_close)
           exec_lua [[
-            assert(not lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID), "Shouldn't attach twice")
+            assert(not lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID), "Shouldn't attach twice")
           ]]
         end;
         on_exit = function(code, signal)
@@ -339,7 +339,7 @@ describe('Language Client API', function()
           eq(full_kind, client.resolved_capabilities.text_document_did_change)
           eq(true, client.resolved_capabilities.text_document_open_close)
           exec_lua [[
-            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
         on_exit = function(code, signal)
@@ -381,7 +381,7 @@ describe('Language Client API', function()
           eq(full_kind, client.resolved_capabilities.text_document_did_change)
           eq(true, client.resolved_capabilities.text_document_open_close)
           exec_lua [[
-            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
         on_exit = function(code, signal)
@@ -428,7 +428,7 @@ describe('Language Client API', function()
           eq(sync_kind, client.resolved_capabilities.text_document_did_change)
           eq(true, client.resolved_capabilities.text_document_open_close)
           exec_lua [[
-            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
         on_exit = function(code, signal)
@@ -475,7 +475,7 @@ describe('Language Client API', function()
           eq(sync_kind, client.resolved_capabilities.text_document_did_change)
           eq(true, client.resolved_capabilities.text_document_open_close)
           exec_lua [[
-            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
         on_exit = function(code, signal)
@@ -525,7 +525,7 @@ describe('Language Client API', function()
           eq(sync_kind, client.resolved_capabilities.text_document_did_change)
           eq(true, client.resolved_capabilities.text_document_open_close)
           exec_lua [[
-            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
         on_exit = function(code, signal)

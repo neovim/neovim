@@ -27,7 +27,7 @@ To do so, you can either:
 - Use the |vim.lsp.add_filetype_config()|, which solves the common use-case of
   a single server for one or more filetypes. This can also be used from vim
   via |lsp#add_filetype_config()|.
-- Or |vim.lsp.start_client()| and |vim.lsp.attach_to_buffer()|. These are the
+- Or |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|. These are the
   backbone of the LSP API. These are easy to use enough for basic or more
   complex configurations such as in |lsp-advanced-js-example|.
 
@@ -126,7 +126,7 @@ vim.lsp.get_filetype_client_by_name({name})
 ================================================================================
                                                            *lsp-core-api*
 These are the core api functions for working with clients. You will mainly be
-using |vim.lsp.start_client()| and |vim.lsp.attach_to_buffer()| for operations
+using |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()| for operations
 and |vim.lsp.get_client_by_id()| to retrieve a client by its id after it has
 initialized (or {config.on_init}. see below)
 
@@ -290,8 +290,8 @@ The client object has some methods and members related to using the client.
       initialize response from the server in `server_capabilities`.
 
 
-                                                    *vim.lsp.attach_to_buffer()*
-vim.lsp.attach_to_buffer({bufnr}, {client_id})
+                                                   *vim.lsp.buf_attach_client()*
+vim.lsp.buf_attach_client({bufnr}, {client_id})
 
   Implements the `textDocument/did*` notifications required to track a buffer
   for any language server.
@@ -541,7 +541,7 @@ request from lua as follows:
 
 For more advanced configurations where just filtering by filetype isn't
 sufficient, you can use the `vim.lsp.start_client()` and
-`vim.lsp.attach_to_buffer()` commands to easily customize the configuration
+`vim.lsp.buf_attach_client()` commands to easily customize the configuration
 however you please. For example, if you want to do your own filtering, or
 start a new LSP client based on the root directory for if you plan to work
 with multiple projects in a single session. Below is a fully working Lua
@@ -643,7 +643,7 @@ The example will:
     end
     -- Finally, attach to the buffer to track changes. This will do nothing if we
     -- are already attached.
-    vim.lsp.attach_to_buffer(bufnr, client_id)
+    vim.lsp.buf_attach_client(bufnr, client_id)
   end
   
   vim.api.nvim_command [[autocmd BufReadPost * lua check_start_javascript_lsp()]]
