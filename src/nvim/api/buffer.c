@@ -1257,7 +1257,7 @@ Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
   return chunks;
 }
 
-Dictionary nvim__uf_stats(Buffer buffer, Error *err)
+Dictionary nvim__buf_stats(Buffer buffer, Error *err)
 {
   Dictionary rv = ARRAY_DICT_INIT;
 
