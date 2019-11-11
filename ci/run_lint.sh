@@ -20,6 +20,10 @@ enter_suite 'pylint'
 run_test 'make pylint' pylint
 exit_suite --continue
 
+enter_suite 'shlint'
+run_test 'make shlint' shlint
+exit_suite --continue
+
 enter_suite single-includes
 CLICOLOR_FORCE=1 run_test_wd \
   --allow-hang \

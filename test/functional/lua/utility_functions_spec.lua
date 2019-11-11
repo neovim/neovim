@@ -3,6 +3,8 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 
 local funcs = helpers.funcs
+local meths = helpers.meths
+local command = helpers.command
 local clear = helpers.clear
 local eq = helpers.eq
 local eval = helpers.eval
@@ -12,6 +14,7 @@ local exec_lua = helpers.exec_lua
 local matches = helpers.matches
 local source = helpers.source
 local NIL = helpers.NIL
+local retry = helpers.retry
 
 before_each(clear)
 
@@ -388,6 +391,9 @@ describe('lua stdlib', function()
       func! VarArg(...)
         return a:000
       endfunc
+      func! Nilly()
+        return [v:null, v:null]
+      endfunc
     ]])
     eq(true, exec_lua([[return next(vim.fn.FooFunc(3)) == nil ]]))
     eq(3, eval("g:test"))
@@ -397,7 +403,75 @@ describe('lua stdlib', function()
 
     eq({2, "foo", true}, exec_lua([[return vim.fn.VarArg(2, "foo", true)]]))
 
+    eq(true, exec_lua([[
+      local x = vim.fn.Nilly()
+      return #x == 2 and x[1] == vim.NIL and x[2] == vim.NIL
+    ]]))
+    eq({NIL, NIL}, exec_lua([[return vim.fn.Nilly()]]))
+
     -- error handling
     eq({false, 'Vim:E714: List required'}, exec_lua([[return {pcall(vim.fn.add, "aa", "bb")}]]))
+  end)
+
+  it('vim.rpcrequest and vim.rpcnotify', function()
+    exec_lua([[
+      chan = vim.fn.jobstart({'cat'}, {rpc=true})
+      vim.rpcrequest(chan, 'nvim_set_current_line', 'meow')
+    ]])
+    eq('meow', meths.get_current_line())
+    command("let x = [3, 'aa', v:true, v:null]")
+    eq(true, exec_lua([[
+      ret = vim.rpcrequest(chan, 'nvim_get_var', 'x')
+      return #ret == 4 and ret[1] == 3 and ret[2] == 'aa' and ret[3] == true and ret[4] == vim.NIL
+    ]]))
+    eq({3, 'aa', true, NIL}, exec_lua([[return ret]]))
+
+    -- error handling
+    eq({false, 'Invalid channel: 23'},
+       exec_lua([[return {pcall(vim.rpcrequest, 23, 'foo')}]]))
+    eq({false, 'Invalid channel: 23'},
+       exec_lua([[return {pcall(vim.rpcnotify, 23, 'foo')}]]))
+
+    eq({false, 'Vim:E121: Undefined variable: foobar'},
+       exec_lua([[return {pcall(vim.rpcrequest, chan, 'nvim_eval', "foobar")}]]))
+
+
+    -- rpcnotify doesn't wait on request
+    eq('meow', exec_lua([[
+      vim.rpcnotify(chan, 'nvim_set_current_line', 'foo')
+      return vim.api.nvim_get_current_line()
+    ]]))
+    retry(10, nil, function()
+      eq('foo', meths.get_current_line())
+    end)
+
+    local screen = Screen.new(50,7)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {bold = true, reverse = true},
+      [3] = {foreground = Screen.colors.Grey100, background = Screen.colors.Red},
+      [4] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+    screen:attach()
+    exec_lua([[
+      local timer = vim.loop.new_timer()
+      timer:start(20, 0, function ()
+        -- notify ok (executed later when safe)
+        vim.rpcnotify(chan, 'nvim_set_var', 'yy', {3, vim.NIL})
+        -- rpcrequest an error
+        vim.rpcrequest(chan, 'nvim_set_current_line', 'bork')
+      end)
+    ]])
+    screen:expect{grid=[[
+      foo                                               |
+      {1:~                                                 }|
+      {2:                                                  }|
+      {3:Error executing luv callback:}                     |
+      {3:[string "<nvim>"]:6: E5560: rpcrequest must not be}|
+      {3: called in a lua loop callback}                    |
+      {4:Press ENTER or type command to continue}^           |
+    ]]}
+    feed('<cr>')
+    eq({3, NIL}, meths.get_var('yy'))
   end)
 end)

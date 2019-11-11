@@ -1284,7 +1284,7 @@ func s:DoNothing()
 endfunc
 
 func Test_script_local_func()
-  set nocp viminfo+=nviminfo
+  set nocp nomore viminfo+=nviminfo
   new
   nnoremap <buffer> _x	:call <SID>DoNothing()<bar>call <SID>DoLast()<bar>delfunc <SID>DoNothing<bar>delfunc <SID>DoLast<cr>
 
