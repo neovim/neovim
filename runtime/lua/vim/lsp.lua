@@ -89,8 +89,10 @@ local function for_each_buffer_client(bufnr, callback)
     -- condition between literally a single statement.
     -- We could skip this error, but let's error for now.
     local client = active_clients[client_id]
-        or error(string.format("Client %d has already shut down.", client_id))
-    callback(client, client_id)
+        -- or error(string.format("Client %d has already shut down.", client_id))
+    if client then
+      callback(client, client_id)
+    end
   end
 end
 
@@ -465,6 +467,9 @@ function lsp.start_client(config)
     if not client.resolved_capabilities.text_document_open_close then
       return
     end
+    if not vim.api.nvim_buf_is_loaded(bufnr) then
+      return
+    end
     local params = {
       textDocument = {
         version = 0;
@@ -505,6 +510,10 @@ do
     -- Lazy initialize these because clients may not even need them.
     local incremental_changes = once(function(client)
       local size_index = encoding_index[client.offset_encoding]
+      local length = select(size_index, old_byte_size, old_utf16_size, old_utf32_size)
+      if length == 0 then
+        return
+      end
       local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
       -- This is necessary because we are specifying the full line including the
       -- newline in range. Therefore, we must replace the newline as well.
@@ -516,7 +525,7 @@ do
           start = { line = firstline, character = 0 };
           ["end"] = { line = lastline, character = 0 };
         };
-        rangeLength = select(size_index, old_byte_size, old_utf16_size, old_utf32_size);
+        rangeLength = length;
         text = table.concat(lines, '\n');
       };
     end)
@@ -613,6 +622,11 @@ function lsp.attach_to_buffer(bufnr, client_id)
   if client then
     client._text_document_did_open(bufnr)
   end
+  return true
+end
+
+function lsp.buf_is_attached(bufnr, client_id)
+  return (all_buffer_active_clients[bufnr] or {})[client_id] == true
 end
 
 -- Look up an active client by its id, returns nil if it is not yet initialized

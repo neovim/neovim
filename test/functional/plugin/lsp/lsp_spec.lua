@@ -9,6 +9,8 @@ local NIL = helpers.NIL
 -- yield.
 local run, stop = helpers.run, helpers.stop
 
+if helpers.pending_win32(pending) then return end
+
 local is_windows = require'luv'.os_uname().sysname == "Windows"
 local lsp_test_rpc_server_file = "test/functional/fixtures/lsp-test-rpc-server.lua"
 if is_windows then
@@ -85,9 +87,7 @@ local function test_rpc_server(config)
       return stop()
     end
   end
-  local function on_setup()
-  end
-  run(on_request, on_notify, on_setup, 1000)
+  run(on_request, on_notify, config.on_setup, 1000)
   if config.on_exit then
     config.on_exit(code, signal)
   end
@@ -199,6 +199,7 @@ describe('Language Client API', function()
       test_rpc_server {
         test_name = "basic_init";
         on_init = function(client)
+          eq(0, client.resolved_capabilities.text_document_did_change)
           client.request('shutdown')
           client.notify('exit')
         end;
@@ -210,110 +211,373 @@ describe('Language Client API', function()
         end;
       }
     end)
+
+    it('should verify capabilities sent', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+      }
+      test_rpc_server {
+        test_name = "basic_check_capabilities";
+        on_init = function(client)
+          client.stop()
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(...)
+          eq(table.remove(expected_callbacks), {...}, "expected callback")
+        end;
+      }
+    end)
+
+    it('should not send didOpen if the buffer closes before init', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+      }
+      test_rpc_server {
+        test_name = "basic_finish";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+          eq(1, exec_lua("return TEST_RPC_CLIENT_ID"))
+          eq(true, exec_lua("return lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID)"))
+          eq(true, exec_lua("return lsp.buf_is_attached(BUFFER, TEST_RPC_CLIENT_ID)"))
+          exec_lua [[
+            vim.api.nvim_command(BUFFER.."bwipeout")
+          ]]
+        end;
+        on_init = function(client)
+          local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(full_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          client.notify('finish')
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
+    it('should check the body sent attaching before init', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+          exec_lua [[
+            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_init = function(c)
+          client = c
+          local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(full_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          exec_lua [[
+            assert(not lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID), "Shouldn't attach twice")
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          if method == 'start' then
+            client.notify('finish')
+          end
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
+    it('should check the body sent attaching after init', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(c)
+          client = c
+          local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(full_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          exec_lua [[
+            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          if method == 'start' then
+            client.notify('finish')
+          end
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
+    it('should check the body and didChange full', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open_and_change";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(c)
+          client = c
+          local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(full_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          exec_lua [[
+            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          if method == 'start' then
+            exec_lua [[
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "boop";
+              })
+            ]]
+            client.notify('finish')
+          end
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
+    it('should check the body and didChange incremental', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open_and_change_incremental";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(c)
+          client = c
+          local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
+          eq(sync_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          exec_lua [[
+            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          if method == 'start' then
+            exec_lua [[
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "boop";
+              })
+            ]]
+            client.notify('finish')
+          end
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
+    it('should check the body and didChange full with 2 changes', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open_and_change_multi";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(c)
+          client = c
+          local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(sync_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          exec_lua [[
+            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          if method == 'start' then
+            exec_lua [[
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "321";
+              })
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "boop";
+              })
+            ]]
+            client.notify('finish')
+          end
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
+    it('should check the body and didChange full lifecycle', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "basic_check_buffer_open_and_change_multi_and_close";
+        on_setup = function()
+          exec_lua [[
+            BUFFER = vim.api.nvim_create_buf(false, true)
+            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+              "testing";
+              "123";
+            })
+          ]]
+        end;
+        on_init = function(c)
+          client = c
+          local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
+          eq(sync_kind, client.resolved_capabilities.text_document_did_change)
+          eq(true, client.resolved_capabilities.text_document_open_close)
+          exec_lua [[
+            assert(lsp.attach_to_buffer(BUFFER, TEST_RPC_CLIENT_ID))
+          ]]
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          if method == 'start' then
+            exec_lua [[
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "321";
+              })
+              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+                "boop";
+              })
+              vim.api.nvim_command(BUFFER.."bwipeout")
+            ]]
+            client.notify('finish')
+          end
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+          if method == 'finish' then
+            exec_lua "TEST_RPC_CLIENT.stop()"
+          end
+        end;
+      }
+    end)
+
   end)
 
-  -- describe('server_name is not specified', function()
-  --   before_each(function()
-  --     clear()
-  --     source(dedent([[
-  --       lua << EOF
-  --         lsp = require('vim.lsp')
-  --         lsp.server_config.add({
-  --           filetype = 'txt',
-  --           cmd = { './build/bin/nvim', '--headless' }
-  --         })
-  --       EOF
-  --     ]]))
-  --   end)
+  describe("parsing tests", function()
+    it('should handle invalid content-length correctly', function()
+      local expected_callbacks = {
+        {NIL, "shutdown", {}, 1};
+        {NIL, "finish", {}, 1};
+        {NIL, "start", {}, 1};
+      }
+      local client
+      test_rpc_server {
+        test_name = "invalid_header";
+        on_setup = function()
+        end;
+        on_init = function(c)
+          client = c
+          client.stop(true)
+        end;
+        on_exit = function(code, signal)
+          eq(0, code, "exit code") eq(0, signal, "exit signal")
+        end;
+        on_callback = function(err, method, params, client_id)
+          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+        end;
+      }
+    end)
 
-  --   after_each(function()
-  --     exec_lua("lsp.stop_client('txt')")
-  --   end)
-
-  --   describe('start_client and stop_client', function()
-  --     it('should return true', function()
-  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'txt')"))
-
-  --       exec_lua("client = lsp.start_client('txt')")
-  --       helpers.sleep(10)
-
-  --       eq(false, exec_lua("return client:is_stopped()"))
-  --       eq(true, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(true, exec_lua("return lsp.client_has_started('txt', 'txt')"))
-
-  --       exec_lua("lsp.stop_client('txt', 'txt')")
-  --       helpers.sleep(10)
-
-  --       eq(true, exec_lua("return client:is_stopped()"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'txt')"))
-  --     end)
-  --   end)
-  -- end)
-
-  -- describe('running two language server for one filetype', function()
-  --   before_each(function()
-  --     clear()
-  --     source(dedent([[
-  --       lua << EOF
-  --         lsp = require('vim.lsp')
-  --         lsp.server_config.add({
-  --           filetype = 'txt',
-  --           server_name = 'server1',
-  --           cmd = { './build/bin/nvim', '--headless' }
-  --         })
-  --         lsp.server_config.add({
-  --           filetype = 'txt',
-  --           server_name = 'server2',
-  --           cmd = { './build/bin/nvim', '--headless' }
-  --         })
-  --       EOF
-  --     ]]))
-  --   end)
-
-  --   after_each(function()
-  --     exec_lua("lsp.stop_client('txt')")
-  --   end)
-
-  --   describe('start_client and stop_client', function()
-  --     it('should return true', function()
-  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
-
-  --       exec_lua("client = lsp.start_client('txt', 'server1')")
-  --       helpers.sleep(10)
-
-  --       eq(false, exec_lua("return client:is_stopped()"))
-  --       eq(true, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(true, exec_lua("return lsp.client_has_started('txt', 'server1')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
-
-  --       exec_lua("lsp.stop_client('txt', 'server1')")
-  --       helpers.sleep(10)
-
-  --       eq(true, exec_lua("return client:is_stopped()"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
-
-  --       exec_lua("client = lsp.start_client('txt', 'server2')")
-  --       helpers.sleep(10)
-
-  --       eq(false, exec_lua("return client:is_stopped()"))
-  --       eq(true, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
-  --       eq(true, exec_lua("return lsp.client_has_started('txt', 'server2')"))
-
-  --       exec_lua("lsp.stop_client('txt', 'server2')")
-  --       helpers.sleep(10)
-
-  --       eq(true, exec_lua("return client:is_stopped()"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server1')"))
-  --       eq(false, exec_lua("return lsp.client_has_started('txt', 'server2')"))
-  --     end)
-  --   end)
-  -- end)
+  end)
 end)

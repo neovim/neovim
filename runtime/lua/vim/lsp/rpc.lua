@@ -25,10 +25,6 @@ local function is_dir(filename)
   return stat and stat.type == 'directory' or false
 end
 
-local function isnull(v)
-  return v == nil or v == vim.NIL
-end
-
 local NIL = vim.NIL
 local function convert_NIL(v)
   if v == NIL then return nil end
