@@ -9,14 +9,21 @@ local NIL = helpers.NIL
 -- yield.
 local run, stop = helpers.run, helpers.stop
 
+local is_windows = require'luv'.os_uname().sysname == "Windows"
+local lsp_test_rpc_server_file = "test/functional/fixtures/lsp-test-rpc-server.lua"
+if is_windows then
+  lsp_test_rpc_server_file = lsp_test_rpc_server_file:gsub("/", "\\")
+end
+
 local function test_rpc_server_setup(test_name)
   exec_lua([=[
     lsp = require('vim.lsp')
+    local test_name, fixture_filename = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd = {
         vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
-        "-c", string.format("lua TEST_NAME = %q", ...),
-        "-c", "luafile test/functional/fixtures/lsp-test-rpc-server.lua"
+        "-c", string.format("lua TEST_NAME = %q", test_name),
+        "-c", "luafile "..fixture_filename,
       };
       callbacks = setmetatable({}, {
         __index = function(t, method)
@@ -34,7 +41,7 @@ local function test_rpc_server_setup(test_name)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name)
+  ]=], test_name, lsp_test_rpc_server_file)
 end
 
 local function test_rpc_server(config)
@@ -99,15 +106,16 @@ describe('Language Client API', function()
       local test_name = "basic_init"
       exec_lua([=[
         lsp = require('vim.lsp')
+        local test_name, fixture_filename = ...
         TEST_RPC_CLIENT_ID = lsp.start_client {
           cmd = {
             vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
-            "-c", string.format("lua TEST_NAME = %q", ...),
-            "-c", "luafile test/functional/fixtures/lsp-test-rpc-server.lua"
+            "-c", string.format("lua TEST_NAME = %q", test_name),
+            "-c", "luafile "..fixture_filename;
           };
           root_dir = vim.loop.cwd();
         }
-      ]=], test_name)
+      ]=], test_name, lsp_test_rpc_server_file)
     end)
 
     after_each(function()
