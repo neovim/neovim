@@ -391,21 +391,6 @@ function module.retry(max, max_ms, fn)
   end
 end
 
--- close timers on exit if there are still ones running.
-local timers = {}
-function module.set_timeout(timeout, fn)
-  assert(timeout > 0, "timeout must be positive")
-	local timer = luv.new_timer()
-	local timer_id = table.maxn(timers)
-	timers[timer_id] = timer
-	timer:start(timeout, 0, function()
-		pcall(fn)
-		timers[timer_id] = nil
-		timer:stop()
-		timer:close()
-	end)
-end
-
 -- Starts a new global Nvim session.
 --
 -- Parameters are interpreted as startup args, OR a map with these keys:
@@ -833,11 +818,6 @@ return function(after_each)
       for _, fname in ipairs(sourced_fnames) do
         os.remove(fname)
       end
-			for timer_id, timer in pairs(timers) do
-				timers[timer_id] = nil
-				timer:stop()
-				timer:close()
-			end
       check_logs()
       check_cores('build/bin/nvim')
       if session then
