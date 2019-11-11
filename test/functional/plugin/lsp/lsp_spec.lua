@@ -21,17 +21,17 @@ local function test_rpc_server_setup(test_name)
       callbacks = setmetatable({}, {
         __index = function(t, method)
           return function(...)
-            return vim.fn.rpcrequest(1, 'callback', ...)
+            return vim.rpcrequest(1, 'callback', ...)
           end
         end;
       });
       root_dir = vim.loop.cwd();
       on_init = function(client, result)
         TEST_RPC_CLIENT = client
-        vim.fn.rpcrequest(1, "init", result)
+        vim.rpcrequest(1, "init", result)
       end;
       on_exit = function(...)
-        vim.fn.rpcnotify(1, "exit", ...)
+        vim.rpcnotify(1, "exit", ...)
       end;
     }
   ]=], test_name)
