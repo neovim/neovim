@@ -230,12 +230,12 @@ describe('lua stdlib', function()
     end
 
     -- Validates args.
-    eq(true, pcall(split, 'string', 'string', nil))
-    eq('Error executing lua: .../shared.lua: Expected string, got number',
-      pcall_err(split, 1, 'string', nil))
-    eq('Error executing lua: .../shared.lua: Expected string, got number',
-      pcall_err(split, 'string', 1, nil))
-    eq('Error executing lua: .../shared.lua: Expected boolean or nil, got number',
+    eq(true, pcall(split, 'string', 'string'))
+    eq('Error executing lua: .../shared.lua: s: expected string, got number',
+      pcall_err(split, 1, 'string'))
+    eq('Error executing lua: .../shared.lua: sep: expected string, got number',
+      pcall_err(split, 'string', 1))
+    eq('Error executing lua: .../shared.lua: plain: expected boolean, got number',
       pcall_err(split, 'string', 'string', 1))
   end)
 
@@ -256,7 +256,7 @@ describe('lua stdlib', function()
     end
 
     -- Validates args.
-    eq('Error executing lua: .../shared.lua: Expected string, got number',
+    eq('Error executing lua: .../shared.lua: s: expected string, got number',
       pcall_err(trim, 2))
   end)
 
@@ -301,7 +301,7 @@ describe('lua stdlib', function()
     eq('foo%%%-bar', exec_lua([[return vim.pesc(vim.pesc('foo-bar'))]]))
 
     -- Validates args.
-    eq("Error executing lua: .../shared.lua: Expected string, got number",
+    eq('Error executing lua: .../shared.lua: s: expected string, got number',
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
@@ -441,16 +441,25 @@ describe('lua stdlib', function()
     eq("Error executing lua: .../shared.lua: invalid type name: nil",
       pcall_err(exec_lua, "vim.validate{ arg1={ 1 }}"))
 
+    -- Validated parameters are required by default.
+    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
+      pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's' }}"))
+    -- Explicitly required.
+    eq("Error executing lua: .../shared.lua: arg1: expected string, got nil",
+      pcall_err(exec_lua, "vim.validate{ arg1={ nil, 's', false }}"))
+
     eq("Error executing lua: .../shared.lua: arg1: expected table, got number",
       pcall_err(exec_lua, "vim.validate{arg1={1, 't'}}"))
     eq("Error executing lua: .../shared.lua: arg2: expected string, got number",
-      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'},  arg2={1, 's'}}"))
+      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={1, 's'}}"))
     eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
-      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'},  arg2={nil, 's'}}"))
+      pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
     eq("Error executing lua: .../shared.lua: arg2: expected string, got nil",
       pcall_err(exec_lua, "vim.validate{arg1={{}, 't'}, arg2={nil, 's'}}"))
     eq("Error executing lua: .../shared.lua: arg1: expected even number, got 3",
       pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end, 'even number'}}"))
+    eq("Error executing lua: .../shared.lua: arg1: expected ?, got 3",
+      pcall_err(exec_lua, "vim.validate{arg1={3, function(a) return a == 1 end}}"))
   end)
 
   it('vim.is_callable', function()
