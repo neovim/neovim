@@ -33,11 +33,12 @@
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
+local vim = {}
 
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
-local function _system(cmd)
+function vim._system(cmd)
   local out = vim.api.nvim_call_function('system', { cmd })
   local err = vim.api.nvim_get_vvar('shell_error')
   return err, out
@@ -45,19 +46,19 @@ end
 
 -- Gets process info from the `ps` command.
 -- Used by nvim_get_proc() as a fallback.
-local function _os_proc_info(pid)
+function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
   local cmd = { 'ps', '-p', pid, '-o', 'comm=', }
-  local err, name = _system(cmd)
+  local err, name = vim._system(cmd)
   if 1 == err and string.gsub(name, '%s*', '') == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
     local args_str = vim.api.nvim_call_function('string', { cmd })
     error('command failed: '..args_str)
   end
-  local _, ppid = _system({ 'ps', '-p', pid, '-o', 'ppid=', })
+  local _, ppid = vim._system({ 'ps', '-p', pid, '-o', 'ppid=', })
   -- Remove trailing whitespace.
   name = string.gsub(string.gsub(name, '%s+$', ''), '^.*/', '')
   ppid = string.gsub(ppid, '%s+$', '')
@@ -71,12 +72,12 @@ end
 
 -- Gets process children from the `pgrep` command.
 -- Used by nvim_get_proc_children() as a fallback.
-local function _os_proc_children(ppid)
+function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
   local cmd = { 'pgrep', '-P', ppid, }
-  local err, rv = _system(cmd)
+  local err, rv = vim._system(cmd)
   if 1 == err and string.gsub(rv, '%s*', '') == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
@@ -98,7 +99,7 @@ end
 -- Last inserted paths. Used to clear out items from package.[c]path when they
 -- are no longer in &runtimepath.
 local last_nvim_paths = {}
-local function _update_package_paths()
+function vim._update_package_paths()
   local cur_nvim_paths = {}
   local rtps = vim.api.nvim_list_runtime_paths()
   local sep = package.config:sub(1, 1)
@@ -189,7 +190,7 @@ end
 ---                - 3: ends the paste (exactly once)
 --@returns false if client should cancel the paste.
 local function paste(lines, phase) end  -- luacheck: no unused
-paste = (function()
+vim.paste = (function()
   local tdots, tick, got_line1 = 0, 0, false
   return function(lines, phase)
     local call = vim.api.nvim_call_function
@@ -238,7 +239,7 @@ end)()
 ---@see |lua-loop-callbacks|
 ---@see |vim.schedule()|
 ---@see |vim.in_fast_event()|
-local function schedule_wrap(cb)
+function vim.schedule_wrap(cb)
   return (function (...)
     local args = {...}
     vim.schedule(function() cb(unpack(args)) end)
@@ -259,7 +260,6 @@ local function __index(t, key)
   end
 end
 
-
 -- vim.fn.{func}(...)
 local function _fn_index(t, key)
   local function _fn(...)
@@ -268,20 +268,11 @@ local function _fn_index(t, key)
   t[key] = _fn
   return _fn
 end
-local fn = setmetatable({}, {__index=_fn_index})
 
-local module = {
-  _update_package_paths = _update_package_paths,
-  _os_proc_children = _os_proc_children,
-  _os_proc_info = _os_proc_info,
-  _system = _system,
-  paste = paste,
-  schedule_wrap = schedule_wrap,
-  fn=fn,
-}
+vim.fn = setmetatable({}, {__index=_fn_index})
 
-setmetatable(module, {
+setmetatable(vim, {
   __index = __index
 })
 
-return module
+return vim
