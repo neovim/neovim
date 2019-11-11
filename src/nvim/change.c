@@ -17,6 +17,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/mark.h"
+#include "nvim/mark_extended.h"
 #include "nvim/memline.h"
 #include "nvim/misc1.h"
 #include "nvim/move.h"
@@ -372,7 +373,7 @@ void appended_lines_mark(linenr_T lnum, long count)
   // Skip mark_adjust when adding a line after the last one, there can't
   // be marks there. But it's still needed in diff mode.
   if (lnum + count < curbuf->b_ml.ml_line_count || curwin->w_p_diff) {
-    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false);
+    mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L, false, kExtmarkUndo);
   }
   changed_lines(lnum + 1, 0, lnum + 1, count, true);
 }
@@ -390,7 +391,8 @@ void deleted_lines(linenr_T lnum, long count)
 /// be triggered to display the cursor.
 void deleted_lines_mark(linenr_T lnum, long count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count, false,
+              kExtmarkUndo);
   changed_lines(lnum, 0, lnum + count, -count, true);
 }
 
@@ -950,6 +952,9 @@ int open_line(
   int vreplace_mode;
   bool did_append;                // appended a new line
   int saved_pi = curbuf->b_p_pi;  // copy of preserveindent setting
+
+  linenr_T lnum = curwin->w_cursor.lnum;
+  colnr_T mincol = curwin->w_cursor.col + 1;
 
   // make a copy of the current line so we can mess with it
   char_u *saved_line = vim_strsave(get_cursor_line_ptr());
@@ -1574,7 +1579,8 @@ int open_line(
     // be marks there. But still needed in diff mode.
     if (curwin->w_cursor.lnum + 1 < curbuf->b_ml.ml_line_count
         || curwin->w_p_diff) {
-      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false);
+      mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L, false,
+                  kExtmarkUndo);
     }
     did_append = true;
   } else {
@@ -1663,8 +1669,12 @@ int open_line(
         if (flags & OPENLINE_MARKFIX) {
           mark_col_adjust(curwin->w_cursor.lnum,
                           curwin->w_cursor.col + less_cols_off,
-                          1L, (long)-less_cols, 0);
+                          1L, (long)-less_cols, 0, kExtmarkNOOP);
         }
+        // Always move extmarks - Here we move only the line where the
+        // cursor is, the previous mark_adjust takes care of the lines after
+        extmark_col_adjust(curbuf, lnum, mincol, 1L, (long)-less_cols,
+                           kExtmarkUndo);
       } else {
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
       }
