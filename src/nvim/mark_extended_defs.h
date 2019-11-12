@@ -8,19 +8,19 @@
 
 struct ExtMarkLine;
 
-typedef struct ExtendedMark
+typedef struct Extmark
 {
   uint64_t ns_id;
   uint64_t mark_id;
   struct ExtMarkLine *line;
   colnr_T col;
-} ExtendedMark;
+} Extmark;
 
 
 // We only need to compare columns as rows are stored in a different tree.
 // Marks are ordered by: position, namespace, mark_id
 // This improves moving marks but slows down all other use cases (searches)
-static inline int extmark_cmp(ExtendedMark a, ExtendedMark b)
+static inline int extmark_cmp(Extmark a, Extmark b)
 {
   int cmp = kb_generic_cmp(a.col, b.col);
   if (cmp != 0) {
@@ -35,7 +35,7 @@ static inline int extmark_cmp(ExtendedMark a, ExtendedMark b)
 
 
 #define markitems_cmp(a, b) (extmark_cmp((a), (b)))
-KBTREE_INIT(markitems, ExtendedMark, markitems_cmp, 10)
+KBTREE_INIT(markitems, Extmark, markitems_cmp, 10)
 
 typedef struct ExtMarkLine
 {

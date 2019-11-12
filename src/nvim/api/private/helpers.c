@@ -1512,11 +1512,8 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 // If throw == true then an error will be raised if nothing
 // was found
 // Returns NULL if something went wrong
-ExtendedMark *extmark_from_id_or_pos(Buffer buffer,
-                                     Integer namespace,
-                                     Object id,
-                                     Error *err,
-                                     bool throw)
+Extmark *extmark_from_id_or_pos(Buffer buffer, Integer namespace, Object id,
+                                Error *err, bool throw)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
@@ -1524,7 +1521,7 @@ ExtendedMark *extmark_from_id_or_pos(Buffer buffer,
     return NULL;
   }
 
-  ExtendedMark *extmark = NULL;
+  Extmark *extmark = NULL;
   if (id.type == kObjectTypeArray) {
     if (id.data.array.size != 2) {
       api_set_error(err, kErrorTypeValidation,
@@ -1603,8 +1600,7 @@ bool set_extmark_index_from_obj(buf_T *buf, Integer namespace,
       return false;
     }
 
-    ExtendedMark *extmark = extmark_from_id(buf, (uint64_t)namespace,
-                                            (uint64_t)id);
+    Extmark *extmark = extmark_from_id(buf, (uint64_t)namespace, (uint64_t)id);
     if (extmark) {
       *lnum = extmark->line->lnum;
       *colnr = extmark->col;

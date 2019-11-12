@@ -53,7 +53,7 @@
 int extmark_set(buf_T *buf, uint64_t ns, uint64_t id,
                 linenr_T lnum, colnr_T col, ExtmarkOp op)
 {
-  ExtendedMark *extmark = extmark_from_id(buf, ns, id);
+  Extmark *extmark = extmark_from_id(buf, ns, id);
   if (!extmark) {
     extmark_create(buf, ns, id, lnum, col, op);
     return true;
@@ -72,7 +72,7 @@ int extmark_set(buf_T *buf, uint64_t ns, uint64_t id,
 // Returns 0 on missing id
 int extmark_del(buf_T *buf, uint64_t ns, uint64_t id, ExtmarkOp op)
 {
-  ExtendedMark *extmark = extmark_from_id(buf, ns, id);
+  Extmark *extmark = extmark_from_id(buf, ns, id);
   if (!extmark) {
     return 0;
   }
@@ -197,7 +197,7 @@ static void extmark_create(buf_T *buf, uint64_t ns, uint64_t id,
 
 // update the position of an extmark
 // to update while iterating pass the markitems itr
-static void extmark_update(ExtendedMark *extmark, buf_T *buf,
+static void extmark_update(Extmark *extmark, buf_T *buf,
                            uint64_t ns, uint64_t id,
                            linenr_T lnum, colnr_T col,
                            ExtmarkOp op, kbitr_t(markitems) *mitr)
@@ -234,7 +234,7 @@ static void extmark_update(ExtendedMark *extmark, buf_T *buf,
   }
 }
 
-static int extmark_delete(ExtendedMark *extmark,
+static int extmark_delete(Extmark *extmark,
                           buf_T *buf,
                           uint64_t ns,
                           uint64_t id,
@@ -261,7 +261,7 @@ static int extmark_delete(ExtendedMark *extmark,
 }
 
 // Lookup an extmark by id
-ExtendedMark *extmark_from_id(buf_T *buf, uint64_t ns, uint64_t id)
+Extmark *extmark_from_id(buf_T *buf, uint64_t ns, uint64_t id)
 {
   if (!buf->b_extmark_ns) {
     return NULL;
@@ -285,8 +285,7 @@ ExtendedMark *extmark_from_id(buf_T *buf, uint64_t ns, uint64_t id)
 }
 
 // Lookup an extmark by position
-ExtendedMark *extmark_from_pos(buf_T *buf,
-                               uint64_t ns, linenr_T lnum, colnr_T col)
+Extmark *extmark_from_pos(buf_T *buf, uint64_t ns, linenr_T lnum, colnr_T col)
 {
   if (!buf->b_extmark_ns) {
     return NULL;
@@ -1045,7 +1044,7 @@ bool extmark_copy_and_place(buf_T *buf,
   // marks within the same extmarkline. Too keep it simple, first delete all
   // items from the extmarkline and put them back in the right order.
   FOR_ALL_EXTMARKLINES(buf, l_lnum, u_lnum, {
-    kvec_t(ExtendedMark) temp_space = KV_INITIAL_VALUE;
+    kvec_t(Extmark) temp_space = KV_INITIAL_VALUE;
     bool same_line = extmarkline == destline;
     FOR_ALL_EXTMARKS_IN_LINE(extmarkline->items,
                              (extmarkline->lnum > l_lnum) ? 0 : l_col,
@@ -1068,7 +1067,7 @@ bool extmark_copy_and_place(buf_T *buf,
     })
     if (same_line) {
       for (size_t i = 0; i < kv_size(temp_space); i++) {
-        ExtendedMark mark = kv_A(temp_space, i);
+        Extmark mark = kv_A(temp_space, i);
         extmark_put(p_col, mark.mark_id, extmarkline, mark.ns_id);
       }
       kv_destroy(temp_space);
@@ -1120,7 +1119,7 @@ void extmarkline_free(ExtMarkLine *extmarkline)
 void extmark_put(colnr_T col, uint64_t id,
                  ExtMarkLine *extmarkline, uint64_t ns)
 {
-  ExtendedMark t;
+  Extmark t;
   t.col = col;
   t.mark_id = id;
   t.line = extmarkline;
