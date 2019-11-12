@@ -284,8 +284,8 @@ function M.open_floating_preview(contents, filetype)
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
-  local floating_win = vim.fn.win_id2win(floating_winnr)
-  api.nvim_command("autocmd CursorMoved * ++once "..floating_win.."wincmd c")
+  api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
+  api.nvim_command("autocmd CursorMoved <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
   return floating_bufnr, floating_winnr
 end
 
@@ -490,6 +490,32 @@ do
       table.insert(virt_texts, {"■ "..last.message:gsub("\r", ""):gsub("\n", "  "), severity_highlights[last.severity]})
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
+  end
+
+  function M.buf_loclist(bufnr, locations)
+    local targetwin
+    for _, winnr in ipairs(api.nvim_list_wins()) do
+      local winbuf = api.nvim_win_get_buf(winnr)
+      if winbuf == bufnr then
+        targetwin = winnr
+        break
+      end
+    end
+    if not targetwin then return end
+
+    local loclist = {}
+    local path = api.nvim_buf_get_name(bufnr)
+    for _, d in ipairs(locations) do
+      -- TODO: URL parsing here?
+      local start = d.range.start
+      table.insert(loclist, {
+          filename = path,
+          lnum = start.line + 1,
+          col = start.character + 1,
+          text = d.message,
+      })
+    end
+    vim.fn.setloclist(targetwin, loclist, ' ', 'Language Server')
   end
 end
 
