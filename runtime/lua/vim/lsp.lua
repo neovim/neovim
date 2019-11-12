@@ -8,6 +8,7 @@ local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
   = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
 local uv = vim.loop
 local tbl_isempty, tbl_extend = vim.tbl_isempty, vim.tbl_extend
+local validate = vim.validate
 
 local lsp = {
   protocol = protocol;
@@ -26,21 +27,26 @@ local lsp = {
 -- TODO improve handling of scratch buffers with LSP attached.
 
 local function resolve_bufnr(bufnr)
+  validate { bufnr = { bufnr, 'n', true } }
   if bufnr == nil or bufnr == 0 then
     return vim.api.nvim_get_current_buf()
   end
-  assert(type(bufnr) == 'number', "bufnr must be a number")
   return bufnr
 end
 
 local function is_dir(filename)
+  validate{filename={filename,'s'}}
   local stat = uv.fs_stat(filename)
   return stat and stat.type == 'directory' or false
 end
 
 -- TODO Use vim.wait when that is available, but provide an alternative for now.
 local wait = vim.wait or function(timeout_ms, condition, interval)
-  assert(type(timeout_ms) == 'number', "timeout_ms must be a number")
+  validate {
+    timeout_ms = { timeout_ms, 'n' };
+    condition = { condition, 'f' };
+    interval = { interval, 'n', true };
+  }
   assert(timeout_ms > 0, "timeout_ms must be > 0")
   local _ = log.debug() and log.debug("wait.fallback", timeout_ms)
   interval = interval or 200
@@ -78,7 +84,9 @@ local all_buffer_active_clients = {}
 local uninitialized_clients = {}
 
 local function for_each_buffer_client(bufnr, callback)
-  assert(type(callback) == 'function', "callback must be a function")
+  validate {
+    callback = { callback, 'f' };
+  }
   bufnr = resolve_bufnr(bufnr)
   local client_ids = all_buffer_active_clients[bufnr]
   if not client_ids or tbl_isempty(client_ids) then
@@ -104,8 +112,11 @@ lsp.client_errors = tbl_extend("error", lsp_rpc.client_errors, vim.tbl_add_rever
 })
 
 local function validate_encoding(encoding)
-  assert(type(encoding) == 'string', "encoding must be a string")
-  return valid_encodings[encoding:lower()] or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
+  validate {
+    encoding = { encoding, 's' };
+  }
+  return valid_encodings[encoding:lower()]
+      or error(string.format("Invalid offset encoding %q. Must be one of: 'utf-8', 'utf-16', 'utf-32'", encoding))
 end
 
 local function validate_command(input)
@@ -130,45 +141,33 @@ local function validate_command(input)
   return cmd, cmd_args
 end
 
+local function optional_validator(fn)
+  return function(v)
+    return v == nil or fn(v)
+  end
+end
+
 local function validate_client_config(config)
-  assert(type(config) == 'table', 'argument must be a table')
-  assert(config.cmd, "config must have 'cmd' key")
+  validate {
+    config = { config, 't' };
+  }
+  validate {
+    root_dir        = { config.root_dir, is_dir, "directory" };
+    callbacks       = { config.callbacks, "t", true };
+    capabilities    = { config.capabilities, "t", true };
+    -- cmd             = { config.cmd, "s", false };
+    cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
+    cmd_env         = { config.cmd_env, "f", true };
+    name            = { config.name, 's', true };
+    on_error        = { config.on_error, "f", true };
+    on_exit         = { config.on_exit, "f", true };
+    on_init         = { config.on_init, "f", true };
+    offset_encoding = { config.offset_encoding, "s", true };
+  }
   local cmd, cmd_args = validate_command(config.cmd)
-  assert(type(config.root_dir) == 'string', "config.root_dir must be a string")
-  assert(is_dir(config.root_dir), "config.root_dir must be a directory")
   local offset_encoding = valid_encodings.UTF16
   if config.offset_encoding then
     offset_encoding = validate_encoding(config.offset_encoding)
-  end
-  if config.callbacks then
-    assert(type(config.callbacks) == 'table', "config.callbacks must be a table")
-  end
-  if config.capabilities then
-    assert(type(config.capabilities) == 'table', "config.capabilities must be a table")
-  end
-
-  -- There are things sent by the server in the initialize response which
-  -- contains capabilities that would be useful for completion engines, such as
-  -- the character code triggers for completion and code action, so I'll expose this
-  -- for now.
-  if config.on_init then
-    assert(type(config.on_init) == 'function', "config.on_init must be a function")
-  end
-  if config.on_exit then
-    assert(type(config.on_exit) == 'function', "config.on_exit must be a function")
-  end
-  if config.on_error then
-    assert(type(config.on_error) == 'function', "config.on_error must be a function")
-  end
-  if config.cmd_env then
-    assert(type(config.cmd_env) == 'table', "config.cmd_env must be a table")
-  end
-  if config.cmd_cwd then
-    assert(type(config.cmd_cwd) == 'string', "config.cmd_cwd must be a string")
-    assert(is_dir(config.cmd_cwd), "config.cmd_cwd must be a directory")
-  end
-  if config.name then
-    assert(type(config.name) == 'string', "config.name must be a string")
   end
   return {
     cmd = cmd; cmd_args = cmd_args;
@@ -431,7 +430,7 @@ function lsp.start_client(config)
   end
 
   function client.cancel_request(id)
-    assert(type(id) == 'number', "id must be a number")
+    validate{id = {id, 'n'}}
     return rpc.notify("$/cancelRequest", { id = id })
   end
 
@@ -590,7 +589,10 @@ end
 -- @param bufnr [number] buffer handle or 0 for current
 -- @param client_id [number] the client id
 function lsp.buf_attach_client(bufnr, client_id)
-  assert(type(client_id) == 'number', "client_id must be a number")
+  validate {
+    bufnr     = {bufnr, 'n', true};
+    client_id = {client_id, 'n'};
+  }
   bufnr = resolve_bufnr(bufnr)
   local buffer_client_ids = all_buffer_active_clients[bufnr]
   -- This is our first time attaching to this buffer.
@@ -714,17 +716,18 @@ nvim_command("autocmd VimLeavePre * lua vim.lsp._vim_exit_handler()")
 ---
 
 --- Send a request to a server and return the response
--- @param method [string]: Name of the request method
--- @param params [table] (optional): Arguments to send to the server
--- @param bufnr [number] (optional): The number of the buffer
--- @param filetype [string] (optional): The filetype associated with the server
--- @param server_name [string] (optional)
+-- @param bufnr [number] Buffer handle or 0 for current.
+-- @param method [string] Request method name
+-- @param params [table|nil] Parameters to send to the server
+-- @param callback [function|nil] Request callback (or uses the client's callbacks)
 --
--- @returns: success?, request_id, cancel_fn
+-- @returns: client_request_ids, cancel_all_requests
 function lsp.buf_request(bufnr, method, params, callback)
-  if callback then
-    assert(type(callback) == 'function', "buf_request callback must be a function")
-  end
+  validate {
+    bufnr    = { bufnr, 'n', true };
+    method   = { method, 's' };
+    callback = { callback, 'f', true };
+  }
   local client_request_ids = {}
   for_each_buffer_client(bufnr, function(client, client_id)
     local request_success, request_id = client.request(method, params, callback)
@@ -747,10 +750,10 @@ function lsp.buf_request(bufnr, method, params, callback)
 end
 
 --- Send a request to a server and wait for the response.
--- @param bufnr [number] (optional): The number of the buffer
--- @param method [string]: Name of the request method
--- @param params [string]: Arguments to send to the server
--- @param timeout_ms=100 [number] (optional): maximum ms to wait for a result.
+-- @param bufnr [number] Buffer handle or 0 for current.
+-- @param method [string] Request method name
+-- @param params [string] Parameters to send to the server
+-- @param timeout_ms [number|100] Maximum ms to wait for a result
 --
 -- @returns: The table of {[client_id] = request_result}
 function lsp.buf_request_sync(bufnr, method, params, timeout_ms)
@@ -782,6 +785,10 @@ end
 --
 -- @returns nil
 function lsp.buf_notify(bufnr, method, params)
+  validate {
+    bufnr    = { bufnr, 'n', true };
+    method   = { method, 's' };
+  }
   for_each_buffer_client(bufnr, function(client, _client_id)
     client.rpc.notify(method, params)
   end)
@@ -878,8 +885,10 @@ function lsp.add_filetype_config(config)
   config.root_dir = config.root_dir or uv.cwd()
   -- Validate config.
   validate_client_config(config)
+  validate {
+    name     = { config.name, 's' };
+  }
   assert(config.filetype, "config must have 'filetype' key")
-  assert(type(config.name) == 'string', "config.name must be a string")
 
   local filetypes
   if type(config.filetype) == 'string' then
@@ -925,7 +934,8 @@ end
 -- new_config: the new configuration options. @see |vim.lsp.start_client()|.
 -- @returns string the new name.
 function lsp.copy_filetype_config(existing_name, new_config)
-  local config = all_filetype_configs[existing_name] or error(string.format("Configuration with name %q doesn't exist", existing_name))
+  local config = all_filetype_configs[existing_name]
+      or error(string.format("Configuration with name %q doesn't exist", existing_name))
   config = tbl_extend("force", config, new_config or {})
   config.client_id = nil
   config.original_config_name = existing_name

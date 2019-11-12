@@ -181,7 +181,7 @@ function M.convert_input_to_markdown_lines(input, contents)
   if type(input) == 'string' then
     list_extend(contents, split_lines(input))
   else
-    assert(type(input) == 'table', "Expected a table for Hover.contents. Please file an issue on neovim/neovim")
+    assert(type(input) == 'table', "Expected a table for Hover.contents")
     -- MarkupContent
     if input.kind then
       -- The kind can be either plaintext or markdown. However, either way we
@@ -245,7 +245,10 @@ local function get_floating_window_option(width, height)
 end
 
 function M.open_floating_preview(contents, filetype)
-  assert(type(contents) == 'table', 'open_floating_preview(): contents must be a table')
+  vim.validate {
+    contents = { contents, 't' };
+    filetype = { filetype, 's', true };
+  }
 
   -- Trim empty lines from the end.
   for i = #contents, 1, -1 do
@@ -271,9 +274,6 @@ function M.open_floating_preview(contents, filetype)
 
   local floating_bufnr = vim.api.nvim_create_buf(false, true)
   if filetype then
-    if not (type(filetype) == 'string') then
-      error(("Invalid filetype for open_floating_preview: %q"):format(filetype))
-    end
     vim.api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
   end
 

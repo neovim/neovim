@@ -1,6 +1,7 @@
 local uv = vim.loop
 local log = require('vim.lsp.log')
 local protocol = require('vim.lsp.protocol')
+local validate, schedule, schedule_wrap = vim.validate, vim.schedule, vim.schedule_wrap
 
 -- TODO replace with a better implementation.
 local function json_encode(data)
@@ -134,7 +135,9 @@ local client_errors = vim.tbl_add_reverse_lookup {
 }
 
 local function format_rpc_error(err)
-  assert(type(err) == 'table', "err must be a table")
+  validate {
+    err = { err, 't' };
+  }
   local code_name = assert(protocol.ErrorCodes[err.code], "err.code is invalid")
   local message_parts = {"RPC", code_name}
   if err.message then
@@ -179,14 +182,16 @@ end
 -- @param cmd [
 local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_params)
   local _ = log.info() and log.info("Starting RPC client", {cmd = cmd, args = cmd_args, extra = extra_spawn_params})
-  assert(type(cmd) == 'string', "cmd must be a string")
-  assert(type(cmd_args) == 'table', "cmd_args must be a table")
+  validate {
+    cmd = { cmd, 's' };
+    cmd_args = { cmd_args, 't' };
+    handlers = { handlers, 't', true };
+  }
 
   if not (vim.fn.executable(cmd) == 1) then
     error(string.format("The given command %q is not executable.", cmd))
   end
   if handlers then
-    assert(type(handlers) == 'table', "handlers must be a table")
     local user_handlers = handlers
     handlers = {}
     for handle_name, default_handler in pairs(default_handlers) do
@@ -199,7 +204,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
         if not (handle_name == 'server_request'
           or handle_name == 'on_exit') -- TODO this blocks the loop exiting for some reason.
         then
-          user_handler = vim.schedule_wrap(user_handler)
+          user_handler = schedule_wrap(user_handler)
         end
         handlers[handle_name] = user_handler
       else
@@ -246,7 +251,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     local _ = log.debug() and log.debug("rpc.send.payload", payload)
     if handle:is_closing() then return false end
     -- TODO(ashkan) remove this once we have a Lua json_encode
-    vim.schedule(function()
+    schedule(function()
       local encoded = assert(json_encode(payload))
       stdin:write(format_message_with_content_length(encoded))
     end)
@@ -272,6 +277,9 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
   end
 
   local function send_request(method, params, callback)
+    validate {
+      callback = { callback, 'f' };
+    }
     message_index = message_index + 1
     local message_id = message_index
     local result = encode_and_send {
@@ -281,7 +289,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       params = params;
     }
     if result then
-      message_callbacks[message_id] = vim.schedule_wrap(callback)
+      message_callbacks[message_id] = schedule_wrap(callback)
       return result, message_id
     else
       return false
@@ -326,7 +334,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       decoded.params = convert_NIL(decoded.params)
       -- Schedule here so that the users functions don't trigger an error and
       -- we can still use the result.
-      vim.schedule(function()
+      schedule(function()
         local status, result
         status, result, err = try_call(client_errors.SERVER_REQUEST_HANDLER_ERROR,
             handlers.server_request, decoded.method, decoded.params)
@@ -359,7 +367,9 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
       local callback = message_callbacks[result_id]
       if callback then
         message_callbacks[result_id] = nil
-        assert(type(callback) == 'function', "callback must be a function")
+        validate {
+          callback = { callback, 'f' };
+        }
         if decoded.error then
           decoded.error = setmetatable(decoded.error, {
             __tostring = format_rpc_error;
@@ -382,7 +392,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     end
   end
   -- TODO(ashkan) remove this once we have a Lua json_decode
-  handle_body = vim.schedule_wrap(handle_body)
+  handle_body = schedule_wrap(handle_body)
 
   local request_parser = coroutine.wrap(request_parser_loop)
   request_parser()
