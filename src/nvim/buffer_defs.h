@@ -810,7 +810,7 @@ struct file_buffer {
 
   PMap(uint64_t) *b_extmark_ns;         // extmark namespaces
   kbtree_t(extmarklines) b_extlines;  // extmarks
-  kvec_t(ExtMarkLine *) b_extmark_move_space;  // temp space for extmarks
+  kvec_t(ExtmarkLine *) b_extmark_move_space;  // temp space for extmarks
 
   // array of channel_id:s which have asked to receive updates for this
   // buffer.

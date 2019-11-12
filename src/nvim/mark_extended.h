@@ -15,12 +15,12 @@
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKLINES(buf, l_lnum, u_lnum, code)\
   kbitr_t(extmarklines) itr;\
-  ExtMarkLine t;\
+  ExtmarkLine t;\
   t.lnum = l_lnum;\
   if (!kb_itr_get(extmarklines, &buf->b_extlines, &t, &itr)) { \
     kb_itr_next(extmarklines, &buf->b_extlines, &itr);\
   }\
-  ExtMarkLine *extmarkline;\
+  ExtmarkLine *extmarkline;\
   for (; kb_itr_valid(&itr); kb_itr_next(extmarklines, \
                                          &buf->b_extlines, &itr)) { \
     extmarkline = kb_itr_key(&itr);\
@@ -33,12 +33,12 @@
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKLINES_PREV(buf, l_lnum, u_lnum, code)\
   kbitr_t(extmarklines) itr;\
-  ExtMarkLine t;\
+  ExtmarkLine t;\
   t.lnum = u_lnum;\
   if (!kb_itr_get(extmarklines, &buf->b_extlines, &t, &itr)) { \
     kb_itr_prev(extmarklines, &buf->b_extlines, &itr);\
   }\
-  ExtMarkLine *extmarkline;\
+  ExtmarkLine *extmarkline;\
   for (; kb_itr_valid(&itr); kb_itr_prev(extmarklines, \
                                          &buf->b_extlines, &itr)) { \
     extmarkline = kb_itr_key(&itr);\

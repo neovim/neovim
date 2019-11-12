@@ -58,7 +58,7 @@ int extmark_set(buf_T *buf, uint64_t ns, uint64_t id,
     extmark_create(buf, ns, id, lnum, col, op);
     return true;
   } else {
-    ExtMarkLine *extmarkline = extmark->line;
+    ExtmarkLine *extmarkline = extmark->line;
     extmark_update(extmark, buf, ns, id, lnum,  col, op, NULL);
     if (kb_size(&extmarkline->items) == 0) {
       kb_del(extmarklines, &buf->b_extlines, extmarkline);
@@ -180,7 +180,7 @@ static void extmark_create(buf_T *buf, uint64_t ns, uint64_t id,
   }
 
   // Create or get a line
-  ExtMarkLine *extmarkline = extmarkline_ref(buf, lnum, true);
+  ExtmarkLine *extmarkline = extmarkline_ref(buf, lnum, true);
   // Create and put mark on the line
   extmark_put(col, id, extmarkline, ns);
 
@@ -207,10 +207,10 @@ static void extmark_update(Extmark *extmark, buf_T *buf,
     u_extmark_update(buf, ns, id, extmark->line->lnum, extmark->col,
                      lnum, col);
   }
-  ExtMarkLine *old_line = extmark->line;
+  ExtmarkLine *old_line = extmark->line;
   // Move the mark to a new line and update column
   if (old_line->lnum != lnum) {
-    ExtMarkLine *ref_line = extmarkline_ref(buf, lnum, true);
+    ExtmarkLine *ref_line = extmarkline_ref(buf, lnum, true);
     extmark_put(col, id, ref_line, ns);
     // Update the hashmap
     ExtmarkNs *ns_obj = pmap_get(uint64_t)(buf->b_extmark_ns, ns);
@@ -250,7 +250,7 @@ static int extmark_delete(Extmark *extmark,
   pmap_del(uint64_t)(ns_obj->map, id);
 
   // Remove the mark mark from the line
-  ExtMarkLine *extmarkline = extmark->line;
+  ExtmarkLine *extmarkline = extmark->line;
   kb_del(markitems, &extmarkline->items, *extmark);
   // Remove the line if there are no more marks in the line
   if (kb_size(&extmarkline->items) == 0) {
@@ -270,7 +270,7 @@ Extmark *extmark_from_id(buf_T *buf, uint64_t ns, uint64_t id)
   if (!ns_obj || !kh_size(ns_obj->map->table)) {
     return NULL;
   }
-  ExtMarkLine *extmarkline = pmap_get(uint64_t)(ns_obj->map, id);
+  ExtmarkLine *extmarkline = pmap_get(uint64_t)(ns_obj->map, id);
   if (!extmarkline) {
     return NULL;
   }
@@ -841,7 +841,7 @@ static bool extmark_col_adjust_impl(buf_T *buf, linenr_T lnum,
 {
   bool marks_exist = false;
 
-  ExtMarkLine *extmarkline = extmarkline_ref(buf, lnum, false);
+  ExtmarkLine *extmarkline = extmarkline_ref(buf, lnum, false);
   if (!extmarkline) {
     return false;
   }
@@ -967,7 +967,7 @@ void extmark_adjust(buf_T *buf,
                     ExtmarkOp undo,
                     bool end_temp)
 {
-  ExtMarkLine *_extline;
+  ExtmarkLine *_extline;
 
   // btree needs to be kept ordered to work, so far only :move requires this
   // 2nd call with end_temp = true unpack the lines from the temp position
@@ -989,7 +989,7 @@ void extmark_adjust(buf_T *buf,
     // Careful! marks from deleted region can end up on en extisting extmarkline
     // that is goinig to be adjusted to the target position.
     linenr_T join_num = line1 - amount_after;
-    ExtMarkLine *joinline = (join_num > line2
+    ExtmarkLine *joinline = (join_num > line2
                              ? extmarkline_ref(buf, join_num, false) : NULL);
 
     // extmark_adjust is already redoable, the copy should only be for undo
@@ -1030,7 +1030,7 @@ bool extmark_copy_and_place(buf_T *buf,
                             linenr_T u_lnum, colnr_T u_col,
                             linenr_T p_lnum, colnr_T p_col,
                             ExtmarkOp undo, bool delete,
-                            ExtMarkLine *destline)
+                            ExtmarkLine *destline)
 
 {
   bool marks_moved = false;
@@ -1086,10 +1086,10 @@ bool extmark_copy_and_place(buf_T *buf,
 }
 
 // Get reference to line in kbtree_t, allocating it if neccessary.
-ExtMarkLine *extmarkline_ref(buf_T *buf, linenr_T lnum, bool put)
+ExtmarkLine *extmarkline_ref(buf_T *buf, linenr_T lnum, bool put)
 {
   kbtree_t(extmarklines) *b = &buf->b_extlines;
-  ExtMarkLine t, **pp;
+  ExtmarkLine t, **pp;
   t.lnum = lnum;
 
   pp = kb_get(extmarklines, b, &t);
@@ -1097,7 +1097,7 @@ ExtMarkLine *extmarkline_ref(buf_T *buf, linenr_T lnum, bool put)
     if (!put) {
       return NULL;
     }
-    ExtMarkLine *p = xcalloc(sizeof(ExtMarkLine), 1);
+    ExtmarkLine *p = xcalloc(sizeof(ExtmarkLine), 1);
     p->lnum = lnum;
     // p->items zero initialized
     kb_put(extmarklines, b, p);
@@ -1107,7 +1107,7 @@ ExtMarkLine *extmarkline_ref(buf_T *buf, linenr_T lnum, bool put)
   return *pp;
 }
 
-void extmarkline_free(ExtMarkLine *extmarkline)
+void extmarkline_free(ExtmarkLine *extmarkline)
 {
   kb_destroy(markitems, (&extmarkline->items));
   xfree(extmarkline);
@@ -1117,7 +1117,7 @@ void extmarkline_free(ExtMarkLine *extmarkline)
 ///
 /// caller must ensure combination of id and ns_id isn't in use.
 void extmark_put(colnr_T col, uint64_t id,
-                 ExtMarkLine *extmarkline, uint64_t ns)
+                 ExtmarkLine *extmarkline, uint64_t ns)
 {
   Extmark t;
   t.col = col;

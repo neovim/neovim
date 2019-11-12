@@ -6,13 +6,13 @@
 #include "nvim/lib/kbtree.h"
 #include "nvim/lib/kvec.h"
 
-struct ExtMarkLine;
+struct ExtmarkLine;
 
 typedef struct Extmark
 {
   uint64_t ns_id;
   uint64_t mark_id;
-  struct ExtMarkLine *line;
+  struct ExtmarkLine *line;
   colnr_T col;
 } Extmark;
 
@@ -37,14 +37,14 @@ static inline int extmark_cmp(Extmark a, Extmark b)
 #define markitems_cmp(a, b) (extmark_cmp((a), (b)))
 KBTREE_INIT(markitems, Extmark, markitems_cmp, 10)
 
-typedef struct ExtMarkLine
+typedef struct ExtmarkLine
 {
   linenr_T lnum;
   kbtree_t(markitems) items;
-} ExtMarkLine;
+} ExtmarkLine;
 
 #define EXTMARKLINE_CMP(a, b) (kb_generic_cmp((a)->lnum, (b)->lnum))
-KBTREE_INIT(extmarklines, ExtMarkLine *, EXTMARKLINE_CMP, 10)
+KBTREE_INIT(extmarklines, ExtmarkLine *, EXTMARKLINE_CMP, 10)
 
 
 typedef struct undo_object ExtmarkUndoObject;
