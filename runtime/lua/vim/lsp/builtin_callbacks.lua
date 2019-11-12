@@ -2,16 +2,16 @@
 --
 -- vim.api.nvim_buf_set_lines(0, 0, 0, false, vim.tbl_keys(vim.lsp.builtin_callbacks))
 --
+
 -- textDocument/completion
 -- textDocument/declaration
 -- textDocument/definition
 -- textDocument/hover
 -- textDocument/implementation
+-- textDocument/publishDiagnostics
 -- textDocument/rename
 -- textDocument/signatureHelp
 -- textDocument/typeDefinition
--- window/logMessage
--- window/showMessage
 -- TODO codeLens/resolve
 -- TODO completionItem/resolve
 -- TODO documentLink/resolve
@@ -22,9 +22,10 @@
 -- TODO textDocument/documentSymbol
 -- TODO textDocument/formatting
 -- TODO textDocument/onTypeFormatting
--- TODO textDocument/publishDiagnostics
 -- TODO textDocument/rangeFormatting
 -- TODO textDocument/references
+-- window/logMessage
+-- window/showMessage
 
 local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
@@ -75,6 +76,7 @@ builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, result)
   end
   util.buf_clear_diagnostics(bufnr)
   util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
+  util.buf_diagnostics_underline(bufnr, result.diagnostics)
   util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
 end
 
