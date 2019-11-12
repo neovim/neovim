@@ -847,4 +847,63 @@ pesc({s})                                                         *vim.pesc()*
                 See also: ~
                     https://github.com/rxi/lume
 
+validate({opt})                                               *vim.validate()*
+                Validates a parameter specification (types and values).
+
+                Usage example: >
+
+                  function user.new(name, age, hobbies)
+                    vim.validate{
+                      name={name, 'string'},
+                      age={age, 'number'},
+                      hobbies={hobbies, 'table'},
+                    }
+                    ...
+                  end
+<
+
+                Examples with explicit argument values (can be run directly): >
+
+                  vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+                     => NOP (success)
+<
+>
+                  vim.validate{arg1={1, 'table'}}
+                     => error('arg1: expected table, got number')
+<
+>
+                  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+                     => error('arg1: expected even number, got 3')
+<
+
+                Parameters: ~
+                    {opt}  Map of parameter names to validations. Each key is
+                           a parameter name; each value is a tuple in one of
+                           these forms:
+                           1. (arg_value, type_name, optional)
+                              • arg_value: argument value
+                              • type_name: string type name, one of: ("table",
+                                "t", "string", "s", "number", "n", "boolean",
+                                "b", "function", "f", "nil", "thread",
+                                "userdata")
+                              • optional: (optional) boolean, if true, `nil`
+                                is valid
+
+                           2. (arg_value, fn, msg)
+                              • arg_value: argument value
+                              • fn: any function accepting one argument,
+                                returns true if and only if the argument is
+                                valid
+                              • msg: (optional) error string if validation
+                                fails
+
+is_callable({f})                                           *vim.is_callable()*
+                Returns true if object `f` can be called as a function.
+
+                Parameters: ~
+                    {f}  Any object
+
+                Return: ~
+                    true if `f` is callable, else false
+
  vim:tw=78:ts=8:ft=help:norl:

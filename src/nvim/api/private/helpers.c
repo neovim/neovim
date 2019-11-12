@@ -10,6 +10,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/api/vim.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/lua/executor.h"
 #include "nvim/ascii.h"
@@ -23,6 +24,7 @@
 #include "nvim/eval/typval.h"
 #include "nvim/map_defs.h"
 #include "nvim/map.h"
+#include "nvim/mark_extended.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 #include "nvim/version.h"
@@ -1504,4 +1506,128 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
   tv_dict_free(dict);
 
   return mappings;
+}
+
+// Returns an extmark given an id or a positional index
+// If throw == true then an error will be raised if nothing
+// was found
+// Returns NULL if something went wrong
+Extmark *extmark_from_id_or_pos(Buffer buffer, Integer namespace, Object id,
+                                Error *err, bool throw)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+
+  if (!buf) {
+    return NULL;
+  }
+
+  Extmark *extmark = NULL;
+  if (id.type == kObjectTypeArray) {
+    if (id.data.array.size != 2) {
+      api_set_error(err, kErrorTypeValidation,
+                    _("Position must have 2 elements"));
+      return NULL;
+    }
+    linenr_T row = (linenr_T)id.data.array.items[0].data.integer;
+    colnr_T col = (colnr_T)id.data.array.items[1].data.integer;
+    if (row < 1 || col < 1) {
+      if (throw) {
+      api_set_error(err, kErrorTypeValidation, _("Row and column MUST be > 0"));
+      }
+      return NULL;
+    }
+    extmark = extmark_from_pos(buf, (uint64_t)namespace, row, col);
+  } else if (id.type != kObjectTypeInteger) {
+    if (throw) {
+      api_set_error(err, kErrorTypeValidation,
+                    _("Mark id must be an int or [row, col]"));
+    }
+    return NULL;
+  } else if (id.data.integer < 0) {
+    if (throw) {
+      api_set_error(err, kErrorTypeValidation, _("Mark id must be positive"));
+    }
+    return NULL;
+  } else {
+    extmark = extmark_from_id(buf,
+                              (uint64_t)namespace,
+                              (uint64_t)id.data.integer);
+  }
+
+  if (!extmark) {
+    if (throw) {
+      api_set_error(err, kErrorTypeValidation, _("Mark doesn't exist"));
+    }
+    return NULL;
+  }
+  return extmark;
+}
+
+// Is the Namespace in use?
+bool ns_initialized(uint64_t ns)
+{
+  if (ns < 1) {
+    return false;
+  }
+  return ns < (uint64_t)next_namespace_id;
+}
+
+/// Get line and column from extmark object
+///
+/// Extmarks may be queried from position or name or even special names
+/// in the future such as "cursor". This function sets the line and col
+/// to make the extmark functions recognize what's required
+///
+/// @param[out] lnum lnum to be set
+/// @param[out] colnr col to be set
+bool set_extmark_index_from_obj(buf_T *buf, Integer namespace,
+                                Object obj, linenr_T *lnum, colnr_T *colnr,
+                                Error *err)
+{
+  // Check if it is mark id
+  if (obj.type == kObjectTypeInteger) {
+    Integer id = obj.data.integer;
+    if (id == 0) {
+        *lnum = 1;
+        *colnr = 1;
+        return true;
+    } else if (id == -1) {
+        *lnum = MAXLNUM;
+        *colnr = MAXCOL;
+        return true;
+    } else if (id < 0) {
+      api_set_error(err, kErrorTypeValidation, _("Mark id must be positive"));
+      return false;
+    }
+
+    Extmark *extmark = extmark_from_id(buf, (uint64_t)namespace, (uint64_t)id);
+    if (extmark) {
+      *lnum = extmark->line->lnum;
+      *colnr = extmark->col;
+      return true;
+    } else {
+      api_set_error(err, kErrorTypeValidation, _("No mark with requested id"));
+      return false;
+    }
+
+  // Check if it is a position
+  } else if (obj.type == kObjectTypeArray) {
+    Array pos = obj.data.array;
+    if (pos.size != 2
+        || pos.items[0].type != kObjectTypeInteger
+        || pos.items[1].type != kObjectTypeInteger) {
+      api_set_error(err, kErrorTypeValidation,
+                    _("Position must have 2 integer elements"));
+      return false;
+    }
+    Integer line = pos.items[0].data.integer;
+    Integer col = pos.items[1].data.integer;
+    *lnum = (linenr_T)(line >= 0 ? line + 1 : MAXLNUM);
+    *colnr = (colnr_T)(col >= 0 ? col + 1 : MAXCOL);
+    return true;
+  } else {
+    api_set_error(err, kErrorTypeValidation,
+                  _("Position must be a mark id Integer or position Array"));
+    return false;
+  }
 }
