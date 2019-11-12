@@ -188,6 +188,26 @@ function vim.pesc(s)
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
 end
 
+--- Test if `prefix` is a prefix of `s` for strings.
+--
+-- @param s String to check
+-- @param prefix Potential prefix
+-- @return boolean True if prefix is a prefix of s
+function vim.startswith(s, prefix)
+  vim.validate { s = {s, 's'}; prefix = {prefix, 's'}; }
+  return s:sub(1, #prefix) == prefix
+end
+
+--- Test if `suffix` is a suffix of `s` for strings.
+--
+-- @param s String to check
+-- @param suffix Potential suffix
+-- @return boolean True if suffix is a suffix of s
+function vim.endswith(s, suffix)
+  vim.validate { s = {s, 's'}; suffix = {suffix, 's'}; }
+  return #suffix == 0 or s:sub(-#suffix) == suffix
+end
+
 --- Validates a parameter specification (types and values).
 ---
 --- Usage example:
