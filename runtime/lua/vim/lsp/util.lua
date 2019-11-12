@@ -1,4 +1,6 @@
 local protocol = require 'vim.lsp.protocol'
+local validate = vim.validate
+local api = vim.api
 
 local M = {}
 
@@ -26,7 +28,7 @@ end
 
 local function resolve_bufnr(bufnr)
   if bufnr == nil or bufnr == 0 then
-    return vim.api.nvim_get_current_buf()
+    return api.nvim_get_current_buf()
   end
   return bufnr
 end
@@ -47,19 +49,19 @@ function M.text_document_apply_text_edit(text_edit, bufnr)
   local finish = range['end']
   local new_lines = split_lines(text_edit.newText)
   if start.character == 0 and finish.character == 0 then
-    vim.api.nvim_buf_set_lines(bufnr, start.line, finish.line, false, new_lines)
+    api.nvim_buf_set_lines(bufnr, start.line, finish.line, false, new_lines)
     return
   end
-  vim.api.nvim_err_writeln('apply_text_edit currently only supports character ranges starting at 0')
+  api.nvim_err_writeln('apply_text_edit currently only supports character ranges starting at 0')
   error('apply_text_edit currently only supports character ranges starting at 0')
   return
   --  TODO test and finish this support for character ranges.
---  local lines = vim.api.nvim_buf_get_lines(0, start.line, finish.line + 1, false)
+--  local lines = api.nvim_buf_get_lines(0, start.line, finish.line + 1, false)
 --  local suffix = lines[#lines]:sub(finish.character+2)
 --  local prefix = lines[1]:sub(start.character+2)
 --  new_lines[#new_lines] = new_lines[#new_lines]..suffix
 --  new_lines[1] = prefix..new_lines[1]
---  vim.api.nvim_buf_set_lines(0, start.line, finish.line, false, new_lines)
+--  api.nvim_buf_set_lines(0, start.line, finish.line, false, new_lines)
 end
 
 -- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
@@ -91,8 +93,8 @@ function M.text_document_apply_text_document_edit(text_document_edit, bufnr)
 end
 
 function M.get_current_line_to_cursor()
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local line = assert(vim.api.nvim_buf_get_lines(0, pos[1]-1, pos[1], false)[1])
+  local pos = api.nvim_win_get_cursor(0)
+  local line = assert(api.nvim_buf_get_lines(0, pos[1]-1, pos[1], false)[1])
   return line:sub(pos[2]+1)
 end
 
@@ -165,7 +167,7 @@ function M.workspace_apply_workspace_edit(workspace_edit)
     -- TODO improve this approach. Try to edit open buffers without switching.
     -- Not sure how to handle files which aren't open. This is deprecated
     -- anyway, so I guess it could be left as is.
-    vim.api.nvim_command('edit '..fname)
+    api.nvim_command('edit '..fname)
     for _, change in ipairs(changes) do
       M.text_document_apply_text_edit(change)
     end
@@ -225,7 +227,7 @@ local function get_floating_window_option(width, height)
     row = 0
   end
 
-  if vim.fn.wincol() + width <= vim.api.nvim_get_option('columns') then
+  if vim.fn.wincol() + width <= api.nvim_get_option('columns') then
     anchor = anchor..'W'
     col = 0
   else
@@ -245,7 +247,7 @@ local function get_floating_window_option(width, height)
 end
 
 function M.open_floating_preview(contents, filetype)
-  vim.validate {
+  validate {
     contents = { contents, 't' };
     filetype = { filetype, 's', true };
   }
@@ -272,24 +274,216 @@ function M.open_floating_preview(contents, filetype)
   -- Add right padding of 1 each.
   width = width + 1
 
-  local floating_bufnr = vim.api.nvim_create_buf(false, true)
+  local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
-    vim.api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
+    api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
   end
-
   local float_option = get_floating_window_option(width, height)
-  local floating_winnr = vim.api.nvim_open_win(floating_bufnr, true, float_option)
+  local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
   if filetype == 'markdown' then
-    vim.api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
+    api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
+  end
+  api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
+  local floating_win = vim.fn.win_id2win(floating_winnr)
+  api.nvim_command("autocmd CursorMoved * ++once "..floating_win.."wincmd c")
+  return floating_bufnr, floating_winnr
+end
+
+
+local function highlight_range(bufnr, ns, hiname, start, finish)
+  if start[1] == finish[1] then
+    -- TODO care about encoding here since this is in byte index?
+    api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], finish[2])
+  else
+    api.nvim_buf_add_highlight(bufnr, ns, hiname, start[1], start[2], -1)
+    for line = start[1] + 1, finish[1] - 1 do
+      api.nvim_buf_add_highlight(bufnr, ns, hiname, line, 0, -1)
+    end
+    api.nvim_buf_add_highlight(bufnr, ns, hiname, finish[1], 0, finish[2])
+  end
+end
+
+do
+  local all_buffer_diagnostics = {}
+
+  local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
+
+  local default_severity_highlight = {
+    [protocol.DiagnosticSeverity.Error] = { guifg = "Red" };
+    [protocol.DiagnosticSeverity.Warning] = { guifg = "Orange" };
+    [protocol.DiagnosticSeverity.Information] = { guifg = "LightBlue" };
+    [protocol.DiagnosticSeverity.Hint] = { guifg = "LightGrey" };
+  }
+
+  local underline_highlight_name = "LspDiagnosticsUnderline"
+  api.nvim_command(string.format("highlight %s gui=underline cterm=underline", underline_highlight_name))
+
+  local function find_color_rgb(color)
+    local rgb_hex = api.nvim_get_color_by_name(color)
+    validate { color = {color, function() return rgb_hex ~= -1 end, "valid color name"} }
+    return rgb_hex
   end
 
-  vim.api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
+  --- Determine whether to use black or white text
+  -- Ref: https://stackoverflow.com/a/1855903/837964
+  -- https://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color
+  local function color_is_bright(r, g, b)
+    -- Counting the perceptive luminance - human eye favors green color
+    local luminance = (0.299*r + 0.587*g + 0.114*b)/255
+    if luminance > 0.5 then
+      return true -- Bright colors, black font
+    else
+      return false -- Dark colors, white font
+    end
+  end
 
-  -- TODO is this necessary?
-  local floating_win = vim.fn.win_id2win(floating_winnr)
+  local severity_highlights = {}
 
-  vim.api.nvim_command("wincmd p")
-  vim.api.nvim_command("autocmd CursorMoved <buffer> ++once :"..floating_win.."wincmd c")
+  function M.set_severity_highlights(highlights)
+    validate {highlights = {highlights, 't'}}
+    for severity, default_color in pairs(default_severity_highlight) do
+      local severity_name = protocol.DiagnosticSeverity[severity]
+      local highlight_name = "LspDiagnostics"..severity_name
+      local hi_info = highlights[severity] or default_color
+      -- Try to fill in the foreground color with a sane default.
+      if not hi_info.guifg and hi_info.guibg then
+        -- TODO(ashkan) move this out when bitop is guaranteed to be included.
+        local bit = require 'bit'
+        local band, rshift = bit.band, bit.rshift
+        local rgb = find_color_rgb(hi_info.guibg)
+        local is_bright = color_is_bright(rshift(rgb, 16), band(rshift(rgb, 8), 0xFF), band(rgb, 0xFF))
+        hi_info.guifg = is_bright and "Black" or "White"
+      end
+      if not hi_info.ctermfg and hi_info.ctermbg then
+        -- TODO(ashkan) move this out when bitop is guaranteed to be included.
+        local bit = require 'bit'
+        local band, rshift = bit.band, bit.rshift
+        local rgb = find_color_rgb(hi_info.ctermbg)
+        local is_bright = color_is_bright(rshift(rgb, 16), band(rshift(rgb, 8), 0xFF), band(rgb, 0xFF))
+        hi_info.ctermfg = is_bright and "Black" or "White"
+      end
+      local cmd_parts = {"highlight", highlight_name}
+      for k, v in pairs(hi_info) do
+        table.insert(cmd_parts, k.."="..v)
+      end
+      api.nvim_command(table.concat(cmd_parts, ' '))
+      severity_highlights[severity] = highlight_name
+    end
+  end
+
+  function M.buf_clear_diagnostics(bufnr)
+    validate { bufnr = {bufnr, 'n', true} }
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+    api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
+  end
+
+  -- Initialize with the defaults.
+  M.set_severity_highlights(default_severity_highlight)
+
+  function M.get_severity_highlight_name(severity)
+    return severity_highlights[severity]
+  end
+
+  function M.show_line_diagnostics()
+    local bufnr = api.nvim_get_current_buf()
+    local line = api.nvim_win_get_cursor(0)[1] - 1
+    -- local marks = api.nvim_buf_get_extmarks(bufnr, diagnostic_ns, {line, 0}, {line, -1}, {})
+    -- if #marks == 0 then
+    --   return
+    -- end
+    -- local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+    local lines = {"Diagnostics:"}
+    local highlights = {{0, "Bold"}}
+
+    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_diagnostics then return end
+    local line_diagnostics = buffer_diagnostics[line]
+    if not line_diagnostics then return end
+
+    for i, diagnostic in ipairs(line_diagnostics) do
+    -- for i, mark in ipairs(marks) do
+    --   local mark_id = mark[1]
+    --   local diagnostic = buffer_diagnostics[mark_id]
+
+      -- TODO(ashkan) make format configurable?
+      local prefix = string.format("%d. ", i)
+      table.insert(lines, prefix..diagnostic.message)
+      table.insert(highlights, {#prefix + 1, severity_highlights[diagnostic.severity]})
+    end
+    local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
+    for i, hi in ipairs(highlights) do
+      local prefixlen, hiname = unpack(hi)
+      -- Start highlight after the prefix
+      api.nvim_buf_add_highlight(popup_bufnr, -1, hiname, i-1, prefixlen, -1)
+    end
+    return popup_bufnr, winnr
+  end
+
+  function M.buf_diagnostics_save_positions(bufnr, diagnostics)
+    validate {
+      bufnr = {bufnr, 'n', true};
+      diagnostics = {diagnostics, 't', true};
+    }
+    if not diagnostics then return end
+    bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
+
+    if not all_buffer_diagnostics[bufnr] then
+      -- Clean up our data when the buffer unloads.
+      api.nvim_buf_attach(bufnr, false, {
+        on_detach = function(b)
+          all_buffer_diagnostics[b] = nil
+        end
+      })
+    end
+    all_buffer_diagnostics[bufnr] = {}
+    local buffer_diagnostics = all_buffer_diagnostics[bufnr]
+
+    for _, diagnostic in ipairs(diagnostics) do
+      local start = diagnostic.range.start
+      -- local mark_id = api.nvim_buf_set_extmark(bufnr, diagnostic_ns, 0, start.line, 0, {})
+      -- buffer_diagnostics[mark_id] = diagnostic
+      local line_diagnostics = buffer_diagnostics[start.line]
+      if not line_diagnostics then
+        line_diagnostics = {}
+        buffer_diagnostics[start.line] = line_diagnostics
+      end
+      table.insert(line_diagnostics, diagnostic)
+    end
+  end
+
+
+  function M.buf_diagnostics_underline(bufnr, diagnostics)
+    for _, diagnostic in ipairs(diagnostics) do
+      local start = diagnostic.range.start
+      local finish = diagnostic.range["end"]
+
+      -- TODO care about encoding here since this is in byte index?
+      highlight_range(bufnr, diagnostic_ns, underline_highlight_name,
+          {start.line, start.character},
+          {finish.line, finish.character}
+      )
+    end
+  end
+
+  function M.buf_diagnostics_virtual_text(bufnr, diagnostics)
+    local buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_line_diagnostics then
+      M.buf_diagnostics_save_positions(bufnr, diagnostics)
+    end
+    buffer_line_diagnostics = all_buffer_diagnostics[bufnr]
+    if not buffer_line_diagnostics then
+      return
+    end
+    for line, line_diags in pairs(buffer_line_diagnostics) do
+      local virt_texts = {}
+      for i = 1, #line_diags - 1 do
+        table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})
+      end
+      local last = line_diags[#line_diags]
+      table.insert(virt_texts, {"■ "..last.message, severity_highlights[last.severity]})
+      api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
+    end
+  end
 end
 
 return M

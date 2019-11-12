@@ -29,6 +29,7 @@
 local log = require 'vim.lsp.log'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
+local api = vim.api
 
 local function split_lines(value)
   return vim.split(value, '\n', true)
@@ -42,9 +43,9 @@ builtin_callbacks['textDocument/completion'] = function(_, _, result)
   if not result or vim.tbl_isempty(result) then
     return
   end
-  local pos = vim.api.nvim_win_get_cursor(0)
+  local pos = api.nvim_win_get_cursor(0)
   local row, col = pos[1], pos[2]
-  local line = assert(vim.api.nvim_buf_get_lines(0, row-1, row, false)[1])
+  local line = assert(api.nvim_buf_get_lines(0, row-1, row, false)[1])
   local line_to_cursor = line:sub(col+1)
 
   local matches = util.text_document_completion_list_to_complete_items(result, line_to_cursor)
@@ -60,6 +61,22 @@ builtin_callbacks['textDocument/rename'] = function(_, _, result)
   util.workspace_apply_workspace_edit(result)
 end
 
+local function uri_to_bufnr(uri)
+  return vim.fn.bufadd(vim.uri_to_fname(uri))
+end
+
+builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, result)
+  if not result then return end
+  local uri = result.uri
+  local bufnr = uri_to_bufnr(uri)
+  if not bufnr then
+    api.nvim_err_writeln(string.format("LSP.publishDiagnostics: Couldn't find buffer for %s", uri))
+    return
+  end
+  util.buf_clear_diagnostics(bufnr)
+  util.buf_diagnostics_save_positions(bufnr, result.diagnostics)
+  util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
+end
 
 -- textDocument/hover
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
@@ -155,7 +172,7 @@ builtin_callbacks['textDocument/signatureHelp'] = function(_, _, result)
 end
 
 local function update_tagstack()
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = api.nvim_get_current_buf()
   local line = vim.fn.line('.')
   local col = vim.fn.col('.')
   local tagname = vim.fn.expand('<cWORD>')
@@ -185,34 +202,22 @@ local function update_tagstack()
 end
 
 local function handle_location(result)
-  local current_file = vim.fn.expand('%:p')
-
   -- We can sometimes get a list of locations, so set the first value as the
   -- only value we want to handle
   -- TODO(ashkan) was this correct^? We could use location lists.
   if result[1] ~= nil then
     result = result[1]
   end
-
   if result.uri == nil then
-    vim.api.nvim_err_writeln('[LSP] Could not find a valid location')
+    api.nvim_err_writeln('[LSP] Could not find a valid location')
     return
   end
-
-  if type(result.uri) ~= 'string' then
-    vim.api.nvim_err_writeln('Invalid uri')
-    return
-  end
-
   local result_file = vim.uri_to_fname(result.uri)
-
+  local bufnr = vim.fn.bufadd(result_file)
   update_tagstack()
-  if result_file ~= vim.uri_from_fname(current_file) then
-    vim.api.nvim_command('silent drop ' .. result_file)
-  end
-
+  api.nvim_set_current_buf(bufnr)
   local start = result.range.start
-  vim.api.nvim_win_set_cursor(0, {start.line + 1, start.character})
+  api.nvim_win_set_cursor(0, {start.line + 1, start.character})
 end
 
 local function location_callback(_, method, result)
@@ -246,10 +251,10 @@ local function log_message(_, _, result, client_id)
   if message_type == protocol.MessageType.Error then
     -- Might want to not use err_writeln,
     -- but displaying a message with red highlights or something
-    vim.api.nvim_err_writeln(string.format("LSP[%s] %s", client_name, message))
+    api.nvim_err_writeln(string.format("LSP[%s] %s", client_name, message))
   else
     local message_type_name = protocol.MessageType[message_type]
-    vim.api.nvim_out_write(string.format("LSP[%s][%s] %s\n", client_name, message_type_name, message))
+    api.nvim_out_write(string.format("LSP[%s][%s] %s\n", client_name, message_type_name, message))
   end
   return result
 end
