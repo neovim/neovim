@@ -407,8 +407,14 @@ do
 
       -- TODO(ashkan) make format configurable?
       local prefix = string.format("%d. ", i)
-      table.insert(lines, prefix..diagnostic.message)
-      table.insert(highlights, {#prefix + 1, severity_highlights[diagnostic.severity]})
+      local hiname = severity_highlights[diagnostic.severity]
+      local message_lines = split_lines(diagnostic.message)
+      table.insert(lines, prefix..message_lines[1])
+      table.insert(highlights, {#prefix + 1, hiname})
+      for j = 2, #message_lines do
+        table.insert(lines, message_lines[j])
+        table.insert(highlights, {0, hiname})
+      end
     end
     local popup_bufnr, winnr = M.open_floating_preview(lines, 'plaintext')
     for i, hi in ipairs(highlights) do
@@ -480,7 +486,8 @@ do
         table.insert(virt_texts, {"■", severity_highlights[line_diags[i].severity]})
       end
       local last = line_diags[#line_diags]
-      table.insert(virt_texts, {"■ "..last.message, severity_highlights[last.severity]})
+      -- TODO(ashkan) use first line instead of subbing 2 spaces?
+      table.insert(virt_texts, {"■ "..last.message:gsub("\r", ""):gsub("\n", "  "), severity_highlights[last.severity]})
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
