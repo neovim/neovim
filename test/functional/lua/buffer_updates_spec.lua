@@ -142,9 +142,20 @@ describe('lua: buffer event callbacks', function()
     tick = tick + 1
     check_events({{ "test2", "lines", 1, tick, 11, 12, 12, 5 }})
 
+    meths.buf_set_lines(0, 0, -1, false, {"x1", "x2"})
+    tick = tick + 1
+    check_events({{ "test2", "lines", 1, tick, 0, 12, 2, 139 }})
+
+    feed('<C-a>')
+    tick = tick + 1
+    check_events({
+      { "test2", "lines", 1, tick, 0, 1, 1, 3 };
+      { "test2", "lines", 1, tick+1, 0, 1, 1, 6 };
+    })
+
     command('bwipe!')
     check_events({{ "test2", "detach", 1 }})
-   end
+  end
 
   it('works', function()
     check(false)
