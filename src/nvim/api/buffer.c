@@ -1027,9 +1027,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
     return rv;
   }
 
-  ExtendedMark *extmark = extmark_from_id(buf,
-                                          (uint64_t)ns_id,
-                                          (uint64_t)id);
+  Extmark *extmark = extmark_from_id(buf, (uint64_t)ns_id, (uint64_t)id);
   if (!extmark) {
     return rv;
   }
@@ -1058,7 +1056,7 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// @param opts additional options. Supports the keys:
 ///          - amount:  Maximum number of marks to return
 /// @param[out] err Details of an error that may have occurred
-/// @return [[nsmark_id, row, col], ...]
+/// @return [[extmark_id, row, col], ...]
 Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
                             Object start, Object end, Dictionary opts,
                             Error *err)
@@ -1129,7 +1127,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 
   for (size_t i = 0; i < kv_size(marks); i++) {
     Array mark = ARRAY_DICT_INIT;
-    ExtendedMark *extmark = kv_A(marks, i);
+    Extmark *extmark = kv_A(marks, i);
     ADD(mark, INTEGER_OBJ((Integer)extmark->mark_id));
     ADD(mark, INTEGER_OBJ(extmark->line->lnum-1));
     ADD(mark, INTEGER_OBJ(extmark->col-1));

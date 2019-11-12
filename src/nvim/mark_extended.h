@@ -15,12 +15,12 @@
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKLINES(buf, l_lnum, u_lnum, code)\
   kbitr_t(extmarklines) itr;\
-  ExtMarkLine t;\
+  ExtmarkLine t;\
   t.lnum = l_lnum;\
   if (!kb_itr_get(extmarklines, &buf->b_extlines, &t, &itr)) { \
     kb_itr_next(extmarklines, &buf->b_extlines, &itr);\
   }\
-  ExtMarkLine *extmarkline;\
+  ExtmarkLine *extmarkline;\
   for (; kb_itr_valid(&itr); kb_itr_next(extmarklines, \
                                          &buf->b_extlines, &itr)) { \
     extmarkline = kb_itr_key(&itr);\
@@ -33,12 +33,12 @@
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKLINES_PREV(buf, l_lnum, u_lnum, code)\
   kbitr_t(extmarklines) itr;\
-  ExtMarkLine t;\
+  ExtmarkLine t;\
   t.lnum = u_lnum;\
   if (!kb_itr_get(extmarklines, &buf->b_extlines, &t, &itr)) { \
     kb_itr_prev(extmarklines, &buf->b_extlines, &itr);\
   }\
-  ExtMarkLine *extmarkline;\
+  ExtmarkLine *extmarkline;\
   for (; kb_itr_valid(&itr); kb_itr_prev(extmarklines, \
                                          &buf->b_extlines, &itr)) { \
     extmarkline = kb_itr_key(&itr);\
@@ -51,7 +51,7 @@
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKS(buf, ns, l_lnum, l_col, u_lnum, u_col, code)\
   kbitr_t(markitems) mitr;\
-  ExtendedMark mt;\
+  Extmark mt;\
   mt.ns_id = ns;\
   mt.mark_id = 0;\
   mt.line = NULL;\
@@ -60,7 +60,7 @@
     if (!kb_itr_get(markitems, &extmarkline->items, mt, &mitr)) { \
         kb_itr_next(markitems, &extmarkline->items, &mitr);\
     } \
-    ExtendedMark *extmark;\
+    Extmark *extmark;\
     for (; \
          kb_itr_valid(&mitr); \
          kb_itr_next(markitems, &extmarkline->items, &mitr)) { \
@@ -77,7 +77,7 @@
 // see FOR_ALL_? for documentation
 #define FOR_ALL_EXTMARKS_PREV(buf, ns, l_lnum, l_col, u_lnum, u_col, code)\
   kbitr_t(markitems) mitr;\
-  ExtendedMark mt;\
+  Extmark mt;\
   mt.mark_id = sizeof(uint64_t);\
   mt.ns_id = ns;\
   FOR_ALL_EXTMARKLINES_PREV(buf, l_lnum, u_lnum, { \
@@ -85,7 +85,7 @@
     if (!kb_itr_get(markitems, &extmarkline->items, mt, &mitr)) { \
         kb_itr_prev(markitems, &extmarkline->items, &mitr);\
     } \
-    ExtendedMark *extmark;\
+    Extmark *extmark;\
     for (; \
          kb_itr_valid(&mitr); \
          kb_itr_prev(markitems, &extmarkline->items, &mitr)) { \
@@ -101,7 +101,7 @@
 
 #define FOR_ALL_EXTMARKS_IN_LINE(items, l_col, u_col, code)\
   kbitr_t(markitems) mitr;\
-  ExtendedMark mt;\
+  Extmark mt;\
   mt.ns_id = 0;\
   mt.mark_id = 0;\
   mt.line = NULL;\
@@ -110,7 +110,7 @@
   if (!kb_itr_get(markitems, &items, mt, &mitr)) { \
     kb_itr_next(markitems, &items, &mitr);\
   } \
-  ExtendedMark *extmark;\
+  Extmark *extmark;\
   for (; kb_itr_valid(&mitr); kb_itr_next(markitems, &items, &mitr)) { \
     extmark = &kb_itr_key(&mitr);\
     if (extmark->col > extmarkline_u_col) { \
@@ -126,7 +126,7 @@ typedef struct ExtmarkNs {  // For namespacing extmarks
 } ExtmarkNs;
 
 
-typedef kvec_t(ExtendedMark *) ExtmarkArray;
+typedef kvec_t(Extmark *) ExtmarkArray;
 
 
 // Undo/redo extmarks
