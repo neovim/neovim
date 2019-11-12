@@ -54,16 +54,17 @@ local function test_rpc_server(config)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
-      local argtype = exec_lua("return type(TEST_RPC_CLIENT[...])", name)
-      if argtype == 'function' then
-        return function(...)
-          return exec_lua([=[
-          local args = {...}
-          return TEST_RPC_CLIENT[table.remove(args, 1)](unpack(args))
-          ]=], name, ...)
+      -- Workaround for not being able to yield() inside __index for Lua 5.1 :(
+      -- Otherwise I would just return the value here.
+      return function(...)
+        return exec_lua([=[
+        local name = ...
+        if type(TEST_RPC_CLIENT[name]) == 'function' then
+          return TEST_RPC_CLIENT[name](select(2, ...))
+        else
+          return TEST_RPC_CLIENT[name]
         end
-      else
-        return exec_lua("return TEST_RPC_CLIENT[...]", name)
+        ]=], name, ...)
       end
     end;
   })
@@ -202,7 +203,7 @@ describe('Language Client API', function()
       test_rpc_server {
         test_name = "basic_init";
         on_init = function(client)
-          eq(0, client.resolved_capabilities.text_document_did_change)
+          eq(0, client.resolved_capabilities().text_document_did_change)
           client.request('shutdown')
           client.notify('exit')
         end;
@@ -238,6 +239,7 @@ describe('Language Client API', function()
         {NIL, "shutdown", {}, 1};
         {NIL, "finish", {}, 1};
       }
+      local client
       test_rpc_server {
         test_name = "basic_finish";
         on_setup = function()
@@ -255,10 +257,11 @@ describe('Language Client API', function()
             vim.api.nvim_command(BUFFER.."bwipeout")
           ]]
         end;
-        on_init = function(client)
+        on_init = function(_client)
+          client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
+          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
           client.notify('finish')
         end;
         on_exit = function(code, signal)
@@ -267,7 +270,7 @@ describe('Language Client API', function()
         on_callback = function(err, method, params, client_id)
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
+            client.stop()
           end
         end;
       }
@@ -294,11 +297,11 @@ describe('Language Client API', function()
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
         end;
-        on_init = function(c)
-          client = c
+        on_init = function(_client)
+          client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
+          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
           exec_lua [[
             assert(not lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID), "Shouldn't attach twice")
           ]]
@@ -312,7 +315,7 @@ describe('Language Client API', function()
           end
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
+            client.stop()
           end
         end;
       }
@@ -336,11 +339,11 @@ describe('Language Client API', function()
             })
           ]]
         end;
-        on_init = function(c)
-          client = c
+        on_init = function(_client)
+          client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
+          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -354,7 +357,7 @@ describe('Language Client API', function()
           end
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
+            client.stop()
           end
         end;
       }
@@ -378,11 +381,11 @@ describe('Language Client API', function()
             })
           ]]
         end;
-        on_init = function(c)
-          client = c
+        on_init = function(_client)
+          client = _client
           local full_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(full_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
+          eq(full_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -401,7 +404,7 @@ describe('Language Client API', function()
           end
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
+            client.stop()
           end
         end;
       }
@@ -426,11 +429,11 @@ describe('Language Client API', function()
     --         })
     --       ]]
     --     end;
-    --     on_init = function(c)
-    --       client = c
+    --     on_init = function(_client)ction(c)
+    --       client = _client
     --       local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
-    --       eq(sync_kind, client.resolved_capabilities.text_document_did_change)
-    --       eq(true, client.resolved_capabilities.text_document_open_close)
+    --       eq(sync_kind, client.resolved_capabilities().text_document_did_change)
+    --       eq(true, client.resolved_capabilities().text_document_open_close)
     --       exec_lua [[
     --         assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
     --       ]]
@@ -449,7 +452,7 @@ describe('Language Client API', function()
     --       end
     --       eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
     --       if method == 'finish' then
-    --         exec_lua "TEST_RPC_CLIENT.stop()"
+    --         client.stop()
     --       end
     --     end;
     --   }
@@ -474,11 +477,11 @@ describe('Language Client API', function()
     --         })
     --       ]]
     --     end;
-    --     on_init = function(c)
-    --       client = c
+    --     on_init = function(_client)ction(c)
+    --       client = _client
     --       local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
-    --       eq(sync_kind, client.resolved_capabilities.text_document_did_change)
-    --       eq(true, client.resolved_capabilities.text_document_open_close)
+    --       eq(sync_kind, client.resolved_capabilities().text_document_did_change)
+    --       eq(true, client.resolved_capabilities().text_document_open_close)
     --       exec_lua [[
     --         assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
     --       ]]
@@ -493,7 +496,7 @@ describe('Language Client API', function()
     --       end
     --       eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
     --       if method == 'finish' then
-    --         exec_lua "TEST_RPC_CLIENT.stop()"
+    --         client.stop()
     --       end
     --     end;
     --   }
@@ -517,11 +520,11 @@ describe('Language Client API', function()
             })
           ]]
         end;
-        on_init = function(c)
-          client = c
+        on_init = function(_client)
+          client = _client
           local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(sync_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
+          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -543,7 +546,7 @@ describe('Language Client API', function()
           end
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
+            client.stop()
           end
         end;
       }
@@ -567,11 +570,11 @@ describe('Language Client API', function()
             })
           ]]
         end;
-        on_init = function(c)
-          client = c
+        on_init = function(_client)
+          client = _client
           local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Full")
-          eq(sync_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
+          eq(sync_kind, client.resolved_capabilities().text_document_did_change)
+          eq(true, client.resolved_capabilities().text_document_open_close)
           exec_lua [[
             assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
           ]]
@@ -594,7 +597,7 @@ describe('Language Client API', function()
           end
           eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
           if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
+            client.stop()
           end
         end;
       }
@@ -614,8 +617,8 @@ describe('Language Client API', function()
         test_name = "invalid_header";
         on_setup = function()
         end;
-        on_init = function(c)
-          client = c
+        on_init = function(_client)
+          client = _client
           client.stop(true)
         end;
         on_exit = function(code, signal)
