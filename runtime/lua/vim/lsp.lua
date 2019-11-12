@@ -502,7 +502,10 @@ do
       firstline, lastline, new_lastline, old_byte_size, old_utf32_size,
       old_utf16_size)
     local _ = log.debug() and log.debug("on_lines", bufnr, changedtick, firstline,
-    lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size)
+    lastline, new_lastline, old_byte_size, old_utf32_size, old_utf16_size, nvim_buf_get_lines(bufnr, firstline, new_lastline, true))
+    if old_byte_size == 0 then
+      return
+    end
     -- Don't do anything if there are no clients attached.
     if tbl_isempty(all_buffer_active_clients[bufnr] or {}) then
       return
@@ -511,13 +514,10 @@ do
     local incremental_changes = once(function(client)
       local size_index = encoding_index[client.offset_encoding]
       local length = select(size_index, old_byte_size, old_utf16_size, old_utf32_size)
-      if length == 0 then
-        return
-      end
       local lines = nvim_buf_get_lines(bufnr, firstline, new_lastline, true)
       -- This is necessary because we are specifying the full line including the
       -- newline in range. Therefore, we must replace the newline as well.
-      if new_lastline > firstline then
+      if #lines > 0 then
        table.insert(lines, '')
       end
       return {
@@ -540,10 +540,16 @@ do
       local changes
       if text_document_did_change == protocol.TextDocumentSyncKind.None then
         return
+      --[=[ TODO(ashkan) there seem to be problems with the byte_sizes sent by
+      -- neovim right now so only send the full content for now. In general, we
+      -- can assume that servers *will* support both versions anyway, as there
+      -- is no way to specify the sync capability by the client.
+      -- See https://github.com/palantir/python-language-server/commit/cfd6675bc10d5e8dbc50fc50f90e4a37b7178821#diff-f68667852a14e9f761f6ebf07ba02fc8 for an example of pyls handling both.
+      --]=]
+      elseif true or text_document_did_change == protocol.TextDocumentSyncKind.Full then
+        changes = full_changes(client)
       elseif text_document_did_change == protocol.TextDocumentSyncKind.Incremental then
         changes = incremental_changes(client)
-      elseif text_document_did_change == protocol.TextDocumentSyncKind.Full then
-        changes = full_changes(client)
       end
       client.notify("textDocument/didChange", {
         textDocument = {

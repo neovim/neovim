@@ -17,14 +17,15 @@ if is_windows then
   lsp_test_rpc_server_file = lsp_test_rpc_server_file:gsub("/", "\\")
 end
 
-local function test_rpc_server_setup(test_name)
+local function test_rpc_server_setup(test_name, timeout_ms)
   exec_lua([=[
     lsp = require('vim.lsp')
-    local test_name, fixture_filename = ...
+    local test_name, fixture_filename, timeout = ...
     TEST_RPC_CLIENT_ID = lsp.start_client {
       cmd = {
         vim.api.nvim_get_vvar("progpath"), '-Es', '-u', 'NONE', '--headless',
         "-c", string.format("lua TEST_NAME = %q", test_name),
+        "-c", string.format("lua TIMEOUT = %d", timeout),
         "-c", "luafile "..fixture_filename,
       };
       callbacks = setmetatable({}, {
@@ -43,13 +44,13 @@ local function test_rpc_server_setup(test_name)
         vim.rpcnotify(1, "exit", ...)
       end;
     }
-  ]=], test_name, lsp_test_rpc_server_file)
+  ]=], test_name, lsp_test_rpc_server_file, timeout_ms or 1e3)
 end
 
 local function test_rpc_server(config)
   if config.test_name then
     clear()
-    test_rpc_server_setup(config.test_name)
+    test_rpc_server_setup(config.test_name, config.timeout_ms or 1e3)
   end
   local client = setmetatable({}, {
     __index = function(_, name)
@@ -87,7 +88,9 @@ local function test_rpc_server(config)
       return stop()
     end
   end
-  run(on_request, on_notify, config.on_setup, 1000)
+  --  TODO specify timeout?
+  --  run(on_request, on_notify, config.on_setup, 1000)
+  run(on_request, on_notify, config.on_setup)
   if config.on_exit then
     config.on_exit(code, signal)
   end
@@ -404,52 +407,97 @@ describe('Language Client API', function()
       }
     end)
 
-    it('should check the body and didChange incremental', function()
-      local expected_callbacks = {
-        {NIL, "shutdown", {}, 1};
-        {NIL, "finish", {}, 1};
-        {NIL, "start", {}, 1};
-      }
-      local client
-      test_rpc_server {
-        test_name = "basic_check_buffer_open_and_change_incremental";
-        on_setup = function()
-          exec_lua [[
-            BUFFER = vim.api.nvim_create_buf(false, true)
-            vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
-              "testing";
-              "123";
-            })
-          ]]
-        end;
-        on_init = function(c)
-          client = c
-          local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
-          eq(sync_kind, client.resolved_capabilities.text_document_did_change)
-          eq(true, client.resolved_capabilities.text_document_open_close)
-          exec_lua [[
-            assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
-          ]]
-        end;
-        on_exit = function(code, signal)
-          eq(0, code, "exit code") eq(0, signal, "exit signal")
-        end;
-        on_callback = function(err, method, params, client_id)
-          if method == 'start' then
-            exec_lua [[
-              vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
-                "boop";
-              })
-            ]]
-            client.notify('finish')
-          end
-          eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
-          if method == 'finish' then
-            exec_lua "TEST_RPC_CLIENT.stop()"
-          end
-        end;
-      }
-    end)
+    -- TODO(askhan) we don't support full for now, so we can disable these tests.
+    -- it('should check the body and didChange incremental', function()
+    --   local expected_callbacks = {
+    --     {NIL, "shutdown", {}, 1};
+    --     {NIL, "finish", {}, 1};
+    --     {NIL, "start", {}, 1};
+    --   }
+    --   local client
+    --   test_rpc_server {
+    --     test_name = "basic_check_buffer_open_and_change_incremental";
+    --     on_setup = function()
+    --       exec_lua [[
+    --         BUFFER = vim.api.nvim_create_buf(false, true)
+    --         vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+    --           "testing";
+    --           "123";
+    --         })
+    --       ]]
+    --     end;
+    --     on_init = function(c)
+    --       client = c
+    --       local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
+    --       eq(sync_kind, client.resolved_capabilities.text_document_did_change)
+    --       eq(true, client.resolved_capabilities.text_document_open_close)
+    --       exec_lua [[
+    --         assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+    --       ]]
+    --     end;
+    --     on_exit = function(code, signal)
+    --       eq(0, code, "exit code") eq(0, signal, "exit signal")
+    --     end;
+    --     on_callback = function(err, method, params, client_id)
+    --       if method == 'start' then
+    --         exec_lua [[
+    --           vim.api.nvim_buf_set_lines(BUFFER, 1, 2, false, {
+    --             "boop";
+    --           })
+    --         ]]
+    --         client.notify('finish')
+    --       end
+    --       eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+    --       if method == 'finish' then
+    --         exec_lua "TEST_RPC_CLIENT.stop()"
+    --       end
+    --     end;
+    --   }
+    -- end)
+
+    -- TODO(askhan) we don't support full for now, so we can disable these tests.
+    -- it('should check the body and didChange incremental normal mode editting', function()
+    --   local expected_callbacks = {
+    --     {NIL, "shutdown", {}, 1};
+    --     {NIL, "finish", {}, 1};
+    --     {NIL, "start", {}, 1};
+    --   }
+    --   local client
+    --   test_rpc_server {
+    --     test_name = "basic_check_buffer_open_and_change_incremental_editting";
+    --     on_setup = function()
+    --       exec_lua [[
+    --         BUFFER = vim.api.nvim_create_buf(false, true)
+    --         vim.api.nvim_buf_set_lines(BUFFER, 0, -1, false, {
+    --           "testing";
+    --           "123";
+    --         })
+    --       ]]
+    --     end;
+    --     on_init = function(c)
+    --       client = c
+    --       local sync_kind = exec_lua("return require'vim.lsp.protocol'.TextDocumentSyncKind.Incremental")
+    --       eq(sync_kind, client.resolved_capabilities.text_document_did_change)
+    --       eq(true, client.resolved_capabilities.text_document_open_close)
+    --       exec_lua [[
+    --         assert(lsp.buf_attach_client(BUFFER, TEST_RPC_CLIENT_ID))
+    --       ]]
+    --     end;
+    --     on_exit = function(code, signal)
+    --       eq(0, code, "exit code") eq(0, signal, "exit signal")
+    --     end;
+    --     on_callback = function(err, method, params, client_id)
+    --       if method == 'start' then
+    --         helpers.command("normal! 1Go")
+    --         client.notify('finish')
+    --       end
+    --       eq(table.remove(expected_callbacks), {err, method, params, client_id}, "expected callback")
+    --       if method == 'finish' then
+    --         exec_lua "TEST_RPC_CLIENT.stop()"
+    --       end
+    --     end;
+    --   }
+    -- end)
 
     it('should check the body and didChange full with 2 changes', function()
       local expected_callbacks = {

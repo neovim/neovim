@@ -1,4 +1,6 @@
-local protocol = require'vim.lsp.protocol'
+local protocol = require 'vim.lsp.protocol'
+
+-- Internal utility methods.
 
 -- TODO replace with a better implementation.
 local function json_encode(data)
@@ -18,13 +20,25 @@ local function json_decode(data)
   end
 end
 
-local function assert_eq(a, b, message)
-  if not vim.deep_equal(a, b) then
-    local errm = string.format("assert_eq failed: left == %q, right == %q", vim.inspect(a), vim.inspect(b))
-    if message then
-      errm = message..": "..errm
+local function message_parts(sep, ...)
+  local parts = {}
+  for i = 1, select("#", ...) do
+    local arg = select(i, ...)
+    if arg ~= nil then
+      table.insert(parts, arg)
     end
-    error(errm)
+  end
+  return table.concat(parts, sep)
+end
+
+-- Assert utility methods
+
+local function assert_eq(a, b, ...)
+  if not vim.deep_equal(a, b) then
+    error(message_parts(": ",
+      ..., "assert_eq failed",
+      string.format("left == %q, right == %q", vim.inspect(a), vim.inspect(b))
+    ))
   end
 end
 
@@ -34,6 +48,8 @@ local function format_message_with_content_length(encoded_message)
     encoded_message;
   }
 end
+
+-- Server utility methods.
 
 local function read_message()
   local line = io.read("*l")
@@ -47,7 +63,7 @@ end
 
 local function respond(id, err, result)
   assert(type(id) == 'number', "id must be a number")
-  send { id = id, error = err, result = result }
+  send { jsonrpc = "2.0"; id = id, error = err, result = result }
 end
 
 local function notify(method, params)
@@ -55,33 +71,41 @@ local function notify(method, params)
   send { method = method, params = params or {} }
 end
 
-local function expect_notification(method, params)
+local function expect_notification(method, params, ...)
   local message = read_message()
-  assert_eq(method, message.method, "expect_notification method")
-  assert_eq(params, message.params, "expect_notification "..method.." params")
-  assert_eq({jsonrpc = "2.0"; method=method, params=params}, message, "expect_notification "..method.." message")
+  assert_eq(method, message.method,
+      ..., "expect_notification", "method")
+  assert_eq(params, message.params,
+      ..., "expect_notification", method, "params")
+  assert_eq({jsonrpc = "2.0"; method=method, params=params}, message,
+      ..., "expect_notification", "message")
+end
+
+local function expect_request(method, callback, ...)
+  local req = read_message()
+  assert_eq(method, req.method,
+      ..., "expect_request", "method")
+  local err, result = callback(req.params)
+  respond(req.id, err, result)
 end
 
 io.stderr:setvbuf("no")
-io.stderr:write("hello!")
 
-local function skeleton(params)
-  local on_init = assert(params.on_init)
-  local body = assert(params.body)
-  do
-    local init_req = read_message()
-    assert_eq("initialize", init_req.method)
-    respond(init_req.id, nil, on_init(init_req.params))
-  end
+local function skeleton(config)
+  local on_init = assert(config.on_init)
+  local body = assert(config.body)
+  expect_request("initialize", function(params)
+    return nil, on_init(params)
+  end)
   expect_notification("initialized", {})
   body()
-  do
-    local shutdown_req = read_message()
-    assert(shutdown_req.method == "shutdown", "expected shutdown, found "..shutdown_req.method)
-    respond(shutdown_req.id, nil, {})
-  end
+  expect_request("shutdown", function()
+    return nil, {}
+  end)
   expect_notification("exit", nil)
 end
+
+-- The actual tests.
 
 local tests = {}
 
@@ -331,11 +355,70 @@ function tests.basic_check_buffer_open_and_change_incremental()
   }
 end
 
+function tests.basic_check_buffer_open_and_change_incremental_editting()
+  skeleton {
+    on_init = function(params)
+      local expected_capabilities = protocol.make_client_capabilities()
+      assert_eq(params.capabilities, expected_capabilities)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.Incremental;
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didOpen', {
+        textDocument = {
+          languageId = "";
+          text = table.concat({"testing"; "123"}, "\n");
+          uri = "file://";
+          version = 0;
+        };
+      })
+      expect_notification('textDocument/didChange', {
+        textDocument = {
+          uri = "file://";
+          version = 3;
+        };
+        contentChanges = {
+          {
+            range = {
+              start = { line = 0; character = 0; };
+              ["end"] = { line = 1; character = 0; };
+            };
+            rangeLength = 4;
+            text = "testing\n\n";
+          };
+        }
+      })
+      expect_notification("finish")
+      notify('finish')
+    end;
+  }
+end
+
 function tests.invalid_header()
   io.stdout:write("Content-length: \r\n")
 end
 
-local test_name = _G.TEST_NAME
+-- Tests will be indexed by TEST_NAME
+
+local kill_timer = vim.loop.new_timer()
+kill_timer:start(_G.TIMEOUT or 1e3, 0, function()
+  kill_timer:stop()
+  kill_timer:close()
+  io.stderr:write("TIMEOUT")
+  os.exit(100)
+end)
+
+local test_name = _G.TEST_NAME -- lualint workaround
 assert(type(test_name) == 'string', 'TEST_NAME must be specified.')
-assert(tests[test_name], "Test not found")()
+local status, err = pcall(assert(tests[test_name], "Test not found"))
+kill_timer:stop()
+kill_timer:close()
+if not status then
+  io.stderr:write(err)
+  os.exit(1)
+end
 os.exit(0)
