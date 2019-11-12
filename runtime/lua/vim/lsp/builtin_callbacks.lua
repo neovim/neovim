@@ -62,7 +62,7 @@ builtin_callbacks['textDocument/rename'] = function(_, _, result)
 end
 
 local function uri_to_bufnr(uri)
-  return vim.fn.bufadd(vim.uri_to_fname(uri))
+  return vim.fn.bufadd((vim.uri_to_fname(uri)))
 end
 
 builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, result)
