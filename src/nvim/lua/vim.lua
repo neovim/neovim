@@ -261,14 +261,14 @@ end
 
 
 -- vim.fn.{func}(...)
-local function fn_index(t, key)
-  local function func(...)
+local function _fn_index(t, key)
+  local function _fn(...)
     return vim.call(key, ...)
   end
-  t[key] = func
-  return func
+  t[key] = _fn
+  return _fn
 end
-local fn = setmetatable({}, {__index=fn_index})
+local fn = setmetatable({}, {__index=_fn_index})
 
 local module = {
   _update_package_paths = _update_package_paths,

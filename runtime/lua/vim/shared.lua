@@ -47,9 +47,7 @@ end)()
 --@param plain If `true` use `sep` literally (passed to String.find)
 --@returns Iterator over the split components
 function vim.gsplit(s, sep, plain)
-  assert(type(s) == "string", string.format("Expected string, got %s", type(s)))
-  assert(type(sep) == "string", string.format("Expected string, got %s", type(sep)))
-  assert(type(plain) == "boolean" or type(plain) == "nil", string.format("Expected boolean or nil, got %s", type(plain)))
+  vim.validate{s={s,'s'},sep={sep,'s'},plain={plain,'b',true}}
 
   local start = 1
   local done = false
@@ -106,7 +104,7 @@ end
 --@param value Value to compare
 --@returns true if `t` contains `value`
 function vim.tbl_contains(t, value)
-  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+  vim.validate{t={t,'t'}}
 
   for _,v in ipairs(t) do
     if v == value then
@@ -176,7 +174,7 @@ end
 --@param s String to trim
 --@returns String with whitespace removed from its beginning and end
 function vim.trim(s)
-  assert(type(s) == 'string', string.format("Expected string, got %s", type(s)))
+  vim.validate{s={s,'s'}}
   return s:match('^%s*(.*%S)') or ''
 end
 
@@ -186,8 +184,98 @@ end
 --@param s  String to escape
 --@returns  %-escaped pattern string
 function vim.pesc(s)
-  assert(type(s) == 'string', string.format("Expected string, got %s", type(s)))
+  vim.validate{s={s,'s'}}
   return s:gsub('[%(%)%.%%%+%-%*%?%[%]%^%$]', '%%%1')
+end
+
+--- Validates a parameter specification (types and values).
+---
+--- Usage example:
+--- <pre>
+---  function user.new(name, age, hobbies)
+---    vim.validate{
+---      name={name, 'string'},
+---      age={age, 'number'},
+---      hobbies={hobbies, 'table'},
+---    }
+---    ...
+---  end
+--- </pre>
+---
+--- Examples with explicit argument values (can be run directly):
+--- <pre>
+---  vim.validate{arg1={{'foo'}, 'table'}, arg2={'foo', 'string'}}
+---     => NOP (success)
+---
+---  vim.validate{arg1={1, 'table'}}
+---     => error('arg1: expected table, got number')
+---
+---  vim.validate{arg1={3, function(a) return (a % 2) == 0 end, 'even number'}}
+---     => error('arg1: expected even number, got 3')
+--- </pre>
+---
+--@param opt Map of parameter names to validations. Each key is a parameter
+---          name; each value is a tuple in one of these forms:
+---          1. (arg_value, type_name, optional)
+---             - arg_value: argument value
+---             - type_name: string type name, one of: ("table", "t", "string",
+---               "s", "number", "n", "boolean", "b", "function", "f", "nil",
+---               "thread", "userdata")
+---             - optional: (optional) boolean, if true, `nil` is valid
+---          2. (arg_value, fn, msg)
+---             - arg_value: argument value
+---             - fn: any function accepting one argument, returns true if and
+---               only if the argument is valid
+---             - msg: (optional) error string if validation fails
+function vim.validate(opt) end  -- luacheck: no unused
+vim.validate = (function()
+  local type_names = {
+    t='table', s='string', n='number', b='boolean', f='function', c='callable',
+    ['table']='table', ['string']='string', ['number']='number',
+    ['boolean']='boolean', ['function']='function', ['callable']='callable',
+    ['nil']='nil', ['thread']='thread', ['userdata']='userdata',
+  }
+  local function _type_name(t)
+    local tname = type_names[t]
+    if tname == nil then
+      error(string.format('invalid type name: %s', tostring(t)))
+    end
+    return tname
+  end
+  local function _is_type(val, t)
+    return t == 'callable' and vim.is_callable(val) or type(val) == t
+  end
+
+  return function(opt)
+    assert(type(opt) == 'table', string.format('opt: expected table, got %s', type(opt)))
+    for param_name, spec in pairs(opt) do
+      assert(type(spec) == 'table', string.format('%s: expected table, got %s', param_name, type(spec)))
+
+      local val = spec[1]   -- Argument value.
+      local t = spec[2]     -- Type name, or callable.
+      local optional = (true == spec[3])
+
+      if not vim.is_callable(t) then  -- Check type name.
+        if (not optional or val ~= nil) and not _is_type(val, _type_name(t)) then
+          error(string.format("%s: expected %s, got %s", param_name, _type_name(t), type(val)))
+        end
+      elseif not t(val) then  -- Check user-provided validation function.
+        error(string.format("%s: expected %s, got %s", param_name, (spec[3] or '?'), val))
+      end
+    end
+    return true
+  end
+end)()
+
+--- Returns true if object `f` can be called as a function.
+---
+--@param f Any object
+--@return true if `f` is callable, else false
+function vim.is_callable(f)
+  if type(f) == 'function' then return true end
+  local m = getmetatable(f)
+  if m == nil then return false end
+  return type(m.__call) == 'function'
 end
 
 return vim
