@@ -98,6 +98,38 @@ function vim.split(s,sep,plain)
   return t
 end
 
+--- Return a list of all keys used in a table.
+--- However, the order of the return table of keys is not guaranteed.
+---
+--@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+---
+--@param t Table
+--@returns list of keys
+function vim.tbl_keys(t)
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+
+  local keys = {}
+  for k, _ in pairs(t) do
+    table.insert(keys, k)
+  end
+  return keys
+end
+
+--- Return a list of all values used in a table.
+--- However, the order of the return table of values is not guaranteed.
+---
+--@param t Table
+--@returns list of values
+function vim.tbl_values(t)
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+
+  local values = {}
+  for _, v in pairs(t) do
+    table.insert(values, v)
+  end
+  return values
+end
+
 --- Checks if a list-like (vector) table contains `value`.
 ---
 --@param t Table to check
@@ -112,6 +144,16 @@ function vim.tbl_contains(t, value)
     end
   end
   return false
+end
+
+-- Returns true if the table is empty, and contains no indexed or keyed values.
+--
+--@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
+--
+--@param t Table to check
+function vim.tbl_isempty(t)
+  assert(type(t) == 'table', string.format("Expected table, got %s", type(t)))
+  return next(t) == nil
 end
 
 --- Merges two or more map-like tables.
@@ -145,13 +187,69 @@ function vim.tbl_extend(behavior, ...)
   return ret
 end
 
+--- Deep compare values for equality
+function vim.deep_equal(a, b)
+  if a == b then return true end
+  if type(a) ~= type(b) then return false end
+  if type(a) == 'table' then
+    -- TODO improve this algorithm's performance.
+    for k, v in pairs(a) do
+      if not vim.deep_equal(v, b[k]) then
+        return false
+      end
+    end
+    for k, v in pairs(b) do
+      if not vim.deep_equal(v, a[k]) then
+        return false
+      end
+    end
+    return true
+  end
+  return false
+end
+
+--- Add the reverse lookup values to an existing table.
+--- For example:
+--- `tbl_add_reverse_lookup { A = 1 } == { [1] = 'A', A = 1 }`
+--
+--Do note that it *modifies* the input.
+--@param o table The table to add the reverse to.
+function vim.tbl_add_reverse_lookup(o)
+  local keys = vim.tbl_keys(o)
+  for _, k in ipairs(keys) do
+    local v = o[k]
+    if o[v] then
+      error(string.format("The reverse lookup found an existing value for %q while processing key %q", tostring(v), tostring(k)))
+    end
+    o[v] = k
+  end
+  return o
+end
+
+--- Extends a list-like table with the values of another list-like table.
+---
+--NOTE: This *mutates* dst!
+--@see |extend()|
+---
+--@param dst The list which will be modified and appended to.
+--@param src The list from which values will be inserted.
+function vim.list_extend(dst, src)
+  assert(type(dst) == 'table', "dst must be a table")
+  assert(type(src) == 'table', "src must be a table")
+  for _, v in ipairs(src) do
+    table.insert(dst, v)
+  end
+  return dst
+end
+
 --- Creates a copy of a list-like table such that any nested tables are
 --- "unrolled" and appended to the result.
+---
+--@see From https://github.com/premake/premake-core/blob/master/src/base/table.lua
 ---
 --@param t List-like table
 --@returns Flattened copy of the given list-like table.
 function vim.tbl_flatten(t)
-  -- From https://github.com/premake/premake-core/blob/master/src/base/table.lua
   local result = {}
   local function _tbl_flatten(_t)
     local n = #_t
@@ -166,6 +264,32 @@ function vim.tbl_flatten(t)
   end
   _tbl_flatten(t)
   return result
+end
+
+-- Determine whether a Lua table can be treated as an array.
+---
+--@params Table
+--@returns true: A non-empty array, false: A non-empty table, nil: An empty table
+function vim.tbl_islist(t)
+  if type(t) ~= 'table' then
+    return false
+  end
+
+  local count = 0
+
+  for k, _ in pairs(t) do
+    if type(k) == "number" then
+      count = count + 1
+    else
+      return false
+    end
+  end
+
+  if count > 0 then
+    return true
+  else
+    return nil
+  end
 end
 
 --- Trim whitespace (Lua pattern "%s") from both sides of a string.
@@ -279,3 +403,4 @@ function vim.is_callable(f)
 end
 
 return vim
+-- vim:sw=2 ts=2 et
