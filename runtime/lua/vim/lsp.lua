@@ -220,7 +220,8 @@ end
 -- capabilities: A {table} which will be used instead of
 -- `vim.lsp.protocol.make_client_capabilities()` which contains neovim's
 -- default capabilities and passed to the language server on initialization.
--- You probably want to copy this with |vim.deepcopy()| and then modify it.
+-- You'll probably want to use make_client_capabilities() and modify the
+-- result.
 -- NOTE:
 --   To send an empty dictionary, you should use
 --   `{[vim.type_idx]=vim.types.dictionary}` Otherwise, it will be encoded as

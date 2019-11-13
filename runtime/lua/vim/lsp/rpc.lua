@@ -105,7 +105,6 @@ local header_start_pattern = ("content"):gsub("%w", function(c) return "["..c..c
 local function request_parser_loop()
   local buffer = ''
   while true do
-    local buffer_start = 1
     -- A message can only be complete if it has a double CRLF and also the full
     -- payload, so first let's check for the CRLFs
     local start, finish = buffer:find('\r\n\r\n', 1, true)
@@ -117,7 +116,7 @@ local function request_parser_loop()
       -- only valid headers start with "Content-*", so that's the thing we will
       -- be searching for.
       -- TODO(ashkan) I'd like to remove this, but it seems permanent :(
-      buffer_start = buffer:find(header_start_pattern)
+      local buffer_start = buffer:find(header_start_pattern)
       local headers = parse_headers(buffer:sub(buffer_start, start-1))
       buffer = buffer:sub(finish+1)
       local content_length = headers.content_length
