@@ -94,19 +94,35 @@ local function parse_headers(header)
     end
   end
   headers.content_length = tonumber(headers.content_length)
-  assert(headers.content_length, "Content-Length not found in headers.")
+      or error(string.format("Content-Length not found in headers. %q", header))
   return headers
 end
 
+-- This is the start of any possible header patterns. The gsub converts it to a
+-- case insensitive pattern.
+local header_start_pattern = ("content"):gsub("%w", function(c) return "["..c..c:upper().."]" end)
+
 local function request_parser_loop()
+  local first_header = true
   local buffer = ''
   while true do
+    local buffer_start = 1
     -- A message can only be complete if it has a double CRLF and also the full
     -- payload, so first let's check for the CRLFs
     local start, finish = buffer:find('\r\n\r\n', 1, true)
     -- Start parsing the headers
     if start then
-      local headers = parse_headers(buffer:sub(1, start-1))
+      -- This is a workaround for servers sending initial garbage before
+      -- sending headers, such as if a bash script sends stdout. It assumes
+      -- that we know all of the headers ahead of time. At this moment, the
+      -- only valid headers start with "Content-*", so that's the thing we will
+      -- be searching for. We could use this for *all* headers, but I'd rather
+      -- error for invalid servers.
+      if first_header then
+        buffer_start = buffer:find(header_start_pattern)
+        first_header = false
+      end
+      local headers = parse_headers(buffer:sub(buffer_start, start-1))
       buffer = buffer:sub(finish+1)
       local content_length = headers.content_length
       -- Keep waiting for data until we have enough.
