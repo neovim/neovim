@@ -127,15 +127,18 @@ local function request_parser_loop()
       local content_length = headers.content_length
       -- Keep waiting for data until we have enough.
       while #buffer < content_length do
-        buffer = buffer..assert(coroutine.yield(), ":( body") -- TODO hmm.
+        buffer = buffer..(coroutine.yield()
+            or error("Expected more data for the body. The server may have died.")) -- TODO hmm.
       end
       local body = buffer:sub(1, content_length)
       buffer = buffer:sub(content_length + 1)
       -- Yield our data.
-      buffer = buffer..assert(coroutine.yield(headers, body), ':( cont') -- TODO hmm.
+      buffer = buffer..(coroutine.yield(headers, body)
+          or error("Expected more data for the body. The server may have died.")) -- TODO hmm.
     else
       -- Get more data since we don't have enough.
-      buffer = buffer..assert(coroutine.yield(), ":( header") -- TODO hmm.
+      buffer = buffer..(coroutine.yield()
+          or error("Expected more data for the header. The server may have died.")) -- TODO hmm.
     end
   end
 end
