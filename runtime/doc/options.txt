@@ -2242,8 +2242,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fileformat'* *'ff'*
 'fileformat' 'ff'	string (Windows default: "dos",
-				Unix default: "unix",
-				Macintosh default: "mac")
+				Unix default: "unix")
 			local to buffer
 	This gives the <EOL> of the current buffer, which is used for
 	reading/writing the buffer from/to a file:
@@ -2265,7 +2264,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'fileformats' 'ffs'	string (default:
 				Vim+Vi	Win32: "dos,unix",
 				Vim	Unix: "unix,dos",
-				Vim	Mac: "mac,unix,dos",
 				Vi	others: "")
 			global
 	This gives the end-of-line (<EOL>) formats that will be tried when
