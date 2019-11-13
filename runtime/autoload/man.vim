@@ -381,14 +381,23 @@ function! man#init_pager() abort
 endfunction
 
 function! man#goto_tag(pattern, flags, info) abort
-  let [sect, name] = man#extract_sect_and_name_ref(a:pattern)
+  let [l:sect, l:name] = man#extract_sect_and_name_ref(a:pattern)
 
-  let candidates = s:get_paths(sect, name)
+  let l:paths = s:get_paths(l:sect, l:name)
+  let l:structured = []
 
-  return map(candidates, {
-  \  _, path -> {
-  \      'name': s:extract_sect_and_name_path(path)[1],
-  \      'filename': 'man://' . path,
+  for l:path in l:paths
+    let l:n = s:extract_sect_and_name_path(l:path)[1]
+    let l:structured += [{ 'name': l:n, 'path': l:path }]
+  endfor
+
+  " sort by relevance - exact matches first, then the previous order
+  call sort(l:structured, { a, b -> a.name ==? l:name ? -1 : b.name ==? l:name ? 1 : 0 })
+
+  return map(l:structured, {
+  \  _, entry -> {
+  \      'name': entry.name,
+  \      'filename': 'man://' . entry.path,
   \      'cmd': '1'
   \    }
   \  })
