@@ -250,7 +250,11 @@ end
 local function log_message(_, _, result, client_id)
   local message_type = result.type
   local message = result.message
-  local client_name = vim.lsp.get_client_by_id(client_id).name
+  local client = vim.lsp.get_client_by_id(client_id)
+  local client_name = client and client.name or string.format("id=%d", client_id)
+  if not client then
+    api.nvim_err_writeln(string.format("LSP[%s] client has shut down after sending the message", client_name))
+  end
   if message_type == protocol.MessageType.Error then
     -- Might want to not use err_writeln,
     -- but displaying a message with red highlights or something
