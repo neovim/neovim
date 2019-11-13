@@ -103,7 +103,6 @@ end
 local header_start_pattern = ("content"):gsub("%w", function(c) return "["..c..c:upper().."]" end)
 
 local function request_parser_loop()
-  local first_header = true
   local buffer = ''
   while true do
     local buffer_start = 1
@@ -116,12 +115,9 @@ local function request_parser_loop()
       -- sending headers, such as if a bash script sends stdout. It assumes
       -- that we know all of the headers ahead of time. At this moment, the
       -- only valid headers start with "Content-*", so that's the thing we will
-      -- be searching for. We could use this for *all* headers, but I'd rather
-      -- error for invalid servers.
-      if first_header then
-        buffer_start = buffer:find(header_start_pattern)
-        first_header = false
-      end
+      -- be searching for.
+      -- TODO(ashkan) I'd like to remove this, but it seems permanent :(
+      buffer_start = buffer:find(header_start_pattern)
       local headers = parse_headers(buffer:sub(buffer_start, start-1))
       buffer = buffer:sub(finish+1)
       local content_length = headers.content_length
