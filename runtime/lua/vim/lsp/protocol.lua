@@ -634,7 +634,7 @@ function protocol.make_client_capabilities()
           valueSet = (function()
             local res = {}
             for k in pairs(protocol.CompletionItemKind) do
-              if type(k) == 'string' then table.insert(res, k) end
+              if type(k) == 'number' then table.insert(res, k) end
             end
             return res
           end)();
@@ -925,7 +925,7 @@ function protocol.resolve_capabilities(server_capabilities)
     error("The server sent invalid signatureHelpProvider")
   end
 
-  return vim.tbl_deep_merge({}
+  return vim.tbl_extend("error"
       , text_document_sync_properties
       , signature_help_properties
       , general_properties

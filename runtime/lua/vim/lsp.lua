@@ -175,6 +175,26 @@ local function validate_client_config(config)
   }
 end
 
+local function text_document_did_open_handler(bufnr, client)
+  if not client.resolved_capabilities.text_document_open_close then
+    return
+  end
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+  local params = {
+    textDocument = {
+      version = 0;
+      uri = vim.uri_from_bufnr(bufnr);
+      -- TODO make sure our filetypes are compatible with languageId names.
+      languageId = nvim_buf_get_option(bufnr, 'filetype');
+      text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n');
+    }
+  }
+  client.notify('textDocument/didOpen', params)
+end
+
+
 --- Start a client and initialize it.
 -- Its arguments are passed via a configuration object.
 --
@@ -197,9 +217,14 @@ end
 -- pairs or both. Non-string values are coerced to a string.
 -- For example: `{ "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }`.
 --
--- capabilities: A {table} which will be merged using |vim.deep_merge| with
--- neovim's default capabilities and passed to the language server on
--- initialization.
+-- capabilities: A {table} which will be used instead of
+-- `vim.lsp.protocol.make_client_capabilities()` which contains neovim's
+-- default capabilities and passed to the language server on initialization.
+-- You probably want to copy this with |vim.deepcopy()| and then modify it.
+-- NOTE:
+--   To send an empty dictionary, you should use
+--   `{[vim.type_idx]=vim.types.dictionary}` Otherwise, it will be encoded as
+--   an array.
 --
 -- callbacks: A {table} of whose keys are language server method names and the
 -- values are `function(err, method, params, client_id)`.
@@ -222,17 +247,24 @@ end
 -- specified in the LSP specification. The client does not verify this
 -- is correct.
 --
--- on_error: A `function(code, ...)` for handling errors thrown by client
--- operation. {code} is a number describing the error. Other arguments
--- may be passed depending on the error kind.  @see |vim.lsp.client_errors| for
+-- on_error(code, ...): A function for handling errors thrown by client
+-- operation. {code} is a number describing the error. Other arguments may be
+-- passed depending on the error kind.  @see |vim.lsp.client_errors| for
 -- possible errors. `vim.lsp.client_errors[code]` can be used to retrieve a
 -- human understandable string.
 --
--- on_init: A `function(client, initialize_result)` which is called after the
+-- on_init(client, initialize_result): A function which is called after the
 -- request `initialize` is completed. `initialize_result` contains
 -- `capabilities` and anything else the server may send. For example, `clangd`
 -- sends `result.offsetEncoding` if `capabilities.offsetEncoding` was sent to
 -- it.
+--
+-- on_exit(code, signal, client_id): A function which is called after the
+-- client has exited. code is the exit code of the process, and signal is a
+-- number describing the signal used to terminate (if any).
+--
+-- on_attach(client, bufnr): A function which is called after the client is
+-- attached to a buffer.
 --
 -- trace:  'off' | 'messages' | 'verbose' | nil passed directly to the language
 -- server in the initialize request. Invalid/empty values will default to 'off'
@@ -255,7 +287,6 @@ function lsp.start_client(config)
   if config.callbacks and config.callbacks.__metatable then
     setmetatable(callbacks, getmetatable(config.callbacks))
   end
-  local capabilities = config.capabilities or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
 
@@ -344,7 +375,7 @@ function lsp.start_client(config)
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
-      capabilities = vim.tbl_deep_merge(protocol.make_client_capabilities(), capabilities);
+      capabilities = config.capabilities or protocol.make_client_capabilities();
       -- The initial trace setting. If omitted trace is disabled ('off').
       -- trace = 'off' | 'messages' | 'verbose';
       trace = valid_traces[config.trace] or 'off';
@@ -391,7 +422,7 @@ function lsp.start_client(config)
       -- someone restarts a client.
       for bufnr, client_ids in pairs(all_buffer_active_clients) do
         if client_ids[client_id] then
-          client._text_document_did_open(bufnr)
+          client._on_attach(bufnr)
         end
       end
     end)
@@ -462,23 +493,12 @@ function lsp.start_client(config)
     return rpc.handle:is_closing()
   end
 
-  function client._text_document_did_open(bufnr)
-    if not client.resolved_capabilities.text_document_open_close then
-      return
+  function client._on_attach(bufnr)
+    text_document_did_open_handler(bufnr, client)
+    if config.on_attach then
+      -- TODO(ashkan) handle errors.
+      pcall(config.on_attach, client, bufnr)
     end
-    if not vim.api.nvim_buf_is_loaded(bufnr) then
-      return
-    end
-    local params = {
-      textDocument = {
-        version = 0;
-        uri = vim.uri_from_bufnr(bufnr);
-        -- TODO make sure our filetypes are compatible with languageId names.
-        languageId = nvim_buf_get_option(bufnr, 'filetype');
-        text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n');
-      }
-    }
-    rpc.notify('textDocument/didOpen', params)
   end
 
   initialize()
@@ -628,7 +648,7 @@ function lsp.buf_attach_client(bufnr, client_id)
   -- Send didOpen for the client if it is initialized. If it isn't initialized
   -- then it will send didOpen on initialize.
   if client then
-    client._text_document_did_open(bufnr)
+    client._on_attach(bufnr)
   end
   return true
 end
@@ -862,6 +882,15 @@ function lsp.get_filetype_client_by_name(name)
   end
 end
 
+local function start_filetype_config(config)
+  config.client_id = lsp.start_client(config)
+  nvim_command(string.format(
+    "autocmd FileType %s silent lua vim.lsp.buf_attach_client(0, %d)",
+    table.concat(config.filetypes, ','),
+    config.client_id))
+  return config.client_id
+end
+
 -- Easy configuration option for common LSP use-cases.
 -- This will lazy initialize the client when the filetypes specified are
 -- encountered and attach to those buffers.
@@ -886,7 +915,7 @@ function lsp.add_filetype_config(config)
   -- Validate config.
   validate_client_config(config)
   validate {
-    name     = { config.name, 's' };
+    name = { config.name, 's' };
   }
   assert(config.filetype, "config must have 'filetype' key")
 
@@ -965,13 +994,7 @@ function lsp._start_filetype_config_client(name)
     -- TODO log here?
     return
   end
-  config.client_id = lsp.start_client(config)
-  lsp.buf_attach_client(0, config.client_id)
-
-  nvim_command(string.format(
-    "autocmd FileType %s silent lua vim.lsp.buf_attach_client(0, %d)",
-    table.concat(config.filetypes, ','),
-    config.client_id))
+  lsp.buf_attach_client(0, start_filetype_config(config))
   return config.client_id
 end
 

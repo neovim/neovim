@@ -98,6 +98,18 @@ builtin_callbacks['textDocument/hover'] = function(_, _, result)
   end
 end
 
+builtin_callbacks['textDocument/peekDefinition'] = function(_, _, result)
+  if result == nil or vim.tbl_isempty(result) then return end
+  -- TODO(ashkan) what to do with multiple locations?
+  result = result[1]
+  local bufnr = uri_to_bufnr(result.uri)
+  assert(bufnr)
+  local start = result.range.start
+  local finish = result.range["end"]
+  util.open_floating_peek_preview(bufnr, start, finish, { offset_x = 1 })
+  util.open_floating_preview({"*Peek:*", string.rep(" ", finish.character - start.character + 1) }, 'markdown', { offset_y = -(finish.line - start.line) })
+end
+
 --- Convert SignatureHelp response to preview contents.
 -- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_signatureHelp
 local function signature_help_to_preview_contents(input)
@@ -276,7 +288,7 @@ for k, fn in pairs(builtin_callbacks) do
     if err then
       error(tostring(err))
     end
-    fn(err, method, params, client_id)
+    return fn(err, method, params, client_id)
   end
 end
 

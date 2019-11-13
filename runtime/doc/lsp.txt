@@ -165,8 +165,14 @@ vim.lsp.start_client({config})
       `{ "PRODUCTION=true"; "TEST=123"; PORT = 8080; HOST = "0.0.0.0"; }`
  
   `capabilities`
-    A {table} which will be merged using |vim.deep_merge| with neovim's
+    A {table} which will be used instead of
+    `vim.lsp.protocol.make_client_capabilities()` which contains neovim's
     default capabilities and passed to the language server on initialization.
+    You probably want to copy this with |vim.deepcopy()| and then modify it.
+    NOTE:
+      To send an empty dictionary, you should use
+      `{[vim.type_idx]=vim.types.dictionary}` Otherwise, it will be encoded as
+      an array.
  
   `callbacks`
     A {table} of whose keys are language server method names and the values
@@ -202,6 +208,9 @@ vim.lsp.start_client({config})
     may send. For example, `clangd` sends `initialize_result.offsetEncoding`
     if `capabilities.offsetEncoding` was sent to it. You can *only* modify the
     `client.offset_encoding` here before any notifications are sent.
+ 
+  `on_attach(client, bufnr)`
+    A function which is called after the client is attached to a buffer.
  
   `on_exit(code, signal, client_id)`
     A function which is called after the client has exited. code is the exit

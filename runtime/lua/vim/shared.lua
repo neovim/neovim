@@ -187,57 +187,6 @@ function vim.tbl_extend(behavior, ...)
   return ret
 end
 
---- Deep merge the values from the tables to the right
--- This is useful for applying changes to deeply nested properties
--- on a map-like table. For instance:
---
--- ```lua
--- local capabilities = {
---  textDocument = {
---    synchronization = {
---      didOpen = false;
---    }
---  }
--- }
--- vim.tbl_deep_merge(capabilities, {
---  textDocument = {
---    synchronization = {
---      didClose = true;
---    }
---  }
--- }) == {
---  textDocument = {
---    synchronization = {
---      didOpen = false;
---      didClose = true;
---    }
---  }
--- }
--- ```
---
--- A map-like table will never be overriden with an empty table, but
--- it can be overriden with another type of value, for instance:
---
--- ```
--- vim.tbl_deep_merge({a={b=1}}, {a={}}) == {a={b=1}}
--- vim.tbl_deep_merge({a={b=1}}, {a=2}) == {a=2}
--- ```
-function vim.tbl_deep_merge(dst, ...)
-  assert(type(dst) == 'table', 'tbl_deep_merge destination must be a table')
-  for i = 1, select("#", ...) do
-    local t = select(i, ...)
-    assert(type(t) == 'table', 'tbl_deep_merge sources must be tables')
-    for k, v in pairs(t) do
-      if type(v) == 'table' and not vim.tbl_islist(v) then
-        dst[k] = vim.tbl_deep_merge(dst[k] or {}, v)
-      else
-        dst[k] = v
-      end
-    end
-  end
-  return dst
-end
-
 --- Deep compare values for equality
 function vim.deep_equal(a, b)
   if a == b then return true end

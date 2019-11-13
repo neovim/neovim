@@ -215,7 +215,16 @@ function M.convert_input_to_markdown_lines(input, contents)
   return contents
 end
 
-local function get_floating_window_option(width, height)
+function M.make_floating_popup_options(width, height, opts)
+  validate {
+    opts = { opts, 't', true };
+  }
+  opts = opts or {}
+  validate {
+    ["opts.offset_x"] = { opts.offset_x, 'n', true };
+    ["opts.offset_y"] = { opts.offset_y, 'n', true };
+  }
+
   local anchor = ''
   local row, col
 
@@ -237,19 +246,20 @@ local function get_floating_window_option(width, height)
 
   return {
     anchor = anchor,
-    col = col,
+    col = col + (opts.offset_x or 0),
     height = height,
     relative = 'cursor',
-    row = row,
+    row = row + (opts.offset_y or 0),
     style = 'minimal',
     width = width,
   }
 end
 
-function M.open_floating_preview(contents, filetype)
+function M.open_floating_preview(contents, filetype, opts)
   validate {
     contents = { contents, 't' };
     filetype = { filetype, 's', true };
+    opts = { opts, 't', true };
   }
 
   -- Trim empty lines from the end.
@@ -278,7 +288,7 @@ function M.open_floating_preview(contents, filetype)
   if filetype then
     api.nvim_buf_set_option(floating_bufnr, 'filetype', filetype)
   end
-  local float_option = get_floating_window_option(width, height)
+  local float_option = M.make_floating_popup_options(width, height, opts)
   local floating_winnr = api.nvim_open_win(floating_bufnr, false, float_option)
   if filetype == 'markdown' then
     api.nvim_win_set_option(floating_winnr, 'conceallevel', 2)
@@ -287,6 +297,30 @@ function M.open_floating_preview(contents, filetype)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
   api.nvim_command("autocmd CursorMoved <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
   return floating_bufnr, floating_winnr
+end
+
+local function validate_lsp_position(pos)
+  validate { pos = {pos, 't'} }
+  validate {
+    line = {pos.line, 'n'};
+    character = {pos.character, 'n'};
+  }
+  return true
+end
+
+function M.open_floating_peek_preview(bufnr, start, finish, opts)
+  validate {
+    bufnr = {bufnr, 'n'};
+    start = {start, validate_lsp_position, 'valid start Position'};
+    finish = {finish, validate_lsp_position, 'valid finish Position'};
+    opts = { opts, 't', true };
+  }
+  local width = math.max(finish.character - start.character + 1, 1)
+  local height = math.max(finish.line - start.line + 1, 1)
+  local floating_winnr = api.nvim_open_win(bufnr, false, M.make_floating_popup_options(width, height, opts))
+  api.nvim_win_set_cursor(floating_winnr, {start.line+1, start.character})
+  api.nvim_command("autocmd CursorMoved * ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+  return floating_winnr
 end
 
 
@@ -491,32 +525,32 @@ do
       api.nvim_buf_set_virtual_text(bufnr, diagnostic_ns, line, virt_texts, {})
     end
   end
+end
 
-  function M.buf_loclist(bufnr, locations)
-    local targetwin
-    for _, winnr in ipairs(api.nvim_list_wins()) do
-      local winbuf = api.nvim_win_get_buf(winnr)
-      if winbuf == bufnr then
-        targetwin = winnr
-        break
-      end
+function M.buf_loclist(bufnr, locations)
+  local targetwin
+  for _, winnr in ipairs(api.nvim_list_wins()) do
+    local winbuf = api.nvim_win_get_buf(winnr)
+    if winbuf == bufnr then
+      targetwin = winnr
+      break
     end
-    if not targetwin then return end
-
-    local loclist = {}
-    local path = api.nvim_buf_get_name(bufnr)
-    for _, d in ipairs(locations) do
-      -- TODO: URL parsing here?
-      local start = d.range.start
-      table.insert(loclist, {
-          filename = path,
-          lnum = start.line + 1,
-          col = start.character + 1,
-          text = d.message,
-      })
-    end
-    vim.fn.setloclist(targetwin, loclist, ' ', 'Language Server')
   end
+  if not targetwin then return end
+
+  local items = {}
+  local path = api.nvim_buf_get_name(bufnr)
+  for _, d in ipairs(locations) do
+    -- TODO: URL parsing here?
+    local start = d.range.start
+    table.insert(items, {
+        filename = path,
+        lnum = start.line + 1,
+        col = start.character + 1,
+        text = d.message,
+    })
+  end
+  vim.fn.setloclist(targetwin, items, ' ', 'Language Server')
 end
 
 return M
