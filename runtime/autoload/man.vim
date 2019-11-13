@@ -66,7 +66,6 @@ function! man#open_page(count, count1, mods, ...) abort
 
   let [l:buf, l:save_tfu] = [bufnr(), &tagfunc]
   try
-    set eventignore+=BufReadCmd
     set tagfunc=man#goto_tag
     let l:target = l:name . '(' . l:sect . ')'
     if a:mods !~# 'tab' && s:find_man()
@@ -76,7 +75,6 @@ function! man#open_page(count, count1, mods, ...) abort
     endif
   finally
     call setbufvar(l:buf, '&tagfunc', l:save_tfu)
-    set eventignore-=BufReadCmd
   endtry
 
   let b:man_sect = sect
