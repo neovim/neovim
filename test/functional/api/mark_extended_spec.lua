@@ -475,6 +475,13 @@ describe('Extmarks buffer api', function()
     check_undo_redo(ns, marks[2], 0, 3, 1, 2)
   end)
 
+  it('deleting right before a mark works #extmarks', function()
+    -- op_delete in ops.c
+    set_extmark(ns, marks[1], 0, 2)
+    feed('0lx')
+    check_undo_redo(ns, marks[1], 0, 2, 0, 1)
+  end)
+
   it('deleting on a mark works #extmarks', function()
     -- op_delete in ops.c
     set_extmark(ns, marks[1], 0, 2)

@@ -5599,11 +5599,7 @@ insertchar (
     do_digraph(-1);                     /* clear digraphs */
     do_digraph(buf[i-1]);               /* may be the start of a digraph */
     buf[i] = NUL;
-    colnr_T col_start = curwin->w_cursor.col;
     ins_str(buf);
-    extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
-                       (colnr_T)(col_start + 1), 0,
-                       (long)STRLEN(buf), kExtmarkUndo);
     if (flags & INSCHAR_CTRLV) {
       redo_literal(*buf);
       i = 1;
@@ -5614,9 +5610,6 @@ insertchar (
   } else {
     int cc;
 
-    extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
-                       (colnr_T)(curwin->w_cursor.col + 1), 0,
-                       1, kExtmarkUndo);
     if ((cc = utf_char2len(c)) > 1) {
       char_u buf[MB_MAXBYTES + 1];
 
@@ -8506,14 +8499,6 @@ static bool ins_tab(void)
   }
 
   temp -= get_nolist_virtcol() % temp;
-
-  // Move extmarks
-  extmark_col_adjust(curbuf,
-                     curwin->w_cursor.lnum,
-                     curwin->w_cursor.col,
-                     0,
-                     temp,
-                     kExtmarkUndo);
 
   /*
    * Insert the first space with ins_char().	It will delete one char in
