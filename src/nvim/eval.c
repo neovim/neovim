@@ -8711,7 +8711,7 @@ static void f_getenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   if (p == NULL) {
     rettv->v_type = VAR_SPECIAL;
-    rettv->vval.v_number = kSpecialVarNull;
+    rettv->vval.v_special = kSpecialVarNull;
     return;
   }
   rettv->vval.v_string = p;
@@ -15669,7 +15669,7 @@ static void f_setenv(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   const char *name = tv_get_string_buf(&argvars[0], namebuf);
 
   if (argvars[1].v_type == VAR_SPECIAL
-      && argvars[1].vval.v_number == kSpecialVarNull) {
+      && argvars[1].vval.v_special == kSpecialVarNull) {
     os_unsetenv(name);
   } else {
     os_setenv(name, tv_get_string_buf(&argvars[1], valbuf), 1);
