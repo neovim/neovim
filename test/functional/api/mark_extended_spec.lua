@@ -422,7 +422,7 @@ describe('Extmarks buffer api', function()
     set_extmark(ns, marks[1], 1, 2)
     -- Insert a fullwidth (two col) tilde, NICE
     feed('0i～<esc>')
-    check_undo_redo(ns, marks[1], 1, 2, 1, 3)
+    check_undo_redo(ns, marks[1], 1, 2, 1, 5)
   end)
 
   it('marks move with blockwise inserts #extmarks', function()
