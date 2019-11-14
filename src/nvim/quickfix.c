@@ -4559,9 +4559,9 @@ static qfline_T *qf_find_closest_entry(qf_list_T *qfl,
 
 /// Get the nth quickfix entry below the specified entry treating multiple
 /// entries on a single line as one. Searches forward in the list.
-static qfline_T *qf_get_nth_below_entry(qfline_T *entry,
-                                        int *errornr,
-                                        linenr_T n)
+static void qf_get_nth_below_entry(qfline_T *entry,
+                                   int *errornr,
+                                   linenr_T n)
 {
   while (n-- > 0 && !got_int) {
     qfline_T *first_entry = entry;
@@ -4582,15 +4582,13 @@ static qfline_T *qf_get_nth_below_entry(qfline_T *entry,
     entry = entry->qf_next;
     (*errornr)++;
   }
-
-  return entry;
 }
 
 /// Get the nth quickfix entry above the specified entry treating multiple
 /// entries on a single line as one. Searches backwards in the list.
-static qfline_T *qf_get_nth_above_entry(qfline_T *entry,
-                                        int *errornr,
-                                        linenr_T n)
+static void qf_get_nth_above_entry(qfline_T *entry,
+                                   int *errornr,
+                                   linenr_T n)
 {
   while (n-- > 0 && !got_int) {
     if (entry->qf_prev == NULL
@@ -4604,8 +4602,6 @@ static qfline_T *qf_get_nth_above_entry(qfline_T *entry,
     // If multiple entries are on the same line, then use the first entry
     entry = qf_find_first_entry_on_line(entry, errornr);
   }
-
-  return entry;
 }
 
 /// Find the n'th quickfix entry adjacent to line 'lnum' in buffer 'bnr' in the
@@ -4629,9 +4625,9 @@ static int qf_find_nth_adj_entry(qf_list_T *qfl,
   if (--n > 0) {
     // Go to the n'th entry in the current buffer
     if (dir == FORWARD) {
-      adj_entry = qf_get_nth_below_entry(adj_entry, &errornr, n);
+      qf_get_nth_below_entry(adj_entry, &errornr, n);
     } else {
-      adj_entry = qf_get_nth_above_entry(adj_entry, &errornr, n);
+      qf_get_nth_above_entry(adj_entry, &errornr, n);
     }
   }
 
