@@ -77,7 +77,6 @@ addons:
       - gdb
       - gperf
       - language-pack-tr
-      - libc6-dev-i386
       - libtool-bin
       - locales
       - ninja-build
@@ -159,6 +158,14 @@ jobs:
         - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -m32 -DCMAKE_TOOLCHAIN_FILE=$TRAVIS_BUILD_DIR/cmake/i386-linux-gnu.toolchain.cmake"
         # Minimum required CMake.
         - CMAKE_URL=https://cmake.org/files/v2.8/cmake-2.8.12-Linux-i386.sh
+        - *common-job-env
+    - name: big-endian
+      os: linux
+      arch: s390x
+      compiler: gcc
+      env:
+        - CMAKE_FLAGS="$CMAKE_FLAGS -DPREFER_LUA=ON"
+        - DEPS_CMAKE_FLAGS="$DEPS_CMAKE_FLAGS -DUSE_BUNDLED_LUAJIT=OFF"
         - *common-job-env
     - name: clang-tsan
       os: linux
