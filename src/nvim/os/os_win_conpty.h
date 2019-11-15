@@ -8,7 +8,7 @@
 extern HRESULT (WINAPI *pCreatePseudoConsole)  // NOLINT(whitespace/parens)
   (COORD, HANDLE, HANDLE, DWORD, HPCON *);
 extern HRESULT (WINAPI *pResizePseudoConsole)(HPCON, COORD);
-extern HRESULT (WINAPI *pClosePseudoConsole)(HPCON);
+extern void (WINAPI *pClosePseudoConsole)(HPCON);
 
 typedef struct conpty {
   HPCON pty;

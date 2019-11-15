@@ -18,7 +18,7 @@ static bool conpty_working = false;
 
 HRESULT (WINAPI *pCreatePseudoConsole)(COORD, HANDLE, HANDLE, DWORD, HPCON *);
 HRESULT (WINAPI *pResizePseudoConsole)(HPCON, COORD);
-HRESULT (WINAPI *pClosePseudoConsole)(HPCON);
+void (WINAPI *pClosePseudoConsole)(HPCON);
 
 bool os_has_conpty_working(void)
 {
