@@ -18,9 +18,9 @@ typedef struct pty_process {
   char *term_name;
   uint16_t width, height;
   union {
-    winpty_t *winpty_object;
-    conpty_t *conpty_object;
-  } pty_object;
+    winpty_t *winpty;
+    conpty_t *conpty;
+  } object;
   pty_type_t type;
   HANDLE finish_wait;
   HANDLE process_handle;
@@ -40,7 +40,7 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
   rv.term_name = NULL;
   rv.width = 80;
   rv.height = 24;
-  rv.pty_object.winpty_object = NULL;
+  rv.object.winpty = NULL;
   rv.type = PTY_TYPE_WINPTY;
   rv.finish_wait = NULL;
   rv.process_handle = NULL;

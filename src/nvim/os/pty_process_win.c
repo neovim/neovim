@@ -25,9 +25,9 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   Process *proc = (Process *)ptyproc;
 
   if (ptyproc->type == PTY_TYPE_CONPTY
-      && ptyproc->pty_object.conpty_object != NULL) {
-    os_conpty_free(ptyproc->pty_object.conpty_object);
-    ptyproc->pty_object.conpty_object = NULL;
+      && ptyproc->object.conpty != NULL) {
+    os_conpty_free(ptyproc->object.conpty);
+    ptyproc->object.conpty = NULL;
   }
   uv_timer_init(&proc->loop->uv, &ptyproc->wait_eof_timer);
   ptyproc->wait_eof_timer.data = (void *)ptyproc;
@@ -184,9 +184,9 @@ int pty_process_spawn(PtyProcess *ptyproc)
   }
 
   if (ptyproc->type == PTY_TYPE_CONPTY) {
-    ptyproc->pty_object.conpty_object = conpty_object;
+    ptyproc->object.conpty = conpty_object;
   } else {
-    ptyproc->pty_object.winpty_object = winpty_object;
+    ptyproc->object.winpty = winpty_object;
   }
   ptyproc->process_handle = process_handle;
   winpty_object = NULL;
@@ -230,17 +230,17 @@ void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
   FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->type == PTY_TYPE_CONPTY
-      && ptyproc->pty_object.conpty_object != NULL) {
+      && ptyproc->object.conpty != NULL) {
     assert(width <= SHRT_MAX);
     assert(height <= SHRT_MAX);
     COORD size = { (int16_t)width, (int16_t)height };
     if (pResizePseudoConsole(
-        ptyproc->pty_object.conpty_object->pty, size) != S_OK) {
+        ptyproc->object.conpty->pty, size) != S_OK) {
       ELOG("ResizePseudoConsoel failed: error code: %d",
            os_translate_sys_error((int)GetLastError()));
     }
-  } else if (ptyproc->pty_object.winpty_object != NULL) {
-    winpty_set_size(ptyproc->pty_object.winpty_object, width, height, NULL);
+  } else if (ptyproc->object.winpty != NULL) {
+    winpty_set_size(ptyproc->object.winpty, width, height, NULL);
   }
 }
 
@@ -260,9 +260,9 @@ void pty_process_close_master(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
   if (ptyproc->type == PTY_TYPE_WINPTY
-      && ptyproc->pty_object.winpty_object != NULL) {
-    winpty_free(ptyproc->pty_object.winpty_object);
-    ptyproc->pty_object.winpty_object = NULL;
+      && ptyproc->object.winpty != NULL) {
+    winpty_free(ptyproc->object.winpty);
+    ptyproc->object.winpty = NULL;
   }
 }
 
