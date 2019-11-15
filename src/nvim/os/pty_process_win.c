@@ -231,14 +231,7 @@ void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
 {
   if (ptyproc->type == PTY_TYPE_CONPTY
       && ptyproc->object.conpty != NULL) {
-    assert(width <= SHRT_MAX);
-    assert(height <= SHRT_MAX);
-    COORD size = { (int16_t)width, (int16_t)height };
-    if (pResizePseudoConsole(
-        ptyproc->object.conpty->pty, size) != S_OK) {
-      ELOG("ResizePseudoConsoel failed: error code: %d",
-           os_translate_sys_error((int)GetLastError()));
-    }
+    os_conpty_set_size(ptyproc->object.conpty, width, height);
   } else if (ptyproc->object.winpty != NULL) {
     winpty_set_size(ptyproc->object.winpty, width, height, NULL);
   }
