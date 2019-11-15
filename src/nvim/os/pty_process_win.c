@@ -183,11 +183,9 @@ int pty_process_spawn(PtyProcess *ptyproc)
     uv_run(&proc->loop->uv, UV_RUN_ONCE);
   }
 
-  if (ptyproc->type == PTY_TYPE_CONPTY) {
-    ptyproc->object.conpty = conpty_object;
-  } else {
-    ptyproc->object.winpty = winpty_object;
-  }
+  (ptyproc->type == PTY_TYPE_CONPTY) ?
+    (void *)(ptyproc->object.conpty = conpty_object) :
+    (void *)(ptyproc->object.winpty = winpty_object);
   ptyproc->process_handle = process_handle;
   winpty_object = NULL;
   conpty_object = NULL;
