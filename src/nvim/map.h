@@ -53,6 +53,8 @@ MAP_DECLS(String, handle_T)
 #define map_del(T, U) map_##T##_##U##_del
 #define map_clear(T, U) map_##T##_##U##_clear
 
+#define map_size(map) ((map)->table->size)
+
 #define pmap_new(T) map_new(T, ptr_t)
 #define pmap_free(T) map_free(T, ptr_t)
 #define pmap_get(T) map_get(T, ptr_t)
