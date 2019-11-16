@@ -14,6 +14,9 @@
 #include "nvim/option.h"
 #include "nvim/os/os.h"
 #include "nvim/os/input.h"
+#ifdef WIN32
+# include "nvim/os/os_win_console.h"
+#endif
 #include "nvim/event/rstream.h"
 
 #define KEY_BUFFER_SIZE 0xfff
@@ -37,13 +40,7 @@ void tinput_init(TermInput *input, Loop *loop)
   //    ls *.md | xargs nvim
 #ifdef WIN32
   if (!os_isatty(input->in_fd)) {
-      const HANDLE conin_handle = CreateFile("CONIN$",
-                                             GENERIC_READ | GENERIC_WRITE,
-                                             FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                             (LPSECURITY_ATTRIBUTES)NULL,
-                                             OPEN_EXISTING, 0, (HANDLE)NULL);
-      input->in_fd = _open_osfhandle(conin_handle, _O_RDONLY);
-      assert(input->in_fd != -1);
+      input->in_fd = os_get_conin_fd();
   }
 #else
   if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {

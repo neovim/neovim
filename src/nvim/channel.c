@@ -13,6 +13,7 @@
 #include "nvim/os/shell.h"
 #ifdef WIN32
 # include "nvim/os/os_win_conpty.h"
+# include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/path.h"
 #include "nvim/ascii.h"
@@ -479,23 +480,9 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
   // stdin and stdout with CONIN$ and CONOUT$, respectively.
   if (embedded_mode && os_has_conpty_working()) {
     stdin_dup_fd = os_dup(STDIN_FILENO);
-    close(STDIN_FILENO);
-    const HANDLE conin_handle =
-      CreateFile("CONIN$", GENERIC_READ | GENERIC_WRITE,
-                 FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
-                 OPEN_EXISTING, 0, (HANDLE)NULL);
-    assert(conin_handle != INVALID_HANDLE_VALUE);
-    const int conin_fd = _open_osfhandle((intptr_t)conin_handle, _O_RDONLY);
-    assert(conin_fd == STDIN_FILENO);
+    os_replace_stdin_to_conin();
     stdout_dup_fd = os_dup(STDOUT_FILENO);
-    close(STDOUT_FILENO);
-    const HANDLE conout_handle =
-      CreateFile("CONOUT$", GENERIC_READ | GENERIC_WRITE,
-                 FILE_SHARE_READ, (LPSECURITY_ATTRIBUTES)NULL,
-                 OPEN_EXISTING, 0, (HANDLE)NULL);
-    assert(conout_handle != INVALID_HANDLE_VALUE);
-    const int conout_fd = _open_osfhandle((intptr_t)conout_handle, 0);
-    assert(conout_fd == STDOUT_FILENO);
+    os_replace_stdout_to_conout();
   }
 #endif
   rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);
