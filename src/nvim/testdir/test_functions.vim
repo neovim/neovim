@@ -1132,6 +1132,13 @@ func Test_reg_executing_and_recording()
 
   " :normal command saves and restores reg_executing
   let s:reg_stat = ''
+  let @q = ":call TestFunc()\<CR>:call s:save_reg_stat()\<CR>"
+  func TestFunc() abort
+    normal! ia
+  endfunc
+  call feedkeys("@q", 'xt')
+  call assert_equal(':q', s:reg_stat)
+  delfunc TestFunc
 
   " getchar() command saves and restores reg_executing
   map W :call TestFunc()<CR>
