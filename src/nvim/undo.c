@@ -225,9 +225,6 @@ int u_save_cursor(void)
  */
 int u_save(linenr_T top, linenr_T bot)
 {
-  if (undo_off)
-    return OK;
-
   if (top >= bot || bot > (curbuf->b_ml.ml_line_count + 1)) {
     return FAIL;        /* rely on caller to do error messages */
   }
@@ -246,9 +243,6 @@ int u_save(linenr_T top, linenr_T bot)
  */
 int u_savesub(linenr_T lnum)
 {
-  if (undo_off)
-    return OK;
-
   return u_savecommon(lnum - 1, lnum + 1, lnum + 1, FALSE);
 }
 
@@ -260,9 +254,6 @@ int u_savesub(linenr_T lnum)
  */
 int u_inssub(linenr_T lnum)
 {
-  if (undo_off)
-    return OK;
-
   return u_savecommon(lnum - 1, lnum, lnum + 1, FALSE);
 }
 
@@ -275,9 +266,6 @@ int u_inssub(linenr_T lnum)
  */
 int u_savedel(linenr_T lnum, long nlines)
 {
-  if (undo_off)
-    return OK;
-
   return u_savecommon(lnum - 1, lnum + nlines,
       nlines == curbuf->b_ml.ml_line_count ? 2 : lnum, FALSE);
 }
@@ -2924,9 +2912,6 @@ void u_undoline(void)
 {
   colnr_T t;
   char_u  *oldp;
-
-  if (undo_off)
-    return;
 
   if (curbuf->b_u_line_ptr == NULL
       || curbuf->b_u_line_lnum > curbuf->b_ml.ml_line_count) {
