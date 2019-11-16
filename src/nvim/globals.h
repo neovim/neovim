@@ -768,7 +768,6 @@ EXTERN int did_outofmem_msg INIT(= false);
 // set after out of memory msg
 EXTERN int did_swapwrite_msg INIT(= false);
 // set after swap write error msg
-EXTERN int undo_off INIT(= false);          // undo switched off for now
 EXTERN int global_busy INIT(= 0);           // set when :global is executing
 EXTERN int listcmd_busy INIT(= false);      // set when :argdo, :windo or
                                             // :bufdo is executing

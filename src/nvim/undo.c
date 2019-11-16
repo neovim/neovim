@@ -225,9 +225,6 @@ int u_save_cursor(void)
  */
 int u_save(linenr_T top, linenr_T bot)
 {
-  if (undo_off)
-    return OK;
-
   if (top >= bot || bot > (curbuf->b_ml.ml_line_count + 1)) {
     return FAIL;        /* rely on caller to do error messages */
   }
@@ -246,10 +243,7 @@ int u_save(linenr_T top, linenr_T bot)
  */
 int u_savesub(linenr_T lnum)
 {
-  if (undo_off)
-    return OK;
-
-  return u_savecommon(lnum - 1, lnum + 1, lnum + 1, FALSE);
+  return u_savecommon(lnum - 1, lnum + 1, lnum + 1, false);
 }
 
 /*
@@ -260,10 +254,7 @@ int u_savesub(linenr_T lnum)
  */
 int u_inssub(linenr_T lnum)
 {
-  if (undo_off)
-    return OK;
-
-  return u_savecommon(lnum - 1, lnum, lnum + 1, FALSE);
+  return u_savecommon(lnum - 1, lnum, lnum + 1, false);
 }
 
 /*
@@ -275,9 +266,6 @@ int u_inssub(linenr_T lnum)
  */
 int u_savedel(linenr_T lnum, long nlines)
 {
-  if (undo_off)
-    return OK;
-
   return u_savecommon(lnum - 1, lnum + nlines,
       nlines == curbuf->b_ml.ml_line_count ? 2 : lnum, FALSE);
 }
@@ -2925,9 +2913,6 @@ void u_undoline(void)
   colnr_T t;
   char_u  *oldp;
 
-  if (undo_off)
-    return;
-
   if (curbuf->b_u_line_ptr == NULL
       || curbuf->b_u_line_lnum > curbuf->b_ml.ml_line_count) {
     beep_flush();
@@ -3058,8 +3043,14 @@ u_header_T *u_force_get_undo_header(buf_T *buf)
   }
   // Create the first undo header for the buffer
   if (!uhp) {
-    // TODO(timeyyy): there would be a better way to do this!
-    u_save_cursor();
+    // Undo is normally invoked in change code, which already has swapped
+    // curbuf.
+    buf_T *save_curbuf = curbuf;
+    curbuf = buf;
+    // Args are tricky: this means replace empty range by empty range..
+    u_savecommon(0, 1, 1, true);
+    curbuf = save_curbuf;
+
     uhp = buf->b_u_curhead;
     if (!uhp) {
       uhp = buf->b_u_newhead;
