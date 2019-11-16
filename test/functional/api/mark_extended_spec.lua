@@ -1262,6 +1262,12 @@ describe('Extmarks buffer api', function()
     check_undo_redo(ns, marks[1], 3, 4, 2, 6)
   end)
 
+  it('in read-only buffer', function()
+    command("view! runtime/doc/help.txt")
+    eq(true, curbufmeths.get_option('ro'))
+    local id = set_extmark(ns, 0, 0, 2)
+    eq({{id, 0, 2}}, get_extmarks(ns,0, -1))
+  end)
 end)
 
 describe('Extmarks buffer api with many marks', function()
