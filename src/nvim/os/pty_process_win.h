@@ -9,9 +9,9 @@
 #include "nvim/os/os_win_conpty.h"
 
 typedef enum {
-  PTY_TYPE_WINPTY,
-  PTY_TYPE_CONPTY
-} pty_type_t;
+  kWinpty,
+  kConpty
+} PtyType;
 
 typedef struct pty_process {
   Process process;
@@ -21,7 +21,7 @@ typedef struct pty_process {
     winpty_t *winpty;
     conpty_t *conpty;
   } object;
-  pty_type_t type;
+  PtyType type;
   HANDLE finish_wait;
   HANDLE process_handle;
   uv_timer_t wait_eof_timer;
@@ -41,7 +41,7 @@ static inline PtyProcess pty_process_init(Loop *loop, void *data)
   rv.width = 80;
   rv.height = 24;
   rv.object.winpty = NULL;
-  rv.type = PTY_TYPE_WINPTY;
+  rv.type = kWinpty;
   rv.finish_wait = NULL;
   rv.process_handle = NULL;
   return rv;

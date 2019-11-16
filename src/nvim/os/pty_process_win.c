@@ -24,7 +24,7 @@ static void CALLBACK pty_process_finish1(void *context, BOOLEAN unused)
   PtyProcess *ptyproc = (PtyProcess *)context;
   Process *proc = (Process *)ptyproc;
 
-  if (ptyproc->type == PTY_TYPE_CONPTY
+  if (ptyproc->type == kConpty
       && ptyproc->object.conpty != NULL) {
     os_conpty_free(ptyproc->object.conpty);
     ptyproc->object.conpty = NULL;
@@ -61,11 +61,11 @@ int pty_process_spawn(PtyProcess *ptyproc)
     if ((conpty_object =
          os_conpty_init(&in_name, &out_name,
                         ptyproc->width, ptyproc->height)) != NULL) {
-      ptyproc->type = PTY_TYPE_CONPTY;
+      ptyproc->type = kConpty;
     }
   }
 
-  if (ptyproc->type == PTY_TYPE_WINPTY) {
+  if (ptyproc->type == kWinpty) {
     cfg = winpty_config_new(WINPTY_FLAG_ALLOW_CURPROC_DESKTOP_CREATION, &err);
     if (cfg == NULL) {
       emsg = "winpty_config_new failed";
@@ -125,7 +125,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     goto cleanup;
   }
 
-  if (ptyproc->type == PTY_TYPE_CONPTY) {
+  if (ptyproc->type == kConpty) {
     if (!os_conpty_spawn(conpty_object,
                          &process_handle,
                          NULL,
@@ -183,7 +183,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
     uv_run(&proc->loop->uv, UV_RUN_ONCE);
   }
 
-  (ptyproc->type == PTY_TYPE_CONPTY) ?
+  (ptyproc->type == kConpty) ?
     (void *)(ptyproc->object.conpty = conpty_object) :
     (void *)(ptyproc->object.winpty = winpty_object);
   ptyproc->process_handle = process_handle;
@@ -227,7 +227,7 @@ void pty_process_resize(PtyProcess *ptyproc, uint16_t width,
                         uint16_t height)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (ptyproc->type == PTY_TYPE_CONPTY
+  if (ptyproc->type == kConpty
       && ptyproc->object.conpty != NULL) {
     os_conpty_set_size(ptyproc->object.conpty, width, height);
   } else if (ptyproc->object.winpty != NULL) {
@@ -250,7 +250,7 @@ void pty_process_close(PtyProcess *ptyproc)
 void pty_process_close_master(PtyProcess *ptyproc)
   FUNC_ATTR_NONNULL_ALL
 {
-  if (ptyproc->type == PTY_TYPE_WINPTY
+  if (ptyproc->type == kWinpty
       && ptyproc->object.winpty != NULL) {
     winpty_free(ptyproc->object.winpty);
     ptyproc->object.winpty = NULL;
