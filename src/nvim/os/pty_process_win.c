@@ -56,8 +56,8 @@ int pty_process_spawn(PtyProcess *ptyproc)
 
   assert(proc->err.closed);
 
-  int pty_type = *p_twt;
-  if (pty_type == 'c' && os_has_conpty_working()) {
+  int pty_type = *p_tmt;
+  if (pty_type != 'w' && os_has_conpty_working()) {
     if ((conpty_object =
          os_conpty_init(&in_name, &out_name,
                         ptyproc->width, ptyproc->height)) != NULL) {

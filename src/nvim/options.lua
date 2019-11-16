@@ -2497,10 +2497,10 @@ return {
       defaults={if_true={vi=false}}
     },
     {
-      full_name='termwintype', abbreviation='twt',
+      full_name='termtype', abbreviation='tmt',
       type='string', scope={'global'},
       vi_def=false,
-      varname='p_twt',
+      varname='p_tmt',
       defaults={if_true={vi="",vim=""}}
     },
     {
