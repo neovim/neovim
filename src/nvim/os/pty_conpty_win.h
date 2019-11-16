@@ -1,5 +1,5 @@
-#ifndef NVIM_OS_OS_WIN_CONPTY_H
-#define NVIM_OS_OS_WIN_CONPTY_H
+#ifndef NVIM_OS_PTY_CONPTY_WIN_H
+#define NVIM_OS_PTY_CONPTY_WIN_H
 
 #ifndef HPCON
 # define HPCON VOID *
@@ -16,7 +16,7 @@ typedef struct conpty {
 } conpty_t;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/os_win_conpty.h.generated.h"
+# include "os/pty_conpty_win.h.generated.h"
 #endif
 
-#endif  // NVIM_OS_OS_WIN_CONPTY_H
+#endif  // NVIM_OS_PTY_CONPTY_WIN_H

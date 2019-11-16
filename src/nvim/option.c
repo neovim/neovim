@@ -77,7 +77,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #ifdef WIN32
-# include "nvim/os/os_win_conpty.h"
+# include "nvim/os/pty_conpty_win.h"
 #endif
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/input.h"

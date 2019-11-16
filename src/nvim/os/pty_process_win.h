@@ -6,7 +6,7 @@
 
 #include "nvim/event/process.h"
 #include "nvim/lib/queue.h"
-#include "nvim/os/os_win_conpty.h"
+#include "nvim/os/pty_conpty_win.h"
 
 typedef enum {
   kWinpty,

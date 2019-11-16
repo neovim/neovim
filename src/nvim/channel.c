@@ -12,7 +12,7 @@
 #include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/shell.h"
 #ifdef WIN32
-# include "nvim/os/os_win_conpty.h"
+# include "nvim/os/pty_conpty_win.h"
 # include "nvim/os/os_win_console.h"
 #endif
 #include "nvim/path.h"

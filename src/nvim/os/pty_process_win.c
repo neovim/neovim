@@ -12,7 +12,7 @@
 #include "nvim/memory.h"
 #include "nvim/mbyte.h"  // for utf8_to_utf16, utf16_to_utf8
 #include "nvim/os/pty_process_win.h"
-#include "nvim/os/os_win_conpty.h"
+#include "nvim/os/pty_conpty_win.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/pty_process_win.c.generated.h"
