@@ -286,6 +286,11 @@ int update_screen(int type)
     return FAIL;
   }
 
+  // May have postponed updating diffs.
+  if (need_diff_redraw) {
+    diff_redraw(true);
+  }
+
   if (must_redraw) {
     if (type < must_redraw)         /* use maximal type */
       type = must_redraw;

@@ -744,6 +744,7 @@ EXTERN int maptick INIT(= 0);            // tick for each non-mapped char
 EXTERN int must_redraw INIT(= 0);           // type of redraw necessary
 EXTERN bool skip_redraw INIT(= false);      // skip redraw once
 EXTERN bool do_redraw INIT(= false);        // extra redraw once
+EXTERN bool need_diff_redraw INIT(= false);  // need to call diff_redraw()
 EXTERN bool must_redraw_pum INIT(= false);  // redraw pum. NB: must_redraw
                                             // should also be set.
 
