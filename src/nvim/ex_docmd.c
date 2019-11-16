@@ -8207,6 +8207,7 @@ static void ex_normal(exarg_T *eap)
   int save_insertmode = p_im;
   int save_finish_op = finish_op;
   long save_opcount = opcount;
+  const int save_reg_executing = reg_executing;
   char_u      *arg = NULL;
   int l;
   char_u      *p;
@@ -8301,7 +8302,8 @@ static void ex_normal(exarg_T *eap)
   p_im = save_insertmode;
   finish_op = save_finish_op;
   opcount = save_opcount;
-  msg_didout |= save_msg_didout;        /* don't reset msg_didout now */
+  reg_executing = save_reg_executing;
+  msg_didout |= save_msg_didout;        // don't reset msg_didout now
 
   /* Restore the state (needed when called from a function executed for
    * 'indentexpr'). Update the mouse and cursor, they may have changed. */

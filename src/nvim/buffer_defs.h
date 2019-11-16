@@ -918,19 +918,19 @@ typedef struct w_line {
  * or row (FR_ROW) layout or is a leaf, which has a window.
  */
 struct frame_S {
-  char fr_layout;               /* FR_LEAF, FR_COL or FR_ROW */
+  char fr_layout;               // FR_LEAF, FR_COL or FR_ROW
   int fr_width;
-  int fr_newwidth;              /* new width used in win_equal_rec() */
+  int fr_newwidth;              // new width used in win_equal_rec()
   int fr_height;
-  int fr_newheight;             /* new height used in win_equal_rec() */
-  frame_T     *fr_parent;       /* containing frame or NULL */
-  frame_T     *fr_next;         /* frame right or below in same parent, NULL
-                                   for first */
-  frame_T     *fr_prev;         /* frame left or above in same parent, NULL
-                                   for last */
-  /* fr_child and fr_win are mutually exclusive */
-  frame_T     *fr_child;        /* first contained frame */
-  win_T       *fr_win;          /* window that fills this frame */
+  int fr_newheight;             // new height used in win_equal_rec()
+  frame_T     *fr_parent;       // containing frame or NULL
+  frame_T     *fr_next;         // frame right or below in same parent, NULL
+                                // for last
+  frame_T     *fr_prev;         // frame left or above in same parent, NULL
+                                // for first
+  // fr_child and fr_win are mutually exclusive
+  frame_T     *fr_child;        // first contained frame
+  win_T       *fr_win;          // window that fills this frame
 };
 
 #define FR_LEAF 0       /* frame is a leaf */
