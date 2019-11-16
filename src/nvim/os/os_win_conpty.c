@@ -14,23 +14,26 @@
 # define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE 0x00020016
 #endif
 
-static bool conpty_working = false;
-
 HRESULT (WINAPI *pCreatePseudoConsole)(COORD, HANDLE, HANDLE, DWORD, HPCON *);
 HRESULT (WINAPI *pResizePseudoConsole)(HPCON, COORD);
 void (WINAPI *pClosePseudoConsole)(HPCON);
 
 bool os_has_conpty_working(void)
 {
-  return conpty_working;
+  static TriState has_conpty = kNone;
+  if (has_conpty == kNone) {
+    has_conpty = os_dyn_conpty_init();
+  }
+
+  return has_conpty == kTrue;
 }
 
-void os_dyn_conpty_init(void)
+TriState os_dyn_conpty_init(void)
 {
   uv_lib_t kernel;
   if (uv_dlopen("kernel32.dll", &kernel)) {
     uv_dlclose(&kernel);
-    return;
+    return kFalse;
   }
   static struct {
     char *name;
@@ -45,10 +48,10 @@ void os_dyn_conpty_init(void)
        conpty_entry[i].name != NULL && conpty_entry[i].ptr != NULL; i++) {
     if (uv_dlsym(&kernel, conpty_entry[i].name, (void **)conpty_entry[i].ptr)) {
       uv_dlclose(&kernel);
-      return;
+      return kFalse;
     }
   }
-  conpty_working = true;
+  return kTrue;
 }
 
 conpty_t *os_conpty_init(char **in_name, char **out_name,

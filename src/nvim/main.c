@@ -46,9 +46,6 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/os/os_defs.h"
-#ifdef WIN32
-# include "nvim/os/os_win_conpty.h"
-#endif
 #include "nvim/path.h"
 #include "nvim/profile.h"
 #include "nvim/popupmnu.h"
@@ -229,9 +226,6 @@ void early_init(void)
 
   init_signs();
   ui_comp_syn_init();
-#ifdef WIN32
-  os_dyn_conpty_init();
-#endif
 }
 
 #ifdef MAKE_LIB
