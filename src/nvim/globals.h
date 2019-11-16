@@ -400,11 +400,6 @@ EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
 
-/* Value set from 'diffopt'. */
-EXTERN int diff_context INIT(= 6);              /* context for folds */
-EXTERN int diff_foldcolumn INIT(= 2);           /* 'foldcolumn' for diff mode */
-EXTERN int diff_need_scrollbind INIT(= FALSE);
-
 /* The root of the menu hierarchy. */
 EXTERN vimmenu_T        *root_menu INIT(= NULL);
 /*
@@ -744,7 +739,6 @@ EXTERN int maptick INIT(= 0);            // tick for each non-mapped char
 EXTERN int must_redraw INIT(= 0);           // type of redraw necessary
 EXTERN bool skip_redraw INIT(= false);      // skip redraw once
 EXTERN bool do_redraw INIT(= false);        // extra redraw once
-EXTERN bool need_diff_redraw INIT(= false);  // need to call diff_redraw()
 EXTERN bool must_redraw_pum INIT(= false);  // redraw pum. NB: must_redraw
                                             // should also be set.
 
