@@ -1,13 +1,17 @@
 -- Test suite for testing luaeval() function
 local helpers = require('test.functional.helpers')(after_each)
+local Screen = require('test.functional.ui.screen')
 
 local redir_exec = helpers.redir_exec
+local pcall_err = helpers.pcall_err
 local exc_exec = helpers.exc_exec
+local exec_lua = helpers.exec_lua
 local command = helpers.command
 local meths = helpers.meths
 local funcs = helpers.funcs
 local clear = helpers.clear
 local eval = helpers.eval
+local feed = helpers.feed
 local NIL = helpers.NIL
 local eq = helpers.eq
 
@@ -186,9 +190,9 @@ describe('luaeval()', function()
        exc_exec('call luaeval("{1, foo=2}")'))
     eq("Vim(call):E5101: Cannot convert given lua type",
        exc_exec('call luaeval("vim.api.nvim_buf_get_lines")'))
-    startswith("Vim(call):E5107: Error while creating lua chunk for luaeval(): ",
+    startswith("Vim(call):E5107: Error loading lua [string \"luaeval()\"]:",
                exc_exec('call luaeval("1, 2, 3")'))
-    startswith("Vim(call):E5108: Error while calling lua chunk for luaeval(): ",
+    startswith("Vim(call):E5108: Error executing lua [string \"luaeval()\"]:",
                exc_exec('call luaeval("(nil)()")'))
     eq("Vim(call):E5101: Cannot convert given lua type",
        exc_exec('call luaeval("{42, vim.api}")'))
@@ -237,19 +241,99 @@ describe('luaeval()', function()
 
   it('errors out correctly when doing incorrect things in lua', function()
     -- Conversion errors
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: attempt to call field \'xxx_nonexistent_key_xxx\' (a nil value)',
        exc_exec([[call luaeval("vim.xxx_nonexistent_key_xxx()")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [string "<VimL compiled string>"]:1: ERROR',
+    eq('Vim(call):E5108: Error executing lua [string "luaeval()"]:1: ERROR',
        exc_exec([[call luaeval("error('ERROR')")]]))
-    eq('Vim(call):E5108: Error while calling lua chunk for luaeval(): [NULL]',
+    eq('Vim(call):E5108: Error executing lua [NULL]',
        exc_exec([[call luaeval("error(nil)")]]))
   end)
 
   it('does not leak memory when called with too long line',
   function()
     local s = ('x'):rep(65536)
-    eq('Vim(call):E5107: Error while creating lua chunk for luaeval(): [string "<VimL compiled string>"]:1: unexpected symbol near \')\'',
+    eq('Vim(call):E5107: Error loading lua [string "luaeval()"]:1: unexpected symbol near \')\'',
        exc_exec([[call luaeval("(']] .. s ..[[' + )")]]))
     eq(s, funcs.luaeval('"' .. s .. '"'))
+  end)
+end)
+
+describe('v:lua', function()
+  before_each(function()
+    exec_lua([[
+      function _G.foo(a,b,n)
+        _G.val = n
+        return a+b
+      end
+      mymod = {}
+      function mymod.noisy(name)
+        vim.api.nvim_set_current_line("hey "..name)
+      end
+      function mymod.crashy()
+        nonexistent()
+      end
+      function mymod.omni(findstart, base)
+        if findstart == 1 then
+          return 5
+        else
+          if base == 'st' then
+            return {'stuff', 'steam', 'strange things'}
+          end
+        end
+      end
+      vim.api.nvim_buf_set_option(0, 'omnifunc', 'v:lua.mymod.omni')
+    ]])
+  end)
+
+  it('works in expressions', function()
+    eq(7, eval('v:lua.foo(3,4,v:null)'))
+    eq(true, exec_lua([[return _G.val == vim.NIL]]))
+    eq(NIL, eval('v:lua.mymod.noisy("eval")'))
+    eq("hey eval", meths.get_current_line())
+
+    eq("Vim:E5108: Error executing lua [string \"<nvim>\"]:10: attempt to call global 'nonexistent' (a nil value)",
+       pcall_err(eval, 'v:lua.mymod.crashy()'))
+  end)
+
+  it('works in :call', function()
+    command(":call v:lua.mymod.noisy('command')")
+    eq("hey command", meths.get_current_line())
+    eq("Vim(call):E5108: Error executing lua [string \"<nvim>\"]:10: attempt to call global 'nonexistent' (a nil value)",
+       pcall_err(command, 'call v:lua.mymod.crashy()'))
+  end)
+
+  it('works in func options', function()
+    local screen = Screen.new(60, 8)
+    screen:set_default_attr_ids({
+      [1] = {bold = true, foreground = Screen.colors.Blue1},
+      [2] = {background = Screen.colors.WebGray},
+      [3] = {background = Screen.colors.LightMagenta},
+      [4] = {bold = true},
+      [5] = {bold = true, foreground = Screen.colors.SeaGreen4},
+    })
+    screen:attach()
+    feed('isome st<c-x><c-o>')
+    screen:expect{grid=[[
+      some stuff^                                                  |
+      {1:~   }{2: stuff          }{1:                                        }|
+      {1:~   }{3: steam          }{1:                                        }|
+      {1:~   }{3: strange things }{1:                                        }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {1:~                                                           }|
+      {4:-- Omni completion (^O^N^P) }{5:match 1 of 3}                    |
+    ]]}
+  end)
+
+  it('throw errors for invalid use', function()
+    eq('Vim(let):E15: Invalid expression: v:lua.func', pcall_err(command, "let g:Func = v:lua.func"))
+    eq('Vim(let):E15: Invalid expression: v:lua', pcall_err(command, "let g:Func = v:lua"))
+    eq("Vim(let):E15: Invalid expression: v:['lua']", pcall_err(command, "let g:Func = v:['lua']"))
+
+    eq("Vim:E15: Invalid expression: v:['lua'].foo()", pcall_err(eval, "v:['lua'].foo()"))
+    eq("Vim(call):E461: Illegal variable name: v:['lua']", pcall_err(command, "call v:['lua'].baar()"))
+
+    eq("Vim(let):E46: Cannot change read-only variable \"v:['lua']\"", pcall_err(command, "let v:['lua'] = 'xx'"))
+    eq("Vim(let):E46: Cannot change read-only variable \"v:lua\"", pcall_err(command, "let v:lua = 'xx'"))
   end)
 end)

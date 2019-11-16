@@ -54,11 +54,12 @@ describe('print', function()
       v_tblout = setmetatable({}, meta_tblout)
     ]])
     eq('', redir_exec('luafile ' .. fname))
-    eq('\nE5105: Error while calling lua chunk: E5114: Error while converting print argument #2: [NULL]',
+    -- TODO(bfredl): these look weird, print() should not use "E5114:" style errors..
+    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: [NULL]',
        redir_exec('lua print("foo", v_nilerr, "bar")'))
-    eq('\nE5105: Error while calling lua chunk: E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
+    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: Xtest-functional-lua-overrides-luafile:2: abc',
        redir_exec('lua print("foo", v_abcerr, "bar")'))
-    eq('\nE5105: Error while calling lua chunk: E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
+    eq('\nE5108: Error executing lua E5114: Error while converting print argument #2: <Unknown error: lua_tolstring returned NULL for tostring result>',
        redir_exec('lua print("foo", v_tblout, "bar")'))
   end)
   it('prints strings with NULs and NLs correctly', function()
@@ -156,7 +157,8 @@ describe('debug.debug', function()
       lua_debug> ^                                          |
     ]])
     feed('<C-c>')
-    screen:expect([[
+    screen:expect{grid=[[
+      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
@@ -167,11 +169,10 @@ describe('debug.debug', function()
       lua_debug> print("TEST")                             |
       TEST                                                 |
                                                            |
-      {E:E5105: Error while calling lua chunk: [string "<VimL }|
-      {E:compiled string>"]:5: attempt to perform arithmetic o}|
-      {E:n local 'a' (a nil value)}                            |
+      {E:E5108: Error executing lua [string ":lua"]:5: attempt}|
+      {E: to perform arithmetic on local 'a' (a nil value)}    |
       Interrupt: {cr:Press ENTER or type command to continue}^   |
-    ]])
+    ]]}
     feed('<C-l>:lua Test()\n')
     screen:expect([[
       {0:~                                                    }|
@@ -190,7 +191,8 @@ describe('debug.debug', function()
       lua_debug> ^                                          |
     ]])
     feed('\n')
-    screen:expect([[
+    screen:expect{grid=[[
+      {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
       {0:~                                                    }|
@@ -201,11 +203,10 @@ describe('debug.debug', function()
       {0:~                                                    }|
       nil                                                  |
       lua_debug>                                           |
-      {E:E5105: Error while calling lua chunk: [string "<VimL }|
-      {E:compiled string>"]:5: attempt to perform arithmetic o}|
-      {E:n local 'a' (a nil value)}                            |
+      {E:E5108: Error executing lua [string ":lua"]:5: attempt}|
+      {E: to perform arithmetic on local 'a' (a nil value)}    |
       {cr:Press ENTER or type command to continue}^              |
-    ]])
+    ]]}
   end)
 
   it("can be safely exited with 'cont'", function()
