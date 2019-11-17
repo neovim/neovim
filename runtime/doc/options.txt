@@ -1875,7 +1875,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'dip'* *'diffopt'*
-'diffopt' 'dip'		string	(default "internal,filler")
+'diffopt' 'dip'		string	(default "internal,filler,closeoff")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
@@ -1931,6 +1931,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 		vertical	Start diff mode with vertical splits (unless
 				explicitly specified otherwise).
+
+		closeoff	When a window is closed where 'diff' is set
+				and there is only one window remaining in the
+				same tab page with 'diff' set, execute
+				`:diffoff` in that window.  This undoes a
+				`:diffsplit` command.
 
 		hiddenoff	Do not use diff mode for a buffer when it
 				becomes hidden.

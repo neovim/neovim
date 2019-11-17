@@ -612,7 +612,7 @@ return {
       alloced=true,
       redraw={'current_window'},
       varname='p_dip',
-      defaults={if_true={vi="internal,filler"}}
+      defaults={if_true={vi="internal,filler,closeoff"}}
     },
     {
       full_name='digraph', abbreviation='dg',
