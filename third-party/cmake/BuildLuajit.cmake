@@ -42,6 +42,12 @@ function(BuildLuajit)
   endif()
 endfunction()
 
+check_c_compiler_flag(-fno-stack-check HAS_NO_STACK_CHECK)
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin" AND HAS_NO_STACK_CHECK)
+  set(NO_STACK_CHECK "CFLAGS+=-fno-stack-check")
+else()
+  set(NO_STACK_CHECK "")
+endif()
 if(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
   set(AMD64_ABI "LDFLAGS=-lpthread -lc++abi")
 else()
@@ -50,6 +56,7 @@ endif()
 set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
                                 CFLAGS+=-DLUA_USE_APICHECK
                                 CFLAGS+=-DLUA_USE_ASSERT
+                                ${NO_STACK_CHECK}
                                 ${AMD64_ABI}
                                 CCDEBUG+=-g
                                 Q=
