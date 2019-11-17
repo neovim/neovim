@@ -29,6 +29,7 @@
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
+#include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/garray.h"
@@ -2949,7 +2950,7 @@ void ex_pyxdo(exarg_T *eap)
   }
 }
 
-/// ":source {fname}"
+/// ":source [{fname}]"
 void ex_source(exarg_T *eap)
 {
   cmd_source(eap->arg, eap);
@@ -2958,7 +2959,7 @@ void ex_source(exarg_T *eap)
 static void cmd_source(char_u *fname, exarg_T *eap)
 {
   if (*fname == NUL) {
-    EMSG(_(e_argreq));
+    cmd_source_buffer(eap);
   } else if (eap != NULL && eap->forceit) {
     // ":source!": read Normal mode commands
     // Need to execute the commands directly.  This is required at least
@@ -2973,6 +2974,13 @@ static void cmd_source(char_u *fname, exarg_T *eap)
     // ":source" read ex commands
   } else if (do_source(fname, false, DOSO_NONE) == FAIL) {
     EMSG2(_(e_notopen), fname);
+  }
+}
+
+static void cmd_source_buffer(exarg_T *eap)
+{
+  for (linenr_T lnum = eap->line1; lnum <= eap->line2; lnum++) {
+    do_source_str((const char *)ml_get(lnum), ":source (no file)");
   }
 }
 
