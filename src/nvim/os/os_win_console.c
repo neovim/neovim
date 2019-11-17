@@ -2,6 +2,7 @@
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "nvim/vim.h"
+#include "nvim/os/os_win_console.h"
 
 int os_get_conin_fd(void)
 {
