@@ -26,7 +26,7 @@ void tinput_init(TermInput *input, Loop *loop)
 {
   input->loop = loop;
   input->paste = 0;
-  input->in_fd = 0;
+  input->in_fd = STDIN_FILENO;
   input->waiting_for_bg_response = 0;
   input->key_buffer = rbuffer_new(KEY_BUFFER_SIZE);
   uv_mutex_init(&input->key_buffer_mutex);
@@ -36,7 +36,7 @@ void tinput_init(TermInput *input, Loop *loop)
   //    echo q | nvim -es
   //    ls *.md | xargs nvim
 #ifdef WIN32
-  if (!os_isatty(0)) {
+  if (!os_isatty(input->in_fd)) {
       const HANDLE conin_handle = CreateFile("CONIN$",
                                              GENERIC_READ | GENERIC_WRITE,
                                              FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -46,8 +46,8 @@ void tinput_init(TermInput *input, Loop *loop)
       assert(input->in_fd != -1);
   }
 #else
-  if (!os_isatty(0) && os_isatty(2)) {
-    input->in_fd = 2;
+  if (!os_isatty(input->in_fd) && os_isatty(STDERR_FILENO)) {
+    input->in_fd = STDERR_FILENO;
   }
 #endif
   input_global_fd_init(input->in_fd);
