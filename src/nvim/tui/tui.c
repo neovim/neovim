@@ -220,7 +220,7 @@ static void terminfo_start(UI *ui)
   data->unibi_ext.reset_cursor_style = -1;
   data->unibi_ext.get_bg = -1;
   data->unibi_ext.set_underline_color = -1;
-  data->out_fd = 1;
+  data->out_fd = STDOUT_FILENO;
   data->out_isatty = os_isatty(data->out_fd);
 
   const char *term = os_getenv("TERM");

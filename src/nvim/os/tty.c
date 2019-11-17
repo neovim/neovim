@@ -6,6 +6,7 @@
 //
 
 #include "nvim/os/os.h"
+#include "nvim/os/tty.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/tty.c.generated.h"
