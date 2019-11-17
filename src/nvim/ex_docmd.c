@@ -140,6 +140,31 @@ struct dbg_stuff {
   except_T    *current_exception;
 };
 
+typedef struct {
+  // parsed results
+  exarg_T *eap;
+  char_u *parsed_upto;  // local we've parsed up to so far
+  char_u *cmd;  // start of command
+  char_u *after_modifier;
+
+  // errors
+  char_u *errormsg;
+
+  // globals that need to be updated
+  cmdmod_T cmdmod;
+  int sandbox;
+  int msg_silent;
+  int emsg_silent;
+  bool ex_pressedreturn;
+  long p_verbose;
+
+  // other side-effects
+  bool set_eventignore;
+  long verbose_save;
+  int save_msg_silent;
+  int did_esilent;
+  bool did_sandbox;
+} parse_state_T;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.c.generated.h"
@@ -1218,6 +1243,292 @@ static char_u *skip_colon_white(const char_u *p, bool skipleadingwhite)
   return (char_u *)p;
 }
 
+static void parse_state_to_global(const parse_state_T *parse_state)
+{
+  cmdmod = parse_state->cmdmod;
+  sandbox = parse_state->sandbox;
+  msg_silent = parse_state->msg_silent;
+  emsg_silent = parse_state->emsg_silent;
+  ex_pressedreturn = parse_state->ex_pressedreturn;
+  p_verbose = parse_state->p_verbose;
+
+  if (parse_state->set_eventignore) {
+    set_string_option_direct(
+        (char_u *)"ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
+  }
+}
+
+static void parse_state_from_global(parse_state_T *parse_state)
+{
+  memset(parse_state, 0, sizeof(*parse_state));
+  parse_state->cmdmod = cmdmod;
+  parse_state->sandbox = sandbox;
+  parse_state->msg_silent = msg_silent;
+  parse_state->emsg_silent = emsg_silent;
+  parse_state->ex_pressedreturn = ex_pressedreturn;
+  parse_state->p_verbose = p_verbose;
+}
+
+//
+// Parse one Ex command.
+//
+// This has no side-effects, except for modifying parameters
+// passed in by pointer.
+//
+// The `out` should be zeroed, and its `ea` member initialised,
+// before calling this function.
+//
+static bool parse_one_cmd(
+    char_u **cmdlinep,
+    parse_state_T *const out,
+    LineGetter fgetline,
+    void *fgetline_cookie)
+{
+  exarg_T ea = {
+    .line1 = 1,
+    .line2 = 1,
+  };
+  *out->eap = ea;
+
+  // "#!anything" is handled like a comment.
+  if ((*cmdlinep)[0] == '#' && (*cmdlinep)[1] == '!') {
+    return false;
+  }
+
+  /*
+   * Repeat until no more command modifiers are found.
+   */
+  ea.cmd = *cmdlinep;
+  for (;; ) {
+    /*
+     * 1. Skip comment lines and leading white space and colons.
+     */
+    while (*ea.cmd == ' '
+           || *ea.cmd == '\t'
+           || *ea.cmd == ':') {
+      ea.cmd++;
+    }
+
+    // in ex mode, an empty line works like :+
+    if (*ea.cmd == NUL && exmode_active
+        && (getline_equal(fgetline, fgetline_cookie, getexmodeline)
+            || getline_equal(fgetline, fgetline_cookie, getexline))
+        && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
+      ea.cmd = (char_u *)"+";
+      out->ex_pressedreturn = true;
+    }
+
+    // ignore comment and empty lines
+    if (*ea.cmd == '"') {
+      return false;
+    }
+    if (*ea.cmd == NUL) {
+      out->ex_pressedreturn = true;
+      return false;
+    }
+
+    /*
+     * 2. Handle command modifiers.
+     */
+    char_u *p = skip_range(ea.cmd, NULL);
+    switch (*p) {
+    // When adding an entry, also modify cmd_exists().
+    case 'a':   if (!checkforcmd(&ea.cmd, "aboveleft", 3))
+        break;
+      out->cmdmod.split |= WSP_ABOVE;
+      continue;
+
+    case 'b':   if (checkforcmd(&ea.cmd, "belowright", 3)) {
+        out->cmdmod.split |= WSP_BELOW;
+        continue;
+      }
+      if (checkforcmd(&ea.cmd, "browse", 3)) {
+        out->cmdmod.browse = true;
+        continue;
+      }
+      if (!checkforcmd(&ea.cmd, "botright", 2)) {
+        break;
+      }
+      out->cmdmod.split |= WSP_BOT;
+      continue;
+
+    case 'c':   if (!checkforcmd(&ea.cmd, "confirm", 4))
+        break;
+      out->cmdmod.confirm = true;
+      continue;
+
+    case 'k':   if (checkforcmd(&ea.cmd, "keepmarks", 3)) {
+        out->cmdmod.keepmarks = true;
+        continue;
+    }
+      if (checkforcmd(&ea.cmd, "keepalt", 5)) {
+        out->cmdmod.keepalt = true;
+        continue;
+      }
+      if (checkforcmd(&ea.cmd, "keeppatterns", 5)) {
+        out->cmdmod.keeppatterns = true;
+        continue;
+      }
+      if (!checkforcmd(&ea.cmd, "keepjumps", 5)) {
+        break;
+      }
+      out->cmdmod.keepjumps = true;
+      continue;
+
+    case 'f': {  // only accept ":filter {pat} cmd"
+      char_u *reg_pat;
+
+      if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
+        break;
+      }
+      if (*p == '!') {
+        out->cmdmod.filter_force = true;
+        p = skipwhite(p + 1);
+        if (*p == NUL || ends_excmd(*p)) {
+          break;
+        }
+      }
+      p = skip_vimgrep_pat(p, &reg_pat, NULL);
+      if (p == NULL || *p == NUL) {
+        break;
+      }
+      out->cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
+      if (out->cmdmod.filter_regmatch.regprog == NULL) {
+        break;
+      }
+      ea.cmd = p;
+      continue;
+    }
+
+    // ":hide" and ":hide | cmd" are not modifiers
+    case 'h':   if (p != ea.cmd || !checkforcmd(&p, "hide", 3)
+                    || *p == NUL || ends_excmd(*p))
+        break;
+      ea.cmd = p;
+      out->cmdmod.hide = true;
+      continue;
+
+    case 'l':   if (checkforcmd(&ea.cmd, "lockmarks", 3)) {
+        out->cmdmod.lockmarks = true;
+        continue;
+    }
+
+      if (!checkforcmd(&ea.cmd, "leftabove", 5)) {
+        break;
+      }
+      out->cmdmod.split |= WSP_ABOVE;
+      continue;
+
+    case 'n':
+      if (checkforcmd(&ea.cmd, "noautocmd", 3)) {
+        if (out->cmdmod.save_ei == NULL) {
+          // Set 'eventignore' to "all". Restore the
+          // existing option value later.
+          out->cmdmod.save_ei = vim_strsave(p_ei);
+          out->set_eventignore = true;
+        }
+        continue;
+      }
+      if (!checkforcmd(&ea.cmd, "noswapfile", 3)) {
+        break;
+      }
+      out->cmdmod.noswapfile = true;
+      continue;
+
+    case 'r':   if (!checkforcmd(&ea.cmd, "rightbelow", 6))
+        break;
+      out->cmdmod.split |= WSP_BELOW;
+      continue;
+
+    case 's':   if (checkforcmd(&ea.cmd, "sandbox", 3)) {
+        if (!out->did_sandbox) {
+          out->sandbox++;
+        }
+        out->did_sandbox = true;
+        continue;
+    }
+      if (!checkforcmd(&ea.cmd, "silent", 3)) {
+        break;
+      }
+      if (out->save_msg_silent == -1) {
+        out->save_msg_silent = out->msg_silent;
+      }
+      out->msg_silent++;
+      if (*ea.cmd == '!' && !ascii_iswhite(ea.cmd[-1])) {
+        // ":silent!", but not "silent !cmd"
+        ea.cmd = skipwhite(ea.cmd + 1);
+        out->emsg_silent++;
+        out->did_esilent++;
+      }
+      continue;
+
+    case 't':   if (checkforcmd(&p, "tab", 3)) {
+      long tabnr = get_address(
+          &ea, &ea.cmd, ADDR_TABS, ea.skip, false, 1);
+
+      if (tabnr == MAXLNUM) {
+        out->cmdmod.tab = tabpage_index(curtab) + 1;
+      } else {
+        if (tabnr < 0 || tabnr > LAST_TAB_NR) {
+          out->errormsg = (char_u *)_(e_invrange);
+          return false;
+        }
+        out->cmdmod.tab = tabnr + 1;
+      }
+      ea.cmd = p;
+      continue;
+    }
+      if (!checkforcmd(&ea.cmd, "topleft", 2)) {
+        break;
+      }
+      out->cmdmod.split |= WSP_TOP;
+      continue;
+
+    case 'u':   if (!checkforcmd(&ea.cmd, "unsilent", 3))
+        break;
+      if (out->save_msg_silent == -1) {
+        out->save_msg_silent = out->msg_silent;
+      }
+      out->msg_silent = 0;
+      continue;
+
+    case 'v':   if (checkforcmd(&ea.cmd, "vertical", 4)) {
+        out->cmdmod.split |= WSP_VERT;
+        continue;
+    }
+      if (!checkforcmd(&p, "verbose", 4))
+        break;
+      if (out->verbose_save < 0) {
+        out->verbose_save = out->p_verbose;
+      }
+      if (ascii_isdigit(*ea.cmd)) {
+        out->p_verbose = atoi((char *)ea.cmd);
+      } else {
+        out->p_verbose = 1;
+      }
+      ea.cmd = p;
+      continue;
+    }
+    break;
+  }
+  out->after_modifier = ea.cmd;
+
+  // 3. Skip over the range to find the command. Let "p" point to after it.
+  //
+  // We need the command to know what kind of range it uses.
+
+  out->cmd = ea.cmd;
+  ea.cmd = skip_range(ea.cmd, NULL);
+  if (*ea.cmd == '*') {
+    ea.cmd = skipwhite(ea.cmd + 1);
+  }
+  out->parsed_upto = find_command(&ea, NULL);
+
+  *out->eap = ea;
+
+  return true;
+}
+
 /*
  * Execute one Ex command.
  *
@@ -1245,21 +1556,13 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   char_u              *p;
   linenr_T lnum;
   long n;
-  char_u              *errormsg = NULL;         /* error message */
-  exarg_T ea;                                   /* Ex command arguments */
-  long verbose_save = -1;
+  char_u              *errormsg = NULL;  // error message
+  exarg_T ea;
   int save_msg_scroll = msg_scroll;
-  int save_msg_silent = -1;
-  int did_esilent = 0;
-  int did_sandbox = FALSE;
+  parse_state_T parsed;
   cmdmod_T save_cmdmod;
   const int save_reg_executing = reg_executing;
-  char_u *cmd;
-  int address_count = 1;
 
-  memset(&ea, 0, sizeof(ea));
-  ea.line1 = 1;
-  ea.line2 = 1;
   ex_nesting_level++;
 
   /* When the last file has not been edited :q has to be typed twice. */
@@ -1278,229 +1581,28 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   save_cmdmod = cmdmod;
   memset(&cmdmod, 0, sizeof(cmdmod));
 
-  /* "#!anything" is handled like a comment. */
-  if ((*cmdlinep)[0] == '#' && (*cmdlinep)[1] == '!')
+  parse_state_from_global(&parsed);
+  parsed.eap = &ea;
+  parsed.verbose_save = -1;
+  parsed.save_msg_silent = -1;
+  parsed.did_esilent = 0;
+  parsed.did_sandbox = false;
+  bool parse_success = parse_one_cmd(cmdlinep, &parsed, fgetline, cookie);
+  parse_state_to_global(&parsed);
+
+  // Update locals from parse_one_cmd()
+  errormsg = parsed.errormsg;
+  p = parsed.parsed_upto;
+
+  if (!parse_success) {
     goto doend;
-
-  /*
-   * Repeat until no more command modifiers are found.
-   */
-  ea.cmd = *cmdlinep;
-  for (;; ) {
-    /*
-     * 1. Skip comment lines and leading white space and colons.
-     */
-    while (*ea.cmd == ' ' || *ea.cmd == '\t' || *ea.cmd == ':')
-      ++ea.cmd;
-
-    /* in ex mode, an empty line works like :+ */
-    if (*ea.cmd == NUL && exmode_active
-        && (getline_equal(fgetline, cookie, getexmodeline)
-            || getline_equal(fgetline, cookie, getexline))
-        && curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count) {
-      ea.cmd = (char_u *)"+";
-      ex_pressedreturn = true;
-    }
-
-    /* ignore comment and empty lines */
-    if (*ea.cmd == '"')
-      goto doend;
-    if (*ea.cmd == NUL) {
-      ex_pressedreturn = true;
-      goto doend;
-    }
-
-    /*
-     * 2. Handle command modifiers.
-     */
-    p = skip_range(ea.cmd, NULL);
-    switch (*p) {
-    /* When adding an entry, also modify cmd_exists(). */
-    case 'a':   if (!checkforcmd(&ea.cmd, "aboveleft", 3))
-        break;
-      cmdmod.split |= WSP_ABOVE;
-      continue;
-
-    case 'b':   if (checkforcmd(&ea.cmd, "belowright", 3)) {
-        cmdmod.split |= WSP_BELOW;
-        continue;
-      }
-      if (checkforcmd(&ea.cmd, "browse", 3)) {
-        cmdmod.browse = true;
-        continue;
-      }
-      if (!checkforcmd(&ea.cmd, "botright", 2))
-        break;
-      cmdmod.split |= WSP_BOT;
-      continue;
-
-    case 'c':   if (!checkforcmd(&ea.cmd, "confirm", 4))
-        break;
-      cmdmod.confirm = true;
-      continue;
-
-    case 'k':   if (checkforcmd(&ea.cmd, "keepmarks", 3)) {
-        cmdmod.keepmarks = true;
-        continue;
-    }
-      if (checkforcmd(&ea.cmd, "keepalt", 5)) {
-        cmdmod.keepalt = true;
-        continue;
-      }
-      if (checkforcmd(&ea.cmd, "keeppatterns", 5)) {
-        cmdmod.keeppatterns = true;
-        continue;
-      }
-      if (!checkforcmd(&ea.cmd, "keepjumps", 5))
-        break;
-      cmdmod.keepjumps = true;
-      continue;
-
-    case 'f': {  // only accept ":filter {pat} cmd"
-      char_u *reg_pat;
-
-      if (!checkforcmd(&p, "filter", 4) || *p == NUL || ends_excmd(*p)) {
-        break;
-      }
-      if (*p == '!') {
-        cmdmod.filter_force = true;
-        p = skipwhite(p + 1);
-        if (*p == NUL || ends_excmd(*p)) {
-          break;
-        }
-      }
-      p = skip_vimgrep_pat(p, &reg_pat, NULL);
-      if (p == NULL || *p == NUL) {
-        break;
-      }
-      cmdmod.filter_regmatch.regprog = vim_regcomp(reg_pat, RE_MAGIC);
-      if (cmdmod.filter_regmatch.regprog == NULL) {
-        break;
-      }
-      ea.cmd = p;
-      continue;
-    }
-
-    /* ":hide" and ":hide | cmd" are not modifiers */
-    case 'h':   if (p != ea.cmd || !checkforcmd(&p, "hide", 3)
-                    || *p == NUL || ends_excmd(*p))
-        break;
-      ea.cmd = p;
-      cmdmod.hide = true;
-      continue;
-
-    case 'l':   if (checkforcmd(&ea.cmd, "lockmarks", 3)) {
-        cmdmod.lockmarks = true;
-        continue;
-    }
-
-      if (!checkforcmd(&ea.cmd, "leftabove", 5))
-        break;
-      cmdmod.split |= WSP_ABOVE;
-      continue;
-
-    case 'n':
-      if (checkforcmd(&ea.cmd, "noautocmd", 3)) {
-        if (cmdmod.save_ei == NULL) {
-          /* Set 'eventignore' to "all". Restore the
-           * existing option value later. */
-          cmdmod.save_ei = vim_strsave(p_ei);
-          set_string_option_direct(
-            (char_u *)"ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
-        }
-        continue;
-      }
-      if (!checkforcmd(&ea.cmd, "noswapfile", 3)) {
-        break;
-      }
-      cmdmod.noswapfile = true;
-      continue;
-
-    case 'r':   if (!checkforcmd(&ea.cmd, "rightbelow", 6))
-        break;
-      cmdmod.split |= WSP_BELOW;
-      continue;
-
-    case 's':   if (checkforcmd(&ea.cmd, "sandbox", 3)) {
-        if (!did_sandbox)
-          ++sandbox;
-        did_sandbox = TRUE;
-        continue;
-    }
-      if (!checkforcmd(&ea.cmd, "silent", 3))
-        break;
-      if (save_msg_silent == -1)
-        save_msg_silent = msg_silent;
-      ++msg_silent;
-      if (*ea.cmd == '!' && !ascii_iswhite(ea.cmd[-1])) {
-        /* ":silent!", but not "silent !cmd" */
-        ea.cmd = skipwhite(ea.cmd + 1);
-        ++emsg_silent;
-        ++did_esilent;
-      }
-      continue;
-
-    case 't':   if (checkforcmd(&p, "tab", 3)) {
-      long tabnr = get_address(&ea, &ea.cmd, ADDR_TABS, ea.skip, false, 1);
-      if (tabnr == MAXLNUM) {
-        cmdmod.tab = tabpage_index(curtab) + 1;
-      } else {
-        if (tabnr < 0 || tabnr > LAST_TAB_NR) {
-          errormsg = (char_u *)_(e_invrange);
-          goto doend;
-        }
-        cmdmod.tab = tabnr + 1;
-      }
-      ea.cmd = p;
-      continue;
-    }
-      if (!checkforcmd(&ea.cmd, "topleft", 2))
-        break;
-      cmdmod.split |= WSP_TOP;
-      continue;
-
-    case 'u':   if (!checkforcmd(&ea.cmd, "unsilent", 3))
-        break;
-      if (save_msg_silent == -1)
-        save_msg_silent = msg_silent;
-      msg_silent = 0;
-      continue;
-
-    case 'v':   if (checkforcmd(&ea.cmd, "vertical", 4)) {
-        cmdmod.split |= WSP_VERT;
-        continue;
-    }
-      if (!checkforcmd(&p, "verbose", 4))
-        break;
-      if (verbose_save < 0)
-        verbose_save = p_verbose;
-      if (ascii_isdigit(*ea.cmd))
-        p_verbose = atoi((char *)ea.cmd);
-      else
-        p_verbose = 1;
-      ea.cmd = p;
-      continue;
-    }
-    break;
   }
-  char_u *after_modifier = ea.cmd;
 
   ea.skip = (did_emsg
              || got_int
              || current_exception
              || (cstack->cs_idx >= 0
                  && !(cstack->cs_flags[cstack->cs_idx] & CSF_ACTIVE)));
-
-  // 3. Skip over the range to find the command. Let "p" point to after it.
-  //
-  // We need the command to know what kind of range it uses.
-
-  cmd = ea.cmd;
-  ea.cmd = skip_range(ea.cmd, NULL);
-  if (*ea.cmd == '*') {
-    ea.cmd = skipwhite(ea.cmd + 1);
-  }
-  p = find_command(&ea, NULL);
 
   // Count this line for profiling if skip is TRUE.
   if (do_profiling == PROF_YES
@@ -1571,148 +1673,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     }
   }
 
-  /* repeat for all ',' or ';' separated addresses */
-  ea.cmd = cmd;
-  for (;; ) {
-    ea.line1 = ea.line2;
-    switch (ea.addr_type) {
-      case ADDR_LINES:
-        // default is current line number
-        ea.line2 = curwin->w_cursor.lnum;
-        break;
-      case ADDR_WINDOWS:
-        ea.line2 = CURRENT_WIN_NR;
-        break;
-      case ADDR_ARGUMENTS:
-        ea.line2 = curwin->w_arg_idx + 1;
-        if (ea.line2 > ARGCOUNT) {
-          ea.line2 = ARGCOUNT;
-        }
-        break;
-      case ADDR_LOADED_BUFFERS:
-      case ADDR_BUFFERS:
-        ea.line2 = curbuf->b_fnum;
-        break;
-      case ADDR_TABS:
-        ea.line2 = CURRENT_TAB_NR;
-        break;
-      case ADDR_TABS_RELATIVE:
-        ea.line2 = 1;
-        break;
-      case ADDR_QUICKFIX:
-        ea.line2 = qf_get_cur_valid_idx(&ea);
-        break;
-    }
-    ea.cmd = skipwhite(ea.cmd);
-    lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip,
-                       ea.addr_count == 0, address_count++);
-    if (ea.cmd == NULL) {  // error detected
-      goto doend;
-    }
-    if (lnum == MAXLNUM) {
-      if (*ea.cmd == '%') {                 /* '%' - all lines */
-        ++ea.cmd;
-        switch (ea.addr_type) {
-          case ADDR_LINES:
-            ea.line1 = 1;
-            ea.line2 = curbuf->b_ml.ml_line_count;
-            break;
-          case ADDR_LOADED_BUFFERS: {
-            buf_T *buf = firstbuf;
-            while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
-              buf = buf->b_next;
-            }
-            ea.line1 = buf->b_fnum;
-            buf = lastbuf;
-            while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
-              buf = buf->b_prev;
-            }
-            ea.line2 = buf->b_fnum;
-            break;
-          }
-          case ADDR_BUFFERS:
-            ea.line1 = firstbuf->b_fnum;
-            ea.line2 = lastbuf->b_fnum;
-            break;
-          case ADDR_WINDOWS:
-          case ADDR_TABS:
-            if (IS_USER_CMDIDX(ea.cmdidx)) {
-              ea.line1 = 1;
-              ea.line2 =
-                  ea.addr_type == ADDR_WINDOWS ? LAST_WIN_NR : LAST_TAB_NR;
-            } else {
-              // there is no Vim command which uses '%' and
-              // ADDR_WINDOWS or ADDR_TABS
-              errormsg = (char_u *)_(e_invrange);
-              goto doend;
-            }
-            break;
-          case ADDR_TABS_RELATIVE:
-            errormsg = (char_u *)_(e_invrange);
-            goto doend;
-            break;
-          case ADDR_ARGUMENTS:
-            if (ARGCOUNT == 0) {
-              ea.line1 = ea.line2 = 0;
-            } else {
-              ea.line1 = 1;
-              ea.line2 = ARGCOUNT;
-            }
-            break;
-          case ADDR_QUICKFIX:
-            ea.line1 = 1;
-            ea.line2 = qf_get_size(&ea);
-            if (ea.line2 == 0) {
-              ea.line2 = 1;
-            }
-            break;
-        }
-        ++ea.addr_count;
-      }
-      /* '*' - visual area */
-      else if (*ea.cmd == '*') {
-        pos_T       *fp;
-
-        if (ea.addr_type != ADDR_LINES) {
-          errormsg = (char_u *)_(e_invrange);
-          goto doend;
-        }
-
-        ++ea.cmd;
-        if (!ea.skip) {
-          fp = getmark('<', FALSE);
-          if (check_mark(fp) == FAIL)
-            goto doend;
-          ea.line1 = fp->lnum;
-          fp = getmark('>', FALSE);
-          if (check_mark(fp) == FAIL)
-            goto doend;
-          ea.line2 = fp->lnum;
-          ++ea.addr_count;
-        }
-      }
-    } else
-      ea.line2 = lnum;
-    ea.addr_count++;
-
-    if (*ea.cmd == ';') {
-      if (!ea.skip) {
-        curwin->w_cursor.lnum = ea.line2;
-        // don't leave the cursor on an illegal line or column
-        check_cursor();
-      }
-    } else if (*ea.cmd != ',') {
-      break;
-    }
-    ea.cmd++;
-  }
-
-  /* One address given: set start and end lines */
-  if (ea.addr_count == 1) {
-    ea.line1 = ea.line2;
-    /* ... but only implicit: really no address given */
-    if (lnum == MAXLNUM)
-      ea.addr_count = 0;
+  ea.cmd = parsed.cmd;
+  if (parse_cmd_address(&ea, &errormsg) == FAIL) {
+    goto doend;
   }
 
   /*
@@ -1791,8 +1754,8 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       if (!(flags & DOCMD_VERBOSE)) {
         // If the modifier was parsed OK the error must be in the following
         // command
-        if (after_modifier != NULL) {
-          append_command(after_modifier);
+        if (parsed.after_modifier != NULL) {
+          append_command(parsed.after_modifier);
         } else {
           append_command(*cmdlinep);
         }
@@ -2260,12 +2223,12 @@ static char_u * do_one_cmd(char_u **cmdlinep,
 
   // The :try command saves the emsg_silent flag, reset it here when
   // ":silent! try" was used, it should only apply to :try itself.
-  if (ea.cmdidx == CMD_try && did_esilent > 0) {
-    emsg_silent -= did_esilent;
+  if (ea.cmdidx == CMD_try && parsed.did_esilent > 0) {
+    emsg_silent -= parsed.did_esilent;
     if (emsg_silent < 0) {
       emsg_silent = 0;
     }
-    did_esilent = 0;
+    parsed.did_esilent = 0;
   }
 
   // 7. Execute the command.
@@ -2331,8 +2294,9 @@ doend:
       ? cmdnames[(int)ea.cmdidx].cmd_name
       : (char_u *)NULL);
 
-  if (verbose_save >= 0)
-    p_verbose = verbose_save;
+  if (parsed.verbose_save >= 0) {
+    p_verbose = parsed.verbose_save;
+  }
   if (cmdmod.save_ei != NULL) {
     /* Restore 'eventignore' to the value before ":noautocmd". */
     set_string_option_direct((char_u *)"ei", -1, cmdmod.save_ei,
@@ -2347,16 +2311,18 @@ doend:
   cmdmod = save_cmdmod;
   reg_executing = save_reg_executing;
 
-  if (save_msg_silent != -1) {
-    /* messages could be enabled for a serious error, need to check if the
-     * counters don't become negative */
-    if (!did_emsg || msg_silent > save_msg_silent)
-      msg_silent = save_msg_silent;
-    emsg_silent -= did_esilent;
-    if (emsg_silent < 0)
+  if (parsed.save_msg_silent != -1) {
+    // messages could be enabled for a serious error, need to check if the
+    // counters don't become negative
+    if (!did_emsg || msg_silent > parsed.save_msg_silent) {
+      msg_silent = parsed.save_msg_silent;
+    }
+    emsg_silent -= parsed.did_esilent;
+    if (emsg_silent < 0) {
       emsg_silent = 0;
-    /* Restore msg_scroll, it's set by file I/O commands, even when no
-     * message is actually displayed. */
+    }
+    // Restore msg_scroll, it's set by file I/O commands, even when no
+    // message is actually displayed.
     msg_scroll = save_msg_scroll;
 
     /* "silent reg" or "silent echo x" inside "redir" leaves msg_col
@@ -2365,8 +2331,9 @@ doend:
       msg_col = 0;
   }
 
-  if (did_sandbox)
-    --sandbox;
+  if (parsed.did_sandbox) {
+    sandbox--;
+  }
 
   if (ea.nextcmd && *ea.nextcmd == NUL)         /* not really a next command */
     ea.nextcmd = NULL;
@@ -2374,6 +2341,160 @@ doend:
   --ex_nesting_level;
 
   return ea.nextcmd;
+}
+
+// Parse the address range, if any, in "eap".
+// Return FAIL and set "errormsg" or return OK.
+int parse_cmd_address(exarg_T *eap, char_u **errormsg)
+  FUNC_ATTR_NONNULL_ALL
+{
+  int address_count = 1;
+  linenr_T lnum;
+
+  // Repeat for all ',' or ';' separated addresses.
+  for (;;) {
+    eap->line1 = eap->line2;
+    switch (eap->addr_type) {
+      case ADDR_LINES:
+        // default is current line number
+        eap->line2 = curwin->w_cursor.lnum;
+        break;
+      case ADDR_WINDOWS:
+        eap->line2 = CURRENT_WIN_NR;
+        break;
+      case ADDR_ARGUMENTS:
+        eap->line2 = curwin->w_arg_idx + 1;
+        if (eap->line2 > ARGCOUNT) {
+          eap->line2 = ARGCOUNT;
+        }
+        break;
+      case ADDR_LOADED_BUFFERS:
+      case ADDR_BUFFERS:
+        eap->line2 = curbuf->b_fnum;
+        break;
+      case ADDR_TABS:
+        eap->line2 = CURRENT_TAB_NR;
+        break;
+      case ADDR_TABS_RELATIVE:
+        eap->line2 = 1;
+        break;
+      case ADDR_QUICKFIX:
+        eap->line2 = qf_get_cur_valid_idx(eap);
+        break;
+    }
+    eap->cmd = skipwhite(eap->cmd);
+    lnum = get_address(eap, &eap->cmd, eap->addr_type, eap->skip,
+                       eap->addr_count == 0, address_count++);
+    if (eap->cmd == NULL) {  // error detected
+      return FAIL;
+    }
+    if (lnum == MAXLNUM) {
+      if (*eap->cmd == '%') {  // '%' - all lines
+        eap->cmd++;
+        switch (eap->addr_type) {
+          case ADDR_LINES:
+            eap->line1 = 1;
+            eap->line2 = curbuf->b_ml.ml_line_count;
+            break;
+          case ADDR_LOADED_BUFFERS: {
+            buf_T *buf = firstbuf;
+
+            while (buf->b_next != NULL && buf->b_ml.ml_mfp == NULL) {
+              buf = buf->b_next;
+            }
+            eap->line1 = buf->b_fnum;
+            buf = lastbuf;
+            while (buf->b_prev != NULL && buf->b_ml.ml_mfp == NULL) {
+              buf = buf->b_prev;
+            }
+            eap->line2 = buf->b_fnum;
+            break;
+          }
+          case ADDR_BUFFERS:
+            eap->line1 = firstbuf->b_fnum;
+            eap->line2 = lastbuf->b_fnum;
+            break;
+          case ADDR_WINDOWS:
+          case ADDR_TABS:
+            if (IS_USER_CMDIDX(eap->cmdidx)) {
+              eap->line1 = 1;
+              eap->line2 = eap->addr_type == ADDR_WINDOWS
+                ? LAST_WIN_NR : LAST_TAB_NR;
+            } else {
+              // there is no Vim command which uses '%' and
+              // ADDR_WINDOWS or ADDR_TABS
+              *errormsg = (char_u *)_(e_invrange);
+              return FAIL;
+            }
+            break;
+          case ADDR_TABS_RELATIVE:
+            *errormsg = (char_u *)_(e_invrange);
+            return FAIL;
+          case ADDR_ARGUMENTS:
+            if (ARGCOUNT == 0) {
+              eap->line1 = eap->line2 = 0;
+            } else {
+              eap->line1 = 1;
+              eap->line2 = ARGCOUNT;
+            }
+            break;
+          case ADDR_QUICKFIX:
+            eap->line1 = 1;
+            eap->line2 = qf_get_size(eap);
+            if (eap->line2 == 0) {
+              eap->line2 = 1;
+            }
+            break;
+        }
+        eap->addr_count++;
+      } else if (*eap->cmd == '*') {
+        // '*' - visual area
+        if (eap->addr_type != ADDR_LINES) {
+          *errormsg = (char_u *)_(e_invrange);
+          return FAIL;
+        }
+
+        eap->cmd++;
+        if (!eap->skip) {
+          pos_T *fp = getmark('<', false);
+          if (check_mark(fp) == FAIL) {
+            return FAIL;
+          }
+          eap->line1 = fp->lnum;
+          fp = getmark('>', false);
+          if (check_mark(fp) == FAIL) {
+            return FAIL;
+          }
+          eap->line2 = fp->lnum;
+          eap->addr_count++;
+        }
+      }
+    } else {
+      eap->line2 = lnum;
+    }
+    eap->addr_count++;
+
+    if (*eap->cmd == ';') {
+      if (!eap->skip) {
+        curwin->w_cursor.lnum = eap->line2;
+        // don't leave the cursor on an illegal line or column
+        check_cursor();
+      }
+    } else if (*eap->cmd != ',') {
+      break;
+    }
+    eap->cmd++;
+  }
+
+  // One address given: set start and end lines.
+  if (eap->addr_count == 1) {
+    eap->line1 = eap->line2;
+    // ... but only implicit: really no address given
+    if (lnum == MAXLNUM) {
+      eap->addr_count = 0;
+    }
+  }
+  return OK;
 }
 
 /*
@@ -3556,15 +3677,13 @@ const char * set_one_cmd_context(
   return NULL;
 }
 
-/*
- * skip a range specifier of the form: addr [,addr] [;addr] ..
- *
- * Backslashed delimiters after / or ? will be skipped, and commands will
- * not be expanded between /'s and ?'s or after "'".
- *
- * Also skip white space and ":" characters.
- * Returns the "cmd" pointer advanced to beyond the range.
- */
+// Skip a range specifier of the form: addr [,addr] [;addr] ..
+//
+// Backslashed delimiters after / or ? will be skipped, and commands will
+// not be expanded between /'s and ?'s or after "'".
+//
+// Also skip white space and ":" characters.
+// Returns the "cmd" pointer advanced to beyond the range.
 char_u *skip_range(
     const char_u *cmd,
     int *ctx       // pointer to xp_context or NULL
