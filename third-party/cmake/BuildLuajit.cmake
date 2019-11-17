@@ -56,13 +56,13 @@ else()
   set(NO_STACK_CHECK "")
 endif()
 set(INSTALLCMD_UNIX ${MAKE_PRG} CFLAGS=-fPIC
-                                  CFLAGS+=-DLUA_USE_APICHECK
-                                  CFLAGS+=-DLUA_USE_ASSERT
-                                  ${NO_STACK_CHECK}
-                                  ${AMD64_ABI}
-                                  CCDEBUG+=-g
-                                  Q=
-                                  install)
+                                CFLAGS+=-DLUA_USE_APICHECK
+                                CFLAGS+=-DLUA_USE_ASSERT
+                                ${NO_STACK_CHECK}
+                                ${AMD64_ABI}
+                                CCDEBUG+=-g
+                                Q=
+                                install)
 
 if(UNIX)
   if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
