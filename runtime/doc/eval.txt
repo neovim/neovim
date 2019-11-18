@@ -1738,7 +1738,7 @@ v:lnum		Line number for the 'foldexpr' |fold-expr|, 'formatexpr' and
 		|sandbox|.
 
 						*v:lua* *lua-variable*
-v:lua		Prefix for calling lua functions from expressions.
+v:lua		Prefix for calling Lua functions from expressions.
 		See |v:lua-call| for more information.
 
 					*v:mouse_win* *mouse_win-variable*

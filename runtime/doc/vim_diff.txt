@@ -296,7 +296,7 @@ coerced to strings. See |id()| for more details, currently it uses
 
 |c_CTRL-R| pasting a non-special register into |cmdline| omits the last <CR>.
 
-Lua interface (|if_lua.txt|):
+Lua interface (|lua.txt|):
 
 - `:lua print("a\0b")` will print `a^@b`, like with `:echomsg "a\nb"` . In Vim
   that prints `a` and `b` on separate lines, exactly like
@@ -307,14 +307,14 @@ Lua interface (|if_lua.txt|):
 - Lua package.path and package.cpath are automatically updated according to
   'runtimepath': |lua-require|.
 
-|input()| and |inputdialog()| support for each other’s features (return on
-cancel and completion respectively) via dictionary argument (replaces all
-other arguments if used).
-
-|input()| and |inputdialog()| support user-defined cmdline highlighting.
-
 Commands:
   |:doautocmd| does not warn about "No matching autocommands".
+
+Functions:
+  |input()| and |inputdialog()| support for each other’s features (return on
+  cancel and completion respectively) via dictionary argument (replaces all
+  other arguments if used).
+  |input()| and |inputdialog()| support user-defined cmdline highlighting.
 
 Highlight groups:
   |hl-ColorColumn|, |hl-CursorColumn| are lower priority than most other
@@ -399,10 +399,10 @@ VimL (Vim script) compatibility:
 
 Some legacy Vim features are not implemented:
 
-- |if_py|: *python-bindeval* *python-Function* are not supported
-- |if_lua|: the `vim` object is missing some legacy methods
-- *if_perl*
+- |if_lua|: Nvim Lua API is not compatible with Vim's "if_lua"
 - *if_mzscheme*
+- *if_perl*
+- |if_py|: *python-bindeval* *python-Function* are not supported
 - *if_tcl*
 
 ==============================================================================
@@ -524,4 +524,4 @@ TUI:
   always uses 7-bit control sequences.
 
 ==============================================================================
- vim:tw=78:ts=8:sw=2:noet:ft=help:norl:
+ vim:tw=78:ts=8:sw=2:et:ft=help:norl:
