@@ -2855,6 +2855,7 @@ buf_write(
               != 0) {
             SET_ERRMSG(_("E506: Can't write to backup file "
                          "(add ! to override)"));
+            backup = NULL;
             continue;
           }
 
