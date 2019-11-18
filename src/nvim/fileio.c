@@ -2882,6 +2882,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
               != 0) {
             SET_ERRMSG(_("E506: Can't write to backup file "
                          "(add ! to override)"));
+            continue;
           }
 
 #ifdef UNIX
@@ -2892,6 +2893,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #ifdef HAVE_ACL
           mch_set_acl((char_u *)backup, acl);
 #endif
+          SET_ERRMSG(NULL);
           break;
         }
       }
