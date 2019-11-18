@@ -320,6 +320,19 @@ func Test_zz_Numbers()
         \ ])
 endfunc
 
+" Affix flags
+func Test_zz_affix_flags()
+  call LoadAffAndDic(g:test_data_aff10, g:test_data_dic10)
+  call RunGoodBad("drink drinkable drinkables drinktable drinkabletable",
+	\ "bad: drinks drinkstable drinkablestable",
+        \ ["drink", "drinkable", "drinkables", "table"],
+        \ [['bad', []],
+	\ ['drinks', ['drink']],
+	\ ['drinkstable', ['drinktable', 'drinkable', 'drink table']],
+        \ ['drinkablestable', ['drinkabletable', 'drinkables table', 'drinkable table']],
+	\ ])
+endfunc
+
 function FirstSpellWord()
   call feedkeys("/^start:\n", 'tx')
   normal ]smm
@@ -750,6 +763,21 @@ let g:test_data_dic9 = [
       \"1234",
       \"foo",
       \"bar",
+      \ ]
+let g:test_data_aff10 = [
+      \"COMPOUNDRULE se",
+      \"COMPOUNDPERMITFLAG p",
+      \"",
+      \"SFX A Y 1",
+      \"SFX A 0 able/Mp .",
+      \"",
+      \"SFX M Y 1",
+      \"SFX M 0 s .",
+      \ ]
+let g:test_data_dic10 = [
+      \"1234",
+      \"drink/As",
+      \"table/e",
       \ ]
 let g:test_data_aff_sal = [
       \"SET ISO8859-1",
