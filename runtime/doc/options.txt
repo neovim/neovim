@@ -843,6 +843,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  name, precede it with a backslash.
 	- To include a comma in a directory name precede it with a backslash.
 	- A directory name may end in an '/'.
+	- For Unix and Win32, if a directory ends in two path separators "//",
+	  the swap file name will be built from the complete path to the file
+	  with all path separators changed to percent '%' signs. This will
+	  ensure file name uniqueness in the backup directory.
+	  On Win32, it is also possible to end with "\\".  However, When a
+	  separating comma is following, you must use "//", since "\\" will
+	  include the comma in the file name. Therefore it is recommended to
+	  use '//', instead of '\\'.
 	- Environment variables are expanded |:set_env|.
 	- Careful with '\' characters, type one before a space, type two to
 	  get one in the option (see |option-backslash|), for example: >
@@ -1992,12 +2000,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- A directory starting with "./" (or ".\" for Windows) means to
 	  put the swap file relative to where the edited file is.  The leading
 	  "." is replaced with the path name of the edited file.
-	- For Unix and Win32, if a directory ends in two path separators "//"
-	  or "\\", the swap file name will be built from the complete path to
-	  the file with all path separators substituted to percent '%' signs.
-	  This will ensure file name uniqueness in the preserve directory.
-	  On Win32, when a separating comma is following, you must use "//",
-	  since "\\" will include the comma in the file name.
+	- For Unix and Win32, if a directory ends in two path separators "//",
+	  the swap file name will be built from the complete path to the file
+	  with all path separators substituted to percent '%' signs. This will
+	  ensure file name uniqueness in the preserve directory.
+	  On Win32, it is also possible to end with "\\".  However, When a
+	  separating comma is following, you must use "//", since "\\" will
+	  include the comma in the file name. Therefore it is recommended to
+	  use '//', instead of '\\'.
 	- Spaces after the comma are ignored, other spaces are considered part
 	  of the directory name.  To have a space at the start of a directory
 	  name, precede it with a backslash.
