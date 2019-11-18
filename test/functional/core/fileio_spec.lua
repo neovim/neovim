@@ -14,6 +14,7 @@ local sleep = helpers.sleep
 local read_file = helpers.read_file
 local trim = helpers.trim
 local currentdir = helpers.funcs.getcwd
+local iswin = helpers.iswin
 
 describe('fileio', function()
   before_each(function()
@@ -102,14 +103,10 @@ describe('fileio', function()
     feed('Abar<esc>')
     command('write')
 
-    -- The backup filename is the full path of the file with the path
-    -- separators replaced with %s
-    local sep = helpers.get_pathsep()
-    local sepPattern = helpers.iswin() and '[/\\]' or '/'
-    local backup_file_name = string.gsub(currentdir() .. sep .. 'Xtest_startup_file1', sepPattern, '%%') .. '~'
-    eq('x', {currentdir(), backup_file_name, helpers.funcs.glob('Xtest_backupdir/*')})
-
-    local foo_contents = trim(read_file('Xtest_backupdir' .. sep .. backup_file_name))
+    -- Backup filename = fullpath, separators replaced with "%".
+    local backup_file_name = string.gsub(currentdir()..'/Xtest_startup_file1',
+      iswin() and '[:/\\]' or '/', '%%') .. '~'
+    local foo_contents = trim(read_file('Xtest_backupdir/'..backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
 
     eq('foobar', foobar_contents);
