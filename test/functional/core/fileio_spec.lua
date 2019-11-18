@@ -1,10 +1,11 @@
 local lfs = require('lfs')
+local global_helpers = require('test.helpers')
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
-local neq = helpers.neq
+local neq = global_helpers.neq
 local feed = helpers.feed
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
