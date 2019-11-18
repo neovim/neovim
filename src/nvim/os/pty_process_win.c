@@ -56,6 +56,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
   }
 
   winpty_config_set_initial_size(cfg, ptyproc->width, ptyproc->height);
+  winpty_config_set_mouse_mode(cfg, WINPTY_MOUSE_MODE_FORCE);
   winpty_object = winpty_open(cfg, &err);
   if (winpty_object == NULL) {
     emsg = "winpty_open failed";
