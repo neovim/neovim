@@ -2781,10 +2781,11 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #endif
 
           // copy the file
-          if (os_copy(fname, backup, UV_FS_COPYFILE_FICLONE)
-              != 0) {
-            SET_ERRMSG(_("E506: Can't write to backup file "
-                         "(add ! to override)"));
+          if (os_copy(fname, backup, UV_FS_COPYFILE_FICLONE) != 0) {
+            SET_ERRMSG(_("E509: Cannot create backup file (add ! to override)"));
+            XFREE_CLEAR(backup);
+            backup = NULL;
+            continue;
           }
 
 #ifdef UNIX
@@ -2795,6 +2796,7 @@ int buf_write(buf_T *buf, char *fname, char *sfname, linenr_T start, linenr_T en
 #ifdef HAVE_ACL
           mch_set_acl((char_u *)backup, acl);
 #endif
+          SET_ERRMSG(NULL);
           break;
         }
       }

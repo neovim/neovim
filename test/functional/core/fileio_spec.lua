@@ -1,3 +1,4 @@
+local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
 
 local assert_log = helpers.assert_log
@@ -5,6 +6,7 @@ local assert_nolog = helpers.assert_nolog
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local neq = helpers.neq
 local ok = helpers.ok
 local feed = helpers.feed
 local funcs = helpers.funcs
@@ -130,6 +132,57 @@ describe('fileio', function()
 
     eq('foobar', foobar_contents);
     eq('foo', foo_contents);
+  end)
+
+  it('backup symlinked files #11349', function()
+    if isCI('cirrus') then
+      pending('FIXME: cirrus')
+    end
+    clear()
+
+    local initial_content = 'foo'
+    local link_file_name = 'Xtest_startup_file2'
+    local backup_file_name = link_file_name .. '~'
+
+    write_file('Xtest_startup_file1', initial_content, false)
+    lfs.link('Xtest_startup_file1', link_file_name, true)
+    command('set backup')
+    command('set backupcopy=yes')
+    command('edit ' .. link_file_name)
+    feed('Abar<esc>')
+    command('write')
+
+    local backup_raw = read_file(backup_file_name)
+    neq(nil, backup_raw, "Expected backup file " .. backup_file_name .. "to exist but did not")
+    eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
+  end)
+
+
+  it('backup symlinked files in first avialable backupdir #11349', function()
+    if isCI('cirrus') then
+      pending('FIXME: cirrus')
+    end
+    clear()
+
+    local initial_content = 'foo'
+    local backup_dir = 'Xtest_backupdir'
+    local sep = helpers.get_pathsep()
+    local link_file_name = 'Xtest_startup_file2'
+    local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
+
+    write_file('Xtest_startup_file1', initial_content, false)
+    lfs.link('Xtest_startup_file1', link_file_name, true)
+    mkdir(backup_dir)
+    command('set backup')
+    command('set backupcopy=yes')
+    command('set backupdir=.__this_does_not_exist__,' .. backup_dir)
+    command('edit ' .. link_file_name)
+    feed('Abar<esc>')
+    command('write')
+
+    local backup_raw = read_file(backup_file_name)
+    neq(nil, backup_raw, "Expected backup file " .. backup_file_name .. " to exist but did not")
+    eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
   end)
 
   it('readfile() on multibyte filename #10586', function()
