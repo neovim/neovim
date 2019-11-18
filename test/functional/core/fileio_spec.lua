@@ -129,14 +129,6 @@ describe('fileio', function()
     feed('Abar<esc>')
     command('write')
 
-    local final_contents = initial_content .. 'bar'
-
-    local file_contents = trim(read_file('Xtest_startup_file1'))
-    eq(final_contents, file_contents)
-
-    local orig_contents = trim(read_file('Xtest_startup_file2'))
-    eq(final_contents, orig_contents)
-
     local backup_raw = read_file('Xtest_startup_file2~')
     neq(nil, backup_raw, "Expected backup file to exist but did not")
     eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
@@ -156,14 +148,6 @@ describe('fileio', function()
     command('edit Xtest_startup_file2')
     feed('Abar<esc>')
     command('write')
-
-    local final_contents = initial_content .. 'bar'
-
-    local file_contents = trim(read_file('Xtest_startup_file1'))
-    eq(final_contents, file_contents)
-
-    local orig_contents = trim(read_file('Xtest_startup_file2'))
-    eq(final_contents, orig_contents)
 
     local backup_raw = read_file('Xtest_startup_swapdir/Xtest_startup_file2~')
     neq(nil, backup_raw, "Expected backup file to exist but did not")
