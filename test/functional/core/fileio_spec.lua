@@ -107,7 +107,8 @@ describe('fileio', function()
     local sep = helpers.get_pathsep()
     local sepPattern = helpers.iswin() and '[/\\]' or '/'
     local backup_file_name = string.gsub(currentdir() .. sep .. 'Xtest_startup_file1', sepPattern, '%%') .. '~'
-    eq('x', helpers.funcs.glob('Xtest_backupdir/*'))
+    eq('x', {currentdir(), backup_file_name, helpers.funcs.glob('Xtest_backupdir/*')})
+
     local foo_contents = trim(read_file('Xtest_backupdir' .. sep .. backup_file_name))
     local foobar_contents = trim(read_file('Xtest_startup_file1'))
 
