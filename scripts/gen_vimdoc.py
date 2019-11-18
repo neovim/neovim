@@ -9,25 +9,22 @@ This would be easier using lxml and XSLT, but:
   2. I wouldn't know how to deal with nested indentation in <para> tags using
      XSLT.
 
-Each function documentation is formatted with the following rules:
+Each function :help block is formatted as follows:
 
-  - Maximum width of 78 characters (`text_width`).
-  - Spaces for indentation.
-  - Function signature and helptag are on the same line.
-    - Helptag is right aligned.
+  - Max width of 78 columns (`text_width`).
+  - Indent with spaces (not tabs).
+  - Indent of 16 columns for body text.
+  - Function signature and helptag (right-aligned) on the same line.
     - Signature and helptag must have a minimum of 8 spaces between them.
-    - If the signature is too long, it is placed on the line after the
-      helptag.  The signature wraps at `text_width - 8` characters with
-      subsequent lines indented to the open parenthesis.
-  - Documentation body will be indented by 16 spaces.
+    - If the signature is too long, it is placed on the line after the helptag.
+      Signature wraps at `text_width - 8` characters with subsequent
+      lines indented to the open parenthesis.
     - Subsection bodies are indented an additional 4 spaces.
-  - Documentation body consists of the function description, parameter details,
-    return description, and C declaration.
+  - Body consists of function description, parameters, return description, and
+    C declaration (`INCLUDE_C_DECL`).
   - Parameters are omitted for the `void` and `Error *` types, or if the
     parameter is marked as [out].
   - Each function documentation is separated by a single line.
-
-The C declaration is added to the end to show actual argument types.
 """
 import os
 import re
@@ -123,14 +120,21 @@ annotation_map = {
 xrefs = set()
 
 
-def debug_this(s, n):
-    o = n if isinstance(n, str) else n.toprettyxml(indent='  ', newl='\n')
-    name = '' if isinstance(n, str) else n.nodeName
-    if s in o:
+# Raises an error with details about `o`, if `cond` is in object `o`,
+# or if `cond()` is callable and returns True.
+def debug_this(cond, o):
+    name = ''
+    if not isinstance(o, str):
+        try:
+            name = o.nodeName
+            o = o.toprettyxml(indent='  ', newl='\n')
+        except:
+            pass
+    if ((callable(cond) and cond())
+            or (not callable(cond) and cond in o)):
         raise RuntimeError('xxx: {}\n{}'.format(name, o))
 
 
-# XML Parsing Utilities {{{
 def find_first(parent, name):
     """Finds the first matching node within parent."""
     sub = parent.getElementsByTagName(name)
@@ -254,74 +258,42 @@ def doc_wrap(text, prefix='', width=70, func=False, indent=None):
     return result
 
 
-def has_nonexcluded_params(nodes):
-    """Returns true if any of the given <parameterlist> elements has at least
-    one non-excluded item."""
-    for n in nodes:
-        if render_params(n) != '':
-            return True
 
 
-def params_as_map(parent, width=62):
-    """Returns a Doxygen <parameterlist> as a map of
-    <parameter name>:<description>"""
+def update_params_map(parent, ret_map, width=62):
+    """Updates `ret_map` with name:desc key-value pairs extracted
+    from a Doxygen <parameterlist>.
+    """
     items = []
     for node in parent.childNodes:
         if node.nodeType == node.TEXT_NODE:
             continue
-
         name_node = find_first(node, 'parametername')
         if name_node.getAttribute('direction') == 'out':
             continue
-
         name = get_text(name_node)
         if name in param_exclude:
             continue
-
         items.append((name.strip(), node))
-
-    out = {}  # Map of name:desc
+    # `ret_map` is a name:desc map.
     for name, node in items:
         desc = ''
         desc_node = get_child(node, 'parameterdescription')
         if desc_node:
             desc = parse_parblock(desc_node, width=width,
                                   indent=(' ' * len(name)))
-            out[name] = desc
+            ret_map[name] = desc
+    return ret_map
 
-    return out
 
-
-def render_params(parent, width=62):
-    """Renders Doxygen <parameterlist> tag as Vim help text."""
+def fmt_params_map_as_vimhelp(m, width=62):
+    """Renders a params map as Vim :help text."""
     name_length = 0
-    items = []
-    for node in parent.childNodes:
-        if node.nodeType == node.TEXT_NODE:
-            continue
-
-        name_node = find_first(node, 'parametername')
-        if name_node.getAttribute('direction') == 'out':
-            continue
-
-        name = get_text(name_node)
-        if name in param_exclude:
-            continue
-
-        name = '{%s}' % name
-        name_length = max(name_length, len(name) + 2)
-        items.append((name.strip(), node))
-
+    for name, desc in m.items():
+        name_length = max(name_length, len(name) + 4)
     out = ''
-    for name, node in items:
-        name = '    {}'.format(name.ljust(name_length))
-
-        desc = ''
-        desc_node = get_child(node, 'parameterdescription')
-        if desc_node:
-            desc = parse_parblock(desc_node, width=width,
-                                  indent=(' ' * len(name)))
-
+    for name, desc in m.items():
+        name = '    {}'.format('{{{}}}'.format(name).ljust(name_length))
         out += '{}{}\n'.format(name, desc)
     return out.rstrip()
 
@@ -396,21 +368,26 @@ def render_node(n, text, prefix='', indent='', width=62):
 
 
 def para_as_map(parent, indent='', width=62):
-    """Parses XML <para> as a map
+    """Extracts a Doxygen XML <para> node to a map.
 
-    The map returned may or may not contain
-    all of the following keys:
-        'text': Text in the para tag
-        'params': Information from <parameterlist>'s
-        'return': TODO
-        'seealso': TODO
-        'xrefs': TODO
+    Keys:
+        'text': Text from this <para> element
+        'params': <parameterlist> map
+        'return': List of @return strings
+        'seealso': List of @see strings
+        'xrefs': ?
     """
+    chunks = {
+        'text': '',
+        'params': collections.OrderedDict(),
+        'return': [],
+        'seealso': [],
+        'xrefs': []
+    }
+
     if is_inline(parent):
-        return {
-            'text': clean_lines(doc_wrap(render_node(parent, ''),
-                                indent=indent, width=width).strip())
-        }
+        chunks['text'] = clean_lines(doc_wrap(render_node(parent, ''),
+            indent=indent, width=width).strip())
 
     # Ordered dict of ordered lists.
     groups = collections.OrderedDict([
@@ -445,26 +422,18 @@ def para_as_map(parent, indent='', width=62):
         else:
             text += render_node(child, text, indent=indent, width=width)
 
-    chunks = {
-        'text': text,
-        'params': [],
-        'return': [],
-        'seealso': [],
-        'xrefs': []
-    }
+    chunks['text'] = text
 
-    # Generate text from the gathered items.
-    if len(groups['params']) > 0 and has_nonexcluded_params(groups['params']):
+    # Generate map from the gathered items.
+    if len(groups['params']) > 0:
         for child in groups['params']:
-            chunks['params'].append(params_as_map(child, width=width))
-    if len(groups['return']) > 0:
-        for child in groups['return']:
-            chunks['return'].append(render_node(
-                child, '', indent=indent, width=width).lstrip())
-    if len(groups['seealso']) > 0:
-        for child in groups['seealso']:
-            chunks['seealso'].append(render_node(
-                child, '', indent=indent, width=width))
+            update_params_map(child, ret_map=chunks['params'], width=width)
+    for child in groups['return']:
+        chunks['return'].append(render_node(
+            child, '', indent=indent, width=width).lstrip())
+    for child in groups['seealso']:
+        chunks['seealso'].append(render_node(
+            child, '', indent=indent, width=width))
     for child in groups['xrefs']:
         title = get_text(get_child(child, 'xreftitle'))
         xrefs.add(title)
@@ -480,77 +449,31 @@ def render_para(parent, indent='', width=62):
 
     NB: Blank lines in a docstring manifest as <para> tags.
     """
-    if is_inline(parent):
-        return clean_lines(doc_wrap(render_node(parent, ''),
-                                    indent=indent, width=width).strip())
+    para = para_as_map(parent, indent, width)
 
-    # Ordered dict of ordered lists.
-    groups = collections.OrderedDict([
-        ('params', []),
-        ('return', []),
-        ('seealso', []),
-        ('xrefs', []),
-    ])
+    def has_nonexcluded_params(m):
+        """Returns true if any of the given params has at least
+        one non-excluded item."""
+        if fmt_params_map_as_vimhelp(m) != '':
+            return True
 
-    # Gather nodes into groups.  Mostly this is because we want "parameterlist"
-    # nodes to appear together.
-    text = ''
-    kind = ''
-    last = ''
-    for child in parent.childNodes:
-        if child.nodeName == 'parameterlist':
-            groups['params'].append(child)
-        elif child.nodeName == 'xrefsect':
-            groups['xrefs'].append(child)
-        elif child.nodeName == 'simplesect':
-            last = kind
-            kind = child.getAttribute('kind')
-            if kind == 'return' or (kind == 'note' and last == 'return'):
-                groups['return'].append(child)
-            elif kind == 'see':
-                groups['seealso'].append(child)
-            elif kind in ('note', 'warning'):
-                text += render_node(child, text, indent=indent, width=width)
-            else:
-                raise RuntimeError('unhandled simplesect: {}\n{}'.format(
-                    child.nodeName, child.toprettyxml(indent='  ', newl='\n')))
-        else:
-            text += render_node(child, text, indent=indent, width=width)
-
-    chunks = [text]
     # Generate text from the gathered items.
-    if len(groups['params']) > 0 and has_nonexcluded_params(groups['params']):
+    chunks = [para['text']]
+    if len(para['params']) > 0 and has_nonexcluded_params(para['params']):
         chunks.append('\nParameters: ~')
-        for child in groups['params']:
-            chunks.append(render_params(child, width=width))
-    if len(groups['return']) > 0:
+        chunks.append(fmt_params_map_as_vimhelp(para['params'], width=width))
+    if len(para['return']) > 0:
         chunks.append('\nReturn: ~')
-        for child in groups['return']:
-            chunks.append(render_node(
-                child, chunks[-1][-1], indent=indent, width=width))
-    if len(groups['seealso']) > 0:
+        for s in para['return']:
+            chunks.append(s)
+    if len(para['seealso']) > 0:
         chunks.append('\nSee also: ~')
-        for child in groups['seealso']:
-            chunks.append(render_node(
-                child, chunks[-1][-1], indent=indent, width=width))
-    for child in groups['xrefs']:
-        title = get_text(get_child(child, 'xreftitle'))
-        xrefs.add(title)
-        xrefdesc = render_para(get_child(child, 'xrefdescription'), width=width)
-        chunks.append(doc_wrap(xrefdesc, prefix='{}: '.format(title),
-                               width=width) + '\n')
+        for s in para['seealso']:
+            chunks.append(s)
+    for s in para['xrefs']:
+        chunks.append(s)
 
     return clean_lines('\n'.join(chunks).strip())
-
-
-def parse_parblock_as_array(parent, prefix='', width=62, indent=''):
-    """Parses a nested block of <para> tags as an array of maps"""
-    lines = []
-    for child in parent.childNodes:
-        rendered = para_as_map(child, width=width, indent=indent)
-        lines.append(rendered)
-
-    return lines
 
 
 def parse_parblock(parent, prefix='', width=62, indent=''):
@@ -560,145 +483,22 @@ def parse_parblock(parent, prefix='', width=62, indent=''):
         paragraphs.append(render_para(child, width=width, indent=indent))
         paragraphs.append('')
     return clean_lines('\n'.join(paragraphs).strip())
-# }}}
 
 
-def parse_source_xml_for_mpack(filename, mode):
-    """Collects API functions to be packed as msgpack.
+def extract_from_xml(filename, mode, fmt_vimhelp):
+    """Extracts Doxygen info as maps without formatting the text.
 
     Returns two maps:
-      1. API functions
-      2. Deprecated API functions
+      1. Functions
+      2. Deprecated functions
 
-    Caller decides what to do with the deprecated documentation.
+    The `fmt_vimhelp` parameter controls some special cases for use by
+    fmt_doxygen_xml_as_vimhelp(). (TODO: ugly :)
     """
     global xrefs
     xrefs = set()
     functions = {}  # Map of func_name:docstring.
     deprecated_functions = {}  # Map of func_name:docstring.
-
-    dom = minidom.parse(filename)
-    for member in dom.getElementsByTagName('memberdef'):
-        if member.getAttribute('static') == 'yes' or \
-                member.getAttribute('kind') != 'function' or \
-                member.getAttribute('prot') == 'private' or \
-                get_text(get_child(member, 'name')).startswith('_'):
-            continue
-
-        loc = find_first(member, 'location')
-        if 'private' in loc.getAttribute('file'):
-            continue
-
-        return_type = get_text(get_child(member, 'type'))
-        if return_type == '':
-            continue
-
-        if return_type.startswith(('ArrayOf', 'DictionaryOf')):
-            parts = return_type.strip('_').split('_')
-            return_type = '{}({})'.format(parts[0], ', '.join(parts[1:]))
-
-        name = get_text(get_child(member, 'name'))
-
-        annotations = get_text(get_child(member, 'argsstring'))
-        if annotations and ')' in annotations:
-            annotations = annotations.rsplit(')', 1)[-1].strip()
-        # XXX: (doxygen 1.8.11) 'argsstring' only includes attributes of
-        # non-void functions.  Special-case void functions here.
-        if name == 'nvim_get_mode' and len(annotations) == 0:
-            annotations += 'FUNC_API_FAST'
-        annotations = filter(None, map(lambda x: annotation_map.get(x),
-                                       annotations.split()))
-
-        params = []
-        type_length = 0
-
-        for param in get_children(member, 'param'):
-            param_type = get_text(get_child(param, 'type')).strip()
-            param_name = ''
-            declname = get_child(param, 'declname')
-            if declname:
-                param_name = get_text(declname).strip()
-            elif mode == 'lua':
-                # that's how it comes out of lua2dox
-                param_name = param_type
-                param_type = ''
-
-            if param_name in param_exclude:
-                continue
-
-            type_length = max(type_length, len(param_type))
-            params.append((param_type, param_name))
-
-        c_args = []
-        for param_type, param_name in params:
-            c_args.append((
-                '%s %s' % (param_type.ljust(type_length), param_name)).strip())
-
-        c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))
-
-        doc = ''
-        desc = find_first(member, 'detaileddescription')
-        if desc:
-            doc = parse_parblock_as_array(desc)
-            if DEBUG:
-                print(textwrap.indent(
-                    re.sub(r'\n\s*\n+', '\n',
-                           desc.toprettyxml(indent='  ', newl='\n')), ' ' * 16))
-
-        prefix = '%s(' % name
-        suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
-                                   if a[0] not in ('void', 'Error'))
-
-        signature = prefix + suffix
-
-        parameters_doc = []
-        func_doc = []
-        func_return = ''
-        seealso = ''
-        for m in doc:
-            if 'text' in m:
-                if not m['text'] == '':
-                    func_doc.append(m['text'])
-            if 'params' in m:
-                parameters_doc += m['params']
-            if 'return' in m:
-                func_return = m['return']
-            if 'seealso' in m:
-                seealso = m['xrefs']
-
-        function_map = {
-            'signature': signature,
-            'parameters': params,
-            'parameters_doc': parameters_doc,
-            'doc': func_doc,
-            'return': func_return,
-            'seealso': seealso
-        }
-
-        if INCLUDE_C_DECL:
-            function_map['c_decl'] = c_decl
-
-        if 'Deprecated' in xrefs:
-            deprecated_functions[name] = function_map
-        elif name.startswith(CONFIG[mode]['func_name_prefix']):
-            functions[name] = function_map
-
-        xrefs.clear()
-
-    return (functions, deprecated_functions)
-
-
-def parse_source_xml(filename, mode):
-    """Collects API functions.
-    Returns two strings:
-      1. API functions
-      2. Deprecated API functions
-    Caller decides what to do with the deprecated documentation.
-    """
-    global xrefs
-    xrefs = set()
-    functions = {}  # Map of func_name:docstring.
-    deprecated_functions = []
 
     dom = minidom.parse(filename)
     compoundname = get_text(dom.getElementsByTagName('compoundname')[0])
@@ -733,7 +533,9 @@ def parse_source_xml(filename, mode):
         annotations = filter(None, map(lambda x: annotation_map.get(x),
                                        annotations.split()))
 
-        if mode == 'lua':
+        if not fmt_vimhelp:
+            pass
+        elif mode == 'lua':
             fstem = compoundname.split('.')[0]
             fstem = CONFIG[mode]['module_override'].get(fstem, fstem)
             vimtag = '*{}.{}()*'.format(fstem, name)
@@ -757,7 +559,7 @@ def parse_source_xml(filename, mode):
             if param_name in param_exclude:
                 continue
 
-            if param_type.endswith('*'):
+            if fmt_vimhelp and param_type.endswith('*'):
                 param_type = param_type.strip('* ')
                 param_name = '*' + param_name
             type_length = max(type_length, len(param_type))
@@ -765,41 +567,95 @@ def parse_source_xml(filename, mode):
 
         c_args = []
         for param_type, param_name in params:
-            c_args.append('    ' + (
+            c_args.append(('    ' if fmt_vimhelp else '') + (
                 '%s %s' % (param_type.ljust(type_length), param_name)).strip())
-
-        c_decl = textwrap.indent('%s %s(\n%s\n);' % (return_type, name,
-                                                     ',\n'.join(c_args)),
-                                 '    ')
 
         prefix = '%s(' % name
         suffix = '%s)' % ', '.join('{%s}' % a[1] for a in params
                                    if a[0] not in ('void', 'Error'))
-
-        # Minimum 8 chars between signature and vimtag
-        lhs = (text_width - 8) - len(prefix)
-
-        if len(prefix) + len(suffix) > lhs:
-            signature = vimtag.rjust(text_width) + '\n'
-            signature += doc_wrap(suffix, width=text_width-8, prefix=prefix,
-                                  func=True)
-        else:
+        if not fmt_vimhelp:
+            c_decl = '%s %s(%s);' % (return_type, name, ', '.join(c_args))
             signature = prefix + suffix
-            signature += vimtag.rjust(text_width - len(signature))
+        else:
+            c_decl = textwrap.indent('%s %s(\n%s\n);' % (return_type, name,
+                                                         ',\n'.join(c_args)),
+                                     '    ')
 
-        doc = ''
+            # Minimum 8 chars between signature and vimtag
+            lhs = (text_width - 8) - len(prefix)
+
+            if len(prefix) + len(suffix) > lhs:
+                signature = vimtag.rjust(text_width) + '\n'
+                signature += doc_wrap(suffix, width=text_width-8, prefix=prefix,
+                                      func=True)
+            else:
+                signature = prefix + suffix
+                signature += vimtag.rjust(text_width - len(signature))
+
+        paras = []
         desc = find_first(member, 'detaileddescription')
         if desc:
-            doc = parse_parblock(desc)
+            for child in desc.childNodes:
+                paras.append(para_as_map(child))  #, width=width, indent=indent))
             if DEBUG:
                 print(textwrap.indent(
                     re.sub(r'\n\s*\n+', '\n',
                            desc.toprettyxml(indent='  ', newl='\n')), ' ' * 16))
 
+        fn = {
+            'annotations': list(annotations),
+            'signature': signature,
+            'parameters': params,
+            'parameters_doc': [],
+            'doc': [],
+            'return': '',
+            'seealso': '',
+        }
+        if fmt_vimhelp:
+            fn['desc_node'] = desc  # HACK :(
+
+        for m in paras:
+            if 'text' in m:
+                if not m['text'] == '':
+                    fn['doc'].append(m['text'])
+            if 'params' in m:
+                fn['parameters_doc'] += m['params']
+            if 'return' in m:
+                fn['return'] = m['return']
+            if 'seealso' in m:
+                fn['seealso'] = m['xrefs']
+
+        if INCLUDE_C_DECL:
+            fn['c_decl'] = c_decl
+
+        if 'Deprecated' in xrefs:
+            deprecated_functions[name] = fn
+        elif name.startswith(CONFIG[mode]['func_name_prefix']):
+            functions[name] = fn
+
+        xrefs.clear()
+
+    return (functions, deprecated_functions)
+
+
+def fmt_doxygen_xml_as_vimhelp(filename, mode):
+    """Formats functions from doxygen XML into Vim :help format.
+
+    Returns two strings:
+      1. Functions in Vim :help format
+      2. Deprecated functions (handled by caller, or ignored)
+    """
+    functions = {}  # Map of func_name:docstring.
+    deprecated_functions = {}  # Map of func_name:docstring.
+    fns, deprecated_fns = extract_from_xml(filename, mode, True)
+
+    for name, fn in fns.items():
+        if fn['desc_node']:
+            doc = parse_parblock(fn['desc_node'])
         if not doc:
             doc = 'TODO: Documentation'
 
-        annotations = '\n'.join(annotations)
+        annotations = '\n'.join(fn['annotations'])
         if annotations:
             annotations = ('\n\nAttributes: ~\n' +
                            textwrap.indent(annotations, '    '))
@@ -811,10 +667,10 @@ def parse_source_xml(filename, mode):
 
         if INCLUDE_C_DECL:
             doc += '\n\nC Declaration: ~\n>\n'
-            doc += c_decl
+            doc += fn['c_decl']
             doc += '\n<'
 
-        func_doc = signature + '\n'
+        func_doc = fn['signature'] + '\n'
         func_doc += textwrap.indent(clean_lines(doc), ' ' * 16)
         func_doc = re.sub(r'^\s+([<>])$', r'\1', func_doc, flags=re.M)
 
@@ -826,7 +682,7 @@ def parse_source_xml(filename, mode):
         xrefs.clear()
 
     return ('\n\n'.join(list(functions.values())),
-            '\n\n'.join(deprecated_functions),
+            '\n\n'.join(deprecated_fns),
             functions)
 
 
@@ -870,7 +726,7 @@ def gen_docs(config):
         if p.returncode:
             sys.exit(p.returncode)
 
-        mpacks = {}
+        doc_maps = {}
         sections = {}
         intros = {}
         sep = '=' * text_width
@@ -899,10 +755,10 @@ def gen_docs(config):
 
             filename = get_text(find_first(compound, 'name'))
             if filename.endswith('.c') or filename.endswith('.lua'):
-                mpack = parse_source_xml_for_mpack(os.path.join(base, '{}.xml'.format(
-                    compound.getAttribute('refid'))), mode)
+                mpack = extract_from_xml(os.path.join(base, '{}.xml'.format(
+                    compound.getAttribute('refid'))), mode, False)
 
-                functions_text, deprecated_text, fns = parse_source_xml(
+                functions_text, deprecated_text, fns = fmt_doxygen_xml_as_vimhelp(
                     os.path.join(base, '{}.xml'.format(
                                  compound.getAttribute('refid'))), mode)
                 # Collect functions from all modules (for the current `mode`).
@@ -941,7 +797,7 @@ def gen_docs(config):
                             title = '{} Functions'.format(name)
                             helptag = '*api-{}*'.format(name.lower())
                         sections[filename] = (title, helptag, doc)
-                        mpacks[filename] = mpack
+                        doc_maps[filename] = mpack
 
         if not sections:
             return
@@ -974,7 +830,7 @@ def gen_docs(config):
             fp.write(docs.encode('utf8'))
 
         with open(mpack_file, 'wb') as fp:
-            fp.write(msgpack.packb(mpacks, use_bin_type=True))
+            fp.write(msgpack.packb(doc_maps, use_bin_type=True))
 
         shutil.rmtree(output_dir)
 
@@ -994,42 +850,40 @@ def filter_source(filename):
                          fp.read(), flags=re.M))
 
 
-# Doxygen Config {{{
-Doxyfile = '''
-OUTPUT_DIRECTORY       = {output}
-INPUT                  = {input}
-INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = {file_patterns}
-RECURSIVE              = YES
-INPUT_FILTER           = "{filter}"
-EXCLUDE                =
-EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       = */private/*
-EXCLUDE_SYMBOLS        =
-EXTENSION_MAPPING      = lua=C
-EXTRACT_PRIVATE        = NO
+Doxyfile = textwrap.dedent('''
+    OUTPUT_DIRECTORY       = {output}
+    INPUT                  = {input}
+    INPUT_ENCODING         = UTF-8
+    FILE_PATTERNS          = {file_patterns}
+    RECURSIVE              = YES
+    INPUT_FILTER           = "{filter}"
+    EXCLUDE                =
+    EXCLUDE_SYMLINKS       = NO
+    EXCLUDE_PATTERNS       = */private/*
+    EXCLUDE_SYMBOLS        =
+    EXTENSION_MAPPING      = lua=C
+    EXTRACT_PRIVATE        = NO
 
-GENERATE_HTML          = NO
-GENERATE_DOCSET        = NO
-GENERATE_HTMLHELP      = NO
-GENERATE_QHP           = NO
-GENERATE_TREEVIEW      = NO
-GENERATE_LATEX         = NO
-GENERATE_RTF           = NO
-GENERATE_MAN           = NO
-GENERATE_DOCBOOK       = NO
-GENERATE_AUTOGEN_DEF   = NO
+    GENERATE_HTML          = NO
+    GENERATE_DOCSET        = NO
+    GENERATE_HTMLHELP      = NO
+    GENERATE_QHP           = NO
+    GENERATE_TREEVIEW      = NO
+    GENERATE_LATEX         = NO
+    GENERATE_RTF           = NO
+    GENERATE_MAN           = NO
+    GENERATE_DOCBOOK       = NO
+    GENERATE_AUTOGEN_DEF   = NO
 
-GENERATE_XML           = YES
-XML_OUTPUT             = xml
-XML_PROGRAMLISTING     = NO
+    GENERATE_XML           = YES
+    XML_OUTPUT             = xml
+    XML_PROGRAMLISTING     = NO
 
-ENABLE_PREPROCESSING   = YES
-MACRO_EXPANSION        = YES
-EXPAND_ONLY_PREDEF     = NO
-MARKDOWN_SUPPORT       = YES
-'''
-# }}}
+    ENABLE_PREPROCESSING   = YES
+    MACRO_EXPANSION        = YES
+    EXPAND_ONLY_PREDEF     = NO
+    MARKDOWN_SUPPORT       = YES
+''')
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
@@ -1037,4 +891,4 @@ if __name__ == "__main__":
     else:
         gen_docs(Doxyfile)
 
-# vim: set ft=python ts=4 sw=4 tw=79 et fdm=marker :
+# vim: set ft=python ts=4 sw=4 tw=79 et :
