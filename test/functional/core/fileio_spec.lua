@@ -1,8 +1,10 @@
+local lfs = require('lfs')
 local helpers = require('test.functional.helpers')(after_each)
 
 local clear = helpers.clear
 local command = helpers.command
 local eq = helpers.eq
+local neq = helpers.neq
 local feed = helpers.feed
 local funcs = helpers.funcs
 local nvim_prog = helpers.nvim_prog
@@ -12,6 +14,7 @@ local rmdir = helpers.rmdir
 local mkdir = helpers.mkdir
 local sleep = helpers.sleep
 local read_file = helpers.read_file
+local write_file = helpers.write_file
 local trim = helpers.trim
 local currentdir = helpers.funcs.getcwd
 local iswin = helpers.iswin
@@ -111,6 +114,59 @@ describe('fileio', function()
 
     eq('foobar', foobar_contents);
     eq('foo', foo_contents);
+  end)
+
+  it('backup symlinked files #11349', function()
+    clear()
+
+    local initial_content = 'foo'
+    write_file('Xtest_startup_file1', initial_content, false)
+    lfs.link('Xtest_startup_file1', 'Xtest_startup_file2', true)
+    command('set backup')
+    command('set backupcopy=yes')
+    command('edit Xtest_startup_file2')
+    feed('Abar<esc>')
+    command('write')
+
+    local final_contents = initial_content .. 'bar'
+
+    local file_contents = trim(read_file('Xtest_startup_file1'))
+    eq(final_contents, file_contents)
+
+    local orig_contents = trim(read_file('Xtest_startup_file2'))
+    eq(final_contents, orig_contents)
+
+    local backup_raw = read_file('Xtest_startup_file2~')
+    neq(nil, backup_raw, "Expected backup file to exist but did not")
+    eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
+  end)
+
+
+  it('backup symlinked files in first avialable backupdir #11349', function()
+    clear()
+
+    local initial_content = 'foo'
+    write_file('Xtest_startup_file1', initial_content, false)
+    lfs.link('Xtest_startup_file1', 'Xtest_startup_file2', true)
+    lfs.mkdir('Xtest_startup_swapdir')
+    command('set backup')
+    command('set backupcopy=yes')
+    command('set backupdir=.__this_does_not_exist__,Xtest_startup_swapdir')
+    command('edit Xtest_startup_file2')
+    feed('Abar<esc>')
+    command('write')
+
+    local final_contents = initial_content .. 'bar'
+
+    local file_contents = trim(read_file('Xtest_startup_file1'))
+    eq(final_contents, file_contents)
+
+    local orig_contents = trim(read_file('Xtest_startup_file2'))
+    eq(final_contents, orig_contents)
+
+    local backup_raw = read_file('Xtest_startup_swapdir/Xtest_startup_file2~')
+    neq(nil, backup_raw, "Expected backup file to exist but did not")
+    eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
   end)
 
   it('readfile() on multibyte filename #10586', function()

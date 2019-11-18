@@ -15,6 +15,7 @@ local check_cores = global_helpers.check_cores
 local check_logs = global_helpers.check_logs
 local dedent = global_helpers.dedent
 local eq = global_helpers.eq
+local neq = global_helpers.neq
 local filter = global_helpers.filter
 local is_os = global_helpers.is_os
 local map = global_helpers.map
