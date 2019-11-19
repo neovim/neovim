@@ -10,13 +10,14 @@ local pcall_err = helpers.pcall_err
 
 do
   clear()
-  if missing_provider('python3') then
+  local reason = missing_provider('python3')
+  if reason then
     it(':python3 reports E319 if provider is missing', function()
       local expected = [[Vim%(py3.*%):E319: No "python3" provider found.*]]
       matches(expected, pcall_err(command, 'py3 print("foo")'))
       matches(expected, pcall_err(command, 'py3file foo'))
     end)
-    pending('Python 3 (or the pynvim module) is broken/missing', function() end)
+    pending(string.format('Python 3 (or the pynvim module) is broken/missing (%s)', reason), function() end)
     return
   end
 end
