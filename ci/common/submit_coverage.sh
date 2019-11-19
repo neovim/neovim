@@ -23,8 +23,7 @@ if ! [ -f "$codecov_sh" ]; then
 fi
 
 (
-  cd build
-  fastcov -b --lcov -o lcov.info -i ../src --gcov "$GCOV"
+  fastcov -b --lcov -o lcov.info -c build -i src/ --gcov "$GCOV"
 
   # DEBUG
   lcov --version
