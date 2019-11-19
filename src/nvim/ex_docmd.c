@@ -3637,6 +3637,9 @@ const char * set_one_cmd_context(
     }
     break;
 #endif
+  case CMD_todo:
+    xp->xp_context = EXPAND_TODO;
+    xp->xp_pattern = (char_u *)arg;  
   case CMD_profile:
     set_context_in_profile_cmd(xp, arg);
     break;
@@ -5080,6 +5083,7 @@ static const char *command_complete[] =
   [EXPAND_AUGROUP] = "augroup",
   [EXPAND_BEHAVE] = "behave",
   [EXPAND_BUFFERS] = "buffer",
+  [EXPAND_TODO] = "todo",
   [EXPAND_CHECKHEALTH] = "checkhealth",
   [EXPAND_COLORS] = "color",
   [EXPAND_COMMANDS] = "command",
@@ -8621,6 +8625,45 @@ static void ex_stag(exarg_T *eap)
   ex_tag_cmd(eap, cmdnames[eap->cmdidx].cmd_name + 1);
   postponed_split_flags = 0;
   postponed_split_tab = 0;
+}
+
+/*
+ * ":todo"
+ */
+char todo_notes[] = "TODO:\n*Kick ass\n*Go to space\n*Represent the human race";
+
+static void ex_todo(exarg_T *eap)
+{
+
+  char arg_command[] = "";
+
+  if (strlen(eap->arg) == 0){
+    
+    MSG_PUTS_TITLE(todo_notes);
+
+    //EMSG(_("No notes added... yet. Try ':todo add <note>' first!"));
+  }else{
+
+    for (int i = 0; i < strlen(eap->arg); i++){
+      if (eap->arg[i] == ' '){
+        break;
+      }else{
+        strcpy(arg_command, eap->arg[i]);
+      }
+    }
+
+    MSG_PUTS_TITLE(arg_command);
+
+  }
+
+  if (strcmp(eap->arg, "add") == 0){
+
+    strcat(todo_notes, eap->arg);
+
+    MSG_PUTS_TITLE(eap->arg);
+
+  }
+
 }
 
 /*
