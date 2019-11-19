@@ -121,15 +121,26 @@ describe('fileio', function()
     clear()
 
     local initial_content = 'foo'
+    local backup_dir = 'Xtest_backupdir'
+    local sep = helpers.get_pathsep()
+    local link_file_name = 'Xtest_startup_file2'
+    local backup_file_name = link_file_name .. '~'
+
     write_file('Xtest_startup_file1', initial_content, false)
-    lfs.link('Xtest_startup_file1', 'Xtest_startup_file2', true)
+    lfs.link('Xtest_startup_file1', link_file_name, true)
     command('set backup')
     command('set backupcopy=yes')
-    command('edit Xtest_startup_file2')
+    command('edit ' .. link_file_name)
     feed('Abar<esc>')
     command('write')
 
-    local backup_raw = read_file('Xtest_startup_file2~')
+    -- only for testing Windows
+    command('edit Xtest_startup_file1')
+    feed('Ibaz<esc>')
+    command('write')
+
+    local backup_raw = read_file(backup_file_name)
+    eq('x', {currentdir(), lfs.symlinkattributes(link_file_name), backup_file_name, helpers.funcs.glob('./*')})
     neq(nil, backup_raw, "Expected backup file to exist but did not")
     eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
   end)
@@ -139,17 +150,28 @@ describe('fileio', function()
     clear()
 
     local initial_content = 'foo'
+    local backup_dir = 'Xtest_backupdir'
+    local sep = helpers.get_pathsep()
+    local link_file_name = 'Xtest_startup_file2'
+    local backup_file_name = backup_dir .. sep .. link_file_name .. '~'
+
     write_file('Xtest_startup_file1', initial_content, false)
-    lfs.link('Xtest_startup_file1', 'Xtest_startup_file2', true)
-    lfs.mkdir('Xtest_startup_swapdir')
+    lfs.link('Xtest_startup_file1', link_file_name, true)
+    mkdir('Xtest_backupdir')
     command('set backup')
     command('set backupcopy=yes')
-    command('set backupdir=.__this_does_not_exist__,Xtest_startup_swapdir')
-    command('edit Xtest_startup_file2')
+    command('set backupdir=.__this_does_not_exist__,' .. backup_dir)
+    command('edit ' .. link_file_name)
     feed('Abar<esc>')
     command('write')
 
-    local backup_raw = read_file('Xtest_startup_swapdir/Xtest_startup_file2~')
+    -- only for testing Windows
+    command('edit Xtest_startup_file1')
+    feed('Ibaz<esc>')
+    command('write')
+
+    local backup_raw = read_file(backup_file_name)
+    eq('x', {currentdir(), lfs.symlinkattributes(link_file_name), backup_file_name, helpers.funcs.glob(backup_dir .. '/*')})
     neq(nil, backup_raw, "Expected backup file to exist but did not")
     eq(initial_content, trim(backup_raw), 'Expected backup to contain original contents')
   end)
