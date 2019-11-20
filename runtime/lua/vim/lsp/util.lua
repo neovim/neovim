@@ -261,31 +261,26 @@ function M.open_floating_preview(contents, filetype, opts)
     filetype = { filetype, 's', true };
     opts = { opts, 't', true };
   }
-
-  -- Don't modify our inputs.
-  contents = vim.deepcopy(contents)
+  opts = opts or {}
 
   -- Trim empty lines from the end.
-  for i = #contents, 1, -1 do
-    if #contents[i] == 0 then
-      table.remove(contents)
-    else
-      break
-    end
-  end
+  contents = M.trim_empty_lines(contents)
 
-  local width = 0
-  local height = #contents
-  for i, line in ipairs(contents) do
-    -- Clean up the input and add left pad.
-    line = " "..line:gsub("\r", "")
-    -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-    local line_width = vim.fn.strdisplaywidth(line)
-    width = math.max(line_width, width)
-    contents[i] = line
+  local width = opts.width
+  local height = opts.height or #contents
+  if not width then
+    width = 0
+    for i, line in ipairs(contents) do
+      -- Clean up the input and add left pad.
+      line = " "..line:gsub("\r", "")
+      -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
+      local line_width = vim.fn.strdisplaywidth(line)
+      width = math.max(line_width, width)
+      contents[i] = line
+    end
+    -- Add right padding of 1 each.
+    width = width + 1
   end
-  -- Add right padding of 1 each.
-  width = width + 1
 
   local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
@@ -555,6 +550,57 @@ function M.buf_loclist(bufnr, locations)
   end
   vim.fn.setloclist(targetwin, items, ' ', 'Language Server')
 end
+
+-- Remove empty lines from the beginning and end.
+function M.trim_empty_lines(lines)
+  local result = {}
+  local start = 1
+  for i = 1, #lines do
+    if #lines[i] > 0 then
+      start = i
+      break
+    end
+  end
+  local finish = 1
+  for i = #lines, 1, -1 do
+    if #lines[i] > 0 then
+      finish = i
+      break
+    end
+  end
+  -- TODO(ashkan) use tbl_slice.
+  for i = start, finish do
+    table.insert(result, lines[i])
+  end
+  return result
+end
+
+-- Accepts markdown lines and tries to reduce it to a filetype if it is
+-- just a single code block.
+-- Note: This modifies the input.
+--
+-- Returns: filetype or 'markdown' if it was unchanged.
+function M.try_trim_markdown_code_blocks(lines)
+  local language_id = lines[1]:match("^```(.*)")
+  if language_id then
+    local has_inner_code_fence = false
+    for i = 2, (#lines - 1) do
+      local line = lines[i]
+      if line:sub(1,3) == '```' then
+        has_inner_code_fence = true
+        break
+      end
+    end
+    -- No inner code fences + starting with code fence = hooray.
+    if not has_inner_code_fence then
+      table.remove(lines, 1)
+      table.remove(lines)
+      return language_id
+    end
+  end
+  return 'markdown'
+end
+
 
 return M
 -- vim:sw=2 ts=2 et
