@@ -633,6 +633,16 @@ void win_set_minimal_style(win_T *wp)
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
+
+  // colorcolumn: cleared
+  if (wp->w_p_cc) {
+    xfree(wp->w_p_cc);
+    wp->w_p_cc = NULL;
+  }
+  if (wp->w_p_cc_cols) {
+    xfree(wp->w_p_cc_cols);
+    wp->w_p_cc_cols = NULL;
+  }
 }
 
 void win_config_float(win_T *wp, FloatConfig fconfig)
