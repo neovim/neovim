@@ -62,14 +62,10 @@ builtin_callbacks['textDocument/rename'] = function(_, _, result)
   util.workspace_apply_workspace_edit(result)
 end
 
-local function uri_to_bufnr(uri)
-  return vim.fn.bufadd((vim.uri_to_fname(uri)))
-end
-
 builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, result)
   if not result then return end
   local uri = result.uri
-  local bufnr = uri_to_bufnr(uri)
+  local bufnr = vim.uri_to_bufnr(uri)
   if not bufnr then
     api.nvim_err_writeln(string.format("LSP.publishDiagnostics: Couldn't find buffer for %s", uri))
     return
@@ -154,7 +150,7 @@ builtin_callbacks['textDocument/peekDefinition'] = function(_, _, result)
   if result == nil or vim.tbl_isempty(result) then return end
   -- TODO(ashkan) what to do with multiple locations?
   result = result[1]
-  local bufnr = uri_to_bufnr(result.uri)
+  local bufnr = vim.uri_to_bufnr(result.uri)
   assert(bufnr)
   local start = result.range.start
   local finish = result.range["end"]

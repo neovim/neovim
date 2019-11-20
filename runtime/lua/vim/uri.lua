@@ -77,13 +77,18 @@ local function uri_to_fname(uri)
   else
     uri = uri:gsub('^file://', '')
   end
-
   return uri_decode(uri)
+end
+
+-- Return or create a buffer for a uri.
+local function uri_to_bufnr(uri)
+  return vim.fn.bufadd((uri_to_fname(uri)))
 end
 
 return {
   uri_from_fname = uri_from_fname,
   uri_from_bufnr = uri_from_bufnr,
   uri_to_fname = uri_to_fname,
+  uri_to_bufnr = uri_to_bufnr,
 }
 -- vim:sw=2 ts=2 et
