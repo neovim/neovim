@@ -262,6 +262,9 @@ function M.open_floating_preview(contents, filetype, opts)
     opts = { opts, 't', true };
   }
 
+  -- Don't modify our inputs.
+  contents = vim.deepcopy(contents)
+
   -- Trim empty lines from the end.
   for i = #contents, 1, -1 do
     if #contents[i] == 0 then
