@@ -145,6 +145,33 @@ jobs:
       env:
         - CLANG_SANITIZER=TSAN
         - *common-job-env
+    - if: type != pull
+      name: snap
+      os: linux
+      env:
+        - LC_ALL: C.UTF-8
+        - LANG: C.UTF-8
+        - SNAPCRAFT_ENABLE_SILENT_REPORT: y
+        - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
+      addons:
+        snaps:
+          - name: snapcraft
+            channel: stable
+            classic: true
+          - name: http
+          - name: transfer
+          - name: lxd
+            channel: stable
+      before_install: /bin/true
+      install: ci/snap/install.sh
+      before_script: echo "Building snap..."
+      script: ci/snap/script.sh
+      after_success: ci/snap/after_success.sh
+      before_cache: /bin/true
+      deploy:
+        skip_cleanup: true
+        provider: script
+        script: ci/snap/deploy.sh
   fast_finish: true
 
 before_install: ci/before_install.sh
