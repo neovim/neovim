@@ -340,6 +340,7 @@ local function create_and_start_client(cmd, cmd_args, handlers, extra_spawn_para
     local decoded, err = json_decode(body)
     if not decoded then
       on_error(client_errors.INVALID_SERVER_JSON, err)
+      return
     end
     local _ = log.debug() and log.debug("decoded", decoded)
 
