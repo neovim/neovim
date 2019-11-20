@@ -252,6 +252,8 @@ func GetVimProg()
   endif
 endfunc
 
+let g:valgrind_cnt = 1
+
 " Get the command to run Vim, with -u NONE and --headless arguments.
 " If there is an argument use it instead of "NONE".
 func GetVimCommand(...)
@@ -267,6 +269,13 @@ func GetVimCommand(...)
   endif
   let cmd .= ' --headless -i NONE'
   let cmd = substitute(cmd, 'VIMRUNTIME=.*VIMRUNTIME;', '', '')
+
+  " If using valgrind, make sure every run uses a different log file.
+  if cmd =~ 'valgrind.*--log-file='
+    let cmd = substitute(cmd, '--log-file=\(^\s*\)', '--log-file=\1.' . g:valgrind_cnt, '')
+    let g:valgrind_cnt += 1
+  endif
+
   return cmd
 endfunc
 
@@ -290,9 +299,6 @@ endfunc
 func RunVimPiped(before, after, arguments, pipecmd)
   let $NVIM_LOG_FILE = exists($NVIM_LOG_FILE) ? $NVIM_LOG_FILE : 'Xnvim.log'
   let cmd = GetVimCommand()
-  if cmd == ''
-    return 0
-  endif
   let args = ''
   if len(a:before) > 0
     call writefile(a:before, 'Xbefore.vim')
