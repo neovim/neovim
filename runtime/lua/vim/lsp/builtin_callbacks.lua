@@ -81,6 +81,56 @@ builtin_callbacks['textDocument/publishDiagnostics'] = function(_, _, result)
   -- util.buf_loclist(bufnr, result.diagnostics)
 end
 
+local function focusable_popup()
+  local popup_win
+  return function(winnr)
+    if popup_win and nvim.win_is_valid(popup_win) then
+      if nvim.get_current_win() == popup_win then
+        nvim.ex.wincmd "p"
+      else
+        nvim.set_current_win(popup_win)
+      end
+      return
+    end
+    popup_win = winnr
+  end
+end
+
+local hover_popup = focusable_popup()
+
+local function trim_empty_lines(lines)
+  local result = {}
+  for _, line in ipairs(lines) do
+    if #line > 0 then
+      table.insert(result, line)
+    end
+  end
+  return result
+end
+
+-- Accepts markdown lines and tries to reduce it to a filetype if it is
+-- just a single code block.
+local function try_trim_code_blocks(lines)
+  local language_id = lines[1]:match("^```(.*)")
+  if language_id then
+    local has_inner_code_fence = false
+    for i = 2, (#lines - 1) do
+      local line = lines[i]
+      if line:sub(1,3) == '```' then
+        has_inner_code_fence = true
+        break
+      end
+    end
+    -- No inner code fences + starting with code fence = hooray.
+    if not has_inner_code_fence then
+      table.remove(lines, 1)
+      table.remove(lines)
+      return lines, language_id
+    end
+  end
+  return lines, 'markdown'
+end
+
 -- textDocument/hover
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_hover
 -- @params MarkedString | MarkedString[] | MarkupContent
@@ -91,10 +141,12 @@ builtin_callbacks['textDocument/hover'] = function(_, _, result)
 
   if result.contents ~= nil then
     local markdown_lines = util.convert_input_to_markdown_lines(result.contents)
+    markdown_lines = trim_empty_lines(markdown_lines)
     if vim.tbl_isempty(markdown_lines) then
       markdown_lines = { 'No information available' }
     end
-    util.open_floating_preview(markdown_lines, 'markdown')
+    local _, winnr = util.open_floating_preview(try_trim_code_blocks(markdown_lines))
+    hover_popup(winnr)
   end
 end
 
