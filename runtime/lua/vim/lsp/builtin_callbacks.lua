@@ -80,11 +80,11 @@ end
 local function focusable_popup()
   local popup_win
   return function(winnr)
-    if popup_win and nvim.win_is_valid(popup_win) then
-      if nvim.get_current_win() == popup_win then
-        nvim.ex.wincmd "p"
+    if popup_win and api.nvim_win_is_valid(popup_win) then
+      if api.nvim_get_current_win() == popup_win then
+        api.nvim_command("wincmd p")
       else
-        nvim.set_current_win(popup_win)
+        api.nvim_set_current_win(popup_win)
       end
       return
     end
