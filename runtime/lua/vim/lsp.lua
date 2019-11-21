@@ -1,4 +1,4 @@
-local builtin_callbacks = require 'vim.lsp.builtin_callbacks'
+local default_callbacks = require 'vim.lsp.default_callbacks'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
@@ -12,7 +12,8 @@ local validate = vim.validate
 
 local lsp = {
   protocol = protocol;
-  builtin_callbacks = builtin_callbacks;
+  default_callbacks = default_callbacks;
+  buf = require'vim.lsp.buf';
   util = util;
   -- Allow raw RPC access.
   rpc = lsp_rpc;
@@ -283,7 +284,7 @@ function lsp.start_client(config)
 
   local client_id = next_client_id()
 
-  local callbacks = tbl_extend("keep", config.callbacks or {}, builtin_callbacks)
+  local callbacks = tbl_extend("keep", config.callbacks or {}, default_callbacks)
   -- Copy metatable if it has one.
   if config.callbacks and config.callbacks.__metatable then
     setmetatable(callbacks, getmetatable(config.callbacks))
@@ -869,134 +870,8 @@ function lsp.omnifunc(findstart, base)
   end
 end
 
----
---- FileType based configuration utility
----
-
-local all_filetype_configs = {}
-
--- Lookup a filetype config client by its name.
-function lsp.get_filetype_client_by_name(name)
-  local config = all_filetype_configs[name]
-  if config.client_id then
-    return active_clients[config.client_id]
-  end
-end
-
-local function start_filetype_config(config)
-  config.client_id = lsp.start_client(config)
-  nvim_command(string.format(
-    "autocmd FileType %s silent lua vim.lsp.buf_attach_client(0, %d)",
-    table.concat(config.filetypes, ','),
-    config.client_id))
-  return config.client_id
-end
-
--- Easy configuration option for common LSP use-cases.
--- This will lazy initialize the client when the filetypes specified are
--- encountered and attach to those buffers.
---
--- The configuration options are the same as |vim.lsp.start_client()|, but
--- with a few additions and distinctions:
---
--- Additional parameters:
--- - filetype: {string} or {list} of filetypes to attach to.
--- - name: A unique string among all other servers configured with
--- |vim.lsp.add_filetype_config|.
---
--- Differences:
--- - root_dir: will default to |getcwd()|
---
-function lsp.add_filetype_config(config)
-  -- Additional defaults.
-  -- Keep a copy of the user's input for debugging reasons.
-  local user_config = config
-  config = tbl_extend("force", {}, user_config)
-  config.root_dir = config.root_dir or uv.cwd()
-  -- Validate config.
-  validate_client_config(config)
-  validate {
-    name = { config.name, 's' };
-  }
-  assert(config.filetype, "config must have 'filetype' key")
-
-  local filetypes
-  if type(config.filetype) == 'string' then
-    filetypes = { config.filetype }
-  elseif type(config.filetype) == 'table' then
-    filetypes = config.filetype
-    assert(not tbl_isempty(filetypes), "config.filetype must not be an empty table")
-  else
-    error("config.filetype must be a string or a list of strings")
-  end
-
-  if all_filetype_configs[config.name] then
-    -- If the client exists, then it is likely that they are doing some kind of
-    -- reload flow, so let's not throw an error here.
-    if all_filetype_configs[config.name].client_id then
-      -- TODO log here? It might be unnecessarily annoying.
-      return
-    end
-    error(string.format('A configuration with the name %q already exists. They must be unique', config.name))
-  end
-
-  all_filetype_configs[config.name] = tbl_extend("keep", config, {
-    client_id = nil;
-    filetypes = filetypes;
-    user_config = user_config;
-  })
-
-  nvim_command(string.format(
-    "autocmd FileType %s ++once silent lua vim.lsp._start_filetype_config_client(%q)",
-    table.concat(filetypes, ','),
-    config.name))
-end
-
--- Create a copy of an existing configuration, and override config with values
--- from new_config.
--- This is useful if you wish you create multiple LSPs with different root_dirs
--- or other use cases.
---
--- You can specify a new unique name, but if you do not, a unique name will be
--- created like `name-dup_count`.
---
--- existing_name: the name of the existing config to copy.
--- new_config: the new configuration options. @see |vim.lsp.start_client()|.
--- @returns string the new name.
-function lsp.copy_filetype_config(existing_name, new_config)
-  local config = all_filetype_configs[existing_name]
-      or error(string.format("Configuration with name %q doesn't exist", existing_name))
-  config = tbl_extend("force", config, new_config or {})
-  config.client_id = nil
-  config.original_config_name = existing_name
-
-  -- If the user didn't rename it, we will.
-  if config.name == existing_name then
-    -- Create a new, unique name.
-    local duplicate_count = 0
-    for _, conf in pairs(all_filetype_configs) do
-      if conf.original_config_name == existing_name then
-        duplicate_count = duplicate_count + 1
-      end
-    end
-    config.name = string.format("%s-%d", existing_name, duplicate_count + 1)
-  end
-  print("New config name:", config.name)
-  lsp.add_filetype_config(config)
-  return config.name
-end
-
--- Autocmd handler to actually start the client when an applicable filetype is
--- encountered.
-function lsp._start_filetype_config_client(name)
-  local config = all_filetype_configs[name]
-  -- If it exists and is running, don't make it again.
-  if config.client_id and active_clients[config.client_id] then
-    -- TODO log here?
-    return
-  end
-  lsp.buf_attach_client(0, start_filetype_config(config))
-  return config.client_id
+function lsp.client_is_stopped(client_id)
+  return active_clients[client_id] == nil
 end
 
 ---

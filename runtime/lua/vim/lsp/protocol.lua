@@ -10,7 +10,6 @@ end
 
 --[=[
 -- Useful for interfacing with:
--- https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/specification-3-14.md
 -- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 function transform_schema_comments()
   nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]

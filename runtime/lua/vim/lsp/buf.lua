@@ -33,7 +33,7 @@ end
 
 local function request(method, params, callback)
 	--	TODO(ashkan) enable this.
-	--	callback = vim.lsp.default_callback[method] or callback
+	--	callback = vim.lsp.default_callbacks[method] or callback
 	validate {
 		method = {method, 's'};
 		callback = {callback, 'f'};
@@ -172,9 +172,78 @@ function M.implementation()
 	request('textDocument/implementation', params, location_callback)
 end
 
+--- Convert SignatureHelp response to preview contents.
+-- https://microsoft.github.io/language-server-protocol/specifications/specification-3-14/#textDocument_signatureHelp
+local function signature_help_to_preview_contents(input)
+  if not input.signatures then
+    return
+  end
+  --The active signature. If omitted or the value lies outside the range of
+  --`signatures` the value defaults to zero or is ignored if `signatures.length
+  --=== 0`. Whenever possible implementors should make an active decision about
+  --the active signature and shouldn't rely on a default value.
+  local contents = {}
+  local active_signature = input.activeSignature or 0
+  -- If the activeSignature is not inside the valid range, then clip it.
+  if active_signature >= #input.signatures then
+    active_signature = 0
+  end
+  local signature = input.signatures[active_signature + 1]
+  if not signature then
+    return
+  end
+  vim.list_extend(contents, split_lines(signature.label))
+  if signature.documentation then
+    util.convert_input_to_markdown_lines(signature.documentation, contents)
+  end
+  if input.parameters then
+    local active_parameter = input.activeParameter or 0
+    -- If the activeParameter is not inside the valid range, then clip it.
+    if active_parameter >= #input.parameters then
+      active_parameter = 0
+    end
+    local parameter = signature.parameters and signature.parameters[active_parameter]
+    if parameter then
+      --[=[
+      --Represents a parameter of a callable-signature. A parameter can
+      --have a label and a doc-comment.
+      interface ParameterInformation {
+        --The label of this parameter information.
+        --
+        --Either a string or an inclusive start and exclusive end offsets within its containing
+        --signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
+        --string representation as `Position` and `Range` does.
+        --
+        --*Note*: a label of type string should be a substring of its containing signature label.
+        --Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.
+        label: string | [number, number];
+        --The human-readable doc-comment of this parameter. Will be shown
+        --in the UI but can be omitted.
+        documentation?: string | MarkupContent;
+      }
+      --]=]
+      -- TODO highlight parameter
+      if parameter.documentation then
+        util.convert_input_to_markdown_lines(parameter.documentation, contents)
+      end
+    end
+  end
+  return contents
+end
+
 function M.signature_help()
 	local params = protocol.make_text_document_position_params()
-	request('textDocument/signatureHelp', params, location_callback)
+	focusable_preview('textDocument/signatureHelp', params, function(result)
+		if not (result and result.signatures and result.signatures[1]) then return end
+
+		-- TODO show empty popup when signatures is empty?
+		local lines = signature_help_to_preview_contents(result)
+		lines = util.trim_empty_lines(lines)
+		if vim.tbl_isempty(lines) then
+			return { 'No signature available' }
+		end
+		return lines, util.try_trim_markdown_code_blocks(lines)
+	end)
 end
 
 -- TODO(ashkan) ?
@@ -193,6 +262,19 @@ function M.completion(context)
 end
 
 function M.range_formatting()
+end
+
+function M.rename(new_name)
+	-- TODO(ashkan) use prepareRename
+	-- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
+	local params = protocol.make_text_document_position_params()
+	new_name = new_name or npcall(vfn.input, "New Name: ")
+	if not (new_name and #new_name > 0) then return end
+	params.newName = new_name
+	request('textDocument/rename', params, function(_, _, result)
+		if not result then return end
+		util.workspace_apply_workspace_edit(result)
+	end)
 end
 
 return M

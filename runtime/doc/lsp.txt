@@ -346,31 +346,34 @@ vim.lsp.rpc_response_error({code}, [{message}], [{data}])
   the server.
 
 ================================================================================
-                                                     *vim.lsp.builtin_callbacks*
+                                                     *vim.lsp.default_callbacks*
 
-The |vim.lsp.builtin_callbacks| table contains the default |lsp-callbacks|
+The |vim.lsp.default_callbacks| table contains the default |lsp-callbacks|
 that are used when creating a new client. The keys are the LSP method names.
 
 The following requests and notifications have built-in callbacks defined to
 handle the response in an idiomatic way.
 
-  textDocument/completion
-  textDocument/declaration
-  textDocument/definition
-  textDocument/hover
-  textDocument/implementation
-  textDocument/rename
-  textDocument/signatureHelp
-  textDocument/typeDefinition
+  textDocument/publishDiagnostics
   window/logMessage
   window/showMessage
 
-You can check these via `vim.tbl_keys(vim.lsp.builtin_callbacks)`.
+You can check these via `vim.tbl_keys(vim.lsp.default_callbacks)`.
 
-These will be automatically used and can be overridden by users (either by
-modifying the |vim.lsp.builtin_callbacks| object or on a per-client basis
-by passing in a table via the {callbacks} parameter on |vim.lsp.start_client|
-or |vim.lsp.add_filetype_config|.
+These will be used preferrentially in `vim.lsp.buf` methods when handling
+requests. They will also be used when responding to server requests and
+notifications.
+
+Use cases:
+- Users can modify this to customize to their preferences.
+- UI plugins can modify this by assigning to
+  `vim.lsp.default_callbacks[method]` so as to provide more specialized
+  handling, allowing you to leverage the UI capabilities available. UIs should
+  try to be conscientious of any existing changes the user may have set
+  already by checking for existing values.
+
+Any callbacks passed directly to `request` methods on a server client will
+have the highest precedence, followed by the `default_callbacks`.
 
 More information about callbacks can be found in |lsp-callbacks|.
 
@@ -379,8 +382,8 @@ More information about callbacks can be found in |lsp-callbacks|.
 
 Callbacks are functions which are called in a variety of situations by the
 client. Their signature is `function(err, method, params, client_id)` They can
-be set by the {callbacks} parameter for |vim.lsp.start_client| and
-|vim.lsp.add_filetype_config| or via the |vim.lsp.builtin_callbacks|.
+be set by the {callbacks} parameter for |vim.lsp.start_client| or via the
+|vim.lsp.default_callbacks|.
 
 This will be called for:
 - notifications from the server, where `err` will always be `nil`
