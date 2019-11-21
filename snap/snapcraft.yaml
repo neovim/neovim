@@ -19,7 +19,9 @@ apps:
         command: usr/bin/nvim
         environment:
             HOME: /home/$USER
-            VIM: $SNAP/usr/share/nvim/runtime
+            VIM: $SNAP/usr/share/nvim
+            VIMRUNTIME: $SNAP/usr/share/nvim/runtime
+        desktop: usr/share/applications/nvim.desktop
 
 parts:
     nvim:
@@ -37,6 +39,12 @@ parts:
         make-parameters:
             - CMAKE_BUILD_TYPE=Release
             - CMAKE_INSTALL_PREFIX=/usr
+        override-build: |
+            snapcraftctl build
+            # Fix Desktop file
+            sed -i 's|^Exec=nvim|Exec=/snap/bin/nvim.nvim|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
+            sed -i 's|^TryExec=nvim|TryExec=/snap/bin/nvim.nvim|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
+            sed -i 's|^Icon=.*|Icon=${SNAP}/usr/share/pixmaps/nvim.png|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/nvim.desktop
         build-packages:
             - ninja-build
             - libtool
