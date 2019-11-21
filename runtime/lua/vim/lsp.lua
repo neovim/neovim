@@ -98,11 +98,7 @@ local function for_each_buffer_client(bufnr, callback)
     return
   end
   for client_id in pairs(client_ids) do
-    -- This is unlikely to happen. Could only potentially happen in a race
-    -- condition between literally a single statement.
-    -- We could skip this error, but let's error for now.
     local client = active_clients[client_id]
-        -- or error(string.format("Client %d has already shut down.", client_id))
     if client then
       callback(client, client_id)
     end
