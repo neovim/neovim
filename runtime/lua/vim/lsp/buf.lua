@@ -134,12 +134,14 @@ local function handle_location(result)
     err_message('[LSP] Could not find a valid location')
     return
   end
-  local result_file = vim.uri_to_fname(result.uri)
-  local bufnr = vfn.bufadd(result_file)
+  local bufnr = vim.uri_to_bufnr(result.uri)
   update_tagstack()
   api.nvim_set_current_buf(bufnr)
-  local start = result.range.start
-  api.nvim_win_set_cursor(0, {start.line + 1, start.character})
+  local row = result.range.start.line
+  local col = result.range.start.character
+  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  col = #line:sub(1, col)
+  api.nvim_win_set_cursor(0, {row + 1, col})
   return true
 end
 local function location_callback(_, method, result)
