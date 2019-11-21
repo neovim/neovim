@@ -4,8 +4,6 @@ local exec_lua = helpers.exec_lua
 local dedent = helpers.dedent
 local insert = helpers.insert
 local clear = helpers.clear
-local command = helpers.command
-local NIL = helpers.NIL
 
 describe('LSP util', function()
   local test_text = dedent([[
