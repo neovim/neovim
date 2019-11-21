@@ -26,89 +26,83 @@ local function remove_prefix(prefix, word)
   return word:sub(prefix_length + 1)
 end
 
-function M.apply_edit_to_lines(lines, start_pos, end_pos, new_lines)
-  -- 0-indexing to 1-indexing makes things look a bit worse.
-  local i_0 = start_pos[1] + 1
-  local i_n = end_pos[1] + 1
-  local n = i_n - i_0 + 1
-  if not lines[i_0] or not lines[i_n] then
-    error(vim.inspect{#lines, i_0, i_n, n, start_pos, end_pos, new_lines})
+-- TODO(ashkan) @performance this could do less copying.
+function M.set_lines(lines, A, B, new_lines)
+  -- 0-indexing to 1-indexing
+  local i_0 = A[1] + 1
+  local i_n = B[1] + 1
+  if not (i_0 >= 1 and i_0 <= #lines and i_n >= 1 and i_n <= #lines) then
+    error("Invalid range: "..vim.inspect{A = A; B = B; #lines, new_lines})
   end
   local prefix = ""
-  local suffix = lines[i_n]:sub(end_pos[2]+1)
-  lines[i_n] = lines[i_n]:sub(1, end_pos[2]+1)
-  if start_pos[2] > 0 then
-    prefix = lines[i_0]:sub(1, start_pos[2])
-    -- lines[i_0] = lines[i_0]:sub(start.character+1)
+  local suffix = lines[i_n]:sub(B[2]+1)
+  if A[2] > 0 then
+    prefix = lines[i_0]:sub(1, A[2])
   end
-  -- TODO(ashkan) figure out how to avoid copy here. likely by changing algo.
-  new_lines = vim.list_extend({}, new_lines)
+  new_lines = list_extend({}, new_lines)
   if #suffix > 0 then
     new_lines[#new_lines] = new_lines[#new_lines]..suffix
   end
   if #prefix > 0 then
     new_lines[1] = prefix..new_lines[1]
   end
-  if #new_lines >= n then
-    for i = 1, n do
-      lines[i + i_0 - 1] = new_lines[i]
+  local result = list_extend({}, lines, 1, i_0 - 1)
+  list_extend(result, new_lines)
+  list_extend(result, lines, i_n + 1)
+  return result
+end
+
+local function sort_by_key(fn)
+  return function(a,b)
+    local ka, kb = fn(a), fn(b)
+    assert(#ka == #kb)
+    for i = 1, #ka do
+      if ka[i] ~= kb[i] then
+        return ka[i] < kb[i]
+      end
     end
-    for i = n+1,#new_lines do
-      table.insert(lines, i_n + 1, new_lines[i])
-    end
-  else
-    for i = 1, #new_lines do
-      lines[i + i_0 - 1] = new_lines[i]
-    end
-    for _ = #new_lines+1, n do
-      table.remove(lines, i_0 + #new_lines + 1)
-    end
+    -- every value must have been equal here, which means it's not less than.
+    return false
   end
 end
+local edit_sort_key = sort_by_key(function(e)
+  return {e.A[1], e.A[2], e.i}
+end)
 
 function M.apply_text_edits(text_edits, bufnr)
   if not next(text_edits) then return end
-  -- nvim.print("Start", #text_edits)
   local start_line, finish_line = math.huge, -1
   local cleaned = {}
-  for _, e in ipairs(text_edits) do
+  for i, e in ipairs(text_edits) do
     start_line = math.min(e.range.start.line, start_line)
     finish_line = math.max(e.range["end"].line, finish_line)
+    -- TODO(ashkan) sanity check ranges for overlap.
     table.insert(cleaned, {
+      i = i;
       A = {e.range.start.line; e.range.start.character};
       B = {e.range["end"].line; e.range["end"].character};
       lines = vim.split(e.newText, '\n', true);
     })
   end
+
+  -- Reverse sort the orders so we can apply them without interfering with
+  -- eachother. Also add i as a sort key to mimic a stable sort.
+  table.sort(cleaned, edit_sort_key)
   local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
-  for i, e in ipairs(cleaned) do
-    -- nvim.print(i, "e", e.A, e.B, #e.lines[#e.lines], e.lines)
-    local y = 0
-    local x = 0
-    -- TODO(ashkan) this could be done in O(n) with dynamic programming
-    for j = 1, i-1 do
-      local o = cleaned[j]
-      -- nvim.print(i, "o", o.A, o.B, x, y, #o.lines[#o.lines], o.lines)
-      if o.A[1] <= e.A[1] and o.A[2] <= e.A[2] then
-        y = y - (o.B[1] - o.A[1] + 1) + #o.lines
-        -- Same line
-        if #o.lines > 1 then
-          x = -e.A[2] + #o.lines[#o.lines]
-        else
-          if o.A[1] == e.A[1] then
-            -- Try to account for insertions.
-            -- TODO how to account for deletions?
-            x = x - (o.B[2] - o.A[2]) + #o.lines[#o.lines]
-          end
-        end
-      end
-    end
-    local A = {e.A[1] + y - start_line, e.A[2] + x}
-    local B = {e.B[1] + y - start_line, e.B[2] + x}
-    -- if x ~= 0 or y ~= 0 then
-    --   nvim.print(i, "_", e.A, e.B, y, x, A, B, e.lines)
-    -- end
-    M.apply_edit_to_lines(lines, A, B, e.lines)
+  local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
+  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) == finish_line + 1
+  if set_eol and #lines[#lines] ~= 0 then
+    table.insert(lines, '')
+  end
+
+  for i = #cleaned, 1, -1 do
+    local e = cleaned[i]
+    local A = {e.A[1] - start_line, e.A[2]}
+    local B = {e.B[1] - start_line, e.B[2]}
+    lines = M.set_lines(lines, A, B, e.lines)
+  end
+  if set_eol and #lines[#lines] == 0 then
+    table.remove(lines)
   end
   api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
 end

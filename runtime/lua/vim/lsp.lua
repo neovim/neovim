@@ -160,13 +160,13 @@ local function validate_client_config(config)
     root_dir        = { config.root_dir, is_dir, "directory" };
     callbacks       = { config.callbacks, "t", true };
     capabilities    = { config.capabilities, "t", true };
-    -- cmd             = { config.cmd, "s", false };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
     cmd_env         = { config.cmd_env, "f", true };
     name            = { config.name, 's', true };
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
     on_init         = { config.on_init, "f", true };
+    before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
   }
   local cmd, cmd_args = validate_command(config.cmd)
@@ -266,6 +266,12 @@ end
 -- passed depending on the error kind.  @see |vim.lsp.client_errors| for
 -- possible errors. `vim.lsp.client_errors[code]` can be used to retrieve a
 -- human understandable string.
+--
+-- before_init(initialize_params, config): A function which is called *before*
+-- the request `initialize` is completed. `initialize_params` contains
+-- the parameters we are sending to the server and `config` is the config that
+-- was passed to `start_client()` for convenience. You can use this to modify
+-- parameters before they are sent.
 --
 -- on_init(client, initialize_result): A function which is called after the
 -- request `initialize` is completed. `initialize_result` contains
@@ -385,7 +391,6 @@ function lsp.start_client(config)
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
       rootUri = vim.uri_from_fname(config.root_dir);
---      rootUri = vim.uri_from_fname(vim.fn.expand("%:p:h"));
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
@@ -409,6 +414,10 @@ function lsp.start_client(config)
       -- }
       workspaceFolders = nil;
     }
+    if config.before_init then
+      -- TODO(ashkan) handle errors here.
+      pcall(config.before_init, initialize_params, config)
+    end
     local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))

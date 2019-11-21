@@ -261,11 +261,14 @@ end
 
 function M.formatting(options)
   validate { options = {options, 't', true} }
+  options = vim.tbl_extend('keep', options or {}, {
+    tabSize = api.nvim_buf_get_option(0, 'tabstop');
+    insertSpaces = api.nvim_buf_get_option(0, 'expandtab');
+  })
   local params = {
     textDocument = { uri = vim.uri_from_bufnr(0) };
-    options = options or {};
+    options = options;
   }
-  params.options[vim.type_idx] = vim.types.dictionary
   return request('textDocument/formatting', params, function(_, _, result)
     if not result then return end
     util.apply_text_edits(result)
@@ -278,6 +281,10 @@ function M.range_formatting(options, start_pos, end_pos)
     start_pos = {start_pos, 't', true};
     end_pos = {end_pos, 't', true};
   }
+  options = vim.tbl_extend('keep', options or {}, {
+    tabSize = api.nvim_buf_get_option(0, 'tabstop');
+    insertSpaces = api.nvim_buf_get_option(0, 'expandtab');
+  })
   start_pos = start_pos or vim.api.nvim_buf_get_mark(0, '<')
   end_pos = end_pos or vim.api.nvim_buf_get_mark(0, '>')
   local params = {
@@ -286,9 +293,8 @@ function M.range_formatting(options, start_pos, end_pos)
       start = { line = start_pos[1]; character = start_pos[2]; };
       ["end"] = { line = end_pos[1]; character = end_pos[2]; };
     };
-    options = options or {};
+    options = options;
   }
-  params.options[vim.type_idx] = vim.types.dictionary
   return request('textDocument/rangeFormatting', params, function(_, _, result)
     if not result then return end
     util.apply_text_edits(result)
