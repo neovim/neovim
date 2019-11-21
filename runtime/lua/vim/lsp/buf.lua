@@ -65,7 +65,7 @@ local function focusable_preview(method, params, fn)
 end
 
 function M.hover()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   focusable_preview('textDocument/hover', params, function(result)
     if not (result and result.contents) then return end
 
@@ -79,7 +79,7 @@ function M.hover()
 end
 
 function M.peek_definition()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   request('textDocument/peekDefinition', params, function(_, _, result, _)
     if not (result and result[1]) then return end
     local loc = result[1]
@@ -153,22 +153,22 @@ local function location_callback(_, method, result)
 end
 
 function M.declaration()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   request('textDocument/declaration', params, location_callback)
 end
 
 function M.definition()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   request('textDocument/definition', params, location_callback)
 end
 
 function M.type_definition()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   request('textDocument/typeDefinition', params, location_callback)
 end
 
 function M.implementation()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   request('textDocument/implementation', params, location_callback)
 end
 
@@ -232,7 +232,7 @@ local function signature_help_to_preview_contents(input)
 end
 
 function M.signature_help()
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   focusable_preview('textDocument/signatureHelp', params, function(result)
     if not (result and result.signatures and result.signatures[1]) then return end
 
@@ -248,7 +248,7 @@ end
 
 -- TODO(ashkan) ?
 function M.completion(context)
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   params.context = context
   return request('textDocument/completion', params, function(_, _, result)
     if vim.tbl_isempty(result or {}) then return end
@@ -306,7 +306,7 @@ end
 function M.rename(new_name)
   -- TODO(ashkan) use prepareRename
   -- * result: [`Range`](#range) \| `{ range: Range, placeholder: string }` \| `null` describing the range of the string to rename and optionally a placeholder text of the string content to be renamed. If `null` is returned then it is deemed that a 'textDocument/rename' request is not valid at the given position.
-  local params = protocol.make_text_document_position_params()
+  local params = util.make_position_params()
   new_name = new_name or npcall(vfn.input, "New Name: ")
   if not (new_name and #new_name > 0) then return end
   params.newName = new_name

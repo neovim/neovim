@@ -638,6 +638,17 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
+function M.make_position_params()
+  local row, col = unpack(api.nvim_win_get_cursor(0))
+  row = row - 1
+  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  col = vim.str_utfindex(line, col)
+  return {
+    textDocument = { uri = vim.uri_from_bufnr(0) };
+    position = { line = row; character = col; }
+  }
+end
+
 
 return M
 -- vim:sw=2 ts=2 et

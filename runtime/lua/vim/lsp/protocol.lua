@@ -680,19 +680,6 @@ function protocol.make_client_capabilities()
   }
 end
 
-function protocol.make_text_document_position_params()
-  local position = vim.api.nvim_win_get_cursor(0)
-  return {
-    textDocument = {
-      uri = vim.uri_from_bufnr()
-    };
-    position = {
-      line = position[1] - 1;
-      character = position[2];
-    }
-  }
-end
-
 --[=[
 export interface DocumentFilter {
   --A language id, like `typescript`.

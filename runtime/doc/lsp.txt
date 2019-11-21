@@ -327,12 +327,10 @@ vim.lsp.protocol
        vim.lsp.protocol.TextDocumentSyncKind[1] == "Full"
 
   Utility functions used internally are:
-    `vim.lsp.make_client_capabilities()`
+    `vim.lsp.protocol.make_client_capabilities()`
           Make a ClientCapabilities object. These are the builtin
           capabilities.
-    `vim.lsp.make_text_document_position_params()`
-          Make a TextDocumentPositionParams object.
-    `vim.lsp.resolve_capabilities(server_capabilites)`
+    `vim.lsp.protocol.resolve_capabilities(server_capabilites)`
           Creates a normalized object describing capabilities from the server
           capabilities.
 
