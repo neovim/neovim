@@ -635,13 +635,9 @@ void win_set_minimal_style(win_T *wp)
   }
 
   // colorcolumn: cleared
-  if (wp->w_p_cc) {
+  if (wp->w_p_cc != NULL && *wp->w_p_cc != NUL) {
     xfree(wp->w_p_cc);
-    wp->w_p_cc = NULL;
-  }
-  if (wp->w_p_cc_cols) {
-    xfree(wp->w_p_cc_cols);
-    wp->w_p_cc_cols = NULL;
+    wp->w_p_cc = (char_u *)xstrdup("");
   }
 }
 
