@@ -27,6 +27,11 @@ local lsp = {
 -- TODO consider whether 'eol' or 'fixeol' should change the nvim_buf_get_lines that send.
 -- TODO improve handling of scratch buffers with LSP attached.
 
+local function err_message(...)
+  nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  nvim_command("redraw")
+end
+
 local function resolve_bufnr(bufnr)
   validate { bufnr = { bufnr, 'n', true } }
   if bufnr == nil or bufnr == 0 then
@@ -316,13 +321,12 @@ function lsp.start_client(config)
 
   function handlers.on_error(code, err)
     local _ = log.error() and log.error(log_prefix, "on_error", { code = lsp.client_errors[code], err = err })
-    print(string.format('%s: Error %s: %q', log_prefix, lsp.client_errors[code], vim.inspect(err)))
---    nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, lsp.client_errors[code], vim.inspect(err)))
+    err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then
         local _ = log.error() and log.error(log_prefix, "user on_error failed", { err = usererr })
-        nvim_err_writeln(log_prefix.." user on_error failed: "..tostring(usererr))
+        err_message(log_prefix, ' user on_error failed: ', tostring(usererr))
       end
     end
   end
@@ -434,7 +438,7 @@ function lsp.start_client(config)
   local function unsupported_method(method)
     local msg = "server doesn't support "..method
     local _ = log.warn() and log.warn(msg)
-    nvim_err_writeln(msg)
+    err_message(msg)
     return lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
   end
 

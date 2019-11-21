@@ -23,6 +23,11 @@ local function npcall(fn, ...)
 	return ok_or_nil(pcall(fn, ...))
 end
 
+local function err_message(...)
+  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  api.nvim_command("redraw")
+end
+
 local function find_window_by_var(name, value)
 	for _, win in ipairs(api.nvim_list_wins()) do
 		if npcall(api.nvim_win_get_var, win, name) == value then
@@ -133,7 +138,7 @@ local function handle_location(result)
     result = result[1]
   end
   if result.uri == nil then
-    api.nvim_err_writeln('[LSP] Could not find a valid location')
+    err_message('[LSP] Could not find a valid location')
     return
   end
   local result_file = vim.uri_to_fname(result.uri)
