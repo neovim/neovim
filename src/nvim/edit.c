@@ -3056,7 +3056,9 @@ static void ins_compl_clear(void)
   XFREE_CLEAR(compl_orig_text);
   compl_enter_selects = false;
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 /// Check that Insert completion is active.
@@ -4313,7 +4315,9 @@ static void ins_compl_delete(void)
   // causes flicker, thus we can't do that.
   changed_cline_bef_curs();
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 // Insert the new text being completed.
@@ -4335,6 +4339,7 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
+  dict->dv_lock = VAR_FIXED;
   tv_dict_add_str(
       dict, S_LEN("word"),
       (const char *)EMPTY_IF_NULL(match->cp_str));

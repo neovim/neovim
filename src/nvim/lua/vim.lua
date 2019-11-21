@@ -167,8 +167,7 @@ end
 ---
 --- Example: To remove ANSI color codes when pasting:
 --- <pre>
---- vim.paste = (function()
----   local overridden = vim.paste
+--- vim.paste = (function(overridden)
 ---   return function(lines, phase)
 ---     for i,line in ipairs(lines) do
 ---       -- Scrub ANSI color codes from paste input.
@@ -176,7 +175,7 @@ end
 ---     end
 ---     overridden(lines, phase)
 ---   end
---- end)()
+--- end)(vim.paste)
 --- </pre>
 ---
 --@see |paste|

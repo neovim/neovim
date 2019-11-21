@@ -48,6 +48,9 @@ func Test_quote_selection_selection_exclusive()
   set selection=exclusive
   exe "norm! fdvhi'y"
   call assert_equal('bcde', @")
+  let @"='dummy'
+  exe "norm! $gevi'y"
+  call assert_equal('bcde', @")
   set selection&vim
   bw!
 endfunc

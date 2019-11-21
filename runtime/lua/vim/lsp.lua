@@ -24,7 +24,6 @@ local lsp = {
   -- format_rpc_error = lsp_rpc.format_rpc_error;
 }
 
--- TODO consider whether 'eol' or 'fixeol' should change the nvim_buf_get_lines that send.
 -- TODO improve handling of scratch buffers with LSP attached.
 
 local function err_message(...)
@@ -181,6 +180,14 @@ local function validate_client_config(config)
   }
 end
 
+local function buf_get_full_text(bufnr)
+  local text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, true), '\n')
+  if nvim_buf_get_option(bufnr, 'eol') then
+    text = text .. '\n'
+  end
+  return text
+end
+
 local function text_document_did_open_handler(bufnr, client)
   if not client.resolved_capabilities.text_document_open_close then
     return
@@ -194,7 +201,7 @@ local function text_document_did_open_handler(bufnr, client)
       uri = vim.uri_from_bufnr(bufnr);
       -- TODO make sure our filetypes are compatible with languageId names.
       languageId = nvim_buf_get_option(bufnr, 'filetype');
-      text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), '\n');
+      text = buf_get_full_text(bufnr);
     }
   }
   client.notify('textDocument/didOpen', params)
@@ -557,7 +564,7 @@ do
     end)
     local full_changes = once(function()
       return {
-        text = table.concat(nvim_buf_get_lines(bufnr, 0, -1, false), "\n");
+        text = buf_get_full_text(bufnr);
       };
     end)
     local uri = vim.uri_from_bufnr(bufnr)

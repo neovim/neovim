@@ -106,6 +106,14 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 
 /// Activates buffer-update events on a channel, or as Lua callbacks.
 ///
+/// Example (Lua): capture buffer updates in a global `events` variable
+/// (use "print(vim.inspect(events))" to see its contents):
+/// <pre>
+///   events = {}
+///   vim.api.nvim_buf_attach(0, false, {
+///     on_lines=function(...) table.insert(events, {...}) end})
+/// </pre>
+///
 /// @see |nvim_buf_detach()|
 /// @see |api-buffer-updates-lua|
 ///
@@ -1041,18 +1049,18 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
 /// range ends can be specified as (row, col) tuples, as well as extmark
 /// ids in the same namespace. In addition, 0 and -1 works as shorthands
 /// for (0,0) and (-1,-1) respectively, so that all marks in the buffer can be
-/// quieried as:
+/// queried as:
 ///
-///    all_marks = nvim_buf_get_extmarks(0, my_ns, 0, -1, -1)
+///    all_marks = nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
 ///
 /// If end is a lower position than start, then the range will be traversed
-/// backwards. This is mostly used with limited amount, to be able to get the
+/// backwards. This is mostly useful with limited amount, to be able to get the
 /// first marks prior to a given position.
 ///
 /// @param buffer The buffer handle
 /// @param ns_id An id returned previously from nvim_create_namespace
-/// @param lower One of:  extmark id, (row, col) or 0, -1 for buffer ends
-/// @param upper One of: extmark id, (row, col) or 0, -1 for buffer ends
+/// @param start One of:  extmark id, (row, col) or 0, -1 for buffer ends
+/// @param end One of: extmark id, (row, col) or 0, -1 for buffer ends
 /// @param opts additional options. Supports the keys:
 ///          - amount:  Maximum number of marks to return
 /// @param[out] err Details of an error that may have occurred
@@ -1153,7 +1161,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 /// @param buffer The buffer handle
 /// @param ns_id a identifier returned previously with nvim_create_namespace
 /// @param id The extmark's id or 0 to create a new mark.
-/// @param row The row to set the extmark to.
+/// @param line The row to set the extmark to.
 /// @param col The column to set the extmark to.
 /// @param opts Optional parameters. Currently not used.
 /// @param[out] err Details of an error that may have occurred

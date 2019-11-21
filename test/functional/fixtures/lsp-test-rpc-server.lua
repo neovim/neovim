@@ -170,7 +170,7 @@ function tests.basic_check_buffer_open()
       expect_notification('textDocument/didOpen', {
         textDocument = {
           languageId = "";
-          text = table.concat({"testing"; "123"}, "\n");
+          text = table.concat({"testing"; "123"}, "\n") .. '\n';
           uri = "file://";
           version = 0;
         };
@@ -197,7 +197,7 @@ function tests.basic_check_buffer_open_and_change()
       expect_notification('textDocument/didOpen', {
         textDocument = {
           languageId = "";
-          text = table.concat({"testing"; "123"}, "\n");
+          text = table.concat({"testing"; "123"}, "\n") .. '\n';
           uri = "file://";
           version = 0;
         };
@@ -208,7 +208,7 @@ function tests.basic_check_buffer_open_and_change()
           version = 3;
         };
         contentChanges = {
-          { text = table.concat({"testing"; "boop"}, "\n"); };
+          { text = table.concat({"testing"; "boop"}, "\n") .. '\n'; };
         }
       })
       expect_notification("finish")
@@ -217,7 +217,7 @@ function tests.basic_check_buffer_open_and_change()
   }
 end
 
-function tests.basic_check_buffer_open_and_change_multi()
+function tests.basic_check_buffer_open_and_change_noeol()
   skeleton {
     on_init = function(params)
       local expected_capabilities = protocol.make_client_capabilities()
@@ -244,7 +244,42 @@ function tests.basic_check_buffer_open_and_change_multi()
           version = 3;
         };
         contentChanges = {
-          { text = table.concat({"testing"; "321"}, "\n"); };
+          { text = table.concat({"testing"; "boop"}, "\n"); };
+        }
+      })
+      expect_notification("finish")
+      notify('finish')
+    end;
+  }
+end
+function tests.basic_check_buffer_open_and_change_multi()
+  skeleton {
+    on_init = function(params)
+      local expected_capabilities = protocol.make_client_capabilities()
+      assert_eq(params.capabilities, expected_capabilities)
+      return {
+        capabilities = {
+          textDocumentSync = protocol.TextDocumentSyncKind.Full;
+        }
+      }
+    end;
+    body = function()
+      notify('start')
+      expect_notification('textDocument/didOpen', {
+        textDocument = {
+          languageId = "";
+          text = table.concat({"testing"; "123"}, "\n") .. '\n';
+          uri = "file://";
+          version = 0;
+        };
+      })
+      expect_notification('textDocument/didChange', {
+        textDocument = {
+          uri = "file://";
+          version = 3;
+        };
+        contentChanges = {
+          { text = table.concat({"testing"; "321"}, "\n") .. '\n'; };
         }
       })
       expect_notification('textDocument/didChange', {
@@ -253,7 +288,7 @@ function tests.basic_check_buffer_open_and_change_multi()
           version = 4;
         };
         contentChanges = {
-          { text = table.concat({"testing"; "boop"}, "\n"); };
+          { text = table.concat({"testing"; "boop"}, "\n") .. '\n'; };
         }
       })
       expect_notification("finish")
@@ -278,7 +313,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
       expect_notification('textDocument/didOpen', {
         textDocument = {
           languageId = "";
-          text = table.concat({"testing"; "123"}, "\n");
+          text = table.concat({"testing"; "123"}, "\n") .. '\n';
           uri = "file://";
           version = 0;
         };
@@ -289,7 +324,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
           version = 3;
         };
         contentChanges = {
-          { text = table.concat({"testing"; "321"}, "\n"); };
+          { text = table.concat({"testing"; "321"}, "\n") .. '\n'; };
         }
       })
       expect_notification('textDocument/didChange', {
@@ -298,7 +333,7 @@ function tests.basic_check_buffer_open_and_change_multi_and_close()
           version = 4;
         };
         contentChanges = {
-          { text = table.concat({"testing"; "boop"}, "\n"); };
+          { text = table.concat({"testing"; "boop"}, "\n") .. '\n'; };
         }
       })
       expect_notification('textDocument/didClose', {
@@ -328,7 +363,7 @@ function tests.basic_check_buffer_open_and_change_incremental()
       expect_notification('textDocument/didOpen', {
         textDocument = {
           languageId = "";
-          text = table.concat({"testing"; "123"}, "\n");
+          text = table.concat({"testing"; "123"}, "\n") .. '\n';
           uri = "file://";
           version = 0;
         };
