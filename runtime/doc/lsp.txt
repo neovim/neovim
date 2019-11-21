@@ -178,8 +178,8 @@ vim.lsp.start_client({config})
   `callbacks`
     A {table} of whose keys are language server method names and the values
     are `function(err, method, params, client_id)` See |lsp-callbacks| for
-    more. This will be combined with |lsp-builtin-callbacks| to provide
-    defaults.
+    more. This will be combined with |lsp-default-callbacks| to resolve
+    the callbacks for a client as a fallback.
  
   `init_options`
     A {table} of values to pass in the initialization request as

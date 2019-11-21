@@ -284,19 +284,19 @@ function lsp.start_client(config)
 
   local client_id = next_client_id()
 
-  local callbacks = tbl_extend("keep", config.callbacks or {}, default_callbacks)
-  -- Copy metatable if it has one.
-  if config.callbacks and config.callbacks.__metatable then
-    setmetatable(callbacks, getmetatable(config.callbacks))
-  end
+  local callbacks = config.callbacks or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
 
   local handlers = {}
 
+  local function resolve_callback(method)
+    return callbacks[method] or default_callbacks[method]
+  end
+
   function handlers.notification(method, params)
     local _ = log.debug() and log.debug('notification', method, params)
-    local callback = callbacks[method]
+    local callback = resolve_callback(method)
     if callback then
       -- Method name is provided here for convenience.
       callback(nil, method, params, client_id)
@@ -305,7 +305,7 @@ function lsp.start_client(config)
 
   function handlers.server_request(method, params)
     local _ = log.debug() and log.debug('server_request', method, params)
-    local callback = callbacks[method]
+    local callback = resolve_callback(method)
     if callback then
       local _ = log.debug() and log.debug("server_request: found callback for", method)
       return callback(nil, method, params, client_id)
@@ -316,7 +316,8 @@ function lsp.start_client(config)
 
   function handlers.on_error(code, err)
     local _ = log.error() and log.error(log_prefix, "on_error", { code = lsp.client_errors[code], err = err })
-    nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, lsp.client_errors[code], vim.inspect(err)))
+    print(string.format('%s: Error %s: %q', log_prefix, lsp.client_errors[code], vim.inspect(err)))
+--    nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, lsp.client_errors[code], vim.inspect(err)))
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then
@@ -440,7 +441,7 @@ function lsp.start_client(config)
   --- Checks capabilities before rpc.request-ing.
   function client.request(method, params, callback)
     if not callback then
-      callback = client.callbacks[method]
+      callback = resolve_callback(method)
         or error(string.format("request callback is empty and no default was found for client %s", client.name))
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
