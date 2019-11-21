@@ -5,12 +5,17 @@ local api = vim.api
 
 local M = {}
 
+local function err_message(...)
+  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  api.nvim_command("redraw")
+end
+
 M['textDocument/publishDiagnostics'] = function(_, _, result)
   if not result then return end
   local uri = result.uri
   local bufnr = vim.uri_to_bufnr(uri)
   if not bufnr then
-    api.nvim_err_writeln(string.format("LSP.publishDiagnostics: Couldn't find buffer for %s", uri))
+    err_message("LSP.publishDiagnostics: Couldn't find buffer for ", uri)
     return
   end
   util.buf_clear_diagnostics(bufnr)
@@ -18,11 +23,6 @@ M['textDocument/publishDiagnostics'] = function(_, _, result)
   util.buf_diagnostics_underline(bufnr, result.diagnostics)
   util.buf_diagnostics_virtual_text(bufnr, result.diagnostics)
   -- util.buf_loclist(bufnr, result.diagnostics)
-end
-
-local function err_message(...)
-  api.nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
-  api.nvim_command("redraw")
 end
 
 local function log_message(_, _, result, client_id)
@@ -34,8 +34,6 @@ local function log_message(_, _, result, client_id)
     err_message("LSP[", client_name, "] client has shut down after sending the message")
   end
   if message_type == protocol.MessageType.Error then
-    -- Might want to not use err_writeln,
-    -- but displaying a message with red highlights or something
     err_message("LSP[", client_name, "] ", message)
   else
     local message_type_name = protocol.MessageType[message_type]

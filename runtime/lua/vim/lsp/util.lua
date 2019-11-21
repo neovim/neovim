@@ -546,7 +546,6 @@ end
 
 -- Remove empty lines from the beginning and end.
 function M.trim_empty_lines(lines)
-  local result = {}
   local start = 1
   for i = 1, #lines do
     if #lines[i] > 0 then
@@ -561,11 +560,7 @@ function M.trim_empty_lines(lines)
       break
     end
   end
-  -- TODO(ashkan) use tbl_slice.
-  for i = start, finish do
-    table.insert(result, lines[i])
-  end
-  return result
+  return vim.list_extend({}, lines, start, finish)
 end
 
 -- Accepts markdown lines and tries to reduce it to a filetype if it is

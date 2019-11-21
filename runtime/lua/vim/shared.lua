@@ -226,18 +226,25 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
---- Extends a list-like table with the values of another list-like table.
----
---NOTE: This *mutates* dst!
---@see |extend()|
----
---@param dst The list which will be modified and appended to.
---@param src The list from which values will be inserted.
-function vim.list_extend(dst, src)
-  assert(type(dst) == 'table', "dst must be a table")
-  assert(type(src) == 'table', "src must be a table")
-  for _, v in ipairs(src) do
-    table.insert(dst, v)
+-- Extends a list-like table with the values of another list-like table.
+--
+-- NOTE: This *mutates* dst!
+-- @see |extend()|
+--
+-- @param dst list which will be modified and appended to.
+-- @param src list from which values will be inserted.
+-- @param start Start index on src. defaults to 1
+-- @param finish Final index on src. defaults to #src
+-- @returns dst
+function vim.list_extend(dst, src, start, finish)
+  vim.validate {
+    dst = {dst, 't'};
+    src = {src, 't'};
+    start = {start, 'n', true};
+    finish = {finish, 'n', true};
+  }
+  for i = start or 1, finish or #src do
+    table.insert(dst, src[i])
   end
   return dst
 end

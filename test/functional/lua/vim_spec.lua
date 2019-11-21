@@ -353,10 +353,14 @@ describe('lua stdlib', function()
 
   it('vim.list_extend', function()
     eq({1,2,3}, exec_lua [[ return vim.list_extend({1}, {2,3}) ]])
-    eq('Error executing lua: .../shared.lua: src must be a table',
+    eq('Error executing lua: .../shared.lua: src: expected table, got nil',
       pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
     eq({1,2}, exec_lua [[ return vim.list_extend({1}, {2;a=1}) ]])
     eq(true, exec_lua [[ local a = {1} return vim.list_extend(a, {2;a=1}) == a ]])
+    eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1) ]])
+    eq({}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 2) ]])
+    eq({}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1, -1) ]])
+    eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, -1, 2) ]])
   end)
 
   it('vim.tbl_add_reverse_lookup', function()
