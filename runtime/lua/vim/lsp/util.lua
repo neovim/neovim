@@ -26,13 +26,6 @@ local function remove_prefix(prefix, word)
   return word:sub(prefix_length + 1)
 end
 
-local function resolve_bufnr(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    return api.nvim_get_current_buf()
-  end
-  return bufnr
-end
-
 function M.apply_edit_to_lines(lines, start_pos, end_pos, new_lines)
   -- 0-indexing to 1-indexing makes things look a bit worse.
   local i_0 = start_pos[1] + 1
