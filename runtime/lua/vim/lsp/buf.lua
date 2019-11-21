@@ -44,6 +44,7 @@ local function request(method, params, callback)
     callback = {callback, 'f'};
   }
   return vim.lsp.buf_request(0, method, params, function(err, _, result, client_id)
+    local _ = log.debug() and log.debug("vim.lsp.buf", method, client_id, err, result)
     if err then error(tostring(err)) end
     return callback(err, method, result, client_id)
   end)

@@ -52,16 +52,12 @@ function M.text_document_apply_text_edit(text_edit, bufnr)
     api.nvim_buf_set_lines(bufnr, start.line, finish.line, false, new_lines)
     return
   end
-  api.nvim_err_writeln('apply_text_edit currently only supports character ranges starting at 0')
-  error('apply_text_edit currently only supports character ranges starting at 0')
-  return
-  --  TODO test and finish this support for character ranges.
---  local lines = api.nvim_buf_get_lines(0, start.line, finish.line + 1, false)
---  local suffix = lines[#lines]:sub(finish.character+2)
---  local prefix = lines[1]:sub(start.character+2)
---  new_lines[#new_lines] = new_lines[#new_lines]..suffix
---  new_lines[1] = prefix..new_lines[1]
---  api.nvim_buf_set_lines(0, start.line, finish.line, false, new_lines)
+ local lines = api.nvim_buf_get_lines(bufnr, start.line, finish.line + 1, false)
+ local suffix = lines[#lines]:sub(finish.character+1)
+ local prefix = lines[1]:sub(1, start.character)
+ new_lines[#new_lines] = new_lines[#new_lines]..suffix
+ new_lines[1] = prefix..new_lines[1]
+ api.nvim_buf_set_lines(bufnr, start.line, finish.line + 1, false, new_lines)
 end
 
 -- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
@@ -158,18 +154,15 @@ function M.workspace_apply_workspace_edit(workspace_edit)
     return
   end
 
-  if workspace_edit.changes == nil or #workspace_edit.changes == 0 then
+  local all_changes = workspace_edit.changes
+  if not (all_changes and not vim.tbl_isempty(all_changes)) then
     return
   end
 
-  for uri, changes in pairs(workspace_edit.changes) do
-    local fname = vim.uri_to_fname(uri)
-    -- TODO improve this approach. Try to edit open buffers without switching.
-    -- Not sure how to handle files which aren't open. This is deprecated
-    -- anyway, so I guess it could be left as is.
-    api.nvim_command('edit '..fname)
+  for uri, changes in pairs(all_changes) do
+    local bufnr = vim.uri_to_bufnr(uri)
     for _, change in ipairs(changes) do
-      M.text_document_apply_text_edit(change)
+      M.text_document_apply_text_edit(change, bufnr)
     end
   end
 end
