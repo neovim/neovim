@@ -335,7 +335,7 @@ function M.open_floating_preview(contents, filetype, opts)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  api.nvim_command("autocmd CursorMoved <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+  api.nvim_command("autocmd CursorMoved,BufHidden <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
   return floating_bufnr, floating_winnr
 end
 
