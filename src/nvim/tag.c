@@ -1194,12 +1194,10 @@ static int find_tagfunc_tags(
   taglist = rettv.vval.v_list;
 
   TV_LIST_ITER_CONST(taglist, li, {
-    char_u    *mfp;
     char_u    *res_name;
     char_u    *res_fname;
     char_u    *res_cmd;
     char_u    *res_kind;
-    int   len;
     int   has_extra = 0;
     int   name_only = flags & TAG_NAMES;
 
@@ -1208,7 +1206,7 @@ static int find_tagfunc_tags(
       break;
     }
 
-    len = 2;
+    size_t len = 2;
     res_name = NULL;
     res_fname = NULL;
     res_cmd = NULL;
@@ -1254,15 +1252,7 @@ static int find_tagfunc_tags(
       break;
     }
 
-    if (name_only) {
-      mfp = vim_strsave(res_name);
-    } else {
-      mfp = (char_u *)xmalloc((int)sizeof(char_u) + len + 1);
-    }
-
-    if (mfp == NULL) {
-      continue;
-    }
+    char_u *const mfp = name_only ? vim_strsave(res_name) : xmalloc(len + 2);
 
     if (!name_only) {
       char_u *p = mfp;
