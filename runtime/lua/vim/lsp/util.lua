@@ -33,32 +33,99 @@ local function resolve_bufnr(bufnr)
   return bufnr
 end
 
+function M.apply_edit_to_lines(lines, start_pos, end_pos, new_lines)
+  -- 0-indexing to 1-indexing makes things look a bit worse.
+  local i_0 = start_pos[1] + 1
+  local i_n = end_pos[1] + 1
+  local n = i_n - i_0 + 1
+  if not lines[i_0] or not lines[i_n] then
+    error(vim.inspect{#lines, i_0, i_n, n, start_pos, end_pos, new_lines})
+  end
+  local prefix = ""
+  local suffix = lines[i_n]:sub(end_pos[2]+1)
+  lines[i_n] = lines[i_n]:sub(1, end_pos[2]+1)
+  if start_pos[2] > 0 then
+    prefix = lines[i_0]:sub(1, start_pos[2])
+    -- lines[i_0] = lines[i_0]:sub(start.character+1)
+  end
+  -- TODO(ashkan) figure out how to avoid copy here. likely by changing algo.
+  new_lines = vim.list_extend({}, new_lines)
+  if #suffix > 0 then
+    new_lines[#new_lines] = new_lines[#new_lines]..suffix
+  end
+  if #prefix > 0 then
+    new_lines[1] = prefix..new_lines[1]
+  end
+  if #new_lines >= n then
+    for i = 1, n do
+      lines[i + i_0 - 1] = new_lines[i]
+    end
+    for i = n+1,#new_lines do
+      table.insert(lines, i_n + 1, new_lines[i])
+    end
+  else
+    for i = 1, #new_lines do
+      lines[i + i_0 - 1] = new_lines[i]
+    end
+    for _ = #new_lines+1, n do
+      table.remove(lines, i_0 + #new_lines + 1)
+    end
+  end
+end
+
+function M.apply_text_edits(text_edits, bufnr)
+  if not next(text_edits) then return end
+  -- nvim.print("Start", #text_edits)
+  local start_line, finish_line = math.huge, -1
+  local cleaned = {}
+  for _, e in ipairs(text_edits) do
+    start_line = math.min(e.range.start.line, start_line)
+    finish_line = math.max(e.range["end"].line, finish_line)
+    table.insert(cleaned, {
+      A = {e.range.start.line; e.range.start.character};
+      B = {e.range["end"].line; e.range["end"].character};
+      lines = vim.split(e.newText, '\n', true);
+    })
+  end
+  local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
+  for i, e in ipairs(cleaned) do
+    -- nvim.print(i, "e", e.A, e.B, #e.lines[#e.lines], e.lines)
+    local y = 0
+    local x = 0
+    -- TODO(ashkan) this could be done in O(n) with dynamic programming
+    for j = 1, i-1 do
+      local o = cleaned[j]
+      -- nvim.print(i, "o", o.A, o.B, x, y, #o.lines[#o.lines], o.lines)
+      if o.A[1] <= e.A[1] and o.A[2] <= e.A[2] then
+        y = y - (o.B[1] - o.A[1] + 1) + #o.lines
+        -- Same line
+        if #o.lines > 1 then
+          x = -e.A[2] + #o.lines[#o.lines]
+        else
+          if o.A[1] == e.A[1] then
+            -- Try to account for insertions.
+            -- TODO how to account for deletions?
+            x = x - (o.B[2] - o.A[2]) + #o.lines[#o.lines]
+          end
+        end
+      end
+    end
+    local A = {e.A[1] + y - start_line, e.A[2] + x}
+    local B = {e.B[1] + y - start_line, e.B[2] + x}
+    -- if x ~= 0 or y ~= 0 then
+    --   nvim.print(i, "_", e.A, e.B, y, x, A, B, e.lines)
+    -- end
+    M.apply_edit_to_lines(lines, A, B, e.lines)
+  end
+  api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
+end
+
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
 -- local valid_unix_path_characters = "[^/]"
 -- https://github.com/davidm/lua-glob-pattern
 -- https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names
 -- function M.glob_to_regex(glob)
 -- end
-
---- Apply the TextEdit response.
--- @params TextEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-function M.text_document_apply_text_edit(text_edit, bufnr)
-  bufnr = resolve_bufnr(bufnr)
-  local range = text_edit.range
-  local start = range.start
-  local finish = range['end']
-  local new_lines = split_lines(text_edit.newText)
-  if start.character == 0 and finish.character == 0 then
-    api.nvim_buf_set_lines(bufnr, start.line, finish.line, false, new_lines)
-    return
-  end
- local lines = api.nvim_buf_get_lines(bufnr, start.line, finish.line + 1, false)
- local suffix = lines[#lines]:sub(finish.character+1)
- local prefix = lines[1]:sub(1, start.character)
- new_lines[#new_lines] = new_lines[#new_lines]..suffix
- new_lines[1] = prefix..new_lines[1]
- api.nvim_buf_set_lines(bufnr, start.line, finish.line + 1, false, new_lines)
-end
 
 -- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
@@ -74,18 +141,15 @@ end
 
 --- Apply the TextDocumentEdit response.
 -- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-function M.text_document_apply_text_document_edit(text_document_edit, bufnr)
-  -- local text_document = text_document_edit.textDocument
-  -- TODO use text_document_version?
-  -- local text_document_version = text_document.version
-
-  -- TODO technically, you could do this without doing multiple buf_get/set
-  -- by getting the full region (smallest line and largest line) and doing
-  -- the edits on the buffer, and then applying the buffer at the end.
-  -- I'm not sure if that's better.
-  for _, text_edit in ipairs(text_document_edit.edits) do
-    M.text_document_apply_text_edit(text_edit, bufnr)
+function M.apply_text_document_edit(text_document_edit)
+  local text_document = text_document_edit.textDocument
+  local bufnr = vim.uri_to_bufnr(text_document.uri)
+  -- TODO(ashkan) check this is correct.
+  if api.nvim_buf_get_changedtick(bufnr) > text_document.version then
+    print("Buffer ", text_document.uri, " newer than edits.")
+    return
   end
+  M.apply_text_edits(text_document_edit.edits, bufnr)
 end
 
 function M.get_current_line_to_cursor()
@@ -141,14 +205,14 @@ function M.text_document_completion_list_to_complete_items(result, line_prefix)
 end
 
 -- @params WorkspaceEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-function M.workspace_apply_workspace_edit(workspace_edit)
+function M.apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
     for _, change in ipairs(workspace_edit.documentChanges) do
       if change.kind then
         -- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
-        M.text_document_apply_text_document_edit(change)
+        M.apply_text_document_edit(change)
       end
     end
     return
@@ -161,9 +225,7 @@ function M.workspace_apply_workspace_edit(workspace_edit)
 
   for uri, changes in pairs(all_changes) do
     local bufnr = vim.uri_to_bufnr(uri)
-    for _, change in ipairs(changes) do
-      M.text_document_apply_text_edit(change, bufnr)
-    end
+    M.apply_text_edits(changes, bufnr)
   end
 end
 

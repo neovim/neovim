@@ -259,7 +259,127 @@ function M.completion(context)
   end)
 end
 
-function M.range_formatting()
+local function apply_edit_to_lines(lines, start_pos, end_pos, new_lines)
+  -- 0-indexing to 1-indexing makes things look a bit worse.
+  local i_0 = start_pos[1] + 1
+  local i_n = end_pos[1] + 1
+  local n = i_n - i_0 + 1
+  if not lines[i_0] or not lines[i_n] then
+    error(vim.inspect{#lines, i_0, i_n, n, start_pos, end_pos, new_lines})
+  end
+  local prefix = ""
+  local suffix = lines[i_n]:sub(end_pos[2]+1)
+  lines[i_n] = lines[i_n]:sub(1, end_pos[2]+1)
+  if start_pos[2] > 0 then
+    prefix = lines[i_0]:sub(1, start_pos[2])
+    -- lines[i_0] = lines[i_0]:sub(start.character+1)
+  end
+  -- TODO(ashkan) figure out how to avoid copy here. likely by changing algo.
+  new_lines = vim.list_extend({}, new_lines)
+  if #suffix > 0 then
+    new_lines[#new_lines] = new_lines[#new_lines]..suffix
+  end
+  if #prefix > 0 then
+    new_lines[1] = prefix..new_lines[1]
+  end
+  if #new_lines >= n then
+    for i = 1, n do
+      lines[i + i_0 - 1] = new_lines[i]
+    end
+    for i = n+1,#new_lines do
+      table.insert(lines, i_n + 1, new_lines[i])
+    end
+  else
+    for i = 1, #new_lines do
+      lines[i + i_0 - 1] = new_lines[i]
+    end
+    for _ = #new_lines+1, n do
+      table.remove(lines, i_0 + #new_lines + 1)
+    end
+  end
+end
+
+local function apply_text_edits(text_edits, bufnr)
+  if not next(text_edits) then return end
+  -- nvim.print("Start", #text_edits)
+  local start_line, finish_line = math.huge, -1
+  local cleaned = {}
+  for _, e in ipairs(text_edits) do
+    start_line = math.min(e.range.start.line, start_line)
+    finish_line = math.max(e.range["end"].line, finish_line)
+    table.insert(cleaned, {
+      A = {e.range.start.line; e.range.start.character};
+      B = {e.range["end"].line; e.range["end"].character};
+      lines = vim.split(e.newText, '\n', true);
+    })
+  end
+  local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
+  for i, e in ipairs(cleaned) do
+    -- nvim.print(i, "e", e.A, e.B, #e.lines[#e.lines], e.lines)
+    local y = 0
+    local x = 0
+    -- TODO(ashkan) this could be done in O(n) with dynamic programming
+    for j = 1, i-1 do
+      local o = cleaned[j]
+      -- nvim.print(i, "o", o.A, o.B, x, y, #o.lines[#o.lines], o.lines)
+      if o.A[1] <= e.A[1] and o.A[2] <= e.A[2] then
+        y = y - (o.B[1] - o.A[1] + 1) + #o.lines
+        -- Same line
+        if #o.lines > 1 then
+          x = -e.A[2] + #o.lines[#o.lines]
+        else
+          if o.A[1] == e.A[1] then
+            -- Try to account for insertions.
+            -- TODO how to account for deletions?
+            x = x - (o.B[2] - o.A[2]) + #o.lines[#o.lines]
+          end
+        end
+      end
+    end
+    local A = {e.A[1] + y - start_line, e.A[2] + x}
+    local B = {e.B[1] + y - start_line, e.B[2] + x}
+    -- if x ~= 0 or y ~= 0 then
+    --   nvim.print(i, "_", e.A, e.B, y, x, A, B, e.lines)
+    -- end
+    apply_edit_to_lines(lines, A, B, e.lines)
+  end
+  api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
+end
+
+function M.formatting(options)
+  validate { options = {options, 't', true} }
+  local params = {
+    textDocument = { uri = vim.uri_from_bufnr(0) };
+    options = options or {};
+  }
+  params.options[vim.type_idx] = vim.types.dictionary
+  return request('textDocument/formatting', params, function(_, _, result)
+    if not result then return end
+    apply_text_edits(result)
+  end)
+end
+
+function M.range_formatting(options, start_pos, end_pos)
+  validate {
+    options = {options, 't', true};
+    start_pos = {start_pos, 't', true};
+    end_pos = {end_pos, 't', true};
+  }
+  start_pos = start_pos or vim.api.nvim_buf_get_mark(0, '<')
+  end_pos = end_pos or vim.api.nvim_buf_get_mark(0, '>')
+  local params = {
+    textDocument = { uri = vim.uri_from_bufnr(0) };
+    range = {
+      start = { line = start_pos[1]; character = start_pos[2]; };
+      ["end"] = { line = end_pos[1]; character = end_pos[2]; };
+    };
+    options = options or {};
+  }
+  params.options[vim.type_idx] = vim.types.dictionary
+  return request('textDocument/rangeFormatting', params, function(_, _, result)
+    if not result then return end
+    apply_text_edits(result)
+  end)
 end
 
 function M.rename(new_name)

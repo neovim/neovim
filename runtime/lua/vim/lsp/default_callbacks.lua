@@ -10,6 +10,15 @@ local function err_message(...)
   api.nvim_command("redraw")
 end
 
+M['workspace/applyEdit'] = function(_, _, workspace_edit)
+  if not workspace_edit then return end
+  -- TODO(ashkan) Do something more with label?
+  if workspace_edit.label then
+    print("Workspace edit", workspace_edit.label)
+  end
+  util.apply_workspace_edit(workspace_edit.edit)
+end
+
 M['textDocument/publishDiagnostics'] = function(_, _, result)
   if not result then return end
   local uri = result.uri
