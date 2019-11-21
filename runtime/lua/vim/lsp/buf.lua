@@ -391,7 +391,7 @@ function M.rename(new_name)
   params.newName = new_name
   request('textDocument/rename', params, function(_, _, result)
     if not result then return end
-    util.workspace_apply_workspace_edit(result)
+    util.apply_workspace_edit(result)
   end)
 end
 
