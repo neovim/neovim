@@ -903,7 +903,7 @@ end
 -- Print some debug information about all LSP related things.
 -- The output of this function should not be relied upon and may change.
 function lsp.print_debug_info()
-  print(vim.inspect({ clients = active_clients, filetype_configs = all_filetype_configs }))
+  print(vim.inspect({ clients = active_clients }))
 end
 
 -- Log level dictionary with reverse lookup as well.

@@ -7,14 +7,6 @@ local log = require 'vim.lsp.log'
 
 local M = {}
 
-local function resolve_bufnr(bufnr)
-  validate { bufnr = { bufnr, 'n', true } }
-  if bufnr == nil or bufnr == 0 then
-    return api.nvim_get_current_buf()
-  end
-  return bufnr
-end
-
 local function ok_or_nil(status, ...)
   if not status then return end
   return ...
@@ -198,7 +190,7 @@ local function signature_help_to_preview_contents(input)
   if not signature then
     return
   end
-  vim.list_extend(contents, split_lines(signature.label))
+  vim.list_extend(contents, vim.split(signature.label, '\n', true))
   if signature.documentation then
     util.convert_input_to_markdown_lines(signature.documentation, contents)
   end
