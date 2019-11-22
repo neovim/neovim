@@ -933,10 +933,11 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                                   'number', 'relativenumber', 'cursorline',
                                   'cursorcolumn', 'foldcolumn', 'spell' and
                                   'list' options. 'signcolumn' is changed to
-                                  `auto` . The end-of-buffer region is hidden
-                                  by setting `eob` flag of 'fillchars' to a
-                                  space char, and clearing the |EndOfBuffer|
-                                  region in 'winhighlight'.
+                                  `auto` and 'colorcolumn' is cleared. The
+                                  end-of-buffer region is hidden by setting
+                                  `eob` flag of 'fillchars' to a space char, and
+                                  clearing the |EndOfBuffer| region in
+                                  'winhighlight'.
 
                 Return: ~
                     Window handle, or 0 on error
