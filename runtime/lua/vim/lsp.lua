@@ -862,7 +862,7 @@ function lsp.omnifunc(findstart, base)
       position = {
         -- 0-indexed for both line and character
         line = pos[1] - 1,
-        character = pos[2],
+        character = vim.str_utfindex(line, pos[2]),
       };
       -- The completion context. This is only available if the client specifies
       -- to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`

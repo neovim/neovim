@@ -2,8 +2,8 @@ local validate = vim.validate
 local api = vim.api
 local vfn = vim.fn
 local util = require 'vim.lsp.util'
-local protocol = require 'vim.lsp.protocol'
 local log = require 'vim.lsp.log'
+local list_extend = vim.list_extend
 
 local M = {}
 
@@ -192,7 +192,7 @@ local function signature_help_to_preview_contents(input)
   if not signature then
     return
   end
-  vim.list_extend(contents, vim.split(signature.label, '\n', true))
+  list_extend(contents, vim.split(signature.label, '\n', true))
   if signature.documentation then
     util.convert_input_to_markdown_lines(signature.documentation, contents)
   end
@@ -287,13 +287,23 @@ function M.range_formatting(options, start_pos, end_pos)
     tabSize = api.nvim_buf_get_option(0, 'tabstop');
     insertSpaces = api.nvim_buf_get_option(0, 'expandtab');
   })
-  start_pos = start_pos or vim.api.nvim_buf_get_mark(0, '<')
-  end_pos = end_pos or vim.api.nvim_buf_get_mark(0, '>')
+  local A = list_extend({}, start_pos or api.nvim_buf_get_mark(0, '<'))
+  local B = list_extend({}, end_pos or api.nvim_buf_get_mark(0, '>'))
+  -- convert to 0-index
+  A[1] = A[1] - 1
+  B[1] = B[1] - 1
+  -- account for encoding.
+  if A[2] > 0 then
+    A = {A[1], util.character_offset(0, unpack(A))}
+  end
+  if B[2] > 0 then
+    B = {B[1], util.character_offset(0, unpack(B))}
+  end
   local params = {
     textDocument = { uri = vim.uri_from_bufnr(0) };
     range = {
-      start = { line = start_pos[1]; character = start_pos[2]; };
-      ["end"] = { line = end_pos[1]; character = end_pos[2]; };
+      start = { line = A[1]; character = A[2]; };
+      ["end"] = { line = B[1]; character = B[2]; };
     };
     options = options;
   }

@@ -649,6 +649,13 @@ function M.make_position_params()
   }
 end
 
+-- @param buf buffer handle or 0 for current.
+-- @param row 0-indexed line
+-- @param col 0-indexed byte offset in line
+function M.character_offset(buf, row, col)
+  local line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
+  return vim.str_utfindex(line, col)
+end
 
 return M
 -- vim:sw=2 ts=2 et
