@@ -11,6 +11,14 @@ end
 
 local list_extend = vim.list_extend
 
+local function ok_or_nil(status, ...)
+  if not status then return end
+  return ...
+end
+local function npcall(fn, ...)
+  return ok_or_nil(pcall(fn, ...))
+end
+
 --- Find the longest shared prefix between prefix and word.
 -- e.g. remove_prefix("123tes", "testing") == "ting"
 local function remove_prefix(prefix, word)
@@ -39,17 +47,22 @@ function M.set_lines(lines, A, B, new_lines)
   if A[2] > 0 then
     prefix = lines[i_0]:sub(1, A[2])
   end
-  new_lines = list_extend({}, new_lines)
+  local n = i_n - i_0 + 1
+  if n ~= #new_lines then
+    for _ = 1, n - #new_lines do table.remove(lines, i_0) end
+    for _ = 1, #new_lines - n do table.insert(lines, i_0, '') end
+  end
+  for i = 1, #new_lines do
+    lines[i - 1 + i_0] = new_lines[i]
+  end
   if #suffix > 0 then
-    new_lines[#new_lines] = new_lines[#new_lines]..suffix
+    local i = i_0 + #new_lines - 1
+    lines[i] = lines[i]..suffix
   end
   if #prefix > 0 then
-    new_lines[1] = prefix..new_lines[1]
+    lines[i_0] = prefix..lines[i_0]
   end
-  local result = list_extend({}, lines, 1, i_0 - 1)
-  list_extend(result, new_lines)
-  list_extend(result, lines, i_n + 1)
-  return result
+  return lines
 end
 
 local function sort_by_key(fn)
@@ -99,7 +112,7 @@ function M.apply_text_edits(text_edits, bufnr)
     local e = cleaned[i]
     local A = {e.A[1] - start_line, e.A[2]}
     local B = {e.B[1] - start_line, e.B[2]}
-    lines = M.set_lines(lines, A, B, e.lines)
+    M.set_lines(lines, A, B, e.lines)
   end
   if set_eol and #lines[#lines] == 0 then
     table.remove(lines)
@@ -638,11 +651,12 @@ function M.try_trim_markdown_code_blocks(lines)
   return 'markdown'
 end
 
+local str_utfindex = vim.str_utfindex
 function M.make_position_params()
   local row, col = unpack(api.nvim_win_get_cursor(0))
   row = row - 1
   local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
-  col = vim.str_utfindex(line, col)
+  col = str_utfindex(line, col)
   return {
     textDocument = { uri = vim.uri_from_bufnr(0) };
     position = { line = row; character = col; }
@@ -654,7 +668,9 @@ end
 -- @param col 0-indexed byte offset in line
 function M.character_offset(buf, row, col)
   local line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
-  return vim.str_utfindex(line, col)
+  -- TODO(ashkan) is there a better way to handle col being past line length?
+  -- If the col is past the EOL, use the line length.
+  return npcall(str_utfindex, line, col) or str_utfindex(line)
 end
 
 return M
