@@ -11,14 +11,6 @@ end
 
 local list_extend = vim.list_extend
 
-local function ok_or_nil(status, ...)
-  if not status then return end
-  return ...
-end
-local function npcall(fn, ...)
-  return ok_or_nil(pcall(fn, ...))
-end
-
 --- Find the longest shared prefix between prefix and word.
 -- e.g. remove_prefix("123tes", "testing") == "ting"
 local function remove_prefix(prefix, word)
@@ -668,9 +660,11 @@ end
 -- @param col 0-indexed byte offset in line
 function M.character_offset(buf, row, col)
   local line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
-  -- TODO(ashkan) is there a better way to handle col being past line length?
   -- If the col is past the EOL, use the line length.
-  return npcall(str_utfindex, line, col) or str_utfindex(line)
+  if col > #line then
+    return str_utfindex(line)
+  end
+  return str_utfindex(line, col)
 end
 
 return M
