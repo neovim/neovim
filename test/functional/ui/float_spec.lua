@@ -40,7 +40,6 @@ describe('floating windows', function()
     [20] = {bold = true, foreground = Screen.colors.Brown},
     [21] = {background = Screen.colors.Gray90},
     [22] = {background = Screen.colors.LightRed},
-    [23] = {background = Screen.colors.LightRed},
   }
 
   it('behavior', function()
