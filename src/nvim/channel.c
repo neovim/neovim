@@ -482,7 +482,7 @@ uint64_t channel_from_stdio(bool rpc, CallbackReader on_output,
     stdin_dup_fd = os_dup(STDIN_FILENO);
     os_replace_stdin_to_conin();
     stdout_dup_fd = os_dup(STDOUT_FILENO);
-    os_replace_stdout_to_conout();
+    os_replace_stdout_and_stderr_to_conout();
   }
 #endif
   rstream_init_fd(&main_loop, &channel->stream.stdio.in, stdin_dup_fd, 0);

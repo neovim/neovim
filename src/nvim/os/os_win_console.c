@@ -24,9 +24,8 @@ void os_replace_stdin_to_conin(void)
   assert(conin_fd == STDIN_FILENO);
 }
 
-void os_replace_stdout_to_conout(void)
+void os_replace_stdout_and_stderr_to_conout(void)
 {
-  close(STDOUT_FILENO);
   const HANDLE conout_handle =
     CreateFile("CONOUT$",
                GENERIC_READ | GENERIC_WRITE,
@@ -34,6 +33,10 @@ void os_replace_stdout_to_conout(void)
                (LPSECURITY_ATTRIBUTES)NULL,
                OPEN_EXISTING, 0, (HANDLE)NULL);
   assert(conout_handle != INVALID_HANDLE_VALUE);
+  close(STDOUT_FILENO);
   const int conout_fd = _open_osfhandle((intptr_t)conout_handle, 0);
   assert(conout_fd == STDOUT_FILENO);
+  close(STDERR_FILENO);
+  const int conerr_fd = _open_osfhandle((intptr_t)conout_handle, 0);
+  assert(conerr_fd == STDERR_FILENO);
 }
