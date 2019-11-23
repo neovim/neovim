@@ -241,7 +241,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        1 change; before #2  0 seconds ago      |
+        1 change; before #2  {MATCH:.*}|
       ]]}
 
       -- change/insert in the middle
@@ -278,7 +278,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        1 change; before #4  0 seconds ago      |
+        1 change; before #4  {MATCH:.*}|
       ]]}
 
       feed('u')
@@ -290,7 +290,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        1 change; before #3  0 seconds ago      |
+        1 change; before #3  {MATCH:.*}|
       ]]}
       end)
 
@@ -317,7 +317,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        1 more line; before #2  0 seconds ago   |
+        1 more line; before #2  {MATCH:.*}|
       ]]}
     end)
 
@@ -357,7 +357,7 @@ describe('Buffer highlighting', function()
         {9:from }{8:diff}{7:erent} sources                  |
         {1:~                                       }|
         {1:~                                       }|
-        1 line less; before #3  0 seconds ago   |
+        1 line less; before #3  {MATCH:.*}|
       ]]}
 
       feed('<esc>u')
@@ -369,7 +369,7 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
         {1:~                                       }|
         {1:~                                       }|
-        1 line less; before #2  0 seconds ago   |
+        1 line less; before #2  {MATCH:.*}|
       ]]}
     end)
   end)
