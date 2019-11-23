@@ -279,7 +279,7 @@ func GetVimCommand(...)
   return cmd
 endfunc
 
-" Get the command to run Vim, with --clean.
+" Get the command to run Vim, with --clean instead of "-u NONE".
 func GetVimCommandClean()
   let cmd = GetVimCommand()
   let cmd = substitute(cmd, '-u NONE', '--clean', '')
