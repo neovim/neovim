@@ -5626,6 +5626,86 @@ void bufhl_mark_adjust(buf_T* buf,
   }
 }
 
+/// Adjust a placed highlight for column changes and joined/broken lines
+bool bufhl_mark_col_adjust(buf_T *buf,
+                           linenr_T lnum,
+                           colnr_T mincol,
+                           long lnum_amount,
+                           long col_amount)
+{
+  bool moved = false;
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, false);
+  if (!lineinfo) {
+    // Old line empty, nothing to do
+    return false;
+  }
+  // Create the new line below only if needed
+  BufhlLine *lineinfo2 = NULL;
+
+  colnr_T delcol = MAXCOL;
+  if (lnum_amount == 0 && col_amount < 0) {
+    delcol = mincol+(int)col_amount;
+  }
+
+  size_t newidx = 0;
+  for (size_t i = 0; i < kv_size(lineinfo->items); i++) {
+    BufhlItem *item = &kv_A(lineinfo->items, i);
+    bool delete = false;
+    if (item->start >= mincol) {
+      moved = true;
+      item->start += (int)col_amount;
+      if (item->stop < MAXCOL) {
+        item->stop += (int)col_amount;
+      }
+      if (lnum_amount != 0) {
+        if (lineinfo2 == NULL) {
+          lineinfo2 = bufhl_tree_ref(&buf->b_bufhl_info,
+                                     lnum+lnum_amount, true);
+        }
+        kv_push(lineinfo2->items, *item);
+        delete = true;
+      }
+    } else {
+      if (item->start >= delcol) {
+        moved = true;
+        item->start = delcol;
+      }
+      if (item->stop == MAXCOL || item->stop+1 >= mincol) {
+        if (item->stop == MAXCOL) {
+          if (delcol < MAXCOL
+              && delcol > (colnr_T)STRLEN(ml_get_buf(buf, lnum, false))) {
+            delete = true;
+          }
+        } else {
+          moved = true;
+          item->stop += (int)col_amount;
+        }
+        assert(lnum_amount >= 0);
+        if (lnum_amount > 0) {
+          item->stop = MAXCOL;
+        }
+      } else if (item->stop+1 >= delcol) {
+        moved = true;
+        item->stop = delcol-1;
+      }
+      // we covered the entire range with a visual delete or something
+      if (item->stop < item->start) {
+        delete = true;
+      }
+    }
+
+    if (!delete) {
+      if (i != newidx) {
+        kv_A(lineinfo->items, newidx) = kv_A(lineinfo->items, i);
+      }
+      newidx++;
+    }
+  }
+  kv_size(lineinfo->items) = newidx;
+
+  return moved;
+}
+
 
 /// Get highlights to display at a specific line
 ///

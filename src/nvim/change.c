@@ -359,6 +359,24 @@ void changed_bytes(linenr_T lnum, colnr_T col)
   }
 }
 
+/// insert/delete bytes at column
+///
+/// Like changed_bytes() but also adjust extmark for "added" bytes.
+/// When "added" is negative text was deleted.
+static void inserted_bytes(linenr_T lnum, colnr_T col, int added)
+{
+  if (added > 0) {
+    extmark_col_adjust(curbuf, lnum, col+1, 0, added, kExtmarkUndo);
+  } else if (added < 0) {
+    // TODO(bfredl): next revision of extmarks should handle both these
+    // with the same entry point. Also with more sane params..
+    extmark_col_adjust_delete(curbuf, lnum, col+2,
+                              col+(-added)+1, kExtmarkUndo, 0);
+  }
+
+  changed_bytes(lnum, col);
+}
+
 /// Appended "count" lines below line "lnum" in the current buffer.
 /// Must be called AFTER the change and after mark_adjust().
 /// Takes care of marking the buffer to be redrawn and sets the changed flag.
@@ -630,7 +648,7 @@ void ins_char_bytes(char_u *buf, size_t charlen)
   ml_replace(lnum, newp, false);
 
   // mark the buffer as changed and prepare for displaying
-  changed_bytes(lnum, (colnr_T)col);
+  inserted_bytes(lnum, (colnr_T)col, (int)(newlen - oldlen));
 
   // If we're in Insert or Replace mode and 'showmatch' is set, then briefly
   // show the match for right parens and braces.
@@ -676,7 +694,7 @@ void ins_str(char_u *s)
   assert(bytes >= 0);
   memmove(newp + col + newlen, oldp + col, (size_t)bytes);
   ml_replace(lnum, newp, false);
-  changed_bytes(lnum, col);
+  inserted_bytes(lnum, col, newlen);
   curwin->w_cursor.col += newlen;
 }
 
@@ -797,7 +815,7 @@ int del_bytes(colnr_T count, bool fixpos_arg, bool use_delcombine)
   }
 
   // mark the buffer as changed and prepare for displaying
-  changed_bytes(lnum, curwin->w_cursor.col);
+  inserted_bytes(lnum, col, -count);
 
   return OK;
 }

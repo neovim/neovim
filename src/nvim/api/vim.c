@@ -1074,9 +1074,10 @@ fail:
 ///                    float where the text should not be edited. Disables
 ///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
 ///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
-///                    is changed to `auto`. The end-of-buffer region is hidden
-///                    by setting `eob` flag of 'fillchars' to a space char,
-///                    and clearing the |EndOfBuffer| region in 'winhighlight'.
+///                    is changed to `auto` and 'colorcolumn' is cleared. The
+///                    end-of-buffer region is hidden by setting `eob` flag of
+///                    'fillchars' to a space char, and clearing the
+///                    |EndOfBuffer| region in 'winhighlight'.
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
