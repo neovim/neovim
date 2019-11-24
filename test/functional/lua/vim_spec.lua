@@ -553,4 +553,61 @@ describe('lua stdlib', function()
     eq(false, exec_lua("return vim.is_callable('foo')"))
     eq(false, exec_lua("return vim.is_callable({})"))
   end)
+
+  it('vim.g', function()
+    exec_lua [[
+    vim.api.nvim_set_var("testing", "hi")
+    vim.api.nvim_set_var("other", 123)
+    ]]
+    eq('hi', funcs.luaeval "vim.g.testing")
+    eq(123, funcs.luaeval "vim.g.other")
+    eq(NIL, funcs.luaeval "vim.g.nonexistant")
+  end)
+
+  it('vim.env', function()
+    exec_lua [[
+    vim.fn.setenv("A", 123)
+    ]]
+    eq('123', funcs.luaeval "vim.env.A")
+    eq(NIL, funcs.luaeval "vim.env.B")
+  end)
+
+  it('vim.v', function()
+    eq(funcs.luaeval "vim.api.nvim_get_vvar('progpath')", funcs.luaeval "vim.v.progpath")
+    eq(false, funcs.luaeval "vim.v['false']")
+    eq(NIL, funcs.luaeval "vim.v.null")
+  end)
+
+  it('vim.bo', function()
+    eq('', funcs.luaeval "vim.bo.filetype")
+    exec_lua [[
+    vim.api.nvim_buf_set_option(0, "filetype", "markdown")
+    BUF = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(BUF, "modifiable", false)
+    ]]
+    eq(false, funcs.luaeval "vim.bo.modified")
+    eq('markdown', funcs.luaeval "vim.bo.filetype")
+    eq(false, funcs.luaeval "vim.bo(BUF).modifiable")
+    exec_lua [[
+    vim.bo.filetype = ''
+    vim.bo(BUF).modifiable = true
+    ]]
+    eq('', funcs.luaeval "vim.bo.filetype")
+    eq(true, funcs.luaeval "vim.bo(BUF).modifiable")
+  end)
+
+  it('vim.wo', function()
+    eq('', funcs.luaeval "vim.bo.filetype")
+    exec_lua [[
+    vim.api.nvim_win_set_option(0, "cole", 2)
+    BUF = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(BUF, "modifiable", false)
+    ]]
+    eq(2, funcs.luaeval "vim.wo.cole")
+    exec_lua [[
+    vim.wo.conceallevel = 0
+    vim.bo(BUF).modifiable = true
+    ]]
+    eq(0, funcs.luaeval "vim.wo.cole")
+  end)
 end)

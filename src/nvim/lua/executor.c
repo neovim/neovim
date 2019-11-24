@@ -268,12 +268,7 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 #endif
 
   // vim
-  const char *code = (char *)&vim_module[0];
-  if (luaL_loadbuffer(lstate, code, strlen(code), "@vim.lua")
-      || lua_pcall(lstate, 0, LUA_MULTRET, 0)) {
-    nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
-    return 1;
-  }
+  lua_newtable(lstate);
   // vim.api
   nlua_add_api_functions(lstate);
   // vim.types, vim.type_idx, vim.val_idx
@@ -333,6 +328,24 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   nlua_add_treesitter(lstate);
 
   lua_setglobal(lstate, "vim");
+
+  {
+    const char *code = (char *)&shared_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@shared.lua")
+        || lua_pcall(lstate, 0, 0, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating shared module: %.*s"));
+      return 1;
+    }
+  }
+
+  {
+    const char *code = (char *)&vim_module[0];
+    if (luaL_loadbuffer(lstate, code, strlen(code), "@vim.lua")
+        || lua_pcall(lstate, 0, 0, 0)) {
+      nlua_error(lstate, _("E5106: Error while creating vim module: %.*s"));
+      return 1;
+    }
+  }
 
   return 0;
 }
