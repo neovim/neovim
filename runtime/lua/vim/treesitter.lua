@@ -125,7 +125,7 @@ local function match_preds(match, preds, bufnr)
 
 end
 
-function Query:match(node, bufnr, start, stop)
+function Query:iter_captures(node, bufnr, start, stop)
   local raw_iter = node:rawquery(self.query,start,stop)
   local function iter()
     local capture, node, match = raw_iter()

@@ -9,7 +9,7 @@ else
 end
 
 -- TSHighlighter = {}
--- what is autoreload? 
+-- what is autoreload?
 TSHighlighter = _G.TSHighlighter or {}
 TSHighlighter.__index = TSHighlighter
 
@@ -98,7 +98,7 @@ end
 function TSHighlighter:on_line(_, win, buf, line)
   count = 0
   if self.iter == nil then
-    self.iter = self.query:match(self.root,buf,line,self.botline)
+    self.iter = self.query:iter_captures(self.root,buf,line,self.botline)
   end
   while line >= self.nextrow do
     -- TODO: capture should be numeric index!
