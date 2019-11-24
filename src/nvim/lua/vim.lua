@@ -33,35 +33,35 @@
 --    - https://github.com/bakpakin/Fennel (pretty print, repl)
 --    - https://github.com/howl-editor/howl/tree/master/lib/howl/util
 
+local vim = vim
+assert(vim)
 
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
-local function _system(cmd)
-  local out = vim.api.nvim_call_function('system', { cmd })
-  local err = vim.api.nvim_get_vvar('shell_error')
+function vim._system(cmd)
+  local out = vim.fn.system(cmd)
+  local err = vim.v.shell_error
   return err, out
 end
 
 -- Gets process info from the `ps` command.
 -- Used by nvim_get_proc() as a fallback.
-local function _os_proc_info(pid)
+function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
   local cmd = { 'ps', '-p', pid, '-o', 'comm=', }
-  local err, name = _system(cmd)
-  if 1 == err and string.gsub(name, '%s*', '') == '' then
+  local err, name = vim._system(cmd)
+  if 1 == err and vim.trim(name) == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
-    local args_str = vim.api.nvim_call_function('string', { cmd })
-    error('command failed: '..args_str)
+    error('command failed: '..vim.fn.string(cmd))
   end
-  local _, ppid = _system({ 'ps', '-p', pid, '-o', 'ppid=', })
+  local _, ppid = vim._system({ 'ps', '-p', pid, '-o', 'ppid=', })
   -- Remove trailing whitespace.
-  name = string.gsub(string.gsub(name, '%s+$', ''), '^.*/', '')
-  ppid = string.gsub(ppid, '%s+$', '')
-  ppid = tonumber(ppid) == nil and -1 or tonumber(ppid)
+  name = vim.trim(name):gsub('^.*/', '')
+  ppid = tonumber(ppid) or -1
   return {
     name = name,
     pid = pid,
@@ -71,20 +71,19 @@ end
 
 -- Gets process children from the `pgrep` command.
 -- Used by nvim_get_proc_children() as a fallback.
-local function _os_proc_children(ppid)
+function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
   local cmd = { 'pgrep', '-P', ppid, }
-  local err, rv = _system(cmd)
-  if 1 == err and string.gsub(rv, '%s*', '') == '' then
+  local err, rv = vim._system(cmd)
+  if 1 == err and vim.trim(rv) == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
-    local args_str = vim.api.nvim_call_function('string', { cmd })
-    error('command failed: '..args_str)
+    error('command failed: '..vim.fn.string(cmd))
   end
   local children = {}
-  for s in string.gmatch(rv, '%S+') do
+  for s in rv:gmatch('%S+') do
     local i = tonumber(s)
     if i ~= nil then
       table.insert(children, i)
@@ -98,7 +97,7 @@ end
 -- Last inserted paths. Used to clear out items from package.[c]path when they
 -- are no longer in &runtimepath.
 local last_nvim_paths = {}
-local function _update_package_paths()
+function vim._update_package_paths()
   local cur_nvim_paths = {}
   local rtps = vim.api.nvim_list_runtime_paths()
   local sep = package.config:sub(1, 1)
@@ -162,35 +161,35 @@ local function inspect(object, options)  -- luacheck: no unused
   error(object, options)  -- Stub for gen_vimdoc.py
 end
 
---- Paste handler, invoked by |nvim_paste()| when a conforming UI
---- (such as the |TUI|) pastes text into the editor.
----
---- Example: To remove ANSI color codes when pasting:
---- <pre>
---- vim.paste = (function(overridden)
----   return function(lines, phase)
----     for i,line in ipairs(lines) do
----       -- Scrub ANSI color codes from paste input.
----       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
----     end
----     overridden(lines, phase)
----   end
---- end)(vim.paste)
---- </pre>
----
---@see |paste|
----
---@param lines  |readfile()|-style list of lines to paste. |channel-lines|
---@param phase  -1: "non-streaming" paste: the call contains all lines.
----              If paste is "streamed", `phase` indicates the stream state:
----                - 1: starts the paste (exactly once)
----                - 2: continues the paste (zero or more times)
----                - 3: ends the paste (exactly once)
---@returns false if client should cancel the paste.
-local function paste(lines, phase) end  -- luacheck: no unused
-paste = (function()
+do
   local tdots, tick, got_line1 = 0, 0, false
-  return function(lines, phase)
+
+  --- Paste handler, invoked by |nvim_paste()| when a conforming UI
+  --- (such as the |TUI|) pastes text into the editor.
+  ---
+  --- Example: To remove ANSI color codes when pasting:
+  --- <pre>
+  --- vim.paste = (function(overridden)
+  ---   return function(lines, phase)
+  ---     for i,line in ipairs(lines) do
+  ---       -- Scrub ANSI color codes from paste input.
+  ---       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
+  ---     end
+  ---     overridden(lines, phase)
+  ---   end
+  --- end)(vim.paste)
+  --- </pre>
+  ---
+  --@see |paste|
+  ---
+  --@param lines  |readfile()|-style list of lines to paste. |channel-lines|
+  --@param phase  -1: "non-streaming" paste: the call contains all lines.
+  ---              If paste is "streamed", `phase` indicates the stream state:
+  ---                - 1: starts the paste (exactly once)
+  ---                - 2: continues the paste (zero or more times)
+  ---                - 3: ends the paste (exactly once)
+  --@returns false if client should cancel the paste.
+  function vim.paste(lines, phase)
     local call = vim.api.nvim_call_function
     local now = vim.loop.now()
     local mode = call('mode', {}):sub(1,1)
@@ -230,20 +229,33 @@ paste = (function()
     end
     return true  -- Paste will not continue if not returning `true`.
   end
-end)()
+end
 
 --- Defers callback `cb` until the Nvim API is safe to call.
 ---
 ---@see |lua-loop-callbacks|
 ---@see |vim.schedule()|
 ---@see |vim.in_fast_event()|
-local function schedule_wrap(cb)
+function vim.schedule_wrap(cb)
   return (function (...)
     local args = {...}
     vim.schedule(function() cb(unpack(args)) end)
   end)
 end
 
+-- vim.fn.{func}(...)
+vim.fn = setmetatable({}, {
+  __index = function(t, key)
+    local function _fn(...)
+      return vim.call(key, ...)
+    end
+    t[key] = _fn
+    return _fn
+  end
+})
+
+-- These are for loading runtime modules lazily since they aren't available in
+-- the nvim binary as specified in executor.c
 local function __index(t, key)
   if key == 'inspect' then
     t.inspect = require('vim.inspect')
@@ -251,10 +263,6 @@ local function __index(t, key)
   elseif key == 'treesitter' then
     t.treesitter = require('vim.treesitter')
     return t.treesitter
-  elseif require('vim.shared')[key] ~= nil then
-    -- Expose all `vim.shared` functions on the `vim` module.
-    t[key] = require('vim.shared')[key]
-    return t[key]
   elseif require('vim.uri')[key] ~= nil then
     -- Expose all `vim.uri` functions on the `vim` module.
     t[key] = require('vim.uri')[key]
@@ -265,29 +273,100 @@ local function __index(t, key)
   end
 end
 
-
--- vim.fn.{func}(...)
-local function _fn_index(t, key)
-  local function _fn(...)
-    return vim.call(key, ...)
-  end
-  t[key] = _fn
-  return _fn
-end
-local fn = setmetatable({}, {__index=_fn_index})
-
-local module = {
-  _update_package_paths = _update_package_paths,
-  _os_proc_children = _os_proc_children,
-  _os_proc_info = _os_proc_info,
-  _system = _system,
-  paste = paste,
-  schedule_wrap = schedule_wrap,
-  fn=fn,
-}
-
-setmetatable(module, {
+setmetatable(vim, {
   __index = __index
 })
+
+do
+  local a = vim.api
+  local validate = vim.validate
+  local function make_meta_accessor(get, set, del)
+    validate {
+      get = {get, 'f'};
+      set = {set, 'f'};
+      del = {del, 'f', true};
+    }
+    local mt = {}
+    if del then
+      function mt:__newindex(k, v)
+        if v == nil then
+          return del(k)
+        end
+        return set(k, v)
+      end
+    else
+      function mt:__newindex(k, v)
+        return set(k, v)
+      end
+    end
+    function mt:__index(k)
+      return get(k)
+    end
+    return setmetatable({}, mt)
+  end
+  local function pcall_ret(status, ...)
+    if status then return ... end
+  end
+  local function nil_wrap(fn)
+    return function(...)
+      return pcall_ret(pcall(fn, ...))
+    end
+  end
+  vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
+  vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
+  vim.o = make_meta_accessor(nil_wrap(a.nvim_get_option), a.nvim_set_option)
+  vim.env = make_meta_accessor(vim.fn.getenv, vim.fn.setenv)
+  -- TODO(ashkan) if/when these are available from an API, generate them
+  -- instead of hardcoding.
+  local window_options = {
+              arab = true;       arabic = true;   breakindent = true; breakindentopt = true;
+               bri = true;       briopt = true;            cc = true;           cocu = true;
+              cole = true;  colorcolumn = true; concealcursor = true;   conceallevel = true;
+               crb = true;          cuc = true;           cul = true;     cursorbind = true;
+      cursorcolumn = true;   cursorline = true;          diff = true;            fcs = true;
+               fdc = true;          fde = true;           fdi = true;            fdl = true;
+               fdm = true;          fdn = true;           fdt = true;            fen = true;
+         fillchars = true;          fml = true;           fmr = true;     foldcolumn = true;
+        foldenable = true;     foldexpr = true;    foldignore = true;      foldlevel = true;
+        foldmarker = true;   foldmethod = true;  foldminlines = true;    foldnestmax = true;
+          foldtext = true;          lbr = true;           lcs = true;      linebreak = true;
+              list = true;    listchars = true;            nu = true;         number = true;
+       numberwidth = true;          nuw = true; previewwindow = true;            pvw = true;
+    relativenumber = true;    rightleft = true;  rightleftcmd = true;             rl = true;
+               rlc = true;          rnu = true;           scb = true;            scl = true;
+               scr = true;       scroll = true;    scrollbind = true;     signcolumn = true;
+             spell = true;   statusline = true;           stl = true;            wfh = true;
+               wfw = true;        winbl = true;      winblend = true;   winfixheight = true;
+       winfixwidth = true; winhighlight = true;         winhl = true;           wrap = true;
+  }
+  local function new_buf_opt_accessor(bufnr)
+    local function get(k)
+      if window_options[k] then
+        return a.nvim_err_writeln(k.." is a window option, not a buffer option")
+      end
+      return a.nvim_buf_get_option(bufnr, k)
+    end
+    local function set(k, v)
+      if window_options[k] then
+        return a.nvim_err_writeln(k.." is a window option, not a buffer option")
+      end
+      return a.nvim_buf_set_option(bufnr, k, v)
+    end
+    return make_meta_accessor(nil_wrap(get), set)
+  end
+  vim.bo = new_buf_opt_accessor(0)
+  getmetatable(vim.bo).__call = function(_, bufnr)
+    return new_buf_opt_accessor(bufnr)
+  end
+  local function new_win_opt_accessor(winnr)
+    local function get(k)    return a.nvim_win_get_option(winnr, k) end
+    local function set(k, v) return a.nvim_win_set_option(winnr, k, v) end
+    return make_meta_accessor(nil_wrap(get), set)
+  end
+  vim.wo = new_win_opt_accessor(0)
+  getmetatable(vim.wo).__call = function(_, winnr)
+    return new_win_opt_accessor(winnr)
+  end
+end
 
 return module

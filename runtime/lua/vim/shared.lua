@@ -4,7 +4,7 @@
 -- test-suite. If, in the future, Nvim itself is used to run the test-suite
 -- instead of "vanilla Lua", these functions could move to src/nvim/lua/vim.lua
 
-local vim = {}
+local vim = vim or {}
 
 --- Returns a deep copy of the given object. Non-table objects are copied as
 --- in a typical Lua assignment, whereas table objects are copied recursively.

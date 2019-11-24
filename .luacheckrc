@@ -2,6 +2,8 @@
 
 -- Ignore W211 (unused variable) with preload files.
 files["**/preload.lua"] = {ignore = { "211" }}
+-- Allow vim module to modify itself, but only here.
+files["src/nvim/lua/vim.lua"] = {ignore = { "122/vim" }}
 
 -- Don't report unused self arguments of methods.
 self = false
