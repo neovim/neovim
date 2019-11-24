@@ -564,7 +564,7 @@ describe('lua stdlib', function()
     exec_lua [[
     vim.fn.setenv("A", 123)
     ]]
-    eq(os.getenv("PATH"), funcs.luaeval "vim.env.PATH")
+    eq(funcs.getcwd(), funcs.luaeval "vim.env.PWD")
     eq('123', funcs.luaeval "vim.env.A")
     eq(NIL, funcs.luaeval "vim.env.B")
   end)

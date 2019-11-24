@@ -39,31 +39,29 @@ assert(vim)
 -- Internal-only until comments in #8107 are addressed.
 -- Returns:
 --    {errcode}, {output}
-local function _system(cmd)
-  local out = vim.api.nvim_call_function('system', { cmd })
-  local err = vim.api.nvim_get_vvar('shell_error')
+function vim._system(cmd)
+  local out = vim.fn.system(cmd)
+  local err = vim.v.shell_error
   return err, out
 end
 
 -- Gets process info from the `ps` command.
 -- Used by nvim_get_proc() as a fallback.
-local function _os_proc_info(pid)
+function vim._os_proc_info(pid)
   if pid == nil or pid <= 0 or type(pid) ~= 'number' then
     error('invalid pid')
   end
   local cmd = { 'ps', '-p', pid, '-o', 'comm=', }
-  local err, name = _system(cmd)
-  if 1 == err and string.gsub(name, '%s*', '') == '' then
+  local err, name = vim._system(cmd)
+  if 1 == err and vim.trim(name) == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
-    local args_str = vim.api.nvim_call_function('string', { cmd })
-    error('command failed: '..args_str)
+    error('command failed: '..vim.fn.string(cmd))
   end
-  local _, ppid = _system({ 'ps', '-p', pid, '-o', 'ppid=', })
+  local _, ppid = vim._system({ 'ps', '-p', pid, '-o', 'ppid=', })
   -- Remove trailing whitespace.
-  name = string.gsub(string.gsub(name, '%s+$', ''), '^.*/', '')
-  ppid = string.gsub(ppid, '%s+$', '')
-  ppid = tonumber(ppid) == nil and -1 or tonumber(ppid)
+  name = vim.trim(name):gsub('^.*/', '')
+  ppid = tonumber(ppid) or -1
   return {
     name = name,
     pid = pid,
@@ -73,20 +71,19 @@ end
 
 -- Gets process children from the `pgrep` command.
 -- Used by nvim_get_proc_children() as a fallback.
-local function _os_proc_children(ppid)
+function vim._os_proc_children(ppid)
   if ppid == nil or ppid <= 0 or type(ppid) ~= 'number' then
     error('invalid ppid')
   end
   local cmd = { 'pgrep', '-P', ppid, }
-  local err, rv = _system(cmd)
-  if 1 == err and string.gsub(rv, '%s*', '') == '' then
+  local err, rv = vim._system(cmd)
+  if 1 == err and vim.trim(rv) == '' then
     return {}  -- Process not found.
   elseif 0 ~= err then
-    local args_str = vim.api.nvim_call_function('string', { cmd })
-    error('command failed: '..args_str)
+    error('command failed: '..vim.fn.string(cmd))
   end
   local children = {}
-  for s in string.gmatch(rv, '%S+') do
+  for s in rv:gmatch('%S+') do
     local i = tonumber(s)
     if i ~= nil then
       table.insert(children, i)
@@ -100,7 +97,7 @@ end
 -- Last inserted paths. Used to clear out items from package.[c]path when they
 -- are no longer in &runtimepath.
 local last_nvim_paths = {}
-local function _update_package_paths()
+function vim._update_package_paths()
   local cur_nvim_paths = {}
   local rtps = vim.api.nvim_list_runtime_paths()
   local sep = package.config:sub(1, 1)
@@ -245,11 +242,6 @@ function vim.schedule_wrap(cb)
     vim.schedule(function() cb(unpack(args)) end)
   end)
 end
-
-vim._update_package_paths = _update_package_paths
-vim._os_proc_children = _os_proc_children
-vim._os_proc_info = _os_proc_info
-vim._system = _system
 
 -- vim.fn.{func}(...)
 vim.fn = setmetatable({}, {
