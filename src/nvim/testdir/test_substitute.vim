@@ -241,7 +241,7 @@ func Test_sub_cmd_3()
   call Run_SubCmd_Tests(tests)
 endfunc
 
-" Test for submatch() on :substitue.
+" Test for submatch() on :substitute.
 func Test_sub_cmd_4()
   set magic&
   set cpo&
