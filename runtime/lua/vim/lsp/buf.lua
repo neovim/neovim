@@ -51,7 +51,9 @@ local function focusable_preview(method, params, fn)
   do
     local win = find_window_by_var(method, bufnr)
     if win then
-      return api.nvim_set_current_win(win)
+      api.nvim_set_current_win(win)
+      api.nvim_command("stopinsert")
+      return
     end
   end
   return request(method, params, function(_, _, result, _)
@@ -234,7 +236,9 @@ end
 function M.signature_help()
   local params = util.make_position_params()
   focusable_preview('textDocument/signatureHelp', params, function(result)
-    if not (result and result.signatures and result.signatures[1]) then return end
+    if not (result and result.signatures and result.signatures[1]) then
+      return { 'No signature available' }
+    end
 
     -- TODO show empty popup when signatures is empty?
     local lines = signature_help_to_preview_contents(result)

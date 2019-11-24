@@ -104,7 +104,7 @@ function M.apply_text_edits(text_edits, bufnr)
     local e = cleaned[i]
     local A = {e.A[1] - start_line, e.A[2]}
     local B = {e.B[1] - start_line, e.B[2]}
-    M.set_lines(lines, A, B, e.lines)
+    lines = M.set_lines(lines, A, B, e.lines)
   end
   if set_eol and #lines[#lines] == 0 then
     table.remove(lines)
@@ -340,7 +340,8 @@ function M.open_floating_preview(contents, filetype, opts)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  api.nvim_command("autocmd CursorMoved,BufHidden <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+  -- TODO make InsertCharPre disappearing optional?
+  api.nvim_command("autocmd CursorMoved,BufHidden,InsertCharPre <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
   return floating_bufnr, floating_winnr
 end
 

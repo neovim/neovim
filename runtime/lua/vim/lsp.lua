@@ -343,9 +343,19 @@ function lsp.start_client(config)
   function handlers.on_exit(code, signal)
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
-    for _, client_ids in pairs(all_buffer_active_clients) do
+    local active_buffers = {}
+    for bufnr, client_ids in pairs(all_buffer_active_clients) do
+      if client_ids[client_id] then
+        table.insert(active_buffers, bufnr)
+      end
       client_ids[client_id] = nil
     end
+    -- Buffer level cleanup
+    vim.schedule(function()
+      for _, bufnr in ipairs(active_buffers) do
+        util.buf_clear_diagnostics(bufnr)
+      end
+    end)
     if config.on_exit then
       pcall(config.on_exit, code, signal, client_id)
     end
