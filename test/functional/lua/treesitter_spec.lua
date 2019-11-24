@@ -105,6 +105,61 @@ describe('treesitter API', function()
       eq(true, exec_lua("return parser:parse() == tree2"))
     end)
 
+    it('supports queries', function()
+      insert([[
+void ui_refresh(void)
+{
+  int width = INT_MAX, height = INT_MAX;
+  bool ext_widgets[kUIExtCount];
+  for (UIExtension i = 0; (int)i < kUIExtCount; i++) {
+    ext_widgets[i] = true;
+  }
+
+  bool inclusive = ui_override();
+  for (size_t i = 0; i < ui_count; i++) {
+    UI *ui = uis[i];
+    width = MIN(ui->width, width);
+    height = MIN(ui->height, height);
+    foo = BAR(ui->bazaar, bazaar);
+    for (UIExtension j = 0; (int)j < kUIExtCount; j++) {
+      ext_widgets[j] &= (ui->ui_ext[j] || inclusive);
+    }
+  }
+}]])
+
+        local query = [[
+          ((call_expression function: (identifier) @minfunc (argument_list (identifier) @min_id)) (eq? @minfunc "MIN"))
+          "for" @keyword
+          (primitive_type) @type
+          (field_expression argument: (identifier) @fieldarg)
+        ]]
+
+        local res = exec_lua([[
+          cquery = vim.treesitter.parse_query("c", ...)
+          parser = vim.treesitter.get_parser(0, "c")
+          tree = parser:parse()
+          res = {}
+          for cid, node in cquery:iter_captures(tree:root(), 0, 7, 14) do
+            -- can't transmit node over RPC. just check the name and range
+            table.insert(res, {cquery.captures[cid], node:type(), node:range()})
+          end
+          return res
+        ]], query)
+
+        eq({
+          { "type", "primitive_type", 8, 2, 8, 6 },
+          { "keyword", "for", 9, 2, 9, 5 },
+          { "type", "primitive_type", 9, 7, 9, 13 },
+          { "minfunc", "identifier", 11, 12, 11, 15 },
+          { "fieldarg", "identifier", 11, 16, 11, 18 },
+          { "min_id", "identifier", 11, 27, 11, 32 },
+          { "minfunc", "identifier", 12, 13, 12, 16 },
+          { "fieldarg", "identifier", 12, 17, 12, 19 },
+          { "min_id", "identifier", 12, 29, 12, 35 },
+          { "fieldarg", "identifier", 13, 14, 13, 16 }
+        }, res)
+    end)
+
     it('inspects language', function()
         local keys, fields, symbols = unpack(exec_lua([[
           local lang = vim.treesitter.inspect_language('c')
