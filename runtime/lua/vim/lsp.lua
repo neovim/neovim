@@ -4,6 +4,7 @@ local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 
+local vim = vim
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
   = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
 local uv = vim.loop
