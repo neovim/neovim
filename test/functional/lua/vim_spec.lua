@@ -609,8 +609,8 @@ describe('lua stdlib', function()
 
   it('vim.cmd', function()
     exec_lua [[
-		vim.cmd.autocmd("BufNew * ++once lua BUF = vim.fn.expand('<abuf>')")
-		vim.cmd.new()
+    vim.cmd.autocmd("BufNew * ++once lua BUF = vim.fn.expand('<abuf>')")
+    vim.cmd.new()
     ]]
     eq('2', funcs.luaeval "BUF")
     eq(2, funcs.luaeval "#vim.api.nvim_list_bufs()")
