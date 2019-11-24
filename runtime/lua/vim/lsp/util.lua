@@ -1,4 +1,5 @@
 local protocol = require 'vim.lsp.protocol'
+local vim = vim
 local validate = vim.validate
 local api = vim.api
 
@@ -573,30 +574,71 @@ do
   end
 end
 
-function M.buf_loclist(bufnr, locations)
-  local targetwin
-  for _, winnr in ipairs(api.nvim_list_wins()) do
-    local winbuf = api.nvim_win_get_buf(winnr)
-    if winbuf == bufnr then
-      targetwin = winnr
-      break
+local position_sort = sort_by_key(function(v)
+  return {v.line, v.character}
+end)
+
+-- Returns the items with the byte position calculated correctly and in sorted
+-- order.
+function M.locations_to_items(locations)
+  local items = {}
+  local grouped = setmetatable({}, {
+    __index = function(t, k)
+      local v = {}
+      rawset(t, k, v)
+      return v
+    end;
+  })
+  for _, d in ipairs(locations) do
+    local start = d.range.start
+    local fname = assert(vim.uri_to_fname(d.uri))
+    table.insert(grouped[fname], start)
+  end
+  local keys = vim.tbl_keys(grouped)
+  table.sort(keys)
+  -- TODO(ashkan) I wish we could do this lazily.
+  for _, fname in ipairs(keys) do
+    local rows = grouped[fname]
+    table.sort(rows, position_sort)
+    local i = 0
+    for line in io.lines(fname) do
+      for _, pos in ipairs(rows) do
+        local row = pos.line
+        if i == row then
+          local col
+          if pos.character > #line then
+            col = #line
+          else
+            col =  vim.str_byteindex(line, pos.character)
+          end
+          table.insert(items, {
+            filename = fname,
+            lnum = row + 1,
+            col = col + 1;
+          })
+        end
+      end
+      i = i + 1
     end
   end
-  if not targetwin then return end
+  return items
+end
 
-  local items = {}
-  local path = api.nvim_buf_get_name(bufnr)
-  for _, d in ipairs(locations) do
-    -- TODO: URL parsing here?
-    local start = d.range.start
-    table.insert(items, {
-        filename = path,
-        lnum = start.line + 1,
-        col = start.character + 1,
-        text = d.message,
-    })
-  end
-  vim.fn.setloclist(targetwin, items, ' ', 'Language Server')
+-- locations is Location[]
+-- Only sets for the current window.
+function M.set_loclist(locations)
+  vim.fn.setloclist(0, {}, ' ', {
+    title = 'Language Server';
+    items = M.locations_to_items(locations);
+  })
+end
+
+-- locations is Location[]
+function M.set_qflist(locations)
+  vim.fn.setqflist({}, ' ', {
+    title = 'Language Server';
+    items = M.locations_to_items(locations);
+  })
 end
 
 -- Remove empty lines from the beginning and end.

@@ -1,3 +1,4 @@
+local vim = vim
 local validate = vim.validate
 local api = vim.api
 local vfn = vim.fn
@@ -327,6 +328,20 @@ function M.rename(new_name)
   request('textDocument/rename', params, function(_, _, result)
     if not result then return end
     util.apply_workspace_edit(result)
+  end)
+end
+
+function M.references(context)
+  validate { context = { context, 't', true } }
+  local params = util.make_position_params()
+  params.context = context or {
+    includeDeclaration = true;
+  }
+  params[vim.type_idx] = vim.types.dictionary
+  request('textDocument/references', params, function(_, _, result)
+    if not result then return end
+    util.set_qflist(result)
+    vim.api.nvim_command("copen")
   end)
 end
 
