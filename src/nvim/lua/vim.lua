@@ -283,7 +283,6 @@ setmetatable(vim, {
 
 do
   local a = vim.api
-  local fn = vim.fn
   local validate = vim.validate
   local function make_meta_accessor(get, set, del)
     validate {
@@ -320,7 +319,7 @@ do
   vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
   vim.o = make_meta_accessor(nil_wrap(a.nvim_get_option), a.nvim_set_option)
-  vim.env = make_meta_accessor(fn.getenv, fn.setenv)
+  vim.env = make_meta_accessor(vim.fn.getenv, vim.fn.setenv)
   local function new_win_accessor(winnr)
     local function get(k)    return a.nvim_win_get_var(winnr, k) end
     local function set(k, v) return a.nvim_win_set_var(winnr, k, v) end
