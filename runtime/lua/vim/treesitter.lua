@@ -30,6 +30,13 @@ function Parser:_on_lines(bufnr, _, start_row, old_stop_row, stop_row, old_byte_
   self.valid = false
 end
 
+function Parser:_on_bytes(bufnr, _, row, col, old, new)
+  local start_byte = a.nvim_buf_get_offset(bufnr,row) + col
+  self._parser:edit(start_byte,start_byte+old,start_byte+new,
+                    row,col,row,col+old,row,col+new)
+  self.valid = false
+end
+
 local module = {
   add_language=vim._ts_add_language,
   inspect_language=vim._ts_inspect_language,
@@ -49,6 +56,9 @@ function module.create_parser(bufnr, ft, id)
   local function lines_cb(_, ...)
     return self:_on_lines(...)
   end
+  local function bytes_cb(_, ...)
+    return self:_on_bytes(...)
+  end
   local detach_cb = nil
   if id ~= nil then
     detach_cb = function()
@@ -57,7 +67,7 @@ function module.create_parser(bufnr, ft, id)
       end
     end
   end
-  a.nvim_buf_attach(self.bufnr, false, {on_lines=lines_cb, on_detach=detach_cb})
+  a.nvim_buf_attach(self.bufnr, false, {on_lines=lines_cb, on_bytes=bytes_cb, on_detach=detach_cb})
   return self
 end
 
