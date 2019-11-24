@@ -284,19 +284,7 @@ setmetatable(vim, {
 do
   local a = vim.api
   local fn = vim.fn
-  local nvim_command = a.nvim_command
-  local tbl_flatten = vim.tbl_flatten
   local validate = vim.validate
-  vim.cmd = setmetatable({}, {
-    __index = function(t, k)
-      local command = k:gsub("_$", "!")
-      local f = function(...)
-        return nvim_command(table.concat(tbl_flatten {command, ...}, " "))
-      end
-      t[k] = f
-      return f
-    end
-  })
   local function make_meta_accessor(get, set, del)
     validate {
       get = {get, 'f'};
