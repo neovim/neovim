@@ -1191,7 +1191,7 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
     api_set_error(err, kErrorTypeValidation, "line value outside range");
     return 0;
   } else if (line < buf->b_ml.ml_line_count) {
-    len = STRLEN(ml_get_buf(curbuf, (linenr_T)line+1, false));
+    len = STRLEN(ml_get_buf(buf, (linenr_T)line+1, false));
   }
 
   if (col == -1) {
