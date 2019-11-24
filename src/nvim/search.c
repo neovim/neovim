@@ -3777,30 +3777,31 @@ find_prev_quote(
   return col_start;
 }
 
-/*
- * Find quote under the cursor, cursor at end.
- * Returns TRUE if found, else FALSE.
- */
-int
-current_quote(
+// Find quote under the cursor, cursor at end.
+// Returns true if found, else false.
+bool current_quote(
     oparg_T *oap,
     long count,
-    int include,                    /* TRUE == include quote char */
-    int quotechar                  /* Quote character */
+    bool include,                 // true == include quote char
+    int quotechar                 // Quote character
 )
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u      *line = get_cursor_line_ptr();
   int col_end;
   int col_start = curwin->w_cursor.col;
   bool inclusive = false;
-  int vis_empty = true;                 // Visual selection <= 1 char
-  int vis_bef_curs = false;             // Visual starts before cursor
-  int inside_quotes = false;            // Looks like "i'" done before
-  int selected_quote = false;           // Has quote inside selection
+  bool vis_empty = true;                // Visual selection <= 1 char
+  bool vis_bef_curs = false;            // Visual starts before cursor
+  bool did_exclusive_adj = false;       // adjusted pos for 'selection'
+  bool inside_quotes = false;           // Looks like "i'" done before
+  bool selected_quote = false;          // Has quote inside selection
   int i;
-  int restore_vis_bef = false;          // resotre VIsual on abort
+  bool restore_vis_bef = false;         // resotre VIsual on abort
 
-  // Correct cursor when 'selection' is "exclusive".
+  // When 'selection' is "exclusive" move the cursor to where it would be
+  // with 'selection' "inclusive", so that the logic is the same for both.
+  // The cursor then is moved forward after adjusting the area.
   if (VIsual_active) {
     // this only works within one line
     if (VIsual.lnum != curwin->w_cursor.lnum) {
@@ -3810,6 +3811,14 @@ current_quote(
     vis_bef_curs = lt(VIsual, curwin->w_cursor);
     vis_empty = equalpos(VIsual, curwin->w_cursor);
     if (*p_sel == 'e') {
+      if (vis_bef_curs) {
+        dec_cursor();
+        did_exclusive_adj = true;
+      } else if (!vis_empty) {
+        dec(&VIsual);
+        did_exclusive_adj = true;
+      }
+      vis_empty = equalpos(VIsual, curwin->w_cursor);
       if (!vis_bef_curs && !vis_empty) {
         // VIsual needs to be start of Visual selection.
         pos_T t = curwin->w_cursor;
@@ -3819,8 +3828,6 @@ current_quote(
         vis_bef_curs = true;
         restore_vis_bef = true;
       }
-      dec_cursor();
-      vis_empty = equalpos(VIsual, curwin->w_cursor);
     }
   }
 
@@ -3846,7 +3853,7 @@ current_quote(
     /* Find out if we have a quote in the selection. */
     while (i <= col_end)
       if (line[i++] == quotechar) {
-        selected_quote = TRUE;
+        selected_quote = true;
         break;
       }
   }
@@ -3935,8 +3942,8 @@ current_quote(
     }
   }
 
-  /* When "include" is TRUE, include spaces after closing quote or before
-   * the starting quote. */
+  // When "include" is true, include spaces after closing quote or before
+  // the starting quote.
   if (include) {
     if (ascii_iswhite(line[col_end + 1]))
       while (ascii_iswhite(line[col_end + 1]))
@@ -3982,9 +3989,10 @@ current_quote(
     inclusive = true;
   if (VIsual_active) {
     if (vis_empty || vis_bef_curs) {
-      /* decrement cursor when 'selection' is not exclusive */
-      if (*p_sel != 'e')
+      // decrement cursor when 'selection' is not exclusive
+      if (*p_sel != 'e') {
         dec_cursor();
+      }
     } else {
       /* Cursor is at start of Visual area.  Set the end of the Visual
        * area when it was just inside quotes or it didn't end at a
@@ -4008,11 +4016,13 @@ current_quote(
     oap->inclusive = inclusive;
   }
 
-  return OK;
+  return true;
 
 abort_search:
   if (VIsual_active && *p_sel == 'e') {
-    inc_cursor();
+    if (did_exclusive_adj) {
+      inc_cursor();
+    }
     if (restore_vis_bef) {
        pos_T t = curwin->w_cursor;
 
