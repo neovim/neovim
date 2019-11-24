@@ -191,9 +191,6 @@ static char_u * const namespace_char = (char_u *)"abglstvw";
 /// Variable used for g:
 static ScopeDictDictItem globvars_var;
 
-/// g: value
-#define globvarht globvardict.dv_hashtab
-
 /*
  * Old Vim variables such as "v:version" are also available without the "v:".
  * Also in functions.  We need a special hashtable for them.
@@ -202,21 +199,13 @@ static hashtab_T compat_hashtab;
 
 hashtab_T func_hashtab;
 
+var_flavour_T VAR_FLAVOUR_ALL =
+  VAR_FLAVOUR_DEFAULT | VAR_FLAVOUR_SESSION | VAR_FLAVOUR_SHADA;
+
 // Used for checking if local variables or arguments used in a lambda.
 static int *eval_lavars_used = NULL;
 
-/*
- * Array to hold the hashtab with variables local to each sourced script.
- * Each item holds a variable (nameless) that points to the dict_T.
- */
-typedef struct {
-  ScopeDictDictItem sv_var;
-  dict_T sv_dict;
-} scriptvar_T;
-
-static garray_T ga_scripts = {0, 0, sizeof(scriptvar_T *), 4, NULL};
-#define SCRIPT_SV(id) (((scriptvar_T **)ga_scripts.ga_data)[(id) - 1])
-#define SCRIPT_VARS(id) (SCRIPT_SV(id)->sv_dict.dv_hashtab)
+garray_T ga_scripts = { 0, 0, sizeof(scriptvar_T *), 4, NULL };
 
 static int echo_attr = 0;   /* attributes used for ":echo" */
 
@@ -245,15 +234,6 @@ typedef enum {
   GLV_READ_ONLY = TFN_READ_ONLY,  ///< Indicates that caller will not change
                                   ///< the value (prevents error message).
 } GetLvalFlags;
-
-// flags used in uf_flags
-#define FC_ABORT    0x01          // abort function on error
-#define FC_RANGE    0x02          // function accepts range
-#define FC_DICT     0x04          // Dict function, uses "self"
-#define FC_CLOSURE  0x08          // closure, uses outer scope variables
-#define FC_DELETED  0x10          // :delfunction used while uf_refcount > 0
-#define FC_REMOVED  0x20          // function redefined while uf_refcount > 0
-#define FC_SANDBOX  0x40          // function defined in the sandbox
 
 // The names of packages that once were loaded are remembered.
 static garray_T ga_loaded = { 0, 0, sizeof(char_u *), 4, NULL };
@@ -8222,7 +8202,7 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[0].v_type == VAR_NUMBER) {
     index = argvars[0].vval.v_number;
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as an argument");
+    EMSG2(_(e_invarg2), "index");
     return;
   }
 
@@ -8242,8 +8222,11 @@ static void f_ctxget(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 /// "ctxpop()" function
 static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
-  if (!ctx_restore(NULL, kCtxAll)) {
-    EMSG(_("Context stack is empty"));
+  Error err = ERROR_INIT;
+  ctx_restore(NULL, &err);
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
   }
 }
 
@@ -8251,28 +8234,22 @@ static void f_ctxpop(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   int types = kCtxAll;
+  Error err = ERROR_INIT;
   if (argvars[0].v_type == VAR_LIST) {
     types = 0;
     TV_LIST_ITER(argvars[0].vval.v_list, li, {
       typval_T *tv_li = TV_LIST_ITEM_TV(li);
       if (tv_li->v_type == VAR_STRING) {
-        if (strequal((char *)tv_li->vval.v_string, "regs")) {
-          types |= kCtxRegs;
-        } else if (strequal((char *)tv_li->vval.v_string, "jumps")) {
-          types |= kCtxJumps;
-        } else if (strequal((char *)tv_li->vval.v_string, "bufs")) {
-          types |= kCtxBufs;
-        } else if (strequal((char *)tv_li->vval.v_string, "gvars")) {
-          types |= kCtxGVars;
-        } else if (strequal((char *)tv_li->vval.v_string, "sfuncs")) {
-          types |= kCtxSFuncs;
-        } else if (strequal((char *)tv_li->vval.v_string, "funcs")) {
-          types |= kCtxFuncs;
+        CONTEXT_TYPE_FROM_STR(types, (char *)tv_li->vval.v_string, &err);
+        if (ERROR_SET(&err)) {
+          EMSG(err.msg);
+          api_clear_error(&err);
+          return;
         }
       }
     });
   } else if (argvars[0].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a List as an argument");
+    EMSG2(_(e_invarg2), "types");
     return;
   }
   ctx_save(NULL, types);
@@ -8282,7 +8259,7 @@ static void f_ctxpush(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   if (argvars[0].v_type != VAR_DICT) {
-    EMSG2(_(e_invarg2), "expected dictionary as first argument");
+    EMSG2(_(e_invarg2), "context");
     return;
   }
 
@@ -8290,7 +8267,7 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   if (argvars[1].v_type == VAR_NUMBER) {
     index = argvars[1].vval.v_number;
   } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    EMSG2(_(e_invarg2), "expected nothing or a Number as second argument");
+    EMSG2(_(e_invarg2), "index");
     return;
   }
 
@@ -8300,22 +8277,18 @@ static void f_ctxset(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     return;
   }
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
-
   Dictionary dict = vim_to_object(&argvars[0]).data.dictionary;
   Context tmp = CONTEXT_INIT;
-  ctx_from_dict(dict, &tmp);
-
-  if (did_emsg) {
-    ctx_free(&tmp);
-  } else {
-    ctx_free(ctx);
-    *ctx = tmp;
-  }
-
+  Error err = ERROR_INIT;
+  ctx_from_dict(dict, &tmp, &err);
   api_free_dictionary(dict);
-  did_emsg = save_did_emsg;
+  if (ERROR_SET(&err)) {
+    EMSG(err.msg);
+    api_clear_error(&err);
+    return;
+  }
+  ctx_free(ctx);
+  *ctx = tmp;
 }
 
 /// "ctxsize()" function
@@ -10115,7 +10088,7 @@ static void f_getbufvar(typval_T *argvars, typval_T *rettv, FunPtr fptr)
     if (*varname == '&') {  // buffer-local-option
       if (varname[1] == NUL) {
         // get all buffer-local options in a dict
-        dict_T *opts = get_winbuf_options(true);
+        dict_T *opts = get_options(SREQ_BUF, true, false);
 
         if (opts != NULL) {
           tv_dict_set_ret(rettv, opts);
@@ -11354,7 +11327,7 @@ getwinvar(
       if (*varname == '&') {
         if (varname[1] == NUL) {
           // get all window-local options in a dict
-          dict_T *opts = get_winbuf_options(false);
+          dict_T *opts = get_options(SREQ_WIN, true, false);
 
           if (opts != NULL) {
             tv_dict_set_ret(rettv, opts);
@@ -20200,7 +20173,8 @@ static void check_vars(const char *name, size_t len)
   const char *varname;
   hashtab_T *ht = find_var_ht(name, len, &varname);
 
-  if (ht == get_funccal_local_ht() || ht == get_funccal_args_ht()) {
+  if (ht == get_funccal_local_ht(current_funccal)
+      || ht == get_funccal_args_ht()) {
     if (find_var(name, len, NULL, true) != NULL) {
       *eval_lavars_used = true;
     }
@@ -20486,7 +20460,7 @@ static dictitem_T *find_var_in_ht(hashtab_T *const ht,
 }
 
 // Get function call environment based on backtrace debug level
-static funccall_T *get_funccal(void)
+funccall_T *get_funccal(void)
 {
   funccall_T *funccal = current_funccal;
   if (debug_backtrace_level > 0) {
@@ -20504,6 +20478,17 @@ static funccall_T *get_funccal(void)
   return funccal;
 }
 
+/// Get parent scope funccall_T for the given funccall_T (closure).
+///
+/// @param[in]  fc  Pointer to funccall_T to get parent scope of.
+///
+/// @return Pointer to parent scope funccall_T of "fc" or NULL.
+funccall_T *get_funccal_parent_scope(funccall_T *fc)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return fc->func->uf_scoped;
+}
+
 /// Return the hashtable used for argument in the current funccal.
 /// Return NULL if there is no current funccal.
 static hashtab_T *get_funccal_args_ht(void)
@@ -20514,14 +20499,15 @@ static hashtab_T *get_funccal_args_ht(void)
   return &get_funccal()->l_avars.dv_hashtab;
 }
 
-/// Return the hashtable used for local variables in the current funccal.
-/// Return NULL if there is no current funccal.
-static hashtab_T *get_funccal_local_ht(void)
+/// Return the hashtable used for local variables in the given funccal.
+///
+/// @param[in]  fc  Pointer to funccall_T.
+///
+/// @return Hashtable used for local variables in "fc".
+///         NULL if "fc" is NULL.
+hashtab_T *get_funccal_local_ht(funccall_T *fc)
 {
-  if (current_funccal == NULL) {
-    return NULL;
-  }
-  return &get_funccal()->l_vars.dv_hashtab;
+  return fc ? &fc->l_vars.dv_hashtab : NULL;
 }
 
 /// Find the dict and hashtable used for a variable
@@ -21419,7 +21405,7 @@ void ex_function(exarg_T *eap)
             continue;
           }
           if (!func_name_refcount(fp->uf_name)) {
-            list_func_head(fp, false, false);
+            list_func_head(fp, false);
           }
         }
       }
@@ -21450,7 +21436,7 @@ void ex_function(exarg_T *eap)
             fp = HI2UF(hi);
             if (!isdigit(*fp->uf_name)
                 && vim_regexec(&regmatch, fp->uf_name, 0))
-              list_func_head(fp, false, false);
+              list_func_head(fp, false);
           }
         }
         vim_regfree(regmatch.regprog);
@@ -21517,20 +21503,18 @@ void ex_function(exarg_T *eap)
     if (!eap->skip && !got_int) {
       fp = find_func(name);
       if (fp != NULL) {
-        list_func_head(fp, !eap->forceit, eap->forceit);
+        list_func_head(fp, true);
         for (int j = 0; j < fp->uf_lines.ga_len && !got_int; j++) {
           if (FUNCLINE(fp, j) == NULL) {
             continue;
           }
           msg_putchar('\n');
-          if (!eap->forceit) {
-            msg_outnum((long)j + 1);
-            if (j < 9) {
-              msg_putchar(' ');
-            }
-            if (j < 99) {
-              msg_putchar(' ');
-            }
+          msg_outnum((long)j + 1);
+          if (j < 9) {
+            msg_putchar(' ');
+          }
+          if (j < 99) {
+            msg_putchar(' ');
           }
           msg_prt_line(FUNCLINE(fp, j), false);
           ui_flush();                  // show a line at a time
@@ -21538,7 +21522,7 @@ void ex_function(exarg_T *eap)
         }
         if (!got_int) {
           msg_putchar('\n');
-          msg_puts(eap->forceit ? "endfunction" : "   endfunction");
+          msg_puts("   endfunction");
         }
       } else
         emsg_funcname(N_("E123: Undefined function: %s"), name);
@@ -22299,13 +22283,12 @@ static inline bool eval_fname_sid(const char *const name)
 ///
 /// @param[in]  fp      Function pointer.
 /// @param[in]  indent  Indent line.
-/// @param[in]  force   Include bang "!" (i.e.: "function!").
-static void list_func_head(ufunc_T *fp, int indent, bool force)
+static void list_func_head(ufunc_T *fp, int indent)
 {
   msg_start();
   if (indent)
     MSG_PUTS("   ");
-  MSG_PUTS(force ? "function! " : "function ");
+  MSG_PUTS("function ");
   if (fp->uf_name[0] == K_SPECIAL) {
     MSG_PUTS_ATTR("<SNR>", HL_ATTR(HLF_8));
     msg_puts((const char *)fp->uf_name + 3);
@@ -22802,7 +22785,7 @@ static void cat_func_name(char_u *buf, ufunc_T *fp)
 /// For the first we only count the name stored in func_hashtab as a reference,
 /// using function() does not count as a reference, because the function is
 /// looked up by name.
-static bool func_name_refcount(char_u *name)
+bool func_name_refcount(char_u *name)
 {
   return isdigit(*name) || *name == '<';
 }
@@ -23893,30 +23876,34 @@ dictitem_T *find_var_in_scoped_ht(const char *name, const size_t namelen,
   return v;
 }
 
-/// Iterate over global variables
+/// Iterate over variables in hashtable.
 ///
-/// @warning No modifications to global variable dictionary must be performed
-///          while iteration is in progress.
+/// @warning No modifications to the given variable dictionary must be
+///          performed while iteration is in progress.
 ///
+/// @param[in]   ht     Hashtable to iterate over.
 /// @param[in]   iter   Iterator. Pass NULL to start iteration.
+/// @param[in]   flav   Variable name "flavour" to consider. See var_flavour_T.
 /// @param[out]  name   Variable name.
 /// @param[out]  rettv  Variable value.
 ///
 /// @return Pointer that needs to be passed to next `var_shada_iter` invocation
 ///         or NULL to indicate that iteration is over.
-const void *var_shada_iter(const void *const iter, const char **const name,
-                           typval_T *rettv, var_flavour_T flavour)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(2, 3)
+const void *var_shada_iter(const hashtab_T *ht, const void *const iter,
+                           var_flavour_T flav, const char **const name,
+                           typval_T *rettv)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ARG(1, 4, 5)
 {
   const hashitem_T *hi;
-  const hashitem_T *hifirst = globvarht.ht_array;
-  const size_t hinum = (size_t) globvarht.ht_mask + 1;
+  const hashitem_T *hifirst = ht->ht_array;
+  const size_t hinum = (size_t)ht->ht_mask + 1;
   *name = NULL;
   if (iter == NULL) {
-    hi = globvarht.ht_array;
-    while ((size_t) (hi - hifirst) < hinum
+    hi = ht->ht_array;
+    while ((size_t)(hi - hifirst) < hinum
            && (HASHITEM_EMPTY(hi)
-               || !(var_flavour(hi->hi_key) & flavour))) {
+               || !(var_flavour(hi->hi_key) & flav)
+               || (TV_DICT_HI2DI(hi)->di_flags & DI_FLAGS_RO))) {
       hi++;
     }
     if ((size_t) (hi - hifirst) == hinum) {
@@ -23928,17 +23915,20 @@ const void *var_shada_iter(const void *const iter, const char **const name,
   *name = (char *)TV_DICT_HI2DI(hi)->di_key;
   tv_copy(&TV_DICT_HI2DI(hi)->di_tv, rettv);
   while ((size_t)(++hi - hifirst) < hinum) {
-    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flavour)) {
+    if (!HASHITEM_EMPTY(hi) && (var_flavour(hi->hi_key) & flav)
+        && !(TV_DICT_HI2DI(hi)->di_flags & DI_FLAGS_RO)) {
       return hi;
     }
   }
   return NULL;
 }
 
-void var_set_global(const char *const name, typval_T vartv)
+void var_set(const char *const name, typval_T vartv, bool keep_funccal)
 {
   funccall_T *const saved_current_funccal = current_funccal;
-  current_funccal = NULL;
+  if (!keep_funccal) {
+    current_funccal = NULL;
+  }
   set_var(name, strlen(name), &vartv, false);
   current_funccal = saved_current_funccal;
 }

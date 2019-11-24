@@ -1403,14 +1403,14 @@ Dictionary nvim_get_color_map(void)
   return colors;
 }
 
-/// Gets a map of the current editor state.
+/// Returns a map of the current editor state (see |context|).
 ///
 /// @param opts  Optional parameters.
-///               - types:  List of |context-types| ("regs", "jumps", "bufs",
-///                 "gvars", …) to gather, or empty for "all".
+///               - types:  Array of |context-types| ("regs", "jumps", "bufs",
+///                 "gvars", …) to gather, or empty for all.
 /// @param[out]  err  Error details, if any
 ///
-/// @return map of global |context|.
+/// @return Map of global |context| (see |context-map|).
 Dictionary nvim_get_context(Dictionary opts, Error *err)
   FUNC_API_SINCE(6)
 {
@@ -1435,21 +1435,8 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
   if (types.size > 0) {
     for (size_t i = 0; i < types.size; i++) {
       if (types.items[i].type == kObjectTypeString) {
-        const char *const s = types.items[i].data.string.data;
-        if (strequal(s, "regs")) {
-          int_types |= kCtxRegs;
-        } else if (strequal(s, "jumps")) {
-          int_types |= kCtxJumps;
-        } else if (strequal(s, "bufs")) {
-          int_types |= kCtxBufs;
-        } else if (strequal(s, "gvars")) {
-          int_types |= kCtxGVars;
-        } else if (strequal(s, "sfuncs")) {
-          int_types |= kCtxSFuncs;
-        } else if (strequal(s, "funcs")) {
-          int_types |= kCtxFuncs;
-        } else {
-          api_set_error(err, kErrorTypeValidation, "unexpected type: %s", s);
+        CONTEXT_TYPE_FROM_STR(int_types, types.items[i].data.string.data, err);
+        if (ERROR_SET(err)) {
           return (Dictionary)ARRAY_DICT_INIT;
         }
       }
@@ -1463,25 +1450,28 @@ Dictionary nvim_get_context(Dictionary opts, Error *err)
   return dict;
 }
 
-/// Sets the current editor state from the given |context| map.
+/// Sets the current editor state from the given |context-map|.
 ///
-/// @param  dict  |Context| map.
-Object nvim_load_context(Dictionary dict)
+/// @param[in]    dict  Context map.
+/// @param[out]   err   Error details, if any.
+Object nvim_load_context(Dictionary dict, Error *err)
   FUNC_API_SINCE(6)
 {
   Context ctx = CONTEXT_INIT;
+  Error _err = ERROR_INIT;
 
-  int save_did_emsg = did_emsg;
-  did_emsg = false;
+  ctx_from_dict(dict, &ctx, &_err);
+  if (!ERROR_SET(&_err)) {
+    ctx_restore(&ctx, &_err);
+  }
 
-  ctx_from_dict(dict, &ctx);
-  if (!did_emsg) {
-    ctx_restore(&ctx, kCtxAll);
+  if (ERROR_SET(&_err)) {
+    api_set_error(err, kErrorTypeException,
+                  "malformed context dictionary: %s", _err.msg);
+    api_clear_error(&_err);
   }
 
   ctx_free(&ctx);
-
-  did_emsg = save_did_emsg;
   return (Object)OBJECT_INIT;
 }
 
