@@ -265,7 +265,10 @@ vim.fn = setmetatable({}, {
 -- These are for loading runtime modules lazily since they aren't available in
 -- the nvim binary as specified in executor.c
 local function __index(t, key)
-  if key == 'treesitter' then
+  if key == 'inspect' then
+    t.inspect = require('vim.inspect')
+    return t.inspect
+  elseif key == 'treesitter' then
     t.treesitter = require('vim.treesitter')
     return t.treesitter
   elseif require('vim.uri')[key] ~= nil then
