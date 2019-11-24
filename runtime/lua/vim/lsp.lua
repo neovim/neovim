@@ -1,9 +1,10 @@
-local builtin_callbacks = require 'vim.lsp.builtin_callbacks'
+local default_callbacks = require 'vim.lsp.default_callbacks'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
 local util = require 'vim.lsp.util'
 
+local vim = vim
 local nvim_err_writeln, nvim_buf_get_lines, nvim_command, nvim_buf_get_option
   = vim.api.nvim_err_writeln, vim.api.nvim_buf_get_lines, vim.api.nvim_command, vim.api.nvim_buf_get_option
 local uv = vim.loop
@@ -12,7 +13,8 @@ local validate = vim.validate
 
 local lsp = {
   protocol = protocol;
-  builtin_callbacks = builtin_callbacks;
+  default_callbacks = default_callbacks;
+  buf = require'vim.lsp.buf';
   util = util;
   -- Allow raw RPC access.
   rpc = lsp_rpc;
@@ -24,6 +26,11 @@ local lsp = {
 }
 
 -- TODO improve handling of scratch buffers with LSP attached.
+
+local function err_message(...)
+  nvim_err_writeln(table.concat(vim.tbl_flatten{...}))
+  nvim_command("redraw")
+end
 
 local function resolve_bufnr(bufnr)
   validate { bufnr = { bufnr, 'n', true } }
@@ -92,11 +99,7 @@ local function for_each_buffer_client(bufnr, callback)
     return
   end
   for client_id in pairs(client_ids) do
-    -- This is unlikely to happen. Could only potentially happen in a race
-    -- condition between literally a single statement.
-    -- We could skip this error, but let's error for now.
     local client = active_clients[client_id]
-        -- or error(string.format("Client %d has already shut down.", client_id))
     if client then
       callback(client, client_id)
     end
@@ -154,13 +157,13 @@ local function validate_client_config(config)
     root_dir        = { config.root_dir, is_dir, "directory" };
     callbacks       = { config.callbacks, "t", true };
     capabilities    = { config.capabilities, "t", true };
-    -- cmd             = { config.cmd, "s", false };
     cmd_cwd         = { config.cmd_cwd, optional_validator(is_dir), "directory" };
     cmd_env         = { config.cmd_env, "f", true };
     name            = { config.name, 's', true };
     on_error        = { config.on_error, "f", true };
     on_exit         = { config.on_exit, "f", true };
     on_init         = { config.on_init, "f", true };
+    before_init     = { config.before_init, "f", true };
     offset_encoding = { config.offset_encoding, "s", true };
   }
   local cmd, cmd_args = validate_command(config.cmd)
@@ -261,6 +264,12 @@ end
 -- possible errors. `vim.lsp.client_errors[code]` can be used to retrieve a
 -- human understandable string.
 --
+-- before_init(initialize_params, config): A function which is called *before*
+-- the request `initialize` is completed. `initialize_params` contains
+-- the parameters we are sending to the server and `config` is the config that
+-- was passed to `start_client()` for convenience. You can use this to modify
+-- parameters before they are sent.
+--
 -- on_init(client, initialize_result): A function which is called after the
 -- request `initialize` is completed. `initialize_result` contains
 -- `capabilities` and anything else the server may send. For example, `clangd`
@@ -290,19 +299,19 @@ function lsp.start_client(config)
 
   local client_id = next_client_id()
 
-  local callbacks = tbl_extend("keep", config.callbacks or {}, builtin_callbacks)
-  -- Copy metatable if it has one.
-  if config.callbacks and config.callbacks.__metatable then
-    setmetatable(callbacks, getmetatable(config.callbacks))
-  end
+  local callbacks = config.callbacks or {}
   local name = config.name or tostring(client_id)
   local log_prefix = string.format("LSP[%s]", name)
 
   local handlers = {}
 
+  local function resolve_callback(method)
+    return callbacks[method] or default_callbacks[method]
+  end
+
   function handlers.notification(method, params)
     local _ = log.debug() and log.debug('notification', method, params)
-    local callback = callbacks[method]
+    local callback = resolve_callback(method)
     if callback then
       -- Method name is provided here for convenience.
       callback(nil, method, params, client_id)
@@ -311,7 +320,7 @@ function lsp.start_client(config)
 
   function handlers.server_request(method, params)
     local _ = log.debug() and log.debug('server_request', method, params)
-    local callback = callbacks[method]
+    local callback = resolve_callback(method)
     if callback then
       local _ = log.debug() and log.debug("server_request: found callback for", method)
       return callback(nil, method, params, client_id)
@@ -322,12 +331,12 @@ function lsp.start_client(config)
 
   function handlers.on_error(code, err)
     local _ = log.error() and log.error(log_prefix, "on_error", { code = lsp.client_errors[code], err = err })
-    nvim_err_writeln(string.format('%s: Error %s: %q', log_prefix, lsp.client_errors[code], vim.inspect(err)))
+    err_message(log_prefix, ': Error ', lsp.client_errors[code], ': ', vim.inspect(err))
     if config.on_error then
       local status, usererr = pcall(config.on_error, code, err)
       if not status then
         local _ = log.error() and log.error(log_prefix, "user on_error failed", { err = usererr })
-        nvim_err_writeln(log_prefix.." user on_error failed: "..tostring(usererr))
+        err_message(log_prefix, ' user on_error failed: ', tostring(usererr))
       end
     end
   end
@@ -335,9 +344,19 @@ function lsp.start_client(config)
   function handlers.on_exit(code, signal)
     active_clients[client_id] = nil
     uninitialized_clients[client_id] = nil
-    for _, client_ids in pairs(all_buffer_active_clients) do
+    local active_buffers = {}
+    for bufnr, client_ids in pairs(all_buffer_active_clients) do
+      if client_ids[client_id] then
+        table.insert(active_buffers, bufnr)
+      end
       client_ids[client_id] = nil
     end
+    -- Buffer level cleanup
+    vim.schedule(function()
+      for _, bufnr in ipairs(active_buffers) do
+        util.buf_clear_diagnostics(bufnr)
+      end
+    end)
     if config.on_exit then
       pcall(config.on_exit, code, signal, client_id)
     end
@@ -379,7 +398,6 @@ function lsp.start_client(config)
       -- The rootUri of the workspace. Is null if no folder is open. If both
       -- `rootPath` and `rootUri` are set `rootUri` wins.
       rootUri = vim.uri_from_fname(config.root_dir);
---      rootUri = vim.uri_from_fname(vim.fn.expand("%:p:h"));
       -- User provided initialization options.
       initializationOptions = config.init_options;
       -- The capabilities provided by the client (editor or tool)
@@ -403,11 +421,15 @@ function lsp.start_client(config)
       -- }
       workspaceFolders = nil;
     }
+    if config.before_init then
+      -- TODO(ashkan) handle errors here.
+      pcall(config.before_init, initialize_params, config)
+    end
     local _ = log.debug() and log.debug(log_prefix, "initialize_params", initialize_params)
     rpc.request('initialize', initialize_params, function(init_err, result)
       assert(not init_err, tostring(init_err))
       assert(result, "server sent empty result")
-      rpc.notify('initialized', {})
+      rpc.notify('initialized', {[vim.type_idx]=vim.types.dictionary})
       client.initialized = true
       uninitialized_clients[client_id] = nil
       client.server_capabilities = assert(result.capabilities, "initialize result doesn't contain capabilities")
@@ -439,14 +461,14 @@ function lsp.start_client(config)
   local function unsupported_method(method)
     local msg = "server doesn't support "..method
     local _ = log.warn() and log.warn(msg)
-    nvim_err_writeln(msg)
+    err_message(msg)
     return lsp.rpc_response_error(protocol.ErrorCodes.MethodNotFound, msg)
   end
 
   --- Checks capabilities before rpc.request-ing.
   function client.request(method, params, callback)
     if not callback then
-      callback = client.callbacks[method]
+      callback = resolve_callback(method)
         or error(string.format("request callback is empty and no default was found for client %s", client.name))
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
@@ -851,7 +873,7 @@ function lsp.omnifunc(findstart, base)
       position = {
         -- 0-indexed for both line and character
         line = pos[1] - 1,
-        character = pos[2],
+        character = vim.str_utfindex(line, pos[2]),
       };
       -- The completion context. This is only available if the client specifies
       -- to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
@@ -876,134 +898,8 @@ function lsp.omnifunc(findstart, base)
   end
 end
 
----
---- FileType based configuration utility
----
-
-local all_filetype_configs = {}
-
--- Lookup a filetype config client by its name.
-function lsp.get_filetype_client_by_name(name)
-  local config = all_filetype_configs[name]
-  if config.client_id then
-    return active_clients[config.client_id]
-  end
-end
-
-local function start_filetype_config(config)
-  config.client_id = lsp.start_client(config)
-  nvim_command(string.format(
-    "autocmd FileType %s silent lua vim.lsp.buf_attach_client(0, %d)",
-    table.concat(config.filetypes, ','),
-    config.client_id))
-  return config.client_id
-end
-
--- Easy configuration option for common LSP use-cases.
--- This will lazy initialize the client when the filetypes specified are
--- encountered and attach to those buffers.
---
--- The configuration options are the same as |vim.lsp.start_client()|, but
--- with a few additions and distinctions:
---
--- Additional parameters:
--- - filetype: {string} or {list} of filetypes to attach to.
--- - name: A unique string among all other servers configured with
--- |vim.lsp.add_filetype_config|.
---
--- Differences:
--- - root_dir: will default to |getcwd()|
---
-function lsp.add_filetype_config(config)
-  -- Additional defaults.
-  -- Keep a copy of the user's input for debugging reasons.
-  local user_config = config
-  config = tbl_extend("force", {}, user_config)
-  config.root_dir = config.root_dir or uv.cwd()
-  -- Validate config.
-  validate_client_config(config)
-  validate {
-    name = { config.name, 's' };
-  }
-  assert(config.filetype, "config must have 'filetype' key")
-
-  local filetypes
-  if type(config.filetype) == 'string' then
-    filetypes = { config.filetype }
-  elseif type(config.filetype) == 'table' then
-    filetypes = config.filetype
-    assert(not tbl_isempty(filetypes), "config.filetype must not be an empty table")
-  else
-    error("config.filetype must be a string or a list of strings")
-  end
-
-  if all_filetype_configs[config.name] then
-    -- If the client exists, then it is likely that they are doing some kind of
-    -- reload flow, so let's not throw an error here.
-    if all_filetype_configs[config.name].client_id then
-      -- TODO log here? It might be unnecessarily annoying.
-      return
-    end
-    error(string.format('A configuration with the name %q already exists. They must be unique', config.name))
-  end
-
-  all_filetype_configs[config.name] = tbl_extend("keep", config, {
-    client_id = nil;
-    filetypes = filetypes;
-    user_config = user_config;
-  })
-
-  nvim_command(string.format(
-    "autocmd FileType %s ++once silent lua vim.lsp._start_filetype_config_client(%q)",
-    table.concat(filetypes, ','),
-    config.name))
-end
-
--- Create a copy of an existing configuration, and override config with values
--- from new_config.
--- This is useful if you wish you create multiple LSPs with different root_dirs
--- or other use cases.
---
--- You can specify a new unique name, but if you do not, a unique name will be
--- created like `name-dup_count`.
---
--- existing_name: the name of the existing config to copy.
--- new_config: the new configuration options. @see |vim.lsp.start_client()|.
--- @returns string the new name.
-function lsp.copy_filetype_config(existing_name, new_config)
-  local config = all_filetype_configs[existing_name]
-      or error(string.format("Configuration with name %q doesn't exist", existing_name))
-  config = tbl_extend("force", config, new_config or {})
-  config.client_id = nil
-  config.original_config_name = existing_name
-
-  -- If the user didn't rename it, we will.
-  if config.name == existing_name then
-    -- Create a new, unique name.
-    local duplicate_count = 0
-    for _, conf in pairs(all_filetype_configs) do
-      if conf.original_config_name == existing_name then
-        duplicate_count = duplicate_count + 1
-      end
-    end
-    config.name = string.format("%s-%d", existing_name, duplicate_count + 1)
-  end
-  print("New config name:", config.name)
-  lsp.add_filetype_config(config)
-  return config.name
-end
-
--- Autocmd handler to actually start the client when an applicable filetype is
--- encountered.
-function lsp._start_filetype_config_client(name)
-  local config = all_filetype_configs[name]
-  -- If it exists and is running, don't make it again.
-  if config.client_id and active_clients[config.client_id] then
-    -- TODO log here?
-    return
-  end
-  lsp.buf_attach_client(0, start_filetype_config(config))
-  return config.client_id
+function lsp.client_is_stopped(client_id)
+  return active_clients[client_id] == nil
 end
 
 ---
@@ -1030,7 +926,7 @@ end
 -- Print some debug information about all LSP related things.
 -- The output of this function should not be relied upon and may change.
 function lsp.print_debug_info()
-  print(vim.inspect({ clients = active_clients, filetype_configs = all_filetype_configs }))
+  print(vim.inspect({ clients = active_clients }))
 end
 
 -- Log level dictionary with reverse lookup as well.

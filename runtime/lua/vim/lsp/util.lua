@@ -1,4 +1,5 @@
 local protocol = require 'vim.lsp.protocol'
+local vim = vim
 local validate = vim.validate
 local api = vim.api
 
@@ -26,11 +27,90 @@ local function remove_prefix(prefix, word)
   return word:sub(prefix_length + 1)
 end
 
-local function resolve_bufnr(bufnr)
-  if bufnr == nil or bufnr == 0 then
-    return api.nvim_get_current_buf()
+-- TODO(ashkan) @performance this could do less copying.
+function M.set_lines(lines, A, B, new_lines)
+  -- 0-indexing to 1-indexing
+  local i_0 = A[1] + 1
+  local i_n = B[1] + 1
+  if not (i_0 >= 1 and i_0 <= #lines and i_n >= 1 and i_n <= #lines) then
+    error("Invalid range: "..vim.inspect{A = A; B = B; #lines, new_lines})
   end
-  return bufnr
+  local prefix = ""
+  local suffix = lines[i_n]:sub(B[2]+1)
+  if A[2] > 0 then
+    prefix = lines[i_0]:sub(1, A[2])
+  end
+  local n = i_n - i_0 + 1
+  if n ~= #new_lines then
+    for _ = 1, n - #new_lines do table.remove(lines, i_0) end
+    for _ = 1, #new_lines - n do table.insert(lines, i_0, '') end
+  end
+  for i = 1, #new_lines do
+    lines[i - 1 + i_0] = new_lines[i]
+  end
+  if #suffix > 0 then
+    local i = i_0 + #new_lines - 1
+    lines[i] = lines[i]..suffix
+  end
+  if #prefix > 0 then
+    lines[i_0] = prefix..lines[i_0]
+  end
+  return lines
+end
+
+local function sort_by_key(fn)
+  return function(a,b)
+    local ka, kb = fn(a), fn(b)
+    assert(#ka == #kb)
+    for i = 1, #ka do
+      if ka[i] ~= kb[i] then
+        return ka[i] < kb[i]
+      end
+    end
+    -- every value must have been equal here, which means it's not less than.
+    return false
+  end
+end
+local edit_sort_key = sort_by_key(function(e)
+  return {e.A[1], e.A[2], e.i}
+end)
+
+function M.apply_text_edits(text_edits, bufnr)
+  if not next(text_edits) then return end
+  local start_line, finish_line = math.huge, -1
+  local cleaned = {}
+  for i, e in ipairs(text_edits) do
+    start_line = math.min(e.range.start.line, start_line)
+    finish_line = math.max(e.range["end"].line, finish_line)
+    -- TODO(ashkan) sanity check ranges for overlap.
+    table.insert(cleaned, {
+      i = i;
+      A = {e.range.start.line; e.range.start.character};
+      B = {e.range["end"].line; e.range["end"].character};
+      lines = vim.split(e.newText, '\n', true);
+    })
+  end
+
+  -- Reverse sort the orders so we can apply them without interfering with
+  -- eachother. Also add i as a sort key to mimic a stable sort.
+  table.sort(cleaned, edit_sort_key)
+  local lines = api.nvim_buf_get_lines(bufnr, start_line, finish_line + 1, false)
+  local fix_eol = api.nvim_buf_get_option(bufnr, 'fixeol')
+  local set_eol = fix_eol and api.nvim_buf_line_count(bufnr) == finish_line + 1
+  if set_eol and #lines[#lines] ~= 0 then
+    table.insert(lines, '')
+  end
+
+  for i = #cleaned, 1, -1 do
+    local e = cleaned[i]
+    local A = {e.A[1] - start_line, e.A[2]}
+    local B = {e.B[1] - start_line, e.B[2]}
+    lines = M.set_lines(lines, A, B, e.lines)
+  end
+  if set_eol and #lines[#lines] == 0 then
+    table.remove(lines)
+  end
+  api.nvim_buf_set_lines(bufnr, start_line, finish_line + 1, false, lines)
 end
 
 -- local valid_windows_path_characters = "[^<>:\"/\\|?*]"
@@ -39,30 +119,6 @@ end
 -- https://stackoverflow.com/questions/1976007/what-characters-are-forbidden-in-windows-and-linux-directory-names
 -- function M.glob_to_regex(glob)
 -- end
-
---- Apply the TextEdit response.
--- @params TextEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-function M.text_document_apply_text_edit(text_edit, bufnr)
-  bufnr = resolve_bufnr(bufnr)
-  local range = text_edit.range
-  local start = range.start
-  local finish = range['end']
-  local new_lines = split_lines(text_edit.newText)
-  if start.character == 0 and finish.character == 0 then
-    api.nvim_buf_set_lines(bufnr, start.line, finish.line, false, new_lines)
-    return
-  end
-  api.nvim_err_writeln('apply_text_edit currently only supports character ranges starting at 0')
-  error('apply_text_edit currently only supports character ranges starting at 0')
-  return
-  --  TODO test and finish this support for character ranges.
---  local lines = api.nvim_buf_get_lines(0, start.line, finish.line + 1, false)
---  local suffix = lines[#lines]:sub(finish.character+2)
---  local prefix = lines[1]:sub(start.character+2)
---  new_lines[#new_lines] = new_lines[#new_lines]..suffix
---  new_lines[1] = prefix..new_lines[1]
---  api.nvim_buf_set_lines(0, start.line, finish.line, false, new_lines)
-end
 
 -- textDocument/completion response returns one of CompletionItem[], CompletionList or null.
 -- https://microsoft.github.io/language-server-protocol/specification#textDocument_completion
@@ -78,18 +134,15 @@ end
 
 --- Apply the TextDocumentEdit response.
 -- @params TextDocumentEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-function M.text_document_apply_text_document_edit(text_document_edit, bufnr)
-  -- local text_document = text_document_edit.textDocument
-  -- TODO use text_document_version?
-  -- local text_document_version = text_document.version
-
-  -- TODO technically, you could do this without doing multiple buf_get/set
-  -- by getting the full region (smallest line and largest line) and doing
-  -- the edits on the buffer, and then applying the buffer at the end.
-  -- I'm not sure if that's better.
-  for _, text_edit in ipairs(text_document_edit.edits) do
-    M.text_document_apply_text_edit(text_edit, bufnr)
+function M.apply_text_document_edit(text_document_edit)
+  local text_document = text_document_edit.textDocument
+  local bufnr = vim.uri_to_bufnr(text_document.uri)
+  -- TODO(ashkan) check this is correct.
+  if api.nvim_buf_get_changedtick(bufnr) > text_document.version then
+    print("Buffer ", text_document.uri, " newer than edits.")
+    return
   end
+  M.apply_text_edits(text_document_edit.edits, bufnr)
 end
 
 function M.get_current_line_to_cursor()
@@ -145,32 +198,27 @@ function M.text_document_completion_list_to_complete_items(result, line_prefix)
 end
 
 -- @params WorkspaceEdit [table] see https://microsoft.github.io/language-server-protocol/specification
-function M.workspace_apply_workspace_edit(workspace_edit)
+function M.apply_workspace_edit(workspace_edit)
   if workspace_edit.documentChanges then
     for _, change in ipairs(workspace_edit.documentChanges) do
       if change.kind then
         -- TODO(ashkan) handle CreateFile/RenameFile/DeleteFile
         error(string.format("Unsupported change: %q", vim.inspect(change)))
       else
-        M.text_document_apply_text_document_edit(change)
+        M.apply_text_document_edit(change)
       end
     end
     return
   end
 
-  if workspace_edit.changes == nil or #workspace_edit.changes == 0 then
+  local all_changes = workspace_edit.changes
+  if not (all_changes and not vim.tbl_isempty(all_changes)) then
     return
   end
 
-  for uri, changes in pairs(workspace_edit.changes) do
-    local fname = vim.uri_to_fname(uri)
-    -- TODO improve this approach. Try to edit open buffers without switching.
-    -- Not sure how to handle files which aren't open. This is deprecated
-    -- anyway, so I guess it could be left as is.
-    api.nvim_command('edit '..fname)
-    for _, change in ipairs(changes) do
-      M.text_document_apply_text_edit(change)
-    end
+  for uri, changes in pairs(all_changes) do
+    local bufnr = vim.uri_to_bufnr(uri)
+    M.apply_text_edits(changes, bufnr)
   end
 end
 
@@ -261,28 +309,26 @@ function M.open_floating_preview(contents, filetype, opts)
     filetype = { filetype, 's', true };
     opts = { opts, 't', true };
   }
+  opts = opts or {}
 
   -- Trim empty lines from the end.
-  for i = #contents, 1, -1 do
-    if #contents[i] == 0 then
-      table.remove(contents)
-    else
-      break
-    end
-  end
+  contents = M.trim_empty_lines(contents)
 
-  local width = 0
-  local height = #contents
-  for i, line in ipairs(contents) do
-    -- Clean up the input and add left pad.
-    line = " "..line:gsub("\r", "")
-    -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
-    local line_width = vim.fn.strdisplaywidth(line)
-    width = math.max(line_width, width)
-    contents[i] = line
+  local width = opts.width
+  local height = opts.height or #contents
+  if not width then
+    width = 0
+    for i, line in ipairs(contents) do
+      -- Clean up the input and add left pad.
+      line = " "..line:gsub("\r", "")
+      -- TODO(ashkan) use nvim_strdisplaywidth if/when that is introduced.
+      local line_width = vim.fn.strdisplaywidth(line)
+      width = math.max(line_width, width)
+      contents[i] = line
+    end
+    -- Add right padding of 1 each.
+    width = width + 1
   end
-  -- Add right padding of 1 each.
-  width = width + 1
 
   local floating_bufnr = api.nvim_create_buf(false, true)
   if filetype then
@@ -295,7 +341,8 @@ function M.open_floating_preview(contents, filetype, opts)
   end
   api.nvim_buf_set_lines(floating_bufnr, 0, -1, true, contents)
   api.nvim_buf_set_option(floating_bufnr, 'modifiable', false)
-  api.nvim_command("autocmd CursorMoved <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
+  -- TODO make InsertCharPre disappearing optional?
+  api.nvim_command("autocmd CursorMoved,BufHidden,InsertCharPre <buffer> ++once lua pcall(vim.api.nvim_win_close, "..floating_winnr..", true)")
   return floating_bufnr, floating_winnr
 end
 
@@ -527,30 +574,140 @@ do
   end
 end
 
-function M.buf_loclist(bufnr, locations)
-  local targetwin
-  for _, winnr in ipairs(api.nvim_list_wins()) do
-    local winbuf = api.nvim_win_get_buf(winnr)
-    if winbuf == bufnr then
-      targetwin = winnr
+local position_sort = sort_by_key(function(v)
+  return {v.line, v.character}
+end)
+
+-- Returns the items with the byte position calculated correctly and in sorted
+-- order.
+function M.locations_to_items(locations)
+  local items = {}
+  local grouped = setmetatable({}, {
+    __index = function(t, k)
+      local v = {}
+      rawset(t, k, v)
+      return v
+    end;
+  })
+  for _, d in ipairs(locations) do
+    local start = d.range.start
+    local fname = assert(vim.uri_to_fname(d.uri))
+    table.insert(grouped[fname], start)
+  end
+  local keys = vim.tbl_keys(grouped)
+  table.sort(keys)
+  -- TODO(ashkan) I wish we could do this lazily.
+  for _, fname in ipairs(keys) do
+    local rows = grouped[fname]
+    table.sort(rows, position_sort)
+    local i = 0
+    for line in io.lines(fname) do
+      for _, pos in ipairs(rows) do
+        local row = pos.line
+        if i == row then
+          local col
+          if pos.character > #line then
+            col = #line
+          else
+            col =  vim.str_byteindex(line, pos.character)
+          end
+          table.insert(items, {
+            filename = fname,
+            lnum = row + 1,
+            col = col + 1;
+          })
+        end
+      end
+      i = i + 1
+    end
+  end
+  return items
+end
+
+-- locations is Location[]
+-- Only sets for the current window.
+function M.set_loclist(locations)
+  vim.fn.setloclist(0, {}, ' ', {
+    title = 'Language Server';
+    items = M.locations_to_items(locations);
+  })
+end
+
+-- locations is Location[]
+function M.set_qflist(locations)
+  vim.fn.setqflist({}, ' ', {
+    title = 'Language Server';
+    items = M.locations_to_items(locations);
+  })
+end
+
+-- Remove empty lines from the beginning and end.
+function M.trim_empty_lines(lines)
+  local start = 1
+  for i = 1, #lines do
+    if #lines[i] > 0 then
+      start = i
       break
     end
   end
-  if not targetwin then return end
-
-  local items = {}
-  local path = api.nvim_buf_get_name(bufnr)
-  for _, d in ipairs(locations) do
-    -- TODO: URL parsing here?
-    local start = d.range.start
-    table.insert(items, {
-        filename = path,
-        lnum = start.line + 1,
-        col = start.character + 1,
-        text = d.message,
-    })
+  local finish = 1
+  for i = #lines, 1, -1 do
+    if #lines[i] > 0 then
+      finish = i
+      break
+    end
   end
-  vim.fn.setloclist(targetwin, items, ' ', 'Language Server')
+  return vim.list_extend({}, lines, start, finish)
+end
+
+-- Accepts markdown lines and tries to reduce it to a filetype if it is
+-- just a single code block.
+-- Note: This modifies the input.
+--
+-- Returns: filetype or 'markdown' if it was unchanged.
+function M.try_trim_markdown_code_blocks(lines)
+  local language_id = lines[1]:match("^```(.*)")
+  if language_id then
+    local has_inner_code_fence = false
+    for i = 2, (#lines - 1) do
+      local line = lines[i]
+      if line:sub(1,3) == '```' then
+        has_inner_code_fence = true
+        break
+      end
+    end
+    -- No inner code fences + starting with code fence = hooray.
+    if not has_inner_code_fence then
+      table.remove(lines, 1)
+      table.remove(lines)
+      return language_id
+    end
+  end
+  return 'markdown'
+end
+
+local str_utfindex = vim.str_utfindex
+function M.make_position_params()
+  local row, col = unpack(api.nvim_win_get_cursor(0))
+  row = row - 1
+  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  col = str_utfindex(line, col)
+  return {
+    textDocument = { uri = vim.uri_from_bufnr(0) };
+    position = { line = row; character = col; }
+  }
+end
+
+-- @param buf buffer handle or 0 for current.
+-- @param row 0-indexed line
+-- @param col 0-indexed byte offset in line
+function M.character_offset(buf, row, col)
+  local line = api.nvim_buf_get_lines(buf, row, row+1, true)[1]
+  -- If the col is past the EOL, use the line length.
+  if col > #line then
+    return str_utfindex(line)
+  end
+  return str_utfindex(line, col)
 end
 
 return M

@@ -10,7 +10,6 @@ end
 
 --[=[
 -- Useful for interfacing with:
--- https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/specification-3-14.md
 -- https://github.com/microsoft/language-server-protocol/raw/gh-pages/_specifications/specification-3-14.md
 function transform_schema_comments()
   nvim.command [[silent! '<,'>g/\/\*\*\|\*\/\|^$/d]]
@@ -678,19 +677,6 @@ function protocol.make_client_capabilities()
     };
     workspace = nil;
     experimental = nil;
-  }
-end
-
-function protocol.make_text_document_position_params()
-  local position = vim.api.nvim_win_get_cursor(0)
-  return {
-    textDocument = {
-      uri = vim.uri_from_bufnr()
-    };
-    position = {
-      line = position[1] - 1;
-      character = position[2];
-    }
   }
 end
 

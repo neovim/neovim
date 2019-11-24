@@ -24,104 +24,13 @@ After installing a language server to your machine, you must let Neovim know
 how to start and interact with that language server.
 
 To do so, you can either:
-- Use the |vim.lsp.add_filetype_config()|, which solves the common use-case of
-  a single server for one or more filetypes. This can also be used from vim
-  via |lsp#add_filetype_config()|.
+- Use https://github.com/neovim/nvim-lsp and one of the existing servers there
+  or set up a new one using the `nvim_lsp/skeleton` interface (and contribute
+  it if you find it useful). This uses |vim.lsp.start_client()| under the
+  hood.
 - Or |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|. These are the
   backbone of the LSP API. These are easy to use enough for basic or more
   complex configurations such as in |lsp-advanced-js-example|.
-
-================================================================================
-                                                           *lsp-filetype-config*
-
-These are utilities specific to filetype based configurations.
-
-                                                     *lsp#add_filetype_config()*
-                                                 *vim.lsp.add_filetype_config()*
-lsp#add_filetype_config({config}) for Vim.
-vim.lsp.add_filetype_config({config}) for Lua
-
-  These are functions which can be used to create a simple configuration which
-  will start a language server for a list of filetypes based on the |FileType|
-  event.
-  It will lazily start start the server, meaning that it will only start once
-  a matching filetype is encountered.
- 
-  The {config} options are the same as |vim.lsp.start_client()|, but
-  with a few additions and distinctions:
- 
-  Additional parameters:~
-    `filetype`
-      {string} or {list} of filetypes to attach to.
-    `name`
-      A unique identifying string among all other servers configured with
-      |vim.lsp.add_filetype_config|.
- 
-  Differences:~
-    `root_dir`
-      Will default to |getcwd()| instead of being required.
-
-  NOTE: the function options in {config} like {config.on_init} are for Lua
-  callbacks, not Vim callbacks.
->
-    " Go example
-    call lsp#add_filetype_config({
-          \ 'filetype': 'go',
-          \ 'name': 'gopls',
-          \ 'cmd': 'gopls'
-          \ })
-    " Python example
-    call lsp#add_filetype_config({
-          \ 'filetype': 'python',
-          \ 'name': 'pyls',
-          \ 'cmd': 'pyls'
-          \ })
-    " Rust example
-    call lsp#add_filetype_config({
-          \ 'filetype': 'rust',
-          \ 'name': 'rls',
-          \ 'cmd': 'rls',
-          \ 'capabilities': {
-          \   'clippy_preference': 'on',
-          \   'all_targets': v:false,
-          \   'build_on_save': v:true,
-          \   'wait_to_build': 0
-          \ }})
-<
->
-  -- From Lua
-  vim.lsp.add_filetype_config {
-    name = "clangd";
-    filetype = {"c", "cpp"};
-    cmd = "clangd -background-index";
-    capabilities = {
-      offsetEncoding = {"utf-8", "utf-16"};
-    };
-    on_init = vim.schedule_wrap(function(client, result)
-      if result.offsetEncoding then
-        client.offset_encoding = result.offsetEncoding
-      end
-    end)
-  }
-<
-                                                *vim.lsp.copy_filetype_config()*
-vim.lsp.copy_filetype_config({existing_name}, [{override_config}])
-
-  You can use this to copy an existing filetype configuration and change it by
-  specifying {override_config} which will override any properties in the
-  existing configuration. If you don't specify a new unique name with
-  {override_config.name} then it will try to create one and return it.
-
-  Returns:~
-    `name` the new configuration name.
-
-                                         *vim.lsp.get_filetype_client_by_name()*
-vim.lsp.get_filetype_client_by_name({name})
-
-  Use this to look up a client by its name created from
-  |vim.lsp.add_filetype_config()|.
-
-  Returns nil if the client is not active or the name is not valid.
 
 ================================================================================
                                                            *lsp-core-api*
@@ -178,8 +87,8 @@ vim.lsp.start_client({config})
   `callbacks`
     A {table} of whose keys are language server method names and the values
     are `function(err, method, params, client_id)` See |lsp-callbacks| for
-    more. This will be combined with |lsp-builtin-callbacks| to provide
-    defaults.
+    more. This will be combined with |lsp-default-callbacks| to resolve
+    the callbacks for a client as a fallback.
  
   `init_options`
     A {table} of values to pass in the initialization request as
@@ -202,6 +111,12 @@ vim.lsp.start_client({config})
     the error kind. See |vim.lsp.client_errors| for possible errors.
     `vim.lsp.client_errors[code]` can be used to retrieve a human
     understandable string.
+ 
+  `before_init(initialize_params, config)`
+    A function which is called *before* the request `initialize` is completed.
+    `initialize_params` contains the parameters we are sending to the server
+    and `config` is the config that was passed to `start_client()` for
+    convenience. You can use this to modify parameters before they are sent.
  
   `on_init(client, initialize_result)`
     A function which is called after the request `initialize` is completed.
@@ -346,31 +261,34 @@ vim.lsp.rpc_response_error({code}, [{message}], [{data}])
   the server.
 
 ================================================================================
-                                                     *vim.lsp.builtin_callbacks*
+                                                     *vim.lsp.default_callbacks*
 
-The |vim.lsp.builtin_callbacks| table contains the default |lsp-callbacks|
+The |vim.lsp.default_callbacks| table contains the default |lsp-callbacks|
 that are used when creating a new client. The keys are the LSP method names.
 
 The following requests and notifications have built-in callbacks defined to
 handle the response in an idiomatic way.
 
-  textDocument/completion
-  textDocument/declaration
-  textDocument/definition
-  textDocument/hover
-  textDocument/implementation
-  textDocument/rename
-  textDocument/signatureHelp
-  textDocument/typeDefinition
+  textDocument/publishDiagnostics
   window/logMessage
   window/showMessage
 
-You can check these via `vim.tbl_keys(vim.lsp.builtin_callbacks)`.
+You can check these via `vim.tbl_keys(vim.lsp.default_callbacks)`.
 
-These will be automatically used and can be overridden by users (either by
-modifying the |vim.lsp.builtin_callbacks| object or on a per-client basis
-by passing in a table via the {callbacks} parameter on |vim.lsp.start_client|
-or |vim.lsp.add_filetype_config|.
+These will be used preferrentially in `vim.lsp.buf` methods when handling
+requests. They will also be used when responding to server requests and
+notifications.
+
+Use cases:
+- Users can modify this to customize to their preferences.
+- UI plugins can modify this by assigning to
+  `vim.lsp.default_callbacks[method]` so as to provide more specialized
+  handling, allowing you to leverage the UI capabilities available. UIs should
+  try to be conscientious of any existing changes the user may have set
+  already by checking for existing values.
+
+Any callbacks passed directly to `request` methods on a server client will
+have the highest precedence, followed by the `default_callbacks`.
 
 More information about callbacks can be found in |lsp-callbacks|.
 
@@ -379,8 +297,8 @@ More information about callbacks can be found in |lsp-callbacks|.
 
 Callbacks are functions which are called in a variety of situations by the
 client. Their signature is `function(err, method, params, client_id)` They can
-be set by the {callbacks} parameter for |vim.lsp.start_client| and
-|vim.lsp.add_filetype_config| or via the |vim.lsp.builtin_callbacks|.
+be set by the {callbacks} parameter for |vim.lsp.start_client| or via the
+|vim.lsp.default_callbacks|.
 
 This will be called for:
 - notifications from the server, where `err` will always be `nil`
@@ -409,12 +327,10 @@ vim.lsp.protocol
        vim.lsp.protocol.TextDocumentSyncKind[1] == "Full"
 
   Utility functions used internally are:
-    `vim.lsp.make_client_capabilities()`
+    `vim.lsp.protocol.make_client_capabilities()`
           Make a ClientCapabilities object. These are the builtin
           capabilities.
-    `vim.lsp.make_text_document_position_params()`
-          Make a TextDocumentPositionParams object.
-    `vim.lsp.resolve_capabilities(server_capabilites)`
+    `vim.lsp.protocol.resolve_capabilities(server_capabilites)`
           Creates a normalized object describing capabilities from the server
           capabilities.
 
@@ -482,18 +398,16 @@ vim.lsp.buf_notify({bufnr}, {method}, {params})
 ================================================================================
                                                                    *lsp-logging*
 
-                                                           *lsp#set_log_level()*
-lsp#set_log_level({level})
+                                                       *vim.lsp.set_log_level()*
+vim.lsp.set_log_level({level})
   You can set the log level for language server client logging.
   Possible values: "trace", "debug", "info", "warn", "error"
 
   Default: "warn"
 
-  Example: `call lsp#set_log_level("debug")`
+  Example: `lua vim.lsp.set_log_level("debug")`
 
-                                                            *lsp#get_log_path()*
                                                         *vim.lsp.get_log_path()*
-lsp#get_log_path()
 vim.lsp.get_log_path()
   Returns the path that LSP logs are written.
 
@@ -508,43 +422,43 @@ vim.lsp.log_levels
 ================================================================================
                                                                   *lsp-omnifunc*
                                                             *vim.lsp.omnifunc()*
-                                                                  *lsp#omnifunc*
-lsp#omnifunc({findstart}, {base})
 vim.lsp.omnifunc({findstart}, {base})
 
 To configure omnifunc, add the following in your init.vim:
 >
-        set omnifunc=lsp#omnifunc
-
-        " This is optional, but you may find it useful
-        autocmd CompleteDone * pclose
+  " Configure for python
+  autocmd Filetype python setl omnifunc=v:lua.vim.lsp.omnifunc
+  
+  " Or with on_attach
+  start_client {
+    ...
+    on_attach = function(client, bufnr)
+      vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+    end;
+  }
+  
+  " This is optional, but you may find it useful
+  autocmd CompleteDone * pclose
 <
 ================================================================================
                                                              *lsp-vim-functions*
+
+To use the functions from vim, it is recommended to use |v:lua| to interface
+with the Lua functions. No direct vim functions are provided, but the
+interface is still easy to use from mappings.
 
 These methods can be used in mappings and are the equivalent of using the
 request from lua as follows:
 
 >
-  lua vim.lsp.buf_request(0, "textDocument/hover", vim.lsp.protocol.make_text_document_position_params())
-<
-
-  lsp#text_document_declaration()
-  lsp#text_document_definition()
-  lsp#text_document_hover()
-  lsp#text_document_implementation()
-  lsp#text_document_signature_help()
-  lsp#text_document_type_definition()
-
->
   " Example config
-  autocmd Filetype rust,python,go,c,cpp setl omnifunc=lsp#omnifunc
-  nnoremap <silent> ;dc :call lsp#text_document_declaration()<CR>
-  nnoremap <silent> ;df :call lsp#text_document_definition()<CR>
-  nnoremap <silent> ;h  :call lsp#text_document_hover()<CR>
-  nnoremap <silent> ;i  :call lsp#text_document_implementation()<CR>
-  nnoremap <silent> ;s  :call lsp#text_document_signature_help()<CR>
-  nnoremap <silent> ;td :call lsp#text_document_type_definition()<CR>
+  autocmd Filetype rust,python,go,c,cpp setl omnifunc=v:lua.vim.lsp.omnifunc
+  nnoremap <silent> ;dc <cmd>lua vim.lsp.buf.declaration()<CR>
+  nnoremap <silent> ;df <cmd>lua vim.lsp.buf.definition()<CR>
+  nnoremap <silent> ;h  <cmd>lua vim.lsp.buf.hover()<CR>
+  nnoremap <silent> ;i  <cmd>lua vim.lsp.buf.implementation()<CR>
+  nnoremap <silent> ;s  <cmd>lua vim.lsp.buf.signature_help()<CR>
+  nnoremap <silent> ;td <cmd>lua vim.lsp.buf.type_definition()<CR>
 <
 ================================================================================
                                                        *lsp-advanced-js-example*
