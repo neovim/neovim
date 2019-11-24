@@ -327,16 +327,6 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
 
-  {
-    const char *code = (char *)&inspect_module[0];
-    if (luaL_loadbuffer(lstate, code, strlen(code), "@inspect.lua")
-        || lua_pcall(lstate, 0, 1, 0)) {
-      nlua_error(lstate, _("E5106: Error while creating inspect module: %.*s"));
-      return 1;
-    }
-    lua_setfield(lstate, -2, "inspect");
-  }
-
   lua_setglobal(lstate, "vim");
 
   {

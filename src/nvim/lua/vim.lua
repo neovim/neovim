@@ -164,33 +164,34 @@ local function inspect(object, options)  -- luacheck: no unused
   error(object, options)  -- Stub for gen_vimdoc.py
 end
 
---- Paste handler, invoked by |nvim_paste()| when a conforming UI
---- (such as the |TUI|) pastes text into the editor.
----
---- Example: To remove ANSI color codes when pasting:
---- <pre>
---- vim.paste = (function(overridden)
----   return function(lines, phase)
----     for i,line in ipairs(lines) do
----       -- Scrub ANSI color codes from paste input.
----       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
----     end
----     overridden(lines, phase)
----   end
---- end)(vim.paste)
---- </pre>
----
---@see |paste|
----
---@param lines  |readfile()|-style list of lines to paste. |channel-lines|
---@param phase  -1: "non-streaming" paste: the call contains all lines.
----              If paste is "streamed", `phase` indicates the stream state:
----                - 1: starts the paste (exactly once)
----                - 2: continues the paste (zero or more times)
----                - 3: ends the paste (exactly once)
---@returns false if client should cancel the paste.
 do
   local tdots, tick, got_line1 = 0, 0, false
+
+  --- Paste handler, invoked by |nvim_paste()| when a conforming UI
+  --- (such as the |TUI|) pastes text into the editor.
+  ---
+  --- Example: To remove ANSI color codes when pasting:
+  --- <pre>
+  --- vim.paste = (function(overridden)
+  ---   return function(lines, phase)
+  ---     for i,line in ipairs(lines) do
+  ---       -- Scrub ANSI color codes from paste input.
+  ---       lines[i] = line:gsub('\27%[[0-9;mK]+', '')
+  ---     end
+  ---     overridden(lines, phase)
+  ---   end
+  --- end)(vim.paste)
+  --- </pre>
+  ---
+  --@see |paste|
+  ---
+  --@param lines  |readfile()|-style list of lines to paste. |channel-lines|
+  --@param phase  -1: "non-streaming" paste: the call contains all lines.
+  ---              If paste is "streamed", `phase` indicates the stream state:
+  ---                - 1: starts the paste (exactly once)
+  ---                - 2: continues the paste (zero or more times)
+  ---                - 3: ends the paste (exactly once)
+  --@returns false if client should cancel the paste.
   function vim.paste(lines, phase)
     local call = vim.api.nvim_call_function
     local now = vim.loop.now()
@@ -262,7 +263,7 @@ vim.fn = setmetatable({}, {
 })
 
 -- These are for loading runtime modules lazily since they aren't available in
--- the neovim binary as specified in executor.c
+-- the nvim binary as specified in executor.c
 local function __index(t, key)
   if key == 'treesitter' then
     t.treesitter = require('vim.treesitter')
