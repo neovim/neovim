@@ -1194,12 +1194,10 @@ static int find_tagfunc_tags(
   taglist = rettv.vval.v_list;
 
   TV_LIST_ITER_CONST(taglist, li, {
-    char_u    *mfp;
     char_u    *res_name;
     char_u    *res_fname;
     char_u    *res_cmd;
     char_u    *res_kind;
-    int   len;
     int   has_extra = 0;
     int   name_only = flags & TAG_NAMES;
 
@@ -1208,7 +1206,7 @@ static int find_tagfunc_tags(
       break;
     }
 
-    len = 2;
+    size_t len = 2;
     res_name = NULL;
     res_fname = NULL;
     res_cmd = NULL;
@@ -1254,15 +1252,7 @@ static int find_tagfunc_tags(
       break;
     }
 
-    if (name_only) {
-      mfp = vim_strsave(res_name);
-    } else {
-      mfp = (char_u *)xmalloc((int)sizeof(char_u) + len + 1);
-    }
-
-    if (mfp == NULL) {
-      continue;
-    }
+    char_u *const mfp = name_only ? vim_strsave(res_name) : xmalloc(len + 2);
 
     if (!name_only) {
       char_u *p = mfp;
@@ -1669,12 +1659,9 @@ find_tags(
             break;              /* End the binary search without a match. */
           else
             search_info.curr_offset = offset;
-        }
-        /*
-         * Skipping back (after a match during binary search).
-         */
-        else if (state == TS_SKIP_BACK) {
-          search_info.curr_offset -= LSIZE * 2;
+        } else if (state == TS_SKIP_BACK) {
+          // Skipping back (after a match during binary search).
+          search_info.curr_offset -= lbuf_size * 2;
           if (search_info.curr_offset < 0) {
             search_info.curr_offset = 0;
             rewind(fp);
@@ -1690,7 +1677,7 @@ find_tags(
           /* Adjust the search file offset to the correct position */
           search_info.curr_offset_used = search_info.curr_offset;
           vim_fseek(fp, search_info.curr_offset, SEEK_SET);
-          eof = vim_fgets(lbuf, LSIZE, fp);
+          eof = vim_fgets(lbuf, lbuf_size, fp);
           if (!eof && search_info.curr_offset != 0) {
             /* The explicit cast is to work around a bug in gcc 3.4.2
              * (repeated below). */
@@ -1700,12 +1687,12 @@ find_tags(
               vim_fseek(fp, search_info.low_offset, SEEK_SET);
               search_info.curr_offset = search_info.low_offset;
             }
-            eof = vim_fgets(lbuf, LSIZE, fp);
+            eof = vim_fgets(lbuf, lbuf_size, fp);
           }
           /* skip empty and blank lines */
           while (!eof && vim_isblankline(lbuf)) {
             search_info.curr_offset = vim_ftell(fp);
-            eof = vim_fgets(lbuf, LSIZE, fp);
+            eof = vim_fgets(lbuf, lbuf_size, fp);
           }
           if (eof) {
             /* Hit end of file.  Skip backwards. */
@@ -1721,10 +1708,9 @@ find_tags(
         else {
           /* skip empty and blank lines */
           do {
-            if (use_cscope)
-              eof = cs_fgets(lbuf, LSIZE);
-            else
-              eof = vim_fgets(lbuf, LSIZE, fp);
+            eof = use_cscope
+              ? cs_fgets(lbuf, lbuf_size)
+              : vim_fgets(lbuf, lbuf_size, fp);
           } while (!eof && vim_isblankline(lbuf));
 
           if (eof) {
@@ -1849,19 +1835,14 @@ parse_line:
         // When the line is too long the NUL will not be in the
         // last-but-one byte (see vim_fgets()).
         // Has been reported for Mozilla JS with extremely long names.
-        // In that case we can't parse it and we ignore the line.
-        if (lbuf[LSIZE - 2] != NUL && !use_cscope) {
-          if (p_verbose >= 5) {
-            verbose_enter();
-            MSG(_("Ignoring long line in tags file"));
-            verbose_leave();
-          }
-          if (state != TS_LINEAR) {
-            // Avoid getting stuck.
-            linear = true;
-            state = TS_LINEAR;
-            vim_fseek(fp, search_info.low_offset, SEEK_SET);
-          }
+        // In that case we need to increase lbuf_size.
+        if (lbuf[lbuf_size - 2] != NUL && !use_cscope) {
+          lbuf_size *= 2;
+          xfree(lbuf);
+          lbuf = xmalloc(lbuf_size);
+          // this will try the same thing again, make sure the offset is
+          // different
+          search_info.curr_offset = 0;
           continue;
         }
 
@@ -2664,6 +2645,9 @@ static int jumpto_tag(
   str = tagp.command;
   for (pbuf_end = pbuf; *str && *str != '\n' && *str != '\r'; ) {
     *pbuf_end++ = *str++;
+    if (pbuf_end - pbuf + 1 >= LSIZE) {
+      break;
+    }
   }
   *pbuf_end = NUL;
 
