@@ -288,7 +288,7 @@ do
         if s == nil then
           return nvim_command(k)
         end
-        return nvim_command(table.concat({k, s}, ' '))
+        return nvim_command(k.." "..s)
       end
     end;
   })
