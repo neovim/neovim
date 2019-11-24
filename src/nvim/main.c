@@ -75,6 +75,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
 #include "nvim/api/private/dispatch.h"
+#include "nvim/lua/executor.h"
 #ifndef WIN32
 # include "nvim/os/pty_process_unix.h"
 #endif
@@ -116,6 +117,8 @@ typedef struct {
   int diff_mode;                        // start with 'diff' set
 
   char *listen_addr;                    // --listen {address}
+  int remote;                           // --remote[-subcmd] {file1} {file2}
+  char *server_addr;                    // --server {address}
 } mparm_T;
 
 // Values for edit_type.
@@ -280,6 +283,17 @@ int main(int argc, char **argv)
   }
 
   server_init(params.listen_addr);
+  if (params.remote) {
+    uint64_t chan = server_connect(params.server_addr);
+    if (!chan) {
+      mch_exit(0);
+    }
+
+    bool exit = remote_request(chan, &params, params.remote, argc, argv);
+    if (exit) {
+      mch_exit(0);
+    }
+  }
 
   if (GARGCOUNT > 0) {
     fname = get_fname(&params, cwd);
@@ -739,6 +753,92 @@ static bool edit_stdin(bool explicit, mparm_T *parmp)
   return explicit || implicit;
 }
 
+static uint64_t server_connect(char *server_addr)
+{
+  if (server_addr == NULL) {
+    EMSG2(e_noserver, "no address specified");
+    msg_putchar('\n');
+    return 0;
+  }
+  CallbackReader on_data = CALLBACK_READER_INIT;
+  const char *error = NULL;
+  bool is_tcp = strrchr(server_addr, ':') ? true : false;
+
+  uint64_t chan = channel_connect(is_tcp, server_addr, true, on_data, 50, &error);
+  if (error) {
+    EMSG2(e_noserver, error);
+    msg_putchar('\n');
+
+    return 0;
+  }
+  return chan;
+}
+
+/// Handle remote subcommands
+static bool remote_request(uint64_t chan, mparm_T *params, int remote_args,
+                           int argc, char **argv)
+{
+  Boolean should_exit = true;
+  Boolean tabbed;
+  int files;
+
+  int t_argc = remote_args;
+  Array args = ARRAY_DICT_INIT;
+  String arg_s;
+  for (; t_argc < argc; t_argc++) {
+    arg_s = cstr_to_string(argv[t_argc]);
+    ADD(args, STRING_OBJ(arg_s));
+  }
+
+  Error err = ERROR_INIT;
+  Array a = ARRAY_DICT_INIT;
+  ADD(a, INTEGER_OBJ((Integer)chan));
+  ADD(a, ARRAY_OBJ(args));
+  String s = STATIC_CSTR_AS_STRING("return vim._cs_remote(...)");
+  Object o = nvim_execute_lua(s, a, &err);
+  api_free_array(a);
+
+
+  if (ERROR_SET(&err)) {
+    EMSG2("vim._cs_remote: %s", err.msg);
+    api_clear_error(&err);
+    goto free_return;
+  } else if (o.type != kObjectTypeDictionary) {
+    EMSG("vim._cs_remote must return a dictionary");
+    goto free_return;
+  }
+
+  Dictionary dict = o.data.dictionary;
+  for (size_t i = 0; i < dict.size ; i++) {
+    if (strcmp(dict.items[i].key.data, "tabbed") == 0) {
+      // should we check items[i].value.type here?
+      tabbed = dict.items[i].value.data.boolean;
+    } else if (strcmp(dict.items[i].key.data, "should_exit") == 0) {
+      should_exit = dict.items[i].value.data.boolean;
+    } else if (strcmp(dict.items[i].key.data, "files") == 0) {
+      files = (int)dict.items[i].value.data.integer;
+    }
+  }
+
+free_return:
+  // TODO: should be done automagically by mch_exit?
+  if (msg_col > 0) {
+    msg_putchar('\n');
+  }
+
+  api_free_object(o);
+
+  if (should_exit) {
+    return true;
+  }
+
+  if (tabbed) {
+    params->window_count = files;
+    params->window_layout = WIN_TABS;
+  }
+  return false;
+}
+
 /// Scan the command line arguments.
 static void command_line_scan(mparm_T *parmp)
 {
@@ -794,6 +894,9 @@ static void command_line_scan(mparm_T *parmp)
           // "--version" give version message
           // "--noplugin[s]" skip plugins
           // "--cmd <cmd>" execute cmd before vimrc
+          // "--remote" open file on remote instance
+          // "--server" name of vim server to send to or name
+          // of server to become
           if (STRICMP(argv[0] + argv_idx, "help") == 0) {
             usage();
             mch_exit(0);
@@ -834,6 +937,11 @@ static void command_line_scan(mparm_T *parmp)
             // Do nothing: file args are always literal. #7679
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0) {
             p_lpl = false;
+          } else if (STRNICMP(argv[0] + argv_idx, "remote", 6) == 0) {
+            parmp->remote = parmp->argc - argc;
+          } else if (STRNICMP(argv[0] + argv_idx, "server", 6) == 0) {
+            want_argument = true;
+            argv_idx += 6;
           } else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = true;
             argv_idx += 3;
@@ -1091,6 +1199,9 @@ static void command_line_scan(mparm_T *parmp)
             } else if (strequal(argv[-1], "--listen")) {
               // "--listen {address}"
               parmp->listen_addr = argv[0];
+            } else if (strequal(argv[-1], "--server")) {
+              // "--server {address}"
+              parmp->server_addr = argv[0];
             }
             // "--startuptime <file>" already handled
             break;
@@ -1258,6 +1369,8 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
   paramp->use_debug_break_level = -1;
   paramp->window_count = -1;
   paramp->listen_addr = NULL;
+  paramp->server_addr = NULL;
+  paramp->remote = 0;
 }
 
 /// Initialize global startuptime file if "--startuptime" passed as an argument.
@@ -2000,6 +2113,8 @@ static void usage(void)
   mch_msg(_("  --headless            Don't start a user interface\n"));
   mch_msg(_("  --listen <address>    Serve RPC API from this address\n"));
   mch_msg(_("  --noplugin            Don't load plugins\n"));
+  mch_msg(_("  --remote[-subcommand] Execute commands remotey on a server\n"));
+  mch_msg(_("  --server <address>    Specify RPC server to send commands to\n"));
   mch_msg(_("  --startuptime <file>  Write startup timing messages to <file>\n"));
   mch_msg(_("\nSee \":help startup-options\" for all options.\n"));
 }

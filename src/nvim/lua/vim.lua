@@ -276,6 +276,54 @@ local function _fn_index(t, key)
 end
 local fn = setmetatable({}, {__index=_fn_index})
 
+local function __rpcrequest(...)
+  return vim.api.nvim_call_function("rpcrequest", {...})
+end
+
+local function _cs_remote_lua(code)
+  local expr = true
+  local chunk, err = loadstring("return \n"..code, "remote")
+  if chunk == nil then
+    expr = false
+    chunk, err = loadstring(code, "remote")
+  end
+  if err then
+    return err
+  end
+  local _, res = pcall(chunk)
+  if type(res) == "table" then
+    res = vim.inspect(res)
+  elseif res == nil and not expr then
+    res = ""
+  end
+  return res
+end
+
+local function _cs_remote(rcid, args)
+
+  local f_silent = false
+  local f_wait = false
+  local f_tab = false
+  local should_exit = true
+  local command = 'edit '
+
+  local subcmd = string.sub(args[1],10)
+
+  if subcmd == 'send' then
+    __rpcrequest(rcid, 'nvim_input', args[2])
+    -- should we show warning if --server doesn't exist in --send and --expr?
+  elseif subcmd == 'expr' then
+    local res = __rpcrequest(rcid, 'nvim_eval', args[2])
+    print(res)
+  elseif subcmd == 'lua' then
+    local res = __rpcrequest( rcid, 'nvim_execute_lua', 'return vim._cs_remote_lua(...)', {args[2]})
+    print(res)
+  else
+    print('--remote subcommand not found')
+  end
+  return {should_exit = true}
+end
+
 local module = {
   _update_package_paths = _update_package_paths,
   _os_proc_children = _os_proc_children,
@@ -284,6 +332,8 @@ local module = {
   paste = paste,
   schedule_wrap = schedule_wrap,
   fn=fn,
+  _cs_remote = _cs_remote,
+  _cs_remote_lua = _cs_remote_lua,
 }
 
 setmetatable(module, {
