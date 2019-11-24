@@ -126,6 +126,9 @@ local function match_preds(match, preds, bufnr)
 end
 
 function Query:iter_captures(node, bufnr, start, stop)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
   local raw_iter = node:rawquery(self.query,start,stop)
   local function iter()
     local capture, node, match = raw_iter()
