@@ -1585,10 +1585,12 @@ void enter_buffer(buf_T *buf)
 
     open_buffer(false, NULL, 0);
   } else {
-    if (!msg_silent) {
+    if (!msg_silent && !shortmess(SHM_FILEINFO)) {
       need_fileinfo = true;             // display file info after redraw
     }
-    (void)buf_check_timestamp(curbuf, false);     // check if file changed
+    // check if file changed
+    (void)buf_check_timestamp(curbuf, false);
+
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
