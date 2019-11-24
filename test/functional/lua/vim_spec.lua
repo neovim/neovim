@@ -606,4 +606,13 @@ describe('lua stdlib', function()
     ]]
     eq(0, funcs.luaeval "vim.wo.cole")
   end)
+
+  it('vim.cmd', function()
+    exec_lua [[
+		vim.cmd.autocmd("BufNew * ++once lua BUF = vim.fn.expand('<abuf>')")
+		vim.cmd.new()
+    ]]
+    eq('2', funcs.luaeval "BUF")
+    eq(2, funcs.luaeval "#vim.api.nvim_list_bufs()")
+  end)
 end)
