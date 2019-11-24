@@ -324,26 +324,8 @@ do
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
   vim.o = make_meta_accessor(nil_wrap(a.nvim_get_option), a.nvim_set_option)
   vim.env = make_meta_accessor(vim.fn.getenv, vim.fn.setenv)
-  local function new_win_accessor(winnr)
-    local function get(k)    return a.nvim_win_get_var(winnr, k) end
-    local function set(k, v) return a.nvim_win_set_var(winnr, k, v) end
-    local function del(k)    return a.nvim_win_del_var(winnr, k) end
-    return make_meta_accessor(nil_wrap(get), set, del)
-  end
-  vim.w = new_win_accessor(0)
-  getmetatable(vim.w).__call = function(_, winnr)
-    return new_win_accessor(winnr)
-  end
-  local function new_buf_accessor(bufnr)
-    local function get(k)    return a.nvim_buf_get_var(bufnr, k) end
-    local function set(k, v) return a.nvim_buf_set_var(bufnr, k, v) end
-    local function del(k)    return a.nvim_buf_del_var(bufnr, k) end
-    return make_meta_accessor(nil_wrap(get), set, del)
-  end
-  vim.b = new_buf_accessor(0)
-  getmetatable(vim.b).__call = function(_, bufnr)
-    return new_buf_accessor(bufnr)
-  end
+  -- TODO(ashkan) if/when these are available from an API, generate them
+  -- instead of hardcoding.
   local window_options = {
               arab = true;       arabic = true;   breakindent = true; breakindentopt = true;
                bri = true;       briopt = true;            cc = true;           cocu = true;
@@ -390,7 +372,7 @@ do
     return make_meta_accessor(nil_wrap(get), set)
   end
   vim.wo = new_win_opt_accessor(0)
-  getmetatable(vim.bo).__call = function(_, winnr)
+  getmetatable(vim.wo).__call = function(_, winnr)
     return new_win_opt_accessor(winnr)
   end
 end
