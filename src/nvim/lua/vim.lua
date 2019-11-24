@@ -252,15 +252,17 @@ vim._system = _system
 
 -- vim.fn.{func}(...)
 vim.fn = setmetatable({}, {
-	__index = function(t, key)
-		local function _fn(...)
-			return vim.call(key, ...)
-		end
-		t[key] = _fn
-		return _fn
-	end
+  __index = function(t, key)
+    local function _fn(...)
+      return vim.call(key, ...)
+    end
+    t[key] = _fn
+    return _fn
+  end
 })
 
+-- These are for loading runtime modules lazily since they aren't available in
+-- the neovim binary as specified in executor.c
 local function __index(t, key)
   if key == 'treesitter' then
     t.treesitter = require('vim.treesitter')
