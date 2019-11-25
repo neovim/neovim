@@ -5,6 +5,7 @@ local request = helpers.request
 local eq = helpers.eq
 local ok = helpers.ok
 local curbufmeths = helpers.curbufmeths
+local bufmeths = helpers.bufmeths
 local pcall_err = helpers.pcall_err
 local insert = helpers.insert
 local feed = helpers.feed
@@ -1274,6 +1275,13 @@ describe('Extmarks buffer api', function()
     eq(true, curbufmeths.get_option('ro'))
     local id = set_extmark(ns, 0, 0, 2)
     eq({{id, 0, 2}}, get_extmarks(ns,0, -1))
+  end)
+
+  it('can set a mark to other buffer', function()
+    local buf = request('nvim_create_buf', 0, 1)
+    request('nvim_buf_set_lines', buf, 0, -1, 1, {"", ""})
+    local id = bufmeths.set_extmark(buf, ns, 0, 1, 0, {})
+    eq({{id, 1, 0}}, bufmeths.get_extmarks(buf, ns, 0, -1, {}))
   end)
 end)
 
