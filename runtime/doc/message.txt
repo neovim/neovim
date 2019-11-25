@@ -679,8 +679,8 @@ no argument has been specified.
   Invalid argument: {arg}
   Duplicate argument: {arg}
 
-An Ex command or function has been executed, but an invalid argument has been
-specified.
+Ex command or function has been executed, but an invalid argument was
+specified.  Or a non-executable command was given to |system()|.
 
 							*E488*  >
   Trailing characters

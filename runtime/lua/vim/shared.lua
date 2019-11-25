@@ -226,16 +226,17 @@ function vim.tbl_add_reverse_lookup(o)
   return o
 end
 
--- Extends a list-like table with the values of another list-like table.
---
--- NOTE: This *mutates* dst!
--- @see |extend()|
---
--- @param dst list which will be modified and appended to.
--- @param src list from which values will be inserted.
--- @param start Start index on src. defaults to 1
--- @param finish Final index on src. defaults to #src
--- @returns dst
+--- Extends a list-like table with the values of another list-like table.
+---
+--- NOTE: This mutates dst!
+---
+--@see |vim.tbl_extend()|
+---
+--@param dst list which will be modified and appended to.
+--@param src list from which values will be inserted.
+--@param start Start index on src. defaults to 1
+--@param finish Final index on src. defaults to #src
+--@returns dst
 function vim.list_extend(dst, src, start, finish)
   vim.validate {
     dst = {dst, 't'};

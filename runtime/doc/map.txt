@@ -786,7 +786,7 @@ g@{motion}		Call the function set by the 'operatorfunc' option.
 			character of the text.
 			The function is called with one String argument:
 			    "line"	{motion} was |linewise|
-			    "char"	{motion} was |characterwise|
+			    "char"	{motion} was |charwise|
 			    "block"	{motion} was |blockwise-visual|
 			Although "block" would rarely appear, since it can
 			only result from Visual mode where "g@" is not useful.

@@ -404,7 +404,7 @@ tag		char	      note action in Normal mode	~
 |t|		t{char}		1  cursor till before Nth occurrence of {char}
 				   to the right
 |u|		u		2  undo changes
-|v|		v		   start characterwise Visual mode
+|v|		v		   start charwise Visual mode
 |w|		w		1  cursor N words forward
 |x|		["x]x		2  delete N characters under and after the
 				   cursor [into register x]
@@ -866,7 +866,7 @@ These can be used after an operator, but before a {motion} has been entered.
 
 tag		char		action in Operator-pending mode	~
 -----------------------------------------------------------------------
-|o_v|		v		force operator to work characterwise
+|o_v|		v		force operator to work charwise
 |o_V|		V		force operator to work linewise
 |o_CTRL-V|	CTRL-V		force operator to work blockwise
 
@@ -978,7 +978,7 @@ tag		command	      note action in Visual mode	~
 |v_r|		r		2  replace highlighted area with a character
 |v_s|		s		2  delete highlighted area and start insert
 |v_u|		u		2  make highlighted area lowercase
-|v_v|		v		   make Visual mode characterwise or stop
+|v_v|		v		   make Visual mode charwise or stop
 				   Visual mode
 |v_x|		x		2  delete the highlighted area
 |v_y|		y		   yank the highlighted area

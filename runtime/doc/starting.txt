@@ -1270,7 +1270,7 @@ exactly four MessagePack objects:
                        Key  Type             Def   Description ~
                        rt   UInteger         0     Register type:
                                                    No  Description ~
-                                                   0   |characterwise-register|
+                                                   0   |charwise-register|
                                                    1   |linewise-register|
                                                    2   |blockwise-register|
                        rw   UInteger         0     Register width. Only valid

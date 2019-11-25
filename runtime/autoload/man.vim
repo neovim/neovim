@@ -1,4 +1,4 @@
-" Maintainer: Anmol Sethi <anmol@aubble.com>
+" Maintainer: Anmol Sethi <hi@nhooyr.io>
 
 if exists('s:loaded_man')
   finish
@@ -139,7 +139,7 @@ function! s:get_page(path) abort
   " Disable hard-wrap by using a big $MANWIDTH (max 1000 on some systems #9065).
   " Soft-wrap: ftplugin/man.vim sets wrap/breakindent/….
   " Hard-wrap: driven by `man`.
-  let manwidth = !get(g:,'man_hardwrap') ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
+  let manwidth = !get(g:,'man_hardwrap', 1) ? 999 : (empty($MANWIDTH) ? winwidth(0) : $MANWIDTH)
   " Force MANPAGER=cat to ensure Vim is not recursively invoked (by man-db).
   " http://comments.gmane.org/gmane.editors.vim.devel/29085
   " Set MAN_KEEP_FORMATTING so Debian man doesn't discard backspaces.
@@ -357,6 +357,10 @@ function! s:format_candidate(path, psect) abort
 endfunction
 
 function! man#init_pager() abort
+  " https://github.com/neovim/neovim/issues/6828
+  let og_modifiable = &modifiable
+  setlocal modifiable
+
   if getline(1) =~# '^\s*$'
     silent keepjumps 1delete _
   else
@@ -374,6 +378,8 @@ function! man#init_pager() abort
   if -1 == match(bufname('%'), 'man:\/\/')  " Avoid duplicate buffers, E95.
     execute 'silent file man://'.tolower(fnameescape(ref))
   endif
+
+  let &l:modifiable = og_modifiable
 endfunction
 
 function! man#goto_tag(pattern, flags, info) abort

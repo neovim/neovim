@@ -285,3 +285,21 @@ func Test_compl_feedkeys()
   bwipe!
   set completeopt&
 endfunc
+
+func Test_compl_in_cmdwin()
+  set wildmenu wildchar=<Tab>
+  com! -nargs=1 -complete=command GetInput let input = <q-args>
+  com! -buffer TestCommand echo 'TestCommand'
+
+  let input = ''
+  call feedkeys("q:iGetInput T\<C-x>\<C-v>\<CR>", 'tx!')
+  call assert_equal('TestCommand', input)
+
+  let input = ''
+  call feedkeys("q::GetInput T\<Tab>\<CR>:q\<CR>", 'tx!')
+  call assert_equal('T', input)
+
+  delcom TestCommand
+  delcom GetInput
+  set wildmenu& wildchar&
+endfunc

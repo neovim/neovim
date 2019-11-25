@@ -90,7 +90,7 @@ start and end of the motion are not in the same line, and there are only
 blanks before the start and there are no non-blanks after the end of the
 motion, the delete becomes linewise.  This means that the delete also removes
 the line of blanks that you might expect to remain. Use the |o_v| operator to
-force the motion to be characterwise.
+force the motion to be charwise.
 
 Trying to delete an empty region of text (e.g., "d0" in the first column)
 is an error when 'cpoptions' includes the 'E' flag.
@@ -1074,7 +1074,7 @@ also use these commands to move text from one file to another, because Vim
 preserves all registers when changing buffers (the CTRL-^ command is a quick
 way to toggle between two files).
 
-				*linewise-register* *characterwise-register*
+				*linewise-register* *charwise-register*
 You can repeat the put commands with "." (except for :put) and undo them.  If
 the command that was used to get the text into the register was |linewise|,
 Vim inserts the text below ("p") or above ("P") the line where the cursor is.
@@ -1116,10 +1116,9 @@ this happen.  However, if the width of the block is not a multiple of a <Tab>
 width and the text after the inserted block contains <Tab>s, that text may be
 misaligned.
 
-Note that after a characterwise yank command, Vim leaves the cursor on the
-first yanked character that is closest to the start of the buffer.  This means
-that "yl" doesn't move the cursor, but "yh" moves the cursor one character
-left.
+Note that after a charwise yank command, Vim leaves the cursor on the first
+yanked character that is closest to the start of the buffer.  This means that
+"yl" doesn't move the cursor, but "yh" moves the cursor one character left.
 Rationale:	In Vi the "y" command followed by a backwards motion would
 		sometimes not move the cursor to the first yanked character,
 		because redisplaying was skipped.  In Vim it always moves to

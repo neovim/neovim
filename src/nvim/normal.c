@@ -1422,12 +1422,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       if (oap->motion_type == kMTLineWise) {
         oap->inclusive = false;
       } else if (oap->motion_type == kMTCharWise) {
-        // If the motion already was characterwise, toggle "inclusive"
+        // If the motion already was charwise, toggle "inclusive"
         oap->inclusive = !oap->inclusive;
       }
       oap->motion_type = kMTCharWise;
     } else if (oap->motion_force == Ctrl_V) {
-      // Change line- or characterwise motion into Visual block mode.
+      // Change line- or charwise motion into Visual block mode.
       if (!VIsual_active) {
         VIsual_active = true;
         VIsual = oap->start;
@@ -1516,7 +1516,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, bool gui_yank)
       }
 
       // In Select mode, a linewise selection is operated upon like a
-      // characterwise selection.
+      // charwise selection.
       // Special case: gH<Del> deletes the last line.
       if (VIsual_select && VIsual_mode == 'V'
           && cap->oap->op_type != OP_DELETE) {
@@ -4588,7 +4588,7 @@ static void nv_colon(cmdarg_T *cap)
     nv_operator(cap);
   } else {
     if (cap->oap->op_type != OP_NOP) {
-      // Using ":" as a movement is characterwise exclusive.
+      // Using ":" as a movement is charwise exclusive.
       cap->oap->motion_type = kMTCharWise;
       cap->oap->inclusive = false;
     } else if (cap->count0 && !is_cmdkey) {
@@ -6372,8 +6372,8 @@ static void nv_visual(cmdarg_T *cap)
   if (cap->cmdchar == Ctrl_Q)
     cap->cmdchar = Ctrl_V;
 
-  /* 'v', 'V' and CTRL-V can be used while an operator is pending to make it
-   * characterwise, linewise, or blockwise. */
+  // 'v', 'V' and CTRL-V can be used while an operator is pending to make it
+  // charwise, linewise, or blockwise.
   if (cap->oap->op_type != OP_NOP) {
     motion_force = cap->oap->motion_force = cap->cmdchar;
     finish_op = false;          // operator doesn't finish now but later
@@ -7887,15 +7887,17 @@ static void nv_put_opt(cmdarg_T *cap, bool fix_indent)
         cap->oap->regname = regname;
       }
 
-      /* When deleted a linewise Visual area, put the register as
-       * lines to avoid it joined with the next line.  When deletion was
-       * characterwise, split a line when putting lines. */
-      if (VIsual_mode == 'V')
+      // When deleted a linewise Visual area, put the register as
+      // lines to avoid it joined with the next line.  When deletion was
+      // charwise, split a line when putting lines.
+      if (VIsual_mode == 'V') {
         flags |= PUT_LINE;
-      else if (VIsual_mode == 'v')
+      } else if (VIsual_mode == 'v') {
         flags |= PUT_LINE_SPLIT;
-      if (VIsual_mode == Ctrl_V && dir == FORWARD)
+      }
+      if (VIsual_mode == Ctrl_V && dir == FORWARD) {
         flags |= PUT_LINE_FORWARD;
+      }
       dir = BACKWARD;
       if ((VIsual_mode != 'V'
            && curwin->w_cursor.col < curbuf->b_op_start.col)

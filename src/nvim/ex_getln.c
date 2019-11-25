@@ -5008,19 +5008,24 @@ static void expand_shellcmd(char_u *filepat, int *num_file, char_u ***file,
   hashtab_T found_ht;
   hash_init(&found_ht);
   for (s = path; ; s = e) {
+    e = vim_strchr(s, ENV_SEPCHAR);
+    if (e == NULL) {
+      e = s + STRLEN(s);
+    }
+
     if (*s == NUL) {
       if (did_curdir) {
         break;
       }
       // Find directories in the current directory, path is empty.
       did_curdir = true;
-    } else if (*s == '.') {
+      flags |= EW_DIR;
+    } else if (STRNCMP(s, ".", e - s) == 0) {
       did_curdir = true;
-    }
-
-    e = vim_strchr(s, ENV_SEPCHAR);
-    if (e == NULL) {
-      e = s + STRLEN(s);
+      flags |= EW_DIR;
+    } else {
+      // Do not match directories inside a $PATH item.
+      flags &= ~EW_DIR;
     }
 
     l = (size_t)(e - s);

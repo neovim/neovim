@@ -93,6 +93,7 @@ fi
 _do_bump_commit
 echo "
 Next steps:
+    - Update runtime/nvim.appdata.xml on _master_
     - Run tests/CI (version_spec.lua)!
     - Push the tag:
         git push --follow-tags
