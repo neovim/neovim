@@ -515,8 +515,9 @@ func Test_cmdline_complete_user_names()
     let names = system('net user')
     if names =~ 'Administrator'
       " Trying completion of  :e ~A  should complete to Administrator.
+      " There could be other names starting with "A" before Administrator.
       call feedkeys(':e ~A' . "\<c-a>\<c-B>\"\<cr>", 'tx')
-      call assert_match('^"e \~Administrator', @:)
+      call assert_match('^"e \~.*Administrator', @:)
     endif
   endif
 endfunc
