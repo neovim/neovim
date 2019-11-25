@@ -301,7 +301,7 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   let l = getcompletion('.', 'shellcmd')
-  call assert_equal(['./', '../'], l[0:1])
+  call assert_equal(['./', '../'], filter(l, 'v:val =~ "\\./"'))
   call assert_equal(-1, match(l[2:], '^\.\.\?/$'))
   let root = has('win32') ? 'C:\\' : '/'
   let l = getcompletion(root, 'shellcmd')
@@ -373,6 +373,29 @@ func Test_getcompletion()
   set tags&
 
   call assert_fails('call getcompletion("", "burp")', 'E475:')
+endfunc
+
+func Test_shellcmd_completion()
+  let save_path = $PATH
+
+  call mkdir('Xpathdir/Xpathsubdir', 'p')
+  call writefile([''], 'Xpathdir/Xfile.exe')
+  call setfperm('Xpathdir/Xfile.exe', 'rwx------')
+
+  " Set PATH to example directory without trailing slash.
+  let $PATH = getcwd() . '/Xpathdir'
+
+  " Test for the ":!<TAB>" case.  Previously, this would include subdirs of
+  " dirs in the PATH, even though they won't be executed.  We check that only
+  " subdirs of the PWD and executables from the PATH are included in the
+  " suggestions.
+  let actual = getcompletion('X', 'shellcmd')
+  let expected = map(filter(glob('*', 0, 1), 'isdirectory(v:val) && v:val[0] == "X"'), 'v:val . "/"')
+  call insert(expected, 'Xfile.exe')
+  call assert_equal(expected, actual)
+
+  call delete('Xpathdir', 'rf')
+  let $PATH = save_path
 endfunc
 
 func Test_expand_star_star()
