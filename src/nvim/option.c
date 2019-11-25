@@ -5173,6 +5173,13 @@ void ui_refresh_options(void)
     }
     ui_call_option_set(name, value);
   }
+  if (p_mouse != NULL) {
+    if (*p_mouse == NUL) {
+      ui_call_mouse_off();
+    } else {
+      setmouse();
+    }
+  }
 }
 
 /*
