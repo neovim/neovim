@@ -3,7 +3,6 @@ local validate = vim.validate
 local api = vim.api
 local vfn = vim.fn
 local util = require 'vim.lsp.util'
-local log = require 'vim.lsp.log'
 local list_extend = vim.list_extend
 
 local M = {}
