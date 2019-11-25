@@ -1,9 +1,7 @@
 // This is an open source non-commercial project. Dear PVS-Studio, please check
 // it. PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
-/*
- * quickfix.c: functions for quickfix mode, using a file with error messages
- */
+// quickfix.c: functions for quickfix mode, using a file with error messages
 
 #include <assert.h>
 #include <inttypes.h>
@@ -53,9 +51,7 @@ struct dir_stack_T {
   char_u              *dirname;
 };
 
-/*
- * For each error the next struct is allocated and linked in a list.
- */
+// For each error the next struct is allocated and linked in a list.
 typedef struct qfline_S qfline_T;
 struct qfline_S {
   qfline_T    *qf_next;         ///< pointer to next error in the list
@@ -74,9 +70,7 @@ struct qfline_S {
   char_u qf_valid;              ///< valid error message detected
 };
 
-/*
- * There is a stack of error lists.
- */
+// There is a stack of error lists.
 #define LISTCOUNT   10
 #define INVALID_QFIDX (-1)
 
@@ -120,15 +114,13 @@ typedef struct qf_list_S {
 /// Quickfix/Location list stack definition
 /// Contains a list of quickfix/location lists (qf_list_T)
 struct qf_info_S {
-  /*
-   * Count of references to this list. Used only for location lists.
-   * When a location list window reference this list, qf_refcount
-   * will be 2. Otherwise, qf_refcount will be 1. When qf_refcount
-   * reaches 0, the list is freed.
-   */
+  // Count of references to this list. Used only for location lists.
+  // When a location list window reference this list, qf_refcount
+  // will be 2. Otherwise, qf_refcount will be 1. When qf_refcount
+  // reaches 0, the list is freed.
   int qf_refcount;
-  int qf_listcount;                 /* current number of lists */
-  int qf_curlist;                   /* current error list */
+  int qf_listcount;                 // current number of lists
+  int qf_curlist;                   // current error list
   qf_list_T qf_lists[LISTCOUNT];
   qfltype_T qfl_type;  // type of list
 };
@@ -138,31 +130,29 @@ static unsigned last_qf_id = 0;   // Last Used quickfix list id
 
 #define FMT_PATTERNS 11           // maximum number of % recognized
 
-/*
- * Structure used to hold the info of one part of 'errorformat'
- */
+// Structure used to hold the info of one part of 'errorformat'
 typedef struct efm_S efm_T;
 struct efm_S {
-  regprog_T       *prog;        /* pre-formatted part of 'errorformat' */
-  efm_T           *next;        /* pointer to next (NULL if last) */
-  char_u addr[FMT_PATTERNS];            /* indices of used % patterns */
-  char_u prefix;                /* prefix of this format line: */
-                                /*   'D' enter directory */
-                                /*   'X' leave directory */
-                                /*   'A' start of multi-line message */
-                                /*   'E' error message */
-                                /*   'W' warning message */
-                                /*   'I' informational message */
-                                /*   'C' continuation line */
-                                /*   'Z' end of multi-line message */
-                                /*   'G' general, unspecific message */
-                                /*   'P' push file (partial) message */
-                                /*   'Q' pop/quit file (partial) message */
-                                /*   'O' overread (partial) message */
-  char_u flags;                 /* additional flags given in prefix */
-                                /*   '-' do not include this line */
-                                /*   '+' include whole line in message */
-  int conthere;                 /* %> used */
+  regprog_T       *prog;        // pre-formatted part of 'errorformat'
+  efm_T           *next;        // pointer to next (NULL if last)
+  char_u addr[FMT_PATTERNS];    // indices of used % patterns
+  char_u prefix;                // prefix of this format line:
+                                // 'D' enter directory
+                                // 'X' leave directory
+                                // 'A' start of multi-line message
+                                // 'E' error message
+                                // 'W' warning message
+                                // 'I' informational message
+                                // 'C' continuation line
+                                // 'Z' end of multi-line message
+                                // 'G' general, unspecific message
+                                // 'P' push file (partial) message
+                                // 'Q' pop/quit file (partial) message
+                                // 'O' overread (partial) message
+  char_u flags;                 // additional flags given in prefix
+                                // '-' do not include this line
+                                // '+' include whole line in message
+  int conthere;                 // %> used
 };
 
 /// List of location lists to be deleted.
@@ -221,7 +211,7 @@ static char_u *e_no_more_items = (char_u *)N_("E553: No more items");
 
 // Quickfix window check helper macro
 #define IS_QF_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref == NULL)
-/* Location list window check helper macro */
+// Location list window check helper macro
 #define IS_LL_WINDOW(wp) (bt_quickfix(wp->w_buffer) && wp->w_llist_ref != NULL)
 
 // Quickfix and location list stack check helper macros
@@ -1156,16 +1146,12 @@ qf_init_ext(
     goto error2;
   }
 
-  /*
-   * got_int is reset here, because it was probably set when killing the
-   * ":make" command, but we still want to read the errorfile then.
-   */
-  got_int = FALSE;
+  // got_int is reset here, because it was probably set when killing the
+  // ":make" command, but we still want to read the errorfile then.
+  got_int = false;
 
-  /*
-   * Read the lines in the error file one by one.
-   * Try to recognize one of the error formats in each line.
-   */
+  // Read the lines in the error file one by one.
+  // Try to recognize one of the error formats in each line.
   while (!got_int) {
     status = qf_init_process_nextline(qfl, fmt_first, &state, &fields);
     if (status == QF_END_OF_INPUT) {  // end of input
@@ -1263,10 +1249,8 @@ static void qf_new_list(qf_info_T *qi, const char_u *qf_title)
     qf_free(&qi->qf_lists[--qi->qf_listcount]);
   }
 
-  /*
-   * When the stack is full, remove to oldest entry
-   * Otherwise, add a new entry.
-   */
+  // When the stack is full, remove to oldest entry
+  // Otherwise, add a new entry.
   if (qi->qf_listcount == LISTCOUNT) {
     qf_free(&qi->qf_lists[0]);
     for (i = 1; i < LISTCOUNT; i++) {
@@ -1714,7 +1698,7 @@ static void ll_free_all(qf_info_T **pqi)
   qi = *pqi;
   if (qi == NULL)
     return;
-  *pqi = NULL;          /* Remove reference to this list */
+  *pqi = NULL;          // Remove reference to this list
 
   qi->qf_refcount--;
   if (qi->qf_refcount < 1) {
@@ -1739,7 +1723,7 @@ void qf_free_all(win_T *wp)
   qf_info_T   *qi = &ql_info;
 
   if (wp != NULL) {
-    /* location list */
+    // location list
     ll_free_all(&wp->w_llist);
     ll_free_all(&wp->w_llist_ref);
   } else {
@@ -1892,14 +1876,13 @@ static qf_info_T *qf_alloc_stack(qfltype_T qfltype)
 static qf_info_T *ll_get_or_alloc_list(win_T *wp)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  if (IS_LL_WINDOW(wp))
-    /* For a location list window, use the referenced location list */
+  if (IS_LL_WINDOW(wp)) {
+    // For a location list window, use the referenced location list
     return wp->w_llist_ref;
+  }
 
-  /*
-   * For a non-location list window, w_llist_ref should not point to a
-   * location list.
-   */
+  // For a non-location list window, w_llist_ref should not point to a
+  // location list.
   ll_free_all(&wp->w_llist_ref);
 
   if (wp->w_llist == NULL) {
@@ -2133,22 +2116,21 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr,
 {
   struct dir_stack_T  *ds_ptr;
 
-  /* allocate new stack element and hook it in */
+  // allocate new stack element and hook it in
   struct dir_stack_T *ds_new = xmalloc(sizeof(struct dir_stack_T));
 
   ds_new->next = *stackptr;
   *stackptr = ds_new;
 
-  /* store directory on the stack */
+  // store directory on the stack
   if (vim_isAbsName(dirbuf)
       || (*stackptr)->next == NULL
-      || (*stackptr && is_file_stack))
+      || (*stackptr && is_file_stack)) {
     (*stackptr)->dirname = vim_strsave(dirbuf);
-  else {
-    /* Okay we don't have an absolute path.
-     * dirbuf must be a subdir of one of the directories on the stack.
-     * Let's search...
-     */
+  } else {
+    // Okay we don't have an absolute path.
+    // dirbuf must be a subdir of one of the directories on the stack.
+    // Let's search...
     ds_new = (*stackptr)->next;
     (*stackptr)->dirname = NULL;
     while (ds_new) {
@@ -2161,7 +2143,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr,
       ds_new = ds_new->next;
     }
 
-    /* clean up all dirs we already left */
+    // clean up all dirs we already left
     while ((*stackptr)->next != ds_new) {
       ds_ptr = (*stackptr)->next;
       (*stackptr)->next = (*stackptr)->next->next;
@@ -2169,7 +2151,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr,
       xfree(ds_ptr);
     }
 
-    /* Nothing found -> it must be on top level */
+    // Nothing found -> it must be on top level
     if (ds_new == NULL) {
       xfree((*stackptr)->dirname);
       (*stackptr)->dirname = vim_strsave(dirbuf);
@@ -2187,18 +2169,16 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr,
 }
 
 
-/*
- * pop dirbuf from the directory stack and return previous directory or NULL if
- * stack is empty
- */
+// pop dirbuf from the directory stack and return previous directory or NULL if
+// stack is empty
 static char_u *qf_pop_dir(struct dir_stack_T **stackptr)
 {
   struct dir_stack_T  *ds_ptr;
 
-  /* TODO: Should we check if dirbuf is the directory on top of the stack?
-   * What to do if it isn't? */
+  // TODO(vim): Should we check if dirbuf is the directory on top of the stack?
+  // What to do if it isn't?
 
-  /* pop top element and free it */
+  // pop top element and free it
   if (*stackptr != NULL) {
     ds_ptr = *stackptr;
     *stackptr = (*stackptr)->next;
@@ -2206,13 +2186,11 @@ static char_u *qf_pop_dir(struct dir_stack_T **stackptr)
     xfree(ds_ptr);
   }
 
-  /* return NEW top element as current dir or NULL if stack is empty*/
+  // return NEW top element as current dir or NULL if stack is empty
   return *stackptr ? (*stackptr)->dirname : NULL;
 }
 
-/*
- * clean up directory stack
- */
+// clean up directory stack
 static void qf_clean_dir_stack(struct dir_stack_T **stackptr)
 {
   struct dir_stack_T  *ds_ptr;
@@ -2887,10 +2865,8 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     }
   }
 
-  /*
-   * If there is a file name,
-   * read the wanted file if needed, and check autowrite etc.
-   */
+  // If there is a file name,
+  // read the wanted file if needed, and check autowrite etc.
   old_curbuf = curbuf;
   old_lnum = curwin->w_cursor.lnum;
 
@@ -2938,8 +2914,8 @@ theend:
     qfl->qf_index = qf_index;
   }
   if (p_swb != old_swb && opened_window) {
-    /* Restore old 'switchbuf' value, but not when an autocommand or
-     * modeline has changed the value. */
+    // Restore old 'switchbuf' value, but not when an autocommand or
+    // modeline has changed the value.
     if (p_swb == empty_option) {
       p_swb = old_swb;
       swb_flags = old_swb_flags;
@@ -3038,10 +3014,8 @@ static void qf_list_entry(qfline_T *qfp, int qf_idx, bool cursel)
   ui_flush();  // show one line at a time
 }
 
-/*
- * ":clist": list all errors
- * ":llist": list all locations
- */
+// ":clist": list all errors
+// ":llist": list all locations
 void qf_list(exarg_T *eap)
 {
   qf_list_T *qfl;
@@ -3116,10 +3090,8 @@ void qf_list(exarg_T *eap)
   }
 }
 
-/*
- * Remove newlines and leading whitespace from an error message.
- * Put the result in "buf[bufsize]".
- */
+// Remove newlines and leading whitespace from an error message.
+// Put the result in "buf[bufsize]".
 static void qf_fmt_text(const char_u *restrict text, char_u *restrict buf,
                         int bufsize)
   FUNC_ATTR_NONNULL_ALL
@@ -3277,9 +3249,7 @@ static void qf_free(qf_list_T *qfl)
   qfl->qf_changedtick = 0L;
 }
 
-/*
- * qf_mark_adjust: adjust marks
- */
+// qf_mark_adjust: adjust marks
 bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount,
                     long amount_after)
 {
@@ -3321,21 +3291,19 @@ bool qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount,
   return found_one;
 }
 
-/*
- * Make a nice message out of the error character and the error number:
- *  char    number	message
- *  e or E    0		" error"
- *  w or W    0		" warning"
- *  i or I    0		" info"
- *  0	      0		""
- *  other     0		" c"
- *  e or E    n		" error n"
- *  w or W    n		" warning n"
- *  i or I    n		" info n"
- *  0	      n		" error n"
- *  other     n		" c n"
- *  1	      x		""	:helpgrep
- */
+// Make a nice message out of the error character and the error number:
+//  char    number  message
+//  e or E    0     " error"
+//  w or W    0     " warning"
+//  i or I    0     " info"
+//  0         0     ""
+//  other     0     " c"
+//  e or E    n     " error n"
+//  w or W    n     " warning n"
+//  i or I    n     " info n"
+//  0         n     " error n"
+//  other     n     " c n"
+//  1         x     ""          :helpgrep
 static char_u *qf_types(int c, int nr)
 {
   static char_u buf[20];
@@ -3396,12 +3364,10 @@ void qf_view_result(bool split)
   do_cmdline_cmd((IS_LL_WINDOW(curwin) ? ".ll" : ".cc"));
 }
 
-/*
- * ":cwindow": open the quickfix window if we have errors to display,
- *	       close it if not.
- * ":lwindow": open the location list window if we have locations to display,
- *	       close it if not.
- */
+// ":cwindow": open the quickfix window if we have errors to display,
+//             close it if not.
+// ":lwindow": open the location list window if we have locations to display,
+//             close it if not.
 void ex_cwindow(exarg_T *eap)
 {
   qf_info_T   *qi;
@@ -3414,14 +3380,12 @@ void ex_cwindow(exarg_T *eap)
 
   qfl = qf_get_curlist(qi);
 
-  /* Look for an existing quickfix window.  */
+  // Look for an existing quickfix window.
   win = qf_find_win(qi);
 
-  /*
-   * If a quickfix window is open but we have no errors to display,
-   * close the window.  If a quickfix window is not open, then open
-   * it if we have errors; otherwise, leave it closed.
-   */
+  // If a quickfix window is open but we have no errors to display,
+  // close the window.  If a quickfix window is not open, then open
+  // it if we have errors; otherwise, leave it closed.
   if (qf_stack_empty(qi)
       || qfl->qf_nonevalid
       || qf_list_empty(qf_get_curlist(qi))) {
@@ -3433,10 +3397,8 @@ void ex_cwindow(exarg_T *eap)
   }
 }
 
-/*
- * ":cclose": close the window showing the list of errors.
- * ":lclose": close the window showing the location list
- */
+// ":cclose": close the window showing the list of errors.
+// ":lclose": close the window showing the location list
 void ex_cclose(exarg_T *eap)
 {
   win_T *win = NULL;
@@ -3446,7 +3408,7 @@ void ex_cclose(exarg_T *eap)
     return;
   }
 
-  /* Find existing quickfix window and close it. */
+  // Find existing quickfix window and close it.
   win = qf_find_win(qi);
   if (win != NULL) {
     win_close(win, false);
@@ -3642,38 +3604,32 @@ void ex_cbottom(exarg_T *eap)
   }
 }
 
-/*
- * Return the number of the current entry (line number in the quickfix
- * window).
- */
+// Return the number of the current entry (line number in the quickfix
+// window).
 linenr_T qf_current_entry(win_T *wp)
 {
   qf_info_T   *qi = &ql_info;
 
-  if (IS_LL_WINDOW(wp))
-    /* In the location list window, use the referenced location list */
+  if (IS_LL_WINDOW(wp)) {
+    // In the location list window, use the referenced location list
     qi = wp->w_llist_ref;
+  }
 
   return qf_get_curlist(qi)->qf_index;
 }
 
-/*
- * Update the cursor position in the quickfix window to the current error.
- * Return TRUE if there is a quickfix window.
- */
-static int 
-qf_win_pos_update (
+// Update the cursor position in the quickfix window to the current error.
+// Return TRUE if there is a quickfix window.
+static int qf_win_pos_update(
     qf_info_T *qi,
-    int old_qf_index               /* previous qf_index or zero */
+    int old_qf_index               // previous qf_index or zero
 )
 {
   win_T       *win;
   int qf_index = qf_get_curlist(qi)->qf_index;
 
-  /*
-   * Put the cursor on the current error in the quickfix window, so that
-   * it's viewable.
-   */
+  // Put the cursor on the current error in the quickfix window, so that
+  // it's viewable.
   win = qf_find_win(qi);
   if (win != NULL
       && qf_index <= win->w_buffer->b_ml.ml_line_count
@@ -3725,10 +3681,8 @@ static win_T *qf_find_win(const qf_info_T *qi)
   return NULL;
 }
 
-/*
- * Find a quickfix buffer.
- * Searches in windows opened in all the tabs.
- */
+// Find a quickfix buffer.
+// Searches in windows opened in all the tabs.
 static buf_T *qf_find_buf(const qf_info_T *qi)
   FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
 {
@@ -3754,16 +3708,14 @@ static void qf_update_win_titlevar(qf_info_T *qi)
   }
 }
 
-/*
- * Find the quickfix buffer.  If it exists, update the contents.
- */
+// Find the quickfix buffer.  If it exists, update the contents.
 static void qf_update_buffer(qf_info_T *qi, qfline_T *old_last)
 {
   buf_T       *buf;
   win_T       *win;
   aco_save_T aco;
 
-  /* Check if a buffer for the quickfix list exists.  Update it. */
+  // Check if a buffer for the quickfix list exists.  Update it.
   buf = qf_find_buf(qi);
   if (buf != NULL) {
     linenr_T old_line_count = buf->b_ml.ml_line_count;
@@ -3936,7 +3888,7 @@ static void qf_fill_buffer(qf_list_T *qfl, buf_T *buf, qfline_T *old_last)
     redraw_curbuf_later(NOT_VALID);
   }
 
-  /* Restore KeyTyped, setting 'filetype' may reset it. */
+  // Restore KeyTyped, setting 'filetype' may reset it.
   KeyTyped = old_KeyTyped;
 }
 
@@ -3990,9 +3942,7 @@ static void qf_jump_first(qf_info_T *qi, unsigned save_qfid, int forceit)
   }
 }
 
-/*
- * Return TRUE when using ":vimgrep" for ":grep".
- */
+// Return TRUE when using ":vimgrep" for ":grep".
 int grep_internal(cmdidx_T cmdidx)
 {
   return (cmdidx == CMD_grep
@@ -4055,9 +4005,7 @@ static char *make_get_fullcmd(const char_u *makecmd, const char_u *fname)
   return cmd;
 }
 
-/*
- * Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
- */
+// Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
 void ex_make(exarg_T *eap)
 {
   char_u      *fname;
@@ -4128,11 +4076,9 @@ cleanup:
   xfree(cmd);
 }
 
-/*
- * Return the name for the errorfile, in allocated memory.
- * Find a new unique name when 'makeef' contains "##".
- * Returns NULL for error.
- */
+// Return the name for the errorfile, in allocated memory.
+// Find a new unique name when 'makeef' contains "##".
+// Returns NULL for error.
 static char_u *get_mef_name(void)
 {
   char_u      *p;
@@ -4154,7 +4100,7 @@ static char_u *get_mef_name(void)
   if (*p == NUL)
     return vim_strsave(p_mef);
 
-  /* Keep trying until the name doesn't exist yet. */
+  // Keep trying until the name doesn't exist yet.
   for (;; ) {
     if (start == -1) {
       start = (int)os_get_pid();
@@ -4703,10 +4649,8 @@ static char_u * cfile_get_auname(cmdidx_T cmdidx)
 }
 
 
-/*
- * ":cfile"/":cgetfile"/":caddfile" commands.
- * ":lfile"/":lgetfile"/":laddfile" commands.
- */
+// ":cfile"/":cgetfile"/":caddfile" commands.
+// ":lfile"/":lgetfile"/":laddfile" commands.
 void ex_cfile(exarg_T *eap)
 {
   win_T       *wp = NULL;
@@ -4947,12 +4891,10 @@ static void vgr_jump_to_match(qf_info_T *qi, int forceit, int *redraw_for_dummy,
   }
 }
 
-/*
- * ":vimgrep {pattern} file(s)"
- * ":vimgrepadd {pattern} file(s)"
- * ":lvimgrep {pattern} file(s)"
- * ":lvimgrepadd {pattern} file(s)"
- */
+// ":vimgrep {pattern} file(s)"
+// ":vimgrepadd {pattern} file(s)"
+// ":lvimgrep {pattern} file(s)"
+// ":lvimgrepadd {pattern} file(s)"
 void ex_vimgrep(exarg_T *eap)
 {
   regmmatch_T regmatch;
@@ -4994,7 +4936,7 @@ void ex_vimgrep(exarg_T *eap)
   else
     tomatch = MAXLNUM;
 
-  /* Get the search pattern: either white-separated or enclosed in // */
+  // Get the search pattern: either white-separated or enclosed in //
   regmatch.regprog = NULL;
   char_u *title = vim_strsave(qf_cmdtitle(*eap->cmdlinep));
   p = skip_vimgrep_pat(eap->arg, &s, &flags);
@@ -5021,9 +4963,10 @@ void ex_vimgrep(exarg_T *eap)
     qf_new_list(qi, title);
   }
 
-  /* parse the list of arguments */
-  if (get_arglist_exp(p, &fcount, &fnames, true) == FAIL)
+  // parse the list of arguments
+  if (get_arglist_exp(p, &fcount, &fnames, true) == FAIL) {
     goto theend;
+  }
   if (fcount == 0) {
     EMSG(_(e_nomatch));
     goto theend;
@@ -5032,8 +4975,8 @@ void ex_vimgrep(exarg_T *eap)
   dirname_start = xmalloc(MAXPATHL);
   dirname_now = xmalloc(MAXPATHL);
 
-  /* Remember the current directory, because a BufRead autocommand that does
-   * ":lcd %:p:h" changes the meaning of short path names. */
+  // Remember the current directory, because a BufRead autocommand that does
+  // ":lcd %:p:h" changes the meaning of short path names.
   os_dirname(dirname_start, MAXPATHL);
 
   incr_quickfix_busy();
@@ -5046,15 +4989,15 @@ void ex_vimgrep(exarg_T *eap)
   for (fi = 0; fi < fcount && !got_int && tomatch > 0; fi++) {
     fname = path_try_shorten_fname(fnames[fi]);
     if (time(NULL) > seconds) {
-      /* Display the file name every second or so, show the user we are
-       * working on it. */
+      // Display the file name every second or so, show the user we are
+      // working on it.
       seconds = time(NULL);
       vgr_display_fname(fname);
     }
 
     buf = buflist_findname_exp(fnames[fi]);
     if (buf == NULL || buf->b_ml.ml_mfp == NULL) {
-      /* Remember that a buffer with this name already exists. */
+      // Remember that a buffer with this name already exists.
       duplicate_name = (buf != NULL);
       using_dummy = TRUE;
       redraw_for_dummy = TRUE;
@@ -5087,20 +5030,20 @@ void ex_vimgrep(exarg_T *eap)
         if (found_match && first_match_buf == NULL)
           first_match_buf = buf;
         if (duplicate_name) {
-          /* Never keep a dummy buffer if there is another buffer
-           * with the same name. */
+          // Never keep a dummy buffer if there is another buffer
+          // with the same name.
           wipe_dummy_buffer(buf, dirname_start);
           buf = NULL;
         } else if (!cmdmod.hide
-                   || buf->b_p_bh[0] == 'u'             /* "unload" */
-                   || buf->b_p_bh[0] == 'w'             /* "wipe" */
-                   || buf->b_p_bh[0] == 'd') {          /* "delete" */
-          /* When no match was found we don't need to remember the
-           * buffer, wipe it out.  If there was a match and it
-           * wasn't the first one or we won't jump there: only
-           * unload the buffer.
-           * Ignore 'hidden' here, because it may lead to having too
-           * many swap files. */
+                   || buf->b_p_bh[0] == 'u'             // "unload"
+                   || buf->b_p_bh[0] == 'w'             // "wipe"
+                   || buf->b_p_bh[0] == 'd') {          // "delete"
+          // When no match was found we don't need to remember the
+          // buffer, wipe it out.  If there was a match and it
+          // wasn't the first one or we won't jump there: only
+          // unload the buffer.
+          // Ignore 'hidden' here, because it may lead to having too
+          // many swap files.
           if (!found_match) {
             wipe_dummy_buffer(buf, dirname_start);
             buf = NULL;
@@ -5124,10 +5067,10 @@ void ex_vimgrep(exarg_T *eap)
             target_dir = vim_strsave(dirname_now);
           }
 
-          /* The buffer is still loaded, the Filetype autocommands
-           * need to be done now, in that buffer.  And the modelines
-           * need to be done (again).  But not the window-local
-           * options! */
+          // The buffer is still loaded, the Filetype autocommands
+          // need to be done now, in that buffer.  And the modelines
+          // need to be done (again).  But not the window-local
+          // options!
           aucmd_prepbuf(&aco, buf);
           apply_autocmds(EVENT_FILETYPE, buf->b_p_ft,
               buf->b_fname, TRUE, buf);
@@ -5171,8 +5114,8 @@ void ex_vimgrep(exarg_T *eap)
 
   decr_quickfix_busy();
 
-  /* If we loaded a dummy buffer into the current window, the autocommands
-   * may have messed up things, need to redraw and recompute folds. */
+  // If we loaded a dummy buffer into the current window, the autocommands
+  // may have messed up things, need to redraw and recompute folds.
   if (redraw_for_dummy) {
     foldUpdateAll(curwin);
   }
@@ -5185,18 +5128,16 @@ theend:
   vim_regfree(regmatch.regprog);
 }
 
-/*
- * Restore current working directory to "dirname_start" if they differ, taking
- * into account whether it is set locally or globally.
- */
+// Restore current working directory to "dirname_start" if they differ, taking
+// into account whether it is set locally or globally.
 static void restore_start_dir(char_u *dirname_start)
 {
   char_u *dirname_now = xmalloc(MAXPATHL);
 
   os_dirname(dirname_now, MAXPATHL);
   if (STRCMP(dirname_start, dirname_now) != 0) {
-    /* If the directory has changed, change it back by building up an
-     * appropriate ex command and executing it. */
+    // If the directory has changed, change it back by building up an
+    // appropriate ex command and executing it.
     exarg_T ea = {
       .arg = dirname_start,
       .cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd,
@@ -5206,23 +5147,21 @@ static void restore_start_dir(char_u *dirname_start)
   xfree(dirname_now);
 }
 
-/*
- * Load file "fname" into a dummy buffer and return the buffer pointer,
- * placing the directory resulting from the buffer load into the
- * "resulting_dir" pointer. "resulting_dir" must be allocated by the caller
- * prior to calling this function. Restores directory to "dirname_start" prior
- * to returning, if autocmds or the 'autochdir' option have changed it.
- *
- * If creating the dummy buffer does not fail, must call unload_dummy_buffer()
- * or wipe_dummy_buffer() later!
- *
- * Returns NULL if it fails.
- */
+// Load file "fname" into a dummy buffer and return the buffer pointer,
+// placing the directory resulting from the buffer load into the
+// "resulting_dir" pointer. "resulting_dir" must be allocated by the caller
+// prior to calling this function. Restores directory to "dirname_start" prior
+// to returning, if autocmds or the 'autochdir' option have changed it.
+//
+// If creating the dummy buffer does not fail, must call unload_dummy_buffer()
+// or wipe_dummy_buffer() later!
+//
+// Returns NULL if it fails.
 static buf_T *
 load_dummy_buffer (
     char_u *fname,
-    char_u *dirname_start,      /* in: old directory */
-    char_u *resulting_dir      /* out: new directory */
+    char_u *dirname_start,      // in: old directory
+    char_u *resulting_dir       // out: new directory
 )
 {
   buf_T       *newbuf;
@@ -5239,24 +5178,24 @@ load_dummy_buffer (
   }
   set_bufref(&newbufref, newbuf);
 
-  /* Init the options. */
+  // Init the options.
   buf_copy_options(newbuf, BCO_ENTER | BCO_NOHELP);
 
-  /* need to open the memfile before putting the buffer in a window */
+  // need to open the memfile before putting the buffer in a window
   if (ml_open(newbuf) == OK) {
     // Make sure this buffer isn't wiped out by autocommands.
     newbuf->b_locked++;
     // set curwin/curbuf to buf and save a few things
     aucmd_prepbuf(&aco, newbuf);
 
-    /* Need to set the filename for autocommands. */
-    (void)setfname(curbuf, fname, NULL, FALSE);
+    // Need to set the filename for autocommands.
+    (void)setfname(curbuf, fname, NULL, false);
 
-    /* Create swap file now to avoid the ATTENTION message. */
-    check_need_swap(TRUE);
+    // Create swap file now to avoid the ATTENTION message.
+    check_need_swap(true);
 
-    /* Remove the "dummy" flag, otherwise autocommands may not
-     * work. */
+    // Remove the "dummy" flag, otherwise autocommands may not
+    // work.
     curbuf->b_flags &= ~BF_DUMMY;
 
     newbuf_to_wipe.br_buf = NULL;
@@ -5289,11 +5228,9 @@ load_dummy_buffer (
     newbuf->b_flags |= BF_DUMMY;
   }
 
-  /*
-   * When autocommands/'autochdir' option changed directory: go back.
-   * Let the caller know what the resulting dir was first, in case it is
-   * important.
-   */
+  // When autocommands/'autochdir' option changed directory: go back.
+  // Let the caller know what the resulting dir was first, in case it is
+  // important.
   os_dirname(resulting_dir, MAXPATHL);
   restore_start_dir(dirname_start);
 
@@ -5307,42 +5244,38 @@ load_dummy_buffer (
   return newbuf;
 }
 
-/*
- * Wipe out the dummy buffer that load_dummy_buffer() created. Restores
- * directory to "dirname_start" prior to returning, if autocmds or the
- * 'autochdir' option have changed it.
- */
+// Wipe out the dummy buffer that load_dummy_buffer() created. Restores
+// directory to "dirname_start" prior to returning, if autocmds or the
+// 'autochdir' option have changed it.
 static void wipe_dummy_buffer(buf_T *buf, char_u *dirname_start)
 {
-  if (curbuf != buf) {          /* safety check */
+  if (curbuf != buf) {          // safety check
     cleanup_T cs;
 
-    /* Reset the error/interrupt/exception state here so that aborting()
-     * returns FALSE when wiping out the buffer.  Otherwise it doesn't
-     * work when got_int is set. */
+    // Reset the error/interrupt/exception state here so that aborting()
+    // returns FALSE when wiping out the buffer.  Otherwise it doesn't
+    // work when got_int is set.
     enter_cleanup(&cs);
 
     wipe_buffer(buf, FALSE);
 
-    /* Restore the error/interrupt/exception state if not discarded by a
-     * new aborting error, interrupt, or uncaught exception. */
+    // Restore the error/interrupt/exception state if not discarded by a
+    // new aborting error, interrupt, or uncaught exception.
     leave_cleanup(&cs);
-    /* When autocommands/'autochdir' option changed directory: go back. */
+    // When autocommands/'autochdir' option changed directory: go back.
     restore_start_dir(dirname_start);
   }
 }
 
-/*
- * Unload the dummy buffer that load_dummy_buffer() created. Restores
- * directory to "dirname_start" prior to returning, if autocmds or the
- * 'autochdir' option have changed it.
- */
+// Unload the dummy buffer that load_dummy_buffer() created. Restores
+// directory to "dirname_start" prior to returning, if autocmds or the
+// 'autochdir' option have changed it.
 static void unload_dummy_buffer(buf_T *buf, char_u *dirname_start)
 {
-  if (curbuf != buf) {          /* safety check */
-    close_buffer(NULL, buf, DOBUF_UNLOAD, FALSE);
+  if (curbuf != buf) {          // safety check
+    close_buffer(NULL, buf, DOBUF_UNLOAD, false);
 
-    /* When autocommands/'autochdir' option changed directory: go back. */
+    // When autocommands/'autochdir' option changed directory: go back.
     restore_start_dir(dirname_start);
   }
 }
@@ -6297,14 +6230,12 @@ static int cbuffer_process_args(exarg_T *eap,
   return OK;
 }
 
-/*
- * ":[range]cbuffer [bufnr]" command.
- * ":[range]caddbuffer [bufnr]" command.
- * ":[range]cgetbuffer [bufnr]" command.
- * ":[range]lbuffer [bufnr]" command.
- * ":[range]laddbuffer [bufnr]" command.
- * ":[range]lgetbuffer [bufnr]" command.
- */
+// ":[range]cbuffer [bufnr]" command.
+// ":[range]caddbuffer [bufnr]" command.
+// ":[range]cgetbuffer [bufnr]" command.
+// ":[range]lbuffer [bufnr]" command.
+// ":[range]laddbuffer [bufnr]" command.
+// ":[range]lgetbuffer [bufnr]" command.
 void ex_cbuffer(exarg_T *eap)
 {
   buf_T *buf = NULL;
@@ -6405,8 +6336,8 @@ void ex_cexpr(exarg_T *eap)
 
   qf_info_T *qi = qf_cmd_get_or_alloc_stack(eap, &wp);
 
-  /* Evaluate the expression.  When the result is a string or a list we can
-   * use it to fill the errorlist. */
+  // Evaluate the expression.  When the result is a string or a list we can
+  // use it to fill the errorlist.
   typval_T tv;
   if (eval0(eap->arg, &tv, NULL, true) != FAIL) {
     if ((tv.v_type == VAR_STRING && tv.vval.v_string != NULL)

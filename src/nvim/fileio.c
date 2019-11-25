@@ -3731,8 +3731,9 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
     return FAIL;
   }
 
-  if (setfname(curbuf, fname, sfname, FALSE) == OK)
+  if (setfname(curbuf, fname, sfname, false) == OK) {
     curbuf->b_flags |= BF_NOTEDITED;
+  }
 
   /* ....and a new named one is created */
   apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, curbuf);

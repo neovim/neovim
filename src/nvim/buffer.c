@@ -411,11 +411,11 @@ bool buf_valid(buf_T *buf)
 ///               caller should get a new buffer very soon!
 ///               The 'bufhidden' option can force freeing and deleting.
 /// @param abort_if_last
-///               If TRUE, do not close the buffer if autocommands cause
+///               If true, do not close the buffer if autocommands cause
 ///               there to be only one window with this buffer. e.g. when
 ///               ":quit" is supposed to close the window but autocommands
 ///               close all other windows.
-void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
+void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 {
   bool unload_buf = (action != 0);
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
@@ -2694,7 +2694,7 @@ setfname(
     buf_T *buf,
     char_u *ffname,
     char_u *sfname,
-    int message                    // give message when buffer already exists
+    bool message                  // give message when buffer already exists
 )
 {
   buf_T       *obuf = NULL;
