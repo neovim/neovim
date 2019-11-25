@@ -1238,7 +1238,7 @@ do_buffer(
               return FAIL;
             }
           } else {
-            EMSG2(_("E89: %s will be killed(add ! to override)"),
+            EMSG2(_("E89: %s will be killed (add ! to override)"),
                   (char *)buf->b_fname);
             return FAIL;
           }

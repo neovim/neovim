@@ -100,7 +100,7 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Kan nie vóór eerste buffer gaan nie"
 
 #, fuzzy, c-format
-#~ msgid "E89: %s will be killed(add ! to override)"
+#~ msgid "E89: %s will be killed (add ! to override)"
 #~ msgstr "E189: \"%s\" bestaan (gebruik ! om te dwing)"
 
 #, c-format
