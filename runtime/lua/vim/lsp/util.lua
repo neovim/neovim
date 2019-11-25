@@ -310,37 +310,14 @@ function M.make_floating_popup_options(width, height, opts)
   }
 end
 
--- local function update_tagstack()
---   local fn = vim.fn
---   local bufnr = api.nvim_get_current_buf()
---   local line = fn.line('.')
---   local col = fn.col('.')
---   local tagname = fn.expand('<cWORD>')
---   local item = { bufnr = bufnr, from = { bufnr, line, col, 0 }, tagname = tagname }
---   local winid = fn.win_getid()
---   local tagstack = fn.gettagstack(winid)
---   local action
---   if tagstack.length == tagstack.curidx then
---     action = 'r'
---     tagstack.items[tagstack.curidx] = item
---   elseif tagstack.length > tagstack.curidx then
---     action = 'r'
---     if tagstack.curidx > 1 then
---       tagstack.items = table.insert(tagstack.items[tagstack.curidx - 1], item)
---     else
---       tagstack.items = { item }
---     end
---   else
---     action = 'a'
---     tagstack.items = { item }
---   end
---   tagstack.curidx = tagstack.curidx + 1
---   fn.settagstack(winid, tagstack, action)
--- end
-
 function M.jump_to_location(location)
   if location.uri == nil then return end
   local bufnr = vim.uri_to_bufnr(location.uri)
+  -- TODO(ashkan) this function was removed because I didn't fully comprehend
+  -- the tagstack and it was a holdover from the previous LSP efforts. If
+  -- someone wants to work on this and enable it, they can find it in the
+  -- commit d5aaad14ecdd2047089e1a018e97af1f790b3e42 in the file
+  -- `runtime/lua/vim/lsp/buf.lua` at line 103.
   -- update_tagstack()
   api.nvim_set_current_buf(bufnr)
   local row = location.range.start.line
