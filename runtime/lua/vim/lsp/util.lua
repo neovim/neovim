@@ -2,6 +2,7 @@ local protocol = require 'vim.lsp.protocol'
 local vim = vim
 local validate = vim.validate
 local api = vim.api
+local list_extend = vim.list_extend
 
 local M = {}
 
@@ -10,7 +11,13 @@ local function split_lines(value)
   return split(value, '\n', true)
 end
 
-local list_extend = vim.list_extend
+local function ok_or_nil(status, ...)
+  if not status then return end
+  return ...
+end
+local function npcall(fn, ...)
+  return ok_or_nil(pcall(fn, ...))
+end
 
 --- Find the longest shared prefix between prefix and word.
 -- e.g. remove_prefix("123tes", "testing") == "ting"
@@ -301,6 +308,78 @@ function M.make_floating_popup_options(width, height, opts)
     style = 'minimal',
     width = width,
   }
+end
+
+-- local function update_tagstack()
+--   local fn = vim.fn
+--   local bufnr = api.nvim_get_current_buf()
+--   local line = fn.line('.')
+--   local col = fn.col('.')
+--   local tagname = fn.expand('<cWORD>')
+--   local item = { bufnr = bufnr, from = { bufnr, line, col, 0 }, tagname = tagname }
+--   local winid = fn.win_getid()
+--   local tagstack = fn.gettagstack(winid)
+--   local action
+--   if tagstack.length == tagstack.curidx then
+--     action = 'r'
+--     tagstack.items[tagstack.curidx] = item
+--   elseif tagstack.length > tagstack.curidx then
+--     action = 'r'
+--     if tagstack.curidx > 1 then
+--       tagstack.items = table.insert(tagstack.items[tagstack.curidx - 1], item)
+--     else
+--       tagstack.items = { item }
+--     end
+--   else
+--     action = 'a'
+--     tagstack.items = { item }
+--   end
+--   tagstack.curidx = tagstack.curidx + 1
+--   fn.settagstack(winid, tagstack, action)
+-- end
+
+function M.jump_to_location(location)
+  if location.uri == nil then return end
+  local bufnr = vim.uri_to_bufnr(location.uri)
+  -- update_tagstack()
+  api.nvim_set_current_buf(bufnr)
+  local row = location.range.start.line
+  local col = location.range.start.character
+  local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
+  col = vim.str_byteindex(line, col)
+  api.nvim_win_set_cursor(0, {row + 1, col})
+  return true
+end
+
+local function find_window_by_var(name, value)
+  for _, win in ipairs(api.nvim_list_wins()) do
+    if npcall(api.nvim_win_get_var, win, name) == value then
+      return win
+    end
+  end
+end
+
+-- Check if a window with `unique_name` tagged is associated with the current
+-- buffer. If not, make a new preview.
+--
+-- fn()'s return values will be passed directly to open_floating_preview in the
+-- case that a new floating window should be created.
+function M.focusable_preview(unique_name, fn)
+  if npcall(api.nvim_win_get_var, 0, unique_name) then
+    return api.nvim_command("wincmd p")
+  end
+  local bufnr = api.nvim_get_current_buf()
+  do
+    local win = find_window_by_var(unique_name, bufnr)
+    if win then
+      api.nvim_set_current_win(win)
+      api.nvim_command("stopinsert")
+      return
+    end
+  end
+  local pbufnr, pwinnr = M.open_floating_preview(fn())
+  api.nvim_win_set_var(pwinnr, unique_name, bufnr)
+  return pbufnr, pwinnr
 end
 
 function M.open_floating_preview(contents, filetype, opts)
@@ -609,12 +688,13 @@ function M.locations_to_items(locations)
           if pos.character > #line then
             col = #line
           else
-            col =  vim.str_byteindex(line, pos.character)
+            col = vim.str_byteindex(line, pos.character)
           end
           table.insert(items, {
             filename = fname,
             lnum = row + 1,
             col = col + 1;
+            text = line;
           })
         end
       end
