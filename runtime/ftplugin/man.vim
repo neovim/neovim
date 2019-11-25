@@ -1,4 +1,4 @@
-" Maintainer:          Anmol Sethi <anmol@aubble.com>
+" Maintainer:          Anmol Sethi <hi@nhooyr.io>
 " Previous Maintainer: SungHyun Nam <goweol@gmail.com>
 
 if exists('b:did_ftplugin') || &filetype !=# 'man'

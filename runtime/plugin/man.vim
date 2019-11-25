@@ -1,4 +1,4 @@
-" Maintainer: Anmol Sethi <anmol@aubble.com>
+" Maintainer: Anmol Sethi <hi@nhooyr.io>
 
 if exists('g:loaded_man')
   finish
