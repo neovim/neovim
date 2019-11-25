@@ -1013,10 +1013,10 @@ ArrayOf(Integer, 2) nvim_buf_get_mark(Buffer buffer, String name, Error *err)
 
 /// Returns position for a given extmark id
 ///
-/// @param buffer The buffer handle
-/// @param namespace a identifier returned previously with nvim_create_namespace
-/// @param id the extmark id
-/// @param[out] err Details of an error that may have occurred
+/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param id  Extmark id
+/// @param[out] err   Error details, if any
 /// @return (row, col) tuple or empty list () if extmark id was absent
 ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
                                             Integer id, Error *err)
@@ -1044,30 +1044,50 @@ ArrayOf(Integer) nvim_buf_get_extmark_by_id(Buffer buffer, Integer ns_id,
   return rv;
 }
 
-/// List extmarks in a range (inclusive)
+/// Gets extmarks in "traversal order" from a |charwise| region defined by
+/// buffer positions (inclusive, 0-indexed |api-indexing|).
 ///
-/// range ends can be specified as (row, col) tuples, as well as extmark
-/// ids in the same namespace. In addition, 0 and -1 works as shorthands
-/// for (0,0) and (-1,-1) respectively, so that all marks in the buffer can be
-/// queried as:
+/// Region can be given as (row,col) tuples, or valid extmark ids (whose
+/// positions define the bounds). 0 and -1 are understood as (0,0) and (-1,-1)
+/// respectively, thus the following are equivalent:
 ///
-///    all_marks = nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+/// <pre>
+///   nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+///   nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+/// </pre>
 ///
-/// If end is a lower position than start, then the range will be traversed
-/// backwards. This is mostly useful with limited amount, to be able to get the
-/// first marks prior to a given position.
+/// If `end` is less than `start`, traversal works backwards. (Useful
+/// with `limit`, to get the first marks prior to a given position.)
 ///
-/// @param buffer The buffer handle
-/// @param ns_id An id returned previously from nvim_create_namespace
-/// @param start One of:  extmark id, (row, col) or 0, -1 for buffer ends
-/// @param end One of: extmark id, (row, col) or 0, -1 for buffer ends
-/// @param opts additional options. Supports the keys:
-///          - amount:  Maximum number of marks to return
-/// @param[out] err Details of an error that may have occurred
-/// @return [[extmark_id, row, col], ...]
-Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
-                            Object start, Object end, Dictionary opts,
-                            Error *err)
+/// Example:
+///
+/// <pre>
+///   local a   = vim.api
+///   local pos = a.nvim_win_get_cursor(0)
+///   local ns  = a.nvim_create_namespace('my-plugin')
+///   -- Create new extmark at line 1, column 1.
+///   local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+///   -- Create new extmark at line 3, column 1.
+///   local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+///   -- Get extmarks only from line 3.
+///   local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+///   -- Get all marks in this buffer + namespace.
+///   local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+///   print(vim.inspect(ms))
+/// </pre>
+///
+/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param start  Start of range, given as (row, col) or valid extmark id
+///               (whose position defines the bound)
+/// @param end  End of range, given as (row, col) or valid extmark id
+///             (whose position defines the bound)
+/// @param opts  Optional parameters. Keys:
+///          - limit:  Maximum number of marks to return
+/// @param[out] err   Error details, if any
+/// @return List of [extmark_id, row, col] tuples in "traversal order".
+Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
+                            Object end, Dictionary opts, Error *err)
   FUNC_API_SINCE(7)
 {
   Array rv = ARRAY_DICT_INIT;
@@ -1081,17 +1101,17 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
     api_set_error(err, kErrorTypeValidation, _("Invalid ns_id"));
     return rv;
   }
-  Integer amount = -1;
+  Integer limit = -1;
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
-    if (strequal("amount", k.data)) {
+    if (strequal("limit", k.data)) {
       if (v->type != kObjectTypeInteger) {
-        api_set_error(err, kErrorTypeValidation, "amount is not an integer");
+        api_set_error(err, kErrorTypeValidation, "limit is not an integer");
         return rv;
       }
-      amount = v->data.integer;
+      limit = v->data.integer;
       v->data.integer = LUA_NOREF;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
@@ -1099,7 +1119,7 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
     }
   }
 
-  if (amount == 0) {
+  if (limit == 0) {
     return rv;
   }
 
@@ -1108,13 +1128,13 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
 
   linenr_T l_lnum;
   colnr_T l_col;
-  if (!set_extmark_index_from_obj(buf, ns_id, start, &l_lnum, &l_col, err)) {
+  if (!extmark_get_index_from_obj(buf, ns_id, start, &l_lnum, &l_col, err)) {
     return rv;
   }
 
   linenr_T u_lnum;
   colnr_T u_col;
-  if (!set_extmark_index_from_obj(buf, ns_id, end, &u_lnum, &u_col, err)) {
+  if (!extmark_get_index_from_obj(buf, ns_id, end, &u_lnum, &u_col, err)) {
     return rv;
   }
 
@@ -1129,9 +1149,8 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
   }
 
 
-  ExtmarkArray marks = extmark_get(buf, (uint64_t)ns_id, l_lnum, l_col,
-                                   u_lnum, u_col, (int64_t)amount,
-                                   reverse);
+  ExtmarkArray marks = extmark_get(buf, (uint64_t)ns_id, l_lnum, l_col, u_lnum,
+                                   u_col, (int64_t)limit, reverse);
 
   for (size_t i = 0; i < kv_size(marks); i++) {
     Array mark = ARRAY_DICT_INIT;
@@ -1146,26 +1165,23 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id,
   return rv;
 }
 
-/// Create or update an extmark at a position
+/// Creates or updates an extmark.
 ///
-/// If an invalid namespace is given, an error will be raised.
-///
-/// To create a new extmark, pass in id=0. The new extmark id will be
-/// returned. To move an existing mark, pass in its id.
+/// To create a new extmark, pass id=0. The extmark id will be returned.
+//  To move an existing mark, pass its id.
 ///
 /// It is also allowed to create a new mark by passing in a previously unused
 /// id, but the caller must then keep track of existing and unused ids itself.
-/// This is mainly useful over RPC, to avoid needing to wait for the return
-/// value.
+/// (Useful over RPC, to avoid waiting for the return value.)
 ///
-/// @param buffer The buffer handle
-/// @param ns_id a identifier returned previously with nvim_create_namespace
-/// @param id The extmark's id or 0 to create a new mark.
-/// @param line The row to set the extmark to.
-/// @param col The column to set the extmark to.
-/// @param opts Optional parameters. Currently not used.
-/// @param[out] err Details of an error that may have occurred
-/// @return the id of the extmark.
+/// @param buffer  Buffer handle, or 0 for current buffer
+/// @param ns_id  Namespace id from |nvim_create_namespace()|
+/// @param id  Extmark id, or 0 to create new
+/// @param line  Line number where to place the mark
+/// @param col  Column where to place the mark
+/// @param opts  Optional parameters. Currently not used.
+/// @param[out]  err   Error details, if any
+/// @return Id of the created/updated extmark
 Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
                              Integer line, Integer col,
                              Dictionary opts, Error *err)
@@ -1217,13 +1233,13 @@ Integer nvim_buf_set_extmark(Buffer buffer, Integer ns_id, Integer id,
   return (Integer)id_num;
 }
 
-/// Remove an extmark
+/// Removes an extmark.
 ///
-/// @param buffer The buffer handle
-/// @param ns_id a identifier returned previously with nvim_create_namespace
-/// @param id The extmarks's id
-/// @param[out] err Details of an error that may have occurred
-/// @return true on success, false if the extmark was not found.
+/// @param buffer Buffer handle, or 0 for current buffer
+/// @param ns_id Namespace id from |nvim_create_namespace()|
+/// @param id Extmark id
+/// @param[out] err   Error details, if any
+/// @return true if the extmark was found, else false
 Boolean nvim_buf_del_extmark(Buffer buffer,
                              Integer ns_id,
                              Integer id,
@@ -1309,7 +1325,8 @@ Integer nvim_buf_add_highlight(Buffer buffer,
   return ns_id;
 }
 
-/// Clears namespaced objects, highlights and virtual text, from a line range
+/// Clears namespaced objects (highlights, extmarks, virtual text) from
+/// a region.
 ///
 /// Lines are 0-indexed. |api-indexing|  To clear the namespace in the entire
 /// buffer, specify line_start=0 and line_end=-1.

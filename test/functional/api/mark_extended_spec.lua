@@ -36,7 +36,7 @@ local function get_extmarks(ns_id, start, end_, opts)
   return curbufmeths.get_extmarks(ns_id, start, end_, opts)
 end
 
-describe('Extmarks buffer api', function()
+describe('API/extmarks', function()
   local screen
   local marks, positions, ns_string2, ns_string, init_text, row, col
   local ns, ns2
@@ -153,26 +153,26 @@ describe('Extmarks buffer api', function()
     end
 
     -- next with mark id
-    rv = get_extmarks(ns, marks[1], {-1, -1}, {amount=1})
+    rv = get_extmarks(ns, marks[1], {-1, -1}, {limit=1})
     eq({{marks[1], positions[1][1], positions[1][2]}}, rv)
-    rv = get_extmarks(ns, marks[2], {-1, -1}, {amount=1})
+    rv = get_extmarks(ns, marks[2], {-1, -1}, {limit=1})
     eq({{marks[2], positions[2][1], positions[2][2]}}, rv)
     -- next with positional when mark exists at position
-    rv = get_extmarks(ns, positions[1], {-1, -1}, {amount=1})
+    rv = get_extmarks(ns, positions[1], {-1, -1}, {limit=1})
     eq({{marks[1], positions[1][1], positions[1][2]}}, rv)
     -- next with positional index (no mark at position)
-    rv = get_extmarks(ns, {positions[1][1], positions[1][2] +1}, {-1, -1}, {amount=1})
+    rv = get_extmarks(ns, {positions[1][1], positions[1][2] +1}, {-1, -1}, {limit=1})
     eq({{marks[2], positions[2][1], positions[2][2]}}, rv)
     -- next with Extremity index
-    rv = get_extmarks(ns, {0,0}, {-1, -1}, {amount=1})
+    rv = get_extmarks(ns, {0,0}, {-1, -1}, {limit=1})
     eq({{marks[1], positions[1][1], positions[1][2]}}, rv)
 
     -- nextrange with mark id
     rv = get_extmarks(ns, marks[1], marks[3])
     eq({marks[1], positions[1][1], positions[1][2]}, rv[1])
     eq({marks[2], positions[2][1], positions[2][2]}, rv[2])
-    -- nextrange with amount
-    rv = get_extmarks(ns, marks[1], marks[3], {amount=2})
+    -- nextrange with `limit`
+    rv = get_extmarks(ns, marks[1], marks[3], {limit=2})
     eq(2, table.getn(rv))
     -- nextrange with positional when mark exists at position
     rv = get_extmarks(ns, positions[1], positions[3])
@@ -196,18 +196,18 @@ describe('Extmarks buffer api', function()
     eq({{marks[3], positions[3][1], positions[3][2]}}, rv)
 
     -- prev with mark id
-    rv = get_extmarks(ns, marks[3], {0, 0}, {amount=1})
+    rv = get_extmarks(ns, marks[3], {0, 0}, {limit=1})
     eq({{marks[3], positions[3][1], positions[3][2]}}, rv)
-    rv = get_extmarks(ns, marks[2], {0, 0}, {amount=1})
+    rv = get_extmarks(ns, marks[2], {0, 0}, {limit=1})
     eq({{marks[2], positions[2][1], positions[2][2]}}, rv)
     -- prev with positional when mark exists at position
-    rv = get_extmarks(ns, positions[3], {0, 0}, {amount=1})
+    rv = get_extmarks(ns, positions[3], {0, 0}, {limit=1})
     eq({{marks[3], positions[3][1], positions[3][2]}}, rv)
     -- prev with positional index (no mark at position)
-    rv = get_extmarks(ns, {positions[1][1], positions[1][2] +1}, {0, 0}, {amount=1})
+    rv = get_extmarks(ns, {positions[1][1], positions[1][2] +1}, {0, 0}, {limit=1})
     eq({{marks[1], positions[1][1], positions[1][2]}}, rv)
     -- prev with Extremity index
-    rv = get_extmarks(ns, {-1,-1}, {0,0}, {amount=1})
+    rv = get_extmarks(ns, {-1,-1}, {0,0}, {limit=1})
     eq({{marks[3], positions[3][1], positions[3][2]}}, rv)
 
     -- prevrange with mark id
@@ -215,8 +215,8 @@ describe('Extmarks buffer api', function()
     eq({marks[3], positions[3][1], positions[3][2]}, rv[1])
     eq({marks[2], positions[2][1], positions[2][2]}, rv[2])
     eq({marks[1], positions[1][1], positions[1][2]}, rv[3])
-    -- prevrange with amount
-    rv = get_extmarks(ns, marks[3], marks[1], {amount=2})
+    -- prevrange with limit
+    rv = get_extmarks(ns, marks[3], marks[1], {limit=2})
     eq(2, table.getn(rv))
     -- prevrange with positional when mark exists at position
     rv = get_extmarks(ns, positions[3], positions[1])
@@ -241,7 +241,7 @@ describe('Extmarks buffer api', function()
     eq({{marks[1], positions[1][1], positions[1][2]}}, rv)
   end)
 
-  it('querying for information with amount #extmarks', function()
+  it('querying for information with limit #extmarks', function()
     -- add some more marks
     for i, m in ipairs(marks) do
       if positions[i] ~= nil then
@@ -250,19 +250,19 @@ describe('Extmarks buffer api', function()
       end
     end
 
-    local rv = get_extmarks(ns, {0, 0}, {-1, -1}, {amount=1})
+    local rv = get_extmarks(ns, {0, 0}, {-1, -1}, {limit=1})
     eq(1, table.getn(rv))
-    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {amount=2})
+    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {limit=2})
     eq(2, table.getn(rv))
-    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {amount=3})
+    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {limit=3})
     eq(3, table.getn(rv))
 
     -- now in reverse
-    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {amount=1})
+    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {limit=1})
     eq(1, table.getn(rv))
-    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {amount=2})
+    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {limit=2})
     eq(2, table.getn(rv))
-    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {amount=3})
+    rv = get_extmarks(ns, {0, 0}, {-1, -1}, {limit=3})
     eq(3, table.getn(rv))
   end)
 
@@ -295,9 +295,9 @@ describe('Extmarks buffer api', function()
        rv)
   end)
 
-  it('get_marks amount 0 returns nothing #extmarks', function()
+  it('get_marks limit=0 returns nothing #extmarks', function()
     set_extmark(ns, marks[1], positions[1][1], positions[1][2])
-    local rv = get_extmarks(ns, {-1, -1}, {-1, -1}, {amount=0})
+    local rv = get_extmarks(ns, {-1, -1}, {-1, -1}, {limit=0})
     eq({}, rv)
   end)
 
@@ -730,7 +730,7 @@ describe('Extmarks buffer api', function()
     -- Test updates
     feed('o<esc>')
     set_extmark(ns, marks[1], positions[1][1], positions[1][2])
-    rv = get_extmarks(ns, marks[1], marks[1], {amount=1})
+    rv = get_extmarks(ns, marks[1], marks[1], {limit=1})
     eq(1, table.getn(rv))
     feed("u")
     feed("<c-r>")
@@ -771,23 +771,23 @@ describe('Extmarks buffer api', function()
     set_extmark(ns2, marks[2], positions[2][1], positions[2][2])
     set_extmark(ns2, marks[3], positions[3][1], positions[3][2])
 
-    -- get_next (amount set)
-    rv = get_extmarks(ns, {0, 0}, positions[2], {amount=1})
+    -- get_next (limit set)
+    rv = get_extmarks(ns, {0, 0}, positions[2], {limit=1})
     eq(1, table.getn(rv))
-    rv = get_extmarks(ns2, {0, 0}, positions[2], {amount=1})
+    rv = get_extmarks(ns2, {0, 0}, positions[2], {limit=1})
     eq(1, table.getn(rv))
-    -- get_prev (amount set)
-    rv = get_extmarks(ns, positions[1], {0, 0}, {amount=1})
+    -- get_prev (limit set)
+    rv = get_extmarks(ns, positions[1], {0, 0}, {limit=1})
     eq(1, table.getn(rv))
-    rv = get_extmarks(ns2, positions[1], {0, 0}, {amount=1})
+    rv = get_extmarks(ns2, positions[1], {0, 0}, {limit=1})
     eq(1, table.getn(rv))
 
-    -- get_next (amount not set)
+    -- get_next (no limit)
     rv = get_extmarks(ns, positions[1], positions[2])
     eq(2, table.getn(rv))
     rv = get_extmarks(ns2, positions[1], positions[2])
     eq(2, table.getn(rv))
-    -- get_prev (amount not set)
+    -- get_prev (no limit)
     rv = get_extmarks(ns, positions[2], positions[1])
     eq(2, table.getn(rv))
     rv = get_extmarks(ns2, positions[2], positions[1])
@@ -1250,7 +1250,7 @@ describe('Extmarks buffer api', function()
     eq("col value outside range", pcall_err(set_extmark, ns, marks[1], 0, invalid_col))
   end)
 
-  it('when line > line_count, throw error #extmarks', function()
+  it('fails when line > line_count #extmarks', function()
     local invalid_col = init_text:len() + 1
     local invalid_lnum = 3
     eq('line value outside range', pcall_err(set_extmark, ns, marks[1], invalid_lnum, invalid_col))
@@ -1258,10 +1258,9 @@ describe('Extmarks buffer api', function()
   end)
 
   it('bug from check_col in extmark_set #extmarks_sub', function()
-    -- This bug was caused by extmark_set always using
-    -- check_col. check_col always uses the current buffer.
-    -- This wasn't working during undo so we now use
-    -- check_col and check_lnum only when they are required.
+    -- This bug was caused by extmark_set always using check_col. check_col
+    -- always uses the current buffer. This wasn't working during undo so we
+    -- now use check_col and check_lnum only when they are required.
     feed('A<cr>67890<cr>xx<esc>')
     feed('A<cr>12345<cr>67890<cr>xx<esc>')
     set_extmark(ns, marks[1], 3, 4)

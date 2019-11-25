@@ -5204,8 +5204,7 @@ void write_reg_contents_lst(int name, char_u **strings,
 
 /// write_reg_contents_ex - store `str` in register `name`
 ///
-/// If `str` ends in '\n' or '\r', use linewise, otherwise use
-/// characterwise.
+/// If `str` ends in '\n' or '\r', use linewise, otherwise use charwise.
 ///
 /// @warning when `name` is '/', `len` and `must_append` are ignored. This
 ///          means that `str` MUST be NUL-terminated.
