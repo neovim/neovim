@@ -19,6 +19,7 @@ API Usage						*api-rpc* *RPC* *rpc*
 							*msgpack-rpc*
 RPC is the typical way to control Nvim programmatically.  Nvim implements the
 MessagePack-RPC protocol:
+  https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md
   https://github.com/msgpack/msgpack/blob/0b8f5ac/spec.md
 
 Many clients use the API: user interfaces (GUIs), remote plugins, scripts like
@@ -935,8 +936,8 @@ nvim_open_win({buffer}, {enter}, {config})                   *nvim_open_win()*
                                   'list' options. 'signcolumn' is changed to
                                   `auto` and 'colorcolumn' is cleared. The
                                   end-of-buffer region is hidden by setting
-                                  `eob` flag of 'fillchars' to a space char, and
-                                  clearing the |EndOfBuffer| region in
+                                  `eob` flag of 'fillchars' to a space char,
+                                  and clearing the |EndOfBuffer| region in
                                   'winhighlight'.
 
                 Return: ~
@@ -1022,7 +1023,7 @@ nvim_put({lines}, {type}, {after}, {follow})                      *nvim_put()*
                     {type}    Edit behavior: any |getregtype()| result, or:
                               • "b" |blockwise-visual| mode (may include
                                 width, e.g. "b3")
-                              • "c" |characterwise| mode
+                              • "c" |charwise| mode
                               • "l" |linewise| mode
                               • "" guess by contents, see |setreg()|
                     {after}   Insert after cursor (like |p|), or before (like
@@ -1797,81 +1798,93 @@ nvim_buf_get_extmark_by_id({buffer}, {ns_id}, {id})
                 Returns position for a given extmark id
 
                 Parameters: ~
-                    {buffer}     The buffer handle
-                    {namespace}  a identifier returned previously with
-                                 nvim_create_namespace
-                    {id}         the extmark id
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {id}      Extmark id
 
                 Return: ~
                     (row, col) tuple or empty list () if extmark id was absent
 
                                                      *nvim_buf_get_extmarks()*
 nvim_buf_get_extmarks({buffer}, {ns_id}, {start}, {end}, {opts})
-                List extmarks in a range (inclusive)
+                Gets extmarks in "traversal order" from a |charwise| region
+                defined by buffer positions (inclusive, 0-indexed
+                |api-indexing|).
 
-                range ends can be specified as (row, col) tuples, as well as
-                extmark ids in the same namespace. In addition, 0 and -1 works
-                as shorthands for (0,0) and (-1,-1) respectively, so that all
-                marks in the buffer can be queried as:
+                Region can be given as (row,col) tuples, or valid extmark ids
+                (whose positions define the bounds). 0 and -1 are understood
+                as (0,0) and (-1,-1) respectively, thus the following are
+                equivalent:
+>
+                  nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+                  nvim_buf_get_extmarks(0, my_ns, [0,0], [-1,-1], {})
+<
 
-                all_marks = nvim_buf_get_extmarks(0, my_ns, 0, -1, {})
+                If `end` is less than `start` , traversal works backwards.
+                (Useful with `limit` , to get the first marks prior to a given
+                position.)
 
-                If end is a lower position than start, then the range will be
-                traversed backwards. This is mostly useful with limited
-                amount, to be able to get the first marks prior to a given
-                position.
+                Example:
+>
+                  local a   = vim.api
+                  local pos = a.nvim_win_get_cursor(0)
+                  local ns  = a.nvim_create_namespace('my-plugin')
+                  -- Create new extmark at line 1, column 1.
+                  local m1  = a.nvim_buf_set_extmark(0, ns, 0, 0, 0, {})
+                  -- Create new extmark at line 3, column 1.
+                  local m2  = a.nvim_buf_set_extmark(0, ns, 0, 2, 0, {})
+                  -- Get extmarks only from line 3.
+                  local ms  = a.nvim_buf_get_extmarks(0, ns, {2,0}, {2,0}, {})
+                  -- Get all marks in this buffer + namespace.
+                  local all = a.nvim_buf_get_extmarks(0, ns, 0, -1, {})
+                  print(vim.inspect(ms))
+<
 
                 Parameters: ~
-                    {buffer}  The buffer handle
-                    {ns_id}   An id returned previously from
-                              nvim_create_namespace
-                    {start}   One of: extmark id, (row, col) or 0, -1 for
-                              buffer ends
-                    {end}     One of: extmark id, (row, col) or 0, -1 for
-                              buffer ends
-                    {opts}    additional options. Supports the keys:
-                              • amount: Maximum number of marks to return
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {start}   Start of range, given as (row, col) or valid
+                              extmark id (whose position defines the bound)
+                    {end}     End of range, given as (row, col) or valid
+                              extmark id (whose position defines the bound)
+                    {opts}    Optional parameters. Keys:
+                              • limit: Maximum number of marks to return
 
                 Return: ~
-                    [[extmark_id, row, col], ...]
+                    List of [extmark_id, row, col] tuples in "traversal
+                    order".
 
                                                       *nvim_buf_set_extmark()*
 nvim_buf_set_extmark({buffer}, {ns_id}, {id}, {line}, {col}, {opts})
-                Create or update an extmark at a position
+                Creates or updates an extmark.
 
-                If an invalid namespace is given, an error will be raised.
-
-                To create a new extmark, pass in id=0. The new extmark id will
-                be returned. To move an existing mark, pass in its id.
-
-                It is also allowed to create a new mark by passing in a
-                previously unused id, but the caller must then keep track of
-                existing and unused ids itself. This is mainly useful over
-                RPC, to avoid needing to wait for the return value.
+                To create a new extmark, pass id=0. The extmark id will be
+                returned. It is also allowed to create a new mark by passing
+                in a previously unused id, but the caller must then keep track
+                of existing and unused ids itself. (Useful over RPC, to avoid
+                waiting for the return value.)
 
                 Parameters: ~
-                    {buffer}  The buffer handle
-                    {ns_id}   a identifier returned previously with
-                              nvim_create_namespace
-                    {id}      The extmark's id or 0 to create a new mark.
-                    {line}    The row to set the extmark to.
-                    {col}     The column to set the extmark to.
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {id}      Extmark id, or 0 to create new
+                    {line}    Line number where to place the mark
+                    {col}     Column where to place the mark
                     {opts}    Optional parameters. Currently not used.
 
                 Return: ~
-                    the id of the extmark.
+                    Id of the created/updated extmark
 
 nvim_buf_del_extmark({buffer}, {ns_id}, {id})         *nvim_buf_del_extmark()*
-                Remove an extmark
+                Removes an extmark.
 
                 Parameters: ~
-                    {buffer}  The buffer handle
-                    {ns_id}   a identifier returned previously with
-                              nvim_create_namespace
-                    {id}      The extmarks's id
+                    {buffer}  Buffer handle, or 0 for current buffer
+                    {ns_id}   Namespace id from |nvim_create_namespace()|
+                    {id}      Extmark id
 
                 Return: ~
-                    true on success, false if the extmark was not found.
+                    true if the extmark was found, else false
 
                                                     *nvim_buf_add_highlight()*
 nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line},
@@ -1916,8 +1929,8 @@ nvim_buf_add_highlight({buffer}, {ns_id}, {hl_group}, {line},
 
                                                   *nvim_buf_clear_namespace()*
 nvim_buf_clear_namespace({buffer}, {ns_id}, {line_start}, {line_end})
-                Clears namespaced objects, highlights and virtual text, from a
-                line range
+                Clears namespaced objects (highlights, extmarks, virtual text)
+                from a region.
 
                 Lines are 0-indexed. |api-indexing| To clear the namespace in
                 the entire buffer, specify line_start=0 and line_end=-1.

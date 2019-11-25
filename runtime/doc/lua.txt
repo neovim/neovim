@@ -876,16 +876,23 @@ tbl_add_reverse_lookup({o})                     *vim.tbl_add_reverse_lookup()*
                 Parameters: ~
                     {o}  table The table to add the reverse to.
 
-list_extend({dst}, {src})                                  *vim.list_extend()*
+list_extend({dst}, {src}, {start}, {finish})               *vim.list_extend()*
                 Extends a list-like table with the values of another list-like
                 table.
 
+                NOTE: This mutates dst!
+
                 Parameters: ~
-                    {dst}  The list which will be modified and appended to.
-                    {src}  The list from which values will be inserted.
+                    {dst}     list which will be modified and appended to.
+                    {src}     list from which values will be inserted.
+                    {start}   Start index on src. defaults to 1
+                    {finish}  Final index on src. defaults to #src
+
+                Return: ~
+                    dst
 
                 See also: ~
-                    |extend()|
+                    |vim.tbl_extend()|
 
 tbl_flatten({t})                                           *vim.tbl_flatten()*
                 Creates a copy of a list-like table such that any nested

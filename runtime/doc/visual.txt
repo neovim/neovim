@@ -48,7 +48,7 @@ position.
 ==============================================================================
 2. Starting and stopping Visual mode			*visual-start*
 
-						*v* *characterwise-visual*
+						*v* *charwise-visual*
 [count]v		Start Visual mode per character.
 			With [count] select the same number of characters or
 			lines as used for the last Visual operation, but at
@@ -74,7 +74,7 @@ position.
 
 If you use <Esc>, click the left mouse button or use any command that
 does a jump to another buffer while in Visual mode, the highlighting stops
-and no text is affected.  Also when you hit "v" in characterwise Visual mode,
+and no text is affected.  Also when you hit "v" in charwise Visual mode,
 "CTRL-V" in blockwise Visual mode or "V" in linewise Visual mode.  If you hit
 CTRL-Z the highlighting stops and the editor is suspended or a new shell is
 started |CTRL-Z|.
@@ -477,7 +477,7 @@ Commands in Select mode:
 Otherwise, typed characters are handled as in Visual mode.
 
 When using an operator in Select mode, and the selection is linewise, the
-selected lines are operated upon, but like in characterwise selection.  For
+selected lines are operated upon, but like in charwise selection.  For
 example, when a whole line is deleted, it can later be pasted in the middle of
 a line.
 
@@ -510,7 +510,7 @@ gV			Avoid the automatic reselection of the Visual area
 			selection.
 
 							*gh*
-gh			Start Select mode, characterwise.  This is like "v",
+gh			Start Select mode, charwise.  This is like "v",
 			but starts Select mode instead of Visual mode.
 			Mnemonic: "get highlighted".
 
