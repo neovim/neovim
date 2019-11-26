@@ -1,4 +1,4 @@
-local default_callbacks = require 'vim.lsp.default_callbacks'
+local default_callbacks = require 'vim.lsp.callbacks'
 local log = require 'vim.lsp.log'
 local lsp_rpc = require 'vim.lsp.rpc'
 local protocol = require 'vim.lsp.protocol'
@@ -13,7 +13,7 @@ local validate = vim.validate
 
 local lsp = {
   protocol = protocol;
-  default_callbacks = default_callbacks;
+  callbacks = default_callbacks;
   buf = require'vim.lsp.buf';
   util = util;
   -- Allow raw RPC access.
@@ -469,7 +469,7 @@ function lsp.start_client(config)
   function client.request(method, params, callback)
     if not callback then
       callback = resolve_callback(method)
-        or error(string.format("request callback is empty and no default was found for client %s", client.name))
+        or error("not found: request callback for client "..client.name)
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
     -- TODO keep these checks or just let it go anyway?
