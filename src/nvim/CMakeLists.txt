@@ -465,6 +465,7 @@ install_helper(TARGETS nvim)
 
 set_property(TARGET nvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
+set_property(TARGET nvim PROPERTY ENABLE_EXPORTS TRUE)
 
 if(ENABLE_LTO AND (POLICY CMP0069))
   include(CheckIPOSupported)
