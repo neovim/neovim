@@ -176,7 +176,7 @@ end
 M['textDocument/peekDefinition'] = function(_, _, result, _)
   if not (result and result[1]) then return end
   local loc = result[1]
-  local bufnr = vim.uri_to_bufnr(loc.uri) or error("couldn't find file "..tostring(loc.uri))
+  local bufnr = vim.uri_to_bufnr(loc.uri) or error("not found: "..tostring(loc.uri))
   local start = loc.range.start
   local finish = loc.range["end"]
   util.open_floating_peek_preview(bufnr, start, finish, { offset_x = 1 })

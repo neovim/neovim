@@ -469,7 +469,7 @@ function lsp.start_client(config)
   function client.request(method, params, callback)
     if not callback then
       callback = resolve_callback(method)
-        or error("request callback is empty and no default was found for client "..client.name)
+        or error("not found: request callback for client "..client.name)
     end
     local _ = log.debug() and log.debug(log_prefix, "client.request", client_id, method, params, callback)
     -- TODO keep these checks or just let it go anyway?
