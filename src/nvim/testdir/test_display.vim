@@ -71,6 +71,7 @@ func! Test_display_foldtext_mbyte()
 endfunc
 
 func Test_display_listchars_precedes()
+  set fillchars+=vert:\|
   call NewWindow(10, 10)
   " Need a physical line that wraps over the complete
   " window size

@@ -2362,7 +2362,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	string	(default "")
-			local to window
+			global or local to window |global-local|
 	Characters to fill the statuslines and vertical separators.
 	It is a comma separated list of items:
 
@@ -3671,7 +3671,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'listchars'* *'lcs'*
 'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+"
 				 Vi default: "eol:$")
-			local to window
+			global or local to window |global-local|
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
 
