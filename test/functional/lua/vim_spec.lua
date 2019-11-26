@@ -587,13 +587,17 @@ describe('lua stdlib', function()
     ]]
     eq(false, funcs.luaeval "vim.bo.modified")
     eq('markdown', funcs.luaeval "vim.bo.filetype")
-    eq(false, funcs.luaeval "vim.bo(BUF).modifiable")
+    eq(false, funcs.luaeval "vim.bo[BUF].modifiable")
     exec_lua [[
     vim.bo.filetype = ''
-    vim.bo(BUF).modifiable = true
+    vim.bo[BUF].modifiable = true
     ]]
     eq('', funcs.luaeval "vim.bo.filetype")
-    eq(true, funcs.luaeval "vim.bo(BUF).modifiable")
+    eq(true, funcs.luaeval "vim.bo[BUF].modifiable")
+    matches("^Error executing lua: .*: Invalid option name: 'nosuchopt'$",
+       pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
+    matches("^Error executing lua: .*: Expected lua string$",
+       pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
   end)
 
   it('vim.wo', function()
@@ -606,8 +610,12 @@ describe('lua stdlib', function()
     eq(2, funcs.luaeval "vim.wo.cole")
     exec_lua [[
     vim.wo.conceallevel = 0
-    vim.bo(BUF).modifiable = true
+    vim.bo[BUF].modifiable = true
     ]]
     eq(0, funcs.luaeval "vim.wo.cole")
+    matches("^Error executing lua: .*: Invalid option name: 'notanopt'$",
+       pcall_err(exec_lua, 'return vim.wo.notanopt'))
+    matches("^Error executing lua: .*: Expected lua string$",
+       pcall_err(exec_lua, 'return vim.wo[0][0].list'))
   end)
 end)
