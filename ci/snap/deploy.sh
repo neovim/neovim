@@ -6,10 +6,14 @@ set -o pipefail
 # not a tagged release, abort
 [[ "$TRAVIS_TAG" != "$TRAVIS_BRANCH" ]] && exit 0
 
-openssl aes-256-cbc -K $encrypted_0a6446eb3ae3_key \
-  -iv $encrypted_0a6446eb3ae3_iv \
+openssl enc \
+  -aes-256-cbc \
+  -md sha512 \
+  -pbkdf2 \
+  -iter 1000 \
+  -a -d \
   -in .snapcraft/travis_snapcraft.cfg \
-  -out .snapcraft/snapcraft.cfg -d
+  -out .snapcraft/snapcraft.cfg -k $SNAP_SECRECT_KEY
 
 SNAP=$(find ./ -name "*.snap")
 
