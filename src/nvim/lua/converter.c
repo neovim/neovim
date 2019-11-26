@@ -1225,7 +1225,7 @@ GENERATE_INDEX_FUNCTION(Tabpage)
 
 #undef GENERATE_INDEX_FUNCTION
 
-/// Record some auxilary values in vim module
+/// Record some auxiliary values in vim module
 ///
 /// Assumes that module table is on top of the stack.
 ///
