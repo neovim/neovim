@@ -313,12 +313,7 @@ end
 function M.jump_to_location(location)
   if location.uri == nil then return end
   local bufnr = vim.uri_to_bufnr(location.uri)
-  -- TODO(ashkan) this function was removed because I didn't fully comprehend
-  -- the tagstack and it was a holdover from the previous LSP efforts. If
-  -- someone wants to work on this and enable it, they can find it in the
-  -- commit d5aaad14ecdd2047089e1a018e97af1f790b3e42 in the file
-  -- `runtime/lua/vim/lsp/buf.lua` at line 103.
-  -- update_tagstack()
+  -- TODO(ashkan) use tagfunc here to update tagstack.
   api.nvim_set_current_buf(bufnr)
   local row = location.range.start.line
   local col = location.range.start.character
