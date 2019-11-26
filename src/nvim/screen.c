@@ -124,7 +124,7 @@
 
 
 // temporary buffer for rendering a single screenline, so it can be
-// comparared with previous contents to calulate smallest delta.
+// comparared with previous contents to calculate smallest delta.
 static size_t linebuf_size = 0;
 static schar_T *linebuf_char = NULL;
 static sattr_T *linebuf_attr = NULL;

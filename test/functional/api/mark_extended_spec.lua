@@ -507,7 +507,7 @@ describe('API/extmarks', function()
     feed('0l3dl<esc>')
     check_undo_redo(ns, marks[1], 0, 2, 0, 1)
     check_undo_redo(ns, marks[2], 0, 3, 0, 1)
-    -- delete 1, nothing should happend to our marks
+    -- delete 1, nothing should happen to our marks
     feed('u')
     feed('$x')
     check_undo_redo(ns, marks[2], 0, 3, 0, 3)
@@ -543,7 +543,7 @@ describe('API/extmarks', function()
     check_undo_redo(ns, marks[1], 0, 1, 0, 0)
     check_undo_redo(ns, marks[2], 0, 3, 0, 0)
     check_undo_redo(ns, marks[3], 1, 2, 1, 0)
-    -- delete 1, nothing should happend to our marks
+    -- delete 1, nothing should happen to our marks
     feed('u')
     feed('$<c-v>jx')
     check_undo_redo(ns, marks[2], 0, 3, 0, 3)

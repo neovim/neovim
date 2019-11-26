@@ -4,7 +4,7 @@
 // Implements extended marks for plugins. Each mark exists in a btree of
 // lines containing btrees of columns.
 //
-// The btree provides efficent range lookups.
+// The btree provides efficient range lookups.
 // A map of pointers to the marks is used for fast lookup by mark id.
 //
 // Marks are moved by calls to: extmark_col_adjust, extmark_adjust, or
@@ -300,7 +300,7 @@ Extmark *extmark_from_pos(buf_T *buf, uint64_t ns, linenr_T lnum, colnr_T col)
   return NULL;
 }
 
-// Returns an avaliable id in a namespace
+// Returns an available id in a namespace
 uint64_t extmark_free_id_get(buf_T *buf, uint64_t ns)
 {
   if (!buf->b_extmark_ns) {

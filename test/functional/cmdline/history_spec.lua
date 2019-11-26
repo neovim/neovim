@@ -6,7 +6,7 @@ describe('history support code', function()
   before_each(clear)
 
   it('correctly clears start of the history', function()
-    -- Regression test: check absense of the memory leak when clearing start of
+    -- Regression test: check absence of the memory leak when clearing start of
     -- the history using ex_getln.c/clr_history().
     eq(1, funcs.histadd(':', 'foo'))
     eq(1, funcs.histdel(':'))
@@ -14,7 +14,7 @@ describe('history support code', function()
   end)
 
   it('correctly clears end of the history', function()
-    -- Regression test: check absense of the memory leak when clearing end of
+    -- Regression test: check absence of the memory leak when clearing end of
     -- the history using ex_getln.c/clr_history().
     meths.set_option('history', 1)
     eq(1, funcs.histadd(':', 'foo'))

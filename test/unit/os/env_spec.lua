@@ -121,7 +121,7 @@ describe('env.c', function()
       local name = 'NVIM_UNIT_TEST_GETENV_1N'
       local value = 'NVIM_UNIT_TEST_GETENV_1V'
       eq(NULL, os_getenv(name))
-      -- Use os_setenv because Lua dosen't have setenv.
+      -- Use os_setenv because Lua doesn't have setenv.
       os_setenv(name, value, 1)
       eq(value, os_getenv(name))
 
