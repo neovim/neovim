@@ -314,7 +314,7 @@ do
   end
   vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
-  vim.o = make_meta_accessor(nil_wrap(a.nvim_get_option), a.nvim_set_option)
+  vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
   vim.env = make_meta_accessor(vim.fn.getenv, vim.fn.setenv)
   -- TODO(ashkan) if/when these are available from an API, generate them
   -- instead of hardcoding.
@@ -344,29 +344,31 @@ do
       if window_options[k] then
         return a.nvim_err_writeln(k.." is a window option, not a buffer option")
       end
-      return a.nvim_buf_get_option(bufnr, k)
+      if bufnr == nil and type(k) == "number" then
+        return new_buf_opt_accessor(k)
+      end
+      return a.nvim_buf_get_option(bufnr or 0, k)
     end
     local function set(k, v)
       if window_options[k] then
         return a.nvim_err_writeln(k.." is a window option, not a buffer option")
       end
-      return a.nvim_buf_set_option(bufnr, k, v)
+      return a.nvim_buf_set_option(bufnr or 0, k, v)
     end
-    return make_meta_accessor(nil_wrap(get), set)
+    return make_meta_accessor(get, set)
   end
-  vim.bo = new_buf_opt_accessor(0)
-  getmetatable(vim.bo).__call = function(_, bufnr)
-    return new_buf_opt_accessor(bufnr)
-  end
+  vim.bo = new_buf_opt_accessor(nil)
   local function new_win_opt_accessor(winnr)
-    local function get(k)    return a.nvim_win_get_option(winnr, k) end
-    local function set(k, v) return a.nvim_win_set_option(winnr, k, v) end
-    return make_meta_accessor(nil_wrap(get), set)
+    local function get(k)
+      if winnr == nil and type(k) == "number" then
+        return new_win_opt_accessor(k)
+      end
+      return a.nvim_win_get_option(winnr or nil, k)
+    end
+    local function set(k, v) return a.nvim_win_set_option(winnr or nil, k, v) end
+    return make_meta_accessor(get, set)
   end
-  vim.wo = new_win_opt_accessor(0)
-  getmetatable(vim.wo).__call = function(_, winnr)
-    return new_win_opt_accessor(winnr)
-  end
+  vim.wo = new_win_opt_accessor(nil)
 end
 
 return module
