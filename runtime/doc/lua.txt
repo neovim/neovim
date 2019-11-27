@@ -717,6 +717,16 @@ vim.NIL								    *vim.NIL*
 	is equivalent to a missing value: `{"foo", nil}` is the same as 
 	`{"foo"}`
 
+vim.empty_dict()					    *vim.empty_dict()*
+	Creates a special table which will be converted to an empty
+	dictionary when converting lua values to vimL or API types. The
+	table is empty, and this property is marked using a metatable. An
+	empty table `{}` without this metatable will default to convert to
+	an array/list.
+
+	Note: if numeric keys are added to the table, the metatable will be
+	ignored and the dict converted to a list/array anyway.
+
 vim.rpcnotify({channel}, {method}[, {args}...])		    *vim.rpcnotify()*
 	Sends {event} to {channel} via |RPC| and returns immediately.
 	If {channel} is 0, the event is broadcast to all channels.
