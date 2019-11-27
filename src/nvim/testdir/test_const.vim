@@ -176,6 +176,12 @@ func Test_cannot_modify_existing_variable()
     call assert_fails('const [i2, f2, s2] = [1, 1.1, "vim"]', 'E995:')
 endfunc
 
+func Test_const_with_condition()
+  const x = 0
+  if 0 | const x = 1 | endif
+  call assert_equal(0, x)
+endfunc
+
 func Test_const_with_index_access()
     let l = [1, 2, 3]
     call assert_fails('const l[0] = 4', 'E996:')

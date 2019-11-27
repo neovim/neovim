@@ -24,6 +24,10 @@ func Test_let()
   let out = execute('let a {0 == 1 ? "a" : "b"}')
   let s = "\na                     #1\nb                     #2"
   call assert_equal(s, out)
+
+  let x = 0
+  if 0 | let x = 1 | endif
+  call assert_equal(0, x)
 endfunc
 
 func s:set_arg1(a) abort
