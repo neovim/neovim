@@ -182,6 +182,20 @@ func Test_const_with_condition()
   call assert_equal(0, x)
 endfunc
 
+func Test_lockvar()
+  let x = 'hello'
+  lockvar x
+  call assert_fails('let x = "there"', 'E741')
+  if 0 | unlockvar x | endif
+  call assert_fails('let x = "there"', 'E741')
+  unlockvar x
+  let x = 'there'
+
+  if 0 | lockvar x | endif
+  let x = 'again'
+endfunc
+
+
 func Test_const_with_index_access()
     let l = [1, 2, 3]
     call assert_fails('const l[0] = 4', 'E996:')
