@@ -107,9 +107,14 @@ func Test_map_completion()
 
   " set cpo+=<
   map <Left> left
+  exe "set t_k6=\<Esc>[17~"
+  call feedkeys(":map \<Esc>[17~x f6x\<CR>", 'xt')
   call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <Left>', getreg(':'))
+  call feedkeys(":map \<Esc>[17~\<Tab>\<Home>\"\<CR>", 'xt')
+  " call assert_equal("\"map <F6>x", getreg(':'))
   unmap <Left>
+  call feedkeys(":unmap \<Esc>[17~x\<CR>", 'xt')
   set cpo-=<
 
   set cpo+=B
