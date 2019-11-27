@@ -26,6 +26,15 @@ def Settings( **kwargs ):
             }
           ]
         }
+      },
+      'capabilities': {
+        'textDocument': {
+          'completion': {
+            'completionItem': {
+              'snippetSupport': True
+            }
+          }
+        }
       }
     }
 
