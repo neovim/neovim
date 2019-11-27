@@ -111,8 +111,10 @@ func Test_map_completion()
   call feedkeys(":map \<Esc>[17~x f6x\<CR>", 'xt')
   call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <Left>', getreg(':'))
-  call feedkeys(":map \<Esc>[17~\<Tab>\<Home>\"\<CR>", 'xt')
-  " call assert_equal("\"map <F6>x", getreg(':'))
+  if !has('gui_running')
+    call feedkeys(":map \<Esc>[17~\<Tab>\<Home>\"\<CR>", 'xt')
+    " call assert_equal("\"map <F6>x", getreg(':'))
+  endif
   unmap <Left>
   call feedkeys(":unmap \<Esc>[17~x\<CR>", 'xt')
   set cpo-=<
