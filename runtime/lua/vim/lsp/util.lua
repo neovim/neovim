@@ -440,6 +440,11 @@ do
 
   local diagnostic_ns = api.nvim_create_namespace("vim_lsp_diagnostics")
 
+  local underline_highlight_name = "LspDiagnosticsUnderline"
+  api.nvim_command(string.format("highlight default %s gui=underline cterm=underline", underline_highlight_name))
+
+  local severity_highlights = {}
+
   local default_severity_highlight = {
     [protocol.DiagnosticSeverity.Error] = { guifg = "Red" };
     [protocol.DiagnosticSeverity.Warning] = { guifg = "Orange" };
@@ -447,60 +452,17 @@ do
     [protocol.DiagnosticSeverity.Hint] = { guifg = "LightGrey" };
   }
 
-  local underline_highlight_name = "LspDiagnosticsUnderline"
-  api.nvim_command(string.format("highlight %s gui=underline cterm=underline", underline_highlight_name))
-
-  local function find_color_rgb(color)
-    local rgb_hex = api.nvim_get_color_by_name(color)
-    validate { color = {color, function() return rgb_hex ~= -1 end, "valid color name"} }
-    return rgb_hex
-  end
-
-  --- Determine whether to use black or white text
-  -- Ref: https://stackoverflow.com/a/1855903/837964
-  -- https://stackoverflow.com/questions/596216/formula-to-determine-brightness-of-rgb-color
-  local function color_is_bright(r, g, b)
-    -- Counting the perceptive luminance - human eye favors green color
-    local luminance = (0.299*r + 0.587*g + 0.114*b)/255
-    if luminance > 0.5 then
-      return true -- Bright colors, black font
-    else
-      return false -- Dark colors, white font
+  -- Initialize default severity highlights
+  for severity, hi_info in pairs(default_severity_highlight) do
+    local severity_name = protocol.DiagnosticSeverity[severity]
+    local highlight_name = "LspDiagnostics"..severity_name
+    -- Try to fill in the foreground color with a sane default.
+    local cmd_parts = {"highlight", "default", highlight_name}
+    for k, v in pairs(hi_info) do
+      table.insert(cmd_parts, k.."="..v)
     end
-  end
-
-  local severity_highlights = {}
-
-  function M.set_severity_highlights(highlights)
-    validate {highlights = {highlights, 't'}}
-    for severity, default_color in pairs(default_severity_highlight) do
-      local severity_name = protocol.DiagnosticSeverity[severity]
-      local highlight_name = "LspDiagnostics"..severity_name
-      local hi_info = highlights[severity] or default_color
-      -- Try to fill in the foreground color with a sane default.
-      if not hi_info.guifg and hi_info.guibg then
-        -- TODO(ashkan) move this out when bitop is guaranteed to be included.
-        local bit = require 'bit'
-        local band, rshift = bit.band, bit.rshift
-        local rgb = find_color_rgb(hi_info.guibg)
-        local is_bright = color_is_bright(rshift(rgb, 16), band(rshift(rgb, 8), 0xFF), band(rgb, 0xFF))
-        hi_info.guifg = is_bright and "Black" or "White"
-      end
-      if not hi_info.ctermfg and hi_info.ctermbg then
-        -- TODO(ashkan) move this out when bitop is guaranteed to be included.
-        local bit = require 'bit'
-        local band, rshift = bit.band, bit.rshift
-        local rgb = find_color_rgb(hi_info.ctermbg)
-        local is_bright = color_is_bright(rshift(rgb, 16), band(rshift(rgb, 8), 0xFF), band(rgb, 0xFF))
-        hi_info.ctermfg = is_bright and "Black" or "White"
-      end
-      local cmd_parts = {"highlight", highlight_name}
-      for k, v in pairs(hi_info) do
-        table.insert(cmd_parts, k.."="..v)
-      end
-      api.nvim_command(table.concat(cmd_parts, ' '))
-      severity_highlights[severity] = highlight_name
-    end
+    api.nvim_command(table.concat(cmd_parts, ' '))
+    severity_highlights[severity] = highlight_name
   end
 
   function M.buf_clear_diagnostics(bufnr)
@@ -508,9 +470,6 @@ do
     bufnr = bufnr == 0 and api.nvim_get_current_buf() or bufnr
     api.nvim_buf_clear_namespace(bufnr, diagnostic_ns, 0, -1)
   end
-
-  -- Initialize with the defaults.
-  M.set_severity_highlights(default_severity_highlight)
 
   function M.get_severity_highlight_name(severity)
     return severity_highlights[severity]
