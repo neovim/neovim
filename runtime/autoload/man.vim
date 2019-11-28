@@ -151,6 +151,8 @@ function! s:put_page(page) abort
   setlocal modifiable
   setlocal noreadonly
   setlocal noswapfile
+  " git-ls-files(1) is all one keyword/tag-target
+  setlocal iskeyword+=(,)
   silent keepjumps %delete _
   silent put =a:page
   while getline(1) =~# '^\s*$'
