@@ -26,7 +26,6 @@ if !exists('g:no_plugin_maps') && !exists('g:no_man_maps')
   nnoremap <silent> <buffer> j          gj
   nnoremap <silent> <buffer> k          gk
   nnoremap <silent> <buffer> gO         :call man#show_toc()<CR>
-  nnoremap <silent> <buffer> K          :Man<CR>
   if 1 == bufnr('%') || s:pager
     nnoremap <silent> <buffer> <nowait> q :lclose<CR>:q<CR>
   else
