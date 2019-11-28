@@ -235,7 +235,7 @@ static void terminfo_start(UI *ui)
   term = os_getenv("TERM");
 #endif
 
-  data->tmux = terminfo_is_term_family(term, "tmux") || !os_getenv("TMUX");
+  data->tmux = terminfo_is_term_family(term, "tmux") || !!os_getenv("TMUX");
 
   // Set up unibilium/terminfo.
   char *termname = NULL;
@@ -1301,8 +1301,6 @@ static void tui_term_unhandled(UI *ui, String cmd)
   if (data->tmux) {
     out(ui, TMUX_START, strlen(TMUX_START));
   }
-  /* ELOG("DATA: %s", cmd.data); */
-  /* ELOG("SIZE: %zu", cmd.size); */
   out(ui, cmd.data, cmd.size);
   if (data->tmux) {
     out(ui, TMUX_END, strlen(TMUX_END));
