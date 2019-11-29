@@ -1,0 +1,7 @@
+extraction:
+  cpp:
+    after_prepare:
+      - export GNU_MAKE=make
+    index:
+      build_command:
+        - $GNU_MAKE -j2 -s
