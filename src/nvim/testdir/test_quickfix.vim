@@ -1642,6 +1642,14 @@ func Test_switchbuf()
   call assert_equal(3, tabpagenr('$'))
   tabfirst | enew | tabonly | only
 
+  set switchbuf=uselast
+  split
+  let last_winid = win_getid()
+  copen
+  exe "normal 1G\<CR>"
+  call assert_equal(last_winid, win_getid())
+  enew | only
+
   set switchbuf=
   edit Xqftestfile1
   let file1_winid = win_getid()
