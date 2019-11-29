@@ -123,10 +123,11 @@ else
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" \
 	  $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE))) SCRIPTS= $(MAKEOVERRIDES)
 endif
-# Build oldtest by specifying the .vim filename.
+# Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
 src/nvim/testdir/%.vim: phony_force
-	$(MAKE) oldtest NEW_TESTS=$(patsubst src/nvim/testdir/%.vim,%,$@)
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" \
+	  $(patsubst src/nvim/testdir/%.vim,%,$@) SCRIPTS= $(MAKEOVERRIDES)
 
 build/runtime/doc/tags helptags: | nvim
 	+$(BUILD_CMD) -C build runtime/doc/tags
