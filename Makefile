@@ -119,8 +119,14 @@ oldtest: | nvim build/runtime/doc/tags
 ifeq ($(strip $(TEST_FILE)),)
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
 else
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" SCRIPTS= $(MAKEOVERRIDES) $(TEST_FILE)
+	@# Handle TEST_FILE=test_foo{,.res,.vim}.
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" \
+	  $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE))) SCRIPTS= $(MAKEOVERRIDES)
 endif
+# Build oldtest by specifying the .vim filename.
+.PHONY: phony_force
+src/nvim/testdir/%.vim: phony_force
+	$(MAKE) oldtest NEW_TESTS=$(patsubst src/nvim/testdir/%.vim,%,$@)
 
 build/runtime/doc/tags helptags: | nvim
 	+$(BUILD_CMD) -C build runtime/doc/tags
@@ -201,10 +207,10 @@ lint: check-single-includes clint lualint _opt_pylint _opt_shlint
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".
 ifeq ($(BUILD_TYPE),Ninja)
-build/%:
+build/%: phony_force
 	$(BUILD_CMD) -C build $(patsubst build/%,%,$@)
 
-$(DEPS_BUILD_DIR)/%:
+$(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_CMD) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
