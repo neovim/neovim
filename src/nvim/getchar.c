@@ -2198,7 +2198,7 @@ static int vgetorpeek(int advance)
           if (p_im && (State & INSERT))
             c = Ctrl_L;
           else if ((State & CMDLINE)
-                   || (cmdwin_type > 0 && tc == ESC)
+                   || (cmdwin_active() && tc == ESC)
                    )
             c = Ctrl_C;
           else

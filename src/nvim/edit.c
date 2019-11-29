@@ -810,9 +810,10 @@ static int insert_handle_key(InsertState *s)
     FALLTHROUGH;
 
   case Ctrl_C:        // End input mode
-    if (s->c == Ctrl_C && cmdwin_type != 0) {
+    // TODO: also for modal() ??
+    if (s->c == Ctrl_C && cmdwin_active()) {
       // Close the cmdline window. */
-      cmdwin_result = K_IGNORE;
+      modal_result = K_IGNORE;
       got_int = false;         // don't stop executing autocommands et al
       s->nomove = true;
       return 0;  // exit insert mode
@@ -1138,9 +1139,10 @@ check_pum:
       }
       break;
     }
-    if (cmdwin_type != 0) {
+    // TODO: also for modal()?
+    if (cmdwin_active()) {
       // Execute the command in the cmdline window.
-      cmdwin_result = CAR;
+      modal_result = CAR;
       return 0;
     }
     if (!ins_eol(s->c) && !p_im) {
@@ -3600,8 +3602,8 @@ static bool ins_compl_prep(int c)
       }
 
       // Avoid the popup menu remains displayed when leaving the
-      // command line window.
-      if (c == Ctrl_C && cmdwin_type != 0) {
+      // modal window.
+      if (c == Ctrl_C && modal_active()) {
         update_screen(0);
       }
 
@@ -6127,7 +6129,7 @@ comp_textwidth (
     /* The width is the window width minus 'wrapmargin' minus all the
      * things that add to the margin. */
     textwidth = curwin->w_width_inner - curbuf->b_p_wm;
-    if (cmdwin_type != 0) {
+    if (cmdwin_active()) {
       textwidth -= 1;
     }
     textwidth -= curwin->w_p_fdc;

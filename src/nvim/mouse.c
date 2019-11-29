@@ -166,14 +166,13 @@ retnomove:
                 && !on_sep_line
                 && (wp->w_p_rl
                     ? col < wp->w_width_inner - wp->w_p_fdc
-                    : col >= wp->w_p_fdc + (cmdwin_type == 0 && wp == curwin
-                                            ? 0 : 1))
+                    : col >= wp->w_p_fdc + (is_cmdwin(wp) ? 1 : 0))
                 && (flags & MOUSE_MAY_STOP_VIS)))) {
       end_visual_mode();
       redraw_curbuf_later(INVERTED);            // delete the inversion
     }
-    if (cmdwin_type != 0 && wp != curwin) {
-      // A click outside the command-line window: Use modeless
+    if (modal_active() && wp != curwin) {
+      // A click outside the modal window: Use modeless
       // selection if possible.  Allow dragging the status lines.
       on_sep_line = 0;
       row = 0;
@@ -306,7 +305,7 @@ retnomove:
 
   // Check for position outside of the fold column.
   if (curwin->w_p_rl ? col < curwin->w_width_inner - curwin->w_p_fdc :
-      col >= curwin->w_p_fdc + (cmdwin_type == 0 ? 0 : 1)) {
+      col >= curwin->w_p_fdc + (cmdwin_active() ? 1 : 0)) {
     mouse_char = ' ';
   }
 

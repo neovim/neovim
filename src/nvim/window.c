@@ -37,8 +37,10 @@
 #include "nvim/mouse.h"
 #include "nvim/normal.h"
 #include "nvim/option.h"
+#include "nvim/ops.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
@@ -92,7 +94,7 @@ do_window(
 
 # define CHECK_CMDWIN \
   do { \
-    if (cmdwin_type != 0) { \
+    if (modal_active()) { \
       EMSG(_(e_cmdwin)); \
       return; \
     } \
@@ -6923,3 +6925,156 @@ win_T *lastwin_nofloating(void) {
   }
   return res;
 }
+
+int do_modal(ModalType type, FloatConfig *float_config) {
+  bufref_T            old_curbuf;
+  win_T               *old_curwin = curwin;
+  win_T               *wp;
+  int i;
+  garray_T winsizes;
+  char_u typestr[2];
+  int save_restart_edit = restart_edit;
+  int save_State = State;
+  int save_exmode = exmode_active;
+  int save_cmdmsg_rl = cmdmsg_rl;
+
+  if (modal_active()) {
+    abort();
+  }
+
+  set_bufref(&old_curbuf, curbuf);
+
+  /* Save current window sizes. */
+  win_size_save(&winsizes);
+
+  /* Don't execute autocommands while creating the window. */
+  block_autocmds();
+
+  // When using completion in Insert mode with <C-R>=<C-F> one can open the
+  // command line window, but we don't want the popup menu then.
+  pum_undisplay(true);
+
+  // don't use a new tab page
+  cmdmod.tab = 0;
+  cmdmod.noswapfile = 1;
+
+  // Create modal window
+  if (float_config) {
+    Error err = ERROR_INIT;
+    wp = win_new_float(NULL, *float_config, &err);
+    if (ERROR_SET(&err)) {
+      EMSG(err.msg); // TODO: context!!
+    }
+    win_enter(wp, false);
+    RESET_BINDING(wp);
+  } else if (win_split((int)p_cwh, WSP_BOT) == FAIL) {
+    beep_flush();
+    unblock_autocmds();
+    return K_IGNORE;
+  }
+  unblock_autocmds();
+
+  if (type == kModalCmdwin) {
+    cmdwin_init();
+  } else if (type == kModalTerminal) {
+    modal_terminal_init();
+  } else {
+    abort();
+  }
+
+  redraw_later(SOME_VALID);
+
+  // Save the command line info, can be used recursively.
+  void *saved_cmdline = save_cmdline_alloc();
+
+  /* No Ex mode here! */
+  exmode_active = 0;
+
+  State = NORMAL;
+  setmouse();
+
+  if (type == kModalCmdwin) {
+    // Trigger CmdwinEnter autocommands.
+    typestr[0] = (char_u)cmdwin_firstc;
+    typestr[1] = NUL;
+    apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
+    if (restart_edit != 0)        /* autocmd with ":startinsert" */
+      stuffcharReadbuff(K_NOP);
+  }
+
+  modal_type = type;
+
+  i = RedrawingDisabled;
+  RedrawingDisabled = 0;
+  int save_count = save_batch_count();
+
+  /*
+   * Call the main loop until <CR> or CTRL-C is typed.
+   */
+  modal_result = 0;
+  normal_enter(true, false);
+
+  RedrawingDisabled = i;
+  restore_batch_count(save_count);
+
+  const bool save_KeyTyped = KeyTyped;
+
+  if (type == kModalCmdwin) {
+    /* Trigger CmdwinLeave autocommands. */
+    apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
+  }
+
+  /* Restore KeyTyped in case it is modified by autocommands */
+  KeyTyped = save_KeyTyped;
+
+  // Restore the command line info.
+  restore_cmdline_alloc(saved_cmdline);
+  modal_type = kModalNone;
+
+  exmode_active = save_exmode;
+
+  /* Safety check: The old window or buffer was deleted: It's a bug when
+   * this happens! */
+  if (!win_valid(old_curwin) || !bufref_valid(&old_curbuf)) {
+    modal_result = Ctrl_C;
+    EMSG(_("E199: Active window or buffer deleted"));
+  } else {
+    if (type == kModalCmdwin) {
+      cmdwin_finish();
+    } else if (type == kModalTerminal) {
+      // TODO: wipe?
+    } else {
+      abort();
+    }
+
+    /* Don't execute autocommands while deleting the window. */
+    block_autocmds();
+    // Avoid command-line window first character being concealed
+    curwin->w_p_cole = 0;
+    wp = curwin;
+    win_goto(old_curwin);
+    win_close(wp, true);
+
+
+    if (!float_config) {
+      /* Restore window sizes. */
+      win_size_restore(&winsizes);
+    }
+
+    unblock_autocmds();
+  }
+
+  ga_clear(&winsizes);
+  restart_edit = save_restart_edit;
+  cmdmsg_rl = save_cmdmsg_rl;
+
+  State = save_State;
+  setmouse();
+
+  return modal_result;
+}
+
+bool is_cmdwin(win_T *wp) {
+  return cmdwin_active() && curwin == wp;
+}
+

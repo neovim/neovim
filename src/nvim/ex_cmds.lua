@@ -3235,6 +3235,13 @@ return {
     enum='CMD_bang',
     flags=bit.bor(RANGE, WHOLEFOLD, BANG, FILES, CMDWIN),
     addr_type=ADDR_LINES,
+    func='ex_modal',
+  },
+  {
+    command='oldbang',
+    enum='CMD_oldbang',
+    flags=bit.bor(RANGE, WHOLEFOLD, BANG, FILES, CMDWIN),
+    addr_type=ADDR_LINES,
     func='ex_bang',
   },
   {

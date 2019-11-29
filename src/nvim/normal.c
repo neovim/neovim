@@ -70,7 +70,7 @@ typedef struct normal_state {
   bool need_flushbuf;
   bool set_prevcount;
   bool previous_got_int;             // `got_int` was true
-  bool cmdwin;                       // command-line window normal mode
+  bool modal;                        // command-line window normal mode
   bool noexmode;                     // true if the normal mode was pushed from
                                      // ex mode(:global or :visual for example)
   bool toplevel;                     // top-level normal mode
@@ -447,19 +447,21 @@ static int find_command(int cmdchar)
 // Normal state entry point. This is called on:
 //
 // - Startup, In this case the function never returns.
-// - The command-line window is opened(`q:`). Returns when `cmdwin_result` != 0.
+// - Modal window is opened (cmdline window `q:`, :! window, etc).
+//   Returns when `modal_result` != 0.
 // - The :visual command is called from :global in ex mode, `:global/PAT/visual`
 //   for example. Returns when re-entering ex mode(because ex mode recursion is
 //   not allowed)
 //
 // This used to be called main_loop on main.c
-void normal_enter(bool cmdwin, bool noexmode)
+void normal_enter(bool modal, bool noexmode)
 {
   NormalState state;
   normal_state_init(&state);
-  state.cmdwin = cmdwin;
+  state.modal = modal; // TODO: rename!!
   state.noexmode = noexmode;
-  state.toplevel = (!cmdwin || cmdwin_result == 0) && !noexmode;
+  // TODO: this looks borked, why not toplevel = !modal ??
+  state.toplevel = (!modal || modal_result == 0) && !noexmode;
   state_enter(&state.state);
 }
 
@@ -1339,7 +1341,7 @@ static int normal_check(VimState *state)
   // Dict internally somewhere.
   // "may_garbage_collect" is reset in vgetc() which is invoked through
   // do_exmode() and normal_cmd().
-  may_garbage_collect = !s->cmdwin && !s->noexmode;
+  may_garbage_collect = !s->modal && !s->noexmode;
 
   // Update w_curswant if w_set_curswant has been set.
   // Postponed until here to avoid computing w_virtcol too often.
@@ -1353,8 +1355,8 @@ static int normal_check(VimState *state)
     return -1;
   }
 
-  if (s->cmdwin && cmdwin_result != 0) {
-    // command-line window and cmdwin_result is set
+  if (s->modal && modal_result != 0) {
+    // modal window and modal_result is set
     return 0;
   }
 
@@ -2380,7 +2382,7 @@ do_mouse (
 
     /* click in a tab selects that tab page */
     if (is_click
-        && cmdwin_type == 0
+        && !modal_active()
         && mouse_col < Columns) {
       in_tab_line = true;
       c1 = tab_page_click_defs[mouse_col].tabnr;
@@ -5252,8 +5254,9 @@ static void nv_down(cmdarg_T *cap)
     qf_view_result(false);
   } else {
     // In the cmdline window a <CR> executes the command.
-    if (cmdwin_type != 0 && cap->cmdchar == CAR) {
-      cmdwin_result = CAR;
+    // TODO: opt-in for user modal() ?
+    if (cmdwin_active() && cap->cmdchar == CAR) {
+      modal_result = CAR;
     } else {
       cap->oap->motion_type = kMTLineWise;
       if (cursor_down(cap->count1, cap->oap->op_type == OP_NOP) == false) {
@@ -7475,8 +7478,8 @@ static void nv_normal(cmdarg_T *cap)
     if (restart_edit != 0 && mode_displayed)
       clear_cmdline = true;                     /* unshow mode later */
     restart_edit = 0;
-    if (cmdwin_type != 0)
-      cmdwin_result = Ctrl_C;
+    if (modal_active())
+      modal_result = Ctrl_C;
     if (VIsual_active) {
       end_visual_mode();                /* stop Visual */
       redraw_curbuf_later(INVERTED);
@@ -7504,7 +7507,7 @@ static void nv_esc(cmdarg_T *cap)
 
   if (cap->arg) {               /* true for CTRL-C */
     if (restart_edit == 0
-        && cmdwin_type == 0
+        && !modal_active()
         && !VIsual_active
         && no_reason) {
       if (anyBufIsChanged()) {
@@ -7519,8 +7522,9 @@ static void nv_esc(cmdarg_T *cap)
      * set again below when halfway through a mapping. */
     if (!p_im)
       restart_edit = 0;
-    if (cmdwin_type != 0) {
-      cmdwin_result = K_IGNORE;
+    // TODO: also for user modal() ?
+    if (cmdwin_active()) {
+      modal_result = K_IGNORE;
       got_int = false;          /* don't stop executing autocommands et al. */
       return;
     }

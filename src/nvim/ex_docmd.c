@@ -6232,8 +6232,8 @@ static bool before_quit_autocmds(win_T *wp, bool quit_all, int forceit)
 // ":{nr}quit": quit window {nr}
 static void ex_quit(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = Ctrl_C;
+  if (modal_active()) {
+    modal_result = Ctrl_C;
     return;
   }
   /* Don't quit while editing the command line. */
@@ -6305,11 +6305,12 @@ static void ex_cquit(exarg_T *eap)
  */
 static void ex_quit_all(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
+  if (modal_active()) {
+    // FIXME: this is weird
     if (eap->forceit) {
-      cmdwin_result = K_XF1;            // open_cmdwin() takes care of this
+      modal_result = K_XF1;            // open_cmdwin() takes care of this
     } else {
-      cmdwin_result = K_XF2;
+      modal_result = K_XF2;
     }
     return;
   }
@@ -6338,8 +6339,8 @@ static void ex_close(exarg_T *eap)
 {
   win_T *win = NULL;
   int winnr = 0;
-  if (cmdwin_type != 0) {
-    cmdwin_result = Ctrl_C;
+  if (modal_active()) {
+    modal_result = Ctrl_C;
   } else if (!text_locked() && !curbuf_locked()) {
     if (eap->addr_count == 0) {
       ex_win_close(eap->forceit, curwin, NULL);
@@ -6418,8 +6419,9 @@ static void ex_tabclose(exarg_T *eap)
 {
   tabpage_T   *tp;
 
-  if (cmdwin_type != 0)
-    cmdwin_result = K_IGNORE;
+  // why no Ctrl-C???
+  if (modal_active())
+    modal_result = K_IGNORE;
   else if (first_tabpage->tp_next == NULL)
     EMSG(_("E784: Cannot close last tab page"));
   else {
@@ -6443,8 +6445,8 @@ static void ex_tabclose(exarg_T *eap)
 /// ":tabonly": close all tab pages except the current one
 static void ex_tabonly(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = K_IGNORE;
+  if (modal_active()) {
+    modal_result = K_IGNORE;
   } else if (first_tabpage->tp_next == NULL) {
       MSG(_("Already only one tab page"));
   } else {
@@ -6614,8 +6616,8 @@ static void ex_stop(exarg_T *eap)
 // ":exit", ":xit" and ":wq": Write file and quite the current window.
 static void ex_exit(exarg_T *eap)
 {
-  if (cmdwin_type != 0) {
-    cmdwin_result = Ctrl_C;
+  if (modal_active()) {
+    modal_result = Ctrl_C;
     return;
   }
   /* Don't quit while editing the command line. */
@@ -10344,6 +10346,33 @@ static void ex_terminal(exarg_T *eap)
   do_cmdline_cmd(ex_cmd);
 }
 
+// modal terminal window 
+
+static exarg_T *modal_eap = NULL;
+void ex_modal(exarg_T *eap)
+{
+  // TODO: this is ugly. We should be able to launch the pty first
+  // and only if that worked, open the modal window
+  modal_eap = eap;
+
+  FloatConfig fconfig = FLOAT_CONFIG_INIT;
+  fconfig.width = Columns;
+  fconfig.height = Rows/2;
+  fconfig.row = Rows - fconfig.height-1;
+  fconfig.style = kWinStyleMinimal;
+  do_modal(kModalTerminal, &fconfig);
+}
+
+void modal_terminal_init(void)
+{
+  ex_terminal(modal_eap);
+  modal_eap = NULL;
+
+  // terminal mode.
+  stuffReadbuff("i");
+}
+
+// }}}
 /// Checks if `cmd` is "previewable" (i.e. supported by 'inccommand').
 ///
 /// @param[in] cmd Commandline to check. May start with a range or modifier.

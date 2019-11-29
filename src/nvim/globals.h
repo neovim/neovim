@@ -837,9 +837,22 @@ EXTERN char_u   *globaldir INIT(= NULL);
 EXTERN int km_stopsel INIT(= FALSE);
 EXTERN int km_startsel INIT(= FALSE);
 
+typedef enum {
+  kModalNone = 0,  ///< no modal window active
+  kModalCmdwin,    ///< cmdline window
+  kModalTerminal,  ///< modal terminal (:!)
+  KModalUser       ///< window for modal()
+} ModalType;
+
 EXTERN int cedit_key INIT(= -1);     ///< key value of 'cedit' option
-EXTERN int cmdwin_type INIT(= 0);    ///< type of cmdline window or 0
-EXTERN int cmdwin_result INIT(= 0);  ///< result of cmdline window or 0
+
+//EXTERN bool modal_active INIT(= 0); ///< modal window is active
+#define modal_active() (modal_type != kModalNone)
+#define cmdwin_active() (modal_type == kModalCmdwin)
+EXTERN ModalType modal_type INIT(= 0);  ///< type of modal window.
+EXTERN int modal_result INIT(= 0);  ///< result of modal window or 0
+
+EXTERN int cmdwin_firstc INIT(= 0);  //< type of cmdline window 
 EXTERN int cmdwin_level INIT(= 0);   ///< cmdline recursion level
 
 EXTERN char_u no_lines_msg[] INIT(= N_("--No lines in buffer--"));

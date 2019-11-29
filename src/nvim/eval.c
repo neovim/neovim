@@ -10336,7 +10336,7 @@ static void f_getcmdwintype(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
   rettv->vval.v_string = xmallocz(1);
-  rettv->vval.v_string[0] = cmdwin_type;
+  rettv->vval.v_string[0] = cmdwin_active() ? cmdwin_firstc : 0;
 }
 
 // "getcompletion()" function

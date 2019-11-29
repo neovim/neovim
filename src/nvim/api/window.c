@@ -548,9 +548,9 @@ void nvim_win_close(Window window, Boolean force, Error *err)
     return;
   }
 
-  if (cmdwin_type != 0) {
+  if (modal_active()) {
     if (win == curwin) {
-      cmdwin_result = Ctrl_C;
+      modal_result = Ctrl_C;
     } else {
       api_set_error(err, kErrorTypeException, "%s", _(e_cmdwin));
     }
