@@ -375,16 +375,22 @@ describe('VimL dictionary notifications', function()
     source([[
       let g:d = {}
 
-      function! W(...)
-        call dictwatcherdel(g:d, '*', function('W'))
+      function! W1(...)
+        " Delete current and following watcher.
+        call dictwatcherdel(g:d, '*', function('W1'))
+        call dictwatcherdel(g:d, '*', function('W2'))
         try
           call dictwatcherdel({}, 'meh', function('tr'))
         catch
           let g:exc = v:exception
         endtry
       endfunction
+      call dictwatcheradd(g:d, '*', function('W1'))
 
-      call dictwatcheradd(g:d, '*', function('W'))
+      function! W2(...)
+      endfunction
+      call dictwatcheradd(g:d, '*', function('W2'))
+
       let g:d.foo = 23
     ]])
     eq(23, eval('g:d.foo'))
