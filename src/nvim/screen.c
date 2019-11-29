@@ -4021,10 +4021,7 @@ win_line (
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
-        int n = 1;
-        if (wp->w_p_rl) {
-          n = -1;
-        }
+        int n = wp->w_p_rl ? -1 : 1;
         while (col >= 0 && col < grid->Columns) {
           schar_from_ascii(linebuf_char[off], ' ');
           linebuf_attr[off] = term_attrs[vcol];

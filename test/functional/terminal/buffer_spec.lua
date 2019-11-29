@@ -230,7 +230,6 @@ describe(':terminal buffer', function()
     local columns = eval('&columns')
     feed(string.rep('a', columns))
     command('set rightleft')
-    wait()
     screen:expect([[
                                                ydaer ytt|
       {1:a}aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
@@ -240,7 +239,7 @@ describe(':terminal buffer', function()
                                                         |
       {3:-- TERMINAL --}                                    |
     ]])
-    feed_command('bdelete!')
+    command('bdelete!')
   end)
 end)
 
