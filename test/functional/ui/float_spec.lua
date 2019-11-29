@@ -2,9 +2,11 @@ local helpers = require('test.functional.helpers')(after_each)
 local Screen = require('test.functional.ui.screen')
 local os = require('os')
 local clear, feed = helpers.clear, helpers.feed
+local assert_alive = helpers.assert_alive
 local command, feed_command = helpers.command, helpers.feed_command
 local eval = helpers.eval
 local eq = helpers.eq
+local exec_lua = helpers.exec_lua
 local insert = helpers.insert
 local meths = helpers.meths
 local curbufmeths = helpers.curbufmeths
@@ -12,7 +14,7 @@ local funcs = helpers.funcs
 local run = helpers.run
 local pcall_err = helpers.pcall_err
 
-describe('floating windows', function()
+describe('floatwin', function()
   before_each(function()
     clear()
   end)
@@ -54,6 +56,31 @@ describe('floating windows', function()
       wincmd j
     ]])
     eq(1000, funcs.win_getid())
+  end)
+
+  it('closed immediately by autocmd #11383', function()
+    eq('Error executing lua: [string "<nvim>"]:4: Window was closed immediately',
+      pcall_err(exec_lua, [[
+        local a = vim.api
+        local function crashes(contents)
+          local buf = a.nvim_create_buf(false, true)
+          local floatwin = a.nvim_open_win(buf, true, {
+            relative = 'cursor';
+            style = 'minimal';
+            row = 0; col = 0;
+            height = #contents;
+            width = 10;
+          })
+          a.nvim_buf_set_lines(buf, 0, -1, true, contents)
+          local winnr = vim.fn.win_id2win(floatwin)
+          a.nvim_command('wincmd p')
+          a.nvim_command('autocmd CursorMoved * ++once '..winnr..'wincmd c')
+          return buf, floatwin
+        end
+        crashes{'foo'}
+        crashes{'bar'}
+    ]]))
+    assert_alive()
   end)
 
   local function with_ext_multigrid(multigrid)
