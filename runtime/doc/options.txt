@@ -6014,6 +6014,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   vsplit	Just like "split" but split vertically.
 	   newtab	Like "split", but open a new tab page.  Overrules
 			"split" when both are present.
+	   uselast	If included, jump to the previously used window when
+			jumping to errors with |quickfix| commands.
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	number	(default 3000)
