@@ -1125,8 +1125,12 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
   QUEUE *w = NULL;
   DictWatcher *watcher = NULL;
   bool matched = false;
+  bool queue_is_busy = false;
   QUEUE_FOREACH(w, &dict->watchers, {
     watcher = tv_dict_watcher_node_data(w);
+    if (watcher->busy) {
+      queue_is_busy = true;
+    }
     if (tv_callback_equal(&watcher->callback, &callback)
         && watcher->key_pattern_len == key_pattern_len
         && memcmp(watcher->key_pattern, key_pattern, key_pattern_len) == 0) {
@@ -1139,10 +1143,10 @@ bool tv_dict_watcher_remove(dict_T *const dict, const char *const key_pattern,
     return false;
   }
 
-  QUEUE_REMOVE(w);
-  if (watcher->busy) {
+  if (queue_is_busy) {
     watcher->needs_free = true;
   } else {
+    QUEUE_REMOVE(w);
     tv_dict_watcher_free(watcher);
   }
   return true;
@@ -1215,9 +1219,13 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
       tv_clear(&rettv);
-      if (watcher->needs_free) {
-        tv_dict_watcher_free(watcher);
-      }
+    }
+  })
+  QUEUE_FOREACH(w, &dict->watchers, {
+    DictWatcher *watcher = tv_dict_watcher_node_data(w);
+    if (watcher->needs_free) {
+      QUEUE_REMOVE(w);
+      tv_dict_watcher_free(watcher);
     }
   })
   tv_dict_unref(dict);
