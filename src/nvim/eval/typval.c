@@ -1209,6 +1209,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
   typval_T rettv;
 
+  bool any_needs_free = false;
   dict->dv_refcount++;
   QUEUE *w;
   QUEUE_FOREACH(w, &dict->watchers, {
@@ -1219,15 +1220,20 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
       tv_clear(&rettv);
+      if (watcher->needs_free) {
+        any_needs_free = true;
+      }
     }
   })
-  QUEUE_FOREACH(w, &dict->watchers, {
-    DictWatcher *watcher = tv_dict_watcher_node_data(w);
-    if (watcher->needs_free) {
-      QUEUE_REMOVE(w);
-      tv_dict_watcher_free(watcher);
-    }
-  })
+  if (any_needs_free) {
+    QUEUE_FOREACH(w, &dict->watchers, {
+      DictWatcher *watcher = tv_dict_watcher_node_data(w);
+      if (watcher->needs_free) {
+        QUEUE_REMOVE(w);
+        tv_dict_watcher_free(watcher);
+      }
+    })
+  }
   tv_dict_unref(dict);
 
   for (size_t i = 1; i < ARRAY_SIZE(argv); i++) {
