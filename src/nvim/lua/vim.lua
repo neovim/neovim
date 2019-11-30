@@ -315,7 +315,14 @@ do
   vim.g = make_meta_accessor(nil_wrap(a.nvim_get_var), a.nvim_set_var, a.nvim_del_var)
   vim.v = make_meta_accessor(nil_wrap(a.nvim_get_vvar), a.nvim_set_vvar)
   vim.o = make_meta_accessor(a.nvim_get_option, a.nvim_set_option)
-  vim.env = make_meta_accessor(vim.fn.getenv, vim.fn.setenv)
+  local function getenv(k)
+    local v = vim.fn.getenv(k)
+    if v == vim.NIL then
+      return nil
+    end
+    return v
+  end
+  vim.env = make_meta_accessor(getenv, vim.fn.setenv)
   -- TODO(ashkan) if/when these are available from an API, generate them
   -- instead of hardcoding.
   local window_options = {
