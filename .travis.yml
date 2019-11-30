@@ -93,7 +93,8 @@ addons:
 jobs:
   include:
     - stage: second stage
-    - name: snap
+    - if: false
+      name: snap
       os: linux
       env:
         - LC_ALL: C.UTF-8
