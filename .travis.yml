@@ -189,6 +189,8 @@ jobs:
         on:
           branch: master
   fast_finish: true
+  allow_failures:
+    - name: snap
 
 before_install: ci/before_install.sh
 install:        ci/install.sh
