@@ -160,6 +160,11 @@ local function is_child_cdefs()
   return (os.getenv('NVIM_TEST_MAIN_CDEFS') ~= '1')
 end
 
+local cdeffile = nil
+if os.getenv('NVIM_TEST_PRINT_CDEF') == '2' then
+  cdeffile = io.open("build/cdefs.dump.h", "w")
+end
+
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
 cimport = function(...)
@@ -218,6 +223,11 @@ cimport = function(...)
         for lnum, line in ipairs(new_lines) do
           print(lnum, line)
         end
+      elseif os.getenv('NVIM_TEST_PRINT_CDEF') == '2'  then
+        for _, line in ipairs(new_lines) do
+          cdeffile:write(line..'\n')
+        end
+        cdeffile:flush()
       end
       body = table.concat(new_lines, '\n')
 
