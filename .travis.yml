@@ -125,6 +125,11 @@ jobs:
   fast_finish: true
   allow_failures:
     - name: snap
+      env:
+        - LC_ALL: C.UTF-8
+        - LANG: C.UTF-8
+        - SNAPCRAFT_ENABLE_SILENT_REPORT: y
+        - SNAPCRAFT_ENABLE_DEVELOPER_DEBUG: y
 
 before_install: ci/before_install.sh
 install:        ci/install.sh
