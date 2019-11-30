@@ -2184,6 +2184,7 @@ static void didset_options(void)
   (void)opt_strings_flags(p_tc, p_tc_values, &tc_flags, false);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, true);
   (void)opt_strings_flags(p_wop, p_wop_values, &wop_flags, true);
+  (void)opt_strings_flags(p_jop, p_jop_values, &jop_flags, true);
   (void)spell_check_msm();
   (void)spell_check_sps();
   (void)compile_cap_prog(curwin->w_s);
@@ -2631,6 +2632,10 @@ did_set_string_option(
     // 'highlight'
     if (strcmp((char *)(*varp), HIGHLIGHT_INIT) != 0) {
       errmsg = e_unsupportedoption;
+    }
+  } else if (varp == &p_jop) {  // 'jumpoptions'
+    if (opt_strings_flags(p_jop, p_jop_values, &jop_flags, true) != OK) {
+      errmsg = e_invarg;
     }
   } else if (gvarp == &p_nf) {  // 'nrformats'
     if (check_opt_strings(*varp, p_nf_values, true) != OK) {

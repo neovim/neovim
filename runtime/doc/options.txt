@@ -3457,6 +3457,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Unprintable and zero-width Unicode characters are displayed as <xxxx>.
 	There is no option to specify these characters.
 
+						*'jumpoptions'* *'jop'*
+'jumpoptions' 'jop'	string	(default "")
+			global
+	List of words that change the behavior of the |jumplist|.
+	  stack         Make the jumplist behave like the tagstack or like a
+	                web browser.  Relative location of entries in the
+			jumplist is preserved at the cost of discarding
+			subsequent entries when navigating backwards in the
+			jumplist and then jumping to a location.
+			|jumplist-stack|
+
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
 'joinspaces' 'js'	boolean	(default on)
 			global

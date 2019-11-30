@@ -473,6 +473,12 @@ EXTERN char_u   *p_isf;         // 'isfname'
 EXTERN char_u   *p_isi;         // 'isident'
 EXTERN char_u   *p_isp;         // 'isprint'
 EXTERN int p_js;                // 'joinspaces'
+EXTERN char_u *p_jop;           // 'jumpooptions'
+EXTERN unsigned jop_flags;
+#ifdef IN_OPTION_C
+static char *(p_jop_values[]) = { "stack", NULL };
+#endif
+#define JOP_STACK               0x01
 EXTERN char_u   *p_kp;          // 'keywordprg'
 EXTERN char_u   *p_km;          // 'keymodel'
 EXTERN char_u   *p_langmap;     // 'langmap'
