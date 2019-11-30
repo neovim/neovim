@@ -11503,6 +11503,9 @@ static void f_glob2regpat(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 static void f_has(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 {
   static const char *const has_list[] = {
+#if defined(BSD) && !defined(__APPLE__)
+    "bsd",
+#endif
 #ifdef UNIX
     "unix",
 #endif

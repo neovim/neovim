@@ -3801,14 +3801,20 @@ int build_stl_str_hl(
 
       buf_T *const save_curbuf = curbuf;
       win_T *const save_curwin = curwin;
+      const int save_VIsual_active = VIsual_active;
       curwin = wp;
       curbuf = wp->w_buffer;
+      // Visual mode is only valid in the current window.
+      if (curwin != save_curwin) {
+        VIsual_active = false;
+      }
 
       // Note: The result stored in `t` is unused.
       str = eval_to_string_safe(out_p, &t, use_sandbox);
 
       curwin = save_curwin;
       curbuf = save_curbuf;
+      VIsual_active = save_VIsual_active;
 
       // Remove the variable we just stored
       do_unlet(S_LEN("g:actual_curbuf"), true);
