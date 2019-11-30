@@ -4969,9 +4969,11 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 <							*feature-list*
 		    List of supported pseudo-feature names:
 		        acl		|ACL| support
+			bsd		BSD system (not macOS, use "mac" for that).
 		        iconv		Can use |iconv()| for conversion.
 		        +shellslash	Can use backslashes in filenames (Windows)
 			clipboard	|clipboard| provider is available.
+			mac		MacOS system.
 			nvim		This is Nvim.
 			python2		Legacy Vim |python2| interface. |has-python|
 			python3		Legacy Vim |python3| interface. |has-python|
@@ -4981,6 +4983,7 @@ has({feature})	Returns 1 if {feature} is supported, 0 otherwise.  The
 			unix		Unix system.
 			*vim_starting*	True during |startup|. 
 			win32		Windows system (32 or 64 bit).
+			win64		Windows system (64 bit).
 			wsl		WSL (Windows Subsystem for Linux) system
 
 							*has-patch*
