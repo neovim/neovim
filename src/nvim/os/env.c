@@ -285,11 +285,11 @@ void os_get_hostname(char *hostname, size_t size)
 ///   - get value of $HOME
 /// For Windows:
 ///   - assemble homedir using HOMEDRIVE and HOMEPATH
-///   - try uv_os_homedir()
+///   - try os_homedir()
 ///   - resolve references
 ///   - guess C drive
 /// For Unix:
-///   - try uv_os_homedir()
+///   - try os_homedir()
 ///   - go to that directory
 ///   - do os_dirname() to get the real name of that directory.
 ///   - as a last resort, get the current directory.
