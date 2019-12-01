@@ -67,15 +67,28 @@ describe("'fillchars'", function()
       shouldfail('eob:xy') -- two ascii chars
       shouldfail('eob:\255', 'eob:<ff>') -- invalid UTF-8
     end)
-    it('is local to window', function()
-      clear()
-      screen = Screen.new(50, 5)
-      screen:attach()
+    it('has global value', function()
+      screen:try_resize(50, 5)
       insert("foo\nbar")
       command('set laststatus=0')
       command('1,2fold')
       command('vsplit')
       command('set fillchars=fold:x')
+      screen:expect([[
+        ^+--  2 lines: fooxxxxxxxx│+--  2 lines: fooxxxxxxx|
+        ~                        │~                       |
+        ~                        │~                       |
+        ~                        │~                       |
+                                                          |
+      ]])
+    end)
+    it('has local window value', function()
+      screen:try_resize(50, 5)
+      insert("foo\nbar")
+      command('set laststatus=0')
+      command('1,2fold')
+      command('vsplit')
+      command('setl fillchars=fold:x')
       screen:expect([[
         ^+--  2 lines: fooxxxxxxxx│+--  2 lines: foo·······|
         ~                        │~                       |
@@ -96,12 +109,25 @@ describe("'listchars'", function()
     screen:attach()
   end)
 
-  it('is local to window', function()
+  it('has global value', function()
     feed('i<tab><tab><tab><esc>')
-    command('set laststatus=0')
-    command('set list listchars=tab:<->')
+    command('set list laststatus=0')
     command('vsplit')
-    command('set listchars&')
+    command('set listchars=tab:<->')
+    screen:expect([[
+      <------><------>^<------> │<------><------><------>|
+      ~                        │~                       |
+      ~                        │~                       |
+      ~                        │~                       |
+                                                        |
+    ]])
+  end)
+  it('has value local to window', function()
+    feed('i<tab><tab><tab><esc>')
+    command('set list laststatus=0')
+    command('setl listchars=tab:<->')
+    command('vsplit')
+    command('setl listchars<')
     screen:expect([[
       >       >       ^>        │<------><------><------>|
       ~                        │~                       |

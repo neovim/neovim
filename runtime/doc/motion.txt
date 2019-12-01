@@ -60,11 +60,11 @@ After applying the operator the cursor is mostly left at the start of the text
 that was operated upon.  For example, "yfe" doesn't move the cursor, but "yFe"
 moves the cursor leftwards to the "e" where the yank started.
 
-						*linewise* *characterwise*
+						*linewise* *charwise* *characterwise*
 The operator either affects whole lines, or the characters between the start
 and end position.  Generally, motions that move between lines affect lines
 (are linewise), and motions that move within a line affect characters (are
-characterwise).  However, there are some exceptions.
+charwise).  However, there are some exceptions.
 
 						*exclusive* *inclusive*
 Character motion is either inclusive or exclusive.  When inclusive, the
@@ -106,10 +106,10 @@ This cannot be repeated: >
 	d:if 1<CR>
 	   call search("f")<CR>
 	endif<CR>
-Note that when using ":" any motion becomes characterwise exclusive.
+Note that when using ":" any motion becomes charwise exclusive.
 
 								*forced-motion*
-FORCING A MOTION TO BE LINEWISE, CHARACTERWISE OR BLOCKWISE
+FORCING A MOTION TO BE LINEWISE, CHARWISE OR BLOCKWISE
 
 When a motion is not of the type you would like to use, you can force another
 type by using "v", "V" or CTRL-V just after the operator.
@@ -121,22 +121,22 @@ deletes from the cursor position until the character below the cursor >
 	d<C-V>j
 deletes the character under the cursor and the character below the cursor. >
 
-Be careful with forcing a linewise movement to be used characterwise or
-blockwise, the column may not always be defined.
+Be careful with forcing a linewise movement to be used charwise or blockwise,
+the column may not always be defined.
 
 							*o_v*
 v		When used after an operator, before the motion command: Force
-		the operator to work characterwise, also when the motion is
+		the operator to work charwise, also when the motion is
 		linewise.  If the motion was linewise, it will become
 		|exclusive|.
-		If the motion already was characterwise, toggle
+		If the motion already was charwise, toggle
 		inclusive/exclusive.  This can be used to make an exclusive
 		motion inclusive and an inclusive motion exclusive.
 
 							*o_V*
 V		When used after an operator, before the motion command: Force
 		the operator to work linewise, also when the motion is
-		characterwise.
+		charwise.
 
 							*o_CTRL-V*
 CTRL-V		When used after an operator, before the motion command: Force
@@ -508,36 +508,36 @@ aw			"a word", select [count] words (see |word|).
 			Leading or trailing white space is included, but not
 			counted.
 			When used in Visual linewise mode "aw" switches to
-			Visual characterwise mode.
+			Visual charwise mode.
 
 							*v_iw* *iw*
 iw			"inner word", select [count] words (see |word|).
 			White space between words is counted too.
 			When used in Visual linewise mode "iw" switches to
-			Visual characterwise mode.
+			Visual charwise mode.
 
 							*v_aW* *aW*
 aW			"a WORD", select [count] WORDs (see |WORD|).
 			Leading or trailing white space is included, but not
 			counted.
 			When used in Visual linewise mode "aW" switches to
-			Visual characterwise mode.
+			Visual charwise mode.
 
 							*v_iW* *iW*
 iW			"inner WORD", select [count] WORDs (see |WORD|).
 			White space between words is counted too.
 			When used in Visual linewise mode "iW" switches to
-			Visual characterwise mode.
+			Visual charwise mode.
 
 							*v_as* *as*
 as			"a sentence", select [count] sentences (see
 			|sentence|).
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 							*v_is* *is*
 is			"inner sentence", select [count] sentences (see
 			|sentence|).
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 							*v_ap* *ap*
 ap			"a paragraph", select [count] paragraphs (see
@@ -558,14 +558,14 @@ a[			"a [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds
 			the matching ']'.  The enclosed text is selected,
 			including the '[' and ']'.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 i]						*v_i]* *v_i[* *i]* *i[*
 i[			"inner [] block", select [count] '[' ']' blocks.  This
 			goes backwards to the [count] unclosed '[', and finds
 			the matching ']'.  The enclosed text is selected,
 			excluding the '[' and ']'.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 a)							*v_a)* *a)* *a(*
 a(							*vab* *v_ab* *v_a(* *ab*
@@ -573,54 +573,54 @@ ab			"a block", select [count] blocks, from "[count] [(" to
 			the matching ')', including the '(' and ')' (see
 			|[(|).  Does not include white space outside of the
 			parenthesis.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 i)							*v_i)* *i)* *i(*
 i(							*vib* *v_ib* *v_i(* *ib*
 ib			"inner block", select [count] blocks, from "[count] [("
 			to the matching ')', excluding the '(' and ')' (see
 			|[(|).
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 a>						*v_a>* *v_a<* *a>* *a<*
 a<			"a <> block", select [count] <> blocks, from the
 			[count]'th unmatched '<' backwards to the matching
 			'>', including the '<' and '>'.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 i>						*v_i>* *v_i<* *i>* *i<*
 i<			"inner <> block", select [count] <> blocks, from
 			the [count]'th unmatched '<' backwards to the matching
 			'>', excluding the '<' and '>'.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 						*v_at* *at*
 at			"a tag block", select [count] tag blocks, from the
 			[count]'th unmatched "<aaa>" backwards to the matching
 			"</aaa>", including the "<aaa>" and "</aaa>".
 			See |tag-blocks| about the details.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 						*v_it* *it*
 it			"inner tag block", select [count] tag blocks, from the
 			[count]'th unmatched "<aaa>" backwards to the matching
 			"</aaa>", excluding the "<aaa>" and "</aaa>".
 			See |tag-blocks| about the details.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 a}							*v_a}* *a}* *a{*
 a{							*v_aB* *v_a{* *aB*
 aB			"a Block", select [count] Blocks, from "[count] [{" to
 			the matching '}', including the '{' and '}' (see
 			|[{|).
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 i}							*v_i}* *i}* *i{*
 i{							*v_iB* *v_i{* *iB*
 iB			"inner Block", select [count] Blocks, from "[count] [{"
 			to the matching '}', excluding the '{' and '}' (see
 			|[{|).
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 
 a"							*v_aquote* *aquote*
 a'							*v_a'* *a'*
@@ -634,7 +634,7 @@ a`							*v_a`* *a`*
 			start of the line.
 			Any trailing white space is included, unless there is
 			none, then leading white space is included.
-			When used in Visual mode it is made characterwise.
+			When used in Visual mode it is made charwise.
 			Repeating this object in Visual mode another string is
 			included.  A count is currently not used.
 

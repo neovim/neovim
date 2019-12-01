@@ -7316,7 +7316,7 @@ static void set_hl_attr(int idx)
 
   sgp->sg_attr = hl_get_syn_attr(idx+1, at_en);
 
-  // a cursor style uses this syn_id, make sure its atribute is updated.
+  // a cursor style uses this syn_id, make sure its attribute is updated.
   if (cursor_mode_uses_syn_id(idx+1)) {
     ui_mode_info_set();
   }

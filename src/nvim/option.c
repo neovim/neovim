@@ -2205,10 +2205,10 @@ static void didset_options2(void)
   (void)opt_strings_flags(p_cb, p_cb_values, &cb_flags, true);
 
   // Parse default for 'fillchars'.
-  (void)set_chars_option(curwin, &curwin->w_p_fcs);
+  (void)set_chars_option(curwin, &curwin->w_p_fcs, true);
 
   // Parse default for 'listchars'.
-  (void)set_chars_option(curwin, &curwin->w_p_lcs);
+  (void)set_chars_option(curwin, &curwin->w_p_lcs, true);
 
   // Parse default for 'wildmode'.
   check_opt_wim();
@@ -2663,11 +2663,11 @@ did_set_string_option(
       errmsg = e_invarg;
     } else {
       FOR_ALL_TAB_WINDOWS(tp, wp) {
-        if (set_chars_option(wp, &wp->w_p_lcs) != NULL) {
+        if (set_chars_option(wp, &wp->w_p_lcs, true) != NULL) {
           errmsg = (char_u *)_("E834: Conflicts with value of 'listchars'");
           goto ambw_end;
         }
-        if (set_chars_option(wp, &wp->w_p_fcs) != NULL) {
+        if (set_chars_option(wp, &wp->w_p_fcs, true) != NULL) {
           errmsg = (char_u *)_("E835: Conflicts with value of 'fillchars'");
           goto ambw_end;
         }
@@ -2868,10 +2868,26 @@ ambw_end:
       }
       s = skip_to_option_part(s);
     }
-  } else if (varp == &curwin->w_p_lcs) {  // 'listchars'
-    errmsg = set_chars_option(curwin, varp);
-  } else if (varp == &curwin->w_p_fcs) {  // 'fillchars'
-    errmsg = set_chars_option(curwin, varp);
+  } else if (varp == &p_lcs) {  // 'listchars'
+    errmsg = set_chars_option(curwin, varp, false);
+    if (!errmsg) {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
+        set_chars_option(wp, &wp->w_p_lcs, true);
+      }
+    }
+    redraw_all_later(NOT_VALID);
+  } else if (varp == &curwin->w_p_lcs) {  // local 'listchars'
+    errmsg = set_chars_option(curwin, varp, true);
+  } else if (varp == &p_fcs) {  // 'fillchars'
+    errmsg = set_chars_option(curwin, varp, false);
+    if (!errmsg) {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
+        set_chars_option(wp, &wp->w_p_fcs, true);
+      }
+    }
+    redraw_all_later(NOT_VALID);
+  } else if (varp == &curwin->w_p_fcs) {  // local 'fillchars'
+    errmsg = set_chars_option(curwin, varp, true);
   } else if (varp == &p_cedit) {  // 'cedit'
     errmsg = check_cedit();
   } else if (varp == &p_vfile) {  // 'verbosefile'
@@ -3501,7 +3517,7 @@ skip:
 ///
 /// @param varp either &curwin->w_p_lcs or &curwin->w_p_fcs
 /// @return error message, NULL if it's OK.
-static char_u *set_chars_option(win_T *wp, char_u **varp)
+static char_u *set_chars_option(win_T *wp, char_u **varp, bool set)
 {
   int round, i, len, entries;
   char_u *p, *s;
@@ -3536,12 +3552,18 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
     { &wp->w_p_lcs_chars.conceal, "conceal",  NUL  },
   };
 
-  if (varp == &wp->w_p_lcs) {
+  if (varp == &p_lcs || varp == &wp->w_p_lcs) {
     tab = lcs_tab;
     entries = ARRAY_SIZE(lcs_tab);
+    if (varp == &wp->w_p_lcs && wp->w_p_lcs[0] == NUL) {
+      varp = &p_lcs;
+    }
   } else {
     tab = fcs_tab;
     entries = ARRAY_SIZE(fcs_tab);
+    if (varp == &wp->w_p_fcs && wp->w_p_fcs[0] == NUL) {
+      varp = &p_fcs;
+    }
     if (*p_ambw == 'd') {
       // XXX: If ambiwidth=double then "|" and "·" take 2 columns, which is
       // forbidden (TUI limitation?). Set old defaults.
@@ -3554,7 +3576,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
   }
 
   // first round: check for valid value, second round: assign values
-  for (round = 0; round <= 1; round++) {
+  for (round = 0; round <= set ? 1 : 0; round++) {
     if (round > 0) {
       // After checking that the value is valid: set defaults
       for (i = 0; i < entries; i++) {
@@ -3562,7 +3584,7 @@ static char_u *set_chars_option(win_T *wp, char_u **varp)
           *(tab[i].cp) = tab[i].def;
         }
       }
-      if (varp == &wp->w_p_lcs) {
+      if (varp == &p_lcs || varp == &wp->w_p_lcs) {
         wp->w_p_lcs_chars.tab1 = NUL;
         wp->w_p_lcs_chars.tab3 = NUL;
       }
@@ -5173,6 +5195,13 @@ void ui_refresh_options(void)
     }
     ui_call_option_set(name, value);
   }
+  if (p_mouse != NULL) {
+    if (*p_mouse == NUL) {
+      ui_call_mouse_off();
+    } else {
+      setmouse();
+    }
+  }
 }
 
 /*
@@ -5562,6 +5591,16 @@ void unset_global_local_option(char *name, void *from)
     case PV_MENC:
       clear_string_option(&buf->b_p_menc);
       break;
+    case PV_LCS:
+      clear_string_option(&((win_T *)from)->w_p_lcs);
+      set_chars_option((win_T *)from, &((win_T *)from)->w_p_lcs, true);
+      redraw_win_later((win_T *)from, NOT_VALID);
+      break;
+    case PV_FCS:
+      clear_string_option(&((win_T *)from)->w_p_fcs);
+      set_chars_option((win_T *)from, &((win_T *)from)->w_p_fcs, true);
+      redraw_win_later((win_T *)from, NOT_VALID);
+      break;
   }
 }
 
@@ -5598,6 +5637,8 @@ static char_u *get_varp_scope(vimoption_T *p, int opt_flags)
     case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
     case PV_BKC:  return (char_u *)&(curbuf->b_p_bkc);
     case PV_MENC: return (char_u *)&(curbuf->b_p_menc);
+    case PV_FCS:  return (char_u *)&(curwin->w_p_fcs);
+    case PV_LCS:  return (char_u *)&(curwin->w_p_lcs);
     }
     return NULL;     // "cannot happen"
   }
@@ -5656,6 +5697,10 @@ static char_u *get_varp(vimoption_T *p)
            ? (char_u *)&(curbuf->b_p_lw) : p->var;
   case PV_MENC: return *curbuf->b_p_menc != NUL
            ? (char_u *)&(curbuf->b_p_menc) : p->var;
+  case PV_FCS:    return *curwin->w_p_fcs != NUL
+           ? (char_u *)&(curwin->w_p_fcs) : p->var;
+  case PV_LCS:    return *curwin->w_p_lcs != NUL
+           ? (char_u *)&(curwin->w_p_lcs) : p->var;
 
   case PV_ARAB:   return (char_u *)&(curwin->w_p_arab);
   case PV_LIST:   return (char_u *)&(curwin->w_p_list);
@@ -5753,8 +5798,6 @@ static char_u *get_varp(vimoption_T *p)
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
   case PV_SCL:    return (char_u *)&(curwin->w_p_scl);
   case PV_WINHL:  return (char_u *)&(curwin->w_p_winhl);
-  case PV_FCS:    return (char_u *)&(curwin->w_p_fcs);
-  case PV_LCS:    return (char_u *)&(curwin->w_p_lcs);
   case PV_WINBL:  return (char_u *)&(curwin->w_p_winbl);
   default:        IEMSG(_("E356: get_varp ERROR"));
   }
@@ -5896,8 +5939,8 @@ void didset_window_options(win_T *wp)
 {
   check_colorcolumn(wp);
   briopt_check(wp);
-  set_chars_option(wp, &wp->w_p_fcs);
-  set_chars_option(wp, &wp->w_p_lcs);
+  set_chars_option(wp, &wp->w_p_fcs, true);
+  set_chars_option(wp, &wp->w_p_lcs, true);
   parse_winhl_opt(wp);  // sets w_hl_needs_update also for w_p_winbl
   wp->w_grid.blending = wp->w_p_winbl > 0;
 }

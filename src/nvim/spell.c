@@ -1910,11 +1910,11 @@ int init_syl_tab(slang_T *slang)
 // Count the number of syllables in "word".
 // When "word" contains spaces the syllables after the last space are counted.
 // Returns zero if syllables are not defines.
-static int count_syllables(slang_T *slang, char_u *word)
+static int count_syllables(slang_T *slang, const char_u *word)
+  FUNC_ATTR_NONNULL_ALL
 {
   int cnt = 0;
   bool skip = false;
-  char_u      *p;
   int len;
   syl_item_T  *syl;
   int c;
@@ -1922,7 +1922,7 @@ static int count_syllables(slang_T *slang, char_u *word)
   if (slang->sl_syllable == NULL)
     return 0;
 
-  for (p = word; *p != NUL; p += len) {
+  for (const char_u *p = word; *p != NUL; p += len) {
     // When running into a space reset counter.
     if (*p == ' ') {
       len = 1;
@@ -2625,9 +2625,10 @@ static bool spell_mb_isword_class(int cl, const win_T *wp)
 
 // Returns true if "p" points to a word character.
 // Wide version of spell_iswordp().
-static bool spell_iswordp_w(int *p, win_T *wp)
+static bool spell_iswordp_w(const int *p, const win_T *wp)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int *s;
+  const int *s;
 
   if (*p < 256 ? wp->w_s->b_spell_ismw[*p]
       : (wp->w_s->b_spell_ismw_mb != NULL

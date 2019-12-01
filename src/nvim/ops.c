@@ -1644,8 +1644,6 @@ int op_delete(oparg_T *oap)
       curwin->w_cursor.col = 0;
       (void)del_bytes((colnr_T)n, !virtual_op,
                       oap->op_type == OP_DELETE && !oap->is_VIsual);
-      extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
-                         (colnr_T)0, 0L, (long)-n, kExtmarkUndo);
       curwin->w_cursor = curpos;  // restore curwin->w_cursor
       (void)do_join(2, false, false, false, false);
     }
@@ -1685,7 +1683,6 @@ setmarks:
     if (oap->is_VIsual == false) {
       endcol = MAX(endcol - 1, mincol);
     }
-    extmark_col_adjust_delete(curbuf, lnum, mincol, endcol, kExtmarkUndo, 0);
   }
   return OK;
 }
@@ -2279,7 +2276,7 @@ void op_insert(oparg_T *oap, long count1)
   colnr_T col = oap->start.col;
   for (linenr_T lnum = oap->start.lnum; lnum <= oap->end.lnum; lnum++) {
     extmark_col_adjust(curbuf, lnum, col, 0, 1, kExtmarkUndo);
-    }
+  }
 }
 
 /*
@@ -3773,7 +3770,10 @@ int do_join(size_t count,
 
     if (insert_space && t > 0) {
       curr = skipwhite(curr);
-      if (*curr != ')' && currsize != 0 && endcurr1 != TAB
+      if (*curr != NUL
+          && *curr != ')'
+          && currsize != 0
+          && endcurr1 != TAB
           && (!has_format_option(FO_MBYTE_JOIN)
               || (utf_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
           && (!has_format_option(FO_MBYTE_JOIN2)
@@ -4276,14 +4276,14 @@ format_lines(
         if (next_leader_len > 0) {
           (void)del_bytes(next_leader_len, false, false);
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
-                          (long)-next_leader_len, 0, kExtmarkUndo);
+                          (long)-next_leader_len, 0, kExtmarkNOOP);
         } else if (second_indent > 0) {   // the "leader" for FO_Q_SECOND
           int indent = (int)getwhitecols_curline();
 
           if (indent > 0) {
-            (void)del_bytes(indent, FALSE, FALSE);
+            (void)del_bytes(indent, false, false);
             mark_col_adjust(curwin->w_cursor.lnum,
-                            (colnr_T)0, 0L, (long)-indent, 0, kExtmarkUndo);
+                            (colnr_T)0, 0L, (long)-indent, 0, kExtmarkNOOP);
           }
         }
         curwin->w_cursor.lnum--;
@@ -4948,23 +4948,6 @@ int do_addsub(int op_type, pos_T *pos, int length, linenr_T Prenum1)
     curbuf->b_op_end.col--;
   }
 
-  // if buf1 wasn't allocated, only a singe ASCII char was changed in-place.
-  if (did_change && buf1 != NULL) {
-    extmark_col_adjust_delete(curbuf,
-                              pos->lnum,
-                              startpos.col + 2,
-                              endpos.col + 1 + length,
-                              kExtmarkUndo,
-                              0);
-    long col_amount = (long)STRLEN(buf1);
-    extmark_col_adjust(curbuf,
-                       pos->lnum,
-                       startpos.col + 1,
-                       0,
-                       col_amount,
-                       kExtmarkUndo);
-  }
-
 theend:
   xfree(buf1);
   if (visual) {
@@ -5221,8 +5204,7 @@ void write_reg_contents_lst(int name, char_u **strings,
 
 /// write_reg_contents_ex - store `str` in register `name`
 ///
-/// If `str` ends in '\n' or '\r', use linewise, otherwise use
-/// characterwise.
+/// If `str` ends in '\n' or '\r', use linewise, otherwise use charwise.
 ///
 /// @warning when `name` is '/', `len` and `must_append` are ignored. This
 ///          means that `str` MUST be NUL-terminated.

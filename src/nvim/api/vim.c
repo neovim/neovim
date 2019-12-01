@@ -1074,9 +1074,10 @@ fail:
 ///                    float where the text should not be edited. Disables
 ///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
 ///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
-///                    is changed to `auto`. The end-of-buffer region is hidden
-///                    by setting `eob` flag of 'fillchars' to a space char,
-///                    and clearing the |EndOfBuffer| region in 'winhighlight'.
+///                    is changed to `auto` and 'colorcolumn' is cleared. The
+///                    end-of-buffer region is hidden by setting `eob` flag of
+///                    'fillchars' to a space char, and clearing the
+///                    |EndOfBuffer| region in 'winhighlight'.
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
@@ -1094,6 +1095,10 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
   }
   if (enter) {
     win_enter(wp, false);
+  }
+  if (!win_valid(wp)) {
+    api_set_error(err, kErrorTypeException, "Window was closed immediately");
+    return 0;
   }
   if (buffer > 0) {
     nvim_win_set_buf(wp->handle, buffer, err);
@@ -1290,7 +1295,7 @@ theend:
 /// @param lines  |readfile()|-style list of lines. |channel-lines|
 /// @param type  Edit behavior: any |getregtype()| result, or:
 ///              - "b" |blockwise-visual| mode (may include width, e.g. "b3")
-///              - "c" |characterwise| mode
+///              - "c" |charwise| mode
 ///              - "l" |linewise| mode
 ///              - ""  guess by contents, see |setreg()|
 /// @param after  Insert after cursor (like |p|), or before (like |P|).

@@ -3056,7 +3056,9 @@ static void ins_compl_clear(void)
   XFREE_CLEAR(compl_orig_text);
   compl_enter_selects = false;
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 /// Check that Insert completion is active.
@@ -4313,7 +4315,9 @@ static void ins_compl_delete(void)
   // causes flicker, thus we can't do that.
   changed_cline_bef_curs();
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 // Insert the new text being completed.
@@ -4335,6 +4339,7 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
+  dict->dv_lock = VAR_FIXED;
   tv_dict_add_str(
       dict, S_LEN("word"),
       (const char *)EMPTY_IF_NULL(match->cp_str));
@@ -5595,9 +5600,6 @@ insertchar (
     do_digraph(buf[i-1]);               /* may be the start of a digraph */
     buf[i] = NUL;
     ins_str(buf);
-    extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
-                       (colnr_T)(curwin->w_cursor.col + 1), 0,
-                       (long)STRLEN(buf), kExtmarkUndo);
     if (flags & INSCHAR_CTRLV) {
       redo_literal(*buf);
       i = 1;
@@ -5608,9 +5610,6 @@ insertchar (
   } else {
     int cc;
 
-    extmark_col_adjust(curbuf, curwin->w_cursor.lnum,
-                       (colnr_T)(curwin->w_cursor.col + 1), 0,
-                       1, kExtmarkUndo);
     if ((cc = utf_char2len(c)) > 1) {
       char_u buf[MB_MAXBYTES + 1];
 
@@ -8500,14 +8499,6 @@ static bool ins_tab(void)
   }
 
   temp -= get_nolist_virtcol() % temp;
-
-  // Move extmarks
-  extmark_col_adjust(curbuf,
-                     curwin->w_cursor.lnum,
-                     curwin->w_cursor.col,
-                     0,
-                     temp,
-                     kExtmarkUndo);
 
   /*
    * Insert the first space with ins_char().	It will delete one char in

@@ -87,8 +87,8 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Це вже найперший буфер"
 
 #, c-format
-msgid "E89: %s will be killed(add ! to override)"
-msgstr "E89: «%s» буде вбито(! щоб не зважати)"
+msgid "E89: %s will be killed (add ! to override)"
+msgstr "E89: «%s» буде вбито (! щоб не зважати)"
 
 #, c-format
 msgid ""

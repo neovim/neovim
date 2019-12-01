@@ -78,26 +78,45 @@ func Test_map_completion()
   call feedkeys(":map <silent> <sp\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <silent> <special>', getreg(':'))
 
+  map <Middle>x middle
+
   map ,f commaf
   map ,g commaf
+  map <Left> left
+  map <A-Left>x shiftleft
   call feedkeys(":map ,\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map ,f', getreg(':'))
   call feedkeys(":map ,\<Tab>\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map ,g', getreg(':'))
+  call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal('"map <Left>', getreg(':'))
+  call feedkeys(":map <A-Left>\<Tab>\<Home>\"\<CR>", 'xt')
+  call assert_equal("\"map <A-Left>\<Tab>", getreg(':'))
   unmap ,f
   unmap ,g
+  unmap <Left>
+  unmap <A-Left>x
 
   set cpo-=< cpo-=B cpo-=k
   map <Left> left
   call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <Left>', getreg(':'))
+  call feedkeys(":map <M\<Tab>\<Home>\"\<CR>", 'xt')
+  " call assert_equal("\"map <M\<Tab>", getreg(':'))
   unmap <Left>
 
   " set cpo+=<
   map <Left> left
+  exe "set t_k6=\<Esc>[17~"
+  call feedkeys(":map \<Esc>[17~x f6x\<CR>", 'xt')
   call feedkeys(":map <L\<Tab>\<Home>\"\<CR>", 'xt')
   call assert_equal('"map <Left>', getreg(':'))
+  if !has('gui_running')
+    call feedkeys(":map \<Esc>[17~\<Tab>\<Home>\"\<CR>", 'xt')
+    " call assert_equal("\"map <F6>x", getreg(':'))
+  endif
   unmap <Left>
+  call feedkeys(":unmap \<Esc>[17~x\<CR>", 'xt')
   set cpo-=<
 
   set cpo+=B
@@ -113,6 +132,9 @@ func Test_map_completion()
   call assert_equal('"map <Left>', getreg(':'))
   unmap <Left>
   " set cpo-=k
+
+  unmap <Middle>x
+  set cpo&vim
 endfunc
 
 func Test_match_completion()
@@ -159,6 +181,7 @@ func Test_expr_completion()
   endif
   for cmd in [
 	\ 'let a = ',
+	\ 'const a = ',
 	\ 'if',
 	\ 'elseif',
 	\ 'while',
@@ -301,7 +324,7 @@ func Test_getcompletion()
   call assert_equal([], l)
 
   let l = getcompletion('.', 'shellcmd')
-  call assert_equal(['./', '../'], l[0:1])
+  call assert_equal(['./', '../'], filter(l, 'v:val =~ "\\./"'))
   call assert_equal(-1, match(l[2:], '^\.\.\?/$'))
   let root = has('win32') ? 'C:\\' : '/'
   let l = getcompletion(root, 'shellcmd')
@@ -373,6 +396,29 @@ func Test_getcompletion()
   set tags&
 
   call assert_fails('call getcompletion("", "burp")', 'E475:')
+endfunc
+
+func Test_shellcmd_completion()
+  let save_path = $PATH
+
+  call mkdir('Xpathdir/Xpathsubdir', 'p')
+  call writefile([''], 'Xpathdir/Xfile.exe')
+  call setfperm('Xpathdir/Xfile.exe', 'rwx------')
+
+  " Set PATH to example directory without trailing slash.
+  let $PATH = getcwd() . '/Xpathdir'
+
+  " Test for the ":!<TAB>" case.  Previously, this would include subdirs of
+  " dirs in the PATH, even though they won't be executed.  We check that only
+  " subdirs of the PWD and executables from the PATH are included in the
+  " suggestions.
+  let actual = getcompletion('X', 'shellcmd')
+  let expected = map(filter(glob('*', 0, 1), 'isdirectory(v:val) && v:val[0] == "X"'), 'v:val . "/"')
+  call insert(expected, 'Xfile.exe')
+  call assert_equal(expected, actual)
+
+  call delete('Xpathdir', 'rf')
+  let $PATH = save_path
 endfunc
 
 func Test_expand_star_star()
@@ -492,8 +538,9 @@ func Test_cmdline_complete_user_names()
     let names = system('net user')
     if names =~ 'Administrator'
       " Trying completion of  :e ~A  should complete to Administrator.
+      " There could be other names starting with "A" before Administrator.
       call feedkeys(':e ~A' . "\<c-a>\<c-B>\"\<cr>", 'tx')
-      call assert_match('^"e \~Administrator', @:)
+      call assert_match('^"e \~.*Administrator', @:)
     endif
   endif
 endfunc
@@ -572,6 +619,8 @@ func Check_cmdline(cmdtype)
   return ''
 endfunc
 
+set cpo&
+
 func Test_getcmdtype()
   call feedkeys(":MyCmd a\<C-R>=Check_cmdline(':')\<CR>\<Esc>", "xt")
 
@@ -610,6 +659,37 @@ func Test_getcmdwintype()
   call assert_equal(':', a)
 
   call assert_equal('', getcmdwintype())
+endfunc
+
+func Test_getcmdwin_autocmd()
+  let s:seq = []
+  augroup CmdWin
+  au WinEnter * call add(s:seq, 'WinEnter ' .. win_getid())
+  au WinLeave * call add(s:seq, 'WinLeave ' .. win_getid())
+  au BufEnter * call add(s:seq, 'BufEnter ' .. bufnr())
+  au BufLeave * call add(s:seq, 'BufLeave ' .. bufnr())
+  au CmdWinEnter * call add(s:seq, 'CmdWinEnter ' .. win_getid())
+  au CmdWinLeave * call add(s:seq, 'CmdWinLeave ' .. win_getid())
+
+  let org_winid = win_getid()
+  let org_bufnr = bufnr()
+  call feedkeys("q::let a = getcmdwintype()\<CR>:let s:cmd_winid = win_getid()\<CR>:let s:cmd_bufnr = bufnr()\<CR>:q\<CR>", 'x!')
+  call assert_equal(':', a)
+  call assert_equal([
+	\ 'WinLeave ' .. org_winid,
+	\ 'WinEnter ' .. s:cmd_winid,
+	\ 'BufLeave ' .. org_bufnr,
+	\ 'BufEnter ' .. s:cmd_bufnr,
+	\ 'CmdWinEnter ' .. s:cmd_winid,
+	\ 'CmdWinLeave ' .. s:cmd_winid,
+	\ 'BufLeave ' .. s:cmd_bufnr,
+	\ 'WinLeave ' .. s:cmd_winid,
+	\ 'WinEnter ' .. org_winid,
+	\ 'BufEnter ' .. org_bufnr,
+	\ ], s:seq)
+
+  au!
+  augroup END
 endfunc
 
 func Test_verbosefile()
@@ -670,5 +750,3 @@ func Test_cmdline_overstrike()
 
   let &encoding = encoding_save
 endfunc
-
-set cpo&

@@ -339,6 +339,82 @@ describe('lua stdlib', function()
       pcall_err(exec_lua, [[return vim.pesc(2)]]))
   end)
 
+  it('vim.tbl_keys', function()
+    eq({}, exec_lua("return vim.tbl_keys({})"))
+    for _, v in pairs(exec_lua("return vim.tbl_keys({'a', 'b', 'c'})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 1, 2, 3 }, ...)", v))
+    end
+    for _, v in pairs(exec_lua("return vim.tbl_keys({a=1, b=2, c=3})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 'a', 'b', 'c' }, ...)", v))
+    end
+  end)
+
+  it('vim.tbl_values', function()
+    eq({}, exec_lua("return vim.tbl_values({})"))
+    for _, v in pairs(exec_lua("return vim.tbl_values({'a', 'b', 'c'})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 'a', 'b', 'c' }, ...)", v))
+    end
+    for _, v in pairs(exec_lua("return vim.tbl_values({a=1, b=2, c=3})")) do
+      eq(true, exec_lua("return vim.tbl_contains({ 1, 2, 3 }, ...)", v))
+    end
+  end)
+
+  it('vim.tbl_islist', function()
+    eq(NIL, exec_lua("return vim.tbl_islist({})"))
+    eq(true, exec_lua("return vim.tbl_islist({'a', 'b', 'c'})"))
+    eq(false, exec_lua("return vim.tbl_islist({'a', '32', a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.tbl_islist({1, a='hello', b='baz'})"))
+    eq(false, exec_lua("return vim.tbl_islist({a='hello', b='baz', 1})"))
+    eq(false, exec_lua("return vim.tbl_islist({1, 2, nil, a='hello'})"))
+  end)
+
+  it('vim.tbl_isempty', function()
+    eq(true, exec_lua("return vim.tbl_isempty({})"))
+    eq(false, exec_lua("return vim.tbl_isempty({ 1, 2, 3 })"))
+    eq(false, exec_lua("return vim.tbl_isempty({a=1, b=2, c=3})"))
+  end)
+
+  it('vim.deep_equal', function()
+    eq(true, exec_lua [[ return vim.deep_equal({a=1}, {a=1}) ]])
+    eq(true, exec_lua [[ return vim.deep_equal({a={b=1}}, {a={b=1}}) ]])
+    eq(true, exec_lua [[ return vim.deep_equal({a={b={nil}}}, {a={b={}}}) ]])
+    eq(true, exec_lua [[ return vim.deep_equal({a=1, [5]=5}, {nil,nil,nil,nil,5,a=1}) ]])
+    eq(false, exec_lua [[ return vim.deep_equal(1, {nil,nil,nil,nil,5,a=1}) ]])
+    eq(false, exec_lua [[ return vim.deep_equal(1, 3) ]])
+    eq(false, exec_lua [[ return vim.deep_equal(nil, 3) ]])
+    eq(false, exec_lua [[ return vim.deep_equal({a=1}, {a=2}) ]])
+  end)
+
+  it('vim.list_extend', function()
+    eq({1,2,3}, exec_lua [[ return vim.list_extend({1}, {2,3}) ]])
+    eq('Error executing lua: .../shared.lua: src: expected table, got nil',
+      pcall_err(exec_lua, [[ return vim.list_extend({1}, nil) ]]))
+    eq({1,2}, exec_lua [[ return vim.list_extend({1}, {2;a=1}) ]])
+    eq(true, exec_lua [[ local a = {1} return vim.list_extend(a, {2;a=1}) == a ]])
+    eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1) ]])
+    eq({}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 2) ]])
+    eq({}, exec_lua [[ return vim.list_extend({}, {2;a=1}, 1, -1) ]])
+    eq({2}, exec_lua [[ return vim.list_extend({}, {2;a=1}, -1, 2) ]])
+  end)
+
+  it('vim.tbl_add_reverse_lookup', function()
+    eq(true, exec_lua [[
+    local a = { A = 1 }
+    vim.tbl_add_reverse_lookup(a)
+    return vim.deep_equal(a, { A = 1; [1] = 'A'; })
+    ]])
+    -- Throw an error for trying to do it twice (run into an existing key)
+    local code = [[
+    local res = {}
+    local a = { A = 1 }
+    vim.tbl_add_reverse_lookup(a)
+    assert(vim.deep_equal(a, { A = 1; [1] = 'A'; }))
+    vim.tbl_add_reverse_lookup(a)
+    ]]
+    matches('Error executing lua: .../shared.lua: The reverse lookup found an existing value for "[1A]" while processing key "[1A]"',
+      pcall_err(exec_lua, code))
+  end)
+
   it('vim.call, vim.fn', function()
     eq(true, exec_lua([[return vim.call('sin', 0.0) == 0.0 ]]))
     eq(true, exec_lua([[return vim.fn.sin(0.0) == 0.0 ]]))
@@ -510,5 +586,70 @@ describe('lua stdlib', function()
     eq(false, exec_lua("return vim.is_callable(1)"))
     eq(false, exec_lua("return vim.is_callable('foo')"))
     eq(false, exec_lua("return vim.is_callable({})"))
+  end)
+
+  it('vim.g', function()
+    exec_lua [[
+    vim.api.nvim_set_var("testing", "hi")
+    vim.api.nvim_set_var("other", 123)
+    ]]
+    eq('hi', funcs.luaeval "vim.g.testing")
+    eq(123, funcs.luaeval "vim.g.other")
+    eq(NIL, funcs.luaeval "vim.g.nonexistant")
+  end)
+
+  it('vim.env', function()
+    exec_lua [[
+    vim.fn.setenv("A", 123)
+    ]]
+    eq('123', funcs.luaeval "vim.env.A")
+    eq(NIL, funcs.luaeval "vim.env.B")
+  end)
+
+  it('vim.v', function()
+    eq(funcs.luaeval "vim.api.nvim_get_vvar('progpath')", funcs.luaeval "vim.v.progpath")
+    eq(false, funcs.luaeval "vim.v['false']")
+    eq(NIL, funcs.luaeval "vim.v.null")
+  end)
+
+  it('vim.bo', function()
+    eq('', funcs.luaeval "vim.bo.filetype")
+    exec_lua [[
+    vim.api.nvim_buf_set_option(0, "filetype", "markdown")
+    BUF = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(BUF, "modifiable", false)
+    ]]
+    eq(false, funcs.luaeval "vim.bo.modified")
+    eq('markdown', funcs.luaeval "vim.bo.filetype")
+    eq(false, funcs.luaeval "vim.bo[BUF].modifiable")
+    exec_lua [[
+    vim.bo.filetype = ''
+    vim.bo[BUF].modifiable = true
+    ]]
+    eq('', funcs.luaeval "vim.bo.filetype")
+    eq(true, funcs.luaeval "vim.bo[BUF].modifiable")
+    matches("^Error executing lua: .*: Invalid option name: 'nosuchopt'$",
+       pcall_err(exec_lua, 'return vim.bo.nosuchopt'))
+    matches("^Error executing lua: .*: Expected lua string$",
+       pcall_err(exec_lua, 'return vim.bo[0][0].autoread'))
+  end)
+
+  it('vim.wo', function()
+    eq('', funcs.luaeval "vim.bo.filetype")
+    exec_lua [[
+    vim.api.nvim_win_set_option(0, "cole", 2)
+    BUF = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_option(BUF, "modifiable", false)
+    ]]
+    eq(2, funcs.luaeval "vim.wo.cole")
+    exec_lua [[
+    vim.wo.conceallevel = 0
+    vim.bo[BUF].modifiable = true
+    ]]
+    eq(0, funcs.luaeval "vim.wo.cole")
+    matches("^Error executing lua: .*: Invalid option name: 'notanopt'$",
+       pcall_err(exec_lua, 'return vim.wo.notanopt'))
+    matches("^Error executing lua: .*: Expected lua string$",
+       pcall_err(exec_lua, 'return vim.wo[0][0].list'))
   end)
 end)

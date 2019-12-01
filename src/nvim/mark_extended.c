@@ -4,7 +4,7 @@
 // Implements extended marks for plugins. Each mark exists in a btree of
 // lines containing btrees of columns.
 //
-// The btree provides efficent range lookups.
+// The btree provides efficient range lookups.
 // A map of pointers to the marks is used for fast lookup by mark id.
 //
 // Marks are moved by calls to: extmark_col_adjust, extmark_adjust, or
@@ -300,7 +300,7 @@ Extmark *extmark_from_pos(buf_T *buf, uint64_t ns, linenr_T lnum, colnr_T col)
   return NULL;
 }
 
-// Returns an avaliable id in a namespace
+// Returns an available id in a namespace
 uint64_t extmark_free_id_get(buf_T *buf, uint64_t ns)
 {
   if (!buf->b_extmark_ns) {
@@ -910,6 +910,9 @@ void extmark_col_adjust(buf_T *buf, linenr_T lnum,
   bool marks_moved =  extmark_col_adjust_impl(buf, lnum, mincol, lnum_amount,
                                               false, col_amount);
 
+  marks_moved |= bufhl_mark_col_adjust(buf, lnum, mincol,
+                                       lnum_amount, col_amount);
+
   if (undo == kExtmarkUndo && marks_moved) {
     u_extmark_col_adjust(buf, lnum, mincol, lnum_amount, col_amount);
   }
@@ -938,6 +941,7 @@ void extmark_col_adjust_delete(buf_T *buf, linenr_T lnum,
   marks_moved = extmark_col_adjust_impl(buf, lnum, mincol, 0,
                                         true, (long)endcol);
 
+  marks_moved |= bufhl_mark_col_adjust(buf, lnum, endcol, 0, mincol-(endcol+1));
   // Deletes at the end of the line have different behaviour than the normal
   // case when deleted.
   // Cleanup any marks that are floating beyond the end of line.

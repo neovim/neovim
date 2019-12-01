@@ -2409,7 +2409,6 @@ int inchar(
     did_outofmem_msg = FALSE;       /* display out of memory message (again) */
     did_swapwrite_msg = FALSE;      /* display swap file write error again */
   }
-  undo_off = FALSE;                 /* restart undo now */
 
   // Get a character from a script file if there is one.
   // If interrupted: Stop reading script files, close them all.

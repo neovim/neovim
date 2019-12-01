@@ -1512,7 +1512,7 @@ ArrayOf(Dictionary) keymap_array(String mode, buf_T *buf)
 // If throw == true then an error will be raised if nothing
 // was found
 // Returns NULL if something went wrong
-Extmark *extmark_from_id_or_pos(Buffer buffer, Integer namespace, Object id,
+Extmark *extmark_from_id_or_pos(Buffer buffer, Integer ns, Object id,
                                 Error *err, bool throw)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -1536,7 +1536,7 @@ Extmark *extmark_from_id_or_pos(Buffer buffer, Integer namespace, Object id,
       }
       return NULL;
     }
-    extmark = extmark_from_pos(buf, (uint64_t)namespace, row, col);
+    extmark = extmark_from_pos(buf, (uint64_t)ns, row, col);
   } else if (id.type != kObjectTypeInteger) {
     if (throw) {
       api_set_error(err, kErrorTypeValidation,
@@ -1550,7 +1550,7 @@ Extmark *extmark_from_id_or_pos(Buffer buffer, Integer namespace, Object id,
     return NULL;
   } else {
     extmark = extmark_from_id(buf,
-                              (uint64_t)namespace,
+                              (uint64_t)ns,
                               (uint64_t)id.data.integer);
   }
 
@@ -1572,17 +1572,17 @@ bool ns_initialized(uint64_t ns)
   return ns < (uint64_t)next_namespace_id;
 }
 
-/// Get line and column from extmark object
+/// Gets the line and column of an extmark.
 ///
-/// Extmarks may be queried from position or name or even special names
-/// in the future such as "cursor". This function sets the line and col
-/// to make the extmark functions recognize what's required
+/// Extmarks may be queried by position, name or even special names
+/// in the future such as "cursor".
 ///
-/// @param[out] lnum lnum to be set
-/// @param[out] colnr col to be set
-bool set_extmark_index_from_obj(buf_T *buf, Integer namespace,
-                                Object obj, linenr_T *lnum, colnr_T *colnr,
-                                Error *err)
+/// @param[out] lnum extmark line
+/// @param[out] colnr extmark column
+///
+/// @return true if the extmark was found, else false
+bool extmark_get_index_from_obj(buf_T *buf, Integer ns, Object obj, linenr_T
+                                *lnum, colnr_T *colnr, Error *err)
 {
   // Check if it is mark id
   if (obj.type == kObjectTypeInteger) {
@@ -1600,7 +1600,7 @@ bool set_extmark_index_from_obj(buf_T *buf, Integer namespace,
       return false;
     }
 
-    Extmark *extmark = extmark_from_id(buf, (uint64_t)namespace, (uint64_t)id);
+    Extmark *extmark = extmark_from_id(buf, (uint64_t)ns, (uint64_t)id);
     if (extmark) {
       *lnum = extmark->line->lnum;
       *colnr = extmark->col;

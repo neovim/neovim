@@ -201,8 +201,8 @@ the editor.
 	sent from Nvim, like for |ui-cmdline|.
 
 ["mode_change", mode, mode_idx]
-	The mode changed.  The first parameter `mode` is a string representing
-	the current mode. `mode_idx` is an index into the array received in
+	Editor mode changed.  The `mode` parameter is a string representing
+	the current mode. `mode_idx` is an index into the array emitted in
 	the `mode_info_set` event. UIs should change the cursor style
 	according to the properties specified in the corresponding item. The
 	set of modes reported will change in new versions of Nvim, for
@@ -211,11 +211,11 @@ the editor.
 
 ["mouse_on"]
 ["mouse_off"]
-	Tells the client whether mouse support, as determined by |'mouse'|
-	option, is considered to be active in the current mode. This is mostly
-	useful for a terminal frontend, or other situations where Nvim mouse
-	would conflict with other usages of the mouse. It is safe for a client
-	to ignore this and always send mouse events.
+	|'mouse'| was enabled/disabled in the current editor mode. Useful for
+	a terminal UI, or other situations where Nvim mouse would conflict
+	with other usages of the mouse. UIs may ignore this and always send
+	mouse input, because 'mouse' decides the behavior of |nvim_input()|
+	implicitly.
 
 ["busy_start"]
 ["busy_stop"]

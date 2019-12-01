@@ -5,7 +5,7 @@ local command = helpers.command
 local eq = helpers.eq
 local shallowcopy = helpers.shallowcopy
 
-describe('ui receives option updates', function()
+describe('UI receives option updates', function()
   local screen
 
   local function reset(opts, ...)
@@ -44,6 +44,33 @@ describe('ui receives option updates', function()
     local expected = reset()
     screen:expect(function()
       eq(expected, screen.options)
+    end)
+  end)
+
+  it('on attach #11372', function()
+    clear()
+    local evs = {}
+    screen = Screen.new(20,5)
+    -- Override mouse_on/mouse_off handlers.
+    function screen:_handle_mouse_on()
+      table.insert(evs, 'mouse_on')
+    end
+    function screen:_handle_mouse_off()
+      table.insert(evs, 'mouse_off')
+    end
+    screen:attach()
+    screen:expect(function()
+      eq({'mouse_off'}, evs)
+    end)
+    command("set mouse=nvi")
+    screen:expect(function()
+      eq({'mouse_off','mouse_on'}, evs)
+    end)
+    screen:detach()
+    eq({'mouse_off','mouse_on'}, evs)
+    screen:attach()
+    screen:expect(function()
+      eq({'mouse_off','mouse_on','mouse_on'}, evs)
     end)
   end)
 

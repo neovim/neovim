@@ -775,7 +775,7 @@ local function test_cmdline(linegrid)
     }}}
 
     -- This used to send an invalid event where pos where larger than the total
-    -- lenght of content. Checked in _handle_cmdline_show.
+    -- length of content. Checked in _handle_cmdline_show.
     feed('<esc>')
     screen:expect([[
       ^                         |

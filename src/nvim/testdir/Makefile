@@ -48,7 +48,8 @@ NEW_TESTS_IGNORE := $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_ALOT) \
   test_listlbr \
   test_largefile \
 
-NEW_TESTS ?= $(addsuffix .res,$(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT))
+NEW_TESTS ?= $(sort $(filter-out $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT)
+NEW_TESTS_RES ?= $(addsuffix .res,$(NEW_TESTS))
 
 
 ifdef VALGRIND_GDB
@@ -112,6 +113,16 @@ fixff:
 	-$(NVIM_PRG) $(NO_INITS) -u unix.vim "+argdo set ff=dos|upd" +q \
 	  dotest.in
 
+# Execute an individual new style test, e.g.:
+# make test_largefile
+$(NEW_TESTS):
+	rm -f $@.res test.log messages
+	@MAKEFLAGS=--no-print-directory $(MAKE) -f Makefile $@.res
+	@cat messages
+	@if test -f test.log; then \
+		exit 1; \
+	fi
+
 RM_ON_RUN   := test.out X* viminfo
 RM_ON_START := test.ok
 RUN_VIM     := $(TOOL) $(NVIM_PRG) -u unix.vim -U NONE -i viminfo --headless --noplugin -s dotest.in
@@ -172,7 +183,7 @@ newtests: newtestssilent
 	                 cat messages && cat test.log;                      \
 	             fi"
 
-newtestssilent: $(NEW_TESTS)
+newtestssilent: $(NEW_TESTS_RES)
 
 %.res: %.vim .gdbinit
 	@echo "[OLDTEST] Running" $*

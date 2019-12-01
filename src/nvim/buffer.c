@@ -411,11 +411,11 @@ bool buf_valid(buf_T *buf)
 ///               caller should get a new buffer very soon!
 ///               The 'bufhidden' option can force freeing and deleting.
 /// @param abort_if_last
-///               If TRUE, do not close the buffer if autocommands cause
+///               If true, do not close the buffer if autocommands cause
 ///               there to be only one window with this buffer. e.g. when
 ///               ":quit" is supposed to close the window but autocommands
 ///               close all other windows.
-void close_buffer(win_T *win, buf_T *buf, int action, int abort_if_last)
+void close_buffer(win_T *win, buf_T *buf, int action, bool abort_if_last)
 {
   bool unload_buf = (action != 0);
   bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
@@ -1238,7 +1238,7 @@ do_buffer(
               return FAIL;
             }
           } else {
-            EMSG2(_("E89: %s will be killed(add ! to override)"),
+            EMSG2(_("E89: %s will be killed (add ! to override)"),
                   (char *)buf->b_fname);
             return FAIL;
           }
@@ -1585,10 +1585,12 @@ void enter_buffer(buf_T *buf)
 
     open_buffer(false, NULL, 0);
   } else {
-    if (!msg_silent) {
+    if (!msg_silent && !shortmess(SHM_FILEINFO)) {
       need_fileinfo = true;             // display file info after redraw
     }
-    (void)buf_check_timestamp(curbuf, false);     // check if file changed
+    // check if file changed
+    (void)buf_check_timestamp(curbuf, false);
+
     curwin->w_topline = 1;
     curwin->w_topfill = 0;
     apply_autocmds(EVENT_BUFENTER, NULL, NULL, false, curbuf);
@@ -2692,7 +2694,7 @@ setfname(
     buf_T *buf,
     char_u *ffname,
     char_u *sfname,
-    int message                    // give message when buffer already exists
+    bool message                  // give message when buffer already exists
 )
 {
   buf_T       *obuf = NULL;
@@ -5624,6 +5626,86 @@ void bufhl_mark_adjust(buf_T* buf,
       l->line += amount_after;
     }
   }
+}
+
+/// Adjust a placed highlight for column changes and joined/broken lines
+bool bufhl_mark_col_adjust(buf_T *buf,
+                           linenr_T lnum,
+                           colnr_T mincol,
+                           long lnum_amount,
+                           long col_amount)
+{
+  bool moved = false;
+  BufhlLine *lineinfo = bufhl_tree_ref(&buf->b_bufhl_info, lnum, false);
+  if (!lineinfo) {
+    // Old line empty, nothing to do
+    return false;
+  }
+  // Create the new line below only if needed
+  BufhlLine *lineinfo2 = NULL;
+
+  colnr_T delcol = MAXCOL;
+  if (lnum_amount == 0 && col_amount < 0) {
+    delcol = mincol+(int)col_amount;
+  }
+
+  size_t newidx = 0;
+  for (size_t i = 0; i < kv_size(lineinfo->items); i++) {
+    BufhlItem *item = &kv_A(lineinfo->items, i);
+    bool delete = false;
+    if (item->start >= mincol) {
+      moved = true;
+      item->start += (int)col_amount;
+      if (item->stop < MAXCOL) {
+        item->stop += (int)col_amount;
+      }
+      if (lnum_amount != 0) {
+        if (lineinfo2 == NULL) {
+          lineinfo2 = bufhl_tree_ref(&buf->b_bufhl_info,
+                                     lnum+lnum_amount, true);
+        }
+        kv_push(lineinfo2->items, *item);
+        delete = true;
+      }
+    } else {
+      if (item->start >= delcol) {
+        moved = true;
+        item->start = delcol;
+      }
+      if (item->stop == MAXCOL || item->stop+1 >= mincol) {
+        if (item->stop == MAXCOL) {
+          if (delcol < MAXCOL
+              && delcol > (colnr_T)STRLEN(ml_get_buf(buf, lnum, false))) {
+            delete = true;
+          }
+        } else {
+          moved = true;
+          item->stop += (int)col_amount;
+        }
+        assert(lnum_amount >= 0);
+        if (lnum_amount > 0) {
+          item->stop = MAXCOL;
+        }
+      } else if (item->stop+1 >= delcol) {
+        moved = true;
+        item->stop = delcol-1;
+      }
+      // we covered the entire range with a visual delete or something
+      if (item->stop < item->start) {
+        delete = true;
+      }
+    }
+
+    if (!delete) {
+      if (i != newidx) {
+        kv_A(lineinfo->items, newidx) = kv_A(lineinfo->items, i);
+      }
+      newidx++;
+    }
+  }
+  kv_size(lineinfo->items) = newidx;
+
+  return moved;
 }
 
 

@@ -400,11 +400,6 @@ EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
 
-/* Value set from 'diffopt'. */
-EXTERN int diff_context INIT(= 6);              /* context for folds */
-EXTERN int diff_foldcolumn INIT(= 2);           /* 'foldcolumn' for diff mode */
-EXTERN int diff_need_scrollbind INIT(= FALSE);
-
 /* The root of the menu hierarchy. */
 EXTERN vimmenu_T        *root_menu INIT(= NULL);
 /*
@@ -768,7 +763,6 @@ EXTERN int did_outofmem_msg INIT(= false);
 // set after out of memory msg
 EXTERN int did_swapwrite_msg INIT(= false);
 // set after swap write error msg
-EXTERN int undo_off INIT(= false);          // undo switched off for now
 EXTERN int global_busy INIT(= 0);           // set when :global is executing
 EXTERN int listcmd_busy INIT(= false);      // set when :argdo, :windo or
                                             // :bufdo is executing
