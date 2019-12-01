@@ -277,11 +277,13 @@ setmetatable(vim, {
   __index = __index
 })
 
+-- An easier alias for commands.
+vim.cmd = vim.api.nvim_command
+
+-- These are the vim.env/v/g/o/bo/wo variable magic accessors.
 do
   local a = vim.api
   local validate = vim.validate
-  -- An easier alias for commands.
-  vim.cmd = a.nvim_command
   local function make_meta_accessor(get, set, del)
     validate {
       get = {get, 'f'};
