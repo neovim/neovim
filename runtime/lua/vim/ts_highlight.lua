@@ -37,6 +37,7 @@ function TSHighlighter.new(query, bufnr, ft)
   a.nvim_buf_set_option(self.buf, "syntax", "")
   a.nvim_buf_set_luahl(self.buf, {
     on_start=function(...) return self:on_start(...) end,
+    on_window=function(...) return self:on_window(...) end,
     on_line=function(...) return self:on_line(...) end,
   })
   return self
@@ -64,21 +65,18 @@ function TSHighlighter:set_query(query)
 end
 
 function TSHighlighter:on_change(changes)
-  --a.nvim_buf_hl_change(...)
+  for _, ch in ipairs(changes or {}) do
+    a.nvim__buf_redraw_range(self.buf, ch[1], ch[3]+1)
+  end
 end
 
 function TSHighlighter:on_start(_, win, buf, topline, botline)
-  local tree, changes = self.parser:parse()
-  local first, last = botline, topline
-  for _, ch in ipairs(changes or {}) do
-    if ch[1] < first then
-      first = ch[1]
-    end
-    if ch[3] > last then
-      last = ch[3]
-    end
-  end
+  local tree = self.parser:parse()
   self.root = tree:root()
+end
+
+function TSHighlighter:on_window(_, win, buf, topline, botline)
+  local first, last = botline, topline
   self.iter = nil
   self.active_nodes = {}
   self.nextrow = 0

@@ -231,6 +231,20 @@ Boolean nvim_buf_detach(uint64_t channel_id,
   return true;
 }
 
+static void buf_clear_luahl(buf_T *buf, bool force)
+{
+  if (buf->b_luahl || force) {
+    executor_free_luaref(buf->b_luahl_start);
+    executor_free_luaref(buf->b_luahl_window);
+    executor_free_luaref(buf->b_luahl_line);
+    executor_free_luaref(buf->b_luahl_end);
+  }
+  buf->b_luahl_start = LUA_NOREF;
+  buf->b_luahl_window = LUA_NOREF;
+  buf->b_luahl_line = LUA_NOREF;
+  buf->b_luahl_end = LUA_NOREF;
+}
+
 /// TODO: use ref
 void nvim_buf_set_luahl(uint64_t channel_id, Buffer buffer, DictionaryOf(LuaRef) opts, Error *err)
   FUNC_API_SINCE(5)
@@ -245,38 +259,41 @@ void nvim_buf_set_luahl(uint64_t channel_id, Buffer buffer, DictionaryOf(LuaRef)
     return;
   }
 
-  if (buf->b_luahl) {
-    executor_free_luaref(buf->b_luahl_start);
-    executor_free_luaref(buf->b_luahl_line);
-    executor_free_luaref(buf->b_luahl_end);
-  }
-  buf->b_luahl_start = LUA_NOREF;
-  buf->b_luahl_line = LUA_NOREF;
-  buf->b_luahl_end = LUA_NOREF;
+  buf_clear_luahl(buf, false);
 
   for (size_t i = 0; i < opts.size; i++) {
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
-    if (strequal("on_line", k.data)) {
-      if (v->type != kObjectTypeLuaRef) {
-        api_set_error(err, kErrorTypeValidation, "callback is not a function");
-        goto error;
-      }
-      buf->b_luahl_line = v->data.luaref;
-      v->data.luaref = LUA_NOREF;
-    } else if (strequal("on_start", k.data)) {
+    if (strequal("on_start", k.data)) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation, "callback is not a function");
         goto error;
       }
       buf->b_luahl_start = v->data.luaref;
       v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_window", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_window = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else if (strequal("on_line", k.data)) {
+      if (v->type != kObjectTypeLuaRef) {
+        api_set_error(err, kErrorTypeValidation, "callback is not a function");
+        goto error;
+      }
+      buf->b_luahl_line = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
+    } else {
+      api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
+      goto error;
     }
-    // TODO: is "end" useful?
   }
   buf->b_luahl = true;
   return;
 error:
+  buf_clear_luahl(buf, true);
   buf->b_luahl = false;
   // TODO: free stuff!
 }
@@ -1162,7 +1179,6 @@ Array nvim_buf_get_extmarks(Buffer buffer, Integer ns_id, Object start,
         return rv;
       }
       limit = v->data.integer;
-      v->data.integer = LUA_NOREF;
     } else {
       api_set_error(err, kErrorTypeValidation, "unexpected key: %s", k.data);
       return rv;
@@ -1570,6 +1586,17 @@ Array nvim_buf_get_virtual_text(Buffer buffer, Integer lnum, Error *err)
   }
 
   return chunks;
+}
+
+void nvim__buf_redraw_range(Buffer buffer, Integer first, Integer last,
+                            Error *err)
+{
+  buf_T *buf = find_buffer_by_handle(buffer, err);
+  if (!buf) {
+    return;
+  }
+
+  redraw_buf_range_later(buf, first+1, last);
 }
 
 Dictionary nvim__buf_stats(Buffer buffer, Error *err)

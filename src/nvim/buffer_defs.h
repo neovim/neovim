@@ -832,9 +832,9 @@ struct file_buffer {
   // The number for times the current line has been flushed in the memline.
   int flush_count;
 
-  // TODO(bfredl): this should be luaref!
   bool b_luahl;
   LuaRef b_luahl_start;
+  LuaRef b_luahl_window;
   LuaRef b_luahl_line;
   LuaRef b_luahl_end;
 

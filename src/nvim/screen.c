@@ -234,24 +234,21 @@ void redraw_buf_line_later(buf_T *buf,  linenr_T line)
   }
 }
 
-/*
-void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, line_T lastline)
+void redraw_buf_range_later(buf_T *buf,  linenr_T firstline, linenr_T lastline)
 {
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf
         && lastline >= wp->w_topline && firstline < wp->w_botline) {
-    if (wp->w_redraw_top == 0 || wp->w_redraw_top > firstline) {
-        wp->w_redraw_top = firstline;
-    }
-    if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
-        wp->w_redraw_bot = lastline;
-    }
-    redraw_win_later(wp, VALID);
-      redrawWinline(wp, line);
+      if (wp->w_redraw_top == 0 || wp->w_redraw_top > firstline) {
+          wp->w_redraw_top = firstline;
+      }
+      if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lastline) {
+          wp->w_redraw_bot = lastline;
+      }
+      redraw_win_later(wp, VALID);
     }
   }
 }
-*/
 
 /*
  * Changed something in the current window, at buffer line "lnum", that
@@ -497,6 +494,18 @@ int update_screen(int type)
       }
       if (wwp == wp && syntax_present(wp)) {
         syn_stack_apply_changes(wp->w_buffer);
+      }
+
+      buf_T *buf = wp->w_buffer;
+      if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
+        Error err = ERROR_INIT;
+        Array args = ARRAY_DICT_INIT;
+        ADD(args, BUFFER_OBJ(wp->w_buffer->handle));
+        ADD(args, INTEGER_OBJ(display_tick));
+        executor_exec_lua_cb(buf->b_luahl_start, "start", args, false, &err);
+        if (ERROR_SET(&err)) {
+          // TODO
+        }
       }
     }
   }
@@ -1205,7 +1214,7 @@ static void win_update(win_T *wp)
   lnum = wp->w_topline;         /* first line shown in window */
 
 
-  if (buf->b_luahl && buf->b_luahl_start != LUA_NOREF) {
+  if (buf->b_luahl && buf->b_luahl_window != LUA_NOREF) {
     Error err = ERROR_INIT;
     Array args = ARRAY_DICT_INIT;
     linenr_T knownmax = ((wp->w_valid & VALID_BOTLINE)
@@ -1214,7 +1223,7 @@ static void win_update(win_T *wp)
     ADD(args, BUFFER_OBJ(wp->w_buffer->handle));
     ADD(args, INTEGER_OBJ(wp->w_topline-1));
     ADD(args, INTEGER_OBJ(knownmax));
-    Object o = executor_exec_lua_cb(buf->b_luahl_start, "start", args, true, &err);
+    Object o = executor_exec_lua_cb(buf->b_luahl_window, "window", args, true, &err);
     if (o.type == kObjectTypeArray) {
       // TODO: allow a bare "return start, end"
       Array arr = o.data.array;
