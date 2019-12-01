@@ -1052,8 +1052,11 @@ describe('ui/msg_puts_printf', function()
     local cmd = ''
     local locale_dir = test_build_dir..'/share/locale/ja/LC_MESSAGES'
 
+    os.execute('cmake -E make_directory '..locale_dir)
+    os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
+
     clear({env={LANG='ja_JP.UTF-8'}})
-    screen = Screen.new(25, 5)
+    screen = Screen.new(80, 5)
     screen:attach()
 
     if iswin() then
@@ -1067,25 +1070,22 @@ describe('ui/msg_puts_printf', function()
       if (exc_exec('lang ja_JP.UTF-8') ~= 0) then
         pending('Locale ja_JP.UTF-8 not supported', function() end)
         return
-      elseif helpers.isCI() then
-        -- Fails non--Windows CI. Message catalog direcotry issue?
-        pending('fails on unix CI', function() end)
-        return
       end
     end
 
-    os.execute('cmake -E make_directory '..locale_dir)
-    os.execute('cmake -E copy '..test_build_dir..'/src/nvim/po/ja.mo '..locale_dir..'/nvim.mo')
+    eq('ja_JP.UTF-8', eval('$LANG'))
+    local lang = eval('execute("lang messages")')
+    eq('\n現在の messages 言語: "ja_JP.UTF-8"', lang)
 
     cmd = cmd..'"'..nvim_prog..'" -u NONE -i NONE -Es -V1'
     command([[call termopen(']]..cmd..[[')]])
-    screen:expect([[
-    ^Exモードに入ります. ノー |
-    マルモードに戻るには"visu|
-    al"と入力してください.   |
-    :                        |
-                             |
-    ]])
+    screen:expect{grid=[[
+      ^Exモードに入ります. ノーマルモードに戻るには"visual"と入力してください.         |
+      :                                                                               |
+      [Process exited 0]                                                              |
+                                                                                      |
+                                                                                      |
+    ]]}
 
     os.execute('cmake -E remove_directory '..test_build_dir..'/share')
   end)

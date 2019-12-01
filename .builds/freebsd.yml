@@ -29,9 +29,12 @@ tasks:
 - build: |
     cd neovim
     gmake CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" nvim
-- test: |
+- test-functionaltest: |
     cd neovim
-    gmake unittest functionaltest
+    gmake functionaltest
+- test-unittest: |
+    cd neovim
+    gmake unittest
 
 # Unfortunately, oldtest is tanking hard on sourcehut's FreeBSD instance
 # and not producing any logs as a result. So don't do this task for now.
