@@ -569,7 +569,7 @@ describe('lua stdlib', function()
     vim.fn.setenv("A", 123)
     ]]
     eq('123', funcs.luaeval "vim.env.A")
-    eq(NIL, funcs.luaeval "vim.env.B")
+    eq(true, funcs.luaeval "vim.env.B == nil")
   end)
 
   it('vim.v', function()
