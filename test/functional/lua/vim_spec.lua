@@ -117,6 +117,34 @@ describe('lua stdlib', function()
     eq(1, funcs.luaeval('vim.stricmp("\\0C\\0", "\\0B\\0")'))
   end)
 
+  it('vim.startswith', function()
+    eq(true, funcs.luaeval('vim.startswith("123", "1")'))
+    eq(true, funcs.luaeval('vim.startswith("123", "")'))
+    eq(true, funcs.luaeval('vim.startswith("123", "123")'))
+    eq(true, funcs.luaeval('vim.startswith("", "")'))
+
+    eq(false, funcs.luaeval('vim.startswith("123", " ")'))
+    eq(false, funcs.luaeval('vim.startswith("123", "2")'))
+    eq(false, funcs.luaeval('vim.startswith("123", "1234")'))
+
+    eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith("123", nil)')))
+    eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith(nil, "123")')))
+  end)
+
+  it('vim.endswith', function()
+    eq(true, funcs.luaeval('vim.endswith("123", "3")'))
+    eq(true, funcs.luaeval('vim.endswith("123", "")'))
+    eq(true, funcs.luaeval('vim.endswith("123", "123")'))
+    eq(true, funcs.luaeval('vim.endswith("", "")'))
+
+    eq(false, funcs.luaeval('vim.endswith("123", " ")'))
+    eq(false, funcs.luaeval('vim.endswith("123", "2")'))
+    eq(false, funcs.luaeval('vim.endswith("123", "1234")'))
+
+    eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith("123", nil)')))
+    eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith(nil, "123")')))
+  end)
+
   it("vim.str_utfindex/str_byteindex", function()
     exec_lua([[_G.test_text = "xy åäö ɧ 汉语 ↥ 🤦x🦄 å بِيَّ"]])
     local indicies32 = {[0]=0,1,2,3,5,7,9,10,12,13,16,19,20,23,24,28,29,33,34,35,37,38,40,42,44,46,48}
