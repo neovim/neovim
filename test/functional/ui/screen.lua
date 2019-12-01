@@ -606,17 +606,12 @@ function Screen:_redraw(updates)
     for i = 2, #update do
       local handler_name = '_handle_'..method
       local handler = self[handler_name]
-      if handler ~= nil then
-        local status, res = pcall(handler, self, unpack(update[i]))
-        if not status then
-          error(handler_name..' failed'
-            ..'\n  payload: '..inspect(update)
-            ..'\n  error:   '..tostring(res))
-        end
-      else
-        assert(self._on_event,
-          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
-        self._on_event(method, update[i])
+      assert(handler ~= nil, "missing handler: Screen:"..handler_name)
+      local status, res = pcall(handler, self, unpack(update[i]))
+      if not status then
+        error(handler_name..' failed'
+          ..'\n  payload: '..inspect(update)
+          ..'\n  error:   '..tostring(res))
       end
     end
     if k == #updates and method == "flush" then
@@ -624,10 +619,6 @@ function Screen:_redraw(updates)
     end
   end
   return did_flush
-end
-
-function Screen:set_on_event_handler(callback)
-  self._on_event = callback
 end
 
 function Screen:_handle_resize(width, height)

@@ -10,11 +10,9 @@ describe('ui/ext_tabline', function()
     clear()
     screen = Screen.new(25, 5)
     screen:attach({rgb=true, ext_tabline=true})
-    screen:set_on_event_handler(function(name, data)
-      if name == "tabline_update" then
-        event_curtab, event_tabs = unpack(data)
-      end
-    end)
+    function screen:_handle_tabline_update(curtab, tabs)
+      event_curtab, event_tabs = curtab, tabs
+    end
   end)
 
   it('publishes UI events', function()
