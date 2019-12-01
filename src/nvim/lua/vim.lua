@@ -279,10 +279,9 @@ setmetatable(vim, {
 
 do
   local a = vim.api
-  local nvim_command = a.nvim_command
   local validate = vim.validate
   -- An easier alias for commands.
-  vim.cmd = nvim_command
+  vim.cmd = a.nvim_command
   local function make_meta_accessor(get, set, del)
     validate {
       get = {get, 'f'};
