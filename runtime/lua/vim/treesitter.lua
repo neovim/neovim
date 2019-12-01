@@ -129,7 +129,7 @@ function Query:iter_captures(node, bufnr, start, stop)
   if bufnr == 0 then
     bufnr = vim.api.nvim_get_current_buf()
   end
-  local raw_iter = node:rawquery(self.query,start,stop)
+  local raw_iter = node:_rawquery(self.query,true,start,stop)
   local function iter()
     local capture, node, match = raw_iter()
     if match ~= nil then
@@ -141,6 +141,25 @@ function Query:iter_captures(node, bufnr, start, stop)
       end
     end
     return capture, node
+  end
+  return iter
+end
+
+function Query:iter_matches(node, bufnr, start, stop)
+  if bufnr == 0 then
+    bufnr = vim.api.nvim_get_current_buf()
+  end
+  local raw_iter = node:_rawquery(self.query,false,start,stop)
+  local function iter()
+    local match = raw_iter()
+    if match ~= nil then
+      local preds = self.info.patterns[match.pattern]
+      local active = (not preds) or match_preds(match, preds, bufnr)
+      if not active then
+        return iter() -- tail call: try next match
+      end
+    end
+    return match
   end
   return iter
 end

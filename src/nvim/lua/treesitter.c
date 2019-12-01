@@ -72,7 +72,7 @@ static struct luaL_Reg node_meta[] = {
   { "descendant_for_range", node_descendant_for_range },
   { "named_descendant_for_range", node_named_descendant_for_range },
   { "parent", node_parent },
-  { "rawquery", node_rawquery },
+  { "_rawquery", node_rawquery },
   { NULL, NULL }
 };
 
@@ -682,6 +682,31 @@ static int node_parent(lua_State *L)
   return 1;
 }
 
+static void set_match(lua_State *L, TSQueryMatch *match, int nodeidx) {
+  for (int i = 0; i < match->capture_count; i++) {
+    push_node(L, match->captures[i].node, nodeidx);
+    lua_rawseti(L, -2, match->captures[i].index+1);  // [name, node, match]
+  }
+  lua_pushinteger(L, match->pattern_index+1);
+  lua_setfield(L, -2, "pattern");
+}
+
+static int query_next_match(lua_State *L)
+{
+  TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
+  TSQueryCursor *cursor = ud->cursor;
+
+  TSQuery *query = query_check(L, lua_upvalueindex(3));
+  TSQueryMatch match;
+  if (ts_query_cursor_next_match(cursor, &match)) {
+    lua_createtable(L, ts_query_capture_count(query), 2); // [u, n, q, match]
+    set_match(L, &match, lua_upvalueindex(2));
+    return 1;
+  }
+  return 0;
+}
+
+
 static int query_next_capture(lua_State *L)
 {
   TSLua_cursor *ud = lua_touserdata(L, lua_upvalueindex(1));
@@ -701,7 +726,7 @@ static int query_next_capture(lua_State *L)
 
   TSQueryMatch match;
   uint32_t capture_index;
-  while (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
+  if (ts_query_cursor_next_capture(cursor, &match, &capture_index)) {
     TSQueryCapture capture = match.captures[capture_index];
 
     lua_pushinteger(L, capture.index+1);
@@ -711,13 +736,7 @@ static int query_next_capture(lua_State *L)
     ts_query_predicates_for_pattern(query, match.pattern_index, &n_pred);
     if (n_pred > 0 && capture_index == 0) {
       lua_pushvalue(L, lua_upvalueindex(4));  // [name, node, match]
-      for (int i = 0; i < match.capture_count; i++) {
-        push_node(L, match.captures[i].node, lua_upvalueindex(2));
-        lua_rawseti(L, -2, match.captures[i].index+1);  // [name, node, match]
-      }
-
-      lua_pushinteger(L, match.pattern_index+1);
-      lua_setfield(L, -2, "pattern");
+      set_match(L, &match, lua_upvalueindex(2));
 
       if (match.capture_count > 1) {
         ud->predicated_match = match.id;
@@ -742,9 +761,11 @@ static int node_rawquery(lua_State *L)
   TSQueryCursor *cursor = ts_query_cursor_new();
   ts_query_cursor_exec(cursor, query, node);
 
-  if (lua_gettop(L) >= 3) {
-    int start = luaL_checkinteger(L,3);
-    int end = luaL_checkinteger(L,4);
+  bool captures = lua_toboolean(L, 3);
+
+  if (lua_gettop(L) >= 4) {
+    int start = luaL_checkinteger(L ,4);
+    int end = lua_gettop(L) >= 5 ? luaL_checkinteger(L,5) : MAXLNUM;
     ts_query_cursor_set_point_range(cursor,
                                     (TSPoint){ start, 0}, (TSPoint){ end, 0});
   }
@@ -761,10 +782,14 @@ static int node_rawquery(lua_State *L)
   // include query separately, as to keep a ref to it for gc
   lua_pushvalue(L, 2);  // [udata, node, query]
 
-  // placeholder for match state
-  lua_createtable(L, ts_query_capture_count(query), 2); // [u, n, q, match]
+  if (captures) {
+    // placeholder for match state
+    lua_createtable(L, ts_query_capture_count(query), 2); // [u, n, q, match]
+    lua_pushcclosure(L, query_next_capture, 4);  // [closure]
+  } else {
+    lua_pushcclosure(L, query_next_match, 3);  // [closure]
+  }
 
-  lua_pushcclosure(L, query_next_capture, 4);  // [closure]
   return 1;
 }
 
@@ -888,11 +913,11 @@ static int query_inspect(lua_State *L)
   lua_setfield(L, -2, "patterns");  // [retval]
 
   uint32_t n_captures = ts_query_capture_count(query);
-  lua_createtable(L, n_captures, 0);  // [retval, patterns]
+  lua_createtable(L, n_captures, 0);  // [retval, captures]
   for (size_t i = 0; i < n_captures; i++) {
     uint32_t strlen;
     const char *str = ts_query_capture_name_for_id(query, i, &strlen);
-    lua_pushlstring(L, str, strlen);  // [retval, patterns, pat, pred, item]
+    lua_pushlstring(L, str, strlen);  // [retval, captures, capture]
     lua_rawseti(L, -2, i+1);
   }
   lua_setfield(L, -2, "captures");  // [retval]
