@@ -129,9 +129,6 @@ describe('lua stdlib', function()
 
     eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith("123", nil)')))
     eq("string", type(pcall_err(funcs.luaeval, 'vim.startswith(nil, "123")')))
-
-    eq(true, funcs.luaeval('string.startswith == vim.startswith'))
-    eq(true, funcs.luaeval('("123"):startswith("123")'))
   end)
 
   it('vim.endswith', function()
@@ -146,9 +143,6 @@ describe('lua stdlib', function()
 
     eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith("123", nil)')))
     eq("string", type(pcall_err(funcs.luaeval, 'vim.endswith(nil, "123")')))
-
-    eq(true, funcs.luaeval('string.endswith == vim.endswith'))
-    eq(true, funcs.luaeval('("123"):endswith("123")'))
   end)
 
   it("vim.str_utfindex/str_byteindex", function()
