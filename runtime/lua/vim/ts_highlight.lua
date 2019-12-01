@@ -33,6 +33,9 @@ function TSHighlighter.new(query, bufnr, ft)
   local self = setmetatable({}, TSHighlighter)
   self.parser = vim.treesitter.get_parser(bufnr, ft, function(...) self:on_change(...) end)
   self.buf = self.parser.bufnr
+  -- TODO: perhaps on_start should be called uncondionally, instead for only on mod?
+  local tree = self.parser:parse()
+  self.root = tree:root()
   self:set_query(query)
   a.nvim_buf_set_option(self.buf, "syntax", "")
   a.nvim_buf_set_luahl(self.buf, {
