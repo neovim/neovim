@@ -47,12 +47,8 @@ function TSHighlighter:set_query(query)
     query = vim.treesitter.parse_query(self.parser.lang, query)
   end
   self.query = query
-  self:update_hl_defs()
-end
 
--- TODO: redo on ColorScheme! (or on any :hi really)
-function TSHighlighter:update_hl_defs()
-  local id_map = {}
+  self.id_map = {}
   for i, capture in ipairs(self.query.captures) do
     local hl = 0
     local firstc = string.sub(capture, 1, 1)
@@ -61,12 +57,10 @@ function TSHighlighter:update_hl_defs()
       hl_group = vim.split(capture, '.', true)[1]
     end
     if hl_group then
-      -- TODO`maybe hl ids are enough, hl->attr lookup should be pretty fast
-      hl = a.nvim__syn_attr(hl_group)
+      hl = a.nvim_get_hl_id_by_name(hl_group)
     end
-    id_map[i] = hl
+    self.id_map[i] = hl
   end
-  self.id_map = id_map
 end
 
 function TSHighlighter:on_change(changes)

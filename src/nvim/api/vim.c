@@ -128,6 +128,15 @@ Dictionary nvim_get_hl_by_id(Integer hl_id, Boolean rgb, Error *err)
   return hl_get_attr_by_id(attrcode, rgb, err);
 }
 
+/// Gets a highlight group by name
+///
+/// similar to |hlID|, but allocates a new ID if not present.
+Integer nvim_get_hl_id_by_name(String name)
+  FUNC_API_SINCE(7)
+{
+  return syn_check_group((const char_u *)name.data, (int)name.size);
+}
+
 /// Sends input-keys to Nvim, subject to various quirks controlled by `mode`
 /// flags. This is a blocking call, unlike |nvim_input()|.
 ///
@@ -2513,25 +2522,19 @@ Array nvim__inspect_cell(Integer grid, Integer row, Integer col, Error *err)
   return ret;
 }
 
-Integer nvim__syn_attr(String name)
-{
-  int id = syn_name2id((const char_u *)name.data);
-  if (id == 0 || syn_get_final_id(id) == 0) {
-    return 0;
-  }
-  int attrcode = syn_id2attr(id);
-  return attrcode;
-}
-
 void nvim__put_attr(Integer id, Integer c0, Integer c1)
 {
   if (!lua_attr_active) {
     return;
   }
+  if (id == 0 || syn_get_final_id((int)id) == 0) {
+    return;
+  }
+  int attr = syn_id2attr((int)id);
   c0 = MAX(c0, 0);
   c1 = MIN(c1, (Integer)lua_attr_bufsize);
   for (Integer c = c0; c < c1; c++) {
-    lua_attr_buf[c] = (sattr_T)hl_combine_attr(lua_attr_buf[c], (int)id);
+    lua_attr_buf[c] = (sattr_T)hl_combine_attr(lua_attr_buf[c], (int)attr);
   }
   return;
 }
