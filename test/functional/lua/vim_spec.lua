@@ -618,4 +618,13 @@ describe('lua stdlib', function()
     matches("^Error executing lua: .*: Expected lua string$",
        pcall_err(exec_lua, 'return vim.wo[0][0].list'))
   end)
+
+  it('vim.cmd', function()
+    exec_lua [[
+    vim.cmd "autocmd BufNew * ++once lua BUF = vim.fn.expand('<abuf>')"
+    vim.cmd "new"
+    ]]
+    eq('2', funcs.luaeval "BUF")
+    eq(2, funcs.luaeval "#vim.api.nvim_list_bufs()")
+  end)
 end)
