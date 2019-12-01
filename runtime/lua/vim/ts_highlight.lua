@@ -37,6 +37,8 @@ function TSHighlighter.new(query, bufnr, ft)
   local tree = self.parser:parse()
   self.root = tree:root()
   self:set_query(query)
+  self.edit_count = 0
+  self.redraw_count = 0
   a.nvim_buf_set_option(self.buf, "syntax", "")
   a.nvim_buf_set_luahl(self.buf, {
     on_start=function(...) return self:on_start(...) end,
@@ -71,6 +73,7 @@ function TSHighlighter:on_change(changes)
   for _, ch in ipairs(changes or {}) do
     a.nvim__buf_redraw_range(self.buf, ch[1], ch[3]+1)
   end
+  self.edit_count = self.edit_count + 1
 end
 
 function TSHighlighter:on_start(_, win, buf, topline, botline)
@@ -88,6 +91,7 @@ function TSHighlighter:on_window(_, win, buf, topline, botline)
   if first < botline and last > topline then
     return {first, last}
   end
+  self.redraw_count = self.redraw_count + 1
 end
 
 function TSHighlighter:on_line(_, win, buf, line)
@@ -136,6 +140,7 @@ function TSHighlighter:on_line(_, win, buf, line)
     end
   end
   --return (self.first_line+1) .." ".. tostring(count)
+  --return tostring(self.redraw_count)
 end
 
 return TSHighlighter
