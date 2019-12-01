@@ -39,6 +39,7 @@ function TSHighlighter.new(query, bufnr, ft)
   self:set_query(query)
   self.edit_count = 0
   self.redraw_count = 0
+  self.line_count = {}
   a.nvim_buf_set_option(self.buf, "syntax", "")
   a.nvim_buf_set_luahl(self.buf, {
     on_start=function(...) return self:on_start(...) end,
@@ -139,8 +140,9 @@ function TSHighlighter:on_line(_, win, buf, line)
       self.active_nodes[node] = nil
     end
   end
+  self.line_count[line] = (self.line_count[line] or 0) + 1
   --return (self.first_line+1) .." ".. tostring(count)
-  --return tostring(self.redraw_count)
+  --return tostring(self.line_count[line])
 end
 
 return TSHighlighter
