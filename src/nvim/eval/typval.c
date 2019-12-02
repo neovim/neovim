@@ -1200,19 +1200,19 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
 
   typval_T rettv;
 
+  dict->dv_refcount++;
   QUEUE *w;
   QUEUE_FOREACH(w, &dict->watchers) {
     DictWatcher *watcher = tv_dict_watcher_node_data(w);
     if (!watcher->busy && tv_dict_watcher_matches(watcher, key)) {
       rettv = TV_INITIAL_VALUE;
-      dict->dv_refcount++;
       watcher->busy = true;
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
-      tv_dict_unref(dict);
       tv_clear(&rettv);
     }
   }
+  tv_dict_unref(dict);
 
   for (size_t i = 1; i < ARRAY_SIZE(argv); i++) {
     tv_clear(argv + i);
