@@ -479,6 +479,24 @@ created for extmark changes.
 ==============================================================================
 Global Functions                                                  *api-global*
 
+nvim_exec({src}, {output})                                       *nvim_exec()*
+                Executes Vimscript (multiline block of Ex-commands), like
+                anonymous |:source|.
+
+                Optionally returns (non-error, non-shell |:!|) output.
+
+                On execution error: fails with VimL error, does not update
+                v:errmsg.
+
+                Parameters: ~
+                    {src}     Vimscript code
+                    {output}  Capture and return all (non-error, non-shell
+                              |:!|) output
+
+                See also: ~
+                    |execute()|
+                    |nvim_command()|
+
 nvim_command({command})                                       *nvim_command()*
                 Executes an ex-command.
 
@@ -487,6 +505,9 @@ nvim_command({command})                                       *nvim_command()*
 
                 Parameters: ~
                     {command}  Ex-command string
+
+                See also: ~
+                    |nvim_exec()|
 
 nvim_get_hl_by_name({name}, {rgb})                     *nvim_get_hl_by_name()*
                 Gets a highlight definition by name.
@@ -609,19 +630,9 @@ nvim_replace_termcodes({str}, {from_part}, {do_lt}, {special})
                     replace_termcodes
                     cpoptions
 
-nvim_command_output({command})                         *nvim_command_output()*
-                Executes an ex-command and returns its (non-error) output.
-                Shell |:!| output is not captured.
-
-                On execution error: fails with VimL error, does not update
-                v:errmsg.
-
-                Parameters: ~
-                    {command}  Ex-command string
-
 nvim_eval({expr})                                                *nvim_eval()*
-                Evaluates a VimL expression (:help expression). Dictionaries
-                and Lists are recursively expanded.
+                Evaluates a VimL |expression|. Dictionaries and Lists are
+                recursively expanded.
 
                 On execution error: fails with VimL error, does not update
                 v:errmsg.

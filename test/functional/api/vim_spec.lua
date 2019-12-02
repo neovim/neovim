@@ -84,7 +84,7 @@ describe('API', function()
 
     it(':verbose set {option}?', function()
       nvim('exec', 'set nowrap', false)
-      eq('nowrap\n\tLast set from :source (no file)',
+      eq('nowrap\n\tLast set from anonymous :source',
         nvim('exec', 'verbose set wrap?', true))
     end)
 
@@ -1800,7 +1800,7 @@ describe('API', function()
       eq('  1 %a   "[No Name]"                    line 1\n'..
          '  3  h   "[Scratch]"                    line 0\n'..
          '  4  h   "[Scratch]"                    line 0',
-         meths.command_output("ls"))
+         meths.exec('ls', true))
       -- current buffer didn't change
       eq({id=1}, meths.get_current_buf())
 

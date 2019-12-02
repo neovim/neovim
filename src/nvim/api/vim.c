@@ -76,7 +76,8 @@ void api_vim_free_all_mem(void)
 /// Executes Vimscript (multiline block of Ex-commands), like anonymous
 /// |:source|.
 ///
-/// Optionally returns (non-error, non-shell |:!|) output.
+/// Unlike |nvim_command()| this function supports heredocs, script-scope (s:),
+/// etc.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
 ///
@@ -86,24 +87,21 @@ void api_vim_free_all_mem(void)
 /// @param src      Vimscript code
 /// @param output   Capture and return all (non-error, non-shell |:!|) output
 /// @param[out] err Error details (Vim error), if any
+/// @return Output (non-error, non-shell |:!|) if `output` is true,
+///         else empty string.
 String nvim_exec(String src, Boolean output, Error *err)
   FUNC_API_SINCE(7)
 {
-  if (!output) {
-    try_start();
-    do_source_str(src.data, "nvim_exec()");
-    try_end(err);
-    return (String)STRING_INIT;
-  }
-
   const int save_msg_silent = msg_silent;
   garray_T *const save_capture_ga = capture_ga;
   garray_T capture_local;
-  ga_init(&capture_local, 1, 80);
+  if (output) {
+    ga_init(&capture_local, 1, 80);
+    capture_ga = &capture_local;
+  }
 
   try_start();
   msg_silent++;
-  capture_ga = &capture_local;
   do_source_str(src.data, "nvim_exec()");
   capture_ga = save_capture_ga;
   msg_silent = save_msg_silent;
@@ -113,10 +111,10 @@ String nvim_exec(String src, Boolean output, Error *err)
     goto theend;
   }
 
-  if (capture_local.ga_len > 1) {
+  if (output && capture_local.ga_len > 1) {
     String s = (String){
-        .data = capture_local.ga_data,
-        .size = (size_t)capture_local.ga_len,
+      .data = capture_local.ga_data,
+      .size = (size_t)capture_local.ga_len,
     };
     // redir usually (except :echon) prepends a newline.
     if (s.data[0] == '\n') {
@@ -127,7 +125,9 @@ String nvim_exec(String src, Boolean output, Error *err)
     return s;  // Caller will free the memory.
   }
 theend:
-  ga_clear(&capture_local);
+  if (output) {
+    ga_clear(&capture_local);
+  }
   return (String)STRING_INIT;
 }
 
@@ -393,50 +393,13 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-/// Executes an ex-command and returns its (non-error) output.
-/// Shell |:!| output is not captured.
-///
-/// On execution error: fails with VimL error, does not update v:errmsg.
-///
-/// @param command  Ex-command string
-/// @param[out] err Error details (Vim error), if any
+/// @deprecated
+/// @see nvim_exec
 String nvim_command_output(String command, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(7)
 {
-  const int save_msg_silent = msg_silent;
-  garray_T *const save_capture_ga = capture_ga;
-  garray_T capture_local;
-  ga_init(&capture_local, 1, 80);
-
-  try_start();
-  msg_silent++;
-  capture_ga = &capture_local;
-  do_cmdline_cmd(command.data);
-  capture_ga = save_capture_ga;
-  msg_silent = save_msg_silent;
-  try_end(err);
-
-  if (ERROR_SET(err)) {
-    goto theend;
-  }
-
-  if (capture_local.ga_len > 1) {
-    String s = (String){
-      .data = capture_local.ga_data,
-      .size = (size_t)capture_local.ga_len,
-    };
-    // redir usually (except :echon) prepends a newline.
-    if (s.data[0] == '\n') {
-      memmove(s.data, s.data + 1, s.size - 1);
-      s.data[s.size - 1] = '\0';
-      s.size = s.size - 1;
-    }
-    return s;  // Caller will free the memory.
-  }
-
-theend:
-  ga_clear(&capture_local);
-  return (String)STRING_INIT;
+  return nvim_exec(command, true, err);
 }
 
 /// Evaluates a VimL |expression|.

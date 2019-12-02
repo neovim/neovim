@@ -60,7 +60,7 @@ describe(':terminal buffer', function()
     end)
 
     it('does not create swap files', function()
-      local swapfile = nvim('command_output', 'swapname'):gsub('\n', '')
+      local swapfile = nvim('exec', 'swapname', true):gsub('\n', '')
       eq(nil, io.open(swapfile))
     end)
 
