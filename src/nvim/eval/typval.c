@@ -1205,9 +1205,11 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
     DictWatcher *watcher = tv_dict_watcher_node_data(w);
     if (!watcher->busy && tv_dict_watcher_matches(watcher, key)) {
       rettv = TV_INITIAL_VALUE;
+      dict->dv_refcount++;
       watcher->busy = true;
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
+      dict->dv_refcount--;
       tv_clear(&rettv);
     }
   }
