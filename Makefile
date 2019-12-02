@@ -120,8 +120,7 @@ ifeq ($(strip $(TEST_FILE)),)
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
 else
 	@# Handle TEST_FILE=test_foo{,.res,.vim}.
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" \
-	  $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE))) SCRIPTS= $(MAKEOVERRIDES)
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES) SCRIPTS= $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
 # Build oldtest by specifying the relative .vim filename.
 .PHONY: phony_force
