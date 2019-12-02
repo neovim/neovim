@@ -1209,7 +1209,7 @@ void tv_dict_watcher_notify(dict_T *const dict, const char *const key,
       watcher->busy = true;
       callback_call(&watcher->callback, 3, argv, &rettv);
       watcher->busy = false;
-      dict->dv_refcount--;
+      tv_dict_unref(dict);
       tv_clear(&rettv);
     }
   }
