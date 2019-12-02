@@ -49,8 +49,8 @@ NEW_TESTS_IGNORE := \
   test_listlbr \
   test_largefile \
 
-NEW_TESTS ?= $(sort $(filter-out $(NEW_TESTS_ALOT) $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_IGNORE),$(basename $(notdir $(wildcard test_*.vim))))) $(NEW_TESTS_ALOT)
-NEW_TESTS_RES ?= $(addsuffix .res,$(NEW_TESTS))
+NEW_TESTS := $(sort $(basename $(notdir $(wildcard test_*.vim))))
+NEW_TESTS_RES := $(addsuffix .res,$(filter-out $(NEW_TESTS_ALOT) $(NEW_TESTS_IN_ALOT) $(NEW_TESTS_IGNORE),$(NEW_TESTS)) $(NEW_TESTS_ALOT))
 
 
 ifdef VALGRIND_GDB
