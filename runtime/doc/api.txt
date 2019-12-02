@@ -483,7 +483,8 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                 Executes Vimscript (multiline block of Ex-commands), like
                 anonymous |:source|.
 
-                Optionally returns (non-error, non-shell |:!|) output.
+                Unlike |nvim_command()| this function supports heredocs,
+                script-scope (s:), etc.
 
                 On execution error: fails with VimL error, does not update
                 v:errmsg.
@@ -492,6 +493,10 @@ nvim_exec({src}, {output})                                       *nvim_exec()*
                     {src}     Vimscript code
                     {output}  Capture and return all (non-error, non-shell
                               |:!|) output
+
+                Return: ~
+                    Output (non-error, non-shell |:!|) if `output` is true,
+                    else empty string.
 
                 See also: ~
                     |execute()|
@@ -643,7 +648,7 @@ nvim_eval({expr})                                                *nvim_eval()*
                 Return: ~
                     Evaluation result or expanded object
 
-nvim_execute_lua({code}, {args})                          *nvim_execute_lua()*
+nvim_exec_lua({code}, {args})                                *nvim_exec_lua()*
                 Execute Lua code. Parameters (if any) are available as `...`
                 inside the chunk. The chunk can return a value.
 

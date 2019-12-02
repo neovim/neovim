@@ -433,41 +433,44 @@ describe('API', function()
     end)
   end)
 
-  describe('nvim_execute_lua', function()
+  describe('nvim_exec_lua', function()
     it('works', function()
-      meths.execute_lua('vim.api.nvim_set_var("test", 3)', {})
+      meths.exec_lua('vim.api.nvim_set_var("test", 3)', {})
       eq(3, meths.get_var('test'))
 
-      eq(17, meths.execute_lua('a, b = ...\nreturn a + b', {10,7}))
+      eq(17, meths.exec_lua('a, b = ...\nreturn a + b', {10,7}))
 
-      eq(NIL, meths.execute_lua('function xx(a,b)\nreturn a..b\nend',{}))
+      eq(NIL, meths.exec_lua('function xx(a,b)\nreturn a..b\nend',{}))
+      eq("xy", meths.exec_lua('return xx(...)', {'x','y'}))
+
+      -- Deprecated name: nvim_execute_lua.
       eq("xy", meths.execute_lua('return xx(...)', {'x','y'}))
     end)
 
     it('reports errors', function()
       eq([[Error loading lua: [string "<nvim>"]:1: '=' expected near '+']],
-        pcall_err(meths.execute_lua, 'a+*b', {}))
+        pcall_err(meths.exec_lua, 'a+*b', {}))
 
       eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol near '1']],
-        pcall_err(meths.execute_lua, '1+2', {}))
+        pcall_err(meths.exec_lua, '1+2', {}))
 
       eq([[Error loading lua: [string "<nvim>"]:1: unexpected symbol]],
-        pcall_err(meths.execute_lua, 'aa=bb\0', {}))
+        pcall_err(meths.exec_lua, 'aa=bb\0', {}))
 
       eq([[Error executing lua: [string "<nvim>"]:1: attempt to call global 'bork' (a nil value)]],
-        pcall_err(meths.execute_lua, 'bork()', {}))
+        pcall_err(meths.exec_lua, 'bork()', {}))
 
       eq('Error executing lua: [string "<nvim>"]:1: did\nthe\nfail',
-        pcall_err(meths.execute_lua, 'error("did\\nthe\\nfail")', {}))
+        pcall_err(meths.exec_lua, 'error("did\\nthe\\nfail")', {}))
     end)
 
     it('uses native float values', function()
-      eq(2.5, meths.execute_lua("return select(1, ...)", {2.5}))
-      eq("2.5", meths.execute_lua("return vim.inspect(...)", {2.5}))
+      eq(2.5, meths.exec_lua("return select(1, ...)", {2.5}))
+      eq("2.5", meths.exec_lua("return vim.inspect(...)", {2.5}))
 
       -- "special" float values are still accepted as return values.
-      eq(2.5, meths.execute_lua("return vim.api.nvim_eval('2.5')", {}))
-      eq("{\n  [false] = 2.5,\n  [true] = 3\n}", meths.execute_lua("return vim.inspect(vim.api.nvim_eval('2.5'))", {}))
+      eq(2.5, meths.exec_lua("return vim.api.nvim_eval('2.5')", {}))
+      eq("{\n  [false] = 2.5,\n  [true] = 3\n}", meths.exec_lua("return vim.inspect(vim.api.nvim_eval('2.5'))", {}))
     end)
   end)
 
@@ -573,7 +576,7 @@ describe('API', function()
       eq({0,3,14,0}, funcs.getpos('.'))
     end)
     it('vim.paste() failure', function()
-      nvim('execute_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
+      nvim('exec_lua', 'vim.paste = (function(lines, phase) error("fake fail") end)', {})
       eq([[Error executing lua: [string "<nvim>"]:1: fake fail]],
         pcall_err(request, 'nvim_paste', 'line 1\nline 2\nline 3', false, 1))
     end)
@@ -797,7 +800,7 @@ describe('API', function()
       ok(nil ~= string.find(rv, 'noequalalways\n'..
         '\tLast set from API client %(channel id %d+%)'))
 
-      nvim('execute_lua', 'vim.api.nvim_set_option("equalalways", true)', {})
+      nvim('exec_lua', 'vim.api.nvim_set_option("equalalways", true)', {})
       status, rv = pcall(nvim, 'command_output',
         'verbose set equalalways?')
       eq(true, status)

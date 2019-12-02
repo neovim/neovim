@@ -447,6 +447,15 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
+/// @deprecated Use nvim_exec_lua() instead.
+Object nvim_execute_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(3)
+  FUNC_API_DEPRECATED_SINCE(7)
+  FUNC_API_REMOTE_ONLY
+{
+  return executor_exec_lua_api(code, args, err);
+}
+
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -459,8 +468,9 @@ Object nvim_eval(String expr, Error *err)
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim_execute_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
+Object nvim_exec_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_REMOTE_ONLY
 {
   return executor_exec_lua_api(code, args, err);
 }
@@ -1275,8 +1285,8 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   Array lines = string_to_array(data, crlf);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
-  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
-                        err);
+  rv = nvim_exec_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
+                     err);
   if (ERROR_SET(err)) {
     draining = true;
     goto theend;
@@ -2410,7 +2420,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
     String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
-    Object o = nvim_execute_lua(s, a, err);
+    Object o = nvim_exec_lua(s, a, err);
     api_free_string(s);
     api_free_array(a);
     if (o.type == kObjectTypeArray) {
@@ -2456,7 +2466,7 @@ Object nvim_get_proc(Integer pid, Error *err)
   Array a = ARRAY_DICT_INIT;
   ADD(a, INTEGER_OBJ(pid));
   String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
-  Object o = nvim_execute_lua(s, a, err);
+  Object o = nvim_exec_lua(s, a, err);
   api_free_string(s);
   api_free_array(a);
   if (o.type == kObjectTypeArray && o.data.array.size == 0) {

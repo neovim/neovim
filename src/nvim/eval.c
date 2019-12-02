@@ -20527,7 +20527,7 @@ static hashtab_T *get_funccal_local_ht(void)
   return &get_funccal()->l_vars.dv_hashtab;
 }
 
-/// Find the dict and hashtable used for a variable
+/// Finds the dict (g:, l:, s:, …) and hashtable used for a variable.
 ///
 /// @param[in]  name  Variable name, possibly with scope prefix.
 /// @param[in]  name_len  Variable name length.
