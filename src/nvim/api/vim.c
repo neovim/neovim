@@ -73,28 +73,29 @@ void api_vim_free_all_mem(void)
   map_free(String, handle_T)(namespace_ids);
 }
 
-/// Executes a multiline block of ex-commands from a string.
+/// Executes Vimscript (multiline block of Ex-commands), like anonymous
+/// |:source|.
+///
+/// Optionally returns (non-error, non-shell |:!|) output.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
 ///
-/// @param src      String containing the ex-commands
+/// @see |execute()|
+/// @see |nvim_command()|
+///
+/// @param src      Vimscript code
+/// @param output   Capture and return all (non-error, non-shell |:!|) output
 /// @param[out] err Error details (Vim error), if any
-void nvim_source(String src, Error *err) FUNC_API_SINCE(7)
+String nvim_exec(String src, Boolean output, Error *err)
+  FUNC_API_SINCE(7)
 {
-  try_start();
-  do_source_str(src.data, "nvim_source(..)");
-  try_end(err);
-}
+  if (!output) {
+    try_start();
+    do_source_str(src.data, "nvim_exec()");
+    try_end(err);
+    return (String)STRING_INIT;
+  }
 
-/// Executes a multiline block of ex-commands from a string and returns its
-/// (non-error) output. Shell |:!| output is not captured.
-///
-/// On execution error: fails with VimL error, does not update v:errmsg.
-///
-/// @param src      String containing the ex-commands
-/// @param[out] err Error details (Vim error), if any
-String nvim_source_output(String src, Error *err) FUNC_API_SINCE(7)
-{
   const int save_msg_silent = msg_silent;
   garray_T *const save_capture_ga = capture_ga;
   garray_T capture_local;
@@ -103,7 +104,7 @@ String nvim_source_output(String src, Error *err) FUNC_API_SINCE(7)
   try_start();
   msg_silent++;
   capture_ga = &capture_local;
-  do_source_str(src.data, "nvim_source_output(..)");
+  do_source_str(src.data, "nvim_exec()");
   capture_ga = save_capture_ga;
   msg_silent = save_msg_silent;
   try_end(err);
@@ -133,6 +134,8 @@ theend:
 /// Executes an ex-command.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @see |nvim_exec()|
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -436,7 +439,7 @@ theend:
   return (String)STRING_INIT;
 }
 
-/// Evaluates a VimL expression (:help expression).
+/// Evaluates a VimL |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.

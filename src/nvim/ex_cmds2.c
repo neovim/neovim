@@ -3047,6 +3047,9 @@ static char_u *get_str_line(int c, void *cookie, int indent, bool do_concat)
   return (char_u *)xstrdup(buf);
 }
 
+/// Executes lines in `src` as Ex commands.
+///
+/// @see do_source()
 int do_source_str(const char *cmd, const char *traceback_name)
 {
   char_u *save_sourcing_name = sourcing_name;
@@ -3055,7 +3058,7 @@ int do_source_str(const char *cmd, const char *traceback_name)
   if (save_sourcing_name == NULL) {
     sourcing_name = (char_u *)traceback_name;
   } else {
-    snprintf((char *)sourcing_name_buf, sizeof sourcing_name_buf,
+    snprintf((char *)sourcing_name_buf, sizeof(sourcing_name_buf),
              "%s called at %s:%"PRIdLINENR, traceback_name, save_sourcing_name,
              save_sourcing_lnum);
     sourcing_name = sourcing_name_buf;
@@ -3070,23 +3073,19 @@ int do_source_str(const char *cmd, const char *traceback_name)
   current_sctx.sc_sid = SID_STR;
   current_sctx.sc_seq = 0;
   current_sctx.sc_lnum = save_sourcing_lnum;
-  int retval = FAIL;
-  do_cmdline(NULL, get_str_line, (void *)&cookie,
-             DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
-  retval = OK;
-  if (got_int) {
-    EMSG(_(e_interr));
-  }
-
+  int retval = do_cmdline(NULL, get_str_line, (void *)&cookie,
+                          DOCMD_VERBOSE | DOCMD_NOWAIT | DOCMD_REPEAT);
   current_sctx = save_current_sctx;
   sourcing_lnum = save_sourcing_lnum;
   sourcing_name = save_sourcing_name;
   return retval;
 }
 
-/// Read the file "fname" and execute its lines as EX commands.
+/// Reads the file `fname` and executes its lines as Ex commands.
 ///
 /// This function may be called recursively!
+///
+/// @see do_source_str
 ///
 /// @param fname
 /// @param check_other  check for .vimrc and _vimrc
