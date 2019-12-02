@@ -421,13 +421,12 @@ int do_cmdline(char_u *cmdline, LineGetter fgetline,
   // If force_abort is set, we cancel everything.
   did_emsg = false;
 
-  /*
-   * KeyTyped is only set when calling vgetc().  Reset it here when not
-   * calling vgetc() (sourced command lines).
-   */
+  // KeyTyped is only set when calling vgetc().  Reset it here when not
+  // calling vgetc() (sourced command lines).
   if (!(flags & DOCMD_KEYTYPED)
-      && !getline_equal(fgetline, cookie, getexline))
+      && !getline_equal(fgetline, cookie, getexline)) {
     KeyTyped = false;
+  }
 
   /*
    * Continue executing command lines:

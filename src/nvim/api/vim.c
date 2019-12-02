@@ -25,6 +25,7 @@
 #include "nvim/highlight.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
@@ -72,9 +73,69 @@ void api_vim_free_all_mem(void)
   map_free(String, handle_T)(namespace_ids);
 }
 
+/// Executes Vimscript (multiline block of Ex-commands), like anonymous
+/// |:source|.
+///
+/// Optionally returns (non-error, non-shell |:!|) output.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @see |execute()|
+/// @see |nvim_command()|
+///
+/// @param src      Vimscript code
+/// @param output   Capture and return all (non-error, non-shell |:!|) output
+/// @param[out] err Error details (Vim error), if any
+String nvim_exec(String src, Boolean output, Error *err)
+  FUNC_API_SINCE(7)
+{
+  if (!output) {
+    try_start();
+    do_source_str(src.data, "nvim_exec()");
+    try_end(err);
+    return (String)STRING_INIT;
+  }
+
+  const int save_msg_silent = msg_silent;
+  garray_T *const save_capture_ga = capture_ga;
+  garray_T capture_local;
+  ga_init(&capture_local, 1, 80);
+
+  try_start();
+  msg_silent++;
+  capture_ga = &capture_local;
+  do_source_str(src.data, "nvim_exec()");
+  capture_ga = save_capture_ga;
+  msg_silent = save_msg_silent;
+  try_end(err);
+
+  if (ERROR_SET(err)) {
+    goto theend;
+  }
+
+  if (capture_local.ga_len > 1) {
+    String s = (String){
+        .data = capture_local.ga_data,
+        .size = (size_t)capture_local.ga_len,
+    };
+    // redir usually (except :echon) prepends a newline.
+    if (s.data[0] == '\n') {
+      memmove(s.data, s.data + 1, s.size - 1);
+      s.data[s.size - 1] = '\0';
+      s.size = s.size - 1;
+    }
+    return s;  // Caller will free the memory.
+  }
+theend:
+  ga_clear(&capture_local);
+  return (String)STRING_INIT;
+}
+
 /// Executes an ex-command.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @see |nvim_exec()|
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -378,7 +439,7 @@ theend:
   return (String)STRING_INIT;
 }
 
-/// Evaluates a VimL expression (:help expression).
+/// Evaluates a VimL |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
