@@ -357,7 +357,7 @@ describe('VimL dictionary notifications', function()
     eq(2, eval('1+1')) -- Still alive?
   end)
 
-  it('does not case use-after-free when unletting from callback', function()
+  it('does not cause use-after-free when unletting from callback', function()
     source([[
       let g:called = 0
       function W(...) abort
