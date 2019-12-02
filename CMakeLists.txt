@@ -134,20 +134,18 @@ set(NVIM_VERSION_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Minimize logging for release-type builds.
-if(NOT CMAKE_C_FLAGS_RELEASE MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -DMIN_LOG_LEVEL=3")
-endif()
-if(NOT CMAKE_C_FLAGS_MINSIZEREL MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -DMIN_LOG_LEVEL=3")
-endif()
-if(NOT CMAKE_C_FLAGS_RELWITHDEBINFO MATCHES DMIN_LOG_LEVEL)
-  set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO} -DMIN_LOG_LEVEL=3")
-endif()
-
 # Log level (MIN_LOG_LEVEL in log.h)
 if("${MIN_LOG_LEVEL}" MATCHES "^$")
-  message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+  # Minimize logging for release-type builds.
+  if(CMAKE_BUILD_TYPE STREQUAL "Release"
+      OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"
+      OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+    message(STATUS "MIN_LOG_LEVEL not specified, default is 3 (ERROR) for release builds")
+    set(MIN_LOG_LEVEL 3)
+  else()
+    message(STATUS "MIN_LOG_LEVEL not specified, default is 1 (INFO)")
+    set(MIN_LOG_LEVEL 1)
+  endif()
 else()
   if(NOT MIN_LOG_LEVEL MATCHES "^[0-3]$")
     message(FATAL_ERROR "invalid MIN_LOG_LEVEL: " ${MIN_LOG_LEVEL})
