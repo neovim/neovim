@@ -13,6 +13,10 @@ setlocal comments=fb:*,fb:-,fb:+,n:> commentstring=>\ %s
 setlocal formatoptions+=tcqln formatoptions-=r formatoptions-=o
 setlocal formatlistpat=^\\s*\\d\\+\\.\\s\\+\\\|^[-*+]\\s\\+\\\|^\\[^\\ze[^\\]]\\+\\]:
 
+let s:headers = '^#\{1,5}\s*[a-z]'
+execute 'nnoremap <buffer> <silent> [[ ?' . s:headers . '?<CR>:nohls<CR>'
+execute 'nnoremap <buffer> <silent> ]] /' . s:headers . '/<CR>:nohls<CR>'
+
 if exists('b:undo_ftplugin')
   let b:undo_ftplugin .= "|setl cms< com< fo< flp<"
 else
