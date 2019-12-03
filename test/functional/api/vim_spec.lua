@@ -114,6 +114,15 @@ describe('API', function()
       nvim('exec','autocmd BufAdd * :let x1 = "Hello"', false)
       nvim('command', 'new foo')
       eq('Hello', request('nvim_eval', 'g:x1'))
+
+      -- Script scope (s:)
+      eq('ahoy! script-scoped varrrrr', nvim('exec', [[
+          let s:pirate = 'script-scoped varrrrr'
+          func! s:avast_ye_hades(s) abort
+            return s.' '.s:pirate
+          endf
+          echo <sid>avast_ye_hades('ahoy!')
+        ]], true))
     end)
 
     it('non-ASCII input', function()
