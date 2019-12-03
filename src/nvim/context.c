@@ -254,7 +254,7 @@ static inline void ctx_save_funcs(Context *ctx, bool scriptonly)
       size_t cmd_len = sizeof("func! ") + STRLEN(name);
       char *cmd = xmalloc(cmd_len);
       snprintf(cmd, cmd_len, "func! %s", name);
-      String func_body = nvim_command_output(cstr_as_string(cmd), &err);
+      String func_body = nvim_exec(cstr_as_string(cmd), true, &err);
       xfree(cmd);
       if (!ERROR_SET(&err)) {
         ADD(ctx->funcs, STRING_OBJ(func_body));

@@ -798,9 +798,9 @@ static void typval_exec_lua(const char *lcmd, size_t lcmd_len, const char *name,
   }
 }
 
-/// Execute lua string
+/// Execute Lua string
 ///
-/// Used for nvim_execute_lua().
+/// Used for nvim_exec_lua().
 ///
 /// @param[in]  str  String to execute.
 /// @param[in]  args array of ... args

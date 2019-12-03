@@ -236,10 +236,11 @@ with a {thing} that groups functions under a common concept).
 
 Use existing common {action} names if possible:
     add   Append to, or insert into, a collection
-    get   Get a thing (or group of things by query)
-    set   Set a thing (or group of things)
     del   Delete a thing (or group of things)
+    exec  Execute code
+    get   Get a thing (or group of things by query)
     list  Get all things
+    set   Set a thing (or group of things)
 
 Use consistent names for {thing} in all API functions. E.g. a buffer is called
 "buf" everywhere, not "buffer" in some places and "buf" in others.
