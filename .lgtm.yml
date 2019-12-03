@@ -5,4 +5,4 @@ extraction:
       - export BUILD_TYPE=Ninja
     index:
       build_command:
-        - $GNU_MAKE -j2 -s
+        - $GNU_MAKE
