@@ -395,13 +395,48 @@ list_vimpatch_numbers() {
   done
 }
 
+declare -A tokens
+declare -A vim_commit_tags
+
+_set_tokens_and_tags() {
+  if [[ -n "${tokens[*]}" ]]; then
+    return
+  fi
+
+  # Find all "vim-patch:xxx" tokens in the Nvim git log.
+  for token in $(list_vimpatch_tokens); do
+    tokens[$token]=1
+  done
+
+  # Create an associative array mapping Vim commits to tags.
+  eval "vim_commit_tags=(
+    $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags \
+      --format '[%(objectname)]=%(refname:strip=2)' \
+      --sort='-*authordate' \
+      --shell)
+  )"
+  # Exit in case of errors from the above eval (empty vim_commit_tags).
+  if ! (( "${#vim_commit_tags[@]}" )); then
+    msg_err "Could not get Vim commits/tags."
+    exit 1
+  fi
+}
+
 # Prints a newline-delimited list of Vim commits, for use by scripts.
 # "$1": use extended format?
 # "$@" is passed to list_vim_commits, as extra arguments to git-log.
 list_missing_vimpatches() {
+  local -a missing_vim_patches=()
+  _set_missing_vimpatches "$@"
+  for line in "${missing_vim_patches[@]}"; do
+    printf '%s\n' "$line"
+  done
+}
+
+# Sets / appends to missing_vim_patches (useful to avoid a subshell when
+# used multiple times to cache tokens/vim_commit_tags).
+_set_missing_vimpatches() {
   local token vim_commit vim_tag patch_number
-  declare -A tokens
-  declare -A vim_commit_tags
   declare -a git_log_args
 
   local extended_format=$1; shift
@@ -416,6 +451,7 @@ list_missing_vimpatches() {
     [^\(.*/\)?src/nvim/\(.*\)]="\${BASH_REMATCH[1]}src/\${BASH_REMATCH[2]}"
     [^\(.*/\)?\.vim-src/\(.*\)]="\${BASH_REMATCH[2]}"
   )
+  local i j
   for i in "$@"; do
     for j in "${!git_log_replacements[@]}"; do
       if [[ "$i" =~ $j ]]; then
@@ -426,23 +462,7 @@ list_missing_vimpatches() {
     git_log_args+=("$i")
   done
 
-  # Find all "vim-patch:xxx" tokens in the Nvim git log.
-  for token in $(list_vimpatch_tokens); do
-    tokens[$token]=1
-  done
-
-  # Create an associative array mapping Vim commits to tags.
-  eval "declare -A vim_commit_tags=(
-    $(git -C "${VIM_SOURCE_DIR}" for-each-ref refs/tags \
-      --format '[%(objectname)]=%(refname:strip=2)' \
-      --sort='-*authordate' \
-      --shell)
-  )"
-  # Exit in case of errors from the above eval (empty vim_commit_tags).
-  if ! (( "${#vim_commit_tags[@]}" )); then
-    msg_err "Could not get Vim commits/tags."
-    exit 1
-  fi
+  _set_tokens_and_tags
 
   # Get missing Vim commits
   set +u  # Avoid "unbound variable" with bash < 4.4 below.
@@ -474,9 +494,9 @@ list_missing_vimpatches() {
       if [[ "${tokens[$patch_number]-}" ]]; then
         continue
       fi
-      printf '%s%s\n' "$vim_tag" "$info"
+      missing_vim_patches+=("$vim_tag$info")
     else
-      printf '%s%s\n' "$vim_commit" "$info"
+      missing_vim_patches+=("$vim_commit$info")
     fi
   done < <(list_vim_commits "${git_log_args[@]}")
   set -u
