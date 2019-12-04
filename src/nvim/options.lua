@@ -2325,9 +2325,9 @@ return {
       full_name='startofline', abbreviation='sol',
       type='bool', scope={'global'},
       vi_def=true,
-      vim=true,
+      vim=false,
       varname='p_sol',
-      defaults={if_true={vi=true}}
+      defaults={if_true={vi=false}}
     },
     {
       full_name='statusline', abbreviation='stl',

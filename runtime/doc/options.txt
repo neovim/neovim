@@ -5746,7 +5746,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	current one. |:vsplit|
 
 			   *'startofline'* *'sol'* *'nostartofline'* *'nosol'*
-'startofline' 'sol'	boolean	(default on)
+'startofline' 'sol'	boolean	(default off)
 			global
 	When "on" the commands listed below move the cursor to the first
 	non-blank of the line.  When off the cursor is kept in the same column

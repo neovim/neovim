@@ -35,7 +35,7 @@ module.nvim_prog = (
 )
 -- Default settings for the test session.
 module.nvim_set = (
-  'set shortmess+=IS background=light noswapfile noautoindent'
+  'set shortmess+=IS background=light noswapfile noautoindent startofline'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
   ..' belloff= wildoptions-=pum noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
