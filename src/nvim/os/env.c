@@ -302,7 +302,10 @@ char *os_getenvname_at_index(size_t index)
         break;
       }
 
-      const char * const end = strchr(utf8_str, '=');
+      // Some Windows env vars start with =, so skip over that to find the
+      // separator between name/value
+      const char * const end = strchr(utf8_str + (utf8_str[0] == '=' ? 1 : 0),
+                                      '=');
       assert(end != NULL);
       ptrdiff_t len = end - utf8_str;
       assert(len > 0);
