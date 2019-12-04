@@ -532,6 +532,56 @@ Instructions:
 EOF
 }
 
+list_missing_previous_vimpatches_for_patch() {
+  local for_vim_patch="${1}"
+  local vim_commit vim_tag
+  assign_commit_details "${for_vim_patch}"
+
+  local file
+  local -a missing_list
+  local -a fnames
+  while IFS= read -r line ; do
+    fnames+=("$line")
+  done < <(git -C "${VIM_SOURCE_DIR}" diff-tree --no-commit-id --name-only -r "${vim_commit}")
+  local i=0
+  local n=${#fnames[@]}
+  printf '=== getting missing patches for %d files ===\n' "$n"
+  for fname in "${fnames[@]}"; do
+    i=$(( i+1 ))
+    printf '[%d/%d] %s: ' "$i" "$n" "$fname"
+
+    local -a missing_vim_patches=()
+    _set_missing_vimpatches 1 -- "${fname}"
+    # declare -p missing_vim_patches
+
+    local missing_vim_commit="${missing_vim_patches[0]}"
+    if [[ -z "${missing_vim_commit}" ]]; then
+      printf -- "-\n"
+    else
+      printf -- "%s\n" "$missing_vim_commit"
+      missing_list+=("$missing_vim_commit")
+    fi
+  done
+
+  if [[ -z "${missing_list[*]}" ]]; then
+    return 0
+  fi
+
+  echo "=== Missing previous Vim patches ==="
+  if [[ -z "${vim_tag}" ]]; then
+    printf 'NOTE: "%s" is not a Vim tag - listing all oldest missing patches\n' "${for_vim_patch}" >&2
+    printf '%s\n' "${missing_list[@]}" | sort -u
+  else
+    IFS=$'\n' missing_lines=$(printf '%s\n' "${missing_list[@]}" | sort -u)
+    for i in $missing_lines; do
+      if [[ "$i" < "${vim_tag}" ]]; then
+        echo "$i"
+      fi
+    done | sort -u
+  fi
+  return 1
+}
+
 review_commit() {
   local nvim_commit_url="${1}"
   local nvim_patch_url="${nvim_commit_url}.patch"
@@ -629,7 +679,7 @@ review_pr() {
   clean_files
 }
 
-while getopts "hlLMVp:P:g:r:s" opt; do
+while getopts "hlLmMVp:P:g:r:s" opt; do
   case ${opt} in
     h)
       usage
@@ -647,6 +697,11 @@ while getopts "hlLMVp:P:g:r:s" opt; do
       ;;
     M)
       list_vimpatch_numbers
+      exit 0
+      ;;
+    m)
+      shift  # remove opt
+      list_missing_previous_vimpatches_for_patch "$@"
       exit 0
       ;;
     p)
