@@ -546,39 +546,42 @@ list_missing_previous_vimpatches_for_patch() {
   local i=0
   local n=${#fnames[@]}
   printf '=== getting missing patches for %d files ===\n' "$n"
+  if [[ -z "${vim_tag}" ]]; then
+    printf 'NOTE: "%s" is not a Vim tag - listing all oldest missing patches\n' "${for_vim_patch}" >&2
+  fi
   for fname in "${fnames[@]}"; do
     i=$(( i+1 ))
-    printf '[%d/%d] %s: ' "$i" "$n" "$fname"
+    printf '[%.*d/%d] %s: ' "${#n}" "$i" "$n" "$fname"
 
     local -a missing_vim_patches=()
     _set_missing_vimpatches 1 -- "${fname}"
-    # declare -p missing_vim_patches
 
-    local missing_vim_commit="${missing_vim_patches[0]}"
-    if [[ -z "${missing_vim_commit}" ]]; then
+    local missing_vim_commit_info="${missing_vim_patches[0]}"
+    if [[ -z "${missing_vim_commit_info}" ]]; then
       printf -- "-\n"
     else
-      printf -- "%s\n" "$missing_vim_commit"
-      missing_list+=("$missing_vim_commit")
+      local missing_vim_commit="${missing_vim_commit_info%%:*}"
+      if [[ -z "${vim_tag}" ]] || [[ "${missing_vim_commit}" < "${vim_tag}" ]]; then
+        printf -- "%s\n" "$missing_vim_commit_info"
+        missing_list+=("$missing_vim_commit_info")
+      else
+        printf -- "-\n"
+      fi
     fi
   done
 
   if [[ -z "${missing_list[*]}" ]]; then
+    msg_ok 'no missing previous Vim patches'
     return 0
   fi
 
-  echo "=== Missing previous Vim patches ==="
-  if [[ -z "${vim_tag}" ]]; then
-    printf 'NOTE: "%s" is not a Vim tag - listing all oldest missing patches\n' "${for_vim_patch}" >&2
-    printf '%s\n' "${missing_list[@]}" | sort -u
-  else
-    IFS=$'\n' missing_lines=$(printf '%s\n' "${missing_list[@]}" | sort -u)
-    for i in $missing_lines; do
-      if [[ "$i" < "${vim_tag}" ]]; then
-        echo "$i"
-      fi
-    done | sort -u
-  fi
+  local -a missing_unique
+  while IFS= read -r line; do
+    missing_unique+=("$line")
+  done < <(printf '%s\n' "${missing_list[@]}" | sort -u)
+
+  msg_err "$(printf '%d missing previous Vim patches:' ${#missing_unique[@]})"
+  printf ' - %s\n' "${missing_unique[@]}"
   return 1
 }
 
