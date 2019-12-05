@@ -556,9 +556,8 @@ int foldManualAllowed(int create)
 }
 
 // foldCreate() {{{2
-/// Create a fold from line "start" to line "end" (inclusive) in the current
-/// window.
-void foldCreate(win_T *wp, pos_T start, pos_T end)
+/// @see nvim_win_add_fold
+void foldCreate(win_T *wp, linenr_T start, linenr_T end)
 {
   fold_T      *fp;
   garray_T    *gap;
@@ -688,10 +687,8 @@ void foldCreate(win_T *wp, pos_T start, pos_T end)
 
 
 // deleteFold() {{{2
-/// @param start delete all folds from start to end when not 0
-/// @param end delete all folds from start to end when not 0
-/// @param recursive delete recursively if true
 /// @param had_visual true when Visual selection used
+/// @see nvim_fold_delete
 void deleteFold(
     win_T *const wp,
     const linenr_T start,
