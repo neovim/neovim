@@ -863,7 +863,7 @@ function lsp.omnifunc(findstart, base)
   local line_to_cursor = line:sub(1, pos[2])
 
   if findstart == 1 then
-    local wordPos = vim.call("eval", string.format("match('%s', '\\k*$')", line_to_cursor))
+    local wordPos = vim.fn.match(line_to_cursor, '\\k*$')
     return wordPos
 
   else
