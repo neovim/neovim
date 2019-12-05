@@ -313,6 +313,8 @@ end
 function M.jump_to_location(location)
   if location.uri == nil then return end
   local bufnr = vim.uri_to_bufnr(location.uri)
+  -- Save position in jumplist
+  vim.cmd "normal! m'"
   -- TODO(ashkan) use tagfunc here to update tagstack.
   api.nvim_set_current_buf(bufnr)
   local row = location.range.start.line
