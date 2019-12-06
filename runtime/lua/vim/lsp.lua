@@ -844,6 +844,11 @@ function lsp.buf_notify(bufnr, method, params)
   end)
 end
 
+local line = nil;
+local pos = nil;
+local line_to_cursor = nil;
+local textMatch = nil;
+
 --- Function which can be called to generate omnifunc compatible completion.
 function lsp.omnifunc(findstart, base)
   local _ = log.debug() and log.debug("omnifunc.findstart", { findstart = findstart, base = base })
@@ -858,18 +863,31 @@ function lsp.omnifunc(findstart, base)
     end
   end
 
-  local line = vim.api.nvim_get_current_line()
-  local pos = vim.api.nvim_win_get_cursor(0)
-  local line_to_cursor = line:sub(1, pos[2])
 
   if findstart == 1 then
-    local wordPos = vim.fn.match(line_to_cursor, '\\k*$')
-    return wordPos
+
+    line = vim.api.nvim_get_current_line()
+    pos = vim.api.nvim_win_get_cursor(0)
+    line_to_cursor = line:sub(1, pos[2])
+    
+    textMatch = vim.fn.matchstrpos(line_to_cursor, '\\k*$')
+    return textMatch[2]
 
   else
     local _ = log.trace() and log.trace("omnifunc.line", pos, line)
-    local _ = log.trace() and log.trace("omnifunc.line_to_cursor", line_to_cursor)
-    local params = util.make_position_params()
+    local params = {
+       textDocument = { uri = vim.uri_from_bufnr(bufnr); };
+       position = {
+         -- 0-indexed for both line and character
+         line = pos[1] - 1,
+         character = pos[2],
+       };       
+       -- The completion context. This is only available if the client specifies
+       -- to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
+       -- context = nil or {
+       --  triggerKind = protocol.CompletionTriggerKind.Invoked;
+       --  triggerCharacter = nil or "";
+    };
 
     -- TODO handle timeout error differently? Like via an error?
     local client_responses = lsp.buf_request_sync(bufnr, 'textDocument/completion', params) or {}
