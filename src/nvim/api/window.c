@@ -37,7 +37,7 @@ void nvim_win_add_fold(Window window, Integer start, Integer end, Error *err)
     return;
   }
 
-  foldCreate(win, start, end);
+  foldCreate(win, (linenr_T)start, (linenr_T)end);
 }
 
 /// Delete a fold at line "start" in the current window.
@@ -57,7 +57,7 @@ void nvim_win_del_fold(
     return;
   }
 
-  deleteFold(win, start, end, recursive, false);
+  deleteFold(win, (linenr_T)start, (linenr_T)end, recursive, false);
 }
 
 /// Gets the current buffer in a window
