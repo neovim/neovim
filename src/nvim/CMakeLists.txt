@@ -91,6 +91,8 @@ file(GLOB TREESITTER_SOURCES ../tree_sitter/*.c)
 file(GLOB TS_SOURCE_AMALGAM ../tree_sitter/lib.c)
 list(REMOVE_ITEM TREESITTER_SOURCES ${TS_SOURCE_AMALGAM})
 
+file(GLOB HTTP_PARSER_SOURCES ../http_parser/*.c)
+
 foreach(subdir
         os
         api
@@ -466,9 +468,14 @@ if(POLICY CMP0069)
   cmake_policy(SET CMP0069 NEW)
 endif()
 
-add_executable(nvim ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-  ${NVIM_GENERATED_SOURCES} ${NVIM_SOURCES} ${NVIM_HEADERS}
-  ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES})
+set(NVIM_BUILD_FILES
+  ${NVIM_HEADERS} ${NVIM_SOURCES}
+  ${NVIM_GENERATED_SOURCES} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
+  ${XDIFF_SOURCES} ${XDIFF_HEADERS}
+  ${TREESITTER_SOURCES}
+  ${HTTP_PARSER_SOURCES})
+
+add_executable(nvim ${NVIM_BUILD_FILES})
 target_link_libraries(nvim ${NVIM_EXEC_LINK_LIBRARIES})
 install_helper(TARGETS nvim)
 
@@ -549,6 +556,7 @@ else()
 endif()
 set_target_properties(nvim_runtime_deps PROPERTIES FOLDER deps)
 
+<<<<<<< HEAD
 file(MAKE_DIRECTORY ${BINARY_LIB_DIR})
 
 # install treesitter parser if bundled
@@ -568,6 +576,7 @@ add_library(
   ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
   ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
 )
+add_library(libnvim STATIC EXCLUDE_FROM_ALL ${NVIM_BUILD_FILES})
 set_property(TARGET libnvim APPEND PROPERTY
              INCLUDE_DIRECTORIES ${LUA_PREFERRED_INCLUDE_DIRS})
 set_target_properties(
@@ -588,9 +597,7 @@ else()
     nvim-test
     MODULE
     EXCLUDE_FROM_ALL
-    ${NVIM_SOURCES} ${NVIM_GENERATED_SOURCES}
-    ${NVIM_HEADERS} ${NVIM_GENERATED_FOR_SOURCES} ${NVIM_GENERATED_FOR_HEADERS}
-    ${XDIFF_SOURCES} ${XDIFF_HEADERS} ${TREESITTER_SOURCES}
+    ${NVIM_BUILD_FILES}
     ${UNIT_TEST_FIXTURES}
   )
   target_link_libraries(nvim-test ${NVIM_TEST_LINK_LIBRARIES})

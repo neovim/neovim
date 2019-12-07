@@ -9,6 +9,7 @@ BreakBeforeBraces: Linux
 AlignEscapedNewlinesLeft: false
 AllowShortFunctionsOnASingleLine: false
 AlignTrailingComments: true
+AlignEscapedNewlines: DontAlign
 SpacesBeforeTrailingComments: 2
 PenaltyReturnTypeOnItsOwnLine: 200
 AllowAllParametersOfDeclarationOnNextLine: false
