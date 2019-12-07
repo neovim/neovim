@@ -629,22 +629,27 @@ describe('lua stdlib', function()
   end)
 
   it('vim.wo', function()
-    eq('', funcs.luaeval "vim.bo.filetype")
     exec_lua [[
     vim.api.nvim_win_set_option(0, "cole", 2)
-    BUF = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(BUF, "modifiable", false)
+    vim.cmd "split"
+    vim.api.nvim_win_set_option(0, "cole", 2)
     ]]
     eq(2, funcs.luaeval "vim.wo.cole")
     exec_lua [[
     vim.wo.conceallevel = 0
-    vim.bo[BUF].modifiable = true
     ]]
     eq(0, funcs.luaeval "vim.wo.cole")
+    eq(0, funcs.luaeval "vim.wo[0].cole")
+    eq(0, funcs.luaeval "vim.wo[1001].cole")
     matches("^Error executing lua: .*: Invalid option name: 'notanopt'$",
        pcall_err(exec_lua, 'return vim.wo.notanopt'))
     matches("^Error executing lua: .*: Expected lua string$",
        pcall_err(exec_lua, 'return vim.wo[0][0].list'))
+    eq(2, funcs.luaeval "vim.wo[1000].cole")
+    exec_lua [[
+    vim.wo[1000].cole = 0
+    ]]
+    eq(0, funcs.luaeval "vim.wo[1000].cole")
   end)
 
   it('vim.cmd', function()
