@@ -33,6 +33,7 @@
 #include "nvim/lua/executor.h"
 #include "nvim/lua/converter.h"
 #include "nvim/lua/treesitter.h"
+#include "http_parser/http_parser.h"
 
 #include "luv/luv.h"
 
@@ -326,6 +327,9 @@ static int nlua_state_init(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 
   // internal vim._treesitter... API
   nlua_add_treesitter(lstate);
+
+  // internal vim._http_parser... API
+  nlua_add_http_parser(lstate);
 
   lua_setglobal(lstate, "vim");
 
@@ -1008,3 +1012,233 @@ static void nlua_add_treesitter(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   lua_pushcfunction(lstate, tslua_inspect_lang);
   lua_setfield(lstate, -2, "_ts_inspect_language");
 }
+
+// http_parser definitions.
+
+#define LUA_HTTP_PARSER_SET_FIELD_CB(field) \
+  static int nlua_http_parser_on_##field(http_parser *p, const char *at, \
+                                         size_t length) \
+  { \
+    lua_State *lstate = nlua_enter(); \
+    lua_pushlstring(lstate, at, length); /* [meta, url] */ \
+    lua_setfield(lstate, -2, #field);    /* [meta] */ \
+    return 0; \
+  }
+
+LUA_HTTP_PARSER_SET_FIELD_CB(body)
+LUA_HTTP_PARSER_SET_FIELD_CB(url)
+
+#define LUA_HTTP_LAST_HEADER_FIELD "_last_field"
+#define LUA_HTTP_HEADERS_KEY "headers"
+#define LUA_HTTP_COMPLETE_KEY "complete"
+
+// Mark this as being completed.
+static int nlua_http_parser_on_complete_message(http_parser *p)
+{
+  lua_State *lstate = nlua_enter();
+  lua_pushboolean(lstate, true);                    // [meta, true]
+  lua_setfield(lstate, -2, LUA_HTTP_COMPLETE_KEY);  // [meta]
+  return 0;
+}
+
+// Delete the LUA_HTTP_LAST_HEADER_FIELD from result.headers
+static int nlua_http_parser_on_complete_headers(http_parser *p)
+{
+  lua_State *lstate = nlua_enter();
+  lua_getfield(lstate, -1, LUA_HTTP_HEADERS_KEY);        // [meta, headers]
+  lua_pushnil(lstate);                                   // [meta, headers, nil]
+  lua_setfield(lstate, -2, LUA_HTTP_LAST_HEADER_FIELD);  // [meta, headers]
+  lua_pop(lstate, 1);                                    // [meta]
+  if (p->status_code) {
+    lua_pushinteger(lstate, p->status_code);
+    lua_setfield(lstate, -2, "status_code");
+  }
+  if (p->method) {
+    lua_pushstring(lstate, http_method_str(p->method));
+    lua_setfield(lstate, -2, "method");
+  }
+
+  lua_pushinteger(lstate, p->http_major);
+  lua_setfield(lstate, -2, "http_major");
+
+  lua_pushinteger(lstate, p->http_minor);
+  lua_setfield(lstate, -2, "http_minor");
+
+  lua_pushboolean(lstate, p->upgrade == 1);
+  lua_setfield(lstate, -2, "upgrade");
+
+  lua_pushboolean(lstate, http_should_keep_alive(p) != 0);
+  lua_setfield(lstate, -2, "keep_alive");
+  return 0;
+}
+
+// Stores the header field name on LUA_HTTP_LAST_HEADER_FIELD so that the
+// header_value callback can use it to set the header value on the
+// metatable.headers table
+static int nlua_http_parser_on_header_field(http_parser *p,
+                                            const char *at,
+                                            size_t length)
+{
+  lua_State *lstate = nlua_enter();
+  lua_getfield(lstate, -1, LUA_HTTP_HEADERS_KEY);  // [meta, headers]
+  lua_pushlstring(lstate, at, length);             // [meta, headers, value]
+  lua_setfield(lstate, -2, LUA_HTTP_LAST_HEADER_FIELD);  // [meta, headers]
+  lua_pop(lstate, 1);                                    // [meta]
+  return 0;
+}
+
+static int nlua_http_parser_on_header_value(http_parser *p,
+                                            const char *at,
+                                            size_t length)
+{
+  lua_State *lstate = nlua_enter();
+  lua_getfield(lstate, -1, LUA_HTTP_HEADERS_KEY);        // [meta, headers]
+  lua_getfield(lstate, -1, LUA_HTTP_LAST_HEADER_FIELD);  // [meta, headers, key]
+  lua_pushlstring(lstate, at, length);  // [meta, headers, key, value]
+  lua_rawset(lstate, -3);               // [meta, headers]
+  // TODO(ashkan): nil out LUA_HTTP_LAST_HEADER_FIELD when I'm done here?
+  lua_pop(lstate, 1);  // [meta]
+  return 0;
+}
+
+http_parser_settings lua_http_parser_settings = {
+    .on_url = nlua_http_parser_on_url,
+    .on_body = nlua_http_parser_on_body,
+    .on_header_field = nlua_http_parser_on_header_field,
+    .on_header_value = nlua_http_parser_on_header_value,
+    .on_headers_complete = nlua_http_parser_on_complete_headers,
+    .on_message_complete = nlua_http_parser_on_complete_message,
+};
+
+static int nlua_http_parser_execute(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  http_parser *p = luaL_checkudata(lstate, 1, "http_parser");
+  size_t chunk_len = 0;
+  const char *chunk = luaL_checklstring(lstate, 2, &chunk_len);
+  lua_getfenv(lstate, 1);
+  size_t bytes_parsed
+      = http_parser_execute(p, &lua_http_parser_settings, chunk, chunk_len);
+  lua_pop(lstate, 1);
+  if (p->http_errno) {
+    // TODO(ashkan): use the http_errno_name() somehow?
+    lua_pushstring(lstate, http_errno_description(p->http_errno));
+    return lua_error(lstate);
+  }
+
+  lua_Integer ret = (lua_Integer)bytes_parsed;
+  lua_pushinteger(lstate, ret);
+
+  // TODO(ashkan): do something if this is finished?
+  // if (http_body_is_final(p)) {
+  //   lua_getfenv(lstate, 1);
+  //   return 2;
+  // }
+
+  return 1;
+}
+
+// TODO(ashkan): improve diagnostics?
+static int nlua_http_parser_to_string(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_pushliteral(lstate, "<http_parser>");
+  return 1;
+}
+
+static int nlua_http_parser_index(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  // TODO(ashkan): check this even for index?
+  // http_parser* p = luaL_checkudata(lstate, 1, "http_parser");
+  lua_getfenv(lstate, 1);
+  // Return the whole table if the key is "table"
+  if (0 == strcmp(luaL_checkstring(lstate, 2), "table")) {
+    return 1;
+  }
+  lua_pushvalue(lstate, 2);
+  lua_rawget(lstate, -2);
+  lua_remove(lstate, -2);
+  return 1;
+}
+
+static int nlua_create_http_parser(lua_State *const lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  http_parser *p = lua_newuserdata(lstate, sizeof(http_parser));  // [result]
+  http_parser_init(p, HTTP_BOTH);
+  // http_parser_init(p, HTTP_REQUEST);
+  luaL_setmetatable(lstate, "http_parser");
+  lua_newtable(lstate);                            // [result, fenv]
+  lua_newtable(lstate);                            // [result, fenv, headers]
+  lua_setfield(lstate, -2, LUA_HTTP_HEADERS_KEY);  // [result, fenv]
+  lua_setfenv(lstate, -2);                         // [result]
+  return 1;
+}
+
+static int nlua_http_status_name(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  long status_code = luaL_checkinteger(lstate, 1);
+  lua_pushstring(lstate, http_status_str((enum http_status)status_code));
+  return 1;
+}
+
+static const char *HTTP_FIELD_NAMES[UF_MAX] = {
+    "schema", "host", "port", "path", "query", "fragment", "userinfo",
+};
+
+// nlua_http_parse_url(url, [is_connect])
+static int nlua_http_parse_url(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  size_t input_len = 0;
+  const char *input = luaL_checklstring(lstate, 1, &input_len);
+  int is_connect = (int)lua_toboolean(lstate, 2);
+
+  struct http_parser_url u;
+  http_parser_url_init(&u);
+  if (http_parser_parse_url(input, input_len, is_connect, &u) != 0) {
+    // TODO(ashkan): better error message?
+    return luaL_error(lstate, "Failed to parse url");
+  }
+
+  lua_newtable(lstate);  // [fields]
+  for (int i = 0; i < UF_MAX; i++) {
+    if ((u.field_set & (1 << i)) == 0) {
+      continue;
+    }
+
+    lua_pushlstring(lstate, input + u.field_data[i].off,
+                    u.field_data[i].len);  // [fields, value]
+    lua_setfield(lstate, -2, HTTP_FIELD_NAMES[i]);
+  }
+  return 1;
+}
+
+static struct luaL_Reg http_parser_meta[] = {
+  { "__tostring", nlua_http_parser_to_string },
+  { "__index", nlua_http_parser_index },
+  { NULL, NULL }
+};
+
+static void nlua_add_http_parser(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
+{
+  luaL_newmetatable(lstate, "http_parser");  // [meta]
+  luaL_setfuncs(lstate, http_parser_meta, 0);
+  lua_pop(lstate, 1);  // []
+
+  lua_pushcfunction(lstate, nlua_create_http_parser);
+  lua_setfield(lstate, -2, "_http_parser_create");
+
+  lua_pushcfunction(lstate, nlua_http_parser_execute);
+  lua_setfield(lstate, -2, "_http_parser_execute");
+
+  lua_pushcfunction(lstate, nlua_http_status_name);
+  lua_setfield(lstate, -2, "http_status_name");
+
+  lua_pushcfunction(lstate, nlua_http_parse_url);
+  lua_setfield(lstate, -2, "http_parse_url");
+}
+
+#undef LUA_HTTP_COMPLETE_KEY
+#undef LUA_HTTP_HEADERS_KEY
+#undef LUA_HTTP_LAST_HEADER_FIELD
+#undef LUA_HTTP_PARSER_SET_FIELD_CB
