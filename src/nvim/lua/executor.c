@@ -1448,8 +1448,8 @@ static int nlua_create_http_parser(lua_State *const lstate)
 {
   http_parser *p = lua_newuserdata(lstate, sizeof(http_parser));  // [result]
   http_parser_init(p, HTTP_BOTH);
-  // http_parser_init(p, HTTP_REQUEST);
-  luaL_setmetatable(lstate, "http_parser");
+  luaL_newmetatable(lstate, "http_parser");        // [result, meta]
+  lua_setmetatable(lstate, -2);                    // [result]
   lua_newtable(lstate);                            // [result, fenv]
   lua_newtable(lstate);                            // [result, fenv, headers]
   lua_setfield(lstate, -2, LUA_HTTP_HEADERS_KEY);  // [result, fenv]
@@ -1503,8 +1503,19 @@ static struct luaL_Reg http_parser_meta[] = {
 
 static void nlua_add_http_parser(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
-  luaL_newmetatable(lstate, "http_parser");  // [meta]
-  luaL_setfuncs(lstate, http_parser_meta, 0);
+  // Equivalent to the following in luajit.
+  // luaL_newmetatable(lstate, "http_parser");  // [meta]
+  // luaL_setfuncs(lstate, http_parser_meta, 0);
+  {
+    const char *tname = "http_parser";
+    luaL_Reg *meta = http_parser_meta;
+    if (luaL_newmetatable(lstate, tname)) {  // [meta]
+      for (size_t i = 0; meta[i].name != NULL; i++) {
+        lua_pushcfunction(lstate, meta[i].func);  // [meta, func]
+        lua_setfield(lstate, -2, meta[i].name);   // [meta]
+      }
+    }
+  }
   lua_pop(lstate, 1);  // []
 
   lua_pushcfunction(lstate, nlua_create_http_parser);
