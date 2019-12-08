@@ -12,25 +12,21 @@ Nvim is a client to the Language Server Protocol:
                                       Type |gO| to see the table of contents.
 
 ================================================================================
-LSP API                                                                *lsp-api*
+LSP API                                                            *lsp-intro*
 
-Neovim exposes a API for the language server protocol. To get the real benefits
-of this API, a language server must be installed.
-Many examples can be found here:
+The `vim.lsp` Lua module provides a flexible API for consuming LSP servers.
+
+To get the real benefits of this API, a language server must be installed.
 
   https://microsoft.github.io/language-server-protocol/implementors/servers/
 
-After installing a language server to your machine, you must let Neovim know
+After installing a language server to your machine, you must let Nvim know
 how to start and interact with that language server.
-
-To do so, you can either:
-- Use https://github.com/neovim/nvim-lsp and one of the existing servers there
-  or set up a new one using the `nvim_lsp/skeleton` interface (and contribute
-  it if you find it useful). This uses |vim.lsp.start_client()| under the
-  hood.
-- Or |vim.lsp.start_client()| and |vim.lsp.buf_attach_client()|. These are the
-  backbone of the LSP API. These are easy to use enough for basic or more
-  complex configurations such as in |lsp-advanced-js-example|.
+- The easy way to do that is use the configs provided here:
+  https://github.com/neovim/nvim-lsp
+- The low-level approach is to use |vim.lsp.start_client()| and
+  |vim.lsp.buf_attach_client()| directly.  Useful if you want to build
+  advanced LSP plugins based on the Nvim LSP module. |lsp-advanced-js-example|
 
 ================================================================================
                                                            *lsp-core-api*
@@ -75,7 +71,7 @@ vim.lsp.start_client({config})
  
   `capabilities`
     A {table} which will be used instead of
-    `vim.lsp.protocol.make_client_capabilities()` which contains neovim's
+    `vim.lsp.protocol.make_client_capabilities()` which contains Nvim's
     default capabilities and passed to the language server on initialization.
     You'll probably want to use make_client_capabilities() and modify the
     result.
@@ -420,9 +416,8 @@ vim.lsp.get_log_path()
 vim.lsp.log_levels
   Log level dictionary with reverse lookup as well.
  
-  Can be used to lookup the number from the name or the name from the number.
-  Levels by name: 'trace', 'debug', 'info', 'warn', 'error'
-  Level numbers begin with 'trace' at 0
+  Can be used to lookup the number from the name or vice-versa.
+  Levels: "trace" (0), "debug" (1), "info" (2), "warn" (3), "error" (4)
 
 ================================================================================
                                                                   *lsp-omnifunc*
