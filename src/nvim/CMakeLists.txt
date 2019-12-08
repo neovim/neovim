@@ -183,6 +183,8 @@ if(NOT MSVC)
 
   # tree-sitter: inlined external project, we don't maintain it. #10124
   set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
+  # http-parser: inlined external project, we don't maintain it.
+  set_source_files_properties(${HTTP_PARSER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
 endif()
 
 if(NOT "${MIN_LOG_LEVEL}" MATCHES "^$")
