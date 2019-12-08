@@ -12,6 +12,7 @@ compile_commands.json
 /tmp/
 /.clangd/
 
+.DS_Store
 *.mo
 .*.sw?
 *~

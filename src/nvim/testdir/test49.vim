@@ -178,7 +178,7 @@ endif
 "		next Xpath value.  No new Xnext value is prepared.  The argument
 "		should be 2^(n-1) for the nth Xloop command inside the loop.
 "		If the loop has only one Xloop command, the argument can be
-"		ommitted (default: 1).
+"		omitted (default: 1).
 "
 "	- Use XloopNEXT before ":continue" and ":endwhile".  This computes a new
 "	  Xnext value for the next execution of the loop by multiplying the old
