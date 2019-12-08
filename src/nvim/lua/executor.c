@@ -1407,9 +1407,7 @@ static int nlua_http_parser_execute(lua_State *const lstate)
       = http_parser_execute(p, &lua_http_parser_settings, chunk, chunk_len);
   lua_pop(lstate, 1);
   if (p->http_errno) {
-    // TODO(ashkan): use the http_errno_name() somehow?
-    lua_pushstring(lstate, http_errno_description(p->http_errno));
-    return lua_error(lstate);
+    return luaL_error(lstate, "HTTP parsing failed: %s", http_errno_description(p->http_errno));
   }
 
   lua_Integer ret = (lua_Integer)bytes_parsed;
