@@ -60,6 +60,45 @@ describe("folded lines", function()
     ]])
   end)
 
+  it("works with multibyte fillchars", function()
+    insert([[
+      aa
+      bb
+      cc
+      dd
+      ee
+      ff]])
+    command("set fillchars+=foldopen:▾,foldsep:│,foldclose:▸")
+    feed_command('1')
+    command("set foldcolumn=2")
+    feed('zf4j')
+    feed('zf2j')
+    feed('zO')
+    screen:expect{grid=[[
+      {7:▾▾}^aa                                         |
+      {7:││}bb                                         |
+      {7:││}cc                                         |
+      {7:││}dd                                         |
+      {7:││}ee                                         |
+      {7:│ }ff                                         |
+      {1:~                                            }|
+      :1                                           |
+    ]]}
+
+    feed_command("set rightleft")
+    screen:expect{grid=[[
+                                               a^a{7:▾▾}|
+                                               bb{7:││}|
+                                               cc{7:││}|
+                                               dd{7:││}|
+                                               ee{7:││}|
+                                               ff{7: │}|
+      {1:                                            ~}|
+      :set rightleft                               |
+    ]]}
+  end)
+
+
   it("works with multibyte text", function()
     -- Currently the only allowed value of 'maxcombine'
     eq(6, meths.get_option('maxcombine'))

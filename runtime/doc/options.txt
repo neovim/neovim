@@ -2371,6 +2371,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  stlnc:c	' ' or '='	statusline of the non-current windows
 	  vert:c	'│' or '|'	vertical separators |:vsplit|
 	  fold:c	'·' or '-'	filling 'foldtext'
+	  foldopen:c	'-'		mark the beginning of a fold
+	  foldclose:c	'+'		show a closed fold
+	  foldsep:c	'|'		open fold middle marker
 	  diff:c	'-'		deleted lines of the 'diff' option
 	  msgsep:c	' '		message separator 'display'
 	  eob:c		'~'		empty lines at the end of a buffer

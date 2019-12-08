@@ -126,7 +126,8 @@
 
 
 // temporary buffer for rendering a single screenline, so it can be
-// comparared with previous contents to calculate smallest delta.
+// compared with previous contents to calculate smallest delta.
+// Per-cell attributes
 static size_t linebuf_size = 0;
 static schar_T *linebuf_char = NULL;
 static sattr_T *linebuf_attr = NULL;
@@ -1814,27 +1815,6 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     col++;
   }
 
-  // 2. Add the 'foldcolumn'
-  // Reduce the width when there is not enough space.
-  fdc = compute_foldcolumn(wp, col);
-  if (fdc > 0) {
-    fill_foldcolumn(buf, wp, TRUE, lnum);
-    if (wp->w_p_rl) {
-      int i;
-
-      copy_text_attr(off + wp->w_grid.Columns - fdc - col, buf, fdc,
-                     win_hl_attr(wp, HLF_FC));
-      // reverse the fold column
-      for (i = 0; i < fdc; i++) {
-        schar_from_ascii(linebuf_char[off + wp->w_grid.Columns - i - 1 - col],
-                         buf[i]);
-      }
-    } else {
-      copy_text_attr(off + col, buf, fdc, win_hl_attr(wp, HLF_FC));
-    }
-    col += fdc;
-  }
-
 # define RL_MEMSET(p, v, l) \
   do { \
     if (wp->w_p_rl) { \
@@ -1847,6 +1827,25 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       } \
     } \
   } while (0)
+
+  // 2. Add the 'foldcolumn'
+  // Reduce the width when there is not enough space.
+  fdc = compute_foldcolumn(wp, col);
+  if (fdc > 0) {
+    fill_foldcolumn(buf, wp, true, lnum);
+    const char_u *it = &buf[0];
+    for (int i = 0; i < fdc; i++) {
+      int mb_c = mb_ptr2char_adv(&it);
+      if (wp->w_p_rl) {
+          schar_from_char(linebuf_char[off + wp->w_grid.Columns - i - 1 - col],
+                          mb_c);
+      } else {
+        schar_from_char(linebuf_char[off + col + i], mb_c);
+      }
+    }
+    RL_MEMSET(col, win_hl_attr(wp, HLF_FC), fdc);
+    col += fdc;
+  }
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
@@ -2068,58 +2067,73 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
   }
 }
 
-/*
- * Fill the foldcolumn at "p" for window "wp".
- * Only to be called when 'foldcolumn' > 0.
- */
-static void
-fill_foldcolumn (
+/// Fills the foldcolumn at "p" for window "wp".
+/// Only to be called when 'foldcolumn' > 0.
+///
+/// @param[out] p  Char array to write into
+/// @param lnum    Absolute current line number
+/// @param closed  Whether it is in 'foldcolumn' mode
+///
+/// Assume monocell characters
+/// @return number of chars added to \param p
+static size_t
+fill_foldcolumn(
     char_u *p,
     win_T *wp,
-    int closed,                     /* TRUE of FALSE */
-    linenr_T lnum                  /* current line number */
+    int closed,
+    linenr_T lnum
 )
 {
   int i = 0;
   int level;
   int first_level;
-  int empty;
-  int fdc = compute_foldcolumn(wp, 0);
-
+  int fdc = compute_foldcolumn(wp, 0);    // available cell width
+  size_t char_counter = 0;
+  int symbol = 0;
+  int len = 0;
   // Init to all spaces.
-  memset(p, ' ', (size_t)fdc);
+  memset(p, ' ', MAX_MCO * fdc + 1);
 
   level = win_foldinfo.fi_level;
-  if (level > 0) {
-    // If there is only one column put more info in it.
-    empty = (fdc == 1) ? 0 : 1;
 
-    // If the column is too narrow, we start at the lowest level that
-    // fits and use numbers to indicated the depth.
-    first_level = level - fdc - closed + 1 + empty;
-    if (first_level < 1) {
-      first_level = 1;
+  // If the column is too narrow, we start at the lowest level that
+  // fits and use numbers to indicated the depth.
+  first_level = level - fdc - closed + 1;
+  if (first_level < 1) {
+    first_level = 1;
+  }
+
+  for (i = 0; i  < MIN(fdc, level); i++) {
+    if (win_foldinfo.fi_lnum == lnum
+        && first_level + i >= win_foldinfo.fi_low_level) {
+      symbol = wp->w_p_fcs_chars.foldopen;
+    } else if (first_level == 1) {
+      symbol = wp->w_p_fcs_chars.foldsep;
+    } else if (first_level + i <= 9) {
+      symbol = '0' + first_level + i;
+    } else {
+      symbol = '>';
     }
 
-    for (i = 0; i + empty < fdc; i++) {
-      if (win_foldinfo.fi_lnum == lnum
-          && first_level + i >= win_foldinfo.fi_low_level) {
-        p[i] = '-';
-      } else if (first_level == 1) {
-        p[i] = '|';
-      } else if (first_level + i <= 9) {
-        p[i] = '0' + first_level + i;
-      } else {
-        p[i] = '>';
-      }
-      if (first_level + i == level) {
-        break;
-      }
+    len = utf_char2bytes(symbol, &p[char_counter]);
+    char_counter += len;
+    if (first_level + i >= level) {
+      i++;
+      break;
     }
   }
+
   if (closed) {
-    p[i >= fdc ? i - 1 : i] = '+';
+    if (symbol != 0) {
+      // rollback length
+      char_counter -= len;
+    }
+    symbol = wp->w_p_fcs_chars.foldclosed;
+    len = utf_char2bytes(symbol, &p[char_counter]);
+    char_counter += len;
   }
+
+  return MAX(char_counter + (fdc-i), (size_t)fdc);
 }
 
 /*
@@ -2807,9 +2821,8 @@ win_line (
           // Draw the 'foldcolumn'.  Allocate a buffer, "extra" may
           // already be in use.
           xfree(p_extra_free);
-          p_extra_free = xmalloc(12 + 1);
-          fill_foldcolumn(p_extra_free, wp, false, lnum);
-          n_extra = fdc;
+          p_extra_free = xmalloc(MAX_MCO * fdc + 1);
+          n_extra = fill_foldcolumn(p_extra_free, wp, false, lnum);
           p_extra_free[n_extra] = NUL;
           p_extra = p_extra_free;
           c_extra = NUL;
