@@ -193,6 +193,7 @@ if(NOT MSVC)
   # tree-sitter: inlined external project, we don't maintain it. #10124
   set_source_files_properties(${TREESITTER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
   # http-parser: inlined external project, we don't maintain it.
+  # https://github.com/nodejs/http-parser at commit 28f3c35c215ffbe0241685901338fad484660454
   set_source_files_properties(${HTTP_PARSER_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion -Wno-pedantic -Wno-shadow -Wno-missing-prototypes -Wno-unused-variable")
 endif()
 

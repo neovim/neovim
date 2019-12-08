@@ -1446,8 +1446,7 @@ static int nlua_http_parser_index(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   return 1;
 }
 
-static int nlua_create_http_parser(lua_State *const lstate)
-  FUNC_ATTR_NONNULL_ALL
+static int nlua_http_parser_new(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
 {
   http_parser *p = lua_newuserdata(lstate, sizeof(http_parser));  // [result]
   http_parser_init(p, HTTP_BOTH);
@@ -1483,7 +1482,7 @@ static int nlua_http_parse_url(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   if (http_parser_parse_url(input, input_len, is_connect, &u) != 0) {
     // We would give a more informative error, but http_parser doesn't give us
     // any.
-    return luaL_error(lstate, "Failed to parse url.");
+    return luaL_error(lstate, "Failed to parse url");
   }
 
   lua_newtable(lstate);  // [fields]
@@ -1527,8 +1526,8 @@ static void nlua_add_http_parser(lua_State *const lstate) FUNC_ATTR_NONNULL_ALL
   }
   lua_pop(lstate, 1);  // []
 
-  lua_pushcfunction(lstate, nlua_create_http_parser);
-  lua_setfield(lstate, -2, "_http_parser_create");
+  lua_pushcfunction(lstate, nlua_http_parser_new);
+  lua_setfield(lstate, -2, "_http_parser_new");
 
   lua_pushcfunction(lstate, nlua_http_parser_execute);
   lua_setfield(lstate, -2, "_http_parser_execute");
