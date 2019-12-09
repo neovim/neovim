@@ -187,10 +187,8 @@ function M.text_document_completion_list_to_complete_items(result, line_prefix)
     end
 
     local word = completion_item.insertText or completion_item.label
-
-    -- Ref: `:h complete-items`
     table.insert(matches, {
-      word = remove_prefix(line_prefix, word),
+      word = word,
       abbr = completion_item.label,
       kind = protocol.CompletionItemKind[completion_item.kind] or '',
       menu = completion_item.detail or '',
