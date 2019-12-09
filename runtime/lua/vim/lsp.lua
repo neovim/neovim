@@ -864,29 +864,15 @@ function lsp.omnifunc(findstart, base)
   else
     -- Then, perform standard completion request
     log.info("base ", base)
-    
+ 
     local pos = vim.api.nvim_win_get_cursor(0)
     local line = vim.api.nvim_get_current_line()
     local line_to_cursor = line:sub(1, pos[2])
     local _ = log.trace() and log.trace("omnifunc.line", pos, line)
-   
 
     -- Get the start postion of the current keyword 
     local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
-
-    local params = {
-       textDocument = { uri = vim.uri_from_bufnr(bufnr); };
-       position = {
-         -- 0-indexed for both line and character
-         line = pos[1] - 1,
-         character = pos[2],
-        };
-       -- The completion context. This is only available if the client specifies
-       -- to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`
-       -- context = nil or {
-       --  triggerKind = protocol.CompletionTriggerKind.Invoked;
-       --  triggerCharacter = nil or "";
-    };
+    local params = util.make_position_params()
 
     -- TODO handle timeout error differently? Like via an error?
     local client_responses = lsp.buf_request_sync(bufnr, 'textDocument/completion', params) or {}
