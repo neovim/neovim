@@ -336,6 +336,11 @@ Macro/|recording| behavior
 Motion:
   The |jumplist| avoids useless/phantom jumps.
 
+  When the new option |jumpoptions| includes 'stack', the jumplist behaves
+  like the tagstack or history in a web browser--jumping from the middle of
+  the jumplist discards the locations after the jumped-from position
+  (|jumplist-stack|).
+
 Normal commands:
   |Q| is the same as |gQ|
 
