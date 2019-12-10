@@ -522,10 +522,9 @@ single CTRL-V (you have to type CTRL-V two times).
 You can create an empty {rhs} by typing nothing after a single CTRL-V (you
 have to type CTRL-V two times).  Unfortunately, you cannot do this in a vimrc
 file.
-							*<Nop>*
+							|<Nop>|
 An easier way to get a mapping that doesn't produce anything, is to use
-"<Nop>" for the {rhs}.  This only works when the |<>| notation is enabled.
-For example, to make sure that function key 8 does nothing at all: >
+"<Nop>" for the {rhs}.  For example, to disable function key 8: >
 	:map  <F8>  <Nop>
 	:map! <F8>  <Nop>
 <

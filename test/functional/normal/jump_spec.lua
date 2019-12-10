@@ -48,7 +48,7 @@ describe('jumplist', function()
   end)
 end)
 
-describe('jumpoptions=stack behaves like browser history', function()
+describe("jumpoptions=stack behaves like 'tagstack'", function()
   before_each(function()
     clear()
     feed(':clearjumps<cr>')
