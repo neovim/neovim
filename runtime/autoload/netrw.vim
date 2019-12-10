@@ -688,10 +688,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
   endif
 
   " save registers
-  if has("clipboard")
-   sil! let keepregstar = @*
-   sil! let keepregplus = @+
-  endif
   sil! let keepregslash= @/
 
   " if   dosplit
@@ -915,10 +911,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
 "     call Decho("..case Nexplore with starpat=".starpat.": (indx=".indx.")",'~'.expand("<slnum>"))
      if !exists("w:netrw_explore_list") " sanity check
       NetrwKeepj call netrw#ErrorMsg(s:WARNING,"using Nexplore or <s-down> improperly; see help for netrw-starstar",40)
-      if has("clipboard")
-       sil! let @* = keepregstar
-       sil! let @+ = keepregplus
-      endif
       sil! let @/ = keepregslash
 "      call Dret("netrw#Explore")
       return
@@ -940,10 +932,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
 "     call Decho("case Pexplore with starpat=".starpat.": (indx=".indx.")",'~'.expand("<slnum>"))
      if !exists("w:netrw_explore_list") " sanity check
       NetrwKeepj call netrw#ErrorMsg(s:WARNING,"using Pexplore or <s-up> improperly; see help for netrw-starstar",41)
-      if has("clipboard")
-       sil! let @* = keepregstar
-       sil! let @+ = keepregplus
-      endif
       sil! let @/ = keepregslash
 "      call Dret("netrw#Explore")
       return
@@ -995,10 +983,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
       catch /^Vim\%((\a\+)\)\=:E480/
        keepalt call netrw#ErrorMsg(s:WARNING,'no files matched pattern<'.pattern.'>',45)
        if &hls | let keepregslash= s:ExplorePatHls(pattern) | endif
-       if has("clipboard")
-	sil! let @* = keepregstar
-	sil! let @+ = keepregplus
-       endif
        sil! let @/ = keepregslash
 "       call Dret("netrw#Explore : no files matched pattern")
        return
@@ -1031,10 +1015,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
 
      if w:netrw_explore_listlen == 0 || (w:netrw_explore_listlen == 1 && w:netrw_explore_list[0] =~ '\*\*\/')
       keepalt NetrwKeepj call netrw#ErrorMsg(s:WARNING,"no files matched",42)
-      if has("clipboard")
-       sil! let @* = keepregstar
-       sil! let @+ = keepregplus
-      endif
       sil! let @/ = keepregslash
 "      call Dret("netrw#Explore : no files matched")
       return
@@ -1078,10 +1058,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
 "    call Decho("..your vim does not have +path_extra",'~'.expand("<slnum>"))
     if !exists("g:netrw_quiet")
      keepalt NetrwKeepj call netrw#ErrorMsg(s:WARNING,"your vim needs the +path_extra feature for Exploring with **!",44)
-    endif
-    if has("clipboard")
-     sil! let @* = keepregstar
-     sil! let @+ = keepregplus
     endif
     sil! let @/ = keepregslash
 "    call Dret("netrw#Explore : missing +path_extra")
@@ -1152,10 +1128,6 @@ fun! netrw#Explore(indx,dosplit,style,...)
   " there's no danger of a late FocusGained event on initialization.
   " Consequently, set s:netrw_events to 2.
   let s:netrw_events= 2
-  if has("clipboard")
-   sil! let @* = keepregstar
-   sil! let @+ = keepregplus
-  endif
   sil! let @/ = keepregslash
 "  call Dret("netrw#Explore : @/<".@/.">")
 endfun
@@ -9559,10 +9531,6 @@ fun! s:NetrwWideListing()
    let newcolstart = w:netrw_bannercnt + fpc
    let newcolend   = newcolstart + fpc - 1
 "   call Decho("bannercnt=".w:netrw_bannercnt." fpl=".w:netrw_fpl." fpc=".fpc." newcol[".newcolstart.",".newcolend."]",'~'.expand("<slnum>"))
-   if has("clipboard")
-    sil! let keepregstar = @*
-    sil! let keepregplus = @+
-   endif
    while line("$") >= newcolstart
     if newcolend > line("$") | let newcolend= line("$") | endif
     let newcolqty= newcolend - newcolstart
@@ -9575,10 +9543,6 @@ fun! s:NetrwWideListing()
     exe "sil! NetrwKeepj ".newcolstart.','.newcolend.'d _'
     exe 'sil! NetrwKeepj '.w:netrw_bannercnt
    endwhile
-   if has("clipboard")
-    sil! let @*= keepregstar
-    sil! let @+= keepregplus
-   endif
    exe "sil! NetrwKeepj ".w:netrw_bannercnt.',$s/\s\+$//e'
    NetrwKeepj call histdel("/",-1)
    exe 'nno <buffer> <silent> w	:call search(''^.\\|\s\s\zs\S'',''W'')'."\<cr>"
