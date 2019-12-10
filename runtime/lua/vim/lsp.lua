@@ -864,13 +864,13 @@ function lsp.omnifunc(findstart, base)
   else
     -- Then, perform standard completion request
     log.info("base ", base)
- 
+
     local pos = vim.api.nvim_win_get_cursor(0)
     local line = vim.api.nvim_get_current_line()
     local line_to_cursor = line:sub(1, pos[2])
     local _ = log.trace() and log.trace("omnifunc.line", pos, line)
 
-    -- Get the start postion of the current keyword 
+    -- Get the start postion of the current keyword
     local textMatch = vim.fn.match(line_to_cursor, '\\k*$')
     local params = util.make_position_params()
 
@@ -881,7 +881,7 @@ function lsp.omnifunc(findstart, base)
       -- TODO how to handle errors?
       if not response.error then
         local data = response.result
-        local completion_items = util.text_document_completion_list_to_complete_items(data or {}, line_to_cursor)
+        local completion_items = util.text_document_completion_list_to_complete_items(data or {})
         local _ = log.trace() and log.trace("omnifunc.completion_items", completion_items)
         vim.list_extend(matches, completion_items)
       end
