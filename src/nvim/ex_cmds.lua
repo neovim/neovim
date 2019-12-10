@@ -2865,6 +2865,12 @@ return {
     func='ex_todo',
   },
   {
+    command='symbol',
+    flags=bit.bor(EXTRA, TRLBAR),
+    addr_type=ADDR_LINES,
+    func='ex_symbol',
+  },
+  {
     command='topleft',
     flags=bit.bor(NEEDARG, EXTRA, NOTRLCOM),
     addr_type=ADDR_LINES,

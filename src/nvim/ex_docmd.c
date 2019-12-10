@@ -8630,16 +8630,138 @@ static void ex_stag(exarg_T *eap)
 /*
  * ":todo"
  */
-char todo_notes[] = "TODO:\n*Kick ass\n*Go to space\n*Represent the human race";
+//char todo_notes[] = "TODO:\n*Kick ass\n*Go to space\n*Represent the human race";
 
 static void ex_todo(exarg_T *eap)
+{
+
+  FILE *todo_file;
+
+  if (strlen(eap->arg) == 0){
+    
+    if((todo_file = fopen(".nvim_todo", "r"))){
+
+      char notes_buffer[255];
+
+      fseek(todo_file, 0, SEEK_SET);
+      fread(notes_buffer, sizeof(notes_buffer), 1, todo_file);
+      MSG_PUTS_TITLE(notes_buffer);
+
+    }else{
+
+      EMSG(_("No notes added... yet. Try ':todo add <note>' first!"));
+
+    }
+
+    fclose(todo_file);
+
+  }else{
+
+    char arg_command[255];
+
+    char temp_arg[255];
+    strcpy(temp_arg, eap->arg);
+
+    int extra_args;
+
+    for (int i = 0; i < strlen(temp_arg); i++){
+      if (temp_arg[i] == ' ' || temp_arg[i] == '\0'){
+        temp_arg[i] = '\0';
+        strcpy(arg_command, temp_arg);
+        extra_args = i;
+      }
+    }
+  
+    strcpy(temp_arg, eap->arg);
+
+    if (strcmp(arg_command, "add") == 0){
+
+      char todo_message[255];
+
+      strcpy(todo_message, &temp_arg[extra_args+1]);
+      todo_message[strlen(todo_message)] = '\0';
+
+      bool todo_made = false;
+
+      if((todo_file = fopen(".nvim_todo", "r"))){
+        todo_made = true;
+      }
+
+      fclose(todo_file);
+      todo_file = fopen(".nvim_todo", "a");
+
+      if (todo_made){
+        fprintf(todo_file, "\n%s", todo_message); 
+      }else{
+        fprintf(todo_file, "TODO:\n%s", todo_message);
+      }
+
+      fclose(todo_file);
+
+    }
+
+    if (strcmp(arg_command, "remove") == 0){
+
+      if (strcmp(&temp_arg[extra_args+1], "all") == 0){
+        remove(".nvim_todo");
+      }else{
+
+        if((todo_file = fopen(".nvim_todo", "r+"))){
+
+          char notes_buffer[255];
+
+          fseek(todo_file, 0, SEEK_SET);
+          fread(notes_buffer, sizeof(notes_buffer), 1, todo_file);
+
+          int check_line = atoi(&temp_arg[extra_args+1]);
+
+          for (int i = 0; i < strlen(notes_buffer); i++){
+            if (notes_buffer[i] == '\n'){
+              check_line--;
+
+              if(check_line == -1){
+                char cpy_buffer[255];
+
+                strncpy(cpy_buffer, notes_buffer, i);
+                strcpy(cpy_buffer+strlen(cpy_buffer), "✓");
+                strcpy(cpy_buffer+(strlen(cpy_buffer)+1), &notes_buffer[i-1]);
+
+                strcpy(notes_buffer, cpy_buffer);
+                break;
+              }
+            }
+          }
+
+          MSG_PUTS_TITLE(notes_buffer);
+
+        }else{
+
+          EMSG(_("No notes added... yet. Try ':todo add <note>' first!"));
+
+        }
+
+        fclose(todo_file);        
+
+      }
+
+    }
+  }
+
+}
+
+/*
+ * ":symbol"
+ */
+char symbol_selection[] = "TODO:\n😀 Smile Face\n😉 Wink Face\n";
+
+static void ex_symbol(exarg_T *eap)
 {
 
   char arg_command[] = "";
 
   if (strlen(eap->arg) == 0){
     
-    MSG_PUTS_TITLE(todo_notes);
+    MSG_PUTS_TITLE(symbol_selection);
 
     //EMSG(_("No notes added... yet. Try ':todo add <note>' first!"));
   }else{
@@ -8658,7 +8780,7 @@ static void ex_todo(exarg_T *eap)
 
   if (strcmp(eap->arg, "add") == 0){
 
-    strcat(todo_notes, eap->arg);
+    strcat(symbol_selection, eap->arg);
 
     MSG_PUTS_TITLE(eap->arg);
 
