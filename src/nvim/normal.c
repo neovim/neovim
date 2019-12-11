@@ -1328,7 +1328,7 @@ static int normal_check(VimState *state)
     // has been done, close any file for startup messages.
     if (time_fd != NULL) {
       TIME_MSG("first screen update");
-      TIME_MSG("--- NVIM STARTED ---");
+      TIME_MSG("--- Nvim started ---");
       fclose(time_fd);
       time_fd = NULL;
     }

@@ -41,7 +41,7 @@
 /// Careful: may trigger autocommands that reload the buffer.
 void change_warning(int col)
 {
-  static char *w_readonly = N_("W10: Warning: Changing a readonly file");
+  static char *w_readonly = N_("W10: Warning: Changing a read only file");
 
   if (curbuf->b_did_warn == false
       && curbufIsChanged() == 0

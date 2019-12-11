@@ -1849,14 +1849,14 @@ failed:
       }
       if (conv_error != 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
-            _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
+            _("[Conversion error in line %" PRId64 "]"), (int64_t)conv_error);
         c = TRUE;
       } else if (illegal_byte > 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
-            _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
+            _("[Illegal byte in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = TRUE;
       } else if (error)  {
-        STRCAT(IObuff, _("[READ ERRORS]"));
+        STRCAT(IObuff, _("[Read errors]"));
         c = TRUE;
       }
       if (msg_add_fileformat(fileformat))
@@ -3443,7 +3443,7 @@ restore_backup:
     add_quoted_fname((char *)IObuff, IOSIZE, buf, (const char *)fname);
     c = false;
     if (write_info.bw_conv_error) {
-      STRCAT(IObuff, _(" CONVERSION ERROR"));
+      STRCAT(IObuff, _(" Conversion error"));
       c = TRUE;
       if (write_info.bw_conv_error_lnum != 0)
         vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %" PRId64 ";"),

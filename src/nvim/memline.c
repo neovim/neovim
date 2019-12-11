@@ -1034,7 +1034,7 @@ void ml_recover(bool checkext)
         goto theend;
       }
       ++error;
-      ml_append(lnum++, (char_u *)_("???MANY LINES MISSING"),
+      ml_append(lnum++, (char_u *)_("Many lines missing"),
                 (colnr_T)0, true);
     } else {          // there is a block
       pp = hp->bh_data;
@@ -1045,13 +1045,13 @@ void ml_recover(bool checkext)
             line_count -= pp->pb_pointer[i].pe_line_count;
           if (line_count != 0) {
             ++error;
-            ml_append(lnum++, (char_u *)_("???LINE COUNT WRONG"),
+            ml_append(lnum++, (char_u *)_("Line count wrong"),
                       (colnr_T)0, true);
           }
         }
 
         if (pp->pb_count == 0) {
-          ml_append(lnum++, (char_u *)_("???EMPTY BLOCK"),
+          ml_append(lnum++, (char_u *)_("Empty block"),
                     (colnr_T)0, true);
           error++;
         } else if (idx < (int)pp->pb_count) {         // go a block deeper
@@ -1073,7 +1073,7 @@ void ml_recover(bool checkext)
             }
             if (cannot_open) {
               ++error;
-              ml_append(lnum++, (char_u *)_("???LINES MISSING"),
+              ml_append(lnum++, (char_u *)_("Line missing"),
                         (colnr_T)0, true);
             }
             ++idx;                  /* get same block again for next index */
@@ -1103,7 +1103,7 @@ void ml_recover(bool checkext)
             goto theend;
           }
           ++error;
-          ml_append(lnum++, (char_u *)_("???BLOCK MISSING"),
+          ml_append(lnum++, (char_u *)_("Block missing"),
                     (colnr_T)0, true);
         } else {
           // it is a data block
@@ -1567,7 +1567,7 @@ static time_t swapfile_info(char_u *fname)
           MSG_PUTS(_("\n        process ID: "));
           msg_outnum(char_to_long(b0.b0_pid));
           if (os_proc_running((int)char_to_long(b0.b0_pid))) {
-            MSG_PUTS(_(" (STILL RUNNING)"));
+            MSG_PUTS(_(" (Still running)"));
             process_still_running = true;
           }
         }
@@ -3275,7 +3275,7 @@ attention_message (
   MSG_PUTS("\"\n");
   FileInfo file_info;
   if (!os_fileinfo((char *)buf->b_fname, &file_info)) {
-    MSG_PUTS(_("      CANNOT BE FOUND"));
+    MSG_PUTS(_("      Cannot be found"));
   } else {
     MSG_PUTS(_("             dated: "));
     x = file_info.stat.st_mtim.tv_sec;

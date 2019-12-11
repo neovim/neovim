@@ -22444,7 +22444,7 @@ prof_sort_list(
   int i;
   ufunc_T     *fp;
 
-  fprintf(fd, "FUNCTIONS SORTED ON %s TIME\n", title);
+  fprintf(fd, "Functions sorted on %s time\n", title);
   fprintf(fd, "count  total (s)   self (s)  function\n");
   for (i = 0; i < 20 && i < st_len; ++i) {
     fp = sorttab[i];
