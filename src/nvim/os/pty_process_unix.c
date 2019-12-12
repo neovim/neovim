@@ -56,7 +56,7 @@ int pty_process_spawn(PtyProcess *ptyproc)
 {
   if (!termios_default.c_cflag) {
     // TODO(jkeyes): We could pass NULL to forkpty() instead ...
-    init_termios(&termios_default);
+    init_termios(&termios_default, ptyproc);
   }
 
   int status = 0;  // zero or negative error code (libuv convention)
@@ -183,7 +183,10 @@ static void init_child(PtyProcess *ptyproc)
   _exit(122);  // 122 is EXEC_FAILED in the Vim source.
 }
 
-static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
+static void init_termios(
+    struct termios *termios,
+    PtyProcess *ptyproc
+) FUNC_ATTR_NONNULL_ALL
 {
   // Taken from pangoterm
   termios->c_iflag = ICRNL|IXON;
@@ -192,7 +195,11 @@ static void init_termios(struct termios *termios) FUNC_ATTR_NONNULL_ALL
   termios->c_oflag |= TAB0;
 #endif
   termios->c_cflag = CS8|CREAD;
-  termios->c_lflag = ISIG|ICANON|IEXTEN|ECHO|ECHOE|ECHOK;
+  termios->c_lflag = ISIG|ICANON|IEXTEN|ECHOE|ECHOK;
+
+  if (ptyproc->echo) {
+    termios->c_lflag |= ECHO;
+  }
 
   cfsetspeed(termios, 38400);
 

@@ -276,6 +276,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool detach, const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
+                           bool pty_echo,
                            char *term_name, varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
@@ -300,6 +301,9 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     }
     if (pty_height > 0) {
       chan->stream.pty.height = pty_height;
+    }
+    if (!pty_echo) {
+      chan->stream.pty.echo = false;
     }
     if (term_name) {
       chan->stream.pty.term_name = term_name;

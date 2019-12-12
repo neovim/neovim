@@ -12594,6 +12594,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   bool detach = false;
   bool rpc = false;
   bool pty = false;
+  bool pty_echo = true;
   CallbackReader on_stdout = CALLBACK_READER_INIT,
                  on_stderr = CALLBACK_READER_INIT;
   Callback on_exit = CALLBACK_NONE;
@@ -12631,14 +12632,15 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   char *term_name = NULL;
 
   if (pty) {
+    pty_echo = !(tv_dict_get_number(job_opts, "pty_no_echo") != 0);
     width = (uint16_t)tv_dict_get_number(job_opts, "width");
     height = (uint16_t)tv_dict_get_number(job_opts, "height");
     term_name = tv_dict_get_string(job_opts, "TERM", true);
   }
 
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit, pty,
-                                    rpc, detach, cwd, width, height, term_name,
-                                    &rettv->vval.v_number);
+                                    rpc, detach, cwd, width, height, pty_echo,
+                                    term_name, &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
   }
@@ -14933,7 +14935,7 @@ static void f_rpcstart(typval_T *argvars, typval_T *rettv, FunPtr fptr)
 
   Channel *chan = channel_job_start(argv, CALLBACK_READER_INIT,
                                     CALLBACK_READER_INIT, CALLBACK_NONE,
-                                    false, true, false, NULL, 0, 0, NULL,
+                                    false, true, false, NULL, 0, 0, true, NULL,
                                     &rettv->vval.v_number);
   if (chan) {
     channel_create_event(chan, NULL);
@@ -18320,6 +18322,7 @@ static void f_termopen(typval_T *argvars, typval_T *rettv, FunPtr fptr)
   Channel *chan = channel_job_start(argv, on_stdout, on_stderr, on_exit,
                                     true, false, false, cwd,
                                     term_width, curwin->w_height_inner,
+                                    true,
                                     xstrdup("xterm-256color"),
                                     &rettv->vval.v_number);
   if (rettv->vval.v_number <= 0) {
