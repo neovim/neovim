@@ -158,7 +158,7 @@ jobs:
       env:
         - CLANG_SANITIZER=TSAN
         - *common-job-env
-    - if: type != pull_request
+    - if: true
       name: snap
       os: linux
       env:
