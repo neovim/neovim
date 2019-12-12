@@ -12,7 +12,7 @@ description: |
  For lots more details, see the wiki!
 
 grade: stable  # must be 'stable' to release into candidate/stable channels
-confinement: classic
+confinement: devmode
 
 apps:
     nvim:
