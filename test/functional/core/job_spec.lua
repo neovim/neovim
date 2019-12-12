@@ -49,6 +49,18 @@ describe('jobs', function()
     ]])
   end)
 
+  it('must specify env option as a dict', function()
+    command("let g:job_opts.env = v:true")
+    local _, err = pcall(function()
+      if iswin() then
+        nvim('command', "let j = jobstart('set', g:job_opts)")
+      else
+        nvim('command', "let j = jobstart('env', g:job_opts)")
+      end
+    end)
+    ok(string.find(err, "E475: Invalid argument: env") ~= nil)
+  end)
+
   it('append environment #env', function()
     nvim('command', "let $VAR = 'abc'")
     nvim('command', "let g:job_opts.env = {'TOTO': 'hello world'}")
