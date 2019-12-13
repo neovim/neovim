@@ -449,7 +449,8 @@ func Test_tag_line_toolong()
     call assert_report(v:exception)
   catch /.*/
   endtry
-  call assert_equal('Ignoring long line in tags file', split(execute('messages'), '\n')[-1])
+  call assert_equal('Searching tags file Xtags', split(execute('messages'), '\n')[-1])
+
   call writefile([
 	\ '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567	django/contrib/admin/templates/admin/edit_inline/stacked.html	16;"	j	line:16	language:HTML'
 	\ ], 'Xtags')
@@ -460,10 +461,52 @@ func Test_tag_line_toolong()
     call assert_report(v:exception)
   catch /.*/
   endtry
-  call assert_equal('Ignoring long line in tags file', split(execute('messages'), '\n')[-1])
+  call assert_equal('Searching tags file Xtags', split(execute('messages'), '\n')[-1])
+
+  " binary search works in file with long line
+  call writefile([
+        \ 'asdfasfd	nowhere	16',
+	\ 'foobar	Xsomewhere	3; " 12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567',
+        \ 'zasdfasfd	nowhere	16',
+	\ ], 'Xtags')
+  call writefile([
+        \ 'one',
+        \ 'two',
+        \ 'trhee',
+        \ 'four',
+        \ ], 'Xsomewhere')
+  tag foobar
+  call assert_equal('Xsomewhere', expand('%'))
+  call assert_equal(3, getcurpos()[1])
+
   call delete('Xtags')
+  call delete('Xsomewhere')
   set tags&
   let &verbose = old_vbs
+endfunc
+
+func Test_tagline()
+  call writefile([
+	\ 'provision	Xtest.py	/^    def provision(self, **kwargs):$/;"	m	line:1	language:Python class:Foo',
+	\ 'provision	Xtest.py	/^    def provision(self, **kwargs):$/;"	m	line:3	language:Python class:Bar',
+	\], 'Xtags')
+  call writefile([
+	\ '    def provision(self, **kwargs):',
+	\ '        pass',
+	\ '    def provision(self, **kwargs):',
+	\ '        pass',
+	\], 'Xtest.py')
+
+  set tags=Xtags
+
+  1tag provision
+  call assert_equal(line('.'), 1)
+  2tag provision
+  call assert_equal(line('.'), 3)
+
+  call delete('Xtags')
+  call delete('Xtest.py')
+  set tags&
 endfunc
 
 " vim: shiftwidth=2 sts=2 expandtab

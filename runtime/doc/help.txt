@@ -129,6 +129,7 @@ Advanced editing ~
 |autocmd.txt|	automatically executing commands on an event
 |eval.txt|	expression evaluation, conditional commands
 |fold.txt|	hide (fold) ranges of lines
+|lua.txt|	Lua API
 
 Special issues ~
 |print.txt|	printing
@@ -157,7 +158,6 @@ GUI ~
 
 Interfaces ~
 |if_cscop.txt|	using Cscope with Vim
-|if_lua.txt|	Lua interface
 |if_pyth.txt|	Python interface
 |if_ruby.txt|	Ruby interface
 |sign.txt|	debugging signs

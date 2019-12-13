@@ -85,7 +85,7 @@ CONFIG = {
         'append_only': [],
     },
     'lua': {
-        'filename': 'if_lua.txt',
+        'filename': 'lua.txt',
         'section_start_token': '*lua-vim*',
         'section_order': [
             'vim.lua',

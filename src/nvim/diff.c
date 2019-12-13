@@ -44,7 +44,7 @@
 #include "nvim/os/shell.h"
 
 static int diff_busy = false;         // using diff structs, don't change them
-static int diff_need_update = false;  // ex_diffupdate needs to be called
+static bool diff_need_update = false;  // ex_diffupdate needs to be called
 
 // Flags obtained from the 'diffopt' option
 #define DIFF_FILLER     0x001   // display filler lines
@@ -57,8 +57,9 @@ static int diff_need_update = false;  // ex_diffupdate needs to be called
 #define DIFF_VERTICAL   0x080   // vertical splits
 #define DIFF_HIDDEN_OFF 0x100   // diffoff when hidden
 #define DIFF_INTERNAL   0x200   // use internal xdiff algorithm
+#define DIFF_CLOSE_OFF  0x400   // diffoff when closing window
 #define ALL_WHITE_DIFF (DIFF_IWHITE | DIFF_IWHITEALL | DIFF_IWHITEEOL)
-static int diff_flags = DIFF_INTERNAL | DIFF_FILLER;
+static int diff_flags = DIFF_INTERNAL | DIFF_FILLER | DIFF_CLOSE_OFF;
 
 static long diff_algorithm = 0;
 
@@ -490,7 +491,8 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
   }
 
   if (tp == curtab) {
-    diff_redraw(true);
+    // Don't redraw right away, this updates the diffs, which can be slow.
+    need_diff_redraw = true;
 
     // Need to recompute the scroll binding, may remove or add filler
     // lines (e.g., when adding lines above w_topline). But it's slow when
@@ -634,8 +636,9 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 /// Mark all diff buffers in the current tab page for redraw.
 ///
 /// @param dofold Also recompute the folds
-static void diff_redraw(int dofold)
+void diff_redraw(bool dofold)
 {
+  need_diff_redraw = false;
   FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (!wp->w_p_diff) {
       continue;
@@ -1472,6 +1475,13 @@ void ex_diffoff(exarg_T *eap)
     diff_buf_clear();
   }
 
+  if (!diffwin) {
+    diff_need_update = false;
+    curtab->tp_diff_invalid = false;
+    curtab->tp_diff_update = false;
+    diff_clear(curtab);
+  }
+
   // Remove "hor" from from 'scrollopt' if there are no diff windows left.
   if (!diffwin && (vim_strchr(p_sbo, 'h') != NULL)) {
     do_cmdline_cmd("set sbo-=hor");
@@ -1712,6 +1722,7 @@ static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig,
 ///
 /// @param tp
 void diff_clear(tabpage_T *tp)
+  FUNC_ATTR_NONNULL_ALL
 {
   diff_T *p;
   diff_T *next_p;
@@ -2141,6 +2152,9 @@ int diffopt_changed(void)
     } else if (STRNCMP(p, "hiddenoff", 9) == 0) {
       p += 9;
       diff_flags_new |= DIFF_HIDDEN_OFF;
+    } else if (STRNCMP(p, "closeoff", 8) == 0) {
+      p += 8;
+      diff_flags_new |= DIFF_CLOSE_OFF;
     } else if (STRNCMP(p, "indent-heuristic", 16) == 0) {
       p += 16;
       diff_indent_heuristic = XDF_INDENT_HEURISTIC;
@@ -2214,6 +2228,13 @@ bool diffopt_horizontal(void)
 bool diffopt_hiddenoff(void)
 {
   return (diff_flags & DIFF_HIDDEN_OFF) != 0;
+}
+
+// Return true if 'diffopt' contains "closeoff".
+bool diffopt_closeoff(void)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  return (diff_flags & DIFF_CLOSE_OFF) != 0;
 }
 
 /// Find the difference within a changed line.
@@ -2690,7 +2711,8 @@ void ex_diffgetput(exarg_T *eap)
 
       // Adjust marks.  This will change the following entries!
       if (added != 0) {
-        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added, false);
+        mark_adjust(lnum, lnum + count - 1, (long)MAXLNUM, (long)added, false,
+                    kExtmarkUndo);
         if (curwin->w_cursor.lnum >= lnum) {
           // Adjust the cursor position if it's in/after the changed
           // lines.

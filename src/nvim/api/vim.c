@@ -25,6 +25,7 @@
 #include "nvim/highlight.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
+#include "nvim/ex_cmds2.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memline.h"
@@ -39,6 +40,7 @@
 #include "nvim/ops.h"
 #include "nvim/option.h"
 #include "nvim/state.h"
+#include "nvim/mark_extended.h"
 #include "nvim/syntax.h"
 #include "nvim/getchar.h"
 #include "nvim/os/input.h"
@@ -71,9 +73,69 @@ void api_vim_free_all_mem(void)
   map_free(String, handle_T)(namespace_ids);
 }
 
+/// Executes Vimscript (multiline block of Ex-commands), like anonymous
+/// |:source|.
+///
+/// Unlike |nvim_command()| this function supports heredocs, script-scope (s:),
+/// etc.
+///
+/// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @see |execute()|
+/// @see |nvim_command()|
+///
+/// @param src      Vimscript code
+/// @param output   Capture and return all (non-error, non-shell |:!|) output
+/// @param[out] err Error details (Vim error), if any
+/// @return Output (non-error, non-shell |:!|) if `output` is true,
+///         else empty string.
+String nvim_exec(String src, Boolean output, Error *err)
+  FUNC_API_SINCE(7)
+{
+  const int save_msg_silent = msg_silent;
+  garray_T *const save_capture_ga = capture_ga;
+  garray_T capture_local;
+  if (output) {
+    ga_init(&capture_local, 1, 80);
+    capture_ga = &capture_local;
+  }
+
+  try_start();
+  msg_silent++;
+  do_source_str(src.data, "nvim_exec()");
+  capture_ga = save_capture_ga;
+  msg_silent = save_msg_silent;
+  try_end(err);
+
+  if (ERROR_SET(err)) {
+    goto theend;
+  }
+
+  if (output && capture_local.ga_len > 1) {
+    String s = (String){
+      .data = capture_local.ga_data,
+      .size = (size_t)capture_local.ga_len,
+    };
+    // redir usually (except :echon) prepends a newline.
+    if (s.data[0] == '\n') {
+      memmove(s.data, s.data + 1, s.size - 1);
+      s.data[s.size - 1] = '\0';
+      s.size = s.size - 1;
+    }
+    return s;  // Caller will free the memory.
+  }
+theend:
+  if (output) {
+    ga_clear(&capture_local);
+  }
+  return (String)STRING_INIT;
+}
+
 /// Executes an ex-command.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
+///
+/// @see |nvim_exec()|
 ///
 /// @param command  Ex-command string
 /// @param[out] err Error details (Vim error), if any
@@ -331,53 +393,16 @@ String nvim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
-/// Executes an ex-command and returns its (non-error) output.
-/// Shell |:!| output is not captured.
-///
-/// On execution error: fails with VimL error, does not update v:errmsg.
-///
-/// @param command  Ex-command string
-/// @param[out] err Error details (Vim error), if any
+/// @deprecated
+/// @see nvim_exec
 String nvim_command_output(String command, Error *err)
   FUNC_API_SINCE(1)
+  FUNC_API_DEPRECATED_SINCE(7)
 {
-  const int save_msg_silent = msg_silent;
-  garray_T *const save_capture_ga = capture_ga;
-  garray_T capture_local;
-  ga_init(&capture_local, 1, 80);
-
-  try_start();
-  msg_silent++;
-  capture_ga = &capture_local;
-  do_cmdline_cmd(command.data);
-  capture_ga = save_capture_ga;
-  msg_silent = save_msg_silent;
-  try_end(err);
-
-  if (ERROR_SET(err)) {
-    goto theend;
-  }
-
-  if (capture_local.ga_len > 1) {
-    String s = (String){
-      .data = capture_local.ga_data,
-      .size = (size_t)capture_local.ga_len,
-    };
-    // redir usually (except :echon) prepends a newline.
-    if (s.data[0] == '\n') {
-      memmove(s.data, s.data + 1, s.size - 1);
-      s.data[s.size - 1] = '\0';
-      s.size = s.size - 1;
-    }
-    return s;  // Caller will free the memory.
-  }
-
-theend:
-  ga_clear(&capture_local);
-  return (String)STRING_INIT;
+  return nvim_exec(command, true, err);
 }
 
-/// Evaluates a VimL expression (:help expression).
+/// Evaluates a VimL |expression|.
 /// Dictionaries and Lists are recursively expanded.
 ///
 /// On execution error: fails with VimL error, does not update v:errmsg.
@@ -422,6 +447,15 @@ Object nvim_eval(String expr, Error *err)
   return rv;
 }
 
+/// @deprecated Use nvim_exec_lua() instead.
+Object nvim_execute_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(3)
+  FUNC_API_DEPRECATED_SINCE(7)
+  FUNC_API_REMOTE_ONLY
+{
+  return executor_exec_lua_api(code, args, err);
+}
+
 /// Execute Lua code. Parameters (if any) are available as `...` inside the
 /// chunk. The chunk can return a value.
 ///
@@ -434,8 +468,9 @@ Object nvim_eval(String expr, Error *err)
 ///                   or executing the Lua code.
 ///
 /// @return           Return value of Lua code if present or NIL.
-Object nvim_execute_lua(String code, Array args, Error *err)
-  FUNC_API_SINCE(3) FUNC_API_REMOTE_ONLY
+Object nvim_exec_lua(String code, Array args, Error *err)
+  FUNC_API_SINCE(7)
+  FUNC_API_REMOTE_ONLY
 {
   return executor_exec_lua_api(code, args, err);
 }
@@ -1073,9 +1108,10 @@ fail:
 ///                    float where the text should not be edited. Disables
 ///                    'number', 'relativenumber', 'cursorline', 'cursorcolumn',
 ///                    'foldcolumn', 'spell' and 'list' options. 'signcolumn'
-///                    is changed to `auto`. The end-of-buffer region is hidden
-///                    by setting `eob` flag of 'fillchars' to a space char,
-///                    and clearing the |EndOfBuffer| region in 'winhighlight'.
+///                    is changed to `auto` and 'colorcolumn' is cleared. The
+///                    end-of-buffer region is hidden by setting `eob` flag of
+///                    'fillchars' to a space char, and clearing the
+///                    |EndOfBuffer| region in 'winhighlight'.
 /// @param[out] err Error details, if any
 ///
 /// @return Window handle, or 0 on error
@@ -1093,6 +1129,10 @@ Window nvim_open_win(Buffer buffer, Boolean enter, Dictionary config,
   }
   if (enter) {
     win_enter(wp, false);
+  }
+  if (!win_valid(wp)) {
+    api_set_error(err, kErrorTypeException, "Window was closed immediately");
+    return 0;
   }
   if (buffer > 0) {
     nvim_win_set_buf(wp->handle, buffer, err);
@@ -1245,13 +1285,13 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
   Array lines = string_to_array(data, crlf);
   ADD(args, ARRAY_OBJ(lines));
   ADD(args, INTEGER_OBJ(phase));
-  rv = nvim_execute_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
-                        err);
+  rv = nvim_exec_lua(STATIC_CSTR_AS_STRING("return vim.paste(...)"), args,
+                     err);
   if (ERROR_SET(err)) {
     draining = true;
     goto theend;
   }
-  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 1)) {
+  if (!(State & (CMDLINE | INSERT)) && (phase == -1 || phase == 1)) {
     ResetRedobuff();
     AppendCharToRedobuff('a');  // Dot-repeat.
   }
@@ -1269,7 +1309,7 @@ Boolean nvim_paste(String data, Boolean crlf, Integer phase, Error *err)
       }
     }
   }
-  if (!(State & CMDLINE) && !(State & INSERT) && (phase == -1 || phase == 3)) {
+  if (!(State & (CMDLINE | INSERT)) && (phase == -1 || phase == 3)) {
     AppendCharToRedobuff(ESC);  // Dot-repeat.
   }
 theend:
@@ -1289,7 +1329,7 @@ theend:
 /// @param lines  |readfile()|-style list of lines. |channel-lines|
 /// @param type  Edit behavior: any |getregtype()| result, or:
 ///              - "b" |blockwise-visual| mode (may include width, e.g. "b3")
-///              - "c" |characterwise| mode
+///              - "c" |charwise| mode
 ///              - "l" |linewise| mode
 ///              - ""  guess by contents, see |setreg()|
 /// @param after  Insert after cursor (like |p|), or before (like |P|).
@@ -2380,7 +2420,7 @@ Array nvim_get_proc_children(Integer pid, Error *err)
     Array a = ARRAY_DICT_INIT;
     ADD(a, INTEGER_OBJ(pid));
     String s = cstr_to_string("return vim._os_proc_children(select(1, ...))");
-    Object o = nvim_execute_lua(s, a, err);
+    Object o = nvim_exec_lua(s, a, err);
     api_free_string(s);
     api_free_array(a);
     if (o.type == kObjectTypeArray) {
@@ -2426,7 +2466,7 @@ Object nvim_get_proc(Integer pid, Error *err)
   Array a = ARRAY_DICT_INIT;
   ADD(a, INTEGER_OBJ(pid));
   String s = cstr_to_string("return vim._os_proc_info(select(1, ...))");
-  Object o = nvim_execute_lua(s, a, err);
+  Object o = nvim_exec_lua(s, a, err);
   api_free_string(s);
   api_free_array(a);
   if (o.type == kObjectTypeArray && o.data.array.size == 0) {

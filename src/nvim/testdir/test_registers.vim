@@ -1,3 +1,16 @@
+"
+" Tests for register operations
+"
+
+" This test must be executed first to check for empty and unset registers.
+func Test_aaa_empty_reg_test()
+  call assert_fails('normal @@', 'E748:')
+  call assert_fails('normal @%', 'E354:')
+  call assert_fails('normal @#', 'E354:')
+  call assert_fails('normal @!', 'E354:')
+  call assert_fails('normal @:', 'E30:')
+  call assert_fails('normal @.', 'E29:')
+endfunc
 
 func Test_yank_shows_register()
     enew
@@ -82,3 +95,76 @@ func Test_recording_esc_sequence()
     let &t_F2 = save_F2
   endif
 endfunc
+
+" Test for executing the last used register (@)
+func Test_last_used_exec_reg()
+  " Test for the @: command
+  let a = ''
+  call feedkeys(":let a ..= 'Vim'\<CR>", 'xt')
+  normal @:
+  call assert_equal('VimVim', a)
+
+  " Test for the @= command
+  let x = ''
+  let a = ":let x ..= 'Vim'\<CR>"
+  exe "normal @=a\<CR>"
+  normal @@
+  call assert_equal('VimVim', x)
+
+  " Test for the @. command
+  let a = ''
+  call feedkeys("i:let a ..= 'Edit'\<CR>", 'xt')
+  normal @.
+  normal @@
+  call assert_equal('EditEdit', a)
+
+  enew!
+endfunc
+
+func Test_get_register()
+  enew
+  edit Xfile1
+  edit Xfile2
+  call assert_equal('Xfile2', getreg('%'))
+  call assert_equal('Xfile1', getreg('#'))
+
+  call feedkeys("iTwo\<Esc>", 'xt')
+  call assert_equal('Two', getreg('.'))
+  call assert_equal('', getreg('_'))
+  call assert_beeps('normal ":yy')
+  call assert_beeps('normal "%yy')
+  call assert_beeps('normal ".yy')
+
+  call assert_equal('', getreg("\<C-F>"))
+  call assert_equal('', getreg("\<C-W>"))
+  call assert_equal('', getreg("\<C-L>"))
+
+  call assert_equal('', getregtype('!'))
+
+  enew!
+endfunc
+
+func Test_set_register()
+  call assert_fails("call setreg('#', 200)", 'E86:')
+
+  edit Xfile_alt_1
+  let b1 = bufnr('')
+  edit Xfile_alt_2
+  let b2 = bufnr('')
+  edit Xfile_alt_3
+  let b3 = bufnr('')
+  call setreg('#', 'alt_1')
+  call assert_equal('Xfile_alt_1', getreg('#'))
+  call setreg('#', b2)
+  call assert_equal('Xfile_alt_2', getreg('#'))
+
+  let ab = 'regwrite'
+  call setreg('=', '')
+  call setreg('=', 'a', 'a')
+  call setreg('=', 'b', 'a')
+  call assert_equal('regwrite', getreg('='))
+
+  enew!
+endfunc
+
+" vim: shiftwidth=2 sts=2 expandtab

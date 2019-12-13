@@ -540,7 +540,7 @@ void ml_open_file(buf_T *buf)
 /// file, or reading into an existing buffer, create a swap file now.
 ///
 /// @param newfile reading file into new buffer
-void check_need_swap(int newfile)
+void check_need_swap(bool newfile)
 {
   int old_msg_silent = msg_silent;  // might be reset by an E325 message
   msg_silent = 0;  // If swap dialog prompts for input, user needs to see it!
@@ -937,8 +937,9 @@ void ml_recover(bool checkext)
    */
   if (directly) {
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
-    if (setfname(curbuf, NameBuff, NULL, TRUE) == FAIL)
+    if (setfname(curbuf, NameBuff, NULL, true) == FAIL) {
       goto theend;
+    }
   }
 
   home_replace(NULL, mfp->mf_fname, NameBuff, MAXPATHL, TRUE);
@@ -1437,7 +1438,7 @@ recover_names (
  * Append the full path to name with path separators made into percent
  * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
  */
-static char *make_percent_swname(const char *dir, char *name)
+char *make_percent_swname(const char *dir, char *name)
   FUNC_ATTR_NONNULL_ARG(1)
 {
   char *d = NULL;

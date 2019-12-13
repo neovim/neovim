@@ -28,6 +28,7 @@
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"
 #include "nvim/main.h"
+#include "nvim/mark_extended.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -1837,6 +1838,13 @@ change_indent (
 
     xfree(new_line);
   }
+
+  // change_indent seems to bec called twice, this combination only triggers
+  // once for both calls
+  if (new_cursor_col - vcol != 0) {
+    extmark_col_adjust(curbuf, curwin->w_cursor.lnum, 0, 0, amount,
+                       kExtmarkUndo);
+  }
 }
 
 /*
@@ -3048,7 +3056,9 @@ static void ins_compl_clear(void)
   XFREE_CLEAR(compl_orig_text);
   compl_enter_selects = false;
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 /// Check that Insert completion is active.
@@ -4305,7 +4315,9 @@ static void ins_compl_delete(void)
   // causes flicker, thus we can't do that.
   changed_cline_bef_curs();
   // clear v:completed_item
-  set_vim_var_dict(VV_COMPLETED_ITEM, tv_dict_alloc());
+  dict_T *const d = tv_dict_alloc();
+  d->dv_lock = VAR_FIXED;
+  set_vim_var_dict(VV_COMPLETED_ITEM, d);
 }
 
 // Insert the new text being completed.
@@ -4327,6 +4339,7 @@ static dict_T *ins_compl_dict_alloc(compl_T *match)
 {
   // { word, abbr, menu, kind, info }
   dict_T *dict = tv_dict_alloc();
+  dict->dv_lock = VAR_FIXED;
   tv_dict_add_str(
       dict, S_LEN("word"),
       (const char *)EMPTY_IF_NULL(match->cp_str));
@@ -5606,10 +5619,11 @@ insertchar (
       AppendCharToRedobuff(c);
     } else {
       ins_char(c);
-      if (flags & INSCHAR_CTRLV)
+      if (flags & INSCHAR_CTRLV) {
         redo_literal(c);
-      else
+      } else {
         AppendCharToRedobuff(c);
+      }
     }
   }
 }
@@ -6891,8 +6905,9 @@ static void mb_replace_pop_ins(int cc)
     for (i = 1; i < n; ++i)
       buf[i] = replace_pop();
     ins_bytes_len(buf, n);
-  } else
+  } else {
     ins_char(cc);
+  }
 
   if (enc_utf8)
     /* Handle composing chars. */
@@ -8002,9 +8017,9 @@ static bool ins_bs(int c, int mode, int *inserted_space_p)
           Insstart_orig.col = curwin->w_cursor.col;
         }
 
-        if (State & VREPLACE_FLAG)
+        if (State & VREPLACE_FLAG) {
           ins_char(' ');
-        else {
+        } else {
           ins_str((char_u *)" ");
           if ((State & REPLACE_FLAG))
             replace_push(NUL);
@@ -8482,6 +8497,7 @@ static bool ins_tab(void)
   } else {  // otherwise use "tabstop"
     temp = (int)curbuf->b_p_ts;
   }
+
   temp -= get_nolist_virtcol() % temp;
 
   /*
@@ -8491,12 +8507,13 @@ static bool ins_tab(void)
    */
   ins_char(' ');
   while (--temp > 0) {
-    if (State & VREPLACE_FLAG)
+    if (State & VREPLACE_FLAG) {
       ins_char(' ');
-    else {
+    } else {
       ins_str((char_u *)" ");
-      if (State & REPLACE_FLAG)             /* no char replaced */
+      if (State & REPLACE_FLAG) {            // no char replaced
         replace_push(NUL);
+      }
     }
   }
 

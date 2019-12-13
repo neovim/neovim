@@ -47,9 +47,8 @@ bool terminfo_is_bsd_console(const char *term)
   // like cursor-shaping. Assume that TERM=xterm is degraded. #8644
   return strequal(term, "xterm") && !!os_getenv("XTERM_VERSION");
 # endif
-#else
-  return false;
 #endif
+  return false;
 }
 
 /// Loads a built-in terminfo db when we (unibilium) failed to load a terminfo

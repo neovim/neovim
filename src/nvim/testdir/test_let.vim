@@ -24,6 +24,10 @@ func Test_let()
   let out = execute('let a {0 == 1 ? "a" : "b"}')
   let s = "\na                     #1\nb                     #2"
   call assert_equal(s, out)
+
+  let x = 0
+  if 0 | let x = 1 | endif
+  call assert_equal(0, x)
 endfunc
 
 func s:set_arg1(a) abort
@@ -140,6 +144,11 @@ func Test_let_varg_fail()
   call assert_fails('call s:set_varg7(1)', 'E742:')
   call s:set_varg8([0])
 endfunction
+
+func Test_let_utf8_environment()
+  let $a = 'ĀĒĪŌŪあいうえお'
+  call assert_equal('ĀĒĪŌŪあいうえお', $a)
+endfunc
 
 func Test_let_heredoc_fails()
   call assert_fails('let v =<< marker', 'E991:')
@@ -284,4 +293,12 @@ E
      END
   endif
   call assert_equal([], check)
+
+  " unpack assignment
+  let [a, b, c] =<< END
+     x
+     \y
+     z
+END
+  call assert_equal(['     x', '     \y', '     z'], [a, b, c])
 endfunc

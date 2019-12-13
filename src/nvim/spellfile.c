@@ -265,6 +265,8 @@
                                 // follow; never used in prefix tree
 #define BY_SPECIAL  BY_FLAGS2   // highest special byte value
 
+#define ZERO_FLAG   65009       // used when flag is zero: "0"
+
 // Flags used in .spl file for soundsalike flags.
 #define SAL_F0LLOWUP            1
 #define SAL_COLLAPSE            2
@@ -2783,6 +2785,7 @@ static unsigned affitem2flag(int flagtype, char_u *item, char_u *fname, int lnum
 }
 
 // Get one affix name from "*pp" and advance the pointer.
+// Returns ZERO_FLAG for "0".
 // Returns zero for an error, still advances the pointer then.
 static unsigned get_affitem(int flagtype, char_u **pp)
 {
@@ -2794,6 +2797,9 @@ static unsigned get_affitem(int flagtype, char_u **pp)
       return 0;
     }
     res = getdigits_int(pp, true, 0);
+    if (res == 0) {
+      res = ZERO_FLAG;
+    }
   } else {
     res = mb_ptr2char_adv((const char_u **)pp);
     if (flagtype == AFT_LONG || (flagtype == AFT_CAPLONG
@@ -2915,10 +2921,15 @@ static bool flag_in_afflist(int flagtype, char_u *afflist, unsigned flag)
       int digits = getdigits_int(&p, true, 0);
       assert(digits >= 0);
       n = (unsigned int)digits;
-      if (n == flag)
+      if (n == 0) {
+        n = ZERO_FLAG;
+      }
+      if (n == flag) {
         return true;
-      if (*p != NUL)            // skip over comma
-        ++p;
+      }
+      if (*p != NUL) {          // skip over comma
+        p++;
+      }
     }
     break;
   }

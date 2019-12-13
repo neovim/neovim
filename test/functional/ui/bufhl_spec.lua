@@ -217,6 +217,161 @@ describe('Buffer highlighting', function()
                                                 |
       ]])
     end)
+
+    it('and adjusting columns', function()
+      -- insert before
+      feed('ggiquite <esc>')
+      screen:expect{grid=[[
+        quite^ a {5:longer} example                  |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      feed('u')
+      screen:expect{grid=[[
+        ^a {5:longer} example                        |
+        in {6:order} to {7:de}{5:monstr}{7:ate}                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #2  {MATCH:.*}|
+      ]]}
+
+      -- change/insert in the middle
+      feed('+fesAAAA')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ordAAAA^r} to {7:de}{5:monstr}{7:ate}              |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- INSERT --}                            |
+      ]]}
+
+      feed('<esc>tdD')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ordAAAAr} t^o                          |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      feed('u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ordAAAAr} to^ demonstrate              |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #4  {MATCH:.*}|
+      ]]}
+
+      feed('u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:ord^er} to demonstrate                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 change; before #3  {MATCH:.*}|
+      ]]}
+      end)
+
+    it('and joining lines', function()
+      feed('ggJJJ')
+      screen:expect{grid=[[
+        a {5:longer} example in {6:order} to {7:de}{5:monstr}{7:ate}|
+        {7: combin}{8:ing hi}{7:ghlights^ }{8:from diff}{7:erent sou}|
+        {7:rces}                                    |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+                                                |
+      ]]}
+
+      -- TODO(bfredl): perhaps better undo
+      feed('uuu')
+      screen:expect{grid=[[
+        ^a longer example                        |
+        in order to demonstrate                 |
+        combining highlights                    |
+        from different sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 more line; before #2  {MATCH:.*}|
+      ]]}
+    end)
+
+    it('and splitting lines', function()
+      feed('2Gtti<cr>')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}                                |
+        ^ to {7:de}{5:monstr}{7:ate}                         |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {7:-- INSERT --}                            |
+      ]]}
+
+      -- TODO(bfredl): keep both "parts" after split, requires proper extmark ranges
+      feed('<esc>tsi<cr>')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}                                |
+         to {7:de}{5:mo}                                |
+        ^nstrate                                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {7:-- INSERT --}                            |
+      ]]}
+
+      -- TODO(bfredl): perhaps better undo
+      feed('<esc>u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in {6:order}                                |
+         to demo{7:^nstrat}{8:e}                         |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        1 line less; before #3  {MATCH:.*}|
+      ]]}
+
+      feed('<esc>u')
+      screen:expect{grid=[[
+        a {5:longer} example                        |
+        in order^ to demonstrate                 |
+        {7:combin}{8:ing}{9: hi}ghlights                    |
+        {9:from }{8:diff}{7:erent} sources                  |
+        {1:~                                       }|
+        {1:~                                       }|
+        {1:~                                       }|
+        1 line less; before #2  {MATCH:.*}|
+      ]]}
+    end)
   end)
 
   it('prioritizes latest added highlight', function()
@@ -384,6 +539,22 @@ describe('Buffer highlighting', function()
         {1:~                                       }|
                                                 |
       ]])
+    end)
+
+    it('can be retrieved', function()
+      local get_virtual_text = curbufmeths.get_virtual_text
+      local line_count = curbufmeths.line_count
+
+      local s1 = {{'Köttbullar', 'Comment'}, {'Kräuterbutter'}}
+      local s2 = {{'こんにちは', 'Comment'}}
+
+      set_virtual_text(-1, 0, s1, {})
+      eq(s1, get_virtual_text(0))
+
+      set_virtual_text(-1, line_count(), s2, {})
+      eq(s2, get_virtual_text(line_count()))
+
+      eq({}, get_virtual_text(line_count() + 9000))
     end)
 
     it('is not highlighted by visual selection', function()

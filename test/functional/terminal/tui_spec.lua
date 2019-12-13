@@ -302,6 +302,49 @@ describe('TUI', function()
     expect_child_buf_lines({''})
   end)
 
+  it('paste: select-mode', function()
+    feed_data('ithis is line 1\nthis is line 2\nline 3 is here\n\027')
+    wait_for_mode('n')
+    screen:expect{grid=[[
+      this is line 1                                    |
+      this is line 2                                    |
+      line 3 is here                                    |
+      {1: }                                                 |
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Select-mode. Use <C-n> to move down.
+    feed_data('gg04lgh\14\14')
+    wait_for_mode('s')
+    feed_data('\027[200~')
+    feed_data('just paste it™')
+    feed_data('\027[201~')
+    screen:expect{grid=[[
+      thisjust paste it™{1:3} is here                       |
+                                                        |
+      {4:~                                                 }|
+      {4:~                                                 }|
+      {5:[No Name] [+]                                     }|
+                                                        |
+      {3:-- TERMINAL --}                                    |
+    ]]}
+    -- Undo.
+    feed_data('u')
+    expect_child_buf_lines{
+      'this is line 1',
+      'this is line 2',
+      'line 3 is here',
+      '',
+      }
+    -- Redo.
+    feed_data('\18')  -- <C-r>
+    expect_child_buf_lines{
+      'thisjust paste it™3 is here',
+      '',
+      }
+  end)
+
   it('paste: terminal mode', function()
     feed_data(':set statusline=^^^^^^^\n')
     feed_data(':terminal '..nvim_dir..'/tty-test\n')
@@ -443,7 +486,7 @@ describe('TUI', function()
   end)
 
   it('paste: recovers from vim.paste() failure', function()
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       _G.save_paste_fn = vim.paste
       vim.paste = function(lines, phase) error("fake fail") end
     ]], {})
@@ -501,7 +544,7 @@ describe('TUI', function()
       {3:-- TERMINAL --}                                    |
     ]]}
     -- Paste works if vim.paste() succeeds.
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = _G.save_paste_fn
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -520,7 +563,7 @@ describe('TUI', function()
   it('paste: vim.paste() cancel (retval=false) #10865', function()
     -- This test only exercises the "cancel" case.  Use-case would be "dangling
     -- paste", but that is not implemented yet. #10865
-    child_session:request('nvim_execute_lua', [[
+    child_session:request('nvim_exec_lua', [[
       vim.paste = function(lines, phase) return false end
     ]], {})
     feed_data('\027[200~line A\nline B\n\027[201~')
@@ -535,7 +578,7 @@ describe('TUI', function()
                                                         |
       {4:~                                                 }|
       {5:                                                  }|
-      {8:paste: Error executing lua: vim.lua:211: Vim:E21: }|
+      {MATCH:paste: Error executing lua: vim.lua:%d+: Vim:E21: }|
       {8:Cannot make changes, 'modifiable' is off}          |
       {10:Press ENTER or type command to continue}{1: }          |
       {3:-- TERMINAL --}                                    |

@@ -15,7 +15,7 @@ describe('cmdline CTRL-R', function()
     -- <CR> inserted between lines, NOT after the final line.
     eq('line1abc\rline2somemoretext', funcs.getcmdline())
 
-    -- Yank 2 lines characterwise, then paste to cmdline.
+    -- Yank 2 lines charwise, then paste to cmdline.
     feed([[<C-\><C-N>gg05lyvj:<C-R>0]])
     -- <CR> inserted between lines, NOT after the final line.
     eq('abc\rline2', funcs.getcmdline())

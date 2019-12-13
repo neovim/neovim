@@ -272,11 +272,35 @@ static void close_cb(Stream *stream, void *data)
   channel_decref(data);
 }
 
+
+/// Starts a job and returns the associated channel
+///
+/// @param[in]  argv  Arguments vector specifying the command to run,
+///                   NULL-terminated
+/// @param[in]  on_stdout  Callback to read the job's stdout
+/// @param[in]  on_stderr  Callback to read the job's stderr
+/// @param[in]  on_exit  Callback to receive the job's exit status
+/// @param[in]  pty  True if the job should run attached to a pty
+/// @param[in]  rpc  True to communicate with the job using msgpack-rpc,
+///                  `on_stdout` is ignored
+/// @param[in]  detach  True if the job should not be killed when nvim exits,
+///                     ignored if `pty` is true
+/// @param[in]  cwd  Initial working directory for the job.  Nvim's working
+///                  directory if `cwd` is NULL
+/// @param[in]  pty_width  Width of the pty, ignored if `pty` is false
+/// @param[in]  pty_height  Height of the pty, ignored if `pty` is false
+/// @param[in]  term_name  `$TERM` for the pty
+/// @param[in]  env  Nvim's configured environment is used if this is NULL,
+///                  otherwise defines all environment variables
+/// @param[out]  status_out  0 for invalid arguments, > 0 for the channel id,
+///                          < 0 if the job can't start
+///
+/// @returns [allocated] channel
 Channel *channel_job_start(char **argv, CallbackReader on_stdout,
                            CallbackReader on_stderr, Callback on_exit,
                            bool pty, bool rpc, bool detach, const char *cwd,
                            uint16_t pty_width, uint16_t pty_height,
-                           char *term_name, varnumber_T *status_out)
+                           char *term_name, char **env, varnumber_T *status_out)
 {
   assert(cwd == NULL || os_isdir_executable(cwd));
 
@@ -314,6 +338,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   proc->events = chan->events;
   proc->detach = detach;
   proc->cwd = cwd;
+  proc->env = env;
 
   char *cmd = xstrdup(proc->argv[0]);
   bool has_out, has_err;
@@ -328,6 +353,7 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
   if (status) {
     EMSG3(_(e_jobspawn), os_strerror(status), cmd);
     xfree(cmd);
+    os_free_fullenv(proc->env);
     if (proc->type == kProcessTypePty) {
       xfree(chan->stream.pty.term_name);
     }
@@ -336,6 +362,8 @@ Channel *channel_job_start(char **argv, CallbackReader on_stdout,
     return NULL;
   }
   xfree(cmd);
+  os_free_fullenv(proc->env);
+
 
   wstream_init(&proc->in, 0);
   if (has_out) {

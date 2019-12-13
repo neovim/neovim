@@ -307,7 +307,7 @@ describe('put command', function()
   -- }}}
 
   -- Conversion functions {{{
-  local function convert_characterwise(expect_base, conversion_table,
+  local function convert_charwise(expect_base, conversion_table,
                                        virtualedit_end, visual_put)
     expect_base = dedent(expect_base)
     -- There is no difference between 'P' and 'p' when VIsual_active
@@ -335,7 +335,7 @@ describe('put command', function()
       expect_base = expect_base:gsub('(test_stringx?)"', '%1.')
     end
     return expect_base
-  end -- convert_characterwise()
+  end -- convert_charwise()
 
   local function make_back(string)
     local prev_line
@@ -500,7 +500,7 @@ describe('put command', function()
   local function run_normal_mode_tests(test_string, base_map, extra_setup,
                                        virtualedit_end, selection_string)
     local function convert_closure(e, c)
-      return convert_characterwise(e, c, virtualedit_end, selection_string)
+      return convert_charwise(e, c, virtualedit_end, selection_string)
     end
     local function expect_normal_creator(expect_base, conversion_table)
       local test_expect = expect_creator(convert_closure, expect_base, conversion_table)

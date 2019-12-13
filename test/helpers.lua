@@ -99,6 +99,9 @@ function module.pcall_err(fn, ...)
   -- to this:
   --    Error executing lua: .../foo.lua:186: Expected string, got number
   errmsg = errmsg:gsub([[lua: [a-zA-Z]?:?[^:]-[/\]([^:/\]+):%d+: ]], 'lua: .../%1: ')
+  -- Compiled modules will not have a path and will just be a name like
+  -- shared.lua:186, so strip the number.
+  errmsg = errmsg:gsub([[lua: ([^:/\ ]+):%d+: ]], 'lua: .../%1: ')
   --                          ^ Windows drive-letter (C:)
   return errmsg
 end

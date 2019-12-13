@@ -269,7 +269,7 @@ local ext_keys = {
 -- grid:        Expected screen state (string). Each line represents a screen
 --              row. Last character of each row (typically "|") is stripped.
 --              Common indentation is stripped.
---              Lines containing only "{IGNORE}|" are skipped.
+--              "{MATCH:x}|" lines are matched against Lua pattern `x`.
 -- attr_ids:    Expected text attributes. Screen rows are transformed according
 --              to this table, as follows: each substring S composed of
 --              characters having the same attributes will be substituted by
@@ -390,9 +390,10 @@ function Screen:expect(expected, attr_ids, ...)
         err_msg = "Expected screen height " .. #expected_rows
         .. ' differs from actual height ' .. #actual_rows .. '.'
       end
-      for i = 1, #expected_rows do
-         msg_expected_rows[i] = expected_rows[i]
-        if expected_rows[i] ~= actual_rows[i] and expected_rows[i] ~= "{IGNORE}|" then
+      for i, row in ipairs(expected_rows) do
+        msg_expected_rows[i] = row
+        local m = (row ~= actual_rows[i] and row:match('{MATCH:(.*)}') or nil)
+        if row ~= actual_rows[i] and (not m or not actual_rows[i]:match(m)) then
           msg_expected_rows[i] = '*' .. msg_expected_rows[i]
           if i <= #actual_rows then
             actual_rows[i] = '*' .. actual_rows[i]
@@ -605,17 +606,12 @@ function Screen:_redraw(updates)
     for i = 2, #update do
       local handler_name = '_handle_'..method
       local handler = self[handler_name]
-      if handler ~= nil then
-        local status, res = pcall(handler, self, unpack(update[i]))
-        if not status then
-          error(handler_name..' failed'
-            ..'\n  payload: '..inspect(update)
-            ..'\n  error:   '..tostring(res))
-        end
-      else
-        assert(self._on_event,
-          "Add Screen:"..handler_name.." or call Screen:set_on_event_handler")
-        self._on_event(method, update[i])
+      assert(handler ~= nil, "missing handler: Screen:"..handler_name)
+      local status, res = pcall(handler, self, unpack(update[i]))
+      if not status then
+        error(handler_name..' failed'
+          ..'\n  payload: '..inspect(update)
+          ..'\n  error:   '..tostring(res))
       end
     end
     if k == #updates and method == "flush" then
@@ -623,10 +619,6 @@ function Screen:_redraw(updates)
     end
   end
   return did_flush
-end
-
-function Screen:set_on_event_handler(callback)
-  self._on_event = callback
 end
 
 function Screen:_handle_resize(width, height)

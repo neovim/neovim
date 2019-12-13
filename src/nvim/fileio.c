@@ -2650,6 +2650,7 @@ buf_write(
    */
   if (!(append && *p_pm == NUL) && !filtering && perm >= 0 && dobackup) {
     FileInfo file_info;
+    const bool no_prepend_dot = false;
 
     if ((bkc & BKC_YES) || append) {       /* "yes" */
       backup_copy = TRUE;
@@ -2737,6 +2738,7 @@ buf_write(
       int some_error = false;
       char_u      *dirp;
       char_u      *rootname;
+      char_u      *p;
 
       /*
        * Try to make the backup in each directory in the 'bdir' option.
@@ -2756,6 +2758,17 @@ buf_write(
          * Isolate one directory name, using an entry in 'bdir'.
          */
         (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+        p = IObuff + STRLEN(IObuff);
+        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+          // Ends with '//', Use Full path
+          if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
+              != NULL) {
+            backup = (char_u *)modname((char *)p, (char *)backup_ext,
+                                       no_prepend_dot);
+            xfree(p);
+          }
+        }
+
         rootname = get_file_in_dir(fname, IObuff);
         if (rootname == NULL) {
           some_error = TRUE;                /* out of memory */
@@ -2764,10 +2777,14 @@ buf_write(
 
         FileInfo file_info_new;
         {
-          /*
-           * Make backup file name.
-           */
-          backup = (char_u *)modname((char *)rootname, (char *)backup_ext, FALSE);
+          //
+          // Make the backup file name.
+          //
+          if (backup == NULL) {
+            backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
+                                       no_prepend_dot);
+          }
+
           if (backup == NULL) {
             xfree(rootname);
             some_error = TRUE;                          /* out of memory */
@@ -2893,12 +2910,26 @@ nobackup:
          * Isolate one directory name and make the backup file name.
          */
         (void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
-        rootname = get_file_in_dir(fname, IObuff);
-        if (rootname == NULL)
-          backup = NULL;
-        else {
-          backup = (char_u *)modname((char *)rootname, (char *)backup_ext, FALSE);
-          xfree(rootname);
+        p = IObuff + STRLEN(IObuff);
+        if (after_pathsep((char *)IObuff, (char *)p) && p[-1] == p[-2]) {
+          // path ends with '//', use full path
+          if ((p = (char_u *)make_percent_swname((char *)IObuff, (char *)fname))
+              != NULL) {
+            backup = (char_u *)modname((char *)p, (char *)backup_ext,
+                                       no_prepend_dot);
+            xfree(p);
+          }
+        }
+
+        if (backup == NULL) {
+          rootname = get_file_in_dir(fname, IObuff);
+          if (rootname == NULL) {
+            backup = NULL;
+          } else {
+            backup = (char_u *)modname((char *)rootname, (char *)backup_ext,
+                                       no_prepend_dot);
+            xfree(rootname);
+          }
         }
 
         if (backup != NULL) {
@@ -3700,8 +3731,9 @@ static int set_rw_fname(char_u *fname, char_u *sfname)
     return FAIL;
   }
 
-  if (setfname(curbuf, fname, sfname, FALSE) == OK)
+  if (setfname(curbuf, fname, sfname, false) == OK) {
     curbuf->b_flags |= BF_NOTEDITED;
+  }
 
   /* ....and a new named one is created */
   apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, curbuf);

@@ -65,7 +65,7 @@ FILTER_PATTERNS = *.lua=lua2dox_filter
 
 Either add them to the end or find the appropriate entry in Doxyfile.
 
-There are other lines that you might like to alter, but see futher documentation for details.
+There are other lines that you might like to alter, but see further documentation for details.
 
 <li> When Doxyfile is edited run "doxygen"
 

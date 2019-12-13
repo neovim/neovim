@@ -30,7 +30,6 @@
 #include "nvim/indent_c.h"
 #include "nvim/buffer_updates.h"
 #include "nvim/main.h"
-#include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
@@ -792,6 +791,8 @@ int prompt_for_number(int *mouse_used)
       cmdline_row = msg_row - 1;
     }
     need_wait_return = false;
+    msg_didany = false;
+    msg_didout = false;
   } else {
     cmdline_row = save_cmdline_row;
   }

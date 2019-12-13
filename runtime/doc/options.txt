@@ -843,6 +843,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  name, precede it with a backslash.
 	- To include a comma in a directory name precede it with a backslash.
 	- A directory name may end in an '/'.
+	- For Unix and Win32, if a directory ends in two path separators "//",
+	  the swap file name will be built from the complete path to the file
+	  with all path separators changed to percent '%' signs. This will
+	  ensure file name uniqueness in the backup directory.
+	  On Win32, it is also possible to end with "\\".  However, When a
+	  separating comma is following, you must use "//", since "\\" will
+	  include the comma in the file name. Therefore it is recommended to
+	  use '//', instead of '\\'.
 	- Environment variables are expanded |:set_env|.
 	- Careful with '\' characters, type one before a space, type two to
 	  get one in the option (see |option-backslash|), for example: >
@@ -1875,7 +1883,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	security reasons.
 
 						*'dip'* *'diffopt'*
-'diffopt' 'dip'		string	(default "internal,filler")
+'diffopt' 'dip'		string	(default "internal,filler,closeoff")
 			global
 	Option settings for diff mode.  It can consist of the following items.
 	All are optional.  Items must be separated by a comma.
@@ -1932,6 +1940,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 		vertical	Start diff mode with vertical splits (unless
 				explicitly specified otherwise).
 
+		closeoff	When a window is closed where 'diff' is set
+				and there is only one window remaining in the
+				same tab page with 'diff' set, execute
+				`:diffoff` in that window.  This undoes a
+				`:diffsplit` command.
+
 		hiddenoff	Do not use diff mode for a buffer when it
 				becomes hidden.
 
@@ -1986,12 +2000,14 @@ A jump table for the options with a short description can be found at |Q_op|.
 	- A directory starting with "./" (or ".\" for Windows) means to
 	  put the swap file relative to where the edited file is.  The leading
 	  "." is replaced with the path name of the edited file.
-	- For Unix and Win32, if a directory ends in two path separators "//"
-	  or "\\", the swap file name will be built from the complete path to
-	  the file with all path separators substituted to percent '%' signs.
-	  This will ensure file name uniqueness in the preserve directory.
-	  On Win32, when a separating comma is following, you must use "//",
-	  since "\\" will include the comma in the file name.
+	- For Unix and Win32, if a directory ends in two path separators "//",
+	  the swap file name will be built from the complete path to the file
+	  with all path separators substituted to percent '%' signs. This will
+	  ensure file name uniqueness in the preserve directory.
+	  On Win32, it is also possible to end with "\\".  However, When a
+	  separating comma is following, you must use "//", since "\\" will
+	  include the comma in the file name. Therefore it is recommended to
+	  use '//', instead of '\\'.
 	- Spaces after the comma are ignored, other spaces are considered part
 	  of the directory name.  To have a space at the start of a directory
 	  name, precede it with a backslash.
@@ -2242,8 +2258,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 					*'fileformat'* *'ff'*
 'fileformat' 'ff'	string (Windows default: "dos",
-				Unix default: "unix",
-				Macintosh default: "mac")
+				Unix default: "unix")
 			local to buffer
 	This gives the <EOL> of the current buffer, which is used for
 	reading/writing the buffer from/to a file:
@@ -2265,7 +2280,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 'fileformats' 'ffs'	string (default:
 				Vim+Vi	Win32: "dos,unix",
 				Vim	Unix: "unix,dos",
-				Vim	Mac: "mac,unix,dos",
 				Vi	others: "")
 			global
 	This gives the end-of-line (<EOL>) formats that will be tried when
@@ -2348,7 +2362,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 						*'fillchars'* *'fcs'*
 'fillchars' 'fcs'	string	(default "")
-			local to window
+			global or local to window |global-local|
 	Characters to fill the statuslines and vertical separators.
 	It is a comma separated list of items:
 
@@ -3443,6 +3457,17 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Unprintable and zero-width Unicode characters are displayed as <xxxx>.
 	There is no option to specify these characters.
 
+						*'jumpoptions'* *'jop'*
+'jumpoptions' 'jop'	string	(default "")
+			global
+	List of words that change the behavior of the |jumplist|.
+	  stack         Make the jumplist behave like the tagstack or like a
+	                web browser.  Relative location of entries in the
+			jumplist is preserved at the cost of discarding
+			subsequent entries when navigating backwards in the
+			jumplist and then jumping to a location.
+			|jumplist-stack|
+
 			*'joinspaces'* *'js'* *'nojoinspaces'* *'nojs'*
 'joinspaces' 'js'	boolean	(default on)
 			global
@@ -3657,7 +3682,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 						*'listchars'* *'lcs'*
 'listchars' 'lcs'	string	(default: "tab:> ,trail:-,nbsp:+"
 				 Vi default: "eol:$")
-			local to window
+			global or local to window |global-local|
 	Strings to use in 'list' mode and for the |:list| command.  It is a
 	comma separated list of string settings.
 
@@ -5732,7 +5757,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	current one. |:vsplit|
 
 			   *'startofline'* *'sol'* *'nostartofline'* *'nosol'*
-'startofline' 'sol'	boolean	(default on)
+'startofline' 'sol'	boolean	(default off)
 			global
 	When "on" the commands listed below move the cursor to the first
 	non-blank of the line.  When off the cursor is kept in the same column
@@ -6000,6 +6025,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	   vsplit	Just like "split" but split vertically.
 	   newtab	Like "split", but open a new tab page.  Overrules
 			"split" when both are present.
+	   uselast	If included, jump to the previously used window when
+			jumping to errors with |quickfix| commands.
 
 						*'synmaxcol'* *'smc'*
 'synmaxcol' 'smc'	number	(default 3000)
@@ -6638,22 +6665,18 @@ A jump table for the options with a short description can be found at |Q_op|.
 				*'wildmenu'* *'wmnu'* *'nowildmenu'* *'nowmnu'*
 'wildmenu' 'wmnu'	boolean	(default on)
 			global
-	When 'wildmenu' is on, command-line completion operates in an enhanced
-	mode.  On pressing 'wildchar' (usually <Tab>) to invoke completion,
-	the possible matches are shown just above the command line, with the
-	first match highlighted (overwriting the status line, if there is
-	one).  Keys that show the previous/next match, such as <Tab> or
-	CTRL-P/CTRL-N, cause the highlight to move to the appropriate match.
-	When 'wildmode' is used, "wildmenu" mode is used where "full" is
-	specified.  "longest" and "list" do not start "wildmenu" mode.
-	You can check the current mode with |wildmenumode()|.
-	If there are more matches than can fit in the line, a ">" is shown on
-	the right and/or a "<" is shown on the left.  The status line scrolls
-	as needed.
-	The "wildmenu" mode is abandoned when a key is hit that is not used
-	for selecting a completion.
-	While the "wildmenu" is active the following keys have special
-	meanings:
+	Enables "enhanced mode" of command-line completion. When user hits
+	<Tab> (or 'wildchar') to invoke completion, the possible matches are
+	shown in a menu just above the command-line (see 'wildoptions'), with
+	the first match highlighted (overwriting the statusline).  Keys that
+	show the previous/next match (<Tab>/CTRL-P/CTRL-N) highlight the
+	match.
+	'wildmode' must specify "full": "longest" and "list" do not start
+	'wildmenu' mode. You can check the current mode with |wildmenumode()|.
+	The menu is canceled when a key is hit that is not used for selecting
+	a completion.
+
+	While the menu is active these keys have special meanings:
 
 	<Left> <Right>	- select previous/next match (like CTRL-P/CTRL-N)
 	<Down>		- in filename/menu name completion: move into a
@@ -6663,15 +6686,12 @@ A jump table for the options with a short description can be found at |Q_op|.
 	<Up>		- in filename/menu name completion: move up into
 			  parent directory or parent menu.
 
-	This makes the menus accessible from the console |console-menus|.
-
-	If you prefer the <Left> and <Right> keys to move the cursor instead
-	of selecting a different match, use this: >
+	If you want <Left> and <Right> to move the cursor instead of selecting
+	a different match, use this: >
 		:cnoremap <Left> <Space><BS><Left>
 		:cnoremap <Right> <Space><BS><Right>
 <
-	The "WildMenu" highlighting is used for displaying the current match
-	|hl-WildMenu|.
+	|hl-WildMenu| highlights the current match.
 
 						*'wildmode'* *'wim'*
 'wildmode' 'wim'	string	(default: "full")

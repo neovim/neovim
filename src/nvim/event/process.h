@@ -23,6 +23,7 @@ struct process {
   uint64_t stopped_time;  // process_stop() timestamp
   const char *cwd;
   char **argv;
+  char **env;
   Stream in, out, err;
   process_exit_cb cb;
   internal_process_cb internal_exit_cb, internal_close_cb;

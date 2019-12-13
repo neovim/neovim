@@ -10,7 +10,9 @@ compile_commands.json
 /dist/
 /.deps/
 /tmp/
+/.clangd/
 
+.DS_Store
 *.mo
 .*.sw?
 *~

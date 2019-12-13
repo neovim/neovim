@@ -35,7 +35,7 @@ module.nvim_prog = (
 )
 -- Default settings for the test session.
 module.nvim_set = (
-  'set shortmess+=IS background=light noswapfile noautoindent'
+  'set shortmess+=IS background=light noswapfile noautoindent startofline'
   ..' laststatus=1 undodir=. directory=. viewdir=. backupdir=.'
   ..' belloff= wildoptions-=pum noshowcmd noruler nomore redrawdebug=invalid')
 module.nvim_argv = {
@@ -186,7 +186,12 @@ function module.expect_msg_seq(...)
     if status then
       return result
     end
-    final_error = cat_err(final_error, result)
+    local message = result
+    if type(result) == "table" then
+      -- 'eq' returns several things
+      message = result.message
+    end
+    final_error = cat_err(final_error, message)
   end
   error(final_error)
 end
@@ -706,7 +711,7 @@ module.curwinmeths = module.create_callindex(module.curwin)
 module.curtabmeths = module.create_callindex(module.curtab)
 
 function module.exec_lua(code, ...)
-  return module.meths.execute_lua(code, {...})
+  return module.meths.exec_lua(code, {...})
 end
 
 function module.redir_exec(cmd)

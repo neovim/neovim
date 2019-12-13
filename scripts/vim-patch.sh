@@ -501,13 +501,15 @@ show_vimpatches() {
     fi
   done
 
-  printf "\nInstructions:
+  cat << EOF
+
+Instructions:
   To port one of the above patches to Neovim, execute this script with the patch revision as argument and follow the instructions, e.g.
-  '%s -p v8.0.1234', or '%s -P v8.0.1234'
+  '${BASENAME} -p v8.0.1234', or '${BASENAME} -P v8.0.1234'
 
   NOTE: Please port the _oldest_ patch if you possibly can.
-        You can use '%s -l path/to/file' to see what patches are missing for a file.
-" "${BASENAME}" "${BASENAME}"
+        You can use '${BASENAME} -l path/to/file' to see what patches are missing for a file.
+EOF
 }
 
 review_commit() {

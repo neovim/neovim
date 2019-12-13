@@ -633,6 +633,12 @@ void win_set_minimal_style(win_T *wp)
     xfree(wp->w_p_scl);
     wp->w_p_scl = (char_u *)xstrdup("auto");
   }
+
+  // colorcolumn: cleared
+  if (wp->w_p_cc != NULL && *wp->w_p_cc != NUL) {
+    xfree(wp->w_p_cc);
+    wp->w_p_cc = (char_u *)xstrdup("");
+  }
 }
 
 void win_config_float(win_T *wp, FloatConfig fconfig)
@@ -2418,6 +2424,7 @@ int win_close(win_T *win, bool free_buf)
   bool help_window = false;
   tabpage_T   *prev_curtab = curtab;
   frame_T *win_frame = win->w_floating ? NULL : win->w_frame->fr_parent;
+  const bool had_diffmode = win->w_p_diff;
 
   if (last_window() && !win->w_floating) {
     EMSG(_("E444: Cannot close last window"));
@@ -2641,6 +2648,22 @@ int win_close(win_T *win, bool free_buf)
    * before it was opened. */
   if (help_window)
     restore_snapshot(SNAP_HELP_IDX, close_curwin);
+
+  // If the window had 'diff' set and now there is only one window left in
+  // the tab page with 'diff' set, and "closeoff" is in 'diffopt', then
+  // execute ":diffoff!".
+  if (diffopt_closeoff() && had_diffmode && curtab == prev_curtab) {
+    int diffcount = 0;
+
+    FOR_ALL_WINDOWS_IN_TAB(dwin, curtab) {
+      if (dwin->w_p_diff) {
+        diffcount++;
+      }
+    }
+    if (diffcount == 1) {
+      do_cmdline_cmd("diffoff!");
+    }
+  }
 
   curwin->w_pos_changed = true;
   redraw_all_later(NOT_VALID);
@@ -4349,9 +4372,10 @@ static void win_goto_hor(bool left, long count)
   }
 }
 
-/*
- * Make window "wp" the current window.
- */
+/// Make window `wp` the current window.
+///
+/// @warning Autocmds may close the window immediately, so caller must check
+///          win_valid(wp).
 void win_enter(win_T *wp, bool undo_sync)
 {
   win_enter_ext(wp, undo_sync, false, false, true, true);

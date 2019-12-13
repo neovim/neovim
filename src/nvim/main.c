@@ -27,6 +27,7 @@
 #include "nvim/highlight.h"
 #include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
+#include "nvim/lua/executor.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
@@ -143,7 +144,6 @@ static const char *err_extra_cmd =
 
 void event_init(void)
 {
-  log_init();
   loop_init(&main_loop, NULL);
   resize_events = multiqueue_new_child(main_loop.events);
 
@@ -219,6 +219,7 @@ void early_init(void)
   // First find out the home directory, needed to expand "~" in options.
   init_homedir();               // find real value of $HOME
   set_init_1();
+  log_init();
   TIME_MSG("inits 1");
 
   set_lang_var();               // set v:lang and v:ctype
@@ -1515,7 +1516,7 @@ static void create_windows(mparm_T *parmp)
           /* We can't close the window, it would disturb what
            * happens next.  Clear the file name and set the arg
            * index to -1 to delete it later. */
-          setfname(curbuf, NULL, NULL, FALSE);
+          setfname(curbuf, NULL, NULL, false);
           curwin->w_arg_idx = -1;
           swap_exists_action = SEA_NONE;
         } else

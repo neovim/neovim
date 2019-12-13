@@ -14,6 +14,9 @@ return {
     -- Relative (non-hidden) paths.
     '^[^/\\.]',
   },
+  modules = {
+    ['vim'] = 'runtime/lua/vim/shared.lua'
+  },
 }
 
 -- vim: ft=lua tw=80 sw=2 et

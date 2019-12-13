@@ -124,7 +124,7 @@
 
 
 // temporary buffer for rendering a single screenline, so it can be
-// comparared with previous contents to calulate smallest delta.
+// comparared with previous contents to calculate smallest delta.
 static size_t linebuf_size = 0;
 static schar_T *linebuf_char = NULL;
 static sattr_T *linebuf_attr = NULL;
@@ -284,6 +284,11 @@ int update_screen(int type)
   // which would bypass the checks in screen_resize for popupmenu etc.
   if (!default_grid.chars || resizing) {
     return FAIL;
+  }
+
+  // May have postponed updating diffs.
+  if (need_diff_redraw) {
+    diff_redraw(true);
   }
 
   if (must_redraw) {
@@ -4016,10 +4021,13 @@ win_line (
       if (wp->w_buffer->terminal) {
         // terminal buffers may need to highlight beyond the end of the
         // logical line
-        while (col < grid->Columns) {
+        int n = wp->w_p_rl ? -1 : 1;
+        while (col >= 0 && col < grid->Columns) {
           schar_from_ascii(linebuf_char[off], ' ');
-          linebuf_attr[off++] = term_attrs[vcol++];
-          col++;
+          linebuf_attr[off] = term_attrs[vcol];
+          off += n;
+          vcol += n;
+          col += n;
         }
       }
       grid_put_linebuf(grid, row, 0, col, grid->Columns, wp->w_p_rl, wp,

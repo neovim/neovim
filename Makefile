@@ -119,8 +119,13 @@ oldtest: | nvim build/runtime/doc/tags
 ifeq ($(strip $(TEST_FILE)),)
 	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" $(MAKEOVERRIDES)
 else
-	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" NEW_TESTS=$(TEST_FILE) SCRIPTS= $(MAKEOVERRIDES)
+	@# Handle TEST_FILE=test_foo{,.res,.vim}.
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" SCRIPTS= $(MAKEOVERRIDES) $(patsubst %.vim,%,$(patsubst %.res,%,$(TEST_FILE)))
 endif
+# Build oldtest by specifying the relative .vim filename.
+.PHONY: phony_force
+src/nvim/testdir/%.vim: phony_force
+	+$(SINGLE_MAKE) -C src/nvim/testdir NVIM_PRG="$(realpath build/bin/nvim)" SCRIPTS= $(MAKEOVERRIDES) $(patsubst src/nvim/testdir/%.vim,%,$@)
 
 build/runtime/doc/tags helptags: | nvim
 	+$(BUILD_CMD) -C build runtime/doc/tags
@@ -137,6 +142,14 @@ functionaltest-lua: | nvim
 
 lualint: | build/.ran-cmake deps
 	$(BUILD_CMD) -C build lualint
+
+shlint:
+	@shellcheck --version | head -n 2
+	shellcheck scripts/vim-patch.sh
+
+_opt_shlint:
+	@command -v shellcheck && { $(MAKE) shlint; exit $$?; } \
+		|| echo "SKIP: shlint (shellcheck not found)"
 
 pylint:
 	flake8 contrib/ scripts/ src/ test/
@@ -188,16 +201,16 @@ appimage:
 appimage-%:
 	bash scripts/genappimage.sh $*
 
-lint: check-single-includes clint lualint _opt_pylint
+lint: check-single-includes clint lualint _opt_pylint _opt_shlint
 
 # Generic pattern rules, allowing for `make build/bin/nvim` etc.
 # Does not work with "Unix Makefiles".
 ifeq ($(BUILD_TYPE),Ninja)
-build/%:
+build/%: phony_force
 	$(BUILD_CMD) -C build $(patsubst build/%,%,$@)
 
-$(DEPS_BUILD_DIR)/%:
+$(DEPS_BUILD_DIR)/%: phony_force
 	$(BUILD_CMD) -C $(DEPS_BUILD_DIR) $(patsubst $(DEPS_BUILD_DIR)/%,%,$@)
 endif
 
-.PHONY: test lualint pylint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix
+.PHONY: test lualint pylint shlint functionaltest unittest lint clint clean distclean nvim libnvim cmake deps install appimage checkprefix

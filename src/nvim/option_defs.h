@@ -473,6 +473,12 @@ EXTERN char_u   *p_isf;         // 'isfname'
 EXTERN char_u   *p_isi;         // 'isident'
 EXTERN char_u   *p_isp;         // 'isprint'
 EXTERN int p_js;                // 'joinspaces'
+EXTERN char_u *p_jop;           // 'jumpooptions'
+EXTERN unsigned jop_flags;
+#ifdef IN_OPTION_C
+static char *(p_jop_values[]) = { "stack", NULL };
+#endif
+#define JOP_STACK               0x01
 EXTERN char_u   *p_kp;          // 'keywordprg'
 EXTERN char_u   *p_km;          // 'keymodel'
 EXTERN char_u   *p_langmap;     // 'langmap'
@@ -484,6 +490,7 @@ EXTERN long     p_linespace;    // 'linespace'
 EXTERN char_u   *p_lispwords;   // 'lispwords'
 EXTERN long p_ls;               // 'laststatus'
 EXTERN long p_stal;             // 'showtabline'
+EXTERN char_u   *p_lcs;         // 'listchars'
 
 EXTERN int p_lz;                // 'lazyredraw'
 EXTERN int p_lpl;               // 'loadplugins'
@@ -611,13 +618,14 @@ EXTERN char_u   *p_swb;         // 'switchbuf'
 EXTERN unsigned swb_flags;
 #ifdef IN_OPTION_C
 static char *(p_swb_values[]) =
-  { "useopen", "usetab", "split", "newtab", "vsplit", NULL };
+  { "useopen", "usetab", "split", "newtab", "vsplit", "uselast", NULL };
 #endif
 #define SWB_USEOPEN             0x001
 #define SWB_USETAB              0x002
 #define SWB_SPLIT               0x004
 #define SWB_NEWTAB              0x008
 #define SWB_VSPLIT              0x010
+#define SWB_USELAST             0x020
 EXTERN int p_tbs;               ///< 'tagbsearch'
 EXTERN char_u *p_tc;            ///< 'tagcase'
 EXTERN unsigned tc_flags;       ///< flags from 'tagcase'
@@ -652,6 +660,7 @@ EXTERN long p_ul;               ///< 'undolevels'
 EXTERN long p_ur;               ///< 'undoreload'
 EXTERN long p_uc;               ///< 'updatecount'
 EXTERN long p_ut;               ///< 'updatetime'
+EXTERN char_u *p_fcs;           ///< 'fillchar'
 EXTERN char_u *p_shada;         ///< 'shada'
 EXTERN char *p_shadafile;       ///< 'shadafile'
 EXTERN char_u *p_vdir;          ///< 'viewdir'
