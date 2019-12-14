@@ -305,7 +305,7 @@ class ProjectBreakpoints( object ):
             if isinstance( result, bool ):
               result = 'Y' if result else 'N'
 
-            if not isinstance( result, str) or result not in ( 'Y', 'N', '' ):
+            if not isinstance( result, str ) or result not in ( 'Y', 'N', '' ):
               raise ValueError(
                 f"Invalid value for exception breakpoint filter '{f}': "
                 f"'{result}'. Must be boolean, 'Y', 'N' or '' (default)" )

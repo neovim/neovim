@@ -24,7 +24,6 @@ things like:
 
 Along with optional additional configuration for things like:
 
-- Function breakpoints
 - Exception breakpoints
 
 ### Debug adapter configuration
@@ -109,6 +108,12 @@ But for now, consider the following example snippet:
           "--test-identifier", "${TestIdentifier}",
           "--secret-token", "${SecretToken}"
         ]
+      },
+      "breakpoints": {
+        "exception": {
+          "caught": "",
+          "uncaught": "Y"
+        }
       }
     }
   }

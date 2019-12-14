@@ -6,11 +6,11 @@ function! ClearDown()
   call vimspector#test#setup#ClearDown()
 endfunction
 
-function! SetUp_Test_Go_Simple()
+function! SetUp_Test_Python_Simple()
   let g:vimspector_enable_mappings = 'HUMAN'
 endfunction
 
-function! Test_Go_Simple()
+function! Test_Python_Simple()
   let fn='main.py'
   lcd ../support/test/python/simple_python
   exe 'edit ' . fn
@@ -28,16 +28,8 @@ function! Test_Go_Simple()
   call setpos( '.', [ 0, 1, 1 ] )
 
   " Here we go. Start Debugging
-  pyx << EOF
-from unittest.mock import patch
-with patch( 'vimspector.utils.SelectFromList',
-            return_value=None ) as p:
-  with patch( 'vimspector.utils.AskForInput',
-              return_value=None ) as p:
-    vim.eval( 'vimspector#LaunchWithSettings( { "configuration": "run" } )' )
-    vim.eval( 'vimspector#test#signs#AssertCursorIsAtLineInBuffer( fn, 6, 1 )' )
-    p.assert_called()
-EOF
+  call vimspector#LaunchWithSettings( { "configuration": "run" } )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( fn, 6, 1 )
 
   " Step
   call feedkeys( "\<F10>", 'xt' )

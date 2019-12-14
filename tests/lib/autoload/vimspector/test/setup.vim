@@ -16,8 +16,7 @@ endfunction
 function! vimspector#test#setup#ClearDown() abort
 endfunction
 
-function! vimspector#test#setup#Reset() abort
-  call vimspector#Reset()
+function! vimspector#test#setup#WaitForReset() abort
   call WaitForAssert( {->
         \ assert_true( pyxeval( '_vimspector_session._connection is None' ) )
         \ } )
@@ -26,6 +25,12 @@ function! vimspector#test#setup#Reset() abort
         \ }, 10000 )
 
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorCode' )
+endfunction
+
+function! vimspector#test#setup#Reset() abort
+  call vimspector#Reset()
+  call vimspector#test#setup#WaitForReset()
+
   call vimspector#ClearBreakpoints()
   call vimspector#test#signs#AssertSignGroupEmpty( 'VimspectorBP' )
 
