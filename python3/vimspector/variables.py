@@ -31,6 +31,7 @@ class VariablesView( object ):
     self._vars = View( variables_win, {}, self._DrawScopes )
     self._watch = View( watches_win, {}, self._DrawWatches )
     self._connection = connection
+    self._current_syntax = ''
 
     # Allows us to hit <CR> to expand/collapse variables
     with utils.LetCurrentWindow( self._vars.win ):
@@ -91,6 +92,7 @@ class VariablesView( object ):
       utils.ClearBuffer( self._vars.win.buffer )
     with utils.ModifiableScratchBuffer( self._watch.win.buffer ):
       utils.ClearBuffer( self._watch.win.buffer )
+    self._current_syntax = ''
 
   def ConnectionUp( self, connection ):
     self._connection = connection
@@ -373,3 +375,19 @@ class VariablesView( object ):
         'context': 'hover',
       }
     }, failure_handler )
+
+
+  def SetSyntax( self, syntax ):
+    if not syntax:
+      syntax = ''
+
+    if self._current_syntax == syntax:
+      return
+
+    self._current_syntax = syntax
+
+    with utils.LetCurrentWindow( self._vars.win ):
+      vim.command( 'set syntax={}'.format( utils.Escape( syntax ) ) )
+
+    with utils.LetCurrentWindow( self._watch.win ):
+      vim.command( 'set syntax={}'.format( utils.Escape( syntax ) ) )

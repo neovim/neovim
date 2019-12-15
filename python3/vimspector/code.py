@@ -27,6 +27,7 @@ class CodeView( object ):
 
     self._terminal_window = None
     self._terminal_buffer_number = None
+    self.current_syntax = None
 
     self._logger = logging.getLogger( __name__ )
     utils.SetUpLogging( self._logger )
@@ -93,6 +94,9 @@ class CodeView( object ):
                                    frame[ 'line' ],
                                    frame[ 'source' ][ 'path' ] ) )
 
+    self.current_syntax = utils.ToUnicode(
+      vim.current.buffer.options[ 'syntax' ] )
+
     return True
 
   def Clear( self ):
@@ -102,6 +106,7 @@ class CodeView( object ):
       self._signs[ 'vimspectorPC' ] = None
 
     self._UndisplaySigns()
+    self.current_syntax = None
 
   def Reset( self ):
     self.ClearBreakpoints()

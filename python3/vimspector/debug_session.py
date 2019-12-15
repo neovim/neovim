@@ -427,6 +427,7 @@ class DebugSession( object ):
       return False
 
     if frame:
+      self._variablesView.SetSyntax( self._codeView.current_syntax )
       self._variablesView.LoadScopes( frame )
       self._variablesView.EvaluateWatches()
     else:

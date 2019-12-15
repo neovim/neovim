@@ -434,3 +434,9 @@ def GetBufferFilepath( buf ):
     return ''
 
   return os.path.normpath( buf.name )
+
+
+def ToUnicode( b ):
+  if isinstance( b, bytes ):
+    return b.decode( 'utf-8' )
+  return b
