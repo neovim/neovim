@@ -56,17 +56,17 @@ GADGETS = {
     },
     'do': lambda name, root: InstallCppTools( name, root ),
     'all': {
-      'version': '0.23.1',
+      'version': '0.26.2',
     },
     'linux': {
       'file_name': 'cpptools-linux.vsix',
       'checksum':
-        'c0f424bd6d5e016d70126587c80b92d981729c708ce524f2cce4c3f524b41d71'
+        '767aed01f0c0b5eb9e9eff96aba47b576d153d2b2d9fc28e306722ea45a02ff5'
     },
     'macos': {
       'file_name': 'cpptools-osx.vsix',
       'checksum':
-        '431692395ba243ea20428e083d5df3201a0dbda31a66eab7729da0f377def5fd',
+        '6fd52562e1e53287c0e9b94813709c6fab487c16ff3054eda6233d6c0241eb0e',
     },
     'windows': {
       'file_name': 'cpptools-win32.vsix',
@@ -523,6 +523,10 @@ parser.add_argument( '--force-all',
                      action = 'store_true',
                      help = 'Enable all unsupported completers' )
 
+parser.add_argument( '--no-gadget-config',
+                     action = 'store_true',
+                     help = "Don't write the .gagets.json, just install" )
+
 done_languages = set()
 for name, gadget in GADGETS.items():
   lang = gadget[ 'language' ]
@@ -616,9 +620,18 @@ for name, gadget in GADGETS.items():
     print( "FAILED installing {}: {}".format( name, e ) )
 
 
-with open( install.GetGadgetConfigFile( os.path.dirname( __file__ ) ),
-           'w' ) as f:
-  json.dump( { 'adapters': all_adapters }, f, indent=2, sort_keys=True )
+adapter_config = json.dumps ( { 'adapters': all_adapters },
+                              indent=2,
+                              sort_keys=True )
+
+if args.no_gadget_config:
+  print( "" )
+  print( "Would write the following gadgets: " )
+  print( adapter_config )
+else:
+  with open( install.GetGadgetConfigFile( os.path.dirname( __file__ ) ),
+             'w' ) as f:
+    f.write( adapter_config )
 
 if failed:
   raise RuntimeError( 'Failed to install gadgets: {}'.format(
