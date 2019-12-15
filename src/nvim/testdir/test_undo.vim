@@ -241,6 +241,26 @@ func Test_undojoin()
   close!
 endfunc
 
+" undojoin not allowed after undo
+func Test_undojoin_after_undo()
+  new
+  call feedkeys("ixx\<Esc>u", 'xt')
+  call assert_fails(':undojoin', 'E790:')
+  bwipe!
+endfunc
+
+" undojoin is a noop when no change yet, or when 'undolevels' is negative
+func Test_undojoin_noop()
+  new
+  call feedkeys(":undojoin\<CR>", 'xt')
+  call assert_equal([''], getline(1, '$'))
+  setlocal undolevels=-1
+  call feedkeys("ixx\<Esc>u", 'xt')
+  call feedkeys(":undojoin\<CR>", 'xt')
+  call assert_equal(['xx'], getline(1, '$'))
+  bwipe!
+endfunc
+
 func Test_undo_write()
   call delete('Xtest')
   split Xtest
@@ -327,6 +347,22 @@ func Test_undofile_earlier()
   call delete('Xundofile')
 endfunc
 
+func Test_wundo_errors()
+  new
+  call setline(1, 'hello')
+  call assert_fails('wundo! Xdoesnotexist/Xundofile', 'E828:')
+  bwipe!
+endfunc
+
+func Test_rundo_errors()
+  call assert_fails('rundo XfileDoesNotExist', 'E822:')
+
+  call writefile(['abc'], 'Xundofile')
+  call assert_fails('rundo Xundofile', 'E823:')
+
+  call delete('Xundofile')
+endfunc
+
 " Test for undo working properly when executing commands from a register.
 " Also test this in an empty buffer.
 func Test_cmd_in_reg_undo()
@@ -341,6 +377,24 @@ func Test_cmd_in_reg_undo()
   call assert_equal(0, &modified)
   only!
   let @a = ''
+endfunc
+
+" undo or redo are noop if there is nothing to undo or redo
+func Test_undo_redo_noop()
+  new
+  call assert_fails('undo 2', 'E830:')
+
+  message clear
+  undo
+  let messages = split(execute('message'), "\n")
+  call assert_equal('Already at oldest change', messages[-1])
+
+  message clear
+  redo
+  let messages = split(execute('message'), "\n")
+  call assert_equal('Already at newest change', messages[-1])
+
+  bwipe!
 endfunc
 
 func Test_redo_empty_line()
