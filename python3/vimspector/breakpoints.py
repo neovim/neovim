@@ -87,6 +87,7 @@ class ProjectBreakpoints( object ):
     else:
       for file_name, breakpoints in self._line_breakpoints.items():
         for bp in breakpoints:
+          self._SignToLine( file_name, bp )
           qf.append( {
             'filename': file_name,
             'lnum': bp[ 'line' ],
@@ -113,6 +114,7 @@ class ProjectBreakpoints( object ):
     # These are the user-entered breakpoints.
     for file_name, breakpoints in self._line_breakpoints.items():
       for bp in breakpoints:
+        self._SignToLine( file_name, bp )
         if 'sign_id' in bp:
           vim.command( 'sign unplace {0} group=VimspectorBP'.format(
             bp[ 'sign_id' ] ) )
@@ -132,6 +134,7 @@ class ProjectBreakpoints( object ):
     found_bp = False
     action = 'New'
     for index, bp in enumerate( self._line_breakpoints[ file_name ] ):
+      self._SignToLine( file_name, bp )
       if bp[ 'line' ] == line:
         found_bp = True
         if bp[ 'state' ] == 'ENABLED' and not self._connection:
@@ -143,7 +146,7 @@ class ProjectBreakpoints( object ):
               bp[ 'sign_id' ] ) )
           del self._line_breakpoints[ file_name ][ index ]
           action = 'Delete'
-          break
+        break
 
     self._logger.debug( "Toggle found bp at {}:{} ? {} ({})".format(
       file_name,
@@ -215,6 +218,7 @@ class ProjectBreakpoints( object ):
     for file_name, line_breakpoints in self._line_breakpoints.items():
       breakpoints = []
       for bp in line_breakpoints:
+        self._SignToLine( file_name, bp )
         if 'sign_id' in bp:
           vim.command( 'sign unplace {0} group=VimspectorBP'.format(
             bp[ 'sign_id' ] ) )
@@ -301,7 +305,7 @@ class ProjectBreakpoints( object ):
             if isinstance( result, bool ):
               result = 'Y' if result else 'N'
 
-            if not isinstance( result, str) or result not in ( 'Y', 'N', '' ):
+            if not isinstance( result, str ) or result not in ( 'Y', 'N', '' ):
               raise ValueError(
                 f"Invalid value for exception breakpoint filter '{f}': "
                 f"'{result}'. Must be boolean, 'Y', 'N' or '' (default)" )
@@ -330,6 +334,7 @@ class ProjectBreakpoints( object ):
   def _ShowBreakpoints( self ):
     for file_name, line_breakpoints in self._line_breakpoints.items():
       for bp in line_breakpoints:
+        self._SignToLine( file_name, bp )
         if 'sign_id' in bp:
           vim.command( 'sign unplace {0} group=VimspectorBP '.format(
             bp[ 'sign_id' ] ) )
@@ -344,3 +349,17 @@ class ProjectBreakpoints( object ):
             'vimspectorBP' if bp[ 'state' ] == 'ENABLED'
                            else 'vimspectorBPDisabled',
             file_name ) )
+
+
+  def _SignToLine( self, file_name, bp ):
+    if 'sign_id' not in bp:
+      return bp[ 'line' ]
+
+    signs = vim.eval( "sign_getplaced( '{}', {} )".format(
+      utils.Escape( file_name ),
+      json.dumps( { 'id': file_name, 'group': 'VimspectorBP', } ) ) )
+
+    if len( signs ) == 1 and len( signs[ 0 ][ 'signs' ] ) == 1:
+      bp[ 'line' ] = int( signs[ 0 ][ 'signs' ][ 0 ][ 'lnum' ] )
+
+    return bp[ 'line' ]

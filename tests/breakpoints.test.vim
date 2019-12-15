@@ -246,3 +246,52 @@ function Test_DisableBreakpointWhileDebugging()
   lcd -
   %bwipeout!
 endfunction
+
+function! SetUp_Test_Insert_Code_Above_Breakpoint()
+  let g:vimspector_enable_mappings = 'HUMAN'
+endfunction
+
+function! Test_Insert_Code_Above_Breakpoint()
+  let fn='main.py'
+  lcd ../support/test/python/simple_python
+  exe 'edit ' . fn
+  call setpos( '.', [ 0, 25, 5 ] )
+
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( fn, 25, 5 )
+  call vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorBP', 25 )
+
+  " Add the breakpoint
+  call feedkeys( "\<F9>", 'xt' )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                                           \ 25,
+                                                           \ 'vimspectorBP' )
+
+  " Insert a line above the breakpoint
+  call append( 22, '  # Test' )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( fn, 26, 5 )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                                           \ 26,
+                                                           \ 'vimspectorBP' )
+
+  " CHeck that we break at the right point
+  call setpos( '.', [ 0, 1, 1 ] )
+  call vimspector#LaunchWithSettings( { "configuration": "run" } )
+  call vimspector#test#signs#AssertCursorIsAtLineInBuffer( fn, 26, 1 )
+  call vimspector#Reset()
+  call vimspector#test#setup#WaitForReset()
+
+  " Toggle the breakpoint
+  call setpos( '.', [ 0, 26, 1 ] )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine( 'VimspectorBP',
+                                                           \ 26,
+                                                           \ 'vimspectorBP' )
+  call feedkeys( "\<F9>", 'xt' )
+  call vimspector#test#signs#AssertSignGroupSingletonAtLine(
+        \ 'VimspectorBP',
+        \ 26,
+        \ 'vimspectorBPDisabled' )
+  " Delete it
+  call feedkeys( "\<F9>", 'xt' )
+  call vimspector#test#signs#AssertSignGroupEmptyAtLine( 'VimspectorBP', 26 )
+
+endfunction

@@ -4,9 +4,9 @@ RUN_VIM="vim --clean --not-a-term"
 RUN_TEST="${RUN_VIM} -S lib/run_test.vim"
 
 if [ -z "$VIMSPECTOR_MIMODE" ]; then
-  if which -s lldb; then
+  if which lldb >/dev/null 2>&1; then
     export VIMSPECTOR_MIMODE=lldb
-  elif which -s gdb; then
+  elif which gdb >/dev/null 2>&1; then
     export VIMSPECTOR_MIMODE=gdb
   else
     echo "Couldn't guess VIMSPECTOR_MIMODE. Need lldb or gdb in path"

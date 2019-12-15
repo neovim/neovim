@@ -9,6 +9,12 @@
         "program": "${file}",
         "stopOnEntry": true,
         "console": "integratedTerminal"
+      },
+      "breakpoints": {
+        "exception": {
+          "raised": "N",
+          "uncaught": ""
+        }
       }
     },
     "attach": {
@@ -18,6 +24,12 @@
         "type": "python",
         "host": "localhost",
         "port": "5678"
+      },
+      "breakpoints": {
+        "exception": {
+          "raised": "N",
+          "uncaught": ""
+        }
       }
     }
   }
