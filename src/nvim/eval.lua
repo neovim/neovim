@@ -243,6 +243,7 @@ return {
     pow={args=2},
     prevnonblank={args=1},
     printf={args=varargs(1)},
+    pum_getpos={},
     pumvisible={},
     py3eval={args=1},
     pyeval={args=1},
