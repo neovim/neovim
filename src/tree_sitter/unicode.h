@@ -10,8 +10,8 @@ extern "C" {
 
 #define U_EXPORT
 #define U_EXPORT2
-#include "unicode/utf8.h"
-#include "unicode/utf16.h"
+#include "./unicode/utf8.h"
+#include "./unicode/utf16.h"
 
 static const int32_t TS_DECODE_ERROR = U_SENTINEL;
 

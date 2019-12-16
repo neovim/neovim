@@ -34,9 +34,9 @@
 #ifndef __UTF16_H__
 #define __UTF16_H__
 
-#include "unicode/umachine.h"
+#include "./umachine.h"
 #ifndef __UTF_H__
-#   include "unicode/utf.h"
+#   include "./utf.h"
 #endif
 
 /* single-code point definitions -------------------------------------------- */
